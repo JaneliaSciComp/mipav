@@ -6,6 +6,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.TreeMap;
@@ -22,6 +23,8 @@ import javax.swing.JTextField;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.file.FileInfoImageXML;
+import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
@@ -37,7 +40,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	private JPanel mainPanel;
 	
 	/** image to register to standard column **/
-	private ModelImage neuronImage;
+	private ModelImage neuronImage,cityBlockImage;
 	
 	/** points file **/
 	private File pointsFile, surfaceFile;
@@ -94,7 +97,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Standard Column Registration v1.5");
+        setTitle("Drosophila Standard Column Registration v1.7");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
         
@@ -111,6 +114,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         pointsFilePathTextField.setEditable(false);
         pointsFilePathTextField.setBackground(Color.white);
         pointsBrowseButton = new JButton("Browse");
+        pointsBrowseButton.setEnabled(false);
         pointsBrowseButton.addActionListener(this);
         pointsBrowseButton.setActionCommand("pointsBrowse");
         
@@ -119,6 +123,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         surfaceFilePathTextField.setEditable(false);
         surfaceFilePathTextField.setBackground(Color.white);
         surfaceBrowseButton = new JButton("Browse");
+        surfaceBrowseButton.setEnabled(false);
         surfaceBrowseButton.addActionListener(this);
         surfaceBrowseButton.setActionCommand("surfaceBrowse");
         
@@ -233,6 +238,8 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 		        	neuronImage = fileIO.readImage(chooser.getSelectedFile().getName(), chooser.getCurrentDirectory() + File.separator, true, null);
 		        	resols = neuronImage.getResolutions(0);
 		        	imageFilePathTextField.setText(currDir);
+		        	surfaceBrowseButton.setEnabled(true);
+		        	pointsBrowseButton.setEnabled(true);
 		        }
 		 }else if(command.equalsIgnoreCase("pointsBrowse")) {
 			 JFileChooser chooser = new JFileChooser();
@@ -299,6 +306,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 		        	if(!readSurfaceFile(surfaceFile)) {
 		        		MipavUtil.displayError("Error parsing surface file");
 		        	}else {
+		        		createCityBlockImage();
 		        		surfaceFilePathTextField.setText(currDir);
 		        	}
 		        	
@@ -447,7 +455,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	 */
 	protected void callAlgorithm() {
 		float samplingRate = Float.valueOf((String)surfaceFileSamplingCB.getSelectedItem()).floatValue();
-		alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,allFilamentCoords,surfaceFile,samplingRate);
+		alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,allFilamentCoords,surfaceFile,samplingRate,cityBlockImage);
 		alg.addListener(this);
 		setCursor(new Cursor(Cursor.WAIT_CURSOR));
 		
@@ -526,6 +534,190 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 			return false;
 		}
 	}
+	
+	
+	
+	private void createCityBlockImage() {
+		
+		int[] extents = {512,512,512};
+        cityBlockImage = new ModelImage(ModelImage.UBYTE, extents,"cityBlockImage");
+        float[] cityBlockImageResols = new float[3];
+        cityBlockImageResols[0] = neuronImage.getResolutions(0)[0];
+        cityBlockImageResols[1] = neuronImage.getResolutions(0)[1];
+        cityBlockImageResols[2] = neuronImage.getResolutions(0)[2];
+		for(int i=0;i<cityBlockImage.getExtents()[2];i++) {
+			cityBlockImage.setResolutions(i, cityBlockImageResols);
+		}
+		
+		FileInfoImageXML[] fileInfoBases = new FileInfoImageXML[cityBlockImage.getExtents()[2]];
+        for (int i = 0; i < fileInfoBases.length; i++) {
+            fileInfoBases[i] = new FileInfoImageXML(neuronImage.getImageName(), null, FileUtility.XML);
+            fileInfoBases[i].setEndianess(neuronImage.getFileInfo()[0].getEndianess());
+            fileInfoBases[i].setUnitsOfMeasure(neuronImage.getFileInfo()[0].getUnitsOfMeasure());
+            fileInfoBases[i].setResolutions(neuronImage.getFileInfo()[0].getResolutions());
+            fileInfoBases[i].setExtents(neuronImage.getExtents());
+            fileInfoBases[i].setOrigin(neuronImage.getFileInfo()[0].getOrigin());
+
+        }
+
+        cityBlockImage.setFileInfo(fileInfoBases);
+        byte[] cityBlockImageBuffer = new byte[512*512*512];
+        for(int i=0;i<cityBlockImageBuffer.length;i++) {
+        	cityBlockImageBuffer[i] = 100;	
+        }
+        try {
+        	cityBlockImage.importData(0, cityBlockImageBuffer, true);
+        } catch (IOException error) {
+            System.out.println("IO exception");
+            error.printStackTrace();
+            return;
+        }
+        
+        
+        
+         int key;
+         int x1,y1,z1;
+         
+         ArrayList<int[]> zeroCoords = new ArrayList<int[]>();
+
+		 
+		 int allFilamentsSize = allFilamentCoords.size();
+		 int alSize;
+		 ArrayList<float[]> al;
+		 float[] coords;
+		 for(int i=0;i<allFilamentsSize;i++) {
+			 al = allFilamentCoords.get(i);
+			 alSize = al.size();
+			 for(int k=0;k<alSize;k++) {
+				 coords = al.get(k);
+				 x1 = Math.round(coords[0]);
+				 y1 = Math.round(coords[1]);
+				 z1 = Math.round(coords[2]);
+				 int[] arr = {x1,y1,z1};
+		         zeroCoords.add(arr);
+		         cityBlockImage.set(x1,y1,z1,0);
+		         
+			 }
+		 }
+
+		 
+		 ArrayList<int[]> oneCoords = new ArrayList<int[]>();
+		 for(int i=0;i<zeroCoords.size();i++) {
+			int[] zeroCoord = zeroCoords.get(i);
+			int zeroX = zeroCoord[0];
+			int zeroY = zeroCoord[1];
+			int zeroZ = zeroCoord[2];
+			
+			int zeroXPlus1 = zeroX + 1;
+			int zeroXMinus1 = zeroX - 1;
+			int zeroYPlus1 = zeroY + 1;
+			int zeroYMinus1 = zeroY - 1;
+			int zeroZPlus1 = zeroZ + 1;
+			int zeroZMinus1 = zeroZ - 1;
+			
+			
+			
+			if ((cityBlockImage.get(zeroXPlus1, zeroY, zeroZ)).byteValue() == 100) {
+				cityBlockImage.set(zeroXPlus1,zeroY,zeroZ,1);
+				int[] arr = {zeroXPlus1,zeroY,zeroZ};
+				oneCoords.add(arr);
+			}
+			if ((cityBlockImage.get(zeroXMinus1, zeroY, zeroZ)).byteValue() == 100) {
+				cityBlockImage.set(zeroXMinus1,zeroY,zeroZ,1);
+				int[] arr = {zeroXMinus1,zeroY,zeroZ};
+				oneCoords.add(arr);
+			}
+			if ((cityBlockImage.get(zeroX, zeroYPlus1, zeroZ)).byteValue() == 100) {
+				cityBlockImage.set(zeroX,zeroYPlus1,zeroZ,1);
+				int[] arr = {zeroX,zeroYPlus1,zeroZ};
+				oneCoords.add(arr);
+			}
+			if ((cityBlockImage.get(zeroX, zeroYMinus1, zeroZ)).byteValue() == 100) {
+				cityBlockImage.set(zeroX,zeroYMinus1,zeroZ,1);
+				int[] arr = {zeroX,zeroYMinus1,zeroZ};
+				oneCoords.add(arr);
+			}
+			if ((cityBlockImage.get(zeroX, zeroY, zeroZPlus1)).byteValue() == 100) {
+				cityBlockImage.set(zeroX,zeroY,zeroZPlus1,1);
+				int[] arr = {zeroX,zeroY,zeroZPlus1};
+				oneCoords.add(arr);
+			}
+			if ((cityBlockImage.get(zeroX, zeroY, zeroZMinus1)).byteValue() == 100) {
+				cityBlockImage.set(zeroX,zeroY,zeroZMinus1,1);
+				int[] arr = {zeroX,zeroY,zeroZMinus1};
+				oneCoords.add(arr);
+			}
+		 }
+		 
+		 
+		 
+		 
+		 
+		 //ArrayList<int[]> twoCoords = new ArrayList<int[]>();
+		 for(int i=0;i<oneCoords.size();i++) {
+				int[] oneCoord = oneCoords.get(i);
+				int oneX = oneCoord[0];
+				int oneY = oneCoord[1];
+				int oneZ = oneCoord[2];
+				
+				int oneXPlus1 = oneX + 1;
+				int oneXMinus1 = oneX - 1;
+				int oneYPlus1 = oneY + 1;
+				int oneYMinus1 = oneY - 1;
+				int oneZPlus1 = oneZ + 1;
+				int oneZMinus1 = oneZ - 1;
+				
+				
+				
+				if ((cityBlockImage.get(oneXPlus1, oneY, oneZ)).byteValue() == 100) {
+					cityBlockImage.set(oneXPlus1,oneY,oneZ,2);
+					int[] arr = {oneXPlus1,oneY,oneZ};
+					//twoCoords.add(arr);
+				}
+				if ((cityBlockImage.get(oneXMinus1, oneY, oneZ)).byteValue() == 100) {
+					cityBlockImage.set(oneXMinus1,oneY,oneZ,2);
+					int[] arr = {oneXMinus1,oneY,oneZ};
+					//twoCoords.add(arr);
+				}
+				if ((cityBlockImage.get(oneX, oneYPlus1, oneZ)).byteValue() == 100) {
+					cityBlockImage.set(oneX,oneYPlus1,oneZ,2);
+					int[] arr = {oneX,oneYPlus1,oneZ};
+					//twoCoords.add(arr);
+				}
+				if ((cityBlockImage.get(oneX, oneYMinus1, oneZ)).byteValue() == 100) {
+					cityBlockImage.set(oneX,oneYMinus1,oneZ,2);
+					int[] arr = {oneX,oneYMinus1,oneZ};
+					//twoCoords.add(arr);
+				}
+				if ((cityBlockImage.get(oneX, oneY, oneZPlus1)).byteValue() == 100) {
+					cityBlockImage.set(oneX,oneY,oneZPlus1,2);
+					int[] arr = {oneX,oneY,oneZPlus1};
+					//twoCoords.add(arr);
+				}
+				if ((cityBlockImage.get(oneX, oneY, oneZMinus1)).byteValue() == 100) {
+					cityBlockImage.set(oneX,oneY,oneZMinus1,2);
+					int[] arr = {oneX,oneY,oneZMinus1};
+					//twoCoords.add(arr);
+				}
+			 }
+		 
+		 
+		 
+		 cityBlockImage.calcMinMax();
+		 
+         //new ViewJFrameImage(cityBlockImage);                                     
+        
+        
+
+				 
+	
+	
+	}
+        
+		
+		
+
+	
 	
 	
 	
