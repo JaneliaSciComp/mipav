@@ -108,6 +108,8 @@ public class AlgorithmTPSpline extends AlgorithmBase {
     private int yDimA;
     
     private int zDimA;
+    
+    private boolean doSetupOnly = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -275,6 +277,80 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         }
     }
     
+    
+    
+    
+    /**
+     * AlgorithmTPSpline - constructor for 3D case.
+     *
+     * @param  xSource     array with x coordinates of source data
+     * @param  ySource     array with y coordinates of source data
+     * @param  zSource     array with z coordinates of source data
+     * @param  xTar        array with x coordinates of target data
+     * @param  yTar        array with y coordinates of target data
+     * @param  zTar        array with z coordinates of target data
+     * @param  smooth      cannot be negative. * If the smoothing term is nonzero, the interpolation is not exact
+     * @param  baseImage   DOCUMENT ME!
+     * @param  matchImage  DOCUMENT ME!
+     */
+    public AlgorithmTPSpline(double[] xSource, double[] ySource, double[] zSource, double[] xTar, double[] yTar,
+                             double[] zTar, float smooth, ModelImage baseImage, ModelImage matchImage, boolean doSetupOnly) {
+        this.x = xSource;
+        this.y = ySource;
+        this.z = zSource;
+        this.xTar = xTar;
+        this.yTar = yTar;
+        this.zTar = zTar;
+        this.smooth = smooth;
+        this.baseImage = baseImage;
+        this.matchImage = matchImage;
+        this.doSetupOnly = doSetupOnly;
+
+        N = x.length;
+
+        if (N < 4) {
+            MipavUtil.displayError("AlgorithmTPSpline: x source array length cannot be less than 4");
+
+            return;
+        }
+
+        if (N != y.length) {
+            MipavUtil.displayError("AlgorithmTPSpline: x source array length does not equal y source array length");
+
+            return;
+        }
+
+        if (N != z.length) {
+            MipavUtil.displayError("AlgorithmTPSpline: x source array length does not equal z source array length");
+
+            return;
+        }
+
+        if (N != xTar.length) {
+            MipavUtil.displayError("AlgorithmTPSpline: x source array length does not equal x target array length");
+
+            return;
+        }
+
+        if (N != yTar.length) {
+            MipavUtil.displayError("AlgorithmTPSpline: x source array length does not equal y target array length");
+
+            return;
+        }
+
+        if (N != zTar.length) {
+            MipavUtil.displayError("AlgorithmTPSpline: x source array length does not equal z target array length");
+
+            return;
+        }
+
+        if (smooth < 0.0f) {
+            MipavUtil.displayError("AlgorithmTPSPline: smooth cannot be negative");
+
+            return;
+        }
+    }
+    
     /**
      * Constructor used when N, xDimA, yDimA, zDimA, x[], y[], z[], and C[][] are read from a file
      * @param matchImage
@@ -349,8 +425,13 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                     setupTPSpline2D();
                     tpSpline2D();
                 } else {
-                    setupTPSpline3D();
-                    tpSpline3D();
+                	if(doSetupOnly) {
+                		setupTPSpline3D();
+                	}else {
+                		setupTPSpline3D();
+                        tpSpline3D();
+                	}
+                    
                 }
             } // if (setupRequired)
             else {
