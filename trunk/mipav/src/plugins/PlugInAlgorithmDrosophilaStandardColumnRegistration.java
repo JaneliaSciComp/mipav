@@ -48,7 +48,7 @@ import gov.nih.mipav.view.ViewJFrameImage;
 public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends AlgorithmBase {
 	
 	/** model images **/
-	private ModelImage standardColumnImage, neuronImage, neuronImage_grey, resultImage1, resultImage2, imageX, imageY, resultImage_minInterp, finalImage;
+	private ModelImage standardColumnImage, neuronImage, neuronImage_grey, resultImage1, finalImage, cityBlockImage;
 	
 	/** resolutions **/
 	private float[] resols;
@@ -208,6 +208,8 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     
     private float samplingRate;
     
+    private int[] neuronImageExtents;
+    
     
     
     /**
@@ -215,8 +217,9 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
      * @param neuronImage
      * @param pointsMap
      */
-	public PlugInAlgorithmDrosophilaStandardColumnRegistration(ModelImage neuronImage, TreeMap<Integer, float[]> pointsMap, ArrayList <ArrayList<float[]>> allFilamentCoords, File oldSurfaceFile, float samplingRate) {
+	public PlugInAlgorithmDrosophilaStandardColumnRegistration(ModelImage neuronImage, TreeMap<Integer, float[]> pointsMap, ArrayList <ArrayList<float[]>> allFilamentCoords, File oldSurfaceFile, float samplingRate, ModelImage cityBlockImage) {
 		this.neuronImage = neuronImage;
+		this.neuronImageExtents = neuronImage.getExtents();
 		dir = neuronImage.getImageDirectory();
 		//create neuron grey image
 		createGreyImage();
@@ -259,6 +262,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		
 		this.oldSurfaceFile = oldSurfaceFile;
 		this.samplingRate = samplingRate;
+		this.cityBlockImage = cityBlockImage;
 		
 	}
 	
@@ -616,7 +620,10 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         	 standardColumnImage = null;
          }
          
-         
+         if(cityBlockImage != null) {
+        	 cityBlockImage.disposeLocal();
+        	 cityBlockImage = null;
+         }
          
          if(neuronImage != null) {
         	 neuronImage.disposeLocal();
@@ -778,7 +785,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
             
        
             try {
-                spline = new AlgorithmTPSpline(xSource, ySource, zSource, xTar, yTar, zTar, 0.0f, standardColumnImage,resultImage1);
+                spline = new AlgorithmTPSpline(xSource, ySource, zSource, xTar, yTar, zTar, 0.0f, standardColumnImage,resultImage1,true);
             } catch (OutOfMemoryError error) {
                 spline = null;
                 System.gc();
@@ -788,6 +795,8 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
             }
 
             spline.run();
+            
+            
 
 	}
 	
@@ -829,8 +838,23 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		//resultImage2 = spline.getResultImage();
 		thinPlateSplineMatrixFileName = "nonlinearThinPlateSpline-" + resultImage1.getImageName() + "_To_" + standardColumnImage.getImageName() + ".tps";
 		spline.saveMatrix(dir + thinPlateSplineMatrixFileName, null);
+		/*ModelImage resImg = spline.getResultImage();
+		if(resImg != null) {
+			resImg.disposeLocal();
+			resImg = null;
+	    }*/
+		spline.finalize();
+        spline = null;
 		System.out.println("Saving nonlinear thin plate spline transformation matrix as " + dir + thinPlateSplineMatrixFileName);
-
+		if(resultImage1 != null) {
+       	 resultImage1.disposeLocal();
+       	 resultImage1 = null;
+        }
+		if(standardColumnImage != null) {
+       	 standardColumnImage.disposeLocal();
+       	 standardColumnImage = null;
+        }
+		System.gc();
 	}
 	
 	/**
@@ -923,6 +947,12 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
         LSMatch = new AlgorithmRegLeastSquares(ptAmm, ptBmm, DIM);
         LSMatch.run();
+        tmpptA = null;
+        tmpptB = null;
+        ptA = null; // new Vector3f[nPtsA];
+        ptB = null;
+        ptAmm = null;
+        ptBmm = null;
         
 	}
 
@@ -955,7 +985,9 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
             AlgorithmTransform.transformTrilinearC(neuronImage_grey, resultImage1, LSMatch.getTransformBtoA(),
                                                    xdimA, ydimA, zdimA, xresA, yresA, zresA, fillValue);
         }
-        
+
+        LSMatch.finalize();
+        LSMatch = null;
         
         resultImage1.calcMinMax();
         resultImage1.setImageName("LS Transformed image");
@@ -969,8 +1001,8 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         int nCurves;
         Vector3f pt, tPt;
         
-        TransMatrix kTMInverse = lsMatrix.clone();
-        kTMInverse.Inverse();
+        //TransMatrix kTMInverse = lsMatrix.clone();
+        //kTMInverse.Inverse();
         String label = "";
         VOIPoint point;
         ArrayList<Integer> indexAL_std = new ArrayList<Integer>();
@@ -1060,6 +1092,16 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
         resultImage1.notifyImageDisplayListeners();
 
+        if(neuronImage_grey != null) {
+       	 neuronImage_grey.disposeLocal();
+       	 neuronImage_grey = null;
+        }
+        
+        
+        indexAL_std = null;
+        sliceAL_std = null;
+        labelAL_std = null;
+        addCurvesMap = null;
         
         //new ViewJFrameImage(standardColumnImage);
 	}
@@ -1150,9 +1192,9 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         
         
         float[] finalImageResols = new float[3];
-        finalImageResols[0] = standardColumnImage.getResolutions(0)[0];
-        finalImageResols[1] = standardColumnImage.getResolutions(0)[1];
-        finalImageResols[2] = standardColumnImage.getResolutions(0)[2];
+        finalImageResols[0] = neuronImage.getResolutions(0)[0];
+        finalImageResols[1] = neuronImage.getResolutions(0)[1];
+        finalImageResols[2] = neuronImage.getResolutions(0)[2];
 		 for(int i=0;i<finalImage.getExtents()[2];i++) {
 			 finalImage.setResolutions(i, finalImageResols);
 		 }
@@ -1169,7 +1211,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		 byte[] rgb = new byte[3];
 		 
 		 byte[] neuronImageBuffer;
-         int length2 = neuronImage.getExtents()[0] * neuronImage.getExtents()[1] * neuronImage.getExtents()[2] * 4;
+         int length2 = neuronImageExtents[0] * neuronImageExtents[1] * neuronImageExtents[2] * 4;
          neuronImageBuffer = new byte[length2];
          try {
         	 neuronImage.exportData(0, length2, neuronImageBuffer);
@@ -1203,7 +1245,11 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 			 if((float)Math.floor(z) == z) {
 			 		System.out.println("z is " +  z);
 			 		begTime = System.currentTimeMillis();
+			 		if(z%5 == 0) {
+			 			System.gc();
+			 		}
 			 }
+			 
 			 for(float y=0;y<512;y=y+samplingRate) {
 
 				 for(float x=0;x<512;x=x+samplingRate) {
@@ -1254,51 +1300,42 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
 							 
 							 //Calculating new surface file points!!!!!
-							 float diffX,diffY,diffZ;
-							 float diffTotal;
-							 ArrayList<float[]> al;
-							 ArrayList<float[]> al_new;
-							 float[] coords;
-							 for(int i=0;i<allFilamentCoords.size();i++) {
-								 al = allFilamentCoords.get(i);
-								 for(int k=0;k<al.size();k++) {
-									 coords = al.get(k);
-									 if(coords[3] == 1) {
-										 //System.out.println("flag is 1");
-										 continue;
-									 }
-									 diffX = Math.abs(tPt2[0] - coords[0]);
-									 diffY = Math.abs(tPt2[1] - coords[1]);
-									 diffZ = Math.abs(tPt2[2] - coords[2]);
-									 
-									 //diffTotal =(float) Math.sqrt((diffX * diffX) + (diffY * diffY) + (diffZ * diffZ));
-										
-									 diffTotal = (diffX * diffX) + (diffY * diffY) + (diffZ * diffZ);
-									 
-									 //if(diffTotal < tolerance) {
-									 if(diffTotal < toleranceSq) {
-										 //System.out.println("blah");
-										//float[] newCoords = allFilamentCoords_newCoords.get(i).get(k);
-										//if(newCoords == null) {
-											//float[] nCoords = {x,y,z,diffTotal};
-										 float[] nCoords = {x,y,z};
-										    al_new = allFilamentCoords_newCoords.get(i);
-										    al_new.set(k, nCoords);
-											coords[3] = 1;
-											//al.set(k, coords);
-											//allFilamentCoords.set(i, al);
+							 
+							 
+							 if(cityBlockImage.getByte((int)(tPt2[0]+0.5f),(int)(tPt2[1]+0.5f),(int)(tPt2[2]+0.5f)) != 100) {
+								 float diffX,diffY,diffZ;
+								 float diffTotal;
+								 ArrayList<float[]> al;
+								 ArrayList<float[]> al_new;
+								 float[] coords;
+								 int allFilamentsSize = allFilamentCoords.size();
+								 int alSize;
+								 for(int i=0;i<allFilamentsSize;i++) {
+									 al = allFilamentCoords.get(i);
+									 alSize = al.size();
+									 for(int k=0;k<alSize;k++) {
+										 coords = al.get(k);
+										 if(coords[3] == 1) {
+											 continue;
+										 }
+										 diffX = Math.abs(tPt2[0] - coords[0]);
+										 diffY = Math.abs(tPt2[1] - coords[1]);
+										 diffZ = Math.abs(tPt2[2] - coords[2]);
 											
-										/*}else {
-											float currentDiffTotal = newCoords[3];
-											if(diffTotal < currentDiffTotal) {
-												float[] nCoords = {x,y,z,diffTotal};
-												allFilamentCoords_newCoords.get(i).set(k, nCoords);
-											}
-										}*/
-									 } 
+										 diffTotal = (diffX * diffX) + (diffY * diffY) + (diffZ * diffZ);
+										 
+										 if(diffTotal < toleranceSq) {
+											 float[] nCoords = {x,y,z};
+											    al_new = allFilamentCoords_newCoords.get(i);
+											    al_new.set(k, nCoords);
+												coords[3] = 1;
+										 } 
+									 }
+									 
 								 }
-								 
 							 }
+							 
+							 
 							 
 							 
 							 
@@ -1331,7 +1368,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 				 }
 			 }
 			 
-			 if((float)Math.floor(z) == z) {
+			 /*if((float)Math.floor(z) == z) {
 				 long endTime = System.currentTimeMillis();
 		         long diffTime = endTime - begTime;
 		         float seconds = ((float) diffTime) / 1000;
@@ -1339,9 +1376,12 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
 		         System.out.println("** slice took " + seconds + " seconds \n");
 			 		
-			 }
+			 }*/
 		 }
-		 
+		 if(cityBlockImage != null) {
+        	 cityBlockImage.disposeLocal();
+        	 cityBlockImage = null;
+         }
 		 
 		 try {
 		    	finalImage.importData(0, finalBuffer, true);
@@ -1355,10 +1395,10 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	     FileInfoImageXML[] fileInfoBases = new FileInfoImageXML[finalImage.getExtents()[2]];
 		 for (int i = 0; i < fileInfoBases.length; i++) {
 	            fileInfoBases[i] = new FileInfoImageXML(finalImage.getImageName(), null, FileUtility.XML);
-	            fileInfoBases[i].setUnitsOfMeasure(standardColumnImage.getFileInfo()[0].getUnitsOfMeasure());
+	            fileInfoBases[i].setUnitsOfMeasure(neuronImage.getFileInfo()[0].getUnitsOfMeasure());
 	            fileInfoBases[i].setResolutions(finalImageResols);
-	            fileInfoBases[i].setExtents(standardColumnImage.getExtents());
-	            fileInfoBases[i].setOrigin(standardColumnImage.getFileInfo()[0].getOrigin());
+	            fileInfoBases[i].setExtents(neuronImage.getExtents());
+	            fileInfoBases[i].setOrigin(neuronImage.getFileInfo()[0].getOrigin());
 	            fileInfoBases[i].setDataType(ModelStorageBase.ARGB);
 
 	     }
@@ -1486,322 +1526,13 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	
 	
 	
-	/**
-	 * reads the non-linear transform file
-	 * @param nltFile
-	 * @return
-	 */
-	private boolean readNLTFile(File nltFile) {
-		String directory;
-        RandomAccessFile in;
-        String str = null;
-        StringTokenizer stoken = null;
-        int i, j, k;
-        int srcMinExtent;
-        int iNumControlPointsMax;
-		try {
-            in = new RandomAccessFile(nltFile, "r");
-
-            // read number of dimensions
-            do {
-                str = in.readLine().trim();
-            } while (str.substring(0, 1).equals("#"));
-
-            float fDims = Float.valueOf(str).floatValue();
-
-            if (2.5f == fDims) {
-                nDims = 3;
-                have25D = true;
-            } else {
-                nDims = (int) fDims;
-                have25D = false;
-            }
-
-            if (imageY.getNDims() != nDims) {
-                MipavUtil.displayError("");
-                in.close();
-
-                return false;
-            }
-
-            // read resolutions for output image
-            do {
-                str = in.readLine().trim();
-            } while (str.substring(0, 1).equals("#"));
-
-            stoken = new StringTokenizer(str);
-            resolutions = new float[nDims];
-            srcMinExtent = Integer.MAX_VALUE;
-
-            for (i = 0; i < nDims; i++) {
-                resolutions[i] = Float.valueOf(stoken.nextToken()).floatValue();
-
-                if ((imageY.getExtents()[i] < srcMinExtent) && ((!have25D) || (i < 2))) {
-                    srcMinExtent = imageY.getExtents()[i];
-                }
-            }
-
-            // If 2D/3D, read dimensions for target image
-            if (!have25D) {
-
-                do {
-                    str = in.readLine().trim();
-                } while (str.substring(0, 1).equals("#"));
-
-                stoken = new StringTokenizer(str);
-                destExtents = new int[nDims];
-                destMinExtent = Integer.MAX_VALUE;
-
-                for (i = 0; i < nDims; i++) {
-                    destExtents[i] = Integer.valueOf(stoken.nextToken()).intValue();
-
-                    if (destExtents[i] < destMinExtent) {
-                        destMinExtent = destExtents[i];
-                    }
-                }
-            } else {
-                numberSlices = imageY.getExtents()[2];
-            }
-
-            // read B-spline degree
-            do {
-                str = in.readLine().trim();
-            } while (str.substring(0, 1).equals("#"));
-
-            stoken = new StringTokenizer(str);
-            splineDegree = Integer.valueOf(stoken.nextToken()).intValue();
-
-            if ((splineDegree < 1) || (splineDegree > 4)) {
-                MipavUtil.displayError("Error! Spline degree has an illegal value = " + splineDegree);
-                in.close();
-
-                return false;
-            }
-
-            // read number of control points
-            do {
-                str = in.readLine().trim();
-            } while (str.substring(0, 1).equals("#"));
-
-            stoken = new StringTokenizer(str);
-            numControlPoints = Integer.valueOf(stoken.nextToken()).intValue();
-
-            int iNumControlPointsMin = BSplineBasisf.GetMinNumControlPoints(splineDegree);
-
-            if (have25D) {
-                iNumControlPointsMax = srcMinExtent / 2;
-            } else {
-                iNumControlPointsMax = destMinExtent / 2;
-            }
-
-            if (numControlPoints < iNumControlPointsMin) {
-                MipavUtil.displayError("Error! The parameter file specifies " + numControlPoints +
-                                       " control points, but " + iNumControlPointsMin + " are required");
-                in.close();
-
-                return false;
-            }
-
-            if (numControlPoints > iNumControlPointsMax) {
-                MipavUtil.displayError("Error! The parameter file specifies " + numControlPoints +
-                                       " control points, but no more than " + iNumControlPointsMax +
-                                       " are allowed");
-                in.close();
-
-                return false;
-            }
-
-            if (!have25D) {
-                int allDimControlPoints = (nDims == 2) ? (numControlPoints * numControlPoints)
-                                                       : (numControlPoints * numControlPoints * numControlPoints);
-
-                controlMat = new float[allDimControlPoints][nDims];
-
-                for (i = 0; i < allDimControlPoints; i++) {
-
-                    do {
-                        str = in.readLine().trim();
-                    } while (str.substring(0, 1).equals("#"));
-
-                    stoken = new StringTokenizer(str);
-
-                    for (j = 0; j < nDims; j++) {
-                        controlMat[i][j] = Float.valueOf(stoken.nextToken()).floatValue();
-                    }
-                } // for (i = 0; i < allDimControlPoints; i++)
-            } // if (!have25D)
-            else { // have25D
-
-                int allDimControlPoints = numControlPoints * numControlPoints;
-                controlMat25D = new float[numberSlices][allDimControlPoints][2];
-
-                for (k = 0; k < numberSlices; k++) {
-
-                    for (i = 0; i < allDimControlPoints; i++) {
-
-                        do {
-                            str = in.readLine().trim();
-                        } while (str.substring(0, 1).equals("#"));
-
-                        stoken = new StringTokenizer(str);
-                        controlMat25D[k][i][0] = Float.valueOf(stoken.nextToken()).floatValue();
-                        controlMat25D[k][i][1] = Float.valueOf(stoken.nextToken()).floatValue();
-                    } // for (i = 0; i < allDimControlPoints; i++)
-                } // for (k = 0; k < numberSlices; k++)
-            } // else have25D
-
-            in.close();
-
-            return true;
-        } catch (IOException e) {
-            MipavUtil.displayError("Read Error reading nlt file : "  +   e.getMessage());
-
-            return false;
-        }
-	}
-	
-	/**
-	 * reads the green transform file
-	 * @param transformFile
-	 */
-	private void readTransform1(File transform1File) {
-		try {
-            RandomAccessFile raFile = new RandomAccessFile(transform1File, "r");
-            String[] arr;
-            raFile.readLine(); //skip over num columns since we know it is 4
-            raFile.readLine(); //skip over num rows since we know it is 4
-            double[][] doubleArr = new double[4][4];
-            String line1 = raFile.readLine().trim();
-            arr = line1.split("\\s+");
-            if(arr.length == 4) {
-           	 doubleArr[0][0] = Double.valueOf(arr[0]).doubleValue();
-           	 doubleArr[0][1] = Double.valueOf(arr[1]).doubleValue();
-           	 doubleArr[0][2] = Double.valueOf(arr[2]).doubleValue();
-           	 doubleArr[0][3] = Double.valueOf(arr[3]).doubleValue();
-            }
-            String line2 = raFile.readLine().trim();
-            arr = line2.split("\\s+");
-            if(arr.length == 4) {
-           	 doubleArr[1][0] = Double.valueOf(arr[0]).doubleValue();
-           	 doubleArr[1][1] = Double.valueOf(arr[1]).doubleValue();
-           	 doubleArr[1][2] = Double.valueOf(arr[2]).doubleValue();
-           	 doubleArr[1][3] = Double.valueOf(arr[3]).doubleValue();
-            }
-            String line3 = raFile.readLine().trim();
-            arr = line3.split("\\s+");
-            if(arr.length == 4) {
-           	 doubleArr[2][0] = Double.valueOf(arr[0]).doubleValue();
-           	 doubleArr[2][1] = Double.valueOf(arr[1]).doubleValue();
-           	 doubleArr[2][2] = Double.valueOf(arr[2]).doubleValue();
-           	 doubleArr[2][3] = Double.valueOf(arr[3]).doubleValue();
-            }
-            String line4 = raFile.readLine().trim();
-            arr = line4.split("\\s+");
-            if(arr.length == 4) {
-           	 doubleArr[3][0] = Double.valueOf(arr[0]).doubleValue();
-           	 doubleArr[3][1] = Double.valueOf(arr[1]).doubleValue();
-           	 doubleArr[3][2] = Double.valueOf(arr[2]).doubleValue();
-           	 doubleArr[3][3] = Double.valueOf(arr[3]).doubleValue();
-            }
-            raFile.close(); 
-            
-            matrixGreen = new TransMatrix(4);
-            matrixGreen.setMatrix(doubleArr);
-            //System.out.println("matrixGreen:");
-            //System.out.println(matrixGreen.toString());
-
-            
-            //matrixGreen = new Matrix(doubleArr,4,4);
-   	 }catch(Exception ex) {
-   		 ex.printStackTrace();
-   	 }
-	}
-	
-	/**
-	 * reads the affine transform file
-	 * @param transformFile
-	 */
-	private void readTransform2(File transform2File){
-		try {
-            RandomAccessFile raFile = new RandomAccessFile(transform2File, "r");
-            String[] arr;
-            raFile.readLine(); //skip over num columns since we know it is 4
-            raFile.readLine(); //skip over num rows since we know it is 4
-            double[][] doubleArr = new double[4][4];
-            String line1 = raFile.readLine().trim();
-            arr = line1.split("\\s+");
-            if(arr.length == 4) {
-           	 doubleArr[0][0] = Double.valueOf(arr[0]).doubleValue();
-           	 doubleArr[0][1] = Double.valueOf(arr[1]).doubleValue();
-           	 doubleArr[0][2] = Double.valueOf(arr[2]).doubleValue();
-           	 doubleArr[0][3] = Double.valueOf(arr[3]).doubleValue();
-            }
-            String line2 = raFile.readLine().trim();
-            arr = line2.split("\\s+");
-            if(arr.length == 4) {
-           	 doubleArr[1][0] = Double.valueOf(arr[0]).doubleValue();
-           	 doubleArr[1][1] = Double.valueOf(arr[1]).doubleValue();
-           	 doubleArr[1][2] = Double.valueOf(arr[2]).doubleValue();
-           	 doubleArr[1][3] = Double.valueOf(arr[3]).doubleValue();
-            }
-            String line3 = raFile.readLine().trim();
-            arr = line3.split("\\s+");
-            if(arr.length == 4) {
-           	 doubleArr[2][0] = Double.valueOf(arr[0]).doubleValue();
-           	 doubleArr[2][1] = Double.valueOf(arr[1]).doubleValue();
-           	 doubleArr[2][2] = Double.valueOf(arr[2]).doubleValue();
-           	 doubleArr[2][3] = Double.valueOf(arr[3]).doubleValue();
-            }
-            String line4 = raFile.readLine().trim();
-            arr = line4.split("\\s+");
-            if(arr.length == 4) {
-           	 doubleArr[3][0] = Double.valueOf(arr[0]).doubleValue();
-           	 doubleArr[3][1] = Double.valueOf(arr[1]).doubleValue();
-           	 doubleArr[3][2] = Double.valueOf(arr[2]).doubleValue();
-           	 doubleArr[3][3] = Double.valueOf(arr[3]).doubleValue();
-            }
-            raFile.close(); 
-            matrixAffine = new TransMatrix(4);
-            matrixAffine.setMatrix(doubleArr);
-            //System.out.println("matrixAffine:");
-            //System.out.println(matrixAffine.toString());
-
-            //matrixAffine = new Matrix(doubleArr,4,4);
-   	 }catch(Exception ex) {
-   		 ex.printStackTrace();
-   	 }
-	}
 	
 	
 	
 	
 	
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	/**
-	 * gets new value based on slope and b-intercept
-	 * @param X
-	 * @param slope
-	 * @param b
-	 * @return
-	 */
-	private float getNewValue(float X, float slope, float b) {
-		float Y = 0;
-		float mx = slope * X;
-		Y = mx + b;
-		return Y;
-	}
-	
+
 	
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//Inner class that has the three coordinates for the point
