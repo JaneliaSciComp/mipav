@@ -4073,11 +4073,6 @@ mainLoop:
         double temp;
         double maxdia;
         boolean swapk, negk;
-        boolean[] negkMat = new boolean[nn];
-
-        for (k = 0; k < nn; k++) {
-            negkMat[k] = false;
-        }
 
         pl = 0;
         pu = -1;
@@ -4094,7 +4089,7 @@ mainLoop:
                 jpvt[k] = k;
 
                 if (negk) {
-                    negkMat[k] = true;
+                    jpvt[k] = -jpvt[k];
                 }
 
                 if (!swapk) {
@@ -4137,9 +4132,7 @@ mainLoop:
                 } // for (j = plp1; j < nn; j++)
 
                 jpvt[k] = jpvt[pl];
-                negkMat[k] = negkMat[pl];
                 jpvt[pl] = k;
-                negkMat[pl] = false;
                 pl++;
             } // for (k = 0; k < nn; k++)
 
@@ -4148,11 +4141,11 @@ mainLoop:
             for (kb = pl; kb < nn; kb++) {
                 k = nn - 1 - kb + pl;
 
-                if (!negkMat[k]) {
+                if (jpvt[k] >= 0) {
                     continue;
                 }
 
-                negkMat[k] = false;
+                jpvt[k] = -jpvt[k];
 
                 if (pu == k) {
                     pu--;
@@ -4190,11 +4183,8 @@ mainLoop:
                 } // for (j = kp1; j < nn; j++) {
 
                 jt = jpvt[k];
-                negk = negkMat[k];
                 jpvt[k] = jpvt[pu];
-                negkMat[k] = negkMat[pu];
                 jpvt[pu] = jt;
-                negkMat[pu] = negk;
 
                 pu--;
             } // for (kb = pl; kb < nn; kb++)
@@ -5005,12 +4995,7 @@ mainLoop:
         double[] work = new double[p];
         double temp;
         boolean negj, swapj;
-        boolean[] negjMat = new boolean[p];
         double[] tempMat = new double[n];
-
-        for (j = 0; j < p; j++) {
-            negjMat[j] = false;
-        }
 
         pl = 0;
         pu = -1;
@@ -5025,7 +5010,7 @@ mainLoop:
                 jpvt[j] = j;
 
                 if (negj) {
-                    negjMat[j] = true;
+                	jpvt[j] = -j;
                 }
 
                 if (!swapj) {
@@ -5042,9 +5027,7 @@ mainLoop:
                 }
 
                 jpvt[j] = jpvt[pl];
-                negjMat[j] = negjMat[pl];
                 jpvt[pl] = j;
-                negjMat[pl] = false;
                 pl++;
             } // for (j = 0; j < p; j++)
 
@@ -5053,11 +5036,10 @@ mainLoop:
             for (jj = 1; jj <= p; jj++) {
                 j = p - jj;
 
-                if (!negjMat[j]) {
-                    continue;
+                if (jpvt[j] >= 0) {
+                	continue;
                 }
-
-                negjMat[j] = false;
+                jpvt[j] = -jpvt[j];
 
                 if (j != pu) {
 
@@ -5068,28 +5050,26 @@ mainLoop:
                     }
 
                     jp = jpvt[pu];
-                    negj = negjMat[pu];
                     jpvt[pu] = jpvt[j];
-                    negjMat[pu] = negjMat[j];
                     jpvt[j] = jp;
-                    negjMat[j] = negj;
                 } // if (j != pu)
 
                 pu--;
             } // for (jj = 1; jj <= p; jj++)
 
-            // COMPUTE THE NORMS OF THE FREE COLUMNS.
-
-            for (j = pl; j <= pu; j++) {
-
-                for (i = 0; i < n; i++) {
-                    tempMat[i] = x[i][j];
-                }
-
-                qraux[j] = dnrm2(n, tempMat, 1);
-                work[j] = qraux[j];
-            } // for (j = pl; j <= pu; j++)
         } // if (job != 0)
+        
+        // COMPUTE THE NORMS OF THE FREE COLUMNS.
+        
+        for (j = pl; j <= pu; j++) {
+
+	        for (i = 0; i < n; i++) {
+	            tempMat[i] = x[i][j];
+	        }
+	
+	        qraux[j] = dnrm2(n, tempMat, 1);
+	        work[j] = qraux[j];
+        } // for (j = pl; j <= pu; j++)
 
         // PERFORM THE HOUSEHOLDER REDUCTION OF X.
 
