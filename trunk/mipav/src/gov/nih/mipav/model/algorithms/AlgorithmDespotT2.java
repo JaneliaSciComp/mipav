@@ -1636,7 +1636,11 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                 pixelIndex = 0;
                 for (y=0; y<height; y++) {
                     for (x=0; x<width; x++) {
-                        t1PixelValues[pixelIndex] = image.getDouble(x, y, k, t);
+                        if(image.getNDims() < 4) {
+                            t1PixelValues[pixelIndex] = image.getDouble(x, y, k);
+                        } else {
+                            t1PixelValues[pixelIndex] = image.getDouble(x, y, k, t);
+                        }
                         pixelIndex++;
                     }
                 }
@@ -1647,7 +1651,11 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            b1PixelValues[pixelIndex] = image.getDouble(x, y, k, t);
+                            if(image.getNDims() < 4) {
+                                b1PixelValues[pixelIndex] = image.getDouble(x, y, k);
+                            } else {
+                                b1PixelValues[pixelIndex] = image.getDouble(x, y, k, t);
+                            }
                             pixelIndex++;
                         }
                     }
