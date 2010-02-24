@@ -1145,7 +1145,11 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                                 pixelValues[angle][pixelIndex] = image.getDouble(x, y, k, t);
                             }
                             if (performDESPOT1withPreCalculatedB1Map) {
-                                b1Values[pixelIndex] = b1FieldImage.getDouble(x, y, k, t); 
+                                if(b1FieldImage.getNDims() < 4) {
+                                    b1Values[pixelIndex] = b1FieldImage.getDouble(x, y, k); 
+                                } else {
+                                    b1Values[pixelIndex] = b1FieldImage.getDouble(x, y, k, t); 
+                                }
                             }
                             pixelIndex++;
                         }
