@@ -495,7 +495,7 @@ public abstract class NLConstrainedEngine {
     private double stepb;
 
     /**
-     * 1D array of length nPts containing the orthogonal projection of residuals onto space spanned by the frist
+     * 1D array of length nPts containing the orthogonal projection of residuals onto space spanned by the first
      * pseudoRank linear independent columns of the Jacobian.
      */
     private double[] v;
@@ -1838,17 +1838,16 @@ mainLoop:
      * @param  fnew    DOCUMENT ME!
      * @param  phiMat  DOCUMENT ME!
      */
-    private void fsumsq(double alfk, double[] xnew, double[] fnew, double[] phiMat, int ctrl[]) {
+    private void fsumsq(double alfk, double[] xnew, double[] fnew, double[] fn_val, int ctrl[]) {
         // EVALUATE FUNCTION VALUES AT THE POINT a+alfk*dx . POSSIBLY THE USER CAN SIGNAL UNCOMPUTABILTY ON RETURN FROM
         // THE USER WRITTEN ROUTINE fitToFunction
 
-        double fn_val;
         double[][] dummy = new double[1][1];
         int lctrl;
         int i;
         double temp;
 
-        fn_val = 0.0;
+        fn_val[0] = 0.0;
 
         for (i = 0; i < param; i++) {
             xnew[i] = a[i] + (alfk * dx[i]);
@@ -1859,45 +1858,44 @@ mainLoop:
         fitToFunction(xnew, fnew, dummy);
         lctrl = ctrlMat[0];
         if (outputMes) {
-	        Preferences.debug("xnew inside fsumsq\n");
+	        Preferences.debug("xnew and fnew inside fsumsq\n");
 	
 	        for (i = 0; i < param; i++) {
-	            Preferences.debug(xnew[i] + "\n");
+	            Preferences.debug("xnew[" + i + "] = " + xnew[i] + "\n");
             }
+	        
+	        for (i = 0; i < nPts; i++) {
+	        	Preferences.debug("fnew[" + i + "] = " + fnew[i] + "\n");
+	        }
         }
 
-        /*Preferences.debug("fnew inside fsumsq\n");
-         * for (i = 0; i < nPts; i++) { Preferences.debug(fnew[i] + "\n");}*/
         if (ctrl[0] != 1) {
 
             if (lctrl == -1) {
                 temp = dnrm2(nPts, fnew, 1);
-                fn_val = 0.5 * temp * temp;
+                fn_val[0] = 0.5 * temp * temp;
             }
-
+            
             if (outputMes) {
-                Preferences.debug("fn_val when ctrl = -1 = " + fn_val + "\n");
+                Preferences.debug("fn_val[0] when ctrl[0] != 1 = " + fn_val[0] + "\n");
             }
 
             if (lctrl < -10) {
                 ctrl[0] = lctrl;
             }
 
-            phiMat[0] = fn_val;
-
             return;
         } // if (ctrl != 1)
 
         if (lctrl == 1) {
             temp = dnrm2(nPts, fnew, 1);
-            fn_val = 0.5 * temp * temp;
+            fn_val[0] = 0.5 * temp * temp;
         }
       
         if (outputMes) {
-            Preferences.debug("fn_val when ctrl= 1 = " + fn_val + "\n");
+            Preferences.debug("fn_val[0] when ctrl[0]= 1 = " + fn_val[0] + "\n");
         }
         ctrl[0] = lctrl;
-        phiMat[0] = fn_val;
 
         return;
     }
@@ -4910,7 +4908,7 @@ mainLoop:
             t = 0.0;
 
             for (j = 0; j <= (k - 1); j++) {
-                t = t + covarMat[j][k] + dx[j];
+                t = t + covarMat[j][k] * dx[j];
             }
 
             dx[k] = (dx[k] - t) / covarMat[k][k];
