@@ -371,9 +371,6 @@ public abstract class NLConstrainedEngine {
     /** scalar containing norm of the gradient divided by norm of Jacobian. */
     private double gnorm;
 
-    /** DOCUMENT ME! */
-    private int i, j, k;
-
     /** Variables used for restart information. */
     private int icount, lattry, itotal, irank, imax, ival;
 
@@ -644,7 +641,9 @@ public abstract class NLConstrainedEngine {
      * driver.
      */
     public void driver() {
-
+    	int i;
+    	int j;
+    	int k;
         try {
 
             for (i = 0; i < param; i++) {
@@ -3505,6 +3504,7 @@ mainLoop:
 
         int itno;
         double reduc, ac, pred;
+        int i;
 
         if (restart) {
             return;
@@ -4069,6 +4069,7 @@ mainLoop:
          * CAUSE INFO TO BE LESS THAN nn. */
 
         int pu, pl, plp1, j, jp, jt, k, kb, km1, kp1, l, maxl;
+        int i;
         double temp;
         double maxdia;
         boolean swapk, negk;
@@ -4273,9 +4274,9 @@ mainLoop:
                 w0[j] = covarMat[k][j];
                 temp = -covarMat[k][j];
 
-                for (i = kp1; i <= j; i++) {
-                    covarMat[i][j] = covarMat[i][j] + (temp * w0[i]);
-                } // for (i = kp1; i <= j; i++)
+                for (i = 0; i <= j-k-1; i++) {
+                    covarMat[kp1+i][j] = covarMat[kp1+i][j] + (temp * w0[kp1+i]);
+                } // for (i = 0; i <= j-k-1; i++)
             } // for (j = kp1; j < nn; j++)
         } // for (k = 0; k < nn; k++)
 
