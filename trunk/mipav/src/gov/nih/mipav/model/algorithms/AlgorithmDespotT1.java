@@ -549,7 +549,11 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                     if (upperLeftCorner) {
                         for (y=20; y<30; y++) {
                             for (x=20; x<30; x++) {
-                                noiseSum += image.getFloat(x, y, k);
+                                if(image.getNDims() < 4) {
+                                    noiseSum += image.getFloat(x, y, k);
+                                } else {
+                                    noiseSum += image.getFloat(x, y, k, t);
+                                }
                                 noiseIndex++;
                             }
                         }
@@ -557,24 +561,33 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                     if (upperRightCorner) {
                         for (y=20; y<30; y++) {
                             for (x=width-30; x<width-20; x++) {
-                                noiseSum += image.getFloat(x, y, k);
-                                noiseIndex++;
+                                if(image.getNDims() < 4) {
+                                    noiseSum += image.getFloat(x, y, k);
+                                } else {
+                                    noiseSum += image.getFloat(x, y, k, t);
+                                }
                             }
                         }
                     }
                     if (lowerLeftCorner) {
                         for (y=height-30; y<height-20; y++) {
                             for (x=20; x<30; x++) {
-                                noiseSum += image.getFloat(x, y, k);
-                                noiseIndex++;
+                                if(image.getNDims() < 4) {
+                                    noiseSum += image.getFloat(x, y, k);
+                                } else {
+                                    noiseSum += image.getFloat(x, y, k, t);
+                                }
                             }
                         }
                     }
                     if (lowerRightCorner) {
                         for (y=height-30; y<height-20; y++) {
                             for (x=width-30; x<width-20; x++) {
-                                noiseSum += image.getFloat(x, y, k);
-                                noiseIndex++;
+                                if(image.getNDims() < 4) {
+                                    noiseSum += image.getFloat(x, y, k);
+                                } else {
+                                    noiseSum += image.getFloat(x, y, k, t);
+                                }
                             }
                         }
                     }
@@ -741,32 +754,44 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                     if (upperLeftCorner) {
                         for (y=20; y<30; y++) {
                             for (x=20; x<30; x++) {
-                                noiseSum += image.getFloat(x, y, k);
-                                noiseIndex++;
+                                if(image.getNDims() < 4) {
+                                    noiseSum += image.getFloat(x, y, k);
+                                } else {
+                                    noiseSum += image.getFloat(x, y, k, t);
+                                }
                             }
                         }
                     }
                     if (upperRightCorner) {
                         for (y=20; y<30; y++) {
                             for (x=width-30; x<width-20; x++) {
-                                noiseSum += image.getFloat(x, y, k);
-                                noiseIndex++;
+                                if(image.getNDims() < 4) {
+                                    noiseSum += image.getFloat(x, y, k);
+                                } else {
+                                    noiseSum += image.getFloat(x, y, k, t);
+                                }
                             }
                         }
                     }
                     if (lowerLeftCorner) {
                         for (y=height-30; y<height-20; y++) {
                             for (x=20; x<30; x++) {
-                                noiseSum += image.getFloat(x, y, k);
-                                noiseIndex++;
+                                if(image.getNDims() < 4) {
+                                    noiseSum += image.getFloat(x, y, k);
+                                } else {
+                                    noiseSum += image.getFloat(x, y, k, t);
+                                }
                             }
                         }
                     }
                     if (lowerRightCorner) {
                         for (y=height-30; y<height-20; y++) {
                             for (x=width-30; x<width-20; x++) {
-                                noiseSum += image.getFloat(x, y, k);
-                                noiseIndex++;
+                                if(image.getNDims() < 4) {
+                                    noiseSum += image.getFloat(x, y, k);
+                                } else {
+                                    noiseSum += image.getFloat(x, y, k, t);
+                                }
                             }
                         }
                     }
@@ -1080,32 +1105,44 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                     if (upperLeftCorner) {
                         for (y=20; y<30; y++) {
                             for (x=20; x<30; x++) {
-                                noiseSum += image.getFloat(x, y, k);
-                                noiseIndex++;
+                                if(image.getNDims() < 4) {
+                                    noiseSum += image.getFloat(x, y, k);
+                                } else {
+                                    noiseSum += image.getFloat(x, y, k, t);
+                                }
                             }
                         }
                     }
                     if (upperRightCorner) {
                         for (y=20; y<30; y++) {
                             for (x=width-30; x<width-20; x++) {
-                                noiseSum += image.getFloat(x, y, k);
-                                noiseIndex++;
+                                if(image.getNDims() < 4) {
+                                    noiseSum += image.getFloat(x, y, k);
+                                } else {
+                                    noiseSum += image.getFloat(x, y, k, t);
+                                }
                             }
                         }
                     }
                     if (lowerLeftCorner) {
                         for (y=height-30; y<height-20; y++) {
                             for (x=20; x<30; x++) {
-                                noiseSum += image.getFloat(x, y, k);
-                                noiseIndex++;
+                                if(image.getNDims() < 4) {
+                                    noiseSum += image.getFloat(x, y, k);
+                                } else {
+                                    noiseSum += image.getFloat(x, y, k, t);
+                                }
                             }
                         }
                     }
                     if (lowerRightCorner) {
                         for (y=height-30; y<height-20; y++) {
                             for (x=width-30; x<width-20; x++) {
-                                noiseSum += image.getFloat(x, y, k);
-                                noiseIndex++;
+                                if(image.getNDims() < 4) {
+                                    noiseSum += image.getFloat(x, y, k);
+                                } else {
+                                    noiseSum += image.getFloat(x, y, k, t);
+                                }
                             }
                         }
                     }
@@ -1165,7 +1202,9 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                         
                         if (performDESPOT1withPreCalculatedB1Map) {
                             b1 = b1Values[pixelIndex];
-                            if (b1 == 0) b1 = 1.00;
+                            if (b1 == 0) { 
+                                b1 = 1.00;
+                            }
                         }
                         else b1 = 1.00;
                         
