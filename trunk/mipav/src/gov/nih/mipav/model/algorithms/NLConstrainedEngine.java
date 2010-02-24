@@ -5466,8 +5466,8 @@ mainLoop:
 
         if (cr && (k < n)) {
 
-            for (i = kp1 - 1; i < n; i++) {
-                rsd[i] = qty[i];
+            for (i = 0; i < n-k-1; i++) {
+                rsd[kp1-1+i] = qty[kp1-1+i];
             }
         } // if (cr && (k < n))
 
