@@ -1409,7 +1409,7 @@ public abstract class NLConstrainedEngine {
         // where m = n for x[] double and m = 2*n for complex.
 
         double fn_val = 0.0;
-        int i, ix, j, next;
+        int i, j, nn, next;
         double cuthi, cutlo, hitest, sum, xmax;
         double term;
         boolean doSwitch, loop, do85, do100, do105, do110, do115, do200;
@@ -1427,10 +1427,10 @@ public abstract class NLConstrainedEngine {
 
         next = 1;
         sum = 0.0;
+        nn = n * incx;
         xmax = 0.0;
-        i = 0;
+        i = 1;
         j = 0;
-        ix = 1;
         loop = true;
         doSwitch = true;
         do85 = false;
@@ -1449,7 +1449,7 @@ mainLoop:
                 switch (next) {
 
                     case 1:
-                        if (Math.abs(x[i]) > cutlo) {
+                        if (Math.abs(x[i-1]) > cutlo) {
                             do85 = true;
                         } else {
                             next = 2;
@@ -1463,9 +1463,9 @@ mainLoop:
                     case 2:
 
                         // phase 1. sum is zero
-                        if (x[i] == 0.0) {
+                        if (x[i-1] == 0.0) {
                             do200 = true;
-                        } else if (Math.abs(x[i]) > cutlo) {
+                        } else if (Math.abs(x[i-1]) > cutlo) {
                             do85 = true;
                         } else {
                             next = 3;
@@ -1478,12 +1478,12 @@ mainLoop:
                         // phase 2.  sum is small.
                         // scale to avoid destructive underflow.
 
-                        if (Math.abs(x[i]) > cutlo) {
+                        if (Math.abs(x[i-1]) > cutlo) {
                             // prepare for phase 3.
 
                             sum = (sum * xmax) * xmax;
                             do85 = true;
-                        } // if (Math.abs(x[i]) > cutlo )
+                        } // if (Math.abs(x[i-1]) > cutlo )
                         else {
                             do110 = true;
                         }
@@ -1505,18 +1505,17 @@ mainLoop:
                 do85 = false;
                 hitest = cuthi / n;
 
-                for (j = ix; j <= n; j++) {
+                for (j = i; j <= nn; j+=incx) {
 
-                    if (Math.abs(x[i]) >= hitest) {
+                    if (Math.abs(x[j-1]) >= hitest) {
                         do100 = true;
                         doSwitch = false;
 
                         continue mainLoop;
                     }
 
-                    sum = sum + (x[i] * x[i]);
-                    i = i + incx;
-                } // for (j = ix; j <= n; j++)
+                    sum = sum + (x[j-1] * x[j-1]);
+                } // for (j = i; j <= nn; j+=incx)
 
                 fn_val = Math.sqrt(sum);
 
@@ -1528,20 +1527,19 @@ mainLoop:
 
                 // prepare for phase 4.
                 // ABS(x(i)) is very large
-                ix = j;
+                i = j;
                 next = 4;
                 doSwitch = true;
-                sum = (sum / x[i]) / x[i];
+                sum = (sum / x[i-1]) / x[i-1];
 
                 // Set xmax; large if next = 4, small if next = 3
-                xmax = Math.abs(x[i]);
-                term = x[i] / xmax;
+                xmax = Math.abs(x[i-1]);
+                term = x[i-1] / xmax;
                 sum = sum + (term * term);
 
-                ix = ix + 1;
                 i = i + incx;
 
-                if (ix <= n) {
+                if (i <= nn) {
                     continue mainLoop;
                 }
 
@@ -1557,10 +1555,9 @@ mainLoop:
             if (do200) {
                 do200 = false;
                 doSwitch = true;
-                ix = ix + 1;
                 i = i + incx;
 
-                if (ix <= n) {
+                if (i <= nn) {
                     continue mainLoop;
                 }
 
@@ -1576,14 +1573,13 @@ mainLoop:
             if (do105) {
                 do105 = false;
                 doSwitch = true;
-                xmax = Math.abs(x[i]);
-                term = x[i] / xmax;
+                xmax = Math.abs(x[i-1]);
+                term = x[i-1] / xmax;
                 sum = sum + (term * term);
 
-                ix = ix + 1;
                 i = i + incx;
 
-                if (ix <= n) {
+                if (i <= nn) {
                     continue mainLoop;
                 }
 
@@ -1601,32 +1597,55 @@ mainLoop:
                 // common code for phases 2 and 4.
                 // in phase 4 sum is large.  scale to avoid overflow.
 
-                if (Math.abs(x[i]) <= xmax) {
-                    do115 = true;
-                    doSwitch = false;
+                if (Math.abs(x[i-1]) <= xmax) {
+                	doSwitch = true;
+                    term = x[i-1] / xmax;
+                    sum = sum + (term * term);
 
+                    i = i + incx;
+
+                    if (i <= nn) {
+                        continue mainLoop;
+                    }
+
+                    // end of main loop.
+
+                    // compute square root and adjust for scaling.
+
+                    fn_val = xmax * Math.sqrt(sum);
+
+                    return fn_val;
+                }
+
+                term = xmax / x[i-1];
+                sum = 1.0 + (sum * (term * term));
+                xmax = Math.abs(x[i-1]);
+                doSwitch = true;
+
+                i = i + incx;
+
+                if (i <= nn) {
                     continue mainLoop;
                 }
 
-                term = xmax / x[i];
-                sum = 1.0 + (sum * term * term);
-                xmax = Math.abs(x[i]);
-                do200 = true;
-                doSwitch = false;
+                // end of main loop.
 
-                continue mainLoop;
+                // compute square root and adjust for scaling.
+
+                fn_val = xmax * Math.sqrt(sum);
+
+                return fn_val;
             } // if (do110)
 
             if (do115) {
                 do115 = false;
                 doSwitch = true;
-                term = x[i] / xmax;
+                term = x[i-1] / xmax;
                 sum = sum + (term * term);
 
-                ix = ix + 1;
                 i = i + incx;
 
-                if (ix <= n) {
+                if (i <= nn) {
                     continue mainLoop;
                 }
 
