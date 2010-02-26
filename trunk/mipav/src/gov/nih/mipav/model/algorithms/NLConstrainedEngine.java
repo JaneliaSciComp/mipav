@@ -1,6 +1,9 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import gov.nih.mipav.model.algorithms.AlgorithmSM2.Fit24DModel;
+import gov.nih.mipav.model.algorithms.AlgorithmSM2.Fit25HModel;
+import gov.nih.mipav.model.algorithms.AlgorithmSM2.FitAll;
 import gov.nih.mipav.view.*;
 
 
@@ -516,9 +519,106 @@ public abstract class NLConstrainedEngine {
     private double x1Minrm, x2Minrm, x3Minrm;
     
     protected boolean outputMes = true;
+    
+    private boolean testMode = false; 
+    
+    private boolean  analyticalJacobian = true;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
+    public NLConstrainedEngine() {
+    	int i;
+    	// Below is an example used to fit y = alpha - beta*(rho**x)
+    	// This example implements the solution of problem D of chapter 24 of Applied Regression Analysis, Third Edition by
+    	// Norman R. Draper and Harry Smith */
+    	// The correct answer is a0 = 72.4326,  a1 = 28.2519, a2 = 0.5968
+    	// Works for 4 possibilities of internalScaling = true, false; Jacobian calculation = numerical, analytical
+    	Preferences.debug("Draper problem 24D y = alpha - beta*(rho**x)\n");
+    	Preferences.debug("Correct answer is a0 = 72.4326, a1 = 28.2519, a2 = 0.5968\n");
+    	testMode = true;
+    	outputMes = false;
+    	nPts = 5;
+    	param = 3;
+        xSeries = new double[5];
+        ySeries = new double[nPts];
+        gues = new double[param];
+        xSeries[0] = 0.0;
+        xSeries[1] = 1.0;
+        xSeries[2] = 2.0;
+        xSeries[3] = 3.0;
+        xSeries[4] = 4.0;
+        ySeries[0] = 44.4;
+        ySeries[1] = 54.6;
+        ySeries[2] = 63.8;
+        ySeries[3] = 65.7;
+        ySeries[4] = 68.9;
+        fitTestModel();
+        gues[0] = 0.0;
+        gues[1] = 10.0;
+        gues[2] = 0.2;
+        bounds = 2; // bounds = 0 means unconstrained
+
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        // Constrain alpha
+        bl = new double[param];
+        bu = new double[param];
+        bl[0] = -1000.0;
+        bu[0] = 1000.0;
+
+        // Constrain beta
+        bl[1] = -1000.0;
+        bu[1] = 1000.0;
+
+        // Constrain rho
+        bl[2] = 0.0;
+        bu[2] = 1.0;
+        driverCalls();
+        
+       // Below is an example used to fit y = (-50.0 * log(0.01*i)**(2.0/3.0) + 25.0
+    	// where a0 = -50, a1 = 2.0/3.0, a3 = 25.0
+    	// Variant of test example 25 from Hock and Schittkowski
+    	// Works for 4 possibilities of internalScaling = true, false; Jacobian calculation = numerical, analytical
+        Preferences.debug("Test example 25 from Hock and Schittkowski\n");
+        Preferences.debug("y = (-50.0 * log(0.01*i)**(2.0/3.0) + 25.0\n");
+        Preferences.debug("Correct answer is a0 = -50, a1 = 2.0/3.0, a3 = 25.0\n");
+        nPts = 99;
+        param = 3;
+    	xSeries = new double[99];
+    	ySeries = new double[nPts];
+    	gues = new double[param];
+    	for (i = 1; i <= 99; i++) {
+    		xSeries[i-1] = 0.01 * i;
+    		ySeries[i-1] = Math.pow((-50.0 * Math.log(xSeries[i-1])),2.0/3.0) + 25.0;
+    	}
+    	gues[0] = -100.0;
+    	gues[1] = 1.0/3.0;
+    	gues[2] = 12.5;
+    	bounds = 2; // bounds = 0 means unconstrained
+
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        // Constrain alpha
+        bl = new double[param];
+        bu = new double[param];
+        // Constrain a[0]
+        bl[0] = -100.0;
+        bu[0] = -0.1;
+
+        // Constrain a[1]
+        bl[1] = 0.0;
+        bu[1] = 5.0;
+
+        // Constrain a[2]
+        bl[2] = 0.0;
+        bu[2] = 25.6;
+        driverCalls();
+    }
+    
     /**
      * NLConstrainedEngine - non-linear fit to a function.
      *
@@ -627,6 +727,376 @@ public abstract class NLConstrainedEngine {
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+    /*if (fullTest) {
+    	FitAll fa = new FitAll();
+    	return;
+    }*/
+    
+    /*class FitAll extends NLConstrainedEngine {
+
+       
+        public FitAll() {
+
+            // nPoints data points, 3 coefficients, and exponential fitting
+            super();
+
+            
+        }
+
+        
+        public void driver() {
+            super.driver();
+        }
+
+        
+        public void dumpResults() {
+            
+        }
+
+       
+        public void fitToFunction(double[] a, double[] residuals, double[][] covarMat) {
+            
+
+            return;
+        }
+    }*/
+
+        /**
+         * Creates a new Fit24DModel object.
+         *
+         * @param  nPoints  DOCUMENT ME!
+         * @param  xData    DOCUMENT ME!
+         * @param  yData    DOCUMENT ME!
+         * @param  initial  DOCUMENT ME!
+         */
+        private void fitTestModel() {
+
+            // nPoints data points, 3 coefficients, and exponential fitting
+        	try {
+                
+
+                maxIterations = 20 * param;
+                residuals = new double[nPts];
+                pivit = new int[param];
+                aset = new int[param];
+                dx = new double[param];
+                g = new double[param];
+                w0 = new double[param];
+                w1 = new double[nPts];
+                w2 = new double[nPts];
+                w3 = new double[param];
+                v = new double[nPts];
+                gmat = new double[param][param];
+
+                // compute srelpr single relative precision
+                releps();
+                rootsp = Math.sqrt(srelpr);
+
+                mdg = param;
+                tolerance = rootsp;
+                relativeConvergence = 10.0 * rootsp;
+                absoluteConvergence = srelpr;
+                parameterConvergence = 10.0 * rootsp;
+
+                a = new double[param];
+
+                int covar2 = Math.max(4, param);
+                covarMat = new double[nPts][covar2];
+            } catch (OutOfMemoryError error) { }
+
+            
+        }
+    
+        
+        public void fitToTestFunction(double[] a, double[] residuals, double[][] covarMat) {
+            int ctrl;
+            int i;
+            double ymodel = 0.0;
+
+            try {
+                ctrl = ctrlMat[0];
+
+                if ((ctrl == -1) || (ctrl == 1)) {
+
+                    // evaluate the residuals[i] = ymodel[i] - ySeries[i]
+                    for (i = 0; i < nPts; i++) {
+                        ymodel = a[0] - (a[1] * Math.pow(a[2], xSeries[i]));
+                        residuals[i] = ymodel - ySeries[i];
+                    }
+                } // if ((ctrl == -1) || (ctrl == 1))
+                else if (ctrl == 2) {
+                    if (analyticalJacobian) {
+	                    // Calculate the Jacobian analytically
+	                    for (i = 0; i < nPts; i++) {
+	                        covarMat[i][0] = 1.0;
+	                        covarMat[i][1] = -Math.pow(a[2], xSeries[i]);
+	                        covarMat[i][2] = -xSeries[i] * a[1] * Math.pow(a[2], xSeries[i] - 1.0);
+	                    }
+                    }
+                    else {
+                    	// If the user wishes to calculate the Jacobian numerically
+                         ctrlMat[0] = 0; 	
+                    }
+                } // else if (ctrl == 2)
+            } catch (Exception e) {
+                Preferences.debug("function error: " + e.getMessage() + "\n");
+            }
+
+            return;
+        }
+        
+        private void dumpTestResults() {
+        	int i;
+        	if (analyticalJacobian) {
+        	    Preferences.debug("Internal scaling = " + internalScaling + " Analytical Jacobian used\n");
+        	}
+        	else {
+        		Preferences.debug("Internal scaling = " + internalScaling + " Numerical Jacobian used\n");
+        	}
+            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n");
+            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n");
+            for (i = 0; i < param; i++) {
+                Preferences.debug("a" + i + " = " + String.valueOf(a[i]) + "\n");
+            }
+            if (exitStatus == 12340) { 	
+            	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
+            	Preferences.debug("because the relative change in x is less than epsx and\n");
+                Preferences.debug("because we are computing at noise level no problem (Gauss-Newton the last 3 step)\n");
+            }
+            else if (exitStatus == 12341) {
+            	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
+            	Preferences.debug("because the relative change in x is less than epsx and\n");
+                Preferences.debug("because we are computing at noise level prank < n at the termination point\n");	
+            }
+            else if (exitStatus == 12342) {
+            	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
+            	Preferences.debug("because the relative change in x is less than epsx and\n");
+                Preferences.debug("because we are computing at noise level the method of Newton was used (at least) in the last step\n");	
+            }
+            else if (exitStatus == 12343) {
+            	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
+            	Preferences.debug("because the relative change in x is less than epsx and\n");
+            	Preferences.debug("because we are computing at noise level the 2nd but last step was subspace minimization but\n");
+                Preferences.debug("the last two were Gauss-Newton steps \n");
+            }
+            else if (exitStatus == 12344) {
+            	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
+            	Preferences.debug("because the relative change in x is less than epsx and\n");
+                Preferences.debug("because we are computing at noise level the steplength was not unit in both the last two steps\n");	
+            }
+            else if (exitStatus == 12300) {
+            	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
+            	Preferences.debug("because the relative change in x is less than epsx\n");
+            }
+            else if (exitStatus == 12000) {
+            	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+            	Preferences.debug("because the sum of squares is less than epsabs**2\n");
+            }
+            else if (exitStatus == 10340) {
+            	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+            	Preferences.debug("because the relative change in x is less than epsx and\n");
+                Preferences.debug("because we are computing at noise level no problem (Gauss-Newton the last 3 step)\n");
+            }
+            else if (exitStatus == 10341) {
+            	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+            	Preferences.debug("because the relative change in x is less than epsx and\n");
+                Preferences.debug("because we are computing at noise level prank < n at the termination point\n");	
+            }
+            else if (exitStatus == 10342) {
+            	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+            	Preferences.debug("because the relative change in x is less than epsx and\n");
+                Preferences.debug("because we are computing at noise level the method of Newton was used (at least) in the last step\n");	
+            }
+            else if (exitStatus == 10343) {
+            	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+            	Preferences.debug("because the relative change in x is less than epsx and\n");
+            	Preferences.debug("because we are computing at noise level the 2nd but last step was subspace minimization but\n");
+                Preferences.debug("the last two were Gauss-Newton steps\n");
+            } 
+            else if (exitStatus == 10344) {
+            	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+            	Preferences.debug("because the relative change in x is less than epsx and\n");
+                Preferences.debug("because we are computing at noise level the steplength was not unit in both the last two steps\n");	
+            }
+            else if (exitStatus == 10300) {
+            	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+            	Preferences.debug("because the relative change in x is less than epsx\n");
+            }
+            else if (exitStatus == 10040) {
+            	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+                Preferences.debug("because we are computing at noise level no problem (Gauss-Newton the last 3 step)\n");
+            } 
+            else if (exitStatus == 10041) {
+            	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+                Preferences.debug("because we are computing at noise level prank < n at the termination point\n");	
+            }
+            else if (exitStatus == 10042) {
+            	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+                Preferences.debug("because we are computing at noise level the method of Newton was used (at least) in the last step\n");	
+            }
+            else if (exitStatus == 10043) {
+            	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+            	Preferences.debug("because we are computing at noise level the 2nd but last step was subspace minimization but\n");
+                Preferences.debug("the last two were Gauss-Newton steps\n");
+            }  
+            else if (exitStatus == 10044) {
+            	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+                Preferences.debug("because we are computing at noise level the steplength was not unit in both the last two steps\n");	
+            }
+            else if (exitStatus == 10000) {
+            	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2\n");
+            }
+            else if (exitStatus == 2340) {
+            	Preferences.debug("Normal terminations because the sum of squares is less than epsabs**2 and\n");
+            	Preferences.debug("because the relative change in x is less than epsx and\n");
+                Preferences.debug("because we are computing at noise level no problem (Gauss-Newton the last 3 step)\n");
+            }
+            else if (exitStatus == 2341) {
+            	Preferences.debug("Normal terminations because the sum of squares is less than epsabs**2  and\n");
+            	Preferences.debug("because the relative change in x is less than epsx and\n");
+                Preferences.debug("because we are computing at noise level prank < n at the termination point\n");	
+            }  
+            else if (exitStatus == 2342) {
+            	Preferences.debug("Normal terminations because the sum of squares is less than epsabs**2 and\n");
+            	Preferences.debug("because the relative change in x is less than epsx and\n");
+                Preferences.debug("because we are computing at noise level the method of Newton was used (at least) in the last step\n");	
+            }  
+            else if (exitStatus == 2343) {
+            	Preferences.debug("Normal terminations because the sum of squares is less than epsabs**2 and\n");
+            	Preferences.debug("because the relative change in x is less than epsx and\n");
+            	Preferences.debug("because we are computing at noise level the 2nd but last step was subspace minimization but\n");
+                Preferences.debug("the last two were Gauss-Newton steps\n");
+            }
+            else if (exitStatus == 2344) {
+            	Preferences.debug("Normal terminations because the sum of squares is less than epsabs**2 and\n");
+            	Preferences.debug("because the relative change in x is less than epsx and\n");
+                Preferences.debug("because we are computing at noise level the steplength was not unit in both the last two steps\n");	
+            } 
+            else if (exitStatus == 2300) {
+            	Preferences.debug("Normal terminations because the sum of squares is less than epsabs**2 and\n");
+            	Preferences.debug("because the relative change in x is less than epsx\n");	
+            }
+            else if (exitStatus == 2040) {
+            	Preferences.debug("Normal terminations because the sum of squares is less than epsabs**2 and\n");
+                Preferences.debug("because we are computing at noise level no problem (Gauss-Newton the last 3 step)\n");
+            }   
+            else if (exitStatus == 2041) {
+            	Preferences.debug("Normal terminations because the sum of squares is less than epsabs**2  and\n");
+                Preferences.debug("because we are computing at noise level prank < n at the termination point\n");	
+            } 
+            else if (exitStatus == 2042) {
+            	Preferences.debug("Normal terminations because the sum of squares is less than epsabs**2 and\n");
+                Preferences.debug("because we are computing at noise level the method of Newton was used (at least) in the last step\n");	
+            }
+            else if (exitStatus == 2043) {
+            	Preferences.debug("Normal terminations because the sum of squares is less than epsabs**2 and\n");
+            	Preferences.debug("because we are computing at noise level the 2nd but last step was subspace minimization but\n");
+                Preferences.debug("the last two were Gauss-Newton steps\n");
+            }
+            else if (exitStatus == 2044) {
+            	Preferences.debug("Normal terminations because the sum of squares is less than epsabs**2 and\n");
+                Preferences.debug("because we are computing at noise level the steplength was not unit in both the last two steps\n");	
+            }
+            else if (exitStatus == 2000) {
+            	Preferences.debug("Normal terminations because the sum of squares is less than epsabs**2\n");
+            } 
+            else if (exitStatus == 340) {
+            	Preferences.debug("Normal terminations because the relative change in x is less than epsx and\n");
+                Preferences.debug("because we are computing at noise level no problem (Gauss-Newton the last 3 step)\n");
+            }  
+            else if (exitStatus == 341) {
+            	Preferences.debug("Normal terminations because the relative change in x is less than epsx  and\n");
+                Preferences.debug("because we are computing at noise level prank < n at the termination point\n");	
+            }
+            else if (exitStatus == 342) {
+            	Preferences.debug("Normal terminations because the relative change in x is less than epsx and\n");
+                Preferences.debug("because we are computing at noise level the method of Newton was used (at least) in the last step\n");	
+            }
+            else if (exitStatus == 343) {
+            	Preferences.debug("Normal terminations because the relative change in x is less than epsx and\n");
+                Preferences.debug("because we are computing at noise level the 2nd but last step was subspace minimization but\n");
+                Preferences.debug("the last two were Gauss-Newton steps\n");
+            }
+            else if (exitStatus == 344) {
+            	Preferences.debug("Normal terminations because the relative change in x is less than epsx and\n");
+                Preferences.debug("because we are computing at noise level the steplength was not unit in both the last two steps\n");	
+            }
+            else if (exitStatus == 300) {
+            	Preferences.debug("Normal terminations because the relative change in x is less than epsx\n");
+            } 
+            else if (exitStatus == 40) {
+            	Preferences.debug("Normal terminations because we are computing at noise level no problem (Gauss-Newton the last 3 steps)\n");
+            } 
+            else if (exitStatus == 41) {
+            	Preferences.debug("Normal terminations because we are computing at noise level prank < n at the termination point\n");
+            }
+            else if (exitStatus == 42) {
+            	Preferences.debug("Normal terminations because we are computing at noise level the method of Newton was used (at least) in the last step\n");
+            }
+            else if (exitStatus == 43) {
+            	Preferences.debug("Normal terminations because we are computing at noise level the 2nd but last step was subspace minimization but\n");
+                Preferences.debug("the last two were Gauss-Newton steps\n");
+            }
+            else if (exitStatus == 44) {
+            	Preferences.debug("Normal terminations because we are computing at noise level the steplenght was not unit in both the last two steps\n");
+            } 
+            else if (exitStatus == -1) {
+                Preferences.debug("Abnormal terminations because m < n or n <= 0 or m <= 0 or mdc < m or mdw < n*n + 5*n + 3*m + 6 or\n");
+                Preferences.debug("maxit <= 0 or epsrel < 0 or epsabs < 0 or epsx < 0 or invalid starting point on entry\n");
+            } 
+            else if (exitStatus == -2) {
+            	Preferences.debug("Abnormal terminations because the number of iterations has exceeded the maximum allowed iterations\n");
+            }
+            else if (exitStatus == -3) {
+            	Preferences.debug("Abnormal terminations because the Hessian emanating from the 2nd order method is not positive definite\n");
+            }
+            else if (exitStatus == -4) {
+            	Preferences.debug("Abnormal terminations because the algorithm would like to use 2nd derivatives but is not allowed to do that\n");
+            }
+            else if (exitStatus == -5) {
+            	Preferences.debug("Abnormal terminations because an undamped step with Newtons method is a failure\n");
+            }
+            else if (exitStatus == -6) {
+            	Preferences.debug("Abnormal terminations because the latest search direction computed using subspace minimization\n");
+            	Preferences.debug("was not a descent direction (probably caused by a wrongly computed Jacobian)\n");
+            }
+            else if (exitStatus == -7) {
+            	Preferences.debug("Abnormal terminations because there is only one feasible point,\n");
+            	Preferences.debug("namely X(I) = BL(I) = BU(I), I = 1,2,...,N\n");
+            }
+            Preferences.debug("\n");
+        }
+        
+        private void driverCalls() {
+        	// The default is internalScaling = false
+            internalScaling = false;
+            analyticalJacobian = false;
+            fitTestModel();
+            driver();
+            dumpTestResults();
+            internalScaling = false;
+            analyticalJacobian = true;
+            fitTestModel();
+            driver();
+            dumpTestResults();
+            internalScaling = true;
+            analyticalJacobian = false;
+            fitTestModel();
+            driver();
+            dumpTestResults();
+            internalScaling = true;
+            analyticalJacobian = true;
+            fitTestModel();
+            driver();
+            dumpTestResults();
+            Preferences.debug("\n");	
+        }
     /**
      * fitToFunction communicates with 3 protected variables param, nPts, and ctrlMat ctrlMat is used as a wrapper for
      * ctrl or lctrl. Evaluates the residuals or the Jacobian at a certain a[]
@@ -1830,7 +2300,12 @@ mainLoop:
 
         // EVALUATE THE FUNCTIONS AT PREVIOUS POINT
         ctrlMat[0] = evreucCtrl;
-        fitToFunction(a, residuals, dummy);
+        if (testMode) {
+        	fitToTestFunction(a, residuals, dummy);
+        }
+        else {
+            fitToFunction(a, residuals, dummy);
+        }
         evreucCtrl = ctrlMat[0];
 
         if (evreucCtrl < -10) {
@@ -1873,7 +2348,12 @@ mainLoop:
 
         lctrl = ctrl[0];
         ctrlMat[0] = lctrl;
-        fitToFunction(xnew, fnew, dummy);
+        if (testMode) {
+        	fitToTestFunction(xnew, fnew, dummy);
+        }
+        else {
+            fitToFunction(xnew, fnew, dummy);
+        }
         lctrl = ctrlMat[0];
         if (outputMes) {
 	        Preferences.debug("xnew and fnew inside fsumsq\n");
@@ -2265,7 +2745,12 @@ mainLoop:
                 a[k] = ak + epsk;
                 a[j] = a[j] + epsj;
                 ctrlMat[0] = hessCtrl;
-                fitToFunction(a, c1Mat, dummy);
+                if (testMode) {
+                	fitToTestFunction(a, c1Mat, dummy);
+                }
+                else {
+                    fitToFunction(a, c1Mat, dummy);
+                }
                 hessCtrl = ctrlMat[0];
 
                 if (hessCtrl < -10) {
@@ -2279,7 +2764,12 @@ mainLoop:
                 a[k] = ak + epsk;
                 a[j] = a[j] - epsj;
                 ctrlMat[0] = hessCtrl;
-                fitToFunction(a, c2Mat, dummy);
+                if (testMode) {
+                	fitToTestFunction(a, c2Mat, dummy);
+                }
+                else {
+                    fitToFunction(a, c2Mat, dummy);
+                }
                 hessCtrl = ctrlMat[0];
 
                 if (hessCtrl < -10) {
@@ -2293,7 +2783,12 @@ mainLoop:
                 a[k] = ak - epsk;
                 a[j] = a[j] + epsj;
                 ctrlMat[0] = hessCtrl;
-                fitToFunction(a, c3Mat, dummy);
+                if (testMode) {
+                	fitToTestFunction(a, c3Mat, dummy);
+                }
+                else {
+                    fitToFunction(a, c3Mat, dummy);
+                }
                 hessCtrl = ctrlMat[0];
 
                 if (hessCtrl < -10) {
@@ -2307,7 +2802,12 @@ mainLoop:
                 a[k] = ak - epsk;
                 a[j] = a[j] - epsj;
                 ctrlMat[0] = hessCtrl;
-                fitToFunction(a, c4Mat, dummy);
+                if (testMode) {
+                	fitToTestFunction(a, c4Mat, dummy);
+                }
+                else {
+                    fitToFunction(a, c4Mat, dummy);
+                }
                 hessCtrl = ctrlMat[0];
 
                 if (hessCtrl < -10) {
@@ -2370,7 +2870,12 @@ mainLoop:
             a[j] = xtemp + deltaj;
             jacCtrl[0] = -1;
             ctrlMat[0] = jacCtrl[0];
-            fitToFunction(a, w1, covarMat);
+            if (testMode) {
+            	fitToTestFunction(a, w1, covarMat);
+            }
+            else {
+                fitToFunction(a, w1, covarMat);
+            }
             jacCtrl[0] = ctrlMat[0];
 
             if (jacCtrl[0] < -10) {
@@ -2977,7 +3482,12 @@ mainLoop:
         // Evaluate at user supplied point
         ctrl = 1;
         ctrlMat[0] = ctrl;
-        fitToFunction(a, residuals, covarMat);
+        if (testMode) {
+        	fitToTestFunction(a, residuals, covarMat);
+        }
+        else {
+            fitToFunction(a, residuals, covarMat);
+        }
         ctrl = ctrlMat[0];
 
         if (ctrl == -1) {
@@ -3427,7 +3937,12 @@ mainLoop:
         // SIGNALS THAT BY SETTING CTRL TO ZERO ON RETURN
 
         ctrlMat[0] = newuncCtrl[0];
-        fitToFunction(a, residuals, covarMat);
+        if (testMode) {
+        	fitToTestFunction(a, residuals, covarMat);
+        }
+        else {
+            fitToFunction(a, residuals, covarMat);
+        }
         newuncCtrl[0] = ctrlMat[0];
 
         if (newuncCtrl[0] == 2) {
@@ -5771,7 +6286,12 @@ mainLoop:
 
         stepucCtrl = 1;
         ctrlMat[0] = stepucCtrl;
-        fitToFunction(a, residuals, dummy);
+        if (testMode) {
+        	fitToTestFunction(a, residuals, dummy);
+        }
+        else {
+            fitToFunction(a, residuals, dummy);
+        }
         stepucCtrl = ctrlMat[0];
         eval = 1;
 
