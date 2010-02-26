@@ -270,6 +270,14 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
                 radioClip.setEnabled(true);
                 radioPromote.setEnabled(true);    
             }
+            
+            //buildComboBoxImage() is now called each time because multiply allows for a larger number of ImageB choices
+            Object selected = comboBoxImage.getSelectedItem();
+            buildComboBoxImage();
+            if(selected != null) {
+                comboBoxImage.setSelectedItem(selected);
+            }
+            System.out.println(comboBoxImage.getModel().getSize());
         }
     }
 
@@ -481,9 +489,7 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
         ViewUserInterface UI;
         boolean sameDims = true;
 
-        comboBoxImage = new JComboBox();
-        comboBoxImage.setFont(serif12);
-        comboBoxImage.setBackground(Color.white);
+        comboBoxImage.removeAllItems();
 
         UI = ViewUserInterface.getReference();
 
@@ -519,6 +525,20 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
                                 (imageA.getExtents()[1] == img.getExtents()[1]) && (isColor == img.isColorImage())) {
                             comboBoxImage.addItem(name);
                         }
+                    } else if (opType == AlgorithmImageCalculator.MULTIPLY) {
+                        //With multiply operator, n-1 dimension img is applied like a filter to imageA
+                        if(imageA.getNDims()-1 == img.getNDims()) {
+                            for (j = 0; j < imageA.getNDims()-1; j++) {
+
+                                if (imageA.getExtents()[j] != img.getExtents()[j]) {
+                                    sameDims = false;
+                                }
+                            }
+
+                            if ((sameDims == true) && (isColor == img.isColorImage())) {
+                                comboBoxImage.addItem(name);
+                            }
+                        }
                     }
                 }
             }
@@ -549,6 +569,10 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
         labelImageB.setForeground(Color.black);
         labelImageB.setFont(serif12);
 
+        comboBoxImage = new JComboBox();
+        comboBoxImage.setFont(serif12);
+        comboBoxImage.setBackground(Color.white);
+        
         buildComboBoxImage();
 
         JLabel labelOperator = new JLabel("Operator:");
@@ -589,27 +613,33 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
         gbc.gridheight = 1;
         gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.WEST;
-        gbc.weightx = 1;
+        gbc.weightx = 0;
         gbc.insets = new Insets(5, 5, 5, 5);
         inputPanel.add(labelUse, gbc);
         gbc.gridx = 1;
+        gbc.weightx = 1;
         inputPanel.add(labelImageA, gbc);
         gbc.gridx = 0;
+        gbc.weightx = 0;
         gbc.gridy = 1;
         inputPanel.add(labelOperator, gbc);
         gbc.gridx = 1;
+        gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         inputPanel.add(comboBoxOperator, gbc);
         gbc.gridx = 0;
+        gbc.weightx = 0;
         gbc.gridy = 2;
         gbc.fill = GridBagConstraints.NONE;
         inputPanel.add(labelImageB, gbc);
         gbc.gridx = 1;
+        gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         inputPanel.add(comboBoxImage, gbc);
 
 
         gbc.gridx = 0;
+        gbc.weightx = 0;
         gbc.gridy = 3;
         gbc.fill = GridBagConstraints.NONE;
         gbc.insets = new Insets(0, 0, 0, 0);
@@ -632,9 +662,12 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
         group2.add(radioReplace);
 
         gbc.gridx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 1;
         gbc.gridy = 0;
         outputPanel.add(radioNew, gbc);
         gbc.gridy = 1;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         outputPanel.add(radioReplace, gbc);
 
         JPanel mainPanel = new JPanel(new BorderLayout());
