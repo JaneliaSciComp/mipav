@@ -1,8 +1,5 @@
 package gov.nih.mipav.model.algorithms;
 
-
-import gov.nih.mipav.model.algorithms.AlgorithmSM2.Fit24DModel;
-import gov.nih.mipav.model.algorithms.AlgorithmSM2.Fit25HModel;
 import gov.nih.mipav.model.algorithms.AlgorithmSM2.FitAll;
 import gov.nih.mipav.view.*;
 
@@ -523,6 +520,12 @@ public abstract class NLConstrainedEngine {
     private boolean testMode = false; 
     
     private boolean  analyticalJacobian = true;
+    
+    private int testCase;
+    
+    private final int DRAPER24D = 0;
+    
+    private final int HOCK25 = 25;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -533,10 +536,10 @@ public abstract class NLConstrainedEngine {
     	// Norman R. Draper and Harry Smith */
     	// The correct answer is a0 = 72.4326,  a1 = 28.2519, a2 = 0.5968
     	// Works for 4 possibilities of internalScaling = true, false; Jacobian calculation = numerical, analytical
-    	Preferences.debug("Draper problem 24D y = alpha - beta*(rho**x)\n");
+    	Preferences.debug("Draper problem 24D y = a0 - a1*(a2**x)\n");
     	Preferences.debug("Correct answer is a0 = 72.4326, a1 = 28.2519, a2 = 0.5968\n");
     	testMode = true;
-    	outputMes = false;
+    	testCase = DRAPER24D;
     	nPts = 5;
     	param = 3;
         xSeries = new double[5];
@@ -577,13 +580,17 @@ public abstract class NLConstrainedEngine {
         bu[2] = 1.0;
         driverCalls();
         
-       // Below is an example used to fit y = (-50.0 * log(0.01*i)**(2.0/3.0) + 25.0
-    	// where a0 = -50, a1 = 2.0/3.0, a3 = 25.0
+        // Below is an example used to fit y = 100 * (a2 - a1)**2 + 
+        
+        // Below is an example used to fit y = (a0 * log(0.01*i)**(a1) + a2
+    	// where a0 = -50, a1 = 2.0/3.0, a2 = 25.0
     	// Variant of test example 25 from Hock and Schittkowski
     	// Works for 4 possibilities of internalScaling = true, false; Jacobian calculation = numerical, analytical
         Preferences.debug("Test example 25 from Hock and Schittkowski\n");
-        Preferences.debug("y = (-50.0 * log(0.01*i)**(2.0/3.0) + 25.0\n");
+        Preferences.debug("y = (a0 * log(0.01*i)**(a1) + a2\n");
         Preferences.debug("Correct answer is a0 = -50, a1 = 2.0/3.0, a3 = 25.0\n");
+        testMode = true;
+        testCase = HOCK25;
         nPts = 99;
         param = 3;
     	xSeries = new double[99];
@@ -593,6 +600,7 @@ public abstract class NLConstrainedEngine {
     		xSeries[i-1] = 0.01 * i;
     		ySeries[i-1] = Math.pow((-50.0 * Math.log(xSeries[i-1])),2.0/3.0) + 25.0;
     	}
+    	fitTestModel();
     	gues[0] = -100.0;
     	gues[1] = 1.0/3.0;
     	gues[2] = 12.5;
@@ -815,29 +823,56 @@ public abstract class NLConstrainedEngine {
 
             try {
                 ctrl = ctrlMat[0];
-
-                if ((ctrl == -1) || (ctrl == 1)) {
-
-                    // evaluate the residuals[i] = ymodel[i] - ySeries[i]
-                    for (i = 0; i < nPts; i++) {
-                        ymodel = a[0] - (a[1] * Math.pow(a[2], xSeries[i]));
-                        residuals[i] = ymodel - ySeries[i];
-                    }
-                } // if ((ctrl == -1) || (ctrl == 1))
-                else if (ctrl == 2) {
-                    if (analyticalJacobian) {
-	                    // Calculate the Jacobian analytically
+                switch (testCase) {
+                case DRAPER24D:
+	                if ((ctrl == -1) || (ctrl == 1)) {
+	
+	                    // evaluate the residuals[i] = ymodel[i] - ySeries[i]
 	                    for (i = 0; i < nPts; i++) {
-	                        covarMat[i][0] = 1.0;
-	                        covarMat[i][1] = -Math.pow(a[2], xSeries[i]);
-	                        covarMat[i][2] = -xSeries[i] * a[1] * Math.pow(a[2], xSeries[i] - 1.0);
+	                        ymodel = a[0] - (a[1] * Math.pow(a[2], xSeries[i]));
+	                        residuals[i] = ymodel - ySeries[i];
 	                    }
-                    }
-                    else {
-                    	// If the user wishes to calculate the Jacobian numerically
-                         ctrlMat[0] = 0; 	
-                    }
-                } // else if (ctrl == 2)
+	                } // if ((ctrl == -1) || (ctrl == 1))
+	                else if (ctrl == 2) {
+	                    if (analyticalJacobian) {
+		                    // Calculate the Jacobian analytically
+		                    for (i = 0; i < nPts; i++) {
+		                        covarMat[i][0] = 1.0;
+		                        covarMat[i][1] = -Math.pow(a[2], xSeries[i]);
+		                        covarMat[i][2] = -xSeries[i] * a[1] * Math.pow(a[2], xSeries[i] - 1.0);
+		                    }
+	                    }
+	                    else {
+	                    	// If the user wishes to calculate the Jacobian numerically
+	                         ctrlMat[0] = 0; 	
+	                    }
+	                } // else if (ctrl == 2)
+	                break;
+                case HOCK25:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+
+                        // evaluate the residuals[i] = ymodel[i] - ySeries[i]
+                        for (i = 0; i < nPts; i++) {
+                            ymodel = Math.pow((a[0] * Math.log(xSeries[i])),a[1]) + a[2];
+                            residuals[i] = ymodel - ySeries[i];
+                        }
+                    } // if ((ctrl == -1) || (ctrl == 1))
+                    else if (ctrl == 2) {
+                        if (analyticalJacobian) {
+	                        // Calculate the Jacobian analytically
+	                        for (i = 0; i < nPts; i++) {
+	                            covarMat[i][0] = a[1]*Math.pow((a[0] * Math.log(xSeries[i])),a[1]-1.0) * Math.log(xSeries[i]);
+	                            covarMat[i][1] = Math.log(a[0] * Math.log(xSeries[i])) * Math.pow((a[0] * Math.log(xSeries[i])),a[1]);
+	                            covarMat[i][2] = 1.0;
+	                        }
+                        }
+                        else {
+	                    	// If the user wishes to calculate the Jacobian numerically
+	                         ctrlMat[0] = 0; 	
+	                    }
+	                } // else if (ctrl == 2)
+                	break;
+                } // switch (testCase)
             } catch (Exception e) {
                 Preferences.debug("function error: " + e.getMessage() + "\n");
             }
@@ -1115,7 +1150,7 @@ public abstract class NLConstrainedEngine {
     	int j;
     	int k;
         try {
-
+            outputMes = false;
             for (i = 0; i < param; i++) {
                 a[i] = gues[i];
             }
