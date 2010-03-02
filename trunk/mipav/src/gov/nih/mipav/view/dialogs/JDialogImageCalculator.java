@@ -525,8 +525,8 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
                                 (imageA.getExtents()[1] == img.getExtents()[1]) && (isColor == img.isColorImage())) {
                             comboBoxImage.addItem(name);
                         }
-                    } else if (opType == AlgorithmImageCalculator.MULTIPLY) {
-                        //With multiply operator, n-1 dimension img is applied like a filter to imageA
+                    } else if (!(opType == AlgorithmImageCalculator.MEAN_SQUARED_ERROR)) {
+                        //With any operator other than MSE, n-1 dimension img is applied like a filter to imageA
                         if(imageA.getNDims()-1 == img.getNDims()) {
                             for (j = 0; j < imageA.getNDims()-1; j++) {
 
@@ -575,6 +575,12 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
         
         buildComboBoxImage();
 
+        if(comboBoxImage.getModel().getSize() == 0) {
+            MipavUtil.displayWarning("This calculator requires images with the same extents and nearly the same dimensionality "+
+                    "as the target image.");
+            return;
+        }
+        
         JLabel labelOperator = new JLabel("Operator:");
         labelOperator.setForeground(Color.black);
         labelOperator.setFont(serif12);
