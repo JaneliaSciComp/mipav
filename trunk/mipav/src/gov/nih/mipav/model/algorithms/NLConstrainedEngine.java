@@ -9,6 +9,20 @@ import gov.nih.mipav.view.*;
  * and upper bounds. Reference: Gauss-Newton Based Algorithms For Constrained Nonlinear Least Squares Problems by Per
  * Lindstrom and Per-Ake Wedin, Institute of Information Processing, University of Umea, S-901 87 Umea, Sweden This can
  * be downleaded from http://www.cs.umu.se/~perl/reports/alg.ps.gz
+ * 
+ * The original code could incorrectly set the number of active constraints 1 greater than the number of parameters in 
+ * gnavuc.  The code for setting constraintAct was improved in 2 places to prevent this problem.  First, in evreuc:
+ * Before the loop for (i = 0; i < param; i++) put constraintAct = 0; and in the loop change
+ *  if (aset[i] != 0) {
+ *      continue;
+ *  }
+ *  to:
+ *  aset[i] = 0;
+ *  so that aset would be evaluated for each parameter.
+ *  In gnavuc changed constraintAct++; to 
+ *  if ((aset[imax] == 0) && (ival != 0)) {
+ *      constraintAct++;
+ *  }
  */
 
 // BELOW IS AN EXAMPLE OF A DRIVER USED IN FITTING A 4 PARAMETER
@@ -402,7 +416,7 @@ public abstract class NLConstrainedEngine {
     private double noise;
 
     /** Number of active constraints. */
-    private int paramAct;
+    private int constraintAct;
 
     /** DOCUMENT ME! */
     private double pgb1;
@@ -525,13 +539,17 @@ public abstract class NLConstrainedEngine {
     
     private final int DRAPER24D = 0;
     
+    private final int MEYER = 10;
+    
+    private final int KOWALIK_AND_OSBORNE = 15;
+    
     private final int HOCK25 = 25;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     public NLConstrainedEngine() {
     	int i;
-    	// Below is an example used to fit y = alpha - beta*(rho**x)
+    	// Below is an example used to fit y = a0 - a1*(a2**x)
     	// This example implements the solution of problem D of chapter 24 of Applied Regression Analysis, Third Edition by
     	// Norman R. Draper and Harry Smith */
     	// The correct answer is a0 = 72.4326,  a1 = 28.2519, a2 = 0.5968
@@ -565,17 +583,17 @@ public abstract class NLConstrainedEngine {
         // all parameters
         // bounds = 2 means different lower and upper bounds
         // for all parameters
-        // Constrain alpha
+        // Constrain a0
         bl = new double[param];
         bu = new double[param];
         bl[0] = -1000.0;
         bu[0] = 1000.0;
 
-        // Constrain beta
+        // Constrain a1
         bl[1] = -1000.0;
         bu[1] = 1000.0;
 
-        // Constrain rho
+        // Constrain a2
         bl[2] = 0.0;
         bu[2] = 1.0;
         driverCalls();
@@ -610,7 +628,6 @@ public abstract class NLConstrainedEngine {
         // all parameters
         // bounds = 2 means different lower and upper bounds
         // for all parameters
-        // Constrain alpha
         bl = new double[param];
         bu = new double[param];
         // Constrain a[0]
@@ -624,6 +641,142 @@ public abstract class NLConstrainedEngine {
         // Constrain a[2]
         bl[2] = 0.0;
         bu[2] = 25.6;
+        driverCalls();
+        // Below is an example to fit y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // According to the article if started at 10 * standard starting point or 
+        // 100 * standard point ELSUNC running unconstrained converges towards a reported
+        // unbounded local minimizer.  In fact unconstrained only worked at the standard 
+        // starting point and constrained would work at 10 * standard starting point 
+        // but not 100 * standard starting point.
+        Preferences.debug("Kowalik and Osborne function standard starting point\n");
+        Preferences.debug("y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)\n");
+        Preferences.debug("Correct answer is a0 = 0.1928, a1 = 0.1913, a2 = 0.1231, a3 = 0.1361\n");
+        testMode = true;
+        testCase = KOWALIK_AND_OSBORNE;
+        nPts = 11;
+        param = 4;
+        xSeries = new double[]{4.0, 2.0, 1.0, 0.5, 0.25, 0.167, 0.125, 0.1, 0.0833, 0.0714, 0.0625};
+        ySeries = new double[]{0.1957, 0.1947, 0.1735, 0.1600, 0.0844, 0.0627, 0.0456, 0.0342, 
+        		               0.0323, 0.0235, 0.0246};
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 0.25;
+        gues[1] = 0.39;
+        gues[2] = 0.415;
+        gues[3] = 0.39;
+        
+        bounds = 0;  // bounds = 0 means unconstrained
+
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is an example to fit y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // According to the article if started at 10 * standard starting point or 
+        // 100 * standard point ELSUNC running unconstrained converges towards a reported
+        // unbounded local minimizer.  In fact unconstrained only worked at the standard 
+        // starting point and constrained would work at 10 * standard starting point 
+        // but not 100 * standard starting point.
+        Preferences.debug("Kowalik and Osborne function 10 * standard starting point\n");
+        Preferences.debug("y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)\n");
+        Preferences.debug("Correct answer is a0 = 0.1928, a1 = 0.1913, a2 = 0.1231, a3 = 0.1361\n");
+        testMode = true;
+        testCase = KOWALIK_AND_OSBORNE;
+        nPts = 11;
+        param = 4;
+        xSeries = new double[]{4.0, 2.0, 1.0, 0.5, 0.25, 0.167, 0.125, 0.1, 0.0833, 0.0714, 0.0625};
+        ySeries = new double[]{0.1957, 0.1947, 0.1735, 0.1600, 0.0844, 0.0627, 0.0456, 0.0342, 
+        		               0.0323, 0.0235, 0.0246};
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 2.5;
+        gues[1] = 3.9;
+        gues[2] = 4.15;
+        gues[3] = 3.9;
+        
+        bounds = 2;  // bounds = 0 means unconstrained
+
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        bl[0] = 0;
+        bu[0] = 10.0;
+        bl[1] = 0;
+        bu[1] = 10.0;
+        bl[2] = 0;
+        bu[2] = 10.0;
+        bl[3] = 0;
+        bu[3] = 10.0;
+        driverCalls();
+        // Below is an example to fit y = a0*exp[a1/(45 + 5*x + a2)]
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Meyer function standard starting point\n");
+        Preferences.debug("Y = a0*exp[a1/(x + a2)]\n");
+        Preferences.debug("Correct answers are a0 = 0.0056096, a1 = 6181.3, a2 = 345.22\n");
+        testMode = true;
+        testCase = MEYER;
+        nPts = 16;
+        param = 3;
+        xSeries = new double[]{50.0, 55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 90.0, 95.0,
+        		               100.0, 105.0, 110.0, 115.0, 120.0, 125.0};
+        ySeries = new double[]{34780.0, 28610.0, 23650.0, 19630.0, 16370.0, 13720.0, 11540.0,
+        		               9744.0, 8261.0, 7030.0, 6005.0, 5147.0, 4427.0, 3820.0,
+        		               3307.0, 2872.0};
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 0.02;
+        gues[1] = 4000.0;
+        gues[2] = 250.0;
+        bounds = 0;  // bounds = 0 means unconstrained
+
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is an example to fit y = a0*exp[a1/(45 + 5*x + a2)]
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Meyer function 10 * standard starting point\n");
+        Preferences.debug("Y = a0*exp[a1/(x + a2)]\n");
+        Preferences.debug("Correct answers are a0 = 0.0056096, a1 = 6181.3, a2 = 345.22\n");
+        testMode = true;
+        testCase = MEYER;
+        nPts = 16;
+        param = 3;
+        xSeries = new double[]{50.0, 55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 90.0, 95.0,
+        		               100.0, 105.0, 110.0, 115.0, 120.0, 125.0};
+        ySeries = new double[]{34780.0, 28610.0, 23650.0, 19630.0, 16370.0, 13720.0, 11540.0,
+        		               9744.0, 8261.0, 7030.0, 6005.0, 5147.0, 4427.0, 3820.0,
+        		               3307.0, 2872.0};
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 0.2;
+        gues[1] = 40000.0;
+        gues[2] = 2500.0;
+        bounds = 2;  // bounds = 0 means unconstrained
+
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        bl[0] = 1.0E-3;
+        bu[0] = 1.0;
+        bl[1] = 100.0;
+        bu[1] = 100000.0;
+        bl[2] = 100.0;
+        bu[2] = 3000.0;                                             
         driverCalls();
     }
     
@@ -783,7 +936,7 @@ public abstract class NLConstrainedEngine {
         	try {
                 
 
-                maxIterations = 20 * param;
+                maxIterations = 400 * param;
                 residuals = new double[nPts];
                 pivit = new int[param];
                 aset = new int[param];
@@ -864,6 +1017,62 @@ public abstract class NLConstrainedEngine {
 	                            covarMat[i][0] = a[1]*Math.pow((a[0] * Math.log(xSeries[i])),a[1]-1.0) * Math.log(xSeries[i]);
 	                            covarMat[i][1] = Math.log(a[0] * Math.log(xSeries[i])) * Math.pow((a[0] * Math.log(xSeries[i])),a[1]);
 	                            covarMat[i][2] = 1.0;
+	                        }
+                        }
+                        else {
+	                    	// If the user wishes to calculate the Jacobian numerically
+	                         ctrlMat[0] = 0; 	
+	                    }
+	                } // else if (ctrl == 2)
+                	break;
+                case KOWALIK_AND_OSBORNE:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+
+                        // evaluate the residuals[i] = ymodel[i] - ySeries[i]
+                        for (i = 0; i < nPts; i++) {
+                            ymodel = a[0]*(xSeries[i]*xSeries[i] + a[1]*xSeries[i])/
+                                    (xSeries[i]*xSeries[i] + a[2]*xSeries[i] + a[3]);
+                            residuals[i] = ymodel - ySeries[i];
+                        }
+                    } // if ((ctrl == -1) || (ctrl == 1))
+                    else if (ctrl == 2) {
+                    	double denom;
+                    	double top;
+                        if (analyticalJacobian) {
+	                        // Calculate the Jacobian analytically
+	                        for (i = 0; i < nPts; i++) {
+	                        	denom = (xSeries[i]*xSeries[i] + a[2]*xSeries[i] + a[3]);
+	                        	top = (xSeries[i]*xSeries[i] + a[1]*xSeries[i]);
+	                            covarMat[i][0] = top/denom;
+	                            covarMat[i][1] = a[0]*xSeries[i]/denom;
+	                            covarMat[i][2] = -a[0]*xSeries[i]*top/(denom*denom);
+	                            covarMat[i][3] = -a[0]*top/(denom*denom);
+	                        }
+                        }
+                        else {
+	                    	// If the user wishes to calculate the Jacobian numerically
+	                         ctrlMat[0] = 0; 	
+	                    }
+	                } // else if (ctrl == 2)
+                	break;
+                case MEYER:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+
+                        // evaluate the residuals[i] = ymodel[i] - ySeries[i]
+                        for (i = 0; i < nPts; i++) {
+                            ymodel = a[0]*Math.exp(a[1]/(xSeries[i] + a[2]));
+                            residuals[i] = ymodel - ySeries[i];
+                        }
+                    } // if ((ctrl == -1) || (ctrl == 1))
+                    else if (ctrl == 2) {
+                    	double exponent;
+                        if (analyticalJacobian) {
+	                        // Calculate the Jacobian analytically
+	                        for (i = 0; i < nPts; i++) {
+	                        	exponent = Math.exp(a[1]/(xSeries[i] + a[2]));
+	                            covarMat[i][0] = exponent;
+	                            covarMat[i][1] = (a[0]/(xSeries[i] + a[2]))* exponent;
+	                            covarMat[i][2] = -(a[0]*a[1]/((xSeries[i] + a[2])*(xSeries[i] + a[2]))) * exponent;
 	                        }
                         }
                         else {
@@ -1190,13 +1399,13 @@ public abstract class NLConstrainedEngine {
             }
 
             if (((exitStatus % 10) == 1) && outputMes) {
-                System.out.println("Pseudo-rank of the Jacobian is not full < (param - paramAct)\n");
+                System.out.println("Pseudo-rank of the Jacobian is not full < (param - constraintAct)\n");
 
                 if (!internalScaling) {
                     System.out.println("A run with internalScaling = true might " + "give another solution\n");
                 }
 
-                Preferences.debug("Pseudo-rank of the Jacobian is not full < (param - paramAct)\n");
+                Preferences.debug("Pseudo-rank of the Jacobian is not full < (param - constraintAct)\n");
 
                 if (!internalScaling) {
                     Preferences.debug("A run with internalScaling = true might " + "give another solution\n");
@@ -1339,7 +1548,7 @@ public abstract class NLConstrainedEngine {
         // MDG MUST BE >= N
         // secondAllowed LOGICAL SCALAR = TRUE IF THE USER HAS ALLOWED USE OF
         // 2:ND DERIVATES. FALSE OTHERWISE
-        // paramAct INTEGER SCALAR CONTAINING THE NO. OF ACTIVE CONSTRAINTS
+        // constraintAct INTEGER SCALAR CONTAINING THE NO. OF ACTIVE CONSTRAINTS
         // (POSITIVE OR NEGATIVE)
         // aset[] INTEGER 1D ARRAY OF DIMENSION param
         // CONTAINING +1 OR -1 TO INDICATE AN ACTIVE BOUND (OTHERWISE ZERO)
@@ -1353,7 +1562,7 @@ public abstract class NLConstrainedEngine {
         // = -1 IF MINIMIZATION IN SUBSPACE HAS BEEN USED
         // TO COMPUTE DX
         // = -2 IF THE METHOD OF NEWTON HAS BEEN USED TO COMPUTE dx
-        // paramAct IS PUT EQUAL TO -paramAct-1 IF paramAct < 0 ON ENTRY
+        // constraintAct IS PUT EQUAL TO -constraintAct-1 IF constraintAct < 0 ON ENTRY
         // errorStatus INTEGER SCALAR CONTAINING -3 IF COEFFICIENT MATRIX IN
         // SYSTEM ARISING FROM SECOND DERIVATIVE METHOD IS NOT
         // POSITIVE DEFINITE
@@ -1432,7 +1641,7 @@ public abstract class NLConstrainedEngine {
         } else {
             secuc();
             kod = secind;
-            pseudoRank = -(param - paramAct);
+            pseudoRank = -(param - constraintAct);
             dxnorm = dnrm2(param, dx, 1);
         } // else
 
@@ -2290,18 +2499,17 @@ mainLoop:
             // CHECK IF ANY BOUND IS CROSSED.IF SO, MAKE THE
             // CORRESPONDING CONSTRAINT ACTIVE
 
+            constraintAct = 0;
             for (i = 0; i < param; i++) {
 
-                if (aset[i] != 0) {
-                    continue;
-                }
+                aset[i] = 0;
 
                 c2 = 0.0;
-
+                
                 if (a[i] < (bl[i] + c2 + dsqrel)) {
                     aset[i] = 1;
                     a[i] = bl[i];
-                    paramAct++;
+                    constraintAct++;
 
                     continue;
                 }
@@ -2314,7 +2522,7 @@ mainLoop:
 
                 aset[i] = -1;
                 a[i] = bu[i];
-                paramAct++;
+                constraintAct++;
             } // for (i = 0; i < param; i++)
 
             // INCREASE ITERATION COUNT
@@ -2530,7 +2738,7 @@ mainLoop:
         // beta  CONTAINS THE NORM OF THE ORTHOGONAL PROJECTION OF residuals
         // ONTO THE COLUMN SPACE OF THE JACOBIAN
         // prekm1  SEE EXPLANATION IN SUBROUTINE ANALUC
-        // paramAct INTEGER SCALAR CONTAINING THE NO.OF ACTIVE CONSTRAINTS
+        // constraintAct INTEGER SCALAR CONTAINING THE NO.OF ACTIVE CONSTRAINTS
         // (POSITIVE OR NEGATIVE)
         // aset[] INTEGER 1D ARRAY OF DIMENSION param
         // CONTAINING +1 OR -1 TO INDICTATE AN ACTIVE BOUND (OTHERWISE ZERO)
@@ -2540,7 +2748,7 @@ mainLoop:
         // secind  INDICATES THE ALTERNATIVE IF GN-DIRECTION IS NOT ACCEPTED
         // = -1 IF SUBSPACE MINIMIZATION
         // = -2 IF NEWTONS METHOD
-        // paramAct IS PUT EQUAL TO -paramAct-1 IF paramAct IS <0 ON ENTRY
+        // constraintAct IS PUT EQUAL TO -constraintAct-1 IF constraintAct IS <0 ON ENTRY
         // gndok = true IF CURRENT GN-DIRECTION IS ACCEPTED
         // = false IF RECOMPUTATION OF SEARCH DIRECTION IS NEEDED
 
@@ -2630,9 +2838,11 @@ mainLoop:
             return;
         }
 
+        if ((aset[imax] == 0) && (ival != 0)) {
+        	constraintAct++;
+        }
         aset[imax] = ival;
         imax = -1;
-        paramAct++;
 
         return;
     }
@@ -3450,7 +3660,7 @@ mainLoop:
         }
 
         // Initialize aset[i] and check values in bl[i] and bu[i]
-        paramAct = 0;
+        constraintAct = 0;
         paramCons = 0;
 
         for (i = 0; i < param; i++) {
@@ -3480,7 +3690,7 @@ mainLoop:
             }
 
             if (aset[i] != 0) {
-                paramAct = paramAct + 1;
+                constraintAct = constraintAct + 1;
             }
 
             if (bl[i] == bu[i]) {
@@ -3508,7 +3718,7 @@ mainLoop:
         alfkm2 = 1.0;
         kodkm2 = 1;
         kod = 1;
-        rngkm1 = Math.max(1, param - paramAct);
+        rngkm1 = Math.max(1, param - constraintAct);
         lattry = rngkm1;
         kodkm1 = 1;
         bestpg = 0.0;
@@ -4059,7 +4269,7 @@ mainLoop:
         // THE LONGEST COLUMN OF THE JACOBIAN
 
         // param INTEGER SCALAR CONTAINING THE NO. OF UNKNOWNS
-        // paramAct INTEGER SCALAR CONTAINING THE NO. OF ACTIVE CONSTRAINTS
+        // constraintAct INTEGER SCALAR CONTAINING THE NO. OF ACTIVE CONSTRAINTS
         // aset[] INTEGER 1D ARRAY OF DIMENSION param
         // CONTAINING A CODE WHICH INDICATES WHETHER AN UNKNOWN IS
         // ACTIVE OR NOT.
@@ -4108,7 +4318,7 @@ mainLoop:
 	        Preferences.debug("phi = " + phi + "\n");
 	        Preferences.debug("reduc = " + reduc + "\n");
 	
-	        if (paramAct > 0) {
+	        if (constraintAct > 0) {
 	
 	            for (i = 0; i < param; i++) {
 	                Preferences.debug("aset[" + i + "] = " + aset[i] + "\n");
@@ -4889,7 +5099,7 @@ mainLoop:
         // nPts INTEGER SCALAR CONTAINING THE LENGTH OF THE ARRAYS residuals,v,w1
         // mdg INTEGER SCALAR CONTAINING LEADING DIMENSION OF ARRAY gmat.
         // mdg MUST BE >= param
-        // paramAct INTEGER SCALAR CONTAINING NO. OF ACTIVE CONSTRAINTS
+        // constraintAct INTEGER SCALAR CONTAINING NO. OF ACTIVE CONSTRAINTS
 
         // ON RETURN
 
@@ -4914,13 +5124,13 @@ mainLoop:
         double[] dummy = new double[param];
 
         // INSTEAD OF SOLVING (1) WE SOLVE A TRANSFORMED SYSTEM
-        // WHICH HAS param-paramAct UNKNOWNS DY
+        // WHICH HAS param-constraintAct UNKNOWNS DY
 
         // I.E. SOLVE  T    T      nPts-1                           T     T
         // (R *R+E *D*(SIGMA(residuals *G ))*D*E)*DY = -(R :0)*Q *residuals  (2)
         // K=0           K  K
 
-        // dx = D*E*DY  (THE LAST paramAct ELEMENTS OF DY EQUAL TO ZERO)
+        // dx = D*E*DY  (THE LAST constraintAct ELEMENTS OF DY EQUAL TO ZERO)
 
         // FORM RIGHT HAND SIDE OF SYSTEM (2)
         // I.E.          T     T
@@ -4928,7 +5138,7 @@ mainLoop:
         // T
         // FIRST FORM Q *residuals BY USING SQRSL AND STORE IN w1
 
-        nn = param - paramAct;
+        nn = param - constraintAct;
         sqrsl(covarMat, nPts, nn, w0, residuals, dummy, w1, dummy, dummy, dummy, 1000);
 
         // T
@@ -5012,13 +5222,13 @@ mainLoop:
 
         // FORM  dx = D*E*DY
 
-        if (paramAct != 0) {
+        if (constraintAct != 0) {
 
-            for (i = 0; i < paramAct; i++) {
+            for (i = 0; i < constraintAct; i++) {
                 j = nn + i;
                 dx[j] = 0.0;
             }
-        } // if (paramAct != 0)
+        } // if (constraintAct != 0)
 
         pivec(w0);
 
@@ -5051,7 +5261,7 @@ mainLoop:
         // residuals is the vector of residuals
         // on entry
 
-        // paramAct number of active constraints
+        // constraintAct number of active constraints
         // Equals -number of active constraints when one is deleted in soliuc
 
         // pseudoRank scalar containing the pseudo rank of the matrix J
@@ -5110,7 +5320,7 @@ mainLoop:
         // ALSO DETERMINE PSEUDO RANK OF MATRIX J*D
 
         tol = Math.sqrt(param) * tau;
-        pseudoRank = triunc(tol, paramAct);
+        pseudoRank = triunc(tol, constraintAct);
 
         // COMPUTE THE "PSEUDO INVERSE" SOLUTION (DX) BY USING pseudoRank AS
         // PSEUDO RANK OF MATRIX J*D
@@ -5129,7 +5339,7 @@ mainLoop:
 	        }
         }
 
-        beta = dnrm2(param - paramAct, w1, 1);
+        beta = dnrm2(param - constraintAct, w1, 1);
         info = rngkm1 - 1;
 
         if (alfkm1 == aupkm1) {
@@ -5146,18 +5356,18 @@ mainLoop:
         // Delete the constraint that causes the largest predicted
         // reduction in the objective
         if (outputMes) {
-	        Preferences.debug("paramAct = " + paramAct + "\n");
+	        Preferences.debug("constraintAct = " + constraintAct + "\n");
 	        Preferences.debug("pseudoRank = " + pseudoRank + "\n");
 	        Preferences.debug("imax = " + imax + "\n");
         }
 
-        if ((paramAct == 0) || (imax != -1)) {
+        if ((constraintAct == 0) || (imax != -1)) {
             return;
         }
 
         // Initialize
         ii = 0;
-        kk = param - paramAct;
+        kk = param - constraintAct;
         mr = param - kk;
         d1max = d1sqs;
         kmax = -1;
@@ -5178,7 +5388,7 @@ mainLoop:
                 continue;
             }
 
-            if (pseudoRank < (param - paramAct)) {
+            if (pseudoRank < (param - constraintAct)) {
                 k = 0;
                 kk = 0;
                 if (outputMes) {
@@ -5192,7 +5402,7 @@ mainLoop:
                     System.exit(errorStatus);
                 }
 
-                lprank = triunc(tol, paramAct - 1);
+                lprank = triunc(tol, constraintAct - 1);
                 if (outputMes) {
                     Preferences.debug("lprank = " + lprank + "\n");
                 }
@@ -5212,9 +5422,9 @@ mainLoop:
                 if ((dx[i] * inds * (bu[i] - bl[i])) <= 0.0) {
                     continue;
                 }
-            } // if (pseudoRank < (param - paramAct))
+            } // if (pseudoRank < (param - constraintAct))
             else {
-                k = param - paramAct + ii;
+                k = param - constraintAct + ii;
                 ii++;
 
                 // T
@@ -5223,7 +5433,7 @@ mainLoop:
                     w2[jj] = w1[jj];
                 }
 
-                // Zero the kth column below its (param - paramAct)+1 element
+                // Zero the kth column below its (param - constraintAct)+1 element
                 for (j = 0; j < param; j++) {
                     work[j] = covarMat[j][k];
 
@@ -5309,22 +5519,22 @@ mainLoop:
             imax = i;
         } // for (i = 0; i < param; i++)
 
-        if (pseudoRank < (param - paramAct)) {
+        if (pseudoRank < (param - constraintAct)) {
 
             if (imax != -1) {
                 ival = aset[imax];
                 aset[imax] = 0;
-                paramAct--;
+                constraintAct--;
             } // if (imax != -1)
 
             newunc();
-            pseudoRank = triunc(tol, paramAct);
+            pseudoRank = triunc(tol, constraintAct);
             pseudoRankMat[0] = pseudoRank;
             d1sqs = gndunc(false, pseudoRankMat, work);
             pseudoRank = pseudoRankMat[0];
-            beta = dnrm2(param - paramAct, w1, 1);
+            beta = dnrm2(param - constraintAct, w1, 1);
             prekm1 = beta;
-        } // if (pseudoRank < (param - paramAct))
+        } // if (pseudoRank < (param - constraintAct))
         else if (kmax != -1) {
 
             // FORM J*DX WHERE DX IS THE AUGMENTED GN-DIRECTION.
@@ -5403,8 +5613,8 @@ mainLoop:
             ival = aset[imax];
             aset[imax] = 0;
             pseudoRank++;
-            paramAct--;
-            beta = dnrm2(param - paramAct, w1, 1);
+            constraintAct--;
+            beta = dnrm2(param - constraintAct, w1, 1);
             prekm1 = beta;
             d1sqs = d1max;
 
@@ -6162,7 +6372,7 @@ mainLoop:
         // THE LOWER BOUNDS OF THE UNKNOWNS
         // bu[] double 1D ARRAY OF DIMENSION param CONTAINING
         // THE UPPER BOUNDS OF THE UNKNOWNS
-        // paramAct INTEGER SCALAR CONTAINING THE NO. OF ACTIVE CONSTRAINTS
+        // constraintAct INTEGER SCALAR CONTAINING THE NO. OF ACTIVE CONSTRAINTS
         // aset[] INTEGER 1D ARRAY OF DIMENSION param
         // CONTAINING A CODE WHICH INDICATES WHETHER AN UNKNOWN IS
         // ACTIVE OR NOT.
@@ -6176,7 +6386,7 @@ mainLoop:
         // residuals[] THE VALUE OF THE RESIDUALS AT THE NEW POINT
         // phi  THE VALUE OF THE OBJECTIVE AT THE NEW POINT
         // aset[] MODIFIED IN ONE ELEMENT IF A BOUND IS CROSSED
-        // paramAct  THE CURRENT NO. OF ACTIVE CONSTRAINTS
+        // constraintAct  THE CURRENT NO. OF ACTIVE CONSTRAINTS
         // eval INTEGER SCALAR CONTAINING NO. OF FUNCTION EVALUATIONS
         // DONE INSIDE THE LINESEARCH ROUTINE
         // alpha double SCALAR CONTAINING THE STEPSIZE
@@ -6561,7 +6771,7 @@ mainLoop:
         // THE LOWER BOUNDS OF THE UNKNOWNS
         // bu[] double 1D ARRAY OF DIMENSION param CONTAINING
         // THE UPPER BOUNDS OF THE UNKNOWNS
-        // paramAct INTEGER SCALAR CONTAINING THE NO. OF ACTIVE CONSTRAINTS
+        // constraintAct INTEGER SCALAR CONTAINING THE NO. OF ACTIVE CONSTRAINTS
         // exitStatus INTEGER 1D ARRAY OF DIMENSION param
         // CONTAINING A CODE WHICH INDICATES WHETHER AN UNKNOWN IS
         // ACTIVE OR NOT.
@@ -6675,7 +6885,7 @@ mainLoop:
 	        }
         }
 
-        if (paramAct != 0) {
+        if (constraintAct != 0) {
 
             for (i = 0; i < param; i++) {
 
@@ -6694,7 +6904,7 @@ mainLoop:
                 rlmax = Math.abs(g[i]);
                 exitStatus = 0;
             } // for (i = 0; i < param; i++)
-        } // if (paramAct != 0)
+        } // if (constraintAct != 0)
 
         if (exitStatus == 0) {
 
@@ -6724,7 +6934,7 @@ mainLoop:
             return;
         }
 
-        if (pseudoRank != (param - paramAct)) {
+        if (pseudoRank != (param - constraintAct)) {
             exitStatus = exitStatus + 1;
 
             return;
@@ -6749,11 +6959,11 @@ mainLoop:
      * DOCUMENT ME!
      *
      * @param   tol       DOCUMENT ME!
-     * @param   paramAct  DOCUMENT ME!
+     * @param   constraintAct  DOCUMENT ME!
      *
      * @return  DOCUMENT ME!
      */
-    private int triunc(double tol, int paramAct) {
+    private int triunc(double tol, int constraintAct) {
         // MAKE A QR-DECOMPOSITION OF THE nPts*param MATRIX covarMat BY USING THE ROUTINE SQRDC FROM LINPACK I.E.
         // DETEMINE MATRICES Q,E,R SO THAT      T                                          Q *covarMat*E = (R)
         //                                                (0) WHERE  Q IS nPts*nPts ORTHOGONAL E IS param*param
@@ -6767,7 +6977,7 @@ mainLoop:
         // param   NO. OF COLUMNS IN MATRIX C
         // tol  A SMALL POSITIVE VALUE USED TO DETERMINE PSEUDO RANK OF
         // MATRIX covarMat  (SEE pseudoRank)
-        // paramAct INTEGER SCALAR CONTAINING THE NO. OF ACTIVE CONSTRAINTS
+        // constraintAct INTEGER SCALAR CONTAINING THE NO. OF ACTIVE CONSTRAINTS
         // aset[] INTEGER 1D ARRAY OF DIMENSION param CONTAINING A CODE
         // WHICH INDICATES WHETHER AN UNKNOWN IS ACTIVE OR NOT.
         // ASET(I) = 0 WHEN a[I] IS FREE
@@ -6806,7 +7016,7 @@ mainLoop:
 
         k = -1;
         r11 = Math.abs(covarMat[0][0]);
-        nn = param - paramAct;
+        nn = param - constraintAct;
 
         if (nn == 0) {
             return 0;
