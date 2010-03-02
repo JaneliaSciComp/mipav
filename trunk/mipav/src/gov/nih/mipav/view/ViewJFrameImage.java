@@ -1711,15 +1711,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("waveletThreshold")) {
             new JDialogWaveletThreshold(this, getActiveImage());
         } else if (command.equals("Calculator")) {
-
-            if (isMultipleSameSizeImages(true) == true) {
-                new JDialogImageCalculator(this, getActiveImage());
-            } else {
-                MipavUtil.displayError("There is no image with the same dimensions as\n"
-                        + getActiveImage().getImageName() + " to operate on.");
-
-                return;
-            }
+            //whether valid images are available is handled in the image calculator
+            new JDialogImageCalculator(this, getActiveImage());
         } else if (command.equals("BulkCalculator")) {
 
             if (isMultipleSameSizeImages(true) == true) {
