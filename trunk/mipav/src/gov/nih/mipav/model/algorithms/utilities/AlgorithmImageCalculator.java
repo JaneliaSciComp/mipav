@@ -1197,33 +1197,42 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
             z = 1;
         }
 
-        // determine if we are dealing with a 3D minus a 2D
+        // determine if we are dealing with an acceptable different extents case,
+        // these will allow srcImageB to be applied on a per n-1 dimension basis to all "slices" of n dimension. 
+        // Each "slice" has size diffExtentsFactor
         boolean diffExtents = false;
+        int diffExtentsFactor = 1;
 
-        if ((srcImageA.getNDims() == 3) && (srcImageB.getNDims() == 2)) {
+        if (srcImageA.getNDims()-1 == srcImageB.getNDims()) {
             diffExtents = true;
+            for(int d=0; d<srcImageB.getNDims(); d++) {
+                diffExtentsFactor *= srcImageB.getExtents()[d];
+            }
         }
+        
 
         boolean doneOnce = false;
 
         int totalLength = f * t * z * length;
+        //The current "slice" of srcImageA
+        int pseudoSliceNum = 0;
 
         for (m = 0; (m < f) && !threadStopped; m++) {
 
             for (k = 0; (k < t) && !threadStopped; k++) {
 
                 for (j = 0; (j < z) && !threadStopped; j++) {
-
+                    
                     try {
                         offset = (m * t * z * length) + (k * z * length) + (j * length);
-
+                        
                         if (doComplex) {
                             srcImageA.exportDComplexData(2 * offset, length, bufferA, bufferAI);
                         } else {
                             srcImageA.exportData(offset, length, bufferA); // locks and releases lock
                         }
 
-                        if (!diffExtents || !doneOnce) {
+                        if (!diffExtents) {
 
                             if (doComplex) {
                                 srcImageB.exportDComplexData(2 * offset, length, bufferB, bufferBI);
@@ -1231,6 +1240,17 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                                 srcImageB.exportData(offset, length, bufferB); // locks and releases lock
                             }
 
+                            doneOnce = true;
+                        } else if(diffExtents) {
+                            
+                            if (doComplex) {
+                                pseudoSliceNum = 2 * offset / diffExtentsFactor;
+                                srcImageB.exportDComplexData(2 * offset - pseudoSliceNum*diffExtentsFactor, length, bufferB, bufferBI);
+                            } else {
+                                pseudoSliceNum = offset / diffExtentsFactor;
+                                srcImageB.exportData(offset - pseudoSliceNum*diffExtentsFactor, length, bufferB); // locks and releases lock
+                            }
+                            
                             doneOnce = true;
                         }
                     } catch (IOException error) {
@@ -2110,16 +2130,24 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
             z = 1;
         }
 
-        // determine if we are dealing with a 3D minus a 2D
+        // determine if we are dealing with an acceptable different extents case,
+        // these will allow srcImageB to be applied on a per n-1 dimension basis to all "slices" of n dimension. 
+        // Each "slice" has size diffExtentsFactor
         boolean diffExtents = false;
+        int diffExtentsFactor = 1;
 
-        if ((srcImageA.getNDims() == 3) && (srcImageB.getNDims() == 2)) {
+        if (srcImageA.getNDims()-1 == srcImageB.getNDims()) {
             diffExtents = true;
+            for(int d=0; d<srcImageB.getNDims(); d++) {
+                diffExtentsFactor *= srcImageB.getExtents()[d];
+            }
         }
 
         boolean doneOnce = false;
 
         int totalLength = f * t * z * length;
+        //The current "slice" of srcImageA
+        int pseudoSliceNum = 0;
 
         // System.err.println("Length is: " + length + " totalLength is: " + totalLength);
         // System.err.println("Dest image type is: " + destImage.getType());
@@ -2138,7 +2166,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                             srcImageA.exportData(offset, length, bufferA); // locks and releases lock
                         }
 
-                        if (!diffExtents || !doneOnce) {
+                        if (!diffExtents) {
 
                             if (doComplex) {
                                 srcImageB.exportDComplexData(2 * offset, length, bufferB, bufferBI);
@@ -2146,6 +2174,17 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                                 srcImageB.exportData(offset, length, bufferB); // locks and releases lock
                             }
 
+                            doneOnce = true;
+                        } else if(diffExtents) {
+                            
+                            if (doComplex) {
+                                pseudoSliceNum = 2 * offset / diffExtentsFactor;
+                                srcImageB.exportDComplexData(2 * offset - pseudoSliceNum*diffExtentsFactor, length, bufferB, bufferBI);
+                            } else {
+                                pseudoSliceNum = offset / diffExtentsFactor;
+                                srcImageB.exportData(offset - pseudoSliceNum*diffExtentsFactor, length, bufferB); // locks and releases lock
+                            }
+                            
                             doneOnce = true;
                         }
                     } catch (IOException error) {
