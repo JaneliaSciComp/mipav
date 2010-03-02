@@ -539,6 +539,8 @@ public abstract class NLConstrainedEngine {
     
     private final int DRAPER24D = 0;
     
+    private final int BARD = 8;
+    
     private final int MEYER = 10;
     
     private final int KOWALIK_AND_OSBORNE = 15;
@@ -631,7 +633,7 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         // Constrain a[0]
-        bl[0] = -100.0;
+        bl[0] = -200.0;
         bu[0] = -0.1;
 
         // Constrain a[1]
@@ -641,6 +643,123 @@ public abstract class NLConstrainedEngine {
         // Constrain a[2]
         bl[2] = 0.0;
         bu[2] = 25.6;
+        driverCalls();
+        // Below is an example to fit y = a0 + x/(a1*(16 - x) + a2*min(x,16-x))
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // According to the article if started at 10 * standard starting point or 
+        // 100 * standard point ELSUNC running unconstrained converges towards a reported
+        // unbounded local minimizer.  In fact unconstrained only worked at the standard 
+        // starting point and constrained would work at 10 * standard starting point 
+        // but not 100 * standard starting point.
+        Preferences.debug("Bard function standard starting point\n");
+        Preferences.debug("y = a0 = x/(a1*(16-x) + a2*min(x,16-x))\n");
+        Preferences.debug("Correct answer is a0 = 0.08241, a1 = 1.133, a2 = 2.344\n");
+        testMode = true;
+        testCase = BARD;
+        nPts = 15;
+        param = 3;
+        xSeries = new double[15];
+        for (i = 1; i <= 15; i++) {
+        	xSeries[i-1] = i;
+        }
+        ySeries = new double[]{0.14, 0.18, 0.22, 0.25, 0.29, 0.32, 0.35, 0.39, 
+        		               0.37, 0.58, 0.73, 0.96, 1.34, 2.10, 4.39};
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 1.0;
+        gues[1] = 1.0;
+        gues[2] = 1.0;
+        
+        bounds = 0;  // bounds = 0 means unconstrained
+
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is an example to fit y = a0 + x/(a1*(16 - x) + a2*min(x,16-x))
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // According to the article if started at 10 * standard starting point or 
+        // 100 * standard point ELSUNC running unconstrained converges towards a reported
+        // unbounded local minimizer.  In fact unconstrained only worked at the standard 
+        // starting point and constrained would work at 10 * standard starting point 
+        // but not 100 * standard starting point.
+        Preferences.debug("Bard function 10 * standard starting point\n");
+        Preferences.debug("y = a0 = x/(a1*(16-x) + a2*min(x,16-x))\n");
+        Preferences.debug("Correct answer is a0 = 0.08241, a1 = 1.133, a2 = 2.344\n");
+        testMode = true;
+        testCase = BARD;
+        nPts = 15;
+        param = 3;
+        xSeries = new double[15];
+        for (i = 1; i <= 15; i++) {
+        	xSeries[i-1] = i;
+        }
+        ySeries = new double[]{0.14, 0.18, 0.22, 0.25, 0.29, 0.32, 0.35, 0.39, 
+        		               0.37, 0.58, 0.73, 0.96, 1.34, 2.10, 4.39};
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 10.0;
+        gues[1] = 10.0;
+        gues[2] = 10.0;
+        
+        bounds = 2;  // bounds = 0 means unconstrained
+
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        bl[0] = 0.0;
+        bu[0] = 20.0;
+        bl[1] = 0.0;
+        bu[1] = 20.0;
+        bl[2] = 0.0;
+        bu[2] = 20.0;
+        driverCalls();
+        // Below is an example to fit y = a0 + x/(a1*(16 - x) + a2*min(x,16-x))
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // According to the article if started at 10 * standard starting point or 
+        // 100 * standard point ELSUNC running unconstrained converges towards a reported
+        // unbounded local minimizer.In fact unconstrained only worked at the standard 
+        // starting point and constrained would work at 10 * standard starting point 
+        // but not 100 * standard starting point.
+        Preferences.debug("Bard function 100 * standard starting point\n");
+        Preferences.debug("y = a0 = x/(a1*(16-x) + a2*min(x,16-x))\n");
+        Preferences.debug("Correct answer is a0 = 0.08241, a1 = 1.133, a2 = 2.344\n");
+        testMode = true;
+        testCase = BARD;
+        nPts = 15;
+        param = 3;
+        xSeries = new double[15];
+        for (i = 1; i <= 15; i++) {
+        	xSeries[i-1] = i;
+        }
+        ySeries = new double[]{0.14, 0.18, 0.22, 0.25, 0.29, 0.32, 0.35, 0.39, 
+        		               0.37, 0.58, 0.73, 0.96, 1.34, 2.10, 4.39};
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 100.0;
+        gues[1] = 100.0;
+        gues[2] = 100.0;
+        
+        bounds = 2;  // bounds = 0 means unconstrained
+
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        bl[0] = 0.0;
+        bu[0] = 200.0;
+        bl[1] = 0.0;
+        bu[1] = 200.0;
+        bl[2] = 0.0;
+        bu[2] = 200.0;
         driverCalls();
         // Below is an example to fit y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
@@ -1017,6 +1136,33 @@ public abstract class NLConstrainedEngine {
 	                            covarMat[i][0] = a[1]*Math.pow((a[0] * Math.log(xSeries[i])),a[1]-1.0) * Math.log(xSeries[i]);
 	                            covarMat[i][1] = Math.log(a[0] * Math.log(xSeries[i])) * Math.pow((a[0] * Math.log(xSeries[i])),a[1]);
 	                            covarMat[i][2] = 1.0;
+	                        }
+                        }
+                        else {
+	                    	// If the user wishes to calculate the Jacobian numerically
+	                         ctrlMat[0] = 0; 	
+	                    }
+	                } // else if (ctrl == 2)
+                	break;
+                case BARD:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+
+                        // evaluate the residuals[i] = ymodel[i] - ySeries[i]
+                        for (i = 0; i < nPts; i++) {
+                            ymodel = a[0] + xSeries[i]/(a[1]*(16.0 - xSeries[i]) 
+                            		 + a[2]*Math.min(xSeries[i], 16.0 - xSeries[i]));
+                            residuals[i] = ymodel - ySeries[i];
+                        }
+                    } // if ((ctrl == -1) || (ctrl == 1))
+                    else if (ctrl == 2) {
+                    	double denom;
+                        if (analyticalJacobian) {
+	                        // Calculate the Jacobian analytically
+	                        for (i = 0; i < nPts; i++) {
+	                        	denom = (a[1]*(16.0 - xSeries[i]) + a[2]*Math.min(xSeries[i], 16.0 - xSeries[i]));
+	                            covarMat[i][0] = 1.0;
+	                            covarMat[i][1] = -xSeries[i]*(16.0 - xSeries[i])/(denom*denom);
+	                            covarMat[i][2] = -xSeries[i]*Math.min(xSeries[i], 16.0 - xSeries[i])/(denom*denom);
 	                        }
                         }
                         else {
