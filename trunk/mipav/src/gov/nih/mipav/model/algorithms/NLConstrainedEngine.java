@@ -23,6 +23,21 @@ import gov.nih.mipav.view.*;
  *  if ((aset[imax] == 0) && (ival != 0)) {
  *      constraintAct++;
  *  }
+ *  
+ *  For the self tests:
+ *  DRAPER24D OK.
+ *  HOCK25 OK.
+ *  BARD At standard initial starting point unconstrained OK.  At 10 * standard initial starting point only 
+ *  constrained OK.  At 100 * standard initial starting point Chi-squared = NaN for constrained.
+ *  KOWALIK_AND_OSBORNE at standard initial starting point OK.  At 10 * standard initial starting point only
+ *  constrained OK.  At 100 * starting point does not work
+ *  Note that the article Gauss-Newton Based Algorithms for Constrained Nonlinear Least Squares Problems by 
+ *  Per Lindstrom and Per-ake Wedin says, "However, on the problems BARD and KOWALIK_AND_OSBORNE commented ELSUNC
+ *  started at 10*Xs and 100*Xs, converges towards a reported unbounded local minimizer.
+ *  MEYER starting point okay.  At 10 * standard starting point constrained does not work.
+ *  OSBRONE1 at starting point unconstrained okay.
+ *  OSBORNE2 at starting point unconstrained okay.
+ *   
  */
 
 // BELOW IS AN EXAMPLE OF A DRIVER USED IN FITTING A 4 PARAMETER
@@ -545,6 +560,10 @@ public abstract class NLConstrainedEngine {
     
     private final int KOWALIK_AND_OSBORNE = 15;
     
+    private final int OSBORNE1 = 17;
+    
+    private final int OSBORNE2 = 19;
+    
     private final int HOCK25 = 25;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -556,7 +575,7 @@ public abstract class NLConstrainedEngine {
     	// Norman R. Draper and Harry Smith */
     	// The correct answer is a0 = 72.4326,  a1 = 28.2519, a2 = 0.5968
     	// Works for 4 possibilities of internalScaling = true, false; Jacobian calculation = numerical, analytical
-    	Preferences.debug("Draper problem 24D y = a0 - a1*(a2**x)\n");
+    	Preferences.debug("Draper problem 24D y = a0 - a1*(a2**x) constrained\n");
     	Preferences.debug("Correct answer is a0 = 72.4326, a1 = 28.2519, a2 = 0.5968\n");
     	testMode = true;
     	testCase = DRAPER24D;
@@ -606,7 +625,7 @@ public abstract class NLConstrainedEngine {
     	// where a0 = -50, a1 = 2.0/3.0, a2 = 25.0
     	// Variant of test example 25 from Hock and Schittkowski
     	// Works for 4 possibilities of internalScaling = true, false; Jacobian calculation = numerical, analytical
-        Preferences.debug("Test example 25 from Hock and Schittkowski\n");
+        Preferences.debug("Test example 25 from Hock and Schittkowski constrained\n");
         Preferences.debug("y = (a0 * log(0.01*i)**(a1) + a2\n");
         Preferences.debug("Correct answer is a0 = -50, a1 = 2.0/3.0, a3 = 25.0\n");
         testMode = true;
@@ -651,9 +670,10 @@ public abstract class NLConstrainedEngine {
         // unbounded local minimizer.  In fact unconstrained only worked at the standard 
         // starting point and constrained would work at 10 * standard starting point 
         // but not 100 * standard starting point.
-        Preferences.debug("Bard function standard starting point\n");
+        Preferences.debug("Bard function standard starting point unconstrained\n");
         Preferences.debug("y = a0 = x/(a1*(16-x) + a2*min(x,16-x))\n");
         Preferences.debug("Correct answer is a0 = 0.08241, a1 = 1.133, a2 = 2.344\n");
+        Preferences.debug("Correct answer has Chi-squared = 8.21487E-3\n");
         testMode = true;
         testCase = BARD;
         nPts = 15;
@@ -686,9 +706,10 @@ public abstract class NLConstrainedEngine {
         // unbounded local minimizer.  In fact unconstrained only worked at the standard 
         // starting point and constrained would work at 10 * standard starting point 
         // but not 100 * standard starting point.
-        Preferences.debug("Bard function 10 * standard starting point\n");
+        Preferences.debug("Bard function 10 * standard starting point constrained\n");
         Preferences.debug("y = a0 = x/(a1*(16-x) + a2*min(x,16-x))\n");
         Preferences.debug("Correct answer is a0 = 0.08241, a1 = 1.133, a2 = 2.344\n");
+        Preferences.debug("Correct answer has Chi-squared = 8.21487E-3\n");
         testMode = true;
         testCase = BARD;
         nPts = 15;
@@ -727,9 +748,10 @@ public abstract class NLConstrainedEngine {
         // unbounded local minimizer.In fact unconstrained only worked at the standard 
         // starting point and constrained would work at 10 * standard starting point 
         // but not 100 * standard starting point.
-        Preferences.debug("Bard function 100 * standard starting point\n");
+        Preferences.debug("Bard function 100 * standard starting point constrained\n");
         Preferences.debug("y = a0 = x/(a1*(16-x) + a2*min(x,16-x))\n");
         Preferences.debug("Correct answer is a0 = 0.08241, a1 = 1.133, a2 = 2.344\n");
+        Preferences.debug("Correct answer has Chi-squared = 8.21487E-3\n");
         testMode = true;
         testCase = BARD;
         nPts = 15;
@@ -768,9 +790,10 @@ public abstract class NLConstrainedEngine {
         // unbounded local minimizer.  In fact unconstrained only worked at the standard 
         // starting point and constrained would work at 10 * standard starting point 
         // but not 100 * standard starting point.
-        Preferences.debug("Kowalik and Osborne function standard starting point\n");
+        Preferences.debug("Kowalik and Osborne function standard starting point unconstrained\n");
         Preferences.debug("y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)\n");
         Preferences.debug("Correct answer is a0 = 0.1928, a1 = 0.1913, a2 = 0.1231, a3 = 0.1361\n");
+        Preferences.debug("Correct answer has Chi-squared = 3.07505E-4\n");
         testMode = true;
         testCase = KOWALIK_AND_OSBORNE;
         nPts = 11;
@@ -801,9 +824,10 @@ public abstract class NLConstrainedEngine {
         // unbounded local minimizer.  In fact unconstrained only worked at the standard 
         // starting point and constrained would work at 10 * standard starting point 
         // but not 100 * standard starting point.
-        Preferences.debug("Kowalik and Osborne function 10 * standard starting point\n");
+        Preferences.debug("Kowalik and Osborne function 10 * standard starting point constrained\n");
         Preferences.debug("y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)\n");
         Preferences.debug("Correct answer is a0 = 0.1928, a1 = 0.1913, a2 = 0.1231, a3 = 0.1361\n");
+        Preferences.debug("Correct answer has Chi-squared = 3.07505E-4\n");
         testMode = true;
         testCase = KOWALIK_AND_OSBORNE;
         nPts = 11;
@@ -835,11 +859,54 @@ public abstract class NLConstrainedEngine {
         bl[3] = 0;
         bu[3] = 10.0;
         driverCalls();
+        // Below is an example to fit y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        // According to the article if started at 10 * standard starting point or 
+        // 100 * standard point ELSUNC running unconstrained converges towards a reported
+        // unbounded local minimizer.  In fact unconstrained only worked at the standard 
+        // starting point and constrained would work at 10 * standard starting point 
+        // but not 100 * standard starting point.
+        Preferences.debug("Kowalik and Osborne function 100 * standard starting point constrained\n");
+        Preferences.debug("y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)\n");
+        Preferences.debug("Correct answer is a0 = 0.1928, a1 = 0.1913, a2 = 0.1231, a3 = 0.1361\n");
+        Preferences.debug("Correct answer has Chi-squared = 3.07505E-4\n");
+        testMode = true;
+        testCase = KOWALIK_AND_OSBORNE;
+        nPts = 11;
+        param = 4;
+        xSeries = new double[]{4.0, 2.0, 1.0, 0.5, 0.25, 0.167, 0.125, 0.1, 0.0833, 0.0714, 0.0625};
+        ySeries = new double[]{0.1957, 0.1947, 0.1735, 0.1600, 0.0844, 0.0627, 0.0456, 0.0342, 
+        		               0.0323, 0.0235, 0.0246};
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 25.0;
+        gues[1] = 39.0;
+        gues[2] = 41.5;
+        gues[3] = 39.0;
+        
+        bounds = 2;  // bounds = 0 means unconstrained
+
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        bl[0] = 0;
+        bu[0] = 100.0;
+        bl[1] = 0;
+        bu[1] = 100.0;
+        bl[2] = 0;
+        bu[2] = 100.0;
+        bl[3] = 0;
+        bu[3] = 100.0;
+        driverCalls();
         // Below is an example to fit y = a0*exp[a1/(45 + 5*x + a2)]
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Meyer function standard starting point\n");
+        Preferences.debug("Meyer function standard starting point unconstrained\n");
         Preferences.debug("Y = a0*exp[a1/(x + a2)]\n");
         Preferences.debug("Correct answers are a0 = 0.0056096, a1 = 6181.3, a2 = 345.22\n");
+        Preferences.debug("Correct answer has Chi-squared = 87.9458\n");
         testMode = true;
         testCase = MEYER;
         nPts = 16;
@@ -865,9 +932,10 @@ public abstract class NLConstrainedEngine {
         driverCalls();
         // Below is an example to fit y = a0*exp[a1/(45 + 5*x + a2)]
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Meyer function 10 * standard starting point\n");
+        Preferences.debug("Meyer function 10 * standard starting point constrained\n");
         Preferences.debug("Y = a0*exp[a1/(x + a2)]\n");
         Preferences.debug("Correct answers are a0 = 0.0056096, a1 = 6181.3, a2 = 345.22\n");
+        Preferences.debug("Correct answer has Chi-squared = 87.9458\n");
         testMode = true;
         testCase = MEYER;
         nPts = 16;
@@ -896,6 +964,84 @@ public abstract class NLConstrainedEngine {
         bu[1] = 100000.0;
         bl[2] = 100.0;
         bu[2] = 3000.0;                                             
+        driverCalls();
+        // Below is an example to fit y = a0 + a1*exp(-a3*x) + a2*exp(-a4*x)
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Osborne 1 function unconstrained\n");
+        Preferences.debug("y = a0 + a1*exp(-a3*x) + a2*exp(-a4*x)\n");
+        Preferences.debug("Correct answer is a0 = 0.37541, a1 = 1.9358, a2 = -1.4647, a3 = 0.012868, a4 = 0.022123\n");
+        Preferences.debug("Correct answer has Chi-squared = 5.46489E-5\n");
+        testMode = true;
+        testCase = OSBORNE1;
+        nPts = 33;
+        param = 5;
+        xSeries = new double[33];
+        for (i = 1; i <= 33; i++) {
+        	xSeries[i-1] = 10.0*(i-1);
+        }
+        ySeries = new double[]{0.844, 0.908, 0.932, 0.936, 0.925, 0.908, 0.881, 0.850, 0.818,
+        		  0.784, 0.751, 0.718, 0.685, 0.658, 0.628, 0.603, 0.580, 0.558, 0.538, 0.522,
+        		  0.506, 0.490, 0.478, 0.467, 0.457, 0.448, 0.438, 0.431, 0.424, 0.420, 0.414,
+        		  0.411, 0.406};
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 0.5;
+        gues[1] = 1.5;
+        gues[2] = -1.0;
+        gues[3] = 0.01;
+        gues[4] = 0.02;
+        bounds = 0;  // bounds = 0 means unconstrained
+
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is an example to fit y = a0*exp(-a4*x) + a1*exp(-a5*(x-a8)**2) 
+        // + a2*exp(-a6*(x-a9)**2) + a3*exp(-a7*(x-a10)**2)
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Osborne 2 function unconstrained\n");
+        Preferences.debug("y = a0*exp(-a4*x) + a1*exp(-a5*(x-a8)**2) \n");
+        Preferences.debug("    + a2*exp(-a6*(x-a9)**2) + a3*exp(-a7*(x-a10)**2)\n");
+        Preferences.debug("Correct answer has Chi-squared = 4.01377E-2\n");
+        testMode = true;
+        testCase = OSBORNE2;
+        nPts = 65;
+        param = 11;
+        xSeries = new double[65];
+        for (i = 1; i <= 65; i++) {
+        	xSeries[i-1] = (i-1)/10.0;
+        }
+        ySeries = new double[]{1.366, 1.191, 1.112, 1.013, 0.991, 0.885, 0.831, 0.847, 0.786,
+        		  0.725, 0.746, 0.679, 0.608, 0.655, 0.616, 0.606, 0.602, 0.626, 0.651, 0.724,
+        		  0.649, 0.649, 0.694, 0.644, 0.624, 0.661, 0.612, 0.558, 0.533, 0.495, 0.500,
+        		  0.423, 0.395, 0.375, 0.372, 0.391, 0.396, 0.405, 0.428, 0.429, 0.523, 0.562,
+        		  0.607, 0.653, 0.672, 0.708, 0.633, 0.668, 0.645, 0.632, 0.591, 0.559, 0.597,
+        		  0.625, 0.739, 0.710, 0.729, 0.720, 0.636, 0.581, 0.428, 0.292, 0.162, 0.098,
+        		  0.054};
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 1.3;
+        gues[1] = 0.65;
+        gues[2] = 0.65;
+        gues[3] = 0.7;
+        gues[4] = 0.6;
+        gues[5] = 3.0;
+        gues[6] = 5.0;
+        gues[7] = 7.0;
+        gues[8] = 2.0;
+        gues[9] = 4.5;
+        gues[10] = 5.5;
+        bounds = 0;  // bounds = 0 means unconstrained
+
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
         driverCalls();
     }
     
@@ -1219,6 +1365,73 @@ public abstract class NLConstrainedEngine {
 	                            covarMat[i][0] = exponent;
 	                            covarMat[i][1] = (a[0]/(xSeries[i] + a[2]))* exponent;
 	                            covarMat[i][2] = -(a[0]*a[1]/((xSeries[i] + a[2])*(xSeries[i] + a[2]))) * exponent;
+	                        }
+                        }
+                        else {
+	                    	// If the user wishes to calculate the Jacobian numerically
+	                         ctrlMat[0] = 0; 	
+	                    }
+	                } // else if (ctrl == 2)
+                	break;
+                case OSBORNE1:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+
+                        // evaluate the residuals[i] = ymodel[i] - ySeries[i]
+                        for (i = 0; i < nPts; i++) {
+                            ymodel = a[0] + a[1]*Math.exp(-a[3]*xSeries[i]) + a[2]*Math.exp(-a[4]*xSeries[i]);
+                            residuals[i] = ymodel - ySeries[i];
+                        }
+                    } // if ((ctrl == -1) || (ctrl == 1))
+                    else if (ctrl == 2) {
+                        if (analyticalJacobian) {
+	                        // Calculate the Jacobian analytically
+	                        for (i = 0; i < nPts; i++) {
+	                            covarMat[i][0] = 1.0;
+	                            covarMat[i][1] = Math.exp(-a[3]*xSeries[i]);
+	                            covarMat[i][2] = Math.exp(-a[4]*xSeries[i]);
+	                            covarMat[i][3] = -a[1]*xSeries[i]*Math.exp(-a[3]*xSeries[i]);
+	                            covarMat[i][4] = -a[2]*xSeries[i]*Math.exp(-a[4]*xSeries[i]);
+	                        }
+                        }
+                        else {
+	                    	// If the user wishes to calculate the Jacobian numerically
+	                         ctrlMat[0] = 0; 	
+	                    }
+	                } // else if (ctrl == 2)
+                	break;
+                case OSBORNE2:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+
+                        // evaluate the residuals[i] = ymodel[i] - ySeries[i]
+                        for (i = 0; i < nPts; i++) {
+                            ymodel = a[0]*Math.exp(-a[4]*xSeries[i]) 
+                                   + a[1]*Math.exp(-a[5]*(xSeries[i] - a[8])*(xSeries[i] - a[8]))
+                                   + a[2]*Math.exp(-a[6]*(xSeries[i] - a[9])*(xSeries[i] - a[9]))
+                                   + a[3]*Math.exp(-a[7]*(xSeries[i] - a[10])*(xSeries[i] - a[10]));
+                            residuals[i] = ymodel - ySeries[i];
+                        }
+                    } // if ((ctrl == -1) || (ctrl == 1))
+                    else if (ctrl == 2) {
+                        if (analyticalJacobian) {
+	                        // Calculate the Jacobian analytically
+	                        for (i = 0; i < nPts; i++) {
+	                            covarMat[i][0] = Math.exp(-a[4]*xSeries[i]);
+	                            covarMat[i][1] = Math.exp(-a[5]*(xSeries[i] - a[8])*(xSeries[i] - a[8]));
+	                            covarMat[i][2] = Math.exp(-a[6]*(xSeries[i] - a[9])*(xSeries[i] - a[9]));
+	                            covarMat[i][3] = Math.exp(-a[7]*(xSeries[i] - a[10])*(xSeries[i] - a[10]));
+	                            covarMat[i][4] = -a[0]*xSeries[i]*Math.exp(-a[4]*xSeries[i]) ;
+	                            covarMat[i][5] = -a[1]*(xSeries[i] - a[8])*(xSeries[i] - a[8])
+	                                             *Math.exp(-a[5]*(xSeries[i] - a[8])*(xSeries[i] - a[8]));
+	                            covarMat[i][6] = -a[2]*(xSeries[i] - a[9])*(xSeries[i] - a[9])
+	                                             *Math.exp(-a[6]*(xSeries[i] - a[9])*(xSeries[i] - a[9]));
+	                            covarMat[i][7] = -a[3]*(xSeries[i] - a[10])*(xSeries[i] - a[10])
+	                                             *Math.exp(-a[7]*(xSeries[i] - a[10])*(xSeries[i] - a[10]));
+	                            covarMat[i][8] = 2.0*a[1]*a[5]*(xSeries[i] - a[8])
+	                                             *Math.exp(-a[5]*(xSeries[i] - a[8])*(xSeries[i] - a[8]));
+	                            covarMat[i][9] = 2.0*a[2]*a[6]*(xSeries[i] - a[9])
+	                                             *Math.exp(-a[6]*(xSeries[i] - a[9])*(xSeries[i] - a[9]));
+	                            covarMat[i][10] = 2.0*a[3]*a[7]*(xSeries[i] - a[10])
+	                                              *Math.exp(-a[7]*(xSeries[i] - a[10])*(xSeries[i] - a[10]));
 	                        }
                         }
                         else {
