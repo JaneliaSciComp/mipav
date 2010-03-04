@@ -1,12 +1,16 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
-import WildMagic.LibGraphics.Effects.*;
-import WildMagic.LibGraphics.ObjectSystem.*;
-import WildMagic.LibGraphics.Shaders.*;
-import WildMagic.LibGraphics.Rendering.*;
+import WildMagic.LibGraphics.Effects.ShaderEffect;
+import WildMagic.LibGraphics.ObjectSystem.StreamInterface;
+import WildMagic.LibGraphics.Rendering.Texture;
+import WildMagic.LibGraphics.Shaders.PixelShader;
+import WildMagic.LibGraphics.Shaders.Program;
+import WildMagic.LibGraphics.Shaders.VertexShader;
 
 public class ImageReduceEffect extends ShaderEffect
     implements StreamInterface
 {
+    /**  */
+    private static final long serialVersionUID = 8646199208619749718L;
     private double m_dNumSamples;
     
 

@@ -27,6 +27,9 @@ import WildMagic.LibGraphics.Shaders.VertexShader;
 public class VolumePreRenderEffect extends ShaderEffect
     implements StreamInterface
 {
+    /**  */
+    private static final long serialVersionUID = -9019623746108147953L;
+
     /** Creates an new VolumePreRenderEffect 
      * @param bUseTextureCoords when true use texture coordinates as the colors in the pre-render.
      * @param bUnique when true create unique shader programs, when false share shader programs.

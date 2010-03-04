@@ -7,6 +7,8 @@ import gov.nih.mipav.*;
 
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.renderer.WildMagic.Render.LocalVolumeVOI;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.ScreenCoordinateListener;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -37,7 +39,7 @@ import javax.swing.*;
  * @see     ViewJComponentDualTriImage
  */
 public class ViewJComponentTriImage extends ViewJComponentEditImage
-        implements MouseWheelListener, KeyListener, ActionListener {
+        implements MouseWheelListener, KeyListener, ActionListener, ScreenCoordinateListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -1185,6 +1187,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         } else if (cursorMode == ZOOMING_IN) {
             return;
         } else if (cursorMode == ZOOMING_OUT) {
+            return;
+        }  else if (cursorMode == VOI_3D) {
             return;
         } else {
             setCursorMode(DEFAULT);
@@ -2767,8 +2771,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         if (VOIs != null) {
             int nVOI = VOIs.size();
 
-            for (int i = nVOI - 1; i >= 0; i--) {
-
+            for (int i = nVOI - 1; i >= 0; i--) {                
                 if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
 
                     for (int k = 0; k < imageActive.getExtents()[2]; k++) {
@@ -2785,21 +2788,67 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                                 offscreenGraphics2d.setColor(VOIs.VOIAt(i).getColor());
 
                                 ((VOIPoint) (VOIs.VOIAt(i).getCurves()[k].elementAt(j))).drawAxialSelf(offscreenGraphics2d,
-                                                                                                       (int)
-                                                                                                       screenPt.X,
-                                                                                                       (int)
-                                                                                                       screenPt.Y,
+                                        (int)
+                                        screenPt.X,
+                                        (int)
+                                        screenPt.Y,
 
-                                                                                                       // voiPoints[j] );
-                                                                                                       patientPt);
+                                        // voiPoints[j] );
+                                patientPt);
+                            }
+                        }
+                    }
+                }
+            } // if (VOIs != null)
+        }
+        
+        drawTriPlanar3DVOIs(offscreenGraphics2d);
+    }
+
+    private void drawTriPlanar3DVOIs(Graphics2D offscreenGraphics2d)
+    {
+        if ( imageA.get3DVOIs() == null )
+        {
+            return;
+        }
+        ViewVOIVector VOIs = (ViewVOIVector) imageA.get3DVOIs().clone();
+
+        if ((this == triImageFrame.getTriImage(ViewJFrameTriImage.AXIAL_AB)) ||
+                (this == triImageFrame.getTriImage(ViewJFrameTriImage.SAGITTAL_AB)) ||
+                (this == triImageFrame.getTriImage(ViewJFrameTriImage.CORONAL_AB))) {
+
+            if (imageB != null) {
+                VOIs.addAll((ViewVOIVector) imageB.get3DVOIs().clone());
+            }
+        }
+
+        if (VOIs != null) {
+            int nVOI = VOIs.size();
+
+            for (int i = nVOI - 1; i >= 0; i--) {    
+                VOI kVOI = VOIs.get(i);
+                Vector<VOIBase>[] kCurves = kVOI.getCurves();
+
+                for ( int j = 0; j < kCurves.length; j++ )
+                {
+                    if ( kCurves[j] != null )
+                    {
+                        for ( int k = 0; k < kCurves[j].size(); k++ )
+                        {
+                            VOIBase kVOI3D = kCurves[j].get(k);
+                            if ( kVOI3D instanceof LocalVolumeVOI )
+                            {
+                                ((LocalVolumeVOI)kVOI3D).draw( zoomX, zoomY,
+                                        res, unitsOfMeasure, slice, orientation, 
+                                        offscreenGraphics2d );
                             }
                         }
                     }
                 }
             }
-        } // if (VOIs != null)
+        }
     }
-
+    
     /**
      * Draws the VOI intensity line.
      *
@@ -3094,4 +3143,67 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             triImageFrame.setCenter((int) m_kVolumePoint.X, (int) m_kVolumePoint.Y, (int) m_kVolumePoint.Z);
         }
     }
+
+    public Vector3f fileToScreen(Vector3f kFile) {
+        Vector3f patientPt = new Vector3f();
+        MipavCoordinateSystems.fileToPatient( kFile, patientPt, imageA, orientation );
+        Vector3f screenPt = new Vector3f();
+        super.LocalToScreen( patientPt, screenPt );
+        return screenPt;
+    }
+
+    public Vector3f patientToScreen(Vector3f kPt) {
+        Vector3f screenPt = new Vector3f();
+        super.LocalToScreen( kPt, screenPt );
+        return screenPt;
+    }
+
+    public boolean screenToFile(int iX, int iY, int iZ, Vector3f kVolumePt) {
+        boolean bClipped = false;
+        if ( (iX < 0 ) || (iX > getWidth()) || (iY < 0 ) || (iY > getHeight()) )
+        {
+            bClipped = true;
+        }
+        Vector3f screenPt = new Vector3f(iX, iY, iZ);
+        Vector3f patientPt = new Vector3f();
+        super.ScreenToLocal( screenPt, patientPt );
+        if ( (patientPt.X < 0) || (patientPt.X > localImageExtents[0]-1) ||
+                (patientPt.Y < 0) || (patientPt.Y > localImageExtents[1]-1) )
+        {
+            bClipped = true;
+        }
+                
+        MipavCoordinateSystems.patientToFile( patientPt, kVolumePt, imageA, orientation );
+        return bClipped;
+    }
+    
+
+
+    public Vector3f upSlice()
+    {
+        if ( slice + 1 < localImageExtents[2] )
+        {
+            Vector3f kLocalPoint = new Vector3f();
+            MipavCoordinateSystems.fileToPatient(m_kVolumePoint, kLocalPoint, imageActive, orientation);
+            kLocalPoint.Z++;
+            MipavCoordinateSystems.patientToFile(kLocalPoint, m_kVolumePoint, imageActive, orientation);
+            setCenter( (int)m_kVolumePoint.X, (int)m_kVolumePoint.Y, (int)m_kVolumePoint.Z );
+            return m_kVolumePoint;
+        }
+        return null;
+    }
+    
+    public Vector3f downSlice()
+    {
+        if ( slice - 1 > 0 )
+        {
+            Vector3f kLocalPoint = new Vector3f();
+            MipavCoordinateSystems.fileToPatient(m_kVolumePoint, kLocalPoint, imageActive, orientation);
+            kLocalPoint.Z--;
+            MipavCoordinateSystems.patientToFile(kLocalPoint, m_kVolumePoint, imageActive, orientation);
+            setCenter( (int)m_kVolumePoint.X, (int)m_kVolumePoint.Y, (int)m_kVolumePoint.Z );
+            return m_kVolumePoint;
+        }
+        return null;
+    } 
 }

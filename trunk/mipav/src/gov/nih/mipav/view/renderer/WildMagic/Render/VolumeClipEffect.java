@@ -9,6 +9,8 @@ import WildMagic.LibGraphics.Shaders.Program;
  */
 public abstract class VolumeClipEffect extends ShaderEffect
 {
+    /**  */
+    private static final long serialVersionUID = -833857381096103948L;
     public static final int CLIP_X = 0;
     public static final int CLIP_X_INV = 1;
     public static final int CLIP_Y = 2;
@@ -45,6 +47,18 @@ public abstract class VolumeClipEffect extends ShaderEffect
 
 
     /* (non-Javadoc)
+     * @see WildMagic.LibGraphics.Effects.ShaderEffect#dispose()
+     */
+    public void dispose()
+    {
+        m_afDoClip = null;
+        m_afClipAll = null;
+        m_aafClipData = null;
+        super.dispose();
+    }
+
+
+    /* (non-Javadoc)
      * @see WildMagic.LibGraphics.Effects.ShaderEffect#OnLoadPrograms(int, WildMagic.LibGraphics.Shaders.Program, WildMagic.LibGraphics.Shaders.Program)
      */
     public void OnLoadPrograms (int iPass, Program pkVProgram, Program pkPProgram, Program pkCProgram)
@@ -73,18 +87,6 @@ public abstract class VolumeClipEffect extends ShaderEffect
             pkCProgram.GetUC("clipEyeInv").SetDataSource(m_aafClipData[CLIP_EYE_INV]);
         }
         super.OnLoadPrograms( iPass, pkVProgram, pkPProgram, pkCProgram );
-    }
-
-
-    /* (non-Javadoc)
-     * @see WildMagic.LibGraphics.Effects.ShaderEffect#dispose()
-     */
-    public void dispose()
-    {
-        m_afDoClip = null;
-        m_afClipAll = null;
-        m_aafClipData = null;
-        super.dispose();
     }
 
     /**

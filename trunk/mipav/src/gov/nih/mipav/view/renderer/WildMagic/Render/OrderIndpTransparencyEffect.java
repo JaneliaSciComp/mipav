@@ -1,7 +1,8 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
-import WildMagic.LibGraphics.Effects.*;
-import WildMagic.LibGraphics.Rendering.*;
-import WildMagic.LibGraphics.Shaders.*;
+import WildMagic.LibGraphics.Effects.ShaderEffect;
+import WildMagic.LibGraphics.Rendering.Texture;
+import WildMagic.LibGraphics.Shaders.PixelShader;
+import WildMagic.LibGraphics.Shaders.VertexShader;
 
 /**
  * This class sets up the final pass in rendering multiple semi-transparent surfaces.
@@ -21,6 +22,9 @@ import WildMagic.LibGraphics.Shaders.*;
  */
 public class OrderIndpTransparencyEffect extends ShaderEffect
 {
+    /**  */
+    private static final long serialVersionUID = -1254697242675646161L;
+
     /**
      * Creates a new OrderIndpTransparencyEffect for the final rendering pass.
      * @param akTextures, set of three Frame Buffer Object (FBO) textures to render into/read from.

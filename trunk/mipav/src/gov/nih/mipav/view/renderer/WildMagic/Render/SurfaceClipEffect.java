@@ -9,6 +9,8 @@ import WildMagic.LibGraphics.Shaders.VertexShader;
  */
 public class SurfaceClipEffect extends VolumeClipEffect
 {    
+    /**  */
+    private static final long serialVersionUID = 8502686732859951115L;
     /**
      * Create a surface clip effect. Used to generate the surface mask texture.
      */

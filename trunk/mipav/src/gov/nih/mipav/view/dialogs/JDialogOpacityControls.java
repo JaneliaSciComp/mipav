@@ -4,6 +4,7 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.J3D.surfaceview.*;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.*;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -43,6 +44,8 @@ public class JDialogOpacityControls extends JDialogBase implements ChangeListene
     private SurfacePaint surfacePaint = null;
     /** SurfacePaint reference */
     private SurfacePaint_WM surfacePaint_WM = null;
+    
+    private VOIManagerInterface voiManager = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -117,6 +120,12 @@ public class JDialogOpacityControls extends JDialogBase implements ChangeListene
         this.surfacePaint_WM = surfacePaint;
         init(initVal);
     }
+    
+    public JDialogOpacityControls(Frame theParentFrame, VOIManagerInterface voiManager, float initVal) {
+        super(theParentFrame, false);
+        this.voiManager = voiManager;
+        init(initVal);
+    }
 
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -142,6 +151,10 @@ public class JDialogOpacityControls extends JDialogBase implements ChangeListene
             if ( surfacePaint_WM != null )
             {
                 surfacePaint_WM.setOpacity( opacity );
+            }
+            if ( voiManager != null )
+            {
+                voiManager.setOpacity( opacity );
             }
 
             dispose();
@@ -272,6 +285,10 @@ public class JDialogOpacityControls extends JDialogBase implements ChangeListene
                 if ( surfacePaint_WM != null )
                 {
                     surfacePaint_WM.setOpacity( opacity );
+                }
+                if ( voiManager != null )
+                {
+                    voiManager.setOpacity( opacity );
                 }
             }
         }

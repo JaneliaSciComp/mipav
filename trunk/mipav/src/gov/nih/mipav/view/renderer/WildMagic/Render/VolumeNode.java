@@ -6,7 +6,6 @@ import WildMagic.LibGraphics.Rendering.CullState;
 import WildMagic.LibGraphics.Rendering.Renderer;
 import WildMagic.LibGraphics.SceneGraph.Culler;
 import WildMagic.LibGraphics.SceneGraph.Node;
-import WildMagic.LibGraphics.SceneGraph.Spatial.CullingMode;
 
 public class VolumeNode extends VolumeObject
 {
@@ -57,6 +56,16 @@ public class VolumeNode extends VolumeObject
         return m_kNode;
     }
 
+    /**
+     * Return the translation vector.
+     * @return translation vector.
+     */
+    public Vector3f GetTranslate()
+    {
+        return new Vector3f(m_kNode.Local.GetTranslate());
+    }
+
+
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#Render(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.SceneGraph.Culler)
      */
@@ -70,8 +79,7 @@ public class VolumeNode extends VolumeObject
         kCuller.ComputeVisibleSet(m_kScene);
         kRenderer.DrawScene(kCuller.GetVisibleSet());
     }
-
-
+    
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#Translate(WildMagic.LibFoundation.Mathematics.Vector3f)
      */
@@ -80,15 +88,6 @@ public class VolumeNode extends VolumeObject
         super.Translate(kTranslate);
         m_kNode.Local.SetTranslate(kTranslate);
         m_kScene.UpdateGS();
-    }
-    
-    /**
-     * Return the translation vector.
-     * @return translation vector.
-     */
-    public Vector3f GetTranslate()
-    {
-        return new Vector3f(m_kNode.Local.GetTranslate());
     }
     
     /** Creates the scene graph. */

@@ -100,8 +100,8 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
      * @param  slice         DOCUMENT ME!
      * @param  isRegistered  DOCUMENT ME!
      */
-    public JDialogAnnotation(ModelImage image, VOI textVOI, int slice, boolean isRegistered) {
-        super(image.getParentFrame(), false);
+    public JDialogAnnotation(ModelImage image, VOI textVOI, int slice, boolean isRegistered, boolean modal) {
+        super(image.getParentFrame(), modal);
         this.activeImage = image;
         this.textVOI = textVOI;
 

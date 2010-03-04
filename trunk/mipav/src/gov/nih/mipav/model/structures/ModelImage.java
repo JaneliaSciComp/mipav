@@ -80,6 +80,7 @@ public class ModelImage extends ModelStorageBase {
 
     /** Backup of mask for undoing. */
     private BitSet maskBU;
+    private boolean useMask = false;
 
     /** Holds all of the images associated matrices. */
     private MatrixHolder matrixHolder;
@@ -99,6 +100,9 @@ public class ModelImage extends ModelStorageBase {
 
     /** List of VOIs that are displayed with this image. */
     private VOIVector voiVector = null;
+    
+    /** List of VOIs that are displayed with this image. */
+    private VOIVector voiVector3D = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -201,6 +205,7 @@ public class ModelImage extends ModelStorageBase {
 
         frameList = new Vector<ViewImageUpdateInterface>();
         voiVector = new VOIVector();
+        voiVector3D = new VOIVector();
     }
 
     /**
@@ -285,6 +290,21 @@ public class ModelImage extends ModelStorageBase {
 
         for (int i = 0; i < nVOI; i++) {
             voiVector.add((VOI)VOIs.VOIAt(i).clone());
+        }
+
+        System.gc();
+    }
+
+    /**
+     * adds VOI vector for with new VOIs.
+     *
+     * @param  VOIs  VOIs to add to image
+     */
+    public void add3DVOIs(VOIVector VOIs) {
+        int nVOI = VOIs.size();
+
+        for (int i = 0; i < nVOI; i++) {
+            voiVector3D.add((VOI)VOIs.VOIAt(i).clone());
         }
 
         System.gc();
@@ -1450,6 +1470,11 @@ public class ModelImage extends ModelStorageBase {
     public BitSet getMaskBU() {
         return maskBU;
     }
+    
+    public void useMask(boolean bOn)
+    {
+        useMask = bOn;
+    }
 
     /**
      * Accessor that returns transformation matrix.
@@ -1834,6 +1859,15 @@ public class ModelImage extends ModelStorageBase {
      */
     public VOIVector getVOIs() {
         return voiVector;
+    }
+
+    /**
+     * Accessor that returns.
+     *
+     * @return  VOI vector
+     */
+    public VOIVector get3DVOIs() {
+        return voiVector3D;
     }
 
     /**
@@ -2780,6 +2814,17 @@ public class ModelImage extends ModelStorageBase {
     }
 
     /**
+     * Method that register an VOI to this image.
+     *
+     * @param  voi  Region of interest (VOI) to be registered with the image model
+     */
+    public void register3DVOI(VOI voi) {
+        voiVector3D.addVOI(voi);
+        printVOIs();
+        // need to add voi to list object!!!
+    }
+
+    /**
      * Remove a listener from the class.
      *
      * @param  obj  "object' to be added to the list
@@ -3573,6 +3618,13 @@ public class ModelImage extends ModelStorageBase {
     }
 
     /**
+     * Unregisters all VOIs from this image model.
+     */
+    public void unregisterAll3DVOIs() {
+        voiVector3D.removeAllElements();
+    }
+
+    /**
      * Unregisters the image from the user interface.
      */
     public void unRegisterImage() {
@@ -3591,6 +3643,23 @@ public class ModelImage extends ModelStorageBase {
         voiVector.removeElement(voi);
 
         for (int i = 0; i < voiVector.size(); i++) { // ((VOI)(voiVector.elementAt(i))).setID((short)i);
+        }
+    }
+
+    /**
+     * Method that unregisters an VOI.
+     *
+     * @param  voi  Volume of interest (VOI) to be removed from the image model
+     */
+    public void unregister3DVOI(VOI voi) {
+        voiVector3D.removeElement(voi);
+    }
+    
+    public void printVOIs()
+    {
+        for (int i = 0; i < voiVector.size(); i++)
+        {
+            voiVector.get(i).print();
         }
     }
 
@@ -4420,6 +4489,24 @@ public class ModelImage extends ModelStorageBase {
             voiVector = null;
         } // if ( voiVector != null )
 
+        if (voiVector3D != null) {
+
+            // voiVector.removeAllElements();
+            i = voiVector3D.size();
+
+            for (j = i - 1; j >= 0; j--) {
+                VOI voi = (VOI) (((Vector) voiVector3D).remove(j));
+
+                try {
+                    voi.finalize();
+                } catch (Throwable e) { }
+
+                voi = null;
+            } // for (j = i-1; j >= 0; j--)
+
+            voiVector3D = null;
+        } // if ( voiVector != null )
+
         matrixHolder = null;
         mask = null;
         maskBU = null;
@@ -4469,4 +4556,54 @@ public class ModelImage extends ModelStorageBase {
         // The clone method will register the image after the name has been set.
         imageName = name;
     }
+    
+
+    /**
+     * Export data into values array.
+     *
+     * @param   start   indicates starting position in data array
+     * @param   length  length of data to be copied from data array
+     * @param   values  array where data is to be deposited
+     *
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     */
+    public final synchronized void exportDataUseMask(int start, int length, byte[] values) throws IOException {
+        int i, j;
+
+        if ((start >= 0) && ((start + length) <= getSize()) && (length <= values.length)) {
+
+            try {
+                setLock(W_LOCKED);
+
+                for (i = start, j = 0; j < length; i++, j++) {
+                    if ( (mask != null) && useMask) 
+                    {
+                        if ( mask.get(j) )
+                        {
+                            values[j] = getByte(i);
+                        }
+                        else
+                        {
+                            values[j] = 0;
+                        }
+                    }
+                    else
+                    {
+                        values[j] = getByte(i);
+                    }
+                    
+                }
+
+            } catch (IOException error) {
+                throw error;
+            } finally {
+                releaseLock();
+            }
+
+            return;
+        }
+
+        throw new IOException("Export data error - bounds incorrect");
+    }
+
 }

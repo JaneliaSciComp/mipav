@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
+import gov.nih.mipav.view.renderer.J3D.PlaneRender;
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
 import WildMagic.LibGraphics.Effects.ShaderEffect;
 import WildMagic.LibGraphics.ObjectSystem.StreamInterface;
@@ -18,6 +19,8 @@ import WildMagic.LibGraphics.Shaders.VertexShader;
 public class VolumeHistogramEffect extends ShaderEffect
 implements StreamInterface
 {
+    /**  */
+    private static final long serialVersionUID = 547439954218104278L;
     public static final int COLLAPSE_COLUMNS = 0;
     public static final int COLLAPSE_ROWS = 1;
     public static final int NONE = 2;
@@ -31,6 +34,57 @@ implements StreamInterface
     Matrix4f m_kImageTransform;
     float m_fZSlice = 0.0f;
     float m_fUseZSlice = 0.0f;
+
+    public VolumeHistogramEffect ( Texture kTexA, int iType )
+    {
+        VertexShader kVShader;
+        PixelShader kPShader;
+        /* Set single-pass rendering: */
+        SetPassQuantity(1);
+        if ( iType == COLLAPSE_COLUMNS )
+        {
+            kVShader = new VertexShader("VolumeHistogramColumnsV", true);
+            kPShader = new PixelShader("VolumeHistogramColumnsP", true);
+        }
+        else if ( iType == COLLAPSE_ROWS )
+        {
+            kVShader = new VertexShader("VolumeHistogramRowsV", true);
+            kPShader = new PixelShader("VolumeHistogramRowsP", true);
+        }
+        else
+        {
+            kVShader = new VertexShader("VolumeHistogramPassThroughV", true);
+            kPShader = new PixelShader("TextureP", true);
+        }
+        SetVShader(0,kVShader);
+        SetPShader(0,kPShader);
+        
+        kPShader.SetTextureQuantity(1);
+        kPShader.SetTexture( 0, kTexA );
+        kPShader.SetImageName( 0, kTexA.GetName() );
+    }
+
+
+
+    public VolumeHistogramEffect ( Texture kTexA, Matrix4f kImageTransform )
+    {
+
+        for ( int i = 0; i < 3; i++ )
+        {
+            m_aiExtents[i] = kTexA.GetImage().GetBound(i);
+        }
+        m_kImageTransform = kImageTransform;
+        
+        VertexShader kVShader = new VertexShader("TransformImageV");
+        PixelShader kPShader = new PixelShader("TransformImageP");
+        SetPassQuantity(1);
+        SetVShader(0,kVShader);
+        SetPShader(0,kPShader);
+        
+        kPShader.SetTextureQuantity(1);
+        kPShader.SetTexture( 0, kTexA );
+        kPShader.SetImageName( 0, kTexA.GetName() );
+    }
 
     public VolumeHistogramEffect ( Texture kTexA, Texture kTexB, 
             float fMinA, float fMaxA, float fMinB, float fMaxB,
@@ -78,57 +132,6 @@ implements StreamInterface
         {
             m_aiExtents[i] = kTexA.GetImage().GetBound(i);
         }
-    }
-
-
-
-    public VolumeHistogramEffect ( Texture kTexA, Matrix4f kImageTransform )
-    {
-
-        for ( int i = 0; i < 3; i++ )
-        {
-            m_aiExtents[i] = kTexA.GetImage().GetBound(i);
-        }
-        m_kImageTransform = kImageTransform;
-        
-        VertexShader kVShader = new VertexShader("TransformImageV");
-        PixelShader kPShader = new PixelShader("TransformImageP");
-        SetPassQuantity(1);
-        SetVShader(0,kVShader);
-        SetPShader(0,kPShader);
-        
-        kPShader.SetTextureQuantity(1);
-        kPShader.SetTexture( 0, kTexA );
-        kPShader.SetImageName( 0, kTexA.GetName() );
-    }
-
-    public VolumeHistogramEffect ( Texture kTexA, int iType )
-    {
-        VertexShader kVShader;
-        PixelShader kPShader;
-        /* Set single-pass rendering: */
-        SetPassQuantity(1);
-        if ( iType == COLLAPSE_COLUMNS )
-        {
-            kVShader = new VertexShader("VolumeHistogramColumnsV", true);
-            kPShader = new PixelShader("VolumeHistogramColumnsP", true);
-        }
-        else if ( iType == COLLAPSE_ROWS )
-        {
-            kVShader = new VertexShader("VolumeHistogramRowsV", true);
-            kPShader = new PixelShader("VolumeHistogramRowsP", true);
-        }
-        else
-        {
-            kVShader = new VertexShader("VolumeHistogramPassThroughV", true);
-            kPShader = new PixelShader("TextureP", true);
-        }
-        SetVShader(0,kVShader);
-        SetPShader(0,kPShader);
-        
-        kPShader.SetTextureQuantity(1);
-        kPShader.SetTexture( 0, kTexA );
-        kPShader.SetImageName( 0, kTexA.GetName() );
     }
     
     
@@ -261,17 +264,6 @@ implements StreamInterface
     }
 
 
-    public void ZSlice( float fZ )
-    {
-        m_fZSlice = fZ;
-        Program pkCProgram = GetCProgram(0);
-        if ( pkCProgram != null && pkCProgram.GetUC("ZSlice") != null ) 
-        {
-            pkCProgram.GetUC("ZSlice").GetData()[0] = m_fZSlice;
-        } 
-        //System.err.println( "ZSlice: " + m_fZSlice + " Step: " + m_fZStep + " " + (m_fZSlice + m_fZStep) );
-    }
-    
     public void UseZSlice( )
     {
         m_fUseZSlice = 1f;
@@ -279,6 +271,17 @@ implements StreamInterface
         if ( pkCProgram != null && pkCProgram.GetUC("UseZSlice") != null ) 
         {
             pkCProgram.GetUC("UseZSlice").GetData()[0] = m_fUseZSlice;
+        } 
+        //System.err.println( "ZSlice: " + m_fZSlice + " Step: " + m_fZStep + " " + (m_fZSlice + m_fZStep) );
+    }
+    
+    public void ZSlice( float fZ )
+    {
+        m_fZSlice = fZ;
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram != null && pkCProgram.GetUC("ZSlice") != null ) 
+        {
+            pkCProgram.GetUC("ZSlice").GetData()[0] = m_fZSlice;
         } 
         //System.err.println( "ZSlice: " + m_fZSlice + " Step: " + m_fZStep + " " + (m_fZSlice + m_fZStep) );
     }

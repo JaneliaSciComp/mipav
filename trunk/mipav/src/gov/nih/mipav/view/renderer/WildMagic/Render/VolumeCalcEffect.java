@@ -29,6 +29,9 @@ import WildMagic.LibGraphics.Shaders.VertexShader;
 public class VolumeCalcEffect extends VolumeClipEffect
     implements StreamInterface
 {
+    /**  */
+    private static final long serialVersionUID = -4844378132828150930L;
+
     /** When true the volume data is color. */
     private boolean m_bIsColor = false;
 
@@ -161,18 +164,12 @@ public class VolumeCalcEffect extends VolumeClipEffect
     }
     
     
-    /** Sets the step size shader parameter.
-     * @param kVolumeImage the shared volume data and textures.
-     */
-    public void SetStepSize(VolumeImage kVolumeImage)
+    public void SetIsoVal(float fVal)
     {
         Program pkCProgram = GetCProgram(0);
-        if ( pkCProgram.GetUC("StepSize") != null ) 
+        if ( pkCProgram.GetUC("IsoVal") != null ) 
         {
-            pkCProgram.GetUC("StepSize").GetData()[0] = 1.0f/((float)(kVolumeImage.GetImage().getExtents()[0])-1);
-            pkCProgram.GetUC("StepSize").GetData()[1] = 1.0f/((float)(kVolumeImage.GetImage().getExtents()[1])-1);
-            pkCProgram.GetUC("StepSize").GetData()[2] = 1.0f/((float)(kVolumeImage.GetImage().getExtents()[2])-1);
-            //System.err.println( m_afExtents[0] + " " + m_afExtents[1] + " " + m_afExtents[2] );
+            pkCProgram.GetUC("IsoVal").GetData()[0] = fVal;
         }
     }
     
@@ -191,12 +188,18 @@ public class VolumeCalcEffect extends VolumeClipEffect
         }
     }
     
-    public void SetIsoVal(float fVal)
+    /** Sets the step size shader parameter.
+     * @param kVolumeImage the shared volume data and textures.
+     */
+    public void SetStepSize(VolumeImage kVolumeImage)
     {
         Program pkCProgram = GetCProgram(0);
-        if ( pkCProgram.GetUC("IsoVal") != null ) 
+        if ( pkCProgram.GetUC("StepSize") != null ) 
         {
-            pkCProgram.GetUC("IsoVal").GetData()[0] = fVal;
+            pkCProgram.GetUC("StepSize").GetData()[0] = 1.0f/((float)(kVolumeImage.GetImage().getExtents()[0])-1);
+            pkCProgram.GetUC("StepSize").GetData()[1] = 1.0f/((float)(kVolumeImage.GetImage().getExtents()[1])-1);
+            pkCProgram.GetUC("StepSize").GetData()[2] = 1.0f/((float)(kVolumeImage.GetImage().getExtents()[2])-1);
+            //System.err.println( m_afExtents[0] + " " + m_afExtents[1] + " " + m_afExtents[2] );
         }
     }
     

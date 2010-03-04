@@ -104,7 +104,7 @@ public class Multieffects extends JavaApplication3D
             m_kCuller.ComputeVisibleSet(m_spkScene);
         }
 
-        //m_pkRenderer.EnableUserClipPlane(0, m_kPlane);
+        m_pkRenderer.EnableUserClipPlane(0, m_kPlane);
         m_pkRenderer.ClearBuffers();
         if (m_pkRenderer.BeginScene())
         {          
@@ -201,7 +201,7 @@ public class Multieffects extends JavaApplication3D
         m_spkScene.AttachChild(pkPlane);
         
         m_iActive = 0;
-        //m_pkRenderer.EnableUserClipPlane(0, m_kPlane);
+        m_pkRenderer.EnableUserClipPlane(0, m_kPlane);
         
     }
 

@@ -1,11 +1,15 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
-import WildMagic.LibGraphics.Effects.*;
-import WildMagic.LibGraphics.ObjectSystem.*;
-import WildMagic.LibGraphics.Shaders.*;
+import WildMagic.LibGraphics.Effects.ShaderEffect;
+import WildMagic.LibGraphics.ObjectSystem.StreamInterface;
+import WildMagic.LibGraphics.Shaders.PixelShader;
+import WildMagic.LibGraphics.Shaders.Program;
+import WildMagic.LibGraphics.Shaders.VertexShader;
 
 public class ScaledTextureEffect extends ShaderEffect
     implements StreamInterface
 {
+    /**  */
+    private static final long serialVersionUID = -2514458768937685922L;
     private float m_fScale = 1.0f;
     
     /** Creates a new TextureEffect with the texture specified.

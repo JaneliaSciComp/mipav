@@ -1,19 +1,12 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 import gov.nih.mipav.MipavCoordinateSystems;
-import gov.nih.mipav.model.algorithms.AlgorithmExtractSurface;
-import gov.nih.mipav.model.algorithms.AlgorithmExtractSurfaceCubes;
-import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.view.ViewUserInterface;
-import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
-import gov.nih.mipav.view.renderer.WildMagic.Interface.FileSurface_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceExtractorCubes;
 
 import java.awt.Frame;
 import java.awt.event.KeyListener;
-import java.io.File;
 
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
@@ -30,6 +23,8 @@ import com.sun.opengl.util.Animator;
 public class VolumeImageExtract extends VolumeImageViewer
     implements GLEventListener, KeyListener
 {
+    /**  */
+    private static final long serialVersionUID = 5118167091752659025L;
     private static int ms_iSurface = 0;
     private VolumeCalcEffect m_spkEffect2;
     private GraphicsImage m_kCalcImage;
@@ -191,7 +186,7 @@ public class VolumeImageExtract extends VolumeImageViewer
         m_aiNewExtents[2] = m_kVolumeImage.GetImage().getExtents()[2];
         m_aiNewExtents[2] = Math.max( Math.max(m_aiNewExtents[0], m_aiNewExtents[1]),
                 m_aiNewExtents[2]);
-        float fStep = 1.0f/(float)(m_aiNewExtents[2]-1);
+        float fStep = 1.0f/(m_aiNewExtents[2]-1);
 
         float[] res = m_kVolumeImage.GetImage().getResolutions(0);
         int[] extents = m_kVolumeImage.GetImage().getExtents();
@@ -204,7 +199,7 @@ public class VolumeImageExtract extends VolumeImageViewer
         m_pkPlane.AttachEffect(m_spkEffect);
         m_pkRenderer.LoadResources(m_pkPlane);
         ((VolumeCalcEffect)m_spkEffect).SetStepSize(fStep, fStep, fStep);
-        float fIsoVal = (float)(((float)m_iExtractLevel - m_kVolumeImage.GetImage().getMin()) /
+        float fIsoVal = (float)((m_iExtractLevel - m_kVolumeImage.GetImage().getMin()) /
         (m_kVolumeImage.GetImage().getMax() - m_kVolumeImage.GetImage().getMin()));
         ((VolumeCalcEffect)m_spkEffect).SetIsoVal( fIsoVal );
         m_pkPlane.DetachAllEffects();

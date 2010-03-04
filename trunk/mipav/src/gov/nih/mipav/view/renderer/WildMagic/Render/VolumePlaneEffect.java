@@ -21,6 +21,9 @@ import WildMagic.LibGraphics.Shaders.VertexShader;
 public class VolumePlaneEffect extends ShaderEffect
 implements StreamInterface
 {
+    /**  */
+    private static final long serialVersionUID = -5399442879177045664L;
+
     /** Shared volume data and textures. */
     private VolumeImage m_kVolumeImageA;
 
@@ -55,19 +58,6 @@ implements StreamInterface
     }
 
     /**
-     * Sets the blend factor shader parameter between imageA and imageB.
-     * @param fBlend blend factor (range = 0-1).
-     */
-    public void setABBlend(float fBlend)
-    {
-        Program pkCProgram = GetCProgram(0);
-        if ( (pkCProgram != null) && pkCProgram.GetUC("ABBlend") != null ) 
-        {
-            pkCProgram.GetUC("ABBlend").GetData()[0] = fBlend;
-        }
-    }
-    
-    /**
      * memory cleanup.
      */
     public void dispose()
@@ -76,7 +66,7 @@ implements StreamInterface
         m_kVolumeImageB = null;
         super.dispose();
     }
-
+    
     /**
      * Sets the blend factor shader parameter between imageA and imageB.
      * @param fBlend blend factor (range = 0-1).
@@ -129,6 +119,7 @@ implements StreamInterface
             setRGBTB(null);
         }
     }
+
     /* (non-Javadoc)
      * @see WildMagic.LibGraphics.Effects.ShaderEffect#SaveStrings(java.lang.String)
      */
@@ -139,6 +130,18 @@ implements StreamInterface
         pkTree.Append(super.SaveStrings(null));
 
         return pkTree;
+    }
+    /**
+     * Sets the blend factor shader parameter between imageA and imageB.
+     * @param fBlend blend factor (range = 0-1).
+     */
+    public void setABBlend(float fBlend)
+    {
+        Program pkCProgram = GetCProgram(0);
+        if ( (pkCProgram != null) && pkCProgram.GetUC("ABBlend") != null ) 
+        {
+            pkCProgram.GetUC("ABBlend").GetData()[0] = fBlend;
+        }
     }
 
     /**

@@ -36,6 +36,9 @@ import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 public class ImageRegistrationGPU extends JavaApplication3D
 //implements GLEventListener, KeyListener
 {
+    /**  */
+    private static final long serialVersionUID = 3444862706603129509L;
+
     protected static int m_iScreenCaptureCounter = 1000;
 
     protected VolumeHistogramEffect m_akCollapse2D;
@@ -157,18 +160,6 @@ public class ImageRegistrationGPU extends JavaApplication3D
     }
     
 
-    public void setToOrigin( TransMatrix kToOrigin ) 
-    {
-        m_kToOrigin = convertTo4D(kToOrigin);
-        m_kToOriginInv.Inverse(m_kToOrigin);
-    }
-    public void setFromOrigin( TransMatrix kFromOrigin )
-    {
-        m_kFromOrigin = convertTo4D(kFromOrigin);
-        m_kFromOriginInv.Inverse(m_kFromOrigin);
-        
-    }
-    
     public void calcError(TransMatrix kTransform) {
         //if ( ((OpenGLRenderer)m_pkRenderer).GetContext() !=  GetCanvas().getContext().getCurrent() )
         {
@@ -182,12 +173,6 @@ public class ImageRegistrationGPU extends JavaApplication3D
         display(GetCanvas());  
         GetCanvas().getContext().release();
     }
-    
-    public boolean checkStatus()
-    {
-        return m_bStatus;
-    }
-    
     public void calcLineMinimization()
     {
         //if ( ((OpenGLRenderer)m_pkRenderer).GetContext() !=  GetCanvas().getContext().getCurrent() )
@@ -202,6 +187,32 @@ public class ImageRegistrationGPU extends JavaApplication3D
         m_bCalcLineMin = true;
         display(GetCanvas());  
         GetCanvas().getContext().release();
+    }
+    
+    public boolean checkStatus()
+    {
+        return m_bStatus;
+    }
+    
+    public Matrix4f convertTo4D( Matrix4f kTransform )
+    {
+        if ( m_kImageA.nDims == 2 )
+        {
+            Matrix4f kMat = new Matrix4f(false);
+            kMat.M00 = kTransform.M00;
+            kMat.M01 = kTransform.M01;
+            kMat.M02 = 0;
+            kMat.M03 = kTransform.M02;            
+
+            kMat.M10 = kTransform.M10;
+            kMat.M11 = kTransform.M11;
+            kMat.M12 = 0;
+            kMat.M13 = kTransform.M12;
+            kMat.Transpose();
+            return kMat;            
+        }
+        kTransform.Transpose();
+        return kTransform;
     }
     
     public void display(GLAutoDrawable arg0) {
@@ -238,7 +249,7 @@ public class ImageRegistrationGPU extends JavaApplication3D
             calcEntropy();
         }
     }
-
+    
     public void dispose()
     {
         if ( !m_bDisposeComplete )
@@ -249,6 +260,7 @@ public class ImageRegistrationGPU extends JavaApplication3D
             display(GetCanvas());  
         }
     }
+
     public void dispose(GLAutoDrawable arg0)
     {
 
@@ -326,7 +338,6 @@ public class ImageRegistrationGPU extends JavaApplication3D
                 
         super.dispose();
     }
-
     public float[] getBracketB()
     {
         return m_afBracketB;
@@ -336,7 +347,7 @@ public class ImageRegistrationGPU extends JavaApplication3D
     {
         return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
     }
-    
+
     public double getError()
     {
         //System.err.println( "GetError " + m_dHxy + " " + m_dHx + " " + m_dHy );
@@ -464,33 +475,25 @@ public class ImageRegistrationGPU extends JavaApplication3D
             }
         }
     }
-
-    public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight){}
     
+    public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight){}
+
     public void SetFrame( JFrame kFrame )
     {
         m_kFrame = kFrame;
     }
     
-    public Matrix4f convertTo4D( Matrix4f kTransform )
+    public void setFromOrigin( TransMatrix kFromOrigin )
     {
-        if ( m_kImageA.nDims == 2 )
-        {
-            Matrix4f kMat = new Matrix4f(false);
-            kMat.M00 = kTransform.M00;
-            kMat.M01 = kTransform.M01;
-            kMat.M02 = 0;
-            kMat.M03 = kTransform.M02;            
-
-            kMat.M10 = kTransform.M10;
-            kMat.M11 = kTransform.M11;
-            kMat.M12 = 0;
-            kMat.M13 = kTransform.M12;
-            kMat.Transpose();
-            return kMat;            
-        }
-        kTransform.Transpose();
-        return kTransform;
+        m_kFromOrigin = convertTo4D(kFromOrigin);
+        m_kFromOriginInv.Inverse(m_kFromOrigin);
+        
+    }
+    
+    public void setToOrigin( TransMatrix kToOrigin ) 
+    {
+        m_kToOrigin = convertTo4D(kToOrigin);
+        m_kToOriginInv.Inverse(m_kToOrigin);
     }
 
     public void setTransform( TransMatrix kTransform )
@@ -609,35 +612,6 @@ public class ImageRegistrationGPU extends JavaApplication3D
         m_kBracketPoints.UpdateRS();    
     }
     
-    private void CreateTransformMesh()
-    {
-        //System.err.println( iWidth + " " + iHeight + " " + iDepth );
-        Attributes kAttributes = new Attributes();
-        kAttributes.SetPChannels(3);
-        
-        int iVQuantity = 4;
-        VertexBuffer pkVB = new VertexBuffer(kAttributes,iVQuantity);
-
-        // generate geometry
-
-        float[] afChannels = pkVB.GetData();
-        int iIndex = 0;
-        afChannels[iIndex++] = 0; afChannels[iIndex++] = -1.0f; afChannels[iIndex++] = 0.0f;        
-        afChannels[iIndex++] = 0; afChannels[iIndex++] = -0.34f; afChannels[iIndex++] = 0.3f;        
-        afChannels[iIndex++] = 0; afChannels[iIndex++] = 0.34f; afChannels[iIndex++] = 0.7f;  
-        afChannels[iIndex++] = 0; afChannels[iIndex++] = 0.95f; afChannels[iIndex++] = 1.0f;
-        
-        
-        m_kTransformPoints = new Polypoint( pkVB );        
-        AlphaState kAlpha = new AlphaState();
-        kAlpha.BlendEnabled = true;
-        kAlpha.SrcBlend = AlphaState.SrcBlendMode.SBF_ONE;
-        kAlpha.DstBlend = AlphaState.DstBlendMode.DBF_ONE;
-        m_kTransformPoints.AttachGlobalState(kAlpha);
-        m_kTransformPoints.UpdateGS();
-        m_kTransformPoints.UpdateRS();    
-    }
-    
     protected void CreateHistogramMesh(int iWidth, int iHeight)
     {
         Attributes kAttributes = new Attributes();
@@ -684,7 +658,6 @@ public class ImageRegistrationGPU extends JavaApplication3D
         m_kEntropyPoints2D.UpdateGS();
         m_kEntropyPoints2D.UpdateRS();            
     }
-    
     
     protected ResourceIdentifier CreateImageMesh(int iWidth, int iHeight, int iDepth)
     {
@@ -733,7 +706,8 @@ public class ImageRegistrationGPU extends JavaApplication3D
 
         return m_pkRenderer.LoadVBuffer( pkVB.GetAttributes(), pkVB.GetAttributes(), pkVB );
     }
-
+    
+    
     protected void CreateScene ()
     {           
         int iWidth = m_iWidth;
@@ -785,7 +759,7 @@ public class ImageRegistrationGPU extends JavaApplication3D
         m_kImageLineMinDual.SetImageSize( m_kImageA.extents[0],m_kImageA.extents[1],iDepth );
   */
     }
-    
+
     private void calcEntropy()
     {        
         calcEntropy( m_kImageA, m_kImageA.dataSize ); 
@@ -1048,8 +1022,6 @@ public class ImageRegistrationGPU extends JavaApplication3D
         }
     }
     
-    
-
     private void CreateImageTextures()
     {   
         m_kTextureA = new Texture();
@@ -1103,7 +1075,9 @@ public class ImageRegistrationGPU extends JavaApplication3D
         m_kBracketNewOut = CreateRenderTargetInit( "bracketNew", 1, 3 );
         */
     }
-        
+    
+    
+
     private OpenGLFrameBuffer CreateRenderTarget( String kImageName, int iWidth, int iHeight )
     {      
         //System.err.println( kImageName + " " + iWidth + " " + iHeight );
@@ -1122,7 +1096,7 @@ public class ImageRegistrationGPU extends JavaApplication3D
         return new OpenGLFrameBuffer(m_eFormat,m_eDepth,m_eStencil,
                 m_eBuffering,m_eMultisampling,m_pkRenderer,akSceneTarget,GetCanvas());
     }
-
+        
     private OpenGLFrameBuffer CreateRenderTargetInit( String kImageName, int iWidth, int iHeight )
     {      
         float[] afData = new float[iWidth*iHeight*4];
@@ -1144,6 +1118,35 @@ public class ImageRegistrationGPU extends JavaApplication3D
         return new OpenGLFrameBuffer(m_eFormat,m_eDepth,m_eStencil,
                 m_eBuffering,m_eMultisampling,m_pkRenderer,akSceneTarget,GetCanvas());
 
+    }
+
+    private void CreateTransformMesh()
+    {
+        //System.err.println( iWidth + " " + iHeight + " " + iDepth );
+        Attributes kAttributes = new Attributes();
+        kAttributes.SetPChannels(3);
+        
+        int iVQuantity = 4;
+        VertexBuffer pkVB = new VertexBuffer(kAttributes,iVQuantity);
+
+        // generate geometry
+
+        float[] afChannels = pkVB.GetData();
+        int iIndex = 0;
+        afChannels[iIndex++] = 0; afChannels[iIndex++] = -1.0f; afChannels[iIndex++] = 0.0f;        
+        afChannels[iIndex++] = 0; afChannels[iIndex++] = -0.34f; afChannels[iIndex++] = 0.3f;        
+        afChannels[iIndex++] = 0; afChannels[iIndex++] = 0.34f; afChannels[iIndex++] = 0.7f;  
+        afChannels[iIndex++] = 0; afChannels[iIndex++] = 0.95f; afChannels[iIndex++] = 1.0f;
+        
+        
+        m_kTransformPoints = new Polypoint( pkVB );        
+        AlphaState kAlpha = new AlphaState();
+        kAlpha.BlendEnabled = true;
+        kAlpha.SrcBlend = AlphaState.SrcBlendMode.SBF_ONE;
+        kAlpha.DstBlend = AlphaState.DstBlendMode.DBF_ONE;
+        m_kTransformPoints.AttachGlobalState(kAlpha);
+        m_kTransformPoints.UpdateGS();
+        m_kTransformPoints.UpdateRS();    
     }
 
     private void printTarget( String kMsg, Texture kTarget )

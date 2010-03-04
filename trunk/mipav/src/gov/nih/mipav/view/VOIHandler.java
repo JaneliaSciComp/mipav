@@ -2714,6 +2714,10 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
             // that are happening here, in fact, zoom breaks if we don't return
             return;
         }
+        if ( mode == compImage.VOI_3D )
+        {
+            return;
+        }
 
         xS = compImage.getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
         yS = compImage.getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
@@ -3593,7 +3597,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 }
 
                 // pop up a dialog that allows text input, color, and font formatting
-                new JDialogAnnotation(compImage.getActiveImage(), newTextVOI, compImage.getSlice(), false);
+                new JDialogAnnotation(compImage.getActiveImage(), newTextVOI, compImage.getSlice(), false, false);
 
                 if (!((mouseEvent.isShiftDown() == true) || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
                     compImage.setCursorMode(ViewJComponentEditImage.DEFAULT);
@@ -3965,7 +3969,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
                         // if the Text was double-clicked, bring up the editor
                         if (mouseEvent.getClickCount() == 2) {
-                            new JDialogAnnotation(compImage.getActiveImage(), VOIs.VOIAt(i), compImage.getSlice(), true);
+                            new JDialogAnnotation(compImage.getActiveImage(), VOIs.VOIAt(i), compImage.getSlice(), true, false);
                         }
                     } else if (selectedCurve.contains(xS, yS, true)) {
 

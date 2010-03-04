@@ -22,6 +22,8 @@ import com.sun.opengl.util.Animator;
 public class VolumeImageSurfaceMask extends VolumeImageViewer
     implements GLEventListener, KeyListener
 {
+    /**  */
+    private static final long serialVersionUID = -6880453836501887284L;
     private Vector<VolumeObject> m_kDisplayList = null;
     private SurfaceClipEffect m_kSurfaceClip = null;
     

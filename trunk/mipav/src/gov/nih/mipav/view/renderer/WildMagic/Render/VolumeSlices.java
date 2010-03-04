@@ -4,13 +4,12 @@ import gov.nih.mipav.MipavCoordinateSystems;
 import gov.nih.mipav.model.structures.ModelRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
-import WildMagic.LibFoundation.Mathematics.Matrix4f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Rendering.AlphaState;
 import WildMagic.LibGraphics.Rendering.CullState;
 import WildMagic.LibGraphics.Rendering.GlobalState;
+import WildMagic.LibGraphics.Rendering.PolygonOffsetState;
 import WildMagic.LibGraphics.Rendering.Renderer;
-import WildMagic.LibGraphics.Rendering.ZBufferState;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.Culler;
 import WildMagic.LibGraphics.SceneGraph.Node;
@@ -164,6 +163,16 @@ public class VolumeSlices extends VolumeObject
 
     }
 
+    public Node GetScene()
+    {
+        m_kScene.DetachAllChildren();
+        for ( int i = 0; i < 3; i++ )
+        {
+            m_kScene.AttachChild(m_akPlanes[i]);
+        }
+        return m_kScene;
+    }
+    
     /** Return the current display status for the bounding box for the given plane.
      * @param i the plane index (0-3) in file coordinates.
      * @return true when the bounding box is displayed.
@@ -173,7 +182,6 @@ public class VolumeSlices extends VolumeObject
         int iIndex = MipavCoordinateSystems.fileToModel(i, m_kVolumeImageA.GetImage() );
         return m_abShowBoundingBox[iIndex];
     }
-    
     /** Return the current display status for the bounding box for the given plane.
      * @param i the plane index (0-3) in file coordinates.
      * @return true when the bounding box is displayed.
@@ -183,6 +191,7 @@ public class VolumeSlices extends VolumeObject
         int iIndex = MipavCoordinateSystems.fileToModel(i, m_kVolumeImageA.GetImage() );
         return m_abShowPlanes[iIndex];
     }
+    
     /**
      * Return the opacity for the given plane.
      * @param i the plane index (0-3) in file coordinates.
@@ -194,66 +203,9 @@ public class VolumeSlices extends VolumeObject
         return m_akPlaneEffect[iIndex].GetBlend(); 
     }
     
-    public void setABBlend( float fBlend )
-    {
-        for ( int i = 0; i < 3; i++ )
-        {
-            m_akPlaneEffect[i].setABBlend(fBlend);
-            m_akPlaneEffectTransparent[i].setABBlend(fBlend);
-        }
-    }
-    
 
 
 
-    public void setRGBTA(ModelRGB RGBT) {
-        for ( int i = 0; i < 3; i++ )
-        {
-            m_akPlaneEffect[i].setRGBTA(RGBT);
-            m_akPlaneEffectTransparent[i].setRGBTA(RGBT);
-        }
-    }    
-    
-    public void setRGBTB(ModelRGB RGBT) {
-        for ( int i = 0; i < 3; i++ )
-        {
-            m_akPlaneEffect[i].setRGBTB(RGBT);
-            m_akPlaneEffectTransparent[i].setRGBTB(RGBT);
-        }
-    }
-    
-    /**
-     * Sets the background color.
-     * @param kColor new background color.
-     */
-    public void SetBackgroundColor( ColorRGBA kColor )
-    {
-        for ( int i = 0; i < 3; i++ )
-        {
-            m_akPlaneEffect[i].SetBackgroundColor( kColor );
-            m_akPlaneEffectTransparent[i].SetBackgroundColor( kColor );
-        }
-    }
-    
-    /* (non-Javadoc)
-     * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#PreRender(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.SceneGraph.Culler)
-     
-    public void PreRender( Renderer kRenderer, Culler kCuller, boolean bSolid )
-    {
-        if ( !m_bDisplay )
-        {
-            return;
-        }
-        for ( int i = 0; i < 3; i++ )
-        {
-            m_akPlanes[i].DetachAllEffects();
-            m_akPlanes[i].AttachEffect( m_kVolumePreShader[i] );
-        }
-        m_kScene.UpdateGS();
-        kCuller.ComputeVisibleSet(m_kScene);
-        kRenderer.DrawScene(kCuller.GetVisibleSet());
-    }*/
-    
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#Render(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.SceneGraph.Culler)
      */
@@ -331,10 +283,49 @@ public class VolumeSlices extends VolumeObject
         m_kScene.UpdateRS();
         kCuller.ComputeVisibleSet(m_kScene);              
         kRenderer.DrawScene(kCuller.GetVisibleSet());
+    }    
+    
+    public void setABBlend( float fBlend )
+    {
+        for ( int i = 0; i < 3; i++ )
+        {
+            m_akPlaneEffect[i].setABBlend(fBlend);
+            m_akPlaneEffectTransparent[i].setABBlend(fBlend);
+        }
     }
     
+    /**
+     * Sets the background color.
+     * @param kColor new background color.
+     */
+    public void SetBackgroundColor( ColorRGBA kColor )
+    {
+        for ( int i = 0; i < 3; i++ )
+        {
+            m_akPlaneEffect[i].SetBackgroundColor( kColor );
+            m_akPlaneEffectTransparent[i].SetBackgroundColor( kColor );
+        }
+    }
     
-
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#PreRender(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.SceneGraph.Culler)
+     
+    public void PreRender( Renderer kRenderer, Culler kCuller, boolean bSolid )
+    {
+        if ( !m_bDisplay )
+        {
+            return;
+        }
+        for ( int i = 0; i < 3; i++ )
+        {
+            m_akPlanes[i].DetachAllEffects();
+            m_akPlanes[i].AttachEffect( m_kVolumePreShader[i] );
+        }
+        m_kScene.UpdateGS();
+        kCuller.ComputeVisibleSet(m_kScene);
+        kRenderer.DrawScene(kCuller.GetVisibleSet());
+    }*/
+    
     /** Sets the bounding box color for the given plane.
      * @param i the plane index (0-3) in file coordinates.
      * @param kColor the new color.
@@ -348,6 +339,8 @@ public class VolumeSlices extends VolumeObject
         }
         m_akBoundingBox[iIndex].VBuffer.Release();
     }
+    
+    
 
     /** Sets the positions of the three orthogonal planes. 
      * @param kCenter the positions in file coordinates.
@@ -437,6 +430,21 @@ public class VolumeSlices extends VolumeObject
             m_akBoundingBox[i].VBuffer.Release();
         }
     }
+
+    public void setRGBTA(ModelRGB RGBT) {
+        for ( int i = 0; i < 3; i++ )
+        {
+            m_akPlaneEffect[i].setRGBTA(RGBT);
+            m_akPlaneEffectTransparent[i].setRGBTA(RGBT);
+        }
+    }
+    public void setRGBTB(ModelRGB RGBT) {
+        for ( int i = 0; i < 3; i++ )
+        {
+            m_akPlaneEffect[i].setRGBTB(RGBT);
+            m_akPlaneEffectTransparent[i].setRGBTB(RGBT);
+        }
+    }
     /** Sets the opacity for the given plane.
      * @param i the plane index (0-3) in file coordinates.
      * @param fAlpha the opacity for the given plane.
@@ -488,6 +496,7 @@ public class VolumeSlices extends VolumeObject
             m_akPlaneEffectTransparent[i].ShowSurface(bOn);
         }
     }
+
     /** Creates the bounding frames for the planes. */
     private void CreateBoundingBox ( )
     {
@@ -551,6 +560,13 @@ public class VolumeSlices extends VolumeObject
         m_kAlpha.BlendEnabled = true;
         m_kScene.AttachGlobalState(m_kAlpha);
 
+        m_kPolygonOffset = new PolygonOffsetState();
+        m_kPolygonOffset.FillEnabled = true;
+        m_kPolygonOffset.LineEnabled = true;
+        m_kPolygonOffset.PointEnabled = true;
+        m_kPolygonOffset.Bias = 1;
+        m_kScene.AttachGlobalState(m_kPolygonOffset);
+        
         Attributes kAttr = new Attributes();
         kAttr.SetPChannels(3);
         kAttr.SetCChannels(0,3);
@@ -566,15 +582,5 @@ public class VolumeSlices extends VolumeObject
             m_akPlanes[i].VBuffer.SetShared(true);
             m_akPlanes[i].IBuffer.SetShared(true);
         }
-    }
-
-    public Node GetScene()
-    {
-        m_kScene.DetachAllChildren();
-        for ( int i = 0; i < 3; i++ )
-        {
-            m_kScene.AttachChild(m_akPlanes[i]);
-        }
-        return m_kScene;
     }
 }

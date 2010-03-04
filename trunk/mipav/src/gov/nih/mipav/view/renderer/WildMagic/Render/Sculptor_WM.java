@@ -15,8 +15,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
 
 import javax.media.opengl.GLCanvas;
 import javax.swing.JFileChooser;
@@ -361,11 +359,6 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
         return m_aucSculptImage;
     }
 
-    public void setSculptImage(byte[] abImage)
-    {
-        m_aucSculptImage = abImage;
-    }
-
     /**
      * Initialize the Mouse listener. Note - this function should be called once per instance only, as it sets up the
      * MouseMotionListener and MouseListener.
@@ -420,16 +413,11 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
         return m_bSculptDrawn;
     }
 
-
-    public void setSculptDrawn(boolean value)
-    {
-        m_bSculptDrawn = value;
-    }
-
     /* (non-Javadoc)
      * @see java.awt.event.MouseListener#mouseClicked(java.awt.event.MouseEvent)
      */
     public void mouseClicked(MouseEvent kEvent) {}
+
 
     /**
      * Invoked when the mouse is dragged while a button is held down. If this occurs while sculpting is enabled, then
@@ -971,6 +959,16 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
             }
             m_kImageBackupB = (ModelImage)m_kImageB.clone("sculpt_backupB");
         }
+    }
+
+    public void setSculptDrawn(boolean value)
+    {
+        m_bSculptDrawn = value;
+    }
+
+    public void setSculptImage(byte[] abImage)
+    {
+        m_aucSculptImage = abImage;
     }
 
     /**

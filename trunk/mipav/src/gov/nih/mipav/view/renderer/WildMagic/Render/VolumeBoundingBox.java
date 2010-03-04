@@ -163,5 +163,9 @@ public class VolumeBoundingBox extends VolumeObject
             m_akBoundingBox[i].Local.SetTranslate(m_kTranslate);
             m_kScene.AttachChild(m_akBoundingBox[i]);
         }
+        
+        System.err.println( "BoundingBox" );
+        System.err.println( m_fX + " " + m_fY + " " + m_fZ );
+        System.err.println( m_kTranslate.ToString() );
     }
 }

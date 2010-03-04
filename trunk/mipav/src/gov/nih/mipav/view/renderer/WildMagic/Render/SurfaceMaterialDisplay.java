@@ -1,7 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 import gov.nih.mipav.MipavInitGPU;
-import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 
 import java.awt.event.KeyListener;
 
@@ -19,10 +18,6 @@ import WildMagic.LibGraphics.SceneGraph.Culler;
 import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.StandardMesh;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
-import WildMagic.LibGraphics.Shaders.CompiledProgramCatalog;
-import WildMagic.LibGraphics.Shaders.ImageCatalog;
-import WildMagic.LibGraphics.Shaders.PixelProgramCatalog;
-import WildMagic.LibGraphics.Shaders.VertexProgramCatalog;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
 /**
@@ -32,6 +27,10 @@ import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 public class SurfaceMaterialDisplay extends JavaApplication3D
 implements GLEventListener, KeyListener
 {
+    /**  */
+    private static final long serialVersionUID = 1567185245264397021L;
+
+
     private Node m_spkScene;
 
 

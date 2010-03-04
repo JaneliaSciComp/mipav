@@ -170,6 +170,8 @@ public abstract class ViewJComponentBase extends JComponent {
     /** DOCUMENT ME! */
     public static final int SPLIT_VOI = 38;
     
+    public static final int VOI_3D = 39;
+    
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */

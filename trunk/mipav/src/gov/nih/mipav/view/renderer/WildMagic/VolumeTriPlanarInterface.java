@@ -4,21 +4,90 @@ package gov.nih.mipav.view.renderer.WildMagic;
 import gov.nih.mipav.*;
 
 import gov.nih.mipav.model.file.FileInfoBase;
-import gov.nih.mipav.model.structures.*;
-
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.renderer.*;
-import gov.nih.mipav.view.renderer.J3D.*;
-import gov.nih.mipav.view.renderer.WildMagic.Interface.*;
-import gov.nih.mipav.view.renderer.WildMagic.Render.*;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelLUT;
+import gov.nih.mipav.model.structures.ModelRGB;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.TransferFunction;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewControlsImage;
+import gov.nih.mipav.view.ViewImageFileFilter;
+import gov.nih.mipav.view.ViewImageUpdateInterface;
+import gov.nih.mipav.view.ViewJColorChooser;
+import gov.nih.mipav.view.ViewJComponentBase;
+import gov.nih.mipav.view.ViewJComponentEditImage;
+import gov.nih.mipav.view.ViewJFrameBase;
+import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewJProgressBar;
+import gov.nih.mipav.view.ViewMenuBuilder;
+import gov.nih.mipav.view.ViewToolBarBuilder;
+import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.dialogs.JDialogLivewire;
+import gov.nih.mipav.view.renderer.JPanelHistoLUT;
+import gov.nih.mipav.view.renderer.JPanelHistoRGB;
+import gov.nih.mipav.view.renderer.JPanelRendererBase;
+import gov.nih.mipav.view.renderer.JPanelVolOpacityRGB;
+import gov.nih.mipav.view.renderer.ViewJComponentVolOpacityBase;
+import gov.nih.mipav.view.renderer.J3D.JPanelVolOpacity;
+import gov.nih.mipav.view.renderer.J3D.JPanelVolOpacityBase;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogDTIInput;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogStereoControls;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelClip_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelCustumBlend;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelDisplay_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelGeodesic_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelLights_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelMultiDimensionalTransfer;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelPositions;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelRenderMode_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSculptor_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSlices_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurface_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelVolume4D;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceExtractorCubes;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase.CancelListener;
+import gov.nih.mipav.view.renderer.WildMagic.Render.LocalVolumeVOI;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeNode;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeVOI;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidgetState;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener;
 import gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.CorticalAnalysisRender;
 import gov.nih.mipav.view.renderer.WildMagic.flythroughview.*;
 import gov.nih.mipav.view.renderer.flythroughview.JPanelFlythruMove;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.io.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Insets;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.Vector;
 
 import javax.media.opengl.GLAutoDrawable;
@@ -35,9 +104,9 @@ import WildMagic.LibGraphics.SceneGraph.*;
 
 import com.sun.opengl.util.Animator;
 
-
-public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateInterface, ActionListener,
-        WindowListener, ComponentListener, ChangeListener {
+public class VolumeTriPlanarInterface extends JFrame
+implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentListener, ChangeListener, VOIManagerInterfaceListener
+{
     /**
      * Item to hold tab name and corresponding panel.
      */
@@ -87,7 +156,9 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 
     /** Panel that holds the toolbars. */
     protected JPanel panelToolbar = new JPanel();
-
+    /** Constraints on panelToolbar layout: */
+    protected GridBagConstraints panelToolBarGBC = new GridBagConstraints();
+    
     /** Rendering the brainsurfaceFlattener objects. */
     protected CorticalAnalysisRender brainsurfaceFlattenerRender = null;
 
@@ -218,7 +289,8 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 
     /** Current frame width and height. */
     protected int screenWidth, screenHeight;
-
+    
+    protected VOIManagerInterface m_kVOIInterface = null;
     protected int m_iVOICount = 0;
 
     protected int m_iVOITotal = 0;
@@ -226,8 +298,6 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     protected String m_kVOIName = "";
 
     protected Vector<String> m_kVOINameList = new Vector<String>();
-
-    private JToolBar m_kVOIToolbar;
 
     private IntVector[] m_kVOIImage = null;
 
@@ -249,6 +319,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 
     protected boolean m_bDependentInterfaceInit = false;
 
+    
     /**
      * Specific constructor call from the VolumeViewerDTI.
      */
@@ -427,7 +498,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
             raycastRenderWM.cropClipVolume();
             setModified();
         } else if (command.equals("UndoCropVolume")) {
-            updateData();
+            updateData(true);
         } else if (command.equals("SaveCropVolume")) {
             raycastRenderWM.saveImageFromTexture();
         } else if (command.equals("Slices")) {
@@ -520,13 +591,13 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
             final boolean showAxes = menuObj.isMenuItemSelected("Show axes");
             for (int iPlane = 0; iPlane < 3; iPlane++) {
                 m_akPlaneRender[iPlane].showAxes(showAxes);
-                m_akPlaneRender[iPlane].SetModified(true);
+                m_akPlaneRender[iPlane].updateDisplay();
             }
         } else if (command.equals("ShowXHairs")) {
             final boolean showXHairs = menuObj.isMenuItemSelected("Show crosshairs");
             for (int iPlane = 0; iPlane < 3; iPlane++) {
                 m_akPlaneRender[iPlane].showXHairs(showXHairs);
-                m_akPlaneRender[iPlane].SetModified(true);
+                m_akPlaneRender[iPlane].updateDisplay();
             }
         } else if (command.equals("RadiologicalView")) {
             setRadiological(true);
@@ -536,51 +607,21 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
             raycastRenderWM.displayShaderParameters();
         } else if (command.equals("VOIToolbar")) {
             final boolean showVOI = menuObj.isMenuItemSelected("VOI toolbar");
-            m_kVOIToolbar.setVisible(showVOI);
+            if ( m_kVOIInterface == null )
+            {
+                initVOI();
+            }
+            m_kVOIInterface.getToolBar().setVisible(showVOI);
         } else if (command.equals("4DToolbar") && m_b4D) {
             insertTab("4D", m_kVolume4DGUI.getMainPanel());
             resizePanel();
-        } else if (command.equals("RectVOI")) {
-            doVOI(command);
-        } else if (command.equals("EllipseVOI")) {
-            doVOI(command);
-        } else if (command.equals("Polyline")) {
-            doVOI(command);
-        } else if (command.equals("VOIColor")) {
-            doVOI(command);
-        } else if (command.equals("LevelSetVOI")) {
-            doVOI(command);
-        } else if (command.equals("deleteAllVOI")) {
-            doVOI(command);
-        } else if (command.equals("deleteVOI")) {
-            doVOI(command);
-        } else if (command.equals("cutVOI")) {
-            doVOI(command);
-        } else if (command.equals("copyVOI")) {
-            doVOI(command);
-        } else if (command.equals("pasteVOI")) {
-            doVOI(command);
-        } else if (command.equals("PropVOIUp")) {
-            doVOI(command);
-        } else if (command.equals("PropVOIDown")) {
-            doVOI(command);
-        } else if (command.equals("PropVOIAll")) {
-            doVOI(command);
-        } else if (command.equals("Pointer")) {
-            doVOI(command);
-        } else if (command.equals("Default")) {
-            doVOI(command);
-        } else if (command.equals("3DVOIIntersect")) {
-            create3DVOI(true);
-        } else if (command.equals("3DVOIUnion")) {
-            create3DVOI(false);
         } else if (command.equals("Record")) {
             raycastRenderWM.record(m_kRecordToggle.isSelected());
         } else if (command.equals("SaveState")) {
             SaveState();
         } else if (command.equals("LoadState")) {
             LoadState();
-        }
+        } 
 
     }
 
@@ -1436,13 +1477,17 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         raycastRenderWM.SetCustumBlend(iBlendEquation, iLogicOp, iSrcBlend, iDstBlend, kColor);
     }
 
-    public void setDefaultCursor() {
-        setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-        final Component kComponent = m_kVOIToolbar.getComponentAtIndex(0);
-        if (kComponent instanceof JToggleButton) {
-            final JToggleButton kButton = (JToggleButton) m_kVOIToolbar.getComponentAtIndex(0);
-            kButton.setSelected(true);
-            doVOI("Default");
+    public void setDefaultCursor( )
+    {
+        setCursor( new Cursor(Cursor.DEFAULT_CURSOR) );
+        if ( m_kVOIInterface != null )
+        {
+            Component kComponent = m_kVOIInterface.getToolBar().getComponentAtIndex(0);
+            if ( kComponent instanceof JToggleButton )
+            {
+                JToggleButton kButton = (JToggleButton)m_kVOIInterface.getToolBar().getComponentAtIndex(0);
+                kButton.setSelected(true);
+            }
         }
     }
 
@@ -1560,12 +1605,33 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         if (m_akPlaneRender != null) {
             for (int i = 0; i < 3; i++) {
                 if (m_akPlaneRender[i] != null) {
-                    m_akPlaneRender[i].SetModified(true);
+                    m_akPlaneRender[i].updateDisplay();
                 }
             }
         }
     }
 
+    /*
+    public void updateCurrentVOI(LocalVolumeVOI kOld, LocalVolumeVOI kNew)
+    {
+        raycastRenderWM.updateCurrentVOI(kOld, kNew);    
+        setModified();
+    }
+*/
+    
+    public Vector3f patientToScreen( int iActive, Vector3f kPatient )
+    {
+        if ( m_akPlaneRender != null )
+        {
+            if ( m_akPlaneRender[iActive] != null )
+            {
+                return m_akPlaneRender[iActive].patientToScreen(kPatient);
+            }
+        }
+        return null;
+    }
+
+    
     /**
      * Set the object rotation parameters for displaying.
      */
@@ -1629,8 +1695,13 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         if (m_kVolumeImageB.GetImage() != null) {
             m_kVolumeImageB.GetImage().setRadiologicalView(bOn);
         }
-        final Vector3f center = sliceGUI.getCenter();
-        raycastRenderWM.setCenter(new Vector3f(center.X, center.Y, center.Z));
+        Vector3f center = sliceGUI.getCenter();
+
+        if ( m_kVOIInterface != null )
+        {
+            m_kVOIInterface.setCenter(center);
+        }
+        raycastRenderWM.setCenter( new Vector3f( center.X, center.Y, center.Z ) );    
         for (int i = 0; i < 3; i++) {
             if (m_akPlaneRender[i] != null) {
                 m_akPlaneRender[i].setRadiologicalView(bOn);
@@ -1715,6 +1786,10 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
                 m_akPlaneRender[i].setCenter(center);
             }
         }
+        if ( m_kVOIInterface != null )
+        {
+            m_kVOIInterface.setCenter(center);
+        }
 
         raycastRenderWM.setCenter(center);
         sliceGUI.setCenter((int) center.X, (int) center.Y, (int) center.Z);
@@ -1736,7 +1811,12 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
                 }
             }
         }
-        raycastRenderWM.setCenter(new Vector3f(center.X, center.Y, center.Z));
+
+        if ( m_kVOIInterface != null )
+        {
+            m_kVOIInterface.setCenter(center);
+        }
+        raycastRenderWM.setCenter( new Vector3f( center.X, center.Y, center.Z ) );
     }
 
     /**
@@ -1905,12 +1985,13 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     /**
      * Causes the PlaneRender objects to update the texture maps when the underlying ModelImage changes.
      */
-    public void updateData() {
+    public void updateData(boolean bCopyToCopy) {
         if (m_kVolumeImageA != null) {
-            m_kVolumeImageA.UpdateData(m_kVolumeImageA.GetImage());
+            m_kVolumeImageA.UpdateData(m_kVolumeImageA.GetImage(), bCopyToCopy);
         }
-        if (m_kVolumeImageB != null) {
-            m_kVolumeImageB.UpdateData(m_kVolumeImageB.GetImage());
+        if ( m_kVolumeImageB.GetImage() != null )
+        {
+            m_kVolumeImageB.UpdateData(m_kVolumeImageB.GetImage(), bCopyToCopy);
         }
         raycastRenderWM.updateData();
         setModified();
@@ -2214,22 +2295,17 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         gbc.weightx = 1;
         viewToolBar.add(VolumeTriPlanarInterface.getRendererProgressBar(), gbc);
 
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.weightx = 1;
-        gbc.weighty = 1;
-        panelToolbar.add(viewToolBar, gbc);
-
-        gbc.gridy++;
-        final ViewToolBarBuilder toolBarObj = new ViewToolBarBuilder(this);
-        m_kVOIToolbar = toolBarObj.buildVolumeTriPlanarVOIToolBar();
-        m_kVOIToolbar.setVisible(false);
-        panelToolbar.add(m_kVOIToolbar, gbc);
+        panelToolBarGBC = new GridBagConstraints();
+        panelToolBarGBC.gridx = 0;
+        panelToolBarGBC.gridy = 0;
+        panelToolBarGBC.gridwidth = 1;
+        panelToolBarGBC.gridheight = 1;
+        panelToolBarGBC.fill = GridBagConstraints.BOTH;
+        panelToolBarGBC.anchor = GridBagConstraints.WEST;
+        panelToolBarGBC.weightx = 1;
+        panelToolBarGBC.weighty = 1;
+        panelToolbar.add(viewToolBar, panelToolBarGBC);
+        panelToolBarGBC.gridy++;
     }
 
     /**
@@ -2543,54 +2619,65 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         getContentPane().add(mainPane, BorderLayout.CENTER);
     }
 
-    protected void create3DVOI(final boolean bIntersection) {
+    public void create3DVOI( boolean bIntersection )
+    {
+        ModelImage kImage = new ModelImage( ModelStorageBase.INTEGER, 
+                m_kVolumeImageA.GetImage().getExtents(), "Temp" );
+        kImage.copyFileTypeInfo(m_kVolumeImageA.GetImage());
 
-        if (m_akPlaneRender != null) {
-            ModelImage kImage = new ModelImage(ModelStorageBase.INTEGER, m_kVolumeImageA.GetImage().getExtents(),
-                    "Temp");
-            kImage.copyFileTypeInfo(m_kVolumeImageA.GetImage());
-            for (int i = 0; i < 3; i++) {
-                if (m_akPlaneRender[i] != null) {
-                    m_akPlaneRender[i].make3DVOI(bIntersection, kImage, i);
+        m_kVOIInterface.make3DVOI(bIntersection, kImage);
+        kImage.calcMinMax();
+        //new ViewJFrameImage(kImage, null, new Dimension(610, 200), false);
+
+        int[] aiExtents = kImage.getExtents();
+        int length = aiExtents[0] * aiExtents[1] * aiExtents[2];
+        int[] buffer = new int[length];
+
+        if ( m_kVOIImage == null )
+        {
+            m_kVOIImage = new IntVector[length];
+        }
+
+        for (int i = 0; i < length; i++) {
+            buffer[i] = kImage.getInt(i);
+            if ( bIntersection && (buffer[i] < 250) )
+            {
+                buffer[i] = 0;
+            }
+            if ( buffer[i] != 0 )
+            {
+                if ( m_kVOIImage[i] == null )
+                {
+                    m_kVOIImage[i] = new IntVector();
+                }
+                if ( !m_kVOIImage[i].contains( m_iVOICount ) )
+                {
+                    m_kVOIImage[i].add( m_iVOICount );
                 }
             }
-            kImage.calcMinMax();
-            // new ViewJFrameImage(kImage, null, new Dimension(610, 200), false);
-            final int[] aiExtents = kImage.getExtents();
-            final int length = aiExtents[0] * aiExtents[1] * aiExtents[2];
-            final int[] buffer = new int[length];
+        }
 
-            if (m_kVOIImage == null) {
-                m_kVOIImage = new IntVector[length];
-            }
-
-            for (int i = 0; i < length; i++) {
-                buffer[i] = kImage.getInt(i);
-                if (bIntersection && (buffer[i] < 250)) {
-                    buffer[i] = 0;
-                }
-                if (buffer[i] != 0) {
-                    if (m_kVOIImage[i] == null) {
-                        m_kVOIImage[i] = new IntVector();
-                    }
-                    if ( !m_kVOIImage[i].contains(m_iVOICount)) {
-                        m_kVOIImage[i].add(m_iVOICount);
-                    }
-                }
-            }
-
-            final float[] afResolutions = kImage.getResolutions(0);
-            final int[] direction = MipavCoordinateSystems.getModelDirections(m_kVolumeImageA.GetImage());
-            final float[] startLocation = m_kVolumeImageA.GetImage().getFileInfo(0).getOrigin();
-            SurfaceExtractorCubes kExtractor = new SurfaceExtractorCubes(aiExtents[0], aiExtents[1], aiExtents[2],
-                    buffer, afResolutions[0], afResolutions[1], afResolutions[2], direction, startLocation, null);
-            final TriMesh kMesh = kExtractor.getLevelSurface(245, false);
-            if (kMesh != null) {
-                // Get the adjacent triangles:
-                VETMesh kVETMesh = new VETMesh(2 * kMesh.VBuffer.GetVertexQuantity(), .9f, 2 * kMesh.IBuffer
-                        .GetIndexQuantity(), .9f, 2 * kMesh.GetTriangleQuantity(), .9f, kMesh.IBuffer.GetData());
-                kMesh.IBuffer = new IndexBuffer(kVETMesh.GetTriangles());
-                final TriMesh[] kMeshes = new TriMesh[1];
+        float[] afResolutions = kImage.getResolutions(0);
+        int[] direction = MipavCoordinateSystems.getModelDirections(m_kVolumeImageA.GetImage());
+        float[] startLocation = m_kVolumeImageA.GetImage().getFileInfo(0).getOrigin();
+        SurfaceExtractorCubes kExtractor = 
+            new SurfaceExtractorCubes(aiExtents[0], 
+                    aiExtents[1], 
+                    aiExtents[2], buffer,
+                    afResolutions[0], 
+                    afResolutions[1], 
+                    afResolutions[2], direction,
+                    startLocation, null);
+        TriMesh kMesh = kExtractor.getLevelSurface( 245, false );
+        if ( kMesh != null )
+        {
+            //              Get the adjacent triangles:
+                VETMesh kVETMesh = new VETMesh( 2* kMesh.VBuffer.GetVertexQuantity(), .9f,
+                        2 * kMesh.IBuffer.GetIndexQuantity(), .9f,
+                        2 * kMesh.GetTriangleQuantity(), .9f,
+                        kMesh.IBuffer.GetData() );
+                kMesh.IBuffer = new IndexBuffer( kVETMesh.GetTriangles() );
+                TriMesh[] kMeshes = new TriMesh[1];
                 kMeshes[0] = kMesh;
                 if (kMeshes[0] != null) {
                     getVolumeGPU().displayVolumeRaycast(false);
@@ -2605,14 +2692,14 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
                     m_kVOIName = "";
                 }
                 kVETMesh = null;
-            } else {
-                m_kVOIName = "";
-            }
-            kExtractor = null;
-            kImage.disposeLocal();
-            kImage = null;
         }
-
+        else
+        {
+            m_kVOIName = "";
+        }
+        kExtractor = null;
+        kImage.disposeLocal();
+        kImage = null;
     }
 
     /**
@@ -2676,19 +2763,6 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
                 if (m_kVOIImage[i].contains(iVOICount)) {
                     final int iIndex = m_kVOIImage[i].indexOf(iVOICount);
                     m_kVOIImage[i].remove(iIndex);
-                }
-            }
-        }
-    }
-
-    /**
-     * Passes VOI-commands to the bottom three panels.
-     */
-    private void doVOI(final String kCommand) {
-        if (m_akPlaneRender != null) {
-            for (int i = 0; i < 3; i++) {
-                if (m_akPlaneRender[i] != null) {
-                    m_akPlaneRender[i].doVOI(kCommand);
                 }
             }
         }
@@ -2932,8 +3006,8 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         // PlaneRender Info:
         for (int i = 0; i < 3; i++) {
             kState.PlaneZoom[i] = m_akPlaneRender[i].getZoom();
-            kState.VOIList[i] = m_akPlaneRender[i].getVOICopy();
-            kState.CurrentVOI[i] = m_akPlaneRender[i].getCurrentVOI();
+            //kState.VOIList[i] = m_akPlaneRender[i].getVOICopy();
+            //kState.CurrentVOI[i] = m_akPlaneRender[i].getCurrentVOI();
         }
         return kState;
     }
@@ -2964,16 +3038,16 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         menuObj.getMenuItem("Show axes").setSelected(kState.ShowAxes);
         for (int i = 0; i < 3; i++) {
             m_akPlaneRender[i].showAxes(kState.ShowAxes);
-            m_akPlaneRender[i].SetModified(true);
+            m_akPlaneRender[i].updateDisplay();
         }
         menuObj.getMenuItem("Show crosshairs").setSelected(kState.ShowCrossHairs);
         final boolean showXHairs = menuObj.isMenuItemSelected("Show crosshairs");
         for (int i = 0; i < 3; i++) {
             m_akPlaneRender[i].showXHairs(kState.ShowCrossHairs);
-            m_akPlaneRender[i].SetModified(true);
+            m_akPlaneRender[i].updateDisplay();
         }
         menuObj.getMenuItem("VOI toolbar").setSelected(kState.ShowVOI);
-        m_kVOIToolbar.setVisible(kState.ShowVOI);
+        m_kVOIInterface.getToolBar().setVisible(kState.ShowVOI);
         menuObj.getMenuItem("4D toolbar").setSelected(kState.Show4D);
         if (kState.Show4D) {
             insertTab("4D", m_kVolume4DGUI.getMainPanel());
@@ -3145,8 +3219,8 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         // PlaneRender Info:
         for (int i = 0; i < 3; i++) {
             m_akPlaneRender[i].setZoom(kState.PlaneZoom[i]);
-            m_akPlaneRender[i].setVOICopy(kState.VOIList[i]);
-            m_akPlaneRender[i].setCurrentVOI(kState.CurrentVOI[i]);
+            //m_akPlaneRender[i].setVOICopy(kState.VOIList[i]);
+            //m_akPlaneRender[i].setCurrentVOI(kState.CurrentVOI[i]);
         }
         setModified();
 
@@ -3224,4 +3298,54 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     public void componentHidden(final ComponentEvent arg0) {}
 
     public void componentShown(final ComponentEvent arg0) {}
+    
+    private void initVOI()
+    {        
+        setSliceFromSurface( sliceGUI.getCenter() );
+        m_kVOIInterface = new VOIManagerInterface( this, m_kVolumeImageA.GetImage(), 3, true );
+        panelToolbar.add( m_kVOIInterface.getToolBar(), panelToolBarGBC );
+        for ( int i = 0; i < 3; i++ )
+        {
+            m_kVOIInterface.getVOIManager(i).setCanvas( m_akPlaneRender[i].GetCanvas() );
+            m_kVOIInterface.getVOIManager(i).setDrawingContext( m_akPlaneRender[i] );
+            m_kVOIInterface.getVOIManager(i).setOrientation( m_akPlaneRender[i].getOrientation() );
+            m_kVOIInterface.getVOIManager(i).setSlice( m_akPlaneRender[i].getSlice() );
+        }
+    }
+    public void PointerActive(boolean bActive) {
+        if ( m_akPlaneRender != null )
+        {
+            for (int i = 0; i < 3; i++) {
+                if ( m_akPlaneRender[i] != null )
+                {
+                    m_akPlaneRender[i].setMouseActive(!bActive);
+                }
+            }
+        }
+    }
+
+
+    public Vector3f PropDown(int iActive) {
+        if ( m_akPlaneRender != null )
+        {
+            if ( m_akPlaneRender[iActive] != null )
+            {
+                return m_akPlaneRender[iActive].upSlice();
+            }
+        }
+        return null;
+    }
+
+
+    public Vector3f PropUp(int iActive) {
+        if ( m_akPlaneRender != null )
+        {
+            if ( m_akPlaneRender[iActive] != null )
+            {
+                return m_akPlaneRender[iActive].downSlice();
+            }
+        }
+        return null;
+    }
+
 }

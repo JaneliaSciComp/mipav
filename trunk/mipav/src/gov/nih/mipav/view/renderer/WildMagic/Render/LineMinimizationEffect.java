@@ -2,7 +2,6 @@ package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
 import WildMagic.LibGraphics.Effects.ShaderEffect;
-import WildMagic.LibGraphics.ObjectSystem.StreamInterface;
 import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.Shaders.PixelShader;
 import WildMagic.LibGraphics.Shaders.Program;
@@ -10,6 +9,8 @@ import WildMagic.LibGraphics.Shaders.VertexShader;
 
 public class LineMinimizationEffect extends ShaderEffect
 {
+    /**  */
+    private static final long serialVersionUID = 7303288656271198298L;
     float m_fMin1;
     float m_fMin2;
     float m_fScale1;
@@ -32,47 +33,6 @@ public class LineMinimizationEffect extends ShaderEffect
 
     private float m_dNumSamples;
     
-    public LineMinimizationEffect ( Texture kTexA, Texture kTexB, Texture kTexBracket,
-                                    float fMinA, float fMaxA, float fMinB, float fMaxB,
-                                    int iWidth, int iHeight )
-    {
-        m_iWidth = iWidth;
-        m_iHeight = iHeight;
-
-        /* Set single-pass rendering: */
-        SetPassQuantity(1);
-        VertexShader kVShader = new VertexShader("VolumeHistogramTransformV", true);
-        PixelShader kPShader = new PixelShader("VolumeHistogramP", true);
-        SetVShader(0,kVShader);
-        SetPShader(0,kPShader);
-        
-        kPShader.SetTextureQuantity(3);
-        kPShader.SetTexture( 0, kTexA );
-        kPShader.SetImageName( 0, kTexA.GetName() );
-        kPShader.SetTexture( 1, kTexB );
-        kPShader.SetImageName( 1, kTexB.GetName() );
-        kPShader.SetTexture( 2, kTexBracket );
-        kPShader.SetImageName( 2, kTexBracket.GetName() );
-        
-        m_fMin1 = fMinA;
-        m_fScale1 = 1;
-        if ((fMaxA - fMinA) != 0) {
-            m_fScale1 = (1.0f) / (fMaxA - fMinA);
-        }
-
-        m_fMin2 = fMinB;
-        m_fScale2 = 1;
-        if ((fMaxB - fMinB) != 0) {
-            m_fScale2 = (1.0f) / (fMaxB - fMinB);
-        }
-
-        for ( int i = 0; i < 3; i++ )
-        {
-            m_aiExtents[i] = kTexA.GetImage().GetBound(i);
-        }
-    }
-    
-
     public LineMinimizationEffect ( Texture kTexBracket, boolean bIs2D,
                                     Matrix4f kToOrigin, Matrix4f kFromOrigin,
                                     float rigid, float dim, float[] startPoint, float[] pt, float ptLength,
@@ -119,6 +79,7 @@ public class LineMinimizationEffect extends ShaderEffect
         kPShader.SetImageName( 0, kTexBracket.GetName() );
     }
     
+
     public LineMinimizationEffect ( Texture kTexA, Texture kTexB, float fMinDist, float dNumSamples, int iDim )
     {
         super(1);
@@ -136,6 +97,46 @@ public class LineMinimizationEffect extends ShaderEffect
         kPShader.SetImageName( 0, kTexA.GetName() );
         kPShader.SetTexture( 1, kTexB );
         kPShader.SetImageName( 1, kTexB.GetName() );
+    }
+    
+    public LineMinimizationEffect ( Texture kTexA, Texture kTexB, Texture kTexBracket,
+                                    float fMinA, float fMaxA, float fMinB, float fMaxB,
+                                    int iWidth, int iHeight )
+    {
+        m_iWidth = iWidth;
+        m_iHeight = iHeight;
+
+        /* Set single-pass rendering: */
+        SetPassQuantity(1);
+        VertexShader kVShader = new VertexShader("VolumeHistogramTransformV", true);
+        PixelShader kPShader = new PixelShader("VolumeHistogramP", true);
+        SetVShader(0,kVShader);
+        SetPShader(0,kPShader);
+        
+        kPShader.SetTextureQuantity(3);
+        kPShader.SetTexture( 0, kTexA );
+        kPShader.SetImageName( 0, kTexA.GetName() );
+        kPShader.SetTexture( 1, kTexB );
+        kPShader.SetImageName( 1, kTexB.GetName() );
+        kPShader.SetTexture( 2, kTexBracket );
+        kPShader.SetImageName( 2, kTexBracket.GetName() );
+        
+        m_fMin1 = fMinA;
+        m_fScale1 = 1;
+        if ((fMaxA - fMinA) != 0) {
+            m_fScale1 = (1.0f) / (fMaxA - fMinA);
+        }
+
+        m_fMin2 = fMinB;
+        m_fScale2 = 1;
+        if ((fMaxB - fMinB) != 0) {
+            m_fScale2 = (1.0f) / (fMaxB - fMinB);
+        }
+
+        for ( int i = 0; i < 3; i++ )
+        {
+            m_aiExtents[i] = kTexA.GetImage().GetBound(i);
+        }
     }
 
 
@@ -269,6 +270,56 @@ public class LineMinimizationEffect extends ShaderEffect
        }
     }
     
+    public void setDim( float fDim )
+    {
+        m_fDim = fDim;
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram != null && pkCProgram.GetUC("Dim_2D") != null ) 
+        {
+            pkCProgram.GetUC("Dim_2D").GetData()[0] = m_fDim;
+        }
+    }
+
+    public void SetImageSize( int iX, int iY, int iZ )
+    {
+        m_aiExtents[0] = iX;
+        m_aiExtents[1] = iY;
+        m_aiExtents[2] = iZ;
+
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram != null && pkCProgram.GetUC("ImageSize") != null ) 
+        {
+            pkCProgram.GetUC("ImageSize").GetData()[0] = (m_aiExtents[0]-1);
+            pkCProgram.GetUC("ImageSize").GetData()[1] = (m_aiExtents[1]-1);
+            pkCProgram.GetUC("ImageSize").GetData()[2] = (m_aiExtents[2]-1);
+            //System.err.println( m_aiExtents[0] + " " + m_aiExtents[1] + " " + m_aiExtents[2]);
+        } 
+        if ( pkCProgram != null && pkCProgram.GetUC("ImageSizeInv") != null ) 
+        {
+            pkCProgram.GetUC("ImageSizeInv").GetData()[0] = 1.0f / (m_aiExtents[0]-1);
+            pkCProgram.GetUC("ImageSizeInv").GetData()[1] = 1.0f / (m_aiExtents[1]-1);
+            if ( (m_aiExtents[2]-1) > 0 )
+            {
+                pkCProgram.GetUC("ImageSizeInv").GetData()[2] = 1.0f / (m_aiExtents[2]-1);
+            }
+            else
+            {
+                pkCProgram.GetUC("ImageSizeInv").GetData()[2] = 0f;
+            }
+            //System.err.println( pkCProgram.GetUC("ImageSizeInv").GetData()[2] );
+        } 
+    }
+    
+    public void setMinDist( float fMinDist )
+    {
+        m_fMinDist = fMinDist;
+        Program pkCProgram = GetCProgram(0);
+        if ( (pkCProgram != null) && pkCProgram.GetUC("minDist") != null ) 
+        {
+            pkCProgram.GetUC("minDist").GetData()[0] = m_fMinDist;
+        }     
+    }
+    
     public void SetOrigin( Matrix4f kToOrigin, Matrix4f kFromOrigin )
     {
         m_kToOrigin = kToOrigin;
@@ -281,36 +332,6 @@ public class LineMinimizationEffect extends ShaderEffect
         if ( pkCProgram != null && pkCProgram.GetUC("fromOrigin") != null ) 
         {
             m_kFromOrigin.GetData(pkCProgram.GetUC("fromOrigin").GetData());
-        }
-    }
-
-    public void setRigid( float fRigid )
-    {
-        m_fRigid = fRigid;
-        Program pkCProgram = GetCProgram(0);
-        if ( pkCProgram != null && pkCProgram.GetUC("rigid") != null ) 
-        {
-            pkCProgram.GetUC("rigid").GetData()[0] = m_fRigid;
-        }
-    }
-    
-    public void setDim( float fDim )
-    {
-        m_fDim = fDim;
-        Program pkCProgram = GetCProgram(0);
-        if ( pkCProgram != null && pkCProgram.GetUC("Dim_2D") != null ) 
-        {
-            pkCProgram.GetUC("Dim_2D").GetData()[0] = m_fDim;
-        }
-    }
-    
-    public void setStartPoint( float[] startPoint )
-    {
-        m_afStartPoint = startPoint;
-        Program pkCProgram = GetCProgram(0);
-        if ( pkCProgram != null && pkCProgram.GetUC("startPoint") != null ) 
-        {
-            pkCProgram.GetUC("startPoint").SetDataSource(m_afStartPoint);
         }
     }
 
@@ -329,6 +350,26 @@ public class LineMinimizationEffect extends ShaderEffect
         }
     }
 
+    public void setRigid( float fRigid )
+    {
+        m_fRigid = fRigid;
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram != null && pkCProgram.GetUC("rigid") != null ) 
+        {
+            pkCProgram.GetUC("rigid").GetData()[0] = m_fRigid;
+        }
+    }
+    
+    public void setStartPoint( float[] startPoint )
+    {
+        m_afStartPoint = startPoint;
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram != null && pkCProgram.GetUC("startPoint") != null ) 
+        {
+            pkCProgram.GetUC("startPoint").SetDataSource(m_afStartPoint);
+        }
+    }
+    
     public void setUnitDirections( float[] directions )
     {
         m_afUnitDirections = directions;
@@ -339,15 +380,6 @@ public class LineMinimizationEffect extends ShaderEffect
         }
     }
     
-    public void setMinDist( float fMinDist )
-    {
-        m_fMinDist = fMinDist;
-        Program pkCProgram = GetCProgram(0);
-        if ( (pkCProgram != null) && pkCProgram.GetUC("minDist") != null ) 
-        {
-            pkCProgram.GetUC("minDist").GetData()[0] = m_fMinDist;
-        }     
-    }
     
     public void updateParameters( Matrix4f kToOrigin, Matrix4f kFromOrigin,
                                     float rigid, float dim, float[] startPoint, float[] pt, float ptLength,
@@ -423,37 +455,6 @@ public class LineMinimizationEffect extends ShaderEffect
             pkCProgram.GetUC("params").GetData()[1] = m_fMinDist;
             pkCProgram.GetUC("params").GetData()[2] = m_fUnitTolerance;
        }
-    }
-    
-    
-    public void SetImageSize( int iX, int iY, int iZ )
-    {
-        m_aiExtents[0] = iX;
-        m_aiExtents[1] = iY;
-        m_aiExtents[2] = iZ;
-
-        Program pkCProgram = GetCProgram(0);
-        if ( pkCProgram != null && pkCProgram.GetUC("ImageSize") != null ) 
-        {
-            pkCProgram.GetUC("ImageSize").GetData()[0] = (m_aiExtents[0]-1);
-            pkCProgram.GetUC("ImageSize").GetData()[1] = (m_aiExtents[1]-1);
-            pkCProgram.GetUC("ImageSize").GetData()[2] = (m_aiExtents[2]-1);
-            //System.err.println( m_aiExtents[0] + " " + m_aiExtents[1] + " " + m_aiExtents[2]);
-        } 
-        if ( pkCProgram != null && pkCProgram.GetUC("ImageSizeInv") != null ) 
-        {
-            pkCProgram.GetUC("ImageSizeInv").GetData()[0] = 1.0f / (m_aiExtents[0]-1);
-            pkCProgram.GetUC("ImageSizeInv").GetData()[1] = 1.0f / (m_aiExtents[1]-1);
-            if ( (m_aiExtents[2]-1) > 0 )
-            {
-                pkCProgram.GetUC("ImageSizeInv").GetData()[2] = 1.0f / (m_aiExtents[2]-1);
-            }
-            else
-            {
-                pkCProgram.GetUC("ImageSizeInv").GetData()[2] = 0f;
-            }
-            //System.err.println( pkCProgram.GetUC("ImageSizeInv").GetData()[2] );
-        } 
     }
     
 }
