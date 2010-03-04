@@ -401,6 +401,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /** int used for quick-key painting for speedier paint brush access. */
     private int quickPaintBrushIndex = -1;
+    
+    /** The button that indicates whether this triframe is linked with tri-frames of similar dimensionality. */
+    private JCheckBox scrollButton;
 
     /** Flag for snapping protractor to nearest multiple of 90 degrees. */
     private boolean snapProtractor90 = false;
@@ -475,7 +478,37 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         Preferences.debug(command, Preferences.DEBUG_MINOR);
 
         if (command.equals("ScrollLink")) {
-            linkedScrolling = !linkedScrolling;        	
+            linkedScrolling = !linkedScrolling;    
+                
+            Enumeration names = userInterface.getRegisteredImageNames();
+
+            boolean sameDims = false;
+            while (names.hasMoreElements()) {
+                String name = (String) names.nextElement();
+                sameDims = true;
+
+                if (!imageA.getImageName().equals(name)) {
+                    ModelImage img = userInterface.getRegisteredImageByName(name);
+
+                    if (img.getTriImageFrame() != null) {
+
+                        if (imageA.getNDims() == img.getNDims()) {
+
+                            for (int z = 0; z < imageA.getNDims(); z++) {
+
+                                if (imageA.getExtents()[z] != img.getExtents()[z]) {
+                                    sameDims = false;
+                                }
+                            }
+
+                            if (sameDims == true) {
+                                img.getTriImageFrame().setLinkButtonSelected(linkedScrolling);
+                            }
+                        }
+                    }
+                }
+            }
+            
         } else if (command.equals("CloseFrame")) {
             windowClosing(null);
         } else if (command.equals("leastSquares")) {
@@ -2013,6 +2046,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
                             if (sameDims == true) {
                             	img.getTriImageFrame().setCenter(i, j, k, false);
+                                img.getTriImageFrame().setTimeSlice(tSlice, false);	
                             }
                         }
                     }
@@ -2426,6 +2460,15 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             }
         }
     }
+    
+    /**
+     * Sets whether the linking button should be set for this image, implies that 
+     * this image will be linked to another tri-frame when true
+     */
+    
+    public void setLinkButtonSelected(boolean selected) {
+        scrollButton.setSelected(selected);
+    }
 
     /**
      * Does nothing.
@@ -2482,18 +2525,70 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @param  slice  indicates image time-slice (4th dimension) to be displayed
      */
     public void setTimeSlice(int slice) {
+        setTimeSlice(slice, true);
+    }
+    
+    /**
+     * Sets the slice to be displayed and updates title frame.
+     *
+     * @param  slice  indicates image time-slice (4th dimension) to be displayed
+     * @param checkedLinkedScroll whether corresponding tri-frames should also be scrolled
+     */
+    public void setTimeSlice(int slice, boolean checkedLinkedScroll) {
 
         if (((imageA.getNDims() <= 3) && (imageB == null)) ||
                 ((imageA.getNDims() <= 3) && (imageB != null) && (imageB.getNDims() <= 3))) {
             return;
         }
 
+        ModelImage compImg = null;
+        if(((imageA.getNDims() == 4) && (tSlice < imageA.getExtents()[3]))) {
+            compImg = imageA;
+        } else if((imageB != null) && (imageB.getNDims() == 4) && (tSlice < imageB.getExtents()[3])) {
+            compImg = imageB;
+        }
+        
         if (((imageA.getNDims() == 4) && (tSlice < imageA.getExtents()[3])) ||
                 ((imageB != null) && (imageB.getNDims() == 4) && (tSlice < imageB.getExtents()[3]))) {
             tSlice = slice;
             updateImages(true);
             setTitle();
             setTSlider(slice);
+        }
+       
+        
+        if (checkedLinkedScroll && linkedScrolling && compImg != null) {
+            
+            int[] center = compImg.getTriImageFrame().getCenter();
+            Enumeration names = userInterface.getRegisteredImageNames();
+
+            boolean sameDims = false;
+            while (names.hasMoreElements()) {
+                String name = (String) names.nextElement();
+                sameDims = true;
+
+                if (!compImg.getImageName().equals(name)) {
+                    ModelImage img = userInterface.getRegisteredImageByName(name);
+
+                    if (img.getTriImageFrame() != null) {
+
+                        if (compImg.getNDims() == img.getNDims()) {
+
+                            for (int z = 0; z < compImg.getNDims(); z++) {
+
+                                if (compImg.getExtents()[z] != img.getExtents()[z]) {
+                                    sameDims = false;
+                                }
+                            }
+
+                            if (sameDims == true) {
+                                img.getTriImageFrame().setCenter(center[0], center[1], center[2], false);
+                                img.getTriImageFrame().setTimeSlice(tSlice, false);    
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -2622,7 +2717,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         Object source = e.getSource();
 
         if (source == tImageSlider) {
-        	System.out.println("Aaa");
+
             int newValue = 1;
 
             // removed to make the slider behavior match the time slider in the main mipav frame
@@ -3105,7 +3200,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         //imageToolBar.add(ViewToolBarBuilder.makeSeparator());
 
-        JCheckBox scrollButton = new JCheckBox(MipavUtil.getIcon("link_broken.gif"));
+        scrollButton = new JCheckBox(MipavUtil.getIcon("link_broken.gif"));
         scrollButton.setPreferredSize(new Dimension(24,24));
         scrollButton.setSelectedIcon(MipavUtil.getIcon("link.gif"));
         scrollButton.addActionListener(this);
