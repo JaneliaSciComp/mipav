@@ -941,7 +941,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	                	} else {
 	                		voiVec[0].setColor(voiBuffer.get(voiVec[0].getName()).getColor());
 	                	}
-	                    voiVec[0].setThickness(2);
 	                    if(fillVOIs != 0 && getZeroStatus(voiVec[0].getName())) {
 	                    	voiVec[0].setDisplayMode(VOI.SOLID);
 	                    	voiVec[0].setOpacity((float)fillVOIs);
@@ -1729,7 +1728,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		
 	    	if(voiBuffer.get(name).getLocation() == pane) {
 	    		v = voiBuffer.get(name);
-	    		v.setThickness(2);
 	    		v.setDisplayMode(VOI.BOUNDARY);
 				getActiveImage().registerVOI(v);
 	    	}
@@ -3214,7 +3212,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	        		rec.addVOIListener(checkBoxLocationTree.get(text).getColorButton());
 	        		
 	            	rec.setColor(c);
-	        		rec.setThickness(2);
 	        		
 	        		if(lutOn && getZeroStatus(rec.getName())) {
 	                	rec.setDisplayMode(VOI.SOLID);
