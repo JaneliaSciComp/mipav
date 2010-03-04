@@ -596,7 +596,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         System.gc();
     }
     
-    @Override
 	public void componentShown(ComponentEvent event) {
     	Component c = event.getComponent();
 	    if(c instanceof MuscleDialogPrompt) {
