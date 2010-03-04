@@ -27,8 +27,10 @@ import gov.nih.mipav.view.*;
  *  For the self tests:
  *  DRAPER24D OK.
  *  HOCK25 OK.
- *  BARD At standard initial starting point unconstrained OK.  At 10 * standard initial starting point only 
- *  constrained OK.  At 100 * standard initial starting point Chi-squared = NaN for constrained.
+ *  BARD Unconstrained only worked at the standard  starting point.  This is as expected
+ *  because a[1] is a root in the denominator and so with unconstrained for large
+ *  ranges a[1] = 0 will result in an infinity.  Constrained with a[1] >= 0.1
+ *  works at 10.0 * starting point and at 100.0 * starting point.
  *  KOWALIK_AND_OSBORNE at standard initial starting point OK.  At 10 * standard initial starting point only
  *  constrained OK.  At 100 * starting point does not work
  *  Note that the article Gauss-Newton Based Algorithms for Constrained Nonlinear Least Squares Problems by 
@@ -665,11 +667,10 @@ public abstract class NLConstrainedEngine {
         driverCalls();
         // Below is an example to fit y = a0 + x/(a1*(16 - x) + a2*min(x,16-x))
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        // According to the article if started at 10 * standard starting point or 
-        // 100 * standard point ELSUNC running unconstrained converges towards a reported
-        // unbounded local minimizer.  In fact unconstrained only worked at the standard 
-        // starting point and constrained would work at 10 * standard starting point 
-        // but not 100 * standard starting point.
+        // Unconstrained only worked at the standard  starting point.  This is as expected
+        // because a[1] is a root in the denominator and so with unconstrained for large
+        // ranges a[1] = 0 will result in an infinity.  Constrained with a[1] >= 0.1
+        // works at 10.0 * starting point and at 100.0 * starting point.
         Preferences.debug("Bard function standard starting point unconstrained\n");
         Preferences.debug("y = a0 = x/(a1*(16-x) + a2*min(x,16-x))\n");
         Preferences.debug("Correct answer is a0 = 0.08241, a1 = 1.133, a2 = 2.344\n");
@@ -701,11 +702,10 @@ public abstract class NLConstrainedEngine {
         driverCalls();
         // Below is an example to fit y = a0 + x/(a1*(16 - x) + a2*min(x,16-x))
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        // According to the article if started at 10 * standard starting point or 
-        // 100 * standard point ELSUNC running unconstrained converges towards a reported
-        // unbounded local minimizer.  In fact unconstrained only worked at the standard 
-        // starting point and constrained would work at 10 * standard starting point 
-        // but not 100 * standard starting point.
+        // Unconstrained only worked at the standard  starting point.  This is as expected
+        // because a[1] is a root in the denominator and so with unconstrained for large
+        // ranges a[1] = 0 will result in an infinity.  Constrained with a[1] >= 0.1
+        // works at 10.0 * starting point and at 100.0 * starting point.
         Preferences.debug("Bard function 10 * standard starting point constrained\n");
         Preferences.debug("y = a0 = x/(a1*(16-x) + a2*min(x,16-x))\n");
         Preferences.debug("Correct answer is a0 = 0.08241, a1 = 1.133, a2 = 2.344\n");
@@ -736,18 +736,17 @@ public abstract class NLConstrainedEngine {
         bu = new double[param];
         bl[0] = 0.0;
         bu[0] = 20.0;
-        bl[1] = 0.0;
+        bl[1] = 0.1;
         bu[1] = 20.0;
         bl[2] = 0.0;
         bu[2] = 20.0;
         driverCalls();
         // Below is an example to fit y = a0 + x/(a1*(16 - x) + a2*min(x,16-x))
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        // According to the article if started at 10 * standard starting point or 
-        // 100 * standard point ELSUNC running unconstrained converges towards a reported
-        // unbounded local minimizer.In fact unconstrained only worked at the standard 
-        // starting point and constrained would work at 10 * standard starting point 
-        // but not 100 * standard starting point.
+        // Unconstrained only worked at the standard  starting point.  This is as expected
+        // because a[1] is a root in the denominator and so with unconstrained for large
+        // ranges a[1] = 0 will result in an infinity.  Constrained with a[1] >= 0.1
+        // works at 10.0 * starting point and at 100.0 * starting point.
         Preferences.debug("Bard function 100 * standard starting point constrained\n");
         Preferences.debug("y = a0 = x/(a1*(16-x) + a2*min(x,16-x))\n");
         Preferences.debug("Correct answer is a0 = 0.08241, a1 = 1.133, a2 = 2.344\n");
@@ -778,7 +777,7 @@ public abstract class NLConstrainedEngine {
         bu = new double[param];
         bl[0] = 0.0;
         bu[0] = 200.0;
-        bl[1] = 0.0;
+        bl[1] = 0.1;
         bu[1] = 200.0;
         bl[2] = 0.0;
         bu[2] = 200.0;
