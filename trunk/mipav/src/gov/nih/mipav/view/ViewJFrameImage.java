@@ -3394,7 +3394,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             // need to get all other images in sync if there are other matching images and if shift was down
             if ( (isShiftDown || linkedScrolling) && (getRegisteredFramedImagesSize() > 0)) {
-                Vector registeredFramedImages = getRegisteredFramedImages();
+                Vector registeredFramedImages = getRegisteredFramedImages(getImageA());
 
                 for (int i = 0; i < registeredFramedImages.size(); i++) {
                     final ModelImage img = (ModelImage) registeredFramedImages.get(i);
@@ -3637,17 +3637,23 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     }
 
     /**
-     * Returns the Vector of Registered Framed Images that are of the same dimensionalty as the active image.
+     * Returns the Vector of Registered Framed Images that are of the same number of dimensions
+     * as the active image and same extents for dimesions 3, 4, and 5.
      * 
      * @return Vector
      */
-    public Vector getRegisteredFramedImages() {
-        final ModelImage activeImage = getImageA();
+    public Vector getRegisteredFramedImages(final ModelImage activeImage) {
         final int activeImageNumDims = activeImage.getNDims();
-        int activeImageNumSlices = 0;
-
-        if (activeImageNumDims == 3) {
+        int activeImageNumSlices = 1, activeImageNumVolumes = 1, activeImageNumChannels = 1; 
+       
+        switch(activeImage.getNDims()) { //all extents above 2D need to be checked
+        case 5: 
+            activeImageNumChannels = activeImage.getExtents()[4];
+        case 4:
+            activeImageNumVolumes = activeImage.getExtents()[3];
+        case 3:
             activeImageNumSlices = activeImage.getExtents()[2];
+            
         }
 
         final Vector registeredFramedImages = new Vector();
@@ -3669,14 +3675,25 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     // now check the dimensionality to see if it matches with the active image
                     final int regFramedNumDims = image.getNDims();
 
-                    if (regFramedNumDims == activeImageNumDims) {
+                    if (regFramedNumDims == activeImageNumDims) { //same dimensionality required
 
-                        // it is the same dimensionality
-                        if (image.getExtents()[2] == activeImageNumSlices) {
-
-                            // zdimensions are the same
-                            // so....now we put the image in the arraylist
+                        switch(image.getNDims()) {
+                        case 5:
+                            if(image.getExtents()[4] != activeImageNumChannels) {
+                                break;
+                            }
+                        case 4: 
+                            if(image.getExtents()[3] != activeImageNumVolumes) {
+                                break;
+                            }
+                        case 3:
+                            if(image.getExtents()[2] != activeImageNumSlices) {
+                                break;
+                            }
+                            //if reached, each n dimension's extents for image and n-d active image are equal
                             registeredFramedImages.add(image);
+                        default:
+                            Preferences.debug(image.getImageName()+" will not be linked to "+activeImage.getImageName(), Preferences.DEBUG_MINOR);
                         }
                     }
                 }
@@ -3692,7 +3709,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @return size of the Vector
      */
     public int getRegisteredFramedImagesSize() {
-        final int size = getRegisteredFramedImages().size();
+        final int size = getRegisteredFramedImages(getImageA()).size();
 
         return size;
     }
@@ -3905,7 +3922,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             // need to get all other images in sync if there are other matching images and if shift was down
             if ( (isShiftDown || linkedScrolling) && (getRegisteredFramedImagesSize() > 0)) {
-                Vector registeredFramedImages = getRegisteredFramedImages();
+                Vector registeredFramedImages = getRegisteredFramedImages(getImageA());
 
                 for (int i = 0; i < registeredFramedImages.size(); i++) {
                     final ModelImage img = (ModelImage) registeredFramedImages.get(i);
@@ -4672,12 +4689,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             controls.setZSlider(componentImage.getSlice());
             updateImages(true);
 
-            /**
-             * when we set the slice of the other images, make SURE they do not try to update linked images (infinite
-             * loop)
-             */
+            //when we set the slice of the other images, make SURE they do not try to update linked images (infinite loop)
             if (updateLinkedImages && linkedScrolling) {
-                final Vector registeredFramedImages = getRegisteredFramedImages();
+                final Vector registeredFramedImages = getRegisteredFramedImages(getImageA());
 
                 for (int i = 0; i < registeredFramedImages.size(); i++) {
                     final ModelImage img = (ModelImage) registeredFramedImages.get(i);
@@ -4712,6 +4726,16 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @param slice indicates image time-slice (4th dimension) to be displayed
      */
     public void setTimeSlice(final int slice) {
+        setTimeSlice(slice, true);
+    }
+    
+    /**
+     * Sets the slice to be displayed and updates title frame.
+     * 
+     * @param slice indicates image time-slice (4th dimension) to be displayed
+     * @param whether linked images should change their linked image sets
+     */
+    public void setTimeSlice(final int slice, boolean checkScroll) {
 
         if (imageA.getNDims() == 4) {
 
@@ -4734,6 +4758,18 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 if (infoDialogB != null) {
                     infoDialogB.setSlice(componentImage.getSlice(), componentImage.getTimeSlice());
+                }
+                
+                //when we set the slice of the other images, make SURE they do not try to update linked images (infinite loop)
+                if (checkScroll && linkedScrolling) {
+                    final Vector registeredFramedImages = getRegisteredFramedImages(getImageA());
+
+                    for (int i = 0; i < registeredFramedImages.size(); i++) {
+                        final ModelImage img = (ModelImage) registeredFramedImages.get(i);
+                        final ViewJFrameImage framedImg = ViewUserInterface.getReference().getFrameContainingImage(img);
+                        framedImg.setTimeSlice(componentImage.getTimeSlice(), false);
+                        framedImg.updateImages();
+                    }
                 }
             }
         } // if (imageA.getNDims() <= 3)
@@ -4759,7 +4795,20 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 if (infoDialogB != null) {
                     infoDialogB.setSlice(componentImage.getSlice(), componentImage.getTimeSlice());
                 }
+                
+                if (checkScroll && linkedScrolling) {
+                    final Vector registeredFramedImages = getRegisteredFramedImages(getImageB());
+
+                    for (int i = 0; i < registeredFramedImages.size(); i++) {
+                        final ModelImage img = (ModelImage) registeredFramedImages.get(i);
+                        final ViewJFrameImage framedImg = ViewUserInterface.getReference().getFrameContainingImage(img);
+                        framedImg.setTimeSlice(componentImage.getTimeSlice(), false);
+                        framedImg.updateImages();
+                    }
+                }
             }
+            
+            
         } // else if ((imageB != null) && (imageB.getNDims() == 4))
         else {
             return;
