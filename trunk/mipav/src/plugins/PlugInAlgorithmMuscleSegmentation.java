@@ -708,11 +708,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		customPane.updateImages(true);
 		customPane.repaint();
 		
-		for(int i=0; i<customVOI.size(); i++) {
-			for(int j=0; j<customVOI.get(i).size(); j++) {
-				customVOI.get(i).get(j).initDependents(customVOI.get(i).size());
-			}
-		}
+		//TODO: Implement dependent scheme when 1.6 is introduced
+		//for(int i=0; i<customVOI.size(); i++) {
+		//	for(int j=0; j<customVOI.get(i).size(); j++) {
+		//		customVOI.get(i).get(j).initDependents(customVOI.get(i).size());
+		//	}
+		//}
 		
 		return mainPanel;
 	}
@@ -1095,6 +1096,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		}
 	}
 	
+	/**
+	 * A muscle pane is an individual VOI, identifying characteristics about the particular VOI.
+	 * 
+	 * @author senseneyj
+	 *
+	 */
 	private class MusclePane extends JPanel implements Serializable, ActionListener, MouseListener {
 		
 		/**The color identifier*/
@@ -1122,7 +1129,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	    private ViewJColorChooser colorChooser;
 	    
 	    /**List of potential children for this MusclePane*/
-	    private ArrayList<DependencyNode> lineList;
+	    //TODO: Implemented for 1.6 Java graphics only
+	    //private ArrayList<DependencyNode> lineList;
 	    
 	    /**Selected dependency node*/
 	    private DependencyNode selected = null;
@@ -1209,15 +1217,16 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			add(numCurves, c);
 		}
 		
-		public void initDependents(int size) {
-			lineList = new ArrayList<DependencyNode>(size);
-			for(int j=0; j<size-1; j++) {
-				Point p1 = this.getLocationOnScreen();
-				Point2D.Double p2 = new Point2D.Double(p1.x-10, p1.y);
-				DependencyNode l;
-				lineList.add(l = new DependencyNode(p1, p2));	
-			}
-		}
+		//TODO: Implement dependency arrows when 1.6 is available, until then this code is not valid
+		//public void initDependents(int size) {
+		//	lineList = new ArrayList<DependencyNode>(size);
+		//	for(int j=0; j<size-1; j++) {
+		//		Point p1 = this.getLocationOnScreen();
+		//		Point2D.Double p2 = new Point2D.Double(p1.x-10, p1.y);
+		//		DependencyNode l;
+		//		lineList.add(l = new DependencyNode(p1, p2));	
+		//	}
+		//}
 
 		public void actionPerformed(ActionEvent e) {
 			if(e.getSource() instanceof JButton && ((JButton)e.getSource()).getText().equals("OK")) {
@@ -1226,12 +1235,14 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			} else if(e.getSource() instanceof PlugInMuscleColorButton) {
 				colorChooser = new ViewJColorChooser(new Frame(), "Pick VOI color", 
 						this, this);
-			} else if(e.getActionCommand().equals(ADD_VOI)) {
-					Point p1 = this.getLocationOnScreen();
-					Point2D.Double p2 = new Point2D.Double(p1.x-10, p1.y);
-					DependencyNode l;
-					lineList.add(new DependencyNode(p1, p2));	
-			}
+			} 
+			//TODO: This code relates to 1.6 graphics abilities
+			//else if(e.getActionCommand().equals(ADD_VOI)) {
+			//		Point p1 = this.getLocationOnScreen();
+			//		Point2D.Double p2 = new Point2D.Double(p1.x-10, p1.y);
+			//		DependencyNode l;
+			//		lineList.add(new DependencyNode(p1, p2));	
+			//}
 		}
 
 		public void mouseClicked(MouseEvent e) {
@@ -1252,12 +1263,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		public void mousePressed(MouseEvent e) {
 			DependencyNode possiblySelected = null;
 			boolean newLine = false;
-			for(int i=0; i<lineList.size(); i++) {
-				if(!lineList.get(i).isPointing()) {
-					possiblySelected = lineList.get(i);
-					newLine = true;
-				}
-			}
+			//TODO: This code relates to 1.6 graphics abilities
+			//for(int i=0; i<lineList.size(); i++) {
+			//	if(!lineList.get(i).isPointing()) {
+			//		possiblySelected = lineList.get(i);
+			//		newLine = true;
+			//	}
+			//}
 			if(newLine && possiblySelected.contains(e.getPoint())) {
 				selected = possiblySelected;
 			}
@@ -1313,9 +1325,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			return isClosed.isSelected();
 		}
 		
-		public ArrayList<DependencyNode> getLineList() {
-			return lineList;
-		}
+		//public ArrayList<DependencyNode> getLineList() {
+		//	return lineList;
+		//}
 
 		public void setColorButton(Color c) {
 			this.colorButton.getColorButton().getColorIcon().setColor(c);
