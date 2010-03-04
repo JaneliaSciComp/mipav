@@ -3470,7 +3470,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
      * @param component DOCUMENT ME!
      * @param event DOCUMENT ME!
      */
-    protected void handleMaskPopupMenu(final Component component, final MouseEvent event) {
+    public static void handleMaskPopupMenu(final Component component, final MouseEvent event) {
         final JPopupMenu popupMenu = new JPopupMenu();
 
         boolean currentState = Preferences.is(Preferences.PREF_QUICK_MASK_NEW);

@@ -102,7 +102,7 @@ public class Multitextures extends JavaApplication3D
             m_kCuller.ComputeVisibleSet(m_spkScene);
         }
 
-        //((OpenGLRenderer)m_pkRenderer).EnableUserClipPlane(0, m_kPlane );
+        ((OpenGLRenderer)m_pkRenderer).EnableUserClipPlane(0, m_kPlane );
         m_pkRenderer.ClearBuffers();
         if (m_pkRenderer.BeginScene())
         {          

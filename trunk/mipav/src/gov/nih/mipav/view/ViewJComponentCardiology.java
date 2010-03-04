@@ -854,7 +854,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                 newTextVOI.setColor(Color.WHITE);
 
                 // pop up a dialog that allows text input, color, and font formatting
-                new JDialogAnnotation(imageActive, newTextVOI, slice, false);
+                new JDialogAnnotation(imageActive, newTextVOI, slice, false, false);
 
                 if (mouseEvent.isShiftDown() != true) {
                     setCursorMode(DEFAULT);
@@ -1189,7 +1189,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
                         // if the Text was double-clicked, bring up the editor
                         if (mouseEvent.getClickCount() == 2) {
-                            new JDialogAnnotation(imageActive, VOIs.VOIAt(i), slice, true);
+                            new JDialogAnnotation(imageActive, VOIs.VOIAt(i), slice, true, false);
                         }
                     } else if (selectedCurve.contains(xS, yS, true)) {
 

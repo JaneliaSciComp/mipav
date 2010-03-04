@@ -7,8 +7,8 @@ import javax.media.opengl.GLAutoDrawable;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
-import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.ShaderEffect;
 import WildMagic.LibGraphics.Effects.TextureEffect;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
@@ -139,8 +139,8 @@ public class VolumeRayCast extends VolumeObject
             FrameBuffer.BufferingType eBuffering,
             FrameBuffer.MultisamplingType eMultisampling,
             int iWidth, int iHeight,
-            GLAutoDrawable arg0, Renderer kRenderer)
-    {
+            GLAutoDrawable kDrawable, Renderer kRenderer)
+    {        
         // The screen camera is designed to map (x,y,z) in [0,1]^3 to (x',y,'z')
         // in [-1,1]^2 x [0,1].
         m_spkScreenCamera = new Camera();
@@ -217,7 +217,7 @@ public class VolumeRayCast extends VolumeObject
 
         // Create the RGBA frame-buffer object to be bound to the scene polygon.
         m_pkPBuffer = new OpenGLFrameBuffer(eFormat,eDepth,eStencil,
-                eBuffering,eMultisampling,kRenderer,m_apkSceneTarget,arg0);
+                eBuffering,eMultisampling,kRenderer,m_apkSceneTarget,kDrawable);
         assert(m_pkPBuffer != null);
 
         m_kScene.UpdateGS();
@@ -329,6 +329,13 @@ public class VolumeRayCast extends VolumeObject
         return m_kTranslate;
     }
 
+    public Matrix4f GetWorld()
+    {
+        m_kScene.UpdateGS();
+        return m_kMesh.HWorld;
+    }
+    
+
     /**
      * Display the volume in MIP mode.
      */
@@ -336,7 +343,6 @@ public class VolumeRayCast extends VolumeObject
     {
         m_kVolumeShaderEffect.MIPMode();
     }
-    
 
     /**
      * Display the volume in Multi-histo mode.
@@ -345,6 +351,7 @@ public class VolumeRayCast extends VolumeObject
     {
         m_kVolumeShaderEffect.MULTIHISTOMode(bOn);
     }
+    
 
     /** Turns off rendering to the PBuffer. Called after all objects displayed
      * with the ray-cast volume have been pre-rendered. */
@@ -354,13 +361,6 @@ public class VolumeRayCast extends VolumeObject
         // Disable the PBuffer
         m_pkPBuffer.Disable();
     }
-    
-
-    public void PreRenderB( Renderer kRenderer )
-    {
-        //kRenderer.Resize( m_spkSceneImage.GetBound(0), m_spkSceneImage.GetBound(1));
-        m_pkPBuffer.Enable();
-    }
 
     public void PostPreRenderB( Renderer kRenderer )
     {
@@ -369,40 +369,10 @@ public class VolumeRayCast extends VolumeObject
     }
 
 
-    /** 
-     * PreRender renders the proxy geometry into the PBuffer texture.
-     * @param kRenderer the OpenGLRenderer object.
-     * @param kCuller the Culler object.
-     */
-    private void PreRender( Renderer kRenderer, Culler kCuller )
+    public void PreRenderB( Renderer kRenderer )
     {
-        if ( !m_bDisplay )
-        {
-            return;
-        }
-        m_iWidthSave = kRenderer.GetWidth();
-        m_iHeightSave = kRenderer.GetHeight();
-        m_kScene.UpdateGS();
-        
-        // First rendering pass:
-        // Draw the proxy geometry to a color buffer, to generate the
-        // back-facing texture-coordinates:
-        m_kMesh.DetachAllEffects();
-        m_kMesh.AttachEffect( m_spkVertexColor3Shader );
-        kCuller.ComputeVisibleSet(m_kScene);
-        // Enable rendering to the PBuffer:
-        //m_pkPBuffer.Enable();
-        kRenderer.SetBackgroundColor(ColorRGBA.BLACK);
-        kRenderer.ClearBuffers();
-
-        kCuller.ComputeVisibleSet(m_kScene);
-
-        // Cull front-facing polygons:
-        m_kCull.CullFace = CullState.CullMode.CT_FRONT;
-        kRenderer.DrawScene(kCuller.GetVisibleSet());
-        // Undo culling:
-        m_kCull.CullFace = CullState.CullMode.CT_BACK;
-        
+        //kRenderer.Resize( m_spkSceneImage.GetBound(0), m_spkSceneImage.GetBound(1));
+        m_pkPBuffer.Enable();
     }
     
     
@@ -780,9 +750,39 @@ public class VolumeRayCast extends VolumeObject
         m_spkVertexColor3Shader = new VertexColor3Effect();
     }
     
-    public Matrix4f GetWorld()
+    /** 
+     * PreRender renders the proxy geometry into the PBuffer texture.
+     * @param kRenderer the OpenGLRenderer object.
+     * @param kCuller the Culler object.
+     */
+    private void PreRender( Renderer kRenderer, Culler kCuller )
     {
+        if ( !m_bDisplay )
+        {
+            return;
+        }
+        m_iWidthSave = kRenderer.GetWidth();
+        m_iHeightSave = kRenderer.GetHeight();
         m_kScene.UpdateGS();
-        return m_kMesh.HWorld;
+        
+        // First rendering pass:
+        // Draw the proxy geometry to a color buffer, to generate the
+        // back-facing texture-coordinates:
+        m_kMesh.DetachAllEffects();
+        m_kMesh.AttachEffect( m_spkVertexColor3Shader );
+        kCuller.ComputeVisibleSet(m_kScene);
+        // Enable rendering to the PBuffer:
+        //m_pkPBuffer.Enable();
+        kRenderer.SetBackgroundColor(ColorRGBA.BLACK);
+        kRenderer.ClearBuffers();
+
+        kCuller.ComputeVisibleSet(m_kScene);
+
+        // Cull front-facing polygons:
+        m_kCull.CullFace = CullState.CullMode.CT_FRONT;
+        kRenderer.DrawScene(kCuller.GetVisibleSet());
+        // Undo culling:
+        m_kCull.CullFace = CullState.CullMode.CT_BACK;
+        
     }
 }

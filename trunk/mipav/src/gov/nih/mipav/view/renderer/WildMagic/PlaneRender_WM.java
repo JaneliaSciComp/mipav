@@ -7,52 +7,53 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.model.structures.PointStack;
+import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIBase;
+import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.WindowLevel;
 import gov.nih.mipav.view.renderer.WildMagic.Render.LocalVolumeVOI;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
-import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeNode;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
-import gov.nih.mipav.view.renderer.WildMagic.Render.LocalVolumeVOIVector;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeVOI;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.ScreenCoordinateListener;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManager;
 
+import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.BitSet;
-import java.util.Stack;
 import java.util.Vector;
 
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLCanvas;
-import javax.media.opengl.GLContext;
 import javax.media.opengl.GLEventListener;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
-import WildMagic.LibFoundation.Mathematics.Mathf;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
-import WildMagic.LibFoundation.Mathematics.Vector2f;
+import WildMagic.LibFoundation.Mathematics.Matrix4f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.Mathematics.Vector4f;
+import WildMagic.LibGraphics.Effects.ShaderEffect;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.Rendering.Camera;
+import WildMagic.LibGraphics.Rendering.Renderer;
 import WildMagic.LibGraphics.Rendering.WireframeState;
 import WildMagic.LibGraphics.Rendering.ZBufferState;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
-import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.Polyline;
 import WildMagic.LibGraphics.SceneGraph.StandardMesh;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
+import WildMagic.LibGraphics.Shaders.Program;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
 import com.sun.opengl.util.Animator;
@@ -66,7 +67,7 @@ import com.sun.opengl.util.Animator;
  *
  */
 public class PlaneRender_WM extends GPURenderBase
-    implements GLEventListener
+    implements GLEventListener, ScreenCoordinateListener
 {
 
     /** Use serialVersionUID for interoperability. */
@@ -89,8 +90,8 @@ public class PlaneRender_WM extends GPURenderBase
     /** The image dimensions in x,y,z:. */
     private int[] m_aiLocalImageExtents;
 
-    /** The image dimension factors in x,y,z:. */
-    private int[] m_aiLocalImageFactors;
+    private float[] m_afResolutions;
+    private int[] m_aiUnits;
 
     /** Set of colors used to draw the axis labels. */
     private ColorRGB[][] m_aakColors = { { new ColorRGB(1, 1, 0), new ColorRGB(0, 1, 0), new ColorRGB(1, 0, 0) },
@@ -174,49 +175,16 @@ public class PlaneRender_WM extends GPURenderBase
     private boolean[] m_abAxisFlip;
 
     /** For zooming with the mouse. */
-    private float m_fMouseX;
     private float m_fMouseY;
     private boolean m_bShowSurface = false;
-    private Camera m_spkVOICamera;
-    private boolean m_bDrawVOI = false;
-
-    private boolean m_bDrawRect = false;
-    private boolean m_bDrawOval = false;
-    private boolean m_bDrawPolyline = false;
-    private boolean m_bDrawLevelSet = false;
-    private boolean m_bUpdateVOI = true;
-    private boolean m_bPointer = false;
-    private boolean m_bSelected = false;
-
-    private int m_iCirclePts = 32;
-    private double[] m_adCos = new double[m_iCirclePts];
-    private double[] m_adSin = new double[m_iCirclePts];
     
-    private TriMesh m_kBallPoint = null;
-    
-    private ZBufferState m_kZState = null;
-    private Attributes m_kVOIAttr = null;
-
-
-    private int m_iCurrentVOIPoint = -1;
     private Vector3f m_kPatientPt = new Vector3f();
     private Vector3f m_kVolumeScale = new Vector3f();
     private Vector3f m_kVolumeScaleInv = new Vector3f();
-
-    private LocalVolumeVOI m_kCurrentVOI = null;
-    private LocalVolumeVOI m_kCopyVOI = null;
-
-    private LocalVolumeVOIVector[] m_kVOIList = null;
-
-    private boolean m_bFirstVOI = true;
     
-    private int m_iVOICount = 0;
     private Vector3f m_kCenter = new Vector3f();
-    private PointStack levelSetStack = new PointStack(500);
-    private BitSet map = null;
-    private Stack<int[]> stack = new Stack<int[]>();
-    private byte[] m_aucData;
-    
+    private boolean m_bIsMouseActive = true;
+    private Matrix4f m_kPVWMatrix = new Matrix4f();
     /**
      * Default PlaneRender interface.
      */
@@ -256,52 +224,6 @@ public class PlaneRender_WM extends GPURenderBase
         m_kWinLevel = new WindowLevel(); 
     }
 
-    /**
-     * Tests the distance for closeness; finds the length of the normal from (x,y) to the line (x1,y1) (x2,y2). Returns
-     * true if the distance is shorter than tol.
-     *
-     * @param   x    x coordinate of point to be tested
-     * @param   x1   x coordinate of first point in line
-     * @param   x2   x coordinate of second point in line
-     * @param   y    y coordinate of point to be tested
-     * @param   y1   y coordinate of first point in line
-     * @param   y2   y coordinate of second point in line
-     * @param   tol  distance to test against
-     *
-     * @return  true if the distance is shorter than tol.
-     */
-    public static synchronized boolean testDistance(int x, int x1, int x2, int y, int y1, int y2, double tol) {
-
-        // double hVx, hVy, aVx, aVy;
-        double lenH, lenH2, lenA, lenO;
-        lenH = MipavMath.distance(x1, x, y1, y);
-
-        if (lenH <= 0) {
-            return false;
-        }
-
-        lenH2 = MipavMath.distance(x, x2, y, y2);
-        lenA = MipavMath.distance(x1, x2, y1, y2);
-
-        if (lenA <= 0) {
-            return false;
-        }
-
-        // hVx = x - x1;
-        // hVy = y - y1;
-        // aVx = x2 - x1;
-        // aVy = y2 - y1;
-        // theta = Math.acos((hVx*aVx + hVy*aVy)/(lenH*lenA));
-        // lenO = lenH * Math.sin(theta);// * (lenH+lenH2+lenA);
-        // The above reduces to:
-        lenO = Math.abs(((y1 - y2) * x) + ((x2 - x1) * y) + ((x1 * y2) - (y1 * x2))) / lenA;
-
-        if ((lenO < tol) && (lenH < lenA) && (lenH2 < lenA)) {
-            return true;
-        }
-
-        return false;
-    }   
     
     /**
      * Adds the VolumeSlices object to the display list for rendering.
@@ -311,9 +233,10 @@ public class PlaneRender_WM extends GPURenderBase
     {
         m_kDisplayList.add(kVolumeSlice);
         m_kTranslate = kVolumeSlice.GetTranslate();
-        SetModified(true);
+        updateDisplay();
     }
-        
+
+       
     /**
      * Closes the frame.
      */
@@ -321,36 +244,7 @@ public class PlaneRender_WM extends GPURenderBase
         disposeLocal();
     }
 
-    /**
-     * Determines if the supplied point can be found within the points that define the contour.
-     *
-     * @return  true if point is within the contour
-     */
-    public boolean contains(int iX, int iY, VertexBuffer kVBuffer) {
-        boolean isInside = false;
-        float fX = iX + 0.49f; // Matt add doc !!!
-        float fY = iY + 0.49f;
-
-        int iNumPoints = kVBuffer.GetVertexQuantity();
-        int iLast = iNumPoints -1;
-        if ( iNumPoints > 0 )
-        {
-            for ( int i = 0; i < iNumPoints; i++ )
-            {
-                Vector3f kPos = kVBuffer.GetPosition3(i);
-                Vector3f kPosL = kVBuffer.GetPosition3(iLast);
-
-                if (((kPosL.Y <= fY) && (fY < kPos.Y) && (areaTwice(kPos.X, kPos.Y, kPosL.X, kPosL.Y, fX, fY) >= 0)) ||
-                        ((kPos.Y <= fY) && (fY < kPosL.Y) && (areaTwice(kPosL.X, kPosL.Y, kPos.X, kPos.Y, fX, fY) >= 0))) {
-                    isInside = !isInside;
-                }
-
-                iLast = i;
-            }
-        }
-        return isInside;
-    }
-    
+     
     /* (non-Javadoc)
      * @see javax.media.opengl.GLEventListener#display(javax.media.opengl.GLAutoDrawable)
      */
@@ -377,18 +271,20 @@ public class PlaneRender_WM extends GPURenderBase
         if (m_pkRenderer.BeginScene())
         {
             for ( int i = 0; i < m_kDisplayList.size(); i++ )
-            {
-                boolean bDisplaySave = m_kDisplayList.get(i).GetDisplay();
-                Matrix3f kSave = new Matrix3f(m_kDisplayList.get(i).GetScene().Local.GetRotate());
-                m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(Matrix3f.IDENTITY);
-                m_kDisplayList.get(i).SetDisplay(true);
-                
-                float fBlend = 1;
-                boolean[] bShowBoundingBox = new boolean[]{ true, true, true };
-                boolean[] bShowSlice = new boolean[]{ true, true, true };
-                VolumeSlices kSlices = null;
+            {                              
                 if ( m_kDisplayList.get(i) instanceof VolumeSlices )
                 {
+                    boolean bDisplaySave = m_kDisplayList.get(i).GetDisplay();
+                    Matrix3f kSave = new Matrix3f(m_kDisplayList.get(i).GetScene().Local.GetRotate());
+                    m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(Matrix3f.IDENTITY);
+                    m_kDisplayList.get(i).SetDisplay(true);
+                    
+                    float fBlend = 1;
+                    boolean[] bShowBoundingBox = new boolean[]{ true, true, true };
+                    boolean[] bShowSlice = new boolean[]{ true, true, true };
+                    VolumeSlices kSlices = null;
+                    
+                    
                     kSlices = (VolumeSlices)m_kDisplayList.get(i);
                     fBlend = kSlices.GetSliceOpacity(m_iPlaneOrientation);
                     kSlices.SetSliceOpacity(m_iPlaneOrientation, 1);
@@ -400,44 +296,25 @@ public class PlaneRender_WM extends GPURenderBase
                         kSlices.ShowBoundingBox(j, m_bDrawXHairs);
                         kSlices.ShowSlice(j, true);
                     }
-                }
-                if ( m_kDisplayList.get(i) instanceof VolumeNode )
-                {
-                    VolumeNode kNode = (VolumeNode)m_kDisplayList.get(i);
-                    if ( kNode.GetNode().GetChild(0) instanceof Polyline )
-                    {
-                        Polyline kPoly = (Polyline)kNode.GetNode().GetChild(0);
-                        Vector3f kPos = FileCoordinatesToVOI( kPoly.VBuffer.GetPosition3(0), true );
-                        //System.err.print( m_iPlaneOrientation + "       " + kPos.Z + " " + m_kCenter.Z );
-                        if ( Math.abs( kPos.Z - m_kCenter.Z) < Mathf.ZERO_TOLERANCE )
-                        {
-                            kNode.Render( m_pkRenderer, m_kCuller, false, true );
-                            //System.err.print("                Draw VOI" );
-                        }
-                        //System.err.println( "" );
-                    }
-                }
-                else
-                {
                     m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller, false, true );
-                }
 
-                m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(kSave);
-                m_kDisplayList.get(i).SetDisplay(bDisplaySave);
+                    m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(kSave);
+                    m_kDisplayList.get(i).SetDisplay(bDisplaySave);
 
-                if ( kSlices != null )
-                {
-                    kSlices.SetSliceOpacity(m_iPlaneOrientation, fBlend);     
-                    for ( int j = 0; j < 3; j++ )
+                    if ( kSlices != null )
                     {
-                        kSlices.ShowBoundingBox(j, bShowBoundingBox[j]);
-                        kSlices.ShowSlice(j, bShowSlice[j]);
+                        kSlices.SetSliceOpacity(m_iPlaneOrientation, fBlend);     
+                        for ( int j = 0; j < 3; j++ )
+                        {
+                            kSlices.ShowBoundingBox(j, bShowBoundingBox[j]);
+                            kSlices.ShowSlice(j, bShowSlice[j]);
+                        }
+                        kSlices.ShowSurface(false);
                     }
-                    kSlices.ShowSurface(false);
                 }
             }
+            drawVOIs( m_kVolumeImageA.GetImage().get3DVOIs() );
             drawAxes();
-            drawVOI();
             m_pkRenderer.EndScene();
         }
         m_pkRenderer.DisplayBackBuffer();
@@ -520,163 +397,32 @@ public class PlaneRender_WM extends GPURenderBase
         super.dispose();
     }
     
-    public ZBufferState getZState()
+
+    public Vector3f upSlice()
     {
-        return m_kZState;
+        if ( m_iSlice+1 < m_aiLocalImageExtents[2] )
+        {
+            m_kPatientPt.Z++;
+            Vector3f volumePt = new Vector3f();                
+            MipavCoordinateSystems.patientToFile( m_kPatientPt, volumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );
+            m_kParent.setSliceFromPlane( volumePt );
+            return volumePt;
+        }
+        return null;
     }
-
-    public void doVOI( String kCommand )
+    
+    public Vector3f downSlice()
     {
-        if ( m_bFirstVOI )
+        if ( m_iSlice-1 >= 0 )
         {
-            m_kZState = new ZBufferState();
-            m_kZState.Compare = ZBufferState.CompareMode.CF_ALWAYS;
-            m_kVOIAttr = new Attributes();
-            m_kVOIAttr.SetPChannels(3);
-            m_kVOIAttr.SetCChannels(0,3);
-            
-            m_bFirstVOI = false;
-            StandardMesh kSDMesh = new StandardMesh(m_kVOIAttr);
-            kSDMesh.SetInside(true);
-            m_kBallPoint = kSDMesh.Box(1.0f/100f, 1.0f/100f, 1.0f/100f);
-            m_kBallPoint.AttachEffect( new VertexColor3Effect() );
-            for ( int i = 0; i < m_kBallPoint.VBuffer.GetVertexQuantity(); i++ )
-            {
-                m_kBallPoint.VBuffer.SetColor3( 0, i, 1, 1, 1 );
-            }
-            m_kBallPoint.AttachGlobalState(m_kZState);
-            WireframeState kWState = new WireframeState();
-            kWState.Fill = WireframeState.FillMode.FM_LINE;
-            m_kBallPoint.AttachGlobalState(kWState);
-            m_kBallPoint.UpdateRS();
-            
-            for ( int i = 0; i < m_iCirclePts; i++ )
-            {
-                m_adCos[i] = Math.cos( Math.PI * 2.0 * i/(float)m_iCirclePts );
-                m_adSin[i] = Math.sin( Math.PI * 2.0 * i/(float)m_iCirclePts);
-            }
+            m_kPatientPt.Z--;
+            Vector3f volumePt = new Vector3f();                
+            MipavCoordinateSystems.patientToFile( m_kPatientPt, volumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );
+            m_kParent.setSliceFromPlane( volumePt );
+            return volumePt;
         }
-
-
-        if (kCommand.equals("RectVOI") ) 
-        {
-            m_bDrawVOI = true;
-            m_bPointer = false;
-            m_kCurrentVOI = null;
-            m_bSelected = false;
-            m_bDrawRect = true;
-            m_bDrawOval = false;
-            m_bDrawPolyline = false;
-            m_bDrawLevelSet = false;
-        } 
-        else if (kCommand.equals("EllipseVOI") ) {
-            m_bDrawVOI = true;
-            m_bPointer = false;
-            m_kCurrentVOI = null;
-            m_bSelected = false;
-            m_bDrawRect = false;
-            m_bDrawOval = true;
-            m_bDrawPolyline = false;
-            m_bDrawLevelSet = false;
-        
-        } 
-        else if (kCommand.equals("Polyline") ) {
-            m_bDrawVOI = true;
-            m_bPointer = false;
-            m_kCurrentVOI = null;
-            m_bSelected = false;
-            m_bDrawRect = false;
-            m_bDrawOval = false;
-            m_bDrawPolyline = true;
-            m_bDrawLevelSet = false;
-        } 
-        else if (kCommand.equals("VOIColor") ) {
-        } 
-        else if (kCommand.equals("LevelSetVOI") ) {
-            m_bDrawVOI = true;
-            m_bPointer = false;
-            m_kCurrentVOI = null;
-            m_bSelected = false;
-            m_bDrawRect = false;
-            m_bDrawOval = false;
-            m_bDrawPolyline = false;
-            m_bDrawLevelSet = true;
-        } 
-        else if (kCommand.equals("deleteAllVOI") ) {
-            deleteAllVOI();
-        }  
-        else if (kCommand.equals("deleteVOI") ) {
-            deleteVOI();
-        } 
-        else if (kCommand.equals("cutVOI") ) {
-            copyVOI();
-            deleteVOI();
-        } 
-        else if (kCommand.equals("copyVOI") ) {
-            copyVOI();
-        } 
-        else if (kCommand.equals("pasteVOI") ) {
-            pasteVOI(m_iSlice);
-        } 
-        else if (kCommand.equals("PropVOIUp") ) {
-            if ( m_kCurrentVOI == null )
-            {
-                return;
-            }
-            if ( m_iSlice+1 < m_aiLocalImageExtents[2] )
-            {
-                copyVOI();
-                pasteVOI(m_iSlice+1);
-                m_kPatientPt.Z++;
-                Vector3f volumePt = new Vector3f();                
-                MipavCoordinateSystems.patientToFile( m_kPatientPt, volumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );
-                m_kParent.setSliceFromPlane( volumePt );
-            }
-        } 
-        else if (kCommand.equals("PropVOIDown") ) {
-            if ( m_kCurrentVOI == null )
-            {
-                return;
-            }
-            if ( m_iSlice-1 >= 0 )
-            {
-                copyVOI();
-                pasteVOI(m_iSlice-1);
-                m_kPatientPt.Z--;
-                Vector3f volumePt = new Vector3f();                
-                MipavCoordinateSystems.patientToFile( m_kPatientPt, volumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );
-                m_kParent.setSliceFromPlane( volumePt );
-            }
-        } 
-        else if (kCommand.equals("PropVOIAll") ) {
-            if ( m_kCurrentVOI == null )
-            {
-                return;
-            }
-            copyVOI();
-            for ( int i = 0; i < m_aiLocalImageExtents[2]; i++ )
-            {
-                if ( i != m_iSlice )
-                {
-                    pasteVOI(i);
-                }
-            }
-        } 
-        else if (kCommand.equals("Pointer") ) {
-            m_bDrawVOI = false;
-            m_bPointer = true;
-        }
-        else if (kCommand.equals("Default") ) {
-            m_bDrawVOI = false;
-            m_bPointer = false;
-        }    
-        if ( m_kCurrentVOI != null )
-        {
-            m_kCurrentVOI.Update();
-        }
-        m_bModified = true;
-        GetCanvas().display();
-    }
+        return null;
+    } 
 
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.GPURenderBase#GetCanvas()
@@ -684,6 +430,11 @@ public class PlaneRender_WM extends GPURenderBase
     public GLCanvas GetCanvas()
     {
         return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
+    }
+    
+    public int getOrientation() 
+    {
+        return m_iPlaneOrientation;
     }
     
     /* (non-Javadoc)
@@ -739,50 +490,7 @@ public class PlaneRender_WM extends GPURenderBase
                 (m_kVolumeImageA.GetImage().getExtents()[1] - 1)/2.0f,
                 (m_kVolumeImageA.GetImage().getExtents()[2] - 1)/2.0f ) );
     }
-
-    /** 
-     * keyPressed callback.
-     * @param kKey the KeyEvent triggering the callback.
-     */
-    public void keyPressed(KeyEvent kKey)
-    {
-        char ucKey = kKey.getKeyChar();            
-        int iKey = kKey.getKeyCode();
-        if ( ucKey == KeyEvent.VK_DELETE )
-        {
-            deleteVOI();
-        }
-    }
-
-    public void make3DVOI( boolean bIntersection, ModelImage kVolume, int iValue )
-    {
-        if ( m_kVOIList != null )
-        {
-            for ( int i = 0; i < m_aiLocalImageExtents[2]; i++ )
-            {
-                if ( m_kVOIList[i] != null )
-                {
-                    for ( int j = 0; j < m_kVOIList[i].size(); j++ )
-                    {
-                        fillVolume( i, m_kVOIList[i].get(j).getLocal(0), kVolume, bIntersection, iValue );
-                        m_kDisplayList.remove(m_kParent.removeNode( m_kVOIList[i].get(j).Name.get(0) ));
-                        LocalVolumeVOI kVOI = m_kVOIList[i].remove(j);
-                        kVOI.dispose();
-                    }
-                    m_kVOIList[i].clear();
-                    m_kVOIList[i] = null;
-                }
-            }
-        }
-        m_kCopyVOI = null;
-        m_kCurrentVOI = null;
-        
-        m_kZState = new ZBufferState();
-        m_kZState.Compare = ZBufferState.CompareMode.CF_ALWAYS;
-        m_kVOIAttr = new Attributes();
-        m_kVOIAttr.SetPChannels(3);
-        m_kVOIAttr.SetCChannels(0,3);
-    }
+    
 
     /* (non-Javadoc)
      * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mouseDragged(java.awt.event.MouseEvent)
@@ -793,11 +501,22 @@ public class PlaneRender_WM extends GPURenderBase
         /* If the right mouse button is pressed and
          * dragged. processRightMouseDrag updates the HistoLUT window and
          * level (contrast and brightness) */
+        
+        //Vector4f kMouseVec = new Vector4f( kEvent.getX()-m_iWidth/2, kEvent.getY()-m_iHeight/2, m_iSlice, 0 );
+        Vector4f kMouseVec = new Vector4f( kEvent.getX(), kEvent.getY(), m_iSlice, 1 );
+        Vector4f kMouseWorld = new Vector4f();
+        m_kPVWMatrix.Mult( kMouseVec, kMouseWorld );
+        kMouseWorld.Scale( 1.0f/kMouseWorld.W );
+        //System.err.println( kMouseVec.ToString() + " " + kMouseWorld.ToString() );
 
+        if ( !m_bIsMouseActive )
+        {
+            return;
+        }
         if (m_bRightMousePressed && !kEvent.isShiftDown()) {
             processRightMouseDrag(kEvent);
-            SetModified (true);
-            
+            updateDisplay ();
+
         }
 
         /* Dragging the mouse with the left-mouse button held down changes the
@@ -822,40 +541,19 @@ public class PlaneRender_WM extends GPURenderBase
         }
     }
 
-    public void mouseMoved(MouseEvent kEvent) 
-    {
-        if ( m_bPointer )
-        {
-            showSelectedVOI( kEvent.getX(), kEvent.getY() );
-        }
-    }
-
     /* (non-Javadoc)
      * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mousePressed(java.awt.event.MouseEvent)
      */
     public void mousePressed(MouseEvent kEvent) {
         super.mousePressed(kEvent);
-        m_fMouseX = kEvent.getX();
         m_fMouseY = kEvent.getY();
+        if ( !m_bIsMouseActive )
+        {
+            return;
+        }
         //System.err.println( m_fMouseX + " " + m_fMouseY );
         /* If the button pressed is the left mouse button: */
         if ((kEvent.getButton() == MouseEvent.BUTTON1) && !kEvent.isShiftDown()) {
-            if ( m_bPointer )
-            {
-                if ( m_kParent.getCursor() == MipavUtil.crosshairCursor )
-                {
-                    moveVOIPoint( kEvent.getX(), kEvent.getY() );
-                }
-                else if ( m_kParent.getCursor() == MipavUtil.addPointCursor )
-                {
-                    addVOIPoint( kEvent.getX(), kEvent.getY() );
-                }
-                else
-                {
-                    selectVOI( kEvent.getX(), kEvent.getY() );
-                }
-            }
-            
             m_bLeftMousePressed = true;
             processLeftMouseDrag( kEvent );
             m_bModified = true;
@@ -874,11 +572,16 @@ public class PlaneRender_WM extends GPURenderBase
      */
     public void mouseReleased(MouseEvent kEvent) {
 
-        super.mousePressed(kEvent);
+        super.mousePressed(kEvent); 
+        if ( !m_bIsMouseActive )
+        {
+            return;
+        }
         /* If the button pressed is the left mouse button turn off the
          * m_bLeftMousePressed flag: */
         if ((kEvent.getButton() == MouseEvent.BUTTON3) && !kEvent.isShiftDown()) {
             m_bRightMousePressed = false;
+            m_kParent.setDefaultCursor();
         }
 
         if ((kEvent.getButton() == MouseEvent.BUTTON1) && !kEvent.isShiftDown()) {
@@ -886,17 +589,6 @@ public class PlaneRender_WM extends GPURenderBase
             m_bLeftMousePressed = false;
         }
         m_bFirstDrag = true;
-        if ( !m_bPointer )
-        {
-            m_kParent.setDefaultCursor( );
-        }
-        m_bDrawVOI = false;
-        if ( m_bUpdateVOI )
-        {
-            saveVOI( kEvent.getX(), kEvent.getY(), m_iSlice );
-            m_bModified = true;
-            GetCanvas().display();
-        }
     }
     
 
@@ -916,51 +608,6 @@ public class PlaneRender_WM extends GPURenderBase
         zoom( );    
     }
     
-    /**
-     * Tests if a point is near the curve.
-     *
-     * @param   x    x coordinate of point
-     * @param   y    y coordinate of point
-     * @param   tol  tolerance indicating the capture range to the line the point.
-     *
-     * @return  returns boolean result of test
-     */
-    public boolean nearLine(int iX, int iY, VertexBuffer kVBuffer) {
-
-        Vector3f kVOIPoint = new Vector3f(iX, m_iHeight - iY, 0 );
-        int i;
-        int x1, y1, x2, y2;
-        int isize = kVBuffer.GetVertexQuantity();
-        for (i = 0; i < (isize - 1); i++)
-        {
-            Vector3f kPos0 = kVBuffer.GetPosition3(i);
-            x1 = MipavMath.round(kPos0.X);
-            y1 = MipavMath.round(kPos0.Y);
-            Vector3f kPos1 = kVBuffer.GetPosition3(i+1);
-            x2 = MipavMath.round(kPos1.X);
-            y2 = MipavMath.round(kPos1.Y);
-
-            if (testDistance((int)kVOIPoint.X, x1, x2, (int)kVOIPoint.Y, y1, y2, 3)) {
-                m_iCurrentVOIPoint = i;
-                return true;
-            }
-        }
-
-        Vector3f kPos0 = kVBuffer.GetPosition3(0);
-        x1 = MipavMath.round(kPos0.X);
-        y1 = MipavMath.round(kPos0.Y);
-        Vector3f kPos1 = kVBuffer.GetPosition3(isize - 1);
-        x2 = MipavMath.round(kPos1.X);
-        y2 = MipavMath.round(kPos1.Y);
-
-        if (testDistance((int)kVOIPoint.X, x1, x2, (int)kVOIPoint.Y, y1, y2, 3)) {
-            m_iCurrentVOIPoint = i;
-            return true;
-        }
-        m_iCurrentVOIPoint = -1;
-        return false;
-    }
-
 
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.GPURenderBase#reshape(javax.media.opengl.GLAutoDrawable, int, int, int, int)
@@ -998,10 +645,22 @@ public class PlaneRender_WM extends GPURenderBase
             float fRMax = (m_fZoomScale*Math.max(m_fX, m_fY))/2.0f;
             float fUMax = fRMax * iHeight / iWidth;
             m_spkCamera.SetFrustum(-fRMax, fRMax,-fUMax, fUMax,1f,5.0f);
-            m_pkRenderer.OnFrustumChange();           
+            m_pkRenderer.OnFrustumChange();          
+            
+
+            float[] afData = new float[16];
+            m_pkRenderer.SetConstantWVPMatrix(2, afData);
+            m_kPVWMatrix.Set( afData[0], afData[1], afData[2], afData[3],
+                    afData[4], afData[5], afData[6], afData[7], 
+                    afData[8], afData[9], afData[10], afData[11], 
+                    afData[12], afData[13], afData[14], afData[15] );
+            //System.err.println( m_kPVWMatrix.ToString() );
         }
         
     }
+
+
+
     
     /**
      * Sets the background color for the frame and rendered image.
@@ -1011,8 +670,8 @@ public class PlaneRender_WM extends GPURenderBase
     public void setBackgroundColor( ColorRGBA kColor )
     {
         m_kBackgroundColor = kColor;
-        return;
     }
+    
 
     /**
      * setCenter sets the cursor and slice position for this PlaneRenderWM
@@ -1027,20 +686,24 @@ public class PlaneRender_WM extends GPURenderBase
         m_bModified = true;
         MipavCoordinateSystems.fileToPatient( center, m_kPatientPt, kImage, m_iPlaneOrientation );
         setSlice( m_kPatientPt.Z );
+        m_kCenter.Mult( center, m_kVolumeScale );
         GetCanvas().display();
-        m_kCenter.Mult( m_kPatientPt, m_kVolumeScale );
     }
 
     /**
      * Causes re-display.
-     * @param bModified
      */
-    public void SetModified ( boolean bModified )
+    public void updateDisplay ( )
     {
-        m_bModified = bModified;
+        m_bModified = true;
         GetCanvas().display();
     }
 
+    public void setMouseActive( boolean bActive )
+    {
+        m_bIsMouseActive = bActive;
+    }
+    
     /**
      * Sets the view to Radiological (true) or Neurological (false) view.
      * @param bOn
@@ -1133,142 +796,7 @@ public class PlaneRender_WM extends GPURenderBase
             m_bDrawXHairs = bShow;
         }
     }
-
-    /**
-     * fill: fill the sculpt outline drawn by the user. Pixels are determined to be inside or outside the sculpt region
-     * based on the parameters, aaiCrossingPoints and aiNumCrossings, using a scan-conversion algorithm that traverses
-     * each row and column of the bounding box of the sculpt region coloring inside points as it goes.
-     *
-     * @param  aaiCrossingPoints  DOCUMENT ME!
-     * @param  aiNumCrossings     DOCUMENT ME!
-     */
-    protected void fill(int[][] aaiCrossingPoints, int[] aiNumCrossings,
-                        int iXMin, int iYMin, int iXMax, int iYMax, int iZ,
-                        ModelImage kVolume, boolean bIntersection, int iValue)
-    {
-        Vector3f kLocalPt = new Vector3f();
-        Vector3f kVolumePt = new Vector3f();
-        int iColumn = 0;
-        //System.err.println( "fill " + iZ );
-        /* Loop over the width of the sculpt region bounding-box: */
-        for (int iX = iXMin; iX < iXMax; iX++) {
-            boolean bInside = false;
-
-            /* Loop over the height of the sculpt region bounding-box: */
-            for (int iY = iYMin; iY < iYMax; iY++) {
-
-                /* loop over each crossing point for this column: */
-                for (int iCross = 0; iCross < aiNumCrossings[iColumn]; iCross++) {
-
-                    if (iY == aaiCrossingPoints[iColumn][iCross]) {
-
-                        /* Each time an edge is cross the point alternates
-                         * from outside to inside: */
-                        bInside = !bInside;
-                    }
-                }
-
-                if (bInside == true) {
-
-                    /* The current pixel is inside the sculpt region.  Get the
-                     * image color from the canvas image and alpha-blend the sculpt color ontop, storing the result in
-                     * the canvas image.
-                     */
-                    kLocalPt.Set(iX, iY, iZ);
-                    kVolumePt = VOIToFileCoordinates(kLocalPt, false);
-                    if ( bIntersection )
-                    {
-                        int iTemp = kVolume.getInt( (int)kVolumePt.X, (int)kVolumePt.Y, (int)kVolumePt.Z );
-                        if ( iValue == 0 )
-                        {
-                            kVolume.set( (int)kVolumePt.X, (int)kVolumePt.Y, (int)kVolumePt.Z, 85 );
-                        }
-                        else if ( iTemp != 0 )
-                        {
-                            kVolume.set( (int)kVolumePt.X, (int)kVolumePt.Y, (int)kVolumePt.Z, 255 );
-                        }
-                    }
-                    else
-                    {
-                        kVolume.set( (int)kVolumePt.X, (int)kVolumePt.Y, (int)kVolumePt.Z, 255 );
-                        //System.err.println( iZ );
-                    }
-                }
-            }
-
-            iColumn++;
-        }
-    }
     
-    /**
-     * This function computes the set of spans indicated by column crossings for the sculpt outline drawn by the user,
-     * by doing a polygon scan conversion in gridded space. The outline must be closed with last point = first point.
-     *
-     * @param  aaiCrossingPoints  DOCUMENT ME!
-     * @param  aiNumCrossings     DOCUMENT ME!
-     */
-    protected void outlineRegion(int[][] aaiCrossingPoints, int[] aiNumCrossings,
-                                 int iXMin, int iYMin, int iXMax, int iYMax,
-                                 Vector3f[] kVolumePts, ModelImage kVolume)
-    {
-        int iNumPts = kVolumePts.length;
-
-        /*
-         * nudge the vertices off of the exact integer coords by a factor of 0.1 to avoid vertices on pixel centers,
-         * which would create spans of zero length
-         */
-        double dNudge = 0.1;       
-        double[][][] aaadEdgeList = new double[iNumPts][2][2];
-
-        for (int iPoint = 0; iPoint < (iNumPts - 1); iPoint++) {
-            aaadEdgeList[iPoint][0][0] = kVolumePts[iPoint].X - dNudge;
-            aaadEdgeList[iPoint][0][1] = kVolumePts[iPoint].Y - dNudge;
-            aaadEdgeList[iPoint][1][0] = kVolumePts[iPoint + 1].X - dNudge;
-            aaadEdgeList[iPoint][1][1] = kVolumePts[iPoint + 1].Y - dNudge;
-        }
-
-        /*
-         * Compute the crossing points for this column and produce spans.
-         */
-        for (int iColumn = iXMin; iColumn <= iXMax; iColumn++) {
-            int iIndex = iColumn - iXMin;
-
-            /* for each edge, figure out if it crosses this column and add its
-             * crossing point to the list if so. */
-            aiNumCrossings[iIndex] = 0;
-
-            for (int iPoint = 0; iPoint < (iNumPts - 1); iPoint++) {
-                double dX0 = aaadEdgeList[iPoint][0][0];
-                double dX1 = aaadEdgeList[iPoint][1][0];
-                double dY0 = aaadEdgeList[iPoint][0][1];
-                double dY1 = aaadEdgeList[iPoint][1][1];
-                double dMinX = (dX0 <= dX1) ? dX0 : dX1;
-                double dMaxX = (dX0 > dX1) ? dX0 : dX1;
-
-                if ((dMinX < iColumn) && (dMaxX > iColumn)) {
-
-                    /* The edge crosses this column, so compute the
-                     * intersection.
-                     */
-                    double dDX = dX1 - dX0;
-                    double dDY = dY1 - dY0;
-                    double dM = (dDX == 0) ? 0 : (dDY / dDX);
-                    double dB = (dDX == 0) ? 0 : (((dX1 * dY0) - (dY1 * dX0)) / dDX);
-
-                    double dYCross = (dM * iColumn) + dB;
-                    double dRound = 0.5;
-                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (dYCross < 0) ? (int) (dYCross - dRound)
-                                                                                      : (int) (dYCross + dRound);
-                    aiNumCrossings[iIndex]++;
-                }
-            }
-
-            /* sort the set of crossings for this column: */
-            sortCrossingPoints(aaiCrossingPoints[iIndex], aiNumCrossings[iIndex]);
-        }
-
-        aaadEdgeList = null;
-    }
     
     /**
      * Based on the orientation of the ModelImage, sets up the index
@@ -1286,19 +814,17 @@ public class PlaneRender_WM extends GPURenderBase
         m_aiAxisOrder = MipavCoordinateSystems.getAxisOrder(kImage, m_iPlaneOrientation);
         m_abAxisFlip = MipavCoordinateSystems.getAxisFlip(kImage, m_iPlaneOrientation);
         m_aiLocalImageExtents = kImage.getExtents( m_iPlaneOrientation );
-        m_aiLocalImageFactors = kImage.getExtentsSize( m_iPlaneOrientation );
-        map = new BitSet(m_aiLocalImageExtents[0] * m_aiLocalImageExtents[1]);
-        
-        float[] afResolutions = kImage.getResolutions( 0, m_iPlaneOrientation );
+        m_aiUnits = kImage.getUnitsOfMeasure(0, m_iPlaneOrientation);
+        m_afResolutions = kImage.getResolutions( 0, m_iPlaneOrientation );
 
-        if ((afResolutions[0] == 0.0f) || (afResolutions[1] == 0.0f) || (afResolutions[2] == 0.0f)) {
-            afResolutions[0] = 1.0f;
-            afResolutions[1] = 1.0f;
-            afResolutions[2] = 1.0f;
+        if ((m_afResolutions[0] == 0.0f) || (m_afResolutions[1] == 0.0f) || (m_afResolutions[2] == 0.0f)) {
+            m_afResolutions[0] = 1.0f;
+            m_afResolutions[1] = 1.0f;
+            m_afResolutions[2] = 1.0f;
         }
 
-        m_fXBox = (m_aiLocalImageExtents[0] - 1) * afResolutions[0];
-        m_fYBox = (m_aiLocalImageExtents[1] - 1) * afResolutions[1];
+        m_fXBox = (m_aiLocalImageExtents[0] - 1) * m_afResolutions[0];
+        m_fYBox = (m_aiLocalImageExtents[1] - 1) * m_afResolutions[1];
 
         m_fMaxBox = m_fXBox;
 
@@ -1306,7 +832,7 @@ public class PlaneRender_WM extends GPURenderBase
             m_fMaxBox = m_fYBox;
         }
         
-        float fMaxZ = (m_aiLocalImageExtents[2] - 1) * afResolutions[2];
+        float fMaxZ = (m_aiLocalImageExtents[2] - 1) * m_afResolutions[2];
         float fMax = m_fMaxBox;
         if (fMaxZ > fMax) {
             fMax = fMaxZ;
@@ -1386,107 +912,6 @@ public class PlaneRender_WM extends GPURenderBase
 
         m_kCenter.Mult( m_kVolumeScale );
         
-        initDataBuffer();
-    }
-    
-    /**
-     * Sorts the edge crossing points in place.
-     *
-     * @param  aiList        list of positions
-     * @param  iNumElements  number of positions.
-     */
-    protected void sortCrossingPoints(int[] aiList, int iNumElements) {
-        boolean bDidSwap = true;
-
-        while (bDidSwap) {
-            bDidSwap = false;
-
-            for (int iPoint = 0; iPoint < (iNumElements - 1); iPoint++) {
-
-                if (aiList[iPoint] > aiList[iPoint + 1]) {
-                    int iTmp = aiList[iPoint];
-                    aiList[iPoint] = aiList[iPoint + 1];
-                    aiList[iPoint + 1] = iTmp;
-                    bDidSwap = true;
-                }
-            }
-        }
-    }
-    
-    private void addVOIPoint( int iX, int iY )
-    {
-        if ( m_kCurrentVOI == null )
-        {            
-            return;
-        }     
-        float fY = m_iHeight - iY;
-        VertexBuffer kVBuffer = new VertexBuffer( m_kCurrentVOI.getLocal(0).VBuffer.GetAttributes(),
-                                                  m_kCurrentVOI.getLocal(0).VBuffer.GetVertexQuantity() + 1 );     
-        int iNumPoints = kVBuffer.GetVertexQuantity();
-        if ( iNumPoints > 0 )
-        {
-            int i = 0;
-            int iCount = 0;
-            while ( i < iNumPoints )
-            {
-                kVBuffer.SetColor3( 0, i, m_aakColors[m_iPlaneOrientation][2] );
-                kVBuffer.SetPosition3( i++, m_kCurrentVOI.getLocal(0).VBuffer.GetPosition3(iCount++) );
-                if ( i == (m_iCurrentVOIPoint + 1 ) )
-                {
-                    kVBuffer.SetColor3( 0, i, m_aakColors[m_iPlaneOrientation][2] );
-                    kVBuffer.SetPosition3( i++, iX, fY, m_iSlice );
-                }         
-            }
-            m_bUpdateVOI = true;
-            m_kVOIList[m_iSlice].remove( m_kCurrentVOI );      
-            m_kDisplayList.remove(m_kParent.removeNode( m_kCurrentVOI.Name.get(0) ));      
-
-            Polyline kRectVOI = new Polyline( kVBuffer, true, true );
-            kRectVOI.AttachEffect( new VertexColor3Effect() );
-            kRectVOI.SetName( m_kCurrentVOI.getLocal(0).GetName() );
-            kRectVOI.AttachGlobalState(m_kZState);            
-
-            m_kCurrentVOI = new LocalVolumeVOI( this, kRectVOI, kRectVOI.GetName() );
-            m_kVOIList[m_iSlice].add( m_kCurrentVOI ); 
-            
-
-            Node kNode = new Node();
-            kNode.AttachChild(m_kCurrentVOI.Volume.get(0) );
-            kNode.SetName(m_kCurrentVOI.Name.get(0));
-            m_kDisplayList.add(m_kParent.addNode(kNode));
-            m_kParent.translateSurface( m_kCurrentVOI.Name.get(0), m_kTranslate );
-            
-            m_kCurrentVOI.Update();
-        }
-        m_iCurrentVOIPoint++;
-        m_kParent.setCursor(MipavUtil.crosshairCursor);        
-    }
-    
-    
-    /**
-     * Calculates twice the area (cross product of two vectors) of a triangle given three points. This is a private
-     * function only called by the function "contains".
-     *
-     * @param   ptAx  x-coordinate of the first point of the triangle
-     * @param   ptAy  y-coordinate of the first point of the triangle
-     * @param   ptBx  x-coordinate of the second point of the triangle
-     * @param   ptBy  y-coordinate of the second point of the triangle
-     * @param   ptCx  x-coordinate of the third point of the triangle
-     * @param   ptCy  y-coordinate of the third point of the triangle
-     *
-     * @return  twice the area of the triangle if CCw or -2*area if CW
-     */
-    private float areaTwice(float ptAx, float ptAy, float ptBx, float ptBy, float ptCx, float ptCy) {
-        return (((ptAx - ptCx) * (ptBy - ptCy)) - ((ptAy - ptCy) * (ptBx - ptCx)));
-    }
-    
-    private void copyVOI( )
-    {
-        if ( m_kCurrentVOI == null )
-        {
-            return;
-        }
-        m_kCopyVOI = new LocalVolumeVOI ( this, createPolyline( m_kCurrentVOI.getLocal(0).VBuffer, m_iSlice  ), "VOI_" + m_iPlaneOrientation + "_" + m_iVOICount++ );
     }
     
     /**
@@ -1633,26 +1058,6 @@ public class PlaneRender_WM extends GPURenderBase
     }    
     
     
-    private Polyline createPolyline( VertexBuffer kVBuffer, int iZ )
-    {
-        int iNumPoints = kVBuffer.GetVertexQuantity();
-        if ( iNumPoints > 0 )
-        {
-            for ( int i = 0; i < iNumPoints; i++ )
-            {
-                Vector3f kPos = kVBuffer.GetPosition3(i);
-                kPos.Z = iZ;
-                kVBuffer.SetPosition3(i, kPos);
-            }
-        }
-        Polyline kPoly = new Polyline( new VertexBuffer( kVBuffer ), true, true );    
-        kPoly.AttachEffect( new VertexColor3Effect() );
-        kPoly.AttachGlobalState(m_kZState);
-        kPoly.UpdateGS();
-        kPoly.UpdateRS();
-        return kPoly;
-    }
-    
     /**
      * Initializes the display parameters.
      */
@@ -1673,186 +1078,6 @@ public class PlaneRender_WM extends GPURenderBase
               
         CreateLabels();
     }
-    
-    private void createVOI( int iX, int iY )
-    {
-        float fYStart = m_iHeight - m_fMouseY;
-        float fY = m_iHeight - iY;
-
-        if ( m_bDrawRect )
-        {
-            if ( m_kCurrentVOI == null )
-            {            
-                VertexBuffer kVBuffer = new VertexBuffer(m_kVOIAttr, 4);
-                for ( int i = 0; i < 4; i++ )
-                {
-                    kVBuffer.SetColor3( 0, i, m_aakColors[m_iPlaneOrientation][2] );
-                }
-                kVBuffer.SetPosition3( 0, m_fMouseX, fYStart, m_iSlice);
-                kVBuffer.SetPosition3( 1, iX, fYStart, m_iSlice);
-                kVBuffer.SetPosition3( 2, iX, fY, m_iSlice);
-                kVBuffer.SetPosition3( 3, m_fMouseX, fY, m_iSlice);
-
-                Polyline kRectVOI = new Polyline( kVBuffer, true, true );
-                kRectVOI.AttachEffect( new VertexColor3Effect() );
-                kRectVOI.AttachGlobalState(m_kZState);
-
-                m_kCurrentVOI = new LocalVolumeVOI( this, kRectVOI, "VOITemp" + m_iPlaneOrientation );
-
-                 Node kNode = new Node();
-                 kNode.AttachChild(m_kCurrentVOI.Volume.get(0) );
-                 kNode.SetName(m_kCurrentVOI.Name.get(0));
-                 m_kDisplayList.add( m_kParent.addNode(kNode) );
-                 m_kParent.translateSurface( m_kCurrentVOI.Name.get(0), m_kTranslate );
-            }
-            else
-            {
-                m_kCurrentVOI.SetPosition( this, 1, iX, fYStart, m_iSlice);
-                m_kCurrentVOI.SetPosition( this, 2, iX, fY, m_iSlice);
-                m_kCurrentVOI.SetPosition( this, 3, m_fMouseX, fY, m_iSlice);       
-                VertexBuffer kVBuffer = m_kCurrentVOI.getLocal(0).VBuffer;   
-                m_kCurrentVOI.Release();
-            }
-            m_kCurrentVOI.Update();
-        }
-        else if ( m_bDrawOval )
-        {
-            float fRadiusX = Math.abs(m_fMouseX - iX);
-            float fRadiusY = Math.abs(fYStart - fY);
-            if ( m_kCurrentVOI == null )
-            {            
-                VertexBuffer kVBuffer = new VertexBuffer(m_kVOIAttr, m_iCirclePts);
-                for ( int i = 0; i < m_iCirclePts; i++ )
-                {
-                    kVBuffer.SetPosition3( i, (float)(m_fMouseX + fRadiusX * m_adCos[i]),
-                            (float)(fYStart + fRadiusY * m_adSin[i]), m_iSlice);
-                    kVBuffer.SetColor3( 0, i, m_aakColors[m_iPlaneOrientation][2] );
-                }
-
-                Polyline kRectVOI = new Polyline( kVBuffer, true, true );
-                kRectVOI.AttachEffect( new VertexColor3Effect() );
-                kRectVOI.AttachGlobalState(m_kZState);
-
-                m_kCurrentVOI = new LocalVolumeVOI( this, kRectVOI, "VOITemp" + m_iPlaneOrientation );
-
-                 Node kNode = new Node();
-                 kNode.AttachChild(m_kCurrentVOI.Volume.get(0) );
-                 kNode.SetName(m_kCurrentVOI.Name.get(0));
-                 m_kDisplayList.add( m_kParent.addNode(kNode) );
-                 m_kParent.translateSurface( m_kCurrentVOI.Name.get(0), m_kTranslate );
-            }
-            else
-            {
-                for ( int i = 0; i < m_iCirclePts; i++ )
-                {
-                    m_kCurrentVOI.SetPosition( this, i, (float)(m_fMouseX + fRadiusX * m_adCos[i]),
-                            (float)(fYStart + fRadiusY * m_adSin[i]), m_iSlice);
-                }
-                m_kCurrentVOI.Release();
-            }
-            m_kCurrentVOI.Update();
-        }
-        else if ( m_bDrawLevelSet )
-        {
-            LocalVolumeVOI kTemp = singleLevelSet(iX, fY);
-            if ( kTemp == null )
-            {
-                return;
-            }
-            if ( m_kCurrentVOI != null )
-            {            
-                String kName = new String(m_kCurrentVOI.Name.get(0));
-                m_kDisplayList.remove(m_kParent.removeNode( kName ));  
-            }
-            m_kCurrentVOI = kTemp;
-            Node kNode = new Node();
-            kNode.AttachChild(m_kCurrentVOI.Volume.get(0) );
-            kNode.SetName(m_kCurrentVOI.Name.get(0));
-            m_kDisplayList.add( m_kParent.addNode(kNode) );
-            m_kParent.translateSurface( m_kCurrentVOI.Name.get(0), m_kTranslate );
-            m_kCurrentVOI.Update();
-        }
-        else if ( m_bDrawPolyline )
-        {
-
-            VertexBuffer kVBuffer = new VertexBuffer(m_kVOIAttr, 2);
-            for ( int i = 0; i < 2; i++ )
-            {
-                kVBuffer.SetColor3( 0, i, m_aakColors[m_iPlaneOrientation][2] );
-            }
-            kVBuffer.SetPosition3( 0, m_fMouseX, fYStart, m_iSlice ) ;
-            kVBuffer.SetPosition3( 1, iX, fY, m_iSlice ) ;
-
-            Polyline kLine = new Polyline( kVBuffer, false, true );
-            kLine.AttachEffect( new VertexColor3Effect() );
-            kLine.AttachGlobalState(m_kZState);
-
-            if ( m_kCurrentVOI == null )
-            {
-                m_kCurrentVOI = new LocalVolumeVOI( this, kLine, "VOITemp"  + m_iPlaneOrientation );
-            }
-            else
-            {
-                m_kCurrentVOI.add( this, kLine, "VOITemp" + m_iPlaneOrientation + "_" + m_iVOICount++ );
-            }
-
-            Node kNode = new Node();
-            kNode.AttachChild(m_kCurrentVOI.Volume.lastElement() );
-            kNode.SetName(m_kCurrentVOI.Name.lastElement() );
-            m_kDisplayList.add(m_kParent.addNode(kNode));
-            m_kParent.translateSurface( m_kCurrentVOI.Name.lastElement(), m_kTranslate );
-
-            m_kCurrentVOI.Update();
-
-            m_fMouseX = iX;
-            m_fMouseY = iY;
-        }
-
-        m_bModified = true;
-        GetCanvas().display();
-        m_bUpdateVOI = true;
-    }
-    
-    private void deleteAllVOI()
-    {
-        if ( m_kVOIList == null )
-        {
-            return;
-        }
-        m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR)); 
-        m_kCurrentVOI = null;
-        for ( int i = 0; i < m_kVOIList.length; i++ )
-        {
-            if ( m_kVOIList[i] != null )
-            {
-                for ( int j = 0; j < m_kVOIList[i].size(); j++ )
-                {
-                    m_kDisplayList.remove(m_kParent.removeNode( m_kVOIList[i].get(j).Name.get(0)) );
-                }
-                m_kVOIList[i].clear();
-            }
-        }
-        m_bUpdateVOI = false;
-        m_bModified = true;
-        GetCanvas().display();
-    }
-    
-    private void deleteVOI()
-    {
-        if ( (m_kCurrentVOI == null) || (m_kVOIList == null) || (m_kVOIList[m_iSlice] == null) )
-        {
-            return;
-        }
-        m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-        m_kDisplayList.remove(m_kParent.removeNode( m_kCurrentVOI.Name.get(0) ));
-        m_kVOIList[m_iSlice].remove( m_kCurrentVOI );            
-        m_kCurrentVOI = null;
-        m_bUpdateVOI = false;
-        m_bModified = true;
-        GetCanvas().display();
-    }
-
-
     
     /**
      * Called from the display function. Draws the axis arrows.
@@ -1896,13 +1121,13 @@ public class PlaneRender_WM extends GPURenderBase
             }
             if ( m_iPlaneOrientation == FileInfoBase.AXIAL) 
             {
-                m_pkRenderer.Draw( m_iLabelX_SpacingX, m_iLabelX_SpacingY, kXSliceHairColor,m_kLabelXDisplay.toCharArray());
-                m_pkRenderer.Draw( m_iLabelY_SpacingX, m_iLabelY_SpacingY, kYSliceHairColor,m_kLabelY.toCharArray());
+                drawText( m_iLabelX_SpacingX, m_iLabelX_SpacingY, kXSliceHairColor,m_kLabelXDisplay.toCharArray());
+                drawText( m_iLabelY_SpacingX, m_iLabelY_SpacingY, kYSliceHairColor,m_kLabelY.toCharArray());
             }
             else
             {
-                m_pkRenderer.Draw( m_iLabelX_SpacingX, m_iHeight - m_iLabelX_SpacingY, kXSliceHairColor,m_kLabelXDisplay.toCharArray());
-                m_pkRenderer.Draw( m_iLabelY_SpacingX, m_iHeight - m_iLabelY_SpacingY, kYSliceHairColor,m_kLabelY.toCharArray());               
+                drawText( m_iLabelX_SpacingX, m_iHeight - m_iLabelX_SpacingY, kXSliceHairColor,m_kLabelXDisplay.toCharArray());
+                drawText( m_iLabelY_SpacingX, m_iHeight - m_iLabelY_SpacingY, kYSliceHairColor,m_kLabelY.toCharArray());               
             }
             m_pkRenderer.SetCamera(m_spkScreenCamera);  
             m_pkRenderer.Draw(m_kXArrow[0]);
@@ -1912,27 +1137,36 @@ public class PlaneRender_WM extends GPURenderBase
             m_pkRenderer.SetCamera(m_spkCamera);
         }
     }
+
     
-    private void drawVOI()
-    {       
-        if ( m_kCurrentVOI != null )
+    protected void drawText( int iX, int iY, ColorRGBA kColor, char[] acText )
+    {
+        m_pkRenderer.Draw( iX, iY-1, ColorRGBA.BLACK, acText);
+        m_pkRenderer.Draw( iX, iY+1, ColorRGBA.BLACK, acText);
+        m_pkRenderer.Draw( iX-1, iY, ColorRGBA.BLACK, acText);
+        m_pkRenderer.Draw( iX+1, iY, ColorRGBA.BLACK, acText);
+
+        m_pkRenderer.Draw( iX, iY, kColor, acText);        
+    }
+    private void drawVOIs( VOIVector kVOIs )
+    {
+        for ( int i = 0; i < kVOIs.size(); i++ )
         {
-            int iNumLines = m_kCurrentVOI.size();
-            for ( int i = 0; i < iNumLines; i++ )
+            VOI kVOI = kVOIs.get(i);
+            Vector<VOIBase>[] kCurves = kVOI.getCurves();
+            for ( int j = 0; j < kCurves.length; j++ )
             {
-                int iNumPoints = m_kCurrentVOI.GetVertexQuantity(i);
-                if ( iNumPoints > 0 )
+                if ( kCurves[j] != null )
                 {
-                    if ( m_iSlice == m_kCurrentVOI.slice(i) )
+                    for ( int k = 0; k < kCurves[j].size(); k++ )
                     {
-                        Vector3f kTranslate = new Vector3f();
-                        for ( int j = 0; j < iNumPoints; j++ )
+                        VOIBase kVOI3D = kCurves[j].get(k);
+                        if ( kVOI3D instanceof LocalVolumeVOI )
                         {
-                            kTranslate.Copy( m_kCurrentVOI.getVolume(i).VBuffer.GetPosition3(j) );
-                            kTranslate.Add( m_kTranslate );
-                            m_kBallPoint.Local.SetTranslate( kTranslate );
-                            m_kBallPoint.UpdateGS();
-                            m_pkRenderer.Draw( m_kBallPoint );
+                            ((LocalVolumeVOI)kVOI3D).draw( this, m_pkRenderer, m_kCuller,                                     
+                                    m_afResolutions, m_aiUnits, 
+                                    m_aiAxisOrder, m_kCenter, m_iSlice, m_iPlaneOrientation,
+                                    m_kVolumeScale, m_kTranslate );
                         }
                     }
                 }
@@ -1940,136 +1174,24 @@ public class PlaneRender_WM extends GPURenderBase
         }
     }
     
-    private void fillVolume( int iSlice, Polyline kPoly, ModelImage kVolume, boolean bIntersection, int iValue )
-    {
-        int iNumPoints = kPoly.VBuffer.GetVertexQuantity();
-        //System.err.println( "fillVolume " + iSlice + " " + iNumPoints );
-        if ( iNumPoints == 0 )
-        {
-            return;
-        }
-        Vector3f[] kVolumePts = new Vector3f[iNumPoints + 1];
-        int iXMin = Integer.MAX_VALUE;
-        int iYMin = Integer.MAX_VALUE;
-        int iXMax = Integer.MIN_VALUE;
-        int iYMax = Integer.MIN_VALUE;
-        for ( int i = 0; i < iNumPoints; i++ )
-        {
-            Vector3f kPt = kPoly.VBuffer.GetPosition3(i);
-            kPt.Z = iSlice;
-            kVolumePts[i] = kPt;//VOIToFileCoordinates( kPt );
-            iXMin = (int)Math.min( iXMin, kVolumePts[i].X );
-            iYMin = (int)Math.min( iYMin, kVolumePts[i].Y );
-            iXMax = (int)Math.max( iXMax, kVolumePts[i].X );
-            iYMax = (int)Math.max( iYMax, kVolumePts[i].Y );
-        }
-        Vector3f kPt = kPoly.VBuffer.GetPosition3(0);
-        kPt.Z = iSlice;
-        kVolumePts[iNumPoints] = kPt;//VOIToFileCoordinates( kPt );
-        iXMin = (int)Math.min( iXMin, kVolumePts[iNumPoints].X );
-        iYMin = (int)Math.min( iYMin, kVolumePts[iNumPoints].Y );
-        iXMax = (int)Math.max( iXMax, kVolumePts[iNumPoints].X );
-        iYMax = (int)Math.max( iYMax, kVolumePts[iNumPoints].Y );
-        iNumPoints++;
-
-        int[][] aaiCrossingPoints = new int[iXMax - iXMin + 1][];
-        int[] aiNumCrossings = new int[iXMax - iXMin + 1];
-
-        for (int i = 0; i < (iXMax - iXMin + 1); i++) {
-            aaiCrossingPoints[i] = new int[iNumPoints];
-        }
-
-        outlineRegion(aaiCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax, kVolumePts, kVolume);
-        fill(aaiCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax, (int)kVolumePts[0].Z, kVolume, bIntersection, iValue);
-        
-    }
-    
     /* Convert the position in LocalCoordinates (rendering space) into
      * PatientCoordinates:
      * @param localPt the current point in LocalCoordinates
      * @param patientPt transformed localPt in PatientCoordinates
      */
-    private void LocalToPatient( Vector3f localPt, Vector3f patientPt )
+    public void LocalToPatient( Vector3f localPt, Vector3f patientPt )
     {
-        patientPt.X = localPt.X * (m_aiLocalImageExtents[0] - 1);
-        patientPt.Y = localPt.Y * (m_aiLocalImageExtents[1] - 1);
-        patientPt.Z = localPt.Z * (m_aiLocalImageExtents[2] - 1);
+        patientPt.X = Math.round(localPt.X * (m_aiLocalImageExtents[0] - 1));
+        patientPt.Y = Math.round(localPt.Y * (m_aiLocalImageExtents[1] - 1));
+        patientPt.Z = Math.round(localPt.Z * (m_aiLocalImageExtents[2] - 1));
     }
 
     
-    private void PatientToLocal( Vector3f patientPt, Vector3f localPt  )
+    public void PatientToLocal( Vector3f patientPt, Vector3f localPt  )
     {
         localPt.X = patientPt.X / (m_aiLocalImageExtents[0] - 1);
         localPt.Y = patientPt.Y / (m_aiLocalImageExtents[1] - 1);
         localPt.Z = patientPt.Z / (m_aiLocalImageExtents[2] - 1);
-    }
-
-    private void moveVOI( int iX, int iY )
-    {
-        float fY = m_iHeight - iY;
-        if ( m_kCurrentVOI == null )
-        {            
-            return;
-        }
-        Vector3f kDiff = new Vector3f( iX, fY, m_iSlice );
-        m_kCurrentVOI.move( this, kDiff );
-        m_kCurrentVOI.Update();
-
-        m_kCurrentVOI.setCenter( iX, fY, m_iSlice );
-        m_kParent.setCursor(MipavUtil.moveCursor);
-        m_bModified = true;
-        GetCanvas().display();
-    }
-    
-    
-    private void moveVOIPoint( int iX, int iY )
-    {
-        if ( m_kCurrentVOI == null )
-        {            
-            return;
-        }
-        float fY = m_iHeight - iY;
-        m_kCurrentVOI.SetPosition( this, m_iCurrentVOIPoint, iX, fY, m_iSlice );     
-        m_kCurrentVOI.Release();
-        m_kCurrentVOI.Update();
-        m_bUpdateVOI = true;
-        m_bModified = true;
-        GetCanvas().display();
-
-        m_kParent.setCursor(MipavUtil.crosshairCursor);
-    }
-    
-    private boolean nearPoint( int iX, int iY, VertexBuffer kVBuffer )
-    {
-        Vector3f kVOIPoint = new Vector3f(iX, m_iHeight - iY, m_iSlice );
-        int iNumPoints = kVBuffer.GetVertexQuantity();
-        if ( iNumPoints > 0 )
-        {
-            for ( int i = 0; i < iNumPoints; i++ )
-            {
-                Vector3f kPos = kVBuffer.GetPosition3(i);
-                Vector3f kDiff = new Vector3f();
-                kDiff.Sub( kPos, kVOIPoint );
-                if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
-                {
-                    m_iCurrentVOIPoint = i;
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-    
-
-    private void pasteVOI( int iSlice )
-    {
-        if ( m_kCopyVOI == null )
-        {
-            return;
-        }
-        m_kCurrentVOI = new LocalVolumeVOI( this, createPolyline( m_kCopyVOI.getLocal(0).VBuffer, iSlice  ), "VOI_" + m_iPlaneOrientation + "_" + m_iVOICount++  );     
-        m_bUpdateVOI = true;
-        saveVOI( 0, 0, iSlice );
     }
     
     /**
@@ -2094,25 +1216,39 @@ public class PlaneRender_WM extends GPURenderBase
         this.LocalToPatient( localPt, patientPt );
         Vector3f volumePt = new Vector3f();
         MipavCoordinateSystems.patientToFile( patientPt, volumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );
-        if ( m_bDrawVOI )
-        {
-            createVOI( kEvent.getX(), kEvent.getY() );
-        } 
-        else if ( m_bPointer )
-        {
-            if ( m_kParent.getCursor() == MipavUtil.crosshairCursor )
-            {
-                moveVOIPoint( kEvent.getX(), kEvent.getY() );
-            }
-            else if ( m_bSelected )
-            {
-                moveVOI( kEvent.getX(), kEvent.getY() );
-            }
-        }
-        else 
-        {
-            m_kParent.setSliceFromPlane( volumePt );
-        }
+        m_kParent.setSliceFromPlane( volumePt );
+    }
+
+
+    public boolean screenToFile(int iX, int iY, int iZ, Vector3f volumePt)
+    {
+        Vector3f localPt = new Vector3f();
+        boolean bClipped = this.ScreenToLocal(iX, iY, iZ, localPt);
+
+        /* Tell the ViewJFrameVolumeView parent to update the other
+         * PlaneRenderWMs and the SurfaceRender with the changed Z position
+         * of the planes with color matching the moved bar: */
+        Vector3f patientPt = new Vector3f();
+        this.LocalToPatient( localPt, patientPt );
+        MipavCoordinateSystems.patientToFile( patientPt, volumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );
+        return bClipped;
+    }
+
+    public Vector3f fileToScreen(Vector3f volumePt)
+    {
+        Vector3f patientPt = new Vector3f();
+        MipavCoordinateSystems.fileToPatient( volumePt, patientPt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );
+        return patientToScreen(patientPt);
+    }
+    
+    public Vector3f patientToScreen(Vector3f patientPt)
+    {
+        Vector3f localPt = new Vector3f();
+        PatientToLocal( patientPt, localPt );
+        
+        Vector3f screenPt = new Vector3f();
+        LocalToScreen( localPt, screenPt );
+        return screenPt;
     }
     
     /**
@@ -2180,54 +1316,8 @@ public class PlaneRender_WM extends GPURenderBase
         }
     }
     
-    private void saveVOI( int iX, int iY, int iSlice )
-    {
-        if ( m_kCurrentVOI != null )
-        {
-            if ( m_kCurrentVOI.size() == 0 )
-            {
-                return;
-            }
-            if ( m_kVOIList == null )
-            {
-                m_kVOIList = new LocalVolumeVOIVector[m_aiLocalImageExtents[2]];
-            }
-            if ( m_kVOIList[iSlice] == null )
-            {
-                m_kVOIList[iSlice] = new LocalVolumeVOIVector();
-            }
-            if ( !m_kVOIList[iSlice].contains( m_kCurrentVOI ) )
-            {
-                String kName = new String(m_kCurrentVOI.Name.get(0));
-                int iNumLines = m_kCurrentVOI.size();
-                if ( iNumLines > 1 )
-                {    
-                    VertexBuffer kVBuffer = new VertexBuffer( m_kCurrentVOI.getLocal(0).VBuffer.GetAttributes(), iNumLines + 1 );
-                    for ( int i = 0; i < iNumLines; i++ )
-                    {
-                        kVBuffer.SetPosition3( i, m_kCurrentVOI.getLocal(i).VBuffer.GetPosition3(0) );
-                        kVBuffer.SetColor3( 0, i, m_aakColors[m_iPlaneOrientation][2] );
-                        m_kDisplayList.remove(m_kParent.removeNode( m_kCurrentVOI.Name.get(i) ));  
-                    }
-                    kVBuffer.SetPosition3( iNumLines, m_kCurrentVOI.getLocal(iNumLines-1).VBuffer.GetPosition3(1) );
-                    kVBuffer.SetColor3( 0, iNumLines, m_aakColors[m_iPlaneOrientation][2] );
-                    Polyline kPoly = createPolyline( kVBuffer, m_iSlice);
-                    m_kCurrentVOI = new LocalVolumeVOI(this, kPoly, kName );
-                }
-                else
-                {
-                    m_kDisplayList.remove(m_kParent.removeNode( kName ));  
-                }
-                Node kNode = new Node();
-                kNode.AttachChild(m_kCurrentVOI.Volume.get(0) );
-                kNode.SetName(kName);
-                m_kDisplayList.add(m_kParent.addNode(kNode));
-                m_kParent.translateSurface( kName, m_kTranslate );
-                m_kVOIList[iSlice].add( m_kCurrentVOI );
-            }
-        }
-        m_bUpdateVOI = false;
-    }
+
+    
     
     /**
      * Calculate the position of the mouse in the Local Coordinates, taking
@@ -2237,8 +1327,13 @@ public class PlaneRender_WM extends GPURenderBase
      * @param iY mouse y coordinate value
      * @param kLocal mouse position in Local Coordinates
      */
-    private void ScreenToLocal(int iX, int iY, int iZ, Vector3f kLocal )
+    public boolean ScreenToLocal(int iX, int iY, int iZ, Vector3f kLocal )
     {
+        boolean bClipped = false;
+        if ( (iX < 0 ) || (iX > m_iWidth) || (iY < 0 ) || (iY > m_iHeight) )
+        {
+            bClipped = true;
+        }
         //System.err.println( "ScreenToLocal " + iX + " " + iY );
         iX = Math.min( m_iWidth,  Math.max( 0, iX ) );
         iY = Math.min( m_iHeight, Math.max( 0, iY ) );
@@ -2255,6 +1350,11 @@ public class PlaneRender_WM extends GPURenderBase
         //System.err.println( "              " + kLocal.X + " " + kLocal.Y );
 
         /* Bounds checking: */
+        if ( (kLocal.X < m_fX0) || (kLocal.X > m_fX1) || (kLocal.Y < m_fY0) || (kLocal.Y > m_fY1))
+        {
+            bClipped = true;
+        }
+        //System.err.println( bClipped + " " + kLocal.Y + " " + m_fY0 + " " + m_fY1 );
         kLocal.X = Math.min( Math.max( kLocal.X, m_fX0 ), m_fX1 );
         kLocal.Y = Math.min( Math.max( kLocal.Y, m_fY0 ), m_fY1 );
         //System.err.println( "              " + kLocal.X + " " + kLocal.Y + " " + m_fX0 + " " + m_fX1 + " " + m_fY0 + " " + m_fY1 );
@@ -2264,10 +1364,12 @@ public class PlaneRender_WM extends GPURenderBase
         kLocal.Y = (kLocal.Y - m_fY0) / m_fYRange;
         //System.err.println( "              " + kLocal.X + " " + kLocal.Y );
         kLocal.Z = iZ / (float)(m_aiLocalImageExtents[2] - 1);
+        
+        return bClipped;
     }
 
 
-    private void LocalToScreen(Vector3f kLocal, Vector3f kScreen)
+    public void LocalToScreen(Vector3f kLocal, Vector3f kScreen)
     {
         kScreen.X = kLocal.X * m_fXRange + m_fX0;
         kScreen.Y = kLocal.Y * m_fYRange + m_fY0;
@@ -2280,28 +1382,12 @@ public class PlaneRender_WM extends GPURenderBase
         float fHalfHeight = ((float) m_iHeight-1) / 2.0f;
         float fX = kScreen.X * fHalfWidth + fHalfWidth;
         float fY = kScreen.Y * fHalfWidth + fHalfHeight;
-        kScreen.Set( fX, fY, m_iSlice );
+        kScreen.Set( Math.round(fX), Math.round(fY), Math.round(kScreen.Z) );
     }
 
-    private void selectVOI( int iX, int iY )
+    public int getSlice()
     {
-        float fY = m_iHeight - iY;
-        m_bSelected = false;
-        m_kCurrentVOI = null;
-        if ( (m_kVOIList != null) && (m_kVOIList[m_iSlice] != null) )
-        {
-            for ( int i = 0; i < m_kVOIList[m_iSlice].size(); i++ )
-            {
-                if ( contains( iX, (int)fY, m_kVOIList[m_iSlice].get(i).getLocal(0).VBuffer ) )
-                {
-                    m_kCurrentVOI = m_kVOIList[m_iSlice].get(i);
-                    m_kCurrentVOI.setCenter( iX, fY, m_iSlice );
-                    //System.err.println( "Selected: " + kCurve.getName() );
-                    m_bSelected = true;
-                    break;
-                }
-            }
-        }
+        return m_iSlice;
     }
     
     /**
@@ -2322,130 +1408,7 @@ public class PlaneRender_WM extends GPURenderBase
 
         if (iSlice != m_iSlice) {
             m_iSlice = iSlice;
-        }
-    }
-
-
-    public LocalVolumeVOI getCurrentVOI()
-    {
-        return m_kCurrentVOI;
-    }
-    
-    public void setCurrentVOI( LocalVolumeVOI kCurrentVOI )
-    {
-        m_kCurrentVOI = kCurrentVOI;
-        doVOI("");
-    }
-    
-    public LocalVolumeVOIVector[] getVOICopy()
-    {
-        if ( m_kVOIList == null )
-        {
-            return null;
-        }
-        LocalVolumeVOIVector[] kReturn = new LocalVolumeVOIVector[m_kVOIList.length];
-        for ( int i = 0; i < m_kVOIList.length; i++ )
-        {
-            if ( m_kVOIList[i] != null )
-            {
-                kReturn[i] = new LocalVolumeVOIVector();
-                for ( int j = 0; j < m_kVOIList[i].size(); j++ )
-                {
-                    kReturn[i].add( new LocalVolumeVOI(m_kVOIList[i].get(j)) );
-                }
-            }
-        }
-        return kReturn;
-    }
-
-    public void setVOICopy(LocalVolumeVOIVector[] kList)
-    {
-        if ( kList == null )
-        {
-            return;
-        }
-        m_kVOIList = new LocalVolumeVOIVector[kList.length];
-        for ( int i = 0; i < kList.length; i++ )
-        {
-            if ( kList[i] != null )
-            {
-                m_kVOIList[i] = new LocalVolumeVOIVector();
-                for ( int j = 0; j < kList[i].size(); j++ )
-                {
-                    m_kCurrentVOI = kList[i].get(j);
-                    saveVOI( 0, 0, i );
-                }
-            }
-        }
-        doVOI("");
-    }
-    
-    private void showSelectedVOI( int iX, int iY )
-    {
-        if ( m_kCurrentVOI != null )
-        {
-            if ( nearPoint( iX, iY, m_kCurrentVOI.getLocal(0).VBuffer ) )
-            {
-                m_kParent.setCursor(MipavUtil.crosshairCursor);
-                return;
-            }
-            else if ( nearLine( iX, iY, m_kCurrentVOI.getLocal(0).VBuffer ) )
-            {
-                m_kParent.setCursor(MipavUtil.addPointCursor);
-                return;
-            }
-        }
-
-        if ( (m_kVOIList != null) && (m_kVOIList[m_iSlice] != null) )
-        {
-            for ( int i = 0; i < m_kVOIList[m_iSlice].size(); i++ )
-            {
-                if ( contains( iX, m_iHeight - iY, m_kVOIList[m_iSlice].get(i).getLocal(0).VBuffer ) )
-                {
-                    m_kParent.setCursor(MipavUtil.moveCursor);
-                    return;
-                }
-            }
-        }    
-        m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-    }
-
-    public Vector3f VOIToFileCoordinates( Vector3f kVOIPt, boolean bScale )
-    {
-        Vector3f localPt = new Vector3f();
-        this.ScreenToLocal((int)kVOIPt.X, (int)(m_iHeight - kVOIPt.Y), (int)kVOIPt.Z, localPt);
-
-        /* Tell the ViewJFrameVolumeView parent to update the other
-         * PlaneRenderWMs and the SurfaceRender with the changed Z position
-         * of the planes with color matching the moved bar: */
-        Vector3f patientPt = new Vector3f();
-        this.LocalToPatient( localPt, patientPt );
-        Vector3f volumePt = new Vector3f();
-        MipavCoordinateSystems.patientToFile( patientPt, volumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );
-        if ( bScale )
-        {
-            volumePt.Mult( m_kVolumeScale );
-            //System.err.println( volumePt.ToString() );
-       }
-        return volumePt; 
-    }
-    
-
-
-    private Vector3f FileCoordinatesToVOI( Vector3f volumePt, boolean bScale )
-    {       
-        Vector3f kVOIPt = new Vector3f();
-        if ( bScale )
-        {
-            kVOIPt.Mult( volumePt, m_kVolumeScaleInv );
-            //System.err.println( volumePt.ToString() );
-        }
-        Vector3f patientPt = new Vector3f();      
-        MipavCoordinateSystems.fileToPatient( kVOIPt, patientPt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );
-
-        Vector3f localPt = new Vector3f();
-        localPt.Mult( patientPt, m_kVolumeScale );
-        return localPt; 
+        }        
     }
 
     private void zoom()
@@ -2455,6 +1418,14 @@ public class PlaneRender_WM extends GPURenderBase
         float fUMax = fRMax * m_iHeight / m_iWidth;
         m_spkCamera.SetFrustum(-fRMax, fRMax,-fUMax, fUMax,1f,5.0f);
         m_pkRenderer.OnFrustumChange();
+        float[] afData = new float[16];
+        m_pkRenderer.SetConstantWVPMatrix(2, afData);
+        m_kPVWMatrix.Set( afData[0], afData[1], afData[2], afData[3],
+                afData[4], afData[5], afData[6], afData[7], 
+                afData[8], afData[9], afData[10], afData[11], 
+                afData[12], afData[13], afData[14], afData[15] );
+        //System.err.println( m_kPVWMatrix.ToString() );
+        //m_kParent.zoom(this);
         m_bModified = true;
         GetCanvas().display();
     }
@@ -2471,446 +1442,14 @@ public class PlaneRender_WM extends GPURenderBase
         zoom();
     }
     
-    
-
-
-    /**
-     * This method calculates the average pixel value based on the four neighbors (N, S, E, W).
-     *
-     * @param   index  the center pixel where the average pixel value is to be calculated.
-     *
-     * @return  the average pixel value as a float.
-     */
-    private float avgPix( int iX, int iY )
+    public int getWidth()
     {
-        int index = m_aiIndexValues[iY][iX];
-        //System.err.print( "         " + index  );
-        int[] extents = m_kVolumeImageA.GetImage().getExtents();
-        if ((index > extents[0]) && (index < (m_kVolumeImageA.GetImage().getSize() - extents[0]))) {
-
-            int sum = (m_aucData[index] & 0x00ff);
-
-            index = m_aiIndexValues[iY-1][iX];
-            sum += (m_aucData[index] & 0x00ff);
-
-            index = m_aiIndexValues[iY][iX-1];
-            sum += (m_aucData[index] & 0x00ff);
-
-            index = m_aiIndexValues[iY][iX+1];
-            sum += (m_aucData[index] & 0x00ff);
-
-            index = m_aiIndexValues[iY+1][iX];
-            sum += (m_aucData[index] & 0x00ff);
-
-            //System.err.println( "         " + 5 +  "   " + sum );
-            return sum / 5.0f;
-        } 
-        //System.err.println( "   " + (m_aucData[index] & 0x00ff));
-        return (m_aucData[index] & 0x00ff);
+        return m_iWidth;
     }
     
-    
-    /**
-     * Generates the possible paths of the level set and pushes them onto a stack. Looks in the 8 neighborhood
-     * directions for the possible paths.
-     *
-     */
-    private void paths(int iX, int iY, int iZ, int i, float level) {
-
-        int[] intPtr = null;
-
-        try {
-            intPtr = new int[1];
-        } catch (OutOfMemoryError error) {
-            System.gc();
-            MipavUtil.displayError("Out of memory: ComponentEditImage.mouseDragged");
-
-            return;
-        }
-
-        intPtr[0] = levelSetStack.size() - 1;
-        
-        //indexMM
-        if ((i != 0) && (m_afAverages[m_iM][m_iM] <= level) && (map.get(m_aiIndexValues[m_iM][m_iM]) == false)) {
-            stack.push(intPtr);
-        } 
-        //indexM_
-        else if ((i != 1) && (m_afAverages[m_iM][m_i_] <= level) && (map.get(m_aiIndexValues[m_iM][m_i_]) == false)) {
-            stack.push(intPtr);
-        }
-        //indexMP
-        else if ((i != 2) && (m_afAverages[m_iM][m_iP] <= level) && (map.get(m_aiIndexValues[m_iM][m_iP]) == false)) {
-            stack.push(intPtr);
-        } 
-        //index_P
-        else if ((i != 3) && (m_afAverages[m_i_][m_iP] <= level) && (map.get(m_aiIndexValues[m_i_][m_iP]) == false)) {
-            stack.push(intPtr);
-        }
-        //indexPP
-        else if ((i != 4) && (m_afAverages[m_iP][m_iP] <= level) && (map.get(m_aiIndexValues[m_iP][m_iP]) == false)) {
-            stack.push(intPtr);
-        }
-        //indexP_
-        else if ((i != 5) && (m_afAverages[m_iP][m_i_] <= level) && (map.get(m_aiIndexValues[m_iP][m_i_]) == false)) {
-            stack.push(intPtr);
-        }
-        //indexPM
-        else if ((i != 6) && (m_afAverages[m_iP][m_iM] <= level) && (map.get(m_aiIndexValues[m_iP][m_iM]) == false)) {
-            stack.push(intPtr);
-        }
-        // index_M
-        else if ((i != 7) && (m_afAverages[m_i_][m_iM] <= level) && (map.get(m_aiIndexValues[m_i_][m_iM]) == false)) {
-            stack.push(intPtr);
-        }
-    }
-
-    
-
-
-    /**
-     * Creates a single level set. Takes a starting point and finds a closed path along the levelset back to the
-     * starting point.
-     *
-     * @param  startPtX  the start point
-     * @param  startPtY  the start point
-     * @param  level     the level of the level set
-     */
-    private LocalVolumeVOI singleLevelSet(float startPtX, float startPtY ) {
-        double distance;
-        stack.removeAllElements();
-
-        for (int i = 0; i < map.size(); i++) {
-            map.clear(i);
-        }
-
-        Vector3f kVOIPt = new Vector3f( startPtX, startPtY, m_iSlice );
-        Vector3f kVolumePt = VOIToFileCoordinates( kVOIPt, false );
-        Vector3f kPatientPt = new Vector3f();
-        MipavCoordinateSystems.fileToPatient( kVolumePt, kPatientPt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );
-        
-        startPtX = kPatientPt.X;
-        startPtY = kPatientPt.Y;
-        int x = (int) ( kPatientPt.X + 0.5);
-        int y = (int) ( kPatientPt.Y + 0.5);
-        int z = (int)kPatientPt.Z;
-
-        setIndices( x, y, z );
-        
-        int index = m_aiIndexValues[m_i_][m_i_];
-        int level = (m_aucData[index] & 0x00ff);
-
-        levelSetStack.reset();
-        levelSetStack.addPoint(x, y);
-        map.set(m_aiIndexValues[m_i_][m_i_]);
-
-        int dir = -1;
-        float diff = 100000;
-        int mapIndex = 0;
-        
-        do {
-
-            if ((x >= 2) && (x < (m_aiLocalImageExtents[0] - 2)) && (y >= 2) && (y < (m_aiLocalImageExtents[1] - 2))) {
-
-                mapIndex = m_aiIndexValues[m_iM][m_i_];
-                //System.err.println( map.get(mapIndex) );
-                if ((m_afAverages[m_iM][m_i_] >= level) &&
-                    ((m_afAverages[m_iM][m_iP] < level) || (m_afAverages[m_i_][m_i_] < level) ||
-                     (m_afAverages[m_iM][m_iM] < level) || (m_afAverages[m_iMM][m_i_] < level)) &&
-                    (map.get(mapIndex) == false)) {
-                    dir = 1;
-                    diff = Math.abs(m_afAverages[m_iM][m_i_] - m_afAverages[m_i_][m_i_]);
-                }
-                mapIndex = m_aiIndexValues[m_iM][m_iP];
-                //System.err.println( map.get(mapIndex) );
-                if ((m_afAverages[m_iM][m_iP] >= level) &&
-                    ((m_afAverages[m_iM][m_iPP] < level) || (m_afAverages[m_i_][m_iP] < level) ||
-                     (m_afAverages[m_iM][m_i_] < level) || (m_afAverages[m_iMM][m_iP] < level)) &&
-                    (map.get(mapIndex) == false)) {
-                    
-                    if (Math.abs(m_afAverages[m_iM][m_iP] - m_afAverages[m_i_][m_i_]) < diff) {
-                        dir = 2;
-                        diff = Math.abs(m_afAverages[m_iM][m_iP] - m_afAverages[m_i_][m_i_]);
-                    }
-                }
-                mapIndex = m_aiIndexValues[m_i_][m_iP];
-                //System.err.println( map.get(mapIndex) );
-                if ((m_afAverages[m_i_][m_iP] >= level) &&
-                    ((m_afAverages[m_i_][m_iPP] < level) || (m_afAverages[m_iP][m_iP] < level) || (m_afAverages[m_i_][m_i_] < level) ||
-                     (m_afAverages[m_iM][m_iP] < level)) && (map.get(mapIndex) == false)) {
-                    
-                    if (Math.abs(m_afAverages[m_i_][m_iP] - m_afAverages[m_i_][m_i_]) < diff) {
-                        dir = 3;
-                        diff = Math.abs(m_afAverages[m_i_][m_iP] - m_afAverages[m_i_][m_i_]);
-                    }
-                }
-                mapIndex = m_aiIndexValues[m_iP][m_iP];
-                //System.err.println( map.get(mapIndex) );
-                if ((m_afAverages[m_iP][m_iP] >= level) &&
-                    ((m_afAverages[m_iP][m_iPP] < level) || (m_afAverages[m_iPP][m_iP] < level) ||
-                     (m_afAverages[m_i_][m_iP] < level) || (m_afAverages[m_iP][m_i_] < level)) &&
-                    (map.get(mapIndex) == false)) {
-                    
-                    if (Math.abs(m_afAverages[m_iP][m_iP] - m_afAverages[m_i_][m_i_]) < diff) {
-                        dir = 4;
-                        diff = Math.abs(m_afAverages[m_iP][m_iP] - m_afAverages[m_i_][m_i_]);
-                    }
-                }
-                mapIndex = m_aiIndexValues[m_iP][m_i_];
-                //System.err.println( map.get(mapIndex) );
-                if ((m_afAverages[m_iP][m_i_] >= level) &&
-                    ((m_afAverages[m_iP][m_iP] < level) || (m_afAverages[m_iPP][m_i_] < level) ||
-                     (m_afAverages[m_iP][m_iM] < level) || (m_afAverages[m_i_][m_i_] < level)) &&
-                    (map.get(mapIndex) == false)) {
-                    
-                    if (Math.abs(m_afAverages[m_iP][m_i_] - m_afAverages[m_i_][m_i_]) < diff) {
-                        dir = 5;
-                        diff = Math.abs(m_afAverages[m_iP][m_i_] - m_afAverages[m_i_][m_i_]);
-                    }
-                }
-                mapIndex = m_aiIndexValues[m_iP][m_iM];
-                //System.err.println( map.get(mapIndex) );
-                if ((m_afAverages[m_iP][m_iM] >= level) &&
-                    ((m_afAverages[m_iP][m_i_] < level) || (m_afAverages[m_iPP][m_iM] < level) ||
-                     (m_afAverages[m_iP][m_iMM] < level) || (m_afAverages[m_i_][m_iM] < level)) &&
-                    (map.get(mapIndex) == false)) {
-                    
-                    if (Math.abs(m_afAverages[m_iP][m_iM] - m_afAverages[m_i_][m_i_]) < diff) {
-                        dir = 6;
-                        diff = Math.abs(m_afAverages[m_iP][m_iM] - m_afAverages[m_i_][m_i_]);
-                    }
-                }
-                mapIndex = m_aiIndexValues[m_i_][m_iM];
-                //System.err.println( map.get(mapIndex) );
-                if ((m_afAverages[m_i_][m_iM] >= level) &&
-                    ((m_afAverages[m_i_][m_i_] < level) || (m_afAverages[m_iP][m_iM] < level) || (m_afAverages[m_i_][m_iMM] < level) ||
-                     (m_afAverages[m_iM][m_iM] < level)) && (map.get(mapIndex) == false)) {
-                    
-                    if (Math.abs(m_afAverages[m_i_][m_iM] - m_afAverages[m_i_][m_i_]) < diff) {
-                        dir = 7;
-                        diff = Math.abs(m_afAverages[m_i_][m_iM] - m_afAverages[m_i_][m_i_]);
-                    }
-                }
-                mapIndex = m_aiIndexValues[m_iM][m_iM];
-                //System.err.println( map.get(mapIndex) );
-                if ((m_afAverages[m_iM][m_iM] >= level) &&
-                    ((m_afAverages[m_iM][m_i_] < level) || (m_afAverages[m_i_][m_iM] < level) ||
-                     (m_afAverages[m_iM][m_iMM] < level) || (m_afAverages[m_iMM][m_iM] < level)) &&
-                    (map.get(mapIndex) == false))  {
-                    
-                    if (Math.abs(m_afAverages[m_iM][m_iM] - m_afAverages[m_i_][m_i_]) < diff) {
-                        dir = 0;
-                        // diff = Math.abs(imageBufferActive[index-xDim-1] - imageBufferActive[index]);
-                    }
-                }
-
-                diff = 1000000;
-
-                if (dir == 1) {          
-                    mapIndex = m_aiIndexValues[m_iM][m_i_];
-                    map.set(mapIndex);
-                    paths(x,y,z, dir, level);
-                    // x = x;
-                    y = y - 1;     
-                    setIndices( x, y, z );
-                } else if (dir == 2) {
-                    mapIndex = m_aiIndexValues[m_iM][m_iP];
-                    map.set(mapIndex);
-                    paths(x,y,z, dir, level);
-                    x = x + 1;
-                    y = y - 1;               
-                    setIndices( x, y, z );
-                } else if (dir == 3) {
-                    mapIndex = m_aiIndexValues[m_i_][m_iP];
-                    map.set(mapIndex);
-                    paths(x,y,z, dir, level);
-                    x = x + 1;
-                    // y = y;               
-                    setIndices( x, y, z );
-                } else if (dir == 4) {
-                    mapIndex = m_aiIndexValues[m_iP][m_iP];
-                    map.set(mapIndex);
-                    paths(x,y,z, dir, level);
-                    x = x + 1;
-                    y = y + 1;               
-                    setIndices( x, y, z );
-                } else if (dir == 5) {
-                    mapIndex = m_aiIndexValues[m_iP][m_i_];
-                    map.set(mapIndex);
-                    paths(x,y,z, dir, level);
-                    // x = x;
-                    y = y + 1;               
-                    setIndices( x, y, z );
-                } else if (dir == 6) {
-                    mapIndex = m_aiIndexValues[m_iP][m_iM];
-                    map.set(mapIndex);
-                    paths(x,y,z, dir, level);
-                    x = x - 1;
-                    y = y + 1;               
-                    setIndices( x, y, z );
-                } else if (dir == 7) {
-                    mapIndex = m_aiIndexValues[m_i_][m_iM];
-                    map.set(mapIndex);
-                    paths(x,y,z, dir, level);
-                    x = x - 1;
-                    // y = y;               
-                    setIndices( x, y, z );
-                } else if (dir == 0) {
-                    mapIndex = m_aiIndexValues[m_iM][m_iM];
-                    map.set(mapIndex);
-                    paths(x,y,z, dir, level);
-                    x = x - 1;
-                    y = y - 1;               
-                    setIndices( x, y, z );
-                } else {
-
-                    if (!stack.empty()) {
-                        int ptr = ((int[]) stack.pop())[0];
-                        x = levelSetStack.getPointX(ptr);
-                        y = levelSetStack.getPointY(ptr);
-                        levelSetStack.setIndex(ptr);
-                        setIndices( x, y, z );
-                    } else {
-                        x = y = -1;
-                    }
-                }
-
-                dir = -1;
-            } else { // near edge of image
-                levelSetStack.reset();
-
-                break;
-            }
-
-            if ((x == -1) || (y == -1)) {
-                levelSetStack.reset();
-
-                break;
-            }
-
-            levelSetStack.addPoint(x, y);
-            distance = ((x - startPtX) * (x - startPtX)) + ((y - startPtY) * (y - startPtY));if ((distance < 2.1) && (levelSetStack.size() < 10)) {
-                distance = 10;
-            }
-        } while (distance > 2.1);
-
-
-        if (levelSetStack.size() != 0) {
-            Vector3f kLocalPt = new Vector3f();
-            Vector3f kScreenPt = new Vector3f();
-            
-            VertexBuffer kVBuffer = new VertexBuffer( m_kVOIAttr, levelSetStack.size() + 1 );
-            for ( int i = 0; i < levelSetStack.size(); i++ )
-            {
-                //System.err.print( levelSetStack.getPointX(i) + " " + levelSetStack.getPointY(i) );
-                
-                kPatientPt.Set( levelSetStack.getPointX(i), levelSetStack.getPointY(i), m_iSlice );
-                PatientToLocal( kPatientPt, kLocalPt );
-                LocalToScreen( kLocalPt, kScreenPt );
-                kScreenPt.Y = m_iHeight - kScreenPt.Y;
-                //kPatientPt.Mult( m_kVolumeScale );
-                //System.err.println( "                " + kScreenPt.X + " " + kScreenPt.Y );
-                
-                kVBuffer.SetPosition3( i, kScreenPt );
-                kVBuffer.SetColor3( 0, i, m_aakColors[m_iPlaneOrientation][2] );
-            }
-            kPatientPt.Set( levelSetStack.getPointX(0), levelSetStack.getPointY(0), m_iSlice );   
-            PatientToLocal( kPatientPt, kLocalPt );
-            LocalToScreen( kLocalPt, kScreenPt );
-            kScreenPt.Y = m_iHeight - kScreenPt.Y;
-            //kPatientPt.Mult( m_kVolumeScale );
-            kVBuffer.SetPosition3( levelSetStack.size(), kScreenPt );
-            kVBuffer.SetColor3( 0, levelSetStack.size(), m_aakColors[m_iPlaneOrientation][2] );
-            Polyline kPoly = createPolyline( kVBuffer, m_iSlice);
-            return new LocalVolumeVOI(this, kPoly, "VOITemp" + m_iPlaneOrientation );
-        } 
-        return null;
-    }
-    
-    private void initDataBuffer()
+    public int getHeight()
     {
-        int iSize = m_aiLocalImageExtents[0]*m_aiLocalImageExtents[1]*m_aiLocalImageExtents[2];
-        m_aucData = new byte[iSize];
-        if ( m_kVolumeImageA.GetImage().isColorImage() )
-        {
-            iSize *= 4;
-            byte[] aucTemp = new byte[iSize];
-            try {
-                m_kVolumeImageA.GetImage().exportData( 0, iSize, aucTemp );
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            for ( int i = 0; i < m_aucData.length; i++ )
-            {
-                m_aucData[i] = (byte)((aucTemp[i*4 + 1] + aucTemp[i*4 + 2] + aucTemp[i*4 + 3])/3.0f);
-            }
-        }
-        else
-        {
-            try {
-                m_kVolumeImageA.GetImage().exportData( 0, iSize, m_aucData );
-            } catch (IOException e) {
-                e.printStackTrace();
-            } 
-        }
-    }
-    
-    private Vector2f[][] m_akSteps = new Vector2f[7][7];
-    private int[][] m_aiIndexValues = new int[7][7];
-    private float[][] m_afAverages = new float[7][7];
-    private int m_iMM = 1;
-    private int m_iM = 2;
-    private int m_i_ = 3;
-    private int m_iP = 4;
-    private int m_iPP = 5;
-
-    private void setIndices( int iX, int iY, int iZ )
-    {
-        for ( int i = 0; i < 7; i++ )
-        {
-            for ( int j = 0; j < 7; j++ )
-            {
-                if ( m_akSteps[i][j] == null )
-                {
-                    m_akSteps[i][j] = new Vector2f( iX + j-3, iY + i - 3 );
-                }
-                else
-                {
-                    m_akSteps[i][j].Set( iX + j-3, iY + i - 3 );
-                }
-            }
-        }
-
-        int[] extents = m_kVolumeImageA.GetImage().getExtents();  
-        Vector3f kVolumePt = new Vector3f();
-        Vector3f kPatientPt = new Vector3f();    
-        
-        for ( int i = 0; i < 7; i++ )
-        {
-            for ( int j = 0; j < 7; j++ )
-            {
-                kPatientPt.Set( m_akSteps[i][j].X, m_akSteps[i][j].Y, iZ );
-                MipavCoordinateSystems.patientToFile( kPatientPt, kVolumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );     
-                m_aiIndexValues[i][j] = (int)(kVolumePt.Z * extents[0] * extents[1] + kVolumePt.Y * extents[0] + kVolumePt.X);
-            }
-        }
-        
-       for ( int i = 1; i < 6; i++ )
-        { 
-            for ( int j = 1; j < 6; j++ )
-            {
-                m_afAverages[i][j] = avgPix( j, i );
-            }
-        }
-    }
-    
-    public Attributes getVOIAttributes()
-    {
-        return m_kVOIAttr;
-    }
-
-    public ColorRGB getZColor()
-    {
-        return m_aakColors[m_iPlaneOrientation][2];
+        return m_iHeight;
     }
     
 }

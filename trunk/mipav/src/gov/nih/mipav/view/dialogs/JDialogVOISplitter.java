@@ -62,7 +62,7 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
     private float tol = 1.0f;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
-  
+    
     public JDialogVOISplitter(Frame theParentFrame, ModelImage im, Vector3f sPt, Vector3f ePt) {
         super(theParentFrame, true);
         image = im;
@@ -77,6 +77,14 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
             currentSlice = ((ViewJFrameImage) parentFrame).getViewableSlice();
         }
         
+        init();
+        setVisible(true);
+    }
+
+    
+    public JDialogVOISplitter(ModelImage im) {
+        super(true);        
+        image = im;
         init();
         setVisible(true);
     }
@@ -97,13 +105,24 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
         String command = e.getActionCommand();
 
         if (command.equals("Split")) {
-
-        	calcSlopeAndB();
-        	splitVOI();
-
             setVisible(false);
-            dispose();
+            if ( startPt != null && endPt != null )
+            {
+                calcSlopeAndB();
+                splitVOI();
+                dispose();
+            }
         }
+    }
+    
+    public boolean getAllSlices()
+    {
+        return allSlicesBox.isSelected();
+    }
+    
+    public boolean getOnlyActive()
+    {
+        return onlyActiveBox.isSelected();
     }
 
     private void calcSlopeAndB() {

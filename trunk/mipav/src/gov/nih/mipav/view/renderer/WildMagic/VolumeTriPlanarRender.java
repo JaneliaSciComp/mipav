@@ -4,8 +4,12 @@ import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
+import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIBase;
+import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.ViewJFrameAnimateClip;
 import gov.nih.mipav.view.dialogs.JDialogBase;
+import gov.nih.mipav.view.renderer.WildMagic.Render.LocalVolumeVOI;
 import gov.nih.mipav.view.renderer.WildMagic.Render.Sculptor_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeBoundingBox;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeClip;
@@ -22,6 +26,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeRayCast;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.OrderIndpTransparencyEffect;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeVOI;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidgetState;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.*;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
@@ -32,6 +37,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.Vector;
 
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLContext;
@@ -52,6 +58,7 @@ import WildMagic.LibGraphics.Rendering.FrameBuffer;
 import WildMagic.LibGraphics.Rendering.GraphicsImage;
 import WildMagic.LibGraphics.Rendering.Light;
 import WildMagic.LibGraphics.Rendering.MaterialState;
+import WildMagic.LibGraphics.Rendering.Renderer;
 import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.Rendering.WireframeState;
 import WildMagic.LibGraphics.Rendering.ZBufferState;
@@ -201,7 +208,88 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             }
         }
     }
+    
 
+    /*
+    public void updateAllVOIs( )
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i) instanceof VolumeVOI )
+            {
+                ((VolumeVOI)m_kDisplayList.get(i)).update();
+            }
+        }
+    }
+    
+    private ColorRGB m_kVOIColor = new ColorRGB(1,0,0);
+    public void setVOIColor( ColorRGB kColor )
+    {
+        m_kVOIColor.Copy(kColor);
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i) instanceof VolumeVOI )
+            {
+                ((VolumeVOI)m_kDisplayList.get(i)).setColor(m_kVOIColor);
+            }
+        }
+    }
+
+    public void updateCurrentVOI(LocalVolumeVOI kOld, LocalVolumeVOI kNew)
+    {
+        if ( (kOld != null) && (kOld != kNew) )
+        {
+            for ( int i = 0; i < m_kDisplayList.size(); i++ )
+            {
+                if ( m_kDisplayList.get(i).GetName() != null )
+                {
+                    if ( m_kDisplayList.get(i).GetName().equals(kOld.getName()))
+                    {
+                        m_kParent.removeVolumeVOI( (VolumeVOI)m_kDisplayList.remove(i) );
+                        System.err.println( "Removing " + kOld.getName() ); 
+                        break;
+                    }
+                }
+            }
+        }
+        GLAutoDrawable kDrawable = GetCanvas();       
+        if ( kDrawable.getContext().makeCurrent() == GLContext.CONTEXT_NOT_CURRENT )
+        {
+            System.err.println( "Context not made current" );
+        }
+        if ( kNew != null )
+        {
+            if ( kOld != kNew )
+            {
+                VolumeVOI kVOI = new VolumeVOI( m_pkRenderer, kDrawable, m_kVolumeImageA, 
+                        m_kTranslate, m_spkCamera,
+                        m_fX, m_fY, m_fZ, kNew );
+                m_kDisplayList.add( 1, kVOI);
+                m_kParent.addVolumeVOI(kVOI);
+                System.err.println( "Adding " + kNew.getName() ); 
+            }
+            else
+            {
+                for ( int i = 0; i < m_kDisplayList.size(); i++ )
+                {
+                    if ( m_kDisplayList.get(i).GetName() != null )
+                    {
+                        if ( m_kDisplayList.get(i).GetName().equals(kNew.getName()))
+                        {
+                            VolumeVOI kVolumeVOI = (VolumeVOI)m_kDisplayList.get(i);
+                            kVolumeVOI.setVOI( m_pkRenderer, kDrawable, kNew );
+                            System.err.println( "Changing " + kNew.getName() ); 
+                            break;
+                        }
+                    }
+                }
+            }
+            UpdateSceneRotation();
+        }
+        kDrawable.getContext().release();
+    }
+    */
+    
     /** Add a polyline to the display. Used to display fiber tract bundles.
      * @param kLine new polyline to display.
      * @param iGroup the group the polyline belongs to.
@@ -409,6 +497,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
         if ( !m_bFirstRender )
         {
+
+            updateVOIs( m_kVolumeImageA.GetImage().get3DVOIs(), arg0 );
+            
             Render();
             UpdateFrameCount();
         }
@@ -2830,6 +2921,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_pkPlane.AttachGlobalState(kZState);
         m_pkPlane.UpdateGS();
         m_pkPlane.UpdateRS();
+        m_pkRenderer.LoadResources(m_pkPlane);
         
         m_kFBO = new OpenGLFrameBuffer(m_eFormat,m_eDepth,m_eStencil,
                 m_eBuffering,m_eMultisampling,m_pkRenderer,akSceneTarget, arg0);
@@ -2865,5 +2957,44 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     {
         super.UpdateSceneRotation();
         m_kSceneToWorld.Copy(m_kVolumeRayCast.GetWorld());
+    }
+    
+    
+    private void updateVOIs( VOIVector kVOIs, GLAutoDrawable kDrawable )
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i) instanceof VolumeVOI )
+            {
+                m_kDisplayList.remove(i);
+                i--;
+            }
+        }
+        for ( int i = 0; i < kVOIs.size(); i++ )
+        {
+            VOI kVOI = kVOIs.get(i);
+            Vector<VOIBase>[] kCurves = kVOI.getCurves();
+            for ( int j = 0; j < kCurves.length; j++ )
+            {
+                if ( kCurves[j] != null )
+                {
+                    for ( int k = 0; k < kCurves[j].size(); k++ )
+                    {
+                        VOIBase kVOI3D = kCurves[j].get(k);
+                        if ( kVOI3D instanceof LocalVolumeVOI )
+                        {
+                           boolean bUpdate = ((LocalVolumeVOI)kVOI3D).draw( this, m_pkRenderer, kDrawable, m_spkCamera, m_kVolumeImageA, m_kTranslate );
+                        }
+                    }
+                }
+            }
+        }
+        UpdateSceneRotation();
+        m_kParent.setModified();
+    }
+    
+    public void addVolumeVOI( VolumeVOI kVOI )
+    {
+        m_kDisplayList.add( m_kDisplayList.size() - 1, kVOI );
     }
 }

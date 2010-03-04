@@ -33,6 +33,8 @@ import com.sun.opengl.util.Animator;
 public class VolumeImageViewer extends JavaApplication3D
     implements GLEventListener, KeyListener
 {
+    /**  */
+    private static final long serialVersionUID = -2042201391319899982L;
     protected static int m_iScreenCaptureCounter = 0;
     protected Node m_spkScene;    
     protected Culler m_kCuller = new Culler(0,0,null);

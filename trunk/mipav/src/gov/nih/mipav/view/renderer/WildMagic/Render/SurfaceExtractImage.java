@@ -1,12 +1,20 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
-import java.util.Vector;
 import java.nio.ByteBuffer;
+import java.util.Vector;
+
 import WildMagic.LibGraphics.Rendering.GraphicsImage;
 
 
 public class SurfaceExtractImage extends GraphicsImage
 {
+    /**  */
+    private static final long serialVersionUID = -8778385831984000534L;
+    public Vector<int[]> TriTable;
+    
+    public int[] Data;
+
+    public int Max, Min;
     /** Construct a 3D image (byte)
      * @param eFormat image format
      * @param iBound0 image dimension 1.
@@ -24,7 +32,6 @@ public class SurfaceExtractImage extends GraphicsImage
         Min = Integer.MAX_VALUE;
         Max = Integer.MIN_VALUE;
     }
-    
     public void dispose()
     {
         Data = null;
@@ -32,7 +39,6 @@ public class SurfaceExtractImage extends GraphicsImage
         TriTable = null;
         super.dispose();
     }
-
     public void SetData ( ByteBuffer kBuffer, int iZ )
     {
         byte[] afData = kBuffer.array();
@@ -67,7 +73,4 @@ public class SurfaceExtractImage extends GraphicsImage
             }
         }
     }
-    public Vector<int[]> TriTable;
-    public int[] Data;
-    public int Max, Min;
 }

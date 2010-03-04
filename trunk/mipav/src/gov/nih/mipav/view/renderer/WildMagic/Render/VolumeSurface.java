@@ -5,7 +5,6 @@ import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 
-import java.nio.FloatBuffer;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -564,22 +563,6 @@ public class VolumeSurface extends VolumeObject
         return m_kMaterial;
     }
     
-    /**
-     * Set the surface opacity properties
-     * @param kMaterial surface opacity value.
-     */
-    public void SetOpacity( float opacity) {
-    	m_kOpacity = opacity;
-    }
-    
-    /**
-     * Return the surface opacity value.
-     * @return surface opacity value.
-     */
-    public float GetOpacity() {
-    	return m_kOpacity;
-    }
-
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#GetMesh()
      */
@@ -594,7 +577,15 @@ public class VolumeSurface extends VolumeObject
     public String GetName()
     {
         return m_kMesh.GetName();
-    }  
+    }
+
+    /**
+     * Return the surface opacity value.
+     * @return surface opacity value.
+     */
+    public float GetOpacity() {
+    	return m_kOpacity;
+    }
     
     /**
      * Return the surface area.
@@ -607,8 +598,8 @@ public class VolumeSurface extends VolumeObject
             m_fSurfaceArea = ComputeSurfaceArea();
         }
         return m_fSurfaceArea;
-    } 
-
+    }  
+    
     /**
      * Return the volume of this surface.
      * @return volume of this surface.
@@ -620,7 +611,8 @@ public class VolumeSurface extends VolumeObject
             m_fVolume = ComputeVolume();
         }
         return m_fVolume;
-    }
+    } 
+
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#Paint(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.Collision.PickRecord, WildMagic.LibFoundation.Mathematics.ColorRGBA, int)
      */
@@ -718,8 +710,6 @@ public class VolumeSurface extends VolumeObject
         kRenderer.DrawScene(kCuller.GetVisibleSet());
     }
       */
-
-  
     /**
      * Removes all geodesic components from the given surface. */
     public void RemoveAllGeodesic()
@@ -735,6 +725,7 @@ public class VolumeSurface extends VolumeObject
         }    
     }
 
+  
     /**
      * Removes the specific geodesic component from the given surface.
      * @param iNode
@@ -760,7 +751,6 @@ public class VolumeSurface extends VolumeObject
             }
         }
     }
-    
 
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#Render(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.SceneGraph.Culler)
@@ -816,6 +806,7 @@ public class VolumeSurface extends VolumeObject
         kCuller.ComputeVisibleSet(m_kScene);
         kRenderer.DrawScene(kCuller.GetVisibleSet());
     }
+    
 
     /**
      * Render the object.
@@ -837,8 +828,7 @@ public class VolumeSurface extends VolumeObject
         kCuller.ComputeVisibleSet(m_kScene);
         kRenderer.DrawScene(kCuller.GetVisibleSet());
     }
-    
-    
+
     /**
      * When the Geodesic object cuts the mesh along an open curve, the old mesh changes, but does not need to be deleted
      * and no new mesh needs to be added. This function allows the Geodesic object to replace the original mesh with the
@@ -863,8 +853,8 @@ public class VolumeSurface extends VolumeObject
         m_kMesh = null;
         m_kMesh = kMesh;
     }
-
-
+    
+    
     /** Sets axis-aligned clipping for the VolumeShaderEffect.
      * @param afClip the clipping parameters for axis-aligned clipping.
      */
@@ -874,7 +864,7 @@ public class VolumeSurface extends VolumeObject
         m_kLightShaderTransparent.SetClip(iWhich, data, bEnable);
     }
 
-    
+
     /** Sets arbitrary clipping for the VolumeShaderEffect.
      * @param afEquation the arbitrary-clip plane equation.
      */
@@ -883,6 +873,8 @@ public class VolumeSurface extends VolumeObject
         m_kLightShader.SetClipArb(afEquation, bEnable);
         m_kLightShaderTransparent.SetClipArb(afEquation, bEnable);
     }
+
+    
     /** Sets eye clipping for the VolumeShaderEffect.
      * @param afEquation the eye clipping equation.
      */
@@ -891,8 +883,6 @@ public class VolumeSurface extends VolumeObject
         m_kLightShader.SetClipEye(afEquation, bEnable);
         m_kLightShaderTransparent.SetClipEye(afEquation, bEnable);
     }
-
-
     /** Sets inverse-eye clipping for the VolumeShaderEffect.
      * @param afEquation the inverse-eye clipping equation.
      */
@@ -933,6 +923,7 @@ public class VolumeSurface extends VolumeObject
             m_kMesh.VBuffer.Release();
         }
     }
+
 
     /**
      * Sets the ModelImage to use as an alternative to the volume ModelImage for surface texturing.
@@ -987,6 +978,14 @@ public class VolumeSurface extends VolumeObject
             m_kMesh.VBuffer.Release();
             m_kScene.UpdateGS();
         }
+    }
+
+    /**
+     * Set the surface opacity properties
+     * @param kMaterial surface opacity value.
+     */
+    public void SetOpacity( float opacity) {
+    	m_kOpacity = opacity;
     }
 
     /**

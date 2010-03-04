@@ -5,7 +5,6 @@ import gov.nih.mipav.model.structures.ModelStorageBase;
 
 import java.awt.Frame;
 import java.awt.event.KeyListener;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -20,6 +19,8 @@ import com.sun.opengl.util.Animator;
 public class VolumeImageNormalGM extends VolumeImageViewer
     implements GLEventListener, KeyListener
 {
+    /**  */
+    private static final long serialVersionUID = 4477999995955496036L;
     private VolumeCalcEffect m_spkEffect2;
     private Texture m_pkVolumeCalcTarget;
     private boolean m_bDisplayFirst = true;

@@ -93,6 +93,7 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
     /** DOCUMENT ME! */
     private float valueG = 0.0f;
 
+    private boolean useVOI = true;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -129,6 +130,21 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
         image = im;
         setMinMax();
         parentFrame = im.getParentFrame();
+
+        if (interactive == false) {
+            callAlgorithmNonInteractive(pol);
+        }
+
+    }
+    
+    public JDialogMask(ModelImage im, boolean interactive, boolean pol, boolean useVOI) {
+        super(false);
+
+        userInterface = ViewUserInterface.getReference();
+        image = im;
+        setMinMax();
+        parentFrame = im.getParentFrame();
+        this.useVOI = useVOI;
 
         if (interactive == false) {
             callAlgorithmNonInteractive(pol);
@@ -308,9 +324,13 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
 
                 // Make algorithm
                 if (image.isColorImage()) {
-                    maskAlgo = new AlgorithmMask(resultImage, image, value, valueG, valueB, polarity, true);
+                    maskAlgo = new AlgorithmMask(resultImage, image, value, valueG, valueB, polarity, useVOI);
                 } else {
-                    maskAlgo = new AlgorithmMask(resultImage, image, value, polarity, true);
+                    maskAlgo = new AlgorithmMask(resultImage, image, value, polarity, useVOI);
+                }
+                if ( !useVOI )
+                {
+                    maskAlgo.setMask(image.getMask());
                 }
 
                 // This is very important. Adding this object as a listener allows the algorithm to
@@ -349,9 +369,13 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
                 if (image.isColorImage()) {
-                    maskAlgo = new AlgorithmMask(image, value, valueG, valueB, polarity, true);
+                    maskAlgo = new AlgorithmMask(image, value, valueG, valueB, polarity, useVOI);
                 } else {
-                    maskAlgo = new AlgorithmMask(image, value, polarity, true);
+                    maskAlgo = new AlgorithmMask(image, value, polarity, useVOI);
+                }
+                if ( !useVOI )
+                {
+                    maskAlgo.setMask(image.getMask());
                 }
 
                 // This is very important. Adding this object as a listener allows the algorithm to

@@ -1,6 +1,7 @@
 package gov.nih.mipav;
 
 
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManager;
 import WildMagic.LibFoundation.Mathematics.BitHacks;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
@@ -15,6 +16,24 @@ public class MipavMath {
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+
+    public static final double angle(final float[] x, final float[] y, final float[] res)
+    {
+        double theta = (180.0 / Math.PI) * Math.atan2((double) ((y[1] - y[0]) * res[1]), (double) ((x[1] - x[0]) * res[0]));
+        double theta2 = (180.0 / Math.PI) * Math.atan2((double) ((y[2] - y[0]) * res[1]), (double) ((x[2] - x[0]) * res[0]));
+        theta2 = theta2 - theta;
+
+        if (theta2 < -180.0) {
+            theta2 = theta2 + 360.0;
+        }
+
+        if (theta2 > 180.0) {
+            theta2 = theta2 - 360.0;
+        }
+        return theta2;
+    }
+    
+    
     /**
      * Calculates the 3D euclidian distance between two points.
      *
@@ -88,6 +107,24 @@ public class MipavMath {
 
         return Math.sqrt(((x1 - x0) * (x1 - x0) * (res[0] * res[0])) + ((y1 - y0) * (y1 - y0) * (res[1] * res[1])) +
                          ((z1 - z0) * (z1 - z0) * (res[2] * res[2])));
+    }
+
+    /**
+     * Calculates the actual distance between two 3D points.
+     *
+     * @param   x0   x coordinate of the first point
+     * @param   y0   y coordinate of the first point
+     * @param   z0   z coordinate of the first point
+     * @param   x1   x coordinate of the second point
+     * @param   y1   y coordinate of the second point
+     * @param   z1   z coordinate of the second point
+     *
+     * @return  DOCUMENT ME!
+     */
+    public static final double distance(final float x0, final float y0, final float z0, final float x1, final float y1,
+                                        final float z1) {
+
+        return Math.sqrt(((x1 - x0) * (x1 - x0)) + ((y1 - y0) * (y1 - y0)) + ((z1 - z0) * (z1 - z0)));
     }
 
     /**

@@ -1,5 +1,6 @@
 package gov.nih.mipav.view;
 
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
@@ -11,6 +12,9 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.renderer.WildMagic.Render.LocalVolumeVOI;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -110,7 +114,7 @@ import javax.swing.event.*;
  * <p>With 4D images a slider for the fourth time dimension appears below the second toolbar.</p>
  */
 public class ViewJFrameTriImage extends ViewJFrameBase
-        implements ItemListener, ChangeListener, KeyListener, MouseListener {
+        implements ItemListener, ChangeListener, KeyListener, MouseListener, VOIManagerInterfaceListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -271,6 +275,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /** Image control toolbar. */
     protected JToolBar imageToolBar;
+    ButtonGroup VOIGroup = new ButtonGroup();
+    
+    protected JToolBar imageAlignToolBar;
 
     /** Spinner component for the paint intensity. */
     protected JSpinner intensitySpinner;
@@ -308,6 +315,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /** Panel that holds the toolbars. */
     protected JPanel panelToolbar = new JPanel();
+    protected GridBagConstraints panelToolBarGBC = new GridBagConstraints();
 
     /** Reference to the parent window. */
     protected ViewJFrameImage parentFrame;
@@ -411,6 +419,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /** Volume Boundary may be changed for cropping the volume. */
     private CubeBounds volumeBounds;
+    
+    private VOIManagerInterface voiManager;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -444,6 +454,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         } catch (Exception e) { }
 
         init();
+        initVOI();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -1207,7 +1218,19 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             Vector3f kCenter = triImage[0].getCenter();
             setPositionLabels((int) kCenter.X, (int) kCenter.Y, (int) kCenter.Z);
             updateImages(true);
-        } else {
+        } 
+
+        else if (command.equals("VOIToolbar")) 
+        {
+            voiManager.getToolBar().setVisible(menuObj.isMenuItemSelected("VOI toolbar"));
+        }
+        else if (command.equals("PaintToolbar") ) {
+            paintToolBar.setVisible(menuObj.isMenuItemSelected("Paint toolbar"));
+        }
+        else if (command.equals("ImageAlignToolbar") ) {
+            imageAlignToolBar.setVisible(menuObj.isMenuItemSelected("Image Align toolbar"));
+        }
+        else {
 			getParentFrame().actionPerformed(event);	
 		}
 
@@ -1710,7 +1733,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                     return;
                 }
             }
-
         }
 
 
@@ -2002,6 +2024,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         if (scrollOriginalCrosshair) {
             parentFrame.setSlice(k);
         }
+        
+        if ( voiManager != null )
+        {
+            voiManager.setCenter( new Vector3f( i, j, k ) );
+        }
 
         fireCoordinateChange(i, j, k);
         setPositionLabels(i, j, k);
@@ -2209,17 +2236,15 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
             if (imageB != null) // do not show if we don't have a mask
             {
-                GridBagConstraints gbc = new GridBagConstraints();
+                panelToolBarGBC.gridy = 4;
+                panelToolBarGBC.gridwidth = 1;
+                panelToolBarGBC.gridheight = 1;
+                panelToolBarGBC.fill = GridBagConstraints.BOTH;
+                panelToolBarGBC.anchor = GridBagConstraints.WEST;
+                panelToolBarGBC.weightx = 100;
+                panelToolBarGBC.weighty = 100;
 
-                gbc.gridy = 4;
-                gbc.gridwidth = 1;
-                gbc.gridheight = 1;
-                gbc.fill = GridBagConstraints.BOTH;
-                gbc.anchor = GridBagConstraints.WEST;
-                gbc.weightx = 100;
-                gbc.weighty = 100;
-
-                panelToolbar.add(panelActiveImage, gbc);
+                panelToolbar.add(panelActiveImage, panelToolBarGBC);
             }
         } else {
             panelToolbar.remove(panelActiveImage);
@@ -2756,6 +2781,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         this.disposeLocal();
     }
 
+    public void windowOpened(final WindowEvent event)
+    {
+        setOldLayout(oldLayout);
+    }
 
     /**
      * Builds the active image panel for choosing which image (A, B, or BOTH) to perform operations on.
@@ -2876,6 +2905,23 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                                                                false),
                                          menuObj.buildMenuItem("Select panel plug-in", PANEL_PLUGIN, 0, null, false)
                                      }));
+        
+        
+        
+
+        boolean showVOIToolbar = Preferences.is(Preferences.PREF_VOI_TOOLBAR_ON);
+        final boolean showPaintToolbar = Preferences.is(Preferences.PREF_PAINT_TOOLBAR_ON);
+
+        // default the VOI and Image toolbars to on if the user hasn't explicitly turned them off
+        if ( !showVOIToolbar && !Preferences.isPreferenceSet(Preferences.PREF_VOI_TOOLBAR_ON)) {
+            showVOIToolbar = true;
+        }
+
+        menuBar.add(menuObj.makeMenu("Toolbars", 'T', false, new JMenuItem[] {
+                menuObj.buildCheckBoxMenuItem("Paint toolbar", "PaintToolbar", showPaintToolbar),
+                menuObj.buildCheckBoxMenuItem("VOI toolbar", "VOIToolbar", showVOIToolbar),
+                menuObj.buildCheckBoxMenuItem("Image Align toolbar", "ImageAlignToolbar", false)
+                }));
 
         return menuBar;
     }
@@ -3005,22 +3051,20 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         buildActiveImagePanel();
         panelToolbar.setLayout(new GridBagLayout());
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.weightx = 1;
-        gbc.weighty = 1;
+        panelToolBarGBC.gridx = 0;
+        panelToolBarGBC.gridy = 2;
+        panelToolBarGBC.gridwidth = 1;
+        panelToolBarGBC.gridheight = 1;
+        panelToolBarGBC.fill = GridBagConstraints.BOTH;
+        panelToolBarGBC.anchor = GridBagConstraints.WEST;
+        panelToolBarGBC.weightx = 1;
+        panelToolBarGBC.weighty = 1;
 
         for (int i = 0; i < NUM_INVISIBLE_BUTTONS; i++) {
             btnInvisible[i] = new JToggleButton("");
         }
 
         Border etchedBorder = BorderFactory.createEtchedBorder();
-        ButtonGroup VOIGroup = new ButtonGroup();
 
         imageToolBar = new JToolBar();
         imageToolBar.setBorder(etchedBorder);
@@ -3059,7 +3103,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         // bogusMagButton = toolbarBuilder.buildToggleButton("bogusMinImage", "Magnify individual frame 0.5x",
         // "trizoomout", indivMagGroup); bogusMagButton.setVisible(false); imageToolBar.add(bogusMagButton);
 
-        imageToolBar.add(ViewToolBarBuilder.makeSeparator());
+        //imageToolBar.add(ViewToolBarBuilder.makeSeparator());
 
         JCheckBox scrollButton = new JCheckBox(MipavUtil.getIcon("link_broken.gif"));
         scrollButton.setPreferredSize(new Dimension(24,24));
@@ -3070,70 +3114,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         
         imageToolBar.add(scrollButton);
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
-
-        ButtonGroup intensityLineGroup = new ButtonGroup();
-        imageToolBar.add(toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_VOI_LINE, VOIGroup));
-        intensityLineGroup.add(btnInvisible[0]);
-
-        imageToolBar.add(ViewToolBarBuilder.makeSeparator());
-
-        ButtonGroup centerGroup = new ButtonGroup();
-        imageToolBar.add(toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_TRIIMAGE_CENTER, VOIGroup));
-
-        centerGroup.add(btnInvisible[3]);
-
-        imageToolBar.add(toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_VOI_PROTRACTOR, VOIGroup));
-
-        intensityLineGroup.add(btnInvisible[2]);
-
-        imageToolBar.add(toolbarBuilder.buildTextButton("Apply", "Applies rotations and translations",
-                                                        "createTransformation"));
-        imageToolBar.add(ViewToolBarBuilder.makeSeparator());
-
-        addPointToggleButton = toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_VOI_POINT_ADD, VOIGroup);
-        addPointToggleButton.addItemListener(this);
-        imageToolBar.add(addPointToggleButton);
-
-        // imageToolBar.add(toolbarBuilder.buildToggleButton("NewVOI", "Initiate new VOI", "newvoi", VOIGroup));
-        imageToolBar.add(toolbarBuilder.buildButton(CustomUIBuilder.PARAM_VOI_POINT_DELETE));
-
-        leastSquaresButton = new JButton(MipavUtil.getIcon("reglsq.gif"));
-        leastSquaresButton.addActionListener(this);
-        leastSquaresButton.setToolTipText("Apply least squares alignment");
-        leastSquaresButton.setActionCommand("leastSquares");
-        leastSquaresButton.setBorderPainted(false);
-        leastSquaresButton.setRolloverIcon(MipavUtil.getIcon("reglsqroll.gif"));
-        leastSquaresButton.setFocusPainted(false);
-
-        if (imageB == null) {
-            leastSquaresButton.setEnabled(false);
-        }
-
-        imageToolBar.add(leastSquaresButton);
-
-        tpSplineButton = new JButton(MipavUtil.getIcon("regtsp.gif"));
-        tpSplineButton.addActionListener(this);
-        tpSplineButton.setToolTipText("Apply thin plate spline alignment");
-        tpSplineButton.setActionCommand("tpSpline");
-        tpSplineButton.setBorderPainted(false);
-        tpSplineButton.setRolloverIcon(MipavUtil.getIcon("regtsproll.gif"));
-        tpSplineButton.setFocusPainted(false);
-
-        if (imageB == null) {
-            tpSplineButton.setEnabled(false);
-        }
-
-        imageToolBar.add(tpSplineButton);
-
-        imageToolBar.add(ViewToolBarBuilder.makeSeparator());
-
-        ButtonGroup oneButtonToggleGroup = new ButtonGroup();
-        oneButtonToggleGroup.add(btnInvisible[1]);
-        imageToolBar.add(toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_TRIIMAGE_BOUNDING_BOX, oneButtonToggleGroup));
-
-        imageToolBar.add(toolbarBuilder.buildTextButton("Crop", "Crops image delineated by the bounding cube",
-                                                        "cropVolume"));
-
 
         int crosshairPixelGap = 0;
 
@@ -3152,7 +3132,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         imageToolBar.add(crosshairSpinner);
 
-        panelToolbar.add(imageToolBar, gbc);
+        panelToolbar.add(imageToolBar, panelToolBarGBC);
 
         // Paint toolbar
         paintToolBar = new JToolBar();
@@ -3314,15 +3294,16 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         paintToolBar.setFloatable(false);
 
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.weightx = 100;
-        gbc.weighty = 100;
-        panelToolbar.add(paintToolBar, gbc);
+        panelToolBarGBC.gridx = 0;
+        panelToolBarGBC.gridy = 3;
+        panelToolBarGBC.gridwidth = 1;
+        panelToolBarGBC.gridheight = 1;
+        panelToolBarGBC.fill = GridBagConstraints.BOTH;
+        panelToolBarGBC.anchor = GridBagConstraints.WEST;
+        panelToolBarGBC.weightx = 100;
+        panelToolBarGBC.weighty = 100;
+        panelToolbar.add(paintToolBar, panelToolBarGBC);
+        paintToolBar.setVisible(menuObj.isMenuItemSelected("Paint toolbar"));
 
         if ((imageA.getNDims() == 4) || ((imageB != null) && (imageB.getNDims() == 4))) {
             JPanel panelImageSlider = new JPanel();
@@ -3346,18 +3327,97 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             tImageSlider.addChangeListener(this);
 
             panelImageSlider.add(tImageSlider);
-            gbc.gridx = 0;
-            gbc.gridy = 4;
-            gbc.gridwidth = 1;
-            gbc.gridheight = 1;
-            gbc.fill = GridBagConstraints.BOTH;
-            gbc.anchor = GridBagConstraints.WEST;
-            gbc.weightx = 100;
-            gbc.weighty = 100;
-            panelToolbar.add(panelImageSlider, gbc);
+            panelToolBarGBC.gridx = 0;
+            panelToolBarGBC.gridy = 4;
+            panelToolBarGBC.gridwidth = 1;
+            panelToolBarGBC.gridheight = 1;
+            panelToolBarGBC.fill = GridBagConstraints.BOTH;
+            panelToolBarGBC.anchor = GridBagConstraints.WEST;
+            panelToolBarGBC.weightx = 100;
+            panelToolBarGBC.weighty = 100;
+            panelToolbar.add(panelImageSlider, panelToolBarGBC);
         }
 
         setImageSelectorPanelVisible(true);
+    }
+    
+    protected void buildImageAlignToolBar()
+    {
+        Border etchedBorder = BorderFactory.createEtchedBorder();
+        imageAlignToolBar = new JToolBar();
+        imageAlignToolBar.setBorder(etchedBorder);
+        imageAlignToolBar.setBorderPainted(true);
+        imageAlignToolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
+        imageAlignToolBar.setFloatable(false);
+
+        ButtonGroup intensityLineGroup = new ButtonGroup();
+        //imageAlignToolBar.add(toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_VOI_LINE, VOIGroup));
+        //intensityLineGroup.add(btnInvisible[0]);
+
+        //imageAlignToolBar.add(ViewToolBarBuilder.makeSeparator());
+
+        ButtonGroup centerGroup = new ButtonGroup();
+        imageAlignToolBar.add(toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_TRIIMAGE_CENTER, VOIGroup));
+
+        centerGroup.add(btnInvisible[3]);
+
+        imageAlignToolBar.add(toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_VOI_PROTRACTOR, VOIGroup));
+
+        intensityLineGroup.add(btnInvisible[2]);
+
+        imageAlignToolBar.add(toolbarBuilder.buildTextButton("Apply", "Applies rotations and translations",
+                                                        "createTransformation"));
+        imageAlignToolBar.add(ViewToolBarBuilder.makeSeparator());
+
+        addPointToggleButton = toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_VOI_POINT_ADD, VOIGroup);
+        addPointToggleButton.addItemListener(this);
+        imageAlignToolBar.add(addPointToggleButton);
+
+        // imageToolBar.add(toolbarBuilder.buildToggleButton("NewVOI", "Initiate new VOI", "newvoi", VOIGroup));
+        imageAlignToolBar.add(toolbarBuilder.buildButton(CustomUIBuilder.PARAM_VOI_POINT_DELETE));
+
+        leastSquaresButton = new JButton(MipavUtil.getIcon("reglsq.gif"));
+        leastSquaresButton.addActionListener(this);
+        leastSquaresButton.setToolTipText("Apply least squares alignment");
+        leastSquaresButton.setActionCommand("leastSquares");
+        leastSquaresButton.setBorderPainted(false);
+        leastSquaresButton.setRolloverIcon(MipavUtil.getIcon("reglsqroll.gif"));
+        leastSquaresButton.setFocusPainted(false);
+
+        if (imageB == null) {
+            leastSquaresButton.setEnabled(false);
+        }
+
+        imageAlignToolBar.add(leastSquaresButton);
+
+        tpSplineButton = new JButton(MipavUtil.getIcon("regtsp.gif"));
+        tpSplineButton.addActionListener(this);
+        tpSplineButton.setToolTipText("Apply thin plate spline alignment");
+        tpSplineButton.setActionCommand("tpSpline");
+        tpSplineButton.setBorderPainted(false);
+        tpSplineButton.setRolloverIcon(MipavUtil.getIcon("regtsproll.gif"));
+        tpSplineButton.setFocusPainted(false);
+
+        if (imageB == null) {
+            tpSplineButton.setEnabled(false);
+        }
+
+        imageAlignToolBar.add(tpSplineButton);
+
+        imageAlignToolBar.add(ViewToolBarBuilder.makeSeparator());
+
+        ButtonGroup oneButtonToggleGroup = new ButtonGroup();
+        oneButtonToggleGroup.add(btnInvisible[1]);
+        imageAlignToolBar.add(toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_TRIIMAGE_BOUNDING_BOX, oneButtonToggleGroup));
+
+        imageAlignToolBar.add(toolbarBuilder.buildTextButton("Crop", "Crops image delineated by the bounding cube",
+                                                        "cropVolume"));
+        
+
+        panelToolBarGBC.gridy++;
+        panelToolbar.add( imageAlignToolBar, panelToolBarGBC );
+        imageAlignToolBar.setVisible(false);
+
     }
 
     /**
@@ -3555,6 +3615,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         JMenuBar menuBar = buildMenu();
         setJMenuBar(menuBar);
         buildToolbars();
+        buildImageAlignToolBar();
 
         setResizable(true);
 
@@ -3593,7 +3654,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         triImage[CORONAL_A].addMouseListener(this);
         triImage[CORONAL_A].setName((new Integer(CORONAL_A)).toString());
 
-        updateLayout();
 
         tSlice = 0;
 
@@ -3608,6 +3668,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 triImage[i].setDoCenter(false);
             }
         }
+        updateLayout();
 
         /* set the center after the triImage[].setResolutions and
          * triImage[].setZoom calls have been made: */
@@ -5016,5 +5077,100 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
             return this;
         }
+    }
+    
+
+    private void initVOI()
+    {
+        int iActiveCount = 0;
+        for ( int i = 0; i < triImage.length; i++ )
+        {
+            if ( triImage[i] != null )
+            {
+                iActiveCount++;
+            }
+        }
+        System.err.println( iActiveCount );
+        voiManager = new VOIManagerInterface( this, imageA, iActiveCount, false );
+        panelToolBarGBC.gridy++;
+        panelToolbar.add( voiManager.getToolBar(), panelToolBarGBC );
+
+        voiManager.getVOIManager(0).setCanvas( triImage[AXIAL_A] );
+        voiManager.getVOIManager(0).setDrawingContext( triImage[AXIAL_A] );
+        voiManager.getVOIManager(0).setOrientation( triImage[AXIAL_A].getOrientation() );
+        voiManager.getVOIManager(0).setSlice( triImage[AXIAL_A].getSlice() );
+
+        voiManager.getVOIManager(1).setCanvas( triImage[CORONAL_A] );
+        voiManager.getVOIManager(1).setDrawingContext( triImage[CORONAL_A] );
+        voiManager.getVOIManager(1).setOrientation( triImage[CORONAL_A].getOrientation() );
+        voiManager.getVOIManager(1).setSlice( triImage[CORONAL_A].getSlice() );
+
+        voiManager.getVOIManager(2).setCanvas( triImage[SAGITTAL_A] );
+        voiManager.getVOIManager(2).setDrawingContext( triImage[SAGITTAL_A] );
+        voiManager.getVOIManager(2).setOrientation( triImage[SAGITTAL_A].getOrientation() );
+        voiManager.getVOIManager(2).setSlice( triImage[SAGITTAL_A].getSlice() );
+        
+        voiManager.getToolBar().setVisible(true);
+    }
+
+    public void PointerActive(boolean bActive) {
+        if ( bActive )
+        {
+            triImage[AXIAL_A].setCursorMode(ViewJComponentBase.VOI_3D);
+            triImage[CORONAL_A].setCursorMode(ViewJComponentBase.VOI_3D);
+            triImage[SAGITTAL_A].setCursorMode(ViewJComponentBase.VOI_3D);
+        }
+        else
+        {
+            triImage[AXIAL_A].setCursorMode(ViewJComponentBase.DEFAULT);
+            triImage[CORONAL_A].setCursorMode(ViewJComponentBase.DEFAULT);
+            triImage[SAGITTAL_A].setCursorMode(ViewJComponentBase.DEFAULT);
+        }
+    }
+
+    public Vector3f PropDown(int iActive) {
+        switch ( iActive )
+        {
+        case 0: return triImage[AXIAL_A].downSlice();
+        case 1: return triImage[CORONAL_A].downSlice();
+        case 2: return triImage[SAGITTAL_A].downSlice();
+        }
+        return null;
+    }
+
+
+    public Vector3f PropUp(int iActive) {
+        switch ( iActive )
+        {
+        case 0: return triImage[AXIAL_A].upSlice();
+        case 1: return triImage[CORONAL_A].upSlice();
+        case 2: return triImage[SAGITTAL_A].upSlice();
+        }
+        return null;
+    }
+
+
+    public void create3DVOI(boolean bIntersection) {
+        System.err.println( "create3DVOI " + bIntersection );        
+    }
+
+    public void setCursor(Cursor kCursor) {
+        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            if (triImage[i] != null) {
+                triImage[i].setCursor(kCursor);
+            }
+        }
+    }
+
+    public void setDefaultCursor() {
+        PointerActive(false);
+    }
+
+    public void setModified() {
+        updateImages();
+    }
+
+    public void updateData(boolean bCopyToCPU) {
+        System.err.println( "updateData " + bCopyToCPU); 
     }
 }

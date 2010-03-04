@@ -8,10 +8,8 @@ import WildMagic.LibGraphics.ObjectSystem.StreamInterface;
 import WildMagic.LibGraphics.ObjectSystem.StringTree;
 import WildMagic.LibGraphics.Rendering.AlphaState;
 import WildMagic.LibGraphics.Rendering.Texture;
-import WildMagic.LibGraphics.Shaders.PixelProgramCatalog;
 import WildMagic.LibGraphics.Shaders.PixelShader;
 import WildMagic.LibGraphics.Shaders.Program;
-import WildMagic.LibGraphics.Shaders.VertexProgramCatalog;
 import WildMagic.LibGraphics.Shaders.VertexShader;
 
 /** 
@@ -26,6 +24,8 @@ import WildMagic.LibGraphics.Shaders.VertexShader;
 public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     implements StreamInterface
 {
+    /**  */
+    private static final long serialVersionUID = 5580825290512790813L;
     /** View Mode MIP Constant: */
     private final static int MIP = 0;
     /** View Mode DRR Constant: */

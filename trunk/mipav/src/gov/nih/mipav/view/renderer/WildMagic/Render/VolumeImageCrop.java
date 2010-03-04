@@ -15,6 +15,8 @@ import com.sun.opengl.util.Animator;
 public class VolumeImageCrop extends VolumeImageViewer
     implements GLEventListener, KeyListener
 {
+    /**  */
+    private static final long serialVersionUID = -3884075404385493867L;
     private VolumeClipEffect m_kClipEffect = null;
     
     public VolumeImageCrop( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, VolumeClipEffect kClip )

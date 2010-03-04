@@ -6,6 +6,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Collision.PickRecord;
 import WildMagic.LibGraphics.Rendering.AlphaState;
 import WildMagic.LibGraphics.Rendering.CullState;
+import WildMagic.LibGraphics.Rendering.PolygonOffsetState;
 import WildMagic.LibGraphics.Rendering.Renderer;
 import WildMagic.LibGraphics.Rendering.WireframeState;
 import WildMagic.LibGraphics.Rendering.ZBufferState;
@@ -52,6 +53,9 @@ public abstract class VolumeObject
 
     /** Alpha blending for this object. */
     protected AlphaState m_kAlpha;
+
+    /** PolygonOffset blending for this object. */
+    protected PolygonOffsetState m_kPolygonOffset;
 
     /** Alpha blending for this object. */
     protected AlphaState m_kAlphaTransparency;
@@ -241,6 +245,15 @@ public abstract class VolumeObject
     }
     
     /**
+     * Return the translation vector.
+     * @return translation vector.
+     */
+    public Vector3f GetTranslate()
+    {
+        return new Vector3f(m_kTranslate);
+    }
+
+    /**
      * Painting support.
      * @param kRenderer Renderer.
      * @param kRecord pick record.
@@ -251,7 +264,6 @@ public abstract class VolumeObject
             @SuppressWarnings("unused") PickRecord kRecord, 
             @SuppressWarnings("unused") ColorRGBA kPaintColor, 
             @SuppressWarnings("unused") int iBrushSize ) {}
-
     /** 
      * Render the object after all other objects have been rendererd. Useful
      * for screen-space objects such as the eye-clip plane.
@@ -260,6 +272,7 @@ public abstract class VolumeObject
      */
     public void PostRender( @SuppressWarnings("unused") Renderer kRenderer, 
             @SuppressWarnings("unused") Culler kCuller ) {}
+    
     /**
      * Render the object.
      * @param kRenderer the OpenGLRenderer object.
@@ -295,7 +308,6 @@ public abstract class VolumeObject
     {
         m_bDisplay = bDisplay;
     }
-    
     /**
      * Sets front-face culling on/off.
      * @param bOn on/off.
@@ -308,6 +320,7 @@ public abstract class VolumeObject
             m_kCull.CullFace = CullState.CullMode.CT_FRONT;
         }
     }
+    
     /**
      * Sets the light for the EllipsoidsShader.
      * @param kLightType the name of the light to set (Light0, Light1, etc.)
@@ -330,6 +343,7 @@ public abstract class VolumeObject
         m_bPickable = bPickable;
     }
     
+
     /**
      * Enables/disables wireframe and sets the mode: FILL, LINE, POINT.
      * @param bEnable turns the Wireframe State on/off.
@@ -344,7 +358,6 @@ public abstract class VolumeObject
         }
     }
     
-
     /**
      * Add to the object translation vector.
      * @param kTranslate new translation amount.
@@ -352,14 +365,5 @@ public abstract class VolumeObject
     public void Translate(Vector3f kTranslate)
     {
         m_kTranslate.Add(kTranslate);
-    }
-    
-    /**
-     * Return the translation vector.
-     * @return translation vector.
-     */
-    public Vector3f GetTranslate()
-    {
-        return new Vector3f(m_kTranslate);
     }
 }

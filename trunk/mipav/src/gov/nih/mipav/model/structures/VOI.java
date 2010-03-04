@@ -4320,6 +4320,22 @@ System.err.println("curves size: " );
         return minDistance;
     }
 
+    public void print()
+    {
+        System.err.println( name + " " + curveType );
+        for ( int i = 0; i < curves.length; i++ )
+        {
+            if ( curves[i] != null )
+            {
+                for ( int j = 0; j < curves[i].size(); j++ )
+                {
+                    System.err.println( "curve " + i + " voi " + j + ": " );
+                    //curves[i].get(j).print();
+                }
+            }
+        }
+    }
+    
     /**
      * Does nothing yet.
      */
@@ -4816,7 +4832,7 @@ System.err.println("curves size: " );
         for (j = 0; j < zDim; j++) {
 
             for (i = 0; i < curves[j].size(); i++) {
-                ((VOIBase) (curves[j].elementAt(i))).setActive(flag);
+                (curves[j].elementAt(i)).setActive(flag);
             }
         }
         // fireVOIselection();
@@ -4858,7 +4874,14 @@ System.err.println("curves size: " );
             for (int j = 0; j < zDim; j++) {
 
                 for (int i = 0; i < curves[j].size(); i++) {
-                    ((VOIProtractor) (curves[j].elementAt(i))).setColor(color);
+                    if ( curves[j].elementAt(i) instanceof VOIProtractor )
+                    {
+                        ((VOIProtractor) (curves[j].elementAt(i))).setColor(color);
+                    }
+                    else
+                    {
+                        return;
+                    }
                 }
             }
         }

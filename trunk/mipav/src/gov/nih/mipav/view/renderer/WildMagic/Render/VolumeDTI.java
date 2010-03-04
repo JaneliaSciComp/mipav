@@ -14,13 +14,11 @@ import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.ShaderEffect;
-import WildMagic.LibGraphics.Effects.TextureEffect;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.Rendering.AlphaState;
 import WildMagic.LibGraphics.Rendering.CullState;
 import WildMagic.LibGraphics.Rendering.MaterialState;
 import WildMagic.LibGraphics.Rendering.Renderer;
-import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.Culler;
 import WildMagic.LibGraphics.SceneGraph.Node;
@@ -177,6 +175,13 @@ public class VolumeDTI extends VolumeObject
         	constantColor.put(new Integer(i), new ColorRGB((float)Math.random(), (float)Math.random(), (float)Math.random()));
         }
         
+    }
+
+    /**
+     * advance the group color index.
+     */
+    public void addGroupColor() {
+    	currentGroupIndex++;
     }
 
     /** Add a polyline to the display. Used to display fiber tract bundles.
@@ -348,7 +353,7 @@ public class VolumeDTI extends VolumeObject
         
         return kTube;
     }
-
+    
     /** Display the DTI volume with glyphs at each voxel. The m_iEllipsMod
      * value is used to limit the number of ellipsoids displayed.
      */    
@@ -430,7 +435,6 @@ public class VolumeDTI extends VolumeObject
             iCount++;
         }
     }
-    
     /**
      * memory cleanup.
      */
@@ -473,6 +477,19 @@ public class VolumeDTI extends VolumeObject
         }
         return true;
     }
+    
+    /** Get the group color with given group ID. 
+     * @param groupID  given group id
+     * @return  ColorRGB group color
+     */
+    public ColorRGB getGroupColor(int iGroup) {
+        if ( groupConstantColor.get(iGroup-1) != null )
+        {
+            return new ColorRGB(constantColor.get(groupConstantColor.get(iGroup-1).intValue()));
+        }
+        return null;
+    }
+    
     /** Returns the polyline color for the specified fiber bundle tract group. 
      * @param iGroup the fiber bundle group to query.
      * @return the polyline color for the specified fiber bundle tract group. 
@@ -484,6 +501,24 @@ public class VolumeDTI extends VolumeObject
             return m_kEllipseConstantColor.get( new Integer(iGroup) );
         }
         return null;
+    }
+    
+    /**
+     * Find the min available group index;
+     */
+    public void removeGroupColor() {
+    	Iterator cIterator = groupConstantColor.keySet().iterator();
+    	Integer cKey;
+    	
+    	currentGroupIndex--;
+    	while ( cIterator.hasNext() )
+        {
+             cKey = (Integer)cIterator.next();
+             if ( groupConstantColor.get(cKey).intValue() ==  currentGroupIndex ) {
+            	 currentGroupIndex++;
+             }
+        }
+    	
     }
     
     /** 
@@ -568,7 +603,15 @@ public class VolumeDTI extends VolumeObject
             kShader.dispose();
         }
     }
-    
+
+    /**
+     * remove the group color index.
+     */
+    public void removeTractColor(Integer iGroup) {
+    	
+    		groupConstantColor.remove(iGroup);
+        
+    }
     /**
      * Render the object.
      * @param kRenderer the OpenGLRenderer object.
@@ -604,11 +647,9 @@ public class VolumeDTI extends VolumeObject
         }
         kRenderer.SetAlphaState(aTemp);
     }
-    
     public void setCenterIndex(int index) {
     	centerIndex = index;
     }
-    
     /** Turns on/off displaying all the glyphs.
      * @param bDisplay when true display all the glyphs in the volume.
      */
@@ -616,6 +657,15 @@ public class VolumeDTI extends VolumeObject
     {
         m_bDisplayAllGlyphs = bDisplay;
     }
+    /** Turns on/off displaying the fiber bundle tracts with 3d arrows.
+     * @param bDisplay when true display the tracts with arrows.
+     */
+    public void setDisplayArrows( boolean bDisplay )
+    {
+        m_bDisplayArrows = bDisplay;
+    }
+    
+    
 
     /** Turns on/off displaying the fiber bundle tracts with cylinders.
      * @param bDisplay when true display the tracts with cylinders.
@@ -623,7 +673,10 @@ public class VolumeDTI extends VolumeObject
     public void setDisplayCylinders( boolean bDisplay )
     {
         m_bDisplayCylinders = bDisplay;
-    }
+    }   
+    
+    
+    
     /** Turns on/off displaying the fiber bundle tracts with ellipsoids.
      * @param bDisplay when true display the tracts with ellipsods.
      */
@@ -637,13 +690,6 @@ public class VolumeDTI extends VolumeObject
     public void setDisplayTubes( boolean bDisplay )
     {
         m_bDisplayTubes = bDisplay;
-    }
-    /** Turns on/off displaying the fiber bundle tracts with 3d arrows.
-     * @param bDisplay when true display the tracts with arrows.
-     */
-    public void setDisplayArrows( boolean bDisplay )
-    {
-        m_bDisplayArrows = bDisplay;
     }
     /** Sets the DTI Image for displaying the tensors as ellipsoids.
      * @param kDTIImage.
@@ -877,66 +923,8 @@ public class VolumeDTI extends VolumeObject
         kDTIImage.disposeLocal();
         kDTIImage = null;
     }
-    
-    
 
-    private void MakeArrow()
-    {
-        m_kArrow = new Node();
-        Vector3f kPos = new Vector3f();
-        Matrix3f matrix = new Matrix3f(0f,0.0f,1f,
-                                       0.0f,1.0f,0.0f,
-                                       -1f,0.0f,0f);
 
-        Attributes kAttr = new Attributes();
-        kAttr.SetPChannels(3);
-        kAttr.SetNChannels(3);
-
-        CullState kCull = new CullState();
-        kCull.Enabled = true;
-        kCull.FrontFace = CullState.FrontMode.FT_CW;
-        StandardMesh kSM = new StandardMesh(kAttr);
-
-        TriMesh pkMesh = kSM.Cone(64,64,1.0f,1.0f, false);
-        m_kArrow.AttachChild(pkMesh);
-        
-        for ( int i = 0; i < pkMesh.VBuffer.GetVertexQuantity(); i++ )
-        {
-            kPos = pkMesh.VBuffer.GetPosition3(i);
-            matrix.Mult(kPos, kPos);
-            kPos.X -=.5;
-            pkMesh.VBuffer.SetPosition3(i, kPos);
-            kPos = pkMesh.VBuffer.GetNormal3(i);
-            matrix.Mult(kPos, kPos);
-            pkMesh.VBuffer.SetNormal3(i, kPos);            
-        }
-
-        TriMesh pkMesh2 = kSM.Cylinder(64,64,0.5f,1.0f,false);
-        for ( int i = 0; i < pkMesh2.VBuffer.GetVertexQuantity(); i++ )
-        {
-            kPos = pkMesh2.VBuffer.GetPosition3(i);
-            matrix.Mult(kPos, kPos);
-            kPos.X +=.5;
-            pkMesh2.VBuffer.SetPosition3(i, kPos);
-            kPos = pkMesh2.VBuffer.GetNormal3(i);
-            matrix.Mult(kPos, kPos);
-            pkMesh2.VBuffer.SetNormal3(i, kPos);            
-        }
-        
-        m_kArrow.AttachChild(pkMesh2);
-
-        pkMesh.AttachEffect(m_kLightShader);
-        pkMesh2.AttachEffect(m_kLightShader);        
-        pkMesh.AttachGlobalState(m_kEllipseMaterial);
-        pkMesh2.AttachGlobalState(m_kEllipseMaterial);    
-        pkMesh.AttachGlobalState(kCull);      
-        pkMesh2.AttachGlobalState(kCull);    
-        pkMesh.UpdateRS();
-        pkMesh2.UpdateRS();
-    }   
-    
-    
-    
     /** Set the m_iEllipsoidMod value. 
      * @param iMod new m_iEllipsoidMod value.
      */
@@ -944,6 +932,8 @@ public class VolumeDTI extends VolumeObject
     {
         m_iEllipsoidMod = iMod;
     }
+    
+     
     /**
      * Sets the light for the EllipsoidsShader.
      * @param kLightType the name of the light to set (Light0, Light1, etc.)
@@ -956,6 +946,7 @@ public class VolumeDTI extends VolumeObject
             m_kLightShader.SetLight(kLightType, afType);
         }
     }
+    
     /** Sets the polyline color for the specified fiber bundle tract group. 
      * @param iGroup the fiber bundle group to set.
      * @param kColor the new polyline color for the specified fiber bundle tract group. 
@@ -1002,8 +993,25 @@ public class VolumeDTI extends VolumeObject
             
         }
     }
-
-
+    
+    /** Sets the polyline color for the specified fiber bundle tract group. 
+     * @param iGroup the fiber bundle group to set.
+     * @param kColor the new polyline color for the specified fiber bundle tract group. 
+     */
+    public void setTubesGroupColor( int iGroup, ColorRGB kColor ) {
+    	if ( groupConstantColor.get(iGroup-1) != null )
+    		constantColor.put(groupConstantColor.get(iGroup-1).intValue(), kColor);
+    }
+    
+    /**
+     * Set the flag to using volume color or not
+     * @param flag  true or false
+     */
+    public void setVolumeColor(boolean flag) {
+    	isUsingVolumeColor = flag;
+    }
+    
+    
     /**
      * Display a fiber bundle tract with a Glyph.
      */    
@@ -1138,7 +1146,6 @@ public class VolumeDTI extends VolumeObject
         m_kLightShader.SetReverseFace(0);
     }
     
-     
     /** Displays a polyline fiber bundle tract with the given shader attached.
      * @param kInputStader shader to apply to the polyline.
      */    
@@ -1150,7 +1157,6 @@ public class VolumeDTI extends VolumeObject
         Node kTractNode;
         Polyline kTract;
         ShaderEffect kShader;
-        int iIndex;
         Iterator cIterator = groupConstantColor.keySet().iterator();
         
         //kAlpha.BlendEnabled = true;
@@ -1162,7 +1168,7 @@ public class VolumeDTI extends VolumeObject
             kTractNode = m_kTracts.get(iKey);
             kShader = kInputShader;
             
-            iIndex = m_kTubeColors.get(iKey);
+            m_kTubeColors.get(iKey);
             ColorRGB kColor1 = null;
             
             if ( kShader == null )
@@ -1294,69 +1300,60 @@ public class VolumeDTI extends VolumeObject
             
         }
     }
-    
-    /**
-     * advance the group color index.
-     */
-    public void addGroupColor() {
-    	currentGroupIndex++;
-    }
-    
-    /**
-     * remove the group color index.
-     */
-    public void removeTractColor(Integer iGroup) {
-    	
-    		groupConstantColor.remove(iGroup);
-        
-    }
-    
-    
-    /**
-     * Find the min available group index;
-     */
-    public void removeGroupColor() {
-    	Iterator cIterator = groupConstantColor.keySet().iterator();
-    	Integer cKey;
-    	
-    	currentGroupIndex--;
-    	while ( cIterator.hasNext() )
-        {
-             cKey = (Integer)cIterator.next();
-             if ( groupConstantColor.get(cKey).intValue() ==  currentGroupIndex ) {
-            	 currentGroupIndex++;
-             }
-        }
-    	
-    }
-    
-    /** Sets the polyline color for the specified fiber bundle tract group. 
-     * @param iGroup the fiber bundle group to set.
-     * @param kColor the new polyline color for the specified fiber bundle tract group. 
-     */
-    public void setTubesGroupColor( int iGroup, ColorRGB kColor ) {
-    	if ( groupConstantColor.get(iGroup-1) != null )
-    		constantColor.put(groupConstantColor.get(iGroup-1).intValue(), kColor);
-    }
-    
-    /** Get the group color with given group ID. 
-     * @param groupID  given group id
-     * @return  ColorRGB group color
-     */
-    public ColorRGB getGroupColor(int iGroup) {
-        if ( groupConstantColor.get(iGroup-1) != null )
-        {
-            return new ColorRGB(constantColor.get(groupConstantColor.get(iGroup-1).intValue()));
-        }
-        return null;
-    }
    
-    /**
-     * Set the flag to using volume color or not
-     * @param flag  true or false
-     */
-    public void setVolumeColor(boolean flag) {
-    	isUsingVolumeColor = flag;
+    private void MakeArrow()
+    {
+        m_kArrow = new Node();
+        Vector3f kPos = new Vector3f();
+        Matrix3f matrix = new Matrix3f(0f,0.0f,1f,
+                                       0.0f,1.0f,0.0f,
+                                       -1f,0.0f,0f);
+
+        Attributes kAttr = new Attributes();
+        kAttr.SetPChannels(3);
+        kAttr.SetNChannels(3);
+
+        CullState kCull = new CullState();
+        kCull.Enabled = true;
+        kCull.FrontFace = CullState.FrontMode.FT_CW;
+        StandardMesh kSM = new StandardMesh(kAttr);
+
+        TriMesh pkMesh = kSM.Cone(64,64,1.0f,1.0f, false);
+        m_kArrow.AttachChild(pkMesh);
+        
+        for ( int i = 0; i < pkMesh.VBuffer.GetVertexQuantity(); i++ )
+        {
+            kPos = pkMesh.VBuffer.GetPosition3(i);
+            matrix.Mult(kPos, kPos);
+            kPos.X -=.5;
+            pkMesh.VBuffer.SetPosition3(i, kPos);
+            kPos = pkMesh.VBuffer.GetNormal3(i);
+            matrix.Mult(kPos, kPos);
+            pkMesh.VBuffer.SetNormal3(i, kPos);            
+        }
+
+        TriMesh pkMesh2 = kSM.Cylinder(64,64,0.5f,1.0f,false);
+        for ( int i = 0; i < pkMesh2.VBuffer.GetVertexQuantity(); i++ )
+        {
+            kPos = pkMesh2.VBuffer.GetPosition3(i);
+            matrix.Mult(kPos, kPos);
+            kPos.X +=.5;
+            pkMesh2.VBuffer.SetPosition3(i, kPos);
+            kPos = pkMesh2.VBuffer.GetNormal3(i);
+            matrix.Mult(kPos, kPos);
+            pkMesh2.VBuffer.SetNormal3(i, kPos);            
+        }
+        
+        m_kArrow.AttachChild(pkMesh2);
+
+        pkMesh.AttachEffect(m_kLightShader);
+        pkMesh2.AttachEffect(m_kLightShader);        
+        pkMesh.AttachGlobalState(m_kEllipseMaterial);
+        pkMesh2.AttachGlobalState(m_kEllipseMaterial);    
+        pkMesh.AttachGlobalState(kCull);      
+        pkMesh2.AttachGlobalState(kCull);    
+        pkMesh.UpdateRS();
+        pkMesh2.UpdateRS();
     }
     
     

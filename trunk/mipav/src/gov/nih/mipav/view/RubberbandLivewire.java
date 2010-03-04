@@ -186,455 +186,28 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
         progressBar = new ViewJProgressBar(((ViewJComponentEditImage) component).getActiveImage().getImageName(),
                                            "Livewire: Computing cost function ...", 0, 100, false, this, this);
 
-        if (selection == GRADIENT_MAG) {
-            progressBar.setVisible(true);
 
-            // for color images, arrays need to be 4 times bigger
-            if (((ViewJComponentEditImage) component).getActiveImage().isColorImage()) {
+        // for color images, arrays need to be 4 times bigger
+        if (((ViewJComponentEditImage) component).getActiveImage().isColorImage()) {
 
-                // direction of the unit vector of the partial derivative in the x direction
-                xDirections = new float[length * 4];
+            // direction of the unit vector of the partial derivative in the x direction
+            xDirections = new float[length * 4];
 
-                // direction of the unit vector of the partial derivative in the y direction
-                yDirections = new float[length * 4];
-            } else {
+            // direction of the unit vector of the partial derivative in the y direction
+            yDirections = new float[length * 4];
+        } else {
 
-                // direction of the unit vector of the partial derivative in the x direction
-                xDirections = new float[length];
+            // direction of the unit vector of the partial derivative in the x direction
+            xDirections = new float[length];
 
-                // direction of the unit vector of the partial derivative in the y direction
-                yDirections = new float[length];
-            }
-
-            // AlgorithmGradientMagnitude magnitude = new AlgorithmGradientMagnitude(null, new float[] {1.75f, 1.75f},
-            // true, false);
-            ModelImage mi;
-            if (((ViewJComponentEditImage) component).getActiveImage().isColorImage()) {
-                mi = new ModelImage(ModelStorageBase.FLOAT, new int[]{4*xDim, yDim}, ((ViewJComponentEditImage) component).getActiveImage().getImageName());    
-            }
-            else {
-                mi = new ModelImage(ModelStorageBase.FLOAT, new int[]{xDim, yDim}, ((ViewJComponentEditImage) component).getActiveImage().getImageName());
-            }
-            try{
-                mi.importData(0, ((ViewJComponentEditImage) component).getActiveImageSliceBuffer(), true);
-            }catch(IOException e){
-                MipavUtil.displayError("RubberbandLiveWire: IOException on extracting active slice" + ".importData(0, ((ViewJComponentEditImage) component).getActiveImageSliceBuffer(), true)" + e);
-
-            }
-            AlgorithmGradientMagnitudeSep magnitude = new AlgorithmGradientMagnitudeSep(mi,
-                                                                                        new float[] { 1.75f, 1.75f },
-                                                                                        true, true);
-        	magnitude.setDirectionNeeded(true);
-            progressBar.updateValueImmed(10);
-
-            if (((ViewJComponentEditImage) component).getActiveImage().isColorImage()) {
-            	magnitude.setNormalized(false);
-            	magnitude.run();
-                localCosts = magnitude.getResultBuffer();
-                xDirections = magnitude.getXDerivativeDirections();
-                yDirections = magnitude.getYDerivativeDirections();
-                progressBar.updateValueImmed(20);
-
-                float[] localCostsTemp = new float[length];
-
-                for (int i = 0; i < localCostsTemp.length; i++) {
-                    localCostsTemp[i] = (float) Math.sqrt((localCosts[(4 * i) + 1] * localCosts[(4 * i) + 1]) +
-                                                          (localCosts[(4 * i) + 2] * localCosts[(4 * i) + 2]) +
-                                                          (localCosts[(4 * i) + 3] * localCosts[(4 * i) + 3]));
-                }
-
-                localCosts = new float[length];
-
-                for (int i = 0; i < localCostsTemp.length; i++) {
-                    localCosts[i] = localCostsTemp[i];
-                }
-
-                progressBar.updateValueImmed(25);
-                localCostsTemp = null;
-
-                float R2;
-                float G2;
-                float B2;
-                float IxMax;
-                float IyMax;
-                int sign;
-                float IxR;
-                float IyR;
-                float IxG;
-                float IyG;
-                float IxB;
-                float IyB;
-                float[] xDirectionsTemp = new float[length];
-                float[] yDirectionsTemp = new float[length];
-                float Ix;
-                float Iy;
-                float I2;
-                mod = length / 35;
-
-                for (int i = 0; i < length; i++) {
-                    R2 = (xDirections[(4 * i) + 1] * xDirections[(4 * i) + 1]) +
-                         (yDirections[(4 * i) + 1] * yDirections[(4 * i) + 1]);
-                    G2 = (xDirections[(4 * i) + 2] * xDirections[(4 * i) + 2]) +
-                         (yDirections[(4 * i) + 2] * yDirections[(4 * i) + 2]);
-                    B2 = (xDirections[(4 * i) + 3] * xDirections[(4 * i) + 3]) +
-                         (yDirections[(4 * i) + 3] * yDirections[(4 * i) + 3]);
-
-                    if ((R2 > G2) && (R2 > B2)) {
-                        IxMax = xDirections[(4 * i) + 1];
-                        IyMax = yDirections[(4 * i) + 1];
-                    } else if ((G2 > R2) && (G2 > B2)) {
-                        IxMax = xDirections[(4 * i) + 2];
-                        IyMax = yDirections[(4 * i) + 2];
-                    } else {
-                        IxMax = xDirections[(4 * i) + 3];
-                        IyMax = yDirections[(4 * i) + 3];
-                    }
-
-                    if (((xDirections[(4 * i) + 1] * IxMax) + (yDirections[(4 * i) + 1] * IyMax)) > 0) {
-                        sign = 1;
-                    } else {
-                        sign = -1;
-                    }
-
-                    IxR = sign * xDirections[(4 * i) + 1];
-                    IyR = sign * yDirections[(4 * i) + 1];
-
-                    if (((xDirections[(4 * i) + 2] * IxMax) + (yDirections[(4 * i) + 2] * IyMax)) > 0) {
-                        sign = 1;
-                    } else {
-                        sign = -1;
-                    }
-
-                    IxG = sign * xDirections[(4 * i) + 2];
-                    IyG = sign * yDirections[(4 * i) + 2];
-
-                    if (((xDirections[(4 * i) + 3] * IxMax) + (yDirections[(4 * i) + 3] * IyMax)) > 0) {
-                        sign = 1;
-                    } else {
-                        sign = -1;
-                    }
-
-                    IxB = sign * xDirections[(4 * i) + 3];
-                    IyB = sign * yDirections[(4 * i) + 3];
-                    R2 = (float) Math.sqrt(R2);
-                    G2 = (float) Math.sqrt(G2);
-                    B2 = (float) Math.sqrt(B2);
-                    Ix = (R2 * IxR) + (G2 * IxG) + (B2 * IxB);
-                    Iy = (R2 * IyR) + (G2 * IyG) + (B2 * IyB);
-                    I2 = (float) Math.sqrt((Ix * Ix) + (Iy * Iy));
-                    xDirectionsTemp[i] = Ix / I2;
-                    yDirectionsTemp[i] = Iy / I2;
-
-                    if ((length % mod) == 0) {
-                        progressBar.updateValueImmed(25 + (i * 35 / length));
-                    }
-                }
-
-                xDirections = new float[length];
-                yDirections = new float[length];
-
-                for (int i = 0; i < length; i++) {
-                    xDirections[i] = xDirectionsTemp[i];
-                    yDirections[i] = yDirectionsTemp[i];
-                }
-
-                progressBar.updateValueImmed(60);
-                xDirectionsTemp = null;
-                yDirectionsTemp = null;
-            } // if (((ViewJComponentEditImage)component).getActiveImage().isColorImage())
-            else { // not color
-
-                // calculates gradient magnitude and stores in localCosts; stores normalized xDirections
-                // and yDirections in the corresponding arrays.
-            	magnitude.setNormalized(true);
-            	magnitude.run();
-                localCosts = magnitude.getResultBuffer();
-                xDirections = magnitude.getXDerivativeDirections();
-                yDirections = magnitude.getYDerivativeDirections();
-                progressBar.updateValueImmed(65);
-
-            } // not color
-
-            float[] sigmas = new float[2];
-            //BitSet smallKernel;
-            BitSet largeKernel;
-            AlgorithmEdgeLaplacian lap;
-
-            if (((ViewJComponentEditImage) component).getActiveImage().isColorImage()) {
-                //BitSet smallKernelR;
-                BitSet largeKernelR;
-                //BitSet smallKernelG;
-                BitSet largeKernelG;
-                //BitSet smallKernelB;
-                BitSet largeKernelB;
-                //smallKernel = new BitSet(length);
-                largeKernel = new BitSet(length);
-
-                float[] colorBuffer = new float[4 * xDim * yDim];
-                colorBuffer = ((ViewJComponentEditImage) component).getActiveImageSliceBuffer();
-
-                float[] singleBuffer = new float[xDim * yDim];
-
-                for (int i = 0; i < singleBuffer.length; i++) {
-                    singleBuffer[i] = colorBuffer[(4 * i) + 1];
-                }
-
-                //sigmas[0] = 0.75f;
-                //sigmas[1] = 0.75f;
-                //lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false);
-                //smallKernelR = lap.calcZeroXMaskBitset(singleBuffer, extents);
-
-                // large kernel edge Laplacian - less noise, poorer localization
-                sigmas[0] = 1.25f;
-                sigmas[1] = 1.25f;
-                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false);
-                largeKernelR = lap.calcZeroXMaskBitset(singleBuffer, extents);
-                progressBar.updateValueImmed(65);
-
-                for (int i = 0; i < singleBuffer.length; i++) {
-                    singleBuffer[i] = colorBuffer[(4 * i) + 2];
-                }
-
-                //sigmas[0] = 0.75f;
-                //sigmas[1] = 0.75f;
-                //lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false);
-                //smallKernelG = lap.calcZeroXMaskBitset(singleBuffer, extents);
-
-                // large kernel edge Laplacian - less noise, poorer localization
-                sigmas[0] = 1.25f;
-                sigmas[1] = 1.25f;
-                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false);
-                largeKernelG = lap.calcZeroXMaskBitset(singleBuffer, extents);
-                progressBar.updateValueImmed(70);
-
-                for (int i = 0; i < singleBuffer.length; i++) {
-                    singleBuffer[i] = colorBuffer[(4 * i) + 3];
-                }
-
-                //sigmas[0] = 0.75f;
-                //sigmas[1] = 0.75f;
-                //lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false);
-                //smallKernelB = lap.calcZeroXMaskBitset(singleBuffer, extents);
-
-                // large kernel edge Laplacian - less noise, poorer localization
-                sigmas[0] = 1.25f;
-                sigmas[1] = 1.25f;
-                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false);
-                largeKernelB = lap.calcZeroXMaskBitset(singleBuffer, extents);
-                progressBar.updateValueImmed(75);
-
-                for (int i = 0; i < length; i++) {
-
-                    //if ((smallKernelR.get(i)) || (smallKernelG.get(i)) || (smallKernelB.get(i))) {
-                        //smallKernel.set(i);
-                    //} else {
-                        //smallKernel.clear(i);
-                    //}
-
-                    if ((largeKernelR.get(i)) || (largeKernelG.get(i)) || (largeKernelB.get(i))) {
-                        largeKernel.set(i);
-                    } else {
-                        largeKernel.clear(i);
-                    }
-                }
-
-                progressBar.updateValueImmed(85);
-                //smallKernelR = null;
-                largeKernelR = null;
-                //smallKernelG = null;
-                largeKernelG = null;
-                //smallKernelB = null;
-                largeKernelB = null;
-                colorBuffer = null;
-                singleBuffer = null;
-            } // if (((ViewJComponentEditImage)component).getActiveImage().isColorImage())
-            else { // not color
-
-                // small kernel edge Laplacian - higher noise, better localization sigmas[0]   = 0.75f; sigmas[1]   =
-                // 0.75f; lap         = new AlgorithmEdgeLaplacianSep(null, null, sigmas, true, false, 0, 0);
-                // smallKernel =
-                // lap.calcZeroXMaskBitset(((ViewJComponentEditImage)component).getActiveImageSliceBuffer(), extents);
-
-                // large kernel edge Laplacian - less noise, poorer localization
-                sigmas[0] = 1.85f;
-                sigmas[1] = 1.85f;
-                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, true);
-                lap.setZeroDetectionType(AlgorithmEdgeLaplacian.MARCHING_SQUARES);
-                progressBar.updateValueImmed(75);
-                largeKernel = lap.calcZeroXMaskBitset(((ViewJComponentEditImage) component).getActiveImageSliceBuffer(),
-                                                      extents);
-                progressBar.updateValueImmed(85);
-            } // not color
-
-            // invert gradient mag so high gradients mean low cost
-            float maximum = -Float.MAX_VALUE;
-            float minimum = Float.MAX_VALUE;
-
-            for (int i = 0; i < localCosts.length; i++) {
-
-                if (localCosts[i] > maximum) {
-                    maximum = localCosts[i];
-                }
-
-                if (localCosts[i] < minimum) {
-                    minimum = localCosts[i];
-                }
-            }
-
-            maximum = maximum - minimum;
-            progressBar.updateValueImmed(90);
-
-            // add in zero edge crossing, weighted slightly higher for the large kernel
-            for (int i = 0; i < localCosts.length; i++) {
-                float temp = 1f;
-
-                // if (smallKernel.get(i)) temp -= .45;
-                // if (largeKernel.get(i)) temp -= .55;
-                if (largeKernel.get(i)) {
-                    temp = 0;
-                }
-
-                // leave .27 for the gradient direction, which is calculated on the fly
-                float gmCost = (localCosts[i] - minimum) / maximum;
-
-                //                if (gmCost < 0.001f){
-                //                    gmCost = -5;
-                //                }
-                localCosts[i] = ((1.0f - gmCost) * 0.40f) + (temp * 0.40f);
-            }
-
-            progressBar.updateValueImmed(100);
-        } else if (selection == MEDIALNESS) {
-            progressBar.setVisible(false);
-
-            AlgorithmLapMedianess medialness = new AlgorithmLapMedianess(null, new float[] { 1.0f, 1.0f }, true, false,
-                                                                         1f, false);
-
-            // progressBar.updateValueImmed(25);
-            if (((ViewJComponentEditImage) component).getActiveImage().isColorImage()) {
-                float[] localCostsR;
-                float[] localCostsG;
-                float[] localCostsB;
-                localCosts = new float[length];
-
-                float[] colorBuffer = new float[4 * length];
-                colorBuffer = ((ViewJComponentEditImage) component).getActiveImageSliceBuffer();
-
-                float[] singleBuffer = new float[length];
-
-                for (int i = 0; i < singleBuffer.length; i++) {
-                    singleBuffer[i] = colorBuffer[(4 * i) + 1];
-                }
-
-                // progressBar.updateValueImmed(30);
-                localCostsR = medialness.calcInBuffer2D(singleBuffer, extents);
-
-                for (int i = 0; i < singleBuffer.length; i++) {
-                    singleBuffer[i] = colorBuffer[(4 * i) + 2];
-                }
-
-                // progressBar.updateValueImmed(35);
-                localCostsG = medialness.calcInBuffer2D(singleBuffer, extents);
-
-                for (int i = 0; i < singleBuffer.length; i++) {
-                    singleBuffer[i] = colorBuffer[(4 * i) + 3];
-                }
-
-                // progressBar.updateValueImmed(40);
-                localCostsB = medialness.calcInBuffer2D(singleBuffer, extents);
-
-                for (int i = 0; i < length; i++) {
-                    localCosts[i] = Math.max(localCostsR[i], Math.max(localCostsG[i], localCostsB[i]));
-                }
-
-                // progressBar.updateValueImmed(45);
-                colorBuffer = null;
-                singleBuffer = null;
-                localCostsR = null;
-                localCostsG = null;
-                localCostsB = null;
-            } // if (((ViewJComponentEditImage)component).getActiveImage().isColorImage())
-            else { // not color
-                localCosts = medialness.calcInBuffer2D(((ViewJComponentEditImage) component).getActiveImageSliceBuffer(),
-                                                       extents);
-                // progressBar.updateValueImmed(45);
-            } // else not color
-
-            /*
-             * AlgorithmFrequencyFilter freq = new
-             * AlgorithmFrequencyFilter(((ViewJComponentEditImage)component).getActiveImage(),
-             * false, false); localCosts = freq.calc2DMedialness();
-             */
-            // invert medialness so high medialness mean low cost
-            float maximum = -Float.MAX_VALUE;
-            float minimum = Float.MAX_VALUE;
-
-            for (int i = 0; i < localCosts.length; i++) {
-
-                if (localCosts[i] > maximum) {
-                    maximum = localCosts[i];
-                }
-
-                if (localCosts[i] < minimum) {
-                    minimum = localCosts[i];
-                }
-            }
-
-            maximum = maximum - minimum;
-            // progressBar.updateValueImmed(70);
-
-            for (int i = 0; i < localCosts.length; i++) {
-                localCosts[i] = (1 - ((localCosts[i] - minimum) / maximum));
-            }
-            // progressBar.updateValueImmed(100);
-        } else if (selection == INTENSITY) {
-            progressBar.setVisible(true);
-
-            localCosts = ((ViewJComponentEditImage) component).getActiveImageSliceBuffer();
-
-            if (((ViewJComponentEditImage) component).getActiveImage().isColorImage()) {
-                float[] localCostsTemp = new float[length];
-
-                for (int i = 0; i < length; i++) {
-                    localCostsTemp[i] = localCosts[(4 * i) + 1] + localCosts[(4 * i) + 2] + localCosts[(4 * i) + 3];
-                }
-
-                progressBar.updateValueImmed(25);
-                localCosts = new float[length];
-
-                for (int i = 0; i < length; i++) {
-                    localCosts[i] = localCostsTemp[i];
-                }
-
-                localCostsTemp = null;
-                progressBar.updateValueImmed(50);
-            }
-
-            // invert intensity so high intensity means low cost
-            float maximum = -Float.MAX_VALUE;
-            float minimum = Float.MAX_VALUE;
-
-            for (int i = 0; i < localCosts.length; i++) {
-
-                if (localCosts[i] > maximum) {
-                    maximum = localCosts[i];
-                }
-
-                if (localCosts[i] < minimum) {
-                    minimum = localCosts[i];
-                }
-            }
-
-            maximum = maximum - minimum;
-            progressBar.updateValueImmed(75);
-
-            for (int i = 0; i < localCosts.length; i++) {
-                localCosts[i] = (1 - ((localCosts[i] - minimum) / maximum));
-            }
-
-            progressBar.updateValueImmed(100);
+            // direction of the unit vector of the partial derivative in the y direction
+            yDirections = new float[length];
         }
-
+        
+        localCosts = getLocalCosts( ((ViewJComponentEditImage) component).getActiveImage(), selection, 
+                ((ViewJComponentEditImage) component).getActiveImageSliceBuffer(),
+                xDirections, yDirections, progressBar );
+        
         costGraph = new byte[localCosts.length]; // Graph with arrows from each node to next one
 
         // A node is a location i in the array; where it
@@ -981,6 +554,511 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
 
     }
 
+    public static float[] getLocalCosts( ModelImage kImage, int selection, float[] activeSliceBuffer, float[] xDirections, float[] yDirections, ViewJProgressBar progressBar )
+    {
+        float[] localCosts = null;
+
+        int[] extents = new int[2];
+        int xDim = kImage.getExtents()[0];
+        int yDim = kImage.getExtents()[1];
+        extents[0] = xDim;
+        extents[1] = yDim;
+
+        int length = xDim * yDim;
+        
+
+        if (selection == GRADIENT_MAG) {
+            if ( progressBar != null )
+            {
+                progressBar.setVisible(true);
+            }
+
+
+            // AlgorithmGradientMagnitude magnitude = new AlgorithmGradientMagnitude(null, new float[] {1.75f, 1.75f},
+            // true, false);
+            ModelImage mi;
+            if (kImage.isColorImage()) {
+                mi = new ModelImage(ModelStorageBase.FLOAT, new int[]{4*xDim, yDim}, kImage.getImageName());    
+            }
+            else {
+                mi = new ModelImage(ModelStorageBase.FLOAT, new int[]{xDim, yDim}, kImage.getImageName());
+            }
+            try{
+                mi.importData(0, activeSliceBuffer, true);
+            }catch(IOException e){
+                MipavUtil.displayError("RubberbandLiveWire: IOException on extracting active slice" + ".importData(0, ((ViewJComponentEditImage) component).getActiveImageSliceBuffer(), true)" + e);
+
+            }
+            AlgorithmGradientMagnitudeSep magnitude = new AlgorithmGradientMagnitudeSep(mi,
+                                                                                        new float[] { 1.75f, 1.75f },
+                                                                                        true, true);
+            magnitude.setDirectionNeeded(true);
+            if ( progressBar != null )
+            {
+                progressBar.updateValueImmed(10);
+            }
+            if (kImage.isColorImage()) {
+                magnitude.setNormalized(false);
+                magnitude.run();
+                localCosts = magnitude.getResultBuffer();
+                xDirections = magnitude.getXDerivativeDirections();
+                yDirections = magnitude.getYDerivativeDirections();
+                if ( progressBar != null )
+                {
+                    progressBar.updateValueImmed(20);
+                }
+                float[] localCostsTemp = new float[length];
+
+                for (int i = 0; i < localCostsTemp.length; i++) {
+                    localCostsTemp[i] = (float) Math.sqrt((localCosts[(4 * i) + 1] * localCosts[(4 * i) + 1]) +
+                                                          (localCosts[(4 * i) + 2] * localCosts[(4 * i) + 2]) +
+                                                          (localCosts[(4 * i) + 3] * localCosts[(4 * i) + 3]));
+                }
+
+                localCosts = new float[length];
+
+                for (int i = 0; i < localCostsTemp.length; i++) {
+                    localCosts[i] = localCostsTemp[i];
+                }
+
+                if ( progressBar != null )
+                {
+                    progressBar.updateValueImmed(25);
+                }
+                localCostsTemp = null;
+
+                float R2;
+                float G2;
+                float B2;
+                float IxMax;
+                float IyMax;
+                int sign;
+                float IxR;
+                float IyR;
+                float IxG;
+                float IyG;
+                float IxB;
+                float IyB;
+                float[] xDirectionsTemp = new float[length];
+                float[] yDirectionsTemp = new float[length];
+                float Ix;
+                float Iy;
+                float I2;
+                int mod = length / 35;
+
+                for (int i = 0; i < length; i++) {
+                    R2 = (xDirections[(4 * i) + 1] * xDirections[(4 * i) + 1]) +
+                         (yDirections[(4 * i) + 1] * yDirections[(4 * i) + 1]);
+                    G2 = (xDirections[(4 * i) + 2] * xDirections[(4 * i) + 2]) +
+                         (yDirections[(4 * i) + 2] * yDirections[(4 * i) + 2]);
+                    B2 = (xDirections[(4 * i) + 3] * xDirections[(4 * i) + 3]) +
+                         (yDirections[(4 * i) + 3] * yDirections[(4 * i) + 3]);
+
+                    if ((R2 > G2) && (R2 > B2)) {
+                        IxMax = xDirections[(4 * i) + 1];
+                        IyMax = yDirections[(4 * i) + 1];
+                    } else if ((G2 > R2) && (G2 > B2)) {
+                        IxMax = xDirections[(4 * i) + 2];
+                        IyMax = yDirections[(4 * i) + 2];
+                    } else {
+                        IxMax = xDirections[(4 * i) + 3];
+                        IyMax = yDirections[(4 * i) + 3];
+                    }
+
+                    if (((xDirections[(4 * i) + 1] * IxMax) + (yDirections[(4 * i) + 1] * IyMax)) > 0) {
+                        sign = 1;
+                    } else {
+                        sign = -1;
+                    }
+
+                    IxR = sign * xDirections[(4 * i) + 1];
+                    IyR = sign * yDirections[(4 * i) + 1];
+
+                    if (((xDirections[(4 * i) + 2] * IxMax) + (yDirections[(4 * i) + 2] * IyMax)) > 0) {
+                        sign = 1;
+                    } else {
+                        sign = -1;
+                    }
+
+                    IxG = sign * xDirections[(4 * i) + 2];
+                    IyG = sign * yDirections[(4 * i) + 2];
+
+                    if (((xDirections[(4 * i) + 3] * IxMax) + (yDirections[(4 * i) + 3] * IyMax)) > 0) {
+                        sign = 1;
+                    } else {
+                        sign = -1;
+                    }
+
+                    IxB = sign * xDirections[(4 * i) + 3];
+                    IyB = sign * yDirections[(4 * i) + 3];
+                    R2 = (float) Math.sqrt(R2);
+                    G2 = (float) Math.sqrt(G2);
+                    B2 = (float) Math.sqrt(B2);
+                    Ix = (R2 * IxR) + (G2 * IxG) + (B2 * IxB);
+                    Iy = (R2 * IyR) + (G2 * IyG) + (B2 * IyB);
+                    I2 = (float) Math.sqrt((Ix * Ix) + (Iy * Iy));
+                    xDirectionsTemp[i] = Ix / I2;
+                    yDirectionsTemp[i] = Iy / I2;
+
+                    if ((length % mod) == 0) {
+                        if ( progressBar != null )
+                        {
+                            progressBar.updateValueImmed(25 + (i * 35 / length));
+                        }
+                    }
+                }
+
+                xDirections = new float[length];
+                yDirections = new float[length];
+
+                for (int i = 0; i < length; i++) {
+                    xDirections[i] = xDirectionsTemp[i];
+                    yDirections[i] = yDirectionsTemp[i];
+                }
+
+                if ( progressBar != null )
+                {
+                    progressBar.updateValueImmed(60);
+                }
+                xDirectionsTemp = null;
+                yDirectionsTemp = null;
+            } // if (((ViewJComponentEditImage)component).getActiveImage().isColorImage())
+            else { // not color
+
+                // calculates gradient magnitude and stores in localCosts; stores normalized xDirections
+                // and yDirections in the corresponding arrays.
+                magnitude.setNormalized(true);
+                magnitude.run();
+                localCosts = magnitude.getResultBuffer();
+                xDirections = magnitude.getXDerivativeDirections();
+                yDirections = magnitude.getYDerivativeDirections();
+                if ( progressBar != null )
+                {
+                    progressBar.updateValueImmed(65);
+                }
+
+            } // not color
+
+            float[] sigmas = new float[2];
+            //BitSet smallKernel;
+            BitSet largeKernel;
+            AlgorithmEdgeLaplacian lap;
+
+            if (kImage.isColorImage()) {
+                //BitSet smallKernelR;
+                BitSet largeKernelR;
+                //BitSet smallKernelG;
+                BitSet largeKernelG;
+                //BitSet smallKernelB;
+                BitSet largeKernelB;
+                //smallKernel = new BitSet(length);
+                largeKernel = new BitSet(length);
+
+                float[] colorBuffer = new float[4 * xDim * yDim];
+                colorBuffer = activeSliceBuffer;
+
+                float[] singleBuffer = new float[xDim * yDim];
+
+                for (int i = 0; i < singleBuffer.length; i++) {
+                    singleBuffer[i] = colorBuffer[(4 * i) + 1];
+                }
+
+                //sigmas[0] = 0.75f;
+                //sigmas[1] = 0.75f;
+                //lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false);
+                //smallKernelR = lap.calcZeroXMaskBitset(singleBuffer, extents);
+
+                // large kernel edge Laplacian - less noise, poorer localization
+                sigmas[0] = 1.25f;
+                sigmas[1] = 1.25f;
+                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false);
+                largeKernelR = lap.calcZeroXMaskBitset(singleBuffer, extents);
+                if ( progressBar != null )
+                {
+                    progressBar.updateValueImmed(65);
+                }
+                for (int i = 0; i < singleBuffer.length; i++) {
+                    singleBuffer[i] = colorBuffer[(4 * i) + 2];
+                }
+
+                //sigmas[0] = 0.75f;
+                //sigmas[1] = 0.75f;
+                //lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false);
+                //smallKernelG = lap.calcZeroXMaskBitset(singleBuffer, extents);
+
+                // large kernel edge Laplacian - less noise, poorer localization
+                sigmas[0] = 1.25f;
+                sigmas[1] = 1.25f;
+                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false);
+                largeKernelG = lap.calcZeroXMaskBitset(singleBuffer, extents);
+                if ( progressBar != null )
+                {
+                    progressBar.updateValueImmed(70);
+                }
+                for (int i = 0; i < singleBuffer.length; i++) {
+                    singleBuffer[i] = colorBuffer[(4 * i) + 3];
+                }
+
+                //sigmas[0] = 0.75f;
+                //sigmas[1] = 0.75f;
+                //lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false);
+                //smallKernelB = lap.calcZeroXMaskBitset(singleBuffer, extents);
+
+                // large kernel edge Laplacian - less noise, poorer localization
+                sigmas[0] = 1.25f;
+                sigmas[1] = 1.25f;
+                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false);
+                largeKernelB = lap.calcZeroXMaskBitset(singleBuffer, extents);
+                if ( progressBar != null )
+                {
+                    progressBar.updateValueImmed(75);
+                }
+                for (int i = 0; i < length; i++) {
+
+                    //if ((smallKernelR.get(i)) || (smallKernelG.get(i)) || (smallKernelB.get(i))) {
+                        //smallKernel.set(i);
+                    //} else {
+                        //smallKernel.clear(i);
+                    //}
+
+                    if ((largeKernelR.get(i)) || (largeKernelG.get(i)) || (largeKernelB.get(i))) {
+                        largeKernel.set(i);
+                    } else {
+                        largeKernel.clear(i);
+                    }
+                }
+
+                if ( progressBar != null )
+                {
+                    progressBar.updateValueImmed(85);
+                }
+                //smallKernelR = null;
+                largeKernelR = null;
+                //smallKernelG = null;
+                largeKernelG = null;
+                //smallKernelB = null;
+                largeKernelB = null;
+                colorBuffer = null;
+                singleBuffer = null;
+            } // if (((ViewJComponentEditImage)component).getActiveImage().isColorImage())
+            else { // not color
+
+                // small kernel edge Laplacian - higher noise, better localization sigmas[0]   = 0.75f; sigmas[1]   =
+                // 0.75f; lap         = new AlgorithmEdgeLaplacianSep(null, null, sigmas, true, false, 0, 0);
+                // smallKernel =
+                // lap.calcZeroXMaskBitset(((ViewJComponentEditImage)component).getActiveImageSliceBuffer(), extents);
+
+                // large kernel edge Laplacian - less noise, poorer localization
+                sigmas[0] = 1.85f;
+                sigmas[1] = 1.85f;
+                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, true);
+                lap.setZeroDetectionType(AlgorithmEdgeLaplacian.MARCHING_SQUARES);
+                if ( progressBar != null )
+                {
+                    progressBar.updateValueImmed(75);
+                }
+                largeKernel = lap.calcZeroXMaskBitset(activeSliceBuffer,
+                                                      extents);
+                if ( progressBar != null )
+                {
+                    progressBar.updateValueImmed(85);
+                }
+            } // not color
+
+            // invert gradient mag so high gradients mean low cost
+            float maximum = -Float.MAX_VALUE;
+            float minimum = Float.MAX_VALUE;
+
+            for (int i = 0; i < localCosts.length; i++) {
+
+                if (localCosts[i] > maximum) {
+                    maximum = localCosts[i];
+                }
+
+                if (localCosts[i] < minimum) {
+                    minimum = localCosts[i];
+                }
+            }
+
+            maximum = maximum - minimum;
+            if ( progressBar != null )
+            {
+                progressBar.updateValueImmed(90);
+            }
+            // add in zero edge crossing, weighted slightly higher for the large kernel
+            for (int i = 0; i < localCosts.length; i++) {
+                float temp = 1f;
+
+                // if (smallKernel.get(i)) temp -= .45;
+                // if (largeKernel.get(i)) temp -= .55;
+                if (largeKernel.get(i)) {
+                    temp = 0;
+                }
+
+                // leave .27 for the gradient direction, which is calculated on the fly
+                float gmCost = (localCosts[i] - minimum) / maximum;
+
+                //                if (gmCost < 0.001f){
+                //                    gmCost = -5;
+                //                }
+                localCosts[i] = ((1.0f - gmCost) * 0.40f) + (temp * 0.40f);
+            }
+
+            if ( progressBar != null )
+            {
+                progressBar.updateValueImmed(100);
+            }
+        } else if (selection == MEDIALNESS) {
+            if ( progressBar != null )
+            {
+                progressBar.setVisible(false);
+            }
+            AlgorithmLapMedianess medialness = new AlgorithmLapMedianess(null, new float[] { 1.0f, 1.0f }, true, false,
+                                                                         1f, false);
+
+            // progressBar.updateValueImmed(25);
+            if (kImage.isColorImage()) {
+                float[] localCostsR;
+                float[] localCostsG;
+                float[] localCostsB;
+                localCosts = new float[length];
+
+                float[] colorBuffer = new float[4 * length];
+                colorBuffer = activeSliceBuffer;
+
+                float[] singleBuffer = new float[length];
+
+                for (int i = 0; i < singleBuffer.length; i++) {
+                    singleBuffer[i] = colorBuffer[(4 * i) + 1];
+                }
+
+                // progressBar.updateValueImmed(30);
+                localCostsR = medialness.calcInBuffer2D(singleBuffer, extents);
+
+                for (int i = 0; i < singleBuffer.length; i++) {
+                    singleBuffer[i] = colorBuffer[(4 * i) + 2];
+                }
+
+                // progressBar.updateValueImmed(35);
+                localCostsG = medialness.calcInBuffer2D(singleBuffer, extents);
+
+                for (int i = 0; i < singleBuffer.length; i++) {
+                    singleBuffer[i] = colorBuffer[(4 * i) + 3];
+                }
+
+                // progressBar.updateValueImmed(40);
+                localCostsB = medialness.calcInBuffer2D(singleBuffer, extents);
+
+                for (int i = 0; i < length; i++) {
+                    localCosts[i] = Math.max(localCostsR[i], Math.max(localCostsG[i], localCostsB[i]));
+                }
+
+                // progressBar.updateValueImmed(45);
+                colorBuffer = null;
+                singleBuffer = null;
+                localCostsR = null;
+                localCostsG = null;
+                localCostsB = null;
+            } // if (((ViewJComponentEditImage)component).getActiveImage().isColorImage())
+            else { // not color
+                localCosts = medialness.calcInBuffer2D(activeSliceBuffer,
+                                                       extents);
+                // progressBar.updateValueImmed(45);
+            } // else not color
+
+            /*
+             * AlgorithmFrequencyFilter freq = new
+             * AlgorithmFrequencyFilter(((ViewJComponentEditImage)component).getActiveImage(),
+             * false, false); localCosts = freq.calc2DMedialness();
+             */
+            // invert medialness so high medialness mean low cost
+            float maximum = -Float.MAX_VALUE;
+            float minimum = Float.MAX_VALUE;
+
+            for (int i = 0; i < localCosts.length; i++) {
+
+                if (localCosts[i] > maximum) {
+                    maximum = localCosts[i];
+                }
+
+                if (localCosts[i] < minimum) {
+                    minimum = localCosts[i];
+                }
+            }
+
+            maximum = maximum - minimum;
+            // progressBar.updateValueImmed(70);
+
+            for (int i = 0; i < localCosts.length; i++) {
+                localCosts[i] = (1 - ((localCosts[i] - minimum) / maximum));
+            }
+            // progressBar.updateValueImmed(100);
+        } else if (selection == INTENSITY) {
+            if ( progressBar != null )
+            {
+                progressBar.setVisible(true);
+            }
+            localCosts = activeSliceBuffer;
+
+            if (kImage.isColorImage()) {
+                float[] localCostsTemp = new float[length];
+
+                for (int i = 0; i < length; i++) {
+                    localCostsTemp[i] = localCosts[(4 * i) + 1] + localCosts[(4 * i) + 2] + localCosts[(4 * i) + 3];
+                }
+
+                if ( progressBar != null )
+                {
+                    progressBar.updateValueImmed(25);
+                }
+                localCosts = new float[length];
+
+                for (int i = 0; i < length; i++) {
+                    localCosts[i] = localCostsTemp[i];
+                }
+
+                localCostsTemp = null;
+                if ( progressBar != null )
+                {
+                    progressBar.updateValueImmed(50);
+                }
+            }
+
+            // invert intensity so high intensity means low cost
+            float maximum = -Float.MAX_VALUE;
+            float minimum = Float.MAX_VALUE;
+
+            for (int i = 0; i < localCosts.length; i++) {
+
+                if (localCosts[i] > maximum) {
+                    maximum = localCosts[i];
+                }
+
+                if (localCosts[i] < minimum) {
+                    minimum = localCosts[i];
+                }
+            }
+
+            maximum = maximum - minimum;
+            if ( progressBar != null )
+            {
+                progressBar.updateValueImmed(75);
+            }
+
+            for (int i = 0; i < localCosts.length; i++) {
+                localCosts[i] = (1 - ((localCosts[i] - minimum) / maximum));
+            }
+
+            if ( progressBar != null )
+            {
+                progressBar.updateValueImmed(100);
+            }
+        }
+
+        return localCosts;
+    }
+    
+    
     /**
      * Unchanged.
      *
@@ -1822,7 +1900,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
      * test runs indicate that this tree stays fairly balanced on its own due to the nature of the insertions and
      * deletions.</p>
      */
-    class ActiveTree {
+    public class ActiveTree {
 
         /** Pointer to root of tree. */
         TreeNode root;
@@ -2043,7 +2121,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
     /**
      * Tree node. Contains data (the integer position and float cost) and pointers to the left and right children.
      */
-    class TreeNode {
+    public class TreeNode {
 
         /** Cost of position. */
         public float cost;
