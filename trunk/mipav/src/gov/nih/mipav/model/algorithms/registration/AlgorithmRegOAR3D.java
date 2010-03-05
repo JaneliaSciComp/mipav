@@ -1646,8 +1646,8 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
             if (calcCOG) {
                 final Vector3f cog = AlgorithmRegOAR3D.calculateCenterOfMass3D(simpleInput, simpleWeightInput, doColor);
                 final Vector3f cogR = AlgorithmRegOAR3D.calculateCenterOfMass3D(simpleRef, simpleWeightRef, doColor);
-                Preferences.debug("Center of mass for the subsampled input image:" + cog.ToString() + "\n");
-                Preferences.debug("Center of mass for the subsampled reference image:" + cogR.ToString() + "\n");
+                Preferences.debug("Center of mass for the subsampled input image:" + cog + "\n");
+                Preferences.debug("Center of mass for the subsampled reference image:" + cogR + "\n");
 
                 diffX = (cog.X - cogR.X);
                 diffY = (cog.Y - cogR.Y);
@@ -2030,8 +2030,8 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         if (calcCOG) {
             cog = AlgorithmRegOAR3D.calculateCenterOfMass3D(input, simpleWeightInputSub8, doColor);
             cogR = AlgorithmRegOAR3D.calculateCenterOfMass3D(ref, simpleWeightRefSub8, doColor);
-            Preferences.debug("Center of mass for the subsampled input image:" + cog.ToString() + "\n");
-            Preferences.debug("Center of mass for the subsampled reference image:" + cogR.ToString() + "\n");
+            Preferences.debug("Center of mass for the subsampled input image:" + cog + "\n");
+            Preferences.debug("Center of mass for the subsampled reference image:" + cogR + "\n");
 
             diffX = (cog.X - cogR.X);
             diffY = (cog.Y - cogR.Y);
@@ -2371,7 +2371,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
             cog = AlgorithmRegOAR3D.calculateCenterOfMass3D(input, simpleWeightInputSub4, doColor);
         }
 
-        Preferences.debug("Center of mass for the subsampled input image:" + cog.ToString() + "\n");
+        Preferences.debug("Center of mass for the subsampled input image:" + cog + "\n");
 
         // Preferences.debug("Center of mass for the subsampled reference image:" + cog + "\n");
         MatrixListItem item = null;

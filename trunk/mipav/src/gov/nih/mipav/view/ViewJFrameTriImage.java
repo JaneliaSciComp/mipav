@@ -457,7 +457,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         } catch (Exception e) { }
 
         init();
-        initVOI();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -1255,7 +1254,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         else if (command.equals("VOIToolbar")) 
         {
+            if ( voiManager == null )
+            {
+                initVOI();
+            }
             voiManager.getToolBar().setVisible(menuObj.isMenuItemSelected("VOI toolbar"));
+            updateLayout();
         }
         else if (command.equals("PaintToolbar") ) {
             paintToolBar.setVisible(menuObj.isMenuItemSelected("Paint toolbar"));
@@ -1359,6 +1363,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         controls = null;
 
         parentFrame.triPlanarClosing();
+        
+        if ( voiManager != null )
+        {
+            voiManager.dispose();
+            voiManager = null;
+        }
     }
 
 
@@ -1939,7 +1949,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @param  active  ViewJComponentBase.IMAGE_A or ViewJComponentBase.IMAGE_B
      */
     public void setActiveImage(int active) {
-
         for (int i = 0; i < MAX_TRI_IMAGES; i++) {
 
             if (triImage[i] != null) {
@@ -3014,7 +3023,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         menuBar.add(menuObj.makeMenu("Toolbars", 'T', false, new JMenuItem[] {
                 menuObj.buildCheckBoxMenuItem("Paint toolbar", "PaintToolbar", showPaintToolbar),
-                menuObj.buildCheckBoxMenuItem("VOI toolbar", "VOIToolbar", showVOIToolbar),
+                menuObj.buildCheckBoxMenuItem("VOI toolbar", "VOIToolbar", false),
                 menuObj.buildCheckBoxMenuItem("Image Align toolbar", "ImageAlignToolbar", false)
                 }));
 
@@ -4380,9 +4389,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
             if (triImage[i] != null) {
                 triImage[i].setActiveImage(ViewJComponentBase.IMAGE_A);
+                if ( voiManager != null )
+                {
+                    voiManager.getVOIManager(i).setActiveImage(activeImage);
+                }
             }
         }
-
+        
         if (activeImage == ViewJComponentBase.IMAGE_B) {
 
             if (triImage[AXIAL_AB] != null) {
@@ -5185,61 +5198,84 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 iActiveCount++;
             }
         }
-        System.err.println( iActiveCount );
-        voiManager = new VOIManagerInterface( this, imageA, iActiveCount, false );
+        voiManager = new VOIManagerInterface( this, imageA, imageB, iActiveCount, false );
         panelToolBarGBC.gridy++;
         panelToolbar.add( voiManager.getToolBar(), panelToolBarGBC );
+        
 
-        voiManager.getVOIManager(0).setCanvas( triImage[AXIAL_A] );
-        voiManager.getVOIManager(0).setDrawingContext( triImage[AXIAL_A] );
-        voiManager.getVOIManager(0).setOrientation( triImage[AXIAL_A].getOrientation() );
-        voiManager.getVOIManager(0).setSlice( triImage[AXIAL_A].getSlice() );
+        if (imageB != null) {
+            voiManager.getVOIManager(AXIAL_AB).init( imageA, imageB,
+                    triImage[AXIAL_AB], triImage[AXIAL_AB],
+                    triImage[AXIAL_AB].getOrientation(), triImage[AXIAL_AB].getSlice() );
+            
+            voiManager.getVOIManager(CORONAL_AB).init( imageA, imageB,
+                    triImage[CORONAL_AB], triImage[CORONAL_AB],
+                    triImage[CORONAL_AB].getOrientation(), triImage[CORONAL_AB].getSlice() );
+            
+            voiManager.getVOIManager(SAGITTAL_AB).init( imageA, imageB,
+                    triImage[SAGITTAL_AB], triImage[SAGITTAL_AB],
+                    triImage[SAGITTAL_AB].getOrientation(), triImage[SAGITTAL_AB].getSlice() );
+            
 
-        voiManager.getVOIManager(1).setCanvas( triImage[CORONAL_A] );
-        voiManager.getVOIManager(1).setDrawingContext( triImage[CORONAL_A] );
-        voiManager.getVOIManager(1).setOrientation( triImage[CORONAL_A].getOrientation() );
-        voiManager.getVOIManager(1).setSlice( triImage[CORONAL_A].getSlice() );
+            voiManager.getVOIManager(AXIAL_B).init( null, imageB,
+                    triImage[AXIAL_B], triImage[AXIAL_B],
+                    triImage[AXIAL_B].getOrientation(), triImage[AXIAL_B].getSlice() );
+            
+            voiManager.getVOIManager(CORONAL_B).init( null, imageB,
+                    triImage[CORONAL_B], triImage[CORONAL_B],
+                    triImage[CORONAL_B].getOrientation(), triImage[CORONAL_B].getSlice() );
+            
+            voiManager.getVOIManager(SAGITTAL_B).init( null, imageB,
+                    triImage[SAGITTAL_B], triImage[SAGITTAL_B],
+                    triImage[SAGITTAL_B].getOrientation(), triImage[SAGITTAL_B].getSlice() );
+        }
 
-        voiManager.getVOIManager(2).setCanvas( triImage[SAGITTAL_A] );
-        voiManager.getVOIManager(2).setDrawingContext( triImage[SAGITTAL_A] );
-        voiManager.getVOIManager(2).setOrientation( triImage[SAGITTAL_A].getOrientation() );
-        voiManager.getVOIManager(2).setSlice( triImage[SAGITTAL_A].getSlice() );
+
+        voiManager.getVOIManager(AXIAL_A).init( imageA, null,
+                triImage[AXIAL_A], triImage[AXIAL_A],
+                triImage[AXIAL_A].getOrientation(), triImage[AXIAL_A].getSlice() );
+        
+        voiManager.getVOIManager(CORONAL_A).init( imageA, null,
+                triImage[CORONAL_A], triImage[CORONAL_A],
+                triImage[CORONAL_A].getOrientation(), triImage[CORONAL_A].getSlice() );
+        
+        voiManager.getVOIManager(SAGITTAL_A).init( imageA, null,
+                triImage[SAGITTAL_A], triImage[SAGITTAL_A],
+                triImage[SAGITTAL_A].getOrientation(), triImage[SAGITTAL_A].getSlice() );
         
         voiManager.getToolBar().setVisible(true);
     }
 
     public void PointerActive(boolean bActive) {
-        if ( bActive )
+        for ( int i = 0; i < triImage.length; i++ )
         {
-            triImage[AXIAL_A].setCursorMode(ViewJComponentBase.VOI_3D);
-            triImage[CORONAL_A].setCursorMode(ViewJComponentBase.VOI_3D);
-            triImage[SAGITTAL_A].setCursorMode(ViewJComponentBase.VOI_3D);
-        }
-        else
-        {
-            triImage[AXIAL_A].setCursorMode(ViewJComponentBase.DEFAULT);
-            triImage[CORONAL_A].setCursorMode(ViewJComponentBase.DEFAULT);
-            triImage[SAGITTAL_A].setCursorMode(ViewJComponentBase.DEFAULT);
+            if ( triImage[i] != null )
+            {
+                if ( bActive )
+                {
+                    triImage[i].setCursorMode(ViewJComponentBase.VOI_3D);
+                }
+                else
+                {
+                    triImage[i].setCursorMode(ViewJComponentBase.DEFAULT);
+                }
+            }
         }
     }
 
     public Vector3f PropDown(int iActive) {
-        switch ( iActive )
+        if ( triImage[iActive] != null )
         {
-        case 0: return triImage[AXIAL_A].downSlice();
-        case 1: return triImage[CORONAL_A].downSlice();
-        case 2: return triImage[SAGITTAL_A].downSlice();
+            return triImage[iActive].downSlice();
         }
         return null;
     }
 
 
     public Vector3f PropUp(int iActive) {
-        switch ( iActive )
+        if ( triImage[iActive] != null )
         {
-        case 0: return triImage[AXIAL_A].upSlice();
-        case 1: return triImage[CORONAL_A].upSlice();
-        case 2: return triImage[SAGITTAL_A].upSlice();
+            return triImage[iActive].upSlice();
         }
         return null;
     }

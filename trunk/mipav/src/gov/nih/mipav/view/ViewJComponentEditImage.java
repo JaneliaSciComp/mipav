@@ -583,8 +583,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                 || Math.round(kTest.Z) != Math.round(position.Z) )
         {
             System.err.println( "scannerToFile broken" );
-            System.err.println( kTest.ToString() );
-            System.err.println( position.ToString() );
+            System.err.println( kTest );
+            System.err.println( position );
             MipavCoordinateSystems.scannerToFile(kOut, kTest, image);
         }
 

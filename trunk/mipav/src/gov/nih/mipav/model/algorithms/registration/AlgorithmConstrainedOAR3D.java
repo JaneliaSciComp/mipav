@@ -1798,8 +1798,8 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             if (calcCOG == true) {
                 Vector3f cog = calculateCenterOfMass3D(simpleInput, simpleWeightInput, doColor);
                 Vector3f cogR = calculateCenterOfMass3D(simpleRef, simpleWeightRef, doColor);
-                Preferences.debug("Center of mass for the subsampled input image:" + cog.ToString() + "\n");
-                Preferences.debug("Center of mass for the subsampled reference image:" + cogR.ToString() + "\n");
+                Preferences.debug("Center of mass for the subsampled input image:" + cog + "\n");
+                Preferences.debug("Center of mass for the subsampled reference image:" + cogR + "\n");
 
                 diffX = (cog.X - cogR.X);
                 diffY = (cog.Y - cogR.Y);
@@ -2318,8 +2318,8 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         if (calcCOG == true) {
             cog = calculateCenterOfMass3D(input, simpleWeightInputSub8, doColor);
             cogR = calculateCenterOfMass3D(ref, simpleWeightRefSub8, doColor);
-            Preferences.debug("Center of mass for the subsampled input image:" + cog.ToString() + "\n");
-            Preferences.debug("Center of mass for the subsampled reference image:" + cogR.ToString() + "\n");
+            Preferences.debug("Center of mass for the subsampled input image:" + cog + "\n");
+            Preferences.debug("Center of mass for the subsampled reference image:" + cogR + "\n");
 
             diffX = (cog.X - cogR.X);
             diffY = (cog.Y - cogR.Y);
@@ -2671,7 +2671,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
         if (calcCOG == true) {
             cog = calculateCenterOfMass3D(input, simpleWeightInputSub4, doColor);
-            Preferences.debug("Center of mass for the subsampled input image:" + cog.ToString() + "\n");
+            Preferences.debug("Center of mass for the subsampled input image:" + cog + "\n");
             // Preferences.debug("Center of mass for the subsampled reference image:" + cog + "\n");
         }
 

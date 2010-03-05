@@ -1851,7 +1851,7 @@ public class PlaneRenderProstate extends GPURenderBase
                 VertexBuffer kVBuffer = m_kCurrentVOI.getLocal(0).VBuffer;   
                 for ( int i = 0; i < 4; i++ )
                 {
-                    System.err.println( kVBuffer.GetPosition3(i).ToString());
+                    System.err.println( kVBuffer.GetPosition3(i));
                 }
                 m_kCurrentVOI.Release();
             }

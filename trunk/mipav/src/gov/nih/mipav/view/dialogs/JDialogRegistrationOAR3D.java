@@ -484,7 +484,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
             if (reg3.isCompleted()) {
                 final TransMatrix finalMatrix = reg3.getTransform();
-                System.err.println(finalMatrix.ToString());
+                System.err.println(finalMatrix);
 
                 if (doLS) {
                     // System.err.println("OAR3D Matrix: " + finalMatrix);

@@ -333,14 +333,18 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
     private PointStack levelSetStack = new PointStack(500);
     private BitSet map = null;
     private Stack<int[]> stack = new Stack<int[]>();
-    private byte[] m_aucData;
     private int m_iSlice;
     private boolean m_bLeftMousePressed;
     private float m_fMouseX, m_fMouseY;
     private int m_iPlaneOrientation;
-    private ModelImage m_kImage;
+    private ModelImage[] m_akImages = new ModelImage[2];
+    private ModelImage m_kImageActive;
     private ModelImage m_kLocalImage;
 
+    private byte[] m_aucBufferA;
+    private byte[] m_aucBufferB;
+    private byte[] m_aucBufferActive;
+    
     private int[] m_aiLocalImageExtents;
 
     private VOIManagerListener m_kParent;
@@ -404,10 +408,9 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
 
     private float[] yDirections;
 
-    public VOIManager (VOIManagerListener kParent, ModelImage kImage )
+    public VOIManager (VOIManagerListener kParent )
     {
         m_kParent = kParent;
-        m_kImage = kImage;
     }
 
     public void anchor(int iX, int iY, boolean bSeed) {
@@ -459,7 +462,51 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         }
         m_kCopyVOI = m_kCurrentVOI.Clone();
     }
-    public void disposeLocal() {
+
+    public void dispose() 
+    {
+        m_kCurrentVOI = null;
+        m_kCopyVOI = null;
+        m_kDrawingContext = null;
+        levelSetStack = null;
+        map = null;
+        stack = null;
+        m_aucBufferA = null;
+        m_aucBufferB = null;
+        m_aucBufferActive = null;
+
+        m_akImages[0] = null;
+        m_akImages[1] = null;
+        m_akImages = null;
+        m_kImageActive = null;
+        if ( m_kLocalImage != null )
+        {
+            m_kLocalImage.disposeLocal();
+            m_kLocalImage = null;
+        }
+
+        m_aiLocalImageExtents = null;
+        m_kParent = null;
+
+        m_akSteps = null;
+        m_aiIndexValues = null;
+        m_afAverages = null;
+
+        m_adCos = null;
+        m_adSin = null;
+
+        m_kComponent = null;
+
+        m_kCenter = null;
+
+        activeTree = null;
+        costGraph = null;
+        localCosts = null;
+        processedIndicies = null;
+        seededCosts = null;
+        m_abInitLiveWire = null;
+        xDirections = null;
+        yDirections = null;
     }
 
 
@@ -731,7 +778,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
     public Vector3f fileCoordinatesToPatient( Vector3f volumePt )
     {       
         Vector3f kPatient = new Vector3f();
-        MipavCoordinateSystems.fileToPatient( volumePt, kPatient, m_kImage, m_iPlaneOrientation );
+        MipavCoordinateSystems.fileToPatient( volumePt, kPatient, m_kImageActive, m_iPlaneOrientation );
         return kPatient;
     }
 
@@ -752,7 +799,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         {
             Vector3f kVolumePt = kPositions.get(i);
             Vector3f kPt = new Vector3f();
-            MipavCoordinateSystems.fileToPatient( kVolumePt, kPt, m_kImage, m_iPlaneOrientation );
+            MipavCoordinateSystems.fileToPatient( kVolumePt, kPt, m_kImageActive, m_iPlaneOrientation );
 
             //kPt.Z = iSlice;/
             kVolumePts[i] = kPt;
@@ -763,7 +810,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         }
         Vector3f kVolumePt = kPositions.get(0);
         Vector3f kPt = new Vector3f();
-        MipavCoordinateSystems.fileToPatient( kVolumePt, kPt, m_kImage, m_iPlaneOrientation );
+        MipavCoordinateSystems.fileToPatient( kVolumePt, kPt, m_kImageActive, m_iPlaneOrientation );
 
         //Vector3f kPt = kPoly.VBuffer.GetPosition3(0);
         //kPt.Mult( m_kVolumeScaleInv );
@@ -786,17 +833,17 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         fill(aaiCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax, (int)kVolumePts[0].Z, kVolume, kMask, bIntersection, iValue);
 
     }
+    
+    public ModelImage[] getActiveImage()
+    {
+        return m_akImages;
+    }
+    
     public LocalVolumeVOI getCurrentVOI()
     {
         return m_kCurrentVOI;
     }
 
-
-
-    //public boolean screenToFileCoordinates( Vector3f kVOIPt, Vector3f kVolumePt )
-    //{
-    //    return m_kParent.screenToFile((int)kVOIPt.X, (int)kVOIPt.Y, (int)kVOIPt.Z, kVolumePt );
-    //}
 
     public int getOrientation()
     {
@@ -1064,7 +1111,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             }
             if ( m_bDrawVOI && (m_iDrawType == SPLITLINE) )
             {
-                JDialogVOISplitter kSplitDialog = new JDialogVOISplitter(m_kImage) ;
+                JDialogVOISplitter kSplitDialog = new JDialogVOISplitter(m_kImageActive) ;
                 if ( !kSplitDialog.isCancelled()) {
                     splitVOIs( kSplitDialog.getAllSlices(), kSplitDialog.getOnlyActive(), m_kCurrentVOI );
                 }
@@ -1114,20 +1161,45 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
     public Vector3f patientCoordinatesToFile( Vector3f patientPt )
     {       
         Vector3f volumePt = new Vector3f();
-        MipavCoordinateSystems.patientToFile( patientPt, volumePt, m_kImage, m_iPlaneOrientation );
+        MipavCoordinateSystems.patientToFile( patientPt, volumePt, m_kImageActive, m_iPlaneOrientation );
         return volumePt;
     }
 
-    //private void saveVOI( int iSlice )
-    //{
-    //    if ( m_kCurrentVOI != null ) 
-    //    {
-    //        m_kParent.addVOI(m_kCurrentVOI);
-    //        m_bUpdateVOI = false;
-    //        m_kCurrentVOI.setActive(false);
-    //    }
-    //}
+    public void init( ModelImage kImageA, ModelImage kImageB, Component kComponent, 
+            ScreenCoordinateListener kContext, int iOrientation, int iSlice )
+    {
+        m_akImages[0] = kImageA;
+        m_akImages[1] = kImageB;
+        if ( kImageA != null )
+        {
+            m_kImageActive = kImageA;
+        }
+        else
+        {
+            m_kImageActive = kImageB;
+        }
+        setCanvas(kComponent);
+        setDrawingContext(kContext);
+        setOrientation(iOrientation);
+        setSlice(iSlice);
+    }
 
+    public void setActiveImage( int iActive )
+    {
+        if ( m_akImages[iActive] != null )
+        {
+            m_kImageActive = m_akImages[iActive];
+        }
+        if ( m_kImageActive == m_akImages[0] )
+        {
+            m_aucBufferActive = m_aucBufferA;
+        }
+        else
+        {
+            m_aucBufferActive = m_aucBufferB;
+        }
+    }
+    
     public void setCanvas (Component kComponent)
     {
         m_kComponent = kComponent;
@@ -1138,7 +1210,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
 
     public void setCenter( Vector3f center )
     {
-        MipavCoordinateSystems.fileToPatient( center, m_kCenter, m_kImage, m_iPlaneOrientation );
+        MipavCoordinateSystems.fileToPatient( center, m_kCenter, m_kImageActive, m_iPlaneOrientation );
         setSlice( m_kCenter.Z );
     }
 
@@ -1155,9 +1227,8 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
     public void setOrientation( int iOrientation )
     {
         m_iPlaneOrientation = iOrientation;
-        m_aiLocalImageExtents = m_kImage.getExtents( m_iPlaneOrientation );
+        m_aiLocalImageExtents = m_kImageActive.getExtents( m_iPlaneOrientation );
         map = new BitSet(m_aiLocalImageExtents[0] * m_aiLocalImageExtents[1]);
-        initDataBuffer();
     }
 
     /**
@@ -1222,7 +1293,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
                      */
                     kLocalPt.Set(iX, iY, iZ);
                     //kVolumePt = VOIToFileCoordinates(kLocalPt, false);
-                    MipavCoordinateSystems.patientToFile( kLocalPt, kVolumePt, m_kImage, m_iPlaneOrientation );
+                    MipavCoordinateSystems.patientToFile( kLocalPt, kVolumePt, m_kImageActive, m_iPlaneOrientation );
 
                     if ( bIntersection )
                     {
@@ -1394,25 +1465,25 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
     private float avgPix( int iX, int iY )
     {
         int index = m_aiIndexValues[iY][iX];
-        int[] extents = m_kImage.getExtents();
-        if ((index > extents[0]) && (index < (m_kImage.getSize() - extents[0]))) {
+        int[] extents = m_kImageActive.getExtents();
+        if ((index > extents[0]) && (index < (m_kImageActive.getSize() - extents[0]))) {
 
-            int sum = (m_aucData[index] & 0x00ff);
+            int sum = (m_aucBufferActive[index] & 0x00ff);
 
             index = m_aiIndexValues[iY-1][iX];
-            sum += (m_aucData[index] & 0x00ff);
+            sum += (m_aucBufferActive[index] & 0x00ff);
 
             index = m_aiIndexValues[iY][iX-1];
-            sum += (m_aucData[index] & 0x00ff);
+            sum += (m_aucBufferActive[index] & 0x00ff);
 
             index = m_aiIndexValues[iY][iX+1];
-            sum += (m_aucData[index] & 0x00ff);
+            sum += (m_aucBufferActive[index] & 0x00ff);
 
             index = m_aiIndexValues[iY+1][iX];
-            sum += (m_aucData[index] & 0x00ff);
+            sum += (m_aucBufferActive[index] & 0x00ff);
             return sum / 5.0f;
         } 
-        return (m_aucData[index] & 0x00ff);
+        return (m_aucBufferActive[index] & 0x00ff);
     }
     /**
      * Takes a byte and gets appropriate addition from current position.
@@ -1456,7 +1527,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
     {
         int colorID = 0;
         VOI newTextVOI = new VOI((short) colorID, "annotation3d.voi",
-                m_kImage.getExtents()[2], VOI.ANNOTATION, -1.0f);
+                m_kImageActive.getExtents()[2], VOI.ANNOTATION, -1.0f);
 
 
         Vector<Vector3f> kPositions = new Vector<Vector3f>();
@@ -1512,7 +1583,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             newTextVOI.setColor(Color.white);
         }
         newTextVOI.setActive(false);
-        new JDialogAnnotation(m_kImage, newTextVOI, iFileSlice, false, true);
+        new JDialogAnnotation(m_kImageActive, newTextVOI, iFileSlice, false, true);
         if ( newTextVOI.isActive() ) {
             VOIText vt = (VOIText) newTextVOI.getCurves()[iFileSlice].elementAt(0);
             ((VOIText3D)m_kCurrentVOI).copyInfo(vt);
@@ -1728,41 +1799,29 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         }
         m_kParent.setCursor(MipavUtil.crosshairCursor);        
     }
-    private void initDataBuffer()
+    
+    public void setDataBuffers(byte[] bufferA, byte[] bufferB)
     {
-        int iSize = m_aiLocalImageExtents[0]*m_aiLocalImageExtents[1]*m_aiLocalImageExtents[2];
-        m_aucData = new byte[iSize];
-        if ( m_kImage.isColorImage() )
+        m_aucBufferA = bufferA;
+        m_aucBufferB = bufferB;
+        if ( m_kImageActive == m_akImages[0] )
         {
-            iSize *= 4;
-            byte[] aucTemp = new byte[iSize];
-            try {
-                m_kImage.exportData( 0, iSize, aucTemp );
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            for ( int i = 0; i < m_aucData.length; i++ )
-            {
-                m_aucData[i] = (byte)((aucTemp[i*4 + 1] + aucTemp[i*4 + 2] + aucTemp[i*4 + 3])/3.0f);
-            }
+            m_aucBufferActive = m_aucBufferA;
         }
         else
         {
-            try {
-                m_kImage.exportData( 0, iSize, m_aucData );
-            } catch (IOException e) {
-                e.printStackTrace();
-            } 
+            m_aucBufferActive = m_aucBufferB;
         }
     }
+    
     private void initLiveWire( int iSlice )
     {
         m_kParent.setCursor( MipavUtil.waitCursor );
         if ( !m_bLiveWireInit )
         {
-            int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(m_kImage, m_iPlaneOrientation);
-            boolean[] abAxisFlip = MipavCoordinateSystems.getAxisFlip(m_kImage, m_iPlaneOrientation);
-            m_kLocalImage = m_kImage.export( aiAxisOrder, abAxisFlip );
+            int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(m_kImageActive, m_iPlaneOrientation);
+            boolean[] abAxisFlip = MipavCoordinateSystems.getAxisFlip(m_kImageActive, m_iPlaneOrientation);
+            m_kLocalImage = m_kImageActive.export( aiAxisOrder, abAxisFlip );
 
             m_bLiveWireInit = true;
             m_abInitLiveWire = new boolean[m_aiLocalImageExtents[2] ];
@@ -2175,7 +2234,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         }
         m_bSelected = false;
         m_kCurrentVOI = null;
-        VOIVector kVOIs = m_kImage.get3DVOIs();
+        VOIVector kVOIs = m_kImageActive.get3DVOIs();
         for ( int i = 0; i < kVOIs.size(); i++ )
         {
             VOI kVOI = kVOIs.get(i);
@@ -2214,7 +2273,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             }
         }
 
-        int[] extents = m_kImage.getExtents();  
+        int[] extents = m_kImageActive.getExtents();  
         Vector3f kVolumePt = new Vector3f();
         Vector3f kPatientPt = new Vector3f();    
 
@@ -2224,7 +2283,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             {
                 kPatientPt.Set( Math.min( m_aiLocalImageExtents[0]-1, Math.max( 0, m_akSteps[i][j].X ) ),
                         Math.min( m_aiLocalImageExtents[1]-1, Math.max( 0, m_akSteps[i][j].Y ) ), iZ );
-                MipavCoordinateSystems.patientToFile( kPatientPt, kVolumePt, m_kImage, m_iPlaneOrientation );     
+                MipavCoordinateSystems.patientToFile( kPatientPt, kVolumePt, m_kImageActive, m_iPlaneOrientation );     
                 m_aiIndexValues[i][j] = (int)(kVolumePt.Z * extents[0] * extents[1] + kVolumePt.Y * extents[0] + kVolumePt.X);
             }
         }
@@ -2269,7 +2328,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             }
         }
 
-        VOIVector kVOIs = m_kImage.get3DVOIs();
+        VOIVector kVOIs = m_kImageActive.get3DVOIs();
         for ( int i = 0; i < kVOIs.size(); i++ )
         {
             VOI kVOI = kVOIs.get(i);
@@ -2309,7 +2368,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         Vector3f kVolumePt = new Vector3f();
         m_kDrawingContext.screenToFile( (int)startPtX, (int)startPtY, m_iSlice, kVolumePt );
         Vector3f kPatientPt = new Vector3f();
-        MipavCoordinateSystems.fileToPatient( kVolumePt, kPatientPt, m_kImage, m_iPlaneOrientation );
+        MipavCoordinateSystems.fileToPatient( kVolumePt, kPatientPt, m_kImageActive, m_iPlaneOrientation );
 
         startPtX = kPatientPt.X;
         startPtY = kPatientPt.Y;
@@ -2320,7 +2379,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         setIndices( x, y, z );
 
         int index = m_aiIndexValues[m_i_][m_i_];
-        int level = (m_aucData[index] & 0x00ff);
+        int level = (m_aucBufferActive[index] & 0x00ff);
 
         levelSetStack.reset();
         levelSetStack.addPoint(x, y);
@@ -2532,7 +2591,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
 
     private void splitVOIs( boolean bAllSlices, boolean bOnlyActive, LocalVolumeVOI kSplitVOI )
     {
-        VOIVector kVOIs = m_kImage.get3DVOIs();
+        VOIVector kVOIs = m_kImageActive.get3DVOIs();
         if ( (kSplitVOI.getSType() != SPLITLINE) || (kVOIs.size() == 0) )
         {
             return;
@@ -2593,7 +2652,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         }
         m_bSelected = false;
         m_kCurrentVOI = null;
-        VOIVector kVOIs = m_kImage.get3DVOIs();
+        VOIVector kVOIs = m_kImageActive.get3DVOIs();
         for ( int i = 0; i < kVOIs.size(); i++ )
         {
             VOI kVOI = kVOIs.get(i);
