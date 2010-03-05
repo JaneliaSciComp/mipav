@@ -23,6 +23,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.IOException;
 import java.util.BitSet;
 import java.util.Vector;
 
@@ -67,7 +68,15 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
         }
     }
     private VOIManagerInterfaceListener m_kParent = null;
-    private ModelImage m_kImage;
+    private ModelImage m_kImageA;
+    private ModelImage m_kImageB;
+    private ModelImage[] m_akImageActive = new ModelImage[2];
+    private ModelImage[] m_akLastActive = new ModelImage[2];
+
+    private byte[] m_aucBufferA;
+    private byte[] m_aucBufferB;
+    private byte[] m_aucBufferActive;
+    
     private ViewToolBarBuilder toolbarBuilder;
 
     private JToolBar m_kVOIToolbar;
@@ -85,14 +94,20 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
     private boolean m_bGPURenderer = false;
 
     public VOIManagerInterface ( VOIManagerInterfaceListener kParent,
-            ModelImage kImage, int iNViews, boolean bGPU )
+            ModelImage kImageA, ModelImage kImageB, int iNViews, boolean bGPU )
     {
         m_kParent = kParent;
-        m_kImage = kImage;
+        m_kImageA = kImageA;
+        m_kImageB = kImageB;        
+        m_akImageActive[0] = kImageA;
+        m_akImageActive[1] = kImageB;
+        
+        m_akLastActive[0] = kImageA;
+        m_akLastActive[1] = kImageB;
 
         toolbarBuilder = new ViewToolBarBuilder(this);
         m_kVOIToolbar =
-            toolbarBuilder.buildVolumeTriPlanarVOIToolBar( m_kImage.getNDims(),
+            toolbarBuilder.buildVolumeTriPlanarVOIToolBar( m_kImageA.getNDims(),
                     -1);
         m_kVOIToolbar.setVisible(false);
         m_kVOIManagers = new VOIManager[iNViews];
@@ -102,9 +117,10 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
                 kColor.getBlue()/255.0f );
         for ( int i = 0; i < iNViews; i++ )
         {
-            m_kVOIManagers[i] = new VOIManager(this, m_kImage);
+            m_kVOIManagers[i] = new VOIManager(this);
         }
         m_bGPURenderer = bGPU;
+        initDataBuffer();
     }
 
     public void actionPerformed(ActionEvent event) {
@@ -165,9 +181,19 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
         } else if (command.equals("Default") ) {
             doVOI(command);
         } else if ( command.equals("QuickMask" ) ) {
-            createMask(true);
+            if ( m_akImageActive[0] != null ) {
+                createMask(m_akImageActive[0], true);
+            }
+            if ( m_akImageActive[1] != null ) {
+                createMask(m_akImageActive[1], true);
+            }
         } else if ( command.equals("QuickMaskReverse" ) ) {
-            createMask(false);
+            if ( m_akImageActive[0] != null ) {
+                createMask(m_akImageActive[0], false);
+            }
+            if ( m_akImageActive[1] != null ) {
+                createMask(m_akImageActive[1], false);
+            }
         } else if (command.equals("3DVOIIntersect") ) {
             m_kParent.create3DVOI(true);
         } else if (command.equals("3DVOIUnion") ) {
@@ -181,6 +207,27 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
 
     public void addVOI( LocalVolumeVOI kNew, boolean bUpdate )
     {
+        if ( m_akImageActive[0] != null )
+        {
+            if ( m_akLastActive[0] != m_akImageActive[0] )
+            {
+                newVOI(false);
+            }
+            addVOI( m_akImageActive[0], kNew, bUpdate );
+        }
+        if ( m_akImageActive[1] != null )
+        {
+            if ( m_akLastActive[1] != m_akImageActive[1] )
+            {
+                newVOI(false);
+            }
+            addVOI( m_akImageActive[1], kNew.Clone(), bUpdate );
+        }
+        m_akLastActive = m_akImageActive;
+    }
+        
+    private void addVOI( ModelImage kImage, LocalVolumeVOI kNew, boolean bUpdate )
+    {       
         if ( kNew.getGroup() == null )
         {
             if ( (m_kCurrentVOIGroup != null) &&  (m_kCurrentVOIGroup.getCurveType() != kNew.getType()) )
@@ -190,10 +237,11 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
             }
             if ( m_kCurrentVOIGroup == null )
             {
-                short sID = (short)(m_kImage.get3DVOIs().size() + 1);
-                m_kCurrentVOIGroup = new VOI( sID, kNew.getName(), m_kImage.getExtents()[2], kNew.getType(), -1f );
+                short sID = (short)(kImage.get3DVOIs().size() + 1);
+                m_kCurrentVOIGroup = new VOI( sID, kNew.getName(), kImage.getExtents()[2], kNew.getType(), -1f );
                 m_kCurrentVOIGroup.setOpacity(1f);
-                m_kImage.register3DVOI( m_kCurrentVOIGroup );
+                kImage.register3DVOI( m_kCurrentVOIGroup );
+                System.err.println( "adding to " + kImage.getImageName() );
             }    
             kNew.setGroup( m_kCurrentVOIGroup );
             if ( kNew instanceof VOIPoint3D &&  kNew.getType() == VOI.POLYLINE_SLICE )
@@ -239,10 +287,10 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
 
 
 
-    public void createMask( boolean bInside )
+    public void createMask( ModelImage kActive, boolean bInside )
     {
 
-        if (m_kImage.get3DVOIs().size() < 1) {
+        if (kActive.get3DVOIs().size() < 1) {
             MipavUtil.displayWarning("Must have at least one VOI to perform quick mask");
             return;
         }
@@ -250,26 +298,26 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
         
         //ModelImage kImage = new ModelImage( ModelStorageBase.INTEGER, 
         //       m_kVolumeImage.GetImage().getExtents(), "Temp" );
-        int iSize = m_kImage.getSize();
-        if ( m_kImage.isColorImage() )
+        int iSize = kActive.getSize();
+        if ( kActive.isColorImage() )
         {
             iSize /= 4;
         }
-        m_kImage.createMask(iSize);
+        kActive.createMask(iSize);
         for (int i = 0; i < m_kVOIManagers.length; i++) {
-            make3DVOI( false, m_kImage, m_kImage.getMask(), i);
+            make3DVOI( false, kActive, kActive, kActive.getMask(), i);
         }
         if ( !bInside )
         {
-            m_kImage.getMask().flip(0, iSize );
+            kActive.getMask().flip(0, iSize );
         }
-        m_kImage.useMask(true);
+        kActive.useMask(true);
         m_kParent.updateData(false);
         //new ViewJFrameImage(kImage);
         
         if ( !m_bGPURenderer )
         {
-            new JDialogMask(m_kImage, false, false, false);
+            new JDialogMask(kActive, false, false, false);
         }
     }
 
@@ -279,9 +327,30 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
         kGroup.getCurves()[0].remove(kOld);
         if ( kGroup.isEmpty() )
         {
-            m_kImage.unregister3DVOI(kGroup);
+            if ( m_akImageActive[0] != null ) { m_akImageActive[0].unregister3DVOI(kGroup); }
+            if ( m_akImageActive[1] != null ) { m_akImageActive[1].unregister3DVOI(kGroup); }
         }
         updateDisplay();
+    }
+
+    public void dispose() 
+    {
+        deleteAllVOI();
+        m_kParent = null;
+        m_kImageA = null;
+        m_kImageB = null;
+        m_akImageActive = null;
+        toolbarBuilder = null;
+        m_kVOIToolbar = null;
+        colorChooser = null;
+        m_kCommands = null;
+
+        for ( int i = 0; i < m_kVOIManagers.length; i++ )
+        {
+            m_kVOIManagers[i].dispose();
+            m_kVOIManagers[i] = null;
+        }
+        m_kVOIManagers = null;
     }
 
     public void doVOI( String kCommand )
@@ -340,15 +409,17 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
 
     public void make3DVOI( boolean bIntersection, ModelImage kVolume  )
     {
-        for (int i = 0; i < m_kVOIManagers.length; i++) {
-            make3DVOI(bIntersection, kVolume, null, i);
+        if ( m_akImageActive[0] != null )
+        {
+            for (int i = 0; i < m_kVOIManagers.length; i++) {
+                make3DVOI(bIntersection, m_akImageActive[0], kVolume, null, i);
+            }
         }
     }
 
-    public void make3DVOI( boolean bIntersection, ModelImage kVolume, BitSet kMask, int iValue )
+    public void make3DVOI( boolean bIntersection, ModelImage kSrc, ModelImage kVolume, BitSet kMask, int iValue )
     {
-
-        VOIVector kVOIs = m_kImage.get3DVOIs();
+        VOIVector kVOIs = kSrc.get3DVOIs();
         while ( kVOIs.size() > 0 )
         {
             VOI kCurrentGroup = kVOIs.remove(0);
@@ -432,8 +503,9 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
                 break;
             }
         }
+        m_akImageActive = m_kVOIManagers[m_iActive].getActiveImage();
     }
-
+    
     /**
      * Set the color of the button. Derived classes may also perform other functions.
      * @param _button button.
@@ -521,7 +593,8 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
             if ( lastCommand.equals( "QuickMask" ) || lastCommand.equals( "QuickMaskReverse" ) )
             {
                 System.err.println( "undo Mask" );
-                m_kImage.useMask(false);
+                if ( m_akImageActive[0] != null ) { m_akImageActive[0].useMask(false); }
+                if ( m_akImageActive[1] != null ) { m_akImageActive[1].useMask(false); }
                 m_kParent.updateData(false);
             }
         }
@@ -533,10 +606,69 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
 
     private void deleteAllVOI()
     {
-        m_kImage.unregisterAll3DVOIs();
+        if ( m_akImageActive[0] != null ) { m_akImageActive[0].unregisterAll3DVOIs(); }
+        if ( m_akImageActive[1] != null ) { m_akImageActive[1].unregisterAll3DVOIs(); }
         updateDisplay();
     }
 
+    private void initDataBuffer()
+    {
+        int iSize = m_kImageA.getExtents()[0]*m_kImageA.getExtents()[1]*m_kImageA.getExtents()[2];
+        m_aucBufferA = new byte[iSize];
+        if ( m_kImageA.isColorImage() )
+        {
+            iSize *= 4;
+            byte[] aucTemp = new byte[iSize];
+            try {
+                m_kImageA.exportData( 0, iSize, aucTemp );
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            for ( int i = 0; i < m_aucBufferA.length; i++ )
+            {
+                m_aucBufferA[i] = (byte)((aucTemp[i*4 + 1] + aucTemp[i*4 + 2] + aucTemp[i*4 + 3])/3.0f);
+            }
+        }
+        else
+        {
+            try {
+                m_kImageA.exportData( 0, iSize, m_aucBufferA );
+            } catch (IOException e) {
+                e.printStackTrace();
+            } 
+        }
+        if ( m_kImageB != null )
+        {
+            iSize = m_kImageB.getExtents()[0]*m_kImageB.getExtents()[1]*m_kImageB.getExtents()[2];
+            m_aucBufferB = new byte[iSize];
+            if ( m_kImageB.isColorImage() )
+            {
+                iSize *= 4;
+                byte[] aucTemp = new byte[iSize];
+                try {
+                    m_kImageB.exportData( 0, iSize, aucTemp );
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                for ( int i = 0; i < m_aucBufferB.length; i++ )
+                {
+                    m_aucBufferB[i] = (byte)((aucTemp[i*4 + 1] + aucTemp[i*4 + 2] + aucTemp[i*4 + 3])/3.0f);
+                }
+            }
+            else
+            {
+                try {
+                    m_kImageB.exportData( 0, iSize, m_aucBufferB );
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } 
+            }
+        }
+        for ( int i = 0; i < m_kVOIManagers.length; i++ )
+        {
+            m_kVOIManagers[i].setDataBuffers( m_aucBufferA, m_aucBufferB );
+        }
+    }
     /*
      * 
     public LocalVolumeVOI getCurrentVOI()

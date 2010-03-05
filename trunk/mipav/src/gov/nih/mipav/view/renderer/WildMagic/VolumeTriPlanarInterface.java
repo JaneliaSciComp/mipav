@@ -2481,6 +2481,11 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             rendererGUI.dispose();
             rendererGUI = null;
         }
+        if ( m_kVOIInterface != null )
+        {
+            m_kVOIInterface.dispose();
+            m_kVOIInterface = null;
+        }
     }
 
     private void disposeRenderers() {
@@ -3302,14 +3307,13 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     private void initVOI()
     {        
         setSliceFromSurface( sliceGUI.getCenter() );
-        m_kVOIInterface = new VOIManagerInterface( this, m_kVolumeImageA.GetImage(), 3, true );
+        m_kVOIInterface = new VOIManagerInterface( this, m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage(), 3, true );
         panelToolbar.add( m_kVOIInterface.getToolBar(), panelToolBarGBC );
         for ( int i = 0; i < 3; i++ )
         {
-            m_kVOIInterface.getVOIManager(i).setCanvas( m_akPlaneRender[i].GetCanvas() );
-            m_kVOIInterface.getVOIManager(i).setDrawingContext( m_akPlaneRender[i] );
-            m_kVOIInterface.getVOIManager(i).setOrientation( m_akPlaneRender[i].getOrientation() );
-            m_kVOIInterface.getVOIManager(i).setSlice( m_akPlaneRender[i].getSlice() );
+            m_kVOIInterface.getVOIManager(i).init( m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage(),                     
+                    m_akPlaneRender[i].GetCanvas(), m_akPlaneRender[i], 
+                    m_akPlaneRender[i].getOrientation(), m_akPlaneRender[i].getSlice() );
         }
     }
     public void PointerActive(boolean bActive) {

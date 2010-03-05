@@ -908,6 +908,9 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
             {
                 progressBar.updateValueImmed(100);
             }
+            
+            mi.disposeLocal();
+            mi = null;
         } else if (selection == MEDIALNESS) {
             if ( progressBar != null )
             {

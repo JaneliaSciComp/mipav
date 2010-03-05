@@ -2327,8 +2327,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         final Vector2f cog = calculateCenterOfMass2D(input, simpleWeightInputSub8, doColor);
         final Vector2f cogR = calculateCenterOfMass2D(ref, simpleWeightRefSub8, doColor);
 
-        Preferences.debug(" COG input image = " + cog.ToString() + "\n");
-        Preferences.debug(" COG ref   image = " + cogR.ToString() + "\n");
+        Preferences.debug(" COG input image = " + cog + "\n");
+        Preferences.debug(" COG ref   image = " + cogR + "\n");
 
         final double diffX = (cog.X - cogR.X);
         final double diffY = (cog.Y - cogR.Y);
@@ -2828,8 +2828,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         final Vector2f cog = calculateCenterOfMass2D(input, simpleWeightInput, doColor);
         final Vector2f cogR = calculateCenterOfMass2D(ref, simpleWeightRef, doColor);
 
-        Preferences.debug(" COG input image = " + cog.ToString() + "\n");
-        Preferences.debug(" COG ref   image = " + cogR.ToString() + "\n");
+        Preferences.debug(" COG input image = " + cog + "\n");
+        Preferences.debug(" COG ref   image = " + cogR + "\n");
 
         final double diffX = (cog.X - cogR.X);
         final double diffY = (cog.Y - cogR.Y);

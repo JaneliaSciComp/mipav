@@ -166,6 +166,6 @@ public class VolumeBoundingBox extends VolumeObject
         
         System.err.println( "BoundingBox" );
         System.err.println( m_fX + " " + m_fY + " " + m_fZ );
-        System.err.println( m_kTranslate.ToString() );
+        System.err.println( m_kTranslate );
     }
 }

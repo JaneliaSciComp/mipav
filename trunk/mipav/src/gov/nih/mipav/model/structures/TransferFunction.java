@@ -348,7 +348,7 @@ public class TransferFunction extends ModelSerialCloneable {
         {
             if ( pts[i] != null )
             {
-                kString = kString.concat( pts[i].ToString() + "   " );
+                kString = kString.concat( pts[i] + "   " );
             }
         }
         return kString;
