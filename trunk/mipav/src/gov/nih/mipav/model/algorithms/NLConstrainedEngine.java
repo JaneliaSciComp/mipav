@@ -47,6 +47,31 @@ import gov.nih.mipav.view.*;
     [0.537138; 1852002979; 4280874360; 1742904647].
     These particular points appear to be "false" local minima on a flat plateau, the fact caused by the finite accuracy of calculations. 
  *  MEYER starting point okay.  At 10 * standard starting point constrained does not work.
+ *  Remember that Java is limited to 64 bits whereas the FORTRAN used by the ELSUNC program has access to the full 80 processor bits.
+ *  >There are basically 2 problems with Java precision. 1.) The Intel Pentium uses 80 bit numbers in floating point
+ * registers. However, Java must round each number back to 64 bits whenever a Java variable is assigned. There used to
+ * be a proposal to introduce a special keyword extendedfp to fully use whatever math the platform had, but it didn't
+ * get thru. Apparently the Java designers felt for Java being consistent is more important than being successful. 2.)
+ * Java also forbids the use of fused multiply-add (FMA) operations. This operation computes the quantity ax + y as a
+ * single floating-point operation. Operations of this type are found in many compute-intensive applications,
+ * particularly matrix operations. With this instruction, only a single rounding occurs for the two arithmetic
+ * operations, yielding a more accurate result in less time than would be required for two separate operations. Java's
+ * strict language definition does not permit use of FMAs and thus sacrifices up to 50% of performance on some
+ * platforms.  
+ * The smaller number of bits on Java would be particularly prevalent for the big flat plateau of the Kowalik and
+ * Osborne function.  With the Kowalik and Osborne run from 10 * the standard starting point, all 4 runs terminate
+ * normally purely because we are computing at the noise level.
+ * 
+ *  >The only obvious cure for this problem would be to use the Java BigDecimal class. However, the use of BigDecimal
+ * would involve much more work than just changing doubles to BigDecimals. For example, with doubles I would write: f =
+ * f/g; With BigDecimal I would write: f = f.divide(g, mc); where mc is the mathematical context settings. Likewise,
+ * instead of the ordinary arithmetic operators I would have to use add, compareTo, equals, negate, plus, remainder, and
+ * subtract. Using BigDecimal would undoubtedly slow the program down considerably.  In addition, BigDecimal cannot do
+ * many functions, such as log, exp, and trigonometric functions.
+ * 
+ * While Meyer with 10 * the original starting point works for the original ELSUNC program, it requires far more
+ * iterations than any of the other test problems - 770 for unconstrained and 782 for constrained.  Since it barely
+ * works for 80 bit FORTRAN, one would not expect it to work for 64 bit Java.
  *  OSBRONE1 at starting point unconstrained okay.
  *  OSBORNE2 at starting point unconstrained okay.
  *   
