@@ -1543,26 +1543,26 @@ public abstract class NLConstrainedEngine {
                 Preferences.debug("because we are computing at noise level\n");
                 Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n");	
             }
-            else if (exitStatus == 10241) {
+            else if (exitStatus == 12041) {
             	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
             	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
                 Preferences.debug("because we are computing at noise level\n");
                 Preferences.debug("The last steps were computed with prank <> n at the termination point\n");	
             }
-            else if (exitStatus == 10242) {
+            else if (exitStatus == 12042) {
             	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
             	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
                 Preferences.debug("because we are computing at noise level\n");	
                 Preferences.debug("The method of Newton was used (at least) in the last step\n");
             }
-            else if (exitStatus == 10243) {
+            else if (exitStatus == 12043) {
             	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
             	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
                 Preferences.debug("because we are computing at noise level\n");	
                 Preferences.debug("The 2nd but last step was subspace minimization but\n");
                 Preferences.debug("the last two were Gauss-Newton steps \n");
             }
-            else if (exitStatus == 10244) {
+            else if (exitStatus == 12044) {
             	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
             	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
                 Preferences.debug("because we are computing at noise level\n");
