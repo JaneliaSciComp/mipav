@@ -666,8 +666,8 @@ public class FileAvi extends FileBase {
                 }
 
                 if (readHeader() != 0) {
-                	Preferences.debug("FileAVI.readImage: Something messed up - could not read avi image transcoded to RGB-AVI" + "\n", Preferences.DEBUG_FILEIO);
-                    System.err.println("Something messed up!!!");
+                	Preferences.debug("FileAVI.readImage: could not read avi image transcoded to RGB-AVI\n", Preferences.DEBUG_FILEIO);
+                    System.err.println("FileAVI.readImage: could not read avi image transcoded to RGB-AVI");
                 }
             }
 
