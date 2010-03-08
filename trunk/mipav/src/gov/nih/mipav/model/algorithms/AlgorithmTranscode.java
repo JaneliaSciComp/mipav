@@ -210,7 +210,7 @@ public class AlgorithmTranscode extends AlgorithmBase implements ControllerListe
         try {
             p = Manager.createProcessor(iml);
         } catch (Exception e) {
-            MipavUtil.displayError("Yikes!  Cannot create a processor from the given url: " + e);
+            MipavUtil.displayError("Cannot create a processor from the given url: " + e);
 
             return;
         }
