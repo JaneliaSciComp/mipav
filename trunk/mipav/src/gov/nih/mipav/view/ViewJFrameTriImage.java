@@ -2600,19 +2600,29 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             }
         }
     }
-
+    
     /**
-     * Set the title of the frame with the image name of slice location.
+     * Sets the title bar for the tri-image frame.  Called for initialization and updating.
+     * Displays time series location for 4D volumes.
      */
     public void setTitle() {
         String str;
 
         if (displayMode == ViewJComponentBase.IMAGE_A) {
-            str = imageA.getImageName() + "  M:" + makeString(triImage[AXIAL_A].getZoomX(), 2);
-            setTitle(str);
-        } else {
-
-            if ((imageB != null) && (triImage[AXIAL_B] != null)) {
+            if (imageA.getNDims() > 3) { // Setup the title for 4D image
+                str = imageA.getImageName() + "  "+ tSlice + "/" + (tDim - 1)
+                        + "t M:" + makeString(triImage[AXIAL_A].getZoomX(), 2);
+                setTitle(str);
+            } else {
+                str = imageA.getImageName() + "  M:" + makeString(triImage[AXIAL_A].getZoomX(), 2);
+                setTitle(str);
+            }
+        } else if ((imageB != null) && (triImage[AXIAL_B] != null)) { 
+            if (imageB.getNDims() > 3) { // Setup the title for 4D image
+                str = imageB.getImageName() + "  " + tSlice + "/" + (tDim - 1)
+                        + "t M:" + makeString(triImage[AXIAL_B].getZoomX(), 2);
+                setTitle(str);
+            } else {
                 str = imageB.getImageName() + "  M:" + makeString(triImage[AXIAL_B].getZoomX(), 2);
                 setTitle(str);
             }
