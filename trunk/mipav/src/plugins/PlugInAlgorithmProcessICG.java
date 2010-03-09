@@ -136,7 +136,9 @@ System.err.println("starting process icg");
 
         double [] sliceCosts = reg25.getCosts();
 
-
+        //registration algorithm is no longer needed, freeing memory
+        reg25.disposeLocal();
+        reg25.finalize();
 
         if (checkDistortion) {
         	fireProgressStateChanged("Checking for distortion...");
