@@ -1564,6 +1564,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         }
 
         // comboBoxCostFunct.addItem("Normalized mutual information smoothed");
+        //This is least squares if doColor, else correlation ratio
         comboBoxCostFunct.setSelectedIndex(0);
 
         final JLabel labelInterp = new JLabel("Interpolation:");
