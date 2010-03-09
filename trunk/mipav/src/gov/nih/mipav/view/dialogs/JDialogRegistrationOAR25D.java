@@ -395,6 +395,7 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
             } // isCompleted
 
             if (reg25 != null) {
+                reg25.disposeLocal();
                 reg25.finalize();
             }
 
@@ -1240,11 +1241,8 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
             comboBoxCostFunct.addItem("Normalized mutual information");
         }
 
-        if (!doColor) {
-            comboBoxCostFunct.setSelectedIndex(1);
-        } else {
-            comboBoxCostFunct.setSelectedIndex(0);
-        }
+        //This is least squares if doColor, else correlation ratio
+        comboBoxCostFunct.setSelectedIndex(0);
 
         JLabel labelInterp = new JLabel("Interpolation:");
         labelInterp.setForeground(Color.black);
