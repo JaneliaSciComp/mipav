@@ -2237,8 +2237,6 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             inputImage.setVOIs(VOIs);
         }
 
-        disposeLocal();
-        finalize();
         setCompleted(true);
     }
 
