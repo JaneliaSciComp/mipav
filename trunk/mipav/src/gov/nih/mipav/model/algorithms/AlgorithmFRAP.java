@@ -675,6 +675,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
             }
 
             regAlgo.run();
+            //registration algorithm is no longer needed, freeing memory
+            regAlgo.disposeLocal();
             regAlgo.finalize();
             regAlgo = null;
             VOIs = bwImage.getVOIs();
