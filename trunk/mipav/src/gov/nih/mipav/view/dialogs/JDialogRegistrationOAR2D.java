@@ -492,6 +492,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                 comboBoxCostFunct.addItem("Normalized mutual information");
             }
 
+            //This is least squares if doColor, else correlation ratio
             comboBoxCostFunct.setSelectedIndex(0);
         } else if (command.equals("BruteForceCheck")) {
 

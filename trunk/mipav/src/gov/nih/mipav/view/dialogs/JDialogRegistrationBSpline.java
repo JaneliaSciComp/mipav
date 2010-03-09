@@ -781,7 +781,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
         m_kComboBoxCostFunction.addItem(RegistrationMeasureLeastSquares.getStaticName());
         m_kComboBoxCostFunction.addItem(RegistrationMeasureCorrelationRatio.getStaticName());
         m_kComboBoxCostFunction.addItem(RegistrationMeasureNormalizedMutualInformation.getStaticName());
-        m_kComboBoxCostFunction.setSelectedIndex(0);
+        m_kComboBoxCostFunction.setSelectedIndex(1);
         m_kComboBoxCostFunction.setEnabled(true);
         m_kComboBoxCostFunction.addItemListener(this);
 

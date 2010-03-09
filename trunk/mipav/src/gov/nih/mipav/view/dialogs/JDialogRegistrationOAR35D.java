@@ -984,6 +984,7 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
             comboBoxCostFunct.addItem("Normalized mutual information");
         }
 
+        //This is least squares if doColor, else correlation ratio
         comboBoxCostFunct.setSelectedIndex(0);
 
         JLabel labelInterp = new JLabel("Interpolation:");
