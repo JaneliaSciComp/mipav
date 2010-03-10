@@ -219,7 +219,13 @@ public class JDialogLogSlopeMapping extends JDialogScriptableBase implements Alg
 	         } 
 	     } else if (command.equals("addXValue")) {
 	    	 tmpStr = xValueText.getText();
-	         xValue = Double.parseDouble(tmpStr);
+	    	 try {
+	             xValue = Double.parseDouble(tmpStr);
+	    	 }
+	    	 catch (NumberFormatException e) {
+	    		 MipavUtil.displayError("Number format exception on attempt to parse x value");
+	    		 return;
+	    	 }
 	         Vector rowData = new Vector();
 	         rowData.add(tmpStr);
 	         srcTableModel.addRow(rowData);
