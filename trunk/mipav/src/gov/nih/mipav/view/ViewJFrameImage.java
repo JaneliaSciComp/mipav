@@ -3055,6 +3055,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogDespotT1(this, getActiveImage());
         } else if (command.equals("despotT2")) {
             new JDialogDespotT2(this, getActiveImage());
+        } else if (command.equals("LogSlope")) {
+        	new JDialogLogSlopeMapping();
         }
 
     }
