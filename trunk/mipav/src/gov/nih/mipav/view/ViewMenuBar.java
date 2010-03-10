@@ -494,6 +494,7 @@ public class ViewMenuBar {
                          menuBuilder.buildMenuItem("Fiber tracking / Statistics", "fiberTracking", 0, null, false),
                          menuBuilder.buildMenuItem("Visualization", "dtiVisualization", 0, null, false)  
     			 }),
+    			 menuBuilder.buildMenuItem("Log slope mapping", "LogSlope", 0, null, false),
     			 menuBuilder.makeMenu("Quantitative MRI", false, new JMenuItem[] {
     			         menuBuilder.makeMenu("T1", false, new JMenuItem[] {
     			                 menuBuilder.buildMenuItem("DespotT1", "despotT1", 0, null, false)
