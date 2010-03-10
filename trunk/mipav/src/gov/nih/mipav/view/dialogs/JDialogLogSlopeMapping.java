@@ -389,6 +389,7 @@ public class JDialogLogSlopeMapping extends JDialogScriptableBase implements Alg
         srcPanel.add(srcImagesScrollPane);
         
         srcImagesList = new ArrayList();
+        xValuesList = new ArrayList();
         
         additionalImagesLabel = new JLabel(" Add Images: ");
         additionalImagesLabel.setForeground(Color.black);
@@ -397,7 +398,7 @@ public class JDialogLogSlopeMapping extends JDialogScriptableBase implements Alg
         addImageBrowseButton.addActionListener(this);
         addImageBrowseButton.setActionCommand("addImageBrowse");
         
-        xValueButton = new JButton("X Value:");
+        xValueButton = new JButton("Add X Value:");
         xValueButton.addActionListener(this);
         xValueButton.setActionCommand("addXValue");
         xValueButton.setEnabled(false);
