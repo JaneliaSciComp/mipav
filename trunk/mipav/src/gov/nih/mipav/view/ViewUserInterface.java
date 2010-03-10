@@ -774,7 +774,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             } else {
         		MipavUtil.displayError("Images required for DESPOT were not found.");
         	}
+        } else if (command.equals("LogSlope")) {
+        	new JDialogLogSlopeMapping();
         }
+        
 
     }
 
