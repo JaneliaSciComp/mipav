@@ -2,7 +2,6 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.filters.AlgorithmBilateralFilter;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.scripting.ParserException;
@@ -10,8 +9,6 @@ import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.components.JPanelAlgorithmOutputOptions;
-import gov.nih.mipav.view.components.JPanelSigmas;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -22,7 +19,6 @@ import java.io.FileNotFoundException;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.BufferedReader;
-import java.util.*;
 
 import javax.swing.*;
 
@@ -40,25 +36,10 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
     //~ Instance fields ------------------------------------------------------------------------------------------------
     
     private JLabel labelParamsToFit;
-
-    /** DOCUMENT ME! */
-    private JLabel labelContrastRelaxivityRate;
-    
-    private JTextField textContrastRelaxivityRate;
-    
-    // contrast relaxivity rate
-    double r1;
-    
-    double r1Min = 0.0;
-    
-    double r1Max = 1000.0;
     
     private JButton buttonTissueFile;
     
     private JTextField textTissueFile;
-    
-    // non-uniform tissue intrinsic relaxivity map
-    double r1i[] = null;
     
     private String directoryTissue;
     
@@ -76,11 +57,6 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
     
     private String fileNameVOI;
     
-    private File fileVOI;
-    
-    // Contents of Mp(t) file
-    private double mcp[] = null;
-    
     private JButton buttonTimesFile;
     
     private JTextField textTimesFile;
@@ -94,12 +70,6 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
     private int numTimes;
     
     private double timeVals[];
-    
-    private int nx;
-    
-    private int ny;
-    
-    private int mp_len;
     
     private ViewVOIVector VOIs;
 
@@ -182,7 +152,6 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         VOI[] voi;
         BufferedReader br;
         String command = event.getActionCommand();
-        Object source = event.getSource();
 
         if (command.equals("OK")) {
 
@@ -514,7 +483,6 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         defaultsString += max_constr[1] + delim;
         defaultsString += min_constr[2] + delim;
         defaultsString += max_constr[2] + delim;
-        defaultsString += r1 + delim;
         defaultsString += tissueImage.getImageFileName();
 
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
@@ -541,8 +509,6 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         textMinConstr2.setText(String.valueOf(min_constr[2]));
         max_constr[2] = scriptParameters.getParams().getDouble("max_constr2");
         textMaxConstr2.setText(String.valueOf(max_constr[2]));
-        r1 = scriptParameters.getParams().getDouble("r1_");
-        textContrastRelaxivityRate.setText(String.valueOf(r1));
         tissueImage = scriptParameters.retrieveImage("tissue_image");
         textTissueFile.setText(tissueImage.getImageFileName());
     }
@@ -561,7 +527,6 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_constr1", max_constr[1]));
         scriptParameters.getParams().put(ParameterFactory.newParameter("min_constr2", min_constr[2]));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_constr2", max_constr[2]));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("r1_", r1));
     	try {
     	    scriptParameters.storeImage(tissueImage, "tissue_image");
     	}
@@ -580,7 +545,6 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
      * @param  event  DOCUMENT ME!
      */
     public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
 
     }
 
@@ -611,7 +575,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
             }
             resultExtents[3] = 3;
             resultImage = new ModelImage(ModelStorageBase.FLOAT, resultExtents, image.getImageName() + "_params");
-            sm2Algo = new AlgorithmSM2(resultImage, image, min_constr, max_constr, r1, tissueImage, timeVals);
+            sm2Algo = new AlgorithmSM2(resultImage, image, min_constr, max_constr, tissueImage, timeVals);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -641,55 +605,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         }
     }
 
-    /**
-     * Builds a list of images. Returns combobox. List must be all color or all black and white.
-     *
-     * @param   image  DOCUMENT ME!
-     *
-     * @return  Newly created combo box.
-     */
-    private JComboBox buildComboBox(ModelImage image) {
-        ViewUserInterface UI;
-        ModelImage nextImage;
-        boolean doAdd;
-        int i;
-
-        JComboBox comboBox = new JComboBox();
-        comboBox.setFont(serif12);
-        comboBox.setBackground(Color.white);
-
-        UI = ViewUserInterface.getReference();
-
-        Enumeration names = UI.getRegisteredImageNames();
-
-        while (names.hasMoreElements()) {
-            String name = (String) names.nextElement();
-
-            if (!name.equals(image.getImageName())) {
-                nextImage = UI.getRegisteredImageByName(name);
-
-                if (UI.getFrameContainingImage(nextImage) != null) {
-
-                    if ((image.isColorImage() == nextImage.isColorImage()) && (nextImage.getNDims() == 2)) {
-                        doAdd = true;
-
-                        for (i = 0; i < image.getNDims(); i++) {
-
-                            if (image.getExtents()[i] != nextImage.getExtents()[i]) {
-                                doAdd = false;
-                            }
-                        }
-
-                        if (doAdd) {
-                            comboBox.addItem(name);
-                        }
-                    }
-                }
-            }
-        }
-
-        return comboBox;
-    }
+    
 
 
     /**
@@ -801,20 +717,6 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         gbc.gridx = 1;
         mainPanel.add(textMaxConstr2, gbc);
         
-        labelContrastRelaxivityRate = new JLabel("Contrast relaxivity rate in 1/(mMol*sec) (0.0 - 1000.0)");
-        labelContrastRelaxivityRate.setForeground(Color.black);
-        labelContrastRelaxivityRate.setFont(serif12);
-        gbc.gridx = 0;
-        gbc.gridy = 7;
-        mainPanel.add(labelContrastRelaxivityRate, gbc);
-        
-        textContrastRelaxivityRate = new JTextField(10);
-        textContrastRelaxivityRate.setText("4.79");
-        textContrastRelaxivityRate.setForeground(Color.black);
-        textContrastRelaxivityRate.setFont(serif12);
-        gbc.gridx = 1;
-        mainPanel.add(textContrastRelaxivityRate, gbc);
-        
         buttonTissueFile = new JButton("Choose 3D tissue R1 map");
         buttonTissueFile.setForeground(Color.black);
         buttonTissueFile.setFont(serif12B);
@@ -823,7 +725,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         buttonTissueFile.setPreferredSize(new Dimension(235, 30));
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy = 7;
         mainPanel.add(buttonTissueFile, gbc);
 
         textTissueFile = new JTextField();
@@ -836,7 +738,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         labelVOI.setForeground(Color.black);
         labelVOI.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 9;
+        gbc.gridy = 8;
         mainPanel.add(labelVOI, gbc);
         
         buttonVOIFile = new JButton("Open a sagittal sinus VOI file");
@@ -846,7 +748,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         buttonVOIFile.setActionCommand("VOIFile");
         buttonVOIFile.setPreferredSize(new Dimension(205, 30));
         gbc.fill = GridBagConstraints.NONE;
-        gbc.gridy = 10;
+        gbc.gridy = 9;
         mainPanel.add(buttonVOIFile, gbc);
         
         textVOIFile = new JTextField();
@@ -863,7 +765,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         buttonTimesFile.setPreferredSize(new Dimension(225, 30));
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 11;
+        gbc.gridy = 10;
         mainPanel.add(buttonTimesFile, gbc);
         
         textTimesFile = new JTextField();
@@ -887,7 +789,6 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
      */
     private boolean setVariables() {
         String tmpStr;
-        BufferedReader br = null;
         
         tmpStr = textMinConstr0.getText();
         min_constr[0] = Double.parseDouble(tmpStr);
@@ -966,24 +867,6 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         	textMaxConstr2.selectAll();
         	return false;	
         }
-        
-        tmpStr = textContrastRelaxivityRate.getText();
-        r1 = Double.parseDouble(tmpStr);
-        
-        if (r1 < r1Min) {
-            MipavUtil.displayError("Contrast relaxivity rate must be at least " + Double.toString(r1Min));
-            textContrastRelaxivityRate.requestFocus();
-            textContrastRelaxivityRate.selectAll();
-            return false;
-        }
-        
-        if (r1 > r1Max) {
-            MipavUtil.displayError("Contrast relaxivity rate must not exceed " + Double.toString(r1Max));
-            textContrastRelaxivityRate.requestFocus();
-            textContrastRelaxivityRate.selectAll();
-            return false;
-        }
-        
         
         fileNameTissue = textTissueFile.getText();  
         try {
