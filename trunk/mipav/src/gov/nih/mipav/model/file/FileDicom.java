@@ -2676,7 +2676,7 @@ public class FileDicom extends FileDicomBase {
         // " # readfrom: " + Long.toString(getFilePointer(), 0x10) + "\n");
 
         // either there's an "item end" or we've read the entire element length
-        while ( !nameSQ.equals(FileDicom.SEQ_ITEM_END) && ( (getFilePointer() - startfptr) < itemLength)) {
+        while ( !nameSQ.equals(FileDicom.SEQ_ITEM_END) && ( (getFilePointer() - startfptr) < itemLength)  && (getFilePointer() < raFile.length())) {
             // The following is almost exactly the same as the code in readHeader. The main difference is the
             // information is stored in a hashtable in DicomItem that is initially empty.
 
