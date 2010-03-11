@@ -15,8 +15,10 @@ import java.text.*;
 
 
 /**
+ * Based on the document provided by Daniel Reich:
+ * Notes on DCE with SM2 (standard model, aka Tofts model, 2-compartment) February 4, 2010 - revision 3
  * 3 model parameters are fit for each voxel in 3D:
- * 1) K_trans in [0, 0.99]
+ * 1) K_trans in [1.0E-5, 0.99]
  * 2) ve in [1.0E-5, 0.99]
  * 3) f_vp in [0, 0.99]
  
@@ -47,12 +49,6 @@ import java.text.*;
 public class AlgorithmSM2 extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-    
-    /** Contrast relaxivity rate in 1/(mMol*sec) (0.0 - 1000.0) */
-    private double r1;
     
     /** A vector of center times for each volume */
     private double timeVals[] = null;
@@ -65,32 +61,17 @@ public class AlgorithmSM2 extends AlgorithmBase {
     
     private double r1ptj[];
     
-    /** non-uniform tissue intrinsic relaxivity map from input 3d + t = 4D image */
-    private double r1i[] = null;
-    
-    /** Time between frames (volumes) in seconds (0.1 - 30.0) */
-    private double tf;
-    
-    /** 1D Mp(t) data from sagittal sinus VOI */
-    private double mp[] = null;
-    
-    private double epsilon = 1.0E-4;
-    
     private double min_constr[];
     private double max_constr[];
-    private double comp[];
-    private double elist[];
     private double ymodel[];
     private int i;
     private int xDim;
     private int yDim;
     private int zDim;
     private int tDim;
-    private double cos0;
     private double initial[] = new double[3];
     private double trapezoidSlope[];
     private double trapezoidConstant[];
-    private int trapezoidIndex;
     private double ktransDivVe;
     private double exparray[][];
     private int[] exitStatus;
@@ -108,16 +89,13 @@ public class AlgorithmSM2 extends AlgorithmBase {
      
      */
     public AlgorithmSM2(ModelImage destImage, ModelImage srcImage, double min_constr[], double max_constr[],
-    		               double r1, ModelImage tissueImage, double timeVals[]) {
+    		               ModelImage tissueImage, double timeVals[]) {
 
         super(destImage, srcImage);
         this.min_constr = min_constr;
         this.max_constr = max_constr;
-        this.r1 = r1;
         this.tissueImage = tissueImage;
         this.timeVals = timeVals;
-        
-        UI = ViewUserInterface.getReference();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -128,16 +106,12 @@ public class AlgorithmSM2 extends AlgorithmBase {
     public void finalize() {
         srcImage = null;
         destImage = null;
-        r1i = null;
-        mp = null;
         min_constr = null;
         max_constr = null;
         if (tissueImage != null) {
         	tissueImage.disposeLocal();
         	tissueImage = null;
         }
-        comp = null;
-        elist = null;
         initial = null;
         super.finalize();
     }
@@ -156,6 +130,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
         double[] params;
         float destArray[];
         int j;
+        // If true, run a self test of NLConstrainedEngine.java
         boolean fullTest = false;
         int voiCount;
         double delT;
@@ -163,7 +138,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
         long abnormalTerminations = 0;
         
         if (fullTest) {
-        	FitAll fa = new FitAll();
+        	new FitAll();
         	return;
         }
         
@@ -234,6 +209,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
         
         voiCount = 0;
         r1pt0 = 0.0;
+        // Actually looking from t = t1 to t = tlast
         for (t = 0; t < tDim; t++) {
             for (i = 0; i < volSize; i++) {
                 if (mask.get(i)) {
@@ -250,7 +226,9 @@ public class AlgorithmSM2 extends AlgorithmBase {
             r1ptj[t] = r1ptj[t]/voiCount;
         } // for (t = 0; t < tDim; t++)
         
+        // Actually looking from t = t1 to t = tlast
         for (t = 0; t < tDim; t++) {
+        	// For t = t1, looking at R1,p(t1) - R10,p, but R1,p(t1) and R10,p are identical except for noise
         	r1ptj[t] = r1ptj[t] - r1pt0;
         	for (i = 0; i < volSize; i++) {
         	    r1tj[i + t*volSize] = r1tj[i + t*volSize] - r1t0[i];	
