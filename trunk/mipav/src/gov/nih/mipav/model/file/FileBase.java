@@ -83,7 +83,7 @@ public abstract class FileBase {
      *
      * @return  DOCUMENT ME!
      */
-    public static float bytesToFloat(boolean bigEndian, int index, byte[] buffer) {
+    public final static float bytesToFloat(boolean bigEndian, int index, byte[] buffer) {
         int tmpInt;
 
         if (bigEndian) {
@@ -108,7 +108,7 @@ public abstract class FileBase {
      *
      * @return  DOCUMENT ME!
      */
-    public static int bytesToInt(boolean bigEndian, int index, byte[] buffer) {
+    public final static int bytesToInt(boolean bigEndian, int index, byte[] buffer) {
 
         if (bigEndian) {
             return (((buffer[index] & 0xff) << 24) | ((buffer[index + 1] & 0xff) << 16) |
@@ -128,7 +128,7 @@ public abstract class FileBase {
      *
      * @return  DOCUMENT ME!
      */
-    public static short bytesToShort(boolean bigEndian, int index, byte[] buffer) {
+    public final static short bytesToShort(boolean bigEndian, int index, byte[] buffer) {
 
         if (bigEndian) {
             return (short) (((buffer[index] & 0xff) << 8) | (buffer[index + 1] & 0xff));
@@ -145,7 +145,7 @@ public abstract class FileBase {
      *
      * @return  DOCUMENT ME!
      */
-    public static byte[] floatToBytes(float data, boolean bigEndian) {
+    public final static byte[] floatToBytes(float data, boolean bigEndian) {
         int tmpInt;
 
         tmpInt = Float.floatToIntBits(data);
@@ -196,8 +196,8 @@ public abstract class FileBase {
      *
      * @return  DOCUMENT ME!
      */
-    public static byte[] intToBytes(int data, boolean bigEndian) {
-        byte[] buffer = new byte[4];
+    public final static byte[] intToBytes(int data, boolean bigEndian) {
+        final byte[] buffer = new byte[4];
 
         if (bigEndian) {
             buffer[0] = (byte) (data >>> 24);
@@ -223,7 +223,7 @@ public abstract class FileBase {
      * @return  DOCUMENT ME!
      */
     public static byte[] longToBytes(long data, boolean bigEndian) {
-        byte[] buffer = new byte[8];
+        final byte[] buffer = new byte[8];
 
         if (bigEndian) {
             buffer[0] = (byte) (data >>> 56);
@@ -256,8 +256,8 @@ public abstract class FileBase {
      *
      * @return  DOCUMENT ME!
      */
-    public static byte[] shortToBytes(short data, boolean bigEndian) {
-        byte[] buffer = new byte[2];
+    public final static byte[] shortToBytes(short data, boolean bigEndian) {
+    	final byte[] buffer = new byte[2];
 
         if (bigEndian) {
             buffer[0] = (byte) (data >>> 8);
@@ -270,19 +270,7 @@ public abstract class FileBase {
         return buffer;
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param   data   DOCUMENT ME!
-     * @param   index  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    public static byte[] stringToBytes(String data, int index) {
-        return null;
-    }
 
-    // public abstract String[] getExtensions();
     /**
      * Adds the ProgressChangeListener to this FileBase object.
      *
@@ -292,9 +280,7 @@ public abstract class FileBase {
         listenerList.add(ProgressChangeListener.class, l);
     }
 
-    //    public abstract String getHeaderFile();
 
-    //    public abstract String[] getImageFiles();
     /**
      * Prepares this class for cleanup.
      */
@@ -467,7 +453,7 @@ public abstract class FileBase {
      * @exception  IOException  if there is an error reading the file
      */
     public final double getDouble(boolean bigEndian) throws IOException {
-        byte[] buffer = new byte[8];
+    	final byte[] buffer = new byte[8];
         raFile.readFully(buffer);
 
         long tmpLong;
@@ -499,7 +485,7 @@ public abstract class FileBase {
      * @exception  IOException  if there is an error reading the file
      */
     public final float getFloat(boolean bigEndian) throws IOException {
-        byte[] buffer = new byte[4];
+        final byte[] buffer = new byte[4];
         raFile.readFully(buffer);
 
         int tmpInt;
@@ -529,7 +515,7 @@ public abstract class FileBase {
      * @exception  IOException  if there is an error reading the file
      */
     public final int getInt(boolean bigEndian) throws IOException {
-        byte[] buffer = new byte[4];
+    	final byte[] buffer = new byte[4];
         raFile.readFully(buffer);
 
         if (bigEndian) {
@@ -552,7 +538,7 @@ public abstract class FileBase {
      * @exception  IOException  if there is an error reading the file
      */
     public final long getLong(boolean bigEndian) throws IOException {
-        byte[] buffer = new byte[8];
+    	final byte[] buffer = new byte[8];
 
         raFile.readFully(buffer);
 
@@ -639,7 +625,7 @@ public abstract class FileBase {
      * @exception  IOException  if there is an error reading the file
      */
     public final long getUInt(boolean bigEndian) throws IOException {
-        byte[] buffer = new byte[4];
+    	final byte[] buffer = new byte[4];
         raFile.readFully(buffer);
 
         if (bigEndian) {
@@ -674,7 +660,7 @@ public abstract class FileBase {
      * @exception  IOException  if there is an error reading the file
      */
     public final int getUnsignedShort(boolean bigEndian) throws IOException {
-        byte[] buffer = new byte[2];
+    	final byte[] buffer = new byte[2];
         raFile.readFully(buffer);
 
         if (bigEndian) {
