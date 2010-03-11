@@ -2845,7 +2845,7 @@ public class FileDicom extends FileDicomBase {
                 throw new IOException();
             }
 
-            if ( (getFilePointer() - startfptr) < itemLength) {
+            if (( (getFilePointer() - startfptr) < itemLength) && (getFilePointer() < raFile.length())) {
                 // preread the next tag, because we have yet to see the
                 // end-sequence tag because we don't want to accidently
                 // read the next new-item tag.
