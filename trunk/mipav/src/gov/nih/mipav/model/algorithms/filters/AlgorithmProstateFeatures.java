@@ -13,6 +13,8 @@ import java.awt.Frame;
 import java.io.*;
 import java.util.*;
 
+import javax.swing.JOptionPane;
+
 
 /**
  * DOCUMENT ME!
@@ -94,6 +96,8 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 
     /** DOCUMENT ME! */
     private ModelImage[] destImage = null;
+    
+    private ModelImage[] classificationImage = null;
 
     /** If true calculate dissimilarity Sum over i,j of Probability(i,j) * Absolute value(i-j). */
     private boolean dissimilarity;
@@ -204,19 +208,167 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 	/** DOCUMENT ME! */
 	private ModelImage gaborImage;
 	
+	private ModelImage gmImage;
+	
 	private ModelImage image; // source image
 	
 	private VOIVector VOIs;
 	
 	private int haralickImagesNumber = 0;
 
+	private boolean distanceFilter;
+	
+	private ModelImage distanceImage;
+	
+	private boolean imageOriginFilter;
+	
+	 private AlgorithmDistanceFilter distanceFilterAlgo = null;
+	 
+	private AlgorithmGradientMagnitude gradientMagAlgo;
+	
+	
+   // fuzzy c mean
+	/** possible values for segmentation. */
+    public static final int BOTH_FUZZY_HARD = 0;
 
+    /** DOCUMENT ME! */
+    public static final int FUZZY_ONLY = 1;
+
+    /** DOCUMENT ME! */
+    public static final int HARD_ONLY = 2;
+
+    /** DOCUMENT ME! */
+    public static final float MAX_FLOAT = 1e30f;
+
+    /** DOCUMENT ME! */
+    public static final float ALPHA = 0.3f;
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
+    private float[] buffer2;
+
+    /** DOCUMENT ME! */
+    private float[] centroids;
+
+    /** DOCUMENT ME! */
+    private int[] classNumber;
+
+    /** DOCUMENT ME! */
+    private boolean cropBackground = false; // When cropBackground is true,
+
+
+    /** DOCUMENT ME! */
+    private int destNum = 0; // number of the destination image
+
+    /** 1/(qValue - 1). */
+    private double exponent;
+
+    /** DOCUMENT ME! */
+    private int iterations;
+
+    /** jacobiIters1 and jacobiIter2 are only used with gain correction. */
+    private int jacobiIters1 = 1;
+
+    /** DOCUMENT ME! */
+    private int jacobiIters2 = 2;
+
+    /** DOCUMENT ME! */
+    private float maxChange;
+
+    /** DOCUMENT ME! */
+    private int maxIter = 100;
+
+    /** DOCUMENT ME! */
+    private float[] mems;
+
+    /** DOCUMENT ME! */
+    private float[] memsBuffer;
+
+    /** DOCUMENT ME! */
+    private int memSize;
+
+    /** DOCUMENT ME! */
+    private int nClass = 3;
+
+    /** DOCUMENT ME! */
+    private int newSliceSize;
+
+    /** DOCUMENT ME! */
+    private int newXDim, newYDim, newZDim;
+
+    /** DOCUMENT ME! */
+    private BitSet objMask;
+
+    /** DOCUMENT ME! */
+    private float[] oldMember;
+
+    /** DOCUMENT ME! */
+    private int oldX, oldY, oldZ;
+
+    /** DOCUMENT ME! */
+    private int orgSlice;
+
+    /** DOCUMENT ME! */
+    private int orgVol;
+
+    /** DOCUMENT ME! */
+    private int orgXDim;
+
+    /** DOCUMENT ME! */
+    private boolean outputGainField = false;
+
+    /** DOCUMENT ME! */
+    private boolean powEIntFlag = true;
+
+    /** pyramidLevels is only used with gain correction. */
+    private int pyramidLevels = 4;
+
+    /** DOCUMENT ME! */
+    private float qValue = 2.0f;
+
+    /** DOCUMENT ME! */
+    private float[] sCentroids;
+
+    /** DOCUMENT ME! */
+    private byte[] segBuffer;
+
+    /** DOCUMENT ME! */
+    private int segmentation = FUZZY_ONLY;
+
+    /** DOCUMENT ME! */
+    private int sliceSize;
+
+    /** smooth1 and smooth2 are only used with gain field correction. */
+    private float smooth1 = 20000;
+
+    /** DOCUMENT ME! */
+    private float smooth2 = 200000;
+
+    /** DOCUMENT ME! */
+    private float threshold = 1.0f;
+
+    /** DOCUMENT ME! */
+    private float tolerance = 0.01f;
+
+    /** DOCUMENT ME! */
+    private boolean[] unusedCentroids;
+    
+    private boolean wholeImage;
+
+    private boolean fuzzyCMeanFilter;
+    
+    private ModelImage[] fuzzyCMeanImages;
+    
+    private AlgorithmFuzzyCMeans fcmAlgo;
+	 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates a new AlgorithmHaralickTexture object for black and white image.
      *
      * @param              destImg            image model where result image is to stored
+     * @param              classificationImg  for each pixel, store which class this pixel belongs to
      * @param              srcImg             source image model
      * @param              windowSize         the size of the square window
      * @param              offsetDistance     distance between 2 pixels of pair
@@ -243,17 +395,24 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
      * @param              concatenate        If true, only 1 result image formed by concatenating the original 
      *                                        source to each of the calculated features
      */
-    public AlgorithmProstateFeatures(ModelImage[] destImg, ModelImage srcImg, int windowSize, int offsetDistance, int greyLevels,
+    public AlgorithmProstateFeatures(ModelImage[] destImg, ModelImage[] classImage,  ModelImage srcImg, int windowSize, int offsetDistance, int greyLevels,
                                     boolean ns, boolean nesw, boolean ew, boolean senw, boolean invariantDir,
                                     boolean contrast, boolean dissimilarity, boolean homogeneity, boolean inverseOrder1,
                                     boolean asm, boolean energy, boolean maxProbability, boolean entropy, boolean mean,
                                     boolean variance, boolean standardDeviation, boolean correlation,
                                     boolean shade, boolean promenance, boolean concatenate, 
                                     boolean gaborFilter, float freqU, float freqV, float sigmaU, float sigmaV, float theta,
-                                    int numberFiltersAdditional) {
+                                    boolean distanceFilter, int numberFiltersAdditional, boolean imageOriginFilter,
+                                    boolean fuzzyCMeanFilter,
+                                    int _nClass, int _pyramidLevels,
+                                    int _jacobiIters1, int _jacobiIters2, float _q, float _smooth1, float _smooth2,
+                                    boolean _outputGainField, int _segmentation, boolean _cropBackground, float _threshold,
+                                    int _max_iter, float _tolerance, boolean _wholeImage,
+                                    float[] centroids) {
         super(null, srcImg);
         image = srcImage;
         destImage = destImg;
+        classificationImage = classImage;
         this.windowSize = windowSize;
         this.offsetDistance = offsetDistance;
         this.greyLevels = greyLevels;
@@ -283,55 +442,132 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
         this.sigmaU = sigmaU;
         this.sigmaV = sigmaV;
         this.theta = theta;
+        this.distanceFilter = distanceFilter;
+        this.imageOriginFilter = imageOriginFilter;
         if ( srcImage.getVOIs() != null ) {
         	this.VOIs = srcImage.getVOIs();
         }
         this.numberFiltersAdditional = numberFiltersAdditional;
         
+        // fuzzy c mean
+        this.fuzzyCMeanFilter = fuzzyCMeanFilter;
+        
+        if (fuzzyCMeanFilter) {
+			this.nClass = _nClass;
+			this.pyramidLevels = _pyramidLevels;
+			this.jacobiIters1 = _jacobiIters1;
+			this.jacobiIters2 = _jacobiIters2;
+			this.qValue = _q;
+			this.exponent = 1.0f / (qValue - 1.0f);
+			this.smooth1 = _smooth1;
+			this.smooth2 = _smooth2;
+			this.outputGainField = _outputGainField;
+			this.segmentation = _segmentation;
+			this.cropBackground = _cropBackground;
+			this.threshold = _threshold;
+			this.maxIter = _max_iter;
+			this.tolerance = _tolerance;
+			this.wholeImage = _wholeImage;
+			this.oldMember = new float[nClass];
+			this.sCentroids = new float[nClass];
+			this.unusedCentroids = new boolean[nClass];
+			this.classNumber = new int[nClass];
+
+			if ((exponent - Math.floor(exponent)) < 0.01) {
+				this.powEIntFlag = true;
+			} else {
+				this.powEIntFlag = false;
+			}
+
+			this.centroids = new float[centroids.length];
+
+			for (int i = 0; i < centroids.length; i++) {
+				this.centroids[i] = centroids[i];
+			}
+		}  
+        
     }
     
     /**
-     * Creates a new AlgorithmHaralickTexture object for color image.
-     *
-     * @param              destImg            image model where result image is to stored
-     * @param              srcImg             source image model
-     * @param              RGBOffset          selects red, green, or blue channel
-     * @param              windowSize         the size of the square window
-     * @param              offsetDistance     distance between 2 pixels of pair
-     * @param              greyLevels         Number of grey levels used if rescaling performed
-     * @param              ns                 true if north south offset direction calculated
-     * @param              nesw               true if northeast-southwest offset direction calculated
-     * @param              ew                 true if east west offset direction calculated
-     * @param              senw               true if southeast-northwest offset direction calculated
-     * @param              invariantDir       true if spatially invariant calculated
-     * @param              contrast           true if contrast calculated
-     * @param              dissimilarity      true if dissimilarity calculated
-     * @param              homogeneity        true if homogeneity calculated
-     * @param              inverseOrder1      true if inverse difference moment of order 1 calculated
-     * @param              asm                true if angular second moment calculated
-     * @param              energy             true if energy calculated
-     * @param              maxProbability     true if maximum probability calculated
-     * @param              entropy            true if entropy calculated
-     * @param              mean               true if gray level coordinate matrix mean calculated
-     * @param              variance           true if gray level coordinate matrix variance calculated
-     * @param              standardDeviation  true if gray level coordinate matrix standard deviation calculated
-     * @param              correlation        true if gray level coordinate matrix correlation calculated
-     * @param              shade              true if cluster shade calculated
-     * @param              promenance         true if cluster promenance calculated 
-     * @param              concatenate        If true, only 1 result image formed by concatenating the original 
-     *                                        source to each of the calculated features    
-     */
-    public AlgorithmProstateFeatures(ModelImage[] destImg, ModelImage srcImg, int RGBOffset, int windowSize, int offsetDistance, int greyLevels,
+	 * Creates a new AlgorithmHaralickTexture object for color image.
+	 * 
+	 * @param destImg
+	 *            image model where result image is to stored
+	 * @param classificationImg
+	 *            for each pixel store which class this pixel belongs to
+	 * @param srcImg
+	 *            source image model
+	 * @param RGBOffset
+	 *            selects red, green, or blue channel
+	 * @param windowSize
+	 *            the size of the square window
+	 * @param offsetDistance
+	 *            distance between 2 pixels of pair
+	 * @param greyLevels
+	 *            Number of grey levels used if rescaling performed
+	 * @param ns
+	 *            true if north south offset direction calculated
+	 * @param nesw
+	 *            true if northeast-southwest offset direction calculated
+	 * @param ew
+	 *            true if east west offset direction calculated
+	 * @param senw
+	 *            true if southeast-northwest offset direction calculated
+	 * @param invariantDir
+	 *            true if spatially invariant calculated
+	 * @param contrast
+	 *            true if contrast calculated
+	 * @param dissimilarity
+	 *            true if dissimilarity calculated
+	 * @param homogeneity
+	 *            true if homogeneity calculated
+	 * @param inverseOrder1
+	 *            true if inverse difference moment of order 1 calculated
+	 * @param asm
+	 *            true if angular second moment calculated
+	 * @param energy
+	 *            true if energy calculated
+	 * @param maxProbability
+	 *            true if maximum probability calculated
+	 * @param entropy
+	 *            true if entropy calculated
+	 * @param mean
+	 *            true if gray level coordinate matrix mean calculated
+	 * @param variance
+	 *            true if gray level coordinate matrix variance calculated
+	 * @param standardDeviation
+	 *            true if gray level coordinate matrix standard deviation
+	 *            calculated
+	 * @param correlation
+	 *            true if gray level coordinate matrix correlation calculated
+	 * @param shade
+	 *            true if cluster shade calculated
+	 * @param promenance
+	 *            true if cluster promenance calculated
+	 * @param concatenate
+	 *            If true, only 1 result image formed by concatenating the
+	 *            original source to each of the calculated features
+	 */
+    public AlgorithmProstateFeatures(ModelImage[] destImg, ModelImage[] classImage,  ModelImage srcImg, int RGBOffset, int windowSize, int offsetDistance, int greyLevels,
                                     boolean ns, boolean nesw, boolean ew, boolean senw, boolean invariantDir,
                                     boolean contrast, boolean dissimilarity, boolean homogeneity, boolean inverseOrder1,
                                     boolean asm, boolean energy, boolean maxProbability, boolean entropy, boolean mean,
                                     boolean variance, boolean standardDeviation, boolean correlation,
                                     boolean shade, boolean promenance, boolean concatenate, 
                                     boolean gaborFilter, float freqU, float freqV, float sigmaU, float sigmaV, float theta,
-                                    int numberFiltersAdditional) {
+                                    boolean distanceFilter,
+                                    int numberFiltersAdditional,
+                                    boolean imageOriginFilter,
+                                    boolean fuzzyCMeanFilter,
+                                    int _nClass, int _pyramidLevels,
+                                    int _jacobiIters1, int _jacobiIters2, float _q, float _smooth1, float _smooth2,
+                                    boolean _outputGainField, int _segmentation, boolean _cropBackground, float _threshold,
+                                    int _max_iter, float _tolerance, boolean _wholeImage,
+                                    float[] centroids) {
         super(null, srcImg);
         image = srcImg;
         destImage = destImg;
+        classificationImage = classImage;
         this.RGBOffset = RGBOffset;
         this.windowSize = windowSize;
         this.offsetDistance = offsetDistance;
@@ -362,17 +598,57 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
         this.sigmaU = sigmaU;
         this.sigmaV = sigmaV;
         this.theta = theta;
+        this.distanceFilter = distanceFilter;
+        this.imageOriginFilter = imageOriginFilter;
         if ( srcImage.getVOIs() != null ) {
         	this.VOIs = srcImage.getVOIs();
         }
         this.numberFiltersAdditional = numberFiltersAdditional;
+        
+        // fuzzy c mean
+        this.fuzzyCMeanFilter = fuzzyCMeanFilter;
+        
+        if (fuzzyCMeanFilter) {
+			this.nClass = _nClass;
+			this.pyramidLevels = _pyramidLevels;
+			this.jacobiIters1 = _jacobiIters1;
+			this.jacobiIters2 = _jacobiIters2;
+			this.qValue = _q;
+			this.exponent = 1.0f / (qValue - 1.0f);
+			this.smooth1 = _smooth1;
+			this.smooth2 = _smooth2;
+			this.outputGainField = _outputGainField;
+			this.segmentation = _segmentation;
+			this.cropBackground = _cropBackground;
+			this.threshold = _threshold;
+			this.maxIter = _max_iter;
+			this.tolerance = _tolerance;
+			this.wholeImage = _wholeImage;
+			this.oldMember = new float[nClass];
+			this.sCentroids = new float[nClass];
+			this.unusedCentroids = new boolean[nClass];
+			this.classNumber = new int[nClass];
+
+			if ((exponent - Math.floor(exponent)) < 0.01) {
+				this.powEIntFlag = true;
+			} else {
+				this.powEIntFlag = false;
+			}
+
+			this.centroids = new float[centroids.length];
+
+			for (int i = 0; i < centroids.length; i++) {
+				this.centroids[i] = centroids[i];
+			}
+		}
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+	// --------------------------------------------------------------------------------------------------------
 
     /**
-     * Prepares this class for destruction.
-     */
+	 * Prepares this class for destruction.
+	 */
     public void finalize() {
         destImage = null;
         srcImage = null;
@@ -402,18 +678,122 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 
         fireProgressStateChanged(0, null, "Running Haralick textures ...");
         if ( gaborFilter ) {
+        	System.err.println("gabor = true;");
         	calculateGaborFilter();
+        	// calculateGM();
         }
+        
+        if ( distanceFilter ) {
+        	calculateDistance();
+        }
+        
+        if ( fuzzyCMeanFilter ) {
+        	calculateFuzzyCMean();
+        }
+        
         calculateHaralick();
     }
 
+    private void calculateFuzzyCMean() {
+    	int resultNumber = 0;
+    	int i;
+    	int[] destExtents = null;
+        int presentNumber = 0;
+
+
+        if ((segmentation == HARD_ONLY) || (segmentation == BOTH_FUZZY_HARD)) {
+            resultNumber++; // segmented image
+        } // if ((segmentation == HARD_ONLY) || (segmentation == BOTH_FUZZY_HARD))
+
+        if ((segmentation == FUZZY_ONLY) || (segmentation == BOTH_FUZZY_HARD)) {
+
+            // if (outputGainField) {
+            // resultNumber++;
+            // }
+            resultNumber += nClass;
+        } // if ((segmentation == FUZZY_ONLY) || (segmentation == BOTH_FUZZY_HARD))
+
+        if (image.getNDims() == 2) { // source image is 2D
+            destExtents = new int[2];
+            destExtents[0] = image.getExtents()[0]; // X dim
+            destExtents[1] = image.getExtents()[1]; // Y dim
+        }
+        
+    	   try {
+    		   fuzzyCMeanImages = new ModelImage[resultNumber];
+               presentNumber = 0;
+
+               if ((segmentation == FUZZY_ONLY) || (segmentation == BOTH_FUZZY_HARD)) {
+
+                   for (i = 0; i < nClass; i++) {
+                       fuzzyCMeanImages[presentNumber++] = new ModelImage(ModelStorageBase.FLOAT, destExtents,
+                                                                     image.getImageName() + 
+                                                                                   "_class" + (i + 1));
+                   }
+                   /* if (outputGainField) {
+                    *  resultImage[presentNumber++] = new ModelImage(ModelStorageBase.FLOAT, destExtents,
+                    * image.getImageName() + "mult", userInterface);              } */
+               }
+
+               if ((segmentation == HARD_ONLY) || (segmentation == BOTH_FUZZY_HARD)) {
+            	   fuzzyCMeanImages[presentNumber++] = new ModelImage(ModelStorageBase.UBYTE, destExtents,
+                                                                 image.getImageName() + "_seg");
+               }
+
+               // Make algorithm
+               fcmAlgo = new AlgorithmFuzzyCMeans(fuzzyCMeanImages, image, nClass, pyramidLevels,
+                       jacobiIters1, jacobiIters2, qValue, smooth1, smooth2,
+                       outputGainField, segmentation, cropBackground, threshold,
+                       maxIter, tolerance, wholeImage);
+
+               // This is very important. Adding this object as a listener allows the algorithm to
+               // notify this object when it has completed of failed. See algorithm performed event.
+               // This is made possible by implementing AlgorithmedPerformed interface
+               fcmAlgo.addListener(this);
+
+
+               if (wholeImage == false) {
+                   fcmAlgo.setMask(image.generateVOIMask());
+                   // if non null, were set by script file
+               }
+             
+               fcmAlgo.setCentroids(centroids);
+            
+               fcmAlgo.run();
+               
+           } catch (OutOfMemoryError x) {
+
+               if (fuzzyCMeanImages != null) {
+
+                   for (i = 0; i < resultNumber; i++) {
+
+                       if (fuzzyCMeanImages[i] != null) {
+                    	   fuzzyCMeanImages[i].disposeLocal(); // Clean up memory of result image
+                    	   fuzzyCMeanImages[i] = null;
+                       }
+                   }
+
+                   fuzzyCMeanImages = null;
+               }
+
+               System.gc();
+               MipavUtil.displayError("Dialog FuzzyCMeans: unable to allocate enough memory");
+
+               return;
+           }
+
+    	
+    }
+    
     
     private void calculateGaborFilter() {
 
     	 try {
     		 gaborImage = (ModelImage) image.clone();
              // resultImage.setImageName(name);
-    		 gaborImage.resetVOIs();
+    		 gaborImage.setType(ModelStorageBase.FLOAT);
+    		 gaborImage.reallocate(ModelStorageBase.FLOAT);
+    		 // gaborImage.resetVOIs();
     		 
              // No need to make new image space because the user has choosen to replace the source image
              // Make the algorithm class
@@ -427,12 +807,64 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 
              FrequencyFilterAlgo.run();
              
+             
+         } catch (OutOfMemoryError x) {
+             MipavUtil.displayError("GaborFilter: unable to allocate enough memory");
+
+             return;
+         }
+    }
+    
+    private void calculateGM() {
+
+		float sigmas[] = new float[2];
+		sigmas[0] = 1.0f;
+		sigmas[1] = 1.0f;
+
+		gmImage = (ModelImage) gaborImage.clone();
+		// resultImage.setImageName(name);
+		gmImage.setType(ModelStorageBase.FLOAT);
+		gmImage.reallocate(ModelStorageBase.FLOAT);
+
+		try {
+			gradientMagAlgo = new AlgorithmGradientMagnitude(gmImage, gaborImage, sigmas, true, false);
+			gradientMagAlgo.addListener(this);
+			gradientMagAlgo.run();
+
+		} catch (OutOfMemoryError x) {
+			MipavUtil
+					.displayError("GM Filter: unable to allocate enough memory");
+
+			return;
+		}
+	}
+    
+    private void calculateDistance() {
+    	 try {
+    		 distanceImage = (ModelImage) image.clone();
+    		 distanceImage.setType(ModelStorageBase.FLOAT);
+    		 distanceImage.reallocate(ModelStorageBase.FLOAT);
+             // resultImage.setImageName(name);
+    		 // distanceImage.resetVOIs();
+    		 
+             // No need to make new image space because the user has choosen to replace the source image
+             // Make the algorithm class
+             distanceFilterAlgo = new AlgorithmDistanceFilter(distanceImage, image, distanceFilter);
+
+             // This is very important. Adding this object as a listener allows the algorithm to
+             // notify this object when it has completed or failed. See algorithm performed event.
+             // This is made possible by implementing AlgorithmedPerformed interface
+             distanceFilterAlgo.addListener(this);
+
+             distanceFilterAlgo.run();
+             
          } catch (OutOfMemoryError x) {
              MipavUtil.displayError("Dialog GaborFilter: unable to allocate enough memory");
 
              return;
          }
     }
+    
     
     /**
      * DOCUMENT ME!
@@ -458,6 +890,8 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
         int numOperators = 0;
         double[] sourceBuffer = new double[sliceSize];
         float[] gaborBuffer = new float[sliceSize];
+        float[] distanceBuffer = new float[sliceSize];
+        float[] fuzzyCMeanBuffer;
         byte[]  byteBuffer = new byte[sliceSize];
         float[] floatBuffer;
         int[][] nsBuffer = null;
@@ -634,6 +1068,10 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 					srcImage.exportData(z * sliceSize, sliceSize, sourceBuffer);
 					if ( gaborFilter ) {
 						gaborImage.exportData(z * sliceSize, sliceSize, gaborBuffer);
+						// gmImage.exportData(z * sliceSize, sliceSize, gaborBuffer);
+					}
+					if ( distanceFilter ) {
+						distanceImage.exportData(z * sliceSize, sliceSize, distanceBuffer);
 					}
 				}
 			} catch (IOException error) {
@@ -861,8 +1299,7 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 							for (i = 0; i < matrixSize; i++) {
 
 								for (j = 0; j < matrixSize; j++) {
-									resultBuffer[currentResult][pos] += (i - j)
-											* (i - j) * glcm[i][j];
+									resultBuffer[currentResult][pos] += (i - j) * (i - j) * glcm[i][j];
 								}
 							}
 
@@ -1059,82 +1496,261 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 				} // for (x = xStart; x <= xEnd; x++)
 			} // for (y = yStart; y <= yEnd && !threadStopped; y++)
 
-			//  adding the additional filter operation. 
+			
+			// add the classification to the haralick filters
 			for (y = yStart; (y <= yEnd) && !threadStopped; y++) {
 
 				for (x = xStart; x <= xEnd; x++) {
 					pos = x + (y * xDim);
-					
-					if ( gaborFilter ) {
-						resultBuffer[currentResult][pos] = gaborBuffer[pos];
-					} 
-					if ( VOIs.size() > 0 ) {
-						if ( gaborFilter ) {
-							resultBufferClass[currentResult][pos] = -1;
-						}
-					    Vector<VOIBase>[] vArray = VOIs.VOIAt(0).getCurves();
-					    
-					    if ( vArray != null ) {
-					    	if ( vArray[z] != null && vArray[z].size() > 0 ) {
-								VOIBase v  = vArray[z].get(0);
-								if ( v instanceof VOIContour ) {
-									if ( ((VOIContour)v).contains(x, y, false) ) {
-										for ( int q = 0; q < currentResult; q++ ) {
-											// resultBuffer[q][pos] = 255;
+
+					if (VOIs.size() > 0) {
+						// resultBufferClass[currentResult-1][pos] = -1;
+						
+						Vector<VOIBase>[] vArray = VOIs.VOIAt(0)
+								.getCurves();
+
+						if (vArray != null) {
+							if (vArray[z] != null && vArray[z].size() > 0) {
+								VOIBase v = vArray[z].get(0);
+								if (v instanceof VOIContour) {
+									if (((VOIContour) v).contains(x, y,
+											false)) {
+										for (int q = 0; q < currentResult; q++) {
+											
 											resultBufferClass[q][pos] = 1;
 										}
-										
-										if ( gaborFilter ) {
-											resultBufferClass[currentResult][pos] = 1;
+
+									} else {
+										for (int q = 0; q < currentResult; q++) {
+											
+											resultBufferClass[q][pos] = -1;
 										}
-										// resultBuffer[currentResult][pos] = 255;
-										// sourceBuffer[pos] = 3400;
 									}
 								}
-					    	}
-					      
-					    }
+							}
+
+						}
+					}
+
+				}
+
+			}
+
+			
+			
+			if (gaborFilter) {
+
+				// adding the additional filter operation.
+				for (y = yStart; (y <= yEnd) && !threadStopped; y++) {
+
+					for (x = xStart; x <= xEnd; x++) {
+						pos = x + (y * xDim);
+
+						if (gaborFilter) {
+
+							resultBuffer[currentResult][pos] = gaborBuffer[pos];
+
+							// System.err.println("resultBuffer[currentResult][pos]
+							// = " + gaborBuffer[pos]);
+						}
+
+						if (VOIs.size() > 0) {
+							if (gaborFilter) {
+								resultBufferClass[currentResult][pos] = -1;
+							}
+							Vector<VOIBase>[] vArray = VOIs.VOIAt(0)
+									.getCurves();
+
+							if (vArray != null) {
+								if (vArray[z] != null && vArray[z].size() > 0) {
+									VOIBase v = vArray[z].get(0);
+									if (v instanceof VOIContour) {
+										if (((VOIContour) v).contains(x, y,
+												false)) {
+											/*
+											for (int q = 0; q < currentResult; q++) {
+												// resultBuffer[q][pos] = 255;
+												resultBufferClass[q][pos] = 1;
+											}
+                                            */
+											if (gaborFilter) {
+												resultBufferClass[currentResult][pos] = 1;
+											}
+											// resultBuffer[currentResult][pos]
+											// = 255;
+											// sourceBuffer[pos] = 3400;
+										}
+									}
+								}
+
+							}
+						}
+
+					}
+
+				}
+
+				currentResult++;
+			}
+			
+			
+			if (distanceFilter) {
+				// adding the additional filter operation.
+				for (y = yStart; (y <= yEnd) && !threadStopped; y++) {
+
+					for (x = xStart; x <= xEnd; x++) {
+						pos = x + (y * xDim);
+
+						if (distanceFilter) {
+							resultBuffer[currentResult][pos] = distanceBuffer[pos];
+
+						}
+
+						if (VOIs.size() > 0) {
+							if (distanceFilter) {
+								resultBufferClass[currentResult][pos] = -1;
+							}
+							Vector<VOIBase>[] vArray = VOIs.VOIAt(0)
+									.getCurves();
+
+							if (vArray != null) {
+								if (vArray[z] != null && vArray[z].size() > 0) {
+									VOIBase v = vArray[z].get(0);
+									if (v instanceof VOIContour) {
+										if (((VOIContour) v).contains(x, y,
+												false)) {
+											/*
+											for (int q = 0; q < currentResult; q++) {
+												// resultBuffer[q][pos] = 255;
+												resultBufferClass[q][pos] = 1;
+											}
+											*/
+
+											if (distanceFilter) {
+												resultBufferClass[currentResult][pos] = 1;
+											}
+											// resultBuffer[currentResult][pos]
+											// = 255;
+											// sourceBuffer[pos] = 3400;
+										}
+									}
+								}
+
+							}
+						}
+
+					}
+
+				}
+
+				currentResult++;
+			}
+			
+			
+			// ruida
+			if (fuzzyCMeanFilter) {
+				for (int fIndex = 0; fIndex < fuzzyCMeanImages.length; fIndex++) {
+					try {
+						fuzzyCMeanBuffer = new float[sliceSize];
+						fuzzyCMeanImages[fIndex].exportData(z * sliceSize, sliceSize, fuzzyCMeanBuffer);		
+					} catch (IOException error) {
+						MipavUtil
+								.displayError("AlgorithmProstateFeatures: IOException on fuzzyCMeanImages.exportData(0,sliceSize,sourceBuffer)");
+						setCompleted(false);
+
+						return;
 					}
 					
+					
+					for (y = yStart; (y <= yEnd) && !threadStopped; y++) {
+
+						for (x = xStart; x <= xEnd; x++) {
+							pos = x + (y * xDim);
+
+							resultBuffer[currentResult][pos] = fuzzyCMeanBuffer[pos];
+
+							if (VOIs.size() > 0) {
+								if (fuzzyCMeanFilter) {
+									resultBufferClass[currentResult][pos] = -1;
+								}
+								Vector<VOIBase>[] vArray = VOIs.VOIAt(0)
+										.getCurves();
+
+								if (vArray != null) {
+									if (vArray[z] != null
+											&& vArray[z].size() > 0) {
+										VOIBase v = vArray[z].get(0);
+										if (v instanceof VOIContour) {
+											if (((VOIContour) v).contains(x, y,
+													false)) {
+												/*
+												for (int q = 0; q < currentResult; q++) {
+													// resultBuffer[q][pos] =
+													// 255;
+													resultBufferClass[q][pos] = 1;
+												}
+												*/
+
+												if (fuzzyCMeanFilter) {
+													resultBufferClass[currentResult][pos] = 1;
+												}
+												// resultBuffer[currentResult][pos]
+												// = 255;
+												// sourceBuffer[pos] = 3400;
+											}
+										}
+									}
+
+								}
+							}
+
+						}
+
+					}
+
+					currentResult++;
 				}
 			}
 			
-		
-			if ( gaborFilter ) {
-				currentResult++;
-			}
-		
 			
 			
+						
 			if (threadStopped) {
 				finalize();
-
 				return;
 			}
 
+			int imageOriginNumber = 0;
 			if (concatenate) {
-				try {
-					destImage[0].importData(z * sliceSize, sourceBuffer, false);
-				} catch (IOException error) {
-					MipavUtil
-							.displayError(""
-									+ "AlgorithmHaralickTexture: IOException on destImage[0].importData(0, sourceBuffer, true)");
-					setCompleted(false);
-
-					return;
+				if ( imageOriginFilter ) {
+					try {
+						destImage[0].importData(z * sliceSize, sourceBuffer, false);
+						classificationImage[0].importData(z * sliceSize, sourceBuffer, false);
+						imageOriginNumber = 1;
+					} catch (IOException error) {
+						MipavUtil
+								.displayError(""
+										+ "AlgorithmHaralickTexture: IOException on destImage[0].importData(0, sourceBuffer, true)");
+						setCompleted(false);
+	
+						return;
+					}
 				}
+				
 				for (i = 0; i < totalFilters; i++) {
 
 					try {
-						destImage[0].importData((i + 1) * zDim * sliceSize + z
+						
+						 destImage[0].importData((i + imageOriginNumber) * zDim * sliceSize + z
 								* sliceSize, resultBuffer[i], false);
+							
 						if ( VOIs.size() > 0  ) {	
-								destImage[0].importDataClass((i + 1) * zDim * sliceSize + z
+								classificationImage[0].importData((i + imageOriginNumber) * zDim * sliceSize + z
 								* sliceSize, resultBufferClass[i], false);
 						}
 					} catch (IOException error) {
 						MipavUtil
-								.displayError("AlgorithmHaralickTexture: IOException on destImage["
+								.displayError("image, AlgorithmProstateFeature: IOException on destImage["
 										+ i
 										+ "].importData(0,resultBuffer["
 										+ i + "],false)");
@@ -1144,6 +1760,7 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 					}
 				} // for (i = 0; i < resultNumber; i++)
 			} // if (concatenate)
+			/*
 			else { // !concatenate
 				for (i = 0; i < totalFilters; i++) {
 
@@ -1166,6 +1783,7 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 					}
 				} // for (i = 0; i < resultNumber; i++)
 			} // else !concatenate
+			*/
 		} // for (z = 0; z < zDim; z++)
 
         haralickImagesNumber = currentResult;
@@ -1173,9 +1791,11 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
         
 		if (concatenate) {
 			destImage[0].calcMinMax();
+			classificationImage[0].calcMinMax();
 		} else {
 			for (i = 0; i < totalFilters; i++) {
 				destImage[i].calcMinMax();
+				classificationImage[i].calcMinMax();
 			}
 		}
 
@@ -1198,17 +1818,88 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
+         
             } else if (gaborImage != null) {
 
                 // algorithm failed but result image still has garbage
             	gaborImage.disposeLocal(); // clean up memory
             	gaborImage = null;
             }
+            FrequencyFilterAlgo.finalize();
+            FrequencyFilterAlgo = null;
+        }
+    	
+    	
+    	if (gradientMagAlgo instanceof AlgorithmGradientMagnitude) {
 
+            if ((algorithm.isCompleted() == true) && (gmImage != null) && ( gaborFilter )) {
+               
+                try {
+                	gmImage = gradientMagAlgo.getDestImage();
+                 
+                } catch (OutOfMemoryError error) {
+                    System.gc();
+                    MipavUtil.displayError("Out of memory: unable to open new frame");
+                }
+            } else if (gmImage != null) {
+
+                // algorithm failed but result image still has garbage
+            	gmImage.disposeLocal(); // clean up memory
+            	gmImage = null;
+            }
+            gradientMagAlgo.finalize();
+            gradientMagAlgo = null;
+        }
+    	
+    	if (algorithm instanceof AlgorithmDistanceFilter) {
+
+            if ((algorithm.isCompleted() == true) && (distanceImage != null) && ( distanceFilter )) {
+               
+                try {
+                	distanceImage = distanceFilterAlgo.getDestImage();
+                 
+                } catch (OutOfMemoryError error) {
+                    System.gc();
+                    MipavUtil.displayError("Out of memory: unable to open new frame");
+                }
+            } else if (distanceImage != null) {
+
+                // algorithm failed but result image still has garbage
+            	distanceImage.disposeLocal(); // clean up memory
+            	distanceImage = null;
+            }
+            distanceFilterAlgo.finalize();
+            distanceFilterAlgo = null;
         }
 
-        FrequencyFilterAlgo.finalize();
-        FrequencyFilterAlgo = null;
+    	
+    	if (algorithm instanceof AlgorithmFuzzyCMeans) {
+
+            if ((fcmAlgo.isCompleted() == true) && (fuzzyCMeanImages != null) && ( fuzzyCMeanFilter )) {
+               
+            	 for (int i = 0; i < fuzzyCMeanImages.length; i++) {
+                     //  updateFileInfo(image, fuzzyCMeanImages[i]);
+            		 fuzzyCMeanImages[i].clearMask();
+                     /*
+                     try {
+                         new ViewJFrameImage(fuzzyCMeanImages[i], null, new Dimension(610, 200 + (i * 20)));
+                     } catch (OutOfMemoryError error) {
+                         System.gc();
+                         JOptionPane.showMessageDialog(null, "Out of memory: unable to open new frame", "Error",
+                                                       JOptionPane.ERROR_MESSAGE);
+                     }
+                     */
+                 }
+            } else if (fuzzyCMeanImages != null) {
+
+                // algorithm failed but result image still has garbage
+            	// fuzzyCMeanImages.disposeLocal(); // clean up memory
+            	fuzzyCMeanImages = null;
+            }
+            fcmAlgo.finalize();
+            fcmAlgo = null;
+        }
+       
 		
 	}
 
