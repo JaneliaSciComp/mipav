@@ -3423,13 +3423,14 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             JPanel panelImageSlider = new JPanel();
             panelImageSlider.setLayout(new GridLayout(1, 1));
             panelImageSlider.setForeground(Color.black);
-
-            TitledBorder borderImageSlider = new TitledBorder(" Time slice index ");
+            
+            tDim = extents[3];
+            TitledBorder borderImageSlider = new TitledBorder(" Time slice index [total number volumes="+ tDim + "] ");
             borderImageSlider.setTitleColor(Color.black);
+            borderImageSlider.setTitleFont(MipavUtil.font12B);
             borderImageSlider.setBorder(new EtchedBorder());
             panelImageSlider.setBorder(borderImageSlider);
-
-            tDim = extents[3];
+ 
             tImageSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 50);
             tImageSlider.setMinorTickSpacing(Math.round(100.0f / (tDim - 1)));
             tImageSlider.setSnapToTicks(true);
