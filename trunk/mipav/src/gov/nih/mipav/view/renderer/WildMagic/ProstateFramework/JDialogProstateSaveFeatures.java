@@ -1358,6 +1358,7 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 			
             
 			resultImage[0].setImageNameArray(imageNameArray);
+			
 			classificationImage[0].setImageNameArray(imageNameArray);
 
 			if (image.isColorImage()) {
