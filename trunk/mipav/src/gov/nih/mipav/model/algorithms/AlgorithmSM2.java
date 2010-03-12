@@ -2,6 +2,7 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.file.*;
 
 import gov.nih.mipav.view.*;
 
@@ -132,14 +133,71 @@ public class AlgorithmSM2 extends AlgorithmBase {
         float destArray[];
         int j;
         // If true, run a self test of NLConstrainedEngine.java
-        boolean fullTest = false;
+        boolean nlConstrainedEngineTest = false;
+        boolean selfTest = false;
         int voiCount;
         double delT;
         long normalTerminations = 0;
         long abnormalTerminations = 0;
         
-        if (fullTest) {
+        if (selfTest) {
+        	int i;
+            String fileList[] = new String[661];
+            String seq;
+            String zero = "0";
+            String baseString = "dcemri_testversion4_";
+            String ext = ".dcm";
+            String selectedFileName;
+            boolean performSort = false;
+            FileIO fileIO;
+            ModelImage dceImage;
+            double dceData[];
+            int sliceSize;
+            int dataSize;
+            
+            xDim = 60;
+            yDim = 200;
+            sliceSize = xDim * yDim;
+            tDim = 661;
+            dataSize = sliceSize * tDim;
+            dceData = new double[dataSize];
+            for (i = 1; i <= 661; i++) {
+               seq = String.valueOf(i);
+               while (seq.length() < 3) {
+            	   seq = zero.concat(seq);
+               }
+               fileList[i-1] = baseString + seq + ext;
+            } // for (i = 1; i <= 661; i++)
+            selectedFileName = fileList[0];
+            fileIO = new FileIO();
+            fileIO.setFileDir("C:" + File.separator + "DCE_MRI" + File.separator + "QIBA_v4" + File.separator +
+                    "Dynamic_v4" + File.separator + "DICOM" + File.separator);
+            dceImage = fileIO.readDicom(selectedFileName, fileList, performSort);
+            try {
+            	dceImage.exportData(0, dataSize, dceData);
+            }
+            catch(IOException e) {
+            	MipavUtil.displayError("IOException on dceImage.exportData(0, dataSize, decData)");
+        		setCompleted(false);
+        		return;	
+            }
+            //dceImage.calcMinMax();
+            //new ViewJFrameImage(dceImage);
+            dceImage.disposeLocal();
+            dceImage = null;
+            
+            r1ptj = new double[tDim];
+            r1pt0 = dceData[190*60];
+            for (t = 0; t < tDim; t++) {
+              r1ptj[t] = dceData[t*sliceSize + 190*60] - r1pt0;	
+            }
+            setCompleted(false);
+            return;
+        } if (selfTest)
+        
+        if (nlConstrainedEngineTest) {
         	new FitAll();
+        	setCompleted(false);
         	return;
         }
         
