@@ -411,6 +411,7 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
                                     float[] centroids) {
         super(null, srcImg);
         image = srcImage;
+        
         destImage = destImg;
         classificationImage = classImage;
         this.windowSize = windowSize;
