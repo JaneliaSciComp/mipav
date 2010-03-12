@@ -18,7 +18,11 @@ import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.border.LineBorder;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
@@ -27,6 +31,7 @@ import gov.nih.mipav.model.file.FileInfoImageXML;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ScrollCorrector;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
@@ -73,6 +78,12 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
     
     private JComboBox surfaceFileSamplingCB;
     
+    private float[] r7_27Coord;
+    
+private JTextArea outputTextArea;
+    
+    private JScrollPane scrollPane;
+    
     
 	//private File retinalRegistrationInfoFile;
 	
@@ -97,11 +108,11 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Standard Column Registration v1.7");
+        setTitle("Drosophila Standard Column Registration v2.0");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
         
-        imageLabel = new JLabel("Result Image ");
+        imageLabel = new JLabel("Image ");
         imageFilePathTextField = new JTextField(35);
         imageFilePathTextField.setEditable(false);
         imageFilePathTextField.setBackground(Color.white);
@@ -133,6 +144,17 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         surfaceFileSamplingCB.addItem("0.5");
         surfaceFileSamplingCB.addItem("0.25");
         surfaceFileSamplingCB.setSelectedIndex(1);
+        
+        
+        outputTextArea = new JTextArea();
+        outputTextArea.setRows(15);
+		outputTextArea.setEditable(false);
+		outputTextArea.setBackground(Color.lightGray);
+		outputTextArea.setBorder(new LineBorder(Color.black));
+		outputTextArea.setForeground(Color.black);
+		scrollPane = new JScrollPane(outputTextArea, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        
+		scrollPane.getVerticalScrollBar().addAdjustmentListener(new ScrollCorrector());
         
         
         //minimizeInterpCheckBox = new JCheckBox("Minimize Interpolation");
@@ -184,6 +206,12 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         gbc.gridx = 1;
         gbc.anchor = GridBagConstraints.WEST;
         mainPanel.add(surfaceFileSamplingCB,gbc);
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.gridwidth = 3;
+        mainPanel.add(scrollPane,gbc);
         //gbc.anchor = GridBagConstraints.CENTER;
         //mainPanel.add(minimizeInterpCheckBox,gbc);
         //gbc.anchor = GridBagConstraints.EAST;
@@ -210,7 +238,9 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         
         pack();
         setMinimumSize(getSize());
+        
         setVisible(true);
+        setResizable(false);
         
         //hard coding for testing
         //currDir = "C:\\images\\nichd\\points\\neuron1\\resultImage_nlt_1.ics";
@@ -246,7 +276,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 		        if (currDir != null) {
 					chooser.setCurrentDirectory(new File(currDir));
 		        }
-		        chooser.setDialogTitle("Choose transformation 1");
+		        chooser.setDialogTitle("Choose points file");
 		        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		        int returnValue = chooser.showOpenDialog(this);
 		        if (returnValue == JFileChooser.APPROVE_OPTION) {
@@ -297,7 +327,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 		        if (currDir != null) {
 					chooser.setCurrentDirectory(new File(currDir));
 		        }
-		        chooser.setDialogTitle("Choose surface file");
+		        chooser.setDialogTitle("Choose filament file");
 		        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		        int returnValue = chooser.showOpenDialog(this);
 		        if (returnValue == JFileChooser.APPROVE_OPTION) {
@@ -325,10 +355,10 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	
 	private boolean readSurfaceFile(File surfaceFile) {
 		boolean success = true;
-		
+		RandomAccessFile raFile = null;
 		try {
 
-			RandomAccessFile raFile = new RandomAccessFile(surfaceFile, "r");
+			raFile = new RandomAccessFile(surfaceFile, "r");
 			
 			String line;
 			
@@ -425,6 +455,13 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 			raFile.close();
 			
 		}catch(Exception e) {
+			try {
+				if(raFile != null) {
+					raFile.close();
+				}
+			}catch(Exception ex) {
+				
+			}
 			e.printStackTrace();
 			return false;
 		}
@@ -455,7 +492,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	 */
 	protected void callAlgorithm() {
 		float samplingRate = Float.valueOf((String)surfaceFileSamplingCB.getSelectedItem()).floatValue();
-		alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,allFilamentCoords,surfaceFile,samplingRate,cityBlockImage);
+		alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,allFilamentCoords,surfaceFile,samplingRate,cityBlockImage,pointsFile,outputTextArea);
 		alg.addListener(this);
 		setCursor(new Cursor(Cursor.WAIT_CURSOR));
 		
@@ -478,9 +515,10 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	 * @return
 	 */
 	private boolean readPointsFile(File pointsFile) {
+		RandomAccessFile raFile = null;
 		try {
 			pointsMap = new TreeMap<Integer, float[]>();
-            RandomAccessFile raFile = new RandomAccessFile(pointsFile, "r");
+            raFile = new RandomAccessFile(pointsFile, "r");
             String[] arr;
             String[] arr2;
             String line;
@@ -525,11 +563,19 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
             		counter++;
             	}
             }
+            raFile.close();
             if(pointsMap.size() != 27) {
             	return false;
             }
             return true;
 		}catch(Exception e) {
+			try {
+				if(raFile != null) {
+					raFile.close();
+				}
+			}catch(Exception ex) {
+				
+			}
 			e.printStackTrace();
 			return false;
 		}
@@ -653,7 +699,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 		 
 		 
 		 
-		 //ArrayList<int[]> twoCoords = new ArrayList<int[]>();
+
 		 for(int i=0;i<oneCoords.size();i++) {
 				int[] oneCoord = oneCoords.get(i);
 				int oneX = oneCoord[0];
@@ -671,47 +717,27 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 				
 				if ((cityBlockImage.get(oneXPlus1, oneY, oneZ)).byteValue() == 100) {
 					cityBlockImage.set(oneXPlus1,oneY,oneZ,2);
-					int[] arr = {oneXPlus1,oneY,oneZ};
-					//twoCoords.add(arr);
 				}
 				if ((cityBlockImage.get(oneXMinus1, oneY, oneZ)).byteValue() == 100) {
 					cityBlockImage.set(oneXMinus1,oneY,oneZ,2);
-					int[] arr = {oneXMinus1,oneY,oneZ};
-					//twoCoords.add(arr);
 				}
 				if ((cityBlockImage.get(oneX, oneYPlus1, oneZ)).byteValue() == 100) {
 					cityBlockImage.set(oneX,oneYPlus1,oneZ,2);
-					int[] arr = {oneX,oneYPlus1,oneZ};
-					//twoCoords.add(arr);
 				}
 				if ((cityBlockImage.get(oneX, oneYMinus1, oneZ)).byteValue() == 100) {
 					cityBlockImage.set(oneX,oneYMinus1,oneZ,2);
-					int[] arr = {oneX,oneYMinus1,oneZ};
-					//twoCoords.add(arr);
 				}
 				if ((cityBlockImage.get(oneX, oneY, oneZPlus1)).byteValue() == 100) {
 					cityBlockImage.set(oneX,oneY,oneZPlus1,2);
-					int[] arr = {oneX,oneY,oneZPlus1};
-					//twoCoords.add(arr);
 				}
 				if ((cityBlockImage.get(oneX, oneY, oneZMinus1)).byteValue() == 100) {
 					cityBlockImage.set(oneX,oneY,oneZMinus1,2);
-					int[] arr = {oneX,oneY,oneZMinus1};
-					//twoCoords.add(arr);
 				}
-			 }
-		 
-		 
-		 
+		 }
+
 		 cityBlockImage.calcMinMax();
 		 
          //new ViewJFrameImage(cityBlockImage);                                     
-        
-        
-
-				 
-	
-	
 	}
         
 		
@@ -726,9 +752,14 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	 * algorithm performed
 	 */
 	public void algorithmPerformed(AlgorithmBase algorithm) {
-		System.out.println("Finished");
-		setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-		dispose();
+		if(alg.isCompleted()) {
+			setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+			 OKButton.setEnabled(false);
+			 cancelButton.setText("Close");
+			 
+			 outputTextArea.append("Finished" + "\n");
+		}
+		
 	}
 	
 	

@@ -1331,6 +1331,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         }
 
         if (spline != null) {
+        	System.out.println("in here");
             spline.run();
             resultImage = spline.getResultImage();
 
@@ -1348,6 +1349,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         }
 
         if (doRotateCenter) {
+        	Preferences.debug("useSACenter = " + useSACenter + "\n");
             center = resampleImage.getImageCentermm(useSACenter);
         }
 
@@ -1360,9 +1362,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             algoTrans.setFillValue(fillValue);
             algoTrans.setUpdateOriginFlag(doUpdateOrigin);
         } else { // ((image.getNDims() >= 3) && (!do25D))
-            Preferences.debug("oXres, oYres, oZres = " + oXres + ", " + oYres + ", " + oZres);
-            Preferences.debug(" oXdim, oYdim, oZdim = " + oXdim + ", " + oYdim + ", " + oZdim + "\n");
-            Preferences.debug("xfrm = " + xfrm);
+
             algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oZres, oXdim, oYdim, oZdim, units,
                     doVOI, doClip, doPad, doRotateCenter, center);
             algoTrans.setFillValue(fillValue);
@@ -1626,6 +1626,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                     transMat.Mult(fileTransMatrix);
                     xfrm = transMat;
                 } else if (transformSource.equals("user")) {
+                	System.out.println("aaa");
                     final double[][] xMat = new double[4][4];
 
                     for (int i = 0; i < 4; i++) {
@@ -1634,6 +1635,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                     transMat.copyMatrix(xMat);
                     xfrm = transMat;
                 } else if (transformSource.equals("self")) {
+                	System.out.println("bbb");
                     transMat.MakeIdentity();
                     xfrm = transMat;
                     if (image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {

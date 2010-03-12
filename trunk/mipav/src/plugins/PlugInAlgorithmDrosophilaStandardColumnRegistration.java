@@ -15,6 +15,8 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Vector;
 
+import javax.swing.JTextArea;
+
 import WildMagic.LibFoundation.Curves.BSplineBasisDiscretef;
 import WildMagic.LibFoundation.Curves.BSplineBasisf;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -31,6 +33,7 @@ import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoImageXML;
 import gov.nih.mipav.model.file.FileUtility;
+import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.BSplineLattice3Df;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelSimpleImage;
@@ -210,14 +213,28 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     
     private int[] neuronImageExtents;
     
+    private float[] r7_27Coord;
     
+    private float[] r7_27Coord_transformed;
+    
+   // private float r7DiffX, r7DiffY, r7DiffZ;
+    
+    private boolean r7CenterPointFound = false;
+    
+    private ArrayList<float[]> inputPointsList = new ArrayList<float[]>();
+    
+    private ArrayList<float[]> transformedPointsList = new ArrayList<float[]>();
+    
+    private File pointsFile;
+    
+    private JTextArea outputTextArea;
     
     /**
      * constuctor
      * @param neuronImage
      * @param pointsMap
      */
-	public PlugInAlgorithmDrosophilaStandardColumnRegistration(ModelImage neuronImage, TreeMap<Integer, float[]> pointsMap, ArrayList <ArrayList<float[]>> allFilamentCoords, File oldSurfaceFile, float samplingRate, ModelImage cityBlockImage) {
+	public PlugInAlgorithmDrosophilaStandardColumnRegistration(ModelImage neuronImage, TreeMap<Integer, float[]> pointsMap, ArrayList <ArrayList<float[]>> allFilamentCoords, File oldSurfaceFile, float samplingRate, ModelImage cityBlockImage, File pointsFile, JTextArea outputTextArea) {
 		this.neuronImage = neuronImage;
 		this.neuronImageExtents = neuronImage.getExtents();
 		dir = neuronImage.getImageDirectory();
@@ -263,6 +280,9 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		this.oldSurfaceFile = oldSurfaceFile;
 		this.samplingRate = samplingRate;
 		this.cityBlockImage = cityBlockImage;
+		this.pointsFile = pointsFile;
+		this.outputTextArea = outputTextArea;
+
 		
 	}
 	
@@ -272,6 +292,8 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	 * run algorithm
 	 */
 	public void runAlgorithm() {
+		outputTextArea.append("Running Algorithm v2.0" + "\n");
+
 		long begTime = System.currentTimeMillis();
 		
 		 int[] extents = {512,512,512};
@@ -520,18 +542,33 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		 neuronImage_grey.registerVOI(newPtVOI);
 		 curves = newPtVOI.getCurves();
 		 int key;
+		 float[] f;
 		 for(int i=0;i<pointsMap.size();i++) {
 			 key = i + 1;
 			 if(pointsMap.get(new Integer(key)) != null) {
 				 x[0] = Math.round(pointsMap.get(new Integer(key))[0]/resols[0]);
 		         y[0] = Math.round(pointsMap.get(new Integer(key))[1]/resols[1]);
 		         z[0] = Math.round(pointsMap.get(new Integer(key))[2]/resols[2]);
+		         if(i == pointsMap.size()-1) {
+		        	 //this is the r7 center point!!
+		        	 r7_27Coord = new float[3];
+		        	 r7_27Coord[0] = x[0];
+		        	 r7_27Coord[1] = y[0];
+		        	 r7_27Coord[2] = z[0];
+		         }
+		         f = new float[3];
+		         f[0] = x[0];
+		         f[1] = y[0];
+		         f[2] = z[0];
+		         inputPointsList.add(f);
 			 }else{
 				 removePointsLabels.add(String.valueOf(key));
 				 x[0] = 10;
 		         y[0] = 10;
 		         z[0] = 10; 
+		         inputPointsList.add(null);
 			 }
+			 transformedPointsList.add(null);
 	         newPtVOI.importCurve(x, y, z, (int)z[0]);
 		 }
 		 
@@ -661,25 +698,19 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
          float seconds = ((float) diffTime) / 1000;
 
 
-         System.out.println("** Algorithm took " + seconds + " seconds \n");
+         outputTextArea.append("** Algorithm took " + seconds + " seconds \n");
          
          
 		 setCompleted(true);
 	}
 	
 	
-	/**
-	 * applies the patrices to the original color image to produce the final image
-	 */
-	private void applyMatricesOnColorImage() {
-		System.out.println("Applying transformation matrices to original color image");
-	}
-	
+
 	/**
 	 * calls the non-linear thin plate spline alg
 	 */
 	private void thinPlateSplineAlg() {
-		System.out.println("Calling Non Linear Thin Plate Spline Registration");
+		outputTextArea.append("Calling Non Linear Thin Plate Spline Registration" + "\n");
 		int nPtsA = 0; // = standardColumnImage.getVOIs().size();
         int nPtsB = 0; // = resultImage1.getVOIs().size()
         Vector3f[] tmpptA = null;
@@ -836,16 +867,16 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	 */
 	private void thinPlateSplineAlgorithmPerformed() {
 		//resultImage2 = spline.getResultImage();
-		thinPlateSplineMatrixFileName = "nonlinearThinPlateSpline-" + resultImage1.getImageName() + "_To_" + standardColumnImage.getImageName() + ".tps";
-		spline.saveMatrix(dir + thinPlateSplineMatrixFileName, null);
+		//thinPlateSplineMatrixFileName = "nonlinearThinPlateSpline-" + resultImage1.getImageName() + "_To_" + standardColumnImage.getImageName() + ".tps";
+		//spline.saveMatrix(dir + thinPlateSplineMatrixFileName, null);
 		/*ModelImage resImg = spline.getResultImage();
 		if(resImg != null) {
 			resImg.disposeLocal();
 			resImg = null;
 	    }*/
-		spline.finalize();
-        spline = null;
-		System.out.println("Saving nonlinear thin plate spline transformation matrix as " + dir + thinPlateSplineMatrixFileName);
+		//spline.finalize();
+        //spline = null;
+        //outputTextArea.append("Saving nonlinear thin plate spline transformation matrix as " + dir + thinPlateSplineMatrixFileName + "\n");
 		if(resultImage1 != null) {
        	 resultImage1.disposeLocal();
        	 resultImage1 = null;
@@ -861,7 +892,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	 * calls rigid least squared alg
 	 */
 	private void leastSquaredAlg() {
-		System.out.println("Calling Rigid Least Squared Registration");
+		outputTextArea.append("Calling Rigid Least Squared Registration" + "\n");
 		int nPtsA = 0; // = standardColumnImage.getVOIs().size();
         int nPtsB = 0; // = neuronImage.getVOIs().size()
         Vector3f[] tmpptA = null;
@@ -962,8 +993,8 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	private void leastSquaredAlgorithmPerformed() {
 		lsMatrix = LSMatch.getTransformBtoA();
 		leastSquaresMatrixFileName = "rigidLeastSquares-" + neuronImage_grey.getImageName() +"_To_" + standardColumnImage.getImageName() + ".mtx";
-		lsMatrix.saveMatrix(dir + leastSquaresMatrixFileName);
-		System.out.println("Saving rigid least squares transformation matrix as " + dir + leastSquaresMatrixFileName);
+		//lsMatrix.saveMatrix(dir + leastSquaresMatrixFileName);
+		//outputTextArea.append("Saving rigid least squares transformation matrix as " + dir + leastSquaresMatrixFileName + "\n");
 		LSMatch.calculateResiduals();
 		xdimA = standardColumnImage.getExtents()[0];
 		ydimA = standardColumnImage.getExtents()[1];
@@ -1035,7 +1066,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 				 yPt[0] = (float)MipavMath.round(tPt.Y/neuronImage_grey.getResolutions(0)[1]);
 				 zPt[0] = (float)MipavMath.round(tPt.Z/neuronImage_grey.getResolutions(0)[2]);
 				 if(xPt[0] < 0 || yPt[0] < 0 || zPt[0] < 0 || xPt[0] > neuronImage_grey.getExtents()[0]-1 || yPt[0] > neuronImage_grey.getExtents()[1]-1 || zPt[0] > neuronImage_grey.getExtents()[2]-1) {
-					 System.out.println("neuron image point after rigid least squares alg is out of bounds - " + label);
+					 outputTextArea.append("neuron image point after rigid least squares alg is out of bounds - " + label + "\n");
 					 indexAL_std.add(new Integer(j));
 					 sliceAL_std.add(new Integer(s));
 					 labelAL_std.add(label);
@@ -1076,7 +1107,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 					 for(int i=0;i<labelAL_std.size();i++) {
 						 removeLabel = labelAL_std.get(i);
 						 if(label.equals(removeLabel)) {
-							 System.out.println("removing point from standard column image - " + label);
+							 outputTextArea.append("removing point from standard column image - " + label + "\n");
 							 voi.removeCurve(j, s); 
 						 }
 					 }
@@ -1221,7 +1252,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
          }
 		 
          byte r,g,b;
-         AlgorithmTPSpline spline2;
+         /*AlgorithmTPSpline spline2;
          RandomAccessFile raFile2;
          File f2;
         try {
@@ -1231,19 +1262,23 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	        spline2.readMatrix(raFile2);
         }catch(Exception e) {
         	e.printStackTrace();
+        	
         	return;
-        }
+        }*/
          
          
         long begTime = 0;
         int[] extents2 = neuronImage.getExtents();
         float[] finalImageRes = finalImage.getResolutions(0);
         int[] finalImageExts = finalImage.getExtents();
-        
+        float diffX,diffY,diffZ;
+		float diffTotal;
+		
 		//loop through each point in result image
 		 for(float z=0;z<512;z=z+samplingRate) {
 			 if((float)Math.floor(z) == z) {
-			 		System.out.println("z is " +  z);
+				 outputTextArea.append("z is " +  z + "\n");
+				 //System.out.println("z is " +  z);
 			 		begTime = System.currentTimeMillis();
 			 		if(z%5 == 0) {
 			 			System.gc();
@@ -1258,8 +1293,9 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 					 float yFloor = (float)Math.floor(y);
 					 float zFloor = (float)Math.floor(z);
 					 
-					 tPt1 = spline2.getCorrespondingPoint(x, y, z);
+					 tPt1 = spline.getCorrespondingPoint(x, y, z);
 
+				
 					 
 					 xmm = tPt1[0] * finalImageRes[0];
 					 ymm = tPt1[1] * finalImageRes[1];
@@ -1295,16 +1331,71 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 								 rgb_short[0] = (short)(rgb[0] & 0xff);
 								 rgb_short[1] = (short)(rgb[1] & 0xff);
 								 rgb_short[2] = (short)(rgb[2] & 0xff);
+								 
+								 
+								 
+								 
 							 }
 							 
-
+							 //if(!r7CenterPointFound) {
+								 //determine if point is the r7_center point transformed
+								 diffX = Math.abs(tPt2[0] - r7_27Coord[0]);
+								 diffY = Math.abs(tPt2[1] - r7_27Coord[1]);
+								 diffZ = Math.abs(tPt2[2] - r7_27Coord[2]);
+									
+								 diffTotal = (diffX * diffX) + (diffY * diffY) + (diffZ * diffZ);
+								 
+								 if(diffTotal < toleranceSq) {
+									 if(r7_27Coord_transformed == null || (r7_27Coord_transformed != null && r7_27Coord_transformed[3] > diffTotal)) {
+										 r7_27Coord_transformed = new float[4];
+										 r7_27Coord_transformed[0] = x * finalImage.getResolutions(0)[0]; 
+										 r7_27Coord_transformed[1] = y * finalImage.getResolutions(0)[1]; 
+										 r7_27Coord_transformed[2] = z * finalImage.getResolutions(0)[2];
+										 r7_27Coord_transformed[3] = diffTotal;
+										 //r7DiffX = x * finalImage.getResolutions(0)[0]; 
+										 //r7DiffY = y * finalImage.getResolutions(0)[1]; 
+										 //r7DiffZ = z * finalImage.getResolutions(0)[2]; 
+										 r7CenterPointFound = true;
+									 }
+								 }
+							 //}
+							 
+							 
+							 
+							 for(int i=0;i<inputPointsList.size();i++) {
+								 float[] f = inputPointsList.get(i);
+								 if(f != null) {
+									 
+									 diffX = Math.abs(tPt2[0] - f[0]);
+									 diffY = Math.abs(tPt2[1] - f[1]);
+									 diffZ = Math.abs(tPt2[2] - f[2]);
+									 
+									 diffTotal = (diffX * diffX) + (diffY * diffY) + (diffZ * diffZ);
+									 
+									 if(diffTotal < toleranceSq) {
+										float[] ft = transformedPointsList.get(i);
+										if(ft == null || (ft != null && ft[3] > diffTotal)) {
+											float[] fTrans = new float[4];
+											fTrans[0] = x * finalImage.getResolutions(0)[0]; 
+											fTrans[1] = y * finalImage.getResolutions(0)[1]; 
+											fTrans[2] = z * finalImage.getResolutions(0)[2];
+											fTrans[3] = diffTotal;
+											transformedPointsList.set(i, fTrans);
+										}
+									 }
+									 
+								 }
+							 }
+							 
+							 
+							 
+							 
+							 
 							 
 							 //Calculating new surface file points!!!!!
-							 
-							 
 							 if(cityBlockImage.getByte((int)(tPt2[0]+0.5f),(int)(tPt2[1]+0.5f),(int)(tPt2[2]+0.5f)) != 100) {
-								 float diffX,diffY,diffZ;
-								 float diffTotal;
+								 //float diffX,diffY,diffZ;
+								 //float diffTotal;
 								 ArrayList<float[]> al;
 								 ArrayList<float[]> al_new;
 								 float[] coords;
@@ -1315,9 +1406,9 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 									 alSize = al.size();
 									 for(int k=0;k<alSize;k++) {
 										 coords = al.get(k);
-										 if(coords[3] == 1) {
-											 continue;
-										 }
+										 //if(coords[3] == 1) {
+											 //continue;
+										// }
 										 diffX = Math.abs(tPt2[0] - coords[0]);
 										 diffY = Math.abs(tPt2[1] - coords[1]);
 										 diffZ = Math.abs(tPt2[2] - coords[2]);
@@ -1325,10 +1416,14 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 										 diffTotal = (diffX * diffX) + (diffY * diffY) + (diffZ * diffZ);
 										 
 										 if(diffTotal < toleranceSq) {
-											 float[] nCoords = {x,y,z};
-											    al_new = allFilamentCoords_newCoords.get(i);
-											    al_new.set(k, nCoords);
-												coords[3] = 1;
+											 float[] nCoords = {x,y,z,diffTotal};
+											 al_new = allFilamentCoords_newCoords.get(i);
+											 float[] ft = al_new.get(k);
+											 if(ft == null || (ft != null && ft[3] > diffTotal)) {
+												 al_new.set(k, nCoords);
+											 }
+											    
+												//coords[3] = 1;
 										 } 
 									 }
 									 
@@ -1393,53 +1488,104 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		 
 	     
 	     FileInfoImageXML[] fileInfoBases = new FileInfoImageXML[finalImage.getExtents()[2]];
+	     float[] f = null;;
+	     if(r7_27Coord_transformed != null) {
+	    	 f = new float[3];
+	    	 f[0] = -r7_27Coord_transformed[0];
+	    	 f[1] = -r7_27Coord_transformed[1];
+	    	 f[2] = -r7_27Coord_transformed[2];
+	     }
 		 for (int i = 0; i < fileInfoBases.length; i++) {
 	            fileInfoBases[i] = new FileInfoImageXML(finalImage.getImageName(), null, FileUtility.XML);
 	            fileInfoBases[i].setUnitsOfMeasure(neuronImage.getFileInfo()[0].getUnitsOfMeasure());
 	            fileInfoBases[i].setResolutions(finalImageResols);
 	            fileInfoBases[i].setExtents(neuronImage.getExtents());
-	            fileInfoBases[i].setOrigin(neuronImage.getFileInfo()[0].getOrigin());
+	            if(r7_27Coord_transformed != null) {
+	            	
+	            	fileInfoBases[i].setOrigin(f);
+	            }else {
+	            	fileInfoBases[i].setOrigin(neuronImage.getFileInfo()[0].getOrigin());
+	            }
+	            
 	            fileInfoBases[i].setDataType(ModelStorageBase.ARGB);
 
 	     }
 		 
+		 if(r7_27Coord_transformed != null) {
+			 outputTextArea.append("Setting new origin of standardized image to transformed r7 center point" + "\n");
+		 }
+		 
 		 finalImage.setFileInfo(fileInfoBases);
 		 finalImage.calcMinMax();
 		 
-		 new ViewJFrameImage(finalImage);
+		 FileIO fileIO = new FileIO();
+	     fileIO.setQuiet(true);
+	     FileWriteOptions opts = new FileWriteOptions(true);
+	     opts.setFileType(FileUtility.ICS);
+	     opts.setFileDirectory(dir);
+	     String finalImageFileName = "finalStandardizedImage";
+	     opts.setFileName(finalImageFileName + ".ics");
+	     opts.setBeginSlice(0);
+         opts.setEndSlice(511);
+         opts.setOptionsSet(true);
+	     fileIO.writeImage(finalImage, opts);
+	     outputTextArea.append("Saving final standardized image as " + dir + finalImageFileName + ".ics" + "\n");
 		 
 		 
-		 /*float tPt3[] = new float[3];
-		 //outout the new surface points
-		 for(int i=0;i<allFilamentCoords_newCoords.size();i++) {
-         	//Vector<float[]> filCoords = allFilamentCoords.get(i);
-         	ArrayList<float[]> filCoords = allFilamentCoords_newCoords.get(i);
-         	
-         	
-         	//Vector<float[]> filNorms = allFilamentNorms.get(i);
-         	System.out.println(i);
-         	System.out.println("ZZZZ " + filCoords.size());
-         	for(int k=0;k<filCoords.size();k++) {
+		 //new ViewJFrameImage(finalImage);
 
-         		float[] filCoord = filCoords.get(k);
-
-         		if(filCoord != null) {
-	         		tPt3[0] = filCoord[0]*finalImage.getResolutions(0)[0];
-	         		tPt3[1] = filCoord[1]*finalImage.getResolutions(0)[1];
-	         		tPt3[2] = filCoord[2]*finalImage.getResolutions(0)[2];
-	
-	         		System.out.println("***** " + tPt3[0] + " " + tPt3[1] + " " + tPt3[2] + ",");
-         		}
-         			
-         	}
-
-         	System.out.println();
-            System.out.println();
-
-         }*/
-		 
 		 writeSurfaceFile();
-		 
+		 writeNewPointsFile();
+	}
+	
+	
+	private boolean writeNewPointsFile() {
+		boolean success = true;
+		
+		String parentDir = pointsFile.getParent();
+		String newName = pointsFile.getName().substring(0, pointsFile.getName().indexOf(".")) +  "_transformedCoordinates.txt"; 
+		outputTextArea.append("Saving new transformed coordinates file as " + parentDir + File.separator + newName + "\n");
+		
+		try {
+
+			File newPointsCoordinatesFile = new File(parentDir + File.separator + newName);
+			FileWriter fw = new FileWriter(newPointsCoordinatesFile);
+			BufferedWriter bw = new BufferedWriter(fw);
+			for(int i=0;i<transformedPointsList.size();i++) {
+				float[] f = transformedPointsList.get(i);
+				String ind = String.valueOf(i+1);
+				if(i==0) {
+					bw.write("top");
+					bw.newLine();
+				}
+				
+				if(i==9) {
+					bw.write("r8");
+					bw.newLine();
+				}
+				
+				if(i==18) {
+					bw.write("r7");
+					bw.newLine();
+				}
+				
+				bw.write(ind + ":");
+				if(f != null) {
+					bw.write((f[0]-r7_27Coord_transformed[0]) + "," + (f[1]-r7_27Coord_transformed[1]) + "," + (f[2]-r7_27Coord_transformed[2]));
+					bw.newLine();
+				}else {
+					bw.newLine();
+				}
+			}
+			bw.close();
+			fw.close();
+			
+		}catch(Exception e) {
+			
+		}
+		
+		
+		return true;
 	}
 	
 	
@@ -1452,7 +1598,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		
 		String parentDir = oldSurfaceFile.getParent();
 		String newName = oldSurfaceFile.getName().substring(0, oldSurfaceFile.getName().indexOf(".")) +  "_standardized.iv"; 
-		System.out.println("Saving new filament file as " + parentDir + File.separator + newName);
+		outputTextArea.append("Saving new filament file as " + parentDir + File.separator + newName + "\n");
 		try {
 			RandomAccessFile raFile = new RandomAccessFile(oldSurfaceFile, "r");
 			File newSurfaceFile = new File(parentDir + File.separator + newName);
@@ -1478,10 +1624,16 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 			         		float[] filCoord = filCoords.get(k);
 
 			         		if(filCoord != null) {
-				         		tPt3[0] = filCoord[0]*finalImage.getResolutions(0)[0];
-				         		tPt3[1] = filCoord[1]*finalImage.getResolutions(0)[1];
-				         		tPt3[2] = filCoord[2]*finalImage.getResolutions(0)[2];
-				
+			         			if(r7CenterPointFound) {
+					         		tPt3[0] = (filCoord[0]*finalImage.getResolutions(0)[0]) - r7_27Coord_transformed[0];
+					         		tPt3[1] = (filCoord[1]*finalImage.getResolutions(0)[1]) - r7_27Coord_transformed[1];
+					         		tPt3[2] = (filCoord[2]*finalImage.getResolutions(0)[2]) - r7_27Coord_transformed[2];
+			         			}else {
+			         				tPt3[0] = filCoord[0]*finalImage.getResolutions(0)[0];
+					         		tPt3[1] = filCoord[1]*finalImage.getResolutions(0)[1];
+					         		tPt3[2] = filCoord[2]*finalImage.getResolutions(0)[2];
+			         			}
+
 				         		//System.out.println("***** " + tPt3[0] + " " + tPt3[1] + " " + tPt3[2] + ",");
 				         		
 				         		bw.write(tPt3[0] + " " + tPt3[1] + " " + tPt3[2] + ",");
