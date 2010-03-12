@@ -90,11 +90,19 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
     
     private JTextField textMaxConstr0;
     
+    private JLabel labelInitial0;
+    
+    private JTextField textInitial0;
+    
     private JLabel labelMinConstr1;
     
     private JTextField textMinConstr1;
     
     private JLabel labelMaxConstr1;
+    
+    private JLabel labelInitial1;
+    
+    private JTextField textInitial1;
     
     private JTextField textMaxConstr1;
     
@@ -106,8 +114,13 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
     
     private JTextField textMaxConstr2;
     
+    private JLabel labelInitial2;
+    
+    private JTextField textInitial2;
+    
     private double min_constr[] = new double[3];
     private double max_constr[] = new double[3];
+    private double initial[] = new double[3];
 
     
     /** DOCUMENT ME! */
@@ -479,10 +492,13 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         String delim = ",";
         String defaultsString = min_constr[0] + delim;
         defaultsString += max_constr[0] + delim;
+        defaultsString += initial[0] + delim;
         defaultsString += min_constr[1] + delim;
         defaultsString += max_constr[1] + delim;
+        defaultsString += initial[1] + delim;
         defaultsString += min_constr[2] + delim;
         defaultsString += max_constr[2] + delim;
+        defaultsString += initial[2] + delim;
         defaultsString += tissueImage.getImageFileName();
 
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
@@ -501,14 +517,20 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         textMinConstr0.setText(String.valueOf(min_constr[0]));
         max_constr[0] = scriptParameters.getParams().getDouble("max_constr0");
         textMaxConstr0.setText(String.valueOf(max_constr[0]));
+        initial[0] = scriptParameters.getParams().getDouble("initial0");
+        textInitial0.setText(String.valueOf(initial[0]));
         min_constr[1] = scriptParameters.getParams().getDouble("min_constr1");
         textMinConstr1.setText(String.valueOf(min_constr[1]));
         max_constr[1] = scriptParameters.getParams().getDouble("max_constr1");
         textMaxConstr1.setText(String.valueOf(max_constr[1]));
+        initial[1] = scriptParameters.getParams().getDouble("initial1");
+        textInitial1.setText(String.valueOf(initial[1]));
         min_constr[2] = scriptParameters.getParams().getDouble("min_constr2");
         textMinConstr2.setText(String.valueOf(min_constr[2]));
         max_constr[2] = scriptParameters.getParams().getDouble("max_constr2");
         textMaxConstr2.setText(String.valueOf(max_constr[2]));
+        initial[2] = scriptParameters.getParams().getDouble("initial2");
+        textInitial2.setText(String.valueOf(initial[2]));
         tissueImage = scriptParameters.retrieveImage("tissue_image");
         textTissueFile.setText(tissueImage.getImageFileName());
     }
@@ -523,10 +545,13 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         
         scriptParameters.getParams().put(ParameterFactory.newParameter("min_constr0", min_constr[0]));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_constr0", max_constr[0]));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("initial0", initial[0]));
         scriptParameters.getParams().put(ParameterFactory.newParameter("min_constr1", min_constr[1]));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_constr1", max_constr[1]));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("initial1", initial[1]));
         scriptParameters.getParams().put(ParameterFactory.newParameter("min_constr2", min_constr[2]));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_constr2", max_constr[2]));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("initial2", initial[2]));
     	try {
     	    scriptParameters.storeImage(tissueImage, "tissue_image");
     	}
@@ -575,7 +600,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
             }
             resultExtents[3] = 3;
             resultImage = new ModelImage(ModelStorageBase.FLOAT, resultExtents, image.getImageName() + "_params");
-            sm2Algo = new AlgorithmSM2(resultImage, image, min_constr, max_constr, tissueImage, timeVals);
+            sm2Algo = new AlgorithmSM2(resultImage, image, min_constr, max_constr, initial, tissueImage, timeVals);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -661,11 +686,25 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         gbc.gridx = 1;
         mainPanel.add(textMaxConstr0, gbc);
         
+        labelInitial0 = new JLabel("K_trans initial guess value (1.0E-5 - 0.99)");
+        labelInitial0.setForeground(Color.black);
+        labelInitial0.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        mainPanel.add(labelInitial0, gbc);
+        
+        textInitial0 = new JTextField(10);
+        textInitial0.setText("0.495");
+        textInitial0.setForeground(Color.black);
+        textInitial0.setFont(serif12);
+        gbc.gridx = 1;
+        mainPanel.add(textInitial0, gbc);
+        
         labelMinConstr1 = new JLabel("ve minimum allowed value (1.0E-5 - 0.99)");
         labelMinConstr1.setForeground(Color.black);
         labelMinConstr1.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 4;
         mainPanel.add(labelMinConstr1, gbc);
         
         textMinConstr1 = new JTextField(10);
@@ -679,7 +718,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         labelMaxConstr1.setForeground(Color.black);
         labelMaxConstr1.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 5;
         mainPanel.add(labelMaxConstr1, gbc);
         
         textMaxConstr1 = new JTextField(10);
@@ -689,11 +728,25 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         gbc.gridx = 1;
         mainPanel.add(textMaxConstr1, gbc);
         
+        labelInitial1 = new JLabel("ve initial guess value (1.0E-5 - 0.99)");
+        labelInitial1.setForeground(Color.black);
+        labelInitial1.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = 6;
+        mainPanel.add(labelInitial1, gbc);
+        
+        textInitial1 = new JTextField(10);
+        textInitial1.setText("0.495");
+        textInitial1.setForeground(Color.black);
+        textInitial1.setFont(serif12);
+        gbc.gridx = 1;
+        mainPanel.add(textInitial1, gbc);
+        
         labelMinConstr2 = new JLabel("vp minimum allowed value (0 - 0.99)");
         labelMinConstr2.setForeground(Color.black);
         labelMinConstr2.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 7;
         mainPanel.add(labelMinConstr2, gbc);
         
         textMinConstr2 = new JTextField(10);
@@ -707,7 +760,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         labelMaxConstr2.setForeground(Color.black);
         labelMaxConstr2.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 8;
         mainPanel.add(labelMaxConstr2, gbc);
         
         textMaxConstr2 = new JTextField(10);
@@ -717,6 +770,20 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         gbc.gridx = 1;
         mainPanel.add(textMaxConstr2, gbc);
         
+        labelInitial2 = new JLabel("vp initial guess value (0.0 - 0.99)");
+        labelInitial2.setForeground(Color.black);
+        labelInitial2.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = 9;
+        mainPanel.add(labelInitial2, gbc);
+        
+        textInitial2 = new JTextField(10);
+        textInitial2.setText("0.495");
+        textInitial2.setForeground(Color.black);
+        textInitial2.setFont(serif12);
+        gbc.gridx = 1;
+        mainPanel.add(textInitial2, gbc);
+        
         buttonTissueFile = new JButton("Choose 3D tissue R1 map");
         buttonTissueFile.setForeground(Color.black);
         buttonTissueFile.setFont(serif12B);
@@ -725,7 +792,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         buttonTissueFile.setPreferredSize(new Dimension(235, 30));
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 7;
+        gbc.gridy = 10;
         mainPanel.add(buttonTissueFile, gbc);
 
         textTissueFile = new JTextField();
@@ -738,7 +805,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         labelVOI.setForeground(Color.black);
         labelVOI.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy = 11;
         mainPanel.add(labelVOI, gbc);
         
         buttonVOIFile = new JButton("Open a sagittal sinus VOI file");
@@ -748,7 +815,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         buttonVOIFile.setActionCommand("VOIFile");
         buttonVOIFile.setPreferredSize(new Dimension(205, 30));
         gbc.fill = GridBagConstraints.NONE;
-        gbc.gridy = 9;
+        gbc.gridy = 12;
         mainPanel.add(buttonVOIFile, gbc);
         
         textVOIFile = new JTextField();
@@ -765,7 +832,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         buttonTimesFile.setPreferredSize(new Dimension(225, 30));
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 10;
+        gbc.gridy = 13;
         mainPanel.add(buttonTimesFile, gbc);
         
         textTimesFile = new JTextField();
@@ -816,6 +883,22 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         	return false;	
         }
         
+        tmpStr = textInitial0.getText();
+        initial[0] = Double.parseDouble(tmpStr);
+        
+        if (initial[0] < min_constr[0]) {
+        	MipavUtil.displayError("Initial K_trans must be at least " + min_constr[0]);
+        	textInitial0.requestFocus();
+        	textInitial0.selectAll();
+        	return false;
+        }
+        else if (initial[0] > max_constr[0]) {
+        	MipavUtil.displayError("Initial K_trans must not exceed " + max_constr[0]);
+        	textInitial0.requestFocus();
+        	textInitial0.selectAll();
+        	return false;	
+        }
+        
         tmpStr = textMinConstr1.getText();
         min_constr[1] = Double.parseDouble(tmpStr);
         
@@ -840,7 +923,23 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         	textMaxConstr1.requestFocus();
         	textMaxConstr1.selectAll();
         	return false;	
-        }	
+        }
+        
+        tmpStr = textInitial1.getText();
+        initial[1] = Double.parseDouble(tmpStr);
+        
+        if (initial[1] < min_constr[1]) {
+        	MipavUtil.displayError("Initial ve must be at least " + min_constr[1]);
+        	textInitial1.requestFocus();
+        	textInitial1.selectAll();
+        	return false;
+        }
+        else if (initial[1] > max_constr[1]) {
+        	MipavUtil.displayError("Initial ve must not exceed " + max_constr[1]);
+        	textInitial1.requestFocus();
+        	textInitial1.selectAll();
+        	return false;	
+        }
         
         tmpStr = textMinConstr2.getText();
         min_constr[2] = Double.parseDouble(tmpStr);
@@ -865,6 +964,22 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         	MipavUtil.displayError("Maximum vp must not exceed 0.99");
         	textMaxConstr2.requestFocus();
         	textMaxConstr2.selectAll();
+        	return false;	
+        }
+        
+        tmpStr = textInitial2.getText();
+        initial[2] = Double.parseDouble(tmpStr);
+        
+        if (initial[2] < min_constr[2]) {
+        	MipavUtil.displayError("Initial vp must be at least " + min_constr[2]);
+        	textInitial2.requestFocus();
+        	textInitial2.selectAll();
+        	return false;
+        }
+        else if (initial[2] > max_constr[2]) {
+        	MipavUtil.displayError("Initial vp must not exceed " + max_constr[2]);
+        	textInitial2.requestFocus();
+        	textInitial2.selectAll();
         	return false;	
         }
         
