@@ -136,15 +136,24 @@ public class JDialogLoadProstateMask extends JDialogBase implements AlgorithmInt
 			for ( int i = 0; i < sourceBuffer.length; i++ ) {
 				value = (Float)mask.get(i);
 				if ( value == 1 ) {
-						sourceBuffer[i] = 1.0;
+				    // sourceBuffer[i] = 1.0;
 				} else {
 					sourceBuffer[i] = 0.0;
 				}
 			}
 			
+			  ModelImage resultImage = (ModelImage)image.clone();
+		        resultImage.importData(0, sourceBuffer, true);
+		        resultImage.calcMinMax();
+		        resultImage.notifyImageDisplayListeners(null, true);
+		        
+		        new ViewJFrameImage(resultImage);
+			
 			image.importData(0, sourceBuffer, true);
 	        image.calcMinMax();
 	        image.notifyImageDisplayListeners(null, true);
+	        
+	      
 	        
 	        morphologyPostProcessing();
 	        
