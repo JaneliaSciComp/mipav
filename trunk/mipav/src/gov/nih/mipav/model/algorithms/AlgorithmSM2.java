@@ -69,7 +69,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
     private int yDim;
     private int zDim;
     private int tDim;
-    private double initial[] = new double[3];
+    private double initial[];
     private double trapezoidSlope[];
     private double trapezoidConstant[];
     private double ktransDivVe;
@@ -89,11 +89,12 @@ public class AlgorithmSM2 extends AlgorithmBase {
      
      */
     public AlgorithmSM2(ModelImage destImage, ModelImage srcImage, double min_constr[], double max_constr[],
-    		               ModelImage tissueImage, double timeVals[]) {
+    		               double initial[], ModelImage tissueImage, double timeVals[]) {
 
         super(destImage, srcImage);
         this.min_constr = min_constr;
         this.max_constr = max_constr;
+        this.initial = initial;
         this.tissueImage = tissueImage;
         this.timeVals = timeVals;
     }
@@ -242,10 +243,6 @@ public class AlgorithmSM2 extends AlgorithmBase {
         	delT = timeVals[t+1] - timeVals[t];
         	trapezoidSlope[t] = (r1ptj[t+1]-r1ptj[t])/delT;
         	trapezoidConstant[t] = (r1ptj[t]*timeVals[t+1] - r1ptj[t+1]*timeVals[t])/delT;
-        }
-        
-        for (i = 0; i < 3; i++) {
-        	initial[i] = (min_constr[i] + max_constr[i])/2.0;
         }
         
         y_array = new double[tDim-1];
