@@ -162,6 +162,8 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 
 	/** DOCUMENT ME! */
 	private ModelImage[] resultImage = null; // result image
+	
+	private ModelImage[] classificationImage = null; // classification image
 
 	/** DOCUMENT ME! */
 	private int resultNumber;
@@ -219,6 +221,8 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 	private JPanel savedFilePanel;
 
 	private boolean gaborFilter = false;
+	
+	private boolean distanceFilter = false;
 
 	private JTextField textSavedFileName;
 
@@ -229,13 +233,18 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 
 	private int haralickImagesNumber = 0;
 	
-	private int imageOriginNumber = 1; 
+	private int imageOriginNumber = 0; 
 
 	// Gabor filter
 	/** DOCUMENT ME! */
 
 	/** DOCUMENT ME! */
 	private JPanel filterPanel;
+	
+	/** DOCUMENT ME! */
+	private JPanel distancePanel;
+	
+	private JPanel distanceFilterPanel;
 
 	/** DOCUMENT ME! */
 	private float freqU;
@@ -288,13 +297,185 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 	
 	private JCheckBox gaborFilterCheckBox;
 	
+	private JCheckBox distanceFilterCheckBox;
+	
 	private JCheckBox imageOriginCheckBox;
 	
 	private JPanel imageOriginPanel;
 	
-	private boolean imageOriginFilter = true;
+	private boolean imageOriginFilter = false;
+	
+	private boolean testSample = false;
+	
+	private JPanel locationPanel;
+	
+	private JPanel locationFilterPanel;
+	
+	private JCheckBox locationCheckBox;
+	
+	private boolean locationEnabled = false;
+	
+	
 
-	// ~ Constructors
+	
+	/*************   fuzzy c-means ********************/
+    /** DOCUMENT ME! */
+    public static final int BOTH_FUZZY_HARD = 0;
+
+    /** DOCUMENT ME! */
+    public static final int FUZZY_ONLY = 1;
+
+    /** DOCUMENT ME! */
+    public static final int HARD_ONLY = 2;
+
+
+    /** DOCUMENT ME! */
+    private float[] centroids;
+
+    /** DOCUMENT ME! */
+    private boolean cropBackground;
+
+    /** DOCUMENT ME! */
+    private JCheckBox cropCheckbox;
+
+    
+    /** DOCUMENT ME! */
+    private float endTol;
+
+    /** DOCUMENT ME! */
+    private AlgorithmFuzzyCMeans fcmAlgo;
+
+    /** DOCUMENT ME! */
+    private JRadioButton fuzzyOnly;
+
+    /** DOCUMENT ME! */
+    private JRadioButton hardFuzzyBoth;
+
+    /** DOCUMENT ME! */
+    private JRadioButton hardOnly;
+    
+    /** DOCUMENT ME! */
+    private ButtonGroup imageVOIGroup;
+
+    /** DOCUMENT ME! */
+    private JPanel imageVOIPanel;
+
+    /** DOCUMENT ME! */
+    private JLabel labelEndTol;
+
+    /** DOCUMENT ME! */
+    private JLabel labelExpo;
+
+    /** DOCUMENT ME! */
+    private JLabel labelJacobi;
+
+    /** DOCUMENT ME! */
+    private JLabel labelMaxIter;
+
+    /** DOCUMENT ME! */
+    private JLabel labelNClasses;
+
+    /** DOCUMENT ME! */
+    private JLabel labelNPyramid;
+
+    /** DOCUMENT ME! */
+    private JLabel labelSignal;
+
+    /** DOCUMENT ME! */
+    private JLabel labelSmooth;
+
+    /** DOCUMENT ME! */
+    private int maxIter;
+
+    /** DOCUMENT ME! */
+    private int nClasses;
+
+    /** DOCUMENT ME! */
+    private int nPyramid = 4;
+
+    /** DOCUMENT ME! */
+    private int oneJacobiIter = 1;
+
+    /** DOCUMENT ME! */
+    private float oneSmooth = 2e4f;
+
+    /** private JCheckBox calcGainFieldCheckbox;. */
+    private boolean outputGainField = false;
+
+    /** DOCUMENT ME! */
+    private JPanel fuzzyCMeanPanel;
+
+    /** DOCUMENT ME! */
+    private int presentNumber;
+
+    /** DOCUMENT ME! */
+    private float q;
+
+    /** DOCUMENT ME! */
+    private boolean regionFlag; // true = apply algorithm to the whole image
+    
+    /** DOCUMENT ME! */
+    private int segmentation;
+
+    /** DOCUMENT ME! */
+    private ButtonGroup segmentationGroup;
+
+    /** DOCUMENT ME! */
+    private JPanel segmentationPanel;
+
+    /** DOCUMENT ME! */
+    private JTextField textEndTol;
+
+    /** DOCUMENT ME! */
+    private JTextField textExpo;
+
+    /** DOCUMENT ME! */
+    private JTextField textMaxIter;
+
+    /** DOCUMENT ME! */
+    private JTextField textNClasses;
+
+    /** DOCUMENT ME! */
+    private JTextField textNPyramid;
+
+    /** DOCUMENT ME! */
+    private JTextField textOneJacobiIter;
+
+    /** DOCUMENT ME! */
+    private JTextField textOneSmooth;
+
+    /** DOCUMENT ME! */
+    private JTextField textSignal;
+
+    /** DOCUMENT ME! */
+    private JTextField textTwoJacobiIter;
+
+    /** DOCUMENT ME! */
+    private JTextField textTwoSmooth;
+
+    /** DOCUMENT ME! */
+    private float threshold;
+
+    /** DOCUMENT ME! */
+    private int twoJacobiIter = 2;
+
+    /** DOCUMENT ME! */
+    private float twoSmooth = 2e5f;
+
+    /** DOCUMENT ME! */
+    private JRadioButton VOIRegions;
+
+    /** DOCUMENT ME! */
+    private JRadioButton wholeImage;
+	
+    private JCheckBox fuzzyCMeanFilterCheckBox;
+	
+    private boolean fuzzyCMeanFilter = false;
+	
+    public int imageFuzzyCMeanNumber;
+    
+    
+    // ~ Constructors
 	// ---------------------------------------------------------------------------------------------------
 
 	/**
@@ -311,9 +492,10 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 	 * @param im
 	 *            Source image.
 	 */
-	public JDialogProstateSaveFeatures(Frame theParentFrame, ModelImage im) {
+	public JDialogProstateSaveFeatures(Frame theParentFrame, ModelImage im, boolean testSample) {
 		super(theParentFrame, false);
 		image = im;
+		this.testSample = testSample;
 		init();
 		loadDefaults();
 		setVisible(true);
@@ -379,7 +561,7 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 		if (algorithm instanceof AlgorithmProstateFeatures) {
 			image.clearMask();
 
-			if ((textureAlgo.isCompleted() == true) && (resultImage != null)) {
+			if ((textureAlgo.isCompleted() == true) && (resultImage != null) && ( classificationImage != null )) {
 
 				// The algorithm has completed and produced a new image to be
 				// displayed.
@@ -389,11 +571,12 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 				// has been deleted.
 				for (i = 0; i < resultNumber; i++) {
 					updateFileInfo(image, resultImage[i]);
+					updateFileInfo(image, classificationImage[i]);
 					resultImage[i].clearMask();
+					classificationImage[i].clearMask();
 
 					try {
-						imageFrame[i] = new ViewJFrameImage(resultImage[i],
-								null, new Dimension(610, 200));
+						imageFrame[i] = new ViewJFrameImage(resultImage[i], null, new Dimension(610, 200));
 					} catch (OutOfMemoryError error) {
 						System.gc();
 						JOptionPane
@@ -403,24 +586,27 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 										"Error", JOptionPane.ERROR_MESSAGE);
 					}
 					haralickImagesNumber = textureAlgo.getHaralickImagesNumber();
-					saveFeatureSpaceValue(resultImage[i]);
+					saveFeatureSpaceValue(resultImage[i], classificationImage[i]);
 				}
 
-			} else if (resultImage != null) {
+			} /* else if (resultImage != null) {
 
 				// algorithm failed but result image still has garbage
 				for (i = 0; i < resultNumber; i++) {
 
 					if (resultImage[i] != null) {
 						resultImage[i].disposeLocal(); // Clean up memory of
+						classificationImage[i].disposeLocal();
 						// result image
 						resultImage[i] = null;
+						classificationImage[i] = null;
 					}
 				}
 
 				resultImage = null;
+				classificationImage = null;
 				System.gc();
-			}
+			} */
 		}
 
 		if (algorithm.isCompleted()) {
@@ -431,17 +617,18 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 
 	}
 
-	public void saveFeatureSpaceValue(ModelImage resultImage) {
+	public void saveFeatureSpaceValue(ModelImage resultImage, ModelImage classificationImage ) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
 		int sliceSize = xDim * yDim;
 		int i, z, k;
 		int classify;
-		int index;
+		int index = 0;
 		float value;
 		int zDim;
-		// resultNumber ?????
-		int numImages = 1 + haralickImagesNumber;
+		int xIndex, yIndex;
+		
+		int numImages = imageOriginNumber + haralickImagesNumber;
 		System.err.println("haralickImagesNumber = " + haralickImagesNumber);
 
 		float[] resultBuffer = new float[sliceSize];
@@ -467,18 +654,17 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 					// import and export ??????????????
 					resultImage.exportData((i) * zDim * sliceSize + z
 							* sliceSize, sliceSize, resultBuffer);
-					resultImage.exportDataClass((i) * zDim * sliceSize + z
+					classificationImage.exportData((i) * zDim * sliceSize + z
 							* sliceSize, sliceSize, resultBufferClass);
 
 					if (i == 0) {
-						resultImage.exportDataClass((i + 1) * zDim * sliceSize
-								+ z * sliceSize, sliceSize, resultBufferClass);
+						classificationImage.exportData((i + imageOriginNumber) * zDim * sliceSize + z * sliceSize, sliceSize, resultBufferClass);
 					}
 
 					for (k = 0; k < sliceSize; k++) {
 						classify = (int) resultBufferClass[k];
 						value = resultBuffer[k];
-						index = i;
+						index = k;
 						// if ( classify == 1 /* && test == false */ ) {
 						// System.err.println("classify = " + classify + " index
 						// = " + index + " value = " + value);
@@ -489,9 +675,9 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 
 				} catch (IOException error) {
 					MipavUtil
-							.displayError("JDialogProstateSaveFeatures: IOException on destImage["
+							.displayError("Temp: JDialogProstateSaveFeatures: IOException on destImage["
 									+ i
-									+ "].importData(0,resultBuffer["
+									+ "].exportData(0,resultBuffer["
 									+ i
 									+ "],false)");
 
@@ -514,24 +700,45 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 			boolean printClassify = false;
 			for (j = 0; j < size; j++) {
 				printClassify = false;
-				for (i = imageOriginNumber; i < features.length; i++) {
+				for (i = 0; i < features.length; i++) {
 					feature = (Feature) features[i].get(j);
 					classify = feature.classify;
 					value = feature.value;
 					index = feature.index;
+					
+					
+					
 					if (i == 0) {
-						featureTemp = (Feature) features[i + 1].get(j);
+						featureTemp = (Feature) features[i + imageOriginNumber].get(j);
 						classify = featureTemp.classify;
 					}
 					if (printClassify == false) {
-						if (classify == 1) {
-							output.print("+1");
+						if ( testSample == true ) {
+							output.print(classify);
 						} else {
-							output.print("-1");
+							if (classify == 1) {
+								output.print("+1");
+							} else {
+								output.print("-1");
+							}
 						}
 						printClassify = true;
 					}
+					
+					if ( printClassify == false ) {
+	         			  output.print(classify);
+	         			  printClassify = true;
+	         		   }
+					
 					output.print(" " + i + ":" + value);
+					
+					
+				}
+				xIndex = index % yDim;
+				yIndex = index / yDim;
+				if ( locationEnabled ) {
+					output.print(" " + (i)  + ":" + xIndex);
+					output.print(" " + (i+1) + ":" + yIndex);
 				}
 				output.println();
 			}
@@ -596,6 +803,16 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 		return resultImage;
 	}
 
+	/**
+	 * Accessor that returns the classification image.
+	 * 
+	 * @return The result image.
+	 */
+	public ModelImage[] getClassificationImage() {
+		return classificationImage;
+	}
+	
+	
 	/**
 	 * Loads the default settings from Preferences to set up the dialog.
 	 */
@@ -901,44 +1118,50 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 		boolean doneShade;
 		boolean donePromenance;
 		boolean doneGaborFilter;
+		boolean doneDistanceFilter;
+		boolean doneFuzzyCMeanFilter;
 		int zDim;
 		int tDim;
 		int newExtents[];
 
 		try {
 			resultImage = new ModelImage[resultNumber];
+			classificationImage = new ModelImage[resultNumber];
 			name = new String[resultNumber];
 
 			if (image.getNDims() == 2) {
-				name[0] = makeImageName(image.getImageName(), "_Haralick");
-				zDim = 1 + numDirections * numOperators + numberFiltersAdditional;
+				name[0] = makeImageName(image.getImageName(), "_Original");
+				zDim = imageOriginNumber + numDirections * numOperators + numberFiltersAdditional;
 				newExtents = new int[3];
 				newExtents[0] = image.getExtents()[0];
 				newExtents[1] = image.getExtents()[1];
 				newExtents[2] = zDim;
-				resultImage[0] = new ModelImage(ModelStorageBase.FLOAT,
-						newExtents, name[0]);
-				tDim = 1 + numDirections * numOperators + numberFiltersAdditional;
+				resultImage[0] = new ModelImage(ModelStorageBase.FLOAT, newExtents, name[0]);
+				classificationImage[0] = new ModelImage(ModelStorageBase.FLOAT, newExtents, name[0]);
+				tDim = imageOriginNumber + numDirections * numOperators + numberFiltersAdditional;
 				// imageNameArray = new String[zDim];
 				imageNameArray = new String[tDim];
-				imageNameArray[0] = name[0];
+				if ( imageOriginFilter ) {
+					imageNameArray[0] = name[0];
+					
+				}
 			} // if (image.getNDims() == 2)
+			/*
 			else { // image.getNDims() == 3
-				name[0] = makeImageName(image.getImageName(), "_Haralick");
+				name[0] = makeImageName(image.getImageName(), "_Original");
 				tDim = 1 + numDirections * numOperators + numberFiltersAdditional;
 				newExtents = new int[4];
 				newExtents[0] = image.getExtents()[0];
 				newExtents[1] = image.getExtents()[1];
 				newExtents[2] = image.getExtents()[2];
 				newExtents[3] = tDim;
-				resultImage[0] = new ModelImage(ModelStorageBase.FLOAT,
-						newExtents, name[0]);
+				resultImage[0] = new ModelImage(ModelStorageBase.FLOAT, newExtents, name[0]);
 				imageNameArray = new String[newExtents[2] * newExtents[3]];
 				for (i = 0; i < image.getExtents()[2]; i++) {
 					imageNameArray[i] = name[0];
 				}
 			}
-
+           */
 			for (i = 0; i < numDirections; i++) {
 
 				if (ns && (!doneNS)) {
@@ -973,9 +1196,13 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 				doneShade = false;
 				donePromenance = false;
 				doneGaborFilter = false;
+				doneDistanceFilter = false;
+				doneFuzzyCMeanFilter = false;
 				
+				
+				// force to do haralick features extraction
 				for (j = 0; j < numOperators; j++) {
-					index = j + (i * (numOperators));
+					index = j + (i * (numOperators)) + imageOriginNumber;
 
 					if (contrast && (!doneContrast)) {
 						opString = "_contrast";
@@ -1020,27 +1247,25 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 						opString = "_promenance";
 						donePromenance = true;
 					} 
-					/*else if (gaborFilter && ( !doneGaborFilter )) {
-                        opString = "_Gabor";
-                        doneGaborFilter = true;
-                    } 
-                    */
+					
                     
 					if (image.getNDims() == 2) {
-						imageNameArray[index + 1] = makeImageName(image
-								.getImageName(), dirString + opString);
-					} else {
+						imageNameArray[index] = makeImageName(image.getImageName(), dirString + opString);
+						// index++;
+					} /* else {
 						for (k = 0; k < image.getExtents()[2]; k++) {
-							imageNameArray[(index + 1) * image.getExtents()[2]
+							imageNameArray[(index) * image.getExtents()[2]
 									+ k] = makeImageName(image.getImageName(),
 									dirString + opString);
 						}
-					}
+					} */
 					
 
 				} // for (j = 0; j < numOperators; j++)
 			} // for (i = 0; i < numDirections; i++)
 
+			index++; 
+			
 			// do additional operation
 			
 			doneGaborFilter = false;
@@ -1051,37 +1276,118 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 
 				if (image.getNDims() == 2) {
 					// index + 2 for the additional filters. 
-					imageNameArray[index + 1 + numberFiltersAdditional] = makeImageName(image
-							.getImageName(), dirString + opString);
-				} else {
+					imageNameArray[index] = makeImageName(image.getImageName(), dirString + opString);
+					index++;
+				} /* else {
 					for (k = 0; k < image.getExtents()[2]; k++) {
 						imageNameArray[(index + 2) * image.getExtents()[2] + k] = makeImageName(
 								image.getImageName(), dirString + opString);
 					}
-				}
+				} */
 
 			}
+			
+			doneDistanceFilter = false;
+			
+			if (distanceFilter && (!doneDistanceFilter)) {
+
+				opString = "_Distance";
+				doneDistanceFilter = true;
+
+				if (image.getNDims() == 2) {
+					// index + 2 for the additional filters. 
+					imageNameArray[index] = makeImageName(image.getImageName(), dirString + opString);
+					index++;
+				} /*else {
+					for (k = 0; k < image.getExtents()[2]; k++) {
+						imageNameArray[(index + 2) * image.getExtents()[2] + k] = makeImageName(
+								image.getImageName(), dirString + opString);
+					}
+				} */
+
+			}
+			
+			
+			doneFuzzyCMeanFilter = false;
+			
+			if (fuzzyCMeanFilter && (!doneFuzzyCMeanFilter)) {
+
+				opString = "_FuzzyCMean";
+				doneFuzzyCMeanFilter = true;
+
+				
+				if (image.getNDims() == 2) {
+					// index + 2 for the additional filters.
+					/*
+					opString = "_FuzzyCMean_class1";
+					imageNameArray[index] = makeImageName(image.getImageName(), dirString + opString);
+					index++;
+					
+					opString = "_FuzzyCMean_class2";
+					imageNameArray[index] = makeImageName(image.getImageName(), dirString + opString);
+					index++;
+					
+					opString = "_FuzzyCMean_class3";
+					imageNameArray[index] = makeImageName(image.getImageName(), dirString + opString);
+					index++;
+					
+					opString = "_FuzzyCMean_class4";
+					imageNameArray[index] = makeImageName(image.getImageName(), dirString + opString);
+					index++;
+				   */
+					
+		            if ((segmentation == FUZZY_ONLY) || (segmentation == BOTH_FUZZY_HARD)) {
+
+		                   for (i = 0; i < nClasses; i++) {
+		                        opString = "_FuzzyCMean" + "_class" + (i + 1);
+		                       imageNameArray[index] = makeImageName(image.getImageName(), dirString + opString);
+		   					   index++;
+		                   }
+		                     
+		               }
+
+		               if ((segmentation == HARD_ONLY) || (segmentation == BOTH_FUZZY_HARD)) {
+		            	  opString = "_FuzzyCMean" + "_seg";
+	                       imageNameArray[index] = makeImageName(image.getImageName(), dirString + opString);
+	   					   index++;
+		               }
+				
+				
+				} 
+			}
+			
             
 			resultImage[0].setImageNameArray(imageNameArray);
+			classificationImage[0].setImageNameArray(imageNameArray);
 
 			if (image.isColorImage()) {
-				textureAlgo = new AlgorithmProstateFeatures(resultImage, image,
+				textureAlgo = new AlgorithmProstateFeatures(resultImage, classificationImage, image,
 						RGBOffset, windowSize, offsetDistance, greyLevels, ns,
 						nesw, ew, senw, invariantDir, contrast, dissimilarity,
 						homogeneity, inverseOrder1, asm, energy,
 						maxProbability, entropy, mean, variance,
 						standardDeviation, correlation, shade, promenance,
-						true, gaborFilter, freqU, freqV, sigmaU, sigmaV, theta,
-						numberFiltersAdditional);
+						true, gaborFilter, freqU, freqV, sigmaU, sigmaV, theta, distanceFilter,
+						numberFiltersAdditional,
+						imageOriginFilter, 
+						fuzzyCMeanFilter, 
+						nClasses, nPyramid, oneJacobiIter, twoJacobiIter, q,
+                        oneSmooth, twoSmooth, outputGainField, segmentation, cropBackground,
+                        threshold, maxIter, endTol, regionFlag, centroids);
 			} else {
-				textureAlgo = new AlgorithmProstateFeatures(resultImage, image,
+				textureAlgo = new AlgorithmProstateFeatures(resultImage, classificationImage, image,
 						windowSize, offsetDistance, greyLevels, ns, nesw, ew,
 						senw, invariantDir, contrast, dissimilarity,
 						homogeneity, inverseOrder1, asm, energy,
 						maxProbability, entropy, mean, variance,
 						standardDeviation, correlation, shade, promenance,
-						true, gaborFilter, freqU, freqV, sigmaU, sigmaV, theta,
-						numberFiltersAdditional);
+						true, gaborFilter, freqU, freqV, sigmaU, sigmaV, theta, distanceFilter,
+						numberFiltersAdditional,
+						imageOriginFilter,
+						fuzzyCMeanFilter, 
+						nClasses, nPyramid, oneJacobiIter, twoJacobiIter, q,
+                        oneSmooth, twoSmooth, outputGainField, segmentation, cropBackground,
+                        threshold, maxIter, endTol, regionFlag, centroids);
 			}
 
 			// This is very important. Adding this object as a listener allows
@@ -1108,21 +1414,24 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 				textureAlgo.run();
 			}
 		} catch (OutOfMemoryError x) {
-
+            /*
 			if (resultImage != null) {
 
 				for (i = 0; i < resultNumber; i++) {
 
 					if (resultImage[i] != null) {
 						resultImage[i].disposeLocal(); // Clean up memory of
+						classificationImage[i].disposeLocal();
 						// result image
 						resultImage[i] = null;
+						classificationImage[i] = null;
 					}
 				}
 
 				resultImage = null;
+				classificationImage = null;
 			}
-
+            */
 			System.gc();
 			MipavUtil
 					.displayError("Dialog Haralick Texture: unable to allocate enough memory");
@@ -1380,9 +1689,228 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 			numberFiltersAdditional++;
 		}
 		
+		if ( distanceFilter ) {
+			numberFiltersAdditional++;
+		}
+		
+		if ( fuzzyCMeanFilter ) {
+			getCentroids();
+			// Calculate the number of result images.
+			imageFuzzyCMeanNumber = 0;
+
+	        if ((segmentation == HARD_ONLY) || (segmentation == BOTH_FUZZY_HARD)) {
+	        	imageFuzzyCMeanNumber++; // segmented image
+	        } // if ((segmentation == HARD_ONLY) || (segmentation == BOTH_FUZZY_HARD))
+
+	        if ((segmentation == FUZZY_ONLY) || (segmentation == BOTH_FUZZY_HARD)) {
+
+	            // if (outputGainField) {
+	            // resultNumber++;
+	            // }
+	        	imageFuzzyCMeanNumber += nClasses;
+	        } // if ((segmentation == FUZZY_ONLY) || (segmentation == BOTH_FUZZY_HARD))
+	        numberFiltersAdditional += imageFuzzyCMeanNumber;
+	        
+	        
+		}
 		
 		return numOps;
 	}
+	
+	/**
+     * Gets the minimum and maximum of each image and initializes the centroids dialog appropriately.
+     *
+     * @return  Flag indicating a successful get.
+     */
+    private boolean getCentroids() {
+        int i;
+        float minimum, maximum;
+        int xDim = image.getExtents()[0];
+        int yDim = image.getExtents()[1];
+        int zDim;
+
+        if (image.getNDims() > 2) {
+            zDim = image.getExtents()[2];
+        } else {
+            zDim = 1;
+        }
+
+        int sliceSize = xDim * yDim;
+        int volSize = xDim * yDim * zDim;
+        float[] buffer = null;
+        int yStepIn, yStepOut, zStepIn, zStepOut;
+        int x, y, z, index, newXDim, newYDim, newZDim, newSliceSize;
+
+        try {
+            buffer = new float[volSize];
+            image.exportData(0, volSize, buffer);
+
+            image.calcMinMax();
+            minimum = (float) image.getMin();
+            maximum = (float) image.getMax();
+
+            if (!regionFlag) {
+                maximum = -Float.MAX_VALUE;
+                minimum = Float.MAX_VALUE;
+
+                for (i = 0; i < volSize; i++) {
+
+                    if (fcmAlgo.getMask().get(i)) {
+
+                        if (buffer[i] > maximum) {
+                            maximum = buffer[i];
+                        }
+
+                        if (buffer[i] < minimum) {
+                            minimum = buffer[i];
+                        }
+                    }
+                }
+            } // if (!wholeImage)
+
+            int xLow = 0;
+            int yLow = 0;
+            int zLow = 0;
+            int xHigh = xDim - 1;
+            int yHigh = yDim - 1;
+            int zHigh = zDim - 1;
+
+            if (cropBackground) {
+
+                // Find the smallest bounding box for the data
+                xLow = xDim - 1;
+                yLow = yDim - 1;
+                zLow = zDim - 1;
+                xHigh = 0;
+                yHigh = 0;
+                zHigh = 0;
+
+                for (z = 0; z < zDim; z++) {
+                    zStepIn = z * sliceSize;
+
+                    for (y = 0; y < yDim; y++) {
+                        yStepIn = (y * xDim) + zStepIn;
+
+                        for (x = 0; x < xDim; x++) {
+                            index = x + yStepIn;
+
+                            if (buffer[index] >= threshold) {
+
+                                if (x < xLow) {
+                                    xLow = x;
+                                }
+
+                                if (x > xHigh) {
+                                    xHigh = x;
+                                }
+
+                                if (y < yLow) {
+                                    yLow = y;
+                                }
+
+                                if (y > yHigh) {
+                                    yHigh = y;
+                                }
+
+                                if (z < zLow) {
+                                    zLow = z;
+                                }
+
+                                if (z > zHigh) {
+                                    zHigh = z;
+                                }
+                            } // if (buffer[index] > threshold)
+                        } // for (x = 0; x < xDim; x++)
+                    } // for (y = 0; y < yDim; y++)
+                } // for (z = 0; z < zDim; z++)
+
+                if ((xLow > 0) || (xHigh < (xDim - 1)) || (yLow > 0) || (yHigh < (yDim - 1)) || (zLow > 0) ||
+                        (zHigh < (zDim - 1))) {
+
+                    // A smaller bounding box has been found for the data
+                    // Recopy area to smaller data array to save space
+                    newXDim = xHigh - xLow + 1;
+                    newYDim = yHigh - yLow + 1;
+                    newZDim = zHigh - zLow + 1;
+
+                    float[] buffer2 = new float[newXDim * newYDim * newZDim];
+                    newSliceSize = newXDim * newYDim;
+
+                    for (z = zLow; z <= zHigh; z++) {
+                        zStepOut = z * sliceSize;
+                        zStepIn = ((z - zLow) * newSliceSize) - xLow - (yLow * newXDim);
+
+                        for (y = yLow; y <= yHigh; y++) {
+                            yStepIn = (y * newXDim) + zStepIn;
+                            yStepOut = (y * xDim) + zStepOut;
+
+                            for (x = xLow; x <= xHigh; x++) {
+                                buffer2[x + yStepIn] = buffer[x + yStepOut];
+                            } // for (x = xLow; x <= xHigh; x++)
+                        } // for (y = yLow; y <= yHigh; y++)
+                    } // for (z = zLow; z <= zHigh; z++)
+
+                    xDim = newXDim;
+                    yDim = newYDim;
+                    zDim = newZDim;
+                    sliceSize = xDim * yDim;
+                    volSize = sliceSize * zDim;
+                    buffer = new float[volSize];
+
+                    for (i = 0; i < sliceSize; i++) {
+                        buffer[i] = buffer2[i];
+                    }
+
+                    buffer2 = null;
+
+                    // Find the new minimum
+                    minimum = maximum;
+
+                    for (i = 0; i < volSize; i++) {
+
+                        if (buffer[i] < minimum) {
+                            minimum = buffer[i];
+                        } // if (buffer[i] < minimum)
+                    } // for (i = 0; i < sliceSize; i++)
+                } // if ((xLow > 0) || (xHigh < (xDim-1)) || (yLow > 0) || (yHigh < (yDim - 1)))
+            } // if (cropBackground)
+        } catch (java.io.IOException ioe) {
+            buffer = null;
+            System.gc();
+            MipavUtil.displayError("Error trying to get centroids.");
+
+            return false;
+        } catch (OutOfMemoryError error) {
+            buffer = null;
+            System.gc();
+            MipavUtil.displayError("Algorithm FuzzyCMeans reports:\n" + error.toString());
+
+            return false;
+        }
+
+        buffer = null;
+        System.gc();
+
+        // Autodetect initial centroids
+        centroids = new float[nClasses];
+
+        JDialogInitialCentroids dialogInitialCentroids = new JDialogInitialCentroids(parentFrame, nClasses, minimum,
+                                                                                     maximum);
+
+        if (dialogInitialCentroids.isCancelled()) {
+            centroids = null;
+
+            return false;
+        } else {
+
+            for (i = 0; i < centroids.length; i++) {
+                centroids[i] = dialogInitialCentroids.getCentroids()[i];
+            }
+        }
+
+        return true;
+    }
+
 
 	/**
 	 * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
@@ -1403,18 +1931,25 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 		buildImageOriginPanel();
 		buildHaralickPanel();
 		buildGaborPanel();
+		buildFuzzyCMeanPanel();
+		buildDistancePanel();
+		buildLocationPanel();
 		buildSavedFilePanel();
 
 		JPanel otherFeatures = new JPanel();
-		otherFeatures.setLayout(new BorderLayout());
+		otherFeatures.setLayout(new BoxLayout(otherFeatures, BoxLayout.Y_AXIS));
 
-		otherFeatures.add(gaborPanel, BorderLayout.NORTH);
-		otherFeatures.add(savedFilePanel, BorderLayout.CENTER);
+		otherFeatures.add(imageOriginPanel);
+		otherFeatures.add(gaborPanel);
+		otherFeatures.add(fuzzyCMeanPanel);
+		otherFeatures.add(distanceFilterPanel);
+		otherFeatures.add(locationFilterPanel);
+		otherFeatures.add(savedFilePanel);
 		
 		JPanel leftPanel = new JPanel();
 		leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
 		
-		leftPanel.add(imageOriginPanel);
+		
 		leftPanel.add(haralickPanel);
 		
 		mainPanel.add(leftPanel, BorderLayout.WEST);
@@ -1428,6 +1963,255 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 		// setVisible( true );
 
 		System.gc();
+	}
+	
+	private void buildFuzzyCMeanPanel() {
+		 labelNClasses = new JLabel("Number of desired classes");
+	        labelNClasses.setForeground(Color.black);
+	        labelNClasses.setFont(serif12);
+
+	        textNClasses = new JTextField(5);
+	        textNClasses.setText("3");
+	        textNClasses.setFont(serif12);
+
+	        /* labelNPyramid = new JLabel("Number of pyramid levels.");
+	         *    labelNPyramid.setForeground(Color.black); labelNPyramid.setFont(serif12); textNPyramid = new
+	         * JTextField(5); textNPyramid.setText("4");textNPyramid.setFont(serif12);*/
+
+	        labelExpo = new JLabel("Desired exponent value");
+	        labelExpo.setForeground(Color.black);
+	        labelExpo.setFont(serif12);
+
+	        textExpo = new JTextField(5);
+	        textExpo.setText("2");
+	        textExpo.setFont(serif12);
+
+	        labelSignal = new JLabel("Signal threshold");
+	        labelSignal.setForeground(Color.black);
+	        labelSignal.setFont(serif12);
+
+	        textSignal = new JTextField(5);
+	        textSignal.setText("0.0");
+	        textSignal.setFont(serif12);
+
+	        cropCheckbox = new JCheckBox("Background cropping");
+	        cropCheckbox.setFont(serif12);
+	        cropCheckbox.setSelected(false);
+	        cropCheckbox.addActionListener(this);
+	        cropCheckbox.setActionCommand("Crop");
+
+	        labelEndTol = new JLabel("End tolerance.");
+	        labelEndTol.setForeground(Color.black);
+	        labelEndTol.setFont(serif12);
+
+	        textEndTol = new JTextField(5);
+	        textEndTol.setText("0.01");
+	        textEndTol.setFont(serif12);
+
+	        labelMaxIter = new JLabel("Maximum number of iterations");
+	        labelMaxIter.setForeground(Color.black);
+	        labelMaxIter.setFont(serif12);
+
+	        textMaxIter = new JTextField(5);
+	        textMaxIter.setText("200");
+	        textMaxIter.setFont(serif12);
+
+	        JPanel upperPanel = new JPanel(new GridBagLayout());
+
+	        GridBagConstraints gbc = new GridBagConstraints();
+	        gbc.gridwidth = 1;
+	        gbc.gridheight = 1;
+	        gbc.anchor = GridBagConstraints.WEST;
+	        gbc.insets = new Insets(5, 5, 5, 5);
+
+	        gbc.gridx = 0;
+	        gbc.gridy = 0;
+	        gbc.weightx = 0;
+	        gbc.fill = GridBagConstraints.NONE;
+	        upperPanel.add(labelNClasses, gbc);
+	        gbc.gridx = 1;
+	        gbc.gridy = 0;
+	        gbc.weightx = 1;
+	        gbc.fill = GridBagConstraints.HORIZONTAL;
+	        upperPanel.add(textNClasses, gbc);
+	        gbc.gridx = 0;
+	        gbc.gridy = 1;
+	        gbc.weightx = 0;
+	        gbc.fill = GridBagConstraints.NONE;
+	        upperPanel.add(labelExpo, gbc);
+	        gbc.gridx = 1;
+	        gbc.gridy = 1;
+	        gbc.weightx = 1;
+	        gbc.fill = GridBagConstraints.HORIZONTAL;
+	        upperPanel.add(textExpo, gbc);
+	        gbc.gridx = 0;
+	        gbc.gridy = 2;
+	        gbc.weightx = 0;
+	        gbc.fill = GridBagConstraints.NONE;
+	        upperPanel.add(labelEndTol, gbc);
+	        gbc.gridx = 1;
+	        gbc.gridy = 2;
+	        gbc.weightx = 1;
+	        gbc.fill = GridBagConstraints.HORIZONTAL;
+	        upperPanel.add(textEndTol, gbc);
+	        gbc.gridx = 0;
+	        gbc.gridy = 3;
+	        gbc.weightx = 0;
+	        gbc.fill = GridBagConstraints.NONE;
+	        upperPanel.add(labelMaxIter, gbc);
+	        gbc.gridx = 1;
+	        gbc.gridy = 3;
+	        gbc.weightx = 1;
+	        gbc.fill = GridBagConstraints.HORIZONTAL;
+	        upperPanel.add(textMaxIter, gbc);
+	        gbc.gridx = 0;
+	        gbc.gridy = 4;
+	        gbc.weightx = 0;
+	        gbc.fill = GridBagConstraints.NONE;
+	        upperPanel.add(labelSignal, gbc);
+	        gbc.gridx = 1;
+	        gbc.gridy = 4;
+	        gbc.weightx = 1;
+	        gbc.fill = GridBagConstraints.HORIZONTAL;
+	        upperPanel.add(textSignal, gbc);
+	        gbc.gridx = 0;
+	        gbc.gridy = 5;
+	        gbc.gridwidth = 2;
+	        upperPanel.add(cropCheckbox, gbc);
+
+	        imageVOIPanel = new JPanel(new GridBagLayout());
+	        imageVOIPanel.setForeground(Color.black);
+	        imageVOIPanel.setBorder(buildTitledBorder("Region"));
+
+	        imageVOIGroup = new ButtonGroup();
+	        wholeImage = new JRadioButton("Whole image", true);
+	        wholeImage.setFont(serif12);
+	        imageVOIGroup.add(wholeImage);
+
+	        VOIRegions = new JRadioButton("VOI region(s)", false);
+	        VOIRegions.setFont(serif12);
+	        imageVOIGroup.add(VOIRegions);
+
+	        gbc.gridx = 0;
+	        gbc.gridy = 0;
+	        gbc.weightx = 1;
+	        gbc.fill = GridBagConstraints.BOTH;
+	        gbc.gridwidth = 1;
+	        gbc.insets = new Insets(0, 0, 0, 0);
+	        imageVOIPanel.add(wholeImage, gbc);
+	        gbc.gridy = 1;
+	        imageVOIPanel.add(VOIRegions, gbc);
+
+	        segmentationGroup = new ButtonGroup();
+	        hardOnly = new JRadioButton("Hard only", false);
+	        hardOnly.setFont(serif12);
+	        segmentationGroup.add(hardOnly);
+
+	        fuzzyOnly = new JRadioButton("Fuzzy only", false);
+	        fuzzyOnly.setFont(serif12);
+	        segmentationGroup.add(fuzzyOnly);
+
+	        hardFuzzyBoth = new JRadioButton("Hard and fuzzy both", true);
+	        hardFuzzyBoth.setFont(serif12);
+	        segmentationGroup.add(hardFuzzyBoth);
+
+	        segmentationPanel = new JPanel(new GridBagLayout());
+	        segmentationPanel.setBorder(buildTitledBorder("Segmentation"));
+
+	        gbc.gridx = 0;
+	        gbc.gridy = 0;
+	        gbc.weightx = 0;
+	        gbc.fill = GridBagConstraints.NONE;
+	        gbc.gridwidth = 1;
+	        segmentationPanel.add(hardOnly, gbc);
+	        gbc.gridy = 1;
+	        segmentationPanel.add(fuzzyOnly, gbc);
+	        gbc.gridy = 2;
+	        segmentationPanel.add(hardFuzzyBoth, gbc);
+      
+	        fuzzyCMeanFilterCheckBox = new JCheckBox("Select Fuzzy C-Means Filter");
+	        fuzzyCMeanFilterCheckBox.setFont(serif12);
+	        fuzzyCMeanFilterCheckBox.setSelected(false);
+	        
+	        fuzzyCMeanPanel = new JPanel(new GridBagLayout());
+	        fuzzyCMeanPanel.setForeground(Color.black);
+	        fuzzyCMeanPanel.setBorder(buildTitledBorder("Fuzzy C-Means"));
+
+	        gbc.gridx = 0;
+	        gbc.gridwidth = GridBagConstraints.REMAINDER;
+	        gbc.gridy = 0;
+	        gbc.fill = GridBagConstraints.BOTH;
+	        gbc.weightx = 1;
+	        fuzzyCMeanPanel.add(upperPanel, gbc);
+	        gbc.gridy = 1;
+	        gbc.gridwidth = 1;
+	        fuzzyCMeanPanel.add(imageVOIPanel, gbc);
+	        gbc.gridx = 1;
+	        fuzzyCMeanPanel.add(segmentationPanel, gbc);
+	        gbc.gridx = 0;
+	        gbc.gridy = 2;
+	        fuzzyCMeanPanel.add(fuzzyCMeanFilterCheckBox, gbc);
+
+	}
+	
+	private void buildLocationPanel() {
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridwidth = 3;
+		gbc.anchor = GridBagConstraints.WEST;
+		gbc.weightx = 1;
+
+		locationPanel = new JPanel(new GridBagLayout());
+		locationPanel.setBorder(buildTitledBorder("Pixel location"));
+	
+		locationCheckBox = new JCheckBox("Select Pixel Location Filter");
+		locationCheckBox.setFont(serif12);
+		locationCheckBox.setSelected(false);
+		
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.gridwidth = 1;
+		gbc.weightx = .5;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		
+		locationPanel.add(locationCheckBox, gbc);
+
+		locationFilterPanel = new JPanel(new GridBagLayout());
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		locationFilterPanel.add(locationPanel, gbc);
+
+	}
+	
+	
+	
+	private void buildDistancePanel() {
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridwidth = 3;
+		gbc.anchor = GridBagConstraints.WEST;
+		gbc.weightx = 1;
+
+		distancePanel = new JPanel(new GridBagLayout());
+		distancePanel.setBorder(buildTitledBorder("Distance filter"));
+	
+		distanceFilterCheckBox = new JCheckBox("Select Distance Filter");
+		distanceFilterCheckBox.setFont(serif12);
+		distanceFilterCheckBox.setSelected(false);
+		
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.gridwidth = 1;
+		gbc.weightx = .5;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		
+		distancePanel.add(distanceFilterCheckBox, gbc);
+
+		distanceFilterPanel = new JPanel(new GridBagLayout());
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		distanceFilterPanel.add(distancePanel, gbc);
+
 	}
 
 	private void buildGaborPanel() {
@@ -1987,22 +2771,21 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 		
 		gaborFilter = gaborFilterCheckBox.isSelected();
 		
+		distanceFilter = distanceFilterCheckBox.isSelected();
+		
+		locationEnabled = locationCheckBox.isSelected();
+		
+		fuzzyCMeanFilter = fuzzyCMeanFilterCheckBox.isSelected();
+		
 		imageOriginFilter = imageOriginCheckBox.isSelected();
 		
 		if ( imageOriginFilter ) {
-			imageOriginNumber = 0;
-		} else {
 			imageOriginNumber = 1;
+		} else {
+			imageOriginNumber = 0;
 		}
 
-		numOperators = getNumOperators();
-
-		if (numOperators == 0) {
-			MipavUtil
-					.displayError("At least 1 texture operator must be selected");
-
-			return false;
-		}
+		
 
 		// Gabor filter
 		tmpStr = textFU.getText();
@@ -2060,6 +2843,98 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 		tmpStr = textTheta.getText();
 		theta = (float) (Float.valueOf(tmpStr).floatValue() * Math.PI / 180.0);
 
+		/* **************   fuzzy C-means  ********************** */ 
+		if ( fuzzyCMeanFilter ) {
+			imageFuzzyCMeanNumber = 4;
+		}
+		
+        if (wholeImage.isSelected()) {
+            regionFlag = true;
+        } else if (VOIRegions.isSelected()) {
+            regionFlag = false;
+        }
+
+        tmpStr = textNClasses.getText();
+
+        if (testParameter(tmpStr, 1.0, 12.0)) {
+            nClasses = Integer.valueOf(tmpStr).intValue();
+        } else {
+            textNClasses.requestFocus();
+            textNClasses.selectAll();
+
+            return false;
+        }
+
+        /* tmpStr = textNPyramid.getText();
+         *       if ( testParameter(tmpStr, 1.0, 6.0) ){ nPyramid = Integer.valueOf(tmpStr).intValue();      }
+         * else{ textNPyramid.requestFocus(); textNPyramid.selectAll(); return;      } */
+
+        tmpStr = textExpo.getText();
+
+        if (testParameter(tmpStr, 1.1, 5.0)) {
+            q = Float.valueOf(tmpStr).floatValue();
+        } else {
+            textExpo.requestFocus();
+            textExpo.selectAll();
+
+            return false;
+        }
+
+        if (cropCheckbox.isSelected()) {
+            cropBackground = true;
+        } else {
+            cropBackground = false;
+        }
+
+        tmpStr = textSignal.getText();
+
+        if (testParameter(tmpStr, -Float.MAX_VALUE, Float.MAX_VALUE)) {
+            threshold = Float.valueOf(tmpStr).floatValue();
+        } else {
+            textSignal.requestFocus();
+            textSignal.selectAll();
+
+            return false;
+        }
+
+        tmpStr = textEndTol.getText();
+
+        if (testParameter(tmpStr, Float.MIN_VALUE, 1.0)) {
+            endTol = Float.valueOf(tmpStr).floatValue();
+        } else {
+            textEndTol.requestFocus();
+            textEndTol.selectAll();
+
+            return false;
+        }
+
+        tmpStr = textMaxIter.getText();
+
+        if (testParameter(tmpStr, 1.0, 10000.0)) {
+            maxIter = Integer.valueOf(tmpStr).intValue();
+        } else {
+            textMaxIter.requestFocus();
+            textMaxIter.selectAll();
+
+            return false;
+        }
+        
+        if (hardOnly.isSelected()) {
+            segmentation = HARD_ONLY;
+        } else if (fuzzyOnly.isSelected()) {
+            segmentation = FUZZY_ONLY;
+        } else {
+            segmentation = BOTH_FUZZY_HARD;
+        }
+        
+        numOperators = getNumOperators();
+
+		if (numOperators == 0) {
+			MipavUtil.displayError("At least 1 texture operator must be selected");
+
+			return false;
+		}
+        
 		return true;
 	}
 
