@@ -6,7 +6,8 @@ public class PlugInDrosophilaRetinalRegistration implements PlugInGeneric {
 	public PlugInDrosophilaRetinalRegistration() {
 		
 	}
-
+ 
+	
 	public void run() {
 		new PlugInDialogDrosophilaRetinalRegistration(false);
 
