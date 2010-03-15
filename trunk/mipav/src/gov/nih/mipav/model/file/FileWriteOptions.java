@@ -167,6 +167,12 @@ public class FileWriteOptions {
     private NDARWriteData ndarData = null;
     
     private HashMap pSetsHashMap = null;
+    
+    private boolean isGzip = false;
+    
+    private boolean isZip = false;
+    
+    private boolean isBz2zip = false;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -1104,8 +1110,36 @@ public class FileWriteOptions {
     public void setZStart(float value) {
         zStart = value;
     }
+    
+    
 
-    /**
+    public boolean isGzip() {
+		return isGzip;
+	}
+
+	public void setGzip(boolean isGzip) {
+		this.isGzip = isGzip;
+	}
+	
+	
+
+	public boolean isZip() {
+		return isZip;
+	}
+
+	public void setZip(boolean isZip) {
+		this.isZip = isZip;
+	}
+
+	public boolean isBz2zip() {
+		return isBz2zip;
+	}
+
+	public void setBz2zip(boolean isBz2zip) {
+		this.isBz2zip = isBz2zip;
+	}
+
+	/**
      * Shows these options as a string, useful for debugging.
      * 
      * @return A string containing the saved file write options.

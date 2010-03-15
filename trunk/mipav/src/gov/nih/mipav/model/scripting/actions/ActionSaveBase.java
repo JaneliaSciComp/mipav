@@ -348,9 +348,23 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
 
         // if not a save as, always save the same type of file
         if (options.isSaveAs()) {
-            parameters.put(ParameterFactory.newString(SAVE_FILE_TYPE, FileTypeTable.getFileTypeInfo(
-                    options.getFileType()).getDefaultExtension()));
 
+        	if(options.isGzip()) {
+        		parameters.put(ParameterFactory.newString(SAVE_FILE_TYPE, FileTypeTable.getFileTypeInfo(options.getFileType()).getDefaultExtension() + ".gz"));
+        	}else if(options.isZip()) {
+        		parameters.put(ParameterFactory.newString(SAVE_FILE_TYPE, FileTypeTable.getFileTypeInfo(options.getFileType()).getDefaultExtension() + ".zip"));
+        	}else if(options.isBz2zip()) {
+        		parameters.put(ParameterFactory.newString(SAVE_FILE_TYPE, FileTypeTable.getFileTypeInfo(options.getFileType()).getDefaultExtension() + ".bz2"));
+        	}else {
+        		parameters.put(ParameterFactory.newString(SAVE_FILE_TYPE, FileTypeTable.getFileTypeInfo(options.getFileType()).getDefaultExtension()));
+
+        	}
+        	
+        	
+            
+        	
+        	
+        	
             // do not record the file name used if recording a script line
             if ( !isScript()) {
                 // added this here specifically for ProvenanceRecorder so that the save-as filename will be shown

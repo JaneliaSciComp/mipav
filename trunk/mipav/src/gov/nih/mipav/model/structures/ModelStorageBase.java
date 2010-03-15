@@ -7591,4 +7591,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
         disposeLocal();
         super.finalize();
     }
+
+	public int getDataSize() {
+		return dataSize;
+	}
+    
+    
 }
