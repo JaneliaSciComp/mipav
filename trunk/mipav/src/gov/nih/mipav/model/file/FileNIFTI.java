@@ -2773,7 +2773,7 @@ public class FileNIFTI extends FileBase {
                 nTimePeriodsSaved = rawFile.getNTimePeriods();
 
                 if (nImagesSaved != 0) {
-                    writeHeader(image, nImagesSaved, nTimePeriodsSaved, fhName, fileDir);
+                    writeHeader(image, nImagesSaved, nTimePeriodsSaved, fhName, fileDir,false);
                 }
 
             } catch (IOException error) {
@@ -3352,7 +3352,7 @@ public class FileNIFTI extends FileBase {
      *
      * @see        FileInfoNIFTI
      */
-    private boolean writeHeader(ModelImage image, int nImagesSaved, int nTimeSaved, String fileName, String fileDir)
+    public boolean writeHeader(ModelImage image, int nImagesSaved, int nTimeSaved, String fileName, String fileDir, boolean doGzip)
             throws IOException {
 
         int i;
@@ -3412,12 +3412,16 @@ public class FileNIFTI extends FileBase {
         }
 
         fileHeader = new File(fileDir + fileHeaderName);
-        raFile = new RandomAccessFile(fileHeader, "rw");
+        if(!doGzip) {
+        	raFile = new RandomAccessFile(fileHeader, "rw");
+        }
 
         // Don't do raFile.setLength(0) if only one file is present because the data is written to this file
         // before the header
         if (!oneFile) {
-            raFile.setLength(0);
+        	if(!doGzip) {
+        		raFile.setLength(0);
+        	}
         }
         // 4 extension bytes after 348 header bytes
         bufferByte = new byte[headerSize + 4];
@@ -4695,8 +4699,10 @@ public class FileNIFTI extends FileBase {
         bufferByte[350] = 0;
         bufferByte[351] = 0;
 
-        raFile.write(bufferByte);
-        raFile.close();
+        if(!doGzip) {
+        	raFile.write(bufferByte);
+        	raFile.close();
+        }
 
         return true; // Successful write
     }
@@ -4753,7 +4759,7 @@ public class FileNIFTI extends FileBase {
                 }
             }
 
-            writeHeader(image, 1, 1, fileName, fileDir);
+            writeHeader(image, 1, 1, fileName, fileDir,false);
 
         } // end for loop
 
@@ -4812,10 +4818,17 @@ public class FileNIFTI extends FileBase {
             }
             // write header with image, # of images per, and 1 time slice
 
-            writeHeader(image, image.getExtents()[2], 1, fileName, fileDir);
+            writeHeader(image, image.getExtents()[2], 1, fileName, fileDir,false);
 
         } // end for loop
 
     }
+
+	public byte[] getBufferByte() {
+		return bufferByte;
+	}
+    
+    
+    
 
 }
