@@ -12,7 +12,6 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
-import gov.nih.mipav.view.renderer.WildMagic.Render.LocalVolumeVOI;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener;
 
@@ -2744,7 +2743,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             // return;
             // }
 
-            newValue = Math.round((tImageSlider.getValue() / 100.0f * (extents[3] - 1)) - 0.01f);
+            newValue = tImageSlider.getValue();
             setTimeSlice(newValue);
             controls.setTimeSl(newValue);
         } else if (source == intensitySpinner) {
@@ -3095,17 +3094,18 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         label1.setFont(font12);
         tImageSliderDictionary.put(new Integer(0), label1);
 
+        
         if ((max - min) > 3) {
             JLabel label2 = new JLabel(Integer.toString(Math.round(rangeF * 2)-1));
             label2.setForeground(Color.black);
             label2.setFont(font12);
-            tImageSliderDictionary.put(new Integer(50), label2);
+            tImageSliderDictionary.put(max/2, label2);
         }
 
-        JLabel label5 = new JLabel(Integer.toString(max-1));
+        JLabel label5 = new JLabel(Integer.toString(max));
         label5.setForeground(Color.black);
         label5.setFont(font12);
-        tImageSliderDictionary.put(new Integer(100), label5);
+        tImageSliderDictionary.put(max, label5);
 
         return tImageSliderDictionary;
     }
@@ -3431,15 +3431,41 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             borderImageSlider.setBorder(new EtchedBorder());
             panelImageSlider.setBorder(borderImageSlider);
  
-            tImageSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 50);
-            tImageSlider.setMinorTickSpacing(Math.round(100.0f / (tDim - 1)));
-            tImageSlider.setSnapToTicks(true);
+            tImageSlider = new JSlider(JSlider.HORIZONTAL, 0, tDim-1, tDim/2);
+            tImageSlider.setMinorTickSpacing(1);
             tImageSlider.setPaintTicks(true);
             tImageSlider.setPaintLabels(true);
-            tImageSlider.setLabelTable(buildTImageSliderLabels(0, tDim));
+            tImageSlider.setSnapToTicks(false);
+            tImageSlider.setLabelTable(buildTImageSliderLabels(0, tDim-1));
             tImageSlider.setValue(1);
             tImageSlider.setValue(0);
             tImageSlider.addChangeListener(this);
+            tImageSlider.addComponentListener(new ComponentListener(){
+                private Dimension d = tImageSlider.getSize();
+                
+                public void componentHidden(ComponentEvent e) {
+                    // TODO Auto-generated method stub
+                    
+                }
+                public void componentMoved(ComponentEvent e) {
+                    // TODO Auto-generated method stub
+                    
+                }
+                public void componentResized(ComponentEvent e) {
+                    if(e.getSource() instanceof JSlider) {
+                    
+                        if(!((JSlider)(e.getSource())).getSize().equals(d)) {
+                            resizeSlider((JSlider)e.getSource());
+                            buildTImageSliderLabels(0, tDim-1);
+                        } 
+                    }
+                    
+                }
+                public void componentShown(ComponentEvent e) {
+                    // TODO Auto-generated method stub
+                    
+                }
+            });
 
             panelImageSlider.add(tImageSlider);
             panelToolBarGBC.gridx = 0;
@@ -3454,6 +3480,17 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         }
 
         setImageSelectorPanelVisible(true);
+    }
+        
+    private void resizeSlider(JSlider src) {
+        double maxTicks = src.getSize().getWidth()/6;
+        
+        int intvl = (int)Math.ceil(tDim/maxTicks);
+        tImageSlider.setMinorTickSpacing(intvl);
+        tImageSlider.setSnapToTicks(false);
+        tImageSlider.setLabelTable(buildTImageSliderLabels(0, tDim-1));
+        tImageSlider.setValue(1);
+        tImageSlider.setValue(0);
     }
     
     protected void buildImageAlignToolBar()
