@@ -17,7 +17,7 @@ import java.text.*;
 
 /**
  * Based on the document provided by Daniel Reich:
- * Notes on DCE with SM2 (standard model, aka Tofts model, 2-compartment) February 4, 2010 - revision 3
+ * Notes on DCE with SM2 (standard model, aka Tofts model, 2-compartment)
  * 3 model parameters are fit for each voxel in 3D:
  * 1) K_trans in [1.0E-5, 0.99]
  * 2) ve in [1.0E-5, 0.99]
@@ -1680,9 +1680,9 @@ public class AlgorithmSM2 extends AlgorithmBase {
                 	for (m = 2; m <= tDim; m++) {
                 		intSum = 0.0;
                 		for (j = 2; j <= m; j++) {
-                			intSum += trapezoidConstant[j-2]*(exparray[j-1][m-1] - exparray[j-2][m-1]);
+                			intSum += trapezoidConstant[j-2]*(exparray[j-1][m-1] - exparray[j-2][m-1])*ve;
 	                        intSum += trapezoidSlope[j-2]* ((exparray[j-1][m-1]*(timeVals[j-1] - 1.0/ktransDivVe)) -
-	                                                                (exparray[j-2][m-1]*(timeVals[j-2] - 1.0/ktransDivVe)));
+	                                                                (exparray[j-2][m-1]*(timeVals[j-2] - 1.0/ktransDivVe)))*ve;
                 		} // for (j = 2; j <= m; j++)
                 		ymodel[m-2] = intSum + vp * r1ptj[m-1];
                 	} // for (m = 2; m <= tDim; m++)
@@ -1708,15 +1708,18 @@ public class AlgorithmSM2 extends AlgorithmBase {
                 		intSumDerivVe = 0.0;
                 		for (j = 2; j <= m; j++) {
 	                        intSumDerivKtrans += trapezoidConstant[j-2]*((timeVals[j-1]-timeVals[m-1])*exparray[j-1][m-1] 
-	                                                                   - (timeVals[j-2] - timeVals[m-1])*exparray[j-2][m-1])/ve;
+	                                                                   - (timeVals[j-2] - timeVals[m-1])*exparray[j-2][m-1]);
 	                        intSumDerivKtrans += trapezoidSlope[j-2]*((exparray[j-1][m-1]*(timeVals[j-1]-timeVals[m-1])*(timeVals[j-1] - 1.0/ktransDivVe)) -
-	                        		                                  (exparray[j-2][m-1]*(timeVals[j-2]-timeVals[m-1])*(timeVals[j-2] - 1.0/ktransDivVe)))/ve;
-	                        intSumDerivKtrans += trapezoidSlope[j-2]*(exparray[j-1][m-1] - exparray[j-2][m-1])*ve/(ktrans*ktrans);
+	                        		                                  (exparray[j-2][m-1]*(timeVals[j-2]-timeVals[m-1])*(timeVals[j-2] - 1.0/ktransDivVe)));
+	                        intSumDerivKtrans += trapezoidSlope[j-2]*(exparray[j-1][m-1] - exparray[j-2][m-1])*ve*ve/(ktrans*ktrans);
 	                        intSumDerivVe += trapezoidConstant[j-2]*((timeVals[j-1]-timeVals[m-1])*exparray[j-1][m-1] 
-	                                                              - (timeVals[j-2]-timeVals[m-1])*exparray[j-2][m-1])*(-ktrans/(ve*ve));
+	                                                              - (timeVals[j-2]-timeVals[m-1])*exparray[j-2][m-1])*(-ktrans/ve);
+	                        intSumDerivVe += trapezoidConstant[j-2]*(exparray[j-1][m-1] - exparray[j-2][m-1]);
 	                        intSumDerivVe += trapezoidSlope[j-2]*((exparray[j-1][m-1]*(timeVals[j-1]-timeVals[m-1])*(timeVals[j-1] - 1.0/ktransDivVe)) -
-	                                  (exparray[j-2][m-1]*(timeVals[j-2]-timeVals[m-1])*(timeVals[j-2] - 1.0/ktransDivVe)))*(-ktrans/(ve*ve));
-	                        intSumDerivVe += trapezoidSlope[j-2]*(exparray[j-1][m-1] - exparray[j-2][m-1])*(-1.0/ktrans);
+	                                  (exparray[j-2][m-1]*(timeVals[j-2]-timeVals[m-1])*(timeVals[j-2] - 1.0/ktransDivVe)))*(-ktrans/ve);
+	                        intSumDerivVe += trapezoidSlope[j-2]*(exparray[j-1][m-1] - exparray[j-2][m-1])*(-2.0*ve/ktrans);
+	                        intSumDerivVe += trapezoidSlope[j-2]* ((exparray[j-1][m-1]*timeVals[j-1]) -
+                                    (exparray[j-2][m-1]*timeVals[j-2]));
                 		} // for (j = 2; j <= m; j++)
                 		covarMat[m-2][0] = intSumDerivKtrans;
                 		covarMat[m-2][1] = intSumDerivVe;
