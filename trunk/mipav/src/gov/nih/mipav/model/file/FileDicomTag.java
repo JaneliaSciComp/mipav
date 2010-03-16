@@ -749,10 +749,10 @@ public class FileDicomTag extends ModelSerialCloneable {
                 retval = 2;
             } else {
             	try {
-            		retval = ((String) (val[0])).length();
+            		retval = val[0].toString().length();
             	} catch(NullPointerException e) {
             		retval = 0;
-            	}
+            	} 
             }
         } else if (type.equalsIgnoreCase("otherByteString") || type.equalsIgnoreCase("typeUnknown")) {
             final Object[] val = getValueList();
