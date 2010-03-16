@@ -690,6 +690,20 @@ public class FileDicomBase {
     }
 
     /**
+     * Writes a byte to a file.
+     *
+     * @param      data       Data to be written to file.
+     *
+     * @exception  IOException  if there is an error writing the file
+     */
+    public final void writeByte(byte data) throws IOException {
+    
+        byteBuffer2[0] = (byte) (data & 0xff);
+    
+        raFile.write(byteBuffer2);
+    }
+
+    /**
      * Gets the file/buffer pointer and returns it.
      *
      * @return  the file/buffer pointer
