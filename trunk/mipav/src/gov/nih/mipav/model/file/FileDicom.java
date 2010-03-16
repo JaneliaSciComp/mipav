@@ -683,6 +683,8 @@ public class FileDicom extends FileDicomBase {
             // ******* Gets the next element
             getNextElement(endianess); // gets group, element, length
             name = convertGroupElement(groupWord, elementWord);
+            
+            
             final FileDicomKey key = new FileDicomKey(name);
             int tagVM;
  // Should be removed           
@@ -3631,22 +3633,32 @@ public class FileDicom extends FileDicomBase {
                 // System.err.println();
             } else if (type.equals(FileDicomBase.OTHER_WORD_STRING)) { // OW -- word = 2 bytes
 
-                final Short[] data = (Short[]) element.getValue(false);
+                final Object[] data = (Object[])element.getValue(false);
 
                 // We are not sure that that LUT endianess is always BIG
                 // but the example images we have are.
                 // Book 3 C.7.6.3.1.6 says to swap byte of OW.
                 if ( ( (gr == 0x28) && (el == 0x1201)) || ( (gr == 0x28) && (el == 0x1202))
                         || ( (gr == 0x28) && (el == 0x1203))) {
-
-                    for (final Short element2 : data) {
+                    
+                    //data is guaranteed to be short for these tags
+                    for (final Short element2 : (Short[])data) {
                         writeShort(element2.shortValue(), true);
                     }
                 } else {
 
-                    for (final Short element2 : data) {
-                        writeShort(element2.shortValue(), endianess);
+                    if(data instanceof Short[]) {
+                        for (final Short element2 : (Short[])data) {
+                            writeShort(element2.shortValue(), endianess);
+                        }
+                    } else if(data instanceof Byte[]) {
+                        for (final Byte element2 : (Byte[])data) {
+                            writeByte(element2.byteValue());
+                        }
                     }
+                    
+                    
+                    
                 }
 
             } else if (type.equals(FileDicomBase.TYPE_STRING)) {
