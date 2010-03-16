@@ -788,7 +788,7 @@ public class JDialogLightBox extends JDialogBase implements ChangeListener {
             tSlider.setMinorTickSpacing(Math.round(100.0f / (frame.getImageB().getExtents()[3] - 1)));
         }
 
-        tSlider.setSnapToTicks(true);
+        tSlider.setSnapToTicks(false);
         tSlider.setPaintTicks(true);
         tSlider.setPaintLabels(true);
 
