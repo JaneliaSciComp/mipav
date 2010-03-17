@@ -74,6 +74,17 @@ public class FilePARREC extends FileBase {
     private boolean sameSliceScalings = true;
     private int originalDataType;
     
+    /** normal par/rec are sorted by volumes...sometime, they are not sorted like this...instead they are based on slices
+     * if that is true, then we need to change around the image dataarray to make it sorted by volumes
+     */
+    private boolean isSortedByVolumes = true;
+    
+    /** num slices per volume **/
+    private int numSlices;
+    
+    /** num vols in 4d dataset **/
+    private int numVolumes;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -566,7 +577,7 @@ public class FilePARREC extends FileBase {
             Preferences.debug("FilePARREC:readHeader. Number of slices not found."+ "\n");
             return false;
         }
-        int numSlices = Integer.valueOf(s);
+        numSlices = Integer.valueOf(s);
 
 
         // Let's parse the first slice:
@@ -646,6 +657,19 @@ public class FilePARREC extends FileBase {
             }
             idx += I.intValue();
         }
+        
+        //need to figure out if this par/rec is sorted normally by volumes or by slices.  If its by slices then we will see all the
+        //slice 1s then all the slice 2s.  etc.
+        sl = (String)Slices.get(0);
+        values = sl.split("\\s+");
+        String sliceNumString1 = values[0]; //slice number is the 1st one 
+        sl = (String)Slices.get(1);
+        values = sl.split("\\s+");
+        String sliceNumString2 = values[0];
+        if(sliceNumString1.equals(sliceNumString2)) {
+        	isSortedByVolumes = false;
+        }
+        
         
         // Let's parse the other slices for rescaleIntercept, rescaleSlope, and scaleSlope:
         for (int i = 1; i < Slices.size(); i++) {
@@ -733,7 +757,7 @@ public class FilePARREC extends FileBase {
             Preferences.debug("FilePARREC:readHeader. Invalid slice dimension"+ "\n");
             return false;
         }
-        int numVolumes =Slices.size()/numSlices;
+        numVolumes =Slices.size()/numSlices;
         int[] Extents;
         if(numVolumes>1) {
             Extents = new int[] { dim1, dim2, numSlices, numVolumes };
@@ -920,12 +944,184 @@ public class FilePARREC extends FileBase {
         } catch (OutOfMemoryError e) {
             throw (e);
         }
+        
+        //we need to rearrange the buffer because the par/rec image is not sorted properly
+        if(!isSortedByVolumes) {
+        	int type;
+        	type = image.getType();
+        	int[] exts = image.getExtents();
+        	int sliceLength = exts[0] * exts[1];
+        	if(image.isColorImage()) {
+        		sliceLength = sliceLength * 4;
+        	}
+        	int dataSizeLength = image.getDataSize();
+        	byte[] sliceByteData = null;
+        	byte[] newByteData = null;
+        	short[] sliceShortData = null;
+        	short[] newShortData = null;
+        	float[] sliceFloatData = null;
+        	float[] newFloatData = null;
+        	int[] sliceIntData = null;
+        	int[] newIntData = null;
+        	long[] sliceLongData = null;
+        	long[] newLongData = null;
+        	int st = 0;
+        	int newDataStart = 0;
+        	if(type == ModelStorageBase.BYTE || type == ModelStorageBase.UBYTE || type == ModelStorageBase.ARGB) {
+        		sliceByteData = new byte[sliceLength];
+        		newByteData = new byte[dataSizeLength];
+        	}else if(type == ModelStorageBase.SHORT || type == ModelStorageBase.USHORT || type == ModelStorageBase.ARGB_USHORT ) {
+        		sliceShortData = new short[sliceLength];
+        		newShortData = new short[dataSizeLength];
+        	}else if(type == ModelStorageBase.INTEGER || type == ModelStorageBase.UINTEGER) {
+        		sliceIntData = new int[sliceLength];
+        		newIntData = new int[dataSizeLength];
+        	}else if(type == ModelStorageBase.LONG) {
+        		sliceLongData = new long[sliceLength];
+        		newLongData = new long[dataSizeLength];
+        	}else if(type == ModelStorageBase.FLOAT || type == ModelStorageBase.ARGB_FLOAT) {
+        		sliceFloatData = new float[sliceLength];
+        		newFloatData = new float[dataSizeLength];	
+        	}
+        	
+
+        	for(int start=0,counter=0;start<dataSizeLength;start=start+sliceLength,counter++) {
+        		if(type == ModelStorageBase.BYTE || type == ModelStorageBase.UBYTE) {
+        			try {
+          	        	 image.exportData(start, sliceLength, sliceByteData);
+          	         	} catch (IOException error) {
+          	             System.out.println("IO exception");
+          	             return null;
+          	         	}
+   	       	         if(counter%numVolumes == 0 && start != 0) {
+   	       	        	 st = st + sliceLength;
+   	       	        	newDataStart = st;
+   	       	         }
+   	       	         for(int i=newDataStart,m=0;i<newDataStart+sliceLength;i++,m++) {
+   	       	        	 newByteData[i] = sliceByteData[m];
+   	       	         }
+   	       	         newDataStart = newDataStart + (numSlices*sliceLength); 
+        			
+        		}else if(type == ModelStorageBase.SHORT || type == ModelStorageBase.USHORT ) {
+        			try {
+          	        	 image.exportData(start, sliceLength, sliceShortData);
+          	         	} catch (IOException error) {
+          	             System.out.println("IO exception");
+          	             return null;
+          	         	}
+   	       	         if(counter%numVolumes == 0 && start != 0) {
+   	       	        	 st = st + sliceLength;
+   	       	        	newDataStart = st;
+   	       	         }
+   	       	         for(int i=newDataStart,m=0;i<newDataStart+sliceLength;i++,m++) {
+   	       	        	 newShortData[i] = sliceShortData[m];
+   	       	         }
+   	       	         newDataStart = newDataStart + (numSlices*sliceLength);
+        		}else if(type == ModelStorageBase.INTEGER || type == ModelStorageBase.UINTEGER) {
+        			try {
+          	        	 image.exportData(start, sliceLength, sliceIntData);
+          	         	} catch (IOException error) {
+          	             System.out.println("IO exception");
+          	             return null;
+          	         	}
+   	       	         if(counter%numVolumes == 0 && start != 0) {
+   	       	        	 st = st + sliceLength;
+   	       	        	newDataStart = st;
+   	       	         }
+   	       	         for(int i=newDataStart,m=0;i<newDataStart+sliceLength;i++,m++) {
+   	       	        	 newIntData[i] = sliceIntData[m];
+   	       	         }
+   	       	         newDataStart = newDataStart + (numSlices*sliceLength); 
+        		}else if(type == ModelStorageBase.LONG) {
+        			try {
+          	        	 image.exportData(start, sliceLength, sliceLongData);
+          	         	} catch (IOException error) {
+          	             System.out.println("IO exception");
+          	             return null;
+          	         	}
+   	       	         if(counter%numVolumes == 0 && start != 0) {
+   	       	        	 st = st + sliceLength;
+   	       	        	newDataStart = st;
+   	       	         }
+   	       	         for(int i=newDataStart,m=0;i<newDataStart+sliceLength;i++,m++) {
+   	       	        	 newLongData[i] = sliceLongData[m];
+   	       	         }
+   	       	         newDataStart = newDataStart + (numSlices*sliceLength); 
+        		}else if(type == ModelStorageBase.FLOAT) {
+            		try {
+       	        	 image.exportData(start, sliceLength, sliceFloatData);
+       	         	} catch (IOException error) {
+       	             System.out.println("IO exception");
+       	             return null;
+       	         	}
+	       	         if(counter%numVolumes == 0 && start != 0) {
+	       	        	 st = st + sliceLength;
+	       	        	newDataStart = st;
+	       	         }
+	       	         for(int i=newDataStart,m=0;i<newDataStart+sliceLength;i++,m++) {
+	       	        	 newFloatData[i] = sliceFloatData[m];
+	       	         }
+	       	         newDataStart = newDataStart + (numSlices*sliceLength); 
+            	}
+        	}
+        	
+        	
+        	if(type == ModelStorageBase.BYTE || type == ModelStorageBase.UBYTE) {
+        		try {
+     		    	image.importData(0, newByteData, true);
+        		} catch (IOException error) {
+     	            System.out.println("IO exception");
+     	            error.printStackTrace();
+     	            return null;
+        		}
+        	}else if(type == ModelStorageBase.SHORT || type == ModelStorageBase.USHORT ) {
+        		try {
+     		    	image.importData(0, newShortData, true);
+        		} catch (IOException error) {
+     	            System.out.println("IO exception");
+     	            error.printStackTrace();
+     	            return null;
+        		}
+        	}else if(type == ModelStorageBase.INTEGER || type == ModelStorageBase.UINTEGER) {
+        		try {
+     		    	image.importData(0, newIntData, true);
+        		} catch (IOException error) {
+     	            System.out.println("IO exception");
+     	            error.printStackTrace();
+     	            return null;
+        		}
+        	}else if(type == ModelStorageBase.LONG) {
+        		try {
+     		    	image.importData(0, newLongData, true);
+        		} catch (IOException error) {
+     	            System.out.println("IO exception");
+     	            error.printStackTrace();
+     	            return null;
+        		}
+        	}else if(type == ModelStorageBase.FLOAT) {
+        		try {
+     		    	image.importData(0, newFloatData, true);
+        		} catch (IOException error) {
+     	            System.out.println("IO exception");
+     	            error.printStackTrace();
+     	            return null;
+        		}
+        	}
+        } //end if(!isSortedByVolumes)
+        
+        
+        
+        
         if (image != null) {
             image.calcMinMax();
         }
 
         return image;
     }
+    
+    
+    
+    
 
     /**
      * Reads in a PAR/REC image (first the header file, then the raw file)
