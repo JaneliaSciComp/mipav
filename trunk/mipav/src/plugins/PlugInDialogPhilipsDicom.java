@@ -136,62 +136,6 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
         if (algorithm instanceof PlugInAlgorithmPhilipsDicom) {
             Preferences.debug("DICOM Process Time Elapsed: " + algorithm.getElapsedTime());
             image.clearMask();
-            
-            if ((philipsAlgo.isCompleted() == true) && (resultImage != null)) {
-            	progressBar.setVisible(true);
-                progressBar.setMessage("Saving image...");
-            	
-            	// The algorithm has completed and produced a new image to be displayed.
-                updateFileInfo(image, resultImage);
-
-                resultImage.clearMask();
-
-                FileIO fileIO = new FileIO();
-                FileWriteOptions opts = new FileWriteOptions(true);
-                opts.setFileType(FileUtility.XML);
-                opts.setFileDirectory(image.getImageDirectory()+"corrected"+File.separator);
-                opts.setFileName(image.getImageName()+"_corrected");
-                if(image.getNDims() > 2) {
-	                opts.setBeginSlice(0);
-	                opts.setEndSlice(resultImage.getExtents()[2]-1);
-                }
-                opts.setIsScript(false);
-                opts.setOptionsSet(true); 
-                File f = new File(image.getImageDirectory()+"corrected"+File.separator);
-                if(!f.exists())
-                	f.mkdir();
-                fileIO.writeImage(resultImage, opts);
-                
-                progressBar.setMessage("Reloading image...");
-                progressBar.updateValue(95);
-                
-                resultImage = fileIO.readImage(image.getImageDirectory()+"corrected"+
-                								File.separator+image.getImageName()+"_corrected.xml");
-                
-                progressBar.dispose();
-                
-                try {
-                    new ViewJFrameImage(resultImage);
-                    
-                } catch (OutOfMemoryError error) {
-                    System.gc();
-                    MipavUtil.displayError("Out of memory: unable to open new frame");
-                } catch (Exception e) {
-                	MipavUtil.displayError("General display error occured.  Note image has been saved.");
-                	System.gc();
-                	e.printStackTrace();
-                }
-                
-                MipavUtil.displayInfo("Image saved as "+image.getImageName()+"_corrected\n"+
-                						"in "+image.getImageDirectory()+"corrected"+File.separator);
-            } else if (resultImage != null) {
-
-                // algorithm failed but result image still has garbage
-                resultImage.disposeLocal(); // clean up memory
-                resultImage = null;
-                System.gc();
-
-            }
 
             if (algorithm.isCompleted()) {
                 insertScriptLine();
