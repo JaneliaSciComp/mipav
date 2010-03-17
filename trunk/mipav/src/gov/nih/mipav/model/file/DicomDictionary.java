@@ -110,7 +110,10 @@ public class DicomDictionary {
         if (masterHashtable == null) {
             parseFile(DEFAULT_DICTIONARY);
         }
-
+        
+        //if this key is one of a series, it needs to be converted to wild card chars for the dictionary
+        key = convertToWildKey(key);
+        
         return masterHashtable.containsKey(key);
     }
 
@@ -162,6 +165,9 @@ public class DicomDictionary {
         if (masterHashtable == null) {
             parseFile(DEFAULT_DICTIONARY);
         }
+        
+        //if this key is one of a series, it needs to be converted to wild card chars for the dictionary
+        key = convertToWildKey(key);
 
         return masterHashtable.get(key);
     }
@@ -180,7 +186,10 @@ public class DicomDictionary {
         while (enumeration.hasMoreElements()) {
             FileDicomKey key = enumeration.nextElement();
 
-            FileDicomTagInfo tag = masterHashtable.get(key);
+            //if this key is one of a series, it needs to be converted to wild card chars for the dictionary
+            FileDicomKey searchKey = convertToWildKey(key);
+            
+            FileDicomTagInfo tag = masterHashtable.get(searchKey);
 
             String foundTagName = tag.getName();
 
@@ -206,6 +215,9 @@ public class DicomDictionary {
             parseFile(DEFAULT_DICTIONARY);
         }
 
+        //if this key is one of a series, it needs to be converted to wild card chars for the dictionary
+        key = convertToWildKey(key);
+        
         FileDicomTagInfo tag = masterHashtable.get(key);
 
         if (tag == null) {
@@ -229,8 +241,11 @@ public class DicomDictionary {
             parseFile(DEFAULT_DICTIONARY);
         }
 
-        FileDicomTagInfo tag = masterHashtable.get(key);
+        //if this key is one of a series, it needs to be converted to wild card chars for the dictionary
+        key = convertToWildKey(key);
 
+        FileDicomTagInfo tag = masterHashtable.get(key);
+        
         if (tag == null) {
             return null;
         }
@@ -294,6 +309,9 @@ public class DicomDictionary {
             parseFile(DEFAULT_DICTIONARY);
         }
 
+        //if this key is one of a series, it needs to be converted to wild card chars for the dictionary
+        key = convertToWildKey(key);
+        
         FileDicomTagInfo tag = (FileDicomTagInfo) masterHashtable.get(key);
 
         if (tag == null) {
@@ -317,6 +335,9 @@ public class DicomDictionary {
             parseFile(DEFAULT_DICTIONARY);
         }
 
+        //if this key is one of a series, it needs to be converted to wild card chars for the dictionary
+        key = convertToWildKey(key);
+        
         FileDicomTagInfo tag = (FileDicomTagInfo) masterHashtable.get(key);
 
         if (tag == null) {
@@ -341,6 +362,9 @@ public class DicomDictionary {
             parseFile(DEFAULT_DICTIONARY);
         }
 
+        //if this key is one of a series, it needs to be converted to wild card chars for the dictionary
+        key = convertToWildKey(key);
+        
         FileDicomTagInfo tag = (FileDicomTagInfo) masterHashtable.get(key);
 
         if (tag == null) {
@@ -396,7 +420,7 @@ public class DicomDictionary {
                 int j = i;
 
                 /*
-                 * use the group and element numbers, gathering them in a way to accomodate the occaisional general
+                 * use the group and element numbers, gathering them in a way to accommodate the occasional general
                  * group/element number (like 60xx).
                  */
                 int tempGN, valGN;
@@ -518,6 +542,26 @@ public class DicomDictionary {
 
         fw.write(" # End of Tag Dictionary file.\n");
         fw.close();
+    }
+    
+    /**
+     * Converts group numbers of 60xx or 50xx dicom key elements so that the 
+     * dicom dictionary will be able to find them.
+     */
+    
+    private static FileDicomKey convertToWildKey(FileDicomKey key) {
+        String wildCheck = key.getGroup().substring(0, 2);
+        //if key group is not a 50xx or 60xx, then returning the masterHashtable evaluation is enough
+        if(!wildCheck.equals("50") && !wildCheck.equals("60")) {
+            return key;
+        } else { //dicom dictionary stores wildcard values, so check after converting group name
+            String keyStr = key.toString();
+            int commaLoc = keyStr.indexOf(',');
+            keyStr = keyStr.substring(0, commaLoc-2)+"xx"+keyStr.substring(commaLoc);
+            FileDicomKey newKey = (FileDicomKey) key.clone();
+            newKey.setKey(keyStr);
+            return newKey;
+        }
     }
 
     /**
