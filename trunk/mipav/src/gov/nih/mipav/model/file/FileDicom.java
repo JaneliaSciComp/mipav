@@ -717,6 +717,8 @@ public class FileDicom extends FileDicomBase {
                             "Private Tag"));
                 } else {
                     final FileDicomTagInfo info = DicomDictionary.getInfo(key);
+                    //this is required if DicomDictionary contains wild card characters
+                    info.setKey(key);
                     tagTable.putPrivateTagValue(info);
                     tagVM = info.getValueMultiplicity();
                     tagTable.get(key).setValueRepresentation(new String(vr));
@@ -2685,9 +2687,15 @@ public class FileDicom extends FileDicomBase {
             FileDicomTag entry;
 
             if (fileInfo.vr_type == FileInfoDicom.IMPLICIT) {
-
+                FileDicomTagInfo info;
+                
                 if (DicomDictionary.containsTag(new FileDicomKey(groupWord, elementWord))) {
-                    entry = new FileDicomTag(DicomDictionary.getInfo(new FileDicomKey(groupWord, elementWord)));
+                    FileDicomKey key = null;
+                    
+                    info = DicomDictionary.getInfo(key = new FileDicomKey(groupWord, elementWord));
+                    //is is required if DicomDictionary contains wild card characters
+                    info.setKey(key);
+                    entry = new FileDicomTag(info);
                     type = entry.getType();
                 } else {
 
@@ -2700,7 +2708,10 @@ public class FileDicom extends FileDicomBase {
                 FileDicomTagInfo info;
 
                 if (DicomDictionary.containsTag(new FileDicomKey(groupWord, elementWord))) {
-                    info = (FileDicomTagInfo) DicomDictionary.getInfo(new FileDicomKey(groupWord, elementWord)).clone();
+                    FileDicomKey key = null;
+                    info = (FileDicomTagInfo) DicomDictionary.getInfo(key = new FileDicomKey(groupWord, elementWord)).clone();
+                    //this is required if DicomDictionary contains wild card characters
+                    info.setKey(key);
                     entry = new FileDicomTag(info);
                     entry.setValueRepresentation(new String(vr));
                 } else {

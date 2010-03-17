@@ -471,6 +471,9 @@ public class FileMincHDF extends FileBase {
 
                             if (info == null) {
                                 info = new FileDicomTagInfo(key, "UT", 1, "Private Tag", "Private Tag");
+                            } else {
+                                //is is required if DicomDictionary contains wild card characters
+                                info.setKey(key);
                             }
 
                             final FileDicomTag tag = new FileDicomTag(info);

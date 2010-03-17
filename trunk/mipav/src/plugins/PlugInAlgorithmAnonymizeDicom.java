@@ -551,6 +551,8 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	                } else { //not a private tag
 
 	                	FileDicomTagInfo info = (FileDicomTagInfo) DicomDictionary.getInfo(key);
+	                	//this is required if DicomDictionary contains wild card characters
+	                    info.setKey(key);
 	                    tagVM = info.getValueMultiplicity();
 	                }
 	            }
@@ -1712,8 +1714,14 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 
 	            if (fileInfo.vr_type == FileInfoDicom.IMPLICIT) {
 
+	                FileDicomTagInfo info;
+	                
 	                if (DicomDictionary.containsTag(new FileDicomKey(groupWord, elementWord))) {
-	                    entry = new FileDicomTag(DicomDictionary.getInfo(new FileDicomKey(groupWord, elementWord)));
+	                    FileDicomKey key = null;
+	                    info = DicomDictionary.getInfo(key = new FileDicomKey(groupWord, elementWord));
+	                    //this is required if DicomDictionary contains wild card characters
+                        info.setKey(key);
+	                    entry = new FileDicomTag(info);
 	                    type = entry.getType();
 	                } else {
 
@@ -1726,7 +1734,10 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	                FileDicomTagInfo info;
 
 	                if (DicomDictionary.containsTag(new FileDicomKey(groupWord, elementWord))) {
-	                    info = (FileDicomTagInfo) DicomDictionary.getInfo(new FileDicomKey(groupWord, elementWord)).clone();
+	                    FileDicomKey key = null;
+	                    info = (FileDicomTagInfo) DicomDictionary.getInfo(key = new FileDicomKey(groupWord, elementWord)).clone();
+	                    //this is required if DicomDictionary contains wild card characters
+	                    info.setKey(key);
 	                    entry = new FileDicomTag(info);
 	                    entry.setValueRepresentation(new String(vr));
 	                } else {

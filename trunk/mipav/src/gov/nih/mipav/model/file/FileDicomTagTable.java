@@ -456,6 +456,9 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
                 // TODO: might want to display an error message... the key is not in the dicom dictionary.  how should
                 // private, unknown, and sequence tags be handled?
                 return;
+            } else {
+                //is is required if DicomDictionary contains wild card characters
+                info.setKey(key);
             }
 
             tag = new FileDicomTag(info, value);
@@ -521,12 +524,16 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
 
         if (tag == null) {
             FileDicomTagInfo info = DicomDictionary.getInfo(key);
+            
 
             if (info == null) {
 
                 // TODO: might want to display an error message... the key is not in the dicom dictionary.  how should
                 // private, unknown, and sequence tags be handled?
                 return;
+            } else {
+                //is is required if DicomDictionary contains wild card characters
+                info.setKey(key);
             }
 
             tag = new FileDicomTag(info);
