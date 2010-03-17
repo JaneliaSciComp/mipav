@@ -2058,6 +2058,12 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                 doBlue = !doBlue;
             }
         }
+        //add possible wild cards
+        doBlue = !doBlue;
+        groupColorMap.put("50xx", doBlue ? blue : green);
+        doBlue = !doBlue;
+        groupColorMap.put("60xx", doBlue ? blue : green);
+        
     }
 
     private class CompareGroup implements Comparator<FileDicomKey> {
@@ -2065,18 +2071,6 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         public int compare(final FileDicomKey o1Key, final FileDicomKey o2Key) {
             String o1 = o1Key.getGroup();
             String o2 = o2Key.getGroup();
-
-            if (o1.equals("50xx")) {
-                o1 = "5000";
-            } else if (o1.equals("60xx")) {
-                o1 = "6000";
-            }
-
-            if (o2.equals("50xx")) {
-                o2 = "5000";
-            } else if (o2.equals("60xx")) {
-                o2 = "6000";
-            }
 
             return Integer.valueOf(o1, 16) - Integer.valueOf(o2, 16);
         }
@@ -2374,7 +2368,12 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     final String group = name.substring(0, 4);
                     Color f = groupColorMap.get(group);
                     if (f == null) {
-                        f = new Color(0xffcccc); // light red
+                        String subgr = group.substring(0, 2);
+                        if(subgr.equals("50") || subgr.equals("60")) {
+                            f = groupColorMap.get(subgr+"xx");
+                        } else {
+                            f = new Color(0xffcccc); // light red
+                        }
                     }
 
                     cell.setBackground(f);
