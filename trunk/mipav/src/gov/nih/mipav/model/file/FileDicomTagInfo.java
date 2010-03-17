@@ -289,6 +289,16 @@ public class FileDicomTagInfo extends ModelSerialCloneable {
     }
 
     /**
+     * Sets the dicom tag's key.  This is only used to specify the values of wild card tags stored
+     * in the DicomDictionary
+     *
+     * @param  vr  the value representation
+     */
+    public final void setKey(FileDicomKey key) {
+        this.key = key;
+    }
+    
+    /**
      * Sets the value representation; used only for explicit vr.
      *
      * @param  vr  the value representation
