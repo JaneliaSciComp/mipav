@@ -51,6 +51,9 @@ public class FileDicomBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
+    /** One byte array used to read/write in data so that one doesn't't need to be allocated with each read/write. */
+    protected byte[] byteBuffer = new byte[1];
+    
     /** Two byte array used to read/write in data so that one doesn't't need to be allocated with each read/write. */
     protected byte[] byteBuffer2 = new byte[2];
 
@@ -698,9 +701,9 @@ public class FileDicomBase {
      */
     public final void writeByte(byte data) throws IOException {
     
-        byteBuffer2[0] = (byte) (data & 0xff);
+        byteBuffer[0] = (byte) (data & 0xff);
     
-        raFile.write(byteBuffer2);
+        raFile.write(byteBuffer);
     }
 
     /**
