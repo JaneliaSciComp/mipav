@@ -336,10 +336,10 @@ public class AlgorithmSM2 extends AlgorithmBase {
             for (yIndex = 0; yIndex < 18; yIndex++) {
             	veIndex = yIndex % 3;
             	veActual = veArray[veIndex];
-            	//initial[1] = veActual;
+            	initial[1] = veActual;
             	vpIndex = yIndex/3;
             	vpActual = vpArray[vpIndex];
-            	//initial[2] = vpActual;
+            	initial[2] = vpActual;
                 for (ktransIndex = 0; ktransIndex < 6; ktransIndex++) {
                     ktransActual = ktransArray[ktransIndex];
                     Preferences.debug("ktrans = " + ktransActual + " ve = " + veActual + " vp = " + vpActual + "\n");
@@ -349,7 +349,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
                 	        exparray[j][m] = Math.exp((timeVals[j] - timeVals[m])*ktransDivVe);
                 		}
                 	}
-                    //initial[0] = ktransActual;
+                    initial[0] = ktransActual;
                     for (t = 1; t < tDim; t++) {
                     	IntModel imod;
                         int steps;
@@ -1827,7 +1827,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
                 ctrl = ctrlMat[0];
                 //Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + " a[2] = " + a[2] + "\n");
                 for (j = 0; j < 3; j++) {
-                	if ((a[j] < bl[j] - 1.0E-10) || (a[j] > bu[j] + 1.0E-10)) {
+                	if ((a[j] < bl[j] - 1.0E-6) || (a[j] > bu[j] + 1.0E-6)) {
                 		outOfBounds = true;
                 		Preferences.debug("a[" + j + "] = " + a[j] + "\n");
                 		if (ctrl == 1) {
