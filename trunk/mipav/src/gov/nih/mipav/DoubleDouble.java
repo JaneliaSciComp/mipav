@@ -612,6 +612,23 @@ public strictfp class DoubleDouble
 		
 	}
 	
+	public DoubleDouble sin() {
+		// Return the sine of a DoubleDouble number
+		DoubleDouble msquare = (this.multiply(this)).negate();
+		DoubleDouble s = new DoubleDouble(this);
+		DoubleDouble t = new DoubleDouble(this);
+		double n = 1.0;
+		while (Math.abs(t.doubleValue()) > DoubleDouble.EPS) {
+			n += 1.0;
+			t.divide(DoubleDouble.valueOf(n));
+			n += 1.0;
+			t.divide(DoubleDouble.valueOf(n));
+			t = t.multiply(msquare);
+			s = s.add(t);
+		}
+		return s;
+	}
+	
 	/**
 	 * Computes the value of this number raised to an integral power.
 	 * Follows semantics of Java Math.pow as closely as possible.
