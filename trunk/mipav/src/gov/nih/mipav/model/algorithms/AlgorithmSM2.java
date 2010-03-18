@@ -1826,15 +1826,6 @@ public class AlgorithmSM2 extends AlgorithmBase {
             try {
                 ctrl = ctrlMat[0];
                 //Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + " a[2] = " + a[2] + "\n");
-                for (j = 0; j < 3; j++) {
-                	if ((a[j] < bl[j] - 1.0E-6) || (a[j] > bu[j] + 1.0E-6)) {
-                		outOfBounds = true;
-                		Preferences.debug("a[" + j + "] = " + a[j] + "\n");
-                		if (ctrl == 1) {
-                			ctrlMat[0] = -1;
-                		}
-                	}
-                }
                 if ((ctrl == -1) || (ctrl == 1)) {
                 	ktrans = a[0];
                 	ve = a[1];
