@@ -82,6 +82,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
     private int[] paramInf = new int[3];
     private double[] paramMin = new double[3];
     private double[] paramMax = new double[3];
+    private boolean outOfBounds;
     
     private ModelImage tissueImage;
 
@@ -298,6 +299,10 @@ public class AlgorithmSM2 extends AlgorithmBase {
             int failure = 0;
             int notADescentDirection = 0;
             int ktransequalszero = 0;
+            int outOfBoundsInSuccess = 0;
+            int outOfBoundsInFailure = 0;
+            int outOfBoundsInIncorrectDescent = 0;
+            int outOfBoundsInKtransEqualsZero = 0;
             tDim = 100;
             timeVals = new double[tDim];
             for (i = 0; i < 100; i++) {
@@ -369,6 +374,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
                         Preferences.debug("t = " + t +  "y_array = " + y_array[t-1] + " ymodel = " + ymodel[t-1] + "\n");*/
                     } // for (t = 1; t < tDim; t++)
                     // Note that the nPts, tDim-1, is the number of points in the y_array.
+                    outOfBounds = false;
                     dModel = new FitSM2ConstrainedModel(tDim-1, r1ptj, y_array, initial);
                     dModel.driver();
                     //dModel.dumpResults();
@@ -383,23 +389,39 @@ public class AlgorithmSM2 extends AlgorithmBase {
                     if ((Math.abs(ktransActual - params[0]) <= 1.0E-5) && (Math.abs(veActual - params[1]) <= 1.0E-5) &&
                             (Math.abs(vpActual - params[2]) <= 1.0E-5)) {
                         success++;
+                        if (outOfBounds) {
+                        	outOfBoundsInSuccess++;
+                        }
                     }
                     else {
                         failure++;
+                        if (outOfBounds) {
+                        	outOfBoundsInFailure++;
+                        }
                         if (status == -6) {
                         	notADescentDirection++;
+                        	if (outOfBounds) {
+                        		outOfBoundsInIncorrectDescent++;
+                        	}
                         }
                         else if (ktransActual == 0.0) {
                         	ktransequalszero++;
+                        	if (outOfBounds) {
+                        		outOfBoundsInKtransEqualsZero++;
+                        	}
                         }
                     }
                 } // for (ktransIndex = 0; ktransIndex < 6; ktransIndex++)
             } // for (yIndex = 0; yIndex < 18; yIndex++)
             Preferences.debug("Number of successes = " + success + "\n");
             Preferences.debug("Number of failures = " + failure + "\n");
+            Preferences.debug("Out of bounds in success = " + outOfBoundsInSuccess + "\n");
+            Preferences.debug("Out of bounds in failure = " + outOfBoundsInFailure + "\n");
             Preferences.debug("Number failing with abnormal termination because the latest search direction computed using subspace minimization\n");
         	Preferences.debug("was not a descent direction (probably caused by a wrongly computed Jacobian) = " + notADescentDirection + "\n");
         	Preferences.debug("Number failing because cannot handle ktrans equals zero = " + ktransequalszero + "\n");
+        	Preferences.debug("Out of bounds in incorrect descent = " + outOfBoundsInIncorrectDescent + "\n");
+        	Preferences.debug("out of bounds with ktrans equals zero = " + outOfBoundsInKtransEqualsZero + "\n");
             setCompleted(false);
             return;
         } // if (selfTest2)
@@ -1804,6 +1826,14 @@ public class AlgorithmSM2 extends AlgorithmBase {
             try {
                 ctrl = ctrlMat[0];
                 //Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + " a[2] = " + a[2] + "\n");
+                for (j = 0; j < 3; j++) {
+                	if ((a[j] < bl[j]) || (a[j] > bu[j])) {
+                		outOfBounds = true;
+                		if (ctrl == 1) {
+                			ctrlMat[0] = -1;
+                		}
+                	}
+                }
                 if ((ctrl == -1) || (ctrl == 1)) {
                 	ktrans = a[0];
                 	ve = a[1];
