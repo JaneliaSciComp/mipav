@@ -596,6 +596,22 @@ public strictfp class DoubleDouble
 	  return axdd.add(new DoubleDouble(d2));
 	}
 	
+	public DoubleDouble exp() {
+		// Return the exponential of a DoubleDouble number
+		DoubleDouble s = DoubleDouble.valueOf(1.0).add(this);
+		DoubleDouble t = new DoubleDouble(this);
+		double n = 1.0;
+		
+		while (t.doubleValue() > DoubleDouble.EPS) {
+			n += 1.0;
+			t = t.divide(DoubleDouble.valueOf(n));
+			t = t.multiply(this);
+			s = s.add(t);
+		}
+		return s;
+		
+	}
+	
 	/**
 	 * Computes the value of this number raised to an integral power.
 	 * Follows semantics of Java Math.pow as closely as possible.
