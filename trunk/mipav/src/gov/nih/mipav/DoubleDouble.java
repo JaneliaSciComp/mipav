@@ -596,6 +596,10 @@ public strictfp class DoubleDouble
 	  return axdd.add(new DoubleDouble(d2));
 	}
 	
+	/**
+	 * For all real, x exp(x) = 1 + x + x**2/2! + x**3/3! + x**4/4! + ...
+	 * @return
+	 */
 	public DoubleDouble exp() {
 		// Return the exponential of a DoubleDouble number
 		DoubleDouble s = DoubleDouble.valueOf(1.0).add(this);
@@ -612,6 +616,42 @@ public strictfp class DoubleDouble
 		
 	}
 	
+	/**
+	 * For x > 0, ratio = (x-1)/(x+1), log(x) = 2(ratio + ratio**3/3 + ratio**5/5 + ...)
+	 * @return
+	 */
+	public DoubleDouble log() {
+		// Return the natural log of a DoubleDouble number
+		if (isZero()) {
+			return NaN;
+		}
+		
+		if (isNegative()) {
+			return NaN;
+		}
+		
+		DoubleDouble num = this.subtract(DoubleDouble.valueOf(1.0));
+		DoubleDouble denom = this.add(DoubleDouble.valueOf(1.0));
+		DoubleDouble ratio = num.divide(denom);
+		DoubleDouble ratioSquare = ratio.multiply(ratio);
+		DoubleDouble s = DoubleDouble.valueOf(2.0).multiply(ratio);
+		DoubleDouble t = (DoubleDouble)s.clone();
+		DoubleDouble w = (DoubleDouble)s.clone();
+		double n = 1.0;
+		
+		while (w.doubleValue() > DoubleDouble.EPS) {
+			n += 2.0;
+			t = t.multiply(ratioSquare);
+			w = t.divide(DoubleDouble.valueOf(n));
+			s = s.add(w);
+		}
+		return s;
+	}
+	
+	/**
+	 * For all real x, sin(x) = x - x**3/3! + x**5/5! - x**7/7! + ...
+	 * @return
+	 */
 	public DoubleDouble sin() {
 		// Return the sine of a DoubleDouble number
 		DoubleDouble msquare = (this.multiply(this)).negate();
@@ -620,13 +660,170 @@ public strictfp class DoubleDouble
 		double n = 1.0;
 		while (Math.abs(t.doubleValue()) > DoubleDouble.EPS) {
 			n += 1.0;
-			t.divide(DoubleDouble.valueOf(n));
+			t = t.divide(DoubleDouble.valueOf(n));
 			n += 1.0;
-			t.divide(DoubleDouble.valueOf(n));
+			t = t.divide(DoubleDouble.valueOf(n));
 			t = t.multiply(msquare);
 			s = s.add(t);
 		}
 		return s;
+	}
+	
+	/**
+	 * For all real x, cos(x) = 1 - x**2/2! + x**4/4! - x**6/6! + ...
+	 * @return
+	 */
+	public DoubleDouble cos() {
+		// Return the cosine of a DoubleDouble number
+		DoubleDouble msquare = (this.multiply(this)).negate();
+		DoubleDouble s = DoubleDouble.valueOf(1.0);
+		DoubleDouble t = DoubleDouble.valueOf(1.0);
+		double n = 0.0;
+		while (Math.abs(t.doubleValue()) > DoubleDouble.EPS) {
+			n += 1.0;
+			t = t.divide(DoubleDouble.valueOf(n));
+			n += 1.0;
+			t = t.divide(DoubleDouble.valueOf(n));
+			t = t.multiply(msquare);
+			s = s.add(t);
+		}
+		return s;
+	}
+	
+	/**
+	 * For all -1 < x < 1, arcsin(x) = x + x**3/(2*3) + (1 * 3 * x**5)/(2 * 4 * 5) + (1 * 3 * 5 * x**7)/(2 * 4 * 6 * 7) + ...
+	 * @return
+	 */
+	public DoubleDouble asin() {
+		// Return the arcsine of a DoubleDouble number
+		if ((this.abs()).ge(DoubleDouble.valueOf(1.0))) {
+			return NaN;
+		}
+		DoubleDouble square = this.multiply(this);
+		DoubleDouble s = new DoubleDouble(this);
+		DoubleDouble t = new DoubleDouble(this);
+		DoubleDouble w = new DoubleDouble(this);
+		double n = 1.0;
+		double numn = 1.0;
+		double denomn = 1.0;
+		while (Math.abs(w.doubleValue()) > DoubleDouble.EPS) {
+			n += 2.0;
+			numn = (n - 2.0);
+			denomn = (n - 1.0);
+			t = t.divide(DoubleDouble.valueOf(denomn));
+			t = t.multiply(DoubleDouble.valueOf(numn));
+			t = t.multiply(square);
+			w = t.divide(DoubleDouble.valueOf(n));
+			s = s.add(w);
+		}
+		return s;
+	}
+	
+	/**
+	 * For all -1 < x < 1, arccos(x) = PI/2 - arcsin(x)
+	 * @return
+	 */
+	public DoubleDouble acos() {
+		if ((this.abs()).ge(DoubleDouble.valueOf(1.0))) {
+			return NaN;
+		}
+		DoubleDouble s = PI_2.subtract(this.asin());
+		return s;
+	}
+	
+	/**
+	 * For -1 < x < 1, arctan(x) = x - x**3/3 + x**5/5 - x**7/7 + ...
+	 * For x > 1, arctan(x) = PI/2 - 1/x + 1/(3*x**3) - 1/(5*x**5) +1/(7*x**7) - ...
+	 * * For x < -1, arctan(x) = -PI/2 - 1/x + 1/(3*x**3) - 1/(5*x**5) +1/(7*x**7) - ...
+	 * @return
+	 */
+	public DoubleDouble atan() {
+		DoubleDouble s;
+		if (this.equals(DoubleDouble.valueOf(1.0))) {
+		    s = PI_2.divide(DoubleDouble.valueOf(2.0));	
+		}
+		else if (this.equals(DoubleDouble.valueOf(-1.0))) {
+			s = PI_2.divide(DoubleDouble.valueOf(-2.0));
+		}
+		else if (this.abs().lt(DoubleDouble.valueOf(1.0))) {
+			DoubleDouble msquare = (this.multiply(this)).negate();
+			s = new DoubleDouble(this);
+			DoubleDouble t = new DoubleDouble(this);
+			DoubleDouble w = new DoubleDouble(this);
+			double n = 1.0;
+			while (Math.abs(w.doubleValue()) > DoubleDouble.EPS) {
+				n += 2.0;
+				t = t.multiply(msquare);
+				w = t.divide(DoubleDouble.valueOf(n));
+				s = s.add(w);
+			}	
+		}
+		else {
+			DoubleDouble msquare = (this.multiply(this)).negate();
+			s = this.reciprocal().negate();
+			DoubleDouble t = (DoubleDouble)s.clone();
+			DoubleDouble w = (DoubleDouble)s.clone();
+			double n = 1.0;
+			while (Math.abs(w.doubleValue()) > DoubleDouble.EPS) {
+				n += 2.0;
+				t = t.divide(msquare);
+				w = t.divide(DoubleDouble.valueOf(n));
+				s = s.add(w);
+			}
+			if (isPositive()) {
+				s = s.add(PI_2);
+			}
+			else {
+				s = s.subtract(PI_2);
+			}
+		}
+		return s;
+	}
+	
+	public DoubleDouble Bernoulli(int n) {
+		// Compute the DoubleDouble Bernoulli number Bn
+		// Ported from subroutine BERNOA in 
+		// Computation of Special Functions by Shanjie Zhang and Jianming Jin
+		int m;
+		int k;
+		int j;
+		DoubleDouble s;
+		DoubleDouble r;
+		DoubleDouble temp;
+		if (n < 0) {
+			return NaN;
+		}
+		else if ((n >= 3) && (((n - 1) % 2) == 0)) {
+			// B2*n+1 = 0 for n = 1,2,3
+			return DoubleDouble.valueOf(0.0);
+		}
+		DoubleDouble BN[] = new DoubleDouble[n+1];
+		BN[0] = DoubleDouble.valueOf(1.0);
+		if (n == 0) {
+			return BN[0];
+		}
+		BN[1] = DoubleDouble.valueOf(-0.5);
+		if (n == 1) {
+			return BN[1];
+		}
+		for (m = 2; m <= n; m++) {
+		    s = DoubleDouble.valueOf(m).add(DoubleDouble.valueOf(1.0));
+		    s = s.reciprocal();
+		    s = DoubleDouble.valueOf(0.5).subtract(s);
+		    for (k = 2; k <= m-1; k++) {
+		    	r = DoubleDouble.valueOf(1.0);
+		    	for (j = 2; j <= k; j++) {
+		    	    temp = DoubleDouble.valueOf(j).add(DoubleDouble.valueOf(m));
+		    	    temp = temp.subtract(DoubleDouble.valueOf(k));
+		    	    temp = temp.divide(DoubleDouble.valueOf(j));
+		    	    r = r.multiply(temp);
+		    	} // for (j = 2; j <= k; j++)
+		    	temp = r.multiply(BN[k]);
+		    	s = s.subtract(temp);
+		    } // for (k = 2; k <= m-1; k++)
+		    BN[m] = s;
+		} // for (m = 2; m <= n; m++)
+		return BN[n];
 	}
 	
 	/**
@@ -663,6 +860,39 @@ public strictfp class DoubleDouble
 	  if (exp < 0)
 	    return s.reciprocal();
 	  return s;
+	}
+	
+	/**
+	 * 
+	 * @param x the double exponent
+	 * @return a raised to the double power x
+	 * For a > 0, base = x * log(a), a**x = 1 + base + base**2/2! + base**3/3! + ... 
+	 */
+	public DoubleDouble pow(double x) {
+		if (x == 0.0) {
+			return valueOf(1.0);
+		}
+		
+		if (isZero()) {
+			return NaN;
+		}
+		
+		if (isNegative()) {
+			return NaN;
+		}
+	    DoubleDouble loga = this.log();	
+	    DoubleDouble base = DoubleDouble.valueOf(x).multiply(loga);
+	    DoubleDouble s = DoubleDouble.valueOf(1.0).add(base);
+		DoubleDouble t = (DoubleDouble)base.clone();
+		double n = 1.0;
+		
+		while (t.doubleValue() > DoubleDouble.EPS) {
+			n += 1.0;
+			t = t.divide(DoubleDouble.valueOf(n));
+			t = t.multiply(base);
+			s = s.add(t);
+		}
+		return s;
 	}
 	
 	/*------------------------------------------------------------
