@@ -1869,6 +1869,16 @@ public class ModelImage extends ModelStorageBase {
     public VOIVector get3DVOIs() {
         return voiVector3D;
     }
+    
+    public VOIVector get3DVOIsCopy()
+    {
+        VOIVector kCopy = new VOIVector();
+        for ( int i = 0; i < voiVector3D.size(); i++ )
+        {
+            kCopy.add ( new VOI( voiVector3D.get(i) ) );
+        }
+        return kCopy;
+    }
 
     /**
      * Forms a single VOI structure from all the VOIs presently loaded in the imageModel.
@@ -2820,8 +2830,10 @@ public class ModelImage extends ModelStorageBase {
      */
     public void register3DVOI(VOI voi) {
         voiVector3D.addVOI(voi);
-        printVOIs();
-        // need to add voi to list object!!!
+    }
+
+    public int isRegistered(VOI voi) {
+        return voiVector3D.indexOf(voi);
     }
 
     /**
@@ -3282,6 +3294,20 @@ public class ModelImage extends ModelStorageBase {
         }
 
         System.gc();
+    }
+
+
+    /**
+     * Sets VOI vector for with new VOIs.
+     *
+     * @param  VOIs  VOIs to image VOIs
+     */
+    public void set3DVOIs(VOIVector VOIs) {
+        voiVector3D = new VOIVector();
+        int nVOI = VOIs.size();
+        for (int i = 0; i < nVOI; i++) {
+            voiVector3D.add( new VOI(VOIs.VOIAt(i)));
+        }
     }
 
     /**

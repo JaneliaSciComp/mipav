@@ -2838,6 +2838,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                             VOIBase kVOI3D = kCurves[j].get(k);
                             if ( kVOI3D instanceof LocalVolumeVOI )
                             {
+                                offscreenGraphics2d.setColor( kVOI.getColor() );
                                 ((LocalVolumeVOI)kVOI3D).draw( zoomX, zoomY,
                                         res, unitsOfMeasure, slice, orientation, 
                                         offscreenGraphics2d );
@@ -3144,6 +3145,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         }
     }
 
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.ScreenCoordinateListener#fileToScreen(WildMagic.LibFoundation.Mathematics.Vector3f)
+     */
     public Vector3f fileToScreen(Vector3f kFile) {
         Vector3f patientPt = new Vector3f();
         MipavCoordinateSystems.fileToPatient( kFile, patientPt, imageA, orientation );
@@ -3152,12 +3156,18 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         return screenPt;
     }
 
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.ScreenCoordinateListener#patientToScreen(WildMagic.LibFoundation.Mathematics.Vector3f)
+     */
     public Vector3f patientToScreen(Vector3f kPt) {
         Vector3f screenPt = new Vector3f();
         super.LocalToScreen( kPt, screenPt );
         return screenPt;
     }
 
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.ScreenCoordinateListener#screenToFile(int, int, int, WildMagic.LibFoundation.Mathematics.Vector3f)
+     */
     public boolean screenToFile(int iX, int iY, int iZ, Vector3f kVolumePt) {
         boolean bClipped = false;
         if ( (iX < 0 ) || (iX > getWidth()) || (iY < 0 ) || (iY > getHeight()) )
@@ -3176,9 +3186,35 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         MipavCoordinateSystems.patientToFile( patientPt, kVolumePt, imageA, orientation );
         return bClipped;
     }
-    
 
 
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.ScreenCoordinateListener#screenToFile(WildMagic.LibFoundation.Mathematics.Vector3f, WildMagic.LibFoundation.Mathematics.Vector3f)
+     */
+    public boolean screenToFile( Vector3f kScreen, Vector3f kFile ) {
+        boolean bClipped = false;
+        if ( (kScreen.X < 0 ) || (kScreen.X > getWidth()) || (kScreen.Y < 0 ) || (kScreen.Y > getHeight()) )
+        {
+            bClipped = true;
+        }
+        Vector3f patientPt = new Vector3f();
+        super.ScreenToLocal( kScreen, patientPt );
+        if ( (patientPt.X < 0) || (patientPt.X > localImageExtents[0]-1) ||
+                (patientPt.Y < 0) || (patientPt.Y > localImageExtents[1]-1) )
+        {
+            bClipped = true;
+        }
+                
+        MipavCoordinateSystems.patientToFile( patientPt, kFile, imageA, orientation );
+        return bClipped;
+    }
+
+
+    /**
+     * Increments the current slice in local coordinates and returns 
+     * the new position in the view-independent file coordinates.
+     * @return
+     */
     public Vector3f upSlice()
     {
         if ( slice + 1 < localImageExtents[2] )
@@ -3192,7 +3228,12 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         }
         return null;
     }
-    
+
+    /**
+     * Decrements the current slice in local coordinates and returns 
+     * the new position in the view-independent file coordinates.
+     * @return
+     */
     public Vector3f downSlice()
     {
         if ( slice - 1 > 0 )

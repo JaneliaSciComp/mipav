@@ -107,6 +107,9 @@ public abstract class VOIBase extends Vector<Vector3f> {
 
     /** General use color (white) used in VOI. */
     protected Color white = new Color(255, 255, 255);
+    
+    /** Reference to the containing VOI object. */
+    protected VOI voiGroup;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -117,6 +120,39 @@ public abstract class VOIBase extends Vector<Vector3f> {
         super(20, 10);
         active = false;
         fixed = false;
+    }
+    
+
+    /**
+     * Copies the input VOIBase into a new VOIBase object.
+     * @param kBase
+     */
+    public VOIBase( VOIBase kBase ) {
+        super(20, 10);
+        this.active = kBase.active;
+        this.gcPt.Copy(kBase.gcPt);
+        this.cenMassPt.Copy(kBase.cenMassPt);
+        this.cenMassPtR.Copy(kBase.cenMassPtR);
+        this.cenMassPtG.Copy(kBase.cenMassPtG);
+        this.cenMassPtB.Copy(kBase.cenMassPtB);
+        this.doName = kBase.doName;
+        this.fixed = kBase.fixed;
+        if ( kBase.label != null )
+        {
+            this.label = new String(kBase.label);
+        }
+        this.lastPoint = kBase.lastPoint;
+        if ( kBase.name != null )
+        {
+            this.name = new String(kBase.name);
+        }
+        this.nearPoint = kBase.nearPoint;
+        this.voiGroup = kBase.voiGroup;
+
+        for ( int i = 0; i < kBase.size(); i++ )
+        {
+            add( kBase.get(i) );
+        } 
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -378,6 +414,16 @@ public abstract class VOIBase extends Vector<Vector3f> {
         }
     }
 
+
+    /**
+     * Returns the VOI object that contains this contour.
+     * @return the VOI object that contains this contour.
+     */
+    public VOI getGroup()
+    {
+        return voiGroup;
+    }
+    
     /**
      * Gets the label of the VOI.
      *
@@ -646,6 +692,16 @@ public abstract class VOIBase extends Vector<Vector3f> {
      */
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+
+    /**
+     * Sets the VOI object that contains this contour.
+     * @param kGroup VOI container for this contour.
+     */
+    public void setGroup( VOI kGroup )
+    {
+        voiGroup = kGroup;
     }
 
     /**

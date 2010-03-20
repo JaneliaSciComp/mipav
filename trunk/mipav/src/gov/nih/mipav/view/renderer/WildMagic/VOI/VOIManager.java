@@ -311,6 +311,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
 
     private boolean m_bPointer = false;
     private boolean m_bSelected = false;
+
     private static final int TEXT = 0;
     private static final int POINT = 1;
     public static final int POLYPOINT = 2;
@@ -321,9 +322,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
     public static final int POLYLINE = 7;
     public static final int LEVELSET = 8;
     public static final int LIVEWIRE = 9;
-
     private static final int RECTANGLE3D = 10;
-
     public static final int SPLITLINE = 11;
     private int m_iDrawType;
 
@@ -335,6 +334,10 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
     private Stack<int[]> stack = new Stack<int[]>();
     private int m_iSlice;
     private boolean m_bLeftMousePressed;
+
+    /** Change the mouse cursor with the first mouseDrag event */
+    private boolean m_bFirstDrag = true;
+
     private float m_fMouseX, m_fMouseY;
     private int m_iPlaneOrientation;
     private ModelImage[] m_akImages = new ModelImage[2];
@@ -344,7 +347,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
     private byte[] m_aucBufferA;
     private byte[] m_aucBufferB;
     private byte[] m_aucBufferActive;
-    
+
     private int[] m_aiLocalImageExtents;
 
     private VOIManagerListener m_kParent;
@@ -379,7 +382,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
 
     private Component m_kComponent = null;
 
-    private int m_iLiveWireSelection;
+    private int m_iLiveWireSelection = 0;
 
     Vector3f m_kCenter = new Vector3f();
 
@@ -408,6 +411,8 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
 
     private float[] yDirections;
 
+    private float[] imageBufferActive;
+    
     public VOIManager (VOIManagerListener kParent )
     {
         m_kParent = kParent;
@@ -419,17 +424,20 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         {
             Vector<Vector3f> kPositions = new Vector<Vector3f>();
             kPositions.add( kNewPoint );
-            m_kCurrentVOI = new VOIContour3D( this, m_kDrawingContext, m_iPlaneOrientation, m_iDrawType, kPositions, false);
+            m_kCurrentVOI = new VOIContour3D( this, m_kDrawingContext, m_iPlaneOrientation, m_iDrawType, m_iDrawType, kPositions, false);
             m_kParent.addVOI( m_kCurrentVOI, true );
         }
         else
         {
-            m_kCurrentVOI.add( this, kNewPoint, false );
+            if ( m_kCurrentVOI.add( kNewPoint, false ) )
+            {
+                m_kParent.updateDisplay();
+            }
         }
         m_kCurrentVOI.setAnchor();
         if ( bSeed )
         {
-            initLiveWire( m_iSlice );
+            initLiveWire( m_iSlice, true );
             seed(iX, iY);
         }
     }
@@ -440,12 +448,15 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         {
             Vector<Vector3f> kPositions = new Vector<Vector3f>();
             kPositions.add( kNewPoint );
-            m_kCurrentVOI = new VOIContour3D( this, m_kDrawingContext, m_iPlaneOrientation, m_iDrawType, kPositions, false);
+            m_kCurrentVOI = new VOIContour3D( this, m_kDrawingContext, m_iPlaneOrientation, m_iDrawType, m_iDrawType, kPositions, false);
             m_kParent.addVOI( m_kCurrentVOI, true );
         }
         else
         {
-            m_kCurrentVOI.add( this, kNewPoint, false );
+            if ( m_kCurrentVOI.add( kNewPoint, false ) )
+            {
+                m_kParent.updateDisplay();
+            }
         }
         m_kCurrentVOI.setAnchor();
         if ( !bFinished )
@@ -454,14 +465,21 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         }
     }
 
-    public void copyVOI( )
+    public int deleteVOIActivePt( LocalVolumeVOI kVOI )
     {
-        if ( m_kCurrentVOI == null )
+        int iPos = kVOI.getSelectedPoint();
+        if ( iPos < 0 )
         {
-            return;
+            return kVOI.size();
         }
-        m_kCopyVOI = m_kCurrentVOI.Clone();
+        kVOI.delete( kVOI.getSelectedPoint() );      
+        if ( (kVOI.size() == 0) && (kVOI == m_kCurrentVOI) )
+        {
+            m_kCurrentVOI = null;
+        }
+        return kVOI.size();
     }
+
 
     public void dispose() 
     {
@@ -510,7 +528,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
     }
 
 
-    public void doVOI( String kCommand )
+    public void doVOI( String kCommand, boolean isDrawCommand )
     {
         if ( m_bFirstVOI )
         {
@@ -521,194 +539,70 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
                 m_adSin[i] = Math.sin( Math.PI * 2.0 * i/m_iCirclePts);
             }
         }
+        m_bDrawVOI = false;
+        m_bPointer = false;
 
-        if ( kCommand.equals("NewVOI") )
-        {
-            unselectVOI();
 
-            m_kCurrentVOI = null;
-        }
-        else if ( kCommand.equals("protractor") )
-        {
-            if ( m_kCurrentVOI != null )
-            {
-                m_kCurrentVOI.setActive(false);
-                m_kCurrentVOI = null;
-            }
-            m_bDrawVOI = true;
-            m_bPointer = false;
-            m_bSelected = false;
-            m_iDrawType = PROTRACTOR;
-        }
-        else if ( kCommand.equals("LiveWireVOI") )
-        {
-            if ( m_kCurrentVOI != null )
-            {
-                m_kCurrentVOI.setActive(false);
-                m_kCurrentVOI = null;
-            }
-            m_bDrawVOI = true;
-            m_bPointer = false;
-            m_bSelected = false;
-            m_iDrawType = LIVEWIRE;
-        }
-        else if ( kCommand.equals("SplitVOI") )
-        {
-            if ( m_kCurrentVOI != null )
-            {
-                m_kCurrentVOI.setActive(false);
-                m_kCurrentVOI = null;
-            }
-            m_bDrawVOI = true;
-            m_bPointer = false;
-            m_bSelected = false;
-            m_iDrawType = SPLITLINE;
-        }
-        else if ( kCommand.equals("Line") )
-        {
-            if ( m_kCurrentVOI != null )
-            {
-                m_kCurrentVOI.setActive(false);
-                m_kCurrentVOI = null;
-            }
-            m_bDrawVOI = true;
-            m_bPointer = false;
-            m_bSelected = false;
-            m_iDrawType = LINE;
-        }
-        else if ( kCommand.equals("Polyslice") )
-        {
-            m_bDrawVOI = true;
-            m_bPointer = false;
-            if ( m_kCurrentVOI != null )
-            {
-                m_kCurrentVOI.setActive(false);
-                m_kCurrentVOI = null;
-            }
-            m_bSelected = false;
-            m_iDrawType = POLYPOINT;
-        }
-        else if ( kCommand.equals("Point") )
-        {
-            m_bDrawVOI = true;
-            m_bPointer = false;
-            if ( m_kCurrentVOI != null )
-            {
-                m_kCurrentVOI.setActive(false);
-                m_kCurrentVOI = null;
-            }
-            m_bSelected = false;
-            m_iDrawType = POINT;
-        }
-        else if ( kCommand.equals("TextVOI") )
-        {
-            m_bDrawVOI = true;
-            m_bPointer = false;
-            if ( m_kCurrentVOI != null )
-            {
-                m_kCurrentVOI.setActive(false);
-                m_kCurrentVOI = null;
-            }
-            m_bSelected = false;
-            m_iDrawType = TEXT;
-        }
-        else if (kCommand.equals("Rect3DVOI") ) 
-        {
-            m_bDrawVOI = true;
-            m_bPointer = false;
-            if ( m_kCurrentVOI != null )
-            {
-                m_kCurrentVOI.setActive(false);
-                m_kCurrentVOI = null;
-            }
-            m_bSelected = false;
-            m_iDrawType = RECTANGLE3D;
-        } 
-        else if (kCommand.equals("RectVOI") ) 
-        {
-            m_bDrawVOI = true;
-            m_bPointer = false;
-            if ( m_kCurrentVOI != null )
-            {
-                m_kCurrentVOI.setActive(false);
-                m_kCurrentVOI = null;
-            }
-            m_bSelected = false;
-            m_iDrawType = RECTANGLE;
-        } 
-        else if (kCommand.equals("EllipseVOI") ) {
-            m_bDrawVOI = true;
-            m_bPointer = false;
-            if ( m_kCurrentVOI != null )
-            {
-                m_kCurrentVOI.setActive(false);
-                m_kCurrentVOI = null;
-            }
-            m_bSelected = false;
-            m_iDrawType = OVAL;
-
-        } 
-        else if (kCommand.equals("Polyline") ) {
-            m_bDrawVOI = true;
-            m_bPointer = false;
-            if ( m_kCurrentVOI != null )
-            {
-                m_kCurrentVOI.setActive(false);
-                m_kCurrentVOI = null;
-            }
-            m_bSelected = false;
-            m_iDrawType = POLYLINE;
-        } 
-        else if (kCommand.equals("VOIColor") ) {
-        } 
-        else if (kCommand.equals("LevelSetVOI") ) {
-            m_bDrawVOI = true;
-            m_bPointer = false;
-            if ( m_kCurrentVOI != null )
-            {
-                m_kCurrentVOI.setActive(false);
-                m_kCurrentVOI = null;
-            }
-            m_bSelected = false;
-            m_iDrawType = LEVELSET;
-        } 
-        else if (kCommand.equals("deleteVOI") ) {
-            deleteCurrentVOI();
-        } 
-        else if (kCommand.equals("cutVOI") ) {
-            copyVOI();
-            deleteCurrentVOI();
-        } 
-        else if (kCommand.equals("copyVOI") ) {
-            copyVOI();
-        } 
-        else if (kCommand.equals("pasteVOI") ) {
-            pasteVOI(m_iSlice);
-            m_kParent.updateDisplay();
-        } 
-        else if (kCommand.equals("PropVOIAll") ) {
-            copyVOI();
-            for ( int i = 0; i < m_aiLocalImageExtents[2]; i++ )
-            {
-                if ( i != m_iSlice )
-                {
-                    pasteVOI(i);
-                }
-            }
-            m_kCurrentVOI = null;
-            m_kParent.updateDisplay();
-        }
-        else if (kCommand.equals("Pointer") ) {
-            m_bDrawVOI = false;
+        if (kCommand.equals("Pointer") ) {
             m_bPointer = true;
         }
-        else if (kCommand.equals("Default") ) {
-            m_bDrawVOI = false;
-            m_bPointer = false;
-        }            
+        else if ( kCommand.equals("NewVOI") )
+        {
+            m_kCurrentVOI = null;
+        }
+        else if ( isDrawCommand )
+        {
+            m_bDrawVOI = true;
+            m_bSelected = false;
+            if ( m_kCurrentVOI != null )
+            {
+                m_kCurrentVOI.setActive(false);
+                m_kCurrentVOI = null;
+            }
+
+            if ( kCommand.equals("protractor") )
+            {
+                m_iDrawType = PROTRACTOR;
+            }
+            else if ( kCommand.equals("LiveWireVOI") )
+            {
+                m_iDrawType = LIVEWIRE;
+            }
+            else if ( kCommand.equals("SplitVOI") )
+            {
+                m_iDrawType = SPLITLINE;
+            }
+            else if ( kCommand.equals("Line") )
+            {
+                m_iDrawType = LINE;
+            }
+            else if ( kCommand.equals("Polyslice") )
+            {
+                m_iDrawType = POLYPOINT;
+            }
+            else if ( kCommand.equals("Point") ) {
+                m_iDrawType = POINT;
+            }
+            else if ( kCommand.equals("TextVOI") ) {
+                m_iDrawType = TEXT;
+            }
+            else if (kCommand.equals("Rect3DVOI") ) {
+                m_iDrawType = RECTANGLE3D;
+            } 
+            else if (kCommand.equals("RectVOI") ) {
+                m_iDrawType = RECTANGLE;
+            } 
+            else if (kCommand.equals("EllipseVOI") ) {
+                m_iDrawType = OVAL;
+            } 
+            else if (kCommand.equals("Polyline") ) {
+                m_iDrawType = POLYLINE;
+            } 
+            else if (kCommand.equals("LevelSetVOI") ) {
+                m_iDrawType = LEVELSET;
+            } 
+        }
     }
-
-
     public void drawNext(int iX, int iY) {
         if ( m_kCurrentVOI == null )
         {
@@ -721,7 +615,10 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
 
         float fY = iY;
         Vector3f kNewPoint = new Vector3f( iX, fY, m_iSlice ) ;
-        m_kCurrentVOI.add( this, kNewPoint, false );
+        if ( m_kCurrentVOI.add( kNewPoint, false ) )
+        {
+            m_kParent.updateDisplay( );
+        }
 
         Vector3f kFile = new Vector3f();
         m_kDrawingContext.screenToFile(iX, (int)fY, m_iSlice, kFile);
@@ -737,6 +634,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             return;
         }
 
+        boolean bPointsAdded = false;
         int iAnchor = m_kCurrentVOI.getAnchor();
         while (liveWirePtIndex != seedPoint) {
             // add mouseIndex point:
@@ -744,7 +642,10 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             y = (mouseIndex - x)/xDim;
             kNewPoint = new Vector3f( x, y, m_iSlice ) ;
             Vector3f kVolumePt = patientCoordinatesToFile(kNewPoint);
-            m_kCurrentVOI.add( this, iAnchor, kVolumePt, true );
+            if ( m_kCurrentVOI.add( iAnchor, kVolumePt, true ) )
+            {
+                bPointsAdded = true;
+            }
 
             // System.out.println(" Draw next x: = " + xPoints[count] + " y = " + yPoints[count] + "  seed = " +
             // seedPoint + " location = " +  location);
@@ -757,9 +658,16 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         y = (mouseIndex - x)/xDim;
         kNewPoint = new Vector3f( x, y, m_iSlice ) ;
         Vector3f kVolumePt = patientCoordinatesToFile(kNewPoint);
-        m_kCurrentVOI.add( this, iAnchor, kVolumePt, true );
-        //m_kParent.updateCurrentVOI(m_kCurrentVOI, m_kCurrentVOI);
+        if ( m_kCurrentVOI.add( iAnchor, kVolumePt, true ) )
+        {
+            bPointsAdded = true;
+        }
+        if ( bPointsAdded )
+        {
+            m_kParent.updateDisplay();
+        }
     }
+
     public void drawNextPolyline(int iX, int iY) {
         if ( m_kCurrentVOI == null )
         {
@@ -772,7 +680,10 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
 
         float fY = iY;
         Vector3f kNewPoint = new Vector3f( iX, fY, m_iSlice ) ;
-        m_kCurrentVOI.add( this, kNewPoint, false );
+        if ( m_kCurrentVOI.add( kNewPoint, false ) )
+        {
+            m_kParent.updateDisplay();
+        }
     }
 
     public Vector3f fileCoordinatesToPatient( Vector3f volumePt )
@@ -833,12 +744,12 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         fill(aaiCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax, (int)kVolumePts[0].Z, kVolume, kMask, bIntersection, iValue);
 
     }
-    
+
     public ModelImage[] getActiveImage()
     {
         return m_akImages;
     }
-    
+
     public LocalVolumeVOI getCurrentVOI()
     {
         return m_kCurrentVOI;
@@ -848,6 +759,25 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
     public int getOrientation()
     {
         return m_iPlaneOrientation;
+    }
+
+    public void init( ModelImage kImageA, ModelImage kImageB, Component kComponent, 
+            ScreenCoordinateListener kContext, int iOrientation, int iSlice )
+    {
+        m_akImages[0] = kImageA;
+        m_akImages[1] = kImageB;
+        if ( kImageA != null )
+        {
+            m_kImageActive = kImageA;
+        }
+        else
+        {
+            m_kImageActive = kImageB;
+        }
+        setCanvas(kComponent);
+        setDrawingContext(kContext);
+        setOrientation(iOrientation);
+        setSlice(iSlice);
     }
 
 
@@ -860,18 +790,17 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         final int keyCode = e.getKeyCode();
 
         switch (keyCode) {
-        case KeyEvent.VK_UP:     moveVOI( new Vector3f( 0, 1, 0 ) ); return;
-        case KeyEvent.VK_DOWN:   moveVOI( new Vector3f( 0,-1, 0 ) ); return;
-        case KeyEvent.VK_LEFT:   moveVOI( new Vector3f(-1, 0, 0 ) ); return;
-        case KeyEvent.VK_RIGHT:  moveVOI( new Vector3f( 1, 0, 0 ) ); return;
+        case KeyEvent.VK_UP:     m_kParent.doVOI("MoveUP"); return;
+        case KeyEvent.VK_DOWN:   m_kParent.doVOI("MoveDown"); return;
+        case KeyEvent.VK_LEFT:   m_kParent.doVOI("MoveLeft"); return;
+        case KeyEvent.VK_RIGHT:  m_kParent.doVOI("MoveRight"); return;
         }
         KeyStroke ks = KeyStroke.getKeyStrokeForEvent(e);
         String command = Preferences.getShortcutCommand(ks);
         if (command != null) {
-            doVOI( command );
+            m_kParent.doVOI( command );
         }
     }
-
 
     public void keyReleased(KeyEvent e) {
         final int keyCode = e.getKeyCode();
@@ -879,54 +808,20 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         case KeyEvent.VK_DELETE:
             if (e.isShiftDown()) 
             {
-                deleteVOIActivePt();
+                m_kParent.doVOI("deleteVOIActivePt");
             } 
             else 
             {
-                deleteCurrentVOI();
-            }
-            return;
-
-        case KeyEvent.VK_C:
-            if (e.isControlDown()) 
-            {
-                copyVOI();
-            }
-            return;
-
-        case KeyEvent.VK_V:
-            if (e.isControlDown()) 
-            {
-                pasteVOI(m_iSlice);
-                m_kParent.updateDisplay();
-            }
-            return;
-
-        case KeyEvent.VK_X:
-            if (e.isControlDown()) 
-            {
-                copyVOI();
-                deleteCurrentVOI();
-            }
-            return;
-
-        case KeyEvent.VK_A:
-            if (e.isControlDown()) 
-            {
-                //selectAllVOIs();
-            }
-            return;
-
-        case KeyEvent.VK_Z:
-            if (e.isControlDown() ) 
-            {
-                //undoLastVOI();
+                m_kParent.doVOI("deleteVOI");
             }
             return;
         }
     }
 
     public void keyTyped(KeyEvent e) {}
+
+
+
 
     public void liveWire( int iSelection )
     {
@@ -951,13 +846,15 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         m_iDrawType = LIVEWIRE;
     }
 
+
     public void mouseClicked(MouseEvent kEvent) {
         m_fMouseX = kEvent.getX();
         m_fMouseY = kEvent.getY();
-        if ( isActive() )
+        if ( !isActive() )
         {
-            m_kParent.setActive(this);
+            return;
         }
+        m_kParent.setActive(this);
         if ( m_bDrawVOI && (m_iDrawType == LIVEWIRE || m_iDrawType == POLYLINE) && (kEvent.getClickCount() > 1) )
         {
             showSelectedVOI( kEvent.getX(), kEvent.getY() );
@@ -975,6 +872,9 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
                 {
                     if ( m_kCurrentVOI.getGroup().getCurveType() != m_kCurrentVOI.getType() )
                     {
+                        VOI kGroup = m_kCurrentVOI.getGroup();
+                        kGroup.getCurves()[0].remove(m_kCurrentVOI);
+                        m_kCurrentVOI.setGroup(null);
                         m_kParent.addVOI(m_kCurrentVOI, true);
                     }
                 }
@@ -999,15 +899,15 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
      * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mouseDragged(java.awt.event.MouseEvent)
      */
     public void mouseDragged(MouseEvent kEvent) {
-        if ( isActive() )
+        if ( !isActive() )
         {
-            m_kParent.setActive(this);
-            if (m_bLeftMousePressed) {
-                processLeftMouseDrag(kEvent);
-            }
+            return;
+        }
+        m_kParent.setActive(this);
+        if (m_bLeftMousePressed) {
+            processLeftMouseDrag(kEvent);
         }
     }
-
 
     public void mouseEntered(MouseEvent arg0) {
         if ( isActive() )
@@ -1016,34 +916,30 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         }        
     }
 
-
-
-
     public void mouseExited(MouseEvent arg0) {}
 
     public void mouseMoved(MouseEvent kEvent) 
     {      
-        if ( isActive() )
+        if ( !isActive() )
         {
-            m_kParent.setActive(this);
-        }        
+            return;
+        }
+        m_kParent.setActive(this);
         if ( m_bPointer )
         {
             showSelectedVOI( kEvent.getX(), kEvent.getY() );
         }
-        if ( m_bDrawVOI && (m_iDrawType == LEVELSET) )
+        else if ( m_bDrawVOI && (m_iDrawType == LEVELSET) )
         {
             createVOI( kEvent.getX(), kEvent.getY() );
         } 
-        if ( (m_kCurrentVOI != null) && m_bDrawVOI && (m_iDrawType == LIVEWIRE) )
+        else if ( (m_kCurrentVOI != null) && m_bDrawVOI && (m_iDrawType == LIVEWIRE) )
         {
             drawNext( kEvent.getX(), kEvent.getY() );
-            m_kParent.updateDisplay();
         } 
-        if ( (m_kCurrentVOI != null) && m_bDrawVOI && (m_iDrawType == POLYLINE) )
+        else if ( (m_kCurrentVOI != null) && m_bDrawVOI && (m_iDrawType == POLYLINE) )
         {
             drawNextPolyline( kEvent.getX(), kEvent.getY() );
-            m_kParent.updateDisplay();
         } 
     }
 
@@ -1053,30 +949,32 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
     public void mousePressed(MouseEvent kEvent) {
         m_fMouseX = kEvent.getX();
         m_fMouseY = kEvent.getY();
-        if ( isActive() )
+        if ( !isActive() )
         {
-            m_kParent.setActive(this);
-            if (kEvent.getButton() == MouseEvent.BUTTON1) {
-                if ( m_bPointer )
-                {
-                    if ( m_iNearStatus == NearPoint )
-                    {
-                        moveVOIPoint( kEvent.getX(), kEvent.getY() );
-                    }
-                    else if ( m_iNearStatus == NearLine )
-                    {
-                        addVOIPoint( kEvent.getX(), kEvent.getY() );
-                    }
-                    else
-                    {
-                        selectVOI( kEvent.getX(), kEvent.getY(), kEvent.isShiftDown() );
-                    }
-                }
+            return;
+        }
+        m_kParent.setActive(this);
 
-                m_bLeftMousePressed = true;
-                processLeftMouseDrag( kEvent );
-                m_kParent.updateDisplay();
+        if (kEvent.getButton() == MouseEvent.BUTTON1) {
+            if ( m_bPointer )
+            {    
+                if ( m_iNearStatus == NearPoint )
+                {
+                    moveVOIPoint( kEvent.getX(), kEvent.getY() );
+                }
+                else if ( m_iNearStatus == NearLine )
+                {
+                    m_kParent.saveVOIs("addVOIPoint");
+                    addVOIPoint( kEvent.getX(), kEvent.getY() );
+                }
+                else
+                {
+                    selectVOI( kEvent.getX(), kEvent.getY(), kEvent.isShiftDown() );
+                }
             }
+
+            m_bLeftMousePressed = true;
+            processLeftMouseDrag( kEvent );
         }
     }
 
@@ -1084,104 +982,95 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
      * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mouseReleased(java.awt.event.MouseEvent)
      */
     public void mouseReleased(MouseEvent kEvent) {
-        if ( isActive() )
-        {
-            m_kParent.setActive(this);
-
-            if (kEvent.getButton() == MouseEvent.BUTTON1) {
-                processLeftMouseDrag( kEvent );
-                m_bLeftMousePressed = false;
-            }
-            if ( m_bDrawVOI && ((m_iDrawType == POINT) || (m_iDrawType == POLYPOINT)) )
-            {
-                createVOI( kEvent.getX(), kEvent.getY() );
-            } 
-            if ( m_bDrawVOI && (m_iDrawType == TEXT) )
-            {
-                createTextVOI( kEvent.getX(), kEvent.getY() );
-            } 
-
-
-            if ( m_bDrawVOI && (m_iDrawType == RECTANGLE3D) )
-            {
-                m_kCurrentVOI.setActive(true);
-                m_kParent.doVOI("PropVOIAll");
-                m_bDrawVOI = false;
-                return;
-            }
-            if ( m_bDrawVOI && (m_iDrawType == SPLITLINE) )
-            {
-                JDialogVOISplitter kSplitDialog = new JDialogVOISplitter(m_kImageActive) ;
-                if ( !kSplitDialog.isCancelled()) {
-                    splitVOIs( kSplitDialog.getAllSlices(), kSplitDialog.getOnlyActive(), m_kCurrentVOI );
-                }
-                kSplitDialog = null;
-            }
-            if ( m_bDrawVOI && (m_iDrawType == LIVEWIRE) )
-            {
-                anchor( kEvent.getX(), kEvent.getY(), true );
-                return;
-            }
-            if ( m_bDrawVOI && (m_iDrawType == POLYLINE) )
-            {
-                anchorPolyline( kEvent.getX(), kEvent.getY(), false );
-                return;
-            }
-            if ( !m_bPointer )
-            {
-                m_kParent.setDefaultCursor( );
-                m_kParent.setSelectedVOI( m_kCurrentVOI.getGroup(), kEvent.isShiftDown() );
-            }
-            m_iNearStatus = NearNone;
-            if ( !kEvent.isShiftDown() || (m_iDrawType == TEXT) 
-                    || (m_iDrawType == LINE) || (m_iDrawType == PROTRACTOR)
-                    || (m_iDrawType == POLYLINE) || (m_iDrawType == LIVEWIRE)  
-                    || (m_iDrawType == RECTANGLE3D) || (m_iDrawType == SPLITLINE) )
-            {
-                m_bDrawVOI = false;
-            }
-            else
-            {
-                m_kCurrentVOI = null;
-            }
-        }
-    }
-
-    public void pasteVOI( int iSlice )
-    {
-        if ( m_kCopyVOI == null )
+        if ( !isActive() )
         {
             return;
         }
-        m_kCurrentVOI = m_kCopyVOI.Clone(iSlice);
+        m_kParent.setActive(this);
 
-        m_kParent.addVOI(m_kCurrentVOI, false);
-        m_kCurrentVOI.setActive(false);
+        if (kEvent.getButton() == MouseEvent.BUTTON1) {
+            processLeftMouseDrag( kEvent );
+            m_bLeftMousePressed = false;
+            m_bFirstDrag = true;
+        }
+        if ( m_bDrawVOI && ((m_iDrawType == POINT) || (m_iDrawType == POLYPOINT)) )
+        {
+            createVOI( kEvent.getX(), kEvent.getY() );
+        } 
+        else if ( m_bDrawVOI && (m_iDrawType == TEXT) )
+        {
+            createTextVOI( kEvent.getX(), kEvent.getY() );
+        } 
+        else if ( m_bDrawVOI && (m_iDrawType == RECTANGLE3D) )
+        {
+            m_kCurrentVOI.setActive(true);
+            m_kParent.doVOI("PropVOIAll");
+            m_bDrawVOI = false;
+            return;
+        }
+        else if ( m_bDrawVOI && (m_iDrawType == SPLITLINE) )
+        {
+            JDialogVOISplitter kSplitDialog = new JDialogVOISplitter(m_kImageActive) ;
+            if ( !kSplitDialog.isCancelled()) {
+                splitVOIs( kSplitDialog.getAllSlices(), kSplitDialog.getOnlyActive(), m_kCurrentVOI );
+            }
+            kSplitDialog = null;
+            m_bDrawVOI = false;
+            return;
+        }
+        else if ( m_bDrawVOI && (m_iDrawType == LIVEWIRE) )
+        {
+            anchor( kEvent.getX(), kEvent.getY(), true );
+            return;
+        }
+        else if ( m_bDrawVOI && (m_iDrawType == POLYLINE) )
+        {
+            anchorPolyline( kEvent.getX(), kEvent.getY(), false );
+            return;
+        }
+
+
+        if ( !kEvent.isShiftDown() && !m_bPointer )
+        {
+            m_kParent.setDefaultCursor( );
+            m_kParent.setSelectedVOI( m_kCurrentVOI.getGroup(), kEvent.isShiftDown() );
+        }
+        m_iNearStatus = NearNone;
+        if ( !kEvent.isShiftDown() || (m_iDrawType == TEXT) 
+                || (m_iDrawType == LINE) || (m_iDrawType == PROTRACTOR)
+                || (m_iDrawType == POLYLINE) || (m_iDrawType == LIVEWIRE)  
+                || (m_iDrawType == RECTANGLE3D) || (m_iDrawType == SPLITLINE) )
+        {
+            m_bDrawVOI = false;
+        }
+        else
+        {
+            m_kCurrentVOI = null;
+        }
     }
+
+    public void pasteAllVOI( LocalVolumeVOI kVOI )
+    {
+        m_kCopyVOI = kVOI;
+        for ( int i = 0; i < m_aiLocalImageExtents[2]; i++ )
+        {
+            pasteVOI(i);
+        }
+        m_kCurrentVOI = null;
+    }
+
+
+    public void pasteVOI( LocalVolumeVOI kVOI )
+    {
+        m_kCopyVOI = kVOI;
+        pasteVOI(m_iSlice);
+    }
+
     public Vector3f patientCoordinatesToFile( Vector3f patientPt )
     {       
         Vector3f volumePt = new Vector3f();
         MipavCoordinateSystems.patientToFile( patientPt, volumePt, m_kImageActive, m_iPlaneOrientation );
         return volumePt;
-    }
-
-    public void init( ModelImage kImageA, ModelImage kImageB, Component kComponent, 
-            ScreenCoordinateListener kContext, int iOrientation, int iSlice )
-    {
-        m_akImages[0] = kImageA;
-        m_akImages[1] = kImageB;
-        if ( kImageA != null )
-        {
-            m_kImageActive = kImageA;
-        }
-        else
-        {
-            m_kImageActive = kImageB;
-        }
-        setCanvas(kComponent);
-        setDrawingContext(kContext);
-        setOrientation(iOrientation);
-        setSlice(iSlice);
     }
 
     public void setActiveImage( int iActive )
@@ -1199,7 +1088,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             m_aucBufferActive = m_aucBufferB;
         }
     }
-    
+
     public void setCanvas (Component kComponent)
     {
         m_kComponent = kComponent;
@@ -1217,8 +1106,21 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
     public void setCurrentVOI( LocalVolumeVOI kCurrentVOI )
     {
         m_kCurrentVOI = kCurrentVOI;
-        doVOI("");
     }
+    public void setDataBuffers(byte[] bufferA, byte[] bufferB)
+    {
+        m_aucBufferA = bufferA;
+        m_aucBufferB = bufferB;
+        if ( m_kImageActive == m_akImages[0] )
+        {
+            m_aucBufferActive = m_aucBufferA;
+        }
+        else
+        {
+            m_aucBufferActive = m_aucBufferB;
+        }
+    }
+
     public void setDrawingContext( ScreenCoordinateListener kContext )
     {
         m_kDrawingContext = kContext;
@@ -1440,6 +1342,8 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         }
     }
 
+
+
     private void addVOIPoint( int iX, int iY )
     {
         if ( m_kCurrentVOI == null )
@@ -1447,14 +1351,13 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             return;
         }     
         int iPos = m_kCurrentVOI.getNearPoint();
-        m_kCurrentVOI.add( this, iPos, new Vector3f(iX, iY, m_iSlice), false );      
-        //m_kParent.updateCurrentVOI( m_kCurrentVOI, m_kCurrentVOI );
-        m_kParent.setCursor(MipavUtil.crosshairCursor);        
-        m_iNearStatus = NearPoint;
+        if ( m_kCurrentVOI.add( iPos, new Vector3f(iX, iY, m_iSlice), false ) )
+        {
+            m_kParent.setCursor(MipavUtil.crosshairCursor);        
+            m_iNearStatus = NearPoint;
+            m_kParent.updateDisplay();
+        }
     }
-
-
-
     /**
      * This method calculates the average pixel value based on the four neighbors (N, S, E, W).
      *
@@ -1523,6 +1426,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
 
         return 0;
     }
+
     private void createTextVOI( int iX, int iY )
     {
         int colorID = 0;
@@ -1597,6 +1501,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         }
 
     }
+
     private void createVOI( int iX, int iY )
     {
         float fYStart = m_fMouseY;
@@ -1611,21 +1516,6 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             m_kCurrentVOI = new VOIPoint3D( this, m_kDrawingContext, m_iPlaneOrientation, m_iDrawType, kPositions, false);
 
         }
-        /*
-        else if ( m_iDrawType == POLYPOINT )
-        { 
-            Vector3f kNewPoint = new Vector3f( iX, fY, m_iSlice ) ;
-            if ( m_kCurrentVOI == null )
-            {
-                Vector<Vector3f> kPositions = new Vector<Vector3f>();
-                kPositions.add( kNewPoint );
-                m_kCurrentVOI = new LocalVolumeVOI( this, m_kDrawingContext, m_iPlaneOrientation, m_iDrawType, kPositions, false);
-            }
-            else
-            {
-                m_kCurrentVOI.add( this, kNewPoint, false );
-            }
-        } */
         else if ( m_iDrawType == RECTANGLE || m_iDrawType == RECTANGLE3D )
         {
             if ( m_kCurrentVOI == null )
@@ -1635,7 +1525,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
                 kPositions.add( new Vector3f (iX, fYStart, m_iSlice));
                 kPositions.add( new Vector3f (iX, fY, m_iSlice));
                 kPositions.add( new Vector3f (m_fMouseX, fY, m_iSlice));
-                m_kCurrentVOI = new VOIContour3D( this, m_kDrawingContext, m_iPlaneOrientation, m_iDrawType, kPositions, false);
+                m_kCurrentVOI = new VOIContour3D( this, m_kDrawingContext, m_iPlaneOrientation, m_iDrawType, m_iDrawType, kPositions, false);
             }
             else
             {
@@ -1643,7 +1533,6 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
                 m_kCurrentVOI.setPosition( this, 2, iX, fY, m_iSlice);
                 m_kCurrentVOI.setPosition( this, 3, m_fMouseX, fY, m_iSlice);       
             }
-            //m_kCurrentVOI.Update();
         }
         else if ( m_iDrawType == OVAL )
         {
@@ -1657,7 +1546,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
                     kPositions.add( new Vector3f ((float)(m_fMouseX + fRadiusX * m_adCos[i]),
                             (float)(fYStart + fRadiusY * m_adSin[i]), m_iSlice));
                 }
-                m_kCurrentVOI = new VOIContour3D( this, m_kDrawingContext, m_iPlaneOrientation, m_iDrawType, kPositions, false );
+                m_kCurrentVOI = new VOIContour3D( this, m_kDrawingContext, m_iPlaneOrientation, m_iDrawType, m_iDrawType, kPositions, false );
             }
             else
             {
@@ -1670,6 +1559,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         }
         else if ( m_iDrawType == LEVELSET )
         {
+            //initLiveWire( m_iSlice, false );
             LocalVolumeVOI kTemp = singleLevelSet(iX, fY);
             if ( kTemp == null )
             {
@@ -1685,12 +1575,15 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
                 kPositions.add( new Vector3f( m_fMouseX, fYStart, m_iSlice) ) ;
                 kPositions.add( new Vector3f( iX, fY, m_iSlice) ) ;
 
-                m_kCurrentVOI = new VOIContour3D( this, m_kDrawingContext, m_iPlaneOrientation, m_iDrawType, kPositions, false);
+                m_kCurrentVOI = new VOIContour3D( this, m_kDrawingContext, m_iPlaneOrientation, m_iDrawType, m_iDrawType, kPositions, false);
             }
             else
             {
                 Vector3f kNewPoint = new Vector3f( iX, fY, m_iSlice ) ;
-                m_kCurrentVOI.add( this, kNewPoint, false );
+                if ( m_kCurrentVOI.add( kNewPoint, false ) )
+                {
+                    m_kParent.updateDisplay( );
+                }
             }
 
             m_fMouseX = iX;
@@ -1755,6 +1648,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             m_fMouseX = iX;
             m_fMouseY = iY;
         }
+
         m_kCurrentVOI.setActive(false);
         if ( kOld != m_kCurrentVOI )
         {
@@ -1765,56 +1659,9 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
                 m_kParent.deleteVOI(kOld);
             }
         }
-        m_kParent.updateDisplay();
     }
-    private void deleteCurrentVOI()
-    {
-        if ( m_kCurrentVOI == null )
-        {
-            return;
-        }
 
-        m_kParent.deleteVOI( m_kCurrentVOI );
-        m_kCurrentVOI = null;
-    }
-    private void deleteVOIActivePt( )
-    {
-        if ( m_kCurrentVOI == null )
-        {            
-            return;
-        }     
-        int iPos = m_kCurrentVOI.getSelectedPoint();
-        if ( iPos < 0 )
-        {
-            return;
-        }
-        m_kCurrentVOI.delete( m_kCurrentVOI.getSelectedPoint() );        
-        if ( m_kCurrentVOI.isEmpty() )
-        {
-            deleteCurrentVOI();
-        }
-        else
-        {
-            //m_kParent.updateCurrentVOI( m_kCurrentVOI, m_kCurrentVOI );
-        }
-        m_kParent.setCursor(MipavUtil.crosshairCursor);        
-    }
-    
-    public void setDataBuffers(byte[] bufferA, byte[] bufferB)
-    {
-        m_aucBufferA = bufferA;
-        m_aucBufferB = bufferB;
-        if ( m_kImageActive == m_akImages[0] )
-        {
-            m_aucBufferActive = m_aucBufferA;
-        }
-        else
-        {
-            m_aucBufferActive = m_aucBufferB;
-        }
-    }
-    
-    private void initLiveWire( int iSlice )
+    private void initLiveWire( int iSlice, boolean bLiveWire )
     {
         m_kParent.setCursor( MipavUtil.waitCursor );
         if ( !m_bLiveWireInit )
@@ -1840,7 +1687,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         int yDim = m_kLocalImage.getExtents()[1];
 
         int length = xDim * yDim;
-        float[] sliceBuffer = null;
+        imageBufferActive = null;
 
         // for color images, arrays need to be 4 times bigger
         if (m_kLocalImage.isColorImage()) {
@@ -1851,7 +1698,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             // direction of the unit vector of the partial derivative in the y direction
             yDirections = new float[length * 4];
 
-            sliceBuffer = new float[length * 4];
+            imageBufferActive = new float[length * 4];
         } else {
 
             // direction of the unit vector of the partial derivative in the x direction
@@ -1860,57 +1707,37 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             // direction of the unit vector of the partial derivative in the y direction
             yDirections = new float[length];
 
-            sliceBuffer = new float[length];
+            imageBufferActive = new float[length];
         }
 
         try {
-            m_kLocalImage.exportData(iSlice * sliceBuffer.length, sliceBuffer.length, sliceBuffer);
+            m_kLocalImage.exportData(iSlice * imageBufferActive.length, imageBufferActive.length, imageBufferActive);
         } catch (IOException error) {
             MipavUtil.displayError("Error while trying to retrieve RGB data.");
         }
-        localCosts = RubberbandLivewire.getLocalCosts( m_kLocalImage, m_iLiveWireSelection, 
-                sliceBuffer,
-                xDirections, yDirections, null );
+        
+        if ( bLiveWire )
+        {
+            localCosts = RubberbandLivewire.getLocalCosts( m_kLocalImage, m_iLiveWireSelection, 
+                    imageBufferActive,
+                    xDirections, yDirections, null );
 
-        costGraph = new byte[localCosts.length]; // Graph with arrows from each node to next one
+            costGraph = new byte[localCosts.length]; // Graph with arrows from each node to next one
 
-        // A node is a location i in the array; where it
-        // points to is the value costGraph[i].
-        processedIndicies = new BitSet(localCosts.length); // Boolean indicating if pixel at location
-        // has been processed.
-        seededCosts = new float[localCosts.length]; // Seeded costs, so looking up a cost that has been
-        // set is easy
-        activeTree = new ActiveTree(); // List of active nodes to expand; reset on seed(pt) call
+            // A node is a location i in the array; where it
+            // points to is the value costGraph[i].
+            processedIndicies = new BitSet(localCosts.length); // Boolean indicating if pixel at location
+            // has been processed.
+            seededCosts = new float[localCosts.length]; // Seeded costs, so looking up a cost that has been
+            // set is easy
+            activeTree = new ActiveTree(); // List of active nodes to expand; reset on seed(pt) call
 
 
-        m_abInitLiveWire[iSlice] = true;
+            m_abInitLiveWire[iSlice] = true;
+        }
         m_kParent.setDefaultCursor();
     }
-    private void moveVOI( int iX, int iY )
-    {
-        if ( m_kCurrentVOI == null )
-        {            
-            return;
-        }
-        Vector3f kDiff = new Vector3f( iX - m_fMouseX, iY - m_fMouseY, 0 );
-        //kDiff.Sub( m_kCurrentVOI.getLocalCenter() );
-        m_kCurrentVOI.move( this, kDiff );
-        m_kParent.setCursor(MipavUtil.moveCursor);
-        //m_kParent.updateCurrentVOI( m_kCurrentVOI, m_kCurrentVOI );
 
-
-        m_fMouseX = iX;
-        m_fMouseY = iY;
-    }
-
-    private void moveVOI( Vector3f kDiff )
-    {
-        if ( m_kCurrentVOI == null )
-        {            
-            return;
-        }
-        m_kCurrentVOI.move( this, kDiff );             
-    }
     private void moveVOIPoint( int iX, int iY )
     {
         if ( m_kCurrentVOI == null )
@@ -1920,6 +1747,17 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         m_kCurrentVOI.setPosition( this, m_kCurrentVOI.getNearPoint(), iX, iY, m_iSlice );  
 
         m_kParent.setCursor(MipavUtil.crosshairCursor);
+    }
+
+    private void pasteVOI( int iSlice )
+    {
+        if ( m_kCopyVOI == null )
+        {
+            return;
+        }
+        m_kCurrentVOI = m_kCopyVOI.clone(iSlice);
+        m_kParent.pasteVOI(m_kCurrentVOI);
+        m_kCurrentVOI.setActive(false);
     }
 
     /**
@@ -1979,27 +1817,10 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
 
 
     /**
-     * Dragging the mouse with the left-mouse button held down changes the
-     * positions of the X and Y cross bars, and therefore the ZSlice positions
-     * of the associated PlaneRenderWM objects and the TriPlanar Surface. The
-     * new positions are calculated and passed onto the parent frame.
-     *
      * @param  kEvent  the mouse event generated by a mouse drag
      */
     private void processLeftMouseDrag(MouseEvent kEvent) {
 
-        /* Calculate the center of the mouse in local coordinates, taking into
-         * account zoom and translate: */
-        //Vector3f localPt = new Vector3f();
-        //m_kParent.ScreenToLocal(kEvent.getX(), kEvent.getY(), m_iSlice, localPt);
-
-        /* Tell the ViewJFrameVolumeView parent to update the other
-         * PlaneRenderWMs and the SurfaceRender with the changed Z position
-         * of the planes with color matching the moved bar: */
-        //Vector3f patientPt = new Vector3f();
-        //m_kParent.LocalToPatient( localPt, patientPt );
-        //Vector3f volumePt = new Vector3f();
-        //MipavCoordinateSystems.patientToFile( patientPt, volumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );
         if ( m_bDrawVOI && !(((m_iDrawType == POINT) || (m_iDrawType == POLYPOINT) ||
                 (m_iDrawType == LIVEWIRE) || (m_iDrawType == LEVELSET) || (m_iDrawType == TEXT))) )
         {
@@ -2009,13 +1830,24 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         {
             if ( m_iNearStatus == NearPoint )
             {
+                if ( m_bFirstDrag && ((m_fMouseX != kEvent.getX()) || (m_fMouseY != kEvent.getY())) )
+                {
+                    m_kParent.saveVOIs( "movePoint" );
+                    m_bFirstDrag = false;
+                }
                 moveVOIPoint( kEvent.getX(), kEvent.getY() );
             }
             else if ( m_bSelected )
             {
-                moveVOI( kEvent.getX(), kEvent.getY() );
+                if ( m_bFirstDrag && ((m_fMouseX != kEvent.getX()) || (m_fMouseY != kEvent.getY())) )
+                {
+                    m_kParent.saveVOIs( "moveVOI" );
+                    m_bFirstDrag = false;
+                }
+                m_kParent.moveVOI( new Vector3f( kEvent.getX() - m_fMouseX, kEvent.getY() - m_fMouseY, 0 ) );
+                m_fMouseX = kEvent.getX();
+                m_fMouseY = kEvent.getY();
             }
-            m_kParent.updateDisplay();
         }
     }
 
@@ -2310,11 +2142,11 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             }
             else if ( m_kCurrentVOI.nearLine( iX, iY, m_iSlice ) )
             {
-                if ( (m_kCurrentVOI.getType() != VOI.POINT) && 
-                        (m_kCurrentVOI.getType() != VOI.LINE) &&
-                        (m_kCurrentVOI.getType() != VOI.POLYLINE_SLICE) &&
-                        (m_kCurrentVOI.getType() != VOI.PROTRACTOR) &&
-                        (m_kCurrentVOI.getType() != VOI.ANNOTATION) )
+                if ( (m_kCurrentVOI.getType() != VOI.POINT_3D) && 
+                        (m_kCurrentVOI.getType() != VOI.LINE_3D) &&
+                        (m_kCurrentVOI.getType() != VOI.POLYLINE_SLICE_3D) &&
+                        (m_kCurrentVOI.getType() != VOI.PROTRACTOR_3D) &&
+                        (m_kCurrentVOI.getType() != VOI.ANNOTATION_3D) )
                 {
                     m_kParent.setCursor(MipavUtil.addPointCursor);
                     m_iNearStatus = NearLine;
@@ -2345,7 +2177,6 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         }
         m_iNearStatus = NearNone;
         m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-        m_kParent.updateDisplay();
     }
 
     /**
@@ -2577,6 +2408,320 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             {
                 kPatientPt.Set( levelSetStack.getPointX(i), levelSetStack.getPointY(i), m_iSlice );
                 kScreenPt = m_kDrawingContext.patientToScreen( kPatientPt );
+                kPositions.add( kScreenPt );
+            }
+            kPatientPt.Set( levelSetStack.getPointX(0), levelSetStack.getPointY(0), m_iSlice );   
+            kScreenPt = m_kDrawingContext.patientToScreen( kPatientPt );
+            kPositions.add( kScreenPt );
+            return new VOIContour3D(this, m_kDrawingContext, m_iPlaneOrientation, m_iDrawType, m_iDrawType, kPositions, false);
+        } 
+        return null;
+    }
+    
+    
+    
+    
+
+
+    /**
+     * This method calculates the average pixel value based on the four neighbors (N, S, E, W).
+     *
+     * @param   index  the center pixel where the average pixel value is to be calculated.
+     *
+     * @return  the average pixel value as a float.
+     */
+    private float avgPix(int index) {
+        int xDim = m_kLocalImage.getExtents()[0];
+
+        if ((index > xDim) && (index < (imageBufferActive.length - xDim))) {
+
+            float sum = imageBufferActive[index];
+
+            sum += imageBufferActive[index - xDim];
+            sum += imageBufferActive[index - 1];
+            sum += imageBufferActive[index + 1];
+            sum += imageBufferActive[index + xDim];
+
+            return sum / 5.0f;
+        } else {
+            return (imageBufferActive[index]);
+        }
+    }
+
+    /**
+     * Generates the possible paths of the level set and pushes them onto a stack. Looks in the 8 neighborhood
+     * directions for the possible paths.
+     *
+     * @param  index  image location
+     * @param  i      DOCUMENT ME!
+     */
+    private void paths(int index, int i, float level) {
+
+        int[] intPtr = null;
+
+        try {
+            intPtr = new int[1];
+        } catch (OutOfMemoryError error) {
+            System.gc();
+            MipavUtil.displayError("Out of memory: ComponentEditImage.mouseDragged");
+
+            return;
+        }
+
+        intPtr[0] = levelSetStack.size() - 1;
+        int xDim = m_kLocalImage.getExtents()[0];
+
+        if ((i != 0) && (imageBufferActive[index - xDim - 1] <= level) && (map.get(index - xDim - 1) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 1) && (imageBufferActive[index - xDim] <= level) && (map.get(index - xDim) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 2) && (imageBufferActive[index - xDim + 1] <= level) && (map.get(index - xDim + 1) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 3) && (imageBufferActive[index + 1] <= level) && (map.get(index + 1) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 4) && (imageBufferActive[index + xDim + 1] <= level) && (map.get(index + xDim + 1) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 5) && (imageBufferActive[index + xDim] <= level) && (map.get(index + xDim) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 6) && (imageBufferActive[index + xDim - 1] <= level) && (map.get(index + xDim - 1) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 7) && (imageBufferActive[index - 1] <= level) && (map.get(index - 1) == false)) {
+            stack.push(intPtr);
+        }
+    }
+
+    /**
+     * Creates a single level set. Takes a starting point and finds a closed path along the levelset back to the
+     * starting point.
+     *
+     * @param  startPtX  the start point
+     * @param  startPtY  the start point
+     * @param  level     the level of the level set
+     */
+    private LocalVolumeVOI singleLevelSet(float startPtX, float startPtY, float level) {
+
+        int x, y;
+        int index;
+        double distance;
+        stack.removeAllElements();
+
+        if (imageBufferActive == null) {
+            return null;
+        }
+
+        int xDim = m_kLocalImage.getExtents()[0];
+        int yDim = m_kLocalImage.getExtents()[1];
+
+        for (int i = 0; i < map.size(); i++) {
+            map.clear(i);
+        }
+        
+
+        new Vector3f( startPtX, startPtY, m_iSlice );
+        Vector3f kVolumePt = new Vector3f();
+        m_kDrawingContext.screenToFile( (int)startPtX, (int)startPtY, m_iSlice, kVolumePt );
+        Vector3f kPatientPt = new Vector3f();
+        MipavCoordinateSystems.fileToPatient( kVolumePt, kPatientPt, m_kImageActive, m_iPlaneOrientation );
+
+        startPtX = kPatientPt.X;
+        startPtY = kPatientPt.Y;        
+
+        if (startPtX >= (xDim - 1)) {
+            return null;
+        }
+
+        if (startPtY >= (yDim - 1)) {
+            return null;
+        }
+
+        x = (int) (startPtX + 0.5);
+        y = (int) (startPtY + 0.5);
+        
+        index = (y * xDim) + x;
+        level = (m_aucBufferActive[index] & 0x00ff);
+
+        levelSetStack.reset();
+        levelSetStack.addPoint(x, y);
+        map.set((y * xDim) + x);
+
+        int dir = -1;
+        float diff = 100000;
+
+        do {
+            index = (y * xDim) + x;
+
+            if ((x >= 2) && (x < (xDim - 2)) && (y >= 2) && (y < (yDim - 2))) {
+
+                if ((avgPix(index - xDim) >= level) &&
+                        ((avgPix(index - xDim + 1) < level) || (avgPix(index) < level) ||
+                             (avgPix(index - xDim - 1) < level) || (avgPix(index - (2 * xDim)) < level)) &&
+                        (map.get(index - xDim) == false)) {
+                    dir = 1;
+                    diff = Math.abs(avgPix(index - xDim) - avgPix(index));
+                }
+
+                if ((avgPix(index - xDim + 1) >= level) &&
+                        ((avgPix(index - xDim + 2) < level) || (avgPix(index + 1) < level) ||
+                             (avgPix(index - xDim) < level) || (avgPix(index - (2 * xDim) + 1) < level)) &&
+                        (map.get(index - xDim + 1) == false)) {
+
+                    if (Math.abs(avgPix(index - xDim + 1) - avgPix(index)) < diff) {
+                        dir = 2;
+                        diff = Math.abs(avgPix(index - xDim + 1) - avgPix(index));
+                    }
+                }
+
+                if ((avgPix(index + 1) >= level) &&
+                        ((avgPix(index + 2) < level) || (avgPix(index + xDim + 1) < level) || (avgPix(index) < level) ||
+                             (avgPix(index - xDim + 1) < level)) && (map.get(index + 1) == false)) {
+
+                    if (Math.abs(avgPix(index + 1) - avgPix(index)) < diff) {
+                        dir = 3;
+                        diff = Math.abs(avgPix(index + 1) - avgPix(index));
+                    }
+                }
+
+                if ((avgPix(index + xDim + 1) >= level) &&
+                        ((avgPix(index + xDim + 2) < level) || (avgPix(index + (2 * xDim) + 1) < level) ||
+                             (avgPix(index + 1) < level) || (avgPix(index + xDim) < level)) &&
+                        (map.get(index + xDim + 1) == false)) {
+
+                    if (Math.abs(avgPix(index + xDim + 1) - avgPix(index)) < diff) {
+                        dir = 4;
+                        diff = Math.abs(avgPix(index + xDim + 1) - avgPix(index));
+                    }
+                }
+
+                if ((avgPix(index + xDim) >= level) &&
+                        ((avgPix(index + xDim + 1) < level) || (avgPix(index + (2 * xDim)) < level) ||
+                             (avgPix(index + xDim - 1) < level) || (avgPix(index) < level)) &&
+                        (map.get(index + xDim) == false)) {
+
+                    if (Math.abs(avgPix(index + xDim) - avgPix(index)) < diff) {
+                        dir = 5;
+                        diff = Math.abs(avgPix(index + xDim) - avgPix(index));
+                    }
+                }
+
+                if ((avgPix(index + xDim - 1) >= level) &&
+                        ((avgPix(index + xDim) < level) || (avgPix(index + (2 * xDim) - 1) < level) ||
+                             (avgPix(index + xDim - 2) < level) || (avgPix(index - 1) < level)) &&
+                        (map.get(index + xDim - 1) == false)) {
+
+                    if (Math.abs(avgPix(index + xDim - 1) - avgPix(index)) < diff) {
+                        dir = 6;
+                        diff = Math.abs(avgPix(index + xDim - 1) - avgPix(index));
+                    }
+                }
+
+                if ((avgPix(index - 1) >= level) &&
+                        ((avgPix(index) < level) || (avgPix(index + xDim - 1) < level) || (avgPix(index - 2) < level) ||
+                             (avgPix(index - xDim - 1) < level)) && (map.get(index - 1) == false)) {
+
+                    if (Math.abs(avgPix(index - 1) - avgPix(index)) < diff) {
+                        dir = 7;
+                        diff = Math.abs(avgPix(index - 1) - avgPix(index));
+                    }
+                }
+
+                if ((avgPix(index - xDim - 1) >= level) &&
+                        ((avgPix(index - xDim) < level) || (avgPix(index - 1) < level) ||
+                             (avgPix(index - xDim - 2) < level) || (avgPix(index - (2 * xDim) - 1) < level)) &&
+                        (map.get(index - xDim - 1) == false)) {
+
+                    if (Math.abs(avgPix(index - xDim - 1) - avgPix(index)) < diff) {
+                        dir = 0;
+                        // diff = Math.abs(imageBufferActive[index-xDim-1] - imageBufferActive[index]);
+                    }
+                }
+
+                diff = 1000000;
+
+                if (dir == 1) {
+                    // x = x;
+                    y = y - 1;
+                    map.set(index - xDim);
+                    paths(index, 1, level);
+                } else if (dir == 2) {
+                    x = x + 1;
+                    y = y - 1;
+                    map.set(index - xDim + 1);
+                    paths(index, 2, level);
+                } else if (dir == 3) {
+                    x = x + 1;
+                    // y = y;
+                    map.set(index + 1);
+                    paths(index, 3, level);
+                } else if (dir == 4) {
+                    x = x + 1;
+                    y = y + 1;
+                    map.set(index + xDim + 1);
+                    paths(index, 4, level);
+                } else if (dir == 5) {
+                    // x = x;
+                    y = y + 1;
+                    map.set(index + xDim);
+                    paths(index, 5, level);
+                } else if (dir == 6) {
+                    x = x - 1;
+                    y = y + 1;
+                    map.set(index + xDim - 1);
+                    paths(index, 6, level);
+                } else if (dir == 7) {
+                    x = x - 1;
+                    // y = y;
+                    map.set(index - 1);
+                    paths(index, 7, level);
+                } else if (dir == 0) {
+                    x = x - 1;
+                    y = y - 1;
+                    map.set(index - xDim - 1);
+                    paths(index, 0, level);
+                } else {
+
+                    if (!stack.empty()) {
+                        int ptr = ((int[]) stack.pop())[0];
+                        x = levelSetStack.getPointX(ptr);
+                        y = levelSetStack.getPointY(ptr);
+                        levelSetStack.setIndex(ptr);
+                    } else {
+                        x = y = -1;
+                    }
+                }
+
+                dir = -1;
+            } else { // near edge of image
+                levelSetStack.reset();
+
+                break;
+            }
+
+            if ((x == -1) || (y == -1)) {
+                levelSetStack.reset();
+
+                break;
+            }
+
+            levelSetStack.addPoint(x, y);
+
+            distance = ((x - startPtX) * (x - startPtX)) + ((y - startPtY) * (y - startPtY));
+
+            if ((distance < 2.1) && (levelSetStack.size() < 10)) {
+                distance = 10;
+            }
+        } while (distance > 2.1);
+
+
+
+        if (levelSetStack.size() != 0) {
+            new Vector3f();
+            Vector3f kScreenPt = new Vector3f();
+
+            Vector<Vector3f> kPositions = new Vector<Vector3f>();
+            for ( int i = 0; i < levelSetStack.size(); i++ )
+            {
+                kPatientPt.Set( levelSetStack.getPointX(i), levelSetStack.getPointY(i), m_iSlice );
+                kScreenPt = m_kDrawingContext.patientToScreen( kPatientPt );
                 kScreenPt.Y = kScreenPt.Y;
                 kPositions.add( kScreenPt );
             }
@@ -2584,10 +2729,13 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             kScreenPt = m_kDrawingContext.patientToScreen( kPatientPt );
             kScreenPt.Y = kScreenPt.Y;
             kPositions.add( kScreenPt );
-            return new VOIContour3D(this, m_kDrawingContext, m_iPlaneOrientation, m_iDrawType, kPositions, false);
+            return new VOIContour3D(this, m_kDrawingContext, m_iPlaneOrientation, m_iDrawType, m_iDrawType, kPositions, false);
         } 
         return null;
     }
+    
+    
+    
 
     private void splitVOIs( boolean bAllSlices, boolean bOnlyActive, LocalVolumeVOI kSplitVOI )
     {
@@ -2638,31 +2786,8 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
 
         for ( int i = 0; i < kNewVOIs.size(); i++ )
         {
-            //m_kParent.updateCurrentVOI( null, kNewVOIs.get(i) );
             m_kParent.addVOI(kNewVOIs.get(i), true);
         }
         m_kCurrentVOI = null;
     }
-
-    private void unselectVOI( )
-    {
-        if ( m_kCurrentVOI != null )
-        {
-            m_kCurrentVOI.setActive(false);
-        }
-        m_bSelected = false;
-        m_kCurrentVOI = null;
-        VOIVector kVOIs = m_kImageActive.get3DVOIs();
-        for ( int i = 0; i < kVOIs.size(); i++ )
-        {
-            VOI kVOI = kVOIs.get(i);
-            for ( int j = 0; j < kVOI.getCurves()[0].size(); j++ )
-            {
-                LocalVolumeVOI kVOI3D = ((LocalVolumeVOI)kVOI.getCurves()[0].get(j));
-                kVOI3D.setActive(false);
-            }
-        }
-    }
-
-
 }

@@ -117,6 +117,8 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
     /** DOCUMENT ME! */
     private JRadioButton VOIRegionsRB;
 
+    /** Flag indicates if this object should dispose the input image. */
+    private boolean disposeImage = false;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -135,6 +137,21 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
         image = im;
         userInterface = ViewUserInterface.getReference();
         init();
+    }
+    
+    
+    /**
+     * Creates a subset of the extract surface dialog. The surface is extracted from VOIs, so the option is set as default.
+     * @param theParentFrame
+     * @param im
+     * @param bDisposeImage
+     */
+    public JDialogExtractSurfaceCubes(JFrame theParentFrame, ModelImage im, boolean bDisposeImage) {
+        super(theParentFrame, false);
+        image = im;
+        userInterface = ViewUserInterface.getReference();
+        initSubset();
+        disposeImage = bDisposeImage;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -297,6 +314,10 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
         // }
         // }
 
+        if ( disposeImage )
+        {
+            image.disposeLocal();
+        }
         dispose();
     }
     
@@ -665,6 +686,183 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
         setVisible(true);
     }
 
+    
+    /**
+     * Initializes the GUI by creating the components, placing them in the dialog, and displaying them.
+     */
+    private void initSubset() {
+        String fileLocation;
+        setForeground(Color.black);
+        setTitle("Extract Surface");
+
+        JPanel imageVOIPanel = new JPanel(new GridBagLayout());
+
+        imageVOIPanel.setForeground(Color.black);
+        imageVOIPanel.setBorder(buildTitledBorder("Extract surface of:"));
+
+        ButtonGroup imageVOIGroup = new ButtonGroup();
+
+        maskImageRB = new JRadioButton("Mask image", false);
+        maskImageRB.setFont(serif12);
+        imageVOIGroup.add(maskImageRB);
+        maskImageRB.addItemListener(this);
+
+        VOIRegionsRB = new JRadioButton("VOI region", false);
+        VOIRegionsRB.setFont(serif12);
+        imageVOIGroup.add(VOIRegionsRB);
+        VOIRegionsRB.addItemListener(this);
+
+        intensityLevelRB = new JRadioButton("Intensity level", true);
+        intensityLevelRB.setFont(serif12);
+        imageVOIGroup.add(intensityLevelRB);
+        intensityLevelRB.addItemListener(this);
+
+        intensityTF = new JTextField();
+        intensityTF.setText("50");
+        intensityTF.setEnabled(false);
+        intensityTF.setFont(serif12);
+
+       
+        blurCheck = new JCheckBox("Blur by (Std. Dev)", false);
+        blurCheck.setForeground(Color.black);
+        blurCheck.setFont(serif12);
+        blurCheck.addItemListener(this);
+
+        blurTF = new JTextField();
+        blurTF.setText("0.5");
+        blurTF.setFont(serif12);
+        blurTF.setEnabled(false);
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridwidth = 2;
+        gbc.gridheight = 1;
+        gbc.weightx = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        imageVOIPanel.add(VOIRegionsRB, gbc);
+        gbc.gridy = 1;
+        imageVOIPanel.add(maskImageRB, gbc);
+        gbc.gridy = 2;
+        gbc.gridwidth = 1;
+        gbc.weightx = 0;
+        imageVOIPanel.add(intensityLevelRB, gbc);
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        imageVOIPanel.add(intensityTF, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.gridwidth = 1;
+        gbc.weightx = 0;
+        imageVOIPanel.add(blurCheck, gbc);
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        imageVOIPanel.add(blurTF, gbc);
+
+        JPanel decimatePanel = new JPanel();
+
+        decimatePanel.setForeground(Color.black);
+        decimatePanel.setBorder(buildTitledBorder("Decimate surface"));
+
+        decimateSurfaceCB = new JCheckBox("Decimate surface (Reduce triangle count)", false);
+        decimateSurfaceCB.setFont(serif12);
+        decimatePanel.add(decimateSurfaceCB);
+
+        gbc = new GridBagConstraints();
+        gbc.gridwidth = 2;
+        gbc.gridheight = 1;
+        gbc.weightx = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+
+        JPanel filePanel = new JPanel(new GridBagLayout());
+
+        filePanel.setForeground(Color.black);
+        filePanel.setBorder(buildTitledBorder("Save surface"));
+
+        fileButton = new JButton("Choose...");
+        fileButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        fileButton.setFont(serif12B);
+        fileButton.addActionListener(this);
+        fileButton.setActionCommand("File");
+
+        fileTF = new JTextField();
+        fileTF.setText(makeImageName(image.getImageName()+ "_surface", ".sur"));
+
+        if (userInterface.getDefaultDirectory() != null) {
+            fileLocation = userInterface.getDefaultDirectory();
+        } else {
+            fileLocation = System.getProperties().getProperty("user.dir");
+        }
+
+        fileLocation += makeImageName(image.getImageName(), ".sur");
+
+        fileTF.setToolTipText(fileLocation);
+        fileTF.setFont(serif12);
+
+        JLabel formatLabel = new JLabel(" ");
+        formatLabel.setFont(serif12B);
+
+        fileTypeList = new JComboBox(fileTypes);
+        fileTypeList.setSelectedIndex(1);
+        fileTypeList.setActionCommand("chooseType");
+        fileTypeList.addActionListener(this);
+        fileTypeList.setEditable(false);
+        fileTypeList.setFont(serif12);
+        fileTypeList.setAlignmentX(Component.LEFT_ALIGNMENT);
+        fileTypeList.setBackground(Color.white);
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0;
+        gbc.gridwidth = 1;
+        filePanel.add(fileButton, gbc);
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        filePanel.add(fileTF, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.fill = GridBagConstraints.LINE_END;
+        gbc.weightx = 0;
+        gbc.gridwidth = 1;
+        filePanel.add(formatLabel, gbc);
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        filePanel.add(fileTypeList, gbc);
+
+        JPanel mainPanel = new JPanel(new GridBagLayout());
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        //mainPanel.add(imageVOIPanel, gbc);
+        //gbc.gridy = 1;
+        mainPanel.add(decimatePanel, gbc);
+        gbc.gridy++;
+        mainPanel.add(filePanel, gbc);
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+        //JPanel buttonPanel = new JPanel();
+
+        //buildOKButton();
+        //buttonPanel.add(OKButton);
+        //buildCancelButton();
+        //buttonPanel.add(cancelButton);
+
+        getContentPane().add(mainPanel);
+        //getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+        getContentPane().add(buildButtons(), BorderLayout.SOUTH);
+        pack();
+        setVisible(true);
+    }
+
+    
+    
     /**
      * Use the GUI results to set up the variables needed to run the algorithm.
      *

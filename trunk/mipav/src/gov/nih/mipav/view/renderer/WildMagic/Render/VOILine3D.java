@@ -24,31 +24,36 @@ public class VOILine3D extends LocalVolumeVOI
     public VOILine3D( VOIManager parent, ScreenCoordinateListener kContext, int iOrientation, int iType, int iSType, Vector<Vector3f> kLocal, int iZ )
     {
         super(parent, kContext, iOrientation, iType, iSType, kLocal, iZ );
-        m_iVOIType = VOI.LINE;
+        m_iVOIType = VOI.LINE_3D;
         m_bClosed = false;
     }
 
     public VOILine3D(VOIManager parent, ScreenCoordinateListener kContext, int iOrientation, int iType, Vector<Vector3f> kLocal, boolean bIsFile)
     {
-        super(parent,kContext,iOrientation,iType,kLocal,bIsFile);
-        m_iVOIType = VOI.LINE;
+        super(parent,kContext,iOrientation,iType,-1,kLocal,bIsFile);
+        m_iVOIType = VOI.LINE_3D;
         m_bClosed = false;
     }
-
-    public void add( VOIManager parent, int iPos, Vector3f kNewPoint, boolean bIsFile  ) {}
-
-    public void add(VOIManager parent, Vector3f kNewPoint, boolean bIsFile) {}
-
-    public VOILine3D Clone( )
+    
+    public VOILine3D( VOILine3D kVOI )
     {
-        return new VOILine3D( m_kParent, m_kDrawingContext, m_iOrientation, m_iVOIType, this, true );
+        super(kVOI);
+    }
+    
+    public VOILine3D( VOILine3D kVOI, int iZ )
+    {
+        super(kVOI, iZ);
     }
 
-    public VOILine3D Clone( int iZ )
+    public boolean add( int iPos, Vector3f kNewPoint, boolean bIsFile  ) 
     {
-        return new VOILine3D( m_kParent, m_kDrawingContext, m_iOrientation, m_iVOIType, m_iVOISpecialType, this, iZ );
+        return false;
     }
 
+    public boolean add( Vector3f kNewPoint, boolean bIsFile) 
+    {
+        return false;
+    }
 
     public boolean contains(int iOrientation, int iX, int iY, int iZ ) {
         if ( iZ != slice() || iOrientation != m_iOrientation )
@@ -70,7 +75,7 @@ public class VOILine3D extends LocalVolumeVOI
             return;
         }
 
-
+/*
         if ( getGroup() != null )
         {
             g.setColor( getGroup().getColor() );
@@ -79,6 +84,7 @@ public class VOILine3D extends LocalVolumeVOI
         {
             g.setColor( Color.yellow );
         }
+        */
 
         Vector3f kStart = m_kDrawingContext.fileToScreen( get(0) );
         Vector3f kEnd = m_kDrawingContext.fileToScreen( get(1) );
@@ -302,11 +308,6 @@ public class VOILine3D extends LocalVolumeVOI
         }
     }
 
-    public int getType()
-    {
-        return m_iVOIType;
-    }
-
     public LocalVolumeVOI split ( Vector3f kStartPt, Vector3f kEndPt )
     {
         return null;
@@ -485,5 +486,15 @@ public class VOILine3D extends LocalVolumeVOI
             coords[2] = (int) (linePtsX[0] + vector2 + 0.5);
             coords[3] = (int) (linePtsY[0] - vector1 + 0.5);
         }
+    }
+    
+
+
+    public VOILine3D clone() {
+        return new VOILine3D(this);
+    }
+
+    public VOILine3D clone(int iZ) {
+        return new VOILine3D(this, iZ);
     }
 }

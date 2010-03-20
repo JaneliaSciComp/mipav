@@ -47,7 +47,8 @@ public class CustomUIBuilder {
 	public static final UIParams PARAM_VOI_PROPERTIES = new UIParams("VOIProperties", "View VOI Properties", "voiquestion");
 	public static final UIParams PARAM_VOI_COLOR = new UIParams("VOIColor", "Current/change VOI Color", "transparent");
 	public static final UIParams PARAM_VOI_NEW = new UIParams("NewVOI", "Initiate new VOI", "newvoi");
-	public static final UIParams PARAM_VOI_UNDO = new UIParams("undoVOI", "Undo last VOI change (Ctrl-Z)", "undopaint");
+    public static final UIParams PARAM_VOI_UNDO = new UIParams("undoVOI", "Undo last VOI change (Ctrl-Z)", "undopaint");
+    public static final UIParams PARAM_VOI_REDO = new UIParams("redoVOI", "Redo last VOI change (Ctrl-Y)", "redopaint");
 	public static final UIParams PARAM_VOI_CUT = new UIParams("cutVOI", "Cut selected contour (Ctrl-X)", "cutpaint");
 	public static final UIParams PARAM_VOI_COPY = new UIParams("copyVOI", "Copy selected contour (Ctrl-C)", "copypaint");
 	public static final UIParams PARAM_VOI_PASTE = new UIParams("pasteVOI", "Paste contour (Ctrl-V)", "pastepaint");
