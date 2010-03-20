@@ -33,44 +33,81 @@ public class VOIPoint3D extends LocalVolumeVOI
 
     /** True only for the active point of a polyline_slice structure (display's coordinates)*/
     private boolean isActivePoint = false;
-    
+
     private int m_iID = -1;
 
 
     public VOIPoint3D( VOIManager parent, ScreenCoordinateListener kContext, int iOrientation, int iType, int iSType, Vector<Vector3f> kLocal, int iZ )
     {
         super(parent, kContext, iOrientation, iType, iSType, kLocal, iZ );
-        m_iVOIType = VOI.POINT;
+        m_iVOIType = VOI.POINT_3D;
         if ( iType == VOIManager.POLYPOINT )
         {
-            m_iVOIType = VOI.POLYLINE_SLICE;
+            m_iVOIType = VOI.POLYLINE_SLICE_3D;
         }
         m_bClosed = false;
     }
-    
+
     public VOIPoint3D(VOIManager parent, ScreenCoordinateListener kContext, int iOrientation, int iType, Vector<Vector3f> kLocal, boolean bIsFile)
     {
-        super(parent,kContext,iOrientation,iType,kLocal,bIsFile);
-        m_iVOIType = VOI.POINT;
+        super(parent,kContext,iOrientation,iType,-1,kLocal,bIsFile);
+        m_iVOIType = VOI.POINT_3D;
         if ( iType == VOIManager.POLYPOINT )
         {
-            m_iVOIType = VOI.POLYLINE_SLICE;
+            m_iVOIType = VOI.POLYLINE_SLICE_3D;
         }
         m_bClosed = false;
     }
-    
-    public void add( VOIManager parent, int iPos, Vector3f kNewPoint, boolean bIsFile  ) {}
 
-
-    public void add(VOIManager parent, Vector3f kNewPoint, boolean bIsFile) {}
-
-    public VOIPoint3D Clone( )
+    public boolean add( int iPos, Vector3f kNewPoint, boolean bIsFile  ) 
     {
-        return new VOIPoint3D( m_kParent, m_kDrawingContext, m_iOrientation, m_iVOIType, this, true );
+        return false;
     }
-    public VOIPoint3D Clone( int iZ )
+
+    public boolean add( Vector3f kNewPoint, boolean bIsFile) 
     {
-        return new VOIPoint3D( m_kParent, m_kDrawingContext, m_iOrientation, m_iVOIType, m_iVOISpecialType, this, iZ );
+        return false;
+    }
+
+    public VOIPoint3D( VOIPoint3D kVOI )
+    {
+        super(kVOI);
+        this.firstSlicePoint = kVOI.firstSlicePoint;
+        if ( kVOI.totalDistanceString != null )
+        {
+            this.totalDistanceString = new String( kVOI.totalDistanceString );
+        }
+        if ( kVOI.distanceString != null )
+        {
+            this.distanceString = new String( kVOI.distanceString );
+        }
+        this.isActivePoint = kVOI.isActivePoint;
+        this.m_iID = kVOI.m_iID;
+    }
+
+
+    public VOIPoint3D( VOIPoint3D kVOI, int iZ )
+    {
+        super(kVOI, iZ);
+        this.firstSlicePoint = kVOI.firstSlicePoint;
+        if ( kVOI.totalDistanceString != null )
+        {
+            this.totalDistanceString = new String( kVOI.totalDistanceString );
+        }
+        if ( kVOI.distanceString != null )
+        {
+            this.distanceString = new String( kVOI.distanceString );
+        }
+        this.isActivePoint = kVOI.isActivePoint;
+        this.m_iID = kVOI.m_iID;
+    }
+
+    public VOIPoint3D clone() {
+        return new VOIPoint3D(this);
+    }
+
+    public VOIPoint3D clone(int iZ) {
+        return new VOIPoint3D(this, iZ);
     }
 
     public boolean contains(int iOrientation, int iX, int iY, int iZ ) {
@@ -99,7 +136,7 @@ public class VOIPoint3D extends LocalVolumeVOI
 
     public void drawSelf( Graphics g, String label ) {
 
-
+        /*
         if ( getGroup() != null )
         {
             g.setColor( getGroup().getColor() );
@@ -108,7 +145,7 @@ public class VOIPoint3D extends LocalVolumeVOI
         {
             g.setColor( Color.yellow );
         }
-
+         */
         boolean doName = (Preferences.is(Preferences.PREF_SHOW_VOI_NAME) && name != null);
 
         Vector3f kFile = get(0);
@@ -119,7 +156,7 @@ public class VOIPoint3D extends LocalVolumeVOI
         int yS = Math.round( kScreen.Y );
 
         String str;
-        if ( m_iVOIType != VOI.POLYLINE_SLICE )
+        if ( m_iVOIType != VOI.POLYLINE_SLICE_3D )
         {
             str = new String("(" + x + "," + y + ")");
             //Create the string that will be drawn for label and name
@@ -304,11 +341,6 @@ public class VOIPoint3D extends LocalVolumeVOI
         return m_kDrawingContext.fileToScreen( get(0) );
     }
 
-    public int getType()
-    {
-        return m_iVOIType;
-    }
-
     public boolean nearLine(int iX, int iY, int iZ )
     {
         return false;
@@ -329,7 +361,7 @@ public class VOIPoint3D extends LocalVolumeVOI
 
         this.totalDistanceString = totalDistance;
         this.distanceString = dist;
-        
+
         m_iID = iID;
     }
 
@@ -358,6 +390,7 @@ public class VOIPoint3D extends LocalVolumeVOI
             Program kProgram = ((ShaderEffect)m_kBallPoint.GetEffect(0)).GetCProgram(0);
             if ( kProgram != null )
             {
+                float fUseConstant = 1;
                 if ( kProgram.GetUC("ConstantColor") != null )
                 {
                     if ( isActivePoint && active )
@@ -380,24 +413,13 @@ public class VOIPoint3D extends LocalVolumeVOI
                     }
                     else 
                     {
-                        if ( getGroup() != null )
-                        {
-                            kProgram.GetUC("ConstantColor").GetData()[0] = getGroup().getColor().getRed()/255f;
-                            kProgram.GetUC("ConstantColor").GetData()[1] = getGroup().getColor().getGreen()/255f;
-                            kProgram.GetUC("ConstantColor").GetData()[2] = getGroup().getColor().getBlue()/255f;
-                        }
-                        else
-                        {
-                            kProgram.GetUC("ConstantColor").GetData()[0] = 1;
-                            kProgram.GetUC("ConstantColor").GetData()[1] = 1;
-                            kProgram.GetUC("ConstantColor").GetData()[2] = 0;           
-                        }
+                        fUseConstant = 0;
                     }
                 }
 
                 if ( kProgram.GetUC("UseConstantColor") != null )
                 {
-                    kProgram.GetUC("UseConstantColor").GetData()[0] = 1.0f;
+                    kProgram.GetUC("UseConstantColor").GetData()[0] = fUseConstant;
                 }
             }
             kRenderer.Draw( m_kBallPoint );
@@ -413,11 +435,11 @@ public class VOIPoint3D extends LocalVolumeVOI
             if ( iSlice == slice() )
             {
                 drawVOIPoint( kRenderer, kVolumeVOI );
-                if ( !isActive() && (m_iVOIType != VOI.POLYLINE_SLICE))
+                if ( !isActive() && (m_iVOIType != VOI.POLYLINE_SLICE_3D))
                 {
                     return;
                 }
-                if ( m_iVOIType != VOI.POLYLINE_SLICE )
+                if ( m_iVOIType != VOI.POLYLINE_SLICE_3D )
                 {
                     drawSelectedPoints( kRenderer, kVolumeScale, kTranslate, iOrientation, aiAxisOrder );
                 }
@@ -428,7 +450,7 @@ public class VOIPoint3D extends LocalVolumeVOI
             }
         }
     }
-    
+
     private void drawVOIPoint( Renderer kRenderer, VolumeVOI kVolumeVOI )
     {
         Vector3f kScreen = m_kDrawingContext.fileToScreen( get(0) );
@@ -447,7 +469,7 @@ public class VOIPoint3D extends LocalVolumeVOI
         {
             kLabel = String.valueOf(m_iID);
         }
-        if ( m_iVOIType != VOI.POLYLINE_SLICE )
+        if ( m_iVOIType != VOI.POLYLINE_SLICE_3D )
         {
             if ( isActive() )
             {

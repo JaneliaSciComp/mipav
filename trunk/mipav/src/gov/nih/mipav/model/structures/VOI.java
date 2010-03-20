@@ -67,6 +67,16 @@ public class VOI extends ModelSerialCloneable {
 
     /** Indicates that the VOI is of type POLYLINE that will go through more than one slice. */
     public static final int POLYLINE_SLICE = 7;
+    
+
+    public static final int CONTOUR_3D = 8; 
+    public static final int POLYLINE_3D = 9;
+    public static final int LINE_3D = 10;
+    public static final int POINT_3D = 11; 
+    public static final int PROTRACTOR_3D = 12;
+    public static final int ANNOTATION_3D = 13;
+    public static final int CARDIOLOGY_3D = 14;
+    public static final int POLYLINE_SLICE_3D = 15;
 
     /** DOCUMENT ME! */
     public static final float NOT_A_LEVELSET = Float.MIN_VALUE;
@@ -106,7 +116,7 @@ public class VOI extends ModelSerialCloneable {
     /** The label (numbering) of the curve, displayed when curve is highlighted. */
     private short elementLabel = 1;
 
-    /** If true the VOI can be moved, if false this VOI cannot be moved. */
+    /** If true the VOI cannot be moved, if false this VOI can be moved. */
     private boolean fixed = false;
 
     /** ID of the VOI, also used when choosing the display color. */
@@ -193,7 +203,140 @@ public class VOI extends ModelSerialCloneable {
     /** extension of voi file name of voi was read in through file **/
     private String extension = "";
     //~ Constructors ---------------------------------------------------------------------------------------------------
+   
+    
+    /**
+     * Copies the VOI into a new VOI object.
+     * @param kVOI VOI to copy.
+     */
+    public VOI( VOI kVOI )
+    {
+        this.active = kVOI.active;
+        this.activePolylineSlicePoint = kVOI.activePolylineSlicePoint;
+        this.boundingBox = kVOI.boundingBox;
+        this.color = new Color( kVOI.color.getRed(), kVOI.color.getBlue(), kVOI.color.getGreen() );
+        this.thickness = kVOI.thickness;
+        this.contourGraph = kVOI.contourGraph;
+        this.curves = new Vector[kVOI.curves.length];
+        for ( int i = 0; i < kVOI.curves.length; i++ )
+        {
+            if ( kVOI.curves[i] != null )
+            {
+                this.curves[i] = new Vector<VOIBase>();
+                for ( int j = 0; j < kVOI.curves[i].size(); j++ )
+                {
+                    VOIBase kContour = (VOIBase) kVOI.curves[i].get(j).clone();
+                    kContour.setGroup(this);
+                    this.curves[i].add( kContour );
+                }
+            }
+        }
+        this.curveType = kVOI.curveType;
+        this.displayMode = kVOI.displayMode;
+        this.elementLabel = kVOI.elementLabel;
+        this.fixed = kVOI.fixed;
+        this.ID = kVOI.ID;
+        this.ignoreMax = kVOI.ignoreMax;
+        this.ignoreMin = kVOI.ignoreMin;
+        if ( kVOI.intensity != null )
+        {
+            this.intensity = new float[kVOI.intensity.length];
+            for ( int i = 0; i < kVOI.intensity.length; i++ )
+            {
+                this.intensity[i] = kVOI.intensity[i];
+            }
+        }
+        this.level = kVOI.level;
 
+        if ( kVOI.listenerList != null) {
+            int listeners = kVOI.listenerList.getListenerCount(VOIListener.class);
+            VOIListener [] voiList = kVOI.listenerList.getListeners(VOIListener.class);
+            
+            for (int i = 0; i < voiList.length; i++) {
+                this.addVOIListener(voiList[i]);
+            }
+        }
+        
+        
+        this.name = new String( kVOI.name );
+        this.nearBoundPoint = kVOI.nearBoundPoint;
+        this.opacity = kVOI.opacity;
+        this.pLineSliceIndex = kVOI.pLineSliceIndex;
+        this.polarity = kVOI.polarity;
+        this.polygonIndex = kVOI.polygonIndex;
+
+        if ( kVOI.position != null )
+        {
+            this.position = new float[kVOI.position.length];
+            for ( int i = 0; i < kVOI.position.length; i++ )
+            {
+                this.position[i] = kVOI.position[i];
+            }
+        }
+        this.process = kVOI.process;
+        this.resizeIndex = kVOI.resizeIndex;
+
+        if ( kVOI.rgbIntensities != null )
+        {
+            this.rgbIntensities = new float[kVOI.rgbIntensities.length][];
+            for ( int i = 0; i < kVOI.rgbIntensities.length; i++ )
+            {
+                if ( kVOI.rgbIntensities[i] != null )
+                {
+                    this.rgbIntensities[i] = new float[kVOI.rgbIntensities[i].length];
+                    for ( int j = 0; j < kVOI.rgbIntensities[i].length; j++ )
+                    {
+                        this.rgbIntensities[i][j] = kVOI.rgbIntensities[i][j];
+                    }
+                }
+            }
+        }
+
+        if ( kVOI.rgbPositions != null )
+        {
+            this.rgbPositions = new float[kVOI.rgbPositions.length][];
+            for ( int i = 0; i < kVOI.rgbPositions.length; i++ )
+            {
+                if ( kVOI.rgbPositions[i] != null )
+                {
+                    this.rgbPositions[i] = new float[kVOI.rgbPositions[i].length];
+                    for ( int j = 0; j < kVOI.rgbPositions[i].length; j++ )
+                    {
+                        this.rgbPositions[i][j] = kVOI.rgbPositions[i][j];
+                    }
+                }
+            }
+        }
+
+        if ( kVOI.stats != null )
+        {
+            this.stats = new ViewList[kVOI.stats.length];
+            for ( int i = 0; i < kVOI.stats.length; i++ )
+            {
+                this.stats[i] = new ViewList( kVOI.stats[i].getString(), kVOI.stats[i].getState() );
+            }
+        }
+        this.totalIntensity = kVOI.totalIntensity;
+        this.UID = kVOI.UID;
+        this.visible = kVOI.visible;
+
+        if ( kVOI.voiUpdate != null )
+        {
+            this.voiUpdate = new VOIEvent( (VOI)kVOI.voiUpdate.getSource(), kVOI.voiUpdate.getBase() );
+        }
+        
+        this.watershedID = kVOI.watershedID;
+        this.xBounds[0] = kVOI.xBounds[0];
+        this.xBounds[1] = kVOI.xBounds[1];
+        this.yBounds[0] = kVOI.yBounds[0];
+        this.yBounds[1] = kVOI.yBounds[1];
+        this.zBounds[0] = kVOI.zBounds[0];
+        this.zBounds[1] = kVOI.zBounds[1];
+        this.zDim = kVOI.zDim;
+        this.extension = new String( kVOI.extension );
+    }
+    
+    
     /**
      * Constructs a Volume of Interest (VOI).
      *
@@ -3533,6 +3676,24 @@ System.err.println("curves size: " );
      */
     public boolean isActive() {
         return active;
+    }
+    
+    /**
+     * Returns true iff all contours in this VOI are active.
+     * @return true iff all contours in this VOI are active.
+     */
+    public boolean isAllActive() {
+        if ( !active )
+            return false;
+
+        boolean allActive = true;
+        for (int j = 0; j < zDim; j++) {
+
+            for (int i = 0; i < curves[j].size(); i++) {
+                allActive &= (curves[j].elementAt(i)).isActive();
+            }
+        }
+        return allActive;
     }
 
     /**

@@ -13,6 +13,8 @@ import java.awt.Graphics2D;
 import java.awt.Polygon;
 import java.util.Vector;
 
+import WildMagic.LibFoundation.Distance.DistanceVector3Segment3;
+import WildMagic.LibFoundation.Mathematics.Segment3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Rendering.Renderer;
 
@@ -55,18 +57,20 @@ public class VOIText3D extends LocalVolumeVOI
     /** If this is set to true, a draggable arrow will be displayed */
     private boolean useMarker = true;
     
+    private Vector3f m_kMarkerPos = null;
+    
 
     public VOIText3D( VOIManager parent, ScreenCoordinateListener kContext, int iOrientation, int iType, int iSType, Vector<Vector3f> kLocal, int iZ )
     {
         super(parent, kContext, iOrientation, iType, iSType, kLocal, iZ );
-        m_iVOIType = VOI.ANNOTATION;
+        m_iVOIType = VOI.ANNOTATION_3D;
         m_bClosed = false;
     }  
 
     public VOIText3D(VOIManager parent, ScreenCoordinateListener kContext, int iOrientation, int iType, Vector<Vector3f> kLocal, boolean bIsFile)
     {
-        super(parent,kContext,iOrientation,iType,kLocal,bIsFile);
-        m_iVOIType = VOI.ANNOTATION;
+        super(parent,kContext,iOrientation,iType, -1,kLocal,bIsFile);
+        m_iVOIType = VOI.ANNOTATION_3D;
         m_bClosed = false;
     }
     
@@ -74,17 +78,50 @@ public class VOIText3D extends LocalVolumeVOI
 
     private static int yCor(int len, double dir) {return (int)(len * Math.cos(dir));}
 
-    public void add( VOIManager parent, int iPos, Vector3f kNewPoint, boolean bIsFile  ) {}
-    public void add(VOIManager parent, Vector3f kNewPoint, boolean bIsFile) {}
-
-    public VOIText3D Clone( )
+    public boolean add( int iPos, Vector3f kNewPoint, boolean bIsFile  ) 
     {
-        return new VOIText3D( m_kParent, m_kDrawingContext, m_iOrientation, m_iVOIType, this, true );
+        return false;
     }
 
-    public VOIText3D Clone( int iZ )
+    public boolean add( Vector3f kNewPoint, boolean bIsFile) 
     {
-        return new VOIText3D( m_kParent, m_kDrawingContext, m_iOrientation, m_iVOIType, m_iVOISpecialType, this, iZ );
+        return false;
+    }
+
+    public VOIText3D( VOIText3D kVOI )
+    {
+        super( kVOI );
+        this.fontDescriptors = kVOI.fontDescriptors;
+        this.fontName = new String( kVOI.fontName );
+        this.fontSize = kVOI.fontSize;
+        this.textColor = new Color( kVOI.textColor.getRed(), kVOI.textColor.getGreen(), kVOI.textColor.getBlue() );
+        this.backgroundColor = new Color( kVOI.backgroundColor.getRed(), kVOI.backgroundColor.getGreen(), kVOI.backgroundColor.getBlue() );
+        this.textFont = new Font(fontName, fontDescriptors, fontSize);
+        this.textString = new String( kVOI.textString );
+        this.noteString = new String( kVOI.noteString );
+        this.useMarker = kVOI.useMarker;    
+    }
+
+    public VOIText3D( VOIText3D kVOI, int iZ )
+    {
+        super( kVOI, iZ );
+        this.fontDescriptors = kVOI.fontDescriptors;
+        this.fontName = new String( kVOI.fontName );
+        this.fontSize = kVOI.fontSize;
+        this.textColor = new Color( kVOI.textColor.getRed(), kVOI.textColor.getGreen(), kVOI.textColor.getBlue() );
+        this.backgroundColor = new Color( kVOI.backgroundColor.getRed(), kVOI.backgroundColor.getGreen(), kVOI.backgroundColor.getBlue() );
+        this.textFont = new Font(fontName, fontDescriptors, fontSize);
+        this.textString = new String( kVOI.textString );
+        this.noteString = new String( kVOI.noteString );
+        this.useMarker = kVOI.useMarker;    
+    }
+
+    public VOIText3D clone() {
+        return new VOIText3D(this);
+    }
+
+    public VOIText3D clone(int iZ) {
+        return new VOIText3D(this, iZ);
     }
 
 
@@ -118,6 +155,11 @@ public class VOIText3D extends LocalVolumeVOI
         Vector3f kScreen = m_kDrawingContext.fileToScreen( get(0) );
         int xS = Math.round(kScreen.X);
         int yS = Math.round(kScreen.Y);
+        if ( m_kMarkerPos == null )
+        {
+            m_kMarkerPos = new Vector3f();
+        }
+        m_kMarkerPos.Copy( kScreen );
 
         kScreen = m_kDrawingContext.fileToScreen( get(1) );
         int xS2 = Math.round(kScreen.X);
@@ -149,6 +191,8 @@ public class VOIText3D extends LocalVolumeVOI
             }
 
             this.drawArrow((Graphics2D)g, markerX, markerY, xS2, yS2, .1f);
+            m_kMarkerPos.X = markerX;
+            m_kMarkerPos.Y = markerY;
         } //arrow not off
         if ((textFont != null) && (textFont.getName() == fontName) && (textFont.getStyle() == fontDescriptors)) {
             textFont = textFont.deriveFont(fontSize);
@@ -179,10 +223,60 @@ public class VOIText3D extends LocalVolumeVOI
         g.setFont(previousFont);
 
     }
-    public int getType()
+    
+    public boolean nearLine(int iX, int iY, int iZ )
     {
-        return m_iVOIType;
+        if ( m_kMarkerPos == null )
+        {
+            return super.nearLine(iX,iY,iZ);
+        }
+        Vector3f kVOIPoint = new Vector3f(iX, iY, iZ );
+        Vector3f kPos0 = new Vector3f( m_kMarkerPos );
+        Vector3f kPosFile = get(1);
+        Vector3f kPos1 = m_kDrawingContext.fileToScreen(kPosFile);
+
+        Vector3f kDir = new Vector3f();
+        kDir.Sub( kPos1, kPos0 );
+        float fLength = kDir.Normalize();
+        Segment3f kSegment = new Segment3f(kPos0, kDir, fLength);
+        DistanceVector3Segment3 kDist = new DistanceVector3Segment3( kVOIPoint, kSegment );
+        float fDist = kDist.Get();
+        if ( fDist < 3 )
+        {
+            setNearPoint(size() - 1);
+            return true;
+        }
+        return false;
     }
+
+    public boolean nearPoint( int iX, int iY, int iZ) {
+
+        if ( m_kMarkerPos == null )
+        {
+            return super.nearPoint(iX,iY,iZ);
+        }
+        Vector3f kVOIPoint = new Vector3f(iX, iY, iZ );
+
+        Vector3f kFilePos = get(1);
+        Vector3f kPos = m_kDrawingContext.fileToScreen(kFilePos);
+        Vector3f kDiff = new Vector3f();
+        kDiff.Sub( kPos, kVOIPoint );
+        if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
+        {
+            setNearPoint(1);
+            return true;
+        }
+        kDiff.Sub( m_kMarkerPos, kVOIPoint );
+        if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
+        {
+            setNearPoint(0);
+            return true;
+        }
+            
+        return false;
+    }
+
+    
     public LocalVolumeVOI split ( Vector3f kStartPt, Vector3f kEndPt )
     {
         return null;

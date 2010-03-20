@@ -1234,6 +1234,21 @@ public class PlaneRender_WM extends GPURenderBase
         return bClipped;
     }
 
+
+    public boolean screenToFile( Vector3f kScreen, Vector3f kFile )
+    {
+        Vector3f localPt = new Vector3f();
+        boolean bClipped = this.ScreenToLocal((int)kScreen.X, (int)kScreen.Y, (int)kScreen.Z, localPt);
+
+        /* Tell the ViewJFrameVolumeView parent to update the other
+         * PlaneRenderWMs and the SurfaceRender with the changed Z position
+         * of the planes with color matching the moved bar: */
+        Vector3f patientPt = new Vector3f();
+        this.LocalToPatient( localPt, patientPt );
+        MipavCoordinateSystems.patientToFile( patientPt, kFile, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );
+        return bClipped;
+    }
+
     public Vector3f fileToScreen(Vector3f volumePt)
     {
         Vector3f patientPt = new Vector3f();

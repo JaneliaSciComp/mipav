@@ -1164,6 +1164,25 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
+     * Import Object. Imports Object array that is exported with the exportData function.
+     * @param value_array Object storing data.
+     * @throws IOException
+     */
+    public final void importData(Object value_array) throws IOException {
+        try {
+            setLock(W_LOCKED);
+            for (int i = 0; i < Math.min( Array.getLength(value_array), dataSize ); i++) {
+                data.set(i, (Number)Array.get(value_array, i) );
+            }
+        } catch (IOException error) {
+            throw error;
+        } finally {
+            releaseLock();
+        }
+    }
+
+    
+    /**
      * Export data into values array.
      *
      * @param   start   indicates starting position in data array

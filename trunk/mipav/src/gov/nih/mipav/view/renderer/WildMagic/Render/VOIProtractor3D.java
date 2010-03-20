@@ -23,28 +23,35 @@ public class VOIProtractor3D extends LocalVolumeVOI
     public VOIProtractor3D( VOIManager parent, ScreenCoordinateListener kContext, int iOrientation, int iType, int iSType, Vector<Vector3f> kLocal, int iZ )
     {
         super(parent, kContext, iOrientation, iType, iSType, kLocal, iZ );
-        m_iVOIType = VOI.PROTRACTOR;
+        m_iVOIType = VOI.PROTRACTOR_3D;
         m_bClosed = false;
     }
 
     public VOIProtractor3D(VOIManager parent, ScreenCoordinateListener kContext, int iOrientation, int iType, Vector<Vector3f> kLocal, boolean bIsFile)
     {
-        super(parent,kContext,iOrientation,iType,kLocal,bIsFile);
-        m_iVOIType = VOI.PROTRACTOR;
+        super(parent,kContext,iOrientation,iType, -1,kLocal,bIsFile);
+        m_iVOIType = VOI.PROTRACTOR_3D;
         m_bClosed = false;
     }
-    
-    public void add( VOIManager parent, int iPos, Vector3f kNewPoint, boolean bIsFile  ) {}
 
-    public void add(VOIManager parent, Vector3f kNewPoint, boolean bIsFile) {}
-
-    public VOIProtractor3D Clone( )
+    public VOIProtractor3D( VOIProtractor3D kVOI )
     {
-        return new VOIProtractor3D( m_kParent, m_kDrawingContext, m_iOrientation, m_iVOIType, this, true );
+        super(kVOI);
     }
-    public VOIProtractor3D Clone( int iZ )
+    
+    public VOIProtractor3D( VOIProtractor3D kVOI, int iZ )
     {
-        return new VOIProtractor3D( m_kParent, m_kDrawingContext, m_iOrientation, m_iVOIType, m_iVOISpecialType, this, iZ );
+        super(kVOI, iZ);
+    }
+    
+    public boolean add( int iPos, Vector3f kNewPoint, boolean bIsFile  ) 
+    {
+        return false;
+    }
+
+    public boolean add( Vector3f kNewPoint, boolean bIsFile) 
+    {
+        return false;
     }
 
     public boolean contains( int iOrientation, int iX, int iY, int iZ ) {
@@ -89,7 +96,7 @@ public class VOIProtractor3D extends LocalVolumeVOI
             return;
         }
 
-
+/*
         if ( getGroup() != null )
         {
             g.setColor( getGroup().getColor() );
@@ -98,7 +105,7 @@ public class VOIProtractor3D extends LocalVolumeVOI
         {
             g.setColor( Color.yellow );
         }     
-        
+        */
         
         Vector3f kStart = m_kDrawingContext.fileToScreen( get(0) );
         Vector3f kMiddle = m_kDrawingContext.fileToScreen( get(1) );
@@ -147,6 +154,8 @@ public class VOIProtractor3D extends LocalVolumeVOI
 
             return;
         }
+        
+        Color currentColor = g.getColor();
 
         g.setPaintMode();
         g.setFont(MipavUtil.font12);
@@ -233,14 +242,7 @@ public class VOIProtractor3D extends LocalVolumeVOI
             }
         }
 
-        if ( getGroup() != null )
-        {
-            g.setColor( getGroup().getColor() );
-        }
-        else
-        {
-            g.setColor( Color.yellow );
-        }     
+        g.setColor( currentColor );
 
         for (i = 0; i < 2; i++) {
             getEndLines(x, y, i, coords);
@@ -313,24 +315,12 @@ public class VOIProtractor3D extends LocalVolumeVOI
             }
         } // end of if (showLengths)
 
-        if ( getGroup() != null )
-        {
-            g.setColor( getGroup().getColor() );
-        }
-        else
-        {
-            g.setColor( Color.yellow );
-        }     
+        g.setColor( currentColor );
         
         for (i = 0; i < 2; i++) {
             getEndLines(x2, y2, i, coords);
             g.drawLine((int) coords[0], (int) coords[1], (int) coords[2], (int) coords[3]);
         }
-    }
-    
-    public int getType()
-    {
-        return m_iVOIType;
     }
 
     public LocalVolumeVOI split ( Vector3f kStartPt, Vector3f kEndPt )
@@ -597,5 +587,13 @@ public class VOIProtractor3D extends LocalVolumeVOI
 
         tmpString = tmpString + " " + FileInfoBase.getUnitsOfMeasureAbbrevStr(aiUnits[0]);
         return tmpString;
+    }
+
+    public VOIProtractor3D clone() {
+        return new VOIProtractor3D(this);
+    }
+
+    public VOIProtractor3D clone(int iZ) {
+        return new VOIProtractor3D(this, iZ);
     }
 }

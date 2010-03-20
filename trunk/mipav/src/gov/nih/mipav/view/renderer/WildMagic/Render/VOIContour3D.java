@@ -27,20 +27,33 @@ public class VOIContour3D extends LocalVolumeVOI
         super(parent, kContext, iOrientation, iType, iSType, kLocal, iZ );
     }        
 
-    public VOIContour3D( VOIManager parent, ScreenCoordinateListener kContext, int iOrientation, int iType, Vector<Vector3f> kLocal, boolean bIsFile )
+    public VOIContour3D( VOIManager parent, ScreenCoordinateListener kContext, int iOrientation, int iType, int iSType, Vector<Vector3f> kLocal, boolean bIsFile )
     {
-        super(parent, kContext, iOrientation, iType, kLocal, bIsFile );
+        super(parent, kContext, iOrientation, iType, iSType, kLocal, bIsFile );
+    }
+    
+    public VOIContour3D( VOIContour3D kVOI )
+    {
+        super(kVOI);
+    }
+    
+    public VOIContour3D( VOIContour3D kVOI, int iZ )
+    {
+        super(kVOI, iZ);
     }
 
-    public void add( VOIManager parent, int iPos, Vector3f kNewPoint, boolean bIsFile  )
+    public boolean add( int iPos, Vector3f kNewPoint, boolean bIsFile  )
     {
         if ( m_iVOISpecialType == VOIManager.LEVELSET )
         {
-            return;
+            return false;
         }
         Vector3f kFilePt = kNewPoint;
         if ( !bIsFile )
         {
+            m_akMinMax[0].Min(kNewPoint);
+            m_akMinMax[1].Max(kNewPoint);
+            
             kFilePt = new Vector3f();
             m_kDrawingContext.screenToFile( (int)kNewPoint.X, (int)kNewPoint.Y, (int)kNewPoint.Z, kFilePt);
         }
@@ -48,6 +61,7 @@ public class VOIContour3D extends LocalVolumeVOI
         {
             //Local.insertElementAt( kNewPoint, iPos + 1);
             insertElementAt( kFilePt, iPos + 1);
+            m_bUpdateBounds = true;
         }
         else
         {
@@ -62,22 +76,15 @@ public class VOIContour3D extends LocalVolumeVOI
         {
             m_kVolumeVOI.setVOI(this);
         }
+        
+        return true;
     }
 
-    public void add( VOIManager parent, Vector3f kNewPoint, boolean bIsFile  )
+    public boolean add( Vector3f kNewPoint, boolean bIsFile  )
     {
-        add( parent, size() - 1, kNewPoint, bIsFile );
+        return add( size() - 1, kNewPoint, bIsFile );
     }
     
-    public VOIContour3D Clone( )
-    {
-        return new VOIContour3D( m_kParent, m_kDrawingContext, m_iOrientation, m_iVOIType, this, true );
-    }
-
-    public VOIContour3D Clone( int iZ )
-    {
-        return new VOIContour3D( m_kParent, m_kDrawingContext, m_iOrientation, m_iVOIType, m_iVOISpecialType, this, iZ );
-    }
 
     public boolean contains( int iOrientation, int iX, int iY, int iZ ) {
         if ( iZ != slice() || iOrientation != m_iOrientation )
@@ -178,16 +185,6 @@ public class VOIContour3D extends LocalVolumeVOI
 
             return;
         }
-
-        if ( getGroup() != null )
-        {
-            g.setColor( getGroup().getColor() );
-        }
-        else
-        {
-            g.setColor( Color.yellow );
-        }
-        
         gon = scalePolygon();
 
         if (active) {
@@ -243,52 +240,7 @@ public class VOIContour3D extends LocalVolumeVOI
         }
     }
 
-    public void setPosition( VOIManager parent, int iPos, float fX, float fY, float fZ )
-    {
-        if ( m_iVOISpecialType == VOIManager.LEVELSET )
-        {
-            return;
-        }
-        if ( iPos < size() )
-        {
-            m_bUpdateCenter = true;
-            Vector3f kPos = new Vector3f( fX, fY, fZ );
-            Vector3f kVolumePt = new Vector3f();
-            m_kDrawingContext.screenToFile( (int)kPos.X, (int)kPos.Y, (int)kPos.Z, kVolumePt );
-            set( iPos, kVolumePt );
-            lastPoint = iPos;
-
-
-            if ( m_kVolumeVOI != null )
-            {
-                m_kVolumeVOI.setVOI(this);
-            }
-        }
-
-    }
-
-    public void setPosition( VOIManager parent, int iPos, Vector3f kPos )
-    {
-        if ( m_iVOISpecialType == VOIManager.LEVELSET )
-        {
-            return;
-        }
-        if ( iPos < size() )
-        {
-            m_bUpdateCenter = true;
-            Vector3f kVolumePt = new Vector3f();
-            m_kDrawingContext.screenToFile( (int)kPos.X, (int)kPos.Y, (int)kPos.Z, kVolumePt );
-            set( iPos, kVolumePt );
-            lastPoint = iPos;
-
-            if ( m_kVolumeVOI != null )
-            {
-                m_kVolumeVOI.setVOI(this);
-            }
-        }
-    }
-    
-    
+     
     public LocalVolumeVOI split ( Vector3f kStartPt, Vector3f kEndPt )
     {
         int iVOISlice = slice();
@@ -320,8 +272,6 @@ public class VOIContour3D extends LocalVolumeVOI
         {
             Vector3f kLocal1 = m_kParent.fileCoordinatesToPatient(lastElement());
             Vector3f kLocal2 = m_kParent.fileCoordinatesToPatient(firstElement());
-            //Vector3f kLocal1 = kVOI.Volume.lastElement();
-            //Vector3f kLocal2 = kVOI.Volume.firstElement();
             Vector3f kIntersection = new Vector3f();
 
             if (JDialogVOISplitter.intersects( kLocal1, kLocal2, kStartPt, kEndPt, kIntersection )) {
@@ -362,7 +312,11 @@ public class VOIContour3D extends LocalVolumeVOI
                 m_kVolumeVOI.setVOI(this);
             }
 
-            return new VOIContour3D( m_kParent, m_kDrawingContext, m_iOrientation, VOI.CONTOUR, kPositions, true );
+            m_bUpdateBounds = true;
+            lastPoint = 0;
+            nearPoint = 0;
+            
+            return new VOIContour3D( m_kParent, m_kDrawingContext, m_iOrientation, VOI.CONTOUR_3D, m_iVOISpecialType, kPositions, true );
             //m_kParent.updateCurrentVOI(null, kNew);
         }
         return null;
@@ -392,6 +346,14 @@ public class VOIContour3D extends LocalVolumeVOI
         }
 
         return scaledGon;
+    }
+
+    public LocalVolumeVOI clone() {
+        return new VOIContour3D(this);
+    }
+
+    public LocalVolumeVOI clone(int iZ) {
+        return new VOIContour3D(this, iZ);
     }
 
 }

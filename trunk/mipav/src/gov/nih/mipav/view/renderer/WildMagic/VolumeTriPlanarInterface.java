@@ -1381,6 +1381,11 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         raycastRenderWM.resetAxis();
     }
 
+    public ModelImage getActiveImage()
+    {
+        return m_kVolumeImageA.GetImage();
+    }
+
     /*
      * (non-Javadoc)
      * 
@@ -1773,6 +1778,16 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      */
     public void setSlice(final int slice) {}
 
+    public void setCenter( Vector3f kCenter )
+    {
+        setSliceFromPlane(kCenter);
+    }
+
+    public Vector3f getCenterPt()
+    {
+        return sliceGUI.getCenter();
+    }
+    
     /**
      * Sets the position of the slices in the SurfaceRender and PlaneRender objects. Called from the PlaneRender class.
      * 
@@ -3307,7 +3322,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     private void initVOI()
     {        
         setSliceFromSurface( sliceGUI.getCenter() );
-        m_kVOIInterface = new VOIManagerInterface( this, m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage(), 3, true );
+        m_kVOIInterface = new VOIManagerInterface( this, m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage(), 3, true, null );
         panelToolbar.add( m_kVOIInterface.getToolBar(), panelToolBarGBC );
         for ( int i = 0; i < 3; i++ )
         {
@@ -3316,6 +3331,14 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
                     m_akPlaneRender[i].getOrientation(), m_akPlaneRender[i].getSlice() );
         }
     }
+    
+
+    
+    public Frame getFrame()
+    {
+        return this;
+    }
+    
     public void PointerActive(boolean bActive) {
         if ( m_akPlaneRender != null )
         {
@@ -3350,6 +3373,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             }
         }
         return null;
-    }
-
+    }  
+    public void enableBoth( boolean bEnable ) {}
 }

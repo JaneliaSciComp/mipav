@@ -15,22 +15,27 @@ import WildMagic.LibGraphics.Rendering.Renderer;
 
 public class VOIPolyLineSlice3D extends LocalVolumeVOI
 {
-   /**  */
+    /**  */
     private static final long serialVersionUID = -7909604245705492799L;
-Vector< VOIPoint3D > m_kPoints = new Vector<VOIPoint3D>();
+    Vector< VOIPoint3D > m_kPoints = new Vector<VOIPoint3D>();
 
     public VOIPolyLineSlice3D( VOIPoint3D kPoint )
     {
-        super(kPoint.m_kParent, null, kPoint.m_iOrientation, VOI.POLYLINE_SLICE, kPoint, true);
+        super(kPoint.m_kParent, null, kPoint.m_iOrientation, VOI.POLYLINE_SLICE_3D, -1, kPoint, true);
         m_kPoints.add(kPoint);
         setGroup(kPoint.getGroup());
-        m_iVOIType = VOI.POLYLINE_SLICE;
+        m_iVOIType = VOI.POLYLINE_SLICE_3D;
     }   
 
+    public boolean add( int iPos, Vector3f kNewPoint, boolean bIsFile  ) 
+    {
+        return false;
+    }
 
-    public void add( VOIManager parent, int iPos, Vector3f kNewPoint, boolean bIsFile  ) {}
-
-    public void add(VOIManager parent, Vector3f kNewPoint, boolean bIsFile) {}
+    public boolean add( Vector3f kNewPoint, boolean bIsFile) 
+    {
+        return false;
+    }
 
     public void add( VOIPoint3D kPoint )
     {
@@ -42,52 +47,56 @@ Vector< VOIPoint3D > m_kPoints = new Vector<VOIPoint3D>();
             m_kVolumeVOI.setVOI(this);
         }
     }
-    public void calcBoundingBox()
+
+
+    public Vector3f[] getBoundingBox()
     {
-        for ( int i = 0; i < m_kPoints.size(); i++ )
+        if ( m_bUpdateBounds )
         {
-            Vector3f kLocalPt = m_kPoints.get(i).fileToScreen();
-            if ( i == 0 )
+            for ( int i = 0; i < m_kPoints.size(); i++ )
             {
-                m_iXMin = (int)kLocalPt.X;
-                m_iXMax = (int)kLocalPt.X;
-                m_iYMin = (int)kLocalPt.Y;
-                m_iYMax = (int)kLocalPt.Y;
-                m_iZMin = (int)kLocalPt.Z;
-                m_iZMax = (int)kLocalPt.Z;
+                Vector3f kLocalPt = m_kPoints.get(i).fileToScreen();
+                if ( i == 0 )
+                {
+                    m_akMinMax[0].Copy(kLocalPt);
+                    m_akMinMax[1].Copy(kLocalPt);
+                }
+                m_akMinMax[0].Min(kLocalPt);
+                m_akMinMax[1].Max(kLocalPt);
             }
-            m_iXMin = (int)Math.min( m_iXMin, kLocalPt.X );
-            m_iXMax = (int)Math.max( m_iXMax, kLocalPt.X );
-            m_iYMin = (int)Math.min( m_iYMin, kLocalPt.Y );
-            m_iYMax = (int)Math.max( m_iYMax, kLocalPt.Y );
-            m_iZMin = (int)Math.min( m_iZMin, kLocalPt.Z );
-            m_iZMax = (int)Math.max( m_iZMax, kLocalPt.Z );
+        }
+        return m_akMinMax;
+    }
+
+    public VOIPolyLineSlice3D( VOIPolyLineSlice3D kVOI )
+    {
+        super( kVOI );
+        for ( int i = 0; i < kVOI.m_kPoints.size(); i++ )
+        {
+            m_kPoints.add( new VOIPoint3D( kVOI.m_kPoints.get(i) ) );
         }
     }
 
-    public VOIPolyLineSlice3D Clone( )
+    public VOIPolyLineSlice3D( VOIPolyLineSlice3D kVOI, int iZ )
     {
-        VOIPolyLineSlice3D kNew = new VOIPolyLineSlice3D( m_kPoints.get(0 ) );
-        for ( int i = 1; i < m_kPoints.size(); i++ )
+        super( kVOI, iZ );
+        for ( int i = 0; i < kVOI.m_kPoints.size(); i++ )
         {
-            kNew.add( m_kPoints.get(i) );
+            m_kPoints.add( new VOIPoint3D( kVOI.m_kPoints.get(i) ) );
         }
-        return kNew;
     }
 
-    public VOIPolyLineSlice3D Clone( int iZ )
-    {
-        VOIPolyLineSlice3D kNew = new VOIPolyLineSlice3D( m_kPoints.get(0 ) );
-        for ( int i = 1; i < m_kPoints.size(); i++ )
-        {
-            kNew.add( m_kPoints.get(i) );
-        }
-        return kNew;
+    public VOIPolyLineSlice3D clone() {
+        return new VOIPolyLineSlice3D(this);
+    }
+
+    public VOIPolyLineSlice3D clone(int iZ) {
+        return new VOIPolyLineSlice3D(this, iZ);
     }
 
     public boolean contains(int iOrientation, int iX, int iY, int iZ ) {
-        calcBoundingBox();
-        if ( iZ < m_iZMin || iZ > m_iZMax )
+        getBoundingBox();
+        if ( iZ < m_akMinMax[0].Z || iZ > m_akMinMax[1].Z )
         {
             return false;
         }
@@ -118,20 +127,28 @@ Vector< VOIPoint3D > m_kPoints = new Vector<VOIPoint3D>();
         }
         return nearPoint( iX, iY, iZ );
     }
-
     
+    public void delete( int iPos )
+    {
+        m_kPoints.remove(iPos);
+        super.delete(iPos);
+    }
+
+
     public void draw( float zoomX, float zoomY, 
             float[] resolutions, int[] unitsOfMeasure, int slice, int orientation,
             Graphics g ) 
     {
         drawSelf( resolutions, unitsOfMeasure, g, slice, orientation );
     }
-    
+
     public void drawSelf( float[] resols, int[] unitsOfMeasure, Graphics g, int slice, int orientation ) {
         if ( g == null ) {
             MipavUtil.displayError( "VOIPoint.drawSelf: grapics = null" );
             return;
         }
+
+        Color currentColor = g.getColor();
         
         String totalDistance = getTotalLengthString(resols, unitsOfMeasure);
         String dist = new String();
@@ -145,19 +162,11 @@ Vector< VOIPoint3D > m_kPoints = new Vector<VOIPoint3D>();
             }
         }
 
-        if ( getGroup() != null )
-        {
-            g.setColor( getGroup().getColor() );
-        }
-        else
-        {
-            g.setColor( Color.yellow );
-        }
-
+        g.setColor(currentColor);
         for ( int i = 0; i < m_kPoints.size()-1; i++ )
         {
             if ( (m_kPoints.get(i).slice() == slice && m_kPoints.get(i).getOrientation() == orientation) &&
-                 (m_kPoints.get(i+1).slice() == slice && m_kPoints.get(i+1).getOrientation() == orientation) )
+                    (m_kPoints.get(i+1).slice() == slice && m_kPoints.get(i+1).getOrientation() == orientation) )
             {
                 Vector3f kStart = m_kPoints.get(i).fileToScreen();
                 Vector3f kEnd = m_kPoints.get(i+1).fileToScreen();
@@ -166,21 +175,16 @@ Vector< VOIPoint3D > m_kPoints = new Vector<VOIPoint3D>();
         }
     }
 
-    public int getType()
-    {
-        return m_iVOIType;
-    } 
 
-
-
-    public void move( VOIManager parent, Vector3f kDiff )
+    public void move( Vector3f kDiff, Vector3f[] akMinMax  )
     { 
         for ( int i = 0; i < m_kPoints.size(); i++ )
         {
-            m_kPoints.get(i).move(parent,kDiff);
+            m_kPoints.get(i).move(kDiff, akMinMax);
             set( i, m_kPoints.get(i).get(0) );
         }
         m_bUpdateCenter = true;
+        m_bUpdateBounds = true;
 
         if ( m_kVolumeVOI != null )
         {
@@ -196,7 +200,7 @@ Vector< VOIPoint3D > m_kPoints = new Vector<VOIPoint3D>();
         {
             Vector3f kPos0 = m_kPoints.get(i).fileToScreen();
             Vector3f kPos1 = m_kPoints.get(i+1).fileToScreen();
-            
+
             Vector3f kDir = new Vector3f();
             kDir.Sub( kPos1, kPos0 );
             float fLength = kDir.Normalize();
@@ -226,7 +230,7 @@ Vector< VOIPoint3D > m_kPoints = new Vector<VOIPoint3D>();
         }
         return false;
     }
-    
+
     public boolean nearPoint( int iX, int iY, int iZ) {
 
         Vector3f kVOIPoint = new Vector3f(iX, iY, iZ );
@@ -261,7 +265,7 @@ Vector< VOIPoint3D > m_kPoints = new Vector<VOIPoint3D>();
             }
         }
     }
-    
+
     public void setPosition( VOIManager parent, int iPos, float fX, float fY, float fZ )
     {
         //super.setPosition(parent,iPos,fX,fY,fZ);
@@ -277,7 +281,7 @@ Vector< VOIPoint3D > m_kPoints = new Vector<VOIPoint3D>();
             m_kVolumeVOI.setVOI(this);
         }
     }
-    
+
 
     public void setPosition( VOIManager parent, int iPos, Vector3f kPos )
     {
@@ -294,7 +298,7 @@ Vector< VOIPoint3D > m_kPoints = new Vector<VOIPoint3D>();
             m_kVolumeVOI.setVOI(this);
         }
     }
-    
+
 
     public LocalVolumeVOI split ( Vector3f kStartPt, Vector3f kEndPt )
     {

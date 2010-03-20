@@ -677,7 +677,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
             updateImages(true);
         } else if (command.equals("traverse")) {
-
             if ((imageB != null) && (!radioImageBoth.isEnabled())) {
                 radioImageBoth.setEnabled(true);
             }
@@ -1212,7 +1211,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             ((SpinnerNumberModel) (intensitySpinner.getModel())).setMaximum(new Double(spinnerMax));
             ((SpinnerNumberModel) (intensitySpinner.getModel())).setStepSize(new Double(spinnerStep));
             ((SpinnerNumberModel) (intensitySpinner.getModel())).setValue(new Double(spinnerDefaultValue));
-
+            
             /** updateImages(false) was commented to facilitate placement of VOI points during
              * image registration. This allows the user to control the crosshairs and image slice independently of other
              * images.
@@ -1262,9 +1261,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         }
         else if (command.equals("PaintToolbar") ) {
             paintToolBar.setVisible(menuObj.isMenuItemSelected("Paint toolbar"));
+            updateLayout();
         }
         else if (command.equals("ImageAlignToolbar") ) {
             imageAlignToolBar.setVisible(menuObj.isMenuItemSelected("Image Align toolbar"));
+            updateLayout();
         }
         else {
 			getParentFrame().actionPerformed(event);	
@@ -1370,7 +1371,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         }
     }
 
-
+    public void enableBoth( boolean bEnable )
+    {
+        radioImageBoth.setEnabled(bEnable);
+    }
+    
     /**
      * Gets the axial position of the slice.
      *
@@ -1397,6 +1402,14 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      */
     public int[] getCenter() {
         return volumeCenter;
+    }
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#getCenterPt()
+     */
+    public Vector3f getCenterPt()
+    {
+        return new Vector3f( volumeCenter[0], volumeCenter[1], volumeCenter[2] );
     }
 
     /**
@@ -2002,6 +2015,14 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      */
     public void setCenter(int i, int j, int k) {
     	setCenter(i,j,k, true);
+    }
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#setCenter(WildMagic.LibFoundation.Mathematics.Vector3f)
+     */
+    public void setCenter( Vector3f kCenter )
+    {
+        setCenter( (int)kCenter.X, (int)kCenter.Y, (int)kCenter.Z, true );
     }
     
     /**
@@ -5236,6 +5257,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     }
     
 
+    /**
+     * Initialize the 3D VOI interface.
+     */
     private void initVOI()
     {
         int iActiveCount = 0;
@@ -5246,7 +5270,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 iActiveCount++;
             }
         }
-        voiManager = new VOIManagerInterface( this, imageA, imageB, iActiveCount, false );
+        voiManager = new VOIManagerInterface( this, imageA, imageB, iActiveCount, false, VOIGroup );
         panelToolBarGBC.gridy++;
         panelToolbar.add( voiManager.getToolBar(), panelToolBarGBC );
         
@@ -5293,7 +5317,18 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         
         voiManager.getToolBar().setVisible(true);
     }
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#getFrame()
+     */
+    public Frame getFrame()
+    {
+        return this;
+    }
 
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#PointerActive(boolean)
+     */
     public void PointerActive(boolean bActive) {
         for ( int i = 0; i < triImage.length; i++ )
         {
@@ -5309,8 +5344,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 }
             }
         }
+        traverseButton.setSelected(!bActive);
     }
 
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#PropDown(int)
+     */
     public Vector3f PropDown(int iActive) {
         if ( triImage[iActive] != null )
         {
@@ -5320,6 +5359,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     }
 
 
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#PropUp(int)
+     */
     public Vector3f PropUp(int iActive) {
         if ( triImage[iActive] != null )
         {
@@ -5329,10 +5371,22 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     }
 
 
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#create3DVOI(boolean)
+     */
     public void create3DVOI(boolean bIntersection) {
-        System.err.println( "create3DVOI " + bIntersection );        
+        ModelImage kImage = new ModelImage( ModelStorageBase.INTEGER, 
+                imageA.getExtents(), "Temp" );
+        kImage.copyFileTypeInfo(imageA);
+
+        voiManager.make3DVOI(bIntersection, kImage);
+        kImage.calcMinMax();
+        new JDialogExtractSurfaceCubes(this, kImage, true);
     }
 
+    /* (non-Javadoc)
+     * @see java.awt.Window#setCursor(java.awt.Cursor)
+     */
     public void setCursor(Cursor kCursor) {
         for (int i = 0; i < MAX_TRI_IMAGES; i++) {
             if (triImage[i] != null) {
@@ -5340,16 +5394,40 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             }
         }
     }
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#getActiveImage()
+     */
+    public ModelImage getActiveImage()
+    {
+        int iActive = getSelectedImage();
+        if (iActive == ViewJComponentBase.IMAGE_A)
+        {
+            return imageA;
+        }
+        if (iActive == ViewJComponentBase.IMAGE_B)
+        {
+            return imageB;
+        }
+        return imageA;
+    }
 
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#setDefaultCursor()
+     */
     public void setDefaultCursor() {
         PointerActive(false);
     }
 
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#setModified()
+     */
     public void setModified() {
         updateImages();
     }
 
-    public void updateData(boolean bCopyToCPU) {
-        System.err.println( "updateData " + bCopyToCPU); 
-    }
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#updateData(boolean)
+     */
+    public void updateData(boolean bCopyToCPU) {}
 }

@@ -39,6 +39,7 @@ public abstract class LocalVolumeVOI extends VOIBase
 
     protected Vector3f m_kLocalCenter = new Vector3f();
     protected boolean m_bUpdateCenter = true;
+    protected boolean m_bUpdateBounds = true;
 
     protected VOIManager m_kParent;
     protected int m_iVOIType;
@@ -47,13 +48,7 @@ public abstract class LocalVolumeVOI extends VOIBase
     protected boolean m_bClosed = true;
     protected int m_iOrientation;
 
-    protected int m_iXMin;
-    protected int m_iYMin;
-    protected int m_iZMin;
-    protected int m_iXMax;
-    protected int m_iYMax;
-    protected int m_iZMax;
-    protected VOI m_kGroup;
+    protected Vector3f[] m_akMinMax = new Vector3f[]{ new Vector3f(), new Vector3f() };
     protected VolumeVOI m_kVolumeVOI;
 
 
@@ -63,6 +58,8 @@ public abstract class LocalVolumeVOI extends VOIBase
     protected Polyline m_kBallPoint = null;
     protected ZBufferState m_kZState = null;
     protected Attributes m_kVOIAttr = null;
+    
+    protected ColorRGBA m_kColor = new ColorRGBA();
 
     public LocalVolumeVOI( VOIManager parent, ScreenCoordinateListener kContext, int iOrientation, int iType, int iSType, Vector<Vector3f> kLocal, int iZ )
     {
@@ -86,13 +83,13 @@ public abstract class LocalVolumeVOI extends VOIBase
         }
     }        
     
-    public LocalVolumeVOI( VOIManager parent, ScreenCoordinateListener kContext, int iOrientation, int iType, Vector<Vector3f> kLocal, boolean bIsFile )
+    public LocalVolumeVOI( VOIManager parent, ScreenCoordinateListener kContext, int iOrientation, int iType, int iSType, Vector<Vector3f> kLocal, boolean bIsFile )
     {
         super();
         m_kParent = parent;
         m_kDrawingContext = kContext;
         m_iOrientation = iOrientation;
-        m_iVOIType = VOI.CONTOUR;
+        m_iVOIType = VOI.CONTOUR_3D;
         name = new String("VOI"+ID++);
         if ( kLocal != null )
         {
@@ -114,7 +111,7 @@ public abstract class LocalVolumeVOI extends VOIBase
             }
         }
         lastPoint = size() - 1;
-        m_iVOISpecialType = iType;
+        m_iVOISpecialType = iSType;
         if ( (m_iVOISpecialType == VOIManager.LIVEWIRE) ||
                 (m_iVOISpecialType == VOIManager.POLYLINE) ||
                 (m_iVOISpecialType == VOIManager.POLYPOINT) )
@@ -123,35 +120,80 @@ public abstract class LocalVolumeVOI extends VOIBase
         }
     }
     
-    public abstract void add( VOIManager parent, int iPos, Vector3f kNewPoint, boolean bIsFile  );
-    public abstract void add( VOIManager parent, Vector3f kNewPoint, boolean bIsFile  );
+    public abstract boolean add( int iPos, Vector3f kNewPoint, boolean bIsFile  );
+    public abstract boolean add( Vector3f kNewPoint, boolean bIsFile  );
 
-    public void calcBoundingBox()
+    public Vector3f[] getBoundingBox()
     {
-        for ( int i = 0; i < size(); i++ )
+        if ( m_bUpdateBounds )
         {
-            Vector3f kLocalPt = m_kDrawingContext.fileToScreen(get(i));
-            if ( i == 0 )
+            for ( int i = 0; i < size(); i++ )
             {
-                m_iXMin = (int)kLocalPt.X;
-                m_iXMax = (int)kLocalPt.X;
-                m_iYMin = (int)kLocalPt.Y;
-                m_iYMax = (int)kLocalPt.Y;
-                m_iZMin = (int)kLocalPt.Z;
-                m_iZMax = (int)kLocalPt.Z;
+                Vector3f kLocalPt = m_kDrawingContext.fileToScreen(get(i));
+                if ( i == 0 )
+                {
+                    m_akMinMax[0].Copy(kLocalPt);
+                    m_akMinMax[1].Copy(kLocalPt);
+                }
+                m_akMinMax[0].Min( kLocalPt );
+                m_akMinMax[1].Max( kLocalPt );
             }
-            m_iXMin = (int)Math.min( m_iXMin, kLocalPt.X );
-            m_iXMax = (int)Math.max( m_iXMax, kLocalPt.X );
-            m_iYMin = (int)Math.min( m_iYMin, kLocalPt.Y );
-            m_iYMax = (int)Math.max( m_iYMax, kLocalPt.Y );
-            m_iZMin = (int)Math.min( m_iZMin, kLocalPt.Z );
-            m_iZMax = (int)Math.max( m_iZMax, kLocalPt.Z );
+            m_bUpdateBounds = false;
+        }
+        return m_akMinMax;
+    }
+
+    public LocalVolumeVOI( LocalVolumeVOI kVOI )
+    {        
+        super(kVOI);
+        this.m_kDrawingContext = kVOI.m_kDrawingContext;
+
+        this.m_kLocalCenter.Copy( kVOI.m_kLocalCenter );
+        this.m_bUpdateCenter = kVOI.m_bUpdateCenter;
+        this.m_bUpdateBounds = kVOI.m_bUpdateBounds;
+        this.m_kParent = kVOI.m_kParent;
+        this.m_iVOIType = kVOI.m_iVOIType;
+        this.m_iVOISpecialType = kVOI.m_iVOISpecialType;
+        this.m_iAnchorIndex = kVOI.m_iAnchorIndex;
+        this.m_bClosed = kVOI.m_bClosed;
+        this.m_iOrientation = kVOI.m_iOrientation;
+
+        this.m_akMinMax[0].Copy( kVOI.m_akMinMax[0] );
+        this.m_akMinMax[1].Copy( kVOI.m_akMinMax[1] );
+        
+        this.m_kVolumeVOI = null;       
+    }
+
+    public LocalVolumeVOI( LocalVolumeVOI kVOI, int iZ )
+    {        
+        super(kVOI);
+        this.m_kDrawingContext = kVOI.m_kDrawingContext;
+
+        this.m_kLocalCenter.Copy( kVOI.m_kLocalCenter );
+        this.m_bUpdateCenter = kVOI.m_bUpdateCenter;
+        this.m_bUpdateBounds = kVOI.m_bUpdateBounds;
+        this.m_kParent = kVOI.m_kParent;
+        this.m_iVOIType = kVOI.m_iVOIType;
+        this.m_iVOISpecialType = kVOI.m_iVOISpecialType;
+        this.m_iAnchorIndex = kVOI.m_iAnchorIndex;
+        this.m_bClosed = kVOI.m_bClosed;
+        this.m_iOrientation = kVOI.m_iOrientation;
+
+        this.m_akMinMax[0].Copy( kVOI.m_akMinMax[0] );
+        this.m_akMinMax[1].Copy( kVOI.m_akMinMax[1] );
+        
+        this.m_kVolumeVOI = null; 
+        clear();
+        for ( int i = 0; i < kVOI.size(); i++ )
+        {
+            Vector3f kPos = m_kParent.fileCoordinatesToPatient( kVOI.get(i) );
+            kPos.Z = iZ;
+            add( m_kParent.patientCoordinatesToFile( kPos ) );
         }
     }
 
-    public abstract LocalVolumeVOI Clone(  );
-
-    public abstract LocalVolumeVOI Clone( int iZ );
+    public abstract LocalVolumeVOI clone();
+    public abstract LocalVolumeVOI clone(int iZ);
 
     public boolean contains(int x, int y, boolean forceReload) {
         return contains(m_iOrientation,x,y,slice());
@@ -193,11 +235,10 @@ public abstract class LocalVolumeVOI extends VOIBase
     
     public void delete( int iPos )
     {
-        //Local.remove(iPos);
         remove(iPos);
         lastPoint = Math.max( 0, iPos - 1 );  
         m_bUpdateCenter = true;
-
+        m_bUpdateBounds = true;
 
         if ( m_kVolumeVOI != null )
         {
@@ -330,16 +371,11 @@ public abstract class LocalVolumeVOI extends VOIBase
     
     public int getContourID()
     {
-        if ( m_kGroup != null )
+        if ( voiGroup != null )
         {
-            return m_kGroup.getCurves()[0].indexOf(this);
+            return voiGroup.getCurves()[0].indexOf(this);
         }
         return -1;
-    }
-
-    public VOI getGroup()
-    {
-        return m_kGroup;
     }
 
     public Vector3f getLocalCenter()
@@ -415,7 +451,7 @@ public abstract class LocalVolumeVOI extends VOIBase
         }        
     }
 
-    public void move( VOIManager parent, Vector3f kDiff )
+    public void move( Vector3f kDiff, Vector3f[] akMinMax )
     {            
         if ( m_iVOISpecialType == VOIManager.LEVELSET )
         {
@@ -423,9 +459,15 @@ public abstract class LocalVolumeVOI extends VOIBase
         }
         Vector3f kTest = new Vector3f();
         int iSlice = slice();
-        calcBoundingBox();
-        if ( m_kDrawingContext.screenToFile( (int)(m_iXMin + kDiff.X), (int)(m_iYMin + kDiff.Y), iSlice, kTest ) || 
-                m_kDrawingContext.screenToFile( (int)(m_iXMax + kDiff.X), (int)(m_iYMax + kDiff.Y), iSlice, kTest )  )
+        
+        Vector3f kScreenMin = new Vector3f( akMinMax[0].X, akMinMax[0].Y, iSlice );
+        kScreenMin.Add(kDiff);
+        
+        Vector3f kScreenMax = new Vector3f( akMinMax[1].X, akMinMax[1].Y, iSlice );
+        kScreenMax.Add(kDiff);
+        
+        if ( m_kDrawingContext.screenToFile( kScreenMin, kTest ) || 
+                m_kDrawingContext.screenToFile( kScreenMax, kTest )  )
         {
             return;
         }         
@@ -437,6 +479,13 @@ public abstract class LocalVolumeVOI extends VOIBase
                 Vector3f kPos = get( i );
                 Vector3f kLocal = m_kDrawingContext.fileToScreen( kPos );
                 kLocal.Add( kDiff );
+                if ( i == 0 )
+                {
+                    m_akMinMax[0].Copy(kLocal);
+                    m_akMinMax[1].Copy(kLocal);
+                }
+                m_akMinMax[0].Min(kLocal);
+                m_akMinMax[1].Max(kLocal);
                 Vector3f kVolumePt = new Vector3f();
                 m_kDrawingContext.screenToFile( (int)kLocal.X, (int)kLocal.Y, (int)kLocal.Z, kVolumePt );
                 set( i, kVolumePt );
@@ -482,8 +531,9 @@ public abstract class LocalVolumeVOI extends VOIBase
             }
 
             if ((x >= 0) && (x < xDim) && (y >= 0) && (y < yDim)) {
-                 m_kDrawingContext.screenToFile((int)x, (int)y, (int)kPos.Z, kPosFile);
-                 this.set(lastPoint, kPosFile);
+                m_bUpdateBounds = true;
+                m_kDrawingContext.screenToFile((int)x, (int)y, (int)kPos.Z, kPosFile);
+                this.set(lastPoint, kPosFile);
             }
         }        
     }
@@ -561,19 +611,14 @@ public abstract class LocalVolumeVOI extends VOIBase
         m_bClosed = bClosed;
         if ( m_bClosed )
         {
-            m_iVOIType = VOI.CONTOUR;
+            m_iVOIType = VOI.CONTOUR_3D;
         }
         else
         {
-            m_iVOIType = VOI.POLYLINE;
+            m_iVOIType = VOI.POLYLINE_3D;
         }
     }
-
-    public void setGroup( VOI kGroup )
-    {
-        m_kGroup = kGroup;
-    }
-
+    
     public void setNearPoint( int i )
     {
         nearPoint = i;
@@ -588,12 +633,12 @@ public abstract class LocalVolumeVOI extends VOIBase
         if ( iPos < size() )
         {
             m_bUpdateCenter = true;
+            m_bUpdateBounds = true;
             Vector3f kPos = new Vector3f( fX, fY, fZ );
             Vector3f kVolumePt = new Vector3f();
             m_kDrawingContext.screenToFile( (int)kPos.X, (int)kPos.Y, (int)kPos.Z, kVolumePt );
             set( iPos, kVolumePt );
             lastPoint = iPos;
-
 
             if ( m_kVolumeVOI != null )
             {
@@ -612,6 +657,7 @@ public abstract class LocalVolumeVOI extends VOIBase
         if ( iPos < size() )
         {
             m_bUpdateCenter = true;
+            m_bUpdateBounds = true;
             Vector3f kVolumePt = new Vector3f();
             m_kDrawingContext.screenToFile( (int)kPos.X, (int)kPos.Y, (int)kPos.Z, kVolumePt );
             set( iPos, kVolumePt );
@@ -644,11 +690,12 @@ public abstract class LocalVolumeVOI extends VOIBase
 
     public abstract LocalVolumeVOI split ( Vector3f kStartPt, Vector3f kEndPt );
 
-    public void update()
+    public void update( ColorRGBA kColor )
     {
+        m_kColor.Copy(kColor);
         if ( m_kVolumeVOI != null )
         {
-            m_kVolumeVOI.update();
+            m_kVolumeVOI.update( kColor );
         }
     }
 
@@ -711,7 +758,7 @@ public abstract class LocalVolumeVOI extends VOIBase
             Camera kCamera, VolumeImage kVolumeImage, Vector3f kTranslate)
     {
         m_kVolumeVOI = new VolumeVOI( kRenderer, kDrawable, kVolumeImage, 
-                kTranslate, kCamera, this );
+                kTranslate, kCamera, this, m_kColor );
     }
     
     protected void drawSelectedPoints( Renderer kRenderer, Vector3f kVolumeScale, Vector3f kTranslate,
