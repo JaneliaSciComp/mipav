@@ -90,6 +90,12 @@ public class FileIO {
 
     /** For multi file formats where data is saved in a set of files */
     private String[] dataFileName = null;
+    
+    
+    
+    boolean unzip;
+    boolean gunzip;
+    boolean bz2unzip;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -1597,9 +1603,7 @@ public class FileIO {
     public ModelImage readImage(String fileName, String fileDir, boolean multiFile, final FileInfoBase fileInfo,
             final int secondAddress, final boolean loadB, final boolean one) {
         int index;
-        boolean unzip;
-        boolean gunzip;
-        boolean bz2unzip;
+        
         File file;
         FileInputStream fis;
         ZipInputStream zin;
@@ -2996,11 +3000,13 @@ public class FileIO {
                 } else if (bz2zip) {
                     compressionExt = ".bz2";
                 }
-
+                createProgressBar(null, options.getFileName(), FileIO.FILE_WRITE);
+                int progVal =0;
                 inputFileName = new String[1];
                 outputFileName = new String[1];
                 inputFileName[0] = options.getFileDirectory() + options.getFileName();
                 numFiles = 1;
+                
                 if (fileType == FileUtility.XML) {
                     // For XML the user enters fileName.xml.gz or fileName.xml.bz2, but the xml header file is
                     // not compressed while the raw data file is compressed.
@@ -3016,10 +3022,13 @@ public class FileIO {
                         inputFileName[0] = inputFileName[0].substring(0, index) + ".raw";
                     }
                 }
+
                 for (i = 0; i < numFiles; i++) {
                     outputFileName[i] = inputFileName[i] + compressionExt;
 
                     if (zip) {
+                    	progVal = progVal + (int)(20/numFiles);
+                    	progressBar.updateValue(progVal, false);
                         try {
                             // Create the ZIP output stream
                             zout = new ZipOutputStream(new FileOutputStream(outputFileName[i]));
@@ -3027,7 +3036,7 @@ public class FileIO {
                             MipavUtil.displayError("IOException on new ZipOutputStream");
                             return;
                         }
-
+                       
                         try {
                             zout.putNextEntry(new ZipEntry("data"));
                         } catch (final IOException e) {
@@ -3035,7 +3044,8 @@ public class FileIO {
                             return;
                         }
                         
-                        
+                        progVal = progVal + (int)(20/numFiles);
+                    	progressBar.updateValue(progVal, false);
                         if(singleFileNIFTI) {
                         	//for single file nifti....we write out to gzout directly from image data
                         	FileNIFTI fileNIFTI = new FileNIFTI(options.getFileName(), options.getFileDirectory());
@@ -3048,6 +3058,8 @@ public class FileIO {
                                 return;
                         	}
                         	byte[] headerByteData = fileNIFTI.getBufferByte();
+                        	progVal = progVal + (int)(20/numFiles);
+                         	progressBar.updateValue(progVal, false);
                         	//write out headerByteData
                         	buf = new byte[1024];
                         	for(int k=0;k<headerByteData.length;k=k+1024) {
@@ -3073,6 +3085,8 @@ public class FileIO {
                         	}
                         	int dataSizeLength = image.getDataSize();
                         	byte[] sliceByteData;
+                        	progVal = progVal + (int)(20/numFiles);
+                        	progressBar.updateValue(progVal, false);
                         	//write out image data
                         	for(int start=0;start<dataSizeLength;start=start+sliceLength) {
                         		sliceByteData = getByteImageData(image,start,sliceLength);
@@ -3105,7 +3119,8 @@ public class FileIO {
                                 MipavUtil.displayError("IOException on new FileInputStream for " + inputFileName[i]);
                                 return;
                             }
-
+                            progVal = progVal + (int)(20/numFiles);
+                        	progressBar.updateValue(progVal, false);
                             // Tranfer the bytes from the input file to the Zip output stream
                             buf = new byte[1024];
                             try {
@@ -3116,6 +3131,8 @@ public class FileIO {
                                 MipavUtil.displayError("IOException on byte transfer to zip file");
                                 return;
                             }
+                            progVal = progVal + (int)(20/numFiles);
+                        	progressBar.updateValue(progVal, false);
                             try {
                                 in.close();
                             } catch (final IOException e) {
@@ -3139,6 +3156,8 @@ public class FileIO {
                             MipavUtil.displayError("IOException on zout.finish()");
                             return;
                         }
+                        progVal = progVal + (int)(20/numFiles);
+                    	progressBar.updateValue(progVal, false);
                         try {
                             zout.close();
                         } catch (final IOException e) {
@@ -3147,6 +3166,8 @@ public class FileIO {
                         }
                     } // if (zip)
                     else if (gzip) {
+                    	progVal = progVal + (int)(20/numFiles);
+                    	progressBar.updateValue(progVal, false);
                         try {
                             // Create the GZIP output stream
                             gzout = new GZIPOutputStream(new FileOutputStream(outputFileName[i]));
@@ -3154,7 +3175,8 @@ public class FileIO {
                             MipavUtil.displayError("IOException on new GZIPOutputStream");
                             return;
                         }
-                        
+                        progVal = progVal + (int)(20/numFiles);
+                    	progressBar.updateValue(progVal, false);
                         if(singleFileNIFTI) {
                         	//for single file nifti....we write out to gzout directly from image data
                         	FileNIFTI fileNIFTI = new FileNIFTI(options.getFileName(), options.getFileDirectory());
@@ -3167,6 +3189,8 @@ public class FileIO {
                                 return;
                         	}
                         	byte[] headerByteData = fileNIFTI.getBufferByte();
+                        	 progVal = progVal + (int)(20/numFiles);
+                         	progressBar.updateValue(progVal, false);
                         	//write out headerByteData
                         	buf = new byte[1024];
                         	for(int k=0;k<headerByteData.length;k=k+1024) {
@@ -3192,6 +3216,8 @@ public class FileIO {
                         	}
                         	int dataSizeLength = image.getDataSize();
                         	byte[] sliceByteData;
+                        	 progVal = progVal + (int)(20/numFiles);
+                         	progressBar.updateValue(progVal, false);
                         	//write out image data
                         	for(int start=0;start<dataSizeLength;start=start+sliceLength) {
                         		sliceByteData = getByteImageData(image,start,sliceLength);
@@ -3224,6 +3250,8 @@ public class FileIO {
                                 MipavUtil.displayError("IOException on new FileInputStream for " + inputFileName[i]);
                                 return;
                             }
+                            progVal = progVal + (int)(20/numFiles);
+                        	progressBar.updateValue(progVal, false);
                             //Tranfer the bytes from the input file to the GZIP output stream
                             buf = new byte[1024];
                             try {
@@ -3234,6 +3262,8 @@ public class FileIO {
                                 MipavUtil.displayError("IOException on byte transfer to gzip file");
                                 return;
                             }
+                            progVal = progVal + (int)(20/numFiles);
+                        	progressBar.updateValue(progVal, false);
                             try {
                                 in.close();
                             } catch (final IOException e) {
@@ -3259,6 +3289,8 @@ public class FileIO {
                             MipavUtil.displayError("IOException on gzout.finish()");
                             return;
                         }
+                        progVal = progVal + (int)(20/numFiles);
+                    	progressBar.updateValue(progVal, false);
                         try {
                             gzout.close();
                         } catch (final IOException e) {
@@ -3267,6 +3299,8 @@ public class FileIO {
                         }
                     } // if (gzip)
                     else { // bz2zip
+                    	 progVal = progVal + (int)(20/numFiles);
+                     	progressBar.updateValue(progVal, false);
                         try {
                             out = new FileOutputStream(outputFileName[i]);
                             out.write('B');
@@ -3277,7 +3311,8 @@ public class FileIO {
                             MipavUtil.displayError("IOException on new CBZip2OutputStream");
                             return;
                         }
-                        
+                        progVal = progVal + (int)(20/numFiles);
+                    	progressBar.updateValue(progVal, false);
                         if(singleFileNIFTI) {
                         	//for single file nifti....we write out to gzout directly from image data
                         	FileNIFTI fileNIFTI = new FileNIFTI(options.getFileName(), options.getFileDirectory());
@@ -3290,6 +3325,8 @@ public class FileIO {
                                 return;
                         	}
                         	byte[] headerByteData = fileNIFTI.getBufferByte();
+                        	 progVal = progVal + (int)(20/numFiles);
+                         	progressBar.updateValue(progVal, false);
                         	//write out headerByteData
                         	buf = new byte[1024];
                         	for(int k=0;k<headerByteData.length;k=k+1024) {
@@ -3315,6 +3352,8 @@ public class FileIO {
                         	}
                         	int dataSizeLength = image.getDataSize();
                         	byte[] sliceByteData;
+                        	 progVal = progVal + (int)(20/numFiles);
+                         	progressBar.updateValue(progVal, false);
                         	//write out image data
                         	for(int start=0;start<dataSizeLength;start=start+sliceLength) {
                         		sliceByteData = getByteImageData(image,start,sliceLength);
@@ -3346,7 +3385,8 @@ public class FileIO {
                                 MipavUtil.displayError("IOException on new FileInputStream for " + inputFileName[i]);
                                 return;
                             }
-
+                            progVal = progVal + (int)(20/numFiles);
+                        	progressBar.updateValue(progVal, false);
                             // Tranfer the bytes from the input file to the BZIP2 output stream
                             buf = new byte[1024];
                             try {
@@ -3357,6 +3397,8 @@ public class FileIO {
                                 MipavUtil.displayError("IOException on byte transfer to bz2zip file");
                                 return;
                             }
+                            progVal = progVal + (int)(20/numFiles);
+                        	progressBar.updateValue(progVal, false);
                             try {
                                 in.close();
                             } catch (final IOException e) {
@@ -3372,7 +3414,8 @@ public class FileIO {
                             }
                         }
                        
-
+                        progVal = progVal + (int)(20/numFiles);
+                    	progressBar.updateValue(progVal, false);
                         // complete the bz2zip file
                         try {
                             bz2out.close();
@@ -3524,9 +3567,10 @@ public class FileIO {
 	             return null;
 	         }
 	        byteData = new byte[length*2];
+	        byte[] buff = new byte[2];
     		for(int i=0,k=0;i<shortData.length;i++,k=k+2) {
     			short val = shortData[i];
-    			byte[] byteVal = FileBase.shortToBytes(val, bigEndianness);
+    			byte[] byteVal = FileBase.shortToBytes(val, bigEndianness,buff);
     			byteData[k] = byteVal[0];
     			byteData[k+1] = byteVal[1];
     		}	
@@ -3540,9 +3584,10 @@ public class FileIO {
 	             return null;
 	         }
 	         byteData = new byte[length*4];
+	         byte[] buff = new byte[4];
 	         for(int i=0,k=0;i<intData.length;i++,k=k+4) {
 	    			int val = intData[i];
-	    			byte[] byteVal = FileBase.intToBytes(val, bigEndianness);
+	    			byte[] byteVal = FileBase.intToBytes(val, bigEndianness,buff);
 	    			byteData[k] = byteVal[0];
 	    			byteData[k+1] = byteVal[1];
 	    			byteData[k+2] = byteVal[2];
@@ -3558,9 +3603,10 @@ public class FileIO {
 	             return null;
 	         }
 	         byteData = new byte[length*8];
+	         byte[] buff = new byte[8];
 	         for(int i=0,k=0;i<longData.length;i++,k=k+8) {
 	    			long val = longData[i];
-	    			byte[] byteVal = FileBase.longToBytes(val, bigEndianness);
+	    			byte[] byteVal = FileBase.longToBytes(val, bigEndianness,buff);
 	    			byteData[k] = byteVal[0];
 	    			byteData[k+1] = byteVal[1];
 	    			byteData[k+2] = byteVal[2];
@@ -3580,9 +3626,10 @@ public class FileIO {
 	             return null;
 	         }
 	         byteData = new byte[length*4];
+	         byte[] buff = new byte[4];
 	         for(int i=0,k=0;i<floatData.length;i++,k=k+4) {
 	    			float val = floatData[i];
-	    			byte[] byteVal = FileBase.floatToBytes(val, bigEndianness);
+	    			byte[] byteVal = FileBase.floatToBytes(val, bigEndianness,buff);
 	    			byteData[k] = byteVal[0];
 	    			byteData[k+1] = byteVal[1];
 	    			byteData[k+2] = byteVal[2];
@@ -3609,9 +3656,10 @@ public class FileIO {
 	             return null;
 	         }
 	        byteData = new byte[length*2];
+	        byte[] buff = new byte[2];
     		for(int i=0,k=0;i<shortData.length;i++,k=k+2) {
     			short val = shortData[i];
-    			byte[] byteVal = FileBase.shortToBytes(val, bigEndianness);
+    			byte[] byteVal = FileBase.shortToBytes(val, bigEndianness,buff);
     			byteData[k] = byteVal[0];
     			byteData[k+1] = byteVal[1];
     		}
@@ -3625,9 +3673,10 @@ public class FileIO {
 	             return null;
 	         }
 	         byteData = new byte[length*4];
+	         byte[] buff = new byte[4];
 	         for(int i=0,k=0;i<floatData.length;i++,k=k+4) {
 	    			float val = floatData[i];
-	    			byte[] byteVal = FileBase.floatToBytes(val, bigEndianness);
+	    			byte[] byteVal = FileBase.floatToBytes(val, bigEndianness,buff);
 	    			byteData[k] = byteVal[0];
 	    			byteData[k+1] = byteVal[1];
 	    			byteData[k+2] = byteVal[2];

@@ -3363,8 +3363,9 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         kOut.write(header);
        
         // number of facets
-        kOut.write(FileBase.intToBytes(iTriangleCount, false));
-        
+        byte[] buff = new byte[4];
+        kOut.write(FileBase.intToBytes(iTriangleCount, false, buff));
+        byte[] buff2 = new byte[4];
         for (i = 0; i < iTriangleCount; i++) {
         	index1 = getCoordinateIndex(3 * i);    
             index2 = getCoordinateIndex((3 * i) + 1);
@@ -3382,27 +3383,27 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
             kNormal.scale(1f/3f);
         
             // facet normal
-            kOut.write(FileBase.floatToBytes(kNormal.x, false));
-            kOut.write(FileBase.floatToBytes(kNormal.y, false));
-            kOut.write(FileBase.floatToBytes(kNormal.z, false));
+            kOut.write(FileBase.floatToBytes(kNormal.x, false,buff2));
+            kOut.write(FileBase.floatToBytes(kNormal.y, false,buff2));
+            kOut.write(FileBase.floatToBytes(kNormal.z, false,buff2));
             
             // index 1
             getCoordinate(index1, kVertex);;            
-            kOut.write(FileBase.floatToBytes(kVertex.x, false));
-            kOut.write(FileBase.floatToBytes(kVertex.y, false));
-            kOut.write(FileBase.floatToBytes(kVertex.z, false));
+            kOut.write(FileBase.floatToBytes(kVertex.x, false,buff2));
+            kOut.write(FileBase.floatToBytes(kVertex.y, false,buff2));
+            kOut.write(FileBase.floatToBytes(kVertex.z, false,buff2));
                        
             // index 2
             getCoordinate(index2, kVertex);;
-            kOut.write(FileBase.floatToBytes(kVertex.x, false));
-            kOut.write(FileBase.floatToBytes(kVertex.y, false));
-            kOut.write(FileBase.floatToBytes(kVertex.z, false));
+            kOut.write(FileBase.floatToBytes(kVertex.x, false,buff2));
+            kOut.write(FileBase.floatToBytes(kVertex.y, false,buff2));
+            kOut.write(FileBase.floatToBytes(kVertex.z, false,buff2));
 
             // index 3
             getCoordinate(index3, kVertex);
-            kOut.write(FileBase.floatToBytes(kVertex.x, false));
-            kOut.write(FileBase.floatToBytes(kVertex.y, false));
-            kOut.write(FileBase.floatToBytes(kVertex.z, false));
+            kOut.write(FileBase.floatToBytes(kVertex.x, false,buff2));
+            kOut.write(FileBase.floatToBytes(kVertex.y, false,buff2));
+            kOut.write(FileBase.floatToBytes(kVertex.z, false,buff2));
             
             // 2 byte attribute == 0
             kOut.write(attribute);

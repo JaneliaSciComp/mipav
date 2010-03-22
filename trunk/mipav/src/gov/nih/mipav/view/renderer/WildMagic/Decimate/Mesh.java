@@ -237,8 +237,9 @@ public class Mesh {
 		kOut.write(header);
 
 		// number of facets
-		kOut.write(FileBase.intToBytes(iTriangleCount, false));
-
+		byte[] buff = new byte[4];
+		kOut.write(FileBase.intToBytes(iTriangleCount, false, buff));
+		byte[] buff2 = new byte[4];
 		int j = 0;
 		for (i = 0; i < numF; i++) {
 			int[] Face = new int[3];
@@ -254,9 +255,9 @@ public class Mesh {
 			ddnormalv3d.Cross( v1v3d, v2v3d );
 			ddnormalv3d.Normalize();
 
-			kOut.write(FileBase.floatToBytes((float) ddnormalv3d.X, false));
-			kOut.write(FileBase.floatToBytes((float) ddnormalv3d.Y, false));
-			kOut.write(FileBase.floatToBytes((float) ddnormalv3d.Z, false));
+			kOut.write(FileBase.floatToBytes((float) ddnormalv3d.X, false,buff2));
+			kOut.write(FileBase.floatToBytes((float) ddnormalv3d.Y, false,buff2));
+			kOut.write(FileBase.floatToBytes((float) ddnormalv3d.Z, false,buff2));
 
 			for (j = 0; j < 3; j++) {
 				verts[(3 * i + j)].X = (float)(point[Face[j]].X * scaler);
@@ -264,11 +265,11 @@ public class Mesh {
 				verts[(3 * i + j)].Z = (float)(point[Face[j]].Z * scaler);
 
 				kOut.write(FileBase.floatToBytes((float) verts[(3 * i + j)].X,
-						false));
+						false,buff2));
 				kOut.write(FileBase.floatToBytes((float) verts[(3 * i + j)].Y,
-						false));
+						false,buff2));
 				kOut.write(FileBase.floatToBytes((float) verts[(3 * i + j)].Z,
-						false));
+						false,buff2));
 
 			}
 
