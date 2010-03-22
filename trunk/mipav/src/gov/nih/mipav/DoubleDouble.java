@@ -1113,6 +1113,48 @@ public strictfp class DoubleDouble
 		return s;
 	}
 	
+	/**
+	 * 
+	 * @param x the DoubleDouble exponent
+	 * @return a raised to the DoubleDouble power x
+	 * For a > 0, base = x * log(a), a**x = 1 + base + base**2/2! + base**3/3! + ... 
+	 */
+	public DoubleDouble pow(DoubleDouble x) {
+		if (x.isNaN()) {
+			return NaN;
+		}
+	    if (x.isInfinite()) {
+	    	return NaN;
+	    }
+		if (isNaN()) {
+			return NaN;
+		}
+		if (x.isZero()) {
+			return valueOf(1.0);
+		}
+		
+		if (isZero()) {
+			return NaN;
+		}
+		
+		if (isNegative()) {
+			return NaN;
+		}
+	    DoubleDouble loga = this.log();	
+	    DoubleDouble base = x.multiply(loga);
+	    DoubleDouble s = DoubleDouble.valueOf(1.0).add(base);
+		DoubleDouble t = (DoubleDouble)base.clone();
+		double n = 1.0;
+		
+		while (Math.abs(t.doubleValue()) > DoubleDouble.EPS) {
+			n += 1.0;
+			t = t.divide(DoubleDouble.valueOf(n));
+			t = t.multiply(base);
+			s = s.add(t);
+		}
+		return s;
+	}
+	
 	/*------------------------------------------------------------
 	 *   Conversion Functions
 	 *------------------------------------------------------------
