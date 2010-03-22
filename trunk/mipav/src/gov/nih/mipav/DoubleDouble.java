@@ -95,6 +95,10 @@ public strictfp class DoubleDouble
 	 */
 	public static final DoubleDouble NaN = new DoubleDouble(Double.NaN, Double.NaN);
 	
+	public static final DoubleDouble POSITIVE_INFINITY = new DoubleDouble(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+	
+	public static final DoubleDouble NEGATIVE_INFINITY = new DoubleDouble(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
+	
 	/**
 	 * The smallest representable relative difference between two {link @ DoubleDouble} values
 	 */
@@ -602,11 +606,14 @@ public strictfp class DoubleDouble
 	 */
 	public DoubleDouble exp() {
 		// Return the exponential of a DoubleDouble number
-		DoubleDouble s = DoubleDouble.valueOf(1.0).add(this);
+		if (isNaN()) {
+			return NaN;
+		}
+		DoubleDouble s = (DoubleDouble.valueOf(1.0)).add(this);
 		DoubleDouble t = new DoubleDouble(this);
 		double n = 1.0;
 		
-		while (t.doubleValue() > DoubleDouble.EPS) {
+		while (Math.abs(t.doubleValue()) > DoubleDouble.EPS) {
 			n += 1.0;
 			t = t.divide(DoubleDouble.valueOf(n));
 			t = t.multiply(this);
@@ -622,8 +629,11 @@ public strictfp class DoubleDouble
 	 */
 	public DoubleDouble log() {
 		// Return the natural log of a DoubleDouble number
-		if (isZero()) {
+		if (isNaN()) {
 			return NaN;
+		}
+		if (isZero()) {
+			return NEGATIVE_INFINITY;
 		}
 		
 		if (isNegative()) {
@@ -639,11 +649,59 @@ public strictfp class DoubleDouble
 		DoubleDouble w = (DoubleDouble)s.clone();
 		double n = 1.0;
 		
-		while (w.doubleValue() > DoubleDouble.EPS) {
+		while (Math.abs(w.doubleValue()) > DoubleDouble.EPS) {
 			n += 2.0;
 			t = t.multiply(ratioSquare);
 			w = t.divide(DoubleDouble.valueOf(n));
 			s = s.add(w);
+		}
+		return s;
+	}
+	
+	/**
+	 * For all real x, sinh(x) = x + x**3/3! + x**5/5! + x**7/7! + ... + x**(2n+1)/(2n+1)! + ...
+	 * @return
+	 */
+	public DoubleDouble sinh() {
+		// Return the sinh of a DoubleDouble number
+		if (isNaN())  {
+			return NaN;
+		}
+		DoubleDouble square = this.multiply(this);
+		DoubleDouble s = new DoubleDouble(this);
+		DoubleDouble t = new DoubleDouble(this);
+		double n = 1.0;
+		while (Math.abs(t.doubleValue()) > DoubleDouble.EPS) {
+			n += 1.0;
+			t = t.divide(DoubleDouble.valueOf(n));
+			n += 1.0;
+			t = t.divide(DoubleDouble.valueOf(n));
+			t = t.multiply(square);
+			s = s.add(t);
+		}
+		return s;
+	}
+	
+	/**
+	 * For all real x, cosh(x) = 1 + x**2/2! + x**4/4! + x**6/6! + ... + x**(2*n)/((2*n)!) + ...
+	 * @return
+	 */
+	public DoubleDouble cosh() {
+		// Return the cosh of a DoubleDouble number
+		if (isNaN()) {
+			return NaN;
+		}
+		DoubleDouble square = this.multiply(this);
+		DoubleDouble s = DoubleDouble.valueOf(1.0);
+		DoubleDouble t = DoubleDouble.valueOf(1.0);
+		double n = 0.0;
+		while (Math.abs(t.doubleValue()) > DoubleDouble.EPS) {
+			n += 1.0;
+			t = t.divide(DoubleDouble.valueOf(n));
+			n += 1.0;
+			t = t.divide(DoubleDouble.valueOf(n));
+			t = t.multiply(square);
+			s = s.add(t);
 		}
 		return s;
 	}
@@ -654,6 +712,9 @@ public strictfp class DoubleDouble
 	 */
 	public DoubleDouble sin() {
 		// Return the sine of a DoubleDouble number
+		if (isNaN())  {
+			return NaN;
+		}
 		DoubleDouble msquare = (this.multiply(this)).negate();
 		DoubleDouble s = new DoubleDouble(this);
 		DoubleDouble t = new DoubleDouble(this);
@@ -675,6 +736,9 @@ public strictfp class DoubleDouble
 	 */
 	public DoubleDouble cos() {
 		// Return the cosine of a DoubleDouble number
+		if (isNaN()) {
+			return NaN;
+		}
 		DoubleDouble msquare = (this.multiply(this)).negate();
 		DoubleDouble s = DoubleDouble.valueOf(1.0);
 		DoubleDouble t = DoubleDouble.valueOf(1.0);
@@ -691,13 +755,75 @@ public strictfp class DoubleDouble
 	}
 	
 	/**
+	 * For -PI/2 < x < PI/2, tan(x) = x + (x**3)/3 + 2*(x**5)/15 + 17*(x**7)/315 + 62*(x**9)/2835 + ... +
+	 *                                (2**(2*n))*((2**(2*n)) - 1)*Bn*(x**(2*n-1))/((2*n)!) + ...
+	 * @return
+	 */
+	public DoubleDouble tan() {
+		// Return the tangent of a DoubleDouble number
+		if (isNaN()) {
+			return NaN;
+		}
+		DoubleDouble PIFullTimes;
+		DoubleDouble PIremainder;
+		if ((this.abs()).gt(PI)) {
+			PIFullTimes = (this.divide(PI)).trunc();
+		    PIremainder = this.subtract(PI.multiply(PIFullTimes));
+		}
+		else {
+			PIremainder = this;
+		}
+		if (PIremainder.gt(PI_2)) {
+			PIremainder = PIremainder.subtract(PI);
+		}
+		else if (PIremainder.lt(PI_2.negate())) {
+			PIremainder = PIremainder.add(PI);
+		}
+		if (PIremainder.equals(PI_2)) {
+			return POSITIVE_INFINITY;
+		}
+		else if (PIremainder.equals(PI_2.negate())) {
+			return NEGATIVE_INFINITY;
+		}
+		int twon;
+		DoubleDouble twotwon;
+		DoubleDouble twotwonm1;
+		DoubleDouble square = this.multiply(this);
+		DoubleDouble s = new DoubleDouble(this);
+		DoubleDouble t = new DoubleDouble(this);
+		int n = 1;
+		while (Math.abs(t.doubleValue()) > DoubleDouble.EPS) {
+			n++;
+			twon = 2*n;
+			t = t.divide(factorial(twon));
+			twotwon = (DoubleDouble.valueOf(2.0)).pow(twon);
+			twotwonm1 = twotwon.subtract(DoubleDouble.valueOf(1.0));
+			t = t.multiply(twotwon);
+			t = t.multiply(twotwonm1);
+			t = t.multiply(BernoulliB(n));
+			t = t.multiply(square);
+			s = s.add(t);
+		}
+		return s;
+	}
+	
+	/**
 	 * For all -1 < x < 1, arcsin(x) = x + x**3/(2*3) + (1 * 3 * x**5)/(2 * 4 * 5) + (1 * 3 * 5 * x**7)/(2 * 4 * 6 * 7) + ...
 	 * @return
 	 */
 	public DoubleDouble asin() {
 		// Return the arcsine of a DoubleDouble number
-		if ((this.abs()).ge(DoubleDouble.valueOf(1.0))) {
+		if (isNaN()) {
 			return NaN;
+		}
+		if ((this.abs()).gt(DoubleDouble.valueOf(1.0))) {
+			return NaN;
+		}
+		if (this.equals(DoubleDouble.valueOf(1.0))) {
+			return PI_2;
+		}
+		if (this.equals(DoubleDouble.valueOf(-1.0))) {
+			return PI_2.negate();
 		}
 		DoubleDouble square = this.multiply(this);
 		DoubleDouble s = new DoubleDouble(this);
@@ -724,7 +850,10 @@ public strictfp class DoubleDouble
 	 * @return
 	 */
 	public DoubleDouble acos() {
-		if ((this.abs()).ge(DoubleDouble.valueOf(1.0))) {
+		if (isNaN()) {
+			return NaN;
+		}
+		if ((this.abs()).gt(DoubleDouble.valueOf(1.0))) {
 			return NaN;
 		}
 		DoubleDouble s = PI_2.subtract(this.asin());
@@ -738,6 +867,9 @@ public strictfp class DoubleDouble
 	 * @return
 	 */
 	public DoubleDouble atan() {
+		if (isNaN()) {
+			return NaN;
+		}
 		DoubleDouble s;
 		if (this.equals(DoubleDouble.valueOf(1.0))) {
 		    s = PI_2.divide(DoubleDouble.valueOf(2.0));	
@@ -780,10 +912,18 @@ public strictfp class DoubleDouble
 		return s;
 	}
 	
-	public DoubleDouble Bernoulli(int n) {
+	public DoubleDouble BernoulliA(int n) {
+		// For PI/2 < x < PI, sum from k = 1 to infinity of ((-1)**(k-1))*sin(kx)/(k**2) = 
+		// x*ln(2) - sum from k = 1 to infinity of 
+		// ((-1)**(k-1))*(2**(2k) - 1)*B2k*(x**(2*k+1))/(((2*k)!)*(2*k)*(2*k+1)) 
 		// Compute the DoubleDouble Bernoulli number Bn
 		// Ported from subroutine BERNOA in 
 		// Computation of Special Functions by Shanjie Zhang and Jianming Jin
+		// I thought of creating a version with all the Bernoulli numbers from
+		// B0 to Bn-1 passed in as an input to calculate Bn.  However, according
+		// Zhang and Jin using the correct zero values for B3, B5, B7 actually gives
+		// a much worse result than using the incorrect intermediate B3, B5, B7
+		// values caluclated by this algorithm.
 		int m;
 		int k;
 		int j;
@@ -807,13 +947,13 @@ public strictfp class DoubleDouble
 			return BN[1];
 		}
 		for (m = 2; m <= n; m++) {
-		    s = DoubleDouble.valueOf(m).add(DoubleDouble.valueOf(1.0));
+		    s = (DoubleDouble.valueOf(m)).add(DoubleDouble.valueOf(1.0));
 		    s = s.reciprocal();
-		    s = DoubleDouble.valueOf(0.5).subtract(s);
+		    s = (DoubleDouble.valueOf(0.5)).subtract(s);
 		    for (k = 2; k <= m-1; k++) {
 		    	r = DoubleDouble.valueOf(1.0);
 		    	for (j = 2; j <= k; j++) {
-		    	    temp = DoubleDouble.valueOf(j).add(DoubleDouble.valueOf(m));
+		    	    temp = (DoubleDouble.valueOf(j)).add(DoubleDouble.valueOf(m));
 		    	    temp = temp.subtract(DoubleDouble.valueOf(k));
 		    	    temp = temp.divide(DoubleDouble.valueOf(j));
 		    	    r = r.multiply(temp);
@@ -824,6 +964,75 @@ public strictfp class DoubleDouble
 		    BN[m] = s;
 		} // for (m = 2; m <= n; m++)
 		return BN[n];
+	}
+	
+	public DoubleDouble BernoulliB(int n) {
+		// B2n = ((-1)**(n-1))*2*((2*n)!)*(1 + 1/(2**(2*n)) + 1/(3**(2*n)) + ...)/((2*PI)**(2*n))
+		// = ((-1)**(n-1))*2*(1 + 1/(2**(2*n)) + 1/(3**(2*n)) + ...) * product from m = 1 to 2n of m/(2*PI)
+		// for n = 1, 2, 3, ...
+		// Compute the DoubleDouble Bernoulli number Bn
+		// More efficient than BernoulliA
+		// Ported from subroutine BERNOB in 
+		// Computation of Special Functions by Shanjie Zhang and Jianming Jin
+		int m;
+		int k;
+		DoubleDouble r1;
+		DoubleDouble twoPISqr;
+		DoubleDouble r2;
+		DoubleDouble s;
+		DoubleDouble temp;
+		if (n < 0) {
+			return NaN;
+		}
+		else if ((n >= 3) && (((n - 1) % 2) == 0)) {
+			// B2*n+1 = 0 for n = 1,2,3
+			return DoubleDouble.valueOf(0.0);
+		}
+		DoubleDouble BN[] = new DoubleDouble[n+1];
+		BN[0] = DoubleDouble.valueOf(1.0);
+		if (n == 0) {
+			return BN[0];
+		}
+		BN[1] = DoubleDouble.valueOf(-0.5);
+		if (n == 1) {
+			return BN[1];
+		}
+		BN[2] = (DoubleDouble.valueOf(1.0)).divide(DoubleDouble.valueOf(6.0));
+		if (n == 2) {
+			return BN[2];
+		}
+		r1 = ((DoubleDouble.valueOf(1.0)).divide(PI)).sqr();
+		twoPISqr = TWO_PI.multiply(TWO_PI);
+		for (m = 4; m <= n; m+=2) {
+		    temp = (DoubleDouble.valueOf(m)).divide(twoPISqr);
+		    temp = (DoubleDouble.valueOf(m-1)).multiply(temp);
+		    r1 = (r1.multiply(temp)).negate();
+		    r2 = DoubleDouble.valueOf(1.0);
+		    s = DoubleDouble.valueOf(1.0);
+		    k = 2;
+		    while (Math.abs(s.doubleValue()) > DoubleDouble.EPS) {
+		    	s = (DoubleDouble.valueOf(1.0)).divide(valueOf(k++));
+		    	s = s.pow(m);
+		    	r2 = r2.add(s);
+		    }
+		    BN[m] = r1.multiply(r2);
+		} // for (m = 4; m <= n; m+=2)
+		return BN[n];
+	}
+	
+	public DoubleDouble factorial(int fac) {
+		DoubleDouble prod;
+		if (fac < 0) {
+			return NaN;
+		}
+		if ((fac >= 0) && (fac <= 1)) {
+			return DoubleDouble.valueOf(1.0);
+		}
+		prod = DoubleDouble.valueOf(fac--);
+		while (fac > 1) {
+			prod = prod.multiply(DoubleDouble.valueOf(fac--));
+		}
+		return prod;
 	}
 	
 	/**
@@ -869,6 +1078,15 @@ public strictfp class DoubleDouble
 	 * For a > 0, base = x * log(a), a**x = 1 + base + base**2/2! + base**3/3! + ... 
 	 */
 	public DoubleDouble pow(double x) {
+		if (Double.isNaN(x)) {
+			return NaN;
+		}
+	    if (Double.isInfinite(x)) {
+	    	return NaN;
+	    }
+		if (isNaN()) {
+			return NaN;
+		}
 		if (x == 0.0) {
 			return valueOf(1.0);
 		}
@@ -886,7 +1104,7 @@ public strictfp class DoubleDouble
 		DoubleDouble t = (DoubleDouble)base.clone();
 		double n = 1.0;
 		
-		while (t.doubleValue() > DoubleDouble.EPS) {
+		while (Math.abs(t.doubleValue()) > DoubleDouble.EPS) {
 			n += 1.0;
 			t = t.divide(DoubleDouble.valueOf(n));
 			t = t.multiply(base);
@@ -961,6 +1179,8 @@ public strictfp class DoubleDouble
 	 * @return true if this value is NaN
 	 */
 	public boolean isNaN() { return Double.isNaN(hi); }
+	
+	public boolean isInfinite() {return Double.isInfinite(hi); }
 	
 	/**
 	 * Tests whether this value is equal to another <tt>DoubleDouble</tt> value.
