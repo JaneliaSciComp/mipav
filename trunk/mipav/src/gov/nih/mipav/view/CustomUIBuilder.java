@@ -59,6 +59,10 @@ public class CustomUIBuilder {
             "<br>" + "[right-click for options]" + "</html>", "quickvoimask");
 	public static final UIParams PARAM_VOI_QUICK_NOT_OP = new UIParams("QuickMaskReverse", "<html>" + "Quick NOT VOI mask operation." +
             "<br>" + "[right-click for options]" + "</html>", "quickvoimaskreverse");
+	public static final UIParams PARAM_VOI_3D_INTERSECTION = new UIParams("3DVOIIntersect", "Make 3D VOI Intersection", "intersection");
+    public static final UIParams PARAM_VOI_3D_UNION = new UIParams("3DVOIUnion", "Make 3D VOI Union", "union");
+	
+	
 	
 	
 	/** Paint Mask toolbar buttons */
