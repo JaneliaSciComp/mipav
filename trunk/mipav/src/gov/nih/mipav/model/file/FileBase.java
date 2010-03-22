@@ -175,6 +175,7 @@ public abstract class FileBase {
      *
      * @param   data 
      * @param   bigEndian 
+     * @param   buffer 
      *
      * @return  byte array
      */
@@ -205,6 +206,7 @@ public abstract class FileBase {
      *
      * @param   data       
      * @param   bigEndian  
+     * @param   buffer 
      *
      * @return  byte array
      */
@@ -237,6 +239,7 @@ public abstract class FileBase {
      *
      * @param   data       
      * @param   bigEndian  
+     * @param   buffer 
      *
      * @return  byte array
      */

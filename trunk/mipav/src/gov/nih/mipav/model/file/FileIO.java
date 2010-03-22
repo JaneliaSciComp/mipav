@@ -93,9 +93,7 @@ public class FileIO {
     
     
     
-    boolean unzip;
-    boolean gunzip;
-    boolean bz2unzip;
+   
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -1620,6 +1618,9 @@ public class FileIO {
         if ( (fileName == null) || (fileDir == null)) {
             return null;
         }
+        boolean unzip;
+        boolean gunzip;
+        boolean bz2unzip;
 
         this.fileDir = fileDir;
         fileName.trim();
