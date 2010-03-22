@@ -311,8 +311,8 @@ public class AlgorithmAddMargins extends AlgorithmBase {
             int srcT = (kRead.getNDims() == 4) ? kRead.getExtents()[3] : 1;
             int destT = (kWrite.getNDims() == 4) ? kRead.getExtents()[3] : 1;
             
-            int srcDepth = kRead.getExtents()[2];
-            int destDepth = kWrite.getExtents()[2];
+            int srcDepth = (kRead.getNDims() == 3) ? kRead.getExtents()[2] : 1;
+            int destDepth = (kWrite.getNDims() == 3) ? kWrite.getExtents()[2] : 1;
 
             FileInfoDicom[] fileInfoDicomBuffer = null; // buffer of type DICOM
             FileInfoBase[] fileInfoBuffer = null; // buffer of any old type

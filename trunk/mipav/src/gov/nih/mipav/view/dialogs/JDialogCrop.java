@@ -348,6 +348,11 @@ public class JDialogCrop extends JDialogScriptableBase implements
                 zCrop[0] = -1 * (zBounds[0]);
                 zCrop[1] = -1 * (zBounds[1] - destExtents[2] - 1);
             }
+            else // 3D to 2D
+            {
+                zCrop[0] = -1 * (zBounds[0]);
+                zCrop[1] = -1 * (zBounds[1]+1);
+            }
             cropAlgo = new AlgorithmAddMargins(image, resultImage, 
                     xCrop, yCrop, zCrop);
 

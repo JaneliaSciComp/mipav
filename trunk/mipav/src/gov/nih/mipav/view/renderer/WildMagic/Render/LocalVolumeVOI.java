@@ -48,18 +48,18 @@ public abstract class LocalVolumeVOI extends VOIBase
     protected boolean m_bClosed = true;
     protected int m_iOrientation;
 
-    protected Vector3f[] m_akMinMax = new Vector3f[]{ new Vector3f(), new Vector3f() };
+    protected Vector3f[] m_akMinMax = new Vector3f[]{ new Vector3f(), new Vector3f() };    
+    protected ColorRGBA m_kColor = new ColorRGBA();
+    
+    
+    
     protected VolumeVOI m_kVolumeVOI;
-
-
     protected int m_iCirclePts = 32;
     protected double[] m_adCos = new double[m_iCirclePts];
     protected double[] m_adSin = new double[m_iCirclePts];
     protected Polyline m_kBallPoint = null;
     protected ZBufferState m_kZState = null;
     protected Attributes m_kVOIAttr = null;
-    
-    protected ColorRGBA m_kColor = new ColorRGBA();
 
     public LocalVolumeVOI( VOIManager parent, ScreenCoordinateListener kContext, int iOrientation, int iType, int iSType, Vector<Vector3f> kLocal, int iZ )
     {
