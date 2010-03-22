@@ -160,12 +160,12 @@ public abstract class FileBase {
      * 
      * @return  byte array
      */
-    public final static byte[] floatToBytes(float data, boolean bigEndian) {
+    public final static byte[] floatToBytes(float data, boolean bigEndian, byte[] buffer) {
         int tmpInt;
-
+ 
         tmpInt = Float.floatToIntBits(data);
 
-        return intToBytes(tmpInt, bigEndian);
+        return intToBytes(tmpInt, bigEndian,buffer);
     }
 
 
@@ -178,9 +178,7 @@ public abstract class FileBase {
      *
      * @return  byte array
      */
-    public final static byte[] intToBytes(int data, boolean bigEndian) {
-        final byte[] buffer = new byte[4];
-
+    public final static byte[] intToBytes(int data, boolean bigEndian, byte[] buffer) {
         if (bigEndian) {
             buffer[0] = (byte) (data >>> 24);
             buffer[1] = (byte) (data >>> 16);
@@ -196,6 +194,10 @@ public abstract class FileBase {
         return buffer;
     }
     
+    
+    
+    
+    
 
 
     /**
@@ -206,9 +208,7 @@ public abstract class FileBase {
      *
      * @return  byte array
      */
-    public static byte[] longToBytes(long data, boolean bigEndian) {
-        final byte[] buffer = new byte[8];
-
+    public static byte[] longToBytes(long data, boolean bigEndian, byte[] buffer) {
         if (bigEndian) {
             buffer[0] = (byte) (data >>> 56);
             buffer[1] = (byte) (data >>> 48);
@@ -240,8 +240,7 @@ public abstract class FileBase {
      *
      * @return  byte array
      */
-    public final static byte[] shortToBytes(short data, boolean bigEndian) {
-    	final byte[] buffer = new byte[2];
+    public final static byte[] shortToBytes(short data, boolean bigEndian, byte[] buffer) {
 
         if (bigEndian) {
             buffer[0] = (byte) (data >>> 8);
@@ -468,7 +467,7 @@ public abstract class FileBase {
      * @exception  IOException  if there is an error reading the file
      */
     public final float getFloat(boolean bigEndian) throws IOException {
-        
+
         raFile.readFully(byteFloatBuffer);
 
         int tmpInt;
@@ -498,7 +497,7 @@ public abstract class FileBase {
      * @exception  IOException  if there is an error reading the file
      */
     public final int getInt(boolean bigEndian) throws IOException {
-    	
+  
         raFile.readFully(byteIntBuffer);
 
         if (bigEndian) {
@@ -521,7 +520,6 @@ public abstract class FileBase {
      * @exception  IOException  if there is an error reading the file
      */
     public final long getLong(boolean bigEndian) throws IOException {
-    	
 
         raFile.readFully(byteLongBuffer);
 
@@ -558,7 +556,7 @@ public abstract class FileBase {
      */
     public final int getSignedShort(boolean bigEndian) throws IOException {
         int b3 = 0;
-        
+
         raFile.readFully(byteShortBuffer);
 
         if (bigEndian) {
@@ -759,7 +757,7 @@ public abstract class FileBase {
      * @throws  IOException
      */
     public final long readLong(boolean bigEndian) throws IOException {
-
+    
         raFile.readFully(byteLongBuffer);
 
         long tmpLong;
@@ -790,7 +788,7 @@ public abstract class FileBase {
      */
     public final short readShort(boolean bigEndian) throws IOException {
         short tempShort = 0;
-
+   
 
         raFile.readFully(byteShortBuffer);
 
@@ -834,7 +832,7 @@ public abstract class FileBase {
      * @throws  IOException 
      */
     public final int readUnsignedShort(boolean bigEndian) throws IOException {
-
+   
         raFile.readFully(byteShortBuffer);
 
         if (bigEndian) {

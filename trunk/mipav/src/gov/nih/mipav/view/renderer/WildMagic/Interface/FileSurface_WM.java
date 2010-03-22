@@ -2109,8 +2109,9 @@ public class FileSurface_WM {
         kOut.write(header);
 	       
         // number of facets
-        kOut.write(FileBase.intToBytes(iTriangleCount, false));
-	        
+        byte[] buff = new byte[4];
+        kOut.write(FileBase.intToBytes(iTriangleCount, false, buff));
+        byte[] buff2 = new byte[4];  
         for (int i = 0; i < iTriangleCount; i++) {	            
             index1 = aiIndex[(3 * i)];    
             index2 = aiIndex[((3 * i) + 1)];
@@ -2128,27 +2129,27 @@ public class FileSurface_WM {
             kNormal.Scale(1f/3f);
 	        
             // facet normal
-            kOut.write(FileBase.floatToBytes(kNormal.X, false));
-            kOut.write(FileBase.floatToBytes(kNormal.Y, false));
-            kOut.write(FileBase.floatToBytes(kNormal.Z, false));
+            kOut.write(FileBase.floatToBytes(kNormal.X, false,buff2));
+            kOut.write(FileBase.floatToBytes(kNormal.Y, false,buff2));
+            kOut.write(FileBase.floatToBytes(kNormal.Z, false,buff2));
 	            
             // index 1
             kVBuffer.GetPosition3(index1, kVertex);;            
-            kOut.write(FileBase.floatToBytes(kVertex.X, false));
-            kOut.write(FileBase.floatToBytes(kVertex.Y, false));
-            kOut.write(FileBase.floatToBytes(kVertex.Z, false));
+            kOut.write(FileBase.floatToBytes(kVertex.X, false,buff2));
+            kOut.write(FileBase.floatToBytes(kVertex.Y, false,buff2));
+            kOut.write(FileBase.floatToBytes(kVertex.Z, false,buff2));
 	                       
             // index 2
             kVBuffer.GetPosition3(index2, kVertex);;
-            kOut.write(FileBase.floatToBytes(kVertex.X, false));
-            kOut.write(FileBase.floatToBytes(kVertex.Y, false));
-            kOut.write(FileBase.floatToBytes(kVertex.Z, false));
+            kOut.write(FileBase.floatToBytes(kVertex.X, false,buff2));
+            kOut.write(FileBase.floatToBytes(kVertex.Y, false,buff2));
+            kOut.write(FileBase.floatToBytes(kVertex.Z, false,buff2));
 
             // index 3
             kVBuffer.GetPosition3(index3, kVertex);
-            kOut.write(FileBase.floatToBytes(kVertex.X, false));
-            kOut.write(FileBase.floatToBytes(kVertex.Y, false));
-            kOut.write(FileBase.floatToBytes(kVertex.Z, false));
+            kOut.write(FileBase.floatToBytes(kVertex.X, false,buff2));
+            kOut.write(FileBase.floatToBytes(kVertex.Y, false,buff2));
+            kOut.write(FileBase.floatToBytes(kVertex.Z, false,buff2));
 	            
             // 2 byte attribute == 0
             kOut.write(attribute);
