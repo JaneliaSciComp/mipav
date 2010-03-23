@@ -1155,6 +1155,24 @@ public strictfp class DoubleDouble
 		return s;
 	}
 	
+	public DoubleDouble min(DoubleDouble a, DoubleDouble b) {
+		if (a.le(b)) {
+			return a;
+		}
+		else {
+			return b;
+		}
+	}
+	
+	public DoubleDouble max(DoubleDouble a, DoubleDouble b) {
+		if (a.ge(b)) {
+			return a;
+		}
+		else {
+			return b;
+		}
+	}
+	
 	/*------------------------------------------------------------
 	 *   Conversion Functions
 	 *------------------------------------------------------------
