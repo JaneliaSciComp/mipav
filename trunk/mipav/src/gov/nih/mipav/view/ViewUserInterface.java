@@ -1885,9 +1885,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         openFile.setFilterType(filter);
 
-        // Matt through in a _false_ to get it to compile - 12/31/2002
-        // Vector openImageNames = openFile.open(stackFlag, false);
-        final ArrayList<Vector<String>> openImagesArrayList = openFile.open(stackFlag, false);
+
+        final ArrayList<Vector<String>> openImagesArrayList = openFile.open(stackFlag);
 
         if (openImagesArrayList != null) {
 

@@ -59,7 +59,7 @@ public class PlugInMuscleSegmentation implements PlugInAlgorithm {
 //    	if run from the command line, can be self-contained
     	ViewOpenFileUI ui = new ViewOpenFileUI(true);
     	
-    	ArrayList<Vector<String>> openImagesArrayList = ui.open(false, false);
+    	ArrayList<Vector<String>> openImagesArrayList = ui.open(false);
     	
     	if (openImagesArrayList != null) {
             for (int i = 0; i < openImagesArrayList.size(); i++) {

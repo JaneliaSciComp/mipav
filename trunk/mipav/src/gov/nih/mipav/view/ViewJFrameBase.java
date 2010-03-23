@@ -1372,7 +1372,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
             final JFileChooser chooser = fileChooser.getFileChooser();
 
-            if ( !fileChooser.useAWT()) {
+      
 
                 if (userInterface.getDefaultDirectory() != null) {
                     chooser.setCurrentDirectory(new File(userInterface.getDefaultDirectory()));
@@ -1411,16 +1411,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                 } else {
                     return null;
                 }
-            } else {
-                final String name = fileChooser.getFileName();
-                userInterface.setLastStackFlag(fileChooser.isMulti());
-
-                if (name == null) {
-                    return null;
-                } else {
-                    f = fileChooser.getOpenedFile();
-                }
-            }
+          
         } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameBase.loadImage");
 
@@ -1485,7 +1476,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                         // if prefill fails, do nothing
                     }
 
-                    if ( !fileChooser.useAWT()) {
+              
                         final JFileChooser chooser = fileChooser.getFileChooser();
 
                         // chooser.setName("Save image as");
@@ -1568,14 +1559,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                         } else {
                             return;
                         }
-                    } else {
-                        fileName = fileChooser.getFileName();
-                        directory = fileChooser.getDirectory();
-
-                        if ( (fileName == null) || (directory == null)) {
-                            return;
-                        }
-                    }
+                   
                 } catch (final OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: ViewJFrameBase.save");
                     Preferences.debug("Out of memory: ViewJFrameBase.save\n", 3);

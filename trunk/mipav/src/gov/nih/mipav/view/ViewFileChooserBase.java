@@ -50,8 +50,6 @@ public class ViewFileChooserBase {
     /** DOCUMENT ME! */
     protected ViewUserInterface UI;
 
-    /** DOCUMENT ME! */
-    protected boolean useAWT = Preferences.is(Preferences.PREF_USE_AWT);
 
     /** DOCUMENT ME! */
     private JPanel accessoryPanel = new JPanel();
@@ -117,52 +115,25 @@ public class ViewFileChooserBase {
 
         if (openDialog) {
 
-            if (useAWT) {
-                FileDialog fd = new FileDialog(UI.getMainFrame(), "Open File");
+            chooser = new JFileChooser();
+            chooser.setMultiSelectionEnabled(true);
+            chooser.setFont(MipavUtil.defaultMenuFont);
 
-                if (UI.getDefaultDirectory() != null) {
-                    fd.setDirectory(UI.getDefaultDirectory());
-                } else {
-                    fd.setDirectory(System.getProperties().getProperty("user.dir"));
-                }
+            // chooser.setAccessory(this);
+            chooser.setAccessory(accessoryPanel);
 
-                Dimension d = new Dimension(700, 400);
-                fd.setSize(d);
+            Dimension d = new Dimension(700, 400);
+            chooser.setMinimumSize(d);
+            chooser.setPreferredSize(d);
 
-                fd.setVisible(true);
-                fileName = fd.getFile();
-                directory = fd.getDirectory();
+            updateTitle();
+            setGUI();
 
-                if (fileName == null) {
-                    return;
-                }
+            MipavUtil.setFonts(chooser.getComponents());
 
-                openedFile = new File(directory, fileName);
-
-                // System.err.println("File name: " + fileName + " file directory: " + directory);
-                UI.setDefaultDirectory(directory);
-
-
-            } else {
-                chooser = new JFileChooser();
-                chooser.setMultiSelectionEnabled(true);
-                chooser.setFont(MipavUtil.defaultMenuFont);
-
-                // chooser.setAccessory(this);
-                chooser.setAccessory(accessoryPanel);
-
-                Dimension d = new Dimension(700, 400);
-                chooser.setMinimumSize(d);
-                chooser.setPreferredSize(d);
-
-                updateTitle();
-                setGUI();
-
-                MipavUtil.setFonts(chooser.getComponents());
-
-                addListeners();
-                panel.setVisible(true);
-            }
+            addListeners();
+            panel.setVisible(true);
+            
         }
     }
 
@@ -247,14 +218,6 @@ public class ViewFileChooserBase {
     }
 
 
-    /**
-     * Tells if the GUI is AWT or Swing type (JFileChooser or FileDialog).
-     *
-     * @return  if the GUI is AWT or Swing
-     */
-    public boolean useAWT() {
-        return this.useAWT;
-    }
 
     /**
      * Adds all listeners required by this accessory.
