@@ -116,15 +116,32 @@ public class PlugInAlgorithmPhilipsDicom extends AlgorithmBase {
 	
 		ViewUserInterface.getReference().getMessageFrame().append(appMessage, ViewJFrameMessage.DATA);
 		
-		final int nDim  = srcImage.getNDims();
+		
+		double pix = 0.0, srcpix = 0.0;
+		final int srcDim = srcImage.getNDims();
+		final int destDim  = srcImage.getNDims();
 		
 		for(int t=0; t<tDim; t++) {
     		for(int k=0; k<zDim; k++) {
         		for(int j=0; j<yDim; j++) {
         		    for(int i=0; i<xDim; i++) {
-        			    double pix = ((srcImage.get(i, j).doubleValue()*rescaleSlope) + rescaleIntercept) / 
+        		        switch(srcDim) {
+                        case 2:
+                            srcpix = srcImage.get(i, j).doubleValue();
+                            break;
+                        
+                        case 3:
+                            srcpix = srcImage.get(i, j, k).doubleValue();
+                            break;
+           
+                        case 4:
+                            srcpix = srcImage.get(i, j, k, t).doubleValue();
+                            break;
+                        }
+        		        
+        			    pix = ((srcpix*rescaleSlope) + rescaleIntercept) / 
         			                    (rescaleSlope*scaleSlope);
-        			    switch(nDim) {
+        			    switch(destDim) {
         			    case 2:
         			        destImage.set(i, j, pix);
         			        break;
