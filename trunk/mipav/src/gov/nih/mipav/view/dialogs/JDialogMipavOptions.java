@@ -195,8 +195,6 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     /** DOCUMENT ME! */
     private JCheckBox showOutputWindow;
 
-    /** DOCUMENT ME! */
-    private JCheckBox showPaintBorderBox;
 
     /** DOCUMENT ME! */
     private final JTabbedPane tabbedPane;
@@ -265,7 +263,6 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         displayUserInterfacePanel.setBorder(buildTitledBorder("User interface"));
         makeSplashOptions(gbc, gbl);
 
-        makePaintToolbarOptions(gbc, gbl);
 
         displayColorPanel.setLayout(gbl);
         displayColorPanel.setBorder(buildTitledBorder("Color\\VOI"));
@@ -455,9 +452,6 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                     .makeColorString(preferredActiveColor));
             Preferences.setProperty(Preferences.PREF_CROSSHAIR_CURSOR, crosshairNames[crosshairChoices
                     .getSelectedIndex()]);
-
-            Preferences
-                    .setProperty(Preferences.PREF_SHOW_PAINT_BORDER, String.valueOf(showPaintBorderBox.isSelected()));
 
             // check to see if provenance should be turned on (if it was off)
             if (Preferences.is(Preferences.PREF_DATA_PROVENANCE) != provenanceCheckBox.isSelected()) {
@@ -1426,28 +1420,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         showOutputWindow.setSelected(Preferences.is(Preferences.PREF_SHOW_OUTPUT));
     }
 
-    /**
-     * Makes the "Show Paint toolbar" and the "Show paint border" option lines in the globalChangesPanel.
-     * 
-     * @param gbc the constraints used in the globalChangesPanel
-     * @param gbl the layout used in the globablChangesPanel
-     */
-    protected void makePaintToolbarOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
 
-        showPaintBorderBox = new JCheckBox("Show paint border");
-        showPaintBorderBox.setFont(MipavUtil.font12);
-        showPaintBorderBox.setForeground(Color.black);
-        showPaintBorderBox.addActionListener(this);
-
-        gbc.insets = new Insets(0, 0, 0, 0);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbc.anchor = GridBagConstraints.WEST;
-
-        displayUserInterfacePanel.add(showPaintBorderBox, gbc);
-
-        // preset the choices.
-        showPaintBorderBox.setSelected(Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER));
-    }
 
     /**
      * Makes the quicklist option line in the otherPanel.
