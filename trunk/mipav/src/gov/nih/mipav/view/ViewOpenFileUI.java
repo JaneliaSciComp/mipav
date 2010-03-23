@@ -170,7 +170,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
      * 
      * @return List of the names of the images that were opened.
      */
-    public ArrayList<Vector<String>> open(boolean multiFile, boolean imageset) {
+    public ArrayList<Vector<String>> open(boolean multiFile) {
         ViewJFrameImage imageFrame;
         FileIO fileIO;
         FileIO fileIO2 = null;
@@ -198,7 +198,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
             filter = -1;
         }
 
-        if ( !useAWT) {
+   
 
             try {
                 setMulti(multiFile);
@@ -274,7 +274,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
 
                 return null;
             }
-        }
+        
 
         for (int k = 0; k < openedFiles.length; k++) {
 
@@ -302,16 +302,6 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
                     LUT2 = fileIO.getModelLUT();
                     modelRGB2 = fileIO.getModelRGB();
 
-                    // in the case of iaso running, put in frame will be false
-                    // this must be changed to true if the modalities are already set up
-                    // in the image and linkedImage
-                    if ( ( ( (image.getFileInfo(0).getModality() == FileInfoBase.RED_FREE) && (linkedImage.getFileInfo(
-                            0).getModality() == FileInfoBase.ICG)) || ( (image.getFileInfo(0).getModality() == FileInfoBase.ICG) && (linkedImage
-                            .getFileInfo(0).getModality() == FileInfoBase.RED_FREE)))
-                            && !imageset) {
-
-                        this.putInFrame = true;
-                    }
                 }
             } catch (OutOfMemoryError e) {
                 MipavUtil.displayError("Out of memory!");
@@ -328,7 +318,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
                         imageFrame.setRGBTA(modelRGB);
                     }
 
-                    if (xmlLinked && (linkedImage != null) && !imageset) {
+                    if (xmlLinked && (linkedImage != null)) {
                         imageFrame.setAndLoad(linkedImage);
 
                         if (LUT2 != null) {

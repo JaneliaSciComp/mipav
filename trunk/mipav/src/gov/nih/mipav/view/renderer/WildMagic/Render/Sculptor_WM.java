@@ -700,7 +700,7 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
                 try {
                     ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, true);
 
-                    if (!fileChooser.useAWT()) {
+                
                         JFileChooser chooser = fileChooser.getFileChooser();
 
                         // chooser.setName("Save image as");
@@ -784,14 +784,7 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
                         } else {
                             return false;
                         }
-                    } else {
-                        fileName = fileChooser.getFileName();
-                        directory = fileChooser.getDirectory();
-
-                        if ((fileName == null) || (directory == null)) {
-                            return false;
-                        }
-                    }
+                    
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: ViewJFrameBase.save");
                     Preferences.debug("Out of memory: ViewJFrameBase.save\n", 3);

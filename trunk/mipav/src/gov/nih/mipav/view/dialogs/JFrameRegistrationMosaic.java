@@ -967,40 +967,33 @@ public class JFrameRegistrationMosaic extends JFrame implements ActionListener, 
         try {
             ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, bSave);
 
-            if ( !fileChooser.useAWT()) {
-                JFileChooser chooser = fileChooser.getFileChooser();
+         
+            JFileChooser chooser = fileChooser.getFileChooser();
 
-                if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
-                    chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
-                } else {
-                    chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
-                }
-
-                int returnVal = -1;
-
-                if (bSave == true) {
-                    returnVal = chooser.showSaveDialog(this);
-                } else {
-                    chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.GEN));
-                    returnVal = chooser.showOpenDialog(this);
-                }
-
-                if (returnVal == JFileChooser.APPROVE_OPTION) {
-                    fileName = chooser.getSelectedFile().getName();
-
-                    directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
-                    ViewUserInterface.getReference().setDefaultDirectory(directory);
-                } else {
-                    return false;
-                }
+            if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+                chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
             } else {
-                fileName = fileChooser.getFileName();
-                directory = fileChooser.getDirectory();
-
-                if ( (fileName == null) || (directory == null)) {
-                    return false;
-                }
+                chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
             }
+
+            int returnVal = -1;
+
+            if (bSave == true) {
+                returnVal = chooser.showSaveDialog(this);
+            } else {
+                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.GEN));
+                returnVal = chooser.showOpenDialog(this);
+            }
+
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                fileName = chooser.getSelectedFile().getName();
+
+                directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                ViewUserInterface.getReference().setDefaultDirectory(directory);
+            } else {
+                return false;
+            }
+            
 
             if (bSave == false) {
                 kImage = fileIO.readImage(fileName, directory, false, null);

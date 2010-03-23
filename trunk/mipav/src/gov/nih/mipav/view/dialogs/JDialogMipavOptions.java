@@ -264,7 +264,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         displayUserInterfacePanel.setLayout(gbl);
         displayUserInterfacePanel.setBorder(buildTitledBorder("User interface"));
         makeSplashOptions(gbc, gbl);
-        makeAWTOptions(gbc, gbl);
+
         makePaintToolbarOptions(gbc, gbl);
 
         displayColorPanel.setLayout(gbl);
@@ -358,63 +358,32 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                 provenanceImageCheckBox.setSelected(false);
             }
         } else if (command.equalsIgnoreCase("ChooseProvenance")) {
-            if (Preferences.is(Preferences.PREF_USE_AWT)) {
-                final FileDialog fd = new FileDialog(userInterface.getMainFrame(), "Choose provenance file");
+            
+            final JFileChooser chooser = new JFileChooser();
 
-                try {
-                    fd.setDirectory(new File(provenanceFilename).getParentFile().getPath());
-                } catch (final Exception ex) {
-                    fd.setDirectory(System.getProperty("user.home"));
-                }
-
-                final Dimension d = new Dimension(700, 400);
-                fd.setSize(d);
-
-                fd.setVisible(true);
-
-                final String fileName = fd.getFile();
-                final String directory = fd.getDirectory();
-
-                if (fileName != null) {
-                    provenanceFilename = directory + fileName;
-
-                    String shortName = logFilename;
-
-                    if (provenanceFilename.length() > 24) {
-                        shortName = ".."
-                                + provenanceFilename.substring(provenanceFilename.length() - 22, provenanceFilename
-                                        .length());
-                    }
-
-                    provenanceFileButton.setText(shortName);
-                    provenanceFileButton.setToolTipText(provenanceFilename);
-                }
-            } else {
-                final JFileChooser chooser = new JFileChooser();
-
-                try {
-                    chooser.setCurrentDirectory(new File(provenanceFilename).getParentFile());
-                } catch (final Exception ex) {
-                    chooser.setCurrentDirectory(new File(System.getProperty("user.home")));
-                }
-
-                final int returnVal = chooser.showSaveDialog(this);
-
-                if (returnVal == JFileChooser.APPROVE_OPTION) {
-                    provenanceFilename = chooser.getSelectedFile().getPath();
-
-                    String shortName = provenanceFilename;
-
-                    if (provenanceFilename.length() > 24) {
-                        shortName = ".."
-                                + provenanceFilename.substring(provenanceFilename.length() - 22, provenanceFilename
-                                        .length());
-                    }
-
-                    provenanceFileButton.setText(shortName);
-                    provenanceFileButton.setToolTipText(provenanceFilename);
-                }
+            try {
+                chooser.setCurrentDirectory(new File(provenanceFilename).getParentFile());
+            } catch (final Exception ex) {
+                chooser.setCurrentDirectory(new File(System.getProperty("user.home")));
             }
+
+            final int returnVal = chooser.showSaveDialog(this);
+
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                provenanceFilename = chooser.getSelectedFile().getPath();
+
+                String shortName = provenanceFilename;
+
+                if (provenanceFilename.length() > 24) {
+                    shortName = ".."
+                            + provenanceFilename.substring(provenanceFilename.length() - 22, provenanceFilename
+                                    .length());
+                }
+
+                provenanceFileButton.setText(shortName);
+                provenanceFileButton.setToolTipText(provenanceFilename);
+            }
+            
         } else if (command.equalsIgnoreCase("color")) {
             final int index = voiColorChoices.getSelectedIndex();
             voiColorChoices.setBackground(voiColors[index]);
@@ -481,7 +450,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
             Preferences.setProperty(Preferences.PREF_SHOW_SPLASH, String.valueOf(displaySplash.isSelected()));
             Preferences.setProperty(Preferences.PREF_SHOW_LINE_ANGLE, String.valueOf(showLineVOIAngleBox.isSelected()));
-            Preferences.setProperty(Preferences.PREF_USE_AWT, String.valueOf(useAWTBox.isSelected()));
+            
             Preferences.setProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR, MipavUtil
                     .makeColorString(preferredActiveColor));
             Preferences.setProperty(Preferences.PREF_CROSSHAIR_CURSOR, crosshairNames[crosshairChoices
@@ -718,59 +687,29 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                     });
         } else if (command.equals("ChooseLog")) {
 
-            if (Preferences.is(Preferences.PREF_USE_AWT)) {
-                final FileDialog fd = new FileDialog(userInterface.getMainFrame(), "Choose log file");
+            final JFileChooser chooser = new JFileChooser();
 
-                try {
-                    fd.setDirectory(new File(logFilename).getParentFile().getPath());
-                } catch (final Exception ex) {
-                    fd.setDirectory(System.getProperty("user.dir"));
-                }
-
-                final Dimension d = new Dimension(700, 400);
-                fd.setSize(d);
-
-                fd.setVisible(true);
-
-                final String fileName = fd.getFile();
-                final String directory = fd.getDirectory();
-
-                if (fileName != null) {
-                    logFilename = directory + fileName;
-
-                    String shortName = logFilename;
-
-                    if (logFilename.length() > 24) {
-                        shortName = ".." + logFilename.substring(logFilename.length() - 22, logFilename.length());
-                    }
-
-                    logFileButton.setText(shortName);
-                    logFileButton.setToolTipText(logFilename);
-                }
-            } else {
-                final JFileChooser chooser = new JFileChooser();
-
-                try {
-                    chooser.setCurrentDirectory(new File(logFilename).getParentFile());
-                } catch (final Exception ex) {
-                    chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-                }
-
-                final int returnVal = chooser.showSaveDialog(this);
-
-                if (returnVal == JFileChooser.APPROVE_OPTION) {
-                    logFilename = chooser.getSelectedFile().getPath();
-
-                    String shortName = logFilename;
-
-                    if (logFilename.length() > 24) {
-                        shortName = ".." + logFilename.substring(logFilename.length() - 22, logFilename.length());
-                    }
-
-                    logFileButton.setText(shortName);
-                    logFileButton.setToolTipText(logFilename);
-                }
+            try {
+                chooser.setCurrentDirectory(new File(logFilename).getParentFile());
+            } catch (final Exception ex) {
+                chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
             }
+
+            final int returnVal = chooser.showSaveDialog(this);
+
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                logFilename = chooser.getSelectedFile().getPath();
+
+                String shortName = logFilename;
+
+                if (logFilename.length() > 24) {
+                    shortName = ".." + logFilename.substring(logFilename.length() - 22, logFilename.length());
+                }
+
+                logFileButton.setText(shortName);
+                logFileButton.setToolTipText(logFilename);
+            }
+            
         } else if (event.getSource() == enableLoggingBox) {
 
             if (enableLoggingBox.isSelected()) {
@@ -971,23 +910,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         return applyClosePanel;
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param gbc DOCUMENT ME!
-     * @param gbl DOCUMENT ME!
-     */
-    protected void makeAWTOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
-        useAWTBox = new JCheckBox("Use platform-style file dialog boxes");
-        useAWTBox.setFont(MipavUtil.font12);
-        useAWTBox.setForeground(Color.black);
-        useAWTBox.addActionListener(this);
-        gbc.insets = new Insets(0, 0, 0, 0);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbl.setConstraints(useAWTBox, gbc);
-        displayUserInterfacePanel.add(useAWTBox);
-        useAWTBox.setSelected(Preferences.is(Preferences.PREF_USE_AWT));
-    }
+   
 
     /**
      * Makes the "Check on frame close" option line in the globalChangesPanel If checked the user is required to reply

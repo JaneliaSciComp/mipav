@@ -3806,7 +3806,7 @@ public class JPanelClip extends JPanelRendererJ3D
                 try {
                     ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, true);
 
-                    if (!fileChooser.useAWT()) {
+                    
                         JFileChooser chooser = fileChooser.getFileChooser();
 
                         // chooser.setName("Save image as");
@@ -3890,14 +3890,7 @@ public class JPanelClip extends JPanelRendererJ3D
                         } else {
                             return;
                         }
-                    } else {
-                        fileName = fileChooser.getFileName();
-                        directory = fileChooser.getDirectory();
-
-                        if ((fileName == null) || (directory == null)) {
-                            return;
-                        }
-                    }
+                    
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: ViewJFrameBase.save");
                     Preferences.debug("Out of memory: ViewJFrameBase.save\n", 3);

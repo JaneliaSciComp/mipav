@@ -156,9 +156,6 @@ public class Preferences {
     /** Constant that indicates the pathname of the log file. */
     public static final String PREF_LOG_FILENAME = "LogFilename";
 
-    /** Constant that indicates ... i don't know what * */
-    public static final String PREF_USE_AWT = "UseAWT";
-
     /** Constant identifying if the miscellaneous toolbar is on by default. */
     public static final String PREF_IMAGE_TOOLBAR_ON = "ImageToolbar";
 
