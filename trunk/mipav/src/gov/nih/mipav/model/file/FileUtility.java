@@ -544,7 +544,7 @@ public class FileUtility {
         // end
         String suffix = FileUtility.getExtension(fileName); // suffix = ie. .ima or .img ...
 
-        // System.out.println( "Suffix = _" + suffix + "_" + " subName = " + subName);
+        Preferences.debug("Suffix = _" + suffix + "_" + " subName = " + subName, Preferences.DEBUG_FILEIO);
 
         for (i = 1; i < suffix.length(); i++) {
 
@@ -1598,6 +1598,9 @@ public class FileUtility {
         int i;
         char ch;
         int length = fName.lastIndexOf("."); // Start before suffix.
+        if(length == -1) {
+        	length = fName.length();
+        }
 
         for (i = length - 1; i > -1; i--) {
             ch = fName.charAt(i);
@@ -1609,11 +1612,9 @@ public class FileUtility {
 
         String tmpStr;
 
-        if (length == -1) {
-            tmpStr = fName;
-        } else {
-            tmpStr = fName.substring(0, i + 1);
-        }
+
+        tmpStr = fName.substring(0, i + 1);
+
 
         boolean aCharIsPresent = false;
 
