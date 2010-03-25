@@ -902,11 +902,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
             // It appears JButtons don't pass key modifiers
             // if((event.getModifiers() & ActionEvent.SHIFT_MASK) != 0) {}
-            int oldSlice = componentImage.getSlice();
+            final int oldSlice = componentImage.getSlice();
             if (componentImage.getVOIHandler().propVOI(1, false) == true) {
-                if(oldSlice == componentImage.getSlice()) { 
-                	//means some other handler has not already updated to the new slice
-            		incSlice();
+                if (oldSlice == componentImage.getSlice()) {
+                    // means some other handler has not already updated to the new slice
+                    incSlice();
                 }
             }
         } else if (command.equals("PropVOIDown")) {
@@ -914,12 +914,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 MipavUtil.displayWarning("Please select a VOI!");
                 return;
             }
-            int oldSlice = componentImage.getSlice();
+            final int oldSlice = componentImage.getSlice();
             if (componentImage.getVOIHandler().propVOI( -1, false) == true) {
-            	if(oldSlice == componentImage.getSlice()) { 
-                	//means some other handler has not already updated to the new slice
-            		decSlice();
-            	}
+                if (oldSlice == componentImage.getSlice()) {
+                    // means some other handler has not already updated to the new slice
+                    decSlice();
+                }
             }
         } else if (command.equals("PropVOIActiveUp")) {
             if ( !checkForActiveVOIs()) {
@@ -1387,9 +1387,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("ProstateFeaturesTest")) {
             testProstateFeatures();
         } else if (command.equals("ProstateFeaturesTrain")) {
-        	testProstateFeaturesTrain();
+            testProstateFeaturesTrain();
         } else if (command.equals("ProstateFeaturesClassification")) {
-        	testProstateFeaturesClassification();
+            testProstateFeaturesClassification();
         } else if (command.equals("LoadProstateMask")) {
             loadProstateMask();
         } else if (command.equals("SaveVOIIntensities")) {
@@ -1658,7 +1658,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("MRICorrection")) {
             new JDialogMRIShadingCorrection(this, getActiveImage());
         } else if (command.equals("sm2")) {
-        	new JDialogSM2(this, getActiveImage());
+            new JDialogSM2(this, getActiveImage());
         } else if (command.equals("graphBasedSeg")) {
             new JDialogGraphBasedSegmentation(this, getActiveImage());
         } else if (command.equals("evalSeg")) {
@@ -1711,7 +1711,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("waveletThreshold")) {
             new JDialogWaveletThreshold(this, getActiveImage());
         } else if (command.equals("Calculator")) {
-            //whether valid images are available is handled in the image calculator
+            // whether valid images are available is handled in the image calculator
             new JDialogImageCalculator(this, getActiveImage());
         } else if (command.equals("BulkCalculator")) {
 
@@ -1877,8 +1877,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogSkeletonize(this, getActiveImage());
         } else if (command.equals("Skeletonize3D")) {
             new JDialogSkeletonize3D(this, getActiveImage());
-        } else if (command.equals("SkelGeom3D")) {
-            new JDialogSkelGeom3D(this, getActiveImage());
         } else if (command.equals("Find edges")) {
             new JDialogFindEdges(this, getActiveImage());
         } else if (command.equals("Ultimate erode")) {
@@ -2685,26 +2683,25 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 windowLevel[0].setVisible(true);
                 windowLevel[0].toFront();
-                if(windowLevel[0].tabbedPane.getSelectedIndex() == 0) {
-                	int lev = windowLevel[0].levelSlider.getValue();
-                	int win = windowLevel[0].windowSlider.getValue();
-                	//needed this line below b/c otherwise the event was not getting invoked
-                	windowLevel[0].levelSlider.setValue(lev+1);
+                if (windowLevel[0].tabbedPane.getSelectedIndex() == 0) {
+                    final int lev = windowLevel[0].levelSlider.getValue();
+                    final int win = windowLevel[0].windowSlider.getValue();
+                    // needed this line below b/c otherwise the event was not getting invoked
+                    windowLevel[0].levelSlider.setValue(lev + 1);
 
-                	windowLevel[0].levelSlider.setValue(lev);
-                	windowLevel[0].windowSlider.setValue(win);
-                }else if(windowLevel[0].tabbedPane.getSelectedIndex() == 1) {
-                	int min = windowLevel[0].minSlider.getValue();
-                	int max = windowLevel[0].maxSlider.getValue();
-                	
-                	//needed this line below b/c otherwise the event was not getting invoked
-                	windowLevel[0].minSlider.setValue(min+1);
+                    windowLevel[0].levelSlider.setValue(lev);
+                    windowLevel[0].windowSlider.setValue(win);
+                } else if (windowLevel[0].tabbedPane.getSelectedIndex() == 1) {
+                    final int min = windowLevel[0].minSlider.getValue();
+                    final int max = windowLevel[0].maxSlider.getValue();
 
-                	windowLevel[0].minSlider.setValue(min);
-                	windowLevel[0].maxSlider.setValue(max);
+                    // needed this line below b/c otherwise the event was not getting invoked
+                    windowLevel[0].minSlider.setValue(min + 1);
+
+                    windowLevel[0].minSlider.setValue(min);
+                    windowLevel[0].maxSlider.setValue(max);
                 }
-                
-              
+
             } else {
 
                 if (windowLevel[1] == null) {
@@ -2713,15 +2710,14 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 windowLevel[1].setVisible(true);
                 windowLevel[1].toFront();
-                if(windowLevel[1].tabbedPane.getSelectedIndex() == 0) {
-                	windowLevel[1].levelSlider.setValue(windowLevel[1].levelSlider.getValue());
-                	windowLevel[1].windowSlider.setValue(windowLevel[1].windowSlider.getValue());
-                }else if(windowLevel[1].tabbedPane.getSelectedIndex() == 1) {
-                	windowLevel[1].minSlider.setValue(windowLevel[1].minSlider.getValue());
-                	windowLevel[1].maxSlider.setValue(windowLevel[1].maxSlider.getValue());
+                if (windowLevel[1].tabbedPane.getSelectedIndex() == 0) {
+                    windowLevel[1].levelSlider.setValue(windowLevel[1].levelSlider.getValue());
+                    windowLevel[1].windowSlider.setValue(windowLevel[1].windowSlider.getValue());
+                } else if (windowLevel[1].tabbedPane.getSelectedIndex() == 1) {
+                    windowLevel[1].minSlider.setValue(windowLevel[1].minSlider.getValue());
+                    windowLevel[1].maxSlider.setValue(windowLevel[1].maxSlider.getValue());
                 }
-                
-                
+
             }
         } else if (command.equals("invertLUT")) {
 
@@ -3056,7 +3052,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("despotT2")) {
             new JDialogDespotT2(this, getActiveImage());
         } else if (command.equals("LogSlope")) {
-        	new JDialogLogSlopeMapping();
+            new JDialogLogSlopeMapping();
         }
 
     }
@@ -3317,13 +3313,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // +=
             // fudgeFactor;
 
-            // System.err.println("either width is less than component width or height is less than component height...returning\n\n");
+            // System.err.println("either width is less than component width or height is less than component
+            // height...returning\n\n");
             addComponentListener(this);
 
             return;
         } else if ( (width > componentImage.getSize(null).width) || (height > componentImage.getSize(null).height)) {
 
-            // System.err.println("Width or height is greater than compImage width/height, setting to compImage width and height");
+            // System.err.println("Width or height is greater than compImage width/height, setting to compImage width
+            // and height");
 
             if (width > componentImage.getSize(null).width) {
                 width = componentImage.getSize(null).width;
@@ -3333,7 +3331,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 height = componentImage.getSize(null).height;
             }
         } else {
-            // System.err.println("apparently width and height are set okay (comparing to compeditimage)...returning\n\n");
+            // System.err.println("apparently width and height are set okay (comparing to
+            // compeditimage)...returning\n\n");
 
             addComponentListener(this);
 
@@ -3639,23 +3638,23 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     }
 
     /**
-     * Returns the Vector of Registered Framed Images that are of the same number of dimensions
-     * as the active image and same extents for dimesions 3, 4, and 5.
+     * Returns the Vector of Registered Framed Images that are of the same number of dimensions as the active image and
+     * same extents for dimesions 3, 4, and 5.
      * 
      * @return Vector
      */
     public Vector getRegisteredFramedImages(final ModelImage activeImage) {
         final int activeImageNumDims = activeImage.getNDims();
-        int activeImageNumSlices = 1, activeImageNumVolumes = 1, activeImageNumChannels = 1; 
-       
-        switch(activeImage.getNDims()) { //all extents above 2D need to be checked
-        case 5: 
-            activeImageNumChannels = activeImage.getExtents()[4];
-        case 4:
-            activeImageNumVolumes = activeImage.getExtents()[3];
-        case 3:
-            activeImageNumSlices = activeImage.getExtents()[2];
-            
+        int activeImageNumSlices = 1, activeImageNumVolumes = 1, activeImageNumChannels = 1;
+
+        switch (activeImage.getNDims()) { // all extents above 2D need to be checked
+            case 5:
+                activeImageNumChannels = activeImage.getExtents()[4];
+            case 4:
+                activeImageNumVolumes = activeImage.getExtents()[3];
+            case 3:
+                activeImageNumSlices = activeImage.getExtents()[2];
+
         }
 
         final Vector registeredFramedImages = new Vector();
@@ -3677,25 +3676,26 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     // now check the dimensionality to see if it matches with the active image
                     final int regFramedNumDims = image.getNDims();
 
-                    if (regFramedNumDims == activeImageNumDims) { //same dimensionality required
+                    if (regFramedNumDims == activeImageNumDims) { // same dimensionality required
 
-                        switch(image.getNDims()) {
-                        case 5:
-                            if(image.getExtents()[4] != activeImageNumChannels) {
-                                break;
-                            }
-                        case 4: 
-                            if(image.getExtents()[3] != activeImageNumVolumes) {
-                                break;
-                            }
-                        case 3:
-                            if(image.getExtents()[2] != activeImageNumSlices) {
-                                break;
-                            }
-                            //if reached, each n dimension's extents for image and n-d active image are equal
-                            registeredFramedImages.add(image);
-                        default:
-                            Preferences.debug(image.getImageName()+" will not be linked to "+activeImage.getImageName(), Preferences.DEBUG_MINOR);
+                        switch (image.getNDims()) {
+                            case 5:
+                                if (image.getExtents()[4] != activeImageNumChannels) {
+                                    break;
+                                }
+                            case 4:
+                                if (image.getExtents()[3] != activeImageNumVolumes) {
+                                    break;
+                                }
+                            case 3:
+                                if (image.getExtents()[2] != activeImageNumSlices) {
+                                    break;
+                                }
+                                // if reached, each n dimension's extents for image and n-d active image are equal
+                                registeredFramedImages.add(image);
+                            default:
+                                Preferences.debug(image.getImageName() + " will not be linked to "
+                                        + activeImage.getImageName(), Preferences.DEBUG_MINOR);
                         }
                     }
                 }
@@ -4195,7 +4195,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 if ( ((JButton) event.getSource()).getActionCommand().equals("QuickMask")
                         || ((JButton) event.getSource()).getActionCommand().equals("QuickMaskReverse")) {
-                    handleMaskPopupMenu((Component) event.getSource(), event);
+                    ViewJFrameBase.handleMaskPopupMenu((Component) event.getSource(), event);
                 } else if ( ((JButton) event.getSource()).getActionCommand().equals("CommitPaint")
                         || ((JButton) event.getSource()).getActionCommand().equals("CommitPaintExt")) {
                     handlePaintToMaskPopupMenu((Component) event.getSource(), event);
@@ -4426,10 +4426,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @return DOCUMENT ME!
      */
     public boolean setAndLoad(final ModelImage image2load, final boolean doOrigins, final boolean doOrients,
-            double defaultValue, double defaultRed, double defaultGreen, double defaultBlue )
-    {
+            final double defaultValue, final double defaultRed, final double defaultGreen, final double defaultBlue) {
 
-        if (loadImage(image2load, componentImage, false, doOrigins, doOrients, defaultValue, defaultRed, defaultGreen, defaultBlue )) {
+        if (loadImage(image2load, componentImage, false, doOrigins, doOrients, defaultValue, defaultRed, defaultGreen,
+                defaultBlue)) {
 
             if ( (imageA.getNDims() == 3) && (imageB.getNDims() == 4)) {
                 removeControls();
@@ -4691,7 +4691,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             controls.setZSlider(componentImage.getSlice());
             updateImages(true);
 
-            //when we set the slice of the other images, make SURE they do not try to update linked images (infinite loop)
+            // when we set the slice of the other images, make SURE they do not try to update linked images (infinite
+            // loop)
             if (updateLinkedImages && linkedScrolling) {
                 final Vector registeredFramedImages = getRegisteredFramedImages(getImageA());
 
@@ -4730,14 +4731,14 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     public void setTimeSlice(final int slice) {
         setTimeSlice(slice, true);
     }
-    
+
     /**
      * Sets the slice to be displayed and updates title frame.
      * 
      * @param slice indicates image time-slice (4th dimension) to be displayed
      * @param whether linked images should change their linked image sets
      */
-    public void setTimeSlice(final int slice, boolean checkScroll) {
+    public void setTimeSlice(final int slice, final boolean checkScroll) {
 
         if (imageA.getNDims() == 4) {
 
@@ -4761,8 +4762,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 if (infoDialogB != null) {
                     infoDialogB.setSlice(componentImage.getSlice(), componentImage.getTimeSlice());
                 }
-                
-                //when we set the slice of the other images, make SURE they do not try to update linked images (infinite loop)
+
+                // when we set the slice of the other images, make SURE they do not try to update linked images
+                // (infinite loop)
                 if (checkScroll && linkedScrolling) {
                     final Vector registeredFramedImages = getRegisteredFramedImages(getImageA());
 
@@ -4797,7 +4799,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 if (infoDialogB != null) {
                     infoDialogB.setSlice(componentImage.getSlice(), componentImage.getTimeSlice());
                 }
-                
+
                 if (checkScroll && linkedScrolling) {
                     final Vector registeredFramedImages = getRegisteredFramedImages(getImageB());
 
@@ -4809,8 +4811,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     }
                 }
             }
-            
-            
+
         } // else if ((imageB != null) && (imageB.getNDims() == 4))
         else {
             return;
@@ -5275,7 +5276,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         zoom = ViewJFrameBase.initZoom(imageA, widthResFactor, heightResFactor, ViewJFrameImage.xScreen,
                 ViewJFrameImage.yScreen);
     } // end initZoom()
-    
+
     /**
      * Constructs the title of the frame with the image name and the slice location.
      * 

@@ -178,7 +178,7 @@ public class ViewMenuBar {
 
                                 menuBuilder.buildMenuItem("Denoising BLS GSM", "blsGSM", 0, null, false),
                                 menuBuilder.buildMenuItem("Thresholding", "waveletThreshold", 0, null, false),}),
-                        menuBuilder.makeMenu("Histogram tools", false, new JMenuItem[] {
+                menuBuilder.makeMenu("Histogram tools", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("2D histogram", "histTwoDim", 0, null, false),
                         menuBuilder.buildMenuItem("Cumulative histogram", "cumHistogram", 0, null, false),
                         menuBuilder.makeMenu("Histogram equalization", false, new JMenuItem[] {
@@ -244,9 +244,6 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Skeletonize", null, 0, null, false),
                         menuBuilder.buildMenuItem("Skeletonize3D pot field", "Skeletonize3D", 0, null, false),
                         menuBuilder.buildMenuItem("Top hat", "topHat", 0, null, false),
-                        // menuBuilder.buildMenuItem("Skeletonize3D voronoi",
-                        // "SkelGeom3D", 0, null,
-                        // false),
                         menuBuilder.buildMenuItem("Ultimate erode", null, 0, null, false),}),
 
                 // menuBuilder.buildMenuItem("Plot surface", null, 0, null, false),
@@ -279,8 +276,8 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Mosaic", "Mosaic", 0, null, false),
                         menuBuilder.buildMenuItem("Optimized automatic registration", "OAR", 0, null, false),
                         menuBuilder.buildMenuItem("Optimized automatic registration 2.5D", "OAR25D", 0, null, false),
-                        //Doesn't seem to work at the moment - should handle wider search range than TSOAR. 
-                        //menuBuilder.buildMenuItem("Optimized automatic registration 3.5D", "OAR35D", 0, null, false),
+                        // Doesn't seem to work at the moment - should handle wider search range than TSOAR.
+                        // menuBuilder.buildMenuItem("Optimized automatic registration 3.5D", "OAR35D", 0, null, false),
                         menuBuilder.buildMenuItem("Time series optimized automatic registration", "TSOAR", 0, null,
                                 false),
                         menuBuilder.buildMenuItem("Registration validation", "RegValidation", 0, null, false),
@@ -289,10 +286,7 @@ public class ViewMenuBar {
                         // null, false),
                         menuBuilder.buildMenuItem("VOI landmark", "VOILandmark", 0, null, false),}),
                 menuBuilder.makeMenu("Segmentation", false, new JMenuItem[] {
-                        menuBuilder
-																.buildMenuItem(
-																		"Evaluate VOI segmentation",
-																		"evalSeg", 0, null, false),
+                        menuBuilder.buildMenuItem("Evaluate VOI segmentation", "evalSeg", 0, null, false),
 
                         // menuBuilder.buildMenuItem("Extract object surface",
                         // "extractObjectSurface", 0, null, false),
@@ -328,8 +322,10 @@ public class ViewMenuBar {
                 menuBuilder.makeMenu("Spatial statistics", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Circle pattern generation", "CircleGen", 0, null, false),
                         menuBuilder.buildMenuItem("Sphere pattern generation", "SphereGen", 0, null, false),
-                        menuBuilder.buildMenuItem("Two class segregation/association generation", "TwoClass", 0, null, false),
-                        menuBuilder.buildMenuItem("Three class segregation/association generation", "ThreeClass", 0, null, false)}),
+                        menuBuilder.buildMenuItem("Two class segregation/association generation", "TwoClass", 0, null,
+                                false),
+                        menuBuilder.buildMenuItem("Three class segregation/association generation", "ThreeClass", 0,
+                                null, false)}),
                 menuBuilder.makeMenu("Transformation tools", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Barrel distortion correction", "Barrel", 0, null, false),
                         menuBuilder.buildMenuItem("Circle to rectangle", "CircleToRec", 0, null, false),
@@ -437,7 +433,7 @@ public class ViewMenuBar {
 
         final JMenu dicomMenu = makeDicomMenu();
 
-        //final JMenu dtiMenu = makeDiffusionTensorMenu();
+        // final JMenu dtiMenu = makeDiffusionTensorMenu();
 
         final JMenuItem closeImageBItem = menuBuilder.buildMenuItem("Close image(B)", "CloseImageB", 0, null, true);
         menuBuilder.setMenuItemEnabled("Close image(B)", false);
@@ -482,32 +478,26 @@ public class ViewMenuBar {
                 menuBuilder.buildMenuItem("Memory usage", "MemoryUsage", 0, null, false),
                 menuBuilder.buildMenuItem("Memory allocation", "MemoryAdjust", 0, null, false),
                 menuBuilder.buildMenuItem("Image registry monitor", "ImageRegistryMonitor", 0, null, false),
-                menuBuilder.buildMenuItem("MIPAV data provenance", "DataProvenance", 0, null, false), ViewMenuBar.separator, 
-                menuBuilder.buildMenuItem("MIPAV options", "Options", 0, null, false),
+                menuBuilder.buildMenuItem("MIPAV data provenance", "DataProvenance", 0, null, false),
+                ViewMenuBar.separator, menuBuilder.buildMenuItem("MIPAV options", "Options", 0, null, false),
                 menuBuilder.buildMenuItem("Shortcut editor", Preferences.PREF_SHORTCUTS, 0, null, false),});
     }
 
     public JMenu makeSystemsAnalysisMenu() {
-    	 return menuBuilder.makeMenu("Systems analysis", 'S', false, new JComponent[] {
-    			 menuBuilder.makeMenu("DTI", false, new JMenuItem[] {
-                         menuBuilder.buildMenuItem("Estimate tensor", "estimateTensor", 0, null, false),
-                         menuBuilder.buildMenuItem("Fiber tracking / Statistics", "fiberTracking", 0, null, false),
-                         menuBuilder.buildMenuItem("Visualization", "dtiVisualization", 0, null, false)  
-    			 }),
-    			 menuBuilder.buildMenuItem("Log slope mapping", "LogSlope", 0, null, false),
-    			 menuBuilder.makeMenu("Quantitative MRI", false, new JMenuItem[] {
-    			         menuBuilder.makeMenu("T1", false, new JMenuItem[] {
-    			                 menuBuilder.buildMenuItem("DespotT1", "despotT1", 0, null, false)
-    			         }),
-    			         menuBuilder.makeMenu("T2", false, new JMenuItem[] {
-    			                 menuBuilder.buildMenuItem("DespotT2", "despotT2", 0, null, false)
-    			         }),
-    			         menuBuilder.makeMenu("DCE", false, new JMenuItem[] {
-    			                 menuBuilder.buildMenuItem("T2M2", "t2m2", 0, null, false),
-    			                 menuBuilder.buildMenuItem("SM2", "sm2", 0, null, false)
-    			         })
-    			 })
-    	 });
+        return menuBuilder.makeMenu("Systems analysis", 'S', false, new JComponent[] {
+                menuBuilder.makeMenu("DTI", false, new JMenuItem[] {
+                        menuBuilder.buildMenuItem("Estimate tensor", "estimateTensor", 0, null, false),
+                        menuBuilder.buildMenuItem("Fiber tracking / Statistics", "fiberTracking", 0, null, false),
+                        menuBuilder.buildMenuItem("Visualization", "dtiVisualization", 0, null, false)}),
+                menuBuilder.buildMenuItem("Log slope mapping", "LogSlope", 0, null, false),
+                menuBuilder.makeMenu("Quantitative MRI", false, new JMenuItem[] {
+                        menuBuilder.makeMenu("T1", false, new JMenuItem[] {menuBuilder.buildMenuItem("DespotT1",
+                                "despotT1", 0, null, false)}),
+                        menuBuilder.makeMenu("T2", false, new JMenuItem[] {menuBuilder.buildMenuItem("DespotT2",
+                                "despotT2", 0, null, false)}),
+                        menuBuilder.makeMenu("DCE", false, new JMenuItem[] {
+                                menuBuilder.buildMenuItem("T2M2", "t2m2", 0, null, false),
+                                menuBuilder.buildMenuItem("SM2", "sm2", 0, null, false)})})});
     }
 
     /**
@@ -670,7 +660,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Horizontal", "ImageFlipY", 0, "fliphoriz.gif", true),
                         menuBuilder.buildMenuItem("Vertical", "ImageFlipX", 0, "flipvert.gif", true),
                         menuBuilder.buildMenuItem("Depth", "ImageFlipZ", 0, "flipvert.gif", true)}),
-                menuBuilder.buildMenuItem("Generate grid", "writeGrid", 0, null, false),       
+                menuBuilder.buildMenuItem("Generate grid", "writeGrid", 0, null, false),
                 menuBuilder.buildMenuItem("Image calculator", "Calculator", 0, null, false),
                 menuBuilder.buildMenuItem("Image calculator - Bulk Images", "BulkCalculator", 0, null, false),
                 menuBuilder.buildMenuItem("Image math", null, 0, null, false),
@@ -845,16 +835,24 @@ public class ViewMenuBar {
                                 menuBuilder.buildMenuItem("Trim parameter", "Trim", 0, null, true),
                                 ViewMenuBar.separator,
                                 menuBuilder.buildMenuItem("Cardiology VOI", "Cardio", 0, null, true),
-                                menuBuilder.makeMenu("Prostate VOI", true, new JMenuItem[] {
-                                		menuBuilder.buildMenuItem("Merge VOIs", "ProstateMergedVOIs", 0, null, false),
-                                		menuBuilder.buildMenuItem("Surface Reconstruction", "ProstateReconstruct", 0, null, false),
-                                		menuBuilder.buildMenuItem("Save Features", "ProstateFeaturesSave", 0, null, false),
-                                		menuBuilder.buildMenuItem("Save Test Features", "ProstateFeaturesTest", 0, null, false),
-                                		menuBuilder.buildMenuItem("Training", "ProstateFeaturesTrain", 0, null, false),
-                                		menuBuilder.buildMenuItem("Classification", "ProstateFeaturesClassification", 0, null, false),
-                                		menuBuilder.buildMenuItem("Load Mask", "LoadProstateMask", 0, null, false),
-                                		menuBuilder.buildMenuItem("Extract Surface", "ProstateExtract", 0, null, false)
-                                }),
+                                menuBuilder.makeMenu("Prostate VOI", true,
+                                        new JMenuItem[] {
+                                                menuBuilder.buildMenuItem("Merge VOIs", "ProstateMergedVOIs", 0, null,
+                                                        false),
+                                                menuBuilder.buildMenuItem("Surface Reconstruction",
+                                                        "ProstateReconstruct", 0, null, false),
+                                                menuBuilder.buildMenuItem("Save Features", "ProstateFeaturesSave", 0,
+                                                        null, false),
+                                                menuBuilder.buildMenuItem("Save Test Features", "ProstateFeaturesTest",
+                                                        0, null, false),
+                                                menuBuilder.buildMenuItem("Training", "ProstateFeaturesTrain", 0, null,
+                                                        false),
+                                                menuBuilder.buildMenuItem("Classification",
+                                                        "ProstateFeaturesClassification", 0, null, false),
+                                                menuBuilder.buildMenuItem("Load Mask", "LoadProstateMask", 0, null,
+                                                        false),
+                                                menuBuilder.buildMenuItem("Extract Surface", "ProstateExtract", 0,
+                                                        null, false)}),
                                 ViewMenuBar.separator,
                                 menuBuilder.makeMenu("Graph", true, new JMenuItem[] {
                                         menuBuilder.buildMenuItem("Open VOI intensity graph", "OpenNewGraph", 0,
@@ -972,7 +970,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Denoising BLS GSM", false);
             menuBuilder.setMenuItemEnabled("Extract 3D subset from 4D", false);
             menuBuilder.setMenuItemEnabled("Graph based", false);
-            //menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", false);
+            // menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", false);
             menuBuilder.setMenuItemEnabled("Remove time volumes", false);
             menuBuilder.setMenuItemEnabled("Swap dims 3<->4", false);
             menuBuilder.setMenuItemEnabled("Swap dims 1<->4", false);
@@ -1010,7 +1008,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Manual 2D series", true);
             menuBuilder.setMenuItemEnabled("Constrained optimized automatic registration", false);
             menuBuilder.setMenuItemEnabled("Optimized automatic registration 2.5D", false);
-            //menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", false);
+            // menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", false);
             menuBuilder.setMenuItemEnabled("B-Spline automatic registration 2.5D", false);
             menuBuilder.setMenuItemEnabled("Time series optimized automatic registration", false);
             menuBuilder.setMenuItemEnabled("X axis 180", false);
@@ -1182,7 +1180,7 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("Convert 4D to 3D", true);
         menuBuilder.setMenuItemEnabled("Denoising BLS GSM", true);
         menuBuilder.setMenuItemEnabled("Extract 3D subset from 4D", true);
-        //menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", true);
+        // menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", true);
         menuBuilder.setMenuItemEnabled("Remove time volumes", true);
         menuBuilder.setMenuItemEnabled("Swap dims 3<->4", true);
         menuBuilder.setMenuItemEnabled("Swap dims 1<->4", true);
