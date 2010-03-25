@@ -12,6 +12,8 @@ import java.util.*;
 import java.io.*;
 
 import javax.swing.*;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
  /** 
 *   
 *   Interface for the TalairachTransform plugin.
@@ -523,30 +525,44 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
         int[] dims = null;
 		String suffix = "";
 		int transformID=-1;
+		Vector3f currentOrigin = new Vector3f(image.getOrigin()); 
+		Vector3f newOrigin = new Vector3f();
+		int[] newOrientations = new int[3];
+		
+		
+		
 		if (transformType.equals("acpc to orig")) 	   { 
 			dims = transform.getOrigDim(); 
 			suffix = "_orig"; 
 			transformID = AlgorithmTalairachTransform.ACPC_TO_ORIG;
+			transform.acpcToOrig(currentOrigin, newOrigin);
+			newOrientations = transform.getOrigOrientLabelsInverse();
 		} else if (transformType.equals("Tlrc to orig")) { 
 			dims = transform.getOrigDim(); 
 			suffix = "_orig"; 
 			transformID = AlgorithmTalairachTransform.TLRC_TO_ORIG;
+			transform.tlrcToOrig(currentOrigin, newOrigin);
+			newOrientations = transform.getOrigOrientLabelsInverse();
 		} else if (transformType.equals("orig to acpc")) { 
 			dims = transform.getAcpcDim(); 
 			suffix = "_acpc"; 
 			transformID = AlgorithmTalairachTransform.ORIG_TO_ACPC;
+			transform.origToAcpc(currentOrigin, newOrigin);
 		} else if (transformType.equals("Tlrc to acpc")) { 
 			dims = transform.getAcpcDim(); 
 			suffix = "_acpc"; 
 			transformID = AlgorithmTalairachTransform.TLRC_TO_ACPC;
+			transform.tlrcToAcpc(currentOrigin, newOrigin);
 		} else if (transformType.equals("orig to Tlrc")) { 
 			dims = transform.getTlrcDim(); 
 			suffix = "_Tlrc"; 
 			transformID = AlgorithmTalairachTransform.ORIG_TO_TLRC;
+			transform.origToTlrc(currentOrigin, newOrigin);
 		} else if (transformType.equals("acpc to Tlrc")) { 
 			dims = transform.getTlrcDim(); 
 			suffix = "_Tlrc"; 
 			transformID = AlgorithmTalairachTransform.ACPC_TO_TLRC;
+			transform.acpcToTlrc(currentOrigin, newOrigin);
 		}
 		int interpolationID = -1;
 		if (interpolation.equals("Nearest Neighbor")) {
@@ -568,7 +584,7 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 		} else if (interpolation.equals("Windowed sinc")) {
 			interpolationID = AlgorithmTalairachTransform.WSINC;
 		}
-		
+		float[] newOriginFloatArray = {newOrigin.X,newOrigin.Y,newOrigin.Z};
 		try {
 			resultImage = new ModelImage(ModelImage.FLOAT, dims, makeImageName(otherImage.getImageName(), suffix));
 				
@@ -584,10 +600,8 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 					fileInfo[i].setUnitsOfMeasure(image.getFileInfo(0).getUnitsOfMeasure());
 					fileInfo[i].setResolutions(transform.getOrigRes());
 					fileInfo[i].setExtents(transform.getOrigDim());
-					if (transform.getOrigOrigin() != null) {
-                        fileInfo[i].setOrigin(transform.getOrigOrigin());
-					}
-					fileInfo[i].setAxisOrientation(transform.getOrigOrientLabels());
+                    fileInfo[i].setOrigin(newOriginFloatArray);
+					fileInfo[i].setAxisOrientation(newOrientations);
 					fileInfo[i].setImageOrientation(transform.getOrigImageOrientLabel());
 				}
 			} else {
@@ -607,6 +621,7 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 					fileInfo[i].setResolutions(resol);
 					fileInfo[i].setExtents(dims);
 					fileInfo[i].setAxisOrientation(orient);
+					fileInfo[i].setOrigin(newOriginFloatArray);
 					fileInfo[i].setImageOrientation(FileInfoBase.AXIAL);
 				}
 			}

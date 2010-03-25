@@ -2793,27 +2793,41 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         int imageOrientation;
         FileInfoBase[] fileInfo;
         int i;
+        Vector3f currentOrigin = new Vector3f(image.getOrigin()); 
+		Vector3f newOrigin = new Vector3f();
+		int[] newOrientations = new int[3];
 
         if (transformType == JDialogScriptableTransform.ACPC_TO_ORIG) {
             dims = tInfo.getOrigDim();
+            tInfo.acpcToOrig(currentOrigin, newOrigin);
+			newOrientations = tInfo.getOrigOrientLabelsInverse();
         } else if (transformType == JDialogScriptableTransform.TLRC_TO_ORIG) {
             dims = tInfo.getOrigDim();
+            tInfo.tlrcToOrig(currentOrigin, newOrigin);
+			newOrientations = tInfo.getOrigOrientLabelsInverse();
         } else if (transformType == JDialogScriptableTransform.ORIG_TO_ACPC) {
             dims = tInfo.getAcpcDim();
+            tInfo.origToAcpc(currentOrigin, newOrigin);
         } else if (transformType == JDialogScriptableTransform.TLRC_TO_ACPC) {
             dims = tInfo.getAcpcDim();
+            tInfo.tlrcToAcpc(currentOrigin, newOrigin);
         } else if (transformType == JDialogScriptableTransform.ORIG_TO_TLRC) {
             dims = tInfo.getTlrcDim();
+            tInfo.origToTlrc(currentOrigin, newOrigin);
         } else if (transformType == JDialogScriptableTransform.ACPC_TO_TLRC) {
             dims = tInfo.getTlrcDim();
+            tInfo.acpcToTlrc(currentOrigin, newOrigin);
         }
 
         try {
             resultImage = new ModelImage(ModelStorageBase.FLOAT, dims, JDialogBase.makeImageName(image.getImageName(),
                     "_TT"));
             fileInfo = resultImage.getFileInfo();
-
-            if ( (transformType == JDialogScriptableTransform.ACPC_TO_ORIG)
+            
+            //Dont think the following code is needed...seems redundant to the stuff below it
+            //Won't erase for now
+            
+            /*if ( (transformType == JDialogScriptableTransform.ACPC_TO_ORIG)
                     || (transformType == JDialogScriptableTransform.TLRC_TO_ORIG)) {
                 axisOrientation = getAxisOrientation(tInfo.getOrigOrient());
                 zAxisOrientation = axisOrientation[2];
@@ -2863,7 +2877,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                     fileInfo[i].setImageOrientation(FileInfoBase.AXIAL);
                 } // for (i = 0; i < fileInfo.length; i++)
             } // else not transformed to ORIG
-
+*/
             if ( (transformType == AlgorithmTalairachTransform.ACPC_TO_ORIG)
                     || (transformType == AlgorithmTalairachTransform.TLRC_TO_ORIG)) {
 
@@ -2878,7 +2892,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                     fileInfo[i].setResolutions(tInfo.getOrigRes());
                     fileInfo[i].setExtents(tInfo.getOrigDim());
                     fileInfo[i].setOrigin(tInfo.getOrigOrigin());
-                    fileInfo[i].setAxisOrientation(tInfo.getOrigOrientLabels());
+                    fileInfo[i].setAxisOrientation(newOrientations);
                     fileInfo[i].setImageOrientation(tInfo.getOrigImageOrientLabel());
 
                     // BEN
