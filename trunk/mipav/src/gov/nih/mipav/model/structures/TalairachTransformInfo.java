@@ -26,37 +26,37 @@ public class TalairachTransformInfo implements Serializable {
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 5791995578653926105L;
 
-    /** acpc constants. */
+    /** acpc constants. Lateral. */
     private static final float ACPC_LATERAL = 95.0f;
 
-    /** DOCUMENT ME! */
+    /** acpc constants. Anterior. */
     private static final float ACPC_ANTERIOR = 95.0f;
 
-    /** DOCUMENT ME! */
+    /** acpc constants.  Posterior. */
     private static final float ACPC_POSTERIOR = 140.0f;
 
-    /** DOCUMENT ME! */
+    /** acpc constants.  Inferior. */
     private static final float ACPC_INFERIOR = 70.0f;
 
-    /** DOCUMENT ME! */
+    /** acpc constants.  Superior. */
     private static final float ACPC_SUPERIOR = 100.0f;
 
-    /** DOCUMENT ME! */
+    /** acpc constants. AC to PC. */
     public static final int TLRC_AC_TO_PC = 23;
 
-    /** DOCUMENT ME! */
+    /** acpc constants. Most Anterior to AC. */
     public static final int TLRC_FRONT_TO_AC = 70;
 
-    /** DOCUMENT ME! */
+    /** acpc constants. PC to most posterior. */
     public static final int TLRC_PC_TO_BACK = 79;
 
-    /** DOCUMENT ME! */
+    /** acpc constants. most inferior to AC.*/
     public static final int TLRC_BOT_TO_AC = 42;
 
-    /** DOCUMENT ME! */
+    /** acpc constants. AC to most superior. */
     public static final int TLRC_AC_TO_TOP = 74;
 
-    /** DOCUMENT ME! */
+    /** acpc constants. AC to left or right. */
     public static final int TLRC_AC_TO_LAT = 68;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -64,10 +64,10 @@ public class TalairachTransformInfo implements Serializable {
     /** Anterior Comissure in acpc space. */
     private Vector3f acpcAC = new Vector3f(95.0f, 95.0f, 70.0f);
 
-    /** image dimensions. */
+    /** Image dimensions. */
     private int[] acpcDim = { 192, 236, 171 };
 
-    /** DOCUMENT ME! */
+    /** ACPC min and max extents of the brain. */
     private Vector3f acpcMax;
 
     /** ACPC min and max extents of the brain. */
@@ -76,17 +76,15 @@ public class TalairachTransformInfo implements Serializable {
     /** Posterior Comissure in acpc space. */
     private Vector3f acpcPC = new Vector3f();
 
-    /** voxel resolution (cubic). */
+    /** Voxel resolution (cubic). */
     private float acpcRes = 1.0f;
 
-    // flags for computations
-    /** true if we have the data to compute orig <-> acpc. */
+    /** True if we have the data to compute orig <-> acpc. */
     private boolean isAcpc = false;
 
-    /** true if we ahve the data to compute acpc <-> tlrc. */
+    /** True if we ahve the data to compute acpc <-> tlrc. */
     private boolean isTlrc = false;
 
-    // orig: original image space
     /** Anterior Comissure in original space. */
     private Vector3f origAC;
 
@@ -96,34 +94,25 @@ public class TalairachTransformInfo implements Serializable {
     /** ACPC orientation in original image. */
     private float[][] origOrient;
     
-    /** Original image origin */
+    /** Original image origin. */
     private float[] origOrigin;
-
-    /* acpc: ACPC aligned space */
 
     /** Posterior Comissure in original space. */
     private Vector3f origPC;
 
-    // private Vector3f  origMin;    // Original min and max extents of the brain
-    // private Vector3f  origMax;
-
     /** Original image voxel resolutions. */
     private float[] origRes;
 
-    // tlrc: Talairach space
     /** Anterior Comissure in Talairach space. */
     private Vector3f tlrcAC = new Vector3f(80.0f, 80.0f, 65.0f);
 
-    /** image dimensions. */
+    /** Image dimensions. */
     private int[] tlrcDim = { 161, 191, 151 };
 
     /** Posterior Comissure in Talairach space. */
     private Vector3f tlrcPC = new Vector3f(80.0f, 103.0f, 65.0f);
 
-    // private Vector3f  tlrcMin = new Vector3f(12.0f,10.0f,23.0f);  // ACPC min and max extents of the brain
-    // private Vector3f  tlrcMax = new Vector3f(148.0f,172.0f,139.0f);
-
-    /** voxel resolutions for the sub-boxes. */
+    /** Voxel resolutions for the sub-boxes. */
     private float[] tlrcRes;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -167,14 +156,13 @@ public class TalairachTransformInfo implements Serializable {
     }
     
     /**
-     * DOCUMENT ME!
+     * Transforms point from acpc to orig...matrix is implicitly inverted in code.
      *
-     * @param  pt     DOCUMENT ME!
-     * @param  trans  DOCUMENT ME!
+     * @param  pt     old point
+     * @param  trans  new point
      */
     public void acpcToOrig(Vector3f pt, Vector3f trans) {
 
-        // (P_acpc-AC_acpc)*Res_acpc*orientOrig = (P_orig-AC_orig)*Res_orig
         trans.X = origAC.X + (origOrient[0][0] * (pt.X - acpcAC.X) * acpcRes / origRes[0]) +
                   (origOrient[1][0] * (pt.Y - acpcAC.Y) * acpcRes / origRes[0]) +
                   (origOrient[2][0] * (pt.Z - acpcAC.Z) * acpcRes / origRes[0]);
@@ -187,33 +175,19 @@ public class TalairachTransformInfo implements Serializable {
                   (origOrient[1][2] * (pt.Y - acpcAC.Y) * acpcRes / origRes[2]) +
                   (origOrient[2][2] * (pt.Z - acpcAC.Z) * acpcRes / origRes[2]);
 
-        /*
-         *       trans.X = origAC.X + origOrient[0][0]*(pt.X-acpcAC.X)*acpcRes/origRes[0]                +
-         * origOrient[1][0]*(pt.Y-acpcAC.Y)*acpcRes/origRes[1]                +
-         * origOrient[2][0]*(pt.Z-acpcAC.Z)*acpcRes/origRes[2];
-         *
-         *    trans.Y = origAC.Y + origOrient[0][1]*(pt.X-acpcAC.X)*acpcRes/origRes[0]                +
-         * origOrient[1][1]*(pt.Y-acpcAC.Y)*acpcRes/origRes[1]                +
-         * origOrient[2][1]*(pt.Z-acpcAC.Z)*acpcRes/origRes[2];
-         *
-         *    trans.Z = origAC.Z + origOrient[0][2]*(pt.X-acpcAC.X)*acpcRes/origRes[0]                +
-         * origOrient[1][2]*(pt.Y-acpcAC.Y)*acpcRes/origRes[1]                +
-         * origOrient[2][2]*(pt.Z-acpcAC.Z)*acpcRes/origRes[2];
-         */
         return;
     }
 
     /**
-     * DOCUMENT ME!
+     * Transforms point from acpc to orig...matrix is implicitly inverted in code.
      *
-     * @param  x      DOCUMENT ME!
-     * @param  y      DOCUMENT ME!
-     * @param  z      DOCUMENT ME!
-     * @param  trans  DOCUMENT ME!
+     * @param  x      
+     * @param  y      
+     * @param  z      
+     * @param  trans  new point
      */
     public void acpcToOrig(int x, int y, int z, Vector3f trans) {
-
-        // (P_acpc-AC_acpc)*Res_acpc*orientOrig = (P_orig-AC_orig)*Res_orig
+    	
         trans.X = origAC.X + (origOrient[0][0] * (x - acpcAC.X) * acpcRes / origRes[0]) +
                   (origOrient[1][0] * (y - acpcAC.Y) * acpcRes / origRes[0]) +
                   (origOrient[2][0] * (z - acpcAC.Z) * acpcRes / origRes[0]);
@@ -226,27 +200,14 @@ public class TalairachTransformInfo implements Serializable {
                   (origOrient[1][2] * (y - acpcAC.Y) * acpcRes / origRes[2]) +
                   (origOrient[2][2] * (z - acpcAC.Z) * acpcRes / origRes[2]);
 
-        /*
-         *       trans.X = origAC.X +  origOrient[0][0]*(x-acpcAC.X)*acpcRes/origRes[0]                +
-         * origOrient[1][0]*(y-acpcAC.Y)*acpcRes/origRes[1]                +
-         * origOrient[2][0]*(z-acpcAC.Z)*acpcRes/origRes[2];
-         *
-         *    trans.Y = origAC.Y +  origOrient[0][1]*(x-acpcAC.X)*acpcRes/origRes[0]                +
-         * origOrient[1][1]*(y-acpcAC.Y)*acpcRes/origRes[1]                +
-         * origOrient[2][1]*(z-acpcAC.Z)*acpcRes/origRes[2];
-         *
-         *    trans.Z = origAC.Z +  origOrient[0][2]*(x-acpcAC.X)*acpcRes/origRes[0]                +
-         * origOrient[1][2]*(y-acpcAC.Y)*acpcRes/origRes[1]                +
-         * origOrient[2][2]*(z-acpcAC.Z)*acpcRes/origRes[2];
-         */
         return;
     }
 
     /**
-     * DOCUMENT ME!
+     * Transforms point from acpc to tlrc.
      *
-     * @param  pt     DOCUMENT ME!
-     * @param  trans  DOCUMENT ME!
+     * @param  pt     old point
+     * @param  trans  new point
      */
     public void acpcToTlrc(Vector3f pt, Vector3f trans) {
         float resx, resy, resz;
@@ -274,7 +235,6 @@ public class TalairachTransformInfo implements Serializable {
             resz = tlrcRes[6];
         }
 
-        // (P_tlrc-AC_tlrc)*Res_tlrc = (P_acpc-AC_acpc)*Res_acpc
         if (usePC) {
             trans.X = tlrcPC.X + ((pt.X - acpcPC.X) * acpcRes / resx);
             trans.Y = tlrcPC.Y + ((pt.Y - acpcPC.Y) * acpcRes / resy);
@@ -289,12 +249,12 @@ public class TalairachTransformInfo implements Serializable {
     }
 
     /**
-     * DOCUMENT ME!
+     * Transforms point from acpc to tlrc.
      *
-     * @param  x      DOCUMENT ME!
-     * @param  y      DOCUMENT ME!
-     * @param  z      DOCUMENT ME!
-     * @param  trans  DOCUMENT ME!
+     * @param  x      
+     * @param  y      
+     * @param  z     
+     * @param  trans  new point
      */
     public void acpcToTlrc(int x, int y, int z, Vector3f trans) {
         float resx, resy, resz;
@@ -337,15 +297,13 @@ public class TalairachTransformInfo implements Serializable {
     }
 
     /**
-     * for debug: return the transform as a 4x4 matrix.*
+     * For debug: return the transform as a 4x4 matrix.
      *
-     * @return  DOCUMENT ME!
+     * @return  4*4 matrix
      */
     public double[][] displayAcpc() {
         double[][] mat = new double[4][4];
-        Vector3f trans = new Vector3f();
 
-        // (P_acpc-AC_acpc)*Res_acpc*orientOrig = (P_orig-AC_orig)*Res_orig
         mat[0][0] = origOrient[0][0] / origRes[0] * acpcRes;
         mat[0][1] = origOrient[1][0] / origRes[1] * acpcRes;
         mat[0][2] = origOrient[2][0] / origRes[2] * acpcRes;
@@ -377,15 +335,13 @@ public class TalairachTransformInfo implements Serializable {
     }
 
     /**
-     * DOCUMENT ME!
+     * For debug: return the transform inverse as a 4x4 matrix.
      *
-     * @return  DOCUMENT ME!
+     * @return  4*4 matrix
      */
     public double[][] displayAcpcInverse() {
         double[][] mat = new double[4][4];
-        Vector3f trans = new Vector3f();
 
-        // (P_acpc-AC_acpc)*Res_acpc*orientOrig = (P_orig-AC_orig)*Res_orig
         mat[0][0] = origOrient[0][0] * origRes[0] / acpcRes;
         mat[0][1] = origOrient[0][1] * origRes[0] / acpcRes;
         mat[0][2] = origOrient[0][2] * origRes[0] / acpcRes;
@@ -417,11 +373,7 @@ public class TalairachTransformInfo implements Serializable {
     }
 
     /**
-     * DOCUMENT ME!
-     *
-     * @param   id  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * Unknown use and currently not being referenced within MIPAV
      */
     public double[][] displayTlrc(int id) {
         double[][] mat = new double[4][4];
@@ -502,7 +454,6 @@ public class TalairachTransformInfo implements Serializable {
                 break;
         }
 
-        // (P_tlrc-AC_tlrc)*Res_tlrc = (P_acpc-AC_acpc)*Res_acpc
         mat[0][0] = tlrcRes[x] / acpcRes;
         mat[0][1] = 0;
         mat[0][2] = 0;
@@ -532,85 +483,90 @@ public class TalairachTransformInfo implements Serializable {
     }
 
     /**
-     * DOCUMENT ME!
+     * Gets anterior commissure in acpc space.
      *
-     * @return  DOCUMENT ME!
+     * @return  acpcAC
      */
     public Vector3f getAcpcAC() {
         return acpcAC;
     }
 
     /**
-     * DOCUMENT ME!
+     * Gets acpc image dimensions.
      *
-     * @return  DOCUMENT ME!
+     * @return  acpcDim
      */
     public int[] getAcpcDim() {
         return acpcDim;
     }
 
     /**
-     * DOCUMENT ME!
+     * Gets acpc max extent.
      *
-     * @return  DOCUMENT ME!
+     * @return  acpcMax
      */
     public Vector3f getAcpcMax() {
         return acpcMax;
     }
 
     /**
-     * DOCUMENT ME!
+     * Gets acpc min extent.
      *
-     * @return  DOCUMENT ME!
+     * @return  acpcMin
      */
     public Vector3f getAcpcMin() {
         return acpcMin;
     }
 
     /**
-     * DOCUMENT ME!
+     * Gets posterior comissure in acpc space.
      *
-     * @return  DOCUMENT ME!
+     * @return  acpcPC
      */
     public Vector3f getAcpcPC() {
         return acpcPC;
     }
 
     /**
-     * DOCUMENT ME!
+     * Gets resolution in acpc space.
      *
-     * @return  DOCUMENT ME!
+     * @return  acpcRes
      */
     public float getAcpcRes() {
         return acpcRes;
     }
 
     /**
-     * accessors to get all quantities.
+     * Gets anterior comissure in original space.
      *
-     * @return  DOCUMENT ME!
+     * @return  origAC
      */
     public Vector3f getOrigAC() {
         return origAC;
     }
 
     /**
-     * DOCUMENT ME!
+     *  Gets original dims.
      *
-     * @return  DOCUMENT ME!
+     * @return  origDim
      */
     public int[] getOrigDim() {
         return origDim;
     }
     
+    /**
+     * Gets original origin.
+     * 
+     * @return origOrigin
+     */
     public float[] getOrigOrigin() {
         return origOrigin;
     }
 
     /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * Determines the image orienation in the forward direction...orig to acpc or acpc to tlrc.
+     * 
+     * @return  image orientation
      */
     public int getOrigImageOrientLabel() {
         int num;
@@ -638,197 +594,213 @@ public class TalairachTransformInfo implements Serializable {
     }
 
     /**
-     * DOCUMENT ME!
+     * Gets the orienatations from original space.
      *
-     * @return  DOCUMENT ME!
+     * @return  origOrient
      */
     public float[][] getOrigOrient() {
         return origOrient;
     }
 
+
     /**
-     * DOCUMENT ME!
+     * When going from acpc to orig or tlrc to orig, this method is used
+     * to determine what he new axis orienations.  It uses an inverted
+     * matrix for determination.
      *
-     * @return  DOCUMENT ME!
+     * @return  orientations
      */
-    public int[] getOrigOrientLabels() {
+    public int[] getOrigOrientLabelsInverse() {
+    	
+    	TransMatrix matrix = new TransMatrix(3);
+    	for(int i=0;i<3;i++) {
+    		for(int k=0;k<3;k++) {
+    			matrix.set(i,k,origOrient[i][k]);
+    		}
+    	}
+    	
+    	matrix.Inverse();
+    	
+    	float[][] origOrientINVERSE = new float[3][3];
+    	for(int i=0;i<3;i++) {
+    		for(int k=0;k<3;k++) {
+    			origOrientINVERSE[i][k] = matrix.get(i, k);
+    		}
+    	}
+    	
+    	
         int num;
         int[] label = new int[3];
 
         // X: R2L
         num = 0;
-
         for (int n = 1; n < 3; n++) {
-
-            if ((origOrient[0][n] * origOrient[0][n]) > (origOrient[0][num] * origOrient[0][num])) {
+            if ((origOrientINVERSE[0][n] * origOrientINVERSE[0][n]) > (origOrientINVERSE[0][num] * origOrientINVERSE[0][num])) {
                 num = n;
             }
         }
 
-        if ((num == 0) && (origOrient[0][num] > 0)) {
+        if ((num == 0) && (origOrientINVERSE[0][num] > 0)) {
             label[0] = FileInfoBase.ORI_R2L_TYPE;
-        } else if ((num == 0) && (origOrient[0][num] < 0)) {
+        } else if ((num == 0) && (origOrientINVERSE[0][num] < 0)) {
             label[0] = FileInfoBase.ORI_L2R_TYPE;
-        } else if ((num == 1) && (origOrient[0][num] > 0)) {
+        } else if ((num == 1) && (origOrientINVERSE[0][num] > 0)) {
             label[0] = FileInfoBase.ORI_A2P_TYPE;
-        } else if ((num == 1) && (origOrient[0][num] < 0)) {
+        } else if ((num == 1) && (origOrientINVERSE[0][num] < 0)) {
             label[0] = FileInfoBase.ORI_P2A_TYPE;
-        } else if ((num == 2) && (origOrient[0][num] > 0)) {
+        } else if ((num == 2) && (origOrientINVERSE[0][num] > 0)) {
             label[0] = FileInfoBase.ORI_I2S_TYPE;
-        } else if ((num == 2) && (origOrient[0][num] < 0)) {
+        } else if ((num == 2) && (origOrientINVERSE[0][num] < 0)) {
             label[0] = FileInfoBase.ORI_S2I_TYPE;
         }
 
         // Y: A2P
         num = 0;
-
         for (int n = 1; n < 3; n++) {
-
-            if ((origOrient[1][n] * origOrient[1][n]) > (origOrient[1][num] * origOrient[1][num])) {
+            if ((origOrientINVERSE[1][n] * origOrientINVERSE[1][n]) > (origOrientINVERSE[1][num] * origOrientINVERSE[1][num])) {
                 num = n;
             }
         }
 
-        if ((num == 0) && (origOrient[1][num] > 0)) {
+        if ((num == 0) && (origOrientINVERSE[1][num] > 0)) {
             label[1] = FileInfoBase.ORI_R2L_TYPE;
-        } else if ((num == 0) && (origOrient[1][num] < 0)) {
+        } else if ((num == 0) && (origOrientINVERSE[1][num] < 0)) {
             label[1] = FileInfoBase.ORI_L2R_TYPE;
-        } else if ((num == 1) && (origOrient[1][num] > 0)) {
+        } else if ((num == 1) && (origOrientINVERSE[1][num] > 0)) {
             label[1] = FileInfoBase.ORI_A2P_TYPE;
-        } else if ((num == 1) && (origOrient[1][num] < 0)) {
+        } else if ((num == 1) && (origOrientINVERSE[1][num] < 0)) {
             label[1] = FileInfoBase.ORI_P2A_TYPE;
-        } else if ((num == 2) && (origOrient[1][num] > 0)) {
+        } else if ((num == 2) && (origOrientINVERSE[1][num] > 0)) {
             label[1] = FileInfoBase.ORI_I2S_TYPE;
-        } else if ((num == 2) && (origOrient[1][num] < 0)) {
+        } else if ((num == 2) && (origOrientINVERSE[1][num] < 0)) {
             label[1] = FileInfoBase.ORI_S2I_TYPE;
         }
 
         // Z: I2S
         num = 0;
-
         for (int n = 1; n < 3; n++) {
-
-            if ((origOrient[2][n] * origOrient[2][n]) > (origOrient[2][num] * origOrient[2][num])) {
+            if ((origOrientINVERSE[2][n] * origOrientINVERSE[2][n]) > (origOrientINVERSE[2][num] * origOrientINVERSE[2][num])) {
                 num = n;
             }
         }
 
-        if ((num == 0) && (origOrient[2][num] > 0)) {
+        if ((num == 0) && (origOrientINVERSE[2][num] > 0)) {
             label[2] = FileInfoBase.ORI_R2L_TYPE;
-        } else if ((num == 0) && (origOrient[2][num] < 0)) {
+        } else if ((num == 0) && (origOrientINVERSE[2][num] < 0)) {
             label[2] = FileInfoBase.ORI_L2R_TYPE;
-        } else if ((num == 1) && (origOrient[2][num] > 0)) {
+        } else if ((num == 1) && (origOrientINVERSE[2][num] > 0)) {
             label[2] = FileInfoBase.ORI_A2P_TYPE;
-        } else if ((num == 1) && (origOrient[2][num] < 0)) {
+        } else if ((num == 1) && (origOrientINVERSE[2][num] < 0)) {
             label[2] = FileInfoBase.ORI_P2A_TYPE;
-        } else if ((num == 2) && (origOrient[2][num] > 0)) {
+        } else if ((num == 2) && (origOrientINVERSE[2][num] > 0)) {
             label[2] = FileInfoBase.ORI_I2S_TYPE;
-        } else if ((num == 2) && (origOrient[2][num] < 0)) {
+        } else if ((num == 2) && (origOrientINVERSE[2][num] < 0)) {
             label[2] = FileInfoBase.ORI_S2I_TYPE;
         }
 
         return label;
     }
 
+
     /**
-     * DOCUMENT ME!
+     * Gets posterior comissure in original space.
      *
-     * @return  DOCUMENT ME!
+     * @return  orgiPC
      */
     public Vector3f getOrigPC() {
         return origPC;
     }
 
     /**
-     * DOCUMENT ME!
+     * Gets resolution in original space.
      *
-     * @return  DOCUMENT ME!
+     * @return  orgiRes
+     * 
      */
     public float[] getOrigRes() {
         return origRes;
     }
 
     /**
-     * DOCUMENT ME!
+     * Gets anterior comissure in tlrc space.
      *
-     * @return  DOCUMENT ME!
+     * @return tlrcAC
      */
     public Vector3f getTlrcAC() {
         return tlrcAC;
     }
 
     /**
-     * DOCUMENT ME!
+     * Gets dims in tlrc space.
      *
-     * @return  DOCUMENT ME!
+     * @return  tlrcDim
      */
     public int[] getTlrcDim() {
         return tlrcDim;
     }
 
     /**
-     * DOCUMENT ME!
+     * Gets posterior comissure in tlrc space.
      *
-     * @return  DOCUMENT ME!
+     * @return  tlrcPC
      */
     public Vector3f getTlrcPC() {
         return tlrcPC;
     }
 
     /**
-     * public Vector3f getTlrcMin() { return tlrcMin; } public Vector3f getTlrcMax() { return tlrcMax; }.
+     * Gets resoltion in tlrc space.
      *
-     * @return  DOCUMENT ME!
+     * @return  tlrcRes
      */
     public float[] getTlrcRes() {
         return tlrcRes;
     }
 
     /**
-     * DOCUMENT ME!
+     * Returns true if we have data to compute orig <-> acpc.
      *
-     * @return  DOCUMENT ME!
+     * @return  isAcpc
      */
     public boolean isAcpc() {
         return isAcpc;
     }
 
     /**
-     * DOCUMENT ME!
+     * Sets isACPC flag.
      *
-     * @param  flag  DOCUMENT ME!
+     * @param  boolean flag 
      */
     public void isAcpc(boolean flag) {
         isAcpc = flag;
     }
 
     /**
-     * DOCUMENT ME!
+     * returns true if we have data to compute acpc <-> tlrc.
      *
-     * @return  DOCUMENT ME!
+     * @return  isTlrc
      */
     public boolean isTlrc() {
         return isTlrc;
     }
 
     /**
-     * DOCUMENT ME!
+     * Sets isTLRC flag.
      *
-     * @param  flag  DOCUMENT ME!
+     * @param  boolean flag
      */
     public void isTlrc(boolean flag) {
         isTlrc = flag;
     }
 
     /**
-     * compute transforms from one space to another one.
-     *
-     * @param  pt     DOCUMENT ME!
-     * @param  trans  DOCUMENT ME!
+     * Transforms point from  orig to acpc.
+     * 
+     * @param  pt     old point
+     * @param  trans  new point
      */
     public void origToAcpc(Vector3f pt, Vector3f trans) {
 
-        // (P_acpc-AC_acpc)*Res_acpc*orientOrig = (P_orig-AC_orig)*Res_orig
         trans.X = acpcAC.X + (origOrient[0][0] * (pt.X - origAC.X) * origRes[0] / acpcRes) +
                   (origOrient[0][1] * (pt.Y - origAC.Y) * origRes[1] / acpcRes) +
                   (origOrient[0][2] * (pt.Z - origAC.Z) * origRes[2] / acpcRes);
@@ -841,33 +813,19 @@ public class TalairachTransformInfo implements Serializable {
                   (origOrient[2][1] * (pt.Y - origAC.Y) * origRes[1] / acpcRes) +
                   (origOrient[2][2] * (pt.Z - origAC.Z) * origRes[2] / acpcRes);
 
-        /*
-         *       trans.X = acpcAC.X + origOrient[0][0]*(pt.X-origAC.X)*origRes[0]/acpcRes                +
-         * origOrient[0][1]*(pt.Y-origAC.Y)*origRes[0]/acpcRes                +
-         * origOrient[0][2]*(pt.Z-origAC.Z)*origRes[0]/acpcRes;
-         *
-         *    trans.Y = acpcAC.Y + origOrient[1][0]*(pt.X-origAC.X)*origRes[1]/acpcRes                +
-         * origOrient[1][1]*(pt.Y-origAC.Y)*origRes[1]/acpcRes                +
-         * origOrient[1][2]*(pt.Z-origAC.Z)*origRes[1]/acpcRes;
-         *
-         *    trans.Z = acpcAC.Z + origOrient[2][0]*(pt.X-origAC.X)*origRes[2]/acpcRes                +
-         * origOrient[2][1]*(pt.Y-origAC.Y)*origRes[2]/acpcRes                +
-         * origOrient[2][2]*(pt.Z-origAC.Z)*origRes[2]/acpcRes;
-         */
         return;
     }
 
     /**
-     * DOCUMENT ME!
+     * Transforms point from  orig to acpc.
      *
-     * @param  x      DOCUMENT ME!
-     * @param  y      DOCUMENT ME!
-     * @param  z      DOCUMENT ME!
-     * @param  trans  DOCUMENT ME!
+     * @param  x     
+     * @param  y     
+     * @param  z      
+     * @param  trans  new point
      */
     public void origToAcpc(int x, int y, int z, Vector3f trans) {
 
-        // (P_acpc-AC_acpc)*Res_acpc*orientOrig = (P_orig-AC_orig)*Res_orig
         trans.X = acpcAC.X + (origOrient[0][0] * (x - origAC.X) * origRes[0] / acpcRes) +
                   (origOrient[0][1] * (y - origAC.Y) * origRes[1] / acpcRes) +
                   (origOrient[0][2] * (z - origAC.Z) * origRes[2] / acpcRes);
@@ -880,27 +838,14 @@ public class TalairachTransformInfo implements Serializable {
                   (origOrient[2][1] * (y - origAC.Y) * origRes[1] / acpcRes) +
                   (origOrient[2][2] * (z - origAC.Z) * origRes[2] / acpcRes);
 
-        /*
-         *       trans.X = acpcAC.X + origOrient[0][0]*(x-origAC.X)*origRes[0]/acpcRes                +
-         * origOrient[0][1]*(y-origAC.Y)*origRes[0]/acpcRes                +
-         * origOrient[0][2]*(z-origAC.Z)*origRes[0]/acpcRes;
-         *
-         *    trans.Y = acpcAC.Y + origOrient[1][0]*(x-origAC.X)*origRes[1]/acpcRes                +
-         * origOrient[1][1]*(y-origAC.Y)*origRes[1]/acpcRes                +
-         * origOrient[1][2]*(z-origAC.Z)*origRes[1]/acpcRes;
-         *
-         *    trans.Z = acpcAC.Z + origOrient[2][0]*(x-origAC.X)*origRes[2]/acpcRes                +
-         * origOrient[2][1]*(y-origAC.Y)*origRes[2]/acpcRes                +
-         * origOrient[2][2]*(z-origAC.Z)*origRes[2]/acpcRes;
-         */
         return;
     }
 
     /**
-     * DOCUMENT ME!
-     *
-     * @param  pt     DOCUMENT ME!
-     * @param  trans  DOCUMENT ME!
+     * Transforms point from  orig to tlrc.
+     * 
+     * @param  pt     old point
+     * @param  trans  new point
      */
     public void origToTlrc(Vector3f pt, Vector3f trans) {
         Vector3f tmp = new Vector3f();
@@ -909,12 +854,12 @@ public class TalairachTransformInfo implements Serializable {
     }
 
     /**
-     * DOCUMENT ME!
+     * Transforms point from  orig to tlrc.
      *
-     * @param  x      DOCUMENT ME!
-     * @param  y      DOCUMENT ME!
-     * @param  z      DOCUMENT ME!
-     * @param  trans  DOCUMENT ME!
+     * @param  x     
+     * @param  y     
+     * @param  z      
+     * @param  trans  new point
      */
     public void origToTlrc(int x, int y, int z, Vector3f trans) {
         Vector3f tmp = new Vector3f();
@@ -923,7 +868,7 @@ public class TalairachTransformInfo implements Serializable {
     }
 
     /**
-     * read/write to a text file.
+     * Read/write to a text file.
      *
      * @param  filename  DOCUMENT ME!
      */
@@ -1083,36 +1028,36 @@ public class TalairachTransformInfo implements Serializable {
     }
 
     /**
-     * DOCUMENT ME!
+     * Sets acpc max extent.
      *
-     * @param  pt  DOCUMENT ME!
+     * @param  Vector3f pt
      */
     public void setAcpcMax(Vector3f pt) {
         acpcMax = new Vector3f(pt.X, pt.Y, pt.Z);
     }
 
     /**
-     * DOCUMENT ME!
+     * Sets acpc min extent.
      *
-     * @param  pt  DOCUMENT ME!
+     * @param  Vector3f pt
      */
     public void setAcpcMin(Vector3f pt) {
         acpcMin = new Vector3f(pt.X, pt.Y, pt.Z);
     }
 
     /**
-     * DOCUMENT ME!
-     *
-     * @param  pt  DOCUMENT ME!
+     * Sets acpc posterior comissure.
+     * 
+     * @param  Vector3f pt
      */
     public void setAcpcPC(Vector3f pt) {
         acpcPC = new Vector3f(pt.X, pt.Y, pt.Z);
     }
 
     /**
-     * DOCUMENT ME!
+     * Sets acps resolution.
      *
-     * @param  res  DOCUMENT ME!
+     * @param  float res
      */
     public void setAcpcRes(float res) {
         acpcRes = res;
@@ -1130,31 +1075,36 @@ public class TalairachTransformInfo implements Serializable {
     }
 
     /**
-     * accessors to set the unknown quantities.
+     * 	Sets the anterior comissure in original space.
      *
-     * @param  pt  DOCUMENT ME!
+     * @param  Vector3f point
      */
     public void setOrigAC(Vector3f pt) {
         origAC = new Vector3f(pt.X, pt.Y, pt.Z);
     }
 
     /**
-     * DOCUMENT ME!
+     * Sets dims in original space.
      *
-     * @param  dim  DOCUMENT ME!
+     * @param  int[] dim
      */
     public void setOrigDim(int[] dim) {
         origDim = (int[]) dim.clone();
     }
     
+    /**
+     * Sets origin in original space.
+     * 
+     * @param origin
+     */
     public void setOrigOrigin(float[] origin) {
         origOrigin = (float[]) origin.clone();
     }
 
     /**
-     * DOCUMENT ME!
+     * Sets orienatationsin origianl space.
      *
-     * @param  orient  DOCUMENT ME!
+     * @param  float[][] orient
      */
     public void setOrigOrient(float[][] orient) {
         origOrient = new float[3][3];
@@ -1168,37 +1118,37 @@ public class TalairachTransformInfo implements Serializable {
     }
 
     /**
-     * DOCUMENT ME!
+     * Sets posterior comissure in original space.
      *
-     * @param  pt  DOCUMENT ME!
+     * @param  Vector3f point
      */
     public void setOrigPC(Vector3f pt) {
         origPC = new Vector3f(pt.X, pt.Y, pt.Z);
     }
 
     /**
-     * DOCUMENT ME!
+     * Sets resolution in original space.
      *
-     * @param  res  DOCUMENT ME!
+     * @param  float[] res
      */
     public void setOrigRes(float[] res) {
         origRes = (float[]) res.clone();
     }
 
     /**
-     * DOCUMENT ME!
+     * Sets resolution in tlrc space
      *
-     * @param  res  DOCUMENT ME!
+     * @param  float[] res
      */
     public void setTlrcRes(float[] res) {
         tlrcRes = (float[]) res.clone();
     }
 
     /**
-     * DOCUMENT ME!
+     *  Transforms point from tlrc to acpc...matrix is implicitly inverted in code.
      *
-     * @param  pt     DOCUMENT ME!
-     * @param  trans  DOCUMENT ME!
+     * @param  pt    old point
+     * @param  trans new point
      */
     public void tlrcToAcpc(Vector3f pt, Vector3f trans) {
         float resx, resy, resz;
@@ -1226,7 +1176,6 @@ public class TalairachTransformInfo implements Serializable {
             resz = tlrcRes[6];
         }
 
-        // (P_tlrc-AC_tlrc)*Res_tlrc = (P_acpc-AC_acpc)*Res_acpc
         if (usePC) {
             trans.X = acpcPC.X + ((pt.X - tlrcPC.X) / acpcRes * resx);
             trans.Y = acpcPC.Y + ((pt.Y - tlrcPC.Y) / acpcRes * resy);
@@ -1241,12 +1190,12 @@ public class TalairachTransformInfo implements Serializable {
     }
 
     /**
-     * DOCUMENT ME!
+     * Transforms point from tlrc to acpc...matrix is implicitly inverted in code.
      *
-     * @param  x      DOCUMENT ME!
-     * @param  y      DOCUMENT ME!
-     * @param  z      DOCUMENT ME!
-     * @param  trans  DOCUMENT ME!
+     * @param  x    
+     * @param  y      
+     * @param  z      
+     * @param  trans  new point
      */
     public void tlrcToAcpc(int x, int y, int z, Vector3f trans) {
         float resx, resy, resz;
@@ -1289,10 +1238,10 @@ public class TalairachTransformInfo implements Serializable {
     }
 
     /**
-     * DOCUMENT ME!
+     *  Transforms point from tlrc to orig...matrix is implicitly inverted in code.
      *
-     * @param  pt     DOCUMENT ME!
-     * @param  trans  DOCUMENT ME!
+     * @param  pt    old point
+     * @param  trans new point
      */
     public void tlrcToOrig(Vector3f pt, Vector3f trans) {
         Vector3f tmp = new Vector3f();
@@ -1301,12 +1250,12 @@ public class TalairachTransformInfo implements Serializable {
     }
 
     /**
-     * DOCUMENT ME!
+     * Transforms point from tlrc to orig...matrix is implicitly inverted in code.
      *
-     * @param  x      DOCUMENT ME!
-     * @param  y      DOCUMENT ME!
-     * @param  z      DOCUMENT ME!
-     * @param  trans  DOCUMENT ME!
+     * @param  x  
+     * @param  y    
+     * @param  z  
+     * @param  trans  new point
      */
     public void tlrcToOrig(int x, int y, int z, Vector3f trans) {
         Vector3f tmp = new Vector3f();
@@ -1315,7 +1264,7 @@ public class TalairachTransformInfo implements Serializable {
     }
 
     /**
-     * read/write to a text file.
+     * Read/write to a text file.
      *
      * @param  filename  DOCUMENT ME!
      */
@@ -1383,12 +1332,12 @@ public class TalairachTransformInfo implements Serializable {
     }
 
     /**
-     * parsing utility.
+     * Parsing utility.
      *
-     * @param   line  DOCUMENT ME!
-     * @param   nb    DOCUMENT ME!
+     * @param   line  
+     * @param   nb    
      *
-     * @return  DOCUMENT ME!
+     * @return  
      */
     private float[] parseFloatParameters(String line, int nb) {
         int next = 0;
@@ -1426,12 +1375,12 @@ public class TalairachTransformInfo implements Serializable {
     }
 
     /**
-     * DOCUMENT ME!
+     * Parsing Parameters Utility
      *
-     * @param   line  DOCUMENT ME!
-     * @param   nb    DOCUMENT ME!
+     * @param   line 
+     * @param   nb   
      *
-     * @return  DOCUMENT ME!
+     * @return 
      */
     private int[] parseIntParameters(String line, int nb) {
         int next = 0;
