@@ -750,11 +750,6 @@ public class FileVOI extends FileXML {
         boolean saveAsLPS = Preferences.is(Preferences.PREF_VOI_LPS_SAVE);
         boolean is2D = (image.getNDims() == 2);
         
-        // Save the dicom matrix info as default.   
-        if ( !is2D && saveAsLPS  ) {
-        	saveDicomMatrixInfo();
-        }
-        
         if (isXML) {
             writeXML(voi, saveAllContours);
             return;
@@ -1095,97 +1090,6 @@ public class FileVOI extends FileXML {
             e.printStackTrace();
         }
     }
-
-    /**
-     * Save the dicom matrix header info.  The .ply file format can't save the dicom info.   We decide to 
-     * save the dicom info when save the VOI file.  So, the dicom info will be read when load the .ply surface
-     * into the volume render.  This ensures the correct scale of surface.   The dicom matrix info is 
-     * saved in the current image directory with the .dicomMatrix suffix. 
-     */
-    private void saveDicomMatrixInfo() {
-    	int iXDim, iYDim, iZDim;
-    	boolean flip = true;
-
-		iXDim = image.getExtents()[0];
-		iYDim = image.getExtents()[1];
-		iZDim = image.getExtents()[2];
-
-		float fXRes, fYRes, fZRes;
-
-		fXRes = image.getFileInfo()[0].getResolutions()[0];
-		fYRes = image.getFileInfo()[0].getResolutions()[1];
-		fZRes = image.getFileInfo()[0].getResolutions()[2];
-
-		float[] box = new float[3];
-
-		box[0] = (iXDim - 1) * fXRes;
-		box[1] = (iYDim - 1) * fYRes;
-		box[2] = (iZDim - 1) * fZRes;
-		
-    	int[] direction = MipavCoordinateSystems.getModelDirections(image);
-		float[] startLocation = image.getFileInfo(0).getOrigin();
-
-		TransMatrix dicomMatrix = null;
-		TransMatrix inverseDicomMatrix = null;
-		if (image.getMatrixHolder().containsType(
-				TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
-
-			// Get the DICOM transform that describes the transformation
-			// from
-			// axial to this image orientation
-			dicomMatrix = image.getMatrix();
-			inverseDicomMatrix = new TransMatrix(image.getMatrix());
-			inverseDicomMatrix.Inverse();
-		}
-		
-		
-		try {
-			FileOutputStream  fOut = new FileOutputStream(fileDir + fileName + ".dicomMatrix");
-			DataOutputStream  kOut = new DataOutputStream(fOut);
- 
-			
-			 if (inverseDicomMatrix == null) {
-		            
-		            if (flip) {
-		                kOut.writeInt(1);
-		            } else {
-		                kOut.writeInt(0);
-		            }
-		        } else {
-		            
-		            if (flip) {
-		                kOut.writeInt(3);
-		            } else {
-		                kOut.writeInt(2);
-		            }
-		        }
-
-		        kOut.writeInt(direction[0]);
-		        kOut.writeInt(direction[1]);
-		        kOut.writeInt(direction[2]);
-
-		        kOut.writeFloat(startLocation[0]);
-		        kOut.writeFloat(startLocation[1]);
-		        kOut.writeFloat(startLocation[2]);
-		        kOut.writeFloat(box[0]);
-		        kOut.writeFloat(box[1]);
-		        kOut.writeFloat(box[2]);
-		        
-		        if (inverseDicomMatrix != null) {
-		            for (int i = 0; i <= 3; i++) {
-		                for (int j = 0; j <= 3; j++) {
-		                	kOut.writeDouble(inverseDicomMatrix.Get(i, j));
-		                }
-		            }
-		        }
-		        kOut.close();
-		        
-		} catch (Exception e) {
-			System.err.println("CAUGHT EXCEPTION WITHIN saveDicomMatrixInfo() of FileVOI");
-			e.printStackTrace();
-		}
-
-	}
     
     /**
 	 * Converts string point (x,y) to Vector2f point.
