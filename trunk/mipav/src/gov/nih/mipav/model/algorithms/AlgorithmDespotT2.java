@@ -1296,7 +1296,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
         Gaussian[3][2] = 4;
         Gaussian[3][3] = 2;
         Gaussian[3][4] = 0;
-        Gaussian[0][0] = 0;
+        Gaussian[4][0] = 0;
         Gaussian[4][1] = 0;
         Gaussian[4][2] = 1;
         Gaussian[4][3] = 0;
