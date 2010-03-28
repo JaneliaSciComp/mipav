@@ -4,6 +4,7 @@ package gov.nih.mipav.model.algorithms;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.algorithms.AlgorithmFRAP.IntModel;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.DoubleDouble;
 
 import gov.nih.mipav.view.*;
 
@@ -134,6 +135,8 @@ public class AlgorithmSM2 extends AlgorithmBase {
         double[] params;
         float destArray[];
         int j;
+        // If true, run a self test of NLConstrainedEngineEP.java
+        boolean nlConstrainedEngineEPTest = false;
         // If true, run a self test of NLConstrainedEngine.java
         boolean nlConstrainedEngineTest = false;
         boolean selfTest = false;
@@ -402,6 +405,12 @@ public class AlgorithmSM2 extends AlgorithmBase {
         	Preferences.debug("Number failing because cannot handle ktrans equals zero = " + ktransequalszero + "\n");
             return;
         } // if (selfTest2)
+        
+        if (nlConstrainedEngineEPTest) {
+        	new FitAllEP();
+        	setCompleted(false);
+        	return;
+        }
         
         if (nlConstrainedEngineTest) {
         	new FitAll();
@@ -1963,6 +1972,52 @@ public class AlgorithmSM2 extends AlgorithmBase {
             return;
         }
     }*/
+    
+    class FitAllEP extends NLConstrainedEngineEP {
+
+        /**
+         * Creates a new Fit24DModel object.
+         *
+         * @param  nPoints  DOCUMENT ME!
+         * @param  xData    DOCUMENT ME!
+         * @param  yData    DOCUMENT ME!
+         * @param  initial  DOCUMENT ME!
+         */
+        public FitAllEP() {
+
+            // nPoints data points, 3 coefficients, and exponential fitting
+            super();
+
+            
+        }
+
+        /**
+         * Starts the analysis.
+         */
+        public void driver() {
+            super.driver();
+        }
+
+        /**
+         * Display results of displaying exponential fitting parameters.
+         */
+        public void dumpResults() {
+            
+        }
+
+        /**
+         * Fit to function - a0 - a1*(a2**x).
+         *
+         * @param  a          The x value of the data point.
+         * @param  residuals  The best guess parameter values.
+         * @param  covarMat   The derivative values of y with respect to fitting parameters.
+         */
+        public void fitToFunction(DoubleDouble[] a, DoubleDouble[] residuals, DoubleDouble[][] covarMat) {
+            
+
+            return;
+        }
+    }
     
     class FitAll extends NLConstrainedEngine {
 
