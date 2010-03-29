@@ -1089,7 +1089,7 @@ public abstract class NLConstrainedEngineEP {
         ySeries = new DoubleDouble[]{DoubleDouble.valueOf(0.844), DoubleDouble.valueOf(0.908),
         		                     DoubleDouble.valueOf(0.932), DoubleDouble.valueOf(0.936),
         		                     DoubleDouble.valueOf(0.925), DoubleDouble.valueOf(0.908),
-        		                     DoubleDouble.valueOf(0.8810), DoubleDouble.valueOf(0.850),
+        		                     DoubleDouble.valueOf(0.881), DoubleDouble.valueOf(0.850),
         		                     DoubleDouble.valueOf(0.818), DoubleDouble.valueOf(0.784),
         		                     DoubleDouble.valueOf(0.751), DoubleDouble.valueOf(0.718),
         		                     DoubleDouble.valueOf(0.685), DoubleDouble.valueOf(0.658),
@@ -1438,7 +1438,7 @@ public abstract class NLConstrainedEngineEP {
                         	d2 = xSeries[i].min(sixteenmx);
                         	d2 = a[2].multiply(d2);
                         	denom = d1.add(d2);
-                        	ymodel = xSeries[i].divide(d1);
+                        	ymodel = xSeries[i].divide(denom);
                         	ymodel = ymodel.add(a[0]);
                             //ymodel = a[0] + xSeries[i]/(a[1]*(16.0 - xSeries[i]) 
                             		 //+ a[2]*Math.min(xSeries[i], 16.0 - xSeries[i]));
@@ -2715,7 +2715,7 @@ public abstract class NLConstrainedEngineEP {
 
         for (k = 0; k < param; k++) {
 
-            if (((covarMat[k][k]).abs()).le(tolr)) {
+            if ((covarMat[k][k].abs()).le(tolr)) {
                 break;
             }
 
@@ -2978,7 +2978,10 @@ public abstract class NLConstrainedEngineEP {
         // four phase method using two built-in constants that are
         // hopefully applicable to all machines.
         // cutlo = maximum of  SQRT(u/eps)  over all known machines.
+    	// u = eps = 4.9E-324 so cutlo = 1
+    	// For regular 64 bit operation cutlo = 1.491E-154
         // cuthi = minimum of  SQRT(v)      over all known machines.
+    	// cuthi = 1.34078E154, the same as for regular 64 bit operation.
         // where
         // eps = smallest no. such that eps + 1. > 1.
         // u   = smallest positive no.   (underflow limit)
@@ -3006,10 +3009,9 @@ public abstract class NLConstrainedEngineEP {
 
         // Set machine-dependent constants
 
-        cutlo = (new DoubleDouble(0.0,Double.MIN_VALUE));
+        cutlo = (new DoubleDouble(Double.MIN_VALUE, 0.0));
         cutlo = (cutlo.divide(srelpr)).sqrt();
-        cuthi = (new DoubleDouble(Double.MAX_VALUE,Double.MAX_VALUE));
-        cuthi = cuthi.sqrt();
+        cuthi = (new DoubleDouble(Math.sqrt(Double.MAX_VALUE),0.0));
 
         next = 1;
         sum = DoubleDouble.valueOf(0.0);
@@ -3035,7 +3037,7 @@ mainLoop:
                 switch (next) {
 
                     case 1:
-                        if (((x[i-1]).abs()).gt(cutlo)) {
+                        if ((x[i-1].abs()).gt(cutlo)) {
                             do85 = true;
                         } else {
                             next = 2;
@@ -3051,7 +3053,7 @@ mainLoop:
                         // phase 1. sum is zero
                         if (x[i-1].equals(DoubleDouble.valueOf(0.0))) {
                             do200 = true;
-                        } else if (((x[i-1]).abs()).gt(cutlo)) {
+                        } else if ((x[i-1].abs()).gt(cutlo)) {
                             do85 = true;
                         } else {
                             next = 3;
@@ -3064,7 +3066,7 @@ mainLoop:
                         // phase 2.  sum is small.
                         // scale to avoid destructive underflow.
 
-                        if (((x[i-1]).abs()).gt(cutlo)) {
+                        if ((x[i-1].abs()).gt(cutlo)) {
                             // prepare for phase 3.
 
                             sum = (sum.multiply(xmax)).multiply(xmax);
@@ -3093,7 +3095,7 @@ mainLoop:
 
                 for (j = i; j <= nn; j+=incx) {
 
-                    if (((x[j-1]).abs()).ge(hitest)) {
+                    if ((x[j-1].abs()).ge(hitest)) {
                         do100 = true;
                         doSwitch = false;
 
@@ -3103,7 +3105,7 @@ mainLoop:
                     sum = sum.add(x[j-1].multiply(x[j-1]));
                 } // for (j = i; j <= nn; j+=incx)
 
-                fn_val = (sum).sqrt();
+                fn_val = sum.sqrt();
 
                 return fn_val;
             } // if (do85)
@@ -3119,7 +3121,7 @@ mainLoop:
                 sum = (sum.divide(x[i-1])).divide(x[i-1]);
 
                 // Set xmax; large if next = 4, small if next = 3
-                xmax = (x[i-1]).abs();
+                xmax = x[i-1].abs();
                 term = x[i-1].divide(xmax);
                 sum = sum.add(term.multiply(term));
 
@@ -3133,7 +3135,7 @@ mainLoop:
 
                 // compute square root and adjust for scaling.
 
-                fn_val = xmax.multiply((sum).sqrt());
+                fn_val = xmax.multiply(sum.sqrt());
 
                 return fn_val;
             } // if (do100)
@@ -3151,7 +3153,7 @@ mainLoop:
 
                 // compute square root and adjust for scaling.
 
-                fn_val = xmax.multiply((sum).sqrt());
+                fn_val = xmax.multiply(sum.sqrt());
 
                 return fn_val;
             } // if (do200)
@@ -3159,7 +3161,7 @@ mainLoop:
             if (do105) {
                 do105 = false;
                 doSwitch = true;
-                xmax = (x[i-1]).abs();
+                xmax = x[i-1].abs();
                 term = x[i-1].divide(xmax);
                 sum = sum.add(term.multiply(term));
 
@@ -3173,7 +3175,7 @@ mainLoop:
 
                 // compute square root and adjust for scaling.
 
-                fn_val = xmax.multiply((sum).sqrt());
+                fn_val = xmax.multiply(sum.sqrt());
 
                 return fn_val;
             } // if (do105)
@@ -3183,7 +3185,7 @@ mainLoop:
                 // common code for phases 2 and 4.
                 // in phase 4 sum is large.  scale to avoid overflow.
 
-                if (((x[i-1]).abs()).le(xmax)) {
+                if ((x[i-1].abs()).le(xmax)) {
                 	doSwitch = true;
                     term = x[i-1].divide(xmax);
                     sum = sum.add(term.multiply(term));
@@ -3198,14 +3200,14 @@ mainLoop:
 
                     // compute square root and adjust for scaling.
 
-                    fn_val = xmax.multiply((sum).sqrt());
+                    fn_val = xmax.multiply(sum.sqrt());
 
                     return fn_val;
                 }
 
                 term = xmax.divide(x[i-1]);
                 sum = (DoubleDouble.valueOf(1.0)).add(sum.multiply(term.multiply(term)));
-                xmax = (x[i-1]).abs();
+                xmax = x[i-1].abs();
                 doSwitch = true;
 
                 i = i + incx;
@@ -3218,7 +3220,7 @@ mainLoop:
 
                 // compute square root and adjust for scaling.
 
-                fn_val = xmax.multiply((sum).sqrt());
+                fn_val = xmax.multiply(sum.sqrt());
 
                 return fn_val;
             } // if (do110)
@@ -3239,7 +3241,7 @@ mainLoop:
 
                 // compute square root and adjust for scaling.
 
-                fn_val = xmax.multiply((sum).sqrt());
+                fn_val = xmax.multiply(sum.sqrt());
 
                 return fn_val;
             } // if (do115)
@@ -5574,8 +5576,8 @@ mainLoop:
         	oldFrac = frac;
             frac = (DoubleDouble.valueOf(0.5)).multiply(frac);
             if (frac.equals(DoubleDouble.valueOf(0.0))) {
-            	frac = oldFrac;
-            	break;
+            	srelpr = oldFrac;
+            	return;
             }
             temp = frac.add(DoubleDouble.valueOf(1.0));
 
