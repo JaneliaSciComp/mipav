@@ -133,12 +133,12 @@ public strictfp class DoubleDouble
 	/**
 	 * The high-order component of the double-double precision value.
 	 */
-	private double hi = 0.0;
+	public double hi = 0.0;
 	
 	/**
 	 * The low-order component of the double-double precision value.
 	 */
-	private double lo = 0.0;
+	public double lo = 0.0;
 	
 	/**
 	 * Creates a new DoubleDouble with value 0.0.
@@ -1339,8 +1339,12 @@ public strictfp class DoubleDouble
 	public String toString()
 	{
 	  int mag = magnitude(hi);
-	  if (mag >= -3 && mag <= 20)
+	  if (mag >= -3 && mag <= 20) {
 	  	return toStandardNotation();
+	  }
+	  else if ((mag <= -301) || (mag >= 301)) {
+		  return String.valueOf(hi);
+	  }
 		return toSciNotation();
 	}
 	
