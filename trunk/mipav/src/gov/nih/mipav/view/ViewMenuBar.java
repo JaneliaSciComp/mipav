@@ -860,13 +860,12 @@ public class ViewMenuBar {
                                         menuBuilder.buildMenuItem("Open VOI intensity graph", "OpenNewGraph", 0,
                                                 "open.gif", true),
                                         menuBuilder.buildMenuItem("Boundary intensity", "boundaryIntensity", 0, null,
-                                                true),
-                                        menuBuilder.buildMenuItem("Total intensity", "totalIntensity", 0, null, true),
-                                        menuBuilder.buildMenuItem("Average intensity", "avgIntensity", 0, null, true),
-                                        menuBuilder.buildMenuItem("Total intensity with threshold",
-                                                "totalIntensityThreshold", 0, null, true),
-                                        menuBuilder.buildMenuItem("Average intensity with threshold",
-                                                "avgIntensityThreshold", 0, null, true)}), ViewMenuBar.separator,
+                                                true)
+                                        //menuBuilder.buildMenuItem("Total intensity", "totalIntensity", 0, null, true),
+                                        //menuBuilder.buildMenuItem("Average intensity", "avgIntensity", 0, null, true),
+                                        //menuBuilder.buildMenuItem("Total intensity with threshold","totalIntensityThreshold", 0, null, true),
+                                        //menuBuilder.buildMenuItem("Average intensity with threshold","avgIntensityThreshold", 0, null, true)
+                                        }), ViewMenuBar.separator,
                                 menuBuilder.buildMenuItem("Properties...", "VOIProperties", 'P', null, true),
                                 menuBuilder.buildMenuItem("Statistics generator...", "VOIStatistics", 'G', null, true),});
     }
