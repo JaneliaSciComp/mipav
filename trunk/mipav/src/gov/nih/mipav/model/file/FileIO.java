@@ -2740,6 +2740,25 @@ public class FileIO {
             }
         }
 
+        
+        if (zip || gzip || bz2zip) {
+            index = options.getFileName().lastIndexOf(".");
+
+            if (index >= 0) {
+                ext = options.getFileName().substring(index + 1);
+                if (ext.equalsIgnoreCase("nii")) {
+                    singleFileNIFTI = true;
+                }
+            }
+            if (!(singleFileNIFTI || fileType == FileUtility.MINC || fileType == FileUtility.MINC_HDF || fileType == FileUtility.XML)) {
+            	
+            	 MipavUtil.displayError("Compression only on single file nifti or minc or single file xml.");
+            	 return;
+            }
+        }
+        
+        
+        
         if ( !options.isSet()) {
             options.setFileType(fileType);
             options.setMultiFile(image.getFileInfo(0).getMultiFile());
