@@ -2749,9 +2749,15 @@ public class FileIO {
         }
 
         if (options.isSaveAs() && !options.isSet()) {
-            if ( !callDialog(image.getExtents(), (fileType == FileUtility.TIFF), options)) {
-                return;
-            }
+        	//if(!gzip && !zip && !bz2zip) {
+	            if ( !callDialog(image.getExtents(), (fileType == FileUtility.TIFF), options)) {
+	                return;
+	            }
+	            if( (gzip || zip || bz2zip) && options.isMultiFile()  ) {
+	            	 MipavUtil.displayError("Compression only on single file");
+	            	return;
+	            }
+        	//}
         }
 
         boolean success = false;
@@ -2956,7 +2962,13 @@ public class FileIO {
                 break;
 
             case FileUtility.XML:
-                success = writeXML(image, options, bDisplayProgress );
+            	if(gzip || zip || bz2zip) {
+            		options.setWriteHeaderOnly(true);
+            		success = writeXML(image, options, false );
+            	}else {
+            		success = writeXML(image, options, bDisplayProgress );
+            	}
+                
                 break;
 
             case FileUtility.AVI:
@@ -2983,6 +2995,9 @@ public class FileIO {
                 return;
         }
 
+        
+        //xml and nii zip, gzip,and bz2 files are written out without first saving off the uncompressed file to disk and then 
+        //reading it in....rather it is streamed directly from the image buffer
         if (zip || gzip || bz2zip) {
             index = options.getFileName().lastIndexOf(".");
 
@@ -3084,34 +3099,124 @@ public class FileIO {
                         	if(image.isColorImage()) {
                         		sliceLength = sliceLength * 4;
                         	}
-                        	int dataSizeLength = image.getDataSize();
+
                         	byte[] sliceByteData;
                         	progVal = progVal + (int)(20/numFiles);
                         	progressBar.updateValue(progVal, false);
                         	//write out image data
-                        	for(int start=0;start<dataSizeLength;start=start+sliceLength) {
-                        		sliceByteData = getByteImageData(image,start,sliceLength);
-                        		for(int k=0;k<sliceByteData.length;k=k+1024) {
-                            		int zipLen = 1024;
-                            		for(int b=0,c=k;b<buf.length;b++,c++) {
-                            			if(c<sliceByteData.length) {
-                            				buf[b] = sliceByteData[c];
-                            			}else {
-                            				zipLen = b;
-                            				break;
-                            			}
-                            		}
-                            		try {
-                            			zout.write(buf, 0, zipLen);	
-                            		}catch (Exception e) {
-                            			e.printStackTrace();
-                            			MipavUtil.displayError("IOException on byte transfer to zip file");
-                                        return;
-                            		}
+                        	
+                        	
+                        	int tS = options.getBeginTime();
+                        	int tEnd = options.getEndTime();
+                        	int s3d = options.getBeginSlice() * sliceLength;
+                        	int e3d = (options.getEndSlice() + 1) * sliceLength;
+                        	int s4d = 0;
+                        	int s =0;
+                        	int end = 0;
+                        	int e4d = 0;
+                        	
+                        	for(int tStart=tS;tStart<=tEnd;tStart++) {
+                        		if(image.is4DImage()) {
+                        			
+                        			s4d = s3d + (tStart * image.getExtents()[2] * sliceLength);
+                        			e4d = e3d + (tStart * image.getExtents()[2] * sliceLength);
+                        			s = s4d;
+                        			end = e4d;
+                        		}else {
+                        			s = s3d;
+                        			end = e3d;
+                        		}
+                        		
+                        		for(int start=s;start<end;start=start+sliceLength) {
+                            		sliceByteData = getByteImageData(image,start,sliceLength);
+                            		for(int k=0;k<sliceByteData.length;k=k+1024) {
+                                		int zipLen = 1024;
+                                		for(int b=0,c=k;b<buf.length;b++,c++) {
+                                			if(c<sliceByteData.length) {
+                                				buf[b] = sliceByteData[c];
+                                			}else {
+                                				zipLen = b;
+                                				break;
+                                			}
+                                		}
+                                		try {
+                                			zout.write(buf, 0, zipLen);	
+                                		}catch (Exception e) {
+                                			e.printStackTrace();
+                                			MipavUtil.displayError("IOException on byte transfer to zip file");
+                                            return;
+                                		}
+                                	}
                             	}
+                        		
                         	}
+                        	
+                        	
+                        	
+                        	
                         	success = true;
                         	
+                        }else if(fileType == FileUtility.XML) {
+                        	//header has already been writen out
+                        	buf = new byte[1024];
+                        	int sliceLength = image.getExtents()[0] * image.getExtents()[1];
+                        	if(image.isColorImage()) {
+                        		sliceLength = sliceLength * 4;
+                        	}
+
+                        	byte[] sliceByteData;
+                        	progVal = progVal + (int)(20/numFiles);
+                        	progressBar.updateValue(progVal, false);
+                        	//write out image data
+                        	
+                        	int tS = options.getBeginTime();
+                        	int tEnd = options.getEndTime();
+                        	int s3d = options.getBeginSlice() * sliceLength;
+                        	int e3d = (options.getEndSlice() + 1) * sliceLength;
+                        	int s4d = 0;
+                        	int s =0;
+                        	int end = 0;
+                        	int e4d = 0;
+                        	
+                        	for(int tStart=tS;tStart<=tEnd;tStart++) {
+                        		if(image.is4DImage()) {
+                        			
+                        			s4d = s3d + (tStart * image.getExtents()[2] * sliceLength);
+                        			e4d = e3d + (tStart * image.getExtents()[2] * sliceLength);
+                        			s = s4d;
+                        			end = e4d;
+                        		}else {
+                        			s = s3d;
+                        			end = e3d;
+                        		}
+                        		
+                        		for(int start=s;start<end;start=start+sliceLength) {
+                            		sliceByteData = getByteImageData(image,start,sliceLength);
+                            		for(int k=0;k<sliceByteData.length;k=k+1024) {
+                                		int zipLen = 1024;
+                                		for(int b=0,c=k;b<buf.length;b++,c++) {
+                                			if(c<sliceByteData.length) {
+                                				buf[b] = sliceByteData[c];
+                                			}else {
+                                				zipLen = b;
+                                				break;
+                                			}
+                                		}
+                                		try {
+                                			zout.write(buf, 0, zipLen);	
+                                		}catch (Exception e) {
+                                			e.printStackTrace();
+                                			MipavUtil.displayError("IOException on byte transfer to zip file");
+                                            return;
+                                		}
+                                	}
+                            	}
+                        	}
+                        	
+                        	
+                        	
+                        	success = true; 
+                           
                         }else {
                         	// Open the input file
                             try {
@@ -3215,34 +3320,121 @@ public class FileIO {
                         	if(image.isColorImage()) {
                         		sliceLength = sliceLength * 4;
                         	}
-                        	int dataSizeLength = image.getDataSize();
+
                         	byte[] sliceByteData;
                         	 progVal = progVal + (int)(20/numFiles);
                          	progressBar.updateValue(progVal, false);
                         	//write out image data
-                        	for(int start=0;start<dataSizeLength;start=start+sliceLength) {
-                        		sliceByteData = getByteImageData(image,start,sliceLength);
-                        		for(int k=0;k<sliceByteData.length;k=k+1024) {
-                            		int gzipLen = 1024;
-                            		for(int b=0,c=k;b<buf.length;b++,c++) {
-                            			if(c<sliceByteData.length) {
-                            				buf[b] = sliceByteData[c];
-                            			}else {
-                            				gzipLen = b;
-                            				break;
-                            			}
-                            		}
-                            		try {
-                            			gzout.write(buf, 0, gzipLen);	
-                            		}catch (Exception e) {
-                            			e.printStackTrace();
-                            			MipavUtil.displayError("IOException on byte transfer to gzip file");
-                                        return;
-                            		}
+                         	
+                         	
+                         	int tS = options.getBeginTime();
+                        	int tEnd = options.getEndTime();
+                        	int s3d = options.getBeginSlice() * sliceLength;
+                        	int e3d = (options.getEndSlice() + 1) * sliceLength;
+                        	int s4d = 0;
+                        	int s =0;
+                        	int end = 0;
+                        	int e4d = 0;
+                        	
+                        	for(int tStart=tS;tStart<=tEnd;tStart++) {
+                        		if(image.is4DImage()) {
+                        			
+                        			s4d = s3d + (tStart * image.getExtents()[2] * sliceLength);
+                        			e4d = e3d + (tStart * image.getExtents()[2] * sliceLength);
+                        			s = s4d;
+                        			end = e4d;
+                        		}else {
+                        			s = s3d;
+                        			end = e3d;
+                        		}
+                        		
+                        		for(int start=s;start<end;start=start+sliceLength) {
+                            		sliceByteData = getByteImageData(image,start,sliceLength);
+                            		for(int k=0;k<sliceByteData.length;k=k+1024) {
+                                		int gzipLen = 1024;
+                                		for(int b=0,c=k;b<buf.length;b++,c++) {
+                                			if(c<sliceByteData.length) {
+                                				buf[b] = sliceByteData[c];
+                                			}else {
+                                				gzipLen = b;
+                                				break;
+                                			}
+                                		}
+                                		try {
+                                			gzout.write(buf, 0, gzipLen);	
+                                		}catch (Exception e) {
+                                			e.printStackTrace();
+                                			MipavUtil.displayError("IOException on byte transfer to gzip file");
+                                            return;
+                                		}
+                                	}
                             	}
+                        		
                         	}
+                         	
+                         	
+                        	
                         	success = true;
-                        }else {
+                        }else if(fileType == FileUtility.XML) {
+                        	buf = new byte[1024];
+                        	int sliceLength = image.getExtents()[0] * image.getExtents()[1];
+                        	if(image.isColorImage()) {
+                        		sliceLength = sliceLength * 4;
+                        	}
+
+                        	byte[] sliceByteData;
+                        	 progVal = progVal + (int)(20/numFiles);
+                         	progressBar.updateValue(progVal, false);
+                        	//write out image data
+                         	int tS = options.getBeginTime();
+                        	int tEnd = options.getEndTime();
+                        	int s3d = options.getBeginSlice() * sliceLength;
+                        	int e3d = (options.getEndSlice() + 1) * sliceLength;
+                        	int s4d = 0;
+                        	int s =0;
+                        	int end = 0;
+                        	int e4d = 0;
+                        	
+                        	for(int tStart=tS;tStart<=tEnd;tStart++) {
+                        		if(image.is4DImage()) {
+                        			
+                        			s4d = s3d + (tStart * image.getExtents()[2] * sliceLength);
+                        			e4d = e3d + (tStart * image.getExtents()[2] * sliceLength);
+                        			s = s4d;
+                        			end = e4d;
+                        		}else {
+                        			s = s3d;
+                        			end = e3d;
+                        		}
+                        		
+                        		for(int start=s;start<end;start=start+sliceLength) {
+                            		sliceByteData = getByteImageData(image,start,sliceLength);
+                            		for(int k=0;k<sliceByteData.length;k=k+1024) {
+                                		int gzipLen = 1024;
+                                		for(int b=0,c=k;b<buf.length;b++,c++) {
+                                			if(c<sliceByteData.length) {
+                                				buf[b] = sliceByteData[c];
+                                			}else {
+                                				gzipLen = b;
+                                				break;
+                                			}
+                                		}
+                                		try {
+                                			gzout.write(buf, 0, gzipLen);	
+                                		}catch (Exception e) {
+                                			e.printStackTrace();
+                                			MipavUtil.displayError("IOException on byte transfer to gzip file");
+                                            return;
+                                		}
+                                	}
+                            	}
+                        		
+                        	}
+                        	
+                        	success = true;
+                        }
+                        
+                        else {
                         	// Open the input file
                         	try {
                                 in = new FileInputStream(inputFileName[i]);
@@ -3351,32 +3543,118 @@ public class FileIO {
                         	if(image.isColorImage()) {
                         		sliceLength = sliceLength * 4;
                         	}
-                        	int dataSizeLength = image.getDataSize();
+          
                         	byte[] sliceByteData;
                         	 progVal = progVal + (int)(20/numFiles);
                          	progressBar.updateValue(progVal, false);
                         	//write out image data
-                        	for(int start=0;start<dataSizeLength;start=start+sliceLength) {
-                        		sliceByteData = getByteImageData(image,start,sliceLength);
-                        		for(int k=0;k<sliceByteData.length;k=k+1024) {
-                            		int bzipLen = 1024;
-                            		for(int b=0,c=k;b<buf.length;b++,c++) {
-                            			if(c<sliceByteData.length) {
-                            				buf[b] = sliceByteData[c];
-                            			}else {
-                            				bzipLen = b;
-                            				break;
-                            			}
-                            		}
-                            		try {
-                            			bz2out.write(buf, 0, bzipLen);	
-                            		}catch (Exception e) {
-                            			e.printStackTrace();
-                            			MipavUtil.displayError("IOException on byte transfer to bz2zip file");
-                                        return;
-                            		}
+                         	
+                         	
+                         	
+                         	int tS = options.getBeginTime();
+                        	int tEnd = options.getEndTime();
+                        	int s3d = options.getBeginSlice() * sliceLength;
+                        	int e3d = (options.getEndSlice() + 1) * sliceLength;
+                        	int s4d = 0;
+                        	int s =0;
+                        	int end = 0;
+                        	int e4d = 0;
+                        	
+                        	for(int tStart=tS;tStart<=tEnd;tStart++) {
+                        		if(image.is4DImage()) {
+                        			
+                        			s4d = s3d + (tStart * image.getExtents()[2] * sliceLength);
+                        			e4d = e3d + (tStart * image.getExtents()[2] * sliceLength);
+                        			s = s4d;
+                        			end = e4d;
+                        		}else {
+                        			s = s3d;
+                        			end = e3d;
+                        		}
+                        		
+                        		for(int start=s;start<end;start=start+sliceLength) {
+                            		sliceByteData = getByteImageData(image,start,sliceLength);
+                            		for(int k=0;k<sliceByteData.length;k=k+1024) {
+                                		int bzipLen = 1024;
+                                		for(int b=0,c=k;b<buf.length;b++,c++) {
+                                			if(c<sliceByteData.length) {
+                                				buf[b] = sliceByteData[c];
+                                			}else {
+                                				bzipLen = b;
+                                				break;
+                                			}
+                                		}
+                                		try {
+                                			bz2out.write(buf, 0, bzipLen);	
+                                		}catch (Exception e) {
+                                			e.printStackTrace();
+                                			MipavUtil.displayError("IOException on byte transfer to bz2zip file");
+                                            return;
+                                		}
+                                	}
                             	}
                         	}
+                         	
+                         	
+                        	
+                        	success = true;
+                        }else if(fileType == FileUtility.XML) {
+                        	buf = new byte[1024];
+                        	int sliceLength = image.getExtents()[0] * image.getExtents()[1];
+                        	if(image.isColorImage()) {
+                        		sliceLength = sliceLength * 4;
+                        	}
+                        
+                        	byte[] sliceByteData;
+                        	 progVal = progVal + (int)(20/numFiles);
+                         	progressBar.updateValue(progVal, false);
+                        	//write out image data
+                         	int tS = options.getBeginTime();
+                        	int tEnd = options.getEndTime();
+                        	int s3d = options.getBeginSlice() * sliceLength;
+                        	int e3d = (options.getEndSlice() + 1) * sliceLength;
+                        	int s4d = 0;
+                        	int s =0;
+                        	int end = 0;
+                        	int e4d = 0;
+                        	
+                        	for(int tStart=tS;tStart<=tEnd;tStart++) {
+                        		if(image.is4DImage()) {
+                        			
+                        			s4d = s3d + (tStart * image.getExtents()[2] * sliceLength);
+                        			e4d = e3d + (tStart * image.getExtents()[2] * sliceLength);
+                        			s = s4d;
+                        			end = e4d;
+                        		}else {
+                        			s = s3d;
+                        			end = e3d;
+                        		}
+                        		
+                        		
+                        		for(int start=s;start<end;start=start+sliceLength) {
+                            		sliceByteData = getByteImageData(image,start,sliceLength);
+                            		for(int k=0;k<sliceByteData.length;k=k+1024) {
+                                		int bzipLen = 1024;
+                                		for(int b=0,c=k;b<buf.length;b++,c++) {
+                                			if(c<sliceByteData.length) {
+                                				buf[b] = sliceByteData[c];
+                                			}else {
+                                				bzipLen = b;
+                                				break;
+                                			}
+                                		}
+                                		try {
+                                			bz2out.write(buf, 0, bzipLen);	
+                                		}catch (Exception e) {
+                                			e.printStackTrace();
+                                			MipavUtil.displayError("IOException on byte transfer to bz2zip file");
+                                            return;
+                                		}
+                                	}
+                            	}
+                        	}
+                         	
+                        	
                         	success = true;
                         }else {
                         	 // Open the input file
@@ -3429,7 +3707,7 @@ public class FileIO {
 
             } // if (singleFileNIFTI || (fileType == FileUtility.MINC) || (fileType == FileUtility.MINC_HDF) ||
             else {
-                MipavUtil.displayError("Compression only on single file nifti or minc or xml");
+                MipavUtil.displayError("Compression only on single file nifti or minc or single file xml");
             }
         } // if (zip || gzip || bz2zip)
 
