@@ -1223,11 +1223,13 @@ public class FileImageXML extends FileXML {
 
         // set up the NDAR specific information for header writing
         if (options.writeHeaderOnly()) {
+        	
+        	
             NDARWriteData data = options.getNDARData();
-
-            ((FileInfoImageXML) fileInfo).setSubjectID(data.validGUID);
-
-            ((FileInfoImageXML) fileInfo).setHistory(data.zipFileName);
+            if(data != null) {
+            	((FileInfoImageXML) fileInfo).setSubjectID(data.validGUID);	
+            	((FileInfoImageXML) fileInfo).setHistory(data.zipFileName);
+            }
             
             
             //add psets and parameters
@@ -1366,10 +1368,11 @@ public class FileImageXML extends FileXML {
                 }
             }
         }
-
+        int start = startSlice;
         // if all resolutions are the same, only write 1
         if ( !separateRes) {
             numRes = 1;
+            start = 0;
         }
 
         if (separateRes) {
@@ -1381,7 +1384,7 @@ public class FileImageXML extends FileXML {
             }
         }
 
-        for (int resIndex = startSlice; resIndex < numRes; resIndex++) {
+        for (int resIndex = start; resIndex < numRes; resIndex++) {
             resolutions = img.getFileInfo()[resIndex].getResolutions();
             openTag("Resolutions", true);
 
@@ -2094,10 +2097,14 @@ public class FileImageXML extends FileXML {
             linkProgress(rawFile);
 
             if (img.getNDims() == 3) {
-                rawFile.writeImage3DTo2D(img, options, rawExtension);
+            	if ( !options.writeHeaderOnly()) {
+            		rawFile.writeImage3DTo2D(img, options, rawExtension);
+            	}
                 writeHeader3DTo2D(img, fhName, fileDir, options);
             } else if (img.getNDims() == 4) {
-                rawFile.writeImage4DTo3D(img, options, rawExtension);
+            	if ( !options.writeHeaderOnly()) {
+            		rawFile.writeImage4DTo3D(img, options, rawExtension);
+            	}
                 writeHeader4DTo3D(img, fhName, fileDir, options);
             }
 
