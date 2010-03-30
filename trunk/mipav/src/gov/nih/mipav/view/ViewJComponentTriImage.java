@@ -3039,7 +3039,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             position = new float[(length * 2) + 1];
             intensity = new float[(length * 2) + 1];
             pts = intensityLine.findPositionAndIntensity(slice, 0, position, intensity, imageBufferActive, res,
-                                                         localImageExtents[0], localImageExtents[1]);
+                                                         localImageExtents[0], localImageExtents[1],null);
             pos = new float[pts];
             inten = new float[pts];
 
@@ -3050,7 +3050,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
             if (intensityLine.getContourGraph() == null) {
                 lineGraph = new ViewJFrameGraph(pos, inten, "Line VOI Graph", intensityLine,
-                                                FileInfoBase.getUnitsOfMeasureAbbrevStr(unitsOfMeasure[0]));
+                                                FileInfoBase.getUnitsOfMeasureAbbrevStr(unitsOfMeasure[0]),null);
                 lineGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
                 lineGraph.setVisible(true);
                 intensityLine.setContourGraph(lineGraph);

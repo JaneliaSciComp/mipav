@@ -1449,7 +1449,7 @@ public class VOIHandler extends JComponent implements MouseListener,
 												.getUnitsOfMeasureAbbrevStr(compImage
 														.getActiveImage()
 														.getFileInfo(0)
-														.getUnitsOfMeasure(0)));
+														.getUnitsOfMeasure(0)),null);
 
 								contourGraph
 										.setDefaultDirectory(ViewUserInterface
@@ -1621,7 +1621,7 @@ public class VOIHandler extends JComponent implements MouseListener,
 											.getUnitsOfMeasureAbbrevStr(compImage
 													.getActiveImage()
 													.getFileInfo(0)
-													.getUnitsOfMeasure(3)));
+													.getUnitsOfMeasure(3)),null);
 
 							contourGraph.setDefaultDirectory(ViewUserInterface
 									.getReference().getDefaultDirectory());
@@ -1747,7 +1747,7 @@ public class VOIHandler extends JComponent implements MouseListener,
 										.getUnitsOfMeasureAbbrevStr(compImage
 												.getActiveImage()
 												.getFileInfo(0)
-												.getUnitsOfMeasure(0)));
+												.getUnitsOfMeasure(0)),null);
 
 						contourGraph.setDefaultDirectory(ViewUserInterface
 								.getReference().getDefaultDirectory());
@@ -1824,7 +1824,7 @@ public class VOIHandler extends JComponent implements MouseListener,
 							ptPosition, ptIntensity, "Intensity Graph", v,
 							FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage
 									.getActiveImage().getFileInfo(0)
-									.getUnitsOfMeasure(3)));
+									.getUnitsOfMeasure(3)),null);
 					contourGraph.setDefaultDirectory(ViewUserInterface
 							.getReference().getDefaultDirectory());
 					contourGraph.setVisible(false);
@@ -7458,6 +7458,7 @@ public class VOIHandler extends JComponent implements MouseListener,
 
 		float[] position;
 		float[] intensity;
+		int[][] xyCoords;
 		ViewJFrameGraph lineGraph;
 		int length;
 		float[][] rgbPositions;
@@ -7472,11 +7473,16 @@ public class VOIHandler extends JComponent implements MouseListener,
 		float meanInten;
 		float totalInten;
 		float stdDevInten;
+		float min;
+		float max;
+		int zSlice = 0;
 
 		ViewVOIVector VOIs = compImage.getActiveImage().getVOIs();
 
 		VOIs.VOIAt(voiIndex).exportArrays(lineX, lineY, lineZ,
 				compImage.getSlice(), contourIndex);
+		
+		zSlice = compImage.getSlice();
 
 		if (compImage.getActiveImage().isColorImage() == true) {
 
@@ -7559,6 +7565,8 @@ public class VOIHandler extends JComponent implements MouseListener,
 							+ ((lineY[1] - lineY[0]) * (lineY[1] - lineY[0]))));
 			position = new float[(length * 2) + 1];
 			intensity = new float[(length * 2) + 1];
+			xyCoords = new int[(length * 2) + 1][2];
+			
 
 			int pt = VOIs.VOIAt(voiIndex).findPositionAndIntensity(
 					compImage.getSlice(),
@@ -7569,16 +7577,26 @@ public class VOIHandler extends JComponent implements MouseListener,
 					compImage.getActiveImage().getFileInfo()[compImage
 							.getSlice()].getResolutions(),
 					compImage.getActiveImage().getExtents()[0],
-					compImage.getActiveImage().getExtents()[1]);
+					compImage.getActiveImage().getExtents()[1],xyCoords);
 			float[] pos = new float[pt];
 			float[] inten = new float[pt];
 
+			
+			
 			meanInten = 0.0f;
 			totalInten = 0.0f;
+			min = intensity[0];
+			max = intensity[0];
 			for (m = 0; m < pt; m++) {
 				pos[m] = position[m];
 				inten[m] = intensity[m];
 				totalInten += intensity[m];
+				if(intensity[m] < min) {
+					min = intensity[m];
+				}
+				if(intensity[m] > max) {
+					max = intensity[m];
+				}
 			}
 			meanInten = totalInten / pt;
 			stdDevInten = 0.0f;
@@ -7593,7 +7611,7 @@ public class VOIHandler extends JComponent implements MouseListener,
 						VOIs.VOIAt(voiIndex), FileInfoBase
 								.getUnitsOfMeasureAbbrevStr(compImage
 										.getActiveImage().getFileInfo(0)
-										.getUnitsOfMeasure(0)));
+										.getUnitsOfMeasure(0)),xyCoords);
 				lineGraph.setDefaultDirectory(ViewUserInterface.getReference()
 						.getDefaultDirectory());
 				lineGraph.setVisible(true);
@@ -7608,10 +7626,27 @@ public class VOIHandler extends JComponent implements MouseListener,
 						inten, VOIs.VOIAt(voiIndex), contourIndex);
 			}
 
+			
+			boolean is2D = compImage.getImageA().is2DImage();
+			
 			ViewUserInterface.getReference().setDataText(
-					"Line\ttotal \tmean \tstandard deviation " + "\n");
+					"Line\tmin \tmax \ttotal \tmean \tstandard deviation " + "\n");
 			ViewUserInterface.getReference().setDataText(
-					"\t" + totalInten + "\t" + meanInten + "\t" + stdDevInten + "\n");
+					"\t" + min + "\t" + max + "\t" + totalInten + "\t" + meanInten + "\t" + stdDevInten + "\n");
+			/*ViewUserInterface.getReference().setDataText(
+					"Line\tcoordinates \tposition on curve \tintensity " + "\n");
+			for(int i=0;i<pt;i++) {
+				String coords = xyCoords[i][0] + "," + xyCoords[i][1];
+				if(!is2D) {
+					coords = coords + "," + zSlice;
+				}
+				
+				ViewUserInterface.getReference().setDataText(
+						"\t" + coords + "\t" + pos[i] + "\t" + intensity[i]  + "\n");
+				
+				
+				
+			}*/
 
 			// update...*/
 			return;

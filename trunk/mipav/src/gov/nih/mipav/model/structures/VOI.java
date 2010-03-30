@@ -2427,16 +2427,17 @@ public class VOI extends ModelSerialCloneable {
      * @param   resolutions  image resolutions
      * @param   xDim         x dimension
      * @param   yDim         y dimension
+     * @param   xyCoords     actual x,y coords of the boundary go in here if not null
      *
      * @return  number of valid points in the array
      */
     public int findPositionAndIntensity(int slice, int contourNo, float[] position, float[] intensity,
-                                        float[] imageBuffer, float[] resolutions, int xDim, int yDim) {
+                                        float[] imageBuffer, float[] resolutions, int xDim, int yDim, int[][] xyCoords) {
 
         if (curveType == LINE) {
             return ((VOILine) (curves[slice].elementAt(contourNo))).findPositionAndIntensity(position, intensity,
                                                                                              imageBuffer, resolutions,
-                                                                                             xDim, yDim);
+                                                                                             xDim, yDim,xyCoords);
         }
 
         if (curveType == PROTRACTOR) {
