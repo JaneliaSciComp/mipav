@@ -4801,14 +4801,15 @@ mainLoop:
 
         minrm1(v2);
         pprim = pol3(xmin);
-        pbiss = (((((DoubleDouble.valueOf(6.0)).multiply(xmin)).multiply(xmin)).multiply(v2norm)).multiply(v2norm)).add
-                (((DoubleDouble.valueOf(6.0)).multiply(xmin)).multiply(scv1v2)).add
-                ((DoubleDouble.valueOf(2.0)).multiply(scv0v2)).add
-                (v1norm.multiply(v1norm));
+        pbiss = (((((DoubleDouble.valueOf(6.0)).multiply(xmin)).multiply(xmin)).multiply(v2norm)).multiply(v2norm));
+        pbiss = pbiss.add(((DoubleDouble.valueOf(6.0)).multiply(xmin)).multiply(scv1v2));
+        pbiss = pbiss.add((DoubleDouble.valueOf(2.0)).multiply(scv0v2));
+        pbiss = pbiss.add(v1norm.multiply(v1norm));
         h0 = (pprim.divide(pbiss)).abs();
-        dm = (((DoubleDouble.valueOf(6.0)).multiply(scv1v2)).abs()).add
-               ((((DoubleDouble.valueOf(12.0)).multiply(xmin)).multiply(v2norm)).multiply(v2norm)).add
-               ((((DoubleDouble.valueOf(24.0)).multiply(h0)).multiply(v2norm)).multiply(v2norm));
+        dm = (DoubleDouble.valueOf(6.0)).multiply(scv1v2);
+        dm = dm.add((((DoubleDouble.valueOf(12.0)).multiply(xmin)).multiply(v2norm)).multiply(v2norm));
+        dm = dm.abs();
+        dm = dm.add((((DoubleDouble.valueOf(24.0)).multiply(h0)).multiply(v2norm)).multiply(v2norm));
 
         // DETERMINE IF DP(X)=0 SHOULD BE SOLVED BY USING NEWTONS METHOD
 
@@ -4891,7 +4892,7 @@ mainLoop:
                          (v1norm.multiply(v1norm))));
             d = (pprim.negate()).divide(pbiss);
             x[0] = x0.add(d);
-            errorVar = ((((DoubleDouble.valueOf(2.0)).multiply(dm)).multiply(d)).multiply(d)).divide((pbiss).abs());
+            errorVar = ((((DoubleDouble.valueOf(2.0)).multiply(dm)).multiply(d)).multiply(d)).divide(pbiss.abs());
             x0 = x[0];
             k++;
         } while ((errorVar.gt(eps)) && (k < 3));
