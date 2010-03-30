@@ -549,7 +549,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                                                                                         imageBufferActive,
                                                                                         imageActive.getResolutions(slice),
                                                                                         imageActive.getExtents()[0],
-                                                                                        imageActive.getExtents()[1]);
+                                                                                        imageActive.getExtents()[1],null);
                                         float[] pos = new float[pt];
                                         float[] inten = new float[pt];
 
@@ -560,7 +560,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
                                         if (VOIs.VOIAt(i).getContourGraph() == null) {
                                             lineGraph = new ViewJFrameGraph(pos, inten, "Line VOI Graph", VOIs.VOIAt(i),
-                                                                            FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getUnitsOfMeasure(0)));
+                                                                            FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getUnitsOfMeasure(0)),null);
                                             lineGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
                                             lineGraph.setVisible(true);
                                             VOIs.VOIAt(i).setContourGraph(lineGraph);

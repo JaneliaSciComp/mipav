@@ -440,11 +440,12 @@ public class VOILine extends VOIBase {
      * @param   resolutions  image resolutions
      * @param   xD           x-Dimension of image
      * @param   yD           y-Dimension of image
+     * @param   xyCoords     actual x,y coords of the boundary go in here if not null
      *
      * @return  the number of points in the position and intensity array that hava valid data.
      */
     public int findPositionAndIntensity(float[] position, float[] intensity, float[] imageBuffer, float[] resolutions,
-                                        int xD, int yD) {
+                                        int xD, int yD,int[][] xyCoords) {
         double distance = 0;
         double subDistance = 0;
         int index, indexX = 0, indexY = 0;
@@ -485,6 +486,8 @@ public class VOILine extends VOIBase {
 
             position[pt] = (float) subDistance;
             intensity[pt] = imageBuffer[index];
+            xyCoords[pt][0] = indexX;
+            xyCoords[pt][1] = indexY;
             pt++;
             myX = myX + xInc;
             myY = myY + yInc;
@@ -497,7 +500,8 @@ public class VOILine extends VOIBase {
         if ((pt < position.length) && (pt < intensity.length)) {
             position[pt] = (float) distance;
             intensity[pt] = imageBuffer[index];
-
+            xyCoords[pt][0] = indexX;
+            xyCoords[pt][1] = indexY;
             return pt + 1;
         } else {
             return pt;

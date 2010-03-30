@@ -339,6 +339,11 @@ public class ViewJFrameGraph extends JFrame
 
     /** DOCUMENT ME! */
     private JLabel yGridLineLabel;
+    
+    /**
+     * this is a list of the x,y coords of the image that the graph uses for disply
+     */
+    private int[][] xyCoords;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -656,7 +661,7 @@ public class ViewJFrameGraph extends JFrame
      * @param  v      the VOI the graph is being made for
      */
     public ViewJFrameGraph(float[] x, float[] y, String title, VOI v) {
-        this(x, y, title, v, null);
+        this(x, y, title, v, null,null);
     }
 
     /**
@@ -889,10 +894,14 @@ public class ViewJFrameGraph extends JFrame
      * @param  title  the title of the frame
      * @param  v      the VOI the graph is being made for
      * @param  units  the string representing the units of the curve (x-axis)
+     * @param   xyCoords     actual x,y coords of the boundary go in here if not null 
+     *
      */
-    public ViewJFrameGraph(float[] xInit, float[] yInit, String title, VOI v, String units) {
+    public ViewJFrameGraph(float[] xInit, float[] yInit, String title, VOI v, String units, int[][] xyCoords) {
         super(title);
 
+        this.xyCoords = xyCoords;
+        
         ViewJComponentFunct[] functArray;
         ViewJComponentFunct[] fittedFuncts;
 
@@ -3339,7 +3348,7 @@ public class ViewJFrameGraph extends JFrame
             itemOpenSameGraph = new JMenuItem("Open Graph to Same Frame", MipavUtil.getIcon("open.gif"));
             itemSaveGraph = new JMenuItem("Save Graph", MipavUtil.getIcon("save.gif"));
             itemPrintGraph = new JMenuItem("Print Graph");
-            itemTableOutput = new JMenuItem("Table Output");
+            itemTableOutput = new JMenuItem("Data to Output Window");
             itemClose = new JMenuItem("Close Graph");
             vectorCopyFunct = new Vector(graph.getFuncts().length);
             vectorDeleteFunct = new Vector(graph.getFuncts().length);
@@ -3921,9 +3930,20 @@ public class ViewJFrameGraph extends JFrame
         }
 
         ui.setDataText("\n");
+        if(xyCoords != null) {
+        	 ui.setDataText("x,y coords \tposition on curve \tintensity" );
+        }else {
+        	ui.setDataText("position on curve \tintensity" );
+        }
+        ui.setDataText("\n");
         for (int i = 0; i < len; i++) {
 
             for (int j = 0; j < graph.getFuncts().length; j++) { // writes to the file the pairs of x and y coordinates
+            	if(xyCoords != null) {
+            		String coords = xyCoords[i][0] + " , " + xyCoords[i][1];
+            		ui.setDataText(coords);
+                    ui.setDataText("\t");
+            	}
                 s = Float.toString(graph.getFuncts()[j].getXs()[i]);
                 ui.setDataText(s);
                 ui.setDataText("\t");
