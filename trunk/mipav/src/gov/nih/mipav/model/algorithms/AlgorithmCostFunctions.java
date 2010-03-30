@@ -82,9 +82,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-//    private double aT00, aT10, aT20;
-
-    /** DOCUMENT ME! */
     private int costCalled = 0;
 
     /** DOCUMENT ME! */
@@ -97,34 +94,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
     private ModelSimpleImage inputWgtImage = null;
 
     /** DOCUMENT ME! */
-//    private double iT00, iT10, iT20;
-
-    /** DOCUMENT ME! */
-//    private double[] jointHist;
-
-    /** DOCUMENT ME! */
-    private double M_PI = Math.PI;
-
-    /** DOCUMENT ME! */
-//    private double[] margHistI;
-
-    /** DOCUMENT ME! */
-//    private double[] margHistR;
-
-    /** DOCUMENT ME! */
-//    private Point minMaxPt = new Point();
-
-    /** DOCUMENT ME! */
     private int nBins;
-
-    /** DOCUMENT ME! */
-//    private double newPtX, newPtY, newPtZ;
-
-    /** DOCUMENT ME! */
-//    private double nOverlap;
-
-    /** DOCUMENT ME! */
-//    private double[] numY;
 
     /** DOCUMENT ME! */
     private int nVoxels;
@@ -163,15 +133,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
     private float smoothSize;
 
     /** DOCUMENT ME! */
-//    private double[] sumY;
-
-    /** DOCUMENT ME! */
-//    private double[] sumY2;
-
-    /** DOCUMENT ME! */
-//    private double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
-
-    /** DOCUMENT ME! */
     private int xDim;
 
     /** DOCUMENT ME! */
@@ -179,9 +140,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
     /** DOCUMENT ME! */
     private double xEnd2;
-
-    /** DOCUMENT ME! */
-//    private double[][] xfrm;
 
     /** DOCUMENT ME! */
     private int yDim;
@@ -408,15 +366,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         m_kGPUCost = null;
         
-        //System.err.println( "AlgorithmCostFuntions2D.disposeLocal(): " + this + " " + nBins + " " + costCalled );
-
-//        sumY = null;
-//        sumY2 = null;
-//        numY = null;
-
-//        jointHist = null;
-//        margHistR = null;
-//        margHistI = null;
         pLogP = null;
         //System.gc();
     }
@@ -470,25 +419,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         m_kGPUCost.calcLineMinimization();
         return m_kGPUCost.getBracketB();
     }
-    
-    /**
-     * Accessor that returns the amount of overlap, the total voxels, and the percentage.
-     *
-     * @return  The number of times the cost function has been called.
-     */
-//    public double[] getOverlap() {
-//        double[] toReturn = new double[] { 0, 0, 0 };
-//
-//        if ((costFunctID < MUTUAL_INFORMATION_SMOOTHED) || (costFunctID > NORMALIZED_MUTUAL_INFORMATION)) {
-//            return toReturn;
-//        } else {
-//            toReturn[0] = (double) nOverlap;
-//            toReturn[1] = (double) nVoxels;
-//            toReturn[2] = 100 * toReturn[0] / toReturn[1];
-//
-//            return toReturn;
-//        }
-//    }
+  
 
     /**
      * Sets the input weight image. If the weight values are outside the range [0:1] then the weigthts will be remapped
@@ -517,30 +448,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             }
         }
     }
-
-    /**
-     * Sets the number of bins used in remapping statistical costs.
-     *
-     * @param  nBins  DOCUMENT ME!
-     */
-//    public void setNBins(int nBins) {
-//
-//        sumY = null;
-//        sumY2 = null;
-//        numY = null;
-//        System.gc();
-//
-//        try {
-//            sumY = new double[nBins];
-//            sumY2 = new double[nBins];
-//            numY = new double[nBins];
-//        } catch (OutOfMemoryError error) {
-//            System.gc();
-//            MipavUtil.displayError("Out of memory: CostFunctions.setBins");
-//
-//            return;
-//        }
-//    }
 
     /**
      * Sets the reference weight image. If the weight values are outside the range [0:1] then the weigthts will be
@@ -2269,12 +2176,12 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
      *
      * @return  DOCUMENT ME!
      */
-    private double hanning(double x, int w) {
+    private final static double hanning(double x, int w) {
 
         if (Math.abs(x) > w) {
             return 0.0;
         } else {
-            return (0.5 + (0.5 * Math.cos(M_PI * x / w)));
+            return (0.5 + (0.5 * Math.cos(Math.PI * x / w)));
         }
     }
 
@@ -4246,10 +4153,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 pLogP[num] = -p * Math.log(p);
             }
 
-//            jointHist = new double[nBins * nBins];
-//            margHistR = new double[nBins];
-//            margHistI = new double[nBins];
-
         } catch (OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: CostFunctions.setBins");
@@ -4278,13 +4181,13 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
      *
      * @return  DOCUMENT ME!
      */
-    private double sinc(double x) {
+    private final static double sinc(double x) {
 
         if (Math.abs(x) < 1e-7) {
             return 1.0 - Math.abs(x);
         }
 
-        double y = M_PI * x;
+        double y = Math.PI * x;
 
         return Math.sin(y) / y;
     }
