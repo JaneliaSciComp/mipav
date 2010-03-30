@@ -464,8 +464,8 @@ public class VOILine extends VOIBase {
         yDist = Math.abs(y1 - y0);
 
         // Ths insures maximum xInc or yInc of +-0.5
-        xInc = ((x1 - x0) / (2.0 * Math.max(xDist, yDist)));
-        yInc = ((y1 - y0) / (2.0 * Math.max(xDist, yDist)));
+        xInc = ( (x1 - x0) / (1.0 * Math.max(xDist, yDist)));
+        yInc = ( (y1 - y0) / (1.0 * Math.max(xDist, yDist)));
 
         int pt = 0;
 
@@ -542,8 +542,8 @@ public class VOILine extends VOIBase {
         yDist = Math.abs(y1 - y0);
 
         // Ths insures maximum xInc or yInc of +-0.5
-        xInc = ((x1 - x0) / (2.0 * Math.max(xDist, yDist)));
-        yInc = ((y1 - y0) / (2.0 * Math.max(xDist, yDist)));
+        xInc = ((x1 - x0) / (1.0 * Math.max(xDist, yDist)));
+        yInc = ((y1 - y0) / (1.0 * Math.max(xDist, yDist)));
 
         int pt = 0;
 
@@ -766,8 +766,8 @@ public class VOILine extends VOIBase {
         distance = Math.sqrt(((x1 - x0) * (x1 - x0)) + ((y1 - y0) * (y1 - y0)));
         myY = y0;
         myX = x0;
-        xInc = (x1 - x0) / (2 * distance);
-        yInc = (y1 - y0) / (2 * distance);
+        xInc = (x1 - x0) / (1 * distance);
+        yInc = (y1 - y0) / (1 * distance);
 
         int pt = 0;
         len = (int) Math.round(2 * distance);
@@ -815,8 +815,8 @@ public class VOILine extends VOIBase {
         distance = Math.sqrt(((x1 - x0) * (x1 - x0)) + ((y1 - y0) * (y1 - y0)));
         myY = y0;
         myX = x0;
-        xInc = (x1 - x0) / (2 * distance);
-        yInc = (y1 - y0) / (2 * distance);
+        xInc = (x1 - x0) / (1 * distance);
+        yInc = (y1 - y0) / (1 * distance);
 
         int pt = 0;
         len = (int) Math.round(2 * distance);
