@@ -3850,12 +3850,20 @@ mainLoop:
         DoubleDouble[] c4Mat = new DoubleDouble[nPts];
         DoubleDouble[][] dummy = new DoubleDouble[1][1];
         int j, k, ll;
-        DoubleDouble athird, eps1, eps2, epsk, epsj, ak, aj, term, sum;
+        DoubleDouble eps1, eps2, epsk, epsj, ak, aj, term, sum;
+        double athird;
+        double eps2d;
         int hessCtrl;
 
         hessCtrl = -1;
-        athird = (DoubleDouble.valueOf(1.0)).divide(DoubleDouble.valueOf(3.0));
-        eps2 = srelpr.pow(athird);
+        //athird = (DoubleDouble.valueOf(1.0)).divide(DoubleDouble.valueOf(3.0));
+        //eps2 = srelpr.pow(athird);
+        // srelpr = 4.9E-324.  pow(DoubleDouble) calls DoubleDouble loga = this.log();
+        // For this value of srelpr, log enters an infinite loop
+        // Using standard Java Math.pow calculate eps2 as 1.70312E-108
+        athird = 1.0/3.0;
+        eps2d = Math.pow(srelpr.doubleValue(), athird);
+        eps2 = DoubleDouble.valueOf(eps2d);
         eps1 = eps2;
 
         for (k = 0; k < param; k++) {
