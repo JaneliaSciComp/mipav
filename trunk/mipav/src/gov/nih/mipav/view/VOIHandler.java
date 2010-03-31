@@ -1835,7 +1835,7 @@ public class VOIHandler extends JComponent implements MouseListener,
 									.getActiveImage().getFileInfo(0)
 									.getUnitsOfMeasure(3)));
 					v.getContourGraph().replaceFunction(ptPosition,
-							ptIntensity, v, j);
+							ptIntensity, null, v, j);
 				} else {
 					v.getContourGraph().setUnitsInLabel(
 							FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage
@@ -1869,9 +1869,12 @@ public class VOIHandler extends JComponent implements MouseListener,
 		int length;
 		float[] position;
 		float[] intensity;
+		int[][] xyCoords;
 		int pt;
 		float[][] rgbPositions;
 		float[][] rgbIntensities;
+		float min;
+		float max;
 
 		float[][] rgbPos = null;
 		float[][] rgbInten = null;
@@ -2049,6 +2052,7 @@ public class VOIHandler extends JComponent implements MouseListener,
 
 									position = new float[(length * 2) + 1];
 									intensity = new float[(length * 2) + 1];
+									xyCoords = new int[(length * 2) + 1][2];
 									pt = ((VOIContour) (VOIs.VOIAt(i)
 											.getCurves()[compImage.getSlice()]
 											.elementAt(j)))
@@ -2064,17 +2068,25 @@ public class VOIHandler extends JComponent implements MouseListener,
 													compImage.getActiveImage()
 															.getExtents()[0],
 													compImage.getActiveImage()
-															.getExtents()[1]);
+															.getExtents()[1],xyCoords);
 
 									float[] pos = new float[pt];
 									float[] inten = new float[pt];
 
 									meanInten = 0.0f;
 									totalInten = 0.0f;
+									min = intensity[0];
+									max = intensity[0];
 									for (i = 0; i < pt; i++) {
 										pos[i] = position[i];
 										inten[i] = intensity[i];
 										totalInten += intensity[i];
+										if(intensity[i] < min) {
+											min = intensity[i];
+										}
+										if(intensity[i] > max) {
+											max = intensity[i];
+										}
 									}
 									meanInten = totalInten / pt;
 									stdDevInten = 0.0f;
@@ -2086,7 +2098,7 @@ public class VOIHandler extends JComponent implements MouseListener,
 											/ pt);
 
 									ViewJFrameGraph contourGraph = new ViewJFrameGraph(
-											pos, inten, "Contour VOI Graph");
+											pos, inten, "Contour VOI Graph",xyCoords);
 
 									contourGraph
 											.setUnitsInLabel(FileInfoBase
@@ -2101,7 +2113,7 @@ public class VOIHandler extends JComponent implements MouseListener,
 													.getDefaultDirectory());
 									contourGraph.setVisible(true);
 
-									ViewUserInterface.getReference()
+									/*ViewUserInterface.getReference()
 											.setDataText(
 													"VOI perimiter\t\ttotal \tmean \tstandard deviation "
 															+ "\n");
@@ -2110,7 +2122,14 @@ public class VOIHandler extends JComponent implements MouseListener,
 													"\t\t" + totalInten + "\t"
 															+ meanInten + "\t"
 															+ stdDevInten
-															+ "\n");
+															+ "\n");*/
+									
+									
+									ViewUserInterface.getReference().setDataText(
+											"VOI perimiter\tmin \tmax \ttotal \tmean \tstandard deviation " + "\n");
+									ViewUserInterface.getReference().setDataText(
+											"\t" + min + "\t" + max + "\t" + totalInten + "\t" + meanInten + "\t" + stdDevInten + "\n");
+									
 
 									return;
 								}
@@ -7580,6 +7599,7 @@ public class VOIHandler extends JComponent implements MouseListener,
 					compImage.getActiveImage().getExtents()[1],xyCoords);
 			float[] pos = new float[pt];
 			float[] inten = new float[pt];
+			int[][] xyC = new int[pt][2];
 
 			
 			
@@ -7590,6 +7610,8 @@ public class VOIHandler extends JComponent implements MouseListener,
 			for (m = 0; m < pt; m++) {
 				pos[m] = position[m];
 				inten[m] = intensity[m];
+				xyC[m][0] = xyCoords[m][0];
+				xyC[m][1] = xyCoords[m][1];
 				totalInten += intensity[m];
 				if(intensity[m] < min) {
 					min = intensity[m];
@@ -7611,7 +7633,7 @@ public class VOIHandler extends JComponent implements MouseListener,
 						VOIs.VOIAt(voiIndex), FileInfoBase
 								.getUnitsOfMeasureAbbrevStr(compImage
 										.getActiveImage().getFileInfo(0)
-										.getUnitsOfMeasure(0)),xyCoords);
+										.getUnitsOfMeasure(0)),xyC);
 				lineGraph.setDefaultDirectory(ViewUserInterface.getReference()
 						.getDefaultDirectory());
 				lineGraph.setVisible(true);
@@ -7623,7 +7645,7 @@ public class VOIHandler extends JComponent implements MouseListener,
 								.getActiveImage().getFileInfo(0)
 								.getUnitsOfMeasure(0)));
 				VOIs.VOIAt(voiIndex).getContourGraph().replaceFunction(pos,
-						inten, VOIs.VOIAt(voiIndex), contourIndex);
+						inten, xyC, VOIs.VOIAt(voiIndex), contourIndex);
 			}
 
 			

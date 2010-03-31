@@ -567,7 +567,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                                             lineGraph.setVOI(VOIs.VOIAt(i));
                                         } else {
                                             VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getUnitsOfMeasure(0)));
-                                            VOIs.VOIAt(i).getContourGraph().replaceFunction(pos, inten, VOIs.VOIAt(i),
+                                            VOIs.VOIAt(i).getContourGraph().replaceFunction(pos, inten, null, VOIs.VOIAt(i),
                                                                                             j);
                                         }
 

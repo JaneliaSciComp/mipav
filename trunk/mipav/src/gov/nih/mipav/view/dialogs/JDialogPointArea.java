@@ -577,7 +577,7 @@ public class JDialogPointArea extends JDialogScriptableBase implements Algorithm
                 pos[i] = i;
             }
 
-            graph = new ViewJFrameGraph(pos, averageIntensities, "Point Area Average Intensities");
+            graph = new ViewJFrameGraph(pos, averageIntensities, "Point Area Average Intensities",(int[][])null);
             graph.setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(srcImage.getFileInfo(0).getUnitsOfMeasure(0)));
         }
     }

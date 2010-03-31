@@ -33,6 +33,9 @@ public class ViewJComponentFunct extends JComponent {
 
     /** DOCUMENT ME! */
     public float[] Y;
+    
+    /** xy coordinates of voi boundar **/
+    public int[][] XYCoords;
 
     /** DOCUMENT ME! */
     private String functName;
@@ -84,9 +87,10 @@ public class ViewJComponentFunct extends JComponent {
      * @param  lineColor  color for the function
      * @param  v          voi this is drawn for if it is for a point, should be null otherwise
      */
-    public ViewJComponentFunct(float[] x, float[] y, Color lineColor, VOI v) {
+    public ViewJComponentFunct(float[] x, float[] y, Color lineColor, VOI v,int[][] xyCoords) {
         X = x;
         Y = y;
+        XYCoords = xyCoords;
         originalX = x;
         originalY = y;
         this.lineColor = lineColor;
@@ -101,10 +105,11 @@ public class ViewJComponentFunct extends JComponent {
      * @param  name  integer for name of function
      * @param  v     voi this is drawn for if it is for a point, should be null otherwise
      */
-    public ViewJComponentFunct(float[] x, float[] y, int name, VOI v) {
+    public ViewJComponentFunct(float[] x, float[] y, int name, VOI v, int[][] xyCoords) {
         functName = "Function " + name;
         X = x;
         Y = y;
+        XYCoords = xyCoords;
         originalX = x;
         originalY = y;
         setColor(name - 1);
@@ -139,10 +144,11 @@ public class ViewJComponentFunct extends JComponent {
      * @param  name       integer for name of function
      * @param  v          voi this is drawn for if it is for a point, should be null otherwise
      */
-    public ViewJComponentFunct(float[] x, float[] y, Color lineColor, int name, VOI v) {
+    public ViewJComponentFunct(float[] x, float[] y, Color lineColor, int name, VOI v, int[][] xyCoords) {
         functName = "Function " + name;
         X = x;
         Y = y;
+        XYCoords = xyCoords;
         originalX = x;
         originalY = y;
         this.lineColor = lineColor;
@@ -260,6 +266,11 @@ public class ViewJComponentFunct extends JComponent {
      */
     public float[] getXs() {
         return X;
+    }
+    
+    
+    public int[][] getXYCoords() {
+    	return XYCoords;
     }
 
     /**

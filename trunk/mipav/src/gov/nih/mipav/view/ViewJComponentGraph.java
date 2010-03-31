@@ -1402,7 +1402,7 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
 
             tempFuncts[functions.length] = copiedFunct;
             tempFittedFuncts[functions.length] = new ViewJComponentFunct(copiedXs, copiedYs, copiedFunct.getColor(),
-                                                                         null);
+                                                                         null,(int[][])null);
 
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJComponentGraph.pasteFunct");

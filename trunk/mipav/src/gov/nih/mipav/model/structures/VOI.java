@@ -2446,7 +2446,7 @@ public class VOI extends ModelSerialCloneable {
             return ((VOIContour) (curves[slice].elementAt(contourNo))).findPositionAndIntensity(position, intensity,
                                                                                                 imageBuffer,
                                                                                                 resolutions, xDim,
-                                                                                                yDim);
+                                                                                                yDim,xyCoords);
         } else if (curveType == POINT) {
             return 0;
         } else {
