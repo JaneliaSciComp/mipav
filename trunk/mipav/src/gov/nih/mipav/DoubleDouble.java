@@ -640,8 +640,19 @@ public strictfp class DoubleDouble
 			return NaN;
 		}
 		
-		DoubleDouble num = this.subtract(DoubleDouble.valueOf(1.0));
-		DoubleDouble denom = this.add(DoubleDouble.valueOf(1.0));
+	    DoubleDouble number = this;
+	    int intPart = 0;
+		while (number.gt(E)) {
+		    number = number.divide(E);
+		    intPart++;
+		}
+		while (number.lt(E.reciprocal())) {
+			number = number.multiply(E);
+			intPart--;
+		}
+		
+		DoubleDouble num = number.subtract(DoubleDouble.valueOf(1.0));
+		DoubleDouble denom = number.add(DoubleDouble.valueOf(1.0));
 		DoubleDouble ratio = num.divide(denom);
 		DoubleDouble ratioSquare = ratio.multiply(ratio);
 		DoubleDouble s = DoubleDouble.valueOf(2.0).multiply(ratio);
@@ -655,7 +666,7 @@ public strictfp class DoubleDouble
 			w = t.divide(DoubleDouble.valueOf(n));
 			s = s.add(w);
 		}
-		return s;
+		return s.add(DoubleDouble.valueOf(intPart));
 	}
 	
 	/**
