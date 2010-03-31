@@ -3868,8 +3868,8 @@ mainLoop:
         hessCtrl = -1;
         //athird = (DoubleDouble.valueOf(1.0)).divide(DoubleDouble.valueOf(3.0));
         //eps2 = srelpr.pow(athird);
-        // srelpr = 4.9E-324.  pow(DoubleDouble) calls DoubleDouble loga = this.log();
-        // For this value of srelpr, log enters an infinite loop
+        // DoubleDouble pow does not converge properly for such extreme numbers
+        // Using DoubleDouble pow gives 2.2978677E74.
         // Using standard Java Math.pow calculate eps2 as 1.70312E-108
         athird = 1.0/3.0;
         eps2d = Math.pow(srelpr.doubleValue(), athird);
