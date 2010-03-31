@@ -3057,7 +3057,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                 lineGraph.setVOI(intensityLine);
             } else {
                 intensityLine.getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(unitsOfMeasure[1]));
-                intensityLine.getContourGraph().replaceFunction(pos, inten, intensityLine, 0);
+                intensityLine.getContourGraph().replaceFunction(pos, inten, null, intensityLine, 0);
             }
         }
     }

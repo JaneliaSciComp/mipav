@@ -341,7 +341,7 @@ public class ViewJFrameGraph extends JFrame
     private JLabel yGridLineLabel;
     
     /**
-     * this is a list of the x,y coords of the image that the graph uses for disply
+     * this is a list of the x,y coords of the voi's boundary
      */
     private int[][] xyCoords;
 
@@ -360,8 +360,10 @@ public class ViewJFrameGraph extends JFrame
 
         float[] x = new float[1];
         float[] y = new float[1];
+        int[][] xyc = new int[1][1];
         x[0] = 0;
         y[0] = 0;
+        xyc[0][0] = 0;
         setBounds(0, 0, 500, 400);
 
         ViewJComponentFunct[] functArray;
@@ -373,9 +375,9 @@ public class ViewJFrameGraph extends JFrame
             mainPanel.setBounds(0, 0, getSize().width, getSize().height);
             graph = new ViewJComponentGraph(this, mainPanel.getBounds().width, mainPanel.getBounds().height - 60);
             functArray = new ViewJComponentFunct[1];
-            functArray[0] = new ViewJComponentFunct(x, y, Color.red, 1, voi); // empty function
+            functArray[0] = new ViewJComponentFunct(x, y, Color.red, 1, voi,xyc); // empty function
             fittedFuncts = new ViewJComponentFunct[1];
-            fittedFuncts[0] = new ViewJComponentFunct(x, y, Color.red, voi); // empty function
+            fittedFuncts[0] = new ViewJComponentFunct(x, y, Color.red, voi,xyc); // empty function
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameGraph constructor");
 
@@ -455,21 +457,26 @@ public class ViewJFrameGraph extends JFrame
      * @param  yInit  the array of y coordinates to be plotted in the graph
      * @param  title  the title of the frame
      */
-    public ViewJFrameGraph(float[] xInit, float[] yInit, String title) {
+    public ViewJFrameGraph(float[] xInit, float[] yInit, String title, int[][] xyCoords) {
         super(title);
 
         ViewJComponentFunct[] functArray;
         ViewJComponentFunct[] fittedFuncts;
+        
+        this.xyCoords = xyCoords;
 
         voi = null;
         setBounds(0, 0, 500, 400);
 
         float[] x = new float[xInit.length];
         float[] y = new float[xInit.length];
-
+        int[][] xyC = new int[xInit.length][2];
+        
         for (int i = 0; i < xInit.length; i++) {
             x[i] = xInit[i];
             y[i] = yInit[i];
+            xyC[i][0] = xyCoords[i][0];
+            xyC[i][1] = xyCoords[i][1];
         }
 
         try {
@@ -477,9 +484,9 @@ public class ViewJFrameGraph extends JFrame
             mainPanel.setBounds(0, 0, getSize().width, getSize().height);
             graph = new ViewJComponentGraph(this, mainPanel.getBounds().width, mainPanel.getBounds().height - 60);
             functArray = new ViewJComponentFunct[1];
-            functArray[0] = new ViewJComponentFunct(x, y, Color.red, 1, voi); // empty function
+            functArray[0] = new ViewJComponentFunct(x, y, Color.red, 1, voi,xyC); // empty function
             fittedFuncts = new ViewJComponentFunct[1];
-            fittedFuncts[0] = new ViewJComponentFunct(x, y, Color.red, voi); // empty function
+            fittedFuncts[0] = new ViewJComponentFunct(x, y, Color.red, voi,xyC); // empty function
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameGraph constructor");
 
@@ -590,8 +597,8 @@ public class ViewJFrameGraph extends JFrame
                     color = Color.yellow;
                 }
 
-                functArray[i] = new ViewJComponentFunct(x[i], y[i], color, i + 1, voi); // empty function
-                fittedFuncts[i] = new ViewJComponentFunct(x[i], y[i], color, voi); // empty function
+                functArray[i] = new ViewJComponentFunct(x[i], y[i], color, i + 1, voi,null); // empty function
+                fittedFuncts[i] = new ViewJComponentFunct(x[i], y[i], color, voi,null); // empty function
             }
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameGraph constructor");
@@ -709,9 +716,9 @@ public class ViewJFrameGraph extends JFrame
             mainPanel.setBounds(0, 0, getSize().width, getSize().height);
             graph = new ViewJComponentGraph(this, mainPanel.getBounds().width, mainPanel.getBounds().height - 60);
             functArray = new ViewJComponentFunct[1];
-            functArray[0] = new ViewJComponentFunct(x, y, Color.red, 1, voi); // empty function
+            functArray[0] = new ViewJComponentFunct(x, y, Color.red, 1, voi,null); // empty function
             fittedFuncts = new ViewJComponentFunct[1];
-            fittedFuncts[0] = new ViewJComponentFunct(x, y, Color.red, voi); // empty function
+            fittedFuncts[0] = new ViewJComponentFunct(x, y, Color.red, voi,null); // empty function
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameGraph constructor");
 
@@ -824,8 +831,8 @@ public class ViewJFrameGraph extends JFrame
                     color = Color.yellow;
                 }
 
-                functArray[i] = new ViewJComponentFunct(x[i], y[i], color, i + 1, voi); // empty function
-                fittedFuncts[i] = new ViewJComponentFunct(x[i], y[i], color, voi); // empty function
+                functArray[i] = new ViewJComponentFunct(x[i], y[i], color, i + 1, voi,null); // empty function
+                fittedFuncts[i] = new ViewJComponentFunct(x[i], y[i], color, voi,null); // empty function
             }
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameGraph constructor");
@@ -910,10 +917,14 @@ public class ViewJFrameGraph extends JFrame
 
         float[] x = new float[xInit.length];
         float[] y = new float[xInit.length];
+        int[][] xyC = new int[xInit.length][2];
+        
 
         for (int i = 0; i < xInit.length; i++) {
             x[i] = xInit[i];
             y[i] = yInit[i];
+            xyC[i][0] = xyCoords[i][0];
+            xyC[i][1] = xyCoords[i][1];
         }
 
         setVisible(false);
@@ -923,9 +934,9 @@ public class ViewJFrameGraph extends JFrame
             mainPanel.setBounds(0, 0, getSize().width, getSize().height);
             graph = new ViewJComponentGraph(this, mainPanel.getBounds().width, mainPanel.getBounds().height - 60);
             functArray = new ViewJComponentFunct[1];
-            functArray[0] = new ViewJComponentFunct(x, y, Color.red, 1, voi); // empty function
+            functArray[0] = new ViewJComponentFunct(x, y, Color.red, 1, voi,xyC); // empty function
             fittedFuncts = new ViewJComponentFunct[1];
-            fittedFuncts[0] = new ViewJComponentFunct(x, y, Color.red, voi); // empty function
+            fittedFuncts[0] = new ViewJComponentFunct(x, y, Color.red, voi,xyC); // empty function
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameGraph constructor");
 
@@ -1038,8 +1049,8 @@ public class ViewJFrameGraph extends JFrame
                     color = Color.yellow;
                 }
 
-                functArray[i] = new ViewJComponentFunct(x[i], y[i], color, i + 1, voi); // empty function
-                fittedFuncts[i] = new ViewJComponentFunct(x[i], y[i], color, voi); // empty function
+                functArray[i] = new ViewJComponentFunct(x[i], y[i], color, i + 1, voi,null); // empty function
+                fittedFuncts[i] = new ViewJComponentFunct(x[i], y[i], color, voi, null); // empty function
             }
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameGraph constructor");
@@ -1130,9 +1141,9 @@ public class ViewJFrameGraph extends JFrame
             mainPanel.setBounds(0, 0, getSize().width, getSize().height);
             graph = new ViewJComponentGraph(this, mainPanel.getBounds().width, mainPanel.getBounds().height - 60);
             functArray = new ViewJComponentFunct[1];
-            functArray[0] = new ViewJComponentFunct(x, y, color, 1, voi); // empty function
+            functArray[0] = new ViewJComponentFunct(x, y, color, 1, voi,null); // empty function
             fittedFuncts = new ViewJComponentFunct[1];
-            fittedFuncts[0] = new ViewJComponentFunct(x, y, color, voi); // empty function
+            fittedFuncts[0] = new ViewJComponentFunct(x, y, color, voi, null); // empty function
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameGraph constructor");
 
@@ -1236,8 +1247,8 @@ public class ViewJFrameGraph extends JFrame
             for (i = 0; i < x.length; i++) {
                 color = colorArray[i];
 
-                functArray[i] = new ViewJComponentFunct(x[i], y[i], color, i + 1, voi); // empty function
-                fittedFuncts[i] = new ViewJComponentFunct(x[i], y[i], color, voi); // empty function
+                functArray[i] = new ViewJComponentFunct(x[i], y[i], color, i + 1, voi,null); // empty function
+                fittedFuncts[i] = new ViewJComponentFunct(x[i], y[i], color, voi, null); // empty function
             }
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameGraph constructor");
@@ -1627,7 +1638,7 @@ public class ViewJFrameGraph extends JFrame
                 
             }
 
-            new ViewJFrameGraph(x, gaussY, "Median -> Gaussian");
+            new ViewJFrameGraph(x, gaussY, "Median -> Gaussian",(int[][])null);
 
         }
     }
@@ -2190,8 +2201,8 @@ public class ViewJFrameGraph extends JFrame
 
             // change the first three functions to the new ones (RGB functions)
             // tempFuncts[0]       = new ViewJComponentFunct(x, y, 1, voi);  //empty function
-            tempFuncts[0] = new ViewJComponentFunct(x, y, graph.getFuncts()[0].getColor(), voi); // empty function
-            tempFittedFuncts[0] = new ViewJComponentFunct(x, y, Color.red, voi); // empty function
+            tempFuncts[0] = new ViewJComponentFunct(x, y, graph.getFuncts()[0].getColor(), voi,null); // empty function
+            tempFittedFuncts[0] = new ViewJComponentFunct(x, y, Color.red, voi,null); // empty function
 
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameGraph.replaceFunction()");
@@ -2239,17 +2250,19 @@ public class ViewJFrameGraph extends JFrame
      * @param  myVoi  the new VOI for this function
      * @param  index  DOCUMENT ME!
      */
-    public void replaceFunction(float[] newX, float[] newY, VOI myVoi, int index) {
+    public void replaceFunction(float[] newX, float[] newY, int[][] newXYCoords, VOI myVoi, int index) {
         ViewJComponentFunct[] tempFuncts;
         ViewJComponentFunct[] tempFittedFuncts;
         float[] x;
         float[] y;
+        int[][] xyCoords;
         voi = myVoi;
 
         try {
             x = new float[newX.length];
             y = new float[newY.length];
-
+            xyCoords = new int[newXYCoords.length][2];
+            
             // creates copies of the paramaters, so that if the arrays pointed to by them
             // are modified in ViewJComponentEditImage, the functions are not modified
             x = new float[newX.length];
@@ -2263,14 +2276,19 @@ public class ViewJFrameGraph extends JFrame
             for (int j = 0; j < y.length; j++) {
                 y[j] = newY[j];
             }
+            
+            for (int j = 0; j < xyCoords.length; j++) {
+            	xyCoords[j][0] = newXYCoords[j][0];
+            	xyCoords[j][1] = newXYCoords[j][1];
+            }
 
             tempFuncts = new ViewJComponentFunct[1];
             tempFittedFuncts = new ViewJComponentFunct[1];
 
             // change the first three functions to the new ones (RGB functions)
             // System.out.println ("replace function: new index = " + index);
-            tempFuncts[0] = new ViewJComponentFunct(x, y, index + 1, voi); // empty function
-            tempFittedFuncts[0] = new ViewJComponentFunct(x, y, Color.red, voi); // empty function
+            tempFuncts[0] = new ViewJComponentFunct(x, y, index + 1, voi, xyCoords); // empty function
+            tempFittedFuncts[0] = new ViewJComponentFunct(x, y, Color.red, voi, xyCoords); // empty function
 
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameGraph.replaceFunction()");
@@ -2341,9 +2359,9 @@ public class ViewJFrameGraph extends JFrame
             }
 
             tempFuncts = new ViewJComponentFunct[graph.getFuncts().length + 1];
-            tempFuncts[index] = new ViewJComponentFunct(x, y, index + 1, voi); // empty function
+            tempFuncts[index] = new ViewJComponentFunct(x, y, index + 1, voi, null); // empty function
             tempFittedFuncts = new ViewJComponentFunct[graph.getFittedFuncts().length + 1];
-            tempFittedFuncts[index] = new ViewJComponentFunct(x, y, Color.red, voi); // empty function
+            tempFittedFuncts[index] = new ViewJComponentFunct(x, y, Color.red, voi, null); // empty function
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameGraph.saveCurrentFunction()");
 
@@ -2587,8 +2605,8 @@ public class ViewJFrameGraph extends JFrame
 
             // change the first three functions to the new ones (RGB functions)
             for (int i = 0; i < x.length; i++) {
-                tempFuncts[i] = new ViewJComponentFunct(x[i], y[i], i + 1, voi); // empty function
-                tempFittedFuncts[i] = new ViewJComponentFunct(x[i], y[i], Color.red, voi); // empty function
+                tempFuncts[i] = new ViewJComponentFunct(x[i], y[i], i + 1, voi,null); // empty function
+                tempFittedFuncts[i] = new ViewJComponentFunct(x[i], y[i], Color.red, voi,null); // empty function
             }
 
             for (int i = x.length; i < tempFuncts.length; i++) {
@@ -3939,10 +3957,15 @@ public class ViewJFrameGraph extends JFrame
         for (int i = 0; i < len; i++) {
 
             for (int j = 0; j < graph.getFuncts().length; j++) { // writes to the file the pairs of x and y coordinates
-            	if(xyCoords != null) {
+            	/*if(xyCoords != null) {
             		String coords = xyCoords[i][0] + " , " + xyCoords[i][1];
             		ui.setDataText(coords);
                     ui.setDataText("\t");
+            	}*/
+            	if(graph.getFuncts()[j].getXYCoords() != null) {
+	            	s = graph.getFuncts()[j].getXYCoords()[i][0] + " , " + graph.getFuncts()[j].getXYCoords()[i][1];
+	            	ui.setDataText(s);
+	                ui.setDataText("\t");
             	}
                 s = Float.toString(graph.getFuncts()[j].getXs()[i]);
                 ui.setDataText(s);

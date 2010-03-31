@@ -2403,7 +2403,7 @@ public class VOIContour extends VOIBase {
 	 *         hava valid data.
 	 */
 	public int findPositionAndIntensity(float[] position, float[] intensity,
-			float[] imageBuffer, float[] resolutions, int xDim, int yDim) {
+			float[] imageBuffer, float[] resolutions, int xDim, int yDim,int[][] xyCoords) {
 		int i, j, end, pt;
 		int index, indexX = 0, indexY = 0;
 		double myY, myX, yInc, xInc;
@@ -2440,6 +2440,8 @@ public class VOIContour extends VOIBase {
 											* (resolutions[1]) * (resolutions[1])));
 					position[pt] = (float) (totDistance + subPtDistance);
 					intensity[pt] = imageBuffer[index];
+					xyCoords[pt][0] = indexX;
+		            xyCoords[pt][1] = indexY;
 					pt++;
 				}
 
@@ -2477,6 +2479,8 @@ public class VOIContour extends VOIBase {
 											* (resolutions[1]) * (resolutions[1])));
 					position[pt] = (float) (totDistance + subPtDistance);
 					intensity[pt] = imageBuffer[index];
+					xyCoords[pt][0] = indexX;
+		            xyCoords[pt][1] = indexY;
 					pt++;
 				}
 
@@ -2493,6 +2497,8 @@ public class VOIContour extends VOIBase {
 			pt--;
 			position[pt] = (float) (totDistance + subPtDistance);
 			intensity[pt] = imageBuffer[index];
+			xyCoords[pt][0] = indexX;
+            xyCoords[pt][1] = indexY;
 		}
 
 		return pt + 1;
