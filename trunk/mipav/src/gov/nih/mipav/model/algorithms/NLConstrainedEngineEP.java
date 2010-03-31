@@ -1595,7 +1595,7 @@ public abstract class NLConstrainedEngineEP {
 	                        for (i = 0; i < nPts; i++) {
 	                            covarMat[i][0] = DoubleDouble.valueOf(1.0);
 	                            covarMat[i][1] = a[3].negate();
-	                            covarMat[i][1] = covarMat[1][1].multiply(xSeries[i]);
+	                            covarMat[i][1] = covarMat[i][1].multiply(xSeries[i]);
 	                            covarMat[i][1] = covarMat[i][1].exp();
 	                            //covarMat[i][1] = Math.exp(-a[3]*xSeries[i]);
 	                            covarMat[i][2] = a[4].negate();
