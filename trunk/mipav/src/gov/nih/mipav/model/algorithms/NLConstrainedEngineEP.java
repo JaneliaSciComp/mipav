@@ -3860,20 +3860,13 @@ mainLoop:
         DoubleDouble[] c4Mat = new DoubleDouble[nPts];
         DoubleDouble[][] dummy = new DoubleDouble[1][1];
         int j, k, ll;
-        DoubleDouble eps1, eps2, epsk, epsj, ak, aj, term, sum;
-        double athird;
-        double eps2d;
+        DoubleDouble athird, eps1, eps2, epsk, epsj, ak, aj, term, sum;
         int hessCtrl;
 
         hessCtrl = -1;
-        //athird = (DoubleDouble.valueOf(1.0)).divide(DoubleDouble.valueOf(3.0));
-        //eps2 = srelpr.pow(athird);
-        // DoubleDouble pow does not converge properly for such extreme numbers
-        // Using DoubleDouble pow gives 2.2978677E74.
-        // Using standard Java Math.pow calculate eps2 as 1.70312E-108
-        athird = 1.0/3.0;
-        eps2d = Math.pow(srelpr.doubleValue(), athird);
-        eps2 = DoubleDouble.valueOf(eps2d);
+        athird = (DoubleDouble.valueOf(1.0)).divide(DoubleDouble.valueOf(3.0));
+        eps2 = srelpr.pow(athird);
+        
         eps1 = eps2;
 
         for (k = 0; k < param; k++) {
