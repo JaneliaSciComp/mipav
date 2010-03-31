@@ -605,19 +605,29 @@ public strictfp class DoubleDouble
 	 * @return
 	 */
 	public DoubleDouble exp() {
+		boolean invert = false;
 		// Return the exponential of a DoubleDouble number
 		if (isNaN()) {
 			return NaN;
 		}
-		DoubleDouble s = (DoubleDouble.valueOf(1.0)).add(this);
-		DoubleDouble t = new DoubleDouble(this);
+		DoubleDouble x = this;
+		if (x.lt(DoubleDouble.valueOf(0.0))) {
+			// Much greater precision if all numbers in the series have the same sign.
+			x = x.negate();
+			invert = true;
+		}
+		DoubleDouble s = (DoubleDouble.valueOf(1.0)).add(x);
+		DoubleDouble t = new DoubleDouble(x);
 		double n = 1.0;
 		
 		while (Math.abs(t.doubleValue()) > DoubleDouble.EPS) {
 			n += 1.0;
 			t = t.divide(DoubleDouble.valueOf(n));
-			t = t.multiply(this);
+			t = t.multiply(x);
 			s = s.add(t);
+		}
+		if (invert) {
+			s = s.reciprocal();
 		}
 		return s;
 		
@@ -1089,6 +1099,7 @@ public strictfp class DoubleDouble
 	 * For a > 0, base = x * log(a), a**x = 1 + base + base**2/2! + base**3/3! + ... 
 	 */
 	public DoubleDouble pow(double x) {
+		boolean invert = false;
 		if (Double.isNaN(x)) {
 			return NaN;
 		}
@@ -1111,6 +1122,11 @@ public strictfp class DoubleDouble
 		}
 	    DoubleDouble loga = this.log();	
 	    DoubleDouble base = DoubleDouble.valueOf(x).multiply(loga);
+	    if (base.lt(DoubleDouble.valueOf(0.0))) {
+	    	// Much greater precision if all numbers in the series have the same sign.
+	        base = base.negate();
+	        invert = true;
+	    }
 	    DoubleDouble s = DoubleDouble.valueOf(1.0).add(base);
 		DoubleDouble t = (DoubleDouble)base.clone();
 		double n = 1.0;
@@ -1120,6 +1136,9 @@ public strictfp class DoubleDouble
 			t = t.divide(DoubleDouble.valueOf(n));
 			t = t.multiply(base);
 			s = s.add(t);
+		}
+		if (invert) {
+			s = s.reciprocal();
 		}
 		return s;
 	}
@@ -1131,6 +1150,7 @@ public strictfp class DoubleDouble
 	 * For a > 0, base = x * log(a), a**x = 1 + base + base**2/2! + base**3/3! + ... 
 	 */
 	public DoubleDouble pow(DoubleDouble x) {
+		boolean invert = false;
 		if (x.isNaN()) {
 			return NaN;
 		}
@@ -1153,6 +1173,11 @@ public strictfp class DoubleDouble
 		}
 	    DoubleDouble loga = this.log();	
 	    DoubleDouble base = x.multiply(loga);
+	    if (base.lt(DoubleDouble.valueOf(0.0))) {
+	    	// Much greater precision if all numbers in the series have the same sign.
+	        base = base.negate();
+	        invert = true;
+	    }
 	    DoubleDouble s = DoubleDouble.valueOf(1.0).add(base);
 		DoubleDouble t = (DoubleDouble)base.clone();
 		double n = 1.0;
@@ -1162,6 +1187,9 @@ public strictfp class DoubleDouble
 			t = t.divide(DoubleDouble.valueOf(n));
 			t = t.multiply(base);
 			s = s.add(t);
+		}
+		if (invert) {
+			s = s.reciprocal();
 		}
 		return s;
 	}
