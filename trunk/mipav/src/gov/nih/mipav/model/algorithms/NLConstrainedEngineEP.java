@@ -4008,7 +4008,13 @@ mainLoop:
         int jacCtrl[] = new int[1];
 
         ctrl[0] = 0;
-        delta = srelpr.sqrt();
+        //delta = srelpr.sqrt();
+        // For DoubleDouble srelpr = 4.9E-324, Double.MIN_VALUE, while for standard
+        // 64 bit machines srelpr = 2.220446E-16.
+        // Using the srelpr from extended precision always results in w1[i] = residuals[i],
+        // so covarMat[i][j] is always set equal to zero.
+        // Therefore, use the srelpr value obtained from 64 bit machines.
+        delta = (DoubleDouble.valueOf(2.220446E-16)).sqrt();
 
         for (j = 0; j < param; j++) {
             xtemp = a[j];
