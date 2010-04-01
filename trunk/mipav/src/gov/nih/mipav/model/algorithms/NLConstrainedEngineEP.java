@@ -1202,7 +1202,7 @@ public abstract class NLConstrainedEngineEP {
      * @param  yData    DOCUMENT ME!
      */
     public NLConstrainedEngineEP(int nPts, int param, DoubleDouble[] xSeries, DoubleDouble[] yData) {
-    	int i;
+    	int i,j;
 
         try {
             this.nPts = nPts;
@@ -1247,6 +1247,12 @@ public abstract class NLConstrainedEngineEP {
             
             for (i = 0; i < param; i++) {
             	dx[i] = DoubleDouble.valueOf(0.0);
+            }
+            
+            for (i = 0; i < nPts; i++) {
+            	for (j = 0; j < covar2; j++) {
+            		covarMat[i][j] = DoubleDouble.valueOf(0.0);
+            	}
             }
         } catch (OutOfMemoryError error) { }
     }
@@ -1296,7 +1302,7 @@ public abstract class NLConstrainedEngineEP {
          * @param  initial  DOCUMENT ME!
          */
         private void fitTestModel() {
-        	int i;
+        	int i,j;
 
             // nPoints data points, 3 coefficients, and exponential fitting
         	try {
@@ -1332,6 +1338,12 @@ public abstract class NLConstrainedEngineEP {
                 
                 for (i = 0; i < param; i++) {
                 	dx[i] = DoubleDouble.valueOf(0.0);
+                }
+                
+                for (i = 0; i < nPts; i++) {
+                	for (j = 0; j < covar2; j++) {
+                		covarMat[i][j] = DoubleDouble.valueOf(0.0);
+                	}
                 }
             } catch (OutOfMemoryError error) { }
 
