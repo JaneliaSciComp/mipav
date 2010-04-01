@@ -732,13 +732,31 @@ public strictfp class DoubleDouble
 	 * @return
 	 */
 	public DoubleDouble sin() {
+		boolean negate = false;
 		// Return the sine of a DoubleDouble number
 		if (isNaN())  {
 			return NaN;
 		}
-		DoubleDouble msquare = (this.multiply(this)).negate();
-		DoubleDouble s = new DoubleDouble(this);
-		DoubleDouble t = new DoubleDouble(this);
+		DoubleDouble TWO_PIFullTimes;
+		DoubleDouble TWO_PIremainder;
+		if ((this.abs()).gt(TWO_PI)) {
+			TWO_PIFullTimes = (this.divide(TWO_PI)).trunc();
+		    TWO_PIremainder = this.subtract(TWO_PI.multiply(TWO_PIFullTimes));
+		}
+		else {
+			TWO_PIremainder = this;
+		}
+		if (TWO_PIremainder.gt(PI)) {
+			TWO_PIremainder = TWO_PIremainder.subtract(PI);
+			negate = true;
+		}
+		else if (TWO_PIremainder.lt(PI.negate())) {
+			TWO_PIremainder = TWO_PIremainder.add(PI);
+			negate = true;
+		}
+		DoubleDouble msquare = (TWO_PIremainder.multiply(TWO_PIremainder)).negate();
+		DoubleDouble s = new DoubleDouble(TWO_PIremainder);
+		DoubleDouble t = new DoubleDouble(TWO_PIremainder);
 		double n = 1.0;
 		while (Math.abs(t.doubleValue()) > DoubleDouble.EPS) {
 			n += 1.0;
@@ -748,6 +766,9 @@ public strictfp class DoubleDouble
 			t = t.multiply(msquare);
 			s = s.add(t);
 		}
+		if (negate) {
+			s = s.negate();
+		}
 		return s;
 	}
 	
@@ -756,11 +777,29 @@ public strictfp class DoubleDouble
 	 * @return
 	 */
 	public DoubleDouble cos() {
+		boolean negate = false;
 		// Return the cosine of a DoubleDouble number
 		if (isNaN()) {
 			return NaN;
 		}
-		DoubleDouble msquare = (this.multiply(this)).negate();
+		DoubleDouble TWO_PIFullTimes;
+		DoubleDouble TWO_PIremainder;
+		if ((this.abs()).gt(TWO_PI)) {
+			TWO_PIFullTimes = (this.divide(TWO_PI)).trunc();
+		    TWO_PIremainder = this.subtract(TWO_PI.multiply(TWO_PIFullTimes));
+		}
+		else {
+			TWO_PIremainder = this;
+		}
+		if (TWO_PIremainder.gt(PI)) {
+			TWO_PIremainder = TWO_PIremainder.subtract(PI);
+			negate = true;
+		}
+		else if (TWO_PIremainder.lt(PI.negate())) {
+			TWO_PIremainder = TWO_PIremainder.add(PI);
+			negate = true;
+		}
+		DoubleDouble msquare = (TWO_PIremainder.multiply(TWO_PIremainder)).negate();
 		DoubleDouble s = DoubleDouble.valueOf(1.0);
 		DoubleDouble t = DoubleDouble.valueOf(1.0);
 		double n = 0.0;
@@ -771,6 +810,9 @@ public strictfp class DoubleDouble
 			t = t.divide(DoubleDouble.valueOf(n));
 			t = t.multiply(msquare);
 			s = s.add(t);
+		}
+		if (negate) {
+			s = s.negate();
 		}
 		return s;
 	}
@@ -809,9 +851,9 @@ public strictfp class DoubleDouble
 		int twon;
 		DoubleDouble twotwon;
 		DoubleDouble twotwonm1;
-		DoubleDouble square = this.multiply(this);
-		DoubleDouble s = new DoubleDouble(this);
-		DoubleDouble t = new DoubleDouble(this);
+		DoubleDouble square = PIremainder.multiply(PIremainder);
+		DoubleDouble s = new DoubleDouble(PIremainder);
+		DoubleDouble t = new DoubleDouble(PIremainder);
 		int n = 1;
 		while (Math.abs(t.doubleValue()) > DoubleDouble.EPS) {
 			n++;
