@@ -2484,7 +2484,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         }
 
         if (!haveImag) {
-            shellSort(eigenvalue);
+            Arrays.sort(eigenvalue);
         } else {
             sort(eigenvalue, imagvalue);
         }
@@ -7234,46 +7234,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         return res;
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  buffer  float [] input buffer to be sorted Sort an array into ascending numerical order by Shell's method
-     *                 Reference: Numerical Recipes in C The Art of Scientific Computing Second Edition by William H.
-     *                 Press, Saul A. Teukolsky, William T. Vetterling, Brian P. Flannery, pp. 331- 332.
-     */
-    private void shellSort(double[] buffer) {
-        int i, j, inc;
-        double v;
-        inc = 1;
-
-        int end = buffer.length;
-
-        do {
-            inc *= 3;
-            inc++;
-        } while (inc <= end);
-
-        do {
-            inc /= 3;
-
-            for (i = inc + 1; i <= end; i++) {
-                v = buffer[i - 1];
-                j = i;
-
-                while (buffer[j - inc - 1] > v) {
-                    buffer[j - 1] = buffer[j - inc - 1];
-                    j -= inc;
-
-                    if (j <= inc) {
-                        break;
-                    }
-                }
-
-                buffer[j - 1] = v;
-            }
-        } while (inc > 1);
-
-    }
+    
 
 
     /**

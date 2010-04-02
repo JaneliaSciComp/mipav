@@ -1220,7 +1220,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                             }
                             
                             //red
-                            float[] sortedR = shellSort(buffR);
+
+                            Arrays.sort(buffR);
+                            float[] sortedR = buffR;
                             if(totalBuffR == null) {
                             	totalBuffR = sortedR;
                             }else {
@@ -1275,7 +1277,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                             
                            //green
-                           float[] sortedG = shellSort(buffG);
+                           Arrays.sort(buffG);
+                           float[] sortedG = buffG;
                            if(totalBuffG == null) {
                            	totalBuffG = sortedG;
                            }else {
@@ -1330,7 +1333,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                           
                           
                           //blue
-                          float[] sortedB = shellSort(buffB);
+                          Arrays.sort(buffB);
+                          float[] sortedB = buffB;
                           
                           if(totalBuffB == null) {
                           	totalBuffB = sortedB;
@@ -1509,8 +1513,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                     k++; 
                                 }
                             }
-                            
-                            float[] sorted = shellSort(buff);
+                            Arrays.sort(buff);
+                            float[] sorted = buff;
                             
                             if(totalBuff == null) {
                             	totalBuff = sorted;
@@ -1823,8 +1827,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                
                 
                 if (srcImage.isColorImage()) {
-                
-    	            float[] totalSortedR = shellSort(totalBuffR);
+                	Arrays.sort(totalBuffR);
+    	            float[] totalSortedR = totalBuffR;
     	            int totalCntR = totalSortedR.length;
     	            if (totalCntR%2 == 1) {
     	                totalMedianR = totalSortedR[totalCntR/2] ;   
@@ -1832,8 +1836,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     	            else {
     	                totalMedianR = (totalSortedR[totalCntR/2] + totalSortedR[(totalCntR/2) - 1])/2.0;
     	            }
-    	            
-    	            float[] totalSortedG = shellSort(totalBuffG);
+    	            Arrays.sort(totalBuffG);
+    	            float[] totalSortedG = totalBuffG;
     	            int totalCntG = totalSortedG.length;
     	            if (totalCntG%2 == 1) {
     	                totalMedianG = totalSortedG[totalCntG/2] ;   
@@ -1841,8 +1845,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     	            else {
     	                totalMedianG = (totalSortedG[totalCntG/2] + totalSortedG[(totalCntG/2) - 1])/2.0;
     	            }
-    	            
-    	            float[] totalSortedB = shellSort(totalBuffB);
+    	            Arrays.sort(totalBuffB);
+    	            float[] totalSortedB = totalBuffB;
     	            int totalCntB = totalSortedB.length;
     	            if (totalCntB%2 == 1) {
     	                totalMedianB = totalSortedB[totalCntB/2] ;   
@@ -1851,8 +1855,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     	                totalMedianB = (totalSortedB[totalCntB/2] + totalSortedB[(totalCntB/2) - 1])/2.0;
     	            }
                 }else {
-                	
-                	 float[] totalSorted = shellSort(totalBuff);
+                	 Arrays.sort(totalBuff);
+                	 float[] totalSorted = totalBuff;
                      int totalCnt = totalSorted.length;
                      if (totalCnt%2 == 1) {
                          totalMedian = totalSorted[totalCnt/2] ;   
@@ -2147,7 +2151,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     }
                     
                     //red
-                    float[] sortedR = shellSort(buffR);
+                    Arrays.sort(buffR);
+                    float[] sortedR = buffR;
                     int cntR = sortedR.length;
                     double medianR;
                     float tempR = 0;
@@ -2183,7 +2188,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                     
                    //green
-                   float[] sortedG = shellSort(buffG);
+                   Arrays.sort(buffG);
+                   float[] sortedG = buffG;
                    int cntG = sortedG.length;
                    double medianG;
                    float tempG = 0;
@@ -2219,7 +2225,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                   
                   //blue
-                  float[] sortedB = shellSort(buffB);
+                  Arrays.sort(buffB);
+                  float[] sortedB = buffB;
                   int cntB = sortedB.length;
                   double medianB;
                   float tempB = 0;
@@ -2330,8 +2337,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                             k++; 
                         }
                     }
-                    
-                    float[] sorted = shellSort(buff);
+                    Arrays.sort(buff);
+                    float[] sorted = buff;
                     if(totalBuff == null) {
                     	totalBuff = sorted;
                     }else {
@@ -2937,7 +2944,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                             }
                             
                             //red
-                            float[] sortedR = shellSort(buffR);
+                            Arrays.sort(buffR);
+                            float[] sortedR = buffR;
                             if(totalBuffR == null) {
                             	totalBuffR = sortedR;
                             }else {
@@ -2992,7 +3000,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                             
                            //green
-                           float[] sortedG = shellSort(buffG);
+                           Arrays.sort(buffG);
+                           float[] sortedG = buffG;
                            if(totalBuffG == null) {
                               	totalBuffG = sortedG;
                            }else {
@@ -3046,7 +3055,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                           
                           //blue
-                          float[] sortedB = shellSort(buffB);
+                          Arrays.sort(buffB);
+                          float[] sortedB = buffB;
                           if(totalBuffB == null) {
                             	totalBuffB = sortedB;
                           }else {
@@ -3209,8 +3219,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                     k++; 
                                 }
                             }
-                            
-                            float[] sorted = shellSort(buff);
+                            Arrays.sort(buff);
+                            float[] sorted = buff;
                             if(totalBuff == null) {
                             	totalBuff = sorted;
                             }else {
@@ -3524,8 +3534,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 
                 
                 if (srcImage.isColorImage()) {
-                
-    	            float[] totalSortedR = shellSort(totalBuffR);
+                	 Arrays.sort(totalBuffR);
+    	            float[] totalSortedR = totalBuffR;
     	            int totalCntR = totalSortedR.length;
     	            if (totalCntR%2 == 1) {
     	                totalMedianR = totalSortedR[totalCntR/2] ;   
@@ -3533,8 +3543,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     	            else {
     	                totalMedianR = (totalSortedR[totalCntR/2] + totalSortedR[(totalCntR/2) - 1])/2.0;
     	            }
-    	            
-    	            float[] totalSortedG = shellSort(totalBuffG);
+    	            Arrays.sort(totalBuffG);
+    	            float[] totalSortedG = totalBuffG;
     	            int totalCntG = totalSortedG.length;
     	            if (totalCntG%2 == 1) {
     	                totalMedianG = totalSortedG[totalCntG/2] ;   
@@ -3542,8 +3552,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     	            else {
     	                totalMedianG = (totalSortedG[totalCntG/2] + totalSortedG[(totalCntG/2) - 1])/2.0;
     	            }
-    	            
-    	            float[] totalSortedB = shellSort(totalBuffB);
+    	            Arrays.sort(totalBuffB);
+    	            float[] totalSortedB = totalBuffB;
     	            int totalCntB = totalSortedB.length;
     	            if (totalCntB%2 == 1) {
     	                totalMedianB = totalSortedB[totalCntB/2] ;   
@@ -3552,7 +3562,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     	                totalMedianB = (totalSortedB[totalCntB/2] + totalSortedB[(totalCntB/2) - 1])/2.0;
     	            }
                 }else {
-                	float[] totalSorted = shellSort(totalBuff);
+                	 Arrays.sort(totalBuff);
+                	float[] totalSorted = totalBuff;
                     int totalCnt = totalSorted.length;
                     if (totalCnt%2 == 1) {
                         totalMedian = totalSorted[totalCnt/2] ;   
@@ -3857,7 +3868,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     }
                     
                     //red
-                    float[] sortedR = shellSort(buffR);
+                    Arrays.sort(buffR);
+                    float[] sortedR = buffR;
                     int cntR = sortedR.length;
                     double medianR;
                     float tempR = 0;
@@ -3892,7 +3904,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                    }
 
                    //green
-                   float[] sortedG = shellSort(buffG);
+                   Arrays.sort(buffG);
+                   float[] sortedG = buffG;
                    int cntG = sortedG.length;
                    double medianG;
                    float tempG = 0;
@@ -3928,7 +3941,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                   
                   //blue
-                  float[] sortedB = shellSort(buffB);
+                  Arrays.sort(buffB);
+                  float[] sortedB = buffB;
                   int cntB = sortedB.length;
                   double medianB;
                   float tempB = 0;
@@ -4020,8 +4034,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                             k++; 
                         }
                     }
-                    
-                    float[] sorted = shellSort(buff);
+                    Arrays.sort(buff);
+                    float[] sorted = buff;
                     int cnt = sorted.length;
                     double median;
                     float temp = 0;
@@ -4438,50 +4452,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     
     
     
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  buffer  float [] input buffer to be sorted Sort an array into ascending numerical order by Shell's method
-     *                 Reference: Numerical Recipes in C The Art of Scientific Computing Second Edition by William H.
-     *                 Press, Saul A. Teukolsky, William T. Vetterling, Brian P. Flannery, pp. 331- 332.
-     */
-    private float[] shellSort(float[] buffer) {
-        int i, j, inc;
-        float v;
-        inc = 1;
-        
-        float[] buff = buffer;
-
-        int end = buff.length;
-
-        do {
-            inc *= 3;
-            inc++;
-        } while (inc <= end);
-
-        do {
-            inc /= 3;
-
-            for (i = inc + 1; i <= end; i++) {
-                v = buff[i - 1];
-                j = i;
-
-                while (buff[j - inc - 1] > v) {
-                	buff[j - 1] = buff[j - inc - 1];
-                    j -= inc;
-
-                    if (j <= inc) {
-                        break;
-                    }
-                }
-
-                buff[j - 1] = v;
-            }
-        } while (inc > 1);
-
-        
-        return buff;
-    }
+   
 
 
 }

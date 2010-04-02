@@ -3669,7 +3669,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 finalData2[i] = finalData[i];
             }
 
-            shellSort(finalData2);
+            Arrays.sort(finalData2);
 
             if (lowTruncated > 0.0) {
                 fireProgressStateChanged(-1, null, "Clamping low data ...");
@@ -3728,46 +3728,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
 
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  buffer  float [] input buffer to be sorted Sort an array into ascending numerical order by Shell's method
-     *                 Reference: Numerical Recipes in C The Art of Scientific Computing Second Edition by William H.
-     *                 Press, Saul A. Teukolsky, William T. Vetterling, Brian P. Flannery, pp. 331- 332.
-     */
-    private void shellSort(float[] buffer) {
-        int i, j, inc;
-        float v;
-        inc = 1;
-
-        int end = buffer.length;
-
-        do {
-            inc *= 3;
-            inc++;
-        } while (inc <= end);
-
-        do {
-            inc /= 3;
-
-            for (i = inc + 1; i <= end; i++) {
-                v = buffer[i - 1];
-                j = i;
-
-                while (buffer[j - inc - 1] > v) {
-                    buffer[j - 1] = buffer[j - inc - 1];
-                    j -= inc;
-
-                    if (j <= inc) {
-                        break;
-                    }
-                }
-
-                buffer[j - 1] = v;
-            }
-        } while (inc > 1);
-
-    }
+   
 
     /**
      * Shifts the FFT data back from the center for processing purposes and inverse FFT.

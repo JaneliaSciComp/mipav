@@ -2987,41 +2987,4 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
         return Math.exp(e) / (2.0 * Math.PI * stdOld[j][0] * stdOld[j][1] * Math.sqrt(1.0 - (rhoOld[j] * rhoOld[j])));
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  buffer  input buffer to be sorted Sort an array into ascending numerical order by Shell's method
-     *                 Reference: Numerical Recipes in C The Art of Scientific Computing Second Edition by William H.
-     *                 Press, Saul A. Teukolsky, William T. Vetterling, Brian P. Flannery, pp. 331- 332.
-     */
-    private void shell(float[] buffer) {
-        int i, j, inc;
-        float v;
-        inc = 1;
-
-        do {
-            inc *= 3;
-            inc++;
-        } while (inc <= buffer.length);
-
-        do {
-            inc /= 3;
-
-            for (i = inc + 1; i <= buffer.length; i++) {
-                v = buffer[i - 1];
-                j = i;
-
-                while (buffer[j - inc - 1] > v) {
-                    buffer[j - 1] = buffer[j - inc - 1];
-                    j -= inc;
-
-                    if (j <= inc) {
-                        break;
-                    }
-                }
-
-                buffer[j - 1] = v;
-            }
-        } while (inc > 1);
-    }
 }

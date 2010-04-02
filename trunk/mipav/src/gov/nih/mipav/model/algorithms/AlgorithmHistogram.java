@@ -766,7 +766,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
         UI.setDataText("Mean = " + df.format(mean) + "\n");
         stdDev = Math.sqrt((sumSq - (sum*mean))/(cnt - 1));
         UI.setDataText("Standard deviation = " + df.format(stdDev) + "\n");
-        shellSort(sort);
+        Arrays.sort(sort);
         if (cnt%2 == 1) {
             median = sort[cnt/2] ;   
         }
@@ -966,47 +966,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
         System.gc();
     }
     
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  buffer  float [] input buffer to be sorted Sort an array into ascending numerical order by Shell's method
-     *                 Reference: Numerical Recipes in C The Art of Scientific Computing Second Edition by William H.
-     *                 Press, Saul A. Teukolsky, William T. Vetterling, Brian P. Flannery, pp. 331- 332.
-     */
-    private void shellSort(float[] buffer) {
-        int i, j, inc;
-        float v;
-        inc = 1;
-
-        int end = buffer.length;
-
-        do {
-            inc *= 3;
-            inc++;
-        } while (inc <= end);
-
-        do {
-            inc /= 3;
-
-            for (i = inc + 1; i <= end; i++) {
-                v = buffer[i - 1];
-                j = i;
-
-                while (buffer[j - inc - 1] > v) {
-                    buffer[j - 1] = buffer[j - inc - 1];
-                    j -= inc;
-
-                    if (j <= inc) {
-                        break;
-                    }
-                }
-
-                buffer[j - 1] = v;
-            }
-        } while (inc > 1);
-
-    }
-
+    
     /**
      * Calculate maximum entropy split of a histogram. This method is very similar to Otsu's method. Rather than
      * maximising the inter-class variance, it maximizes the inter-class entropy. Entropy is a measure of the
