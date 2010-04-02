@@ -617,15 +617,17 @@ public strictfp class DoubleDouble
 			invert = true;
 		}
 		DoubleDouble s = (DoubleDouble.valueOf(1.0)).add(x);
+		DoubleDouble sOld = (DoubleDouble)s.clone();
 		DoubleDouble t = new DoubleDouble(x);
 		double n = 1.0;
 		
-		while (Math.abs(t.doubleValue()) > DoubleDouble.EPS) {
+		do {
 			n += 1.0;
 			t = t.divide(DoubleDouble.valueOf(n));
 			t = t.multiply(x);
+			sOld = s;
 			s = s.add(t);
-		}
+		} while (s.ne(sOld));
 		if (invert) {
 			s = s.reciprocal();
 		}
@@ -666,16 +668,18 @@ public strictfp class DoubleDouble
 		DoubleDouble ratio = num.divide(denom);
 		DoubleDouble ratioSquare = ratio.multiply(ratio);
 		DoubleDouble s = DoubleDouble.valueOf(2.0).multiply(ratio);
+		DoubleDouble sOld = (DoubleDouble)s.clone();
 		DoubleDouble t = (DoubleDouble)s.clone();
 		DoubleDouble w = (DoubleDouble)s.clone();
 		double n = 1.0;
 		
-		while (Math.abs(w.doubleValue()) > DoubleDouble.EPS) {
+		do {
 			n += 2.0;
 			t = t.multiply(ratioSquare);
 			w = t.divide(DoubleDouble.valueOf(n));
+			sOld = s;
 			s = s.add(w);
-		}
+		} while (s.ne(sOld));
 		return s.add(DoubleDouble.valueOf(intPart));
 	}
 	
@@ -690,16 +694,18 @@ public strictfp class DoubleDouble
 		}
 		DoubleDouble square = this.multiply(this);
 		DoubleDouble s = new DoubleDouble(this);
+		DoubleDouble sOld = (DoubleDouble)s.clone();
 		DoubleDouble t = new DoubleDouble(this);
 		double n = 1.0;
-		while (Math.abs(t.doubleValue()) > DoubleDouble.EPS) {
+		do {
 			n += 1.0;
 			t = t.divide(DoubleDouble.valueOf(n));
 			n += 1.0;
 			t = t.divide(DoubleDouble.valueOf(n));
 			t = t.multiply(square);
+			sOld = s;
 			s = s.add(t);
-		}
+		} while (s.ne(sOld));
 		return s;
 	}
 	
@@ -714,16 +720,18 @@ public strictfp class DoubleDouble
 		}
 		DoubleDouble square = this.multiply(this);
 		DoubleDouble s = DoubleDouble.valueOf(1.0);
+		DoubleDouble sOld = (DoubleDouble)s.clone();
 		DoubleDouble t = DoubleDouble.valueOf(1.0);
 		double n = 0.0;
-		while (Math.abs(t.doubleValue()) > DoubleDouble.EPS) {
+		do {
 			n += 1.0;
 			t = t.divide(DoubleDouble.valueOf(n));
 			n += 1.0;
 			t = t.divide(DoubleDouble.valueOf(n));
 			t = t.multiply(square);
+			sOld = s;
 			s = s.add(t);
-		}
+		} while (s.ne(sOld));
 		return s;
 	}
 	
@@ -756,16 +764,18 @@ public strictfp class DoubleDouble
 		}
 		DoubleDouble msquare = (TWO_PIremainder.multiply(TWO_PIremainder)).negate();
 		DoubleDouble s = new DoubleDouble(TWO_PIremainder);
+		DoubleDouble sOld = (DoubleDouble)s.clone();
 		DoubleDouble t = new DoubleDouble(TWO_PIremainder);
 		double n = 1.0;
-		while (Math.abs(t.doubleValue()) > DoubleDouble.EPS) {
+		do {
 			n += 1.0;
 			t = t.divide(DoubleDouble.valueOf(n));
 			n += 1.0;
 			t = t.divide(DoubleDouble.valueOf(n));
 			t = t.multiply(msquare);
+			sOld = s;
 			s = s.add(t);
-		}
+		} while (s.ne(sOld));
 		if (negate) {
 			s = s.negate();
 		}
@@ -801,16 +811,18 @@ public strictfp class DoubleDouble
 		}
 		DoubleDouble msquare = (TWO_PIremainder.multiply(TWO_PIremainder)).negate();
 		DoubleDouble s = DoubleDouble.valueOf(1.0);
+		DoubleDouble sOld = (DoubleDouble)s.clone();
 		DoubleDouble t = DoubleDouble.valueOf(1.0);
 		double n = 0.0;
-		while (Math.abs(t.doubleValue()) > DoubleDouble.EPS) {
+		do {
 			n += 1.0;
 			t = t.divide(DoubleDouble.valueOf(n));
 			n += 1.0;
 			t = t.divide(DoubleDouble.valueOf(n));
 			t = t.multiply(msquare);
+			sOld = s;
 			s = s.add(t);
-		}
+		} while (s.ne(sOld));
 		if (negate) {
 			s = s.negate();
 		}
@@ -853,9 +865,10 @@ public strictfp class DoubleDouble
 		DoubleDouble twotwonm1;
 		DoubleDouble square = PIremainder.multiply(PIremainder);
 		DoubleDouble s = new DoubleDouble(PIremainder);
+		DoubleDouble sOld = (DoubleDouble)s.clone();
 		DoubleDouble t = new DoubleDouble(PIremainder);
 		int n = 1;
-		while (Math.abs(t.doubleValue()) > DoubleDouble.EPS) {
+		do {
 			n++;
 			twon = 2*n;
 			t = t.divide(factorial(twon));
@@ -865,8 +878,9 @@ public strictfp class DoubleDouble
 			t = t.multiply(twotwonm1);
 			t = t.multiply(BernoulliB(n));
 			t = t.multiply(square);
+			sOld = s;
 			s = s.add(t);
-		}
+		} while (s.ne(sOld));
 		return s;
 	}
 	
@@ -890,12 +904,13 @@ public strictfp class DoubleDouble
 		}
 		DoubleDouble square = this.multiply(this);
 		DoubleDouble s = new DoubleDouble(this);
+		DoubleDouble sOld = (DoubleDouble)s.clone();
 		DoubleDouble t = new DoubleDouble(this);
 		DoubleDouble w = new DoubleDouble(this);
 		double n = 1.0;
 		double numn = 1.0;
 		double denomn = 1.0;
-		while (Math.abs(w.doubleValue()) > DoubleDouble.EPS) {
+		do {
 			n += 2.0;
 			numn = (n - 2.0);
 			denomn = (n - 1.0);
@@ -903,8 +918,9 @@ public strictfp class DoubleDouble
 			t = t.multiply(DoubleDouble.valueOf(numn));
 			t = t.multiply(square);
 			w = t.divide(DoubleDouble.valueOf(n));
+			sOld = s;
 			s = s.add(w);
-		}
+		} while (s.ne(sOld));
 		return s;
 	}
 	
@@ -934,6 +950,7 @@ public strictfp class DoubleDouble
 			return NaN;
 		}
 		DoubleDouble s;
+		DoubleDouble sOld;
 		if (this.equals(DoubleDouble.valueOf(1.0))) {
 		    s = PI_2.divide(DoubleDouble.valueOf(2.0));	
 		}
@@ -943,28 +960,32 @@ public strictfp class DoubleDouble
 		else if (this.abs().lt(DoubleDouble.valueOf(1.0))) {
 			DoubleDouble msquare = (this.multiply(this)).negate();
 			s = new DoubleDouble(this);
+			sOld = (DoubleDouble)s.clone();
 			DoubleDouble t = new DoubleDouble(this);
 			DoubleDouble w = new DoubleDouble(this);
 			double n = 1.0;
-			while (Math.abs(w.doubleValue()) > DoubleDouble.EPS) {
+			do {
 				n += 2.0;
 				t = t.multiply(msquare);
 				w = t.divide(DoubleDouble.valueOf(n));
+				sOld = s;
 				s = s.add(w);
-			}	
+			} while (s.ne(sOld));
 		}
 		else {
 			DoubleDouble msquare = (this.multiply(this)).negate();
 			s = this.reciprocal().negate();
+			sOld = (DoubleDouble)s.clone();
 			DoubleDouble t = (DoubleDouble)s.clone();
 			DoubleDouble w = (DoubleDouble)s.clone();
 			double n = 1.0;
-			while (Math.abs(w.doubleValue()) > DoubleDouble.EPS) {
+			do {
 				n += 2.0;
 				t = t.divide(msquare);
 				w = t.divide(DoubleDouble.valueOf(n));
+				sOld = s;
 				s = s.add(w);
-			}
+			} while (s.ne(sOld));
 			if (isPositive()) {
 				s = s.add(PI_2);
 			}
@@ -1043,6 +1064,7 @@ public strictfp class DoubleDouble
 		DoubleDouble twoPISqr;
 		DoubleDouble r2;
 		DoubleDouble s;
+		DoubleDouble sOld;
 		DoubleDouble temp;
 		if (n < 0) {
 			return NaN;
@@ -1072,12 +1094,14 @@ public strictfp class DoubleDouble
 		    r1 = (r1.multiply(temp)).negate();
 		    r2 = DoubleDouble.valueOf(1.0);
 		    s = DoubleDouble.valueOf(1.0);
+		    sOld = (DoubleDouble)s.clone();
 		    k = 2;
-		    while (Math.abs(s.doubleValue()) > DoubleDouble.EPS) {
+		    do {
+		    	sOld = s;
 		    	s = (DoubleDouble.valueOf(1.0)).divide(valueOf(k++));
 		    	s = s.pow(m);
 		    	r2 = r2.add(s);
-		    }
+		    } while (s.ne(sOld));
 		    BN[m] = r1.multiply(r2);
 		} // for (m = 4; m <= n; m+=2)
 		return BN[n];
@@ -1170,15 +1194,17 @@ public strictfp class DoubleDouble
 	        invert = true;
 	    }
 	    DoubleDouble s = DoubleDouble.valueOf(1.0).add(base);
+	    DoubleDouble sOld = (DoubleDouble)s.clone();
 		DoubleDouble t = (DoubleDouble)base.clone();
 		double n = 1.0;
 		
-		while (Math.abs(t.doubleValue()) > DoubleDouble.EPS) {
+		do {
 			n += 1.0;
 			t = t.divide(DoubleDouble.valueOf(n));
 			t = t.multiply(base);
+			sOld = s;
 			s = s.add(t);
-		}
+		} while (s.ne(sOld));
 		if (invert) {
 			s = s.reciprocal();
 		}
@@ -1221,15 +1247,17 @@ public strictfp class DoubleDouble
 	        invert = true;
 	    }
 	    DoubleDouble s = DoubleDouble.valueOf(1.0).add(base);
+	    DoubleDouble sOld = (DoubleDouble)s.clone();
 		DoubleDouble t = (DoubleDouble)base.clone();
 		double n = 1.0;
 		
-		while (Math.abs(t.doubleValue()) > DoubleDouble.EPS) {
+		do {
 			n += 1.0;
 			t = t.divide(DoubleDouble.valueOf(n));
 			t = t.multiply(base);
+			sOld = s;
 			s = s.add(t);
-		}
+		} while (s.ne(sOld));
 		if (invert) {
 			s = s.reciprocal();
 		}
@@ -1332,6 +1360,10 @@ public strictfp class DoubleDouble
 	public boolean equals(DoubleDouble y)
 	{
 		return hi == y.hi && lo == y.lo;
+	}
+	
+	public boolean ne(DoubleDouble y) {
+		return hi != y.hi || lo != y.lo;
 	}
 	
 	/**
