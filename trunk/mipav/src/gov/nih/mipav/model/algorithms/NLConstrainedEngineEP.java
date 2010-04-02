@@ -7934,6 +7934,14 @@ mainLoop:
 
         // INITIATE PIVOT VECTOR SO THAT ALL COLUMNS CORRESPONDING TO
         // ACTIVE BOUNDS ARE CONSIDERED AS FINAL COLUMNS
+        
+        // In regular 64 bit operation tol = 2.5809E-8.
+        // In extended precision tol = 3.8499E-162.
+        // In DRAPER24D internal scaling = false, Analytical Jacobian saw a 
+        // wrong result from a covarMat[1][1] = 1.8488E-32 in extended precision
+        // The covarMat[1][1] was 0.0 in 64 bit mode
+        // Don't let the minimum aciting tolerance go below 1.0E-20.
+        DoubleDouble minTol = tol.max(DoubleDouble.valueOf(1.0E-20));
 
         for (i = 0; i < param; i++) {
             pivit[i] = 0;
@@ -7959,7 +7967,7 @@ mainLoop:
 
         for (i = 0; i < nn; i++) {
 
-            if ((covarMat[i][i].abs()).ge(tol)) {
+            if ((covarMat[i][i].abs()).ge(minTol)) {
                 k = i;
             }
         } // for (i = 0; i < nn; i++)
@@ -7968,7 +7976,7 @@ mainLoop:
 
             for (j = 0; j < nn; j++) {
 
-                if ((covarMat[j][j].abs()).le(tol.multiply(r11))) {
+                if ((covarMat[j][j].abs()).le(minTol.multiply(r11))) {
                     break;
                 }
 
