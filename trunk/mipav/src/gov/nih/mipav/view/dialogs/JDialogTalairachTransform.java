@@ -29,23 +29,26 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 */  
 public class JDialogTalairachTransform extends JDialogBase implements AlgorithmInterface {
     
-    private     AlgorithmTalairachTransform algo = null;
-	private		JDialogACPC				acpcDialog = null;
-	private		JDialogTLRC				tlrcDialog = null;
-    private     ModelImage              image;                // source image : contains the transform
-    private     ModelImage              otherImage = null;         // second source image : contain the data to be changed
-    private     ModelImage              resultImage = null;		// result image
-    private     ModelImage              acpcImage = null;		// AC-PC image
-    private     ModelImage              tlrcImage = null;		// Talairach image
-    private     int                     destExtents[];
-    private 	ViewUserInterface       userInterface;
-	private		String					title;
-	
+	// algorithm 
+    private AlgorithmTalairachTransform algo = null;
+    // acpc dialog
+	private JDialogACPC	acpcDialog = null;
+	// source image : contains the transform
+    private ModelImage image;    
+    // second source image : contain the data to be changed
+    private ModelImage otherImage = null;      
+    //result image
+    private ModelImage resultImage = null;	
+    // acpc image
+    private ModelImage acpcImage = null;		
+    // Talairach image
+    private ModelImage  tlrcImage = null;	
+    private ViewUserInterface userInterface;
+	private String title;
 	// algorithm parameters
-	private		String					transformType;
-	private		TalairachTransformInfo	transform;
-	private		String					interpolation;
-		
+	private String transformType;
+	private	TalairachTransformInfo transform;
+	private	String interpolation;
     // dialog elements
     private JPanel  		talairachPanel;
 	private JPanel  		newImagePanel;
@@ -67,8 +70,8 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 	private	JPanel			transPanel;
 	private	JPanel			interpPanel;
 	private	JPanel			loadsavePanel;
-	private	JFileChooser			loadDialog;
-	private	JFileChooser			saveDialog;
+	private	JFileChooser	loadDialog;
+	private	JFileChooser	saveDialog;
 	
 	/**
     *  Creates dialog for plugin.
@@ -79,7 +82,6 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 		super(theParentFrame, false);
         image = im;
 		userInterface = ViewUserInterface.getReference();	    
-        //if (image.getTransformID()==FileInfoBase.TRANSFORM_TALAIRACH_TOURNOUX)
 		transform = image.getTalairachTransformInfo();
 		if (transform==null)
 			transform = new TalairachTransformInfo();
@@ -96,7 +98,6 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
         super();
     	userInterface = UI;
     	image = im;
-        //if (image.getTransformID()==FileInfoBase.TRANSFORM_TALAIRACH_TOURNOUX)
 		transform = image.getTalairachTransformInfo();
 		if (transform==null)
 			transform = new TalairachTransformInfo();
@@ -285,7 +286,6 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
         
         pack();
         setVisible(true); 
-		//setResizable(false);
     	System.gc();
 	
 	} // end init()
@@ -375,7 +375,6 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 	public void dispose() {
 		algo = null;
 		acpcDialog = null;
-		tlrcDialog = null;
     	image = null;        
     	otherImage = null;  
     	resultImage = null;	
@@ -424,6 +423,8 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 		}
 		acpcDialog = new JDialogACPC(view, image, acpcImage, transform, interpolationID);
 	}
+	
+	
 	private void transformToTLRC() {
         ViewJFrameTriImage view;
        
@@ -490,8 +491,11 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
                                             edit.getImageB(), edit.getLUTb(), 
                                             acpcImage.getParentFrame().getControls(), image.getParentFrame() );
 		view.setVisible(true);
-		tlrcDialog = new JDialogTLRC(view, image, acpcImage, tlrcImage, transform, interpolationID);
+		new JDialogTLRC(view, image, acpcImage, tlrcImage, transform, interpolationID);
 	}
+	
+	
+	
 	private void transformImage() {
 
 		// check if a transform is associated with the image
@@ -528,9 +532,7 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 		Vector3f currentOrigin = new Vector3f(image.getOrigin()); 
 		Vector3f newOrigin = new Vector3f();
 		int[] newOrientations = new int[3];
-		
-		
-		
+
 		if (transformType.equals("acpc to orig")) 	   { 
 			dims = transform.getOrigDim(); 
 			suffix = "_orig"; 
@@ -625,13 +627,7 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 					fileInfo[i].setImageOrientation(FileInfoBase.AXIAL);
 				}
 			}
-			/* to set after the computations ?
-			resultImage.setFileInfo(fileInfo);
-			setTalairachHeader(resultImage);
-			setTalairachHeader(otherImage);
-			*/
-			
-			//algo = new AlgorithmTalairachTransform(resultImage, otherImage, transform, transformType, interpolation);                
+             
             algo = new AlgorithmTalairachTransform(resultImage, otherImage, transform, transformID, interpolationID, true, true);                
             
             // This is very important. Adding this object as a listener allows the algorithm to
@@ -722,7 +718,6 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 			//MipavUtil.displayInfo("transform data loaded from "+filename+"\n");
 			userInterface.setDefaultDirectory(loadDialog.getCurrentDirectory().getAbsolutePath());
 		}
-		//loadDialog.setVisible(false);
 	}
 
  	public void saveFileActionPerformed(ActionEvent evt) {
@@ -732,17 +727,11 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 			//MipavUtil.displayInfo("transform data saved to "+filename+"\n");
 			userInterface.setDefaultDirectory(saveDialog.getCurrentDirectory().getAbsolutePath());
 		}
-		//saveDialog.setVisible(false);
 	}
 	
 	/* add the Talairach Transform to the image header */
 	public void setTalairachHeader(ModelImage img) {
 		img.setTalairachTransformInfo(transform);
-		/*
-		for (int z=0;z<img.getFileInfo().length;z++) {
-			img.getFileInfo()[z].setTransformID(FileInfoBase.TRANSFORM_TALAIRACH_TOURNOUX);
-		}
-		*/
 	}
 	//************************************************************************
     //************************** Algorithm Events ****************************
@@ -796,7 +785,6 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
        }
        algorithm.finalize();
        algorithm = null;
-       //dispose();
        updateComboBoxImage();
     }  // end AlgorithmPerformed()
     
