@@ -1393,8 +1393,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             testProstateFeaturesClassification();
         } else if (command.equals("LoadProstateMask")) {
             loadProstateMask();
-        } else if ( command.equals("SaveDicomMatrix")) { 
-        	saveDicomMatrixInfo();
+        } else if (command.equals("SaveDicomMatrix")) {
+            saveDicomMatrixInfo();
         } else if (command.equals("SaveVOIIntensities")) {
             saveVOIIntensities();
         } else if (command.equals("Snake")) {
@@ -1917,10 +1917,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             } else {
                 new JDialogNoise(this, getActiveImage());
             }
-        } else if (command.equals("ANR")) {
-            new JDialogAdaptiveNR(this, getActiveImage());
-        } else if (command.equals("adaptivePathSmooth")) {
-            new JDialogAdaptivePathSmooth(this, getActiveImage());
         } else if (command.equals("NLNR")) {
 
             if (getActiveImage().getType() == ModelStorageBase.BOOLEAN) {
@@ -5830,108 +5826,102 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         return foundActive;
     }
 
-    
     /**
-     * Save the dicom matrix header info.  The .ply file format can't save the dicom info.   We decide to 
-     * save the dicom info when save the VOI file.  So, the dicom info will be read when load the .ply surface
-     * into the volume render.  This ensures the correct scale of surface.   The dicom matrix info is 
-     * saved in the current image directory with the .dicomMatrix suffix. 
+     * Save the dicom matrix header info. The .ply file format can't save the dicom info. We decide to save the dicom
+     * info when save the VOI file. So, the dicom info will be read when load the .ply surface into the volume render.
+     * This ensures the correct scale of surface. The dicom matrix info is saved in the current image directory with the
+     * .dicomMatrix suffix.
      */
     private void saveDicomMatrixInfo() {
-    	int iXDim, iYDim, iZDim;
-    	boolean flip = true;
+        int iXDim, iYDim, iZDim;
+        final boolean flip = true;
 
-		iXDim = imageA.getExtents()[0];
-		iYDim = imageA.getExtents()[1];
-		iZDim = imageA.getExtents()[2];
-		
-		float fXRes, fYRes, fZRes;
+        iXDim = imageA.getExtents()[0];
+        iYDim = imageA.getExtents()[1];
+        iZDim = imageA.getExtents()[2];
 
-		fXRes = imageA.getFileInfo()[0].getResolutions()[0];
-		fYRes = imageA.getFileInfo()[0].getResolutions()[1];
-		fZRes = imageA.getFileInfo()[0].getResolutions()[2];
+        float fXRes, fYRes, fZRes;
 
-		float[] box = new float[3];
+        fXRes = imageA.getFileInfo()[0].getResolutions()[0];
+        fYRes = imageA.getFileInfo()[0].getResolutions()[1];
+        fZRes = imageA.getFileInfo()[0].getResolutions()[2];
 
-		box[0] = (iXDim - 1) * fXRes;
-		box[1] = (iYDim - 1) * fYRes;
-		box[2] = (iZDim - 1) * fZRes;
-		
-    	int[] direction = MipavCoordinateSystems.getModelDirections(imageA);
-		float[] startLocation = imageA.getFileInfo(0).getOrigin();
+        final float[] box = new float[3];
 
-		TransMatrix dicomMatrix = null;
-		TransMatrix inverseDicomMatrix = null;
-		if (imageA.getMatrixHolder().containsType(
-				TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
+        box[0] = (iXDim - 1) * fXRes;
+        box[1] = (iYDim - 1) * fYRes;
+        box[2] = (iZDim - 1) * fZRes;
 
-			// Get the DICOM transform that describes the transformation
-			// from
-			// axial to this image orientation
-			dicomMatrix = imageA.getMatrix();
-			inverseDicomMatrix = new TransMatrix(imageA.getMatrix());
-			inverseDicomMatrix.Inverse();
-		}
-		
-		
-		String fileDir = imageA.getImageDirectory();
-		String fName = imageA.getImageFileName();
-		int index = fName.indexOf('.');
-		String fileName = fName.substring(0, index);
-		
-		System.err.println("Dicom Matrix File Dir = " + fileDir);
-		System.err.println("Dicom Matrix File Name = " + (fileName + ".dicomMatrix"));
-		
-		try {
-			FileOutputStream  fOut = new FileOutputStream(fileDir + fileName + ".dicomMatrix");
-			DataOutputStream  kOut = new DataOutputStream(fOut);
- 
-			
-			 if (inverseDicomMatrix == null) {
-		            
-		            if (flip) {
-		                kOut.writeInt(1);
-		            } else {
-		                kOut.writeInt(0);
-		            }
-		        } else {
-		            
-		            if (flip) {
-		                kOut.writeInt(3);
-		            } else {
-		                kOut.writeInt(2);
-		            }
-		        }
+        final int[] direction = MipavCoordinateSystems.getModelDirections(imageA);
+        final float[] startLocation = imageA.getFileInfo(0).getOrigin();
 
-		        kOut.writeInt(direction[0]);
-		        kOut.writeInt(direction[1]);
-		        kOut.writeInt(direction[2]);
+        TransMatrix dicomMatrix = null;
+        TransMatrix inverseDicomMatrix = null;
+        if (imageA.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
 
-		        kOut.writeFloat(startLocation[0]);
-		        kOut.writeFloat(startLocation[1]);
-		        kOut.writeFloat(startLocation[2]);
-		        kOut.writeFloat(box[0]);
-		        kOut.writeFloat(box[1]);
-		        kOut.writeFloat(box[2]);
-		        
-		        if (inverseDicomMatrix != null) {
-		            for (int i = 0; i <= 3; i++) {
-		                for (int j = 0; j <= 3; j++) {
-		                	kOut.writeDouble(inverseDicomMatrix.Get(i, j));
-		                }
-		            }
-		        }
-		        kOut.close();
-		        
-		} catch (Exception e) {
-			System.err.println("CAUGHT EXCEPTION WITHIN saveDicomMatrixInfo() of FileVOI");
-			e.printStackTrace();
-		}
+            // Get the DICOM transform that describes the transformation
+            // from
+            // axial to this image orientation
+            dicomMatrix = imageA.getMatrix();
+            inverseDicomMatrix = new TransMatrix(imageA.getMatrix());
+            inverseDicomMatrix.Inverse();
+        }
 
-	}
-    
+        final String fileDir = imageA.getImageDirectory();
+        final String fName = imageA.getImageFileName();
+        final int index = fName.indexOf('.');
+        final String fileName = fName.substring(0, index);
 
-    
+        System.err.println("Dicom Matrix File Dir = " + fileDir);
+        System.err.println("Dicom Matrix File Name = " + (fileName + ".dicomMatrix"));
+
+        try {
+            final FileOutputStream fOut = new FileOutputStream(fileDir + fileName + ".dicomMatrix");
+            final DataOutputStream kOut = new DataOutputStream(fOut);
+
+            if (inverseDicomMatrix == null) {
+
+                if (flip) {
+                    kOut.writeInt(1);
+                } else {
+                    kOut.writeInt(0);
+                }
+            } else {
+
+                if (flip) {
+                    kOut.writeInt(3);
+                } else {
+                    kOut.writeInt(2);
+                }
+            }
+
+            kOut.writeInt(direction[0]);
+            kOut.writeInt(direction[1]);
+            kOut.writeInt(direction[2]);
+
+            kOut.writeFloat(startLocation[0]);
+            kOut.writeFloat(startLocation[1]);
+            kOut.writeFloat(startLocation[2]);
+            kOut.writeFloat(box[0]);
+            kOut.writeFloat(box[1]);
+            kOut.writeFloat(box[2]);
+
+            if (inverseDicomMatrix != null) {
+                for (int i = 0; i <= 3; i++) {
+                    for (int j = 0; j <= 3; j++) {
+                        kOut.writeDouble(inverseDicomMatrix.Get(i, j));
+                    }
+                }
+            }
+            kOut.close();
+
+        } catch (final Exception e) {
+            System.err.println("CAUGHT EXCEPTION WITHIN saveDicomMatrixInfo() of FileVOI");
+            e.printStackTrace();
+        }
+
+    }
+
     private class DicomQueryListener implements ActionListener {
 
         private JCheckBox checkBox;

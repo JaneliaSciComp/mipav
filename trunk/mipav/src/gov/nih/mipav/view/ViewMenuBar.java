@@ -147,11 +147,6 @@ public class ViewMenuBar {
                 menuBuilder.buildMenuItem("Filters (Gabor)", "gFilter", 0, null, false),
                 menuBuilder.buildMenuItem("Filters (homomorphic)", "hFilter", 0, null, false),
                 menuBuilder.makeMenu("Filters (spatial)", false, new JMenuItem[] {
-                        menuBuilder.buildMenuItem("Adaptive noise reduction", "ANR", 0, null, false),
-                        menuBuilder.buildMenuItem("Adaptive path smooth", "adaptivePathSmooth", 0, null, false),
-
-                        // menuBuilder.buildMenuItem("Adaptive smooth",
-                        // "adaptiveSmooth", 0, null, false),
                         menuBuilder.buildMenuItem("Anisotropic diffusion", null, 0, null, false),
                         menuBuilder.buildMenuItem("Bilateral filter", null, 0, null, false),
                         menuBuilder.buildMenuItem("Boundary attenuation", "BoundaryAttenuation", 0, null, false),
@@ -851,8 +846,8 @@ public class ViewMenuBar {
                                                         "ProstateFeaturesClassification", 0, null, false),
                                                 menuBuilder.buildMenuItem("Load Mask", "LoadProstateMask", 0, null,
                                                         false),
-                                                menuBuilder.buildMenuItem("Save DicomMatrix", "SaveDicomMatrix", 0, null,
-                                                                false),
+                                                menuBuilder.buildMenuItem("Save DicomMatrix", "SaveDicomMatrix", 0,
+                                                        null, false),
                                                 menuBuilder.buildMenuItem("Extract Surface", "ProstateExtract", 0,
                                                         null, false)}),
                                 ViewMenuBar.separator,
@@ -861,10 +856,13 @@ public class ViewMenuBar {
                                                 "open.gif", true),
                                         menuBuilder.buildMenuItem("Boundary intensity", "boundaryIntensity", 0, null,
                                                 true)
-                                        //menuBuilder.buildMenuItem("Total intensity", "totalIntensity", 0, null, true),
-                                        //menuBuilder.buildMenuItem("Average intensity", "avgIntensity", 0, null, true),
-                                        //menuBuilder.buildMenuItem("Total intensity with threshold","totalIntensityThreshold", 0, null, true),
-                                        //menuBuilder.buildMenuItem("Average intensity with threshold","avgIntensityThreshold", 0, null, true)
+                                // menuBuilder.buildMenuItem("Total intensity", "totalIntensity", 0, null, true),
+                                        // menuBuilder.buildMenuItem("Average intensity", "avgIntensity", 0, null,
+                                        // true),
+                                        // menuBuilder.buildMenuItem("Total intensity with
+                                        // threshold","totalIntensityThreshold", 0, null, true),
+                                        // menuBuilder.buildMenuItem("Average intensity with
+                                        // threshold","avgIntensityThreshold", 0, null, true)
                                         }), ViewMenuBar.separator,
                                 menuBuilder.buildMenuItem("Properties...", "VOIProperties", 'P', null, true),
                                 menuBuilder.buildMenuItem("Statistics generator...", "VOIStatistics", 'G', null, true),});
