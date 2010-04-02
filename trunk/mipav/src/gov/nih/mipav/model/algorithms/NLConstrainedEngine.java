@@ -5942,7 +5942,7 @@ mainLoop:
         if (outputMes) {
 	        Preferences.debug("The right hand side\n");
 	
-	        for (i = 0; i < param; i++) {
+	        for (i = 0; i < nPts; i++) {
 	            Preferences.debug(w1[i] + "\n");
 	        }
         }
