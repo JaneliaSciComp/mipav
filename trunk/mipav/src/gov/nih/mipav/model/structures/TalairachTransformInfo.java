@@ -868,9 +868,9 @@ public class TalairachTransformInfo implements Serializable {
     }
 
     /**
-     * Read/write to a text file.
+     * Reads transform info file
      *
-     * @param  filename  DOCUMENT ME!
+     * @param  filename  name of transform info file
      */
     public void readFromFile(String filename) {
 
@@ -1264,9 +1264,9 @@ public class TalairachTransformInfo implements Serializable {
     }
 
     /**
-     * Read/write to a text file.
+     * writes transform information to file
      *
-     * @param  filename  DOCUMENT ME!
+     * @param  filename  name of transform info file
      */
     public void writeToFile(String filename) {
 
