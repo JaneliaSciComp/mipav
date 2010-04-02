@@ -1997,46 +1997,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  buffer  float [] input buffer to be sorted Sort an array into ascending numerical order by Shell's method
-     *                 Reference: Numerical Recipes in C The Art of Scientific Computing Second Edition by William H.
-     *                 Press, Saul A. Teukolsky, William T. Vetterling, Brian P. Flannery, pp. 331- 332.
-     */
-    private void shellSort(float[] buffer) {
-        int i, j, inc;
-        float v;
-        inc = 1;
 
-        int end = buffer.length;
-
-        do {
-            inc *= 3;
-            inc++;
-        } while (inc <= end);
-
-        do {
-            inc /= 3;
-
-            for (i = inc + 1; i <= end; i++) {
-                v = buffer[i - 1];
-                j = i;
-
-                while (buffer[j - inc - 1] > v) {
-                    buffer[j - 1] = buffer[j - inc - 1];
-                    j -= inc;
-
-                    if (j <= inc) {
-                        break;
-                    }
-                }
-
-                buffer[j - 1] = v;
-            }
-        } while (inc > 1);
-
-    }
 
     /**
      * Allows a single slice to be filtered. Note that a progressBar must be created first.
@@ -2184,7 +2145,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                                         loop = true;
                                         while (loop) {
                                              maskedList = getNeighborList(kn++, a, srcBuffer, true);
-                                             shellSort(maskedList);
+                                             Arrays.sort(maskedList);
                                              zmed = median(maskedList);
                                              zmin = maskedList[0];
                                              zmax = maskedList[maskedList.length-1];
@@ -2212,7 +2173,7 @@ public class AlgorithmMedian extends AlgorithmBase {
     
                                         // verify that this element is an outlier
                                         if (stdDevLimit == 0.0) { // anything is an outlier
-                                            shellSort(maskedList);
+                                            Arrays.sort(maskedList);
                                             destBuffer[a] = median(maskedList);
                                         } else { // look for outlierness
                                             average = mean(maskedList);
@@ -2220,7 +2181,7 @@ public class AlgorithmMedian extends AlgorithmBase {
     
                                             if ((maskedList[kCenter] > (average + (stdDevLimit * sigma))) ||
                                                     (maskedList[kCenter] < (average - (stdDevLimit * sigma)))) {
-                                                shellSort(maskedList);
+                                                Arrays.sort(maskedList);
                                                 destBuffer[a] = median(maskedList);
                                             } else { // if element was not an outlier, pixel is fine.
                                                 destBuffer[a] = srcBuffer[a];
@@ -2274,7 +2235,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                                 loop = true;
                                 while (loop) {
                                      maskedList = getNeighborList(kn++, a, srcBuffer, true);
-                                     shellSort(maskedList);
+                                     Arrays.sort(maskedList);
                                      zmed = median(maskedList);
                                      zmin = maskedList[0];
                                      zmax = maskedList[maskedList.length-1];
@@ -2302,7 +2263,7 @@ public class AlgorithmMedian extends AlgorithmBase {
     
                                 // verify that this element is an outlier
                                 if (stdDevLimit == 0.0) { // anything is an outlier
-                                    shellSort(maskedList);
+                                	Arrays.sort(maskedList);
                                     destBuffer[a] = median(maskedList);
                                 } else { // look for outlierness
                                     average = mean(maskedList);
@@ -2310,7 +2271,7 @@ public class AlgorithmMedian extends AlgorithmBase {
     
                                     if ((maskedList[kCenter] > (average + (stdDevLimit * sigma))) ||
                                             (maskedList[kCenter] < (average - (stdDevLimit * sigma)))) {
-                                        shellSort(maskedList);
+                                    	Arrays.sort(maskedList);
                                         destBuffer[a] = median(maskedList);
                                     } else { // if element was not an outlier, pixel is fine.
                                         destBuffer[a] = srcBuffer[a];
@@ -2620,7 +2581,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                         loop = true;
                         while (loop) {
                              maskedList = getBorderBufferNeighborList(kn++, srcBdrBufferIdx, srcBdrBuffer, true);
-                             shellSort(maskedList);
+                             Arrays.sort(maskedList);
                              zmed = median(maskedList);
                              zmin = maskedList[0];
                              zmax = maskedList[maskedList.length-1];
@@ -2648,7 +2609,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                         
                         //verify that this element is an outlier
                         if (stdDevLimit == 0.0) { // anything is an outlier
-                            shellSort(maskedList);
+                        	Arrays.sort(maskedList);
                             destBuffer[destBufferIdx] = median(maskedList);
                         } else { // look for outlierness
                             average = mean(maskedList);
@@ -2656,7 +2617,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
                             if ((maskedList[kCenter] > (average + (stdDevLimit * sigma))) ||
                                     (maskedList[kCenter] < (average - (stdDevLimit * sigma)))) {
-                                shellSort(maskedList);
+                            	Arrays.sort(maskedList);
                                 destBuffer[destBufferIdx] = median(maskedList);
                             } else { // if element was not an outlier, pixel is fine.
                                 destBuffer[destBufferIdx] = srcBdrBuffer[srcBdrBufferIdx];
@@ -2844,7 +2805,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                                     loop = true;
                                     while (loop) {
                                          maskedList = getNeighborList(kn++, i, srcBuffer, false);
-                                         shellSort(maskedList);
+                                         Arrays.sort(maskedList);
                                          zmed = median(maskedList);
                                          zmin = maskedList[0];
                                          zmax = maskedList[maskedList.length-1];
@@ -2872,7 +2833,7 @@ public class AlgorithmMedian extends AlgorithmBase {
     
                                     // verify that this element is an outlier
                                     if (stdDevLimit == 0.0) { // anything is an outlier
-                                        shellSort(maskedList);
+                                    	Arrays.sort(maskedList);
                                         destBuffer[i] = median(maskedList);
                                     } else { // look for outlierness
                                         average = mean(maskedList);
@@ -2880,7 +2841,7 @@ public class AlgorithmMedian extends AlgorithmBase {
     
                                         if ((maskedList[kCenter] > (average + (stdDevLimit * sigma))) ||
                                                 (maskedList[kCenter] < (average - (stdDevLimit * sigma)))) {
-                                            shellSort(maskedList);
+                                        	Arrays.sort(maskedList);
                                             destBuffer[i] = median(maskedList);
                                         } else { // if element was not an outlier, pixel is fine.
                                             destBuffer[i] = srcBuffer[i];
@@ -3264,7 +3225,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                             loop = true;
                             while (loop) {
                                  maskedList = getNeighborList(kn++, i, srcBuffer, false);
-                                 shellSort(maskedList);
+                                 Arrays.sort(maskedList);
                                  zmed = median(maskedList);
                                  zmin = maskedList[0];
                                  zmax = maskedList[maskedList.length-1];
@@ -3292,7 +3253,7 @@ public class AlgorithmMedian extends AlgorithmBase {
     
                             // verify that this element is an outlier
                             if (stdDevLimit == 0.0) { // anything is an outlier
-                                shellSort(maskedList);
+                            	Arrays.sort(maskedList);
                                 destBuffer[i] = median(maskedList);
                             } else { // look for outlierness
                                 average = mean(maskedList);
@@ -3300,7 +3261,7 @@ public class AlgorithmMedian extends AlgorithmBase {
     
                                 if ((maskedList[kCenter] > (average + (stdDevLimit * sigma))) ||
                                         (maskedList[kCenter] < (average - (stdDevLimit * sigma)))) {
-                                    shellSort(maskedList);
+                                	Arrays.sort(maskedList);
                                     destBuffer[i] = median(maskedList);
                                 } else { // if element was not an outlier, pixel is fine.
                                     destBuffer[i] = srcBuffer[i];
@@ -3365,7 +3326,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                             loop = true;
                             while (loop) {
                                  maskedList = getBorderBufferNeighborList(kn++, srcBdrBufferIdx, srcBdrBuffer, false);
-                                 shellSort(maskedList);
+                                 Arrays.sort(maskedList);
                                  zmed = median(maskedList);
                                  zmin = maskedList[0];
                                  zmax = maskedList[maskedList.length-1];
@@ -3390,7 +3351,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                         } // if (adaptiveSize)
                         else { // not adaptiveSize
                             maskedList = getBorderBufferNeighborList(0, srcBdrBufferIdx, srcBdrBuffer, false);
-                            shellSort(maskedList);
+                            Arrays.sort(maskedList);
                             destBuffer[destBufferIdx] = median(maskedList);
                         } // else not adaptiveSize
                     } else {

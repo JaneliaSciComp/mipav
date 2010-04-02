@@ -5,6 +5,7 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
 
 import java.io.*;
+import java.util.Arrays;
 
 
 /**
@@ -1201,46 +1202,7 @@ public class AlgorithmMode extends AlgorithmBase {
 
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  buffer  input buffer to be sorted Sort an array into ascending numerical order by Shell's method
-     *                 Reference: Numerical Recipes in C The Art of Scientific Computing Second Edition by William H.
-     *                 Press, Saul A. Teukolsky, William T. Vetterling, Brian P. Flannery, pp. 331- 332.
-     */
-    private void shellSort(int[] buffer) {
-        int i, j, inc;
-        int v;
-        inc = 1;
-
-        int end = buffer.length;
-
-        do {
-            inc *= 3;
-            inc++;
-        } while (inc <= end);
-
-        do {
-            inc /= 3;
-
-            for (i = inc + 1; i <= end; i++) {
-                v = buffer[i - 1];
-                j = i;
-
-                while (buffer[j - inc - 1] > v) {
-                    buffer[j - 1] = buffer[j - inc - 1];
-                    j -= inc;
-
-                    if (j <= inc) {
-                        break;
-                    }
-                }
-
-                buffer[j - 1] = v;
-            }
-        } while (inc > 1);
-
-    }
+  
 
     /**
      * Performs mode filtering on a single slice with a 2D or 3D buffer.
@@ -1269,7 +1231,7 @@ public class AlgorithmMode extends AlgorithmBase {
             for (destCol = 0; destCol < srcBufferWidth; destCol++) {
 
                 maskedList = getBorderBufferNeighborList(srcBdrBufferIdx, srcBdrBuffer, true);
-                shellSort(maskedList);
+                Arrays.sort(maskedList);
                 destBuffer[destBufferIdx++] = mode(maskedList, srcBdrBuffer[srcBdrBufferIdx++]);
 
             }
@@ -1306,7 +1268,7 @@ public class AlgorithmMode extends AlgorithmBase {
                 for (destCol = 0; destCol < srcBufferWidth; destCol++) {
 
                     maskedList = getBorderBufferNeighborList(srcBdrBufferIdx, srcBdrBuffer, false);
-                    shellSort(maskedList);
+                    Arrays.sort(maskedList);
                     destBuffer[destBufferIdx++] = mode(maskedList, srcBdrBuffer[srcBdrBufferIdx++]);
 
                 }

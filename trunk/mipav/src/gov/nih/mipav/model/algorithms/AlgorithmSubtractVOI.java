@@ -1158,9 +1158,9 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
                 averageB = (float) (sum / contourVoxels);
             } // if (averageMode == MEAN)
             else { // averageMode == MEDIAN
-                shell(contourBufferR);
-                shell(contourBufferG);
-                shell(contourBufferB);
+            	Arrays.sort(contourBufferR);
+            	Arrays.sort(contourBufferG);
+            	Arrays.sort(contourBufferB);
 
                 if (((contourVoxels / 2) * 2) != contourVoxels) {
                     averageR = contourBufferR[contourVoxels / 2];
@@ -1273,7 +1273,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
                 average = sum / contourVoxels;
             } // if (averageMode == MEAN)
             else { // averageMode == MEDIAN
-                shell(contourBuffer);
+            	Arrays.sort(contourBuffer);
 
                 if (((contourVoxels / 2) * 2) != contourVoxels) {
                     average = contourBuffer[contourVoxels / 2];
@@ -1379,83 +1379,6 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
         }
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  buffer  input buffer to be sorted Sort an array into ascending numerical order by Shell's method
-     *                 Reference: Numerical Recipes in C The Art of Scientific Computing Second Edition by William H.
-     *                 Press, Saul A. Teukolsky, William T. Vetterling, Brian P. Flannery, pp. 331- 332.
-     */
-    private void shell(float[] buffer) {
-        int i, j, inc;
-        float v;
-
-        inc = 1;
-
-        do {
-            inc *= 3;
-            inc++;
-        } while (inc <= buffer.length);
-
-        do {
-            inc /= 3;
-
-            for (i = inc + 1; i <= buffer.length; i++) {
-                v = buffer[i - 1];
-                j = i;
-
-                while (buffer[j - inc - 1] > v) {
-                    buffer[j - 1] = buffer[j - inc - 1];
-                    j -= inc;
-
-                    if (j <= inc) {
-                        break;
-                    }
-                }
-
-                buffer[j - 1] = v;
-            }
-        } while (inc > 1);
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  buffer  input buffer to be sorted Sort an array into ascending numerical order by Shell's method
-     *                 Reference: Numerical Recipes in C The Art of Scientific Computing Second Edition by William H.
-     *                 Press, Saul A. Teukolsky, William T. Vetterling, Brian P. Flannery, pp. 331- 332.
-     */
-    private void shell(double[] buffer) {
-        int i, j, inc;
-        double v;
-
-        inc = 1;
-
-        do {
-            inc *= 3;
-            inc++;
-        } while (inc <= buffer.length);
-
-        do {
-            inc /= 3;
-
-            for (i = inc + 1; i <= buffer.length; i++) {
-                v = buffer[i - 1];
-                j = i;
-
-                while (buffer[j - inc - 1] > v) {
-                    buffer[j - 1] = buffer[j - inc - 1];
-                    j -= inc;
-
-                    if (j <= inc) {
-                        break;
-                    }
-                }
-
-                buffer[j - 1] = v;
-            }
-        } while (inc > 1);
-    }
 
     /**
      * Determine if the min and max values are in the image types range.
