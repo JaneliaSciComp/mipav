@@ -262,7 +262,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
             
             for (k=0; k<nSlices; k++) {
                 fireProgressStateChanged(prefix+"calculating T2 values on slice: "+k+" of "+(nSlices-1));
-                fireProgressStateChanged(0+(int)(((float)k+1.0)/(float)nSlices*80.0));
+                fireProgressStateChanged(0+(int)((float)k/(float)nSlices*80.0));
                 if(interrupted()) {
                     hardInterrupt = true;
                     return;
@@ -565,7 +565,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
             
             for (k=0; k<nSlices; k++) {
                 fireProgressStateChanged(prefix+"calculating T2 values on slice: "+k+" of "+(nSlices-1));
-                fireProgressStateChanged(0+(int)(((float)k+1.0)/(float)nSlices*80.0));
+                fireProgressStateChanged(0+(int)((float)k/(float)nSlices*80.0));
                 if(interrupted()) {
                     hardInterrupt = true;
                     return;
@@ -887,7 +887,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
             
             for (k=0; k<nSlices; k++) {
                 fireProgressStateChanged(prefix+"calculating T2 values on slice: "+k+" of "+(nSlices-1));
-                fireProgressStateChanged(0+(int)(((float)k+1.0)/(float)nSlices*80.0));
+                fireProgressStateChanged(0+(int)((float)k/(float)nSlices*80.0));
                 if(interrupted()) {
                     hardInterrupt = true;
                     return;
@@ -1381,7 +1381,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
         
             for (k=0; k<nSlices; k++) {
                 fireProgressStateChanged(prefix+"calculating Initial Estimates for slice: "+k+" of "+(nSlices-1));
-                fireProgressStateChanged(0+(int)(((float)k+1.0)/(float)nSlices*40.0));
+                fireProgressStateChanged(0+(int)((float)k/(float)nSlices*40.0));
                 if(interrupted()) {
                     hardInterrupt = true;
                     return;
