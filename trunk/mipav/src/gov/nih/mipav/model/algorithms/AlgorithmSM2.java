@@ -285,6 +285,10 @@ public class AlgorithmSM2 extends AlgorithmBase {
         } // if (selfTest)
         
         if (selfTest2) {
+        	// If your initial guesses are 0.495, 0.495, 0.495, then only 30 out of 108 
+        	// runs are correct.
+        	// If your initial guesses are the same as the final answers, then all
+        	// 108 runs are correct.
         	double ktransArray[] = new double[]{0.0, 0.01, 0.02, 0.05, 0.1, 0.2};
             double veArray[] = new double[]{0.1, 0.2, 0.5};
             double vpArray[] = new double[]{0.001, 0.005, 0.01, 0.02, 0.05, 0.1};
@@ -334,10 +338,12 @@ public class AlgorithmSM2 extends AlgorithmBase {
             for (yIndex = 0; yIndex < 18; yIndex++) {
             	veIndex = yIndex % 3;
             	veActual = veArray[veIndex];
-            	initial[1] = veActual;
+            	//initial[1] = veActual;
+            	initial[1] = 0.495;
             	vpIndex = yIndex/3;
             	vpActual = vpArray[vpIndex];
-            	initial[2] = vpActual;
+            	//initial[2] = vpActual;
+            	initial[2] = 0.495;
                 for (ktransIndex = 0; ktransIndex < 6; ktransIndex++) {
                     ktransActual = ktransArray[ktransIndex];
                     Preferences.debug("ktrans = " + ktransActual + " ve = " + veActual + " vp = " + vpActual + "\n");
@@ -347,7 +353,8 @@ public class AlgorithmSM2 extends AlgorithmBase {
                 	        exparray[j][m] = Math.exp((timeVals[j] - timeVals[m])*ktransDivVe);
                 		}
                 	}
-                    initial[0] = ktransActual;
+                    //initial[0] = ktransActual;
+                	initial[0] = 0.495;
                     for (t = 1; t < tDim; t++) {
                     	IntModel imod;
                         int steps;
@@ -403,6 +410,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
             Preferences.debug("Number failing with abnormal termination because the latest search direction computed using subspace minimization\n");
         	Preferences.debug("was not a descent direction (probably caused by a wrongly computed Jacobian) = " + notADescentDirection + "\n");
         	Preferences.debug("Number failing because cannot handle ktrans equals zero = " + ktransequalszero + "\n");
+        	setCompleted(false);
             return;
         } // if (selfTest2)
         
