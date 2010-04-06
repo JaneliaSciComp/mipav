@@ -75,7 +75,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
     
     /**The list of possible maps that can be calculated*/
     private boolean calculateT1 = true;
-    private boolean showB1Map = true;
+    private boolean showB1Map = false;
     private boolean calculateMo = false;
     private boolean invertT1toR1 = false;
     
@@ -1113,7 +1113,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         JTextField field2 = guiHelp.buildDecimalField("Maximum Allowable Mo:", maxMo);
         JCheckBox check1 = guiHelp.buildCheckBox("Show T1 Map", calculateT1);
         JCheckBox check2 = guiHelp.buildCheckBox("Show Mo Map", calculateMo);
-        JCheckBox check3 = guiHelp.buildCheckBox("Show B1 Map", showB1Map);
+        JCheckBox check3 = guiHelp.buildCheckBox("Show B1 Map", true);
         JCheckBox check4 = guiHelp.buildCheckBox("Show R1 Map", invertT1toR1);
         JCheckBox checkOpt = null; 
         if (Nsa > 2) { 
