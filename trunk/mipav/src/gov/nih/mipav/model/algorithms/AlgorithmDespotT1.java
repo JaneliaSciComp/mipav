@@ -1,15 +1,13 @@
 package gov.nih.mipav.model.algorithms;
 
-import java.awt.Frame;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Iterator;
+import java.util.ArrayList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileUtility;
@@ -29,17 +27,20 @@ import gov.nih.mipav.view.ViewUserInterface;
 
 public class AlgorithmDespotT1 extends AlgorithmBase {
 
-    private ModelImage t1ResultStack;
-    private ModelImage moResultStack;
-    private ModelImage r1ResultStack;
-    private ModelImage b1ResultStack;
+    private int processDataThreads;
+    private int computeDataThreads;
     
-    private ModelImage t1ResultLocalVolume;
-    private ModelImage moResultLocalVolume;
-    private ModelImage r1ResultLocalVolume;
-    private ModelImage b1ResultLocalVolume;
+    private ModelImage t1ResultStack = null;
+    private ModelImage moResultStack = null;
+    private ModelImage r1ResultStack = null;
+    private ModelImage b1ResultStack = null;
     
-    private ModelImage largestImage;
+    private ModelImage t1ResultLocalVolume = null;
+    private ModelImage moResultLocalVolume = null;
+    private ModelImage r1ResultLocalVolume = null;
+    private ModelImage b1ResultLocalVolume = null;
+    
+    private ModelImage largestImage = null;
     
     private double despotTR = 5.00;
     private double irspgrTR = 5.00;
@@ -77,7 +78,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
     private boolean onefiveTField = false;
     
     private boolean calculateT1 = true;
-    private boolean showB1Map = true;
+    private boolean showB1Map = false;
     private boolean calculateMo = false;
     private boolean invertT1toR1 = false;
     
@@ -270,15 +271,47 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
      * Initializes local variables that are internal to DESPOT.
      */
     private void init() {
+        int processors = Runtime.getRuntime().availableProcessors();
+        this.processDataThreads = 1;
+        this.computeDataThreads = 1;
+        if(processors > 2) {
+            if(showB1Map && processors-2 > processDataThreads + computeDataThreads) {
+                processDataThreads++;
+            }
+            if(calculateMo && processors-2 > processDataThreads + computeDataThreads) {
+                processDataThreads++;
+            }
+            if(invertT1toR1 && processors-2 > processDataThreads + computeDataThreads) {
+                processDataThreads++;
+            }
+            
+            System.out.println("ComputeData: "+computeDataThreads+"\tProcessData: "+processDataThreads);
+            
+            if(processors-2 > processDataThreads + computeDataThreads) {
+                processDataThreads = (int)(((double)processDataThreads/(processDataThreads+computeDataThreads))*(processors-2));
+                computeDataThreads = (processors-2-processDataThreads);
+            }
+            
+            System.out.println("ComputeData: "+computeDataThreads+"\tProcessData: "+processDataThreads);
+            
+            if(processDataThreads < 1) {
+                processDataThreads = 1;
+            }
+            if(computeDataThreads < 1) {
+                computeDataThreads = 1;
+            }
+        }
+        
+        System.out.println("ComputeData: "+computeDataThreads+"\tProcessData: "+processDataThreads);
         
         String testResult = wList[spgrImageIndex[0]].length() > 20 ? wList[spgrImageIndex[0]].substring(0, 19) : wList[spgrImageIndex[0]];
         this.tempDirString = System.getProperty("java.io.tmpdir")+testResult+File.separator;
-        this.dataListener = new DataListener();
-        
         File f = new File(tempDirString);
         if(!f.exists()) {
             f.mkdirs();
         }
+        
+        this.dataListener = new DataListener();
         if(Preferences.isMultiThreadingEnabled()) {
             dataListener.start();
         }
@@ -480,7 +513,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             for (ti=0; ti<Nti; ti++) {
                 image = ViewUserInterface.getReference().getRegisteredImageByName(wList[irspgrImageIndex[ti]]);  
                 if(image.getNDims() > 3 && !do4D) { //clause is only entered once per program operation
-                    initializeDisplayImages(image);
+                    largestImage = image;
                     do4D = true;
                     tSeries = image.getExtents()[3];
                     initializeLocalImages(image);
@@ -489,7 +522,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         }
         
         if(!do4D) {
-            initializeDisplayImages(image);
+            largestImage = image;
             initializeLocalImages(image);
         }
         
@@ -1034,35 +1067,11 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             }
         }
         
-        dataListener.localInterrupt();
-        
-        try {
-            dataListener.join();
-        } catch (InterruptedException e) {
-            if(completed) {
-                MipavUtil.displayError("Thread execution irregular, dataoutput may be incorrect");
-                e.printStackTrace();
-            }
-        }
-        
-        if(calculateT1) {
-            t1ResultStack = loadResultData(t1ResultStack, t1ResultLocalVolume.getImageName(), tSeries);
-        }
-        if(calculateMo) {
-            moResultStack = loadResultData(moResultStack, moResultLocalVolume.getImageName(), tSeries);
-        }
-        if(invertT1toR1) {
-            r1ResultStack = loadResultData(r1ResultStack, r1ResultLocalVolume.getImageName(), tSeries);
-        }
-        if(showB1Map) {
-            b1ResultStack = loadResultData(b1ResultStack, b1ResultLocalVolume.getImageName(), tSeries);
-        }
-        
-        displayImages();
+        loadFinalData(tSeries);
         
         return true;
     }
-
+    
     public boolean calculateT1UsingConventionalDESPOT1() {
         ModelImage image, b1FieldImage = null;
         float[] ctable, b1ctable;
@@ -1092,7 +1101,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         for (angle=0; angle<Nsa; angle++) {
             image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[angle]]);
             if(image.getNDims() > 3 && !do4D) { //clause is only entered once
-                initializeDisplayImages(image);
+                largestImage = image;
             	do4D = true;
                 tSeries = image.getExtents()[3];
                 initializeLocalImages(image);
@@ -1100,7 +1109,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         }
         
         if(!do4D) {
-            initializeDisplayImages(image);
+            largestImage = image;
             initializeLocalImages(image);
         }
 
@@ -1374,6 +1383,17 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             }
         }
         
+        loadFinalData(tSeries);
+        
+        return true;
+    }
+
+	private void loadFinalData(int tSeries) {
+        //dataListener is normally started in init()
+        if(!Preferences.isMultiThreadingEnabled()) {
+            dataListener.run();
+        }
+        
         dataListener.localInterrupt();
         
         try {
@@ -1385,6 +1405,10 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             }
         }
         
+        if(t1ResultStack == null || moResultStack == null || r1ResultStack == null || b1ResultStack == null) {
+            initializeDisplayImages(largestImage);
+        }
+        
         if(calculateT1) {
             t1ResultStack = loadResultData(t1ResultStack, t1ResultLocalVolume.getImageName(), tSeries);
         }
@@ -1394,13 +1418,14 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         if(invertT1toR1) {
             r1ResultStack = loadResultData(r1ResultStack, r1ResultLocalVolume.getImageName(), tSeries);
         }
+        if(showB1Map) {
+            b1ResultStack = loadResultData(b1ResultStack, b1ResultLocalVolume.getImageName(), tSeries);
+        }
         
         displayImages();
-        
-        return true;
     }
 
-	public ModelImage getT1ResultStack() {
+    public ModelImage getT1ResultStack() {
 		return t1ResultStack;
 	}
 
@@ -1447,9 +1472,9 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
 	 * @param volumeNumber
 	 * @return whether the temp file directory is writable
 	 */
-	private boolean saveImageData(ModelImage tempVolume, int volumeNumber) {
-	    System.out.println("Saving to: "+tempDirString+tempVolume.getImageName()+volumeNumber);
-	    return tempVolume.saveImage(tempDirString, tempVolume.getImageName()+volumeNumber, FileUtility.RAW, true);
+	private boolean saveImageData(ModelImage tempVolume, String name, int volumeNumber) {
+	    System.out.println("Saving to: "+tempDirString+name+volumeNumber);
+	    return tempVolume.saveImage(tempDirString, name+volumeNumber, FileUtility.RAW, true);
 	}
 	
 	/**
@@ -1460,12 +1485,14 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
 	    final ViewOpenFileUI openFile = new ViewOpenFileUI(false);
 	    openFile.setPutInFrame(false);
 	    for(int i=0; i<tVolumes; i++) {
+	        fireProgressStateChanged("Reading image: "+imageName+", "+i);
 	        System.out.println("Reading from: "+tempDirString+imageName+i);
 	        String mipavImageName = openFile.open(tempDirString+imageName+i+".XML", false, null);
 	        System.out.println("Getting image: "+mipavImageName);
 	        tempVolume = ViewUserInterface.getReference().getRegisteredImageByName(mipavImageName);
 	        if(tempVolume != null) {
 	            resultStack = storeImageData(resultStack, tempVolume, i);
+	            tempVolume.disposeLocal();
 	            File f = new File(tempDirString+imageName+i+".RAW");
 	            if(f != null) {
 	                if(f.delete()) {
@@ -1585,17 +1612,21 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
 	private class DataListener extends Thread {
 
 	    private Queue<ImageHolder> dataImport;
-	    private ViewJProgressBar dataBar;
-	    private ModelImage image;
-	    private float[][] data;
-	    private int t;
+	    private ViewJProgressBar[] dataBar;
 	    private boolean localInterrupt;
+	    private int currentBar;
+	    private ArrayList<Future<?>> workList;
 	    
 	    public DataListener() {
 	        dataImport = new ConcurrentLinkedQueue<ImageHolder>();
-	        dataBar = new ViewJProgressBar("Data importer", "Initialized...", 0, 100, false);
-	        dataBar.setVisible(true);
+	        dataBar = new ViewJProgressBar[processDataThreads];
+	        for(int i=0; i<dataBar.length; i++) {
+	            dataBar[i] = new ViewJProgressBar("Data importer "+i, "Initialized...", 0, 100, false);
+	            dataBar[i].setVisible(true);
+	        }
 	        localInterrupt = false;
+	        currentBar = 0;
+	        workList = new ArrayList<Future<?>>();
 	    }
 	    
 	    public void localInterrupt() {
@@ -1603,54 +1634,104 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         }
 
         public boolean insertData(ModelImage image, float[][] data, int time) {
-	        dataBar.setMessage("Receiving data from series "+time);
+            dataBar[0].setMessage("Receiving data from series "+time);
 	        ImageHolder h = new ImageHolder(image, data, time);
 	        return dataImport.offer(h);
 	    }
 	    
         public void run() {
-            while(!isLocalInterrupted()) {
-                while(!dataImport.isEmpty()) {
-                    processImageHolder(dataImport.poll());
+            ExecutorService exec = Executors.newFixedThreadPool(processDataThreads);
+            ProcessImageHolder b;
+            Future<?> f;
+            boolean firstTime = true;
+            while(firstTime || !allComplete()) {
+                firstTime = false;
+                while(!isLocalInterrupted()) {
+                    while(!dataImport.isEmpty()) {
+                        b = new ProcessImageHolder(dataImport.poll(), currentBar);
+                        f = exec.submit(b);
+                        currentBar++;
+                        if(currentBar > dataBar.length-1) {
+                            currentBar = 0;
+                        }
+                        workList.add(f);
+                    }
                 }
             }
-            dataBar.setVisible(false);
-            dataBar.dispose();
+            
+            exec.shutdown();
+            
+            for(int i=0; i<dataBar.length; i++) {
+                dataBar[i].setVisible(false);
+                dataBar[i].dispose();
+                dataBar[i] = null;
+            }
+            
             dataBar = null;
+        }
+        
+        private boolean allComplete() {
+            for(int i=0; i<workList.size(); i++) {
+                if(workList.get(i).isDone()) {
+                    workList.remove(i);
+                    i = i==0 ? 0 : i-1;  
+                }
+            }
+            
+            System.out.println("Size result: "+workList.size());
+            if(workList.size() > 0) {
+                return false;
+            } else {
+                return true;
+            }
         }
         
         public boolean isLocalInterrupted() {
             return localInterrupt;
         }
 
-        private boolean processImageHolder(ImageHolder h) {
-            if(h != null) {
-                image = h.getImage();
-                data = h.getData();
-                t = h.getTime();
-                String imageName = image.getImageFileName().substring(0, image.getImageFileName().length() > 5 ? 4 : image.getImageFileName().length());
-                int startVal = 0;
-                for(int k=0; k<nSlices; k++) {
-                    try {
-                        dataBar.setMessage("Importing "+imageName+" volume: "+t+" slice: "+k);
-                        startVal = image.getSliceSize()*k;
-                        image.importData(startVal, data[k], true);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        MipavUtil.displayError("Could not import result image data.");
+        private class ProcessImageHolder implements Runnable {
+
+            private ImageHolder h;
+            private ModelImage image;
+            private float[][] data;
+            private int t, index;
+
+            public ProcessImageHolder(ImageHolder h, int index) {
+                this.h = h;
+                this.index = index;
+            }
+            
+            public void run() {
+                if(h != null) {
+                    String imageNameLocal = h.getImage().getImageName();
+                    image = (ModelImage)h.getImage().clone();
+                    data = h.getData();
+                    t = h.getTime();
+                    if(image.getImageName().equals("Unknown")) {
+                        System.out.println("STOP");
                     }
-                    dataBar.updateValue((int)(((double)k/(nSlices+1))*80));
-                }
-                saveImageData(image, t);
-                dataBar.setMessage("Re-initialized...");
-                dataBar.updateValue(1);
-                
-                return true;
-            } else {
-                
-                dataBar.setMessage("Re-initialized...");
-                dataBar.updateValue(1);
-                return false; //queue is now empty
+                    System.out.println(image.getImageName());
+                    String imageName = image.getImageName().substring(0, image.getImageName().length() > 5 ? 4 : image.getImageName().length()); 
+                    int startVal = 0;
+                    for(int k=0; k<nSlices; k++) {
+                        try {
+                            dataBar[index].setMessage("Importing "+imageName+" volume: "+t+" slice: "+k);
+                            startVal = image.getSliceSize()*k;
+                            image.importData(startVal, data[k], true);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            MipavUtil.displayError("Could not import result image data.");
+                        }
+                        dataBar[index].updateValue((int)(((double)k/(nSlices+1))*80));
+                    }
+                    saveImageData(image, imageNameLocal, t);
+                    image.disposeLocal();
+                    image = null;
+                    h = null;
+                    dataBar[index].setMessage("Re-initialized...");
+                    dataBar[index].updateValue(1);
+                } 
             }
         }
         
