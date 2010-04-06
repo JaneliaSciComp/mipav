@@ -1,12 +1,24 @@
 package gov.nih.mipav.model.algorithms;
 
 import java.awt.Frame;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewJProgressBar;
+import gov.nih.mipav.view.ViewOpenFileUI;
 import gov.nih.mipav.view.ViewUserInterface;
 
 /** Swiss army knife for calculating the T1 relaxation time from any number of EFGRE (SPGR) images. 
@@ -21,7 +33,14 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
     private ModelImage moResultStack;
     private ModelImage r1ResultStack;
     private ModelImage b1ResultStack;
-
+    
+    private ModelImage t1ResultLocalVolume;
+    private ModelImage moResultLocalVolume;
+    private ModelImage r1ResultLocalVolume;
+    private ModelImage b1ResultLocalVolume;
+    
+    private ModelImage largestImage;
+    
     private double despotTR = 5.00;
     private double irspgrTR = 5.00;
     private double irspgrKy = 96.00;
@@ -85,6 +104,17 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
     private ViewJFrameImage moResultWindow = null;
     private ViewJFrameImage r1ResultWindow = null;
     private ViewJFrameImage b1ResultWindow = null;
+    
+    /** The number of slices in the largest volume */
+    private int nSlices;
+    
+    /**Whether this algorithm will utilize 4D processing optimization */
+    private boolean do4D;
+    
+    /**This object processes data for the DESPOT code */
+    private DataListener dataListener;
+    
+    private String tempDirString;
     
     public AlgorithmDespotT1(double despotTR, double irspgrTR,
             double irspgrKy, double irspgrFA, double maxT1, double maxMo,
@@ -157,6 +187,8 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         this.hardNoiseThreshold = hardNoiseThreshold;
         this.wList = wList;
         this.titles = titles;
+        
+        init();
     }
 
     public AlgorithmDespotT1(ModelImage destImage, ModelImage srcImage,
@@ -230,6 +262,26 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         this.hardNoiseThreshold = hardNoiseThreshold;
         this.wList = wList;
         this.titles = titles;
+        
+        init();
+    }
+    
+    /**
+     * Initializes local variables that are internal to DESPOT.
+     */
+    private void init() {
+        
+        String testResult = wList[spgrImageIndex[0]].length() > 20 ? wList[spgrImageIndex[0]].substring(0, 19) : wList[spgrImageIndex[0]];
+        this.tempDirString = System.getProperty("java.io.tmpdir")+testResult+File.separator;
+        this.dataListener = new DataListener();
+        
+        File f = new File(tempDirString);
+        if(!f.exists()) {
+            f.mkdirs();
+        }
+        if(Preferences.isMultiThreadingEnabled()) {
+            dataListener.start();
+        }
     }
 
     /**
@@ -259,6 +311,17 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         }
         else {
             completed = calculateT1UsingConventionalDESPOT1();
+        }
+        
+        dataListener.localInterrupt();
+        
+        try {
+            dataListener.join();
+        } catch (InterruptedException e) {
+            if(completed) {
+                MipavUtil.displayError("Thread execution irregular, dataoutput may be incorrect");
+                e.printStackTrace();
+            }
         }
         
         setCompleted(completed);
@@ -388,7 +451,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         double ernstAngle, ernstSignal, collectedSignal, weight, sumWeights;
         float noiseSum, threshold;
         
-        int width, height, nSlices, tSeries, irspgrSlices, irspgrSeries;
+        int width, height, tSeries, irspgrSlices, irspgrSeries;
         int irwidth, irheight;
         int x,y,i,j,k,t,angle, p, ti, p1, p2, pixelIndex, noiseIndex;
         int calculateB1 = 1;
@@ -402,22 +465,14 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             nSlices = 1;
         }
         
-        boolean do4D = false;
+        do4D = false;
         tSeries = 1;
         for (angle=0; angle<Nsa; angle++) {
             image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[angle]]);
             if(image.getNDims() > 3 && !do4D) { //clause is only entered once per program operation
                 do4D = true;
                 tSeries = image.getExtents()[3];
-                t1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t1_results");
-                moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
-                r1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r1_results");
-                b1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "b1_results");
                 
-                t1ResultStack = nearCloneImage(image, t1ResultStack);
-                moResultStack = nearCloneImage(image, moResultStack);
-                r1ResultStack = nearCloneImage(image, r1ResultStack);
-                b1ResultStack = nearCloneImage(image, b1ResultStack);
             }
         }
         
@@ -425,31 +480,17 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             for (ti=0; ti<Nti; ti++) {
                 image = ViewUserInterface.getReference().getRegisteredImageByName(wList[irspgrImageIndex[ti]]);  
                 if(image.getNDims() > 3 && !do4D) { //clause is only entered once per program operation
+                    initializeDisplayImages(image);
                     do4D = true;
                     tSeries = image.getExtents()[3];
-                    t1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t1_results");
-                    moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
-                    r1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r1_results");
-                    b1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "b1_results");
-                    
-                    t1ResultStack = nearCloneImage(image, t1ResultStack);
-                    moResultStack = nearCloneImage(image, moResultStack);
-                    r1ResultStack = nearCloneImage(image, r1ResultStack);
-                    b1ResultStack = nearCloneImage(image, b1ResultStack);
+                    initializeLocalImages(image);
                 }
             }
         }
         
         if(!do4D) {
-            t1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t1_results");
-            moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
-            r1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r1_results");
-            b1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "b1_results");
-            
-            t1ResultStack = nearCloneImage(image, t1ResultStack);
-            moResultStack = nearCloneImage(image, moResultStack);
-            r1ResultStack = nearCloneImage(image, r1ResultStack);
-            b1ResultStack = nearCloneImage(image, b1ResultStack);
+            initializeDisplayImages(image);
+            initializeLocalImages(image);
         }
         
         irspgrImage = ViewUserInterface.getReference().getRegisteredImageByName(wList[irspgrImageIndex[0]]);
@@ -833,10 +874,14 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                         if (b1field[k][pixelIndex] > 0.00 && spgrPixelValues[0][pixelIndex] > threshold) {
                             
                             // scale up (or down) the flip angles based on the calculated B1
-                            for (p=0; p<Nsa; p++) scaledFA[p] = fa[p]*b1field[k][pixelIndex];
+                            for (p=0; p<Nsa; p++) {
+                                scaledFA[p] = fa[p]*b1field[k][pixelIndex];
+                            }
                             
                             // grab the SPGR values for this pixel
-                            for (p=0; p<Nsa; p++) spgrData[p] = spgrPixelValues[p][pixelIndex];
+                            for (p=0; p<Nsa; p++) {
+                                spgrData[p] = spgrPixelValues[p][pixelIndex];
+                            }
                             
                             // calculate T1
                             sumX = 0.00;
@@ -973,52 +1018,47 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                         pixelIndex++;
                     }
                 }
+            }
             
-                //adds data to the end of an image
-                try {
-                    int startVal = image.getSliceSize()*nSlices*t + image.getSliceSize()*k;
-                    if (calculateT1) {
-                        t1ResultStack.importData(startVal, t1Values[k], true);
-                    }
-                    if (calculateMo) {
-                        moResultStack.importData(startVal, moValues[k], true);
-                    }
-                    if (invertT1toR1) {
-                        r1ResultStack.importData(startVal, r1Values[k], true);
-                    }
-                    if (showB1Map) {
-                        b1ResultStack.importData(startVal, b1field[k], true);
-                    }
-                } catch(IOException e) {
-                    e.printStackTrace();
-                    MipavUtil.displayError("Data could not be imported into result image");
-                }
+            if(calculateT1) {
+                dataListener.insertData(t1ResultLocalVolume, t1Values, t);
+            }
+            if(calculateMo) {
+                dataListener.insertData(moResultLocalVolume, moValues, t);
+            }
+            if(invertT1toR1) {
+                dataListener.insertData(r1ResultLocalVolume, r1Values, t);
+            }
+            if(showB1Map) {
+                dataListener.insertData(b1ResultLocalVolume, b1field, t);
             }
         }
         
-        if (calculateT1) {
-            t1ResultWindow = new ViewJFrameImage(t1ResultStack);
-            t1ResultWindow.setTitle("DESPOT1-HIFI_T1_Map");
-            t1ResultWindow.setVisible(true);
-        } 
+        dataListener.localInterrupt();
         
-        if (calculateMo) {
-            moResultWindow = new ViewJFrameImage(moResultStack);
-            moResultWindow.setTitle("DESPOT1-HIFI_Mo_Map");
-            moResultWindow.setVisible(true);
-        } 
+        try {
+            dataListener.join();
+        } catch (InterruptedException e) {
+            if(completed) {
+                MipavUtil.displayError("Thread execution irregular, dataoutput may be incorrect");
+                e.printStackTrace();
+            }
+        }
         
-        if (invertT1toR1) {
-            r1ResultWindow = new ViewJFrameImage(r1ResultStack);
-            r1ResultWindow.setTitle("DESPOT1-HIFI_R1_Map");
-            r1ResultWindow.setVisible(true);
-        } 
+        if(calculateT1) {
+            t1ResultStack = loadResultData(t1ResultStack, t1ResultLocalVolume.getImageName(), tSeries);
+        }
+        if(calculateMo) {
+            moResultStack = loadResultData(moResultStack, moResultLocalVolume.getImageName(), tSeries);
+        }
+        if(invertT1toR1) {
+            r1ResultStack = loadResultData(r1ResultStack, r1ResultLocalVolume.getImageName(), tSeries);
+        }
+        if(showB1Map) {
+            b1ResultStack = loadResultData(b1ResultStack, b1ResultLocalVolume.getImageName(), tSeries);
+        }
         
-        if (showB1Map) {
-            b1ResultWindow = new ViewJFrameImage(b1ResultStack);
-            b1ResultWindow.setTitle("DESPOT1-HIFI_B1_Map");
-            b1ResultWindow.setVisible(true);
-        } 
+        displayImages();
         
         return true;
     }
@@ -1035,7 +1075,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         double ernstAngle, ernstSignal, collectedSignal, weight, sumWeights;
         float noiseSum, threshold;
         
-        int width, height, nSlices, tSeries;
+        int width, height, tSeries;
         int x,y,i,j,k,t,angle, pixelIndex, noiseIndex;
         
         image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[0]]);
@@ -1047,31 +1087,21 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             nSlices = 1;
         }
         
-        boolean do4D = false;
+        do4D = false;
         tSeries = 1;
         for (angle=0; angle<Nsa; angle++) {
             image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[angle]]);
             if(image.getNDims() > 3 && !do4D) { //clause is only entered once
+                initializeDisplayImages(image);
             	do4D = true;
                 tSeries = image.getExtents()[3];
-                t1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t1_results");
-                moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
-                r1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r1_results");
-                
-                t1ResultStack = nearCloneImage(image, t1ResultStack);
-                moResultStack = nearCloneImage(image, moResultStack);
-                r1ResultStack = nearCloneImage(image, r1ResultStack);
+                initializeLocalImages(image);
             }
         }
         
         if(!do4D) {
-            t1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t1_results");
-            moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
-            r1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r1_results");
-            
-            t1ResultStack = nearCloneImage(image, t1ResultStack);
-            moResultStack = nearCloneImage(image, moResultStack);
-            r1ResultStack = nearCloneImage(image, r1ResultStack);
+            initializeDisplayImages(image);
+            initializeLocalImages(image);
         }
 
         String prefix = new String();
@@ -1307,45 +1337,65 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                             }
                         }
                         
-                        t1Values[k][pixelIndex] = (float) t1;
-                        moValues[k][pixelIndex] = (float) mo;
-                        r1Values[k][pixelIndex] = (float) r1;
+                        if(calculateT1) {
+                            t1Values[k][pixelIndex] = (float) t1;
+                        }
+                        if(calculateMo) {
+                            moValues[k][pixelIndex] = (float) mo;
+                        }
+                        if(invertT1toR1) {
+                            r1Values[k][pixelIndex] = (float) r1;
+                        }
                     }
                     else {
-                        t1Values[k][pixelIndex] = 0;
-                        moValues[k][pixelIndex] = 0;
-                        r1Values[k][pixelIndex] = 0;
+                        if(calculateT1) {
+                            t1Values[k][pixelIndex] = 0;
+                        }
+                        if(calculateMo) {
+                            moValues[k][pixelIndex] = 0;
+                        }
+                        if(invertT1toR1) {
+                            r1Values[k][pixelIndex] = 0;
+                        }
                     }
                 }
-                try {
-                    int startVal = image.getSliceSize()*nSlices*t + image.getSliceSize()*k;
-                    t1ResultStack.importData(startVal, t1Values[k], true);
-                    moResultStack.importData(startVal, moValues[k], true);
-                    r1ResultStack.importData(startVal, r1Values[k], true);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    MipavUtil.displayError("Could not import result image data.");
-                }
-            } 
+            }
+            
+            fireProgressStateChanged(87);
+            
+            if(calculateT1) {
+                dataListener.insertData(t1ResultLocalVolume, t1Values, t);
+            }
+            if(calculateMo) {
+                dataListener.insertData(moResultLocalVolume, moValues, t);
+            }
+            if(invertT1toR1) {
+                dataListener.insertData(r1ResultLocalVolume, r1Values, t);
+            }
         }
         
-        if (calculateT1) {
-            t1ResultWindow = new ViewJFrameImage(t1ResultStack);
-            t1ResultWindow.setTitle("DESPOT1_T1_Map");
-            t1ResultWindow.setVisible(true);
-        } 
-         
-        if (calculateMo) {
-            moResultWindow = new ViewJFrameImage(moResultStack);
-            moResultWindow.setTitle("DESPOT1_Mo_Map");
-            moResultWindow.setVisible(true);
-        } 
+        dataListener.localInterrupt();
         
-        if (invertT1toR1) {
-            r1ResultWindow = new ViewJFrameImage(r1ResultStack);
-            r1ResultWindow.setTitle("DESPOT1_R1_Map");
-            r1ResultWindow.setVisible(true);
-        } 
+        try {
+            dataListener.join();
+        } catch (InterruptedException e) {
+            if(completed) {
+                MipavUtil.displayError("Thread execution irregular, dataoutput may be incorrect");
+                e.printStackTrace();
+            }
+        }
+        
+        if(calculateT1) {
+            t1ResultStack = loadResultData(t1ResultStack, t1ResultLocalVolume.getImageName(), tSeries);
+        }
+        if(calculateMo) {
+            moResultStack = loadResultData(moResultStack, moResultLocalVolume.getImageName(), tSeries);
+        }
+        if(invertT1toR1) {
+            r1ResultStack = loadResultData(r1ResultStack, r1ResultLocalVolume.getImageName(), tSeries);
+        }
+        
+        displayImages();
         
         return true;
     }
@@ -1364,5 +1414,270 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
 
 	public ModelImage getB1ResultStack() {
 		return b1ResultStack;
+	}
+	
+	/**
+	 * When system permissions do not allow image data to be saved to a computer, this method
+	 * performs the older, slower process of storing image data locally in memory.  This method
+	 * is also the last step of creating the t1, mo, r1, and b1 result stacks.
+	 * 
+	 * @param tempVolume
+	 * @param volumeNumber
+	 */
+	private ModelImage storeImageData(ModelImage resultStack, ModelImage tempVolume, int volumeNumber) {
+	    try {
+    	    int startVal = resultStack.getSliceSize()*nSlices*volumeNumber;
+    	    int sliceSize = tempVolume.getSliceSize();
+    	    float[] volumeData = new float[nSlices*sliceSize];
+	        tempVolume.exportData(0, sliceSize*nSlices, volumeData);
+	        resultStack.importData(startVal, volumeData, true);
+	    } catch(IOException e) {
+	        e.printStackTrace();
+	        MipavUtil.displayError("Could not import result image data.");
+	    }
+	    
+	    return resultStack;
+	}
+	
+	/**
+	 * This method saves an image volume into temporary storage for later loading
+	 * by <code>loadResultData()</code>
+	 * 
+	 * @param tempVolume
+	 * @param volumeNumber
+	 * @return whether the temp file directory is writable
+	 */
+	private boolean saveImageData(ModelImage tempVolume, int volumeNumber) {
+	    System.out.println("Saving to: "+tempDirString+tempVolume.getImageName()+volumeNumber);
+	    return tempVolume.saveImage(tempDirString, tempVolume.getImageName()+volumeNumber, FileUtility.RAW, true);
+	}
+	
+	/**
+	 * This method loads all saved data that resulted from 4D processing in either the conventional or HIFI case
+	 */
+	private ModelImage loadResultData(ModelImage resultStack, String imageName, int tVolumes) {
+	    ModelImage tempVolume = null;
+	    final ViewOpenFileUI openFile = new ViewOpenFileUI(false);
+	    openFile.setPutInFrame(false);
+	    for(int i=0; i<tVolumes; i++) {
+	        System.out.println("Reading from: "+tempDirString+imageName+i);
+	        String mipavImageName = openFile.open(tempDirString+imageName+i+".XML", false, null);
+	        System.out.println("Getting image: "+mipavImageName);
+	        tempVolume = ViewUserInterface.getReference().getRegisteredImageByName(mipavImageName);
+	        if(tempVolume != null) {
+	            resultStack = storeImageData(resultStack, tempVolume, i);
+	            File f = new File(tempDirString+imageName+i+".RAW");
+	            if(f != null) {
+	                if(f.delete()) {
+	                    System.out.println(f.getName()+" succeessfully deleted.");
+	                } else {
+	                    System.out.println(f.getName()+" could not be deleted from your system, please delete manually.");
+	                }
+	            }
+	            f = new File(tempDirString+imageName+i+".XML");
+                if(f != null) {
+                    if(f.delete()) {
+                        System.out.println(f.getName()+" succeessfully deleted.");
+                    } else {
+                        System.out.println(f.getName()+" could not be deleted from your system, please delete manually.");
+                    }
+                }
+	        }
+	    }
+	    
+	    return resultStack;
+	}
+	
+	/**
+	 * This method is used in both the conventional and HIFI case to display result images
+	 */
+	private void displayImages() {
+	    String prefix = new String();
+	    if(performDESPOT1HIFI) {
+	        prefix = "-HIFI";
+	    }
+	    
+	    if (calculateT1) {
+            t1ResultWindow = new ViewJFrameImage(t1ResultStack);
+            t1ResultWindow.setTitle("DESPOT1"+prefix+"_T1_Map");
+            t1ResultWindow.setVisible(true);
+        } 
+         
+        if (calculateMo) {
+            moResultWindow = new ViewJFrameImage(moResultStack);
+            moResultWindow.setTitle("DESPOT1"+prefix+"_Mo_Map");
+            moResultWindow.setVisible(true);
+        } 
+        
+        if (invertT1toR1) {
+            r1ResultWindow = new ViewJFrameImage(r1ResultStack);
+            r1ResultWindow.setTitle("DESPOT1"+prefix+"_R1_Map");
+            r1ResultWindow.setVisible(true);
+        } 
+        
+        if (performDESPOT1HIFI && showB1Map) {
+            b1ResultWindow = new ViewJFrameImage(b1ResultStack);
+            b1ResultWindow.setTitle("DESPOT1"+prefix+"_B1_Map");
+            b1ResultWindow.setVisible(true);
+        } 
+	}
+	
+	/**
+	 * This method initializes the intermediate images as a near-clone of the largest image in the set.
+	 * 
+	 * @param image
+	 */
+	private void initializeLocalImages(ModelImage image) {
+	    //For 4D processing, only volumes are stored in local memory, these volumes are then re-read at program clean-up
+	    int[] localExtents = new int[image.getNDims() > 3 ? image.getNDims()-1 : image.getNDims()];
+	    for(int i=0; i<localExtents.length; i++) {
+	        localExtents[i] = image.getExtents()[i];
+	    }
+	    
+	    if(calculateT1) {
+            t1ResultLocalVolume = new ModelImage(ModelImage.DOUBLE, localExtents, "t1_results_volume");
+            //t1ResultLocalVolume = nearCloneImage(image, t1ResultLocalVolume);
+        }
+        
+        if(calculateMo) {
+            moResultLocalVolume = new ModelImage(ModelImage.DOUBLE, localExtents, "mo_results_volume");
+            //moResultLocalVolume = nearCloneImage(image, moResultLocalVolume);
+        }
+         
+        if(invertT1toR1) {
+            r1ResultLocalVolume = new ModelImage(ModelImage.DOUBLE, localExtents, "r1_results_volume");
+            //r1ResultLocalVolume = nearCloneImage(image, r1ResultLocalVolume);
+        }
+         
+        if(performDESPOT1HIFI && showB1Map) {
+            b1ResultLocalVolume = new ModelImage(ModelImage.DOUBLE, localExtents, "b1_results_volume");
+            //b1ResultLocalVolume = nearCloneImage(image, b1ResultLocalVolume);
+        }
+	}
+	
+	/**
+	 * This method initializes the final images as near-clones of the largest image in the set
+	 * 
+	 * @param image
+	 */
+	private void initializeDisplayImages(ModelImage image) {
+	    if(calculateT1) {
+            t1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t1_results");
+            t1ResultStack = nearCloneImage(image, t1ResultStack);
+        }
+        
+        if(calculateMo) {
+            moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+            moResultStack = nearCloneImage(image, moResultStack);
+        }
+         
+        if(invertT1toR1) {
+            r1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r1_results");
+            r1ResultStack = nearCloneImage(image, r1ResultStack);
+        }
+         
+        if(performDESPOT1HIFI && showB1Map) {
+            b1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "b1_results");
+            b1ResultStack = nearCloneImage(image, b1ResultStack);
+        }
+	}
+	
+	private class DataListener extends Thread {
+
+	    private Queue<ImageHolder> dataImport;
+	    private ViewJProgressBar dataBar;
+	    private ModelImage image;
+	    private float[][] data;
+	    private int t;
+	    private boolean localInterrupt;
+	    
+	    public DataListener() {
+	        dataImport = new ConcurrentLinkedQueue<ImageHolder>();
+	        dataBar = new ViewJProgressBar("Data importer", "Initialized...", 0, 100, false);
+	        dataBar.setVisible(true);
+	        localInterrupt = false;
+	    }
+	    
+	    public void localInterrupt() {
+            localInterrupt = true;
+        }
+
+        public boolean insertData(ModelImage image, float[][] data, int time) {
+	        dataBar.setMessage("Receiving data from series "+time);
+	        ImageHolder h = new ImageHolder(image, data, time);
+	        return dataImport.offer(h);
+	    }
+	    
+        public void run() {
+            while(!isLocalInterrupted()) {
+                while(!dataImport.isEmpty()) {
+                    processImageHolder(dataImport.poll());
+                }
+            }
+            dataBar.setVisible(false);
+            dataBar.dispose();
+            dataBar = null;
+        }
+        
+        public boolean isLocalInterrupted() {
+            return localInterrupt;
+        }
+
+        private boolean processImageHolder(ImageHolder h) {
+            if(h != null) {
+                image = h.getImage();
+                data = h.getData();
+                t = h.getTime();
+                String imageName = image.getImageFileName().substring(0, image.getImageFileName().length() > 5 ? 4 : image.getImageFileName().length());
+                int startVal = 0;
+                for(int k=0; k<nSlices; k++) {
+                    try {
+                        dataBar.setMessage("Importing "+imageName+" volume: "+t+" slice: "+k);
+                        startVal = image.getSliceSize()*k;
+                        image.importData(startVal, data[k], true);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        MipavUtil.displayError("Could not import result image data.");
+                    }
+                    dataBar.updateValue((int)(((double)k/(nSlices+1))*80));
+                }
+                saveImageData(image, t);
+                dataBar.setMessage("Re-initialized...");
+                dataBar.updateValue(1);
+                
+                return true;
+            } else {
+                
+                dataBar.setMessage("Re-initialized...");
+                dataBar.updateValue(1);
+                return false; //queue is now empty
+            }
+        }
+        
+        private class ImageHolder {
+            
+            private ModelImage image;
+            private float[][] data;
+            private int time;
+            
+            public ImageHolder(ModelImage image, float[][] data, int time) {
+                this.image = image;
+                this.data = data;
+                this.time = time;
+            }
+
+            public ModelImage getImage() {
+                return image;
+            }
+
+            public float[][] getData() {
+                return data;
+            }
+
+            public int getTime() {
+                return time;
+            }
+            
+        }
 	}
 }
