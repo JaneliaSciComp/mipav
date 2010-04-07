@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -32,6 +33,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
     
     private int processDataThreads;
     private int computeDataThreads;
+    private int loadDataThreads;
     
     private ModelImage t1ResultStack = null;
     private ModelImage moResultStack = null;
@@ -319,6 +321,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         processors = processors > MAX_PROCESS ? MAX_PROCESS : processors;
         this.processDataThreads = 1;
         this.computeDataThreads = 1;
+        this.loadDataThreads = 1;
         if(Preferences.isMultiThreadingEnabled() && processors > 2) {
             if(calculateT1 && processors-2 > processDataThreads + computeDataThreads) {
                 processDataThreads++;
@@ -348,6 +351,13 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             if(computeDataThreads < 1) {
                 computeDataThreads = 1;
             } 
+            
+            loadDataThreads = processors-2;
+            int divisor = ((calculateT1 ? 1 : 0) + (showB1Map ? 1 : 0) + (calculateMo ? 1 : 0) + (invertT1toR1 ? 1 : 0));
+            loadDataThreads = (int)((double)loadDataThreads/divisor);
+            if(loadDataThreads < 1) {
+                loadDataThreads = 1;
+            }
         }
         
         if(largestImage != null) {
@@ -357,7 +367,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             }
         }
         
-        System.out.println("ComputeData: "+computeDataThreads+"\tProcessData: "+processDataThreads);
+        System.out.println("ComputeData: "+computeDataThreads+"\tProcessData: "+processDataThreads+"\t loadData: "+loadDataThreads);
     }
 
     /**
@@ -1563,17 +1573,40 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             initializeDisplayImages(largestImage);
         }
         
+        int numThreads = 1;
+        if(Preferences.isMultiThreadingEnabled()) {
+            numThreads += (calculateMo ? 1 : 0) + (invertT1toR1 ? 1 : 0) + (showB1Map ? 1 : 0);
+            if(numThreads > Runtime.getRuntime().availableProcessors()-2) {
+                numThreads = Runtime.getRuntime().availableProcessors()-2;
+            }
+        }
+        
+        ExecutorService exec = Executors.newFixedThreadPool(numThreads);
+        LoadResultDataOuter t1 = null, mo = null, r1 = null, b1 = null;
+        
         if(calculateT1) {
-            t1ResultStack = loadResultData(t1ResultStack, "t1_results_volume", tSeries);
+            t1 = new LoadResultDataOuter(t1ResultStack, "t1_results_volume", tSeries);
+            exec.submit(t1);
         }
         if(calculateMo) {
-            moResultStack = loadResultData(moResultStack, "mo_results_volume", tSeries);
+            mo = new LoadResultDataOuter(moResultStack, "mo_results_volume", tSeries);
+            exec.submit(mo);
         }
         if(invertT1toR1) {
-            r1ResultStack = loadResultData(r1ResultStack, "r1_results_volume", tSeries);
+            r1 = new LoadResultDataOuter(r1ResultStack, "r1_results_volume", tSeries);
+            exec.submit(r1);
         }
         if(showB1Map) {
-            b1ResultStack = loadResultData(b1ResultStack, "b1_results_volume", tSeries);
+            b1 = new LoadResultDataOuter(b1ResultStack, "b1_results_volume", tSeries);
+            exec.submit(b1);
+        }
+        exec.shutdown();
+        
+        try {
+            exec.awaitTermination(1, TimeUnit.DAYS);
+        } catch(InterruptedException e) {
+            MipavUtil.displayError("Program did not execute correctly");
+            e.printStackTrace();
         }
         
         displayImages();
@@ -1603,7 +1636,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
 	 * @param tempVolume
 	 * @param volumeNumber
 	 */
-	private ModelImage storeImageData(ModelImage resultStack, ModelImage tempVolume, int volumeNumber) {
+	private void storeImageData(ModelImage resultStack, ModelImage tempVolume, int volumeNumber) {
 	    try {
     	    int startVal = resultStack.getSliceSize()*nSlices*volumeNumber;
     	    int sliceSize = tempVolume.getSliceSize();
@@ -1615,7 +1648,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
 	        MipavUtil.displayError("Could not import result image data.");
 	    }
 	    
-	    return resultStack;
+	    return;
 	}
 	
 	/**
@@ -1632,30 +1665,67 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
 	}
 	
 	/**
-	 * This method loads all saved data that resulted from 4D processing in either the conventional or HIFI case
-	 */
-	private ModelImage loadResultData(ModelImage resultStack, String imageName, int tVolumes) {
-	    ModelImage tempVolume = null;
-	    final ViewOpenFileUI openFile = new ViewOpenFileUI(false);
-	    openFile.setPutInFrame(false);
-	    for(int i=0; i<tVolumes; i++) {
-	        fireProgressStateChanged("Reading image: "+imageName+", "+i);
-	        System.out.println("Reading from: "+tempDirString+imageName+i);
-	        String mipavImageName = openFile.open(tempDirString+imageName+i+".XML", false, null);
-	        System.out.println("Getting image: "+mipavImageName);
-	        tempVolume = ViewUserInterface.getReference().getRegisteredImageByName(mipavImageName);
-	        if(tempVolume != null) {
-	            resultStack = storeImageData(resultStack, tempVolume, i);
-	            tempVolume.disposeLocal();
-	            File f = new File(tempDirString+imageName+i+".RAW");
-	            if(f != null) {
-	                if(f.delete()) {
-	                    System.out.println(f.getName()+" succeessfully deleted.");
-	                } else {
-	                    System.out.println(f.getName()+" could not be deleted from your system, please delete manually.");
-	                }
-	            }
-	            f = new File(tempDirString+imageName+i+".XML");
+     * This class loads all saved data that resulted from 4D processing in either the conventional or HIFI case
+     */
+	private class LoadResultDataOuter implements Runnable {
+	    
+	    private ModelImage resultStack;
+        private String imageName;
+        private int tVolumes;
+
+        public LoadResultDataOuter(ModelImage resultStack, String imageName, int tVolumes) {
+	        this.resultStack = resultStack;
+	        this.imageName = imageName;
+	        this.tVolumes = tVolumes;
+	    }
+
+        public void run() {
+            ExecutorService exec = Executors.newFixedThreadPool(loadDataThreads);
+            ArrayList<LoadResultDataInner> f = new ArrayList<LoadResultDataInner>();
+            LoadResultDataInner d;
+            
+            for(int i=0; i<tVolumes; i++) {
+                fireProgressStateChanged("Reading image: "+imageName+", "+i);
+                System.out.println("Reading from: "+tempDirString+imageName+i);
+                d = new LoadResultDataInner(i, imageName, resultStack);
+                f.add(d);
+                exec.submit(d);
+            }
+            
+            exec.shutdown();
+            
+            try {
+                exec.awaitTermination(1, TimeUnit.DAYS);
+            } catch(InterruptedException e) {
+                MipavUtil.displayError("Program did not execute correctly");
+                e.printStackTrace();
+            }
+        }
+	}
+	
+	private class LoadResultDataInner implements Runnable {
+	    
+	    private final ViewOpenFileUI openFile = new ViewOpenFileUI(false);
+	    private int i;
+	    private String imageName;
+	    private ModelImage resultStack;
+	    
+	    public LoadResultDataInner(int i, String imageName, ModelImage resultStack) {
+	        this.i = i;
+            this.imageName = imageName;
+            this.resultStack = resultStack;
+            
+            openFile.setPutInFrame(false);
+	    }
+
+        public void run() {
+            String mipavImageName = openFile.open(tempDirString+imageName+i+".XML", false, null);
+            System.out.println("Getting image: "+mipavImageName);
+            ModelImage tempVolume = ViewUserInterface.getReference().getRegisteredImageByName(mipavImageName);
+            if(tempVolume != null) {
+                storeImageData(resultStack, tempVolume, i);
+                tempVolume.disposeLocal();
+                File f = new File(tempDirString+imageName+i+".RAW");
                 if(f != null) {
                     if(f.delete()) {
                         System.out.println(f.getName()+" succeessfully deleted.");
@@ -1663,10 +1733,16 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                         System.out.println(f.getName()+" could not be deleted from your system, please delete manually.");
                     }
                 }
-	        }
-	    }
-	    
-	    return resultStack;
+                f = new File(tempDirString+imageName+i+".XML");
+                if(f != null) {
+                    if(f.delete()) {
+                        System.out.println(f.getName()+" succeessfully deleted.");
+                    } else {
+                        System.out.println(f.getName()+" could not be deleted from your system, please delete manually.");
+                    }
+                }
+            }
+        }
 	}
 	
 	/**
@@ -1799,7 +1875,6 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                 }
             }
             
-            System.out.println("Size result: "+workList.size());
             if(workList.size() > 0) {
                 return false;
             } else {
