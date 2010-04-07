@@ -141,6 +141,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
         boolean nlConstrainedEngineTest = false;
         boolean selfTest = false;
         boolean selfTest2 = false;
+        boolean levmarBoxConstraintTest = false;
         int voiCount;
         double delT;
         long normalTerminations = 0;
@@ -422,6 +423,12 @@ public class AlgorithmSM2 extends AlgorithmBase {
         
         if (nlConstrainedEngineTest) {
         	new FitAll();
+        	setCompleted(false);
+        	return;
+        }
+        
+        if (levmarBoxConstraintTest) {
+        	new FitAllBC();
         	setCompleted(false);
         	return;
         }
@@ -2070,6 +2077,56 @@ public class AlgorithmSM2 extends AlgorithmBase {
             
 
             return;
+        }
+    }
+    
+    class FitAllBC extends LevmarBoxConstraint {
+
+        /**
+         * Creates a new Fit24DModel object.
+         *
+         * @param  nPoints  DOCUMENT ME!
+         * @param  xData    DOCUMENT ME!
+         * @param  yData    DOCUMENT ME!
+         * @param  initial  DOCUMENT ME!
+         */
+        public FitAllBC() {
+
+            // nPoints data points, 3 coefficients, and exponential fitting
+            super();
+
+            
+        }
+
+        /**
+         * Starts the analysis.
+         */
+        public int driver() {
+            return super.driver();
+        }
+
+        /**
+         * Display results of displaying exponential fitting parameters.
+         */
+        public void dumpResults() {
+            
+        }
+
+        /**
+         * Fit to function - a0 - a1*(a2**x).
+         *
+         * @param  a          The x value of the data point.
+         * @param  residuals  The best guess parameter values.
+         * @param  covarMat   The derivative values of y with respect to fitting parameters.
+         */
+        public void fitToFunction(double[] param, double[] hx, int paramNum, int nPts) {
+            
+
+            return;
+        }
+        
+        public void fitToJacobian(double[] param, double[] jac, int paramNum, int nPts) {
+        	return;
         }
     }
     
