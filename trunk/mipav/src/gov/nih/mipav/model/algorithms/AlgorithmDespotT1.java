@@ -343,8 +343,6 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                 computeDataThreads = (processors-2-processDataThreads);
             }
             
-            System.out.println("ComputeData: "+computeDataThreads+"\tProcessData: "+processDataThreads);
-            
             if(processDataThreads < 1) {
                 processDataThreads = 1;
             }
@@ -354,16 +352,22 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             
             loadDataThreads = processors-2;
             int divisor = ((calculateT1 ? 1 : 0) + (showB1Map ? 1 : 0) + (calculateMo ? 1 : 0) + (invertT1toR1 ? 1 : 0));
+            if(divisor < 1) {
+                divisor = 1;
+            }
             loadDataThreads = (int)((double)loadDataThreads/divisor);
             if(loadDataThreads < 1) {
                 loadDataThreads = 1;
             }
-        }
-        
-        if(largestImage != null) {
-            if(largestImage.getNDims() > 3) {
-                processDataThreads = processDataThreads > largestImage.getExtents()[3] ? largestImage.getExtents()[3] : processDataThreads;
-                computeDataThreads = computeDataThreads > largestImage.getExtents()[3] ? largestImage.getExtents()[3] : computeDataThreads;
+            
+            System.out.println("ComputeData: "+computeDataThreads+"\tProcessData: "+processDataThreads+"\t loadData: "+loadDataThreads);
+            
+            if(largestImage != null) {
+                if(largestImage.getNDims() > 3) {
+                    processDataThreads = processDataThreads > largestImage.getExtents()[3] ? largestImage.getExtents()[3] : processDataThreads;
+                    computeDataThreads = computeDataThreads > largestImage.getExtents()[3] ? largestImage.getExtents()[3] : computeDataThreads;
+                    loadDataThreads = loadDataThreads > largestImage.getExtents()[3]*divisor ? largestImage.getExtents()[3]*divisor : loadDataThreads;
+                }
             }
         }
         
