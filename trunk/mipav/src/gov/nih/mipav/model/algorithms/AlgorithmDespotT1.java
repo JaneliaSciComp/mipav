@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileUtility;
@@ -27,6 +28,8 @@ import gov.nih.mipav.view.ViewUserInterface;
 
 public class AlgorithmDespotT1 extends AlgorithmBase {
 
+    public static final int MAX_PROCESS = 20;
+    
     private int processDataThreads;
     private int computeDataThreads;
     
@@ -34,11 +37,6 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
     private ModelImage moResultStack = null;
     private ModelImage r1ResultStack = null;
     private ModelImage b1ResultStack = null;
-    
-    private ModelImage t1ResultLocalVolume = null;
-    private ModelImage moResultLocalVolume = null;
-    private ModelImage r1ResultLocalVolume = null;
-    private ModelImage b1ResultLocalVolume = null;
     
     private ModelImage largestImage = null;
     
@@ -117,6 +115,8 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
     
     private String tempDirString;
     
+    private static double[][] Gaussian;
+
     public AlgorithmDespotT1(double despotTR, double irspgrTR,
             double irspgrKy, double irspgrFA, double maxT1, double maxMo,
             double[] despotFA, double[] irspgrTr2, double[] irspgrTI,
@@ -271,10 +271,58 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
      * Initializes local variables that are internal to DESPOT.
      */
     private void init() {
+        computeProcessors();
+        
+        Gaussian = new double[5][5];
+        
+        Gaussian[0][0] = 0;
+        Gaussian[0][1] = 0;
+        Gaussian[0][2] = 1;
+        Gaussian[0][3] = 0;
+        Gaussian[0][4] = 0;
+        Gaussian[1][0] = 0;
+        Gaussian[1][1] = 2;
+        Gaussian[1][2] = 4;
+        Gaussian[1][3] = 2;
+        Gaussian[1][4] = 0;
+        Gaussian[2][0] = 1;
+        Gaussian[2][1] = 4;
+        Gaussian[2][2] = 6;
+        Gaussian[2][3] = 4;
+        Gaussian[2][4] = 1;
+        Gaussian[3][0] = 0;
+        Gaussian[3][1] = 2;
+        Gaussian[3][2] = 4;
+        Gaussian[3][3] = 2;
+        Gaussian[3][4] = 0;
+        Gaussian[4][0] = 0;
+        Gaussian[4][1] = 0;
+        Gaussian[4][2] = 1;
+        Gaussian[4][3] = 0;
+        Gaussian[4][4] = 0;
+        
+        String testResult = wList[spgrImageIndex[0]].length() > 20 ? wList[spgrImageIndex[0]].substring(0, 19) : wList[spgrImageIndex[0]];
+        this.tempDirString = System.getProperty("java.io.tmpdir")+testResult+File.separator;
+        File f = new File(tempDirString);
+        if(!f.exists()) {
+            f.mkdirs();
+        }
+        
+        this.dataListener = new DataListener();
+        if(Preferences.isMultiThreadingEnabled()) {
+            dataListener.start();
+        }
+    }
+    
+    private void computeProcessors() {
         int processors = Runtime.getRuntime().availableProcessors();
+        processors = processors > MAX_PROCESS ? MAX_PROCESS : processors;
         this.processDataThreads = 1;
         this.computeDataThreads = 1;
-        if(processors > 2) {
+        if(Preferences.isMultiThreadingEnabled() && processors > 2) {
+            if(calculateT1 && processors-2 > processDataThreads + computeDataThreads) {
+                processDataThreads++;
+            }
             if(showB1Map && processors-2 > processDataThreads + computeDataThreads) {
                 processDataThreads++;
             }
@@ -299,22 +347,17 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             }
             if(computeDataThreads < 1) {
                 computeDataThreads = 1;
+            } 
+        }
+        
+        if(largestImage != null) {
+            if(largestImage.getNDims() > 3) {
+                processDataThreads = processDataThreads > largestImage.getExtents()[3] ? largestImage.getExtents()[3] : processDataThreads;
+                computeDataThreads = computeDataThreads > largestImage.getExtents()[3] ? largestImage.getExtents()[3] : computeDataThreads;
             }
         }
         
         System.out.println("ComputeData: "+computeDataThreads+"\tProcessData: "+processDataThreads);
-        
-        String testResult = wList[spgrImageIndex[0]].length() > 20 ? wList[spgrImageIndex[0]].substring(0, 19) : wList[spgrImageIndex[0]];
-        this.tempDirString = System.getProperty("java.io.tmpdir")+testResult+File.separator;
-        File f = new File(tempDirString);
-        if(!f.exists()) {
-            f.mkdirs();
-        }
-        
-        this.dataListener = new DataListener();
-        if(Preferences.isMultiThreadingEnabled()) {
-            dataListener.start();
-        }
     }
 
     /**
@@ -463,30 +506,10 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         fireProgressStateChanged(5);
         
         ModelImage image, irspgrImage;
-        float[] ctable;
-        double Inversion, ax, bx, cx, fax, fbx, fcx, R, C, precision, x0, x1, x2, x3, f1, f2, xmin;
-        double smoothedB1;
         
-        Inversion = 1+Math.cos(0.98*3.14159265/180.00);
-        R = 0.61803399;
-        C = 1.00-R;
-        precision = 0.003;
-        
-        double[] fa;
-        double[] scaledFA;
-        double[][] spgrPixelValues;
-        double[][] irspgrPixelValues;
-        float[][] t1Values, moValues, r1Values, b1field;
-        double[][][] b1Values;
-        double[][] Gaussian;
-        double[][][] smoothedB1Values;
-        double sumX, sumY, sumXY, sumXX, slope, intercept, lnslope, t1, e1, mo, r1, d, a, b, b1;
-        double ernstAngle, ernstSignal, collectedSignal, weight, sumWeights;
-        float noiseSum, threshold;
-        
-        int width, height, tSeries, irspgrSlices, irspgrSeries;
+        int width, height, tSeries, irspgrSlices;
         int irwidth, irheight;
-        int x,y,i,j,k,t,angle, p, ti, p1, p2, pixelIndex, noiseIndex;
+        
         int calculateB1 = 1;
         
         image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[0]]);
@@ -500,9 +523,10 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         
         do4D = false;
         tSeries = 1;
-        for (angle=0; angle<Nsa; angle++) {
+        for (int angle=0; angle<Nsa; angle++) {
             image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[angle]]);
             if(image.getNDims() > 3 && !do4D) { //clause is only entered once per program operation
+                largestImage = image;
                 do4D = true;
                 tSeries = image.getExtents()[3];
                 
@@ -510,20 +534,18 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         }
         
         if(!do4D) {
-            for (ti=0; ti<Nti; ti++) {
+            for (int ti=0; ti<Nti; ti++) {
                 image = ViewUserInterface.getReference().getRegisteredImageByName(wList[irspgrImageIndex[ti]]);  
                 if(image.getNDims() > 3 && !do4D) { //clause is only entered once per program operation
                     largestImage = image;
                     do4D = true;
                     tSeries = image.getExtents()[3];
-                    initializeLocalImages(image);
                 }
             }
         }
         
         if(!do4D) {
             largestImage = image;
-            initializeLocalImages(image);
         }
         
         irspgrImage = ViewUserInterface.getReference().getRegisteredImageByName(wList[irspgrImageIndex[0]]);
@@ -541,39 +563,65 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             MipavUtil.displayError("IR-SPGR and SPGR data must have the same image dimensions.");
             return false;
         }
+        computeProcessors();
         
-        Gaussian = new double[5][5];
-        
-        // define the Gaussian kernel
-        Gaussian[0][0] = 0;
-        Gaussian[0][1] = 0;
-        Gaussian[0][2] = 1;
-        Gaussian[0][3] = 0;
-        Gaussian[0][4] = 0;
-        Gaussian[1][0] = 0;
-        Gaussian[1][1] = 2;
-        Gaussian[1][2] = 4;
-        Gaussian[1][3] = 2;
-        Gaussian[1][4] = 0;
-        Gaussian[2][0] = 1;
-        Gaussian[2][1] = 4;
-        Gaussian[2][2] = 6;
-        Gaussian[2][3] = 4;
-        Gaussian[2][4] = 1;
-        Gaussian[3][0] = 0;
-        Gaussian[3][1] = 2;
-        Gaussian[3][2] = 4;
-        Gaussian[3][3] = 2;
-        Gaussian[3][4] = 0;
-        Gaussian[4][0] = 0;
-        Gaussian[4][1] = 0;
-        Gaussian[4][2] = 1;
-        Gaussian[4][3] = 0;
-        Gaussian[4][4] = 0;
-        
+        ExecutorService exec = Executors.newFixedThreadPool(computeDataThreads); 
         // start by calculaing the B1 field
-        String prefix = new String();
-        for(t=0; t<tSeries; t++) {
+        for(int t=0; t<tSeries; t++) {     
+            exec.execute(new CalculteT1UsingDESPOT1HIFIInner(largestImage, width, height, irspgrSlices, t));    
+        }
+        
+        try {
+            exec.awaitTermination(1, TimeUnit.DAYS);
+        } catch (InterruptedException e) {
+            MipavUtil.displayError("Program did not execute correctly");
+            e.printStackTrace();
+        }
+        
+        loadFinalData(tSeries);
+        
+        return true;
+    }
+    
+    private class CalculteT1UsingDESPOT1HIFIInner extends CalculateT1 implements Runnable {
+
+        private int width;
+        private int height;
+        private int irspgrSlices;
+
+        public CalculteT1UsingDESPOT1HIFIInner(ModelImage image, int width, int height, int irspgrSlices, int t) {
+            super(image, t);
+            this.width = width;
+            this.height = height;
+            this.irspgrSlices = irspgrSlices;
+        }
+        
+        public void run() {
+            dataBar.setVisible(true);
+            float[] ctable;
+            String prefix;
+            double Inversion, ax, bx, cx, fax, fbx, fcx, R, C, precision, x0, x1, x2, x3, f1, f2, xmin;
+            double smoothedB1;
+            ModelImage image;
+            
+            Inversion = 1+Math.cos(0.98*3.14159265/180.00);
+            R = 0.61803399;
+            C = 1.00-R;
+            precision = 0.003;
+            
+            double ernstAngle, ernstSignal, collectedSignal, weight, sumWeights;
+            double sumX, sumY, sumXY, sumXX, slope, intercept, lnslope, t1, e1, mo, r1, d, a, b, b1;
+            float noiseSum, threshold;
+            int noiseIndex;
+            int x,y,i,j,k,p, ti, angle, p1, p2, pixelIndex;
+            
+            double[] fa;
+            double[] scaledFA;
+            double[][] spgrPixelValues;
+            double[][] irspgrPixelValues;
+            float[][] t1Values, moValues, r1Values, b1field;
+            double[][][] b1Values;
+            
             if(do4D) {
                 prefix = "Series "+t+": ";
             } else {
@@ -671,10 +719,10 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                 else {
                     threshold = (float) hardNoiseThreshold;
                 }
-                fireProgressStateChanged(prefix+"calculating B1 field for slice: "+k+" of "+(nSlices-1));
-                fireProgressStateChanged(5+(int)((float)k/(float)nSlices*60.0));
+                dataBar.setMessage(prefix+"calculating B1 field for slice: "+k+" of "+(nSlices-1));
+                dataBar.updateValue(5+(int)((float)k/(float)nSlices*60.0));
                 if(interrupted()) {
-                    return false;
+                    return;
                 }
                 // grab the ir-spgr pixel values
                 for (ti=0; ti<Nti; ti++) {
@@ -770,8 +818,8 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             // go back through and apply a single gaussian kernel to smooth the calculated B1 field
             if (smoothB1Field) {
                 for (k=0; k<irspgrSlices; k++) {
-                    fireProgressStateChanged(prefix+"smoothing B1 field on slice: "+k+" of "+(nSlices-1));
-                    fireProgressStateChanged(80+(int)((float)k/(float)nSlices*10.0));
+                    dataBar.setMessage(prefix+"smoothing B1 field on slice: "+k+" of "+(nSlices-1));
+                    dataBar.updateValue(80+(int)((float)k/(float)nSlices*10.0));
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
@@ -807,7 +855,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             }
         
             if(interrupted()) {
-                return false;
+                return;
             }
         
             // clear the b1Values matrix
@@ -875,10 +923,10 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                 }
             
             
-                fireProgressStateChanged(prefix+"calculating T1 values on slice: "+k+" of "+(nSlices-1));
-                fireProgressStateChanged(10+(int)((float)k/(float)nSlices*20.0));
+                dataBar.setMessage(prefix+"calculating T1 values on slice: "+k+" of "+(nSlices-1));
+                dataBar.updateValue(10+(int)((float)k/(float)nSlices*20.0));
                 if(interrupted()) {
-                    return false;
+                    return;
                 }
                 // grab the spgr pixel values 
                 for (angle=0; angle<Nsa; angle++) {
@@ -950,7 +998,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                                 t1 = maxT1;
                             }
                         
-    
+        
                             if (t1 < 0.00 || t1 > maxT1) {
                                 t1 = maxT1;
                             }
@@ -1065,27 +1113,15 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             if(showB1Map) {
                 dataListener.insertData(b1ResultLocalVolume, b1field, t);
             }
+            dataBar.setVisible(false);
         }
         
-        loadFinalData(tSeries);
-        
-        return true;
     }
     
     public boolean calculateT1UsingConventionalDESPOT1() {
-        ModelImage image, b1FieldImage = null;
-        float[] ctable, b1ctable;
+        ModelImage image;
          
-        double b1;
-        double[] fa, b1Values;
-        double[][] pixelValues;
-        float[][] t1Values, moValues, r1Values;
-        double sumX, sumY, sumXY, sumXX, slope, intercept, lnslope, t1, e1, mo, r1, d, a, b;
-        double ernstAngle, ernstSignal, collectedSignal, weight, sumWeights;
-        float noiseSum, threshold;
-        
         int width, height, tSeries;
-        int x,y,i,j,k,t,angle, pixelIndex, noiseIndex;
         
         image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[0]]);
         width = image.getExtents()[0];
@@ -1098,23 +1134,69 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         
         do4D = false;
         tSeries = 1;
-        for (angle=0; angle<Nsa; angle++) {
+        for (int angle=0; angle<Nsa; angle++) {
             image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[angle]]);
             if(image.getNDims() > 3 && !do4D) { //clause is only entered once
                 largestImage = image;
             	do4D = true;
                 tSeries = image.getExtents()[3];
-                initializeLocalImages(image);
             }
         }
         
         if(!do4D) {
             largestImage = image;
-            initializeLocalImages(image);
         }
+        computeProcessors();
+        
+        ExecutorService exec = Executors.newFixedThreadPool(computeDataThreads); 
 
-        String prefix = new String();
-        for(t=0; t<tSeries; t++) {
+        for(int t=0; t<tSeries; t++) {     
+            exec.submit(new CalculateT1UsingConventionalDESPOT1Inner(largestImage, width, height, t));    
+        }
+        exec.shutdown();
+        
+        try {
+            exec.awaitTermination(1, TimeUnit.DAYS);
+        } catch (InterruptedException e) {
+            MipavUtil.displayError("Program did not execute correctly");
+            e.printStackTrace();
+        }
+        
+        loadFinalData(tSeries);
+        
+        return true;
+    }
+    
+    private class CalculateT1UsingConventionalDESPOT1Inner extends CalculateT1 implements Runnable {
+
+        private int width;
+        private int height;
+        
+        public CalculateT1UsingConventionalDESPOT1Inner(ModelImage image, int width, int height, int t) {
+            super(image, t);
+            this.width = width;
+            this.height = height;
+        }
+        
+        public void run() {
+            dataBar.setVisible(true);
+            
+            int x,y,k,angle, pixelIndex, noiseIndex;
+            
+            double b1;
+            double[] fa, b1Values;
+            double[][] pixelValues;
+            float[][] t1Values, moValues, r1Values;
+            
+            double sumX, sumY, sumXY, sumXX, slope, intercept, lnslope, t1, e1, mo, r1, d, a, b;
+            double ernstAngle, ernstSignal, collectedSignal, weight, sumWeights;
+            
+            float noiseSum, threshold;
+            
+            ModelImage image, b1FieldImage = null;
+            
+            String prefix = new String();
+            
             if(do4D) {
                 prefix = "Series "+t+": ";
             } else {
@@ -1189,11 +1271,11 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                 else {
                     threshold = (float) hardNoiseThreshold;
                 }
-                fireProgressStateChanged(prefix+"working on slice: "+k+" of "+(nSlices-1)+". Noise Threshold = "+threshold);
-                fireProgressStateChanged(5+(int)((float)k/(float)nSlices*80.0));
+                dataBar.setMessage(prefix+"working on slice: "+k+" of "+(nSlices-1)+". Noise Threshold = "+threshold);
+                dataBar.updateValue(5+(int)((float)k/(float)nSlices*80.0));
                 
                 if(interrupted()) {
-                    return false;
+                    return;
                 }
                 
                 if (performDESPOT1withPreCalculatedB1Map) {
@@ -1370,7 +1452,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                 }
             }
             
-            fireProgressStateChanged(87);
+            dataBar.updateValue(87);
             
             if(calculateT1) {
                 dataListener.insertData(t1ResultLocalVolume, t1Values, t);
@@ -1381,14 +1463,86 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             if(invertT1toR1) {
                 dataListener.insertData(r1ResultLocalVolume, r1Values, t);
             }
+            
+            dataBar.setVisible(false);
+        }
+    }
+    
+    private abstract class CalculateT1 {
+        protected ModelImage t1ResultLocalVolume = null;
+        protected ModelImage moResultLocalVolume = null;
+        protected ModelImage r1ResultLocalVolume = null;
+        protected ModelImage b1ResultLocalVolume = null;
+        protected ViewJProgressBar dataBar;
+        
+        protected int t;
+        
+        public CalculateT1(ModelImage image, int t) {
+            this.t = t;
+            initializeLocalImages(image);
+            this.dataBar = new ViewJProgressBar("computeData "+t, "Initialized...", 0, 100, false);
+            dataBar.setVisible(false);
         }
         
-        loadFinalData(tSeries);
+        /**
+         * This method initializes the intermediate images as a near-clone of the largest image in the set.
+         * 
+         * @param image
+         */
+        private void initializeLocalImages(ModelImage image) {
+            //For 4D processing, only volumes are stored in local memory, these volumes are then re-read at program clean-up
+            int[] localExtents = new int[image.getNDims() > 3 ? image.getNDims()-1 : image.getNDims()];
+            for(int i=0; i<localExtents.length; i++) {
+                localExtents[i] = image.getExtents()[i];
+            }
+            
+            if(calculateT1) {
+                t1ResultLocalVolume = new ModelImage(ModelImage.DOUBLE, localExtents, "t1_results_volume"+t);
+                //t1ResultLocalVolume = nearCloneImage(image, t1ResultLocalVolume);
+            }
+            
+            if(calculateMo) {
+                moResultLocalVolume = new ModelImage(ModelImage.DOUBLE, localExtents, "mo_results_volume"+t);
+                //moResultLocalVolume = nearCloneImage(image, moResultLocalVolume);
+            }
+             
+            if(invertT1toR1) {
+                r1ResultLocalVolume = new ModelImage(ModelImage.DOUBLE, localExtents, "r1_results_volume"+t);
+                //r1ResultLocalVolume = nearCloneImage(image, r1ResultLocalVolume);
+            }
+             
+            if(performDESPOT1HIFI && showB1Map) {
+                b1ResultLocalVolume = new ModelImage(ModelImage.DOUBLE, localExtents, "b1_results_volume"+t);
+                //b1ResultLocalVolume = nearCloneImage(image, b1ResultLocalVolume);
+            }
+        }
         
-        return true;
+        private void disposeLocal() {
+            if(dataBar != null) {
+                dataBar.dispose();
+                dataBar = null;
+            }
+            
+            if(t1ResultLocalVolume != null) {
+                t1ResultLocalVolume.disposeLocal();
+                t1ResultLocalVolume = null;
+            }
+            if(moResultLocalVolume != null) {
+                moResultLocalVolume.disposeLocal();
+                moResultLocalVolume = null;
+            }
+            if(r1ResultLocalVolume != null) {
+                r1ResultLocalVolume.disposeLocal();
+                r1ResultLocalVolume = null;
+            }
+            if(b1ResultLocalVolume != null) {
+                b1ResultLocalVolume.disposeLocal();
+                b1ResultLocalVolume = null;
+            }
+        }
     }
-
-	private void loadFinalData(int tSeries) {
+    
+    private void loadFinalData(int tSeries) {
         //dataListener is normally started in init()
         if(!Preferences.isMultiThreadingEnabled()) {
             dataListener.run();
@@ -1410,16 +1564,16 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         }
         
         if(calculateT1) {
-            t1ResultStack = loadResultData(t1ResultStack, t1ResultLocalVolume.getImageName(), tSeries);
+            t1ResultStack = loadResultData(t1ResultStack, "t1_results_volume", tSeries);
         }
         if(calculateMo) {
-            moResultStack = loadResultData(moResultStack, moResultLocalVolume.getImageName(), tSeries);
+            moResultStack = loadResultData(moResultStack, "mo_results_volume", tSeries);
         }
         if(invertT1toR1) {
-            r1ResultStack = loadResultData(r1ResultStack, r1ResultLocalVolume.getImageName(), tSeries);
+            r1ResultStack = loadResultData(r1ResultStack, "r1_results_volume", tSeries);
         }
         if(showB1Map) {
-            b1ResultStack = loadResultData(b1ResultStack, b1ResultLocalVolume.getImageName(), tSeries);
+            b1ResultStack = loadResultData(b1ResultStack, "b1_results_volume", tSeries);
         }
         
         displayImages();
@@ -1472,9 +1626,9 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
 	 * @param volumeNumber
 	 * @return whether the temp file directory is writable
 	 */
-	private boolean saveImageData(ModelImage tempVolume, String name, int volumeNumber) {
-	    System.out.println("Saving to: "+tempDirString+name+volumeNumber);
-	    return tempVolume.saveImage(tempDirString, name+volumeNumber, FileUtility.RAW, true);
+	private boolean saveImageData(ModelImage tempVolume, int volumeNumber) {
+	    System.out.println("Saving to: "+tempDirString+tempVolume.getImageName());
+	    return tempVolume.saveImage(tempDirString, tempVolume.getImageName(), FileUtility.RAW, true);
 	}
 	
 	/**
@@ -1547,39 +1701,6 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             b1ResultWindow.setTitle("DESPOT1"+prefix+"_B1_Map");
             b1ResultWindow.setVisible(true);
         } 
-	}
-	
-	/**
-	 * This method initializes the intermediate images as a near-clone of the largest image in the set.
-	 * 
-	 * @param image
-	 */
-	private void initializeLocalImages(ModelImage image) {
-	    //For 4D processing, only volumes are stored in local memory, these volumes are then re-read at program clean-up
-	    int[] localExtents = new int[image.getNDims() > 3 ? image.getNDims()-1 : image.getNDims()];
-	    for(int i=0; i<localExtents.length; i++) {
-	        localExtents[i] = image.getExtents()[i];
-	    }
-	    
-	    if(calculateT1) {
-            t1ResultLocalVolume = new ModelImage(ModelImage.DOUBLE, localExtents, "t1_results_volume");
-            //t1ResultLocalVolume = nearCloneImage(image, t1ResultLocalVolume);
-        }
-        
-        if(calculateMo) {
-            moResultLocalVolume = new ModelImage(ModelImage.DOUBLE, localExtents, "mo_results_volume");
-            //moResultLocalVolume = nearCloneImage(image, moResultLocalVolume);
-        }
-         
-        if(invertT1toR1) {
-            r1ResultLocalVolume = new ModelImage(ModelImage.DOUBLE, localExtents, "r1_results_volume");
-            //r1ResultLocalVolume = nearCloneImage(image, r1ResultLocalVolume);
-        }
-         
-        if(performDESPOT1HIFI && showB1Map) {
-            b1ResultLocalVolume = new ModelImage(ModelImage.DOUBLE, localExtents, "b1_results_volume");
-            //b1ResultLocalVolume = nearCloneImage(image, b1ResultLocalVolume);
-        }
 	}
 	
 	/**
@@ -1704,8 +1825,8 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             
             public void run() {
                 if(h != null) {
-                    String imageNameLocal = h.getImage().getImageName();
-                    image = (ModelImage)h.getImage().clone();
+                    dataBar[index].setVisible(true);
+                    image = h.getImage();
                     data = h.getData();
                     t = h.getTime();
                     if(image.getImageName().equals("Unknown")) {
@@ -1725,12 +1846,11 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                         }
                         dataBar[index].updateValue((int)(((double)k/(nSlices+1))*80));
                     }
-                    saveImageData(image, imageNameLocal, t);
+                    saveImageData(image, t);
                     image.disposeLocal();
                     image = null;
                     h = null;
-                    dataBar[index].setMessage("Re-initialized...");
-                    dataBar[index].updateValue(1);
+                    dataBar[index].setVisible(false);
                 } 
             }
         }
