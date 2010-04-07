@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.text.DecimalFormat;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
@@ -8,6 +9,7 @@ import gov.nih.mipav.model.file.FileDicomTagTable;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewJFrameMessage;
@@ -93,7 +95,12 @@ public class PlugInAlgorithmPhilipsDicom extends AlgorithmBase {
             tDim = 1;
         }
         
-        destImage = (ModelImage)srcImage.clone(srcImage.getImageName()+"_rescale");
+        destImage = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName()+"_rescale");
+        destImage.setFileInfo(srcImage.getFileInfo());
+        destImage.setUserInterface(ViewUserInterface.getReference());
+        if(ViewUserInterface.getReference() != null) {
+            ViewUserInterface.getReference().registerImage(destImage);
+        }    
         
         //Already tested to cast correctly in setVariables
         FileInfoDicom fileInfo = (FileInfoDicom)srcImage.getFileInfo()[0];
@@ -141,9 +148,17 @@ public class PlugInAlgorithmPhilipsDicom extends AlgorithmBase {
         		        
         			    pix = ((srcpix*rescaleSlope) + rescaleIntercept) / 
         			                    (rescaleSlope*scaleSlope);
+        			    if(i == 68 && j == 235) {
+        			        System.out.println("HERE: "+i+", "+j+", pix "+pix+", srcpix "+srcpix);
+        			        System.out.println("STOP");
+        			    }
         			    switch(destDim) {
         			    case 2:
         			        destImage.set(i, j, pix);
+        			        double d = destImage.get(i, j).doubleValue();
+        			        if(i == 68 && j == 235) {
+        			            System.out.println("HERE: "+i+", "+j+", "+pix+", "+d);
+        			        }
         			        break;
         			    
             		    case 3:
