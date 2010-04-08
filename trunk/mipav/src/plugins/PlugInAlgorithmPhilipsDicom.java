@@ -96,7 +96,7 @@ public class PlugInAlgorithmPhilipsDicom extends AlgorithmBase {
         }
         
         destImage = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName()+"_rescale");
-        destImage.setFileInfo(srcImage.getFileInfo());
+        destImage.setFileInfo(srcImage.getFileInfo().clone());
         destImage.setUserInterface(ViewUserInterface.getReference());
         if(ViewUserInterface.getReference() != null) {
             ViewUserInterface.getReference().registerImage(destImage);
