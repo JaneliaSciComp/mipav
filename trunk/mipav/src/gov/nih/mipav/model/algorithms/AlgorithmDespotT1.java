@@ -584,6 +584,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         for(int t=0; t<tSeries; t++) {     
             exec.execute(new CalculteT1UsingDESPOT1HIFIInner(largestImage, width, height, irspgrSlices, t));    
         }
+        exec.shutdown();
         
         try {
             exec.awaitTermination(1, TimeUnit.DAYS);
@@ -591,6 +592,9 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             MipavUtil.displayError("Program did not execute correctly");
             e.printStackTrace();
         }
+        
+        fireProgressStateChanged("Computation finished..loading data");
+        fireProgressStateChanged(85);
         
         loadFinalData(tSeries);
         
@@ -1175,6 +1179,9 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             MipavUtil.displayError("Program did not execute correctly");
             e.printStackTrace();
         }
+        
+        fireProgressStateChanged("Computation finished..loading data");
+        fireProgressStateChanged(85);
         
         loadFinalData(tSeries);
         
