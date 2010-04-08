@@ -125,6 +125,9 @@ public class PlugInAlgorithmPhilipsDicom extends AlgorithmBase {
 		final int destDim  = srcImage.getNDims();
 		
 		for(int t=0; t<tDim; t++) {
+		    if(tDim > 1) {
+		        fireProgressStateChanged((int)(((double)t/tDim)*80), "Processing volume: "+t, "Processing volume: "+t);
+		    }
     		for(int k=0; k<zDim; k++) {
         		for(int j=0; j<yDim; j++) {
         		    for(int i=0; i<xDim; i++) {
