@@ -39,9 +39,6 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** Result image. */
-    private ModelImage resultImage = null;
-
     /** Source image for algorithm */
     private ModelImage image = null; // source image
     
@@ -56,9 +53,6 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
     
     /** The algorithm to perform */
     private PlugInAlgorithmPhilipsDicom philipsAlgo = null;
-    
-    /**The array making up the new Philips DICOM image */
-    private File imageFile;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -157,10 +151,7 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
     protected void callAlgorithm() {
 
         try {
-            String name = makeImageName(image.getImageName(), "_philpsconvert");
-            resultImage = (ModelImage) image.clone();
-            resultImage.setImageName(name);
-            philipsAlgo = new PlugInAlgorithmPhilipsDicom(resultImage, image);
+            philipsAlgo = new PlugInAlgorithmPhilipsDicom(null, image);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -181,10 +172,6 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
                 philipsAlgo.run();
             }
         } catch (OutOfMemoryError x) {
-            if (resultImage != null) {
-                resultImage.disposeLocal(); // Clean up memory of result image
-                resultImage = null;
-            }
 
             MipavUtil.displayError("Kidney segmentation: unable to allocate enough memory");
 
