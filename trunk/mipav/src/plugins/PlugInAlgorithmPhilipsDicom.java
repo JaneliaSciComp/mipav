@@ -96,11 +96,7 @@ public class PlugInAlgorithmPhilipsDicom extends AlgorithmBase {
         }
         
         destImage = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName()+"_rescale");
-        destImage.setFileInfo(srcImage.getFileInfo().clone());
-        destImage.setUserInterface(ViewUserInterface.getReference());
-        if(ViewUserInterface.getReference() != null) {
-            ViewUserInterface.getReference().registerImage(destImage);
-        }    
+        nearCloneImage(srcImage, destImage);
         
         //Already tested to cast correctly in setVariables
         FileInfoDicom fileInfo = (FileInfoDicom)srcImage.getFileInfo()[0];
@@ -148,17 +144,9 @@ public class PlugInAlgorithmPhilipsDicom extends AlgorithmBase {
         		        
         			    pix = ((srcpix*rescaleSlope) + rescaleIntercept) / 
         			                    (rescaleSlope*scaleSlope);
-        			    if(i == 68 && j == 235) {
-        			        System.out.println("HERE: "+i+", "+j+", pix "+pix+", srcpix "+srcpix);
-        			        System.out.println("STOP");
-        			    }
         			    switch(destDim) {
         			    case 2:
         			        destImage.set(i, j, pix);
-        			        double d = destImage.get(i, j).doubleValue();
-        			        if(i == 68 && j == 235) {
-        			            System.out.println("HERE: "+i+", "+j+", "+pix+", "+d);
-        			        }
         			        break;
         			    
             		    case 3:
@@ -190,5 +178,23 @@ public class PlugInAlgorithmPhilipsDicom extends AlgorithmBase {
         resultFrame.setVisible(true);
 		
 		setCompleted(true);
+    }
+    
+    public ModelImage nearCloneImage(ModelImage orig, ModelImage clo) {
+        FileInfoBase[] oArr = orig.getFileInfo();
+        FileInfoBase[] cArr = clo.getFileInfo();
+        if(cArr.length != oArr.length) {
+            MipavUtil.displayError("Images are not same length");
+            return clo;
+        }
+        for(int i=0; i<cArr.length; i++) {
+            fireProgressStateChanged("Creating slice information for "+i);
+            if(cArr == null) {
+                return clo;
+            }
+            cArr[i] = (FileInfoBase)oArr[i].clone();
+        }
+        
+        return clo;
     }
 }
