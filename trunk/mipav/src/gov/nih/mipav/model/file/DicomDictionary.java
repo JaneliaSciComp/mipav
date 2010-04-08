@@ -1,24 +1,12 @@
 package gov.nih.mipav.model.file;
 
 
-import gov.nih.mipav.view.GetPath;
-import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.*;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URL;
 import java.text.DateFormat;
-import java.util.Calendar;
-import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.NoSuchElementException;
-import java.util.StringTokenizer;
+import java.util.*;
 
 
 /**
@@ -107,14 +95,14 @@ public class DicomDictionary {
      */
     public static boolean containsTag(FileDicomKey key) {
 
-        if (masterHashtable == null) {
-            parseFile(DEFAULT_DICTIONARY);
+        if (DicomDictionary.masterHashtable == null) {
+            DicomDictionary.parseFile(DicomDictionary.DEFAULT_DICTIONARY);
         }
-        
-        //if this key is one of a series, it needs to be converted to wild card chars for the dictionary
-        key = convertToWildKey(key);
-        
-        return masterHashtable.containsKey(key);
+
+        // if this key is one of a series, it needs to be converted to wild card chars for the dictionary
+        key = DicomDictionary.convertToWildKey(key);
+
+        return DicomDictionary.masterHashtable.containsKey(key);
     }
 
     /**
@@ -123,7 +111,7 @@ public class DicomDictionary {
      * @return a reference to the dicom tag table
      */
     public static Hashtable<FileDicomKey, FileDicomTagInfo> getDicomTagTable() {
-        return getDicomTagTable(false);
+        return DicomDictionary.getDicomTagTable(false);
     }
 
     /**
@@ -133,19 +121,19 @@ public class DicomDictionary {
      * 
      * @return a reference to the dicom tag table
      */
-    public static Hashtable<FileDicomKey, FileDicomTagInfo> getDicomTagTable(boolean forceReload) {
+    public static Hashtable<FileDicomKey, FileDicomTagInfo> getDicomTagTable(final boolean forceReload) {
 
-        if ( (masterHashtable == null) || (forceReload == true)) {
-            parseFile(DEFAULT_DICTIONARY);
+        if ( (DicomDictionary.masterHashtable == null) || (forceReload == true)) {
+            DicomDictionary.parseFile(DicomDictionary.DEFAULT_DICTIONARY);
         }
 
-        Hashtable<FileDicomKey, FileDicomTagInfo> clonedHashtable = new Hashtable<FileDicomKey, FileDicomTagInfo>(
-                (int) (masterHashtable.size() / 0.7));
-        Enumeration<FileDicomKey> e = masterHashtable.keys();
+        final Hashtable<FileDicomKey, FileDicomTagInfo> clonedHashtable = new Hashtable<FileDicomKey, FileDicomTagInfo>(
+                (int) (DicomDictionary.masterHashtable.size() / 0.7));
+        final Enumeration<FileDicomKey> e = DicomDictionary.masterHashtable.keys();
 
         while (e.hasMoreElements()) {
-            FileDicomKey key = e.nextElement();
-            FileDicomTagInfo value = (FileDicomTagInfo) masterHashtable.get(key).clone();
+            final FileDicomKey key = e.nextElement();
+            final FileDicomTagInfo value = (FileDicomTagInfo) DicomDictionary.masterHashtable.get(key).clone();
 
             clonedHashtable.put(key, value);
         }
@@ -162,14 +150,14 @@ public class DicomDictionary {
      */
     public static FileDicomTagInfo getInfo(FileDicomKey key) {
 
-        if (masterHashtable == null) {
-            parseFile(DEFAULT_DICTIONARY);
+        if (DicomDictionary.masterHashtable == null) {
+            DicomDictionary.parseFile(DicomDictionary.DEFAULT_DICTIONARY);
         }
-        
-        //if this key is one of a series, it needs to be converted to wild card chars for the dictionary
-        key = convertToWildKey(key);
 
-        return masterHashtable.get(key);
+        // if this key is one of a series, it needs to be converted to wild card chars for the dictionary
+        key = DicomDictionary.convertToWildKey(key);
+
+        return DicomDictionary.masterHashtable.get(key);
     }
 
     /**
@@ -180,18 +168,18 @@ public class DicomDictionary {
      * @return The key as a String, for example "0010,0028" If the tag name is not in the hashtable, <code>null</code>
      *         is returned.
      */
-    public static String getKeyFromTagName(String searchTagName) {
-        Enumeration<FileDicomKey> enumeration = masterHashtable.keys();
+    public static String getKeyFromTagName(final String searchTagName) {
+        final Enumeration<FileDicomKey> enumeration = DicomDictionary.masterHashtable.keys();
 
         while (enumeration.hasMoreElements()) {
-            FileDicomKey key = enumeration.nextElement();
+            final FileDicomKey key = enumeration.nextElement();
 
-            //if this key is one of a series, it needs to be converted to wild card chars for the dictionary
-            FileDicomKey searchKey = convertToWildKey(key);
-            
-            FileDicomTagInfo tag = masterHashtable.get(searchKey);
+            // if this key is one of a series, it needs to be converted to wild card chars for the dictionary
+            final FileDicomKey searchKey = DicomDictionary.convertToWildKey(key);
 
-            String foundTagName = tag.getName();
+            final FileDicomTagInfo tag = DicomDictionary.masterHashtable.get(searchKey);
+
+            final String foundTagName = tag.getName();
 
             if (foundTagName.equals(searchTagName)) {
                 return key.getKey();
@@ -211,14 +199,14 @@ public class DicomDictionary {
      */
     public static String getKeyword(FileDicomKey key) {
 
-        if (masterHashtable == null) {
-            parseFile(DEFAULT_DICTIONARY);
+        if (DicomDictionary.masterHashtable == null) {
+            DicomDictionary.parseFile(DicomDictionary.DEFAULT_DICTIONARY);
         }
 
-        //if this key is one of a series, it needs to be converted to wild card chars for the dictionary
-        key = convertToWildKey(key);
-        
-        FileDicomTagInfo tag = masterHashtable.get(key);
+        // if this key is one of a series, it needs to be converted to wild card chars for the dictionary
+        key = DicomDictionary.convertToWildKey(key);
+
+        final FileDicomTagInfo tag = DicomDictionary.masterHashtable.get(key);
 
         if (tag == null) {
             return null;
@@ -237,15 +225,15 @@ public class DicomDictionary {
      */
     public static String getName(FileDicomKey key) {
 
-        if (masterHashtable == null) {
-            parseFile(DEFAULT_DICTIONARY);
+        if (DicomDictionary.masterHashtable == null) {
+            DicomDictionary.parseFile(DicomDictionary.DEFAULT_DICTIONARY);
         }
 
-        //if this key is one of a series, it needs to be converted to wild card chars for the dictionary
-        key = convertToWildKey(key);
+        // if this key is one of a series, it needs to be converted to wild card chars for the dictionary
+        key = DicomDictionary.convertToWildKey(key);
 
-        FileDicomTagInfo tag = masterHashtable.get(key);
-        
+        final FileDicomTagInfo tag = DicomDictionary.masterHashtable.get(key);
+
         if (tag == null) {
             return null;
         }
@@ -260,10 +248,12 @@ public class DicomDictionary {
      * @return True if {@link SUBSET_DICTIONARY_FILENAME} exists.
      */
     public static boolean doesSubsetDicomTagTableExist() {
-        BufferedReader dictionaryReference = getFileReader(SUBSET_DICTIONARY_FILENAME);
+        final BufferedReader dictionaryReference = DicomDictionary
+                .getFileReader(DicomDictionary.SUBSET_DICTIONARY_FILENAME);
 
         if (dictionaryReference == null) {
-            Preferences.debug("Failed to read DICOM dictionary file from " + SUBSET_DICTIONARY_FILENAME);
+            Preferences
+                    .debug("Failed to read DICOM dictionary file from " + DicomDictionary.SUBSET_DICTIONARY_FILENAME);
 
             return false;
         }
@@ -277,7 +267,7 @@ public class DicomDictionary {
      * @return A reference to the subset dicom tag table
      */
     public static Hashtable<FileDicomKey, FileDicomTagInfo> getSubsetDicomTagTable() {
-        return getSubsetDicomTagTable(false);
+        return DicomDictionary.getSubsetDicomTagTable(false);
     }
 
     /**
@@ -287,13 +277,13 @@ public class DicomDictionary {
      * 
      * @return A reference to the subset dicom tag table
      */
-    public static Hashtable<FileDicomKey, FileDicomTagInfo> getSubsetDicomTagTable(boolean forceReload) {
+    public static Hashtable<FileDicomKey, FileDicomTagInfo> getSubsetDicomTagTable(final boolean forceReload) {
 
-        if ( (subsetHashtable == null) || (forceReload == true)) {
-            parseFile(SUBSET_DICTIONARY);
+        if ( (DicomDictionary.subsetHashtable == null) || (forceReload == true)) {
+            DicomDictionary.parseFile(DicomDictionary.SUBSET_DICTIONARY);
         }
 
-        return subsetHashtable;
+        return DicomDictionary.subsetHashtable;
     }
 
     /**
@@ -305,14 +295,14 @@ public class DicomDictionary {
      */
     public static String getType(FileDicomKey key) {
 
-        if (masterHashtable == null) {
-            parseFile(DEFAULT_DICTIONARY);
+        if (DicomDictionary.masterHashtable == null) {
+            DicomDictionary.parseFile(DicomDictionary.DEFAULT_DICTIONARY);
         }
 
-        //if this key is one of a series, it needs to be converted to wild card chars for the dictionary
-        key = convertToWildKey(key);
-        
-        FileDicomTagInfo tag = (FileDicomTagInfo) masterHashtable.get(key);
+        // if this key is one of a series, it needs to be converted to wild card chars for the dictionary
+        key = DicomDictionary.convertToWildKey(key);
+
+        final FileDicomTagInfo tag = DicomDictionary.masterHashtable.get(key);
 
         if (tag == null) {
             return null;
@@ -331,14 +321,14 @@ public class DicomDictionary {
      */
     public static int getVM(FileDicomKey key) {
 
-        if (masterHashtable == null) {
-            parseFile(DEFAULT_DICTIONARY);
+        if (DicomDictionary.masterHashtable == null) {
+            DicomDictionary.parseFile(DicomDictionary.DEFAULT_DICTIONARY);
         }
 
-        //if this key is one of a series, it needs to be converted to wild card chars for the dictionary
-        key = convertToWildKey(key);
-        
-        FileDicomTagInfo tag = (FileDicomTagInfo) masterHashtable.get(key);
+        // if this key is one of a series, it needs to be converted to wild card chars for the dictionary
+        key = DicomDictionary.convertToWildKey(key);
+
+        final FileDicomTagInfo tag = DicomDictionary.masterHashtable.get(key);
 
         if (tag == null) {
             return 0;
@@ -358,14 +348,14 @@ public class DicomDictionary {
      */
     public static String getVR(FileDicomKey key) {
 
-        if (masterHashtable == null) {
-            parseFile(DEFAULT_DICTIONARY);
+        if (DicomDictionary.masterHashtable == null) {
+            DicomDictionary.parseFile(DicomDictionary.DEFAULT_DICTIONARY);
         }
 
-        //if this key is one of a series, it needs to be converted to wild card chars for the dictionary
-        key = convertToWildKey(key);
-        
-        FileDicomTagInfo tag = (FileDicomTagInfo) masterHashtable.get(key);
+        // if this key is one of a series, it needs to be converted to wild card chars for the dictionary
+        key = DicomDictionary.convertToWildKey(key);
+
+        final FileDicomTagInfo tag = DicomDictionary.masterHashtable.get(key);
 
         if (tag == null) {
             return null;
@@ -375,108 +365,70 @@ public class DicomDictionary {
     }
 
     /**
-     * Sorts the list of tags using a slightly modified shell-sort and returns it as an array in order of FileDicomKeys.
-     * This sorting routine is taken from <u>Numerical Recipes in C</u>, 2nd ed. by William H. Press, et al, page 332.
+     * Sorts the list of tags and returns it as an array in order of FileDicomKeys.
      * 
      * @param dicomTagsList The hashtable of DICOM tags (the keys are FileDicomKey and the object referred to by that
      *            key is the FileDicomTagInfo).
      * 
      * @return a sorted array of DICOM Keys.
      */
-    public static FileDicomKey[] sortTagKeys(Hashtable<FileDicomKey, FileDicomTagInfo> dicomTagsList) {
+    public static FileDicomKey[] sortTagKeys(final Hashtable<FileDicomKey, FileDicomTagInfo> dicomTagsList) {
         FileDicomKey[] dicomKeys;
 
         dicomKeys = new FileDicomKey[dicomTagsList.size()];
 
         int q = 0;
-        Enumeration<FileDicomKey> e = dicomTagsList.keys();
+        final Enumeration<FileDicomKey> e = dicomTagsList.keys();
 
-        while (e.hasMoreElements()) // collect list of keys we will consider
-
-        // valid to sort:
-        {
-            dicomKeys[q] = (FileDicomKey) e.nextElement();
+        // collect list of keys we will consider valid to sort:
+        while (e.hasMoreElements()) {
+            dicomKeys[q] = e.nextElement();
             q++;
         }
 
-        // sort the list of keys (via shell sort):
-        int numDICOMKeys = dicomKeys.length - 1;
-        int inc = 1;
-        FileDicomKey val;
-
-        do {
-            inc *= 3;
-            inc++;
-        } while (inc <= numDICOMKeys);
-
-        do {
-            inc /= 3;
-
-            for (int i = inc; i <= numDICOMKeys; i++) {
-
-                // orders all from index 0 to numDICOMKeys
-                val = dicomKeys[i];
-
-                int j = i;
-
-                /*
-                 * use the group and element numbers, gathering them in a way to accommodate the occasional general
-                 * group/element number (like 60xx).
-                 */
-                int tempGN, valGN;
+        final Comparator<FileDicomKey> comparator = new Comparator<FileDicomKey>() {
+            public int compare(final FileDicomKey key1, final FileDicomKey key2) {
+                // use the group and element numbers, gathering them in a way to accommodate the occasional general
+                // group/element number (like 60xx).
+                int key1GN, key2GN;
 
                 try {
-                    tempGN = dicomKeys[j - inc].getGroupNumber();
-                } catch (NumberFormatException nfe) {
-                    tempGN = Integer.parseInt(dicomKeys[j - inc].getGroup().replace('x', '0'), 0x10);
+                    key1GN = key1.getGroupNumber();
+                } catch (final NumberFormatException nfe) {
+                    key1GN = Integer.parseInt(key1.getGroup().replace('x', '0'), 0x10);
                 }
 
                 try {
-                    valGN = val.getGroupNumber();
-                } catch (NumberFormatException nfe) {
-                    valGN = Integer.parseInt(val.getGroup().replace('x', '0'), 0x10);
+                    key2GN = key2.getGroupNumber();
+                } catch (final NumberFormatException nfe) {
+                    key2GN = Integer.parseInt(key2.getGroup().replace('x', '0'), 0x10);
                 }
 
-                int tempEN, valEN;
+                int key1EN, key2EN;
 
                 try {
-                    tempEN = dicomKeys[j - inc].getElementNumber();
-                } catch (NumberFormatException nfe) {
-                    tempEN = Integer.parseInt(dicomKeys[j - inc].getElement().replace('x', '0'), 0x10);
+                    key1EN = key1.getElementNumber();
+                } catch (final NumberFormatException nfe) {
+                    key1EN = Integer.parseInt(key1.getElement().replace('x', '0'), 0x10);
                 }
 
                 try {
-                    valEN = val.getElementNumber();
-                } catch (NumberFormatException nfe) {
-                    valEN = Integer.parseInt(val.getElement().replace('x', '0'), 0x10);
+                    key2EN = key2.getElementNumber();
+                } catch (final NumberFormatException nfe) {
+                    key2EN = Integer.parseInt(key2.getElement().replace('x', '0'), 0x10);
                 }
 
-                // check on both group and element numbers at the same time:
-                while ( (tempGN > valGN) || ( (tempGN == valGN) && (tempEN > valEN))) {
-                    dicomKeys[j] = dicomKeys[j - inc];
-                    j -= inc;
-
-                    if (j <= inc) {
-                        break;
-                    }
-
-                    // else, reset the temp GN & temp EN
-                    try {
-                        tempGN = dicomKeys[j - inc].getGroupNumber();
-                    } catch (NumberFormatException nfe) {
-                        tempGN = Integer.parseInt(dicomKeys[j - inc].getGroup().replace('x', '0'), 0x10);
-                    }
-
-                    try {
-                        tempEN = dicomKeys[j - inc].getElementNumber();
-                    } catch (NumberFormatException nfe) {
-                        tempEN = Integer.parseInt(dicomKeys[j - inc].getElement().replace('x', '0'), 0x10);
-                    }
+                if (key1GN < key2GN || (key1GN == key2GN && key1EN < key2EN)) {
+                    return -1;
+                } else if (key1GN == key2GN && key1EN == key2EN) {
+                    return 0;
+                } else {
+                    return 1;
                 }
-
-                dicomKeys[j] = val;
             }
-        } while (inc > 1);
+        };
+
+        Arrays.sort(dicomKeys, comparator);
 
         return dicomKeys;
     }
@@ -489,8 +441,9 @@ public class DicomDictionary {
      * 
      * @throws IOException when the file cannot be written to.
      */
-    public static void writeFile(File dictFile, Hashtable<FileDicomKey, FileDicomTagInfo> dicomHash) throws IOException {
-        writeFile(dictFile, dicomHash, null);
+    public static void writeFile(final File dictFile, final Hashtable<FileDicomKey, FileDicomTagInfo> dicomHash)
+            throws IOException {
+        DicomDictionary.writeFile(dictFile, dicomHash, null);
     }
 
     /**
@@ -502,19 +455,19 @@ public class DicomDictionary {
      * 
      * @throws IOException when the file cannot be written to.
      */
-    public static void writeFile(File dictFile, Hashtable<FileDicomKey, FileDicomTagInfo> dicomHash, String altComment)
-            throws IOException {
+    public static void writeFile(final File dictFile, final Hashtable<FileDicomKey, FileDicomTagInfo> dicomHash,
+            final String altComment) throws IOException {
 
         if ( !dictFile.canWrite()) {
             throw new IOException(dictFile + " cannot be written.");
         }
 
-        FileWriter fw = new FileWriter(dictFile, false);
+        final FileWriter fw = new FileWriter(dictFile, false);
 
-        FileDicomKey[] sortedKeys = DicomDictionary.sortTagKeys(dicomHash);
+        final FileDicomKey[] sortedKeys = DicomDictionary.sortTagKeys(dicomHash);
 
-        Calendar c = Calendar.getInstance();
-        DateFormat df = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
+        final Calendar c = Calendar.getInstance();
+        final DateFormat df = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
 
         fw.write(" # DICOM Tag Dictionary \n");
         fw.write(" # " + df.format(c.getTime()) + "\n");
@@ -530,9 +483,9 @@ public class DicomDictionary {
             fw.write(" # " + altComment + "\n");
         }
 
-        for (int i = 0; i < sortedKeys.length; i++) {
-            FileDicomTagInfo tag = ((FileDicomTagInfo) dicomHash.get(sortedKeys[i]));
-            fw.write("(" + sortedKeys[i].toString() + ")\t");
+        for (final FileDicomKey element : sortedKeys) {
+            final FileDicomTagInfo tag = (dicomHash.get(element));
+            fw.write("(" + element.toString() + ")\t");
             fw.write("VERS=\"" + tag.getVersion() + "\"\t");
             fw.write("VR=\"" + tag.getValueRepresentation() + "\"\t");
             fw.write("VM=\"" + tag.getValueMultiplicity() + "\"\t");
@@ -543,22 +496,21 @@ public class DicomDictionary {
         fw.write(" # End of Tag Dictionary file.\n");
         fw.close();
     }
-    
+
     /**
-     * Converts group numbers of 60xx or 50xx dicom key elements so that the 
-     * dicom dictionary will be able to find them.
+     * Converts group numbers of 60xx or 50xx dicom key elements so that the dicom dictionary will be able to find them.
      */
-    
-    private static FileDicomKey convertToWildKey(FileDicomKey key) {
-        String wildCheck = key.getGroup().substring(0, 2);
-        //if key group is not a 50xx or 60xx, then returning the masterHashtable evaluation is enough
-        if(!wildCheck.equals("50") && !wildCheck.equals("60")) {
+
+    private static FileDicomKey convertToWildKey(final FileDicomKey key) {
+        final String wildCheck = key.getGroup().substring(0, 2);
+        // if key group is not a 50xx or 60xx, then returning the masterHashtable evaluation is enough
+        if ( !wildCheck.equals("50") && !wildCheck.equals("60")) {
             return key;
-        } else { //dicom dictionary stores wildcard values, so check after converting group name
+        } else { // dicom dictionary stores wildcard values, so check after converting group name
             String keyStr = key.toString();
-            int commaLoc = keyStr.indexOf(',');
-            keyStr = keyStr.substring(0, commaLoc-2)+"xx"+keyStr.substring(commaLoc);
-            FileDicomKey newKey = (FileDicomKey) key.clone();
+            final int commaLoc = keyStr.indexOf(',');
+            keyStr = keyStr.substring(0, commaLoc - 2) + "xx" + keyStr.substring(commaLoc);
+            final FileDicomKey newKey = (FileDicomKey) key.clone();
             newKey.setKey(keyStr);
             return newKey;
         }
@@ -571,13 +523,13 @@ public class DicomDictionary {
      * 
      * @return A reader for the given file name.
      */
-    private static BufferedReader getFileReader(String filename) {
+    private static BufferedReader getFileReader(final String filename) {
 
         try {
             String filepath;
 
-            if (filename.equals(DEFAULT_DICTIONARY_FILENAME)) {
-                URL fileURL = Thread.currentThread().getContextClassLoader().getResource(filename);
+            if (filename.equals(DicomDictionary.DEFAULT_DICTIONARY_FILENAME)) {
+                final URL fileURL = Thread.currentThread().getContextClassLoader().getResource(filename);
 
                 return new BufferedReader(new InputStreamReader(fileURL.openStream()));
             } else {
@@ -588,7 +540,7 @@ public class DicomDictionary {
                 filepath = "";
             }
 
-            File dictionaryFile = new File(filepath + filename);
+            final File dictionaryFile = new File(filepath + filename);
 
             if ( !dictionaryFile.exists()) {
                 throw new FileNotFoundException(dictionaryFile.getAbsolutePath() + " does not exist.");
@@ -603,7 +555,7 @@ public class DicomDictionary {
             }
 
             return new BufferedReader(new FileReader(dictionaryFile));
-        } catch (Throwable t) {
+        } catch (final Throwable t) {
             return null;
         }
     }
@@ -615,17 +567,17 @@ public class DicomDictionary {
      * 
      * @see FileDicomTagInfo
      */
-    private static void parseFile(int dictionary_type) {
+    private static void parseFile(final int dictionary_type) {
         String filename;
-        Hashtable<FileDicomKey, FileDicomTagInfo> hashtable = new Hashtable<FileDicomKey, FileDicomTagInfo>();
+        final Hashtable<FileDicomKey, FileDicomTagInfo> hashtable = new Hashtable<FileDicomKey, FileDicomTagInfo>();
 
-        if (dictionary_type == SUBSET_DICTIONARY) {
-            filename = SUBSET_DICTIONARY_FILENAME;
+        if (dictionary_type == DicomDictionary.SUBSET_DICTIONARY) {
+            filename = DicomDictionary.SUBSET_DICTIONARY_FILENAME;
         } else {
-            filename = DEFAULT_DICTIONARY_FILENAME;
+            filename = DicomDictionary.DEFAULT_DICTIONARY_FILENAME;
         }
 
-        BufferedReader dictionaryReference = getFileReader(filename);
+        BufferedReader dictionaryReference = DicomDictionary.getFileReader(filename);
 
         if (dictionaryReference == null) {
             Preferences.debug("Failed to read DICOM dictionary file from " + filename);
@@ -647,19 +599,19 @@ public class DicomDictionary {
                     if (s.charAt(0) == '#') { // indicates a comment
                         continue;
                     }
-                } catch (StringIndexOutOfBoundsException str) {
+                } catch (final StringIndexOutOfBoundsException str) {
                     // String index out of bounds on s.charAt(0) probably
                     // means the string is empty.
 
                     continue;
                 }
 
-                StringTokenizer tok = new StringTokenizer(s, "=");
+                final StringTokenizer tok = new StringTokenizer(s, "=");
                 String values = "";
 
                 try {
                     values = ((String) tok.nextElement()).trim();
-                } catch (NoSuchElementException noway) {
+                } catch (final NoSuchElementException noway) {
                     continue;
                 }
 
@@ -676,7 +628,7 @@ public class DicomDictionary {
                 values = (String) tok.nextElement();
 
                 int index = values.lastIndexOf("\"");
-                String vers = values.substring(1, index);
+                final String vers = values.substring(1, index);
 
                 values = (String) tok.nextElement();
 
@@ -689,12 +641,12 @@ public class DicomDictionary {
                 values = (String) tok.nextElement();
                 index = values.lastIndexOf("\"");
 
-                String vmS = values.substring(1, index);
+                final String vmS = values.substring(1, index);
                 int vm;
 
                 try {
                     vm = Integer.valueOf(vmS).intValue();
-                } catch (NumberFormatException e) {
+                } catch (final NumberFormatException e) {
 
                     if (vmS.endsWith("n")) {
                         vm = Integer.MAX_VALUE;
@@ -707,12 +659,12 @@ public class DicomDictionary {
                     values = (String) tok.nextElement();
                     index = values.lastIndexOf("\"");
 
-                    String keyword = values.substring(1, index);
+                    final String keyword = values.substring(1, index);
 
                     values = (String) tok.nextElement();
                     index = values.lastIndexOf("\"");
 
-                    String name = values.substring(1, index);
+                    final String name = values.substring(1, index);
 
                     hashtable.put(key, new FileDicomTagInfo(key, vers, vr, vm, keyword, name));
                 } else {
@@ -722,31 +674,31 @@ public class DicomDictionary {
                         values = (String) tok.nextElement();
                         index = values.lastIndexOf("\"");
 
-                        String keyword = values.substring(1, index);
+                        final String keyword = values.substring(1, index);
 
                         values = (String) tok.nextElement();
                         index = values.lastIndexOf("\"");
 
-                        String name = values.substring(1, index);
+                        final String name = values.substring(1, index);
                         hashtable.put(key, new FileDicomTagInfo(key, vers, vr, vm, keyword, name));
                     } else {
                         values = (String) tok.nextElement();
                         index = values.lastIndexOf("\"");
 
-                        String keyword = values.substring(1, index);
+                        final String keyword = values.substring(1, index);
 
                         values = (String) tok.nextElement();
                         index = values.lastIndexOf("\"");
 
-                        String name = values.substring(1, index);
+                        final String name = values.substring(1, index);
                         hashtable.put(key, new FileDicomTagInfo(key, vers, vr, vm, keyword, name));
                     }
                 }
             }
-        } catch (FileNotFoundException fnfe) {
+        } catch (final FileNotFoundException fnfe) {
             Preferences.debug("Dictionary file not found: " + filename);
             MipavUtil.displayWarning("Dictionary file not found: " + filename);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             MipavUtil.displayError("Failed to parse DICOM dictionary file.");
             e.printStackTrace();
         } finally {
@@ -757,14 +709,14 @@ public class DicomDictionary {
                     dictionaryReference.close();
                     dictionaryReference = null;
                 }
-            } catch (IOException closee) {
+            } catch (final IOException closee) {
                 // ignore a problem closing the dictionary
             }
 
-            if (dictionary_type == SUBSET_DICTIONARY) {
-                subsetHashtable = hashtable;
+            if (dictionary_type == DicomDictionary.SUBSET_DICTIONARY) {
+                DicomDictionary.subsetHashtable = hashtable;
             } else {
-                masterHashtable = hashtable;
+                DicomDictionary.masterHashtable = hashtable;
             }
         }
     }
