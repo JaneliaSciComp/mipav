@@ -337,7 +337,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                 processDataThreads++;
             }
             
-            ViewUserInterface.getReference().getMessageFrame().append("ComputeData: "+computeDataThreads+"\tProcessData: "+processDataThreads, ViewJFrameMessage.DEBUG);
+            ViewUserInterface.getReference().getMessageFrame().append("ComputeData: "+computeDataThreads+"\tProcessData: "+processDataThreads+"\n", ViewJFrameMessage.DEBUG);
             
             if(processors-2 > processDataThreads + computeDataThreads) {
                 processDataThreads = (int)(((double)processDataThreads/(processDataThreads+computeDataThreads))*(processors-2));
@@ -361,7 +361,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                 loadDataThreads = 1;
             }
             
-            ViewUserInterface.getReference().getMessageFrame().append("ComputeData: "+computeDataThreads+"\tProcessData: "+processDataThreads+"\t loadData: "+loadDataThreads, ViewJFrameMessage.DEBUG);
+            ViewUserInterface.getReference().getMessageFrame().append("ComputeData: "+computeDataThreads+"\tProcessData: "+processDataThreads+"\t loadData: "+loadDataThreads+"\n", ViewJFrameMessage.DEBUG);
             
             if(largestImage != null) {
                 if(largestImage.getNDims() > 3) {
@@ -382,7 +382,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             }
         }
         
-        ViewUserInterface.getReference().getMessageFrame().append("ComputeData: "+computeDataThreads+"\tProcessData: "+processDataThreads+"\t loadData: "+loadDataThreads, ViewJFrameMessage.DEBUG);
+        ViewUserInterface.getReference().getMessageFrame().append("ComputeData: "+computeDataThreads+"\tProcessData: "+processDataThreads+"\t loadData: "+loadDataThreads+"\n", ViewJFrameMessage.DEBUG);
     }
 
     /**
@@ -1711,7 +1711,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             
             for(int i=0; i<tVolumes; i++) {
                 fireProgressStateChanged("Reading image: "+imageName+", "+i);
-                ViewUserInterface.getReference().getMessageFrame().append("Reading from: "+tempDirString+imageName+i, ViewJFrameMessage.DEBUG);
+                ViewUserInterface.getReference().getMessageFrame().append("Reading from: "+tempDirString+imageName+i+"\n", ViewJFrameMessage.DEBUG);
                 d = new LoadResultDataInner(i, imageName, resultStack);
                 f.add(d);
                 exec.submit(d);
@@ -1745,7 +1745,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
 
         public void run() {
             String mipavImageName = openFile.open(tempDirString+imageName+i+".XML", false, null);
-            ViewUserInterface.getReference().getMessageFrame().append("Getting image: "+mipavImageName, ViewJFrameMessage.DEBUG);
+            ViewUserInterface.getReference().getMessageFrame().append("Getting image: "+mipavImageName+"\n", ViewJFrameMessage.DEBUG);
             ModelImage tempVolume = ViewUserInterface.getReference().getRegisteredImageByName(mipavImageName);
             if(tempVolume != null) {
                 storeImageData(resultStack, tempVolume, i);
@@ -1753,17 +1753,17 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                 File f = new File(tempDirString+imageName+i+".RAW");
                 if(f != null) {
                     if(f.delete()) {
-                        ViewUserInterface.getReference().getMessageFrame().append(f.getName()+" succeessfully deleted.", ViewJFrameMessage.DEBUG);
+                        ViewUserInterface.getReference().getMessageFrame().append(f.getName()+" succeessfully deleted."+"\n", ViewJFrameMessage.DEBUG);
                     } else {
-                        ViewUserInterface.getReference().getMessageFrame().append(f.getName()+" could not be deleted from your system, please delete manually.", ViewJFrameMessage.DEBUG);
+                        ViewUserInterface.getReference().getMessageFrame().append(f.getName()+" could not be deleted from your system, please delete manually."+"\n", ViewJFrameMessage.DEBUG);
                     }
                 }
                 f = new File(tempDirString+imageName+i+".XML");
                 if(f != null) {
                     if(f.delete()) {
-                        ViewUserInterface.getReference().getMessageFrame().append(f.getName()+" succeessfully deleted.", ViewJFrameMessage.DEBUG);
+                        ViewUserInterface.getReference().getMessageFrame().append(f.getName()+" succeessfully deleted."+"\n", ViewJFrameMessage.DEBUG);
                     } else {
-                        ViewUserInterface.getReference().getMessageFrame().append(f.getName()+" could not be deleted from your system, please delete manually.", ViewJFrameMessage.DEBUG);
+                        ViewUserInterface.getReference().getMessageFrame().append(f.getName()+" could not be deleted from your system, please delete manually."+"\n", ViewJFrameMessage.DEBUG);
                     }
                 }
             }
@@ -1932,7 +1932,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                     if(image.getImageName().equals("Unknown")) {
                         System.out.println("STOP");
                     }
-                    ViewUserInterface.getReference().getMessageFrame().append(image.getImageName(), ViewJFrameMessage.DEBUG);
+                    ViewUserInterface.getReference().getMessageFrame().append(image.getImageName()+"\n", ViewJFrameMessage.DEBUG);
                     String imageName = image.getImageName().substring(0, image.getImageName().length() > 5 ? 4 : image.getImageName().length()); 
                     int startVal = 0;
                     for(int k=0; k<nSlices; k++) {
