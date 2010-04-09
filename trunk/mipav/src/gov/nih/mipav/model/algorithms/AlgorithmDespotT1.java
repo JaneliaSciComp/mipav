@@ -17,6 +17,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewJFrameMessage;
 import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewOpenFileUI;
 import gov.nih.mipav.view.ViewUserInterface;
@@ -336,7 +337,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                 processDataThreads++;
             }
             
-            System.out.println("ComputeData: "+computeDataThreads+"\tProcessData: "+processDataThreads);
+            ViewUserInterface.getReference().getMessageFrame().append("ComputeData: "+computeDataThreads+"\tProcessData: "+processDataThreads, ViewJFrameMessage.DEBUG);
             
             if(processors-2 > processDataThreads + computeDataThreads) {
                 processDataThreads = (int)(((double)processDataThreads/(processDataThreads+computeDataThreads))*(processors-2));
@@ -360,7 +361,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                 loadDataThreads = 1;
             }
             
-            System.out.println("ComputeData: "+computeDataThreads+"\tProcessData: "+processDataThreads+"\t loadData: "+loadDataThreads);
+            ViewUserInterface.getReference().getMessageFrame().append("ComputeData: "+computeDataThreads+"\tProcessData: "+processDataThreads+"\t loadData: "+loadDataThreads, ViewJFrameMessage.DEBUG);
             
             if(largestImage != null) {
                 if(largestImage.getNDims() > 3) {
@@ -381,7 +382,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             }
         }
         
-        System.out.println("ComputeData: "+computeDataThreads+"\tProcessData: "+processDataThreads+"\t loadData: "+loadDataThreads);
+        ViewUserInterface.getReference().getMessageFrame().append("ComputeData: "+computeDataThreads+"\tProcessData: "+processDataThreads+"\t loadData: "+loadDataThreads, ViewJFrameMessage.DEBUG);
     }
 
     /**
@@ -1684,7 +1685,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
 	 * @return whether the temp file directory is writable
 	 */
 	private boolean saveImageData(ModelImage tempVolume, int volumeNumber) {
-	    System.out.println("Saving to: "+tempDirString+tempVolume.getImageName());
+	    ViewUserInterface.getReference().getMessageFrame().append("Saving to: "+tempDirString+tempVolume.getImageName(), ViewJFrameMessage.DEBUG);
 	    return tempVolume.saveImage(tempDirString, tempVolume.getImageName(), FileUtility.RAW, true);
 	}
 	
@@ -1710,7 +1711,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             
             for(int i=0; i<tVolumes; i++) {
                 fireProgressStateChanged("Reading image: "+imageName+", "+i);
-                System.out.println("Reading from: "+tempDirString+imageName+i);
+                ViewUserInterface.getReference().getMessageFrame().append("Reading from: "+tempDirString+imageName+i, ViewJFrameMessage.DEBUG);
                 d = new LoadResultDataInner(i, imageName, resultStack);
                 f.add(d);
                 exec.submit(d);
@@ -1744,7 +1745,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
 
         public void run() {
             String mipavImageName = openFile.open(tempDirString+imageName+i+".XML", false, null);
-            System.out.println("Getting image: "+mipavImageName);
+            ViewUserInterface.getReference().getMessageFrame().append("Getting image: "+mipavImageName, ViewJFrameMessage.DEBUG);
             ModelImage tempVolume = ViewUserInterface.getReference().getRegisteredImageByName(mipavImageName);
             if(tempVolume != null) {
                 storeImageData(resultStack, tempVolume, i);
@@ -1752,17 +1753,17 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                 File f = new File(tempDirString+imageName+i+".RAW");
                 if(f != null) {
                     if(f.delete()) {
-                        System.out.println(f.getName()+" succeessfully deleted.");
+                        ViewUserInterface.getReference().getMessageFrame().append(f.getName()+" succeessfully deleted.", ViewJFrameMessage.DEBUG);
                     } else {
-                        System.out.println(f.getName()+" could not be deleted from your system, please delete manually.");
+                        ViewUserInterface.getReference().getMessageFrame().append(f.getName()+" could not be deleted from your system, please delete manually.", ViewJFrameMessage.DEBUG);
                     }
                 }
                 f = new File(tempDirString+imageName+i+".XML");
                 if(f != null) {
                     if(f.delete()) {
-                        System.out.println(f.getName()+" succeessfully deleted.");
+                        ViewUserInterface.getReference().getMessageFrame().append(f.getName()+" succeessfully deleted.", ViewJFrameMessage.DEBUG);
                     } else {
-                        System.out.println(f.getName()+" could not be deleted from your system, please delete manually.");
+                        ViewUserInterface.getReference().getMessageFrame().append(f.getName()+" could not be deleted from your system, please delete manually.", ViewJFrameMessage.DEBUG);
                     }
                 }
             }
@@ -1931,7 +1932,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                     if(image.getImageName().equals("Unknown")) {
                         System.out.println("STOP");
                     }
-                    System.out.println(image.getImageName());
+                    ViewUserInterface.getReference().getMessageFrame().append(image.getImageName(), ViewJFrameMessage.DEBUG);
                     String imageName = image.getImageName().substring(0, image.getImageName().length() > 5 ? 4 : image.getImageName().length()); 
                     int startVal = 0;
                     for(int k=0; k<nSlices; k++) {
