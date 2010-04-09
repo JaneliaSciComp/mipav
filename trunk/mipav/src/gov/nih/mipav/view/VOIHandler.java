@@ -1250,7 +1250,6 @@ public class VOIHandler extends JComponent implements MouseListener,
 	 */
 	public void graph25VOI_CalcInten(boolean totalIntensity,
 			boolean useThreshold, float threshold) {
-		System.out.println("HERE");
 		int i, j, s;
 		int nVOI;
 		ViewVOIVector VOIs;

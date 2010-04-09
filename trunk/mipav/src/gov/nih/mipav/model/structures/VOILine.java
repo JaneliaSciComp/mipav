@@ -447,7 +447,6 @@ public class VOILine extends VOIBase {
     public int findPositionAndIntensity(float[] position, float[] intensity, float[] imageBuffer, float[] resolutions,
                                         int xD, int yD,int[][] xyCoords) {
        
-    	System.out.println("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
     	
     	double distance = 0;
         double subDistance = 0;
