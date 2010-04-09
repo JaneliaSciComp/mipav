@@ -60,10 +60,22 @@ import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogVOIStatistics;
 
 /**
- * Plugin that applies a series of transformations to one image so that it registers to second image
- * Then, either an average or closest z calculation is done to build a result image of 512x512x512
+ * This plugin was done for Dr Chi-hon Lee of NICHD
+ * 
+ * The main research problem Dr Lee had was that the z-resolution is poor compared to x and y when acquiring
+ * datsets using confocal microscopy
+ * 
+ * The solution was to acquire 2 orthogonal datsets and combine them into a result image
+ * 
+ * In order to achieve this, one dataset needs to be registered to the other datset to obtain transformation files.
+ * This part is done prior to the plugin by a user
+ * 
+ * This plugin builds a result image by transforming back to both images using the transformation files and
+ * applying a certain combination of the pixels to put in the result image
+
+ * The result image is of 512x512x512 size
+ * 
  * @author pandyan
- *
  */
 public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase implements AlgorithmInterface {
 	
@@ -134,10 +146,13 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
     /** vjf to draw vois on **/
     private ViewJFrameImage vjfX, vjfY;
 
+    /** output text area **/
     private JTextArea outputTextArea;
     
+    /** scroll pane **/
     private JScrollPane scrollPane;
     
+    /** alg **/
     private PlugInAlgorithmDrosophilaRetinalRegistration alg;
     
 
@@ -165,7 +180,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Retinal Registration v2.0");
+        setTitle("Drosophila Retinal Registration v2.1");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
 
@@ -277,14 +292,10 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
         interpPanel.setBorder(new TitledBorder("Interpolation"));
         rescalePanel.setBorder(new TitledBorder("Rescale H to F"));
         averagingOptionsPanel.setBorder(new TitledBorder("Averaging Options"));
-        
-        
-        //gbc.anchor = GridBagConstraints.WEST;
+
         processPanel.add(doAverageRadio,gbc);
         gbc.gridy = 1;
         processPanel.add(doSqRtRadio,gbc);
-        //gbc.gridy = 2;
-        //processPanel.add(doClosestZRadio,gbc);
         gbc.gridy = 0;
         interpPanel.add(doTrilinearRadio,gbc);
         gbc.gridy = 1;
@@ -362,10 +373,6 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
         
         gbc.gridy = 7;
         mainPanel.add(scrollPane,gbc);
-        //gbc.gridx = 0;
-        //gbc.gridy = 6;
-        //mainPanel.add(concatMatricesOnly,gbc);  //this is to just generate a concatenated matrix
-        
         JPanel OKCancelPanel = new JPanel();
         buildOKButton();
         OKButton.setActionCommand("ok");
@@ -378,67 +385,8 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
         getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
         setResizable(false);
         pack();
-        //setMinimumSize(getSize());
         setVisible(true);
 
-        //hard coding for testing...1st dataset
-        //imageX      
-        /*currDir = "C:\\images\\nichd\\1\\N4A07-TM2-40XO-NA-13-12bit-080608-1x0.ics";
-        FileIO fileIO = new FileIO();
-        imageX = fileIO.readImage("N4A07-TM2-40XO-NA-13-12bit-080608-1x0.ics", "C:\\images\\nichd\\1" + File.separator, true, null);
-        vjfX = new ViewJFrameImage(imageX);
-        imageXFilePathTextField.setText(currDir);
-        //imageY
-        currDir = "C:\\images\\nichd\\1\\N4A07-TM2-40XO-NA-13-12bit-080608-1y0.ics";
-        fileIO = new FileIO();
-        imageY = fileIO.readImage("N4A07-TM2-40XO-NA-13-12bit-080608-1y0.ics", "C:\\images\\nichd\\1" + File.separator, true, null);
-        vjfY = new ViewJFrameImage(imageY);
-        imageYFilePathTextField.setText(currDir);
-        //transform1
-        currDir = "C:\\images\\nichd\\1\\N4A07-ix0-greenChannel_To_N4A07-iy0-greenChannel-9degrees-105-10-3.mtx";
-    	transform1File = new File(currDir);
-    	readTransform1(transform1File);
-    	//transform2
-    	currDir = "C:\\images\\nichd\\1\\N4A07-TM2-40XO-NA-13-12bit-080608-1x0Gray-afterTransformUsingGreenChannelTransformMatrix_To_N4A07-TM2-40XO-NA-13-12bit-080608-1y0Gray-12degrees-5-3-1.mtx";
-    	transform2File = new File(currDir);
-    	readTransform2(transform2File);*/
-    	//end hard coding for testing
-
-        //hard coding for testing...2nd dataset
-        //imageX
-        /*currDir = "C:\\images\\nichd\\2_withBlurring2\\N4A07-TM2-40XO-NA-13-12bit-080608-3x0.ics";
-        FileIO fileIO = new FileIO();
-        imageX = fileIO.readImage("N4A07-TM2-40XO-NA-13-12bit-080608-3x0.ics", "C:\\images\\nichd\\2_withBlurring2" + File.separator, true, null);
-        new ViewJFrameImage(imageX);
-        imageXFilePathTextField.setText(currDir);
-        //imageY
-        currDir = "C:\\images\\nichd\\2_withBlurring2\\N4A07-TM2-40XO-NA-13-12bit-080608-3y0.ics";
-        fileIO = new FileIO();
-        imageY = fileIO.readImage("N4A07-TM2-40XO-NA-13-12bit-080608-3y0.ics", "C:\\images\\nichd\\2_withBlurring2" + File.separator, true, null);
-        new ViewJFrameImage(imageY);
-        imageYFilePathTextField.setText(currDir);
-        //transform1
-        currDir = "C:\\images\\nichd\\2_withBlurring2\\GrayG_To_GrayG1-9degrees-105-10-3..mtx";
-    	transform1File = new File(currDir);
-    	readTransform1(transform1File);
-    	//transform2
-    	currDir = "C:\\images\\nichd\\2_withBlurring2\\N4A07-TM2-40XO-NA-13-12bit-080608-3x0Gray_transform_gblur_To_N4A07-TM2-40XO-NA-13-12bit-080608-3y0Gray_gblur-12-5-3-1.mtx";
-    	transform2File = new File(currDir);
-    	readTransform2(transform2File);
-    	//transform3
-    	currDir = "C:\\images\\nichd\\2_withBlurring2\\N4A07-TM2-40XO-NA-13-12bit-080608-3x0Gray_transform_transform_gblur.nlt";
-    	transform3File = new File(currDir);
-    	if(!transform3File.getName().endsWith(".nlt")) {
-    		MipavUtil.displayError("A valid .nlt file is required");
-    		return;
-    	}
-    	boolean success = readNLTFile(transform3File);
-    	if(!success) {
-    		MipavUtil.displayError("Error reading nlt file");
-    		return;
-    	}
-    	transform3FilePathTextField.setText(currDir);*/
-    	//end hard coding for testing
 	}
 	
 	/**
@@ -456,8 +404,6 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 			ignoreBGRadio.setEnabled(false);
 			includeBGRadio.setEnabled(false);
 		}else if (command.equalsIgnoreCase("imageXBrowse")) { 
-			//outputTextArea.setText("aaaaaaa \n");
-			//outputTextArea.append("HHHHHHHHHHHHH" + "\n");
 			JFileChooser chooser = new JFileChooser();
 	        if (currDir != null) {
 				chooser.setCurrentDirectory(new File(currDir));
@@ -476,7 +422,6 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 	            imageXFilePathTextField.setText(currDir);
 	        }
 		 }else if (command.equalsIgnoreCase("imageXRegisteredBrowse")) { 
-			 //outputTextArea.append("YYYYYYYYYYYYYY" + "\n");
 				JFileChooser chooser = new JFileChooser();
 		        if (currDir != null) {
 					chooser.setCurrentDirectory(new File(currDir));
@@ -489,51 +434,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 		        	FileIO fileIO = new FileIO();
 		            imageXRegistered = fileIO.readImage(chooser.getSelectedFile().getName(), chooser.getCurrentDirectory() + File.separator, true, null);
 		            imageXRegisteredFilePathTextField.setText(currDir);
-		        }
-		        
-		        
-		        /*//TESTING ONLY!!!!!!
-		        TransMatrix xfrm = new TransMatrix(4);
-				xfrm.MakeIdentity();
-				int interp = 0; //trilinear interp
-				float oXres = imageXRegistered.getResolutions(0)[0];
-				float oYres = imageXRegistered.getResolutions(0)[1];
-				System.out.println(imageXRegistered.getResolutions(0)[2]);
-				System.out.println(imageXRegistered.getExtents()[2]);
-				float oZres = imageXRegistered.getResolutions(0)[2] * (imageXRegistered.getExtents()[2]/512f);
-				System.out.println(oXres + " " + oYres + " " + oZres);
-				int oXdim = 512;
-				int oYdim = 512;
-				int oZdim = 512;
-				int[] units = new int[imageXRegistered.getUnitsOfMeasure().length];
-		        for (int i = 0; i < units.length; i++) {
-		            units[i] = imageXRegistered.getUnitsOfMeasure(i);
-		        }
-		        boolean doVOI = false;
-		        boolean doClip = true;
-		        boolean doPad = false;
-		        boolean doRotateCenter = true;
-		        Vector3f center = imageXRegistered.getImageCentermm(false);
-				float fillValue = 0.0f;
-				boolean doUpdateOrigin = true;
-				boolean isSATransform = false;
-				
-				
-				//imageXRegisteredTransform
-				System.out.println("transforming imageXRegistered to 512x512x512");
-				algoTrans = new AlgorithmTransform(imageXRegistered, xfrm, interp, oXres, oYres, oZres, oXdim, oYdim, oZdim, units,
-		                doVOI, doClip, doPad, doRotateCenter, center);
-		        algoTrans.setFillValue(fillValue);
-		        algoTrans.setUpdateOriginFlag(doUpdateOrigin);
-		        algoTrans.setUseScannerAnatomical(isSATransform);
-		        algoTrans.run();
-		        imageXRegisteredTransformed = algoTrans.getTransformedImage();
-		        imageXRegisteredTransformed.calcMinMax();
-		        
-		        new ViewJFrameImage(imageXRegisteredTransformed);*/
-		        
-		        
-		        
+		        }    
 		 }else if(command.equalsIgnoreCase("imageYBrowse")) {
 			 JFileChooser chooser = new JFileChooser();
 		        if (currDir != null) {
@@ -632,7 +533,9 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 	
 	
 	
-	
+	/***
+	 * calls algorithm
+	 */
 	protected void callAlgorithm() {
 		alg = new PlugInAlgorithmDrosophilaRetinalRegistration(imageX,imageXRegistered,imageY,vjfX,vjfY,outputTextArea,matrixGreen,
 				matrixAffine,doTrilinearRadio,doAverageRadio,doRescaleRadio,ignoreBGRadio,doSqRtRadio,transform3FilePathTextField,
@@ -655,21 +558,10 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 	
 	
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+    /**
+     * validate vars
+     * @return success
+     */
 	private boolean validatingVars() {
 		boolean valid = true;
 		if(imageXFilePathTextField.getText().equals("")) {
@@ -703,7 +595,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 	
 	/**
 	 * reads the non-linear transform file
-	 * @param nltFile
+	 * @param nltFile success
 	 * @return
 	 */
 	private boolean readNLTFile(File nltFile) {
@@ -922,12 +814,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
             
             matrixGreen = new TransMatrix(4);
             matrixGreen.setMatrix(doubleArr);
-            //System.out.println("matrixGreen:");
-            //System.out.println(matrixGreen.toString());
-            
             transform1FilePathTextField.setText(currDir);
-            
-            //matrixGreen = new Matrix(doubleArr,4,4);
    	 }catch(Exception ex) {
    		 ex.printStackTrace();
    	 }
@@ -979,11 +866,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
             raFile.close(); 
             matrixAffine = new TransMatrix(4);
             matrixAffine.setMatrix(doubleArr);
-            //System.out.println("matrixAffine:");
-            //System.out.println(matrixAffine.toString());
-            
             transform2FilePathTextField.setText(currDir);
-            //matrixAffine = new Matrix(doubleArr,4,4);
    	 }catch(Exception ex) {
    		 ex.printStackTrace();
    	 }
