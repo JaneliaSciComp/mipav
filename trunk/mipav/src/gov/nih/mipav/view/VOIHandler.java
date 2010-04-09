@@ -4,6 +4,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.*;
 
+import gov.nih.mipav.model.algorithms.AlgorithmVOIProps;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -1020,6 +1021,46 @@ public class VOIHandler extends JComponent implements MouseListener,
 
 		return nActive;
 	}
+	
+	
+	/**
+     * This legacy code returns all active vois for a given source image.  PlugIns should explicitly identify VOIs they would
+     * like to process using AlgorithmVOIProps, because the user may have already added other VOIs to srcImage, or VOIs
+     * may be created by the algorithm in an unexpected way.  This plugin relied on <code>AlgorithmVOIProp</code>'s 
+     * getActiveVOIs() code, so that code has been moved into this plugin.
+     * 
+     * Use of this method is discouraged, as shown by the old documentation for this method:
+     * not for use. should be moved to a better location. does NOT clone the VOIs that it find to be active, and inserts
+     * into a new ViewVOIVector. if no VOIs are active, the ViewVOIVector returned is <code>null</code>.
+     *
+     * @return  All the active VOIs for a given srcImage.
+     */
+    private ViewVOIVector getActiveVOIs(ModelImage srcImage) {
+        ViewVOIVector voiList;
+
+        voiList = new ViewVOIVector();
+
+        int i;
+
+        try {
+
+            for (i = 0; i < srcImage.getVOIs().size(); i++) {
+
+                if (srcImage.getVOIs().VOIAt(i).isActive()) {
+
+                    // voi at i is the active voi
+                    voiList.addElement(srcImage.getVOIs().VOIAt(i));
+                }
+            }
+        } catch (ArrayIndexOutOfBoundsException indexException) {
+
+            // got to the end of list and never found an active VOI.
+            // return an  empty VOI list.
+            return new ViewVOIVector();
+        }
+
+        return voiList;
+    }
 
 	/**
 	 * Gets the anchor point used for calculating VOI movement distances.
@@ -1209,6 +1250,7 @@ public class VOIHandler extends JComponent implements MouseListener,
 	 */
 	public void graph25VOI_CalcInten(boolean totalIntensity,
 			boolean useThreshold, float threshold) {
+		System.out.println("HERE");
 		int i, j, s;
 		int nVOI;
 		ViewVOIVector VOIs;
@@ -1460,6 +1502,21 @@ public class VOIHandler extends JComponent implements MouseListener,
 								v.setTotalIntensity(totalIntensity);
 								v.setPosition(position);
 								v.setIntensity(intensity);
+								
+								ModelImage image = compImage.getImageA();
+								AlgorithmVOIProps algoVOI = new AlgorithmVOIProps(image, getActiveVOIs(image));
+								algoVOI.run();
+								float min = algoVOI.getMinIntensity();
+								float max = algoVOI.getMaxIntensity();
+								float totalInten = algoVOI.getSumIntensities();
+								float meanInten = algoVOI.getAvgInten();
+								float stdDevInten = algoVOI.getStdDev();
+								
+								
+								ViewUserInterface.getReference().setDataText(
+										"VOI \tmin \tmax \ttotal \tmean \tstandard deviation " + "\n");
+								ViewUserInterface.getReference().setDataText(
+										"\t" + min + "\t" + max + "\t" + totalInten + "\t" + meanInten + "\t" + stdDevInten + "\n");
 
 								return;
 							}
