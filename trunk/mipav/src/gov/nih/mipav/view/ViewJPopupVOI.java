@@ -127,7 +127,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
         graphSubMenu.add(ViewMenuBuilder.buildMenuItem("Boundary intensity", "boundaryIntensity", 0, this, null,
                                                        false));
 
-       /* if ((handler.getComponentImage().getActiveImage().getNDims() == 3) ||
+        if ((handler.getComponentImage().getActiveImage().getNDims() == 3) ||
                 (handler.getComponentImage().getActiveImage().getNDims() == 4)) {
             graphSubMenu.add(ViewMenuBuilder.buildMenuItem("Total intensity", "totalIntensity", 0, this, null, false));
             graphSubMenu.add(ViewMenuBuilder.buildMenuItem("Average intensity", "avgIntensity", 0, this, null, false));
@@ -135,7 +135,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
                                                            0, this, null, false));
             graphSubMenu.add(ViewMenuBuilder.buildMenuItem("Average intensity with threshold", "avgIntensityThreshold",
                                                            0, this, null, false));
-        }*/
+        }
 
         itemClose = ViewMenuBuilder.buildMenuItem("Close VOI (polyline->polygon)", "closeVOI", 0, this, null, true);
 
