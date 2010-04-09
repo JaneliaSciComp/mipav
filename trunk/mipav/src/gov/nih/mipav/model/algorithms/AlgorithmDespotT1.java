@@ -1590,6 +1590,9 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             if(numThreads > Runtime.getRuntime().availableProcessors()-2) {
                 numThreads = Runtime.getRuntime().availableProcessors()-2;
             }
+            if(numThreads < 1) {
+            	numThreads = 1;
+            }
         }
         
         ExecutorService exec = Executors.newFixedThreadPool(numThreads);
