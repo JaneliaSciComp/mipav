@@ -1,16 +1,68 @@
 package gov.nih.mipav.model.dicomcomm;
 
 
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.Preferences;
 
 
 /**
  * DIMSE-C service implementations. Most DIMSE C Service messaging classes only require setting an appropriate DICOM
  * command field.
+ * 
+ * <hr>
+ * 
+ * This DICOM communication package was originally based on the Java Dicom Package, whose license is below:
+ * 
+ * <pre>
+ * Java Dicom Package (com.zmed.dicom)
+ * 
+ *  Copyright (c) 1996-1997 Z Medical Imaging Systems, Inc.
+ * 
+ *  This software is provided, as is, for non-commercial educational
+ *  purposes only.   Use or incorporation of this software or derivative
+ *  works in commercial applications requires written consent from
+ *  Z Medical Imaging Systems, Inc.
+ * 
+ *  Z MEDICAL IMAGING SYSTEMS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT
+ *  THE SUITABILITY OF THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING
+ *  BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
+ *  FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, OR CONFORMANCE TO ANY
+ *  SPECIFICATION OR STANDARD.  Z MEDICAL IMAGING SYSTEMS SHALL NOT BE
+ *  LIABLE FOR ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING OR
+ *  MODIFYING THIS SOFTWARE OR ITS DERIVATIVES.
+ * 
+ *  =============================================================================
+ * 
+ *  This software package is implemented similarly to the UC Davis public
+ *  domain C++ DICOM implementation which contains the following copyright
+ *  notice:
+ * 
+ *  Copyright (C) 1995, University of California, Davis
+ * 
+ *  THIS SOFTWARE IS MADE AVAILABLE, AS IS, AND THE UNIVERSITY
+ *  OF CALIFORNIA DOES NOT MAKE ANY WARRANTY ABOUT THE SOFTWARE, ITS
+ *  PERFORMANCE, ITS MERCHANTABILITY OR FITNESS FOR ANY PARTICULAR
+ *  USE, FREEDOM FROM ANY COMPUTER DISEASES OR ITS CONFORMITY TO ANY
+ *  SPECIFICATION. THE ENTIRE RISK AS TO QUALITY AND PERFORMANCE OF
+ *  THE SOFTWARE IS WITH THE USER.
+ * 
+ *  Copyright of the software and supporting documentation is
+ *  owned by the University of California, and free access
+ *  is hereby granted as a license to use this software, copy this
+ *  software and prepare derivative works based upon this software.
+ *  However, any distribution of this software source code or
+ *  supporting documentation or derivative works (source code and
+ *  supporting documentation) must include this copyright notice.
+ * 
+ *  The UC Davis C++ source code is publicly available from the following
+ *  anonymous ftp site:
+ * 
+ *  ftp://imrad.ucdmc.ucdavis.edu/pub/dicom/UCDMC/
+ * </pre>
  */
 public class DICOM_CRequest {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Flag indicating low priority transfer. */
     protected static int LOW = 2;
@@ -21,7 +73,8 @@ public class DICOM_CRequest {
     /** Flag indicating high priority transfer. */
     protected static int HIGH = 1;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** This field distinguishes the DIMSE-C operation conveyed by this message. */
     int COMMAND = 0;
@@ -29,31 +82,33 @@ public class DICOM_CRequest {
     /** Message ID - Used to distinguish this message from other messages. */
     private int MSG_ID = 33;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates a new DICOM_CRequest object.
-     *
-     * @param  commandType  DICOM.COMMAND_CEchoRQ, or CStoreRQ, CFindRQ, CMoveRQ
+     * 
+     * @param commandType DICOM.COMMAND_CEchoRQ, or CStoreRQ, CFindRQ, CMoveRQ
      */
-    public DICOM_CRequest(int commandType) {
+    public DICOM_CRequest(final int commandType) {
         COMMAND = commandType;
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * This is used to fix the padding (even length) of move destinations for some GE DICOM implementations.
-     *
-     * @param   str  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param str DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public static final String fixMoveDestString(String str) {
 
         str = str.trim();
 
-        if ((str.length() % 2) != 0) {
+        if ( (str.length() % 2) != 0) {
             str += " ";
         }
 
@@ -62,35 +117,34 @@ public class DICOM_CRequest {
 
     /**
      * Accessor to the the message ID.
-     *
-     * @return  this objects message ID
+     * 
+     * @return this objects message ID
      */
     public final int getMsgID() {
         return MSG_ID;
     }
 
-
     /**
      * A simplified read if no info is necessary.
-     *
-     * @param      dco  the incoming DICOM command message
-     *
-     * @exception  DICOM_Exception  DOCUMENT ME!
+     * 
+     * @param dco the incoming DICOM command message
+     * 
+     * @exception DICOM_Exception DOCUMENT ME!
      */
-    public void read(DICOM_Object dco) throws DICOM_Exception {
+    public void read(final DICOM_Object dco) throws DICOM_Exception {
         read(null, dco, null);
     }
 
     /**
      * Reads a DIMSE-C message.
-     *
-     * @param      pdu  the context pdu
-     * @param      dco  the incoming DICOM message
-     * @param      ddo  store the incoming DICOM data object in this object
-     *
-     * @exception  DICOM_Exception  DOCUMENT ME!
+     * 
+     * @param pdu the context pdu
+     * @param dco the incoming DICOM message
+     * @param ddo store the incoming DICOM data object in this object
+     * 
+     * @exception DICOM_Exception DOCUMENT ME!
      */
-    public void read(DICOM_PDUService pdu, DICOM_Object dco, DICOM_Object ddo) throws DICOM_Exception {
+    public void read(final DICOM_PDUService pdu, final DICOM_Object dco, final DICOM_Object ddo) throws DICOM_Exception {
 
         if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
             Preferences.debug(DICOM_Util.timeStamper() + " CRequest.read: \n");
@@ -105,14 +159,14 @@ public class DICOM_CRequest {
             throw new DICOM_Exception("DCO is null");
         }
 
-        int command = dco.getInt16(DICOM_RTC.DD_CommandField);
+        final int command = dco.getInt16(DICOM_RTC.DD_CommandField);
 
         if (command != COMMAND) {
-            throw new DICOM_Exception(" DIMSE-C Request error : " + DICOM_Util.toHexString((short) command) +
-                                      " looking for " + DICOM_Util.toHexString(COMMAND));
+            throw new DICOM_Exception(" DIMSE-C Request error : " + DICOM_Util.toHexString((short) command)
+                    + " looking for " + DICOM_Util.toHexString(COMMAND));
         }
 
-        int dataSetType = dco.getInt16(DICOM_RTC.DD_DataSetType);
+        final int dataSetType = dco.getInt16(DICOM_RTC.DD_DataSetType);
 
         if (dataSetType != DICOM_Constants.DSTYPE_NODATAPRESENT) {
 
@@ -132,13 +186,13 @@ public class DICOM_CRequest {
             } // Information is not present
         }
 
-        int status = dco.getInt16(DICOM_RTC.DD_Status);
+        final int status = dco.getInt16(DICOM_RTC.DD_Status);
 
-        if ((status >= DICOM_Constants.STATUS_ERRORFIRST) && (status <= DICOM_Constants.STATUS_ERRORLAST)) {
+        if ( (status >= DICOM_Constants.STATUS_ERRORFIRST) && (status <= DICOM_Constants.STATUS_ERRORLAST)) {
             String str1, str2;
 
-            str1 = "Status in error " + DICOM_Util.toHexString((short) COMMAND) + " [" +
-                   DICOM_Util.toHexString((short) status) + "] ";
+            str1 = "Status in error " + DICOM_Util.toHexString((short) COMMAND) + " ["
+                    + DICOM_Util.toHexString((short) status) + "] ";
             str2 = dco.getStr(DICOM_RTC.DD_ErrorComment);
 
             if (str2 != null) {
@@ -151,27 +205,28 @@ public class DICOM_CRequest {
 
     /**
      * Reads a DIMSE-C message.
-     *
-     * @param      pdu  the context pdu DICOMClientServer
-     * @param      dco  the incoming DICOM message
-     * @param      ddo  a place to store the incoming DICOM data object or null if not required
-     *
-     * @exception  DICOM_Exception  DOCUMENT ME!
+     * 
+     * @param pdu the context pdu DICOMClientServer
+     * @param dco the incoming DICOM message
+     * @param ddo a place to store the incoming DICOM data object or null if not required
+     * 
+     * @exception DICOM_Exception DOCUMENT ME!
      */
-    public void readCResponseAlias(DICOM_PDUService pdu, DICOM_Object dco, DICOM_Object ddo) throws DICOM_Exception {
+    public void readCResponseAlias(final DICOM_PDUService pdu, final DICOM_Object dco, final DICOM_Object ddo)
+            throws DICOM_Exception {
 
         if (dco == null) {
             throw new DICOM_Exception("null dco");
         }
 
-        int command = dco.getInt16(DICOM_RTC.DD_CommandField);
+        final int command = dco.getInt16(DICOM_RTC.DD_CommandField);
 
         if (command != COMMAND) { // not correct command
-            throw new DICOM_Exception("DIMSE-C Request error: " + DICOM_Util.toHexString((short) command) +
-                                      " looking for " + DICOM_Util.toHexString(COMMAND));
+            throw new DICOM_Exception("DIMSE-C Request error: " + DICOM_Util.toHexString((short) command)
+                    + " looking for " + DICOM_Util.toHexString(COMMAND));
         }
 
-        int dstype = dco.getInt16(DICOM_RTC.DD_DataSetType);
+        final int dstype = dco.getInt16(DICOM_RTC.DD_DataSetType);
 
         if (dstype != DICOM_Constants.DSTYPE_NODATAPRESENT) {
 
@@ -196,7 +251,7 @@ public class DICOM_CRequest {
             }
         }
 
-        int status = dco.getInt16(DICOM_RTC.DD_Status);
+        final int status = dco.getInt16(DICOM_RTC.DD_Status);
 
         if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
 
@@ -209,16 +264,18 @@ public class DICOM_CRequest {
             }
         }
 
-        if ((status >= DICOM_Constants.STATUS_ERRORFIRST) && (status <= DICOM_Constants.STATUS_ERRORLAST)) {
+        if ( (status >= DICOM_Constants.STATUS_ERRORFIRST) && (status <= DICOM_Constants.STATUS_ERRORLAST)) {
             String str1, errorComment;
 
-            str1 = "Status error for command  = " + DICOM_Constants.convertCommandToString(COMMAND) + // +DICOM_Util.toHexString( (short) COMMAND ) +
-                   " status = [" + DICOM_Util.toHexString((short) status) + "] ";
+            str1 = "Status error for command  = " + DICOM_Constants.convertCommandToString(COMMAND) + // +DICOM_Util.toHexString(
+                                                                                                        // (short)
+                                                                                                        // COMMAND ) +
+                    " status = [" + DICOM_Util.toHexString((short) status) + "] ";
             errorComment = dco.getStr(DICOM_RTC.DD_ErrorComment); // + dco.getOffending Element;
 
             // Preferences.debug("CRequest.readCResponseAlias DCO : " + dco.toString("DCO") + "\n");
             // Preferences.debug("CRequest.readCResponseAlias DDO : " + ddo.toString("DDO") + "\n");
-            // System.out.println("DD_ErrorComment = " +  errorComment);
+            // System.out.println("DD_ErrorComment = " + errorComment);
 
             if (errorComment != null) {
                 str1 = str1 + errorComment + "\n";
@@ -230,57 +287,53 @@ public class DICOM_CRequest {
 
     /**
      * Sets the message ID to the value given. ID is used to distinguish messages from one another.
-     *
-     * @param  msgID  the new message ID
+     * 
+     * @param msgID the new message ID
      */
-    public final void setMsgID(int msgID) {
+    public final void setMsgID(final int msgID) {
         MSG_ID = msgID;
     }
 
     /**
      * Writes a DIMSE-C message.
-     *
-     * @param      pdu          the context pdu DICOMClientServer
-     * @param      transferSyntax     transfer syntax.
-     * @param      classUID     the SOP Class UID.
-     * @param      instanceUID  DOCUMENT ME!
-     * @param      ddo          the outgoing DICOM data object (null if none required)
-     * @param      AETitle      byte array to store the destination Application Entity title for C-Moves
-     *
-     * @exception  DICOM_Exception  DOCUMENT ME!
+     * 
+     * @param pdu the context pdu DICOMClientServer
+     * @param transferSyntax transfer syntax.
+     * @param classUID the SOP Class UID.
+     * @param instanceUID DOCUMENT ME!
+     * @param ddo the outgoing DICOM data object (null if none required)
+     * @param AETitle byte array to store the destination Application Entity title for C-Moves
+     * 
+     * @exception DICOM_Exception DOCUMENT ME!
      */
-    public void write(DICOM_PDUService pdu, String transferSyntax, String classUID, String instanceUID, DICOM_Object ddo, byte[] AETitle)
-            throws DICOM_Exception {
+    public void write(final DICOM_PDUService pdu, String transferSyntax, final String classUID,
+            final String instanceUID, final DICOM_Object ddo, final byte[] AETitle) throws DICOM_Exception {
 
         if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
             Preferences.debug(DICOM_Util.timeStamper() + " CRequest.write: Start \n");
         }
 
-        DICOM_Object dcor = new DICOM_Object();
+        final DICOM_Object dcor = new DICOM_Object();
 
         // these are filled in the order of the Part 7 Section 9.1.x charts...
         dcor.setInt16(DICOM_RTC.DD_CommandField, COMMAND);
         dcor.setInt16(DICOM_RTC.DD_MessageID, MSG_ID);
 
         DICOM_Util.determineSOPClassUIDAndPush(classUID, null, ddo, dcor);
-        
-		if ((COMMAND == DICOM_Constants.COMMAND_CStoreRQ) && (ddo != null)) {
-		
-			
-			dcor.setStr(DICOM_RTC.DD_AffectedSOPInstanceUID, instanceUID);
-		    // copy Affected SOP Instance UID
-		}
-		else if((COMMAND == DICOM_Constants.COMMAND_CStoreRQ)){
-	    	String s = ddo.getStr(DICOM_RTC.DD_SOPInstanceUID);
-			
-	        if (s != null) {
-	            dcor.setStr(DICOM_RTC.DD_AffectedSOPInstanceUID, s);
-	        }
-	    }
-		
-		
 
-        dcor.setInt16(DICOM_RTC.DD_Priority, MEDIUM); // See class definition for other priority codes
+        if ( (COMMAND == DICOM_Constants.COMMAND_CStoreRQ) && (ddo != null)) {
+
+            dcor.setStr(DICOM_RTC.DD_AffectedSOPInstanceUID, instanceUID);
+            // copy Affected SOP Instance UID
+        } else if ( (COMMAND == DICOM_Constants.COMMAND_CStoreRQ)) {
+            final String s = ddo.getStr(DICOM_RTC.DD_SOPInstanceUID);
+
+            if (s != null) {
+                dcor.setStr(DICOM_RTC.DD_AffectedSOPInstanceUID, s);
+            }
+        }
+
+        dcor.setInt16(DICOM_RTC.DD_Priority, DICOM_CRequest.MEDIUM); // See class definition for other priority codes
 
         if (ddo != null) {
             dcor.setInt16(DICOM_RTC.DD_DataSetType, DICOM_Constants.DSTYPE_DATAPRESENT);
@@ -294,11 +347,11 @@ public class DICOM_CRequest {
                 throw new DICOM_Exception("AETitle = Null");
             }
 
-            byte[] serverAETitle = new byte[16];
+            final byte[] serverAETitle = new byte[16];
             DICOM_Util.fillByteArray(serverAETitle, ' ');
             DICOM_Util.copyByteArray(serverAETitle, AETitle);
 
-            dcor.setStr(DICOM_RTC.DD_MoveDestination, fixMoveDestString(new String(serverAETitle)));
+            dcor.setStr(DICOM_RTC.DD_MoveDestination, DICOM_CRequest.fixMoveDestString(new String(serverAETitle)));
         }
 
         if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {

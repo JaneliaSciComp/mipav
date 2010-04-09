@@ -1,15 +1,67 @@
 package gov.nih.mipav.model.dicomcomm;
 
 
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.Preferences;
 
 
 /**
  * DICOM Value Representation. A VR is composed of 1. group 2. element 3. data
+ * 
+ * <hr>
+ * 
+ * This DICOM communication package was originally based on the Java Dicom Package, whose license is below:
+ * 
+ * <pre>
+ * Java Dicom Package (com.zmed.dicom)
+ * 
+ *  Copyright (c) 1996-1997 Z Medical Imaging Systems, Inc.
+ * 
+ *  This software is provided, as is, for non-commercial educational
+ *  purposes only.   Use or incorporation of this software or derivative
+ *  works in commercial applications requires written consent from
+ *  Z Medical Imaging Systems, Inc.
+ * 
+ *  Z MEDICAL IMAGING SYSTEMS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT
+ *  THE SUITABILITY OF THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING
+ *  BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
+ *  FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, OR CONFORMANCE TO ANY
+ *  SPECIFICATION OR STANDARD.  Z MEDICAL IMAGING SYSTEMS SHALL NOT BE
+ *  LIABLE FOR ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING OR
+ *  MODIFYING THIS SOFTWARE OR ITS DERIVATIVES.
+ * 
+ *  =============================================================================
+ * 
+ *  This software package is implemented similarly to the UC Davis public
+ *  domain C++ DICOM implementation which contains the following copyright
+ *  notice:
+ * 
+ *  Copyright (C) 1995, University of California, Davis
+ * 
+ *  THIS SOFTWARE IS MADE AVAILABLE, AS IS, AND THE UNIVERSITY
+ *  OF CALIFORNIA DOES NOT MAKE ANY WARRANTY ABOUT THE SOFTWARE, ITS
+ *  PERFORMANCE, ITS MERCHANTABILITY OR FITNESS FOR ANY PARTICULAR
+ *  USE, FREEDOM FROM ANY COMPUTER DISEASES OR ITS CONFORMITY TO ANY
+ *  SPECIFICATION. THE ENTIRE RISK AS TO QUALITY AND PERFORMANCE OF
+ *  THE SOFTWARE IS WITH THE USER.
+ * 
+ *  Copyright of the software and supporting documentation is
+ *  owned by the University of California, and free access
+ *  is hereby granted as a license to use this software, copy this
+ *  software and prepare derivative works based upon this software.
+ *  However, any distribution of this software source code or
+ *  supporting documentation or derivative works (source code and
+ *  supporting documentation) must include this copyright notice.
+ * 
+ *  The UC Davis C++ source code is publicly available from the following
+ *  anonymous ftp site:
+ * 
+ *  ftp://imrad.ucdmc.ucdavis.edu/pub/dicom/UCDMC/
+ * </pre>
  */
 public class DICOM_VR {
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** Actual data array of the the VR. */
     public byte[] data;
@@ -20,11 +72,11 @@ public class DICOM_VR {
     /** Represents the DICOM group number. */
     public int group;
 
-
     /** Inital DICOM type. */
     private int ddType = DICOM_RTC.DD_UNDEFINED;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Default constructor.
@@ -35,38 +87,38 @@ public class DICOM_VR {
 
     /**
      * Creates a new DICOM_VR object.
-     *
-     * @param  group    DICOM group number.
-     * @param  element  DICOM element number.
-     * @param  data     Actual data array of the the VR.
-     * @param  DDType   DOCUMENT ME!
+     * 
+     * @param group DICOM group number.
+     * @param element DICOM element number.
+     * @param data Actual data array of the the VR.
+     * @param DDType DOCUMENT ME!
      */
-    public DICOM_VR(int group, int element, byte[] data, int DDType) {
+    public DICOM_VR(final int group, final int element, final byte[] data, final int DDType) {
         initVR(group, element, data, DDType);
     }
 
     /**
      * Creates a new DICOM_VR object.
-     *
-     * @param  group    DICOM group number.
-     * @param  element  DICOM element number.
-     * @param  strData  String representation of the VR.
-     * @param  DDType   Type of group, element tag
+     * 
+     * @param group DICOM group number.
+     * @param element DICOM element number.
+     * @param strData String representation of the VR.
+     * @param DDType Type of group, element tag
      */
-    public DICOM_VR(int group, int element, String strData, int DDType) {
+    public DICOM_VR(final int group, final int element, final String strData, final int DDType) {
         initVR(group, element, strData.getBytes(), DDType);
     }
 
     /**
      * Creates a new DICOM_VR object.
-     *
-     * @param  group    DICOM group number.
-     * @param  element  DICOM element number.
-     * @param  val      Value of the VR.
-     * @param  size     DOCUMENT ME!
+     * 
+     * @param group DICOM group number.
+     * @param element DICOM element number.
+     * @param val Value of the VR.
+     * @param size DOCUMENT ME!
      */
-    public DICOM_VR(int group, int element, int val, int size) {
-        byte[] data = new byte[size];
+    public DICOM_VR(final int group, final int element, final int val, final int size) {
+        final byte[] data = new byte[size];
 
         switch (size) {
 
@@ -89,22 +141,24 @@ public class DICOM_VR {
         initVR(group, element, data, DICOM_RTC.DD_UNDEFINED);
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Reads a VR from a Buffer (network socket).
-     *
-     * @param   group     the group number
-     * @param   element   the element number
-     * @param   length    the length of the data to read
-     * @param   vrBuffer  the DICOM_Comms to read from
-     *
-     * @return  a created VR with the data inside
-     *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * 
+     * @param group the group number
+     * @param element the element number
+     * @param length the length of the data to read
+     * @param vrBuffer the DICOM_Comms to read from
+     * 
+     * @return a created VR with the data inside
+     * 
+     * @throws DICOM_Exception DOCUMENT ME!
      */
-    public static DICOM_VR readData(int group, int element, int length, DICOM_Comms vrBuffer) throws DICOM_Exception {
-        DICOM_VR vr = new DICOM_VR();
+    public static DICOM_VR readData(final int group, final int element, int length, final DICOM_Comms vrBuffer)
+            throws DICOM_Exception {
+        final DICOM_VR vr = new DICOM_VR();
 
         vr.group = group;
         vr.element = element;
@@ -122,13 +176,12 @@ public class DICOM_VR {
             }
         }
 
-
         try {
 
             // Take a look at the adding checking code here !
             vr.data = new byte[length];
             vrBuffer.read(vr.data, length);
-        } catch (NegativeArraySizeException arrexc) {
+        } catch (final NegativeArraySizeException arrexc) {
 
             if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                 Preferences.debug("DICOM_VR: caught negative array size; no End-of-sequence tag found!\n");
@@ -142,70 +195,70 @@ public class DICOM_VR {
 
     /**
      * Private functions to support the toString for debug purposes
-     *
-     * @param   value  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param value DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
 
     /**
      * Converts value to an unsigned integer and returns it as a long.
-     *
-     * @param   value  value to be converted to an unsigned short
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param value value to be converted to an unsigned short
+     * 
+     * @return DOCUMENT ME!
      */
-    public static final long unsignedInt(int value) {
-        return (((long) (value)) & 0xffffffff);
+    public static final long unsignedInt(final int value) {
+        return ( ((long) (value)) & 0xffffffff);
     }
 
     /**
      * Converts value to an unsigned short and returns it as an integer.
-     *
-     * @param   value  value to be converted to an unsigned short
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param value value to be converted to an unsigned short
+     * 
+     * @return DOCUMENT ME!
      */
-    public static final int unsignedShort(int value) {
-        return (((int) (value)) & 0xffff);
+    public static final int unsignedShort(final int value) {
+        return ( ( (value)) & 0xffff);
     }
 
     /**
      * Writes a VR to a DICOM_Comms (network socket).
-     *
-     * @param  vr        the VR to write
-     * @param  vrBuffer  the DICOM_Comms to write to
+     * 
+     * @param vr the VR to write
+     * @param vrBuffer the DICOM_Comms to write to
      */
-    public static final void writeData(DICOM_VR vr, DICOM_Comms vrBuffer) {
+    public static final void writeData(final DICOM_VR vr, final DICOM_Comms vrBuffer) {
         vrBuffer.write(vr.data, 0, vr.data.length);
     }
-    
+
     /**
      * Writes a VR to a DICOM_Comms (network socket).
-     *
-     * @param  vr        the VR to write
-     * @param  vrBuffer  the DICOM_Comms to write to
-     * @param ioBuffer 
+     * 
+     * @param vr the VR to write
+     * @param vrBuffer the DICOM_Comms to write to
+     * @param ioBuffer
      */
-    public static final void writeDataIn(DICOM_VR vr, DICOM_Comms vrBuffer, DICOM_FileIO ioBuffer) {
+    public static final void writeDataIn(final DICOM_VR vr, final DICOM_Comms vrBuffer, final DICOM_FileIO ioBuffer) {
         vrBuffer.writeIn(vr.data, 0, vr.data.length, ioBuffer);
     }
 
     /**
      * Returns a deep copy the VR.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public DICOM_VR copy() {
-        DICOM_VR vr = new DICOM_VR(this.group, this.element, this.data, ddType);
+        final DICOM_VR vr = new DICOM_VR(this.group, this.element, this.data, ddType);
 
         return vr;
     }
 
     /**
      * Gets the index for this VR.
-     *
-     * @return  the index
+     * 
+     * @return the index
      */
     public final int getDDType() {
         int ddType;
@@ -221,8 +274,8 @@ public class DICOM_VR {
 
     /**
      * Gets the type code for this VR.
-     *
-     * @return  the type code
+     * 
+     * @return the type code
      */
     public final int getTypeCode() {
         return (DICOM_RTC.getTypeCode(getDDType()));
@@ -230,13 +283,13 @@ public class DICOM_VR {
 
     /**
      * Initializes the VR.
-     *
-     * @param  group    DICOM group number.
-     * @param  element  DICOM element number.
-     * @param  data     the data associated with this VR
-     * @param  DDType   DOCUMENT ME!
+     * 
+     * @param group DICOM group number.
+     * @param element DICOM element number.
+     * @param data the data associated with this VR
+     * @param DDType DOCUMENT ME!
      */
-    public void initVR(int group, int element, byte[] data, int DDType) {
+    public void initVR(final int group, final int element, final byte[] data, final int DDType) {
         this.group = group;
         this.element = element;
         this.ddType = DDType;
@@ -244,20 +297,19 @@ public class DICOM_VR {
         makeDataEven(data);
     }
 
-
     /**
      * Creates a string representation of this VR.
-     *
-     * @param   str  VR information is concatenated to this string
-     *
-     * @return  the debug string
+     * 
+     * @param str VR information is concatenated to this string
+     * 
+     * @return the debug string
      */
-    public String toString(String str) {
+    public String toString(final String str) {
         int typeCode;
         String typeCodeName;
         String description;
         String strDataLength;
-        int ddType = getDDType();
+        final int ddType = getDDType();
 
         typeCode = DICOM_RTC.getTypeCode(ddType);
         typeCodeName = DICOM_RTC.getTypeCodeName(ddType);
@@ -266,28 +318,27 @@ public class DICOM_VR {
         strDataLength = "                           " + data.length;
         strDataLength = strDataLength.substring(strDataLength.length() - 8);
 
-        return (str + ": VR( " + DICOM_Util.toHexString((short) group) + ", " +
-                DICOM_Util.toHexString((short) element) + " ) " + "(" + DICOM_Util.padAndOrTruncate(description, 40) +
-                " ) \t\t\t" + "[" + DICOM_Util.padAndOrTruncate(typeCodeName, 2) + " ] " + "[" + strDataLength + " ] " +
-                "= " + dataToString(this, typeCode));
+        return (str + ": VR( " + DICOM_Util.toHexString((short) group) + ", " + DICOM_Util.toHexString((short) element)
+                + " ) " + "(" + DICOM_Util.padAndOrTruncate(description, 40) + " ) \t\t\t" + "["
+                + DICOM_Util.padAndOrTruncate(typeCodeName, 2) + " ] " + "[" + strDataLength + " ] " + "= " + DICOM_VR
+                .dataToString(this, typeCode));
     }
 
     /**
      * Build a string reprsentation of the Data based on the VR type. Only used by the "toString" of this class.
-     *
-     * @param   vr        the data to converted into a string in this the value representation object
-     * @param   typeCode  type of VR
-     *
-     * @return  the string representation
+     * 
+     * @param vr the data to converted into a string in this the value representation object
+     * @param typeCode type of VR
+     * 
+     * @return the string representation
      */
-    private static String dataToString(DICOM_VR vr, int typeCode) {
+    private static String dataToString(final DICOM_VR vr, final int typeCode) {
         int index;
         String str = "";
         byte[] data = vr.data;
 
-
         if (data.length > 64) {
-            byte[] newdata = new byte[64];
+            final byte[] newdata = new byte[64];
 
             for (index = 0; index < 64; index++) {
                 newdata[index] = data[index];
@@ -303,7 +354,7 @@ public class DICOM_VR {
             switch (typeCode) {
 
                 case DICOM_RTC.TYPE_UNKNOWN:
-                    if (isDataAlpha(data)) {
+                    if (DICOM_VR.isDataAlpha(data)) {
                         str += "\"" + new String(data) + "\"";
                     } else {
 
@@ -333,11 +384,11 @@ public class DICOM_VR {
                 case DICOM_RTC.TYPE_AT:
                     for (index = 0; index < data.length; index += 4) {
                         str += "(";
-                        str += DICOM_Util.toHexString2((int) data[index]);
-                        str += DICOM_Util.toHexString2((int) data[index + 1]);
+                        str += DICOM_Util.toHexString2(data[index]);
+                        str += DICOM_Util.toHexString2(data[index + 1]);
                         str += ", ";
-                        str += DICOM_Util.toHexString2((int) data[index + 2]);
-                        str += DICOM_Util.toHexString2((int) data[index + 3]);
+                        str += DICOM_Util.toHexString2(data[index + 2]);
+                        str += DICOM_Util.toHexString2(data[index + 3]);
                         str += ") ";
                     }
 
@@ -345,7 +396,7 @@ public class DICOM_VR {
 
                 case DICOM_RTC.TYPE_OB:
                     for (index = 0; index < data.length; index++) {
-                        str += DICOM_Util.toHexString((int) data[index]);
+                        str += DICOM_Util.toHexString(data[index]);
                         str += " ";
                     }
 
@@ -353,8 +404,8 @@ public class DICOM_VR {
 
                 case DICOM_RTC.TYPE_OW:
                     for (index = 0; index < data.length; index += 2) {
-                        str += DICOM_Util.toHexString((int) data[index]);
-                        str += DICOM_Util.toHexString((int) data[index + 1]);
+                        str += DICOM_Util.toHexString(data[index]);
+                        str += DICOM_Util.toHexString(data[index + 1]);
                         str += " ";
                     }
 
@@ -366,7 +417,7 @@ public class DICOM_VR {
 
                 case DICOM_RTC.TYPE_UL:
                     for (index = 0; index < data.length; index += 4) {
-                        str += unsignedInt(DICOM_Comms.bufferToInt32(data, index, DICOM_Comms.LITTLE_ENDIAN));
+                        str += DICOM_VR.unsignedInt(DICOM_Comms.bufferToInt32(data, index, DICOM_Comms.LITTLE_ENDIAN));
                         str += " ";
                     }
 
@@ -377,18 +428,19 @@ public class DICOM_VR {
                     // case DICOM_RTC.TYPE_US_or_SS:
                     // case DICOM_RTC.TYPE_US_US_or_SS_US:
                     // case DICOM_RTC.TYPE_US_or_SS_or_OW:
-                    if ((vr.group == 0x0000) &&
-                            ((vr.element == 0x0100) || (vr.element == 0x0800) || (vr.element == 0x0900))) {
+                    if ( (vr.group == 0x0000)
+                            && ( (vr.element == 0x0100) || (vr.element == 0x0800) || (vr.element == 0x0900))) {
 
                         for (index = 0; index < data.length; index += 2) {
                             str += DICOM_Util.toHexString((short) DICOM_Comms.bufferToInt16(data, index,
-                                                                                            DICOM_Comms.LITTLE_ENDIAN));
+                                    DICOM_Comms.LITTLE_ENDIAN));
                             str += "h ";
                         }
                     } else {
 
                         for (index = 0; index < data.length; index += 2) {
-                            str += unsignedShort(DICOM_Comms.bufferToInt16(data, index, DICOM_Comms.LITTLE_ENDIAN));
+                            str += DICOM_VR.unsignedShort(DICOM_Comms.bufferToInt16(data, index,
+                                    DICOM_Comms.LITTLE_ENDIAN));
                             str += " ";
                         }
                     }
@@ -425,17 +477,16 @@ public class DICOM_VR {
         return (str.trim());
     }
 
-
     /**
      * Determines if a byte is an alpha character.
-     *
-     * @param   ch  character to be tested
-     *
-     * @return  true if byte is an alpha character else false
+     * 
+     * @param ch character to be tested
+     * 
+     * @return true if byte is an alpha character else false
      */
-    private static boolean isAlpha(byte ch) {
+    private static boolean isAlpha(final byte ch) {
 
-        if (((ch >= ' ') && (ch <= 125)) || (ch == 0)) {
+        if ( ( (ch >= ' ') && (ch <= 125)) || (ch == 0)) {
             return (true);
         }
 
@@ -444,12 +495,12 @@ public class DICOM_VR {
 
     /**
      * Determines if data byte array is a string of characters.
-     *
-     * @param   data  array of bytes
-     *
-     * @return  if all bytes in data are alpha characters return true.
+     * 
+     * @param data array of bytes
+     * 
+     * @return if all bytes in data are alpha characters return true.
      */
-    private static boolean isDataAlpha(byte[] data) {
+    private static boolean isDataAlpha(final byte[] data) {
         int size = data.length;
 
         if (size > 16) {
@@ -462,7 +513,7 @@ public class DICOM_VR {
 
         while (size-- > 0) {
 
-            if (!isAlpha(data[size])) {
+            if ( !DICOM_VR.isAlpha(data[size])) {
                 return (false);
             }
         }
@@ -472,31 +523,31 @@ public class DICOM_VR {
 
     /**
      * Make the length of the data buffer even by adding a space or null.
-     *
-     * @param  _data  Array that will be made to have an even length.
+     * 
+     * @param _data Array that will be made to have an even length.
      */
-    private void makeDataEven(byte[] _data) {
+    private void makeDataEven(final byte[] _data) {
         int index;
         // \\00;
-        // String nullStr  = new String("z");
+        // String nullStr = new String("z");
         // String spaceStr = new String("");
 
         if (_data == null) {
             return;
         }
 
-        if ((_data.length % 2) == 0) {
+        if ( (_data.length % 2) == 0) {
             data = _data;
 
             return;
         } else {
-            byte[] newData = new byte[_data.length + 1];
+            final byte[] newData = new byte[_data.length + 1];
 
             for (index = 0; index < _data.length; index++) {
                 newData[index] = _data[index];
             }
 
-            int typeCode = DICOM_RTC.getTypeCode(ddType);
+            final int typeCode = DICOM_RTC.getTypeCode(ddType);
 
             switch (typeCode) {
 
@@ -532,6 +583,5 @@ public class DICOM_VR {
             data = newData;
         }
     }
-
 
 }

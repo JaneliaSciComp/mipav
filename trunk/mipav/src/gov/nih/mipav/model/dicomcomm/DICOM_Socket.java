@@ -1,24 +1,76 @@
 package gov.nih.mipav.model.dicomcomm;
 
 
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.Preferences;
 
 import java.io.*;
-
 import java.net.*;
 
 
 /**
  * Simple class to setup and the socket and streams.
+ * 
+ * <hr>
+ * 
+ * This DICOM communication package was originally based on the Java Dicom Package, whose license is below:
+ * 
+ * <pre>
+ * Java Dicom Package (com.zmed.dicom)
+ * 
+ *  Copyright (c) 1996-1997 Z Medical Imaging Systems, Inc.
+ * 
+ *  This software is provided, as is, for non-commercial educational
+ *  purposes only.   Use or incorporation of this software or derivative
+ *  works in commercial applications requires written consent from
+ *  Z Medical Imaging Systems, Inc.
+ * 
+ *  Z MEDICAL IMAGING SYSTEMS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT
+ *  THE SUITABILITY OF THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING
+ *  BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
+ *  FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, OR CONFORMANCE TO ANY
+ *  SPECIFICATION OR STANDARD.  Z MEDICAL IMAGING SYSTEMS SHALL NOT BE
+ *  LIABLE FOR ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING OR
+ *  MODIFYING THIS SOFTWARE OR ITS DERIVATIVES.
+ * 
+ *  =============================================================================
+ * 
+ *  This software package is implemented similarly to the UC Davis public
+ *  domain C++ DICOM implementation which contains the following copyright
+ *  notice:
+ * 
+ *  Copyright (C) 1995, University of California, Davis
+ * 
+ *  THIS SOFTWARE IS MADE AVAILABLE, AS IS, AND THE UNIVERSITY
+ *  OF CALIFORNIA DOES NOT MAKE ANY WARRANTY ABOUT THE SOFTWARE, ITS
+ *  PERFORMANCE, ITS MERCHANTABILITY OR FITNESS FOR ANY PARTICULAR
+ *  USE, FREEDOM FROM ANY COMPUTER DISEASES OR ITS CONFORMITY TO ANY
+ *  SPECIFICATION. THE ENTIRE RISK AS TO QUALITY AND PERFORMANCE OF
+ *  THE SOFTWARE IS WITH THE USER.
+ * 
+ *  Copyright of the software and supporting documentation is
+ *  owned by the University of California, and free access
+ *  is hereby granted as a license to use this software, copy this
+ *  software and prepare derivative works based upon this software.
+ *  However, any distribution of this software source code or
+ *  supporting documentation or derivative works (source code and
+ *  supporting documentation) must include this copyright notice.
+ * 
+ *  The UC Davis C++ source code is publicly available from the following
+ *  anonymous ftp site:
+ * 
+ *  ftp://imrad.ucdmc.ucdavis.edu/pub/dicom/UCDMC/
+ * </pre>
  */
 public class DICOM_Socket {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    public static final int timeout = 6000000; // 100 minute read timeout  -- seems big
+    public static final int timeout = 6000000; // 100 minute read timeout -- seems big
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** Flag indicating whether of not the socket is connected. */
     public boolean connected = false;
@@ -32,23 +84,25 @@ public class DICOM_Socket {
     /** Socket object. */
     public Socket socket = null;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * DICOMSocket constructor.
      */
-    public DICOM_Socket() { }
+    public DICOM_Socket() {}
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Attaches this DICOMSocket to a JAVA socket.
-     *
-     * @param   socket  the socket to attach
-     *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * 
+     * @param socket the socket to attach
+     * 
+     * @throws DICOM_Exception DOCUMENT ME!
      */
-    public void attach(Socket socket) throws DICOM_Exception {
+    public void attach(final Socket socket) throws DICOM_Exception {
 
         close();
 
@@ -59,12 +113,12 @@ public class DICOM_Socket {
         this.socket = socket;
 
         try {
-            socket.setSoTimeout(timeout);
+            socket.setSoTimeout(DICOM_Socket.timeout);
 
             inStream = socket.getInputStream();
             outStream = socket.getOutputStream();
             connected = true;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             close();
             throw new DICOM_Exception("DICOMSocket attach( " + socket + " ):" + e);
         }
@@ -75,7 +129,7 @@ public class DICOM_Socket {
      */
     public void close() {
 
-        if ((socket != null) && (connected == true)) {
+        if ( (socket != null) && (connected == true)) {
 
             try {
 
@@ -86,7 +140,7 @@ public class DICOM_Socket {
                 socket.close();
                 inStream.close();
                 outStream.close();
-            } catch (Exception e) { }
+            } catch (final Exception e) {}
         }
 
         socket = null;
@@ -97,21 +151,21 @@ public class DICOM_Socket {
 
     /**
      * Open (and connect) a socket.
-     *
-     * @param   ip    the ip address to connect to
-     * @param   port  the port number to connect to
-     *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * 
+     * @param ip the ip address to connect to
+     * @param port the port number to connect to
+     * 
+     * @throws DICOM_Exception DOCUMENT ME!
      */
-    public void open(String ip, int port) throws DICOM_Exception {
+    public void open(final String ip, final int port) throws DICOM_Exception {
 
         // Close any open sockets first
         close();
 
         try {
-            Socket socket = new Socket(InetAddress.getByName(ip), port);
+            final Socket socket = new Socket(InetAddress.getByName(ip), port);
             attach(socket);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             close();
             throw new DICOM_Exception("DICOMSocket.open( " + ip + ", " + port + " ):" + e);
         }
@@ -119,21 +173,21 @@ public class DICOM_Socket {
 
     /**
      * Low level socket read.
-     *
-     * @param   data   buffer to store the data
-     * @param   count  number of bytes to be read
-     *
-     * @return  DOCUMENT ME!
-     *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * 
+     * @param data buffer to store the data
+     * @param count number of bytes to be read
+     * 
+     * @return DOCUMENT ME!
+     * 
+     * @throws DICOM_Exception DOCUMENT ME!
      */
-    public int readBinary(byte[] data, int count) throws DICOM_Exception {
+    public int readBinary(final byte[] data, final int count) throws DICOM_Exception {
         int actual = 0;
 
         try {
 
-            // Preferences.debug( "\n" +  DICOM_Util.timeStamper() + " **** DICOMSocket.readBinary: data buffer length =
-            // " +     data.length + " byte count requested = " + count  +" **** \n");
+            // Preferences.debug( "\n" + DICOM_Util.timeStamper() + " **** DICOMSocket.readBinary: data buffer length =
+            // " + data.length + " byte count requested = " + count +" **** \n");
             if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                 Preferences.debug("DICOMSocket readBinary( socket = " + socket + ") \n");
             }
@@ -142,22 +196,21 @@ public class DICOM_Socket {
 
             // System.out.println("actual = " + actual);
             if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
-                Preferences.debug("\n" + DICOM_Util.timeStamper() + " **** DICOMSocket.readBinary: length" + actual +
-                                  " **** \n");
+                Preferences.debug("\n" + DICOM_Util.timeStamper() + " **** DICOMSocket.readBinary: length" + actual
+                        + " **** \n");
             }
 
             if (actual < 0) {
                 close();
 
                 if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
-                    Preferences.debug(DICOM_Util.timeStamper() + " DICOMSocket.readBinary( Trying to read nBytes = " +
-                                      count + " ) actual = " + actual + " \n");
+                    Preferences.debug(DICOM_Util.timeStamper() + " DICOMSocket.readBinary( Trying to read nBytes = "
+                            + count + " ) actual = " + actual + " \n");
                 }
 
-                throw new DICOM_Exception("DICOMSocket.readBinary( Trying to read nBytes = " + count + " ) = " +
-                                          actual);
+                throw new DICOM_Exception("DICOMSocket.readBinary( Trying to read nBytes = " + count + " ) = " + actual);
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             /*
              * if (e instanceof BindException) { System.out.println("BindException "); } if (e instanceof
              * ConnectException) { System.out.println("ConnectionException "); } if (e instanceof
@@ -169,8 +222,8 @@ public class DICOM_Socket {
             // Preferences.debug("DICOMSocket readBinary( socket = " + socket + ") \n"); Preferences.debug( "\n" +
             // DICOM_Util.timeStamper() + " **** DICOMSocket.readBinary: length " + actual +" **** \n");
             if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
-                Preferences.debug("\n" + DICOM_Util.timeStamper() + " DICOMSocket.readBinary: IOException - " + e +
-                                  "\n");
+                Preferences.debug("\n" + DICOM_Util.timeStamper() + " DICOMSocket.readBinary: IOException - " + e
+                        + "\n");
             }
 
             close();
@@ -178,7 +231,7 @@ public class DICOM_Socket {
         }
 
         if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
-            showDataBuffer(data, 0, actual);
+            DICOM_Socket.showDataBuffer(data, 0, actual);
         }
 
         return (actual);
@@ -186,14 +239,14 @@ public class DICOM_Socket {
 
     /**
      * Low level socket write.
-     *
-     * @param   data    buffer of data send out the port (connection)\
-     * @param   offset  offset
-     * @param   count   number of bytes to be sent
-     *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * 
+     * @param data buffer of data send out the port (connection)\
+     * @param offset offset
+     * @param count number of bytes to be sent
+     * 
+     * @throws DICOM_Exception DOCUMENT ME!
      */
-    public void writeBinary(byte[] data, int offset, int count) throws DICOM_Exception {
+    public void writeBinary(final byte[] data, final int offset, final int count) throws DICOM_Exception {
 
         try {
 
@@ -207,26 +260,26 @@ public class DICOM_Socket {
             if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                 Preferences.debug("\n" + DICOM_Util.timeStamper() + " **** DICOMSocket.writeBinary: ****\n");
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             close();
             throw new DICOM_Exception("DICOMSocket writeBinary( " + data + ", " + offset + ", " + count + " ):" + e);
         }
 
         if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
-            showDataBuffer(data, offset, count);
+            DICOM_Socket.showDataBuffer(data, offset, count);
         }
     }
 
     /**
      * Simple utility to convert a number to ASCII.
-     *
-     * @param   num  an ASCII number
-     *
-     * @return  a string with the corresponding ASCII value.
+     * 
+     * @param num an ASCII number
+     * 
+     * @return a string with the corresponding ASCII value.
      */
-    private static char convertToASCII(int num) {
+    private static char convertToASCII(final int num) {
 
-        if ((num < 32) || (num > 126)) {
+        if ( (num < 32) || (num > 126)) {
             return ('_');
         }
 
@@ -524,12 +577,12 @@ public class DICOM_Socket {
 
     /**
      * Simple utility to convert a number [0:15] to hex.
-     *
-     * @param   num  a number [0:15] to be converted to hex String
-     *
-     * @return  hex string. If number is outside range then a space is returned.
+     * 
+     * @param num a number [0:15] to be converted to hex String
+     * 
+     * @return hex string. If number is outside range then a space is returned.
      */
-    private static char convertToHex(int num) {
+    private static char convertToHex(final int num) {
 
         switch (Math.abs(num)) {
 
@@ -587,12 +640,12 @@ public class DICOM_Socket {
 
     /**
      * Utility method to dump hex and ASCII to the MIPAV debug frame.
-     *
-     * @param  data    data buffer to be displayed
-     * @param  offset  starting offset
-     * @param  count   number of bytes to be displayed from data buffer
+     * 
+     * @param data data buffer to be displayed
+     * @param offset starting offset
+     * @param count number of bytes to be displayed from data buffer
      */
-    private static synchronized void showDataBuffer(byte[] data, int offset, int count) {
+    private static synchronized void showDataBuffer(final byte[] data, final int offset, final int count) {
         int i, j, k, ih;
         int end = 4096; // 512;
 
@@ -604,21 +657,21 @@ public class DICOM_Socket {
             end = offset + count;
         }
 
-        char[] ASCIIchar = new char[65];
+        final char[] ASCIIchar = new char[65];
 
         for (i = offset, ih = 0; i < end; i++) {
-            ASCIIchar[ih++] = convertToHex((data[i] & 0xff) / 16);
-            ASCIIchar[ih++] = convertToHex((data[i] & 0xff) % 16);
+            ASCIIchar[ih++] = DICOM_Socket.convertToHex( (data[i] & 0xff) / 16);
+            ASCIIchar[ih++] = DICOM_Socket.convertToHex( (data[i] & 0xff) % 16);
             ASCIIchar[ih++] = ' ';
 
-            if (((i + 1) % 16) == 0) {
+            if ( ( (i + 1) % 16) == 0) {
                 ih = 0;
 
                 // Show ASCII for 16 bytes of HEX
                 ASCIIchar[48] = ' ';
 
                 for (j = 15, k = 0; j >= 0; k++, j--) {
-                    ASCIIchar[49 + k] = convertToASCII(data[i - j] & 0xff);
+                    ASCIIchar[49 + k] = DICOM_Socket.convertToASCII(data[i - j] & 0xff);
                 }
 
                 if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
@@ -643,7 +696,7 @@ public class DICOM_Socket {
             }
 
             for (i = count % 16, j = 0; i > 0; i--, j++) {
-                ASCIIchar[49 + j] = convertToASCII(data[count - i] & 0xff);
+                ASCIIchar[49 + j] = DICOM_Socket.convertToASCII(data[count - i] & 0xff);
             }
 
             if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
