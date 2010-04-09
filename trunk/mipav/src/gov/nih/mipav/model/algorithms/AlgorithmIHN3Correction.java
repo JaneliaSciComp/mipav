@@ -6,44 +6,78 @@ import gov.nih.mipav.model.structures.jama.JamaMatrix;
 
 import gov.nih.mipav.view.*;
 
-import java.io.*;
-
+import java.io.IOException;
 import java.util.*;
 
 
 /**
- * <p>N3 Inhomogeneity correction This is based on code by John G. Sled, McConnell Brain Imaging Centre, Montreal
+ * <p>
+ * N3 Inhomogeneity correction This is based on code by John G. Sled, McConnell Brain Imaging Centre, Montreal
  * Neurological Institute, McGill University Information may be found at: http://www.bic.mni.mcgill.ca/software/N3/
- * Bibliography:</p>
- *
- * <p>1. J.G. Sled, A.P. Zijdenbos, and A.C. Evans, "A non-parametric method for automatic correction of intensity
- * non-uniformity in MRI data," IEEE Transactions on Medical Imaging, vol. 17, pp. 87-97, February, 1998.</p>
- *
- * <p>2. J.G. Sled, A.P. Zijdenbos, and A.C. Evans, "A comparison of retrospective intensity non-uniformity correction
- * methods for MRI," in Information Processing in Medical Imaging, pp. 459-464, 1997.</p>
- *
- * <p>3. J.G. Sled, "A non-parametric method for automatic correction of intensity non-uniformity in MRI data," Master's
- * thesis, McGill University, Montreal, QC, May, 1997.</p>
- *
- * <p>The N3 method should work with any MR volume including raw (non-stereotaxic) data.</p>
- *
- * <p>An artifact often seen in MRI is for the signal intensity to vary smoothly across an image. Variously referred to
- * as RF inhomogeneity, shading artifact, or intensity non-uniformity, it is usually attributed to such factors as poor
+ * Bibliography:
+ * </p>
+ * 
+ * <p>
+ * 1. J.G. Sled, A.P. Zijdenbos, and A.C. Evans, "A non-parametric method for automatic correction of intensity
+ * non-uniformity in MRI data," IEEE Transactions on Medical Imaging, vol. 17, pp. 87-97, February, 1998.
+ * </p>
+ * 
+ * <p>
+ * 2. J.G. Sled, A.P. Zijdenbos, and A.C. Evans, "A comparison of retrospective intensity non-uniformity correction
+ * methods for MRI," in Information Processing in Medical Imaging, pp. 459-464, 1997.
+ * </p>
+ * 
+ * <p>
+ * 3. J.G. Sled, "A non-parametric method for automatic correction of intensity non-uniformity in MRI data," Master's
+ * thesis, McGill University, Montreal, QC, May, 1997.
+ * </p>
+ * 
+ * <p>
+ * The N3 method should work with any MR volume including raw (non-stereotaxic) data.
+ * </p>
+ * 
+ * <p>
+ * An artifact often seen in MRI is for the signal intensity to vary smoothly across an image. Variously referred to as
+ * RF inhomogeneity, shading artifact, or intensity non-uniformity, it is usually attributed to such factors as poor
  * radio frequency(RF) field uniformity, eddy currents driven by switching of field gradients, and patient anatomy both
- * inside and outside the field of view.</p>
- *
- * <p>This code corrects intensity non-uniformity in MR data without requiring supervision. This method can be applied
+ * inside and outside the field of view.
+ * </p>
+ * 
+ * <p>
+ * This code corrects intensity non-uniformity in MR data without requiring supervision. This method can be applied
  * without a tissue intensity or geometric model. Described as Non-parametric Non_uniform intensity Normalization (N3),
  * the method is independent of pulse sequence and insensitive to pathological data that might otherwise violate model
  * assumptions. To eliminate the dependence of the field estimate on anatomy, an iterative approach is employed to
  * estimate both the multiplicative bias field and the distribution of true tissue intensities. Preprocessing of MR data
  * using N3 has been shown to substantially improve the accuracy of anatomical analysis techniques such as tissue
- * classification and cortical surface extraction.</p>
+ * classification and cortical surface extraction.
+ * </p>
+ * 
+ * <hr>
+ * 
+ * <p>
+ * From John G. Sled's original N3 code:
+ * 
+ * <blockquote>
+ * 
+ * <pre>
+ * Copyright 1996, John G. Sled
+ * McConnell Brain Imaging Centre,
+ * Montreal Neurological Institute, McGill University.
+ * 
+ * Permission to use, copy, modify, and distribute this software and its documentation for any purpose and without fee
+ * is hereby granted, provided that the above copyright notice appear in all copies. The author and McGill University
+ * make no representations about the suitability of this software for any purpose. It is provided &quot;as is&quot; without
+ * express or implied warranty.
+ * </pre>
+ * 
+ * </blockquote>
+ * </p>
  */
-
 public class AlgorithmIHN3Correction extends AlgorithmBase {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** inverse FFT */
     public static final int INVERSE = -1;
@@ -54,7 +88,8 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
     /** DOCUMENT ME! */
     public static final int spline = 4; // splines are cubic
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private float[][] AtA;
@@ -66,8 +101,8 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
     private double[][] AtF;
 
     /**
-     * If true determines the threshold by histogram analysis.
-     * If true a VOI cannot be used and the input threshold is ignored.
+     * If true determines the threshold by histogram analysis. If true a VOI cannot be used and the input threshold is
+     * ignored.
      */
     private boolean autoThreshold = false;
 
@@ -75,7 +110,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
     private float[][][][] bendingMatrix;
 
     /** DOCUMENT ME! */
-    private int binNumber = 200;
+    private final int binNumber = 200;
 
     /** Histogram bin width. */
     private float binWidth;
@@ -89,17 +124,11 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
     /** DOCUMENT ME! */
     private float[] blurR;
 
-
     /** Buffer for original source image. */
     private float[] buffer;
 
     /** DOCUMENT ME! */
-    private float[][] bW = {
-        { -1, 3, -3, 1 },
-        { 3, -6, 0, 4 },
-        { -3, 3, 3, 1 },
-        { 1, 0, 0, 0 }
-    };
+    private final float[][] bW = { { -1, 3, -3, 1}, {3, -6, 0, 4}, { -3, 3, 3, 1}, {1, 0, 0, 0}};
 
     /** DOCUMENT ME! */
     private float[] CArray;
@@ -171,7 +200,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
     private float[] fHistPaddedR;
 
     /** Lowest allowable field value. */
-    private float field_floor = 0.1f;
+    private final float field_floor = 0.1f;
 
     /** DOCUMENT ME! */
     private float[] fieldBuffer;
@@ -254,7 +283,6 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private double[][] JArray;
-
 
     /**
      * Width of deconvolution kernel used to sharpen the histogram. Larger values give faster convergence while smaller
@@ -343,12 +371,11 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
     /** DOCUMENT ME! */
     private int order;
 
-
     /** DOCUMENT ME! */
     private int[] orgDim;
 
     /** Distance per pixel in millimeters. */
-    private float[] orgResol;
+    private final float[] orgResol;
 
     /** DOCUMENT ME! */
     private int padded_size;
@@ -377,7 +404,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
     /**
      * The factor by which the data is subsampled to a lower resolution in estimating the slowly varying non-uniformity
      * field. Reduce sampling in the finest sampling direction by the shrink factor. Reduce other sampling directions
-     * only if resolution is less than shrink times original minimum resolution.  Uses nearest neighbor resampling.
+     * only if resolution is less than shrink times original minimum resolution. Uses nearest neighbor resampling.
      */
     private float shrink = 4.0f;
 
@@ -406,10 +433,10 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
     private float sourceMin, sourceMax;
 
     /** DOCUMENT ME! */
-    private float spline_lambda = 1.0f;
+    private final float spline_lambda = 1.0f;
 
     /** DOCUMENT ME! */
-    private float spline_subsample = 1.0f;
+    private final float spline_subsample = 1.0f;
 
     /** DOCUMENT ME! */
     private double sqrtNum;
@@ -460,8 +487,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
     private int transformDir;
 
     /** DOCUMENT ME! */
-    //private TransMatrix transMatrix;
-
+    // private TransMatrix transMatrix;
     /** DOCUMENT ME! */
     private int[] upper;
 
@@ -496,8 +522,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
     private float xf;
 
     /** DOCUMENT ME! */
-    //private float[][] xfrm;
-
+    // private float[][] xfrm;
     /** DOCUMENT ME! */
     private int xo, xyo;
 
@@ -519,37 +544,37 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
     /** DOCUMENT ME! */
     private double zeroMoment1;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates a new AlgorithmIHN3Correction object.
-     *
-     * @param  destImg         image model where result image is to stored
-     * @param  fieldImg        image model where used field is stored
-     * @param  srcImg          source image model
-     * @param  _threshold      Values at less than _threshold are treated as part of the background
-     * @param  _maxIters       Maximum number of iterations
-     * @param  _endTol         The measure used to terminate the iterations is the coefficient of variation
-     *                         of change in field estimates between successive iterations.
-     * @param  _fieldDistance  Characteristic distance over which the field varies. The distance between
-     *                         adjacent knots in bspline fitting with at least 4 knots going in every dimension.
-     *                         The default in the dialog is one third the distance (resolution * extents) of the
-     *                         smallest dimension.
-     * @param  _shrink         The factor by which the data is subsampled to a lower resolution in estimating
-     *                         the slowly varying non-uniformity field. Reduce sampling in the finest sampling
-     *                         direction by the shrink factor.
-     * @param  _kernelfwhm     Width of deconvolution kernel used to sharpen the histogram. Larger values give
-     *                         faster convergence while smaller values give greater accuracy.
-     * @param  _noise          Noise used in Weiner filter
-     * @param  _entireImage    If true, the N3 method is applied to the entire image.
-     *                         If false, the N3 method is applied only to the region of interest.
-     * @param  _autoThreshold  If true determines the threshold by histogram analysis.
-     *                         If true a VOI cannot be used and the input threshold is ignored.
-     * @param  useScript       If true, the program is run from a script
+     * 
+     * @param destImg image model where result image is to stored
+     * @param fieldImg image model where used field is stored
+     * @param srcImg source image model
+     * @param _threshold Values at less than _threshold are treated as part of the background
+     * @param _maxIters Maximum number of iterations
+     * @param _endTol The measure used to terminate the iterations is the coefficient of variation of change in field
+     *            estimates between successive iterations.
+     * @param _fieldDistance Characteristic distance over which the field varies. The distance between adjacent knots in
+     *            bspline fitting with at least 4 knots going in every dimension. The default in the dialog is one third
+     *            the distance (resolution * extents) of the smallest dimension.
+     * @param _shrink The factor by which the data is subsampled to a lower resolution in estimating the slowly varying
+     *            non-uniformity field. Reduce sampling in the finest sampling direction by the shrink factor.
+     * @param _kernelfwhm Width of deconvolution kernel used to sharpen the histogram. Larger values give faster
+     *            convergence while smaller values give greater accuracy.
+     * @param _noise Noise used in Weiner filter
+     * @param _entireImage If true, the N3 method is applied to the entire image. If false, the N3 method is applied
+     *            only to the region of interest.
+     * @param _autoThreshold If true determines the threshold by histogram analysis. If true a VOI cannot be used and
+     *            the input threshold is ignored.
+     * @param useScript If true, the program is run from a script
      */
-    public AlgorithmIHN3Correction(ModelImage destImg, ModelImage fieldImg, ModelImage srcImg, float _threshold,
-                                   int _maxIters, float _endTol, float _fieldDistance, float _shrink, float _kernelfwhm,
-                                   float _noise, boolean _entireImage, boolean _autoThreshold, boolean useScript) {
+    public AlgorithmIHN3Correction(final ModelImage destImg, final ModelImage fieldImg, final ModelImage srcImg,
+            final float _threshold, final int _maxIters, final float _endTol, final float _fieldDistance,
+            final float _shrink, final float _kernelfwhm, final float _noise, final boolean _entireImage,
+            final boolean _autoThreshold, final boolean useScript) {
 
         super(destImg, srcImg);
         fieldImage = fieldImg;
@@ -570,7 +595,8 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         }
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Prepares this class for destruction.
@@ -591,8 +617,6 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             return;
         }
 
-        
-
         if (srcImage.getNDims() == 2) {
             nDimensions = 2;
             IHN3Correction2();
@@ -607,7 +631,6 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             return;
         }
     }
-
 
     /**
      * Prepares this class for destruction.
@@ -647,13 +670,13 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
 
     /**
      * This is the method that calculates the FFT.
-     *
-     * @param  rData  real data
-     * @param  iData  imaginary data
+     * 
+     * @param rData real data
+     * @param iData imaginary data
      */
-    private void fft(float[] rData, float[] iData) {
+    private void fft(final float[] rData, final float[] iData) {
 
-        double TWO_PI = 2 * java.lang.Math.PI;
+        final double TWO_PI = 2 * java.lang.Math.PI;
         double wt1Imag, wt1Real;
         double angle, delta;
         float imag, real, fTemp, fReal, fImag;
@@ -662,9 +685,9 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         int k1, k1Double;
         int iSwap, i1Swap, i2Swap, index, dim;
         int direction;
-        int ndim = 1;
+        final int ndim = 1;
 
-        if (transformDir == FORWARD) {
+        if (transformDir == AlgorithmIHN3Correction.FORWARD) {
             direction = 1;
         } else {
             direction = -1;
@@ -722,8 +745,8 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                             index = index3 + k1;
                             fReal = rData[index];
                             fImag = iData[index];
-                            imag = (float) ((fImag * wt1Real) + (fReal * wt1Imag));
-                            real = (float) ((fReal * wt1Real) - (fImag * wt1Imag));
+                            imag = (float) ( (fImag * wt1Real) + (fReal * wt1Imag));
+                            real = (float) ( (fReal * wt1Real) - (fImag * wt1Imag));
                             iData[index] = iData[index3] - imag;
                             rData[index] = rData[index3] - real;
                             iData[index3] = iData[index3] + imag;
@@ -734,7 +757,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             }
         }
 
-        if (transformDir == INVERSE) {
+        if (transformDir == AlgorithmIHN3Correction.INVERSE) {
 
             for (i = 0; i < padded_size; i++) {
                 rData[i] = rData[i] / padded_size;
@@ -807,11 +830,11 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                         pDloc_i = l;
 
                         for (; l >= 0; l--) { // only do half in Sled's code since AtA is
-                                              // symmetric and he has special
-                                              // code to require only the diagonal and
-                                              // upper parts.  However, with my code I must
-                                              // explicitly calculate the entire symmetric
-                                              // matrix
+                            // symmetric and he has special
+                            // code to require only the diagonal and
+                            // upper parts. However, with my code I must
+                            // explicitly calculate the entire symmetric
+                            // matrix
                             incr = value_k * values[pValue--];
                             UP -= dloc_i[pDloc_i--];
                             AtA[UP / nProduct][UP % nProduct] += incr;
@@ -833,7 +856,6 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             } // for (y = lower[1]; y <= upper[1]; y += spline_subsample)
         } // for (x = lower[0]; x <= upper[0]; x += spline_subsample)
 
-
         // fit splines to the data
 
         // compute N dimensional bending energy matrix
@@ -854,7 +876,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 // forms a nArray[i] by nArray[i] matrix with order'th derivatives
                 if (nArray[i] < 4) {
                     MipavUtil.displayError("algorithm IHN3Correction bending energy not defined for size < 4");
-                    
+
                     setCompleted(false);
 
                     return;
@@ -884,10 +906,11 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 // take order'th derivative of B
                 for (m = 0; m < order; m++) {
 
-                    for (j = 0; j < spline; j++) {
+                    for (j = 0; j < AlgorithmIHN3Correction.spline; j++) {
 
-                        for (k = 1; k < spline; k++) {
-                            bW[j][spline - k] = k * bW[j][spline - k - 1];
+                        for (k = 1; k < AlgorithmIHN3Correction.spline; k++) {
+                            bW[j][AlgorithmIHN3Correction.spline - k] = k
+                                    * bW[j][AlgorithmIHN3Correction.spline - k - 1];
                         }
 
                         bW[j][0] = 0.0f;
@@ -901,33 +924,33 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 int maxK1;
                 int maxK2;
 
-                for (m = 0; m < spline; m++) {
+                for (m = 0; m < AlgorithmIHN3Correction.spline; m++) {
 
-                    for (j = m; j < spline; j++) {
+                    for (j = m; j < AlgorithmIHN3Correction.spline; j++) {
 
                         // convolve each pair of polynomials
                         for (k = 0; k < sizeC; k++) {
                             CArray[k] = 0;
                             endK = k + 1;
 
-                            if ((sizeC - k) < endK) {
+                            if ( (sizeC - k) < endK) {
                                 endK = sizeC - k;
                             }
 
                             for (l = 0; l < endK; l++) {
-                                maxK1 = k - spline + 1;
+                                maxK1 = k - AlgorithmIHN3Correction.spline + 1;
 
                                 if (maxK1 < 0) {
                                     maxK1 = 0;
                                 }
 
-                                maxK2 = spline - 1 - k;
+                                maxK2 = AlgorithmIHN3Correction.spline - 1 - k;
 
                                 if (maxK2 < 0) {
                                     maxK2 = 0;
                                 }
 
-                                CArray[k] += bW[m][maxK1 + l] * bW[j][spline - 1 - l - maxK2];
+                                CArray[k] += bW[m][maxK1 + l] * bW[j][AlgorithmIHN3Correction.spline - 1 - l - maxK2];
                             }
                         } // for (k = 0; k < sizeC; k++)
 
@@ -935,7 +958,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                         DArray[m][j] = 0;
 
                         for (k = 0; k < sizeC; k++) {
-                            DArray[m][j] += CArray[k] / (float) (sizeC - k);
+                            DArray[m][j] += CArray[k] / (sizeC - k);
                         } // for (k = 0; k < sizeC; k++)
 
                     } // for (j = m; j < spline; j++)
@@ -1191,9 +1214,9 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         // Compute the factorization J = U*D*U'
         // A = new Matrix(J);
         // B = new Matrix(AtF);
-        JamaMatrix AMat = new JamaMatrix(JArray);
-        JamaMatrix BMat = new JamaMatrix(AtF);
-        JamaMatrix XMat = AMat.solve(BMat);
+        final JamaMatrix AMat = new JamaMatrix(JArray);
+        final JamaMatrix BMat = new JamaMatrix(AtF);
+        final JamaMatrix XMat = AMat.solve(BMat);
         coef = XMat.getArrayCopy();
 
     }
@@ -1204,7 +1227,6 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
     private void fitSplinesToVolumeLookup3D() {
 
         // do least squares fit to data
-
 
         int fourX, fourY, fourZ;
         int divUP, modUP;
@@ -1271,11 +1293,11 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                             pDloc_i = l;
 
                             for (; l >= 0; l--) { // only do half in Sled's code since AtA is
-                                                  // symmetric and he has special
-                                                  // code to require only the diagonal and
-                                                  // upper parts.  However, with my code I must
-                                                  // explicitly calculate the entire symmetric
-                                                  // matrix
+                                // symmetric and he has special
+                                // code to require only the diagonal and
+                                // upper parts. However, with my code I must
+                                // explicitly calculate the entire symmetric
+                                // matrix
                                 incr = value_k * values[pValue--];
                                 UP -= dloc_i[pDloc_i--];
                                 modUP = UP % nProduct;
@@ -1304,7 +1326,6 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             return;
         }
 
-
         // fit splines to the data
 
         // compute N dimensional bending energy matrix
@@ -1325,7 +1346,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 if (nArray[i] < 4) {
                     cleanUp();
                     MipavUtil.displayError("algorithm IHN3Correction bending energy not defined for size < 4");
-                    
+
                     setCompleted(false);
 
                     return;
@@ -1356,10 +1377,11 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 // take order'th derivative of B
                 for (m = 0; m < order; m++) {
 
-                    for (j = 0; j < spline; j++) {
+                    for (j = 0; j < AlgorithmIHN3Correction.spline; j++) {
 
-                        for (k = 1; k < spline; k++) {
-                            bW[j][spline - k] = k * bW[j][spline - k - 1];
+                        for (k = 1; k < AlgorithmIHN3Correction.spline; k++) {
+                            bW[j][AlgorithmIHN3Correction.spline - k] = k
+                                    * bW[j][AlgorithmIHN3Correction.spline - k - 1];
                         }
 
                         bW[j][0] = 0.0f;
@@ -1372,33 +1394,33 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 int maxK1;
                 int maxK2;
 
-                for (m = 0; m < spline; m++) {
+                for (m = 0; m < AlgorithmIHN3Correction.spline; m++) {
 
-                    for (j = m; j < spline; j++) {
+                    for (j = m; j < AlgorithmIHN3Correction.spline; j++) {
 
                         // convolve each pair of polynomials
                         for (k = 0; k < sizeC; k++) {
                             CArray[k] = 0;
                             endK = k + 1;
 
-                            if ((sizeC - k) < endK) {
+                            if ( (sizeC - k) < endK) {
                                 endK = sizeC - k;
                             }
 
                             for (l = 0; l < endK; l++) {
-                                maxK1 = k - spline + 1;
+                                maxK1 = k - AlgorithmIHN3Correction.spline + 1;
 
                                 if (maxK1 < 0) {
                                     maxK1 = 0;
                                 }
 
-                                maxK2 = spline - 1 - k;
+                                maxK2 = AlgorithmIHN3Correction.spline - 1 - k;
 
                                 if (maxK2 < 0) {
                                     maxK2 = 0;
                                 }
 
-                                CArray[k] += bW[m][maxK1 + l] * bW[j][spline - 1 - l - maxK2];
+                                CArray[k] += bW[m][maxK1 + l] * bW[j][AlgorithmIHN3Correction.spline - 1 - l - maxK2];
                             }
                         } // for (k = 0; k < sizeC; k++)
 
@@ -1406,7 +1428,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                         DArray[m][j] = 0;
 
                         for (k = 0; k < sizeC; k++) {
-                            DArray[m][j] += CArray[k] / (float) (sizeC - k);
+                            DArray[m][j] += CArray[k] / (sizeC - k);
                         } // for (k = 0; k < sizeC; k++)
 
                     } // for (j = m; j < spline; j++)
@@ -1668,16 +1690,15 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         // A = new Matrix(J);
         // B = new Matrix(AtF);
         // B = new Matrix(AtF);
-        JamaMatrix AMat = new JamaMatrix(JArray);
-        JamaMatrix BMat = new JamaMatrix(AtF);
-        JamaMatrix XMat = AMat.solve(BMat);
+        final JamaMatrix AMat = new JamaMatrix(JArray);
+        final JamaMatrix BMat = new JamaMatrix(AtF);
+        final JamaMatrix XMat = AMat.solve(BMat);
         coef = XMat.getArrayCopy();
     }
 
     /**
-     * IHN3Correction2().
-     * Derived from PERL file nu_estimate_np_and_em.in
-     * Iteratively estimates intensity non-uniformity artifacts in MRI areas.
+     * IHN3Correction2(). Derived from PERL file nu_estimate_np_and_em.in Iteratively estimates intensity non-uniformity
+     * artifacts in MRI areas.
      */
     private void IHN3Correction2() {
         int i, j, k;
@@ -1688,23 +1709,21 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         sliceSize = orgDim[0] * orgDim[1];
 
         fireProgressStateChanged(srcImage.getImageName(), "Importing source image...");
-        
-
 
         try {
             buffer = new float[sliceSize];
             srcImage.exportData(0, sliceSize, buffer);
-        } catch (IOException ioe) {
+        } catch (final IOException ioe) {
             MipavUtil.displayError("algorithm IHN3Correction reports:\n" + ioe.toString());
-            
+
             setCompleted(false);
 
             return;
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             buffer = null;
             System.gc();
             displayError("AlgorithmIHN3Correction: Out of memory on field image import data");
-            
+
             setCompleted(false);
 
             return;
@@ -1735,7 +1754,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 if (orgResol[0] < newRes) {
                     newResol[0] = orgResol[0] * shrink;
                     volumeFactor = volumeFactor * shrink;
-                    newDim[0] = (int) Math.ceil((orgDim[0] - 1) / shrink) + 1;
+                    newDim[0] = (int) Math.ceil( (orgDim[0] - 1) / shrink) + 1;
                     Sx = (newDim[0] * newResol[0]) / (orgDim[0] * orgResol[0]);
                 } else {
                     Sx = 1.0;
@@ -1744,16 +1763,16 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 if (orgResol[1] < newRes) {
                     newResol[1] = orgResol[1] * shrink;
                     volumeFactor = volumeFactor * shrink;
-                    newDim[1] = (int) Math.ceil((orgDim[1] - 1) / shrink) + 1;
+                    newDim[1] = (int) Math.ceil( (orgDim[1] - 1) / shrink) + 1;
                     Sy = (newDim[1] * newResol[1]) / (orgDim[1] * orgResol[1]);
                 } else {
                     Sy = 1.0;
                 }
 
                 newSliceSize = newDim[0] * newDim[1];
-                TransMatrix xfrm = new TransMatrix(3);
-                //xfrm.setZoom(Sx, Sy); xfrm.Inverse();
-                xfrm.setZoom(1.0f/Sx, 1.0f/Sy);
+                final TransMatrix xfrm = new TransMatrix(3);
+                // xfrm.setZoom(Sx, Sy); xfrm.Inverse();
+                xfrm.setZoom(1.0f / Sx, 1.0f / Sy);
                 transformNearestNeighbor2D(buffer, xfrm);
             } // if (shrink != 1.0f)
             else {
@@ -1798,9 +1817,9 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             if (sMin < 1.0f) {
                 logOffset = 1.0f - sMin;
 
-                if ((sMax + logOffset) >= Float.MAX_VALUE) {
+                if ( (sMax + logOffset) >= Float.MAX_VALUE) {
                     MipavUtil.displayError("Dynamic range too great for log compression");
-                    
+
                     setCompleted(false);
 
                     return;
@@ -1834,7 +1853,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 }
 
                 for (i = 0; i < newSliceSize; i++) {
-                    index = (int) ((sBuffer[i] * histFactor) + histOffset);
+                    index = (int) ( (sBuffer[i] * histFactor) + histOffset);
 
                     if (index == nBins) {
                         index = nBins - 1;
@@ -1853,12 +1872,12 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 histMean = 0.0f;
 
                 for (i = 0; i < nBins; i++) {
-                    histMean += hist[i] * (((i - histOffset) / histFactor) + halfBin);
+                    histMean += hist[i] * ( ( (i - histOffset) / histFactor) + halfBin);
                 }
 
                 histMean = histMean / histSum;
                 zeroMoment0 = hist[0] / histSum;
-                firstMoment0 = (((-histOffset) / histFactor) + halfBin) * hist[0] / histSum;
+                firstMoment0 = ( ( ( -histOffset) / histFactor) + halfBin) * hist[0] / histSum;
 
                 varMax = 0.0;
                 i = 0;
@@ -1867,9 +1886,9 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
 
                     // 0th and 1st cumulative moments of the histogram up to the kth level
                     zeroMoment1 = zeroMoment0 + (hist[k] / histSum);
-                    firstMoment1 = firstMoment0 + ((((k - histOffset) / histFactor) + halfBin) * hist[k] / histSum);
+                    firstMoment1 = firstMoment0 + ( ( ( (k - histOffset) / histFactor) + halfBin) * hist[k] / histSum);
 
-                    if ((zeroMoment1 > 0.0) && (zeroMoment1 < 1.0)) {
+                    if ( (zeroMoment1 > 0.0) && (zeroMoment1 < 1.0)) {
                         sqrtNum = (histMean * zeroMoment1) - firstMoment1;
                         vari = sqrtNum * sqrtNum / (zeroMoment1 * (1.0 - zeroMoment1));
 
@@ -1883,7 +1902,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                     firstMoment0 = firstMoment1;
                 } // for (k = 1; k < nBins; k++)
 
-                threshold = (float) (((i - histOffset) / histFactor) + halfBin);
+                threshold = (float) ( ( (i - histOffset) / histFactor) + halfBin);
                 hist = null;
             } // if (autoThreshold)
 
@@ -1899,16 +1918,16 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 }
             }
 
-            if (autoThreshold && (!useScript)) {
-                MipavUtil.displayInfo("auto threshold = " + threshold + " includes " + j + " pixels excludes " +
-                                      (newSliceSize - j) + " pixels");
+            if (autoThreshold && ( !useScript)) {
+                MipavUtil.displayInfo("auto threshold = " + threshold + " includes " + j + " pixels excludes "
+                        + (newSliceSize - j) + " pixels");
             }
 
             if (sMask != null) {
 
                 for (i = 0; i < newSliceSize; i++) {
 
-                    if (!sMask.get(i)) {
+                    if ( !sMask.get(i)) {
                         tMask.clear(i);
                     }
                 }
@@ -1920,7 +1939,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             // Set logBuffer to zero where the final tMask is not set
             for (i = 0; i < newSliceSize; i++) {
 
-                if (!tMask.get(i)) {
+                if ( !tMask.get(i)) {
                     logBuffer[i] = 0.0f;
                 }
             }
@@ -1941,9 +1960,9 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             step = new int[nDimensions];
             nArray = new int[nDimensions];
             bendingMatrix = new float[nDimensions][3][][];
-            CArray = new float[(2 * spline) - 1];
-            sizeC = (2 * spline) - 1;
-            DArray = new float[spline][spline];
+            CArray = new float[ (2 * AlgorithmIHN3Correction.spline) - 1];
+            sizeC = (2 * AlgorithmIHN3Correction.spline) - 1;
+            DArray = new float[AlgorithmIHN3Correction.spline][AlgorithmIHN3Correction.spline];
             integral = new float[6][4];
             tiindex = new int[nDimensions];
             tistep = new int[nDimensions];
@@ -1953,11 +1972,11 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             yMat = new float[binNumber];
             ys = new float[binNumber];
             fHist = new float[binNumber];
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             cleanUp();
             System.gc();
             displayError("AlgorithmIHN3Correction: Out of memory on field image import data");
-            
+
             setCompleted(false);
 
             return;
@@ -1969,7 +1988,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         stddev = 100.0f;
         volumeDomain();
 
-        for (iters = 0; ((iters < maxIters) && (stddev >= endTol)) && !threadStopped; iters++) {
+        for (iters = 0; ( (iters < maxIters) && (stddev >= endTol)) && !threadStopped; iters++) {
             fireProgressStateChanged("Starting iteration " + iters);
             fireProgressStateChanged(Math.round((float) iters / (maxIters - 1) * 100));
 
@@ -2010,16 +2029,16 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 if (tMask.get(i)) {
                     value = workingBuffer[i];
 
-                    if ((value >= class_min) && (value <= class_max)) {
+                    if ( (value >= class_min) && (value <= class_max)) {
                         loc = (value - sourceMin) / binWidth;
 
-                        // iLoc    = (int)(Math.floor(loc));
+                        // iLoc = (int)(Math.floor(loc));
                         iLoc = (int) (loc);
                         fOffset = loc - iLoc - 0.5f;
 
                         if (fOffset == 0.0f) {
                             fHist[iLoc]++;
-                        } else if ((fOffset > 0.0f) && (iLoc <= (binNumber - 2))) {
+                        } else if ( (fOffset > 0.0f) && (iLoc <= (binNumber - 2))) {
                             fHist[iLoc] += 1.0f - fOffset;
                             fHist[iLoc + 1] += fOffset;
                         } else if (iLoc >= 1) {
@@ -2044,20 +2063,20 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             fwhmScale = 2.0 * Math.sqrt(Math.log(2.0) / Math.PI) / fwhm;
             blurR[0] = (float) fwhmScale;
 
-            for (i = 1; i <= ((padded_size - 1) / 2); i++) {
-                blurR[i] = blurR[padded_size - i] = (float) (fwhmScale * Math.exp(-i * i * fwhmFactor));
+            for (i = 1; i <= ( (padded_size - 1) / 2); i++) {
+                blurR[i] = blurR[padded_size - i] = (float) (fwhmScale * Math.exp( -i * i * fwhmFactor));
             }
 
-            if (((padded_size - 1) / 2) != (padded_size / 2)) { // if size is even fill in middle value
-                blurR[padded_size / 2] = (float) (fwhmScale * Math.exp(-padded_size * padded_size * fwhmFactor / 4.0));
+            if ( ( (padded_size - 1) / 2) != (padded_size / 2)) { // if size is even fill in middle value
+                blurR[padded_size / 2] = (float) (fwhmScale * Math.exp( -padded_size * padded_size * fwhmFactor / 4.0));
             }
 
-            transformDir = FORWARD;
+            transformDir = AlgorithmIHN3Correction.FORWARD;
             fft(blurR, blurI);
 
             // Create Weiner restoration filter in frequency domain assuming white noise model
             for (i = 0; i < padded_size; i++) {
-                denom = 1 / ((blurR[i] * blurR[i]) + (blurI[i] * blurI[i]) + noise);
+                denom = 1 / ( (blurR[i] * blurR[i]) + (blurI[i] * blurI[i]) + noise);
                 filterR[i] = blurR[i] * denom;
                 filterI[i] = -blurI[i] * denom;
             }
@@ -2069,9 +2088,8 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 fHistPaddedR[i] = fHist[i - offset];
             }
 
-
             // Compute filtered distribution f
-            transformDir = FORWARD;
+            transformDir = AlgorithmIHN3Correction.FORWARD;
             fft(fHistPaddedR, fHistPaddedI);
 
             for (i = 0; i < padded_size; i++) {
@@ -2080,7 +2098,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 fHistPaddedI[i] = (temp * filterI[i]) + (fHistPaddedI[i] * filterR[i]);
             }
 
-            transformDir = INVERSE;
+            transformDir = AlgorithmIHN3Correction.INVERSE;
             fft(fHistPaddedR, fHistPaddedI);
             Arrays.fill(fHistPaddedI, 0.0f);
 
@@ -2094,12 +2112,12 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
 
             // create moment array
             for (i = 0; i < padded_size; i++) {
-                momentR[i] = (float) ((class_min + ((i - offset) * slope)) * fHistPaddedR[i]);
+                momentR[i] = (float) ( (class_min + ( (i - offset) * slope)) * fHistPaddedR[i]);
                 momentI[i] = 0.0f;
             }
 
             // compute mapping
-            transformDir = FORWARD;
+            transformDir = AlgorithmIHN3Correction.FORWARD;
             fft(momentR, momentI);
 
             for (i = 0; i < padded_size; i++) {
@@ -2108,10 +2126,10 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 momentI[i] = (temp * blurI[i]) + (momentI[i] * blurR[i]);
             }
 
-            transformDir = INVERSE;
+            transformDir = AlgorithmIHN3Correction.INVERSE;
             fft(momentR, momentI);
 
-            transformDir = FORWARD;
+            transformDir = AlgorithmIHN3Correction.FORWARD;
             fft(fHistPaddedR, fHistPaddedI);
 
             for (i = 0; i < padded_size; i++) {
@@ -2120,7 +2138,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 fHistPaddedI[i] = (temp * blurI[i]) + (fHistPaddedI[i] * blurR[i]);
             }
 
-            transformDir = INVERSE;
+            transformDir = AlgorithmIHN3Correction.INVERSE;
             fft(fHistPaddedR, fHistPaddedI);
 
             for (i = offset; i < (offset + binNumber); i++) {
@@ -2130,8 +2148,8 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             // remove any NAN and infinities from yMat
             for (i = 0; i < binNumber; i++) {
 
-                if ((Float.isNaN(yMat[i])) || (yMat[i] == Float.NEGATIVE_INFINITY) ||
-                        (yMat[i] == Float.POSITIVE_INFINITY)) {
+                if ( (Float.isNaN(yMat[i])) || (yMat[i] == Float.NEGATIVE_INFINITY)
+                        || (yMat[i] == Float.POSITIVE_INFINITY)) {
                     yMat[i] = 0.0f;
                 }
             }
@@ -2170,9 +2188,9 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                     offset1 = 1;
                     offset2 = binNumber - 2;
 
-                    if ((start == 0) && (fIndex == ys[offset1])) {
+                    if ( (start == 0) && (fIndex == ys[offset1])) {
                         start = 1;
-                    } else if ((start == (binNumber - 1)) && (fIndex == ys[offset2])) {
+                    } else if ( (start == (binNumber - 1)) && (fIndex == ys[offset2])) {
                         start = binNumber - 2;
                     }
 
@@ -2212,7 +2230,6 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 }
             } // for (i = 0; i < newSliceSize; i++)
 
-
             for (i = 0; i < newSliceSize; i++) {
                 workingBuffer[i] = logBuffer[i] - estimateBuffer[i];
                 estimateBuffer[i] = residueBuffer[i]; // note old residue is saved for checking stopping condition
@@ -2223,7 +2240,6 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
 
             // compensate for N dependence in lambda
             lambda = lambda / (spline_subsample * spline_subsample);
-
 
             TBSplineVolume();
             fitSplinesToVolumeLookup2D();
@@ -2249,12 +2265,12 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             } // for (i = 0; i < newSliceSize; i++)
 
             mean = sumValue / numVoxels;
-            stddev = (float) Math.sqrt((sum2Value / numVoxels) - (mean * mean));
+            stddev = (float) Math.sqrt( (sum2Value / numVoxels) - (mean * mean));
 
         } // for (iters = 0; ((iters < maxIters) && (stddev >= endTol)) && !threadStopped; iters++)
 
         if (threadStopped) {
-           Preferences.debug("Stopped after iteration " + (iters-1) + " due to cancellation\n");
+            Preferences.debug("Stopped after iteration " + (iters - 1) + " due to cancellation\n");
         }
 
         fireProgressStateChanged("Last iteration was = " + (iters - 1));
@@ -2291,7 +2307,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             cleanUp();
             System.gc();
             MipavUtil.displayError("algorithm IHN3Correction could not normalize with zero mean");
-            
+
             setCompleted(false);
 
             return;
@@ -2307,9 +2323,9 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         } else {
             Sx = (orgDim[0] * orgResol[0]) / (newDim[0] * newResol[0]);
             Sy = (orgDim[1] * orgResol[1]) / (newDim[1] * newResol[1]);
-            TransMatrix xfrm = new TransMatrix(3);
-            //xfrm.setZoom(Sx, Sy); xfrm.Inverse();
-            xfrm.setZoom(1.0f/Sx, 1.0f/Sy);
+            final TransMatrix xfrm = new TransMatrix(3);
+            // xfrm.setZoom(Sx, Sy); xfrm.Inverse();
+            xfrm.setZoom(1.0f / Sx, 1.0f / Sy);
             transformBilinear(workingBuffer, xfrm);
         } // else shrink != 1.0f
 
@@ -2342,35 +2358,32 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             }
 
             destImage.importData(0, fieldBuffer, true);
-        } catch (IOException error) {
+        } catch (final IOException error) {
             cleanUp();
             System.gc();
             displayError("AlgorithmIHN3Correction: IOException on field image import data");
-            
+
             setCompleted(false);
 
             return;
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             cleanUp();
             System.gc();
             displayError("AlgorithmIHN3Correction: Out of memory on field image import data");
-            
+
             setCompleted(false);
 
             return;
         }
 
-        
         setCompleted(true);
 
         return;
     }
 
-
     /**
-     * IHN3Correction3.
-     * Derived from PERL file nu_estimate_np_and_em.in
-     * Iteratively estimates intensity non-uniformity artifacts in MRI volumes.
+     * IHN3Correction3. Derived from PERL file nu_estimate_np_and_em.in Iteratively estimates intensity non-uniformity
+     * artifacts in MRI volumes.
      */
     private void IHN3Correction3() {
         int i, j, k;
@@ -2382,26 +2395,24 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         sliceSize = orgDim[0] * orgDim[1];
         volSize = sliceSize * orgDim[2];
 
-
         fireProgressStateChanged(srcImage.getImageName(), "Importing source image...");
-        
 
         try {
             buffer = new float[volSize];
             srcImage.exportData(0, volSize, buffer);
-        } catch (IOException ioe) {
+        } catch (final IOException ioe) {
             cleanUp();
             System.gc();
             MipavUtil.displayError("algorithm IHN3Correction reports:\n" + ioe.toString());
-            
+
             setCompleted(false);
 
             return;
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             cleanUp();
             System.gc();
             displayError("AlgorithmIHN3Correction: Out of memory on field image import data");
-            
+
             setCompleted(false);
 
             return;
@@ -2436,7 +2447,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 if (orgResol[0] < newRes) {
                     newResol[0] = orgResol[0] * shrink;
                     volumeFactor = volumeFactor * shrink;
-                    newDim[0] = (int) Math.ceil((orgDim[0] - 1) / shrink) + 1;
+                    newDim[0] = (int) Math.ceil( (orgDim[0] - 1) / shrink) + 1;
                     Sx = (newDim[0] * newResol[0]) / (orgDim[0] * orgResol[0]);
                 } else {
                     Sx = 1.0;
@@ -2445,7 +2456,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 if (orgResol[1] < newRes) {
                     newResol[1] = orgResol[1] * shrink;
                     volumeFactor = volumeFactor * shrink;
-                    newDim[1] = (int) Math.ceil((orgDim[1] - 1) / shrink) + 1;
+                    newDim[1] = (int) Math.ceil( (orgDim[1] - 1) / shrink) + 1;
                     Sy = (newDim[1] * newResol[1]) / (orgDim[1] * orgResol[1]);
                 } else {
                     Sy = 1.0;
@@ -2454,7 +2465,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 if (orgResol[2] < newRes) {
                     newResol[2] = orgResol[2] * shrink;
                     volumeFactor = volumeFactor * shrink;
-                    newDim[2] = (int) Math.ceil((orgDim[2] - 1) / shrink) + 1;
+                    newDim[2] = (int) Math.ceil( (orgDim[2] - 1) / shrink) + 1;
                     Sz = (newDim[2] * newResol[2]) / (orgDim[2] * orgResol[2]);
                 } else {
                     Sz = 1.0;
@@ -2462,9 +2473,9 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
 
                 newSliceSize = newDim[0] * newDim[1];
                 newVolSize = newSliceSize * newDim[2];
-                TransMatrix xfrm = new TransMatrix(4);
-                //xfrm.setZoom(Sx, Sy, Sz); xfrm.Inverse();
-                xfrm.setZoom(1.0f/Sx, 1.0f/Sy, 1.0f/Sz);
+                final TransMatrix xfrm = new TransMatrix(4);
+                // xfrm.setZoom(Sx, Sy, Sz); xfrm.Inverse();
+                xfrm.setZoom(1.0f / Sx, 1.0f / Sy, 1.0f / Sz);
                 transformNearestNeighbor3D(buffer, xfrm);
             } // if (shrink != 1.0f)
             else {
@@ -2509,9 +2520,9 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             if (sMin < 1.0f) {
                 logOffset = 1.0f - sMin;
 
-                if ((sMax + logOffset) >= Float.MAX_VALUE) {
+                if ( (sMax + logOffset) >= Float.MAX_VALUE) {
                     MipavUtil.displayError("Dynamic range too great for log compression");
-                    
+
                     setCompleted(false);
 
                     return;
@@ -2545,7 +2556,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 }
 
                 for (i = 0; i < newVolSize; i++) {
-                    index = (int) ((sBuffer[i] * histFactor) + histOffset);
+                    index = (int) ( (sBuffer[i] * histFactor) + histOffset);
 
                     if (index == nBins) {
                         index = nBins - 1;
@@ -2564,12 +2575,12 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 histMean = 0.0f;
 
                 for (i = 0; i < nBins; i++) {
-                    histMean += hist[i] * (((i - histOffset) / histFactor) + halfBin);
+                    histMean += hist[i] * ( ( (i - histOffset) / histFactor) + halfBin);
                 }
 
                 histMean = histMean / histSum;
                 zeroMoment0 = hist[0] / histSum;
-                firstMoment0 = (((-histOffset) / histFactor) + halfBin) * hist[0] / histSum;
+                firstMoment0 = ( ( ( -histOffset) / histFactor) + halfBin) * hist[0] / histSum;
 
                 varMax = 0.0;
                 i = 0;
@@ -2578,9 +2589,9 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
 
                     // 0th and 1st cumulative moments of the histogram up to the kth level
                     zeroMoment1 = zeroMoment0 + (hist[k] / histSum);
-                    firstMoment1 = firstMoment0 + ((((k - histOffset) / histFactor) + halfBin) * hist[k] / histSum);
+                    firstMoment1 = firstMoment0 + ( ( ( (k - histOffset) / histFactor) + halfBin) * hist[k] / histSum);
 
-                    if ((zeroMoment1 > 0.0) && (zeroMoment1 < 1.0)) {
+                    if ( (zeroMoment1 > 0.0) && (zeroMoment1 < 1.0)) {
                         sqrtNum = (histMean * zeroMoment1) - firstMoment1;
                         vari = sqrtNum * sqrtNum / (zeroMoment1 * (1.0 - zeroMoment1));
 
@@ -2594,7 +2605,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                     firstMoment0 = firstMoment1;
                 } // for (k = 1; k < nBins; k++)
 
-                threshold = (float) (((i - histOffset) / histFactor) + halfBin);
+                threshold = (float) ( ( (i - histOffset) / histFactor) + halfBin);
                 hist = null;
             } // if (autoThreshold)
 
@@ -2610,16 +2621,16 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 }
             }
 
-            if (autoThreshold && (!useScript)) {
-                MipavUtil.displayInfo("auto threshold = " + threshold + " includes " + j + " voxels excludes " +
-                                      (newVolSize - j) + " voxels");
+            if (autoThreshold && ( !useScript)) {
+                MipavUtil.displayInfo("auto threshold = " + threshold + " includes " + j + " voxels excludes "
+                        + (newVolSize - j) + " voxels");
             }
 
             if (sMask != null) {
 
                 for (i = 0; i < newVolSize; i++) {
 
-                    if (!sMask.get(i)) {
+                    if ( !sMask.get(i)) {
                         tMask.clear(i);
                     }
                 }
@@ -2631,7 +2642,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             // Set logBuffer to zero where the final tMask is not set
             for (i = 0; i < newVolSize; i++) {
 
-                if (!tMask.get(i)) {
+                if ( !tMask.get(i)) {
                     logBuffer[i] = 0.0f;
                 }
             }
@@ -2650,9 +2661,9 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             upper = new int[nDimensions];
             nArray = new int[nDimensions];
             bendingMatrix = new float[nDimensions][3][][];
-            CArray = new float[(2 * spline) - 1];
-            sizeC = (2 * spline) - 1;
-            DArray = new float[spline][spline];
+            CArray = new float[ (2 * AlgorithmIHN3Correction.spline) - 1];
+            sizeC = (2 * AlgorithmIHN3Correction.spline) - 1;
+            DArray = new float[AlgorithmIHN3Correction.spline][AlgorithmIHN3Correction.spline];
             integral = new float[6][4];
             tiindex = new int[nDimensions];
             tistep = new int[nDimensions];
@@ -2663,11 +2674,11 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             yMat = new float[binNumber];
             ys = new float[binNumber];
 
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             cleanUp();
             System.gc();
             displayError("AlgorithmIHN3Correction: Out of memory on field image import data");
-            
+
             setCompleted(false);
 
             return;
@@ -2680,7 +2691,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         stddev = 100.0f;
         volumeDomain();
 
-        for (iters = 0; ((iters < maxIters) && (stddev >= endTol)) && !threadStopped; iters++) {
+        for (iters = 0; ( (iters < maxIters) && (stddev >= endTol)) && !threadStopped; iters++) {
             Preferences.debug("Starting iteration " + iters + ": Tol = " + stddev + "\n", Preferences.DEBUG_ALGORITHM);
 
             fireProgressStateChanged("Starting iteration " + iters + ": Tol = " + stddev);
@@ -2723,7 +2734,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 if (tMask.get(i)) {
                     value = workingBuffer[i];
 
-                    if ((value >= class_min) && (value <= class_max)) {
+                    if ( (value >= class_min) && (value <= class_max)) {
                         loc = (value - sourceMin) / binWidth;
 
                         // iLoc = (int)(Math.floor(loc));
@@ -2732,7 +2743,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
 
                         if (fOffset == 0.0f) {
                             fHist[iLoc]++;
-                        } else if ((fOffset > 0.0f) && (iLoc <= (binNumber - 2))) {
+                        } else if ( (fOffset > 0.0f) && (iLoc <= (binNumber - 2))) {
                             fHist[iLoc] += 1.0f - fOffset;
                             fHist[iLoc + 1] += fOffset;
                         } else if (iLoc >= 1) {
@@ -2755,20 +2766,20 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             fwhmScale = 2.0 * Math.sqrt(Math.log(2.0) / Math.PI) / fwhm;
             blurR[0] = (float) fwhmScale;
 
-            for (i = 1; i <= ((padded_size - 1) / 2); i++) {
-                blurR[i] = blurR[padded_size - i] = (float) (fwhmScale * Math.exp(-i * i * fwhmFactor));
+            for (i = 1; i <= ( (padded_size - 1) / 2); i++) {
+                blurR[i] = blurR[padded_size - i] = (float) (fwhmScale * Math.exp( -i * i * fwhmFactor));
             }
 
-            if (((padded_size - 1) / 2) != (padded_size / 2)) { // if size is even fill in middle value
-                blurR[padded_size / 2] = (float) (fwhmScale * Math.exp(-padded_size * padded_size * fwhmFactor / 4.0));
+            if ( ( (padded_size - 1) / 2) != (padded_size / 2)) { // if size is even fill in middle value
+                blurR[padded_size / 2] = (float) (fwhmScale * Math.exp( -padded_size * padded_size * fwhmFactor / 4.0));
             }
 
-            transformDir = FORWARD;
+            transformDir = AlgorithmIHN3Correction.FORWARD;
             fft(blurR, blurI);
 
             // Create Weiner restoration filter in frequency domain assuming white noise model
             for (i = 0; i < padded_size; i++) {
-                denom = 1 / ((blurR[i] * blurR[i]) + (blurI[i] * blurI[i]) + noise);
+                denom = 1 / ( (blurR[i] * blurR[i]) + (blurI[i] * blurI[i]) + noise);
                 filterR[i] = blurR[i] * denom;
                 filterI[i] = -blurI[i] * denom;
             }
@@ -2781,7 +2792,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             }
 
             // Compute filtered distribution f
-            transformDir = FORWARD;
+            transformDir = AlgorithmIHN3Correction.FORWARD;
             fft(fHistPaddedR, fHistPaddedI);
 
             for (i = 0; i < padded_size; i++) {
@@ -2790,7 +2801,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 fHistPaddedI[i] = (temp * filterI[i]) + (fHistPaddedI[i] * filterR[i]);
             }
 
-            transformDir = INVERSE;
+            transformDir = AlgorithmIHN3Correction.INVERSE;
             fft(fHistPaddedR, fHistPaddedI);
 
             for (i = 0; i < padded_size; i++) {
@@ -2802,12 +2813,12 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             }
 
             for (i = 0; i < padded_size; i++) {
-                momentR[i] = (float) ((class_min + ((i - offset) * slope)) * fHistPaddedR[i]);
+                momentR[i] = (float) ( (class_min + ( (i - offset) * slope)) * fHistPaddedR[i]);
                 momentI[i] = 0.0f;
             }
 
             // compute mapping
-            transformDir = FORWARD;
+            transformDir = AlgorithmIHN3Correction.FORWARD;
             fft(momentR, momentI);
 
             for (i = 0; i < padded_size; i++) {
@@ -2816,9 +2827,9 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 momentI[i] = (temp * blurI[i]) + (momentI[i] * blurR[i]);
             }
 
-            transformDir = INVERSE;
+            transformDir = AlgorithmIHN3Correction.INVERSE;
             fft(momentR, momentI);
-            transformDir = FORWARD;
+            transformDir = AlgorithmIHN3Correction.FORWARD;
             fft(fHistPaddedR, fHistPaddedI);
 
             for (i = 0; i < padded_size; i++) {
@@ -2827,7 +2838,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 fHistPaddedI[i] = (temp * blurI[i]) + (fHistPaddedI[i] * blurR[i]);
             }
 
-            transformDir = INVERSE;
+            transformDir = AlgorithmIHN3Correction.INVERSE;
             fft(fHistPaddedR, fHistPaddedI);
 
             for (i = offset; i < (offset + binNumber); i++) {
@@ -2837,8 +2848,8 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             // remove any NAN and infinities from yMat
             for (i = 0; i < binNumber; i++) {
 
-                if ((Float.isNaN(yMat[i])) || (yMat[i] == Float.NEGATIVE_INFINITY) ||
-                        (yMat[i] == Float.POSITIVE_INFINITY)) {
+                if ( (Float.isNaN(yMat[i])) || (yMat[i] == Float.NEGATIVE_INFINITY)
+                        || (yMat[i] == Float.POSITIVE_INFINITY)) {
                     yMat[i] = 0.0f;
                 }
             }
@@ -2877,9 +2888,9 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                     offset1 = 1;
                     offset2 = binNumber - 2;
 
-                    if ((start == 0) && (fIndex == ys[offset1])) {
+                    if ( (start == 0) && (fIndex == ys[offset1])) {
                         start = 1;
-                    } else if ((start == (binNumber - 1)) && (fIndex == ys[offset2])) {
+                    } else if ( (start == (binNumber - 1)) && (fIndex == ys[offset2])) {
                         start = binNumber - 2;
                     }
 
@@ -2949,7 +2960,6 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 break;
             }
 
-
             for (i = 0; i < newVolSize; i++) {
                 residueBuffer[i] = workingBuffer[i];
                 workingBuffer[i] = estimateBuffer[i] - residueBuffer[i];
@@ -2970,15 +2980,14 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             } // for (i = 0; i < newVolSize; i++)
 
             mean = sumValue / numVoxels;
-            stddev = (float) Math.sqrt((sum2Value / numVoxels) - (mean * mean));
+            stddev = (float) Math.sqrt( (sum2Value / numVoxels) - (mean * mean));
         } // for (iters = 0; ((iters < maxIters) && (stddev >= endTol)) && !threadStopped; iters++)
 
         if (threadStopped) {
-            Preferences.debug("Stopped during iteration " + (iters-1) + " due to cancellation\n");
+            Preferences.debug("Stopped during iteration " + (iters - 1) + " due to cancellation\n");
         }
-        
+
         fireProgressStateChanged("Last iteration was = " + (iters - 1));
-        
 
         logBuffer = null;
         correctedBuffer = null;
@@ -3012,7 +3021,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             }
         } else {
             MipavUtil.displayError("Algorithm IHN3Correction could not normalize with zero mean");
-            
+
             setCompleted(false);
 
             return;
@@ -3029,9 +3038,9 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             Sx = (orgDim[0] * orgResol[0]) / (newDim[0] * newResol[0]);
             Sy = (orgDim[1] * orgResol[1]) / (newDim[1] * newResol[1]);
             Sz = (orgDim[2] * orgResol[2]) / (newDim[2] * newResol[2]);
-            TransMatrix xfrm = new TransMatrix(4);
-            //xfrm.setZoom(Sx, Sy, Sz); xfrm.Inverse();
-            xfrm.setZoom(1.0f/Sx, 1.0f/Sy, 1.0f/Sz);
+            final TransMatrix xfrm = new TransMatrix(4);
+            // xfrm.setZoom(Sx, Sy, Sz); xfrm.Inverse();
+            xfrm.setZoom(1.0f / Sx, 1.0f / Sy, 1.0f / Sz);
             transformTrilinear(workingBuffer, xfrm);
         } // else shrink != 1.0f
 
@@ -3065,25 +3074,24 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
 
             destImage.importData(0, fieldBuffer, true);
 
-        } catch (IOException error) {
+        } catch (final IOException error) {
             cleanUp();
             System.gc();
             displayError("AlgorithmIHN3Correction: IOException on field image import data");
-            
+
             setCompleted(false);
 
             return;
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             cleanUp();
             System.gc();
             displayError("AlgorithmIHN3Correction: Out of memory on field image import data");
-            
+
             setCompleted(false);
 
             return;
         }
 
-        
         setCompleted(true);
 
         return;
@@ -3128,7 +3136,6 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             } // for (y = 0; y < newDim[1]; y++)
         } // for (x = 0; x < newDim[0]; x++)
     }
-
 
     /**
      * DOCUMENT ME!
@@ -3210,8 +3217,8 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             first = (domain[i][0] > 0.0f) ? (int) Math.ceil(domain[i][0] / newResol[i]) : 0;
 
             // compute index of last voxel within domain plus one
-            last = (domain[i][1] < ((newDim[i] - 1) * newResol[i])) ? ((int) Math.floor(domain[i][1] / newResol[i]) + 1)
-                                                                    : newDim[i];
+            last = (domain[i][1] < ( (newDim[i] - 1) * newResol[i])) ? ((int) Math.floor(domain[i][1] / newResol[i]) + 1)
+                    : newDim[i];
 
             // fill outside domain with zeros
             for (k = 0; k < (first * 4); k++) {
@@ -3224,7 +3231,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             for (j = first; j < last; j++, xf += newResol[i]) {
 
                 // locate nearest knot location greater than or equal to point
-                blockInt = (int) Math.ceil((xf - zero[i]) / fieldDistance) - 1;
+                blockInt = (int) Math.ceil( (xf - zero[i]) / fieldDistance) - 1;
 
                 if (blockInt < 0) {
                     blockInt = 0;
@@ -3266,11 +3273,11 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
 
     /**
      * Transforms and resamples volume using bilinear interpolation.
-     *
-     * @param  imgBuf  - image array
-     * @param  xfrm    - TransMatrix to be applied
+     * 
+     * @param imgBuf - image array
+     * @param xfrm - TransMatrix to be applied
      */
-    private void transformBilinear(float[] imgBuf, TransMatrix xfrm) {
+    private void transformBilinear(final float[] imgBuf, final TransMatrix xfrm) {
         int i, j;
         int X0pos, Y0pos;
         int X1pos, Y1pos;
@@ -3298,7 +3305,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             // if ( isProgressBarVisible()&& i%mod ==0) {
             // progressBar.setValue((int)((float)i/oXdim * 100+0.5));
             // }
-            imm = (float) i * orgResol[0];
+            imm = i * orgResol[0];
             temp1 = (imm * T00) + T02;
             temp2 = (imm * T10) + T12;
 
@@ -3306,18 +3313,19 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
 
                 // transform i,j
                 value = 0; // remains zero if voxel is transformed out of bounds
-                jmm = (float) j * orgResol[1];
+                jmm = j * orgResol[1];
                 X = (temp1 + (jmm * T01)) / newResol[0];
                 roundX = (int) (X + 0.5f);
 
-                if ((X >= 0) && (roundX < newDim[0])) {
+                if ( (X >= 0) && (roundX < newDim[0])) {
                     Y = (temp2 + (jmm * T11)) / newResol[1];
                     roundY = (int) (Y + 0.5f);
 
-                    if ((Y >= 0) && (roundY < newDim[1])) {
+                    if ( (Y >= 0) && (roundY < newDim[1])) {
 
-                        if ((roundX == (newDim[0] - 1)) || (roundY == (newDim[1] - 1))) { // cannot interpolate on last
-                                                                                          // X or Y
+                        if ( (roundX == (newDim[0] - 1)) || (roundY == (newDim[1] - 1))) { // cannot interpolate on
+                            // last
+                            // X or Y
                             X0pos = roundX;
                             Y0pos = roundY * newDim[0];
                             value = imgBuf[Y0pos + X0pos];
@@ -3333,8 +3341,8 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                             Y0pos = (int) Y * newDim[0];
                             X1pos = X0pos + 1;
                             Y1pos = Y0pos + newDim[0];
-                            value = (x1 * y1 * imgBuf[Y0pos + X0pos]) + (x0 * y1 * imgBuf[Y0pos + X1pos]) +
-                                    (x1 * y0 * imgBuf[Y1pos + X0pos]) + (x0 * y0 * imgBuf[Y1pos + X1pos]);
+                            value = (x1 * y1 * imgBuf[Y0pos + X0pos]) + (x0 * y1 * imgBuf[Y0pos + X1pos])
+                                    + (x1 * y0 * imgBuf[Y1pos + X0pos]) + (x0 * y0 * imgBuf[Y1pos + X1pos]);
                         }
                     } // end if Y in bounds
                 } // end if X in bounds
@@ -3347,11 +3355,11 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
 
     /**
      * Transforms and resamples volume using nearest neighbor interpolation.
-     *
-     * @param  imgBuf  image array
-     * @param  xfrm    transformation matrix to be applied
+     * 
+     * @param imgBuf image array
+     * @param xfrm transformation matrix to be applied
      */
-    private void transformNearestNeighbor2D(float[] imgBuf, TransMatrix xfrm) {
+    private void transformNearestNeighbor2D(final float[] imgBuf, final TransMatrix xfrm) {
         int i, j;
         float X, Y;
         int roundX, roundY;
@@ -3359,7 +3367,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         float imm, jmm;
 
         // int mod = newDim[0]/50;
-        // int   counter = 0; //used for progress bar
+        // int counter = 0; //used for progress bar
         float T00, T01, T02, T10, T11, T12;
 
         T00 = xfrm.Get(0, 0);
@@ -3387,8 +3395,8 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             for (j = 0; j < newDim[1]; j++) {
 
                 // transform i,j
-                imm = (float) i * newResol[0];
-                jmm = (float) j * newResol[1];
+                imm = i * newResol[0];
+                jmm = j * newResol[1];
                 X = (imm * T00) + (jmm * T01) + T02;
                 Y = (imm * T10) + (jmm * T11) + T12;
 
@@ -3400,14 +3408,14 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 roundX = (int) (X + 0.5f);
                 roundY = (int) (Y + 0.5f);
 
-                if ((roundX < 0) || (roundX >= (orgDim[0] - 1)) || (roundY < 0) || (roundY >= (orgDim[1] - 1))) {
+                if ( (roundX < 0) || (roundX >= (orgDim[0] - 1)) || (roundY < 0) || (roundY >= (orgDim[1] - 1))) {
                     sBuffer[i + (j * newDim[0])] = 0;
                 } else {
                     xOffset = roundX;
                     yOffset = roundY * orgDim[0];
                     sBuffer[i + (j * newDim[0])] = imgBuf[xOffset + yOffset];
 
-                    if ((mask != null) && (mask.get(xOffset + yOffset))) {
+                    if ( (mask != null) && (mask.get(xOffset + yOffset))) {
                         sMask.set(i + (j * newDim[0]));
                     }
                 }
@@ -3419,11 +3427,11 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
 
     /**
      * Transforms and resamples volume using nearest neighbor interpolation.
-     *
-     * @param  imgBuf  image array
-     * @param  xfrm    transformation matrix to be applied
+     * 
+     * @param imgBuf image array
+     * @param xfrm transformation matrix to be applied
      */
-    private void transformNearestNeighbor3D(float[] imgBuf, TransMatrix xfrm) {
+    private void transformNearestNeighbor3D(final float[] imgBuf, final TransMatrix xfrm) {
         int i, j, k;
         float X, Y, Z;
         int xOffset, yOffset, zOffset;
@@ -3462,15 +3470,15 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             // if (isProgressBarVisible()&& i%mod==0) {
             // progressBar.setValue((int)((float)i/newDim[0] * 100+0.5));
             // }
-            imm = (float) i * newResol[0];
+            imm = i * newResol[0];
 
             for (j = 0; j < newDim[1]; j++) {
-                jmm = (float) j * newResol[1];
+                jmm = j * newResol[1];
 
                 for (k = 0; k < newDim[2]; k++) {
 
                     // transform i,j,k
-                    kmm = (float) k * newResol[2];
+                    kmm = k * newResol[2];
 
                     X = (imm * T00) + (jmm * T01) + (kmm * T02) + T03;
                     Y = (imm * T10) + (jmm * T11) + (kmm * T12) + T13;
@@ -3486,8 +3494,8 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                     roundY = (int) (Y + 0.5f);
                     roundZ = (int) (Z + 0.5f);
 
-                    if ((roundX < 0) || (roundX > (orgDim[0] - 1)) || (roundY < 0) || (roundY > (orgDim[1] - 1)) ||
-                            (roundZ < 0) || (roundZ > (orgDim[2] - 1))) {
+                    if ( (roundX < 0) || (roundX > (orgDim[0] - 1)) || (roundY < 0) || (roundY > (orgDim[1] - 1))
+                            || (roundZ < 0) || (roundZ > (orgDim[2] - 1))) {
                         sBuffer[i + (j * newDim[0]) + (k * newSliceSize)] = 0;
                     } else {
                         xOffset = roundX;
@@ -3495,7 +3503,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                         zOffset = roundZ * sliceSize;
                         sBuffer[i + (j * newDim[0]) + (k * newSliceSize)] = imgBuf[xOffset + yOffset + zOffset];
 
-                        if ((mask != null) && (mask.get(xOffset + yOffset + zOffset))) {
+                        if ( (mask != null) && (mask.get(xOffset + yOffset + zOffset))) {
                             sMask.set(i + (j * newDim[0]) + (k * newSliceSize));
                         }
                     }
@@ -3507,15 +3515,15 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
 
     /**
      * Transforms and resamples volume using trilinear interpolation.
-     *
-     * @param  imgBuffer  image array
-     * @param  xfrm       transformation matrix to be applied
+     * 
+     * @param imgBuffer image array
+     * @param xfrm transformation matrix to be applied
      */
-    private void transformTrilinear(float[] imgBuffer, TransMatrix matrix) {
-        
+    private void transformTrilinear(final float[] imgBuffer, final TransMatrix matrix) {
+
         AlgorithmTransform.transformTrilinear(imgBuffer, fieldBuffer, matrix, newDim[0], newDim[1], newDim[2],
-                                              newResol[0], newResol[1], newResol[2], orgDim[0], orgDim[1], orgDim[2],
-                                              orgResol[0], orgResol[1], orgResol[2], null);
+                newResol[0], newResol[1], newResol[2], orgDim[0], orgDim[1], orgDim[2], orgResol[0], orgResol[1],
+                orgResol[2], null);
     }
 
     /**
@@ -3539,9 +3547,8 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 upper[i] = (int) Math.floor(domain[i][1] / newResol[i]);
             } // for (i = 0; i < nDimensions; i++)
 
-
             for (i = 0; i < nDimensions; i++) {
-                nArray[i] = (int) Math.ceil((domain[i][1] - domain[i][0]) / fieldDistance) + 3;
+                nArray[i] = (int) Math.ceil( (domain[i][1] - domain[i][0]) / fieldDistance) + 3;
             }
 
             nMax = nArray[0];
@@ -3620,11 +3627,11 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             momentR = new float[padded_size];
             momentI = new float[padded_size];
 
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             cleanUp();
             System.gc();
             displayError("AlgorithmIHN3Correction: Out of memory on field image import data in routine volumeDomain");
-            
+
             setCompleted(false);
 
             return;
