@@ -34,12 +34,30 @@ import gov.nih.mipav.view.dialogs.JDialogVOIStatistics;
 
 
 
+/**
+ * This plugin was done for Dr Chi-hon Lee of NICHD
+ * 
+ * The main research problem Dr Lee had was that the z-resolution is poor compared to x and y when acquiring
+ * datsets using confocal microscopy
+ * 
+ * The solution was to acquire 2 orthogonal datsets and combine them into a result image
+ * 
+ * In order to achieve this, one dataset needs to be registered to the other datset to obtain transformation files.
+ * This part is done prior to the plugin by a user
+ * 
+ * This plugin builds a result image by transforming back to both images using the transformation files and
+ * applying a certain combination of the pixels to put in the result image
 
+ * The result image is of 512x512x512 size
+ * 
+ * @author pandyan
+ */
 public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase {
 	
 	/** images **/
 	private ModelImage imageX, imageXRegistered, imageY, resultImage, redChannelsImage, greenChannelsImage, imageXRegisteredTransformed, imageYTransformed;
 
+	/** alg **/
 	private  AlgorithmVOIProps algoVOIProps;
 	
 	/** min and maxes of vois **/
@@ -58,7 +76,6 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
     
     /** transform matrices **/
     private TransMatrix matrixGreen, matrixAffine;
-    
     
     /** coefficients need for b-spline **/
     private float[][][] imageX_R_coeff;
@@ -90,30 +107,59 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
     /** b slpine */
     private BSplineLattice3Df m_kBSpline3D;
     
+    /** alg **/
     private AlgorithmTransform algoTrans;
     
+    /** image y res **/
     private float[] imageYRes;
     
+    /** image Y end **/
     private boolean imageYEnd;
     
+    /** dir **/
     private String dir;
     
+    /** image x orig **/
     private float[] imageXOrig;
     
     /** extents */
     private int[] imageYExtents;
     
+    /** radio buttons **/
     private JRadioButton doTrilinearRadio, doAverageRadio, doRescaleRadio, ignoreBGRadio, doSqRtRadio;
     
+    /** textfield **/
     private JTextField transform3FilePathTextField;
     
+    /** num control points **/
     private int numControlPoints;
     
+    /** spline degree **/
     private int splineDegree;
     
+    /** control mat **/
     private float[][] controlMat;
 	
-	
+	/**
+	 * constructr
+	 * @param imageX
+	 * @param imageXRegistered
+	 * @param imageY
+	 * @param vjfX
+	 * @param vjfY
+	 * @param outputTextArea
+	 * @param matrixGreen
+	 * @param matrixAffine
+	 * @param doTrilinearRadio
+	 * @param doAverageRadio
+	 * @param doRescaleRadio
+	 * @param ignoreBGRadio
+	 * @param doSqRtRadio
+	 * @param transform3FilePathTextField
+	 * @param numControlPoints
+	 * @param splineDegree
+	 * @param controlMat
+	 */
 	public PlugInAlgorithmDrosophilaRetinalRegistration(ModelImage imageX, ModelImage imageXRegistered, ModelImage imageY, ViewJFrameImage vjfX, ViewJFrameImage vjfY, JTextArea outputTextArea,
 			TransMatrix matrixGreen, TransMatrix matrixAffine, JRadioButton doTrilinearRadio, JRadioButton doAverageRadio, JRadioButton doRescaleRadio, JRadioButton ignoreBGRadio, 
 			JRadioButton doSqRtRadio, JTextField transform3FilePathTextField, int numControlPoints, int splineDegree, float[][] controlMat) {
@@ -149,9 +195,11 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
 	
 	
 	
-	
+	/**
+	 * run algorithm
+	 */
 	public void runAlgorithm() {
-		outputTextArea.append("Running Algorithm v2.0" + "\n");
+		outputTextArea.append("Running Algorithm v2.1" + "\n");
 		long begTime = System.currentTimeMillis();
 
 		 //rescale imageX intensity to imageY based on VOI
@@ -161,14 +209,12 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
 		     int nVOIX = VOIsX.size();
 			 if(nVOIX != 1) {
 				 MipavUtil.displayError("Both images must contain one VOI");
-				 //setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 	        	 return;
 			 }
 			 VOIVector VOIsY = imageY.getVOIs();
 		     int nVOIY = VOIsY.size();
 			 if(nVOIY != 1) {
 				 MipavUtil.displayError("Both images must contain one VOI");
-				 //setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 	        	 return;
 			 }
 			 VOI VOIX = VOIsX.VOIAt(0);
@@ -184,8 +230,6 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
 	         minB_X = algoVOIProps.getMinIntensityBlue();
 	         maxB_X = algoVOIProps.getMaxIntensityBlue();
 	         
-	         //System.out.println("imageX VOI values: minR maxR minG maxG minB maxB :" + minR_X + " " + maxR_X + " " + minG_X + " " + maxG_X + " " + minB_X + " " + maxB_X);
-	         
 	         algoVOIProps.finalize();
 	         algoVOIProps = null;
 			 VOI VOIY = VOIsY.VOIAt(0);
@@ -200,9 +244,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
 	         
 	         minB_Y = algoVOIProps.getMinIntensityBlue();
 	         maxB_Y = algoVOIProps.getMaxIntensityBlue();
-	         
-	         //System.out.println("imageY VOI values: minR maxR minG maxG minB maxB :" + minR_Y + " " + maxR_Y + " " + minG_Y + " " + maxG_Y + " " + minB_Y + " " + maxB_Y);
-	         
+         
 	         algoVOIProps.finalize();
 	         algoVOIProps = null;
 	         
@@ -211,19 +253,10 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
 	         
 	         VOIsX.clear();
 	         VOIsY.clear();
-	         
-	         //calculate slope and b-intercept for voi-window
-	         slopeR = calculateSlope(minR_Y,minR_X,maxR_Y,maxR_X);
-	         bR = calculateB(minR_Y,minR_X,slopeR);
-	         //System.out.println("slopeR = " + slopeR + " , bR = " + bR);
-	         
+
 	         slopeG = calculateSlope(minG_Y,minG_X,maxG_Y,maxG_X);
 	         bG = calculateB(minG_Y,minG_X,slopeG);
-	         //System.out.println("slopeG = " + slopeG + " , bG = " + bG);
-	         
-	         slopeB = calculateSlope(minB_Y,minB_X,maxB_Y,maxB_X);
-	         bB = calculateB(minB_Y,minB_X,slopeB);
-	         //System.out.println("slopeB = " + slopeB + " , bB = " + bB);
+
 	         
 	         //now we go through imageX and rescale
 	         int length = imageX.getExtents()[0] * imageX.getExtents()[1] * imageX.getExtents()[2] * 4;
@@ -233,14 +266,13 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
 	        	 imageX.exportData(0, length, buffer);
 	         } catch (IOException error) {
 	             System.out.println("IO exception");
-	             //setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 	             return;
 	         }
 	         float red,green,blue;
 	         float newRed, newGreen, newBlue;
 	         
 	         for(int i=0;i<buffer.length;i=i+4) {
-	        	 red = buffer[i+1];
+	        	 /*red = buffer[i+1];
 	        	 if(slopeR == 0 && bR == 0) {
 	        		 newRed = red;
 	        	 }else {
@@ -251,7 +283,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
 		        		 newRed = 255;
 		        	 }
 	        	 }
-	        	 buffer[i+1] = newRed;
+	        	 buffer[i+1] = newRed;*/
 	        	 
 	        	 green = buffer[i+2];
 	        	 if(slopeG == 0 && bG == 0) {
@@ -266,7 +298,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
 	        	 }
 	        	 buffer[i+2] = newGreen;
 	        	 
-	        	 blue = buffer[i+3];
+	        	 /*blue = buffer[i+3];
 	        	 if(slopeB == 0 && bB == 0) {
 	        		 newBlue = blue;
 	        	 }else {
@@ -277,43 +309,23 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
 		        		 newBlue = 255;
 		        	 }
 	        	 }
-	        	 buffer[i+3] = newBlue;           
+	        	 buffer[i+3] = newBlue;      */     
 	         }
 	         
 	         try {
 	             imageX.importData(0, buffer, true);
 	         } catch (IOException error) {
 	             System.out.println("IO exception");
-	             //setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 	             return;
 	         }
 	         imageX.calcMinMax();
 		 }//done rescaling
 
-		 //if(doAverageRadio.isSelected()) {
-			 //doAverage = true;
-		 //}else {
-			 //doAverage = false;
-		 //}
 
 		 TransMatrix intermMatrix1 = new TransMatrix(4);
 		 intermMatrix1.Mult(matrixAffine, matrixGreen); //pretty sure this is correct
 		 
-		 /*if(concatMatricesOnly.isSelected()) {
-			 try {
-		            File concatFile = new File(parentDir + File.separator + "concatOfGreenAndAff.mtx");
-		            FileOutputStream outputStream = new FileOutputStream(concatFile);
-		            PrintStream printStream = new PrintStream(outputStream);
-		            printStream.println("4");
-		            printStream.println("4");
-		            printStream.println(intermMatrix1.matrixToString(10, 4));
-		            outputStream.close();
-		            
-			 }catch(Exception ex) {
-				 ex.printStackTrace();
-			 }
-			 return;
-		 }*/
+
 		 
 		 intermMatrix1.Inverse();
 
@@ -338,7 +350,6 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
        	 imageX.exportData(0, length1, imageXBuffer);
         } catch (IOException error) {
             System.out.println("IO exception");
-            //setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             return;
         }
         
@@ -381,7 +392,6 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
         try {
        	 imageY.exportData(0, length2, imageYBuffer);
         } catch (IOException error) {
-       	 //setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             System.out.println("IO exception");
             return;
         }
@@ -459,7 +469,6 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
 		 //loop through each point in result image
 		 outputTextArea.append("Combining images into result image... \n");
 		 for(int z=0;z<512;z++) {
-			 	//System.out.println("z is " +  z);
 			 	outputTextArea.append("z is " +  z + "\n");
 			 for(int y=0;y<512;y++) {
 				 for(int x=0;x<512;x++) {
@@ -516,28 +525,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
 						 tPt2[0] = xmm /imageY.getResolutions(0)[0];
 						 tPt2[1] = ymm /imageY.getResolutions(0)[1];
 						 tPt2[2] = zmm /imageY.getResolutions(0)[2];
-						 
-						 
-						 //TESTING....9/21/2009
-						 /*int xInt1 = (int)Math.round(tPt1[0]);
-						 int yInt1 = (int)Math.round(tPt1[1]);
-						 int zInt1 = (int)Math.round(tPt1[2]);
-						 try {
-							 imageX.setC(xInt1, yInt1, zInt1, 3, 200);
-						 }catch(Exception ex) {
-							 
-						 }
-						 
-						 int xInt2 = (int)Math.round(tPt2[0]);
-						 int yInt2 = (int)Math.round(tPt2[1]);
-						 int zInt2 = (int)Math.round(tPt2[2]);
-						 try {
-							 imageY.setC(xInt2, yInt2, zInt2, 3, 200);
-						 }catch(Exception ex) {
-							 
-						 }*/
-						 
-						 
+ 
 					 }
 					 //Now either do averaging or closest-Z
 					 int floorPointIndex1=0, floorPointIndex2=0;
@@ -828,47 +816,13 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
 
 						 
 						 byte r,g,b;
-						 //float r1,g1,b1;
-						 //float r2,g2,b2;
 
 						if(diff1 < diff2) {
-							//r1 = ((1-(float)diff1) * rgb1_short[0]) + ((float)diff1 * rgb2_short[0]);
-							//r2 = ((float)diff2 * rgb1_short[0]) + ((1 - (float)diff2) * rgb2_short[0]);
-							
-							//g1 = ((1-(float)diff1) * rgb1_short[1]) + ((float)diff1 * rgb2_short[1]);
-							//g2 = ((float)diff2 * rgb1_short[1]) + ((1 - (float)diff2) * rgb2_short[1]);
-							
-							//b1 = ((1-(float)diff1) * rgb1_short[2]) + ((float)diff1 * rgb2_short[2]);
-							//b2 = ((float)diff2 * rgb1_short[2]) + ((1 - (float)diff2) * rgb2_short[2]);
-							
-							//r = (byte)(r1);
-							//g = (byte)(g1);
-							//b = (byte)(b1);
-							
-							//r = (byte)((r1+r2)/2);
-							//g = (byte)((g1+g2)/2);
-							//b = (byte)((b1+b2)/2);
-							
+
 							r = (byte)rgb1_short[0];
 							g = (byte)rgb1_short[1];
 							b = (byte)rgb1_short[2]; 
 						}else {
-							//r1 = ((1-(float)diff2) * rgb2_short[0]) + ((float)diff2 * rgb1_short[0]);
-							//r2 = ((float)diff1 * rgb2_short[0]) + ((1 - (float)diff1) * rgb1_short[0]);
-							
-							//g1 = ((1-(float)diff2) * rgb2_short[1]) + ((float)diff2 * rgb1_short[1]);
-							//g2 = ((float)diff1 * rgb2_short[1]) + ((1 - (float)diff1) * rgb1_short[1]);
-							
-							//b1 = ((1-(float)diff2) * rgb2_short[2]) + ((float)diff2 * rgb1_short[2]);
-							//b2 = ((float)diff1 * rgb2_short[2]) + ((1 - (float)diff1) * rgb1_short[2]);
-							
-							//r = (byte)(r1);
-							//g = (byte)(g1);
-							//b = (byte)(b1);
-							
-							//r = (byte)((r1+r2)/2);
-							//g = (byte)((g1+g2)/2);
-							//b = (byte)((b1+b2)/2);
 
 							r = (byte)rgb2_short[0];
 							g = (byte)rgb2_short[1];
@@ -891,21 +845,17 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
 				 }
 			 }
 		 }
+		 
+		 outputTextArea.append("\n");
 
 	    try {
 	    	resultImage.importData(0, resultBuffer, true);
        } catch (IOException error) {
            System.out.println("IO exception");
            error.printStackTrace();
-           //setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
            return;
        }
 
-       
-        //resultImageResols[2] = imageX.getResolutions(0)[0];
-		 //for(int i=0;i<resultImage.getExtents()[2];i++) {
-		 //	 resultImage.setResolutions(i, resultImageResols);
-		 //}
 		 FileInfoImageXML[] fileInfoBases = new FileInfoImageXML[resultImage.getExtents()[2]];
 		 for (int i = 0; i < fileInfoBases.length; i++) {
 	            fileInfoBases[i] = new FileInfoImageXML(resultImage.getImageName(), null, FileUtility.XML);
@@ -924,16 +874,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
 		 
 		 resultImage.setFileInfo(fileInfoBases);
 	     resultImage.calcMinMax();
-	     
-	     //write out input params to file
-	     //writeInputParams();
-	     
-	     
-	     
-	     
-	     
-	     
-	     
+ 
 	     if(imageX != null) {
 	    	 imageX.disposeLocal();
 	    	 imageX = null;
@@ -946,15 +887,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
 	        
 	     //create red and green channels image
 	     createRedAndGreenChannelsImages();
-	     
-	     
-	     
-	     //new ViewJFrameImage(resultImage);
-	     
-	     
-	     
-	     
-	     
+
 	     if(imageY != null) {
 	    	 imageY.disposeLocal();
 	    	 imageY = null;
@@ -963,12 +896,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
 	     if(vjfY != null) {
 	    	 vjfY.close();
 	     }
-	     
-	    
-	     //new ViewJFrameImage(imageX); //testing
-	     //new ViewJFrameImage(imageY); //testing
-		 //dispose();
-	     
+
 	     long endTime = System.currentTimeMillis();
          long diffTime = endTime - begTime;
          float seconds = ((float) diffTime) / 1000;
@@ -984,10 +912,12 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
 	
 	
 	
-	
+	/**
+	 * creates additional red channels and green channels images
+	 */
 	private void createRedAndGreenChannelsImages() {
-		//System.out.println("creating red and green channel images...");
 		outputTextArea.append("creating red and green channel images..." + "\n");
+		outputTextArea.append("\n");
 		TransMatrix xfrm = new TransMatrix(4);
 		xfrm.MakeIdentity();
 		int interp = 0; //trilinear interp
@@ -1009,10 +939,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
 		float fillValue = 0.0f;
 		boolean doUpdateOrigin = true;
 		boolean isSATransform = false;
-		
-		
-		//imageXRegisteredTransform
-		//System.out.println("transforming imageXRegistered to 512x512x512");
+
 		algoTrans = new AlgorithmTransform(imageXRegistered, xfrm, interp, oXres, oYres, oZres, oXdim, oYdim, oZdim, units,
                 doVOI, doClip, doPad, doRotateCenter, center);
         algoTrans.setFillValue(fillValue);
@@ -1021,8 +948,6 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
         algoTrans.run();
         imageXRegisteredTransformed = algoTrans.getTransformedImage();
         imageXRegisteredTransformed.calcMinMax();
-        
-        //new ViewJFrameImage(imageXRegisteredTransformed);
         
         //now we can dispose of imageXRegisterd
         if(imageXRegistered != null) {
@@ -1137,7 +1062,9 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
          opts.setEndSlice(511);
          opts.setOptionsSet(true);
 	     fileIO.writeImage(resultImage, opts);
-	     outputTextArea.append("saving combined result image as " + dir + resultImageFileName + ".ics"+ "\n");
+	     outputTextArea.append("saving combined result image as: \n");
+	     outputTextArea.append(dir + resultImageFileName + ".ics"+ "\n");
+	     outputTextArea.append("\n");
 	     
 	     if(resultImage != null) {
 	    	 resultImage.disposeLocal();
@@ -1192,13 +1119,9 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
 			 g = i+2;
 			 b = i+3;
 			 imageYTransformedByteR = imageYTransformed.getByte(r);
-			 //compImageByteR = resultImage.getByte(r);
-			 //imageXRegisteredTransformedByteR = imageXRegisteredTransformed.getByte(r);
-			 
+
 			 imageYTransformedByteG = imageYTransformed.getByte(g);
-			 //compImageByteG = resultImage.getByte(g);
-			 //imageXRegisteredTransformedByteG = imageXRegisteredTransformed.getByte(g);
-			 
+
 			 //alpha
 			 //redChannelsBuffer[a] = (byte)255;
 			 //channel 1
@@ -1207,8 +1130,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
 			 redChannelsBuffer[g] = imageYTransformedByteR;
 			 //channel 3
 			 //redChannelsBuffer[b] = compImageByteR;
-			 
-			 
+
 			 
 			 //alpha
 			 //greenChannelsBuffer[a] = (byte)255;
@@ -1250,11 +1172,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
 	            fileInfoBases[i].setUnitsOfMeasure(units);
 	            fileInfoBases[i].setResolutions(redChannelsImageResols);
 	            fileInfoBases[i].setExtents(redChannelsImage.getExtents());
-	            //fileInfoBases[i].setImageOrientation(imageX.getFileInfo()[0].getImageOrientation());
-	            //fileInfoBases[i].setAxisOrientation(imageX.getFileInfo()[0].getAxisOrientation());
 	            fileInfoBases[i].setOrigin(orig);
-	            //fileInfoBases[i].setPixelPadValue(imageX.getFileInfo()[0].getPixelPadValue());
-	            //fileInfoBases[i].setPhotometric(imageX.getFileInfo()[0].getPhotometric());
 	            fileInfoBases[i].setDataType(ModelStorageBase.ARGB);
 	            fileInfoBases[i].setFileDirectory(dir);
 	     }
@@ -1272,7 +1190,9 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
          opts.setOptionsSet(true);
 	     fileIO.writeImage(redChannelsImage, opts);
 	     
-	     outputTextArea.append("saving red channels image as " + dir + redImageFileName + ".ics"+ "\n");
+	     outputTextArea.append("saving red channels image as: \n");
+	     outputTextArea.append(dir + redImageFileName + ".ics"+ "\n");
+	     outputTextArea.append("\n");
 	     
 	     if(redChannelsImage != null) {
 	    	 redChannelsImage.disposeLocal();
@@ -1293,11 +1213,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
 	            fileInfoBases[i].setUnitsOfMeasure(units);
 	            fileInfoBases[i].setResolutions(redChannelsImageResols);
 	            fileInfoBases[i].setExtents(greenChannelsImage.getExtents());
-	            //fileInfoBases[i].setImageOrientation(imageX.getFileInfo()[0].getImageOrientation());
-	            //fileInfoBases[i].setAxisOrientation(imageX.getFileInfo()[0].getAxisOrientation());
 	            fileInfoBases[i].setOrigin(orig);
-	            //fileInfoBases[i].setPixelPadValue(imageX.getFileInfo()[0].getPixelPadValue());
-	            //fileInfoBases[i].setPhotometric(imageX.getFileInfo()[0].getPhotometric());
 	            fileInfoBases[i].setDataType(ModelStorageBase.ARGB);
 	            fileInfoBases[i].setFileDirectory(dir);
 	     }
@@ -1316,7 +1232,9 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
 	     fileIO.writeImage(greenChannelsImage, opts);
 	     
 	     
-	     outputTextArea.append("saving green channels image as " + dir + greenImageFileName + ".ics"+ "\n");
+	     outputTextArea.append("saving green channels image as: \n");
+	     outputTextArea.append(dir + greenImageFileName + ".ics"+ "\n");
+	     outputTextArea.append("\n");
 	     
 	     if(greenChannelsImage != null) {
 	    	 greenChannelsImage.disposeLocal();

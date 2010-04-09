@@ -36,6 +36,17 @@ import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 
+/**
+ * This plugin was done for Dr Chi-hon Lee of NICHD
+ * 
+ * This plugin basically standardizes the output from the DrosophilaRetinalRegistration to a standard model
+ * 
+ * It also standardizes an input surface file
+ * 
+ * It also allows for inverting the output surface file
+ * 
+ * @author pandyan
+ */
 public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBase implements AlgorithmInterface {
 
 	/** grid bag constraints **/
@@ -56,12 +67,9 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
     /** browse button **/
     private JButton imageBrowseButton, pointsBrowseButton, surfaceBrowseButton;
     
-    /** **/
-    private JLabel pointsLabel, imageLabel, surfaceLabel, surfaceSamplingLabel;
-    
-    /** **/
-    //private JCheckBox minimizeInterpCheckBox;
-    
+    /** labels **/
+    private JLabel pointsLabel, imageLabel, surfaceLabel, surfaceSamplingLabel, invertIVFileCBLabel;
+
     /** current directory  **/
     private String currDir = null;
     
@@ -71,24 +79,27 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
     /** points collection **/
     public TreeMap<Integer, float[]> pointsMap;
     
+    /** coords of filament **/
     ArrayList <ArrayList<float[]>> allFilamentCoords = new ArrayList <ArrayList<float[]>>();
-    ArrayList <ArrayList<float[]>> allFilamentNorms = new ArrayList <ArrayList<float[]>>();
-    
+
+    /** resolutions **/
     private float[] resols;
     
+    /** surface file sampling checkbox **/
     private JComboBox surfaceFileSamplingCB;
     
-    private float[] r7_27Coord;
+    /** flip checkboxes **/
+    private JCheckBox flipXCB, flipYCB, flipZCB;
     
-private JTextArea outputTextArea;
+    /** flip panel **/
+    private JPanel flipPanel;
+
+    /** output text area **/
+    private JTextArea outputTextArea;
     
+    /** scroll pane **/
     private JScrollPane scrollPane;
-    
-    
-	//private File retinalRegistrationInfoFile;
-	
-	//private boolean minimizeInterp = false;
-	
+
 	/**
 	 * constructor
 	 */
@@ -105,10 +116,12 @@ private JTextArea outputTextArea;
 		init();
 	}
 	
-	
+	/**
+	 * init
+	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Standard Column Registration v2.0");
+        setTitle("Drosophila Standard Column Registration v2.1");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
         
@@ -145,6 +158,17 @@ private JTextArea outputTextArea;
         surfaceFileSamplingCB.addItem("0.25");
         surfaceFileSamplingCB.setSelectedIndex(1);
         
+        invertIVFileCBLabel = new JLabel("Invert IV File");
+        flipXCB = new JCheckBox("Flip X");
+        flipYCB = new JCheckBox("Flip Y");
+        flipZCB = new JCheckBox("Flip Z");
+        
+        flipPanel = new JPanel();
+        flipPanel.add(flipXCB);
+        flipPanel.add(flipYCB);
+        flipPanel.add(flipZCB);
+        
+        
         
         outputTextArea = new JTextArea();
         outputTextArea.setRows(15);
@@ -155,27 +179,7 @@ private JTextArea outputTextArea;
 		scrollPane = new JScrollPane(outputTextArea, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         
 		scrollPane.getVerticalScrollBar().addAdjustmentListener(new ScrollCorrector());
-        
-        
-        //minimizeInterpCheckBox = new JCheckBox("Minimize Interpolation");
-        //minimizeInterpCheckBox.setSelected(false);
-        //minimizeInterpCheckBox.setActionCommand("minimizeInterp");
-        //minimizeInterpCheckBox.addActionListener(this);
-        
-        //retinalRegistrationInfoLabel = new JLabel("Retinal Registration Info File");
-        //retinalRegistrationInfoPathTextField = new JTextField(35);
-        //retinalRegistrationInfoPathTextField.setEditable(false);
-        //retinalRegistrationInfoPathTextField.setBackground(Color.white);
-        //retinalRegistrationInfoBrowseButton = new JButton("Browse");
-        //retinalRegistrationInfoBrowseButton.addActionListener(this);
-        //retinalRegistrationInfoBrowseButton.setActionCommand("retinalRegistrationInfoBrowse");
-        
 
-        //retinalRegistrationInfoLabel.setEnabled(false);
-        //retinalRegistrationInfoPathTextField.setEnabled(false);
-        //retinalRegistrationInfoBrowseButton.setEnabled(false);
-        
-        
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.insets = new Insets(15,5,5,15);
@@ -206,25 +210,27 @@ private JTextArea outputTextArea;
         gbc.gridx = 1;
         gbc.anchor = GridBagConstraints.WEST;
         mainPanel.add(surfaceFileSamplingCB,gbc);
-        gbc.anchor = GridBagConstraints.CENTER;
-        gbc.fill = GridBagConstraints.BOTH;
+        
         gbc.gridx = 0;
         gbc.gridy = 4;
+        mainPanel.add(invertIVFileCBLabel,gbc);
+        gbc.gridx = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        mainPanel.add(flipPanel,gbc);
+        
+        
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.fill = GridBagConstraints.BOTH;
+        
+        
+        
+        
+        
+        gbc.gridx = 0;
+        gbc.gridy = 5;
         gbc.gridwidth = 3;
         mainPanel.add(scrollPane,gbc);
-        //gbc.anchor = GridBagConstraints.CENTER;
-        //mainPanel.add(minimizeInterpCheckBox,gbc);
-        //gbc.anchor = GridBagConstraints.EAST;
-        //gbc.gridx = 0;
-        //gbc.gridy = 3;
-        //mainPanel.add(retinalRegistrationInfoLabel,gbc);
-        //gbc.gridx = 1;
-        //mainPanel.add(retinalRegistrationInfoPathTextField,gbc);
-        //gbc.gridx = 2;
-        //mainPanel.add(retinalRegistrationInfoBrowseButton,gbc);
-        
-        
-        
+
         JPanel OKCancelPanel = new JPanel();
         buildOKButton();
         OKButton.setActionCommand("ok");
@@ -241,17 +247,12 @@ private JTextArea outputTextArea;
         
         setVisible(true);
         setResizable(false);
-        
-        //hard coding for testing
-        //currDir = "C:\\images\\nichd\\points\\neuron1\\resultImage_nlt_1.ics";
-        //FileIO fileIO = new FileIO();
-        //neuronImage = fileIO.readImage("resultImage_nlt_1.ics", "C:\\images\\nichd\\points\\neuron1" + File.separator, true, null);
-        //imageFilePathTextField.setText(currDir);
-        
-        
+
 	}
 	
-
+	/**
+	 * action performed
+	 */
 	public void actionPerformed(ActionEvent e) {
 		String command = e.getActionCommand();
 		if(command.equalsIgnoreCase("imageBrowse")) {
@@ -295,34 +296,7 @@ private JTextArea outputTextArea;
 			 }else {
 				 MipavUtil.displayError("Input image and points file are required");
 			 }
-		 }/*else if(command.equals("minimizeInterp")) {
-			 if(minimizeInterpCheckBox.isSelected()) {
-				 minimizeInterp = true;
-				 retinalRegistrationInfoLabel.setEnabled(true);
-			     retinalRegistrationInfoPathTextField.setEnabled(true);
-			     retinalRegistrationInfoBrowseButton.setEnabled(true);
-			 }else {
-				 minimizeInterp = false;
-				 retinalRegistrationInfoLabel.setEnabled(false);
-			     retinalRegistrationInfoPathTextField.setEnabled(false);
-			     retinalRegistrationInfoPathTextField.setText("");
-			     retinalRegistrationInfoBrowseButton.setEnabled(false);
-			 }
-		 }else if(command.equals("retinalRegistrationInfoBrowse")) {
-			 JFileChooser chooser = new JFileChooser();
-		        if (currDir != null) {
-					chooser.setCurrentDirectory(new File(currDir));
-		        }
-		        chooser.setDialogTitle("Choose file");
-		        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-		        int returnValue = chooser.showOpenDialog(this);
-		        if (returnValue == JFileChooser.APPROVE_OPTION) {
-		        	currDir = chooser.getSelectedFile().getAbsolutePath();
-		        	//retinalRegistrationInfoFile = new File(currDir);
-		        	//retinalRegistrationInfoPathTextField.setText(currDir);
-		        }
-		 }*/
-		 else if(command.equalsIgnoreCase("surfaceBrowse")) {
+		 }else if(command.equalsIgnoreCase("surfaceBrowse")) {
 			 JFileChooser chooser = new JFileChooser();
 		        if (currDir != null) {
 					chooser.setCurrentDirectory(new File(currDir));
@@ -352,7 +326,11 @@ private JTextArea outputTextArea;
 	
 	
 	
-	
+	/**
+	 * reads surface file
+	 * @param surfaceFile
+	 * @return
+	 */
 	private boolean readSurfaceFile(File surfaceFile) {
 		boolean success = true;
 		RandomAccessFile raFile = null;
@@ -369,8 +347,6 @@ private JTextArea outputTextArea;
 					break;
 				}
 				if(line.contains("Coordinate3")) {
-					//System.out.println();
-					//System.out.println();
 					ArrayList<float[]> filamentCoords = new ArrayList<float[]>();
 					while(!((line=raFile.readLine()).endsWith("}"))) {
 						line = line.trim();
@@ -384,18 +360,10 @@ private JTextArea outputTextArea;
 							if(line.endsWith(",")) {
 								line = line.substring(0, line.indexOf(",")).trim();
 							}
-							//System.out.println(line);
 							String[] splits = line.split("\\s+");
 							float coord_x = new Float(splits[0]).floatValue();
 							float coord_y = new Float(splits[1]).floatValue();
 							float coord_z = new Float(splits[2]).floatValue();
-							
-							/*int x = Math.round(coord_x/resols[0]);
-							int y = Math.round(coord_y/resols[1]);
-							int z = Math.round(coord_z/resols[2]);
-							
-							int[] coords = {x,y,z};*/
-							
 							float x = coord_x/resols[0];
 							float y = coord_y/resols[1];
 							float z = coord_z/resols[2];
@@ -408,50 +376,11 @@ private JTextArea outputTextArea;
 					allFilamentCoords.add(filamentCoords);
 				}
 				
-				/*if(line.startsWith("Normal")) {
-					System.out.println();
-					System.out.println();
-					Vector<float[]> filamentNorms = new Vector<float[]>();
-					while(!((line=raFile.readLine()).endsWith("}"))) {
-						line = line.trim();
-						if(!line.equals("")) {
-							if(line.startsWith("vector [")) {
-								line = line.substring(line.indexOf("vector [") + 8, line.length()).trim();
-							}
-							if(line.endsWith("]")) {
-								line = line.substring(0, line.indexOf("]")).trim();
-							}
-							if(line.endsWith(",")) {
-								line = line.substring(0, line.indexOf(",")).trim();
-							}
-							System.out.println(line);
-							String[] splits = line.split("\\s+");
-							float norm_x = new Float(splits[0]).floatValue();
-							float norm_y = new Float(splits[1]).floatValue();
-							float norm_z = new Float(splits[2]).floatValue();
-							float[] norms = {norm_z,norm_y,norm_z};
-							filamentNorms.add(norms);
-						}
-					}
-					allFilamentNorms.add(filamentNorms);
-				}*/
 				
 				
 				
 				
 			}
-			/*for(int i=0;i<allFilamentCoords.size();i++) {
-	         	//Vector<float[]> filCoords = allFilamentCoords.get(i);
-	         	ArrayList<float[]> filCoords = allFilamentCoords.get(i);
-	         	System.out.println("XXXX " + filCoords.size());
-	         	
-	         	//Vector<float[]> filNorms = allFilamentNorms.get(i);
-	         	System.out.println(i);
-	         	for(int k=0;k<filCoords.size();k++) {
-	         		float[] filCoord = filCoords.get(k);
-	         		System.out.println("***** " + filCoord[0] + " " + filCoord[1] + " " + filCoord[2] + ",");
-	         	}
-			}*/
 			raFile.close();
 			
 		}catch(Exception e) {
@@ -492,7 +421,8 @@ private JTextArea outputTextArea;
 	 */
 	protected void callAlgorithm() {
 		float samplingRate = Float.valueOf((String)surfaceFileSamplingCB.getSelectedItem()).floatValue();
-		alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,allFilamentCoords,surfaceFile,samplingRate,cityBlockImage,pointsFile,outputTextArea);
+
+		alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,allFilamentCoords,surfaceFile,samplingRate,cityBlockImage,pointsFile,outputTextArea,flipXCB.isSelected(), flipYCB.isSelected(), flipZCB.isSelected());
 		alg.addListener(this);
 		setCursor(new Cursor(Cursor.WAIT_CURSOR));
 		
@@ -582,7 +512,9 @@ private JTextArea outputTextArea;
 	}
 	
 	
-	
+	/**
+	 * creates city block image
+	 */
 	private void createCityBlockImage() {
 		
 		int[] extents = {512,512,512};
@@ -736,8 +668,7 @@ private JTextArea outputTextArea;
 		 }
 
 		 cityBlockImage.calcMinMax();
-		 
-         //new ViewJFrameImage(cityBlockImage);                                     
+                                  
 	}
         
 		

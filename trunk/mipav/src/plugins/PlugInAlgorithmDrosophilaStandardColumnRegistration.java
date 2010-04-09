@@ -48,6 +48,17 @@ import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
 
 
+/**
+ * This plugin was done for Dr Chi-hon Lee of NICHD
+ * 
+ * This plugin basically standardizes the output from the DrosophilaRetinalRegistration to a standard model
+ * 
+ * It also standardizes an input surface file
+ * 
+ * It also allows for inverting the output surface file
+ * 
+ * @author pandyan
+ */
 public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends AlgorithmBase {
 	
 	/** model images **/
@@ -61,6 +72,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	
 	 /** Resolutions of match image and base image. */
     private float xresA, yresA, zresA, xresB, yresB, zresB;
+    
     /** least squared alg **/
     private AlgorithmRegLeastSquares LSMatch;
     
@@ -76,22 +88,22 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     /** points collection **/
     private TreeMap<Integer, float[]> pointsMap;
     
-    /** DOCUMENT ME! */
+    /** xSource */
     private double[] xSource;
 
-    /** DOCUMENT ME! */
+    /** xTar */
     private double[] xTar;
 
-    /** DOCUMENT ME! */
+    /** ySource */
     private double[] ySource;
 
-    /** DOCUMENT ME! */
+    /** yTar */
     private double[] yTar;
 
-    /** DOCUMENT ME! */
+    /** zSource */
     private double[] zSource;
 
-    /** DOCUMENT ME! */
+    /** zTar! */
     private double[] zTar;
 
     /** tp spline alg **/
@@ -100,141 +112,80 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     /** file info **/
     private FileInfoBase fInfoBase;
     
+    /** red value weighting **/
     private float redValue = 1.0f / 3.0f;
     
+    /** green value weighting **/
     private float greenValue = 1.0f / 3.0f;
     
+    /** blue value weighting **/
     private float blueValue = 1.0f / 3.0f;
     
+    /** threshold average **/
     private boolean thresholdAverage = false;
     
+    /** intensity average **/
     private boolean intensityAverage = false;
     
+    /** threshold **/
     private float threshold = 0.0f;
     
     /** dir where neuron image is **/
     private String dir;
     
-    /** matrix for least squares **/
-    private String leastSquaresMatrixFileName;
-    
-    /** matrix for thin plate spline **/
-    private String thinPlateSplineMatrixFileName, reverseThinPlateSplineMatrixFileName;
-    
     /** least squares - rigid matrix **/
     private TransMatrix lsMatrix;
 
-    private String imageXPath;
-    private String imageYPath;
-    private String trans1Path;
-    private String trans2Path;
-    private String trans3Path;
-    private boolean doSqrRt = false;
-    private boolean doAverage = false;
-    private boolean doClosestZ = false;
-    private boolean doTrilin = false;
-    private boolean doRescale = false;
-    private boolean doAverageIgnore = false;
-    private float slopeR, slopeG, slopeB, bR, bG, bB;
-    /** coefficients need for b-spline **/
-    private float[][][] imageX_R_coeff;
-    
-    /** coefficients need for b-spline **/
-    private float[][][] imageX_G_coeff;
-    
-    /** coefficients need for b-spline **/
-    private float[][][] imageX_B_coeff;
-    
-    /** coefficients need for b-spline **/
-    private float[][][] imageY_R_coeff;
-    
-    /** coefficients need for b-spline **/
-    private float[][][] imageY_G_coeff;
-    
-    /** coefficients need for b-spline **/
-    private float[][][] imageY_B_coeff;
-    
-    /** num slices */
-    private int numberSlices;
-    
-    /** spline degree */
-    private int splineDegree;
-    
-    /** number control points */
-    private int numControlPoints;
-    
-    /** control matrix */
-    private float[][] controlMat;
-    
-    /** 2D and 3D B-Spline basis definitions. */
-    private BSplineBasisDiscretef m_kBSplineBasisX;
-
-    /** b spline */
-    private BSplineBasisDiscretef m_kBSplineBasisY;
-
-    /** b spline */
-    private BSplineBasisDiscretef m_kBSplineBasisZ;
-    
-    /** extents */
-    private int[] destExtents;
-    
-    /** b slpine */
-    private BSplineLattice3Df m_kBSpline3D;
-    
-    /** transform matrices **/
-    private TransMatrix matrixGreen, matrixAffine;
-    
-    /** 2.5 d */
-    private boolean have25D = false;
-    
-    /** num dims */
-    private int nDims;
-    
-    /** resolutions */
-    private float[] resolutions;
-
-
-    /** extents */
-    private int destMinExtent;
-
-    
-    /** control matrix */
-    private float[][][] controlMat25D;
-    
+    /** coords of filament **/
     private ArrayList <ArrayList<float[]>> allFilamentCoords;
     
+    /** new coords of filment **/
     private ArrayList <ArrayList<float[]>> allFilamentCoords_newCoords;
     
+    /** tolerances used **/
     private double tolerance, toleranceSq;
     
+    /** old surface file **/
     private File oldSurfaceFile;
     
+    /** sampling rate **/
     private float samplingRate;
     
+    /** neuraon image extents **/
     private int[] neuronImageExtents;
     
+    /** r7 center coord **/
     private float[] r7_27Coord;
     
+    /** r7 center coord transformed **/
     private float[] r7_27Coord_transformed;
-    
-   // private float r7DiffX, r7DiffY, r7DiffZ;
-    
+
+    /** if r7 center point was found **/
     private boolean r7CenterPointFound = false;
     
+    /** input points **/
     private ArrayList<float[]> inputPointsList = new ArrayList<float[]>();
     
+    /** transformed points **/
     private ArrayList<float[]> transformedPointsList = new ArrayList<float[]>();
     
+    /** points file **/
     private File pointsFile;
     
+    /** output text area **/
     private JTextArea outputTextArea;
+    
+    /** whether to flip or not **/
+    private boolean flipX, flipY, flipZ;
+    
+
     
     /**
      * constuctor
      * @param neuronImage
      * @param pointsMap
      */
-	public PlugInAlgorithmDrosophilaStandardColumnRegistration(ModelImage neuronImage, TreeMap<Integer, float[]> pointsMap, ArrayList <ArrayList<float[]>> allFilamentCoords, File oldSurfaceFile, float samplingRate, ModelImage cityBlockImage, File pointsFile, JTextArea outputTextArea) {
+	public PlugInAlgorithmDrosophilaStandardColumnRegistration(ModelImage neuronImage, TreeMap<Integer, float[]> pointsMap, ArrayList <ArrayList<float[]>> allFilamentCoords, File oldSurfaceFile, float samplingRate, ModelImage cityBlockImage, File pointsFile, JTextArea outputTextArea, boolean flipX, boolean flipY, boolean flipZ) {
 		this.neuronImage = neuronImage;
 		this.neuronImageExtents = neuronImage.getExtents();
 		dir = neuronImage.getImageDirectory();
@@ -255,33 +206,23 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 			
 			allFilamentCoords_newCoords.add(al_new);
 		}
-		//System.out.println(allFilamentCoords.size());
-		//System.out.println(allFilamentCoords_newCoords.size());
-		
-		/*for(int i=0;i<allFilamentCoords_newCoords.size();i++) {
-         	//Vector<float[]> filCoords = allFilamentCoords.get(i);
-         	ArrayList<float[]> filCoords = allFilamentCoords_newCoords.get(i);
-         	
-         	
-         	//Vector<float[]> filNorms = allFilamentNorms.get(i);
-         	System.out.println(i);
-         	System.out.println("YYYY " + filCoords.size());
-		}*/
+
 		
 		double sqrRtThree = Math.sqrt(3);
 		
 		tolerance = (sqrRtThree/2)*(((resols[0]/resols[0]) + (resols[1]/resols[0]) + (resols[2]/resols[0]))/3);
-		//System.out.println("tolerance is " + tolerance);
+
 		toleranceSq = tolerance * tolerance;
-		//System.out.println("toleranceSq is " + toleranceSq);
-		//this.minimizeInterp = minimizeInterp;
-		//this.retinalRegistrationInfoFile = retinalRegistrationInfoFile;
 		
 		this.oldSurfaceFile = oldSurfaceFile;
 		this.samplingRate = samplingRate;
 		this.cityBlockImage = cityBlockImage;
 		this.pointsFile = pointsFile;
 		this.outputTextArea = outputTextArea;
+		this.flipX = flipX;
+		this.flipY = flipY;
+		this.flipZ = flipZ;
+	
 
 		
 	}
@@ -292,7 +233,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	 * run algorithm
 	 */
 	public void runAlgorithm() {
-		outputTextArea.append("Running Algorithm v2.0" + "\n");
+		outputTextArea.append("Running Algorithm v2.1" + "\n");
 
 		long begTime = System.currentTimeMillis();
 		
@@ -604,8 +545,6 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
          }
      	standardColumnImage.notifyImageDisplayListeners();
 
-		//new ViewJFrameImage(standardColumnImage);
-
          VOIVector neuronVOIs = neuronImage_grey.getVOIs();
          voi = (VOI) neuronVOIs.elementAt(0);
          curves = voi.getCurves();
@@ -635,10 +574,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
          }
 
          neuronImage_grey.notifyImageDisplayListeners();
-		 
-         //new ViewJFrameImage(neuronImage_grey);
-         
-         
+
          //call rigid least squares alg
          leastSquaredAlg();
          leastSquaredAlgorithmPerformed();
@@ -648,9 +584,6 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
          thinPlateSplineAlgorithmPerformed();
          
          createFinalImage();
-         
-         //apply transformation matrices to the original color image
-         //applyMatricesOnColorImage();
 		 
          if(standardColumnImage != null) {
         	 standardColumnImage.disposeLocal();
@@ -680,19 +613,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         	 resultImage1.disposeLocal();
         	 resultImage1 = null;
          }
-         
-         
-         
-         
-         //if(minimizeInterp) {
-        	 //if(resultImage2 != null) {
-            	 //resultImage2.disposeLocal();
-            	 //resultImage2 = null;
-             //}
-        	 //minimizeInterp();
-         //}
-         
-         
+
          long endTime = System.currentTimeMillis();
          long diffTime = endTime - begTime;
          float seconds = ((float) diffTime) / 1000;
@@ -765,8 +686,6 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
                 for (i = 0; i < tmpptB.length; i++) {
                     ptNum = (int) (Short.valueOf(((VOIPoint) curvesM[s].elementAt(i)).getLabel()).shortValue()) - 1;
-
-                    // ptNum = (int)(Short.valueOf(((VOIPoint)tmpptB[i]).getLabel()).shortValue());
                     ptB[ptNum] = tmpptB[i];
                 }
             }
@@ -866,17 +785,6 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	 * alg performed for thin plate spline
 	 */
 	private void thinPlateSplineAlgorithmPerformed() {
-		//resultImage2 = spline.getResultImage();
-		//thinPlateSplineMatrixFileName = "nonlinearThinPlateSpline-" + resultImage1.getImageName() + "_To_" + standardColumnImage.getImageName() + ".tps";
-		//spline.saveMatrix(dir + thinPlateSplineMatrixFileName, null);
-		/*ModelImage resImg = spline.getResultImage();
-		if(resImg != null) {
-			resImg.disposeLocal();
-			resImg = null;
-	    }*/
-		//spline.finalize();
-        //spline = null;
-        //outputTextArea.append("Saving nonlinear thin plate spline transformation matrix as " + dir + thinPlateSplineMatrixFileName + "\n");
 		if(resultImage1 != null) {
        	 resultImage1.disposeLocal();
        	 resultImage1 = null;
@@ -945,12 +853,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
                 ptB[ptNum] = tmpptB[i];
             }
         }
-        
-        
-        //for(int w=0;w<ptA.length;w++) {
-        	//System.out.println(ptA[w].X + "," + ptA[w].Y + "," + ptA[w].Z + "     "  + ptB[w].X + "," + ptB[w].Y + "," + ptB[w].Z);
-        //}
-        
+
         Vector3f[] ptAmm = new Vector3f[nPtsA];
         Vector3f[] ptBmm = new Vector3f[nPtsB];
         zresA = 1;
@@ -992,9 +895,6 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	 */
 	private void leastSquaredAlgorithmPerformed() {
 		lsMatrix = LSMatch.getTransformBtoA();
-		leastSquaresMatrixFileName = "rigidLeastSquares-" + neuronImage_grey.getImageName() +"_To_" + standardColumnImage.getImageName() + ".mtx";
-		//lsMatrix.saveMatrix(dir + leastSquaresMatrixFileName);
-		//outputTextArea.append("Saving rigid least squares transformation matrix as " + dir + leastSquaresMatrixFileName + "\n");
 		LSMatch.calculateResiduals();
 		xdimA = standardColumnImage.getExtents()[0];
 		ydimA = standardColumnImage.getExtents()[1];
@@ -1031,9 +931,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         Vector[] newCurves;
         int nCurves;
         Vector3f pt, tPt;
-        
-        //TransMatrix kTMInverse = lsMatrix.clone();
-        //kTMInverse.Inverse();
+
         String label = "";
         VOIPoint point;
         ArrayList<Integer> indexAL_std = new ArrayList<Integer>();
@@ -1073,7 +971,6 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 				 }else {
 					 AddVals vals = new AddVals(xPt, yPt, zPt);
 					 labelInt = new Integer(label);
-					 //System.out.println(labelInt + " " + vals.getXPt()[0] + " " + vals.getYPt()[0] + " " + vals.getZPt()[0]);
 					 addCurvesMap.put(labelInt, vals);
 				 }
 			 }
@@ -1086,9 +983,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		AddVals v;
         while (iter.hasNext()) {
         	key = (Integer)iter.next();
-        	//System.out.println("key is " + key);
         	v = addCurvesMap.get(key);
-        	//System.out.println(" " + v.getXPt()[0] + " " + v.getYPt()[0] + " " + v.getZPt()[0]);
         	newVOI.importCurve(v.getXPt(), v.getYPt(), v.getZPt(), (int)(v.getZPt()[0]));
         }
             
@@ -1114,9 +1009,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	        	 }
 	        }
         }
-        
-        //new ViewJFrameImage(resultImage1);
-        
+
         standardColumnImage.notifyImageDisplayListeners();
         
         resultImage1.registerVOI(newVOI);
@@ -1133,86 +1026,14 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         sliceAL_std = null;
         labelAL_std = null;
         addCurvesMap = null;
-        
-        //new ViewJFrameImage(standardColumnImage);
+
 	}
 	
-	
-	
-	
-	/*private void minimizeInterp() {
-		FileReader fr;
-		BufferedReader br;
-		String line;
-		
-		
-		
-		try {
-	        fr = new FileReader(retinalRegistrationInfoFile);
-	        br = new BufferedReader(fr);
-	        
-	        line = br.readLine();
-	        imageXPath = line.substring(line.indexOf("imageH:")+7, line.length());
-	    	imageXPath = imageXPath.trim().replace("\\", File.separator);
-	    	
-	    	line = br.readLine();
-	    	imageYPath = line.substring(line.indexOf("imageF:")+7, line.length());
-	    	imageYPath = imageXPath.trim().replace("\\", File.separator);
-	    	
-	    	line = br.readLine();
-	    	trans1Path = line.substring(line.indexOf("trans1:")+7, line.length());
-	    	trans1Path = imageXPath.trim().replace("\\", File.separator);
-	    	
-	    	line = br.readLine();
-	    	trans2Path = line.substring(line.indexOf("trans2:")+7, line.length());
-	    	trans2Path = imageXPath.trim().replace("\\", File.separator);
-	    	
-	    	line = br.readLine();
-	    	trans3Path = line.substring(line.indexOf("trans3:")+7, line.length());
-	    	trans3Path = imageXPath.trim().replace("\\", File.separator);
-	    	
-	    	line = br.readLine();
-	    	if(line.trim().equals("sqrRt")) {
-	    		doSqrRt = true;
-	    	}else if(line.trim().equals("closestZ")) {
-	    		doClosestZ = true;
-	    	}else {
-	    		doAverage = true;
-	    		String avg = line.trim().substring(line.indexOf(":")+1, line.length());
-	    		if(line.equals("ignore")) {
-	    			doAverageIgnore = true;
-	    		}
-	    	}
-	    	
-	    	line = br.readLine();
-	    	if(line.trim().equals("trilinear")) {
-	    		doTrilin = true;
-	    	}
-	    	
-	    	line = br.readLine();
-	    	if(line.trim().startsWith("rescale")) {
-	    		doRescale = true;
-	    		String[] splits = line.split(":");
-	    		slopeR = new Float(splits[1].trim()).floatValue();
-	    		bR = new Float(splits[2].trim()).floatValue();
-	    		slopeG = new Float(splits[3].trim()).floatValue();
-	    		bG = new Float(splits[4].trim()).floatValue();
-	    		slopeB = new Float(splits[5].trim()).floatValue();
-	    		bB = new Float(splits[6].trim()).floatValue();
-	    	}
 
-	    	br.close();
-	    	
-	    	createFinalImage();
-
-    	}catch(Exception e) {
-    		e.printStackTrace();
-    		
-    	}
-	}*/
 	
-	
-	
+	/**
+	 * creates final image
+	 */
 	private void createFinalImage() {
 
 		//make LS MAtrix into inverse
@@ -1252,21 +1073,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
          }
 		 
          byte r,g,b;
-         /*AlgorithmTPSpline spline2;
-         RandomAccessFile raFile2;
-         File f2;
-        try {
-	        f2 = new File(dir + thinPlateSplineMatrixFileName);
-			raFile2 = new RandomAccessFile(f2, "r");
-			spline2 = new AlgorithmTPSpline();
-	        spline2.readMatrix(raFile2);
-        }catch(Exception e) {
-        	e.printStackTrace();
-        	
-        	return;
-        }*/
-         
-         
+
         long begTime = 0;
         int[] extents2 = neuronImage.getExtents();
         float[] finalImageRes = finalImage.getResolutions(0);
@@ -1278,7 +1085,6 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		 for(float z=0;z<512;z=z+samplingRate) {
 			 if((float)Math.floor(z) == z) {
 				 outputTextArea.append("z is " +  z + "\n");
-				 //System.out.println("z is " +  z);
 			 		begTime = System.currentTimeMillis();
 			 		if(z%5 == 0) {
 			 			System.gc();
@@ -1337,8 +1143,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 								 
 							 }
 							 
-							 //if(!r7CenterPointFound) {
-								 //determine if point is the r7_center point transformed
+
 								 diffX = Math.abs(tPt2[0] - r7_27Coord[0]);
 								 diffY = Math.abs(tPt2[1] - r7_27Coord[1]);
 								 diffZ = Math.abs(tPt2[2] - r7_27Coord[2]);
@@ -1352,14 +1157,10 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 										 r7_27Coord_transformed[1] = y * finalImage.getResolutions(0)[1]; 
 										 r7_27Coord_transformed[2] = z * finalImage.getResolutions(0)[2];
 										 r7_27Coord_transformed[3] = diffTotal;
-										 //r7DiffX = x * finalImage.getResolutions(0)[0]; 
-										 //r7DiffY = y * finalImage.getResolutions(0)[1]; 
-										 //r7DiffZ = z * finalImage.getResolutions(0)[2]; 
 										 r7CenterPointFound = true;
 									 }
 								 }
-							 //}
-							 
+
 							 
 							 
 							 for(int i=0;i<inputPointsList.size();i++) {
@@ -1394,8 +1195,6 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 							 
 							 //Calculating new surface file points!!!!!
 							 if(cityBlockImage.getByte((int)(tPt2[0]+0.5f),(int)(tPt2[1]+0.5f),(int)(tPt2[2]+0.5f)) != 100) {
-								 //float diffX,diffY,diffZ;
-								 //float diffTotal;
 								 ArrayList<float[]> al;
 								 ArrayList<float[]> al_new;
 								 float[] coords;
@@ -1406,9 +1205,6 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 									 alSize = al.size();
 									 for(int k=0;k<alSize;k++) {
 										 coords = al.get(k);
-										 //if(coords[3] == 1) {
-											 //continue;
-										// }
 										 diffX = Math.abs(tPt2[0] - coords[0]);
 										 diffY = Math.abs(tPt2[1] - coords[1]);
 										 diffZ = Math.abs(tPt2[2] - coords[2]);
@@ -1463,16 +1259,11 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 				 }
 			 }
 			 
-			 /*if((float)Math.floor(z) == z) {
-				 long endTime = System.currentTimeMillis();
-		         long diffTime = endTime - begTime;
-		         float seconds = ((float) diffTime) / 1000;
 
-
-		         System.out.println("** slice took " + seconds + " seconds \n");
-			 		
-			 }*/
 		 }
+		 
+		 outputTextArea.append("\n");
+		 
 		 if(cityBlockImage != null) {
         	 cityBlockImage.disposeLocal();
         	 cityBlockImage = null;
@@ -1513,6 +1304,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		 
 		 if(r7_27Coord_transformed != null) {
 			 outputTextArea.append("Setting new origin of standardized image to transformed r7 center point" + "\n");
+			 outputTextArea.append("\n");
 		 }
 		 
 		 finalImage.setFileInfo(fileInfoBases);
@@ -1529,22 +1321,27 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
          opts.setEndSlice(511);
          opts.setOptionsSet(true);
 	     fileIO.writeImage(finalImage, opts);
-	     outputTextArea.append("Saving final standardized image as " + dir + finalImageFileName + ".ics" + "\n");
-		 
-		 
-		 //new ViewJFrameImage(finalImage);
+	     outputTextArea.append("Saving final standardized image as: \n");
+	     outputTextArea.append(dir + finalImageFileName + ".ics" + "\n");
+	     outputTextArea.append("\n");
 
 		 writeSurfaceFile();
 		 writeNewPointsFile();
 	}
 	
 	
+	/**
+	 * writes new points file
+	 * @return
+	 */
 	private boolean writeNewPointsFile() {
 		boolean success = true;
 		
 		String parentDir = pointsFile.getParent();
 		String newName = pointsFile.getName().substring(0, pointsFile.getName().indexOf(".")) +  "_transformedCoordinates.txt"; 
-		outputTextArea.append("Saving new transformed coordinates file as " + parentDir + File.separator + newName + "\n");
+		outputTextArea.append("Saving new transformed coordinates file as: \n");
+		outputTextArea.append(parentDir + File.separator + newName + "\n");
+		outputTextArea.append("\n");
 		
 		try {
 
@@ -1590,15 +1387,31 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	
 	
 	
-	
+	/**
+	 * writes new surface file
+	 * @return
+	 */
 	private boolean writeSurfaceFile() {
 		
 		boolean success = true;
 		int index = 0;
 		
 		String parentDir = oldSurfaceFile.getParent();
-		String newName = oldSurfaceFile.getName().substring(0, oldSurfaceFile.getName().indexOf(".")) +  "_standardized.iv"; 
-		outputTextArea.append("Saving new filament file as " + parentDir + File.separator + newName + "\n");
+		String newName = oldSurfaceFile.getName().substring(0, oldSurfaceFile.getName().indexOf(".")) +  "_standardized"; 
+		if(flipX) {
+			newName = newName + "_flipX";
+		}
+		if(flipY) {
+			newName = newName + "_flipY";	
+		}
+		if(flipZ) {
+			newName = newName + "_flipZ";	
+		}
+		newName = newName + ".iv";
+		outputTextArea.append("Saving new filament file as: \n");
+		outputTextArea.append(parentDir + File.separator + newName + "\n");
+		outputTextArea.append("\n");
+		
 		try {
 			RandomAccessFile raFile = new RandomAccessFile(oldSurfaceFile, "r");
 			File newSurfaceFile = new File(parentDir + File.separator + newName);
@@ -1633,8 +1446,17 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 					         		tPt3[1] = filCoord[1]*finalImage.getResolutions(0)[1];
 					         		tPt3[2] = filCoord[2]*finalImage.getResolutions(0)[2];
 			         			}
+			         			
+			         			if(flipX) {
+			         				tPt3[0] = tPt3[0] * -1;
+			         			}
+			         			if(flipY) {
+			         				tPt3[1] = tPt3[1] * -1;
+			         			}
+			         			if(flipZ) {
+			         				tPt3[2] = tPt3[2] * -1;
+			         			}
 
-				         		//System.out.println("***** " + tPt3[0] + " " + tPt3[1] + " " + tPt3[2] + ",");
 				         		
 				         		bw.write(tPt3[0] + " " + tPt3[1] + " " + tPt3[2] + ",");
 								bw.newLine();
