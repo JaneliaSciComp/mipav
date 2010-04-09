@@ -11,19 +11,68 @@ import java.io.*;
 /**
  * This is the DICOM store class that defines functions to compose and send a store request to a DICOM image file
  * archive such as the image file server located in NIH's Clinical Center.
- *
- * @version  1.0
+ * 
+ * <hr>
+ * 
+ * This DICOM communication package was originally based on the Java Dicom Package, whose license is below:
+ * 
+ * <pre>
+ * Java Dicom Package (com.zmed.dicom)
+ * 
+ *  Copyright (c) 1996-1997 Z Medical Imaging Systems, Inc.
+ * 
+ *  This software is provided, as is, for non-commercial educational
+ *  purposes only.   Use or incorporation of this software or derivative
+ *  works in commercial applications requires written consent from
+ *  Z Medical Imaging Systems, Inc.
+ * 
+ *  Z MEDICAL IMAGING SYSTEMS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT
+ *  THE SUITABILITY OF THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING
+ *  BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
+ *  FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, OR CONFORMANCE TO ANY
+ *  SPECIFICATION OR STANDARD.  Z MEDICAL IMAGING SYSTEMS SHALL NOT BE
+ *  LIABLE FOR ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING OR
+ *  MODIFYING THIS SOFTWARE OR ITS DERIVATIVES.
+ * 
+ *  =============================================================================
+ * 
+ *  This software package is implemented similarly to the UC Davis public
+ *  domain C++ DICOM implementation which contains the following copyright
+ *  notice:
+ * 
+ *  Copyright (C) 1995, University of California, Davis
+ * 
+ *  THIS SOFTWARE IS MADE AVAILABLE, AS IS, AND THE UNIVERSITY
+ *  OF CALIFORNIA DOES NOT MAKE ANY WARRANTY ABOUT THE SOFTWARE, ITS
+ *  PERFORMANCE, ITS MERCHANTABILITY OR FITNESS FOR ANY PARTICULAR
+ *  USE, FREEDOM FROM ANY COMPUTER DISEASES OR ITS CONFORMITY TO ANY
+ *  SPECIFICATION. THE ENTIRE RISK AS TO QUALITY AND PERFORMANCE OF
+ *  THE SOFTWARE IS WITH THE USER.
+ * 
+ *  Copyright of the software and supporting documentation is
+ *  owned by the University of California, and free access
+ *  is hereby granted as a license to use this software, copy this
+ *  software and prepare derivative works based upon this software.
+ *  However, any distribution of this software source code or
+ *  supporting documentation or derivative works (source code and
+ *  supporting documentation) must include this copyright notice.
+ * 
+ *  The UC Davis C++ source code is publicly available from the following
+ *  anonymous ftp site:
+ * 
+ *  ftp://imrad.ucdmc.ucdavis.edu/pub/dicom/UCDMC/
+ * </pre>
  */
-
 public class DICOM_Store implements Runnable {
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** Class UID. */
     private String classUID;
 
     /** File name of the image to be stored. */
-    private String fileName;
+    private final String fileName;
 
     /** Reference to the Query/Retrieve GUI object. */
     private ViewJFrameDICOMQuery frame;
@@ -35,27 +84,29 @@ public class DICOM_Store implements Runnable {
     private DICOM_PDUService pdu;
 
     /** The remote Application Entity Title. */
-    private String remoteAETitle;
+    private final String remoteAETitle;
 
     /** The transfer syntax used when storing images. */
     private String transferSyntax = null;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates a new DICOM_Store object.
-     *
-     * @param  _fileName       file name of the images
-     * @param  _remoteAETitle  remote application entity name
-     * @param  _frame          MIPAV's query frame
+     * 
+     * @param _fileName file name of the images
+     * @param _remoteAETitle remote application entity name
+     * @param _frame MIPAV's query frame
      */
-    public DICOM_Store(String _fileName, String _remoteAETitle, ViewJFrameDICOMQuery _frame) {
+    public DICOM_Store(final String _fileName, final String _remoteAETitle, final ViewJFrameDICOMQuery _frame) {
         fileName = _fileName;
         remoteAETitle = _remoteAETitle;
         frame = _frame;
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * DOCUMENT ME!
@@ -83,9 +134,8 @@ public class DICOM_Store implements Runnable {
             // to the remote AE
             pdu = new DICOM_PDUService();
 
-
             // grab the first DICOM file (if directory) to see what the transfer syntax is:
-            
+
             if (fileName != null) {
                 getUIDs(fileName);
             }
@@ -99,13 +149,13 @@ public class DICOM_Store implements Runnable {
             }
 
             pdu.close();
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             frame.appendSendMessage("Failed -- " + fileName + " to " + remoteAETitle + "\n");
             MipavUtil.displayError("Error opening directory:" + error);
             pdu.close();
 
             return;
-        } catch (DICOM_Exception e) {
+        } catch (final DICOM_Exception e) {
             frame.appendSendMessage("Failed -- " + fileName + " to " + remoteAETitle + "\n");
             MipavUtil.displayError("Error: sendStoreRQ():" + e);
             pdu.close();
@@ -116,14 +166,14 @@ public class DICOM_Store implements Runnable {
 
     /**
      * Reads in the DICOM image file from disk, composes a DICOM C-Store request and sends the request.
-     *
-     * @param   fileName  name of DICOM image file
-     *
-     * @return  true if the method succeeded in sending all images else false
+     * 
+     * @param fileName name of DICOM image file
+     * 
+     * @return true if the method succeeded in sending all images else false
      */
-    public boolean sendStoreRQ(String fileName) {
+    public boolean sendStoreRQ(final String fileName) {
         DICOM_Object ddo;
-        DICOM_StdStorage storageSOP = new DICOM_StdStorage();
+        final DICOM_StdStorage storageSOP = new DICOM_StdStorage();
         boolean returnVal = false;
 
         try {
@@ -135,7 +185,7 @@ public class DICOM_Store implements Runnable {
                 return false;
             } else {
 
-                // Get UIDs  and pass it as a parameter in the next method (write. )
+                // Get UIDs and pass it as a parameter in the next method (write. )
 
                 // ben update: this has been moved to when we connect to the server so that we can tell the server
                 // exactly what type of file we are going to send
@@ -144,7 +194,7 @@ public class DICOM_Store implements Runnable {
                 storageSOP.write(pdu, ddo, transferSyntax, classUID, instanceUID);
                 returnVal = true;
             }
-        } catch (DICOM_Exception e) {
+        } catch (final DICOM_Exception e) {
             MipavUtil.displayError("DICOMStore.sendStoreRQ():" + e);
 
             return false;
@@ -155,12 +205,12 @@ public class DICOM_Store implements Runnable {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   dir  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param dir DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    private String getFirstFile(String dir) {
+    private String getFirstFile(final String dir) {
         int i;
         File fileDir = null;
         String[] dirList;
@@ -179,17 +229,17 @@ public class DICOM_Store implements Runnable {
                 String test = null;
 
                 for (i = 0; i < dirList.length; i++) {
-	                    test = dir + File.separatorChar + dirList[i];
-	                    if(test != null && test.lastIndexOf('.') != -1){
-	                    	sample = test.substring(test.lastIndexOf('.')).trim();
-		                    if (sample.contains("dcm")) {
-		                        return test;
-		                    }
-	                    }
-                	}
+                    test = dir + File.separatorChar + dirList[i];
+                    if (test != null && test.lastIndexOf('.') != -1) {
+                        sample = test.substring(test.lastIndexOf('.')).trim();
+                        if (sample.contains("dcm")) {
+                            return test;
+                        }
+                    }
                 }
-            
-        } catch (OutOfMemoryError error) {
+            }
+
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Error opening directory:" + error);
 
             return null;
@@ -201,16 +251,16 @@ public class DICOM_Store implements Runnable {
 
     /**
      * Read in the DICOM file and parses the header to find the UIDs needed to send the image.
-     *
-     * @param  fileName  DICOM file to be read.
+     * 
+     * @param fileName DICOM file to be read.
      */
-    private void getUIDs(String file) {
+    private void getUIDs(final String file) {
         FileDicom fileDICOM = null;
         FileInfoDicom fInfoDicom = null;
         String modality = null;
-        File fileDir = new File(file);
-        
-        String fileName = getFirstFile(file);
+        final File fileDir = new File(file);
+
+        final String fileName = getFirstFile(file);
 
         try {
             fileDICOM = new FileDicom(fileName);
@@ -219,12 +269,11 @@ public class DICOM_Store implements Runnable {
                 fInfoDicom = (FileInfoDicom) (fileDICOM.getFileInfo());
                 transferSyntax = (String) (fInfoDicom.getTagTable().getValue("0002,0010"));
                 classUID = (String) (fInfoDicom.getTagTable().getValue("0008,0016"));
-                
-                if (!fileDir.isDirectory()){
-                	instanceUID = (String) (fInfoDicom.getTagTable().getValue("0008,0018"));
-                }
-                else{
-                	getDirUIDs(fileDir);
+
+                if ( !fileDir.isDirectory()) {
+                    instanceUID = (String) (fInfoDicom.getTagTable().getValue("0008,0018"));
+                } else {
+                    getDirUIDs(fileDir);
                 }
 
                 if (classUID != null) {
@@ -267,66 +316,66 @@ public class DICOM_Store implements Runnable {
                     }
                 }
             }
-        } catch (IOException ioe) {
+        } catch (final IOException ioe) {
             System.out.println("DICOM_Store.getUIDs: " + ioe);
         }
-
 
         return;
     }
 
-    private void getDirUIDs(File fileDir) {
+    private void getDirUIDs(final File fileDir) {
         int i;
         String[] dirList;
 
         try {
-        		String dir = fileDir.getAbsolutePath(), sample = "";
-                dirList = fileDir.list();
-                String test = null;
-                FileDicom fileDICOM = null;
-                FileInfoDicom fInfoDicom = null;
-                
-                instanceUID = "";
+            final String dir = fileDir.getAbsolutePath();
+            String sample = "";
+            dirList = fileDir.list();
+            String test = null;
+            FileDicom fileDICOM = null;
+            FileInfoDicom fInfoDicom = null;
 
-                for (i = 0; i < dirList.length; i++) {
-                    test = dir + File.separatorChar + dirList[i];
-                    if(test != null && test.lastIndexOf('.') != -1){
-                    	sample = test.substring(test.lastIndexOf('.')).trim();
-	                    if (sample.contains("dcm")) {
-                            fileDICOM = new FileDicom(test);
+            instanceUID = "";
 
-                            if (fileDICOM.readHeader(true)) {
-                            	fInfoDicom = (FileInfoDicom) (fileDICOM.getFileInfo());
-                            	if(instanceUID == ""){
-                                	instanceUID = (String) (fInfoDicom.getTagTable().getValue("0008,0018"));
-                            	}
-                            	else{
-                                	instanceUID = instanceUID + "\\" + (String) (fInfoDicom.getTagTable().getValue("0008,0018"));
+            for (i = 0; i < dirList.length; i++) {
+                test = dir + File.separatorChar + dirList[i];
+                if (test != null && test.lastIndexOf('.') != -1) {
+                    sample = test.substring(test.lastIndexOf('.')).trim();
+                    if (sample.contains("dcm")) {
+                        fileDICOM = new FileDicom(test);
 
-                            	}
+                        if (fileDICOM.readHeader(true)) {
+                            fInfoDicom = (FileInfoDicom) (fileDICOM.getFileInfo());
+                            if (instanceUID == "") {
+                                instanceUID = (String) (fInfoDicom.getTagTable().getValue("0008,0018"));
+                            } else {
+                                instanceUID = instanceUID + "\\"
+                                        + (String) (fInfoDicom.getTagTable().getValue("0008,0018"));
+
                             }
-	                    }
+                        }
                     }
                 }
-                
-        } catch (OutOfMemoryError error) {
+            }
+
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Error opening directory:" + error);
 
-        } catch (IOException e) {
-			e.printStackTrace();
-		}
+        } catch (final IOException e) {
+            e.printStackTrace();
+        }
 
-	}
+    }
 
-	/**
+    /**
      * Recursily desends the directory tree to send the images. This is a patient level is specified as the directly,
      * all studies, series, and images for that patient are sent
-     *
-     * @param   dir  directory of where images to be sent are located
-     *
-     * @return  true is the method succeed in sending all images else false
+     * 
+     * @param dir directory of where images to be sent are located
+     * 
+     * @return true is the method succeed in sending all images else false
      */
-    private boolean sendImages(String dir) {
+    private boolean sendImages(final String dir) {
         int i;
         File fileDir = null;
         String[] dirList;
@@ -351,7 +400,7 @@ public class DICOM_Store implements Runnable {
                     }
                 }
             }
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Error opening directory:" + error);
 
             return false;

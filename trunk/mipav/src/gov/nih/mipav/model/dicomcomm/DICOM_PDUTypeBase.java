@@ -3,11 +3,62 @@ package gov.nih.mipav.model.dicomcomm;
 
 /**
  * DICOMPDUTypeBase abstract base class that is extended by DICOMPDUType and DICOMPDUItemType.
+ * 
+ * <hr>
+ * 
+ * This DICOM communication package was originally based on the Java Dicom Package, whose license is below:
+ * 
+ * <pre>
+ * Java Dicom Package (com.zmed.dicom)
+ * 
+ *  Copyright (c) 1996-1997 Z Medical Imaging Systems, Inc.
+ * 
+ *  This software is provided, as is, for non-commercial educational
+ *  purposes only.   Use or incorporation of this software or derivative
+ *  works in commercial applications requires written consent from
+ *  Z Medical Imaging Systems, Inc.
+ * 
+ *  Z MEDICAL IMAGING SYSTEMS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT
+ *  THE SUITABILITY OF THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING
+ *  BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
+ *  FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, OR CONFORMANCE TO ANY
+ *  SPECIFICATION OR STANDARD.  Z MEDICAL IMAGING SYSTEMS SHALL NOT BE
+ *  LIABLE FOR ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING OR
+ *  MODIFYING THIS SOFTWARE OR ITS DERIVATIVES.
+ * 
+ *  =============================================================================
+ * 
+ *  This software package is implemented similarly to the UC Davis public
+ *  domain C++ DICOM implementation which contains the following copyright
+ *  notice:
+ * 
+ *  Copyright (C) 1995, University of California, Davis
+ * 
+ *  THIS SOFTWARE IS MADE AVAILABLE, AS IS, AND THE UNIVERSITY
+ *  OF CALIFORNIA DOES NOT MAKE ANY WARRANTY ABOUT THE SOFTWARE, ITS
+ *  PERFORMANCE, ITS MERCHANTABILITY OR FITNESS FOR ANY PARTICULAR
+ *  USE, FREEDOM FROM ANY COMPUTER DISEASES OR ITS CONFORMITY TO ANY
+ *  SPECIFICATION. THE ENTIRE RISK AS TO QUALITY AND PERFORMANCE OF
+ *  THE SOFTWARE IS WITH THE USER.
+ * 
+ *  Copyright of the software and supporting documentation is
+ *  owned by the University of California, and free access
+ *  is hereby granted as a license to use this software, copy this
+ *  software and prepare derivative works based upon this software.
+ *  However, any distribution of this software source code or
+ *  supporting documentation or derivative works (source code and
+ *  supporting documentation) must include this copyright notice.
+ * 
+ *  The UC Davis C++ source code is publicly available from the following
+ *  anonymous ftp site:
+ * 
+ *  ftp://imrad.ucdmc.ucdavis.edu/pub/dicom/UCDMC/
+ * </pre>
  */
-
 public abstract class DICOM_PDUTypeBase {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     public static final byte RESERVED = 0;
@@ -69,84 +120,86 @@ public abstract class DICOM_PDUTypeBase {
     /** DOCUMENT ME! */
     public static final byte PDUTYPE_ImplementationVersion = 0x55;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    protected byte itemType = PDUTYPE_UNKNOWN;
+    protected byte itemType = DICOM_PDUTypeBase.PDUTYPE_UNKNOWN;
 
     /** DOCUMENT ME! */
     protected int length = 0;
 
     /** DOCUMENT ME! */
-    protected byte reserved1 = RESERVED;
+    protected byte reserved1 = DICOM_PDUTypeBase.RESERVED;
 
     /** DOCUMENT ME! */
-    protected byte reserved2 = RESERVED;
+    protected byte reserved2 = DICOM_PDUTypeBase.RESERVED;
 
     /** DOCUMENT ME! */
-    protected byte reserved3 = RESERVED;
+    protected byte reserved3 = DICOM_PDUTypeBase.RESERVED;
 
     /** DOCUMENT ME! */
-    protected byte reserved4 = RESERVED;
+    protected byte reserved4 = DICOM_PDUTypeBase.RESERVED;
 
     /** DOCUMENT ME! */
     protected String UID = "";
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * These methods must be implemented by each class that extends this class.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public abstract int calcSize();
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   connection  DOCUMENT ME!
-     *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * 
+     * @param connection DOCUMENT ME!
+     * 
+     * @throws DICOM_Exception DOCUMENT ME!
      */
     public abstract void readBody(DICOM_Comms connection) throws DICOM_Exception;
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   connection  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * 
+     * @param connection DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
+     * 
+     * @throws DICOM_Exception DOCUMENT ME!
      */
     public abstract byte readHeader(DICOM_Comms connection) throws DICOM_Exception;
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   connection  DOCUMENT ME!
-     *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * 
+     * @param connection DOCUMENT ME!
+     * 
+     * @throws DICOM_Exception DOCUMENT ME!
      */
     public abstract void writeBody(DICOM_Comms connection) throws DICOM_Exception;
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   connection  DOCUMENT ME!
-     *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * 
+     * @param connection DOCUMENT ME!
+     * 
+     * @throws DICOM_Exception DOCUMENT ME!
      */
     public abstract void writeHeader(DICOM_Comms connection) throws DICOM_Exception;
 
     /**
      * Converts item type to a readable string.
-     *
-     * @param   itemType  type defined above
-     *
-     * @return  readable item type string
+     * 
+     * @param itemType type defined above
+     * 
+     * @return readable item type string
      */
-    public static String convertItemTypeToString(byte itemType) {
+    public static String convertItemTypeToString(final byte itemType) {
 
         switch (itemType) {
 
@@ -211,8 +264,8 @@ public abstract class DICOM_PDUTypeBase {
 
     /**
      * Gets the UID for a simple PDU type.
-     *
-     * @return  the UID
+     * 
+     * @return the UID
      */
     public String getUID() {
         return (UID);
@@ -220,8 +273,8 @@ public abstract class DICOM_PDUTypeBase {
 
     /**
      * Calculates the PDU item's body size (not including the header).
-     *
-     * @return  the UID's length
+     * 
+     * @return the UID's length
      */
     public int length() {
         return (UID.length());
@@ -229,38 +282,37 @@ public abstract class DICOM_PDUTypeBase {
 
     /**
      * Reads the header and body of the PDU message from the connection.
-     *
-     * @param   connection  the connection where the data is read in
-     *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * 
+     * @param connection the connection where the data is read in
+     * 
+     * @throws DICOM_Exception DOCUMENT ME!
      */
-    public void read(DICOM_Comms connection) throws DICOM_Exception {
+    public void read(final DICOM_Comms connection) throws DICOM_Exception {
         readHeader(connection); // is defined in the class the extends this class
         readBody(connection); // is defined in the class the extends this class
     }
 
     /**
      * Sets the UID for a simple PDU type.
-     *
-     * @param  UID  DOCUMENT ME!
+     * 
+     * @param UID DOCUMENT ME!
      */
-    public void setUID(String UID) {
+    public void setUID(final String UID) {
         this.UID = UID;
     }
 
     /**
      * Writes the header and body of the PDU messages.
-     *
-     * @param   connection  the connection where the data sent out
-     *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * 
+     * @param connection the connection where the data sent out
+     * 
+     * @throws DICOM_Exception DOCUMENT ME!
      */
-    public void write(DICOM_Comms connection) throws DICOM_Exception {
+    public void write(final DICOM_Comms connection) throws DICOM_Exception {
         writeHeader(connection); // is defined in the class the extends this class
         writeBody(connection); // is defined in the class the extends this class
 
         // connection.flush();
     }
-
 
 }
