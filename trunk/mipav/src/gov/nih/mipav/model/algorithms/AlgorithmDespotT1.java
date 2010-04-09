@@ -369,6 +369,16 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                     loadDataThreads = loadDataThreads > largestImage.getExtents()[3]*divisor ? largestImage.getExtents()[3]*divisor : loadDataThreads;
                 }
             }
+            
+            if(processDataThreads < 1) {
+                processDataThreads = 1;
+            }
+            if(computeDataThreads < 1) {
+                computeDataThreads = 1;
+            } 
+            if(loadDataThreads < 1) {
+                loadDataThreads = 1;
+            }
         }
         
         System.out.println("ComputeData: "+computeDataThreads+"\tProcessData: "+processDataThreads+"\t loadData: "+loadDataThreads);
