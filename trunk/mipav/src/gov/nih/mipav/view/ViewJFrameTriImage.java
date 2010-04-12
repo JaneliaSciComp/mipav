@@ -2582,7 +2582,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             tSlice = slice;
             updateImages(true);
             setTitle();
-            setTSlider(slice);
+            tImageSlider.setValue(slice);
         }
        
         
@@ -2754,20 +2754,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      */
     public void stateChanged(ChangeEvent e) {
         Object source = e.getSource();
-
-        if (source == tImageSlider) {
-
-            int newValue = 1;
-
-            // removed to make the slider behavior match the time slider in the main mipav frame
-            // if (tImageSlider.getValueIsAdjusting() == true) {
-            // return;
-            // }
-
-            newValue = tImageSlider.getValue();
+        
+        if (source.equals(tImageSlider)) {
+            int newValue = tImageSlider.getValue();
             setTimeSlice(newValue);
             controls.setTimeSl(newValue);
-        } else if (source == intensitySpinner) {
+        } else if (source.equals(intensitySpinner)) {
             float paintIntensity = ((SpinnerNumberModel) intensitySpinner.getModel()).getNumber().floatValue();
 
             for (int i = 0; i < MAX_TRI_IMAGES; i++) {
@@ -2776,7 +2768,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                     triImage[i].setIntensityDropper(paintIntensity);
                 }
             }
-        } else if (source == crosshairSpinner) {
+        } else if (source.equals(crosshairSpinner)) {
             int crosshairPixelGap = ((SpinnerNumberModel) crosshairSpinner.getModel()).getNumber().intValue();
 
             // System.err.println(crosshairPixelGap);
@@ -3452,42 +3444,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             borderImageSlider.setBorder(new EtchedBorder());
             panelImageSlider.setBorder(borderImageSlider);
  
-            tImageSlider = new JSlider(JSlider.HORIZONTAL, 0, tDim-1, tDim/2);
-            tImageSlider.setMinorTickSpacing(1);
-            tImageSlider.setPaintTicks(true);
-            tImageSlider.setPaintLabels(true);
-            tImageSlider.setSnapToTicks(false);
-            tImageSlider.setLabelTable(buildTImageSliderLabels(0, tDim-1));
-            tImageSlider.setValue(1);
-            tImageSlider.setValue(0);
+            tImageSlider = new ViewJSlider(ViewJSlider.TIME, tDim-1);
             tImageSlider.addChangeListener(this);
-            tImageSlider.addComponentListener(new ComponentListener(){
-                private Dimension d = tImageSlider.getSize();
-                
-                public void componentHidden(ComponentEvent e) {
-                    // TODO Auto-generated method stub
-                    
-                }
-                public void componentMoved(ComponentEvent e) {
-                    // TODO Auto-generated method stub
-                    
-                }
-                public void componentResized(ComponentEvent e) {
-                    if(e.getSource() instanceof JSlider) {
-                    
-                        if(!((JSlider)(e.getSource())).getSize().equals(d)) {
-                            resizeSlider((JSlider)e.getSource());
-                            buildTImageSliderLabels(0, tDim-1);
-                        } 
-                    }
-                    
-                }
-                public void componentShown(ComponentEvent e) {
-                    // TODO Auto-generated method stub
-                    
-                }
-            });
-
+            
             panelImageSlider.add(tImageSlider);
             panelToolBarGBC.gridx = 0;
             panelToolBarGBC.gridy = 4;
@@ -3501,17 +3460,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         }
 
         setImageSelectorPanelVisible(true);
-    }
-        
-    private void resizeSlider(JSlider src) {
-        double maxTicks = src.getSize().getWidth()/6;
-        
-        int intvl = (int)Math.ceil(tDim/maxTicks);
-        tImageSlider.setMinorTickSpacing(intvl);
-        tImageSlider.setSnapToTicks(false);
-        tImageSlider.setLabelTable(buildTImageSliderLabels(0, tDim-1));
-        tImageSlider.setValue(1);
-        tImageSlider.setValue(0);
     }
     
     protected void buildImageAlignToolBar()
@@ -4540,23 +4488,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         }
     }
 
-    /**
-     * Sets time slider slice.
-     *
-     * @param  tSlice  Slice to set to.
-     */
-    protected void setTSlider(int tSlice) {
-        int newValue;
-
-        if (tImageSlider == null) {
-            return;
-        }
-
-        newValue = Math.round((100.0f * tSlice / (extents[3] - 1)) - 0.01f);
-        tImageSlider.removeChangeListener(this);
-        tImageSlider.setValue(newValue);
-        tImageSlider.addChangeListener(this);
-    }
+    
 
     /**
      * Displays histoLUT frame.
