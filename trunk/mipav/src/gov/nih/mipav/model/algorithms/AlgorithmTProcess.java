@@ -1,0 +1,351 @@
+package gov.nih.mipav.model.algorithms;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileUtility;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewJFrameMessage;
+import gov.nih.mipav.view.ViewJProgressBar;
+import gov.nih.mipav.view.ViewOpenFileUI;
+import gov.nih.mipav.view.ViewUserInterface;
+
+public abstract class AlgorithmTProcess extends AlgorithmBase {
+
+    public static final int MAX_PROCESS = 20;
+    
+    protected int processDataThreads;
+    protected int computeDataThreads;
+    protected int loadDataThreads;
+    
+    /** The number of slices in the largest volume */
+    protected int nSlices;
+    
+    /**Whether this algorithm will utilize 4D processing optimization */
+    protected boolean do4D;
+    
+    /**This object processes data for the DESPOT code */
+    protected DataListener dataListener;
+    
+    protected String tempDirString;
+    
+    public AlgorithmTProcess(ModelImage destImage, ModelImage srcImage) {
+        super(destImage, srcImage);
+    }
+
+    public AlgorithmTProcess() {
+        super();
+    }
+
+    /**
+     * This method gives <code>clo</code> most of the image attributes of <code>orig</code> besides
+     * data type to minimize rounding errors.
+     * 
+     * @param orig Original image
+     * @param clo Near clone image
+     */
+    public ModelImage nearCloneImage(ModelImage orig, ModelImage clo) {
+        FileInfoBase[] oArr = orig.getFileInfo();
+        FileInfoBase[] cArr = clo.getFileInfo();
+        if(cArr.length != oArr.length) {
+            MipavUtil.displayError("Images are not same length");
+            return clo;
+        }
+        for(int i=0; i<cArr.length; i++) {
+            if(cArr == null) {
+                return clo;
+            }
+            cArr[i].setOffset(oArr[i].getOffset());
+            cArr[i].setEndianess(oArr[i].getEndianess());
+            cArr[i].setResolutions(oArr[i].getResolutions().clone());
+            cArr[i].setUnitsOfMeasure(oArr[i].getUnitsOfMeasure().clone());
+            cArr[i].setOrigin(oArr[i].getOrigin().clone());
+            cArr[i].setImageOrientation(cArr[i].getImageOrientation());
+            cArr[i].setAxisOrientation(oArr[i].getAxisOrientation().clone());
+            cArr[i].setDataType(ModelImage.DOUBLE);
+        }
+        
+        return clo;
+    }
+
+    protected abstract void computeProcessors();
+
+    protected abstract void displayImages();
+
+    /**
+     * This method saves an image volume into temporary storage for later loading
+     * by <code>loadResultData()</code>
+     * 
+     * @param tempVolume
+     * @param volumeNumber
+     * @return whether the temp file directory is writable
+     */
+    private boolean saveImageData(ModelImage tempVolume, int volumeNumber) {
+        ViewUserInterface.getReference().getMessageFrame().append("Saving to: "+tempDirString+tempVolume.getImageName(), ViewJFrameMessage.DEBUG);
+        return tempVolume.saveImage(tempDirString, tempVolume.getImageName(), FileUtility.RAW, true);
+    }
+    
+    /**
+     * When system permissions do not allow image data to be saved to a computer, this method
+     * performs the older, slower process of storing image data locally in memory.  This method
+     * is also the last step of creating the t1, mo, r1, and b1 result stacks.
+     * 
+     * @param tempVolume
+     * @param volumeNumber
+     */
+    private void storeImageData(ModelImage resultStack, ModelImage tempVolume, int volumeNumber) {
+        try {
+            int startVal = resultStack.getSliceSize()*nSlices*volumeNumber;
+            int sliceSize = tempVolume.getSliceSize();
+            float[] volumeData = new float[nSlices*sliceSize];
+            tempVolume.exportData(0, sliceSize*nSlices, volumeData);
+            resultStack.importData(startVal, volumeData, true);
+        } catch(IOException e) {
+            e.printStackTrace();
+            MipavUtil.displayError("Could not import result image data.");
+        }
+        
+        return;
+    }
+    
+    protected class DataListener extends Thread {
+    
+        private Queue<ImageHolder> dataImport;
+        private ViewJProgressBar[] dataBar;
+        private boolean localInterrupt;
+        private int currentBar;
+        private ArrayList<Future<?>> workList;
+        
+        public DataListener() {
+            dataImport = new ConcurrentLinkedQueue<ImageHolder>();
+            dataBar = new ViewJProgressBar[processDataThreads];
+            for(int i=0; i<dataBar.length; i++) {
+                dataBar[i] = new ViewJProgressBar("Data importer "+i, "Initialized...", 0, 100, false);
+                dataBar[i].setVisible(true);
+            }
+            localInterrupt = false;
+            currentBar = 0;
+            workList = new ArrayList<Future<?>>();
+        }
+        
+        public void localInterrupt() {
+            localInterrupt = true;
+        }
+    
+        public boolean insertData(ModelImage image, float[][] data, int time) {
+            dataBar[0].setMessage("Receiving data from series "+time);
+            ImageHolder h = new ImageHolder(image, data, time);
+            return dataImport.offer(h);
+        }
+        
+        public void run() {
+            ExecutorService exec = Executors.newFixedThreadPool(processDataThreads);
+            ProcessImageHolder b;
+            Future<?> f;
+            boolean firstTime = true;
+            while(firstTime || !allComplete()) {
+                firstTime = false;
+                while(!isLocalInterrupted()) {
+                    while(!dataImport.isEmpty()) {
+                        b = new ProcessImageHolder(dataImport.poll(), currentBar);
+                        f = exec.submit(b);
+                        currentBar++;
+                        if(currentBar > dataBar.length-1) {
+                            currentBar = 0;
+                        }
+                        workList.add(f);
+                    }
+                }
+            }
+            
+            exec.shutdown();
+            
+            for(int i=0; i<dataBar.length; i++) {
+                dataBar[i].setVisible(false);
+                dataBar[i].dispose();
+                dataBar[i] = null;
+            }
+            
+            dataBar = null;
+        }
+        
+        private boolean allComplete() {
+            for(int i=0; i<workList.size(); i++) {
+                if(workList.get(i).isDone()) {
+                    workList.remove(i);
+                    i = i==0 ? 0 : i-1;  
+                }
+            }
+            
+            if(workList.size() > 0) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+        
+        public boolean isLocalInterrupted() {
+            return localInterrupt;
+        }
+    
+        private class ProcessImageHolder implements Runnable {
+    
+            private ImageHolder h;
+            private ModelImage image;
+            private float[][] data;
+            private int t, index;
+    
+            public ProcessImageHolder(ImageHolder h, int index) {
+                this.h = h;
+                this.index = index;
+            }
+            
+            public void run() {
+                if(h != null) {
+                    dataBar[index].setVisible(true);
+                    image = h.getImage();
+                    data = h.getData();
+                    t = h.getTime();
+                    if(image.getImageName().equals("Unknown")) {
+                        System.out.println("STOP");
+                    }
+                    ViewUserInterface.getReference().getMessageFrame().append(image.getImageName()+"\n", ViewJFrameMessage.DEBUG);
+                    String imageName = image.getImageName().substring(0, image.getImageName().length() > 5 ? 4 : image.getImageName().length()); 
+                    int startVal = 0;
+                    for(int k=0; k<nSlices; k++) {
+                        try {
+                            dataBar[index].setMessage("Importing "+imageName+" volume: "+t+" slice: "+k);
+                            startVal = image.getSliceSize()*k;
+                            image.importData(startVal, data[k], true);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            MipavUtil.displayError("Could not import result image data.");
+                        }
+                        dataBar[index].updateValue((int)(((double)k/(nSlices+1))*80));
+                    }
+                    saveImageData(image, t);
+                    image.disposeLocal();
+                    image = null;
+                    h = null;
+                    dataBar[index].setVisible(false);
+                } 
+            }
+        }
+        
+        private class ImageHolder {
+            
+            private ModelImage image;
+            private float[][] data;
+            private int time;
+            
+            public ImageHolder(ModelImage image, float[][] data, int time) {
+                this.image = image;
+                this.data = data;
+                this.time = time;
+            }
+    
+            public ModelImage getImage() {
+                return image;
+            }
+    
+            public float[][] getData() {
+                return data;
+            }
+    
+            public int getTime() {
+                return time;
+            }
+            
+        }
+    }
+
+    /**
+     * This class loads all saved data that resulted from 4D processing in either the conventional or HIFI case
+     */
+    protected class LoadResultDataOuter implements Runnable {
+        
+        private ModelImage resultStack;
+        private String imageName;
+        private int tVolumes;
+
+        public LoadResultDataOuter(ModelImage resultStack, String imageName, int tVolumes) {
+            this.resultStack = resultStack;
+            this.imageName = imageName;
+            this.tVolumes = tVolumes;
+        }
+
+        public void run() {
+            ExecutorService exec = Executors.newFixedThreadPool(loadDataThreads);
+            ArrayList<LoadResultDataInner> f = new ArrayList<LoadResultDataInner>();
+            LoadResultDataInner d;
+            
+            for(int i=0; i<tVolumes; i++) {
+                fireProgressStateChanged("Reading image: "+imageName+", "+i);
+                ViewUserInterface.getReference().getMessageFrame().append("Reading from: "+tempDirString+imageName+i+"\n", ViewJFrameMessage.DEBUG);
+                d = new LoadResultDataInner(i, imageName, resultStack);
+                f.add(d);
+                exec.submit(d);
+            }
+            
+            exec.shutdown();
+            
+            try {
+                exec.awaitTermination(1, TimeUnit.DAYS);
+            } catch(InterruptedException e) {
+                MipavUtil.displayError("Program did not execute correctly");
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    private class LoadResultDataInner implements Runnable {
+        
+        private final ViewOpenFileUI openFile = new ViewOpenFileUI(false);
+        private int i;
+        private String imageName;
+        private ModelImage resultStack;
+        
+        public LoadResultDataInner(int i, String imageName, ModelImage resultStack) {
+            this.i = i;
+            this.imageName = imageName;
+            this.resultStack = resultStack;
+            
+            openFile.setPutInFrame(false);
+        }
+
+        public void run() {
+            String mipavImageName = openFile.open(tempDirString+imageName+i+".XML", false, null);
+            ViewUserInterface.getReference().getMessageFrame().append("Getting image: "+mipavImageName+"\n", ViewJFrameMessage.DEBUG);
+            ModelImage tempVolume = ViewUserInterface.getReference().getRegisteredImageByName(mipavImageName);
+            if(tempVolume != null) {
+                storeImageData(resultStack, tempVolume, i);
+                tempVolume.disposeLocal();
+                File f = new File(tempDirString+imageName+i+".RAW");
+                if(f != null) {
+                    if(f.delete()) {
+                        ViewUserInterface.getReference().getMessageFrame().append(f.getName()+" succeessfully deleted."+"\n", ViewJFrameMessage.DEBUG);
+                    } else {
+                        ViewUserInterface.getReference().getMessageFrame().append(f.getName()+" could not be deleted from your system, please delete manually."+"\n", ViewJFrameMessage.DEBUG);
+                    }
+                }
+                f = new File(tempDirString+imageName+i+".XML");
+                if(f != null) {
+                    if(f.delete()) {
+                        ViewUserInterface.getReference().getMessageFrame().append(f.getName()+" succeessfully deleted."+"\n", ViewJFrameMessage.DEBUG);
+                    } else {
+                        ViewUserInterface.getReference().getMessageFrame().append(f.getName()+" could not be deleted from your system, please delete manually."+"\n", ViewJFrameMessage.DEBUG);
+                    }
+                }
+            }
+        }
+    }
+}
