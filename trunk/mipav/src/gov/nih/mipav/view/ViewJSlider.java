@@ -26,27 +26,47 @@ import javax.swing.JSlider;
  */
 public class ViewJSlider extends JSlider {
 
-    public static final String TIME = "Time";
-    public static final String SLICE = "Slice";
-    public static final String CONTRAST = "Contrast";
-    public static final String CUSTOM = "Custom";
+    public static final String TIME = "TIME";
+    public static final String SLICE = "SLICE";
+    public static final String CONTRAST = "CONTRAST";
+    public static final String CUSTOM = "CUSTOM";
     
     public enum SliderType {
         
         TIME(ViewJSlider.TIME),
         SLICE(ViewJSlider.SLICE),
-        CONTRAST(ViewJSlider.CONTRAST);
+        CONTRAST(ViewJSlider.CONTRAST),
+        CUSTOM(ViewJSlider.CUSTOM);
+        
+        private ViewJSlider implement;
+        private String str;
         
         SliderType(String str) {
+            this.implement = new ViewJSlider();
+            this.str = str;
+            
             if(str.equals(ViewJSlider.TIME)) {
-                
+                implement.setOrientation(ViewJSlider.HORIZONTAL);
             } else if(str.equals(ViewJSlider.SLICE)) {
-                
+                implement.setOrientation(ViewJSlider.HORIZONTAL);
             } else if(str.equals(ViewJSlider.CONTRAST)) {
-                
+                implement.setOrientation(ViewJSlider.VERTICAL);
+            } else {
+                implement.setOrientation(ViewJSlider.HORIZONTAL);
             }
+            implement.setMinorTickSpacing(1);
+            implement.setPaintTicks(true);
+            implement.setPaintLabels(true);
+            implement.setSnapToTicks(false);
         }
         
+        protected ViewJSlider getImpl() {
+            return implement;
+        }
+        
+        public String toString() {
+            return str;
+        }
     }
 
     /** Refers to the type of slider being used by MIPAV */
@@ -58,6 +78,8 @@ public class ViewJSlider extends JSlider {
     /**Holds the background BoundedRangeModel which describes the actual range of the data */
     private BoundedRangeModel brmBackground;
     
+    private ViewJSlider() {}
+    
     /**
      * Creates a horizontal slider with the range and initial
      * value specified by type.
@@ -66,7 +88,7 @@ public class ViewJSlider extends JSlider {
      */
     public ViewJSlider(String type) {
         super();  
-        init();
+        init(type);
     }
 
     /**
@@ -76,9 +98,9 @@ public class ViewJSlider extends JSlider {
      * @param type See ViewJSlider.SliderTypes for possible pre-built types
      * @param orientation @see JSlider
      */
-    public ViewJSlider(String type, int orientation) {
-        super(orientation);
-        init();
+    public ViewJSlider(String type, int maxBound) {
+        super(0, maxBound);
+        init(type);
     }
 
     /**
@@ -90,7 +112,7 @@ public class ViewJSlider extends JSlider {
      */
     public ViewJSlider(String type, BoundedRangeModel brm) {
         super(brm);
-        init();
+        init(type);
     }
 
     /**
@@ -104,7 +126,7 @@ public class ViewJSlider extends JSlider {
      */
     public ViewJSlider(String type, int min, int max) {
         super(min, max);
-        init();
+        init(type);
     }
 
     /**
@@ -119,7 +141,7 @@ public class ViewJSlider extends JSlider {
      */
     public ViewJSlider(String type, int min, int max, int value) {
         super(min, max, value);
-        init();
+        init(type);
     }
 
     /**
@@ -136,22 +158,10 @@ public class ViewJSlider extends JSlider {
      */
     public ViewJSlider(String type, int orientation, int min, int max, int value) {
         super(orientation, min, max, value);
-        init();
-    }
-    
-    private void init() {
-       
-    }
-    
-    private void resizeSlider() {
-        double maxTicks = getSize().getWidth()/6;
+        init(type);
         
-        int intvl = (int)Math.ceil(getMaximum()/maxTicks);
-        setMinorTickSpacing(intvl);
-        setSnapToTicks(false);
-        setLabelTable(buildSliderLabels(getMinimum(), getMaximum()-1));
-        setValue(1);
-        setValue(0);
+        
+        
     }
     
     /**
@@ -162,25 +172,45 @@ public class ViewJSlider extends JSlider {
      *
      * @return  Slider labels hash.
      */
-    protected Hashtable buildSliderLabels(int min, int max) {
-        Hashtable tImageSliderDictionary = new Hashtable();
-
-        Font font12 = MipavUtil.font12;
-        float rangeF = (max) / 4.0f;
-
-        JLabel label1 = createLabel("0");
-        tImageSliderDictionary.put(new Integer(0), label1);
-
+    protected Hashtable<Integer, JLabel> buildSliderLabels(int intvlMajor) {
+        Hashtable<Integer, JLabel> sliderLabels = new Hashtable<Integer, JLabel>();
+        sliderLabels.put(getMinimum(), createLabel(String.valueOf(getMinimum())));
         
-        if ((max - min) > 3) {
-            JLabel label2 = createLabel(Integer.toString(Math.round(rangeF * 2)-1));
-            tImageSliderDictionary.put(max/2, label2);
+        for(int i=getMinimum()+intvlMajor; i<getMaximum(); i+=intvlMajor) {
+            sliderLabels.put(i, createLabel(String.valueOf(i)));
         }
+        sliderLabels.put(getMaximum(), createLabel(String.valueOf(getMaximum())));
+    
+        return sliderLabels;
+    }
 
-        JLabel label5 = createLabel(Integer.toString(max));
-        tImageSliderDictionary.put(max, label5);
+    /**
+     * Helper method to create a label with the proper font and font color.
+     *
+     * @param   title  Text of the label.
+     *
+     * @return  New label.
+     */
+    protected static JLabel createLabel(String title) {
+        JLabel label = new JLabel(title);
+        label.setFont(MipavUtil.font12);
+        label.setForeground(Color.black);
+    
+        return label;
+    }
 
-        return tImageSliderDictionary;
+    private void init(String typeStr) {
+        type = SliderType.valueOf(typeStr);
+        
+        setDefaults();
+    }
+    
+    public void setDefaults() {
+        this.setMinorTickSpacing(type.getImpl().getMinorTickSpacing());
+        this.setPaintTicks(type.getImpl().getPaintTicks());
+        this.setPaintLabels(type.getImpl().getPaintLabels());
+        this.setSnapToTicks(type.getImpl().getSnapToTicks());
+        this.addComponentListener(new ViewJSliderResizeTool());
     }
     
     /**
@@ -194,32 +224,61 @@ public class ViewJSlider extends JSlider {
         public void componentHidden(ComponentEvent e) { }
         
         public void componentMoved(ComponentEvent e) { }
-
+    
         public void componentResized(ComponentEvent e) {
             if(e.getSource() instanceof JSlider) {
-            
                 if(!((JSlider)(e.getSource())).getSize().equals(d)) {
+                    int value = getValue();
                     resizeSlider();
-                    buildSliderLabels(0, getMaximum()-1);
+                    setValue(value);
                 } 
             }
         }
-
+    
         public void componentShown(ComponentEvent e) { }
     }
     
-    /**
-     * Helper method to create a label with the proper font and font color.
-     *
-     * @param   title  Text of the label.
-     *
-     * @return  New label.
-     */
-    private JLabel createLabel(String title) {
-        JLabel label = new JLabel(title);
-        label.setFont(MipavUtil.font12);
-        label.setForeground(Color.black);
+    private void resizeSlider() {
+        double maxMinorTicks = 0.0;
+        double maxMajorTicks = 0.0;
+        if(getOrientation() == ViewJSlider.HORIZONTAL) {
+            maxMinorTicks = getSize().getWidth()/6;
+            maxMajorTicks = getSize().getWidth()/60;
+        } else {
+            maxMinorTicks = getSize().getHeight()/6;
+            maxMajorTicks = getSize().getHeight()/60;
+        }
+        
+        
+        int intvlMinor = (int)Math.ceil((getMaximum()-getMinimum())/maxMinorTicks);
+        int intvlMajor = (int)Math.ceil((getMaximum()-getMinimum())/maxMajorTicks);
 
-        return label;
+        int i = 0, maxTrys = 20;
+        while((intvlMajor % intvlMinor != 0 || (getMaximum()-getMinimum()+1)%intvlMajor != 0)
+                && intvlMajor < getMaximum()-getMinimum() && i<maxTrys) {
+            intvlMajor++;
+            i++;
+        }
+        int oldIntvlMajor = getMajorTickSpacing();
+        
+        if(i<maxTrys) {
+            if(intvlMajor < getMaximum() - getMinimum()) {
+                setMajorTickSpacing(intvlMajor);
+            }
+            
+            setMinorTickSpacing(intvlMinor);
+            if(maxMajorTicks > 1) {
+                setMajorTickSpacing(intvlMajor);
+            }
+            if(intvlMinor == 1) {
+                setSnapToTicks(true);
+            } else {
+                setSnapToTicks(false);
+            }
+            
+            if(intvlMajor != oldIntvlMajor) {
+                setLabelTable(buildSliderLabels(intvlMajor));
+            }
+        }
     }
 }
