@@ -5,12 +5,9 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
- * Fourth-order Bspline for 1-3D lines and 2D surface. I plan to add a 3D surface soon. This class is based on code from
- * Dave Eberly's MAGIC C++ library while at UNC.
+ * Fourth-order Bspline for 1-3D lines and 2D surface. This class is based on code from
+ * Dave Eberly's MAGIC C++ library.
  *
- * @version  0.1 April 27, 1998
- * @author   Matthew J. McAuliffe, Ph.D. adapted from code by David Eberly
- * @see      AlgorithmBSnake
  */
 public class AlgorithmBSpline extends AlgorithmBase {
 
@@ -52,9 +49,6 @@ public class AlgorithmBSpline extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private float[] dz = new float[5];
-
-    /** DOCUMENT ME! */
-    private float[][] geom = new float[5][5]; // Geometry matrix for 2D surface
 
     /** DOCUMENT ME! */
     private float[] geoms = new float[5];
@@ -976,7 +970,6 @@ public class AlgorithmBSpline extends AlgorithmBase {
         geomx = null;
         geomy = null;
         geomz = null;
-        geom = null; // Geometry matrix for 2D surface
         dt = null;
         dx = null;
         dy = null;
