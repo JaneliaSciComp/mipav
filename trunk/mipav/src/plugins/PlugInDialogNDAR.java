@@ -408,7 +408,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     }
 
     private void init() {
-        setTitle("NDAR Image Submission Package Creation Tool");
+        setTitle("NDAR Image Submission Package Creation Tool v1.0");
 
         multiFileTable = new Hashtable<File, Boolean>();
         infoTable = new Hashtable<File, LinkedHashMap<String, String>>();
