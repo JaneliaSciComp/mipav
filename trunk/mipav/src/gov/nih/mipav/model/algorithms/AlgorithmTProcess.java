@@ -20,8 +20,18 @@ import gov.nih.mipav.view.ViewOpenFileUI;
 import gov.nih.mipav.view.ViewUserInterface;
 
 public abstract class AlgorithmTProcess extends AlgorithmBase {
-
+    
     public static final int MAX_PROCESS = 20;
+    
+    protected boolean upperLeftCorner = true;
+    protected boolean upperRightCorner = false;
+    protected boolean lowerLeftCorner = false;
+    protected boolean lowerRightCorner = false;
+    
+    protected boolean useSmartThresholding = true;
+    protected boolean useHardThresholding = false;
+    protected float noiseScale = (float) 4.00;
+    protected float hardNoiseThreshold = (float) 0.00;
     
     protected int processDataThreads;
     protected int computeDataThreads;
@@ -37,6 +47,8 @@ public abstract class AlgorithmTProcess extends AlgorithmBase {
     protected DataListener dataListener;
     
     protected String tempDirString;
+    
+    protected static double[][] Gaussian;
     
     public AlgorithmTProcess(ModelImage destImage, ModelImage srcImage) {
         super(destImage, srcImage);
@@ -117,6 +129,87 @@ public abstract class AlgorithmTProcess extends AlgorithmBase {
         return;
     }
     
+    protected abstract class CalculateT {
+
+        protected int width;
+        protected int height;
+        
+        protected int t;
+        
+        protected ViewJProgressBar dataBar;
+        
+        public CalculateT(int t) {
+            this.dataBar = new ViewJProgressBar("computeData "+t, "Initialized...", 0, 100, false);
+            dataBar.setVisible(false);
+            this.t = t;
+        }
+        
+        /**
+         * Performs smart thresholding for the given image at at certain slice k
+         * 
+         * @param image
+         * @param k
+         * @return
+         */
+        protected float calculateThreshold(ModelImage image, int k) {
+            float noiseSum = (float) 0.00, threshold = (float)0.00;
+            int noiseIndex = 0;
+            int x, y;
+            if (upperLeftCorner) {
+                for (y=20; y<30; y++) {
+                    for (x=20; x<30; x++) {
+                        if(image.getNDims() < 4) {
+                            noiseSum += image.getFloat(x, y, k);
+                        } else {
+                            noiseSum += image.getFloat(x, y, k, t);
+                        }
+                        noiseIndex++;
+                    }
+                }
+            }
+            if (upperRightCorner) {
+                for (y=20; y<30; y++) {
+                    for (x=width-30; x<width-20; x++) {
+                        if(image.getNDims() < 4) {
+                            noiseSum += image.getFloat(x, y, k);
+                        } else {
+                            noiseSum += image.getFloat(x, y, k, t);
+                        }
+                    }
+                }
+            }
+            if (lowerLeftCorner) {
+                for (y=height-30; y<height-20; y++) {
+                    for (x=20; x<30; x++) {
+                        if(image.getNDims() < 4) {
+                            noiseSum += image.getFloat(x, y, k);
+                        } else {
+                            noiseSum += image.getFloat(x, y, k, t);
+                        }
+                    }
+                }
+            }
+            if (lowerRightCorner) {
+                for (y=height-30; y<height-20; y++) {
+                    for (x=width-30; x<width-20; x++) {
+                        if(image.getNDims() < 4) {
+                            noiseSum += image.getFloat(x, y, k);
+                        } else {
+                            noiseSum += image.getFloat(x, y, k, t);
+                        }
+                    }
+                }
+            }
+            
+            threshold = (float) ( (noiseSum/noiseIndex + 1)*noiseScale );
+            return threshold;
+        }
+
+        protected abstract void disposeLocal();
+
+        protected abstract void initializeLocalImages(ModelImage image);
+    }
+    
     protected class DataListener extends Thread {
     
         private Queue<ImageHolder> dataImport;
@@ -137,16 +230,20 @@ public abstract class AlgorithmTProcess extends AlgorithmBase {
             workList = new ArrayList<Future<?>>();
         }
         
-        public void localInterrupt() {
-            localInterrupt = true;
-        }
-    
         public boolean insertData(ModelImage image, float[][] data, int time) {
             dataBar[0].setMessage("Receiving data from series "+time);
             ImageHolder h = new ImageHolder(image, data, time);
             return dataImport.offer(h);
         }
         
+        public boolean isLocalInterrupted() {
+            return localInterrupt;
+        }
+
+        public void localInterrupt() {
+            localInterrupt = true;
+        }
+
         public void run() {
             ExecutorService exec = Executors.newFixedThreadPool(processDataThreads);
             ProcessImageHolder b;
@@ -192,11 +289,7 @@ public abstract class AlgorithmTProcess extends AlgorithmBase {
                 return true;
             }
         }
-        
-        public boolean isLocalInterrupted() {
-            return localInterrupt;
-        }
-    
+
         private class ProcessImageHolder implements Runnable {
     
             private ImageHolder h;
@@ -218,7 +311,7 @@ public abstract class AlgorithmTProcess extends AlgorithmBase {
                     if(image.getImageName().equals("Unknown")) {
                         System.out.println("STOP");
                     }
-                    ViewUserInterface.getReference().getMessageFrame().append(image.getImageName()+"\n", ViewJFrameMessage.DEBUG);
+                    ViewUserInterface.getReference().getMessageFrame().append("Working on: "+image.getImageName()+"\n", ViewJFrameMessage.DEBUG);
                     String imageName = image.getImageName().substring(0, image.getImageName().length() > 5 ? 4 : image.getImageName().length()); 
                     int startVal = 0;
                     for(int k=0; k<nSlices; k++) {
@@ -253,12 +346,12 @@ public abstract class AlgorithmTProcess extends AlgorithmBase {
                 this.time = time;
             }
     
-            public ModelImage getImage() {
-                return image;
-            }
-    
             public float[][] getData() {
                 return data;
+            }
+
+            public ModelImage getImage() {
+                return image;
             }
     
             public int getTime() {
