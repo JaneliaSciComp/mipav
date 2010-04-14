@@ -30,12 +30,14 @@ public class ViewJSlider extends JSlider {
     public static final String SLICE = "SLICE";
     public static final String CONTRAST = "CONTRAST";
     public static final String CUSTOM = "CUSTOM";
+    public static final String OPACITY = "OPACITY";
     
     public enum SliderType {
         
         TIME(ViewJSlider.TIME),
         SLICE(ViewJSlider.SLICE),
         CONTRAST(ViewJSlider.CONTRAST),
+        OPACITY(ViewJSlider.OPACITY),
         CUSTOM(ViewJSlider.CUSTOM);
         
         private ViewJSlider implement;
@@ -203,6 +205,7 @@ public class ViewJSlider extends JSlider {
         type = SliderType.valueOf(typeStr);
         
         setDefaults();
+        resizeSlider();
     }
     
     public void setDefaults() {
@@ -235,7 +238,9 @@ public class ViewJSlider extends JSlider {
             }
         }
     
-        public void componentShown(ComponentEvent e) { }
+        public void componentShown(ComponentEvent e) { 
+        	
+        }
     }
     
     private void resizeSlider() {
