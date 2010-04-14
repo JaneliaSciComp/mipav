@@ -102,8 +102,8 @@ public abstract class AlgorithmTProcess extends AlgorithmBase {
      * @return whether the temp file directory is writable
      */
     private boolean saveImageData(ModelImage tempVolume, int volumeNumber) {
-        ViewUserInterface.getReference().getMessageFrame().append("Saving to: "+tempDirString+tempVolume.getImageName(), ViewJFrameMessage.DEBUG);
-        return tempVolume.saveImage(tempDirString, tempVolume.getImageName(), FileUtility.RAW, true);
+        ViewUserInterface.getReference().getMessageFrame().append("Saving to: "+tempDirString+File.separator+tempVolume.getImageName(), ViewJFrameMessage.DEBUG);
+        return tempVolume.saveImage(tempDirString+File.separator, tempVolume.getImageName(), FileUtility.RAW, true);
     }
     
     /**
