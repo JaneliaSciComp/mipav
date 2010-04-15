@@ -377,9 +377,6 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
                 Preferences.setLastImage(directory + fileName, image.getFileInfo()[0].getMultiFile(), image.getNDims());
             }
 
-            /* DELETE_CODE after 4/2010  This should be removed because it is handled in the ViewJFrameImage.init().
-             * If no new bugs appear please remove  
-            // updates menubar for each image
             Vector<Frame> imageFrames = UI.getImageFrameVector();
 
             if (imageFrames.size() < 1) {
@@ -397,7 +394,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
 
                 UI.getActiveImageFrame().setControls();
             }
-             */
+             
             imagesArrayList.add(images);
         }
 
@@ -531,8 +528,6 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
         }
 
         // updates menubar for each image
-        /* DELETE_CODE after 4/2010  This should be removed because it is handled in the ViewJFrameImage.init().
-         * If no new bugs appear please remove  
         Vector<Frame> imageFrames = UI.getImageFrameVector();
 
         if (imageFrames.size() < 1) {
@@ -548,7 +543,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
                 }
             }
         }
-		*/
+		
         
         
         return image.getImageName();
