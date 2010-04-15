@@ -87,24 +87,8 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
     /** DOCUMENT ME! */
     protected JToolBar scriptToolBar;
 
-    /**
-     * the slice slider is a JSlider defining an integer number of steps. That number of steps is given by
-     * sliderResolution. Although the major&minor tick marks will not necessarily align with any particular slice, there
-     * is built-in ability to have the tick-marks correspond to a particular percentage of an image set. ie, distance
-     * between each major tick will represent 1/10 of image-set, and the minor ticks will be 1/5 of that 1/10. Should
-     * the number of slices the slider must refer to be larger than the resolution the slider will not always refer to
-     * the correct slice when moved.
-     */
-    protected int sliderResolutionInt = 1000;
-
-    /** DOCUMENT ME! */
-    protected float sliderResolutionFloat = (float) sliderResolutionInt;
-
     /** DOCUMENT ME! */
     protected JSlider tImageSlider;
-
-    /** DOCUMENT ME! */
-    protected Hashtable tImageSliderDictionary = new Hashtable();
 
     /** Main toolbar . */
     protected JToolBar toolBar;
@@ -293,37 +277,18 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
                 tDim = frame.getImageB().getExtents()[3];
             }
 
-            buildTImageSliderLabels(0, tDim);
-            tImageSlider = new JSlider(JSlider.HORIZONTAL, 0, sliderResolutionInt, sliderResolutionInt / 2);
-            tImageSlider.setMajorTickSpacing(majorSpacing);
-            tImageSlider.setMinorTickSpacing(minorSpacing);
-            tImageSlider.setPaintTicks(true);
-            tImageSlider.setPaintLabels(true);
-            tImageSlider.setLabelTable(tImageSliderDictionary);
+            System.out.println("here");
+            tImageSlider = new ViewJSlider(ViewJSlider.TIME, 0, tDim-1);
             tImageSlider.setValue(0);
-            tImageSlider.setVisible(true);
             tImageSlider.addChangeListener(this);
-
             
-            buildZImageSliderLabels(0, zDim);
-            zImageSlider = new JSlider(JSlider.HORIZONTAL, 0, sliderResolutionInt, sliderResolutionInt / 2);
-            zImageSlider.setMajorTickSpacing(majorSpacing);
-            zImageSlider.setMinorTickSpacing(minorSpacing);
-            zImageSlider.setPaintTicks(true);
-            zImageSlider.setPaintLabels(true);
-            zImageSlider.setLabelTable(zImageSliderDictionary);
-
-            // could have used local meth setZslider(extents/2),
-            // but there are too many other commands that could
-            // just as well be used here:
-            zImageSlider.setValue(sliderResolutionInt / 2); // set midpoint
+            zImageSlider = new ViewJSlider(ViewJSlider.SLICE, 0, zDim-1);
 
             panelImageSlider.add(zImageSlider);
             panelImageSlider.add(tImageSlider);
 
             generalPanel.add(panelToolbars, "North");
             generalPanel.add(panelImageSlider, "South");
-            zImageSlider.setVisible(true);
             zImageSlider.addChangeListener(this);
         } else if (numberOfDimensions == 3) {
         	zDim = frame.getImageA().getExtents()[2];
@@ -338,23 +303,8 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
             borderImageSlider.setBorder(new EtchedBorder());
             panelImageSlider.setBorder(borderImageSlider);
 
-            
-            buildZImageSliderLabels(0, zDim);
+            zImageSlider = new ViewJSlider(ViewJSlider.SLICE, 0, zDim-1);
 
-            // System.out.println("resol = " + sliderResolutionInt);
-            zImageSlider = new JSlider(JSlider.HORIZONTAL, 0, sliderResolutionInt, sliderResolutionInt / 2);
-            zImageSlider.setMajorTickSpacing(majorSpacing);
-            zImageSlider.setMinorTickSpacing(minorSpacing);
-            zImageSlider.setPaintTicks(true);
-            zImageSlider.setPaintLabels(true);
-            zImageSlider.setLabelTable(zImageSliderDictionary);
-
-            // could have used local meth setZslider(extents/2),
-            // but there are too many other commands that could
-            // just as well be used here:
-            // zImageSlider.setValue(sliderResolutionInt/2);   // set midpoint
-            // updateZImageSlider(zDim/2);
-            zImageSlider.setVisible(true);
             zImageSlider.addChangeListener(this);
             panelImageSlider.add(zImageSlider);
             generalPanel.add(panelToolbars, "North");
@@ -363,7 +313,6 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
             generalPanel.add(panelToolbars, "Center");
         }
 
-        // generalPanel.validate();
         add(generalPanel, "North");
 
         panelActiveImage = new JPanel();
@@ -392,8 +341,9 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
         radioImageB.addActionListener(this);
         panelActiveImage.add(radioImageB, BorderLayout.EAST);
         buildAlphaSlider();
+        
+        validate();
 
-        // validate();
     }
 
     
@@ -461,43 +411,24 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
                  tDim = frame.getImageB().getExtents()[3];
              }
 
-             buildTImageSliderLabels(1, tDim);
-             tImageSlider = new JSlider(JSlider.HORIZONTAL, 0, sliderResolutionInt, sliderResolutionInt / 2);
-             tImageSlider.setMajorTickSpacing(majorSpacing);
-             tImageSlider.setMinorTickSpacing(minorSpacing);
-             tImageSlider.setPaintTicks(true);
-             tImageSlider.setPaintLabels(true);
-             tImageSlider.setLabelTable(tImageSliderDictionary);
+             //buildTImageSliderLabels(1, tDim);
+             tImageSlider = new ViewJSlider(ViewJSlider.TIME, 0, tDim-1);
              tImageSlider.setValue(0);
-             tImageSlider.setVisible(true);
              tImageSlider.addChangeListener(this);
 
              zDim = frame.getImageA().getExtents()[2];
-             buildZImageSliderLabels(1, zDim);
-             zImageSlider = new JSlider(JSlider.HORIZONTAL, 0, sliderResolutionInt, sliderResolutionInt / 2);
-             zImageSlider.setMajorTickSpacing(majorSpacing);
-             zImageSlider.setMinorTickSpacing(minorSpacing);
-             zImageSlider.setPaintTicks(true);
-             zImageSlider.setPaintLabels(true);
-             zImageSlider.setLabelTable(zImageSliderDictionary);
 
-             // could have used local meth setZslider(extents/2),
-             // but there are too many other commands that could
-             // just as well be used here:
-             zImageSlider.setValue(sliderResolutionInt / 2); // set midpoint
+             zImageSlider = new ViewJSlider(ViewJSlider.SLICE, 0, zDim-1);
 
              panelImageSlider.add(zImageSlider);
              panelImageSlider.add(tImageSlider);
 
              generalPanel.add(panelToolbars, "North");
              generalPanel.add(panelImageSlider, "South");
-             zImageSlider.setVisible(true);
              zImageSlider.addChangeListener(this);
          } else if (numberOfDimensions == 3) {
              panelImageSlider = new JPanel();
              panelImageSlider.setLayout(new GridLayout(1, 1));
-
-             // panelImageSlider.setLayout(new BorderLayout());
              panelImageSlider.setForeground(Color.black);
              borderImageSlider = new TitledBorder("Image slice");
              borderImageSlider.setTitleColor(Color.black);
@@ -506,22 +437,8 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
              panelImageSlider.setBorder(borderImageSlider);
 
              zDim = frame.getImageA().getExtents()[2];
-             buildZImageSliderLabels(1, zDim);
 
-             // System.out.println("resol = " + sliderResolutionInt);
-             zImageSlider = new JSlider(JSlider.HORIZONTAL, 0, sliderResolutionInt, sliderResolutionInt / 2);
-             zImageSlider.setMajorTickSpacing(majorSpacing);
-             zImageSlider.setMinorTickSpacing(minorSpacing);
-             zImageSlider.setPaintTicks(true);
-             zImageSlider.setPaintLabels(true);
-             zImageSlider.setLabelTable(zImageSliderDictionary);
-
-             // could have used local meth setZslider(extents/2),
-             // but there are too many other commands that could
-             // just as well be used here:
-             // zImageSlider.setValue(sliderResolutionInt/2);   // set midpoint
-             // updateZImageSlider(zDim/2);
-             zImageSlider.setVisible(true);
+             zImageSlider = new ViewJSlider(ViewJSlider.SLICE, 0, zDim-1);
              zImageSlider.addChangeListener(this);
              panelImageSlider.add(zImageSlider);
              generalPanel.add(panelToolbars, "North");
@@ -558,6 +475,8 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
          radioImageB.addActionListener(this);
          panelActiveImage.add(radioImageB, BorderLayout.EAST);
          buildAlphaSlider();
+         
+         validate();
 
          // validate();
     }
@@ -587,7 +506,7 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
         zImageSlider = null;
         zImageSliderDictionary = null;
         tImageSlider = null;
-        tImageSliderDictionary = null;
+        //tImageSliderDictionary = null;
         alphaSlider = null;
         gbc = null;
     }
@@ -723,14 +642,8 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
             return;
         }
 
-        if (frame.getImageA().getNDims() == 4) {
-            newValue = Math.round((sliderResolutionFloat * tSlice / (frame.getImageA().getExtents()[3] - 1)) - 0.01f);
-        } else {
-            newValue = Math.round((sliderResolutionFloat * tSlice / (frame.getImageB().getExtents()[3] - 1)) - 0.01f);
-        }
-
         tImageSlider.removeChangeListener(this);
-        tImageSlider.setValue(newValue);
+        tImageSlider.setValue(tSlice);
         tImageSlider.addChangeListener(this);
     }
 
@@ -768,22 +681,13 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
      * @see    ViewControlsImage#updateZImageSlider(int)
      */
     public void setZSlider(int zSlice) {
-        int newValue;
 
         if (zImageSlider == null) {
             return;
         }
 
-        if (frame.getImageA().getNDims() >= 3) {
-            newValue = Math.round((sliderResolutionFloat * zSlice / (frame.getImageA().getExtents()[2] - 1)) - 0.01f);
-            // newValue = zSlice;
-        } else {
-            newValue = Math.round((sliderResolutionFloat * zSlice / (frame.getImageB().getExtents()[2] - 1)) - 0.01f);
-            // newValue = zSlice;
-        }
-
         zImageSlider.removeChangeListener(this);
-        zImageSlider.setValue(newValue);
+        zImageSlider.setValue(zSlice);
         zImageSlider.addChangeListener(this);
     }
 
@@ -801,25 +705,15 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
         int newValue = 1;
 
         if (source == zImageSlider) {
-            newValue = Math.round((zImageSlider.getValue() / sliderResolutionFloat *
-                                       (frame.getImageA().getExtents()[2] - 1)) - 0.01f);
 
             if (frame.getImageA().getLightBoxFrame() != null) {
-                frame.getImageA().getLightBoxFrame().setSlice(newValue);
+                frame.getImageA().getLightBoxFrame().setSlice(zImageSlider.getValue());
             }
 
-            frame.getImageA().setSlice(newValue);
+            frame.getImageA().setSlice(zImageSlider.getValue());
         } else if (source == tImageSlider) {
 
-            if (frame.getImageA().getNDims() == 4) {
-                newValue = Math.round((tImageSlider.getValue() / sliderResolutionFloat *
-                                           (frame.getImageA().getExtents()[3] - 1)) - 0.01f);
-            } else {
-                newValue = Math.round((tImageSlider.getValue() / sliderResolutionFloat *
-                                           (frame.getImageB().getExtents()[3] - 1)) - 0.01f);
-            }
-
-            frame.getImageA().setTimeSlice(newValue);
+            frame.getImageA().setTimeSlice(tImageSlider.getValue());
         } else if (source == alphaSlider) {
 
             if ((alphaSlider.getValueIsAdjusting() == true) && (imageSize > (1024 * 1024))) {
@@ -861,24 +755,6 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
 
     } // end updateScripts()
 
-    /**
-     * Places the pointer on the (slice) slider bar to a location corresponding to the given slice value (within the
-     * set) allowing notification of the listeners.
-     *
-     * @param  value  The slice in the frame that is displayed
-     *
-     * @see    JSlider
-     * @see    ViewControlsImage#setZSlider(int)
-     */
-    public void updateZImageSlider(int value) {
-        int newValue;
-
-        newValue = Math.round((float) value / (frame.getImageA().getExtents()[2] - 1) * sliderResolutionInt);
-
-        if (zImageSlider != null) {
-            zImageSlider.setValue(newValue);
-        }
-    }
 
     /**
      * Builds the slider used to control the alpha blending.
@@ -932,75 +808,6 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
         alphaSlider.addChangeListener(this);
     }
 
-    /**
-     * Places JLabels under the (time) slider bar indicating the minimum, the maximum and the midpoint of the set.
-     *
-     * @param  min  The minimum for the slider.
-     * @param  max  The maximum for the slider.
-     *
-     * @see    JLabel
-     */
-    protected void buildTImageSliderLabels(int min, int max) {
-
-        Font font12 = MipavUtil.font12;
-        float rangeF = (max) / 4.0f;
-
-        JLabel label1 = new JLabel("0");
-
-        label1.setForeground(Color.black);
-        label1.setFont(font12);
-        tImageSliderDictionary.put(new Integer(0), label1);
-
-        if ((max - min) > 3) {
-            JLabel label2 = new JLabel(Integer.toString(Math.round(rangeF * 2)-1));
-
-            label2.setForeground(Color.black);
-            label2.setFont(font12);
-            tImageSliderDictionary.put(new Integer(sliderResolutionInt / 2), label2);
-        }
-
-        JLabel label5 = new JLabel(Integer.toString(max-1));
-
-        label5.setForeground(Color.black);
-        label5.setFont(font12);
-        tImageSliderDictionary.put(new Integer(sliderResolutionInt), label5);
-    }
-
-    /**
-     * Places JLabels under the (slice) slider bar indicating the minimum, the maximum and the midpoint of the set.
-     *
-     * @param  min  Minimum value for slider.
-     * @param  max  Maximum value for slider.
-     *
-     * @see    JLabel
-     */
-    protected void buildZImageSliderLabels(int min, int max) {
-
-        Font font12 = MipavUtil.font12;
-        float rangeF = (max) / 4.0f;
-
-        JLabel label1 = new JLabel("0");
-
-        label1.setForeground(Color.black);
-        label1.setFont(font12);
-        zImageSliderDictionary.put(new Integer(0), label1);
-
-        if ((max - min) > 3) {
-            JLabel label2 = new JLabel(Integer.toString(Math.round(rangeF * 2)-1));
-
-            label2.setForeground(Color.black);
-            label2.setFont(font12);
-            zImageSliderDictionary.put(new Integer(sliderResolutionInt / 2), label2);
-        }
-
-        JLabel label5 = new JLabel(Integer.toString(max-1));
-
-        label5.setForeground(Color.black);
-        label5.setFont(font12);
-        zImageSliderDictionary.put(new Integer(sliderResolutionInt), label5);
-    }
-    
-    
     
     /**
      * This method toggles between the intensities

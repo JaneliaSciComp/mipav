@@ -82,6 +82,12 @@ public class ViewJSlider extends JSlider {
     
     private ViewJSlider() {}
     
+    public void updateUI() {
+    	super.updateUI();
+    	
+    	resizeSlider();
+    }
+    
     /**
      * Creates a horizontal slider with the range and initial
      * value specified by type.
@@ -224,11 +230,14 @@ public class ViewJSlider extends JSlider {
      */
     private class ViewJSliderResizeTool implements ComponentListener {
         
-        public void componentHidden(ComponentEvent e) { }
+        public void componentHidden(ComponentEvent e) { System.out.println(getSize());}
         
-        public void componentMoved(ComponentEvent e) { }
+        public void componentMoved(ComponentEvent e) { System.out.println(getSize());}
     
         public void componentResized(ComponentEvent e) {
+        	System.out.println(e.getSource());
+        	System.out.println(e.getClass());
+        	System.out.println("xxxxxx component resized");
             if(e.getSource() instanceof JSlider) {
                 if(!((JSlider)(e.getSource())).getSize().equals(d)) {
                     int value = getValue();
@@ -239,7 +248,7 @@ public class ViewJSlider extends JSlider {
         }
     
         public void componentShown(ComponentEvent e) { 
-        	
+        	System.out.println(getSize());
         }
     }
     
@@ -253,7 +262,6 @@ public class ViewJSlider extends JSlider {
             maxMinorTicks = getSize().getHeight()/6;
             maxMajorTicks = getSize().getHeight()/60;
         }
-        
         
         int intvlMinor = (int)Math.ceil((getMaximum()-getMinimum())/maxMinorTicks);
         int intvlMajor = (int)Math.ceil((getMaximum()-getMinimum())/maxMajorTicks);
