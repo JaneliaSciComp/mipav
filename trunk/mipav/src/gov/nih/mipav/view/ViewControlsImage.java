@@ -269,7 +269,6 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
                 tDim = frame.getImageB().getExtents()[3];
             }
 
-            System.out.println("buildToolbar: 4D here");
             tImageSlider = new ViewJSlider(ViewJSlider.TIME, 0, tDim-1);
             tImageSlider.setValue(0);
             
@@ -295,7 +294,6 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
             borderImageSlider.setBorder(new EtchedBorder());
             panelImageSlider.setBorder(borderImageSlider);
 
-            System.out.println("buildToolbar: 3D here");
             zImageSlider = new ViewJSlider(ViewJSlider.SLICE, 0, zDim-1);
             panelImageSlider.add(zImageSlider);
             generalPanel.add(panelToolbars, "North");
@@ -801,7 +799,15 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
     }
 
     
-    /**
+    public JSlider getTImageSlider() {
+		return tImageSlider;
+	}
+
+	public JSlider getZImageSlider() {
+		return zImageSlider;
+	}
+
+	/**
      * This method toggles between the intensities
      * between Image A and Image B
      * 

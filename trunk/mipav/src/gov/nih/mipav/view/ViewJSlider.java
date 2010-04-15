@@ -224,14 +224,11 @@ public class ViewJSlider extends JSlider {
      */
     private class ViewJSliderResizeTool implements ComponentListener {
         
-        public void componentHidden(ComponentEvent e) { System.out.println(getSize());}
+        public void componentHidden(ComponentEvent e) { }
         
-        public void componentMoved(ComponentEvent e) { System.out.println(getSize());}
+        public void componentMoved(ComponentEvent e) { }
     
         public void componentResized(ComponentEvent e) {
-        	System.out.println(e.getSource());
-        	System.out.println(e.getClass());
-        	System.out.println("xxxxxx component resized");
             if(e.getSource() instanceof JSlider) {
                 if(!((JSlider)(e.getSource())).getSize().equals(dim)) {
                     int value = getValue();
@@ -242,11 +239,11 @@ public class ViewJSlider extends JSlider {
         }
     
         public void componentShown(ComponentEvent e) { 
-        	System.out.println(getSize());
+
         }
     }
     
-    private void resizeSlider() {
+    public void resizeSlider() {
         double maxMinorTicks = 0.0;
         double maxMajorTicks = 0.0;
         if(getOrientation() == ViewJSlider.HORIZONTAL) {
