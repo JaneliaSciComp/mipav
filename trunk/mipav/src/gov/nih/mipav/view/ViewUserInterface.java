@@ -2072,7 +2072,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 Preferences.debug("Bad argument.", Preferences.DEBUG_MINOR);
             }
         }
-        this.getFrameContainingImage(this.getRegisteredImageByName(name)).toFront();
+
     }
 
     /**
