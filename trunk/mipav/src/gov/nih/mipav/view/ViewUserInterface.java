@@ -746,7 +746,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
             final int number = Integer.valueOf(command.substring(10)).intValue();
             openLastImage(number);
-            System.out.println("hello");
+            System.out.println("ViewUserInterface: actionevent: LastImage; hello");
         } else if (command.equals("loadDWI")) {
             new JDialogDTIInput(JDialogDTIInput.DWI);
         } else if (command.equals("loadDTI")) {
@@ -2073,8 +2073,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 Preferences.debug("Bad argument.", Preferences.DEBUG_MINOR);
             }
         }
-
+        System.out.println("ViewUserInterface:OpenLastImage near end");
         this.getFrameContainingImage(this.getRegisteredImageByName(name)).toFront();
+        System.out.println("ViewUserInterface:OpenLastImage at end");
     }
 
     /**

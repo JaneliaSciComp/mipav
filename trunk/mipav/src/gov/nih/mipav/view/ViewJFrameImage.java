@@ -4467,6 +4467,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @see ViewJComponentEditImage#repaint()
      */
     public void setControls() {
+    	System.out.println("ViewJFrameImage.setControls: Hey!");
         if (getImageB() != null) {
             menuBuilder.setMenuItemEnabled("Close image(B)", true);
             controls.addActiveImageControl();
@@ -5551,7 +5552,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"), menuBuilder
                 .isMenuItemSelected("VOI toolbar"), menuBuilder.isMenuItemSelected("Paint toolbar"), menuBuilder
                 .isMenuItemSelected("Scripting toolbar"), componentImage.getVOIHandler().getVOI_ID());
-
+        
         if (getActiveImage().getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
 
             // menuBuilder.setMenuItemEnabled("Show image/DICOM overlay", true);
@@ -5594,18 +5595,14 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             setLocation(loc.width, loc.height);
         }
         // build the shortcuts that will fire when CTRL/SHIFT/ALT keys are pressed with another key
-
-        updateImages(true);
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
-        pack();
-
-        // User interface will have list of frames
+        // User interface will have list of frames and sets controls
         userInterface.registerFrame(this);
-
-        this.updateImages();
+        
         addComponentListener(this);
 
+        pack(); // Pack before making visible.
         if (userInterface.isAppFrameVisible()) {
             setVisible(true);
         } else {
@@ -5614,6 +5611,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         final JMenuItem kAutoITKMenu = menuBuilder.getMenuItem("Insight toolkit (auto ITK)");
         m_kAutoItkLoader = new AutoItkLoader(this, (JMenu) kAutoITKMenu);
+        
+        updateImages(true);
+        //userInterface.actionPerformed(new ActionEvent())
+        System.out.println("ViewJFrameImage: init: just before exiting");
+
+        
 
     } // end init()
 

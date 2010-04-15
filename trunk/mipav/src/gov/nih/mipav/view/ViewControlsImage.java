@@ -54,12 +54,6 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
     /** DOCUMENT ME! */
     protected int imageSize;
 
-    /** JSlider.majorSpacing/minorSpacing. */
-    protected int majorSpacing = 100; // 25;
-
-    /** DOCUMENT ME! */
-    protected int minorSpacing = 20; // 5;
-
     /** Paint toolbar. */
     protected JToolBar paintToolBar;
 
@@ -99,8 +93,6 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
     /** DOCUMENT ME! */
     protected JSlider zImageSlider;
 
-    /** DOCUMENT ME! */
-    protected Hashtable zImageSliderDictionary = new Hashtable();
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -277,10 +269,9 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
                 tDim = frame.getImageB().getExtents()[3];
             }
 
-            System.out.println("here");
+            System.out.println("buildToolbar: 4D here");
             tImageSlider = new ViewJSlider(ViewJSlider.TIME, 0, tDim-1);
             tImageSlider.setValue(0);
-            tImageSlider.addChangeListener(this);
             
             zImageSlider = new ViewJSlider(ViewJSlider.SLICE, 0, zDim-1);
 
@@ -290,6 +281,7 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
             generalPanel.add(panelToolbars, "North");
             generalPanel.add(panelImageSlider, "South");
             zImageSlider.addChangeListener(this);
+            zImageSlider = new ViewJSlider(ViewJSlider.SLICE, 0, zDim-1);
         } else if (numberOfDimensions == 3) {
         	zDim = frame.getImageA().getExtents()[2];
             panelImageSlider = new JPanel();
@@ -303,12 +295,14 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
             borderImageSlider.setBorder(new EtchedBorder());
             panelImageSlider.setBorder(borderImageSlider);
 
+            System.out.println("buildToolbar: 3D here");
             zImageSlider = new ViewJSlider(ViewJSlider.SLICE, 0, zDim-1);
-
-            zImageSlider.addChangeListener(this);
             panelImageSlider.add(zImageSlider);
             generalPanel.add(panelToolbars, "North");
             generalPanel.add(panelImageSlider, "South");
+            zImageSlider.addChangeListener(this);
+            zImageSlider.validate();
+            
         } else {
             generalPanel.add(panelToolbars, "Center");
         }
@@ -504,9 +498,7 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
         panelImageSlider = null;
         borderImageSlider = null;
         zImageSlider = null;
-        zImageSliderDictionary = null;
         tImageSlider = null;
-        //tImageSliderDictionary = null;
         alphaSlider = null;
         gbc = null;
     }
