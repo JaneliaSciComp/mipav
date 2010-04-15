@@ -746,6 +746,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
             final int number = Integer.valueOf(command.substring(10)).intValue();
             openLastImage(number);
+            System.out.println("hello");
         } else if (command.equals("loadDWI")) {
             new JDialogDTIInput(JDialogDTIInput.DWI);
         } else if (command.equals("loadDTI")) {
