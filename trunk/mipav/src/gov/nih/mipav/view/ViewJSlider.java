@@ -75,16 +75,13 @@ public class ViewJSlider extends JSlider {
     private SliderType type;
     
     /** Holds the old dimension to minimize redrawing of slider table */
-    private Dimension d;
+    private Dimension dim;
     
-    /**Holds the background BoundedRangeModel which describes the actual range of the data */
-    private BoundedRangeModel brmBackground;
     
     private ViewJSlider() {}
     
     public void updateUI() {
     	super.updateUI();
-    	
     	resizeSlider();
     }
     
@@ -167,9 +164,6 @@ public class ViewJSlider extends JSlider {
     public ViewJSlider(String type, int orientation, int min, int max, int value) {
         super(orientation, min, max, value);
         init(type);
-        
-        
-        
     }
     
     /**
@@ -239,7 +233,7 @@ public class ViewJSlider extends JSlider {
         	System.out.println(e.getClass());
         	System.out.println("xxxxxx component resized");
             if(e.getSource() instanceof JSlider) {
-                if(!((JSlider)(e.getSource())).getSize().equals(d)) {
+                if(!((JSlider)(e.getSource())).getSize().equals(dim)) {
                     int value = getValue();
                     resizeSlider();
                     setValue(value);
@@ -293,5 +287,6 @@ public class ViewJSlider extends JSlider {
                 setLabelTable(buildSliderLabels(intvlMajor));
             }
         }
+        
     }
 }
