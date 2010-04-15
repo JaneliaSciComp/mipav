@@ -415,7 +415,6 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
      * @return The image name of the image that was read in.
      */
     public String open(String fileName, boolean multiFile, FileInfoBase fileInfo) {
-    	System.out.println("ViewOpenFileUI.open:");
         int index;
         ViewJFrameImage imageFrame;
         FileIO fileIO = null;

@@ -4467,7 +4467,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @see ViewJComponentEditImage#repaint()
      */
     public void setControls() {
-    	System.out.println("ViewJFrameImage.setControls: Hey!");
         if (getImageB() != null) {
             menuBuilder.setMenuItemEnabled("Close image(B)", true);
             controls.addActiveImageControl();
@@ -5538,7 +5537,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         initExtentsVariables(imageA);
 
         // create and build the menus and controls
-        controls = new ViewControlsImage(this); // Build controls used in this frame
         menuBuilder = new ViewMenuBuilder(this);
 
         // build the menuBar based on the number of dimensions for imageA
@@ -5548,7 +5546,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         menuBar.addKeyListener(this);
 
         // imageA.
-
+        controls = new ViewControlsImage(this); // Build controls used in this frame
         controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"), menuBuilder
                 .isMenuItemSelected("VOI toolbar"), menuBuilder.isMenuItemSelected("Paint toolbar"), menuBuilder
                 .isMenuItemSelected("Scripting toolbar"), componentImage.getVOIHandler().getVOI_ID());
@@ -5572,9 +5570,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         getContentPane().add(scrollPane);
         scrollPane.setBackground(Color.black);
-
-        // setSize(scrollPane.getSize().width + getInsets().left + getInsets().right,
-        // scrollPane.getSize().height + getInsets().top + getInsets().bottom);
 
         setBackground(Color.black);
 
@@ -5613,11 +5608,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         m_kAutoItkLoader = new AutoItkLoader(this, (JMenu) kAutoITKMenu);
         
         updateImages(true);
-        //userInterface.actionPerformed(new ActionEvent())
-        System.out.println("ViewJFrameImage: init: just before exiting");
 
-        
-
+        if(controls.getTImageSlider() != null) {
+        	((ViewJSlider)controls.getTImageSlider()).resizeSlider();
+        }
+        if(controls.getZImageSlider() != null) {
+        	((ViewJSlider)controls.getZImageSlider()).resizeSlider();
+        }
     } // end init()
 
     /**
