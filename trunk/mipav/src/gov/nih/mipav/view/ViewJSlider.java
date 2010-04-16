@@ -80,11 +80,7 @@ public class ViewJSlider extends JSlider {
     
     private ViewJSlider() {}
     
-    public void updateUI() {
-    	super.updateUI();
-    	resizeSlider();
-    }
-    
+
     /**
      * Creates a horizontal slider with the range and initial
      * value specified by type.
@@ -178,15 +174,9 @@ public class ViewJSlider extends JSlider {
         Hashtable<Integer, JLabel> sliderLabels = new Hashtable<Integer, JLabel>();
         sliderLabels.put(getMinimum(), createLabel(String.valueOf(getMinimum())));
         
-        if(intvlMajor > 0) {
-            for(int i=getMinimum()+intvlMajor; i<getMaximum(); i+=intvlMajor) {
-                sliderLabels.put(i, createLabel(String.valueOf(i)));
-            }   
-        } else {
-            int half = (int)Math.floor((getMaximum() + getMinimum())/2.0);
-            sliderLabels.put(half, createLabel(String.valueOf(half)));
+        for(int i=getMinimum()+intvlMajor; i<getMaximum(); i+=intvlMajor) {
+            sliderLabels.put(i, createLabel(String.valueOf(i)));
         }
-            
         sliderLabels.put(getMaximum(), createLabel(String.valueOf(getMaximum())));
     
         return sliderLabels;
@@ -207,6 +197,10 @@ public class ViewJSlider extends JSlider {
         return label;
     }
 
+    /**
+     * init
+     * @param typeStr
+     */
     private void init(String typeStr) {
         type = SliderType.valueOf(typeStr);
         
@@ -214,6 +208,9 @@ public class ViewJSlider extends JSlider {
         resizeSlider();
     }
     
+    /**
+     * sets some default parms
+     */
     public void setDefaults() {
         this.setMinorTickSpacing(type.getImpl().getMinorTickSpacing());
         this.setPaintTicks(type.getImpl().getPaintTicks());
@@ -231,9 +228,8 @@ public class ViewJSlider extends JSlider {
     private class ViewJSliderResizeTool implements ComponentListener {
         
         public void componentHidden(ComponentEvent e) { }
-        
         public void componentMoved(ComponentEvent e) { }
-    
+        public void componentShown(ComponentEvent e) {  }
         public void componentResized(ComponentEvent e) {
             if(e.getSource() instanceof JSlider) {
                 if(!((JSlider)(e.getSource())).getSize().equals(dim)) {
@@ -242,76 +238,76 @@ public class ViewJSlider extends JSlider {
                     setValue(value);
                 } 
             }
-        }
-    
-        public void componentShown(ComponentEvent e) { 
-
-        }
+        } 
     }
     
+    /**
+     * creates/resizes the slider
+     * once intvlMajor is determined which is based on width and range, intvlMinor
+     * is then determined
+     */
     public void resizeSlider() {
-        double maxMinorTicks = 0.0;
-        double maxMajorTicks = 0.0;
+        double maxMajorTicks = 1.0;
         if(getOrientation() == ViewJSlider.HORIZONTAL) {
-            maxMinorTicks = getSize().getWidth()/6;
-            maxMajorTicks = getSize().getWidth()/60;
+            maxMajorTicks = getSize().getWidth()/50;
         } else {
-            maxMinorTicks = getSize().getHeight()/6;
-            maxMajorTicks = getSize().getHeight()/60;
+            maxMajorTicks = getSize().getHeight()/50;
         }
-        int iMajor = 0, iMinor = 0, maxTrysMajor = 20, maxTrysMinor = 20;
-        int intvlMinor = 1, intvlMajor = 1;
+        
+        int intvlMajor = (int)Math.ceil((getMaximum()-getMinimum()+1)/maxMajorTicks);
+        
+        int i = 0, maxTrys = 100;
+        while(((getMaximum()-getMinimum()+1)%intvlMajor != 0)
+                && intvlMajor < getMaximum()-getMinimum()+1 && i<maxTrys) {
+            intvlMajor++;
+            i++;
+        }
         int oldIntvlMajor = getMajorTickSpacing();
-        
-        
-        //find optimal major ticks
-        if(maxMajorTicks < getMaximum() + getMinimum()) {
-            intvlMajor = (int)Math.ceil((getMaximum()+getMinimum())/maxMajorTicks);
-    
-            
-            while((intvlMajor % intvlMinor != 0 || (getMaximum()+getMinimum())%intvlMajor != 0)
-                    && intvlMajor < getMaximum()+getMinimum() && iMajor<maxTrysMajor) {
-                intvlMajor++;
-                iMajor++;
+
+        //handle prime numbers----if intvlMajor is prime number, add 1 to it
+        if(isPrime(intvlMajor)) {
+        	intvlMajor = intvlMajor + 1;
+        }
+       
+        int intvlMinor = 1;
+        if(intvlMinor != intvlMajor) {
+        	intvlMinor = (int)Math.ceil(intvlMajor / 7.0);
+        	int k =0, maxTrys2=100;
+            while(((intvlMajor)%intvlMinor != 0) && k<maxTrys2) {
+                intvlMinor++;
+                k++;
             }
-        } else {
-            intvlMajor = 1;
         }
         
-        //find optimal minor ticks
-        if(maxMinorTicks < getMaximum() + getMinimum()) {
-            intvlMinor = (int)Math.ceil((getMaximum()+getMinimum())/maxMinorTicks);
-            
-            if(iMajor < maxTrysMajor) {
-                while(intvlMajor % intvlMinor != 0 && intvlMinor < intvlMajor && iMinor<maxTrysMinor) {
-                    intvlMinor++;
-                    iMinor++;
-                }
-            }
-        } else {
-            intvlMinor = 1;
-        }   
-        
-        //if minor converged, set minor tick spacing
-        if(iMinor < maxTrysMinor) {
+        if(i<=maxTrys) {
+            setMajorTickSpacing(intvlMajor);
             setMinorTickSpacing(intvlMinor);
-            
             if(intvlMinor == 1) {
                 setSnapToTicks(true);
             } else {
                 setSnapToTicks(false);
             }
+            if(intvlMajor != oldIntvlMajor) {
+                setLabelTable(buildSliderLabels(intvlMajor));
+            }
         }
         
-        //if major converges and is not the same as the last one, set major tick spacing
-        if(iMajor<maxTrysMajor && intvlMajor != oldIntvlMajor) {
-            if(intvlMajor < getMaximum() + getMinimum() || maxMajorTicks > 1) {
-                setMajorTickSpacing(intvlMajor);
-            }
-
-            setLabelTable(buildSliderLabels(intvlMajor));
-        } else if(iMajor == maxTrysMajor) {
-            setLabelTable(buildSliderLabels(-1));
-        }
+    }
+    
+    /**
+     * helper function that determines if number is prime
+     * @param num
+     * @return
+     */
+    private boolean isPrime(int num) {
+    	boolean isPrime = false;
+    	int[] primes = {2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97};
+    	for(int i=0;i<primes.length;i++) {
+    		if(num == primes[i]) {
+    			isPrime = true;
+    			break;
+    		}
+    	}
+    	return isPrime;
     }
 }
