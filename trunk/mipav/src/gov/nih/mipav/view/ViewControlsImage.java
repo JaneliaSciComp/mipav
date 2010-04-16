@@ -271,16 +271,18 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
 
             tImageSlider = new ViewJSlider(ViewJSlider.TIME, 0, tDim-1);
             tImageSlider.setValue(0);
+            tImageSlider.addChangeListener(this);
             
             zImageSlider = new ViewJSlider(ViewJSlider.SLICE, 0, zDim-1);
-
+            zImageSlider.addChangeListener(this);
+            
             panelImageSlider.add(zImageSlider);
             panelImageSlider.add(tImageSlider);
 
             generalPanel.add(panelToolbars, "North");
             generalPanel.add(panelImageSlider, "South");
-            zImageSlider.addChangeListener(this);
-            zImageSlider = new ViewJSlider(ViewJSlider.SLICE, 0, zDim-1);
+            
+            
         } else if (numberOfDimensions == 3) {
         	zDim = frame.getImageA().getExtents()[2];
             panelImageSlider = new JPanel();
@@ -295,10 +297,11 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
             panelImageSlider.setBorder(borderImageSlider);
 
             zImageSlider = new ViewJSlider(ViewJSlider.SLICE, 0, zDim-1);
+            zImageSlider.addChangeListener(this);
+            
             panelImageSlider.add(zImageSlider);
             generalPanel.add(panelToolbars, "North");
             generalPanel.add(panelImageSlider, "South");
-            zImageSlider.addChangeListener(this);
             zImageSlider.validate();
             
         } else {
@@ -403,7 +406,6 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
                  tDim = frame.getImageB().getExtents()[3];
              }
 
-             //buildTImageSliderLabels(1, tDim);
              tImageSlider = new ViewJSlider(ViewJSlider.TIME, 0, tDim-1);
              tImageSlider.setValue(0);
              tImageSlider.addChangeListener(this);
@@ -411,13 +413,14 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
              zDim = frame.getImageA().getExtents()[2];
 
              zImageSlider = new ViewJSlider(ViewJSlider.SLICE, 0, zDim-1);
-
+             zImageSlider.addChangeListener(this);
+             
              panelImageSlider.add(zImageSlider);
              panelImageSlider.add(tImageSlider);
 
              generalPanel.add(panelToolbars, "North");
              generalPanel.add(panelImageSlider, "South");
-             zImageSlider.addChangeListener(this);
+             
          } else if (numberOfDimensions == 3) {
              panelImageSlider = new JPanel();
              panelImageSlider.setLayout(new GridLayout(1, 1));
@@ -469,8 +472,6 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
          buildAlphaSlider();
          
          validate();
-
-         // validate();
     }
     
     /**
