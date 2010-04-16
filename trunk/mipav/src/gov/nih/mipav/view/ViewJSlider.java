@@ -178,9 +178,15 @@ public class ViewJSlider extends JSlider {
         Hashtable<Integer, JLabel> sliderLabels = new Hashtable<Integer, JLabel>();
         sliderLabels.put(getMinimum(), createLabel(String.valueOf(getMinimum())));
         
-        for(int i=getMinimum()+intvlMajor; i<getMaximum(); i+=intvlMajor) {
-            sliderLabels.put(i, createLabel(String.valueOf(i)));
+        if(intvlMajor > 0) {
+            for(int i=getMinimum()+intvlMajor; i<getMaximum(); i+=intvlMajor) {
+                sliderLabels.put(i, createLabel(String.valueOf(i)));
+            }   
+        } else {
+            int half = (int)Math.floor((getMaximum() + getMinimum())/2.0);
+            sliderLabels.put(half, createLabel(String.valueOf(half)));
         }
+            
         sliderLabels.put(getMaximum(), createLabel(String.valueOf(getMaximum())));
     
         return sliderLabels;
@@ -253,37 +259,59 @@ public class ViewJSlider extends JSlider {
             maxMinorTicks = getSize().getHeight()/6;
             maxMajorTicks = getSize().getHeight()/60;
         }
-        
-        int intvlMinor = (int)Math.ceil((getMaximum()-getMinimum())/maxMinorTicks);
-        int intvlMajor = (int)Math.ceil((getMaximum()-getMinimum())/maxMajorTicks);
-
-        int i = 0, maxTrys = 20;
-        while((intvlMajor % intvlMinor != 0 || (getMaximum()-getMinimum()+1)%intvlMajor != 0)
-                && intvlMajor < getMaximum()-getMinimum() && i<maxTrys) {
-            intvlMajor++;
-            i++;
-        }
+        int iMajor = 0, iMinor = 0, maxTrysMajor = 20, maxTrysMinor = 20;
+        int intvlMinor = 1, intvlMajor = 1;
         int oldIntvlMajor = getMajorTickSpacing();
         
-        if(i<maxTrys) {
-            if(intvlMajor < getMaximum() - getMinimum()) {
-                setMajorTickSpacing(intvlMajor);
-            }
+        
+        //find optimal major ticks
+        if(maxMajorTicks < getMaximum() + getMinimum()) {
+            intvlMajor = (int)Math.ceil((getMaximum()+getMinimum())/maxMajorTicks);
+    
             
-            setMinorTickSpacing(intvlMinor);
-            if(maxMajorTicks > 1) {
-                setMajorTickSpacing(intvlMajor);
+            while((intvlMajor % intvlMinor != 0 || (getMaximum()+getMinimum())%intvlMajor != 0)
+                    && intvlMajor < getMaximum()+getMinimum() && iMajor<maxTrysMajor) {
+                intvlMajor++;
+                iMajor++;
             }
+        } else {
+            intvlMajor = 1;
+        }
+        
+        //find optimal minor ticks
+        if(maxMinorTicks < getMaximum() + getMinimum()) {
+            intvlMinor = (int)Math.ceil((getMaximum()+getMinimum())/maxMinorTicks);
+            
+            if(iMajor < maxTrysMajor) {
+                while(intvlMajor % intvlMinor != 0 && intvlMinor < intvlMajor && iMinor<maxTrysMinor) {
+                    intvlMinor++;
+                    iMinor++;
+                }
+            }
+        } else {
+            intvlMinor = 1;
+        }   
+        
+        //if minor converged, set minor tick spacing
+        if(iMinor < maxTrysMinor) {
+            setMinorTickSpacing(intvlMinor);
+            
             if(intvlMinor == 1) {
                 setSnapToTicks(true);
             } else {
                 setSnapToTicks(false);
             }
-            
-            if(intvlMajor != oldIntvlMajor) {
-                setLabelTable(buildSliderLabels(intvlMajor));
-            }
         }
         
+        //if major converges and is not the same as the last one, set major tick spacing
+        if(iMajor<maxTrysMajor && intvlMajor != oldIntvlMajor) {
+            if(intvlMajor < getMaximum() + getMinimum() || maxMajorTicks > 1) {
+                setMajorTickSpacing(intvlMajor);
+            }
+
+            setLabelTable(buildSliderLabels(intvlMajor));
+        } else if(iMajor == maxTrysMajor) {
+            setLabelTable(buildSliderLabels(-1));
+        }
     }
 }
