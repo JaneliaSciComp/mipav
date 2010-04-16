@@ -240,6 +240,7 @@ public class ViewJSlider extends JSlider {
                     int value = getValue();
                     resizeSlider();
                     setValue(value);
+                    dim = ((JSlider)(e.getSource())).getSize();
                 } 
             }
         }
