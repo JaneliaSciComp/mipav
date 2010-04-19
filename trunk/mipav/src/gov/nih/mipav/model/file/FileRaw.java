@@ -5,6 +5,7 @@ import gov.nih.mipav.*;
 
 import gov.nih.mipav.model.structures.*;
 
+import gov.nih.mipav.util.MipavMath;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
