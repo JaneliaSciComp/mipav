@@ -81,12 +81,6 @@ public class ViewJSlider extends JSlider {
     /** Holds the old dimension to minimize redrawing of slider table */
     private Dimension dim;
     
-    /** Holds getMaximum()+getMinimum() throughout life of a ViewJSlider */
-    private int maxPlusMin;
-    
-    /** Initialized in init(), holds the returned value of isPrime(maxPlusMin) */
-    private boolean isTotalPrime;
-    
     /** Default constructor **/
     private ViewJSlider() {}
     
@@ -191,7 +185,7 @@ public class ViewJSlider extends JSlider {
                 sliderLabels.put(i, createLabel(String.valueOf(i)));
             }   
             if(intvlMajor == getMaximum()) {
-            	int half = (int)Math.floor((getMaximum() + getMinimum())/2.0);
+                int half = (int)Math.floor((getMaximum() + getMinimum())/2.0);
                 sliderLabels.put(half, createLabel(String.valueOf(half)));
             }
         } else {
@@ -227,18 +221,6 @@ public class ViewJSlider extends JSlider {
     private void init(String typeStr) {
         type = SliderType.valueOf(typeStr);
         setDefaults();
-        
-        boundsChanged();
-    }
-    
-    /**
-     * When the JSliders extents have been changed in some way, this helper method
-     * makes sure ViewJSlider variables are correctly set, it then calls resizeSlider()
-     * to make sure the GUI is displaying properly.
-     */
-    private void boundsChanged() {
-        maxPlusMin = getMaximum() + getMinimum();
-        isTotalPrime = isPrime(maxPlusMin);
         resizeSlider();
     }
     
@@ -303,7 +285,7 @@ public class ViewJSlider extends JSlider {
      * Determine the minor tick spacing using the getBestTickSpacing method
      */
     public void resizeSlider() {
-    	double maxMinorTicks = 0.0;
+        double maxMinorTicks = 0.0;
         double maxMajorTicks = 0.0;
         int majTickSpacing,minTickSpacing;
         if(getOrientation() == ViewJSlider.HORIZONTAL) {
@@ -313,110 +295,75 @@ public class ViewJSlider extends JSlider {
             maxMinorTicks = getSize().getHeight()/5;
             maxMajorTicks = getSize().getHeight()/50;
         }
-        
-        if(maxPlusMin != getMaximum() + getMinimum()) {
-            maxPlusMin = getMaximum() + getMinimum();
-            isTotalPrime = isPrime(maxPlusMin);
-        }
-
+        int maxPlusMin = getMaximum() + getMinimum();
         if(maxPlusMin < maxMajorTicks) {
-        	majTickSpacing = 1;
-        	minTickSpacing = 1;
-        	setMajorTickSpacing(majTickSpacing);
-        	setMinorTickSpacing(minTickSpacing);
-        	setLabelTable(buildSliderLabels(majTickSpacing));
-        	setSnapToTicks(true);
-        	return;
+            majTickSpacing = 1;
+            minTickSpacing = 1;
+            setMajorTickSpacing(majTickSpacing);
+            setMinorTickSpacing(minTickSpacing);
+            setLabelTable(buildSliderLabels(majTickSpacing));
+            setSnapToTicks(true);
+            return;
         }
         
-        if(isTotalPrime) {
-        	majTickSpacing = 0;
-        	minTickSpacing = getBestTickSpacing(maxPlusMin + 1,maxMinorTicks);
-			setMajorTickSpacing(majTickSpacing);
-        	setMinorTickSpacing(minTickSpacing);
-        	setLabelTable(buildSliderLabels(majTickSpacing));
-        	if(minTickSpacing == 1) {
+        if(isPrime(maxPlusMin)) {
+            majTickSpacing = 0;
+            minTickSpacing = getBestTickSpacing(maxPlusMin + 1,maxMinorTicks);
+            setMajorTickSpacing(majTickSpacing);
+            setMinorTickSpacing(minTickSpacing);
+            setLabelTable(buildSliderLabels(majTickSpacing));
+            if(minTickSpacing == 1) {
                 setSnapToTicks(true);
             } else {
                 setSnapToTicks(false);
             }
-			return;
-        	
+            return;
+            
         }else {
-        	majTickSpacing = getBestTickSpacing(maxPlusMin, maxMajorTicks);
-        	if(maxPlusMin < maxMinorTicks) {
-        		minTickSpacing = 1;
-        		setLabelTable(buildSliderLabels(majTickSpacing));
-        		setMajorTickSpacing(majTickSpacing);
-            	setMinorTickSpacing(minTickSpacing);
-            	setSnapToTicks(true);
-            	return;
-        	}else {
-        		if(isPrime(majTickSpacing)) {
-        			minTickSpacing = majTickSpacing;
-        			setMajorTickSpacing(majTickSpacing);
-                	setMinorTickSpacing(minTickSpacing);
-                	setLabelTable(buildSliderLabels(majTickSpacing));
-                	if(minTickSpacing == 1) {
+            majTickSpacing = getBestTickSpacing(maxPlusMin, maxMajorTicks);
+            if(maxPlusMin < maxMinorTicks) {
+                minTickSpacing = 1;
+                setLabelTable(buildSliderLabels(majTickSpacing));
+                setMajorTickSpacing(majTickSpacing);
+                setMinorTickSpacing(minTickSpacing);
+                setSnapToTicks(true);
+                return;
+            }else {
+                if(isPrime(majTickSpacing)) {
+                    minTickSpacing = majTickSpacing;
+                    setMajorTickSpacing(majTickSpacing);
+                    setMinorTickSpacing(minTickSpacing);
+                    setLabelTable(buildSliderLabels(majTickSpacing));
+                    if(minTickSpacing == 1) {
                         setSnapToTicks(true);
                     } else {
                         setSnapToTicks(false);
                     }
-        			return;
-        		}else {
-        			minTickSpacing = getBestTickSpacing(maxPlusMin,maxMinorTicks);
-        			if(majTickSpacing%minTickSpacing != 0) {
-        				while(majTickSpacing%minTickSpacing != 0 && minTickSpacing <= majTickSpacing) {
-        					minTickSpacing++;
-        				}
-        			}
-        			setMajorTickSpacing(majTickSpacing);
-                	setMinorTickSpacing(minTickSpacing);
-                	setLabelTable(buildSliderLabels(majTickSpacing));
-                	if(minTickSpacing == 1) {
+                    return;
+                }else {
+                    minTickSpacing = getBestTickSpacing(maxPlusMin,maxMinorTicks);
+                    if(majTickSpacing%minTickSpacing != 0) {
+                        while(majTickSpacing%minTickSpacing != 0 && minTickSpacing <= majTickSpacing) {
+                            minTickSpacing++;
+                        }
+                    }
+                    setMajorTickSpacing(majTickSpacing);
+                    setMinorTickSpacing(minTickSpacing);
+                    setLabelTable(buildSliderLabels(majTickSpacing));
+                    if(minTickSpacing == 1) {
                         setSnapToTicks(true);
                     } else {
                         setSnapToTicks(false);
                     }
-        			return;
-        		}
-        	}
+                    return;
+                }
+            }
         }  
     }
-
-    /**
-     * @see javax.swing.JSlider#setExtent(int)
-     */
-    public void setExtent(int extent) {
-        super.setExtent(extent);
-        boundsChanged();
-    }
-
-    /**
-    * @see javax.swing.JSlider#setMaximum(int)
-    */
-    public void setMaximum(int maximum) {
-        super.setMaximum(maximum);
-        boundsChanged();
-    }
-
-    /**
-     * @see javax.swing.JSlider#setMinimum(int)
-     */
-    public void setMinimum(int minimum) {
-        super.setMinimum(minimum);
-        boundsChanged();
-    }
-
-    /**
-     * @see javax.swing.JSlider#setModel(BoundedRangeModel)
-     */
-    public void setModel(BoundedRangeModel newModel) {
-        super.setModel(newModel);
-        boundsChanged();
-    }
-
-
+    
+    
+    
+    
     /**
      * Gets the best tick spacing by finding the value that divides into the numb with the greatest numher that is 
      * still less than the maxNumber of ticks
@@ -425,17 +372,17 @@ public class ViewJSlider extends JSlider {
      * @return Best tick spacing value
      */
     private int getBestTickSpacing(int num, double maxNumTicks) {
-    	int bestTickSpacing = 1;
+        int bestTickSpacing = 1;
     
         for(int i=getMaximum();i>=1;i--) {
-        	if(num%i==0) {
-        		if(num/i < maxNumTicks) {
-        			bestTickSpacing = i;
-        		}
-        	}
+            if(num%i==0) {
+                if(num/i < maxNumTicks) {
+                    bestTickSpacing = i;
+                }
+            }
         }
-    	return bestTickSpacing;
-    	
+        return bestTickSpacing;
+        
     }
     
     
@@ -448,20 +395,20 @@ public class ViewJSlider extends JSlider {
      * @return boolean telling whether it is prime or not.
      */
     private static boolean isPrime(int num) {
-    	boolean isPrime = false;
-    	int[] primes = {2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,
-    			113,127,131,137,139,149,151,157,163,167,173,179,181,191,193,197,199,211,223,227,229,233,239,
-    			241,251,257,263,269,271,277,281,283,293,307,311,313,317,331,337,347,349,353,359,367,373,379,
-    			383,389,397,401,409,419,421,431,433,439,443,449,457,461,463,467,479,487,491,499,503,509,521,523,
-    			541,547,557,563,569,571,577,587,593,599,601,607,613,617,619,631,641,643,647,653,659,661,673,677,
-    			683,691,701,709,719,727,733,739,743,751,757,761,769,773,787,797,809,811,821,823,827,829,839,
-    			853,857,859,863,877,881,883,887,907,911,919,929,937,941,947,953,967,971,977,983,991,997};
-    	for(int i=0;i<primes.length;i++) {
-    		if(num == primes[i]) {
-    			isPrime = true;
-    			break;
-    		}
-    	}
-    	return isPrime;
+        boolean isPrime = false;
+        int[] primes = {2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,
+                113,127,131,137,139,149,151,157,163,167,173,179,181,191,193,197,199,211,223,227,229,233,239,
+                241,251,257,263,269,271,277,281,283,293,307,311,313,317,331,337,347,349,353,359,367,373,379,
+                383,389,397,401,409,419,421,431,433,439,443,449,457,461,463,467,479,487,491,499,503,509,521,523,
+                541,547,557,563,569,571,577,587,593,599,601,607,613,617,619,631,641,643,647,653,659,661,673,677,
+                683,691,701,709,719,727,733,739,743,751,757,761,769,773,787,797,809,811,821,823,827,829,839,
+                853,857,859,863,877,881,883,887,907,911,919,929,937,941,947,953,967,971,977,983,991,997};
+        for(int i=0;i<primes.length;i++) {
+            if(num == primes[i]) {
+                isPrime = true;
+                break;
+            }
+        }
+        return isPrime;
     }
 }
