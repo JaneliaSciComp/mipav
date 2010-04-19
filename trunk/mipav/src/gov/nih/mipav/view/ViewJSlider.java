@@ -274,14 +274,14 @@ public class ViewJSlider extends JSlider {
      * 
      * If it is greater than max major ticks, then determine if the range is a prime number
      * 
-     * If it is a prime number, determine the maj tick spacing using the getBestTickSpacing method.
+     * If it is not a prime number, determine the maj tick spacing using the getBestTickSpacing method.
      * If there is room for all  minor ticks, then set minor tick spacing to 1.
      * If there is not room, first determine if the maj tick spacing is a prime number.
      * If it is a prime number, set the minor tick spacing to major tick spacing
      * If it is not a prime number, determine the minor tick spacing using the getBestTickSpacing method.
      * 
      * 
-     * If it is not a prime number, set the maj tick spacing to 0
+     * If it is a prime number, set the maj tick spacing to 0
      * Determine the minor tick spacing using the getBestTickSpacing method
      */
     public void resizeSlider() {
