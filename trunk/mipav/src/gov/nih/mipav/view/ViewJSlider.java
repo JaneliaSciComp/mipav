@@ -31,6 +31,7 @@ public class ViewJSlider extends JSlider {
     public static final String CONTRAST = "CONTRAST";
     public static final String CUSTOM = "CUSTOM";
     public static final String OPACITY = "OPACITY";
+    public static final String MAGNIFICATION = "MAGNIFICATION";
     
     public enum SliderType {
         
@@ -38,7 +39,8 @@ public class ViewJSlider extends JSlider {
         SLICE(ViewJSlider.SLICE),
         CONTRAST(ViewJSlider.CONTRAST),
         OPACITY(ViewJSlider.OPACITY),
-        CUSTOM(ViewJSlider.CUSTOM);
+        MAGNIFICATION(ViewJSlider.MAGNIFICATION),
+        CUSTOM(ViewJSlider.CUSTOM);    
         
         private ViewJSlider implement;
         private String str;
@@ -53,6 +55,8 @@ public class ViewJSlider extends JSlider {
                 implement.setOrientation(ViewJSlider.HORIZONTAL);
             } else if(str.equals(ViewJSlider.CONTRAST)) {
                 implement.setOrientation(ViewJSlider.VERTICAL);
+            } else if(str.equals(ViewJSlider.MAGNIFICATION)) {
+                implement.setOrientation(ViewJSlider.HORIZONTAL);
             } else {
                 implement.setOrientation(ViewJSlider.HORIZONTAL);
             }
@@ -76,6 +80,12 @@ public class ViewJSlider extends JSlider {
     
     /** Holds the old dimension to minimize redrawing of slider table */
     private Dimension dim;
+    
+    /** Holds getMaximum()+getMinimum() throughout life of a ViewJSlider */
+    private int maxPlusMin;
+    
+    /** Initialized in init(), holds the returned value of isPrime(maxPlusMin) */
+    private boolean isTotalPrime;
     
     /** Default constructor **/
     private ViewJSlider() {}
@@ -217,6 +227,18 @@ public class ViewJSlider extends JSlider {
     private void init(String typeStr) {
         type = SliderType.valueOf(typeStr);
         setDefaults();
+        
+        boundsChanged();
+    }
+    
+    /**
+     * When the JSliders extents have been changed in some way, this helper method
+     * makes sure ViewJSlider variables are correctly set, it then calls resizeSlider()
+     * to make sure the GUI is displaying properly.
+     */
+    private void boundsChanged() {
+        maxPlusMin = getMaximum() + getMinimum();
+        isTotalPrime = isPrime(maxPlusMin);
         resizeSlider();
     }
     
@@ -250,13 +272,12 @@ public class ViewJSlider extends JSlider {
                     int value = getValue();
                     resizeSlider();
                     setValue(value);
+                    dim = ((JSlider)(e.getSource())).getSize();
                 } 
             }
         }
     
-        public void componentShown(ComponentEvent e) { 
-
-        }
+        public void componentShown(ComponentEvent e) { }
     }
     
     
@@ -292,7 +313,12 @@ public class ViewJSlider extends JSlider {
             maxMinorTicks = getSize().getHeight()/5;
             maxMajorTicks = getSize().getHeight()/50;
         }
-        int maxPlusMin = getMaximum() + getMinimum();
+        
+        if(maxPlusMin != getMaximum() + getMinimum()) {
+            maxPlusMin = getMaximum() + getMinimum();
+            isTotalPrime = isPrime(maxPlusMin);
+        }
+
         if(maxPlusMin < maxMajorTicks) {
         	majTickSpacing = 1;
         	minTickSpacing = 1;
@@ -303,7 +329,7 @@ public class ViewJSlider extends JSlider {
         	return;
         }
         
-        if(isPrime(maxPlusMin)) {
+        if(isTotalPrime) {
         	majTickSpacing = 0;
         	minTickSpacing = getBestTickSpacing(maxPlusMin + 1,maxMinorTicks);
 			setMajorTickSpacing(majTickSpacing);
@@ -357,10 +383,40 @@ public class ViewJSlider extends JSlider {
         	}
         }  
     }
-    
-    
-    
-    
+
+    /**
+     * @see javax.swing.JSlider#setExtent(int)
+     */
+    public void setExtent(int extent) {
+        super.setExtent(extent);
+        boundsChanged();
+    }
+
+    /**
+    * @see javax.swing.JSlider#setMaximum(int)
+    */
+    public void setMaximum(int maximum) {
+        super.setMaximum(maximum);
+        boundsChanged();
+    }
+
+    /**
+     * @see javax.swing.JSlider#setMinimum(int)
+     */
+    public void setMinimum(int minimum) {
+        super.setMinimum(minimum);
+        boundsChanged();
+    }
+
+    /**
+     * @see javax.swing.JSlider#setModel(BoundedRangeModel)
+     */
+    public void setModel(BoundedRangeModel newModel) {
+        super.setModel(newModel);
+        boundsChanged();
+    }
+
+
     /**
      * Gets the best tick spacing by finding the value that divides into the numb with the greatest numher that is 
      * still less than the maxNumber of ticks
@@ -391,7 +447,7 @@ public class ViewJSlider extends JSlider {
      * @param num Number to be determined if it is prime or not.
      * @return boolean telling whether it is prime or not.
      */
-    private boolean isPrime(int num) {
+    private static boolean isPrime(int num) {
     	boolean isPrime = false;
     	int[] primes = {2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,
     			113,127,131,137,139,149,151,157,163,167,173,179,181,191,193,197,199,211,223,227,229,233,239,
