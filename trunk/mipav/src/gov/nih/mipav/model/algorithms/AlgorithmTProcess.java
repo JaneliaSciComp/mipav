@@ -102,8 +102,8 @@ public abstract class AlgorithmTProcess extends AlgorithmBase {
      * @return whether the temp file directory is writable
      */
     private boolean saveImageData(ModelImage tempVolume, int volumeNumber) {
-        ViewUserInterface.getReference().getMessageFrame().append("Saving to: "+tempDirString+File.separator+tempVolume.getImageName(), ViewJFrameMessage.DEBUG);
-        return tempVolume.saveImage(tempDirString+File.separator, tempVolume.getImageName(), FileUtility.RAW, true);
+        ViewUserInterface.getReference().getMessageFrame().append("Saving to: "+tempDirString+tempVolume.getImageName(), ViewJFrameMessage.DEBUG);
+        return tempVolume.saveImage(tempDirString, tempVolume.getImageName(), FileUtility.RAW, true);
     }
     
     /**
@@ -416,13 +416,13 @@ public abstract class AlgorithmTProcess extends AlgorithmBase {
         }
 
         public void run() {
-            String mipavImageName = openFile.open(tempDirString+imageName+i+".XML", false, null);
+            String mipavImageName = openFile.open(tempDirString+imageName+i+".xml", false, null);
             ViewUserInterface.getReference().getMessageFrame().append("Getting image: "+mipavImageName+"\n", ViewJFrameMessage.DEBUG);
             ModelImage tempVolume = ViewUserInterface.getReference().getRegisteredImageByName(mipavImageName);
             if(tempVolume != null) {
                 storeImageData(resultStack, tempVolume, i);
                 tempVolume.disposeLocal();
-                File f = new File(tempDirString+imageName+i+".RAW");
+                File f = new File(tempDirString+imageName+i+".raw");
                 if(f != null) {
                     if(f.delete()) {
                         ViewUserInterface.getReference().getMessageFrame().append(f.getName()+" succeessfully deleted."+"\n", ViewJFrameMessage.DEBUG);
@@ -430,7 +430,7 @@ public abstract class AlgorithmTProcess extends AlgorithmBase {
                         ViewUserInterface.getReference().getMessageFrame().append(f.getName()+" could not be deleted from your system, please delete manually."+"\n", ViewJFrameMessage.DEBUG);
                     }
                 }
-                f = new File(tempDirString+imageName+i+".XML");
+                f = new File(tempDirString+imageName+i+".xml");
                 if(f != null) {
                     if(f.delete()) {
                         ViewUserInterface.getReference().getMessageFrame().append(f.getName()+" succeessfully deleted."+"\n", ViewJFrameMessage.DEBUG);
