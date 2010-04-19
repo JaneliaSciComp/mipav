@@ -3,7 +3,7 @@ package gov.nih.mipav.model.algorithms.registration;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelSimpleImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.util.FileUtil;
+import gov.nih.mipav.util.TestingFileUtil;
 
 import java.util.Vector;
 
@@ -99,11 +99,11 @@ public class AlgorithmRegOAR2DTest extends TestCase {
         maxIterations = 2;
         numMinima = 3;
         
-        float[] data = FileUtil.readRawFileFloat(refImageFileName, false);
+        float[] data = TestingFileUtil.readRawFileFloat(refImageFileName, false);
         refImage = new ModelImage(ModelStorageBase.FLOAT, new int[]{512, 512}, "r_M00176_Anatomic_slice2");
         refImage.importData(0, data, true);
         refImage.setResolutions(0, resolution);
-        data = FileUtil.readRawFileFloat(matchImageFileName, false);
+        data = TestingFileUtil.readRawFileFloat(matchImageFileName, false);
         matchImage = new ModelImage(ModelStorageBase.FLOAT, new int[]{512, 512}, "r_M00176_Anatomic_slice2_20_20_26");
         matchImage.importData(0, data, true);
         matchImage.setResolutions(0, resolution);

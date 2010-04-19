@@ -1,42 +1,50 @@
 package gov.nih.mipav.model.algorithms;
 
-import WildMagic.LibFoundation.Mathematics.Vector3f;
-import WildMagic.LibFoundation.Mathematics.Matrix3f;
-import WildMagic.LibGraphics.SceneGraph.*;
 
-import gov.nih.mipav.*;
+import gov.nih.mipav.MipavCoordinateSystems;
+import gov.nih.mipav.util.MipavMath;
 
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.renderer.WildMagic.Interface.*;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.FileSurface_WM;
 
-import java.io.*;
-
+import java.io.IOException;
 import java.util.*;
+
+import WildMagic.LibFoundation.Mathematics.*;
+import WildMagic.LibGraphics.SceneGraph.*;
 
 
 /**
  * A class for segmenting the brain from a 3D MRI. The algorithm is partially based on the paper:
- *
+ * 
  * <pre>
-     BET: Brain Extraction Tool<br>
-     Stephen M. Smith<br>
-     FMRIB Technical Report TR00SMS2<br>
-     Oxford Centre for Functional Magnetic Resonance Imaging of the Brain<br>
+ *  BET: Brain Extraction Tool
+ * <br>
+ *  Stephen M. Smith
+ * <br>
+ *  FMRIB Technical Report TR00SMS2
+ * <br>
+ *  Oxford Centre for Functional Magnetic Resonance Imaging of the Brain
+ * <br>
  * </pre>
- *
- * <p>See the document BrainExtraction.pdf for a detailed description of the algorithm as implemented in this class. A
- * few modifications to the original algorithm were made.</p>
+ * 
+ * <p>
+ * See the document BrainExtraction.pdf for a detailed description of the algorithm as implemented in this class. A few
+ * modifications to the original algorithm were made.
+ * </p>
  */
 public class AlgorithmBrainExtractor extends AlgorithmBase {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Indicates that the image is in Sagittal or Coronal orientation. */
     public static final int SAT_COR = 1;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** Controls how much the image influences the surface evolution. */
     protected float imageFactor = 0.08f;
@@ -141,14 +149,13 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     protected int nIterations = 500;
 
     /** Indicated the orientation of the dataset. Default sagittal/cornal */
-    protected int orientationFlag = SAT_COR;
+    protected int orientationFlag = AlgorithmBrainExtractor.SAT_COR;
 
     /** If true stop processing. */
-    private boolean abort = false;
+    private final boolean abort = false;
 
     /** factor above median at which edge values are taken to zero. */
     private float aboveMedian = 1.5f;
-
 
     /** DOCUMENT ME! */
     private float[] box;
@@ -183,19 +190,20 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     /** If true initialize surface as a sphere. */
     private boolean useSphere = false;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Create an extractor for segmenting the brain from a 3D magnetic resonance image.
-     *
-     * @param  srcImg           The source image. Should be MR image of the brain
-     * @param  orientation      Image orienation
-     * @param  runOneIteration  Run one iteration so that one can observe initial surface location.
-     * @param  estimateSphere   Use sphere as the initial surface to be evolved.
-     * @param  centerPoint      The center of the initial ellipsoid or sphere.
+     * 
+     * @param srcImg The source image. Should be MR image of the brain
+     * @param orientation Image orienation
+     * @param runOneIteration Run one iteration so that one can observe initial surface location.
+     * @param estimateSphere Use sphere as the initial surface to be evolved.
+     * @param centerPoint The center of the initial ellipsoid or sphere.
      */
-    public AlgorithmBrainExtractor(ModelImage srcImg, int orientation, boolean runOneIteration, boolean estimateSphere,
-    		Vector3f centerPoint) {
+    public AlgorithmBrainExtractor(final ModelImage srcImg, final int orientation, final boolean runOneIteration,
+            final boolean estimateSphere, final Vector3f centerPoint) {
         int i;
         float fMax, fMin;
         orientationFlag = orientation;
@@ -205,14 +213,14 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         m_kCenter.Y = centerPoint.Y;
         m_kCenter.Z = centerPoint.Z;
 
+        /*
+         * The number of levels to subdivide the initial ellipsoid into a mesh that approximates the brain surface. The
+         * number of triangles in the mesh is 8*pow(4,S) where S is the subdivision parameter. A reasonable choice is 5,
+         * leading to a mesh with 8192 triangle.
+         */
+        final int iSubdivisions = 5; // 6 = 32K triangles
 
-        /* The number of levels to subdivide the initial
-         *   ellipsoid into a mesh that approximates the brain surface.  The  number of triangles in the mesh is
-         * 8*pow(4,S) where S is the  subdivision parameter.  A reasonable choice is 5, leading to a mesh
-         *   with 8192 triangle. */
-        int iSubdivisions = 5; // 6 =  32K triangles
-
-        // iSubdivisions = 6;         // 6 =  32K triangles
+        // iSubdivisions = 6; // 6 = 32K triangles
         // image bounds and voxel sizes
         m_iXBound = srcImg.getExtents()[0];
         m_iYBound = srcImg.getExtents()[1];
@@ -227,7 +235,6 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         box[1] = (m_iYBound - 1) * m_fYDelta;
         box[2] = (m_iZBound - 1) * m_fZDelta;
 
-
         srcImage = srcImg;
 
         /* Read the direction vector from the MipavCoordinateSystems class: */
@@ -236,7 +243,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         startLocation = srcImg.getFileInfo()[0].getOrigin();
 
         // The histogram analysis is best performed by binning into 8-bit
-        // data.  The image term in the evolution scheme depends only on a
+        // data. The image term in the evolution scheme depends only on a
         // few intensity threshold values, so the method appears not to be
         // sensitive to number of bits in the image data.
         m_aiImage = new int[m_iQuantity];
@@ -245,7 +252,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         fMax = (float) srcImg.getMax();
 
         // Remap image data to 0 - 1023
-        float fMult = 1023.0f / (fMax - fMin);
+        final float fMult = 1023.0f / (fMax - fMin);
 
         for (i = 0; i < m_iQuantity; i++) {
             m_aiImage[i] = (int) (fMult * (srcImg.getFloat(i) - fMin));
@@ -280,12 +287,12 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         // Compute the median intensity for voxels inside the initial ellipsoid.
         computeMedianIntensity(true);
 
-        // Supporting quantities for update of mesh.  VMean[i] stores the
+        // Supporting quantities for update of mesh. VMean[i] stores the
         // average of the immediate vertex neighbors of vertex V[i].
         // VNormal[i] is the vertex normal at V[i] computed as the average
-        // of the non-unit normals for all triangles sharing V[i].  Define
-        // S = VMean[i] - V[i].  SNormal[i] is the component of S in the
-        // VNormal[i] direction and STangent[i] = S - SNormal[i].  The value
+        // of the non-unit normals for all triangles sharing V[i]. Define
+        // S = VMean[i] - V[i]. SNormal[i] is the component of S in the
+        // VNormal[i] direction and STangent[i] = S - SNormal[i]. The value
         // Curvature[i] is an estimate of the surface curvature at V[i].
         m_akVMean = new Vector3f[m_iVQuantity];
         m_akVNormal = new Vector3f[m_iVQuantity];
@@ -304,7 +311,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         m_aiMask = new byte[m_iQuantity];
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * The segmentation function. Ideally, the only work an application needs to do is create an MjBrainExtractor object
@@ -318,27 +326,23 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         // The second stage the message is a little less stiff and mesh is allowed to
         // conform more to the surface of the brain.
 
-
         // First phase is mandatory with set values
-        int i,j;
-        int iMaxStep = 8;
+        int i, j;
+        final int iMaxStep = 8;
         int iMaxUpdate;
-        int jMaxUpdate = 10;
-        
+        final int jMaxUpdate = 10;
 
-        int tmpMD = m_iMaxDepth;
-        float tmpF3F = imageFactor;
-        float tmpStiff = m_fStiffness;
+        final int tmpMD = m_iMaxDepth;
+        final float tmpF3F = imageFactor;
+        final float tmpStiff = m_fStiffness;
 
         Vector3f centerPt = new Vector3f();
-                
+
         m_iMaxDepth = 7;
         imageFactor = 0.1f;
         m_fStiffness = 0.2f;
-        
-        
-        fireProgressStateChanged(srcImage.getImageName(), "Extracting brain ...");
 
+        fireProgressStateChanged(srcImage.getImageName(), "Extracting brain ...");
 
         if (runOneIter == true) {
             iMaxUpdate = 1;
@@ -349,9 +353,9 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         for (int iStep = 1; (iStep <= iMaxStep) && !threadStopped; iStep++) {
 
             if (secondStageErosion) {
-                fireProgressStateChanged(Math.round((iStep * 100.0f) / 800 * 25));
+                fireProgressStateChanged(Math.round( (iStep * 100.0f) / 800 * 25));
             } else {
-                fireProgressStateChanged(Math.round((iStep * 100.0f) / 800 * 50));
+                fireProgressStateChanged(Math.round( (iStep * 100.0f) / 800 * 50));
             }
 
             for (i = 1; i <= iMaxUpdate; i++) {
@@ -369,33 +373,32 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             iMaxUpdate = nIterations;
         }
         for (j = 1; (j <= jMaxUpdate && updateCenter(centerPt)); j++) {
-        	
-        	for (i = 1; (i <= iMaxUpdate) && !threadStopped; i++) {
 
-                if (((j % 100) == 0)) {
+            for (i = 1; (i <= iMaxUpdate) && !threadStopped; i++) {
+
+                if ( ( (j % 100) == 0)) {
 
                     if (secondStageErosion) {
-                        fireProgressStateChanged(Math.round((25 + (((float) (i * j)) / jMaxUpdate * 25))));
+                        fireProgressStateChanged(Math.round( (25 + ( ((float) (i * j)) / jMaxUpdate * 25))));
                     } else {
-                        fireProgressStateChanged(Math.round((50 + (((float) (i * j)) / jMaxUpdate * 50))));
+                        fireProgressStateChanged(Math.round( (50 + ( ((float) (i * j)) / jMaxUpdate * 50))));
                     }
                 }
 
                 updateMesh();
-                        
+
             }
-        	
-        	getInsideVoxels(false);
+
+            getInsideVoxels(false);
             centerPt = computeNewCenter();
             m_kCenter = centerPt;
-            //estimateEllipsoid();
-            //generateEllipsoidMesh(5);
+            // estimateEllipsoid();
+            // generateEllipsoidMesh(5);
             computeMedianIntensity(false);
-            
+
             Preferences.debug("New Center of Mass = " + m_kCenter + "\n");
-        	
+
         }
-        
 
         if (threadStopped) {
             finalize();
@@ -409,7 +412,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         if (secondStageErosion) {
 
             // After the image edge erosion in getInsideVoxels(), the mesh no longer corresponds
-            // to the image.  Therefore, use the eroded image to recalculate the mesh.
+            // to the image. Therefore, use the eroded image to recalculate the mesh.
             fireProgressStateChanged("Recalculating mesh for eroded image");
             m_iMaxDepth = 7;
             imageFactor = 0.1f;
@@ -422,7 +425,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             }
 
             for (int iStep = 1; (iStep <= iMaxStep) && !threadStopped; iStep++) {
-                fireProgressStateChanged(Math.round(50 + ((iStep * 100.0f) / 800 * 25)));
+                fireProgressStateChanged(Math.round(50 + ( (iStep * 100.0f) / 800 * 25)));
 
                 for (i = 1; i <= iMaxUpdate; i++) {
                     updateMesh();
@@ -433,10 +436,10 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             imageFactor = tmpF3F;
             m_fStiffness = tmpStiff;
 
-            // m_iMaxDepth         = 4;
-            // m_iHalfMaxDepth     = 3;
-            // imageFactor            = 0.08f;        // --> 0  more stiff
-            // m_fStiffness        = 0.15f;        // --> 0  less stiff
+            // m_iMaxDepth = 4;
+            // m_iHalfMaxDepth = 3;
+            // imageFactor = 0.08f; // --> 0 more stiff
+            // m_fStiffness = 0.15f; // --> 0 less stiff
             if (runOneIter == true) {
                 iMaxUpdate = 1;
             } else {
@@ -445,8 +448,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
             for (i = 1; (i <= iMaxUpdate) && !threadStopped; i++) {
 
-                if (((i % 100) == 0)) {
-                    fireProgressStateChanged(Math.round((75 + (((float) (i)) / iMaxUpdate * 25))));
+                if ( ( (i % 100) == 0)) {
+                    fireProgressStateChanged(Math.round( (75 + ( ((float) (i)) / iMaxUpdate * 25))));
                 }
 
                 updateMesh();
@@ -466,7 +469,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             if (saveBrainMesh) {
                 saveMesh(true);
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             System.out.println(" Problem saving mesh.");
         }
 
@@ -503,8 +506,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
      * Get the 3D image that represents the extracted brain. The image is ternary and has the same dimensions as the
      * input MRI. A voxel value of 0 indicates background. A voxel value of 1 indicates brain surface. A voxel value of
      * 2 indicates a voxel inside the brain surface.
-     *
-     * @return  the image that represents the extracted brain
+     * 
+     * @return the image that represents the extracted brain
      */
     public final byte[] getBrainMask() {
         return m_aiMask;
@@ -513,8 +516,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     /**
      * Get the current brain selection term, as described in BrainExtraction.pdf, that is part of the image term in the
      * surface evolution. The default value is 0.5.
-     *
-     * @return  the current brain selection term
+     * 
+     * @return the current brain selection term
      */
     public final float getBrainSelection() {
         return m_fBrainSelection;
@@ -524,8 +527,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
      * Get the 3D image that represents the extracted brain. The image is ternary and has the same dimensions as the
      * input MRI. A voxel value of 0 indicates background. A voxel value of 1 indicates brain surface. A voxel value of
      * 2 indicates a voxel inside the brain surface.
-     *
-     * @return  the image that represents the extracted brain
+     * 
+     * @return the image that represents the extracted brain
      */
     public final float getBrainVolume() {
         return nBrainVoxels * m_fXDelta * m_fYDelta * m_fZDelta;
@@ -536,8 +539,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
      * rasterization is designed so that the voxel surface has no holes, thereby allowing it to be flood-filled. But
      * just in case numerical round-off errors cause a few holes, this parameter is exposed for public use. The default
      * value is 0 (no dilation). If the value is D > 0, the dilation mask is a cube of size (2*D+1)x(2*D+1)x(2*D+1).
-     *
-     * @return  the current dilation size
+     * 
+     * @return the current dilation size
      */
     public final int getDilationSize() {
         return m_iDMax;
@@ -546,8 +549,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     /**
      * Get the maximum depth, as described in BrainExtraction.pdf, that is part of the image term in the surface
      * evolution. The default value is 7.
-     *
-     * @return  the current maximum depth
+     * 
+     * @return the current maximum depth
      */
     public final int getMaxDepth() {
         return m_iMaxDepth;
@@ -556,8 +559,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     /**
      * Get the spacing along the vertex normal rays, as described in BrainExtraction.pdf, that is part of the image term
      * in the surface evolution. The default value is 1.0.
-     *
-     * @return  the current spacing
+     * 
+     * @return the current spacing
      */
     public final float getRayDelta() {
         return m_fRayDelta;
@@ -566,8 +569,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     /**
      * Set the reduction factor for estimating the initial ellipsoid, as described in BrainExtraction.pdf. The default
      * value is 0.6.
-     *
-     * @return  the current reduction factor
+     * 
+     * @return the current reduction factor
      */
     public final float getReductionX() {
         return m_fReductionX;
@@ -576,8 +579,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     /**
      * Set the reduction factor for estimating the initial ellipsoid, as described in BrainExtraction.pdf. The default
      * value is 0.4.
-     *
-     * @return  the current reduction factor
+     * 
+     * @return the current reduction factor
      */
     public final float getReductionY() {
         return m_fReductionY;
@@ -586,8 +589,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     /**
      * Set the reduction factor for estimating the initial ellipsoid, as described in BrainExtraction.pdf. The default
      * value is 0.6.
-     *
-     * @return  the current reduction factor
+     * 
+     * @return the current reduction factor
      */
     public final float getReductionZ() {
         return m_fReductionZ;
@@ -596,8 +599,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     /**
      * Set the stiffness of the mesh, as described in BrainExtraction.pdf, that is part of the surface normal term in
      * the surface evolution. The default value is 0.1.
-     *
-     * @return  the current stiffness
+     * 
+     * @return the current stiffness
      */
     public final float getStiffness() {
         return m_fStiffness;
@@ -612,27 +615,25 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     public void histogramAnalysis() {
 
         // compute histogram
-        int[] aiHistogram = new int[1024];
+        final int[] aiHistogram = new int[1024];
         Arrays.fill(aiHistogram, 0);
 
         int i;
         int j;
-        
+
         for (i = 0; i < m_iQuantity; i++) {
-        	aiHistogram[m_aiImage[i]]++;
+            aiHistogram[m_aiImage[i]]++;
         }
-        
-        
 
-        // Eliminate a large chunk of background.  The four parameters below
+        // Eliminate a large chunk of background. The four parameters below
         // were selected based on empirical studies.
-        double dMinFactor = 0.03;
-        double dMaxFactor = 0.98;
-        double dBrightFactor = 0.95;
+        final double dMinFactor = 0.03;
+        final double dMaxFactor = 0.98;
+        final double dBrightFactor = 0.95;
 
-        int iMax = 64;
-        int iMinCutoff = (int) (dMinFactor * m_iQuantity);
-        int iMaxCutoff = (int) (dMaxFactor * m_iQuantity);
+        final int iMax = 64;
+        final int iMinCutoff = (int) (dMinFactor * m_iQuantity);
+        final int iMaxCutoff = (int) (dMaxFactor * m_iQuantity);
 
         // Find background - i.e. the value with the most counts
         float maxCount = -1;
@@ -664,7 +665,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                 }
             }
 
-            m_iBackThreshold = MipavMath.round((0.9f * m_iMinThreshold) + (0.1f * m_iMaxThreshold));
+            m_iBackThreshold = MipavMath.round( (0.9f * m_iMinThreshold) + (0.1f * m_iMaxThreshold));
         } else {
             m_iBackThreshold = maxCountIndex + 1;
         }
@@ -681,9 +682,9 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         // compute brightness thresholds
         iAccum = 0;
 
-        int iBrightCutoff = (int) (dBrightFactor * iReducedQuantity);
+        final int iBrightCutoff = (int) (dBrightFactor * iReducedQuantity);
 
-        // m_iMaxThreshold     = m_iBackThreshold;
+        // m_iMaxThreshold = m_iBackThreshold;
         for (i = m_iBackThreshold; i < 1024; i++) {
             iAccum += aiHistogram[i];
 
@@ -718,18 +719,19 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         int i;
         float fMax, fMin;
 
-        /* The number of levels to subdivide the initial
-         *   ellipsoid into a mesh that approximates the brain surface.  The  number of triangles in the mesh is
-         * 8*pow(4,S) where S is the  subdivision parameter.  A reasonable choice is 5, leading to a mesh
-         *   with 8192 triangle. */
-        int iSubdivisions = 5; // 6 =  32K triangles
+        /*
+         * The number of levels to subdivide the initial ellipsoid into a mesh that approximates the brain surface. The
+         * number of triangles in the mesh is 8*pow(4,S) where S is the subdivision parameter. A reasonable choice is 5,
+         * leading to a mesh with 8192 triangle.
+         */
+        final int iSubdivisions = 5; // 6 = 32K triangles
 
         // iSubdivisions = 6;
         fMin = (float) srcImage.getMin();
         fMax = (float) srcImage.getMax();
 
         // Remap image data to 0 - 1023
-        float fMult = 1023.0f / (fMax - fMin);
+        final float fMult = 1023.0f / (fMax - fMin);
 
         for (i = 0; i < m_iQuantity; i++) {
             m_aiImage[i] = (int) (fMult * (srcImage.getFloat(i) - fMin));
@@ -764,12 +766,12 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         // Compute the median intensity for voxels inside the initial ellipsoid.
         computeMedianIntensity(true);
 
-        // Supporting quantities for update of mesh.  VMean[i] stores the
+        // Supporting quantities for update of mesh. VMean[i] stores the
         // average of the immediate vertex neighbors of vertex V[i].
         // VNormal[i] is the vertex normal at V[i] computed as the average
-        // of the non-unit normals for all triangles sharing V[i].  Define
-        // S = VMean[i] - V[i].  SNormal[i] is the component of S in the
-        // VNormal[i] direction and STangent[i] = S - SNormal[i].  The value
+        // of the non-unit normals for all triangles sharing V[i]. Define
+        // S = VMean[i] - V[i]. SNormal[i] is the component of S in the
+        // VNormal[i] direction and STangent[i] = S - SNormal[i]. The value
         // Curvature[i] is an estimate of the surface curvature at V[i].
         m_akVMean = new Vector3f[m_iVQuantity];
         m_akVNormal = new Vector3f[m_iVQuantity];
@@ -804,8 +806,6 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             return;
         }
 
-        
-
         if (abort != true) {
             extractBrain();
         }
@@ -813,20 +813,20 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
     /**
      * sets the aboveMedian ratio for second stage erosion Edge values >= median * aboveMedian are taken to zero.
-     *
-     * @param  aboveMedian  DOCUMENT ME!
+     * 
+     * @param aboveMedian DOCUMENT ME!
      */
-    public final void setAboveMedian(float aboveMedian) {
+    public final void setAboveMedian(final float aboveMedian) {
         this.aboveMedian = aboveMedian;
     }
 
     /**
      * Set the brain selection term, as described in BrainExtraction.pdf, that is part of the image term in the surface
      * evolution. The default value is 0.5.
-     *
-     * @param  fBrainSelection  the new brain selection term
+     * 
+     * @param fBrainSelection the new brain selection term
      */
-    public final void setBrainSelection(float fBrainSelection) {
+    public final void setBrainSelection(final float fBrainSelection) {
         m_fBrainSelection = fBrainSelection;
     }
 
@@ -835,144 +835,144 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
      * rasterization is designed so that the voxel surface has no holes, thereby allowing it to be flood-filled. But
      * just in case numerical round-off errors cause a few holes, this parameter is exposed for public use. The default
      * value is 0 (no dilation). If the value is D > 0, the dilation mask is a cube of size (2*D+1)x(2*D+1)x(2*D+1).
-     *
-     * @param  iDMax  the new dilation size
+     * 
+     * @param iDMax the new dilation size
      */
-    public final void setDilationSize(int iDMax) {
+    public final void setDilationSize(final int iDMax) {
         m_iDMax = iDMax;
     }
 
     /**
      * Sets whether to extract the brain to a paint mask instead of removing non-brain image data.
-     *
-     * @param  extractPaint  whether to extract the brain to a paint mask
+     * 
+     * @param extractPaint whether to extract the brain to a paint mask
      */
-    public void setExtractPaint(boolean extractPaint) {
+    public void setExtractPaint(final boolean extractPaint) {
         this.extractPaint = extractPaint;
     }
 
     /**
      * Sets the number of iterations.
-     *
-     * @param  ratio  DOCUMENT ME!
+     * 
+     * @param ratio DOCUMENT ME!
      */
-    public final void setImageRatio(float ratio) {
+    public final void setImageRatio(final float ratio) {
         imageFactor = ratio;
     }
 
     /**
      * Sets the number of iterations.
-     *
-     * @param  nIter  DOCUMENT ME!
+     * 
+     * @param nIter DOCUMENT ME!
      */
-    public final void setIterations(int nIter) {
+    public final void setIterations(final int nIter) {
         this.nIterations = nIter;
     }
 
     /**
      * Indicates if surface evolution should be skipped. This is helpful when determining if the initial ellipsoid is a
      * good estimate.
-     *
-     * @param  flag  if true skip evolution of surface
+     * 
+     * @param flag if true skip evolution of surface
      */
-    public final void setJustIntialEllipsoid(boolean flag) {
+    public final void setJustIntialEllipsoid(final boolean flag) {
         runOneIter = flag;
     }
 
     /**
      * Set the maximum depth, as described in BrainExtraction.pdf, that is part of the image term in the surface
      * evolution. The default value is 7.
-     *
-     * @param  iMaxDepth  the new maximum depth
+     * 
+     * @param iMaxDepth the new maximum depth
      */
-    public final void setMaxDepth(int iMaxDepth) {
+    public final void setMaxDepth(final int iMaxDepth) {
         m_iMaxDepth = iMaxDepth;
     }
 
     /**
      * Indicates the orientation of the image for use in the ellipsoid estimation.
-     *
-     * @param  orientation  the new image orientation
+     * 
+     * @param orientation the new image orientation
      */
-    public final void setOrientation(int orientation) {
+    public final void setOrientation(final int orientation) {
         orientationFlag = orientation;
     }
 
     /**
      * Set the spacing along the vertex normal rays, as described in BrainExtraction.pdf, that is part of the image term
      * in the surface evolution. The default value is 1.0.
-     *
-     * @param  fRayDelta  the new normal ray spacing
+     * 
+     * @param fRayDelta the new normal ray spacing
      */
-    public final void setRayDelta(float fRayDelta) {
+    public final void setRayDelta(final float fRayDelta) {
         m_fRayDelta = fRayDelta;
     }
 
     /**
      * Set the reduction factor for estimating the initial ellipsoid, as described in BrainExtraction.pdf. The default
      * value is 0.6.
-     *
-     * @param  fReduction  the amount to reduce the axis of the ellipsoid.
+     * 
+     * @param fReduction the amount to reduce the axis of the ellipsoid.
      */
-    public final void setReductionX(float fReduction) {
+    public final void setReductionX(final float fReduction) {
         m_fReductionX = fReduction;
     }
 
     /**
      * Set the reduction factor for estimating the initial ellipsoid, as described in BrainExtraction.pdf. The default
      * value is 0.5.
-     *
-     * @param  fReduction  the amount to reduce the axis of the ellipsoid.
+     * 
+     * @param fReduction the amount to reduce the axis of the ellipsoid.
      */
-    public final void setReductionY(float fReduction) {
+    public final void setReductionY(final float fReduction) {
         m_fReductionY = fReduction;
     }
 
     /**
      * Set the reduction factor for estimating the initial ellipsoid, as described in BrainExtraction.pdf. The default
      * value is 0.6.
-     *
-     * @param  fReduction  the amount to reduce the axis of the ellipsoid.
+     * 
+     * @param fReduction the amount to reduce the axis of the ellipsoid.
      */
-    public final void setReductionZ(float fReduction) {
+    public final void setReductionZ(final float fReduction) {
         m_fReductionZ = fReduction;
     }
 
     /**
      * Sets whether to save a surface mesh of the extracted brain.
-     *
-     * @param  saveMesh  whether to save a brain surface mesh
+     * 
+     * @param saveMesh whether to save a brain surface mesh
      */
-    public void setSaveBrainMesh(boolean saveMesh) {
+    public void setSaveBrainMesh(final boolean saveMesh) {
         saveBrainMesh = saveMesh;
     }
 
     /**
      * Sets whether or not second stage erosion occurs taking edge values exceeding median by a factor >= aboveMedian to
      * zero.
-     *
-     * @param  secondStageErosion  DOCUMENT ME!
+     * 
+     * @param secondStageErosion DOCUMENT ME!
      */
-    public final void setSecondStageErosion(boolean secondStageErosion) {
+    public final void setSecondStageErosion(final boolean secondStageErosion) {
         this.secondStageErosion = secondStageErosion;
     }
 
     /**
      * Set the stiffness of the mesh, as described in BrainExtraction.pdf, that is part of the surface normal term in
      * the surface evolution. The default value is 0.1.
-     *
-     * @param  fStiffness  the new stiffness
+     * 
+     * @param fStiffness the new stiffness
      */
-    public final void setStiffness(float fStiffness) {
+    public final void setStiffness(final float fStiffness) {
         m_fStiffness = fStiffness;
     }
 
     /**
      * Don't try estimating ellipse as initial surface use sphere estimate.
-     *
-     * @param  flag  if true estimate initial surface with sphere and not ellipse.
+     * 
+     * @param flag if true estimate initial surface with sphere and not ellipse.
      */
-    public final void setUseSphere(boolean flag) {
+    public final void setUseSphere(final boolean flag) {
         useSphere = flag;
     }
 
@@ -988,27 +988,27 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         computeVertexNormals();
         computeVertexInformation();
 
-        int xDim = srcImage.getExtents()[0] - 1;
-        int yDim = srcImage.getExtents()[1] - 1;
-        int zDim = srcImage.getExtents()[2] - 1;
+        final int xDim = srcImage.getExtents()[0] - 1;
+        final int yDim = srcImage.getExtents()[1] - 1;
+        final int zDim = srcImage.getExtents()[2] - 1;
 
-        Vector3f kScale = new Vector3f();
-        
+        final Vector3f kScale = new Vector3f();
+
         // update the vertices
         for (int i = 0; i < m_iVQuantity; i++) {
-        	Vector3f kVertex = m_akVertex[i];
+            final Vector3f kVertex = m_akVertex[i];
 
             // tangential update
             fUpdate1 = 0.5f;
-            kScale.Scale( fUpdate1, m_akSTangent[i] );
+            kScale.Scale(fUpdate1, m_akSTangent[i]);
             kVertex.Add(kScale, kVertex);
 
             // normal update
-            float fUpdate2 = update2(i);
-            float fUpdate3 = update3(i);
-            kScale.Scale( fUpdate2, m_akSNormal[i] );
+            final float fUpdate2 = update2(i);
+            final float fUpdate3 = update3(i);
+            kScale.Scale(fUpdate2, m_akSNormal[i]);
             kVertex.Add(kScale, kVertex);
-            kScale.Scale( fUpdate3, m_akVNormal[i] );
+            kScale.Scale(fUpdate3, m_akVNormal[i]);
             kVertex.Add(kScale, kVertex);
 
             if (kVertex.X < 0) {
@@ -1037,24 +1037,23 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
         }
     }
-    
-       
+
     /**
      * Compute the average length of all the edges in the triangle mesh.
      */
     protected void computeMeanEdgeLength() {
         m_fMeanEdgeLength = 0.0f;
 
-        Iterator kEIter = m_kEMap.entrySet().iterator();
+        final Iterator kEIter = m_kEMap.entrySet().iterator();
         Map.Entry kEntry = null;
-        Vector3f kEdge = new Vector3f();
+        final Vector3f kEdge = new Vector3f();
 
         while (kEIter.hasNext()) {
             kEntry = (Map.Entry) kEIter.next();
 
-            Edge kE = (Edge) kEntry.getKey();
-            Vector3f kP0 = m_akVertex[kE.m_i0];
-            Vector3f kP1 = m_akVertex[kE.m_i1];
+            final Edge kE = (Edge) kEntry.getKey();
+            final Vector3f kP0 = m_akVertex[kE.m_i0];
+            final Vector3f kP1 = m_akVertex[kE.m_i1];
             kEdge.Sub(kP1, kP0);
             m_fMeanEdgeLength += kEdge.Length();
         }
@@ -1066,66 +1065,66 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
      * Compute the median intensity of those voxels inside the initial ellipsoid. This intensity is used in the image
      * term of the surface evolution.
      */
-    protected void computeMedianIntensity( boolean initial) {
+    protected void computeMedianIntensity(final boolean initial) {
 
         // compute median intensity of voxels inside initial ellipsoid
-        float fInvLength0 = 1.0f / m_afLength[0];
-        float fInvLength1 = 1.0f / m_afLength[1];
-        float fInvLength2 = 1.0f / m_afLength[2];
+        final float fInvLength0 = 1.0f / m_afLength[0];
+        final float fInvLength1 = 1.0f / m_afLength[1];
+        final float fInvLength2 = 1.0f / m_afLength[2];
         int iIQuantity = 0;
         int[] aiIntensity;
-        
+
         if (initial) {
-        	aiIntensity = new int[m_iQuantity];
+            aiIntensity = new int[m_iQuantity];
         } else {
-        	aiIntensity = new int[m_aiMask.length];
+            aiIntensity = new int[m_aiMask.length];
         }
-               
-        Vector3f kP = new Vector3f();
+
+        final Vector3f kP = new Vector3f();
 
         for (int iZ = 0, i = 0; iZ < m_iZBound; iZ++) {
 
             for (int iY = 0; iY < m_iYBound; iY++) {
 
                 for (int iX = 0; iX < m_iXBound; iX++) {
-                    
-                	if (initial) {
-                		
-                		int iIntensity = m_aiImage[i++];
+
+                    if (initial) {
+
+                        final int iIntensity = m_aiImage[i++];
 
                         if (iIntensity > m_iBackThreshold) {
 
-                        // transform to ellipsoid coordinates
-                        float fX = ((float) (iX)) - m_kCenter.X;
-                        float fY = ((float) (iY)) - m_kCenter.Y;
-                        float fZ = ((float) (iZ)) - m_kCenter.Z;
-                        kP.X = (fX * m_kRotate.M00) + (fY * m_kRotate.M10) + (fZ * m_kRotate.M20);
-                        kP.Y = (fX * m_kRotate.M01) + (fY * m_kRotate.M11) + (fZ * m_kRotate.M21);
-                        kP.Z = (fX * m_kRotate.M02) + (fY * m_kRotate.M12) + (fZ * m_kRotate.M22);
+                            // transform to ellipsoid coordinates
+                            final float fX = ( (iX)) - m_kCenter.X;
+                            final float fY = ( (iY)) - m_kCenter.Y;
+                            final float fZ = ( (iZ)) - m_kCenter.Z;
+                            kP.X = (fX * m_kRotate.M00) + (fY * m_kRotate.M10) + (fZ * m_kRotate.M20);
+                            kP.Y = (fX * m_kRotate.M01) + (fY * m_kRotate.M11) + (fZ * m_kRotate.M21);
+                            kP.Z = (fX * m_kRotate.M02) + (fY * m_kRotate.M12) + (fZ * m_kRotate.M22);
 
-                        kP.X *= fInvLength0;
-                        kP.Y *= fInvLength1;
-                        kP.Z *= fInvLength2;
+                            kP.X *= fInvLength0;
+                            kP.Y *= fInvLength1;
+                            kP.Z *= fInvLength2;
 
-                        if (((kP.X * kP.X) + (kP.Y * kP.Y) + (kP.Z * kP.Z)) <= 1.0f) {
+                            if ( ( (kP.X * kP.X) + (kP.Y * kP.Y) + (kP.Z * kP.Z)) <= 1.0f) {
 
                                 // voxel is inside ellipsoid
                                 aiIntensity[iIQuantity++] = iIntensity;
                             }
                         }
-                		
-                	} else {
-                		
-                		if (m_aiMask[getIndex(iX, iY, iZ)] > 0) {
-                			
-                			int iIntensity = m_aiImage[getIndex(iX, iY, iZ)];
+
+                    } else {
+
+                        if (m_aiMask[getIndex(iX, iY, iZ)] > 0) {
+
+                            final int iIntensity = m_aiImage[getIndex(iX, iY, iZ)];
 
                             if (iIntensity > m_iBackThreshold) {
 
                                 // transform to ellipsoid coordinates
-                                float fX = ((float) (iX)) - m_kCenter.X;
-                                float fY = ((float) (iY)) - m_kCenter.Y;
-                                float fZ = ((float) (iZ)) - m_kCenter.Z;
+                                final float fX = ( (iX)) - m_kCenter.X;
+                                final float fY = ( (iY)) - m_kCenter.Y;
+                                final float fZ = ( (iZ)) - m_kCenter.Z;
                                 kP.X = (fX * m_kRotate.M00) + (fY * m_kRotate.M10) + (fZ * m_kRotate.M20);
                                 kP.Y = (fX * m_kRotate.M01) + (fY * m_kRotate.M11) + (fZ * m_kRotate.M21);
                                 kP.Z = (fX * m_kRotate.M02) + (fY * m_kRotate.M12) + (fZ * m_kRotate.M22);
@@ -1134,17 +1133,16 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                                 kP.Y *= fInvLength1;
                                 kP.Z *= fInvLength2;
 
-                                if (((kP.X * kP.X) + (kP.Y * kP.Y) + (kP.Z * kP.Z)) <= 1.0f) {
+                                if ( ( (kP.X * kP.X) + (kP.Y * kP.Y) + (kP.Z * kP.Z)) <= 1.0f) {
 
                                     // voxel is inside ellipsoid
                                     aiIntensity[iIQuantity++] = iIntensity;
                                 }
                             }
-                		}
-                		
-                		
-                	}
-                	
+                        }
+
+                    }
+
                 }
             }
         }
@@ -1167,7 +1165,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     protected void computeVertexInformation() {
         float fMinCurvature = Float.POSITIVE_INFINITY;
         float fMaxCurvature = Float.NEGATIVE_INFINITY;
-        float fInvMeanLength = 1.0f / m_fMeanEdgeLength;
+        final float fInvMeanLength = 1.0f / m_fMeanEdgeLength;
 
         int i;
 
@@ -1175,13 +1173,13 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             m_akVMean[i].Set(0.0f, 0.0f, 0.0f);
         }
 
-        Vector3f kS = new Vector3f();
+        final Vector3f kS = new Vector3f();
 
         for (i = 0; i < m_iVQuantity; i++) {
 
             // compute the mean of the vertex neighbors
             // Point3f kMean = m_akVMean[i];
-            UnorderedSetInt kAdj = m_akAdjacent[i];
+            final UnorderedSetInt kAdj = m_akAdjacent[i];
 
             for (int j = 0; j < kAdj.getQuantity(); j++) {
                 m_akVMean[i].Add(m_akVertex[kAdj.get(j)]);
@@ -1195,8 +1193,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             m_akSTangent[i].Sub(kS, m_akSNormal[i]);
 
             // compute the curvature
-            float fLength = m_akSNormal[i].Length();
-            m_afCurvature[i] = ((2.0f * fLength) * fInvMeanLength) * fInvMeanLength;
+            final float fLength = m_akSNormal[i].Length();
+            m_afCurvature[i] = ( (2.0f * fLength) * fInvMeanLength) * fInvMeanLength;
 
             if (m_afCurvature[i] < fMinCurvature) {
                 fMinCurvature = m_afCurvature[i];
@@ -1225,19 +1223,19 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             m_akVNormal[i].Set(0.0f, 0.0f, 0.0f);
         }
 
-        Vector3f kEdge1 = new Vector3f();
-        Vector3f kEdge2 = new Vector3f();
-        Vector3f kNormal = new Vector3f();
+        final Vector3f kEdge1 = new Vector3f();
+        final Vector3f kEdge2 = new Vector3f();
+        final Vector3f kNormal = new Vector3f();
 
         for (int iT = 0; iT < m_iTQuantity; iT++) {
 
             // get the vertices of the triangle
-            int iP0 = m_aiConnect[3 * iT];
-            int iP1 = m_aiConnect[(3 * iT) + 1];
-            int iP2 = m_aiConnect[(3 * iT) + 2];
-            Vector3f kP0 = m_akVertex[iP0];
-            Vector3f kP1 = m_akVertex[iP1];
-            Vector3f kP2 = m_akVertex[iP2];
+            final int iP0 = m_aiConnect[3 * iT];
+            final int iP1 = m_aiConnect[ (3 * iT) + 1];
+            final int iP2 = m_aiConnect[ (3 * iT) + 2];
+            final Vector3f kP0 = m_akVertex[iP0];
+            final Vector3f kP1 = m_akVertex[iP1];
+            final Vector3f kP2 = m_akVertex[iP2];
 
             // compute the triangle normal
             kEdge1.Sub(kP1, kP0);
@@ -1254,37 +1252,37 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             m_akVNormal[i].Normalize();
         }
     }
-    
+
     protected Vector3f computeNewCenter() {
-    	
-    	Vector3f newCenter = new Vector3f();
-    	float totWeight = 0.0f;
-    	float comX = 0.0f;
-    	float comY = 0.0f;
-    	float comZ = 0.0f;
-    	
-    	for (int iZ = 1; iZ <= (m_iZBound - 1); iZ++) {
-    		
-    		for (int iY = 1; iY <= (m_iYBound - 1); iY++) {
-    			
-    			for (int iX = 1; iX <= (m_iXBound - 1); iX++) {
-    				
-    				if (m_aiMask[getIndex(iX, iY, iZ)] > 0) {
-                        comX += (float) (iX * m_aiImage[getIndex(iX, iY, iZ)]);
-                        comY += (float) (iY * m_aiImage[getIndex(iX, iY, iZ)]);
-                        comZ += (float) (iZ * m_aiImage[getIndex(iX, iY, iZ)]);
+
+        final Vector3f newCenter = new Vector3f();
+        float totWeight = 0.0f;
+        float comX = 0.0f;
+        float comY = 0.0f;
+        float comZ = 0.0f;
+
+        for (int iZ = 1; iZ <= (m_iZBound - 1); iZ++) {
+
+            for (int iY = 1; iY <= (m_iYBound - 1); iY++) {
+
+                for (int iX = 1; iX <= (m_iXBound - 1); iX++) {
+
+                    if (m_aiMask[getIndex(iX, iY, iZ)] > 0) {
+                        comX += (iX * m_aiImage[getIndex(iX, iY, iZ)]);
+                        comY += (iY * m_aiImage[getIndex(iX, iY, iZ)]);
+                        comZ += (iZ * m_aiImage[getIndex(iX, iY, iZ)]);
                         totWeight += m_aiImage[getIndex(iX, iY, iZ)];
                     }
-    			}
-    		}
-    	}
-    	
-    	newCenter.X = comX * srcImage.getFileInfo(0).getResolution(0) / totWeight;
-    	newCenter.Y = comX * srcImage.getFileInfo(0).getResolution(1) / totWeight;
-    	newCenter.Z = comX * srcImage.getFileInfo(0).getResolution(2) / totWeight;
-    	
-    	return newCenter;
-    	
+                }
+            }
+        }
+
+        newCenter.X = comX * srcImage.getFileInfo(0).getResolution(0) / totWeight;
+        newCenter.Y = comX * srcImage.getFileInfo(0).getResolution(1) / totWeight;
+        newCenter.Z = comX * srcImage.getFileInfo(0).getResolution(2) / totWeight;
+
+        return newCenter;
+
     }
 
     /**
@@ -1292,13 +1290,15 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
      * larger than a brightness threshold and that are part of the upper-half of the head. The idea is that the scalp
      * voxels in the upper-half form lie approximately on an ellipsoidal surface.<br>
      * <br>
-     *
-     * <p>NOTE. The assumption is that the traversal from bottom to top of head is in the y-direction of the 3D image.
-     * It does not matter if the top of the head has y-values smaller/larger than those for the bottom of the head. If
-     * this assumption is not met, the image should be permuted OR this code must be modified to attempt to recognize
-     * the orientation of the head</p>
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * <p>
+     * NOTE. The assumption is that the traversal from bottom to top of head is in the y-direction of the 3D image. It
+     * does not matter if the top of the head has y-values smaller/larger than those for the bottom of the head. If this
+     * assumption is not met, the image should be permuted OR this code must be modified to attempt to recognize the
+     * orientation of the head
+     * </p>
+     * 
+     * @return DOCUMENT ME!
      */
     protected boolean estimateEllipsoid() {
 
@@ -1308,27 +1308,27 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
         // Make the estimation numerically robust by tracking voxel positions
         // that are uniformly scaled into [-1,1]^3.
-        float fBMax = (float) m_iXBound;
+        float fBMax = m_iXBound;
 
-        if ((float) m_iYBound > fBMax) {
-            fBMax = (float) m_iYBound;
+        if (m_iYBound > fBMax) {
+            fBMax = m_iYBound;
         }
 
-        if ((float) m_iZBound > fBMax) {
-            fBMax = (float) m_iZBound;
+        if (m_iZBound > fBMax) {
+            fBMax = m_iZBound;
         }
 
-        float fInvBMax = 1.0f / fBMax;
+        final float fInvBMax = 1.0f / fBMax;
 
         // The arrays "less" and "greater" store positions of bright voxels
-        // that occur less or greater than YBound/2, respectively.  The
+        // that occur less or greater than YBound/2, respectively. The
         // array with the smaller number of voxels represents the scalp
-        // voxels in the upper-half of the head.  The comparison of counts
+        // voxels in the upper-half of the head. The comparison of counts
         // is based on empirical studies.
-        Vector kLess = new Vector();
-        Vector kGreater = new Vector();
-        int iHalfYBound = m_iYBound / 2;
-        int iHalfZBound = m_iZBound / 2;
+        final Vector kLess = new Vector();
+        final Vector kGreater = new Vector();
+        final int iHalfYBound = m_iYBound / 2;
+        final int iHalfZBound = m_iZBound / 2;
 
         for (int iZ = 0, iIndex = 0; iZ < m_iZBound; iZ++) {
 
@@ -1337,7 +1337,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                 for (int iX = 0; iX < m_iXBound; iX++) {
 
                     if (m_aiImage[iIndex++] >= m_iBrightThreshold) {
-                        Vector3f kVoxel = new Vector3f(fInvBMax * iX, fInvBMax * iY, fInvBMax * iZ);
+                        final Vector3f kVoxel = new Vector3f(fInvBMax * iX, fInvBMax * iY, fInvBMax * iZ);
 
                         if (orientationFlag == AlgorithmBrainExtractor.SAT_COR) {
 
@@ -1361,7 +1361,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             }
         }
 
-        // Fit points with an ellipsoid.  The algorithm uses a least-squares
+        // Fit points with an ellipsoid. The algorithm uses a least-squares
         // estimation of the coefficients for a quadratic equation that
         // represents the ellipsoid.
         AlgorithmQuadraticFit kQFit;
@@ -1396,7 +1396,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         m_afLength[1] *= fBMax;
         m_afLength[2] *= fBMax;
 
-        // Use a smaller version of the ellipsoid for the initial mesh.  The
+        // Use a smaller version of the ellipsoid for the initial mesh. The
         // default reduction is 0.6, 0.4, 0,6.
         m_afLength[0] *= m_fReductionX;
         m_afLength[1] *= m_fReductionY;
@@ -1406,7 +1406,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         Preferences.debug("Brain extractor: extimateEllipsoid: ellipse length 2 = " + m_afLength[1] + "\n");
         Preferences.debug("Brain extractor: extimateEllipsoid: ellipse length 3 = " + m_afLength[2] + "\n");
 
-        if ((m_afLength[0] > 0) && (m_afLength[1] > 0) && (m_afLength[2] > 0)) {
+        if ( (m_afLength[0] > 0) && (m_afLength[1] > 0) && (m_afLength[2] > 0)) {
             return true;
         } else {
             return false;
@@ -1439,10 +1439,10 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             }
         }
 
-        float radius = (float) Math.pow(0.75 * (1 / Math.PI) * count, 0.333333);
+        final float radius = (float) Math.pow(0.75 * (1 / Math.PI) * count, 0.333333);
         Preferences.debug("Brain extractor: extimateSphere: radius = " + radius + "\n");
 
-        // Use a smaller version of the sphere for the initial mesh.  The
+        // Use a smaller version of the sphere for the initial mesh. The
         // default reduction is 0.75.
         // m_afLength[0] *= m_fReduction;
         // m_afLength[1] *= m_fReduction;
@@ -1459,20 +1459,20 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     /**
      * Identify voxels enclosed by the brain surface by using a flood fill. The flood fill is nonrecursive to avoid
      * overflowing the program stack.
-     *
-     * @param  iX  the x-value of the seed point for the fill
-     * @param  iY  the y-value of the seed point for the fill
-     * @param  iZ  the z-value of the seed point for the fill
+     * 
+     * @param iX the x-value of the seed point for the fill
+     * @param iY the y-value of the seed point for the fill
+     * @param iZ the z-value of the seed point for the fill
      */
     protected void floodFill(int iX, int iY, int iZ) {
 
-        // Allocate the maximum amount of space needed.   An empty stack has
+        // Allocate the maximum amount of space needed. An empty stack has
         // iTop == -1.
         int[] aiXStack = new int[m_iQuantity];
         int[] aiYStack = new int[m_iQuantity];
         int[] aiZStack = new int[m_iQuantity];
 
-        // An empty stack has iTop = -1.  Push seed point onto stack.  All
+        // An empty stack has iTop = -1. Push seed point onto stack. All
         // points pushed onto stack have background color zero.
         int iTop = 0;
         aiXStack[iTop] = iX;
@@ -1482,7 +1482,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         while (iTop >= 0) // stack is not empty
         {
 
-            // Read top of stack.  Do not pop since we need to return to this
+            // Read top of stack. Do not pop since we need to return to this
             // top value later to restart the fill in a different direction.
             iX = aiXStack[iTop];
             iY = aiYStack[iTop];
@@ -1491,9 +1491,9 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             // fill the pixel
             m_aiMask[getIndex(iX, iY, iZ)] = 2;
 
-            int iXp1 = iX + 1;
+            final int iXp1 = iX + 1;
 
-            if ((iXp1 < m_iXBound) && (m_aiMask[getIndex(iXp1, iY, iZ)] == 0)) {
+            if ( (iXp1 < m_iXBound) && (m_aiMask[getIndex(iXp1, iY, iZ)] == 0)) {
 
                 // push pixel with background color
                 iTop++;
@@ -1504,9 +1504,9 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                 continue;
             }
 
-            int iXm1 = iX - 1;
+            final int iXm1 = iX - 1;
 
-            if ((0 <= iXm1) && (m_aiMask[getIndex(iXm1, iY, iZ)] == 0)) {
+            if ( (0 <= iXm1) && (m_aiMask[getIndex(iXm1, iY, iZ)] == 0)) {
 
                 // push pixel with background color
                 iTop++;
@@ -1517,9 +1517,9 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                 continue;
             }
 
-            int iYp1 = iY + 1;
+            final int iYp1 = iY + 1;
 
-            if ((iYp1 < m_iYBound) && (m_aiMask[getIndex(iX, iYp1, iZ)] == 0)) {
+            if ( (iYp1 < m_iYBound) && (m_aiMask[getIndex(iX, iYp1, iZ)] == 0)) {
 
                 // push pixel with background color
                 iTop++;
@@ -1530,9 +1530,9 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                 continue;
             }
 
-            int iYm1 = iY - 1;
+            final int iYm1 = iY - 1;
 
-            if ((0 <= iYm1) && (m_aiMask[getIndex(iX, iYm1, iZ)] == 0)) {
+            if ( (0 <= iYm1) && (m_aiMask[getIndex(iX, iYm1, iZ)] == 0)) {
 
                 // push pixel with background color
                 iTop++;
@@ -1543,9 +1543,9 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                 continue;
             }
 
-            int iZp1 = iZ + 1;
+            final int iZp1 = iZ + 1;
 
-            if ((iZp1 < m_iZBound) && (m_aiMask[getIndex(iX, iY, iZp1)] == 0)) {
+            if ( (iZp1 < m_iZBound) && (m_aiMask[getIndex(iX, iY, iZp1)] == 0)) {
 
                 // push pixel with background color
                 iTop++;
@@ -1556,9 +1556,9 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                 continue;
             }
 
-            int iZm1 = iZ - 1;
+            final int iZm1 = iZ - 1;
 
-            if ((0 <= iZm1) && (m_aiMask[getIndex(iX, iY, iZm1)] == 0)) {
+            if ( (0 <= iZm1) && (m_aiMask[getIndex(iX, iY, iZm1)] == 0)) {
 
                 // push pixel with background color
                 iTop++;
@@ -1583,13 +1583,13 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
      * Tessellate a unit sphere centered at the origin. Start with an octahedron and subdivide. The final mesh is then
      * affinely mapped to the initial ellipsoid produced by estimateEllipsoid(). The subdivision scheme is described in
      * BrainExtraction.pdf.
-     *
-     * @param  iSubdivisions  the number of levels to subdivide the ellipsoid
+     * 
+     * @param iSubdivisions the number of levels to subdivide the ellipsoid
      */
-    protected void generateEllipsoidMesh(int iSubdivisions) {
+    protected void generateEllipsoidMesh(final int iSubdivisions) {
 
         // Compute the number of vertices, edges, and triangles for an
-        // octahedron subdivided to the specified level.  The recursions are
+        // octahedron subdivided to the specified level. The recursions are
         // V1 = V0 + E0
         // E1 = 2*E0 + 3*T0
         // T1 = 4*T0
@@ -1607,7 +1607,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         }
 
         // See BrainExtraction.pdf for a description of the subdivision
-        // algorithm.  The use of the HashMap m_kEMap is to store midpoint
+        // algorithm. The use of the HashMap m_kEMap is to store midpoint
         // information for edges so that triangles sharing an edge know what
         // the new vertices are for replacing themselves with subtriangles.
         m_akVertex = new Vector3f[m_iVQuantity];
@@ -1621,8 +1621,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             m_akAdjacent[i] = new UnorderedSetInt(6, 1);
         }
 
-        m_akVertex[0].Set(+1.0f, 0.0f, 0.0f);
-        m_akVertex[1].Set(-1.0f, 0.0f, 0.0f);
+        m_akVertex[0].Set( +1.0f, 0.0f, 0.0f);
+        m_akVertex[1].Set( -1.0f, 0.0f, 0.0f);
         m_akVertex[2].Set(0.0f, +1.0f, 0.0f);
         m_akVertex[3].Set(0.0f, -1.0f, 0.0f);
         m_akVertex[4].Set(0.0f, 0.0f, +1.0f);
@@ -1655,7 +1655,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
         m_kEMap = new HashMap();
 
-        Integer kInvalid = new Integer(-1);
+        final Integer kInvalid = new Integer( -1);
         m_kEMap.put(new Edge(0, 4), kInvalid);
         m_kEMap.put(new Edge(1, 4), kInvalid);
         m_kEMap.put(new Edge(2, 4), kInvalid);
@@ -1675,20 +1675,20 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         for (iStep = 1; iStep <= iSubdivisions; iStep++) {
 
             // generate midpoints of edges
-            Iterator kEIter = m_kEMap.entrySet().iterator();
+            final Iterator kEIter = m_kEMap.entrySet().iterator();
             Map.Entry kEntry = null;
 
             while (kEIter.hasNext()) {
                 kEntry = (Map.Entry) kEIter.next();
 
-                Edge kE = (Edge) kEntry.getKey();
-                Vector3f kP0 = m_akVertex[kE.m_i0];
-                Vector3f kP1 = m_akVertex[kE.m_i1];
-                Vector3f kPMid = m_akVertex[iPNext];
+                final Edge kE = (Edge) kEntry.getKey();
+                final Vector3f kP0 = m_akVertex[kE.m_i0];
+                final Vector3f kP1 = m_akVertex[kE.m_i1];
+                final Vector3f kPMid = m_akVertex[iPNext];
                 kPMid.Add(kP0, kP1);
 
-                float fInvLen = 1.0f /
-                                    (float) Math.sqrt((kPMid.X * kPMid.X) + (kPMid.Y * kPMid.Y) + (kPMid.Z * kPMid.Z));
+                final float fInvLen = 1.0f / (float) Math.sqrt( (kPMid.X * kPMid.X) + (kPMid.Y * kPMid.Y)
+                        + (kPMid.Z * kPMid.Z));
                 kPMid.Scale(fInvLen);
                 kEntry.setValue(new Integer(iPNext));
                 iPNext++;
@@ -1703,12 +1703,12 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                 iP1 = m_aiConnect[i1];
                 iP2 = m_aiConnect[i2];
 
-                Edge kE01 = new Edge(iP0, iP1);
-                Edge kE12 = new Edge(iP1, iP2);
-                Edge kE20 = new Edge(iP2, iP0);
-                int iM01 = ((Integer) m_kEMap.get(kE01)).intValue();
-                int iM12 = ((Integer) m_kEMap.get(kE12)).intValue();
-                int iM20 = ((Integer) m_kEMap.get(kE20)).intValue();
+                final Edge kE01 = new Edge(iP0, iP1);
+                final Edge kE12 = new Edge(iP1, iP2);
+                final Edge kE20 = new Edge(iP2, iP0);
+                final int iM01 = ((Integer) m_kEMap.get(kE01)).intValue();
+                final int iM12 = ((Integer) m_kEMap.get(kE12)).intValue();
+                final int iM20 = ((Integer) m_kEMap.get(kE20)).intValue();
 
                 // add new edges
 
@@ -1753,8 +1753,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         // generate vertex adjacency
         for (iT = 0; iT < m_iTQuantity; iT++) {
             iP0 = m_aiConnect[3 * iT];
-            iP1 = m_aiConnect[(3 * iT) + 1];
-            iP2 = m_aiConnect[(3 * iT) + 2];
+            iP1 = m_aiConnect[ (3 * iT) + 1];
+            iP2 = m_aiConnect[ (3 * iT) + 2];
 
             m_akAdjacent[iP0].insert(iP1);
             m_akAdjacent[iP0].insert(iP2);
@@ -1765,21 +1765,18 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         }
 
         // rotate, scale, and translate sphere to get ellipsoid
-        float resXFactor = m_fXDelta /
-                               (float)
-                                   Math.sqrt((m_kRotate.M00 * m_kRotate.M00 * m_fXDelta * m_fXDelta) +
-                                                 (m_kRotate.M01 * m_kRotate.M01 * m_fYDelta * m_fYDelta) +
-                                                 (m_kRotate.M02 * m_kRotate.M02 * m_fZDelta * m_fZDelta));
-        float resYFactor = m_fYDelta /
-                               (float)
-                                   Math.sqrt((m_kRotate.M10 * m_kRotate.M10 * m_fXDelta * m_fXDelta) +
-                                                 (m_kRotate.M11 * m_kRotate.M11 * m_fYDelta * m_fYDelta) +
-                                                 (m_kRotate.M12 * m_kRotate.M12 * m_fZDelta * m_fZDelta));
-        float resZFactor = m_fZDelta /
-                               (float)
-                                   Math.sqrt((m_kRotate.M20 * m_kRotate.M20 * m_fXDelta * m_fXDelta) +
-                                                 (m_kRotate.M21 * m_kRotate.M21 * m_fYDelta * m_fYDelta) +
-                                                 (m_kRotate.M22 * m_kRotate.M22 * m_fZDelta * m_fZDelta));
+        final float resXFactor = m_fXDelta
+                / (float) Math.sqrt( (m_kRotate.M00 * m_kRotate.M00 * m_fXDelta * m_fXDelta)
+                        + (m_kRotate.M01 * m_kRotate.M01 * m_fYDelta * m_fYDelta)
+                        + (m_kRotate.M02 * m_kRotate.M02 * m_fZDelta * m_fZDelta));
+        final float resYFactor = m_fYDelta
+                / (float) Math.sqrt( (m_kRotate.M10 * m_kRotate.M10 * m_fXDelta * m_fXDelta)
+                        + (m_kRotate.M11 * m_kRotate.M11 * m_fYDelta * m_fYDelta)
+                        + (m_kRotate.M12 * m_kRotate.M12 * m_fZDelta * m_fZDelta));
+        final float resZFactor = m_fZDelta
+                / (float) Math.sqrt( (m_kRotate.M20 * m_kRotate.M20 * m_fXDelta * m_fXDelta)
+                        + (m_kRotate.M21 * m_kRotate.M21 * m_fYDelta * m_fYDelta)
+                        + (m_kRotate.M22 * m_kRotate.M22 * m_fZDelta * m_fZDelta));
 
         for (i = 0; i < m_iVQuantity; i++) {
             m_akVertex[i].X *= m_afLength[0];
@@ -1800,14 +1797,14 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     /**
      * A convenience function for mapping the 3D voxel position (iX,iY,iZ) to a 1D array index. The images are stored as
      * 1D arrays, so this function is used frequently.
-     *
-     * @param   iX  the x-value of the voxel position
-     * @param   iY  the y-value of the voxel position
-     * @param   iZ  the z-value of the voxel position
-     *
-     * @return  the 1D array index corresponding to (iX,iY,iZ)
+     * 
+     * @param iX the x-value of the voxel position
+     * @param iY the y-value of the voxel position
+     * @param iZ the z-value of the voxel position
+     * 
+     * @return the 1D array index corresponding to (iX,iY,iZ)
      */
-    protected final int getIndex(int iX, int iY, int iZ) {
+    protected final int getIndex(final int iX, final int iY, final int iZ) {
         return iX + (m_iXBound * (iY + (m_iYBound * iZ)));
     }
 
@@ -1815,10 +1812,10 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
      * Identify all voxels that are inside or on the mesh that represents the brain surface. The surface voxels are
      * constructed by rasterizing the triangles of the mesh in 3D. The centroid of these voxels is used as a seed point
      * for a flood fill of the region enclosed by the surface.
-     *
-     * @param  doErode  DOCUMENT ME!
+     * 
+     * @param doErode DOCUMENT ME!
      */
-    protected void getInsideVoxels(boolean doErode) {
+    protected void getInsideVoxels(final boolean doErode) {
 
         for (int n = 0; n < m_aiMask.length; n++) {
             m_aiMask[n] = 0;
@@ -1829,9 +1826,9 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         for (int iT = 0; iT < m_iTQuantity; iT++) {
 
             // get the vertices of the triangle
-            Vector3f kV0 = m_akVertex[m_aiConnect[3 * iT]];
-            Vector3f kV1 = m_akVertex[m_aiConnect[(3 * iT) + 1]];
-            Vector3f kV2 = m_akVertex[m_aiConnect[(3 * iT) + 2]];
+            final Vector3f kV0 = m_akVertex[m_aiConnect[3 * iT]];
+            final Vector3f kV1 = m_akVertex[m_aiConnect[ (3 * iT) + 1]];
+            final Vector3f kV2 = m_akVertex[m_aiConnect[ (3 * iT) + 2]];
 
             // compute the axis-aligned bounding box of the triangle
             float fXMin = kV0.X, fXMax = fXMin;
@@ -1874,15 +1871,15 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                 fZMax = kV2.Z;
             }
 
-            // Rasterize the triangle.  The rasterization is repeated in all
+            // Rasterize the triangle. The rasterization is repeated in all
             // three coordinate directions to make sure that floating point
             // round-off errors do not cause any holes in the rasterized
             // surface.
-            int iXMin = (int) fXMin, iXMax = (int) fXMax;
-            int iYMin = (int) fYMin, iYMax = (int) fYMax;
-            int iZMin = (int) fZMin, iZMax = (int) fZMax;
+            final int iXMin = (int) fXMin, iXMax = (int) fXMax;
+            final int iYMin = (int) fYMin, iYMax = (int) fYMax;
+            final int iZMin = (int) fZMin, iZMax = (int) fZMax;
             int ptr;
-            int end = m_aiMask.length;
+            final int end = m_aiMask.length;
 
             for (iY = iYMin; iY <= iYMax; iY++) {
 
@@ -1892,7 +1889,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                     if (iX != -1) {
                         ptr = getIndex(iX, iY, iZ);
 
-                        if ((ptr >= 0) && (ptr < end)) {
+                        if ( (ptr >= 0) && (ptr < end)) {
                             m_aiMask[ptr] = 1;
                         }
                         // m_aiMask[getIndex(iX,iY,iZ)] = 1;
@@ -1908,7 +1905,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                     if (iY != -1) {
                         ptr = getIndex(iX, iY, iZ);
 
-                        if ((ptr >= 0) && (ptr < end)) {
+                        if ( (ptr >= 0) && (ptr < end)) {
                             m_aiMask[ptr] = 1;
                         }
                         // m_aiMask[getIndex(iX,iY,iZ)] = 1;
@@ -1924,7 +1921,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                     if (iZ != -1) {
                         ptr = getIndex(iX, iY, iZ);
 
-                        if ((ptr >= 0) && (ptr < end)) {
+                        if ( (ptr >= 0) && (ptr < end)) {
                             m_aiMask[ptr] = 1;
                         }
                         // m_aiMask[getIndex(iX,iY,iZ)] = 1;
@@ -1950,21 +1947,21 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                                 for (int iDy = -m_iDMax; iDy <= m_iDMax; iDy++) {
 
                                     for (int iDx = -m_iDMax; iDx <= m_iDMax; iDx++) {
-                                        int iX0 = iX + iDx;
+                                        final int iX0 = iX + iDx;
 
-                                        if ((iX0 < 0) || (iX0 >= m_iXBound)) {
+                                        if ( (iX0 < 0) || (iX0 >= m_iXBound)) {
                                             continue;
                                         }
 
-                                        int iY0 = iY + iDy;
+                                        final int iY0 = iY + iDy;
 
-                                        if ((iY0 < 0) || (iY0 >= m_iYBound)) {
+                                        if ( (iY0 < 0) || (iY0 >= m_iYBound)) {
                                             continue;
                                         }
 
-                                        int iZ0 = iZ + iDz;
+                                        final int iZ0 = iZ + iDz;
 
-                                        if ((iZ0 < 0) || (iZ0 >= m_iZBound)) {
+                                        if ( (iZ0 < 0) || (iZ0 >= m_iZBound)) {
                                             continue;
                                         }
 
@@ -2001,27 +1998,27 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                 for (iX = 1; iX < (m_iXBound - 1); iX++) {
 
                     if (m_aiMask[getIndex(iX, iY, iZ)] > 0) {
-                        fXC += (float) iX;
-                        fYC += (float) iY;
-                        fZC += (float) iZ;
+                        fXC += iX;
+                        fYC += iY;
+                        fZC += iZ;
                         iCount++;
                     }
                 }
             }
         }
 
-        float fInvCount = 1.0f / iCount;
+        final float fInvCount = 1.0f / iCount;
         fXC *= fInvCount;
         fYC *= fInvCount;
         fZC *= fInvCount;
 
         floodFill((int) fXC, (int) fYC, (int) fZC);
 
-        float fMin = (float) srcImage.getMin();
-        float fMax = (float) srcImage.getMax();
+        final float fMin = (float) srcImage.getMin();
+        final float fMax = (float) srcImage.getMax();
 
         if (extractPaint) {
-            BitSet bitSet = new BitSet(m_aiMask.length);
+            final BitSet bitSet = new BitSet(m_aiMask.length);
 
             for (int m = 0; m < m_aiMask.length; m++) {
 
@@ -2049,12 +2046,12 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             // to a zero background value or to another value already eroded
             fireProgressStateChanged("Performing second stage edge erosion");
 
-            float median = fMin + (m_iMedianIntensity * (fMax - fMin) / 1023);
-            float th = median * aboveMedian;
+            final float median = fMin + (m_iMedianIntensity * (fMax - fMin) / 1023);
+            final float th = median * aboveMedian;
             Preferences.debug("Brain extractor: getInsideVoxels: erode threshold = " + th + "\n");
 
             boolean[] chk;
-            int sliceSize = m_iXBound * m_iYBound;
+            final int sliceSize = m_iXBound * m_iYBound;
             int pos1;
             int pos2;
             int pos3;
@@ -2065,7 +2062,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             try {
                 buffer = new float[m_iQuantity];
                 chk = new boolean[m_iQuantity];
-            } catch (OutOfMemoryError e) {
+            } catch (final OutOfMemoryError e) {
                 MipavUtil.displayError("AlgorithmBrainExtractor: Out of memory error creating buffer and chk");
 
                 setCompleted(false);
@@ -2075,7 +2072,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
             try {
                 srcImage.exportData(0, m_iQuantity, buffer);
-            } catch (IOException er) {
+            } catch (final IOException er) {
                 MipavUtil.displayError("AlgorithmBrainExtractor: IO error on image export data");
 
                 setCompleted(false);
@@ -2140,23 +2137,23 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
                             if (chk[pos]) {
 
-                                if ((iY >= 1) && (buffer[pos - m_iXBound] == fMin) && (!chk[pos - m_iXBound])) {
+                                if ( (iY >= 1) && (buffer[pos - m_iXBound] == fMin) && ( !chk[pos - m_iXBound])) {
                                     found = true;
                                     chk[pos - m_iXBound] = true;
                                 }
 
-                                if ((iY < (m_iYBound - 1)) && (buffer[pos + m_iXBound] == fMin) &&
-                                        (!chk[pos + m_iXBound])) {
+                                if ( (iY < (m_iYBound - 1)) && (buffer[pos + m_iXBound] == fMin)
+                                        && ( !chk[pos + m_iXBound])) {
                                     found = true;
                                     chk[pos + m_iXBound] = true;
                                 }
 
-                                if ((iX >= 1) && (buffer[pos - 1] == fMin) && (!chk[pos - 1])) {
+                                if ( (iX >= 1) && (buffer[pos - 1] == fMin) && ( !chk[pos - 1])) {
                                     found = true;
                                     chk[pos - 1] = true;
                                 }
 
-                                if ((iX < (m_iXBound - 1)) && (buffer[pos + 1] == fMin) && (!chk[pos + 1])) {
+                                if ( (iX < (m_iXBound - 1)) && (buffer[pos + 1] == fMin) && ( !chk[pos + 1])) {
                                     found = true;
                                     chk[pos + 1] = true;
                                 }
@@ -2184,48 +2181,48 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
                             if (chk[pos]) {
 
-                                if ((iY >= 1) && (buffer[pos - m_iXBound] >= th)) {
+                                if ( (iY >= 1) && (buffer[pos - m_iXBound] >= th)) {
 
-                                    if (((iX >= 1) &&
-                                             ((buffer[pos - m_iXBound - 1] >= th) || chk[pos - m_iXBound - 1])) ||
-                                            ((iX < (m_iXBound - 1)) &&
-                                                 ((buffer[pos - m_iXBound + 1] >= th) || chk[pos - m_iXBound + 1]))) {
+                                    if ( ( (iX >= 1) && ( (buffer[pos - m_iXBound - 1] >= th) || chk[pos - m_iXBound
+                                            - 1]))
+                                            || ( (iX < (m_iXBound - 1)) && ( (buffer[pos - m_iXBound + 1] >= th) || chk[pos
+                                                    - m_iXBound + 1]))) {
                                         found = true;
                                         chk[pos - m_iXBound] = true;
                                         buffer[pos - m_iXBound] = fMin;
                                     }
                                 }
 
-                                if ((iY < (m_iYBound - 1)) && (buffer[pos + m_iXBound] >= th)) {
+                                if ( (iY < (m_iYBound - 1)) && (buffer[pos + m_iXBound] >= th)) {
 
-                                    if (((iX >= 1) &&
-                                             ((buffer[pos + m_iXBound - 1] >= th) || chk[pos + m_iXBound - 1])) ||
-                                            ((iX < (m_iXBound - 1)) &&
-                                                 ((buffer[pos + m_iXBound + 1] >= th) || chk[pos + m_iXBound + 1]))) {
+                                    if ( ( (iX >= 1) && ( (buffer[pos + m_iXBound - 1] >= th) || chk[pos + m_iXBound
+                                            - 1]))
+                                            || ( (iX < (m_iXBound - 1)) && ( (buffer[pos + m_iXBound + 1] >= th) || chk[pos
+                                                    + m_iXBound + 1]))) {
                                         found = true;
                                         chk[pos + m_iXBound] = true;
                                         buffer[pos + m_iXBound] = fMin;
                                     }
                                 }
 
-                                if ((iX >= 1) && (buffer[pos - 1] >= th)) {
+                                if ( (iX >= 1) && (buffer[pos - 1] >= th)) {
 
-                                    if (((iY >= 1) &&
-                                             ((buffer[pos - m_iXBound - 1] >= th) || chk[pos - m_iXBound - 1])) ||
-                                            ((iY < (m_iYBound - 1)) &&
-                                                 ((buffer[pos + m_iXBound - 1] >= th) || chk[pos + m_iXBound - 1]))) {
+                                    if ( ( (iY >= 1) && ( (buffer[pos - m_iXBound - 1] >= th) || chk[pos - m_iXBound
+                                            - 1]))
+                                            || ( (iY < (m_iYBound - 1)) && ( (buffer[pos + m_iXBound - 1] >= th) || chk[pos
+                                                    + m_iXBound - 1]))) {
                                         found = true;
                                         chk[pos - 1] = true;
                                         buffer[pos - 1] = fMin;
                                     }
                                 }
 
-                                if ((iX < (m_iXBound - 1)) && (buffer[pos + 1] >= th)) {
+                                if ( (iX < (m_iXBound - 1)) && (buffer[pos + 1] >= th)) {
 
-                                    if (((iY >= 1) &&
-                                             ((buffer[pos - m_iXBound + 1] >= th) || chk[pos - m_iXBound + 1])) ||
-                                            ((iY < (m_iYBound - 1)) &&
-                                                 ((buffer[pos + m_iXBound + 1] >= th) || chk[pos + m_iXBound + 1]))) {
+                                    if ( ( (iY >= 1) && ( (buffer[pos - m_iXBound + 1] >= th) || chk[pos - m_iXBound
+                                            + 1]))
+                                            || ( (iY < (m_iYBound - 1)) && ( (buffer[pos + m_iXBound + 1] >= th) || chk[pos
+                                                    + m_iXBound + 1]))) {
                                         found = true;
                                         chk[pos + 1] = true;
                                         buffer[pos + 1] = fMin;
@@ -2255,19 +2252,19 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                             if (buffer[pos] > fMin) {
                                 neighbors = 0;
 
-                                if ((iY >= 1) && (!chk[pos - m_iXBound])) {
+                                if ( (iY >= 1) && ( !chk[pos - m_iXBound])) {
                                     neighbors++;
                                 }
 
-                                if ((iY < (m_iYBound - 1)) && (!chk[pos + m_iXBound])) {
+                                if ( (iY < (m_iYBound - 1)) && ( !chk[pos + m_iXBound])) {
                                     neighbors++;
                                 }
 
-                                if ((iX >= 1) && (!chk[pos - 1])) {
+                                if ( (iX >= 1) && ( !chk[pos - 1])) {
                                     neighbors++;
                                 }
 
-                                if ((iX < (m_iXBound - 1)) && (!chk[pos + 1])) {
+                                if ( (iX < (m_iXBound - 1)) && ( !chk[pos + 1])) {
                                     neighbors++;
                                 }
 
@@ -2286,8 +2283,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
                 srcImage.importData(0, buffer, false);
 
-
-            } catch (IOException er) {
+            } catch (final IOException er) {
                 MipavUtil.displayError("AlgorithmBrainExtractor: IO error on image import data");
 
                 setCompleted(false);
@@ -2299,18 +2295,18 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         if (doErode && (buffer != null)) {
             nBrainVoxels = 0;
 
-            for (int m = 0; m < buffer.length; m++) {
+            for (final float element : buffer) {
 
-                if (buffer[m] > fMin) {
+                if (element > fMin) {
                     nBrainVoxels++;
                 }
             }
         } else {
             nBrainVoxels = 0;
 
-            for (int m = 0; m < m_aiMask.length; m++) {
+            for (final byte element : m_aiMask) {
 
-                if (m_aiMask[m] > 0) {
+                if (element > 0) {
                     nBrainVoxels++;
                 }
             }
@@ -2323,116 +2319,116 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
      * Compute the point of intersection between a line (0,iY,iZ)+t(1,0,0) and the triangle defined by the three input
      * points. All calculations are in voxel coordinates and the x-value of the intersection point is truncated to an
      * integer.
-     *
-     * @param   kV0  a 3D vertex of the triangle
-     * @param   kV1  a 3D vertex of the triangle
-     * @param   kV2  a 3D vertex of the triangle
-     * @param   iY   the y-value of the origin of the line
-     * @param   iZ   the z-value of the origin of the line
-     *
-     * @return  the x-value of the intersection
+     * 
+     * @param kV0 a 3D vertex of the triangle
+     * @param kV1 a 3D vertex of the triangle
+     * @param kV2 a 3D vertex of the triangle
+     * @param iY the y-value of the origin of the line
+     * @param iZ the z-value of the origin of the line
+     * 
+     * @return the x-value of the intersection
      */
-    protected int getIntersectX(Vector3f kV0, Vector3f kV1, Vector3f kV2, int iY, int iZ) {
+    protected int getIntersectX(final Vector3f kV0, final Vector3f kV1, final Vector3f kV2, final int iY, final int iZ) {
 
         // Compute the intersection, if any, by calculating barycentric
         // coordinates of the intersection of the line with the plane of
-        // the triangle.  The barycentric coordinates are K0 = fC0/fDet,
-        // K1 = fC1/fDet, and K2 = fC2/fDet with K0+K1+K2=1.  The intersection
-        // point with the plane is K0*V0+K1*V1+K2*V2.  The point is inside
+        // the triangle. The barycentric coordinates are K0 = fC0/fDet,
+        // K1 = fC1/fDet, and K2 = fC2/fDet with K0+K1+K2=1. The intersection
+        // point with the plane is K0*V0+K1*V1+K2*V2. The point is inside
         // the triangle whenever K0, K1, and K2 are all in the interval [0,1].
-        float fPu = iY - kV0.Y, fPv = iZ - kV0.Z;
-        float fE1u = kV1.Y - kV0.Y, fE1v = kV1.Z - kV0.Z;
-        float fE2u = kV2.Y - kV0.Y, fE2v = kV2.Z - kV0.Z;
-        float fE1dP = (fE1u * fPu) + (fE1v * fPv);
-        float fE2dP = (fE2u * fPu) + (fE2v * fPv);
-        float fE1dE1 = (fE1u * fE1u) + (fE1v * fE1v);
-        float fE1dE2 = (fE1u * fE2u) + (fE1v * fE2v);
-        float fE2dE2 = (fE2u * fE2u) + (fE2v * fE2v);
-        float fDet = (float) Math.abs((fE1dE1 * fE2dE2) - (fE1dE2 * fE1dE2));
+        final float fPu = iY - kV0.Y, fPv = iZ - kV0.Z;
+        final float fE1u = kV1.Y - kV0.Y, fE1v = kV1.Z - kV0.Z;
+        final float fE2u = kV2.Y - kV0.Y, fE2v = kV2.Z - kV0.Z;
+        final float fE1dP = (fE1u * fPu) + (fE1v * fPv);
+        final float fE2dP = (fE2u * fPu) + (fE2v * fPv);
+        final float fE1dE1 = (fE1u * fE1u) + (fE1v * fE1v);
+        final float fE1dE2 = (fE1u * fE2u) + (fE1v * fE2v);
+        final float fE2dE2 = (fE2u * fE2u) + (fE2v * fE2v);
+        final float fDet = Math.abs( (fE1dE1 * fE2dE2) - (fE1dE2 * fE1dE2));
 
-        float fC1 = (fE2dE2 * fE1dP) - (fE1dE2 * fE2dP);
+        final float fC1 = (fE2dE2 * fE1dP) - (fE1dE2 * fE2dP);
 
-        if ((fC1 < 0.0f) || (fC1 > fDet)) {
-
-            // ray does not intersect triangle
-            return -1;
-        }
-
-        float fC2 = (fE1dE1 * fE2dP) - (fE1dE2 * fE1dP);
-
-        if ((fC2 < 0.0f) || (fC2 > fDet)) {
+        if ( (fC1 < 0.0f) || (fC1 > fDet)) {
 
             // ray does not intersect triangle
             return -1;
         }
 
-        float fC0 = fDet - fC1 - fC2;
+        final float fC2 = (fE1dE1 * fE2dP) - (fE1dE2 * fE1dP);
 
-        if ((fC0 < 0.0f) || (fC0 > fDet)) {
+        if ( (fC2 < 0.0f) || (fC2 > fDet)) {
 
             // ray does not intersect triangle
             return -1;
         }
 
-        return (int) MipavMath.round(((fC0 * kV0.X) + (fC1 * kV1.X) + (fC2 * kV2.X)) / fDet);
+        final float fC0 = fDet - fC1 - fC2;
+
+        if ( (fC0 < 0.0f) || (fC0 > fDet)) {
+
+            // ray does not intersect triangle
+            return -1;
+        }
+
+        return MipavMath.round( ( (fC0 * kV0.X) + (fC1 * kV1.X) + (fC2 * kV2.X)) / fDet);
     }
 
     /**
      * Compute the point of intersection between a line (iX,0,iZ)+t(0,1,0) and the triangle defined by the three input
      * points. All calculations are in voxel coordinates and the y-value of the intersection point is truncated to an
      * integer.
-     *
-     * @param   kV0  a 3D vertex of the triangle
-     * @param   kV1  a 3D vertex of the triangle
-     * @param   kV2  a 3D vertex of the triangle
-     * @param   iX   the x-value of the origin of the line
-     * @param   iZ   the z-value of the origin of the line
-     *
-     * @return  the y-value of the intersection
+     * 
+     * @param kV0 a 3D vertex of the triangle
+     * @param kV1 a 3D vertex of the triangle
+     * @param kV2 a 3D vertex of the triangle
+     * @param iX the x-value of the origin of the line
+     * @param iZ the z-value of the origin of the line
+     * 
+     * @return the y-value of the intersection
      */
-    protected int getIntersectY(Vector3f kV0, Vector3f kV1, Vector3f kV2, int iX, int iZ) {
+    protected int getIntersectY(final Vector3f kV0, final Vector3f kV1, final Vector3f kV2, final int iX, final int iZ) {
 
         // Compute the intersection, if any, by calculating barycentric
         // coordinates of the intersection of the line with the plane of
-        // the triangle.  The barycentric coordinates are K0 = fC0/fDet,
-        // K1 = fC1/fDet, and K2 = fC2/fDet with K0+K1+K2=1.  The intersection
-        // point with the plane is K0*V0+K1*V1+K2*V2.  The point is inside
+        // the triangle. The barycentric coordinates are K0 = fC0/fDet,
+        // K1 = fC1/fDet, and K2 = fC2/fDet with K0+K1+K2=1. The intersection
+        // point with the plane is K0*V0+K1*V1+K2*V2. The point is inside
         // the triangle whenever K0, K1, and K2 are all in the interval [0,1].
-        float fPu = iX - kV0.X, fPv = iZ - kV0.Z;
-        float fE1u = kV1.X - kV0.X, fE1v = kV1.Z - kV0.Z;
-        float fE2u = kV2.X - kV0.X, fE2v = kV2.Z - kV0.Z;
-        float fE1dP = (fE1u * fPu) + (fE1v * fPv);
-        float fE2dP = (fE2u * fPu) + (fE2v * fPv);
-        float fE1dE1 = (fE1u * fE1u) + (fE1v * fE1v);
-        float fE1dE2 = (fE1u * fE2u) + (fE1v * fE2v);
-        float fE2dE2 = (fE2u * fE2u) + (fE2v * fE2v);
-        float fDet = (float) Math.abs((fE1dE1 * fE2dE2) - (fE1dE2 * fE1dE2));
+        final float fPu = iX - kV0.X, fPv = iZ - kV0.Z;
+        final float fE1u = kV1.X - kV0.X, fE1v = kV1.Z - kV0.Z;
+        final float fE2u = kV2.X - kV0.X, fE2v = kV2.Z - kV0.Z;
+        final float fE1dP = (fE1u * fPu) + (fE1v * fPv);
+        final float fE2dP = (fE2u * fPu) + (fE2v * fPv);
+        final float fE1dE1 = (fE1u * fE1u) + (fE1v * fE1v);
+        final float fE1dE2 = (fE1u * fE2u) + (fE1v * fE2v);
+        final float fE2dE2 = (fE2u * fE2u) + (fE2v * fE2v);
+        final float fDet = Math.abs( (fE1dE1 * fE2dE2) - (fE1dE2 * fE1dE2));
 
-        float fC1 = (fE2dE2 * fE1dP) - (fE1dE2 * fE2dP);
+        final float fC1 = (fE2dE2 * fE1dP) - (fE1dE2 * fE2dP);
 
-        if ((fC1 < 0.0f) || (fC1 > fDet)) {
-
-            // ray does not intersect triangle
-            return -1;
-        }
-
-        float fC2 = (fE1dE1 * fE2dP) - (fE1dE2 * fE1dP);
-
-        if ((fC2 < 0.0f) || (fC2 > fDet)) {
+        if ( (fC1 < 0.0f) || (fC1 > fDet)) {
 
             // ray does not intersect triangle
             return -1;
         }
 
-        float fC0 = fDet - fC1 - fC2;
+        final float fC2 = (fE1dE1 * fE2dP) - (fE1dE2 * fE1dP);
 
-        if ((fC0 < 0.0f) || (fC0 > fDet)) {
+        if ( (fC2 < 0.0f) || (fC2 > fDet)) {
 
             // ray does not intersect triangle
             return -1;
         }
 
-        int iY = (int) MipavMath.round(((fC0 * kV0.Y) + (fC1 * kV1.Y) + (fC2 * kV2.Y)) / fDet);
+        final float fC0 = fDet - fC1 - fC2;
+
+        if ( (fC0 < 0.0f) || (fC0 > fDet)) {
+
+            // ray does not intersect triangle
+            return -1;
+        }
+
+        final int iY = MipavMath.round( ( (fC0 * kV0.Y) + (fC1 * kV1.Y) + (fC2 * kV2.Y)) / fDet);
 
         return iY;
     }
@@ -2441,78 +2437,79 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
      * Compute the point of intersection between a line (iX,iY,0)+t(0,0,1) and the triangle defined by the three input
      * points. All calculations are in voxel coordinates and the z-value of the intersection point is truncated to an
      * integer.
-     *
-     * @param   kV0  a 3D vertex of the triangle
-     * @param   kV1  a 3D vertex of the triangle
-     * @param   kV2  a 3D vertex of the triangle
-     * @param   iX   the x-value of the origin of the line
-     * @param   iY   the y-value of the origin of the line
-     *
-     * @return  the z-value of the intersection
+     * 
+     * @param kV0 a 3D vertex of the triangle
+     * @param kV1 a 3D vertex of the triangle
+     * @param kV2 a 3D vertex of the triangle
+     * @param iX the x-value of the origin of the line
+     * @param iY the y-value of the origin of the line
+     * 
+     * @return the z-value of the intersection
      */
-    protected int getIntersectZ(Vector3f kV0, Vector3f kV1, Vector3f kV2, int iX, int iY) {
+    protected int getIntersectZ(final Vector3f kV0, final Vector3f kV1, final Vector3f kV2, final int iX, final int iY) {
 
         // Compute the intersection, if any, by calculating barycentric
         // coordinates of the intersection of the line with the plane of
-        // the triangle.  The barycentric coordinates are K0 = fC0/fDet,
-        // K1 = fC1/fDet, and K2 = fC2/fDet with K0+K1+K2=1.  The intersection
-        // point with the plane is K0*V0+K1*V1+K2*V2.  The point is inside
+        // the triangle. The barycentric coordinates are K0 = fC0/fDet,
+        // K1 = fC1/fDet, and K2 = fC2/fDet with K0+K1+K2=1. The intersection
+        // point with the plane is K0*V0+K1*V1+K2*V2. The point is inside
         // the triangle whenever K0, K1, and K2 are all in the interval [0,1].
-        float fPu = iX - kV0.X, fPv = iY - kV0.Y;
-        float fE1u = kV1.X - kV0.X, fE1v = kV1.Y - kV0.Y;
-        float fE2u = kV2.X - kV0.X, fE2v = kV2.Y - kV0.Y;
-        float fE1dP = (fE1u * fPu) + (fE1v * fPv);
-        float fE2dP = (fE2u * fPu) + (fE2v * fPv);
-        float fE1dE1 = (fE1u * fE1u) + (fE1v * fE1v);
-        float fE1dE2 = (fE1u * fE2u) + (fE1v * fE2v);
-        float fE2dE2 = (fE2u * fE2u) + (fE2v * fE2v);
-        float fDet = (float) Math.abs((fE1dE1 * fE2dE2) - (fE1dE2 * fE1dE2));
+        final float fPu = iX - kV0.X, fPv = iY - kV0.Y;
+        final float fE1u = kV1.X - kV0.X, fE1v = kV1.Y - kV0.Y;
+        final float fE2u = kV2.X - kV0.X, fE2v = kV2.Y - kV0.Y;
+        final float fE1dP = (fE1u * fPu) + (fE1v * fPv);
+        final float fE2dP = (fE2u * fPu) + (fE2v * fPv);
+        final float fE1dE1 = (fE1u * fE1u) + (fE1v * fE1v);
+        final float fE1dE2 = (fE1u * fE2u) + (fE1v * fE2v);
+        final float fE2dE2 = (fE2u * fE2u) + (fE2v * fE2v);
+        final float fDet = Math.abs( (fE1dE1 * fE2dE2) - (fE1dE2 * fE1dE2));
 
-        float fC1 = (fE2dE2 * fE1dP) - (fE1dE2 * fE2dP);
+        final float fC1 = (fE2dE2 * fE1dP) - (fE1dE2 * fE2dP);
 
-        if ((fC1 < 0.0f) || (fC1 > fDet)) {
-
-            // ray does not intersect triangle
-            return -1;
-        }
-
-        float fC2 = (fE1dE1 * fE2dP) - (fE1dE2 * fE1dP);
-
-        if ((fC2 < 0.0f) || (fC2 > fDet)) {
+        if ( (fC1 < 0.0f) || (fC1 > fDet)) {
 
             // ray does not intersect triangle
             return -1;
         }
 
-        float fC0 = fDet - fC1 - fC2;
+        final float fC2 = (fE1dE1 * fE2dP) - (fE1dE2 * fE1dP);
 
-        if ((fC0 < 0.0f) || (fC0 > fDet)) {
+        if ( (fC2 < 0.0f) || (fC2 > fDet)) {
 
             // ray does not intersect triangle
             return -1;
         }
 
-        int iZ = (int) MipavMath.round(((fC0 * kV0.Z) + (fC1 * kV1.Z) + (fC2 * kV2.Z)) / fDet);
+        final float fC0 = fDet - fC1 - fC2;
+
+        if ( (fC0 < 0.0f) || (fC0 > fDet)) {
+
+            // ray does not intersect triangle
+            return -1;
+        }
+
+        final int iZ = MipavMath.round( ( (fC0 * kV0.Z) + (fC1 * kV1.Z) + (fC2 * kV2.Z)) / fDet);
 
         return iZ;
     }
 
     /**
-     * Internal support to write vertices, normals, and connectivity indices to the file. 
-     *
-     * @param      flip  if the y axis should be flipped - true for extract, false for from another surface
-     *
-     * @exception  IOException  if there is an error writing to the file
+     * Internal support to write vertices, normals, and connectivity indices to the file.
+     * 
+     * @param flip if the y axis should be flipped - true for extract, false for from another surface
+     * 
+     * @exception IOException if there is an error writing to the file
      */
-    protected void saveMesh(boolean flip) throws IOException {
+    protected void saveMesh(final boolean flip) throws IOException {
         TransMatrix dicomMatrix = null;
         TransMatrix inverseDicomMatrix = null;
-        //double[][] inverseDicomArray = null;
+        // double[][] inverseDicomArray = null;
         float[] coord;
         float[] tCoord;
         int i;
 
-        String kName = ViewUserInterface.getReference().getDefaultDirectory() + srcImage.getImageName() + "_brain.sur";
+        final String kName = ViewUserInterface.getReference().getDefaultDirectory() + srcImage.getImageName()
+                + "_brain.sur";
 
         if (srcImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
 
@@ -2521,8 +2518,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             dicomMatrix = srcImage.getMatrix();
             inverseDicomMatrix = new TransMatrix(srcImage.getMatrix());
             inverseDicomMatrix.Inverse();
-            //inverseDicomArray = inverseDicomMatrix.getMatrix();
-            //inverseDicomMatrix = null;
+            // inverseDicomArray = inverseDicomMatrix.getMatrix();
+            // inverseDicomMatrix = null;
             coord = new float[3];
             tCoord = new float[3];
 
@@ -2551,24 +2548,24 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             }
         } // else
 
-        TriMesh kMesh = new TriMesh(new VertexBuffer(m_akVertex), new IndexBuffer(m_aiConnect));
+        final TriMesh kMesh = new TriMesh(new VertexBuffer(m_akVertex), new IndexBuffer(m_aiConnect));
         FileSurface_WM.save(kName, kMesh, 0, kMesh.VBuffer, flip, direction, startLocation, box, inverseDicomMatrix);
     }
 
     /**
      * Compute the coefficient of the surface normal for the update of the mesh vertex V[i] in the SNormal[i] direction.
      * See BrainExtraction.pdf for a description of the update.
-     *
-     * @param   i  the index of the vertex to update
-     *
-     * @return  the coefficient of SNormal[i] for the update
+     * 
+     * @param i the index of the vertex to update
+     * 
+     * @return the coefficient of SNormal[i] for the update
      */
-    protected float update2(int i) {
+    protected float update2(final int i) {
         float fArg = m_fFParam * (m_afCurvature[i] - m_fEParam);
-        float fExpP = (float) Math.exp(fArg);
-        float fExpN = (float) Math.exp(-fArg);
-        float fTanh = (fExpP - fExpN) / (fExpP + fExpN);
-        float fUpdate2 = 0.5f * m_fStiffness * (1.0f + fTanh);
+        final float fExpP = (float) Math.exp(fArg);
+        final float fExpN = (float) Math.exp( -fArg);
+        final float fTanh = (fExpP - fExpN) / (fExpP + fExpN);
+        final float fUpdate2 = 0.5f * m_fStiffness * (1.0f + fTanh);
 
         return fUpdate2;
     }
@@ -2576,28 +2573,28 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     /**
      * Compute the coefficient of the vertex normal for the update of the mesh vertex V[i] in the VNormal[i] direction.
      * See BrainExtraction.pdf for a description of the update.
-     *
-     * @param   i  the index of the vertex to update
-     *
-     * @return  the coefficient of VNormal[i] for the update
+     * 
+     * @param i the index of the vertex to update
+     * 
+     * @return the coefficient of VNormal[i] for the update
      */
-    protected float update3(int i) {
-    	Vector3f kVertex = m_akVertex[i];
-        Vector3f kNormal = m_akVNormal[i];
+    protected float update3(final int i) {
+        final Vector3f kVertex = m_akVertex[i];
+        final Vector3f kNormal = m_akVNormal[i];
 
-        float fIMin = (float) m_iMedianIntensity;
-        float fIMax = (float) m_iBackThreshold;
-        int iHalfMaxDepth = m_iMaxDepth / 2;
+        float fIMin = m_iMedianIntensity;
+        float fIMax = m_iBackThreshold;
+        final int iHalfMaxDepth = m_iMaxDepth / 2;
 
-        // TO DO.  The ray depth should be in millimeters, not voxel units.
-        // For now I'll just use the value as specified.  Later I need to
+        // TO DO. The ray depth should be in millimeters, not voxel units.
+        // For now I'll just use the value as specified. Later I need to
         // input the dx, dy, and dz terms for millimeters per voxel.
-        Vector3f kDiff = new Vector3f();
-        Vector3f kScale = new Vector3f();
+        final Vector3f kDiff = new Vector3f();
+        final Vector3f kScale = new Vector3f();
         for (int j = 0; j < m_iMaxDepth; j++) {
 
             // get point on ray emanating from vertex into bounded region
-        	kScale.Scale( -m_fRayDelta * j, kNormal );
+            kScale.Scale( -m_fRayDelta * j, kNormal);
             kDiff.Add(kScale, kVertex);
 
             // nearest neighbor interpolation
@@ -2623,7 +2620,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                 iZ = m_iZBound - 1;
             }
 
-            float fValue = m_aiImage[iX + (m_iXBound * (iY + (m_iYBound * iZ)))];
+            final float fValue = m_aiImage[iX + (m_iXBound * (iY + (m_iYBound * iZ)))];
 
             // update the minimum intensity
             if (fValue < fIMin) {
@@ -2639,31 +2636,32 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             }
         }
 
-        float fRatio = (-m_fBrainSelection + ((fIMin - m_iMinThreshold) / (fIMax - m_iMinThreshold)));
+        final float fRatio = ( -m_fBrainSelection + ( (fIMin - m_iMinThreshold) / (fIMax - m_iMinThreshold)));
 
         // float fUpdate3 = 0.05f * fRatio * m_fMeanEdgeLength;
-        float fUpdate3 = imageFactor * fRatio * m_fMeanEdgeLength;
+        final float fUpdate3 = imageFactor * fRatio * m_fMeanEdgeLength;
 
         return fUpdate3;
     }
-    
-    protected boolean updateCenter(Vector3f Center) {
-    	
-    	float distCenter;
-    	
-    	distCenter = Center.Distance(m_kCenter);
-    	
-    	Preferences.debug("Distance between Centers = " + distCenter + "\n");
-    	
-    	if (distCenter <= 0.05) {
-    		return false;
-    	} else {
-    		return true;
-    	}
-    	    	
+
+    protected boolean updateCenter(final Vector3f Center) {
+
+        float distCenter;
+
+        distCenter = Center.Distance(m_kCenter);
+
+        Preferences.debug("Distance between Centers = " + distCenter + "\n");
+
+        if (distCenter <= 0.05) {
+            return false;
+        } else {
+            return true;
+        }
+
     }
 
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
+    // ~ Inner Classes
+    // --------------------------------------------------------------------------------------------------
 
     /**
      * A representation of an edge for the vertex-edge-triangle table. This class stores the pair of vertex indices for
@@ -2678,11 +2676,11 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
         /**
          * Constructs an edge in the table.
-         *
-         * @param  i0  a vertex index for an end point
-         * @param  i1  a vertex index for an end point
+         * 
+         * @param i0 a vertex index for an end point
+         * @param i1 a vertex index for an end point
          */
-        public Edge(int i0, int i1) {
+        public Edge(final int i0, final int i1) {
 
             if (i0 < i1) {
 
@@ -2699,23 +2697,22 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
         /**
          * Support for hashing into a map of edges.
-         *
-         * @param   kObject  an edge for comparison to the current one
-         *
-         * @return  true iff the edges are identical. Because the class stores ordered indices, it is not necessary to
-         *          use the more expensive test (i0 == other.i0 && i1 == other.i1) || (i0 == other.i1 && i1 ==
-         *          other.i0).
+         * 
+         * @param kObject an edge for comparison to the current one
+         * 
+         * @return true iff the edges are identical. Because the class stores ordered indices, it is not necessary to
+         *         use the more expensive test (i0 == other.i0 && i1 == other.i1) || (i0 == other.i1 && i1 == other.i0).
          */
-        public boolean equals(Object kObject) {
-            Edge kE = (Edge) kObject;
+        public boolean equals(final Object kObject) {
+            final Edge kE = (Edge) kObject;
 
             return (m_i0 == kE.m_i0) && (m_i1 == kE.m_i1);
         }
 
         /**
          * Support for hashing into a map of edges.
-         *
-         * @return  the hash key for the edge
+         * 
+         * @return the hash key for the edge
          */
         public int hashCode() {
             return (m_i0 << 16) | m_i1;
@@ -2728,9 +2725,11 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
      * dynamic changes to a mesh. When an item is deleted from the set, the last element in the array is moved into that
      * location. The sets for which this class is used are typically small, so the costs for searching the unordered
      * items are not a factor.
-     *
-     * <p>The class has a static value DEFAULT_GROW that is used to increase the number of elements when a reallocation
-     * must occur. The new storage size is the current maximum quantity plus the growth value.</p>
+     * 
+     * <p>
+     * The class has a static value DEFAULT_GROW that is used to increase the number of elements when a reallocation
+     * must occur. The new storage size is the current maximum quantity plus the growth value.
+     * </p>
      */
 
     private class UnorderedSetInt {
@@ -2754,7 +2753,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
          * The default growth value for reallocations of the array representing the set. The application can change this
          * to whatever is appropriate for its purposes.
          */
-        private int DEFAULT_GROW = 8;
+        private final int DEFAULT_GROW = 8;
 
         /**
          * Construct an empty unordered set. The initial maximum quantity and growth values are DEFAULT_GROW. When
@@ -2765,45 +2764,45 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
         /**
          * Create an unordered set that is a deep copy of the input set.
-         *
-         * @param  kSet  The input set to copy.
+         * 
+         * @param kSet The input set to copy.
          */
-        public UnorderedSetInt(UnorderedSetInt kSet) {
+        public UnorderedSetInt(final UnorderedSetInt kSet) {
             copy(kSet);
         }
 
         /**
          * Construct an empty unordered set with the specified maximum quantity and growth values.
-         *
-         * @param  iMaxQuantity  The initial number of elements in the array. If the value is nonpositive, the initial
-         *                       number is DEFAULT_GROW.
-         * @param  iGrow         The growth amount for a reallocation. If a reallocation occurs, the new number of
-         *                       elements is the current maximum quantity plus the growth value. If the input value is
-         *                       nonpositive, the growth is set to DEFAULT_GROW.
+         * 
+         * @param iMaxQuantity The initial number of elements in the array. If the value is nonpositive, the initial
+         *            number is DEFAULT_GROW.
+         * @param iGrow The growth amount for a reallocation. If a reallocation occurs, the new number of elements is
+         *            the current maximum quantity plus the growth value. If the input value is nonpositive, the growth
+         *            is set to DEFAULT_GROW.
          */
-        public UnorderedSetInt(int iMaxQuantity, int iGrow) {
+        public UnorderedSetInt(final int iMaxQuantity, final int iGrow) {
             reset(iMaxQuantity, iGrow);
         }
 
         /**
          * Append an element to the end of the storage array.
-         *
-         * @param   iElement  The element to append.
-         *
-         * @return  The array location that contains the newly appended element. A side effect of this call is
-         *          reallocation of the storage array, if necessary.
+         * 
+         * @param iElement The element to append.
+         * 
+         * @return The array location that contains the newly appended element. A side effect of this call is
+         *         reallocation of the storage array, if necessary.
          */
-        public int append(int iElement) {
+        public int append(final int iElement) {
 
             if (m_iQuantity == m_iMaxQuantity) {
-                int iNewMaxQuantity = m_iMaxQuantity + m_iGrow;
-                int[] aiNewElement = new int[iNewMaxQuantity];
+                final int iNewMaxQuantity = m_iMaxQuantity + m_iGrow;
+                final int[] aiNewElement = new int[iNewMaxQuantity];
                 System.arraycopy(m_aiElement, 0, aiNewElement, 0, m_iMaxQuantity);
                 m_iMaxQuantity = iNewMaxQuantity;
                 m_aiElement = aiNewElement;
             }
 
-            int iLocation = m_iQuantity++;
+            final int iLocation = m_iQuantity++;
             m_aiElement[iLocation] = iElement;
 
             return iLocation;
@@ -2818,7 +2817,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             if (m_iQuantity > 0) {
 
                 // Try Catch - Matt
-                int[] aiNewElement = new int[m_iQuantity];
+                final int[] aiNewElement = new int[m_iQuantity];
                 System.arraycopy(m_aiElement, 0, aiNewElement, 0, m_iQuantity);
                 m_iMaxQuantity = m_iQuantity;
                 m_aiElement = aiNewElement;
@@ -2829,10 +2828,10 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
         /**
          * Make a deep copy of the input set.
-         *
-         * @param  kSet  The set to make a deep copy of.
+         * 
+         * @param kSet The set to make a deep copy of.
          */
-        public void copy(UnorderedSetInt kSet) {
+        public void copy(final UnorderedSetInt kSet) {
             m_iQuantity = kSet.m_iQuantity;
             m_iMaxQuantity = kSet.m_iMaxQuantity;
             m_iGrow = kSet.m_iGrow;
@@ -2842,12 +2841,12 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
         /**
          * Search the set to see if the input element currently exists.
-         *
-         * @param   iElement  The element to search for.
-         *
-         * @return  The value is true if and only if the element is found in the set.
+         * 
+         * @param iElement The element to search for.
+         * 
+         * @return The value is true if and only if the element is found in the set.
          */
-        public final boolean exists(int iElement) {
+        public final boolean exists(final int iElement) {
 
             for (int i = 0; i < m_iQuantity; i++) {
 
@@ -2862,20 +2861,20 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         /**
          * Retrieve the element in the array location i. It is necessary that 0 <= i < getQuantity() in order to read
          * valid elements.
-         *
-         * @param   i  The array location whose element is to be retrieved.
-         *
-         * @return  The element in array location i.
+         * 
+         * @param i The array location whose element is to be retrieved.
+         * 
+         * @return The element in array location i.
          */
-        public final int get(int i) {
+        public final int get(final int i) {
             return m_aiElement[i];
         }
 
         /**
          * The growth value for reallocations. If a reallocation must occur, the new maximum quantity is the current
          * maximum quantity plus the growth amount.
-         *
-         * @return  The growth value.
+         * 
+         * @return The growth value.
          */
         public final int getGrow() {
             return m_iGrow;
@@ -2884,8 +2883,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         /**
          * The maximum quantity of elements in the set. Not all elements are necessarily used. The used quantity is
          * provided by getQuantity().
-         *
-         * @return  The maximum quantity of elements in the set.
+         * 
+         * @return The maximum quantity of elements in the set.
          */
         public final int getMaxQuantity() {
             return m_iMaxQuantity;
@@ -2896,8 +2895,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
          * vacated by the removed element. The new location of the last element is retrived by this function. However,
          * if the last element is the one that was removed, this function returns -1. If you need the value, you must
          * call this function before the next call to remove or removeAt.
-         *
-         * @return  The new location of the last element that was moved.
+         * 
+         * @return The new location of the last element that was moved.
          */
         public final int getNewIndex() {
             return m_iNewIndex;
@@ -2907,8 +2906,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
          * On a call to remove or removeAt, the last element in the array is moved to the array location vacated by the
          * removed element. The old location of the last element is retrived by this function. If you need the value,
          * you must call this function before the next call to remove or removeAt.
-         *
-         * @return  The old location of the last element that was moved.
+         * 
+         * @return The old location of the last element that was moved.
          */
         public final int getOldIndex() {
             return m_iOldIndex;
@@ -2917,8 +2916,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         /**
          * The current number of valid elements in the array. This number is less than or equal to the maximum quantity.
          * The elements with indices 0 through getQuantity()-1 are the valid ones.
-         *
-         * @return  The current number of valid elements.
+         * 
+         * @return The current number of valid elements.
          */
         public final int getQuantity() {
             return m_iQuantity;
@@ -2926,14 +2925,14 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
         /**
          * Insert an element into the set.
-         *
-         * @param   iElement  The element to insert.
-         *
-         * @return  The value is true if and only if the element is inserted. The input element is not inserted if it
-         *          already exists in the set. A side effect of this call is reallocation of the storage array, if
-         *          necessary.
+         * 
+         * @param iElement The element to insert.
+         * 
+         * @return The value is true if and only if the element is inserted. The input element is not inserted if it
+         *         already exists in the set. A side effect of this call is reallocation of the storage array, if
+         *         necessary.
          */
-        public boolean insert(int iElement) {
+        public boolean insert(final int iElement) {
             int i;
 
             for (i = 0; i < m_iQuantity; i++) {
@@ -2944,8 +2943,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             }
 
             if (m_iQuantity == m_iMaxQuantity) {
-                int iNewMaxQuantity = m_iMaxQuantity + m_iGrow;
-                int[] aiNewElement = new int[iNewMaxQuantity];
+                final int iNewMaxQuantity = m_iMaxQuantity + m_iGrow;
+                final int[] aiNewElement = new int[iNewMaxQuantity];
                 System.arraycopy(m_aiElement, 0, aiNewElement, 0, m_iMaxQuantity);
                 m_iMaxQuantity = iNewMaxQuantity;
                 m_aiElement = aiNewElement;
@@ -2958,15 +2957,15 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
         /**
          * Remove the specified element from the set.
-         *
-         * @param   iElement  The element to remove.
-         *
-         * @return  The value is true if and only if the element existed and was removed. The last element is
-         *          potentially moved into the slot vacated by the specified element. If needed, the old and new
-         *          locations of the last element can be retrieved by calls to getOldIndex() and getNewIndex(). If the
-         *          last element was the one removed, getNewIndex() returns -1.
+         * 
+         * @param iElement The element to remove.
+         * 
+         * @return The value is true if and only if the element existed and was removed. The last element is potentially
+         *         moved into the slot vacated by the specified element. If needed, the old and new locations of the
+         *         last element can be retrieved by calls to getOldIndex() and getNewIndex(). If the last element was
+         *         the one removed, getNewIndex() returns -1.
          */
-        public boolean remove(int iElement) {
+        public boolean remove(final int iElement) {
 
             for (int i = 0; i < m_iQuantity; i++) {
 
@@ -2990,17 +2989,17 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
         /**
          * Remove the element from the set in the specified location.
-         *
-         * @param   i  The array location whose element is to be removed.
-         *
-         * @return  The value is true if and only if the input location is within the valid index range 0 <= i <
-         *          getQuantity(). The last element is potentially moved into the slot vacated by the specified element.
-         *          If needed, the old and new locations of the last element can be retrieved by calls to getOldIndex()
-         *          and getNewIndex(). If the last element was the one removed, getNewIndex() returns -1.
+         * 
+         * @param i The array location whose element is to be removed.
+         * 
+         * @return The value is true if and only if the input location is within the valid index range 0 <= i <
+         *         getQuantity(). The last element is potentially moved into the slot vacated by the specified element.
+         *         If needed, the old and new locations of the last element can be retrieved by calls to getOldIndex()
+         *         and getNewIndex(). If the last element was the one removed, getNewIndex() returns -1.
          */
-        public boolean removeAt(int i) {
+        public boolean removeAt(final int i) {
 
-            if ((0 <= i) && (i < m_iQuantity)) {
+            if ( (0 <= i) && (i < m_iQuantity)) {
                 m_iQuantity--;
                 m_iOldIndex = m_iQuantity;
 
@@ -3028,9 +3027,9 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         /**
          * Reset the unordered set to the specified state. The old array is deleted. The new array has a maximum
          * quantity and growth value as specified by the inputs.
-         *
-         * @param  iMaxQuantity  The new maximum quantity for the array.
-         * @param  iGrow         The new growth value.
+         * 
+         * @param iMaxQuantity The new maximum quantity for the array.
+         * @param iGrow The new growth value.
          */
         public void reset(int iMaxQuantity, int iGrow) {
 
@@ -3050,11 +3049,11 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
         /**
          * Assign the specified element to array location i. It is necessary that 0 <= i < getMaxQuantity().
-         *
-         * @param  i         The array location to assign to.
-         * @param  iElement  The element to assign to array location i.
+         * 
+         * @param i The array location to assign to.
+         * @param iElement The element to assign to array location i.
          */
-        public final void set(int i, int iElement) {
+        public final void set(final int i, final int iElement) {
             m_aiElement[i] = iElement;
         }
     }

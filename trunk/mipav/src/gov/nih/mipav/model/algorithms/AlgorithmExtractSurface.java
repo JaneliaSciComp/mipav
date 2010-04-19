@@ -1,19 +1,21 @@
 package gov.nih.mipav.model.algorithms;
 
-import WildMagic.LibFoundation.Meshes.*;
-import WildMagic.LibGraphics.Detail.*;
-import WildMagic.LibGraphics.SceneGraph.*;
-import gov.nih.mipav.*;
 
-import gov.nih.mipav.model.algorithms.filters.*;
+import gov.nih.mipav.MipavCoordinateSystems;
+
+import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.renderer.J3D.model.structures.*;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.*;
 
 import java.io.*;
-import java.util.*;
+import java.util.Vector;
 
+import WildMagic.LibFoundation.Meshes.VETMesh;
+import WildMagic.LibGraphics.Detail.*;
+import WildMagic.LibGraphics.SceneGraph.*;
 
 
 /**
@@ -22,25 +24,26 @@ import java.util.*;
  * visualization of the surface. The input to this algorithm is typically a mask image where 0 = background and 100 =
  * object (i.e. interior to a VOI). The mask image is then blurred slightly and the level (50) is extracted. A greyscale
  * image may also be input and a surface is extracted given a level. The steps are:
- *
+ * 
  * <ol>
- *   <li>Build mask image of VOI (i.e. all point interior to VOI are set to 100. All points exterior are = 0.</li>
- *   <li>Blur mask image if not greyscale</li>
- *   <li>Extract level surface at 50 or user defined level</li>
- *   <li>Save surface ( ".sur")</li>
- *   <li>If decimate then decimate surface and save (".sur")</li>
+ * <li>Build mask image of VOI (i.e. all point interior to VOI are set to 100. All points exterior are = 0.</li>
+ * <li>Blur mask image if not greyscale</li>
+ * <li>Extract level surface at 50 or user defined level</li>
+ * <li>Save surface ( ".sur")</li>
+ * <li>If decimate then decimate surface and save (".sur")</li>
  * </ol>
- *
- * @version  0.1 June, 2001
- * @author   Matthew J. McAuliffe, Ph.D.
- * @author   David H. Eberly, Ph.D. wrote all the extraction and decimation code found in the SurfaceExtraction,
- *           SurfaceDecimation and associated classes, with a little input from Matt with speed and memory optimizations
- * @see      ModelSurfaceExtractor
- * @see      ModelSurfaceDecimator
+ * 
+ * @version 0.1 June, 2001
+ * @author Matthew J. McAuliffe, Ph.D.
+ * @author David H. Eberly, Ph.D. wrote all the extraction and decimation code found in the SurfaceExtraction,
+ *         SurfaceDecimation and associated classes, with a little input from Matt with speed and memory optimizations
+ * @see ModelSurfaceExtractor
+ * @see ModelSurfaceDecimator
  */
 public class AlgorithmExtractSurface extends AlgorithmBase {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Extract surface from VOI. */
     public static final int VOI_MODE = 0;
@@ -51,46 +54,46 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
     /** Extract surface based on intensity level. */
     public static final int LEVEL_MODE = 2;
 
-
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** If true then the input image is blurred slightly. */
-    private boolean blurFlag;
+    private final boolean blurFlag;
 
     /** The amount to blur to smooth surface. */
     private float blurSigma = 0.5f;
 
     /** If true then the extracted surface is decimated into a continuous level of detail surface (clod). */
-    private boolean decimateFlag;
+    private final boolean decimateFlag;
 
     /** Indicates level surface to be extracted. */
-    private float level;
+    private final float level;
 
     /** Mask image to extract surface from. */
     private ModelImage maskImage;
 
     /** Indicates mode - VOI, LEVELSET, or MASK. */
-    private int mode;
+    private final int mode;
 
     /** Path and name of extracted surface file. ".sur" will be appended if necessary. */
     private String surfaceFileName;
 
-
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates a new AlgorithmExtractSurface object.
-     *
-     * @param  image     mask image or grayscale where a level surface is to be extracted
-     * @param  level     indicates level surface to be extraced
-     * @param  mode      Indicates mode - VOI, LEVELSET, or MASK.
-     * @param  decFlag   indicates whether or not the decimation into a CLOD should take place.
-     * @param  blurFlag  if true then the input image is blurred slightly
-     * @param  sigma     the amount to blur the image
-     * @param  fileName  path and name of extracted surface file. ".sur" will be appended if necessary.
+     * 
+     * @param image mask image or grayscale where a level surface is to be extracted
+     * @param level indicates level surface to be extraced
+     * @param mode Indicates mode - VOI, LEVELSET, or MASK.
+     * @param decFlag indicates whether or not the decimation into a CLOD should take place.
+     * @param blurFlag if true then the input image is blurred slightly
+     * @param sigma the amount to blur the image
+     * @param fileName path and name of extracted surface file. ".sur" will be appended if necessary.
      */
-    public AlgorithmExtractSurface(ModelImage image, float level, int mode, boolean decFlag,
-                                   boolean blurFlag, float sigma, String fileName) {
+    public AlgorithmExtractSurface(final ModelImage image, final float level, final int mode, final boolean decFlag,
+            final boolean blurFlag, final float sigma, final String fileName) {
 
         super(null, image);
         decimateFlag = decFlag;
@@ -102,7 +105,8 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
         init();
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Prepares this class for destruction.
@@ -156,9 +160,8 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
         TransMatrix dicomMatrix = null;
         TransMatrix inverseDicomMatrix = null;
 
-
         AlgorithmGaussianBlur blurAlgo;
-        float[] sigmas = { blurSigma, blurSigma, blurSigma };
+        final float[] sigmas = {blurSigma, blurSigma, blurSigma};
 
         if (blurFlag == true) {
 
@@ -181,7 +184,7 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
 
                     return;
                 }
-            } catch (OutOfMemoryError error) {
+            } catch (final OutOfMemoryError error) {
 
                 if (maskImage != null) {
                     maskImage.disposeLocal();
@@ -218,23 +221,23 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
         fYRes = maskImage.getFileInfo()[0].getResolutions()[1];
         fZRes = maskImage.getFileInfo()[0].getResolutions()[2];
 
-        float[] box = new float[3];
+        final float[] box = new float[3];
 
         box[0] = (iXDim - 1) * fXRes;
         box[1] = (iYDim - 1) * fYRes;
         box[2] = (iZDim - 1) * fZRes;
 
         /* Read the direction vector from the MipavCoordinateSystems class: */
-        int[] direction = MipavCoordinateSystems.getModelDirections(srcImage);
-        float[] origin = srcImage.getFileInfo(0).getOrigin();
+        final int[] direction = MipavCoordinateSystems.getModelDirections(srcImage);
+        final float[] origin = srcImage.getFileInfo(0).getOrigin();
 
         int[] buffer = null;
         int[] buffer2 = null;
 
         // Make storage string
         if (surfaceFileName.endsWith(".sur") == false) {
-            surfaceFileName = ViewUserInterface.getReference().getDefaultDirectory() + File.separator +
-                              surfaceFileName + ".sur";
+            surfaceFileName = ViewUserInterface.getReference().getDefaultDirectory() + File.separator + surfaceFileName
+                    + ".sur";
         } else {
             surfaceFileName = ViewUserInterface.getReference().getDefaultDirectory() + File.separator + surfaceFileName;
         }
@@ -272,8 +275,8 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
                 inverseDicomMatrix.Inverse();
             }
 
-            SurfaceExtractor kExtractor = new SurfaceExtractor(iXDim, iYDim, iZDim + 2, buffer2, fXRes, fYRes,
-                                                                         fZRes, direction, origin, dicomMatrix);
+            final SurfaceExtractor kExtractor = new SurfaceExtractor(iXDim, iYDim, iZDim + 2, buffer2, fXRes, fYRes,
+                    fZRes, direction, origin, dicomMatrix);
 
             buffer = null;
             System.gc();
@@ -282,43 +285,40 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
 
             // Next line extracts the surface at the supplied level.
             // kExtractor.flag = true;
-            TriMesh kMesh = kExtractor.get((int) level);
+            final TriMesh kMesh = kExtractor.get((int) level);
             // Get the adjacent triangles:
-            VETMesh kVETMesh = new VETMesh( 2* kMesh.VBuffer.GetVertexQuantity(), .9f,
-                    2 * kMesh.IBuffer.GetIndexQuantity(), .9f,
-                    2 * kMesh.GetTriangleQuantity(), .9f,
-                    kMesh.IBuffer.GetData() );
-            kMesh.IBuffer = new IndexBuffer( kVETMesh.GetTriangles() );
+            VETMesh kVETMesh = new VETMesh(2 * kMesh.VBuffer.GetVertexQuantity(), .9f, 2 * kMesh.IBuffer
+                    .GetIndexQuantity(), .9f, 2 * kMesh.GetTriangleQuantity(), .9f, kMesh.IBuffer.GetData());
+            kMesh.IBuffer = new IndexBuffer(kVETMesh.GetTriangles());
 
             buffer2 = null;
             fireProgressStateChanged(50);
 
             if (decimateFlag == true) {
                 fireProgressStateChanged("Initializing surface.");
-                kVETMesh = new VETMesh( 2* kMesh.VBuffer.GetVertexQuantity(), .9f,
-                                        2 * kMesh.IBuffer.GetIndexQuantity(), .9f,
-                                        2 * kMesh.GetTriangleQuantity(), .9f,
-                                        kMesh.IBuffer.GetData() );
-                Vector<VETMesh> kComponents = new Vector<VETMesh>();
+                kVETMesh = new VETMesh(2 * kMesh.VBuffer.GetVertexQuantity(), .9f,
+                        2 * kMesh.IBuffer.GetIndexQuantity(), .9f, 2 * kMesh.GetTriangleQuantity(), .9f, kMesh.IBuffer
+                                .GetData());
+                final Vector<VETMesh> kComponents = new Vector<VETMesh>();
                 kVETMesh.GetComponents(kComponents);
-                int iNumComponents = kComponents.size();
-                ClodMesh[] akClod = new ClodMesh[iNumComponents];
-                
+                final int iNumComponents = kComponents.size();
+                final ClodMesh[] akClod = new ClodMesh[iNumComponents];
 
-                int iIndex = surfaceFileName.lastIndexOf('.');
-                String kName = surfaceFileName.substring(0,iIndex);
-                
+                final int iIndex = surfaceFileName.lastIndexOf('.');
+                final String kName = surfaceFileName.substring(0, iIndex);
+
                 fireProgressStateChanged("Surface decimation in progress");
                 for (i = 0; (i < iNumComponents) && !threadStopped; i++) {
-                    VertexBuffer kVBuffer = new VertexBuffer(kMesh.VBuffer);
-                    IndexBuffer kIBuffer = new IndexBuffer(kComponents.get(i).GetTriangles());
-                    CreateClodMesh kDecimator = new CreateClodMesh(kVBuffer, kIBuffer);
+                    final VertexBuffer kVBuffer = new VertexBuffer(kMesh.VBuffer);
+                    final IndexBuffer kIBuffer = new IndexBuffer(kComponents.get(i).GetTriangles());
+                    final CreateClodMesh kDecimator = new CreateClodMesh(kVBuffer, kIBuffer);
                     kDecimator.decimate();
                     akClod[i] = new ClodMesh(kVBuffer, kIBuffer, kDecimator.getRecords());
 
-                    fireProgressStateChanged("Saving surface"); 
-                    
-                    FileSurface_WM.save(kName + i + ".sur", akClod[i], 1,  akClod[i].VBuffer, true, direction, origin, box, inverseDicomMatrix);
+                    fireProgressStateChanged("Saving surface");
+
+                    FileSurface_WM.save(kName + i + ".sur", akClod[i], 1, akClod[i].VBuffer, true, direction, origin,
+                            box, inverseDicomMatrix);
                 }
                 if (threadStopped) {
                     finalize();
@@ -330,15 +330,16 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
             } else {
                 fireProgressStateChanged(75);
                 fireProgressStateChanged("Saving surface");
-                FileSurface_WM.save(surfaceFileName, kMesh, 0, kMesh.VBuffer, true, direction, origin, box, inverseDicomMatrix);
+                FileSurface_WM.save(surfaceFileName, kMesh, 0, kMesh.VBuffer, true, direction, origin, box,
+                        inverseDicomMatrix);
 
             }
-        } catch (IOException error) {
+        } catch (final IOException error) {
             maskImage.disposeLocal();
             errorCleanUp("Extract surface: image access error", true);
 
             return;
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             maskImage.disposeLocal();
             errorCleanUp("Extract surface: out of memory error", true);
 
@@ -348,7 +349,6 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
         System.gc();
         setCompleted(true);
 
-
         return;
     }
 
@@ -357,7 +357,7 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
      */
     private void init() {
 
-        int[] destExtents = new int[3];
+        final int[] destExtents = new int[3];
 
         if (srcImage.getNDims() > 2) {
             destExtents[0] = srcImage.getExtents()[0];
@@ -367,9 +367,9 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
 
         try {
 
-            if (mode == VOI_MODE) {
+            if (mode == AlgorithmExtractSurface.VOI_MODE) {
                 int i;
-                ViewVOIVector VOIs = srcImage.getVOIs();
+                final ViewVOIVector VOIs = srcImage.getVOIs();
                 int nVOI;
 
                 nVOI = VOIs.size();
@@ -379,7 +379,7 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
 
                 for (i = 0; i < nVOI; i++) {
 
-                    if ((VOIs.VOIAt(i).isActive() == true) && (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)) {
+                    if ( (VOIs.VOIAt(i).isActive() == true) && (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)) {
 
                         // VOI IDs start at 0 therefore ensure VOI ID is > 0
                         oldID = VOIs.VOIAt(i).getID();
@@ -390,7 +390,7 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
                     }
                 }
 
-                if (!foundVOI) {
+                if ( !foundVOI) {
 
                     for (i = 0; i < nVOI; i++) {
 
@@ -430,20 +430,19 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
                 }
 
                 // progressBar.setValue(10);
-                maskImage = new ModelImage(ModelImage.USHORT, destExtents, "Surface image");
+                maskImage = new ModelImage(ModelStorageBase.USHORT, destExtents, "Surface image");
                 maskImage.getFileInfo()[0].setResolutions(srcImage.getFileInfo()[0].getResolutions());
                 maskImage.importData(0, tempImage, true);
 
                 // progressBar.setValue(12);
                 tempImage = null;
                 System.gc();
-            } else if (mode == MASK_MODE) {
-                maskImage = new ModelImage(ModelImage.USHORT, destExtents, "Surface image");
+            } else if (mode == AlgorithmExtractSurface.MASK_MODE) {
+                maskImage = new ModelImage(ModelStorageBase.USHORT, destExtents, "Surface image");
 
                 maskImage.getFileInfo()[0].setResolutions(srcImage.getFileInfo()[0].getResolutions());
 
-                int length = destExtents[0] * destExtents[1] * destExtents[2];
-
+                final int length = destExtents[0] * destExtents[1] * destExtents[2];
 
                 for (int i = 0; i < length; i++) {
 
@@ -457,14 +456,14 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
                 maskImage = (ModelImage) srcImage.clone();
                 maskImage.setImageName("Surface image");
             }
-        } catch (IOException error) {
+        } catch (final IOException error) {
             MipavUtil.displayError("Algorithm extract surface: Image(s) locked");
 
             if (maskImage != null) {
                 maskImage.disposeLocal();
                 maskImage = null;
             }
-        } catch (OutOfMemoryError x) {
+        } catch (final OutOfMemoryError x) {
             MipavUtil.displayError("Dialog extract surface: unable to allocate enough memory");
 
             if (maskImage != null) {

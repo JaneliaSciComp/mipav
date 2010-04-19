@@ -7,7 +7,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.GenerateGaussian;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.util.MipavUtil;
+import gov.nih.mipav.util.ThreadUtil;
 
 import java.lang.Runnable;
 import java.io.IOException;
@@ -616,7 +616,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
 						doneSignal.countDown();
 					}
 				};
-				MipavUtil.mipavThreadPool.execute(task);
+				ThreadUtil.mipavThreadPool.execute(task);
 
 			}
 			try {
@@ -700,7 +700,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
 							doneSignal.countDown();
 						}
 					};
-					MipavUtil.mipavThreadPool.execute(task);
+					ThreadUtil.mipavThreadPool.execute(task);
 
 				}
 				try {
@@ -726,7 +726,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
 							doneSignal.countDown();
 						}
 					};
-					MipavUtil.mipavThreadPool.execute(task);
+					ThreadUtil.mipavThreadPool.execute(task);
 
 				}
 				try {
@@ -972,7 +972,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
     							doneSignal.countDown();
     						}
     					};
-    					MipavUtil.mipavThreadPool.execute(task);
+    					ThreadUtil.mipavThreadPool.execute(task);
 
     				}
     				try {
@@ -1000,7 +1000,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
     							doneSignal.countDown();
     						}
     					};
-    					MipavUtil.mipavThreadPool.execute(task);
+    					ThreadUtil.mipavThreadPool.execute(task);
 
     				}
     				try {

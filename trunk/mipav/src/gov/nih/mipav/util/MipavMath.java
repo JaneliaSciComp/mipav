@@ -1,4 +1,4 @@
-package gov.nih.mipav;
+package gov.nih.mipav.util;
 
 
 import WildMagic.LibFoundation.Mathematics.*;
@@ -8,9 +8,6 @@ import WildMagic.LibFoundation.Mathematics.*;
  * Math functions not found in Java's Math class or they are slow.
  */
 public class MipavMath {
-
-    // ~ Methods
-    // --------------------------------------------------------------------------------------------------------
 
     public static final double angle(final float[] x, final float[] y, final float[] res) {
         final double theta = (180.0 / Math.PI) * Math.atan2( ( (y[1] - y[0]) * res[1]), ( (x[1] - x[0]) * res[0]));
@@ -320,4 +317,77 @@ public class MipavMath {
         }
     }
 
+    /**
+     * Calculate the minimum power of two which is greater or equal to the number.
+     * 
+     * @return the minimum power of two which is greater or equal to the value
+     */
+    public static int findMinimumPowerOfTwo(final int num) {
+        int ret = 1;
+        while (ret < num) {
+            ret <<= 1;
+        }
+        return ret;
+    }
+
+    public static float min(final float[] data) {
+        float min = Float.MAX_VALUE;
+        for (final float element : data) {
+            if (min > element) {
+                min = element;
+            }
+        }
+        return min;
+    }
+
+    public static short min(final short[] data) {
+        short min = Short.MAX_VALUE;
+        for (final short element : data) {
+            if (min > element) {
+                min = element;
+            }
+        }
+        return min;
+    }
+
+    public static float max(final float[] data) {
+        float max = Float.MIN_VALUE;
+        for (final float element : data) {
+            if (max < element) {
+                max = element;
+            }
+        }
+        return max;
+    }
+
+    public static short max(final short[] data) {
+        short max = Short.MIN_VALUE;
+        for (final short element : data) {
+            if (max < element) {
+                max = element;
+            }
+        }
+        return max;
+    }
+
+    /**
+     * sqrt(a^2 + b^2) without under/overflow. *
+     * 
+     * @return sqrt(a^2 + b^2)
+     */
+    public static double hypot(final double a, final double b) {
+        double r;
+
+        if (Math.abs(a) > Math.abs(b)) {
+            r = b / a;
+            r = Math.abs(a) * Math.sqrt(1 + (r * r));
+        } else if (b != 0) {
+            r = a / b;
+            r = Math.abs(b) * Math.sqrt(1 + (r * r));
+        } else {
+            r = 0.0;
+        }
+
+        return r;
+    }
 }

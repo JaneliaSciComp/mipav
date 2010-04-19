@@ -2,6 +2,7 @@ package gov.nih.mipav.view;
 
 
 import gov.nih.mipav.plugins.*;
+import gov.nih.mipav.util.ThreadUtil;
 
 import gov.nih.mipav.model.dicomcomm.DICOM_Receiver;
 import gov.nih.mipav.model.file.*;
@@ -763,21 +764,20 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         } else if (command.equals("dtiVisualization")) {
             invokeDTIframe();
         } else if (command.equals("despotT1")) {
-        	if(getActiveImageFrame() != null) {
-        		new JDialogDespotT1(getActiveImageFrame(), getActiveImageFrame().getActiveImage());
-        	} else {
-        		MipavUtil.displayError("Images required for DESPOT were not found.");
-        	} 	
-        } else if (command.equals("despotT2")) {
-            if(getActiveImageFrame() != null) {
-        		new JDialogDespotT2(getActiveImageFrame(), getActiveImageFrame().getActiveImage());
+            if (getActiveImageFrame() != null) {
+                new JDialogDespotT1(getActiveImageFrame(), getActiveImageFrame().getActiveImage());
             } else {
-        		MipavUtil.displayError("Images required for DESPOT were not found.");
-        	}
+                MipavUtil.displayError("Images required for DESPOT were not found.");
+            }
+        } else if (command.equals("despotT2")) {
+            if (getActiveImageFrame() != null) {
+                new JDialogDespotT2(getActiveImageFrame(), getActiveImageFrame().getActiveImage());
+            } else {
+                MipavUtil.displayError("Images required for DESPOT were not found.");
+            }
         } else if (command.equals("LogSlope")) {
-        	new JDialogLogSlopeMapping();
+            new JDialogLogSlopeMapping();
         }
-        
 
     }
 
@@ -1884,7 +1884,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         }
 
         openFile.setFilterType(filter);
-
 
         final ArrayList<Vector<String>> openImagesArrayList = openFile.open(stackFlag);
 
@@ -3285,8 +3284,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     protected JPanel initCreateMultiCoreGpuIndicatorPanel() {
         final JPanel panel = new JPanel();
 
-        final JLabel multiCoreEnabledLabel = new JLabel("Multi-core("
-                + gov.nih.mipav.util.MipavUtil.getAvailableCores() + " cores):");
+        final JLabel multiCoreEnabledLabel = new JLabel("Multi-core(" + ThreadUtil.getAvailableCores() + " cores):");
         multiCoreEnabledLabel.setFont(MipavUtil.font12);
 
         ImageIcon backgroundMulti;

@@ -2,7 +2,7 @@ package gov.nih.mipav.view;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
-import gov.nih.mipav.*;
+import gov.nih.mipav.util.MipavMath;
 import gov.nih.mipav.model.structures.*;
 
 import java.util.*;

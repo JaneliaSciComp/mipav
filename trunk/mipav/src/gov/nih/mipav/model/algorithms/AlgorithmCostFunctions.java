@@ -1,14 +1,14 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.*;
+import gov.nih.mipav.util.MipavMath;
 
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.renderer.WildMagic.Render.ImageRegistrationGPU;
 
-import java.awt.*;
+import java.awt.Point;
 
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
 
@@ -18,7 +18,8 @@ import WildMagic.LibFoundation.Mathematics.Matrix4f;
  */
 public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     public static final int CORRELATION_RATIO_SMOOTHED_WGT = 0;
@@ -76,16 +77,19 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
     /** DOCUMENT ME! */
     public static final int LEAST_SQUARES_COLOR = 18;
+
     public static final int NORMALIZED_MUTUAL_INFORMATION_GPU = 19;
+
     public static final int NORMALIZED_MUTUAL_INFORMATION_GPU_LM = 20;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private int costCalled = 0;
 
     /** DOCUMENT ME! */
-    private int costFunctID = CORRELATION_RATIO_SMOOTHED;
+    private int costFunctID = AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED;
 
     /** DOCUMENT ME! */
     private ModelSimpleImage inputImage;
@@ -94,7 +98,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
     private ModelSimpleImage inputWgtImage = null;
 
     /** DOCUMENT ME! */
-    private int nBins;
+    private final int nBins;
 
     /** DOCUMENT ME! */
     private int nVoxels;
@@ -106,77 +110,79 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
     private ModelSimpleImage refImage;
 
     /** DOCUMENT ME! */
-    private int refSliceSize;
+    private final int refSliceSize;
 
     /** DOCUMENT ME! */
     private ModelSimpleImage refWgtImage = null;
 
     /** DOCUMENT ME! */
-    private double[] sincKernel = new double[201];
+    private final double[] sincKernel = new double[201];
 
     /** DOCUMENT ME! */
-    private int sincWidth = 3;
+    private final int sincWidth = 3;
 
     /** DOCUMENT ME! */
-    private double[] sincx = new double[(2 * sincWidth) + 1];
+    private final double[] sincx = new double[ (2 * sincWidth) + 1];
 
     /** DOCUMENT ME! */
-    private double[] sincy = new double[(2 * sincWidth) + 1];
+    private final double[] sincy = new double[ (2 * sincWidth) + 1];
 
     /** DOCUMENT ME! */
-    private double[] sincz = new double[(2 * sincWidth) + 1];
+    private final double[] sincz = new double[ (2 * sincWidth) + 1];
 
     /** DOCUMENT ME! */
-    private int sliceSize;
+    private final int sliceSize;
 
     /** DOCUMENT ME! */
-    private float smoothSize;
+    private final float smoothSize;
 
     /** DOCUMENT ME! */
-    private int xDim;
+    private final int xDim;
 
     /** DOCUMENT ME! */
-    private int xEnd;
+    private final int xEnd;
 
     /** DOCUMENT ME! */
-    private double xEnd2;
+    private final double xEnd2;
 
     /** DOCUMENT ME! */
-    private int yDim;
+    private final int yDim;
 
     /** DOCUMENT ME! */
-    private int yEnd;
+    private final int yEnd;
 
     /** DOCUMENT ME! */
-    private double yEnd2;
+    private final double yEnd2;
 
     /** DOCUMENT ME! */
-    private int zDim;
+    private final int zDim;
 
     /** DOCUMENT ME! */
-    private int zEnd;
+    private final int zEnd;
 
     /** DOCUMENT ME! */
-    private double zEnd2;
-    
+    private final double zEnd2;
+
     private float[] m_afJointHisto;
-    private boolean m_bPrint = false;
-    
+
+    private final boolean m_bPrint = false;
+
     private ImageRegistrationGPU m_kGPUCost = null;;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates a new AlgorithmCostFunctions object.
-     *
-     * @param  rImage      DOCUMENT ME!
-     * @param  iImage      DOCUMENT ME!
-     * @param  functionID  DOCUMENT ME!
-     * @param  nBins       DOCUMENT ME!
-     * @param  smoothSize  DOCUMENT ME!
+     * 
+     * @param rImage DOCUMENT ME!
+     * @param iImage DOCUMENT ME!
+     * @param functionID DOCUMENT ME!
+     * @param nBins DOCUMENT ME!
+     * @param smoothSize DOCUMENT ME!
      */
-    public AlgorithmCostFunctions(ModelSimpleImage rImage, ModelSimpleImage iImage, int functionID, int nBins,
-                                  float smoothSize) {
+    public AlgorithmCostFunctions(final ModelSimpleImage rImage, final ModelSimpleImage iImage, final int functionID,
+            final int nBins, final float smoothSize) {
 
         costFunctID = functionID;
         refImage = rImage;
@@ -187,7 +193,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         refImage.calcMinMax();
         inputImage.calcMinMax();
 
-//        setNBins(nBins);
+        // setNBins(nBins);
 
         xDim = inputImage.xDim;
         yDim = inputImage.yDim;
@@ -203,39 +209,40 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         zEnd = refImage.zDim - 1;
         refSliceSize = refImage.xDim * refImage.yDim;
 
-        if ((costFunctID >= MUTUAL_INFORMATION_SMOOTHED) && (costFunctID <= NORMALIZED_MUTUAL_INFORMATION)) {
+        if ( (costFunctID >= AlgorithmCostFunctions.MUTUAL_INFORMATION_SMOOTHED)
+                && (costFunctID <= AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION)) {
             setPLogP(nBins); // precalculate
         }
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
-    public int getCostFunction()
-    {
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
+    public int getCostFunction() {
         return costFunctID;
     }
-    
+
     /**
      * Not implemented in this class.
-     *
-     * @param   data  Array of data.
-     *
-     * @return  Double.MAX_VALUE
+     * 
+     * @param data Array of data.
+     * 
+     * @return Double.MAX_VALUE
      */
-    public double cost(double[] data) {
+    public double cost(final double[] data) {
         return Double.MAX_VALUE;
     }
 
     /**
      * Calculates the cost (dependent on the selected cost function) based on the reference image and the input image.
-     *
-     * @param   affMatrix  Transformation matrix to test cost of.
-     *
-     * @return  Cost at a supplied transformation.
+     * 
+     * @param affMatrix Transformation matrix to test cost of.
+     * 
+     * @return Cost at a supplied transformation.
      */
-    public double cost(TransMatrix affMatrix) {
+    public double cost(final TransMatrix affMatrix) {
 
         costCalled++; // global debuggin variable to keep track of how many times cost function was called.
-        //affMatrix = new TransMatrix(4,4);
+        // affMatrix = new TransMatrix(4,4);
         double value = 0;
 
         switch (costFunctID) {
@@ -307,26 +314,13 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             case NORMALIZED_MUTUAL_INFORMATION_SMOOTHED:
                 value = normalizedMutualInformationSmoothed(affMatrix);
                 /*
-                if ( m_kGPUCost != null )
-                {
-                    value = normalizedMutualInformation(affMatrix);
-                    m_kGPUCost.setJoint( m_afJointHisto );
-                    double valueGPU = m_kGPUCost.getError(affMatrix);
-                    if ( Math.abs( valueGPU - value ) > 0.01 )
-                    {
-                        System.err.println( "CPU: " + value + "   GPU: " + valueGPU );
-                        m_bPrint = true;
-                        value = normalizedMutualInformation(affMatrix);
-                        m_kGPUCost.Print(true);
-                        m_kGPUCost.setJoint( m_afJointHisto );
-                        valueGPU = m_kGPUCost.getError(affMatrix);
-                        System.err.println( "22222222 CPU: " + value + "   GPU: " + valueGPU );
-                    }
-                    m_bPrint = false;
-                    m_kGPUCost.Print(false);
-                    value = valueGPU;
-                }
-                */
+                 * if ( m_kGPUCost != null ) { value = normalizedMutualInformation(affMatrix); m_kGPUCost.setJoint(
+                 * m_afJointHisto ); double valueGPU = m_kGPUCost.getError(affMatrix); if ( Math.abs( valueGPU - value ) >
+                 * 0.01 ) { System.err.println( "CPU: " + value + " GPU: " + valueGPU ); m_bPrint = true; value =
+                 * normalizedMutualInformation(affMatrix); m_kGPUCost.Print(true); m_kGPUCost.setJoint( m_afJointHisto );
+                 * valueGPU = m_kGPUCost.getError(affMatrix); System.err.println( "22222222 CPU: " + value + " GPU: " +
+                 * valueGPU ); } m_bPrint = false; m_kGPUCost.Print(false); value = valueGPU; }
+                 */
                 break;
 
             case NORMALIZED_MUTUAL_INFORMATION_SMOOTHED_WGT:
@@ -334,22 +328,20 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 break;
 
             case NORMALIZED_MUTUAL_INFORMATION_GPU:
-                if ( m_kGPUCost != null )
-                {
+                if (m_kGPUCost != null) {
                     m_kGPUCost.calcError(affMatrix);
                     value = m_kGPUCost.getError();
                 }
                 break;
-                
+
             case NORMALIZED_MUTUAL_INFORMATION_GPU_LM:
-                if ( m_kGPUCost != null )
-                {
+                if (m_kGPUCost != null) {
                     m_kGPUCost.calcError(affMatrix);
                     value = m_kGPUCost.getError();
                 }
                 break;
         }
-        
+
         return value;
 
     }
@@ -365,69 +357,59 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         inputWgtImage = null;
 
         m_kGPUCost = null;
-        
+
         pLogP = null;
-        //System.gc();
+        // System.gc();
     }
 
     /**
      * Calls disposeLocal of this class to ensure this class nulls the references to global class variables so that
      * memory will be recovered.
-     *
-     * @throws  Throwable  DOCUMENT ME!
+     * 
+     * @throws Throwable DOCUMENT ME!
      */
     public void finalize() throws Throwable {
         disposeLocal();
         super.finalize();
-    }    
-    
-    public void setGPUCost( ImageRegistrationGPU kGPUCost )
-    {
+    }
+
+    public void setGPUCost(final ImageRegistrationGPU kGPUCost) {
         m_kGPUCost = kGPUCost;
     }
 
     /**
      * Accessor that returns how many times the cost function has been called.
-     *
-     * @return  The number of times the cost function has been called.
+     * 
+     * @return The number of times the cost function has been called.
      */
     public int getCostCalled() {
         return costCalled;
     }
-    
-    public boolean isGPULineMin()
-    {
-        if ( m_kGPUCost != null )
+
+    public boolean isGPULineMin() {
+        if (m_kGPUCost != null) {
             return true;
+        }
         return false;
     }
 
-    public float[] lineMin(Matrix4f kToOrigin, Matrix4f kFromOrigin,
-            float rigid, float dim, double[] startPoint, double[] pt, int ptLength,
-            double[] unitDirections, double unit_tolerance, double fMinDist,
-            double bracketA, double functionA,
-            double bracketB, double functionB,
-            double bracketC, double functionC
-            )
-    {
-        m_kGPUCost.initLineMin( kToOrigin,  kFromOrigin,
-                rigid,  dim, startPoint, pt, ptLength,
-                unitDirections, unit_tolerance, fMinDist,
-                bracketA, functionA,
-                bracketB, functionB,
-                bracketC, functionC);
+    public float[] lineMin(final Matrix4f kToOrigin, final Matrix4f kFromOrigin, final float rigid, final float dim,
+            final double[] startPoint, final double[] pt, final int ptLength, final double[] unitDirections,
+            final double unit_tolerance, final double fMinDist, final double bracketA, final double functionA,
+            final double bracketB, final double functionB, final double bracketC, final double functionC) {
+        m_kGPUCost.initLineMin(kToOrigin, kFromOrigin, rigid, dim, startPoint, pt, ptLength, unitDirections,
+                unit_tolerance, fMinDist, bracketA, functionA, bracketB, functionB, bracketC, functionC);
         m_kGPUCost.calcLineMinimization();
         return m_kGPUCost.getBracketB();
     }
-  
 
     /**
      * Sets the input weight image. If the weight values are outside the range [0:1] then the weigthts will be remapped
      * to be between 0:1.
-     *
-     * @param  inputWgtImg  the input weight image
+     * 
+     * @param inputWgtImg the input weight image
      */
-    public void setInputWgtImage(ModelSimpleImage inputWgtImg) {
+    public void setInputWgtImage(final ModelSimpleImage inputWgtImg) {
         inputWgtImage = inputWgtImg;
 
         float diff;
@@ -436,7 +418,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             return;
         }
 
-        if ((inputWgtImage.min < 0) || (inputWgtImage.max > 1)) {
+        if ( (inputWgtImage.min < 0) || (inputWgtImage.max > 1)) {
 
             // remap data - normalize data between 0 and 1
             if (inputWgtImage.min != inputWgtImage.max) {
@@ -452,10 +434,10 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
     /**
      * Sets the reference weight image. If the weight values are outside the range [0:1] then the weigthts will be
      * remapped to be between 0:1.
-     *
-     * @param  refWgtImg  the reference weight image
+     * 
+     * @param refWgtImg the reference weight image
      */
-    public void setRefWgtImage(ModelSimpleImage refWgtImg) {
+    public void setRefWgtImage(final ModelSimpleImage refWgtImg) {
         refWgtImage = refWgtImg;
 
         float diff;
@@ -464,7 +446,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             return;
         }
 
-        if ((refWgtImage.min < 0) || (refWgtImage.max > 1)) {
+        if ( (refWgtImage.min < 0) || (refWgtImage.max > 1)) {
 
             // remap data - normalize data between 0 and 1
             if (refWgtImage.min != refWgtImage.max) {
@@ -479,13 +461,14 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  tMatrix       DOCUMENT ME!
-     * @param  jointEntropy  DOCUMENT ME!
-     * @param  margEntropyR  DOCUMENT ME!
-     * @param  margEntropyI  DOCUMENT ME!
+     * 
+     * @param tMatrix DOCUMENT ME!
+     * @param jointEntropy DOCUMENT ME!
+     * @param margEntropyR DOCUMENT ME!
+     * @param margEntropyI DOCUMENT ME!
      */
-    private void calcEntropy(TransMatrix tMatrix, double[] jointEntropy, double[] margEntropyR, double[] margEntropyI) {
+    private void calcEntropy(final TransMatrix tMatrix, final double[] jointEntropy, final double[] margEntropyR,
+            final double[] margEntropyI) {
 
         int x, y, z;
         double tmpZ1, tmpZ2, tmpZ3;
@@ -497,18 +480,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double b1, b2;
         double value;
 
-        double T00 = tMatrix.M00;
-        double T01 = tMatrix.M01;
-        double T02 = tMatrix.M02;
-        double T03 = tMatrix.M03;
-        double T10 = tMatrix.M10;
-        double T11 = tMatrix.M11;
-        double T12 = tMatrix.M12;
-        double T13 = tMatrix.M13;
-        double T20 = tMatrix.M20;
-        double T21 = tMatrix.M21;
-        double T22 = tMatrix.M22;
-        double T23 = tMatrix.M23;
+        final double T00 = tMatrix.M00;
+        final double T01 = tMatrix.M01;
+        final double T02 = tMatrix.M02;
+        final double T03 = tMatrix.M03;
+        final double T10 = tMatrix.M10;
+        final double T11 = tMatrix.M11;
+        final double T12 = tMatrix.M12;
+        final double T13 = tMatrix.M13;
+        final double T20 = tMatrix.M20;
+        final double T21 = tMatrix.M21;
+        final double T22 = tMatrix.M22;
+        final double T23 = tMatrix.M23;
         double aT00 = T00;
         double aT10 = T10;
         double aT20 = T20;
@@ -528,26 +511,26 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
-        }else{
-        	iT00 = Double.MAX_VALUE;
+        } else {
+            iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
-        }else{
-        	iT10 = Double.MAX_VALUE;
+        } else {
+            iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
-        }else{
-        	iT20 = Double.MAX_VALUE;
+        } else {
+            iT20 = Double.MAX_VALUE;
         }
 
-        double[] jointHist = new double[nBins * nBins];
-        double[] margHistR = new double[nBins];
-        double[] margHistI = new double[nBins];
- 
+        final double[] jointHist = new double[nBins * nBins];
+        final double[] margHistR = new double[nBins];
+        final double[] margHistI = new double[nBins];
+
         for (int i = 0; i < (nBins * nBins); i++) {
             jointHist[i] = 0;
         }
@@ -559,17 +542,17 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         double constantR = 1;
 
-        if ((refImage.max - refImage.min) != 0) {
+        if ( (refImage.max - refImage.min) != 0) {
             constantR = (nBins - 1) / (refImage.max - refImage.min);
         }
 
         double constantI = 1;
 
-        if ((inputImage.max - inputImage.min) != 0) {
+        if ( (inputImage.max - inputImage.min) != 0) {
             constantI = (nBins - 1) / (inputImage.max - inputImage.min);
         }
 
-        Point minMaxPt = new Point();
+        final Point minMaxPt = new Point();
         for (z = 0; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
             tmpZ2 = (z * T12) + T13;
@@ -607,24 +590,22 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                     position1 = (intZ * sliceSize) + (intY * xDim) + intX;
                     position2 = position1 + sliceSize;
 
-                    b1 = (dy1 * ((dx1 * inputImage.data[position1]) + (dx * inputImage.data[position1 + 1]))) +
-                         (dy *
-                              ((dx1 * inputImage.data[position1 + xDim]) +
-                                   (dx * inputImage.data[position1 + xDim + 1])));
+                    b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position1 + 1])))
+                            + (dy * ( (dx1 * inputImage.data[position1 + xDim]) + (dx * inputImage.data[position1
+                                    + xDim + 1])));
 
-                    b2 = (dy1 * ((dx1 * inputImage.data[position2]) + (dx * inputImage.data[position2 + 1]))) +
-                         (dy *
-                              ((dx1 * inputImage.data[position2 + xDim]) +
-                                   (dx * inputImage.data[position2 + xDim + 1])));
+                    b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position2 + 1])))
+                            + (dy * ( (dx1 * inputImage.data[position2 + xDim]) + (dx * inputImage.data[position2
+                                    + xDim + 1])));
 
-                    value = ((1 - dz) * b1) + (dz * b2);
+                    value = ( (1 - dz) * b1) + (dz * b2);
 
-                    indexValueI = (int) ((value - inputImage.min) * constantI);
-                    indexValueR = (int) ((refImage.data[index] - refImage.min) * constantR);
-                    
-                    //if ( z == 1 )
+                    indexValueI = (int) ( (value - inputImage.min) * constantI);
+                    indexValueR = (int) ( (refImage.data[index] - refImage.min) * constantR);
+
+                    // if ( z == 1 )
                     {
-                        jointHist[(indexValueR * nBins) + indexValueI] += 1;
+                        jointHist[ (indexValueR * nBins) + indexValueI] += 1;
                         margHistR[indexValueR] += 1;
                         margHistI[indexValueI] += 1;
                     }
@@ -639,14 +620,14 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         // note that the pLogP values indexed by integers such that: pLogP(n) = n/N * log(n/N)
         double p = 0.0;
         int n = 0;
-        int pSize = pLogP.length;
+        final int pSize = pLogP.length;
 
         nVoxels = refImage.data.length;
-        
-        m_afJointHisto = new float[nBins*nBins*4];
+
+        m_afJointHisto = new float[nBins * nBins * 4];
 
         for (int i = 0; i < (nBins * nBins); i++) {
-            n = (int) MipavMath.round(jointHist[i]);
+            n = MipavMath.round(jointHist[i]);
 
             if (n > 0) {
 
@@ -657,18 +638,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                     jointEntropy[0] += -p * Math.log(p);
                 }
             }
-            m_afJointHisto[i*4] = (float)jointHist[i];
-            m_afJointHisto[i*4+1] = 0f;
-            m_afJointHisto[i*4+2] = 0f;
-            m_afJointHisto[i*4+3] = (float)jointHist[i];
+            m_afJointHisto[i * 4] = (float) jointHist[i];
+            m_afJointHisto[i * 4 + 1] = 0f;
+            m_afJointHisto[i * 4 + 2] = 0f;
+            m_afJointHisto[i * 4 + 3] = (float) jointHist[i];
         }
-        //System.err.println("");
-        //System.err.println("");
-        //System.err.println("");
-        //System.err.println("Reference");
+        // System.err.println("");
+        // System.err.println("");
+        // System.err.println("");
+        // System.err.println("Reference");
         for (int i = 0; i < nBins; i++) {
-            n = (int) MipavMath.round(margHistR[i]);
-            //System.err.println ( i + " " + n );
+            n = MipavMath.round(margHistR[i]);
+            // System.err.println ( i + " " + n );
             if (n > 0) {
 
                 if (n < pSize) {
@@ -679,15 +660,15 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 }
             }
         }
-        //System.err.println("Done");
-        //System.err.println("");
-        //System.err.println("");
-        //System.err.println("");
+        // System.err.println("Done");
+        // System.err.println("");
+        // System.err.println("");
+        // System.err.println("");
 
         double nOverlap = 0.0;
 
         for (int i = 0; i < nBins; i++) {
-            n = (int) MipavMath.round(margHistI[i]);
+            n = MipavMath.round(margHistI[i]);
 
             if (n > 0) {
                 nOverlap += n;
@@ -701,33 +682,32 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             }
         }
 
-        //System.err.println( "CPU: " + nBins + " " + nVoxels + " " + nOverlap + " " + margEntropyR[0] + " " + margEntropyI[0] + " " + jointEntropy[0] );
-        
+        // System.err.println( "CPU: " + nBins + " " + nVoxels + " " + nOverlap + " " + margEntropyR[0] + " " +
+        // margEntropyI[0] + " " + jointEntropy[0] );
+
         // correct for difference in total histogram size
         // that is: nOverlap vs nVoxels
         // H_1 = N_0/N_1 * H_0 + log(N_1/N_0)
         // = N_0/N_1 * H_0 - log(N_0/N_1)
         if (nOverlap > (0.15 * nVoxels)) {
-            double nRatio = ((double) nVoxels) / ((double) nOverlap);
+            final double nRatio = (nVoxels) / (nOverlap);
 
             margEntropyR[0] = (nRatio * margEntropyR[0]) - Math.log(nRatio);
             margEntropyI[0] = (nRatio * margEntropyI[0]) - Math.log(nRatio);
             jointEntropy[0] = (nRatio * jointEntropy[0]) - Math.log(nRatio);
-            if ( m_bPrint )
-            {
-                System.err.println( "CPU: " + margEntropyR[0] + " " + margEntropyI[0] + " " + jointEntropy[0] );
+            if (m_bPrint) {
+                System.err.println("CPU: " + margEntropyR[0] + " " + margEntropyI[0] + " " + jointEntropy[0]);
             }
-            } else {
+        } else {
 
             // System.out.println("nOvelap not high enough, less than 15% of voxels.");
             // Put in maximum entropy values as base cases = BAD registration
             jointEntropy[0] = 2.0 * Math.log(nBins);
             margEntropyR[0] = Math.log(nBins);
             margEntropyI[0] = Math.log(nBins);
-            if ( m_bPrint )
-            {
+            if (m_bPrint) {
                 System.out.println("nOvelap not high enough, less than 15% of voxels.");
-                System.err.println( "CPU: " + margEntropyR[0] + " " + margEntropyI[0] + " " + jointEntropy[0] );
+                System.err.println("CPU: " + margEntropyR[0] + " " + margEntropyI[0] + " " + jointEntropy[0]);
             }
         }
 
@@ -736,14 +716,14 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  tMatrix       DOCUMENT ME!
-     * @param  jointEntropy  DOCUMENT ME!
-     * @param  margEntropyR  DOCUMENT ME!
-     * @param  margEntropyI  DOCUMENT ME!
+     * 
+     * @param tMatrix DOCUMENT ME!
+     * @param jointEntropy DOCUMENT ME!
+     * @param margEntropyR DOCUMENT ME!
+     * @param margEntropyI DOCUMENT ME!
      */
-    private void calcEntropySmoothed(TransMatrix tMatrix, double[] jointEntropy, double[] margEntropyR,
-                                     double[] margEntropyI) {
+    private void calcEntropySmoothed(final TransMatrix tMatrix, final double[] jointEntropy,
+            final double[] margEntropyR, final double[] margEntropyI) {
 
         int x, y, z;
         double tmpZ1, tmpZ2, tmpZ3;
@@ -768,18 +748,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        double T00 = tMatrix.M00;
-        double T01 = tMatrix.M01;
-        double T02 = tMatrix.M02;
-        double T03 = tMatrix.M03;
-        double T10 = tMatrix.M10;
-        double T11 = tMatrix.M11;
-        double T12 = tMatrix.M12;
-        double T13 = tMatrix.M13;
-        double T20 = tMatrix.M20;
-        double T21 = tMatrix.M21;
-        double T22 = tMatrix.M22;
-        double T23 = tMatrix.M23;
+        final double T00 = tMatrix.M00;
+        final double T01 = tMatrix.M01;
+        final double T02 = tMatrix.M02;
+        final double T03 = tMatrix.M03;
+        final double T10 = tMatrix.M10;
+        final double T11 = tMatrix.M11;
+        final double T12 = tMatrix.M12;
+        final double T13 = tMatrix.M13;
+        final double T20 = tMatrix.M20;
+        final double T21 = tMatrix.M21;
+        final double T22 = tMatrix.M22;
+        final double T23 = tMatrix.M23;
         double aT00 = T00;
         double aT10 = T10;
         double aT20 = T20;
@@ -800,25 +780,24 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
-        }else{
-        	iT00 = Double.MAX_VALUE;
+        } else {
+            iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
-        }else{
-        	iT10 = Double.MAX_VALUE;
+        } else {
+            iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
-        }else{
-        	iT20 = Double.MAX_VALUE;
+        } else {
+            iT20 = Double.MAX_VALUE;
         }
-        double[] jointHist = new double[nBins * nBins];
-        double[] margHistR = new double[nBins];
-        double[] margHistI = new double[nBins];
- 
+        final double[] jointHist = new double[nBins * nBins];
+        final double[] margHistR = new double[nBins];
+        final double[] margHistI = new double[nBins];
 
         for (int i = 0; i < (nBins * nBins); i++) {
             jointHist[i] = 0;
@@ -831,17 +810,17 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         double constantR = 1;
 
-        if ((refImage.max - refImage.min) != 0) {
+        if ( (refImage.max - refImage.min) != 0) {
             constantR = (nBins - 1) / (refImage.max - refImage.min);
         }
 
         double constantI = 1;
 
-        if ((inputImage.max - inputImage.min) != 0) {
+        if ( (inputImage.max - inputImage.min) != 0) {
             constantI = (nBins - 1) / (inputImage.max - inputImage.min);
         }
 
-        Point minMaxPt = new Point();
+        final Point minMaxPt = new Point();
         for (z = 0; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
             tmpZ2 = (z * T12) + T13;
@@ -879,37 +858,35 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                     position1 = (intZ * sliceSize) + (intY * xDim) + intX;
                     position2 = position1 + sliceSize;
 
-                    b1 = (dy1 * ((dx1 * inputImage.data[position1]) + (dx * inputImage.data[position1 + 1]))) +
-                         (dy *
-                              ((dx1 * inputImage.data[position1 + xDim]) +
-                                   (dx * inputImage.data[position1 + xDim + 1])));
+                    b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position1 + 1])))
+                            + (dy * ( (dx1 * inputImage.data[position1 + xDim]) + (dx * inputImage.data[position1
+                                    + xDim + 1])));
 
-                    b2 = (dy1 * ((dx1 * inputImage.data[position2]) + (dx * inputImage.data[position2 + 1]))) +
-                         (dy *
-                              ((dx1 * inputImage.data[position2 + xDim]) +
-                                   (dx * inputImage.data[position2 + xDim + 1])));
+                    b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position2 + 1])))
+                            + (dy * ( (dx1 * inputImage.data[position2 + xDim]) + (dx * inputImage.data[position2
+                                    + xDim + 1])));
 
-                    value = ((1 - dz) * b1) + (dz * b2);
+                    value = ( (1 - dz) * b1) + (dz * b2);
 
                     weight = 1.0;
-                    iCenter = (int) ((value - inputImage.min) * constantI);
-                    indexValueR = (int) ((refImage.data[index] - refImage.min) * constantR);
+                    iCenter = (int) ( (value - inputImage.min) * constantI);
+                    indexValueR = (int) ( (refImage.data[index] - refImage.min) * constantR);
 
                     if (newPtX < smoothX) {
                         weight *= newPtX * invSmoothX;
-                    } else if ((xEnd2 - newPtX) < smoothX) {
+                    } else if ( (xEnd2 - newPtX) < smoothX) {
                         weight *= (xEnd2 - newPtX) * invSmoothX;
                     }
 
                     if (newPtY < smoothY) {
                         weight *= newPtY * invSmoothY;
-                    } else if ((yEnd2 - newPtY) < smoothY) {
+                    } else if ( (yEnd2 - newPtY) < smoothY) {
                         weight *= (yEnd2 - newPtY) * invSmoothY;
                     }
 
                     if (newPtZ < smoothZ) {
                         weight *= newPtZ * invSmoothZ;
-                    } else if ((zEnd2 - newPtZ) < smoothZ) {
+                    } else if ( (zEnd2 - newPtZ) < smoothZ) {
                         weight *= (zEnd2 - newPtZ) * invSmoothZ;
                     }
 
@@ -927,7 +904,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                         iCenter = 0;
                     }
 
-                    jointHist[(indexValueR * nBins) + iCenter] += weight;
+                    jointHist[ (indexValueR * nBins) + iCenter] += weight;
                     margHistI[iCenter] += weight;
                     margHistR[indexValueR] += weight;
 
@@ -961,14 +938,14 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 nR = margHistR[i];
 
                 if (nR > 0.0) {
-                    p = nR / ((double) nOverlap);
+                    p = nR / (nOverlap);
                     margEntropyR[0] += -p * Math.log(p);
                 }
 
                 nI = margHistI[i];
 
                 if (nI > 0.0) {
-                    p = nI / ((double) nOverlap);
+                    p = nI / (nOverlap);
                     margEntropyI[0] += -p * Math.log(p);
                 }
 
@@ -977,7 +954,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                     nJ = jointHist[k];
 
                     if (nJ > 0.0) {
-                        p = nJ / ((double) nOverlap);
+                        p = nJ / (nOverlap);
                         jointEntropy[0] += -p * Math.log(p);
                     }
                 }
@@ -993,14 +970,14 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  tMatrix       DOCUMENT ME!
-     * @param  jointEntropy  DOCUMENT ME!
-     * @param  margEntropyR  DOCUMENT ME!
-     * @param  margEntropyI  DOCUMENT ME!
+     * 
+     * @param tMatrix DOCUMENT ME!
+     * @param jointEntropy DOCUMENT ME!
+     * @param margEntropyR DOCUMENT ME!
+     * @param margEntropyI DOCUMENT ME!
      */
-    private void calcEntropySmoothedWgt(TransMatrix tMatrix, double[] jointEntropy, double[] margEntropyR,
-                                        double[] margEntropyI) {
+    private void calcEntropySmoothedWgt(final TransMatrix tMatrix, final double[] jointEntropy,
+            final double[] margEntropyR, final double[] margEntropyI) {
         int x, y, z;
         double tmpZ1, tmpZ2, tmpZ3;
         int indexZ;
@@ -1025,18 +1002,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        double T00 = tMatrix.M00;
-        double T01 = tMatrix.M01;
-        double T02 = tMatrix.M02;
-        double T03 = tMatrix.M03;
-        double T10 = tMatrix.M10;
-        double T11 = tMatrix.M11;
-        double T12 = tMatrix.M12;
-        double T13 = tMatrix.M13;
-        double T20 = tMatrix.M20;
-        double T21 = tMatrix.M21;
-        double T22 = tMatrix.M22;
-        double T23 = tMatrix.M23;
+        final double T00 = tMatrix.M00;
+        final double T01 = tMatrix.M01;
+        final double T02 = tMatrix.M02;
+        final double T03 = tMatrix.M03;
+        final double T10 = tMatrix.M10;
+        final double T11 = tMatrix.M11;
+        final double T12 = tMatrix.M12;
+        final double T13 = tMatrix.M13;
+        final double T20 = tMatrix.M20;
+        final double T21 = tMatrix.M21;
+        final double T22 = tMatrix.M22;
+        final double T23 = tMatrix.M23;
         double aT00 = T00;
         double aT10 = T10;
         double aT20 = T20;
@@ -1065,26 +1042,25 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         // Also take the inverse of each multiplier, unless it is smaller than 1.0e-8
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
-        }else{
-        	iT00 = Double.MAX_VALUE;
+        } else {
+            iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
-        }else{
-        	iT10 = Double.MAX_VALUE;
+        } else {
+            iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
-        }else{
-        	iT20 = Double.MAX_VALUE;
+        } else {
+            iT20 = Double.MAX_VALUE;
         }
 
-        double[] jointHist = new double[nBins * nBins];
-        double[] margHistR = new double[nBins];
-        double[] margHistI = new double[nBins];
- 
+        final double[] jointHist = new double[nBins * nBins];
+        final double[] margHistR = new double[nBins];
+        final double[] margHistI = new double[nBins];
 
         for (int i = 0; i < (nBins * nBins); i++) {
             jointHist[i] = 0;
@@ -1096,20 +1072,20 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         }
 
         // Define constantR and constantI, where they each represent the number of bins per intensity
-        // value (less than one).  They will be used later to multiply the intensity value of the reference
+        // value (less than one). They will be used later to multiply the intensity value of the reference
         // image to find the appropriate bin.
         double constantR = 1;
 
-        if ((refImage.max - refImage.min) != 0) {
+        if ( (refImage.max - refImage.min) != 0) {
             constantR = (nBins - 1) / (refImage.max - refImage.min);
         }
 
         double constantI = 1;
 
-        if ((inputImage.max - inputImage.min) != 0) {
+        if ( (inputImage.max - inputImage.min) != 0) {
             constantI = (nBins - 1) / (inputImage.max - inputImage.min);
         }
-        Point minMaxPt = new Point();
+        final Point minMaxPt = new Point();
 
         // zEnd has been previously defined to be refImage.zDim-1 (likewise xEnd and yEnd)
         for (z = 0; z <= zEnd; z++) {
@@ -1166,50 +1142,50 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
                     // Get value at current x,y, z for the inputImage.
                     // b1 is value interplated between x values and y values at rounded-down z slice
-                    b1 = (dy1 * ((dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11]))) +
-                         (dy * ((dx1 * inputImage.data[position1x]) + (dx * inputImage.data[position11x])));
+                    b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11])))
+                            + (dy * ( (dx1 * inputImage.data[position1x]) + (dx * inputImage.data[position11x])));
 
                     // b2 is value interpolated between x value and y values at rounded-up z slice
-                    b2 = (dy1 * ((dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21]))) +
-                         (dy * ((dx1 * inputImage.data[position2x]) + (dx * inputImage.data[position21x])));
+                    b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21])))
+                            + (dy * ( (dx1 * inputImage.data[position2x]) + (dx * inputImage.data[position21x])));
 
                     // value is interpolation between b1 and b2 and exact z location
-                    value = ((1 - dz) * b1) + (dz * b2);
+                    value = ( (1 - dz) * b1) + (dz * b2);
 
                     // Get value at current x,y, z for the inputWgtImage - weighted image!!
                     // b1, b2 are same as above; wValue is now interpolation between b1 and b2
-                    b1 = (dy1 * ((dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11]))) +
-                         (dy * ((dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
+                    b1 = (dy1 * ( (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11])))
+                            + (dy * ( (dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
 
-                    b2 = (dy1 * ((dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21]))) +
-                         (dy * ((dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
-                    wValue = ((1 - dz) * b1) + (dz * b2);
+                    b2 = (dy1 * ( (dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21])))
+                            + (dy * ( (dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
+                    wValue = ( (1 - dz) * b1) + (dz * b2);
 
                     // Weight assigned wValue (weight of input image at current loc) times the Reference image weight.
                     weight = wValue * refWgtImage.data[index];
 
-                    // Find iCenter and indexValueR.  iCenter is bin number for this pixel in the Input image (y
-                    // coordinate of joint histogram image).  indexValueR in the bin number for this pixel in the
+                    // Find iCenter and indexValueR. iCenter is bin number for this pixel in the Input image (y
+                    // coordinate of joint histogram image). indexValueR in the bin number for this pixel in the
                     // Reference image (x coordiante of joint histogram image).
-                    iCenter = (int) ((value - inputImage.min) * constantI);
-                    indexValueR = (int) ((refImage.data[index] - refImage.min) * constantR);
+                    iCenter = (int) ( (value - inputImage.min) * constantI);
+                    indexValueR = (int) ( (refImage.data[index] - refImage.min) * constantR);
 
                     // Smooth out the edges.
                     if (newPtX < smoothX) {
                         weight *= newPtX * invSmoothX;
-                    } else if ((xEnd2 - newPtX) < smoothX) {
+                    } else if ( (xEnd2 - newPtX) < smoothX) {
                         weight *= (xEnd2 - newPtX) * invSmoothX;
                     }
 
                     if (newPtY < smoothY) {
                         weight *= newPtY * invSmoothY;
-                    } else if ((yEnd2 - newPtY) < smoothY) {
+                    } else if ( (yEnd2 - newPtY) < smoothY) {
                         weight *= (yEnd2 - newPtY) * invSmoothY;
                     }
 
                     if (newPtZ < smoothZ) {
                         weight *= newPtZ * invSmoothZ;
-                    } else if ((zEnd2 - newPtZ) < smoothZ) {
+                    } else if ( (zEnd2 - newPtZ) < smoothZ) {
                         weight *= (zEnd2 - newPtZ) * invSmoothZ;
                     }
 
@@ -1227,13 +1203,13 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                         iCenter = 0;
                     }
 
-                    // Add "weight" to the histograms.  Index the jointHistogram (saved as 1D array) assuming width of
+                    // Add "weight" to the histograms. Index the jointHistogram (saved as 1D array) assuming width of
                     // nBins, so indexValueR*nBins + iCenter.
-                    jointHist[(indexValueR * nBins) + iCenter] += weight;
+                    jointHist[ (indexValueR * nBins) + iCenter] += weight;
                     margHistI[iCenter] += weight;
                     margHistR[indexValueR] += weight;
 
-                    // Increment index.  Go to next point.
+                    // Increment index. Go to next point.
                     index++;
                     newPtX += T00;
                     newPtY += T10;
@@ -1244,8 +1220,8 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         } // end of z loop
 
         // Up until this point we've generated a jointHistogram "image" and histogram images for the two
-        // input images.  Now, to calculate the Normalized Mutual Information, we'll calculate the entropy of
-        // the histogram images by summing -plogp over all bins.  p is the probability for a given
+        // input images. Now, to calculate the Normalized Mutual Information, we'll calculate the entropy of
+        // the histogram images by summing -plogp over all bins. p is the probability for a given
         // intensity value - equal to the value in the histogram image divided by the total # of voxels.
         double p = 0.0;
         double n = 0.0;
@@ -1257,7 +1233,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             n = jointHist[i];
 
             if (n > 0.0) {
-                p = n / ((double) nVoxels);
+                p = n / (nVoxels);
                 jointEntropy[0] += -p * Math.log(p);
             }
         }
@@ -1267,7 +1243,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             n = margHistR[i];
 
             if (n > 0.0) {
-                p = n / ((double) nVoxels);
+                p = n / (nVoxels);
                 margEntropyR[0] += -p * Math.log(p);
             }
         }
@@ -1280,7 +1256,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
             if (n > 0.0) {
                 nOverlap += n; // Calculate the region of overlap while we're going through Input image voxels.
-                p = n / ((double) nVoxels);
+                p = n / (nVoxels);
                 margEntropyI[0] += -p * Math.log(p);
             }
         }
@@ -1292,7 +1268,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         // This separation number of 5.0 may have to be tweaked depending on
         // the size of the weighted volumes
         if (nOverlap > 5.0) {
-            double nRatio = ((double) nVoxels) / ((double) nOverlap);
+            final double nRatio = (nVoxels) / (nOverlap);
 
             jointEntropy[0] = (nRatio * jointEntropy[0]) - Math.log(nRatio);
             margEntropyR[0] = (nRatio * margEntropyR[0]) - Math.log(nRatio);
@@ -1310,12 +1286,12 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
     /**
      * Correlation ratio cost function.
-     *
-     * @param   tMatrix  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param tMatrix DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    private double correlationRatio(TransMatrix tMatrix) {
+    private double correlationRatio(final TransMatrix tMatrix) {
 
         int x, y, z;
         double tmpZ1, tmpZ2, tmpZ3;
@@ -1328,23 +1304,23 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double dx, dy, dz, dx1, dy1;
         double b1, b2;
 
-        double[] numY = new double[nBins];
-        double[] sumY = new double[nBins];
-        double[] sumY2 = new double[nBins];
+        final double[] numY = new double[nBins];
+        final double[] sumY = new double[nBins];
+        final double[] sumY2 = new double[nBins];
 
         // get transformation matrix into quick access variables.
-        double T00 = tMatrix.M00;
-        double T01 = tMatrix.M01;
-        double T02 = tMatrix.M02;
-        double T03 = tMatrix.M03;
-        double T10 = tMatrix.M10;
-        double T11 = tMatrix.M11;
-        double T12 = tMatrix.M12;
-        double T13 = tMatrix.M13;
-        double T20 = tMatrix.M20;
-        double T21 = tMatrix.M21;
-        double T22 = tMatrix.M22;
-        double T23 = tMatrix.M23;
+        final double T00 = tMatrix.M00;
+        final double T01 = tMatrix.M01;
+        final double T02 = tMatrix.M02;
+        final double T03 = tMatrix.M03;
+        final double T10 = tMatrix.M10;
+        final double T11 = tMatrix.M11;
+        final double T12 = tMatrix.M12;
+        final double T13 = tMatrix.M13;
+        final double T20 = tMatrix.M20;
+        final double T21 = tMatrix.M21;
+        final double T22 = tMatrix.M22;
+        final double T23 = tMatrix.M23;
         double aT00 = T00;
         double aT10 = T10;
         double aT20 = T20;
@@ -1365,31 +1341,31 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
-        }else{
-        	iT00 = Double.MAX_VALUE;
+        } else {
+            iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
-        }else{
-        	iT10 = Double.MAX_VALUE;
+        } else {
+            iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
-        }else{
-        	iT20 = Double.MAX_VALUE;
+        } else {
+            iT20 = Double.MAX_VALUE;
         }
 
         // precalculates this constant for rebinning
         double constant = 1;
 
-        if ((refImage.max - refImage.min) != 0) {
+        if ( (refImage.max - refImage.min) != 0) {
             constant = (nBins - 1) / (refImage.max - refImage.min);
         }
 
         int nCalcs = 0;
-        Point minMaxPt = new Point();
+        final Point minMaxPt = new Point();
 
         for (z = 0; z <= zEnd; z++) { // zEnd = the bound of ref image
             tmpZ1 = (z * T02) + T03;
@@ -1434,16 +1410,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                     position21 = position2 + 1;
 
                     // trilinear interpolation
-                    b1 = (dy1 * ((dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11]))) +
-                         (dy * ((dx1 * inputImage.data[position1 + xDim]) + (dx * inputImage.data[position11 + xDim])));
+                    b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11])))
+                            + (dy * ( (dx1 * inputImage.data[position1 + xDim]) + (dx * inputImage.data[position11
+                                    + xDim])));
 
-                    b2 = (dy1 * ((dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21]))) +
-                         (dy * ((dx1 * inputImage.data[position2 + xDim]) + (dx * inputImage.data[position21 + xDim])));
+                    b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21])))
+                            + (dy * ( (dx1 * inputImage.data[position2 + xDim]) + (dx * inputImage.data[position21
+                                    + xDim])));
 
-                    value = ((1 - dz) * b1) + (dz * b2);
+                    value = ( (1 - dz) * b1) + (dz * b2);
 
                     // This was actually slower -> b1 + (b2-b1)*dz ??????
-                    indexValue = (int) ((refImage.data[index] - refImage.min) * constant);
+                    indexValue = (int) ( (refImage.data[index] - refImage.min) * constant);
                     numY[indexValue] += 1;
                     sumY[indexValue] += value - inputImage.min;
                     sumY2[indexValue] += (value - inputImage.min) * (value - inputImage.min);
@@ -1493,13 +1471,13 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         // penalizes cost based on the number of cost calculations over the
         // total possible if the number of cost calculation is less than 1000.
-        int totCalcs = zEnd * yEnd * xEnd;
+        final int totCalcs = zEnd * yEnd * xEnd;
 
         if (nCalcs < (0.25 * totCalcs)) {
-            corrRatio = corrRatio + ((1.0 - corrRatio) * ((totCalcs - nCalcs) / (double) totCalcs));
+            corrRatio = corrRatio + ( (1.0 - corrRatio) * ( (totCalcs - nCalcs) / (double) totCalcs));
         }
 
-        if ((numTotY <= 1) || (variance <= 0.0)) {
+        if ( (numTotY <= 1) || (variance <= 0.0)) {
             return 1.0;
         } // the totally uncorrelated condition
         else {
@@ -1512,12 +1490,12 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
     /**
      * Correlation ratio cost function.
-     *
-     * @param   tMatrix  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param tMatrix DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    private double correlationRatioSmoothed(TransMatrix tMatrix) {
+    private double correlationRatioSmoothed(final TransMatrix tMatrix) {
 
         int x, y, z;
         double tmpZ1, tmpZ2, tmpZ3;
@@ -1544,23 +1522,23 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        double[] numY = new double[nBins];
-        double[] sumY = new double[nBins];
-        double[] sumY2 = new double[nBins];
+        final double[] numY = new double[nBins];
+        final double[] sumY = new double[nBins];
+        final double[] sumY2 = new double[nBins];
 
         // get transformation matrix into quick access variables.
-        double T00 = tMatrix.M00;
-        double T01 = tMatrix.M01;
-        double T02 = tMatrix.M02;
-        double T03 = tMatrix.M03;
-        double T10 = tMatrix.M10;
-        double T11 = tMatrix.M11;
-        double T12 = tMatrix.M12;
-        double T13 = tMatrix.M13;
-        double T20 = tMatrix.M20;
-        double T21 = tMatrix.M21;
-        double T22 = tMatrix.M22;
-        double T23 = tMatrix.M23;
+        final double T00 = tMatrix.M00;
+        final double T01 = tMatrix.M01;
+        final double T02 = tMatrix.M02;
+        final double T03 = tMatrix.M03;
+        final double T10 = tMatrix.M10;
+        final double T11 = tMatrix.M11;
+        final double T12 = tMatrix.M12;
+        final double T13 = tMatrix.M13;
+        final double T20 = tMatrix.M20;
+        final double T21 = tMatrix.M21;
+        final double T22 = tMatrix.M22;
+        final double T23 = tMatrix.M23;
 
         // the next variable are used in the "findRangeX" method. They are calculated only once to
         // speed up the cost function calculation
@@ -1583,31 +1561,31 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
-        }else{
-        	iT00 = Double.MAX_VALUE;
+        } else {
+            iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
-        }else{
-        	iT10 = Double.MAX_VALUE;
+        } else {
+            iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
-        }else{
-        	iT20 = Double.MAX_VALUE;
+        } else {
+            iT20 = Double.MAX_VALUE;
         }
 
         // precalculates this constant for rebinning
         double constant = 1;
 
-        if ((refImage.max - refImage.min) != 0) {
+        if ( (refImage.max - refImage.min) != 0) {
             constant = (nBins - 1) / (refImage.max - refImage.min);
         }
 
         int nCalcs = 0;
-        Point minMaxPt = new Point();
+        final Point minMaxPt = new Point();
 
         for (z = 0; z <= zEnd; z++) { // zEnd = the bound of ref image
             tmpZ1 = (z * T02) + T03;
@@ -1651,32 +1629,34 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                     position21 = position2 + 1;
 
                     // trilinear interpolation
-                    b1 = (dy1 * ((dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11]))) +
-                         (dy * ((dx1 * inputImage.data[position1 + xDim]) + (dx * inputImage.data[position11 + xDim])));
+                    b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11])))
+                            + (dy * ( (dx1 * inputImage.data[position1 + xDim]) + (dx * inputImage.data[position11
+                                    + xDim])));
 
-                    b2 = (dy1 * ((dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21]))) +
-                         (dy * ((dx1 * inputImage.data[position2 + xDim]) + (dx * inputImage.data[position21 + xDim])));
+                    b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21])))
+                            + (dy * ( (dx1 * inputImage.data[position2 + xDim]) + (dx * inputImage.data[position21
+                                    + xDim])));
 
-                    value = ((1 - dz) * b1) + (dz * b2);
+                    value = ( (1 - dz) * b1) + (dz * b2);
                     // This was actually slower -> b1 + (b2-b1)*dz ??????
 
                     weight = 1.0;
 
                     if (newPtX < smoothX) {
                         weight *= newPtX * invSmoothX;
-                    } else if ((xEnd2 - newPtX) < smoothX) {
+                    } else if ( (xEnd2 - newPtX) < smoothX) {
                         weight *= (xEnd2 - newPtX) * invSmoothX;
                     }
 
                     if (newPtY < smoothY) {
                         weight *= newPtY * invSmoothY;
-                    } else if ((yEnd2 - newPtY) < smoothY) {
+                    } else if ( (yEnd2 - newPtY) < smoothY) {
                         weight *= (yEnd2 - newPtY) * invSmoothY;
                     }
 
                     if (newPtZ < smoothZ) {
                         weight *= newPtZ * invSmoothZ;
-                    } else if ((zEnd2 - newPtZ) < smoothZ) {
+                    } else if ( (zEnd2 - newPtZ) < smoothZ) {
                         weight *= (zEnd2 - newPtZ) * invSmoothZ;
                     }
 
@@ -1686,7 +1666,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
                     // could move remapping (rebinning) of refImage to the calling function. that way it is only
                     // done once - savings - one mult, sub and convert to int. per loop.
-                    indexValue = (int) ((refImage.data[index] - refImage.min) * constant);
+                    indexValue = (int) ( (refImage.data[index] - refImage.min) * constant);
                     tmp = weight * (value - inputImage.min); // Added by Matt to handle image with neg values
                     numY[indexValue] += weight;
                     sumY[indexValue] += tmp;
@@ -1737,13 +1717,13 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         // penalizes cost based on the number of cost calculations over the
         // total possible if the number of cost calculation is less than 1000.
-        int totCalcs = zEnd * yEnd * xEnd;
+        final int totCalcs = zEnd * yEnd * xEnd;
 
         if (nCalcs < (0.15 * totCalcs)) {
-            corrRatio = corrRatio + ((1.0 - corrRatio) * ((totCalcs - nCalcs) / (double) totCalcs));
+            corrRatio = corrRatio + ( (1.0 - corrRatio) * ( (totCalcs - nCalcs) / (double) totCalcs));
         }
 
-        if ((numTotY <= 1) || (variance <= 0.0)) {
+        if ( (numTotY <= 1) || (variance <= 0.0)) {
             return 1.0;
         } // the totally uncorrelated condition
         else {
@@ -1757,12 +1737,12 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
     /**
      * Correlation ratio cost function using weighting functions to mask out areas that should not be included in the
      * cost function calculations.
-     *
-     * @param   tMatrix  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param tMatrix DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    private double correlationRatioSmoothedWgt(TransMatrix tMatrix) {
+    private double correlationRatioSmoothedWgt(final TransMatrix tMatrix) {
 
         int x, y, z;
         double tmpZ1, tmpZ2, tmpZ3;
@@ -1787,22 +1767,22 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        double[] numY = new double[nBins];
-        double[] sumY = new double[nBins];
-        double[] sumY2 = new double[nBins];
+        final double[] numY = new double[nBins];
+        final double[] sumY = new double[nBins];
+        final double[] sumY2 = new double[nBins];
 
-        double T00 = tMatrix.M00;
-        double T01 = tMatrix.M01;
-        double T02 = tMatrix.M02;
-        double T03 = tMatrix.M03;
-        double T10 = tMatrix.M10;
-        double T11 = tMatrix.M11;
-        double T12 = tMatrix.M12;
-        double T13 = tMatrix.M13;
-        double T20 = tMatrix.M20;
-        double T21 = tMatrix.M21;
-        double T22 = tMatrix.M22;
-        double T23 = tMatrix.M23;
+        final double T00 = tMatrix.M00;
+        final double T01 = tMatrix.M01;
+        final double T02 = tMatrix.M02;
+        final double T03 = tMatrix.M03;
+        final double T10 = tMatrix.M10;
+        final double T11 = tMatrix.M11;
+        final double T12 = tMatrix.M12;
+        final double T13 = tMatrix.M13;
+        final double T20 = tMatrix.M20;
+        final double T21 = tMatrix.M21;
+        final double T22 = tMatrix.M22;
+        final double T23 = tMatrix.M23;
 
         // the next variable are used in the "findRangeX" method. They are calculated only once to
         // speed up the cost function calculation
@@ -1826,20 +1806,20 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
-        }else{
-        	iT00 = Double.MAX_VALUE;
+        } else {
+            iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
-        }else{
-        	iT10 = Double.MAX_VALUE;
+        } else {
+            iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
-        }else{
-        	iT20 = Double.MAX_VALUE;
+        } else {
+            iT20 = Double.MAX_VALUE;
         }
 
         // Something to think about - could we use shear-warping to speed this process ???(Paeth, Levoy)
@@ -1848,12 +1828,12 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         double constant = 1;
 
-        if ((refImage.max - refImage.min) != 0) {
+        if ( (refImage.max - refImage.min) != 0) {
             constant = (nBins - 1) / (refImage.max - refImage.min);
         }
 
         int nCalcs = 0;
-        Point minMaxPt = new Point();
+        final Point minMaxPt = new Point();
 
         for (z = 0; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
@@ -1898,37 +1878,37 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                     position21 = position2 + 1;
                     position21x = position21 + xDim;
 
-                    b1 = (dy1 * ((dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11]))) +
-                         (dy * ((dx1 * inputImage.data[position1x]) + (dx * inputImage.data[position11x])));
+                    b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11])))
+                            + (dy * ( (dx1 * inputImage.data[position1x]) + (dx * inputImage.data[position11x])));
 
-                    b2 = (dy1 * ((dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21]))) +
-                         (dy * ((dx1 * inputImage.data[position2x]) + (dx * inputImage.data[position21x])));
-                    value = ((1 - dz) * b1) + (dz * b2);
+                    b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21])))
+                            + (dy * ( (dx1 * inputImage.data[position2x]) + (dx * inputImage.data[position21x])));
+                    value = ( (1 - dz) * b1) + (dz * b2);
 
-                    b1 = (dy1 * ((dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11]))) +
-                         (dy * ((dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
+                    b1 = (dy1 * ( (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11])))
+                            + (dy * ( (dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
 
-                    b2 = (dy1 * ((dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21]))) +
-                         (dy * ((dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
-                    wValue = ((1 - dz) * b1) + (dz * b2);
+                    b2 = (dy1 * ( (dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21])))
+                            + (dy * ( (dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
+                    wValue = ( (1 - dz) * b1) + (dz * b2);
 
                     weight = wValue * refWgtImage.data[index];
 
                     if (newPtX < smoothX) {
                         weight *= newPtX * invSmoothX;
-                    } else if ((xEnd2 - newPtX) < smoothX) {
+                    } else if ( (xEnd2 - newPtX) < smoothX) {
                         weight *= (xEnd2 - newPtX) * invSmoothX;
                     }
 
                     if (newPtY < smoothY) {
                         weight *= newPtY * invSmoothY;
-                    } else if ((yEnd2 - newPtY) < smoothY) {
+                    } else if ( (yEnd2 - newPtY) < smoothY) {
                         weight *= (yEnd2 - newPtY) * invSmoothY;
                     }
 
                     if (newPtZ < smoothZ) {
                         weight *= newPtZ * invSmoothZ;
-                    } else if ((zEnd2 - newPtZ) < smoothZ) {
+                    } else if ( (zEnd2 - newPtZ) < smoothZ) {
                         weight *= (zEnd2 - newPtZ) * invSmoothZ;
                     }
 
@@ -1936,7 +1916,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                         weight = 0.0;
                     }
 
-                    indexValue = (int) ((refImage.data[index] - refImage.min) * constant);
+                    indexValue = (int) ( (refImage.data[index] - refImage.min) * constant);
                     tmp = weight * (value - inputImage.min);
                     numY[indexValue] += weight;
                     sumY[indexValue] += tmp;
@@ -1987,7 +1967,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         // penalizes cost based on the number of cost calculations over the
         // total possible if the number of cost calculation is less than 10000.
 
-        if ((numTotY <= 1) || (variance <= 0.0)) {
+        if ( (numTotY <= 1) || (variance <= 0.0)) {
             return 1.0;
         } // the totally uncorrelated condition
         else {
@@ -1997,12 +1977,11 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  minMaxPt  DOCUMENT ME!
+     * 
+     * @param minMaxPt DOCUMENT ME!
      */
-    private void findRangeX(Point minMaxPt, double newPtX, double newPtY, 
-    		double newPtZ, double aT00, double aT10, double aT20, 
-    		double iT00, double iT10, double iT20) {
+    private void findRangeX(final Point minMaxPt, double newPtX, double newPtY, double newPtZ, final double aT00,
+            final double aT10, final double aT20, final double iT00, final double iT10, final double iT20) {
         double x1, x2, xMin, xMax, xMin0, xMax0;
 
         xMin0 = 0;
@@ -2010,7 +1989,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 < 1.0e-8) {
 
-            if ((0.0 <= newPtX) && (newPtX <= xEnd2)) {
+            if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
                 x1 = -1.0e8;
                 x2 = 1.0e8;
             } else {
@@ -2040,7 +2019,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT10 < 1.0e-8) {
 
-            if ((0.0 <= newPtY) && (newPtY <= yEnd2)) {
+            if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
                 x1 = -1.0e8;
                 x2 = 1.0e8;
             } else {
@@ -2070,7 +2049,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT20 < 1.0e-8) {
 
-            if ((0.0 <= newPtZ) && (newPtZ <= zEnd2)) {
+            if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2)) {
                 x1 = -1.0e8;
                 x2 = 1.0e8;
             } else {
@@ -2109,17 +2088,17 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   data  DOCUMENT ME!
-     * @param   x     DOCUMENT ME!
-     * @param   y     DOCUMENT ME!
-     * @param   z     DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param data DOCUMENT ME!
+     * @param x DOCUMENT ME!
+     * @param y DOCUMENT ME!
+     * @param z DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    private double getSinc(float[] data, double x, double y, double z) {
+    private double getSinc(final float[] data, final double x, final double y, final double z) {
 
-        // kernel half-width  (i.e. range is +/- w)
+        // kernel half-width (i.e. range is +/- w)
         int w = sincWidth;
         int ix0, iy0, iz0;
 
@@ -2131,9 +2110,9 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double kersum = 0.0;
 
         for (int d = -w; d <= w; d++) {
-            sincz[d + w] = kernelVal((z - iz0 + d), w);
-            sincy[d + w] = kernelVal((y - iy0 + d), w);
-            sincx[d + w] = kernelVal((x - ix0 + d), w);
+            sincz[d + w] = kernelVal( (z - iz0 + d), w);
+            sincy[d + w] = kernelVal( (y - iy0 + d), w);
+            sincx[d + w] = kernelVal( (x - ix0 + d), w);
         }
 
         int xj, yj, zj;
@@ -2145,12 +2124,12 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 yj = iy0 - y1 + w;
 
                 for (int x1 = ix0 - w; x1 <= (ix0 + w); x1++) {
-                    int index = (z1 * sliceSize) + (y1 * xDim) + x1;
+                    final int index = (z1 * sliceSize) + (y1 * xDim) + x1;
 
-                    if ((index >= 0) && (index < data.length)) {
+                    if ( (index >= 0) && (index < data.length)) {
                         xj = ix0 - x1 + w;
 
-                        double sincfac = sincx[xj] * sincy[yj] * sincz[zj];
+                        final double sincfac = sincx[xj] * sincy[yj] * sincz[zj];
 
                         convsum += (data[index] * sincfac);
                         kersum += sincfac;
@@ -2170,13 +2149,13 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   x  DOCUMENT ME!
-     * @param   w  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param x DOCUMENT ME!
+     * @param w DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    private final static double hanning(double x, int w) {
+    private final static double hanning(final double x, final int w) {
 
         if (Math.abs(x) > w) {
             return 0.0;
@@ -2187,21 +2166,21 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   x  DOCUMENT ME!
-     * @param   w  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param x DOCUMENT ME!
+     * @param w DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    private double kernelVal(double x, int w) {
+    private double kernelVal(final double x, final int w) {
 
-        // effectively returns  sinc(x)*hanning(x,w);
+        // effectively returns sinc(x)*hanning(x,w);
         if (Math.abs(x) > w) {
             return 0.0f;
         }
 
         double dn = (x / w * 100.0) + 100;
-        int n = (int) Math.floor(dn);
+        final int n = (int) Math.floor(dn);
 
         dn -= n;
 
@@ -2213,17 +2192,17 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             return 0.0f;
         }
 
-        return ((sincKernel[n] * (1.0 - dn)) + (sincKernel[n + 1] * dn));
+        return ( (sincKernel[n] * (1.0 - dn)) + (sincKernel[n + 1] * dn));
     }
 
     /**
      * Least squares cost function.
-     *
-     * @param   tMatrix  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param tMatrix DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    private double leastSquares(TransMatrix tMatrix) {
+    private double leastSquares(final TransMatrix tMatrix) {
 
         int x, y, z;
         double tmpZ1, tmpZ2, tmpZ3;
@@ -2238,18 +2217,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double sum = 0.0;
         long count = 0;
 
-        double T00 = tMatrix.M00;
-        double T01 = tMatrix.M01;
-        double T02 = tMatrix.M02;
-        double T03 = tMatrix.M03;
-        double T10 = tMatrix.M10;
-        double T11 = tMatrix.M11;
-        double T12 = tMatrix.M12;
-        double T13 = tMatrix.M13;
-        double T20 = tMatrix.M20;
-        double T21 = tMatrix.M21;
-        double T22 = tMatrix.M22;
-        double T23 = tMatrix.M23;
+        final double T00 = tMatrix.M00;
+        final double T01 = tMatrix.M01;
+        final double T02 = tMatrix.M02;
+        final double T03 = tMatrix.M03;
+        final double T10 = tMatrix.M10;
+        final double T11 = tMatrix.M11;
+        final double T12 = tMatrix.M12;
+        final double T13 = tMatrix.M13;
+        final double T20 = tMatrix.M20;
+        final double T21 = tMatrix.M21;
+        final double T22 = tMatrix.M22;
+        final double T23 = tMatrix.M23;
 
         // the next variable are used in the "findRangeX" method. They are calculated only once to
         // speed up the cost function calculation
@@ -2273,23 +2252,23 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
-        }else{
-        	iT00 = Double.MAX_VALUE;
+        } else {
+            iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
-        }else{
-        	iT10 = Double.MAX_VALUE;
+        } else {
+            iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
-        }else{
-        	iT20 = Double.MAX_VALUE;
+        } else {
+            iT20 = Double.MAX_VALUE;
         }
 
-        Point minMaxPt = new Point();
+        final Point minMaxPt = new Point();
 
         for (z = 0; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
@@ -2330,13 +2309,15 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                     position11 = position1 + 1;
                     position21 = position2 + 1;
 
-                    b1 = (dy1 * ((dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11]))) +
-                         (dy * ((dx1 * inputImage.data[position1 + xDim]) + (dx * inputImage.data[position11 + xDim])));
+                    b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11])))
+                            + (dy * ( (dx1 * inputImage.data[position1 + xDim]) + (dx * inputImage.data[position11
+                                    + xDim])));
 
-                    b2 = (dy1 * ((dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21]))) +
-                         (dy * ((dx1 * inputImage.data[position2 + xDim]) + (dx * inputImage.data[position21 + xDim])));
+                    b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21])))
+                            + (dy * ( (dx1 * inputImage.data[position2 + xDim]) + (dx * inputImage.data[position21
+                                    + xDim])));
 
-                    value = ((1 - dz) * b1) + (dz * b2);
+                    value = ( (1 - dz) * b1) + (dz * b2);
 
                     valueR = refImage.data[index] - refImage.min;
                     valueI = value - inputImage.min;
@@ -2355,7 +2336,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double lsq = 0;
 
         if (count > 1000) {
-            lsq = sum / ((double) count);
+            lsq = sum / (count);
         } else {
             lsq = Double.MAX_VALUE;
         }
@@ -2365,12 +2346,12 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
     /**
      * Least squares cost function.
-     *
-     * @param   tMatrix  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param tMatrix DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    private double leastSquaresColor(TransMatrix tMatrix) {
+    private double leastSquaresColor(final TransMatrix tMatrix) {
 
         int x, y, z, c;
         double tmpZ1, tmpZ2, tmpZ3;
@@ -2385,18 +2366,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double sum = 0.0;
         long count = 0;
 
-        double T00 = tMatrix.M00;
-        double T01 = tMatrix.M01;
-        double T02 = tMatrix.M02;
-        double T03 = tMatrix.M03;
-        double T10 = tMatrix.M10;
-        double T11 = tMatrix.M11;
-        double T12 = tMatrix.M12;
-        double T13 = tMatrix.M13;
-        double T20 = tMatrix.M20;
-        double T21 = tMatrix.M21;
-        double T22 = tMatrix.M22;
-        double T23 = tMatrix.M23;
+        final double T00 = tMatrix.M00;
+        final double T01 = tMatrix.M01;
+        final double T02 = tMatrix.M02;
+        final double T03 = tMatrix.M03;
+        final double T10 = tMatrix.M10;
+        final double T11 = tMatrix.M11;
+        final double T12 = tMatrix.M12;
+        final double T13 = tMatrix.M13;
+        final double T20 = tMatrix.M20;
+        final double T21 = tMatrix.M21;
+        final double T22 = tMatrix.M22;
+        final double T23 = tMatrix.M23;
 
         // the next variable are used in the "findRangeX" method. They are calculated only once to
         // speed up the cost function calculation
@@ -2420,23 +2401,23 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
-        }else{
-        	iT00 = Double.MAX_VALUE;
+        } else {
+            iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
-        }else{
-        	iT10 = Double.MAX_VALUE;
+        } else {
+            iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
-        }else{
-        	iT20 = Double.MAX_VALUE;
+        } else {
+            iT20 = Double.MAX_VALUE;
         }
 
-        Point minMaxPt = new Point();
+        final Point minMaxPt = new Point();
 
         for (z = 0; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
@@ -2472,24 +2453,22 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                     dx1 = 1 - dx;
                     dy1 = 1 - dy;
 
-                    position1 = 4 * ((intZ * sliceSize) + (intY * xDim) + intX);
+                    position1 = 4 * ( (intZ * sliceSize) + (intY * xDim) + intX);
                     position2 = position1 + (4 * sliceSize);
                     position11 = position1 + 4;
                     position21 = position2 + 4;
 
                     for (c = 1; c <= 3; c++) {
 
-                        b1 = (dy1 * ((dx1 * inputImage.data[position1 + c]) + (dx * inputImage.data[position11 + c]))) +
-                             (dy *
-                                  ((dx1 * inputImage.data[position1 + (4 * xDim) + c]) +
-                                       (dx * inputImage.data[position11 + (4 * xDim) + c])));
+                        b1 = (dy1 * ( (dx1 * inputImage.data[position1 + c]) + (dx * inputImage.data[position11 + c])))
+                                + (dy * ( (dx1 * inputImage.data[position1 + (4 * xDim) + c]) + (dx * inputImage.data[position11
+                                        + (4 * xDim) + c])));
 
-                        b2 = (dy1 * ((dx1 * inputImage.data[position2 + c]) + (dx * inputImage.data[position21 + c]))) +
-                             (dy *
-                                  ((dx1 * inputImage.data[position2 + (4 * xDim) + c]) +
-                                       (dx * inputImage.data[position21 + (4 * xDim) + c])));
+                        b2 = (dy1 * ( (dx1 * inputImage.data[position2 + c]) + (dx * inputImage.data[position21 + c])))
+                                + (dy * ( (dx1 * inputImage.data[position2 + (4 * xDim) + c]) + (dx * inputImage.data[position21
+                                        + (4 * xDim) + c])));
 
-                        valueI = ((1 - dz) * b1) + (dz * b2);
+                        valueI = ( (1 - dz) * b1) + (dz * b2);
 
                         valueR = refImage.data[index + c];
                         sum += (valueR - valueI) * (valueR - valueI);
@@ -2507,7 +2486,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double lsq = 0;
 
         if (count > 1000) {
-            lsq = sum / ((double) count);
+            lsq = sum / (count);
         } else {
             lsq = Double.MAX_VALUE;
         }
@@ -2517,12 +2496,12 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
     /**
      * Least squares cost function.
-     *
-     * @param   tMatrix  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param tMatrix DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    private double leastSquaresSmoothed(TransMatrix tMatrix) {
+    private double leastSquaresSmoothed(final TransMatrix tMatrix) {
 
         int x, y, z;
         double tmpZ1, tmpZ2, tmpZ3;
@@ -2548,18 +2527,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        double T00 = tMatrix.M00;
-        double T01 = tMatrix.M01;
-        double T02 = tMatrix.M02;
-        double T03 = tMatrix.M03;
-        double T10 = tMatrix.M10;
-        double T11 = tMatrix.M11;
-        double T12 = tMatrix.M12;
-        double T13 = tMatrix.M13;
-        double T20 = tMatrix.M20;
-        double T21 = tMatrix.M21;
-        double T22 = tMatrix.M22;
-        double T23 = tMatrix.M23;
+        final double T00 = tMatrix.M00;
+        final double T01 = tMatrix.M01;
+        final double T02 = tMatrix.M02;
+        final double T03 = tMatrix.M03;
+        final double T10 = tMatrix.M10;
+        final double T11 = tMatrix.M11;
+        final double T12 = tMatrix.M12;
+        final double T13 = tMatrix.M13;
+        final double T20 = tMatrix.M20;
+        final double T21 = tMatrix.M21;
+        final double T22 = tMatrix.M22;
+        final double T23 = tMatrix.M23;
 
         // the next variable are used in the "findRangeX" method. They are calculated only once to
         // speed up the cost function calculation
@@ -2583,23 +2562,23 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
-        }else{
-        	iT00 = Double.MAX_VALUE;
+        } else {
+            iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
-        }else{
-        	iT10 = Double.MAX_VALUE;
+        } else {
+            iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
-        }else{
-        	iT20 = Double.MAX_VALUE;
+        } else {
+            iT20 = Double.MAX_VALUE;
         }
 
-        Point minMaxPt = new Point();
+        final Point minMaxPt = new Point();
         for (z = 0; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
             tmpZ2 = (z * T12) + T13;
@@ -2637,35 +2616,33 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                     position1 = (intZ * sliceSize) + (intY * xDim) + intX;
                     position2 = position1 + sliceSize;
 
-                    b1 = (dy1 * ((dx1 * inputImage.data[position1]) + (dx * inputImage.data[position1 + 1]))) +
-                         (dy *
-                              ((dx1 * inputImage.data[position1 + xDim]) +
-                                   (dx * inputImage.data[position1 + xDim + 1])));
+                    b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position1 + 1])))
+                            + (dy * ( (dx1 * inputImage.data[position1 + xDim]) + (dx * inputImage.data[position1
+                                    + xDim + 1])));
 
-                    b2 = (dy1 * ((dx1 * inputImage.data[position2]) + (dx * inputImage.data[position2 + 1]))) +
-                         (dy *
-                              ((dx1 * inputImage.data[position2 + xDim]) +
-                                   (dx * inputImage.data[position2 + xDim + 1])));
+                    b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position2 + 1])))
+                            + (dy * ( (dx1 * inputImage.data[position2 + xDim]) + (dx * inputImage.data[position2
+                                    + xDim + 1])));
 
-                    value = ((1 - dz) * b1) + (dz * b2);
+                    value = ( (1 - dz) * b1) + (dz * b2);
 
                     weight = 1.0;
 
                     if (newPtX < smoothX) {
                         weight *= newPtX * invSmoothX;
-                    } else if ((xEnd2 - newPtX) < smoothX) {
+                    } else if ( (xEnd2 - newPtX) < smoothX) {
                         weight *= (xEnd2 - newPtX) * invSmoothX;
                     }
 
                     if (newPtY < smoothY) {
                         weight *= newPtY * invSmoothY;
-                    } else if ((yEnd2 - newPtY) < smoothY) {
+                    } else if ( (yEnd2 - newPtY) < smoothY) {
                         weight *= (yEnd2 - newPtY) * invSmoothY;
                     }
 
                     if (newPtZ < smoothZ) {
                         weight *= newPtZ * invSmoothZ;
-                    } else if ((zEnd2 - newPtZ) < smoothZ) {
+                    } else if ( (zEnd2 - newPtZ) < smoothZ) {
                         weight *= (zEnd2 - newPtZ) * invSmoothZ;
                     }
 
@@ -2699,12 +2676,12 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
     /**
      * Least squares cost function.
-     *
-     * @param   tMatrix  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param tMatrix DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    private double leastSquaresSmoothedColor(TransMatrix tMatrix) {
+    private double leastSquaresSmoothedColor(final TransMatrix tMatrix) {
 
         int x, y, z, c;
         double tmpZ1, tmpZ2, tmpZ3;
@@ -2730,18 +2707,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        double T00 = tMatrix.M00;
-        double T01 = tMatrix.M01;
-        double T02 = tMatrix.M02;
-        double T03 = tMatrix.M03;
-        double T10 = tMatrix.M10;
-        double T11 = tMatrix.M11;
-        double T12 = tMatrix.M12;
-        double T13 = tMatrix.M13;
-        double T20 = tMatrix.M20;
-        double T21 = tMatrix.M21;
-        double T22 = tMatrix.M22;
-        double T23 = tMatrix.M23;
+        final double T00 = tMatrix.M00;
+        final double T01 = tMatrix.M01;
+        final double T02 = tMatrix.M02;
+        final double T03 = tMatrix.M03;
+        final double T10 = tMatrix.M10;
+        final double T11 = tMatrix.M11;
+        final double T12 = tMatrix.M12;
+        final double T13 = tMatrix.M13;
+        final double T20 = tMatrix.M20;
+        final double T21 = tMatrix.M21;
+        final double T22 = tMatrix.M22;
+        final double T23 = tMatrix.M23;
 
         // the next variable are used in the "findRangeX" method. They are calculated only once to
         // speed up the cost function calculation
@@ -2765,23 +2742,23 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
-        }else{
-        	iT00 = Double.MAX_VALUE;
+        } else {
+            iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
-        }else{
-        	iT10 = Double.MAX_VALUE;
+        } else {
+            iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
-        }else{
-        	iT20 = Double.MAX_VALUE;
+        } else {
+            iT20 = Double.MAX_VALUE;
         }
 
-        Point minMaxPt = new Point();
+        final Point minMaxPt = new Point();
 
         for (z = 0; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
@@ -2817,26 +2794,26 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                     dx1 = 1 - dx;
                     dy1 = 1 - dy;
 
-                    position1 = 4 * ((intZ * sliceSize) + (intY * xDim) + intX);
+                    position1 = 4 * ( (intZ * sliceSize) + (intY * xDim) + intX);
                     position2 = position1 + (4 * sliceSize);
 
                     weight = 1.0;
 
                     if (newPtX < smoothX) {
                         weight *= newPtX * invSmoothX;
-                    } else if ((xEnd2 - newPtX) < smoothX) {
+                    } else if ( (xEnd2 - newPtX) < smoothX) {
                         weight *= (xEnd2 - newPtX) * invSmoothX;
                     }
 
                     if (newPtY < smoothY) {
                         weight *= newPtY * invSmoothY;
-                    } else if ((yEnd2 - newPtY) < smoothY) {
+                    } else if ( (yEnd2 - newPtY) < smoothY) {
                         weight *= (yEnd2 - newPtY) * invSmoothY;
                     }
 
                     if (newPtZ < smoothZ) {
                         weight *= newPtZ * invSmoothZ;
-                    } else if ((zEnd2 - newPtZ) < smoothZ) {
+                    } else if ( (zEnd2 - newPtZ) < smoothZ) {
                         weight *= (zEnd2 - newPtZ) * invSmoothZ;
                     }
 
@@ -2845,19 +2822,15 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                     }
 
                     for (c = 1; c <= 3; c++) {
-                        b1 = (dy1 *
-                                  ((dx1 * inputImage.data[position1 + c]) + (dx * inputImage.data[position1 + 4 + c]))) +
-                             (dy *
-                                  ((dx1 * inputImage.data[position1 + (4 * xDim) + c]) +
-                                       (dx * inputImage.data[position1 + (4 * xDim) + 4 + c])));
+                        b1 = (dy1 * ( (dx1 * inputImage.data[position1 + c]) + (dx * inputImage.data[position1 + 4 + c])))
+                                + (dy * ( (dx1 * inputImage.data[position1 + (4 * xDim) + c]) + (dx * inputImage.data[position1
+                                        + (4 * xDim) + 4 + c])));
 
-                        b2 = (dy1 *
-                                  ((dx1 * inputImage.data[position2 + c]) + (dx * inputImage.data[position2 + 4 + c]))) +
-                             (dy *
-                                  ((dx1 * inputImage.data[position2 + (4 * xDim) + c]) +
-                                       (dx * inputImage.data[position2 + (4 * xDim) + 4 + c])));
+                        b2 = (dy1 * ( (dx1 * inputImage.data[position2 + c]) + (dx * inputImage.data[position2 + 4 + c])))
+                                + (dy * ( (dx1 * inputImage.data[position2 + (4 * xDim) + c]) + (dx * inputImage.data[position2
+                                        + (4 * xDim) + 4 + c])));
 
-                        valueI = ((1 - dz) * b1) + (dz * b2);
+                        valueI = ( (1 - dz) * b1) + (dz * b2);
 
                         valueR = refImage.data[index + c];
 
@@ -2887,12 +2860,12 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
     /**
      * Least squares cost function with weighting.
-     *
-     * @param   tMatrix  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param tMatrix DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    private double leastSquaresSmoothedWgt(TransMatrix tMatrix) {
+    private double leastSquaresSmoothedWgt(final TransMatrix tMatrix) {
 
         int x, y, z;
         double tmpZ1, tmpZ2, tmpZ3;
@@ -2919,18 +2892,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        double T00 = tMatrix.M00;
-        double T01 = tMatrix.M01;
-        double T02 = tMatrix.M02;
-        double T03 = tMatrix.M03;
-        double T10 = tMatrix.M10;
-        double T11 = tMatrix.M11;
-        double T12 = tMatrix.M12;
-        double T13 = tMatrix.M13;
-        double T20 = tMatrix.M20;
-        double T21 = tMatrix.M21;
-        double T22 = tMatrix.M22;
-        double T23 = tMatrix.M23;
+        final double T00 = tMatrix.M00;
+        final double T01 = tMatrix.M01;
+        final double T02 = tMatrix.M02;
+        final double T03 = tMatrix.M03;
+        final double T10 = tMatrix.M10;
+        final double T11 = tMatrix.M11;
+        final double T12 = tMatrix.M12;
+        final double T13 = tMatrix.M13;
+        final double T20 = tMatrix.M20;
+        final double T21 = tMatrix.M21;
+        final double T22 = tMatrix.M22;
+        final double T23 = tMatrix.M23;
 
         // the next variable are used in the "findRangeX" method. They are calculated only once to
         // speed up the cost function calculation
@@ -2954,23 +2927,23 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
-        }else{
-        	iT00 = Double.MAX_VALUE;
+        } else {
+            iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
-        }else{
-        	iT10 = Double.MAX_VALUE;
+        } else {
+            iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
-        }else{
-        	iT20 = Double.MAX_VALUE;
+        } else {
+            iT20 = Double.MAX_VALUE;
         }
 
-        Point minMaxPt = new Point();
+        final Point minMaxPt = new Point();
 
         for (z = 0; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
@@ -3015,37 +2988,37 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                     position21 = position2 + 1;
                     position21x = position21 + xDim;
 
-                    b1 = (dy1 * ((dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11]))) +
-                         (dy * ((dx1 * inputImage.data[position1x]) + (dx * inputImage.data[position11x])));
+                    b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11])))
+                            + (dy * ( (dx1 * inputImage.data[position1x]) + (dx * inputImage.data[position11x])));
 
-                    b2 = (dy1 * ((dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21]))) +
-                         (dy * ((dx1 * inputImage.data[position2x]) + (dx * inputImage.data[position21x])));
-                    value = ((1 - dz) * b1) + (dz * b2);
+                    b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21])))
+                            + (dy * ( (dx1 * inputImage.data[position2x]) + (dx * inputImage.data[position21x])));
+                    value = ( (1 - dz) * b1) + (dz * b2);
 
-                    b1 = (dy1 * ((dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11]))) +
-                         (dy * ((dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
+                    b1 = (dy1 * ( (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11])))
+                            + (dy * ( (dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
 
-                    b2 = (dy1 * ((dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21]))) +
-                         (dy * ((dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
-                    wValue = ((1 - dz) * b1) + (dz * b2);
+                    b2 = (dy1 * ( (dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21])))
+                            + (dy * ( (dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
+                    wValue = ( (1 - dz) * b1) + (dz * b2);
 
                     weight = wValue * refWgtImage.data[index];
 
                     if (newPtX < smoothX) {
                         weight *= newPtX * invSmoothX;
-                    } else if ((xEnd2 - newPtX) < smoothX) {
+                    } else if ( (xEnd2 - newPtX) < smoothX) {
                         weight *= (xEnd2 - newPtX) * invSmoothX;
                     }
 
                     if (newPtY < smoothY) {
                         weight *= newPtY * invSmoothY;
-                    } else if ((yEnd2 - newPtY) < smoothY) {
+                    } else if ( (yEnd2 - newPtY) < smoothY) {
                         weight *= (yEnd2 - newPtY) * invSmoothY;
                     }
 
                     if (newPtZ < smoothZ) {
                         weight *= newPtZ * invSmoothZ;
-                    } else if ((zEnd2 - newPtZ) < smoothZ) {
+                    } else if ( (zEnd2 - newPtZ) < smoothZ) {
                         weight *= (zEnd2 - newPtZ) * invSmoothZ;
                     }
 
@@ -3079,12 +3052,12 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
     /**
      * Least squares cost function with weighting.
-     *
-     * @param   tMatrix  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param tMatrix DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    private double leastSquaresSmoothedWgtColor(TransMatrix tMatrix) {
+    private double leastSquaresSmoothedWgtColor(final TransMatrix tMatrix) {
 
         int x, y, z, c;
         double tmpZ1, tmpZ2, tmpZ3;
@@ -3111,18 +3084,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        double T00 = tMatrix.M00;
-        double T01 = tMatrix.M01;
-        double T02 = tMatrix.M02;
-        double T03 = tMatrix.M03;
-        double T10 = tMatrix.M10;
-        double T11 = tMatrix.M11;
-        double T12 = tMatrix.M12;
-        double T13 = tMatrix.M13;
-        double T20 = tMatrix.M20;
-        double T21 = tMatrix.M21;
-        double T22 = tMatrix.M22;
-        double T23 = tMatrix.M23;
+        final double T00 = tMatrix.M00;
+        final double T01 = tMatrix.M01;
+        final double T02 = tMatrix.M02;
+        final double T03 = tMatrix.M03;
+        final double T10 = tMatrix.M10;
+        final double T11 = tMatrix.M11;
+        final double T12 = tMatrix.M12;
+        final double T13 = tMatrix.M13;
+        final double T20 = tMatrix.M20;
+        final double T21 = tMatrix.M21;
+        final double T22 = tMatrix.M22;
+        final double T23 = tMatrix.M23;
 
         // the next variable are used in the "findRangeX" method. They are calculated only once to
         // speed up the cost function calculation
@@ -3146,23 +3119,23 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
-        }else{
-        	iT00 = Double.MAX_VALUE;
+        } else {
+            iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
-        }else{
-        	iT10 = Double.MAX_VALUE;
+        } else {
+            iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
-        }else{
-        	iT20 = Double.MAX_VALUE;
+        } else {
+            iT20 = Double.MAX_VALUE;
         }
 
-        Point minMaxPt = new Point();
+        final Point minMaxPt = new Point();
 
         for (z = 0; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
@@ -3207,30 +3180,30 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                     position21 = position2 + 1;
                     position21x = position21 + xDim;
 
-                    b1 = (dy1 * ((dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11]))) +
-                         (dy * ((dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
+                    b1 = (dy1 * ( (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11])))
+                            + (dy * ( (dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
 
-                    b2 = (dy1 * ((dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21]))) +
-                         (dy * ((dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
-                    wValue = ((1 - dz) * b1) + (dz * b2);
+                    b2 = (dy1 * ( (dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21])))
+                            + (dy * ( (dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
+                    wValue = ( (1 - dz) * b1) + (dz * b2);
 
                     weight = wValue * refWgtImage.data[index];
 
                     if (newPtX < smoothX) {
                         weight *= newPtX * invSmoothX;
-                    } else if ((xEnd2 - newPtX) < smoothX) {
+                    } else if ( (xEnd2 - newPtX) < smoothX) {
                         weight *= (xEnd2 - newPtX) * invSmoothX;
                     }
 
                     if (newPtY < smoothY) {
                         weight *= newPtY * invSmoothY;
-                    } else if ((yEnd2 - newPtY) < smoothY) {
+                    } else if ( (yEnd2 - newPtY) < smoothY) {
                         weight *= (yEnd2 - newPtY) * invSmoothY;
                     }
 
                     if (newPtZ < smoothZ) {
                         weight *= newPtZ * invSmoothZ;
-                    } else if ((zEnd2 - newPtZ) < smoothZ) {
+                    } else if ( (zEnd2 - newPtZ) < smoothZ) {
                         weight *= (zEnd2 - newPtZ) * invSmoothZ;
                     }
 
@@ -3239,22 +3212,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                     }
 
                     for (c = 1; c <= 3; c++) {
-                        b1 = (dy1 *
-                                  ((dx1 * inputImage.data[(4 * position1) + c]) +
-                                       (dx * inputImage.data[(4 * position11) + c]))) +
-                             (dy *
-                                  ((dx1 * inputImage.data[(4 * position1x) + c]) +
-                                       (dx * inputImage.data[(4 * position11x) + c])));
+                        b1 = (dy1 * ( (dx1 * inputImage.data[ (4 * position1) + c]) + (dx * inputImage.data[ (4 * position11)
+                                + c])))
+                                + (dy * ( (dx1 * inputImage.data[ (4 * position1x) + c]) + (dx * inputImage.data[ (4 * position11x)
+                                        + c])));
 
-                        b2 = (dy1 *
-                                  ((dx1 * inputImage.data[(4 * position2) + c]) +
-                                       (dx * inputImage.data[(4 * position21) + c]))) +
-                             (dy *
-                                  ((dx1 * inputImage.data[(4 * position2x) + c]) +
-                                       (dx * inputImage.data[(4 * position21x) + c])));
-                        valueI = ((1 - dz) * b1) + (dz * b2);
+                        b2 = (dy1 * ( (dx1 * inputImage.data[ (4 * position2) + c]) + (dx * inputImage.data[ (4 * position21)
+                                + c])))
+                                + (dy * ( (dx1 * inputImage.data[ (4 * position2x) + c]) + (dx * inputImage.data[ (4 * position21x)
+                                        + c])));
+                        valueI = ( (1 - dz) * b1) + (dz * b2);
 
-                        valueR = refImage.data[(4 * index) + c];
+                        valueR = refImage.data[ (4 * index) + c];
                         sum += weight * (valueR - valueI) * (valueR - valueI);
                     } // for (c = 1; c <= 3; c++)
 
@@ -3281,53 +3250,53 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   tMatrix  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param tMatrix DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    private double mutualInformation(TransMatrix tMatrix) {
+    private double mutualInformation(final TransMatrix tMatrix) {
 
-        double[] jointEntropy = { 0.0 };
-        double[] margEntropyR = { 0.0 };
-        double[] margEntropyI = { 0.0 };
+        final double[] jointEntropy = {0.0};
+        final double[] margEntropyR = {0.0};
+        final double[] margEntropyI = {0.0};
 
         calcEntropy(tMatrix, jointEntropy, margEntropyR, margEntropyI);
 
-        return ((1 - (margEntropyR[0] + margEntropyI[0] - jointEntropy[0])));
+        return ( (1 - (margEntropyR[0] + margEntropyI[0] - jointEntropy[0])));
     }
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   tMatrix  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param tMatrix DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    private double mutualInformationSmoothed(TransMatrix tMatrix) {
+    private double mutualInformationSmoothed(final TransMatrix tMatrix) {
 
-        double[] jointEntropy = { 0.0 };
-        double[] margEntropyR = { 0.0 };
-        double[] margEntropyI = { 0.0 };
+        final double[] jointEntropy = {0.0};
+        final double[] margEntropyR = {0.0};
+        final double[] margEntropyI = {0.0};
 
         calcEntropySmoothed(tMatrix, jointEntropy, margEntropyR, margEntropyI);
 
-        return ((1 - (margEntropyR[0] + margEntropyI[0] - jointEntropy[0])));
+        return ( (1 - (margEntropyR[0] + margEntropyI[0] - jointEntropy[0])));
     }
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   tMatrix  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param tMatrix DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    private double normalizedMutualInformation(TransMatrix tMatrix) {
+    private double normalizedMutualInformation(final TransMatrix tMatrix) {
 
         double normalizedMI;
-        double[] jointEntropy = { 0.0 };
-        double[] margEntropyR = { 0.0 };
-        double[] margEntropyI = { 0.0 };
+        final double[] jointEntropy = {0.0};
+        final double[] margEntropyR = {0.0};
+        final double[] margEntropyI = {0.0};
 
         calcEntropy(tMatrix, jointEntropy, margEntropyR, margEntropyI);
 
@@ -3342,17 +3311,17 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   tMatrix  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param tMatrix DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    private double normalizedMutualInformationSmoothed(TransMatrix tMatrix) {
+    private double normalizedMutualInformationSmoothed(final TransMatrix tMatrix) {
 
         double normalizedMI;
-        double[] jointEntropy = { 0.0 };
-        double[] margEntropyR = { 0.0 };
-        double[] margEntropyI = { 0.0 };
+        final double[] jointEntropy = {0.0};
+        final double[] margEntropyR = {0.0};
+        final double[] margEntropyI = {0.0};
 
         calcEntropySmoothed(tMatrix, jointEntropy, margEntropyR, margEntropyI);
 
@@ -3367,17 +3336,17 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   tMatrix  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param tMatrix DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    private double normalizedMutualInformationSmoothedWgt(TransMatrix tMatrix) {
+    private double normalizedMutualInformationSmoothedWgt(final TransMatrix tMatrix) {
 
         double normalizedMI;
-        double[] jointEntropy = { 0.0 };
-        double[] margEntropyR = { 0.0 };
-        double[] margEntropyI = { 0.0 };
+        final double[] jointEntropy = {0.0};
+        final double[] margEntropyR = {0.0};
+        final double[] margEntropyI = {0.0};
 
         calcEntropySmoothedWgt(tMatrix, jointEntropy, margEntropyR, margEntropyI);
 
@@ -3392,12 +3361,12 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
     /**
      * Normalized cross-correlation cost function.
-     *
-     * @param   tMatrix  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param tMatrix DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    private double normalizedXCorrelation(TransMatrix tMatrix) {
+    private double normalizedXCorrelation(final TransMatrix tMatrix) {
 
         int x, y, z;
         double tmpZ1, tmpZ2, tmpZ3;
@@ -3419,18 +3388,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double countSqr = 0;
         double varX, varY, varXY;
 
-        double T00 = tMatrix.M00;
-        double T01 = tMatrix.M01;
-        double T02 = tMatrix.M02;
-        double T03 = tMatrix.M03;
-        double T10 = tMatrix.M10;
-        double T11 = tMatrix.M11;
-        double T12 = tMatrix.M12;
-        double T13 = tMatrix.M13;
-        double T20 = tMatrix.M20;
-        double T21 = tMatrix.M21;
-        double T22 = tMatrix.M22;
-        double T23 = tMatrix.M23;
+        final double T00 = tMatrix.M00;
+        final double T01 = tMatrix.M01;
+        final double T02 = tMatrix.M02;
+        final double T03 = tMatrix.M03;
+        final double T10 = tMatrix.M10;
+        final double T11 = tMatrix.M11;
+        final double T12 = tMatrix.M12;
+        final double T13 = tMatrix.M13;
+        final double T20 = tMatrix.M20;
+        final double T21 = tMatrix.M21;
+        final double T22 = tMatrix.M22;
+        final double T23 = tMatrix.M23;
 
         // the next variable are used in the "findRangeX" method. They are calculated only once to
         // speed up the cost function calculation
@@ -3454,23 +3423,23 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
-        }else{
-        	iT00 = Double.MAX_VALUE;
+        } else {
+            iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
-        }else{
-        	iT10 = Double.MAX_VALUE;
+        } else {
+            iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
-        }else{
-        	iT20 = Double.MAX_VALUE;
+        } else {
+            iT20 = Double.MAX_VALUE;
         }
 
-        Point minMaxPt = new Point();
+        final Point minMaxPt = new Point();
 
         for (z = 0; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
@@ -3509,17 +3478,15 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                     position1 = (intZ * sliceSize) + (intY * xDim) + intX;
                     position2 = position1 + sliceSize;
 
-                    b1 = (dy1 * ((dx1 * inputImage.data[position1]) + (dx * inputImage.data[position1 + 1]))) +
-                         (dy *
-                              ((dx1 * inputImage.data[position1 + xDim]) +
-                                   (dx * inputImage.data[position1 + xDim + 1])));
+                    b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position1 + 1])))
+                            + (dy * ( (dx1 * inputImage.data[position1 + xDim]) + (dx * inputImage.data[position1
+                                    + xDim + 1])));
 
-                    b2 = (dy1 * ((dx1 * inputImage.data[position2]) + (dx * inputImage.data[position2 + 1]))) +
-                         (dy *
-                              ((dx1 * inputImage.data[position2 + xDim]) +
-                                   (dx * inputImage.data[position2 + xDim + 1])));
+                    b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position2 + 1])))
+                            + (dy * ( (dx1 * inputImage.data[position2 + xDim]) + (dx * inputImage.data[position2
+                                    + xDim + 1])));
 
-                    value = ((1 - dz) * b1) + (dz * b2);
+                    value = ( (1 - dz) * b1) + (dz * b2);
 
                     valueR = refImage.data[index] - refImage.min;
                     valueI = value - inputImage.min;
@@ -3543,11 +3510,11 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (count > 1000) {
             countSqr = (count - 1) * count;
-            varXY = (sumXY / (count - 1)) - ((sumX * sumY) / countSqr);
-            varX = (sumX2 / (count - 1)) - ((sumX * sumX) / countSqr);
-            varY = (sumY2 / (count - 1)) - ((sumY * sumY) / countSqr);
+            varXY = (sumXY / (count - 1)) - ( (sumX * sumY) / countSqr);
+            varX = (sumX2 / (count - 1)) - ( (sumX * sumX) / countSqr);
+            varY = (sumY2 / (count - 1)) - ( (sumY * sumY) / countSqr);
 
-            if ((varX > 0.0) && (varY > 0.0)) {
+            if ( (varX > 0.0) && (varY > 0.0)) {
                 correlation = Math.abs(varXY) / Math.sqrt(varX * varY);
             }
         }
@@ -3557,12 +3524,12 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
     /**
      * Normalized cross-correlation cost function.
-     *
-     * @param   tMatrix  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param tMatrix DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    private double normalizedXCorrelationSinc(TransMatrix tMatrix) {
+    private double normalizedXCorrelationSinc(final TransMatrix tMatrix) {
 
         int x, y, z;
         double tmpZ1, tmpZ2, tmpZ3;
@@ -3581,18 +3548,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double varX, varY, varXY;
         double countSqr = 0;
 
-        double T00 = tMatrix.M00;
-        double T01 = tMatrix.M01;
-        double T02 = tMatrix.M02;
-        double T03 = tMatrix.M03;
-        double T10 = tMatrix.M10;
-        double T11 = tMatrix.M11;
-        double T12 = tMatrix.M12;
-        double T13 = tMatrix.M13;
-        double T20 = tMatrix.M20;
-        double T21 = tMatrix.M21;
-        double T22 = tMatrix.M22;
-        double T23 = tMatrix.M23;
+        final double T00 = tMatrix.M00;
+        final double T01 = tMatrix.M01;
+        final double T02 = tMatrix.M02;
+        final double T03 = tMatrix.M03;
+        final double T10 = tMatrix.M10;
+        final double T11 = tMatrix.M11;
+        final double T12 = tMatrix.M12;
+        final double T13 = tMatrix.M13;
+        final double T20 = tMatrix.M20;
+        final double T21 = tMatrix.M21;
+        final double T22 = tMatrix.M22;
+        final double T23 = tMatrix.M23;
 
         // the next variable are used in the "findRangeX" method. They are calculated only once to
         // speed up the cost function calculation
@@ -3616,24 +3583,24 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
-        }else{
-        	iT00 = Double.MAX_VALUE;
+        } else {
+            iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
-        }else{
-        	iT10 = Double.MAX_VALUE;
+        } else {
+            iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
-        }else{
-        	iT20 = Double.MAX_VALUE;
+        } else {
+            iT20 = Double.MAX_VALUE;
         }
 
         setupKernel(); // setups sinc kernal
-        Point minMaxPt = new Point();
+        final Point minMaxPt = new Point();
 
         for (z = 0; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
@@ -3683,11 +3650,11 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (count > 1000) {
             countSqr = (count - 1) * count;
-            varXY = (sumXY / (count - 1)) - ((sumX * sumY) / countSqr);
-            varX = (sumX2 / (count - 1)) - ((sumX * sumX) / countSqr);
-            varY = (sumY2 / (count - 1)) - ((sumY * sumY) / countSqr);
+            varXY = (sumXY / (count - 1)) - ( (sumX * sumY) / countSqr);
+            varX = (sumX2 / (count - 1)) - ( (sumX * sumX) / countSqr);
+            varY = (sumY2 / (count - 1)) - ( (sumY * sumY) / countSqr);
 
-            if ((varX > 0.0) && (varY > 0.0)) {
+            if ( (varX > 0.0) && (varY > 0.0)) {
                 correlation = Math.abs(varXY) / Math.sqrt(varX * varY);
             }
         }
@@ -3697,12 +3664,12 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
     /**
      * Normalized cross-correlation cost function.
-     *
-     * @param   tMatrix  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param tMatrix DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    private double normalizedXCorrelationSmoothed(TransMatrix tMatrix) {
+    private double normalizedXCorrelationSmoothed(final TransMatrix tMatrix) {
 
         int x, y, z, iter;
         double tmpZ1, tmpZ2, tmpZ3;
@@ -3739,18 +3706,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        double T00 = tMatrix.M00;
-        double T01 = tMatrix.M01;
-        double T02 = tMatrix.M02;
-        double T03 = tMatrix.M03;
-        double T10 = tMatrix.M10;
-        double T11 = tMatrix.M11;
-        double T12 = tMatrix.M12;
-        double T13 = tMatrix.M13;
-        double T20 = tMatrix.M20;
-        double T21 = tMatrix.M21;
-        double T22 = tMatrix.M22;
-        double T23 = tMatrix.M23;
+        final double T00 = tMatrix.M00;
+        final double T01 = tMatrix.M01;
+        final double T02 = tMatrix.M02;
+        final double T03 = tMatrix.M03;
+        final double T10 = tMatrix.M10;
+        final double T11 = tMatrix.M11;
+        final double T12 = tMatrix.M12;
+        final double T13 = tMatrix.M13;
+        final double T20 = tMatrix.M20;
+        final double T21 = tMatrix.M21;
+        final double T22 = tMatrix.M22;
+        final double T23 = tMatrix.M23;
 
         // the next variable are used in the "findRangeX" method. They are calculated only once to
         // speed up the cost function calculation
@@ -3774,23 +3741,23 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
-        }else{
-        	iT00 = Double.MAX_VALUE;
+        } else {
+            iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
-        }else{
-        	iT10 = Double.MAX_VALUE;
+        } else {
+            iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
-        }else{
-        	iT20 = Double.MAX_VALUE;
+        } else {
+            iT20 = Double.MAX_VALUE;
         }
 
-        Point minMaxPt = new Point();
+        final Point minMaxPt = new Point();
 
         for (iter = 0; iter <= 1; iter++) {
 
@@ -3831,35 +3798,33 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                         position1 = (intZ * sliceSize) + (intY * xDim) + intX;
                         position2 = position1 + sliceSize;
 
-                        b1 = (dy1 * ((dx1 * inputImage.data[position1]) + (dx * inputImage.data[position1 + 1]))) +
-                             (dy *
-                                  ((dx1 * inputImage.data[position1 + xDim]) +
-                                       (dx * inputImage.data[position1 + xDim + 1])));
+                        b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position1 + 1])))
+                                + (dy * ( (dx1 * inputImage.data[position1 + xDim]) + (dx * inputImage.data[position1
+                                        + xDim + 1])));
 
-                        b2 = (dy1 * ((dx1 * inputImage.data[position2]) + (dx * inputImage.data[position2 + 1]))) +
-                             (dy *
-                                  ((dx1 * inputImage.data[position2 + xDim]) +
-                                       (dx * inputImage.data[position2 + xDim + 1])));
+                        b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position2 + 1])))
+                                + (dy * ( (dx1 * inputImage.data[position2 + xDim]) + (dx * inputImage.data[position2
+                                        + xDim + 1])));
 
-                        value = ((1 - dz) * b1) + (dz * b2);
+                        value = ( (1 - dz) * b1) + (dz * b2);
 
                         weight = 1.0;
 
                         if (newPtX < smoothX) {
                             weight *= newPtX * invSmoothX;
-                        } else if ((xEnd2 - newPtX) < smoothX) {
+                        } else if ( (xEnd2 - newPtX) < smoothX) {
                             weight *= (xEnd2 - newPtX) * invSmoothX;
                         }
 
                         if (newPtY < smoothY) {
                             weight *= newPtY * invSmoothY;
-                        } else if ((yEnd2 - newPtY) < smoothY) {
+                        } else if ( (yEnd2 - newPtY) < smoothY) {
                             weight *= (yEnd2 - newPtY) * invSmoothY;
                         }
 
                         if (newPtZ < smoothZ) {
                             weight *= newPtZ * invSmoothZ;
-                        } else if ((zEnd2 - newPtZ) < smoothZ) {
+                        } else if ( (zEnd2 - newPtZ) < smoothZ) {
                             weight *= (zEnd2 - newPtZ) * invSmoothZ;
                         }
 
@@ -3898,12 +3863,12 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         correlation = 0.0; // uncorrelated (worst) case
 
         if (count > 1000) {
-            countFactor = numValues / ((numValues - 1) * count);
+            countFactor = numValues / ( (numValues - 1) * count);
             varXY = sumXY * countFactor;
             varX = sumX2 * countFactor;
             varY = sumY2 * countFactor;
 
-            if ((varX > 0.0) && (varY > 0.0)) {
+            if ( (varX > 0.0) && (varY > 0.0)) {
                 correlation = Math.abs(varXY) / Math.sqrt(varX * varY);
             }
         }
@@ -3913,12 +3878,12 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
     /**
      * Normalized cross-correlation cost function with weighting.
-     *
-     * @param   tMatrix  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param tMatrix DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    private double normalizedXCorrelationSmoothedWgt(TransMatrix tMatrix) {
+    private double normalizedXCorrelationSmoothedWgt(final TransMatrix tMatrix) {
 
         int x, y, z, iter;
         double tmpZ1, tmpZ2, tmpZ3;
@@ -3956,18 +3921,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        double T00 = tMatrix.M00;
-        double T01 = tMatrix.M01;
-        double T02 = tMatrix.M02;
-        double T03 = tMatrix.M03;
-        double T10 = tMatrix.M10;
-        double T11 = tMatrix.M11;
-        double T12 = tMatrix.M12;
-        double T13 = tMatrix.M13;
-        double T20 = tMatrix.M20;
-        double T21 = tMatrix.M21;
-        double T22 = tMatrix.M22;
-        double T23 = tMatrix.M23;
+        final double T00 = tMatrix.M00;
+        final double T01 = tMatrix.M01;
+        final double T02 = tMatrix.M02;
+        final double T03 = tMatrix.M03;
+        final double T10 = tMatrix.M10;
+        final double T11 = tMatrix.M11;
+        final double T12 = tMatrix.M12;
+        final double T13 = tMatrix.M13;
+        final double T20 = tMatrix.M20;
+        final double T21 = tMatrix.M21;
+        final double T22 = tMatrix.M22;
+        final double T23 = tMatrix.M23;
 
         // the next variable are used in the "findRangeX" method. They are calculated only once to
         // speed up the cost function calculation
@@ -3991,23 +3956,23 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
-        }else{
-        	iT00 = Double.MAX_VALUE;
+        } else {
+            iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
-        }else{
-        	iT10 = Double.MAX_VALUE;
+        } else {
+            iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
-        }else{
-        	iT20 = Double.MAX_VALUE;
+        } else {
+            iT20 = Double.MAX_VALUE;
         }
 
-        Point minMaxPt = new Point();
+        final Point minMaxPt = new Point();
 
         for (iter = 0; iter <= 1; iter++) {
 
@@ -4054,37 +4019,37 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                         position21 = position2 + 1;
                         position21x = position21 + xDim;
 
-                        b1 = (dy1 * ((dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11]))) +
-                             (dy * ((dx1 * inputImage.data[position1x]) + (dx * inputImage.data[position11x])));
+                        b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11])))
+                                + (dy * ( (dx1 * inputImage.data[position1x]) + (dx * inputImage.data[position11x])));
 
-                        b2 = (dy1 * ((dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21]))) +
-                             (dy * ((dx1 * inputImage.data[position2x]) + (dx * inputImage.data[position21x])));
-                        value = ((1 - dz) * b1) + (dz * b2);
+                        b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21])))
+                                + (dy * ( (dx1 * inputImage.data[position2x]) + (dx * inputImage.data[position21x])));
+                        value = ( (1 - dz) * b1) + (dz * b2);
 
-                        b1 = (dy1 * ((dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11]))) +
-                             (dy * ((dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
+                        b1 = (dy1 * ( (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11])))
+                                + (dy * ( (dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
 
-                        b2 = (dy1 * ((dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21]))) +
-                             (dy * ((dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
-                        wValue = ((1 - dz) * b1) + (dz * b2);
+                        b2 = (dy1 * ( (dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21])))
+                                + (dy * ( (dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
+                        wValue = ( (1 - dz) * b1) + (dz * b2);
 
                         weight = wValue * refWgtImage.data[index];
 
                         if (newPtX < smoothX) {
                             weight *= newPtX * invSmoothX;
-                        } else if ((xEnd2 - newPtX) < smoothX) {
+                        } else if ( (xEnd2 - newPtX) < smoothX) {
                             weight *= (xEnd2 - newPtX) * invSmoothX;
                         }
 
                         if (newPtY < smoothY) {
                             weight *= newPtY * invSmoothY;
-                        } else if ((yEnd2 - newPtY) < smoothY) {
+                        } else if ( (yEnd2 - newPtY) < smoothY) {
                             weight *= (yEnd2 - newPtY) * invSmoothY;
                         }
 
                         if (newPtZ < smoothZ) {
                             weight *= newPtZ * invSmoothZ;
-                        } else if ((zEnd2 - newPtZ) < smoothZ) {
+                        } else if ( (zEnd2 - newPtZ) < smoothZ) {
                             weight *= (zEnd2 - newPtZ) * invSmoothZ;
                         }
 
@@ -4123,12 +4088,12 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         correlation = 0.0; // uncorrelated (worst) case
 
         if (count > 2.0) {
-            countFactor = numValues / ((numValues - 1) * count);
+            countFactor = numValues / ( (numValues - 1) * count);
             varXY = sumXY * countFactor;
             varX = sumX2 * countFactor;
             varY = sumY2 * countFactor;
 
-            if ((varX > 0.0) && (varY > 0.0)) {
+            if ( (varX > 0.0) && (varY > 0.0)) {
                 correlation = Math.abs(varXY) / Math.sqrt(varX * varY);
             }
         }
@@ -4138,11 +4103,11 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
     /**
      * Precalculates information and allocates buffers used in the calculation of mutual information statistics.
-     *
-     * @param  nBins  the number of bins
+     * 
+     * @param nBins the number of bins
      */
-    private void setPLogP(int nBins) {
-        int N = refImage.data.length;
+    private void setPLogP(final int nBins) {
+        final int N = refImage.data.length;
         double p = 0.0;
 
         try {
@@ -4153,7 +4118,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 pLogP[num] = -p * Math.log(p);
             }
 
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: CostFunctions.setBins");
 
@@ -4168,26 +4133,26 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         // set x between +/- kernelwidth
         for (int n = 0; n <= 200; n++) {
-            double x = (n - 100) / 100.0f * sincWidth;
+            final double x = (n - 100) / 100.0f * sincWidth;
 
-            sincKernel[n] = (sinc(x) * hanning(x, sincWidth));
+            sincKernel[n] = (AlgorithmCostFunctions.sinc(x) * AlgorithmCostFunctions.hanning(x, sincWidth));
         }
     }
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   x  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param x DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    private final static double sinc(double x) {
+    private final static double sinc(final double x) {
 
         if (Math.abs(x) < 1e-7) {
             return 1.0 - Math.abs(x);
         }
 
-        double y = Math.PI * x;
+        final double y = Math.PI * x;
 
         return Math.sin(y) / y;
     }

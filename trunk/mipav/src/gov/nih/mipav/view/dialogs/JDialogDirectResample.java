@@ -1,31 +1,35 @@
 package gov.nih.mipav.view.dialogs;
 
-import gov.nih.mipav.MipavMath;
+
+import gov.nih.mipav.util.MipavMath;
+
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
 
 import javax.swing.*;
 
 
 /**
  * Dialog to ask user to resample the images or not.
- *
- * @author  Ruida Cheng
+ * 
+ * @author Ruida Cheng
  */
 public class JDialogDirectResample extends JDialogScriptableBase implements AlgorithmInterface {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 2885627426314170051L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** The algorithm. */
     AlgorithmTransform algoTransform;
@@ -87,20 +91,21 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
     /** DOCUMENT ME! */
     private int interp = 0;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Empty Contructor for script running.
      */
-    public JDialogDirectResample() { }
+    public JDialogDirectResample() {}
 
     /**
      * Creates the dialog, using the input parameters to place it on the screen.
-     *
-     * @param  _imageA  Model image A.
-     * @param  _imageB  Model image B.
+     * 
+     * @param _imageA Model image A.
+     * @param _imageB Model image B.
      */
-    public JDialogDirectResample(ModelImage _imageA, ModelImage _imageB) {
+    public JDialogDirectResample(final ModelImage _imageA, final ModelImage _imageB) {
         super(ViewUserInterface.getReference().getMainFrame(), false);
         this.image = _imageA;
         image.makeUnitsOfMeasureIdentical();
@@ -113,7 +118,7 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
         res = image.getFileInfo(0).getResolutions();
         this.dim = extents.length;
 
-        for (int i = 0; i < Math.min(3,extents.length); i++) {
+        for (int i = 0; i < Math.min(3, extents.length); i++) {
             volExtents[i] = MipavMath.dimPowerOfTwo(extents[i]);
             volSize *= volExtents[i];
 
@@ -127,23 +132,24 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
         init();
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * On "OK", sets the name variable to the text entered. On "Cancel" disposes of this dialog and sets cancel flag.
-     *
-     * @param  event  Event that triggered this method.
+     * 
+     * @param event Event that triggered this method.
      */
-    public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
+    public void actionPerformed(final ActionEvent event) {
+        final String command = event.getActionCommand();
 
         if (command.equals("OK")) {
             setInterp();
 
             if (dim >= 3) {
 
-                if (extXOutput.getText().trim().equals("") || extYOutput.getText().trim().equals("") ||
-                        extZOutput.getText().trim().equals("")) {
+                if (extXOutput.getText().trim().equals("") || extYOutput.getText().trim().equals("")
+                        || extZOutput.getText().trim().equals("")) {
                     return;
                 }
             } else {
@@ -154,25 +160,25 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
             }
 
             volExtents[0] = MipavMath.dimPowerOfTwo(Integer.parseInt(extXOutput.getText()));
-            newRes[0] = (float) ((extents[0]) * res[0]) / (float) (volExtents[0]);
+            newRes[0] = ( (extents[0]) * res[0]) / (volExtents[0]);
             volExtents[1] = MipavMath.dimPowerOfTwo(Integer.parseInt(extYOutput.getText()));
-            newRes[1] = (float) ((extents[1]) * res[1]) / (float) (volExtents[1]);
+            newRes[1] = ( (extents[1]) * res[1]) / (volExtents[1]);
 
             if (dim >= 3) {
                 volExtents[2] = MipavMath.dimPowerOfTwo(Integer.parseInt(extZOutput.getText()));
-                newRes[2] = (float) ((extents[2]) * res[2]) / (float) (volExtents[2]);
+                newRes[2] = ( (extents[2]) * res[2]) / (volExtents[2]);
             }
 
             if (dim >= 3) {
 
-                if ((extents[0] == volExtents[0]) && (extents[1] == volExtents[1]) && (extents[2] == volExtents[2])) {
+                if ( (extents[0] == volExtents[0]) && (extents[1] == volExtents[1]) && (extents[2] == volExtents[2])) {
                     forceResample = false;
                 } else {
                     forceResample = true;
                 }
             } else {
 
-                if ((extents[0] == volExtents[0]) && (extents[1] == volExtents[1])) {
+                if ( (extents[0] == volExtents[0]) && (extents[1] == volExtents[1])) {
                     forceResample = false;
                 } else {
                     forceResample = true;
@@ -202,20 +208,18 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
 
     /**
      * Algorithm notifies dialog of status.
-     *
-     * @param  algo  DOCUMENT ME!
+     * 
+     * @param algo DOCUMENT ME!
      */
-    public void algorithmPerformed(AlgorithmBase algo) {
+    public void algorithmPerformed(final AlgorithmBase algo) {
 
         if (algo instanceof AlgorithmTransform) {
 
             if (algoTransform.isCompleted()) {
 
-
                 if (resultImage == null) {
                     resultImage = algoTransform.getTransformedImage();
                     resultImage.calcMinMax();
-
 
                     algoTransform.disposeLocal();
                     algoTransform = null;
@@ -247,7 +251,6 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
         }
     }
 
-
     /**
      * Resample images to power of 2.
      */
@@ -258,11 +261,10 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
             // resample image
             if (dim >= 3) {
                 algoTransform = new AlgorithmTransform(image, new TransMatrix(4), interp, newRes[0], newRes[1],
-                                                       newRes[2], volExtents[0], volExtents[1], volExtents[2], false,
-                                                       true, false);
+                        newRes[2], volExtents[0], volExtents[1], volExtents[2], false, true, false);
             } else {
                 algoTransform = new AlgorithmTransform(image, new TransMatrix(4), interp, newRes[0], newRes[1],
-                                                       volExtents[0], volExtents[1], false, true, false);
+                        volExtents[0], volExtents[1], false, true, false);
             }
 
             algoTransform.addListener(this);
@@ -284,21 +286,21 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
         }
 
         // resample imageB
-        if ((imageB != null) && forceResample) {
+        if ( (imageB != null) && forceResample) {
 
             // Resample image into volume that is a power of two !
             Preferences.debug("ViewJFrameSurfaceRenderer.buildTexture: Volume resampled.");
 
             if (dim >= 3) {
                 algoTransform = new AlgorithmTransform(imageB, new TransMatrix(4), AlgorithmTransform.TRILINEAR,
-                                                       newRes[0], newRes[1], newRes[2], volExtents[0], volExtents[1],
-                                                       volExtents[2], false, true, false);
+                        newRes[0], newRes[1], newRes[2], volExtents[0], volExtents[1], volExtents[2], false, true,
+                        false);
             } else {
                 algoTransform = new AlgorithmTransform(imageB, new TransMatrix(4),
 
-                                                       // AlgorithmTransform.CUBIC_LAGRANGIAN,
-                                                       AlgorithmTransform.BILINEAR, newRes[0], newRes[1], volExtents[0],
-                                                       volExtents[1], false, true, false);
+                        // AlgorithmTransform.CUBIC_LAGRANGIAN,
+                        AlgorithmTransform.BILINEAR, newRes[0], newRes[1], volExtents[0], volExtents[1], false, true,
+                        false);
 
             }
 
@@ -320,22 +322,22 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
 
     /**
      * Dispose memory.
-     *
-     * @param  flag  DOCUMENT ME!
+     * 
+     * @param flag DOCUMENT ME!
      */
-    public void dispose(boolean flag) {
+    public void dispose(final boolean flag) {
 
         /*
          * if (componentImage != null) { componentImage.setBuffers(null, null, null, null, null);
          * componentImage.setImageA(null); componentImage.setImageB(null); componentImage.dispose(false);
          * componentImage.disposeLocal(); componentImage = null; }
-         *
+         * 
          * if (resampledImageFrame != null) { resampledImageFrame.dispose(); resampledImageFrame = null; }
-         *
+         * 
          * if (resImageA != null) { resImageA.disposeLocal(); resImageA = null; }
-         *
+         * 
          * if (resImageB != null) { resImageB.disposeLocal(); resImageA = null; }
-         *
+         * 
          * if (resampledImage != null) { resampledImage.disposeLocal(); resampledImage = null; }
          */
         extents = null;
@@ -352,7 +354,7 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
     public void init() {
         setTitle("Resample Dialog");
 
-        Box mainBox = new Box(BoxLayout.Y_AXIS);
+        final Box mainBox = new Box(BoxLayout.Y_AXIS);
 
         /*
          * JPanel msgPanel = new JPanel(); msgPanel.setLayout(new BorderLayout());
@@ -360,7 +362,7 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
          * BorderLayout.NORTH); msgPanel.add(new JLabel("You can modify the extents to Power of 2."),
          * BorderLayout.CENTER);
          */
-        JPanel endPanel = new JPanel();
+        final JPanel endPanel = new JPanel();
         endPanel.setLayout(new BorderLayout());
         // endPanel.add(new JLabel("Selecting Resample will resample the extents to Power of 2."), BorderLayout.NORTH);
         // endPanel.add(new JLabel("Cancel will exit the resample dialog."), BorderLayout.CENTER);
@@ -370,9 +372,9 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
         // mainBox.add(msgPanel);
         mainBox.add(endPanel);
 
-        Box contentBox = new Box(BoxLayout.X_AXIS);
-        JPanel leftPanel = new JPanel();
-        JPanel rightPanel = new JPanel();
+        final Box contentBox = new Box(BoxLayout.X_AXIS);
+        final JPanel leftPanel = new JPanel();
+        final JPanel rightPanel = new JPanel();
 
         // make border
         leftPanel.setBorder(buildTitledBorder("Original Extents"));
@@ -386,7 +388,7 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
         // extent X
         leftPanel.add(Box.createHorizontalStrut(10));
 
-        JLabel extXLabel = new JLabel("extent X:");
+        final JLabel extXLabel = new JLabel("extent X:");
         extXLabel.setFont(serif12);
         extXLabel.setForeground(Color.black);
         extXLabel.setRequestFocusEnabled(false);
@@ -404,7 +406,7 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
         // extent Y
         leftPanel.add(Box.createHorizontalStrut(10));
 
-        JLabel extYLabel = new JLabel("extent Y:");
+        final JLabel extYLabel = new JLabel("extent Y:");
         extYLabel.setFont(serif12);
         extYLabel.setForeground(Color.black);
         extYLabel.setRequestFocusEnabled(false);
@@ -424,7 +426,7 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
             // extent Z
             leftPanel.add(Box.createHorizontalStrut(10));
 
-            JLabel extZLabel = new JLabel("extent Z:");
+            final JLabel extZLabel = new JLabel("extent Z:");
             extZLabel.setFont(serif12);
             extZLabel.setForeground(Color.black);
             extZLabel.setRequestFocusEnabled(false);
@@ -452,7 +454,7 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
         // extent X expected
         rightPanel.add(Box.createHorizontalStrut(10));
 
-        JLabel extXNewLabel = new JLabel("extent X:");
+        final JLabel extXNewLabel = new JLabel("extent X:");
         extXNewLabel.setFont(serif12);
         extXNewLabel.setForeground(Color.black);
         extXNewLabel.setRequestFocusEnabled(false);
@@ -472,7 +474,7 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
         // extent Y expected
         rightPanel.add(Box.createHorizontalStrut(10));
 
-        JLabel extYNewLabel = new JLabel("extent Y:");
+        final JLabel extYNewLabel = new JLabel("extent Y:");
         extYNewLabel.setFont(serif12);
         extYNewLabel.setForeground(Color.black);
         extYNewLabel.setRequestFocusEnabled(false);
@@ -494,7 +496,7 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
             // extent Z expected
             rightPanel.add(Box.createHorizontalStrut(10));
 
-            JLabel extZNewLabel = new JLabel("extent Z:");
+            final JLabel extZNewLabel = new JLabel("extent Z:");
             extZNewLabel.setFont(serif12);
             extZNewLabel.setForeground(Color.black);
             extZNewLabel.setRequestFocusEnabled(false);
@@ -514,13 +516,12 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
 
         mainBox.add(contentBox);
 
-
         // *******INTERPOLATION****************
-        JPanel optionPanel = new JPanel();
+        final JPanel optionPanel = new JPanel();
         optionPanel.setForeground(Color.black);
         optionPanel.setBorder(buildTitledBorder("Options"));
 
-        JLabel labelInterp = new JLabel("Interpolation:");
+        final JLabel labelInterp = new JLabel("Interpolation:");
         labelInterp.setForeground(Color.black);
         labelInterp.setFont(serif12);
         labelInterp.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -570,8 +571,8 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
 
     /**
      * DOCUMENT ME!
-     *
-     * @throws  Throwable  DOCUMENT ME!
+     * 
+     * @throws Throwable DOCUMENT ME!
      */
     protected void finalize() throws Throwable {
         dispose(true);
@@ -611,8 +612,8 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
 
     /**
      * Store the parameters from the dialog to record the execution of this algorithm.
-     *
-     * @throws  ParserException  If there is a problem creating one of the new parameters.
+     * 
+     * @throws ParserException If there is a problem creating one of the new parameters.
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
@@ -625,13 +626,11 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
 
     }
 
-
-
     /**
      * Document ME.
      */
     private void setInterp() {
-        int boxIndex = comboBoxInterp.getSelectedIndex();
+        final int boxIndex = comboBoxInterp.getSelectedIndex();
 
         if (boxIndex == 0) {
             interp = AlgorithmTransform.NEAREST_NEIGHBOR;

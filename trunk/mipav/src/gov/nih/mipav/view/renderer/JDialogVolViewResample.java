@@ -1,11 +1,13 @@
 package gov.nih.mipav.view.renderer;
 
-import gov.nih.mipav.MipavMath;
+
+import gov.nih.mipav.util.MipavMath;
+
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.*;
-import gov.nih.mipav.view.renderer.J3D.*;
+import gov.nih.mipav.view.dialogs.JDialogBase;
+import gov.nih.mipav.view.renderer.J3D.ViewJFrameVolumeView;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -16,17 +18,19 @@ import javax.swing.border.*;
 
 /**
  * Dialog to ask user to resample the images to power of 2 before volume rendering.
- *
- * @author  Ruida Cheng
+ * 
+ * @author Ruida Cheng
  */
 public class JDialogVolViewResample extends JDialogBase {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -1966951185588087479L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** Lookup table of the color imageA, B. */
     protected ModelRGB RGBTA = null, RGBTB = null;
@@ -65,7 +69,7 @@ public class JDialogVolViewResample extends JDialogBase {
     private JComboBox m_kFilterType;
 
     /** Number of available dimension. */
-    private int nDim;
+    private final int nDim;
 
     /** Resample resolutioin corresponding to Power of 2. */
     private float[] newRes = new float[3];
@@ -121,7 +125,6 @@ public class JDialogVolViewResample extends JDialogBase {
      */
     private String startupCommand = null;
 
-
     /** Resampled dimension value in Power of 2. */
     private int[] volExtents = new int[3];
 
@@ -129,17 +132,18 @@ public class JDialogVolViewResample extends JDialogBase {
     private int volSize = 1;
 
     /** Type of ViewJFrameVolumeView object (using WildMagic or not) */
-    private String m_kVolViewType;
+    private final String m_kVolViewType;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates the dialog, using the input parameters to place it on the screen.
-     *
-     * @param  _imageA  Model image A.
-     * @param  _imageB  Model image B.
+     * 
+     * @param _imageA Model image A.
+     * @param _imageB Model image B.
      */
-    public JDialogVolViewResample(ModelImage _imageA, ModelImage _imageB, String kCommand ) {
+    public JDialogVolViewResample(final ModelImage _imageA, final ModelImage _imageB, final String kCommand) {
 
         super(ViewUserInterface.getReference().getMainFrame(), false);
 
@@ -151,7 +155,7 @@ public class JDialogVolViewResample extends JDialogBase {
             RGBTA = (ModelRGB) (_imageA.getParentFrame().getRGBTA().clone());
 
             if (RGBTA == null) {
-                int[] RGBExtents = new int[2];
+                final int[] RGBExtents = new int[2];
                 RGBExtents[0] = 4;
                 RGBExtents[1] = 256;
                 RGBTA = new ModelRGB(RGBExtents);
@@ -177,13 +181,13 @@ public class JDialogVolViewResample extends JDialogBase {
                 }
 
                 if (RGBTB == null) {
-                    int[] RGBExtents = new int[2];
+                    final int[] RGBExtents = new int[2];
                     RGBExtents[0] = 4;
                     RGBExtents[1] = 256;
                     RGBTB = new ModelRGB(RGBExtents);
                 }
             } else {
-                ModelLUT modelLUT = _imageB.getParentFrame().getLUTb();
+                final ModelLUT modelLUT = _imageB.getParentFrame().getLUTb();
 
                 if (modelLUT == null) {
                     LUTb = new ModelLUT(ModelLUT.GRAY, 256, _imageB.getExtents());
@@ -216,7 +220,7 @@ public class JDialogVolViewResample extends JDialogBase {
 
         if (nDim >= 3) {
 
-            if ((extents[0] == volExtents[0]) && (extents[1] == volExtents[1]) && (extents[2] == volExtents[2])) {
+            if ( (extents[0] == volExtents[0]) && (extents[1] == volExtents[1]) && (extents[2] == volExtents[2])) {
                 forceResample = false;
             } else {
                 forceResample = true;
@@ -227,10 +231,10 @@ public class JDialogVolViewResample extends JDialogBase {
             init();
 
             // if do not need resample, set the resample button text to OK.
-            if (!forceResample) {
+            if ( !forceResample) {
                 OKButton.setText("OK");
             }
-        } catch (NoClassDefFoundError error) {
+        } catch (final NoClassDefFoundError error) {
             Preferences.debug("Unable to load volume renderer.  Missing Java3D class. " + error.getMessage() + "\n");
             MipavUtil.displayError("Unable to load volume renderer.  Missing Java3D class.");
 
@@ -243,67 +247,68 @@ public class JDialogVolViewResample extends JDialogBase {
 
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * On "OK", sets the name variable to the text entered. On "Cancel" disposes of this dialog and sets cancel flag.
-     *
-     * @param  event  Event that triggered this method.
+     * 
+     * @param event Event that triggered this method.
      */
-    public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
+    public void actionPerformed(final ActionEvent event) {
+        final String command = event.getActionCommand();
 
         if (command.equals("Resample")) {
 
             volExtents[0] = Integer.parseInt(extXOutput.getText());
 
-            if (!MipavMath.isPowerOfTwo(volExtents[0])) {
+            if ( !MipavMath.isPowerOfTwo(volExtents[0])) {
                 MipavUtil.displayInfo("Reample to Power of 2.");
                 volExtents[0] = MipavMath.dimPowerOfTwo(volExtents[0]);
             }
 
-            if ( radioSurfaceView.isSelected() ) {
+            if (radioSurfaceView.isSelected()) {
                 volExtents[0] = 16;
             }
 
-            newRes[0] = (float) (extents[0] * res[0]) / (float) volExtents[0];
+            newRes[0] = (extents[0] * res[0]) / volExtents[0];
 
             volExtents[1] = Integer.parseInt(extYOutput.getText());
 
-            if (!MipavMath.isPowerOfTwo(volExtents[1])) {
+            if ( !MipavMath.isPowerOfTwo(volExtents[1])) {
                 MipavUtil.displayInfo("Reample to Power of 2.");
                 volExtents[1] = MipavMath.dimPowerOfTwo(volExtents[1]);
             }
 
-            if ( radioSurfaceView.isSelected() ) {
+            if (radioSurfaceView.isSelected()) {
                 volExtents[1] = 16;
             }
 
-            newRes[1] = (float) (extents[1] * res[1]) / (float) volExtents[1];
+            newRes[1] = (extents[1] * res[1]) / volExtents[1];
 
             if (nDim >= 3) {
                 volExtents[2] = Integer.parseInt(extZOutput.getText());
 
-                if (!MipavMath.isPowerOfTwo(volExtents[2])) {
+                if ( !MipavMath.isPowerOfTwo(volExtents[2])) {
                     MipavUtil.displayInfo("Reample to Power of 2.");
                     volExtents[2] = MipavMath.dimPowerOfTwo(volExtents[2]);
                 }
-                if ( radioSurfaceView.isSelected() ) {
+                if (radioSurfaceView.isSelected()) {
                     volExtents[2] = 16;
                 }
-                newRes[2] = (float) (extents[2] * res[2]) / (float) volExtents[2];
+                newRes[2] = (extents[2] * res[2]) / volExtents[2];
             }
 
             if (nDim >= 3) {
 
-                if ((extents[0] == volExtents[0]) && (extents[1] == volExtents[1]) && (extents[2] == volExtents[2])) {
+                if ( (extents[0] == volExtents[0]) && (extents[1] == volExtents[1]) && (extents[2] == volExtents[2])) {
                     forceResample = false;
                 } else {
                     forceResample = true;
                 }
             } else {
 
-                if ((extents[0] == volExtents[0]) && (extents[1] == volExtents[1])) {
+                if ( (extents[0] == volExtents[0]) && (extents[1] == volExtents[1])) {
                     forceResample = false;
                 } else {
                     forceResample = true;
@@ -314,18 +319,18 @@ public class JDialogVolViewResample extends JDialogBase {
             exec();
         } else if (command.equals("Pad")) {
             volExtents[0] = MipavMath.dimPowerOfTwo(Integer.parseInt(extXOutput.getText()));
-            newRes[0] = (float) (extents[0] * res[0]) / (float) volExtents[0];
+            newRes[0] = (extents[0] * res[0]) / volExtents[0];
             volExtents[1] = MipavMath.dimPowerOfTwo(Integer.parseInt(extYOutput.getText()));
-            newRes[1] = (float) (extents[1] * res[1]) / (float) volExtents[1];
+            newRes[1] = (extents[1] * res[1]) / volExtents[1];
 
             if (nDim >= 3) {
                 volExtents[2] = MipavMath.dimPowerOfTwo(Integer.parseInt(extZOutput.getText()));
-                newRes[2] = (float) (extents[2] * res[2]) / (float) volExtents[2];
+                newRes[2] = (extents[2] * res[2]) / volExtents[2];
             }
 
             if (nDim >= 3) {
 
-                if ((extents[0] == volExtents[0]) && (extents[1] == volExtents[1]) && (extents[2] == volExtents[2])) {
+                if ( (extents[0] == volExtents[0]) && (extents[1] == volExtents[1]) && (extents[2] == volExtents[2])) {
                     forceResample = false;
                     forcePadding = false;
                 } else {
@@ -342,7 +347,7 @@ public class JDialogVolViewResample extends JDialogBase {
         } else if (command.equals("xChanged")) {
             int x = Integer.parseInt(extXOutput.getText());
 
-            if (!MipavMath.isPowerOfTwo(x)) {
+            if ( !MipavMath.isPowerOfTwo(x)) {
                 MipavUtil.displayInfo("Reample to Power of 2.");
                 x = MipavMath.dimPowerOfTwo(x);
             }
@@ -351,7 +356,7 @@ public class JDialogVolViewResample extends JDialogBase {
         } else if (command.equals("yChanged")) {
             int y = Integer.parseInt(extYOutput.getText());
 
-            if (!MipavMath.isPowerOfTwo(y)) {
+            if ( !MipavMath.isPowerOfTwo(y)) {
                 MipavUtil.displayInfo("Reample to Power of 2.");
                 y = MipavMath.dimPowerOfTwo(y);
             }
@@ -360,7 +365,7 @@ public class JDialogVolViewResample extends JDialogBase {
         } else if (command.equals("zChanged")) {
             int z = Integer.parseInt(extZOutput.getText());
 
-            if (!MipavMath.isPowerOfTwo(z)) {
+            if ( !MipavMath.isPowerOfTwo(z)) {
                 MipavUtil.displayInfo("Reample to Power of 2.");
                 z = MipavMath.dimPowerOfTwo(z);
             }
@@ -369,10 +374,11 @@ public class JDialogVolViewResample extends JDialogBase {
         } else if (command.equals("FilterChanged")) {
             m_iFilter = m_kFilterType.getSelectedIndex();
 
-            /* Bilinear is not allowed for volumes, and is not in the list, if
-             * a type that is definted after bilinear is selected, increment the m_iFilter value so it matches the
-             * AlgotithmTransform type
-             * definition for that filter: */
+            /*
+             * Bilinear is not allowed for volumes, and is not in the list, if a type that is definted after bilinear is
+             * selected, increment the m_iFilter value so it matches the AlgotithmTransform type definition for that
+             * filter:
+             */
             if (m_iFilter > 0) {
                 m_iFilter++;
             }
@@ -384,8 +390,8 @@ public class JDialogVolViewResample extends JDialogBase {
 
     /**
      * Builds the Cancel button. Sets it internally as well return the just-built button.
-     *
-     * @return  Return the noll resample button.
+     * 
+     * @return Return the noll resample button.
      */
     public JButton buildNotResampleButton() {
         cancelButton = new JButton("Cancel");
@@ -445,17 +451,15 @@ public class JDialogVolViewResample extends JDialogBase {
     public void exec() {
 
         try {
-            if ( m_kVolViewType.equals( "VolTriplanar" ))
-            {
-            	if ( m_kVolViewType.equals( "VolTriplanar" ) )
-                {
+            if (m_kVolViewType.equals("VolTriplanar")) {
+                if (m_kVolViewType.equals("VolTriplanar")) {
                     sr = new ViewJFrameVolumeView(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB, leftPanelRenderMode,
                             rightPanelRenderMode, this);
                     sr.setImageOriginal(imageAOriginal);
 
                     if (forcePadding) {
                         sr.doPadding(extents, volExtents);
-                    }  else if (forceResample) {
+                    } else if (forceResample) {
                         sr.doResample(volExtents, newRes, forceResample, nDim, m_iFilter);
                     }
 
@@ -470,7 +474,8 @@ public class JDialogVolViewResample extends JDialogBase {
 
                     if (sr.getProbeDialog() != null) {
 
-                        // need to update the rfa target labels in case there were attached surfaces that we should show info
+                        // need to update the rfa target labels in case there were attached surfaces that we should show
+                        // info
                         // about
                         sr.getProbeDialog().updateTargetList();
                     }
@@ -497,33 +502,30 @@ public class JDialogVolViewResample extends JDialogBase {
                     }
                 }
 
-            } 
-        } catch (NoClassDefFoundError notAvailableError) {
-            Preferences.debug("ViewJFrameSurfaceRenderer cannot be called; encountered " +
-                    "a NoClassDefFoundError.  \nIt is likely that java3D is " +
-                    "not available on this system.  The error is: \n" +
-                    notAvailableError.getLocalizedMessage());
+            }
+        } catch (final NoClassDefFoundError notAvailableError) {
+            Preferences.debug("ViewJFrameSurfaceRenderer cannot be called; encountered "
+                    + "a NoClassDefFoundError.  \nIt is likely that java3D is "
+                    + "not available on this system.  The error is: \n" + notAvailableError.getLocalizedMessage());
             MipavUtil.displayError("The surface renderer requires java 3D and it cannot " + "be found.");
-        } catch (OutOfMemoryError notEnoughError) {
-            Preferences.debug("ViewJFrameSurfaceRenderer cannot be called as there was " +
-                    "not enough memory allocated.  \n" + "The error is: \n" +
-                    notEnoughError.getLocalizedMessage());
-            MipavUtil.displayError("The surface renderer requires more memory " + "than is currently available;\n" +
-            "See the Memory Allocation menu");
+        } catch (final OutOfMemoryError notEnoughError) {
+            Preferences.debug("ViewJFrameSurfaceRenderer cannot be called as there was "
+                    + "not enough memory allocated.  \n" + "The error is: \n" + notEnoughError.getLocalizedMessage());
+            MipavUtil.displayError("The surface renderer requires more memory " + "than is currently available;\n"
+                    + "See the Memory Allocation menu");
         }
 
     }
-    
- 
+
     /**
      * Build the resample dialog.
      */
     public void init() {
         setTitle("Resample Dialog");
 
-        Box mainBox = new Box(BoxLayout.Y_AXIS);
+        final Box mainBox = new Box(BoxLayout.Y_AXIS);
 
-        JPanel endPanel = new JPanel();
+        final JPanel endPanel = new JPanel();
 
         endPanel.setLayout(new BorderLayout());
         endPanel.add(new JLabel(" Selecting _Resample_ will resample the image's extents to a Power of 2."),
@@ -534,9 +536,9 @@ public class JDialogVolViewResample extends JDialogBase {
                 BorderLayout.SOUTH);
         mainBox.add(endPanel);
 
-        Box contentBox = new Box(BoxLayout.X_AXIS);
-        JPanel leftPanel = new JPanel();
-        JPanel rightPanel = new JPanel();
+        final Box contentBox = new Box(BoxLayout.X_AXIS);
+        final JPanel leftPanel = new JPanel();
+        final JPanel rightPanel = new JPanel();
 
         // make border
         leftPanel.setBorder(buildTitledBorder("Original Extents"));
@@ -551,7 +553,7 @@ public class JDialogVolViewResample extends JDialogBase {
         // extent X
         leftPanel.add(Box.createHorizontalStrut(10));
 
-        JLabel extXLabel = new JLabel("extent X:");
+        final JLabel extXLabel = new JLabel("extent X:");
 
         extXLabel.setFont(serif12);
         extXLabel.setForeground(Color.black);
@@ -570,7 +572,7 @@ public class JDialogVolViewResample extends JDialogBase {
         // extent Y
         leftPanel.add(Box.createHorizontalStrut(10));
 
-        JLabel extYLabel = new JLabel("extent Y:");
+        final JLabel extYLabel = new JLabel("extent Y:");
 
         extYLabel.setFont(serif12);
         extYLabel.setForeground(Color.black);
@@ -591,7 +593,7 @@ public class JDialogVolViewResample extends JDialogBase {
             // extent Z
             leftPanel.add(Box.createHorizontalStrut(10));
 
-            JLabel extZLabel = new JLabel("extent Z:");
+            final JLabel extZLabel = new JLabel("extent Z:");
 
             extZLabel.setFont(serif12);
             extZLabel.setForeground(Color.black);
@@ -620,7 +622,7 @@ public class JDialogVolViewResample extends JDialogBase {
         // extent X expected
         rightPanel.add(Box.createHorizontalStrut(10));
 
-        JLabel extXNewLabel = new JLabel("extent X:");
+        final JLabel extXNewLabel = new JLabel("extent X:");
 
         extXNewLabel.setFont(serif12);
         extXNewLabel.setForeground(Color.black);
@@ -641,7 +643,7 @@ public class JDialogVolViewResample extends JDialogBase {
         // extent Y expected
         rightPanel.add(Box.createHorizontalStrut(10));
 
-        JLabel extYNewLabel = new JLabel("extent Y:");
+        final JLabel extYNewLabel = new JLabel("extent Y:");
 
         extYNewLabel.setFont(serif12);
         extYNewLabel.setForeground(Color.black);
@@ -664,7 +666,7 @@ public class JDialogVolViewResample extends JDialogBase {
             // extent Z expected
             rightPanel.add(Box.createHorizontalStrut(10));
 
-            JLabel extZNewLabel = new JLabel("extent Z:");
+            final JLabel extZNewLabel = new JLabel("extent Z:");
 
             extZNewLabel.setFont(serif12);
             extZNewLabel.setForeground(Color.black);
@@ -686,7 +688,7 @@ public class JDialogVolViewResample extends JDialogBase {
         mainBox.add(contentBox);
 
         /* Filter selection: */
-        JPanel filterPanel = new JPanel();
+        final JPanel filterPanel = new JPanel();
         filterPanel.setBorder(buildTitledBorder("Select Resampling Filter"));
         m_kFilterType = new JComboBox();
         m_kFilterType.addItem(new String("Trilinear Interpolation"));
@@ -703,8 +705,8 @@ public class JDialogVolViewResample extends JDialogBase {
         filterPanel.add(m_kFilterType);
         mainBox.add(filterPanel);
 
-        Box radioBox = new Box(BoxLayout.X_AXIS);
-        JPanel radioButtonPanelLeft = new JPanel();
+        final Box radioBox = new Box(BoxLayout.X_AXIS);
+        final JPanel radioButtonPanelLeft = new JPanel();
 
         gbl = new GridBagLayout();
         gbc = new GridBagConstraints();
@@ -712,15 +714,15 @@ public class JDialogVolViewResample extends JDialogBase {
         radioButtonPanelLeft.setBorder(MipavUtil.buildTitledBorder("Left Panel"));
         radioButtonPanelLeft.setLayout(gbl);
 
-        ButtonGroup group1 = new ButtonGroup();
+        final ButtonGroup group1 = new ButtonGroup();
 
         radioSurfaceL = new JRadioButton("Surface & 3D Texture Volume Renderer", false);
         radioSurfaceL.setFont(serif12);
         radioSurfaceL.addItemListener(this);
         group1.add(radioSurfaceL);
 
-        JLabel emptyLabelUp = new JLabel(" ");
-        JLabel emptyLabelDown = new JLabel(" ");
+        final JLabel emptyLabelUp = new JLabel(" ");
+        final JLabel emptyLabelDown = new JLabel(" ");
 
         radioFlythruL = new JRadioButton("Flythru Renderer", false);
         radioFlythruL.setFont(serif12);
@@ -750,12 +752,12 @@ public class JDialogVolViewResample extends JDialogBase {
         gbc = new GridBagConstraints();
         gbc.gridwidth = 2;
 
-        JPanel radioButtonPanelRight = new JPanel();
+        final JPanel radioButtonPanelRight = new JPanel();
 
         radioButtonPanelRight.setBorder(MipavUtil.buildTitledBorder("Right Panel"));
         radioButtonPanelRight.setLayout(gbl);
 
-        ButtonGroup group2 = new ButtonGroup();
+        final ButtonGroup group2 = new ButtonGroup();
 
         radioSurfaceR = new JRadioButton("Surface & 3D Texture Volume Renderer", false);
         radioSurfaceR.setFont(serif12);
@@ -804,7 +806,7 @@ public class JDialogVolViewResample extends JDialogBase {
 
         mainBox.add(radioBox);
 
-        JPanel OKCancelPanel = new JPanel(new FlowLayout());
+        final JPanel OKCancelPanel = new JPanel(new FlowLayout());
 
         OKButton = buildResampleButton();
         OKCancelPanel.add(OKButton);
@@ -829,12 +831,13 @@ public class JDialogVolViewResample extends JDialogBase {
         // (focus used to go to the first text field, which the user doesn't change much)
         OKButton.requestFocus();
     }
+
     /**
      * Sets the flags for the checkboxes.
-     *
-     * @param  event  event that triggered this function
+     * 
+     * @param event event that triggered this function
      */
-    public synchronized void itemStateChanged(ItemEvent event) {
+    public synchronized void itemStateChanged(final ItemEvent event) {
 
         if (radioSurfaceL.isSelected()) {
             leftPanelRenderMode = ViewJFrameVolumeView.SURFACE;
@@ -890,38 +893,38 @@ public class JDialogVolViewResample extends JDialogBase {
 
     /**
      * Sets a command that should be sent to the renderer after it is started.
-     *
-     * @param  cmd  the action command
+     * 
+     * @param cmd the action command
      */
-    public void sendActionOnStart(String cmd) {
+    public void sendActionOnStart(final String cmd) {
         startupCommand = cmd;
     }
 
     /**
      * Set the image which we can check to see if the probe is hitting anything important (such as vessels, etc).
-     *
-     * @param  img  segmentation image
+     * 
+     * @param img segmentation image
      */
-    public void setSegmentationImage(ModelImage img) {
+    public void setSegmentationImage(final ModelImage img) {
         segmentationImage = img;
     }
 
     /**
      * Builds a titled border with the given title, an etched border, and the proper font and color.
-     *
-     * @param   title    Title of the border
-     * @param   _border  Return the border built
-     *
-     * @return  The titled border.
+     * 
+     * @param title Title of the border
+     * @param _border Return the border built
+     * 
+     * @return The titled border.
      */
-    protected TitledBorder buildTitledBorder(String title, Border _border) {
+    protected TitledBorder buildTitledBorder(final String title, final Border _border) {
         return new TitledBorder(_border, title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
     }
 
     /**
      * Clear up memory from gc.
-     *
-     * @throws  Throwable  Call the dispose local to dispose memory.
+     * 
+     * @throws Throwable Call the dispose local to dispose memory.
      */
     protected void finalize() throws Throwable {
         disposeLocal();
@@ -930,19 +933,19 @@ public class JDialogVolViewResample extends JDialogBase {
 
     /**
      * Creates and initializes the LUT for an image.
-     *
-     * @param   img  the image to create a LUT for
-     *
-     * @return  a LUT for the image <code>img</code> (null if a color image)
-     *
-     * @throws  OutOfMemoryError  if enough memory cannot be allocated for this method
+     * 
+     * @param img the image to create a LUT for
+     * 
+     * @return a LUT for the image <code>img</code> (null if a color image)
+     * 
+     * @throws OutOfMemoryError if enough memory cannot be allocated for this method
      */
-    protected ModelLUT initLUT(ModelImage img) throws OutOfMemoryError {
+    protected ModelLUT initLUT(final ModelImage img) throws OutOfMemoryError {
         ModelLUT newLUT = null;
 
         // only make a lut for non color images
         if (img.isColorImage() == false) {
-            int[] dimExtentsLUT = new int[2];
+            final int[] dimExtentsLUT = new int[2];
 
             dimExtentsLUT[0] = 4;
             dimExtentsLUT[1] = 256;
@@ -962,8 +965,8 @@ public class JDialogVolViewResample extends JDialogBase {
                 max = (float) img.getMax();
             }
 
-            float imgMin = (float) img.getMin();
-            float imgMax = (float) img.getMax();
+            final float imgMin = (float) img.getMin();
+            final float imgMax = (float) img.getMax();
 
             newLUT.resetTransferLine(min, imgMin, max, imgMax);
         }
@@ -985,8 +988,8 @@ public class JDialogVolViewResample extends JDialogBase {
 
     /**
      * Builds the OK button. Sets it internally as well return the just-built button.
-     *
-     * @return  Return the resample button built.
+     * 
+     * @return Return the resample button built.
      */
     private JButton buildResampleButton() {
         OKButton = new JButton("Resample");

@@ -14,7 +14,7 @@ import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIVector;
-import gov.nih.mipav.util.MipavUtil;
+import gov.nih.mipav.util.ThreadUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewVOIVector;

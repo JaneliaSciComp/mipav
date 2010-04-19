@@ -8,7 +8,7 @@ package gov.nih.mipav.model.algorithms.filters;
  */
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.util.FileUtil;
+import gov.nih.mipav.util.TestingFileUtil;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
@@ -48,11 +48,11 @@ public class AlgorithmGradientMagnitudeSepTest extends TestCase {
     protected void setUp() throws Exception{
         srcImage = new ModelImage(ModelStorageBase.FLOAT, new int[]{512, 512}, "");
         float[] sigmas = new float[] {1.75f, 1.75f};
-        imageBuffer = FileUtil.readRawFileFloat(testImageFileName, false);
+        imageBuffer = TestingFileUtil.readRawFileFloat(testImageFileName, false);
         srcImage.importData(0, imageBuffer, true);
-        refBufferMag = FileUtil.readRawFileFloat(gmagImageFileName, false);
-        refBufferXDir = FileUtil.readRawFileFloat(xDerivativeDirectionImageFileName, false);
-        refBufferYDir = FileUtil.readRawFileFloat(yDerivativeDirectionImageFileName, false);
+        refBufferMag = TestingFileUtil.readRawFileFloat(gmagImageFileName, false);
+        refBufferXDir = TestingFileUtil.readRawFileFloat(xDerivativeDirectionImageFileName, false);
+        refBufferYDir = TestingFileUtil.readRawFileFloat(yDerivativeDirectionImageFileName, false);
         
         imgLength = imageBuffer.length;
         gmagSep = new AlgorithmGradientMagnitudeSep(srcImage, sigmas, true, false);

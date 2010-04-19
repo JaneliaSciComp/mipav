@@ -4,7 +4,7 @@ import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
-import gov.nih.mipav.*;
+import gov.nih.mipav.util.MipavMath;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.registration.*;

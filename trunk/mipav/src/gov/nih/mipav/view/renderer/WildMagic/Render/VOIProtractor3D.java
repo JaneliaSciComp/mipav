@@ -1,78 +1,72 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
-import gov.nih.mipav.MipavMath;
+
+import gov.nih.mipav.util.MipavMath;
+
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.VOI;
-import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.renderer.WildMagic.VOI.ScreenCoordinateListener;
-import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManager;
 
-import java.awt.Color;
-import java.awt.Graphics;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.*;
+
+import java.awt.*;
 import java.util.Vector;
 
-import WildMagic.LibFoundation.Mathematics.ColorRGBA;
-import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.Mathematics.*;
 import WildMagic.LibGraphics.Rendering.Renderer;
 
-public class VOIProtractor3D extends LocalVolumeVOI
-{
+
+public class VOIProtractor3D extends LocalVolumeVOI {
     /**  */
     private static final long serialVersionUID = 4571749270028964479L;
 
-    public VOIProtractor3D( VOIManager parent, ScreenCoordinateListener kContext, int iOrientation, int iType, int iSType, Vector<Vector3f> kLocal, int iZ )
-    {
-        super(parent, kContext, iOrientation, iType, iSType, kLocal, iZ );
+    public VOIProtractor3D(final VOIManager parent, final ScreenCoordinateListener kContext, final int iOrientation,
+            final int iType, final int iSType, final Vector<Vector3f> kLocal, final int iZ) {
+        super(parent, kContext, iOrientation, iType, iSType, kLocal, iZ);
         m_iVOIType = VOI.PROTRACTOR_3D;
         m_bClosed = false;
     }
 
-    public VOIProtractor3D(VOIManager parent, ScreenCoordinateListener kContext, int iOrientation, int iType, Vector<Vector3f> kLocal, boolean bIsFile)
-    {
-        super(parent,kContext,iOrientation,iType, -1,kLocal,bIsFile);
+    public VOIProtractor3D(final VOIManager parent, final ScreenCoordinateListener kContext, final int iOrientation,
+            final int iType, final Vector<Vector3f> kLocal, final boolean bIsFile) {
+        super(parent, kContext, iOrientation, iType, -1, kLocal, bIsFile);
         m_iVOIType = VOI.PROTRACTOR_3D;
         m_bClosed = false;
     }
 
-    public VOIProtractor3D( VOIProtractor3D kVOI )
-    {
+    public VOIProtractor3D(final VOIProtractor3D kVOI) {
         super(kVOI);
     }
-    
-    public VOIProtractor3D( VOIProtractor3D kVOI, int iZ )
-    {
+
+    public VOIProtractor3D(final VOIProtractor3D kVOI, final int iZ) {
         super(kVOI, iZ);
     }
-    
-    public boolean add( int iPos, Vector3f kNewPoint, boolean bIsFile  ) 
-    {
+
+    public boolean add(final int iPos, final Vector3f kNewPoint, final boolean bIsFile) {
         return false;
     }
 
-    public boolean add( Vector3f kNewPoint, boolean bIsFile) 
-    {
+    public boolean add(final Vector3f kNewPoint, final boolean bIsFile) {
         return false;
     }
 
-    public boolean contains( int iOrientation, int iX, int iY, int iZ ) {
-        if ( iZ != slice() || iOrientation != m_iOrientation )
-        {
+    public boolean contains(final int iOrientation, final int iX, final int iY, final int iZ) {
+        if (iZ != slice() || iOrientation != m_iOrientation) {
             return false;
         }
         boolean isInside = false;
-        float fX = iX + 0.49f;
-        float fY = iY + 0.49f;
+        final float fX = iX + 0.49f;
+        final float fY = iY + 0.49f;
 
-        int iLast = size() -1;
-        for ( int i = 0; i < size(); i++ )
-        {
-            Vector3f kFilePos = get(i);
-            Vector3f kFilePosL = get(iLast);
-            Vector3f kPos = m_kDrawingContext.fileToScreen( kFilePos );
-            Vector3f kPosL = m_kDrawingContext.fileToScreen( kFilePosL );
+        int iLast = size() - 1;
+        for (int i = 0; i < size(); i++) {
+            final Vector3f kFilePos = get(i);
+            final Vector3f kFilePosL = get(iLast);
+            final Vector3f kPos = m_kDrawingContext.fileToScreen(kFilePos);
+            final Vector3f kPosL = m_kDrawingContext.fileToScreen(kFilePosL);
 
-            if (((kPosL.Y <= fY) && (fY < kPos.Y) && (areaTwice(kPos.X, kPos.Y, kPosL.X, kPosL.Y, fX, fY) >= 0)) ||
-                    ((kPos.Y <= fY) && (fY < kPosL.Y) && (areaTwice(kPosL.X, kPosL.Y, kPos.X, kPos.Y, fX, fY) >= 0))) {
+            if ( ( (kPosL.Y <= fY) && (fY < kPos.Y) && (areaTwice(kPos.X, kPos.Y, kPosL.X, kPosL.Y, fX, fY) >= 0))
+                    || ( (kPos.Y <= fY) && (fY < kPosL.Y) && (areaTwice(kPosL.X, kPosL.Y, kPos.X, kPos.Y, fX, fY) >= 0))) {
                 isInside = !isInside;
             }
 
@@ -86,38 +80,32 @@ public class VOIProtractor3D extends LocalVolumeVOI
             return isInside;
         }
 
-        return nearLine( iX, iY, iZ );
+        return nearLine(iX, iY, iZ);
     }
 
-    public void drawSelf( float[] resols, int[] unitsOfMeasure, Graphics g, int slice, int orientation  ) {
+    public void drawSelf(final float[] resols, final int[] unitsOfMeasure, final Graphics g, final int slice,
+            final int orientation) {
         if (g == null) {
             MipavUtil.displayError("VOIProtractor.drawSelf: grapics = null");
 
             return;
         }
 
-/*
-        if ( getGroup() != null )
-        {
-            g.setColor( getGroup().getColor() );
-        }
-        else
-        {
-            g.setColor( Color.yellow );
-        }     
-        */
-        
-        Vector3f kStart = m_kDrawingContext.fileToScreen( get(0) );
-        Vector3f kMiddle = m_kDrawingContext.fileToScreen( get(1) );
-        Vector3f kEnd = m_kDrawingContext.fileToScreen( get(2) );
-        //0 is middle, 1 is start, 2 is end:
-        float[] x = new float[3];
+        /*
+         * if ( getGroup() != null ) { g.setColor( getGroup().getColor() ); } else { g.setColor( Color.yellow ); }
+         */
+
+        final Vector3f kStart = m_kDrawingContext.fileToScreen(get(0));
+        final Vector3f kMiddle = m_kDrawingContext.fileToScreen(get(1));
+        final Vector3f kEnd = m_kDrawingContext.fileToScreen(get(2));
+        // 0 is middle, 1 is start, 2 is end:
+        final float[] x = new float[3];
         x[0] = kMiddle.X;
         x[1] = kStart.X;
         x[2] = kEnd.X;
 
-        //0 is middle, 1 is start, 2 is end:
-        float[] y = new float[3];
+        // 0 is middle, 1 is start, 2 is end:
+        final float[] y = new float[3];
         y[0] = kMiddle.Y;
         y[1] = kStart.Y;
         y[2] = kEnd.Y;
@@ -136,67 +124,63 @@ public class VOIProtractor3D extends LocalVolumeVOI
 
         if (active == true) {
             this.drawTickMarks(g, unitsOfMeasure, m_kDrawingContext.getWidth(), m_kDrawingContext.getHeight(), resols);
-        } 
+        }
     }
 
-
-
-    public void drawTickMarks(Graphics g, int[] unitsOfMeasure, int xD, int yD, float[] res)
-    {
+    public void drawTickMarks(final Graphics g, final int[] unitsOfMeasure, final int xD, final int yD,
+            final float[] res) {
         int i;
         double slope;
         boolean close;
-        float[] x2 = new float[2];
-        float[] y2 = new float[2];
+        final float[] x2 = new float[2];
+        final float[] y2 = new float[2];
 
         if (g == null) {
             MipavUtil.displayError("VOIprotractor drawTickMarks: graphics = null");
 
             return;
         }
-        
-        Color currentColor = g.getColor();
+
+        final Color currentColor = g.getColor();
 
         g.setPaintMode();
         g.setFont(MipavUtil.font12);
-        
-        Vector3f kStart = m_kDrawingContext.fileToScreen( get(0) );
-        Vector3f kMiddle = m_kDrawingContext.fileToScreen( get(1) );
-        Vector3f kEnd = m_kDrawingContext.fileToScreen( get(2) );
-        
 
-        if ( kStart.equals( kEnd ) )
-        {
+        final Vector3f kStart = m_kDrawingContext.fileToScreen(get(0));
+        final Vector3f kMiddle = m_kDrawingContext.fileToScreen(get(1));
+        final Vector3f kEnd = m_kDrawingContext.fileToScreen(get(2));
+
+        if (kStart.equals(kEnd)) {
             return;
         }
-        
-        //0 is middle, 1 is start, 2 is end:
-        float[] x = new float[3];
+
+        // 0 is middle, 1 is start, 2 is end:
+        final float[] x = new float[3];
         x[0] = kMiddle.X;
         x[1] = kStart.X;
         x[2] = kEnd.X;
 
-        //0 is middle, 1 is start, 2 is end:
-        float[] y = new float[3];
+        // 0 is middle, 1 is start, 2 is end:
+        final float[] y = new float[3];
         y[0] = kMiddle.Y;
         y[1] = kStart.Y;
         y[2] = kEnd.Y;
 
-        if ((x[1] - x[0]) != 0) {
+        if ( (x[1] - x[0]) != 0) {
             slope = (y[1] - y[0]) / (x[1] - x[0]);
         } else {
             slope = Double.MAX_VALUE;
         }
 
-        close = (((y[0] <= (yD / 2)) && (slope < 1) && (slope > -1)) || (x[0] >= (xD / 2)));
-        float[] coords = new float[4];
+        close = ( ( (y[0] <= (yD / 2)) && (slope < 1) && (slope > -1)) || (x[0] >= (xD / 2)));
+        final float[] coords = new float[4];
         getCoords(x, y, .5, coords); // get coordinates for tick marks
 
-        String degreeString = getAngleString( res );
+        final String degreeString = getAngleString(res);
 
         if (close == true) {
 
-            if ((yD - y[0]) < 20) {
+            if ( (yD - y[0]) < 20) {
                 g.setColor(Color.black);
                 g.drawString(degreeString, (int) coords[0] - 20, (int) coords[1] - 21);
                 g.drawString(degreeString, (int) coords[0] - 20, (int) coords[1] - 19);
@@ -204,7 +188,7 @@ public class VOIProtractor3D extends LocalVolumeVOI
                 g.drawString(degreeString, (int) coords[0] - 19, (int) coords[1] - 20);
                 g.setColor(Color.white);
                 g.drawString(degreeString, (int) coords[0] - 20, (int) coords[1] - 20);
-            } else if ((xD - x[0]) < 20) {
+            } else if ( (xD - x[0]) < 20) {
                 g.setColor(Color.black);
                 g.drawString(degreeString, (int) coords[0] - 50, (int) coords[1] + 21);
                 g.drawString(degreeString, (int) coords[0] - 50, (int) coords[1] + 19);
@@ -223,7 +207,7 @@ public class VOIProtractor3D extends LocalVolumeVOI
             }
         } else {
 
-            if ((slope > 0) || (slope < -.5)) {
+            if ( (slope > 0) || (slope < -.5)) {
                 g.setColor(Color.black);
                 g.drawString(degreeString, (int) coords[0] + 20, (int) coords[1] + 21);
                 g.drawString(degreeString, (int) coords[0] + 20, (int) coords[1] + 19);
@@ -242,33 +226,33 @@ public class VOIProtractor3D extends LocalVolumeVOI
             }
         }
 
-        g.setColor( currentColor );
+        g.setColor(currentColor);
 
         for (i = 0; i < 2; i++) {
             getEndLines(x, y, i, coords);
             g.drawLine((int) coords[0], (int) coords[1], (int) coords[2], (int) coords[3]);
         }
 
-        if ((x[2] - x[0]) != 0) {
+        if ( (x[2] - x[0]) != 0) {
             slope = (y[2] - y[0]) / (x[2] - x[0]);
         } else {
             slope = Double.MAX_VALUE;
         }
 
-        close = (((y[2] <= (yD / 2)) && (slope < 1) && (slope > -1)) || (x[2] >= (xD / 2)));
+        close = ( ( (y[2] <= (yD / 2)) && (slope < 1) && (slope > -1)) || (x[2] >= (xD / 2)));
         x2[0] = x[0];
         x2[1] = x[2];
         y2[0] = y[0];
         y2[1] = y[2];
         getCoords(x2, y2, .5, coords); // get coordinates for tick marks
 
-        boolean showLengths = true;
+        final boolean showLengths = true;
         if (showLengths) {
 
-            String lengthString = getLengthString( res, unitsOfMeasure );
+            final String lengthString = getLengthString(res, unitsOfMeasure);
             if (close == true) {
 
-                if ((yD - y2[1]) < 20) {
+                if ( (yD - y2[1]) < 20) {
                     g.setColor(Color.black);
                     g.drawString(lengthString, (int) coords[0] - 20, (int) coords[1] - 21);
                     g.drawString(lengthString, (int) coords[0] - 20, (int) coords[1] - 19);
@@ -276,7 +260,7 @@ public class VOIProtractor3D extends LocalVolumeVOI
                     g.drawString(lengthString, (int) coords[0] - 19, (int) coords[1] - 20);
                     g.setColor(Color.white);
                     g.drawString(lengthString, (int) coords[0] - 20, (int) coords[1] - 20);
-                } else if ((xD - x2[1]) < 20) {
+                } else if ( (xD - x2[1]) < 20) {
                     g.setColor(Color.black);
                     g.drawString(lengthString, (int) coords[0] - 50, (int) coords[1] + 21);
                     g.drawString(lengthString, (int) coords[0] - 50, (int) coords[1] + 19);
@@ -295,7 +279,7 @@ public class VOIProtractor3D extends LocalVolumeVOI
                 }
             } else {
 
-                if ((slope > 0) || (slope < -.5)) {
+                if ( (slope > 0) || (slope < -.5)) {
                     g.setColor(Color.black);
                     g.drawString(lengthString, (int) coords[0] + 20, (int) coords[1] + 21);
                     g.drawString(lengthString, (int) coords[0] + 20, (int) coords[1] + 19);
@@ -315,72 +299,66 @@ public class VOIProtractor3D extends LocalVolumeVOI
             }
         } // end of if (showLengths)
 
-        g.setColor( currentColor );
-        
+        g.setColor(currentColor);
+
         for (i = 0; i < 2; i++) {
             getEndLines(x2, y2, i, coords);
             g.drawLine((int) coords[0], (int) coords[1], (int) coords[2], (int) coords[3]);
         }
     }
 
-    public LocalVolumeVOI split ( Vector3f kStartPt, Vector3f kEndPt )
-    {
+    public LocalVolumeVOI split(final Vector3f kStartPt, final Vector3f kEndPt) {
         return null;
     }
 
-    protected void drawVOI( Renderer kRenderer, int iSlice, float[] afResolutions, int[] aiUnits, VolumeVOI kVolumeVOI, Vector3f kVolumeScale, Vector3f kTranslate, int iOrientation, int[] aiAxisOrder )
-    {             
-        if ( isActive() )
-        {
-            if ( iSlice == slice() )
-            {
+    protected void drawVOI(final Renderer kRenderer, final int iSlice, final float[] afResolutions,
+            final int[] aiUnits, final VolumeVOI kVolumeVOI, final Vector3f kVolumeScale, final Vector3f kTranslate,
+            final int iOrientation, final int[] aiAxisOrder) {
+        if (isActive()) {
+            if (iSlice == slice()) {
 
                 getLocalCenter();
 
-                drawVOIProtractorAngle( kRenderer, afResolutions );
-                drawVOIProtractorLength( kRenderer, afResolutions, aiUnits );
-                drawSelectedPoints( kRenderer, kVolumeScale, kTranslate, iOrientation, aiAxisOrder );
+                drawVOIProtractorAngle(kRenderer, afResolutions);
+                drawVOIProtractorLength(kRenderer, afResolutions, aiUnits);
+                drawSelectedPoints(kRenderer, kVolumeScale, kTranslate, iOrientation, aiAxisOrder);
             }
         }
     }
 
-
-    private void drawVOIProtractorAngle( Renderer kRenderer, float[] afResolutions )
-    {
-        Vector3f kStart = m_kParent.fileCoordinatesToPatient( get(1) );
-        Vector3f kEnd1 = m_kParent.fileCoordinatesToPatient( get(0) );
-        Vector3f kEnd2 = m_kParent.fileCoordinatesToPatient( get(2));
-        float[] x = new float[3];
+    private void drawVOIProtractorAngle(final Renderer kRenderer, final float[] afResolutions) {
+        final Vector3f kStart = m_kParent.fileCoordinatesToPatient(get(1));
+        final Vector3f kEnd1 = m_kParent.fileCoordinatesToPatient(get(0));
+        final Vector3f kEnd2 = m_kParent.fileCoordinatesToPatient(get(2));
+        final float[] x = new float[3];
         x[0] = kStart.X;
         x[1] = kEnd1.X;
         x[2] = kEnd2.X;
 
-        float[] y = new float[3];
+        final float[] y = new float[3];
         y[0] = kStart.Y;
         y[1] = kEnd1.Y;
         y[2] = kEnd2.Y;
 
         float slope;
-        if ((x[1] - x[0]) != 0) {
+        if ( (x[1] - x[0]) != 0) {
             slope = (y[1] - y[0]) / (x[1] - x[0]);
         } else {
             slope = Float.MAX_VALUE;
         }
-        double fAngle = MipavMath.angle(x, y, afResolutions );
+        final double fAngle = MipavMath.angle(x, y, afResolutions);
 
+        final int iWidth = kRenderer.GetWidth();
+        final int iHeight = kRenderer.GetHeight();
+        final boolean close = ( ( (y[0] <= (iHeight / 2)) && (slope < 1) && (slope > -1)) || (x[0] >= (iWidth / 2)));
 
-
-        int iWidth = kRenderer.GetWidth();
-        int iHeight = kRenderer.GetHeight();
-        boolean close = (((y[0] <= (iHeight / 2)) && (slope < 1) && (slope > -1)) || (x[0] >= (iWidth / 2)));
-
-        Vector3f kCenter = m_kDrawingContext.fileToScreen( get(1) );
-        kCenter.Add( m_kDrawingContext.fileToScreen( get(0) ) );
+        final Vector3f kCenter = m_kDrawingContext.fileToScreen(get(1));
+        kCenter.Add(m_kDrawingContext.fileToScreen(get(0)));
         kCenter.Scale(0.5f);
-        int stringX = (int) kCenter.X;
-        int stringY = (int) kCenter.Y;
+        final int stringX = (int) kCenter.X;
+        final int stringY = (int) kCenter.Y;
         String degreeString = String.valueOf(fAngle); // since y decreases going down
-        int i = degreeString.indexOf('.');
+        final int i = degreeString.indexOf('.');
 
         if (degreeString.length() >= (i + 3)) {
             degreeString = degreeString.substring(0, i + 3);
@@ -390,53 +368,50 @@ public class VOIProtractor3D extends LocalVolumeVOI
 
         if (close == true) {
 
-            if ((iHeight - y[0]) < 20) {
-                drawText( kRenderer, stringX - 20, stringY - 20, ColorRGBA.WHITE, degreeString.toCharArray() );
-            } else if ((iWidth - x[0]) < 20) {
-                drawText( kRenderer, stringX - 50, stringY + 20, ColorRGBA.WHITE, degreeString.toCharArray() );
+            if ( (iHeight - y[0]) < 20) {
+                drawText(kRenderer, stringX - 20, stringY - 20, ColorRGBA.WHITE, degreeString.toCharArray());
+            } else if ( (iWidth - x[0]) < 20) {
+                drawText(kRenderer, stringX - 50, stringY + 20, ColorRGBA.WHITE, degreeString.toCharArray());
             } else {
-                drawText( kRenderer, stringX - 20, stringY + 20, ColorRGBA.WHITE, degreeString.toCharArray() );
+                drawText(kRenderer, stringX - 20, stringY + 20, ColorRGBA.WHITE, degreeString.toCharArray());
             }
         } else {
 
-            if ((slope > 0) || (slope < -.5)) {
-                drawText( kRenderer, stringX + 20, stringY + 20, ColorRGBA.WHITE, degreeString.toCharArray() );
+            if ( (slope > 0) || (slope < -.5)) {
+                drawText(kRenderer, stringX + 20, stringY + 20, ColorRGBA.WHITE, degreeString.toCharArray());
             } else {
-                drawText( kRenderer, stringX - 40, stringY - 20, ColorRGBA.WHITE, degreeString.toCharArray() );
+                drawText(kRenderer, stringX - 40, stringY - 20, ColorRGBA.WHITE, degreeString.toCharArray());
             }
         }
     }
 
-
-    private void drawVOIProtractorLength( Renderer kRenderer, float[] afResolutions, int[] aiUnits )
-    {
-        Vector3f kStart = m_kParent.fileCoordinatesToPatient( get(1) );
-        Vector3f kEnd = m_kParent.fileCoordinatesToPatient( get(2) );
-        float[] x = new float[2];
+    private void drawVOIProtractorLength(final Renderer kRenderer, final float[] afResolutions, final int[] aiUnits) {
+        final Vector3f kStart = m_kParent.fileCoordinatesToPatient(get(1));
+        final Vector3f kEnd = m_kParent.fileCoordinatesToPatient(get(2));
+        final float[] x = new float[2];
         x[0] = kStart.X;
         x[1] = kEnd.X;
 
-        float[] y = new float[2];
+        final float[] y = new float[2];
         y[0] = kStart.Y;
         y[1] = kEnd.Y;
 
-        double length = MipavMath.length(x, y, afResolutions );
+        final double length = MipavMath.length(x, y, afResolutions);
 
         float slope;
-        if ((x[1] - x[0]) != 0) {
+        if ( (x[1] - x[0]) != 0) {
             slope = (y[1] - y[0]) / (x[1] - x[0]);
         } else {
             slope = Float.MAX_VALUE;
         }
 
-
-        int iWidth = kRenderer.GetWidth();
-        int iHeight = kRenderer.GetHeight();
-        boolean close = (((y[0] <= (iHeight / 2)) && (slope < 1) && (slope > -1)) || (x[0] >= (iWidth / 2)));
+        final int iWidth = kRenderer.GetWidth();
+        final int iHeight = kRenderer.GetHeight();
+        final boolean close = ( ( (y[0] <= (iHeight / 2)) && (slope < 1) && (slope > -1)) || (x[0] >= (iWidth / 2)));
 
         // g.setColor(Color.yellow);
         String tmpString = String.valueOf(length);
-        int i = tmpString.indexOf('.');
+        final int i = tmpString.indexOf('.');
 
         if (tmpString.length() >= (i + 3)) {
             tmpString = tmpString.substring(0, i + 3);
@@ -444,63 +419,59 @@ public class VOIProtractor3D extends LocalVolumeVOI
 
         tmpString = tmpString + " " + FileInfoBase.getUnitsOfMeasureAbbrevStr(aiUnits[0]);
 
-        Vector3f kCenter = m_kDrawingContext.fileToScreen( get(1) );
-        kCenter.Add( m_kDrawingContext.fileToScreen( get(2) ) );
+        final Vector3f kCenter = m_kDrawingContext.fileToScreen(get(1));
+        kCenter.Add(m_kDrawingContext.fileToScreen(get(2)));
         kCenter.Scale(0.5f);
         int stringX = (int) kCenter.X;
         int stringY = (int) kCenter.Y;
 
         if (close == true) {
 
-            if ((iHeight - y[0]) < 20) {
+            if ( (iHeight - y[0]) < 20) {
 
-                if ((stringY - 21) < 20) {
+                if ( (stringY - 21) < 20) {
                     stringY += 45;
                 }
 
-                if ((stringX - 21) < 10) {
+                if ( (stringX - 21) < 10) {
                     stringX += 25;
                 }
 
-                drawText( kRenderer, stringX - 20, stringY - 20, ColorRGBA.WHITE, tmpString.toCharArray() );
-            } else if ((iWidth - x[0]) < 20) {
-                drawText( kRenderer, stringX - 50, stringY + 20, ColorRGBA.WHITE, tmpString.toCharArray() );
+                drawText(kRenderer, stringX - 20, stringY - 20, ColorRGBA.WHITE, tmpString.toCharArray());
+            } else if ( (iWidth - x[0]) < 20) {
+                drawText(kRenderer, stringX - 50, stringY + 20, ColorRGBA.WHITE, tmpString.toCharArray());
             } else {
-                drawText( kRenderer, stringX - 20, stringY + 20, ColorRGBA.WHITE, tmpString.toCharArray() );
+                drawText(kRenderer, stringX - 20, stringY + 20, ColorRGBA.WHITE, tmpString.toCharArray());
             }
         } else {
 
-            if ((slope > 0) || (slope < -.5)) {
-                drawText( kRenderer, stringX + 20, stringY + 20, ColorRGBA.WHITE, tmpString.toCharArray() );
+            if ( (slope > 0) || (slope < -.5)) {
+                drawText(kRenderer, stringX + 20, stringY + 20, ColorRGBA.WHITE, tmpString.toCharArray());
             } else {
-                drawText( kRenderer, stringX - 40, stringY - 20, ColorRGBA.WHITE, tmpString.toCharArray() );
+                drawText(kRenderer, stringX - 40, stringY - 20, ColorRGBA.WHITE, tmpString.toCharArray());
             }
         }
     }
 
-
-    private String getAngleString( float[] afResolutions )
-    {
-        Vector3f kStart = m_kParent.fileCoordinatesToPatient( get(1) );
-        Vector3f kEnd1 = m_kParent.fileCoordinatesToPatient( get(0) );
-        Vector3f kEnd2 = m_kParent.fileCoordinatesToPatient( get(2));
-        float[] x = new float[3];
+    private String getAngleString(final float[] afResolutions) {
+        final Vector3f kStart = m_kParent.fileCoordinatesToPatient(get(1));
+        final Vector3f kEnd1 = m_kParent.fileCoordinatesToPatient(get(0));
+        final Vector3f kEnd2 = m_kParent.fileCoordinatesToPatient(get(2));
+        final float[] x = new float[3];
         x[0] = kStart.X;
         x[1] = kEnd1.X;
         x[2] = kEnd2.X;
 
-        float[] y = new float[3];
+        final float[] y = new float[3];
         y[0] = kStart.Y;
         y[1] = kEnd1.Y;
         y[2] = kEnd2.Y;
 
-        if ((x[1] - x[0]) != 0) {
-        } else {
-        }
-        double fAngle = MipavMath.angle(x, y, afResolutions );
+        if ( (x[1] - x[0]) != 0) {} else {}
+        final double fAngle = MipavMath.angle(x, y, afResolutions);
 
         String degreeString = String.valueOf(fAngle); // since y decreases going down
-        int i = degreeString.indexOf('.');
+        final int i = degreeString.indexOf('.');
 
         if (degreeString.length() >= (i + 3)) {
             degreeString = degreeString.substring(0, i + 3);
@@ -510,7 +481,7 @@ public class VOIProtractor3D extends LocalVolumeVOI
         return degreeString;
     }
 
-    private void getCoords(float[] x, float[] y, double fraction, float[] coords) {
+    private void getCoords(final float[] x, final float[] y, final double fraction, final float[] coords) {
         float x1, y1;
         double vector1, vector2, tmp;
         double length;
@@ -527,11 +498,11 @@ public class VOIProtractor3D extends LocalVolumeVOI
 
         vector1 = (x[1] - x[0]);
         vector2 = (y[1] - y[0]);
-        length = Math.sqrt((vector1 * vector1) + (vector2 * vector2));
+        length = Math.sqrt( (vector1 * vector1) + (vector2 * vector2));
         vector1 = (x[1] - x[0]) / length;
         vector2 = (y[1] - y[0]) / length;
         tmp = vector1;
-        vector1 = 5 * (-vector2);
+        vector1 = 5 * ( -vector2);
         vector2 = 5 * tmp;
         coords[0] = (int) (x1 + vector1 + 0.5);
         coords[1] = (int) (y1 + vector2 + 0.5);
@@ -539,17 +510,17 @@ public class VOIProtractor3D extends LocalVolumeVOI
         coords[3] = (int) (y1 - vector2 + 0.5);
     }
 
-    private void getEndLines(float[] x, float[] y, int line, float[] coords) {
+    private void getEndLines(final float[] x, final float[] y, final int line, final float[] coords) {
         double vector1, vector2, tmp;
         double length;
         vector1 = (x[1] - x[0]);
         vector2 = (y[1] - y[0]);
-        length = Math.sqrt((vector1 * vector1) + (vector2 * vector2));
+        length = Math.sqrt( (vector1 * vector1) + (vector2 * vector2));
         vector1 = (x[1] - x[0]) / length;
         vector2 = (y[1] - y[0]) / length;
         tmp = vector1;
-        vector1 = -10 * ((vector1 * 0.707) + (vector2 * 0.707));
-        vector2 = 10 * ((tmp * 0.707) - (vector2 * 0.707));
+        vector1 = -10 * ( (vector1 * 0.707) + (vector2 * 0.707));
+        vector2 = 10 * ( (tmp * 0.707) - (vector2 * 0.707));
 
         if (line == 0) {
             coords[0] = (int) (x[1]);
@@ -564,22 +535,21 @@ public class VOIProtractor3D extends LocalVolumeVOI
         }
     }
 
-    private String getLengthString(float[] afResolutions, int[] aiUnits)
-    {
-        Vector3f kStart = m_kParent.fileCoordinatesToPatient( get(1) );
-        Vector3f kEnd = m_kParent.fileCoordinatesToPatient( get(2) );
-        float[] x = new float[2];
+    private String getLengthString(final float[] afResolutions, final int[] aiUnits) {
+        final Vector3f kStart = m_kParent.fileCoordinatesToPatient(get(1));
+        final Vector3f kEnd = m_kParent.fileCoordinatesToPatient(get(2));
+        final float[] x = new float[2];
         x[0] = kStart.X;
         x[1] = kEnd.X;
 
-        float[] y = new float[2];
+        final float[] y = new float[2];
         y[0] = kStart.Y;
         y[1] = kEnd.Y;
 
-        double length = MipavMath.length(x, y, afResolutions );
+        final double length = MipavMath.length(x, y, afResolutions);
 
         String tmpString = String.valueOf(length);
-        int i = tmpString.indexOf('.');
+        final int i = tmpString.indexOf('.');
 
         if (tmpString.length() >= (i + 3)) {
             tmpString = tmpString.substring(0, i + 3);
@@ -593,7 +563,7 @@ public class VOIProtractor3D extends LocalVolumeVOI
         return new VOIProtractor3D(this);
     }
 
-    public VOIProtractor3D clone(int iZ) {
+    public VOIProtractor3D clone(final int iZ) {
         return new VOIProtractor3D(this, iZ);
     }
 }

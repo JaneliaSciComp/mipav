@@ -1,47 +1,46 @@
 package gov.nih.mipav.model.algorithms;
 
-import WildMagic.LibFoundation.Mathematics.Vector3f;
-import WildMagic.LibFoundation.Mathematics.Vector4f;
 
-import gov.nih.mipav.*;
+import gov.nih.mipav.util.MipavMath;
 
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.*;
-
-import java.io.*;
-
+import java.awt.Dimension;
+import java.io.IOException;
 import java.util.*;
+
+import WildMagic.LibFoundation.Mathematics.*;
 
 
 /**
  * Three-Dimensional mathmatical morphology class. Methods include:
- *
+ * 
  * <ul>
- *   <li>Background Distance Map</li>
- *   <li>close</li>
- *   <li>Delete objects</li>
- *   <li>dilate</li>
- *   <li>Distance Map</li>
- *   <li>erode</li>
- *   <li>fill holes</li>
- *   <li>find edges</li>
- *   <li>Identify objects</li>
- *   <li>Morphological gradient</li>
- *   <li>open</li>
- *   <li>Particle Analysis</li>
- *   <li>Skeletonize with pruning option</li>
- *   <li>ultimate erode</li>
+ * <li>Background Distance Map</li>
+ * <li>close</li>
+ * <li>Delete objects</li>
+ * <li>dilate</li>
+ * <li>Distance Map</li>
+ * <li>erode</li>
+ * <li>fill holes</li>
+ * <li>find edges</li>
+ * <li>Identify objects</li>
+ * <li>Morphological gradient</li>
+ * <li>open</li>
+ * <li>Particle Analysis</li>
+ * <li>Skeletonize with pruning option</li>
+ * <li>ultimate erode</li>
  * </ul>
- *
- * @version  1.0 Aug 1999
- * @author   Matthew J. McAuliffe, Ph.D.
+ * 
+ * @version 1.0 Aug 1999
+ * @author Matthew J. McAuliffe, Ph.D.
  */
 public class AlgorithmMorphology3D extends AlgorithmBase {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     public static final int ERODE = 0; // algorithm types
@@ -81,10 +80,10 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     public static final int FILL_HOLES = 12;
-    
+
     /** DOCUMENT ME! */
     public static final int DISTANCE_MAP_FOR_SHAPE_INTERPOLATION = 13;
-    
+
     public static final int MORPHOLOGICAL_GRADIENT = 14;
 
     /** DOCUMENT ME! */
@@ -95,7 +94,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     public static final int CONNECTED24 = 2;
-    
+
     public static final int CONNECTED26 = 3;
 
     /**
@@ -110,37 +109,36 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
      */
     public static final int INNER_EDGING = 1;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** algorithm type (i.e. erode, dilate) */
     private int algorithm;
 
     /** DOCUMENT ME! */
-    private String[] algorithmName = {
-        "ERODE", "DILATE", "CLOSE", "OPEN", "ID_OBJECTS", "DELETE_OBJECTS", "DISTANCE_MAP", "BACKGROUND_DISTANCE_MAP",
-        "ULTIMATE_ERODE", "PARTICLE ANALYSIS", "SKELETONIZE", "FIND_EDGES", "FILL_HOLES",
-        "DISTANCE_MAP_FOR_SHAPE_INTERPOLATION", "MORPHOLOGICAL_GRADIENT"
-    };
+    private final String[] algorithmName = {"ERODE", "DILATE", "CLOSE", "OPEN", "ID_OBJECTS", "DELETE_OBJECTS",
+            "DISTANCE_MAP", "BACKGROUND_DISTANCE_MAP", "ULTIMATE_ERODE", "PARTICLE ANALYSIS", "SKELETONIZE",
+            "FIND_EDGES", "FILL_HOLES", "DISTANCE_MAP_FOR_SHAPE_INTERPOLATION", "MORPHOLOGICAL_GRADIENT"};
 
     /** DOCUMENT ME! */
     private float[] distanceMap = null;
 
     /** Edge type. */
-    private int edgingType;
+    private final int edgingType;
 
     /** if true, indicates that the VOIs should NOT be used and that entire image should be processed. */
     private boolean entireImage;
 
     /** imgBuffer that hold voxel value for the 3D slices. */
     private short[] imgBuffer;
-    
+
     private short[] imgBuffer2;
 
     /** Dilation iteration times. */
-    private int iterationsD;
+    private final int iterationsD;
 
     /** Erosion iteration times. */
-    private int iterationsE;
+    private final int iterationsE;
 
     /** Kernel dimension. */
     private int kDimXY;
@@ -152,13 +150,13 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
     private BitSet kernel;
 
     /** kernel size (i.e. connectedness) */
-    private int kernelType;
+    private final int kernelType;
 
     /** maximum, minimum size of objects. */
     private int min = 1, max = 20000000;
 
     /** Number pixels to prune. */
-    private int numPruningPixels;
+    private final int numPruningPixels;
 
     /** Vector that holding the current availaible objects in the 3D image. */
     private Vector objects = new Vector();
@@ -170,7 +168,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
     private short[] processBuffer;
 
     /** Not used now. Flag to show frame during each algorithm method call. */
-    private boolean showFrame = false;
+    private final boolean showFrame = false;
 
     /** kernel diameter. */
     private float sphereDiameter;
@@ -178,44 +176,47 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
     /** DOCUMENT ME! */
     private Vector3f[] ultErodeObjects = null;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates a new AlgorithmMorphology3D object.
-     *
-     * @param  srcImg          source image model
-     * @param  kernelType      kernel size (i.e. connectedness)
-     * @param  sphereDiameter  only valid if kernelType == SIZED_SPHERE and represents the width of a circle in the
-     *                         resolution of the image
-     * @param  method          setup the algorithm method (i.e. erode)
-     * @param  iterD           number of times to dilate
-     * @param  iterE           number of times to erode
-     * @param  pruningPix      the number of pixels to prune
-     * @param  edType          the type of edging to perform (inner or outer)
-     * @param  entireImage     flag that indicates if the VOIs should NOT be used and entire image should be processed
+     * 
+     * @param srcImg source image model
+     * @param kernelType kernel size (i.e. connectedness)
+     * @param sphereDiameter only valid if kernelType == SIZED_SPHERE and represents the width of a circle in the
+     *            resolution of the image
+     * @param method setup the algorithm method (i.e. erode)
+     * @param iterD number of times to dilate
+     * @param iterE number of times to erode
+     * @param pruningPix the number of pixels to prune
+     * @param edType the type of edging to perform (inner or outer)
+     * @param entireImage flag that indicates if the VOIs should NOT be used and entire image should be processed
      */
-    public AlgorithmMorphology3D(ModelImage srcImg, int kernelType, float sphereDiameter, int method, int iterD,
-                                 int iterE, int pruningPix, int edType, boolean entireImage) {
+    public AlgorithmMorphology3D(final ModelImage srcImg, final int kernelType, final float sphereDiameter,
+            final int method, final int iterD, final int iterE, final int pruningPix, final int edType,
+            final boolean entireImage) {
         this(srcImg, null, kernelType, sphereDiameter, method, iterD, iterE, pruningPix, edType, entireImage);
     }
 
     /**
      * Creates a new AlgorithmMorphology3D object.
-     *
-     * @param  srcImg          source image model
-     * @param  destImg         destination image model
-     * @param  kernelType      kernel size (i.e. connectedness)
-     * @param  sphereDiameter  only valid if kernelType == SIZED_SPHERE and represents the width of a circle in the
-     *                         resolution of the image
-     * @param  method          setup the algorithm method (i.e. erode)
-     * @param  iterD           number of times to dilate
-     * @param  iterE           number of times to erode
-     * @param  pruningPix      the number of pixels to prune
-     * @param  edType          the type of edging to perform (inner or outer)
-     * @param  entireImage     flag that indicates if the VOIs should NOT be used and entire image should be processed
+     * 
+     * @param srcImg source image model
+     * @param destImg destination image model
+     * @param kernelType kernel size (i.e. connectedness)
+     * @param sphereDiameter only valid if kernelType == SIZED_SPHERE and represents the width of a circle in the
+     *            resolution of the image
+     * @param method setup the algorithm method (i.e. erode)
+     * @param iterD number of times to dilate
+     * @param iterE number of times to erode
+     * @param pruningPix the number of pixels to prune
+     * @param edType the type of edging to perform (inner or outer)
+     * @param entireImage flag that indicates if the VOIs should NOT be used and entire image should be processed
      */
-    public AlgorithmMorphology3D(ModelImage srcImg, ModelImage destImg, int kernelType, float sphereDiameter,
-                                 int method, int iterD, int iterE, int pruningPix, int edType, boolean entireImage) {
+    public AlgorithmMorphology3D(final ModelImage srcImg, final ModelImage destImg, final int kernelType,
+            final float sphereDiameter, final int method, final int iterD, final int iterE, final int pruningPix,
+            final int edType, final boolean entireImage) {
         super(destImg, srcImg);
         makeKernel(kernelType);
         setAlgorithm(method);
@@ -226,7 +227,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         this.entireImage = entireImage;
         this.kernelType = kernelType;
 
-        if (kernelType == SIZED_SPHERE) {
+        if (kernelType == AlgorithmMorphology3D.SIZED_SPHERE) {
             this.sphereDiameter = sphereDiameter;
             makeSphericalKernel();
         } else {
@@ -234,7 +235,8 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         }
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Prepares this class for destruction.
@@ -255,18 +257,17 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
     /**
      * Finds the edges of objects.
-     *
-     * @param  edgeType    Indicates that the edge extracted is formed from the voxels that are directly adjacient to
-     *                     the ojbect or from the voxels that overlay the edge voxels of the object.
-     * @param  returnFlag  if true then this operation is a step in the morph process (i.e. close) see OUTER_EDGING see
-     *                     INNER_EDGE
+     * 
+     * @param edgeType Indicates that the edge extracted is formed from the voxels that are directly adjacient to the
+     *            ojbect or from the voxels that overlay the edge voxels of the object.
+     * @param returnFlag if true then this operation is a step in the morph process (i.e. close) see OUTER_EDGING see
+     *            INNER_EDGE
      */
-    public void findEdges(int edgeType, boolean returnFlag) {
+    public void findEdges(final int edgeType, final boolean returnFlag) {
 
         // if thread has already been stopped, dump out
         if (threadStopped) {
             setCompleted(false);
-
 
             finalize();
 
@@ -280,21 +281,20 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         short[] tempBuffer;
         short value;
 
-        int xDim = srcImage.getExtents()[0];
-        int yDim = srcImage.getExtents()[1];
-        int zDim = srcImage.getExtents()[2];
+        final int xDim = srcImage.getExtents()[0];
+        final int yDim = srcImage.getExtents()[1];
+        final int zDim = srcImage.getExtents()[2];
 
-        int sliceSize = xDim * yDim;
-        int imgSize = sliceSize * zDim;
+        final int sliceSize = xDim * yDim;
+        final int imgSize = sliceSize * zDim;
 
         fireProgressStateChanged(0, srcImage.getImageName(), "Finding Edges ...");
 
         try {
             tempBuffer = new short[imgBuffer.length];
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             displayError("Algorithm Morphology3D: Out of memory");
             setCompleted(false);
-
 
             return;
         }
@@ -304,24 +304,26 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             tempBuffer[pix] = 0;
         }
 
-        float pixelsPerProgressValue = 100f / imgSize;
+        final float pixelsPerProgressValue = 100f / imgSize;
 
-        if (edgingType == OUTER_EDGING) {
+        if (edgingType == AlgorithmMorphology3D.OUTER_EDGING) {
 
             // dilate image and then XOR with orignal image
             for (int s = 0; (s < (zDim * sliceSize)) && !threadStopped; s += sliceSize) {
 
-                if ((s % pixelsPerProgressValue) == 0) {
-                    fireProgressStateChanged(MipavMath.round((s / pixelsPerProgressValue)));
+                if ( (s % pixelsPerProgressValue) == 0) {
+                    fireProgressStateChanged(MipavMath.round( (s / pixelsPerProgressValue)));
                 }
 
                 try {
-                    fireProgressStateChanged(Math.round(((float) s) / ((float) (imgSize - 1)) * 100));
-                } catch (NullPointerException npe) {
+                    fireProgressStateChanged(Math.round( ((float) s) / ((float) (imgSize - 1)) * 100));
+                } catch (final NullPointerException npe) {
 
                     if (threadStopped) {
-                        Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                          Preferences.DEBUG_ALGORITHM);
+                        Preferences
+                                .debug(
+                                        "somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
+                                        Preferences.DEBUG_ALGORITHM);
                     }
                 }
 
@@ -340,7 +342,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
                                 for (i = startX; i < endX; i++) {
 
-                                    if ((i >= 0) && (i < (s + sliceSize))) {
+                                    if ( (i >= 0) && (i < (s + sliceSize))) {
                                         processBuffer[i] = value;
                                     }
                                 }
@@ -356,7 +358,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
                 if (entireImage || mask.get(pix)) {
 
-                    if ((imgBuffer[pix] == 0) && (processBuffer[pix] != 0)) {
+                    if ( (imgBuffer[pix] == 0) && (processBuffer[pix] != 0)) {
                         tempBuffer[pix] = processBuffer[pix];
                     }
                 }
@@ -365,15 +367,15 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
             for (int s = 0; (s < (zDim * sliceSize)) && !threadStopped; s += sliceSize) {
 
-                //                try {
+                // try {
                 //
-                //                 if (isProgressBarVisible()) { fireProgressStateChanged(Math.round(((float) s) /
-                // ((float) (imgSize - 1)) * 100)); }                } catch (NullPointerException npe) {
+                // if (isProgressBarVisible()) { fireProgressStateChanged(Math.round(((float) s) /
+                // ((float) (imgSize - 1)) * 100)); } } catch (NullPointerException npe) {
 
-                //                    if (threadStopped) {                        Preferences.debug("somehow you managed
+                // if (threadStopped) { Preferences.debug("somehow you managed
                 // to cancel the algorithm and dispose the progressbar between checking for threadStopping and using
-                // it.",                                          Preferences.DEBUG_ALGORITHM);                    }
-                //    }
+                // it.", Preferences.DEBUG_ALGORITHM); }
+                // }
 
                 for (pix = s; pix < (s + sliceSize); pix++) {
 
@@ -391,7 +393,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
                                 for (i = startX; i < endX; i++) {
 
-                                    if ((i >= 0) && (i < (s + sliceSize))) {
+                                    if ( (i >= 0) && (i < (s + sliceSize))) {
 
                                         if (imgBuffer[i] == 0) {
                                             clear = true;
@@ -416,7 +418,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
                 if (entireImage || mask.get(pix)) {
 
-                    if ((imgBuffer[pix] != 0) && (processBuffer[pix] == 0)) {
+                    if ( (imgBuffer[pix] != 0) && (processBuffer[pix] == 0)) {
                         tempBuffer[pix] = imgBuffer[pix];
                     }
                 }
@@ -434,17 +436,15 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             if (threadStopped) {
                 setCompleted(false);
 
-
                 finalize();
 
                 return;
             }
 
             srcImage.importData(0, imgBuffer, true);
-        } catch (IOException error) {
+        } catch (final IOException error) {
             displayError("Algorithm Morphology3D: Image(s) locked");
             setCompleted(false);
-
 
             return;
         }
@@ -455,10 +455,10 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
     /**
      * Labels each object in an image with a different integer value.
-     *
-     * @param  returnFlag  if true then this operation is a step in the morph process (i.e. close)
+     * 
+     * @param returnFlag if true then this operation is a step in the morph process (i.e. close)
      */
-    public void identifyObjects(boolean returnFlag) {
+    public void identifyObjects(final boolean returnFlag) {
 
         // if thread has already been stopped, dump out
         if (threadStopped) {
@@ -470,14 +470,14 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         }
 
         int pix;
-        int xDim = srcImage.getExtents()[0];
-        int yDim = srcImage.getExtents()[1];
-        int zDim = srcImage.getExtents()[2];
-        int imageLength = xDim * yDim * zDim;
+        final int xDim = srcImage.getExtents()[0];
+        final int yDim = srcImage.getExtents()[1];
+        final int zDim = srcImage.getExtents()[2];
+        final int imageLength = xDim * yDim * zDim;
         short floodValue = 1;
         int count = 0;
 
-        int[] progressValues = getProgressValues();
+        final int[] progressValues = getProgressValues();
 
         this.setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 95));
         deleteObjects(min, max, true);
@@ -486,14 +486,13 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
         fireProgressStateChanged("Identifying objects ...");
 
-
-        int mod = imageLength / 50;
+        final int mod = imageLength / 50;
 
         // objects.removeAllElements();
         for (pix = 0; (pix < imageLength) && !threadStopped; pix++) {
 
-            if (((pix % mod) == 0)) {
-                fireProgressStateChanged(95 + Math.round((pix + 1) / ((float) imageLength) * 5));
+            if ( ( (pix % mod) == 0)) {
+                fireProgressStateChanged(95 + Math.round( (pix + 1) / ((float) imageLength) * 5));
             }
 
             if (entireImage == true) {
@@ -524,17 +523,16 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         float vol;
 
         mStr = srcImage.getFileInfo(0).getVolumeUnitsOfMeasureStr();
-        ViewUserInterface.getReference().getMessageFrame().getData().append(" Object \t# of pixels\tVolume(" + mStr +
-                                                                            ")\n");
+        ViewUserInterface.getReference().getMessageFrame().getData().append(
+                " Object \t# of pixels\tVolume(" + mStr + ")\n");
 
         for (int i = 0; i < objects.size(); i++) {
-            vol = ((intObject) (objects.elementAt(i))).size * srcImage.getFileInfo(0).getResolutions()[0] *
-                      srcImage.getFileInfo(0).getResolutions()[1] * srcImage.getFileInfo(0).getResolutions()[2];
+            vol = ((intObject) (objects.elementAt(i))).size * srcImage.getFileInfo(0).getResolutions()[0]
+                    * srcImage.getFileInfo(0).getResolutions()[1] * srcImage.getFileInfo(0).getResolutions()[2];
 
             // UI.setDataText(
-            ViewUserInterface.getReference().getMessageFrame().getData().append("    " + (i + 1) + "\t" + +((intObject)
-                                                                                                                (objects.elementAt(i))).size +
-                                                                                "\t" + vol + "\n");
+            ViewUserInterface.getReference().getMessageFrame().getData().append(
+                    "    " + (i + 1) + "\t" + + ((intObject) (objects.elementAt(i))).size + "\t" + vol + "\n");
         }
 
         if (returnFlag == true) {
@@ -551,18 +549,18 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                 return;
             }
 
-            if ((srcImage.getType() == ModelStorageBase.BOOLEAN) || (srcImage.getType() == ModelStorageBase.BYTE) ||
-                (srcImage.getType() == ModelStorageBase.UBYTE) || (srcImage.getType() == ModelStorageBase.SHORT)) {
-                srcImage.reallocate(ModelImage.USHORT);
+            if ( (srcImage.getType() == ModelStorageBase.BOOLEAN) || (srcImage.getType() == ModelStorageBase.BYTE)
+                    || (srcImage.getType() == ModelStorageBase.UBYTE) || (srcImage.getType() == ModelStorageBase.SHORT)) {
+                srcImage.reallocate(ModelStorageBase.USHORT);
             }
 
             srcImage.importData(0, processBuffer, true);
-        } catch (IOException error) {
+        } catch (final IOException error) {
             displayError("Algorithm Morphology3D: Image(s) locked");
             setCompleted(false);
 
             return;
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             displayError("Algorithm Morphology3D: Out of memory");
             setCompleted(false);
 
@@ -575,11 +573,11 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
     /**
      * This method is to be applied on skeletonized images: it removes all branches which are iter or less pixels in
      * length.
-     *
-     * @param  iter        the threshold number of pixels for the maximum length of a removed branch to be
-     * @param  returnFlag  if true then this operation is a step in the morph process (i.e. close)
+     * 
+     * @param iter the threshold number of pixels for the maximum length of a removed branch to be
+     * @param returnFlag if true then this operation is a step in the morph process (i.e. close)
      */
-    public void prune(int iter, boolean returnFlag) {
+    public void prune(final int iter, final boolean returnFlag) {
 
         // if thread has already been stopped, dump out
         if (threadStopped) {
@@ -587,13 +585,13 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         }
 
         short p1, p2, p3, p4, p5, p6, p7, p8, p9;
-        short bgColor = 0;
+        final short bgColor = 0;
         short value;
         int i, slice, pix;
-        int xDim = srcImage.getExtents()[0];
-        int yDim = srcImage.getExtents()[1];
-        int zDim = srcImage.getExtents()[2];
-        int sliceSize = xDim * yDim;
+        final int xDim = srcImage.getExtents()[0];
+        final int yDim = srcImage.getExtents()[1];
+        final int zDim = srcImage.getExtents()[2];
+        final int sliceSize = xDim * yDim;
         Vector endpoints;
         Vector branch;
         Vector branchesVector;
@@ -607,59 +605,57 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             tempBuffer = new short[imgBuffer.length];
             endpoints = new Vector();
             branchesVector = new Vector();
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             displayError("Algorithm Morphology3D: Out of memory");
             setCompleted(false);
-
 
             return;
         }
 
         /*
-         *      try {
-         *
-         * if  {             progressBar.setMessage("Pruning image ...");         }
-         *
-         * if  {             fireProgressStateChanged(0);         }     } catch (NullPointerException npe) {
-         *
-         * if (threadStopped) {             Preferences.debug("somehow you managed to cancel the algorithm and dispose
-         * the progressbar between checking for threadStopping and using it.", Preferences.DEBUG_ALGORITHM);    }     }
+         * try {
+         * 
+         * if { progressBar.setMessage("Pruning image ..."); }
+         * 
+         * if { fireProgressStateChanged(0); } } catch (NullPointerException npe) {
+         * 
+         * if (threadStopped) { Preferences.debug("somehow you managed to cancel the algorithm and dispose the
+         * progressbar between checking for threadStopping and using it.", Preferences.DEBUG_ALGORITHM); } }
          */
         for (slice = 0; slice < zDim; slice++) {
 
-            /*            try {
-             *              progressBar.setMessage("Pruning Slice " + (slice + 1));
-             * fireProgressStateChanged(Math.round(((float) slice) / ((float) zDim) * 100));         } catch
+            /*
+             * try { progressBar.setMessage("Pruning Slice " + (slice + 1));
+             * fireProgressStateChanged(Math.round(((float) slice) / ((float) zDim) * 100)); } catch
              * (NullPointerException npe) {
-             *
-             *     if (threadStopped) {                 Preferences.debug("somehow you managed to cancel the algorithm
-             * and dispose the progressbar between checking for threadStopping and using it.",
-             * Preferences.DEBUG_ALGORITHM);             }         }
+             * 
+             * if (threadStopped) { Preferences.debug("somehow you managed to cancel the algorithm and dispose the
+             * progressbar between checking for threadStopping and using it.", Preferences.DEBUG_ALGORITHM); } }
              */
             // sets the intensity of border points to 0
-            for (pix = (slice * sliceSize); pix < ((slice * sliceSize) + xDim); pix++) {
+            for (pix = (slice * sliceSize); pix < ( (slice * sliceSize) + xDim); pix++) {
                 imgBuffer[pix] = 0;
             }
 
-            for (pix = ((slice * sliceSize) + (xDim * (yDim - 1))); pix < ((slice + 1) * sliceSize); pix++) {
+            for (pix = ( (slice * sliceSize) + (xDim * (yDim - 1))); pix < ( (slice + 1) * sliceSize); pix++) {
                 imgBuffer[pix] = 0;
             }
 
-            for (pix = (slice * sliceSize); pix <= ((slice * sliceSize) + (xDim * (yDim - 1))); pix += xDim) {
+            for (pix = (slice * sliceSize); pix <= ( (slice * sliceSize) + (xDim * (yDim - 1))); pix += xDim) {
                 imgBuffer[pix] = 0;
             }
 
-            for (pix = ((slice * sliceSize) + (xDim - 1)); pix < ((slice + 1) * sliceSize); pix += xDim) {
+            for (pix = ( (slice * sliceSize) + (xDim - 1)); pix < ( (slice + 1) * sliceSize); pix += xDim) {
                 imgBuffer[pix] = 0;
             }
 
-            for (pix = (slice * sliceSize); pix < ((slice + 1) * sliceSize); pix++) {
+            for (pix = (slice * sliceSize); pix < ( (slice + 1) * sliceSize); pix++) {
                 processBuffer[pix] = 0;
                 tempBuffer[pix] = imgBuffer[pix];
 
                 if (imgBuffer[pix] != bgColor) {
                     tempBuffer[pix] = -1; // used to represent non-zero pixels which are deeper than iter + 1 pixels
-                                          // from an endpoint
+                    // from an endpoint
                 }
             }
 
@@ -690,8 +686,8 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                     }
                 }
 
-                while (!endpoints.isEmpty()) {
-                    tempBuffer[((Integer) (endpoints.firstElement())).intValue()] = bgColor;
+                while ( !endpoints.isEmpty()) {
+                    tempBuffer[ ((Integer) (endpoints.firstElement())).intValue()] = bgColor;
                     endpoints.removeElementAt(0);
                 }
             }
@@ -720,7 +716,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             // the vector which have a length of iter or less
             int currentBranch = 0;
             int branchesDone = 0;
-            int branchesSize = branchesVector.size();
+            final int branchesSize = branchesVector.size();
 
             while (branchesDone != branchesSize) {
                 branch = (Vector) branchesVector.elementAt(currentBranch);
@@ -766,7 +762,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                 branchesDone++;
             }
 
-            for (pix = (slice * sliceSize); pix < ((slice + 1) * sliceSize); pix++) {
+            for (pix = (slice * sliceSize); pix < ( (slice + 1) * sliceSize); pix++) {
 
                 if (processBuffer[pix] == -1) {
                     tempBuffer[pix] = imgBuffer[pix];
@@ -776,18 +772,18 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             }
 
             // creates final image which contains only branches of more than iter in length
-            while (!branchesVector.isEmpty()) {
+            while ( !branchesVector.isEmpty()) {
                 branch = (Vector) branchesVector.firstElement();
                 branchesVector.removeElementAt(0);
 
-                while (!branch.isEmpty()) {
+                while ( !branch.isEmpty()) {
                     pix = ((Integer) branch.firstElement()).intValue();
                     branch.removeElementAt(0);
                     tempBuffer[pix] = imgBuffer[pix];
                 }
             }
 
-            for (pix = (slice * sliceSize); pix < ((slice + 1) * sliceSize); pix++) {
+            for (pix = (slice * sliceSize); pix < ( (slice + 1) * sliceSize); pix++) {
                 imgBuffer[pix] = tempBuffer[pix];
             }
 
@@ -802,17 +798,15 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             if (threadStopped) {
                 setCompleted(false);
 
-
                 finalize();
 
                 return;
             }
 
             srcImage.importData(0, imgBuffer, true);
-        } catch (IOException error) {
+        } catch (final IOException error) {
             displayError("Algorithm Morphology3D: Image(s) locked");
             setCompleted(false);
-
 
             return;
         }
@@ -833,15 +827,15 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         }
 
         srcImage.calcMinMax();
-        double minValue = srcImage.getMin();
+        final double minValue = srcImage.getMin();
         if (minValue < 0) {
             displayError("Source Image cannot have negative minimum");
             setCompleted(false);
             return;
         }
-        if ((srcImage.getType() != ModelImage.BOOLEAN) && (srcImage.getType() != ModelImage.BYTE) &&
-                (srcImage.getType() != ModelImage.UBYTE) && (srcImage.getType() != ModelImage.SHORT) &&
-                (srcImage.getType() != ModelImage.USHORT)) {
+        if ( (srcImage.getType() != ModelStorageBase.BOOLEAN) && (srcImage.getType() != ModelStorageBase.BYTE)
+                && (srcImage.getType() != ModelStorageBase.UBYTE) && (srcImage.getType() != ModelStorageBase.SHORT)
+                && (srcImage.getType() != ModelStorageBase.USHORT)) {
             displayError("Source Image must be Boolean, Byte, UByte, Short or UShort");
             setCompleted(false);
 
@@ -856,37 +850,33 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         }
 
         try {
-            int length = srcImage.getSliceSize() * srcImage.getExtents()[2];
+            final int length = srcImage.getSliceSize() * srcImage.getExtents()[2];
 
             imgBuffer = new short[length];
 
-            if (algorithm != FILL_HOLES) {
+            if (algorithm != AlgorithmMorphology3D.FILL_HOLES) {
                 processBuffer = new short[length];
             }
 
             srcImage.exportData(0, length, imgBuffer); // locks and releases lock
 
             // fireProgressStateChanged(srcImage.getImageName(), "Morph 3D ...");
-        } catch (IOException error) {
+        } catch (final IOException error) {
             displayError("Algorithm Morphology3D: Image(s) locked");
             setCompleted(false);
 
-
             return;
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             displayError("Algorithm Morphology3D: Out of memory");
             setCompleted(false);
-
 
             return;
         }
 
         // initProgressBar();
 
-        
-
         int[] progressValues; // used to temporarily store the max progress value (for algorithms doing multiple
-                              // functions)
+        // functions)
 
         switch (algorithm) {
 
@@ -905,7 +895,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                 dilate(true);
 
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
-                                  ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
+                        ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
                 erode(false);
                 break;
 
@@ -915,19 +905,19 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                 erode(true);
 
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
-                                  ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
+                        ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
                 dilate(false);
                 break;
-                
+
             case MORPHOLOGICAL_GRADIENT:
                 progressValues = getProgressValues();
                 setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
                 dilate(true);
                 imgBuffer2 = new short[imgBuffer.length];
                 System.arraycopy(imgBuffer, 0, imgBuffer2, 0, imgBuffer.length);
-                try { 
+                try {
                     srcImage.exportData(0, imgBuffer.length, imgBuffer); // locks and releases lock
-                } catch (IOException error) {
+                } catch (final IOException error) {
                     displayError("Algorithm GrayScaleMorphology2D: Image(s) locked");
                     setCompleted(false);
 
@@ -941,10 +931,9 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                 }
                 try {
                     srcImage.importData(0, imgBuffer2, true);
-                } catch (IOException error) {
+                } catch (final IOException error) {
                     displayError("Algorithm GrayScaleMorphology2D: Image(s) locked");
                     setCompleted(false);
-
 
                     return;
                 }
@@ -955,7 +944,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             case FILL_HOLES:
                 fillHoles(false);
                 break;
-                
+
             case DISTANCE_MAP_FOR_SHAPE_INTERPOLATION:
                 distanceMapForShapeInterpolation(false);
                 break;
@@ -999,30 +988,30 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
     /**
      * Sets the algorithm type (i.e. erode, dilate)
-     *
-     * @param  method  algorithm type
+     * 
+     * @param method algorithm type
      */
-    public void setAlgorithm(int method) {
+    public void setAlgorithm(final int method) {
         this.algorithm = method;
     }
 
     /**
      * Sets new source image.
-     *
-     * @param  img  image model
+     * 
+     * @param img image model
      */
-    public void setImage(ModelImage img) {
+    public void setImage(final ModelImage img) {
         srcImage = img;
     }
 
     /**
      * Sets user defined square kernels.
-     *
-     * @param  kernel  user defined kernel
-     * @param  dimXY   length of x and y dimensions
-     * @param  dimZ    length of z dimension
+     * 
+     * @param kernel user defined kernel
+     * @param dimXY length of x and y dimensions
+     * @param dimZ length of z dimension
      */
-    public void setKernel(BitSet kernel, int dimXY, int dimZ) {
+    public void setKernel(final BitSet kernel, final int dimXY, final int dimZ) {
         this.kernel = kernel;
         kDimXY = dimXY;
         kDimZ = dimZ;
@@ -1030,21 +1019,21 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
     /**
      * Sets the bounds of object size used to delete objects.
-     *
-     * @param  _min  minimum size of objects
-     * @param  _max  maximum size of objects
+     * 
+     * @param _min minimum size of objects
+     * @param _max maximum size of objects
      */
-    public void setMinMax(int _min, int _max) {
+    public void setMinMax(final int _min, final int _max) {
         min = _min;
         max = _max;
     }
 
     /**
      * Used in the ultimate erode function to remove all eroded points less than the distance specified in pixel units.
-     *
-     * @param  dist  distance in pixels.
+     * 
+     * @param dist distance in pixels.
      */
-    public void setPixDistance(float dist) {
+    public void setPixDistance(final float dist) {
         pixDist = dist;
     }
 
@@ -1065,7 +1054,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
                     for (x = 0; x < kDimXY; x++) {
 
-                        if (kernel.get((z * kDimXY * kDimXY) + (y * kDimXY) + x) == true) {
+                        if (kernel.get( (z * kDimXY * kDimXY) + (y * kDimXY) + x) == true) {
                             str = str + "1   ";
                         } else {
                             str = str + "0   ";
@@ -1078,10 +1067,9 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
                 Preferences.debug("\n");
             }
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             displayError("Algorithm Morphology3D: Out of memory");
             setCompleted(false);
-
 
             return;
         }
@@ -1093,42 +1081,38 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
      * entry in the table for each of the 256 possible 3x3 neighborhood configurations. An entry of '1' signifies to
      * delete the indicated pixel on the first pass, '2' means to delete the indicated pixel on the second pass, and '3'
      * indicates to delete the pixel on either pass.
-     *
-     * @param  pruningPixels  the number of pixels to prune after skeletonizing. (should be 0 if no pruning is to be
-     *                        done)
-     * @param  returnFlag     if true then this operation is a step in the morph process (i.e. close)
+     * 
+     * @param pruningPixels the number of pixels to prune after skeletonizing. (should be 0 if no pruning is to be done)
+     * @param returnFlag if true then this operation is a step in the morph process (i.e. close)
      */
-    public void skeletonize(int pruningPixels, boolean returnFlag) {
+    public void skeletonize(final int pruningPixels, final boolean returnFlag) {
 
         // if thread has already been stopped, dump out
         if (threadStopped) {
             setCompleted(false);
-
 
             finalize();
 
             return;
         }
 
-        int[] table = // 0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1
-        {
-            0, 0, 0, 1, 0, 0, 1, 3, 0, 0, 3, 1, 1, 0, 1, 3, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 3, 0, 3, 3, 0, 0, 0, 0,
-            0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 3, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0,
-            2, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 3, 0, 2, 0, 0, 1, 3, 1, 0, 0, 1, 3, 0, 0, 0, 0, 0, 0, 0, 1,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 1, 3, 0, 0, 1, 3, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 1, 0, 0, 0, 0, 2, 2, 0, 0,
-            2, 0, 0, 0
-        };
+        final int[] table = // 0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1
+        {0, 0, 0, 1, 0, 0, 1, 3, 0, 0, 3, 1, 1, 0, 1, 3, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 3, 0, 3, 3, 0, 0, 0, 0, 0,
+                0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 3, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2,
+                0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 3, 0, 2, 0, 0, 1, 3, 1, 0, 0, 1, 3, 0, 0, 0,
+                0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 1, 3, 0, 0, 1, 3, 0, 0, 0, 0, 0, 0, 0,
+                1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 3,
+                3, 0, 1, 0, 0, 0, 0, 2, 2, 0, 0, 2, 0, 0, 0};
 
         int pass = 0;
         int pixelsRemoved;
         int pix;
-        int xDim = srcImage.getExtents()[0];
-        int yDim = srcImage.getExtents()[1];
-        int zDim = srcImage.getExtents()[2];
-        int imageLength = xDim * yDim * zDim;
+        final int xDim = srcImage.getExtents()[0];
+        final int yDim = srcImage.getExtents()[1];
+        final int zDim = srcImage.getExtents()[2];
+        final int imageLength = xDim * yDim * zDim;
 
         short[] tempBuffer;
 
@@ -1139,8 +1123,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         for (int i = 0; (i < zDim) && !threadStopped; i++) {
 
             fireProgressStateChanged("Skeletonizing Slice " + (i + 1));
-            fireProgressStateChanged(Math.round(((float) i) / ((float) zDim) * 100));
-
+            fireProgressStateChanged(Math.round( ((float) i) / ((float) zDim) * 100));
 
             do {
                 pixelsRemoved = thin(pass++, i, table);
@@ -1174,19 +1157,17 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             }
 
             srcImage.importData(0, imgBuffer, true);
-        } catch (IOException error) {
+        } catch (final IOException error) {
             displayError("Algorithm Morphology3D: Image(s) locked");
             setCompleted(false);
-
 
             return;
         }
 
         setCompleted(true);
     }
-    
-    
-    private void distanceMapForShapeInterpolation(boolean returnFlag) {
+
+    private void distanceMapForShapeInterpolation(final boolean returnFlag) {
 
         // if thread has already been stopped, dump out
         if (threadStopped) {
@@ -1198,11 +1179,11 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         }
 
         int pix, i;
-        int xDim = srcImage.getExtents()[0];
-        int yDim = srcImage.getExtents()[1];
-        int zDim = srcImage.getExtents()[2];
-        int sliceSize = xDim * yDim;
-        int volSize = xDim * yDim * zDim;
+        final int xDim = srcImage.getExtents()[0];
+        final int yDim = srcImage.getExtents()[1];
+        final int zDim = srcImage.getExtents()[2];
+        final int sliceSize = xDim * yDim;
+        final int volSize = xDim * yDim * zDim;
         float distance;
         float dist;
         Point3D pt;
@@ -1210,18 +1191,16 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         int x, y, z;
 
         float[] minDistanceBuffer;
-        Vector edgePoints = new Vector();
+        final Vector edgePoints = new Vector();
 
         fireProgressStateChanged("Bg. distance image ...");
         fireProgressStateChanged(0);
 
-
         try {
             minDistanceBuffer = new float[volSize];
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             displayError("Algorithm Morphology3D.distanceMap: Out of memory");
             setCompleted(false);
-
 
             return;
         }
@@ -1237,14 +1216,14 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         }
 
         // Find all edge pixels and put the index of their location in a integer vector
-        int end = volSize - sliceSize - xDim - 1;
+        final int end = volSize - sliceSize - xDim - 1;
 
         for (pix = sliceSize + xDim + 1; (pix < end) && !threadStopped; pix++) {
 
-            if ((imgBuffer[pix] == 0) &&
-                    ((imgBuffer[pix - xDim] != 0) || (imgBuffer[pix + 1] != 0) || (imgBuffer[pix + xDim] != 0) ||
-                         (imgBuffer[pix - 1] != 0) || (imgBuffer[pix - sliceSize] != 0) ||
-                         (imgBuffer[pix + sliceSize] != 0))) {
+            if ( (imgBuffer[pix] == 0)
+                    && ( (imgBuffer[pix - xDim] != 0) || (imgBuffer[pix + 1] != 0) || (imgBuffer[pix + xDim] != 0)
+                            || (imgBuffer[pix - 1] != 0) || (imgBuffer[pix - sliceSize] != 0) || (imgBuffer[pix
+                            + sliceSize] != 0))) {
                 edgePoints.addElement(new Point3D(pix % xDim, (pix % sliceSize) / xDim, pix / sliceSize));
             }
         }
@@ -1252,22 +1231,21 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         if (threadStopped) {
             setCompleted(false);
 
-
             finalize();
 
             return;
         }
 
-        int edgeLength = edgePoints.size();
+        final int edgeLength = edgePoints.size();
 
-        int mod = volSize / 50; // mod is 2 percent of length
+        final int mod = volSize / 50; // mod is 2 percent of length
 
-        float xRes = srcImage.getFileInfo(0).getResolutions()[0];
-        float xResSquared = xRes * xRes;
-        float yRes = srcImage.getFileInfo(0).getResolutions()[1];
-        float yResSquared = yRes * yRes;
-        float zRes = srcImage.getFileInfo(0).getResolutions()[2];
-        float zResSquared = zRes * zRes;
+        final float xRes = srcImage.getFileInfo(0).getResolutions()[0];
+        final float xResSquared = xRes * xRes;
+        final float yRes = srcImage.getFileInfo(0).getResolutions()[1];
+        final float yResSquared = yRes * yRes;
+        final float zRes = srcImage.getFileInfo(0).getResolutions()[2];
+        final float zResSquared = zRes * zRes;
 
         pix = 0;
 
@@ -1279,14 +1257,16 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
                     try {
 
-                        if (((pix % mod) == 0)) {
-                            fireProgressStateChanged(Math.round((pix + 1) / ((float) volSize) * 100));
+                        if ( ( (pix % mod) == 0)) {
+                            fireProgressStateChanged(Math.round( (pix + 1) / ((float) volSize) * 100));
                         }
-                    } catch (NullPointerException npe) {
+                    } catch (final NullPointerException npe) {
 
                         if (threadStopped) {
-                            Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                              Preferences.DEBUG_ALGORITHM);
+                            Preferences
+                                    .debug(
+                                            "somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
+                                            Preferences.DEBUG_ALGORITHM);
                         }
                     }
 
@@ -1296,7 +1276,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                             distance = 10000000;
 
                             // Test the distace from point(x1, y1, z1) to all edge points and
-                            // put  the min. distance into the distance buffer
+                            // put the min. distance into the distance buffer
                             for (i = 0; i < edgeLength; i++) {
                                 pt = (Point3D) (edgePoints.elementAt(i));
 
@@ -1304,8 +1284,8 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                                 diffy = pt.y - y;
                                 diffz = pt.z - z;
 
-                                dist = (diffx * diffx * xResSquared) + (diffy * diffy * yResSquared) +
-                                       (diffz * diffz * zResSquared);
+                                dist = (diffx * diffx * xResSquared) + (diffy * diffy * yResSquared)
+                                        + (diffz * diffz * zResSquared);
 
                                 if (dist < distance) {
                                     distance = dist;
@@ -1316,26 +1296,26 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                         }
                     } // if (entireImage || mask.get(pix))
                     else {
-                    	 distance = 10000000;
+                        distance = 10000000;
 
-                         // Test the distace from point(x1, y1, z1) to all edge points and
-                         // put  the min. distance into the distance buffer
-                         for (i = 0; i < edgeLength; i++) {
-                             pt = (Point3D) (edgePoints.elementAt(i));
+                        // Test the distace from point(x1, y1, z1) to all edge points and
+                        // put the min. distance into the distance buffer
+                        for (i = 0; i < edgeLength; i++) {
+                            pt = (Point3D) (edgePoints.elementAt(i));
 
-                             diffx = pt.x - x;
-                             diffy = pt.y - y;
-                             diffz = pt.z - z;
+                            diffx = pt.x - x;
+                            diffy = pt.y - y;
+                            diffz = pt.z - z;
 
-                             dist = (diffx * diffx * xResSquared) + (diffy * diffy * yResSquared) +
-                                    (diffz * diffz * zResSquared);
+                            dist = (diffx * diffx * xResSquared) + (diffy * diffy * yResSquared)
+                                    + (diffz * diffz * zResSquared);
 
-                             if (dist < distance) {
-                                 distance = dist;
-                             }
-                         } // for (i = 0; i < edgeLength; i++)
+                            if (dist < distance) {
+                                distance = dist;
+                            }
+                        } // for (i = 0; i < edgeLength; i++)
 
-                         minDistanceBuffer[pix] = (float) Math.sqrt(distance);
+                        minDistanceBuffer[pix] = (float) Math.sqrt(distance);
                     }
 
                     pix++;
@@ -1362,30 +1342,27 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
             srcImage.reallocate(ModelStorageBase.FLOAT);
             srcImage.importData(0, minDistanceBuffer, true);
-        } catch (IOException error) {
+        } catch (final IOException error) {
             displayError("Algorithm Morphology3D.distanceMap: Image(s) locked");
             setCompleted(false);
 
-
             return;
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             displayError("Algorithm Morphology3D.distanceMap: Out of memory");
             setCompleted(false);
-
 
             return;
         }
 
         setCompleted(true);
     }
-    
 
     /**
      * Generates a Euclidian distance map of the background.
-     *
-     * @param  returnFlag  if true then this operation is a step in the morph process
+     * 
+     * @param returnFlag if true then this operation is a step in the morph process
      */
-    private void backgroundDistanceMap(boolean returnFlag) {
+    private void backgroundDistanceMap(final boolean returnFlag) {
 
         // if thread has already been stopped, dump out
         if (threadStopped) {
@@ -1397,11 +1374,11 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         }
 
         int pix, i;
-        int xDim = srcImage.getExtents()[0];
-        int yDim = srcImage.getExtents()[1];
-        int zDim = srcImage.getExtents()[2];
-        int sliceSize = xDim * yDim;
-        int volSize = xDim * yDim * zDim;
+        final int xDim = srcImage.getExtents()[0];
+        final int yDim = srcImage.getExtents()[1];
+        final int zDim = srcImage.getExtents()[2];
+        final int sliceSize = xDim * yDim;
+        final int volSize = xDim * yDim * zDim;
         float distance;
         float dist;
         Point3D pt;
@@ -1409,18 +1386,16 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         int x, y, z;
 
         float[] minDistanceBuffer;
-        Vector edgePoints = new Vector();
+        final Vector edgePoints = new Vector();
 
         fireProgressStateChanged("Bg. distance image ...");
         fireProgressStateChanged(0);
 
-
         try {
             minDistanceBuffer = new float[volSize];
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             displayError("Algorithm Morphology3D.distanceMap: Out of memory");
             setCompleted(false);
-
 
             return;
         }
@@ -1436,14 +1411,14 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         }
 
         // Find all edge pixels and put the index of their location in a integer vector
-        int end = volSize - sliceSize - xDim - 1;
+        final int end = volSize - sliceSize - xDim - 1;
 
         for (pix = sliceSize + xDim + 1; (pix < end) && !threadStopped; pix++) {
 
-            if ((imgBuffer[pix] == 0) &&
-                    ((imgBuffer[pix - xDim] != 0) || (imgBuffer[pix + 1] != 0) || (imgBuffer[pix + xDim] != 0) ||
-                         (imgBuffer[pix - 1] != 0) || (imgBuffer[pix - sliceSize] != 0) ||
-                         (imgBuffer[pix + sliceSize] != 0))) {
+            if ( (imgBuffer[pix] == 0)
+                    && ( (imgBuffer[pix - xDim] != 0) || (imgBuffer[pix + 1] != 0) || (imgBuffer[pix + xDim] != 0)
+                            || (imgBuffer[pix - 1] != 0) || (imgBuffer[pix - sliceSize] != 0) || (imgBuffer[pix
+                            + sliceSize] != 0))) {
                 edgePoints.addElement(new Point3D(pix % xDim, (pix % sliceSize) / xDim, pix / sliceSize));
             }
         }
@@ -1451,22 +1426,21 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         if (threadStopped) {
             setCompleted(false);
 
-
             finalize();
 
             return;
         }
 
-        int edgeLength = edgePoints.size();
+        final int edgeLength = edgePoints.size();
 
-        int mod = volSize / 50; // mod is 2 percent of length
+        final int mod = volSize / 50; // mod is 2 percent of length
 
-        float xRes = srcImage.getFileInfo(0).getResolutions()[0];
-        float xResSquared = xRes * xRes;
-        float yRes = srcImage.getFileInfo(0).getResolutions()[1];
-        float yResSquared = yRes * yRes;
-        float zRes = srcImage.getFileInfo(0).getResolutions()[2];
-        float zResSquared = zRes * zRes;
+        final float xRes = srcImage.getFileInfo(0).getResolutions()[0];
+        final float xResSquared = xRes * xRes;
+        final float yRes = srcImage.getFileInfo(0).getResolutions()[1];
+        final float yResSquared = yRes * yRes;
+        final float zRes = srcImage.getFileInfo(0).getResolutions()[2];
+        final float zResSquared = zRes * zRes;
 
         pix = 0;
 
@@ -1478,14 +1452,16 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
                     try {
 
-                        if (((pix % mod) == 0)) {
-                            fireProgressStateChanged(Math.round((pix + 1) / ((float) volSize) * 100));
+                        if ( ( (pix % mod) == 0)) {
+                            fireProgressStateChanged(Math.round( (pix + 1) / ((float) volSize) * 100));
                         }
-                    } catch (NullPointerException npe) {
+                    } catch (final NullPointerException npe) {
 
                         if (threadStopped) {
-                            Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                              Preferences.DEBUG_ALGORITHM);
+                            Preferences
+                                    .debug(
+                                            "somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
+                                            Preferences.DEBUG_ALGORITHM);
                         }
                     }
 
@@ -1495,7 +1471,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                             distance = 10000000;
 
                             // Test the distace from point(x1, y1, z1) to all edge points and
-                            // put  the min. distance into the distance buffer
+                            // put the min. distance into the distance buffer
                             for (i = 0; i < edgeLength; i++) {
                                 pt = (Point3D) (edgePoints.elementAt(i));
 
@@ -1503,8 +1479,8 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                                 diffy = pt.y - y;
                                 diffz = pt.z - z;
 
-                                dist = (diffx * diffx * xResSquared) + (diffy * diffy * yResSquared) +
-                                       (diffz * diffz * zResSquared);
+                                dist = (diffx * diffx * xResSquared) + (diffy * diffy * yResSquared)
+                                        + (diffz * diffz * zResSquared);
 
                                 if (dist < distance) {
                                     distance = dist;
@@ -1542,16 +1518,14 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
             srcImage.reallocate(ModelStorageBase.FLOAT);
             srcImage.importData(0, minDistanceBuffer, true);
-        } catch (IOException error) {
+        } catch (final IOException error) {
             displayError("Algorithm Morphology3D.distanceMap: Image(s) locked");
             setCompleted(false);
 
-
             return;
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             displayError("Algorithm Morphology3D.distanceMap: Out of memory");
             setCompleted(false);
-
 
             return;
         }
@@ -1561,12 +1535,12 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
     /**
      * Deletes objects larger than maximum size indicated and objects smaller than the indicated minimum size.
-     *
-     * @param  min         delete all objects smaller than the minimum value (pixels)
-     * @param  max         delete all objects greater than the maximum value (pixels)
-     * @param  returnFlag  if true then this operation is a step in the morph process (i.e. close)
+     * 
+     * @param min delete all objects smaller than the minimum value (pixels)
+     * @param max delete all objects greater than the maximum value (pixels)
+     * @param returnFlag if true then this operation is a step in the morph process (i.e. close)
      */
-    private void deleteObjects(int min, int max, boolean returnFlag) {
+    private void deleteObjects(final int min, final int max, final boolean returnFlag) {
 
         // if thread has already been stopped, dump out
         if (threadStopped) {
@@ -1578,10 +1552,10 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
         int i, pix;
         int count;
-        int xDim = srcImage.getExtents()[0];
-        int yDim = srcImage.getExtents()[1];
-        int zDim = srcImage.getExtents()[2];
-        int volumeLength = xDim * yDim * zDim;
+        final int xDim = srcImage.getExtents()[0];
+        final int yDim = srcImage.getExtents()[1];
+        final int zDim = srcImage.getExtents()[2];
+        final int volumeLength = xDim * yDim * zDim;
         short floodValue = 1;
         short[] tmpBuffer;
 
@@ -1623,23 +1597,23 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         fireProgressStateChanged(10);
 
         for (i = 0; i < objects.size(); i++) {
-            fireProgressStateChanged(Math.round(10 + ((i + 1) / ((float) objects.size()) * 45)));
+            fireProgressStateChanged(Math.round(10 + ( (i + 1) / ((float) objects.size()) * 45)));
 
             if (entireImage == true) {
 
-                if ((((intObject) (objects.elementAt(i))).size < min) ||
-                        (((intObject) (objects.elementAt(i))).size > max)) {
+                if ( ( ((intObject) (objects.elementAt(i))).size < min)
+                        || ( ((intObject) (objects.elementAt(i))).size > max)) {
                     floodFill(processBuffer, ((intObject) (objects.elementAt(i))).index, (short) 0,
-                              ((intObject) (objects.elementAt(i))).id);
+                            ((intObject) (objects.elementAt(i))).id);
                     objects.removeElementAt(i);
                     i--;
                 }
-            } else if (mask.get(((intObject) (objects.elementAt(i))).index) == true) {
+            } else if (mask.get( ((intObject) (objects.elementAt(i))).index) == true) {
 
-                if ((((intObject) (objects.elementAt(i))).size < min) ||
-                        (((intObject) (objects.elementAt(i))).size > max)) {
+                if ( ( ((intObject) (objects.elementAt(i))).size < min)
+                        || ( ((intObject) (objects.elementAt(i))).size > max)) {
                     floodFill(processBuffer, ((intObject) (objects.elementAt(i))).index, (short) 0,
-                              ((intObject) (objects.elementAt(i))).id);
+                            ((intObject) (objects.elementAt(i))).id);
                     objects.removeElementAt(i);
                     i--;
                 }
@@ -1654,17 +1628,16 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             return;
         }
 
-
         // relabel objects in order
         for (i = 0; i < objects.size(); i++) {
-            fireProgressStateChanged(Math.round(55 + ((i + 1) / ((float) objects.size()) * 45)));
+            fireProgressStateChanged(Math.round(55 + ( (i + 1) / ((float) objects.size()) * 45)));
 
             if (entireImage == true) {
                 floodFill(processBuffer, ((intObject) (objects.elementAt(i))).index, (short) (i + 1),
-                          ((intObject) (objects.elementAt(i))).id);
-            } else if (mask.get(((intObject) (objects.elementAt(i))).index) == true) {
+                        ((intObject) (objects.elementAt(i))).id);
+            } else if (mask.get( ((intObject) (objects.elementAt(i))).index) == true) {
                 floodFill(processBuffer, ((intObject) (objects.elementAt(i))).index, (short) (i + 1),
-                          ((intObject) (objects.elementAt(i))).id);
+                        ((intObject) (objects.elementAt(i))).id);
             }
         }
 
@@ -1677,18 +1650,20 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         }
 
         try {
-            ViewUserInterface.getReference().setDataText("\nDeleted objects outside range (" + min + "," + max +
-                                                         "). \n");
+            ViewUserInterface.getReference().setDataText(
+                    "\nDeleted objects outside range (" + min + "," + max + "). \n");
 
             for (i = 0; i < objects.size(); i++) {
-                ViewUserInterface.getReference().setDataText("  Object " + (i + 1) + " = " +
-                                                             ((intObject) (objects.elementAt(i))).size + "\n");
+                ViewUserInterface.getReference().setDataText(
+                        "  Object " + (i + 1) + " = " + ((intObject) (objects.elementAt(i))).size + "\n");
             }
-        } catch (NullPointerException npe) {
+        } catch (final NullPointerException npe) {
 
             if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
+                Preferences
+                        .debug(
+                                "somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
+                                Preferences.DEBUG_ALGORITHM);
             }
         }
 
@@ -1706,22 +1681,20 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                 return;
             }
 
-            if ((srcImage.getType() == ModelStorageBase.BOOLEAN) || (srcImage.getType() == ModelStorageBase.BYTE) ||
-                (srcImage.getType() == ModelStorageBase.UBYTE) || (srcImage.getType() == ModelStorageBase.SHORT)) {
-                srcImage.reallocate(ModelImage.USHORT);
+            if ( (srcImage.getType() == ModelStorageBase.BOOLEAN) || (srcImage.getType() == ModelStorageBase.BYTE)
+                    || (srcImage.getType() == ModelStorageBase.UBYTE) || (srcImage.getType() == ModelStorageBase.SHORT)) {
+                srcImage.reallocate(ModelStorageBase.USHORT);
             }
 
             srcImage.importData(0, processBuffer, true);
-        } catch (IOException error) {
+        } catch (final IOException error) {
             displayError("Algorithm Morphology3D: Image(s) locked");
             setCompleted(false);
 
-
             return;
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             displayError("Algorithm Morphology3D: Out of memory");
             setCompleted(false);
-
 
             return;
         }
@@ -1732,10 +1705,10 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
     /**
      * Dilates a boolean, unsigned byte, or unsigned short image using the indicated kernel and the indicated number of
      * iterations.
-     *
-     * @param  returnFlag  if true then this operation is a step in the morph process (i.e. close)
+     * 
+     * @param returnFlag if true then this operation is a step in the morph process (i.e. close)
      */
-    private void dilate(boolean returnFlag) {
+    private void dilate(final boolean returnFlag) {
 
         // if thread has already been stopped, dump out
         if (threadStopped) {
@@ -1757,24 +1730,24 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         short[] tempBuffer;
         short value;
 
-        int xDim = srcImage.getExtents()[0];
-        int yDim = srcImage.getExtents()[1];
-        int zDim = srcImage.getExtents()[2];
+        final int xDim = srcImage.getExtents()[0];
+        final int yDim = srcImage.getExtents()[1];
+        final int zDim = srcImage.getExtents()[2];
 
-        int halfKDim = kDimXY / 2;
-        int halfKDimZ = kDimZ / 2;
-        int sliceSize = xDim * yDim;
-        int imgSize = sliceSize * zDim;
-        int stepZ = kDimZ * sliceSize;
-        int stepY = kDimXY * xDim;
+        final int halfKDim = kDimXY / 2;
+        final int halfKDimZ = kDimZ / 2;
+        final int sliceSize = xDim * yDim;
+        final int imgSize = sliceSize * zDim;
+        final int stepZ = kDimZ * sliceSize;
+        final int stepY = kDimXY * xDim;
 
-        int totalSize = imgSize * iterationsD;
+        final int totalSize = imgSize * iterationsD;
         int tmpSize = 0;
-        int mod = totalSize / 100;
+        final int mod = totalSize / 100;
 
         fireProgressStateChanged("Dilating image ...");
 
-        int length = xDim * yDim * zDim;
+        final int length = xDim * yDim * zDim;
 
         for (pix = 0; pix < length; pix++) {
             processBuffer[pix] = 0;
@@ -1785,7 +1758,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
             for (pix = 0; (pix < imgSize) && !threadStopped; pix++) {
 
-                if (((tmpSize + pix) % mod) == 0) {
+                if ( ( (tmpSize + pix) % mod) == 0) {
                     fireProgressStateChanged(Math.round((float) (tmpSize + pix) / totalSize * 100));
                 }
 
@@ -1795,7 +1768,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                     if (value != 0) {
                         offsetX = (pix % xDim) - halfKDim;
                         offsetXU = offsetX + kDimXY;
-                        offsetY = ((pix / xDim) % yDim) - halfKDim;
+                        offsetY = ( (pix / xDim) % yDim) - halfKDim;
                         offsetZ = (pix / (sliceSize)) - halfKDimZ;
 
                         count = 0;
@@ -1828,8 +1801,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                             offsetXU = xDim;
                         }
 
-kernelLoop:
-                        for (k = startZ; k < endZ; k += sliceSize) {
+                        kernelLoop: for (k = startZ; k < endZ; k += sliceSize) {
 
                             // only work on valid pixels
                             // essentially process only the overlap between
@@ -1884,10 +1856,9 @@ kernelLoop:
             }
 
             srcImage.importData(0, imgBuffer, true);
-        } catch (IOException error) {
+        } catch (final IOException error) {
             displayError("Algorithm Morphology3D: Image(s) locked");
             setCompleted(false);
-
 
             return;
         }
@@ -1897,15 +1868,14 @@ kernelLoop:
 
     /**
      * Generates a Euclidian distance map.
-     *
-     * @param  returnFlag  if true then this operation is a step in the morph process
+     * 
+     * @param returnFlag if true then this operation is a step in the morph process
      */
-    private void distanceMap(boolean returnFlag) {
+    private void distanceMap(final boolean returnFlag) {
 
         // if thread has already been stopped, dump out
         if (threadStopped) {
             setCompleted(false);
-
 
             finalize();
 
@@ -1913,11 +1883,11 @@ kernelLoop:
         }
 
         int pix, i;
-        int xDim = srcImage.getExtents()[0];
-        int yDim = srcImage.getExtents()[1];
-        int zDim = srcImage.getExtents()[2];
-        int sliceSize = xDim * yDim;
-        int volSize = xDim * yDim * zDim;
+        final int xDim = srcImage.getExtents()[0];
+        final int yDim = srcImage.getExtents()[1];
+        final int zDim = srcImage.getExtents()[2];
+        final int sliceSize = xDim * yDim;
+        final int volSize = xDim * yDim * zDim;
         float distance;
         float dist;
         int diffx, diffy, diffz;
@@ -1925,41 +1895,41 @@ kernelLoop:
         Point3D pt;
 
         float[] minDistanceBuffer;
-        Vector edgePoints = new Vector();
+        final Vector edgePoints = new Vector();
         fireProgressStateChanged("Distance image ...");
-
 
         try {
             minDistanceBuffer = new float[volSize];
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             displayError("Algorithm Morphology3D.distanceMap: Out of memory");
             setCompleted(false);
-
 
             return;
         }
 
         // Find all edge pixels and put the index of their location in a integer vector
-        int end = volSize - sliceSize - xDim - 1;
+        final int end = volSize - sliceSize - xDim - 1;
 
         for (pix = 0; (pix < volSize) && !threadStopped; pix++) {
 
-            if ((pix < (sliceSize + xDim)) && (imgBuffer[pix] > 0)) {
+            if ( (pix < (sliceSize + xDim)) && (imgBuffer[pix] > 0)) {
                 edgePoints.addElement(new Point3D(pix % xDim, (pix % sliceSize) / xDim, pix / sliceSize));
-            } else if (((pix % xDim) == (xDim - 1)) && (imgBuffer[pix] > 0)) {
+            } else if ( ( (pix % xDim) == (xDim - 1)) && (imgBuffer[pix] > 0)) {
                 edgePoints.addElement(new Point3D(pix % xDim, (pix % sliceSize) / xDim, pix / sliceSize));
-            } else if (((pix % xDim) == 0) && (imgBuffer[pix] > 0)) {
+            } else if ( ( (pix % xDim) == 0) && (imgBuffer[pix] > 0)) {
                 edgePoints.addElement(new Point3D(pix % xDim, (pix % sliceSize) / xDim, pix / sliceSize));
-            } else if (((pix % sliceSize) < xDim) && (imgBuffer[pix] > 0)) {
+            } else if ( ( (pix % sliceSize) < xDim) && (imgBuffer[pix] > 0)) {
                 edgePoints.addElement(new Point3D(pix % xDim, (pix % sliceSize) / xDim, pix / sliceSize));
-            } else if (((pix % sliceSize) > (sliceSize - xDim)) && (imgBuffer[pix] > 0)) {
+            } else if ( ( (pix % sliceSize) > (sliceSize - xDim)) && (imgBuffer[pix] > 0)) {
                 edgePoints.addElement(new Point3D(pix % xDim, (pix % sliceSize) / xDim, pix / sliceSize));
-            } else if ((pix > (volSize - sliceSize - 1)) && (imgBuffer[pix] > 0)) {
+            } else if ( (pix > (volSize - sliceSize - 1)) && (imgBuffer[pix] > 0)) {
                 edgePoints.addElement(new Point3D(pix % xDim, (pix % sliceSize) / xDim, pix / sliceSize));
-            } else if ((pix > (sliceSize + 1)) && (pix < end) && (imgBuffer[pix] == 0) &&
-                           ((imgBuffer[pix - xDim] != 0) || (imgBuffer[pix + 1] != 0) || (imgBuffer[pix + xDim] != 0) ||
-                                (imgBuffer[pix - 1] != 0) || (imgBuffer[pix - sliceSize] != 0) ||
-                                (imgBuffer[pix + sliceSize] != 0))) {
+            } else if ( (pix > (sliceSize + 1))
+                    && (pix < end)
+                    && (imgBuffer[pix] == 0)
+                    && ( (imgBuffer[pix - xDim] != 0) || (imgBuffer[pix + 1] != 0) || (imgBuffer[pix + xDim] != 0)
+                            || (imgBuffer[pix - 1] != 0) || (imgBuffer[pix - sliceSize] != 0) || (imgBuffer[pix
+                            + sliceSize] != 0))) {
                 edgePoints.addElement(new Point3D(pix % xDim, (pix % sliceSize) / xDim, pix / sliceSize));
             }
         }
@@ -1972,16 +1942,16 @@ kernelLoop:
             return;
         }
 
-        int edgeLength = edgePoints.size();
+        final int edgeLength = edgePoints.size();
 
-        int mod = volSize / 50; // mod is 2 percent of length
+        final int mod = volSize / 50; // mod is 2 percent of length
 
-        float xRes = srcImage.getFileInfo(0).getResolutions()[0];
-        float xResSquared = xRes * xRes;
-        float yRes = srcImage.getFileInfo(0).getResolutions()[1];
-        float yResSquared = yRes * yRes;
-        float zRes = srcImage.getFileInfo(0).getResolutions()[2];
-        float zResSquared = zRes * zRes;
+        final float xRes = srcImage.getFileInfo(0).getResolutions()[0];
+        final float xResSquared = xRes * xRes;
+        final float yRes = srcImage.getFileInfo(0).getResolutions()[1];
+        final float yResSquared = yRes * yRes;
+        final float zRes = srcImage.getFileInfo(0).getResolutions()[2];
+        final float zResSquared = zRes * zRes;
 
         pix = 0;
 
@@ -1991,19 +1961,18 @@ kernelLoop:
 
                 for (x = 0; (x < xDim) && !threadStopped; x++) {
 
-                    if (((pix % mod) == 0)) {
-                        fireProgressStateChanged(Math.round((pix + 1) / ((float) volSize) * 100));
+                    if ( ( (pix % mod) == 0)) {
+                        fireProgressStateChanged(Math.round( (pix + 1) / ((float) volSize) * 100));
                     }
 
                     /*
-                     *                  try {
-                     *
-                     *             if (((pix % mod) == 0)) { fireProgressStateChanged(Math.round((pix + 1) / ((float)
-                     * volSize) * 100));                     }               } catch (NullPointerException npe) {
-                     *
-                     *             if (threadStopped) {                         Preferences.debug("somehow you managed
-                     * to cancel the algorithm and dispose the progressbar between checking for threadStopping and using
-                     * it.",                                           Preferences.DEBUG_ALGORITHM); }                 }
+                     * try {
+                     * 
+                     * if (((pix % mod) == 0)) { fireProgressStateChanged(Math.round((pix + 1) / ((float) volSize) *
+                     * 100)); } } catch (NullPointerException npe) {
+                     * 
+                     * if (threadStopped) { Preferences.debug("somehow you managed to cancel the algorithm and dispose
+                     * the progressbar between checking for threadStopping and using it.", Preferences.DEBUG_ALGORITHM); } }
                      */
                     if (entireImage || mask.get(pix)) {
 
@@ -2011,7 +1980,7 @@ kernelLoop:
                             distance = 10000000;
 
                             // Test the distace from point(x1, y1, z1) to all edge points and
-                            // put  the min. distance into the distance buffer
+                            // put the min. distance into the distance buffer
                             for (i = 0; i < edgeLength; i++) {
                                 pt = (Point3D) (edgePoints.elementAt(i));
 
@@ -2019,8 +1988,8 @@ kernelLoop:
                                 diffy = pt.y - y;
                                 diffz = pt.z - z;
 
-                                dist = (diffx * diffx * xResSquared) + (diffy * diffy * yResSquared) +
-                                       (diffz * diffz * zResSquared);
+                                dist = (diffx * diffx * xResSquared) + (diffy * diffy * yResSquared)
+                                        + (diffz * diffz * zResSquared);
 
                                 if (dist < distance) {
                                     distance = dist;
@@ -2057,16 +2026,14 @@ kernelLoop:
 
             srcImage.reallocate(ModelStorageBase.FLOAT);
             srcImage.importData(0, minDistanceBuffer, true);
-        } catch (IOException error) {
+        } catch (final IOException error) {
             displayError("Algorithm Morphology3D.distanceMap: Image(s) locked");
             setCompleted(false);
 
-
             return;
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             displayError("Algorithm Morphology3D.distanceMap: Out of memory");
             setCompleted(false);
-
 
             return;
         }
@@ -2077,10 +2044,10 @@ kernelLoop:
     /**
      * Erodes a boolean, unsigned byte, or unsigned short image using the indicated kernel and the indicated number of
      * iterations.
-     *
-     * @param  returnFlag  if true then this operation is a step in the morph process (i.e. open)
+     * 
+     * @param returnFlag if true then this operation is a step in the morph process (i.e. open)
      */
-    private void erode(boolean returnFlag) {
+    private void erode(final boolean returnFlag) {
 
         // if thread has already been stopped, dump out
         if (threadStopped) {
@@ -2103,32 +2070,32 @@ kernelLoop:
         int endX, endY, endZ;
         short[] tempBuffer;
 
-        int xDim = srcImage.getExtents()[0];
-        int yDim = srcImage.getExtents()[1];
-        int zDim = srcImage.getExtents()[2];
+        final int xDim = srcImage.getExtents()[0];
+        final int yDim = srcImage.getExtents()[1];
+        final int zDim = srcImage.getExtents()[2];
 
-        int halfKDim = kDimXY / 2;
-        int halfKDimZ = kDimZ / 2;
+        final int halfKDim = kDimXY / 2;
+        final int halfKDimZ = kDimZ / 2;
 
-        int sliceSize = xDim * yDim;
-        int imgSize = sliceSize * zDim;
-        int stepZ = kDimZ * sliceSize;
-        int stepY = kDimXY * xDim;
+        final int sliceSize = xDim * yDim;
+        final int imgSize = sliceSize * zDim;
+        final int stepZ = kDimZ * sliceSize;
+        final int stepY = kDimXY * xDim;
 
-        int totalSize = imgSize * iterationsE;
+        final int totalSize = imgSize * iterationsE;
         int tmpSize = 0;
-        int mod = totalSize / 100;
+        final int mod = totalSize / 100;
         fireProgressStateChanged("Eroding image ...");
 
         /*
-         *      try {
-         *
-         * if  {             fireProgressStateChanged("Eroding image ...");         }
-         *
-         * if  {             fireProgressStateChanged(0);         }     } catch (NullPointerException npe) {
-         *
-         * if (threadStopped) {             Preferences.debug("somehow you managed to cancel the algorithm and dispose
-         * the progressbar between checking for threadStopping and using it.", Preferences.DEBUG_ALGORITHM);    }     }
+         * try {
+         * 
+         * if { fireProgressStateChanged("Eroding image ..."); }
+         * 
+         * if { fireProgressStateChanged(0); } } catch (NullPointerException npe) {
+         * 
+         * if (threadStopped) { Preferences.debug("somehow you managed to cancel the algorithm and dispose the
+         * progressbar between checking for threadStopping and using it.", Preferences.DEBUG_ALGORITHM); } }
          */
         for (pix = 0; pix < imgSize; pix++) {
             processBuffer[pix] = 0;
@@ -2139,19 +2106,17 @@ kernelLoop:
 
             for (pix = 0; (pix < imgSize) && !threadStopped; pix++) {
 
-                if ((((tmpSize + pix) % mod) == 0)) {
+                if ( ( ( (tmpSize + pix) % mod) == 0)) {
                     fireProgressStateChanged(Math.round((float) (tmpSize + pix) / totalSize * 100));
                 }
 
                 /*
-                 *              try {
-                 *
-                 *         if ((((tmpSize + pix) % mod) == 0)) {             }             } catch (NullPointerException
-                 * npe) {
-                 *
-                 *         if (threadStopped) {                     Preferences.debug("somehow you managed to cancel the
-                 * algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                 *                Preferences.DEBUG_ALGORITHM);                 }             }
+                 * try {
+                 * 
+                 * if ((((tmpSize + pix) % mod) == 0)) { } } catch (NullPointerException npe) {
+                 * 
+                 * if (threadStopped) { Preferences.debug("somehow you managed to cancel the algorithm and dispose the
+                 * progressbar between checking for threadStopping and using it.", Preferences.DEBUG_ALGORITHM); } }
                  */
                 if (entireImage || mask.get(pix)) {
                     value = imgBuffer[pix];
@@ -2162,7 +2127,7 @@ kernelLoop:
                         clear = false;
                         offsetX = (pix % xDim) - halfKDim;
                         offsetXU = offsetX + kDimXY;
-                        offsetY = ((pix / xDim) % yDim) - halfKDim;
+                        offsetY = ( (pix / xDim) % yDim) - halfKDim;
                         offsetZ = (pix / (sliceSize)) - halfKDimZ;
 
                         count = 0;
@@ -2171,7 +2136,7 @@ kernelLoop:
                         startZ = offsetZ * sliceSize;
                         endZ = startZ + stepZ;
 
-                        // Took this out and check it later.  This caused the a subtle error by setting
+                        // Took this out and check it later. This caused the a subtle error by setting
                         // a pixel on an incorrect slice
                         // if (startZ < 0) {
                         // startZ = 0;
@@ -2197,8 +2162,7 @@ kernelLoop:
                             offsetXU = xDim;
                         }
 
-kernelLoop:
-                        for (k = startZ; k < endZ; k += sliceSize) {
+                        kernelLoop: for (k = startZ; k < endZ; k += sliceSize) {
 
                             // only process on valid image slices
                             // essentially process only the overlap between
@@ -2213,7 +2177,7 @@ kernelLoop:
 
                                     for (i = startX; i < endX; i++) {
 
-                                        if ((kernel.get(count) == true) && (imgBuffer[i] == 0)) {
+                                        if ( (kernel.get(count) == true) && (imgBuffer[i] == 0)) {
                                             clear = true;
 
                                             break kernelLoop;
@@ -2261,10 +2225,9 @@ kernelLoop:
             }
 
             srcImage.importData(0, imgBuffer, true);
-        } catch (IOException error) {
+        } catch (final IOException error) {
             displayError("Algorithm Morphology3D: Image(s) locked");
             setCompleted(false);
-
 
             return;
         }
@@ -2274,10 +2237,10 @@ kernelLoop:
 
     /**
      * Fill the holes inside the cell region blocks.
-     *
-     * @param  returnFlag  if true then this operation is a step in the morph process (i.e. close)
+     * 
+     * @param returnFlag if true then this operation is a step in the morph process (i.e. close)
      */
-    private void fillHoles(boolean returnFlag) {
+    private void fillHoles(final boolean returnFlag) {
 
         if (threadStopped) {
             finalize();
@@ -2285,15 +2248,15 @@ kernelLoop:
             return;
         }
 
-        int xDim = srcImage.getExtents()[0];
-        int yDim = srcImage.getExtents()[1];
-        int zDim = srcImage.getExtents()[2];
+        final int xDim = srcImage.getExtents()[0];
+        final int yDim = srcImage.getExtents()[1];
+        final int zDim = srcImage.getExtents()[2];
 
         // int imageLength = xDim * yDim * zDim;
         int offset;
 
-        int sliceSize = xDim * yDim;
-        short floodValue = 2;
+        final int sliceSize = xDim * yDim;
+        final short floodValue = 2;
 
         // Fill the boundary of each the image slice with value 0, which represent the seed value
         int i = 0;
@@ -2309,7 +2272,7 @@ kernelLoop:
             }
 
             // bottom boundary
-            for (i = ((yDim - 1) * xDim) + offset; i < ((yDim * xDim) + offset); i++) {
+            for (i = ( (yDim - 1) * xDim) + offset; i < ( (yDim * xDim) + offset); i++) {
                 imgBuffer[i] = 0;
             }
 
@@ -2336,35 +2299,32 @@ kernelLoop:
 
         try {
 
-            if ((srcImage.getType() == ModelStorageBase.BOOLEAN) || (srcImage.getType() == ModelStorageBase.BYTE) ||
-                (srcImage.getType() == ModelStorageBase.UBYTE) || (srcImage.getType() == ModelStorageBase.SHORT)) {
-                srcImage.reallocate(ModelImage.USHORT);
+            if ( (srcImage.getType() == ModelStorageBase.BOOLEAN) || (srcImage.getType() == ModelStorageBase.BYTE)
+                    || (srcImage.getType() == ModelStorageBase.UBYTE) || (srcImage.getType() == ModelStorageBase.SHORT)) {
+                srcImage.reallocate(ModelStorageBase.USHORT);
             }
 
             srcImage.importData(0, imgBuffer, true);
-        } catch (IOException error) {
+        } catch (final IOException error) {
             displayError("Algorithm Morphology3D: Image(s) locked");
             setCompleted(false);
 
-
             return;
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             displayError("Algorithm Morphology3D: Out of memory");
             setCompleted(false);
-
 
             return;
         }
 
         if (showFrame) {
-            ModelImage tempImage = new ModelImage(ModelImage.USHORT, srcImage.getExtents(), "Fill Objects");
+            final ModelImage tempImage = new ModelImage(ModelStorageBase.USHORT, srcImage.getExtents(), "Fill Objects");
 
             try {
                 tempImage.importData(0, imgBuffer, true);
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 displayError("Algorithm Morphology3D: Image(s) locked in Fill Objects");
                 setCompleted(false);
-
 
                 return;
             }
@@ -2382,32 +2342,32 @@ kernelLoop:
 
     /**
      * 3D flood fill that fill the holes insize the cell region block.
-     *
-     * @param  stIndex     the starting index of the seed point
-     * @param  floodValue  the value to flood the region with
-     * @param  objValue    object ID value that idenditifies the flood region.
+     * 
+     * @param stIndex the starting index of the seed point
+     * @param floodValue the value to flood the region with
+     * @param objValue object ID value that idenditifies the flood region.
      */
-    private void fillHolesRegion(int stIndex, short floodValue, short objValue) {
-        int xDim = srcImage.getExtents()[0];
-        int yDim = srcImage.getExtents()[1];
-        int zDim = srcImage.getExtents()[2];
-        int sliceSize = xDim * yDim;
+    private void fillHolesRegion(final int stIndex, final short floodValue, final short objValue) {
+        final int xDim = srcImage.getExtents()[0];
+        final int yDim = srcImage.getExtents()[1];
+        final int zDim = srcImage.getExtents()[2];
+        final int sliceSize = xDim * yDim;
         int x, y, z;
         int indexZ, indexY;
         int pixCount = 0;
 
         Point3D pt;
         Point3D tempPt;
-        Point3D seed3DPt = new Point3D((stIndex % sliceSize) % xDim, (stIndex % sliceSize) / xDim,
-                                       (stIndex / sliceSize));
-        Stack stack = new Stack();
+        final Point3D seed3DPt = new Point3D( (stIndex % sliceSize) % xDim, (stIndex % sliceSize) / xDim,
+                (stIndex / sliceSize));
+        final Stack stack = new Stack();
 
-        if (imgBuffer[(seed3DPt.z * sliceSize) + (seed3DPt.y * xDim) + seed3DPt.x] == objValue) {
+        if (imgBuffer[ (seed3DPt.z * sliceSize) + (seed3DPt.y * xDim) + seed3DPt.x] == objValue) {
             stack.push(seed3DPt);
-            imgBuffer[(seed3DPt.z * sliceSize) + (seed3DPt.y * xDim) + seed3DPt.x] = floodValue;
+            imgBuffer[ (seed3DPt.z * sliceSize) + (seed3DPt.y * xDim) + seed3DPt.x] = floodValue;
 
             // While loop mark the back ground region with value 2.
-            while (!stack.empty()) {
+            while ( !stack.empty()) {
                 pt = (Point3D) stack.pop();
                 x = pt.x;
                 y = pt.y;
@@ -2424,7 +2384,7 @@ kernelLoop:
                 pixCount++;
 
                 // checking on the voxel's six neighbors
-                if ((x + 1) < xDim) {
+                if ( (x + 1) < xDim) {
 
                     if (imgBuffer[indexZ + indexY + x + 1] == objValue) {
                         tempPt = new Point3D(x + 1, y, z);
@@ -2432,7 +2392,7 @@ kernelLoop:
                     }
                 }
 
-                if ((x - 1) >= 0) {
+                if ( (x - 1) >= 0) {
 
                     if (imgBuffer[indexZ + indexY + x - 1] == objValue) {
                         tempPt = new Point3D(x - 1, y, z);
@@ -2440,33 +2400,33 @@ kernelLoop:
                     }
                 }
 
-                if ((y + 1) < yDim) {
+                if ( (y + 1) < yDim) {
 
-                    if (imgBuffer[indexZ + ((y + 1) * xDim) + x] == objValue) {
+                    if (imgBuffer[indexZ + ( (y + 1) * xDim) + x] == objValue) {
                         tempPt = new Point3D(x, y + 1, z);
                         stack.push(tempPt);
                     }
                 }
 
-                if ((y - 1) >= 0) {
+                if ( (y - 1) >= 0) {
 
-                    if (imgBuffer[indexZ + ((y - 1) * xDim) + x] == objValue) {
+                    if (imgBuffer[indexZ + ( (y - 1) * xDim) + x] == objValue) {
                         tempPt = new Point3D(x, y - 1, z);
                         stack.push(tempPt);
                     }
                 }
 
-                if ((z + 1) < zDim) {
+                if ( (z + 1) < zDim) {
 
-                    if (imgBuffer[((z + 1) * sliceSize) + indexY + x] == objValue) {
+                    if (imgBuffer[ ( (z + 1) * sliceSize) + indexY + x] == objValue) {
                         tempPt = new Point3D(x, y, z + 1);
                         stack.push(tempPt);
                     }
                 }
 
-                if ((z - 1) >= 0) {
+                if ( (z - 1) >= 0) {
 
-                    if (imgBuffer[((z - 1) * sliceSize) + indexY + x] == objValue) {
+                    if (imgBuffer[ ( (z - 1) * sliceSize) + indexY + x] == objValue) {
                         tempPt = new Point3D(x, y, z - 1);
                         stack.push(tempPt);
                     }
@@ -2487,34 +2447,34 @@ kernelLoop:
 
     /**
      * 3D flood fill that forms a short mask.
-     *
-     * @param   idBuffer    buffer to store flooding results
-     * @param   stIndex     starting index indicating the starting location of the flood fill
-     * @param   floodValue  the value to flood the area with
-     * @param   objValue    DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param idBuffer buffer to store flooding results
+     * @param stIndex starting index indicating the starting location of the flood fill
+     * @param floodValue the value to flood the area with
+     * @param objValue DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    private int floodFill(short[] idBuffer, int stIndex, short floodValue, short objValue) {
-        int xDim = srcImage.getExtents()[0];
-        int yDim = srcImage.getExtents()[1];
-        int zDim = srcImage.getExtents()[2];
-        int sliceSize = xDim * yDim;
+    private int floodFill(final short[] idBuffer, final int stIndex, final short floodValue, final short objValue) {
+        final int xDim = srcImage.getExtents()[0];
+        final int yDim = srcImage.getExtents()[1];
+        final int zDim = srcImage.getExtents()[2];
+        final int sliceSize = xDim * yDim;
         int x, y, z;
         int indexZ, indexY;
         int pixCount = 0;
 
         Point3D pt;
         Point3D tempPt;
-        Point3D seed3DPt = new Point3D((stIndex % sliceSize) % xDim, (stIndex % sliceSize) / xDim,
-                                       (stIndex / sliceSize));
-        Stack stack = new Stack();
+        final Point3D seed3DPt = new Point3D( (stIndex % sliceSize) % xDim, (stIndex % sliceSize) / xDim,
+                (stIndex / sliceSize));
+        final Stack stack = new Stack();
 
-        if (imgBuffer[(seed3DPt.z * sliceSize) + (seed3DPt.y * xDim) + seed3DPt.x] > 0) {
+        if (imgBuffer[ (seed3DPt.z * sliceSize) + (seed3DPt.y * xDim) + seed3DPt.x] > 0) {
             stack.push(seed3DPt);
-            imgBuffer[(seed3DPt.z * sliceSize) + (seed3DPt.y * xDim) + seed3DPt.x] = 0;
+            imgBuffer[ (seed3DPt.z * sliceSize) + (seed3DPt.y * xDim) + seed3DPt.x] = 0;
 
-            while (!stack.empty()) {
+            while ( !stack.empty()) {
                 pt = (Point3D) stack.pop();
                 x = pt.x;
                 y = pt.y;
@@ -2525,7 +2485,7 @@ kernelLoop:
                 idBuffer[indexZ + indexY + x] = floodValue;
                 pixCount++;
 
-                if ((x + 1) < xDim) {
+                if ( (x + 1) < xDim) {
 
                     if (imgBuffer[indexZ + indexY + x + 1] == objValue) {
                         tempPt = new Point3D(x + 1, y, z);
@@ -2534,7 +2494,7 @@ kernelLoop:
                     }
                 }
 
-                if ((x - 1) >= 0) {
+                if ( (x - 1) >= 0) {
 
                     if (imgBuffer[indexZ + indexY + x - 1] == objValue) {
                         tempPt = new Point3D(x - 1, y, z);
@@ -2543,39 +2503,39 @@ kernelLoop:
                     }
                 }
 
-                if ((y + 1) < yDim) {
+                if ( (y + 1) < yDim) {
 
-                    if (imgBuffer[indexZ + ((y + 1) * xDim) + x] == objValue) {
+                    if (imgBuffer[indexZ + ( (y + 1) * xDim) + x] == objValue) {
                         tempPt = new Point3D(x, y + 1, z);
                         stack.push(tempPt);
                         imgBuffer[indexZ + (tempPt.y * xDim) + x] = 0;
                     }
                 }
 
-                if ((y - 1) >= 0) {
+                if ( (y - 1) >= 0) {
 
-                    if (imgBuffer[indexZ + ((y - 1) * xDim) + x] == objValue) {
+                    if (imgBuffer[indexZ + ( (y - 1) * xDim) + x] == objValue) {
                         tempPt = new Point3D(x, y - 1, z);
                         stack.push(tempPt);
                         imgBuffer[indexZ + (tempPt.y * xDim) + x] = 0;
                     }
                 }
 
-                if ((z + 1) < zDim) {
+                if ( (z + 1) < zDim) {
 
-                    if (imgBuffer[((z + 1) * sliceSize) + indexY + x] == objValue) {
+                    if (imgBuffer[ ( (z + 1) * sliceSize) + indexY + x] == objValue) {
                         tempPt = new Point3D(x, y, z + 1);
                         stack.push(tempPt);
-                        imgBuffer[(tempPt.z * sliceSize) + indexY + x] = 0;
+                        imgBuffer[ (tempPt.z * sliceSize) + indexY + x] = 0;
                     }
                 }
 
-                if ((z - 1) >= 0) {
+                if ( (z - 1) >= 0) {
 
-                    if (imgBuffer[((z - 1) * sliceSize) + indexY + x] == objValue) {
+                    if (imgBuffer[ ( (z - 1) * sliceSize) + indexY + x] == objValue) {
                         tempPt = new Point3D(x, y, z - 1);
                         stack.push(tempPt);
-                        imgBuffer[(tempPt.z * sliceSize) + indexY + x] = 0;
+                        imgBuffer[ (tempPt.z * sliceSize) + indexY + x] = 0;
                     }
                 }
             }
@@ -2587,16 +2547,16 @@ kernelLoop:
     /**
      * This method returns whether or not pix is the index of an endpoint in tmpBuffer (it is assumed that location pix
      * is not the intensity of the background in tmpBuffer).
-     *
-     * @param   pix        the index of a non-zero pixel in tmpBuffer
-     * @param   tmpBuffer  the image
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param pix the index of a non-zero pixel in tmpBuffer
+     * @param tmpBuffer the image
+     * 
+     * @return DOCUMENT ME!
      */
-    private boolean isEndpoint(int pix, short[] tmpBuffer) {
+    private boolean isEndpoint(final int pix, final short[] tmpBuffer) {
         short p1, p2, p3, p4, p6, p7, p8, p9;
-        int xDim = srcImage.getExtents()[0];
-        short bgColor = 0;
+        final int xDim = srcImage.getExtents()[0];
+        final short bgColor = 0;
 
         p1 = tmpBuffer[pix - xDim - 1];
         p2 = tmpBuffer[pix - xDim];
@@ -2607,29 +2567,29 @@ kernelLoop:
         p8 = tmpBuffer[pix + xDim];
         p9 = tmpBuffer[pix + xDim + 1];
 
-        if ((p2 == bgColor) && (p3 == bgColor) && (p4 != bgColor) && (p6 == bgColor) && (p8 == bgColor) &&
-                (p9 == bgColor)) {
+        if ( (p2 == bgColor) && (p3 == bgColor) && (p4 != bgColor) && (p6 == bgColor) && (p8 == bgColor)
+                && (p9 == bgColor)) {
             return true;
-        } else if ((p2 != bgColor) && (p4 == bgColor) && (p6 == bgColor) && (p7 == bgColor) && (p8 == bgColor) &&
-                       (p9 == bgColor)) {
+        } else if ( (p2 != bgColor) && (p4 == bgColor) && (p6 == bgColor) && (p7 == bgColor) && (p8 == bgColor)
+                && (p9 == bgColor)) {
             return true;
-        } else if ((p1 == bgColor) && (p2 == bgColor) && (p4 == bgColor) && (p6 != bgColor) && (p7 == bgColor) &&
-                       (p8 == bgColor)) {
+        } else if ( (p1 == bgColor) && (p2 == bgColor) && (p4 == bgColor) && (p6 != bgColor) && (p7 == bgColor)
+                && (p8 == bgColor)) {
             return true;
-        } else if ((p1 == bgColor) && (p2 == bgColor) && (p3 == bgColor) && (p4 == bgColor) && (p6 == bgColor) &&
-                       (p8 != bgColor)) {
+        } else if ( (p1 == bgColor) && (p2 == bgColor) && (p3 == bgColor) && (p4 == bgColor) && (p6 == bgColor)
+                && (p8 != bgColor)) {
             return true;
-        } else if ((p1 != bgColor) && (p2 == bgColor) && (p3 == bgColor) && (p4 == bgColor) && (p6 == bgColor) &&
-                       (p7 == bgColor) && (p8 == bgColor) && (p9 == bgColor)) {
+        } else if ( (p1 != bgColor) && (p2 == bgColor) && (p3 == bgColor) && (p4 == bgColor) && (p6 == bgColor)
+                && (p7 == bgColor) && (p8 == bgColor) && (p9 == bgColor)) {
             return true;
-        } else if ((p1 == bgColor) && (p2 == bgColor) && (p3 != bgColor) && (p4 == bgColor) && (p6 == bgColor) &&
-                       (p7 == bgColor) && (p8 == bgColor) && (p9 == bgColor)) {
+        } else if ( (p1 == bgColor) && (p2 == bgColor) && (p3 != bgColor) && (p4 == bgColor) && (p6 == bgColor)
+                && (p7 == bgColor) && (p8 == bgColor) && (p9 == bgColor)) {
             return true;
-        } else if ((p1 == bgColor) && (p2 == bgColor) && (p3 == bgColor) && (p4 == bgColor) && (p6 == bgColor) &&
-                       (p7 != bgColor) && (p8 == bgColor) && (p9 == bgColor)) {
+        } else if ( (p1 == bgColor) && (p2 == bgColor) && (p3 == bgColor) && (p4 == bgColor) && (p6 == bgColor)
+                && (p7 != bgColor) && (p8 == bgColor) && (p9 == bgColor)) {
             return true;
-        } else if ((p1 == bgColor) && (p2 == bgColor) && (p3 == bgColor) && (p4 == bgColor) && (p6 == bgColor) &&
-                       (p7 == bgColor) && (p8 == bgColor) && (p9 != bgColor)) {
+        } else if ( (p1 == bgColor) && (p2 == bgColor) && (p3 == bgColor) && (p4 == bgColor) && (p6 == bgColor)
+                && (p7 == bgColor) && (p8 == bgColor) && (p9 != bgColor)) {
             return true;
         } else {
             return false;
@@ -2638,10 +2598,10 @@ kernelLoop:
 
     /**
      * Generates a kernel of the indicated type.
-     *
-     * @param  kernelType  type of kernel to be generated.
+     * 
+     * @param kernelType type of kernel to be generated.
      */
-    private void makeKernel(int kernelType) {
+    private void makeKernel(final int kernelType) {
 
         switch (kernelType) {
 
@@ -2717,7 +2677,7 @@ kernelLoop:
 
                 kernel.set(112);
                 break;
-                
+
             case CONNECTED26:
                 kDimXY = 3;
                 kDimZ = 3;
@@ -2767,12 +2727,12 @@ kernelLoop:
         double width, radius;
         double thickness;
         double distance;
-        float[] resolutions = srcImage.getFileInfo()[0].getResolutions();
+        final float[] resolutions = srcImage.getFileInfo()[0].getResolutions();
 
         width = sphereDiameter / resolutions[0];
         kDimXY = (int) Math.round(width + 1);
 
-        if ((kDimXY % 2) == 0) {
+        if ( (kDimXY % 2) == 0) {
             kDimXY++;
         }
 
@@ -2783,9 +2743,9 @@ kernelLoop:
         Preferences.debug("# Morph3d.makeSphericalKernel: kernel size = " + kDimXY + "\n");
 
         thickness = resolutions[2] / resolutions[0];
-        kDimZ = (int) Math.round((sphereDiameter / thickness) + 1);
+        kDimZ = (int) Math.round( (sphereDiameter / thickness) + 1);
 
-        if ((kDimZ % 2) == 0) {
+        if ( (kDimZ % 2) == 0) {
             kDimZ++;
         }
 
@@ -2805,11 +2765,11 @@ kernelLoop:
             for (y = 0; y < kDimXY; y++) {
 
                 for (x = 0; x < kDimXY; x++) {
-                    distance = Math.sqrt(((x - halfKDim) * (x - halfKDim)) + ((y - halfKDim) * (y - halfKDim)) +
-                                         ((z - halfKDimZ) * thickness * (z - halfKDimZ) * thickness));
+                    distance = Math.sqrt( ( (x - halfKDim) * (x - halfKDim)) + ( (y - halfKDim) * (y - halfKDim))
+                            + ( (z - halfKDimZ) * thickness * (z - halfKDimZ) * thickness));
 
                     if (distance < radius) {
-                        kernel.set((z * kDimXY * kDimXY) + (y * kDimXY) + x);
+                        kernel.set( (z * kDimXY * kDimXY) + (y * kDimXY) + x);
                     }
                 }
             }
@@ -2822,28 +2782,28 @@ kernelLoop:
 
     /**
      * Used by ultimate erode to simplify code a little. Checks to find a single pixels in the 27 neighborhood.
-     *
-     * @param   buffer     input data buffer
-     * @param   index      index of interest
-     * @param   sliceSize  number of voxels in the image plane
-     * @param   xDim       dimension of the image in the x direction
-     *
-     * @return  true if single pixel, false if not single pixel.
+     * 
+     * @param buffer input data buffer
+     * @param index index of interest
+     * @param sliceSize number of voxels in the image plane
+     * @param xDim dimension of the image in the x direction
+     * 
+     * @return true if single pixel, false if not single pixel.
      */
-    private boolean onePixel(short[] buffer, int index, int sliceSize, int xDim) {
+    private boolean onePixel(final short[] buffer, final int index, final int sliceSize, final int xDim) {
 
-        if ((buffer[index] > 0) && (buffer[index - sliceSize] == 0) && (buffer[index - sliceSize - xDim] == 0) &&
-                (buffer[index - sliceSize - xDim + 1] == 0) && (buffer[index - sliceSize + 1] == 0) &&
-                (buffer[index - sliceSize + xDim + 1] == 0) && (buffer[index - sliceSize + xDim] == 0) &&
-                (buffer[index - sliceSize + xDim - 1] == 0) && (buffer[index - sliceSize - 1] == 0) &&
-                (buffer[index - sliceSize - xDim - 1] == 0) && (buffer[index - xDim] == 0) &&
-                (buffer[index - xDim + 1] == 0) && (buffer[index + 1] == 0) && (buffer[index + xDim + 1] == 0) &&
-                (buffer[index + xDim] == 0) && (buffer[index + xDim - 1] == 0) && (buffer[index - 1] == 0) &&
-                (buffer[index - xDim - 1] == 0) && (buffer[index + sliceSize] == 0) &&
-                (buffer[index + sliceSize - xDim] == 0) && (buffer[index + sliceSize - xDim + 1] == 0) &&
-                (buffer[index + sliceSize + 1] == 0) && (buffer[index + sliceSize + xDim + 1] == 0) &&
-                (buffer[index + sliceSize + xDim] == 0) && (buffer[index + sliceSize + xDim - 1] == 0) &&
-                (buffer[index + sliceSize - 1] == 0) && (buffer[index + sliceSize - xDim - 1] == 0)) {
+        if ( (buffer[index] > 0) && (buffer[index - sliceSize] == 0) && (buffer[index - sliceSize - xDim] == 0)
+                && (buffer[index - sliceSize - xDim + 1] == 0) && (buffer[index - sliceSize + 1] == 0)
+                && (buffer[index - sliceSize + xDim + 1] == 0) && (buffer[index - sliceSize + xDim] == 0)
+                && (buffer[index - sliceSize + xDim - 1] == 0) && (buffer[index - sliceSize - 1] == 0)
+                && (buffer[index - sliceSize - xDim - 1] == 0) && (buffer[index - xDim] == 0)
+                && (buffer[index - xDim + 1] == 0) && (buffer[index + 1] == 0) && (buffer[index + xDim + 1] == 0)
+                && (buffer[index + xDim] == 0) && (buffer[index + xDim - 1] == 0) && (buffer[index - 1] == 0)
+                && (buffer[index - xDim - 1] == 0) && (buffer[index + sliceSize] == 0)
+                && (buffer[index + sliceSize - xDim] == 0) && (buffer[index + sliceSize - xDim + 1] == 0)
+                && (buffer[index + sliceSize + 1] == 0) && (buffer[index + sliceSize + xDim + 1] == 0)
+                && (buffer[index + sliceSize + xDim] == 0) && (buffer[index + sliceSize + xDim - 1] == 0)
+                && (buffer[index + sliceSize - 1] == 0) && (buffer[index + sliceSize - xDim - 1] == 0)) {
             return true;
         } else {
             return false;
@@ -2852,12 +2812,16 @@ kernelLoop:
 
     /**
      * Take a mask like image and performs an analysis.
-     *
-     * <p>1. Deletes objects that are too small (noise) and objects that are too big 2. Ultimate erode and remove points
+     * 
+     * <p>
+     * 1. Deletes objects that are too small (noise) and objects that are too big 2. Ultimate erode and remove points
      * that are too close 3. Watershed using ultimate eroded points as seed points and distance map. 4. Delete objects
-     * that are too small (noise) and objects that are too big</p>
-     *
-     * <p>Ult erode & (bg dist map AND orig image) => watershed(ultErodePts, ANDED Bg Dist) => IDobjects</p>
+     * that are too small (noise) and objects that are too big
+     * </p>
+     * 
+     * <p>
+     * Ult erode & (bg dist map AND orig image) => watershed(ultErodePts, ANDED Bg Dist) => IDobjects
+     * </p>
      */
     private void particleAnalysis() {
 
@@ -2869,11 +2833,11 @@ kernelLoop:
             return;
         }
 
-        int xDim = srcImage.getExtents()[0];
-        int yDim = srcImage.getExtents()[1];
-        int zDim = srcImage.getExtents()[2];
-        int sliceSize = xDim * yDim;
-        int volSize = xDim * yDim * zDim;
+        final int xDim = srcImage.getExtents()[0];
+        final int yDim = srcImage.getExtents()[1];
+        final int zDim = srcImage.getExtents()[2];
+        final int sliceSize = xDim * yDim;
+        final int volSize = xDim * yDim * zDim;
         int pix;
         Vector3f bgPoint;
         Vector3f[] seeds;
@@ -2886,7 +2850,7 @@ kernelLoop:
         ModelImage srcImage2 = null;
         int i;
 
-        int[] progressValues = getProgressValues();
+        final int[] progressValues = getProgressValues();
         setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 45));
 
         try {
@@ -2900,16 +2864,15 @@ kernelLoop:
             }
 
             srcImage.exportData(0, volSize, imgBuffer);
-        } catch (IOException error) {
+        } catch (final IOException error) {
             displayError("Algorithm Morphology3D.particleAnalysis: Image(s) locked");
             setCompleted(false);
-
 
             return;
         }
 
         setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 45),
-                          ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 90));
+                ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 90));
 
         ultimateErode(true); // forms list of points (one point per object, hopefully)
 
@@ -2925,18 +2888,16 @@ kernelLoop:
 
         try {
             srcImage.exportData(0, volSize, imgBuffer);
-            bgPoint = new Vector3f(-1, -1, -1);
+            bgPoint = new Vector3f( -1, -1, -1);
             destExtents = new int[3];
-        } catch (IOException error) {
+        } catch (final IOException error) {
             displayError("Algorithm Morphology3D.particleAnalysis: Image(s) locked");
             setCompleted(false);
 
-
             return;
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             displayError("Algorithm Morphology3D.particleAnalysis: Out of memory");
             setCompleted(false);
-
 
             return;
         }
@@ -2946,11 +2907,11 @@ kernelLoop:
         float maxDist = -Float.MAX_VALUE;
 
         for (pix = 0; pix < volSize; pix++) {
-            if ((entireImage) || (mask.get(pix))) {
+            if ( (entireImage) || (mask.get(pix))) {
                 if (distanceMap[pix] < minDist) {
                     minDist = distanceMap[pix];
                 }
-    
+
                 if (distanceMap[pix] > maxDist) {
                     maxDist = distanceMap[pix];
                 }
@@ -2958,7 +2919,7 @@ kernelLoop:
         }
 
         for (pix = 0; pix < volSize; pix++) {
-            if ((entireImage) || (mask.get(pix))) {
+            if ( (entireImage) || (mask.get(pix))) {
                 if (imgBuffer[pix] > 0) {
                     distanceMap[pix] = maxDist + minDist - distanceMap[pix];
                 } else {
@@ -2976,22 +2937,22 @@ kernelLoop:
         }
 
         for (pix = sliceSize; pix < (volSize - sliceSize); pix++) {
-            if ((entireImage) || (mask.get(pix))) {
-                if ((distanceMap[pix] == 0) &&
-                        (((distanceMap[pix - 1] <= maxDist) && (distanceMap[pix - 1] > 0)) ||
-                             ((distanceMap[pix + 1] <= maxDist) && (distanceMap[pix + 1] > 0)) ||
-                             ((distanceMap[pix - xDim] <= maxDist) && (distanceMap[pix - xDim] > 0)) ||
-                             ((distanceMap[pix + xDim] <= maxDist) && (distanceMap[pix + xDim] > 0)) ||
-                             ((distanceMap[pix - sliceSize] <= maxDist) && (distanceMap[pix - sliceSize] > 0)) ||
-                             ((distanceMap[pix + sliceSize] <= maxDist) && (distanceMap[pix + sliceSize] > 0)))) {
-    
+            if ( (entireImage) || (mask.get(pix))) {
+                if ( (distanceMap[pix] == 0)
+                        && ( ( (distanceMap[pix - 1] <= maxDist) && (distanceMap[pix - 1] > 0))
+                                || ( (distanceMap[pix + 1] <= maxDist) && (distanceMap[pix + 1] > 0))
+                                || ( (distanceMap[pix - xDim] <= maxDist) && (distanceMap[pix - xDim] > 0))
+                                || ( (distanceMap[pix + xDim] <= maxDist) && (distanceMap[pix + xDim] > 0))
+                                || ( (distanceMap[pix - sliceSize] <= maxDist) && (distanceMap[pix - sliceSize] > 0)) || ( (distanceMap[pix
+                                + sliceSize] <= maxDist) && (distanceMap[pix + sliceSize] > 0)))) {
+
                     distanceMap[pix] = maxDist + 10;
                 }
             }
         }
 
         for (pix = 0; pix < volSize; pix++) {
-            if ((entireImage) || (mask.get(pix))) {
+            if ( (entireImage) || (mask.get(pix))) {
                 if (distanceMap[pix] == 0) {
                     distanceMap[pix] = maxDist + 5;
                 }
@@ -3038,53 +2999,49 @@ kernelLoop:
                 Preferences.debug("Seed " + i + " = " + seeds[i].X + "," + seeds[i].Y + "," + seeds[i].Z);
             }
 
-            wsImage = new ModelImage(ModelImage.USHORT, destExtents, "Watershed");
+            wsImage = new ModelImage(ModelStorageBase.USHORT, destExtents, "Watershed");
 
-            distanceImage = new ModelImage(ModelImage.FLOAT, destExtents, "Distance");
+            distanceImage = new ModelImage(ModelStorageBase.FLOAT, destExtents, "Distance");
 
             distanceImage.importData(0, distanceMap, true);
             // srcImage.importData(0, distanceMap, true);
-            if (!entireImage) {
+            if ( !entireImage) {
                 imgBufferOrg = new short[volSize];
                 imgBuffer2 = new short[volSize];
                 try {
                     srcImage.exportData(0, volSize, imgBufferOrg);
-                }
-                catch(IOException e) {
+                } catch (final IOException e) {
                     displayError("Algorithm Morphology2D: Image(s) locked");
                     setCompleted(false);
-                    return;    
+                    return;
                 }
                 for (i = 0; i < volSize; i++) {
                     if (mask.get(i)) {
                         imgBuffer2[i] = imgBufferOrg[i];
                     }
                 }
-                srcImage2 = (ModelImage)srcImage.clone();
+                srcImage2 = (ModelImage) srcImage.clone();
                 try {
                     srcImage2.importData(0, imgBuffer2, true);
-                }
-                catch(IOException e) {
+                } catch (final IOException e) {
                     displayError("Algorithm Morphology2D: Image(s) locked");
                     setCompleted(false);
-                    return;    
+                    return;
                 }
-                ws = new AlgorithmWatershed(wsImage, srcImage2, null, null, null, true); 
+                ws = new AlgorithmWatershed(wsImage, srcImage2, null, null, null, true);
                 imgBuffer2 = null;
             } // if (!entireImage)
             else {
                 ws = new AlgorithmWatershed(wsImage, srcImage, null, null, null, true);
             }
-        } catch (IOException error) {
+        } catch (final IOException error) {
             displayError("Algorithm Morphology3Db: Image(s) locked");
             setCompleted(false);
 
-
             return;
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             displayError("Algorithm Morphology3D: Out of memory");
             setCompleted(false);
-
 
             return;
         }
@@ -3096,15 +3053,15 @@ kernelLoop:
         ws.setEnergyImage(distanceImage);
         ws.run();
 
-        if (!ws.isCompleted()) { // if the (sub) algo is cancelled, this is too
+        if ( !ws.isCompleted()) { // if the (sub) algo is cancelled, this is too
 
             setCompleted(false);
             finalize();
 
             return;
         }
-        
-        if (!entireImage) {
+
+        if ( !entireImage) {
             srcImage2.disposeLocal();
             srcImage2 = null;
         }
@@ -3119,40 +3076,37 @@ kernelLoop:
             wsImage = null;
             distanceImage = null;
 
-        } catch (IOException error) {
+        } catch (final IOException error) {
             displayError("Algorithm Morphology3Dc: Image(s) locked");
             setCompleted(false);
-
 
             return;
         }
 
         fireProgressStateChanged("Deleting objects ...");
         setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 95),
-                          ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
+                ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
         deleteObjects(min, max, false);
-        
-        if (!entireImage) {
+
+        if ( !entireImage) {
             try {
                 srcImage.exportData(0, volSize, imgBuffer);
-            }
-            catch (IOException e) {
+            } catch (final IOException e) {
                 displayError("Algorithm Morphology2D: Image(s) locked");
                 setCompleted(false);
-                return;        
+                return;
             }
             for (i = 0; i < volSize; i++) {
-                if (!mask.get(i)) {
-                    imgBuffer[i] = imgBufferOrg[i];    
+                if ( !mask.get(i)) {
+                    imgBuffer[i] = imgBufferOrg[i];
                 }
             }
             try {
                 srcImage.importData(0, imgBuffer, true);
-            }
-            catch (IOException e) {
+            } catch (final IOException e) {
                 displayError("Algorithm Morphology2D: Image(s) locked");
                 setCompleted(false);
-                return;    
+                return;
             }
         }
 
@@ -3170,26 +3124,26 @@ kernelLoop:
     /**
      * This a thinning algorithm used to do half of one layer of thinning (which layer is dictated by whether pass is
      * even or odd).
-     *
-     * @param   pass   the number pass this execution is on the image
-     * @param   slice  the slice number being worked on (starting with 0);
-     * @param   table  the table to lookup whether to delete the pixel or let it stay.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param pass the number pass this execution is on the image
+     * @param slice the slice number being worked on (starting with 0);
+     * @param table the table to lookup whether to delete the pixel or let it stay.
+     * 
+     * @return DOCUMENT ME!
      */
-    private int thin(int pass, int slice, int[] table) {
+    private int thin(final int pass, final int slice, final int[] table) {
         int p1, p2, p3, p4, p5, p6, p7, p8, p9;
-        int bgColor = 0;
+        final int bgColor = 0;
         int pix;
-        int xDim = srcImage.getExtents()[0];
-        int yDim = srcImage.getExtents()[1];
-        int sliceSize = xDim * yDim;
+        final int xDim = srcImage.getExtents()[0];
+        final int yDim = srcImage.getExtents()[1];
+        final int sliceSize = xDim * yDim;
 
         int v, index, code;
         int pixelsRemoved = 0;
         int pixInSlice;
 
-        for (pix = slice * sliceSize; pix < ((slice + 1) * sliceSize); pix++) {
+        for (pix = slice * sliceSize; pix < ( (slice + 1) * sliceSize); pix++) {
 
             if (entireImage || mask.get(pix)) {
                 pixInSlice = pix % sliceSize;
@@ -3198,49 +3152,49 @@ kernelLoop:
 
                 if (v != bgColor) {
 
-                    if ((pixInSlice - xDim - 1) < 0) {
+                    if ( (pixInSlice - xDim - 1) < 0) {
                         p1 = bgColor;
                     } else {
                         p1 = imgBuffer[pix - xDim - 1] & 0xff;
                     }
 
-                    if ((pixInSlice - xDim) < 0) {
+                    if ( (pixInSlice - xDim) < 0) {
                         p2 = bgColor;
                     } else {
                         p2 = imgBuffer[pix - xDim] & 0xff;
                     }
 
-                    if (((pixInSlice - xDim + 1) < 0) || ((pixInSlice - xDim + 1) >= sliceSize)) {
+                    if ( ( (pixInSlice - xDim + 1) < 0) || ( (pixInSlice - xDim + 1) >= sliceSize)) {
                         p3 = bgColor;
                     } else {
                         p3 = imgBuffer[pix - xDim + 1] & 0xff;
                     }
 
-                    if ((pixInSlice - 1) < 0) {
+                    if ( (pixInSlice - 1) < 0) {
                         p4 = bgColor;
                     } else {
                         p4 = imgBuffer[pix - 1] & 0xff;
                     }
 
-                    if ((pixInSlice + 1) >= sliceSize) {
+                    if ( (pixInSlice + 1) >= sliceSize) {
                         p6 = bgColor;
                     } else {
                         p6 = imgBuffer[pix + 1] & 0xff;
                     }
 
-                    if (((pixInSlice + xDim - 1) < 0) || ((pixInSlice + xDim - 1) >= sliceSize)) {
+                    if ( ( (pixInSlice + xDim - 1) < 0) || ( (pixInSlice + xDim - 1) >= sliceSize)) {
                         p7 = bgColor;
                     } else {
                         p7 = imgBuffer[pix + xDim - 1] & 0xff;
                     }
 
-                    if ((pixInSlice + xDim) >= sliceSize) {
+                    if ( (pixInSlice + xDim) >= sliceSize) {
                         p8 = bgColor;
                     } else {
                         p8 = imgBuffer[pix + xDim] & 0xff;
                     }
 
-                    if ((pixInSlice + xDim + 1) >= sliceSize) {
+                    if ( (pixInSlice + xDim + 1) >= sliceSize) {
                         p9 = bgColor;
                     } else {
                         p9 = imgBuffer[pix + xDim + 1] & 0xff;
@@ -3282,15 +3236,15 @@ kernelLoop:
 
                     code = table[index];
 
-                    if ((pass & 1) == 1) { // odd pass
+                    if ( (pass & 1) == 1) { // odd pass
 
-                        if ((code == 2) || (code == 3)) {
+                        if ( (code == 2) || (code == 3)) {
                             v = bgColor;
                             pixelsRemoved++;
                         }
                     } else { // even pass
 
-                        if ((code == 1) || (code == 3)) {
+                        if ( (code == 1) || (code == 3)) {
                             v = bgColor;
                             pixelsRemoved++;
                         }
@@ -3308,15 +3262,14 @@ kernelLoop:
 
     /**
      * Erodes to a single point.
-     *
-     * @param  returnFlag  if true then this operation is a step in the morph process (i.e. open)
+     * 
+     * @param returnFlag if true then this operation is a step in the morph process (i.e. open)
      */
-    private void ultimateErode(boolean returnFlag) {
+    private void ultimateErode(final boolean returnFlag) {
 
         // if thread has already been stopped, dump out
         if (threadStopped) {
             setCompleted(false);
-
 
             finalize();
 
@@ -3324,12 +3277,12 @@ kernelLoop:
         }
 
         int vox, voxel, i, j, index;
-        int xDim = srcImage.getExtents()[0];
-        int yDim = srcImage.getExtents()[1];
-        int zDim = srcImage.getExtents()[2];
+        final int xDim = srcImage.getExtents()[0];
+        final int yDim = srcImage.getExtents()[1];
+        final int zDim = srcImage.getExtents()[2];
 
-        int sliceSize = xDim * yDim;
-        int volSize = xDim * yDim * zDim;
+        final int sliceSize = xDim * yDim;
+        final int volSize = xDim * yDim * zDim;
         float distance;
         float dist;
         float diffx, diffy;
@@ -3357,10 +3310,9 @@ kernelLoop:
             uPointsSlice = new Vector();
             uPointsSliceOrdered = new Vector();
             maxPt = new Vector3f();
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             displayError("Algorithm Morphology3D.distanceMap: Out of memory");
             setCompleted(false);
-
 
             return;
         }
@@ -3381,28 +3333,28 @@ kernelLoop:
         for (vox = sliceSize; vox < (volSize - sliceSize); vox++) {
 
             // top edge
-            if ((vox % sliceSize) < xDim) {
+            if ( (vox % sliceSize) < xDim) {
                 imgBuffer[vox] = 0;
             } // bottom edge
-            else if ((vox % sliceSize) > (sliceSize - xDim)) {
+            else if ( (vox % sliceSize) > (sliceSize - xDim)) {
                 imgBuffer[vox] = 0;
             } // left edge
-            else if ((vox % xDim) == 0) {
+            else if ( (vox % xDim) == 0) {
                 imgBuffer[vox] = 0;
             } // right edge
-            else if ((vox % xDim) == (xDim - 1)) {
+            else if ( (vox % xDim) == (xDim - 1)) {
                 imgBuffer[vox] = 0;
             }
         }
 
-        int[] progressValues = getProgressValues();
+        final int[] progressValues = getProgressValues();
 
         this.setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 30));
 
         distanceMap(true);
 
         this.setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 30),
-                               ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 95));
+                ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 95));
 
         identifyObjects(true); // results are in destImage
 
@@ -3421,41 +3373,40 @@ kernelLoop:
 
             // go and get source image and put it in imgBuffer
             srcImage.exportData(0, volSize, imgBuffer); // locks and releases lock
-        } catch (IOException error) {
+        } catch (final IOException error) {
             displayError("Algorithm Morphology3D: Image(s) locked");
             setCompleted(false);
-
 
             return;
         }
 
         fireProgressStateChanged(95, null, "Eroding ...");
 
-
         // We have choosen to find ult. points on a slice by slice basis
         for (z = 0; (z < zDim) && !threadStopped; z++) {
             edgePointsSlice.removeAllElements();
 
-            for (vox = z * sliceSize; vox < ((z + 1) * sliceSize); vox++) {
+            for (vox = z * sliceSize; vox < ( (z + 1) * sliceSize); vox++) {
 
-                if (((vox % xDim) == 0) && (imgBuffer[vox] > 0)) {
+                if ( ( (vox % xDim) == 0) && (imgBuffer[vox] > 0)) {
                     edgePointsSlice.addElement(new Vector3f(vox % xDim, (vox % sliceSize) / xDim, zDim));
-                } else if (((vox % xDim) == (xDim - 1)) && (imgBuffer[vox] > 0)) {
+                } else if ( ( (vox % xDim) == (xDim - 1)) && (imgBuffer[vox] > 0)) {
                     edgePointsSlice.addElement(new Vector3f(vox % xDim, (vox % sliceSize) / xDim, zDim));
-                } else if (((vox % sliceSize) == (sliceSize - 1)) && (imgBuffer[vox] > 0)) {
+                } else if ( ( (vox % sliceSize) == (sliceSize - 1)) && (imgBuffer[vox] > 0)) {
                     edgePointsSlice.addElement(new Vector3f(vox % xDim, (vox % sliceSize) / xDim, zDim));
-                } else if (((vox % sliceSize) < xDim) && (imgBuffer[vox] > 0)) {
+                } else if ( ( (vox % sliceSize) < xDim) && (imgBuffer[vox] > 0)) {
                     edgePointsSlice.addElement(new Vector3f(vox % xDim, (vox % sliceSize) / xDim, zDim));
-                } else if (((vox % sliceSize) > (sliceSize - xDim)) && (imgBuffer[vox] > 0)) {
+                } else if ( ( (vox % sliceSize) > (sliceSize - xDim)) && (imgBuffer[vox] > 0)) {
                     edgePointsSlice.addElement(new Vector3f(vox % xDim, (vox % sliceSize) / xDim, zDim));
-                } else if ((vox > xDim) && (vox < (volSize - sliceSize - xDim)) && (imgBuffer[vox] == 0) &&
-                               ((imgBuffer[vox - xDim] != 0) || (imgBuffer[vox + 1] != 0) ||
-                                    (imgBuffer[vox + xDim] != 0) || (imgBuffer[vox - 1] != 0))) {
+                } else if ( (vox > xDim)
+                        && (vox < (volSize - sliceSize - xDim))
+                        && (imgBuffer[vox] == 0)
+                        && ( (imgBuffer[vox - xDim] != 0) || (imgBuffer[vox + 1] != 0) || (imgBuffer[vox + xDim] != 0) || (imgBuffer[vox - 1] != 0))) {
                     edgePointsSlice.addElement(new Vector3f(vox % xDim, (vox % sliceSize) / xDim, zDim));
                 }
             }
 
-            // calculate distance image  of objects based on edge pixels
+            // calculate distance image of objects based on edge pixels
             for (voxel = z * sliceSize, vox = 0; vox < sliceSize; voxel++, vox++) {
                 minDistanceBuffer[vox] = 0;
 
@@ -3465,7 +3416,7 @@ kernelLoop:
                         distance = 10000000;
 
                         // Test the distace from point(x1, y1) to all edge points and
-                        // put  the min. distance into the distance buffer
+                        // put the min. distance into the distance buffer
                         for (i = 0; i < edgePointsSlice.size(); i++) {
                             pt = (Vector3f) (edgePointsSlice.elementAt(i));
 
@@ -3487,7 +3438,6 @@ kernelLoop:
             if (threadStopped) {
                 setCompleted(false);
 
-
                 finalize();
 
                 return;
@@ -3501,10 +3451,10 @@ kernelLoop:
                 if (imgBuffer[voxel] > 0) {
                     cPt = minDistanceBuffer[vox];
 
-                    if ((cPt >= minDistanceBuffer[vox - xDim]) && (cPt >= minDistanceBuffer[vox - xDim + 1]) &&
-                            (cPt >= minDistanceBuffer[vox + 1]) && (cPt >= minDistanceBuffer[vox + xDim + 1]) &&
-                            (cPt >= minDistanceBuffer[vox + xDim]) && (cPt >= minDistanceBuffer[vox + xDim - 1]) &&
-                            (cPt >= minDistanceBuffer[vox - 1]) && (cPt >= minDistanceBuffer[vox - xDim - 1])) {
+                    if ( (cPt >= minDistanceBuffer[vox - xDim]) && (cPt >= minDistanceBuffer[vox - xDim + 1])
+                            && (cPt >= minDistanceBuffer[vox + 1]) && (cPt >= minDistanceBuffer[vox + xDim + 1])
+                            && (cPt >= minDistanceBuffer[vox + xDim]) && (cPt >= minDistanceBuffer[vox + xDim - 1])
+                            && (cPt >= minDistanceBuffer[vox - 1]) && (cPt >= minDistanceBuffer[vox - xDim - 1])) {
 
                         uPointsSlice.addElement(new Vector3f(voxel, imgBuffer[voxel], minDistanceBuffer[vox]));
                     }
@@ -3514,7 +3464,7 @@ kernelLoop:
             // Order ult. points - not effient but number points should be small
             uPointsSliceOrdered.removeAllElements();
 
-            int size = uPointsSlice.size();
+            final int size = uPointsSlice.size();
 
             for (j = 0; j < size; j++) {
                 max = -1;
@@ -3555,7 +3505,7 @@ kernelLoop:
             }
 
             for (int m = 0; m < sliceSize; m++) {
-                imgBuffer[(z * sliceSize) + m] = 0;
+                imgBuffer[ (z * sliceSize) + m] = 0;
             }
 
             for (i = 0; i < uPointsSliceOrdered.size(); i++) {
@@ -3634,15 +3584,12 @@ kernelLoop:
 
                         if (erodeObjsOrdered[j].X != -1) {
 
-                            if (Math.sqrt(((erodeObjsOrdered[i].X - erodeObjsOrdered[j].X) *
-                                               (erodeObjsOrdered[i].X - erodeObjsOrdered[j].X)) +
-                                              ((erodeObjsOrdered[i].Y - erodeObjsOrdered[j].Y) *
-                                                   (erodeObjsOrdered[i].Y - erodeObjsOrdered[j].Y)) +
-                                              ((erodeObjsOrdered[i].Z - erodeObjsOrdered[j].Z) *
-                                                   (erodeObjsOrdered[i].Z - erodeObjsOrdered[j].Z))) < pixDist) {
+                            if (Math
+                                    .sqrt( ( (erodeObjsOrdered[i].X - erodeObjsOrdered[j].X) * (erodeObjsOrdered[i].X - erodeObjsOrdered[j].X))
+                                            + ( (erodeObjsOrdered[i].Y - erodeObjsOrdered[j].Y) * (erodeObjsOrdered[i].Y - erodeObjsOrdered[j].Y))
+                                            + ( (erodeObjsOrdered[i].Z - erodeObjsOrdered[j].Z) * (erodeObjsOrdered[i].Z - erodeObjsOrdered[j].Z))) < pixDist) {
 
-                                imgBuffer[(int) ((erodeObjsOrdered[j].Z * sliceSize) + (erodeObjsOrdered[j].Y * xDim) +
-                                                 erodeObjsOrdered[j].X)] = 0;
+                                imgBuffer[(int) ( (erodeObjsOrdered[j].Z * sliceSize) + (erodeObjsOrdered[j].Y * xDim) + erodeObjsOrdered[j].X)] = 0;
                                 erodeObjsOrdered[j].X = -1;
                             }
                         }
@@ -3668,36 +3615,32 @@ kernelLoop:
                     j++;
                 }
             }
-            
-            if (!entireImage) {
+
+            if ( !entireImage) {
                 imgBuffer2 = new short[volSize];
                 try {
                     srcImage.exportData(0, volSize, imgBuffer2);
-                }
-                catch(IOException e) {
+                } catch (final IOException e) {
                     displayError("Algorithm Morphology3D: Image(s) locked");
                     setCompleted(false);
 
-
-                    return;    
+                    return;
                 }
                 for (i = 0; i < volSize; i++) {
-                    if (!mask.get(i)) {
-                        imgBuffer[i] = imgBuffer2[i];    
+                    if ( !mask.get(i)) {
+                        imgBuffer[i] = imgBuffer2[i];
                     }
                 }
                 imgBuffer2 = null;
             } // if (!entireImage)
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             displayError("Algorithm Morphology3D: Out of memory");
             setCompleted(false);
-
 
             return;
         }
 
         fireProgressStateChanged(100);
-
 
         if (returnFlag == true) {
             return;
@@ -3708,17 +3651,15 @@ kernelLoop:
             if (threadStopped) {
                 setCompleted(false);
 
-
                 finalize();
 
                 return;
             }
 
             srcImage.importData(0, imgBuffer, true);
-        } catch (IOException error) {
+        } catch (final IOException error) {
             displayError("Algorithm Morphology3D: Image(s) locked");
             setCompleted(false);
-
 
             return;
         }
@@ -3726,7 +3667,8 @@ kernelLoop:
         setCompleted(true);
     }
 
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
+    // ~ Inner Classes
+    // --------------------------------------------------------------------------------------------------
 
     /**
      * Simple class to temporarily store the object's size, ID and seed index value. This class is used by the
@@ -3745,12 +3687,12 @@ kernelLoop:
 
         /**
          * Creates a new intObject object.
-         *
-         * @param  idx         seed index. Index is the location in the image
-         * @param  objectID    the flood seed having a value >= 0.
-         * @param  objectSize  the number of voxels in the object
+         * 
+         * @param idx seed index. Index is the location in the image
+         * @param objectID the flood seed having a value >= 0.
+         * @param objectSize the number of voxels in the object
          */
-        public intObject(int idx, short objectID, int objectSize) {
+        public intObject(final int idx, final short objectID, final int objectSize) {
             index = idx;
             id = objectID;
             size = objectSize;

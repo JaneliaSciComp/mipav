@@ -2,7 +2,7 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.util.MipavUtil;
+import gov.nih.mipav.util.ThreadUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ProgressChangeEvent;
 import gov.nih.mipav.view.ProgressChangeListener;
@@ -112,7 +112,7 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         this.srcImage = null;
         destFlag = false;
         threadStopped = false;
-        nthreads = MipavUtil.getAvailableCores();
+        nthreads = ThreadUtil.getAvailableCores();
         multiThreadingEnabled = Preferences.isMultiThreadingEnabled();
     }
 
@@ -134,7 +134,7 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         }
 
         threadStopped = false;
-        nthreads = MipavUtil.getAvailableCores();
+        nthreads = ThreadUtil.getAvailableCores();
         multiThreadingEnabled = Preferences.isMultiThreadingEnabled();
     }
 
@@ -939,5 +939,20 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
 
     public void setProgressModulus(int progressModulus) {
         this.progressModulus = progressModulus;
+    }
+
+
+    /**
+     * Calculate the size of the image.
+     * 
+     * @param dims
+     * @return
+     */
+    public static int calculateImageSize(final int[] dims) {
+        int size = 1;
+        for (final int element : dims) {
+            size *= element;
+        }
+        return size;
     }
 }

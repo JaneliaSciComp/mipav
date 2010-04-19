@@ -9,7 +9,6 @@ import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.AlgorithmSeparableConvolver;
 import gov.nih.mipav.model.algorithms.GenerateGaussian;
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.util.MipavUtil;
 import gov.nih.mipav.view.ViewJProgressBar;
 
 import java.io.IOException;
@@ -113,7 +112,7 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase implements Algorithm
 		}
 
 		int imgLength = cFactor
-				* MipavUtil.calculateImageSize(srcImage.getExtents());
+				* AlgorithmBase.calculateImageSize(srcImage.getExtents());
 
 		try {
 			inputBuffer = new float[imgLength];

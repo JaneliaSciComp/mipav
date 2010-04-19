@@ -4,7 +4,7 @@ package gov.nih.mipav.model.algorithms.registration;
 import WildMagic.LibFoundation.Curves.*;
 import gov.nih.mipav.model.structures.ModelSimpleImage;
 import gov.nih.mipav.model.structures.jama.JamaMatrix;
-import gov.nih.mipav.util.MipavUtil;
+import gov.nih.mipav.util.ThreadUtil;
 
 /**
  * This is a common base class for all BSpline-based registrations.
@@ -53,7 +53,7 @@ public class BSplineRegistrationBasef {
 
         // Pass the target information to the registration measure.
         kRegMeasure.setImages(kImageSrc, kImageTrg);
-        nthreads = MipavUtil.getAvailableCores();
+        nthreads = ThreadUtil.getAvailableCores();
         if(nthreads > 16){
         	nthreads = 16;
         }else if(nthreads > 8){

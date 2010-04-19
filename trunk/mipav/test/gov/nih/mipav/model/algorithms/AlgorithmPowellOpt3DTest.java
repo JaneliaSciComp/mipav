@@ -6,7 +6,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelSimpleImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
-import gov.nih.mipav.util.FileUtil;
+import gov.nih.mipav.util.TestingFileUtil;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
@@ -70,11 +70,11 @@ public class AlgorithmPowellOpt3DTest extends TestCase {
         fromOrigin.Set(1, 3, -toOrigin.Get(1,3));
         fromOrigin.Set(2, 3, -toOrigin.Get(2,3));
 
-        short[] data = FileUtil.readRawFileShort(refImageFileName, false);
+        short[] data = TestingFileUtil.readRawFileShort(refImageFileName, false);
         refImage = new ModelImage(ModelStorageBase.SHORT, new int[]{256, 256, 198}, "33175_3_concat_with_same_resolution");
         refImage.importData(0, data, true);
         refImage.setResolutions(0, resolution);
-        data = FileUtil.readRawFileShort(matchImageFileName, false);
+        data = TestingFileUtil.readRawFileShort(matchImageFileName, false);
         matchImage = new ModelImage(ModelStorageBase.SHORT, new int[]{256, 256, 198}, "33175_3_concat_with_same_resolution_20_20_20_30_30_30");
         matchImage.importData(0, data, true);
         matchImage.setResolutions(0, resolution);
