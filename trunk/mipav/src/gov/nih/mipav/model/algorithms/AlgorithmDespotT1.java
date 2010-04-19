@@ -280,7 +280,8 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
         Gaussian[4][4] = 0;
         
         String testResult = wList[spgrImageIndex[0]].length() > 20 ? wList[spgrImageIndex[0]].substring(0, 19) : wList[spgrImageIndex[0]];
-        this.tempDirString = System.getProperty("java.io.tmpdir")+testResult+File.separator;
+        this.tempDirString = System.getProperty("java.io.tmpdir")+File.separator+testResult+File.separator;
+        ViewUserInterface.getReference().getMessageFrame().append("Saving files to: "+tempDirString, ViewJFrameMessage.DEBUG);
         File f = new File(tempDirString);
         if(!f.exists()) {
             f.mkdirs();
