@@ -6,7 +6,6 @@ import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR3D;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.*;
-import gov.nih.mipav.model.scripting.parameters.ActionEnums.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -86,11 +85,11 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
     /** DOCUMENT ME! */
     private JComboBox comboBoxInterp2;
 
-    private DegreesOfFreedom degreesOfFreedom;
+    /** DOCUMENT ME! */
+    private int cost, interp, interp2, DOF;
 
-    private Interpolation interp, interpFinal;
-
-    private CostFunction cost;
+    /** DOCUMENT ME! */
+    private String costName = null;
 
     /** DOCUMENT ME! */
     private boolean displayTransform;
@@ -251,8 +250,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
      * Tells how to select fill value for out of bounds data 0 for image minimum 1 for NaN for float, zero otherwise. 2
      * for user defined 3 for image maximum
      */
-    // private int outOfBoundsIndex = 0;
-    private OutOfBoundsBehavior outOfBounds = OutOfBoundsBehavior.IMAGE_MIN;
+    private int outOfBoundsIndex = 0;
 
     private float fillValue = 0.0f;
 
@@ -506,8 +504,8 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
                     final String name = JDialogBase.makeImageName(matchImage.getImageName(), "_register");
 
-                    transform = new AlgorithmTransform(matchImage, finalMatrix, interpFinal.intValue, xresA, yresA,
-                            zresA, xdimA, ydimA, zdimA, true, false, pad);
+                    transform = new AlgorithmTransform(matchImage, finalMatrix, interp2, xresA, yresA, zresA, xdimA,
+                            ydimA, zdimA, true, false, pad);
 
                     transform.setUpdateOriginFlag(true);
                     transform.setFillValue(fillValue);
@@ -573,7 +571,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 finalMatrix.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
                 matchImage.getMatrixHolder().addMatrix(finalMatrix);
 
-                String message = "Using cost function, " + cost.toString();
+                String message = "Using cost function, " + costName;
                 message += ", the cost is " + Double.toString(reg3.getAnswer()) + ".\n";
                 message += "Some registration settings: \n";
                 message += "X Rotations from " + rotateBeginX + " to " + rotateEndX + ", ";
@@ -944,7 +942,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
      * 
      * @param x Cost function.
      */
-    public void setCostChoice(final CostFunction x) {
+    public void setCostChoice(final int x) {
         cost = x;
     }
 
@@ -962,8 +960,8 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
      * 
      * @param x Degrees of freedom
      */
-    public void setDOF(final DegreesOfFreedom x) {
-        degreesOfFreedom = x;
+    public void setDOF(final int x) {
+        DOF = x;
     }
 
     /**
@@ -1016,7 +1014,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
      * 
      * @param x Interpolation
      */
-    public void setInterp(final Interpolation x) {
+    public void setInterp(final int x) {
         interp = x;
     }
 
@@ -1025,8 +1023,8 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
      * 
      * @param x Interpolation
      */
-    public void setInterpFinal(final Interpolation x) {
-        interpFinal = x;
+    public void setInterp2(final int x) {
+        interp2 = x;
     }
 
     /**
@@ -1089,8 +1087,8 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
      * 
      * @param outOfBoundsIndex
      */
-    public void setOutOfBoundsIndex(final OutOfBoundsBehavior oobb) {
-        outOfBounds = oobb;
+    public void setOutOfBoundsIndex(final int outOfBoundsIndex) {
+        this.outOfBoundsIndex = outOfBoundsIndex;
     }
 
     /**
@@ -1167,31 +1165,31 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         if (weighted) {
 
             if ( !doLS) {
-                reg3 = new AlgorithmRegOAR3D(refImage, matchImage, refWeightImage, inputWeightImage, cost.intValue,
-                        degreesOfFreedom.intValue, interp.intValue, rotateBeginX, rotateEndX, coarseRateX, fineRateX,
-                        rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ,
-                        fineRateZ, maxOfMinResol, doSubsample, fastMode, bracketBound, maxIterations, numMinima);
+                reg3 = new AlgorithmRegOAR3D(refImage, matchImage, refWeightImage, inputWeightImage, cost, DOF, interp,
+                        rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY,
+                        fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample,
+                        fastMode, bracketBound, maxIterations, numMinima);
             } else {
-                reg3 = new AlgorithmRegOAR3D(refImage, lsImage, refWeightImage, inputWeightImage, cost.intValue,
-                        degreesOfFreedom.intValue, interp.intValue, rotateBeginX, rotateEndX, coarseRateX, fineRateX,
-                        rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ,
-                        fineRateZ, maxOfMinResol, doSubsample, fastMode, bracketBound, maxIterations, numMinima);
+                reg3 = new AlgorithmRegOAR3D(refImage, lsImage, refWeightImage, inputWeightImage, cost, DOF, interp,
+                        rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY,
+                        fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample,
+                        fastMode, bracketBound, maxIterations, numMinima);
             }
         } else {
             // System.out.println("Reference image name is " +refImage.getImageName());
             // System.out.println("Moving image name is " +matchImage.getImageName());
 
             if ( !doLS) {
-                reg3 = new AlgorithmRegOAR3D(refImage, matchImage, cost.intValue, degreesOfFreedom.intValue,
-                        interp.intValue, rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY,
-                        coarseRateY, fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol,
-                        doSubsample, fastMode, bracketBound, maxIterations, numMinima);
+                reg3 = new AlgorithmRegOAR3D(refImage, matchImage, cost, DOF, interp, rotateBeginX, rotateEndX,
+                        coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ,
+                        rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, fastMode, bracketBound,
+                        maxIterations, numMinima);
             } else {
                 System.err.println("Sending LS Image to OAR3D algorithm");
-                reg3 = new AlgorithmRegOAR3D(refImage, lsImage, cost.intValue, degreesOfFreedom.intValue,
-                        interp.intValue, rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY,
-                        coarseRateY, fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol,
-                        doSubsample, fastMode, bracketBound, maxIterations, numMinima);
+                reg3 = new AlgorithmRegOAR3D(refImage, lsImage, cost, DOF, interp, rotateBeginX, rotateEndX,
+                        coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ,
+                        rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, fastMode, bracketBound,
+                        maxIterations, numMinima);
 
             }
         }
@@ -1251,10 +1249,9 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             setReferenceWeightImage(scriptParameters.retrieveImage("reference_weight_image"));
         }
 
-        setDOF(DegreesOfFreedom.class.cast(scriptParameters.getParams().getEnum("degrees_of_freedom").getValue()));
-        setInterp(Interpolation.class.cast(scriptParameters.getParams().getEnum("initial_interpolation_type")
-                .getValue()));
-        setCostChoice(CostFunction.class.cast(scriptParameters.getParams().getEnum("cost_function_type").getValue()));
+        setDOF(scriptParameters.getParams().getInt("degrees_of_freedom"));
+        setInterp(scriptParameters.getParams().getInt("initial_interpolation_type"));
+        setCostChoice(scriptParameters.getParams().getInt("cost_function_type"));
 
         final float[] rotBegin = scriptParameters.getParams().getList("rotate_begin").getAsFloatArray();
         final float[] rotEnd = scriptParameters.getParams().getList("rotate_end").getAsFloatArray();
@@ -1277,20 +1274,18 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         setFineRateZ(fineRates[2]);
 
         setDisplayTransform(scriptParameters.getParams().getBoolean("do_display_transform"));
-        setInterpFinal(Interpolation.class.cast(scriptParameters.getParams().getEnum("final_interpolation_type")
-                .getValue()));
+        setInterp2(scriptParameters.getParams().getInt("final_interpolation_type"));
 
         setMaxOfMinResol(scriptParameters.getParams().getBoolean("do_use_max_of_min_resolutions"));
         setSubsample(scriptParameters.getParams().getBoolean("do_subsample"));
         setFastMode(scriptParameters.getParams().getBoolean("do_use_fast_mode"));
         setCalcCOG(scriptParameters.getParams().getBoolean("do_calc_COG"));
-        setOutOfBoundsIndex(OutOfBoundsBehavior.class.cast(scriptParameters.getParams().getEnum(
-                "out_of_bounds_behavior").getValue()));
-        switch (outOfBounds) {
-            case IMAGE_MIN:
+        setOutOfBoundsIndex(scriptParameters.getParams().getInt("out_of_bounds_index"));
+        switch (outOfBoundsIndex) {
+            case 0:
                 setFillValue((float) imageMin);
                 break;
-            case NaN_IF_FLOAT:
+            case 1:
                 if ( (dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE)
                         || (dataType == ModelStorageBase.ARGB_FLOAT)) {
                     setFillValue(Float.NaN);
@@ -1298,10 +1293,10 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                     setFillValue(0.0f);
                 }
                 break;
-            case USER_DEFINED:
+            case 2:
                 setFillValue(scriptParameters.getParams().getFloat("fill_value"));
                 break;
-            case IMAGE_MAX:
+            case 3:
                 setFillValue((float) imageMax);
                 break;
         }
@@ -1328,9 +1323,9 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             scriptParameters.storeImageInRecorder(getResultImage());
         }
 
-        scriptParameters.getParams().put(ParameterFactory.newParameter("degrees_of_freedom", degreesOfFreedom));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("degrees_of_freedom", DOF));
         scriptParameters.getParams().put(ParameterFactory.newParameter("initial_interpolation_type", interp));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("final_interpolation_type", interpFinal));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("final_interpolation_type", interp2));
         scriptParameters.getParams().put(ParameterFactory.newParameter("cost_function_type", cost));
         scriptParameters.getParams().put(
                 ParameterFactory.newParameter("rotate_begin", new float[] {rotateBeginX, rotateBeginY, rotateBeginZ}));
@@ -1345,7 +1340,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doSubsample));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_fast_mode", fastMode));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_COG", calcCOG));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("out_of_bounds_behavior", outOfBounds));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("out_of_bounds_index", outOfBoundsIndex));
         scriptParameters.getParams().put(ParameterFactory.newParameter("fill_value", fillValue));
         scriptParameters.getParams().put(ParameterFactory.newParameter("bracket_bound", bracketBound));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_iterations", maxIterations));
@@ -2221,7 +2216,8 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 switch (comboBoxCostFunct.getSelectedIndex()) {
 
                     case 0:
-                        cost = CostFunction.LEAST_SQUARES_SMOOTHED_COLOR;
+                        cost = AlgorithmCostFunctions.LEAST_SQUARES_SMOOTHED_COLOR;
+                        costName = "LEAST_SQUARES_SMOOTHED_COLOR";
                         break;
                 }
             } else {
@@ -2229,7 +2225,8 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 switch (comboBoxCostFunct.getSelectedIndex()) {
 
                     case 0:
-                        cost = CostFunction.LEAST_SQUARES_SMOOTHED_WGT_COLOR;
+                        cost = AlgorithmCostFunctions.LEAST_SQUARES_SMOOTHED_WGT_COLOR;
+                        costName = "LEAST_SQUARES_SMOOTHED_WGT_COLOR";
                         break;
                 }
             }
@@ -2241,36 +2238,44 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 switch (comboBoxCostFunct.getSelectedIndex()) {
 
                     case 0:
-                        cost = CostFunction.CORRELATION_RATIO_SMOOTHED;
+                        cost = AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED;
+                        costName = "CORRELATION_RATIO_SMOOTHED";
                         break;
-                    // case 0: newCost = CostFunction.CORRELATION_RATIO; break;
+                    // case 0: cost = AlgorithmCostFunctions.CORRELATION_RATIO; break;
 
                     case 1:
-                        cost = CostFunction.LEAST_SQUARES_SMOOTHED;
+                        cost = AlgorithmCostFunctions.LEAST_SQUARES_SMOOTHED;
+                        costName = "LEAST_SQUARES_SMOOTHED";
 
-                        // newCost = CostFunction.LEAST_SQUARES;
+                        // cost = AlgorithmCostFunctions.LEAST_SQUARES;
+                        // costName = "LEAST_SQUARES_SMOOTHED";
                         break;
-                    // case 2: newCost = CostFunction.MUTUAL_INFORMATION_SMOOTHED; break;
+                    // case 2: cost = AlgorithmCostFunctions.MUTUAL_INFORMATION_SMOOTHED; break;
 
                     case 2:
-                        cost = CostFunction.NORMALIZED_XCORRELATION_SMOOTHED;
+                        cost = AlgorithmCostFunctions.NORMALIZED_XCORRELATION_SMOOTHED;
+                        costName = "NORMALIZED_XCORRELATION_SMOOTHED";
                         break;
-                    // case 3: newCost = CostFunction.NORMALIZED_MUTUAL_INFORMATION; break;
+                    // case 3: cost = AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION; break;
 
                     case 3:
-                        cost = CostFunction.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED;
+                        cost = AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED;
+                        costName = "NORMALIZED_MUTUAL_INFORMATION_SMOOTHED";
                         break;
 
                     case 4:
-                        cost = CostFunction.NORMALIZED_MUTUAL_INFORMATION_GPU;
+                        cost = AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU;
+                        costName = "NORMALIZED_MUTUAL_INFORMATION_GPU";
                         break;
 
                     case 5:
-                        cost = CostFunction.NORMALIZED_MUTUAL_INFORMATION_GPU_LM;
+                        cost = AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU_LM;
+                        costName = "NORMALIZED_MUTUAL_INFORMATION_GPU_LM";
                         break;
 
                     default:
-                        cost = CostFunction.CORRELATION_RATIO_SMOOTHED;
+                        cost = AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED;
+                        costName = "CORRELATION_RATIO_SMOOTHED";
                         break;
                 }
             } else {
@@ -2278,24 +2283,29 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 switch (comboBoxCostFunct.getSelectedIndex()) {
 
                     case 0:
-                        cost = CostFunction.CORRELATION_RATIO_SMOOTHED_WGT;
+                        cost = AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED_WGT;
+                        costName = "CORRELATION_RATIO_SMOOTHED_WGT";
                         break;
 
                     case 1:
-                        cost = CostFunction.LEAST_SQUARES_SMOOTHED_WGT;
+                        cost = AlgorithmCostFunctions.LEAST_SQUARES_SMOOTHED_WGT;
+                        costName = "LEAST_SQUARES_SMOOTHED_WGT";
                         break;
-                    // case 2: newCost = CostFunction.MUTUAL_INFORMATION_SMOOTHED_WGT; break;
+                    // case 2: cost = AlgorithmCostFunctions.MUTUAL_INFORMATION_SMOOTHED_WGT; break;
 
                     case 2:
-                        cost = CostFunction.NORMALIZED_XCORRELATION_SMOOTHED_WGT;
+                        cost = AlgorithmCostFunctions.NORMALIZED_XCORRELATION_SMOOTHED_WGT;
+                        costName = "NORMALIZED_XCORRELATION_SMOOTHED_WGT";
                         break;
 
                     case 3:
-                        cost = CostFunction.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED_WGT;
+                        cost = AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED_WGT;
+                        costName = "NORMALIZED_MUTUAL_INFORMATION_SMOOTHED_WGT";
                         break;
 
                     default:
-                        cost = CostFunction.CORRELATION_RATIO_SMOOTHED_WGT;
+                        cost = AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED_WGT;
+                        costName = "CORRELATION_RATIO_SMOOTHED_WGT";
                         break;
                 }
             }
@@ -2304,98 +2314,98 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         switch (comboBoxDOF.getSelectedIndex()) {
 
             case 0:
-                degreesOfFreedom = DegreesOfFreedom.RIGID;
+                DOF = 6;
                 break;
 
             case 1:
-                degreesOfFreedom = DegreesOfFreedom.GLOBAL_RESCALE;
+                DOF = 7;
                 break;
 
             case 2:
-                degreesOfFreedom = DegreesOfFreedom.SPECIFIC_RESCALE;
+                DOF = 9;
                 break;
 
             case 3:
-                degreesOfFreedom = DegreesOfFreedom.AFFINE;
+                DOF = 12;
                 break;
 
             default:
-                degreesOfFreedom = DegreesOfFreedom.AFFINE;
+                DOF = 12;
                 break;
         }
 
         switch (comboBoxInterp.getSelectedIndex()) {
 
             case 0:
-                interp = Interpolation.TRILINEAR;
+                interp = AlgorithmTransform.TRILINEAR;
                 break;
 
             case 1:
-                interp = Interpolation.BSPLINE3;
+                interp = AlgorithmTransform.BSPLINE3;
                 break;
 
             case 2:
-                interp = Interpolation.BSPLINE4;
+                interp = AlgorithmTransform.BSPLINE4;
                 break;
 
             case 3:
-                interp = Interpolation.CUBIC_LAGRANGIAN;
+                interp = AlgorithmTransform.CUBIC_LAGRANGIAN;
                 break;
 
             case 4:
-                interp = Interpolation.QUINTIC_LAGRANGIAN;
+                interp = AlgorithmTransform.QUINTIC_LAGRANGIAN;
                 break;
 
             case 5:
-                interp = Interpolation.HEPTIC_LAGRANGIAN;
+                interp = AlgorithmTransform.HEPTIC_LAGRANGIAN;
                 break;
 
             case 6:
-                interp = Interpolation.WINDOWED_SINC;
+                interp = AlgorithmTransform.WSINC;
                 break;
-            // case 7: newInterp = Interpolation.NEAREST_NEIGHBOR; break;
+            // case 7: interp = AlgorithmTransform.NEAREST_NEIGHBOR; break;
 
             default:
-                interp = Interpolation.TRILINEAR;
+                interp = AlgorithmTransform.TRILINEAR;
                 break;
         }
 
         switch (comboBoxInterp2.getSelectedIndex()) {
 
             case 0:
-                interpFinal = Interpolation.TRILINEAR;
+                interp2 = AlgorithmTransform.TRILINEAR;
                 break;
 
             case 1:
-                interpFinal = Interpolation.BSPLINE3;
+                interp2 = AlgorithmTransform.BSPLINE3;
                 break;
 
             case 2:
-                interpFinal = Interpolation.BSPLINE4;
+                interp2 = AlgorithmTransform.BSPLINE4;
                 break;
 
             case 3:
-                interpFinal = Interpolation.CUBIC_LAGRANGIAN;
+                interp2 = AlgorithmTransform.CUBIC_LAGRANGIAN;
                 break;
 
             case 4:
-                interpFinal = Interpolation.QUINTIC_LAGRANGIAN;
+                interp2 = AlgorithmTransform.QUINTIC_LAGRANGIAN;
                 break;
 
             case 5:
-                interpFinal = Interpolation.HEPTIC_LAGRANGIAN;
+                interp2 = AlgorithmTransform.HEPTIC_LAGRANGIAN;
                 break;
 
             case 6:
-                interpFinal = Interpolation.WINDOWED_SINC;
+                interp2 = AlgorithmTransform.WSINC;
                 break;
 
             case 7:
-                interpFinal = Interpolation.NEAREST_NEIGHBOR;
+                interp2 = AlgorithmTransform.NEAREST_NEIGHBOR;
                 break;
 
             default:
-                interpFinal = Interpolation.TRILINEAR;
+                interp2 = AlgorithmTransform.TRILINEAR;
                 break;
         }
 
@@ -2673,14 +2683,16 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         doSubsample = sampleCheckbox.isSelected();
 
         fillValue = Float.valueOf(valueText.getText()).floatValue();
-
-        final Enum<?> e = ActionEnums.getEnumerationInstance("OutOfBoundsBehavior", outOfBoundsComboBox
-                .getSelectedIndex());
-        if (e != null) {
-            outOfBounds = (OutOfBoundsBehavior) e;
-        } else {
-            // there was a problem translating between the combo box selection and the enum
-            return false;
+        outOfBoundsIndex = outOfBoundsComboBox.getSelectedIndex();
+        if (outOfBoundsIndex == 2) {
+            // user defined value
+            boolean success = testType(dataType, fillValue);
+            if ( !success) {
+                MipavUtil.displayError("User defined value is out of the data type range");
+                valueText.requestFocus();
+                valueText.selectAll();
+                return false;
+            }
         }
 
         return true;
@@ -2991,24 +3003,23 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             p.setParentCondition(table.getParameter("do_use_weight_images"), "true");
             table.put(p);
 
-            table.put(new ParameterEnum("degrees_of_freedom", DegreesOfFreedom.AFFINE));
-            table.put(new ParameterEnum("initial_interpolation_type", Interpolation.TRILINEAR));
-            table.put(new ParameterEnum("final_interpolation_type", Interpolation.TRILINEAR));
-            table.put(new ParameterEnum("cost_function_type", CostFunction.CORRELATION_RATIO_SMOOTHED));
-            table.put(new ParameterList("rotate_begin", Parameter.Type.FLOAT, "-30,-30,-30"));
-            table.put(new ParameterList("rotate_end", Parameter.Type.FLOAT, "30,30,30"));
-            table.put(new ParameterList("coarse_rate", Parameter.Type.FLOAT, "15,15,15"));
-            table.put(new ParameterList("fine_rate", Parameter.Type.FLOAT, "6,6,6"));
+            table.put(new ParameterInt("degrees_of_freedom", 12));
+            table.put(new ParameterInt("initial_interpolation_type", 0));
+            table.put(new ParameterInt("final_interpolation_type", 0));
+            table.put(new ParameterInt("cost_function_type", 1));
+            table.put(new ParameterList("rotate_begin", Parameter.PARAM_FLOAT, "-30,-30,-30"));
+            table.put(new ParameterList("rotate_end", Parameter.PARAM_FLOAT, "30,30,30"));
+            table.put(new ParameterList("coarse_rate", Parameter.PARAM_FLOAT, "15,15,15"));
+            table.put(new ParameterList("fine_rate", Parameter.PARAM_FLOAT, "6,6,6"));
             table.put(new ParameterBoolean("do_display_transform", true));
             table.put(new ParameterBoolean("do_use_max_of_min_resolutions", true));
             table.put(new ParameterBoolean("do_subsample", true));
             table.put(new ParameterBoolean("do_use_fast_mode", true));
             table.put(new ParameterBoolean("do_calc_COG", true));
 
-            final Parameter boundsParam = new ParameterEnum("out_of_bounds_behavior", OutOfBoundsBehavior.IMAGE_MIN);
-            table.put(boundsParam);
+            table.put(new ParameterInt("out_of_bounds_index", 0));
             p = new ParameterFloat("fill_value", 0);
-            p.setParentCondition(boundsParam, OutOfBoundsBehavior.IMAGE_MIN.toString());
+            p.setParentCondition(table.getParameter("out_of_bounds_index"), "2");
             table.put(p);
 
             table.put(new ParameterInt("bracket_bound", 10));
