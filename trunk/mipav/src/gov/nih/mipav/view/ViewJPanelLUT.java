@@ -1837,7 +1837,7 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
 
         nColorsATextF = new JTextField("256");
         nColorsATextF.setFont(MipavUtil.font12);
-        nColorsATextF.setEnabled(false);
+        nColorsATextF.setEditable(false);
 
         JLabel indexColorLabel = new JLabel("LUT:");
 
@@ -1846,24 +1846,24 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
 
         indexColorATextF = new JTextField(13);
         indexColorATextF.setFont(MipavUtil.font12);
-        indexColorATextF.setEnabled(false);
+        indexColorATextF.setEditable(false);
 
         threshLowerF = new JTextField(5);
         MipavUtil.makeNumericsOnly(threshLowerF, true);
         threshLowerF.setFont(MipavUtil.font12);
-        threshLowerF.setEnabled(false);
+        threshLowerF.setEditable(false);
         threshLowerF.addKeyListener(this);
 
         threshUpperF = new JTextField(5);
         MipavUtil.makeNumericsOnly(threshUpperF, true);
         threshUpperF.setFont(MipavUtil.font12);
-        threshUpperF.setEnabled(false);
+        threshUpperF.setEditable(false);
         threshUpperF.addKeyListener(this);
 
         threshFillF = new JTextField(5);
         MipavUtil.makeNumericsOnly(threshFillF, true);
         threshFillF.setFont(MipavUtil.font12);
-        threshFillF.setEnabled(false);
+        threshFillF.setEditable(false);
         threshFillF.addKeyListener(this);
 
         JLabel threshLabel = new JLabel("Lower threshold:");
@@ -2121,7 +2121,7 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
 
         nColorsBTextF = new JTextField("256");
         nColorsBTextF.setFont(MipavUtil.font12);
-        nColorsBTextF.setEnabled(false);
+        nColorsBTextF.setEditable(false);
 
         JLabel indexColorLabel = new JLabel("LUT:");
 
@@ -2130,24 +2130,24 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
 
         indexColorBTextF = new JTextField(13);
         indexColorBTextF.setFont(MipavUtil.font12);
-        indexColorBTextF.setEnabled(false);
+        indexColorBTextF.setEditable(false);
 
         threshLowerBF = new JTextField(5);
         MipavUtil.makeNumericsOnly(threshLowerBF, true);
         threshLowerBF.setFont(MipavUtil.font12);
-        threshLowerBF.setEnabled(false);
+        threshLowerBF.setEditable(false);
         threshLowerBF.addKeyListener(this);
 
         threshUpperBF = new JTextField(5);
         MipavUtil.makeNumericsOnly(threshUpperBF, true);
         threshUpperBF.setFont(MipavUtil.font12);
-        threshUpperBF.setEnabled(false);
+        threshUpperBF.setEditable(false);
         threshUpperBF.addKeyListener(this);
 
         threshFillBF = new JTextField(5);
         MipavUtil.makeNumericsOnly(threshFillBF, true);
         threshFillBF.setFont(MipavUtil.font12);
-        threshFillBF.setEnabled(false);
+        threshFillBF.setEditable(false);
         threshFillBF.addKeyListener(this);
 
         JLabel threshLabel = new JLabel("Lower threshold:");
