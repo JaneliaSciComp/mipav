@@ -2,7 +2,7 @@ package gov.nih.mipav.model.algorithms;
 
 import WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.model.structures.TransMatrix;
-import gov.nih.mipav.util.MipavUtil;
+import gov.nih.mipav.util.ThreadUtil;
 
 import java.util.Hashtable;
 import java.util.Vector;
@@ -987,7 +987,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
                                 doneSignal.countDown();
                             }
                         };
-                        MipavUtil.mipavThreadPool.execute(task);
+                        ThreadUtil.mipavThreadPool.execute(task);
                     }
                     try {
                         doneSignal.await();
@@ -1144,7 +1144,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
     					doneSignal.countDown();
     				}
     			};
-    			MipavUtil.mipavThreadPool.execute(task);
+    			ThreadUtil.mipavThreadPool.execute(task);
     		}
             try {
                 doneSignal.await();
@@ -1207,7 +1207,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
                             doneSignal.countDown();
                         }
                     };
-                    MipavUtil.mipavThreadPool.execute(task);
+                    ThreadUtil.mipavThreadPool.execute(task);
                 }
             }
         }

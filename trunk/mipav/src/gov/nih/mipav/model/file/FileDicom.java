@@ -1,7 +1,7 @@
 package gov.nih.mipav.model.file;
 
 
-import gov.nih.mipav.MipavMath;
+import gov.nih.mipav.util.MipavMath;
 
 import gov.nih.mipav.model.dicomcomm.DICOM_Constants;
 import gov.nih.mipav.model.file.rawjp2.*;
@@ -162,15 +162,15 @@ public class FileDicom extends FileDicomBase {
 
     /** Whether MIPAV should be written to this dicom file as the secondary stamp * */
     private boolean stampSecondary = true;
-    
+
     private boolean isEnhanced = true;
-    
+
     private FileDicomTagTable[] childrenTagTables;
-    
+
     private FileInfoDicom[] enhancedFileInfos;
-    
+
     private boolean isEnhanced4D = false;
-    
+
     private int enhancedNumSlices;
 
     // ~ Constructors
@@ -683,14 +683,11 @@ public class FileDicom extends FileDicomBase {
             // ******* Gets the next element
             getNextElement(endianess); // gets group, element, length
             name = convertGroupElement(groupWord, elementWord);
-            
-            
+
             final FileDicomKey key = new FileDicomKey(name);
             int tagVM;
- // Should be removed           
- //           final int dirLength;
-            
-            
+            // Should be removed
+            // final int dirLength;
 
             // Preferences.debug("group = " + groupWord + " element = " + elementWord + " length = " +
             // elementLength + "\n", Preferences.DEBUG_FILEIO);
@@ -717,13 +714,12 @@ public class FileDicom extends FileDicomBase {
                             "Private Tag"));
                 } else {
                     final FileDicomTagInfo info = DicomDictionary.getInfo(key);
-                    //this is required if DicomDictionary contains wild card characters
+                    // this is required if DicomDictionary contains wild card characters
                     info.setKey(key);
                     tagTable.putPrivateTagValue(info);
                     tagVM = info.getValueMultiplicity();
                     tagTable.get(key).setValueRepresentation(new String(vr));
-                    
-                    
+
                 }
             }
 
@@ -756,35 +752,35 @@ public class FileDicom extends FileDicomBase {
 
                     Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t" + type + "; value = "
                             + strValue + "; element length = " + elementLength + "\n", Preferences.DEBUG_FILEIO);
-                    
-                    
-                    //need to determine if this is enhanced dicom
-                    //if it is, set up all the additional fileinfos needed and attach
-                    //the childTagTables to the main tagTable
-                    if(name.equals("0002,0002")) {
-                    	if(strValue.trim().equals(DICOM_Constants.UID_EnhancedMRStorage) || 
-                    			strValue.trim().equals(DICOM_Constants.UID_EnhancedCTStorage) ||
-                    			strValue.trim().equals(DICOM_Constants.UID_EnhancedXAStorage)) {
-                    		isEnhanced = true;
-                    	}
+
+                    // need to determine if this is enhanced dicom
+                    // if it is, set up all the additional fileinfos needed and attach
+                    // the childTagTables to the main tagTable
+                    if (name.equals("0002,0002")) {
+                        if (strValue.trim().equals(DICOM_Constants.UID_EnhancedMRStorage)
+                                || strValue.trim().equals(DICOM_Constants.UID_EnhancedCTStorage)
+                                || strValue.trim().equals(DICOM_Constants.UID_EnhancedXAStorage)) {
+                            isEnhanced = true;
+                        }
                     }
-                    if(name.equals("0028,0008") && isEnhanced) {
-                    	int nImages = Integer.valueOf(strValue.trim()).intValue();
-                    	fileInfo.setIsEnhancedDicom(true);
-                    	if(nImages > 1) {
-	                    	childrenTagTables =  new FileDicomTagTable[nImages - 1];
-	                    	enhancedFileInfos = new FileInfoDicom[nImages - 1];
-	                    	for(int i=0;i<nImages-1;i++) {
-	                    		String s = String.valueOf(i+1);
-	                    		FileInfoDicom f = new FileInfoDicom(fileName + s , fileDir, FileUtility.DICOM, fileInfo);
-	                    		f.setIsEnhancedDicom(true);
-	                    		childrenTagTables[i] = f.getTagTable();
-	                    		enhancedFileInfos[i] = f;
-	                    	}
-	                    	tagTable.attachChildTagTables(childrenTagTables);
-                    	}
+                    if (name.equals("0028,0008") && isEnhanced) {
+                        final int nImages = Integer.valueOf(strValue.trim()).intValue();
+                        fileInfo.setIsEnhancedDicom(true);
+                        if (nImages > 1) {
+                            childrenTagTables = new FileDicomTagTable[nImages - 1];
+                            enhancedFileInfos = new FileInfoDicom[nImages - 1];
+                            for (int i = 0; i < nImages - 1; i++) {
+                                final String s = String.valueOf(i + 1);
+                                final FileInfoDicom f = new FileInfoDicom(fileName + s, fileDir, FileUtility.DICOM,
+                                        fileInfo);
+                                f.setIsEnhancedDicom(true);
+                                childrenTagTables[i] = f.getTagTable();
+                                enhancedFileInfos[i] = f;
+                            }
+                            tagTable.attachChildTagTables(childrenTagTables);
+                        }
                     }
-                    
+
                 } else if (type.equals(FileDicomBase.OTHER_BYTE_STRING)) {
 
                     if ( !name.equals(FileDicom.IMAGE_TAG)) {
@@ -813,7 +809,7 @@ public class FileDicom extends FileDicomBase {
 
                 } else if (type.equals(FileDicomBase.TYPE_INT)) {
                     data = getInteger(tagVM, elementLength, endianess);
-                    
+
                     tagTable.setValue(key, data, elementLength);
 
                     Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t (int) value = " + data
@@ -839,92 +835,88 @@ public class FileDicom extends FileDicomBase {
                         || ( (type == FileDicomBase.TYPE_UNKNOWN) && (elementLength == -1))) {
                     final int len = elementLength;
 
-                    
-                    
-                   
-                    
                     // save these values because they'll change as the sequence is read in below.
                     Preferences
                             .debug("Sequence Tags: (" + name + "); length = " + len + "\n", Preferences.DEBUG_FILEIO);
 
                     Object sq;
-                    
-                   
 
-                    //ENHANCED DICOM per frame stuff
-                    if(name.equals("5200,9230")) {
-                    	int numSlices = 0;
-                    	sq = getSequence(endianess, len);
-                    	Vector<FileDicomItem> v = ((FileDicomSQ)sq).getSequence();
-                    	int elemLength;
-                    	FileDicomKey fdKey;
-                    	for(int i=0;i<v.size();i++) {
-                    		FileDicomItem item = v.get(i);
-                    		TreeMap<String, FileDicomTag> dataSet = item.getDataSet();
-                    		Set<String> keySet = dataSet.keySet();
-                    		Iterator<String> iter = keySet.iterator();
-                			while(iter.hasNext()) {
-                	        	String k = iter.next();
-                	        	FileDicomTag entry = dataSet.get(k);
-                	        	String vr = entry.getValueRepresentation();
-                	        	String  t = FileDicomTagInfo.getType(vr);
-                	        	if (t.equals(FileDicomBase.TYPE_SEQUENCE)) {
-                	                elemLength = entry.getLength();
-                	                Vector<FileDicomItem> vSeq = ((FileDicomSQ) entry.getValue(true)).getSequence();
-                	                for(int m=0;m<vSeq.size();m++) {
-                                		FileDicomItem subItem = vSeq.get(m);
-                                		TreeMap<String, FileDicomTag> subDataSet = subItem.getDataSet();
-                                		Set<String> subKeySet = subDataSet.keySet();
-                                		Iterator<String> subIter = subKeySet.iterator();
-                                		while(subIter.hasNext()) {
-                                			String kSub = subIter.next();
-                            	        	FileDicomTag subEntry = subDataSet.get(kSub);
-                            	        	elemLength = subEntry.getLength();
-                            	        	fdKey = new FileDicomKey(kSub);
-                            	        	if(kSub.equals("0020,9057")) {
-                            	        		//OK...so we should be relying on 0020,9056 (Stack ID)
-                            	        		//to tell us the number of volumes in the dataet
-                            	        		//but we find that it is not being implemented in the dataset we have
-                            	        		//Thefore, we will look at 0020.9057 (In-Stack Pos ID).
-                            	        		//These should all be unique for 1 volume.  If we find that there
-                            	        		//are duplicates, then that means we are dealing with a 4D datset
-                            	        		//we will get the number of slices in a volumne.  Then determine
-                            	        		//number of volumes by taking total num slices / num slices per volume
-                            	        		//ftp://medical.nema.org/medical/dicom/final/cp583_ft.pdf
-                            	        		int currNum = ((Integer)subEntry.getValue(true)).intValue();
-                            	        		if(currNum == numSlices) {
-                            	        			isEnhanced4D = true;
-                            	        		}
-                            	        		if(currNum > numSlices) {
-                            	        			numSlices = currNum;
-                            	        		}
-                            	        	}
-                        	                if(i==0) {
-                        	                	tagTable.setValue(fdKey, subEntry.getValue(true), elemLength);
-                        	                }else {
-                        	                	childrenTagTables[i-1].setValue(fdKey, subEntry.getValue(true), elemLength);
-                        	                }
-                                		}
-                	                }
-                	        	} else {
-                	                elemLength = entry.getLength();
-                	                fdKey = new FileDicomKey(k);
-                	                if(i==0) {
-                	                	tagTable.setValue(fdKey, entry.getValue(true), elemLength);
-                	                }else {
-                	                	childrenTagTables[i-1].setValue(fdKey, entry.getValue(true), elemLength);
-                	                }
-                	            }
-                			}
-                    	}
-                    	enhancedNumSlices = numSlices;
-                    	//remove tag 5200,9230 if its there
-                    	FileDicomTag removeTag = tagTable.get(key);
-                    	if(removeTag!= null) {
-                    		tagTable.removeTag(key);
-                    	}
-                    }else {
-                    	if (name.equals("0004,1220")) {
+                    // ENHANCED DICOM per frame stuff
+                    if (name.equals("5200,9230")) {
+                        int numSlices = 0;
+                        sq = getSequence(endianess, len);
+                        final Vector<FileDicomItem> v = ((FileDicomSQ) sq).getSequence();
+                        int elemLength;
+                        FileDicomKey fdKey;
+                        for (int i = 0; i < v.size(); i++) {
+                            final FileDicomItem item = v.get(i);
+                            final TreeMap<String, FileDicomTag> dataSet = item.getDataSet();
+                            final Set<String> keySet = dataSet.keySet();
+                            final Iterator<String> iter = keySet.iterator();
+                            while (iter.hasNext()) {
+                                final String k = iter.next();
+                                final FileDicomTag entry = dataSet.get(k);
+                                final String vr = entry.getValueRepresentation();
+                                final String t = FileDicomTagInfo.getType(vr);
+                                if (t.equals(FileDicomBase.TYPE_SEQUENCE)) {
+                                    elemLength = entry.getLength();
+                                    final Vector<FileDicomItem> vSeq = ((FileDicomSQ) entry.getValue(true))
+                                            .getSequence();
+                                    for (int m = 0; m < vSeq.size(); m++) {
+                                        final FileDicomItem subItem = vSeq.get(m);
+                                        final TreeMap<String, FileDicomTag> subDataSet = subItem.getDataSet();
+                                        final Set<String> subKeySet = subDataSet.keySet();
+                                        final Iterator<String> subIter = subKeySet.iterator();
+                                        while (subIter.hasNext()) {
+                                            final String kSub = subIter.next();
+                                            final FileDicomTag subEntry = subDataSet.get(kSub);
+                                            elemLength = subEntry.getLength();
+                                            fdKey = new FileDicomKey(kSub);
+                                            if (kSub.equals("0020,9057")) {
+                                                // OK...so we should be relying on 0020,9056 (Stack ID)
+                                                // to tell us the number of volumes in the dataet
+                                                // but we find that it is not being implemented in the dataset we have
+                                                // Thefore, we will look at 0020.9057 (In-Stack Pos ID).
+                                                // These should all be unique for 1 volume. If we find that there
+                                                // are duplicates, then that means we are dealing with a 4D datset
+                                                // we will get the number of slices in a volumne. Then determine
+                                                // number of volumes by taking total num slices / num slices per volume
+                                                // ftp://medical.nema.org/medical/dicom/final/cp583_ft.pdf
+                                                final int currNum = ((Integer) subEntry.getValue(true)).intValue();
+                                                if (currNum == numSlices) {
+                                                    isEnhanced4D = true;
+                                                }
+                                                if (currNum > numSlices) {
+                                                    numSlices = currNum;
+                                                }
+                                            }
+                                            if (i == 0) {
+                                                tagTable.setValue(fdKey, subEntry.getValue(true), elemLength);
+                                            } else {
+                                                childrenTagTables[i - 1].setValue(fdKey, subEntry.getValue(true),
+                                                        elemLength);
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    elemLength = entry.getLength();
+                                    fdKey = new FileDicomKey(k);
+                                    if (i == 0) {
+                                        tagTable.setValue(fdKey, entry.getValue(true), elemLength);
+                                    } else {
+                                        childrenTagTables[i - 1].setValue(fdKey, entry.getValue(true), elemLength);
+                                    }
+                                }
+                            }
+                        }
+                        enhancedNumSlices = numSlices;
+                        // remove tag 5200,9230 if its there
+                        final FileDicomTag removeTag = tagTable.get(key);
+                        if (removeTag != null) {
+                            tagTable.removeTag(key);
+                        }
+                    } else {
+                        if (name.equals("0004,1220")) {
                             dirInfo = (FileDicomSQ) getSequence(endianess, len);
                             sq = new FileDicomSQ();
                         } else {
@@ -937,28 +929,21 @@ public class FileDicom extends FileDicomBase {
                         try {
                             tagTable.setValue(key, sq, elementLength);
                         } catch (final NullPointerException e) {
-                        	Preferences.debug("Null pointer exception while setting value.  Trying to put new tag." + "\n", Preferences.DEBUG_FILEIO);
+                            Preferences.debug("Null pointer exception while setting value.  Trying to put new tag."
+                                    + "\n", Preferences.DEBUG_FILEIO);
                         }
-                		
-                	}
-                    
-                    
-                    /*if (name.equals("0004,1220")) {
-                        dirInfo = (FileDicomSQ) getSequence(endianess, len);
-                        sq = new FileDicomSQ();
-                    } else {
-                        sq = getSequence(endianess, len);
 
                     }
-                    // System.err.print( "SEQUENCE DONE: Sequence Tags: (" + name + "); length = " +
-                    // Integer.toString(len, 0x10) + "\n");
 
-                    try {
-                        tagTable.setValue(key, sq, elementLength);
-                    } catch (final NullPointerException e) {
-                        System.err.println("Null pointer exception while setting value.  Trying to put new tag.");
-                    }*/
-                    
+                    /*
+                     * if (name.equals("0004,1220")) { dirInfo = (FileDicomSQ) getSequence(endianess, len); sq = new
+                     * FileDicomSQ(); } else { sq = getSequence(endianess, len);
+                     *  } // System.err.print( "SEQUENCE DONE: Sequence Tags: (" + name + "); length = " + //
+                     * Integer.toString(len, 0x10) + "\n");
+                     * 
+                     * try { tagTable.setValue(key, sq, elementLength); } catch (final NullPointerException e) {
+                     * System.err.println("Null pointer exception while setting value. Trying to put new tag."); }
+                     */
 
                     // fileInfo.setLength(name, len);
                     Preferences.debug("Finished sequence tags.\n\n", Preferences.DEBUG_FILEIO);
@@ -1187,7 +1172,8 @@ public class FileDicom extends FileDicomBase {
 
                     throw new IOException("Out of memory storing unknown tags in FileDicom.readHeader");
                 } catch (final NullPointerException npe) {
-                	Preferences.debug("name: " + name + "\n" + "no hashtable? " + (tagTable == null) + "\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("name: " + name + "\n" + "no hashtable? " + (tagTable == null) + "\n",
+                            Preferences.DEBUG_FILEIO);
                     throw npe;
                 }
             }
@@ -1456,7 +1442,7 @@ public class FileDicom extends FileDicomBase {
                     rawFile.raFile = null;
                 }
             } catch (final IOException error) {
-                //System.err.println("ReadDICOM IOexception error");
+                // System.err.println("ReadDICOM IOexception error");
                 MipavUtil.displayError("FileDicom: " + error);
                 throw (error);
             }
@@ -1635,7 +1621,7 @@ public class FileDicom extends FileDicomBase {
                 }
             } catch (final IOException error) {
                 error.printStackTrace();
-                //System.err.println("ReadDICOM IOexception error");
+                // System.err.println("ReadDICOM IOexception error");
                 MipavUtil.displayError("FileDicom: " + error);
                 throw (error);
             }
@@ -1779,29 +1765,24 @@ public class FileDicom extends FileDicomBase {
     public final void setFileName(final String fName, final FileInfoDicom refInfo) throws IOException {
         this.setFileName(new File(fileDir + fName), refInfo);
     }
-    
-    
 
     public boolean isEnhanced() {
-		return isEnhanced;
-	}
-    
-    
-    
+        return isEnhanced;
+    }
 
-	public boolean isEnhanced4D() {
-		return isEnhanced4D;
-	}
+    public boolean isEnhanced4D() {
+        return isEnhanced4D;
+    }
 
-	public int getEnhancedNumSlices() {
-		return enhancedNumSlices;
-	}
+    public int getEnhancedNumSlices() {
+        return enhancedNumSlices;
+    }
 
-	public FileInfoDicom[] getEnhancedFileInfos() {
-		return enhancedFileInfos;
-	}
+    public FileInfoDicom[] getEnhancedFileInfos() {
+        return enhancedFileInfos;
+    }
 
-	/**
+    /**
      * Accessor that sets the file name and allocates new FileInfo, File and RandomAccess file objects based on the new
      * image file based on the new filename and the new directory. This method sets the filename property of the
      * FileDicom, recreates a raw file for random access file to read the image file pointed to by the filename (the
@@ -1937,7 +1918,6 @@ public class FileDicom extends FileDicomBase {
             rawChunkFile = new FileRawChunk(raFile, fileInfo);
 
             if (saveAsEncapJP2) {
-
 
                 ByteArrayOutputStream buff;
                 final String outfile = fileDir + fileName;
@@ -2270,7 +2250,6 @@ public class FileDicom extends FileDicomBase {
         }
 
         raFile.close();
-
 
         final FileJP2 fileJP2 = new FileJP2();
 
@@ -2680,7 +2659,8 @@ public class FileDicom extends FileDicomBase {
         // " # readfrom: " + Long.toString(getFilePointer(), 0x10) + "\n");
 
         // either there's an "item end" or we've read the entire element length
-        while ( !nameSQ.equals(FileDicom.SEQ_ITEM_END) && ( (getFilePointer() - startfptr) < itemLength)  && (getFilePointer() < raFile.length())) {
+        while ( !nameSQ.equals(FileDicom.SEQ_ITEM_END) && ( (getFilePointer() - startfptr) < itemLength)
+                && (getFilePointer() < raFile.length())) {
             // The following is almost exactly the same as the code in readHeader. The main difference is the
             // information is stored in a hashtable in DicomItem that is initially empty.
 
@@ -2688,12 +2668,12 @@ public class FileDicom extends FileDicomBase {
 
             if (fileInfo.vr_type == FileInfoDicom.IMPLICIT) {
                 FileDicomTagInfo info;
-                
+
                 if (DicomDictionary.containsTag(new FileDicomKey(groupWord, elementWord))) {
                     FileDicomKey key = null;
-                    
+
                     info = DicomDictionary.getInfo(key = new FileDicomKey(groupWord, elementWord));
-                    //is is required if DicomDictionary contains wild card characters
+                    // is is required if DicomDictionary contains wild card characters
                     info.setKey(key);
                     entry = new FileDicomTag(info);
                     type = entry.getType();
@@ -2709,8 +2689,9 @@ public class FileDicom extends FileDicomBase {
 
                 if (DicomDictionary.containsTag(new FileDicomKey(groupWord, elementWord))) {
                     FileDicomKey key = null;
-                    info = (FileDicomTagInfo) DicomDictionary.getInfo(key = new FileDicomKey(groupWord, elementWord)).clone();
-                    //this is required if DicomDictionary contains wild card characters
+                    info = (FileDicomTagInfo) DicomDictionary.getInfo(key = new FileDicomKey(groupWord, elementWord))
+                            .clone();
+                    // this is required if DicomDictionary contains wild card characters
                     info.setKey(key);
                     entry = new FileDicomTag(info);
                     entry.setValueRepresentation(new String(vr));
@@ -2858,7 +2839,7 @@ public class FileDicom extends FileDicomBase {
                 throw new IOException();
             }
 
-            if (( (getFilePointer() - startfptr) < itemLength) && (getFilePointer() < raFile.length())) {
+            if ( ( (getFilePointer() - startfptr) < itemLength) && (getFilePointer() < raFile.length())) {
                 // preread the next tag, because we have yet to see the
                 // end-sequence tag because we don't want to accidently
                 // read the next new-item tag.
@@ -3346,16 +3327,13 @@ public class FileDicom extends FileDicomBase {
 
         return sq;
     }
-    
-    
-    
-    
+
     private void setPerFrameEnhancedSequenceTags(final boolean endianess) {
-    	try {
-    		getNextElement(endianess); // gets the first ITEM tag
-    	}catch(Exception e) {
-    		e.printStackTrace();
-    	}
+        try {
+            getNextElement(endianess); // gets the first ITEM tag
+        } catch (final Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -3644,32 +3622,30 @@ public class FileDicom extends FileDicomBase {
                 // System.err.println();
             } else if (type.equals(FileDicomBase.OTHER_WORD_STRING)) { // OW -- word = 2 bytes
 
-                final Object[] data = (Object[])element.getValue(false);
+                final Object[] data = (Object[]) element.getValue(false);
 
                 // We are not sure that that LUT endianess is always BIG
                 // but the example images we have are.
                 // Book 3 C.7.6.3.1.6 says to swap byte of OW.
                 if ( ( (gr == 0x28) && (el == 0x1201)) || ( (gr == 0x28) && (el == 0x1202))
                         || ( (gr == 0x28) && (el == 0x1203))) {
-                    
-                    //data is guaranteed to be short for these tags
-                    for (final Short element2 : (Short[])data) {
+
+                    // data is guaranteed to be short for these tags
+                    for (final Short element2 : (Short[]) data) {
                         writeShort(element2.shortValue(), true);
                     }
                 } else {
 
-                    if(data instanceof Short[]) {
-                        for (final Short element2 : (Short[])data) {
+                    if (data instanceof Short[]) {
+                        for (final Short element2 : (Short[]) data) {
                             writeShort(element2.shortValue(), endianess);
                         }
-                    } else if(data instanceof Byte[]) {
-                        for (final Byte element2 : (Byte[])data) {
+                    } else if (data instanceof Byte[]) {
+                        for (final Byte element2 : (Byte[]) data) {
                             writeByte(element2.byteValue());
                         }
                     }
-                    
-                    
-                    
+
                 }
 
             } else if (type.equals(FileDicomBase.TYPE_STRING)) {

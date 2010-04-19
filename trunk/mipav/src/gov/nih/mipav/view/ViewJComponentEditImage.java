@@ -1,7 +1,8 @@
 package gov.nih.mipav.view;
 
 
-import gov.nih.mipav.*;
+import gov.nih.mipav.MipavCoordinateSystems;
+import gov.nih.mipav.util.MipavMath;
 
 import gov.nih.mipav.model.algorithms.AlgorithmRegionGrow;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmMask;
@@ -320,7 +321,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
     protected int timeSlice = 0;
 
     /** DOCUMENT ME! */
-    protected Color toppedColor = ACTIVE_IMAGE_COLOR;
+    protected Color toppedColor = ViewJComponentEditImage.ACTIVE_IMAGE_COLOR;
 
     /**
      * This flag is used by the fuzzy connectedness to indicate that a VOI should be used to calculate certain values to
@@ -419,9 +420,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param logMagDisplay display log magnitude of image
      * @param _orientation orientation of the image
      */
-    public ViewJComponentEditImage(ViewJFrameBase _frame, ModelImage _imageA, ModelLUT _LUTa, float[] imgBufferA,
-            ModelImage _imageB, ModelLUT _LUTb, float[] imgBufferB, int[] pixelBuffer, float zoom, int[] extents,
-            boolean logMagDisplay, int _orientation) {
+    public ViewJComponentEditImage(final ViewJFrameBase _frame, final ModelImage _imageA, final ModelLUT _LUTa,
+            float[] imgBufferA, final ModelImage _imageB, final ModelLUT _LUTb, float[] imgBufferB, int[] pixelBuffer,
+            final float zoom, final int[] extents, final boolean logMagDisplay, final int _orientation) {
         super(_imageA.getWidth(_orientation), _imageA.getHeight(_orientation), _imageA);
 
         frame = _frame;
@@ -439,7 +440,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
         // active image color: get preset
         if (Preferences.getProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR) == null) {
-            Preferences.setProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR, MipavUtil.makeColorString(ACTIVE_IMAGE_COLOR));
+            Preferences.setProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR, MipavUtil
+                    .makeColorString(ViewJComponentEditImage.ACTIVE_IMAGE_COLOR));
         } else {
             this
                     .setHighlightColor(MipavUtil.extractColor(Preferences
@@ -451,18 +453,18 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             Preferences.setProperty(Preferences.PREF_CROSSHAIR_CURSOR, "default");
         }
 
-        String crosshairName = Preferences.getProperty(Preferences.PREF_CROSSHAIR_CURSOR);
+        final String crosshairName = Preferences.getProperty(Preferences.PREF_CROSSHAIR_CURSOR);
 
         if (crosshairName.equalsIgnoreCase("default")) {
             this.setCrosshairCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
         } else {
 
             try {
-                Toolkit toolkit = Toolkit.getDefaultToolkit();
+                final Toolkit toolkit = Toolkit.getDefaultToolkit();
 
                 this.setCrosshairCursor(toolkit.createCustomCursor(MipavUtil.getIcon(crosshairName).getImage(),
                         new Point(15, 15), crosshairName));
-            } catch (NullPointerException noIcon) {
+            } catch (final NullPointerException noIcon) {
 
                 // specfied icon cannot be found. Instead, we load default:
                 this.setCrosshairCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
@@ -471,15 +473,15 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             }
         }
 
-        cursorMode = DEFAULT;
+        cursorMode = ViewJComponentBase.DEFAULT;
 
         if (imgBufferA == null) {
-            int bufferFactor = (imageA.isColorImage() ? 4 : 1);
+            final int bufferFactor = (imageA.isColorImage() ? 4 : 1);
             imgBufferA = new float[bufferFactor * imageDim.width * imageDim.height];
         }
 
         if ( (imgBufferB == null) && (imageB != null)) {
-            int bufferFactor = (imageB.isColorImage() ? 4 : 1);
+            final int bufferFactor = (imageB.isColorImage() ? 4 : 1);
             imgBufferB = new float[bufferFactor * imageDim.width * imageDim.height];
         }
 
@@ -524,7 +526,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         addMouseWheelListener(this);
 
         if (frame != null) {
-            magSettings = new JDialogMagnificationControls((Frame) frame, this, getZoomX(), imageA.getImageName());
+            magSettings = new JDialogMagnificationControls(frame, this, getZoomX(), imageA.getImageName());
         }
 
         maxExtents[0] = imageDim.width;
@@ -551,7 +553,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             }
 
         }
-        int imageSize = extents[0] * extents[1];
+        final int imageSize = extents[0] * extents[1];
         paintBuffer = new int[imageSize];
     }
 
@@ -568,38 +570,36 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @return An array of strings that represent patient position.
      */
-    public static final String[] getScannerPositionLabels(ModelImage image, Vector3f position) {
-        DecimalFormat nf = new DecimalFormat("#####0.0##");
-        Vector3f kOut = new Vector3f();
+    public static final String[] getScannerPositionLabels(final ModelImage image, final Vector3f position) {
+        final DecimalFormat nf = new DecimalFormat("#####0.0##");
+        final Vector3f kOut = new Vector3f();
         if (image.getNDims() < 3) {
             // return null;
         }
-     
+
         MipavCoordinateSystems.fileToScanner(position, kOut, image);
-        Vector3f kTest = new Vector3f();
+        final Vector3f kTest = new Vector3f();
         MipavCoordinateSystems.scannerToFile(kOut, kTest, image);
-        if ( Math.round(kTest.X) != Math.round(position.X) 
-                || Math.round(kTest.Y) != Math.round(position.Y) 
-                || Math.round(kTest.Z) != Math.round(position.Z) )
-        {
-            System.err.println( "scannerToFile broken" );
-            System.err.println( kTest );
-            System.err.println( position );
+        if (Math.round(kTest.X) != Math.round(position.X) || Math.round(kTest.Y) != Math.round(position.Y)
+                || Math.round(kTest.Z) != Math.round(position.Z)) {
+            System.err.println("scannerToFile broken");
+            System.err.println(kTest);
+            System.err.println(position);
             MipavCoordinateSystems.scannerToFile(kOut, kTest, image);
         }
 
-        float[] tCoord = new float[3];
+        final float[] tCoord = new float[3];
         tCoord[0] = kOut.X;
         tCoord[1] = kOut.Y;
         tCoord[2] = kOut.Z;
 
-        String[] labels = {"R-L: ", "A-P: ", "I-S: "};
+        final String[] labels = {"R-L: ", "A-P: ", "I-S: "};
 
         if ( !image.getRadiologicalView()) {
             labels[0] = new String("L-R: ");
         }
 
-        String[] strs = new String[3];
+        final String[] strs = new String[3];
 
         if (image.getRadiologicalView()) {
 
@@ -634,7 +634,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param str string in showRegionGrow {@link #showRegionGrow(int, String)}
      */
-    public void calcPaintedVolume(String str) {
+    public void calcPaintedVolume(final String str) {
         int count = 0;
         int zEnd;
         int tEnd;
@@ -651,7 +651,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         float mean[] = null;
         float stdDev[] = null;
         float diff;
-        int paintSize = paintBitmap.size();
+        final int paintSize = paintBitmap.size();
 
         zEnd = 1;
         tEnd = 1;
@@ -694,7 +694,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                 try {
                     imageA.exportData(cf * offset, imgLength, buffer); // locks and releases
                     // lock
-                } catch (IOException error) {
+                } catch (final IOException error) {
                     MipavUtil.displayError("ViewJComponentImage: Image(s) locked");
 
                     return;
@@ -732,7 +732,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                 try {
                     imageA.exportData(cf * offset, imgLength, buffer); // locks and releases
                     // lock
-                } catch (IOException error) {
+                } catch (final IOException error) {
                     MipavUtil.displayError("ViewJComponentImage: Image(s) locked");
 
                     return;
@@ -773,7 +773,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param ms how long to wait between each image
      */
-    public synchronized void cine(int ms) {
+    public synchronized void cine(final int ms) {
         int i;
         int zDim;
         long localTime = System.currentTimeMillis();
@@ -796,7 +796,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
             try {
                 wait(waitTime);
-            } catch (InterruptedException error) {
+            } catch (final InterruptedException error) {
                 Preferences.debug("ViewJComponentEditImage.cine:wait.\n");
             }
         }
@@ -812,7 +812,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param clearPaintMask if true clear paint mask
      * @param polarity DOCUMENT ME!
      */
-    public void commitMask(int imagesDone, boolean clearPaintMask, boolean polarity, boolean commitMasksAs4D) {
+    public void commitMask(final int imagesDone, final boolean clearPaintMask, final boolean polarity,
+            final boolean commitMasksAs4D) {
         commitMask(imagesDone, clearPaintMask, polarity, null, commitMasksAs4D);
     }
 
@@ -825,8 +826,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param intensityLockVector Vector containing Integers values which are indexed to the locked intensity values in
      *            the image
      */
-    public void commitMask(int imagesDone, boolean clearPaintMask, boolean polarity,
-            Vector<Integer> intensityLockVector, boolean commitMasksAs4D) {
+    public void commitMask(final int imagesDone, final boolean clearPaintMask, final boolean polarity,
+            final Vector<Integer> intensityLockVector, final boolean commitMasksAs4D) {
         commitMask(imagesDone, clearPaintMask, polarity, intensityLockVector, true, commitMasksAs4D);
     }
 
@@ -840,15 +841,17 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      *            the image
      * @param showProgressBar if true, shows the progress bar for this algorithm
      */
-    public void commitMask(ModelImage affectedImage, boolean clearPaintMask, boolean polarity,
-            Vector<Integer> intensityLockVector, boolean showProgressBar, boolean commitMasksAs4D) {
+    public void commitMask(final ModelImage affectedImage, final boolean clearPaintMask, final boolean polarity,
+            final Vector<Integer> intensityLockVector, final boolean showProgressBar, final boolean commitMasksAs4D) {
 
         if (affectedImage == imageA) {
-            commitMask(IMAGE_A, clearPaintMask, polarity, intensityLockVector, showProgressBar, commitMasksAs4D);
+            commitMask(ViewJComponentBase.IMAGE_A, clearPaintMask, polarity, intensityLockVector, showProgressBar,
+                    commitMasksAs4D);
         }
 
         if ( (imageB != null) && (affectedImage == imageB)) {
-            commitMask(IMAGE_B, clearPaintMask, polarity, intensityLockVector, showProgressBar, commitMasksAs4D);
+            commitMask(ViewJComponentBase.IMAGE_B, clearPaintMask, polarity, intensityLockVector, showProgressBar,
+                    commitMasksAs4D);
         }
     }
 
@@ -862,12 +865,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      *            the image
      * @param showProgressBar if true, shows the progress bar for this algorithm
      */
-    public void commitMask(int imagesDone, boolean clearPaintMask, boolean polarity,
-            Vector<Integer> intensityLockVector, boolean showProgressBar, boolean commitMasksAs4D) {
+    public void commitMask(final int imagesDone, final boolean clearPaintMask, final boolean polarity,
+            final Vector<Integer> intensityLockVector, final boolean showProgressBar, final boolean commitMasksAs4D) {
 
         float min, max;
         Color fillColor = new Color(128, 0, 0);
-        int[] slice = new int[1];
+        final int[] slice = new int[1];
         slice[0] = 0;
 
         AlgorithmMask maskAlgo = null;
@@ -883,9 +886,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             }
         }
 
-        if ( (imagesDone == IMAGE_A) || (imagesDone == BOTH)) {
-            float imgMinOrig = (float) imageA.getMin();
-            float imgMaxOrig = (float) imageA.getMax();
+        if ( (imagesDone == ViewJComponentBase.IMAGE_A) || (imagesDone == ViewJComponentBase.BOTH)) {
+            final float imgMinOrig = (float) imageA.getMin();
+            final float imgMaxOrig = (float) imageA.getMax();
 
             if (imageA.isColorImage() == true) {
                 maskAlgo = new AlgorithmMask(imageA, fillColor, polarity, false);
@@ -921,8 +924,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                     max = (float) imageA.getMax();
                 }
 
-                float imgMin = (float) imageA.getMin();
-                float imgMax = (float) imageA.getMax();
+                final float imgMin = (float) imageA.getMin();
+                final float imgMax = (float) imageA.getMax();
 
                 if ( (intensityDropper < imgMinOrig) || (intensityDropper > imgMaxOrig)) {
                     LUTa.resetTransferLine(min, imgMin, max, imgMax);
@@ -937,7 +940,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
         maskAlgo = null;
 
-        if ( ( (imagesDone == IMAGE_B) || (imagesDone == BOTH)) && (imageB != null)) {
+        if ( ( (imagesDone == ViewJComponentBase.IMAGE_B) || (imagesDone == ViewJComponentBase.BOTH))
+                && (imageB != null)) {
 
             if (imageB.isColorImage() == true) {
                 maskAlgo = new AlgorithmMask(imageB, fillColor, polarity, false);
@@ -1001,7 +1005,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         int i;
         int end;
 
-        ViewJProgressBar progressBar = new ViewJProgressBar(imageActive.getImageName(), "Masking ...", 0, 100, true);
+        final ViewJProgressBar progressBar = new ViewJProgressBar(imageActive.getImageName(), "Masking ...", 0, 100,
+                true);
         progressBar.setSeparateThread(false);
 
         imageACopy = (ModelImage) imageA.clone();
@@ -1142,7 +1147,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                         imageACopy.reallocate(ModelStorageBase.UBYTE);
                         imageACopy.importData(0, buffer, true);
                     }
-                } catch (IOException error) {
+                } catch (final IOException error) {
                     buffer = null;
                     MipavUtil.displayError("IO Exception");
 
@@ -1152,7 +1157,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                     }
 
                     return null;
-                } catch (OutOfMemoryError e) {
+                } catch (final OutOfMemoryError e) {
                     buffer = null;
                     MipavUtil.displayError("Out of memory error");
 
@@ -1218,7 +1223,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                         imageBCopy.reallocate(ModelStorageBase.UBYTE);
                         imageBCopy.importData(0, buffer, true);
                     }
-                } catch (IOException error) {
+                } catch (final IOException error) {
                     buffer = null;
                     MipavUtil.displayError("IO Exception");
 
@@ -1228,7 +1233,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                     }
 
                     return null;
-                } catch (OutOfMemoryError e) {
+                } catch (final OutOfMemoryError e) {
                     buffer = null;
                     MipavUtil.displayError("Out of memory error");
 
@@ -1259,7 +1264,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                     new ViewJFrameImage(imageBCopy, null, new Dimension(610, 200), false);
                 }
             }
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: unable to open new frame");
 
             if (imageACopy != null) {
@@ -1301,7 +1306,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         int i;
         int end;
 
-        ViewJProgressBar progressBar = new ViewJProgressBar(imageActive.getImageName(), "Masking ...", 0, 100, true);
+        final ViewJProgressBar progressBar = new ViewJProgressBar(imageActive.getImageName(), "Masking ...", 0, 100,
+                true);
         progressBar.setSeparateThread(false);
 
         imageACopy = (ModelImage) imageA.clone();
@@ -1442,7 +1448,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                         imageACopy.reallocate(ModelStorageBase.SHORT);
                         imageACopy.importData(0, buffer, true);
                     }
-                } catch (IOException error) {
+                } catch (final IOException error) {
                     buffer = null;
                     MipavUtil.displayError("IO Exception");
 
@@ -1452,7 +1458,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                     }
 
                     return null;
-                } catch (OutOfMemoryError e) {
+                } catch (final OutOfMemoryError e) {
                     buffer = null;
                     MipavUtil.displayError("Out of memory error");
 
@@ -1518,7 +1524,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                         imageBCopy.reallocate(ModelStorageBase.SHORT);
                         imageBCopy.importData(0, buffer, true);
                     }
-                } catch (IOException error) {
+                } catch (final IOException error) {
                     buffer = null;
                     MipavUtil.displayError("IO Exception");
 
@@ -1528,7 +1534,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                     }
 
                     return null;
-                } catch (OutOfMemoryError e) {
+                } catch (final OutOfMemoryError e) {
                     buffer = null;
                     MipavUtil.displayError("Out of memory error");
 
@@ -1559,7 +1565,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                     new ViewJFrameImage(imageBCopy, null, new Dimension(610, 200), false);
                 }
             }
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: unable to open new frame");
 
             if (imageACopy != null) {
@@ -1595,10 +1601,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param centerPtLocation DOCUMENT ME!
      * @param btest DOCUMENT ME!
      */
-    public void deleteSelectedContours(int centerPtLocation, boolean btest) {
+    public void deleteSelectedContours(final int centerPtLocation, boolean btest) {
         int i, s, nVOI;
 
-        ViewVOIVector VOIs = imageActive.getVOIs();
+        final ViewVOIVector VOIs = imageActive.getVOIs();
 
         nVOI = VOIs.size();
 
@@ -1634,9 +1640,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         if (VOIs.VOIAt(i).isEmpty() == true) {
             imageActive.unregisterVOI(VOIs.VOIAt(i));
 
-            int id = (getActiveImage().getVOIs().size() > 0) ? ( ((VOI) (getActiveImage().getVOIs().lastElement()))
+            final int id = (getActiveImage().getVOIs().size() > 0) ? ( ( (getActiveImage().getVOIs().lastElement()))
                     .getID() + 1) : 0;
-            int lastUID = (getActiveImage().getVOIs().size() > 0) ? ( ((VOI) (getActiveImage().getVOIs().lastElement()))
+            final int lastUID = (getActiveImage().getVOIs().size() > 0) ? ( ( (getActiveImage().getVOIs().lastElement()))
                     .getUID() + 1)
                     : -1;
 
@@ -1652,7 +1658,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param flag if true garbage collector should be called.
      */
-    public void disposeLocal(boolean flag) {
+    public void disposeLocal(final boolean flag) {
         imageBufferA = null;
         imageBufferB = null;
         pixBuffer = null;
@@ -1727,21 +1733,21 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param xRes The resolutions in the <i>x</i>-direction.
      * @param yRes The resolutions in the <i>y</i>-direction.
      */
-    public void drawGradicules(Graphics g, float xRes, float yRes) {
-        Insets insets = frame.getInsets();
-        int rightOffset = getBounds().width - insets.left;
-        int bottomOffset = getBounds().height - insets.bottom - 15;
+    public void drawGradicules(final Graphics g, final float xRes, final float yRes) {
+        final Insets insets = frame.getInsets();
+        final int rightOffset = getBounds().width - insets.left;
+        final int bottomOffset = getBounds().height - insets.bottom - 15;
 
         // Draw gradicules
         if ( (getZoomX() >= 1.0) && (getZoomY() >= 1.0)) {
-            float XCMPerPix = (float) (xRes / 10.0 / getZoomX());
-            float YCMPerPix = (float) (yRes / 10.0 / getZoomY());
+            final float XCMPerPix = (float) (xRes / 10.0 / getZoomX());
+            final float YCMPerPix = (float) (yRes / 10.0 / getZoomY());
 
-            int XGradcmLen = (int) ( (getBounds().width / 3.0) * (XCMPerPix));
-            int YGradcmLen = (int) ( (getBounds().height / 3.0) * (YCMPerPix));
+            final int XGradcmLen = (int) ( (getBounds().width / 3.0) * (XCMPerPix));
+            final int YGradcmLen = (int) ( (getBounds().height / 3.0) * (YCMPerPix));
 
-            int XGradpixLen = (int) (XGradcmLen / XCMPerPix);
-            int YGradpixLen = (int) (YGradcmLen / XCMPerPix);
+            final int XGradpixLen = (int) (XGradcmLen / XCMPerPix);
+            final int YGradpixLen = (int) (YGradcmLen / XCMPerPix);
 
             g.setColor(Color.white);
             g.drawLine(XGradpixLen, bottomOffset - 30, XGradpixLen, bottomOffset - 43);
@@ -1810,7 +1816,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param x x coordinate of where the string is to be drawn
      * @param y y coordinate of where the string is to be drawn
      */
-    public final void drawStringBW(String str, Graphics g, int x, int y) {
+    public final void drawStringBW(final String str, final Graphics g, final int x, final int y) {
 
         if (str == null) {
             return;
@@ -1830,15 +1836,15 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param onlyCurrent DOCUMENT ME!
      */
-    public void eraseAllPaint(boolean onlyCurrent) {
+    public void eraseAllPaint(final boolean onlyCurrent) {
 
         if (onlyCurrent) {
 
             // find start point
-            int currentFrame = imageA.getParentFrame().getViewableSlice();
-            int sliceSize = imageA.getSliceSize();
-            int startPt = currentFrame * sliceSize;
-            int endPt = startPt + sliceSize;
+            final int currentFrame = imageA.getParentFrame().getViewableSlice();
+            final int sliceSize = imageA.getSliceSize();
+            final int startPt = currentFrame * sliceSize;
+            final int endPt = startPt + sliceSize;
 
             for (int i = startPt; i < endPt; i++) {
                 paintBitmap.clear(i);
@@ -1891,13 +1897,13 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             cFactor = 4;
         }
 
-        float[] sliceBuffer = new float[cFactor * imageExtents[0] * imageExtents[1]];
+        final float[] sliceBuffer = new float[cFactor * imageExtents[0] * imageExtents[1]];
 
         if (imageActive.isColorImage() == true) {
 
             try {
                 imageActive.exportData(0, sliceBuffer.length, sliceBuffer);
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 MipavUtil.displayError("Error while trying to retrieve RGB data.");
 
                 return null;
@@ -2027,12 +2033,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @return the number of points in the selected VOI
      */
     public int getNumPoints() {
-        ViewVOIVector VOIs = imageActive.getVOIs();
+        final ViewVOIVector VOIs = imageActive.getVOIs();
 
         if (VOIs.size() == 0) {
             return 0;
         } else {
-            return ((VOI) VOIs.elementAt(0)).getCurves()[0].size();
+            return (VOIs.elementAt(0)).getCurves()[0].size();
         }
     }
 
@@ -2042,7 +2048,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @return int number of VOIs
      */
     public int getnVOI() {
-        ViewVOIVector VOIs = imageActive.getVOIs();
+        final ViewVOIVector VOIs = imageActive.getVOIs();
 
         return (VOIs.size());
     }
@@ -2134,7 +2140,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @return whether to enable showIntensity checkbox
      */
     public boolean getShowMagIntensityEnabled() {
-        Graphics g = getGraphics();
+        final Graphics g = getGraphics();
 
         if (g == null) {
             return false;
@@ -2192,17 +2198,17 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param e event
      */
-    public void keyPressed(KeyEvent e) {}
+    public void keyPressed(final KeyEvent e) {}
 
     /**
      * If the shift key is pressed, updates the graphics.
      * 
      * @param e the key released event
      */
-    public void keyReleased(KeyEvent e) {
-        int keyCode = e.getKeyCode();
+    public void keyReleased(final KeyEvent e) {
+        final int keyCode = e.getKeyCode();
 
-        if (cursorMode == WIN_REGION) {
+        if (cursorMode == ViewJComponentBase.WIN_REGION) {
 
             switch (keyCode) {
 
@@ -2217,8 +2223,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param e event
      */
-    public void keyTyped(KeyEvent e) {}
-
+    public void keyTyped(final KeyEvent e) {}
 
     /**
      * Reads in an image icon from either the set of mipav icons or the user's $HOME/mipav/brushes/ directory.
@@ -2237,7 +2242,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         imageURL = PlaceHolder.class.getResource(imageName);
 
         if (imageURL == null) {
-            File imageFile = new File(System.getProperty("user.home") + File.separator + "mipav" + File.separator
+            final File imageFile = new File(System.getProperty("user.home") + File.separator + "mipav" + File.separator
                     + "brushes" + File.separator + imageName);
             if (imageFile.exists() && imageFile.canRead()) {
                 imageURL = imageFile.toURI().toURL();
@@ -2253,7 +2258,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param paintName the name of the brush to load
      * @param isQuick DOCUMENT ME!
      */
-    public void loadPaintBrush(String paintName, boolean isQuick) {
+    public void loadPaintBrush(final String paintName, final boolean isQuick) {
 
         if (isQuick) {
             quickSwitchBrush();
@@ -2262,7 +2267,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         BufferedImage tempImage = null;
         try {
             tempImage = loadImageFile(paintName);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             MipavUtil.displayError("Could not load paint brush image: " + paintName);
             e.printStackTrace();
             return;
@@ -2278,8 +2283,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
         paintBrush = new BitSet(paintBrushDim.width * paintBrushDim.height);
 
-        int numBands = tempImage.getData().getNumBands();
-        int[] pixel = new int[numBands];
+        final int numBands = tempImage.getData().getNumBands();
+        final int[] pixel = new int[numBands];
         for (int y = 0, pix = 0; y < paintBrushDim.height; y++) {
             for (int x = 0; x < paintBrushDim.width; x++, pix++) {
                 // calling getPixel is required to get this to work for both .png and .gif images.
@@ -2324,7 +2329,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param mouseEvent event that triggers function; contains click count
      */
-    public void mouseClicked(MouseEvent mouseEvent) {
+    public void mouseClicked(final MouseEvent mouseEvent) {
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
 
@@ -2369,8 +2374,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param mouseEvent event that triggered function
      */
-    public void mouseDragged(MouseEvent mouseEvent) {
-        int mouseMods = mouseEvent.getModifiers();
+    public void mouseDragged(final MouseEvent mouseEvent) {
+        final int mouseMods = mouseEvent.getModifiers();
 
         int xS, yS;
         Color dropperColor;
@@ -2384,8 +2389,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         xS = getScaledX(mouseEvent.getX()); // zoomed x. Used as cursor
         yS = getScaledY(mouseEvent.getY()); // zoomed y. Used as cursor
 
-        int xDim = imageActive.getExtents()[0];
-        int yDim = imageActive.getExtents()[1];
+        final int xDim = imageActive.getExtents()[0];
+        final int yDim = imageActive.getExtents()[1];
 
         if ( (xS < 0) || (xS >= xDim) || (yS < 0) || (yS >= yDim)) {
             return;
@@ -2395,7 +2400,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         processDefaultMouseDrag(mouseEvent, xS, yS);
         // }
 
-        if (cursorMode == DROPPER_PAINT) {
+        if (cursorMode == ViewJComponentBase.DROPPER_PAINT) {
 
             if (imageActive.isColorImage() == true) {
                 dropperColor = new Color(
@@ -2407,15 +2412,15 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                 intensityDropper = imageBufferActive[ (yS * imageActive.getExtents()[0]) + xS];
                 frame.getControls().getTools().setIntensityPaintName(String.valueOf((int) (intensityDropper)));
             }
-        } else if (cursorMode == ERASER_PAINT) {
+        } else if (cursorMode == ViewJComponentBase.ERASER_PAINT) {
             performPaint(mouseEvent, true);
             if (imageActive.getTriImageFrame() == null) {
                 imageActive.notifyImageDisplayListeners();
             } else {
                 imageActive.notifyImageDisplayListeners_notTriFrame();
             }
-        } else if (cursorMode == PAINT_VOI) {
-            performPaint(mouseEvent, mouseMods == MouseEvent.BUTTON3_MASK);
+        } else if (cursorMode == ViewJComponentBase.PAINT_VOI) {
+            performPaint(mouseEvent, mouseMods == InputEvent.BUTTON3_MASK);
             if (imageActive.getTriImageFrame() == null) {
                 imageActive.notifyImageDisplayListeners();
             } else {
@@ -2429,7 +2434,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param mouseEvent event
      */
-    public void mouseEntered(MouseEvent mouseEvent) {
+    public void mouseEntered(final MouseEvent mouseEvent) {
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
     }
@@ -2439,17 +2444,17 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param mouseEvent event that triggered function
      */
-    public void mouseExited(MouseEvent mouseEvent) {
+    public void mouseExited(final MouseEvent mouseEvent) {
         lastMouseX = OUT_OF_BOUNDS;
         lastMouseY = OUT_OF_BOUNDS;
-        if ( (cursorMode == MAG_REGION) || (cursorMode == PAINT_VOI) || (cursorMode == ERASER_PAINT)
-                || (cursorMode == WIN_REGION)) {
+        if ( (cursorMode == ViewJComponentBase.MAG_REGION) || (cursorMode == ViewJComponentBase.PAINT_VOI)
+                || (cursorMode == ViewJComponentBase.ERASER_PAINT) || (cursorMode == ViewJComponentBase.WIN_REGION)) {
 
             // repaint();
             paintComponent(getGraphics());
         }
 
-        if (cursorMode == DEFAULT) {
+        if (cursorMode == ViewJComponentBase.DEFAULT) {
             intensityLabel = false;
             paintComponent(getGraphics());
         }
@@ -2461,27 +2466,30 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param mouseEvent event that triggered the function
      */
-    public void mouseMoved(MouseEvent mouseEvent) {
+    public void mouseMoved(final MouseEvent mouseEvent) {
         int xS, yS;
 
-        Graphics g = getGraphics();
+        final Graphics g = getGraphics();
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
         shiftDown = mouseEvent.isShiftDown();
 
-        if ( (cursorMode == ZOOMING_IN) || (cursorMode == ZOOMING_OUT)) {
+        if ( (cursorMode == ViewJComponentBase.ZOOMING_IN) || (cursorMode == ViewJComponentBase.ZOOMING_OUT)) {
 
             // if we are in zoom mode, we don't care about any of the other things
             // that are happening here, in fact, zoom breaks if we don't return
             return;
-        } else if ( (cursorMode == RECTANGLE) || (cursorMode == ELLIPSE) || (cursorMode == LINE)
-                || (cursorMode == RECTANGLE3D) || (cursorMode == POINT_VOI) || (cursorMode == POLYLINE)
-                || (cursorMode == LEVELSET) || (cursorMode == PAINT_VOI) || (cursorMode == DROPPER_PAINT)
-                || (cursorMode == ERASER_PAINT) || (cursorMode == QUICK_LUT) || (cursorMode == PROTRACTOR)
-                || (cursorMode == LIVEWIRE) || (cursorMode == ANNOTATION) || (cursorMode == POLYLINE_SLICE_VOI)
-                || (cursorMode == MOVE) || (cursorMode == MOVE_POINT) || (cursorMode == NEW_POINT)
-                || (cursorMode == RETRACE) || (cursorMode == DELETE_POINT) || (cursorMode == TRANSLATE)
-                || (cursorMode == SPLIT_VOI)) {
+        } else if ( (cursorMode == ViewJComponentBase.RECTANGLE) || (cursorMode == ViewJComponentBase.ELLIPSE)
+                || (cursorMode == ViewJComponentBase.LINE) || (cursorMode == ViewJComponentBase.RECTANGLE3D)
+                || (cursorMode == ViewJComponentBase.POINT_VOI) || (cursorMode == ViewJComponentBase.POLYLINE)
+                || (cursorMode == ViewJComponentBase.LEVELSET) || (cursorMode == ViewJComponentBase.PAINT_VOI)
+                || (cursorMode == ViewJComponentBase.DROPPER_PAINT) || (cursorMode == ViewJComponentBase.ERASER_PAINT)
+                || (cursorMode == ViewJComponentBase.QUICK_LUT) || (cursorMode == ViewJComponentBase.PROTRACTOR)
+                || (cursorMode == ViewJComponentBase.LIVEWIRE) || (cursorMode == ViewJComponentBase.ANNOTATION)
+                || (cursorMode == ViewJComponentBase.POLYLINE_SLICE_VOI) || (cursorMode == ViewJComponentBase.MOVE)
+                || (cursorMode == ViewJComponentBase.MOVE_POINT) || (cursorMode == ViewJComponentBase.NEW_POINT)
+                || (cursorMode == ViewJComponentBase.RETRACE) || (cursorMode == ViewJComponentBase.DELETE_POINT)
+                || (cursorMode == ViewJComponentBase.TRANSLATE) || (cursorMode == ViewJComponentBase.SPLIT_VOI)) {
             g.dispose();
 
             return;
@@ -2490,7 +2498,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         xS = getScaledX(mouseEvent.getX()); // zoomed x. Used as cursor
         yS = getScaledY(mouseEvent.getY()); // zoomed y. Used as cursor
 
-        if ( (cursorMode == PAINT_VOI) && mouseEvent.isShiftDown()) {
+        if ( (cursorMode == ViewJComponentBase.PAINT_VOI) && mouseEvent.isShiftDown()) {
             performPaint(mouseEvent, false);
             imageActive.notifyImageDisplayListeners(null, true);
 
@@ -2499,8 +2507,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
         // the user can erase by holding down shift while in eraser mode
         // or by holding down control while in paint mode
-        if ( ( (cursorMode == ERASER_PAINT) && mouseEvent.isShiftDown())
-                || ( (cursorMode == PAINT_VOI) && mouseEvent.isControlDown())) {
+        if ( ( (cursorMode == ViewJComponentBase.ERASER_PAINT) && mouseEvent.isShiftDown())
+                || ( (cursorMode == ViewJComponentBase.PAINT_VOI) && mouseEvent.isControlDown())) {
             performPaint(mouseEvent, true);
             imageActive.notifyImageDisplayListeners(null, true);
 
@@ -2524,21 +2532,21 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             return;
         }
 
-        if (cursorMode == MAG_REGION) {
+        if (cursorMode == ViewJComponentBase.MAG_REGION) {
             repaint();
 
             return;
-        } else if (cursorMode == WIN_REGION) {
+        } else if (cursorMode == ViewJComponentBase.WIN_REGION) {
             repaint();
 
             return;
-        } else if ( (cursorMode == PAINT_VOI) || (cursorMode == ERASER_PAINT)) {
+        } else if ( (cursorMode == ViewJComponentBase.PAINT_VOI) || (cursorMode == ViewJComponentBase.ERASER_PAINT)) {
 
             // repaint();
             paintComponent(getGraphics());
 
             return;
-        } else if ( (cursorMode == PAINT_CAN) || (cursorMode == PAINT_VASC)) {
+        } else if ( (cursorMode == ViewJComponentBase.PAINT_CAN) || (cursorMode == ViewJComponentBase.PAINT_VASC)) {
 
             if (growDialog != null) {
 
@@ -2563,7 +2571,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
         // System.err.println("got to end...");
 
-        setCursorMode(DEFAULT);
+        setCursorMode(ViewJComponentBase.DEFAULT);
     } // end mouseMoved
 
     /**
@@ -2572,12 +2580,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param mouseEvent event that triggered function
      */
-    public void mousePressed(MouseEvent mouseEvent) {
+    public void mousePressed(final MouseEvent mouseEvent) {
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
 
-        int xS = getScaledX(mouseEvent.getX());
-        int yS = getScaledY(mouseEvent.getY());
+        final int xS = getScaledX(mouseEvent.getX());
+        final int yS = getScaledY(mouseEvent.getY());
 
         if (modifyFlag == false) {
             return;
@@ -2587,7 +2595,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         mousePressIsShiftDown = mouseEvent.isShiftDown();
 
         // shows intsnsity label upon mouse press
-        if (cursorMode == DEFAULT) {
+        if (cursorMode == ViewJComponentBase.DEFAULT) {
             setPixelInformationAtLocation(xS, yS);
 
             if (mouseEvent.getButton() == MouseEvent.BUTTON1) {
@@ -2596,17 +2604,18 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             }
         }
 
-        if ( (cursorMode == DEFAULT) && mouseEvent.isControlDown()) { // center the image around cursor (no zooming)
+        if ( (cursorMode == ViewJComponentBase.DEFAULT) && mouseEvent.isControlDown()) { // center the image around
+                                                                                            // cursor (no zooming)
 
-            int centerX = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().width / 2;
-            int centerY = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().height / 2;
+            final int centerX = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().width / 2;
+            final int centerY = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().height / 2;
 
             ((ViewJFrameImage) frame).getScrollPane().getHorizontalScrollBar().setValue(mouseEvent.getX() - centerX);
             ((ViewJFrameImage) frame).getScrollPane().getVerticalScrollBar().setValue(mouseEvent.getY() - centerY);
 
         }
 
-        if ( (cursorMode == ZOOMING_IN) || (cursorMode == ZOOMING_OUT)) {
+        if ( (cursorMode == ViewJComponentBase.ZOOMING_IN) || (cursorMode == ViewJComponentBase.ZOOMING_OUT)) {
             // int xS = getScaledX(mouseEvent.getX()); // zoomed x. Used as cursor int yS =
             // getScaledY(mouseEvent.getY()); // zoomed y. Used as cursor
 
@@ -2614,7 +2623,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                     getZoomMagnitudeY(mouseEvent.getButton() == MouseEvent.BUTTON3), xS, yS);
 
             if (mouseEvent.isShiftDown() == false) {
-                cursorMode = DEFAULT;
+                cursorMode = ViewJComponentBase.DEFAULT;
                 setCursor(MipavUtil.defaultCursor);
             }
 
@@ -2624,23 +2633,24 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         try {
             mousePressedPaint(mouseEvent);
 
-            if ( (cursorMode == WIN_REGION) && (mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK)) {
-                String newValue = JOptionPane.showInputDialog(frame, "Enter new size for windowed region:", String
-                        .valueOf(windowedRegionSize));
+            if ( (cursorMode == ViewJComponentBase.WIN_REGION)
+                    && (mouseEvent.getModifiers() == InputEvent.BUTTON3_MASK)) {
+                final String newValue = JOptionPane.showInputDialog(frame, "Enter new size for windowed region:",
+                        String.valueOf(windowedRegionSize));
 
                 try {
 
                     if (newValue != null) {
                         windowedRegionSize = Integer.parseInt(newValue);
                     }
-                } catch (NumberFormatException nfe) {
+                } catch (final NumberFormatException nfe) {
                     MipavUtil.displayError("Invalid size entered for windowed region.");
                 }
             }
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ComponentEditImage.mousePressed");
-            setCursorMode(DEFAULT);
+            setCursorMode(ViewJComponentBase.DEFAULT);
 
             return;
         }
@@ -2651,7 +2661,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param mouseEvent event that triggered function
      */
-    public void mouseReleased(MouseEvent mouseEvent) {
+    public void mouseReleased(final MouseEvent mouseEvent) {
 
         // calling garbage collect here to clean up any memory used while getting the LPS coordinates
         System.gc();
@@ -2675,27 +2685,27 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             return;
         }
 
-        if (cursorMode != MOVE) {
+        if (cursorMode != ViewJComponentBase.MOVE) {
             setPixelInformationAtLocation(xS, yS);
         }
 
         // clicking with the right mouse button in a regular image frame updates the image's
         // tri-image frame (if one is open) to show that point in all of the components
         if ( (mouseEvent.getModifiers() & InputEvent.BUTTON2_MASK) != 0) {
-            ViewJFrameTriImage triFrame = imageActive.getTriImageFrame();
+            final ViewJFrameTriImage triFrame = imageActive.getTriImageFrame();
 
             if (triFrame != null) {
                 triFrame.setSlicesFromFrame(xS, yS, slice);
             }
         }
 
-        if (cursorMode == POINT_VOI) {} else if (cursorMode == POLYLINE_SLICE_VOI) {} else if (cursorMode == ANNOTATION) {} else if (cursorMode == LEVELSET) {} else if (cursorMode == RECTANGLE) {} else if (cursorMode == RECTANGLE3D) {} else if (cursorMode == ELLIPSE) {} else if (cursorMode == LINE) {} else if (cursorMode == PROTRACTOR) {} else if (cursorMode == NEW_POINT) {} else if (cursorMode == DELETE_POINT) {} else if (cursorMode == PAINT_CAN) {
+        if (cursorMode == ViewJComponentBase.POINT_VOI) {} else if (cursorMode == ViewJComponentBase.POLYLINE_SLICE_VOI) {} else if (cursorMode == ViewJComponentBase.ANNOTATION) {} else if (cursorMode == ViewJComponentBase.LEVELSET) {} else if (cursorMode == ViewJComponentBase.RECTANGLE) {} else if (cursorMode == ViewJComponentBase.RECTANGLE3D) {} else if (cursorMode == ViewJComponentBase.ELLIPSE) {} else if (cursorMode == ViewJComponentBase.LINE) {} else if (cursorMode == ViewJComponentBase.PROTRACTOR) {} else if (cursorMode == ViewJComponentBase.NEW_POINT) {} else if (cursorMode == ViewJComponentBase.DELETE_POINT) {} else if (cursorMode == ViewJComponentBase.PAINT_CAN) {
             xPG = (short) xS;
             yPG = (short) yS;
             zPG = (short) slice;
 
             if (imageActive.isColorImage()) {
-                int index = 4 * (yS + imageActive.getExtents()[0] + xS);
+                final int index = 4 * (yS + imageActive.getExtents()[0] + xS);
                 seedValR = imageBufferActive[index + 1];
                 seedValG = imageBufferActive[index + 2];
                 seedValB = imageBufferActive[index + 3];
@@ -2707,54 +2717,55 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
             imageActive.notifyImageDisplayListeners(null, true);
 
-        } else if (cursorMode == PAINT_VASC) {
-            int index = xS + (yS * imageActive.getExtents()[0]);
-            int z = MipavMath.round( ((ViewJFramePaintVasculature) frame).getMIPZValue(index));
-            float value = ((ViewJFramePaintVasculature) frame).imageBuffer[index + (z * imageActive.getSliceSize())];
+        } else if (cursorMode == ViewJComponentBase.PAINT_VASC) {
+            final int index = xS + (yS * imageActive.getExtents()[0]);
+            final int z = MipavMath.round( ((ViewJFramePaintVasculature) frame).getMIPZValue(index));
+            final float value = ((ViewJFramePaintVasculature) frame).imageBuffer[index
+                    + (z * imageActive.getSliceSize())];
 
             ((ViewJFrameImage) ((ViewJFramePaintVasculature) frame).parent).getComponentImage().regionGrow((short) xS,
                     (short) yS, (short) z, value, null, true);
             ((ViewJFrameImage) ((ViewJFramePaintVasculature) frame).parent).getComponentImage().setRegionGrowVars(
                     (short) xS, (short) yS, (short) z, value);
             imageActive.notifyImageDisplayListeners(null, true);
-        } else if (cursorMode == QUICK_LUT) {
+        } else if (cursorMode == ViewJComponentBase.QUICK_LUT) {
             int wS, hS;
 
             xS = MipavMath.round(voiHandler.getRubberband().getBounds().x / (getZoomX() * resolutionX));
             yS = MipavMath.round(voiHandler.getRubberband().getBounds().y / (getZoomY() * resolutionY));
             wS = MipavMath.round(voiHandler.getRubberband().getBounds().width / (getZoomX() * resolutionX));
             hS = MipavMath.round(voiHandler.getRubberband().getBounds().height / (getZoomY() * resolutionY));
-	            if (imageA.isColorImage() == false) {
-	
-	                if (imageA == imageActive) {
-	                    this.quickLUT(xS, wS, yS, hS, imageBufferA, imageA, LUTa);
-	                    imageActive.notifyImageDisplayListeners(LUTa, true);
-	                } else if ( (imageB != null) && (imageActive == imageB)) {
-	                    this.quickLUT(xS, wS, yS, hS, imageBufferB, imageB, LUTb);
-	                    imageActive.notifyImageDisplayListeners(LUTb, true);
-	                }
-	            } else { // RGB image
-	
-	                if (imageA == imageActive) {
-	                    this.quickRGB(xS, wS, yS, hS, imageBufferA, imageA, RGBTA);
-	                    imageActive.notifyImageDisplayListeners(true, 1, RGBTA);
-	                } else if ( (imageBufferB != null) && (imageB != null) && (imageB == imageActive)) {
-	                    this.quickRGB(xS, wS, yS, hS, imageBufferB, imageB, RGBTB);
-	                    imageActive.notifyImageDisplayListeners(true, 1, RGBTB);
-	                }
-	            }
-	
-	            if ( (getActiveImage().isColorImage()) && (getActiveImage().getHistoRGBFrame() != null)) {
-	                getActiveImage().getHistoRGBFrame().update();
-	            } else if (getActiveImage().getHistoLUTFrame() != null) {
-	                getActiveImage().getHistoLUTFrame().update();
-	            }
-	
-	            if ( ! ( (mouseEvent.isShiftDown() == true) || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
-	                setCursorMode(DEFAULT);
-	            }
-            
-        } else if (cursorMode == DEFAULT) {
+            if (imageA.isColorImage() == false) {
+
+                if (imageA == imageActive) {
+                    this.quickLUT(xS, wS, yS, hS, imageBufferA, imageA, LUTa);
+                    imageActive.notifyImageDisplayListeners(LUTa, true);
+                } else if ( (imageB != null) && (imageActive == imageB)) {
+                    this.quickLUT(xS, wS, yS, hS, imageBufferB, imageB, LUTb);
+                    imageActive.notifyImageDisplayListeners(LUTb, true);
+                }
+            } else { // RGB image
+
+                if (imageA == imageActive) {
+                    this.quickRGB(xS, wS, yS, hS, imageBufferA, imageA, RGBTA);
+                    imageActive.notifyImageDisplayListeners(true, 1, RGBTA);
+                } else if ( (imageBufferB != null) && (imageB != null) && (imageB == imageActive)) {
+                    this.quickRGB(xS, wS, yS, hS, imageBufferB, imageB, RGBTB);
+                    imageActive.notifyImageDisplayListeners(true, 1, RGBTB);
+                }
+            }
+
+            if ( (getActiveImage().isColorImage()) && (getActiveImage().getHistoRGBFrame() != null)) {
+                getActiveImage().getHistoRGBFrame().update();
+            } else if (getActiveImage().getHistoLUTFrame() != null) {
+                getActiveImage().getHistoLUTFrame().update();
+            }
+
+            if ( ! ( (mouseEvent.isShiftDown() == true) || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
+                setCursorMode(ViewJComponentBase.DEFAULT);
+            }
+
+        } else if (cursorMode == ViewJComponentBase.DEFAULT) {
             intensityLabel = false;
             paintComponent(getGraphics());
         }
@@ -2770,8 +2781,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param mouseWheelEvent DOCUMENT ME!
      */
-    public void mouseWheelMoved(MouseWheelEvent mouseWheelEvent) {
-        int wheelRotation = mouseWheelEvent.getWheelRotation();
+    public void mouseWheelMoved(final MouseWheelEvent mouseWheelEvent) {
+        final int wheelRotation = mouseWheelEvent.getWheelRotation();
 
         if (frame instanceof ViewJFrameImage) {
 
@@ -2813,11 +2824,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * Open the user defined LUT table and transfer function.
      */
     public void openUDLUTandTransferFunct() {
-        String fName = "userdefine.lut";
-        String dName = Preferences.getPreferencesDir();
-        
+        final String fName = "userdefine.lut";
+        final String dName = Preferences.getPreferencesDir();
+
         readLUTandTFunctFrom(fName, dName);
-        
+
         try {
 
             if (imageA.isColorImage() == false) {
@@ -2836,7 +2847,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                 }
             }
 
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ComponentEditImage.openUDLUT");
         }
@@ -2847,7 +2858,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         return this.rgbString;
     }
 
-    public void setRGBPaintComponents(String rgb) {
+    public void setRGBPaintComponents(final String rgb) {
         this.rgbString = rgb;
     }
 
@@ -2856,7 +2867,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param graphics graphics
      */
-    public void paintComponent(Graphics graphics) {
+    public void paintComponent(final Graphics graphics) {
         try {
             if (modifyFlag == false) {
                 return;
@@ -2872,30 +2883,27 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
             if (isDisplayable()) { // a component is displayable when it is connected to a screen resource
 
-                int width = Math.round(zoomX * imageDim.width * resolutionX);
-                int height = Math.round(zoomY * imageDim.height * resolutionY);
+                final int width = Math.round(zoomX * imageDim.width * resolutionX);
+                final int height = Math.round(zoomY * imageDim.height * resolutionY);
 
                 if ( (offscreenImage == null) || (offscreenImage.getWidth(null) != width)
                         || (offscreenImage.getHeight(null) != height)) {
                     try {
                         offscreenImage = createImage(width, height);
-                    }
-                    catch (OutOfMemoryError error) {
+                    } catch (final OutOfMemoryError error) {
                         offscreenImage = null;
                         System.gc();
-                        
+
                         if (Preferences.is(Preferences.PREF_ZOOM_LINEAR)) {
                             if (zoomX <= 1.0f) {
                                 zoomX = 0.5f * zoomX;
-                            }
-                            else {
+                            } else {
                                 zoomX = zoomX - 1.0f;
                             }
-                            
+
                             if (zoomY <= 1.0f) {
                                 zoomY = 0.5f * zoomY;
-                            }
-                            else {
+                            } else {
                                 zoomY = zoomY - 1.0f;
                             }
 
@@ -2904,14 +2912,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                             zoomX = 0.5f * zoomX;
                             zoomY = 0.5f * zoomY;
                         }
-                        
-                        int xS = getScaledX(imageDim.width >> 2);
-                        int yS = getScaledY(imageDim.height >> 2);
-                        cursorMode = DEFAULT;
+
+                        final int xS = getScaledX(imageDim.width >> 2);
+                        final int yS = getScaledY(imageDim.height >> 2);
+                        cursorMode = ViewJComponentBase.DEFAULT;
                         setCursor(MipavUtil.defaultCursor);
                         ((ViewJFrameImage) frame).updateFrame(zoomX, zoomY, xS, yS);
-                        System.err.println("Reduced zoom because createImage in " +
-                        "ComponentEditImage.paintComponent yielded OutOfMemoryError");
+                        System.err.println("Reduced zoom because createImage in "
+                                + "ComponentEditImage.paintComponent yielded OutOfMemoryError");
 
                         return;
                     } // catch (OutOfMemoryError error)
@@ -2939,7 +2947,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             }
 
             // clip graphics to visible area on screen - this saves rendering time
-            Rectangle visibleRect = getVisibleRect();
+            final Rectangle visibleRect = getVisibleRect();
             offscreenGraphics2d.setClip(visibleRect);
 
             // build the paint image that will be blended on-screen
@@ -2961,11 +2969,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                 img.flush();
             }
 
-            int zoomedWidth = Math.round(zoomX * img.getWidth(this) * resolutionX);
-            int zoomedHeight = Math.round(zoomY * img.getHeight(this) * resolutionY);
+            final int zoomedWidth = Math.round(zoomX * img.getWidth(this) * resolutionX);
+            final int zoomedHeight = Math.round(zoomY * img.getHeight(this) * resolutionY);
 
-            if ( (interpMode == INTERPOLATE_A) || (interpMode == INTERPOLATE_BOTH)) {
-                offscreenGraphics2d.setRenderingHints(renderBilinear);
+            if ( (interpMode == ViewJComponentBase.INTERPOLATE_A)
+                    || (interpMode == ViewJComponentBase.INTERPOLATE_BOTH)) {
+                offscreenGraphics2d.setRenderingHints(ViewJComponentEditImage.renderBilinear);
             }
 
             // draw image A
@@ -2974,15 +2983,16 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
             if (imageB != null) {
 
-                if ( (interpMode == INTERPOLATE_B) || (interpMode == INTERPOLATE_BOTH)) {
-                    offscreenGraphics2d.setRenderingHints(renderBilinear);
+                if ( (interpMode == ViewJComponentBase.INTERPOLATE_B)
+                        || (interpMode == ViewJComponentBase.INTERPOLATE_BOTH)) {
+                    offscreenGraphics2d.setRenderingHints(ViewJComponentEditImage.renderBilinear);
                 } else {
-                    offscreenGraphics2d.setRenderingHints(renderNearestNeighbor);
+                    offscreenGraphics2d.setRenderingHints(ViewJComponentEditImage.renderNearestNeighbor);
                 }
 
                 // if checkerboarding is OFF, this means blending should be enabled
                 if ( ! (frame instanceof ViewJFrameLightBox)) {
-                    cleanBuffer(BOTH);
+                    cleanBuffer(ViewJComponentBase.BOTH);
                 }
 
                 if ( !isCheckerboarded()) {
@@ -3013,7 +3023,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
             // change rendering hint back from BILINEAR to nearest neighbor so that
             // all other painting will not be in interpolated mode
-            offscreenGraphics2d.setRenderingHints(renderNearestNeighbor);
+            offscreenGraphics2d.setRenderingHints(ViewJComponentEditImage.renderNearestNeighbor);
 
             offscreenGraphics2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
 
@@ -3024,8 +3034,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             paintImage.flush();
             paintImage = null;
 
-            if ( (cursorMode == PAINT_VOI)
-                    || ( (cursorMode == ERASER_PAINT) && ( (lastMouseX != OUT_OF_BOUNDS) || (lastMouseY != OUT_OF_BOUNDS)))) {
+            if ( (cursorMode == ViewJComponentBase.PAINT_VOI)
+                    || ( (cursorMode == ViewJComponentBase.ERASER_PAINT) && ( (lastMouseX != OUT_OF_BOUNDS) || (lastMouseY != OUT_OF_BOUNDS)))) {
 
                 // this method repaints the paint brush cursor without repainting the entire image
                 repaintPaintBrushCursorFast(offscreenGraphics2d);
@@ -3037,17 +3047,18 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
             drawImageText(offscreenGraphics2d); // draw image text, i.e. slice number
 
-            if ( (cursorMode == WIN_REGION) && ( (lastMouseX != OUT_OF_BOUNDS) || (lastMouseY != OUT_OF_BOUNDS))
-                    && (shiftDown == false)) {
+            if ( (cursorMode == ViewJComponentBase.WIN_REGION)
+                    && ( (lastMouseX != OUT_OF_BOUNDS) || (lastMouseY != OUT_OF_BOUNDS)) && (shiftDown == false)) {
 
-                if ( (interpMode == INTERPOLATE_B) || (interpMode == INTERPOLATE_BOTH)) {
-                    offscreenGraphics2d.setRenderingHints(renderBilinear);
+                if ( (interpMode == ViewJComponentBase.INTERPOLATE_B)
+                        || (interpMode == ViewJComponentBase.INTERPOLATE_BOTH)) {
+                    offscreenGraphics2d.setRenderingHints(ViewJComponentEditImage.renderBilinear);
                 }
 
                 if ( (lastWinRegionSlice != slice) || (cleanImageB == null)) {
-                    cleanBuffer(IMAGE_B);
+                    cleanBuffer(ViewJComponentBase.IMAGE_B);
 
-                    MemoryImageSource memImageSource = new MemoryImageSource(imageDim.width, imageDim.height,
+                    final MemoryImageSource memImageSource = new MemoryImageSource(imageDim.width, imageDim.height,
                             cleanImageBufferB, 0, imageDim.width);
 
                     cleanImageB = createImage(memImageSource);
@@ -3057,9 +3068,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                         windowedRegionSize, getZoomX(), cleanImageB);
 
                 lastWinRegionSlice = slice;
-            } else if ( (cursorMode == MAG_REGION) && ( (lastMouseX != OUT_OF_BOUNDS) || (lastMouseY != OUT_OF_BOUNDS))) {
+            } else if ( (cursorMode == ViewJComponentBase.MAG_REGION)
+                    && ( (lastMouseX != OUT_OF_BOUNDS) || (lastMouseY != OUT_OF_BOUNDS))) {
                 paintMagComponent(offscreenGraphics2d);
-            } else if (cursorMode == DEFAULT) {
+            } else if (cursorMode == ViewJComponentBase.DEFAULT) {
 
                 if ( ! (this instanceof ViewJComponentSingleRegistration) && ! (frame instanceof ViewJFrameLightBox)) {
 
@@ -3095,10 +3107,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
              * totalMemory) > 0.8) { System.err.println("repaint gc() called:\t" + memoryInUse + "\t" + totalMemory);
              * System.gc(); }
              */
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ComponentEditImge.paintComponent.");
-        } catch (Throwable t) {
+        } catch (final Throwable t) {
             t.printStackTrace();
         }
     }
@@ -3110,8 +3122,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param ty y translation
      * @param g graphics
      */
-    public void paintComponentForPrinter(int tx, int ty, Graphics g) {
-        ViewVOIVector VOIs = imageActive.getVOIs();
+    public void paintComponentForPrinter(final int tx, final int ty, final Graphics g) {
+        final ViewVOIVector VOIs = imageActive.getVOIs();
 
         if (g == null) {
             MipavUtil.displayError("ComponentEditImage.paintComponent: graphics = null");
@@ -3123,7 +3135,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
         super.paintComponent(g);
 
-        int nVOI = VOIs.size();
+        final int nVOI = VOIs.size();
 
         if (slice != -99) {
 
@@ -3134,7 +3146,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             }
         }
 
-        if (cursorMode == LEVELSET) {
+        if (cursorMode == ViewJComponentBase.LEVELSET) {
             g.setColor(Color.yellow);
             g.drawPolygon(voiHandler.getZoomedLevelSetPolygon());
             // g.drawPolygon(zoomPolygon(rbLevelSet.getLevelSetPolygon(), getZoomX(), getZoomY()));
@@ -3150,16 +3162,16 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param graphics2d graphics component
      */
-    public void paintMagComponent(Graphics2D graphics2d) {
+    public void paintMagComponent(final Graphics2D graphics2d) {
         int xNew = lastMouseX;
         int yNew = lastMouseY;
         int width = MAGR_WIDTH;
         int height = MAGR_HEIGHT;
-        float mag = ( (shiftDown == false) ? MAGR_MAG : getZoomX());
-        int imageType = imageActive.getType();
-        int imageXDim = imageActive.getExtents()[0];
-        double minIntensity = getActiveImage().getMin();
-        double maxIntensity = getActiveImage().getMax();
+        final float mag = ( (shiftDown == false) ? MAGR_MAG : getZoomX());
+        final int imageType = imageActive.getType();
+        final int imageXDim = imageActive.getExtents()[0];
+        final double minIntensity = getActiveImage().getMin();
+        final double maxIntensity = getActiveImage().getMax();
 
         int xNewO, yNewO;
         int x1, y1, xw1, yh1;
@@ -3175,63 +3187,63 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
         height = width;
 
-        xNew = (int) ( ((int) (xNew / (float) zoomX) * zoomX) + 0.5);
-        yNew = (int) ( ((int) (yNew / (float) zoomY) * zoomY) + 0.5);
+        xNew = (int) ( ((int) (xNew / zoomX) * zoomX) + 0.5);
+        yNew = (int) ( ((int) (yNew / zoomY) * zoomY) + 0.5);
 
-        int sIWidth = (int) (width / mag);
-        int sIHeight = (int) (height / mag);
+        final int sIWidth = (int) (width / mag);
+        final int sIHeight = (int) (height / mag);
 
         if (img != null) {
             xNewO = xNew - (int) (0.5f * width);
             yNewO = yNew - (int) (0.5f * height);
 
-            int sX = (int) (xNew / zoomX);
-            int sY = (int) (yNew / zoomY);
+            final int sX = (int) (xNew / zoomX);
+            final int sY = (int) (yNew / zoomY);
 
-            if ( (sX - (int) (sIWidth / 2)) < 0) {
+            if ( (sX - (sIWidth / 2)) < 0) {
                 return;
             }
 
-            if ( (sY - (int) (sIHeight / 2)) < 0) {
+            if ( (sY - (sIHeight / 2)) < 0) {
                 return;
             }
 
             // Draw zoomed portion of window
-            x2 = sX - (int) (sIWidth / 2);
+            x2 = sX - (sIWidth / 2);
             x1 = xNewO;
             xw1 = width + xNewO;
-            y2 = sY - (int) (sIHeight / 2);
+            y2 = sY - (sIHeight / 2);
             y1 = yNewO;
             yh1 = height + yNewO;
 
-            if ( (interpMode == INTERPOLATE_A) || (interpMode == INTERPOLATE_BOTH)) {
-                graphics2d.setRenderingHints(renderBilinear);
+            if ( (interpMode == ViewJComponentBase.INTERPOLATE_A)
+                    || (interpMode == ViewJComponentBase.INTERPOLATE_BOTH)) {
+                graphics2d.setRenderingHints(ViewJComponentEditImage.renderBilinear);
             } else {
-                graphics2d.setRenderingHints(renderNearestNeighbor);
+                graphics2d.setRenderingHints(ViewJComponentEditImage.renderNearestNeighbor);
             }
 
-            graphics2d.drawImage(img, x1, y1, xw1, yh1, x2, y2, sX + (int) (sIWidth / 2), sY + (int) (sIHeight / 2),
-                    this);
+            graphics2d.drawImage(img, x1, y1, xw1, yh1, x2, y2, sX + (sIWidth / 2), sY + (sIHeight / 2), this);
 
             if ( (imageB != null) && (imgB != null)) {
 
-                if ( (interpMode == INTERPOLATE_B) || (interpMode == INTERPOLATE_BOTH)) {
-                    graphics2d.setRenderingHints(renderBilinear);
+                if ( (interpMode == ViewJComponentBase.INTERPOLATE_B)
+                        || (interpMode == ViewJComponentBase.INTERPOLATE_BOTH)) {
+                    graphics2d.setRenderingHints(ViewJComponentEditImage.renderBilinear);
                 } else {
-                    graphics2d.setRenderingHints(renderNearestNeighbor);
+                    graphics2d.setRenderingHints(ViewJComponentEditImage.renderNearestNeighbor);
                 }
 
                 if ( !isCheckerboarded()) {
                     graphics2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1 - alphaBlend));
                 }
 
-                graphics2d.drawImage(imgB, x1, y1, xw1, yh1, x2, y2, sX + (int) (sIWidth / 2), sY
-                        + (int) (sIHeight / 2), this);
+                graphics2d.drawImage(imgB, x1, y1, xw1, yh1, x2, y2, sX + (sIWidth / 2), sY + (sIHeight / 2), this);
 
                 graphics2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
             }
 
-            graphics2d.setRenderingHints(renderNearestNeighbor);
+            graphics2d.setRenderingHints(ViewJComponentEditImage.renderNearestNeighbor);
 
             graphics2d.setColor(Color.red.darker());
             graphics2d.drawRect(xNewO, yNewO, width - 1, height - 1);
@@ -3247,18 +3259,18 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             }
 
             float offsetY = 0;
-            int startX = sX - (int) (sIWidth / 2);
-            int startY = sY - (int) (sIHeight / 2);
-            int endX = sX + (int) (sIWidth / 2);
-            int endY = sY + (int) (sIHeight / 2);
+            final int startX = sX - (sIWidth / 2);
+            final int startY = sY - (sIHeight / 2);
+            final int endX = sX + (sIWidth / 2);
+            final int endY = sY + (sIHeight / 2);
             int pix;
             int osX, osY;
 
-            float xwidth = (float) width / (endX - startX);
-            float yheight = (float) height / (endX - startX);
+            final float xwidth = (float) width / (endX - startX);
+            final float yheight = (float) height / (endX - startX);
 
-            int fontHeight = graphics2d.getFontMetrics(graphics2d.getFont()).getHeight();
-            int minStrWidth = graphics2d.getFontMetrics(graphics2d.getFont()).stringWidth(
+            final int fontHeight = graphics2d.getFontMetrics(graphics2d.getFont()).getHeight();
+            final int minStrWidth = graphics2d.getFontMetrics(graphics2d.getFont()).stringWidth(
                     Integer.toString((int) minIntensity));
             int maxStrWidth = graphics2d.getFontMetrics(graphics2d.getFont()).stringWidth(
                     Integer.toString((int) maxIntensity));
@@ -3267,9 +3279,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                 maxStrWidth = minStrWidth;
             }
 
-            int maxCharWidth = graphics2d.getFontMetrics(graphics2d.getFont()).charWidth('8');
-            int maxFracDigs = ( ((int) (xwidth) - maxStrWidth) / maxCharWidth) - 2;
-            NumberFormat nf = NumberFormat.getNumberInstance();
+            final int maxCharWidth = graphics2d.getFontMetrics(graphics2d.getFont()).charWidth('8');
+            final int maxFracDigs = ( ((int) (xwidth) - maxStrWidth) / maxCharWidth) - 2;
+            final NumberFormat nf = NumberFormat.getNumberInstance();
 
             if (maxFracDigs > 1) {
                 nf.setMaximumFractionDigits(maxFracDigs);
@@ -3277,10 +3289,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                 nf.setMaximumFractionDigits(1);
             }
 
-            if ( ( ( (imageType == ModelImage.FLOAT) || (imageType == ModelImage.DOUBLE)
-                    || (imageType == ModelImage.COMPLEX) || (imageType == ModelImage.ARGB) || (imageType == ModelImage.ARGB_USHORT)) && ( (maxStrWidth < (xwidth - 1 - (2 * maxCharWidth))) && (fontHeight < (yheight - 1))))
-                    || ( ( (imageType != ModelImage.FLOAT) && (imageType != ModelImage.DOUBLE)
-                            && (imageType != ModelImage.COMPLEX) && (imageType != ModelImage.ARGB) && (imageType != ModelImage.ARGB_USHORT)) && ( (maxStrWidth < (xwidth - 1)) && (fontHeight < (yheight - 1))))) {
+            if ( ( ( (imageType == ModelStorageBase.FLOAT) || (imageType == ModelStorageBase.DOUBLE)
+                    || (imageType == ModelStorageBase.COMPLEX) || (imageType == ModelStorageBase.ARGB) || (imageType == ModelStorageBase.ARGB_USHORT)) && ( (maxStrWidth < (xwidth - 1 - (2 * maxCharWidth))) && (fontHeight < (yheight - 1))))
+                    || ( ( (imageType != ModelStorageBase.FLOAT) && (imageType != ModelStorageBase.DOUBLE)
+                            && (imageType != ModelStorageBase.COMPLEX) && (imageType != ModelStorageBase.ARGB) && (imageType != ModelStorageBase.ARGB_USHORT)) && ( (maxStrWidth < (xwidth - 1)) && (fontHeight < (yheight - 1))))) {
 
                 if (showMagIntensity) {
 
@@ -3293,9 +3305,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
                             if ( (pix >= 0) && (pix < imageBufferActive.length)) {
 
-                                if ( (imageType == ModelImage.FLOAT) || (imageType == ModelImage.DOUBLE)
-                                        || (imageType == ModelImage.COMPLEX) || (imageType == ModelImage.ARGB)
-                                        || (imageType == ModelImage.ARGB_USHORT)) {
+                                if ( (imageType == ModelStorageBase.FLOAT) || (imageType == ModelStorageBase.DOUBLE)
+                                        || (imageType == ModelStorageBase.COMPLEX)
+                                        || (imageType == ModelStorageBase.ARGB)
+                                        || (imageType == ModelStorageBase.ARGB_USHORT)) {
                                     sliceString = nf.format(imageBufferActive[pix]);
                                 } else {
                                     sliceString = Integer.toString((int) imageBufferActive[pix]);
@@ -3331,13 +3344,13 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         // swap previous with current
 
         if (paintBrushPrevious != null) {
-            BitSet tempSet = (BitSet) paintBrushPrevious.clone();
-            Dimension tempDim = (Dimension) paintBrushDimPrevious.clone();
+            final BitSet tempSet = (BitSet) paintBrushPrevious.clone();
+            final Dimension tempDim = (Dimension) paintBrushDimPrevious.clone();
 
-            int prevWidth = paintImagePrevious.getWidth();
-            int prevHeight = paintImagePrevious.getHeight();
+            final int prevWidth = paintImagePrevious.getWidth();
+            final int prevHeight = paintImagePrevious.getHeight();
 
-            BufferedImage tempBImage = new BufferedImage(prevWidth, prevHeight, paintImagePrevious.getType());
+            final BufferedImage tempBImage = new BufferedImage(prevWidth, prevHeight, paintImagePrevious.getType());
 
             for (int i = 0; i < prevWidth; i++) {
 
@@ -3346,9 +3359,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                 }
             }
 
-            int curWidth = paintImage.getWidth();
-            int curHeight = paintImage.getHeight();
-            BufferedImage tempBImageCurrent = new BufferedImage(curWidth, curHeight, paintImage.getType());
+            final int curWidth = paintImage.getWidth();
+            final int curHeight = paintImage.getHeight();
+            final BufferedImage tempBImageCurrent = new BufferedImage(curWidth, curHeight, paintImage.getType());
 
             for (int i = 0; i < curWidth; i++) {
 
@@ -3376,8 +3389,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             paintBrushPrevious = (BitSet) paintBrush.clone();
             paintBrushDimPrevious = (Dimension) paintBrushDim.clone();
 
-            int width = paintImage.getWidth();
-            int height = paintImage.getHeight();
+            final int width = paintImage.getWidth();
+            final int height = paintImage.getHeight();
 
             paintImagePrevious = new BufferedImage(width, height, paintImage.getType());
 
@@ -3397,7 +3410,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param str the string to prepend to message containing region growth statistics
      */
-    public void regionGrow(String str) {
+    public void regionGrow(final String str) {
 
         if (seedPaintBitmap != null) {
             regionGrow(xPG, yPG, zPG, seedVal, str, false);
@@ -3421,7 +3434,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param str String to start line with
      * @param click whether this region grow was initiated by a click on the image
      */
-    public void regionGrow(short x, short y, short z, float value, String str, boolean click) {
+    public void regionGrow(final short x, final short y, final short z, final float value, final String str,
+            final boolean click) {
         this.regionGrow(x, y, z, value, imageActive, str, click);
     }
 
@@ -3443,8 +3457,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param leadString the string to append to the region grow output
      * @param click whether this region grow was initiated by a click on the image
      */
-    public void regionGrow(short x, short y, short z, float value, ModelImage image, String leadString, boolean click) {
-        Cursor cursor = getCursor();
+    public void regionGrow(final short x, final short y, final short z, final float value, final ModelImage image,
+            final String leadString, boolean click) {
+        final Cursor cursor = getCursor();
 
         setCursor(MipavUtil.waitCursor);
 
@@ -3493,7 +3508,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         }
 
         try {
-            AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(image, 1.0f, 1.0f);
+            final AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(image, 1.0f, 1.0f);
 
             regionGrowAlgo.setRunningInSeparateThread(false);
 
@@ -3525,7 +3540,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                         variableThresholds, timeSlice, regionGrowBounds);
                 showRegionInfo(count, leadString);
             }
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ComponentEditImage.regionGrow");
         }
@@ -3575,8 +3590,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param str String to start line with
      * @param click whether this region grow was initiated by a click on the image
      */
-    public void regionGrow(short x, short y, short z, float valueR, float valueG, float valueB, String str,
-            boolean click) {
+    public void regionGrow(final short x, final short y, final short z, final float valueR, final float valueG,
+            final float valueB, final String str, final boolean click) {
         this.regionGrow(x, y, z, valueR, valueG, valueB, imageActive, str, click);
     }
 
@@ -3600,9 +3615,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param leadString the string to append to the region grow output
      * @param click whether this region grow was initiated by a click on the image
      */
-    public void regionGrow(short x, short y, short z, float valueR, float valueG, float valueB, ModelImage image,
-            String leadString, boolean click) {
-        Cursor cursor = getCursor();
+    public void regionGrow(final short x, final short y, final short z, final float valueR, final float valueG,
+            final float valueB, final ModelImage image, final String leadString, boolean click) {
+        final Cursor cursor = getCursor();
 
         setCursor(MipavUtil.waitCursor);
 
@@ -3655,7 +3670,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         }
 
         try {
-            AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(image, 1.0f, 1.0f);
+            final AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(image, 1.0f, 1.0f);
 
             regionGrowAlgo.setRunningInSeparateThread(false);
 
@@ -3683,7 +3698,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                         regionGrowBounds);
                 showRegionInfo(count, leadString);
             }
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ComponentEditImage.regionGrow");
         }
@@ -3720,7 +3735,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param str the string to prepend to message containing region growth statistics
      */
-    public void regionGrowColor(String str) {
+    public void regionGrowColor(final String str) {
 
         if (seedPaintBitmap != null) {
             regionGrow(xPG, yPG, zPG, seedValR, seedValG, seedValB, str, false);
@@ -3771,7 +3786,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                 }
             }
 
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ComponentEditImage.resetLUT");
         }
@@ -3797,7 +3812,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param filename filename to save LUT as
      * @param dirName directory to save LUT to
      */
-    public void saveLUTandTransferFunction(String filename, String dirName) {
+    public void saveLUTandTransferFunction(final String filename, final String dirName) {
         ModelRGB rgb;
         ModelLUT lut;
         ModelImage img;
@@ -3840,20 +3855,19 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
             fileHistoLUT.writeLUTandTransferFunction();
 
-        } catch (IOException error) {
+        } catch (final IOException error) {
             MipavUtil.displayError("Error writing LUT: \n" + error.getMessage());
         }
 
     } // end saveLUTAs()
-    
-    
+
     /**
-     * This method reads a LUT and Transfer function from a file diretory specified. 
+     * This method reads a LUT and Transfer function from a file diretory specified.
      * 
-     * @param filename filename of LUT 
+     * @param filename filename of LUT
      * @param dirName directory of LUT
      */
-    public void readLUTandTFunctFrom(String filename, String dirName) {
+    public void readLUTandTFunctFrom(final String filename, final String dirName) {
         ModelRGB rgb;
         ModelLUT lut;
         ModelImage img;
@@ -3896,7 +3910,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
             fileHistoLUT.readLUTandTransferFunction(false);
 
-        } catch (IOException error) {
+        } catch (final IOException error) {
             MipavUtil.displayError("Error writing LUT: \n" + error.getMessage());
         }
 
@@ -3908,8 +3922,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
     public void saveUDLUT() {
 
         // save both the LUT and the transfer functions
-        String fName = "userdefine.lut";
-        String dName = Preferences.getPreferencesDir();
+        final String fName = "userdefine.lut";
+        final String dName = Preferences.getPreferencesDir();
 
         saveLUTandTransferFunction(fName, dName);
 
@@ -3920,18 +3934,18 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param active IMAGE_A or IMAGE_B
      */
-    public void setActiveImage(int active) {
+    public void setActiveImage(final int active) {
         winLevelSet = false;
         voiHandler.setActiveVOI_ID(active);
 
-        if ( (active == IMAGE_A) || (imageB == null)) {
+        if ( (active == ViewJComponentBase.IMAGE_A) || (imageB == null)) {
             imageActive = imageA;
             imageBufferActive = imageBufferA;
 
             if ( !paintBitmapSwitch) {
                 paintBitmap = imageA.getMask();
             }
-        } else if (active == IMAGE_B) {
+        } else if (active == ViewJComponentBase.IMAGE_B) {
             imageActive = imageB;
             imageBufferActive = imageBufferB;
         }
@@ -3944,7 +3958,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param value amount [0,100] that is the percentage of Image A to be displayed
      */
-    public void setAlphaBlend(int value) {
+    public void setAlphaBlend(final int value) {
 
         if ( (value >= 0) && (value <= 100)) {
             alphaBlend = value / 100.0f;
@@ -3961,7 +3975,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param pixBuff storage buffer used to build a displayable image
      * @param pixBuffB storage buffer used to build a displayable imageB for the window
      */
-    public void setBuffers(float[] imgBufferA, float[] imgBufferB, int[] pixBuff, int[] pixBuffB) {
+    public void setBuffers(final float[] imgBufferA, final float[] imgBufferB, final int[] pixBuff, final int[] pixBuffB) {
         imageBufferA = imgBufferA;
         imageBufferB = imgBufferB;
         cleanImageBufferA = pixBuff;
@@ -3976,12 +3990,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param rowCheckers int # of rows
      * @param columnCheckers int # of columns
      */
-    public void setCheckerboard(int rowCheckers, int columnCheckers) {
+    public void setCheckerboard(final int rowCheckers, final int columnCheckers) {
         this.nRowCheckers = rowCheckers;
         this.nColumnCheckers = columnCheckers;
 
-        ViewJFrameBase vjfb = ((ViewJComponentEditImage) this).getFrame();
-        ViewControlsImage vci = vjfb.getControls();
+        final ViewJFrameBase vjfb = (this).getFrame();
+        final ViewControlsImage vci = vjfb.getControls();
 
         if (vci != null) {
 
@@ -3998,7 +4012,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param curs the new crosshair cursor
      */
-    public void setCrosshairCursor(Cursor curs) {
+    public void setCrosshairCursor(final Cursor curs) {
         this.crosshairCursor = curs;
     }
 
@@ -4007,7 +4021,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param mode the integer mode
      */
-    public void setCursorMode(int mode) {
+    public void setCursorMode(final int mode) {
         this.cursorMode = mode;
         voiHandler.setMode(mode);
     }
@@ -4017,7 +4031,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param val whether to show the fuzzy connectedness image
      */
-    public void setDisplayFuzzy(boolean val) {
+    public void setDisplayFuzzy(final boolean val) {
         this.displayFuzzy = val;
     }
 
@@ -4026,7 +4040,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param flag true = modify, and false = locked
      */
-    public void setEnabled(boolean flag) {
+    public void setEnabled(final boolean flag) {
         modifyFlag = flag;
         voiHandler.getRubberband().setActive(flag);
     }
@@ -4036,7 +4050,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param controls the controls with color and opacity information
      */
-    public void setFrameControls(ViewControlsImage controls) {
+    public void setFrameControls(final ViewControlsImage controls) {
         frameControls = controls;
     }
 
@@ -4046,7 +4060,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param val the fuzzy connectedness threshold value
      */
-    public void setFuzzyThreshold(float val) {
+    public void setFuzzyThreshold(final float val) {
         this.fuzzyThreshold = val;
     }
 
@@ -4055,7 +4069,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param dialog the paint grow dialog
      */
-    public void setGrowDialog(RegionGrowDialog dialog) {
+    public void setGrowDialog(final RegionGrowDialog dialog) {
         growDialog = dialog;
     }
 
@@ -4064,7 +4078,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param hasThreshold1 whether the paint buffer has a threshold1
      */
-    public void setHasThreshold1(boolean hasThreshold1) {
+    public void setHasThreshold1(final boolean hasThreshold1) {
         m_kPatientSlice.setHasThreshold1(hasThreshold1);
     }
 
@@ -4073,7 +4087,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param hasThreshold2 whether the paint buffer has a threshold2
      */
-    public void setHasThreshold2(boolean hasThreshold2) {
+    public void setHasThreshold2(final boolean hasThreshold2) {
         m_kPatientSlice.setHasThreshold2(hasThreshold2);
     }
 
@@ -4082,7 +4096,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param c the new color to use.
      */
-    public void setHighlightColor(Color c) {
+    public void setHighlightColor(final Color c) {
         toppedColor = c;
     }
 
@@ -4091,7 +4105,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param image imageA
      */
-    public void setImageA(ModelImage image) {
+    public void setImageA(final ModelImage image) {
         imageA = image;
         m_kPatientSlice.setImageA(image);
         setZoom(1, 1); // sets zoom
@@ -4102,7 +4116,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param image imageB
      */
-    public void setImageB(ModelImage image) {
+    public void setImageB(final ModelImage image) {
         imageB = image;
         m_kPatientSlice.setImageB(image);
 
@@ -4119,7 +4133,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param buffer image buffer to put in the buffer for Image B
      */
-    public void setImageBufferB(float[] buffer) {
+    public void setImageBufferB(final float[] buffer) {
         imageBufferB = buffer;
     }
 
@@ -4128,7 +4142,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param imageColocalize the colocalization image
      */
-    public void setImageColocalize(ModelImage imageColocalize) {
+    public void setImageColocalize(final ModelImage imageColocalize) {
         m_kPatientSlice.setImageColocalize(imageColocalize);
     }
 
@@ -4141,7 +4155,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param imageExtents int[]
      */
-    public void setImageExtents(int[] imageExtents) {
+    public void setImageExtents(final int[] imageExtents) {
         this.imageExtents = imageExtents;
         if (m_kPatientSlice != null) {
             m_kPatientSlice.setImageExtents();
@@ -4153,7 +4167,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param intensityDropper the dropper intensity
      */
-    public void setIntensityDropper(float intensityDropper) {
+    public void setIntensityDropper(final float intensityDropper) {
         this.intensityDropper = intensityDropper;
     }
 
@@ -4162,7 +4176,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param val lower region grow delta
      */
-    public void setLess(float val) {
+    public void setLess(final float val) {
         this.less = val;
     }
 
@@ -4171,7 +4185,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param val lower region grow delta
      */
-    public void setLessB(float val) {
+    public void setLessB(final float val) {
         this.lessB = val;
     }
 
@@ -4180,7 +4194,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param val lower region grow delta
      */
-    public void setLessG(float val) {
+    public void setLessG(final float val) {
         this.lessG = val;
     }
 
@@ -4189,7 +4203,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param val lower region grow delta
      */
-    public void setLessR(float val) {
+    public void setLessR(final float val) {
         this.lessR = val;
     }
 
@@ -4198,7 +4212,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param flag if true display log of the Magnitude of the complex image
      */
-    public void setLogMagDisplay(boolean flag) {
+    public void setLogMagDisplay(final boolean flag) {
         logMagDisplay = flag;
     }
 
@@ -4207,7 +4221,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param LUT the model LUT
      */
-    public void setLUTa(ModelLUT LUT) {
+    public void setLUTa(final ModelLUT LUT) {
         LUTa = LUT;
         m_kPatientSlice.setLUTa(LUT);
     }
@@ -4217,7 +4231,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param LUT the model LUT
      */
-    public void setLUTb(ModelLUT LUT) {
+    public void setLUTb(final ModelLUT LUT) {
         LUTb = LUT;
         m_kPatientSlice.setLUTb(LUT);
     }
@@ -4227,7 +4241,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param val the maximum region grow distance
      */
-    public void setMaxDistance(int val) {
+    public void setMaxDistance(final int val) {
         this.maxDistance = val;
     }
 
@@ -4236,7 +4250,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param flag DOCUMENT ME!
      */
-    public void setModifyFlag(boolean flag) {
+    public void setModifyFlag(final boolean flag) {
         modifyFlag = flag;
     }
 
@@ -4245,7 +4259,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param val upper region grow delta
      */
-    public void setMore(float val) {
+    public void setMore(final float val) {
         this.more = val;
     }
 
@@ -4254,7 +4268,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param val upper region grow delta
      */
-    public void setMoreB(float val) {
+    public void setMoreB(final float val) {
         this.moreB = val;
     }
 
@@ -4263,7 +4277,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param val upper region grow delta
      */
-    public void setMoreG(float val) {
+    public void setMoreG(final float val) {
         this.moreG = val;
     }
 
@@ -4272,7 +4286,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param val upper region grow delta
      */
-    public void setMoreR(float val) {
+    public void setMoreR(final float val) {
         this.moreR = val;
     }
 
@@ -4281,7 +4295,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param paintBitmapSwitch if true do not getMask on a setActiveImage command
      */
-    public void setPaintBitmapSwitch(boolean paintBitmapSwitch) {
+    public void setPaintBitmapSwitch(final boolean paintBitmapSwitch) {
         this.paintBitmapSwitch = paintBitmapSwitch;
     }
 
@@ -4290,7 +4304,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param paintBrushSize the integer mode
      */
-    public void setPaintBrushSize(int paintBrushSize) {
+    public void setPaintBrushSize(final int paintBrushSize) {
         this.paintBrushSize = paintBrushSize;
     }
 
@@ -4299,7 +4313,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param mask the new paint mask
      */
-    public void setPaintMask(BitSet mask) {
+    public void setPaintMask(final BitSet mask) {
         paintBitmap = mask;
     }
 
@@ -4309,14 +4323,15 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param xS mouse x location
      * @param yS mouse y location
      */
-    public void setPixelInformationAtLocation(int xS, int yS) {
+    public void setPixelInformationAtLocation(final int xS, final int yS) {
 
         try {
             String str;
 
             if ( (imageActive.getOrigin()[0] != 0) || (imageActive.getOrigin()[1] != 0)
                     || ( (imageActive.getNDims() > 2) && (imageActive.getOrigin()[2] != 0))) {
-                String[] values = getScannerPositionLabels(imageActive, new Vector3f(xS, yS, slice));
+                final String[] values = ViewJComponentEditImage.getScannerPositionLabels(imageActive, new Vector3f(xS,
+                        yS, slice));
 
                 if (values != null) {
 
@@ -4381,7 +4396,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                     frame.setMessageText(str);
                 }
             }
-        } catch (ArrayIndexOutOfBoundsException error) {
+        } catch (final ArrayIndexOutOfBoundsException error) {
             frame.setMessageText("  X: " + String.valueOf( (xS)) + " Y: " + String.valueOf( (yS)));
         }
     }
@@ -4394,7 +4409,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param z z coordinate
      * @param val intensity at the point (x,y,z)
      */
-    public void setRegionGrowVars(short x, short y, short z, float val) {
+    public void setRegionGrowVars(final short x, final short y, final short z, final float val) {
         xPG = x;
         yPG = y;
         zPG = z;
@@ -4407,7 +4422,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param RGBT RGB table
      */
-    public void setRGBTA(ModelRGB RGBT) {
+    public void setRGBTA(final ModelRGB RGBT) {
         RGBTA = RGBT;
         m_kPatientSlice.setRGBTA(RGBT);
     }
@@ -4417,7 +4432,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param RGBT RGB table
      */
-    public void setRGBTB(ModelRGB RGBT) {
+    public void setRGBTB(final ModelRGB RGBT) {
         RGBTB = RGBT;
         m_kPatientSlice.setRGBTB(RGBT);
     }
@@ -4427,7 +4442,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param flag whether to show intensity in mag. box
      */
-    public void setShowMagIntensity(boolean flag) {
+    public void setShowMagIntensity(final boolean flag) {
         showMagIntensity = flag;
     }
 
@@ -4436,7 +4451,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param flag whether to display the slice number
      */
-    public void setShowSliceNum(boolean flag) {
+    public void setShowSliceNum(final boolean flag) {
         showSliceNumber = flag;
     }
 
@@ -4445,7 +4460,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param val the maximum region grow size
      */
-    public void setSizeLimit(int val) {
+    public void setSizeLimit(final int val) {
         this.sizeLimit = val;
     }
 
@@ -4454,7 +4469,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param _slice image slice to be displayed
      */
-    public void setSlice(int _slice) {
+    public void setSlice(final int _slice) {
         slice = _slice;
         m_kPatientSlice.updateSlice(slice);
     }
@@ -4464,7 +4479,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param str str that is painted on the lower left of image
      */
-    public void setStringOverride(String str) {
+    public void setStringOverride(final String str) {
         stringOverride = str;
     }
 
@@ -4475,7 +4490,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param useGreenThreshold whether to threshold the green paint buffer
      * @param useBlueThreshold whether to threshold the blue paint buffer
      */
-    public void setThresholdColors(boolean useRedThreshold, boolean useGreenThreshold, boolean useBlueThreshold) {
+    public void setThresholdColors(final boolean useRedThreshold, final boolean useGreenThreshold,
+            final boolean useBlueThreshold) {
         m_kPatientSlice.setThresholdColors(useRedThreshold, useGreenThreshold, useBlueThreshold);
     }
 
@@ -4485,7 +4501,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param threshold1 the first threshold
      * @param threshold2 the second threshold
      */
-    public void setThresholds(float threshold1, float threshold2) {
+    public void setThresholds(final float threshold1, final float threshold2) {
         m_kPatientSlice.setThresholds(threshold1, threshold2);
     }
 
@@ -4494,7 +4510,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param _slice the time slice to be displayed
      */
-    public void setTimeSlice(int _slice) {
+    public void setTimeSlice(final int _slice) {
         timeSlice = _slice;
     }
 
@@ -4503,7 +4519,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param val whether to use the selected VOI to get the initial variance for the fuzzy regionGrow
      */
-    public void setUseVOI(boolean val) {
+    public void setUseVOI(final boolean val) {
         this.useVOI = val;
     }
 
@@ -4512,7 +4528,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param variableThresholds boolean
      */
-    public void setVariableThresholds(boolean variableThresholds) {
+    public void setVariableThresholds(final boolean variableThresholds) {
         this.variableThresholds = variableThresholds;
     }
 
@@ -4525,7 +4541,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @return boolean to indicate if the show was successful
      */
-    public boolean show(int tSlice, int zSlice, boolean forceShow) {
+    public boolean show(final int tSlice, final int zSlice, final boolean forceShow) {
         return show(tSlice, zSlice, null, null, forceShow, interpMode);
     }
 
@@ -4540,7 +4556,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @return boolean to indicate if the show was successful
      */
-    public boolean show(int tSlice, int zSlice, ModelLUT _LUTa, ModelLUT _LUTb, boolean forceShow) {
+    public boolean show(final int tSlice, final int zSlice, final ModelLUT _LUTa, final ModelLUT _LUTb,
+            final boolean forceShow) {
         return show(tSlice, zSlice, _LUTa, _LUTb, forceShow, interpMode);
     }
 
@@ -4556,7 +4573,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @return boolean to indicate if the show was successful
      */
-    public boolean show(int tSlice, int zSlice, ModelLUT _LUTa, ModelLUT _LUTb, boolean forceShow, int interpMode) {
+    public boolean show(final int tSlice, final int zSlice, final ModelLUT _LUTa, final ModelLUT _LUTb,
+            final boolean forceShow, final int interpMode) {
 
         if (interpMode > -1) {
             setInterpolationMode(interpMode);
@@ -4573,8 +4591,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         if (m_kPatientSlice.showUsingOrientation(tSlice, cleanImageBufferA, cleanImageBufferB, forceShow, false, 0,
                 false)) {
             cleanImageB = null;
-            cleanBuffer(IMAGE_A);
-            cleanBuffer(IMAGE_B);
+            cleanBuffer(ViewJComponentBase.IMAGE_A);
+            cleanBuffer(ViewJComponentBase.IMAGE_B);
 
             slice = zSlice;
             setSliceString(String.valueOf(slice));
@@ -4612,7 +4630,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param count Number of pixels (voxels)
      * @param leadString the string to prepend to message containing region growth statistics
      */
-    public void showRegionInfo(int count, String leadString) {
+    public void showRegionInfo(final int count, final String leadString) {
         float volume;
         float area;
 
@@ -4645,7 +4663,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                             "statistics pixels = " + count + "\t  volume = " + volume + str + "\n");
                 }
             }
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ComponentEditImage.showRegionInfo");
         }
@@ -4660,7 +4678,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param stdDev Standard deviation of pixel intensities
      * @param leadString the string to prepend to message containing region growth statistics
      */
-    public void showRegionInfo(int count, float total[], float mean[], float stdDev[], String leadString) {
+    public void showRegionInfo(final int count, final float total[], final float mean[], final float stdDev[],
+            String leadString) {
         float volume;
         float area;
         int pad;
@@ -4739,7 +4758,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                 frame.getUserInterface().setDataText(
                         "blue\t\t" + total[2] + "\t\t" + mean[2] + "\t\t" + stdDev[2] + "\n");
             }
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ComponentEditImage.showRegionInfo");
         }
@@ -4788,8 +4807,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param backup whether to save the previous paint mask to allow the update to be un-done
      * @param isGrower whether this paint listener is the one that did the region grow
      */
-    public void updatePaint(BitSet region, boolean backup, boolean isGrower) {
-        
+    public void updatePaint(final BitSet region, final boolean backup, final boolean isGrower) {
+
         if (isGrower) {
 
             if (backup) {
@@ -4838,9 +4857,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         try {
             opacity = (int) (frame.getControls().getTools().getOpacity() * 255);
             paintColor = frame.getControls().getTools().getPaintColor();
-        } catch (Exception e) {}
+        } catch (final Exception e) {}
 
-        Color brushColor = new Color(paintColor.getRed(), paintColor.getGreen(), paintColor.getBlue(), opacity);
+        final Color brushColor = new Color(paintColor.getRed(), paintColor.getGreen(), paintColor.getBlue(), opacity);
         int counter = 0;
 
         for (int y = 0; y < paintBrushDim.height; y++) {
@@ -4863,7 +4882,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      *            redrawn. <code>false</code>, of course, will not let the component paint the coloured rectangle
      *            when repainted.
      */
-    public void useHighlight(boolean hilite) {
+    public void useHighlight(final boolean hilite) {
         onTop = hilite;
     }
 
@@ -4919,7 +4938,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @return DOCUMENT ME!
      */
-    protected float getZoomMagnitudeX(boolean reverse) {
+    protected float getZoomMagnitudeX(final boolean reverse) {
         return getZoomMagnitude(getZoomX(), reverse);
     }
 
@@ -4930,7 +4949,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @return DOCUMENT ME!
      */
-    protected float getZoomMagnitudeY(boolean reverse) {
+    protected float getZoomMagnitudeY(final boolean reverse) {
         return getZoomMagnitude(getZoomY(), reverse);
     }
 
@@ -4940,21 +4959,21 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param mouseEvent the mouseEvent that triggered this function call.
      */
-    protected void mousePressedPaint(MouseEvent mouseEvent) {
+    protected void mousePressedPaint(final MouseEvent mouseEvent) {
         int xS = getScaledX(mouseEvent.getX()); // zoomed x. Used as cursor
         int yS = getScaledY(mouseEvent.getY()); // zoomed y. Used as cursor
 
-        int x = mouseEvent.getX();
-        int y = mouseEvent.getY();
+        final int x = mouseEvent.getX();
+        final int y = mouseEvent.getY();
 
         if ( (xS < 0) || (xS >= imageActive.getExtents()[0]) || (yS < 0) || (yS >= imageActive.getExtents()[1])) {
             return;
         }
 
-        if (cursorMode == DROPPER_PAINT) {
+        if (cursorMode == ViewJComponentBase.DROPPER_PAINT) {
 
             if (imageActive.isColorImage() == true) {
-                Color dropperColor = new Color(
+                final Color dropperColor = new Color(
                         (int) imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 1],
                         (int) imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 2],
                         (int) imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 3]);
@@ -4965,22 +4984,22 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             }
         }
 
-        if (cursorMode == ERASER_PAINT) {
+        if (cursorMode == ViewJComponentBase.ERASER_PAINT) {
             performPaint(mouseEvent, true);
             imageActive.notifyImageDisplayListeners();
-        } else if (cursorMode == PAINT_VOI) {
+        } else if (cursorMode == ViewJComponentBase.PAINT_VOI) {
             // backup paintBitmap to paintBitmapBU
             backupPaintBitmap();
 
             xS = getScaledX(mouseEvent.getX()); // zoomed x. Used as cursor
             yS = getScaledY(mouseEvent.getY()); // zoomed y. Used as cursor
 
-            performPaint(mouseEvent, mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK);
+            performPaint(mouseEvent, mouseEvent.getModifiers() == InputEvent.BUTTON3_MASK);
             // imageActive.notifyImageDisplayListeners(); 8/12/2008-nish Commented out b/c we want update on mouse
             // release
         }
 
-        if ( (cursorMode == MAG_REGION) && (mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK)) {
+        if ( (cursorMode == ViewJComponentBase.MAG_REGION) && (mouseEvent.getModifiers() == InputEvent.BUTTON3_MASK)) {
 
             if ( (magSettings != null) && !magSettings.isVisible()) {
                 magSettings.setWidthText((int) (frame.getSize().width * 0.25));
@@ -4996,7 +5015,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @return Flag indicating success or failure.
      */
-    public boolean createImg(int slice) {
+    public boolean createImg(final int slice) {
         m_kPatientSlice.updateSlice(slice);
 
         if (m_kPatientSlice.showUsingOrientation(0, paintBuffer, null, true, false, 0, false)) {
@@ -5010,7 +5029,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param event DOCUMENT ME!
      */
-    protected void performPaint(MouseEvent event) {
+    protected void performPaint(final MouseEvent event) {
         performPaint(event, false);
     }
 
@@ -5020,25 +5039,25 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param mouseEvent MouseEvent the mouseEvent associated with this paint action
      * @param erase boolean if true, paintBitmap is cleared (erased), otherwise paintBitmap is set (painted)
      */
-    protected void performPaint(MouseEvent mouseEvent, boolean erase) {
+    protected void performPaint(final MouseEvent mouseEvent, final boolean erase) {
 
-        int xS = (int) ( (mouseEvent.getX() / (zoomX * resolutionX)) + 0.5);
+        final int xS = (int) ( (mouseEvent.getX() / (zoomX * resolutionX)) + 0.5);
 
-        int yS = (int) ( (mouseEvent.getY() / (zoomY * resolutionY)) + 0.5);
+        final int yS = (int) ( (mouseEvent.getY() / (zoomY * resolutionY)) + 0.5);
 
-        int brushSize = getBrushSize();
-        int hBrushSize = getHBrushSize();
+        final int brushSize = getBrushSize();
+        final int hBrushSize = getHBrushSize();
 
         if (paintBrush != null) {
 
-            int brushXDim = paintBrushDim.width;
-            int brushYDim = paintBrushDim.height;
+            final int brushXDim = paintBrushDim.width;
+            final int brushYDim = paintBrushDim.height;
 
             int counter = 0;
-            int offset = imageActive.getSliceSize() * slice;
+            final int offset = imageActive.getSliceSize() * slice;
 
-            int xDim = imageActive.getExtents()[0];
-            int yDim = imageActive.getExtents()[1];
+            final int xDim = imageActive.getExtents()[0];
+            final int yDim = imageActive.getExtents()[1];
 
             for (int height = 0; height < brushYDim; height++) {
 
@@ -5047,7 +5066,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                     if (paintBrush.get(counter)) {
 
                         if ( ( (xS + width) < xDim) && ( (yS + height) < yDim)) {
-                            int st = ( (yS + height) * imageActive.getExtents()[0]) + (xS + width);
+                            final int st = ( (yS + height) * imageActive.getExtents()[0]) + (xS + width);
 
                             if (erase == true) {
                                 paintBitmap.clear(offset + st);
@@ -5072,7 +5091,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             for (int j = jMin; j <= jMax; j++) {
 
                 for (int i = iMin; i <= iMax; i++) {
-                    int st = (j * imageActive.getExtents()[0]) + i;
+                    final int st = (j * imageActive.getExtents()[0]) + i;
 
                     if (erase == true) {
                         paintBitmap.clear(offset + st);
@@ -5098,7 +5117,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                 for (int j = jMin; j <= jMax; j++) {
 
                     for (int i = iMin; i <= iMax; i++) {
-                        int st = (j * imageActive.getExtents()[0]) + i;
+                        final int st = (j * imageActive.getExtents()[0]) + i;
 
                         if (erase == true) {
                             paintBitmap.clear(offset + st);
@@ -5124,16 +5143,16 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param xS the mouse x location on screen
      * @param yS the mouse y location on screen
      */
-    protected void processDefaultMouseDrag(MouseEvent mouseEvent, int xS, int yS) {
-        int xDim = imageActive.getExtents()[0];
-        int yDim = imageActive.getExtents()[1];
+    protected void processDefaultMouseDrag(final MouseEvent mouseEvent, final int xS, final int yS) {
+        final int xDim = imageActive.getExtents()[0];
+        final int yDim = imageActive.getExtents()[1];
         String str;
 
         try {
 
-            if (cursorMode == DEFAULT) {
+            if (cursorMode == ViewJComponentBase.DEFAULT) {
 
-                if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0) {
+                if ( (mouseEvent.getModifiers() & InputEvent.BUTTON3_MASK) != 0) {
 
                     // Dragging the mouse with the right mouse button pressed
                     // increases the window when going from left to right.
@@ -5141,8 +5160,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                     // increases the level when going from down to up.
                     m_kWinLevel.setAlpha(alphaBlend);
 
-                    float fX = xS / (float) xDim;
-                    float fY = yS / (float) yDim;
+                    final float fX = xS / (float) xDim;
+                    final float fY = yS / (float) yDim;
 
                     m_kWinLevel.updateWinLevel(fX, fY, !winLevelSet, m_kPatientSlice.getActiveLookupTable(),
                             imageActive);
@@ -5162,11 +5181,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             } // if (mode == DEFAULT))
 
             setPixelInformationAtLocation(xS, yS);
-        } catch (ArrayIndexOutOfBoundsException error) {
+        } catch (final ArrayIndexOutOfBoundsException error) {
             str = "  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS);
             frame.setMessageText(str);
 
-            if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
+            if ( (mouseEvent.getModifiers() & InputEvent.BUTTON2_MASK) != 0) {
                 frame.getUserInterface().setDataText("\n" + str);
             }
         }
@@ -5181,7 +5200,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
         if (pixBufferB != null) { // no need to execute if there is no image B
 
-            ViewJFrameBase vjfb = (ViewJFrameBase) frame;
+            final ViewJFrameBase vjfb = frame;
 
             ModelLUT modelLUT = vjfb.getLUTa();
 
@@ -5218,7 +5237,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             if (imageA.isColorImage() && imageB != null) {
                 int temp2, temp3;
                 for (int i = 0; i < pixBufferB.length; i++) {
-                    int temp = pixBufferB[i];
+                    final int temp = pixBufferB[i];
                     if ( !zeroToOneLUTAdj) {
                         temp2 = temp & 0x00ffffff; // apply mask. temp will equal zero if the pixel should be
                         // transparent
@@ -5254,9 +5273,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param buffer DOCUMENT ME!
      */
-    private void cleanBuffer(int buffer) {
+    private void cleanBuffer(final int buffer) {
 
-        if (buffer == IMAGE_A) {
+        if (buffer == ViewJComponentBase.IMAGE_A) {
 
             if ( (pixBuffer == null) || (pixBuffer.length != cleanImageBufferA.length)) {
                 pixBuffer = new int[cleanImageBufferA.length];
@@ -5264,7 +5283,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
             System.arraycopy(cleanImageBufferA, 0, pixBuffer, 0, cleanImageBufferA.length);
 
-        } else if (buffer == IMAGE_B) {
+        } else if (buffer == ViewJComponentBase.IMAGE_B) {
 
             if (cleanImageBufferB != null) {
 
@@ -5274,7 +5293,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
                 System.arraycopy(cleanImageBufferB, 0, pixBufferB, 0, cleanImageBufferB.length);
             }
-        } else if (buffer == BOTH) {
+        } else if (buffer == ViewJComponentBase.BOTH) {
 
             if ( (pixBuffer == null) || (pixBuffer.length != cleanImageBufferA.length)) {
                 pixBuffer = new int[cleanImageBufferA.length];
@@ -5296,7 +5315,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param offscreenGraphics2d Graphics2D graphics context to draw in
      */
-    private void drawImageText(Graphics2D offscreenGraphics2d) {
+    private void drawImageText(final Graphics2D offscreenGraphics2d) {
 
         if ( ( ((int) ( (zoomX * imageDim.width) + 0.5) - 40) > 0) && (sliceString != null)
                 && (showSliceNumber == true)) {
@@ -5320,11 +5339,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @return the calculated zoom factor
      */
-    private float getZoomMagnitude(float zoom, boolean reverse) {
+    private float getZoomMagnitude(final float zoom, final boolean reverse) {
 
         if (Preferences.is(Preferences.PREF_ZOOM_LINEAR)) {
 
-            if (cursorMode == ZOOMING_IN) {
+            if (cursorMode == ViewJComponentBase.ZOOMING_IN) {
 
                 if (reverse) {
 
@@ -5359,7 +5378,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             }
         } else { // zoomMode == EXPONENTIAL
 
-            if (cursorMode == ZOOMING_IN) {
+            if (cursorMode == ViewJComponentBase.ZOOMING_IN) {
 
                 if (reverse) {
                     return zoom * 0.5f;
@@ -5376,8 +5395,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             }
         }
     }
-
-
 
     // When the apply or close button is pressed, JDialogCheckerBoard sets the following 2 parameters used.
     /**
@@ -5396,8 +5413,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             return;
         }
 
-        ViewJFrameBase vjfb = ((ViewJComponentEditImage) this).getFrame();
-        ViewControlsImage vci = vjfb.getControls();
+        final ViewJFrameBase vjfb = (this).getFrame();
+        final ViewControlsImage vci = vjfb.getControls();
 
         if (vci != null) {
             vci.setAlphaSliderEnabled(false);
@@ -5510,58 +5527,59 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param image DOCUMENT ME!
      * @param LUT DOCUMENT ME!
      */
-    private void quickLUT(int xS, int wS, int yS, int hS, float[] imageBuffer, ModelImage image, ModelLUT LUT) {
-        if (wS > 5 && hS > 5){
-	        int xDim = image.getExtents()[0];
-	        int yDim = image.getExtents()[1];
-	
-	        float min = Float.MAX_VALUE;
-	        float max = -100000000;
-	        float[] x = new float[4];
-	        float[] y = new float[4];
-	        float[] z = new float[4];
-	        Dimension dim = new Dimension(256, 256);
-	        float minImage, maxImage;
-	
-	        for (int j = yS; j < (yS + hS); j++) {
-	
-	            for (int i = xS; i < (xS + wS); i++) {
-	
-	                if (imageBuffer[ (j * xDim) + i] > max) {
-	                    max = imageBuffer[ (j * xDim) + i];
-	                }
-	
-	                if (imageBuffer[ (j * xDim) + i] < min) {
-	                    min = imageBuffer[ (j * xDim) + i];
-	                }
-	            }
-	        }
-	
-	        if (image.getType() == ModelStorageBase.UBYTE) {
-	            minImage = 0;
-	            maxImage = 255;
-	        } else if (image.getType() == ModelStorageBase.BYTE) {
-	            minImage = -128;
-	            maxImage = 127;
-	        } else {
-	            minImage = (float) image.getMin();
-	            maxImage = (float) image.getMax();
-	        }
-	
-	        // Set LUT min max values;
-	        x[0] = minImage;
-	        x[1] = min;
-	        x[2] = max;
-	        x[3] = maxImage;
-	
-	        y[0] = dim.height - 1;
-	        y[1] = dim.height - 1;
-	        y[2] = 0;
-	        y[3] = 0;
-	
-	        LUT.getTransferFunction().importArrays(x, y, 4);
-	
-    }
+    private void quickLUT(final int xS, final int wS, final int yS, final int hS, final float[] imageBuffer,
+            final ModelImage image, final ModelLUT LUT) {
+        if (wS > 5 && hS > 5) {
+            final int xDim = image.getExtents()[0];
+            final int yDim = image.getExtents()[1];
+
+            float min = Float.MAX_VALUE;
+            float max = -100000000;
+            final float[] x = new float[4];
+            final float[] y = new float[4];
+            final float[] z = new float[4];
+            final Dimension dim = new Dimension(256, 256);
+            float minImage, maxImage;
+
+            for (int j = yS; j < (yS + hS); j++) {
+
+                for (int i = xS; i < (xS + wS); i++) {
+
+                    if (imageBuffer[ (j * xDim) + i] > max) {
+                        max = imageBuffer[ (j * xDim) + i];
+                    }
+
+                    if (imageBuffer[ (j * xDim) + i] < min) {
+                        min = imageBuffer[ (j * xDim) + i];
+                    }
+                }
+            }
+
+            if (image.getType() == ModelStorageBase.UBYTE) {
+                minImage = 0;
+                maxImage = 255;
+            } else if (image.getType() == ModelStorageBase.BYTE) {
+                minImage = -128;
+                maxImage = 127;
+            } else {
+                minImage = (float) image.getMin();
+                maxImage = (float) image.getMax();
+            }
+
+            // Set LUT min max values;
+            x[0] = minImage;
+            x[1] = min;
+            x[2] = max;
+            x[3] = maxImage;
+
+            y[0] = dim.height - 1;
+            y[1] = dim.height - 1;
+            y[2] = 0;
+            y[3] = 0;
+
+            LUT.getTransferFunction().importArrays(x, y, 4);
+
+        }
     }
 
     /**
@@ -5575,67 +5593,68 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param image DOCUMENT ME!
      * @param RGB DOCUMENT ME!
      */
-    private void quickRGB(int xS, int wS, int yS, int hS, float[] imageBuffer, ModelImage image, ModelRGB RGB) {
-        if (wS > 5 && hS > 5){
-	    	
-	    	int xDim = image.getExtents()[0];
-	        int yDim = image.getExtents()[1];
-	
-	        float[] minC = {Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE};
-	        float[] maxC = { -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
-	
-	        float min = Float.MAX_VALUE;
-	        float max = -100000000;
-	        float[][] x = new float[3][4];
-	        float[][] y = new float[3][4];
-	        float[][] z = new float[3][4];
-	        Dimension dim = new Dimension(256, 256);
-	
-	        for (int j = yS; j < (yS + hS); j++) {
-	
-	            for (int i = xS; i < (xS + wS); i++) {
-	
-	                for (int c = 0; c < 3; c++) {
-	
-	                    if (imageBuffer[ (j * xDim * 4) + (i * 4) + c + 1] > maxC[c]) {
-	                        maxC[c] = imageBuffer[ (j * xDim * 4) + (i * 4) + c + 1];
-	                    }
-	
-	                    if (imageBuffer[ (j * xDim * 4) + (i * 4) + c + 1] < minC[c]) {
-	                        minC[c] = imageBuffer[ (j * xDim * 4) + (i * 4) + c + 1];
-	                    }
-	                }
-	            }
-	        }
-	
-	        max = Math.max(maxC[0], maxC[1]);
-	        max = Math.max(maxC[2], max);
-	
-	        for (int i = 0; i < 3; i++) {
-	
-	            // Set LUT min max values;
-	            // if (imageA.isColorImage() == true) {
-	            if (image.getType() == ModelStorageBase.ARGB) {
-	                x[i][1] = minC[i];
-	                x[i][2] = maxC[i];
-	            } else {
-	                x[i][1] = minC[i] * 255 / max;
-	                x[i][2] = maxC[i] * 255 / max;
-	            }
-	
-	            x[i][0] = 0;
-	            x[i][3] = 255;
-	
-	            y[i][0] = dim.height - 1;
-	            y[i][1] = dim.height - 1;
-	            y[i][2] = 0;
-	            y[i][3] = 0;
-	        }
-	
-	        RGB.getRedFunction().importArrays(x[0], y[0], 4);
-	        RGB.getGreenFunction().importArrays(x[1], y[1], 4);
-	        RGB.getBlueFunction().importArrays(x[2], y[2], 4);
-	        RGB.makeRGB( -1);
+    private void quickRGB(final int xS, final int wS, final int yS, final int hS, final float[] imageBuffer,
+            final ModelImage image, final ModelRGB RGB) {
+        if (wS > 5 && hS > 5) {
+
+            final int xDim = image.getExtents()[0];
+            final int yDim = image.getExtents()[1];
+
+            final float[] minC = {Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE};
+            final float[] maxC = { -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
+
+            final float min = Float.MAX_VALUE;
+            float max = -100000000;
+            final float[][] x = new float[3][4];
+            final float[][] y = new float[3][4];
+            final float[][] z = new float[3][4];
+            final Dimension dim = new Dimension(256, 256);
+
+            for (int j = yS; j < (yS + hS); j++) {
+
+                for (int i = xS; i < (xS + wS); i++) {
+
+                    for (int c = 0; c < 3; c++) {
+
+                        if (imageBuffer[ (j * xDim * 4) + (i * 4) + c + 1] > maxC[c]) {
+                            maxC[c] = imageBuffer[ (j * xDim * 4) + (i * 4) + c + 1];
+                        }
+
+                        if (imageBuffer[ (j * xDim * 4) + (i * 4) + c + 1] < minC[c]) {
+                            minC[c] = imageBuffer[ (j * xDim * 4) + (i * 4) + c + 1];
+                        }
+                    }
+                }
+            }
+
+            max = Math.max(maxC[0], maxC[1]);
+            max = Math.max(maxC[2], max);
+
+            for (int i = 0; i < 3; i++) {
+
+                // Set LUT min max values;
+                // if (imageA.isColorImage() == true) {
+                if (image.getType() == ModelStorageBase.ARGB) {
+                    x[i][1] = minC[i];
+                    x[i][2] = maxC[i];
+                } else {
+                    x[i][1] = minC[i] * 255 / max;
+                    x[i][2] = maxC[i] * 255 / max;
+                }
+
+                x[i][0] = 0;
+                x[i][3] = 255;
+
+                y[i][0] = dim.height - 1;
+                y[i][1] = dim.height - 1;
+                y[i][2] = 0;
+                y[i][3] = 0;
+            }
+
+            RGB.getRedFunction().importArrays(x[0], y[0], 4);
+            RGB.getGreenFunction().importArrays(x[1], y[1], 4);
+            RGB.getBlueFunction().importArrays(x[2], y[2], 4);
+            RGB.makeRGB( -1);
         }
     }
 
@@ -5644,56 +5663,55 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param graphics2d Graphics2D the graphics context to draw in
      */
-    private void repaintImageIntensityLabelFast(Graphics2D graphics2d) {
+    private void repaintImageIntensityLabelFast(final Graphics2D graphics2d) {
 
         if ( (graphics2d == null) || (lastMouseX == OUT_OF_BOUNDS) || (lastMouseY == OUT_OF_BOUNDS)) {
             return;
         }
 
-        int xS = getScaledX(lastMouseX); // zoomed x. Used as cursor
-        int yS = getScaledY(lastMouseY); // zoomed y. Used as cursor
+        final int xS = getScaledX(lastMouseX); // zoomed x. Used as cursor
+        final int yS = getScaledY(lastMouseY); // zoomed y. Used as cursor
 
         // position where label should go
-        int x = (MipavMath.round(xS * zoomX) + 15);
-        int y = (MipavMath.round(yS * zoomY) + 35);
+        final int x = (MipavMath.round(xS * zoomX) + 15);
+        final int y = (MipavMath.round(yS * zoomY) + 35);
 
         // positions needed to determine when label should be flipped over when getting too close to edge
-        int wC = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().width;
-        int hC = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().height;
-        int xC = MipavMath.round(xS * zoomX);
-        int yC = MipavMath.round(yS * zoomY);
+        final int wC = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().width;
+        final int hC = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().height;
+        final int xC = MipavMath.round(xS * zoomX);
+        final int yC = MipavMath.round(yS * zoomY);
 
         Color textColor = null;
         Color backgroundColor = null;
 
         // set color of label text
         if (Preferences.getProperty(Preferences.PREF_INTENSITY_LABEL_COLOR) != null) {
-            String prefColor = Preferences.getProperty(Preferences.PREF_INTENSITY_LABEL_COLOR);
+            final String prefColor = Preferences.getProperty(Preferences.PREF_INTENSITY_LABEL_COLOR);
             textColor = MipavUtil.extractColor(prefColor);
         } else {
             textColor = Color.yellow;
         }
 
         if (Preferences.getProperty(Preferences.PREF_INTENSITY_LABEL_BACKGROUND_COLOR) != null) {
-            String prefColor = Preferences.getProperty(Preferences.PREF_INTENSITY_LABEL_BACKGROUND_COLOR);
+            final String prefColor = Preferences.getProperty(Preferences.PREF_INTENSITY_LABEL_BACKGROUND_COLOR);
             backgroundColor = MipavUtil.extractColor(prefColor);
         } else {
             backgroundColor = Color.black;
         }
 
         // we will only display up to 3 decimal places
-        DecimalFormat df = new DecimalFormat("0.0##");
+        final DecimalFormat df = new DecimalFormat("0.0##");
 
         graphics2d.setColor(backgroundColor);
 
         if (imageActive.isColorImage()) {
-            String red = df.format(new Float(imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 1])
-                    .doubleValue());
-            String green = df
-                    .format(new Float(imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 2])
-                            .doubleValue());
-            String blue = df.format(new Float(imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 3])
-                    .doubleValue());
+            final String red = df.format(new Float(
+                    imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 1]).doubleValue());
+            final String green = df.format(new Float(
+                    imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 2]).doubleValue());
+            final String blue = df.format(new Float(
+                    imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 3]).doubleValue());
 
             if ( ( (wC - xC) > 170) && ( (hC - yC) > 40)) {
                 graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," + green + ","
@@ -5749,7 +5767,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                         + blue, x, y - 40);
             }
         } else {
-            String intensity = df.format(new Float(imageBufferActive[ (yS * imageActive.getExtents()[0]) + xS])
+            final String intensity = df.format(new Float(imageBufferActive[ (yS * imageActive.getExtents()[0]) + xS])
                     .doubleValue());
 
             if ( ( (wC - xC) > 100) && ( (hC - yC) > 50)) {
@@ -5798,14 +5816,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param graphics2d Graphics2D the graphics context to draw in
      */
-    private void repaintPaintBrushCursorFast(Graphics2D graphics2d) {
+    private void repaintPaintBrushCursorFast(final Graphics2D graphics2d) {
 
         if ( (graphics2d == null) || (lastMouseX == OUT_OF_BOUNDS) || (lastMouseY == OUT_OF_BOUNDS)) {
             return;
         }
 
-        int xS = lastMouseX;
-        int yS = lastMouseY;
+        final int xS = lastMouseX;
+        final int yS = lastMouseY;
 
         // yx, xz
         float factor = 1f;
@@ -5830,12 +5848,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param LUT DOCUMENT ME!
      * @param image DOCUMENT ME!
      */
-    private void resetLUT(ModelLUT LUT, ModelImage image) {
+    private void resetLUT(final ModelLUT LUT, final ModelImage image) {
         float min, max;
-        float[] x = new float[4];
-        float[] y = new float[4];
-        float[] z = new float[4];
-        Dimension dim = new Dimension(256, 256);
+        final float[] x = new float[4];
+        final float[] y = new float[4];
+        final float[] z = new float[4];
+        final Dimension dim = new Dimension(256, 256);
 
         // Set LUT min max values;
         if (image.getType() == ModelStorageBase.UBYTE) {
@@ -5870,10 +5888,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param RGBT DOCUMENT ME!
      */
     private void resetRGB(ModelRGB RGBT) {
-        float[] x = new float[4];
-        float[] y = new float[4];
-        float[] z = new float[4];
-        Dimension dim = new Dimension(256, 256);
+        final float[] x = new float[4];
+        final float[] y = new float[4];
+        final float[] z = new float[4];
+        final Dimension dim = new Dimension(256, 256);
 
         // Set LUT min max values;
         x[0] = 0;
@@ -5889,7 +5907,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         y[3] = 0;
 
         if (RGBT == null) {
-            int[] RGBExtents = new int[2];
+            final int[] RGBExtents = new int[2];
             RGBExtents[0] = 4;
             RGBExtents[1] = 256;
             RGBT = new ModelRGB(RGBExtents);
@@ -5901,12 +5919,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         RGBT.makeRGB( -1);
     }
 
-   
     /**
      * 
      * @param zeroToOneLUTAdj
      */
-    public void setZeroToOneLUTAdj(boolean zeroToOneLUTAdj) {
+    public void setZeroToOneLUTAdj(final boolean zeroToOneLUTAdj) {
         this.zeroToOneLUTAdj = zeroToOneLUTAdj;
     }
 

@@ -5,7 +5,6 @@ import gov.nih.mipav.model.Kernel;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmSeparableConvolver;
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.util.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJProgressBar;
 
@@ -110,7 +109,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
         }
 
 		int imgLength = cFactor
-				* MipavUtil.calculateImageSize(srcImage.getExtents());
+				* AlgorithmBase.calculateImageSize(srcImage.getExtents());
 
 		float[] buffer = new float[imgLength];
 		try {

@@ -3,7 +3,7 @@ package gov.nih.mipav.model.algorithms;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.util.MipavUtil;
+import gov.nih.mipav.util.ThreadUtil;
 import gov.nih.mipav.view.ViewJProgressBar;
 
 import java.io.*;
@@ -3415,7 +3415,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
     						doneSignal.countDown();
     					}
     				};
-    				MipavUtil.mipavThreadPool.execute(task);
+    				ThreadUtil.mipavThreadPool.execute(task);
 
     			}
     			try {
@@ -3519,7 +3519,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
 							doneSignal.countDown();
 						}
 					};
-					MipavUtil.mipavThreadPool.execute(task);
+					ThreadUtil.mipavThreadPool.execute(task);
 
 				}
 				try {
@@ -3645,7 +3645,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
 							doneSignal.countDown();
 						}
 					};
-					MipavUtil.mipavThreadPool.execute(task);
+					ThreadUtil.mipavThreadPool.execute(task);
 
 				}
 				try {

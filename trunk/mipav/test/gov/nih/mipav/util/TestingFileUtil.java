@@ -9,7 +9,7 @@ import java.io.RandomAccessFile;
 
 import WildMagic.LibFoundation.Mathematics.GMatrixf;
 
-public class FileUtil {
+public class TestingFileUtil {
     /**
      * Read the DTI path file.
      * @param pathFileName

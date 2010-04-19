@@ -2,7 +2,7 @@ package gov.nih.mipav;
 
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.util.FileUtil;
+import gov.nih.mipav.util.TestingFileUtil;
 
 import java.io.File;
 import junit.framework.Assert;
@@ -35,7 +35,7 @@ public class MipavCoordinateSystemTest {
 	    testImageFileName = f.getPath() + File.separatorChar + "genormcor2.raw";
 		
 		srcImage = new ModelImage(ModelStorageBase.SHORT, new int[]{256, 256, 34}, "");
-        imageBuffer = FileUtil.readRawFileShort(testImageFileName, false);
+        imageBuffer = TestingFileUtil.readRawFileShort(testImageFileName, false);
         try {
           srcImage.importData(0, imageBuffer, true);
         } catch ( Exception e ) {

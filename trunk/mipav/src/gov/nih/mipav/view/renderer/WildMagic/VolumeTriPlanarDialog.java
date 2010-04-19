@@ -1,7 +1,7 @@
 package gov.nih.mipav.view.renderer.WildMagic;
 
 
-import gov.nih.mipav.MipavMath;
+import gov.nih.mipav.util.MipavMath;
 
 import gov.nih.mipav.model.structures.*;
 

@@ -8,7 +8,7 @@ package gov.nih.mipav.model.algorithms;
  */
 import gov.nih.mipav.model.GaussianKernelFactory;
 import gov.nih.mipav.model.Kernel;
-import gov.nih.mipav.util.FileUtil;
+import gov.nih.mipav.util.TestingFileUtil;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
@@ -40,9 +40,9 @@ public class AlgorithmSeparableConvolverTest extends TestCase {
     private GaussianKernelFactory gkf;
     protected void setUp(){
         float[] sigmas = new float[] {1.0f, 1.0f};
-        srcBuffer = FileUtil.readRawFileFloat(testImageFileName, false);
-        refBufferXDer = FileUtil.readRawFileFloat(xDerivativeImageFileName, false);
-        refBufferYDer = FileUtil.readRawFileFloat(yDerivativeImageFileName, false);
+        srcBuffer = TestingFileUtil.readRawFileFloat(testImageFileName, false);
+        refBufferXDer = TestingFileUtil.readRawFileFloat(xDerivativeImageFileName, false);
+        refBufferYDer = TestingFileUtil.readRawFileFloat(yDerivativeImageFileName, false);
 //        refBufferZDer = FileUtil.readRawFileFloat("test\\r_M00176_Anatomic_slice2_z_der.raw", false);
         imgLength = srcBuffer.length;
         gkf = GaussianKernelFactory.getInstance(sigmas);

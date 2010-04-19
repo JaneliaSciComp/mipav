@@ -1,6 +1,8 @@
 package gov.nih.mipav.view.dialogs;
 
 
+import gov.nih.mipav.util.ThreadUtil;
+
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.structures.ModelImage;
 
@@ -195,7 +197,6 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     /** DOCUMENT ME! */
     private JCheckBox showOutputWindow;
 
-
     /** DOCUMENT ME! */
     private final JTabbedPane tabbedPane;
 
@@ -262,7 +263,6 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         displayUserInterfacePanel.setLayout(gbl);
         displayUserInterfacePanel.setBorder(buildTitledBorder("User interface"));
         makeSplashOptions(gbc, gbl);
-
 
         displayColorPanel.setLayout(gbl);
         displayColorPanel.setBorder(buildTitledBorder("Color\\VOI"));
@@ -355,7 +355,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                 provenanceImageCheckBox.setSelected(false);
             }
         } else if (command.equalsIgnoreCase("ChooseProvenance")) {
-            
+
             final JFileChooser chooser = new JFileChooser();
 
             try {
@@ -380,7 +380,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                 provenanceFileButton.setText(shortName);
                 provenanceFileButton.setToolTipText(provenanceFilename);
             }
-            
+
         } else if (command.equalsIgnoreCase("color")) {
             final int index = voiColorChoices.getSelectedIndex();
             voiColorChoices.setBackground(voiColors[index]);
@@ -397,7 +397,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                     });
         } else if (command.equalsIgnoreCase("intensityLabelBackground")) {
             colorChooser = new ViewJColorChooser(null, "Pick label background color", new ActionListener() { // OKAY
-                                                                                                                // listener
+                        // listener
                         public void actionPerformed(final ActionEvent ae) {
                             intensityLabelBackgroundColor = colorChooser.getColor();
                             intensityLabelBackgroundButton.setBackground(intensityLabelBackgroundColor);
@@ -447,7 +447,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
             Preferences.setProperty(Preferences.PREF_SHOW_SPLASH, String.valueOf(displaySplash.isSelected()));
             Preferences.setProperty(Preferences.PREF_SHOW_LINE_ANGLE, String.valueOf(showLineVOIAngleBox.isSelected()));
-            
+
             Preferences.setProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR, MipavUtil
                     .makeColorString(preferredActiveColor));
             Preferences.setProperty(Preferences.PREF_CROSSHAIR_CURSOR, crosshairNames[crosshairChoices
@@ -703,7 +703,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                 logFileButton.setText(shortName);
                 logFileButton.setToolTipText(logFilename);
             }
-            
+
         } else if (event.getSource() == enableLoggingBox) {
 
             if (enableLoggingBox.isSelected()) {
@@ -903,8 +903,6 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
         return applyClosePanel;
     }
-
-   
 
     /**
      * Makes the "Check on frame close" option line in the globalChangesPanel If checked the user is required to reply
@@ -1420,8 +1418,6 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         showOutputWindow.setSelected(Preferences.is(Preferences.PREF_SHOW_OUTPUT));
     }
 
-
-
     /**
      * Makes the quicklist option line in the otherPanel.
      * 
@@ -1520,8 +1516,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     }
 
     protected void makeMultiThreadingEnabledOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
-        multiThreadingEnabledCheckBox = new JCheckBox("Multi-Threading Enabled("
-                + gov.nih.mipav.util.MipavUtil.getAvailableCores() + " cores)");
+        multiThreadingEnabledCheckBox = new JCheckBox("Multi-Threading Enabled(" + ThreadUtil.getAvailableCores()
+                + " cores)");
         multiThreadingEnabledCheckBox.setFont(MipavUtil.font12);
         multiThreadingEnabledCheckBox.setForeground(Color.black);
         multiThreadingEnabledCheckBox.addActionListener(this);
@@ -1537,7 +1533,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
     protected void makeGpuCompEnabledOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
         gpuCompEnabledCheckBox = new JCheckBox("GPU Computing Enabled"); // TODO: Add status of GPUs once method is
-                                                                            // implemented in Java
+        // implemented in Java
         gpuCompEnabledCheckBox.setFont(MipavUtil.font12);
         gpuCompEnabledCheckBox.setForeground(Color.black);
         gpuCompEnabledCheckBox.addActionListener(this);

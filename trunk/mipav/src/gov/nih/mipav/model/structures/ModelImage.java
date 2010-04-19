@@ -1,24 +1,24 @@
 package gov.nih.mipav.model.structures;
 
 
-import WildMagic.LibFoundation.Mathematics.Vector3f;
-
-import gov.nih.mipav.*;
+import gov.nih.mipav.MipavCoordinateSystems;
+import gov.nih.mipav.util.MipavMath;
 
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.*;
-import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.provenance.*;
+import gov.nih.mipav.model.scripting.ScriptRecorder;
+import gov.nih.mipav.model.scripting.actions.ActionChangeName;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 
 import java.io.*;
-
 import java.util.*;
 
 import javax.swing.*;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
@@ -26,13 +26,14 @@ import javax.swing.*;
  * class that supports boolean, byte, short, int, long, float, double, etc. data types. After the buffer is created the
  * minimum and maximum parameters are calculated. ModelImage is a specific buffer to addressing issues relating to
  * images.
- *
- * @author   Matthew J. McAuliffe Ph.D.
- * @version  1.0
+ * 
+ * @author Matthew J. McAuliffe Ph.D.
+ * @version 1.0
  */
 public class ModelImage extends ModelStorageBase {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 1234298038008494667L;
@@ -49,7 +50,8 @@ public class ModelImage extends ModelStorageBase {
      */
     public static final int IMAGE_B = 1;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /**
      * List of frames where this image is displayed. This is an important list, for example when the LUT of table is
@@ -65,12 +67,12 @@ public class ModelImage extends ModelStorageBase {
      * file name.
      */
     private String imageName;
-    
+
     /** If imageNameArray is not null, then a different image name will appear on every slice */
     private String imageNameArray[] = null;
 
     /** Indicates the image order when two images are displayed in the same frame. */
-    private int imageOrder = IMAGE_A;
+    private int imageOrder = ModelImage.IMAGE_A;
 
     /**
      * Mask is a binary object that is true interior to a VOI and false otherwise used in algorithms to process only on
@@ -80,15 +82,18 @@ public class ModelImage extends ModelStorageBase {
 
     /** Backup of mask for undoing. */
     private BitSet maskBU;
+
     private boolean useMask = false;
 
     /** Holds all of the images associated matrices. */
     private MatrixHolder matrixHolder;
 
-    /** Holds the data provenance (image history)  The transient keyword is used to indicate that the provenanceHolder
-     *  should not be cloned when the image is cloned.  The new cloned image creates its own provenanceHolder */
+    /**
+     * Holds the data provenance (image history) The transient keyword is used to indicate that the provenanceHolder
+     * should not be cloned when the image is cloned. The new cloned image creates its own provenanceHolder
+     */
     private transient ProvenanceHolder provenanceHolder;
-    
+
     /** Reference to talairach transform information. */
     private TalairachTransformInfo talairach;
 
@@ -100,20 +105,21 @@ public class ModelImage extends ModelStorageBase {
 
     /** List of VOIs that are displayed with this image. */
     private VOIVector voiVector = null;
-    
+
     /** List of VOIs that are displayed with this image. */
     private VOIVector voiVector3D = null;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates a new ModelImage object.
-     *
-     * @param  type        indicates type of buffer(ie. boolean, byte ...)
-     * @param  dimExtents  array indicating image extent in each dimension.
-     * @param  name        name of the image.
+     * 
+     * @param type indicates type of buffer(ie. boolean, byte ...)
+     * @param dimExtents array indicating image extent in each dimension.
+     * @param name name of the image.
      */
-    public ModelImage(int type, int[] dimExtents, String name) {
+    public ModelImage(final int type, final int[] dimExtents, final String name) {
         super(type, dimExtents);
 
         int i;
@@ -122,8 +128,8 @@ public class ModelImage extends ModelStorageBase {
         // MIPAV. I keep a reference to the userinterface here so that when an image
         // is created it can added to the hashtable in the user interface.
         UI = ViewUserInterface.getReference();
-        
-        imageName = makeImageName(name, ""); // removes suffix if one is there.
+
+        imageName = ModelImage.makeImageName(name, ""); // removes suffix if one is there.
 
         if (UI == null) {
             Preferences.debug("New ModelImage = " + imageName + ", but UI is null.");
@@ -133,13 +139,13 @@ public class ModelImage extends ModelStorageBase {
             UI.registerImage(this);
         }
 
-        float[] resolutions = new float[5];
+        final float[] resolutions = new float[5];
 
         for (i = 0; i < 5; i++) {
             resolutions[i] = (float) 1.0;
         }
 
-        int[] units = new int[5];
+        final int[] units = new int[5];
 
         for (i = 0; i < 5; i++) {
             units[i] = FileInfoBase.MILLIMETERS;
@@ -162,17 +168,17 @@ public class ModelImage extends ModelStorageBase {
         mask = new BitSet(length);
         maskBU = new BitSet(length);
 
-        //create Matrix Holder to store matrices
+        // create Matrix Holder to store matrices
         this.matrixHolder = new MatrixHolder(dimExtents.length);
 
-        //create the data provenance holder to store the image history
+        // create the data provenance holder to store the image history
         this.provenanceHolder = new ProvenanceHolder();
-        
+
         if (dimExtents.length == 2) {
             fileInfo = new FileInfoBase[1];
 
             // save the entire filename with the suffix -- helps later when saving file
-            fileInfo[0] = new FileInfoImageXML(makeImageName(name, ".xml"), null, FileUtility.XML);
+            fileInfo[0] = new FileInfoImageXML(ModelImage.makeImageName(name, ".xml"), null, FileUtility.XML);
             fileInfo[0].setExtents(dimExtents);
             fileInfo[0].setResolutions(resolutions);
             fileInfo[0].setUnitsOfMeasure(units);
@@ -183,7 +189,7 @@ public class ModelImage extends ModelStorageBase {
             for (i = 0; i < dimExtents[2]; i++) {
 
                 // save the entire filename with the suffix -- helps later when saving file
-                fileInfo[i] = new FileInfoImageXML(makeImageName(name, ".xml"), null, FileUtility.XML);
+                fileInfo[i] = new FileInfoImageXML(ModelImage.makeImageName(name, ".xml"), null, FileUtility.XML);
                 fileInfo[i].setExtents(dimExtents);
                 fileInfo[i].setResolutions(resolutions);
                 fileInfo[i].setUnitsOfMeasure(units);
@@ -195,7 +201,7 @@ public class ModelImage extends ModelStorageBase {
             for (i = 0; i < (dimExtents[2] * dimExtents[3]); i++) {
 
                 // save the entire filename with the suffix -- helps later when saving file
-                fileInfo[i] = new FileInfoImageXML(makeImageName(name, ".xml"), null, FileUtility.XML);
+                fileInfo[i] = new FileInfoImageXML(ModelImage.makeImageName(name, ".xml"), null, FileUtility.XML);
                 fileInfo[i].setExtents(dimExtents);
                 fileInfo[i].setResolutions(resolutions);
                 fileInfo[i].setUnitsOfMeasure(units);
@@ -210,49 +216,47 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Creates a new ModelImage object.
-     *
-     * @param       type        indicates type of buffer(ie. boolean, byte ...)
-     * @param       dimExtents  DOCUMENT ME!
-     * @param       name        DOCUMENT ME!
-     * @param       _UI         DOCUMENT ME!
-     *
-     * @return      DOCUMENT ME!
-     *
-     * @deprecated  DOCUMENT ME!
+     * 
+     * @param type indicates type of buffer(ie. boolean, byte ...)
+     * @param dimExtents DOCUMENT ME!
+     * @param name DOCUMENT ME!
+     * @param _UI DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
+     * 
+     * @deprecated DOCUMENT ME!
      */
-    public ModelImage(int type, int[] dimExtents, String name, ViewUserInterface _UI) {
+    public ModelImage(final int type, final int[] dimExtents, final String name, final ViewUserInterface _UI) {
         this(type, dimExtents, name);
     }
-    
-    
-    
-    
-    
-    public ModelImage(ModelSimpleImage simpleImage, String name) {
-    	this(ModelImage.FLOAT, simpleImage.extents, name);
-    	try {
-        	this.importData(0, simpleImage.data, true);
 
-        } catch (IOException ioe) {
+    public ModelImage(final ModelSimpleImage simpleImage, final String name) {
+        this(ModelStorageBase.FLOAT, simpleImage.extents, name);
+        try {
+            this.importData(0, simpleImage.data, true);
+
+        } catch (final IOException ioe) {
             System.out.println("error importing values");
 
         }
-    	
+
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Accessor that returns whether or not the given data type is a color data type.
-     *
-     * @param   dataType  The data type from a ModelImage to determine if it is of one of the three types of color
-     *                    images supported.
-     *
-     * @return  <code>true</code> if color, <code>false</code> if not color.
+     * 
+     * @param dataType The data type from a ModelImage to determine if it is of one of the three types of color images
+     *            supported.
+     * 
+     * @return <code>true</code> if color, <code>false</code> if not color.
      */
-    public static boolean isColorImage(int dataType) {
+    public static boolean isColorImage(final int dataType) {
 
-        if ((dataType == ARGB) || (dataType == ARGB_USHORT) || (dataType == ARGB_FLOAT)) {
+        if ( (dataType == ModelStorageBase.ARGB) || (dataType == ModelStorageBase.ARGB_USHORT)
+                || (dataType == ModelStorageBase.ARGB_FLOAT)) {
             return true;
         } else {
             return false;
@@ -262,10 +266,10 @@ public class ModelImage extends ModelStorageBase {
     /**
      * Add a listener to this class so that notifyListener can be used to notify all listeners to update the display of
      * the image.
-     *
-     * @param  obj  "object' to be added to the list
+     * 
+     * @param obj "object' to be added to the list
      */
-    public void addImageDisplayListener(ViewImageUpdateInterface obj) {
+    public void addImageDisplayListener(final ViewImageUpdateInterface obj) {
         if (frameList == null) {
             frameList = new Vector<ViewImageUpdateInterface>();
         }
@@ -282,14 +286,14 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * adds VOI vector for with new VOIs.
-     *
-     * @param  VOIs  VOIs to add to image
+     * 
+     * @param VOIs VOIs to add to image
      */
-    public void addVOIs(VOIVector VOIs) {
-        int nVOI = VOIs.size();
+    public void addVOIs(final VOIVector VOIs) {
+        final int nVOI = VOIs.size();
 
         for (int i = 0; i < nVOI; i++) {
-            voiVector.add((VOI)VOIs.VOIAt(i).clone());
+            voiVector.add((VOI) VOIs.VOIAt(i).clone());
         }
 
         System.gc();
@@ -297,26 +301,25 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * adds VOI vector for with new VOIs.
-     *
-     * @param  VOIs  VOIs to add to image
+     * 
+     * @param VOIs VOIs to add to image
      */
-    public void add3DVOIs(VOIVector VOIs) {
-        int nVOI = VOIs.size();
+    public void add3DVOIs(final VOIVector VOIs) {
+        final int nVOI = VOIs.size();
 
         for (int i = 0; i < nVOI; i++) {
-            voiVector3D.add((VOI)VOIs.VOIAt(i).clone());
+            voiVector3D.add((VOI) VOIs.VOIAt(i).clone());
         }
 
         System.gc();
     }
 
-
     /**
      * Anonymize the image by altering the sensitive data of each slice to something generic.
-     *
-     * @see  FileInfoDicom#anonymize
+     * 
+     * @see FileInfoDicom#anonymize
      */
-    public void anonymize(boolean[] list, boolean doRename) {
+    public void anonymize(final boolean[] list, final boolean doRename) {
         int i;
 
         if (this.isDicomImage()) { // if image is DICOM,
@@ -324,13 +327,13 @@ public class ModelImage extends ModelStorageBase {
             if (getNDims() == 2) { // and if image is a single slice
                 ((FileInfoDicom) fileInfo[0]).anonymize(list); // tell the fileInfo to anonymize itself
                 this.setFileInfo(fileInfo[0], 0); // and then make sure (by resetting) the fileInfo in this image is
-                                                  // the same as the sanitised version
+                // the same as the sanitised version
             } else { // and image has more than one slice
 
                 for (i = 0; i < getExtents()[2]; i++) { // then for all slices in this image,
                     ((FileInfoDicom) fileInfo[i]).anonymize(list); // tell the fileInfo of slice i to anonymize itself
                     this.setFileInfo(fileInfo[i], i); // and then make sure (by resetting) the ith fileInfo in this
-                                                      // image is the same as the sanitised version
+                    // image is the same as the sanitised version
                 }
             }
         } else if (this.isMincImage()) {
@@ -361,40 +364,33 @@ public class ModelImage extends ModelStorageBase {
 
         /*
          * 
-         if (fileInfo[0].getModality() == FileInfoBase.COMPUTED_TOMOGRAPHY) {
+         * if (fileInfo[0].getModality() == FileInfoBase.COMPUTED_TOMOGRAPHY) {
+         * 
+         * if (getMin() < -1024) { // Do nothing } else { setMin(-1024); }
+         * 
+         * if (getMax() > 3071) { // Do nothing } else { setMax(3071); } }
+         */
 
-            if (getMin() < -1024) { // Do nothing
-            } else {
-                setMin(-1024);
-            }
+        for (final FileInfoBase element : fileInfo) {
 
-            if (getMax() > 3071) { // Do nothing
+            if ( !isColorImage()) {
+                element.setMin(getMin());
+                element.setMax(getMax());
             } else {
-                setMax(3071);
-            }
-        }
-		*/
-        
-        for (int i = 0; i < fileInfo.length; i++) {
-
-            if (!isColorImage()) {
-                fileInfo[i].setMin(getMin());
-                fileInfo[i].setMax(getMax());
-            } else {
-                fileInfo[i].setMinR(getMinR());
-                fileInfo[i].setMaxR(getMaxR());
-                fileInfo[i].setMinG(getMinG());
-                fileInfo[i].setMaxG(getMaxG());
-                fileInfo[i].setMinB(getMinB());
-                fileInfo[i].setMaxB(getMaxB());
+                element.setMinR(getMinR());
+                element.setMaxR(getMaxR());
+                element.setMinG(getMinG());
+                element.setMaxG(getMaxG());
+                element.setMinB(getMinB());
+                element.setMaxB(getMaxB());
             }
         }
 
         // compare min and max to the last min and max
         // if they've changed, then reset the transfer function
         // in any frames
-        if ((getMin() != lastMin) || (getMax() != lastMax)) {
-            ViewJFrameImage frame = this.getParentFrame();
+        if ( (getMin() != lastMin) || (getMax() != lastMax)) {
+            final ViewJFrameImage frame = this.getParentFrame();
 
             if (frame == null) {
                 return;
@@ -425,17 +421,17 @@ public class ModelImage extends ModelStorageBase {
                 max = (float) this.getMax();
             }
 
-            float imgMin = (float) this.getMin();
-            float imgMax = (float) this.getMax();
+            final float imgMin = (float) this.getMin();
+            final float imgMax = (float) this.getMax();
 
             lut.resetTransferLine(min, imgMin, max, imgMax);
         }
     }
-    
+
     /**
      * @param dims new dimensions for image
      */
-    public void setExtents(int[] dims) {
+    public void setExtents(final int[] dims) {
         super.setExtents(dims);
         if (this.getParentFrame() != null) {
             this.getParentFrame().changeMenuEnables();
@@ -444,10 +440,10 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Changes the image dimensionality or extents.
-     *
-     * @param  dimExtents  new dimensions for mask, maskBU, and fileInfo
+     * 
+     * @param dimExtents new dimensions for mask, maskBU, and fileInfo
      */
-    public void changeExtents(int[] dimExtents) {
+    public void changeExtents(final int[] dimExtents) {
         int i;
         int length = 1;
 
@@ -467,9 +463,9 @@ public class ModelImage extends ModelStorageBase {
         maskBU = new BitSet(length);
         setExtents(dimExtents);
 
-        float[] resolutions = fileInfo[0].getResolutions();
-        int[] units = fileInfo[0].getUnitsOfMeasure();
-        int type = fileInfo[0].getDataType();
+        final float[] resolutions = fileInfo[0].getResolutions();
+        final int[] units = fileInfo[0].getUnitsOfMeasure();
+        final int type = fileInfo[0].getDataType();
 
         if (dimExtents.length == 2) {
             fileInfo = new FileInfoBase[1];
@@ -507,7 +503,7 @@ public class ModelImage extends ModelStorageBase {
     public void clearMask() {
 
         if (mask != null) {
-            int size = mask.size();
+            final int size = mask.size();
 
             for (int i = 0; i < size; i++) {
                 mask.clear(i);
@@ -518,28 +514,28 @@ public class ModelImage extends ModelStorageBase {
     /**
      * Copies the image and all data associated with the image (i.e. VOIs). Invokes the clone(String newName) method
      * with newName set to null;
-     *
-     * @return  the new copy of the image
+     * 
+     * @return the new copy of the image
      */
     public Object clone() {
-        ModelImage image = (ModelImage) this.clone(null);
+        final ModelImage image = (ModelImage) this.clone(null);
 
         image.frameList = new Vector<ViewImageUpdateInterface>();
         image.provenanceHolder = new ProvenanceHolder();
 
-        return ((Object) image);
+        return (image);
     }
 
     /**
      * Copies the image and all data associated with the image (i.e. VOIs). Sets the name of the new image to newName.
-     *
-     * @param   newName  String containing the name for the cloned image. If null then 'this' image name is appended
-     *                   with "_clone".
-     *
-     * @return  the new copy of the image
+     * 
+     * @param newName String containing the name for the cloned image. If null then 'this' image name is appended with
+     *            "_clone".
+     * 
+     * @return the new copy of the image
      */
-    public Object clone(String newName) {
-        ModelImage image = (ModelImage) super.clone();
+    public Object clone(final String newName) {
+        final ModelImage image = (ModelImage) super.clone();
 
         if (image == null) {
             return null;
@@ -563,15 +559,15 @@ public class ModelImage extends ModelStorageBase {
             UI.registerImage(image);
         }
 
-        return ((Object) image);
+        return (image);
     } // end clone(String)
 
     /**
      * Deep copies the file type info from the fromImage to the current image object.
-     *
-     * @param  fromImage  image from which to copy file type info
+     * 
+     * @param fromImage image from which to copy file type info
      */
-    public void copyFileTypeInfo(ModelImage fromImage) {
+    public void copyFileTypeInfo(final ModelImage fromImage) {
         int numInfos;
         int numFromInfos;
 
@@ -586,43 +582,42 @@ public class ModelImage extends ModelStorageBase {
             numFromInfos = fromImage.getExtents()[2] * fromImage.getExtents()[3];
         }
 
-        FileInfoBase[] fileInfo = new FileInfoBase[numInfos];
+        final FileInfoBase[] fileInfo = new FileInfoBase[numInfos];
 
         if (fromImage.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
-            FileInfoDicom oldDicomInfo = (FileInfoDicom) fromImage.getFileInfo(0);
-            FileDicomTagTable[] childTagTables = new FileDicomTagTable[numInfos - 1];
+            final FileInfoDicom oldDicomInfo = (FileInfoDicom) fromImage.getFileInfo(0);
+            final FileDicomTagTable[] childTagTables = new FileDicomTagTable[numInfos - 1];
 
             // first create all of the new file infos (reference and children) and fill them with tags from the old
-            // file info.  some of these tag values will be overridden in the next loop
+            // file info. some of these tag values will be overridden in the next loop
             for (int i = 0; i < numInfos; i++) {
 
                 if (i == 0) {
 
                     // create a new reference file info
                     fileInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
-                                                    oldDicomInfo.getFileFormat());
-                    
-                    ((FileInfoDicom)fileInfo[0]).vr_type = oldDicomInfo.vr_type;
+                            oldDicomInfo.getFileFormat());
+
+                    ((FileInfoDicom) fileInfo[0]).vr_type = oldDicomInfo.vr_type;
                 } else {
 
                     // all other slices are children of the first file info..
                     fileInfo[i] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
-                                                    oldDicomInfo.getFileFormat(), (FileInfoDicom) fileInfo[0]);
-                    
-                    ((FileInfoDicom)fileInfo[i]).vr_type = oldDicomInfo.vr_type;
+                            oldDicomInfo.getFileFormat(), (FileInfoDicom) fileInfo[0]);
+
+                    ((FileInfoDicom) fileInfo[i]).vr_type = oldDicomInfo.vr_type;
 
                     childTagTables[i - 1] = ((FileInfoDicom) fileInfo[i]).getTagTable();
                 }
 
                 if (numInfos > i) {
-                    if ( i < numFromInfos )
-                    {
-                    // more correct information for a Z-axis rotation, so copy the file info on a slice basis
-                        ((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom) fromImage.getFileInfo(i));
-                    }
-                    else
-                    {
-                        ((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom) fromImage.getFileInfo(numFromInfos-1));
+                    if (i < numFromInfos) {
+                        // more correct information for a Z-axis rotation, so copy the file info on a slice basis
+                        ((FileInfoDicom) fileInfo[i]).getTagTable()
+                                .importTags((FileInfoDicom) fromImage.getFileInfo(i));
+                    } else {
+                        ((FileInfoDicom) fileInfo[i]).getTagTable().importTags(
+                                (FileInfoDicom) fromImage.getFileInfo(numFromInfos - 1));
                     }
                 } else {
 
@@ -633,25 +628,25 @@ public class ModelImage extends ModelStorageBase {
 
             ((FileInfoDicom) fileInfo[0]).getTagTable().attachChildTagTables(childTagTables);
         } else {
-	
-        	  for (int i = 0; i < numInfos; i++) {
-            	if (getNDims() == 2) {
-            		fileInfo[i] = (FileInfoBase) getFileInfo(0).clone();
-            	}else if (getNDims() == 3) {
-	                if (getExtents()[2] > i) {
-	                    fileInfo[i] = (FileInfoBase) getFileInfo(i).clone();
-	                } else {
-	                    fileInfo[i] = (FileInfoBase) getFileInfo(0).clone();
-	                }
-            	}else {
-            		if (getExtents()[2]*getExtents()[3] > i) {
-	                    fileInfo[i] = (FileInfoBase) getFileInfo(i).clone();
-	                } else {
-	                    fileInfo[i] = (FileInfoBase) getFileInfo(0).clone();
-	                }
-            	}
+
+            for (int i = 0; i < numInfos; i++) {
+                if (getNDims() == 2) {
+                    fileInfo[i] = (FileInfoBase) getFileInfo(0).clone();
+                } else if (getNDims() == 3) {
+                    if (getExtents()[2] > i) {
+                        fileInfo[i] = (FileInfoBase) getFileInfo(i).clone();
+                    } else {
+                        fileInfo[i] = (FileInfoBase) getFileInfo(0).clone();
+                    }
+                } else {
+                    if (getExtents()[2] * getExtents()[3] > i) {
+                        fileInfo[i] = (FileInfoBase) getFileInfo(i).clone();
+                    } else {
+                        fileInfo[i] = (FileInfoBase) getFileInfo(0).clone();
+                    }
+                }
             }
-        	 
+
         }
 
         FileInfoBase.copyCoreInfo(fromImage.getFileInfo(), fileInfo);
@@ -663,25 +658,25 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Creates mask and maskBU of new length.
-     *
-     * @param  length  int
+     * 
+     * @param length int
      */
-    public void createMask(int length) {
+    public void createMask(final int length) {
         mask = new BitSet(length);
         maskBU = new BitSet(length);
     }
 
     /**
      * Displays all information about an image.
-     *
-     * @param  dialog  dialog object where image information is to be displayed
-     * @param  z       index of file information -- each image slice can have separate file information (i.e. like
-     *                 DICOM).
-     * @param  t       t slice of the fileinfo to display.
-     * @param  dicom   boolean indicating if this is a DICOM file
-     * @param  xml     boolean indicating if this is a XML file
+     * 
+     * @param dialog dialog object where image information is to be displayed
+     * @param z index of file information -- each image slice can have separate file information (i.e. like DICOM).
+     * @param t t slice of the fileinfo to display.
+     * @param dicom boolean indicating if this is a DICOM file
+     * @param xml boolean indicating if this is a XML file
      */
-    public void displayAboutInfo(JDialogBase dialog, int z, int t, boolean dicom, boolean xml) {
+    public void displayAboutInfo(final JDialogBase dialog, final int z, final int t, final boolean dicom,
+            final boolean xml) {
         int index;
 
         if (getNDims() == 2) {
@@ -699,15 +694,15 @@ public class ModelImage extends ModelStorageBase {
             ((JDialogFileInfoDICOM) dialog).displayAboutInfo(this, (FileInfoDicom) fileInfo[index], index);
         } else if (xml) {
             dialog.setTitle(dialog.getTitle() + ": " + (index));
-            fileInfo[index].displayAboutInfo((JDialogFileInfoXML) dialog, getMatrix());
-        } else if ( fileInfo[0] instanceof FileInfoMincHDF) {
-        	dialog.setTitle(dialog.getTitle() + ": " + (index));
-        	((JDialogFileInfoMincHDF)dialog).displayAboutInfo(this, (FileInfoMincHDF)fileInfo[0], index);
-        	//fileInfo[0].displayAboutInfo(dialog, getMatrix());
+            fileInfo[index].displayAboutInfo(dialog, getMatrix());
+        } else if (fileInfo[0] instanceof FileInfoMincHDF) {
+            dialog.setTitle(dialog.getTitle() + ": " + (index));
+            ((JDialogFileInfoMincHDF) dialog).displayAboutInfo(this, (FileInfoMincHDF) fileInfo[0], index);
+            // fileInfo[0].displayAboutInfo(dialog, getMatrix());
         } else {
 
             // System.out.println(" dialog = " + dialog);
-            // System.out.println(" +++++++++++++++++++++++++++++  z  = " + i);
+            // System.out.println(" +++++++++++++++++++++++++++++ z = " + i);
             // System.out.println(" fileInfo = " + fileInfo[i]);
             dialog.setTitle(dialog.getTitle() + ": " + (index));
 
@@ -724,10 +719,10 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Unregisters image and disposes of image memory and associated objects.
-     *
-     * @param  garbageCollect  boolean - A flag indicating whether or not garbage collection is invoked.
+     * 
+     * @param garbageCollect boolean - A flag indicating whether or not garbage collection is invoked.
      */
-    public void disposeLocal(boolean garbageCollect) {
+    public void disposeLocal(final boolean garbageCollect) {
         unRegisterImage();
         disposeThisImage();
 
@@ -735,47 +730,42 @@ public class ModelImage extends ModelStorageBase {
             System.gc();
         }
     }
-    
+
     /**
-     * Exports data based on the mapping the current ModelImage to a new ModelImage oriented based on 
-     * the axisOrder and axisFlip arrays.
-     *
-     * @param   axisOrderOut  The mapping of current ModelImage to the new ModelImage axes.
-     * @param   axisFlip   Invert flags for the new axes.
-     *
-     * @return  A new ModelImage. Extents, resolutions, units, origins and orientations are all updated.
+     * Exports data based on the mapping the current ModelImage to a new ModelImage oriented based on the axisOrder and
+     * axisFlip arrays.
+     * 
+     * @param axisOrderOut The mapping of current ModelImage to the new ModelImage axes.
+     * @param axisFlip Invert flags for the new axes.
+     * 
+     * @return A new ModelImage. Extents, resolutions, units, origins and orientations are all updated.
      */
-    public final ModelImage export(int[] axisOrderOut, boolean[] axisFlipOut) {
+    public final ModelImage export(final int[] axisOrderOut, final boolean[] axisFlipOut) {
 
+        final int orientationIn = getImageOrientation();
+        final int[] axisOrderIn = MipavCoordinateSystems.getAxisOrder(this, orientationIn);
 
-        int orientationIn = getImageOrientation();
-        int[] axisOrderIn = MipavCoordinateSystems.getAxisOrder(this, orientationIn);
-        
-        int orientationOut = MipavCoordinateSystems.axisOrderToImageOrientation( axisOrderOut );
-        
+        final int orientationOut = MipavCoordinateSystems.axisOrderToImageOrientation(axisOrderOut);
+
         boolean bMatched = true;
-        for ( int i = 0; i < axisOrderIn.length; i++ )
-        {
-            if ( axisOrderIn[i] != axisOrderOut[i] )
-            {
+        for (int i = 0; i < axisOrderIn.length; i++) {
+            if (axisOrderIn[i] != axisOrderOut[i]) {
                 bMatched = false;
                 break;
             }
-            if ( axisFlipOut[i] == true )
-            {
+            if (axisFlipOut[i] == true) {
                 bMatched = false;
                 break;
             }
         }
-        if ( bMatched )
-        {
-            return (ModelImage)this.clone();
+        if (bMatched) {
+            return (ModelImage) this.clone();
         }
-        int iDims = getNDims();
-        int[] extentsOut = new int[iDims];
-        float[] resolutionsOut = new float[iDims];
-        int[] unitsOfMeasureOut = new int[iDims];
-        float[] startLocationsOut = new float[iDims];
+        final int iDims = getNDims();
+        final int[] extentsOut = new int[iDims];
+        final float[] resolutionsOut = new float[iDims];
+        final int[] unitsOfMeasureOut = new int[iDims];
+        final float[] startLocationsOut = new float[iDims];
         for (int i = 0; i < iDims; i++) {
             extentsOut[i] = getExtents()[axisOrderOut[i]];
             resolutionsOut[i] = getResolutions(0)[axisOrderOut[i]];
@@ -783,43 +773,41 @@ public class ModelImage extends ModelStorageBase {
             startLocationsOut[i] = getOrigin()[axisOrderOut[i]];
         }
 
-        ModelImage kReturn = new ModelImage( getType(), extentsOut, "" );
-        if ( kReturn.fileInfo != null ) {
+        final ModelImage kReturn = new ModelImage(getType(), extentsOut, "");
+        if (kReturn.fileInfo != null) {
             for (int i = 0; i < kReturn.getFileInfo().length; i++) {
-                kReturn.fileInfo[i].setResolutions( resolutionsOut );
+                kReturn.fileInfo[i].setResolutions(resolutionsOut);
                 kReturn.fileInfo[i].setUnitsOfMeasure(unitsOfMeasureOut);
-                kReturn.fileInfo[i].setOrigin( startLocationsOut );
+                kReturn.fileInfo[i].setOrigin(startLocationsOut);
             }
         }
         try {
-            setLock(W_LOCKED);
+            setLock(ModelStorageBase.W_LOCKED);
 
+            /* Get the loop bounds, based on the coordinate-systems: transformation: */
+            final int iBound = (iDims > 0) ? getExtents()[axisOrderOut[0]] : 1;
+            final int jBound = (iDims > 1) ? getExtents()[axisOrderOut[1]] : 1;
+            final int kBound = (iDims > 2) ? getExtents()[axisOrderOut[2]] : 1;
+            final int tBound = (iDims > 3) ? getExtents()[axisOrderOut[3]] : 1;
 
-            /* Get the loop bounds, based on the coordinate-systems: transformation:  */
-            int iBound = (iDims > 0) ? getExtents()[axisOrderOut[0]] : 1;
-            int jBound = (iDims > 1) ? getExtents()[axisOrderOut[1]] : 1;
-            int kBound = (iDims > 2) ? getExtents()[axisOrderOut[2]] : 1;
-            int tBound = (iDims > 3) ? getExtents()[axisOrderOut[3]] : 1;
-
-            /* Get the loop multiplication factors for indexing into the 1D array
-             * with 3 index variables: based on the coordinate-systems:
-             * transformation:  */
-            int[] aiFactors = new int[3];
+            /*
+             * Get the loop multiplication factors for indexing into the 1D array with 3 index variables: based on the
+             * coordinate-systems: transformation:
+             */
+            final int[] aiFactors = new int[3];
             aiFactors[0] = 1;
             aiFactors[1] = (iDims > 1) ? getExtents()[0] : 1;
             aiFactors[2] = (iDims > 2) ? (getExtents()[0] * getExtents()[1]) : 1;
 
-            int iFactor = aiFactors[axisOrderOut[0]];
-            int jFactor = aiFactors[axisOrderOut[1]];
-            int kFactor = aiFactors[axisOrderOut[2]];
+            final int iFactor = aiFactors[axisOrderOut[0]];
+            final int jFactor = aiFactors[axisOrderOut[1]];
+            final int kFactor = aiFactors[axisOrderOut[2]];
 
+            final int tFactor = (iDims > 2) ? (getExtents()[0] * getExtents()[1] * getExtents()[2])
+                    : ( (iDims > 1) ? (getExtents()[0] * getExtents()[1]) : ( (iDims > 0) ? getExtents()[0] : 1));
 
-            int tFactor = (iDims > 2)
-            ? (getExtents()[0] * getExtents()[1] * getExtents()[2])
-                    : ((iDims > 1) ? (getExtents()[0] * getExtents()[1])
-                            : ((iDims > 0) ? getExtents()[0] : 1));
-
-            boolean exportComplex = ((getType() == COMPLEX) || (getType() == DCOMPLEX))? true : false;
+            final boolean exportComplex = ( (getType() == ModelStorageBase.COMPLEX) || (getType() == ModelStorageBase.DCOMPLEX)) ? true
+                    : false;
             double real, imaginary, mag;
 
             for (int t = 0; t < tBound; t++) {
@@ -845,31 +833,36 @@ public class ModelImage extends ModelStorageBase {
                                 kIndex = (kBound - 1) - k;
                             }
 
-                            int srcIndex = (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (t * tFactor);
-                            int dstIndex = t * (kBound * jBound * iBound) + k * (jBound * iBound) + j * (iBound) + i;
+                            final int srcIndex = (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor)
+                                    + (t * tFactor);
+                            final int dstIndex = t * (kBound * jBound * iBound) + k * (jBound * iBound) + j * (iBound)
+                                    + i;
 
                             /* if color: */
-                            if ((getType() == ARGB) || (getType() == ARGB_USHORT) || (getType() == ARGB_FLOAT)) {
-                                kReturn.set((dstIndex * 4) + 0, getFloat((srcIndex * 4) + 0));
-                                kReturn.set((dstIndex * 4) + 1, getFloat((srcIndex * 4) + 1));
-                                kReturn.set((dstIndex * 4) + 2, getFloat((srcIndex * 4) + 2));
-                                kReturn.set((dstIndex * 4) + 3, getFloat((srcIndex * 4) + 3));
+                            if ( (getType() == ModelStorageBase.ARGB) || (getType() == ModelStorageBase.ARGB_USHORT)
+                                    || (getType() == ModelStorageBase.ARGB_FLOAT)) {
+                                kReturn.set( (dstIndex * 4) + 0, getFloat( (srcIndex * 4) + 0));
+                                kReturn.set( (dstIndex * 4) + 1, getFloat( (srcIndex * 4) + 1));
+                                kReturn.set( (dstIndex * 4) + 2, getFloat( (srcIndex * 4) + 2));
+                                kReturn.set( (dstIndex * 4) + 3, getFloat( (srcIndex * 4) + 3));
                             }
                             /* if complex: */
-                            else if ((getType() == COMPLEX) || (getType() == DCOMPLEX)) {
+                            else if ( (getType() == ModelStorageBase.COMPLEX)
+                                    || (getType() == ModelStorageBase.DCOMPLEX)) {
 
                                 if (exportComplex) {
-                                    kReturn.set((dstIndex * 2) + 0, getFloat(srcIndex * 2));
-                                    kReturn.set((dstIndex * 2) + 1, getFloat((srcIndex * 2) + 1));
+                                    kReturn.set( (dstIndex * 2) + 0, getFloat(srcIndex * 2));
+                                    kReturn.set( (dstIndex * 2) + 1, getFloat( (srcIndex * 2) + 1));
                                 } else {
                                     real = getFloat(srcIndex * 2);
-                                    imaginary = getFloat((srcIndex * 2) + 1);
+                                    imaginary = getFloat( (srcIndex * 2) + 1);
 
                                     if (getLogMagDisplay() == true) {
-                                        mag = Math.sqrt((real * real) + (imaginary * imaginary));
-                                        kReturn.set(dstIndex, (float) (0.4342944819 * Math.log((1.0 + mag))));
+                                        mag = Math.sqrt( (real * real) + (imaginary * imaginary));
+                                        kReturn.set(dstIndex, (float) (0.4342944819 * Math.log( (1.0 + mag))));
                                     } else {
-                                        kReturn.set(dstIndex, (float) Math.sqrt((real * real) + (imaginary * imaginary)));
+                                        kReturn.set(dstIndex, (float) Math.sqrt( (real * real)
+                                                + (imaginary * imaginary)));
                                     }
                                 }
                             }
@@ -881,18 +874,17 @@ public class ModelImage extends ModelStorageBase {
                     }
                 }
             }
-        } catch (IOException error) {
-            
+        } catch (final IOException error) {
+
         } finally {
             releaseLock();
         }
-        
 
         calcStartLocations(startLocationsOut, axisOrderOut, axisFlipOut);
-        int[] axisOrientationOut = new int[3];
+        final int[] axisOrientationOut = new int[3];
         calcAxisOrientation(axisOrientationOut, axisOrderOut, axisFlipOut);
         kReturn.setImageOrientation(orientationOut);
-        if ( kReturn.fileInfo != null ) {
+        if (kReturn.fileInfo != null) {
             for (int i = 0; i < kReturn.getFileInfo().length; i++) {
                 kReturn.fileInfo[i].setAxisOrientation(axisOrientationOut);
                 kReturn.fileInfo[i].setOrigin(startLocationsOut);
@@ -902,37 +894,33 @@ public class ModelImage extends ModelStorageBase {
         return kReturn;
     }
 
-
     /**
      * Calculates the new start locations based on image orientation.
-     *
-     * @param  newLoc  float[] buffer to store the new start locations
+     * 
+     * @param newLoc float[] buffer to store the new start locations
      */
-    private void calcStartLocations(float[] newLoc, int[] axisOrder, boolean axisFlip[]) {
+    private void calcStartLocations(final float[] newLoc, final int[] axisOrder, final boolean axisFlip[]) {
 
-        float[] oldLoc = getFileInfo()[0].getOrigin();
-        float[] oldRes = getFileInfo()[0].getResolutions();
-        int[] oldDims = getExtents();
-        
-        int[] direct = new int[getNDims()];
-        int[] axisOrient = fileInfo[0].getAxisOrientation();
-        for (int i = 0; i < Math.min( 3, getNDims() ); i++) {
-            if ((axisOrient[i] == FileInfoBase.ORI_R2L_TYPE) || 
-                    (axisOrient[i] == FileInfoBase.ORI_A2P_TYPE) || 
-                    (axisOrient[i] == FileInfoBase.ORI_I2S_TYPE)) {
+        final float[] oldLoc = getFileInfo()[0].getOrigin();
+        final float[] oldRes = getFileInfo()[0].getResolutions();
+        final int[] oldDims = getExtents();
+
+        final int[] direct = new int[getNDims()];
+        final int[] axisOrient = fileInfo[0].getAxisOrientation();
+        for (int i = 0; i < Math.min(3, getNDims()); i++) {
+            if ( (axisOrient[i] == FileInfoBase.ORI_R2L_TYPE) || (axisOrient[i] == FileInfoBase.ORI_A2P_TYPE)
+                    || (axisOrient[i] == FileInfoBase.ORI_I2S_TYPE)) {
                 direct[i] = 1;
             } else {
                 direct[i] = -1;
             }
         }
-        
-        for ( int i = 0; i < newLoc.length; i++ )
-        {
+
+        for (int i = 0; i < newLoc.length; i++) {
             newLoc[i] = oldLoc[axisOrder[i]];
-            if ( axisFlip[i] )
-            {
-                int invert = direct[axisOrder[i]];
-                newLoc[i] = oldLoc[axisOrder[i]] + invert * ((oldDims[axisOrder[i]] - 1) * oldRes[axisOrder[i]]);
+            if (axisFlip[i]) {
+                final int invert = direct[axisOrder[i]];
+                newLoc[i] = oldLoc[axisOrder[i]] + invert * ( (oldDims[axisOrder[i]] - 1) * oldRes[axisOrder[i]]);
             }
             if (Math.abs(newLoc[i]) < .000001f) {
                 newLoc[i] = 0f;
@@ -942,50 +930,39 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Calculate the new image AxisOrientation, based on re-ordering the axes using axisOrder and axisFlip.
-     * @param newOrient  new image AxisOrientation (R2L or L2R, P2A or A2P, etc...)
+     * 
+     * @param newOrient new image AxisOrientation (R2L or L2R, P2A or A2P, etc...)
      * @param axisOrder re-ordering of axes
      * @param axisFlip inverting new axes.
      */
-    private void calcAxisOrientation(int[] newOrient, int[] axisOrder, boolean axisFlip[]) {
+    private void calcAxisOrientation(final int[] newOrient, final int[] axisOrder, final boolean axisFlip[]) {
 
-        int[] oldOrient = getAxisOrientation();
+        final int[] oldOrient = getAxisOrientation();
 
-        for ( int i = 0; i < newOrient.length; i++ )
-        {
+        for (int i = 0; i < newOrient.length; i++) {
             newOrient[i] = oldOrient[axisOrder[i]];
-            if ( axisFlip[i] )
-            {
-                if ( newOrient[i] == FileInfoBase.ORI_R2L_TYPE )
-                {
+            if (axisFlip[i]) {
+                if (newOrient[i] == FileInfoBase.ORI_R2L_TYPE) {
                     newOrient[i] = FileInfoBase.ORI_L2R_TYPE;
-                }
-                else if ( newOrient[i] == FileInfoBase.ORI_L2R_TYPE )
-                {
+                } else if (newOrient[i] == FileInfoBase.ORI_L2R_TYPE) {
                     newOrient[i] = FileInfoBase.ORI_R2L_TYPE;
-                }
-                else if ( newOrient[i] == FileInfoBase.ORI_P2A_TYPE )
-                {
+                } else if (newOrient[i] == FileInfoBase.ORI_P2A_TYPE) {
                     newOrient[i] = FileInfoBase.ORI_A2P_TYPE;
-                }
-                else if ( newOrient[i] == FileInfoBase.ORI_A2P_TYPE )
-                {
+                } else if (newOrient[i] == FileInfoBase.ORI_A2P_TYPE) {
                     newOrient[i] = FileInfoBase.ORI_P2A_TYPE;
-                }
-                else if ( newOrient[i] == FileInfoBase.ORI_I2S_TYPE )
-                {
+                } else if (newOrient[i] == FileInfoBase.ORI_I2S_TYPE) {
                     newOrient[i] = FileInfoBase.ORI_S2I_TYPE;
-                }
-                else if ( newOrient[i] == FileInfoBase.ORI_S2I_TYPE )
-                {
+                } else if (newOrient[i] == FileInfoBase.ORI_S2I_TYPE) {
                     newOrient[i] = FileInfoBase.ORI_I2S_TYPE;
                 }
             }
         }
     }
+
     /**
      * Forms a solid (without holes) binary image from all VOIs in the image.
-     *
-     * @return  image image of boolean type with VOI objects = 1 and background = 0
+     * 
+     * @return image image of boolean type with VOI objects = 1 and background = 0
      */
     public ModelImage generateBinaryImage() {
         return this.generateBinaryImage(false, false);
@@ -993,13 +970,13 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Forms a binary image from VOIs.
-     *
-     * @param   XOR         indicates that nested VOI contours will be exclusive ORed with other contours of the VOI
-     * @param   onlyActive  Only mask regions that are active (i.e. selected VOIs)
-     *
-     * @return  image image of boolean type with VOI objects = 1 and background = 0
+     * 
+     * @param XOR indicates that nested VOI contours will be exclusive ORed with other contours of the VOI
+     * @param onlyActive Only mask regions that are active (i.e. selected VOIs)
+     * 
+     * @return image image of boolean type with VOI objects = 1 and background = 0
      */
-    public ModelImage generateBinaryImage(boolean XOR, boolean onlyActive) {
+    public ModelImage generateBinaryImage(final boolean XOR, final boolean onlyActive) {
         ModelImage maskImage = null;
 
         if (voiVector.size() == 0) {
@@ -1007,17 +984,17 @@ public class ModelImage extends ModelStorageBase {
         }
 
         try {
-            maskImage = new ModelImage(ModelImage.BOOLEAN, this.getExtents(), "Binary Image");
+            maskImage = new ModelImage(ModelStorageBase.BOOLEAN, this.getExtents(), "Binary Image");
 
             JDialogBase.updateFileInfoOtherModality(this, maskImage);
 
             fixFileTypeInfo(maskImage);
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             throw error;
         }
 
         for (int i = 0; i < voiVector.size(); i++) {
-            ((VOI) voiVector.elementAt(i)).createBinaryImage(maskImage, XOR, onlyActive);
+            (voiVector.elementAt(i)).createBinaryImage(maskImage, XOR, onlyActive);
         }
 
         maskImage.clearMask();
@@ -1028,25 +1005,25 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Generates a solid (no holes) short image of regions defined by VOIs.
-     *
-     * @param   offset  offset value added to ID - normally 1 used to label the masked regions
-     *
-     * @return  ModelImage mask image of type short
+     * 
+     * @param offset offset value added to ID - normally 1 used to label the masked regions
+     * 
+     * @return ModelImage mask image of type short
      */
-    public ModelImage generateShortImage(int offset) {
+    public ModelImage generateShortImage(final int offset) {
         return this.generateShortImage(offset, false, false);
     }
 
     /**
      * Exports a short mask of the VOI[index]. VOI[0] = 1 ... VOI[n] = n
-     *
-     * @param   offset      offset value added to ID - normally 1. ID is used to label the masked regions
-     * @param   XOR         indicates that nested VOI contours will be exclusive ORed with other contours of the VOI
-     * @param   onlyActive  Only mask regions that are active (i.e. selected VOIs)
-     *
-     * @return  ModelImage mask image of type short
+     * 
+     * @param offset offset value added to ID - normally 1. ID is used to label the masked regions
+     * @param XOR indicates that nested VOI contours will be exclusive ORed with other contours of the VOI
+     * @param onlyActive Only mask regions that are active (i.e. selected VOIs)
+     * 
+     * @return ModelImage mask image of type short
      */
-    public ModelImage generateShortImage(int offset, boolean XOR, boolean onlyActive) {
+    public ModelImage generateShortImage(final int offset, final boolean XOR, final boolean onlyActive) {
         ModelImage maskImage = null;
 
         if (voiVector.size() == 0) {
@@ -1054,19 +1031,19 @@ public class ModelImage extends ModelStorageBase {
         }
 
         try {
-            maskImage = new ModelImage(ModelImage.SHORT, this.getExtents(), "Short Image");
+            maskImage = new ModelImage(ModelStorageBase.SHORT, this.getExtents(), "Short Image");
 
             JDialogBase.updateFileInfoOtherModality(this, maskImage);
 
             fixFileTypeInfo(maskImage);
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             throw error;
         }
 
         for (int i = 0; i < voiVector.size(); i++) {
             maskImage.clearMask();
-            if(((VOI) voiVector.elementAt(i)).getCurveType() != VOI.POINT) {
-            	((VOI) voiVector.elementAt(i)).createShortImage(maskImage, offset, XOR, onlyActive);
+            if ( (voiVector.elementAt(i)).getCurveType() != VOI.POINT) {
+                (voiVector.elementAt(i)).createShortImage(maskImage, offset, XOR, onlyActive);
             }
         }
 
@@ -1078,26 +1055,26 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Generates a solid (no holes) unsigned byte image of regions defined by VOIs.
-     *
-     * @param   offset  offset value added to ID - normally 1. ID is used to label the masked regions
-     *
-     * @return  ModelImage mask image of type unsigned byte
+     * 
+     * @param offset offset value added to ID - normally 1. ID is used to label the masked regions
+     * 
+     * @return ModelImage mask image of type unsigned byte
      */
 
-    public ModelImage generateUnsignedByteImage(int offset) {
+    public ModelImage generateUnsignedByteImage(final int offset) {
         return this.generateUnsignedByteImage(offset, false, false);
     }
 
     /**
      * Exports an unsigned byte mask of the VOI[index]. VOI[0] = 1 ... VOI[n] = n
-     *
-     * @param   offset      offset value added to ID - normally 1. ID is used to label the masked regions
-     * @param   XOR         indicates that nested VOI contours will be exclusive ORed with other contours of the VOI
-     * @param   onlyActive  Only mask regions that are active (i.e. selected VOIs)
-     *
-     * @return  ModelImage mask image of type unsigned byte
+     * 
+     * @param offset offset value added to ID - normally 1. ID is used to label the masked regions
+     * @param XOR indicates that nested VOI contours will be exclusive ORed with other contours of the VOI
+     * @param onlyActive Only mask regions that are active (i.e. selected VOIs)
+     * 
+     * @return ModelImage mask image of type unsigned byte
      */
-    public ModelImage generateUnsignedByteImage(int offset, boolean XOR, boolean onlyActive) {
+    public ModelImage generateUnsignedByteImage(final int offset, final boolean XOR, final boolean onlyActive) {
         ModelImage maskImage = null;
 
         if (voiVector.size() == 0) {
@@ -1105,18 +1082,18 @@ public class ModelImage extends ModelStorageBase {
         }
 
         try {
-            maskImage = new ModelImage(ModelImage.UBYTE, this.getExtents(), "UBYTE Image");
+            maskImage = new ModelImage(ModelStorageBase.UBYTE, this.getExtents(), "UBYTE Image");
 
             JDialogBase.updateFileInfoOtherModality(this, maskImage);
 
             fixFileTypeInfo(maskImage);
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             throw error;
         }
 
         for (int i = 0; i < voiVector.size(); i++) {
             maskImage.clearMask();
-            ((VOI) voiVector.elementAt(i)).createUByteImage(maskImage, offset, XOR, onlyActive);
+            (voiVector.elementAt(i)).createUByteImage(maskImage, offset, XOR, onlyActive);
         }
 
         maskImage.clearMask();
@@ -1127,8 +1104,8 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Generates a BitSet mask of all the VOIs and sets ImageModel mask.
-     *
-     * @return  binary mask of all VOIs returned as a BitSet object
+     * 
+     * @return binary mask of all VOIs returned as a BitSet object
      */
     public BitSet generateVOIMask() {
         return this.generateVOIMask(Preferences.is(Preferences.PREF_USE_VOI_XOR));
@@ -1136,20 +1113,20 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Generates a BitSet mask of all the VOIs and sets ImageModel mask.
-     *
-     * @param   XOR  indicates that nested VOI contours will be exclusive ORed with other contours of the VOI
-     *
-     * @return  binary mask of all VOIs returned as a BitSet object
+     * 
+     * @param XOR indicates that nested VOI contours will be exclusive ORed with other contours of the VOI
+     * 
+     * @return binary mask of all VOIs returned as a BitSet object
      */
-    public BitSet generateVOIMask(boolean XOR) {
+    public BitSet generateVOIMask(final boolean XOR) {
         int i;
-        int[] extents = getExtents();
+        final int[] extents = getExtents();
 
         if (voiVector.size() != 0) {
 
             for (i = 0; i < voiVector.size(); i++) {
 
-                // System.out.println( "ModelImage: generateVOIMask(boolean XOR)  voi = " + i );
+                // System.out.println( "ModelImage: generateVOIMask(boolean XOR) voi = " + i );
                 voiVector.VOIAt(i).createBinaryMask(mask, extents[0], extents[1], XOR, false);
             }
         }
@@ -1159,27 +1136,27 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Generates a mask of the type short - without XORing VOI contours.
-     *
-     * @param   mask   mask of VOI of type short
-     * @param   index  indicates a specific VOI used to create the mask
-     *
-     * @return  mask short mask of the VOI
+     * 
+     * @param mask mask of VOI of type short
+     * @param index indicates a specific VOI used to create the mask
+     * 
+     * @return mask short mask of the VOI
      */
-    public short[] generateVOIMask(short[] mask, int index) {
+    public short[] generateVOIMask(final short[] mask, final int index) {
         return this.generateVOIMask(mask, index, false);
     }
 
     /**
      * Generates a BitSet mask of all the VOIs and sets ImageModel mask.
-     *
-     * @param   XOR         indicates that nested VOI contours will be exclusive ORed with other contours of the VOI
-     * @param   onlyActive  Only mask regions that are active (i.e. selected )
-     *
-     * @return  binary mask of all VOIs returned as a BitSet object
+     * 
+     * @param XOR indicates that nested VOI contours will be exclusive ORed with other contours of the VOI
+     * @param onlyActive Only mask regions that are active (i.e. selected )
+     * 
+     * @return binary mask of all VOIs returned as a BitSet object
      */
-    public BitSet generateVOIMask(boolean XOR, boolean onlyActive) {
+    public BitSet generateVOIMask(final boolean XOR, final boolean onlyActive) {
         int i;
-        int[] extents = getExtents();
+        final int[] extents = getExtents();
 
         if (voiVector.size() != 0) {
 
@@ -1193,17 +1170,17 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Exports a short mask of the VOI[index].
-     *
-     * @param   mask   mask of VOI of type short
-     * @param   index  indicates a specific VOI used to create the mask
-     * @param   XOR    indicates that nested VOI contours will be exclusive ORed with other contours of the VOI
-     *
-     * @return  mask short mask of the VOI
+     * 
+     * @param mask mask of VOI of type short
+     * @param index indicates a specific VOI used to create the mask
+     * @param XOR indicates that nested VOI contours will be exclusive ORed with other contours of the VOI
+     * 
+     * @return mask short mask of the VOI
      */
-    public short[] generateVOIMask(short[] mask, int index, boolean XOR) {
+    public short[] generateVOIMask(final short[] mask, final int index, final boolean XOR) {
 
         if (voiVector.size() != 0) {
-            return (((VOI) voiVector.elementAt(index)).createShortMask(getExtents()[0], getExtents()[1], mask, XOR));
+            return ( (voiVector.elementAt(index)).createShortMask(getExtents()[0], getExtents()[1], mask, XOR));
         } else {
             return null;
         }
@@ -1211,8 +1188,8 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Method that returns the animate frame if it exists else returns null.
-     *
-     * @return  animate frame
+     * 
+     * @return animate frame
      */
     public ViewJFrameAnimate getAnimateFrame() {
 
@@ -1228,8 +1205,8 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Method that returns the HistoLUT frame if it exists else returns null.
-     *
-     * @return  histoLUTFrame
+     * 
+     * @return histoLUTFrame
      */
     public ViewJFrameHistoLUT getHistoLUTFrame() {
 
@@ -1248,8 +1225,8 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Method that returns the HistoRGB frame if it exists else returns null.
-     *
-     * @return  histoRGBFrame
+     * 
+     * @return histoRGBFrame
      */
     public ViewJFrameHistoRGB getHistoRGBFrame() {
 
@@ -1266,11 +1243,11 @@ public class ModelImage extends ModelStorageBase {
 
         return null;
     }
-  
+
     /**
      * Calculates translation offset for transforming image about the center of the image.
-     *
-     * @return  Center of image in pixels.
+     * 
+     * @return Center of image in pixels.
      */
     public Vector3f getImageCenter() {
         Vector3f center;
@@ -1285,7 +1262,7 @@ public class ModelImage extends ModelStorageBase {
             } else {
                 center.Z = 0f;
             }
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("getImageCenter: Out of memory error");
             center = null;
             System.gc();
@@ -1296,30 +1273,28 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Calculates translation offset for transforming image about the center of the image in the resolution space.
-     *
-     * @param   useScanner  DOCUMENT ME!
-     *
-     * @return  Center of the image in millimeters (or other physical dimension).
+     * 
+     * @param useScanner DOCUMENT ME!
+     * 
+     * @return Center of the image in millimeters (or other physical dimension).
      */
-    public Vector3f getImageCentermm(boolean useScanner) {
+    public Vector3f getImageCentermm(final boolean useScanner) {
         Vector3f center;
         center = new Vector3f();
 
         if (useScanner && (getExtents().length > 2)) {
             MipavCoordinateSystems.scannerToFile(new Vector3f(0f, 0f, 0f), center, this);
 
-            if ((center.X >= 0) && (center.X <= getExtents()[0]) && (center.Y >= 0) && (center.Y <= getExtents()[1]) &&
-                    (center.Z >= 0) && (center.Z <= getExtents()[2])) {
+            if ( (center.X >= 0) && (center.X <= getExtents()[0]) && (center.Y >= 0) && (center.Y <= getExtents()[1])
+                    && (center.Z >= 0) && (center.Z <= getExtents()[2])) {
 
                 center.X *= fileInfo[0].getResolutions()[0];
                 center.Y *= fileInfo[0].getResolutions()[1];
                 center.Z *= fileInfo[0].getResolutions()[2];
 
-
                 return center;
             }
         }
-
 
         try {
 
@@ -1332,7 +1307,7 @@ public class ModelImage extends ModelStorageBase {
             } else {
                 center.Z = 0f;
             }
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("GetImageCentermm: Out of memory error");
             center = null;
             System.gc();
@@ -1343,13 +1318,13 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Returns the directory where the image file is located.
-     *
-     * @return  The directory where the image file resides.
+     * 
+     * @return The directory where the image file resides.
      */
     public String getImageDirectory() {
 
         if (fileInfo != null) {
-        	//System.out.println(fileInfo[0].getFileDirectory());
+            // System.out.println(fileInfo[0].getFileDirectory());
             return fileInfo[0].getFileDirectory();
         } else {
             return null;
@@ -1358,24 +1333,23 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Returns the file name of the image.
-     *
-     * @return  the String that represents the filename (as stored in the fileinfo)
+     * 
+     * @return the String that represents the filename (as stored in the fileinfo)
      */
     public String getImageFileName() {
 
         if (fileInfo != null) {
-        	//System.out.println(fileInfo[0].getFileName());
+            // System.out.println(fileInfo[0].getFileName());
             return fileInfo[0].getFileName();
         } else {
             return null;
         }
     }
 
-
     /**
      * Accessor that returns.
-     *
-     * @return  image frame vector
+     * 
+     * @return image frame vector
      */
     public Vector<ViewImageUpdateInterface> getImageFrameVector() {
 
@@ -1385,7 +1359,7 @@ public class ModelImage extends ModelStorageBase {
             if (frameList != null) {
 
                 for (int i = 0; i < frameList.size(); i++) {
-                    Preferences.debug(((JFrame) (frameList.elementAt(i))).getTitle() + "\n");
+                    Preferences.debug( ((JFrame) (frameList.elementAt(i))).getTitle() + "\n");
                 }
             }
 
@@ -1397,8 +1371,8 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Returns the type of image.
-     *
-     * @return  type of image (MRI, CT, ...)
+     * 
+     * @return type of image (MRI, CT, ...)
      */
     public int getImageModality() {
 
@@ -1411,9 +1385,9 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Accessor that returns the name of the image.
-     *
-     * @return  the String representing the filename if DICOM image then ImageName is the patients' name else, imageName
-     *          is the file name (see the contructor for more)
+     * 
+     * @return the String representing the filename if DICOM image then ImageName is the patients' name else, imageName
+     *         is the file name (see the contructor for more)
      */
     public String getImageName() {
 
@@ -1426,8 +1400,8 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * For multiple image viewers this indicates order of the image.
-     *
-     * @return  integer indicating image order
+     * 
+     * @return integer indicating image order
      */
     public int getImageOrder() {
         return imageOrder;
@@ -1435,8 +1409,8 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Method that returns the lightbox frame if it exists else returns null.
-     *
-     * @return  lightbox frame
+     * 
+     * @return lightbox frame
      */
     public ViewJFrameLightBox getLightBoxFrame() {
 
@@ -1455,8 +1429,8 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Accessor that returns.
-     *
-     * @return  mask that indicates which pixels/voxels will be processed.
+     * 
+     * @return mask that indicates which pixels/voxels will be processed.
      */
     public BitSet getMask() {
         return mask;
@@ -1464,22 +1438,21 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Accessor that returns.
-     *
-     * @return  a bakeup of mask that indicates which pixels/voxels will be processed.
+     * 
+     * @return a bakeup of mask that indicates which pixels/voxels will be processed.
      */
     public BitSet getMaskBU() {
         return maskBU;
     }
-    
-    public void useMask(boolean bOn)
-    {
+
+    public void useMask(final boolean bOn) {
         useMask = bOn;
     }
 
     /**
      * Accessor that returns transformation matrix.
-     *
-     * @return  transformation matrix
+     * 
+     * @return transformation matrix
      */
     public TransMatrix getMatrix() {
         return matrixHolder.getCompositeMatrix(true);
@@ -1487,26 +1460,26 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public MatrixHolder getMatrixHolder() {
         return matrixHolder;
     }
 
     public ProvenanceHolder getProvenanceHolder() {
-    	return this.provenanceHolder;
+        return this.provenanceHolder;
     }
-    
+
     /**
      * If no LUT or RGB color table is defined, this returns the packed int value for the color at iIndexs for the input
      * ModelImage kImage:
-     *
-     * @param   iIndex  pixel index
-     *
-     * @return  RGB color value.
+     * 
+     * @param iIndex pixel index
+     * 
+     * @return RGB color value.
      */
-    public final int getPackedColor(int iIndex) {
+    public final int getPackedColor(final int iIndex) {
         int iRed = 0;
         int iGreen = 0;
         int iBlue = 0;
@@ -1517,22 +1490,28 @@ public class ModelImage extends ModelStorageBase {
             iGreen = this.getC(iIndex, 2).byteValue();
             iBlue = this.getC(iIndex, 3).byteValue();
         } else if (this.getType() == ModelStorageBase.ARGB_USHORT) {
-            Number kRed = new Double(255 * (this.getC(iIndex, 1).shortValue() - this.getMin()) / (this.getMax() - this.getMin()));
-            iRed = kRed.byteValue(); 
-            Number kGreen = new Double(255 * (this.getC(iIndex, 2).shortValue() - this.getMin()) / (this.getMax() - this.getMin()));
+            final Number kRed = new Double(255 * (this.getC(iIndex, 1).shortValue() - this.getMin())
+                    / (this.getMax() - this.getMin()));
+            iRed = kRed.byteValue();
+            final Number kGreen = new Double(255 * (this.getC(iIndex, 2).shortValue() - this.getMin())
+                    / (this.getMax() - this.getMin()));
             iGreen = kGreen.byteValue();
-            Number kBlue = new Double(255 * (this.getC(iIndex, 3).shortValue() - this.getMin()) / (this.getMax() - this.getMin()));
-            iBlue = kBlue.byteValue();   
+            final Number kBlue = new Double(255 * (this.getC(iIndex, 3).shortValue() - this.getMin())
+                    / (this.getMax() - this.getMin()));
+            iBlue = kBlue.byteValue();
         } else if (this.getType() == ModelStorageBase.ARGB_FLOAT) {
-            Number kRed = new Double(255 * (this.getC(iIndex, 1).floatValue() - this.getMin()) / (this.getMax() - this.getMin()));
-            iRed = kRed.byteValue(); 
-            Number kGreen = new Double(255 * (this.getC(iIndex, 2).floatValue() - this.getMin()) / (this.getMax() - this.getMin()));
+            final Number kRed = new Double(255 * (this.getC(iIndex, 1).floatValue() - this.getMin())
+                    / (this.getMax() - this.getMin()));
+            iRed = kRed.byteValue();
+            final Number kGreen = new Double(255 * (this.getC(iIndex, 2).floatValue() - this.getMin())
+                    / (this.getMax() - this.getMin()));
             iGreen = kGreen.byteValue();
-            Number kBlue = new Double(255 * (this.getC(iIndex, 3).floatValue() - this.getMin()) / (this.getMax() - this.getMin()));
-            iBlue = kBlue.byteValue();   
-        }
-        else {
-            Number kGray = new Double(255 * (this.getFloat(iIndex) - this.getMin()) / (this.getMax() - this.getMin()));
+            final Number kBlue = new Double(255 * (this.getC(iIndex, 3).floatValue() - this.getMin())
+                    / (this.getMax() - this.getMin()));
+            iBlue = kBlue.byteValue();
+        } else {
+            final Number kGray = new Double(255 * (this.getFloat(iIndex) - this.getMin())
+                    / (this.getMax() - this.getMin()));
             iRed = kGray.byteValue();
             iGreen = iRed;
             iBlue = iRed;
@@ -1548,8 +1527,8 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Returns the parent frame of this image. Should always exist.
-     *
-     * @return  The parent frame of this image.
+     * 
+     * @return The parent frame of this image.
      */
     public ViewJFrameImage getParentFrame() {
 
@@ -1571,15 +1550,16 @@ public class ModelImage extends ModelStorageBase {
     /**
      * Extract an arbitrary slice plane from the image using tri-linear interpolation. Performs bounds checking and
      * returns a full plane of the image (up to the slicesize * 2).
-     *
-     * @param   topLeft   the top left point of the plane; must be in the image coord system.
-     * @param   topRight  the top right point of the plane; must be in the image coord system.
-     * @param   botLeft   the bottom left point of the plane; must be in the image coord system.
-     * @param   botRight  the bottom right point of the plane; must be in the image coord system. not really used..
-     *
-     * @return  a float buffer containing the extracted plane (size == image.getSliceSize() 2).
+     * 
+     * @param topLeft the top left point of the plane; must be in the image coord system.
+     * @param topRight the top right point of the plane; must be in the image coord system.
+     * @param botLeft the bottom left point of the plane; must be in the image coord system.
+     * @param botRight the bottom right point of the plane; must be in the image coord system. not really used..
+     * 
+     * @return a float buffer containing the extracted plane (size == image.getSliceSize() 2).
      */
-    public final float[] getPlane(Vector3f topLeft, Vector3f topRight, Vector3f botLeft, Vector3f botRight) {
+    public final float[] getPlane(final Vector3f topLeft, final Vector3f topRight, final Vector3f botLeft,
+            final Vector3f botRight) {
         double x, y, z;
         int i, j, index;
 
@@ -1587,9 +1567,9 @@ public class ModelImage extends ModelStorageBase {
         // move down a distance determined by the line (topLeft, botLeft) divided by extents[1]
         // stop when slicesize pixels have been filled (and we should reach botRight..)
 
-        float xRes = getFileInfo(0).getResolutions()[0];
-        float yRes = getFileInfo(0).getResolutions()[1];
-        float zRes = getFileInfo(0).getResolutions()[2];
+        final float xRes = getFileInfo(0).getResolutions()[0];
+        final float yRes = getFileInfo(0).getResolutions()[1];
+        final float zRes = getFileInfo(0).getResolutions()[2];
         topLeft.X *= xRes;
         topLeft.Y *= yRes;
         topLeft.Z *= zRes;
@@ -1603,34 +1583,32 @@ public class ModelImage extends ModelStorageBase {
         botRight.Y *= yRes;
         botRight.Z *= zRes;
 
-        int planeLength = (int)
-                              MipavMath.round(Math.sqrt(((botLeft.X - topLeft.X) * (botLeft.X - topLeft.X)) +
-                                                        ((botLeft.Y - topLeft.Y) * (botLeft.Y - topLeft.Y)) +
-                                                        ((botLeft.Z - topLeft.Z) * (botLeft.Z - topLeft.Z))));
-        int planeWidth = (int)
-                             MipavMath.round(Math.sqrt(((topRight.X - topLeft.X) * (topRight.X - topLeft.X)) +
-                                                       ((topRight.Y - topLeft.Y) * (topRight.Y - topLeft.Y)) +
-                                                       ((topRight.Z - topLeft.Z) * (topRight.Z - topLeft.Z))));
-        int planeSize = planeLength * planeWidth;
-        float[] plane = new float[planeSize];
+        final int planeLength = MipavMath.round(Math.sqrt( ( (botLeft.X - topLeft.X) * (botLeft.X - topLeft.X))
+                + ( (botLeft.Y - topLeft.Y) * (botLeft.Y - topLeft.Y))
+                + ( (botLeft.Z - topLeft.Z) * (botLeft.Z - topLeft.Z))));
+        final int planeWidth = MipavMath.round(Math.sqrt( ( (topRight.X - topLeft.X) * (topRight.X - topLeft.X))
+                + ( (topRight.Y - topLeft.Y) * (topRight.Y - topLeft.Y))
+                + ( (topRight.Z - topLeft.Z) * (topRight.Z - topLeft.Z))));
+        final int planeSize = planeLength * planeWidth;
+        final float[] plane = new float[planeSize];
 
-        double colStep = 1.0 / planeWidth;
-        double rowStep = 1.0 / planeLength;
+        final double colStep = 1.0 / planeWidth;
+        final double rowStep = 1.0 / planeLength;
         double colFactor = 0;
         double rowFactor = 0;
         double rowOffsetX = 0;
         double rowOffsetY = 0;
         double rowOffsetZ = 0;
-        float colDeltaX = topRight.X - topLeft.X;
-        float colDeltaY = topRight.Y - topLeft.Y;
-        float colDeltaZ = topRight.Z - topLeft.Z;
-        float rowDeltaX = botLeft.X - topLeft.X;
-        float rowDeltaY = botLeft.Y - topLeft.Y;
-        float rowDeltaZ = botLeft.Z - topLeft.Z;
+        final float colDeltaX = topRight.X - topLeft.X;
+        final float colDeltaY = topRight.Y - topLeft.Y;
+        final float colDeltaZ = topRight.Z - topLeft.Z;
+        final float rowDeltaX = botLeft.X - topLeft.X;
+        final float rowDeltaY = botLeft.Y - topLeft.Y;
+        final float rowDeltaZ = botLeft.Z - topLeft.Z;
 
-        float invXRes = 1.0f / xRes;
-        float invYRes = 1.0f / yRes;
-        float invZRes = 1.0f / zRes;
+        final float invXRes = 1.0f / xRes;
+        final float invYRes = 1.0f / yRes;
+        final float invZRes = 1.0f / zRes;
 
         for (rowFactor = 0, i = 0, index = 0; rowFactor < 1; i++, rowFactor = rowStep * i) {
 
@@ -1659,8 +1637,8 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Method that returns the registration frame if it exists else returns null.
-     *
-     * @return  registration frame
+     * 
+     * @return registration frame
      */
     public ViewJFrameRegistration getRegistrationFrame() {
 
@@ -1678,19 +1656,19 @@ public class ModelImage extends ModelStorageBase {
      * Takes input x,y,z coordinate and returns that point transformed into the scanner's (DICOM) coordinate system. L =
      * Left - first axis is positive to the left P = Posterior - second axis is positive to the posterior S = Superior -
      * third axis is positive to the superior
-     *
-     * @param  x             Absolute x value in slice.
-     * @param  y             Absolute y value in slice.
-     * @param  z             Absolute z value in slice.
-     * @param  scannerCoord  the point transformed into the scanner's (DICOM) coordinate system.
+     * 
+     * @param x Absolute x value in slice.
+     * @param y Absolute y value in slice.
+     * @param z Absolute z value in slice.
+     * @param scannerCoord the point transformed into the scanner's (DICOM) coordinate system.
      */
-    public void getScannerCoordLPS(int x, int y, int z, float[] scannerCoord) {
+    public void getScannerCoordLPS(final int x, final int y, final int z, final float[] scannerCoord) {
 
-        if ((!matrixHolder.containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) &&
-                (getFileInfo()[0].getFileFormat() != FileUtility.XML) &&
-                (getFileInfo()[0].getFileFormat() != FileUtility.MINC) &&
-                (getFileInfo()[0].getFileFormat() != FileUtility.NIFTI) &&
-                (getFileInfo()[0].getFileFormat() != FileUtility.AFNI)) {
+        if ( ( !matrixHolder.containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
+                && (getFileInfo()[0].getFileFormat() != FileUtility.XML)
+                && (getFileInfo()[0].getFileFormat() != FileUtility.MINC)
+                && (getFileInfo()[0].getFileFormat() != FileUtility.NIFTI)
+                && (getFileInfo()[0].getFileFormat() != FileUtility.AFNI)) {
             return;
         }
 
@@ -1700,10 +1678,10 @@ public class ModelImage extends ModelStorageBase {
             nDims = 3;
         }
 
-        float[] coord = new float[3];
-        float[] tCoord = new float[3];
-        float[] origin = new float[3];
-        float[] res = new float[3];
+        final float[] coord = new float[3];
+        final float[] tCoord = new float[3];
+        final float[] origin = new float[3];
+        final float[] res = new float[3];
 
         // Get the voxel coordinate in from mouse events in image space
         coord[0] = x;
@@ -1714,26 +1692,25 @@ public class ModelImage extends ModelStorageBase {
         origin[0] = getFileInfo()[0].getOrigin()[0];
         origin[1] = getFileInfo()[0].getOrigin()[1];
         origin[2] = getFileInfo()[0].getOrigin()[2];
-        // System.out.println("Origin     "  + origin[0] + ", " + origin[1] + ", " + origin[2] );
+        // System.out.println("Origin " + origin[0] + ", " + origin[1] + ", " + origin[2] );
 
         for (int j = 0; j < 3; j++) {
 
-            if ((getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_L2R_TYPE) ||
-                    (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_R2L_TYPE)) {
+            if ( (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_L2R_TYPE)
+                    || (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_R2L_TYPE)) {
                 origin[0] = getFileInfo()[0].getOrigin()[j];
 
-            } else if ((getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_P2A_TYPE) ||
-                           (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_A2P_TYPE)) {
+            } else if ( (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_P2A_TYPE)
+                    || (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_A2P_TYPE)) {
                 origin[1] = getFileInfo()[0].getOrigin()[j];
 
-            } else if ((getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_S2I_TYPE) ||
-                           (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_I2S_TYPE)) {
+            } else if ( (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_S2I_TYPE)
+                    || (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_I2S_TYPE)) {
                 origin[2] = getFileInfo()[0].getOrigin()[j];
 
             }
         }
         // origin in LPS order
-
 
         // Get voxel resolutions
         res[0] = getFileInfo(0).getResolutions()[0];
@@ -1747,11 +1724,11 @@ public class ModelImage extends ModelStorageBase {
         coord[2] = coord[2] * res[2];
 
         // System.out.println("dicomMatrix = " + dicomMatrix.toString());
-        if ((matrixHolder.containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) ||
-                (getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
+        if ( (matrixHolder.containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
+                || (getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
 
             // System.out.println("dicomMatrix = " + dicomMatrix.toString());
-            TransMatrix dicomMatrix = (TransMatrix) (getMatrix().clone());
+            final TransMatrix dicomMatrix = (getMatrix().clone());
 
             // Finally convert the point to axial millimeter DICOM space.
             dicomMatrix.transform(coord, tCoord);
@@ -1790,16 +1767,16 @@ public class ModelImage extends ModelStorageBase {
      * Takes input x,y,z coordinate and returns that point transformed into the RAS coordinate system. R = Right - first
      * axis is positive to the right A = Anterior - second axis is positive to the anterior S = Superior - third axis is
      * positive to the superior
-     *
-     * @param  x             Absolute x value in slice.
-     * @param  y             Absolute y value in slice.
-     * @param  z             Absolute z value in slice.
-     * @param  scannerCoord  the point transformed into the scanner's (DICOM) coordinate system.
+     * 
+     * @param x Absolute x value in slice.
+     * @param y Absolute y value in slice.
+     * @param z Absolute z value in slice.
+     * @param scannerCoord the point transformed into the scanner's (DICOM) coordinate system.
      */
 
-    public void getScannerCoordRAS(int x, int y, int z, float[] scannerCoord) {
+    public void getScannerCoordRAS(final int x, final int y, final int z, final float[] scannerCoord) {
 
-        if (!matrixHolder.containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
+        if ( !matrixHolder.containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
             return;
         }
 
@@ -1817,8 +1794,8 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Accessor that returns the talairach transform information.
-     *
-     * @return  TalairachTransformInfo talairach info
+     * 
+     * @return TalairachTransformInfo talairach info
      */
     public TalairachTransformInfo getTalairachTransformInfo() {
         return talairach;
@@ -1826,8 +1803,8 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Method that returns the tri image frame if it exists else returns null.
-     *
-     * @return  tri image frame
+     * 
+     * @return tri image frame
      */
     public ViewJFrameTriImage getTriImageFrame() {
 
@@ -1843,10 +1820,10 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Returns the reference to the user interface.
-     *
-     * @deprecated  DOCUMENT ME!
-     *
-     * @return      the reference to the user interface.
+     * 
+     * @deprecated DOCUMENT ME!
+     * 
+     * @return the reference to the user interface.
      */
     public ViewUserInterface getUserInterface() {
         return UI;
@@ -1854,8 +1831,8 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Accessor that returns.
-     *
-     * @return  VOI vector
+     * 
+     * @return VOI vector
      */
     public VOIVector getVOIs() {
         return voiVector;
@@ -1863,19 +1840,17 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Accessor that returns.
-     *
-     * @return  VOI vector
+     * 
+     * @return VOI vector
      */
     public VOIVector get3DVOIs() {
         return voiVector3D;
     }
-    
-    public VOIVector get3DVOIsCopy()
-    {
-        VOIVector kCopy = new VOIVector();
-        for ( int i = 0; i < voiVector3D.size(); i++ )
-        {
-            kCopy.add ( new VOI( voiVector3D.get(i) ) );
+
+    public VOIVector get3DVOIsCopy() {
+        final VOIVector kCopy = new VOIVector();
+        for (int i = 0; i < voiVector3D.size(); i++) {
+            kCopy.add(new VOI(voiVector3D.get(i)));
         }
         return kCopy;
     }
@@ -1891,7 +1866,7 @@ public class ModelImage extends ModelStorageBase {
         int index = 1;
         Vector[] contours;
         Vector3f[] points;
-        Vector3f[] point1 = new Vector3f[1];
+        final Vector3f[] point1 = new Vector3f[1];
         VOI newVOI = null;
         VOI newPtVOI = null;
         VOI newPLineVOI = null;
@@ -1916,7 +1891,7 @@ public class ModelImage extends ModelStorageBase {
 
         for (i = nVOIs - 1; i >= 0; i--) {
 
-            if ((tempVOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) && tempVOIs.VOIAt(i).isActive()) {
+            if ( (tempVOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) && tempVOIs.VOIAt(i).isActive()) {
 
                 if (newVOI == null) {
                     newVOI = new VOI((short) 0, "joinedContour", slices, VOI.CONTOUR, -1.0f);
@@ -1931,7 +1906,7 @@ public class ModelImage extends ModelStorageBase {
 
                     for (k = nContours - 1; k >= 0; k--) {
 
-                        if (((VOIBase) contours[j].elementAt(k)).isActive()) {
+                        if ( ((VOIBase) contours[j].elementAt(k)).isActive()) {
                             tempBase = (VOIContour) contours[j].elementAt(k);
                             contours[j].removeElementAt(k);
                             tempBase.setName(newVOI.getName());
@@ -1947,7 +1922,7 @@ public class ModelImage extends ModelStorageBase {
                     nContours = contours[j].size();
 
                     for (k = 0; k < nContours; k++) {
-                        ((VOIBase) contours[j].elementAt(k)).setLabel(String.valueOf((index++)));
+                        ((VOIBase) contours[j].elementAt(k)).setLabel(String.valueOf( (index++)));
                     }
                 }
 
@@ -1956,8 +1931,7 @@ public class ModelImage extends ModelStorageBase {
                     tempVOIs.removeElementAt(i);
                 }
 
-
-            } else if ((tempVOIs.VOIAt(i).getCurveType() == VOI.POLYLINE) && tempVOIs.VOIAt(i).isActive()) {
+            } else if ( (tempVOIs.VOIAt(i).getCurveType() == VOI.POLYLINE) && tempVOIs.VOIAt(i).isActive()) {
 
                 if (newPLineVOI == null) {
                     newPLineVOI = new VOI((short) 0, "polyLine" + nameExt, slices, VOI.POLYLINE, -1.0f);
@@ -1972,7 +1946,7 @@ public class ModelImage extends ModelStorageBase {
 
                     for (k = nContours - 1; k >= 0; k--) {
 
-                        if (((VOIBase) contours[j].elementAt(k)).isActive()) {
+                        if ( ((VOIBase) contours[j].elementAt(k)).isActive()) {
                             tempBase = (VOIContour) contours[j].elementAt(k);
                             contours[j].removeElementAt(k);
                             tempBase.setName(newPLineVOI.getName());
@@ -1988,7 +1962,7 @@ public class ModelImage extends ModelStorageBase {
                     nContours = contours[j].size();
 
                     for (k = 0; k < nContours; k++) {
-                        ((VOIBase) contours[j].elementAt(k)).setLabel(String.valueOf((index++)));
+                        ((VOIBase) contours[j].elementAt(k)).setLabel(String.valueOf( (index++)));
                     }
                 }
 
@@ -1997,7 +1971,7 @@ public class ModelImage extends ModelStorageBase {
                     tempVOIs.removeElementAt(i);
                 }
 
-            } else if ((tempVOIs.VOIAt(i).getCurveType() == VOI.LINE) && tempVOIs.VOIAt(i).isActive()) {
+            } else if ( (tempVOIs.VOIAt(i).getCurveType() == VOI.LINE) && tempVOIs.VOIAt(i).isActive()) {
 
                 if (newLineVOI == null) {
                     newLineVOI = new VOI((short) 0, "line" + nameExt, slices, VOI.LINE, -1.0f);
@@ -2012,7 +1986,7 @@ public class ModelImage extends ModelStorageBase {
 
                     for (k = nContours - 1; k >= 0; k--) {
 
-                        if (((VOIBase) contours[j].elementAt(k)).isActive()) {
+                        if ( ((VOIBase) contours[j].elementAt(k)).isActive()) {
                             tempBase = (VOILine) contours[j].elementAt(k);
                             contours[j].removeElementAt(k);
                             tempBase.setName(newLineVOI.getName());
@@ -2028,7 +2002,7 @@ public class ModelImage extends ModelStorageBase {
                     nContours = contours[j].size();
 
                     for (k = 0; k < nContours; k++) {
-                        ((VOIBase) contours[j].elementAt(k)).setLabel(String.valueOf((index++)));
+                        ((VOIBase) contours[j].elementAt(k)).setLabel(String.valueOf( (index++)));
                     }
                 }
 
@@ -2037,8 +2011,7 @@ public class ModelImage extends ModelStorageBase {
                     tempVOIs.removeElementAt(i);
                 }
 
-
-            } else if ((tempVOIs.VOIAt(i).getCurveType() == VOI.POINT) && tempVOIs.VOIAt(i).isActive()) {
+            } else if ( (tempVOIs.VOIAt(i).getCurveType() == VOI.POINT) && tempVOIs.VOIAt(i).isActive()) {
 
                 if (newPtVOI == null) {
                     newPtVOI = new VOI((short) 0, "point" + nameExt, slices, VOI.POINT, -1.0f);
@@ -2053,7 +2026,7 @@ public class ModelImage extends ModelStorageBase {
 
                     for (k = nPoints - 1; k >= 0; k--) {
 
-                        if (((VOIBase) tempVOIs.VOIAt(i).getCurves()[j].elementAt(k)).isActive()) {
+                        if ( (tempVOIs.VOIAt(i).getCurves()[j].elementAt(k)).isActive()) {
                             point1[0] = points[k];
                             newPtVOI.importCurve(point1, j);
                             tempVOIs.VOIAt(i).getCurves()[j].removeElementAt(k);
@@ -2077,7 +2050,7 @@ public class ModelImage extends ModelStorageBase {
                         tempVOIs.removeElementAt(i);
                     }
                 }
-            } else if ((tempVOIs.VOIAt(i).getCurveType() == VOI.PROTRACTOR) && tempVOIs.VOIAt(i).isActive()) {
+            } else if ( (tempVOIs.VOIAt(i).getCurveType() == VOI.PROTRACTOR) && tempVOIs.VOIAt(i).isActive()) {
 
                 if (newProtractorVOI == null) {
                     newProtractorVOI = new VOI((short) 0, "protractor" + nameExt, slices, VOI.PROTRACTOR, -1.0f);
@@ -2092,7 +2065,7 @@ public class ModelImage extends ModelStorageBase {
 
                     for (k = nContours - 1; k >= 0; k--) {
 
-                        if (((VOIBase) tempVOIs.VOIAt(i).getCurves()[j].elementAt(k)).isActive()) {
+                        if ( (tempVOIs.VOIAt(i).getCurves()[j].elementAt(k)).isActive()) {
                             tempBase = (VOIProtractor) contours[j].elementAt(k);
                             contours[j].removeElementAt(k);
                             tempBase.setName(newProtractorVOI.getName());
@@ -2117,7 +2090,6 @@ public class ModelImage extends ModelStorageBase {
                     tempVOIs.removeElementAt(i);
                 }
 
-
             }
         }
 
@@ -2130,11 +2102,10 @@ public class ModelImage extends ModelStorageBase {
             for (sliceNum = 0; sliceNum < newVOI.getCurves().length; sliceNum++) {
 
                 for (curveNum = 0; curveNum < newVOI.getCurves()[sliceNum].size(); curveNum++) {
-                    ((VOIBase) newVOI.getCurves()[sliceNum].elementAt(curveNum)).setLabel(String.valueOf(index++));
+                    (newVOI.getCurves()[sliceNum].elementAt(curveNum)).setLabel(String.valueOf(index++));
                 }
             }
         }
-
 
         if (newVOI != null) {
             tempVOIs.addElement(newVOI);
@@ -2163,12 +2134,12 @@ public class ModelImage extends ModelStorageBase {
         /**
          * System.err.println("\n\nGrouping DEBUG INFO:"); VOI tempVOI = null; Vector [] tempCurves = null; //temp stuff
          * for debugging purposes for (i = 0; i < voiVector.size(); i++) { tempVOI = voiVector.VOIAt(i);
-         * System.err.println( i + ": VOI name: " + tempVOI.getName()); tempCurves = tempVOI.getCurves(); for (j = 0; j
-         * < tempCurves.length; j++) {     System.err.println("\tSize: " + tempCurves[j].size());
-         * System.err.println("\t" + tempCurves[j].toString()); } }
+         * System.err.println( i + ": VOI name: " + tempVOI.getName()); tempCurves = tempVOI.getCurves(); for (j = 0; j <
+         * tempCurves.length; j++) { System.err.println("\tSize: " + tempCurves[j].size()); System.err.println("\t" +
+         * tempCurves[j].toString()); } }
          */
         for (i = 0; i < voiVector.size(); i++) {
-            ((VOI) voiVector.elementAt(i)).setID((short) i);
+            (voiVector.elementAt(i)).setID((short) i);
         }
 
         notifyImageDisplayListeners();
@@ -2177,12 +2148,12 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Forms a single VOI structure from all the VOIs presently loaded in the imageModel.
-     *
-     * @param  newVOIVector  a new ViewVOIVector to hold the grouped VOIs
-     * @param  where         int array telling where to sort
-     * @param  name          the name of the VOI
+     * 
+     * @param newVOIVector a new ViewVOIVector to hold the grouped VOIs
+     * @param where int array telling where to sort
+     * @param name the name of the VOI
      */
-    public void groupVOIs(ViewVOIVector newVOIVector, int[] where, String name) {
+    public void groupVOIs(final ViewVOIVector newVOIVector, final int[] where, final String name) {
         // System.err.println("calling group VOIs, passing in new vector");
 
         int i, j, k;
@@ -2191,7 +2162,7 @@ public class ModelImage extends ModelStorageBase {
         int nContours, nPoints;
         Vector<VOIBase>[] contours;
         Vector3f[] points;
-        Vector3f[] point1 = new Vector3f[1];
+        final Vector3f[] point1 = new Vector3f[1];
 
         VOI newVOI = null;
         VOI newPtVOI = null;
@@ -2300,7 +2271,7 @@ public class ModelImage extends ModelStorageBase {
 
         // Sort where so that the length of the vector won't get screwed up
         for (i = 1; i < where.length; i++) {
-            int tmp = where[i];
+            final int tmp = where[i];
 
             for (j = i; (j > 0) && (tmp < where[j - 1]); j--) {
                 where[j] = where[j - 1];
@@ -2334,7 +2305,7 @@ public class ModelImage extends ModelStorageBase {
         }
 
         for (i = 0; i < voiVector.size(); i++) {
-            ((VOI) voiVector.elementAt(i)).setID((short) i);
+            (voiVector.elementAt(i)).setID((short) i);
         }
 
         int sliceNum, curveNum, voiNum;
@@ -2342,14 +2313,13 @@ public class ModelImage extends ModelStorageBase {
 
         for (voiNum = 0; voiNum < voiVector.size(); voiNum++) {
 
-            if (((VOI) voiVector.elementAt(voiNum)).getName().equals(name)) {
+            if ( (voiVector.elementAt(voiNum)).getName().equals(name)) {
 
-                for (sliceNum = 0; sliceNum < ((VOI) voiVector.elementAt(voiNum)).getCurves().length; sliceNum++) {
+                for (sliceNum = 0; sliceNum < (voiVector.elementAt(voiNum)).getCurves().length; sliceNum++) {
 
-                    for (curveNum = 0; curveNum < ((VOI) voiVector.elementAt(voiNum)).getCurves()[sliceNum].size();
-                             curveNum++) {
-                        ((VOIBase) ((VOI) voiVector.elementAt(voiNum)).getCurves()[sliceNum].elementAt(curveNum))
-                            .setLabel(String.valueOf(index++));
+                    for (curveNum = 0; curveNum < (voiVector.elementAt(voiNum)).getCurves()[sliceNum].size(); curveNum++) {
+                        ( (voiVector.elementAt(voiNum)).getCurves()[sliceNum].elementAt(curveNum)).setLabel(String
+                                .valueOf(index++));
                     }
                 }
 
@@ -2361,38 +2331,39 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Accessor that returns whether or not the image is a color image.
-     *
-     * @return  <code>true</code> if color, <code>false</code> if not color.
+     * 
+     * @return <code>true</code> if color, <code>false</code> if not color.
      */
     public boolean isColorImage() {
 
-        if ((getType() == ARGB) || (getType() == ARGB_USHORT) || (getType() == ARGB_FLOAT)) {
+        if ( (getType() == ModelStorageBase.ARGB) || (getType() == ModelStorageBase.ARGB_USHORT)
+                || (getType() == ModelStorageBase.ARGB_FLOAT)) {
             return true;
         } else {
             return false;
         }
     }
-    
-    public boolean is2DImage(){
-    	return (getExtents().length == 2);
+
+    public boolean is2DImage() {
+        return (getExtents().length == 2);
     }
-    
-    public boolean is3DImage(){
+
+    public boolean is3DImage() {
         return (getExtents().length == 3);
     }
-    
-    public boolean is4DImage(){
+
+    public boolean is4DImage() {
         return (getExtents().length == 4);
     }
-    
+
     /**
      * Accessor that returns whether or not the image is a COMPLEX or DCOMPLEX image.
-     *
-     * @return  <code>true</code> if complex, <code>false</code> if not complex.
+     * 
+     * @return <code>true</code> if complex, <code>false</code> if not complex.
      */
     public boolean isComplexImage() {
 
-        if ((getType() == COMPLEX) || (getType() == DCOMPLEX)) {
+        if ( (getType() == ModelStorageBase.COMPLEX) || (getType() == ModelStorageBase.DCOMPLEX)) {
             return true;
         } else {
             return false;
@@ -2401,8 +2372,8 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Accessor that returns whether or not the image is a DICOM image.
-     *
-     * @return  <code>true</code> if DICOM, <code>false</code> if not DICOM.
+     * 
+     * @return <code>true</code> if DICOM, <code>false</code> if not DICOM.
      */
     public boolean isDicomImage() {
 
@@ -2415,8 +2386,8 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Accessor that returns whether or not the image is a MINC image.
-     *
-     * @return  <code>true</code> if MINC, <code>false</code> if not MINC.
+     * 
+     * @return <code>true</code> if MINC, <code>false</code> if not MINC.
      */
     public boolean isMincImage() {
 
@@ -2438,12 +2409,12 @@ public class ModelImage extends ModelStorageBase {
 
         for (int i = 0; i < frameList.size(); i++) {
 
-            if ((frameList.elementAt(i) instanceof ViewJFrameBase)) {
+            if ( (frameList.elementAt(i) instanceof ViewJFrameBase)) {
                 frameList.elementAt(i).updateImages();
             }
         }
     }
-    
+
     /**
      * Used to notify all frames except the triImage frames that display this image model need to be updated.
      */
@@ -2455,30 +2426,30 @@ public class ModelImage extends ModelStorageBase {
 
         for (int i = 0; i < frameList.size(); i++) {
 
-            if ((frameList.elementAt(i) instanceof ViewJFrameBase)) {
-            	if(!(frameList.elementAt(i) instanceof gov.nih.mipav.view.ViewJFrameTriImage)) {
-            		frameList.elementAt(i).updateImages();
-            	}
+            if ( (frameList.elementAt(i) instanceof ViewJFrameBase)) {
+                if ( ! (frameList.elementAt(i) instanceof gov.nih.mipav.view.ViewJFrameTriImage)) {
+                    frameList.elementAt(i).updateImages();
+                }
             }
         }
     }
 
     /**
      * Used to notify all frames that display this image model need to be updated.
-     *
-     * @param  LUT        new LUT used to display image (can be null);
-     * @param  forceShow  force the display method(s) to reload image data and display image slower but needed if image
-     *                    model changes.
+     * 
+     * @param LUT new LUT used to display image (can be null);
+     * @param forceShow force the display method(s) to reload image data and display image slower but needed if image
+     *            model changes.
      */
-    public void notifyImageDisplayListeners(ModelLUT LUT, boolean forceShow) {
+    public void notifyImageDisplayListeners(final ModelLUT LUT, final boolean forceShow) {
 
         if (frameList != null) {
 
             for (int i = 0; i < frameList.size(); i++) {
 
-                if ((frameList.elementAt(i) instanceof ViewJFrameBase)) {
-                    ModelImage imgA = ((ViewJFrameBase) frameList.elementAt(i)).getImageA();
-                    ModelImage imgB = ((ViewJFrameBase) frameList.elementAt(i)).getImageB();
+                if ( (frameList.elementAt(i) instanceof ViewJFrameBase)) {
+                    final ModelImage imgA = ((ViewJFrameBase) frameList.elementAt(i)).getImageA();
+                    final ModelImage imgB = ((ViewJFrameBase) frameList.elementAt(i)).getImageB();
 
                     if (this == imgA) {
                         frameList.elementAt(i).updateImages(LUT, null, forceShow, -1);
@@ -2486,9 +2457,9 @@ public class ModelImage extends ModelStorageBase {
                         frameList.elementAt(i).updateImages(null, LUT, forceShow, -1);
                     }
                 } /* LUT update of a non-ModelImage data strucuture: */
-                else if ((frameList.elementAt(i) instanceof VolumeTriPlanarInterface)) {
-                    ModelImage imgA = ((VolumeTriPlanarInterface) frameList.elementAt(i)).getImageA();
-                    ModelImage imgB = ((VolumeTriPlanarInterface) frameList.elementAt(i)).getImageB();
+                else if ( (frameList.elementAt(i) instanceof VolumeTriPlanarInterface)) {
+                    final ModelImage imgA = ((VolumeTriPlanarInterface) frameList.elementAt(i)).getImageA();
+                    final ModelImage imgB = ((VolumeTriPlanarInterface) frameList.elementAt(i)).getImageB();
 
                     if (this == imgA) {
                         frameList.elementAt(i).updateImages(LUT, null, forceShow, -1);
@@ -2496,62 +2467,56 @@ public class ModelImage extends ModelStorageBase {
                         frameList.elementAt(i).updateImages(null, LUT, forceShow, -1);
                     }
                 } /* LUT update of a non-ModelImage data strucuture: */
-                else if ((frameList.elementAt(i) instanceof
-                        gov.nih.mipav.view.renderer.J3D.surfaceview.brainflattenerview.JPanelBrainSurfaceFlattener)) {
-                    ModelImage imgA = ((gov.nih.mipav.view.renderer.J3D.surfaceview.brainflattenerview.JPanelBrainSurfaceFlattener)
-                            frameList.elementAt(i)).getImageA();
-                    ModelImage imgB = ((gov.nih.mipav.view.renderer.J3D.surfaceview.brainflattenerview.JPanelBrainSurfaceFlattener)
-                            frameList.elementAt(i)).getImageB();
+                else if ( (frameList.elementAt(i) instanceof gov.nih.mipav.view.renderer.J3D.surfaceview.brainflattenerview.JPanelBrainSurfaceFlattener)) {
+                    final ModelImage imgA = ((gov.nih.mipav.view.renderer.J3D.surfaceview.brainflattenerview.JPanelBrainSurfaceFlattener) frameList
+                            .elementAt(i)).getImageA();
+                    final ModelImage imgB = ((gov.nih.mipav.view.renderer.J3D.surfaceview.brainflattenerview.JPanelBrainSurfaceFlattener) frameList
+                            .elementAt(i)).getImageB();
 
                     if (this == imgA) {
                         frameList.elementAt(i).updateImages(LUT, null, forceShow, -1);
                     } else if (this == imgB) {
                         frameList.elementAt(i).updateImages(null, LUT, forceShow, -1);
                     }
-                } 
-                else if ((frameList.elementAt(i) instanceof
-                              gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.JPanelBrainSurfaceFlattener_WM)) {
-                    ModelImage imgA = ((gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.JPanelBrainSurfaceFlattener_WM)
-                                           frameList.elementAt(i)).getImageA();
-                    ModelImage imgB = ((gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.JPanelBrainSurfaceFlattener_WM)
-                                           frameList.elementAt(i)).getImageB();
+                } else if ( (frameList.elementAt(i) instanceof gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.JPanelBrainSurfaceFlattener_WM)) {
+                    final ModelImage imgA = ((gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.JPanelBrainSurfaceFlattener_WM) frameList
+                            .elementAt(i)).getImageA();
+                    final ModelImage imgB = ((gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.JPanelBrainSurfaceFlattener_WM) frameList
+                            .elementAt(i)).getImageB();
 
                     if (this == imgA) {
                         frameList.elementAt(i).updateImages(LUT, null, forceShow, -1);
                     } else if (this == imgB) {
                         frameList.elementAt(i).updateImages(null, LUT, forceShow, -1);
                     }
-                } else if ((frameList.elementAt(i) instanceof
-                                gov.nih.mipav.view.renderer.J3D.surfaceview.JPanelSurfaceTexture)) {
-                    ModelImage imgS = ((gov.nih.mipav.view.renderer.J3D.surfaceview.JPanelSurfaceTexture)
-                                           frameList.elementAt(i)).getImageSeparate();
-                    ModelImage imgL = ((gov.nih.mipav.view.renderer.J3D.surfaceview.JPanelSurfaceTexture)
-                                           frameList.elementAt(i)).getImageLink();
+                } else if ( (frameList.elementAt(i) instanceof gov.nih.mipav.view.renderer.J3D.surfaceview.JPanelSurfaceTexture)) {
+                    final ModelImage imgS = ((gov.nih.mipav.view.renderer.J3D.surfaceview.JPanelSurfaceTexture) frameList
+                            .elementAt(i)).getImageSeparate();
+                    final ModelImage imgL = ((gov.nih.mipav.view.renderer.J3D.surfaceview.JPanelSurfaceTexture) frameList
+                            .elementAt(i)).getImageLink();
 
                     if (this == imgS) {
                         frameList.elementAt(i).updateImages(LUT, null, forceShow, -1);
                     } else if (this == imgL) {
                         frameList.elementAt(i).updateImages(null, LUT, forceShow, -1);
                     }
-                }  else if ((frameList.elementAt(i) instanceof
-                                gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM)) {
-                    ModelImage imgS = ((gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM)
-                                           frameList.elementAt(i)).getImageSeparate();
-                    ModelImage imgL = ((gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM)
-                                           frameList.elementAt(i)).getImageLink();
+                } else if ( (frameList.elementAt(i) instanceof gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM)) {
+                    final ModelImage imgS = ((gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM) frameList
+                            .elementAt(i)).getImageSeparate();
+                    final ModelImage imgL = ((gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM) frameList
+                            .elementAt(i)).getImageLink();
 
                     if (this == imgS) {
                         frameList.elementAt(i).updateImages(LUT, null, forceShow, -1);
                     }
-                } else if ((frameList.elementAt(i) instanceof
-                        gov.nih.mipav.model.algorithms.DiffusionTensorImaging.AlgorithmDWI2DTI)) {
+                } else if ( (frameList.elementAt(i) instanceof gov.nih.mipav.model.algorithms.DiffusionTensorImaging.AlgorithmDWI2DTI)) {
                     frameList.elementAt(i).updateImages();
                 }
 
             }
         }
 
-        if ((getHistoLUTFrame() != null) && (forceShow == true)) {
+        if ( (getHistoLUTFrame() != null) && (forceShow == true)) {
 
             if (getHistoLUTFrame().getImageA() == this) {
                 getHistoLUTFrame().notifyOfUpdate(LUT, ViewJFrameBase.IMAGE_A);
@@ -2560,7 +2525,7 @@ public class ModelImage extends ModelStorageBase {
             }
         }
 
-        if ((getHistoRGBFrame() != null) && (forceShow == true)) {
+        if ( (getHistoRGBFrame() != null) && (forceShow == true)) {
 
             if (getHistoRGBFrame().getImageA() == this) {
                 getHistoRGBFrame().notifyOfUpdate(LUT, ViewJFrameBase.IMAGE_A);
@@ -2572,13 +2537,13 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Used to notify all frames that display this image model need to be updated for RGB (color) images.
-     *
-     * @param  forceShow   force the display method(s) to reload image data and display image slower but needed if image
-     *                     model changes.
-     * @param  alphaBlend  the amount to blend between two images displayed in the same frame.
-     * @param  RGBT        ModelRGB
+     * 
+     * @param forceShow force the display method(s) to reload image data and display image slower but needed if image
+     *            model changes.
+     * @param alphaBlend the amount to blend between two images displayed in the same frame.
+     * @param RGBT ModelRGB
      */
-    public void notifyImageDisplayListeners(boolean forceShow, int alphaBlend, ModelRGB RGBT) {
+    public void notifyImageDisplayListeners(final boolean forceShow, final int alphaBlend, final ModelRGB RGBT) {
 
         if (frameList == null) {
             return;
@@ -2586,9 +2551,9 @@ public class ModelImage extends ModelStorageBase {
 
         for (int i = 0; i < frameList.size(); i++) {
 
-            if ((frameList.elementAt(i) instanceof ViewJFrameBase)) {
-                ModelImage imgA = ((ViewJFrameBase) frameList.elementAt(i)).getImageA();
-                ModelImage imgB = ((ViewJFrameBase) frameList.elementAt(i)).getImageB();
+            if ( (frameList.elementAt(i) instanceof ViewJFrameBase)) {
+                final ModelImage imgA = ((ViewJFrameBase) frameList.elementAt(i)).getImageA();
+                final ModelImage imgB = ((ViewJFrameBase) frameList.elementAt(i)).getImageB();
 
                 if (this == imgA) {
                     ((ViewJFrameBase) frameList.elementAt(i)).setRGBTA(RGBT);
@@ -2597,9 +2562,9 @@ public class ModelImage extends ModelStorageBase {
                 }
 
                 frameList.elementAt(i).updateImages(null, null, forceShow, -1);
-            } else if ((frameList.elementAt(i) instanceof VolumeTriPlanarInterface)) {
-                ModelImage imgA = ((VolumeTriPlanarInterface) frameList.elementAt(i)).getImageA();
-                ModelImage imgB = ((VolumeTriPlanarInterface) frameList.elementAt(i)).getImageB();
+            } else if ( (frameList.elementAt(i) instanceof VolumeTriPlanarInterface)) {
+                final ModelImage imgA = ((VolumeTriPlanarInterface) frameList.elementAt(i)).getImageA();
+                final ModelImage imgB = ((VolumeTriPlanarInterface) frameList.elementAt(i)).getImageB();
 
                 if (this == imgA) {
                     ((VolumeTriPlanarInterface) frameList.elementAt(i)).setRGBTA(RGBT);
@@ -2608,33 +2573,34 @@ public class ModelImage extends ModelStorageBase {
                 }
 
                 frameList.elementAt(i).updateImages(null, null, forceShow, -1);
-            } else if ((frameList.elementAt(i) instanceof
-                            gov.nih.mipav.view.renderer.J3D.surfaceview.JPanelSurfaceTexture)) {
-                ModelImage imgS = ((gov.nih.mipav.view.renderer.J3D.surfaceview.JPanelSurfaceTexture) frameList.elementAt(i))
-                                      .getImageSeparate();
-                ModelImage imgL = ((gov.nih.mipav.view.renderer.J3D.surfaceview.JPanelSurfaceTexture) frameList.elementAt(i))
-                                      .getImageLink();
+            } else if ( (frameList.elementAt(i) instanceof gov.nih.mipav.view.renderer.J3D.surfaceview.JPanelSurfaceTexture)) {
+                final ModelImage imgS = ((gov.nih.mipav.view.renderer.J3D.surfaceview.JPanelSurfaceTexture) frameList
+                        .elementAt(i)).getImageSeparate();
+                final ModelImage imgL = ((gov.nih.mipav.view.renderer.J3D.surfaceview.JPanelSurfaceTexture) frameList
+                        .elementAt(i)).getImageLink();
 
                 if (this == imgS) {
-                    ((gov.nih.mipav.view.renderer.J3D.surfaceview.JPanelSurfaceTexture) frameList.elementAt(i)).setRGBTA(RGBT);
+                    ((gov.nih.mipav.view.renderer.J3D.surfaceview.JPanelSurfaceTexture) frameList.elementAt(i))
+                            .setRGBTA(RGBT);
                 } else if (this == imgL) {
-                    ((gov.nih.mipav.view.renderer.J3D.surfaceview.JPanelSurfaceTexture) frameList.elementAt(i)).setRGBTB(RGBT);
+                    ((gov.nih.mipav.view.renderer.J3D.surfaceview.JPanelSurfaceTexture) frameList.elementAt(i))
+                            .setRGBTB(RGBT);
                 }
-            } else if ((frameList.elementAt(i) instanceof
-                            gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM)) {
-                ModelImage imgS = ((gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM) frameList.elementAt(i))
-                                      .getImageSeparate();
-                ModelImage imgL = ((gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM) frameList.elementAt(i))
-                                      .getImageLink();
+            } else if ( (frameList.elementAt(i) instanceof gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM)) {
+                final ModelImage imgS = ((gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM) frameList
+                        .elementAt(i)).getImageSeparate();
+                final ModelImage imgL = ((gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM) frameList
+                        .elementAt(i)).getImageLink();
 
                 if (this == imgS) {
-                    ((gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM) frameList.elementAt(i)).setRGBTA(RGBT);
-                } 
+                    ((gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM) frameList.elementAt(i))
+                            .setRGBTA(RGBT);
+                }
             }
-            
+
         }
 
-        if ((getHistoLUTFrame() != null) && (forceShow == true)) {
+        if ( (getHistoLUTFrame() != null) && (forceShow == true)) {
 
             if (getHistoLUTFrame().getImageA() == this) {
                 getHistoLUTFrame().notifyOfUpdate(null, ViewJFrameBase.IMAGE_A);
@@ -2643,7 +2609,7 @@ public class ModelImage extends ModelStorageBase {
             }
         }
 
-        if ((getHistoRGBFrame() != null) && (forceShow == true)) {
+        if ( (getHistoRGBFrame() != null) && (forceShow == true)) {
 
             if (getHistoRGBFrame().getImageA() == this) {
                 getHistoRGBFrame().notifyOfUpdate(null, ViewJFrameBase.IMAGE_A);
@@ -2655,15 +2621,16 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Used to notify all listeners that the image is to be redisplayed.
-     *
-     * @param  LUT         new LUT used to display image (can be null);
-     * @param  forceShow   force the display method(s) to reload image data and display image slower but needed if image
-     *                     model changes.
-     * @param  alphaBlend  indicates the amount of blending between two images (image 1's blending value) 1.0 - all of
-     *                     image 1; 0.5 - half image 1 and half image 2
-     * @param  interpMode  image interpolation method (Nearest or Smooth)
+     * 
+     * @param LUT new LUT used to display image (can be null);
+     * @param forceShow force the display method(s) to reload image data and display image slower but needed if image
+     *            model changes.
+     * @param alphaBlend indicates the amount of blending between two images (image 1's blending value) 1.0 - all of
+     *            image 1; 0.5 - half image 1 and half image 2
+     * @param interpMode image interpolation method (Nearest or Smooth)
      */
-    public void notifyImageDisplayListeners(ModelLUT LUT, boolean forceShow, int alphaBlend, int interpMode) {
+    public void notifyImageDisplayListeners(final ModelLUT LUT, final boolean forceShow, final int alphaBlend,
+            final int interpMode) {
 
         if (frameList == null) {
             return;
@@ -2671,9 +2638,9 @@ public class ModelImage extends ModelStorageBase {
 
         for (int i = 0; i < frameList.size(); i++) {
 
-            if ((frameList.elementAt(i) instanceof ViewJFrameBase)) {
-                ModelImage imgA = ((ViewJFrameBase) frameList.elementAt(i)).getImageA();
-                ModelImage imgB = ((ViewJFrameBase) frameList.elementAt(i)).getImageB();
+            if ( (frameList.elementAt(i) instanceof ViewJFrameBase)) {
+                final ModelImage imgA = ((ViewJFrameBase) frameList.elementAt(i)).getImageA();
+                final ModelImage imgB = ((ViewJFrameBase) frameList.elementAt(i)).getImageB();
 
                 ((ViewJFrameBase) frameList.elementAt(i)).setAlphaBlend(alphaBlend);
 
@@ -2685,7 +2652,7 @@ public class ModelImage extends ModelStorageBase {
             }
         }
 
-        if ((getHistoLUTFrame() != null) && (forceShow == true)) {
+        if ( (getHistoLUTFrame() != null) && (forceShow == true)) {
 
             if (getHistoLUTFrame().getImageA() == this) {
                 getHistoLUTFrame().notifyOfUpdate(LUT, ViewJFrameBase.IMAGE_A);
@@ -2694,7 +2661,7 @@ public class ModelImage extends ModelStorageBase {
             }
         }
 
-        if ((getHistoRGBFrame() != null) && (forceShow == true)) {
+        if ( (getHistoRGBFrame() != null) && (forceShow == true)) {
 
             if (getHistoRGBFrame().getImageA() == this) {
                 getHistoRGBFrame().notifyOfUpdate(LUT, ViewJFrameBase.IMAGE_A);
@@ -2716,7 +2683,7 @@ public class ModelImage extends ModelStorageBase {
 
         for (int i = 0; i < frameList.size(); i++) {
 
-            if ((frameList.elementAt(i) instanceof ViewJFrameBase)) {
+            if ( (frameList.elementAt(i) instanceof ViewJFrameBase)) {
                 frameList.elementAt(i).updateImageExtents();
             }
         }
@@ -2731,14 +2698,14 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Read matrix from a file.
-     *
-     * @param   composite  if true make a composite matrix of the by multipling this matrix with the one to be read from
-     *                     the file. If false replace this object matrix with a new matrix read from the file.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param composite if true make a composite matrix of the by multipling this matrix with the one to be read from
+     *            the file. If false replace this object matrix with a new matrix read from the file.
+     * 
+     * @return DOCUMENT ME!
      */
-    public TransMatrix readTransformMatrix(boolean composite) {
-        TransMatrix newMatrix = new TransMatrix(getNDims() + 1);
+    public TransMatrix readTransformMatrix(final boolean composite) {
+        final TransMatrix newMatrix = new TransMatrix(getNDims() + 1);
         String fileName, directory;
         JFileChooser chooser;
 
@@ -2754,7 +2721,7 @@ public class ModelImage extends ModelStorageBase {
 
             chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MATRIX));
 
-            int returnVal = chooser.showOpenDialog(UI.getMainFrame());
+            final int returnVal = chooser.showOpenDialog(UI.getMainFrame());
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 fileName = chooser.getSelectedFile().getName();
@@ -2763,19 +2730,19 @@ public class ModelImage extends ModelStorageBase {
             } else {
                 return null;
             }
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ModelImage.readTransformMatrix");
 
             return null;
         }
 
         try {
-            File file = new File(UI.getDefaultDirectory() + fileName);
-            RandomAccessFile raFile = new RandomAccessFile(file, "r");
+            final File file = new File(UI.getDefaultDirectory() + fileName);
+            final RandomAccessFile raFile = new RandomAccessFile(file, "r");
 
             newMatrix.readMatrix(raFile, composite);
             raFile.close();
-        } catch (IOException error) {
+        } catch (final IOException error) {
             MipavUtil.displayError("Matrix read error");
 
             return null;
@@ -2786,11 +2753,11 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Reallocates ModelImage with new type and all image data lost.
-     *
-     * @param  type  new type of image that is to be allocated
+     * 
+     * @param type new type of image that is to be allocated
      */
-    public void reallocate(int type) {
-        int[] dimExtents = getExtents();
+    public void reallocate(final int type) {
+        final int[] dimExtents = getExtents();
 
         if (dimExtents.length == 2) {
             fileInfo[0].setDataType(type);
@@ -2808,40 +2775,40 @@ public class ModelImage extends ModelStorageBase {
 
         try {
             super.reallocate(type);
-        } catch (IOException ioError) {
+        } catch (final IOException ioError) {
             MipavUtil.displayError("" + ioError);
         }
     }
 
     /**
      * Method that register an VOI to this image.
-     *
-     * @param  voi  Region of interest (VOI) to be registered with the image model
+     * 
+     * @param voi Region of interest (VOI) to be registered with the image model
      */
-    public void registerVOI(VOI voi) {
+    public void registerVOI(final VOI voi) {
         voiVector.addVOI(voi);
         // need to add voi to list object!!!
     }
 
     /**
      * Method that register an VOI to this image.
-     *
-     * @param  voi  Region of interest (VOI) to be registered with the image model
+     * 
+     * @param voi Region of interest (VOI) to be registered with the image model
      */
-    public void register3DVOI(VOI voi) {
+    public void register3DVOI(final VOI voi) {
         voiVector3D.addVOI(voi);
     }
 
-    public int isRegistered(VOI voi) {
+    public int isRegistered(final VOI voi) {
         return voiVector3D.indexOf(voi);
     }
 
     /**
      * Remove a listener from the class.
-     *
-     * @param  obj  "object' to be added to the list
+     * 
+     * @param obj "object' to be added to the list
      */
-    public void removeImageDisplayListener(ViewImageUpdateInterface obj) {
+    public void removeImageDisplayListener(final ViewImageUpdateInterface obj) {
 
         if (frameList != null) {
             frameList.removeElement(obj);
@@ -2857,30 +2824,32 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Save the image to a file. The file type the image is to be save in is passed into this method.
-     *
-     * @param   directory  location where the image is to stored.
-     * @param   fileName   the name of the file (without the extension).
-     * @param   fileType   The format of the image file (i.e. Analyze, XML, DICOM etc.)
-     * @param   isActive   Whether saving is being done in a separate thread
-     *
-     * @return  true if succeeded in saving.
+     * 
+     * @param directory location where the image is to stored.
+     * @param fileName the name of the file (without the extension).
+     * @param fileType The format of the image file (i.e. Analyze, XML, DICOM etc.)
+     * @param isActive Whether saving is being done in a separate thread
+     * 
+     * @return true if succeeded in saving.
      */
-    public boolean saveImage(String directory, String fileName, int fileType, boolean isActive) {
-        return saveImage(directory,fileName,fileType,isActive,true);
+    public boolean saveImage(final String directory, final String fileName, final int fileType, final boolean isActive) {
+        return saveImage(directory, fileName, fileType, isActive, true);
     }
+
     /**
      * Save the image to a file. The file type the image is to be save in is passed into this method.
-     *
-     * @param   directory  location where the image is to stored.
-     * @param   fileName   the name of the file (without the extension).
-     * @param   fileType   The format of the image file (i.e. Analyze, XML, DICOM etc.)
-     * @param   isActive   Whether saving is being done in a separate thread
+     * 
+     * @param directory location where the image is to stored.
+     * @param fileName the name of the file (without the extension).
+     * @param fileType The format of the image file (i.e. Analyze, XML, DICOM etc.)
+     * @param isActive Whether saving is being done in a separate thread
      * @param bDisplayProgress when true display the progress bar for writing.
-     *
-     * @return  true if succeeded in saving.
+     * 
+     * @return true if succeeded in saving.
      */
-    public boolean saveImage(String directory, String fileName, int fileType, boolean isActive, final boolean bDisplayProgress) {
-        FileWriteOptions options = new FileWriteOptions(false);
+    public boolean saveImage(final String directory, final String fileName, final int fileType, final boolean isActive,
+            final boolean bDisplayProgress) {
+        final FileWriteOptions options = new FileWriteOptions(false);
 
         if (this.getNDims() == 3) {
             options.setBeginSlice(0);
@@ -2918,20 +2887,20 @@ public class ModelImage extends ModelStorageBase {
         options.setOptionsSet(true); // Options have been set - therefore don't bring up any dialogs
 
         // like the number of images.
-        FileIO fileIO = new FileIO();
+        final FileIO fileIO = new FileIO();
 
         fileIO.writeImage(this, options, bDisplayProgress);
 
         return true;
     }
 
-    /// Note to Matt should the matrix R/W be moved to the Matrix class ??
+    // / Note to Matt should the matrix R/W be moved to the Matrix class ??
     /**
      * Saves the transformation matrix to file.
-     *
-     * @param  matrix  DOCUMENT ME!
+     * 
+     * @param matrix DOCUMENT ME!
      */
-    public void saveTransformMatrix(TransMatrix matrix) {
+    public void saveTransformMatrix(final TransMatrix matrix) {
 
         String fileName, directory;
         JFileChooser chooser;
@@ -2948,7 +2917,7 @@ public class ModelImage extends ModelStorageBase {
 
             chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MATRIX));
 
-            int returnVal = chooser.showSaveDialog(UI.getMainFrame());
+            final int returnVal = chooser.showSaveDialog(UI.getMainFrame());
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 fileName = chooser.getSelectedFile().getName();
@@ -2957,40 +2926,40 @@ public class ModelImage extends ModelStorageBase {
             } else {
                 return;
             }
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ModelImage.saveTransformMatrix");
 
             return;
         }
 
         try {
-            File file = new File(UI.getDefaultDirectory() + fileName);
-            RandomAccessFile raFile = new RandomAccessFile(file, "rw");
-            if(fileName.endsWith("xfm")) {
-            	//we need to convert matrix to left hand system when for saving as .xfm
-            	TransMatrix mat = new TransMatrix(4);
-                TransMatrix rh_lhMatrix = new TransMatrix(4);
+            final File file = new File(UI.getDefaultDirectory() + fileName);
+            final RandomAccessFile raFile = new RandomAccessFile(file, "rw");
+            if (fileName.endsWith("xfm")) {
+                // we need to convert matrix to left hand system when for saving as .xfm
+                final TransMatrix mat = new TransMatrix(4);
+                final TransMatrix rh_lhMatrix = new TransMatrix(4);
 
                 // right handed to left handed or left handed to right handed coordinate systems
                 rh_lhMatrix.Set(2, 2, -1);
-                
+
                 // p.223 Foley, Van Dam ...
                 // Flipping only z axis
-                // 1  0  0  0
-                // 0  1  0  0
-                // 0  0 -1  0
-                // 0  0  0  1
+                // 1 0 0 0
+                // 0 1 0 0
+                // 0 0 -1 0
+                // 0 0 0 1
 
                 mat.Mult(rh_lhMatrix);
                 mat.Mult(matrix);
                 mat.Mult(rh_lhMatrix);
-                
-            	mat.saveXFMMatrix(raFile);
-            }else {
-            	matrix.saveMatrix(raFile);
+
+                mat.saveXFMMatrix(raFile);
+            } else {
+                matrix.saveMatrix(raFile);
             }
             raFile.close();
-        } catch (IOException error) {
+        } catch (final IOException error) {
             MipavUtil.displayError("Matrix save error");
 
             return;
@@ -2999,17 +2968,17 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Save the gradient magnitude image into the MIPAV default dir.
-     *
-     * @param  gmImage  ModelImage gradient magnitude image to save
+     * 
+     * @param gmImage ModelImage gradient magnitude image to save
      */
-    public static void saveImage(ModelImage kImage) {
-        String fName = kImage.getImageName();
-        String dName = ViewUserInterface.getReference().getDefaultDirectory();
-        FileIO fileIO = new FileIO();
+    public static void saveImage(final ModelImage kImage) {
+        final String fName = kImage.getImageName();
+        final String dName = ViewUserInterface.getReference().getDefaultDirectory();
+        final FileIO fileIO = new FileIO();
 
         fileIO.setQuiet(true);
 
-        FileWriteOptions options = new FileWriteOptions(false);
+        final FileWriteOptions options = new FileWriteOptions(false);
 
         options.setFileDirectory(dName);
         options.setFileName(fName);
@@ -3017,26 +2986,26 @@ public class ModelImage extends ModelStorageBase {
         options.setEndSlice(kImage.getExtents()[2] - 1);
         fileIO.writeImage(kImage, options);
     }
-    
+
     /**
      * Save the images transformation matrix in the working directory with the supplied fileName.
-     *
-     * @param  fileName  - fileName of transformation matrix
-     * @param  matrix    DOCUMENT ME!
+     * 
+     * @param fileName - fileName of transformation matrix
+     * @param matrix DOCUMENT ME!
      */
-    public void saveTransformMatrix(String fileName, TransMatrix matrix) {
+    public void saveTransformMatrix(final String fileName, final TransMatrix matrix) {
 
         if (fileName == null) {
             return;
         }
 
         try {
-            File file = new File(UI.getDefaultDirectory() + fileName);
-            RandomAccessFile raFile = new RandomAccessFile(file, "rw");
+            final File file = new File(UI.getDefaultDirectory() + fileName);
+            final RandomAccessFile raFile = new RandomAccessFile(file, "rw");
 
             matrix.saveMatrix(raFile);
             raFile.close();
-        } catch (IOException error) {
+        } catch (final IOException error) {
             MipavUtil.displayError("Matrix save error");
 
             return;
@@ -3045,10 +3014,10 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Sets the image directory.
-     *
-     * @param  dir  string representing the directory
+     * 
+     * @param dir string representing the directory
      */
-    public void setImageDirectory(String dir) {
+    public void setImageDirectory(final String dir) {
 
         if (fileInfo != null) {
 
@@ -3060,24 +3029,25 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Sets the image type (MRI, CT, ...).
-     *
-     * @param  type  integer representing the type
+     * 
+     * @param type integer representing the type
      */
-    public void setImageModality(int type) {
+    public void setImageModality(final int type) {
 
         if (fileInfo != null) {
             fileInfo[0].setModality(type);
         }
     }
-    
-    /** 
+
+    /**
      * Accesor to set imageNameArray
+     * 
      * @param imageNameArray
      */
-    public void setImageNameArray(String imageNameArray[]) {
+    public void setImageNameArray(final String imageNameArray[]) {
         this.imageNameArray = imageNameArray.clone();
     }
-    
+
     public String[] getImageNameArray() {
         return imageNameArray;
     }
@@ -3085,34 +3055,32 @@ public class ModelImage extends ModelStorageBase {
     /**
      * Accessor that sets the name of the image. This method also updates the file name in the fileInfos to match the
      * new image name.
-     *
-     * @param  name  the String representing the filename
+     * 
+     * @param name the String representing the filename
      */
-    public void setImageName(String name) {
+    public void setImageName(final String name) {
         setImageName(name, true);
     }
 
     /**
      * Accessor that sets the name of the image.
-     *
-     * @param  name            the String representing the filename
-     * @param  updateFileName  whether to update the file name stored in the image's fileInfos to match the new image
-     *                         name
+     * 
+     * @param name the String representing the filename
+     * @param updateFileName whether to update the file name stored in the image's fileInfos to match the new image name
      */
-    public void setImageName(String name, boolean updateFileName) {
+    public void setImageName(String name, final boolean updateFileName) {
 
         // update the fileInfo names
-        FileInfoBase[] fInfos = this.getFileInfo();
-        String tempName = fInfos[0].getFileName();
+        final FileInfoBase[] fInfos = this.getFileInfo();
+        final String tempName = fInfos[0].getFileName();
         String suffix = "";
-        
-        if ((name != null) && (name.lastIndexOf(".") != -1)) {
-            suffix = name.substring(name.lastIndexOf("."), name.length()); 
-            name = name.substring(0,name.lastIndexOf("."));
+
+        if ( (name != null) && (name.lastIndexOf(".") != -1)) {
+            suffix = name.substring(name.lastIndexOf("."), name.length());
+            name = name.substring(0, name.lastIndexOf("."));
         }
 
-
-        if ((suffix == null) && (tempName != null) && (tempName.lastIndexOf(".") != -1)) {
+        if ( (suffix == null) && (tempName != null) && (tempName.lastIndexOf(".") != -1)) {
             suffix = tempName.substring(tempName.lastIndexOf("."), tempName.length());
         }
 
@@ -3134,12 +3102,12 @@ public class ModelImage extends ModelStorageBase {
         }
 
         // first check to see if the image name already equals name
-        if ((name != null) && name.equals(this.getImageName())) {
+        if ( (name != null) && name.equals(this.getImageName())) {
 
             // make sure the image is registered
             if (UI != null) {
 
-                if (!UI.isImageRegistered(name)) {
+                if ( !UI.isImageRegistered(name)) {
                     UI.registerImage(this);
                 }
             }
@@ -3169,28 +3137,28 @@ public class ModelImage extends ModelStorageBase {
     /**
      * Accessor that sets the name of the image. NOT TO BE USED BY ANYONE EXCEPT ViewUserInterface.registerImage. Use
      * setImageName instead!!!
-     *
-     * @param  name  the String representing the filename
+     * 
+     * @param name the String representing the filename
      */
-    public void setImageNamePrivate(String name) {
+    public void setImageNamePrivate(final String name) {
         imageName = name;
     }
 
     /**
      * For multiple image viewers this indicates order of the image.
-     *
-     * @param  order  integer indicating image order
+     * 
+     * @param order integer indicating image order
      */
-    public void setImageOrder(int order) {
+    public void setImageOrder(final int order) {
         imageOrder = order;
     }
 
     /**
      * Sets the image orientation (sagittal, axial, ...).
-     *
-     * @param  orient  integer representing the orientation
+     * 
+     * @param orient integer representing the orientation
      */
-    public void setImageOrientation(int orient) {
+    public void setImageOrientation(final int orient) {
 
         if (fileInfo != null) {
 
@@ -3202,39 +3170,39 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Sets the mask which indicate which pixels/voxels to process.
-     *
-     * @param  _mask  mask in the form of a BitSet, 1 indicates pixel should be processed 0 indicates pixel should not
-     *                be processed
+     * 
+     * @param _mask mask in the form of a BitSet, 1 indicates pixel should be processed 0 indicates pixel should not be
+     *            processed
      */
-    public void setMask(BitSet _mask) {
+    public void setMask(final BitSet _mask) {
         mask = _mask;
     }
 
     /**
      * Sets the mask which indicate which pixels/voxels to process.
-     *
-     * @param  mask  mask in the form of a BitSet, 1 indicates pixel should be processed 0 indicates pixel should not be
-     *               processed
+     * 
+     * @param mask mask in the form of a BitSet, 1 indicates pixel should be processed 0 indicates pixel should not be
+     *            processed
      */
-    public void setMaskBU(BitSet mask) {
+    public void setMaskBU(final BitSet mask) {
         maskBU = mask;
     }
 
     /**
      * Accessor that adds a matrix to the matrix holder.
-     *
-     * @param  matrix  transformation matrix structure.
+     * 
+     * @param matrix transformation matrix structure.
      */
-    public void setMatrix(TransMatrix matrix) {
+    public void setMatrix(final TransMatrix matrix) {
         matrixHolder.addMatrix(matrix);
     }
 
     /**
      * Sets the slice in all frames displaying this image.
-     *
-     * @param  slice  Indicates the z dim. slice that should be displayed.
+     * 
+     * @param slice Indicates the z dim. slice that should be displayed.
      */
-    public void setSlice(int slice) {
+    public void setSlice(final int slice) {
 
         if (frameList == null) {
             return;
@@ -3247,19 +3215,19 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Accessor that sets the talairach transform information.
-     *
-     * @param  tal  TalairachTransformInfo talairach info
+     * 
+     * @param tal TalairachTransformInfo talairach info
      */
-    public void setTalairachTransformInfo(TalairachTransformInfo tal) {
+    public void setTalairachTransformInfo(final TalairachTransformInfo tal) {
         this.talairach = tal;
     }
 
     /**
      * Sets the time slice in all frames displaying this image.
-     *
-     * @param  tSlice  Indicates the t (time) dim. slice that should be displayed.
+     * 
+     * @param tSlice Indicates the t (time) dim. slice that should be displayed.
      */
-    public void setTimeSlice(int tSlice) {
+    public void setTimeSlice(final int tSlice) {
 
         if (frameList == null) {
             return;
@@ -3272,48 +3240,47 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Sets user interface.
-     *
-     * @param  _UI  reference to user interface
+     * 
+     * @param _UI reference to user interface
      */
-    public void setUserInterface(ViewUserInterface _UI) {
+    public void setUserInterface(final ViewUserInterface _UI) {
         UI = _UI;
     }
 
     /**
      * Sets VOI vector for with new VOIs.
-     *
-     * @param  VOIs  VOIs to image VOIs
+     * 
+     * @param VOIs VOIs to image VOIs
      */
-    public void setVOIs(VOIVector VOIs) {
+    public void setVOIs(final VOIVector VOIs) {
         voiVector = new VOIVector();
 
-        int nVOI = VOIs.size();
+        final int nVOI = VOIs.size();
 
         for (int i = 0; i < nVOI; i++) {
-            voiVector.add((VOI)VOIs.VOIAt(i).clone());
+            voiVector.add((VOI) VOIs.VOIAt(i).clone());
         }
 
         System.gc();
     }
 
-
     /**
      * Sets VOI vector for with new VOIs.
-     *
-     * @param  VOIs  VOIs to image VOIs
+     * 
+     * @param VOIs VOIs to image VOIs
      */
-    public void set3DVOIs(VOIVector VOIs) {
+    public void set3DVOIs(final VOIVector VOIs) {
         voiVector3D = new VOIVector();
-        int nVOI = VOIs.size();
+        final int nVOI = VOIs.size();
         for (int i = 0; i < nVOI; i++) {
-            voiVector3D.add( new VOI(VOIs.VOIAt(i)));
+            voiVector3D.add(new VOI(VOIs.VOIAt(i)));
         }
     }
 
     /**
      * Gives a readable representation of the ModelImage, including file name and extents.
-     *
-     * @return  the string representation
+     * 
+     * @return the string representation
      */
     public String toString() {
         String s = "";
@@ -3330,7 +3297,7 @@ public class ModelImage extends ModelStorageBase {
             s += "\t [" + i + "] = " + getFileInfo()[0].getResolutions()[i];
         }
 
-        s += "\n Type: \t\t" + getBufferTypeStr(getType());
+        s += "\n Type: \t\t" + ModelStorageBase.getBufferTypeStr(getType());
 
         if (isColorImage()) {
             s += "\n Image minR:\t" + getMinR();
@@ -3350,10 +3317,11 @@ public class ModelImage extends ModelStorageBase {
         s += "\n\t Endianess:  \t" + getFileInfo()[0].getEndianess();
 
         for (int i = 0; i < getNDims(); i++) {
-            s += "\n\t Units:      \t" +
-                 FileInfoBase.getUnitsOfMeasureAbbrevStr(getFileInfo()[0].getUnitsOfMeasure()[0]); // possibly expand
-                                                                                                   // to see all
-                                                                                                   // measurements
+            s += "\n\t Units:      \t"
+                    + FileInfoBase.getUnitsOfMeasureAbbrevStr(getFileInfo()[0].getUnitsOfMeasure()[0]); // possibly
+                                                                                                        // expand
+            // to see all
+            // measurements
         }
 
         s += "\n\t Orientation:\t" + FileInfoBase.getImageOrientationStr(getImageOrientation());
@@ -3364,7 +3332,8 @@ public class ModelImage extends ModelStorageBase {
 
         // s += "\n\t Orientation:\t" + FileInfoBase.getImageOrientationStr(getImageOrientation());
         for (int i = 0; i < getNDims(); i++) {
-            s += "\n\t Origin: " + i + " \t" + getFileInfo()[0].getOrigin(i); // possibly expand to see all measurements
+            s += "\n\t Origin: " + i + " \t" + getFileInfo()[0].getOrigin(i); // possibly expand to see all
+                                                                                // measurements
         }
 
         s += "\n\t Pixel Pad:  \t" + getFileInfo()[0].getPixelPadValue();
@@ -3399,7 +3368,7 @@ public class ModelImage extends ModelStorageBase {
         VOI[] newProtractorVOI = null;
 
         Vector<VOIBase>[] contours;
-        Vector3f[] point1 = new Vector3f[1];
+        final Vector3f[] point1 = new Vector3f[1];
         int nPoints;
         int nContours;
         Vector3f[] points;
@@ -3448,7 +3417,7 @@ public class ModelImage extends ModelStorageBase {
             } // if (tempVOIs.VOIAt(i).isActive() == true)
         } // for (i = 0; i < nVOIs; i++)
 
-        if ((numContours == 0) && (numPoints == 0) && (numPLines == 0) && (numLines == 0) && (numProtractors == 0)) {
+        if ( (numContours == 0) && (numPoints == 0) && (numPLines == 0) && (numLines == 0) && (numProtractors == 0)) {
             MipavUtil.displayWarning("Must select a VOI to ungroup");
             tempVOIs.removeAllElements();
 
@@ -3520,7 +3489,7 @@ public class ModelImage extends ModelStorageBase {
                         nContours = contours[j].size();
 
                         for (k = 0; k < nContours; k++) {
-                            tempBase = (VOIBase) contours[j].elementAt(k);
+                            tempBase = contours[j].elementAt(k);
                             tempBase.setName(newVOI[n].getName());
                             newVOI[n].getCurves()[j].addElement(tempBase);
                             n++;
@@ -3536,7 +3505,7 @@ public class ModelImage extends ModelStorageBase {
                         nContours = contours[j].size();
 
                         for (k = 0; k < nContours; k++) {
-                            tempBase = (VOIBase) contours[j].elementAt(k);
+                            tempBase = contours[j].elementAt(k);
                             tempBase.setName(newPLineVOI[nPLine].getName());
                             newPLineVOI[nPLine].getCurves()[j].addElement(tempBase);
                             nPLine++;
@@ -3552,7 +3521,7 @@ public class ModelImage extends ModelStorageBase {
                         nContours = contours[j].size();
 
                         for (k = 0; k < nContours; k++) {
-                            tempBase = (VOIBase) contours[j].elementAt(k);
+                            tempBase = contours[j].elementAt(k);
                             tempBase.setName(newLineVOI[nLine].getName());
                             newLineVOI[nLine].getCurves()[j].addElement(tempBase);
                             nLine++;
@@ -3583,7 +3552,7 @@ public class ModelImage extends ModelStorageBase {
                         nContours = contours[j].size();
 
                         for (k = 0; k < nContours; k++) {
-                            tempBase = (VOIBase) contours[j].elementAt(k);
+                            tempBase = contours[j].elementAt(k);
                             tempBase.setName(newProtractorVOI[nProtractor].getName());
                             newProtractorVOI[nProtractor].getCurves()[j].addElement(contours[j].elementAt(k));
                             nProtractor++;
@@ -3621,17 +3590,16 @@ public class ModelImage extends ModelStorageBase {
         tempVOIs = null;
 
         for (i = 0; i < voiVector.size(); i++) {
-            ((VOI) voiVector.elementAt(i)).setID((short) i);
+            (voiVector.elementAt(i)).setID((short) i);
         }
 
         /**
-         *      System.err.println("\n\nUngrouping DEBUG INFO:");     VOI tempVOI = null;     Vector [] tempCurves =
-         * null;     //temp stuff for debugging purposes     for (i = 0; i < voiVector.size(); i++) {         tempVOI =
-         * voiVector.VOIAt(i);         System.err.println( i + ": VOI name: " + tempVOI.getName());         tempCurves =
-         * tempVOI.getCurves();         for (j = 0; j < tempCurves.length; j++) { System.err.println("\tSize: " +
-         * tempCurves[j].size());             System.err.println("\t" + tempCurves[j].toString());         }     }
+         * System.err.println("\n\nUngrouping DEBUG INFO:"); VOI tempVOI = null; Vector [] tempCurves = null; //temp
+         * stuff for debugging purposes for (i = 0; i < voiVector.size(); i++) { tempVOI = voiVector.VOIAt(i);
+         * System.err.println( i + ": VOI name: " + tempVOI.getName()); tempCurves = tempVOI.getCurves(); for (j = 0; j <
+         * tempCurves.length; j++) { System.err.println("\tSize: " + tempCurves[j].size()); System.err.println("\t" +
+         * tempCurves[j].toString()); } }
          */
-
 
         notifyImageDisplayListeners();
     }
@@ -3662,10 +3630,10 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Method that unregisters an VOI.
-     *
-     * @param  voi  Volume of interest (VOI) to be removed from the image model
+     * 
+     * @param voi Volume of interest (VOI) to be removed from the image model
      */
-    public void unregisterVOI(VOI voi) {
+    public void unregisterVOI(final VOI voi) {
         voiVector.removeElement(voi);
 
         for (int i = 0; i < voiVector.size(); i++) { // ((VOI)(voiVector.elementAt(i))).setID((short)i);
@@ -3674,36 +3642,34 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Method that unregisters an VOI.
-     *
-     * @param  voi  Volume of interest (VOI) to be removed from the image model
+     * 
+     * @param voi Volume of interest (VOI) to be removed from the image model
      */
-    public void unregister3DVOI(VOI voi) {
+    public void unregister3DVOI(final VOI voi) {
         voiVector3D.removeElement(voi);
     }
-    
-    public void printVOIs()
-    {
-        for (int i = 0; i < voiVector.size(); i++)
-        {
+
+    public void printVOIs() {
+        for (int i = 0; i < voiVector.size(); i++) {
             voiVector.get(i).print();
         }
     }
 
     /**
      * Give the image a new image name, updates frame (if not null), and file infos.
-     *
-     * @param  newImageName  The new name for the image
+     * 
+     * @param newImageName The new name for the image
      */
     public void updateFileName(String newImageName) {
-        String oldImageName = getImageName();
+        final String oldImageName = getImageName();
         setImageName(newImageName);
 
         ScriptRecorder.getReference().addLine(new ActionChangeName(this, oldImageName, newImageName));
         ProvenanceRecorder.getReference().addLine(new ActionChangeName(this, oldImageName, newImageName));
-        
+
         try {
             UI.getFrameContainingImage(this).setTitle();
-        } catch (Exception e) { // was not in frame..
+        } catch (final Exception e) { // was not in frame..
         }
 
         int index;
@@ -3713,7 +3679,7 @@ public class ModelImage extends ModelStorageBase {
 
             if (fileInfo[0].getFileFormat() == FileUtility.DICOM) {
                 ((FileInfoDicom) (fileInfo[0])).getTagTable().setValue("0010,0010", newImageName.trim(),
-                                                                       newImageName.trim().length());
+                        newImageName.trim().length());
             } else {
                 index = fileInfo[0].getFileName().trim().lastIndexOf(".");
 
@@ -3730,7 +3696,7 @@ public class ModelImage extends ModelStorageBase {
 
                 for (int i = 0; i < getExtents()[2]; i++) {
                     ((FileInfoDicom) (fileInfo[i])).getTagTable().setValue("0010,0010", newImageName.trim(),
-                                                                           newImageName.trim().length());
+                            newImageName.trim().length());
                 }
             } else {
 
@@ -3754,7 +3720,7 @@ public class ModelImage extends ModelStorageBase {
 
                 for (int i = 0; i < (getExtents()[2] * getExtents()[3]); i++) {
                     ((FileInfoDicom) (fileInfo[i])).getTagTable().setValue("0010,0010", newImageName.trim(),
-                                                                           newImageName.trim().length());
+                            newImageName.trim().length());
                 }
             } else {
 
@@ -3778,7 +3744,7 @@ public class ModelImage extends ModelStorageBase {
 
                 for (int i = 0; i < (getExtents()[2] * getExtents()[3] * getExtents()[4]); i++) {
                     ((FileInfoDicom) (fileInfo[i])).getTagTable().setValue("0010,0010", newImageName.trim(),
-                                                                           newImageName.trim().length());
+                            newImageName.trim().length());
                 }
             } else {
 
@@ -3801,22 +3767,22 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Updates the images origin.
-     *
-     * @param  xfrm  the transformation maxtrix used to transform the origin
+     * 
+     * @param xfrm the transformation maxtrix used to transform the origin
      */
-    public void updateImageOrigin(TransMatrix xfrm) {
+    public void updateImageOrigin(final TransMatrix xfrm) {
 
-        FileInfoBase[] fileInfo = getFileInfo();
-        float[] imgOrigin = fileInfo[0].getOrigin();
+        final FileInfoBase[] fileInfo = getFileInfo();
+        final float[] imgOrigin = fileInfo[0].getOrigin();
 
         if (getNDims() == 2) {
-            float[] tempOrigin = new float[2];
+            final float[] tempOrigin = new float[2];
 
             xfrm.transform(imgOrigin[0], imgOrigin[1], tempOrigin);
             imgOrigin[0] = tempOrigin[0];
             imgOrigin[1] = tempOrigin[1];
         } else {
-            float[] tempOrigin = new float[3];
+            final float[] tempOrigin = new float[3];
 
             xfrm.transform(imgOrigin[0], imgOrigin[1], imgOrigin[2], tempOrigin);
             imgOrigin[0] = tempOrigin[0];
@@ -3825,15 +3791,15 @@ public class ModelImage extends ModelStorageBase {
         }
 
         int direction = 1;
-        float startPos = imgOrigin[2];
+        final float startPos = imgOrigin[2];
         int[] axisOrient = null;
 
-        axisOrient = (int[]) fileInfo[0].getAxisOrientation();
+        axisOrient = fileInfo[0].getAxisOrientation();
 
         if (getNDims() >= 3) {
 
-            if ((axisOrient[2] == FileInfoBase.ORI_L2R_TYPE) || (axisOrient[2] == FileInfoBase.ORI_A2P_TYPE) ||
-                    (axisOrient[2] == FileInfoBase.ORI_S2I_TYPE)) {
+            if ( (axisOrient[2] == FileInfoBase.ORI_L2R_TYPE) || (axisOrient[2] == FileInfoBase.ORI_A2P_TYPE)
+                    || (axisOrient[2] == FileInfoBase.ORI_S2I_TYPE)) {
                 direction = -1;
             } else {
                 direction = 1;
@@ -3855,16 +3821,15 @@ public class ModelImage extends ModelStorageBase {
 
                 for (int i = 0; i < getExtents()[2]; i++) {
                     imgOrigin[2] = startPos + (direction * i * fileInfo[0].getResolutions()[2]);
-                    fileInfo[(j * getExtents()[2]) + i].setOrigin(imgOrigin);
+                    fileInfo[ (j * getExtents()[2]) + i].setOrigin(imgOrigin);
                 }
             }
         }
     }
-    
+
     /**
-     * Make all spatial units the same, all time units the same, and all
-     * frequency units the same 
-     *
+     * Make all spatial units the same, all time units the same, and all frequency units the same
+     * 
      */
     public void makeUnitsOfMeasureIdentical() {
         final int OTHER = 0;
@@ -3872,22 +3837,21 @@ public class ModelImage extends ModelStorageBase {
         final int TIME = 2;
         final int FREQUENCY = 3;
         int i;
-        int nDims = getNDims();
+        final int nDims = getNDims();
         int unitType[];
         boolean set1To0 = false;
         boolean set2To0 = false;
         boolean set2To1 = false;
-        
-        int[] units = fileInfo[0].getUnitsOfMeasure();
-        if ((nDims == 2) && (units[0] == units[1])) {
+
+        final int[] units = fileInfo[0].getUnitsOfMeasure();
+        if ( (nDims == 2) && (units[0] == units[1])) {
             return;
-        }
-        else if ((nDims == 3) && (units[0] == units[1]) && (units[1] == units[2])) {
+        } else if ( (nDims == 3) && (units[0] == units[1]) && (units[1] == units[2])) {
             return;
         }
         unitType = new int[nDims];
         for (i = 0; i < nDims; i++) {
-            switch(units[i]) {
+            switch (units[i]) {
                 case FileInfoBase.INCHES:
                 case FileInfoBase.MILS:
                 case FileInfoBase.CENTIMETERS:
@@ -3914,541 +3878,532 @@ public class ModelImage extends ModelStorageBase {
                     break;
             } // switch(units[i])
         } // for (i = 0; i < nDims; i++)
-        
+
         if (nDims == 2) {
-            if ((unitType[0] == OTHER) || (unitType[1] == OTHER) || (unitType[0] != unitType[1])) {
+            if ( (unitType[0] == OTHER) || (unitType[1] == OTHER) || (unitType[0] != unitType[1])) {
                 return;
-            }
-            else {
+            } else {
                 set1To0 = true;
             }
         } // if (nDims == 2)
-        else if ((nDims == 3) || (nDims == 4)) {
-            if ((unitType[0] == OTHER) || (unitType[1] == OTHER) || (unitType[0] != unitType[1])) {
+        else if ( (nDims == 3) || (nDims == 4)) {
+            if ( (unitType[0] == OTHER) || (unitType[1] == OTHER) || (unitType[0] != unitType[1])) {
                 ;
-            }
-            else {
+            } else {
                 set1To0 = true;
             }
-            
-            if ((unitType[0] == OTHER) || (unitType[2] == OTHER) || (unitType[0] != unitType[2])) {
+
+            if ( (unitType[0] == OTHER) || (unitType[2] == OTHER) || (unitType[0] != unitType[2])) {
                 ;
-            }
-            else {
+            } else {
                 set2To0 = true;
-            } 
-            
-            if ((!set1To0) && (!set2To0)) {
-                if ((unitType[1] == OTHER) || (unitType[1] == OTHER) || (unitType[1] != unitType[2])) {
+            }
+
+            if ( ( !set1To0) && ( !set2To0)) {
+                if ( (unitType[1] == OTHER) || (unitType[1] == OTHER) || (unitType[1] != unitType[2])) {
                     ;
-                }
-                else {
+                } else {
                     set2To1 = true;
-                }     
+                }
             } // if ((!set1To0) && (!set2To0))
-            
-            if ((!set1To0) && (!set2To0) && (!set2To1)) {
+
+            if ( ( !set1To0) && ( !set2To0) && ( !set2To1)) {
                 return;
             }
         } // else if ((nDims == 3) || (nDims == 4))
         if (set1To0 && set2To0) {
             make2UnitsOfMeasureIdentical(0, 1);
             make2UnitsOfMeasureIdentical(0, 2);
-        }
-        else if (set1To0) {
+        } else if (set1To0) {
             make2UnitsOfMeasureIdentical(0, 1);
-        }
-        else if (set2To0) {
+        } else if (set2To0) {
             make2UnitsOfMeasureIdentical(0, 2);
-        }
-        else if (set2To1) {
+        } else if (set2To1) {
             make2UnitsOfMeasureIdentical(1, 2);
         }
         return;
     } // public void makeUnitsOfMeasureIdentical()
-    
+
     /**
      * 
-     * @param newUnitDim 
-     * @param oldUnitDim dimension which will have unit of measure converted to unit of measure
-     *                   of dimension newUnitDim and will have the resolution correspondingly
-     *                   converted.
+     * @param newUnitDim
+     * @param oldUnitDim dimension which will have unit of measure converted to unit of measure of dimension newUnitDim
+     *            and will have the resolution correspondingly converted.
      */
-    public void make2UnitsOfMeasureIdentical(int newUnitDim, int oldUnitDim) {
+    public void make2UnitsOfMeasureIdentical(final int newUnitDim, final int oldUnitDim) {
         int i;
-        int newUnit = fileInfo[0].getUnitsOfMeasure()[newUnitDim];
-        int oldUnit = fileInfo[0].getUnitsOfMeasure()[oldUnitDim];
+        final int newUnit = fileInfo[0].getUnitsOfMeasure()[newUnitDim];
+        final int oldUnit = fileInfo[0].getUnitsOfMeasure()[oldUnitDim];
         float res = fileInfo[0].getResolutions()[oldUnitDim];
-        double conv = getConversionFactor(newUnit, oldUnit);
+        final double conv = ModelImage.getConversionFactor(newUnit, oldUnit);
         res *= conv;
-        
+
         for (i = 0; i < fileInfo.length; i++) {
-            fileInfo[i].setUnitsOfMeasure(newUnit,oldUnitDim);
-            fileInfo[i].setResolutions(res,oldUnitDim);
+            fileInfo[i].setUnitsOfMeasure(newUnit, oldUnitDim);
+            fileInfo[i].setResolutions(res, oldUnitDim);
             this.setFileInfo(fileInfo[i], i);
         }
     } // public void make2UnitsOfMeasureIdentical(int newUnit, int originalUnit)
-    
+
     /**
-     * Gets the conversion factor for going between two units.  
+     * Gets the conversion factor for going between two units.
      * 
      * @return Double.MIN_VALUE when a valid conversion is not found
      */
-    public static double getConversionFactor(int newUnit, int oldUnit) {
-    	if(newUnit == oldUnit) {
-    		return 1;
-    	}
-    	
-    	switch(newUnit) {
-        case FileInfoBase.INCHES:
-            switch(oldUnit) {
-                case FileInfoBase.CENTIMETERS:
-                    return 0.393700787;
-                    
-                case FileInfoBase.ANGSTROMS:
-                    return 3.93700787E-9;
-                     
-                case FileInfoBase.NANOMETERS:
-                    return 3.93700787E-8;
-                     
-                case FileInfoBase.MICROMETERS:
-                    return 3.93700787E-5;
-                     
-                case FileInfoBase.MILLIMETERS:
-                    return 3.93700787E-2;
-                     
-                case FileInfoBase.METERS:
-                    return 39.3700787;
-                     
-                case FileInfoBase.KILOMETERS:
-                    return 3.93700787E4;
-                     
-                case FileInfoBase.MILES:
-                    return 6.336E4;
-                   
-                case FileInfoBase.MILS:
-                    return 1.0E-3;
-                     
-            }
-            break;
-        case FileInfoBase.MILS:
-            switch(oldUnit) {
-                case FileInfoBase.CENTIMETERS:
-                    return 3.93700787E2;
-                    
-                case FileInfoBase.ANGSTROMS:
-                    return 3.93700787E-6;
-                     
-                case FileInfoBase.NANOMETERS:
-                    return 3.93700787E-5;
-                     
-                case FileInfoBase.MICROMETERS:
-                    return 3.93700787E-2;
-                     
-                case FileInfoBase.MILLIMETERS:
-                    return 3.93700787E+1;
-                     
-                case FileInfoBase.METERS:
-                    return 3.93700787E4;
-                     
-                case FileInfoBase.KILOMETERS:
-                    return 3.93700787E7;
-                     
-                case FileInfoBase.MILES:
-                    return 6.336E7;
-                   
-                case FileInfoBase.INCHES:
-                    return 1.0E+3;
-                     
-            }
-            break;
-        case FileInfoBase.CENTIMETERS:
-            switch(oldUnit) {
-                case FileInfoBase.INCHES:
-                    return 2.54;
-                    
-                case FileInfoBase.MILS:
-                    return 2.54E-3;
-                     
-                case FileInfoBase.ANGSTROMS:
-                    return 1.0E-8;
-                     
-                case FileInfoBase.NANOMETERS:
-                    return 1.0E-7;
-                     
-                case FileInfoBase.MICROMETERS:
-                    return 1.0E-4;
-                     
-                case FileInfoBase.MILLIMETERS:
-                    return 0.1;
-                     
-                case FileInfoBase.METERS:
-                    return 1.0E2;
-                     
-                case FileInfoBase.KILOMETERS:
-                    return 1.0E5;
-                     
-                case FileInfoBase.MILES:
-                    return 1.609344E5;
-                     
-            }
-            break;
-        case FileInfoBase.ANGSTROMS:
-            switch(oldUnit) {
-                case FileInfoBase.INCHES:
-                    return 2.54E8;
-                    
-                case FileInfoBase.MILS:
-                    return 2.54E5;
-                     
-                case FileInfoBase.CENTIMETERS:
-                    return 1.0E8;
-                     
-                case FileInfoBase.NANOMETERS:
-                    return 10.0;
-                     
-                case FileInfoBase.MICROMETERS:
-                    return 1.0E4;
-                     
-                case FileInfoBase.MILLIMETERS:
-                    return 1.0E7;
-                     
-                case FileInfoBase.METERS:
-                    return 1.0E10;
-                     
-                case FileInfoBase.KILOMETERS:
-                    return 1.0E13;
-                     
-                case FileInfoBase.MILES:
-                    return 1.609344E13;
-                     
-            }
-            break;
-        case FileInfoBase.NANOMETERS:
-            switch(oldUnit) {
-                case FileInfoBase.INCHES:
-                    return 2.54E7;
-                    
-                case FileInfoBase.MILS:
-                    return 2.54E4;
-                     
-                case FileInfoBase.CENTIMETERS:
-                    return 1.0E7;
-                     
-                case FileInfoBase.ANGSTROMS:
-                    return 0.1;
-                     
-                case FileInfoBase.MICROMETERS:
-                    return 1.0E3;
-                     
-                case FileInfoBase.MILLIMETERS:
-                    return 1.0E6;
-                     
-                case FileInfoBase.METERS:
-                    return 1.0E9;
-                     
-                case FileInfoBase.KILOMETERS:
-                    return 1.0E12;
-                     
-                case FileInfoBase.MILES:
-                    return 1.609344E12;
-                     
-            }
-            break;
-        case FileInfoBase.MICROMETERS:
-            switch(oldUnit) {
-                case FileInfoBase.INCHES:
-                    return 2.54E4;
-                    
-                case FileInfoBase.MILS:
-                    return 2.54E1;
-                     
-                case FileInfoBase.CENTIMETERS:
-                    return 1.0E4;
-                     
-                case FileInfoBase.ANGSTROMS:
-                    return 1.0E-4;
-                     
-                case FileInfoBase.NANOMETERS:
-                    return 1.0E-3;
-                     
-                case FileInfoBase.MILLIMETERS:
-                    return 1.0E3;
-                     
-                case FileInfoBase.METERS:
-                    return 1.0E6;
-                     
-                case FileInfoBase.KILOMETERS:
-                    return 1.0E9;
-                     
-                case FileInfoBase.MILES:
-                    return 1.609344E9;
-                     
-            }
-            break;
-        case FileInfoBase.MILLIMETERS:
-            switch(oldUnit) {
-                case FileInfoBase.INCHES:
-                    return 25.4;
-                    
-                case FileInfoBase.MILS:
-                    return 2.54E-2;
-                     
-                case FileInfoBase.CENTIMETERS:
-                    return 10.0;
-                     
-                case FileInfoBase.ANGSTROMS:
-                    return 1.0E-7;
-                     
-                case FileInfoBase.NANOMETERS:
-                    return 1.0E-6;
-                     
-                case FileInfoBase.MICROMETERS:
-                    return 1.0E-3;
-                     
-                case FileInfoBase.METERS:
-                    return 1.0E3;
-                     
-                case FileInfoBase.KILOMETERS:
-                    return 1.0E6;
-                     
-                case FileInfoBase.MILES:
-                    return 1.609344E6;
-                     
-            }
-            break;
-        case FileInfoBase.METERS:
-            switch(oldUnit) {
-                case FileInfoBase.INCHES:
-                    return 2.54E-2;
-                    
-                case FileInfoBase.MILS:
-                    return 2.54E-5;
-                     
-                case FileInfoBase.CENTIMETERS:
-                    return 1.0E-2;
-                     
-                case FileInfoBase.ANGSTROMS:
-                    return 1.0E-10;
-                     
-                case FileInfoBase.NANOMETERS:
-                    return 1.0E-9;
-                     
-                case FileInfoBase.MICROMETERS:
-                    return 1.0E-6;
-                     
-                case FileInfoBase.MILLIMETERS:
-                    return 1.0E-3;
-                     
-                case FileInfoBase.KILOMETERS:
-                    return 1.0E3;
-                     
-                case FileInfoBase.MILES:
-                    return 1.609344E3;
-                     
-            }
-            break;
-        case FileInfoBase.KILOMETERS:
-            switch(oldUnit) {
-                case FileInfoBase.INCHES:
-                	return 2.54E-5;
-                    
-                case FileInfoBase.MILS:
-                    return 2.54E-8;
-                     
-                case FileInfoBase.CENTIMETERS:
-                	return 1.0E-5;
-                     
-                case FileInfoBase.ANGSTROMS:
-                	return 1.0E-13;
-                     
-                case FileInfoBase.NANOMETERS:
-                	return 1.0E-12;
-                     
-                case FileInfoBase.MICROMETERS:
-                	return 1.0E-9;
-                     
-                case FileInfoBase.MILLIMETERS:
-                	return 1.0E-6;
-                     
-                case FileInfoBase.METERS:
-                	return 1.0E-3;
-                     
-                case FileInfoBase.MILES:
-                	return 1.609344;
-                     
-            }
-            break;
-        case FileInfoBase.MILES:
-            switch(oldUnit) {
-                case FileInfoBase.INCHES:
-                	return 1.57828283E-5;
-                    
-                case FileInfoBase.MILS:
-                    return 1.57828283E-8;
-                     
-                case FileInfoBase.CENTIMETERS:
-                	return 6.21371192E-6;
-                     
-                case FileInfoBase.ANGSTROMS:
-                	return 6.21371192E-14;
-                     
-                case FileInfoBase.NANOMETERS:
-                	return 6.21371192E-13;
-                     
-                case FileInfoBase.MICROMETERS:
-                	return 6.21371192E-10;
-                     
-                case FileInfoBase.MILLIMETERS:
-                	return 6.21371192E-7;
-                     
-                case FileInfoBase.METERS:
-                	return 6.21371192E-4;
-                     
-                case FileInfoBase.KILOMETERS:
-                	return 6.21371192E-1;
-                     
-            }
-            break;
-        case FileInfoBase.NANOSEC:
-            switch(oldUnit) {
-                case FileInfoBase.MICROSEC:
-                	return 1.0E3;
-                     
-                case FileInfoBase.MILLISEC:
-                	return 1.0E6;
-                     
-                case FileInfoBase.SECONDS:
-                	return 1.0E9;
-                     
-                case FileInfoBase.MINUTES:
-                	return 6.0E10;
-                     
-                case FileInfoBase.HOURS:
-                	return 3.6E12;
-                     
-            }
-            break;
-        case FileInfoBase.MICROSEC:
-            switch(oldUnit) {
-                case FileInfoBase.NANOSEC:
-                	return 1.0E-3;
-                     
-                case FileInfoBase.MILLISEC:
-                	return 1.0E3;
-                     
-                case FileInfoBase.SECONDS:
-                	return 1.0E6;
-                     
-                case FileInfoBase.MINUTES:
-                	return 6.0E7;
-                     
-                case FileInfoBase.HOURS:
-                	return 3.6E9;
-                     
-            }
-            break;
-        case FileInfoBase.MILLISEC:
-            switch(oldUnit) {
-                case FileInfoBase.NANOSEC:
-                	return 1.0E-6;
-                     
-                case FileInfoBase.MICROSEC:
-                	return 1.0E-3;
-                     
-                case FileInfoBase.SECONDS:
-                	return 1.0E3;
-                     
-                case FileInfoBase.MINUTES:
-                	return 6.0E4;
-                     
-                case FileInfoBase.HOURS:
-                	return 3.6E6;
-                     
-            }
-            break;
-        case FileInfoBase.SECONDS:
-            switch(oldUnit) {
-                case FileInfoBase.NANOSEC:
-                	return 1.0E-9;
-                     
-                case FileInfoBase.MICROSEC:
-                	return 1.0E-6;
-                     
-                case FileInfoBase.MILLISEC:
-                	return 1.0E-3;
-                     
-                case FileInfoBase.MINUTES:
-                	return 6.0E1;
-                     
-                case FileInfoBase.HOURS:
-                	return 3.6E3;
-                     
-            }
-            break;
-        case FileInfoBase.MINUTES:
-            switch(oldUnit) {
-                case FileInfoBase.NANOSEC:
-                	return 1.66666667E-11;
-                     
-                case FileInfoBase.MICROSEC:
-                	return 1.66666667E-8;
-                     
-                case FileInfoBase.MILLISEC:
-                	return 1.66666667E-5;
-                     
-                case FileInfoBase.SECONDS:
-                	return 1.66666667E-2;
-                     
-                case FileInfoBase.HOURS:
-                	return 6.0E1;
-                     
-            }
-            break;
-        case FileInfoBase.HOURS:
-            switch(oldUnit) {
-                case FileInfoBase.NANOSEC:
-                	return 2.77777778E-13;
-                     
-                case FileInfoBase.MICROSEC:
-                	return 2.77777778E-10;
-                     
-                case FileInfoBase.MILLISEC:
-                	return 2.77777778E-7;
-                     
-                case FileInfoBase.SECONDS:
-                	return 2.77777778E-4;
-                     
-                case FileInfoBase.MINUTES:
-                	return 1.66666667E-2;
-                     
-            }
-            break;
-        case FileInfoBase.HZ:
-            switch(oldUnit) {
-                case FileInfoBase.RADS:
-                	return 0.159154943274;
-                     
-            }
-            break;
-        case FileInfoBase.RADS:
-            switch(oldUnit) {
-                case FileInfoBase.HZ:
-                    return 6.2831853;
-                     
-            }
-            break;
-    	} // switch(newUnit)
-    	//no valid conversion found
-    	return Double.MIN_VALUE;
+    public static double getConversionFactor(final int newUnit, final int oldUnit) {
+        if (newUnit == oldUnit) {
+            return 1;
+        }
+
+        switch (newUnit) {
+            case FileInfoBase.INCHES:
+                switch (oldUnit) {
+                    case FileInfoBase.CENTIMETERS:
+                        return 0.393700787;
+
+                    case FileInfoBase.ANGSTROMS:
+                        return 3.93700787E-9;
+
+                    case FileInfoBase.NANOMETERS:
+                        return 3.93700787E-8;
+
+                    case FileInfoBase.MICROMETERS:
+                        return 3.93700787E-5;
+
+                    case FileInfoBase.MILLIMETERS:
+                        return 3.93700787E-2;
+
+                    case FileInfoBase.METERS:
+                        return 39.3700787;
+
+                    case FileInfoBase.KILOMETERS:
+                        return 3.93700787E4;
+
+                    case FileInfoBase.MILES:
+                        return 6.336E4;
+
+                    case FileInfoBase.MILS:
+                        return 1.0E-3;
+
+                }
+                break;
+            case FileInfoBase.MILS:
+                switch (oldUnit) {
+                    case FileInfoBase.CENTIMETERS:
+                        return 3.93700787E2;
+
+                    case FileInfoBase.ANGSTROMS:
+                        return 3.93700787E-6;
+
+                    case FileInfoBase.NANOMETERS:
+                        return 3.93700787E-5;
+
+                    case FileInfoBase.MICROMETERS:
+                        return 3.93700787E-2;
+
+                    case FileInfoBase.MILLIMETERS:
+                        return 3.93700787E+1;
+
+                    case FileInfoBase.METERS:
+                        return 3.93700787E4;
+
+                    case FileInfoBase.KILOMETERS:
+                        return 3.93700787E7;
+
+                    case FileInfoBase.MILES:
+                        return 6.336E7;
+
+                    case FileInfoBase.INCHES:
+                        return 1.0E+3;
+
+                }
+                break;
+            case FileInfoBase.CENTIMETERS:
+                switch (oldUnit) {
+                    case FileInfoBase.INCHES:
+                        return 2.54;
+
+                    case FileInfoBase.MILS:
+                        return 2.54E-3;
+
+                    case FileInfoBase.ANGSTROMS:
+                        return 1.0E-8;
+
+                    case FileInfoBase.NANOMETERS:
+                        return 1.0E-7;
+
+                    case FileInfoBase.MICROMETERS:
+                        return 1.0E-4;
+
+                    case FileInfoBase.MILLIMETERS:
+                        return 0.1;
+
+                    case FileInfoBase.METERS:
+                        return 1.0E2;
+
+                    case FileInfoBase.KILOMETERS:
+                        return 1.0E5;
+
+                    case FileInfoBase.MILES:
+                        return 1.609344E5;
+
+                }
+                break;
+            case FileInfoBase.ANGSTROMS:
+                switch (oldUnit) {
+                    case FileInfoBase.INCHES:
+                        return 2.54E8;
+
+                    case FileInfoBase.MILS:
+                        return 2.54E5;
+
+                    case FileInfoBase.CENTIMETERS:
+                        return 1.0E8;
+
+                    case FileInfoBase.NANOMETERS:
+                        return 10.0;
+
+                    case FileInfoBase.MICROMETERS:
+                        return 1.0E4;
+
+                    case FileInfoBase.MILLIMETERS:
+                        return 1.0E7;
+
+                    case FileInfoBase.METERS:
+                        return 1.0E10;
+
+                    case FileInfoBase.KILOMETERS:
+                        return 1.0E13;
+
+                    case FileInfoBase.MILES:
+                        return 1.609344E13;
+
+                }
+                break;
+            case FileInfoBase.NANOMETERS:
+                switch (oldUnit) {
+                    case FileInfoBase.INCHES:
+                        return 2.54E7;
+
+                    case FileInfoBase.MILS:
+                        return 2.54E4;
+
+                    case FileInfoBase.CENTIMETERS:
+                        return 1.0E7;
+
+                    case FileInfoBase.ANGSTROMS:
+                        return 0.1;
+
+                    case FileInfoBase.MICROMETERS:
+                        return 1.0E3;
+
+                    case FileInfoBase.MILLIMETERS:
+                        return 1.0E6;
+
+                    case FileInfoBase.METERS:
+                        return 1.0E9;
+
+                    case FileInfoBase.KILOMETERS:
+                        return 1.0E12;
+
+                    case FileInfoBase.MILES:
+                        return 1.609344E12;
+
+                }
+                break;
+            case FileInfoBase.MICROMETERS:
+                switch (oldUnit) {
+                    case FileInfoBase.INCHES:
+                        return 2.54E4;
+
+                    case FileInfoBase.MILS:
+                        return 2.54E1;
+
+                    case FileInfoBase.CENTIMETERS:
+                        return 1.0E4;
+
+                    case FileInfoBase.ANGSTROMS:
+                        return 1.0E-4;
+
+                    case FileInfoBase.NANOMETERS:
+                        return 1.0E-3;
+
+                    case FileInfoBase.MILLIMETERS:
+                        return 1.0E3;
+
+                    case FileInfoBase.METERS:
+                        return 1.0E6;
+
+                    case FileInfoBase.KILOMETERS:
+                        return 1.0E9;
+
+                    case FileInfoBase.MILES:
+                        return 1.609344E9;
+
+                }
+                break;
+            case FileInfoBase.MILLIMETERS:
+                switch (oldUnit) {
+                    case FileInfoBase.INCHES:
+                        return 25.4;
+
+                    case FileInfoBase.MILS:
+                        return 2.54E-2;
+
+                    case FileInfoBase.CENTIMETERS:
+                        return 10.0;
+
+                    case FileInfoBase.ANGSTROMS:
+                        return 1.0E-7;
+
+                    case FileInfoBase.NANOMETERS:
+                        return 1.0E-6;
+
+                    case FileInfoBase.MICROMETERS:
+                        return 1.0E-3;
+
+                    case FileInfoBase.METERS:
+                        return 1.0E3;
+
+                    case FileInfoBase.KILOMETERS:
+                        return 1.0E6;
+
+                    case FileInfoBase.MILES:
+                        return 1.609344E6;
+
+                }
+                break;
+            case FileInfoBase.METERS:
+                switch (oldUnit) {
+                    case FileInfoBase.INCHES:
+                        return 2.54E-2;
+
+                    case FileInfoBase.MILS:
+                        return 2.54E-5;
+
+                    case FileInfoBase.CENTIMETERS:
+                        return 1.0E-2;
+
+                    case FileInfoBase.ANGSTROMS:
+                        return 1.0E-10;
+
+                    case FileInfoBase.NANOMETERS:
+                        return 1.0E-9;
+
+                    case FileInfoBase.MICROMETERS:
+                        return 1.0E-6;
+
+                    case FileInfoBase.MILLIMETERS:
+                        return 1.0E-3;
+
+                    case FileInfoBase.KILOMETERS:
+                        return 1.0E3;
+
+                    case FileInfoBase.MILES:
+                        return 1.609344E3;
+
+                }
+                break;
+            case FileInfoBase.KILOMETERS:
+                switch (oldUnit) {
+                    case FileInfoBase.INCHES:
+                        return 2.54E-5;
+
+                    case FileInfoBase.MILS:
+                        return 2.54E-8;
+
+                    case FileInfoBase.CENTIMETERS:
+                        return 1.0E-5;
+
+                    case FileInfoBase.ANGSTROMS:
+                        return 1.0E-13;
+
+                    case FileInfoBase.NANOMETERS:
+                        return 1.0E-12;
+
+                    case FileInfoBase.MICROMETERS:
+                        return 1.0E-9;
+
+                    case FileInfoBase.MILLIMETERS:
+                        return 1.0E-6;
+
+                    case FileInfoBase.METERS:
+                        return 1.0E-3;
+
+                    case FileInfoBase.MILES:
+                        return 1.609344;
+
+                }
+                break;
+            case FileInfoBase.MILES:
+                switch (oldUnit) {
+                    case FileInfoBase.INCHES:
+                        return 1.57828283E-5;
+
+                    case FileInfoBase.MILS:
+                        return 1.57828283E-8;
+
+                    case FileInfoBase.CENTIMETERS:
+                        return 6.21371192E-6;
+
+                    case FileInfoBase.ANGSTROMS:
+                        return 6.21371192E-14;
+
+                    case FileInfoBase.NANOMETERS:
+                        return 6.21371192E-13;
+
+                    case FileInfoBase.MICROMETERS:
+                        return 6.21371192E-10;
+
+                    case FileInfoBase.MILLIMETERS:
+                        return 6.21371192E-7;
+
+                    case FileInfoBase.METERS:
+                        return 6.21371192E-4;
+
+                    case FileInfoBase.KILOMETERS:
+                        return 6.21371192E-1;
+
+                }
+                break;
+            case FileInfoBase.NANOSEC:
+                switch (oldUnit) {
+                    case FileInfoBase.MICROSEC:
+                        return 1.0E3;
+
+                    case FileInfoBase.MILLISEC:
+                        return 1.0E6;
+
+                    case FileInfoBase.SECONDS:
+                        return 1.0E9;
+
+                    case FileInfoBase.MINUTES:
+                        return 6.0E10;
+
+                    case FileInfoBase.HOURS:
+                        return 3.6E12;
+
+                }
+                break;
+            case FileInfoBase.MICROSEC:
+                switch (oldUnit) {
+                    case FileInfoBase.NANOSEC:
+                        return 1.0E-3;
+
+                    case FileInfoBase.MILLISEC:
+                        return 1.0E3;
+
+                    case FileInfoBase.SECONDS:
+                        return 1.0E6;
+
+                    case FileInfoBase.MINUTES:
+                        return 6.0E7;
+
+                    case FileInfoBase.HOURS:
+                        return 3.6E9;
+
+                }
+                break;
+            case FileInfoBase.MILLISEC:
+                switch (oldUnit) {
+                    case FileInfoBase.NANOSEC:
+                        return 1.0E-6;
+
+                    case FileInfoBase.MICROSEC:
+                        return 1.0E-3;
+
+                    case FileInfoBase.SECONDS:
+                        return 1.0E3;
+
+                    case FileInfoBase.MINUTES:
+                        return 6.0E4;
+
+                    case FileInfoBase.HOURS:
+                        return 3.6E6;
+
+                }
+                break;
+            case FileInfoBase.SECONDS:
+                switch (oldUnit) {
+                    case FileInfoBase.NANOSEC:
+                        return 1.0E-9;
+
+                    case FileInfoBase.MICROSEC:
+                        return 1.0E-6;
+
+                    case FileInfoBase.MILLISEC:
+                        return 1.0E-3;
+
+                    case FileInfoBase.MINUTES:
+                        return 6.0E1;
+
+                    case FileInfoBase.HOURS:
+                        return 3.6E3;
+
+                }
+                break;
+            case FileInfoBase.MINUTES:
+                switch (oldUnit) {
+                    case FileInfoBase.NANOSEC:
+                        return 1.66666667E-11;
+
+                    case FileInfoBase.MICROSEC:
+                        return 1.66666667E-8;
+
+                    case FileInfoBase.MILLISEC:
+                        return 1.66666667E-5;
+
+                    case FileInfoBase.SECONDS:
+                        return 1.66666667E-2;
+
+                    case FileInfoBase.HOURS:
+                        return 6.0E1;
+
+                }
+                break;
+            case FileInfoBase.HOURS:
+                switch (oldUnit) {
+                    case FileInfoBase.NANOSEC:
+                        return 2.77777778E-13;
+
+                    case FileInfoBase.MICROSEC:
+                        return 2.77777778E-10;
+
+                    case FileInfoBase.MILLISEC:
+                        return 2.77777778E-7;
+
+                    case FileInfoBase.SECONDS:
+                        return 2.77777778E-4;
+
+                    case FileInfoBase.MINUTES:
+                        return 1.66666667E-2;
+
+                }
+                break;
+            case FileInfoBase.HZ:
+                switch (oldUnit) {
+                    case FileInfoBase.RADS:
+                        return 0.159154943274;
+
+                }
+                break;
+            case FileInfoBase.RADS:
+                switch (oldUnit) {
+                    case FileInfoBase.HZ:
+                        return 6.2831853;
+
+                }
+                break;
+        } // switch(newUnit)
+        // no valid conversion found
+        return Double.MIN_VALUE;
     }
-    
 
     /**
      * Calls disposeLocal of this class to ensure this class nulls the references to global class variables so that
      * memory will be recovered.
-     *
-     * @throws  Throwable  Throws an error if there is a problem with the finalization of this object.
+     * 
+     * @throws Throwable Throws an error if there is a problem with the finalization of this object.
      */
     protected void finalize() throws Throwable {
         this.disposeLocal();
@@ -4458,13 +4413,13 @@ public class ModelImage extends ModelStorageBase {
     /**
      * Helper method for making the result image's name. Strips the current extension from the original name, adds the
      * given extension, and returns the new name.
-     *
-     * @param   imageName  Source image name that will be modified to have a new extension.
-     * @param   ext        Extension to add which gives information about what algorithm was performed on the image.
-     *
-     * @return  The new image name.
+     * 
+     * @param imageName Source image name that will be modified to have a new extension.
+     * @param ext Extension to add which gives information about what algorithm was performed on the image.
+     * 
+     * @return The new image name.
      */
-    public static String makeImageName(String imageName, String ext) {
+    public static String makeImageName(final String imageName, final String ext) {
         String name;
         int index;
 
@@ -4503,11 +4458,11 @@ public class ModelImage extends ModelStorageBase {
             i = voiVector.size();
 
             for (j = i - 1; j >= 0; j--) {
-                VOI voi = (VOI) (((Vector) voiVector).remove(j));
+                VOI voi = (VOI) ( ((Vector) voiVector).remove(j));
 
                 try {
                     voi.finalize();
-                } catch (Throwable e) { }
+                } catch (final Throwable e) {}
 
                 voi = null;
             } // for (j = i-1; j >= 0; j--)
@@ -4521,11 +4476,11 @@ public class ModelImage extends ModelStorageBase {
             i = voiVector3D.size();
 
             for (j = i - 1; j >= 0; j--) {
-                VOI voi = (VOI) (((Vector) voiVector3D).remove(j));
+                VOI voi = (VOI) ( ((Vector) voiVector3D).remove(j));
 
                 try {
                     voi.finalize();
-                } catch (Throwable e) { }
+                } catch (final Throwable e) {}
 
                 voi = null;
             } // for (j = i-1; j >= 0; j--)
@@ -4545,10 +4500,10 @@ public class ModelImage extends ModelStorageBase {
     /**
      * Fixes file information to resultant image structure. When one image's file information is copied to anothers this
      * method sets the modality to OTHER and file directory to an empty string.
-     *
-     * @param  image  source image
+     * 
+     * @param image source image
      */
-    private void fixFileTypeInfo(ModelImage image) {
+    private void fixFileTypeInfo(final ModelImage image) {
         FileInfoBase[] fileInfo;
 
         if (image.getNDims() == 2) {
@@ -4574,53 +4529,47 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Accessor that sets the name of the image without registering the image.
-     *
-     * @param  name  the String representing the filename
+     * 
+     * @param name the String representing the filename
      */
-    private void setClonedImageName(String name) {
+    private void setClonedImageName(final String name) {
 
         // The clone method will register the image after the name has been set.
         imageName = name;
     }
-    
 
     /**
      * Export data into values array.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param length length of data to be copied from data array
+     * @param values array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void exportDataUseMask(int start, int length, byte[] values) throws IOException {
+    public final synchronized void exportDataUseMask(final int start, final int length, final byte[] values)
+            throws IOException {
         int i, j;
 
-        if ((start >= 0) && ((start + length) <= getSize()) && (length <= values.length)) {
+        if ( (start >= 0) && ( (start + length) <= getSize()) && (length <= values.length)) {
 
             try {
-                setLock(W_LOCKED);
+                setLock(ModelStorageBase.W_LOCKED);
 
                 for (i = start, j = 0; j < length; i++, j++) {
-                    if ( (mask != null) && useMask) 
-                    {
-                        if ( mask.get(j) )
-                        {
+                    if ( (mask != null) && useMask) {
+                        if (mask.get(j)) {
                             values[j] = getByte(i);
-                        }
-                        else
-                        {
+                        } else {
                             values[j] = 0;
                         }
-                    }
-                    else
-                    {
+                    } else {
                         values[j] = getByte(i);
                     }
-                    
+
                 }
 
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();

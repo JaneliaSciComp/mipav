@@ -2,7 +2,7 @@ package gov.nih.mipav.model.algorithms.DiffusionTensorImaging;
 
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.util.FileUtil;
+import gov.nih.mipav.util.TestingFileUtil;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
@@ -40,14 +40,14 @@ public class AlgorithmDWI2DTITest extends TestCase{
         nweights = 42;
         nrows = 13;
         maskImage = new ModelImage(ModelStorageBase.SHORT, new int[]{xDim, yDim, nslices}, "904300_BOS_20050629_minc_dicom_MASK");
-        short[] maskImageData = FileUtil.readRawFileShort(MASK_IMAGE_FILENAME, false);
+        short[] maskImageData = TestingFileUtil.readRawFileShort(MASK_IMAGE_FILENAME, false);
         maskImage.importData(0, maskImageData, true);
-        dwiFileNameList = FileUtil.readPathFile(PATH_FILENAME, nslices, nweights);
+        dwiFileNameList = TestingFileUtil.readPathFile(PATH_FILENAME, nslices, nweights);
 
-        BMatrix = FileUtil.readDTIBMatrixFile(BMATRIX_FILENAME, nweights, matrixEntries);
+        BMatrix = TestingFileUtil.readDTIBMatrixFile(BMATRIX_FILENAME, nweights, matrixEntries);
         dti = new AlgorithmDWI2DTI(maskImage, false, nslices, xDim, yDim, nrows, nweights, 0.0f, 
                 dwiFileNameList,  matrixEntries, BMatrix, "dicom");
-        dtiData = FileUtil.readRawFileFloat(DTI_IMAGE_FILENAME, false);
+        dtiData = TestingFileUtil.readRawFileFloat(DTI_IMAGE_FILENAME, false);
     }
 
     @Test

@@ -1,33 +1,33 @@
 package gov.nih.mipav.model.structures;
 
-import WildMagic.LibFoundation.Mathematics.Vector3f;
 
-import gov.nih.mipav.*;
+import gov.nih.mipav.util.MipavMath;
 
-import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.event.*;
 
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
-
-import java.text.*;
-
+import java.text.DecimalFormat;
 import java.util.*;
 
-import javax.swing.event.*;
+import javax.swing.event.EventListenerList;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
  * This the Volume Of Interest (VOI) structure. An image can have 32565 different VOIs. A VOI can have multiple contours
  * in a single slice or in other slices. VOIs can be additive or subtractive so that doughnut like objects can be made.
  * A VOI can be 5 different types: point, line, protractor, polyline and contour.
- *
- * @version  0.1 Oct 27, 1997
+ * 
+ * @version 0.1 Oct 27, 1997
  */
 public class VOI extends ModelSerialCloneable {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 4045424525937515770L;
@@ -67,21 +67,28 @@ public class VOI extends ModelSerialCloneable {
 
     /** Indicates that the VOI is of type POLYLINE that will go through more than one slice. */
     public static final int POLYLINE_SLICE = 7;
-    
 
-    public static final int CONTOUR_3D = 8; 
+    public static final int CONTOUR_3D = 8;
+
     public static final int POLYLINE_3D = 9;
+
     public static final int LINE_3D = 10;
-    public static final int POINT_3D = 11; 
+
+    public static final int POINT_3D = 11;
+
     public static final int PROTRACTOR_3D = 12;
+
     public static final int ANNOTATION_3D = 13;
+
     public static final int CARDIOLOGY_3D = 14;
+
     public static final int POLYLINE_SLICE_3D = 15;
 
     /** DOCUMENT ME! */
     public static final float NOT_A_LEVELSET = Float.MIN_VALUE;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** int indictating that no point was found. */
     public final int NOT_A_POINT = -99;
@@ -98,9 +105,9 @@ public class VOI extends ModelSerialCloneable {
     /** Indicates the color or the VOI. */
     private Color color;
 
-    /** The thickness of the VOI lines*/
+    /** The thickness of the VOI lines */
     private int thickness = 1;
-    
+
     /** DOCUMENT ME! */
     private transient ViewJFrameGraph contourGraph = null;
 
@@ -132,7 +139,7 @@ public class VOI extends ModelSerialCloneable {
     private float[] intensity = null;
 
     /** DOCUMENT ME! */
-    private float level = NOT_A_LEVELSET;
+    private float level = VOI.NOT_A_LEVELSET;
 
     /** DOCUMENT ME! */
     private transient EventListenerList listenerList;
@@ -200,34 +207,32 @@ public class VOI extends ModelSerialCloneable {
     /** DOCUMENT ME! */
     private int zDim;
 
-    /** extension of voi file name of voi was read in through file **/
+    /** extension of voi file name of voi was read in through file * */
     private String extension = "";
-    //~ Constructors ---------------------------------------------------------------------------------------------------
-   
-    
+
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
+
     /**
      * Copies the VOI into a new VOI object.
+     * 
      * @param kVOI VOI to copy.
      */
-    public VOI( VOI kVOI )
-    {
+    public VOI(final VOI kVOI) {
         this.active = kVOI.active;
         this.activePolylineSlicePoint = kVOI.activePolylineSlicePoint;
         this.boundingBox = kVOI.boundingBox;
-        this.color = new Color( kVOI.color.getRed(), kVOI.color.getBlue(), kVOI.color.getGreen() );
+        this.color = new Color(kVOI.color.getRed(), kVOI.color.getBlue(), kVOI.color.getGreen());
         this.thickness = kVOI.thickness;
         this.contourGraph = kVOI.contourGraph;
         this.curves = new Vector[kVOI.curves.length];
-        for ( int i = 0; i < kVOI.curves.length; i++ )
-        {
-            if ( kVOI.curves[i] != null )
-            {
+        for (int i = 0; i < kVOI.curves.length; i++) {
+            if (kVOI.curves[i] != null) {
                 this.curves[i] = new Vector<VOIBase>();
-                for ( int j = 0; j < kVOI.curves[i].size(); j++ )
-                {
-                    VOIBase kContour = (VOIBase) kVOI.curves[i].get(j).clone();
+                for (int j = 0; j < kVOI.curves[i].size(); j++) {
+                    final VOIBase kContour = (VOIBase) kVOI.curves[i].get(j).clone();
                     kContour.setGroup(this);
-                    this.curves[i].add( kContour );
+                    this.curves[i].add(kContour);
                 }
             }
         }
@@ -238,93 +243,77 @@ public class VOI extends ModelSerialCloneable {
         this.ID = kVOI.ID;
         this.ignoreMax = kVOI.ignoreMax;
         this.ignoreMin = kVOI.ignoreMin;
-        if ( kVOI.intensity != null )
-        {
+        if (kVOI.intensity != null) {
             this.intensity = new float[kVOI.intensity.length];
-            for ( int i = 0; i < kVOI.intensity.length; i++ )
-            {
+            for (int i = 0; i < kVOI.intensity.length; i++) {
                 this.intensity[i] = kVOI.intensity[i];
             }
         }
         this.level = kVOI.level;
 
-        if ( kVOI.listenerList != null) {
-            int listeners = kVOI.listenerList.getListenerCount(VOIListener.class);
-            VOIListener [] voiList = kVOI.listenerList.getListeners(VOIListener.class);
-            
-            for (int i = 0; i < voiList.length; i++) {
-                this.addVOIListener(voiList[i]);
+        if (kVOI.listenerList != null) {
+            final int listeners = kVOI.listenerList.getListenerCount(VOIListener.class);
+            final VOIListener[] voiList = kVOI.listenerList.getListeners(VOIListener.class);
+
+            for (final VOIListener element : voiList) {
+                this.addVOIListener(element);
             }
         }
-        
-        
-        this.name = new String( kVOI.name );
+
+        this.name = new String(kVOI.name);
         this.nearBoundPoint = kVOI.nearBoundPoint;
         this.opacity = kVOI.opacity;
         this.pLineSliceIndex = kVOI.pLineSliceIndex;
         this.polarity = kVOI.polarity;
         this.polygonIndex = kVOI.polygonIndex;
 
-        if ( kVOI.position != null )
-        {
+        if (kVOI.position != null) {
             this.position = new float[kVOI.position.length];
-            for ( int i = 0; i < kVOI.position.length; i++ )
-            {
+            for (int i = 0; i < kVOI.position.length; i++) {
                 this.position[i] = kVOI.position[i];
             }
         }
         this.process = kVOI.process;
         this.resizeIndex = kVOI.resizeIndex;
 
-        if ( kVOI.rgbIntensities != null )
-        {
+        if (kVOI.rgbIntensities != null) {
             this.rgbIntensities = new float[kVOI.rgbIntensities.length][];
-            for ( int i = 0; i < kVOI.rgbIntensities.length; i++ )
-            {
-                if ( kVOI.rgbIntensities[i] != null )
-                {
+            for (int i = 0; i < kVOI.rgbIntensities.length; i++) {
+                if (kVOI.rgbIntensities[i] != null) {
                     this.rgbIntensities[i] = new float[kVOI.rgbIntensities[i].length];
-                    for ( int j = 0; j < kVOI.rgbIntensities[i].length; j++ )
-                    {
+                    for (int j = 0; j < kVOI.rgbIntensities[i].length; j++) {
                         this.rgbIntensities[i][j] = kVOI.rgbIntensities[i][j];
                     }
                 }
             }
         }
 
-        if ( kVOI.rgbPositions != null )
-        {
+        if (kVOI.rgbPositions != null) {
             this.rgbPositions = new float[kVOI.rgbPositions.length][];
-            for ( int i = 0; i < kVOI.rgbPositions.length; i++ )
-            {
-                if ( kVOI.rgbPositions[i] != null )
-                {
+            for (int i = 0; i < kVOI.rgbPositions.length; i++) {
+                if (kVOI.rgbPositions[i] != null) {
                     this.rgbPositions[i] = new float[kVOI.rgbPositions[i].length];
-                    for ( int j = 0; j < kVOI.rgbPositions[i].length; j++ )
-                    {
+                    for (int j = 0; j < kVOI.rgbPositions[i].length; j++) {
                         this.rgbPositions[i][j] = kVOI.rgbPositions[i][j];
                     }
                 }
             }
         }
 
-        if ( kVOI.stats != null )
-        {
+        if (kVOI.stats != null) {
             this.stats = new ViewList[kVOI.stats.length];
-            for ( int i = 0; i < kVOI.stats.length; i++ )
-            {
-                this.stats[i] = new ViewList( kVOI.stats[i].getString(), kVOI.stats[i].getState() );
+            for (int i = 0; i < kVOI.stats.length; i++) {
+                this.stats[i] = new ViewList(kVOI.stats[i].getString(), kVOI.stats[i].getState());
             }
         }
         this.totalIntensity = kVOI.totalIntensity;
         this.UID = kVOI.UID;
         this.visible = kVOI.visible;
 
-        if ( kVOI.voiUpdate != null )
-        {
-            this.voiUpdate = new VOIEvent( (VOI)kVOI.voiUpdate.getSource(), kVOI.voiUpdate.getBase() );
+        if (kVOI.voiUpdate != null) {
+            this.voiUpdate = new VOIEvent((VOI) kVOI.voiUpdate.getSource(), kVOI.voiUpdate.getBase());
         }
-        
+
         this.watershedID = kVOI.watershedID;
         this.xBounds[0] = kVOI.xBounds[0];
         this.xBounds[1] = kVOI.xBounds[1];
@@ -333,18 +322,17 @@ public class VOI extends ModelSerialCloneable {
         this.zBounds[0] = kVOI.zBounds[0];
         this.zBounds[1] = kVOI.zBounds[1];
         this.zDim = kVOI.zDim;
-        this.extension = new String( kVOI.extension );
+        this.extension = new String(kVOI.extension);
     }
-    
-    
+
     /**
      * Constructs a Volume of Interest (VOI).
-     *
-     * @param  id    identifier of VOI
-     * @param  name  name of the VOI
-     * @param  zDim  slice (2D image - slice = 1)
+     * 
+     * @param id identifier of VOI
+     * @param name name of the VOI
+     * @param zDim slice (2D image - slice = 1)
      */
-    public VOI(short id, String name, int zDim) {
+    public VOI(final short id, final String name, final int zDim) {
         float hue;
         this.name = name;
         this.ID = id;
@@ -357,15 +345,15 @@ public class VOI extends ModelSerialCloneable {
             curves[i] = new Vector();
         }
 
-        displayMode = BOUNDARY;
-        polarity = ADDITIVE;
+        displayMode = VOI.BOUNDARY;
+        polarity = VOI.ADDITIVE;
         visible = true;
         opacity = 0.3f;
-        hue = (float) ((((ID) * 35) % 360) / 360.0);
+        hue = (float) ( ( ( (ID) * 35) % 360) / 360.0);
         setColor(Color.getHSBColor(hue, (float) 1.0, (float) 1.0)); // important to use the access method
 
         this.thickness = Preferences.getVOIThickness();
-        
+
         // this ensures that color gets set in
         // all protractor contours.
         this.zDim = zDim;
@@ -386,17 +374,17 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Constructs a Volume of Interest (VOI).
-     *
-     * @param  id         identifier of VOI
-     * @param  name       name of the VOI
-     * @param  zDim       number of slices (2D image: slice = 1)
-     * @param  curveType  type of curve, either a line or a contour
-     * @param  presetHue  If presetHue >= 0.0, use this value as the hue
+     * 
+     * @param id identifier of VOI
+     * @param name name of the VOI
+     * @param zDim number of slices (2D image: slice = 1)
+     * @param curveType type of curve, either a line or a contour
+     * @param presetHue If presetHue >= 0.0, use this value as the hue
      */
-    public VOI(short id, String name, int zDim, int curveType, float presetHue) {
+    public VOI(final short id, final String name, final int zDim, final int curveType, final float presetHue) {
         float hue;
 
-        if (curveType != POINT) {
+        if (curveType != VOI.POINT) {
             this.UID = this.hashCode();
             // System.out.println("Non Point VOI with UID: " + this.UID);
         }
@@ -413,25 +401,25 @@ public class VOI extends ModelSerialCloneable {
             curves[i] = new Vector();
         }
 
-        displayMode = BOUNDARY;
-        polarity = ADDITIVE;
+        displayMode = VOI.BOUNDARY;
+        polarity = VOI.ADDITIVE;
         visible = true;
         opacity = 0.3f;
 
-        int colorIncrement = Preferences.getVOIColorIncrement();
+        final int colorIncrement = Preferences.getVOIColorIncrement();
 
         if (presetHue >= 0.0f) {
             hue = presetHue;
             // System.err.println("Setting hue to preset: " + hue);
         } else {
-            hue = (float) ((((ID + colorIncrement) * 35) % 360) / 360.0);
+            hue = (float) ( ( ( (ID + colorIncrement) * 35) % 360) / 360.0);
             // System.err.println("Setting hue to calculated: " + hue);
         }
 
         setColor(Color.getHSBColor(hue, (float) 1.0, (float) 1.0)); // important to use the access method
 
         this.thickness = Preferences.getVOIThickness();
-        
+
         // this ensures that color gets set in
         // all protractor contours.
         this.zDim = zDim;
@@ -449,9 +437,10 @@ public class VOI extends ModelSerialCloneable {
         stats[10] = new ViewList("Major axis length (only 2D)", false);
         stats[11] = new ViewList("Minor axis length (only 2D)", false);
     }
-    
+
     /**
      * Returns the number of z slices actually containing part of the voi
+     * 
      * @return
      */
     public int getVOISlices() {
@@ -465,7 +454,8 @@ public class VOI extends ModelSerialCloneable {
         return voiSlices;
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     // --------- Event-handling routines:
     // to add this object to send out events for listening
@@ -474,10 +464,10 @@ public class VOI extends ModelSerialCloneable {
     // present below.
     /**
      * adds the update listener.
-     *
-     * @param  listener  DOCUMENT ME!
+     * 
+     * @param listener DOCUMENT ME!
      */
-    public void addVOIListener(VOIListener listener) {
+    public void addVOIListener(final VOIListener listener) {
 
         if (listenerList == null) {
             listenerList = new EventListenerList();
@@ -488,8 +478,8 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Finds the area of the entire VOI of the VOIContour type only.
-     *
-     * @return  returns the area
+     * 
+     * @return returns the area
      */
     public int area() {
         int z;
@@ -499,7 +489,7 @@ public class VOI extends ModelSerialCloneable {
 
             for (int i = 0; i < curves[z].size(); i++) {
 
-                if (curveType == CONTOUR) {
+                if (curveType == VOI.CONTOUR) {
                     totalArea += ((VOIContour) (curves[z].elementAt(i))).area();
                 }
             }
@@ -510,20 +500,20 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Prints out the distances between segments, displacement (1st to last point) and total distance in 2D and 3D.
-     *
-     * @param  fileInfo  FileInfoBase
+     * 
+     * @param fileInfo FileInfoBase
      */
-    public void calcPLineDistances(FileInfoBase fileInfo) {
+    public void calcPLineDistances(final FileInfoBase fileInfo) {
 
-        if (curveType != POLYLINE_SLICE) {
+        if (curveType != VOI.POLYLINE_SLICE) {
             return;
         }
 
-        int unitsOfMeasure = fileInfo.getUnitsOfMeasure(0);
-        float[] resols = fileInfo.getResolutions();
+        final int unitsOfMeasure = fileInfo.getUnitsOfMeasure(0);
+        final float[] resols = fileInfo.getResolutions();
         int i;
 
-        Vector distanceVector = new Vector();
+        final Vector distanceVector = new Vector();
         Vector3f firstPoint, secondPoint;
 
         String unitsStr = new String();
@@ -533,7 +523,7 @@ public class VOI extends ModelSerialCloneable {
             case FileInfoBase.INCHES:
                 unitsStr = " in";
                 break;
-              
+
             case FileInfoBase.MILS:
                 unitsStr = " mil";
                 break;
@@ -574,8 +564,7 @@ public class VOI extends ModelSerialCloneable {
                 unitsStr = " Unknown";
         }
 
-
-        int numSlices = fileInfo.getExtents()[2];
+        final int numSlices = fileInfo.getExtents()[2];
         int sliceCounter;
         int pointNumber = 0;
 
@@ -584,11 +573,11 @@ public class VOI extends ModelSerialCloneable {
             for (i = 0; i < curves[sliceCounter].size(); i++) {
 
                 try {
-                    pointNumber = Integer.parseInt(((VOIPoint) curves[sliceCounter].elementAt(i)).getLabel());
+                    pointNumber = Integer.parseInt( ((VOIPoint) curves[sliceCounter].elementAt(i)).getLabel());
                     firstPoint = ((VOIPoint) curves[sliceCounter].elementAt(i)).exportPoint();
                     firstPoint.Z = sliceCounter;
                     distanceVector.add(new PolyPointHolder(firstPoint, pointNumber));
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     e.printStackTrace();
                 }
             }
@@ -603,25 +592,25 @@ public class VOI extends ModelSerialCloneable {
         double displacement3D = 0;
         double displacement2D = 0;
 
-        ViewUserInterface.getReference().getMessageFrame().append("Number of points in polyline slice VOI: " +
-                                                                  distanceVector.size() + "\n", ViewJFrameMessage.DATA);
+        ViewUserInterface.getReference().getMessageFrame().append(
+                "Number of points in polyline slice VOI: " + distanceVector.size() + "\n", ViewJFrameMessage.DATA);
 
-        DecimalFormat n = new DecimalFormat("0.00");
+        final DecimalFormat n = new DecimalFormat("0.00");
 
         for (i = 0; i < (distanceVector.size() - 1); i++) {
             firstPoint = ((PolyPointHolder) distanceVector.elementAt(i)).getPoint();
             secondPoint = ((PolyPointHolder) distanceVector.elementAt(i + 1)).getPoint();
             distance3D = MipavMath.distance(firstPoint.X, firstPoint.Y, firstPoint.Z, secondPoint.X, secondPoint.Y,
-                                            secondPoint.Z, resols);
+                    secondPoint.Z, resols);
             distance2D = MipavMath.distance(firstPoint.X, firstPoint.Y, 0, secondPoint.X, secondPoint.Y, 0, resols);
             totalDistance3D += distance3D;
             totalDistance2D += distance2D;
 
-            ViewUserInterface.getReference().getMessageFrame().append("\tpoint " + Integer.toString(i + 1) +
-                                                                      " to point " + Integer.toString(i + 2) + ": " +
-                                                                      n.format(distance2D) + unitsStr + " (2D), " +
-                                                                      n.format(distance3D) + unitsStr + " (3D)\n",
-                                                                      ViewJFrameMessage.DATA);
+            ViewUserInterface.getReference().getMessageFrame()
+                    .append(
+                            "\tpoint " + Integer.toString(i + 1) + " to point " + Integer.toString(i + 2) + ": "
+                                    + n.format(distance2D) + unitsStr + " (2D), " + n.format(distance3D) + unitsStr
+                                    + " (3D)\n", ViewJFrameMessage.DATA);
 
         }
 
@@ -630,19 +619,17 @@ public class VOI extends ModelSerialCloneable {
 
         displacement2D = MipavMath.distance(firstPoint.X, firstPoint.Y, 0, secondPoint.X, secondPoint.Y, 0, resols);
         displacement3D = MipavMath.distance(firstPoint.X, firstPoint.Y, firstPoint.Z, secondPoint.X, secondPoint.Y,
-                                            secondPoint.Z, resols);
+                secondPoint.Z, resols);
 
         // print displacement
-        ViewUserInterface.getReference().getMessageFrame().append("Displacement (first point to last point): " +
-                                                                  n.format(displacement2D) + unitsStr + " (2D), " +
-                                                                  n.format(displacement3D) + unitsStr + " (3D)\n",
-                                                                  ViewJFrameMessage.DATA);
-
+        ViewUserInterface.getReference().getMessageFrame().append(
+                "Displacement (first point to last point): " + n.format(displacement2D) + unitsStr + " (2D), "
+                        + n.format(displacement3D) + unitsStr + " (3D)\n", ViewJFrameMessage.DATA);
 
         // print total distance
-        ViewUserInterface.getReference().getMessageFrame().append("Total distance: " + n.format(totalDistance2D) +
-                                                                  unitsStr + " (2D), " + n.format(totalDistance3D) +
-                                                                  unitsStr + " (3D)\n", ViewJFrameMessage.DATA);
+        ViewUserInterface.getReference().getMessageFrame().append(
+                "Total distance: " + n.format(totalDistance2D) + unitsStr + " (2D), " + n.format(totalDistance3D)
+                        + unitsStr + " (3D)\n", ViewJFrameMessage.DATA);
 
     }
 
@@ -656,7 +643,7 @@ public class VOI extends ModelSerialCloneable {
 
             for (i = 0; i < curves[z].size(); i++) {
 
-                if (curveType == CONTOUR) {
+                if (curveType == VOI.CONTOUR) {
                     ((VOIContour) (curves[z].elementAt(i))).convexHull();
                 }
             }
@@ -664,39 +651,40 @@ public class VOI extends ModelSerialCloneable {
     }
 
     /**
-     * Clone function that calls the super (modelserializable) clone and then manually copies references 
-     * to the transient VOIListeners (eventlistenerlist)
+     * Clone function that calls the super (modelserializable) clone and then manually copies references to the
+     * transient VOIListeners (eventlistenerlist)
      */
     public Object clone() {
-    	Object obj = super.clone();
-    	
-    	if (listenerList != null) {
-    		int listeners = listenerList.getListenerCount(VOIListener.class);
-    		VOIListener [] voiList = listenerList.getListeners(VOIListener.class);
-    		
-    		for (int i = 0; i < voiList.length; i++) {
-    			((VOI)obj).addVOIListener(voiList[i]);
-    		}
-    	}
-    	
-    	return obj;
+        final Object obj = super.clone();
+
+        if (listenerList != null) {
+            final int listeners = listenerList.getListenerCount(VOIListener.class);
+            final VOIListener[] voiList = listenerList.getListeners(VOIListener.class);
+
+            for (final VOIListener element : voiList) {
+                ((VOI) obj).addVOIListener(element);
+            }
+        }
+
+        return obj;
     }
-    
+
     /**
      * Finds convex hull of a specific contour.
-     *
-     * @param  slice  DOCUMENT ME!
-     * @param  index  DOCUMENT ME!
+     * 
+     * @param slice DOCUMENT ME!
+     * @param index DOCUMENT ME!
      */
-    public void convexHull(int slice, int index) {
+    public void convexHull(final int slice, final int index) {
 
-        if (curveType == CONTOUR) {
+        if (curveType == VOI.CONTOUR) {
             ((VOIContour) (curves[slice].elementAt(index))).convexHull();
         }
     }
-    
+
     /**
      * Calculate the distance of the largest line segment contained entirely within the VOI
+     * 
      * @param xDim
      * @param yDim
      * @param xRes
@@ -704,8 +692,9 @@ public class VOI extends ModelSerialCloneable {
      * @param zRes
      * @return largestDistance
      */
-    public double calcLargestDistance(int xDim, int yDim, float xRes, float yRes, float zRes) {
-        double largestDistanceSq = 0.0f;
+    public double calcLargestDistance(final int xDim, final int yDim, final float xRes, final float yRes,
+            final float zRes) {
+        final double largestDistanceSq = 0.0f;
         int i;
         int j;
         int slice;
@@ -716,95 +705,97 @@ public class VOI extends ModelSerialCloneable {
         int nPts = 0;
         int index = 0;
         int len;
-        
-        if (curveType != CONTOUR) {
+
+        if (curveType != VOI.CONTOUR) {
             MipavUtil.displayError("curveType is not the required CONTOUR for calcLargestDistance");
             return 0;
         }
-        
+
         for (slice = 0; slice < zDim; slice++) {
-            nGons = curves[slice].size(); 
+            nGons = curves[slice].size();
             for (i = 0; i < nGons; i++) {
                 nPts += curves[slice].elementAt(i).size();
             }
         }
-        
+
         xPts = new float[nPts];
         yPts = new float[nPts];
         zPts = new int[nPts];
-        
+
         for (slice = 0; slice < zDim; slice++) {
             nGons = curves[slice].size();
             for (i = 0; i < nGons; i++) {
                 len = curves[slice].elementAt(i).size();
                 for (j = 0; j < len; j++) {
-                   xPts[index] = ((Vector3f) ((VOIContour) (curves[slice].elementAt(i))).elementAt(j)).X;
-                   yPts[index] = ((Vector3f) ((VOIContour) (curves[slice].elementAt(i))).elementAt(j)).Y;
-                   zPts[index++] = slice;
+                    xPts[index] = ( ((VOIContour) (curves[slice].elementAt(i))).elementAt(j)).X;
+                    yPts[index] = ( ((VOIContour) (curves[slice].elementAt(i))).elementAt(j)).Y;
+                    zPts[index++] = slice;
                 }
             }
         }
         long time = System.currentTimeMillis();
         double avg = 0, max = 0;
-        double[] maxAvg = determineMaxAvg(xRes, yRes, zRes, xPts, yPts, zPts);
+        final double[] maxAvg = determineMaxAvg(xRes, yRes, zRes, xPts, yPts, zPts);
         max = maxAvg[0];
         avg = maxAvg[1];
-        
+
         Preferences.debug("Traverse points\n");
         time = System.currentTimeMillis();
         double a = 0, lowerBound = Double.MAX_VALUE, upperBound = Double.MAX_VALUE;
         int iter = 0;
         boolean terminal = false;
-        while(a == 0 && !terminal) {
-        	ArrayList<Integer> orig = new ArrayList<Integer>();
-            ArrayList<Integer> term = new ArrayList<Integer>();
-        	upperBound = lowerBound;
-        	lowerBound = Math.max(0, max-iter*(avg/Math.max(1, (int)Math.pow(xPts.length, 0.3)-9)));
-	        gatherBoundedPoints(orig, term, lowerBound-1, upperBound, xRes, yRes, zRes, xPts, yPts, zPts);
-	        time = System.currentTimeMillis();        
-	        Preferences.debug("Completed points in "+(System.currentTimeMillis() - time)+"\tsize: "+orig.size()+"\n");
-	        a = getLargest(orig, term, xRes, yRes, zRes, xPts, yPts, zPts);
-	        if(lowerBound == 0.0) {
-	        	terminal = true;
-	        }
-	        iter++;
+        while (a == 0 && !terminal) {
+            final ArrayList<Integer> orig = new ArrayList<Integer>();
+            final ArrayList<Integer> term = new ArrayList<Integer>();
+            upperBound = lowerBound;
+            lowerBound = Math.max(0, max - iter * (avg / Math.max(1, (int) Math.pow(xPts.length, 0.3) - 9)));
+            gatherBoundedPoints(orig, term, lowerBound - 1, upperBound, xRes, yRes, zRes, xPts, yPts, zPts);
+            time = System.currentTimeMillis();
+            Preferences.debug("Completed points in " + (System.currentTimeMillis() - time) + "\tsize: " + orig.size()
+                    + "\n");
+            a = getLargest(orig, term, xRes, yRes, zRes, xPts, yPts, zPts);
+            if (lowerBound == 0.0) {
+                terminal = true;
+            }
+            iter++;
         }
         return a;
     }
-    
+
     /**
      * Gathers max and average statistics to build guessing intervals
      */
-    private double[] determineMaxAvg(float xRes, float yRes, float zRes,
-    								float[] xPts, float[] yPts, int zPts[]) {
-    	double max = 0, avg = 0;
-    	int n = xPts.length;
-        Random r = new Random();
-        //note that a stop that yields a non-representative average is fine, since worst case is more computations
-        int stop = n < 100 ? (int)(n*0.50) : (int)(n*0.10);
-        int[] search = new int[stop];
-        int[] end = new int[stop];
+    private double[] determineMaxAvg(final float xRes, final float yRes, final float zRes, final float[] xPts,
+            final float[] yPts, final int zPts[]) {
+        double max = 0, avg = 0;
+        final int n = xPts.length;
+        final Random r = new Random();
+        // note that a stop that yields a non-representative average is fine, since worst case is more computations
+        final int stop = n < 100 ? (int) (n * 0.50) : (int) (n * 0.10);
+        final int[] search = new int[stop];
+        final int[] end = new int[stop];
         double startX, startY, startZ;
         double endX, endY, endZ;
         double delX, delY, delZ;
         double distX, distY, distZ;
         double distanceSq;
         int i, j;
-        for(i = 0; i<stop; i++) {
-        	search[i] = r.nextInt(n);
-        	end[i] = r.nextInt(n);
+        for (i = 0; i < stop; i++) {
+            search[i] = r.nextInt(n);
+            end[i] = r.nextInt(n);
         }
-        
-        int numBegin = 0, numEnd = 0;;
+
+        int numBegin = 0, numEnd = 0;
+        ;
         for (i = 0; i < search.length; i++) {
-            
-        	numBegin = search[i];
-        	startX = xPts[numBegin];
+
+            numBegin = search[i];
+            startX = xPts[numBegin];
             startY = yPts[numBegin];
             startZ = zPts[numBegin];
             for (j = 0; j < end.length; j++) {
                 numEnd = end[j];
-            	endX = xPts[numEnd];
+                endX = xPts[numEnd];
                 endY = yPts[numEnd];
                 endZ = zPts[numEnd];
                 delX = endX - startX;
@@ -813,7 +804,7 @@ public class VOI extends ModelSerialCloneable {
                 distX = xRes * delX;
                 distY = yRes * delY;
                 distZ = zRes * delZ;
-                distanceSq = distX*distX + distY*distY + distZ*distZ;
+                distanceSq = distX * distX + distY * distY + distZ * distZ;
                 avg = avg + distanceSq;
                 if (distanceSq > max) {
                     max = distanceSq;
@@ -821,27 +812,26 @@ public class VOI extends ModelSerialCloneable {
             } // for (j = i+1; j < xPts.length; j++)
         } // for (i = 0; i < xPts.length; i++)
         avg = avg / (end.length * search.length);
-        return new double[]{max, avg};
+        return new double[] {max, avg};
     }
-    
+
     /**
      * Gathers the points that fall within the required bounds
      */
-    private void gatherBoundedPoints(ArrayList<Integer> orig, ArrayList<Integer> term, 
-    							double lowerBound, double upperBound, 
-    							float xRes, float yRes, float zRes, 
-    							float[] xPts, float[] yPts, int zPts[]) {
-    	int i, j;
-    	double startX, startY, startZ;
-    	double endX, endY, endZ;
-    	double delX, delY, delZ;
+    private void gatherBoundedPoints(final ArrayList<Integer> orig, final ArrayList<Integer> term,
+            final double lowerBound, final double upperBound, final float xRes, final float yRes, final float zRes,
+            final float[] xPts, final float[] yPts, final int zPts[]) {
+        int i, j;
+        double startX, startY, startZ;
+        double endX, endY, endZ;
+        double delX, delY, delZ;
         double distX, distY, distZ;
         double distanceSq;
-    	for (i = 0; i < xPts.length; i++) {
+        for (i = 0; i < xPts.length; i++) {
             startX = xPts[i];
             startY = yPts[i];
             startZ = zPts[i];
-            for (j = i+1; j < xPts.length; j++) {
+            for (j = i + 1; j < xPts.length; j++) {
                 endX = xPts[j];
                 endY = yPts[j];
                 endZ = zPts[j];
@@ -851,36 +841,35 @@ public class VOI extends ModelSerialCloneable {
                 distX = xRes * delX;
                 distY = yRes * delY;
                 distZ = zRes * delZ;
-                distanceSq = distX*distX + distY*distY + distZ*distZ;
+                distanceSq = distX * distX + distY * distY + distZ * distZ;
                 if (distanceSq > lowerBound && distanceSq < upperBound) {
-                	orig.add(Integer.valueOf(i));
+                    orig.add(Integer.valueOf(i));
                     term.add(Integer.valueOf(j));
                 } // if (distanceSq > largsestDistanceSq)
             } // for (j = i+1; j < xPts.length; j++)
         } // for (i = 0; i < xPts.length; i++)
     }
-    
+
     /**
-	 * Finds the largest line that lies within entirerly within the VOI.
-     */  
-    private double getLargest(ArrayList<Integer> orig, ArrayList<Integer> term, 
-    							float xRes, float yRes, float zRes, 
-    							float[] xPoints, float[] yPoints, int zPoints[]) {
-    	int origPoint, termPoint;
-    	double largestDistanceSq = 0, distanceSq;
-    	double startX, startY, startZ;
-    	double endX, endY, endZ;
-    	double delX, delY, delZ;
-    	double distX, distY, distZ;
-    	double x, y, z;
+     * Finds the largest line that lies within entirerly within the VOI.
+     */
+    private double getLargest(final ArrayList<Integer> orig, final ArrayList<Integer> term, final float xRes,
+            final float yRes, final float zRes, final float[] xPoints, final float[] yPoints, final int zPoints[]) {
+        int origPoint, termPoint;
+        double largestDistanceSq = 0, distanceSq;
+        double startX, startY, startZ;
+        double endX, endY, endZ;
+        double delX, delY, delZ;
+        double distX, distY, distZ;
+        double x, y, z;
         double slope, slope2;
         int xRound, yRound, zRound;
-        int j, k, r;
+        int j, k;
+        final int r;
         boolean okay;
-        forj:
-        for(j=0; j<orig.size(); j++) {
-        	origPoint = orig.get(j).intValue();
-        	startX = xPoints[origPoint];
+        forj: for (j = 0; j < orig.size(); j++) {
+            origPoint = orig.get(j).intValue();
+            startX = xPoints[origPoint];
             startY = yPoints[origPoint];
             startZ = zPoints[origPoint];
             termPoint = term.get(j).intValue();
@@ -893,155 +882,154 @@ public class VOI extends ModelSerialCloneable {
             distX = xRes * delX;
             distY = yRes * delY;
             distZ = zRes * delZ;
-            distanceSq = distX*distX + distY*distY + distZ*distZ;
-            if(distanceSq > largestDistanceSq) {
-	            if ((Math.abs(delX) >= Math.abs(delY)) && (Math.abs(delX) >= Math.abs(delZ))) {
-	                slope = delY/delX;
-	                slope2 = delZ/delX;
-	                if (endX >= startX) {
-	                    for (x = startX + 0.5, y = startY + 0.5 * slope, z = startZ + 0.5 * slope2; x < endX; x += 0.5, y += 0.5 * slope,
-	                         z += 0.5 * slope2) {
-	                        xRound = (int)Math.round(x);
-	                        yRound = (int)Math.round(y);
-	                        zRound = (int)Math.round(z);
-	                        if ((zRound < 0) || (zRound >= zDim)) {
-	                            continue forj;
-	                        }
-	                        okay = false;
-	                        for (k = 0; (k < curves[zRound].size()) && (!okay); k++) {
-	                            if (((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, false)) { 
-	                                okay = true;  
-	                            }
-	                        }
-	                        if (!okay) {
-	                            continue forj;
-	                        }
-	                    } // for (x = startX + 0.5, y = startY + 0.5 * slope, z = startZ + 0.5 * slope2; x < endX; x += 0.5, y += 0.5 * slope,
-	                } // if (endX >= startX)
-	                else { // endX < startX
-	                    for (x = startX - 0.5, y = startY - 0.5 * slope, z = startZ - 0.5 * slope2; x > endX; x -= 0.5, y -= 0.5 * slope,
-	                         z -= 0.5 * slope2) {
-	                        xRound = (int)Math.round(x);
-	                        yRound = (int)Math.round(y);
-	                        zRound = (int)Math.round(z);
-	                        if ((zRound < 0) || (zRound >= zDim)) {
-	                            continue forj;
-	                        }
-	                        okay = false;
-	                        for (k = 0; (k < curves[zRound].size()) && (!okay); k++) {
-	                            if (((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, false)) { 
-	                                okay = true; 
-	                            }
-	                        }
-	                        if (!okay) {
-	                            continue forj;
-	                        }
-	                    } // for (x = startX - 0.5, y = startY - 0.5 * slope, z = startZ - 0.5 * slope2; x > endX; x -= 0.5, y -= 0.5 * slope,
-	                } // else endX < startX
-	            } // if ((Math.abs(delX) >= Math.abs(delY)) && (Math.abs(delX) >= Math.abs(delZ)))
-	            else if ((Math.abs(delY) >= Math.abs(delX)) && (Math.abs(delY) >= Math.abs(delZ))){ 
-	                slope = delX/delY;
-	                slope2 = delZ/delY;
-	                if (endY >= startY) {
-	                    for (y = startY + 0.5, x = startX + 0.5 * slope, z = startX + 0.5 * slope2; y < endY; y += 0.5, x += 0.5 * slope,
-	                         z += 0.5 * slope2) {
-	                        xRound = (int)Math.round(x);
-	                        yRound = (int)Math.round(y);
-	                        zRound = (int)Math.round(z);
-	                        if ((zRound < 0) || (zRound >= zDim)) {
-	                            continue forj;
-	                        }
-	                        okay = false;
-	                        for (k = 0; (k < curves[zRound].size()) && (!okay); k++) {
-	                            if (((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, false)) { 
-	                                okay = true;         
-	                            }
-	                        }
-	                        if (!okay) {
-	                            continue forj;
-	                        }
-	                    } // for (y = startY + 0.5, x = startX + 0.5 * slope, z = startX + 0.5 * slope2; y < endY; y += 0.5, x += 0.5 * slope,
-	                } // if (endX >= startX)
-	                else { // endX < startX
-	                    for (y = startY - 0.5, x = startX - 0.5 * slope, z = startZ - 0.5 * slope2; y > endY; y -= 0.5, x -= 0.5 * slope,
-	                         z -= 0.5 * slope2) {
-	                        xRound = (int)Math.round(x);
-	                        yRound = (int)Math.round(y);
-	                        zRound = (int)Math.round(z);
-	                        if ((zRound < 0) || (zRound >= zDim)) {
-	                            continue forj;
-	                        }
-	                        okay = false;
-	                        for (k = 0; (k < curves[zRound].size()) && (!okay); k++) {
-	                            if (((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, false)) { 
-	                                okay = true;         
-	                            }
-	                        }
-	                        if (!okay) {
-	                            continue forj;
-	                        }
-	                    } // for (y = startY - 0.5, x = startX - 0.5 * slope, z = startZ - 0.5 * slope2; y > endY; y -= 0.5, x -= 0.5 * slope,
-	                } // else endX < startX    
-	            } // else if ((Math.abs(delY) >= Math.abs(delX)) && (Math.abs(delY) >= Math.abs(delZ)))
-	            else { // ((Math.abs(delZ) >= Math.abs(delX)) && (Math.abs(delZ) >= Math.abs(delY))) 
-	                slope = delX/delZ;
-	                slope2 = delY/delZ;
-	                if (endZ >= startZ) {
-	                    for (z = startZ + 0.5, x = startX + 0.5 * slope, y = startY + 0.5 * slope2; z < endZ; z += 0.5, x += 0.5 * slope,
-	                    y += 0.5 * slope2) {
-	                        xRound = (int)Math.round(x);
-	                        yRound = (int)Math.round(y);
-	                        zRound = (int)Math.round(z);
-	                        if ((zRound < 0) || (zRound >= zDim)) {
-	                            continue forj;
-	                        }
-	                        okay = false;
-	                        for (k = 0; (k < curves[zRound].size()) && (!okay); k++) {
-	                            if (((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, false)) { 
-	                                okay = true;         
-	                            }
-	                        }
-	                        if (!okay) {
-	                            continue forj;
-	                        }
-	                    } // for (z = startZ + 0.5, x = startX + 0.5 * slope, y = startY + 0.5 * slope2; z < endZ; z += 0.5, x += 0.5 * slope,   
-	                } // if (endZ >= startZ)
-	                else { // endZ < startZ
-	                    for (z = startZ - 0.5, x = startX - 0.5 * slope, y = startY - 0.5 * slope2; z > endZ; z -= 0.5, x -= 0.5 * slope,
-	                    y -= 0.5 * slope2) {
-	                        xRound = (int)Math.round(x);
-	                        yRound = (int)Math.round(y);
-	                        zRound = (int)Math.round(z);
-	                        if ((zRound < 0) || (zRound >= zDim)) {
-	                            continue forj;
-	                        }
-	                        okay = false;
-	                        for (k = 0; (k < curves[zRound].size()) && (!okay); k++) {
-	                            if (((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, false)) { 
-	                                okay = true;         
-	                            }
-	                        }
-	                        if (!okay) {
-	                            continue forj;
-	                        }
-	                    } // for (z = startZ - 0.5, x = startX - 0.5 * slope, y = startY - 0.5 * slope2; z > endZ; z -= 0.5, x -= 0.5 * slope,
-	                } // else (endZ < startZ)
-	            } // else ((Math.abs(delZ) >= Math.abs(delX)) && (Math.abs(delZ) >= Math.abs(delY))) 
-	            largestDistanceSq = distanceSq;
-        	}
+            distanceSq = distX * distX + distY * distY + distZ * distZ;
+            if (distanceSq > largestDistanceSq) {
+                if ( (Math.abs(delX) >= Math.abs(delY)) && (Math.abs(delX) >= Math.abs(delZ))) {
+                    slope = delY / delX;
+                    slope2 = delZ / delX;
+                    if (endX >= startX) {
+                        for (x = startX + 0.5, y = startY + 0.5 * slope, z = startZ + 0.5 * slope2; x < endX; x += 0.5, y += 0.5 * slope, z += 0.5 * slope2) {
+                            xRound = (int) Math.round(x);
+                            yRound = (int) Math.round(y);
+                            zRound = (int) Math.round(z);
+                            if ( (zRound < 0) || (zRound >= zDim)) {
+                                continue forj;
+                            }
+                            okay = false;
+                            for (k = 0; (k < curves[zRound].size()) && ( !okay); k++) {
+                                if ( ((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, false)) {
+                                    okay = true;
+                                }
+                            }
+                            if ( !okay) {
+                                continue forj;
+                            }
+                        } // for (x = startX + 0.5, y = startY + 0.5 * slope, z = startZ + 0.5 * slope2; x < endX; x
+                        // += 0.5, y += 0.5 * slope,
+                    } // if (endX >= startX)
+                    else { // endX < startX
+                        for (x = startX - 0.5, y = startY - 0.5 * slope, z = startZ - 0.5 * slope2; x > endX; x -= 0.5, y -= 0.5 * slope, z -= 0.5 * slope2) {
+                            xRound = (int) Math.round(x);
+                            yRound = (int) Math.round(y);
+                            zRound = (int) Math.round(z);
+                            if ( (zRound < 0) || (zRound >= zDim)) {
+                                continue forj;
+                            }
+                            okay = false;
+                            for (k = 0; (k < curves[zRound].size()) && ( !okay); k++) {
+                                if ( ((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, false)) {
+                                    okay = true;
+                                }
+                            }
+                            if ( !okay) {
+                                continue forj;
+                            }
+                        } // for (x = startX - 0.5, y = startY - 0.5 * slope, z = startZ - 0.5 * slope2; x > endX; x
+                        // -= 0.5, y -= 0.5 * slope,
+                    } // else endX < startX
+                } // if ((Math.abs(delX) >= Math.abs(delY)) && (Math.abs(delX) >= Math.abs(delZ)))
+                else if ( (Math.abs(delY) >= Math.abs(delX)) && (Math.abs(delY) >= Math.abs(delZ))) {
+                    slope = delX / delY;
+                    slope2 = delZ / delY;
+                    if (endY >= startY) {
+                        for (y = startY + 0.5, x = startX + 0.5 * slope, z = startX + 0.5 * slope2; y < endY; y += 0.5, x += 0.5 * slope, z += 0.5 * slope2) {
+                            xRound = (int) Math.round(x);
+                            yRound = (int) Math.round(y);
+                            zRound = (int) Math.round(z);
+                            if ( (zRound < 0) || (zRound >= zDim)) {
+                                continue forj;
+                            }
+                            okay = false;
+                            for (k = 0; (k < curves[zRound].size()) && ( !okay); k++) {
+                                if ( ((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, false)) {
+                                    okay = true;
+                                }
+                            }
+                            if ( !okay) {
+                                continue forj;
+                            }
+                        } // for (y = startY + 0.5, x = startX + 0.5 * slope, z = startX + 0.5 * slope2; y < endY; y
+                        // += 0.5, x += 0.5 * slope,
+                    } // if (endX >= startX)
+                    else { // endX < startX
+                        for (y = startY - 0.5, x = startX - 0.5 * slope, z = startZ - 0.5 * slope2; y > endY; y -= 0.5, x -= 0.5 * slope, z -= 0.5 * slope2) {
+                            xRound = (int) Math.round(x);
+                            yRound = (int) Math.round(y);
+                            zRound = (int) Math.round(z);
+                            if ( (zRound < 0) || (zRound >= zDim)) {
+                                continue forj;
+                            }
+                            okay = false;
+                            for (k = 0; (k < curves[zRound].size()) && ( !okay); k++) {
+                                if ( ((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, false)) {
+                                    okay = true;
+                                }
+                            }
+                            if ( !okay) {
+                                continue forj;
+                            }
+                        } // for (y = startY - 0.5, x = startX - 0.5 * slope, z = startZ - 0.5 * slope2; y > endY; y
+                        // -= 0.5, x -= 0.5 * slope,
+                    } // else endX < startX
+                } // else if ((Math.abs(delY) >= Math.abs(delX)) && (Math.abs(delY) >= Math.abs(delZ)))
+                else { // ((Math.abs(delZ) >= Math.abs(delX)) && (Math.abs(delZ) >= Math.abs(delY)))
+                    slope = delX / delZ;
+                    slope2 = delY / delZ;
+                    if (endZ >= startZ) {
+                        for (z = startZ + 0.5, x = startX + 0.5 * slope, y = startY + 0.5 * slope2; z < endZ; z += 0.5, x += 0.5 * slope, y += 0.5 * slope2) {
+                            xRound = (int) Math.round(x);
+                            yRound = (int) Math.round(y);
+                            zRound = (int) Math.round(z);
+                            if ( (zRound < 0) || (zRound >= zDim)) {
+                                continue forj;
+                            }
+                            okay = false;
+                            for (k = 0; (k < curves[zRound].size()) && ( !okay); k++) {
+                                if ( ((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, false)) {
+                                    okay = true;
+                                }
+                            }
+                            if ( !okay) {
+                                continue forj;
+                            }
+                        } // for (z = startZ + 0.5, x = startX + 0.5 * slope, y = startY + 0.5 * slope2; z < endZ; z
+                        // += 0.5, x += 0.5 * slope,
+                    } // if (endZ >= startZ)
+                    else { // endZ < startZ
+                        for (z = startZ - 0.5, x = startX - 0.5 * slope, y = startY - 0.5 * slope2; z > endZ; z -= 0.5, x -= 0.5 * slope, y -= 0.5 * slope2) {
+                            xRound = (int) Math.round(x);
+                            yRound = (int) Math.round(y);
+                            zRound = (int) Math.round(z);
+                            if ( (zRound < 0) || (zRound >= zDim)) {
+                                continue forj;
+                            }
+                            okay = false;
+                            for (k = 0; (k < curves[zRound].size()) && ( !okay); k++) {
+                                if ( ((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, false)) {
+                                    okay = true;
+                                }
+                            }
+                            if ( !okay) {
+                                continue forj;
+                            }
+                        } // for (z = startZ - 0.5, x = startX - 0.5 * slope, y = startY - 0.5 * slope2; z > endZ; z
+                        // -= 0.5, x -= 0.5 * slope,
+                    } // else (endZ < startZ)
+                } // else ((Math.abs(delZ) >= Math.abs(delX)) && (Math.abs(delZ) >= Math.abs(delY)))
+                largestDistanceSq = distanceSq;
+            }
         }
         return Math.sqrt(largestDistanceSq);
     }
-     
 
     /**
      * Creates a binary mask at every slice.
-     *
-     * @param  mask  the binary mask
-     * @param  xDim  x dimension, used to index into the image
-     * @param  yDim  y dimension, used to index into the image
+     * 
+     * @param mask the binary mask
+     * @param xDim x dimension, used to index into the image
+     * @param yDim y dimension, used to index into the image
      */
-    public void createActiveContourBinaryMask(BitSet mask, int xDim, int yDim) {
+    public void createActiveContourBinaryMask(final BitSet mask, final int xDim, final int yDim) {
         int z;
 
         for (z = 0; z < zDim; z++) {
@@ -1051,14 +1039,15 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Creates a binary mask at a slice.
-     *
-     * @param  xDim   x dimension, used to index into the image
-     * @param  yDim   y dimension, used to index into the image
-     * @param  slice  slice to create mask at
-     * @param  mask   the binary mask
-     * @param  twoD   DOCUMENT ME!
+     * 
+     * @param xDim x dimension, used to index into the image
+     * @param yDim y dimension, used to index into the image
+     * @param slice slice to create mask at
+     * @param mask the binary mask
+     * @param twoD DOCUMENT ME!
      */
-    public void createActiveContourBinaryMask(int xDim, int yDim, int slice, BitSet mask, boolean twoD) {
+    public void createActiveContourBinaryMask(final int xDim, final int yDim, final int slice, final BitSet mask,
+            final boolean twoD) {
         int x, y;
         int i, nGons;
         int offset;
@@ -1070,29 +1059,29 @@ public class VOI extends ModelSerialCloneable {
             offsetZ = 0;
         }
 
-        if ((process == true) && (curveType == CONTOUR)) {
+        if ( (process == true) && (curveType == VOI.CONTOUR)) {
 
             for (i = 0; i < nGons; i++) {
 
-                if (((VOIContour) (curves[slice].elementAt(i))).isActive()) {
+                if ( ((VOIContour) (curves[slice].elementAt(i))).isActive()) {
                     ((VOIContour) (curves[slice].elementAt(i))).contains(0, 0, true);
                     getBounds(xBounds, yBounds, zBounds);
 
-                    int xbs = (int) xBounds[0];
-                    int xbe = (int) xBounds[1];
-                    int ybs = (int) yBounds[0];
-                    int ybe = (int) yBounds[1];
+                    final int xbs = (int) xBounds[0];
+                    final int xbe = (int) xBounds[1];
+                    final int ybs = (int) yBounds[0];
+                    final int ybe = (int) yBounds[1];
 
                     for (y = ybs; y < ybe; y++) {
                         offset = offsetZ + (y * xDim);
 
                         for (x = xbs; x < xbe; x++) {
 
-                            if (((VOIContour) (curves[slice].elementAt(i))).contains(x, y, false) &&
-                                    (polarity == ADDITIVE)) {
+                            if ( ((VOIContour) (curves[slice].elementAt(i))).contains(x, y, false)
+                                    && (polarity == VOI.ADDITIVE)) {
                                 mask.set(offset + x);
-                            } else if (((VOIContour) (curves[slice].elementAt(i))).contains(x, y, false) &&
-                                           (polarity == SUBTRACTIVE)) {
+                            } else if ( ((VOIContour) (curves[slice].elementAt(i))).contains(x, y, false)
+                                    && (polarity == VOI.SUBTRACTIVE)) {
                                 mask.clear(offset + x);
                             } else {
                                 // mask[0].clear(offset + x);
@@ -1101,17 +1090,17 @@ public class VOI extends ModelSerialCloneable {
                     }
                 }
             }
-        } else if ((process == true) && (curveType == POINT)) {
+        } else if ( (process == true) && (curveType == VOI.POINT)) {
             Vector3f pt;
-            int size = curves[slice].size();
+            final int size = curves[slice].size();
 
             for (i = 0; i < size; i++) {
                 pt = ((VOIPoint) (curves[slice].elementAt(i))).exportPoint();
-                offset = MipavMath.round((slice * xDim * yDim) + (pt.Y * xDim) + pt.X);
+                offset = MipavMath.round( (slice * xDim * yDim) + (pt.Y * xDim) + pt.X);
 
-                if (polarity == ADDITIVE) {
+                if (polarity == VOI.ADDITIVE) {
                     mask.set(offset);
-                } else if (polarity == SUBTRACTIVE) {
+                } else if (polarity == VOI.SUBTRACTIVE) {
                     mask.clear(offset);
                 } else {
                     // mask[0].clear(offset + x);
@@ -1122,15 +1111,15 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Forms a binary representation of the VOI into the image.
-     *
-     * @param  image       boolean image where VOI bits are to be set.
-     * @param  XOR         indicates that nested VOI contours will be exclusive ORed with other contours of the VOI
-     * @param  onlyActive  Only mask regions that are active (i.e. selected )
+     * 
+     * @param image boolean image where VOI bits are to be set.
+     * @param XOR indicates that nested VOI contours will be exclusive ORed with other contours of the VOI
+     * @param onlyActive Only mask regions that are active (i.e. selected )
      */
-    public void createBinaryImage(ModelImage image, boolean XOR, boolean onlyActive) {
-        int xDim = image.getExtents()[0];
-        int yDim = image.getExtents()[1];
-        int length = xDim * yDim * zDim;
+    public void createBinaryImage(final ModelImage image, final boolean XOR, final boolean onlyActive) {
+        final int xDim = image.getExtents()[0];
+        final int yDim = image.getExtents()[1];
+        final int length = xDim * yDim * zDim;
         int i;
         int t;
         int tDim = 1;
@@ -1139,22 +1128,22 @@ public class VOI extends ModelSerialCloneable {
         if (image.getType() != ModelStorageBase.BOOLEAN) {
             return;
         }
-        
+
         if (image.getNDims() >= 4) {
             tDim = image.getExtents()[3];
         }
 
         createBinaryMask(image.getMask(), xDim, yDim, XOR, onlyActive);
 
-        BitSet mask = image.getMask();
+        final BitSet mask = image.getMask();
 
         for (t = 0; t < tDim; t++) {
             for (i = 0; i < length; i++) {
-    
+
                 if (mask.get(i) == true) {
-                    image.set(t*length + i, true);
+                    image.set(t * length + i, true);
                 } else {
-                    image.set(t* length + i, false);
+                    image.set(t * length + i, false);
                 }
             }
         }
@@ -1162,31 +1151,31 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Creates a binary mask defined by the VOI.
-     *
-     * @param  mask  object storing the masked regions
-     * @param  xDim  x dimension, used to index into the image
-     * @param  yDim  y dimension, used to index into the image
+     * 
+     * @param mask object storing the masked regions
+     * @param xDim x dimension, used to index into the image
+     * @param yDim y dimension, used to index into the image
      */
-    public void createBinaryMask(BitSet mask, int xDim, int yDim) {
+    public void createBinaryMask(final BitSet mask, final int xDim, final int yDim) {
         this.createBinaryMask(mask, xDim, yDim, false, false);
     }
 
     /**
      * Creates a binary mask at a slice for <i>that</i> slice only.
-     *
-     * @param   xDim   x dimension, used to index into the image
-     * @param   yDim   y dimension, used to index into the image
-     * @param   slice  slice to create mask at
-     *
-     * @return  mask the binary mask
+     * 
+     * @param xDim x dimension, used to index into the image
+     * @param yDim y dimension, used to index into the image
+     * @param slice slice to create mask at
+     * 
+     * @return mask the binary mask
      */
-    public BitSet createBinaryMask(int xDim, int yDim, int slice) {
+    public BitSet createBinaryMask(final int xDim, final int yDim, final int slice) {
         BitSet mask;
 
         // System.err.println("creating binary mask");
         try {
             mask = new BitSet(xDim * yDim); // bitset with a rectangular size
-        } catch (OutOfMemoryError oome) {
+        } catch (final OutOfMemoryError oome) {
             return null;
         }
 
@@ -1195,24 +1184,24 @@ public class VOI extends ModelSerialCloneable {
         int offset; // from corner
         nGons = curves[slice].size();
 
-        if ((process == true) && (curveType == CONTOUR)) {
+        if ( (process == true) && (curveType == VOI.CONTOUR)) {
 
             for (i = 0; i < nGons; i++) {
                 ((VOIContour) (curves[slice].elementAt(i))).contains(0, 0, true);
                 getBounds(xBounds, yBounds, zBounds);
 
-                int xbs = (int) xBounds[0];
-                int xbe = (int) xBounds[1];
-                int ybs = (int) yBounds[0];
-                int ybe = (int) yBounds[1];
+                final int xbs = (int) xBounds[0];
+                final int xbe = (int) xBounds[1];
+                final int ybs = (int) yBounds[0];
+                final int ybe = (int) yBounds[1];
 
                 for (y = ybs; y < ybe; y++) {
                     offset = y * xDim; // a horizontal offset
 
                     for (x = xbs; x < xbe; x++) {
 
-                        if (((VOIContour) (curves[slice].elementAt(i))).contains(x, y, false) &&
-                                (polarity == ADDITIVE)) {
+                        if ( ((VOIContour) (curves[slice].elementAt(i))).contains(x, y, false)
+                                && (polarity == VOI.ADDITIVE)) {
 
                             if (mask.get(offset + x)) {
 
@@ -1221,8 +1210,8 @@ public class VOI extends ModelSerialCloneable {
                             } else {
                                 mask.set(offset + x);
                             }
-                        } else if (((VOIContour) (curves[slice].elementAt(i))).contains(x, y, false) &&
-                                       (polarity == SUBTRACTIVE)) {
+                        } else if ( ((VOIContour) (curves[slice].elementAt(i))).contains(x, y, false)
+                                && (polarity == VOI.SUBTRACTIVE)) {
 
                             // System.err.println("doing subtractive");
                             mask.clear(offset + x);
@@ -1232,22 +1221,22 @@ public class VOI extends ModelSerialCloneable {
                     }
                 }
             }
-        } else if ((process == true) && (curveType == POINT)) {
+        } else if ( (process == true) && (curveType == VOI.POINT)) {
             Vector3f pt;
-            int size = curves[slice].size();
+            final int size = curves[slice].size();
 
             for (i = 0; i < size; i++) {
                 pt = ((VOIPoint) (curves[slice].elementAt(i))).exportPoint();
-                offset = MipavMath.round((pt.Y * xDim) + pt.X);
+                offset = MipavMath.round( (pt.Y * xDim) + pt.X);
 
-                if (polarity == ADDITIVE) {
+                if (polarity == VOI.ADDITIVE) {
 
                     if (mask.get(offset)) {
                         mask.clear();
                     } else {
                         mask.set(offset);
                     }
-                } else if (polarity == SUBTRACTIVE) {
+                } else if (polarity == VOI.SUBTRACTIVE) {
                     mask.clear(offset);
                 } else {
                     // mask[0].clear(offset + x);
@@ -1260,21 +1249,21 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Creates a binary mask at a slice for <i>that</i> slice and element only.
-     *
-     * @param   xDim     x dimension, used to index into the image
-     * @param   yDim     y dimension, used to index into the image
-     * @param   slice    slice to create mask at
-     * @param   element  element of VOI
-     *
-     * @return  mask the binary mask
+     * 
+     * @param xDim x dimension, used to index into the image
+     * @param yDim y dimension, used to index into the image
+     * @param slice slice to create mask at
+     * @param element element of VOI
+     * 
+     * @return mask the binary mask
      */
-    public BitSet createBinaryMask(int xDim, int yDim, int slice, int element) {
+    public BitSet createBinaryMask(final int xDim, final int yDim, final int slice, final int element) {
         BitSet mask;
 
         // System.err.println("creating binary mask");
         try {
             mask = new BitSet(xDim * yDim); // bitset with a rectangular size
-        } catch (OutOfMemoryError oome) {
+        } catch (final OutOfMemoryError oome) {
             return null;
         }
 
@@ -1289,22 +1278,22 @@ public class VOI extends ModelSerialCloneable {
             return null;
         }
 
-        if ((process == true) && (curveType == CONTOUR)) {
+        if ( (process == true) && (curveType == VOI.CONTOUR)) {
             ((VOIContour) (curves[slice].elementAt(element))).contains(0, 0, true);
             getBounds(xBounds, yBounds, zBounds);
 
-            int xbs = (int) xBounds[0];
-            int xbe = (int) xBounds[1];
-            int ybs = (int) yBounds[0];
-            int ybe = (int) yBounds[1];
+            final int xbs = (int) xBounds[0];
+            final int xbe = (int) xBounds[1];
+            final int ybs = (int) yBounds[0];
+            final int ybe = (int) yBounds[1];
 
             for (y = ybs; y < ybe; y++) {
                 offset = y * xDim; // a horizontal offset
 
                 for (x = xbs; x < xbe; x++) {
 
-                    if (((VOIContour) (curves[slice].elementAt(element))).contains(x, y, false) &&
-                            (polarity == ADDITIVE)) {
+                    if ( ((VOIContour) (curves[slice].elementAt(element))).contains(x, y, false)
+                            && (polarity == VOI.ADDITIVE)) {
 
                         if (mask.get(offset + x)) {
 
@@ -1313,8 +1302,8 @@ public class VOI extends ModelSerialCloneable {
                         } else {
                             mask.set(offset + x);
                         }
-                    } else if (((VOIContour) (curves[slice].elementAt(element))).contains(x, y, false) &&
-                                   (polarity == SUBTRACTIVE)) {
+                    } else if ( ((VOIContour) (curves[slice].elementAt(element))).contains(x, y, false)
+                            && (polarity == VOI.SUBTRACTIVE)) {
 
                         // System.err.println("doing subtractive");
                         mask.clear(offset + x);
@@ -1323,20 +1312,20 @@ public class VOI extends ModelSerialCloneable {
                     }
                 }
             }
-        } else if ((process == true) && (curveType == POINT)) {
+        } else if ( (process == true) && (curveType == VOI.POINT)) {
             Vector3f pt;
-            int size = curves[slice].size();
+            final int size = curves[slice].size();
             pt = ((VOIPoint) (curves[slice].elementAt(element))).exportPoint();
-            offset = MipavMath.round((pt.Y * xDim) + pt.X);
+            offset = MipavMath.round( (pt.Y * xDim) + pt.X);
 
-            if (polarity == ADDITIVE) {
+            if (polarity == VOI.ADDITIVE) {
 
                 if (mask.get(offset)) {
                     mask.clear();
                 } else {
                     mask.set(offset);
                 }
-            } else if (polarity == SUBTRACTIVE) {
+            } else if (polarity == VOI.SUBTRACTIVE) {
                 mask.clear(offset);
             } else {
                 // mask[0].clear(offset + x);
@@ -1348,14 +1337,15 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Creates a binary mask defined by the VOI.
-     *
-     * @param  mask        object storing the masked regions
-     * @param  xDim        x dimension, used to index into the image
-     * @param  yDim        y dimension, used to index into the image
-     * @param  XOR         indicates that nested VOI contours will be exclusive ORed with other contours of the VOI
-     * @param  onlyActive  Only mask regions that are active (i.e. selected )
+     * 
+     * @param mask object storing the masked regions
+     * @param xDim x dimension, used to index into the image
+     * @param yDim y dimension, used to index into the image
+     * @param XOR indicates that nested VOI contours will be exclusive ORed with other contours of the VOI
+     * @param onlyActive Only mask regions that are active (i.e. selected )
      */
-    public void createBinaryMask(BitSet mask, int xDim, int yDim, boolean XOR, boolean onlyActive) {
+    public void createBinaryMask(final BitSet mask, final int xDim, final int yDim, final boolean XOR,
+            final boolean onlyActive) {
         int z;
 
         for (z = 0; z < zDim; z++) {
@@ -1365,32 +1355,32 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Creates a short image of the VOI. Positions within the VOI are set to the VOI's watershed ID.
-     *
-     * @param  image       short image where VOI labels are to be set.
-     * @param  offset      value added to watershedID - normally 1
-     * @param  XOR         indicates that nested VOI contours will be exclusive ORed with other contours of the VOI
-     * @param  onlyActive  Only mask regions that are active (i.e. selected )
+     * 
+     * @param image short image where VOI labels are to be set.
+     * @param offset value added to watershedID - normally 1
+     * @param XOR indicates that nested VOI contours will be exclusive ORed with other contours of the VOI
+     * @param onlyActive Only mask regions that are active (i.e. selected )
      */
-    public void createShortImage(ModelImage image, int offset, boolean XOR, boolean onlyActive) {
-        int xDim = image.getExtents()[0];
-        int yDim = image.getExtents()[1];
-        int length = xDim * yDim * zDim;
+    public void createShortImage(final ModelImage image, final int offset, final boolean XOR, final boolean onlyActive) {
+        final int xDim = image.getExtents()[0];
+        final int yDim = image.getExtents()[1];
+        final int length = xDim * yDim * zDim;
         int i;
         int tDim = 1;
         int t;
-        
+
         if (image.getNDims() >= 4) {
             tDim = image.getExtents()[3];
         }
         createBinaryMask(image.getMask(), xDim, yDim, XOR, onlyActive);
 
-        BitSet mask = image.getMask();
+        final BitSet mask = image.getMask();
 
         for (t = 0; t < tDim; t++) {
             for (i = 0; i < length; i++) {
-    
+
                 if (mask.get(i) == true) {
-                    image.set(t*length + i, watershedID + offset);
+                    image.set(t * length + i, watershedID + offset);
                 }
             }
         }
@@ -1398,23 +1388,23 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Creates a short mask at a slice.
-     *
-     * @param   xDim  x dimension, used to index into the image
-     * @param   yDim  y dimension, used to index into the image
-     * @param   mask  the short mask
-     *
-     * @return  returns the mask
-     *
-     * @param   XOR   indicates that nested VOI contours will be exclusive ORed with other contours of the VOI
+     * 
+     * @param xDim x dimension, used to index into the image
+     * @param yDim y dimension, used to index into the image
+     * @param mask the short mask
+     * 
+     * @return returns the mask
+     * 
+     * @param XOR indicates that nested VOI contours will be exclusive ORed with other contours of the VOI
      */
-    public short[] createShortMask(int xDim, int yDim, short[] mask, boolean XOR) {
-        int length = xDim * yDim * zDim;
+    public short[] createShortMask(final int xDim, final int yDim, final short[] mask, final boolean XOR) {
+        final int length = xDim * yDim * zDim;
         int i;
         BitSet binaryMask = null;
 
         try {
             binaryMask = new BitSet(length);
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: unable to make mask.");
 
             return null;
@@ -1443,32 +1433,32 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Creates a short image of the VOI. Positions within the VOI are set to the VOI's watershed ID.
-     *
-     * @param  image       short image where VOI labels are to be set.
-     * @param  offset      value added to watershedID - normally 1
-     * @param  XOR         indicates that nested VOI contours will be exclusive ORed with other contours of the VOI
-     * @param  onlyActive  Only mask regions that are active (i.e. selected )
+     * 
+     * @param image short image where VOI labels are to be set.
+     * @param offset value added to watershedID - normally 1
+     * @param XOR indicates that nested VOI contours will be exclusive ORed with other contours of the VOI
+     * @param onlyActive Only mask regions that are active (i.e. selected )
      */
-    public void createUByteImage(ModelImage image, int offset, boolean XOR, boolean onlyActive) {
-        int xDim = image.getExtents()[0];
-        int yDim = image.getExtents()[1];
-        int length = xDim * yDim * zDim;
+    public void createUByteImage(final ModelImage image, final int offset, final boolean XOR, final boolean onlyActive) {
+        final int xDim = image.getExtents()[0];
+        final int yDim = image.getExtents()[1];
+        final int length = xDim * yDim * zDim;
         int i;
         int tDim = 1;
         int t;
-        
+
         if (image.getNDims() >= 4) {
-            tDim = image.getExtents()[3];    
+            tDim = image.getExtents()[3];
         }
         createBinaryMask(image.getMask(), xDim, yDim, XOR, onlyActive);
 
-        BitSet mask = image.getMask();
+        final BitSet mask = image.getMask();
 
         for (t = 0; t < tDim; t++) {
             for (i = 0; i < length; i++) {
-    
+
                 if (mask.get(i) == true) {
-                    image.set(t*length + i, watershedID + offset);
+                    image.set(t * length + i, watershedID + offset);
                 }
             }
         }
@@ -1476,14 +1466,14 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Cycles the active point of a Polyline slice.
-     *
-     * @param  slice      int the slice on which to cycle
-     * @param  direction  int up/down/left/right
+     * 
+     * @param slice int the slice on which to cycle
+     * @param direction int up/down/left/right
      */
-    public void cyclePSlicePt(int slice, int direction) {
+    public void cyclePSlicePt(final int slice, final int direction) {
 
-        if (curveType == POLYLINE_SLICE) {
-            int index = pLineSliceIndex;
+        if (curveType == VOI.POLYLINE_SLICE) {
+            final int index = pLineSliceIndex;
 
             switch (direction) {
 
@@ -1513,19 +1503,19 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Draws the VOI of type VOIContour as a blending of the image and the VOI.
-     *
-     * @param  zoomX        zoom for the x coordinate
-     * @param  zoomY        zoom for the y coordinate
-     * @param  resolutionX  X resolution (aspect ratio)
-     * @param  resolutionY  Y resolution (aspect ratio)
-     * @param  slice        index of slice in curve array
-     * @param  pixBuffer    pixel buffer of image
-     * @param  g            the graphics context where the VOI is to be drawn
-     * @param  xDim         x dimension maximum
-     * @param  yDim         y dimension maximum
+     * 
+     * @param zoomX zoom for the x coordinate
+     * @param zoomY zoom for the y coordinate
+     * @param resolutionX X resolution (aspect ratio)
+     * @param resolutionY Y resolution (aspect ratio)
+     * @param slice index of slice in curve array
+     * @param pixBuffer pixel buffer of image
+     * @param g the graphics context where the VOI is to be drawn
+     * @param xDim x dimension maximum
+     * @param yDim y dimension maximum
      */
-    public void drawBlendSelf(float zoomX, float zoomY, float resolutionX, float resolutionY, int slice,
-                              int[] pixBuffer, Graphics g, int xDim, int yDim) {
+    public void drawBlendSelf(final float zoomX, final float zoomY, final float resolutionX, final float resolutionY,
+            final int slice, final int[] pixBuffer, final Graphics g, final int xDim, final int yDim) {
         int i;
 
         if (displayMode == VOI.BOUNDARY) {
@@ -1538,9 +1528,9 @@ public class VOI extends ModelSerialCloneable {
             if (visible) {
                 g.setColor(color);
 
-                if (curveType == CONTOUR) {
-                    ((VOIContour) (curves[slice].elementAt(i))).drawBlendSelf(zoomX, zoomY, resolutionX, resolutionY, g,
-                                                                              xDim, yDim, pixBuffer, opacity, color);
+                if (curveType == VOI.CONTOUR) {
+                    ((VOIContour) (curves[slice].elementAt(i))).drawBlendSelf(zoomX, zoomY, resolutionX, resolutionY,
+                            g, xDim, yDim, pixBuffer, opacity, color);
                 }
             }
         }
@@ -1548,21 +1538,22 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Draws the VOI, using the curveType to do so.
-     *
-     * @param  zoomX           zoom for the x coordinate
-     * @param  zoomY           zoom for the y coordinate
-     * @param  resolutionX     X resolution (aspect ratio)
-     * @param  resolutionY     Y resolution (aspect ratio)
-     * @param  originX         start location of X origin
-     * @param  originY         start location of Y origin
-     * @param  resols          array of pixel resolutions
-     * @param  unitsOfMeasure  e.g. mm for millimeters etc.
-     * @param  slice           index of slice in curve array
-     * @param  orientation     the orientation of the image slice where the VOI is to be drawn
-     * @param  g               the graphics context where the VOI is to be drawn
+     * 
+     * @param zoomX zoom for the x coordinate
+     * @param zoomY zoom for the y coordinate
+     * @param resolutionX X resolution (aspect ratio)
+     * @param resolutionY Y resolution (aspect ratio)
+     * @param originX start location of X origin
+     * @param originY start location of Y origin
+     * @param resols array of pixel resolutions
+     * @param unitsOfMeasure e.g. mm for millimeters etc.
+     * @param slice index of slice in curve array
+     * @param orientation the orientation of the image slice where the VOI is to be drawn
+     * @param g the graphics context where the VOI is to be drawn
      */
-    public void drawSelf(float zoomX, float zoomY, float resolutionX, float resolutionY, float originX, float originY,
-                         float[] resols, int[] unitsOfMeasure, int slice, int orientation, Graphics g) {
+    public void drawSelf(final float zoomX, final float zoomY, final float resolutionX, final float resolutionY,
+            final float originX, final float originY, final float[] resols, final int[] unitsOfMeasure,
+            final int slice, final int orientation, final Graphics g) {
         int i;
         boolean isSolid = false;
 
@@ -1570,9 +1561,9 @@ public class VOI extends ModelSerialCloneable {
             isSolid = true;
         }
 
-        if (curveType == POLYLINE_SLICE) {
+        if (curveType == VOI.POLYLINE_SLICE) {
             double distance = 0;
-            Vector distanceVector = new Vector();
+            final Vector distanceVector = new Vector();
             Vector3f firstPoint, secondPoint;
             // first calculate the total distance from pt->pt (even in !visible Points)
 
@@ -1588,7 +1579,7 @@ public class VOI extends ModelSerialCloneable {
                 secondPoint = (Vector3f) distanceVector.elementAt(i + 1);
 
                 distance += MipavMath.distance(firstPoint.X, firstPoint.Y, firstPoint.Z, secondPoint.X, secondPoint.Y,
-                                               secondPoint.Z, resols);
+                        secondPoint.Z, resols);
             }
 
             // next draw lines between the points of the visible slice
@@ -1600,8 +1591,7 @@ public class VOI extends ModelSerialCloneable {
 
                 if (visible) {
                     ((VOIPoint) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY, originX,
-                                                                       originY, resols, unitsOfMeasure, orientation, g,
-                                                                       isSolid, thickness);
+                            originY, resols, unitsOfMeasure, orientation, g, isSolid, thickness);
                 }
             }
             // System.err.println("DISTANCE IS: " + distance);
@@ -1613,39 +1603,31 @@ public class VOI extends ModelSerialCloneable {
                 if (visible) {
                     g.setColor(color);
 
-                    if (curveType == CONTOUR) {
+                    if (curveType == VOI.CONTOUR) {
 
                         // getBounds(xBounds, yBounds, zBounds);
                         ((VOIContour) (curves[slice].elementAt(i))).getBounds(xBounds, yBounds, zBounds);
                         ((VOIContour) (curves[slice].elementAt(i))).setBounds(xBounds, yBounds, zBounds);
                         ((VOIContour) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
-                                                                             originX, originY, resols, unitsOfMeasure,
-                                                                             orientation, g, boundingBox, thickness);
-                    } else if (curveType == LINE) {
+                                originX, originY, resols, unitsOfMeasure, orientation, g, boundingBox, thickness);
+                    } else if (curveType == VOI.LINE) {
                         ((VOILine) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
-                                                                          originX, originY, resols, unitsOfMeasure,
-                                                                          orientation, g, isSolid, thickness);
-                    } else if (curveType == POINT) {
+                                originX, originY, resols, unitsOfMeasure, orientation, g, isSolid, thickness);
+                    } else if (curveType == VOI.POINT) {
                         ((VOIPoint) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
-                                                                           originX, originY, resols, unitsOfMeasure,
-                                                                           orientation, g, isSolid, thickness);
-                    } else if (curveType == PROTRACTOR) {
+                                originX, originY, resols, unitsOfMeasure, orientation, g, isSolid, thickness);
+                    } else if (curveType == VOI.PROTRACTOR) {
                         ((VOIProtractor) (curves[slice].elementAt(i))).setColor(color);
                         ((VOIProtractor) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
-                                                                                originX, originY, resols,
-                                                                                unitsOfMeasure, orientation, g,
-                                                                                isSolid, thickness);
-                    } else if (curveType == ANNOTATION) {
+                                originX, originY, resols, unitsOfMeasure, orientation, g, isSolid, thickness);
+                    } else if (curveType == VOI.ANNOTATION) {
                         ((VOIText) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
-                                                                          originX, originY, resols, unitsOfMeasure,
-                                                                          orientation, g, isSolid, thickness);
-                    } else if (curveType == CARDIOLOGY) {
+                                originX, originY, resols, unitsOfMeasure, orientation, g, isSolid, thickness);
+                    } else if (curveType == VOI.CARDIOLOGY) {
 
                         // System.err.println("got here");
                         ((VOICardiology) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
-                                                                                originX, originY, resols,
-                                                                                unitsOfMeasure, orientation, g,
-                                                                                isSolid, thickness);
+                                originX, originY, resols, unitsOfMeasure, orientation, g, isSolid, thickness);
                     }
                 }
             }
@@ -1654,24 +1636,24 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Draws the VOI, using the curveType to do so.
-     *
-     * @param  zoomX           zoom for the x coordinate
-     * @param  zoomY           zoom for the y coordinate
-     * @param  resolutionX     X resolution (aspect ratio)
-     * @param  resolutionY     Y resolution (aspect ratio)
-     * @param  originX         start location of X origin
-     * @param  originY         start location of Y origin
-     * @param  resols          array of pixel resolutions
-     * @param  unitsOfMeasure  e.g. mm for millimeters etc.
-     * @param  slice           index of slice in curve array
-     * @param  orientation     the orientation of the image slice where the VOI is to be drawn
-     * @param  fileInfo        DOCUMENT ME!
-     * @param  dim             DOCUMENT ME!
-     * @param  g               the graphics context where the VOI is to be drawn
+     * 
+     * @param zoomX zoom for the x coordinate
+     * @param zoomY zoom for the y coordinate
+     * @param resolutionX X resolution (aspect ratio)
+     * @param resolutionY Y resolution (aspect ratio)
+     * @param originX start location of X origin
+     * @param originY start location of Y origin
+     * @param resols array of pixel resolutions
+     * @param unitsOfMeasure e.g. mm for millimeters etc.
+     * @param slice index of slice in curve array
+     * @param orientation the orientation of the image slice where the VOI is to be drawn
+     * @param fileInfo DOCUMENT ME!
+     * @param dim DOCUMENT ME!
+     * @param g the graphics context where the VOI is to be drawn
      */
-    public void drawSelf(float zoomX, float zoomY, float resolutionX, float resolutionY, float originX, float originY,
-                         float[] resols, int[] unitsOfMeasure, int slice, int orientation, FileInfoBase fileInfo,
-                         int dim, Graphics g) {
+    public void drawSelf(final float zoomX, final float zoomY, final float resolutionX, final float resolutionY,
+            final float originX, final float originY, final float[] resols, final int[] unitsOfMeasure,
+            final int slice, final int orientation, final FileInfoBase fileInfo, final int dim, final Graphics g) {
         int i;
         boolean isSolid = false;
 
@@ -1679,20 +1661,19 @@ public class VOI extends ModelSerialCloneable {
             isSolid = true;
         }
 
-
-        if (curveType == POLYLINE_SLICE) {
+        if (curveType == VOI.POLYLINE_SLICE) {
 
             try {
                 // break this into other function (for calculating distance...2.5D or 3D
 
-                boolean is25D = fileInfo.getIs2_5D();
+                final boolean is25D = fileInfo.getIs2_5D();
                 double distance = 0;
-                Vector distanceVector = new Vector();
+                final Vector distanceVector = new Vector();
                 Vector3f firstPoint, secondPoint;
 
                 // first calculate the total distance from pt->pt (even in !visible Points)
 
-                int numSlices = fileInfo.getExtents()[2];
+                final int numSlices = fileInfo.getExtents()[2];
                 int sliceCounter;
                 int pointNumber = 0;
 
@@ -1701,7 +1682,7 @@ public class VOI extends ModelSerialCloneable {
                     for (i = 0; i < curves[sliceCounter].size(); i++) {
 
                         try {
-                            pointNumber = Integer.parseInt(((VOIPoint) curves[sliceCounter].elementAt(i)).getLabel());
+                            pointNumber = Integer.parseInt( ((VOIPoint) curves[sliceCounter].elementAt(i)).getLabel());
                             firstPoint = ((VOIPoint) curves[sliceCounter].elementAt(i)).exportPoint();
 
                             if (is25D) {
@@ -1711,7 +1692,7 @@ public class VOI extends ModelSerialCloneable {
                             }
 
                             distanceVector.add(new PolyPointHolder(firstPoint, pointNumber));
-                        } catch (Exception e) {
+                        } catch (final Exception e) {
                             e.printStackTrace();
                         }
                     }
@@ -1727,7 +1708,7 @@ public class VOI extends ModelSerialCloneable {
                     firstPoint = ((PolyPointHolder) distanceVector.elementAt(i)).getPoint();
                     secondPoint = ((PolyPointHolder) distanceVector.elementAt(i + 1)).getPoint();
                     dTemp = MipavMath.distance(firstPoint.X, firstPoint.Y, firstPoint.Z, secondPoint.X, secondPoint.Y,
-                                               secondPoint.Z, resols);
+                            secondPoint.Z, resols);
                     distance += dTemp;
 
                     if (i == activePolylineSlicePoint) {
@@ -1749,17 +1730,18 @@ public class VOI extends ModelSerialCloneable {
                         secondPointLabel = 0;
 
                         try {
-                            firstPointLabel = Integer.parseInt(((VOIPoint) curves[slice].elementAt(i)).getLabel());
-                            secondPointLabel = Integer.parseInt(((VOIPoint) curves[slice].elementAt(i + 1)).getLabel());
-                        } catch (Exception e) {
+                            firstPointLabel = Integer.parseInt( ((VOIPoint) curves[slice].elementAt(i)).getLabel());
+                            secondPointLabel = Integer
+                                    .parseInt( ((VOIPoint) curves[slice].elementAt(i + 1)).getLabel());
+                        } catch (final Exception e) {
                             e.printStackTrace();
                         }
 
-                        if ((secondPointLabel - firstPointLabel) == 1) {
+                        if ( (secondPointLabel - firstPointLabel) == 1) {
                             firstPoint = ((VOIPoint) curves[slice].elementAt(i)).exportPoint();
                             secondPoint = ((VOIPoint) curves[slice].elementAt(i + 1)).exportPoint();
 
-                            if ((orientation == VOIBase.NA) || (orientation == VOIBase.XY)) {
+                            if ( (orientation == VOIBase.NA) || (orientation == VOIBase.XY)) {
 
                                 // 1 -> imageDim instead of 0 -> imageDim - 1
                                 xS = Math.round(firstPoint.X * zoomX * resolutionX);
@@ -1801,7 +1783,7 @@ public class VOI extends ModelSerialCloneable {
                     }
                 }
 
-                DecimalFormat n = new DecimalFormat("0.00");
+                final DecimalFormat n = new DecimalFormat("0.00");
                 sDistStr = n.format(sDist);
 
                 String tmpString = n.format(distance);
@@ -1811,7 +1793,7 @@ public class VOI extends ModelSerialCloneable {
                     case FileInfoBase.INCHES:
                         tmpString = tmpString + " in";
                         break;
-                        
+
                     case FileInfoBase.MILS:
                         tmpString = tmpString + " mil";
                         break;
@@ -1860,7 +1842,7 @@ public class VOI extends ModelSerialCloneable {
                     if (visible) {
                         g.setColor(color);
 
-                        if ((i == 0) && (i == pLineSliceIndex)) {
+                        if ( (i == 0) && (i == pLineSliceIndex)) {
                             ((VOIPoint) (curves[slice].elementAt(i))).setFirstPoint(true, true, tmpString, sDistStr);
                         } else if (i == 0) {
                             ((VOIPoint) (curves[slice].elementAt(i))).setFirstPoint(true, false, tmpString, null);
@@ -1871,13 +1853,12 @@ public class VOI extends ModelSerialCloneable {
                         }
 
                         ((VOIPoint) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
-                                                                           originX, originY, resols, unitsOfMeasure,
-                                                                           orientation, g, isSolid, thickness);
+                                originX, originY, resols, unitsOfMeasure, orientation, g, isSolid, thickness);
 
                     }
                 }
                 // System.err.println("Distance IS: " + distance);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 System.err.println("ERROR ERROR ERROR.....exception thrown in VOI drawSelf");
                 e.printStackTrace();
                 System.err.println("CURVES @ slice size: " + curves[slice].size());
@@ -1891,43 +1872,35 @@ public class VOI extends ModelSerialCloneable {
                 if (visible) {
                     g.setColor(color);
 
-                    if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+                    if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
 
                         // getBounds(xBounds, yBounds, zBounds);
                         ((VOIContour) (curves[slice].elementAt(i))).getBounds(xBounds, yBounds, zBounds);
                         ((VOIContour) (curves[slice].elementAt(i))).setBounds(xBounds, yBounds, zBounds);
 
                         ((VOIContour) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
-                                                                             originX, originY, resols, unitsOfMeasure,
-                                                                             orientation, g, boundingBox, fileInfo,
-                                                                             dim, thickness);
-                    } else if (curveType == LINE) {
+                                originX, originY, resols, unitsOfMeasure, orientation, g, boundingBox, fileInfo, dim,
+                                thickness);
+                    } else if (curveType == VOI.LINE) {
                         ((VOILine) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
-                                                                          originX, originY, resols, unitsOfMeasure,
-                                                                          orientation, g, isSolid, thickness);
-                    } else if (curveType == POINT) {
+                                originX, originY, resols, unitsOfMeasure, orientation, g, isSolid, thickness);
+                    } else if (curveType == VOI.POINT) {
                         ((VOIPoint) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
-                                                                           originX, originY, resols, unitsOfMeasure,
-                                                                           orientation, g, isSolid, thickness);
-                    } else if (curveType == PROTRACTOR) {
+                                originX, originY, resols, unitsOfMeasure, orientation, g, isSolid, thickness);
+                    } else if (curveType == VOI.PROTRACTOR) {
                         ((VOIProtractor) (curves[slice].elementAt(i))).setColor(color);
                         ((VOIProtractor) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
-                                                                                originX, originY, resols,
-                                                                                unitsOfMeasure, orientation, g,
-                                                                                isSolid, thickness);
-                    } else if (curveType == ANNOTATION) {
+                                originX, originY, resols, unitsOfMeasure, orientation, g, isSolid, thickness);
+                    } else if (curveType == VOI.ANNOTATION) {
 
                         // System.err.println("Text: " + ((VOIText)(curves[slice].elementAt(i))).getText());
                         ((VOIText) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
-                                                                          originX, originY, resols, unitsOfMeasure,
-                                                                          orientation, g, isSolid, thickness);
-                    } else if (curveType == CARDIOLOGY) {
+                                originX, originY, resols, unitsOfMeasure, orientation, g, isSolid, thickness);
+                    } else if (curveType == VOI.CARDIOLOGY) {
 
                         // System.err.println("got here");
                         ((VOICardiology) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
-                                                                                originX, originY, resols,
-                                                                                unitsOfMeasure, orientation, g,
-                                                                                isSolid, thickness);
+                                originX, originY, resols, unitsOfMeasure, orientation, g, isSolid, thickness);
                     }
                 }
             }
@@ -1936,19 +1909,19 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Draws the Vertices of the VOI, using the curveType to do so.
-     *
-     * @param  zoomX           zoom for the x coordinate
-     * @param  zoomY           zoom for the y coordinate
-     * @param  resolutionX     X resolution (aspect ratio)
-     * @param  resolutionY     Y resolution (aspect ratio)
-     * @param  resols          array of pixel resolutions
-     * @param  unitsOfMeasure  e.g. mm for millimeters etc.
-     * @param  slice           index of slice in curve array
-     * @param  orientation     the orientation of the image slice where the VOI is to be drawn
-     * @param  g               the graphics context where the vertices are to be drawn
+     * 
+     * @param zoomX zoom for the x coordinate
+     * @param zoomY zoom for the y coordinate
+     * @param resolutionX X resolution (aspect ratio)
+     * @param resolutionY Y resolution (aspect ratio)
+     * @param resols array of pixel resolutions
+     * @param unitsOfMeasure e.g. mm for millimeters etc.
+     * @param slice index of slice in curve array
+     * @param orientation the orientation of the image slice where the VOI is to be drawn
+     * @param g the graphics context where the vertices are to be drawn
      */
-    public void drawVertices(float zoomX, float zoomY, float resolutionX, float resolutionY, float[] resols,
-                             int[] unitsOfMeasure, int slice, int orientation, Graphics g) {
+    public void drawVertices(final float zoomX, final float zoomY, final float resolutionX, final float resolutionY,
+            final float[] resols, final int[] unitsOfMeasure, final int slice, final int orientation, final Graphics g) {
         int i;
         boolean isSolid = false;
 
@@ -1961,20 +1934,19 @@ public class VOI extends ModelSerialCloneable {
             if (visible) {
                 g.setColor(color);
 
-                if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+                if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
                     ((VOIContour) (curves[slice].elementAt(i))).drawVertices(zoomX, zoomY, resolutionX, resolutionY, g,
-                                                                             boundingBox);
-                } else if (curveType == LINE) {
+                            boundingBox);
+                } else if (curveType == VOI.LINE) {
                     ((VOILine) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0f, 0f,
-                                                                      resols, unitsOfMeasure, orientation, g, isSolid, thickness);
-                } else if (curveType == POINT) {
+                            resols, unitsOfMeasure, orientation, g, isSolid, thickness);
+                } else if (curveType == VOI.POINT) {
                     ((VOIPoint) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0f, 0f,
-                                                                       resols, unitsOfMeasure, orientation, g, isSolid, thickness);
-                } else if (curveType == PROTRACTOR) {
+                            resols, unitsOfMeasure, orientation, g, isSolid, thickness);
+                } else if (curveType == VOI.PROTRACTOR) {
                     ((VOIProtractor) (curves[slice].elementAt(i))).setColor(color);
                     ((VOIProtractor) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0f,
-                                                                            0f, resols, unitsOfMeasure, orientation, g,
-                                                                            isSolid, thickness);
+                            0f, resols, unitsOfMeasure, orientation, g, isSolid, thickness);
                 }
             }
         }
@@ -1982,20 +1954,21 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Draws the Vertices of the VOI, using the curveType to do so.
-     *
-     * @param  zoomX           zoom for the x coordinate
-     * @param  zoomY           zoom for the y coordinate
-     * @param  resolutionX     X resolution (aspect ratio)
-     * @param  resolutionY     Y resolution (aspect ratio)
-     * @param  resols          array of pixel resolutions
-     * @param  unitsOfMeasure  e.g. mm for millimeters etc.
-     * @param  slice           index of slice in curve array
-     * @param  orientation     the orientation of the image slice where the VOI is to be drawn
-     * @param  g               the graphics context where the vertices are to be drawn
-     * @param  element         element in slice
+     * 
+     * @param zoomX zoom for the x coordinate
+     * @param zoomY zoom for the y coordinate
+     * @param resolutionX X resolution (aspect ratio)
+     * @param resolutionY Y resolution (aspect ratio)
+     * @param resols array of pixel resolutions
+     * @param unitsOfMeasure e.g. mm for millimeters etc.
+     * @param slice index of slice in curve array
+     * @param orientation the orientation of the image slice where the VOI is to be drawn
+     * @param g the graphics context where the vertices are to be drawn
+     * @param element element in slice
      */
-    public void drawVertices(float zoomX, float zoomY, float resolutionX, float resolutionY, float[] resols,
-                             int[] unitsOfMeasure, int slice, int orientation, Graphics g, int element) {
+    public void drawVertices(final float zoomX, final float zoomY, final float resolutionX, final float resolutionY,
+            final float[] resols, final int[] unitsOfMeasure, final int slice, final int orientation, final Graphics g,
+            final int element) {
         boolean isSolid = false;
 
         if (displayMode == VOI.SOLID) {
@@ -2005,106 +1978,102 @@ public class VOI extends ModelSerialCloneable {
         if (visible) {
             g.setColor(color);
 
-            if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+            if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
 
                 // getBounds and setBounds are not called because they are called in nearPoint
                 // and in ViewJComponentEditImage a single contour call to nearPoint precedes a
                 // single contour call to drawVertices
                 ((VOIContour) (curves[slice].elementAt(element))).drawVertices(zoomX, zoomY, resolutionX, resolutionY,
-                                                                               g, boundingBox);
-            } else if (curveType == LINE) {
+                        g, boundingBox);
+            } else if (curveType == VOI.LINE) {
                 ((VOILine) (curves[slice].elementAt(element))).drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0f, 0f,
-                                                                        resols, unitsOfMeasure, orientation, g,
-                                                                        isSolid, thickness);
-            } else if (curveType == POINT) {
-                ((VOIPoint) (curves[slice].elementAt(element))).drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0f, 0f,
-                                                                         resols, unitsOfMeasure, orientation, g,
-                                                                         isSolid, thickness);
-            } else if (curveType == PROTRACTOR) {
+                        resols, unitsOfMeasure, orientation, g, isSolid, thickness);
+            } else if (curveType == VOI.POINT) {
+                ((VOIPoint) (curves[slice].elementAt(element))).drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0f,
+                        0f, resols, unitsOfMeasure, orientation, g, isSolid, thickness);
+            } else if (curveType == VOI.PROTRACTOR) {
                 ((VOIProtractor) (curves[slice].elementAt(element))).setColor(color);
                 ((VOIProtractor) (curves[slice].elementAt(element))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
-                                                                              0f, 0f, resols, unitsOfMeasure,
-                                                                              orientation, g, isSolid, thickness);
+                        0f, 0f, resols, unitsOfMeasure, orientation, g, isSolid, thickness);
             }
         }
     }
 
     /**
      * Special function to draw tick marks on the VOILine object.
-     *
-     * @param  slice        slice where the line is located
-     * @param  g            graphics to draw in
-     * @param  res          resolutions of the image
-     * @param  units        units of measure (mm or inches)
-     * @param  xDim         DOCUMENT ME!
-     * @param  yDim         DOCUMENT ME!
-     * @param  zoomX        zoom in the x direction
-     * @param  zoomY        zoom in the y direction
-     * @param  resolutionX  image resolution X (aspect ratio)
-     * @param  resolutionY  image resolution Y (aspect ratio)
+     * 
+     * @param slice slice where the line is located
+     * @param g graphics to draw in
+     * @param res resolutions of the image
+     * @param units units of measure (mm or inches)
+     * @param xDim DOCUMENT ME!
+     * @param yDim DOCUMENT ME!
+     * @param zoomX zoom in the x direction
+     * @param zoomY zoom in the y direction
+     * @param resolutionX image resolution X (aspect ratio)
+     * @param resolutionY image resolution Y (aspect ratio)
      */
-    public void drawVOISpecial(int slice, Graphics g, float[] res, int[] units, int xDim, int yDim, float zoomX,
-                               float zoomY, float resolutionX, float resolutionY) {
+    public void drawVOISpecial(final int slice, final Graphics g, final float[] res, final int[] units, final int xDim,
+            final int yDim, final float zoomX, final float zoomY, final float resolutionX, final float resolutionY) {
         drawVOISpecial(slice, g, res, units, xDim, yDim, zoomX, zoomY, resolutionX, resolutionY, 0);
     }
 
     /**
      * Special function to draw tick marks on the VOILine object.
-     *
-     * @param  slice        slice where the line is located
-     * @param  g            graphics to draw in
-     * @param  res          resolutions of the image
-     * @param  units        units of measure (mm or inches)
-     * @param  xDim         DOCUMENT ME!
-     * @param  yDim         DOCUMENT ME!
-     * @param  zoomX        zoom in the x direction
-     * @param  zoomY        zoom in the y direction
-     * @param  resolutionX  image resolution X (aspect ratio)
-     * @param  resolutionY  image resolution Y (aspect ratio)
-     * @param  element      which curve element to update
+     * 
+     * @param slice slice where the line is located
+     * @param g graphics to draw in
+     * @param res resolutions of the image
+     * @param units units of measure (mm or inches)
+     * @param xDim DOCUMENT ME!
+     * @param yDim DOCUMENT ME!
+     * @param zoomX zoom in the x direction
+     * @param zoomY zoom in the y direction
+     * @param resolutionX image resolution X (aspect ratio)
+     * @param resolutionY image resolution Y (aspect ratio)
+     * @param element which curve element to update
      */
-    public void drawVOISpecial(int slice, Graphics g, float[] res, int[] units, int xDim, int yDim, float zoomX,
-                               float zoomY, float resolutionX, float resolutionY, int element) {
+    public void drawVOISpecial(final int slice, final Graphics g, final float[] res, final int[] units, final int xDim,
+            final int yDim, final float zoomX, final float zoomY, final float resolutionX, final float resolutionY,
+            final int element) {
 
-        if (curveType == LINE) {
-            ((VOILine) (curves[slice].elementAt(element))).drawTickMarks(g, color, units, xDim, yDim, res, zoomX, zoomY,
-                                                                         resolutionX, resolutionY);
-        } else if (curveType == PROTRACTOR) {
+        if (curveType == VOI.LINE) {
+            ((VOILine) (curves[slice].elementAt(element))).drawTickMarks(g, color, units, xDim, yDim, res, zoomX,
+                    zoomY, resolutionX, resolutionY);
+        } else if (curveType == VOI.PROTRACTOR) {
             ((VOIProtractor) (curves[slice].elementAt(element))).setColor(color);
             ((VOIProtractor) (curves[slice].elementAt(element))).showProtractorWithAngle(g, res, units, xDim, yDim,
-                                                                                         zoomX, zoomY, resolutionX,
-                                                                                         resolutionY, false, thickness);
+                    zoomX, zoomY, resolutionX, resolutionY, false, thickness);
 
             return;
-        } else if (curveType == CONTOUR) {
+        } else if (curveType == VOI.CONTOUR) {
             return;
-        } else if (curveType == POINT) { }
-        else {
+        } else if (curveType == VOI.POINT) {} else {
             return;
         }
     }
 
     /**
      * two VOIs are the same if they have the same name.
-     *
-     * @param   str  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param str DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    public boolean equals(String str) {
+    public boolean equals(final String str) {
         return (name.equals(str));
     }
 
     /**
      * Get Vector3fs from the VOI; can only use with Point.
-     *
-     * @return  array of points at the slice
+     * 
+     * @return array of points at the slice
      */
     public Vector3f[] exportAllPoints() {
         Vector3f[] points;
         int i, j, k;
 
-        if (curveType != POINT) {
+        if (curveType != VOI.POINT) {
             return null;
         }
 
@@ -2116,14 +2085,14 @@ public class VOI extends ModelSerialCloneable {
 
         try {
             points = new Vector3f[len];
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: unable to export Points.");
 
             return null;
         }
 
-        if (curveType != POINT) {
+        if (curveType != VOI.POINT) {
             return null;
         }
 
@@ -2141,13 +2110,13 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Gets line arrays from the VOI; can only use with LINE, POINT, and PROTRACTOR.
-     *
-     * @param  x      array of x coordinates of line
-     * @param  y      array of y coordinates of line
-     * @param  z      array of z coordinates of line
-     * @param  slice  index of slice
+     * 
+     * @param x array of x coordinates of line
+     * @param y array of y coordinates of line
+     * @param z array of z coordinates of line
+     * @param slice index of slice
      */
-    public void exportArrays(float[] x, float[] y, float[] z, int slice) {
+    public void exportArrays(final float[] x, final float[] y, final float[] z, final int slice) {
 
         for (int i = 0; i < curves[slice].size(); i++) {
             exportArrays(x, y, z, slice, i);
@@ -2156,31 +2125,31 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Gets line arrays from the VOI; can only use with LINE, POINT, and PROTRACTOR.
-     *
-     * @param  x        array of x coordinates of line
-     * @param  y        array of y coordinates of line
-     * @param  z        array of z coordinates of line
-     * @param  slice    index of slice
-     * @param  element  the element whose arrays should be exported
+     * 
+     * @param x array of x coordinates of line
+     * @param y array of y coordinates of line
+     * @param z array of z coordinates of line
+     * @param slice index of slice
+     * @param element the element whose arrays should be exported
      */
-    public void exportArrays(float[] x, float[] y, float[] z, int slice, int element) {
+    public void exportArrays(final float[] x, final float[] y, final float[] z, final int slice, final int element) {
 
-        if (curveType == LINE) {
+        if (curveType == VOI.LINE) {
             ((VOILine) (curves[slice].elementAt(element))).exportArrays(x, y, z);
-        } else if (curveType == PROTRACTOR) {
+        } else if (curveType == VOI.PROTRACTOR) {
             ((VOIProtractor) (curves[slice].elementAt(element))).exportArrays(x, y, z);
         }
     }
 
     /**
      * This method no longer makes sense!!! must remove exportPoint - if VOI is of POINT type then return it.
-     *
-     * @return  return the request point from the VOIPoint object
+     * 
+     * @return return the request point from the VOIPoint object
      */
     public Vector3f exportPoint() {
         int i, j;
 
-        if (curveType != POINT) {
+        if (curveType != VOI.POINT) {
             return null;
         }
 
@@ -2188,7 +2157,7 @@ public class VOI extends ModelSerialCloneable {
 
             for (i = 0; i < curves[j].size(); i++) {
 
-                if (curveType == POINT) {
+                if (curveType == VOI.POINT) {
                     return ((VOIPoint) (curves[j].elementAt(i))).exportPoint();
                 }
             }
@@ -2199,21 +2168,21 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Get Vector3fs from the VOI; can only use with Point.
-     *
-     * @param   slice  index of slice
-     *
-     * @return  array of points at the slice
+     * 
+     * @param slice index of slice
+     * 
+     * @return array of points at the slice
      */
-    public Vector3f[] exportPoints(int slice) {
+    public Vector3f[] exportPoints(final int slice) {
         Vector3f[] points;
 
-        if (curveType != POINT) {
+        if (curveType != VOI.POINT) {
             return null;
         }
 
         try {
             points = new Vector3f[curves[slice].size()];
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: unable to export Points.");
 
@@ -2222,7 +2191,7 @@ public class VOI extends ModelSerialCloneable {
 
         for (int i = 0; i < curves[slice].size(); i++) {
 
-            if (curveType == POINT) {
+            if (curveType == VOI.POINT) {
                 points[i] = ((VOIPoint) (curves[slice].elementAt(i))).exportPoint();
             }
         }
@@ -2232,25 +2201,25 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Gets polygons from the VOI; can only use with Contour.
-     *
-     * @param   slice  index of slice
-     *
-     * @return  array of polygons at the slice
+     * 
+     * @param slice index of slice
+     * 
+     * @return array of polygons at the slice
      */
-    public Polygon[] exportPolygons(int slice) {
+    public Polygon[] exportPolygons(final int slice) {
         Polygon[] polygons;
 
         try {
             polygons = new Polygon[curves[slice].size()];
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: unable to export Polygon.");
 
             return null;
         }
 
-        if ((curveType == LINE) || (curveType == POINT) || (curveType == PROTRACTOR) || (curveType == ANNOTATION) ||
-                (curveType == POLYLINE_SLICE)) {
+        if ( (curveType == VOI.LINE) || (curveType == VOI.POINT) || (curveType == VOI.PROTRACTOR)
+                || (curveType == VOI.ANNOTATION) || (curveType == VOI.POLYLINE_SLICE)) {
             return null;
         }
 
@@ -2263,16 +2232,16 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Exports polygons of contour.
-     *
-     * @param   tMatrix  transformation matrix
-     *
-     * @return  returns the polygon
+     * 
+     * @param tMatrix transformation matrix
+     * 
+     * @return returns the polygon
      */
-    public Polygon[][] exportPolygons(TransMatrix tMatrix) {
+    public Polygon[][] exportPolygons(final TransMatrix tMatrix) {
         int i, z;
-        Polygon[][] transformedGon = null;
+        final Polygon[][] transformedGon = null;
 
-        if (curveType == CONTOUR) {
+        if (curveType == VOI.CONTOUR) {
 
             for (z = 0; z < zDim; z++) {
 
@@ -2285,34 +2254,33 @@ public class VOI extends ModelSerialCloneable {
         return transformedGon;
     }
 
-
     /**
      * Exports the polygon of the contour with some transformation.
-     *
-     * @param   thetaX  rotation in x in degrees
-     * @param   thetaY  rotation in y in degrees
-     * @param   thetaZ  rotation in z in degrees
-     * @param   tX      translation in x
-     * @param   tY      translation in y
-     * @param   tZ      translation in z
-     * @param   scaleX  zoom in x
-     * @param   scaleY  zoom in y
-     * @param   scaleZ  zoom in z
-     *
-     * @return  returns polygon
+     * 
+     * @param thetaX rotation in x in degrees
+     * @param thetaY rotation in y in degrees
+     * @param thetaZ rotation in z in degrees
+     * @param tX translation in x
+     * @param tY translation in y
+     * @param tZ translation in z
+     * @param scaleX zoom in x
+     * @param scaleY zoom in y
+     * @param scaleZ zoom in z
+     * 
+     * @return returns polygon
      */
-    public Polygon[][] exportPolygons(float thetaX, float thetaY, float thetaZ, float tX, float tY, float tZ,
-                                      float scaleX, float scaleY, float scaleZ) {
+    public Polygon[][] exportPolygons(final float thetaX, final float thetaY, final float thetaZ, final float tX,
+            final float tY, final float tZ, final float scaleX, final float scaleY, final float scaleZ) {
         int i;
         int z;
-        Polygon[][] transformedGon = null;
+        final Polygon[][] transformedGon = null;
         Vector3f gcPt = null;
         TransMatrix tMatrix = null;
 
         try {
             gcPt = new Vector3f();
             tMatrix = new TransMatrix(4);
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: VOI exportPolygons.");
 
@@ -2322,12 +2290,12 @@ public class VOI extends ModelSerialCloneable {
         gcPt = getGeometricCenter();
 
         // construct transMatrix object
-        tMatrix.setTranslate((gcPt.X + tX), (gcPt.Y + tY), (gcPt.Z + tZ));
+        tMatrix.setTranslate( (gcPt.X + tX), (gcPt.Y + tY), (gcPt.Z + tZ));
         tMatrix.setRotate(thetaX, thetaY, thetaZ, TransMatrix.DEGREES);
         tMatrix.setZoom(scaleX, scaleY, scaleZ);
-        tMatrix.setTranslate(-gcPt.X, -gcPt.Y, -gcPt.Z);
+        tMatrix.setTranslate( -gcPt.X, -gcPt.Y, -gcPt.Z);
 
-        if (curveType == CONTOUR) {
+        if (curveType == VOI.CONTOUR) {
 
             for (z = 0; z < zDim; z++) {
 
@@ -2342,31 +2310,30 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   slice  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param slice DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    public Vector3f exportPSlicePoint(int slice) {
+    public Vector3f exportPSlicePoint(final int slice) {
 
-        if (curveType == POLYLINE_SLICE) {
+        if (curveType == VOI.POLYLINE_SLICE) {
 
             try {
                 return ((VOIPoint) (curves[slice].elementAt(pLineSliceIndex))).exportPoint();
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 return null;
             }
 
         }
-
 
         return null;
     }
 
     /**
      * Prepares the class for cleanup.
-     *
-     * @throws  Throwable  DOCUMENT ME!
+     * 
+     * @throws Throwable DOCUMENT ME!
      */
     public void finalize() throws Throwable {
         int i;
@@ -2377,7 +2344,7 @@ public class VOI extends ModelSerialCloneable {
                 Vector cv = curves[i];
 
                 for (int j = cv.size() - 1; j >= 0; j--) {
-                    VOIBase base = (VOIBase) cv.remove(j);
+                    final VOIBase base = (VOIBase) cv.remove(j);
                     base.clear();
                 }
 
@@ -2418,36 +2385,34 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Finds the position and intensity for this VOI if it's a line.
-     *
-     * @param   slice        slice where the line is located
-     * @param   contourNo    the contour within the image slice
-     * @param   position     position of the line (x-coordinates)
-     * @param   intensity    intensity of the line (y-coordinates)
-     * @param   imageBuffer  image buffer
-     * @param   resolutions  image resolutions
-     * @param   xDim         x dimension
-     * @param   yDim         y dimension
-     * @param   xyCoords     actual x,y coords of the boundary go in here if not null
-     *
-     * @return  number of valid points in the array
+     * 
+     * @param slice slice where the line is located
+     * @param contourNo the contour within the image slice
+     * @param position position of the line (x-coordinates)
+     * @param intensity intensity of the line (y-coordinates)
+     * @param imageBuffer image buffer
+     * @param resolutions image resolutions
+     * @param xDim x dimension
+     * @param yDim y dimension
+     * @param xyCoords actual x,y coords of the boundary go in here if not null
+     * 
+     * @return number of valid points in the array
      */
-    public int findPositionAndIntensity(int slice, int contourNo, float[] position, float[] intensity,
-                                        float[] imageBuffer, float[] resolutions, int xDim, int yDim, int[][] xyCoords) {
+    public int findPositionAndIntensity(final int slice, final int contourNo, final float[] position,
+            final float[] intensity, final float[] imageBuffer, final float[] resolutions, final int xDim,
+            final int yDim, final int[][] xyCoords) {
 
-        if (curveType == LINE) {
+        if (curveType == VOI.LINE) {
             return ((VOILine) (curves[slice].elementAt(contourNo))).findPositionAndIntensity(position, intensity,
-                                                                                             imageBuffer, resolutions,
-                                                                                             xDim, yDim,xyCoords);
+                    imageBuffer, resolutions, xDim, yDim, xyCoords);
         }
 
-        if (curveType == PROTRACTOR) {
+        if (curveType == VOI.PROTRACTOR) {
             return 0;
-        } else if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+        } else if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
             return ((VOIContour) (curves[slice].elementAt(contourNo))).findPositionAndIntensity(position, intensity,
-                                                                                                imageBuffer,
-                                                                                                resolutions, xDim,
-                                                                                                yDim,xyCoords);
-        } else if (curveType == POINT) {
+                    imageBuffer, resolutions, xDim, yDim, xyCoords);
+        } else if (curveType == VOI.POINT) {
             return 0;
         } else {
             return 0;
@@ -2456,20 +2421,20 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Finds the active Contour and returns it.
-     *
-     * @param   slice  indicates slice where active Contour can be found.
-     *
-     * @return  Contour that is active or null if no contour is active in the indicated slice.
+     * 
+     * @param slice indicates slice where active Contour can be found.
+     * 
+     * @return Contour that is active or null if no contour is active in the indicated slice.
      */
-    public VOIBase getActiveContour(int slice) {
+    public VOIBase getActiveContour(final int slice) {
         int i;
 
         for (i = 0; i < curves[slice].size(); i++) {
 
-            if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+            if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
 
-                if (((VOIContour) (curves[slice].elementAt(i))).isActive()) {
-                    return (VOIContour) (curves[slice].elementAt(i));
+                if ( ((VOIContour) (curves[slice].elementAt(i))).isActive()) {
+                    return (curves[slice].elementAt(i));
                 }
             }
         }
@@ -2479,24 +2444,24 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Finds the active Contour and returns it.
-     *
-     * @param   slice  indicates slice where active Contour can be found.
-     *
-     * @return  index of Contour that is active or -1 if not contour is active in the indicated slice.
+     * 
+     * @param slice indicates slice where active Contour can be found.
+     * 
+     * @return index of Contour that is active or -1 if not contour is active in the indicated slice.
      */
-    public int getActiveContourIndex(int slice) {
+    public int getActiveContourIndex(final int slice) {
         int i;
 
         for (i = 0; i < curves[slice].size(); i++) {
 
-            if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+            if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
 
-                if (((VOIContour) (curves[slice].elementAt(i))).isActive()) {
+                if ( ((VOIContour) (curves[slice].elementAt(i))).isActive()) {
                     return i;
                 }
-            } else if (curveType == POINT) {
+            } else if (curveType == VOI.POINT) {
 
-                if (((VOIPoint) (curves[slice].elementAt(i))).isActive()) {
+                if ( ((VOIPoint) (curves[slice].elementAt(i))).isActive()) {
                     return i;
                 }
             }
@@ -2507,8 +2472,8 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the bounding box flag.
-     *
-     * @return  the process
+     * 
+     * @return the process
      */
     public boolean getBoundingBoxFlag() {
         return boundingBox;
@@ -2516,15 +2481,15 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Calculates the extents or boundary of the voi in x, y, and z.
-     *
-     * @param  x  two element array where x[0] = min extent of the Contour and x[1] = max extent of the Contour in the x
+     * 
+     * @param x two element array where x[0] = min extent of the Contour and x[1] = max extent of the Contour in the x
      *            dimension
-     * @param  y  two element array where y[0] = min extent of the Contour and y[1] = max extent of the Contour in the y
+     * @param y two element array where y[0] = min extent of the Contour and y[1] = max extent of the Contour in the y
      *            dimension
-     * @param  z  two element array where z[0] = min extent of the Contour and z[1] = max extent of the Contour in the z
+     * @param z two element array where z[0] = min extent of the Contour and z[1] = max extent of the Contour in the z
      *            dimension
      */
-    public void getBounds(int[] x, int[] y, int[] z) {
+    public void getBounds(final int[] x, final int[] y, final int[] z) {
         int i, slice;
         int nContours;
         int xStart = 10000, xEnd = -1;
@@ -2533,17 +2498,17 @@ public class VOI extends ModelSerialCloneable {
 
         for (slice = 0; slice < zDim; slice++) {
 
-            if ((zStart == -1) && (curves[slice].size() != 0)) {
+            if ( (zStart == -1) && (curves[slice].size() != 0)) {
                 zStart = slice;
             }
 
-            if ((zStart != -1) && (curves[slice].size() != 0)) {
+            if ( (zStart != -1) && (curves[slice].size() != 0)) {
                 zEnd = slice;
             }
 
             nContours = curves[slice].size();
 
-            if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+            if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
 
                 for (i = 0; i < nContours; i++) {
                     ((VOIContour) (curves[slice].elementAt(i))).getBounds(x, y, z);
@@ -2566,7 +2531,7 @@ public class VOI extends ModelSerialCloneable {
                 }
             }
 
-            if (curveType == LINE) {
+            if (curveType == VOI.LINE) {
 
                 for (i = 0; i < nContours; i++) {
                     ((VOILine) (curves[slice].elementAt(i))).getBounds(x, y, z);
@@ -2589,7 +2554,7 @@ public class VOI extends ModelSerialCloneable {
                 }
             }
 
-            if (curveType == PROTRACTOR) {
+            if (curveType == VOI.PROTRACTOR) {
 
                 for (i = 0; i < nContours; i++) {
                     ((VOIProtractor) (curves[slice].elementAt(i))).getBounds(x, y, z);
@@ -2612,7 +2577,7 @@ public class VOI extends ModelSerialCloneable {
                 }
             }
 
-            if (curveType == POINT) {
+            if (curveType == VOI.POINT) {
 
                 for (i = 0; i < nContours; i++) {
                     ((VOIPoint) (curves[slice].elementAt(i))).getBounds(x, y, z);
@@ -2646,15 +2611,15 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Calculates the extents or boundary of the voi in x, y, and z.
-     *
-     * @param  x  two element array where x[0] = min extent of the Contour and x[1] = max extent of the Contour in the x
+     * 
+     * @param x two element array where x[0] = min extent of the Contour and x[1] = max extent of the Contour in the x
      *            dimension
-     * @param  y  two element array where y[0] = min extent of the Contour and y[1] = max extent of the Contour in the y
+     * @param y two element array where y[0] = min extent of the Contour and y[1] = max extent of the Contour in the y
      *            dimension
-     * @param  z  two element array where z[0] = min extent of the Contour and z[1] = max extent of the Contour in the z
+     * @param z two element array where z[0] = min extent of the Contour and z[1] = max extent of the Contour in the z
      *            dimension
      */
-    public void getBounds(float[] x, float[] y, float[] z) {
+    public void getBounds(final float[] x, final float[] y, final float[] z) {
         int i, slice;
         int nContours;
         float xStart = 10000, xEnd = -1;
@@ -2663,17 +2628,17 @@ public class VOI extends ModelSerialCloneable {
 
         for (slice = 0; slice < zDim; slice++) {
 
-            if ((zStart == -1) && (curves[slice].size() != 0)) {
+            if ( (zStart == -1) && (curves[slice].size() != 0)) {
                 zStart = slice;
             }
 
-            if ((zStart != -1) && (curves[slice].size() != 0)) {
+            if ( (zStart != -1) && (curves[slice].size() != 0)) {
                 zEnd = slice;
             }
 
             nContours = curves[slice].size();
 
-            if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+            if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
 
                 for (i = 0; i < nContours; i++) {
                     ((VOIContour) (curves[slice].elementAt(i))).getBounds(x, y, z);
@@ -2694,7 +2659,7 @@ public class VOI extends ModelSerialCloneable {
                         yEnd = y[1];
                     }
                 }
-            } else if (curveType == LINE) {
+            } else if (curveType == VOI.LINE) {
 
                 for (i = 0; i < nContours; i++) {
                     ((VOILine) (curves[slice].elementAt(i))).getBounds(x, y, z);
@@ -2715,7 +2680,7 @@ public class VOI extends ModelSerialCloneable {
                         yEnd = y[1];
                     }
                 }
-            } else if (curveType == PROTRACTOR) {
+            } else if (curveType == VOI.PROTRACTOR) {
 
                 for (i = 0; i < nContours; i++) {
                     ((VOIProtractor) (curves[slice].elementAt(i))).getBounds(x, y, z);
@@ -2736,7 +2701,7 @@ public class VOI extends ModelSerialCloneable {
                         yEnd = y[1];
                     }
                 }
-            } else if ((curveType == POINT) || (curveType == POLYLINE_SLICE)) {
+            } else if ( (curveType == VOI.POINT) || (curveType == VOI.POLYLINE_SLICE)) {
 
                 for (i = 0; i < nContours; i++) {
                     ((VOIPoint) (curves[slice].elementAt(i))).getBounds(x, y, z);
@@ -2757,7 +2722,7 @@ public class VOI extends ModelSerialCloneable {
                         yEnd = y[1];
                     }
                 }
-            } else if (curveType == ANNOTATION) {
+            } else if (curveType == VOI.ANNOTATION) {
 
                 for (i = 0; i < nContours; i++) {
                     ((VOIText) (curves[slice].elementAt(i))).getBounds(x, y, z);
@@ -2791,8 +2756,8 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Returns the geometric center of the VOI (only contour).
-     *
-     * @return  returns the geometric center
+     * 
+     * @return returns the geometric center
      */
     public Vector3f getGeometricCenter() {
         int i, z;
@@ -2802,7 +2767,7 @@ public class VOI extends ModelSerialCloneable {
         float sumY = (float) 0.0;
         float sumZ = (float) 0.0;
 
-        if ((curveType == LINE) || (curveType == POLYLINE) || (curveType == PROTRACTOR)) {
+        if ( (curveType == VOI.LINE) || (curveType == VOI.POLYLINE) || (curveType == VOI.PROTRACTOR)) {
             return null;
         }
 
@@ -2826,12 +2791,12 @@ public class VOI extends ModelSerialCloneable {
     /**
      * Caclulates the geometric center for all the contours on a particular slice. (This should find for seperate, but
      * grouped, contours as well, but this hasn't been proven!)
-     *
-     * @param   slice  DOCUMENT ME!
-     *
-     * @return  returns the geometric center
+     * 
+     * @param slice DOCUMENT ME!
+     * 
+     * @return returns the geometric center
      */
-    public Vector3f getGeometricCenter(int slice) {
+    public Vector3f getGeometricCenter(final int slice) {
         int i;
         int ncurves = 0;
         Vector3f tempPt = new Vector3f(0, 0, 0);
@@ -2840,7 +2805,7 @@ public class VOI extends ModelSerialCloneable {
         float sumZ = (float) 0.0;
 
         // ignore 1D structures.
-        if ((curveType == LINE) || (curveType == POLYLINE) || (curveType == PROTRACTOR)) {
+        if ( (curveType == VOI.LINE) || (curveType == VOI.POLYLINE) || (curveType == VOI.PROTRACTOR)) {
             return null;
         }
 
@@ -2861,8 +2826,8 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the VOI's color.
-     *
-     * @return  the color
+     * 
+     * @return the color
      */
     public Color getColor() {
         return color;
@@ -2870,8 +2835,8 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Returns the contour graph associated with this voi.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public ViewJFrameGraph getContourGraph() {
         return contourGraph;
@@ -2879,8 +2844,8 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the curves making up the VOI.
-     *
-     * @return  the curves
+     * 
+     * @return the curves
      */
     public Vector<VOIBase>[] getCurves() {
         return curves;
@@ -2888,8 +2853,8 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the curve type.
-     *
-     * @return  the curve type
+     * 
+     * @return the curve type
      */
     public int getCurveType() {
         return curveType;
@@ -2897,8 +2862,8 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the display mode.
-     *
-     * @return  the display mode
+     * 
+     * @return the display mode
      */
     public int getDisplayMode() {
         return displayMode;
@@ -2906,8 +2871,8 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the ID.
-     *
-     * @return  the ID
+     * 
+     * @return the ID
      */
     public short getID() {
         return ID;
@@ -2915,8 +2880,8 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the intensity array to the parameter.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public float[] getIntensity() {
         return intensity;
@@ -2924,8 +2889,8 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the level of the levelset VOI.
-     *
-     * @return  The level
+     * 
+     * @return The level
      */
     public float getLevel() {
         return level;
@@ -2933,8 +2898,8 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the maximum of the range of intensities to ignore.
-     *
-     * @return  The maximum.
+     * 
+     * @return The maximum.
      */
     public float getMaximumIgnore() {
         return ignoreMax;
@@ -2942,8 +2907,8 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the minimum of the range of intensities to ignore.
-     *
-     * @return  The minimum.
+     * 
+     * @return The minimum.
      */
     public float getMinimumIgnore() {
         return ignoreMin;
@@ -2951,8 +2916,8 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the name of the VOI.
-     *
-     * @return  the name
+     * 
+     * @return the name
      */
     public String getName() {
         return name;
@@ -2960,13 +2925,13 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Get the number of points in the VOI file.
-     *
-     * @return  numPoints number of points
+     * 
+     * @return numPoints number of points
      */
     public int getNumPoints() {
         int i;
 
-        if (curveType != POINT) {
+        if (curveType != VOI.POINT) {
             return -1;
         }
 
@@ -2981,8 +2946,8 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the opacity of the VOI.
-     *
-     * @return  the opacity
+     * 
+     * @return the opacity
      */
     public float getOpacity() {
         return opacity;
@@ -2990,11 +2955,11 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * This method is used to get the coordinates of a single VOIPoint.
-     *
-     * @param  coord  this float array contains the x-coordinate in the first element and the y coordinate in the second
-     *                element
+     * 
+     * @param coord this float array contains the x-coordinate in the first element and the y coordinate in the second
+     *            element
      */
-    public void getPointCoordinates(float[] coord) {
+    public void getPointCoordinates(final float[] coord) {
         int i, slice;
         int nContours;
 
@@ -3009,8 +2974,8 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Accessor that returns.
-     *
-     * @return  the polarity
+     * 
+     * @return the polarity
      */
     public int getPolarity() {
         return polarity;
@@ -3018,8 +2983,8 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the position array to the parameter.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public float[] getPosition() {
         return position;
@@ -3027,33 +2992,33 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Gets the position and intensity for this VOI if it's a line.
-     *
-     * @param   slice        slice where the line is located
-     * @param   contourNo    the contour within the image slice
-     * @param   position     position of the line (x-coordinates)
-     * @param   intensity    intensity of the line (y-coordinates)
-     * @param   imageBuffer  image buffer
-     * @param   xDim         x dimension
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param slice slice where the line is located
+     * @param contourNo the contour within the image slice
+     * @param position position of the line (x-coordinates)
+     * @param intensity intensity of the line (y-coordinates)
+     * @param imageBuffer image buffer
+     * @param xDim x dimension
+     * 
+     * @return DOCUMENT ME!
      */
-    public int getPositionAndIntensity(int slice, int contourNo, Vector3f[] position, float[] intensity,
-                                       float[] imageBuffer, int xDim) {
+    public int getPositionAndIntensity(final int slice, final int contourNo, final Vector3f[] position,
+            final float[] intensity, final float[] imageBuffer, final int xDim) {
 
         for (int i = 0; i < position.length; i++) {
             position[i] = new Vector3f();
             position[i].Z = slice;
         }
 
-        if (curveType == LINE) {
+        if (curveType == VOI.LINE) {
             return ((VOILine) (curves[slice].elementAt(0))).getPositionAndIntensity(position, intensity, imageBuffer,
-                                                                                    xDim);
-        } else if (curveType == PROTRACTOR) {
+                    xDim);
+        } else if (curveType == VOI.PROTRACTOR) {
             return 0;
-        } else if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+        } else if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
             return ((VOIContour) (curves[slice].elementAt(contourNo))).getPositionAndIntensity(position, intensity,
-                                                                                               imageBuffer, xDim);
-        } else if (curveType == POINT) {
+                    imageBuffer, xDim);
+        } else if (curveType == VOI.POINT) {
             return 0;
         } else {
             return 0;
@@ -3062,30 +3027,30 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Gets the position and intensity for this VOI if it's a line.
-     *
-     * @param   slice        slice where the line is located
-     * @param   contourNo    the contour within the image slice
-     * @param   position     position of the line (x-coordinates)
-     * @param   intensity    intensity of the line (y-coordinates)
-     * @param   imageBuffer  image buffer
-     * @param   xDim         x dimension
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param slice slice where the line is located
+     * @param contourNo the contour within the image slice
+     * @param position position of the line (x-coordinates)
+     * @param intensity intensity of the line (y-coordinates)
+     * @param imageBuffer image buffer
+     * @param xDim x dimension
+     * 
+     * @return DOCUMENT ME!
      */
-    public int getPositionAndIntensityIndex(int slice, int contourNo, int[] position, float[] intensity,
-                                            float[] imageBuffer, int xDim) {
+    public int getPositionAndIntensityIndex(final int slice, final int contourNo, final int[] position,
+            final float[] intensity, final float[] imageBuffer, final int xDim) {
 
-        if (curveType == LINE) {
+        if (curveType == VOI.LINE) {
             return ((VOILine) (curves[slice].elementAt(0))).getPositionAndIntensityIndex(position, intensity,
-                                                                                         imageBuffer, xDim);
+                    imageBuffer, xDim);
         }
 
-        if (curveType == PROTRACTOR) {
+        if (curveType == VOI.PROTRACTOR) {
             return 0;
-        } else if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
-            return ((VOIContour) (curves[slice].elementAt(contourNo))).getPositionAndIntensityIndex(position, intensity,
-                                                                                                    imageBuffer, xDim);
-        } else if (curveType == POINT) {
+        } else if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
+            return ((VOIContour) (curves[slice].elementAt(contourNo))).getPositionAndIntensityIndex(position,
+                    intensity, imageBuffer, xDim);
+        } else if (curveType == VOI.POINT) {
             return 0;
         } else {
             return 0;
@@ -3094,8 +3059,8 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the process.
-     *
-     * @return  the process
+     * 
+     * @return the process
      */
     public boolean getProcess() {
         return process;
@@ -3103,8 +3068,8 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the rgb intensity array to the parameter.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public float[][] getRGBIntensities() {
         return rgbIntensities;
@@ -3112,8 +3077,8 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the rgb position array to the parameter.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public float[][] getRGBPositions() {
         return rgbPositions;
@@ -3121,14 +3086,14 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Calculates the extents or boundary of the voi for a specified slice in x and y.
-     *
-     * @param  slice  the examined slice
-     * @param  x      two element array where x[0] = min extent of the Contour and x[1] = max extent of the Contour in
-     *                the x dimension
-     * @param  y      two element array where y[0] = min extent of the Contour and y[1] = max extent of the Contour in
-     *                the y dimension
+     * 
+     * @param slice the examined slice
+     * @param x two element array where x[0] = min extent of the Contour and x[1] = max extent of the Contour in the x
+     *            dimension
+     * @param y two element array where y[0] = min extent of the Contour and y[1] = max extent of the Contour in the y
+     *            dimension
      */
-    public void getSliceBounds(int slice, float[] x, float[] y) {
+    public void getSliceBounds(final int slice, final float[] x, final float[] y) {
         int i;
         int nContours;
         float[] z = new float[2];
@@ -3136,7 +3101,7 @@ public class VOI extends ModelSerialCloneable {
         float yStart = 10000, yEnd = -1;
         nContours = curves[slice].size();
 
-        if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+        if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
 
             for (i = 0; i < nContours; i++) {
                 ((VOIContour) (curves[slice].elementAt(i))).getBounds(x, y, z);
@@ -3159,7 +3124,7 @@ public class VOI extends ModelSerialCloneable {
             }
         }
 
-        if (curveType == LINE) {
+        if (curveType == VOI.LINE) {
 
             for (i = 0; i < nContours; i++) {
                 ((VOILine) (curves[slice].elementAt(i))).getBounds(x, y, z);
@@ -3182,7 +3147,7 @@ public class VOI extends ModelSerialCloneable {
             }
         }
 
-        if (curveType == PROTRACTOR) {
+        if (curveType == VOI.PROTRACTOR) {
 
             for (i = 0; i < nContours; i++) {
                 ((VOIProtractor) (curves[slice].elementAt(i))).getBounds(x, y, z);
@@ -3205,7 +3170,7 @@ public class VOI extends ModelSerialCloneable {
             }
         }
 
-        if ((curveType == POINT) || (curveType == POLYLINE_SLICE)) {
+        if ( (curveType == VOI.POINT) || (curveType == VOI.POLYLINE_SLICE)) {
 
             for (i = 0; i < nContours; i++) {
                 ((VOIPoint) (curves[slice].elementAt(i))).getBounds(x, y, z);
@@ -3237,8 +3202,8 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the statistic list used to indicate which statistics are to be calculated for the VOI.
-     *
-     * @return  statistics list
+     * 
+     * @return statistics list
      */
     public ViewList[] getStatisticList() {
         return stats;
@@ -3246,24 +3211,27 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Returns the thickness of the VOI
+     * 
      * @return
      */
     public int getThickness() {
-    	return this.thickness;
+        return this.thickness;
     }
-    
+
     /**
      * Sets the thickness of the VOI
+     * 
      * @param newThickness the new thickness
      */
-    public void setThickness(int newThickness) {
-    	this.thickness = newThickness;
+    public void setThickness(final int newThickness) {
+        this.thickness = newThickness;
     }
+
     /**
      * Accessor that returns that whether to calculate total sum of the intensity (true) else calculate the average
      * pixel intensity (used when plotting an intensity graph of a voi).
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public boolean getTotalIntensity() {
         return totalIntensity;
@@ -3271,8 +3239,8 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the Unique ID (original hash code for object).
-     *
-     * @return  the unique ID
+     * 
+     * @return the unique ID
      */
     public int getUID() {
         return UID;
@@ -3280,88 +3248,88 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * getWatershedID - accessor that returns the watershedID.
-     *
-     * @return  the ID
+     * 
+     * @return the ID
      */
     public short getWatershedID() {
         return watershedID;
     }
-    
+
     /**
      * Accessor that returns number of slices.
      * 
      * @return
      */
     public int getZDim() {
-		return zDim;
-	}
+        return zDim;
+    }
 
-	/**
+    /**
      * Imports the curve into the VOI.
-     *
-     * @param  curve  curve to import
+     * 
+     * @param curve curve to import
      */
-    public void importCurve(VOICardiology curve) {
+    public void importCurve(final VOICardiology curve) {
         curves[0].addElement(curve);
         ((VOICardiology) (curves[0].lastElement())).setLabel(String.valueOf(elementLabel++));
     }
 
-    public void importCurve(VOIText curve, int slice) {
-    	
-    	for (int i = 0; i < zDim; i++) {
-    		this.removeCurves(i);
-    	}
-    	
-    	Vector3f pt1 = (Vector3f)curve.elementAt(0);
-    	Vector3f pt2 = (Vector3f)curve.elementAt(1);
+    public void importCurve(final VOIText curve, final int slice) {
 
-    	pt1.Z = slice;
-    	pt2.Z = slice;
-    	curve.removeAllElements();
-    	curve.addElement(pt1);
-    	curve.addElement(pt2);
-    	
-    	curves[slice].addElement(curve);
+        for (int i = 0; i < zDim; i++) {
+            this.removeCurves(i);
+        }
+
+        final Vector3f pt1 = curve.elementAt(0);
+        final Vector3f pt2 = curve.elementAt(1);
+
+        pt1.Z = slice;
+        pt2.Z = slice;
+        curve.removeAllElements();
+        curve.addElement(pt1);
+        curve.addElement(pt2);
+
+        curves[slice].addElement(curve);
     }
-    
+
     /**
      * Imports the curve into the VOI.
-     *
-     * @param  curve  curve to import
-     * @param  slice  index of slice of curve
+     * 
+     * @param curve curve to import
+     * @param slice index of slice of curve
      */
-    public void importCurve(VOIContour curve, int slice) {
+    public void importCurve(final VOIContour curve, final int slice) {
         curve.setName(name);
-        curves[slice].addElement((VOIContour)curve.clone());
+        curves[slice].addElement((VOIContour) curve.clone());
 
-        if (curveType == PROTRACTOR) {
+        if (curveType == VOI.PROTRACTOR) {
 
             for (int i = 0; i < curves[slice].size(); i++) {
                 ((VOIProtractor) (curves[slice].elementAt(i))).setColor(color);
             }
-        } else if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+        } else if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
             ((VOIContour) (curves[slice].lastElement())).setLabel(String.valueOf(elementLabel++));
         }
     }
 
     /**
      * Imports the curve into the VOI, testing for which type.
-     *
-     * @param  pt     array of 3D points to import
-     * @param  slice  index of slice of curve
+     * 
+     * @param pt array of 3D points to import
+     * @param slice index of slice of curve
      */
-    public void importCurve(Vector3f[] pt, int slice) {
+    public void importCurve(final Vector3f[] pt, final int slice) {
         VOIBase curve;
 
-        if (curveType == LINE) {
+        if (curveType == VOI.LINE) {
             curve = new VOILine(name);
-        } else if (curveType == CONTOUR) {
+        } else if (curveType == VOI.CONTOUR) {
             curve = new VOIContour(name, true);
-        } else if (curveType == POLYLINE) {
+        } else if (curveType == VOI.POLYLINE) {
             curve = new VOIContour(name, false);
-        } else if (curveType == POINT) {
+        } else if (curveType == VOI.POINT) {
             curve = new VOIPoint(name);
-        } else if (curveType == PROTRACTOR) {
+        } else if (curveType == VOI.PROTRACTOR) {
             curve = new VOIProtractor();
         } else {
             return;
@@ -3370,38 +3338,38 @@ public class VOI extends ModelSerialCloneable {
         curve.importPoints(pt);
         curves[slice].addElement(curve);
 
-        if (curveType == POINT) {
+        if (curveType == VOI.POINT) {
             ((VOIPoint) (curves[slice].lastElement())).setLabel(String.valueOf(elementLabel++));
-        } else if (curveType == PROTRACTOR) {
+        } else if (curveType == VOI.PROTRACTOR) {
 
             for (int i = 0; i < curves[slice].size(); i++) {
                 ((VOIProtractor) (curves[slice].elementAt(i))).setColor(color);
             }
-        } else if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+        } else if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
             ((VOIContour) (curves[slice].lastElement())).setLabel(String.valueOf(elementLabel++));
         }
     }
 
     /**
      * Imports the curve into the VOI, testing for which type.
-     *
-     * @param  x      array of x coordinates to import
-     * @param  y      array of y coordinates to import
-     * @param  z      array of z coordinates to import
-     * @param  slice  index of slice of curve
+     * 
+     * @param x array of x coordinates to import
+     * @param y array of y coordinates to import
+     * @param z array of z coordinates to import
+     * @param slice index of slice of curve
      */
-    public void importCurve(int[] x, int[] y, int[] z, int slice) {
+    public void importCurve(final int[] x, final int[] y, final int[] z, final int slice) {
         VOIBase curve;
 
-        if (curveType == LINE) {
+        if (curveType == VOI.LINE) {
             curve = new VOILine(name);
-        } else if (curveType == CONTOUR) {
+        } else if (curveType == VOI.CONTOUR) {
             curve = new VOIContour(name, true);
-        } else if (curveType == POLYLINE) {
+        } else if (curveType == VOI.POLYLINE) {
             curve = new VOIContour(name, false);
-        } else if (curveType == POINT) {
+        } else if (curveType == VOI.POINT) {
             curve = new VOIPoint(name);
-        } else if (curveType == PROTRACTOR) {
+        } else if (curveType == VOI.PROTRACTOR) {
             curve = new VOIProtractor();
         } else {
             return;
@@ -3410,42 +3378,42 @@ public class VOI extends ModelSerialCloneable {
         curve.importArrays(x, y, z, x.length);
         curves[slice].addElement(curve);
 
-        if (curveType == POINT) {
+        if (curveType == VOI.POINT) {
             ((VOIPoint) (curves[slice].lastElement())).setLabel(String.valueOf(elementLabel++));
-        } else if (curveType == PROTRACTOR) {
+        } else if (curveType == VOI.PROTRACTOR) {
 
             for (int i = 0; i < curves[slice].size(); i++) {
                 ((VOIProtractor) (curves[slice].elementAt(i))).setColor(color);
             }
-        } else if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+        } else if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
             ((VOIContour) (curves[slice].lastElement())).setLabel(String.valueOf(elementLabel++));
         }
     }
 
     /**
      * Imports the curve into the VOI, testing for which type.
-     *
-     * @param  x      array of x coordinates to import
-     * @param  y      array of y coordinates to import
-     * @param  z      array of z coordinates to import
-     * @param  slice  index of slice of curve
+     * 
+     * @param x array of x coordinates to import
+     * @param y array of y coordinates to import
+     * @param z array of z coordinates to import
+     * @param slice index of slice of curve
      */
-    public void importCurve(float[] x, float[] y, float[] z, int slice) {
+    public void importCurve(final float[] x, final float[] y, final float[] z, final int slice) {
         VOIBase curve;
 
-        if (curveType == LINE) {
+        if (curveType == VOI.LINE) {
             curve = new VOILine(name);
-        } else if (curveType == CONTOUR) {
+        } else if (curveType == VOI.CONTOUR) {
             curve = new VOIContour(name, true);
-        } else if (curveType == POLYLINE) {
+        } else if (curveType == VOI.POLYLINE) {
             curve = new VOIContour(name, false);
-        } else if (curveType == POINT) {
+        } else if (curveType == VOI.POINT) {
             curve = new VOIPoint(name);
-        } else if (curveType == PROTRACTOR) {
+        } else if (curveType == VOI.PROTRACTOR) {
             curve = new VOIProtractor();
-        } else if (curveType == ANNOTATION) {
+        } else if (curveType == VOI.ANNOTATION) {
             curve = new VOIText();
-        } else if (curveType == POLYLINE_SLICE) {
+        } else if (curveType == VOI.POLYLINE_SLICE) {
             curve = new VOIPoint(name, true);
         } else {
             return;
@@ -3454,39 +3422,38 @@ public class VOI extends ModelSerialCloneable {
         curve.importArrays(x, y, z, x.length);
         curves[slice].addElement(curve);
 
-        if ((curveType == POINT) || (curveType == POLYLINE_SLICE)) {
+        if ( (curveType == VOI.POINT) || (curveType == VOI.POLYLINE_SLICE)) {
             ((VOIPoint) (curves[slice].lastElement())).setLabel(String.valueOf(elementLabel++));
 
-            if (curveType == POLYLINE_SLICE) {
+            if (curveType == VOI.POLYLINE_SLICE) {
 
                 try {
-                    activePolylineSlicePoint = Integer.parseInt(((VOIPoint) (curves[slice].lastElement())).getLabel()) -
-                                               2;
-                } catch (Exception e) {
+                    activePolylineSlicePoint = Integer.parseInt( ((VOIPoint) (curves[slice].lastElement())).getLabel()) - 2;
+                } catch (final Exception e) {
                     activePolylineSlicePoint = 0;
                 }
 
                 polygonIndex = curves[slice].size() - 2;
             }
-        } else if (curveType == PROTRACTOR) {
+        } else if (curveType == VOI.PROTRACTOR) {
 
             for (int i = 0; i < curves[slice].size(); i++) {
                 ((VOIProtractor) (curves[slice].elementAt(i))).setColor(color);
             }
-        } else if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+        } else if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
             ((VOIContour) (curves[slice].lastElement())).setLabel(String.valueOf(elementLabel++));
         }
     }
 
     /**
      * Imports just the VOIs in a slice into this VOI.
-     *
-     * @param  slice     slice indicates the slice where the contour(s) is to be located
-     * @param  voiSlice  voiSlice indicates the slice where the contour(s) is to be copied from
-     * @param  voi       added to VOI
-     * @param  newZDim   indicates the new Z dimenions to be set
+     * 
+     * @param slice slice indicates the slice where the contour(s) is to be located
+     * @param voiSlice voiSlice indicates the slice where the contour(s) is to be copied from
+     * @param voi added to VOI
+     * @param newZDim indicates the new Z dimenions to be set
      */
-    public void importNewVOI(int slice, int voiSlice, VOI voi, int newZDim, boolean resize) {
+    public void importNewVOI(final int slice, final int voiSlice, final VOI voi, final int newZDim, final boolean resize) {
         zDim = newZDim;
 
         float[] x, y, z;
@@ -3494,69 +3461,68 @@ public class VOI extends ModelSerialCloneable {
 
         try {
 
-            if (curveType == PROTRACTOR) {
+            if (curveType == VOI.PROTRACTOR) {
                 n = 3;
-            } else if (curveType == LINE) {
+            } else if (curveType == VOI.LINE) {
                 n = 2;
             }
 
             x = new float[n];
             y = new float[n];
             z = new float[n];
-            
-            if (resize) {
-            	curves = new Vector[zDim];
 
-            	for (int i = 0; i < zDim; i++) {
-            		curves[i] = new Vector();
-            	}
+            if (resize) {
+                curves = new Vector[zDim];
+
+                for (int i = 0; i < zDim; i++) {
+                    curves[i] = new Vector();
+                }
 
             }
 
-        	elementLabel = 1;
-        } catch (OutOfMemoryError e) {
+            elementLabel = 1;
+        } catch (final OutOfMemoryError e) {
             System.gc();
             throw e;
         }
 
-        if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
-            Polygon[] gons = voi.exportPolygons(voiSlice);
+        if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
+            final Polygon[] gons = voi.exportPolygons(voiSlice);
 
-            for (int i = 0; i < gons.length; i++) {
-                importPolygon(gons[i], slice);
+            for (final Polygon element : gons) {
+                importPolygon(element, slice);
             }
-        } else if (curveType == POINT) {
-        	
-        	Vector3f [] pts = voi.exportPoints(voiSlice);
-        	for (int i = 0; i < pts.length; i++) {
-        		System.err.println("i: " + i + ", pt: " + pts[i]);
-        	}
-        	
+        } else if (curveType == VOI.POINT) {
+
+            final Vector3f[] pts = voi.exportPoints(voiSlice);
+            for (int i = 0; i < pts.length; i++) {
+                System.err.println("i: " + i + ", pt: " + pts[i]);
+            }
+
             importPoints(pts, slice);
-        } else if (curveType == ANNOTATION) {
+        } else if (curveType == VOI.ANNOTATION) {
             if (isEmpty()) {
-            	curves[slice].addElement(voi.getCurves()[voiSlice].elementAt(0));
+                curves[slice].addElement(voi.getCurves()[voiSlice].elementAt(0));
             }
-        } else if (curveType == LINE) {
+        } else if (curveType == VOI.LINE) {
             voi.exportArrays(x, y, z, voiSlice);
             importCurve(x, y, z, slice);
-        } else if (curveType == PROTRACTOR) {
+        } else if (curveType == VOI.PROTRACTOR) {
             voi.exportArrays(x, y, z, voiSlice);
             importCurve(x, y, z, slice);
         }
     }
 
-
     /**
      * Imports the point into the VOI (must be a VOI.POINT).
-     *
-     * @param  point  point to import
-     * @param  slice  index of slice of new point
+     * 
+     * @param point point to import
+     * @param slice index of slice of new point
      */
-    public void importPoint(Vector3f point, int slice) {
+    public void importPoint(final Vector3f point, final int slice) {
         VOIPoint voiPt = null;
 
-        if (curveType == POINT) {
+        if (curveType == VOI.POINT) {
             voiPt = new VOIPoint(name);
         } else {
             return;
@@ -3569,15 +3535,15 @@ public class VOI extends ModelSerialCloneable {
 
     /**
      * Imports the point into the VOI (must be a VOI.POINT).
-     *
-     * @param  points  point to import
-     * @param  slice   index of slice of new point
+     * 
+     * @param points point to import
+     * @param slice index of slice of new point
      */
-    public void importPoints(Vector3f[] points, int slice) {
-        VOIPoint[] voiPts = new VOIPoint[points.length];
+    public void importPoints(final Vector3f[] points, final int slice) {
+        final VOIPoint[] voiPts = new VOIPoint[points.length];
         int i;
 
-        if (curveType == POINT) {
+        if (curveType == VOI.POINT) {
 
             for (i = 0; i < points.length; i++) {
                 voiPts[i] = new VOIPoint(name);
@@ -3585,29 +3551,29 @@ public class VOI extends ModelSerialCloneable {
         } else {
             return;
         }
-System.err.println("VOI.importPoints() slice is: " + slice);
+        System.err.println("VOI.importPoints() slice is: " + slice);
         for (i = 0; i < points.length; i++) {
             voiPts[i].importPoint(points[i], slice);
             curves[slice].addElement(voiPts[i]);
             ((VOIPoint) (curves[slice].lastElement())).setLabel(String.valueOf(elementLabel++));
         }
         if (isEmpty()) {
-        	System.err.println("IS EMPTY AFTER IMPORTING");
+            System.err.println("IS EMPTY AFTER IMPORTING");
         }
     }
 
     /**
      * Imports the polygon into the VOI (must be a contour).
-     *
-     * @param  gon    polygon to import
-     * @param  slice  index of slice of new polygon
+     * 
+     * @param gon polygon to import
+     * @param slice index of slice of new polygon
      */
-    public void importPolygon(Polygon gon, int slice) {
+    public void importPolygon(final Polygon gon, final int slice) {
         VOIContour contour = null;
 
-        if (curveType == CONTOUR) {
+        if (curveType == VOI.CONTOUR) {
             contour = new VOIContour(name, true);
-        } else if (curveType == POLYLINE) {
+        } else if (curveType == VOI.POLYLINE) {
             contour = new VOIContour(name, false);
         } else {
             return;
@@ -3620,27 +3586,27 @@ System.err.println("VOI.importPoints() slice is: " + slice);
 
     /**
      * Only for POLYSLICE_LINE types. Inserts a new point into the structure and re-labels numbers
-     *
-     * @param  point  Vector3f the new point to create a VOIPoint from
-     * @param  slice  int the slice into which this new VOIPoint will be inserted
+     * 
+     * @param point Vector3f the new point to create a VOIPoint from
+     * @param slice int the slice into which this new VOIPoint will be inserted
      */
-    public void insertPSlicePt(Vector3f point, int slice) {
+    public void insertPSlicePt(final Vector3f point, final int slice) {
 
-        if (curveType != POLYLINE_SLICE) {
+        if (curveType != VOI.POLYLINE_SLICE) {
             return;
         }
 
-        if ((polygonIndex != -99) && (point != null)) {
-System.err.println("curves size: " );
+        if ( (polygonIndex != -99) && (point != null)) {
+            System.err.println("curves size: ");
             if (curves[slice].size() > polygonIndex) {
-            	System.err.println("yo2:");
-                VOIPoint vPt = new VOIPoint(name, true);
+                System.err.println("yo2:");
+                final VOIPoint vPt = new VOIPoint(name, true);
                 vPt.addElement(point);
 
                 // System.err.println("polygon index (for pline slice): " + polygonIndex);
 
                 // label num is 1 + previous pts label (inserting between)
-                int labelNum = Integer.parseInt(((VOIPoint) curves[slice].elementAt(polygonIndex)).getLabel()) + 1;
+                final int labelNum = Integer.parseInt( ((VOIPoint) curves[slice].elementAt(polygonIndex)).getLabel()) + 1;
 
                 vPt.setLabel(Integer.toString(labelNum));
 
@@ -3648,18 +3614,17 @@ System.err.println("curves size: " );
 
                 int currentLabel = -1;
 
-                for (int i = 0; i < curves.length; i++) {
+                for (final Vector<VOIBase> element : curves) {
 
-                    for (int j = 0; j < curves[i].size(); j++) {
+                    for (int j = 0; j < element.size(); j++) {
 
-                        currentLabel = Integer.parseInt(((VOIPoint) curves[i].elementAt(j)).getLabel());
+                        currentLabel = Integer.parseInt( ((VOIPoint) element.elementAt(j)).getLabel());
 
                         if (currentLabel >= labelNum) {
-                            ((VOIPoint) curves[i].elementAt(j)).incrementLabel(1);
+                            ((VOIPoint) element.elementAt(j)).incrementLabel(1);
                         }
                     }
                 }
-
 
                 // finally insert the new VOIPoint into the structure
                 curves[slice].insertElementAt(vPt, polygonIndex + 1);
@@ -3672,20 +3637,22 @@ System.err.println("curves size: " );
 
     /**
      * Accessor that tells if the VOI is active.
-     *
-     * @return  boolean active
+     * 
+     * @return boolean active
      */
     public boolean isActive() {
         return active;
     }
-    
+
     /**
      * Returns true iff all contours in this VOI are active.
+     * 
      * @return true iff all contours in this VOI are active.
      */
     public boolean isAllActive() {
-        if ( !active )
+        if ( !active) {
             return false;
+        }
 
         boolean allActive = true;
         for (int j = 0; j < zDim; j++) {
@@ -3699,19 +3666,19 @@ System.err.println("curves size: " );
 
     /**
      * Determines if the given BitSet binary mask is true for all points that are within the VOI.
-     *
-     * @param   mask  BitSet
-     * @param   xDim  x dimension, used to index into the image
-     * @param   yDim  y dimension, used to index into the image
-     *
-     * @return  boolean does the mask the VOI area
+     * 
+     * @param mask BitSet
+     * @param xDim x dimension, used to index into the image
+     * @param yDim y dimension, used to index into the image
+     * 
+     * @return boolean does the mask the VOI area
      */
-    public boolean isBinaryMaskContained(BitSet mask, int xDim, int yDim) {
+    public boolean isBinaryMaskContained(final BitSet mask, final int xDim, final int yDim) {
         int z;
 
         for (z = 0; z < zDim; z++) {
 
-            if (!isBinaryMaskContained(xDim, yDim, z, mask)) {
+            if ( !isBinaryMaskContained(xDim, yDim, z, mask)) {
                 return false;
             }
         }
@@ -3721,15 +3688,15 @@ System.err.println("curves size: " );
 
     /**
      * Test whether or not the VOI is empty.
-     *
-     * @return  boolean result of test
+     * 
+     * @return boolean result of test
      */
     public boolean isEmpty() {
         int i;
-//System.err.println("zDim is: " + zDim);
+        // System.err.println("zDim is: " + zDim);
         for (i = 0; i < zDim; i++) {
 
-            if (!curves[i].isEmpty()) {
+            if ( !curves[i].isEmpty()) {
                 return false;
             }
         }
@@ -3739,8 +3706,8 @@ System.err.println("curves size: " );
 
     /**
      * Accessor that tells if VOI is fixed.
-     *
-     * @return  boolean fixed
+     * 
+     * @return boolean fixed
      */
     public boolean isFixed() {
         return fixed;
@@ -3748,8 +3715,8 @@ System.err.println("curves size: " );
 
     /**
      * Accessor that tells if the VOI is visible.
-     *
-     * @return  boolean visible
+     * 
+     * @return boolean visible
      */
     public boolean isVisible() {
         return visible;
@@ -3757,18 +3724,18 @@ System.err.println("curves size: " );
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  slice  DOCUMENT ME!
+     * 
+     * @param slice DOCUMENT ME!
      */
-    public void markPSlicePt(int slice) {
+    public void markPSlicePt(final int slice) {
 
-        if (curveType == POLYLINE_SLICE) {
+        if (curveType == VOI.POLYLINE_SLICE) {
             this.pLineSliceIndex = polygonIndex;
 
             try {
-                activePolylineSlicePoint = Integer.parseInt(((VOIPoint) (curves[slice].elementAt(polygonIndex)))
-                                                                .getLabel()) - 1;
-            } catch (Exception e) {
+                activePolylineSlicePoint = Integer.parseInt( ((VOIPoint) (curves[slice].elementAt(polygonIndex)))
+                        .getLabel()) - 1;
+            } catch (final Exception e) {
                 activePolylineSlicePoint = 0;
             }
         }
@@ -3776,29 +3743,28 @@ System.err.println("curves size: " );
 
     /**
      * Finds 2 points that form the maximum width of the VOI.
-     *
-     * @return  returns the two points.
+     * 
+     * @return returns the two points.
      */
     public Vector3f[] maxWidth() {
         int z, i;
         int j, conSize;
-        double[] maxDistance = new double[1];
-        Vector3f[] points = new Vector3f[2];
+        final double[] maxDistance = new double[1];
+        final Vector3f[] points = new Vector3f[2];
         Vector3f point;
 
         for (z = 0; z < zDim; z++) {
 
             for (i = 0; i < curves[z].size(); i++) {
 
-                if (curveType == CONTOUR) {
+                if (curveType == VOI.CONTOUR) {
                     conSize = ((VOIContour) (curves[z].elementAt(i))).size();
 
                     for (j = 0; j < conSize; j++) {
-                        point = findMaxWidth((Vector3f) ((VOIContour) (curves[z].elementAt(i))).elementAt(j),
-                                             maxDistance);
+                        point = findMaxWidth( ((VOIContour) (curves[z].elementAt(i))).elementAt(j), maxDistance);
 
                         if (point != null) {
-                            points[0] = (Vector3f) ((VOIContour) (curves[z].elementAt(i))).elementAt(j);
+                            points[0] = ((VOIContour) (curves[z].elementAt(i))).elementAt(j);
                             points[1] = point;
                         }
                     }
@@ -3811,40 +3777,41 @@ System.err.println("curves size: " );
 
     /**
      * Move VOI to a new position.
-     *
-     * @param  slice  slice where the VOI is located
-     * @param  xDim   x dimension maximum
-     * @param  yDim   y dimension maximum
-     * @param  zDim   z dimension maximum
-     * @param  xM     amount in pixels to move the line in the x direction
-     * @param  yM     amount in pixels to move the line in the y direction
-     * @param  zM     amount in pixels to move the line in the z direction
+     * 
+     * @param slice slice where the VOI is located
+     * @param xDim x dimension maximum
+     * @param yDim y dimension maximum
+     * @param zDim z dimension maximum
+     * @param xM amount in pixels to move the line in the x direction
+     * @param yM amount in pixels to move the line in the y direction
+     * @param zM amount in pixels to move the line in the z direction
      */
-    public void moveVOI(int slice, int xDim, int yDim, int zDim, int xM, int yM, int zM) {
+    public void moveVOI(final int slice, final int xDim, final int yDim, final int zDim, final int xM, final int yM,
+            final int zM) {
         int i;
 
         if (fixed) {
             return;
         }
 
-        if ((curveType != POINT) && (curveType != ANNOTATION) && (curveType != POLYLINE_SLICE)) {
+        if ( (curveType != VOI.POINT) && (curveType != VOI.ANNOTATION) && (curveType != VOI.POLYLINE_SLICE)) {
 
             if (slice == -1) {
                 getBounds(xBounds, yBounds, zBounds);
 
-                if (((xBounds[0] + xM) >= xDim) || ((xBounds[0] + xM) < 0)) {
+                if ( ( (xBounds[0] + xM) >= xDim) || ( (xBounds[0] + xM) < 0)) {
                     return;
                 }
 
-                if (((xBounds[1] + xM) >= xDim) || ((xBounds[1] + xM) < 0)) {
+                if ( ( (xBounds[1] + xM) >= xDim) || ( (xBounds[1] + xM) < 0)) {
                     return;
                 }
 
-                if (((yBounds[0] + yM) >= yDim) || ((yBounds[0] + yM) < 0)) {
+                if ( ( (yBounds[0] + yM) >= yDim) || ( (yBounds[0] + yM) < 0)) {
                     return;
                 }
 
-                if (((yBounds[1] + yM) >= yDim) || ((yBounds[1] + yM) < 0)) {
+                if ( ( (yBounds[1] + yM) >= yDim) || ( (yBounds[1] + yM) < 0)) {
                     return;
                 }
 
@@ -3854,11 +3821,11 @@ System.err.println("curves size: " );
 
                     for (j = 0; j < curves[i].size(); j++) {
 
-                        if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+                        if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
                             ((VOIContour) (curves[i].elementAt(j))).translate(xM, yM);
-                        } else if (curveType == PROTRACTOR) {
+                        } else if (curveType == VOI.PROTRACTOR) {
                             ((VOIProtractor) (curves[i].elementAt(j))).translate(xM, yM);
-                        } else if (curveType == LINE) {
+                        } else if (curveType == VOI.LINE) {
                             ((VOILine) (curves[i].elementAt(j))).translate(xM, yM);
                         }
                     }
@@ -3871,37 +3838,37 @@ System.err.println("curves size: " );
                 for (i = 0; i < curves[slice].size(); i++) {
                     boolean isActive = false;
 
-                    if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+                    if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
                         isActive = ((VOIContour) (curves[slice].elementAt(i))).isActive();
-                    } else if (curveType == PROTRACTOR) {
+                    } else if (curveType == VOI.PROTRACTOR) {
                         isActive = ((VOIProtractor) (curves[slice].elementAt(i))).isActive();
-                    } else if (curveType == LINE) {
+                    } else if (curveType == VOI.LINE) {
                         isActive = ((VOILine) (curves[slice].elementAt(i))).isActive();
                     }
 
                     if (isActive) {
 
-                        if (((xBounds[0] + xM) >= xDim) || ((xBounds[0] + xM) < 0)) {
+                        if ( ( (xBounds[0] + xM) >= xDim) || ( (xBounds[0] + xM) < 0)) {
                             return;
                         }
 
-                        if (((xBounds[1] + xM) >= xDim) || ((xBounds[1] + xM) < 0)) {
+                        if ( ( (xBounds[1] + xM) >= xDim) || ( (xBounds[1] + xM) < 0)) {
                             return;
                         }
 
-                        if (((yBounds[0] + yM) >= yDim) || ((yBounds[0] + yM) < 0)) {
+                        if ( ( (yBounds[0] + yM) >= yDim) || ( (yBounds[0] + yM) < 0)) {
                             return;
                         }
 
-                        if (((yBounds[1] + yM) >= yDim) || ((yBounds[1] + yM) < 0)) {
+                        if ( ( (yBounds[1] + yM) >= yDim) || ( (yBounds[1] + yM) < 0)) {
                             return;
                         }
 
-                        if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+                        if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
                             ((VOIContour) (curves[slice].elementAt(i))).translate(xM, yM);
-                        } else if (curveType == PROTRACTOR) {
+                        } else if (curveType == VOI.PROTRACTOR) {
                             ((VOIProtractor) (curves[slice].elementAt(i))).translate(xM, yM);
-                        } else if (curveType == LINE) {
+                        } else if (curveType == VOI.LINE) {
                             ((VOILine) (curves[slice].elementAt(i))).translate(xM, yM);
                         }
                     }
@@ -3909,60 +3876,60 @@ System.err.println("curves size: " );
 
                 return;
             }
-        } else if (curveType == POLYLINE_SLICE) {
+        } else if (curveType == VOI.POLYLINE_SLICE) {
             boolean doWhole = (zM == 0);
 
-            if (!doWhole) {
+            if ( !doWhole) {
 
-                if ((pLineSliceIndex < curves[slice].size()) && (pLineSliceIndex >= 0)) {
+                if ( (pLineSliceIndex < curves[slice].size()) && (pLineSliceIndex >= 0)) {
                     ((VOIPoint) (curves[slice].elementAt(pLineSliceIndex))).moveActivePt(zM, xDim, yDim);
                 }
 
             } else {
                 getSliceBounds(slice, xBounds, yBounds);
 
-                if (((xBounds[0] + xM) >= xDim) || ((xBounds[0] + xM) < 0)) {
+                if ( ( (xBounds[0] + xM) >= xDim) || ( (xBounds[0] + xM) < 0)) {
                     return;
                 }
 
-                if (((xBounds[1] + xM) >= xDim) || ((xBounds[1] + xM) < 0)) {
+                if ( ( (xBounds[1] + xM) >= xDim) || ( (xBounds[1] + xM) < 0)) {
                     return;
                 }
 
-                if (((yBounds[0] + yM) >= yDim) || ((yBounds[0] + yM) < 0)) {
+                if ( ( (yBounds[0] + yM) >= yDim) || ( (yBounds[0] + yM) < 0)) {
                     return;
                 }
 
-                if (((yBounds[1] + yM) >= yDim) || ((yBounds[1] + yM) < 0)) {
+                if ( ( (yBounds[1] + yM) >= yDim) || ( (yBounds[1] + yM) < 0)) {
                     return;
                 }
 
                 // use trick to do either active point moving or whole visible VOI moving
                 for (i = 0; i < curves[slice].size(); i++) {
 
-                    if (((VOIPoint) (curves[slice].elementAt(i))).isActive()) {
+                    if ( ((VOIPoint) (curves[slice].elementAt(i))).isActive()) {
                         ((VOIPoint) (curves[slice].elementAt(i))).moveVOIPoint(xM, yM, zM, xDim, yDim, zDim);
                     }
                 }
             }
-        } else if (curveType == POINT) {
+        } else if (curveType == VOI.POINT) {
 
             if (slice == -1) {
                 getBounds(xBounds, yBounds, zBounds);
 
-                if (((xBounds[0] + xM) >= xDim) || ((xBounds[0] + xM) < 0)) {
+                if ( ( (xBounds[0] + xM) >= xDim) || ( (xBounds[0] + xM) < 0)) {
                     return;
                 }
 
-                if (((xBounds[1] + xM) >= xDim) || ((xBounds[1] + xM) < 0)) {
+                if ( ( (xBounds[1] + xM) >= xDim) || ( (xBounds[1] + xM) < 0)) {
                     return;
                 }
 
-                if (((yBounds[0] + yM) >= yDim) || ((yBounds[0] + yM) < 0)) {
+                if ( ( (yBounds[0] + yM) >= yDim) || ( (yBounds[0] + yM) < 0)) {
                     return;
                 }
 
-                if (((yBounds[1] + yM) >= yDim) || ((yBounds[1] + yM) < 0)) {
+                if ( ( (yBounds[1] + yM) >= yDim) || ( (yBounds[1] + yM) < 0)) {
                     return;
                 }
 
@@ -3978,19 +3945,19 @@ System.err.println("curves size: " );
 
                 for (i = 0; i < curves[slice].size(); i++) {
 
-                    if (((VOIPoint) (curves[slice].elementAt(i))).isActive()) {
+                    if ( ((VOIPoint) (curves[slice].elementAt(i))).isActive()) {
                         ((VOIPoint) (curves[slice].elementAt(i))).moveVOIPoint(xM, yM, zM, xDim, yDim, zDim);
                     }
                 }
             }
-        } else if (curveType == ANNOTATION) {
+        } else if (curveType == VOI.ANNOTATION) {
 
             if (slice == -1) {
                 getBounds(xBounds, yBounds, zBounds);
 
                 /*
-                 * if (xBounds[0] + xM >= xDim || xBounds[0] + xM < 0) return; if (xBounds[1] + xM >= xDim || xBounds[1]
-                 * + xM < 0) return; if (yBounds[0] + yM >= yDim || yBounds[0] + yM < 0) return; if (yBounds[1] + yM >=
+                 * if (xBounds[0] + xM >= xDim || xBounds[0] + xM < 0) return; if (xBounds[1] + xM >= xDim || xBounds[1] +
+                 * xM < 0) return; if (yBounds[0] + yM >= yDim || yBounds[0] + yM < 0) return; if (yBounds[1] + yM >=
                  * yDim || yBounds[1] + yM < 0) return;
                  */
                 int j;
@@ -4005,7 +3972,7 @@ System.err.println("curves size: " );
 
                 for (i = 0; i < curves[slice].size(); i++) {
 
-                    if (((VOIText) (curves[slice].elementAt(i))).isActive()) {
+                    if ( ((VOIText) (curves[slice].elementAt(i))).isActive()) {
                         ((VOIText) (curves[slice].elementAt(i))).moveVOIPoint(xM, yM, zM, xDim, yDim, zDim);
                     }
                 }
@@ -4017,16 +3984,16 @@ System.err.println("curves size: " );
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   x      int
-     * @param   y      int
-     * @param   slice  int
-     *
-     * @return  boolean
+     * 
+     * @param x int
+     * @param y int
+     * @param slice int
+     * 
+     * @return boolean
      */
-    public boolean nearCardioLine(int x, int y, int slice) {
+    public boolean nearCardioLine(final int x, final int y, final int slice) {
 
-        if (curveType != CARDIOLOGY) {
+        if (curveType != VOI.CARDIOLOGY) {
             return false;
         }
 
@@ -4035,19 +4002,20 @@ System.err.println("curves size: " );
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   x            int
-     * @param   y            int
-     * @param   slice        int
-     * @param   zoom         float
-     * @param   resolutionX  float
-     * @param   resolutionY  float
-     *
-     * @return  int
+     * 
+     * @param x int
+     * @param y int
+     * @param slice int
+     * @param zoom float
+     * @param resolutionX float
+     * @param resolutionY float
+     * 
+     * @return int
      */
-    public int nearCardioPoint(int x, int y, int slice, float zoom, float resolutionX, float resolutionY) {
+    public int nearCardioPoint(final int x, final int y, final int slice, final float zoom, final float resolutionX,
+            final float resolutionY) {
 
-        if (curveType != CARDIOLOGY) {
+        if (curveType != VOI.CARDIOLOGY) {
             return VOIBase.NOT_A_POINT;
         }
 
@@ -4056,14 +4024,14 @@ System.err.println("curves size: " );
 
     /**
      * Tests if a point is near a line.
-     *
-     * @param   x      x coordinate of line
-     * @param   y      y coordinate of line
-     * @param   slice  index of slice in curve array
-     *
-     * @return  result of test
+     * 
+     * @param x x coordinate of line
+     * @param y y coordinate of line
+     * @param slice index of slice in curve array
+     * 
+     * @return result of test
      */
-    public boolean nearLine(int x, int y, int slice) {
+    public boolean nearLine(final int x, final int y, final int slice) {
 
         if (isEmpty()) {
             return false;
@@ -4071,47 +4039,47 @@ System.err.println("curves size: " );
 
         int i;
 
-        if (curveType == CONTOUR) {
+        if (curveType == VOI.CONTOUR) {
 
             for (i = 0; i < curves[slice].size(); i++) {
 
-                if (((VOIContour) (curves[slice].elementAt(i))).nearLine(x, y, 3)) {
+                if ( ((VOIContour) (curves[slice].elementAt(i))).nearLine(x, y, 3)) {
                     polygonIndex = i;
 
                     return true;
                 }
             }
-        } else if (curveType == POLYLINE) {
+        } else if (curveType == VOI.POLYLINE) {
 
             for (i = 0; i < curves[slice].size(); i++) {
 
-                if (((VOIContour) (curves[slice].elementAt(i))).nearLine(x, y, 3)) {
+                if ( ((VOIContour) (curves[slice].elementAt(i))).nearLine(x, y, 3)) {
                     polygonIndex = i;
 
                     return true;
                 }
             }
-        } else if (curveType == LINE) {
+        } else if (curveType == VOI.LINE) {
 
             for (i = 0; i < curves[slice].size(); i++) {
 
-                if (((VOILine) (curves[slice].elementAt(i))).nearLine(x, y, 5)) {
+                if ( ((VOILine) (curves[slice].elementAt(i))).nearLine(x, y, 5)) {
                     polygonIndex = i;
 
                     return true;
                 }
             }
-        } else if (curveType == PROTRACTOR) {
+        } else if (curveType == VOI.PROTRACTOR) {
 
             for (i = 0; i < curves[slice].size(); i++) {
 
-                if (((VOIProtractor) (curves[slice].elementAt(i))).nearLine(x, y, 10)) {
+                if ( ((VOIProtractor) (curves[slice].elementAt(i))).nearLine(x, y, 10)) {
                     polygonIndex = i;
 
                     return true;
                 }
             }
-        } else if (curveType == POLYLINE_SLICE) {
+        } else if (curveType == VOI.POLYLINE_SLICE) {
             Vector3f pt1;
             Vector3f pt2;
             int x1, y1, x2, y2;
@@ -4133,7 +4101,7 @@ System.err.println("curves size: " );
                         return true;
                     }
                 }
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 return false;
             }
         }
@@ -4145,29 +4113,29 @@ System.err.println("curves size: " );
 
     /**
      * Tests if a point is near an edge point of a line.
-     *
-     * @param   x            x coordinate of point
-     * @param   y            y coordinate of point
-     * @param   slice        index of slice in curve array
-     * @param   element      element of slice
-     * @param   zoom         magnification of image
-     * @param   resolutionX  X resolution (aspect ratio)
-     * @param   resolutionY  Y resolution (aspect ratio)
-     *
-     * @return  result of test
+     * 
+     * @param x x coordinate of point
+     * @param y y coordinate of point
+     * @param slice index of slice in curve array
+     * @param element element of slice
+     * @param zoom magnification of image
+     * @param resolutionX X resolution (aspect ratio)
+     * @param resolutionY Y resolution (aspect ratio)
+     * 
+     * @return result of test
      */
-    public boolean nearLinePoint(int x, int y, int slice, int element, float zoom, float resolutionX,
-                                 float resolutionY) {
+    public boolean nearLinePoint(final int x, final int y, final int slice, final int element, final float zoom,
+            final float resolutionX, final float resolutionY) {
 
         if (isEmpty()) {
             return false;
         }
 
-        if ((curveType == LINE) && (curves[slice].size() > 0)) {
+        if ( (curveType == VOI.LINE) && (curves[slice].size() > 0)) {
 
-            if (((VOILine) (curves[slice].elementAt(element))).isActive() &&
-                    ((VOILine) (curves[slice].elementAt(element))).nearLinePoint(x, y, zoom, resolutionX,
-                                                                                     resolutionY)) {
+            if ( ((VOILine) (curves[slice].elementAt(element))).isActive()
+                    && ((VOILine) (curves[slice].elementAt(element))).nearLinePoint(x, y, zoom, resolutionX,
+                            resolutionY)) {
                 polygonIndex = element;
 
                 return true;
@@ -4182,29 +4150,29 @@ System.err.println("curves size: " );
 
     /**
      * Tests if a point is near an outer point of a protractor.
-     *
-     * @param   x            x coordinate of point
-     * @param   y            y coordinate of point
-     * @param   slice        index of slice in curve array
-     * @param   element      element of slice
-     * @param   zoom         magnification of image
-     * @param   resolutionX  X resolution (aspect ratio)
-     * @param   resolutionY  Y resolution (aspect ratio)
-     *
-     * @return  result of test
+     * 
+     * @param x x coordinate of point
+     * @param y y coordinate of point
+     * @param slice index of slice in curve array
+     * @param element element of slice
+     * @param zoom magnification of image
+     * @param resolutionX X resolution (aspect ratio)
+     * @param resolutionY Y resolution (aspect ratio)
+     * 
+     * @return result of test
      */
-    public boolean nearOuterPoint(int x, int y, int slice, int element, float zoom, float resolutionX,
-                                  float resolutionY) {
+    public boolean nearOuterPoint(final int x, final int y, final int slice, final int element, final float zoom,
+            final float resolutionX, final float resolutionY) {
 
         if (isEmpty()) {
             return false;
         }
 
-        if ((curveType == PROTRACTOR) && (curves[slice].size() > 0)) {
+        if ( (curveType == VOI.PROTRACTOR) && (curves[slice].size() > 0)) {
 
-            if (((VOIProtractor) (curves[slice].elementAt(element))).isActive() &&
-                    ((VOIProtractor) (curves[slice].elementAt(element))).nearOuterPoint(x, y, zoom, resolutionX,
-                                                                                            resolutionY)) {
+            if ( ((VOIProtractor) (curves[slice].elementAt(element))).isActive()
+                    && ((VOIProtractor) (curves[slice].elementAt(element))).nearOuterPoint(x, y, zoom, resolutionX,
+                            resolutionY)) {
                 polygonIndex = element;
 
                 return true;
@@ -4219,17 +4187,18 @@ System.err.println("curves size: " );
 
     /**
      * Tests if a point is near a point.
-     *
-     * @param   x            x coordinate of point
-     * @param   y            y coordinate of point
-     * @param   slice        index of slice in curve array
-     * @param   zoom         magnification of image
-     * @param   resolutionX  X resolution (aspect ratio)
-     * @param   resolutionY  Y resolution (aspect ratio)
-     *
-     * @return  result of test
+     * 
+     * @param x x coordinate of point
+     * @param y y coordinate of point
+     * @param slice index of slice in curve array
+     * @param zoom magnification of image
+     * @param resolutionX X resolution (aspect ratio)
+     * @param resolutionY Y resolution (aspect ratio)
+     * 
+     * @return result of test
      */
-    public boolean nearPoint(int x, int y, int slice, float zoom, float resolutionX, float resolutionY) {
+    public boolean nearPoint(final int x, final int y, final int slice, final float zoom, final float resolutionX,
+            final float resolutionY) {
 
         if (isEmpty()) {
             return false;
@@ -4240,30 +4209,30 @@ System.err.println("curves size: " );
         // System.err.println("doing nearPoint");
         for (i = 0; i < curves[slice].size(); i++) {
 
-            if (curveType == LINE) {
+            if (curveType == VOI.LINE) {
 
-                if (((VOILine) (curves[slice].elementAt(i))).isActive() &&
-                        ((VOILine) (curves[slice].elementAt(i))).nearPoint(x, y, zoom, resolutionX, resolutionY)) {
+                if ( ((VOILine) (curves[slice].elementAt(i))).isActive()
+                        && ((VOILine) (curves[slice].elementAt(i))).nearPoint(x, y, zoom, resolutionX, resolutionY)) {
                     polygonIndex = i;
 
                     return true;
                 }
-            } else if (curveType == PROTRACTOR) {
+            } else if (curveType == VOI.PROTRACTOR) {
 
-                if (((VOIProtractor) (curves[slice].elementAt(i))).isActive() &&
-                        ((VOIProtractor) (curves[slice].elementAt(i))).nearPoint(x, y, zoom, resolutionX,
-                                                                                     resolutionY)) {
+                if ( ((VOIProtractor) (curves[slice].elementAt(i))).isActive()
+                        && ((VOIProtractor) (curves[slice].elementAt(i))).nearPoint(x, y, zoom, resolutionX,
+                                resolutionY)) {
                     polygonIndex = i;
 
                     return true;
                 }
-            } else if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+            } else if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
                 ((VOIContour) (curves[slice].elementAt(i))).getBounds(xBounds, yBounds, zBounds);
                 ((VOIContour) (curves[slice].elementAt(i))).setBounds(xBounds, yBounds, zBounds);
 
-                if (((VOIContour) (curves[slice].elementAt(i))).isActive() && (boundingBox == true)) {
-                    nearBoundPoint = ((VOIContour) (curves[slice].elementAt(i))).nearBoundPoint(x, y, zoom, resolutionX,
-                                                                                                resolutionY);
+                if ( ((VOIContour) (curves[slice].elementAt(i))).isActive() && (boundingBox == true)) {
+                    nearBoundPoint = ((VOIContour) (curves[slice].elementAt(i))).nearBoundPoint(x, y, zoom,
+                            resolutionX, resolutionY);
 
                     if (nearBoundPoint != NOT_A_POINT) {
                         polygonIndex = -99;
@@ -4273,23 +4242,23 @@ System.err.println("curves size: " );
                     }
                 }
 
-                if (((VOIContour) (curves[slice].elementAt(i))).isActive() &&
-                        ((VOIContour) (curves[slice].elementAt(i))).nearPoint(x, y, zoom, resolutionX, resolutionY)) {
+                if ( ((VOIContour) (curves[slice].elementAt(i))).isActive()
+                        && ((VOIContour) (curves[slice].elementAt(i))).nearPoint(x, y, zoom, resolutionX, resolutionY)) {
                     polygonIndex = i;
                     resizeIndex = -99;
 
                     return true;
                 }
-            } else if ((curveType == VOI.POINT) || (curveType == VOI.POLYLINE_SLICE)) {
-                if (((VOIPoint) (curves[slice].elementAt(i))).nearPoint(x, y, zoom, resolutionX, resolutionY)) {
+            } else if ( (curveType == VOI.POINT) || (curveType == VOI.POLYLINE_SLICE)) {
+                if ( ((VOIPoint) (curves[slice].elementAt(i))).nearPoint(x, y, zoom, resolutionX, resolutionY)) {
                     polygonIndex = i;
 
                     return true;
                 }
             } else if (curveType == VOI.ANNOTATION) {
 
-            	//check to see if this is near the VOIText's arrow tip
-                if (((VOIText) (curves[slice].elementAt(i))).nearMarkerPoint(x, y, zoom, resolutionX, resolutionY)) {
+                // check to see if this is near the VOIText's arrow tip
+                if ( ((VOIText) (curves[slice].elementAt(i))).nearMarkerPoint(x, y, zoom, resolutionX, resolutionY)) {
                     polygonIndex = i;
                     return true;
                 }
@@ -4304,48 +4273,48 @@ System.err.println("curves size: " );
 
     /**
      * Tests if a point is near a point.
-     *
-     * @param   x            x coordinate of point
-     * @param   y            y coordinate of point
-     * @param   slice        index of slice in curve array
-     * @param   element      element of slice
-     * @param   zoom         magnification of image
-     * @param   resolutionX  X resolution (aspect ratio)
-     * @param   resolutionY  Y resolution (aspect ratio)
-     *
-     * @return  result of test
+     * 
+     * @param x x coordinate of point
+     * @param y y coordinate of point
+     * @param slice index of slice in curve array
+     * @param element element of slice
+     * @param zoom magnification of image
+     * @param resolutionX X resolution (aspect ratio)
+     * @param resolutionY Y resolution (aspect ratio)
+     * 
+     * @return result of test
      */
-    public boolean nearPoint(int x, int y, int slice, int element, float zoom, float resolutionX, float resolutionY) {
+    public boolean nearPoint(final int x, final int y, final int slice, final int element, final float zoom,
+            final float resolutionX, final float resolutionY) {
 
         if (isEmpty()) {
             return false;
         }
 
-        if (curveType == LINE) {
+        if (curveType == VOI.LINE) {
 
-            if (((VOILine) (curves[slice].elementAt(element))).isActive() &&
-                    ((VOILine) (curves[slice].elementAt(element))).nearPoint(x, y, zoom, resolutionX, resolutionY)) {
+            if ( ((VOILine) (curves[slice].elementAt(element))).isActive()
+                    && ((VOILine) (curves[slice].elementAt(element))).nearPoint(x, y, zoom, resolutionX, resolutionY)) {
                 polygonIndex = element;
 
                 return true;
             }
-        } else if (curveType == PROTRACTOR) {
+        } else if (curveType == VOI.PROTRACTOR) {
 
-            if (((VOIProtractor) (curves[slice].elementAt(element))).isActive() &&
-                    ((VOIProtractor) (curves[slice].elementAt(element))).nearPoint(x, y, zoom, resolutionX,
-                                                                                       resolutionY)) {
+            if ( ((VOIProtractor) (curves[slice].elementAt(element))).isActive()
+                    && ((VOIProtractor) (curves[slice].elementAt(element))).nearPoint(x, y, zoom, resolutionX,
+                            resolutionY)) {
                 polygonIndex = element;
 
                 return true;
             }
-        } else if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+        } else if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
             ((VOIContour) (curves[slice].elementAt(element))).getBounds(xBounds, yBounds, zBounds);
             ((VOIContour) (curves[slice].elementAt(element))).setBounds(xBounds, yBounds, zBounds);
 
-            if (((VOIContour) (curves[slice].elementAt(element))).isActive() && (boundingBox == true)) {
+            if ( ((VOIContour) (curves[slice].elementAt(element))).isActive() && (boundingBox == true)) {
                 nearBoundPoint = ((VOIContour) (curves[slice].elementAt(element))).nearBoundPoint(x, y, zoom,
-                                                                                                  resolutionX,
-                                                                                                  resolutionY);
+                        resolutionX, resolutionY);
 
                 if (nearBoundPoint != NOT_A_POINT) {
                     polygonIndex = -99;
@@ -4355,8 +4324,9 @@ System.err.println("curves size: " );
                 }
             }
 
-            if (((VOIContour) (curves[slice].elementAt(element))).isActive() &&
-                    ((VOIContour) (curves[slice].elementAt(element))).nearPoint(x, y, zoom, resolutionX, resolutionY)) {
+            if ( ((VOIContour) (curves[slice].elementAt(element))).isActive()
+                    && ((VOIContour) (curves[slice].elementAt(element)))
+                            .nearPoint(x, y, zoom, resolutionX, resolutionY)) {
                 polygonIndex = element;
                 resizeIndex = -99;
 
@@ -4364,7 +4334,7 @@ System.err.println("curves size: " );
             }
         } else if (curveType == VOI.POINT) {
 
-            if (((VOIPoint) (curves[slice].elementAt(element))).nearPoint(x, y, zoom, resolutionX, resolutionY)) {
+            if ( ((VOIPoint) (curves[slice].elementAt(element))).nearPoint(x, y, zoom, resolutionX, resolutionY)) {
                 polygonIndex = element;
 
                 return true;
@@ -4382,14 +4352,14 @@ System.err.println("curves size: " );
      * negative sign. If the point is outside contours, the distance is given a positive sign. The contour points are
      * connected by straight line segments between the points so simply find the distances from the point to each line
      * segment comprising the contours.
-     *
-     * @param   x  DOCUMENT ME!
-     * @param   y  DOCUMENT ME!
-     * @param   z  DOCUMENT ME!
-     *
-     * @return  minDistance
+     * 
+     * @param x DOCUMENT ME!
+     * @param y DOCUMENT ME!
+     * @param z DOCUMENT ME!
+     * 
+     * @return minDistance
      */
-    public float pointToContour(int x, int y, int z) {
+    public float pointToContour(final int x, final int y, final int z) {
         int i, j;
         int slice;
         int conSize;
@@ -4410,31 +4380,31 @@ System.err.println("curves size: " );
 
             for (i = 0; i < curves[slice].size(); i++) {
 
-                if (curveType == CONTOUR) {
+                if (curveType == VOI.CONTOUR) {
                     conSize = ((VOIContour) (curves[slice].elementAt(i))).size();
 
                     for (j = 0; j < conSize; j++) {
 
                         // Find one end of the line segment
-                        point = (Vector3f) ((VOIContour) (curves[slice].elementAt(i))).elementAt(j);
+                        point = ((VOIContour) (curves[slice].elementAt(i))).elementAt(j);
                         x1 = point.X;
                         y1 = point.Y;
 
                         // Find the other end of the line segment
                         if (j == (conSize - 1)) {
-                            point = (Vector3f) ((VOIContour) (curves[slice].elementAt(i))).elementAt(0);
+                            point = ((VOIContour) (curves[slice].elementAt(i))).elementAt(0);
                         } else {
-                            point = (Vector3f) ((VOIContour) (curves[slice].elementAt(i))).elementAt(j + 1);
+                            point = ((VOIContour) (curves[slice].elementAt(i))).elementAt(j + 1);
                         }
 
                         x2 = point.X;
                         y2 = point.Y;
 
-                        if ((x == x1) && (y == y1) && (z == slice)) {
+                        if ( (x == x1) && (y == y1) && (z == slice)) {
                             return 0.0f;
-                        } else if ((x == x2) && (y == y2) && (z == slice)) {
+                        } else if ( (x == x2) && (y == y2) && (z == slice)) {
                             return 0.0f;
-                        } else if ((x1 == x2) && (y1 == y2)) {
+                        } else if ( (x1 == x2) && (y1 == y2)) {
                             // 2 contour points coincide - do nothing
                         } else {
                             dx = x2 - x1;
@@ -4443,26 +4413,26 @@ System.err.println("curves size: " );
                             lineLength = (float) Math.sqrt(lineLengthSquared);
                             inprod = (dx * (x - x1)) + (dy * (y - y1));
 
-                            if ((inprod > 0) && (inprod < lineLengthSquared)) {
+                            if ( (inprod > 0) && (inprod < lineLengthSquared)) {
 
                                 // perpindicular projection from point to line falls
                                 // on the section of the line between (x1,y1) and (x2,y2)
-                                distance = Math.abs(((y1 - y2) * x) + ((x2 - x1) * y) + ((x1 * y2) - (y1 * x2))) /
-                                               lineLength;
+                                distance = Math.abs( ( (y1 - y2) * x) + ( (x2 - x1) * y) + ( (x1 * y2) - (y1 * x2)))
+                                        / lineLength;
                             } else {
-                                distance1 = (float) Math.sqrt(((x - x1) * (x - x1)) + ((y - y1) * (y - y1)));
-                                distance2 = (float) Math.sqrt(((x - x2) * (x - x2)) + ((y - y2) * (y - y2)));
+                                distance1 = (float) Math.sqrt( ( (x - x1) * (x - x1)) + ( (y - y1) * (y - y1)));
+                                distance2 = (float) Math.sqrt( ( (x - x2) * (x - x2)) + ( (y - y2) * (y - y2)));
                                 distance = Math.min(distance1, distance2);
                             }
 
-                            distance = (float) Math.sqrt((distance * distance) + ((slice - z) * (slice - z)));
+                            distance = (float) Math.sqrt( (distance * distance) + ( (slice - z) * (slice - z)));
 
                             if (distance < minDistance) {
                                 minDistance = distance;
 
                                 if (z != slice) {
                                     insideContour = false;
-                                } else if ((i != iLast) || (slice != sliceLast)) {
+                                } else if ( (i != iLast) || (slice != sliceLast)) {
                                     insideContour = ((VOIContour) (curves[slice].elementAt(i))).contains(x, y, true);
                                 }
 
@@ -4482,28 +4452,24 @@ System.err.println("curves size: " );
         return minDistance;
     }
 
-    public void print()
-    {
-        System.err.println( name + " " + curveType );
-        for ( int i = 0; i < curves.length; i++ )
-        {
-            if ( curves[i] != null )
-            {
-                for ( int j = 0; j < curves[i].size(); j++ )
-                {
-                    System.err.println( "curve " + i + " voi " + j + ": " );
-                    //curves[i].get(j).print();
+    public void print() {
+        System.err.println(name + " " + curveType);
+        for (int i = 0; i < curves.length; i++) {
+            if (curves[i] != null) {
+                for (int j = 0; j < curves[i].size(); j++) {
+                    System.err.println("curve " + i + " voi " + j + ": ");
+                    // curves[i].get(j).print();
                 }
             }
         }
     }
-    
+
     /**
      * Does nothing yet.
      */
     public void readCurves() {
 
-        // Make fileContour object and read
+    // Make fileContour object and read
     }
 
     /**
@@ -4511,30 +4477,30 @@ System.err.println("curves size: " );
      */
     public void readMask() {
 
-        // Make fileMask object and read
+    // Make fileMask object and read
     }
 
     /**
      * Clears VOI of a curve or point (VOIPoint)at an index in a slice.
-     *
-     * @param  index  slice of curve
-     * @param  slice  index of slice of curve
+     * 
+     * @param index slice of curve
+     * @param slice index of slice of curve
      */
-    public void removeCurve(int index, int slice) {
+    public void removeCurve(final int index, final int slice) {
         short pointID, tmpID, contourID;
         int i, s, nCurves;
 
-        if (curveType == POINT) {
+        if (curveType == VOI.POINT) {
 
-            if (((VOIPoint) curves[slice].elementAt(index)).getLabel() != null) {
-                pointID = Short.valueOf(((VOIPoint) curves[slice].elementAt(index)).getLabel()).shortValue();
+            if ( ((VOIPoint) curves[slice].elementAt(index)).getLabel() != null) {
+                pointID = Short.valueOf( ((VOIPoint) curves[slice].elementAt(index)).getLabel()).shortValue();
                 curves[slice].removeElementAt(index);
 
                 for (s = 0; s < zDim; s++) {
                     nCurves = curves[s].size();
 
                     for (i = 0; i < nCurves; i++) {
-                        tmpID = Short.valueOf(((VOIPoint) curves[s].elementAt(i)).getLabel()).shortValue();
+                        tmpID = Short.valueOf( ((VOIPoint) curves[s].elementAt(i)).getLabel()).shortValue();
 
                         if (tmpID > pointID) {
                             ((VOIPoint) (curves[s].elementAt(i))).setLabel(String.valueOf(tmpID - 1));
@@ -4544,20 +4510,20 @@ System.err.println("curves size: " );
 
                 elementLabel--;
 
-                if ((contourGraph != null) && ((int) elementLabel == 1)) {
-                    contourGraph.deleteFunct(((int) elementLabel) - 1);
+                if ( (contourGraph != null) && (elementLabel == 1)) {
+                    contourGraph.deleteFunct( (elementLabel) - 1);
                 }
             } else {
                 curves[slice].removeElementAt(index);
             }
-        } else if (curveType == ANNOTATION) {
+        } else if (curveType == VOI.ANNOTATION) {
             curves[slice].removeAllElements();
         } else {
 
-            if (curveType == CONTOUR) {
+            if (curveType == VOI.CONTOUR) {
 
-                if (((VOIContour) curves[slice].elementAt(index)).getLabel() != null) {
-                    contourID = Short.valueOf(((VOIContour) curves[slice].elementAt(index)).getLabel()).shortValue();
+                if ( ((VOIContour) curves[slice].elementAt(index)).getLabel() != null) {
+                    contourID = Short.valueOf( ((VOIContour) curves[slice].elementAt(index)).getLabel()).shortValue();
                     curves[slice].removeElementAt(index);
 
                     for (s = 0; s < zDim; s++) {
@@ -4566,12 +4532,12 @@ System.err.println("curves size: " );
                         for (i = 0; i < nCurves; i++) {
 
                             try {
-                                tmpID = Short.valueOf(((VOIContour) curves[s].elementAt(i)).getLabel()).shortValue();
+                                tmpID = Short.valueOf( ((VOIContour) curves[s].elementAt(i)).getLabel()).shortValue();
 
                                 if (tmpID > contourID) {
                                     ((VOIContour) (curves[s].elementAt(i))).setLabel(String.valueOf(tmpID - 1));
                                 }
-                            } catch (NumberFormatException nfe) {
+                            } catch (final NumberFormatException nfe) {
                                 // in case a VOI doesn't have a label, we don't want this thing choking
                             }
                         }
@@ -4589,20 +4555,20 @@ System.err.println("curves size: " );
 
     /**
      * Clears VOI of all curves at a slice.
-     *
-     * @param  slice  index of slice of curves to remove
+     * 
+     * @param slice index of slice of curves to remove
      */
-    public void removeCurves(int slice) {
+    public void removeCurves(final int slice) {
         curves[slice].removeAllElements();
         elementLabel = 1;
     }
 
     /**
      * removes the update listener.
-     *
-     * @param  listener  DOCUMENT ME!
+     * 
+     * @param listener DOCUMENT ME!
      */
-    public void removeVOIListener(VOIListener listener) {
+    public void removeVOIListener(final VOIListener listener) {
 
         if (listenerList == null) {
             listenerList = new EventListenerList();
@@ -4610,18 +4576,19 @@ System.err.println("curves size: " );
 
         listenerList.remove(VOIListener.class, listener);
     }
-    
+
     /**
      * Draws a rubberband around the VOI (only contour).
-     *
-     * @param  x        x coordinate
-     * @param  y        y coordinate
-     * @param  slice    index of slice in curve array
-     * @param  xDim     DOCUMENT ME!
-     * @param  yDim     DOCUMENT ME!
-     * @param  doRound  round point coordinates to integers
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param slice index of slice in curve array
+     * @param xDim DOCUMENT ME!
+     * @param yDim DOCUMENT ME!
+     * @param doRound round point coordinates to integers
      */
-    public void rubberbandVOI(int x, int y, int slice, int xDim, int yDim, boolean doRound) {
+    public void rubberbandVOI(final int x, final int y, final int slice, final int xDim, final int yDim,
+            final boolean doRound) {
         float oldXMin, oldXMax, oldYMin, oldYMax;
         float newXMin, newXMax, newYMin, newYMax;
         float xCenter, yCenter;
@@ -4632,23 +4599,23 @@ System.err.println("curves size: " );
             return;
         }
 
-        if ((polygonIndex >= 0) && (polygonIndex < curves[slice].size())) {
+        if ( (polygonIndex >= 0) && (polygonIndex < curves[slice].size())) {
 
-            if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+            if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
 
                 // System.err.println("x: " + x + "y: " + y);
                 ((VOIContour) (curves[slice].elementAt(polygonIndex))).movePt(x, y);
                 ((VOIContour) (curves[slice].elementAt(polygonIndex))).reloadPoints();
-            } else if (curveType == LINE) {
+            } else if (curveType == VOI.LINE) {
                 ((VOILine) (curves[slice].elementAt(polygonIndex))).movePt(x, y, slice, xDim, yDim);
-            } else if (curveType == PROTRACTOR) {
+            } else if (curveType == VOI.PROTRACTOR) {
                 ((VOIProtractor) (curves[slice].elementAt(polygonIndex))).movePt(x, y);
-            } else if (curveType == CARDIOLOGY) {
+            } else if (curveType == VOI.CARDIOLOGY) {
                 ((VOICardiology) (curves[slice].elementAt(0))).movePt(x, y);
             }
-        } else if ((resizeIndex >= 0) && (resizeIndex < curves[slice].size())) {
+        } else if ( (resizeIndex >= 0) && (resizeIndex < curves[slice].size())) {
 
-            if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+            if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
                 ((VOIContour) (curves[slice].elementAt(resizeIndex))).getBounds(xBounds, yBounds, zBounds);
                 oldXMin = xBounds[0];
                 oldXMax = xBounds[1];
@@ -4659,7 +4626,7 @@ System.err.println("curves size: " );
                 newYMin = yBounds[0];
                 newYMax = yBounds[1];
 
-                if ((nearBoundPoint == 1) || (nearBoundPoint == 4) || (nearBoundPoint == 8)) {
+                if ( (nearBoundPoint == 1) || (nearBoundPoint == 4) || (nearBoundPoint == 8)) {
 
                     if (x < newXMax) {
                         newXMin = x;
@@ -4668,7 +4635,7 @@ System.err.println("curves size: " );
                     }
                 }
 
-                if ((nearBoundPoint == 2) || (nearBoundPoint == 3) || (nearBoundPoint == 6)) {
+                if ( (nearBoundPoint == 2) || (nearBoundPoint == 3) || (nearBoundPoint == 6)) {
 
                     if (x > newXMin) {
                         newXMax = x;
@@ -4677,7 +4644,7 @@ System.err.println("curves size: " );
                     }
                 }
 
-                if ((nearBoundPoint == 1) || (nearBoundPoint == 2) || (nearBoundPoint == 5)) {
+                if ( (nearBoundPoint == 1) || (nearBoundPoint == 2) || (nearBoundPoint == 5)) {
 
                     if (y < newYMax) {
                         newYMin = y;
@@ -4686,7 +4653,7 @@ System.err.println("curves size: " );
                     }
                 }
 
-                if ((nearBoundPoint == 3) || (nearBoundPoint == 4) || (nearBoundPoint == 7)) {
+                if ( (nearBoundPoint == 3) || (nearBoundPoint == 4) || (nearBoundPoint == 7)) {
 
                     if (y > newYMin) {
                         newYMax = y;
@@ -4704,8 +4671,8 @@ System.err.println("curves size: " );
                     scaleY = (newYMax - newYMin) / (oldYMax - oldYMin);
 
                     // If it is a corner lets keep aspect ratio
-                    if ((nearBoundPoint == 1) || (nearBoundPoint == 2) || (nearBoundPoint == 3) ||
-                            (nearBoundPoint == 4)) {
+                    if ( (nearBoundPoint == 1) || (nearBoundPoint == 2) || (nearBoundPoint == 3)
+                            || (nearBoundPoint == 4)) {
 
                         if (scaleX < scaleY) {
                             scaleX = scaleY;
@@ -4746,8 +4713,8 @@ System.err.println("curves size: " );
                     }
 
                     transformVOI(0.0f, 0.0f, 0.0f, translateX, translateY, 0.0f, scaleX, scaleY, 1.0f, slice,
-                                 resizeIndex, doRound);
-                    ((VOIContour) (curves[slice].elementAt(resizeIndex))).contains(-1, -1, true);
+                            resizeIndex, doRound);
+                    ((VOIContour) (curves[slice].elementAt(resizeIndex))).contains( -1, -1, true);
                 } // end of if (change)
             }
         }
@@ -4756,21 +4723,22 @@ System.err.println("curves size: " );
     /**
      * RubberBand (move pt) function created for POLYLINE/CONTOUR so that the screen does not update all points as a
      * single point is drawn.
-     *
-     * @param  x            int x coordinate
-     * @param  y            int y coordinate
-     * @param  slice        int slice of image
-     * @param  xDim         int x dimension of image
-     * @param  yDim         int y dimension of image
-     * @param  doRound      boolean whether or not to use rounding
-     * @param  zoomX        float current X zoom level
-     * @param  zoomY        float current Y zoom level
-     * @param  resolutionX  float X-aspect ratio
-     * @param  resolutionY  float Y-aspect ratio
-     * @param  g            Graphics the graphics for drawing
+     * 
+     * @param x int x coordinate
+     * @param y int y coordinate
+     * @param slice int slice of image
+     * @param xDim int x dimension of image
+     * @param yDim int y dimension of image
+     * @param doRound boolean whether or not to use rounding
+     * @param zoomX float current X zoom level
+     * @param zoomY float current Y zoom level
+     * @param resolutionX float X-aspect ratio
+     * @param resolutionY float Y-aspect ratio
+     * @param g Graphics the graphics for drawing
      */
-    public void rubberbandVOI(int x, int y, int slice, int xDim, int yDim, boolean doRound, float zoomX, float zoomY,
-                              float resolutionX, float resolutionY, Graphics g) {
+    public void rubberbandVOI(final int x, final int y, final int slice, final int xDim, final int yDim,
+            final boolean doRound, final float zoomX, final float zoomY, final float resolutionX,
+            final float resolutionY, final Graphics g) {
         float oldXMin, oldXMax, oldYMin, oldYMax;
         float newXMin, newXMax, newYMin, newYMax;
         float xCenter, yCenter;
@@ -4781,26 +4749,26 @@ System.err.println("curves size: " );
             return;
         }
 
-        if ((polygonIndex >= 0) && (polygonIndex < curves[slice].size())) {
+        if ( (polygonIndex >= 0) && (polygonIndex < curves[slice].size())) {
 
-            if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+            if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
                 ((VOIContour) (curves[slice].elementAt(polygonIndex))).movePt(x, y);
                 ((VOIContour) (curves[slice].elementAt(polygonIndex))).reloadPoints();
-            } else if (curveType == LINE) {
+            } else if (curveType == VOI.LINE) {
                 ((VOILine) (curves[slice].elementAt(polygonIndex))).movePt(x, y, slice, xDim, yDim);
-            } else if (curveType == PROTRACTOR) {
+            } else if (curveType == VOI.PROTRACTOR) {
                 ((VOIProtractor) (curves[slice].elementAt(polygonIndex))).movePt(x, y);
-            } else if (curveType == CARDIOLOGY) {
+            } else if (curveType == VOI.CARDIOLOGY) {
                 ((VOICardiology) (curves[slice].elementAt(0))).movePt(x, y);
-            } else if (curveType == POLYLINE_SLICE) {
+            } else if (curveType == VOI.POLYLINE_SLICE) {
                 ((VOIPoint) (curves[slice].elementAt(polygonIndex))).movePt(x, y);
                 this.markPSlicePt(slice);
-            } else if (curveType == ANNOTATION) {
+            } else if (curveType == VOI.ANNOTATION) {
                 ((VOIText) (curves[slice].elementAt(polygonIndex))).moveMarkerPoint(x, y, slice, xDim, yDim, zDim);
             }
-        } else if ((resizeIndex >= 0) && (resizeIndex < curves[slice].size())) {
+        } else if ( (resizeIndex >= 0) && (resizeIndex < curves[slice].size())) {
 
-            if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+            if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
                 ((VOIContour) (curves[slice].elementAt(resizeIndex))).getBounds(xBounds, yBounds, zBounds);
                 oldXMin = xBounds[0];
                 oldXMax = xBounds[1];
@@ -4811,7 +4779,7 @@ System.err.println("curves size: " );
                 newYMin = yBounds[0];
                 newYMax = yBounds[1];
 
-                if ((nearBoundPoint == 1) || (nearBoundPoint == 4) || (nearBoundPoint == 8)) {
+                if ( (nearBoundPoint == 1) || (nearBoundPoint == 4) || (nearBoundPoint == 8)) {
 
                     if (x < newXMax) {
                         newXMin = x;
@@ -4820,7 +4788,7 @@ System.err.println("curves size: " );
                     }
                 }
 
-                if ((nearBoundPoint == 2) || (nearBoundPoint == 3) || (nearBoundPoint == 6)) {
+                if ( (nearBoundPoint == 2) || (nearBoundPoint == 3) || (nearBoundPoint == 6)) {
 
                     if (x > newXMin) {
                         newXMax = x;
@@ -4829,7 +4797,7 @@ System.err.println("curves size: " );
                     }
                 }
 
-                if ((nearBoundPoint == 1) || (nearBoundPoint == 2) || (nearBoundPoint == 5)) {
+                if ( (nearBoundPoint == 1) || (nearBoundPoint == 2) || (nearBoundPoint == 5)) {
 
                     if (y < newYMax) {
                         newYMin = y;
@@ -4838,7 +4806,7 @@ System.err.println("curves size: " );
                     }
                 }
 
-                if ((nearBoundPoint == 3) || (nearBoundPoint == 4) || (nearBoundPoint == 7)) {
+                if ( (nearBoundPoint == 3) || (nearBoundPoint == 4) || (nearBoundPoint == 7)) {
 
                     if (y > newYMin) {
                         newYMax = y;
@@ -4856,8 +4824,8 @@ System.err.println("curves size: " );
                     scaleY = (newYMax - newYMin) / (oldYMax - oldYMin);
 
                     // If it is a corner lets keep aspect ratio
-                    if ((nearBoundPoint == 1) || (nearBoundPoint == 2) || (nearBoundPoint == 3) ||
-                            (nearBoundPoint == 4)) {
+                    if ( (nearBoundPoint == 1) || (nearBoundPoint == 2) || (nearBoundPoint == 3)
+                            || (nearBoundPoint == 4)) {
 
                         if (scaleX < scaleY) {
                             scaleX = scaleY;
@@ -4898,8 +4866,8 @@ System.err.println("curves size: " );
                     }
 
                     transformVOI(0.0f, 0.0f, 0.0f, translateX, translateY, 0.0f, scaleX, scaleY, 1.0f, slice,
-                                 resizeIndex, doRound);
-                    ((VOIContour) (curves[slice].elementAt(resizeIndex))).contains(-1, -1, true);
+                            resizeIndex, doRound);
+                    ((VOIContour) (curves[slice].elementAt(resizeIndex))).contains( -1, -1, true);
                 } // end of if (change)
             }
         }
@@ -4910,7 +4878,7 @@ System.err.println("curves size: " );
      */
     public void saveCurves() {
 
-        // Make fileContour object and save
+    // Make fileContour object and save
     }
 
     /**
@@ -4918,27 +4886,28 @@ System.err.println("curves size: " );
      */
     public void saveMask() {
 
-        // Make fileMask object and save
+    // Make fileMask object and save
     }
 
     /**
      * Finds the second oder attributes and prints to the command line. Only for contour.
-     *
-     * @param  xDim    DOCUMENT ME!
-     * @param  yDim    DOCUMENT ME!
-     * @param  xRes    DOCUMENT ME!
-     * @param  yRes    DOCUMENT ME!
-     * @param  xUnits  DOCUMENT ME!
-     * @param  yUnits  DOCUMENT ME!
+     * 
+     * @param xDim DOCUMENT ME!
+     * @param yDim DOCUMENT ME!
+     * @param xRes DOCUMENT ME!
+     * @param yRes DOCUMENT ME!
+     * @param xUnits DOCUMENT ME!
+     * @param yUnits DOCUMENT ME!
      */
-    public void secondOrderAttributes(int xDim, int yDim, float xRes, float yRes, int xUnits, int yUnits) {
+    public void secondOrderAttributes(final int xDim, final int yDim, final float xRes, final float yRes,
+            final int xUnits, final int yUnits) {
         int i, z;
         float[] pAxis = null;
         float[] eccentricity = null;
         float[] majorAxis = null;
         float[] minorAxis = null;
 
-        if ((curveType == LINE) || (curveType == POLYLINE) || (curveType == PROTRACTOR)) {
+        if ( (curveType == VOI.LINE) || (curveType == VOI.POLYLINE) || (curveType == VOI.PROTRACTOR)) {
             return;
         }
 
@@ -4947,7 +4916,7 @@ System.err.println("curves size: " );
             eccentricity = new float[1];
             majorAxis = new float[1];
             minorAxis = new float[1];
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: VOI secondOrderAttributes");
 
@@ -4963,10 +4932,9 @@ System.err.println("curves size: " );
 
                 for (i = 0; i < curves[z].size(); i++) {
                     ((VOIContour) (curves[z].elementAt(i))).secondOrderAttributes(xDim, yDim, xRes, yRes, xUnits,
-                                                                                  yUnits, pAxis, eccentricity,
-                                                                                  majorAxis, minorAxis);
-                    Preferences.debug(" Theta = " + pAxis[0] + " ecc = " + eccentricity[0] + " Major axis = " +
-                                      majorAxis[0] + " Minor Axis = " + minorAxis[0] + "\n");
+                            yUnits, pAxis, eccentricity, majorAxis, minorAxis);
+                    Preferences.debug(" Theta = " + pAxis[0] + " ecc = " + eccentricity[0] + " Major axis = "
+                            + majorAxis[0] + " Minor Axis = " + minorAxis[0] + "\n");
                 }
             }
         }
@@ -4974,20 +4942,20 @@ System.err.println("curves size: " );
 
     /**
      * Sets whether or not the VOI is active.
-     *
-     * @param  act  boolean to set active to
+     * 
+     * @param act boolean to set active to
      */
-    public void setActive(boolean act) {
+    public void setActive(final boolean act) {
         this.active = act;
-        //fireVOIselection();
+        // fireVOIselection();
     }
 
     /**
      * Sets all contours in the VOI as active or inactive.
-     *
-     * @param  flag  boolean to set VOI active or inactive
+     * 
+     * @param flag boolean to set VOI active or inactive
      */
-    public void setAllActive(boolean flag) {
+    public void setAllActive(final boolean flag) {
         int i, j;
         this.active = flag;
 
@@ -5002,46 +4970,43 @@ System.err.println("curves size: " );
 
     /**
      * Accessor that sets the flag to the parameter.
-     *
-     * @param  flag  the visible flag
+     * 
+     * @param flag the visible flag
      */
-    public void setBoundingBoxFlag(boolean flag) {
+    public void setBoundingBoxFlag(final boolean flag) {
         this.boundingBox = flag;
     }
 
     /**
      * Accessor that sets the color to the parameter.
-     *
-     * @param  color  the color
+     * 
+     * @param color the color
      */
-    public void setColor(Color color) {
+    public void setColor(final Color color) {
 
         // System.err.println("Setting color externally to: " + color);
         this.color = color;
 
         if (listenerList != null) {
-        	Object[] listeners = listenerList.getListenerList();
-        	// Process the listeners last to first, notifying
-        	// those that are interested in this event
-        	for (int i = listeners.length - 2; i >= 0; i -= 2) {
+            final Object[] listeners = listenerList.getListenerList();
+            // Process the listeners last to first, notifying
+            // those that are interested in this event
+            for (int i = listeners.length - 2; i >= 0; i -= 2) {
 
-        		if (listeners[i] == VOIListener.class) {
-        			((VOIListener) listeners[i + 1]).colorChanged(color);
-        		}
-        	}
+                if (listeners[i] == VOIListener.class) {
+                    ((VOIListener) listeners[i + 1]).colorChanged(color);
+                }
+            }
         }
-        
-        if (curveType == PROTRACTOR) {
+
+        if (curveType == VOI.PROTRACTOR) {
 
             for (int j = 0; j < zDim; j++) {
 
                 for (int i = 0; i < curves[j].size(); i++) {
-                    if ( curves[j].elementAt(i) instanceof VOIProtractor )
-                    {
+                    if (curves[j].elementAt(i) instanceof VOIProtractor) {
                         ((VOIProtractor) (curves[j].elementAt(i))).setColor(color);
-                    }
-                    else
-                    {
+                    } else {
                         return;
                     }
                 }
@@ -5051,256 +5016,256 @@ System.err.println("curves size: " );
 
     /**
      * Accessor that sets the color to the parameter.
-     *
-     * @param  hue  the color of the VOI
+     * 
+     * @param hue the color of the VOI
      */
-    public void setColor(float hue) {
+    public void setColor(final float hue) {
 
         // System.err.println("Setting hue externally to: " + hue);
         this.setColor(Color.getHSBColor(hue, (float) 1.0, (float) 1.0));
-        
-        if (listenerList != null) {
-        	Object[] listeners = listenerList.getListenerList();
-        	// Process the listeners last to first, notifying
-        	// those that are interested in this event
-        	for (int i = listeners.length - 2; i >= 0; i -= 2) {
 
-        		if (listeners[i] == VOIListener.class) {
-        			((VOIListener) listeners[i + 1]).colorChanged(color);
-        		}
-        	}
+        if (listenerList != null) {
+            final Object[] listeners = listenerList.getListenerList();
+            // Process the listeners last to first, notifying
+            // those that are interested in this event
+            for (int i = listeners.length - 2; i >= 0; i -= 2) {
+
+                if (listeners[i] == VOIListener.class) {
+                    ((VOIListener) listeners[i + 1]).colorChanged(color);
+                }
+            }
         }
-        
+
     }
 
     /**
      * Accessor that sets the contourGraph to the parameter.
-     *
-     * @param  newGraph  the graph
+     * 
+     * @param newGraph the graph
      */
-    public void setContourGraph(ViewJFrameGraph newGraph) {
+    public void setContourGraph(final ViewJFrameGraph newGraph) {
         this.contourGraph = newGraph;
     }
 
     /**
      * Accessor that sets the curveType to the parameter.
-     *
-     * @param  curveType  the curve type
+     * 
+     * @param curveType the curve type
      */
-    public void setCurveType(int curveType) {
+    public void setCurveType(final int curveType) {
         this.curveType = curveType;
     }
 
-    public void setCurves(Vector [] newCurves) {
-    	this.curves = newCurves;
-    	this.zDim = newCurves.length;
+    public void setCurves(final Vector[] newCurves) {
+        this.curves = newCurves;
+        this.zDim = newCurves.length;
     }
-    
+
     /**
      * Accessor that sets the display mode to the parameter.
-     *
-     * @param  mode  the display mode
+     * 
+     * @param mode the display mode
      */
-    public void setDisplayMode(int mode) {
+    public void setDisplayMode(final int mode) {
         this.displayMode = mode;
     }
 
     /**
      * Sets whether or not the VOI is fixed.
-     *
-     * @param  fixed  boolean to set fixed to
+     * 
+     * @param fixed boolean to set fixed to
      */
-    public void setFixed(boolean fixed) {
+    public void setFixed(final boolean fixed) {
         this.fixed = fixed;
     }
 
     /**
      * Accessor that sets the ID to the parameter.
-     *
-     * @param  ID  the ID
+     * 
+     * @param ID the ID
      */
-    public void setID(short ID) {
+    public void setID(final short ID) {
         this.ID = ID;
 
-        if (getCurveType() != ANNOTATION) {
+        if (getCurveType() != VOI.ANNOTATION) {
             float hue;
-            int colorIncrement = Preferences.getVOIColorIncrement();
-            hue = (float) ((((ID + colorIncrement) * 35) % 360) / 360.0);
+            final int colorIncrement = Preferences.getVOIColorIncrement();
+            hue = (float) ( ( ( (ID + colorIncrement) * 35) % 360) / 360.0);
             this.setColor(Color.getHSBColor(hue, (float) 1.0, (float) 1.0));
         }
     }
 
     /**
      * Accessor that sets the intensity array to the parameter.
-     *
-     * @param  inten  DOCUMENT ME!
+     * 
+     * @param inten DOCUMENT ME!
      */
-    public void setIntensity(float[] inten) {
+    public void setIntensity(final float[] inten) {
         this.intensity = inten;
     }
 
     /**
      * Accessor that sets the levelset VOI's level.
-     *
-     * @param  lev  The level.
+     * 
+     * @param lev The level.
      */
-    public void setLevel(float lev) {
+    public void setLevel(final float lev) {
         level = lev;
     }
 
     /**
      * Accessor that sets the maximum of the range of intensities to ignore.
-     *
-     * @param  max  The maximum.
+     * 
+     * @param max The maximum.
      */
-    public void setMaximumIgnore(float max) {
+    public void setMaximumIgnore(final float max) {
         ignoreMax = max;
     }
 
     /**
      * Accessor that sets the minimum of the range of intensities to ignore.
-     *
-     * @param  min  The minimum.
+     * 
+     * @param min The minimum.
      */
-    public void setMinimumIgnore(float min) {
+    public void setMinimumIgnore(final float min) {
         ignoreMin = min;
     }
 
     /**
      * Accessor that sets the VOI's name to the parameter.
-     *
-     * @param  name  the name
+     * 
+     * @param name the name
      */
-    public void setName(String name) {
+    public void setName(final String name) {
         this.name = name;
 
         // now must set the name in all VOIBases within
-        for (int i = 0; i < curves.length; i++) {
+        for (final Vector<VOIBase> element : curves) {
 
-            for (int j = 0; j < curves[i].size(); j++) {
-                ((VOIBase) curves[i].elementAt(j)).setName(name);
+            for (int j = 0; j < element.size(); j++) {
+                (element.elementAt(j)).setName(name);
             }
         }
     }
 
     /**
      * Accessor that sets the ID to the parameter.
-     *
-     * @param  ID  the ID
+     * 
+     * @param ID the ID
      */
-    public void setOnlyID(short ID) {
+    public void setOnlyID(final short ID) {
         this.ID = ID;
     }
 
     /**
      * Accessor that sets the opacity to the parameter.
-     *
-     * @param  opacity  the opacity
+     * 
+     * @param opacity the opacity
      */
-    public void setOpacity(float opacity) {
+    public void setOpacity(final float opacity) {
         this.opacity = opacity;
     }
 
     /**
      * Accessor that sets the polarity to the parameter.
-     *
-     * @param  polarity  the polarity
+     * 
+     * @param polarity the polarity
      */
-    public void setPolarity(int polarity) {
+    public void setPolarity(final int polarity) {
         this.polarity = polarity;
     }
 
     /**
      * Accessor that sets the position array to the parameter.
-     *
-     * @param  pos  DOCUMENT ME!
+     * 
+     * @param pos DOCUMENT ME!
      */
-    public void setPosition(float[] pos) {
+    public void setPosition(final float[] pos) {
         this.position = pos;
     }
 
     /**
      * Accessor that sets the flag to the parameter.
-     *
-     * @param  flag  the process flag
+     * 
+     * @param flag the process flag
      */
-    public void setProcess(boolean flag) {
+    public void setProcess(final boolean flag) {
         this.process = flag;
     }
 
     /**
      * Accessor that sets the rgb intensity array to the parameter.
-     *
-     * @param  inten  DOCUMENT ME!
+     * 
+     * @param inten DOCUMENT ME!
      */
-    public void setRGBIntensities(float[][] inten) {
+    public void setRGBIntensities(final float[][] inten) {
         this.rgbIntensities = inten;
     }
 
     /**
      * Accessor that sets the rgb position array to the parameter.
-     *
-     * @param  pos  DOCUMENT ME!
+     * 
+     * @param pos DOCUMENT ME!
      */
-    public void setRGBPositions(float[][] pos) {
+    public void setRGBPositions(final float[][] pos) {
         this.rgbPositions = pos;
     }
 
     /**
      * Accessor that sets the statisitic list.
-     *
-     * @param  stats  list of statistics
+     * 
+     * @param stats list of statistics
      */
-    public void setStatisticList(ViewList[] stats) {
+    public void setStatisticList(final ViewList[] stats) {
         this.stats = stats;
     }
 
     /**
      * Accessor that sets whether to calculate total sum of the intensity (true) else calculate the average pixel
      * intensity (used when plotting an intensity graph of a voi).
-     *
-     * @param  total  DOCUMENT ME!
+     * 
+     * @param total DOCUMENT ME!
      */
-    public void setTotalIntensity(boolean total) {
+    public void setTotalIntensity(final boolean total) {
         this.totalIntensity = total;
     }
 
     /**
      * Sets the unique ID (for saving/retreiving treatment details).
-     *
-     * @param  uid  - unique ID
+     * 
+     * @param uid - unique ID
      */
-    public void setUID(int uid) {
+    public void setUID(final int uid) {
         this.UID = uid;
     }
 
     /**
      * Accessor that sets the flag to the parameter.
-     *
-     * @param  flag  the visible flag
+     * 
+     * @param flag the visible flag
      */
-    public void setVisibleFlag(boolean flag) {
+    public void setVisibleFlag(final boolean flag) {
         this.visible = flag;
     }
 
     /**
      * Accessor that sets the ID to the parameter.
-     *
-     * @param  wID  the ID
+     * 
+     * @param wID the ID
      */
-    public void setWatershedID(short wID) {
+    public void setWatershedID(final short wID) {
         this.watershedID = wID;
     }
 
     /**
      * Accessor that sets xDim and yDim.
-     *
-     * @param  xDim  x dimension
-     * @param  yDim  y dimension
+     * 
+     * @param xDim x dimension
+     * @param yDim y dimension
      */
-    public void setXYDim(int xDim, int yDim) {
+    public void setXYDim(final int xDim, final int yDim) {
 
-        if (curveType == PROTRACTOR) {
+        if (curveType == VOI.PROTRACTOR) {
 
             for (int j = 0; j < zDim; j++) {
 
@@ -5308,7 +5273,7 @@ System.err.println("curves size: " );
                     ((VOIProtractor) (curves[j].elementAt(i))).setXYDim(xDim, yDim);
                 }
             }
-        } else if (curveType == LINE) {
+        } else if (curveType == VOI.LINE) {
 
             for (int j = 0; j < zDim; j++) {
 
@@ -5324,14 +5289,14 @@ System.err.println("curves size: " );
      * given a negative sign. If the point is outside contours, the distance is given a positive sign. The contour
      * points are connected by straight line segments between the points so simply find the distances from the point to
      * each line segment comprising the contours.
-     *
-     * @param   slice  DOCUMENT ME!
-     * @param   x      DOCUMENT ME!
-     * @param   y      DOCUMENT ME!
-     *
-     * @return  minDistance
+     * 
+     * @param slice DOCUMENT ME!
+     * @param x DOCUMENT ME!
+     * @param y DOCUMENT ME!
+     * 
+     * @return minDistance
      */
-    public float slicePointToContour(int slice, int x, int y) {
+    public float slicePointToContour(final int slice, final int x, final int y) {
         int i, j;
         int conSize;
         float x1, x2, y1, y2;
@@ -5348,31 +5313,31 @@ System.err.println("curves size: " );
 
         for (i = 0; i < curves[slice].size(); i++) {
 
-            if (curveType == CONTOUR) {
+            if (curveType == VOI.CONTOUR) {
                 conSize = ((VOIContour) (curves[slice].elementAt(i))).size();
 
                 for (j = 0; j < conSize; j++) {
 
                     // Find one end of the line segment
-                    point = (Vector3f) ((VOIContour) (curves[slice].elementAt(i))).elementAt(j);
+                    point = ((VOIContour) (curves[slice].elementAt(i))).elementAt(j);
                     x1 = point.X;
                     y1 = point.Y;
 
                     // Find the other end of the line segment
                     if (j == (conSize - 1)) {
-                        point = (Vector3f) ((VOIContour) (curves[slice].elementAt(i))).elementAt(0);
+                        point = ((VOIContour) (curves[slice].elementAt(i))).elementAt(0);
                     } else {
-                        point = (Vector3f) ((VOIContour) (curves[slice].elementAt(i))).elementAt(j + 1);
+                        point = ((VOIContour) (curves[slice].elementAt(i))).elementAt(j + 1);
                     }
 
                     x2 = point.X;
                     y2 = point.Y;
 
-                    if ((x == x1) && (y == y1)) {
+                    if ( (x == x1) && (y == y1)) {
                         return 0.0f;
-                    } else if ((x == x2) && (y == y2)) {
+                    } else if ( (x == x2) && (y == y2)) {
                         return 0.0f;
-                    } else if ((x1 == x2) && (y1 == y2)) {
+                    } else if ( (x1 == x2) && (y1 == y2)) {
                         // 2 contour points coincide - do nothing
                     } else {
                         dx = x2 - x1;
@@ -5381,15 +5346,15 @@ System.err.println("curves size: " );
                         lineLength = (float) Math.sqrt(lineLengthSquared);
                         inprod = (dx * (x - x1)) + (dy * (y - y1));
 
-                        if ((inprod > 0) && (inprod < lineLengthSquared)) {
+                        if ( (inprod > 0) && (inprod < lineLengthSquared)) {
 
                             // perpindicular projection from point to line falls
                             // on the section of the line between (x1,y1) and (x2,y2)
-                            distance = Math.abs(((y1 - y2) * x) + ((x2 - x1) * y) + ((x1 * y2) - (y1 * x2))) /
-                                           lineLength;
+                            distance = Math.abs( ( (y1 - y2) * x) + ( (x2 - x1) * y) + ( (x1 * y2) - (y1 * x2)))
+                                    / lineLength;
                         } else {
-                            distance1 = (float) Math.sqrt(((x - x1) * (x - x1)) + ((y - y1) * (y - y1)));
-                            distance2 = (float) Math.sqrt(((x - x2) * (x - x2)) + ((y - y2) * (y - y2)));
+                            distance1 = (float) Math.sqrt( ( (x - x1) * (x - x1)) + ( (y - y1) * (y - y1)));
+                            distance2 = (float) Math.sqrt( ( (x - x2) * (x - x2)) + ( (y - y2) * (y - y2)));
                             distance = Math.min(distance1, distance2);
                         }
 
@@ -5416,8 +5381,8 @@ System.err.println("curves size: " );
 
     /**
      * Accessor that returns the name of the VOI.
-     *
-     * @return  the name
+     * 
+     * @return the name
      */
     public String toString() {
         return name;
@@ -5425,13 +5390,13 @@ System.err.println("curves size: " );
 
     /**
      * Transforms self.
-     *
-     * @param  tMatrix  transformation matrix
+     * 
+     * @param tMatrix transformation matrix
      */
-    public void transformVOI(TransMatrix tMatrix) {
+    public void transformVOI(final TransMatrix tMatrix) {
         int z;
 
-        if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+        if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
 
             for (z = 0; z < zDim; z++) {
 
@@ -5444,19 +5409,19 @@ System.err.println("curves size: " );
 
     /**
      * Transforms self.
-     *
-     * @param  rotX  rotation in x in degrees
-     * @param  rotY  rotation in y in degrees
-     * @param  rotZ  rotation in z in degrees
-     * @param  tX    translation in x
-     * @param  tY    translation in y
-     * @param  tZ    translation in z
-     * @param  sX    zoom in x
-     * @param  sY    zoom in y
-     * @param  sZ    zoom in z
+     * 
+     * @param rotX rotation in x in degrees
+     * @param rotY rotation in y in degrees
+     * @param rotZ rotation in z in degrees
+     * @param tX translation in x
+     * @param tY translation in y
+     * @param tZ translation in z
+     * @param sX zoom in x
+     * @param sY zoom in y
+     * @param sZ zoom in z
      */
-    public void transformVOI(float rotX, float rotY, float rotZ, float tX, float tY, float tZ, float sX, float sY,
-                             float sZ) {
+    public void transformVOI(final float rotX, final float rotY, final float rotZ, final float tX, final float tY,
+            final float tZ, final float sX, final float sY, final float sZ) {
         int z;
         TransMatrix tMatrix = null;
         Vector3f gcPt = null;
@@ -5464,7 +5429,7 @@ System.err.println("curves size: " );
         try {
             gcPt = new Vector3f();
             tMatrix = new TransMatrix(4);
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: VOI exportPolygons.");
 
@@ -5472,12 +5437,12 @@ System.err.println("curves size: " );
         }
 
         gcPt = getGeometricCenter();
-        tMatrix.setTranslate((gcPt.X + tX), (gcPt.Y + tY), (gcPt.Z + tZ));
+        tMatrix.setTranslate( (gcPt.X + tX), (gcPt.Y + tY), (gcPt.Z + tZ));
         tMatrix.setRotate(rotX, rotY, rotZ, TransMatrix.DEGREES);
         tMatrix.setZoom(sX, sY, sZ);
-        tMatrix.setTranslate(-gcPt.X, -gcPt.Y, -gcPt.Z);
+        tMatrix.setTranslate( -gcPt.X, -gcPt.Y, -gcPt.Z);
 
-        if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+        if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
 
             for (z = 0; z < zDim; z++) {
 
@@ -5490,29 +5455,30 @@ System.err.println("curves size: " );
 
     /**
      * Transforms self.
-     *
-     * @param  rotX     rotation in x in degrees
-     * @param  rotY     rotation in y in degrees
-     * @param  rotZ     rotation in z in degrees
-     * @param  tX       translation in x
-     * @param  tY       translation in y
-     * @param  tZ       translation in z
-     * @param  sX       zoom in x
-     * @param  sY       zoom in y
-     * @param  sZ       zoom in z
-     * @param  slice    DOCUMENT ME!
-     * @param  element  DOCUMENT ME!
-     * @param  doRound  if true round point coordinates to integers
+     * 
+     * @param rotX rotation in x in degrees
+     * @param rotY rotation in y in degrees
+     * @param rotZ rotation in z in degrees
+     * @param tX translation in x
+     * @param tY translation in y
+     * @param tZ translation in z
+     * @param sX zoom in x
+     * @param sY zoom in y
+     * @param sZ zoom in z
+     * @param slice DOCUMENT ME!
+     * @param element DOCUMENT ME!
+     * @param doRound if true round point coordinates to integers
      */
-    public void transformVOI(float rotX, float rotY, float rotZ, float tX, float tY, float tZ, float sX, float sY,
-                             float sZ, int slice, int element, boolean doRound) {
+    public void transformVOI(final float rotX, final float rotY, final float rotZ, final float tX, final float tY,
+            final float tZ, final float sX, final float sY, final float sZ, final int slice, final int element,
+            final boolean doRound) {
         TransMatrix tMatrix = null;
         Vector3f gcPt = null;
 
         try {
             gcPt = new Vector3f();
             tMatrix = new TransMatrix(4);
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: VOI exportPolygons.");
 
@@ -5520,12 +5486,12 @@ System.err.println("curves size: " );
         }
 
         gcPt = ((VOIContour) (curves[slice].elementAt(element))).getGeometricCenter();
-        tMatrix.setTranslate((gcPt.X + tX), (gcPt.Y + tY), (gcPt.Z + tZ));
+        tMatrix.setTranslate( (gcPt.X + tX), (gcPt.Y + tY), (gcPt.Z + tZ));
         tMatrix.setRotate(rotX, rotY, rotZ, TransMatrix.DEGREES);
         tMatrix.setZoom(sX, sY, sZ);
-        tMatrix.setTranslate(-gcPt.X, -gcPt.Y, -gcPt.Z);
+        tMatrix.setTranslate( -gcPt.X, -gcPt.Y, -gcPt.Z);
 
-        if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+        if ( (curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
             ((VOIContour) (curves[slice].elementAt(element))).transformContour(tMatrix, doRound);
         }
     }
@@ -5536,10 +5502,10 @@ System.err.println("curves size: " );
     // the fire method.
     /**
      * Fires a VOI event based on the VOI. calls the listener's <code>addedVOI()</code> method.
-     *
-     * @param  curve  DOCUMENT ME!
+     * 
+     * @param curve DOCUMENT ME!
      */
-    protected void fireVOIBaseAdded(VOIBase curve) {
+    protected void fireVOIBaseAdded(final VOIBase curve) {
 
         try {
 
@@ -5548,7 +5514,7 @@ System.err.println("curves size: " );
             if (listenerList.getListenerCount(VOIListener.class) == 0) {
                 return;
             }
-        } catch (NullPointerException npe) {
+        } catch (final NullPointerException npe) {
             listenerList = new EventListenerList();
         }
 
@@ -5557,7 +5523,7 @@ System.err.println("curves size: " );
         voiUpdate = new VOIEvent(this, curve);
 
         // Guaranteed to return a non-null array
-        Object[] listeners = listenerList.getListenerList();
+        final Object[] listeners = listenerList.getListenerList();
 
         // Process the listeners last to first, notifying
         // those that are interested in this event
@@ -5571,10 +5537,10 @@ System.err.println("curves size: " );
 
     /**
      * Fires a VOI event based on the VOI. calls the listener's <code>removedVOI()</code> method.
-     *
-     * @param  curve  DOCUMENT ME!
+     * 
+     * @param curve DOCUMENT ME!
      */
-    protected void fireVOIBaseRemoved(VOIBase curve) {
+    protected void fireVOIBaseRemoved(final VOIBase curve) {
 
         try {
 
@@ -5583,7 +5549,7 @@ System.err.println("curves size: " );
             if (listenerList.getListenerCount(VOIListener.class) == 0) {
                 return;
             }
-        } catch (NullPointerException npe) {
+        } catch (final NullPointerException npe) {
             listenerList = new EventListenerList();
         }
 
@@ -5592,7 +5558,7 @@ System.err.println("curves size: " );
         voiUpdate = new VOIEvent(this, curve);
 
         // Guaranteed to return a non-null array
-        Object[] listeners = listenerList.getListenerList();
+        final Object[] listeners = listenerList.getListenerList();
 
         // Process the listeners last to first, notifying
         // those that are interested in this event
@@ -5616,7 +5582,7 @@ System.err.println("curves size: " );
             if (listenerList.getListenerCount(VOIListener.class) == 0) {
                 return;
             }
-        } catch (NullPointerException npe) {
+        } catch (final NullPointerException npe) {
             listenerList = new EventListenerList();
         }
 
@@ -5625,7 +5591,7 @@ System.err.println("curves size: " );
         voiUpdate = new VOIEvent(this);
 
         // Guaranteed to return a non-null array
-        Object[] listeners = listenerList.getListenerList();
+        final Object[] listeners = listenerList.getListenerList();
         // Process the listeners last to first, notifying
         // those that are interested in this event
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
@@ -5638,15 +5604,16 @@ System.err.println("curves size: " );
 
     /**
      * Creates a binary mask at a slice.
-     *
-     * @param  xDim        x dimension, used to index into the image
-     * @param  yDim        y dimension, used to index into the image
-     * @param  slice       slice to create mask at
-     * @param  mask        the binary mask
-     * @param  XOR         indicates that nested VOI contours will be exclusive ORed with other contours of the VOI
-     * @param  onlyActive  Only mask regions that are active (i.e. selected )
+     * 
+     * @param xDim x dimension, used to index into the image
+     * @param yDim y dimension, used to index into the image
+     * @param slice slice to create mask at
+     * @param mask the binary mask
+     * @param XOR indicates that nested VOI contours will be exclusive ORed with other contours of the VOI
+     * @param onlyActive Only mask regions that are active (i.e. selected )
      */
-    public void createBinaryMask(int xDim, int yDim, int slice, BitSet mask, boolean XOR, boolean onlyActive) {
+    public void createBinaryMask(final int xDim, final int yDim, final int slice, final BitSet mask, final boolean XOR,
+            boolean onlyActive) {
 
         // System.err.println("doing create binary mask");
         int x = 0, y;
@@ -5656,20 +5623,20 @@ System.err.println("curves size: " );
         nGons = curves[slice].size();
         offsetZ = slice * xDim * yDim;
 
-        if ((process == true) && (curveType == CONTOUR)) {
-//System.err.println("XOR is " + XOR);
-//System.err.println("polarity additive?: " + (polarity == ADDITIVE));
+        if ( (process == true) && (curveType == VOI.CONTOUR)) {
+            // System.err.println("XOR is " + XOR);
+            // System.err.println("polarity additive?: " + (polarity == ADDITIVE));
             for (i = 0; i < nGons; i++) {
 
-                if (!onlyActive || ((VOIContour) (curves[slice].elementAt(i))).isActive()) {
+                if ( !onlyActive || ((VOIContour) (curves[slice].elementAt(i))).isActive()) {
                     ((VOIContour) (curves[slice].elementAt(i))).contains(0, 0, true);
                     ((VOIContour) (curves[slice].elementAt(i))).getBounds(xBounds, yBounds, zBounds);
 
                     // Keep the next four lines!!
-                    int xbs = (int) xBounds[0];
-                    int xbe = (int) xBounds[1];
-                    int ybs = (int) yBounds[0];
-                    int ybe = (int) yBounds[1];
+                    final int xbs = (int) xBounds[0];
+                    final int xbe = (int) xBounds[1];
+                    final int ybs = (int) yBounds[0];
+                    final int ybe = (int) yBounds[1];
 
                     // System.err.println("Xbounds 0 = " + xBounds[0] + " Xbounds 1 = " + xBounds[1]);
                     for (y = ybs; y < ybe; y++) {
@@ -5677,16 +5644,16 @@ System.err.println("curves size: " );
 
                         for (x = xbs; x < xbe; x++) {
 
-                            if (((VOIContour) (curves[slice].elementAt(i))).contains(x, y, false) &&
-                                    (polarity == ADDITIVE)) {
+                            if ( ((VOIContour) (curves[slice].elementAt(i))).contains(x, y, false)
+                                    && (polarity == VOI.ADDITIVE)) {
 
                                 if (XOR && mask.get(offset + x)) {
                                     mask.clear(offset + x);
                                 } else {
                                     mask.set(offset + x);
                                 }
-                            } else if (((VOIContour) (curves[slice].elementAt(i))).contains(x, y, false) &&
-                                           (polarity == SUBTRACTIVE)) {
+                            } else if ( ((VOIContour) (curves[slice].elementAt(i))).contains(x, y, false)
+                                    && (polarity == VOI.SUBTRACTIVE)) {
 
                                 // System.err.println("doing subtractive");
                                 mask.clear(offset + x);
@@ -5697,24 +5664,24 @@ System.err.println("curves size: " );
                     }
                 }
             }
-        } else if ((process == true) && (curveType == POINT)) {
+        } else if ( (process == true) && (curveType == VOI.POINT)) {
             Vector3f pt;
-            int size = curves[slice].size();
+            final int size = curves[slice].size();
 
             for (i = 0; i < size; i++) {
                 pt = ((VOIPoint) (curves[slice].elementAt(i))).exportPoint();
 
-                if (!onlyActive || ((VOIPoint) (curves[slice].elementAt(i))).isActive()) {
-                    offset = MipavMath.round((slice * xDim * yDim) + (pt.Y * xDim) + pt.X);
+                if ( !onlyActive || ((VOIPoint) (curves[slice].elementAt(i))).isActive()) {
+                    offset = MipavMath.round( (slice * xDim * yDim) + (pt.Y * xDim) + pt.X);
 
-                    if (polarity == ADDITIVE) {
+                    if (polarity == VOI.ADDITIVE) {
 
                         if (XOR && mask.get(offset)) {
                             mask.clear(offset);
                         } else {
                             mask.set(offset);
                         }
-                    } else if (polarity == SUBTRACTIVE) {
+                    } else if (polarity == VOI.SUBTRACTIVE) {
                         mask.clear(offset);
                     } else {
                         // mask[0].clear(offset + x);
@@ -5726,14 +5693,13 @@ System.err.println("curves size: " );
 
     /**
      * This is used by the method maxWidth.
-     *
-     * @param   pt           calculate the distance from this point to any point on any of the contours which form the
-     *                       VOI.
-     * @param   maxDistance  single array value to keep track of the largest
-     *
-     * @return  the maximum width of the VOI
+     * 
+     * @param pt calculate the distance from this point to any point on any of the contours which form the VOI.
+     * @param maxDistance single array value to keep track of the largest
+     * 
+     * @return the maximum width of the VOI
      */
-    private Vector3f findMaxWidth(Vector3f pt, double[] maxDistance) {
+    private Vector3f findMaxWidth(final Vector3f pt, final double[] maxDistance) {
         int z, i;
         int j, conSize;
         double distance;
@@ -5743,16 +5709,15 @@ System.err.println("curves size: " );
 
             for (i = 0; i < curves[z].size(); i++) {
 
-                if (curveType == CONTOUR) {
+                if (curveType == VOI.CONTOUR) {
                     conSize = ((VOIContour) (curves[z].elementAt(i))).size();
 
                     for (j = 0; j < conSize; j++) {
-                        distance = MipavMath.distance(pt,
-                                                      (Vector3f) ((VOIContour) (curves[z].elementAt(i))).elementAt(j));
+                        distance = MipavMath.distance(pt, ((VOIContour) (curves[z].elementAt(i))).elementAt(j));
 
                         if (distance > maxDistance[0]) {
                             maxDistance[0] = distance;
-                            point = (Vector3f) ((VOIContour) (curves[z].elementAt(i))).elementAt(j);
+                            point = ((VOIContour) (curves[z].elementAt(i))).elementAt(j);
                         }
                     }
                 }
@@ -5764,15 +5729,15 @@ System.err.println("curves size: " );
 
     /**
      * Determines if the given BitSet binary mask is true for all points that are within the VOI.
-     *
-     * @param   xDim   x dimension, used to index into the image
-     * @param   yDim   y dimension, used to index into the image
-     * @param   slice  int the z slice in which to look
-     * @param   mask   BitSet the mask to check
-     *
-     * @return  boolean is the mask true for at least all area covered by VOI
+     * 
+     * @param xDim x dimension, used to index into the image
+     * @param yDim y dimension, used to index into the image
+     * @param slice int the z slice in which to look
+     * @param mask BitSet the mask to check
+     * 
+     * @return boolean is the mask true for at least all area covered by VOI
      */
-    private boolean isBinaryMaskContained(int xDim, int yDim, int slice, BitSet mask) {
+    private boolean isBinaryMaskContained(final int xDim, final int yDim, final int slice, final BitSet mask) {
         int x, y;
         int i, nGons;
         int offset;
@@ -5780,27 +5745,27 @@ System.err.println("curves size: " );
         nGons = curves[slice].size();
         offsetZ = slice * xDim * yDim;
 
-        if ((process == true) && (curveType == CONTOUR)) {
+        if ( (process == true) && (curveType == VOI.CONTOUR)) {
 
             for (i = 0; i < nGons; i++) {
                 ((VOIContour) (curves[slice].elementAt(i))).contains(0, 0, true);
                 ((VOIContour) (curves[slice].elementAt(i))).getBounds(xBounds, yBounds, zBounds);
 
-                int xbs = (int) xBounds[0];
-                int xbe = (int) xBounds[1];
-                int ybs = (int) yBounds[0];
-                int ybe = (int) yBounds[1];
+                final int xbs = (int) xBounds[0];
+                final int xbe = (int) xBounds[1];
+                final int ybs = (int) yBounds[0];
+                final int ybe = (int) yBounds[1];
 
                 for (y = ybs; y < ybe; y++) {
                     offset = offsetZ + (y * xDim);
 
                     for (x = xbs; x < xbe; x++) {
 
-                        if (((VOIContour) (curves[slice].elementAt(i))).contains(x, y, false) &&
-                                (polarity == ADDITIVE)) {
+                        if ( ((VOIContour) (curves[slice].elementAt(i))).contains(x, y, false)
+                                && (polarity == VOI.ADDITIVE)) {
 
                             // if point was in VOI but not already set in mask, not contained
-                            if (!mask.get(offset + x)) {
+                            if ( !mask.get(offset + x)) {
                                 return false;
                             }
                         }
@@ -5812,16 +5777,15 @@ System.err.println("curves size: " );
         return true;
     }
 
-    
     /**
      * Gets a sorted Vector of PolyPoints (for use in the VOI copy/pasting)
+     * 
      * @return Vector, sorted
      */
     public Vector getSortedPolyPoints() {
-    	Vector distanceVector = new Vector();
+        final Vector distanceVector = new Vector();
         Vector3f firstPoint;
         int i;
-        
 
         int sliceCounter;
         int pointNumber = 0;
@@ -5831,13 +5795,13 @@ System.err.println("curves size: " );
             for (i = 0; i < curves[sliceCounter].size(); i++) {
 
                 try {
-                    pointNumber = Integer.parseInt(((VOIPoint) curves[sliceCounter].elementAt(i)).getLabel());
+                    pointNumber = Integer.parseInt( ((VOIPoint) curves[sliceCounter].elementAt(i)).getLabel());
                     firstPoint = ((VOIPoint) curves[sliceCounter].elementAt(i)).exportPoint();
 
                     firstPoint.Z = sliceCounter;
 
                     distanceVector.add(new PolyPointHolder(firstPoint, pointNumber));
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     e.printStackTrace();
                 }
             }
@@ -5846,19 +5810,17 @@ System.err.println("curves size: " );
         Collections.sort(distanceVector, new PointComparator());
         return distanceVector;
     }
-    
-    
-    public String getExtension() {
-		return extension;
-	}
 
-	public void setExtension(String extension) {
-		this.extension = extension;
-	}
-    
-    
-    
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
+    public String getExtension() {
+        return extension;
+    }
+
+    public void setExtension(final String extension) {
+        this.extension = extension;
+    }
+
+    // ~ Inner Classes
+    // --------------------------------------------------------------------------------------------------
 
     /**
      * DOCUMENT ME!
@@ -5867,17 +5829,17 @@ System.err.println("curves size: " );
 
         /**
          * DOCUMENT ME!
-         *
-         * @param   o1  DOCUMENT ME!
-         * @param   o2  DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
+         * 
+         * @param o1 DOCUMENT ME!
+         * @param o2 DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
          */
-        public int compare(Object o1, Object o2) {
-            int a = ((PolyPointHolder) o1).getNumber();
-            int b = ((PolyPointHolder) o2).getNumber();
+        public int compare(final Object o1, final Object o2) {
+            final int a = ((PolyPointHolder) o1).getNumber();
+            final int b = ((PolyPointHolder) o2).getNumber();
 
-            return ((new Integer(a)).compareTo(new Integer(b)));
+            return ( (new Integer(a)).compareTo(new Integer(b)));
         }
 
     }
@@ -5888,26 +5850,26 @@ System.err.println("curves size: " );
     public class PolyPointHolder {
 
         /** DOCUMENT ME! */
-        private int number;
+        private final int number;
 
         /** DOCUMENT ME! */
-        private Vector3f pt;
+        private final Vector3f pt;
 
         /**
          * Creates a new PolyPointHolder object.
-         *
-         * @param  p  DOCUMENT ME!
-         * @param  n  DOCUMENT ME!
+         * 
+         * @param p DOCUMENT ME!
+         * @param n DOCUMENT ME!
          */
-        public PolyPointHolder(Vector3f p, int n) {
+        public PolyPointHolder(final Vector3f p, final int n) {
             this.pt = p;
             this.number = n;
         }
 
         /**
          * DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
          */
         public int getNumber() {
             return this.number;
@@ -5915,14 +5877,12 @@ System.err.println("curves size: " );
 
         /**
          * DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
          */
         public Vector3f getPoint() {
             return this.pt;
         }
     }
-
-	
 
 }

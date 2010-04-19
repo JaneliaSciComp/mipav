@@ -1,53 +1,71 @@
 package gov.nih.mipav.model.algorithms.filters;
 
 
-import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.MipavUtil;
 
-import java.io.*;
+import java.io.IOException;
 
 
 /**
- * DOCUMENT ME!
+ * <p>
+ * In hard thresholding a wavelet coefficient whose magnitude is below the product of threshold and the maximum wavelet
+ * magnitude is zeroed, and a wavelet coefficient whose magnitude is greater than or equal to the product is left
+ * unchanged. In soft thresholding a wavelet coefficient whose magnitude is below the product of threshold and the
+ * maximum wavelet magnitude is zeroed, and a wavelet coefficient whose magnitude is greater than or equal to the
+ * product has its magnitude decreased by the product. Generally, soft thresholding is a better choice. The signal
+ * reconstructed with the coefficients left after hard thresholding may have undesirable artifacts including sidelobes.
+ * Then, an inverse wavelet transform is performed. The image is stripped down to its original size. The data is clamped
+ * so as not to exceed the bounds of the data type of the image into which it is imported. This is a simple method of
+ * reducing white noise.
+ * </p>
+ * 
+ * <p>
+ * The forward and inverse Daubechies wavelet transform routines are taken from Numerical Recipes in C The Art of
+ * Scientific Computing, 2nd edition, by William H. Press, Saul A. Teukolsky, William T. Vetterling, and Brian P.
+ * Flannery, Cambridge University Press, 1997, Chapter 13.10, pp. 591 - 606. The wavelet routines in Numerical Recipes
+ * in C are in the public domain. See {@link http://www.nr.com/public-domain.html} for more information.
+ * </p>
+ * 
+ * <p>
+ * The wavelet transform is mathematically defined only within a signal; image applications need to solve the boundary
+ * problem. 4 different techniques exist:
+ * <ol>
+ * <li>Mirror image replication</li>
+ * <li>Zero padding</li>
+ * <li>Linear extrapolation</li>
+ * <li>Circular convolution</li>
+ * </ol>
+ * </p>
+ * 
+ * <p>
+ * In this module zero padding is used. As stated in the Medx 3.4 User's Guide in Chapter 17 on Advanced Image
+ * Processing Techniques: "The mirror condition can only be used with symmetric wavelet basis." "Daubechies wavelet
+ * bases are non-symmetrical orthogonal wavelets with compact support and are good for data suppression. Only the
+ * periodic boundary condition should be used when using the Daubechies wavelet basis." In Empirical Evaluation of
+ * Boundary Policies for Wavelet-based Image Coding by Claudia Schremmer zero padding, circular convolution, and mirror
+ * image padding are compared. She concludes that mirror padding works best with regard to quality, zero padding
+ * performs worst with regard to quality, and circular convolution is midway between the 2. The matlab wavelet toolbox
+ * literature says that "the disadvantage of zero padding is that discontinuities are artificially created at the
+ * border." Mirror padding "has the disadvantage of artificially creating discontinuities of the first derivative at the
+ * border, but this method works well in general for images." Extrapolation "works well in general for smooth signals."
+ * The wavelet toolbox uses mirror padding as its default mode. How much padding is required? Claudia Schremmer states:
+ * "With padding, the coefficients of the signal on either side of the border are padded with filter_length - 2
+ * coefficients. Consequently, each signal coefficient enters into filter_length/2 calculations of convolution, and the
+ * transform is reversible."
+ * </p>
+ * 
+ * <p>
+ * The image is expanded so that all dimensions are powers of 2 and there is zero padding going past each original
+ * boundary by the coefficient number - 2. The image is transformed into wavelet coefficients.
+ * </p>
  */
 public class AlgorithmWaveletThreshold extends AlgorithmBase {
-    // The image is expanded so that all dimensions are powers of 2 and there is zero padding going past each original
-    // boundary by the coefficient number - 2.   The image is transformed into wavelet coefficients.
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
-
-    /**
-     * In hard thresholding a wavelet coefficient whose magnitude is below the product of threshold and the maximum
-     * wavelet magnitude is zeroed, and a wavelet coefficient whose magnitude is greater than or equal to the product is
-     * left unchanged. In soft thresholding a wavelet coefficient whose magnitude is below the product of threshold and
-     * the maximum wavelet magnitude is zeroed, and a wavelet coefficient whose magnnitude is greater than or equal to
-     * the product has its magnitude decreased by the product. Generally, soft thresholding is a better choice. The
-     * signal reconstructed with the coefficients left after hard thresholding may have undesirable artifacts including
-     * sidelobes. Then, an inverse wavelet transform is performed. The image is stripped down to its original size. The
-     * data is clamped so as not to exceed the bounds of the data type of the image into which it is imported. This is a
-     * simple method of reducing white noise. The forward and inverse Daubechies wavelet transform routines are taken
-     * from Numerical Recipes in C The Art of Scientific Computing, 2nd edition, by William H. Press, Saul A. Teukolsky,
-     * William T. Vetterling, and Brian P. Flannery, Cambridge University Press, 1997, Chapter 13.10, pp. 591 - 606. The
-     * wavelet transform is mathematically defined only within a signal; image applications need to solve the boundary
-     * problem. 4 different techniques exist: 1. Mirror image replication 2. Zero padding 3. Linear extrapolation 4.
-     * Circular convolution In this module zero padding is used. As stated in the Medx 3.4 User's Guide in Chapter 17 on
-     * Advanced Image Processing Techniques: "The mirror condition can only be used with symmetric wavelet basis."
-     * "Daubechies wavelet bases are non-symmetrical orthogonal wavelets with compact support and are good for data
-     * suppression. Only the periodic boundary condition should be used when using the Daubechies wavelet basis." In
-     * Empirical Evaluation of Boundary Policies for Wavelet-based Image Coding by Claudia Schremmer zero padding,
-     * circular convolution, and mirror image padding are compared. She concludes that mirror padding works best with
-     * regard to quality, zero padding performs worst with regard to quality, and circular convolution is midway between
-     * the 2. The matlab wavelet toolbox literature says that "the disadvantage of zero padding is that discontinuities
-     * are artificially created at the border." Mirror padding "has the disadvantage of artificially creating
-     * discontinuities of the first derivative at the border, but this method works well in general for images."
-     * Extrapolation "works well in general for smooth signals." The wavelet toolbox uses mirror padding as its default
-     * mode. How much padding is required? Claudia Schremmer states: " With padding, the coefficients of the signal on
-     * either side of the border are padded with filter_length - 2 coefficients. Consequently, each signal coefficient
-     * enters into filter_length/2 calculations of convolution, and the transform is reversible."
-     */
-    
     /** FORWARD and INVERSE are 2 possible transformDir values */
     public static final int INVERSE = -1;
 
@@ -59,10 +77,9 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
      * a Daubechies 4-coefficient wavelet filter. PWT implements Daubechies filters with 4, 12, and 20 coefficients.
      * DAUB4 and PWT use different default centerings. In spite of the faster speed of DAUB4, the dialog is designed
      * only to call PWT so that the user only sees changes due to the number of coefficients and is not confused by
-     * changes in centering.
-     * Reference on NONNEGATIVE_GARROTE and SCAD thresholding:
-     * "Wavelet Estimators in Nonparametric Regression: A Comparative Simulation Study" by Anestis Antoniadis,
-     * Jeremie Bigot, and Theofanis Sapatinas, Journal of Statistical Software, Vol. 6, Issue 6, pp. 1-83, 2001.
+     * changes in centering. Reference on NONNEGATIVE_GARROTE and SCAD thresholding: "Wavelet Estimators in
+     * Nonparametric Regression: A Comparative Simulation Study" by Anestis Antoniadis, Jeremie Bigot, and Theofanis
+     * Sapatinas, Journal of Statistical Software, Vol. 6, Issue 6, pp. 1-83, 2001.
      */
     public static final int DAUB4 = 1;
 
@@ -82,35 +99,32 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
     public static final double C3 = -0.1294095225512604;
 
     /** coefficients for the PWT filter. */
-    public static final double[] c4 = {
-        0.0, 0.4829629131445341, 0.8365163037378079, 0.2241438680420134, -0.1294095225512604
-    };
+    public static final double[] c4 = {0.0, 0.4829629131445341, 0.8365163037378079, 0.2241438680420134,
+            -0.1294095225512604};
 
     /** DOCUMENT ME! */
-    public static final double[] c12 = {
-        0.0, 0.111540743350, 0.494623890398, 0.751133908021, 0.315250351709, -0.226264693965, -0.129766867567,
-        0.097501605587, 0.027522865530, -0.031582039318, 0.000553842201, 0.004777257511, -0.001077301085
-    };
+    public static final double[] c12 = {0.0, 0.111540743350, 0.494623890398, 0.751133908021, 0.315250351709,
+            -0.226264693965, -0.129766867567, 0.097501605587, 0.027522865530, -0.031582039318, 0.000553842201,
+            0.004777257511, -0.001077301085};
 
     /** DOCUMENT ME! */
-    public static final double[] c20 = {
-        0.0, 0.026670057901, 0.188176800078, 0.527201188932, 0.688459039454, 0.281172343661, -0.249846424327,
-        -0.195946274377, 0.127369340336, 0.093057364604, -0.071394147166, -0.029457536822, 0.033212674059,
-        0.003606553567, -0.010733175483, 0.001395351747, 0.001992405295, -0.000685856695, -0.000116466855,
-        0.000093588670, -0.000013264203
-    };
+    public static final double[] c20 = {0.0, 0.026670057901, 0.188176800078, 0.527201188932, 0.688459039454,
+            0.281172343661, -0.249846424327, -0.195946274377, 0.127369340336, 0.093057364604, -0.071394147166,
+            -0.029457536822, 0.033212674059, 0.003606553567, -0.010733175483, 0.001395351747, 0.001992405295,
+            -0.000685856695, -0.000116466855, 0.000093588670, -0.000013264203};
 
     /** thresholding estimator. */
     public static final int HARD = 1;
 
     /** DOCUMENT ME! */
     public static final int SOFT = 2;
-    
+
     public static final int NONNEGATIVE_GARROTE = 3;
-    
+
     public static final int SCAD = 4;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private float[] aArray;
@@ -137,10 +151,10 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
     private double[] cc;
 
     /** DOCUMENT ME! */
-    private int cm2; // cNum - 2
+    private final int cm2; // cNum - 2
 
     /** DOCUMENT ME! */
-    private int cNum;
+    private final int cNum;
 
     /** DOCUMENT ME! */
     private double[] cr;
@@ -149,13 +163,13 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
     private int dataType;
 
     /** DOCUMENT ME! */
-    private boolean doWaveletImage; // display wavelet transform in log magnitude if true
+    private final boolean doWaveletImage; // display wavelet transform in log magnitude if true
 
     /** DOCUMENT ME! */
     private int[] extents;
 
     /** DOCUMENT ME! */
-    private int filterType;
+    private final int filterType;
 
     /** DOCUMENT ME! */
     private boolean foundSize;
@@ -191,11 +205,12 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
     private int offsetZ;
 
     /** DOCUMENT ME! */
-    private float threshold; // fraction of maximum magnitude below which coefficients
-                             // are zeroed
+    private final float threshold; // fraction of maximum magnitude below which coefficients
+
+    // are zeroed
 
     /** DOCUMENT ME! */
-    private int thresholdType; // HARD or SOFT
+    private final int thresholdType; // HARD or SOFT
 
     /** DOCUMENT ME! */
     private int transformDir;
@@ -209,27 +224,28 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
     /** DOCUMENT ME! */
     private int xy, newXY;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates a new AlgorithmWaveletThreshold object.
-     *
-     * @param  srcImg          source image model
-     * @param  filterType      wavelet filter
-     * @param  cNum            number of coefficients in the pwt filter
-     * @param  thresholdType   HARD or SOFT thresholding
-     * @param  threshold       fraction of maximum magnitude below which coefficients are zeroed
-     * @param  doWaveletImage  display wavelet transform image in log magnitude if true
-     * @param  userInterface   DOCUMENT ME!
+     * 
+     * @param srcImg source image model
+     * @param filterType wavelet filter
+     * @param cNum number of coefficients in the pwt filter
+     * @param thresholdType HARD or SOFT thresholding
+     * @param threshold fraction of maximum magnitude below which coefficients are zeroed
+     * @param doWaveletImage display wavelet transform image in log magnitude if true
+     * @param userInterface DOCUMENT ME!
      */
-    public AlgorithmWaveletThreshold(ModelImage srcImg, int filterType, int cNum, int thresholdType, float threshold,
-                                     boolean doWaveletImage) {
+    public AlgorithmWaveletThreshold(final ModelImage srcImg, final int filterType, int cNum, final int thresholdType,
+            final float threshold, final boolean doWaveletImage) {
         super(null, srcImg);
 
         this.filterType = filterType;
         this.cNum = cNum;
 
-        if (filterType == DAUB4) {
+        if (filterType == AlgorithmWaveletThreshold.DAUB4) {
             cNum = 4;
         }
 
@@ -241,24 +257,24 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
 
     /**
      * Creates a new AlgorithmWaveletThreshold object.
-     *
-     * @param  destImg         image model where result image is to be stored
-     * @param  srcImg          source image model
-     * @param  filterType      wavelet filter
-     * @param  cNum            number of coefficients in the pwt filter
-     * @param  thresholdType   HARD or SOFT thresholding
-     * @param  threshold       fraction of maximum magnitude below which coefficients are zeroed
-     * @param  doWaveletImage  display log maagnitude wavelet transform image if true
-     * @param  userInterface   DOCUMENT ME!
+     * 
+     * @param destImg image model where result image is to be stored
+     * @param srcImg source image model
+     * @param filterType wavelet filter
+     * @param cNum number of coefficients in the pwt filter
+     * @param thresholdType HARD or SOFT thresholding
+     * @param threshold fraction of maximum magnitude below which coefficients are zeroed
+     * @param doWaveletImage display log maagnitude wavelet transform image if true
+     * @param userInterface DOCUMENT ME!
      */
-    public AlgorithmWaveletThreshold(ModelImage destImg, ModelImage srcImg, int filterType, int cNum, int thresholdType,
-                                     float threshold, boolean doWaveletImage) {
+    public AlgorithmWaveletThreshold(final ModelImage destImg, final ModelImage srcImg, final int filterType, int cNum,
+            final int thresholdType, final float threshold, final boolean doWaveletImage) {
         super(destImg, srcImg);
 
         this.filterType = filterType;
         this.cNum = cNum;
 
-        if (filterType == DAUB4) {
+        if (filterType == AlgorithmWaveletThreshold.DAUB4) {
             cNum = 4;
         }
 
@@ -268,7 +284,8 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
         this.doWaveletImage = doWaveletImage;
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Prepare this class for destruction.
@@ -288,8 +305,8 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
 
     /**
      * Accessor that returns the image.
-     *
-     * @return  the wavelet image
+     * 
+     * @return the wavelet image
      */
     public ModelImage getWaveletImage() {
         return waveletImage;
@@ -313,26 +330,22 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
 
         fireProgressStateChanged(srcImage.getImageName(), "Importing source image...");
 
-        
-
-        
-
-        if (filterType == PWT) {
+        if (filterType == AlgorithmWaveletThreshold.PWT) {
 
             switch (cNum) {
 
                 case 4:
-                    cc = c4;
+                    cc = AlgorithmWaveletThreshold.c4;
                     cr = new double[5];
                     break;
 
                 case 12:
-                    cc = c12;
+                    cc = AlgorithmWaveletThreshold.c12;
                     cr = new double[13];
                     break;
 
                 case 20:
-                    cc = c20;
+                    cc = AlgorithmWaveletThreshold.c20;
                     cr = new double[21];
                     break;
             } // switch(cNum)
@@ -342,11 +355,11 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
                 sig = -sig;
             }
 
-            ioff = joff = -(cNum >> 1);
+            ioff = joff = - (cNum >> 1);
             // These values of ioff and joff center the "support" of the
-            // wavelets at each level.  Alternatively, the "peaks" of the
+            // wavelets at each level. Alternatively, the "peaks" of the
             // wavelets can be approximately centered by the choices
-            // ioff = -2 and joff = -cNum + 2.  Note that
+            // ioff = -2 and joff = -cNum + 2. Note that
             // daub4 and pwt use different default centerings.
         } // if (filterType == PWT)
 
@@ -367,11 +380,11 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
 
         try {
             aArray = new float[arrayLength];
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             aArray = null;
             System.gc();
             displayError("AlgorithmWaveletThreshold: Out of memory creating a");
-            
+
             setCompleted(false);
 
             return;
@@ -379,14 +392,13 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
 
         try {
             srcImage.exportData(0, arrayLength, aArray);
-        } catch (IOException error) {
+        } catch (final IOException error) {
             displayError("AlgorithmWaveletThreshold: Source image is locked");
-            
+
             setCompleted(false);
 
             return;
         }
-
 
         // Create aExp with all dimensions powers of 2 and with zero padding
         // going in cNum - 2 past each boundary
@@ -396,7 +408,7 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
             minSize = extents[i] + (2 * cm2);
             foundSize = false;
 
-            for (int j = 2; (j < 30) && (!foundSize); j++) {
+            for (int j = 2; (j < 30) && ( !foundSize); j++) {
 
                 if ((int) Math.pow(2, j) >= minSize) {
                     newExtents[i] = (int) Math.pow(2, j);
@@ -420,11 +432,11 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
 
         try {
             aExp = new float[newArrayLength];
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             aExp = null;
             System.gc();
             displayError("AlgorithmWaveletThreshold: Out of memory creating aExp");
-            
+
             setCompleted(false);
 
             return;
@@ -510,9 +522,8 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
                 for (y = 0; y < yDim; y++) {
 
                     for (z = 0; z < zDim; z++) {
-                        aExp[x + offsetX + (newXDim * (y + offsetY)) + (newXY * (z + offsetZ))] = aArray[x +
-                                                                                                         (xDim * y) +
-                                                                                                         (xy * z)];
+                        aExp[x + offsetX + (newXDim * (y + offsetY)) + (newXY * (z + offsetZ))] = aArray[x + (xDim * y)
+                                + (xy * z)];
                     }
                 }
             }
@@ -753,20 +764,20 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
 
         fireProgressStateChanged("Performing forward wavelet transform");
         fireProgressStateChanged(20);
-        transformDir = FORWARD;
+        transformDir = AlgorithmWaveletThreshold.FORWARD;
         wtn(aExp);
 
         if (doWaveletImage) {
-            waveletImage = new ModelImage(ModelImage.FLOAT, newExtents, "wavelet transform");
+            waveletImage = new ModelImage(ModelStorageBase.FLOAT, newExtents, "wavelet transform");
             waveletImage.setOriginalExtents(extents);
 
             try {
                 aLog = new float[newArrayLength];
-            } catch (OutOfMemoryError e) {
+            } catch (final OutOfMemoryError e) {
                 aLog = null;
                 System.gc();
                 displayError("AlgorithmWaveletThreshold: Out of memory creating aLog");
-                
+
                 setCompleted(false);
 
                 return;
@@ -778,9 +789,9 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
 
             try {
                 waveletImage.importData(0, aLog, true);
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 displayError("AlgorithmWaveletThreshold: IOException on wavelet image import data");
-                
+
                 setCompleted(false);
 
                 return;
@@ -791,10 +802,10 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
         fireProgressStateChanged(50);
         aMax = -Float.MAX_VALUE;
 
-        for (int i = 0; i < aExp.length; i++) {
+        for (final float element : aExp) {
 
-            if (Math.abs(aExp[i]) > aMax) {
-                aMax = Math.abs(aExp[i]);
+            if (Math.abs(element) > aMax) {
+                aMax = Math.abs(element);
             }
         }
 
@@ -828,33 +839,32 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
                 }
 
                 break;
-                
+
             case NONNEGATIVE_GARROTE:
                 aCutSquared = aCutoff * aCutoff;
                 for (int i = 0; i < aExp.length; i++) {
                     if (Math.abs(aExp[i]) < aCutoff) {
                         aExp[i] = 0.0f;
                         belowThreshold++;
-                    }
-                    else {
-                        aExp[i] -= aCutSquared/aExp[i];
+                    } else {
+                        aExp[i] -= aCutSquared / aExp[i];
                     }
                 }
                 break;
-                
+
             case SCAD:
                 for (int i = 0; i < aExp.length; i++) {
                     if (Math.abs(aExp[i]) < aCutoff) {
                         aExp[i] = 0.0f;
                         belowThreshold++;
-                    } else if ((aExp[i] >= aCutoff) && (aExp[i] <= 2*aCutoff)) {
+                    } else if ( (aExp[i] >= aCutoff) && (aExp[i] <= 2 * aCutoff)) {
                         aExp[i] -= aCutoff;
-                    } else if ((aExp[i] <= -aCutoff) && (aExp[i] >= -2*aCutoff)) {
+                    } else if ( (aExp[i] <= -aCutoff) && (aExp[i] >= -2 * aCutoff)) {
                         aExp[i] += aCutoff;
-                    } else if ((aExp[i] > 2*aCutoff) && (aExp[i] <= 3.7*aCutoff)) {
-                        aExp[i] = (float)((2.7*aExp[i] - 3.7*aCutoff)/1.7);
-                    } else if ((aExp[i] < -2*aCutoff) && (aExp[i] >= -3.7*aCutoff)) {
-                        aExp[i] = (float)((2.7*aExp[i] + 3.7*aCutoff)/1.7);
+                    } else if ( (aExp[i] > 2 * aCutoff) && (aExp[i] <= 3.7 * aCutoff)) {
+                        aExp[i] = (float) ( (2.7 * aExp[i] - 3.7 * aCutoff) / 1.7);
+                    } else if ( (aExp[i] < -2 * aCutoff) && (aExp[i] >= -3.7 * aCutoff)) {
+                        aExp[i] = (float) ( (2.7 * aExp[i] + 3.7 * aCutoff) / 1.7);
                     }
                 }
                 break;
@@ -863,7 +873,7 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
 
         fireProgressStateChanged("Performing inverse wavelet transform");
         fireProgressStateChanged(60);
-        transformDir = INVERSE;
+        transformDir = AlgorithmWaveletThreshold.INVERSE;
         wtn(aExp);
 
         // Strip the outer pixels from aExp to return to the originally
@@ -884,8 +894,8 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
                 for (y = 0; y < yDim; y++) {
 
                     for (z = 0; z < zDim; z++) {
-                        aArray[x + (xDim * y) + (xy * z)] = aExp[x + offsetX + (newXDim * (y + offsetY)) +
-                                                                 (newXY * (z + offsetZ))];
+                        aArray[x + (xDim * y) + (xy * z)] = aExp[x + offsetX + (newXDim * (y + offsetY))
+                                + (newXY * (z + offsetZ))];
                     }
                 }
             }
@@ -900,7 +910,7 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
             dataType = srcImage.getType();
         }
 
-        if (dataType == ModelImage.UBYTE) {
+        if (dataType == ModelStorageBase.UBYTE) {
 
             for (int i = 0; i < aArray.length; i++) {
 
@@ -911,7 +921,7 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
                 }
             }
         } // if (dataType == ModelImage.UBYTE)
-        else if (dataType == ModelImage.BYTE) {
+        else if (dataType == ModelStorageBase.BYTE) {
 
             for (int i = 0; i < aArray.length; i++) {
 
@@ -922,7 +932,7 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
                 }
             }
         } // else if (dataType == ModelImage.BYTE)
-        else if (dataType == ModelImage.USHORT) {
+        else if (dataType == ModelStorageBase.USHORT) {
 
             for (int i = 0; i < aArray.length; i++) {
 
@@ -933,7 +943,7 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
                 }
             }
         } // else if (dataType == ModelImage.USHORT)
-        else if (dataType == ModelImage.SHORT) {
+        else if (dataType == ModelStorageBase.SHORT) {
 
             for (int i = 0; i < aArray.length; i++) {
 
@@ -944,7 +954,7 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
                 }
             }
         } // else if (dataType == ModelImage.SHORT)
-        else if (dataType == ModelImage.UINTEGER) {
+        else if (dataType == ModelStorageBase.UINTEGER) {
 
             for (int i = 0; i < aArray.length; i++) {
 
@@ -954,7 +964,7 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
                     aArray[i] = 0;
                 }
             }
-        } else if (dataType == ModelImage.INTEGER) {
+        } else if (dataType == ModelStorageBase.INTEGER) {
 
             for (int i = 0; i < aArray.length; i++) {
 
@@ -975,9 +985,9 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
 
             try {
                 destImage.importData(0, aArray, true);
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 displayError("AlgorithmWaveletThreshold: IOException on destination image import data");
-                
+
                 setCompleted(false);
 
                 return;
@@ -986,9 +996,9 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
 
             try {
                 srcImage.importData(0, aArray, true);
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 displayError("AlgorithmWaveletThreshold: IOException on source image import data");
-                
+
                 setCompleted(false);
 
                 return;
@@ -998,23 +1008,22 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
 
         setCompleted(true);
 
-        
     }
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  a  data vector to which Daubechies 4-coefficient wavelet filter or its transpose (for transformDir ==
+     * 
+     * @param a data vector to which Daubechies 4-coefficient wavelet filter or its transpose (for transformDir ==
      *            INVERSE) is applied
-     * @param  n  DOCUMENT ME!
+     * @param n DOCUMENT ME!
      */
-    private void daub4(float[] a, int n) {
+    private void daub4(final float[] a, final int n) {
         double[] wksp;
         int nh, nh1, i, j;
 
         if (n < 4) {
             MipavUtil.displayError("Length of daub4 array must be at least 4");
-            
+
             setCompleted(false);
 
             return;
@@ -1023,23 +1032,31 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
         wksp = new double[n];
         nh1 = (nh = n >> 1) + 1;
 
-        if (transformDir == FORWARD) { // Apply filter
+        if (transformDir == AlgorithmWaveletThreshold.FORWARD) { // Apply filter
 
             for (i = 0, j = 0; j < (n - 3); j += 2, i++) {
-                wksp[i] = (C0 * a[j]) + (C1 * a[j + 1]) + (C2 * a[j + 2]) + (C3 * a[j + 3]);
-                wksp[i + nh] = (C3 * a[j]) - (C2 * a[j + 1]) + (C1 * a[j + 2]) - (C0 * a[j + 3]);
+                wksp[i] = (AlgorithmWaveletThreshold.C0 * a[j]) + (AlgorithmWaveletThreshold.C1 * a[j + 1])
+                        + (AlgorithmWaveletThreshold.C2 * a[j + 2]) + (AlgorithmWaveletThreshold.C3 * a[j + 3]);
+                wksp[i + nh] = (AlgorithmWaveletThreshold.C3 * a[j]) - (AlgorithmWaveletThreshold.C2 * a[j + 1])
+                        + (AlgorithmWaveletThreshold.C1 * a[j + 2]) - (AlgorithmWaveletThreshold.C0 * a[j + 3]);
             }
 
-            wksp[i] = (C0 * a[n - 2]) + (C1 * a[n - 1]) + (C2 * a[0]) + (C3 * a[1]);
-            wksp[i + nh] = (C3 * a[n - 2]) - (C2 * a[n - 1]) + (C1 * a[0]) - (C0 * a[1]);
+            wksp[i] = (AlgorithmWaveletThreshold.C0 * a[n - 2]) + (AlgorithmWaveletThreshold.C1 * a[n - 1])
+                    + (AlgorithmWaveletThreshold.C2 * a[0]) + (AlgorithmWaveletThreshold.C3 * a[1]);
+            wksp[i + nh] = (AlgorithmWaveletThreshold.C3 * a[n - 2]) - (AlgorithmWaveletThreshold.C2 * a[n - 1])
+                    + (AlgorithmWaveletThreshold.C1 * a[0]) - (AlgorithmWaveletThreshold.C0 * a[1]);
         } // if (transformDir == FORWARD)
         else { // Apply transpose filter
-            wksp[0] = (C2 * a[nh - 1]) + (C1 * a[n - 1]) + (C0 * a[0]) + (C3 * a[nh1 - 1]);
-            wksp[1] = (C3 * a[nh - 1]) - (C0 * a[n - 1]) + (C1 * a[0]) - (C2 * a[nh1 - 1]);
+            wksp[0] = (AlgorithmWaveletThreshold.C2 * a[nh - 1]) + (AlgorithmWaveletThreshold.C1 * a[n - 1])
+                    + (AlgorithmWaveletThreshold.C0 * a[0]) + (AlgorithmWaveletThreshold.C3 * a[nh1 - 1]);
+            wksp[1] = (AlgorithmWaveletThreshold.C3 * a[nh - 1]) - (AlgorithmWaveletThreshold.C0 * a[n - 1])
+                    + (AlgorithmWaveletThreshold.C1 * a[0]) - (AlgorithmWaveletThreshold.C2 * a[nh1 - 1]);
 
             for (i = 0, j = 2; i < (nh - 1); i++) {
-                wksp[j++] = (C2 * a[i]) + (C1 * a[i + nh]) + (C0 * a[i + 1]) + (C3 * a[i + nh1]);
-                wksp[j++] = (C3 * a[i]) - (C0 * a[i + nh]) + (C1 * a[i + 1]) - (C2 * a[i + nh1]);
+                wksp[j++] = (AlgorithmWaveletThreshold.C2 * a[i]) + (AlgorithmWaveletThreshold.C1 * a[i + nh])
+                        + (AlgorithmWaveletThreshold.C0 * a[i + 1]) + (AlgorithmWaveletThreshold.C3 * a[i + nh1]);
+                wksp[j++] = (AlgorithmWaveletThreshold.C3 * a[i]) - (AlgorithmWaveletThreshold.C0 * a[i + nh])
+                        + (AlgorithmWaveletThreshold.C1 * a[i + 1]) - (AlgorithmWaveletThreshold.C2 * a[i + nh1]);
             }
         } // else apply transpose filter
 
@@ -1052,19 +1069,19 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  a  data to which wavelet filter (for transformDir == FORWARD) or to which transpose wavelet filter is
+     * 
+     * @param a data to which wavelet filter (for transformDir == FORWARD) or to which transpose wavelet filter is
      *            applied (for transformDir == INVERSE)
-     * @param  n  Used hierarchically by routines wt1 and wtn
+     * @param n Used hierarchically by routines wt1 and wtn
      */
-    private void pwt(float[] a, int n) {
+    private void pwt(final float[] a, final int n) {
         double ai, ai1;
         double[] wksp;
         int i, ii, j, jf, jr, k, n1, ni, nj, nh, nmod;
 
         if (n < 4) {
             MipavUtil.displayError("Length of pwt array must be at least 4");
-            
+
             setCompleted(false);
 
             return;
@@ -1079,7 +1096,7 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
             wksp[j] = 0.0;
         }
 
-        if (transformDir == FORWARD) { // Apply filter
+        if (transformDir == AlgorithmWaveletThreshold.FORWARD) { // Apply filter
 
             for (ii = 1, i = 1; i <= n; i += 2, ii++) {
                 ni = i + nmod + ioff; // Pointer to be incremented and wrapped around
@@ -1117,28 +1134,27 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
         wksp = null;
     }
 
-
     /**
      * DOCUMENT ME!
-     *
-     * @param  a  data replaced by its wavelet transform for transformDir == FORWARD or by its inverse wavelet transform
+     * 
+     * @param a data replaced by its wavelet transform for transformDir == FORWARD or by its inverse wavelet transform
      *            for transformDir == INVERSE One dimensional discrete wavelet transform. Note that the length of a must
      *            be an integer power of 2
      */
-    private void wt1(float[] a) {
+    private void wt1(final float[] a) {
         int nn;
         int len;
         len = a.length;
 
         if (len < 4) {
             MipavUtil.displayError("Length of wt1 array must be at least 4");
-            
+
             setCompleted(false);
 
             return;
         }
 
-        if (transformDir == FORWARD) { // wavelet transform
+        if (transformDir == AlgorithmWaveletThreshold.FORWARD) { // wavelet transform
 
             // Start at larget hierarchy, and work towards smallest
             switch (filterType) {
@@ -1182,12 +1198,12 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  a  data replaced by its wavelet transform for transformDir == FORWARD or by its inverse wavelet transform
+     * 
+     * @param a data replaced by its wavelet transform for transformDir == FORWARD or by its inverse wavelet transform
      *            for transformDir == INVERSE n-dimensional discrete wavelet transform. Note that the length of each
      *            dimension of a must be an integer power of 2
      */
-    private void wtn(float[] a) {
+    private void wtn(final float[] a) {
         int i1, i2, i3, k, n, nnew, nprev = 1, nt, ntot = 1, idim, ndim;
         float[] wksp;
 
@@ -1214,7 +1230,7 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
                         }
 
                         // Copy the relevant row or column or etc. into workspace
-                        if (transformDir == FORWARD) { // one-dimensional wavelet transform
+                        if (transformDir == AlgorithmWaveletThreshold.FORWARD) { // one-dimensional wavelet transform
 
                             switch (filterType) {
 
@@ -1254,7 +1270,7 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
                         } // else inverse transform
 
                         for (i3 = i1 + i2, k = 1; k <= n; k++, i3 += nprev) {
-                            a[i3 - 1] = (float) wksp[k - 1];
+                            a[i3 - 1] = wksp[k - 1];
                         }
                         // Copy back from workspace
                     }

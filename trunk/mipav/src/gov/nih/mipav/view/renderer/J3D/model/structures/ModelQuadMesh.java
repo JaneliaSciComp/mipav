@@ -1,7 +1,7 @@
 package gov.nih.mipav.view.renderer.J3D.model.structures;
 
 
-import gov.nih.mipav.*;
+import gov.nih.mipav.util.MipavMath;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;

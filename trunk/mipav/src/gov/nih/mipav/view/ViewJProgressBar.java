@@ -1,7 +1,7 @@
 package gov.nih.mipav.view;
 
 
-import gov.nih.mipav.*;
+import gov.nih.mipav.util.MipavMath;
 
 import java.awt.*;
 import java.awt.event.*;

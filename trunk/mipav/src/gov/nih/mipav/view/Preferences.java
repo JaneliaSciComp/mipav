@@ -1,6 +1,8 @@
 package gov.nih.mipav.view;
 
 
+import gov.nih.mipav.util.ThreadUtil;
+
 import gov.nih.mipav.view.dialogs.JDialogOverlay;
 
 import java.awt.*;
@@ -450,16 +452,14 @@ public class Preferences {
 
     /** The character that separates items (such as in the user file type definitions). */
     public static final String ITEM_SEPARATOR = ";";
-    
-    
+
     public static final String PREF_LEVEL = "LevelValue";
-    
+
     public static final String PREF_WINDOW = "WindowValue";
-    
+
     public static final String PREF_MIN = "MinValue";
-    
+
     public static final String PREF_MAX = "MaxValue";
-    
 
     /**
      * The character that separates an item from its value in a definition or mapping (such as in the user file type
@@ -582,7 +582,7 @@ public class Preferences {
         Preferences.defaultProps.setProperty(Preferences.PREF_LB_SELECTED_BORDER_COLOR, "ffff00");
         Preferences.defaultProps.setProperty(Preferences.PREF_LB_MAG, "45.0");
         Preferences.defaultProps.setProperty(Preferences.PREF_LB_LOCATION, "-10,-10"); // use incorrect value to
-                                                                                        // compute 'best'
+        // compute 'best'
         // location
 
         // look and feel properties
@@ -593,10 +593,10 @@ public class Preferences {
         Preferences.defaultProps.setProperty(Preferences.PREF_SHOW_OUTPUT, "true");
 
         // performance information properties
-        Preferences.defaultProps.setProperty(Preferences.PREF_MULTI_THREADING_ENABLED, (gov.nih.mipav.util.MipavUtil
-                .getAvailableCores() > 1) ? "true" : "flase");
-        Preferences.defaultProps.setProperty(Preferences.PREF_NUMBER_OF_THREADS, String
-                .valueOf(gov.nih.mipav.util.MipavUtil.getAvailableCores()));
+        Preferences.defaultProps.setProperty(Preferences.PREF_MULTI_THREADING_ENABLED,
+                (ThreadUtil.getAvailableCores() > 1) ? "true" : "flase");
+        Preferences.defaultProps.setProperty(Preferences.PREF_NUMBER_OF_THREADS, String.valueOf(ThreadUtil
+                .getAvailableCores()));
         Preferences.defaultProps.setProperty(Preferences.PREF_GPU_COMP_ENABLED, "false");
     }
 

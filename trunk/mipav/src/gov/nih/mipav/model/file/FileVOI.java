@@ -1,31 +1,27 @@
 package gov.nih.mipav.model.file;
 
-import WildMagic.LibFoundation.Mathematics.Vector2f;
-import WildMagic.LibFoundation.Mathematics.Vector3f;
 
-import gov.nih.mipav.*;
+import gov.nih.mipav.MipavCoordinateSystems;
+import gov.nih.mipav.util.MipavMath;
 
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.JDialogAnnotation;
 
-import org.apache.xerces.jaxp.*;
-
-import org.xml.sax.*;
-import org.xml.sax.helpers.*;
-
 import java.awt.*;
-
 import java.io.*;
-
-import java.net.*;
-
+import java.net.URL;
 import java.util.*;
 
 import javax.swing.*;
-
 import javax.xml.parsers.*;
+
+import org.apache.xerces.jaxp.JAXPConstants;
+import org.xml.sax.*;
+import org.xml.sax.helpers.DefaultHandler;
+
+import WildMagic.LibFoundation.Mathematics.*;
 
 
 /**
@@ -35,16 +31,19 @@ import javax.xml.parsers.*;
  * triangles (i.e., tesselates) from contours. Therefore, if one wishes to render a surface of a VOI, first save the VOI
  * in Nauges format and supply the VOI file to the Nauges executable. MIPAV's lastest file format is based on XML and
  * should be used in the future.
- *
- * <p>Note: A single VOI per file. However, a VOI can be formed from multiple contours.</p>
- *
- * @version  0.1 Feb 24, 1998
- * @author   Matthew J. McAuliffe, Ph.D.
- * @see      VOI
+ * 
+ * <p>
+ * Note: A single VOI per file. However, a VOI can be formed from multiple contours.
+ * </p>
+ * 
+ * @version 0.1 Feb 24, 1998
+ * @author Matthew J. McAuliffe, Ph.D.
+ * @see VOI
  */
 public class FileVOI extends FileXML {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** The tab character (makes writing out files cleaner-looking). */
     private static final String TAB = "\t";
@@ -56,14 +55,15 @@ public class FileVOI extends FileXML {
     private static final String XML_ENCODING = "UTF-8";
 
     /** The XML version description header. */
-    private static final String XML_HEADER = "<?xml version=\"1.0\" encoding=\"" + XML_ENCODING + "\"?>";
+    private static final String XML_HEADER = "<?xml version=\"1.0\" encoding=\"" + FileVOI.XML_ENCODING + "\"?>";
 
     /** The MIPAV XML header comment. */
     private static final String VOI_HEADER = "<!-- MIPAV VOI file -->";
 
     private static final String TEXT_HEADER = "<!-- MIPAV Annotation file -->";
-    
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** File reference, it and its components are able to be modified by extending classes. */
     protected File file;
@@ -75,38 +75,39 @@ public class FileVOI extends FileXML {
     protected String fileName;
 
     /** Image used to reference properties of the image to aid reading and writing of the VOI. */
-    private ModelImage image;
+    private final ModelImage image;
 
     /** Flag indicating whether the VOI should be written in MIPAV's XML format. */
     private boolean isXML = false;
 
     /** The number of VOIs in the image. */
-    private short numVOIs;
+    private final short numVOIs;
 
     /** File directory where the VOI is to read or written. */
     private int sliceNum;
 
     /** File name without the extension. */
     private String trimmedFileName;
-    
+
     private String extension;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * VOI reader/writer constructor.
-     *
-     * @param      fileName  file name
-     * @param      fileDir   file directory
-     * @param      image     image model: needed during the read process to ensure the VOI "fits" in the image space.
-     *
-     * @exception  IOException  if there is an error making the files
+     * 
+     * @param fileName file name
+     * @param fileDir file directory
+     * @param image image model: needed during the read process to ensure the VOI "fits" in the image space.
+     * 
+     * @exception IOException if there is an error making the files
      */
-    public FileVOI(String fileName, String fileDir, ModelImage image) throws IOException {
-    	super(fileName, fileDir);
+    public FileVOI(String fileName, final String fileDir, final ModelImage image) throws IOException {
+        super(fileName, fileDir);
         this.fileName = fileName;
 
-        int idx = fileName.lastIndexOf(".");
+        final int idx = fileName.lastIndexOf(".");
 
         if (idx != -1) {
             trimmedFileName = fileName.substring(0, idx);
@@ -137,27 +138,27 @@ public class FileVOI extends FileXML {
         }
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
-
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * This method read a VOI file that has been saved in the MIPAV VOI format.
-     *
-     * @param      doLabel  boolean telling to read the files as VOITexts (labels)
-     *
-     * @return     the VOI read off the disk
-     *
-     * @exception  IOException  if there is an error reading the file
+     * 
+     * @param doLabel boolean telling to read the files as VOITexts (labels)
+     * 
+     * @return the VOI read off the disk
+     * 
+     * @exception IOException if there is an error reading the file
      */
-    public VOI[] readVOI(boolean doLabel) throws IOException {
+    public VOI[] readVOI(final boolean doLabel) throws IOException {
 
         String VOIStr;
         VOI[] voi = null;
 
         if (doLabel) {
-            VOIVector voiVector = new VOIVector();
+            final VOIVector voiVector = new VOIVector();
 
-            if (!readAnnotationXML(voiVector)) {
+            if ( !readAnnotationXML(voiVector)) {
                 throw new IOException("Open label(s) failed.");
             } else {
                 voi = new VOI[voiVector.size()];
@@ -180,14 +181,14 @@ public class FileVOI extends FileXML {
 
             if (image.getNDims() == 2) {
 
-                if (!readXML(voi[0])) {
+                if ( !readXML(voi[0])) {
                     throw (new IOException("Open VOI failed."));
                 }
             } else {
 
-                if (!readXML(voi[0])) {
+                if ( !readXML(voi[0])) {
 
-                    if (!readCoordXML(voi[0])) {
+                    if ( !readCoordXML(voi[0])) {
                         throw (new IOException("Open VOI failed."));
                     } else {
 
@@ -234,16 +235,16 @@ public class FileVOI extends FileXML {
 
     /**
      * Writes VOIText(s) to a .lbl file (XML based)
-     *
-     * @param   writeAll  whether or not to write all VOITexts into the same file, or only the selected VOIText
-     *
-     * @throws  IOException  exception thrown if there is an error writing the file
+     * 
+     * @param writeAll whether or not to write all VOITexts into the same file, or only the selected VOIText
+     * 
+     * @throws IOException exception thrown if there is an error writing the file
      */
-    public void writeAnnotationXML(boolean writeAll) throws IOException {
+    public void writeAnnotationXML(final boolean writeAll) throws IOException {
         FileWriter fw;
         while (file.exists() == true) {
-            int response = JOptionPane.showConfirmDialog(null, file.getName() + " exists. Overwrite?", "File exists",
-                                                         JOptionPane.YES_NO_OPTION);
+            final int response = JOptionPane.showConfirmDialog(null, file.getName() + " exists. Overwrite?",
+                    "File exists", JOptionPane.YES_NO_OPTION);
 
             if (response == JOptionPane.YES_OPTION) {
                 file.delete();
@@ -251,13 +252,13 @@ public class FileVOI extends FileXML {
 
                 break;
             } else {
-                JFileChooser chooser = new JFileChooser();
+                final JFileChooser chooser = new JFileChooser();
                 chooser.setDialogTitle("Save label(s) as");
                 chooser.setCurrentDirectory(file);
 
-                chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { ".lbl" }));
+                chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] {".lbl"}));
 
-                int returnVal = chooser.showSaveDialog(null);
+                final int returnVal = chooser.showSaveDialog(null);
 
                 if (returnVal == JFileChooser.APPROVE_OPTION) {
                     fileName = chooser.getSelectedFile().getName();
@@ -273,18 +274,18 @@ public class FileVOI extends FileXML {
             fw = new FileWriter(file);
             bw = new BufferedWriter(fw);
 
-            bw.write(XML_HEADER);
+            bw.write(FileVOI.XML_HEADER);
             bw.newLine();
-            bw.write(TEXT_HEADER);
+            bw.write(FileVOI.TEXT_HEADER);
             bw.newLine();
 
-            openTag("Annotation xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\"", true);
+            openTag("Annotation xmlns:xsi=\"" + FileVOI.W3C_XML_SCHEMA + "-instance\"", true);
 
-            VOIVector VOIs = image.getVOIs();
+            final VOIVector VOIs = image.getVOIs();
 
-            int numVOIs = VOIs.size();
+            final int numVOIs = VOIs.size();
 
-            VOI currentVOI = null; 
+            VOI currentVOI = null;
             Vector[] curves = null;
             VOIText vText = null;
 
@@ -303,7 +304,7 @@ public class FileVOI extends FileXML {
             for (int i = 0; i < numVOIs; i++) {
                 currentVOI = VOIs.VOIAt(i);
 
-                if ((currentVOI.getCurveType() == VOI.ANNOTATION) && (writeAll || currentVOI.isActive())) {
+                if ( (currentVOI.getCurveType() == VOI.ANNOTATION) && (writeAll || currentVOI.isActive())) {
 
                     curves = currentVOI.getCurves();
 
@@ -317,8 +318,8 @@ public class FileVOI extends FileXML {
                             vText = (VOIText) curves[j].elementAt(k);
                             voiString = vText.getText();
                             noteString = vText.getNote();
-                        	doNote = !noteString.equals(JDialogAnnotation.DEFAULT_NOTES) && noteString.length() > 0;
-                        	
+                            doNote = !noteString.equals(JDialogAnnotation.DEFAULT_NOTES) && noteString.length() > 0;
+
                             voiColor = vText.getColor();
                             voiBackgroundColor = vText.getBackgroundColor();
                             textPt = vText.elementAt(0);
@@ -328,61 +329,54 @@ public class FileVOI extends FileXML {
                             fontName = vText.getFontName();
                             fontDescriptors = vText.getFontDescriptors();
 
-                            closedTag( "Text", voiString);
-                            if(doNote)
-                            	closedTag( "Note", noteString);
+                            closedTag("Text", voiString);
+                            if (doNote) {
+                                closedTag("Note", noteString);
+                            }
 
                             if (image.getNDims() > 2) {
                                 MipavCoordinateSystems.fileToScanner(textPt, textPtScanner, image);
                                 MipavCoordinateSystems.fileToScanner(arrowPt, arrowPtScanner, image);
-                                closedTag( "TextLocation",
-                                          Float.toString(textPtScanner.X) + "," + Float.toString(textPtScanner.Y) +
-                                          "," + Float.toString(textPtScanner.Z));
-                                closedTag( "ArrowLocation",
-                                          Float.toString(arrowPtScanner.X) + "," + Float.toString(arrowPtScanner.Y) +
-                                          "," + Float.toString(arrowPtScanner.Z));
+                                closedTag("TextLocation", Float.toString(textPtScanner.X) + ","
+                                        + Float.toString(textPtScanner.Y) + "," + Float.toString(textPtScanner.Z));
+                                closedTag("ArrowLocation", Float.toString(arrowPtScanner.X) + ","
+                                        + Float.toString(arrowPtScanner.Y) + "," + Float.toString(arrowPtScanner.Z));
                                 // System.err.println("Text location: " + textPtScanner + ", arrow location: " +
                                 // arrowPtScanner);
                             } else {
                                 textPt.Z = j;
                                 arrowPt.Z = j;
-                                closedTag( "TextLocation",
-                                          Float.toString(textPt.X) + "," + Float.toString(textPt.Y) + "," +
-                                          Float.toString(textPt.Z));
-                                closedTag( "ArrowLocation",
-                                          Float.toString(arrowPt.X) + "," + Float.toString(arrowPt.Y) + "," +
-                                          Float.toString(arrowPt.Z));
+                                closedTag("TextLocation", Float.toString(textPt.X) + "," + Float.toString(textPt.Y)
+                                        + "," + Float.toString(textPt.Z));
+                                closedTag("ArrowLocation", Float.toString(arrowPt.X) + "," + Float.toString(arrowPt.Y)
+                                        + "," + Float.toString(arrowPt.Z));
                             }
 
-                            closedTag( "UseMarker", Boolean.toString(useMarker));
+                            closedTag("UseMarker", Boolean.toString(useMarker));
 
-                            closedTag( "Color",
-                                      Integer.toString(voiColor.getAlpha()) + "," +
-                                      Integer.toString(voiColor.getRed()) + "," +
-                                      Integer.toString(voiColor.getGreen()) + "," +
-                                      Integer.toString(voiColor.getBlue()));
-                            closedTag( "BackgroundColor",
-                                      Integer.toString(voiBackgroundColor.getAlpha()) + "," +
-                                      Integer.toString(voiBackgroundColor.getRed()) + "," +
-                                      Integer.toString(voiBackgroundColor.getGreen()) + "," +
-                                      Integer.toString(voiBackgroundColor.getBlue()));
-                            closedTag( "FontName", fontName);
-                            closedTag( "FontSize", Integer.toString(fontSize));
+                            closedTag("Color", Integer.toString(voiColor.getAlpha()) + ","
+                                    + Integer.toString(voiColor.getRed()) + "," + Integer.toString(voiColor.getGreen())
+                                    + "," + Integer.toString(voiColor.getBlue()));
+                            closedTag("BackgroundColor", Integer.toString(voiBackgroundColor.getAlpha()) + ","
+                                    + Integer.toString(voiBackgroundColor.getRed()) + ","
+                                    + Integer.toString(voiBackgroundColor.getGreen()) + ","
+                                    + Integer.toString(voiBackgroundColor.getBlue()));
+                            closedTag("FontName", fontName);
+                            closedTag("FontSize", Integer.toString(fontSize));
 
                             if (fontDescriptors == Font.BOLD) {
-                                closedTag( "FontStyle", "BOLD");
+                                closedTag("FontStyle", "BOLD");
                             } else if (fontDescriptors == Font.ITALIC) {
-                                closedTag( "FontStyle", "ITALIC");
+                                closedTag("FontStyle", "ITALIC");
                             } else if (fontDescriptors == (Font.BOLD + Font.ITALIC)) {
-                                closedTag( "FontStyle", "BOLDITALIC");
+                                closedTag("FontStyle", "BOLDITALIC");
                             } else {
-                                closedTag( "FontStyle", "");
+                                closedTag("FontStyle", "");
                             }
 
                             openTag("Label", false);
                         }
                     }
-
 
                 }
             }
@@ -390,21 +384,22 @@ public class FileVOI extends FileXML {
             openTag("Annotation", false);
             bw.close();
 
-        } catch (Exception e) { }
+        } catch (final Exception e) {}
     }
-    
+
     /**
      * Writes VOIText(s) to a .lbl file (XML based)
-     *
-     * @param   writeAllInSameFile  whether or not to write all VOITexts into the same file, or only the selected VOIText
-     *
-     * @throws  IOException  exception thrown if there is an error writing the file
+     * 
+     * @param writeAllInSameFile whether or not to write all VOITexts into the same file, or only the selected VOIText
+     * 
+     * @throws IOException exception thrown if there is an error writing the file
      */
-    public void writeAnnotationInVoiAsXML(boolean writeAllInSameFile, boolean writeAllFromImage) throws IOException {
+    public void writeAnnotationInVoiAsXML(boolean writeAllInSameFile, final boolean writeAllFromImage)
+            throws IOException {
         FileWriter fw;
         while (file.exists() == true) {
-            int response = JOptionPane.showConfirmDialog(null, file.getName() + " exists. Overwrite?", "File exists",
-                                                         JOptionPane.YES_NO_OPTION);
+            final int response = JOptionPane.showConfirmDialog(null, file.getName() + " exists. Overwrite?",
+                    "File exists", JOptionPane.YES_NO_OPTION);
 
             if (response == JOptionPane.YES_OPTION) {
                 file.delete();
@@ -412,13 +407,13 @@ public class FileVOI extends FileXML {
 
                 break;
             } else {
-                JFileChooser chooser = new JFileChooser();
+                final JFileChooser chooser = new JFileChooser();
                 chooser.setDialogTitle("Save label(s) as");
                 chooser.setCurrentDirectory(file);
 
-                chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { ".lbl" }));
+                chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] {".lbl"}));
 
-                int returnVal = chooser.showSaveDialog(null);
+                final int returnVal = chooser.showSaveDialog(null);
 
                 if (returnVal == JFileChooser.APPROVE_OPTION) {
                     fileName = chooser.getSelectedFile().getName();
@@ -434,16 +429,16 @@ public class FileVOI extends FileXML {
             fw = new FileWriter(file);
             bw = new BufferedWriter(fw);
 
-            bw.write(XML_HEADER);
+            bw.write(FileVOI.XML_HEADER);
             bw.newLine();
-            bw.write(TEXT_HEADER);
+            bw.write(FileVOI.TEXT_HEADER);
             bw.newLine();
 
-            openTag("Annotation xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\"", true);
+            openTag("Annotation xmlns:xsi=\"" + FileVOI.W3C_XML_SCHEMA + "-instance\"", true);
 
-            VOIVector VOIs = image.getVOIs();
+            final VOIVector VOIs = image.getVOIs();
 
-            int numVOIs = VOIs.size();
+            final int numVOIs = VOIs.size();
 
             VOI currentVOI = null;
             Vector[] curves = null;
@@ -472,83 +467,78 @@ public class FileVOI extends FileXML {
 
                         for (int k = 0; k < curves[j].size(); k++) {
 
-                        	vText = (VOIText) curves[j].elementAt(k);
-                        	voiString = vText.getText();
-                        	noteString = vText.getNote();
-                        	doNote = !noteString.equals(JDialogAnnotation.DEFAULT_NOTES) && noteString.length() > 0;
-                        	
-                        	//System.out.println("VOI Name: "+voiString+"\tfile: "+file.getName());
-                        	if(writeAllInSameFile || 
-                        			(!writeAllInSameFile && voiString.equals(file.getName().substring(0, file.getName().lastIndexOf('.'))))) {
-                        		
-	                        	openTag("Label", true);
-	                        	
-	                            // there's only one per VOI, but 
-	                            voiColor = vText.getColor();
-	                            voiBackgroundColor = vText.getBackgroundColor();
-	                            textPt = vText.elementAt(0);
-	                            arrowPt =  vText.elementAt(1);
-	                            useMarker = vText.useMarker();
-	                            fontSize = vText.getFontSize();
-	                            fontName = vText.getFontName();
-	                            fontDescriptors = vText.getFontDescriptors();
-	
-	                            closedTag( "Text", voiString);
-	                            if(doNote)
-	                            	closedTag( "Note", noteString);
-	
-	                            if (image.getNDims() > 2) {
-	                                MipavCoordinateSystems.fileToScanner(textPt, textPtScanner, image);
-	                                MipavCoordinateSystems.fileToScanner(arrowPt, arrowPtScanner, image);
-	                                closedTag( "TextLocation",
-	                                          Float.toString(textPtScanner.X) + "," + Float.toString(textPtScanner.Y) +
-	                                          "," + Float.toString(textPtScanner.Z));
-	                                closedTag( "ArrowLocation",
-	                                          Float.toString(arrowPtScanner.X) + "," + Float.toString(arrowPtScanner.Y) +
-	                                          "," + Float.toString(arrowPtScanner.Z));
-	                                // System.err.println("Text location: " + textPtScanner + ", arrow location: " +
-	                                // arrowPtScanner);
-	                            } else {
-	                                textPt.Z = j;
-	                                arrowPt.Z = j;
-	                                closedTag( "TextLocation",
-	                                          Float.toString(textPt.X) + "," + Float.toString(textPt.Y) + "," +
-	                                          Float.toString(textPt.Z));
-	                                closedTag( "ArrowLocation",
-	                                          Float.toString(arrowPt.X) + "," + Float.toString(arrowPt.Y) + "," +
-	                                          Float.toString(arrowPt.Z));
-	                            }
-	
-	                            closedTag( "UseMarker", Boolean.toString(useMarker));
-	
-	                            closedTag( "Color",
-	                                      Integer.toString(voiColor.getAlpha()) + "," +
-	                                      Integer.toString(voiColor.getRed()) + "," +
-	                                      Integer.toString(voiColor.getGreen()) + "," +
-	                                      Integer.toString(voiColor.getBlue()));
-	                            closedTag( "BackgroundColor",
-	                                      Integer.toString(voiBackgroundColor.getAlpha()) + "," +
-	                                      Integer.toString(voiBackgroundColor.getRed()) + "," +
-	                                      Integer.toString(voiBackgroundColor.getGreen()) + "," +
-	                                      Integer.toString(voiBackgroundColor.getBlue()));
-	                            closedTag( "FontName", fontName);
-	                            closedTag( "FontSize", Integer.toString(fontSize));
-	
-	                            if (fontDescriptors == Font.BOLD) {
-	                                closedTag( "FontStyle", "BOLD");
-	                            } else if (fontDescriptors == Font.ITALIC) {
-	                                closedTag( "FontStyle", "ITALIC");
-	                            } else if (fontDescriptors == (Font.BOLD + Font.ITALIC)) {
-	                                closedTag( "FontStyle", "BOLDITALIC");
-	                            } else {
-	                                closedTag( "FontStyle", "");
-	                            }
-	
-	                            openTag("Label", false);
-                        	}
+                            vText = (VOIText) curves[j].elementAt(k);
+                            voiString = vText.getText();
+                            noteString = vText.getNote();
+                            doNote = !noteString.equals(JDialogAnnotation.DEFAULT_NOTES) && noteString.length() > 0;
+
+                            // System.out.println("VOI Name: "+voiString+"\tfile: "+file.getName());
+                            if (writeAllInSameFile
+                                    || ( !writeAllInSameFile && voiString.equals(file.getName().substring(0,
+                                            file.getName().lastIndexOf('.'))))) {
+
+                                openTag("Label", true);
+
+                                // there's only one per VOI, but
+                                voiColor = vText.getColor();
+                                voiBackgroundColor = vText.getBackgroundColor();
+                                textPt = vText.elementAt(0);
+                                arrowPt = vText.elementAt(1);
+                                useMarker = vText.useMarker();
+                                fontSize = vText.getFontSize();
+                                fontName = vText.getFontName();
+                                fontDescriptors = vText.getFontDescriptors();
+
+                                closedTag("Text", voiString);
+                                if (doNote) {
+                                    closedTag("Note", noteString);
+                                }
+
+                                if (image.getNDims() > 2) {
+                                    MipavCoordinateSystems.fileToScanner(textPt, textPtScanner, image);
+                                    MipavCoordinateSystems.fileToScanner(arrowPt, arrowPtScanner, image);
+                                    closedTag("TextLocation", Float.toString(textPtScanner.X) + ","
+                                            + Float.toString(textPtScanner.Y) + "," + Float.toString(textPtScanner.Z));
+                                    closedTag("ArrowLocation", Float.toString(arrowPtScanner.X) + ","
+                                            + Float.toString(arrowPtScanner.Y) + "," + Float.toString(arrowPtScanner.Z));
+                                    // System.err.println("Text location: " + textPtScanner + ", arrow location: " +
+                                    // arrowPtScanner);
+                                } else {
+                                    textPt.Z = j;
+                                    arrowPt.Z = j;
+                                    closedTag("TextLocation", Float.toString(textPt.X) + "," + Float.toString(textPt.Y)
+                                            + "," + Float.toString(textPt.Z));
+                                    closedTag("ArrowLocation", Float.toString(arrowPt.X) + ","
+                                            + Float.toString(arrowPt.Y) + "," + Float.toString(arrowPt.Z));
+                                }
+
+                                closedTag("UseMarker", Boolean.toString(useMarker));
+
+                                closedTag("Color", Integer.toString(voiColor.getAlpha()) + ","
+                                        + Integer.toString(voiColor.getRed()) + ","
+                                        + Integer.toString(voiColor.getGreen()) + ","
+                                        + Integer.toString(voiColor.getBlue()));
+                                closedTag("BackgroundColor", Integer.toString(voiBackgroundColor.getAlpha()) + ","
+                                        + Integer.toString(voiBackgroundColor.getRed()) + ","
+                                        + Integer.toString(voiBackgroundColor.getGreen()) + ","
+                                        + Integer.toString(voiBackgroundColor.getBlue()));
+                                closedTag("FontName", fontName);
+                                closedTag("FontSize", Integer.toString(fontSize));
+
+                                if (fontDescriptors == Font.BOLD) {
+                                    closedTag("FontStyle", "BOLD");
+                                } else if (fontDescriptors == Font.ITALIC) {
+                                    closedTag("FontStyle", "ITALIC");
+                                } else if (fontDescriptors == (Font.BOLD + Font.ITALIC)) {
+                                    closedTag("FontStyle", "BOLDITALIC");
+                                } else {
+                                    closedTag("FontStyle", "");
+                                }
+
+                                openTag("Label", false);
+                            }
                         }
                     }
-
 
                 }
             }
@@ -556,17 +546,17 @@ public class FileVOI extends FileXML {
             openTag("Annotation", false);
             bw.close();
 
-        } catch (Exception e) { }
+        } catch (final Exception e) {}
     }
 
     /**
      * Writes a single VOI to a file in Nauge format.
-     *
-     * @param      voi  VOI to write
-     *
-     * @exception  IOException  if there is an error writing the file
+     * 
+     * @param voi VOI to write
+     * 
+     * @exception IOException if there is an error writing the file
      */
-    public void writeNaugeVOI(VOI voi) throws IOException {
+    public void writeNaugeVOI(final VOI voi) throws IOException {
         int i, j, k;
         int nSlices;
         int nPts;
@@ -635,12 +625,12 @@ public class FileVOI extends FileXML {
 
     /**
      * Writes a single VOI.POINT to a file MIPAV format.
-     *
-     * @param      voi  VOI.POINT to write
-     *
-     * @exception  IOException  if there is an error writing the file
+     * 
+     * @param voi VOI.POINT to write
+     * 
+     * @exception IOException if there is an error writing the file
      */
-    public void writePointVOI(VOI voi) throws IOException {
+    public void writePointVOI(final VOI voi) throws IOException {
         int i, j, k;
         int curveType;
         int count, length;
@@ -696,7 +686,7 @@ public class FileVOI extends FileXML {
 
                 for (k = 0; k < nContours; k++) {
 
-                    if (Integer.parseInt(((VOIPoint) contours[j].elementAt(k)).getLabel()) == (i - 1)) {
+                    if (Integer.parseInt( ((VOIPoint) contours[j].elementAt(k)).getLabel()) == (i - 1)) {
                         raFile.writeBytes(Integer.toString(1) + "\t\t# number of pts in contour\r\n");
 
                         x = new float[1];
@@ -728,13 +718,13 @@ public class FileVOI extends FileXML {
 
     /**
      * Writes a single VOI to a file MIPAV format.
-     *
-     * @param      voi              VOI to write
-     * @param      saveAllContours  if true save all contours, not just the active ones
-     *
-     * @exception  IOException  if there is an error writing the file
+     * 
+     * @param voi VOI to write
+     * @param saveAllContours if true save all contours, not just the active ones
+     * 
+     * @exception IOException if there is an error writing the file
      */
-    public void writeVOI(VOI voi, boolean saveAllContours) throws IOException {
+    public void writeVOI(final VOI voi, final boolean saveAllContours) throws IOException {
         int i, j, k;
         int count, length;
         int curveType;
@@ -747,9 +737,9 @@ public class FileVOI extends FileXML {
 
         Vector[] contours;
 
-        boolean saveAsLPS = Preferences.is(Preferences.PREF_VOI_LPS_SAVE);
-        boolean is2D = (image.getNDims() == 2);
-        
+        final boolean saveAsLPS = Preferences.is(Preferences.PREF_VOI_LPS_SAVE);
+        final boolean is2D = (image.getNDims() == 2);
+
         if (isXML) {
             writeXML(voi, saveAllContours);
             return;
@@ -800,7 +790,7 @@ public class FileVOI extends FileXML {
 
                 for (j = 0; j < nContours; j++) {
 
-                    if (((VOIBase) contours[i].elementAt(j)).isActive()) {
+                    if ( ((VOIBase) contours[i].elementAt(j)).isActive()) {
                         nActiveContours++;
                     }
                 }
@@ -835,13 +825,13 @@ public class FileVOI extends FileXML {
 
     /**
      * Writes VOI to an XML formatted file.
-     *
-     * @param   voi              VOI to be saved
-     * @param   saveAllContours  if true save all contours, not just the active ones
-     *
-     * @throws  IOException  exception thrown if there is an error writing the file
+     * 
+     * @param voi VOI to be saved
+     * @param saveAllContours if true save all contours, not just the active ones
+     * 
+     * @throws IOException exception thrown if there is an error writing the file
      */
-    public void writeXML(VOI voi, boolean saveAllContours) throws IOException {
+    public void writeXML(final VOI voi, final boolean saveAllContours) throws IOException {
         int i, j, k, m;
         int length;
         int nPts;
@@ -852,15 +842,15 @@ public class FileVOI extends FileXML {
         Vector[] contours;
 
         FileWriter fw;
-       
-        //TODO: Make sure other local instances of bw do not cause NullPointerExceptions
-        //BufferedWriter already exists in FileXML.   FileVOI extends FileXML as of version 2209
-        //single copy is necessary for correct implementation of openTag(), closeTag(), etc
-        //BufferedWriter bw;
+
+        // TODO: Make sure other local instances of bw do not cause NullPointerExceptions
+        // BufferedWriter already exists in FileXML. FileVOI extends FileXML as of version 2209
+        // single copy is necessary for correct implementation of openTag(), closeTag(), etc
+        // BufferedWriter bw;
 
         while (file.exists() == true) {
-            int response = JOptionPane.showConfirmDialog(null, file.getName() + " exists. Overwrite?", "File exists",
-                                                         JOptionPane.YES_NO_OPTION);
+            final int response = JOptionPane.showConfirmDialog(null, file.getName() + " exists. Overwrite?",
+                    "File exists", JOptionPane.YES_NO_OPTION);
 
             if (response == JOptionPane.YES_OPTION) {
                 file.delete();
@@ -868,13 +858,13 @@ public class FileVOI extends FileXML {
 
                 break;
             } else {
-                JFileChooser chooser = new JFileChooser();
+                final JFileChooser chooser = new JFileChooser();
                 chooser.setDialogTitle("Save VOI as");
                 chooser.setCurrentDirectory(file);
 
-                chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[]{".xml", ".voi"}));
+                chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] {".xml", ".voi"}));
 
-                int returnVal = chooser.showSaveDialog(null);
+                final int returnVal = chooser.showSaveDialog(null);
 
                 if (returnVal == JFileChooser.APPROVE_OPTION) {
                     fileName = chooser.getSelectedFile().getName();
@@ -894,24 +884,22 @@ public class FileVOI extends FileXML {
             contours = voi.getCurves();
             length = voi.getCurves().length;
 
-            bw.write(XML_HEADER);
+            bw.write(FileVOI.XML_HEADER);
             bw.newLine();
-            bw.write(VOI_HEADER);
+            bw.write(FileVOI.VOI_HEADER);
             bw.newLine();
 
-            openTag("VOI xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\"", true);
-            closedTag( "Unique-ID", Integer.toString(voi.getUID()));
-            closedTag( "Curve-type", Integer.toString(voi.getCurveType()));
-            closedTag( "Color",
-                      Integer.toString(voi.getColor().getAlpha()) + "," + Integer.toString(voi.getColor().getRed()) +
-                      "," + Integer.toString(voi.getColor().getGreen()) + "," +
-                      Integer.toString(voi.getColor().getBlue()));
+            openTag("VOI xmlns:xsi=\"" + FileVOI.W3C_XML_SCHEMA + "-instance\"", true);
+            closedTag("Unique-ID", Integer.toString(voi.getUID()));
+            closedTag("Curve-type", Integer.toString(voi.getCurveType()));
+            closedTag("Color", Integer.toString(voi.getColor().getAlpha()) + ","
+                    + Integer.toString(voi.getColor().getRed()) + "," + Integer.toString(voi.getColor().getGreen())
+                    + "," + Integer.toString(voi.getColor().getBlue()));
 
-            closedTag( "Thickness", Integer.toString(voi.getThickness()));
-            
+            closedTag("Thickness", Integer.toString(voi.getThickness()));
 
-            if ((voi.getCurveType() == VOI.CONTOUR) || (voi.getCurveType() == VOI.POLYLINE) ||
-                    (voi.getCurveType() == VOI.POINT)) {
+            if ( (voi.getCurveType() == VOI.CONTOUR) || (voi.getCurveType() == VOI.POLYLINE)
+                    || (voi.getCurveType() == VOI.POINT)) {
 
                 // run through once and count how many TOTAL contours are there
                 int totalContours = 0;
@@ -934,7 +922,6 @@ public class FileVOI extends FileXML {
 
                 Vector pointVector = new Vector();
 
-
                 // add all contours to a vector for sorting
 
                 for (i = 0; i < contours.length; i++) {
@@ -942,10 +929,9 @@ public class FileVOI extends FileXML {
 
                     for (k = 0; k < nContours; k++) {
 
-                        if ((saveAllContours || ((VOIBase) contours[i].elementAt(k)).isActive())) {
-                            pointVector.add(new VOISortItem((VOIBase) contours[i].elementAt(k),
-                                                            Integer.parseInt(((VOIBase) contours[i].elementAt(k))
-                                                                                 .getLabel()), i));
+                        if ( (saveAllContours || ((VOIBase) contours[i].elementAt(k)).isActive())) {
+                            pointVector.add(new VOISortItem((VOIBase) contours[i].elementAt(k), Integer
+                                    .parseInt( ((VOIBase) contours[i].elementAt(k)).getLabel()), i));
 
                         }
                     }
@@ -953,14 +939,14 @@ public class FileVOI extends FileXML {
 
                 Collections.sort(pointVector, new VOIComparator());
 
-                int pSize = pointVector.size();
+                final int pSize = pointVector.size();
                 VOISortItem tempVOIItem = null;
                 VOIBase tempBase = null;
 
                 boolean saveAsLPS = Preferences.is(Preferences.PREF_VOI_LPS_SAVE);
-                //System.err.println("SaveAsLPS: " + saveAsLPS);
+                // System.err.println("SaveAsLPS: " + saveAsLPS);
                 boolean is2D = (image.getNDims() == 2);
-                
+
                 for (i = 0; i < pSize; i++) {
 
                     tempVOIItem = (VOISortItem) pointVector.elementAt(i);
@@ -970,7 +956,7 @@ public class FileVOI extends FileXML {
 
                     // save old format if image dim is 2
                     if (is2D || !saveAsLPS) {
-                        closedTag( "Slice-number", Integer.toString(tempVOIItem.getSlice()));
+                        closedTag("Slice-number", Integer.toString(tempVOIItem.getSlice()));
                     }
 
                     nPts = tempBase.size();
@@ -983,10 +969,10 @@ public class FileVOI extends FileXML {
 
                     tempBase.exportArrays(x, y, z);
 
-                    if (!is2D && saveAsLPS) {
-                        Vector3f ptIn = new Vector3f();
-                        Vector3f ptOut = new Vector3f();
-                        int slice = tempVOIItem.getSlice();
+                    if ( !is2D && saveAsLPS) {
+                        final Vector3f ptIn = new Vector3f();
+                        final Vector3f ptOut = new Vector3f();
+                        final int slice = tempVOIItem.getSlice();
 
                         for (m = 0; m < nPts; m++) {
                             ptIn.X = x[m];
@@ -995,15 +981,14 @@ public class FileVOI extends FileXML {
                             MipavCoordinateSystems.fileToScanner(ptIn, ptOut, image);
 
                             // System.err.println("Pt in: " + ptIn + ", Pt out: " + ptOut);
-                            closedTag( "Pt",
-                                      Float.toString(ptOut.X) + "," + Float.toString(ptOut.Y) + "," +
-                                      Float.toString(ptOut.Z));
+                            closedTag("Pt", Float.toString(ptOut.X) + "," + Float.toString(ptOut.Y) + ","
+                                    + Float.toString(ptOut.Z));
                         }
                     } else {
                         // image dim is 2 (or SaveAsLPS false).... save to old format
 
                         for (m = 0; m < nPts; m++) {
-                            closedTag( "Pt", Float.toString(x[m]) + "," + Float.toString(y[m]));
+                            closedTag("Pt", Float.toString(x[m]) + "," + Float.toString(y[m]));
                         }
 
                     }
@@ -1024,9 +1009,9 @@ public class FileVOI extends FileXML {
                         nActiveContours = nContours;
                     } else {
 
-                         for (j = 0; j < nContours; j++) {
+                        for (j = 0; j < nContours; j++) {
 
-                            if (((VOIBase) contours[i].elementAt(j)).isActive()) {
+                            if ( ((VOIBase) contours[i].elementAt(j)).isActive()) {
                                 nActiveContours++;
                             }
                         }
@@ -1041,7 +1026,7 @@ public class FileVOI extends FileXML {
 
                                 // save old format if image dim is 2
                                 if (image.getNDims() == 2) {
-                                    closedTag( "Slice-number", Integer.toString(i));
+                                    closedTag("Slice-number", Integer.toString(i));
                                 }
 
                                 nPts = ((Vector) (contours[i].elementAt(j))).size();
@@ -1055,24 +1040,23 @@ public class FileVOI extends FileXML {
                                 ((VOIBase) (contours[i].elementAt(j))).exportArrays(x, y, z);
 
                                 if (image.getNDims() > 2) {
-                                    Vector3f ptIn = new Vector3f();
-                                    Vector3f ptOut = new Vector3f();
-                                    int slice = i;
+                                    final Vector3f ptIn = new Vector3f();
+                                    final Vector3f ptOut = new Vector3f();
+                                    final int slice = i;
 
                                     for (m = 0; m < nPts; m++) {
                                         ptIn.X = x[m];
                                         ptIn.Y = y[m];
                                         ptIn.Z = slice;
                                         MipavCoordinateSystems.fileToScanner(ptIn, ptOut, image);
-                                        closedTag( "Pt",
-                                                  Float.toString(ptOut.X) + "," + Float.toString(ptOut.Y) + "," +
-                                                  Float.toString(ptOut.Z));
+                                        closedTag("Pt", Float.toString(ptOut.X) + "," + Float.toString(ptOut.Y) + ","
+                                                + Float.toString(ptOut.Z));
                                     }
                                 } else {
                                     // image is 2d
 
                                     for (k = 0; k < nPts; k++) {
-                                        closedTag( "Pt", Float.toString(x[k]) + "," + Float.toString(y[k]));
+                                        closedTag("Pt", Float.toString(x[k]) + "," + Float.toString(y[k]));
                                     }
                                 }
 
@@ -1085,21 +1069,19 @@ public class FileVOI extends FileXML {
 
             openTag("VOI", false);
             bw.close();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             System.err.println("CAUGHT EXCEPTION WITHIN writeXML() of FileVOI");
             e.printStackTrace();
         }
     }
-    
+
     /**
-	 * Converts string point (x,y) to Vector2f point.
-	 * 
-	 * @param str
-	 *            string to convert
-	 * @param pt
-	 *            point to return
-	 */
-    private void decodeLine(String str, Vector2f pt) {
+     * Converts string point (x,y) to Vector2f point.
+     * 
+     * @param str string to convert
+     * @param pt point to return
+     */
+    private void decodeLine(final String str, final Vector2f pt) {
         int index;
         String xStr, yStr;
 
@@ -1113,14 +1095,14 @@ public class FileVOI extends FileXML {
 
     /**
      * Reads in an annotation xml (.lbl) file and puts all VOITexts into a VOIVector (to be added to the image)
-     *
-     * @param   voiVector  a VOIVector for holding the VOIs before they are transferred to the image
-     *
-     * @return  boolean
+     * 
+     * @param voiVector a VOIVector for holding the VOIs before they are transferred to the image
+     * 
+     * @return boolean
      */
-    private boolean readAnnotationXML(VOIVector voiVector) {
+    private boolean readAnnotationXML(final VOIVector voiVector) {
 
-        SAXParserFactory spf = SAXParserFactory.newInstance();
+        final SAXParserFactory spf = SAXParserFactory.newInstance();
 
         spf.setNamespaceAware(true);
         spf.setValidating(true);
@@ -1128,12 +1110,12 @@ public class FileVOI extends FileXML {
         try {
 
             // Create a JAXP SAXParser
-            SAXParser saxParser = spf.newSAXParser();
+            final SAXParser saxParser = spf.newSAXParser();
 
             // Validation part 2a: set the schema language if necessary
-            saxParser.setProperty(SAXParserImpl.JAXP_SCHEMA_LANGUAGE, W3C_XML_SCHEMA);
+            saxParser.setProperty(JAXPConstants.JAXP_SCHEMA_LANGUAGE, FileVOI.W3C_XML_SCHEMA);
 
-            URL xsdURL = getClass().getClassLoader().getResource("text.xsd");
+            final URL xsdURL = getClass().getClassLoader().getResource("text.xsd");
 
             if (xsdURL == null) {
                 MipavUtil.displayError("Unable to find VOI XML schema.");
@@ -1141,10 +1123,10 @@ public class FileVOI extends FileXML {
                 return false;
             }
 
-            saxParser.setProperty(SAXParserImpl.JAXP_SCHEMA_SOURCE, xsdURL.toExternalForm());
+            saxParser.setProperty(JAXPConstants.JAXP_SCHEMA_SOURCE, xsdURL.toExternalForm());
 
             // Get the encapsulated SAX XMLReader
-            XMLReader xmlReader = saxParser.getXMLReader();
+            final XMLReader xmlReader = saxParser.getXMLReader();
 
             // Set the ContentHandler of the XMLReader
             xmlReader.setContentHandler(new XMLAnnotationHandler(voiVector));
@@ -1154,7 +1136,7 @@ public class FileVOI extends FileXML {
 
             // Tell the XMLReader to parse the XML document
             xmlReader.parse(MipavUtil.convertToFileURL(fileDir + fileName));
-        } catch (Exception error) {
+        } catch (final Exception error) {
             error.printStackTrace();
             MipavUtil.displayError("Error: " + error.getMessage());
 
@@ -1166,17 +1148,17 @@ public class FileVOI extends FileXML {
 
     /**
      * This method read a VOI file that has been saved in the MIPAV VOI format.
-     *
-     * @return     the new VOI read from the file
-     *
-     * @exception  IOException  if there is an error reading the file
+     * 
+     * @return the new VOI read from the file
+     * 
+     * @exception IOException if there is an error reading the file
      */
     private VOI readContourVOI() throws IOException {
         int i, j, k;
         int nSlices, nContours, nPts;
         int sliceNo;
         float[] x, y, z;
-        Vector2f pt2D = new Vector2f();
+        final Vector2f pt2D = new Vector2f();
         VOI newVOI;
         int maxSlice;
         int curveType;
@@ -1195,7 +1177,7 @@ public class FileVOI extends FileXML {
 
         nSlices = Integer.valueOf(readLine()).intValue();
 
-        if ((nSlices <= 0) || (nSlices > 2096)) {
+        if ( (nSlices <= 0) || (nSlices > 2096)) {
             throw (new IOException(" VOI file corrupted: too many slices"));
         }
 
@@ -1221,7 +1203,7 @@ public class FileVOI extends FileXML {
             if (sliceNo < maxSlice) {
                 nContours = Integer.valueOf(readLine()).intValue();
 
-                if ((nContours <= 0) || (nContours > 2096)) {
+                if ( (nContours <= 0) || (nContours > 2096)) {
                     throw (new IOException(" VOI file corrupted: too many contours per slice"));
                 }
 
@@ -1235,7 +1217,7 @@ public class FileVOI extends FileXML {
                         decodeLine(readLine(), pt2D);
                         x[k] = pt2D.X;
                         y[k] = pt2D.Y;
-                        z[k] = (float) sliceNo;
+                        z[k] = sliceNo;
                     }
 
                     newVOI.importCurve(x, y, z, sliceNo);
@@ -1251,7 +1233,7 @@ public class FileVOI extends FileXML {
         // set the color of the voi
         try {
             newVOI.setColor(new Color(red, green, blue, alpha));
-        } catch (Exception e) {
+        } catch (final Exception e) {
             Preferences.debug("readContourVOI: unable to set color of newVOI.", Preferences.DEBUG_FILEIO);
         }
 
@@ -1260,13 +1242,13 @@ public class FileVOI extends FileXML {
 
     /**
      * Reads in a VOI from a file using the new VOI schema based on Scanner coordinates rather than pixel space
-     *
-     * @param   voi  VOI to be read in
-     *
-     * @return  boolean whether or not the VOI read in successfully
+     * 
+     * @param voi VOI to be read in
+     * 
+     * @return boolean whether or not the VOI read in successfully
      */
-    private boolean readCoordXML(VOI voi) {
-        SAXParserFactory spf = SAXParserFactory.newInstance();
+    private boolean readCoordXML(final VOI voi) {
+        final SAXParserFactory spf = SAXParserFactory.newInstance();
 
         spf.setNamespaceAware(true);
         spf.setValidating(true);
@@ -1274,12 +1256,12 @@ public class FileVOI extends FileXML {
         try {
 
             // Create a JAXP SAXParser
-            SAXParser saxParser = spf.newSAXParser();
+            final SAXParser saxParser = spf.newSAXParser();
 
             // Validation part 2a: set the schema language if necessary
-            saxParser.setProperty(SAXParserImpl.JAXP_SCHEMA_LANGUAGE, W3C_XML_SCHEMA);
+            saxParser.setProperty(JAXPConstants.JAXP_SCHEMA_LANGUAGE, FileVOI.W3C_XML_SCHEMA);
 
-            URL xsdURL = getClass().getClassLoader().getResource("voi_coord.xsd");
+            final URL xsdURL = getClass().getClassLoader().getResource("voi_coord.xsd");
 
             if (xsdURL == null) {
                 MipavUtil.displayError("Unable to find VOI XML schema.");
@@ -1287,10 +1269,10 @@ public class FileVOI extends FileXML {
                 return false;
             }
 
-            saxParser.setProperty(SAXParserImpl.JAXP_SCHEMA_SOURCE, xsdURL.toExternalForm());
+            saxParser.setProperty(JAXPConstants.JAXP_SCHEMA_SOURCE, xsdURL.toExternalForm());
 
             // Get the encapsulated SAX XMLReader
-            XMLReader xmlReader = saxParser.getXMLReader();
+            final XMLReader xmlReader = saxParser.getXMLReader();
 
             // Set the ContentHandler of the XMLReader
             xmlReader.setContentHandler(new XMLCoordHandler(voi));
@@ -1300,7 +1282,7 @@ public class FileVOI extends FileXML {
 
             // Tell the XMLReader to parse the XML document
             xmlReader.parse(MipavUtil.convertToFileURL(fileDir + fileName));
-        } catch (Exception error) {
+        } catch (final Exception error) {
             error.printStackTrace();
             MipavUtil.displayError("Error: " + error.getMessage());
 
@@ -1312,10 +1294,10 @@ public class FileVOI extends FileXML {
 
     /**
      * Reads a line of the file and strips comments indicated by the # symbol.
-     *
-     * @return     the line read in
-     *
-     * @exception  IOException  if there is an error reading the file
+     * 
+     * @return the line read in
+     * 
+     * @exception IOException if there is an error reading the file
      */
     private String readLine() throws IOException {
         String tempString;
@@ -1323,7 +1305,7 @@ public class FileVOI extends FileXML {
 
         try {
             tempString = raFile.readLine();
-        } catch (IOException error) {
+        } catch (final IOException error) {
             throw (error);
         }
 
@@ -1342,14 +1324,14 @@ public class FileVOI extends FileXML {
 
     /**
      * This method read a VOI file that has been saved in the Nauge VOI format.
-     *
-     * @param      firstStr  first line of the Nauge VOI file
-     *
-     * @return     the VOI
-     *
-     * @exception  IOException  if there is an error reading the file
+     * 
+     * @param firstStr first line of the Nauge VOI file
+     * 
+     * @return the VOI
+     * 
+     * @exception IOException if there is an error reading the file
      */
-    private VOI readNaugeVOI(String firstStr) throws IOException {
+    private VOI readNaugeVOI(final String firstStr) throws IOException {
         int i, j, k;
         int indexZ;
         int nSlices, nPts;
@@ -1357,7 +1339,7 @@ public class FileVOI extends FileXML {
         String VOIStr, tempStr;
         float[] x, y, z;
         float[] xTemp, yTemp;
-        Vector2f pt2D = new Vector2f();
+        final Vector2f pt2D = new Vector2f();
         VOI newVOI;
         int maxSlice;
 
@@ -1367,13 +1349,12 @@ public class FileVOI extends FileXML {
         tempStr = firstStr.substring(1).trim();
         nSlices = Integer.valueOf(tempStr).intValue();
 
-        if ((nSlices <= 0) || (nSlices > 2096)) {
+        if ( (nSlices <= 0) || (nSlices > 2096)) {
             throw (new IOException(" VOI file corrupted: too many slices"));
         }
 
         if (image.getNDims() > 2) {
-            newVOI = new VOI((short) image.getVOIs().size(), trimmedFileName, image.getExtents()[2], VOI.CONTOUR,
-                             -1.0f);
+            newVOI = new VOI((short) image.getVOIs().size(), trimmedFileName, image.getExtents()[2], VOI.CONTOUR, -1.0f);
             newVOI.setExtension(extension);
             maxSlice = image.getExtents()[2];
         } else {
@@ -1384,7 +1365,7 @@ public class FileVOI extends FileXML {
 
         VOIStr = raFile.readLine();
 
-        if (!VOIStr.regionMatches(true, 0, "V", 0, 1)) {
+        if ( !VOIStr.regionMatches(true, 0, "V", 0, 1)) {
             throw (new IOException("Error reading VOI file"));
         }
 
@@ -1396,20 +1377,20 @@ public class FileVOI extends FileXML {
             tempStr = VOIStr.substring(indexZ + 1).trim();
             sliceNo = Math.abs(Float.valueOf(tempStr).intValue());
 
-            if ((sliceNo < maxSlice) && (nPts > 0)) {
+            if ( (sliceNo < maxSlice) && (nPts > 0)) {
 
-                while ((VOIStr = readLine()) != null) {
+                while ( (VOIStr = readLine()) != null) {
 
                     if (VOIStr.regionMatches(true, 0, "V", 0, 1)) {
                         break;
                     } else if (VOIStr.regionMatches(true, 0, "{", 0, 1)) {
                         k = 0;
 
-                        while (!((VOIStr = readLine()).regionMatches(true, 0, "}", 0, 1))) {
+                        while ( ! ( (VOIStr = readLine()).regionMatches(true, 0, "}", 0, 1))) {
                             decodeLine(VOIStr, pt2D);
 
-                            if ((pt2D.X < 0) || (pt2D.Y < 0) || (pt2D.X >= image.getExtents()[0]) ||
-                                    (pt2D.Y >= image.getExtents()[1])) {
+                            if ( (pt2D.X < 0) || (pt2D.Y < 0) || (pt2D.X >= image.getExtents()[0])
+                                    || (pt2D.Y >= image.getExtents()[1])) {
                                 throw (new IOException("VOI points exceed image bounds"));
                             }
 
@@ -1449,19 +1430,19 @@ public class FileVOI extends FileXML {
 
     /**
      * This method read a VOI.POINT file that has been saved in the MIPAV PTS format.
-     *
-     * @return     the new VOI read from the file
-     *
-     * @exception  IOException  if there is an error reading the file
+     * 
+     * @return the new VOI read from the file
+     * 
+     * @exception IOException if there is an error reading the file
      */
     private VOI readPointVOI() throws IOException {
         int i, j, k;
         int nSlices, nContours, nPts;
         int sliceNo;
         float[] x, y, z;
-        Vector2f pt2D = new Vector2f();
+        final Vector2f pt2D = new Vector2f();
         VOI newVOI;
-        short id = 7777; /* different from any IDs in ViewJComponentEditImage */
+        final short id = 7777; /* different from any IDs in ViewJComponentEditImage */
         int curveType;
         int red, green, blue, alpha;
         int uid;
@@ -1479,7 +1460,7 @@ public class FileVOI extends FileXML {
 
         nSlices = Integer.valueOf(readLine()).intValue();
 
-        if ((nSlices <= 0) || (nSlices > sliceNum)) {
+        if ( (nSlices <= 0) || (nSlices > sliceNum)) {
             throw (new IOException(" VOI file corrupted: too many slices"));
         }
 
@@ -1491,7 +1472,7 @@ public class FileVOI extends FileXML {
             if (sliceNo < sliceNum) {
                 nContours = Integer.valueOf(readLine()).intValue();
 
-                if ((nContours <= 0) || (nContours > 2096)) {
+                if ( (nContours <= 0) || (nContours > 2096)) {
                     throw (new IOException(" VOI file corrupted: too many contours per slice"));
                 }
 
@@ -1505,7 +1486,7 @@ public class FileVOI extends FileXML {
                         decodeLine(readLine(), pt2D);
                         x[k] = pt2D.X;
                         y[k] = pt2D.Y;
-                        z[k] = (float) sliceNo;
+                        z[k] = sliceNo;
                     }
 
                     newVOI.importCurve(x, y, z, sliceNo);
@@ -1516,7 +1497,7 @@ public class FileVOI extends FileXML {
         try {
             uid = Integer.valueOf(readLine()).intValue();
             newVOI.setUID(uid);
-        } catch (IOException ex) {
+        } catch (final IOException ex) {
             Preferences.debug(ex + "\n", Preferences.DEBUG_FILEIO);
         }
 
@@ -1525,7 +1506,7 @@ public class FileVOI extends FileXML {
         // set the color of the voi
         try {
             newVOI.setColor(new Color(red, green, blue, alpha));
-        } catch (Exception e) {
+        } catch (final Exception e) {
             Preferences.debug("readContourVOI: unable to set color of newVOI.\n", Preferences.DEBUG_FILEIO);
         }
 
@@ -1534,14 +1515,14 @@ public class FileVOI extends FileXML {
 
     /**
      * Reads in the older VOI XML schema (using pixel coordinates)
-     *
-     * @param   voi  VOI
-     *
-     * @return  boolean
+     * 
+     * @param voi VOI
+     * 
+     * @return boolean
      */
-    private boolean readXML(VOI voi) {
+    private boolean readXML(final VOI voi) {
 
-        SAXParserFactory spf = SAXParserFactory.newInstance();
+        final SAXParserFactory spf = SAXParserFactory.newInstance();
 
         spf.setNamespaceAware(true);
         spf.setValidating(true);
@@ -1549,12 +1530,12 @@ public class FileVOI extends FileXML {
         try {
 
             // Create a JAXP SAXParser
-            SAXParser saxParser = spf.newSAXParser();
+            final SAXParser saxParser = spf.newSAXParser();
 
             // Validation part 2a: set the schema language if necessary
-            saxParser.setProperty(SAXParserImpl.JAXP_SCHEMA_LANGUAGE, W3C_XML_SCHEMA);
+            saxParser.setProperty(JAXPConstants.JAXP_SCHEMA_LANGUAGE, FileVOI.W3C_XML_SCHEMA);
 
-            URL xsdURL = getClass().getClassLoader().getResource("voi.xsd");
+            final URL xsdURL = getClass().getClassLoader().getResource("voi.xsd");
 
             if (xsdURL == null) {
                 MipavUtil.displayError("Unable to find VOI XML schema.");
@@ -1562,10 +1543,10 @@ public class FileVOI extends FileXML {
                 return false;
             }
 
-            saxParser.setProperty(SAXParserImpl.JAXP_SCHEMA_SOURCE, xsdURL.toExternalForm());
+            saxParser.setProperty(JAXPConstants.JAXP_SCHEMA_SOURCE, xsdURL.toExternalForm());
 
             // Get the encapsulated SAX XMLReader
-            XMLReader xmlReader = saxParser.getXMLReader();
+            final XMLReader xmlReader = saxParser.getXMLReader();
 
             // Set the ContentHandler of the XMLReader
             xmlReader.setContentHandler(new MyXMLHandler(voi));
@@ -1575,7 +1556,7 @@ public class FileVOI extends FileXML {
 
             // Tell the XMLReader to parse the XML document
             xmlReader.parse(MipavUtil.convertToFileURL(fileDir + fileName));
-        } catch (Exception error) {
+        } catch (final Exception error) {
             // MipavUtil.displayError("Error: " + error.getMessage());
 
             return false;
@@ -1584,7 +1565,8 @@ public class FileVOI extends FileXML {
         return true;
     }
 
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
+    // ~ Inner Classes
+    // --------------------------------------------------------------------------------------------------
 
     /**
      * Handle events generated while parsing the XML file.
@@ -1592,7 +1574,7 @@ public class FileVOI extends FileXML {
     private class MyXMLHandler extends DefaultHandler {
 
         /** The contours of the VOI we are building. */
-        private Vector contourVector;
+        private final Vector contourVector;
 
         /** The current XML tag we are parsing. */
         private String currentKey;
@@ -1604,27 +1586,27 @@ public class FileVOI extends FileXML {
         private int sliceNumber = 0;
 
         /** The VOI that we are building from the XML. */
-        private VOI voi;
+        private final VOI voi;
 
         /**
          * Construct our custom XML data handler.
-         *
-         * @param  voi  the VOI we should build from the XML file data
+         * 
+         * @param voi the VOI we should build from the XML file data
          */
-        public MyXMLHandler(VOI voi) {
+        public MyXMLHandler(final VOI voi) {
             this.voi = voi;
             contourVector = new Vector();
         }
 
         /**
          * DOCUMENT ME!
-         *
-         * @param  ch      char[]
-         * @param  start   int
-         * @param  length  int
+         * 
+         * @param ch char[]
+         * @param start int
+         * @param length int
          */
-        public void characters(char[] ch, int start, int length) {
-            String s = new String(ch, start, length);
+        public void characters(final char[] ch, final int start, final int length) {
+            final String s = new String(ch, start, length);
 
             // don't need to de-entity-ize the string because the parser does
             // that automatically
@@ -1636,14 +1618,15 @@ public class FileVOI extends FileXML {
         /**
          * Parser calls this when the end tag of each element is reached. Data collected in the elementbuffer is
          * generally saved to the image info.
-         *
-         * @param   namespaceURI  the namespace (not used)
-         * @param   localName     the current tag we are parsing
-         * @param   qName         ? (not used)
-         *
-         * @throws  SAXException  if there is a problem with the parser
+         * 
+         * @param namespaceURI the namespace (not used)
+         * @param localName the current tag we are parsing
+         * @param qName ? (not used)
+         * 
+         * @throws SAXException if there is a problem with the parser
          */
-        public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
+        public void endElement(final String namespaceURI, final String localName, final String qName)
+                throws SAXException {
             currentKey = localName;
 
             if (currentKey.equals("Unique-ID")) {
@@ -1652,7 +1635,7 @@ public class FileVOI extends FileXML {
                 voi.setCurveType(Integer.parseInt(elementBuffer));
             } else if (currentKey.equals("Color")) {
                 int a = 0, r = 0, g = 0, b = 0;
-                StringTokenizer st = new StringTokenizer(elementBuffer, ",");
+                final StringTokenizer st = new StringTokenizer(elementBuffer, ",");
 
                 try {
                     a = Integer.parseInt(st.nextToken());
@@ -1661,23 +1644,23 @@ public class FileVOI extends FileXML {
                     b = Integer.parseInt(st.nextToken());
 
                     voi.setColor(new Color(r, g, b, a));
-                } catch (NumberFormatException ex) {
+                } catch (final NumberFormatException ex) {
                     Preferences.debug("Point is incorrectly formatted: " + ex.toString() + "\n",
-                                      Preferences.DEBUG_FILEIO);
+                            Preferences.DEBUG_FILEIO);
                 }
             } else if (currentKey.equals("Thickness")) {
-            	voi.setThickness(Integer.parseInt(elementBuffer));
+                voi.setThickness(Integer.parseInt(elementBuffer));
             } else if (currentKey.equals("Slice-number")) {
                 sliceNumber = Integer.parseInt(elementBuffer);
             } else if (currentKey.equals("Pt")) {
                 float x = 0f, y = 0f;
-                StringTokenizer st = new StringTokenizer(elementBuffer, ",");
+                final StringTokenizer st = new StringTokenizer(elementBuffer, ",");
 
                 try {
                     x = Float.parseFloat(st.nextToken());
                     y = Float.parseFloat(st.nextToken());
                     contourVector.addElement(new Vector2f(x, y));
-                } catch (NumberFormatException nfex) {
+                } catch (final NumberFormatException nfex) {
                     Preferences.debug("Error reading pt: " + nfex.toString() + "\n", Preferences.DEBUG_FILEIO);
                 }
             } else if (currentKey.equals("Contour")) {
@@ -1690,11 +1673,10 @@ public class FileVOI extends FileXML {
                 y = new float[contourVector.size()];
                 z = new float[contourVector.size()];
 
-
                 for (index = 0; index < contourVector.size(); index++) {
                     x[index] = ((Vector2f) contourVector.elementAt(index)).X;
                     y[index] = ((Vector2f) contourVector.elementAt(index)).Y;
-                    z[index] = (float) sliceNumber;
+                    z[index] = sliceNumber;
                 }
 
                 voi.importCurve(x, y, z, sliceNumber);
@@ -1704,16 +1686,16 @@ public class FileVOI extends FileXML {
 
         /**
          * Parser calls this for each element in a document.
-         *
-         * @param   namespaceURI  the namespace (not used)
-         * @param   localName     the current tag we are parsing
-         * @param   qName         ? (not used)
-         * @param   atts          attributes for the current tag
-         *
-         * @throws  SAXException  if there is a problem with the parser
+         * 
+         * @param namespaceURI the namespace (not used)
+         * @param localName the current tag we are parsing
+         * @param qName ? (not used)
+         * @param atts attributes for the current tag
+         * 
+         * @throws SAXException if there is a problem with the parser
          */
-        public void startElement(String namespaceURI, String localName, String qName, Attributes atts)
-                throws SAXException {
+        public void startElement(final String namespaceURI, final String localName, final String qName,
+                final Attributes atts) throws SAXException {
             currentKey = localName;
             elementBuffer = "";
 
@@ -1734,15 +1716,15 @@ public class FileVOI extends FileXML {
 
         /**
          * DOCUMENT ME!
-         *
-         * @param   o1  DOCUMENT ME!
-         * @param   o2  DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
+         * 
+         * @param o1 DOCUMENT ME!
+         * @param o2 DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
          */
-        public int compare(Object o1, Object o2) {
-            int a = ((VOISortItem) o1).getIndex();
-            int b = ((VOISortItem) o2).getIndex();
+        public int compare(final Object o1, final Object o2) {
+            final int a = ((VOISortItem) o1).getIndex();
+            final int b = ((VOISortItem) o2).getIndex();
 
             if (a < b) {
                 return -1;
@@ -1761,22 +1743,22 @@ public class FileVOI extends FileXML {
     private class VOISortItem {
 
         /** DOCUMENT ME! */
-        private int index;
+        private final int index;
 
         /** DOCUMENT ME! */
-        private int slice;
+        private final int slice;
 
         /** DOCUMENT ME! */
-        private VOIBase vBase;
+        private final VOIBase vBase;
 
         /**
          * Creates a new VOISortItem object.
-         *
-         * @param  base  DOCUMENT ME!
-         * @param  idx   DOCUMENT ME!
-         * @param  z     DOCUMENT ME!
+         * 
+         * @param base DOCUMENT ME!
+         * @param idx DOCUMENT ME!
+         * @param z DOCUMENT ME!
          */
-        public VOISortItem(VOIBase base, int idx, int z) {
+        public VOISortItem(final VOIBase base, final int idx, final int z) {
             vBase = base;
             index = idx;
             slice = z;
@@ -1784,8 +1766,8 @@ public class FileVOI extends FileXML {
 
         /**
          * DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
          */
         public int getIndex() {
             return index;
@@ -1793,8 +1775,8 @@ public class FileVOI extends FileXML {
 
         /**
          * DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
          */
         public int getSlice() {
             return slice;
@@ -1802,13 +1784,12 @@ public class FileVOI extends FileXML {
 
         /**
          * DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
          */
         public VOIBase getVOIBase() {
             return vBase;
         }
-
 
     }
 
@@ -1845,18 +1826,17 @@ public class FileVOI extends FileXML {
         private VOIText voiText = null;
 
         /** Holds all the VOITexts read in */
-        private VOIVector voiVector;
+        private final VOIVector voiVector;
 
-        /** the Z dimension of the image*/
+        /** the Z dimension of the image */
         private int zDim = 1;
-
 
         /**
          * Construct our custom XML data handler.
-         *
-         * @param  voiVector  the VOI we should build from the XML file data
+         * 
+         * @param voiVector the VOI we should build from the XML file data
          */
-        public XMLAnnotationHandler(VOIVector voiVector) {
+        public XMLAnnotationHandler(final VOIVector voiVector) {
             this.voiVector = voiVector;
 
             if (image.getNDims() > 2) {
@@ -1866,13 +1846,13 @@ public class FileVOI extends FileXML {
 
         /**
          * DOCUMENT ME!
-         *
-         * @param  ch      char[]
-         * @param  start   int
-         * @param  length  int
+         * 
+         * @param ch char[]
+         * @param start int
+         * @param length int
          */
-        public void characters(char[] ch, int start, int length) {
-            String s = new String(ch, start, length);
+        public void characters(final char[] ch, final int start, final int length) {
+            final String s = new String(ch, start, length);
 
             // don't need to de-entity-ize the string because the parser does
             // that automatically
@@ -1884,14 +1864,15 @@ public class FileVOI extends FileXML {
         /**
          * Parser calls this when the end tag of each element is reached. Data collected in the elementbuffer is
          * generally saved to the image info.
-         *
-         * @param   namespaceURI  the namespace (not used)
-         * @param   localName     the current tag we are parsing
-         * @param   qName         ? (not used)
-         *
-         * @throws  SAXException  if there is a problem with the parser
+         * 
+         * @param namespaceURI the namespace (not used)
+         * @param localName the current tag we are parsing
+         * @param qName ? (not used)
+         * 
+         * @throws SAXException if there is a problem with the parser
          */
-        public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
+        public void endElement(final String namespaceURI, final String localName, final String qName)
+                throws SAXException {
             currentKey = localName;
 
             if (currentKey.equals("Label")) {
@@ -1908,48 +1889,48 @@ public class FileVOI extends FileXML {
             } else if (currentKey.equals("Text")) {
                 voiText.setText(elementBuffer);
             } else if (currentKey.equals("Note")) {
-            	voiText.setNote(elementBuffer);
-        	} else if (currentKey.equals("TextLocation") || currentKey.equals("ArrowLocation")) {
+                voiText.setNote(elementBuffer);
+            } else if (currentKey.equals("TextLocation") || currentKey.equals("ArrowLocation")) {
                 float x = 0f, y = 0f, z = 0f;
-                StringTokenizer st = new StringTokenizer(elementBuffer, ",");
+                final StringTokenizer st = new StringTokenizer(elementBuffer, ",");
 
                 try {
                     x = Float.parseFloat(st.nextToken());
                     y = Float.parseFloat(st.nextToken());
                     z = Float.parseFloat(st.nextToken());
                     // System.err.println("X: " + x + ", Y: " + y + ", Z: " + z);
-                } catch (NumberFormatException nfex) {
+                } catch (final NumberFormatException nfex) {
                     Preferences.debug("Error reading pt: " + nfex.toString() + "\n", Preferences.DEBUG_FILEIO);
                 }
 
-                Vector3f ptIn = new Vector3f(x, y, z);
-                Vector3f ptOut = new Vector3f();
+                final Vector3f ptIn = new Vector3f(x, y, z);
+                final Vector3f ptOut = new Vector3f();
 
                 if (image.getNDims() > 2) {
-                    int xDim = image.getExtents()[0];
-                    int yDim = image.getExtents()[1];
-                    int zDim = image.getExtents()[2];
+                    final int xDim = image.getExtents()[0];
+                    final int yDim = image.getExtents()[1];
+                    final int zDim = image.getExtents()[2];
 
                     Preferences.debug("New contour: " + "\n", Preferences.DEBUG_FILEIO);
 
                     MipavCoordinateSystems.scannerToFile(ptIn, ptOut, image);
 
-                    if ((ptOut.X > xDim) || (ptOut.Y > yDim) || (ptOut.Z >= zDim)) {
+                    if ( (ptOut.X > xDim) || (ptOut.Y > yDim) || (ptOut.Z >= zDim)) {
                         MipavUtil.displayWarning("VOI in file out of image bounds:  Open VOI aborted");
 
                         return;
                     }
-                    
-                    //A mistake has occured in reading FileInfoBase.ORI_L2R_TYPE, all must now be flipped
-                    if((ptOut.X < 0) && (ptOut.Y < 0) && (ptOut.Z < 0)) {
 
-                    	ptOut.X = -ptOut.X;
-                    	ptOut.Y = -ptOut.Y;
-                    	ptOut.Z = -ptOut.Z;
+                    // A mistake has occured in reading FileInfoBase.ORI_L2R_TYPE, all must now be flipped
+                    if ( (ptOut.X < 0) && (ptOut.Y < 0) && (ptOut.Z < 0)) {
+
+                        ptOut.X = -ptOut.X;
+                        ptOut.Y = -ptOut.Y;
+                        ptOut.Z = -ptOut.Z;
                     }
-                    
+
                     slice = (int) ptOut.Z;
-                    System.out.println("Point: "+slice);
+                    System.out.println("Point: " + slice);
 
                     voiText.addElement(ptOut);
                 } else {
@@ -1961,7 +1942,7 @@ public class FileVOI extends FileXML {
             } else if (currentKey.equals("Color") || currentKey.equals("BackgroundColor")) {
 
                 int a = 0, r = 0, g = 0, b = 0;
-                StringTokenizer st = new StringTokenizer(elementBuffer, ",");
+                final StringTokenizer st = new StringTokenizer(elementBuffer, ",");
 
                 try {
                     a = Integer.parseInt(st.nextToken());
@@ -1976,9 +1957,9 @@ public class FileVOI extends FileXML {
                         voiText.setBackgroundColor(new Color(r, g, b, a));
                     }
 
-                } catch (NumberFormatException ex) {
+                } catch (final NumberFormatException ex) {
                     Preferences.debug("Point is incorrectly formatted: " + ex.toString() + "\n",
-                                      Preferences.DEBUG_FILEIO);
+                            Preferences.DEBUG_FILEIO);
                 }
             } else if (currentKey.equals("FontName")) {
                 fontName = new String(elementBuffer);
@@ -1999,21 +1980,21 @@ public class FileVOI extends FileXML {
 
         /**
          * Parser calls this for each element in a document.
-         *
-         * @param   namespaceURI  the namespace (not used)
-         * @param   localName     the current tag we are parsing
-         * @param   qName         ? (not used)
-         * @param   atts          attributes for the current tag
-         *
-         * @throws  SAXException  if there is a problem with the parser
+         * 
+         * @param namespaceURI the namespace (not used)
+         * @param localName the current tag we are parsing
+         * @param qName ? (not used)
+         * @param atts attributes for the current tag
+         * 
+         * @throws SAXException if there is a problem with the parser
          */
-        public void startElement(String namespaceURI, String localName, String qName, Attributes atts)
-                throws SAXException {
+        public void startElement(final String namespaceURI, final String localName, final String qName,
+                final Attributes atts) throws SAXException {
             currentKey = localName;
             elementBuffer = "";
 
             if (currentKey.equals("Label")) {
-            	id++;
+                id++;
                 voi = new VOI(id, "Label_" + id, zDim, VOI.ANNOTATION, 0f);
                 voi.setExtension(extension);
                 voiText = new VOIText();
@@ -2029,7 +2010,7 @@ public class FileVOI extends FileXML {
     private class XMLCoordHandler extends DefaultHandler {
 
         /** The contours of the VOI we are building. */
-        private Vector contourVector;
+        private final Vector contourVector;
 
         /** The current XML tag we are parsing. */
         private String currentKey;
@@ -2038,27 +2019,27 @@ public class FileVOI extends FileXML {
         private String elementBuffer = new String();
 
         /** The VOI that we are building from the XML. */
-        private VOI voi;
+        private final VOI voi;
 
         /**
          * Construct our custom XML data handler.
-         *
-         * @param  voi  the VOI we should build from the XML file data
+         * 
+         * @param voi the VOI we should build from the XML file data
          */
-        public XMLCoordHandler(VOI voi) {
+        public XMLCoordHandler(final VOI voi) {
             this.voi = voi;
             contourVector = new Vector();
         }
 
         /**
          * DOCUMENT ME!
-         *
-         * @param  ch      char[]
-         * @param  start   int
-         * @param  length  int
+         * 
+         * @param ch char[]
+         * @param start int
+         * @param length int
          */
-        public void characters(char[] ch, int start, int length) {
-            String s = new String(ch, start, length);
+        public void characters(final char[] ch, final int start, final int length) {
+            final String s = new String(ch, start, length);
 
             // don't need to de-entity-ize the string because the parser does
             // that automatically
@@ -2070,14 +2051,15 @@ public class FileVOI extends FileXML {
         /**
          * Parser calls this when the end tag of each element is reached. Data collected in the elementbuffer is
          * generally saved to the image info.
-         *
-         * @param   namespaceURI  the namespace (not used)
-         * @param   localName     the current tag we are parsing
-         * @param   qName         ? (not used)
-         *
-         * @throws  SAXException  if there is a problem with the parser
+         * 
+         * @param namespaceURI the namespace (not used)
+         * @param localName the current tag we are parsing
+         * @param qName ? (not used)
+         * 
+         * @throws SAXException if there is a problem with the parser
          */
-        public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
+        public void endElement(final String namespaceURI, final String localName, final String qName)
+                throws SAXException {
             currentKey = localName;
 
             if (currentKey.equals("Unique-ID")) {
@@ -2086,7 +2068,7 @@ public class FileVOI extends FileXML {
                 voi.setCurveType(Integer.parseInt(elementBuffer));
             } else if (currentKey.equals("Color")) {
                 int a = 0, r = 0, g = 0, b = 0;
-                StringTokenizer st = new StringTokenizer(elementBuffer, ",");
+                final StringTokenizer st = new StringTokenizer(elementBuffer, ",");
 
                 try {
                     a = Integer.parseInt(st.nextToken());
@@ -2095,15 +2077,15 @@ public class FileVOI extends FileXML {
                     b = Integer.parseInt(st.nextToken());
 
                     voi.setColor(new Color(r, g, b, a));
-                } catch (NumberFormatException ex) {
+                } catch (final NumberFormatException ex) {
                     Preferences.debug("Point is incorrectly formatted: " + ex.toString() + "\n",
-                                      Preferences.DEBUG_FILEIO);
+                            Preferences.DEBUG_FILEIO);
                 }
             } else if (currentKey.equals("Thickness")) {
-            	voi.setThickness(Integer.parseInt(elementBuffer));
+                voi.setThickness(Integer.parseInt(elementBuffer));
             } else if (currentKey.equals("Pt")) {
                 float x = 0f, y = 0f, z = 0f;
-                StringTokenizer st = new StringTokenizer(elementBuffer, ",");
+                final StringTokenizer st = new StringTokenizer(elementBuffer, ",");
 
                 try {
                     x = Float.parseFloat(st.nextToken());
@@ -2111,7 +2093,7 @@ public class FileVOI extends FileXML {
                     z = Float.parseFloat(st.nextToken());
                     contourVector.addElement(new Vector3f(x, y, z));
                     // System.err.println("X: " + x + ", Y: " + y + ", Z: " + z);
-                } catch (NumberFormatException nfex) {
+                } catch (final NumberFormatException nfex) {
                     Preferences.debug("Error reading pt: " + nfex.toString() + "\n", Preferences.DEBUG_FILEIO);
                 }
             } else if (currentKey.equals("Contour")) {
@@ -2125,11 +2107,11 @@ public class FileVOI extends FileXML {
                 z = new float[contourVector.size()];
 
                 Vector3f ptIn = new Vector3f();
-                Vector3f ptOut = new Vector3f();
+                final Vector3f ptOut = new Vector3f();
 
-                int xDim = image.getExtents()[0];
-                int yDim = image.getExtents()[1];
-                int zDim = image.getExtents()[2];
+                final int xDim = image.getExtents()[0];
+                final int yDim = image.getExtents()[1];
+                final int zDim = image.getExtents()[2];
 
                 Preferences.debug("New contour: " + "\n", Preferences.DEBUG_FILEIO);
 
@@ -2145,31 +2127,31 @@ public class FileVOI extends FileXML {
 
                     // System.err.println("POINT OUT (scanner to file): " + x[index] + ", " + y[index] + ", " +
                     // z[index]);
-                    Preferences.debug("\tScanner coord: " + ptIn + ", File coord: " + x[index] + ", " + y[index] +
-                                      ", " + z[index] + "\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("\tScanner coord: " + ptIn + ", File coord: " + x[index] + ", " + y[index] + ", "
+                            + z[index] + "\n", Preferences.DEBUG_FILEIO);
 
-                    if ((ptOut.X > xDim) || (ptOut.Y > yDim) || (ptOut.Z >= zDim)) {
+                    if ( (ptOut.X > xDim) || (ptOut.Y > yDim) || (ptOut.Z >= zDim)) {
                         throw new SAXException("VOI on file out of image bounds");
                     }
                 }
 
-                voi.importCurve(x, y, z, (int)z[0]);
+                voi.importCurve(x, y, z, (int) z[0]);
             }
 
         }
 
         /**
          * Parser calls this for each element in a document.
-         *
-         * @param   namespaceURI  the namespace (not used)
-         * @param   localName     the current tag we are parsing
-         * @param   qName         ? (not used)
-         * @param   atts          attributes for the current tag
-         *
-         * @throws  SAXException  if there is a problem with the parser
+         * 
+         * @param namespaceURI the namespace (not used)
+         * @param localName the current tag we are parsing
+         * @param qName ? (not used)
+         * @param atts attributes for the current tag
+         * 
+         * @throws SAXException if there is a problem with the parser
          */
-        public void startElement(String namespaceURI, String localName, String qName, Attributes atts)
-                throws SAXException {
+        public void startElement(final String namespaceURI, final String localName, final String qName,
+                final Attributes atts) throws SAXException {
             currentKey = localName;
             elementBuffer = "";
 
@@ -2182,6 +2164,5 @@ public class FileVOI extends FileXML {
         }
 
     }
-
 
 }

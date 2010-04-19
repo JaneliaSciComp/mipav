@@ -5,7 +5,7 @@ import WildMagic.LibFoundation.Curves.*;
 import WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.model.structures.BSplineLattice3Df;
 import gov.nih.mipav.model.structures.ModelSimpleImage;
-import gov.nih.mipav.util.MipavUtil;
+import gov.nih.mipav.util.ThreadUtil;
 import gov.nih.mipav.view.Preferences;
 
 import java.util.concurrent.CountDownLatch;
@@ -1108,7 +1108,7 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
                             doneSignal.countDown();
                         }
                     };
-                    MipavUtil.mipavThreadPool.execute(task);
+                    ThreadUtil.mipavThreadPool.execute(task);
         		}
         	}
     	}
