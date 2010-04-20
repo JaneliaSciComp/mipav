@@ -26,15 +26,22 @@ import gov.nih.mipav.model.algorithms.AlgorithmDespotT1;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.Parameter;
+import gov.nih.mipav.model.scripting.parameters.ParameterBoolean;
+import gov.nih.mipav.model.scripting.parameters.ParameterDouble;
+import gov.nih.mipav.model.scripting.parameters.ParameterExternalImage;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.parameters.ParameterFloat;
+import gov.nih.mipav.model.scripting.parameters.ParameterImage;
+import gov.nih.mipav.model.scripting.parameters.ParameterInt;
 import gov.nih.mipav.model.scripting.parameters.ParameterList;
+import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewUserInterface;
 
-public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmInterface {
+public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery {
 
     private static String title = "DESPOT1 T1 Mapper";
     private double despotTR = 5.00;
@@ -1430,6 +1437,253 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
             }
         }
         
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterDouble("despot_TR", despotTR));
+            table.put(new ParameterDouble("irspgr_TR", irspgrTR));
+            table.put(new ParameterDouble("irspgr_Ky", irspgrKy));
+            table.put(new ParameterDouble("irspgr_FA", irspgrFA));
+            table.put(new ParameterDouble("max_T1", maxT1));
+            table.put(new ParameterDouble("max_Mo", maxMo));
+            
+            //double[], note all non-string arrays are stored as parameter lists
+            table.put(new ParameterList("despot_FA", Parameter.PARAM_DOUBLE, "0,0,0"));
+            table.put(new ParameterList("irspgr_Tr", Parameter.PARAM_DOUBLE, "0,0,0"));
+            table.put(new ParameterList("irspgr_TI", Parameter.PARAM_DOUBLE, "0,0,0")); 
+            table.put(new ParameterList("spgr_Data", Parameter.PARAM_DOUBLE, "0,0,0"));
+            table.put(new ParameterList("irspgr_Data", Parameter.PARAM_DOUBLE, "0,0,0"));
+            
+            table.put(new ParameterDouble("scale", scale));
+            table.put(new ParameterDouble("point_Scale", pointScale));
+            table.put(new ParameterDouble("scale_Increment", scaleIncrement));
+
+            //double[]
+            table.put(new ParameterList("estimates", Parameter.PARAM_DOUBLE, "0,0,0"));
+            table.put(new ParameterList("residuals", Parameter.PARAM_DOUBLE, "0,0,0"));
+
+            //int[]
+            table.put(new ParameterList("direction", Parameter.PARAM_INT, "0,0,0"));
+            table.put(new ParameterList("spgr_Image_Index", Parameter.PARAM_INT, "0,0,0"));
+            table.put(new ParameterList("irspgr_Image_Index", Parameter.PARAM_INT, "0,0,0"));
+            
+            table.put(new ParameterInt("b1_Image_Index", b1ImageIndex));
+            
+            table.put(new ParameterDouble("angle_Increment", angleIncrement));
+
+            table.put(new ParameterInt("Nsa", Nsa));
+            table.put(new ParameterInt("Nti", Nti));
+            
+            table.put(new ParameterDouble("max_Angle", maxAngle));
+            
+            table.put(new ParameterBoolean("smooth_B1_Field", smoothB1Field));
+            table.put(new ParameterBoolean("perform_Straight_DESPOT1", performStraightDESPOT1));
+            table.put(new ParameterBoolean("perform_DESPOT1_with_PreCalculatedB1Map", performDESPOT1withPreCalculatedB1Map));
+            table.put(new ParameterBoolean("perform_DESPOT1_HIFI", performDESPOT1HIFI));
+            table.put(new ParameterBoolean("double_Inversion", doubleInversion));
+            table.put(new ParameterBoolean("single_Inversion", singleInversion));
+            table.put(new ParameterBoolean("ge_Scanner", geScanner));
+            table.put(new ParameterBoolean("siemens_Scanner", siemensScanner));
+            table.put(new ParameterBoolean("three_T_Field", threeTField));
+            table.put(new ParameterBoolean("one_five_TField", onefiveTField));
+            table.put(new ParameterBoolean("calculate_T1", calculateT1));
+            table.put(new ParameterBoolean("show_B1_Map", showB1Map));
+            table.put(new ParameterBoolean("calculate_Mo", calculateMo));
+            table.put(new ParameterBoolean("invert_T1_to_R1", invertT1toR1));
+            table.put(new ParameterBoolean("use_Weights", useWeights));
+            table.put(new ParameterBoolean("uniform_Angle_Spacing", uniformAngleSpacing));
+            table.put(new ParameterBoolean("upper_Left_Corner", upperLeftCorner));
+            table.put(new ParameterBoolean("upper_Right_Corner", upperRightCorner));
+            table.put(new ParameterBoolean("lower_Left_Corner", lowerLeftCorner));
+            table.put(new ParameterBoolean("lower_Right_Corner", lowerRightCorner));
+            table.put(new ParameterBoolean("use_Smart_Thresholding", useSmartThresholding));
+            table.put(new ParameterBoolean("use_Hard_Thresholding", useHardThresholding));
+            
+            table.put(new ParameterFloat("noise_Scale", noiseScale));
+            table.put(new ParameterFloat("hard_Noise_Threshold", hardNoiseThreshold));
+            
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
+            
+            //need a count of wlist
+            table.put(new ParameterInt("number_of_input_images", 1));
+            
+            Enumeration<String> imgNames = ViewUserInterface.getReference().getRegisteredImageNames();
+            while(imgNames.hasMoreElements()) {
+                table.put(new ParameterExternalImage(imgNames.nextElement()));
+            }
+
+            
+            
+            /*AlgorithmParameters.
+            
+            //These are ModelImage names, one finds they are in a useful order
+            ArrayList<String> wListArr = new ArrayList<String>();
+            
+            //get the list of possible images
+            ArrayList<Parameter> parImageArr = new ArrayList<Parameter>();
+            Parameter[] parTotal = scriptParameters.getParams().getParameters();
+            for(int i=0; i<parTotal.length; i++) {
+                if(parTotal[i].getType() == Parameter.PARAM_EXTERNAL_IMAGE) {
+                    parImageArr.add(parTotal[i]);
+                }
+            }
+            
+            ModelImage result = null;
+            //only way of getting number of images without  throwing uncatchable NullPointer
+            int numInputImages = scriptParameters.getParams().getInt("number_of_input_images");
+            for(int imageNum=0; imageNum < numInputImages; imageNum++) {
+                result = scriptParameters.retrieveImage(parImageArr.get(imageNum).getLabel());
+                wListArr.add(result.getImageName());
+            }
+
+            wList = wListArr.toArray(new String[0]);
+            titles = wListArr.toArray(new String[0]);      
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+          //need a count of wList
+            scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_input_images", wList.length));
+            //String[], are in fact ModelImage identifiers need to be stored in order, titles is presumed to be identical for scripting
+            if(wList != null) {
+                for(int i=0; i<wList.length; i++) {
+                    scriptParameters.storeImage(ViewUserInterface.getReference().getRegisteredImageByName(wList[i]), wList[i]);
+                }
+            }
+            
+            if(cAlgo != null) {
+                if(showB1Map && cAlgo.getB1ResultStack() != null) {
+                    //scriptParameters.storeImageInRecorder(cAlgo.getB1ResultStack());
+                    scriptParameters.storeOutputImageParams(cAlgo.getB1ResultStack(), true);
+                }
+                
+                if(calculateMo && cAlgo.getMoResultStack() != null) {
+                    //scriptParameters.storeImageInRecorder(cAlgo.getMoResultStack());
+                    scriptParameters.storeOutputImageParams(cAlgo.getMoResultStack(), true);
+                }
+                
+                if(invertT1toR1 && cAlgo.getR1ResultStack() != null) {
+                    //scriptParameters.storeImageInRecorder(cAlgo.getR1ResultStack());
+                    scriptParameters.storeOutputImageParams(cAlgo.getR1ResultStack(), true);
+                }
+                
+                if(calculateT1 && cAlgo.getT1ResultStack() != null) {
+                    //scriptParameters.storeImageInRecorder(cAlgo.getT1ResultStack());
+                    scriptParameters.storeOutputImageParams(cAlgo.getT1ResultStack(), true);
+                }
+            }
+            
+
+            
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, true));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_SEPARABLE, true));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D, false));
+            table.put(new ParameterList(AlgorithmParameters.SIGMAS, Parameter.PARAM_FLOAT, "1.0,1.0,1.0"));
+            table.put(new ParameterBoolean(AlgorithmParameters.SIGMA_DO_Z_RES_CORRECTION, true));
+            table.put(new ParameterList(AlgorithmParameters.DO_PROCESS_RGB, Parameter.PARAM_BOOLEAN, "true,true,true"));*/
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+        
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage("t1_results"));
+            table.put(new ParameterImage("r1_results"));
+            table.put(new ParameterImage("b1_results"));
+            table.put(new ParameterImage("mo_results"));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                System.out.println("Here3");
+                return new String("Algorithms.MRI");
+            }
+
+            public String getDescription() {
+                return new String("Estimates T1 using two flip angles.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Estimates T1 relaxation times using two flip angles with constant Tr.");
+            }
+
+            public String getShortLabel() {
+                return new String("FlipCalcT1");
+            }
+
+            public String getLabel() {
+                return new String("FlipCalcT1");
+            }
+
+            public String getName() {
+                return new String("FlipCalcT1");
+            }
+        };
+    }
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(String imageParamName) {
+        
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
     }
 
 }
