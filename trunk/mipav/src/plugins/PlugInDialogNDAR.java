@@ -302,8 +302,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             // MipavUtil.showHelp("ISPImages01");
 
         } else if (command.equals("Finish")) {
-            final gov.nih.mipav.SwingWorker worker = new gov.nih.mipav.SwingWorker() {
-                public Object construct() {
+            final SwingWorker<Object,Object> worker = new SwingWorker<Object,Object>() {
+                public Object doInBackground() {
                     createSubmissionFiles();
 
                     return null;
@@ -342,7 +342,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             }
 
             if (response == JOptionPane.YES_OPTION) {
-                worker.start();
+                worker.execute();
                 removeSourceButton.setEnabled(false);
                 finishButton.setEnabled(false);
                 outputDirButton.setEnabled(false);

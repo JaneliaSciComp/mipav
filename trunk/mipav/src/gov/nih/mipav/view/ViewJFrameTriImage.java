@@ -3946,8 +3946,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * Method handles transformations for least squares algorithm in the tri-planar frame.
      */
     protected void handleLeastSquares() {
-        final gov.nih.mipav.SwingWorker worker = new gov.nih.mipav.SwingWorker() {
-            public Object construct() {
+        final SwingWorker<Object,Object> worker = new SwingWorker<Object,Object>() {
+            public Object doInBackground() {
                 ViewJProgressBar progressBar = null;
 
                 try {
@@ -4068,7 +4068,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             }
         };
 
-        worker.start();
+        worker.execute();
     }
 
     /**
