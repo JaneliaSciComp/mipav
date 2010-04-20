@@ -134,8 +134,8 @@ public class JDialogTriImageTransformation extends JDialogBase {
 
             dispose();
 
-            final gov.nih.mipav.SwingWorker worker = new gov.nih.mipav.SwingWorker() {
-                public Object construct() {
+            final SwingWorker<Object,Object> worker = new SwingWorker<Object,Object>() {
+                public Object doInBackground() {
                     transform(imageA);
 
                     if (imageB != null) {
@@ -146,7 +146,7 @@ public class JDialogTriImageTransformation extends JDialogBase {
                 }
             };
 
-            worker.start();
+            worker.execute();
 
         } else if (command.equals("Cancel")) {
             dispose();
