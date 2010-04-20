@@ -142,6 +142,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
         boolean selfTest = false;
         boolean selfTest2 = false;
         boolean levmarBoxConstraintTest = false;
+        boolean ddrvbdTest = false;
         int voiCount;
         double delT;
         long normalTerminations = 0;
@@ -431,6 +432,12 @@ public class AlgorithmSM2 extends AlgorithmBase {
         	new FitAllBC();
         	setCompleted(false);
         	return;
+        }
+        
+        if (ddrvbdTest) {
+        	new FitAllBC2();
+        	setCompleted(false);
+        	return;	
         }
         
         if (srcImage.getNDims() != 4) {
@@ -2094,6 +2101,56 @@ public class AlgorithmSM2 extends AlgorithmBase {
 
             // nPoints data points, 3 coefficients, and exponential fitting
             super();
+
+            
+        }
+
+        /**
+         * Starts the analysis.
+         */
+        public int driver() {
+            return super.driver();
+        }
+
+        /**
+         * Display results of displaying exponential fitting parameters.
+         */
+        public void dumpResults() {
+            
+        }
+
+        /**
+         * Fit to function - a0 - a1*(a2**x).
+         *
+         * @param  a          The x value of the data point.
+         * @param  residuals  The best guess parameter values.
+         * @param  covarMat   The derivative values of y with respect to fitting parameters.
+         */
+        public void fitToFunction(double[] param, double[] hx, int paramNum, int nPts) {
+            
+
+            return;
+        }
+        
+        public void fitToJacobian(double[] param, double[] jac, int paramNum, int nPts) {
+        	return;
+        }
+    }
+    
+    class FitAllBC2 extends LevmarBoxConstraint {
+
+        /**
+         * Creates a new Fit24DModel object.
+         *
+         * @param  nPoints  DOCUMENT ME!
+         * @param  xData    DOCUMENT ME!
+         * @param  yData    DOCUMENT ME!
+         * @param  initial  DOCUMENT ME!
+         */
+        public FitAllBC2() {
+
+            // nPoints data points, 3 coefficients, and exponential fitting
+            super(1);
 
             
         }
