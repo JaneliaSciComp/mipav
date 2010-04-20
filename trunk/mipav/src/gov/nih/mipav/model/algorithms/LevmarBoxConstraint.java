@@ -104,6 +104,11 @@ public abstract class LevmarBoxConstraint {
     private boolean dlasq2Error = false;
     private double dOrg[];
     private double dSort[];
+    
+    /** Found in routine xlaenv */
+    private int iparms[];
+    
+    private String pathTaken;
 	
 	double DOUBLE_EPSILON;
 	
@@ -552,6 +557,10 @@ public abstract class LevmarBoxConstraint {
         driver();
         dumpTestResults();
     }
+	
+	public LevmarBoxConstraint(int x) {
+		ddrvbd_test();
+	}
 	
 	public LevmarBoxConstraint(double param[], double ySeries[], int paramNum, int nPts,
 			                   double lb[], double ub[], int maxIterations, 
@@ -6332,47 +6341,6 @@ public abstract class LevmarBoxConstraint {
 		*  (7)    | S - Spartial | / ( MNMIN ulp |S| ) where Spartial is the
 		*         vector of singular values from the partial SVD
 		*
-		*  Test for DGESDD:
-		*
-		*  (8)    | A - U diag(S) VT | / ( |A| max(M,N) ulp )
-		*
-		*  (9)    | I - U'U | / ( M ulp )
-		*
-		*  (10)   | I - VT VT' | / ( N ulp )
-		*
-		*  (11)   S contains MNMIN nonnegative values in decreasing order.
-		*         (Return 0 if true, 1/ULP if false.)
-		*
-		*  (12)   | U - Upartial | / ( M ulp ) where Upartial is a partially
-		*         computed U.
-		*
-		*  (13)   | VT - VTpartial | / ( N ulp ) where VTpartial is a partially
-		*         computed VT.
-		*
-		*  (14)   | S - Spartial | / ( MNMIN ulp |S| ) where Spartial is the
-		*         vector of singular values from the partial SVD
-		*
-		*  Test for SGESVJ:
-		*
-		*  (15)    | A - U diag(S) VT | / ( |A| max(M,N) ulp )
-		*
-		*  (16)    | I - U'U | / ( M ulp )
-		*
-		*  (17)   | I - VT VT' | / ( N ulp )
-		*
-		*  (18)   S contains MNMIN nonnegative values in decreasing order.
-		*         (Return 0 if true, 1/ULP if false.)
-		*
-		*  Test for SGEJSV:
-		*
-		*  (19)    | A - U diag(S) VT | / ( |A| max(M,N) ulp )
-		*
-		*  (20)    | I - U'U | / ( M ulp )
-		*
-		*  (21)   | I - VT VT' | / ( N ulp )
-		*
-		*  (22)   S contains MNMIN nonnegative values in decreasing order.
-		*         (Return 0 if true, 1/ULP if false.)
 		*
 		*  The "sizes" are specified by the arrays MM(1:NSIZES) and
 		*  NN(1:NSIZES); the value of each element pair (MM(j),NN(j))
@@ -6496,10 +6464,9 @@ public abstract class LevmarBoxConstraint {
 		      int  MAXTYP = 5;
 		     
 		      boolean            BADMM, BADNN;
-		      char          JOBQ, JOBU, JOBVT;
-		      String        PATH;
+		      char          JOBU, JOBVT;
 		      int IINFO[] = new int[1];
-		      int             I, IJQ, IJU, IJVT, IWS, IWTMP, J, JSIZE,
+		      int             I, IJU, IJVT, IWS, IWTMP, J, JSIZE,
 		                      JTYPE, LSWORK, M, MINWRK, MMAX, MNMAX, MNMIN,
 		                      MTYPES, N, NFAIL, NMAX, NTEST;
 		      double OVFL[] = new double[1];
@@ -6513,13 +6480,10 @@ public abstract class LevmarBoxConstraint {
 		      double RESULT[] = new double[7];
 		      double RES[] = new double[1];
 		      double WORK2[][];
-		
-		      boolean            LERR, OK;
-		      String       SRNAMT;
-		      int         INFOT, NUNIT;
 		      int temp;
 		      int temp2;
 		      int temp3;
+		      String firstTaken = null;
 		
 		      // Check for errors
 		 
@@ -6580,9 +6544,6 @@ public abstract class LevmarBoxConstraint {
 		/*
 		*     Initialize constants
 		*/
-		     // PATH( 1: 1 ) = 'Double precision'
-		      //PATH( 2: 3 ) = 'BD'
-		      PATH = new String("DBD");
 		      NFAIL = 0;
 		      NTEST = 0;
 		      UNFL[0] = dlamch( 'S' );
@@ -6590,7 +6551,6 @@ public abstract class LevmarBoxConstraint {
 		      dlabad( UNFL, OVFL );
 		      ULP = dlamch( 'P' );
 		      ULPINV = 1.0 / ULP;
-		      INFOT = 0;
 		/*
 		*     Loop over sizes, types
 		*/
@@ -6610,6 +6570,8 @@ public abstract class LevmarBoxConstraint {
 		            if( !DOTYPE[ JTYPE ] ) {
 		                continue;
 		            }
+		            firstTaken = null;
+		            pathTaken = null;
 		            for ( J = 0; J < 4; J++) {
 		                   IOLDSD[ J ] = ISEED[ J ];
 		            }
@@ -6678,9 +6640,11 @@ public abstract class LevmarBoxConstraint {
 		               if ( IWS > 1 ) {
 		                  dlacpy( 'F', M, N, ASAV, LDA, A, LDA );
 		               } // if (IWS > 1)
-		               SRNAMT = new String("DGESVD");
 		               dgesvd( 'A', 'A', M, N, A, LDA, SSAV, USAV, LDU,
 		                       VTSAV, LDVT, WORK, LSWORK, IINFO );
+		               if (pathTaken != null) {
+		                   firstTaken = new String(pathTaken);
+		               }
 		               if ( IINFO[0] != 0 ) {
 		                   Preferences.debug("In DGESVD IINFO[0] = " + IINFO[0] + " M = " + M + " N = " + N + "\n");
 		                   Preferences.debug("JTYPE = " + JTYPE + " LSWORK = " + LSWORK + "\n");
@@ -6731,7 +6695,6 @@ public abstract class LevmarBoxConstraint {
 		                     JOBU = CJOB[ IJU];
 		                     JOBVT = CJOB[IJVT];
 		                     dlacpy( 'F', M, N, ASAV, LDA, A, LDA );
-		                     SRNAMT =  new String("DGESVD");
 		                     dgesvd( JOBU, JOBVT, M, N, A, LDA, S, U, LDU,
 		                                  VT, LDVT, WORK, LSWORK, IINFO );
 		/*
@@ -6796,9 +6759,32 @@ public abstract class LevmarBoxConstraint {
 		               for ( J = 0; J < 7; J++) {
 		                  if ( RESULT[ J ] >= THRESH ) {
 		                     if ( NFAIL == 0 ) {
-		                        //WRITE( NOUT, FMT = 9999 )
-		                        //WRITE( NOUT, FMT = 9998 )
+		                    	 Preferences.debug(" SVD -- Real Singular Value Decomposition Driver\n");
+		                    	 Preferences.debug(" Matrix types (see DDRVBD for details):\n");
+		                         Preferences.debug(" 0 = Zero matrix\n");
+		                         Preferences.debug(" 1 = Identity matrix\n");
+		                    	 Preferences.debug(" 2 = Evenly spaced singular values near 1\n");
+		                         Preferences.debug(" 3 = Evenly spaced singular values near underflow\n");
+		                         Preferences.debug(" 4 = Evenly spaced singular values near overflow\n");
+		                    	 Preferences.debug(" Tests performed:\n");
+		                    	 Preferences.debug(" A is dense, U and V are orthogonal\n");
+		                    	 Preferences.debug(" S is an array, and Upartial, VTpartial, and\n");
+		                         Preferences.debug(" Spartial are partially computed U, VT and S\n");
+		                         Preferences.debug(" 1 = | A - U diag(S) VT | / ( |A| max(M,N) ulp )\n");
+		                    	 Preferences.debug(" 2 = | I - U**T U | / ( M ulp )\n");
+		                         Preferences.debug(" 3 = | I - VT VT**T | / ( N ulp )\n");
+		                    	 Preferences.debug(" 4 = 0 if S contains min(M,N) nonnegative values in\n");
+		                         Preferences.debug(" decreasing order, else 1/ulp\n");
+		                         Preferences.debug(" 5 = | U - Upartial | / ( M ulp )\n");
+		                         Preferences.debug(" 6 = | VT - VTpartial | / ( N ulp )\n");
+		                    	 Preferences.debug(" 7 = | S - Spartial | / ( min(M,N) ulp |S| )\n");
 		                     } // if (NFAIL == 0)
+		                     if ( J <= 3) {
+		                        Preferences.debug("pathTaken = " + firstTaken + "\n");
+		                     }
+		                     else {
+		                    	 Preferences.debug("pathTaken = " + pathTaken + "\n"); 	 
+		                     }
 		                     Preferences.debug("M = " + M + " N = " + N + "\n");
 		                     Preferences.debug("JTYPE = " + JTYPE + " IWS = " + IWS + "\n");
 		                     Preferences.debug("IOLDSD[0] = " + IOLDSD[0] + " IOLDSD[1] = " + IOLDSD[1] + "\n");
@@ -6814,53 +6800,329 @@ public abstract class LevmarBoxConstraint {
 		      } // for( JSIZE = 0; JSIZE <  NSIZES; JSIZE++)
 		/*
 		*     Summary
-		*
-		      CALL ALASVM( PATH, NOUT, NFAIL, NTEST, 0 )
-		*
-		 9999 FORMAT( ' SVD -- Real Singular Value Decomposition Driver ',
-		     $      / ' Matrix types (see DDRVBD for details):',
-		     $      / / ' 1 = Zero matrix', / ' 2 = Identity matrix',
-		     $      / ' 3 = Evenly spaced singular values near 1',
-		     $      / ' 4 = Evenly spaced singular values near underflow',
-		     $      / ' 5 = Evenly spaced singular values near overflow', / /
-		     $      ' Tests performed: ( A is dense, U and V are orthogonal,',
-		     $      / 19X, ' S is an array, and Upartial, VTpartial, and',
-		     $      / 19X, ' Spartial are partially computed U, VT and S),', / )
-		 9998 FORMAT( ' 1 = | A - U diag(S) VT | / ( |A| max(M,N) ulp ) ',
-		     $      / ' 2 = | I - U**T U | / ( M ulp ) ',
-		     $      / ' 3 = | I - VT VT**T | / ( N ulp ) ',
-		     $      / ' 4 = 0 if S contains min(M,N) nonnegative values in',
-		     $      ' decreasing order, else 1/ulp',
-		     $      / ' 5 = | U - Upartial | / ( M ulp )',
-		     $      / ' 6 = | VT - VTpartial | / ( N ulp )',
-		     $      / ' 7 = | S - Spartial | / ( min(M,N) ulp |S| )',
-		     $      / ' 8 = | A - U diag(S) VT | / ( |A| max(M,N) ulp ) ',
-		     $      / ' 9 = | I - U**T U | / ( M ulp ) ',
-		     $      / '10 = | I - VT VT**T | / ( N ulp ) ',
-		     $      / '11 = 0 if S contains min(M,N) nonnegative values in',
-		     $      ' decreasing order, else 1/ulp',
-		     $      / '12 = | U - Upartial | / ( M ulp )',
-		     $      / '13 = | VT - VTpartial | / ( N ulp )',
-		     $      / '14 = | S - Spartial | / ( min(M,N) ulp |S| )',
-		     $      / '15 = | A - U diag(S) VT | / ( |A| max(M,N) ulp ) ',
-		     $      / '16 = | I - U**T U | / ( M ulp ) ',
-		     $      / '17 = | I - VT VT**T | / ( N ulp ) ',
-		     $      / '18 = 0 if S contains min(M,N) nonnegative values in',
-		     $      ' decreasing order, else 1/ulp',
-		     $      / '19 = | U - Upartial | / ( M ulp )',
-		     $      / '20 = | VT - VTpartial | / ( N ulp )',
-		     $      / '21 = | S - Spartial | / ( min(M,N) ulp |S| )', / / )
-		 9997 FORMAT( ' M=', I5, ', N=', I5, ', type ', I1, ', IWS=', I1,
-		     $      ', seed=', 4( I4, ',' ), ' test(', I2, ')=', G11.4 )
-		 9996 FORMAT( ' DDRVBD: ', A, ' returned INFO=', I6, '.', / 9X, 'M=',
-		     $      I6, ', N=', I6, ', JTYPE=', I6, ', ISEED=(', 3( I5, ',' ),
-		     $      I5, ')' )
-		 9995 FORMAT( ' DDRVBD: ', A, ' returned INFO=', I6, '.', / 9X, 'M=',
-		     $      I6, ', N=', I6, ', JTYPE=', I6, ', LSWORK=', I6, / 9X,
-		     $      'ISEED=(', 3( I5, ',' ), I5, ')' )
 		*/
+		      if (NFAIL > 0) {
+		    	  Preferences.debug("DGESVD failed to pass " + NFAIL + " out of " + NTEST + " tests\n");
+		      }
+		      else {
+		    	  Preferences.debug("All " + NTEST + " tests run on DGESVD paased threshold\n");
+		      }
+		      
 		      return;
   } // ddrvbd
+  
+  private void derred() {
+  /*
+   * Extracted from DERRED
+  *  -- LAPACK test routine (version 3.1) --
+  *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+  *     November 2006
+  *
+  *     .. Scalar Arguments ..
+        CHARACTER*3        PATH
+        INTEGER            NUNIT
+  *     ..
+  *
+  *  Purpose
+  *  =======
+  *
+  *  DERRED tests the error exits for the eigenvalue driver routines for
+  *  DOUBLE PRECISION matrices:
+  *
+  *  PATH  driver   description
+  *  ----  ------   -----------
+  *  SEV   DGEEV    find eigenvalues/eigenvectors for nonsymmetric A
+  *  SES   DGEES    find eigenvalues/Schur form for nonsymmetric A
+  *  SVX   DGEEVX   SGEEV + balancing and condition estimation
+  *  SSX   DGEESX   SGEES + balancing and condition estimation
+  *  DBD   DGESVD   compute SVD of an M-by-N matrix A
+  *        DGESDD   compute SVD of an M-by-N matrix A (by divide and
+  *                 conquer)
+  *
+  *  Arguments
+  *  =========
+  *
+  *  PATH    (input) CHARACTER*3
+  *          The LAPACK path name for the routines to be tested.
+  *
+  *  NUNIT   (input) INTEGER
+  *          The unit number for output.
+  *
+  *  =====================================================================
+  *
+  */    
+        int NMAX = 4;
+        
+        int INFO[] = new int[1];
+        int  I, J;
+        double A[][] = new double[NMAX][NMAX];
+        double S[] = new double[NMAX];
+        double U[][] = new double[NMAX][NMAX];
+        double VT[][] = new double[NMAX][NMAX];
+        double W[] = new double[4*NMAX];
+        int  INFOT;
+        int NFAIL = 0;
+  
+  /*
+  *     Initialize A
+  */
+        for ( J = 0; J <  NMAX; J++) {
+           for ( I = 0; I <  NMAX; I++) {
+              A[ I][ J ] = 0.0;
+           } // for ( I = 0; I <  NMAX; I++)
+        } // for ( J = 0; J <  NMAX; J++)
+        for ( I = 0; I <  NMAX; I++) {
+           A[ I][ I ] = 1.0;
+        } // for ( I = 0; I <  NMAX; I++)
+  
+       
+  /*
+  *        Test DGESVD
+  */
+           INFOT = -1;
+           dgesvd( 'X', 'N', 0, 0, A, 1, S, U, 1, VT, 1, W, 1, INFO );
+           if (INFO[0] != INFOT) {
+        	   Preferences.debug("Illegal value of parameter #1 not detected by DGESVD\n");
+        	   NFAIL++;
+           }
+           INFOT = -2;
+           dgesvd( 'N', 'X', 0, 0, A, 1, S, U, 1, VT, 1, W, 1, INFO );
+           if (INFO[0] != INFOT) {
+        	   Preferences.debug("Illegal value of parameter #2 = 'X' not detected by DGESVD\n");
+        	   NFAIL++;
+           }
+           INFOT = -2;
+           dgesvd( 'O', 'O', 0, 0, A, 1, S, U, 1, VT, 1, W, 1, INFO );
+           if (INFO[0] != INFOT) {
+        	   Preferences.debug("Illegal value of parameter #2 = 'O' not detected by DGESVD\n");
+        	   NFAIL++;
+           }
+           INFOT = -3;
+           dgesvd( 'N', 'N', -1, 0, A, 1, S, U, 1, VT, 1, W, 1, INFO );
+           if (INFO[0] != INFOT) {
+        	   Preferences.debug("Illegal value of parameter #3 not detected by DGESVD\n");
+        	   NFAIL++;
+           }
+           INFOT = -4;
+           dgesvd( 'N', 'N', 0, -1, A, 1, S, U, 1, VT, 1, W, 1, INFO );
+           if (INFO[0] != INFOT) {
+        	   Preferences.debug("Illegal value of parameter #4 not detected by DGESVD\n");
+        	   NFAIL++;
+           }
+           INFOT = -6;
+           dgesvd( 'N', 'N', 2, 1, A, 1, S, U, 1, VT, 1, W, 5, INFO );
+           if (INFO[0] != INFOT) {
+        	   Preferences.debug("Illegal value of parameter #6 not detected by DGESVD\n");
+        	   NFAIL++;
+           }
+           INFOT = -9;
+           dgesvd( 'A', 'N', 2, 1, A, 2, S, U, 1, VT, 1, W, 5, INFO );
+           if (INFO[0] != INFOT) {
+        	   Preferences.debug("Illegal value of parameter #9 not detected by DGESVD\n");
+        	   NFAIL++;
+           }
+           INFOT = -11;
+           dgesvd( 'N', 'A', 1, 2, A, 1, S, U, 1, VT, 1, W, 5, INFO );
+           if (INFO[0] != INFOT) {
+        	   Preferences.debug("Illegal value of parameter #11 not detected by DGESVD\n");
+        	   NFAIL++;
+           }
+          
+           if (NFAIL > 0) {
+        	   Preferences.debug("DGESVD failed " + NFAIL + " out of 8 error exit tests\n");
+           }
+           else {
+        	   Preferences.debug("DGESVD passed all 8 error exit tests\n");
+           }
+           
+           return;
+  } // derred
+  
+  /**
+   * This routine is an extraction from the FORTRAN program version 3.1.1 DCHKEE of the code needed to drive dchkbd in
+   * order to run ddrvbd to test the singular value decomposition driver dgesvd.
+   * Numerical values were obtained from the svd.in datafile. Original DCHKEE created by Univ. of Tennessee,
+   * Univ. of California Berkeley, and NAG Ltd., January, 2007
+   */
+  public void ddrvbd_test() {
+
+      // The number of values of m and n contained in the vectors mval and nval.
+      // The matrix sizes are used in pairs (m, n).
+      int nsizes = 19;
+
+      // The values of the matrix row dimension m
+      int[] mval = new int[] {0, 0, 0, 1, 1, 1, 2, 2, 3, 3, 3, 10, 10, 16, 16, 30, 30, 40, 40};
+      
+      // The values of the matrix column dimension n
+      int[] nval = new int[] {0, 1, 3, 0, 1, 2, 0, 1, 0, 1, 3, 10, 16, 10, 16, 30, 40, 30, 40};
+
+      // Number of values of NB, NBMIN, NX, and NRHS.
+      int nparms = 5;
+
+      // Values of blocksize NB
+      int[] nbval = new int[] { 1, 3, 3, 3, 20 };
+
+      // Values for the minimum blocksize NBMIN
+      int[] nbmin = new int[] { 2, 2, 2, 2, 2 };
+      
+      // Values for the nx crossover point, NXVAL
+      int[] nxval = new int[] { 1, 0, 5, 9, 1};
+
+      // The values for the number of right hand sides nrhs.
+      int[] nsval = new int[] { 2, 0, 2, 2, 2 };
+
+      // Threshold value for the test ratios.  Information will be printed
+      // about each test for which the test ratio is greater than or equal
+      // to threshold.
+      double thresh = 35.0;
+
+      // Test the LAPACK routines
+      boolean tstchk = true;
+
+      // Test the driver routines
+      boolean tstdrv = true;
+
+      // Test the error exits for the dgesvd.
+      // Passed all 8 exits on test.
+      boolean tsterr = false;
+
+      // Code describing how to set the random number seed.
+      // = 0: Set the seed to a default number before each run.
+      // = 1: Initialize the seed to a default value only before the first
+      // run.
+      // = 2: Like 1, but use the seed values in the 4 integer array
+      // ioldsd
+      int newsd = 1;
+      // Number of matrix test types
+      int maxtyp = 5;
+      int ntypes = 5;
+      boolean[] dotype = new boolean[maxtyp];
+      int[] ioldsd = new int[] { 0, 0, 0, 1 };
+      int[] iseed = new int[] { 0, 0, 0, 1 };
+      int nmax = 132;
+      int lwork = (nmax * ((5 * nmax) + 5)) + 1;
+      double[] work = new double[lwork];
+      int[] info = new int[1];
+      int liwork = nmax * (5 * nmax + 20);
+      int[] iwork = new int[liwork];
+      double[][] A;
+      double[] S;
+      double[] SSAV;
+      double[] E;
+      double[][] VT;
+      double[][] ASAV;
+      double[][] USAV;
+      double[][] VTSAV;
+      double[][] U;
+
+      int i;
+      int k;
+
+      for (i = 0; i < maxtyp; i++) {
+          dotype[i] = true;
+      }
+
+      iparms = new int[9];
+      A = new double[nmax][nmax];
+      S = new double[nmax];
+      SSAV = new double[nmax];
+      E = new double[nmax];
+      VT = new double[nmax][nmax];
+      ASAV = new double[nmax][nmax];
+      USAV = new double[nmax][nmax];
+      VTSAV = new double[nmax][nmax];
+      U = new double[nmax][nmax];
+      
+      xlaenv(1, 1);
+      xlaenv(9, 25);
+      
+      if (tsterr && tstdrv) {
+          derred();
+      }
+
+      for (i = 1; i <= nparms; i++) {
+
+          xlaenv(1, nbval[i-1]);
+          xlaenv(2, nbmin[i-1]);
+          xlaenv(3, nxval[i-1]);
+          if (newsd == 0) {
+
+              for (k = 0; k < 4; k++) {
+                  iseed[k] = ioldsd[k];
+              }
+          } // if (newsd == 0)
+
+          Preferences.debug("Parameter " + i + " for ddrvbd\n");
+          Preferences.debug("Blocksize nb = " + nbval[i-1] + "\n");
+          Preferences.debug("Minimum blocksize nbmin = " + nbmin[i - 1] + "\n");
+          Preferences.debug("Crossover point nx = " + nxval[i-1] + "\n");
+
+          if (tstdrv) {
+              ddrvbd(nsizes, mval, nval, maxtyp, dotype, iseed, thresh, A,
+                      nmax, U, nmax, VT, nmax, ASAV, USAV, VTSAV, S, SSAV, E,
+                      work, lwork, iwork, info);
+
+              if (info[0] != 0) {
+                  MipavUtil.displayError("ddrvbd had info = " + info[0]);
+              }
+          } // if (tstdrv)
+      } // for (i = 1; i <= nparms; i++)
+  } // ddrvbd_test
+  
+  /** This is a port of version 3.1 LAPACK auxiliary routine XLAENV.
+   *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+   *     November 2006
+   *
+   *     .. Scalar Arguments ..
+         INTEGER            ISPEC, NVALUE
+   *     ..
+   *
+   *  Purpose
+   *  =======
+   *
+   *  XLAENV sets certain machine- and problem-dependent quantities
+   *  which will later be retrieved by ILAENV.
+   *
+   *  Arguments
+   *  =========
+   *
+   *  ISPEC   (input) INTEGER
+   *          Specifies the parameter to be set in the COMMON array IPARMS.
+   *          = 1: the optimal blocksize; if this value is 1, an unblocked
+   *               algorithm will give the best performance.
+   *          = 2: the minimum block size for which the block routine
+   *               should be used; if the usable block size is less than
+   *               this value, an unblocked routine should be used.
+   *          = 3: the crossover point (in a block routine, for N less
+   *               than this value, an unblocked routine should be used)
+   *          = 4: the number of shifts, used in the nonsymmetric
+   *               eigenvalue routines
+   *          = 5: the minimum column dimension for blocking to be used;
+   *               rectangular blocks must have dimension at least k by m,
+   *               where k is given by ILAENV(2,...) and m by ILAENV(5,...)
+   *          = 6: the crossover point for the SVD (when reducing an m by n
+   *               matrix to bidiagonal form, if max(m,n)/min(m,n) exceeds
+   *               this value, a QR factorization is used first to reduce
+   *               the matrix to a triangular form)
+   *          = 7: the number of processors
+   *          = 8: another crossover point, for the multishift QR and QZ
+   *               methods for nonsymmetric eigenvalue problems.
+   *          = 9: maximum size of the subproblems at the bottom of the
+   *               computation tree in the divide-and-conquer algorithm
+   *               (used by xGELSD and xGESDD)
+   *          =10: ieee NaN arithmetic can be trusted not to trap
+   *          =11: infinity arithmetic can be trusted not to trap
+   *
+   *  NVALUE  (input) INTEGER
+   *          The value of the parameter specified by ISPEC.
+   */
+   private void xlaenv(int ispec, int nvalue) {
+       if ((ispec >= 1) && (ispec <= 9)) {
+           iparms[ispec-1] = nvalue;
+       }
+       return;
+   } // xlaenv
+
 
   /**
    * This is a port of the version 3.2 LAPACK auxiliary routine DLABAD Original DLABAD created by Univ. of Tennessee,
@@ -7046,8 +7308,6 @@ public abstract class LevmarBoxConstraint {
     	      double WORK3[];
     	      double WORK4[];
     	      double WORK5[];
-    	      double WORK6[];
-    	      double BUF[];
     	      double ARRAY[][];
     	      double ARRAY2[][];
     	      double ARRAY3[][];
@@ -7407,7 +7667,7 @@ public abstract class LevmarBoxConstraint {
     	      } // if (info[0] == 0)
     	
     	      if ( INFO[0] != 0 ) {
-    	    	  Preferences.debug("In DGESVD info[0] = " + info[0] + "\n");
+    	    	  Preferences.debug("In DGESVD INFO[0] = " + INFO[0] + "\n");
     	    	  return;
     	      }
     	      else if ( LQUERY ) {
@@ -7452,6 +7712,7 @@ public abstract class LevmarBoxConstraint {
     	      	
     	      	//             Path 1 (M much larger than N, JOBU='N')
     	      	//             No left singular vectors to be computed
+    	      	               pathTaken = new String("Path 1");
     	      	
     	      	               ITAU = 1;
     	      	               IWORK = ITAU + N;
@@ -7518,6 +7779,7 @@ public abstract class LevmarBoxConstraint {
     	      	*              N left singular vectors to be overwritten on A and
     	      	*              no right singular vectors to be computed
     	      	*/
+    	      	            	pathTaken = new String("Path 2");
     	      	               if( LWORK >= N*N+Math.max( 4*N, BDSPAC ) ) {
     	      	
     	      	//                Sufficient workspace for a fast algorithm
@@ -7560,8 +7822,7 @@ public abstract class LevmarBoxConstraint {
     	      	                  j = 0;
     	      	                  for (ICOL = 0; ICOL < N; ICOL++) {
     	      	                	  for (IROW = 0; IROW < LDWRKR; IROW++) {
-    	      	                          WORK[j] = ARRAY[IROW][ICOL];
-    	      	                          j++;
+    	      	                          WORK[j++] = ARRAY[IROW][ICOL];
     	      	                	  }
     	      	                  }
     	      	                  ARRAY2 = new double[LDWRKR][N-1];
@@ -7595,8 +7856,7 @@ public abstract class LevmarBoxConstraint {
     	      	*/                j = 0;
     	  					      for (ICOL = 0; ICOL < N; ICOL++) {
     	  					      	for (IROW = 0; IROW < LDWRKR; IROW++) {
-    	  					              ARRAY[IROW][ICOL] = WORK[j];
-    	  					              j++;
+    	  					              ARRAY[IROW][ICOL] = WORK[j++];
     	  					       }
     	  					      }
     	  					      WORK2 = new double[N-1];
@@ -7692,6 +7952,7 @@ public abstract class LevmarBoxConstraint {
     	      	*              N left singular vectors to be overwritten on A and
     	      	*              N right singular vectors to be computed in VT
     	      	*/
+    	      	            	pathTaken = new String("Path 3");
     	      	               if( LWORK >= N*N+Math.max( 4*N, BDSPAC ) ) {
     	      	/*
     	      	*                 Sufficient workspace for a fast algorithm
@@ -7905,6 +8166,7 @@ public abstract class LevmarBoxConstraint {
     	      	*                 N left singular vectors to be computed in U and
     	      	*                 no right singular vectors to be computed
     	      	*/
+    	      	            	 pathTaken = new String("Path 4");
     	      	                  if ( LWORK >= N*N+Math.max( 4*N, BDSPAC ) ) {
     	      	/*
     	      	*                    Sufficient workspace for a fast algorithm
@@ -8092,6 +8354,7 @@ public abstract class LevmarBoxConstraint {
     	      	*                 N left singular vectors to be computed in U and
     	      	*                 N right singular vectors to be overwritten on A
     	      	*/
+    	      	            	 pathTaken = new String("Path 5");
     	      	                  if ( LWORK >= 2*N*N+Math.max( 4*N, BDSPAC ) ) {
     	      	/*
     	      	*                    Sufficient workspace for a fast algorithm
@@ -8273,7 +8536,6 @@ public abstract class LevmarBoxConstraint {
     	      	*                    Bidiagonalize R in A
     	      	*                    (Workspace: need 4*N, prefer 3*N+2*N*NB)
     	      	*/
-    	      	                     WORK = new double[N-1];
     	      	                     WORK2 = new double[N];
     	      	                     WORK3 = new double[N];
     	      	                     WORK4 = new double[Math.max(1, LWORK-IWORK+1)];
@@ -8311,6 +8573,7 @@ public abstract class LevmarBoxConstraint {
     	      	*                 N left singular vectors to be computed in U and
     	      	*                 N right singular vectors to be computed in VT
     	      	*/
+    	      	            	 pathTaken = new String("Path 6");
     	      	                  if( LWORK >= N*N+Math.max( 4*N, BDSPAC ) ) {
     	      	/*
     	      	*                    Sufficient workspace for a fast algorithm
@@ -8505,6 +8768,7 @@ public abstract class LevmarBoxConstraint {
     	      	*                 M left singular vectors to be computed in U and
     	      	*                 no right singular vectors to be computed
     	      	*/
+    	      	            	 pathTaken = new String("Path 7");
     	      	                  if ( LWORK >= N*N+Math.max( N+M, Math.max(4*N, BDSPAC) ) ) {
     	      	/*
     	      	*                    Sufficient workspace for a fast algorithm
@@ -8687,6 +8951,7 @@ public abstract class LevmarBoxConstraint {
     	      	*                 M left singular vectors to be computed in U and
     	      	*                 N right singular vectors to be overwritten on A
     	      	*/
+    	      	            	pathTaken = new String("Path 8");
     	      	                  if ( LWORK >= 2*N*N+Math.max( N+M, Math.max(4*N, BDSPAC) ) ) {
     	      	/*
     	      	*                    Sufficient workspace for a fast algorithm
@@ -8906,6 +9171,7 @@ public abstract class LevmarBoxConstraint {
     	      	*                 M left singular vectors to be computed in U and
     	      	*                 N right singular vectors to be computed in VT
     	      	*/
+    	      	            	pathTaken = new String("Path 9");
     	      	                  if ( LWORK >= N*N+Math.max( N+M, Math.max(4*N, BDSPAC) ) ) {
     	      	/*
     	      	*                    Sufficient workspace for a fast algorithm
@@ -9103,6 +9369,7 @@ public abstract class LevmarBoxConstraint {
     	      	*           Path 10 (M at least N, but not much larger)
     	      	*           Reduce to bidiagonal form without QR decomposition
     	      	*/
+    	      	        	pathTaken = new String("Path 10");
     	      	            IE = 1;
     	      	            ITAUQ = IE + N;
     	      	            ITAUP = ITAUQ + N;
@@ -9217,6 +9484,7 @@ public abstract class LevmarBoxConstraint {
     	      	*              Path 1t(N much larger than M, JOBVT='N')
     	      	*              No right singular vectors to be computed
     	      	*/
+    	      	            	pathTaken = new String("Path 1t");
     	      	               ITAU = 1;
     	      	               IWORK = ITAU + M;
     	      	/*
@@ -9288,6 +9556,7 @@ public abstract class LevmarBoxConstraint {
     	      	*              M right singular vectors to be overwritten on A and
     	      	*              no left singular vectors to be computed
     	      	*/
+    	      	            	pathTaken = new String("Path 2t");
     	      	               if ( LWORK >= M*M+Math.max( 4*M, BDSPAC ) ) {
     	      	/*
     	      	*                 Sufficient workspace for a fast algorithm
@@ -9446,6 +9715,7 @@ public abstract class LevmarBoxConstraint {
     	      	*              M right singular vectors to be overwritten on A and
     	      	*              M left singular vectors to be computed in U
     	      	*/
+    	      	            	pathTaken = new String("Path 3t");
     	      	               if ( LWORK >= M*M+Math.max( 4*M, BDSPAC ) ) {
     	      	/*
     	      	*                 Sufficient workspace for a fast algorithm
@@ -9653,6 +9923,7 @@ public abstract class LevmarBoxConstraint {
     	      	*                 M right singular vectors to be computed in VT and
     	      	*                 no left singular vectors to be computed
     	      	*/
+    	      	            	 pathTaken = new String("Path 4t");
     	      	                  if ( LWORK >= M*M+Math.max( 4*M, BDSPAC ) ) {
     	      	/*
     	      	*                    Sufficient workspace for a fast algorithm
@@ -9818,6 +10089,7 @@ public abstract class LevmarBoxConstraint {
     	      	*                 M right singular vectors to be computed in VT and
     	      	*                 M left singular vectors to be overwritten on A
     	      	*/
+    	      	            	 pathTaken = new String("Path 5t");
     	      	                  if ( LWORK >= 2*M*M+Math.max( 4*M, BDSPAC ) ) {
     	      	/*
     	      	*                    Sufficient workspace for a fast algorithm
@@ -10015,6 +10287,7 @@ public abstract class LevmarBoxConstraint {
     	      	*                 M right singular vectors to be computed in VT and
     	      	*                 M left singular vectors to be computed in U
     	      	*/
+    	      	            	 pathTaken = new String("Path 6t");
     	      	                  if ( LWORK >= M*M+Math.max( 4*M, BDSPAC ) ) {
     	      	/*
     	      	*                    Sufficient workspace for a fast algorithm
@@ -10197,6 +10470,7 @@ public abstract class LevmarBoxConstraint {
     	      	*                 N right singular vectors to be computed in VT and
     	      	*                 no left singular vectors to be computed
     	      	*/
+    	      	            	 pathTaken = new String("Path 7t");
     	      	                  if ( LWORK >= M*M+Math.max( N+M, Math.max(4*M, BDSPAC) ) ) {
     	      	/*
     	      	*                    Sufficient workspace for a fast algorithm
@@ -10365,6 +10639,7 @@ public abstract class LevmarBoxConstraint {
     	      	*                 N right singular vectors to be computed in VT and
     	      	*                 M left singular vectors to be overwritten on A
     	      	*/
+    	      	            	 pathTaken = new String("Path 8t");
     	      	                  if ( LWORK >= 2*M*M+Math.max( N+M, Math.max(4*M, BDSPAC) ) ) {
     	      	/*
     	      	*                    Sufficient workspace for a fast algorithm
@@ -10568,6 +10843,7 @@ public abstract class LevmarBoxConstraint {
     	      	*                 N right singular vectors to be computed in VT and
     	      	*                 M left singular vectors to be computed in U
     	      	*/
+    	      	            	 pathTaken = new String("Path 9t");
     	      	                  if ( LWORK >= M*M+Math.max( N+M, Math.max(4*M, BDSPAC) ) ) {
     	      	/*
     	      	*                    Sufficient workspace for a fast algorithm
@@ -10753,6 +11029,7 @@ public abstract class LevmarBoxConstraint {
     	      	*           Path 10t(N greater than M, but not much larger)
     	      	*           Reduce to bidiagonal form without LQ decomposition
     	      	*/
+    	      	        	pathTaken = new String("Path 10t");
     	      	            IE = 1;
     	      	            ITAUQ = IE + M;
     	      	            ITAUP = ITAUQ + M;
