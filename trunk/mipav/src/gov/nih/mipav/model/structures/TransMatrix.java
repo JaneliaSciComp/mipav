@@ -1289,7 +1289,6 @@ public class TransMatrix extends Matrix4f
      * @param  tPt  transformed point
      */
     public final void transform(double[] pt, double[] tPt) {
-
         if (pt.length == 3) {
             tPt[0] = (pt[0] * M00) +
                 (pt[1] * M01) +
@@ -1306,9 +1305,13 @@ public class TransMatrix extends Matrix4f
                 (pt[2] * M22) +
                 M23;
 
+
         } else if (pt.length == 2) {
             tPt[0] = (pt[0] * M00) + (pt[1] * M01) + M02;
             tPt[1] = (pt[0] * M10) + (pt[1] * M11) + M12;
+            
+            
+            
         }
 
         return;

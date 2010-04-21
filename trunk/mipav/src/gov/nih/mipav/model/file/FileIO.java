@@ -10423,6 +10423,7 @@ public class FileIO {
 
                 final String tmpStr = new String(Float.toString((float) dicomOrigin[0]) + "\\"
                         + Float.toString((float) dicomOrigin[1]) + "\\" + Float.toString((float) dicomOrigin[2]));
+                
                 ((FileInfoDicom) (fBase)).getTagTable().setValue("0020,0032", tmpStr, tmpStr.length());
 
                 // move the slice position to the next slice in the image
@@ -10793,13 +10794,15 @@ public class FileIO {
                 invMatrix.Inverse();
 
                 final float[] imageOrg = image.getFileInfo(0).getOrigin();
-                final double[] imageOrgDbl = new double[imageOrg.length];
 
-                for (int k = 0; k < imageOrg.length; k++) {
+                final double[] imageOrgDbl = new double[image.getNDims()];
+
+                for (int k = 0; k < imageOrgDbl.length; k++) {
                     imageOrgDbl[k] = imageOrg[k];
                 }
 
                 matrix.transform(imageOrgDbl, axialOrigin);
+
 
                 slLoc = axialOrigin[2];
 
@@ -10890,6 +10893,7 @@ public class FileIO {
 
                     final String tmpStr = new String(Float.toString((float) dicomOrigin[0]) + "\\"
                             + Float.toString((float) dicomOrigin[1]) + "\\" + Float.toString((float) dicomOrigin[2]));
+
                     ((FileInfoDicom) (fBase[k])).getTagTable().setValue("0020,0032", tmpStr, tmpStr.length());
 
                     // move the slice position to the next slice in the image
