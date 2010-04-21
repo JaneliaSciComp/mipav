@@ -10657,16 +10657,14 @@ public class FileIO {
                 }
             }
 
-        } else { // Non DICOM images
+        } else { // if source image is a Non-DICOM image
             myFileInfo = new FileInfoDicom(options.getFileName(), fileDir, FileUtility.DICOM);
-
             final JDialogSaveDicom dialog = new JDialogSaveDicom(UI.getMainFrame(), image.getFileInfo(0), myFileInfo,
                     options.isScript());
 
             if (dialog.isCancelled()) {
                 return false;
             }
-
             myFileInfo.setEndianess(FileBase.LITTLE_ENDIAN);
             myFileInfo.setRescaleIntercept(0);
             myFileInfo.setRescaleSlope(1);
@@ -10677,7 +10675,6 @@ public class FileIO {
                 myFileInfo.getTagTable().setValue("0002,0010", DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
             }
             myFileInfo.vr_type = FileInfoDicom.EXPLICIT;
-
             final boolean isMincFloatNotPet = image.getFileInfo(0).getFileFormat() == FileUtility.MINC
                     && image.getType() == ModelStorageBase.FLOAT;
             final boolean isAnalyzeFloat = image.getFileInfo(0).getFileFormat() == FileUtility.ANALYZE
@@ -10703,7 +10700,6 @@ public class FileIO {
 
                 image = clonedImage;
             }
-
             if ( (image.getType() == ModelStorageBase.SHORT) || (image.getType() == ModelStorageBase.USHORT)
                     || (image.getFileInfo(0).getDataType() == ModelStorageBase.SHORT)
                     || (image.getFileInfo(0).getDataType() == ModelStorageBase.USHORT)) {
@@ -10777,9 +10773,8 @@ public class FileIO {
             FileDicomTag tag = null;
             Object obj = null;
             double slLoc;
-
             final double sliceResolution = myFileInfo.getResolution(2);
-            if (image.getExtents().length > 2) { // This sets the fileinfo to the same for all slices !!
+            if (image.getNDims() > 2) { // This sets the fileinfo to the same for all slices !!
                 final FileInfoBase[] fBase = new FileInfoBase[image.getExtents()[2]];
 
                 final double[] axialOrigin = new double[3];
