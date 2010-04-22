@@ -110,21 +110,8 @@ public class ActionDiscoveryTest {
                     continue;
                 }
 
-                if (param.getType() != Parameter.PARAM_EXTERNAL_IMAGE && param.getType() != Parameter.PARAM_IMAGE) {
-                    val = ActionDiscoveryTest.promptForParameterValue(param);
-
-                    if ( (val == null || val.equals(""))
-                            && (param.getValueString() == null || (param.getValueString() != null && !param
-                                    .isValueAssigned()))) {
-                        System.out.println("*** No value entered for parameter: " + param.convertToString());
-                    } else if ( (val == null || val.equals("")) && param.getValueString() != null) {
-                        System.out.println("*** No value entered, using parameter default: " + param.getLabel() + " = "
-                                + param.getValueString());
-                        // no need to set the value; it's already there.
-                    } else {
-                        param.setValue(val);
-                    }
-                } else {
+                final int type = param.getType();
+                if (type == Parameter.PARAM_EXTERNAL_IMAGE || type == Parameter.PARAM_IMAGE) {
                     // set the value of the input image parameter placeholder
                     param.setValue("$image" + curImageNum);
 
@@ -150,6 +137,20 @@ public class ActionDiscoveryTest {
                     scriptRunner.storeImage(inputImageName);
 
                     curImageNum++;
+                } else {
+                    val = ActionDiscoveryTest.promptForParameterValue(param);
+
+                    if ( (val == null || val.equals(""))
+                            && (param.getValueString() == null || (param.getValueString() != null && !param
+                                    .isValueAssigned()))) {
+                        System.out.println("*** No value entered for parameter: " + param.convertToString());
+                    } else if ( (val == null || val.equals("")) && param.getValueString() != null) {
+                        System.out.println("*** No value entered, using parameter default: " + param.getLabel() + " = "
+                                + param.getValueString());
+                        // no need to set the value; it's already there.
+                    } else {
+                        param.setValue(val);
+                    }
                 }
             }
         } catch (final ParserException e) {
@@ -208,6 +209,12 @@ public class ActionDiscoveryTest {
                 case Parameter.PARAM_LIST:
                     val = ActionDiscoveryTest.input.readLine();
                     break;
+                // TODO: removed during redesign of param enum system.
+                // case Parameter.PARAM_ENUM:
+                // final String opts = Arrays.toString( ((ParameterEnum) param).getParameterOptions());
+                // System.out.print(opts + " ");
+                // val = ActionDiscoveryTest.input.readLine();
+                // break;
                 case Parameter.PARAM_EXTERNAL_IMAGE:
                 case Parameter.PARAM_IMAGE:
                     break;
