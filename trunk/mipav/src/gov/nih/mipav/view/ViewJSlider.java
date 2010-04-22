@@ -306,7 +306,7 @@ public class ViewJSlider extends JSlider {
             return;
         }
         
-        if(MipavMath.isPrime_under1000(maxPlusMin)) {
+        if(MipavMath.isPrimeUnder1000(maxPlusMin)) {
             majTickSpacing = 0;
             minTickSpacing = getBestTickSpacing(maxPlusMin + 1,maxMinorTicks);
             setMajorTickSpacing(majTickSpacing);
@@ -329,7 +329,7 @@ public class ViewJSlider extends JSlider {
                 setSnapToTicks(true);
                 return;
             }else {
-                if(MipavMath.isPrime_under1000(majTickSpacing)) {
+                if(MipavMath.isPrimeUnder1000(majTickSpacing)) {
                     minTickSpacing = majTickSpacing;
                     setMajorTickSpacing(majTickSpacing);
                     setMinorTickSpacing(minTickSpacing);
