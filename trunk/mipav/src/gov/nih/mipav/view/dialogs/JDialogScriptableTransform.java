@@ -391,6 +391,9 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         // Update frames
         image.notifyImageDisplayListeners(null, true);
 
+        // save the completion status for later
+        setComplete(algorithm.isCompleted());
+
         if (algorithm.isCompleted()) {
             insertScriptLine();
         }
@@ -1331,7 +1334,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         }
 
         if (spline != null) {
-        	System.out.println("in here");
+            System.out.println("in here");
             spline.run();
             resultImage = spline.getResultImage();
 
@@ -1349,7 +1352,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         }
 
         if (doRotateCenter) {
-        	Preferences.debug("useSACenter = " + useSACenter + "\n");
+            Preferences.debug("useSACenter = " + useSACenter + "\n");
             center = resampleImage.getImageCentermm(useSACenter);
         }
 
@@ -1418,7 +1421,6 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         doRotateCenter = scriptParameters.getParams().getBoolean("do_rotate_about_center");
         doTalairach = scriptParameters.getParams().getBoolean("do_talairach_transform");
         useSACenter = scriptParameters.getParams().getBoolean("use_scanner_center");
-        isSATransform = scriptParameters.getParams().getBoolean("is_scanner_transform");
         doInvMat = scriptParameters.getParams().getBoolean("do_invert_matrix");
 
         if (doTalairach) {
@@ -1503,8 +1505,6 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             // boolean useImageMatrix = scriptParameters.getParams().getBoolean("use_image_matrix");
             boolean useImageMatrix = false;
 
-            double[] xCol = new double[image.getNDims() + 1];
-
             if ( (image.getNDims() == 2) || do25D) {
                 transMat = new TransMatrix(3);
 
@@ -1517,11 +1517,14 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 oYdim = outputDim[1];
 
                 if ( !useImageMatrix) {
-                    xCol = new double[3];
+                    final double[][] xMat = new double[3][3];
 
                     for (int i = 0; i < 3; i++) {
-                        xCol = scriptParameters.getParams().getList("x_mat" + i).getAsDoubleArray();
+                        xMat[i] = scriptParameters.getParams().getList("x_mat" + i).getAsDoubleArray();
                     }
+
+                    transMat.copyMatrix(xMat);
+                    xfrm = transMat;
                 }
             } else {
                 transMat = new TransMatrix(4);
@@ -1626,7 +1629,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                     transMat.Mult(fileTransMatrix);
                     xfrm = transMat;
                 } else if (transformSource.equals("user")) {
-                	System.out.println("aaa");
+                    System.out.println("aaa");
                     final double[][] xMat = new double[4][4];
 
                     for (int i = 0; i < 4; i++) {
@@ -1635,7 +1638,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                     transMat.copyMatrix(xMat);
                     xfrm = transMat;
                 } else if (transformSource.equals("self")) {
-                	System.out.println("bbb");
+                    System.out.println("bbb");
                     transMat.MakeIdentity();
                     xfrm = transMat;
                     if (image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
@@ -1649,7 +1652,6 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                     transMat.MakeIdentity();
                     xfrm = transMat;
                 }
-
             }
         } // else not Talairach
 
@@ -1669,7 +1671,6 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_rotate_about_center", doRotateCenter));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_talairach_transform", doTalairach));
         scriptParameters.getParams().put(ParameterFactory.newParameter("use_scanner_center", this.useSACenter));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("is_scanner_transform", this.isSATransform));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_invert_matrix", doInvMat));
 
         if (doTalairach) {
@@ -2788,23 +2789,23 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
      */
     private void callTalAlgorithm() {
         int[] dims = null;
-        int[] axisOrientation = null;
-        int zAxisOrientation;
-        int imageOrientation;
+        final int[] axisOrientation = null;
+        final int zAxisOrientation;
+        final int imageOrientation;
         FileInfoBase[] fileInfo;
         int i;
-        Vector3f currentOrigin = new Vector3f(image.getOrigin()); 
-		Vector3f newOrigin = new Vector3f();
-		int[] newOrientations = new int[3];
+        final Vector3f currentOrigin = new Vector3f(image.getOrigin());
+        final Vector3f newOrigin = new Vector3f();
+        int[] newOrientations = new int[3];
 
         if (transformType == JDialogScriptableTransform.ACPC_TO_ORIG) {
             dims = tInfo.getOrigDim();
             tInfo.acpcToOrig(currentOrigin, newOrigin);
-			newOrientations = tInfo.getOrigOrientLabelsInverse();
+            newOrientations = tInfo.getOrigOrientLabelsInverse();
         } else if (transformType == JDialogScriptableTransform.TLRC_TO_ORIG) {
             dims = tInfo.getOrigDim();
             tInfo.tlrcToOrig(currentOrigin, newOrigin);
-			newOrientations = tInfo.getOrigOrientLabelsInverse();
+            newOrientations = tInfo.getOrigOrientLabelsInverse();
         } else if (transformType == JDialogScriptableTransform.ORIG_TO_ACPC) {
             dims = tInfo.getAcpcDim();
             tInfo.origToAcpc(currentOrigin, newOrigin);
@@ -2823,61 +2824,41 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             resultImage = new ModelImage(ModelStorageBase.FLOAT, dims, JDialogBase.makeImageName(image.getImageName(),
                     "_TT"));
             fileInfo = resultImage.getFileInfo();
-            
-            //Dont think the following code is needed...seems redundant to the stuff below it
-            //Won't erase for now
-            
-            /*if ( (transformType == JDialogScriptableTransform.ACPC_TO_ORIG)
-                    || (transformType == JDialogScriptableTransform.TLRC_TO_ORIG)) {
-                axisOrientation = getAxisOrientation(tInfo.getOrigOrient());
-                zAxisOrientation = axisOrientation[2];
 
-                if ( (zAxisOrientation == FileInfoBase.ORI_R2L_TYPE) || (zAxisOrientation == FileInfoBase.ORI_L2R_TYPE)) {
-                    imageOrientation = FileInfoBase.SAGITTAL;
-                } else if ( (zAxisOrientation == FileInfoBase.ORI_A2P_TYPE)
-                        || (zAxisOrientation == FileInfoBase.ORI_P2A_TYPE)) {
-                    imageOrientation = FileInfoBase.CORONAL;
-                } else if ( (zAxisOrientation == FileInfoBase.ORI_I2S_TYPE)
-                        || (zAxisOrientation == FileInfoBase.ORI_S2I_TYPE)) {
-                    imageOrientation = FileInfoBase.AXIAL;
-                } else {
-                    imageOrientation = FileInfoBase.ORI_UNKNOWN_TYPE;
-                }
+            // Dont think the following code is needed...seems redundant to the stuff below it
+            // Won't erase for now
 
-                resultImage.setImageOrientation(imageOrientation);
-
-                for (i = 0; i < fileInfo.length; i++) {
-                    final int[] units = new int[3];
-                    units[0] = units[1] = units[2] = FileInfoBase.MILLIMETERS;
-                    fileInfo[i].setUnitsOfMeasure(units);
-                    fileInfo[i].setResolutions(tInfo.getOrigRes());
-                    fileInfo[i].setExtents(dims);
-                    fileInfo[i].setAxisOrientation(axisOrientation);
-                    fileInfo[i].setImageOrientation(imageOrientation);
-                } // for (i = 0; i < fileInfo.length; i++)
-            } // if ((transformType == ACPC_TO_ORIG) || (transformType == TLRC_TO_ORIG))
-            else { // not transformed to ORIG
-                resultImage.setImageOrientation(FileInfoBase.AXIAL);
-
-                final int[] units = new int[3];
-                units[0] = units[1] = units[2] = FileInfoBase.MILLIMETERS;
-
-                final float[] resol = new float[3];
-                resol[0] = resol[1] = resol[2] = tInfo.getAcpcRes();
-                axisOrientation = new int[3];
-                axisOrientation[0] = FileInfoBase.ORI_R2L_TYPE;
-                axisOrientation[1] = FileInfoBase.ORI_A2P_TYPE;
-                axisOrientation[2] = FileInfoBase.ORI_I2S_TYPE;
-
-                for (i = 0; i < fileInfo.length; i++) {
-                    fileInfo[i].setUnitsOfMeasure(units);
-                    fileInfo[i].setResolutions(resol);
-                    fileInfo[i].setExtents(dims);
-                    fileInfo[i].setAxisOrientation(axisOrientation);
-                    fileInfo[i].setImageOrientation(FileInfoBase.AXIAL);
-                } // for (i = 0; i < fileInfo.length; i++)
-            } // else not transformed to ORIG
-*/
+            /*
+             * if ( (transformType == JDialogScriptableTransform.ACPC_TO_ORIG) || (transformType ==
+             * JDialogScriptableTransform.TLRC_TO_ORIG)) { axisOrientation = getAxisOrientation(tInfo.getOrigOrient());
+             * zAxisOrientation = axisOrientation[2];
+             * 
+             * if ( (zAxisOrientation == FileInfoBase.ORI_R2L_TYPE) || (zAxisOrientation == FileInfoBase.ORI_L2R_TYPE)) {
+             * imageOrientation = FileInfoBase.SAGITTAL; } else if ( (zAxisOrientation == FileInfoBase.ORI_A2P_TYPE) ||
+             * (zAxisOrientation == FileInfoBase.ORI_P2A_TYPE)) { imageOrientation = FileInfoBase.CORONAL; } else if (
+             * (zAxisOrientation == FileInfoBase.ORI_I2S_TYPE) || (zAxisOrientation == FileInfoBase.ORI_S2I_TYPE)) {
+             * imageOrientation = FileInfoBase.AXIAL; } else { imageOrientation = FileInfoBase.ORI_UNKNOWN_TYPE; }
+             * 
+             * resultImage.setImageOrientation(imageOrientation);
+             * 
+             * for (i = 0; i < fileInfo.length; i++) { final int[] units = new int[3]; units[0] = units[1] = units[2] =
+             * FileInfoBase.MILLIMETERS; fileInfo[i].setUnitsOfMeasure(units);
+             * fileInfo[i].setResolutions(tInfo.getOrigRes()); fileInfo[i].setExtents(dims);
+             * fileInfo[i].setAxisOrientation(axisOrientation); fileInfo[i].setImageOrientation(imageOrientation); } //
+             * for (i = 0; i < fileInfo.length; i++) } // if ((transformType == ACPC_TO_ORIG) || (transformType ==
+             * TLRC_TO_ORIG)) else { // not transformed to ORIG resultImage.setImageOrientation(FileInfoBase.AXIAL);
+             * 
+             * final int[] units = new int[3]; units[0] = units[1] = units[2] = FileInfoBase.MILLIMETERS;
+             * 
+             * final float[] resol = new float[3]; resol[0] = resol[1] = resol[2] = tInfo.getAcpcRes(); axisOrientation =
+             * new int[3]; axisOrientation[0] = FileInfoBase.ORI_R2L_TYPE; axisOrientation[1] =
+             * FileInfoBase.ORI_A2P_TYPE; axisOrientation[2] = FileInfoBase.ORI_I2S_TYPE;
+             * 
+             * for (i = 0; i < fileInfo.length; i++) { fileInfo[i].setUnitsOfMeasure(units);
+             * fileInfo[i].setResolutions(resol); fileInfo[i].setExtents(dims);
+             * fileInfo[i].setAxisOrientation(axisOrientation); fileInfo[i].setImageOrientation(FileInfoBase.AXIAL); } //
+             * for (i = 0; i < fileInfo.length; i++) } // else not transformed to ORIG
+             */
             if ( (transformType == AlgorithmTalairachTransform.ACPC_TO_ORIG)
                     || (transformType == AlgorithmTalairachTransform.TLRC_TO_ORIG)) {
 
@@ -4210,16 +4191,15 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         try {
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
 
-            table.put(new ParameterInt("interpolation_type"));
-            table.put(new ParameterInt("constant_fov"));
-            table.put(new ParameterBoolean("do_transform_VOIs"));
-            table.put(new ParameterBoolean("do_clip_output"));
-            table.put(new ParameterBoolean("do_rotate_about_center"));
-            table.put(new ParameterBoolean("use_scanner_center"));
-            table.put(new ParameterBoolean("is_scanner_transform"));
-            table.put(new ParameterBoolean("do_invert_matrix"));
+            table.put(new ParameterInt("interpolation_type", AlgorithmTransform.TRILINEAR));
+            table.put(new ParameterInt("constant_fov", 1));
+            table.put(new ParameterBoolean("do_transform_VOIs", false));
+            table.put(new ParameterBoolean("do_clip_output", true));
+            table.put(new ParameterBoolean("do_rotate_about_center", true));
+            table.put(new ParameterBoolean("use_scanner_center", false));
+            table.put(new ParameterBoolean("do_invert_matrix", false));
 
-            final Parameter talParam = new ParameterBoolean("do_talairach_transform");
+            final Parameter talParam = new ParameterBoolean("do_talairach_transform", false);
             table.put(talParam);
 
             // --- talairach-dependent section ---
@@ -4262,24 +4242,27 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             table.put(tempParam);
 
             // --- non-talairach-dependent section ---
-            tempParam = new ParameterBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D);
+            tempParam = new ParameterBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D, false);
             tempParam.setParentCondition(talParam, "false");
             table.put(tempParam);
-            tempParam = new ParameterBoolean("do_update_origin");
+            tempParam = new ParameterBoolean("do_update_origin", true);
             tempParam.setParentCondition(talParam, "false");
             table.put(tempParam);
-            tempParam = new ParameterBoolean("do_pad");
+            tempParam = new ParameterBoolean("do_pad", false);
             tempParam.setParentCondition(talParam, "false");
             table.put(tempParam);
-            tempParam = new ParameterInt("out_of_bounds_index");
+            tempParam = new ParameterInt("out_of_bounds_index", 0);
             tempParam.setParentCondition(talParam, "false");
             table.put(tempParam);
-            tempParam = new ParameterFloat("fill_value");
+            tempParam = new ParameterFloat("fill_value", 0.0f);
             tempParam.setParentCondition(table.getParameter("out_of_bounds_index"), "2");
             table.put(tempParam);
 
             // used for 2D/2.5D transforms and 3D+ resampling to user res/dim
             tempParam = new ParameterList("output_res", Parameter.PARAM_FLOAT);
+            tempParam.setParentCondition(talParam, "false");
+            table.put(tempParam);
+            tempParam = new ParameterList("output_dim", Parameter.PARAM_INT);
             tempParam.setParentCondition(talParam, "false");
             table.put(tempParam);
             // used for 2D/2.5D transforms and 3D+ transform to user matrix
@@ -4289,7 +4272,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 table.put(tempParam);
             }
 
-            Parameter sourceParam = new ParameterString("transform_source");
+            Parameter sourceParam = new ParameterString("transform_source", "none");
             sourceParam.setParentCondition(talParam, "false");
             table.put(sourceParam);
 
@@ -4306,7 +4289,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             // none transform - no other params needed
 
             // type of resampling
-            sourceParam = new ParameterString("resample_type");
+            sourceParam = new ParameterString("resample_type", "none");
             sourceParam.setParentCondition(talParam, "false");
             table.put(sourceParam);
 
@@ -4314,17 +4297,14 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             tempParam = new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(2));
             tempParam.setParentCondition(sourceParam, "to_image");
             table.put(tempParam);
-            tempParam = new ParameterBoolean("set_pixels");
+            tempParam = new ParameterBoolean("set_pixels", false);
             tempParam.setParentCondition(sourceParam, "to_image");
             table.put(tempParam);
 
-            // resample to_user - also uses output_res from above
-            tempParam = new ParameterList("output_dim", Parameter.PARAM_INT);
-            tempParam.setParentCondition(sourceParam, "to_user");
-            table.put(tempParam);
+            // resample to_user - also uses output_res, output_dim from above
 
             // resample to_factor
-            tempParam = new ParameterFloat("resample_factor");
+            tempParam = new ParameterFloat("resample_factor", 1.0f);
             tempParam.setParentCondition(sourceParam, "to_factor");
             table.put(tempParam);
 
