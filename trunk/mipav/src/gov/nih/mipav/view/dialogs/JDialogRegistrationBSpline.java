@@ -1248,7 +1248,9 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
             table.put(new ParameterExternalImage("reference_image"));
 
             table.put(new ParameterBoolean("is_ref_img_a_src_img_slice", false));
-            table.put(new ParameterInt("ref_slice_in_src_img", 0));
+            Parameter tempParam = new ParameterInt("ref_slice_in_src_img", 0);
+            tempParam.setParentCondition(table.getParameter("is_ref_img_a_src_img_slice"), "true");
+            table.put(tempParam);
 
             table.put(new ParameterString("cost_measure",
                     "gov.nih.mipav.model.algorithms.registration.RegistrationMeasureLeastSquares"));
@@ -1265,7 +1267,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
 
             final Parameter numPassesParam = table.getParameter("num_passes");
             paramPrefix = "pass_2_";
-            Parameter tempParam = new ParameterBoolean("do_subsample", true);
+            tempParam = new ParameterBoolean("do_subsample", true);
             tempParam.setParentCondition(numPassesParam, "2");
             table.put(tempParam);
             tempParam = new ParameterInt(paramPrefix + "bspline_degree", 2);
