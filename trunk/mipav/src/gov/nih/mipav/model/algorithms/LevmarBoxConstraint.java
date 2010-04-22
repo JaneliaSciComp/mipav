@@ -109,6 +109,8 @@ public abstract class LevmarBoxConstraint {
     private int iparms[];
     
     private String pathTaken;
+    private String charTaken;
+    private String path10Info = null;
 	
 	double DOUBLE_EPSILON;
 	
@@ -6483,7 +6485,9 @@ public abstract class LevmarBoxConstraint {
 		      int temp;
 		      int temp2;
 		      int temp3;
-		      String firstTaken = null;
+		      String firstPathTaken = null;
+		      String firstCharTaken = null;
+		      String firstPath10Info = null;
 		
 		      // Check for errors
 		 
@@ -6570,8 +6574,12 @@ public abstract class LevmarBoxConstraint {
 		            if( !DOTYPE[ JTYPE ] ) {
 		                continue;
 		            }
-		            firstTaken = null;
+		            firstPathTaken = null;
 		            pathTaken = null;
+		            firstCharTaken = null;
+		            charTaken = null;
+		            firstPath10Info = null;
+		            path10Info = null;
 		            for ( J = 0; J < 4; J++) {
 		                   IOLDSD[ J ] = ISEED[ J ];
 		            }
@@ -6643,7 +6651,13 @@ public abstract class LevmarBoxConstraint {
 		               dgesvd( 'A', 'A', M, N, A, LDA, SSAV, USAV, LDU,
 		                       VTSAV, LDVT, WORK, LSWORK, IINFO );
 		               if (pathTaken != null) {
-		                   firstTaken = new String(pathTaken);
+		                   firstPathTaken = new String(pathTaken);
+		               }
+		               if (charTaken != null) {
+		            	   firstCharTaken = new String(charTaken);
+		               }
+		               if (path10Info != null) {
+		            	   firstPath10Info = new String(path10Info);
 		               }
 		               if ( IINFO[0] != 0 ) {
 		                   Preferences.debug("In DGESVD IINFO[0] = " + IINFO[0] + " M = " + M + " N = " + N + "\n");
@@ -6692,6 +6706,9 @@ public abstract class LevmarBoxConstraint {
 		                         ( IJU == 1 && IJVT == 1 ) ) {
 		                    	 continue;
 		                     }
+		                     charTaken = null;
+		                     pathTaken = null;
+		                     path10Info = null;
 		                     JOBU = CJOB[ IJU];
 		                     JOBVT = CJOB[IJVT];
 		                     dlacpy( 'F', M, N, ASAV, LDA, A, LDA );
@@ -6716,6 +6733,16 @@ public abstract class LevmarBoxConstraint {
 		                        }
 		                     } // if ( M > 0 && N > 0 )
 		                     RESULT[ 4 ] = Math.max( RESULT[ 4 ], DIF[0] );
+		                     if (DIF[0] >= THRESH) {
+		                    	 Preferences.debug("RESULT[4]:\n");
+		                    	 //Preferences.debug("IJU = " + IJU + " IJVT = " + IJVT + "\n");
+		                    	 Preferences.debug("charTaken = " + charTaken + "\n");
+		                    	 Preferences.debug("pathTaken = " + pathTaken + "\n"); 
+		                    	 if (path10Info != null) {
+		                    		 Preferences.debug("path10Info = " + path10Info + "\n");
+		                    	 }
+		                     }
+		                     
 		/*
 		*                    Compare VT
 		*/
@@ -6735,6 +6762,15 @@ public abstract class LevmarBoxConstraint {
 		                        }
 		                     } // if ( M > 0 &&  N > 0 )
 		                     RESULT[5 ] = Math.max( RESULT[ 5 ], DIF[0] );
+		                     if (DIF[0] >= THRESH) {
+		                    	 Preferences.debug("RESULT[5]:\n");
+		                    	 //Preferences.debug("IJU = " + IJU + " IJVT = " + IJVT + "\n");
+		                    	 Preferences.debug("charTaken = " + charTaken + "\n");
+		                    	 Preferences.debug("pathTaken = " + pathTaken + "\n"); 
+		                    	 if (path10Info != null) {
+		                    		 Preferences.debug("path10Info = " + path10Info + "\n");
+		                    	 }
+		                     }
 		/*
 		*                    Compare S
 		*/
@@ -6750,6 +6786,18 @@ public abstract class LevmarBoxConstraint {
 		                        DIF[0] = Math.max( DIF[0], Math.abs( SSAV[ I ]-S[ I ] ) / DIV );
 		                     } // for ( I = 0; I <  MNMIN - 1; I++)
 		                     RESULT[ 6 ] = Math.max( RESULT[ 6 ], DIF[0] );
+		                     if (DIF[0] >= THRESH) {
+		                    	 Preferences.debug("RESULT[6]:\n");
+		                    	 //Preferences.debug("IJU = " + IJU + " IJVT = " + IJVT + "\n");
+		                    	 Preferences.debug("charTaken = " + charTaken + "\n");
+		                    	 Preferences.debug("pathTaken = " + pathTaken + "\n"); 
+		                    	 if (path10Info != null) {
+		                    		 Preferences.debug("path10Info = " + path10Info + "\n");
+		                    	 }
+		                    	 //for (I = 0; I < MNMIN - 1; I++) {
+		                    	     //Preferences.debug("I = " + I + " S = " + S[I] + " SSAV = " + SSAV[I] + "\n");	 
+		                    	 //}
+		                     }
 		                  } // for (IJVT = 0; IJVT <= 3; IJVT++)
 		               } // for ( IJU = 0; IJU <= 3; IJU++)
 		
@@ -6780,10 +6828,11 @@ public abstract class LevmarBoxConstraint {
 		                    	 Preferences.debug(" 7 = | S - Spartial | / ( min(M,N) ulp |S| )\n");
 		                     } // if (NFAIL == 0)
 		                     if ( J <= 3) {
-		                        Preferences.debug("pathTaken = " + firstTaken + "\n");
-		                     }
-		                     else {
-		                    	 Preferences.debug("pathTaken = " + pathTaken + "\n"); 	 
+		                    	Preferences.debug("charTaken = " + firstCharTaken + "\n");
+		                        Preferences.debug("pathTaken = " + firstPathTaken + "\n");
+		                        if (firstPath10Info != null) {
+		                        	Preferences.debug("path10Info = " + firstPath10Info + "\n");
+		                        }
 		                     }
 		                     Preferences.debug("M = " + M + " N = " + N + "\n");
 		                     Preferences.debug("JTYPE = " + JTYPE + " IWS = " + IWS + "\n");
@@ -7336,7 +7385,7 @@ public abstract class LevmarBoxConstraint {
     	      WNTVO = (( JOBVT == 'O' ) || (JOBVT == 'o'));
     	      WNTVN = (( JOBVT == 'N' ) || (JOBVT == 'n'));
     	      LQUERY = ( LWORK == -1 );
-    	      pathTaken = new String("JOBU = " + JOBU + "JOBVT = " + JOBVT);
+    	      charTaken = new String("JOBU = " + JOBU + " JOBVT = " + JOBVT);
     	
     	      if( !( WNTUA || WNTUS || WNTUO || WNTUN ) ) {
     	         INFO[0] = -1;
@@ -8191,7 +8240,7 @@ public abstract class LevmarBoxConstraint {
     	      	*                    Compute A=Q*R
     	      	*                    (Workspace: need N*N+2*N, prefer N*N+N+N*NB)
     	      	*/
-    	      	                     WORK2 = new double[Math.min(M,N)];
+    	      	                     WORK2 = new double[N];
     	      	                     WORK3 = new double[Math.max(1,LWORK-IWORK+1)];
     	      	                     dgeqrf( M, N, A, LDA, WORK2,
     	      	                                  WORK3, LWORK-IWORK+1, IERR );
@@ -8203,8 +8252,7 @@ public abstract class LevmarBoxConstraint {
     	      	                     j = 0;
     	  	       	                  for (ICOL = 0; ICOL < N; ICOL++) {
     	  	       	                	  for (IROW = 0; IROW < LDWRKR; IROW++) {
-    	  	       	                          WORK[j] = ARRAY[IROW][ICOL];
-    	  	       	                          j++;
+    	  	       	                          WORK[j++] = ARRAY[IROW][ICOL];
     	  	       	                	  }
     	  	       	                  }
     	  	       	                  ARRAY2 = new double[LDWRKR][N-1];
@@ -8245,9 +8293,8 @@ public abstract class LevmarBoxConstraint {
     	      	                			 ARRAY[i][j] = WORK[k++];
     	      	                		 }
     	      	                	 }
-    	      	                     WORK2 = new double[Math.min(M,N)-1];
-    	      	                     WORK3 = new double[Math.min(M,N)];
-    	      	                     WORK4 = new double[Math.min(M,N)];
+    	      	                     WORK3 = new double[N];
+    	      	                     WORK4 = new double[N];
     	      	                     WORK5 = new double[Math.max(1,LWORK-IWORK+1)];
     	      	                     dgebrd( N, N, ARRAY, LDWRKR, S, WORK2, WORK3,
     	      	                                  WORK4, WORK5, LWORK-IWORK+1, IERR );
@@ -8263,9 +8310,9 @@ public abstract class LevmarBoxConstraint {
     	      	*                    singular vectors of R in WORK(IR)
     	      	*                    (Workspace: need N*N+BDSPAC)
     	      	*/
-    	      	                     WORK4 = new double[4*N];
-    	      	                     dbdsqr( 'U', N, 0, N, 0, S, WORK3, DUM2,
-    	      	                                  1, ARRAY, LDWRKR, DUM2, 1, WORK4, INFO );
+    	      	                     WORK5 = new double[4*N];
+    	      	                     dbdsqr( 'U', N, 0, N, 0, S, WORK2, DUM2,
+    	      	                                  1, ARRAY, LDWRKR, DUM2, 1, WORK5, INFO );
     	      	/*
     	      	*                    Multiply Q in A by left singular vectors of R in
     	      	*                    WORK(IR), storing result in U
@@ -9174,7 +9221,7 @@ public abstract class LevmarBoxConstraint {
     	      	*/
     	      	            	
     	      	                  if ( LWORK >= N*N+Math.max( N+M, Math.max(4*N, BDSPAC) ) ) {
-    	      	                	//pathTaken = new String("Path 9 large workspace");
+    	      	                	pathTaken = new String("Path 9 large workspace");
     	      	/*
     	      	*                    Sufficient workspace for a fast algorithm
     	      	*/
@@ -9297,7 +9344,7 @@ public abstract class LevmarBoxConstraint {
     	      	/*
     	      	*                    Insufficient workspace for a fast algorithm
     	      	*/
-    	      	                	//pathTaken = new String("Path 9 small workspace");
+    	      	                	pathTaken = new String("Path 9 small workspace");
     	      	                     ITAU = 1;
     	      	                     IWORK = ITAU + N;
     	      	/*
@@ -9317,14 +9364,15 @@ public abstract class LevmarBoxConstraint {
     	      	*/
     	      	                     dlacpy( 'U', N, N, A, LDA, VT, LDVT );
     	      	                     if ( N > 1 ) {
-    	      	                       ARRAY = new double[LDVT-1][N-1];
-    	      	                       for (i = 0; i < LDVT-1; i++) {
+    	      	                       IROW = Math.max(1,N-1);
+    	      	                       ARRAY = new double[IROW][N-1];
+    	      	                       for (i = 0; i < IROW; i++) {
     	      	                    	   for (j = 0; j < N-1; j++) {
     	      	                    		   ARRAY[i][j] = VT[1+i][j];
     	      	                    	   }
     	      	                       }
-    	      	                       dlaset( 'L', N-1, N-1, 0.0, 0.0, ARRAY, LDVT-1 );
-    	      	                       for (i = 0; i < LDVT-1; i++) {
+    	      	                       dlaset( 'L', N-1, N-1, 0.0, 0.0, ARRAY, IROW );
+    	      	                       for (i = 0; i < IROW; i++) {
     	      	                    	   for (j = 0; j < N-1; j++) {
     	      	                    		   VT[1+i][j] = ARRAY[i][j];
     	      	                    	   }
@@ -9377,7 +9425,6 @@ public abstract class LevmarBoxConstraint {
     	      	*           Path 10 (M at least N, but not much larger)
     	      	*           Reduce to bidiagonal form without QR decomposition
     	      	*/
-    	      	        	//pathTaken = new String("Path 10");
     	      	            IE = 1;
     	      	            ITAUQ = IE + N;
     	      	            ITAUP = ITAUQ + N;
@@ -9451,9 +9498,13 @@ public abstract class LevmarBoxConstraint {
     	      	*              vectors in VT
     	      	*              (Workspace: need BDSPAC)
     	      	*/
+    	      	               pathTaken = new String("Path 10 if ((!WNTUO) && (!WNTVO))");
+    	      	               
     	      	               WORK4 = new double[4*N];
     	      	               dbdsqr( 'U', N, NCVT, NRU, 0, S, WORK, VT,
     	      	                            LDVT, U, LDU, DUM2, 1, WORK4, INFO );
+    	      	               path10Info = new String("INFO[0] = " + INFO[0]);
+    	      	               
     	      	            }
     	      	            else if ( ( !WNTUO ) && WNTVO ) {
     	      	/*
@@ -9462,6 +9513,7 @@ public abstract class LevmarBoxConstraint {
     	      	*              vectors in A
     	      	*              (Workspace: need BDSPAC)
     	      	*/
+    	      	               pathTaken = new String("Path 10 else if  ((!WNTUO) && WNTVO)");
     	      	               WORK4 = new double[4*N];
     	      	               dbdsqr( 'U', N, NCVT, NRU, 0, S, WORK, A, LDA,
     	      	                            U, LDU, DUM2, 1, WORK4, INFO );
@@ -9473,6 +9525,7 @@ public abstract class LevmarBoxConstraint {
     	      	*              vectors in VT
     	      	*              (Workspace: need BDSPAC)
     	      	*/
+    	      	               pathTaken = new String("Path 10 else");
     	      	               WORK4 = new double[4*N];
     	      	               dbdsqr( 'U', N, NCVT, NRU, 0, S, WORK, VT,
     	      	                            LDVT, A, LDA, DUM2, 1, WORK4, INFO );
@@ -10296,7 +10349,7 @@ public abstract class LevmarBoxConstraint {
     	      	*                 M left singular vectors to be computed in U
     	      	*/
     	      	                  if ( LWORK >= M*M+Math.max( 4*M, BDSPAC ) ) {
-    	      	                	//pathTaken = new String("Path 6t large workspace");
+    	      	                	pathTaken = new String("Path 6t large workspace");
     	      	/*
     	      	*                    Sufficient workspace for a fast algorithm
     	      	*/
@@ -11110,7 +11163,7 @@ public abstract class LevmarBoxConstraint {
     	      	*              vectors in VT
     	      	*              (Workspace: need BDSPAC)
     	      	*/
-    	      	               //pathTaken = new String("Path 10t if ((!WNTUO) && (!WNTVO))");
+    	      	               pathTaken = new String("Path 10t if ((!WNTUO) && (!WNTVO))");
     	      	               WORK = new double[4*M];
     	      	               dbdsqr( 'L', M, NCVT, NRU, 0, S, WORK, VT,
     	      	                       LDVT, U, LDU, DUM2, 1, WORK4, INFO );
@@ -11122,7 +11175,7 @@ public abstract class LevmarBoxConstraint {
     	      	*              vectors in A
     	      	*              (Workspace: need BDSPAC)
     	      	*/
-    	      	               //pathTaken = new String("Path 10t else if ((!WNTUO) && WNTVO)");
+    	      	               pathTaken = new String("Path 10t else if ((!WNTUO) && WNTVO)");
     	      	               WORK4 = new double[4*M];
     	      	               dbdsqr( 'L', M, NCVT, NRU, 0, S, WORK, A, LDA,
     	      	                       U, LDU, DUM2, 1, WORK4, INFO );
@@ -11134,7 +11187,7 @@ public abstract class LevmarBoxConstraint {
     	      	*              vectors in VT
     	      	*              (Workspace: need BDSPAC)
     	      	*/
-    	      	               //pathTaken = new String("Path 10t else");
+    	      	               pathTaken = new String("Path 10t else");
     	      	               WORK4 = new double[4*M];
     	      	               dbdsqr( 'L', M, NCVT, NRU, 0, S, WORK, VT,
     	      	                       LDVT, A, LDA, DUM2, 1, WORK4, INFO );
