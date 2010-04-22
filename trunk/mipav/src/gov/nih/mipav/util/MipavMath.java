@@ -5,13 +5,24 @@ import WildMagic.LibFoundation.Mathematics.*;
 
 
 /**
- * Math functions not found in Java's Math class or they are slow.
+ * Math functions not found in Java's Math class or they are slow. All methods should be static.
  */
 public class MipavMath {
 
-    public static final double angle(final float[] x, final float[] y, final float[] res) {
-        final double theta = (180.0 / Math.PI) * Math.atan2( ( (y[1] - y[0]) * res[1]), ( (x[1] - x[0]) * res[0]));
-        double theta2 = (180.0 / Math.PI) * Math.atan2( ( (y[2] - y[0]) * res[1]), ( (x[2] - x[0]) * res[0]));
+   
+	/**
+	 * Calculates the angle between two lines.
+	 * 
+	 * @param x X values.
+	 * @param y Y values.
+	 * @param res Voxel resolutions.
+	 * @return the angle between two lines.
+	 */
+	
+	public static final double angle(final float[] x, final float[] y, final float[] res) {
+        
+		final double theta  = (180.0 / Math.PI) * Math.atan2( ( (y[1] - y[0]) * res[1]), ( (x[1] - x[0]) * res[0]));
+              double theta2 = (180.0 / Math.PI) * Math.atan2( ( (y[2] - y[0]) * res[1]), ( (x[2] - x[0]) * res[0]));
         theta2 = theta2 - theta;
 
         if (theta2 < -180.0) {
@@ -25,7 +36,7 @@ public class MipavMath {
     }
 
     /**
-     * Calculates the 3D euclidian distance between two points.
+     * Calculates the 3D Euclidian distance between two points.
      * 
      * @param pt1 first point
      * @param pt2 second point
@@ -38,7 +49,7 @@ public class MipavMath {
     }
 
     /**
-     * Calculates the 2D euclidian distance between two points.
+     * Calculates the 2D Euclidian distance between two points.
      * 
      * @param x1 first x coordinate
      * @param x2 second x coordinate
@@ -90,7 +101,7 @@ public class MipavMath {
      * @param z1 z coordinate of the second point
      * @param res Voxel resolutions.
      * 
-     * @return DOCUMENT ME!
+     * @return the distance as a double
      */
     public static final double distance(final float x0, final float y0, final float z0, final float x1, final float y1,
             final float z1, final float[] res) {
@@ -109,7 +120,7 @@ public class MipavMath {
      * @param y1 y coordinate of the second point
      * @param z1 z coordinate of the second point
      * 
-     * @return DOCUMENT ME!
+     * @return the distance as a double
      */
     public static final double distance(final float x0, final float y0, final float z0, final float x1, final float y1,
             final float z1) {
@@ -330,6 +341,11 @@ public class MipavMath {
         return ret;
     }
 
+    /**
+     * Returns the minimum value found in a float array.  
+     * @param data the data array
+     * @return minimum value in the array.
+     */
     public static float min(final float[] data) {
         float min = Float.MAX_VALUE;
         for (final float element : data) {
@@ -340,6 +356,11 @@ public class MipavMath {
         return min;
     }
 
+    /**
+     * Returns the minimum value found in a short array.  
+     * @param data the data array
+     * @return minimum value in the array.
+     */
     public static short min(final short[] data) {
         short min = Short.MAX_VALUE;
         for (final short element : data) {
@@ -350,6 +371,11 @@ public class MipavMath {
         return min;
     }
 
+    /**
+     * Returns the maximum value found in a float array.  
+     * @param data the data array
+     * @return minimum value in the array.
+     */
     public static float max(final float[] data) {
         float max = Float.MIN_VALUE;
         for (final float element : data) {
@@ -359,7 +385,12 @@ public class MipavMath {
         }
         return max;
     }
-
+    
+    /**
+     * Returns the maximum value found in a short array.  
+     * @param data the data array
+     * @return minimum value in the array.
+     */
     public static short max(final short[] data) {
         short max = Short.MIN_VALUE;
         for (final short element : data) {
@@ -371,7 +402,7 @@ public class MipavMath {
     }
 
     /**
-     * sqrt(a^2 + b^2) without under/overflow. *
+     * Calculates the hypotenuse equal to the sqrt(a^2 + b^2) without under/overflow. *
      * 
      * @return sqrt(a^2 + b^2)
      */
@@ -391,14 +422,13 @@ public class MipavMath {
         return r;
     }
     
-    
-    
     /**
-     * Helper function that determines if number is prime from a set of primes that is under 1000
+     * Function that determines if number is prime from a set of primes that is under 1000.
+     * 
      * @param num Number to be determined if it is prime or not.
-     * @return boolean telling whether it is prime or not.
+     * @return boolean indicating whether it is prime or not.
      */
-    public static boolean isPrime_under1000(int num) {
+    public static boolean isPrimeUnder1000(int num) {
         boolean isPrime = false;
         int[] primes = {2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,
                 113,127,131,137,139,149,151,157,163,167,173,179,181,191,193,197,199,211,223,227,229,233,239,
