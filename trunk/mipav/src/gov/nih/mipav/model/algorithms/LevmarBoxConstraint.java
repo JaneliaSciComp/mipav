@@ -18,6 +18,7 @@ public abstract class LevmarBoxConstraint {
 	// Constrained MEYER at 10 * standard start INCORRECT maxIterations.
 	// Unconstrained OSBORNE1 CORRECT
 	// Unconstrained OSBORNE2 INCORRECT. Stopped by small Dp.
+	// Replacing the default AX_EQ_B_LU with the more accurate AX_EQ_B_SVD did not improve test performance.
 	private final double INIT_MU = 1.0E-3;
 	
 	private final double STOP_THRESH = 1.0E-17;
@@ -1035,11 +1036,11 @@ public abstract class LevmarBoxConstraint {
 	          //issolved=AX_EQ_B_CHOL(jacTjac, jacTe, Dp, m); ++nlss; linsolver=AX_EQ_B_CHOL;
 	          //issolved=AX_EQ_B_QR(jacTjac, jacTe, Dp, m); ++nlss; linsolver=AX_EQ_B_QR;
 	          //issolved=AX_EQ_B_QRLS(jacTjac, jacTe, Dp, m, m); ++nlss; linsolver=(int (*)(LM_REAL *A, LM_REAL *B, LM_REAL *x, int m))AX_EQ_B_QRLS;
-	          //issolved=AX_EQ_B_SVD(jacTjac, jacTe, Dp, m); ++nlss; linsolver=AX_EQ_B_SVD;
+	          issolved=AX_EQ_B_SVD(jacTjac, jacTe, Dp, paramNum); ++nlss; //linsolver=AX_EQ_B_SVD;
 
 	    //#else
 	          /* use the LU included with levmar */
-	          issolved=AX_EQ_B_LU(jacTjac, jacTe, Dp, paramNum); ++nlss; 
+	          //issolved=AX_EQ_B_LU(jacTjac, jacTe, Dp, paramNum); ++nlss; 
 	          //linsolver=AX_EQ_B_LU;
 	    //#endif /* HAVE_LAPACK */
 
