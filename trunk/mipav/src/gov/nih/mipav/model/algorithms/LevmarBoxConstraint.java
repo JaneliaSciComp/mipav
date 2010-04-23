@@ -6088,7 +6088,6 @@ public abstract class LevmarBoxConstraint {
 		      double   RES2[] = new double[1];
 		      double   VEC[];
 		      double   WORK2[][];
-		      int      minmn;
 		      int i;
 		
 		//     Check inputs
@@ -9617,8 +9616,9 @@ public abstract class LevmarBoxConstraint {
     	      	*              M right singular vectors to be overwritten on A and
     	      	*              no left singular vectors to be computed
     	      	*/
-    	      	            	pathTaken = new String("Path 2t");
+    	      	            	
     	      	               if ( LWORK >= M*M+Math.max( 4*M, BDSPAC ) ) {
+    	      	            	 pathTaken = new String("Path 2t large workspace");
     	      	/*
     	      	*                 Sufficient workspace for a fast algorithm
     	      	*/
@@ -9653,7 +9653,7 @@ public abstract class LevmarBoxConstraint {
     	      	*                 Compute A=L*Q
     	      	*                 (Workspace: need M*M+2*M, prefer M*M+M+M*NB)
     	      	*/
-    	      	                  WORK2 = new double[Math.min(M,N)];
+    	      	                  WORK2 = new double[M];
     	      	                  WORK3 = new double[Math.max(1,LWORK-IWORK+1)];
     	      	                  dgelqf( M, N, A, LDA, WORK2, WORK3, LWORK-IWORK+1, IERR );
     	      	/*
@@ -9686,7 +9686,6 @@ public abstract class LevmarBoxConstraint {
     	      	*                 Bidiagonalize L in WORK(IR)
     	      	*                 (Workspace: need M*M+4*M, prefer M*M+3*M+2*M*NB)
     	      	*/
-    	      	                  WORK2 = new double[M-1];
     	      	                  WORK3 = new double[M];
     	      	                  WORK4 = new double[M];
     	      	                  WORK5 = new double[Math.max(1,LWORK-IWORK+1)];
@@ -9742,6 +9741,7 @@ public abstract class LevmarBoxConstraint {
     	      	/*
     	      	*                 Insufficient workspace for a fast algorithm
     	      	*/
+    	      	            	 pathTaken = new String("Path 2t small workspace");
     	      	                  IE = 1;
     	      	                  ITAUQ = IE + M;
     	      	                  ITAUP = ITAUQ + M;
@@ -9750,8 +9750,8 @@ public abstract class LevmarBoxConstraint {
     	      	*                 Bidiagonalize A
     	      	*                 (Workspace: need 3*M+N, prefer 3*M+(M+N)*NB)
     	      	*/
-    	      	                  WORK2 = new double[Math.min(M,N)];
-    	      	                  WORK3 = new double[Math.min(M, N)];
+    	      	                  WORK2 = new double[M];
+    	      	                  WORK3 = new double[M];
     	      	                  WORK4 = new double[Math.max(1, LWORK-IWORK+1)];
     	      	                  dgebrd( M, N, A, LDA, S, WORK,
     	      	                               WORK2, WORK3, WORK4, LWORK-IWORK+1, IERR );
@@ -9766,7 +9766,7 @@ public abstract class LevmarBoxConstraint {
     	      	*                 singular vectors of A in A
     	      	*                 (Workspace: need BDSPAC)
     	      	*/
-    	      	                  WORK = new double[4*M];
+    	      	                  WORK4 = new double[4*M];
     	      	                  dbdsqr( 'L', M, N, 0, 0, S, WORK, A, LDA, DUM2, 1, DUM2, 1, WORK4, INFO );
     	      	               }
     	      	            }
@@ -15281,6 +15281,9 @@ public abstract class LevmarBoxConstraint {
          }
          
          dlasq2(n, work, info);
+         if (info[0] != 0) {
+        	 Preferences.debug("dlasq2 returned info[0] = " + info[0] + "\n");
+         }
          for (p = 0; p < 4*n; p++) {
              dSort[p] = work[p];
          }
