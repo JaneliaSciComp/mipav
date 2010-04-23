@@ -45,10 +45,6 @@ public class GeneralizedInverse {
     private double badc1_dlatb4;
     private double badc2_dlatb4;
     
-    private boolean dlasq2Error = false;
-    private double dOrg[];
-    private double dSort[];
-    
     public GeneralizedInverse() {
         
     }
@@ -1815,9 +1811,7 @@ public class GeneralizedInverse {
     // There are 4 self tests used in testing the port of dgelss.
     // 1.) dchkqr_test() tests dgeqrf, dorgqr, and dormqr.  All 30744 tests run passed the threshold.
     // 2.) dchklq_test() tests dgelqf, dorglq, and dormlq.  All 30744 tests run passed the threshold.
-    // 3.) dchkbd_test() tests dgebrd, dorgbr, and dbdsqr.  Essentially all 3430 tests pass the threshold.
-    //     The only tests that fail are those that execute the improperly written inner loop of dlasq2.
-    //     These failures are ignored.
+    // 3.) dchkbd_test() tests dgebrd, dorgbr, and dbdsqr.  All 4123 tests pass the threshold.
     // 4.) ddrvls_test() tests dgelss. All 17640 tests passed the threshold.
     
     /* This is a port of dgelss, LAPACK driver routine from version 3.2
@@ -5651,682 +5645,7 @@ public class GeneralizedInverse {
     } // dbdsqr
 
     
-    /** This is a port of version 3.2 LAPACK routine DLASQ1.                                 --
-    *
-    *  -- Contributed by Osni Marques of the Lawrence Berkeley National   --
-    *  -- Laboratory and Beresford Parlett of the Univ. of California at  --
-    *  -- Berkeley                                                        --
-    *  -- November 2008                                                   --
-    *
-    *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
-    *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
-    *
-    *     .. Scalar Arguments ..
-          INTEGER            INFO, N
-    *     ..
-    *     .. Array Arguments ..
-          DOUBLE PRECISION   D( * ), E( * ), WORK( * )
-    *     ..
-    *
-    *  Purpose
-    *  =======
-    *
-    *  DLASQ1 computes the singular values of a real N-by-N bidiagonal
-    *  matrix with diagonal D and off-diagonal E. The singular values
-    *  are computed to high relative accuracy, in the absence of
-    *  denormalization, underflow and overflow. The algorithm was first
-    *  presented in
-    *
-    *  "Accurate singular values and differential qd algorithms" by K. V.
-    *  Fernando and B. N. Parlett, Numer. Math., Vol-67, No. 2, pp. 191-230,
-    *  1994,
-    *
-    *  and the present implementation is described in "An implementation of
-    *  the dqds Algorithm (Positive Case)", LAPACK Working Note.
-    *
-    *  Arguments
-    *  =========
-    *
-    *  N     (input) INTEGER
-    *        The number of rows and columns in the matrix. N >= 0.
-    *
-    *  D     (input/output) DOUBLE PRECISION array, dimension (N)
-    *        On entry, D contains the diagonal elements of the
-    *        bidiagonal matrix whose SVD is desired. On normal exit,
-    *        D contains the singular values in decreasing order.
-    *
-    *  E     (input/output) DOUBLE PRECISION array, dimension (N)
-    *        On entry, elements E(1:N-1) contain the off-diagonal elements
-    *        of the bidiagonal matrix whose SVD is desired.
-    *        On exit, E is overwritten.
-    *
-    *  WORK  (workspace) DOUBLE PRECISION array, dimension (4*N)
-    *
-    *  INFO  (output) INTEGER
-    *        = 0: successful exit
-    *        < 0: if INFO = -i, the i-th argument had an illegal value
-    *        > 0: the algorithm failed
-    *             = 1, a split was marked by a positive value in E
-    *             = 2, current block of Z not diagonalized after 30*N
-    *                  iterations (in inner while loop)
-    *             = 3, termination criterion of outer while loop not met 
-    *                  (program created more than N unreduced blocks)
-    */
-    private void dlasq1(int n, double d[], double e[], double work[], int info[]) {
-        int i;
-        int iinfo[] = new int[1];
-        double eps;
-        double scale;
-        double safmin;
-        double sigmn[] = new double[1];
-        double sigmx[] = new double[1];
-        double d0[] = new double[1];
-        double e0[] = new double[1];
-        double d1[] = new double[1];
-        double work1[][] = new double[2*n-1][1];
-        double dmat[][] = new double[d.length][1];
-        
-        info[0] = 0;
-        if (n < 0) {
-            info[0] = -2;
-            MipavUtil.displayError("Error dlasq1 had n < 0");
-            return;
-        }
-        else if (n == 0) {
-            return;
-        }
-        else if (n == 1) {
-            d[0] = Math.abs(d[0]);
-            return;
-        }
-        else if (n == 2) {
-            d0[0] = d[0];
-            e0[0] = e[0];
-            d1[0] = d[1];
-            dlas2(d0, e0, d1, sigmn, sigmx);
-            d[0] = sigmx[0];
-            d[1] = sigmn[0];
-            return;
-        }
-        
-        // Estimate the largest singular value.
-        sigmx[0] = 0.0;
-        for (i = 1; i <= n-1; i++) {
-            d[i-1] = Math.abs(d[i-1]);
-            sigmx[0] = Math.max(sigmx[0], Math.abs(e[i-1]));
-        }
-        d[n-1] = Math.abs(d[n-1]);
-        
-        // Early return if simgx[0] is zero (matrix is already diagonal).
-        if (sigmx[0] == 0) {
-            dlasrt('D', n, d, iinfo);
-            return;
-        }
-        
-        for (i = 1; i <= n; i++) {
-            sigmx[0] = Math.max(sigmx[0], d[i-1]);
-        }
-        
-        // Copy d and e int work (in the Z format) and scale (squaring the
-        // input data makes scaling by a power of the radix pointless).
-        eps = dlamch('P'); // Precision
-        safmin = dlamch('S'); // Safe minimum
-        scale = Math.sqrt(eps/safmin);
-        for (i = 0; i < n; i++) {
-            work1[2*i][0] = d[i];
-        }
-        for (i = 0; i < n-1; i++) {
-            work1[2*i + 1][0] = e[i];
-        }
-        dlascl('G', 0, 0, sigmx[0], scale, 2*n-1, 1, work1, 2*n-1, iinfo);
-        for (i = 0; i < 2*n-1; i++) {
-            work[i] = work1[i][0];
-        }
-        
-        // Compute the q's and e's
-        
-        for (i = 1; i <= 2*n - 1; i++) {
-            work[i-1] = work[i-1] * work[i-1];
-        }
-        work[2*n-1] = 0.0;
-        dOrg = new double[2*n];
-        dSort = new double[4*n];
-        int p;
-        for (p = 0; p < 2*n; p++) {
-            dOrg[p] = work[p];
-        }
-        
-        dlasq2(n, work, info);
-        for (p = 0; p < 4*n; p++) {
-            dSort[p] = work[p];
-        }
-        
-        if (info[0] == 0) {
-            for (i = 1; i <= n; i++) {
-                dmat[i-1][0] = Math.sqrt(work[i-1]);
-            }
-            dlascl('G', 0, 0, scale, sigmx[0], n, 1, dmat, n, iinfo);
-            for (i = 0; i < n; i++) {
-                d[i] = dmat[i][0];
-            }
-        } // if (info[0] == 0)
-        
-        return;
-    } // dlasq1
-
     
-    /** This is a port of version 3.2 LAPACK routine DLASQ2.
-    *  -- Contributed by Osni Marques of the Lawrence Berkeley National   --
-    *  -- Laboratory and Beresford Parlett of the Univ. of California at  --
-    *  -- Berkeley                                                        --
-    *  -- November 2008                                                   --
-    *
-    *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
-    *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
-    *
-    *     .. Scalar Arguments ..
-          INTEGER            INFO, N
-    *     ..
-    *     .. Array Arguments ..
-          DOUBLE PRECISION   Z( * )
-    *     ..
-    *
-    *  Purpose
-    *  =======
-    *
-    *  DLASQ2 computes all the eigenvalues of the symmetric positive 
-    *  definite tridiagonal matrix associated with the qd array Z to high
-    *  relative accuracy are computed to high relative accuracy, in the
-    *  absence of denormalization, underflow and overflow.
-    *
-    *  To see the relation of Z to the tridiagonal matrix, let L be a
-    *  unit lower bidiagonal matrix with subdiagonals Z(2,4,6,,..) and
-    *  let U be an upper bidiagonal matrix with 1's above and diagonal
-    *  Z(1,3,5,,..). The tridiagonal is L*U or, if you prefer, the
-    *  symmetric tridiagonal to which it is similar.
-    *
-    *  Note : DLASQ2 defines a logical variable, IEEE, which is true
-    *  on machines which follow ieee-754 floating-point standard in their
-    *  handling of infinities and NaNs, and false otherwise. This variable
-    *  is passed to DLASQ3.
-    *
-    *  Arguments
-    *  =========
-    *
-    *  N     (input) INTEGER
-    *        The number of rows and columns in the matrix. N >= 0.
-    *
-    *  Z     (input/output) DOUBLE PRECISION array, dimension ( 4*N )
-    *        On entry Z holds the qd array. On exit, entries 1 to N hold
-    *        the eigenvalues in decreasing order, Z( 2*N+1 ) holds the
-    *        trace, and Z( 2*N+2 ) holds the sum of the eigenvalues. If
-    *        N > 2, then Z( 2*N+3 ) holds the iteration count, Z( 2*N+4 )
-    *        holds NDIVS/NIN^2, and Z( 2*N+5 ) holds the percentage of
-    *        shifts that failed.
-    *
-    *  INFO  (output) INTEGER
-    *        = 0: successful exit
-    *        < 0: if the i-th argument is a scalar and had an illegal
-    *             value, then INFO = -i, if the i-th argument is an
-    *             array and the j-entry had an illegal value, then
-    *             INFO = -(i*100+j)
-    *        > 0: the algorithm failed
-    *              = 1, a split was marked by a positive value in E
-    *              = 2, current block of Z not diagonalized after 30*N
-    *                   iterations (in inner while loop)
-    *              = 3, termination criterion of outer while loop not met 
-    *                   (program created more than N unreduced blocks)
-    *                   
-    Dear LAPACK:
-
-   The introductory comments to DLASQ2 state that if INFO = 2, the algorithm failed because
-   the current block of Z was not diagonalized after 30*N iterations (in inner while loop).
-   The inner while loop is only executed if NBIG > 0.  NBIG = 30 * (N0 -I0 + 1) so the
-   inner while loop is only executed if I0 <= N0.  In order for the inner while loop not to fail
-   I0 must become greater than N0 causing a GO TO 150 to be executed. Inside the inner while loop
-   the call to DLASQ3 only uses I0 and N0 as input arguments leaving them unchanged.  In the
-   IF (PP  .EQ. 0 .AND. N0 - I0 .GE. 3) clause,  SPLT can only be set to I0 - 1 or I4/4.  I4 has
-   a maximum value of 4*(N0-3), so the statement I0 = SPLT +1 either leaves I0 unchanged or increases
-   it up to a maximum value of N0 - 2.  In summary, the inner while loop is entered by values of
-   I0 <= N0, but the execution of the inner while loop can only increase I0 up to a maximum of N0 - 2,
-   so the statement IF (I0 .GT. N0) GO TO 150 needed to prevent an inner loop failure will never be
-   executed.  Therefore, the inner while loop always fails.
-
-                                    Sincerely,
-
-                                 William Gandler
-
-    *
-    *  Further Details
-    *  ===============
-    *  Local Variables: I0:N0 defines a current unreduced segment of Z.
-    *  The shifts are accumulated in SIGMA. Iteration count is in ITER.
-    *  Ping-pong is controlled by PP (alternates between 0 and 1).
-    */
-    private void dlasq2(int n, double z[], int info[]) {
-        double cbias = 1.50;
-        boolean ieee;
-        int i0;
-        int i4;
-        int iinfo[] = new int[1];
-        int ipn4;
-        int iter[] = new int[1];
-        int iwhila;
-        int iwhilb;
-        int k;
-        int kmin;
-        int n0;
-        int nbig;
-        int ndiv[] = new int[1];
-        int nfail[] = new int[1];
-        int pp[] = new int[1];
-        int splt;
-        int ttype[] = new int[1];
-        double d;
-        double dee;
-        double deemin;
-        double desig[] = new double[1];
-        double dmin[] = new double[1];
-        double dmin1[] = new double[1];
-        double dmin2[] = new double[1];
-        double dn[] = new double[1];
-        double dn1[] = new double[1];
-        double dn2[] = new double[1];
-        double e;
-        double emax;
-        double emin;
-        double eps;
-        double g[] = new double[1];
-        double oldemn;
-        double qmax;
-        double qmin;
-        double s;
-        double safmin;
-        double sigma[] = new double[1];
-        double t;
-        double tau[] = new double[1];
-        double temp;
-        double tol;
-        double tol2;
-        double trace;
-        double zmax;
-        String name;
-        String opts;
-        
-        // Test the input arguments
-        // (in case dlasq2 is not called by dlasq1)
-        info[0] = 0;
-        eps = dlamch('P'); // precision
-        safmin = dlamch('S'); // Safe minimum
-        tol = 100 * eps;
-        tol2 = tol * tol;
-        
-        if (n < 0) {
-            info[0] = -1;
-            MipavUtil.displayError("Error dlasq2 had n < 0");
-            return;
-        }
-        else if (n == 0) {
-            return;
-        }
-        else if (n == 1) {
-            // 1-by-1 case
-            if (z[0] < 0.0) {
-                info[0] = -201;
-                MipavUtil.displayError("Error dlsaq2 had z[0] < 0.0");
-            }
-            return;
-        } // else if (n == 1)
-        else if (n == 2) {
-            // 2-by-2 case
-            if ((z[1] < 0.0) || (z[2] < 0.0)) {
-                info[0] = -2;
-                MipavUtil.displayError("Error dlasq2 had z[1] < 0.0 or z[2] < 0.0");
-                return;
-            }
-            else if (z[2] > z[0]) {
-                d = z[2];
-                z[2] = z[0];
-                z[0] = d;
-            }
-            z[4] = z[0] + z[1] + z[2];
-            if (z[1] > z[2]*tol2) {
-                t = 0.5 *((z[0] - z[2]) + z[1]);
-                s = z[2] * (z[1]/t);
-                if (s <= t) {
-                    s = z[2] * (z[1]/(t*(1.0 + Math.sqrt(1.0 + s/t))));
-                }
-                else {
-                    s = z[2] * (z[1]/(t + Math.sqrt(t)*Math.sqrt(t+s)));
-                }
-                t = z[0] + (s + z[1]);
-                z[2] = z[2] * (z[0]/t);
-                z[0] = t;
-            } // if (z[1] > z[2]*tol2)
-            z[1] = z[2];
-            z[5] = z[1] + z[0];
-            return;
-        } // else if (n == 2)
-        
-        // Check for negative data and compute sums of q's and e's.
-        
-        z[2*n-1] = 0.0;
-        emin = z[1];
-        qmax = 0.0;
-        zmax = 0.0;
-        d = 0.0;
-        e = 0.0;
-        
-        for (k = 1; k <= 2*(n-1); k += 2) {
-            if (z[k-1] < 0.0) {
-                info[0] = -(200+k);
-                MipavUtil.displayError("Error dlasq2 had info[0] = " + info[0]);
-                return;
-            }
-            else if (z[k] < 0.0) {
-                info[0] = -(200+k+1);
-                MipavUtil.displayError("Error dlasq2 had info[0] = " + info[0]);
-                return;
-            }
-            d = d + z[k-1];
-            e = e + z[k];
-            qmax = Math.max(qmax, z[k-1]);
-            emin = Math.min(emin, z[k]);
-            zmax = Math.max(qmax, Math.max(zmax, z[k]));
-        } // (k = 1; k <= 2*(n-1); k += 2)
-        if (z[2*n-2] < 0.0) {
-            info[0] = -(200+2*n-1);
-            MipavUtil.displayError("Error dlasq2 had info[0] = " + info[0]);
-            return;
-        }
-        d = d + z[2*n-2];
-        qmax = Math.max(qmax, z[2*n-2]);
-        zmax = Math.max(qmax, zmax);
-        
-        // Check for diagonality
-        
-        if (e == 0.0) {
-            for (k = 2; k <= n; k++) {
-                z[k-1] = z[2*k-2];
-            }
-            dlasrt('D', n, z, iinfo);
-            z[2*n-2] = d;
-            return;
-        } // if (e == 0.0)
-        
-        trace = d + e;
-        
-        // Check for zero data
-        
-        if (trace == 0.0) {
-            z[2*n-2] = 0.0;
-            return;
-        }
-        
-        // Check whether the machine is IEEE conformable.
-        name = new String("DLASQ2");
-        opts = new String("N");
-        ieee = ((ilaenv(10, name, opts, 1, 2, 3, 4) == 1) && (ilaenv(11, name, opts, 1, 2, 3, 4) == 1));
-        
-        // Rearrange data for locality: z = (q1,qq1,e1,ee1,q2,qq2,e2,ee2,...).
-        
-        for (k = 2*n; k >= 2; k -= 2) {
-            z[2*k-1] = 0.0;
-            z[2*k-2] = z[k-1];
-            z[2*k-3] = 0.0;
-            z[2*k-4] = z[k-2];
-        } // for (k = 2*n; k >= 2; k -= 2)
-        
-        i0 = 1;
-        n0 = n;
-        
-        // Reverse the qd-array, if warranted
-        
-        if (cbias * z[4*i0-4] < z[4*n0-4]) {
-            ipn4 = 4 * (i0 + n0);
-            for (i4 = 4*i0; i4 <= 2*(i0+n0-1); i4 += 4) {
-                temp = z[i4-4];
-                z[i4-4] = z[ipn4 -i4 - 4];
-                z[ipn4 - i4 - 4] = temp;
-                temp = z[i4-2];
-                z[i4-2] = z[ipn4 - i4 - 6];
-                z[ipn4 - i4 - 6] = temp;
-            } // for (i4 = 4*i0; i4 <= 2*(i0+n0-1); i4 += 4)
-        } // if (cbias * z[4*i0-4] < z[4*n0-4])
-        
-        // Initial split checking via dqd and Li's test.
-        
-        pp[0] = 0;
-        
-        for (k = 1; k <= 2; k++) {
-            d = z[4*n0+pp[0]-4];
-            for (i4 = 4*(n0-1) + pp[0]; i4 >= 4*i0 + pp[0]; i4 -= 4) {
-                if (z[i4-2] <= tol2*d) {
-                    z[i4-2] = -0.0;
-                    d = z[i4-4];
-                }
-                else {
-                    d = z[i4-4]*(d/(d + z[i4-2]));
-                }
-            } // for (i4 = 4*(n0-1) + pp[0]; i4 >= 4*i0 + pp[0]; i4 -= 4)
-            
-            // dqd maps z to zz plus Li's test
-            
-            emin = z[4*i0+pp[0]];
-            d = z[4*i0+pp[0]-4];
-            for (i4 = 4*i0 + pp[0]; i4 <= 4*(n0-1) + pp[0]; i4 += 4) {
-                z[i4-2*pp[0]-3] = d + z[i4-2];
-                if (z[i4-2] <= tol2*d) {
-                    z[i4-2] = -0.0;
-                    z[i4-2*pp[0]-3] = d;
-                    z[i4-2*pp[0]-1] = 0.0;
-                    d = z[i4];
-                } // if (z[i4-2] <= tol2*d)
-                else if ((safmin * z[i4] < z[i4-2*pp[0]-3]) && (safmin*z[i4-2*pp[0]-3] < z[i4])) {
-                    temp = z[i4]/z[i4-2*pp[0]-3];
-                    z[i4-2*pp[0]-1] = z[i4-2]*temp;
-                    d = d * temp;
-                }
-                else {
-                    z[i4-2*pp[0]-1] = z[i4] *(z[i4-2]/z[i4-2*pp[0]-3]);
-                    d = z[i4] * (d/z[i4-2*pp[0]-3]);
-                }
-                emin = Math.min(emin, z[i4-2*pp[0]-1]);
-            } // for (i4 = 4*i0 + pp[0]; i4 <= 4*(n0-1) + pp[0]; i4 += 4)
-            z[4*n0 - pp[0] - 3] = d;
-            
-            // Now find qmax.
-            
-            qmax = z[4*i0-pp[0]-3];
-            for (i4 = 4*i0 - pp[0] + 2; i4 <= 4*n0 - pp[0] - 2; i4 += 4) {
-                qmax = Math.max(qmax, z[i4-1]);
-            }
-            
-            // Prepare for the next iteration on k.
-            pp[0] = 1 - pp[0];
-        } // for (k = 1; k <= 2; k++)
-        
-        // Initialize variables to pass to dlasq3
-        
-        ttype[0] = 0;
-        dmin1[0] = 0.0;
-        dmin2[0] = 0.0;
-        dn[0] = 0.0;
-        dn1[0] = 0.0;
-        dn2[0] = 0.0;
-        g[0] = 0.0;
-        tau[0] = 0.0;
-        
-        iter[0] = 2;
-        nfail[0] = 0;
-        ndiv[0] = 2*(n0 - i0);
-        
-        loop1: {
-            loop2: for (iwhila = 1; iwhila <= n + 1; iwhila++) {
-                if (n0 < 1) {
-                    break loop1;
-                }
-                
-                // While array unfinished do
-                
-                // e[n0-1] holds the value of sigma when submatrix in i0-1:n0-1
-                // splits from the rest of the array, but is negated.
-                
-                desig[0] = 0.0;
-                if (n0 == n) {
-                    sigma[0] = 0.0;
-                }
-                else {
-                    sigma[0] = -z[4*n0-2];
-                }
-                if (sigma[0] < 0.0) {
-                    info[0] = 1;
-                    return;
-                }
-                
-                // Find the last unreduced submatrix's top index i0, find qmax and
-                // emin.  Find Gershgorin-type bound if Q's much greater than E's.
-                
-                emax = 0.0;
-                if (n0 > i0) {
-                    emin = Math.abs(z[4*n0-6]);
-                }
-                else {
-                    emin = 0.0;
-                }
-                qmin = z[4*n0-4];
-                qmax = qmin;
-                loop3: {
-                    for (i4 = 4*n0; i4 >= 8; i4 -= 4) {
-                        if (z[i4-6] <= 0.0) {
-                            break loop3;
-                        }
-                        if (qmin >= 4.0*emax) {
-                            qmin = Math.min(qmin, z[i4-4]);
-                            emax = Math.max(emax, z[i4-6]);
-                        }
-                        qmax = Math.max(qmax, z[i4-8] + z[i4-6]);
-                        emin = Math.min(emin, z[i4-6]);
-                    } // for (i4 = 4*n0; i4 >= 8; i4 -= 4)
-                    i4 = 4;
-                } // loop3
-                
-                i0 = i4/4;
-                pp[0] = 0;
-                
-                if (n0 - i0 > 1) {
-                    dee = z[4*i0 - 4];
-                    deemin = dee;
-                    kmin = i0;
-                    for (i4 = 4*i0+1; i4 <= 4*n0-3; i4 += 4) {
-                        dee = z[i4-1] * (dee/(dee + z[i4-3]));
-                        if (dee <= deemin) {
-                            deemin = dee;
-                            kmin = (i4+3)/4;
-                        }
-                    } // for (i4 = 4*i0+1; i4 <= 4*n0-3; i4 += 4)
-                    if ((2*(kmin - i0) < n0 - kmin) && (deemin <= 0.5 * z[4*n0-4])) {
-                        ipn4 = 4*(i0+n0);
-                        pp[0] = 2;
-                        for (i4 = 4*i0; i4 <= 2*(i0 + n0 - 1); i4 += 4) {
-                            temp = z[i4-4];
-                            z[i4-4] = z[ipn4-i4-4];
-                            z[ipn4-i4-4] = temp;
-                            temp = z[i4-3];
-                            z[i4-3] = z[ipn4-i4-3];
-                            z[ipn4-i4-3] = temp;
-                            temp = z[i4-2];
-                            z[i4-2] = z[ipn4-i4-6];
-                            z[ipn4-i4-6] = temp;
-                            temp = z[i4-1];
-                            z[i4-1] = z[ipn4-i4-5];
-                            z[ipn4-i4-5] = temp;
-                        } // for (i4 = 4*i0; i4 <= 2*(i0 + n0 - 1); i4 += 4)
-                    } // if ((2*(kmin - i0) < n0 - kmin) && (deemin <= 0.5 * z[4*n0-4]))
-                } // if (n0 - i0 > 1)
-                
-                // Put -(initial shift) into dmin.
-                
-                dmin[0] = -Math.max(0.0, qmin - 2.0*Math.sqrt(qmin)*Math.sqrt(emax));
-                
-                // Now i0:n0 is unreduced.
-                // pp = 0 for ping, pp = 1 for pong.
-                // pp = 2 indicates tht flipping was applied to the z array and
-                // that the tests for deflation upon entry in dlasq3 should not
-                // be performed.
-                
-                nbig = 30*(n0 - i0 + 1);
-                for (iwhilb = 1; iwhilb <= nbig; iwhilb++) {
-                    if (i0 > n0) {
-                        continue loop2;
-                    }
-                    
-                    // While submatrix unfinished take a good dqds step.
-                    dlasq3(i0, n0, z, pp, dmin, sigma, desig, qmax, nfail, iter, ndiv, ieee, ttype,
-                           dmin1, dmin2, dn, dn1, dn2, g, tau);
-                    
-                    pp[0] = 1 - pp[0];
-                    
-                    // When emin is very small check for splits
-                    if ((pp[0] == 0) && (n0 - i0 >= 3)) {
-                        if ((z[4*n0-1] <= tol2*qmax) || (z[4*n0-2] <= tol2*sigma[0])) {
-                            splt = i0 - 1;
-                            qmax = z[4*i0-4];
-                            emin = z[4*i0-2];
-                            oldemn = z[4*i0-1];
-                            for (i4 = 4*i0; i4 <= 4*(n0-3); i4 += 4) {
-                                if ((z[i4-1] <= tol2*z[i4-4]) || (z[i4-2] <= tol2*sigma[0])) {
-                                    z[i4-2] = -sigma[0];
-                                    splt = i4/4;
-                                    qmax = 0.0;
-                                    emin = z[i4+2];
-                                    oldemn = z[i4+3];
-                                } // if ((z[i4-1] <= tol2*z[i4-4]) || (z[i4-2] <= tol2*sigma[0]))
-                                else {
-                                    qmax = Math.max(qmax, z[i4]);
-                                    emin = Math.min(emin, z[i4-2]);
-                                    oldemn = Math.min(oldemn, z[i4-1]);
-                                }
-                            } // for (i4 = 4*i0; i4 <= 4*(n0-3); i4 += 4)
-                            z[4*n0-2] = emin;
-                            z[4*n0-1] = oldemn;
-                            i0 = splt + 1;
-                        } // if ((z[4*n0-1] <= tol2*qmax) || (z[4*n0-2] <= tol2*sigma[0]))
-                    } // if ((pp[0] == 0) && (n0 - i0 >= 3))
-                } // for (iwhilb = 1; iwhilb <= nbig; iwhilb++)
-                dlasq2Error = true;
-                info[0] = 2;
-                return;
-            } // loop2: for (iwhila = 1; iwhila <= n + 1; iwhila++)
-            info[0] = 3;
-            return;
-        } // loop1
-        
-        // Move q's to the front.
-        
-        for (k = 2; k <= n; k++) {
-            z[k-1] = z[4*k-4];
-        }
-        
-        // Sort and compute sum of eigenvalues.
-        
-        dlasrt('D', n, z, iinfo);
-        
-        e = 0.0;
-        for (k = n; k >= 1; k--) {
-            e = e + z[k-1];
-        }
-        
-        // Store trace, sum(eigenvalues), and information on performance.
-        
-        z[2*n] = trace;
-        z[2*n+1] = e;
-        z[2*n+2] = (double)iter[0];
-        z[2*n+3] = (double)ndiv[0]/(double)(n*n);
-        z[2*n+4] = 100.0 * nfail[0]/(double)iter[0];
-        return;
-    } // dlasq2
-
     
     /**
      * This is a port of the version 3.2 LAPACK auxiliary routine DLASRT Original DLASRT created by Univ. of Tennessee,
@@ -6566,271 +5885,922 @@ loop4:
         return;
     } // dlasrt
     
-    /** This is a port of version 3.2 LAPACK routine DLASQ3
-       *  -- Contributed by Osni Marques of the Lawrence Berkeley National   --
-       *  -- Laboratory and Beresford Parlett of the Univ. of California at  --
-       *  -- Berkeley                                                        --
-       *  -- November 2008                                                   --
-       *
-       *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
-       *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
-       *
-       *     .. Scalar Arguments ..
-             LOGICAL            IEEE
-             INTEGER            I0, ITER, N0, NDIV, NFAIL, PP
-             DOUBLE PRECISION   DESIG, DMIN, DMIN1, DMIN2, DN, DN1, DN2, G,
-            $                   QMAX, SIGMA, TAU
-       *     ..
-       *     .. Array Arguments ..
-             DOUBLE PRECISION   Z( * )
-       *     ..
-       *
-       *  Purpose
-       *  =======
-       *
-       *  DLASQ3 checks for deflation, computes a shift (TAU) and calls dqds.
-       *  In case of failure it changes shifts, and tries again until output
-       *  is positive.
-       *
-       *  Arguments
-       *  =========
-       *
-       *  I0     (input) INTEGER
-       *         First index.
-       *
-       *  N0     (input) INTEGER
-       *         Last index.
-       *
-       *  Z      (input) DOUBLE PRECISION array, dimension ( 4*N )
-       *         Z holds the qd array.
-       *
-       *  PP     (input/output) INTEGER
-       *         PP=0 for ping, PP=1 for pong.
-       *         PP=2 indicates that flipping was applied to the Z array   
-       *         and that the initial tests for deflation should not be 
-       *         performed.
-       *
-       *  DMIN   (output) DOUBLE PRECISION
-       *         Minimum value of d.
-       *
-       *  SIGMA  (output) DOUBLE PRECISION
-       *         Sum of shifts used in current segment.
-       *
-       *  DESIG  (input/output) DOUBLE PRECISION
-       *         Lower order part of SIGMA
-       *
-       *  QMAX   (input) DOUBLE PRECISION
-       *         Maximum value of q.
-       *
-       *  NFAIL  (output) INTEGER
-       *         Number of times shift was too big.
-       *
-       *  ITER   (output) INTEGER
-       *         Number of iterations.
-       *
-       *  NDIV   (output) INTEGER
-       *         Number of divisions.
-       *
-       *  IEEE   (input) LOGICAL
-       *         Flag for IEEE or non IEEE arithmetic (passed to DLASQ5).
-       *
-       *  TTYPE  (input/output) INTEGER
-       *         Shift type.
-       *
-       *  DMIN1, DMIN2, DN, DN1, DN2, G, TAU (input/output) DOUBLE PRECISION
-       *         These are passed as arguments in order to save their values
-       *         between calls to DLASQ3.
-       */
-    private void dlasq3(int i0, int n0, double z[], int pp[], double dmin[], double sigma[],
-                   double desig[], double qmax, int nfail[], int iter[], int ndiv[],
-                   boolean ieee, int ttype[], double dmin1[], double dmin2[], double dn[],
-                   double dn1[], double dn2[], double g[], double tau[]) {
-        double cbias = 1.50;
-        int ipn4;
-        int j4;
-        int n0in;
-        int nn;
+    /** This is a port of version 3.2 LAPACK routine DLASQ1.                                 --
+    *
+    *  -- Contributed by Osni Marques of the Lawrence Berkeley National   --
+    *  -- Laboratory and Beresford Parlett of the Univ. of California at  --
+    *  -- Berkeley                                                        --
+    *  -- November 2008                                                   --
+    *
+    *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+    *
+    *     .. Scalar Arguments ..
+          INTEGER            INFO, N
+    *     ..
+    *     .. Array Arguments ..
+          DOUBLE PRECISION   D( * ), E( * ), WORK( * )
+    *     ..
+    *
+    *  Purpose
+    *  =======
+    *
+    *  DLASQ1 computes the singular values of a real N-by-N bidiagonal
+    *  matrix with diagonal D and off-diagonal E. The singular values
+    *  are computed to high relative accuracy, in the absence of
+    *  denormalization, underflow and overflow. The algorithm was first
+    *  presented in
+    *
+    *  "Accurate singular values and differential qd algorithms" by K. V.
+    *  Fernando and B. N. Parlett, Numer. Math., Vol-67, No. 2, pp. 191-230,
+    *  1994,
+    *
+    *  and the present implementation is described in "An implementation of
+    *  the dqds Algorithm (Positive Case)", LAPACK Working Note.
+    *
+    *  Arguments
+    *  =========
+    *
+    *  N     (input) INTEGER
+    *        The number of rows and columns in the matrix. N >= 0.
+    *
+    *  D     (input/output) DOUBLE PRECISION array, dimension (N)
+    *        On entry, D contains the diagonal elements of the
+    *        bidiagonal matrix whose SVD is desired. On normal exit,
+    *        D contains the singular values in decreasing order.
+    *
+    *  E     (input/output) DOUBLE PRECISION array, dimension (N)
+    *        On entry, elements E(1:N-1) contain the off-diagonal elements
+    *        of the bidiagonal matrix whose SVD is desired.
+    *        On exit, E is overwritten.
+    *
+    *  WORK  (workspace) DOUBLE PRECISION array, dimension (4*N)
+    *
+    *  INFO  (output) INTEGER
+    *        = 0: successful exit
+    *        < 0: if INFO = -i, the i-th argument had an illegal value
+    *        > 0: the algorithm failed
+    *             = 1, a split was marked by a positive value in E
+    *             = 2, current block of Z not diagonalized after 30*N
+    *                  iterations (in inner while loop)
+    *             = 3, termination criterion of outer while loop not met 
+    *                  (program created more than N unreduced blocks)
+    */
+    private void dlasq1(int n, double d[], double e[], double work[], int info[]) {
+        int i;
+        int iinfo[] = new int[1];
         double eps;
+        double scale;
+        double safmin;
+        double sigmn[] = new double[1];
+        double sigmx[] = new double[1];
+        double d0[] = new double[1];
+        double e0[] = new double[1];
+        double d1[] = new double[1];
+        double work1[][] = new double[2*n-1][1];
+        double dmat[][] = new double[d.length][1];
+        
+        info[0] = 0;
+        if (n < 0) {
+            info[0] = -2;
+            MipavUtil.displayError("Error dlasq1 had n < 0");
+            return;
+        }
+        else if (n == 0) {
+            return;
+        }
+        else if (n == 1) {
+            d[0] = Math.abs(d[0]);
+            return;
+        }
+        else if (n == 2) {
+            d0[0] = d[0];
+            e0[0] = e[0];
+            d1[0] = d[1];
+            dlas2(d0, e0, d1, sigmn, sigmx);
+            d[0] = sigmx[0];
+            d[1] = sigmn[0];
+            return;
+        }
+        
+        // Estimate the largest singular value.
+        sigmx[0] = 0.0;
+        for (i = 1; i <= n-1; i++) {
+            d[i-1] = Math.abs(d[i-1]);
+            sigmx[0] = Math.max(sigmx[0], Math.abs(e[i-1]));
+        }
+        d[n-1] = Math.abs(d[n-1]);
+        
+        // Early return if simgx[0] is zero (matrix is already diagonal).
+        if (sigmx[0] == 0) {
+            dlasrt('D', n, d, iinfo);
+            return;
+        }
+        
+        for (i = 1; i <= n; i++) {
+            sigmx[0] = Math.max(sigmx[0], d[i-1]);
+        }
+        
+        // Copy d and e int work (in the Z format) and scale (squaring the
+        // input data makes scaling by a power of the radix pointless).
+        eps = dlamch('P'); // Precision
+        safmin = dlamch('S'); // Safe minimum
+        scale = Math.sqrt(eps/safmin);
+        for (i = 0; i < n; i++) {
+            work1[2*i][0] = d[i];
+        }
+        for (i = 0; i < n-1; i++) {
+            work1[2*i + 1][0] = e[i];
+        }
+        dlascl('G', 0, 0, sigmx[0], scale, 2*n-1, 1, work1, 2*n-1, iinfo);
+        for (i = 0; i < 2*n-1; i++) {
+            work[i] = work1[i][0];
+        }
+        
+        // Compute the q's and e's
+        
+        for (i = 1; i <= 2*n - 1; i++) {
+            work[i-1] = work[i-1] * work[i-1];
+        }
+        work[2*n-1] = 0.0;
+        
+        
+        dlasq2(n, work, info);
+        if (info[0] != 0) {
+       	 Preferences.debug("dlasq2 returned info[0] = " + info[0] + "\n");
+        }
+        
+        if (info[0] == 0) {
+            for (i = 1; i <= n; i++) {
+                dmat[i-1][0] = Math.sqrt(work[i-1]);
+            }
+            dlascl('G', 0, 0, scale, sigmx[0], n, 1, dmat, n, iinfo);
+            for (i = 0; i < n; i++) {
+                d[i] = dmat[i][0];
+            }
+        } // if (info[0] == 0)
+        
+        return;
+    } // dlasq1
+
+    
+    /** This is a port of version 3.2 LAPACK routine DLASQ2.
+    *  -- Contributed by Osni Marques of the Lawrence Berkeley National   --
+    *  -- Laboratory and Beresford Parlett of the Univ. of California at  --
+    *  -- Berkeley                                                        --
+    *  -- November 2008                                                   --
+    *
+    *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+    *
+    *     .. Scalar Arguments ..
+          INTEGER            INFO, N
+    *     ..
+    *     .. Array Arguments ..
+          DOUBLE PRECISION   Z( * )
+    *     ..
+    *
+    *  Purpose
+    *  =======
+    *
+    *  DLASQ2 computes all the eigenvalues of the symmetric positive 
+    *  definite tridiagonal matrix associated with the qd array Z to high
+    *  relative accuracy are computed to high relative accuracy, in the
+    *  absence of denormalization, underflow and overflow.
+    *
+    *  To see the relation of Z to the tridiagonal matrix, let L be a
+    *  unit lower bidiagonal matrix with subdiagonals Z(2,4,6,,..) and
+    *  let U be an upper bidiagonal matrix with 1's above and diagonal
+    *  Z(1,3,5,,..). The tridiagonal is L*U or, if you prefer, the
+    *  symmetric tridiagonal to which it is similar.
+    *
+    *  Note : DLASQ2 defines a logical variable, IEEE, which is true
+    *  on machines which follow ieee-754 floating-point standard in their
+    *  handling of infinities and NaNs, and false otherwise. This variable
+    *  is passed to DLASQ3.
+    *
+    *  Arguments
+    *  =========
+    *
+    *  N     (input) INTEGER
+    *        The number of rows and columns in the matrix. N >= 0.
+    *
+    *  Z     (input/output) DOUBLE PRECISION array, dimension ( 4*N )
+    *        On entry Z holds the qd array. On exit, entries 1 to N hold
+    *        the eigenvalues in decreasing order, Z( 2*N+1 ) holds the
+    *        trace, and Z( 2*N+2 ) holds the sum of the eigenvalues. If
+    *        N > 2, then Z( 2*N+3 ) holds the iteration count, Z( 2*N+4 )
+    *        holds NDIVS/NIN^2, and Z( 2*N+5 ) holds the percentage of
+    *        shifts that failed.
+    *
+    *  INFO  (output) INTEGER
+    *        = 0: successful exit
+    *        < 0: if the i-th argument is a scalar and had an illegal
+    *             value, then INFO = -i, if the i-th argument is an
+    *             array and the j-entry had an illegal value, then
+    *             INFO = -(i*100+j)
+    *        > 0: the algorithm failed
+    *              = 1, a split was marked by a positive value in E
+    *              = 2, current block of Z not diagonalized after 30*N
+    *                   iterations (in inner while loop)
+    *              = 3, termination criterion of outer while loop not met 
+    *                   (program created more than N unreduced blocks)
+    *                   
+
+    *
+    *  Further Details
+    *  ===============
+    *  Local Variables: I0:N0 defines a current unreduced segment of Z.
+    *  The shifts are accumulated in SIGMA. Iteration count is in ITER.
+    *  Ping-pong is controlled by PP (alternates between 0 and 1).
+    */
+    private void dlasq2(int n, double z[], int info[]) {
+        double cbias = 1.50;
+        boolean ieee;
+        int i0[] = new int[1];
+        int i4;
+        int iinfo[] = new int[1];
+        int ipn4;
+        int iter[] = new int[1];
+        int iwhila;
+        int iwhilb;
+        int k;
+        int kmin;
+        int n0[] = new int[1];
+        int nbig;
+        int ndiv[] = new int[1];
+        int nfail[] = new int[1];
+        int pp[] = new int[1];
+        int splt;
+        int ttype[] = new int[1];
+        double d;
+        double dee;
+        double deemin;
+        double desig[] = new double[1];
+        double dmin[] = new double[1];
+        double dmin1[] = new double[1];
+        double dmin2[] = new double[1];
+        double dn[] = new double[1];
+        double dn1[] = new double[1];
+        double dn2[] = new double[1];
+        double e;
+        double emax;
+        double emin;
+        double eps;
+        double g[] = new double[1];
+        double oldemn;
+        double qmax;
+        double qmin;
         double s;
+        double safmin;
+        double sigma[] = new double[1];
         double t;
+        double tau[] = new double[1];
         double temp;
         double tol;
         double tol2;
-        boolean calldlasq6;
+        double trace;
+        double zmax;
+        String name;
+        String opts;
         
-        n0in = n0;
-        eps = dlamch('P'); // Precision
-        tol = 100.0 * eps;
+        // Test the input arguments
+        // (in case dlasq2 is not called by dlasq1)
+        info[0] = 0;
+        eps = dlamch('P'); // precision
+        safmin = dlamch('S'); // Safe minimum
+        tol = 100 * eps;
         tol2 = tol * tol;
         
-        // Check for deflation.
-        while (true) {
-            if (n0 < i0) {
+        if (n < 0) {
+            info[0] = -1;
+            MipavUtil.displayError("Error dlasq2 had n < 0");
+            return;
+        }
+        else if (n == 0) {
+            return;
+        }
+        else if (n == 1) {
+            // 1-by-1 case
+            if (z[0] < 0.0) {
+                info[0] = -201;
+                MipavUtil.displayError("Error dlsaq2 had z[0] < 0.0");
+            }
+            return;
+        } // else if (n == 1)
+        else if (n == 2) {
+            // 2-by-2 case
+            if ((z[1] < 0.0) || (z[2] < 0.0)) {
+                info[0] = -2;
+                MipavUtil.displayError("Error dlasq2 had z[1] < 0.0 or z[2] < 0.0");
                 return;
             }
-            if (n0 == i0) {
-                z[4*n0-4] = z[4*n0+pp[0]-4] + sigma[0];
-                n0 = n0 - 1;
-                continue;
+            else if (z[2] > z[0]) {
+                d = z[2];
+                z[2] = z[0];
+                z[0] = d;
             }
-            nn = 4*n0 + pp[0];
-            if (n0 != (i0+1)) {
-                // Check whether e[n0-2] is negligible, 1 eigenvalue.
-                if ((z[nn-6] <= tol2*(sigma[0]+z[nn-4])) ||
-                    (z[nn-2*pp[0]-5] <= tol2*z[nn-8])) {
-                    z[4*n0-4] = z[4*n0+pp[0]-4] + sigma[0];
-                    n0 = n0 - 1;
-                    continue;    
-                }
-                // Check whether e[n0-3] is negligible, 2 eigenvalues.
-                if ((z[nn-10] > tol2*sigma[0]) && (z[nn-2*pp[0]-9] > tol2*z[nn-12])) {
-                    break;
-                }
-            } // if (n0 != (i0 + 1))
-            
-            if (z[nn - 4] > z[nn-8]) {
-                s = z[nn-4];
-                z[nn-4] = z[nn-8];
-                z[nn-8] = s;
-            } // if (z[nn - 4] > z[nn-8])
-            if (z[nn-6] > z[nn-4]*tol2) {
-                t = 0.5 * ((z[nn-8] - z[nn-4]) + z[nn-6]);
-                s = z[nn-4] * (z[nn-6]/t);
+            z[4] = z[0] + z[1] + z[2];
+            if (z[1] > z[2]*tol2) {
+                t = 0.5 *((z[0] - z[2]) + z[1]);
+                s = z[2] * (z[1]/t);
                 if (s <= t) {
-                    s = z[nn-4] * (z[nn-6]/(t*(1.0 + Math.sqrt(1.0 + s/t))));
+                    s = z[2] * (z[1]/(t*(1.0 + Math.sqrt(1.0 + s/t))));
                 }
                 else {
-                    s = z[nn-4] * (z[nn-6]/(t + Math.sqrt(t)*Math.sqrt(t+s)));
+                    s = z[2] * (z[1]/(t + Math.sqrt(t)*Math.sqrt(t+s)));
                 }
-                t = z[nn-8] + (s + z[nn-6]);
-                z[nn-4] = z[nn-4] * (z[nn-8]/t);
-                z[nn-8] = t;
-            } // if (z[nn-6] > z[nn-4]*tol2)
-            z[4*n0-8] = z[nn-8] + sigma[0];
-            z[4*n0-4] = z[nn-4] + sigma[0];
-            n0 = n0 - 2;
-        } // while (true)
+                t = z[0] + (s + z[1]);
+                z[2] = z[2] * (z[0]/t);
+                z[0] = t;
+            } // if (z[1] > z[2]*tol2)
+            z[1] = z[2];
+            z[5] = z[1] + z[0];
+            return;
+        } // else if (n == 2)
         
-        if (pp[0] == 2) {
-            pp[0] = 0;
+        // Check for negative data and compute sums of q's and e's.
+        
+        z[2*n-1] = 0.0;
+        emin = z[1];
+        qmax = 0.0;
+        zmax = 0.0;
+        d = 0.0;
+        e = 0.0;
+        
+        for (k = 1; k <= 2*(n-1); k += 2) {
+            if (z[k-1] < 0.0) {
+                info[0] = -(200+k);
+                MipavUtil.displayError("Error dlasq2 had info[0] = " + info[0]);
+                return;
+            }
+            else if (z[k] < 0.0) {
+                info[0] = -(200+k+1);
+                MipavUtil.displayError("Error dlasq2 had info[0] = " + info[0]);
+                return;
+            }
+            d = d + z[k-1];
+            e = e + z[k];
+            qmax = Math.max(qmax, z[k-1]);
+            emin = Math.min(emin, z[k]);
+            zmax = Math.max(qmax, Math.max(zmax, z[k]));
+        } // (k = 1; k <= 2*(n-1); k += 2)
+        if (z[2*n-2] < 0.0) {
+            info[0] = -(200+2*n-1);
+            MipavUtil.displayError("Error dlasq2 had info[0] = " + info[0]);
+            return;
+        }
+        d = d + z[2*n-2];
+        qmax = Math.max(qmax, z[2*n-2]);
+        zmax = Math.max(qmax, zmax);
+        
+        // Check for diagonality
+        
+        if (e == 0.0) {
+            for (k = 2; k <= n; k++) {
+                z[k-1] = z[2*k-2];
+            }
+            dlasrt('D', n, z, iinfo);
+            z[2*n-2] = d;
+            return;
+        } // if (e == 0.0)
+        
+        trace = d + e;
+        
+        // Check for zero data
+        
+        if (trace == 0.0) {
+            z[2*n-2] = 0.0;
+            return;
         }
         
-        // Reverse the qd-array, if warranted.
+        // Check whether the machine is IEEE conformable.
+        name = new String("DLASQ2");
+        opts = new String("N");
+        ieee = ((ilaenv(10, name, opts, 1, 2, 3, 4) == 1) && (ilaenv(11, name, opts, 1, 2, 3, 4) == 1));
         
-        if ((dmin[0] <= 0.0) || (n0 < n0in)) {
-            if (cbias*z[4*i0+pp[0]-4] < z[4*n0+pp[0]-4]) {
-                ipn4 = 4 * (i0 + n0);
-                for (j4 = 4*i0; j4 <= 2*(i0 + n0 - 1); j4 += 4) {
-                    temp = z[j4-4];
-                    z[j4-4] = z[ipn4-j4-4];
-                    z[ipn4-j4-4] = temp;
-                    temp = z[j4-3];
-                    z[j4-3] = z[ipn4-j4-3];
-                    z[ipn4-j4-3] = temp;
-                    temp = z[j4-2];
-                    z[j4-2] = z[ipn4-j4-6];
-                    z[ipn4-j4-6] = temp;
-                    temp = z[j4-1];
-                    z[j4-1] = z[ipn4-j4-5];
-                    z[ipn4-j4-5] = temp;
-                } // for (j4 = 4*i0; j4 <= 2*(i0 + n0 - 1); j4 += 4)
-                if (n0 - i0 <= 4) {
-                    z[4*n0+pp[0]-2] = z[4*i0+pp[0]-2];
-                    z[4*n0-pp[0]-1] = z[4*i0-pp[0]-1];
+        // Rearrange data for locality: z = (q1,qq1,e1,ee1,q2,qq2,e2,ee2,...).
+        
+        for (k = 2*n; k >= 2; k -= 2) {
+            z[2*k-1] = 0.0;
+            z[2*k-2] = z[k-1];
+            z[2*k-3] = 0.0;
+            z[2*k-4] = z[k-2];
+        } // for (k = 2*n; k >= 2; k -= 2)
+        
+        i0[0] = 1;
+        n0[0] = n;
+        
+        // Reverse the qd-array, if warranted
+        
+        if (cbias * z[4*i0[0]-4] < z[4*n0[0]-4]) {
+            ipn4 = 4 * (i0[0] + n0[0]);
+            for (i4 = 4*i0[0]; i4 <= 2*(i0[0]+n0[0]-1); i4 += 4) {
+                temp = z[i4-4];
+                z[i4-4] = z[ipn4 -i4 - 4];
+                z[ipn4 - i4 - 4] = temp;
+                temp = z[i4-2];
+                z[i4-2] = z[ipn4 - i4 - 6];
+                z[ipn4 - i4 - 6] = temp;
+            } // for (i4 = 4*i0[0]; i4 <= 2*(i0[0]+n0[0]-1); i4 += 4)
+        } // if (cbias * z[4*i0[0]-4] < z[4*n0[0]-4])
+        
+        // Initial split checking via dqd and Li's test.
+        
+        pp[0] = 0;
+        
+        for (k = 1; k <= 2; k++) {
+            d = z[4*n0[0]+pp[0]-4];
+            for (i4 = 4*(n0[0]-1) + pp[0]; i4 >= 4*i0[0] + pp[0]; i4 -= 4) {
+                if (z[i4-2] <= tol2*d) {
+                    z[i4-2] = -0.0;
+                    d = z[i4-4];
                 }
-                dmin2[0] = Math.min(dmin2[0], z[4*n0+pp[0]-2]);
-                z[4*n0+pp[0]-2] = Math.min(z[4*n0+pp[0]-2], Math.min(z[4*i0+pp[0]-2],
-                                           z[4*i0+pp[0]+2]));
-                z[4*n0-pp[0]-1] = Math.min(z[4*n0-pp[0]-1], Math.min(z[4*i0-pp[0]-1], 
-                                           z[4*i0-pp[0]+3]));
-                qmax = Math.max(qmax, Math.max(z[4*i0+pp[0]-4], z[4*i0+pp[0]]));
-                dmin[0] = -0.0;
-            } // if (cbias*z[4*i0+pp[0]-4] < z[4*n0+pp[0]-4])
-        } // if ((dmin[0] <= 0.0) || (n0 < n0in))
-        
-        // Choose a shift
-        dlasq4(i0, n0, z, pp[0], n0in, dmin[0], dmin1[0], dmin2[0], dn[0], dn1[0], dn2[0], tau, ttype, g);
-        
-        // Call dqds until dmin > 0
-        
-        while (true) {
-            dlasq5(i0, n0, z, pp[0], tau[0], dmin, dmin1, dmin2, dn, dn1, dn2, ieee);
+                else {
+                    d = z[i4-4]*(d/(d + z[i4-2]));
+                }
+            } // for (i4 = 4*(n0[0]-1) + pp[0]; i4 >= 4*i0[0] + pp[0]; i4 -= 4)
             
-            ndiv[0] = ndiv[0] + (n0 - i0 + 2);
-            iter[0] = iter[0] + 1;
+            // dqd maps z to zz plus Li's test
             
-            // Check status
-            if (Double.isNaN(dmin[0])) {
-                // NaN
+            emin = z[4*i0[0]+pp[0]];
+            d = z[4*i0[0]+pp[0]-4];
+            for (i4 = 4*i0[0] + pp[0]; i4 <= 4*(n0[0]-1) + pp[0]; i4 += 4) {
+                z[i4-2*pp[0]-3] = d + z[i4-2];
+                if (z[i4-2] <= tol2*d) {
+                    z[i4-2] = -0.0;
+                    z[i4-2*pp[0]-3] = d;
+                    z[i4-2*pp[0]-1] = 0.0;
+                    d = z[i4];
+                } // if (z[i4-2] <= tol2*d)
+                else if ((safmin * z[i4] < z[i4-2*pp[0]-3]) && (safmin*z[i4-2*pp[0]-3] < z[i4])) {
+                    temp = z[i4]/z[i4-2*pp[0]-3];
+                    z[i4-2*pp[0]-1] = z[i4-2]*temp;
+                    d = d * temp;
+                }
+                else {
+                    z[i4-2*pp[0]-1] = z[i4] *(z[i4-2]/z[i4-2*pp[0]-3]);
+                    d = z[i4] * (d/z[i4-2*pp[0]-3]);
+                }
+                emin = Math.min(emin, z[i4-2*pp[0]-1]);
+            } // for (i4 = 4*i0[0] + pp[0]; i4 <= 4*(n0[0]-1) + pp[0]; i4 += 4)
+            z[4*n0[0] - pp[0] - 3] = d;
+            
+            // Now find qmax.
+            
+            qmax = z[4*i0[0]-pp[0]-3];
+            for (i4 = 4*i0[0] - pp[0] + 2; i4 <= 4*n0[0] - pp[0] - 2; i4 += 4) {
+                qmax = Math.max(qmax, z[i4-1]);
+            }
+            
+            // Prepare for the next iteration on k.
+            pp[0] = 1 - pp[0];
+        } // for (k = 1; k <= 2; k++)
+        
+        // Initialize variables to pass to dlasq3
+        
+        ttype[0] = 0;
+        dmin1[0] = 0.0;
+        dmin2[0] = 0.0;
+        dn[0] = 0.0;
+        dn1[0] = 0.0;
+        dn2[0] = 0.0;
+        g[0] = 0.0;
+        tau[0] = 0.0;
+        
+        iter[0] = 2;
+        nfail[0] = 0;
+        ndiv[0] = 2*(n0[0] - i0[0]);
+        
+        loop1: {
+            loop2: for (iwhila = 1; iwhila <= n + 1; iwhila++) {
+                if (n0[0] < 1) {
+                    break loop1;
+                }
                 
-                if (tau[0] == 0.0) {
-                    calldlasq6 = true;
-                    break;
+                // While array unfinished do
+                
+                // e[n0-1] holds the value of sigma when submatrix in i0-1:n0-1
+                // splits from the rest of the array, but is negated.
+                
+                desig[0] = 0.0;
+                if (n0[0] == n) {
+                    sigma[0] = 0.0;
                 }
                 else {
-                    tau[0] = 0.0;
-                    continue;
+                    sigma[0] = -z[4*n0[0]-2];
                 }
-            } // else if (Double.isNaN(dmin[0]))
-            else if ((dmin[0] >= 0.0) && (dmin1[0] > 0.0)) {
-                // Success
-                calldlasq6 = false;
-                break;
-            }
-            else if ((dmin[0] < 0.0) && (dmin1[0] > 0.0) && 
-                    (z[4*(n0-1)-pp[0]-1] < tol*(sigma[0]+dn1[0])) &&
-                    (Math.abs(dn[0]) < tol*sigma[0])) {
-                // Convergence hidden by negative dn[0]
-                z[4*(n0-1)-pp[0]+1] = 0.0;
-                dmin[0] = 0.0;
-                calldlasq6 = false;
-                break;
-            }
-            else if (dmin[0] < 0.0) {
-                //tau[0] too big.  Select new tau[0] and try again.
-                nfail[0] = nfail[0] + 1;
-                if (ttype[0] < -22) {
-                    // Failed twice.  Play it safe.
-                    tau[0] = 0.0;
+                if (sigma[0] < 0.0) {
+                    info[0] = 1;
+                    return;
                 }
-                else if (dmin1[0] > 0.0) {
-                    // Late failure.  Gives excellent shift.
-                    tau[0] = (tau[0] + dmin[0]) * (1.0 - 2.0 * eps);
-                    ttype[0] = ttype[0] - 11;
+                
+                // Find the last unreduced submatrix's top index i0, find qmax and
+                // emin.  Find Gershgorin-type bound if Q's much greater than E's.
+                
+                emax = 0.0;
+                if (n0[0] > i0[0]) {
+                    emin = Math.abs(z[4*n0[0]-6]);
                 }
                 else {
-                    // Early failure.  Divide by 4.
-                    tau[0] = 0.25 * tau[0];
-                    ttype[0] = ttype[0] - 12;
+                    emin = 0.0;
                 }
-                continue;
-            } // else if (dmin[0] < 0.0)
-            // Possible underflow.  Play it safe.
-            calldlasq6 = true;
-            break;
-        } // while (true)
+                qmin = z[4*n0[0]-4];
+                qmax = qmin;
+                loop3: {
+                    for (i4 = 4*n0[0]; i4 >= 8; i4 -= 4) {
+                        if (z[i4-6] <= 0.0) {
+                            break loop3;
+                        }
+                        if (qmin >= 4.0*emax) {
+                            qmin = Math.min(qmin, z[i4-4]);
+                            emax = Math.max(emax, z[i4-6]);
+                        }
+                        qmax = Math.max(qmax, z[i4-8] + z[i4-6]);
+                        emin = Math.min(emin, z[i4-6]);
+                    } // for (i4 = 4*n0[0]; i4 >= 8; i4 -= 4)
+                    i4 = 4;
+                } // loop3
+                
+                i0[0] = i4/4;
+                pp[0] = 0;
+                
+                if (n0[0] - i0[0] > 1) {
+                    dee = z[4*i0[0] - 4];
+                    deemin = dee;
+                    kmin = i0[0];
+                    for (i4 = 4*i0[0]+1; i4 <= 4*n0[0]-3; i4 += 4) {
+                        dee = z[i4-1] * (dee/(dee + z[i4-3]));
+                        if (dee <= deemin) {
+                            deemin = dee;
+                            kmin = (i4+3)/4;
+                        }
+                    } // for (i4 = 4*i0[0]+1; i4 <= 4*n0[0]-3; i4 += 4)
+                    if ((2*(kmin - i0[0]) < n0[0] - kmin) && (deemin <= 0.5 * z[4*n0[0]-4])) {
+                        ipn4 = 4*(i0[0]+n0[0]);
+                        pp[0] = 2;
+                        for (i4 = 4*i0[0]; i4 <= 2*(i0[0] + n0[0] - 1); i4 += 4) {
+                            temp = z[i4-4];
+                            z[i4-4] = z[ipn4-i4-4];
+                            z[ipn4-i4-4] = temp;
+                            temp = z[i4-3];
+                            z[i4-3] = z[ipn4-i4-3];
+                            z[ipn4-i4-3] = temp;
+                            temp = z[i4-2];
+                            z[i4-2] = z[ipn4-i4-6];
+                            z[ipn4-i4-6] = temp;
+                            temp = z[i4-1];
+                            z[i4-1] = z[ipn4-i4-5];
+                            z[ipn4-i4-5] = temp;
+                        } // for (i4 = 4*i0[0]; i4 <= 2*(i0[0] + n0[0] - 1); i4 += 4)
+                    } // if ((2*(kmin - i0[0]) < n0[0] - kmin) && (deemin <= 0.5 * z[4*n0[0]-4]))
+                } // if (n0[0] - i0[0] > 1)
+                
+                // Put -(initial shift) into dmin.
+                
+                dmin[0] = -Math.max(0.0, qmin - 2.0*Math.sqrt(qmin)*Math.sqrt(emax));
+                
+                // Now i0:n0 is unreduced.
+                // pp = 0 for ping, pp = 1 for pong.
+                // pp = 2 indicates tht flipping was applied to the z array and
+                // that the tests for deflation upon entry in dlasq3 should not
+                // be performed.
+                
+                nbig = 30*(n0[0] - i0[0] + 1);
+                for (iwhilb = 1; iwhilb <= nbig; iwhilb++) {
+                    if (i0[0] > n0[0]) {
+                        continue loop2;
+                    }
+                    
+                    // While submatrix unfinished take a good dqds step.
+                    dlasq3(i0, n0, z, pp, dmin, sigma, desig, qmax, nfail, iter, ndiv, ieee, ttype,
+                           dmin1, dmin2, dn, dn1, dn2, g, tau);
+                    
+                    pp[0] = 1 - pp[0];
+                    
+                    // When emin is very small check for splits
+                    if ((pp[0] == 0) && (n0[0] - i0[0] >= 3)) {
+                        if ((z[4*n0[0]-1] <= tol2*qmax) || (z[4*n0[0]-2] <= tol2*sigma[0])) {
+                            splt = i0[0] - 1;
+                            qmax = z[4*i0[0]-4];
+                            emin = z[4*i0[0]-2];
+                            oldemn = z[4*i0[0]-1];
+                            for (i4 = 4*i0[0]; i4 <= 4*(n0[0]-3); i4 += 4) {
+                                if ((z[i4-1] <= tol2*z[i4-4]) || (z[i4-2] <= tol2*sigma[0])) {
+                                    z[i4-2] = -sigma[0];
+                                    splt = i4/4;
+                                    qmax = 0.0;
+                                    emin = z[i4+2];
+                                    oldemn = z[i4+3];
+                                } // if ((z[i4-1] <= tol2*z[i4-4]) || (z[i4-2] <= tol2*sigma[0]))
+                                else {
+                                    qmax = Math.max(qmax, z[i4]);
+                                    emin = Math.min(emin, z[i4-2]);
+                                    oldemn = Math.min(oldemn, z[i4-1]);
+                                }
+                            } // for (i4 = 4*i0; i4 <= 4*(n0-3); i4 += 4)
+                            z[4*n0[0]-2] = emin;
+                            z[4*n0[0]-1] = oldemn;
+                            i0[0] = splt + 1;
+                        } // if ((z[4*n0[0]-1] <= tol2*qmax) || (z[4*n0[0]-2] <= tol2*sigma[0]))
+                    } // if ((pp[0] == 0) && (n0[0] - i0[0] >= 3))
+                } // for (iwhilb = 1; iwhilb <= nbig; iwhilb++)
+                info[0] = 2;
+                return;
+            } // loop2: for (iwhila = 1; iwhila <= n + 1; iwhila++)
+            info[0] = 3;
+            return;
+        } // loop1
         
-        if (calldlasq6) {
-            // Risk of underflow
-            dlasq6(i0, n0, z, pp[0], dmin, dmin1, dmin2, dn, dn1, dn2);
-            ndiv[0] = ndiv[0] + (n0 - i0 + 2);
-            iter[0] = iter[0] + 1;
-            tau[0] = 0.0;
-        } // if (calldlasq6)
+        // Move q's to the front.
         
-        if (tau[0] < sigma[0]) {
-            desig[0] = desig[0] + tau[0];
-            t = sigma[0] + desig[0];
-            desig[0] = desig[0] - (t - sigma[0]);
+        for (k = 2; k <= n; k++) {
+            z[k-1] = z[4*k-4];
         }
-        else {
-            t = sigma[0] + tau[0];
-            desig[0] = sigma[0] - (t - tau[0]) + desig[0];
+        
+        // Sort and compute sum of eigenvalues.
+        
+        dlasrt('D', n, z, iinfo);
+        
+        e = 0.0;
+        for (k = n; k >= 1; k--) {
+            e = e + z[k-1];
         }
-        sigma[0] = t;
+        
+        // Store trace, sum(eigenvalues), and information on performance.
+        
+        z[2*n] = trace;
+        z[2*n+1] = e;
+        z[2*n+2] = (double)iter[0];
+        z[2*n+3] = (double)ndiv[0]/(double)(n*n);
+        z[2*n+4] = 100.0 * nfail[0]/(double)iter[0];
         return;
-    } // dlasq3
+    } // dlasq2
 
+    /** This is a port of version 3.2 LAPACK routine DLASQ3
+     *  -- Contributed by Osni Marques of the Lawrence Berkeley National   --
+     *  -- Laboratory and Beresford Parlett of the Univ. of California at  --
+     *  -- Berkeley                                                        --
+     *  -- November 2008                                                   --
+     *
+     *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+     *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+     *
+     *     .. Scalar Arguments ..
+           LOGICAL            IEEE
+           INTEGER            I0, ITER, N0, NDIV, NFAIL, PP
+           DOUBLE PRECISION   DESIG, DMIN, DMIN1, DMIN2, DN, DN1, DN2, G,
+          $                   QMAX, SIGMA, TAU
+     *     ..
+     *     .. Array Arguments ..
+           DOUBLE PRECISION   Z( * )
+     *     ..
+     *
+     *  Purpose
+     *  =======
+     *
+     *  DLASQ3 checks for deflation, computes a shift (TAU) and calls dqds.
+     *  In case of failure it changes shifts, and tries again until output
+     *  is positive.
+     *
+     *  Arguments
+     *  =========
+     *
+     *  I0     (input/output) INTEGER
+     *         First index.
+     *
+     *  N0     (inputoutput) INTEGER
+     *         Last index.
+     *
+     *  Z      (input) DOUBLE PRECISION array, dimension ( 4*N )
+     *         Z holds the qd array.
+     *
+     *  PP     (input/output) INTEGER
+     *         PP=0 for ping, PP=1 for pong.
+     *         PP=2 indicates that flipping was applied to the Z array   
+     *         and that the initial tests for deflation should not be 
+     *         performed.
+     *
+     *  DMIN   (output) DOUBLE PRECISION
+     *         Minimum value of d.
+     *
+     *  SIGMA  (output) DOUBLE PRECISION
+     *         Sum of shifts used in current segment.
+     *
+     *  DESIG  (input/output) DOUBLE PRECISION
+     *         Lower order part of SIGMA
+     *
+     *  QMAX   (input) DOUBLE PRECISION
+     *         Maximum value of q.
+     *
+     *  NFAIL  (output) INTEGER
+     *         Number of times shift was too big.
+     *
+     *  ITER   (output) INTEGER
+     *         Number of iterations.
+     *
+     *  NDIV   (output) INTEGER
+     *         Number of divisions.
+     *
+     *  IEEE   (input) LOGICAL
+     *         Flag for IEEE or non IEEE arithmetic (passed to DLASQ5).
+     *
+     *  TTYPE  (input/output) INTEGER
+     *         Shift type.
+     *
+     *  DMIN1, DMIN2, DN, DN1, DN2, G, TAU (input/output) DOUBLE PRECISION
+     *         These are passed as arguments in order to save their values
+     *         between calls to DLASQ3.
+     */
+  private void dlasq3(int i0[], int n0[], double z[], int pp[], double dmin[], double sigma[],
+                 double desig[], double qmax, int nfail[], int iter[], int ndiv[],
+                 boolean ieee, int ttype[], double dmin1[], double dmin2[], double dn[],
+                 double dn1[], double dn2[], double g[], double tau[]) {
+      double cbias = 1.50;
+      int ipn4;
+      int j4;
+      int n0in;
+      int nn;
+      double eps;
+      double s;
+      double t;
+      double temp;
+      double tol;
+      double tol2;
+      boolean calldlasq6;
+      
+      n0in = n0[0];
+      eps = dlamch('P'); // Precision
+      tol = 100.0 * eps;
+      tol2 = tol * tol;
+      
+      // Check for deflation.
+      while (true) {
+          if (n0[0] < i0[0]) {
+              return;
+          }
+          if (n0[0] == i0[0]) {
+              z[4*n0[0]-4] = z[4*n0[0]+pp[0]-4] + sigma[0];
+              n0[0] = n0[0] - 1;
+              continue;
+          }
+          nn = 4*n0[0] + pp[0];
+          if (n0[0] != (i0[0]+1)) {
+              // Check whether e[n0[0]-2] is negligible, 1 eigenvalue.
+              if ((z[nn-6] <= tol2*(sigma[0]+z[nn-4])) ||
+                  (z[nn-2*pp[0]-5] <= tol2*z[nn-8])) {
+                  z[4*n0[0]-4] = z[4*n0[0]+pp[0]-4] + sigma[0];
+                  n0[0] = n0[0] - 1;
+                  continue;    
+              }
+              // Check whether e[n0[0]-3] is negligible, 2 eigenvalues.
+              if ((z[nn-10] > tol2*sigma[0]) && (z[nn-2*pp[0]-9] > tol2*z[nn-12])) {
+                  break;
+              }
+          } // if (n0[0] != (i0[0] + 1))
+          
+          if (z[nn - 4] > z[nn-8]) {
+              s = z[nn-4];
+              z[nn-4] = z[nn-8];
+              z[nn-8] = s;
+          } // if (z[nn - 4] > z[nn-8])
+          if (z[nn-6] > z[nn-4]*tol2) {
+              t = 0.5 * ((z[nn-8] - z[nn-4]) + z[nn-6]);
+              s = z[nn-4] * (z[nn-6]/t);
+              if (s <= t) {
+                  s = z[nn-4] * (z[nn-6]/(t*(1.0 + Math.sqrt(1.0 + s/t))));
+              }
+              else {
+                  s = z[nn-4] * (z[nn-6]/(t + Math.sqrt(t)*Math.sqrt(t+s)));
+              }
+              t = z[nn-8] + (s + z[nn-6]);
+              z[nn-4] = z[nn-4] * (z[nn-8]/t);
+              z[nn-8] = t;
+          } // if (z[nn-6] > z[nn-4]*tol2)
+          z[4*n0[0]-8] = z[nn-8] + sigma[0];
+          z[4*n0[0]-4] = z[nn-4] + sigma[0];
+          n0[0] = n0[0] - 2;
+      } // while (true)
+      
+      if (pp[0] == 2) {
+          pp[0] = 0;
+      }
+      
+      // Reverse the qd-array, if warranted.
+      
+      if ((dmin[0] <= 0.0) || (n0[0] < n0in)) {
+          if (cbias*z[4*i0[0]+pp[0]-4] < z[4*n0[0]+pp[0]-4]) {
+              ipn4 = 4 * (i0[0] + n0[0]);
+              for (j4 = 4*i0[0]; j4 <= 2*(i0[0] + n0[0] - 1); j4 += 4) {
+                  temp = z[j4-4];
+                  z[j4-4] = z[ipn4-j4-4];
+                  z[ipn4-j4-4] = temp;
+                  temp = z[j4-3];
+                  z[j4-3] = z[ipn4-j4-3];
+                  z[ipn4-j4-3] = temp;
+                  temp = z[j4-2];
+                  z[j4-2] = z[ipn4-j4-6];
+                  z[ipn4-j4-6] = temp;
+                  temp = z[j4-1];
+                  z[j4-1] = z[ipn4-j4-5];
+                  z[ipn4-j4-5] = temp;
+              } // for (j4 = 4*i0[0]; j4 <= 2*(i0[0] + n0[0] - 1); j4 += 4)
+              if (n0[0] - i0[0] <= 4) {
+                  z[4*n0[0]+pp[0]-2] = z[4*i0[0]+pp[0]-2];
+                  z[4*n0[0]-pp[0]-1] = z[4*i0[0]-pp[0]-1];
+              }
+              dmin2[0] = Math.min(dmin2[0], z[4*n0[0]+pp[0]-2]);
+              z[4*n0[0]+pp[0]-2] = Math.min(z[4*n0[0]+pp[0]-2], Math.min(z[4*i0[0]+pp[0]-2],
+                                         z[4*i0[0]+pp[0]+2]));
+              z[4*n0[0]-pp[0]-1] = Math.min(z[4*n0[0]-pp[0]-1], Math.min(z[4*i0[0]-pp[0]-1], 
+                                         z[4*i0[0]-pp[0]+3]));
+              qmax = Math.max(qmax, Math.max(z[4*i0[0]+pp[0]-4], z[4*i0[0]+pp[0]]));
+              dmin[0] = -0.0;
+          } // if (cbias*z[4*i0[0]+pp[0]-4] < z[4*n0[0]+pp[0]-4])
+      } // if ((dmin[0] <= 0.0) || (n0[0] < n0in))
+      
+      // Choose a shift
+      dlasq4(i0[0], n0[0], z, pp[0], n0in, dmin[0], dmin1[0], dmin2[0], dn[0], dn1[0], dn2[0], tau, ttype, g);
+      
+      // Call dqds until dmin > 0
+      
+      while (true) {
+          dlasq5(i0[0], n0[0], z, pp[0], tau[0], dmin, dmin1, dmin2, dn, dn1, dn2, ieee);
+          
+          ndiv[0] = ndiv[0] + (n0[0] - i0[0] + 2);
+          iter[0] = iter[0] + 1;
+          
+          // Check status
+          if (Double.isNaN(dmin[0])) {
+              // NaN
+              
+              if (tau[0] == 0.0) {
+                  calldlasq6 = true;
+                  break;
+              }
+              else {
+                  tau[0] = 0.0;
+                  continue;
+              }
+          } // else if (Double.isNaN(dmin[0]))
+          else if ((dmin[0] >= 0.0) && (dmin1[0] > 0.0)) {
+              // Success
+              calldlasq6 = false;
+              break;
+          }
+          else if ((dmin[0] < 0.0) && (dmin1[0] > 0.0) && 
+                  (z[4*(n0[0]-1)-pp[0]-1] < tol*(sigma[0]+dn1[0])) &&
+                  (Math.abs(dn[0]) < tol*sigma[0])) {
+              // Convergence hidden by negative dn[0]
+              z[4*(n0[0]-1)-pp[0]+1] = 0.0;
+              dmin[0] = 0.0;
+              calldlasq6 = false;
+              break;
+          }
+          else if (dmin[0] < 0.0) {
+              //tau[0] too big.  Select new tau[0] and try again.
+              nfail[0] = nfail[0] + 1;
+              if (ttype[0] < -22) {
+                  // Failed twice.  Play it safe.
+                  tau[0] = 0.0;
+              }
+              else if (dmin1[0] > 0.0) {
+                  // Late failure.  Gives excellent shift.
+                  tau[0] = (tau[0] + dmin[0]) * (1.0 - 2.0 * eps);
+                  ttype[0] = ttype[0] - 11;
+              }
+              else {
+                  // Early failure.  Divide by 4.
+                  tau[0] = 0.25 * tau[0];
+                  ttype[0] = ttype[0] - 12;
+              }
+              continue;
+          } // else if (dmin[0] < 0.0)
+          // Possible underflow.  Play it safe.
+          calldlasq6 = true;
+          break;
+      } // while (true)
+      
+      if (calldlasq6) {
+          // Risk of underflow
+          dlasq6(i0[0], n0[0], z, pp[0], dmin, dmin1, dmin2, dn, dn1, dn2);
+          ndiv[0] = ndiv[0] + (n0[0] - i0[0] + 2);
+          iter[0] = iter[0] + 1;
+          tau[0] = 0.0;
+      } // if (calldlasq6)
+      
+      if (tau[0] < sigma[0]) {
+          desig[0] = desig[0] + tau[0];
+          t = sigma[0] + desig[0];
+          desig[0] = desig[0] - (t - sigma[0]);
+      }
+      else {
+          t = sigma[0] + tau[0];
+          desig[0] = sigma[0] - (t - tau[0]) + desig[0];
+      }
+      sigma[0] = t;
+      return;
+  } // dlasq3
     
     /** This is a port of version 3.2 LAPACK routine DLASQ4.
        *  -- Contributed by Osni Marques of the Lawrence Berkeley National   --
@@ -24138,12 +24108,9 @@ ib = Math.min(nb, k-i+1);
                                 dlacpy('F', m, nrhs, COPYB, ldb, B, ldb);
                                 srnamt = new String("DGELSS");
                                 
-                                dlasq2Error = false;
                                 dgelss(m, n, nrhs, A, lda, B, ldb, s, rcond, crank,
                                        work, lwork, info);
-                                if (dlasq2Error) {
-                                    continue;
-                                }
+                                
                                 if (info[0] != 0) {
                                     if ((nfail == 0) && (nerrs == 0)) {
                                         Preferences.debug("Least squares driver routine dgelss\n");
@@ -26475,29 +26442,21 @@ ib = Math.min(nb, k-i+1);
                 } // if (mnmin > 1)
                 
                 work2 = new double[4*mnmin];
-                dlasq2Error = false;
                 dbdsqr(uplo, mnmin, 0, 0, 0, s2, work, VT, ldpt, U,
                        ldpt, Z, ldx, work2, iinfo);
                 
                 // check error code from dbdsqr.
                 if (iinfo[0] != 0) {
-                    // Note that because of the 3 zero values, this dbdSqr calls dlasq1.  If dlasq1,
-                    // calls dlasq2 and returns iinfo[0] = 2, this should be ignored because the
-                    // inner while loop of dlsaq2 always fails.
-                    if (!dlasq2Error) {
-                        Preferences.debug("dchkbd dbdsqr(values) returned iinfo[0] = " + iinfo[0] + "\n");
-                        Preferences.debug("m = " + m + " n = " + n + " jtype = " + jtype + "\n");
-                        Preferences.debug("ioldsd[0] = " + ioldsd[0] + " ioldsd[1] = " + ioldsd[1] + "\n");
-                        Preferences.debug("ioldsd[2] = " + ioldsd[2] + " ioldsd[3] = " + ioldsd[3] + "\n");
-                    } // if (!dlasq2Error)
+                    Preferences.debug("dchkbd dbdsqr(values) returned iinfo[0] = " + iinfo[0] + "\n");
+                    Preferences.debug("m = " + m + " n = " + n + " jtype = " + jtype + "\n");
+                    Preferences.debug("ioldsd[0] = " + ioldsd[0] + " ioldsd[1] = " + ioldsd[1] + "\n");
+                    Preferences.debug("ioldsd[2] = " + ioldsd[2] + " ioldsd[3] = " + ioldsd[3] + "\n");
                     if (iinfo[0] < 0) {
                         MipavUtil.displayError("Error exit from dchkbd");
                         return; 
                     }
                     else {
-                        if (!dlasq2Error) {
-                            result[8] = ulpinv;
-                        }
+                        result[8] = ulpinv;
                         for (j = 0; j < 9; j++) {
                             if (result[j] >= thresh) {
                                 if (nfail == 0) {
