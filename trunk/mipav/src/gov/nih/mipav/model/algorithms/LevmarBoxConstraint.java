@@ -11164,7 +11164,7 @@ public abstract class LevmarBoxConstraint {
     	      	*              (Workspace: need BDSPAC)
     	      	*/
     	      	               pathTaken = new String("Path 10t if ((!WNTUO) && (!WNTVO))");
-    	      	               WORK = new double[4*M];
+    	      	               WORK4 = new double[4*M];
     	      	               dbdsqr( 'L', M, NCVT, NRU, 0, S, WORK, VT,
     	      	                       LDVT, U, LDU, DUM2, 1, WORK4, INFO );
     	      	            }
