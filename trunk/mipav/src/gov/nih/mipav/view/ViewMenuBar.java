@@ -281,9 +281,6 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Time series optimized automatic registration", "TSOAR", 0, null,
                                 false),
                         menuBuilder.buildMenuItem("Registration validation", "RegValidation", 0, null, false),
-
-                        // menuBuilder.buildMenuItem("Turbo", "Turbo", 0,
-                        // null, false),
                         menuBuilder.buildMenuItem("VOI landmark", "VOILandmark", 0, null, false),}),
                 menuBuilder.makeMenu("Segmentation", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Evaluate VOI segmentation", "evalSeg", 0, null, false),
