@@ -314,7 +314,7 @@ public class JDialogSaveDicom extends JDialogBase {
                 }
             }
         } else if (fileInfo.getFileFormat() == FileUtility.MINC_HDF) {
-            tagsImportedFromNonDicomImage = ((FileInfoMincHDF) fileInfo).convertTagsToTable();
+            tagsImportedFromNonDicomImage = ((FileInfoMincHDF) fileInfo).getDicomTable();
             fillDataFromTable(tagsImportedFromNonDicomImage);
 
             // remove tags which were used to fill the GUI in fillDataFromTable(). the rest will be blindly imported
@@ -463,7 +463,7 @@ public class JDialogSaveDicom extends JDialogBase {
                 // UID
                 dicomFileInfo.getTagTable().setValue("0002,0003",
                         FileInfoDicom.generateNewTag("0002,0003", "1.2.840.999999999999999999"), 26); // bogus
-                                                                                                                                                // SOP
+                // SOP
                 // Instance UID
                 dicomFileInfo.getTagTable().setValue("0002,0010", "1.2.840.10008.1.2 ", 18); // Little Endian
                 // transfer
@@ -476,7 +476,7 @@ public class JDialogSaveDicom extends JDialogBase {
                 // Capture UID
                 dicomFileInfo.getTagTable().setValue("0008,0018",
                         FileInfoDicom.generateNewTag("0008,0018", "1.2.840.999999999999999999"), 26); // bogus
-                                                                                                                                                // SOP
+                // SOP
                 // Instance UID
 
                 // all secondary capture info is installed by FileDicom.writeImage(), under the assumption that all
@@ -1923,15 +1923,15 @@ public class JDialogSaveDicom extends JDialogBase {
      * 
      * @param table the table of tag-value pairs
      */
-    private void fillDataFromTable(final Hashtable table) {
-        final Enumeration keys = table.keys();
+    private void fillDataFromTable(final Hashtable<String, String> table) {
+        final Enumeration<String> keys = table.keys();
 
         String tag;
         String value;
 
         while (keys.hasMoreElements()) {
-            tag = (String) keys.nextElement();
-            value = (String) table.get(tag);
+            tag = keys.nextElement();
+            value = table.get(tag);
 
             // handle chooser fields differently
             if (tag.equals("(0008,0060)") || tag.equals("(0010,0040)") || tag.equals("(0018,0015)")

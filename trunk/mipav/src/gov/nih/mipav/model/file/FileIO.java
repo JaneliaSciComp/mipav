@@ -90,10 +90,6 @@ public class FileIO {
 
     /** For multi file formats where data is saved in a set of files */
     private String[] dataFileName = null;
-    
-    
-    
-   
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -398,7 +394,7 @@ public class FileIO {
         String studyIDMaster;
         String seriesNoMaster;
         String acqNoMaster;
-        
+
         FileDicomTagTable[] childrenTagTables;
 
         int orientation = FileInfoBase.UNKNOWN_ORIENT;
@@ -508,9 +504,7 @@ public class FileIO {
 
             if (nImages > 1) {
                 refFileInfo.multiFrame = true;
-                
-                
-                
+
             }
 
             Preferences.debug("0028,0008 (nImages) == " + nImages + "\n", Preferences.DEBUG_FILEIO);
@@ -1014,31 +1008,28 @@ public class FileIO {
             }
         }
 
-       
-        
-        //need to determine if it is ENHANCED DICOM and if its 4D
-        boolean isEnhanced = imageFile.isEnhanced();
+        // need to determine if it is ENHANCED DICOM and if its 4D
+        final boolean isEnhanced = imageFile.isEnhanced();
         boolean isEnhanced4D = imageFile.isEnhanced4D();
         int enhancedNumSlices = 1;
         FileInfoDicom[] enhancedFileInfos = null;
-        if(isEnhanced) {
-        	enhancedFileInfos = imageFile.getEnhancedFileInfos();
-        	enhancedNumSlices = imageFile.getEnhancedNumSlices();
+        if (isEnhanced) {
+            enhancedFileInfos = imageFile.getEnhancedFileInfos();
+            enhancedNumSlices = imageFile.getEnhancedNumSlices();
         }
-        
-        
+
         if (nImages > 1) {
-        	if(isEnhanced4D) {
-        		extents = new int[4];
-        		extents[2] = enhancedNumSlices;
-        		extents[3] = nImages/enhancedNumSlices;
-        	}else {
-        		extents = new int[3];
-        		extents[2] = nImages;
-        	}
+            if (isEnhanced4D) {
+                extents = new int[4];
+                extents[2] = enhancedNumSlices;
+                extents[3] = nImages / enhancedNumSlices;
+            } else {
+                extents = new int[3];
+                extents[2] = nImages;
+            }
         } else {
             extents = new int[2];
-            
+
         }
 
         extents[0] = refFileInfo.getExtents()[0];
@@ -1066,67 +1057,61 @@ public class FileIO {
 
         // loop through files, place them in image array
         pBarVal = 0;
-        
-        
-        //ENHANCED DICOM is multiframe...so we need to do matrix/orientation stuff here
-        if(isEnhanced) {
-        	matrix = refFileInfo.getPatientOrientation();
+
+        // ENHANCED DICOM is multiframe...so we need to do matrix/orientation stuff here
+        if (isEnhanced) {
+            matrix = refFileInfo.getPatientOrientation();
 
             if (matrix != null) {
-                matrix.transform(refFileInfo.xLocation, refFileInfo.yLocation,
-                        refFileInfo.zLocation, tPt);
+                matrix.transform(refFileInfo.xLocation, refFileInfo.yLocation, refFileInfo.zLocation, tPt);
             }
-            
+
             if (matrix != null) {
-            	
-            	// get back to original matrix
-           	 float xCos = 0, yCos = 0, zCos = 0;
-               xCos = Math.abs(matrix.get(2, 0));
-               yCos = Math.abs(matrix.get(2, 1));
-               zCos = Math.abs(matrix.get(2, 2));
 
-               for (int j = 0; j < orient.length; j++) {
-                   final int index = absBiggest(matrix.get(j, 0), matrix.get(j, 1), matrix.get(j, 2));
+                // get back to original matrix
+                float xCos = 0, yCos = 0, zCos = 0;
+                xCos = Math.abs(matrix.get(2, 0));
+                yCos = Math.abs(matrix.get(2, 1));
+                zCos = Math.abs(matrix.get(2, 2));
 
-                   if (index == 0) {
+                for (int j = 0; j < orient.length; j++) {
+                    final int index = absBiggest(matrix.get(j, 0), matrix.get(j, 1), matrix.get(j, 2));
 
-                       if (matrix.get(j, 0) > 0) {
-                           orient[j] = FileInfoBase.ORI_R2L_TYPE;
-                       } else {
-                           orient[j] = FileInfoBase.ORI_L2R_TYPE;
-                       }
-                   } else if (index == 1) {
+                    if (index == 0) {
 
-                       if (matrix.get(j, 1) > 0) {
-                           orient[j] = FileInfoBase.ORI_A2P_TYPE;
-                       } else {
-                           orient[j] = FileInfoBase.ORI_P2A_TYPE;
-                       }
-                   } else { // index == 2
+                        if (matrix.get(j, 0) > 0) {
+                            orient[j] = FileInfoBase.ORI_R2L_TYPE;
+                        } else {
+                            orient[j] = FileInfoBase.ORI_L2R_TYPE;
+                        }
+                    } else if (index == 1) {
 
-                       if (matrix.get(j, 2) > 0) {
-                           orient[j] = FileInfoBase.ORI_I2S_TYPE;
-                       } else {
-                           orient[j] = FileInfoBase.ORI_S2I_TYPE;
-                       }
-                   }
-               }if ( (xCos > yCos) && (xCos > zCos)) {
-                   orientation = FileInfoBase.SAGITTAL;
-               } else if ( (yCos > xCos) && (yCos > zCos)) {
-                   orientation = FileInfoBase.CORONAL;
-               } else if ( (zCos > xCos) && (zCos > yCos)) {
-                   orientation = FileInfoBase.AXIAL;
-               } 
-           
-           
-           
-                
+                        if (matrix.get(j, 1) > 0) {
+                            orient[j] = FileInfoBase.ORI_A2P_TYPE;
+                        } else {
+                            orient[j] = FileInfoBase.ORI_P2A_TYPE;
+                        }
+                    } else { // index == 2
+
+                        if (matrix.get(j, 2) > 0) {
+                            orient[j] = FileInfoBase.ORI_I2S_TYPE;
+                        } else {
+                            orient[j] = FileInfoBase.ORI_S2I_TYPE;
+                        }
+                    }
+                }
+                if ( (xCos > yCos) && (xCos > zCos)) {
+                    orientation = FileInfoBase.SAGITTAL;
+                } else if ( (yCos > xCos) && (yCos > zCos)) {
+                    orientation = FileInfoBase.CORONAL;
+                } else if ( (zCos > xCos) && (zCos > yCos)) {
+                    orientation = FileInfoBase.AXIAL;
+                }
 
             }
-            
+
         }
-        
-        
+
         for (int i = 0; i < nImages; i++) {
             if (multiframe) {
                 filename = fileList[0];
@@ -1167,7 +1152,6 @@ public class FileIO {
 
                 imageFile.setFileInfo(curFileInfo);
 
-
                 // Read the image
                 if (image.getType() == ModelStorageBase.FLOAT) {
                     imageFile.readImage(bufferFloat, curFileInfo.getDataType(), start);
@@ -1179,15 +1163,15 @@ public class FileIO {
                 } else {
                     imageFile.readImage(bufferShort, curFileInfo.getDataType(), start);
                 }
-                if(!isEnhanced4D) {
-                	curFileInfo.setExtents(extents);
-                }else {
-                	curFileInfo.setExtents(extents);
-                	float[] res = curFileInfo.getResolutions();
-                	float[] newRes = {res[0],res[1],res[2],1};
-        			curFileInfo.setResolutions(newRes);
+                if ( !isEnhanced4D) {
+                    curFileInfo.setExtents(extents);
+                } else {
+                    curFileInfo.setExtents(extents);
+                    final float[] res = curFileInfo.getResolutions();
+                    final float[] newRes = {res[0], res[1], res[2], 1};
+                    curFileInfo.setResolutions(newRes);
                 }
-                
+
                 curFileInfo.setAxisOrientation(orient);
                 curFileInfo.setImageOrientation(orientation);
 
@@ -1213,29 +1197,29 @@ public class FileIO {
                     }
                 }
 
-                if(!isEnhanced4D) {
-                	curFileInfo.setOrigin(newOriginPt);
-                }else {
-                	float[] newOriginPt4D = new float[4];
-                	newOriginPt4D[0] = newOriginPt[0];
-                	newOriginPt4D[1] = newOriginPt[1];
-                	newOriginPt4D[2] = newOriginPt[2];
-                	newOriginPt4D[3] = 0;
-                	curFileInfo.setOrigin(newOriginPt4D);
+                if ( !isEnhanced4D) {
+                    curFileInfo.setOrigin(newOriginPt);
+                } else {
+                    final float[] newOriginPt4D = new float[4];
+                    newOriginPt4D[0] = newOriginPt[0];
+                    newOriginPt4D[1] = newOriginPt[1];
+                    newOriginPt4D[2] = newOriginPt[2];
+                    newOriginPt4D[3] = 0;
+                    curFileInfo.setOrigin(newOriginPt4D);
                 }
 
-                //If it is enhanced dicom, attach all the fileinfos to the image
-                if(isEnhanced && enhancedFileInfos != null) {
-                	if(location == 0) {
-                		image.setFileInfo(curFileInfo, location);
-                	}else {
-                		FileInfoDicom[] enhancedFileInfo = {enhancedFileInfos[location-1]};
-                		FileInfoDicom[] origFileInfo = {curFileInfo};
-                		FileInfoBase.copyCoreInfo(origFileInfo, enhancedFileInfo);
-                		image.setFileInfo(enhancedFileInfos[location-1], location);
-                	}
-                }else {
-                	image.setFileInfo(curFileInfo, location);
+                // If it is enhanced dicom, attach all the fileinfos to the image
+                if (isEnhanced && enhancedFileInfos != null) {
+                    if (location == 0) {
+                        image.setFileInfo(curFileInfo, location);
+                    } else {
+                        final FileInfoDicom[] enhancedFileInfo = {enhancedFileInfos[location - 1]};
+                        final FileInfoDicom[] origFileInfo = {curFileInfo};
+                        FileInfoBase.copyCoreInfo(origFileInfo, enhancedFileInfo);
+                        image.setFileInfo(enhancedFileInfos[location - 1], location);
+                    }
+                } else {
+                    image.setFileInfo(curFileInfo, location);
                 }
 
                 if (image.getType() == ModelStorageBase.FLOAT) {
@@ -1283,8 +1267,6 @@ public class FileIO {
                 return null;
             }
         }
-        
-
 
         // Save the DICOM tag 0020,0037 Image Orientation to the image transformation matrix.
         if (matrix != null) {
@@ -1435,7 +1417,7 @@ public class FileIO {
 
             // see if we found z-res somewhere
             if ( (sliceThickness == -1) && (sliceDifference == -1)) {
-            	Preferences.debug("error calculating z-resolution in FileIO.readDicom()", Preferences.DEBUG_FILEIO);
+                Preferences.debug("error calculating z-resolution in FileIO.readDicom()", Preferences.DEBUG_FILEIO);
             }
         }
 
@@ -1454,7 +1436,6 @@ public class FileIO {
         // refFileInfo = null;
         bufferShort = null;
         bufferFloat = null;
-
 
         return image;
     }
@@ -1601,7 +1582,7 @@ public class FileIO {
     public ModelImage readImage(String fileName, String fileDir, boolean multiFile, final FileInfoBase fileInfo,
             final int secondAddress, final boolean loadB, final boolean one) {
         int index;
-        
+
         File file;
         FileInputStream fis;
         ZipInputStream zin;
@@ -2059,7 +2040,7 @@ public class FileIO {
                 case FileUtility.PARREC:
                     image = readPARREC(fileName, fileDir, one);
                     break;
-                    
+
                 case FileUtility.ZVI:
                     image = readZVI(fileName, fileDir, one);
                     break;
@@ -2593,8 +2574,6 @@ public class FileIO {
         }
 
     }
-    
-
 
     /**
      * Determines file type from the file name and calls different write functions based on the file type. Stores file
@@ -2605,7 +2584,7 @@ public class FileIO {
      * @param options Needed info to write this image.
      */
     public void writeImage(final ModelImage image, final FileWriteOptions options) {
-        writeImage(image,options,true);
+        writeImage(image, options, true);
     }
 
     /**
@@ -2617,7 +2596,7 @@ public class FileIO {
      * @param options Needed info to write this image.
      * @param bDisplayProgress when true display the progress bar for writing.
      */
-    public void writeImage(final ModelImage image, final FileWriteOptions options, final boolean bDisplayProgress ) {
+    public void writeImage(final ModelImage image, final FileWriteOptions options, final boolean bDisplayProgress) {
         int fileType;
         String suffix;
         int index;
@@ -2675,7 +2654,7 @@ public class FileIO {
 
             options.setDefault(true); // this would already be set.... hrmm....
         } else { // otherwise, get the file-type from the file-info.
-        	
+
             fileType = image.getFileInfo(0).getFileFormat();
         }
 
@@ -2740,7 +2719,6 @@ public class FileIO {
             }
         }
 
-        
         if (zip || gzip || bz2zip) {
             index = options.getFileName().lastIndexOf(".");
 
@@ -2750,15 +2728,13 @@ public class FileIO {
                     singleFileNIFTI = true;
                 }
             }
-            if (!(singleFileNIFTI || fileType == FileUtility.MINC || fileType == FileUtility.MINC_HDF || fileType == FileUtility.XML)) {
-            	
-            	 MipavUtil.displayError("Compression only on single file nifti or minc or single file xml.");
-            	 return;
+            if ( ! (singleFileNIFTI || fileType == FileUtility.MINC || fileType == FileUtility.MINC_HDF || fileType == FileUtility.XML)) {
+
+                MipavUtil.displayError("Compression only on single file nifti or minc or single file xml.");
+                return;
             }
         }
-        
-        
-        
+
         if ( !options.isSet()) {
             options.setFileType(fileType);
             options.setMultiFile(image.getFileInfo(0).getMultiFile());
@@ -2768,15 +2744,15 @@ public class FileIO {
         }
 
         if (options.isSaveAs() && !options.isSet()) {
-        	//if(!gzip && !zip && !bz2zip) {
-	            if ( !callDialog(image.getExtents(), (fileType == FileUtility.TIFF), options)) {
-	                return;
-	            }
-	            if( (gzip || zip || bz2zip) && options.isMultiFile()  ) {
-	            	 MipavUtil.displayError("Compression only on single file");
-	            	return;
-	            }
-        	//}
+            // if(!gzip && !zip && !bz2zip) {
+            if ( !callDialog(image.getExtents(), (fileType == FileUtility.TIFF), options)) {
+                return;
+            }
+            if ( (gzip || zip || bz2zip) && options.isMultiFile()) {
+                MipavUtil.displayError("Compression only on single file");
+                return;
+            }
+            // }
         }
 
         boolean success = false;
@@ -2792,12 +2768,12 @@ public class FileIO {
                 break;
 
             case FileUtility.NIFTI:
-            	if(!gzip && !zip && !bz2zip) {
-            		success = writeNIFTI(image, options);
+                if ( !gzip && !zip && !bz2zip) {
+                    success = writeNIFTI(image, options);
                     break;
-            	}else {
-            		break;
-            	}
+                } else {
+                    break;
+                }
             case FileUtility.SPM:
                 success = writeSPM(image, options);
                 break;
@@ -2981,13 +2957,13 @@ public class FileIO {
                 break;
 
             case FileUtility.XML:
-            	if(gzip || zip || bz2zip) {
-            		options.setWriteHeaderOnly(true);
-            		success = writeXML(image, options, false );
-            	}else {
-            		success = writeXML(image, options, bDisplayProgress );
-            	}
-                
+                if (gzip || zip || bz2zip) {
+                    options.setWriteHeaderOnly(true);
+                    success = writeXML(image, options, false);
+                } else {
+                    success = writeXML(image, options, bDisplayProgress);
+                }
+
                 break;
 
             case FileUtility.AVI:
@@ -3014,9 +2990,9 @@ public class FileIO {
                 return;
         }
 
-        
-        //xml and nii zip, gzip,and bz2 files are written out without first saving off the uncompressed file to disk and then 
-        //reading it in....rather it is streamed directly from the image buffer
+        // xml and nii zip, gzip,and bz2 files are written out without first saving off the uncompressed file to disk
+        // and then
+        // reading it in....rather it is streamed directly from the image buffer
         if (zip || gzip || bz2zip) {
             index = options.getFileName().lastIndexOf(".");
 
@@ -3036,12 +3012,12 @@ public class FileIO {
                     compressionExt = ".bz2";
                 }
                 createProgressBar(null, options.getFileName(), FileIO.FILE_WRITE);
-                int progVal =0;
+                int progVal = 0;
                 inputFileName = new String[1];
                 outputFileName = new String[1];
                 inputFileName[0] = options.getFileDirectory() + options.getFileName();
                 numFiles = 1;
-                
+
                 if (fileType == FileUtility.XML) {
                     // For XML the user enters fileName.xml.gz or fileName.xml.bz2, but the xml header file is
                     // not compressed while the raw data file is compressed.
@@ -3062,8 +3038,8 @@ public class FileIO {
                     outputFileName[i] = inputFileName[i] + compressionExt;
 
                     if (zip) {
-                    	progVal = progVal + (int)(20/numFiles);
-                    	progressBar.updateValue(progVal, false);
+                        progVal = progVal + (20 / numFiles);
+                        progressBar.updateValue(progVal, false);
                         try {
                             // Create the ZIP output stream
                             zout = new ZipOutputStream(new FileOutputStream(outputFileName[i]));
@@ -3071,181 +3047,176 @@ public class FileIO {
                             MipavUtil.displayError("IOException on new ZipOutputStream");
                             return;
                         }
-                       
+
                         try {
                             zout.putNextEntry(new ZipEntry("data"));
                         } catch (final IOException e) {
                             MipavUtil.displayError("IOException on zout.putNextEntry");
                             return;
                         }
-                        
-                        progVal = progVal + (int)(20/numFiles);
-                    	progressBar.updateValue(progVal, false);
-                        if(singleFileNIFTI) {
-                        	//for single file nifti....we write out to gzout directly from image data
-                        	FileNIFTI fileNIFTI = new FileNIFTI(options.getFileName(), options.getFileDirectory());
-                        	int nImagesSaved = options.getEndSlice() - options.getBeginSlice() + 1;
-                        	int nTimePeriodsSaved = options.getEndTime() - options.getBeginTime() + 1;
-                        	try {
-                        		fileNIFTI.writeHeader(image, nImagesSaved, nTimePeriodsSaved, options.getFileName(), options.getFileDirectory(),true);
-                        	}catch (IOException e) {
-                        		MipavUtil.displayError("IOException wrting header " + inputFileName[i]);
+
+                        progVal = progVal + (20 / numFiles);
+                        progressBar.updateValue(progVal, false);
+                        if (singleFileNIFTI) {
+                            // for single file nifti....we write out to gzout directly from image data
+                            final FileNIFTI fileNIFTI = new FileNIFTI(options.getFileName(), options.getFileDirectory());
+                            final int nImagesSaved = options.getEndSlice() - options.getBeginSlice() + 1;
+                            final int nTimePeriodsSaved = options.getEndTime() - options.getBeginTime() + 1;
+                            try {
+                                fileNIFTI.writeHeader(image, nImagesSaved, nTimePeriodsSaved, options.getFileName(),
+                                        options.getFileDirectory(), true);
+                            } catch (final IOException e) {
+                                MipavUtil.displayError("IOException wrting header " + inputFileName[i]);
                                 return;
-                        	}
-                        	byte[] headerByteData = fileNIFTI.getBufferByte();
-                        	progVal = progVal + (int)(20/numFiles);
-                         	progressBar.updateValue(progVal, false);
-                        	//write out headerByteData
-                        	buf = new byte[1024];
-                        	for(int k=0;k<headerByteData.length;k=k+1024) {
-                        		int zipLen = 1024;
-                        		for(int b=0,c=k;b<buf.length;b++,c++) {
-                        			if(c<headerByteData.length) {
-                        				buf[b] = headerByteData[c];
-                        			}else {
-                        				zipLen = b;
-                        				break;
-                        			}
-                        		}
-                        		try {
-                        			zout.write(buf, 0, zipLen);	
-                        		}catch (IOException e) {
-                        			MipavUtil.displayError("IOException on byte transfer to zip file");
+                            }
+                            final byte[] headerByteData = fileNIFTI.getBufferByte();
+                            progVal = progVal + (20 / numFiles);
+                            progressBar.updateValue(progVal, false);
+                            // write out headerByteData
+                            buf = new byte[1024];
+                            for (int k = 0; k < headerByteData.length; k = k + 1024) {
+                                int zipLen = 1024;
+                                for (int b = 0, c = k; b < buf.length; b++, c++) {
+                                    if (c < headerByteData.length) {
+                                        buf[b] = headerByteData[c];
+                                    } else {
+                                        zipLen = b;
+                                        break;
+                                    }
+                                }
+                                try {
+                                    zout.write(buf, 0, zipLen);
+                                } catch (final IOException e) {
+                                    MipavUtil.displayError("IOException on byte transfer to zip file");
                                     return;
-                        		}
-                        	}
-                        	int sliceLength = image.getExtents()[0] * image.getExtents()[1];
-                        	if(image.isColorImage()) {
-                        		sliceLength = sliceLength * 4;
-                        	}
+                                }
+                            }
+                            int sliceLength = image.getExtents()[0] * image.getExtents()[1];
+                            if (image.isColorImage()) {
+                                sliceLength = sliceLength * 4;
+                            }
 
-                        	byte[] sliceByteData;
-                        	progVal = progVal + (int)(20/numFiles);
-                        	progressBar.updateValue(progVal, false);
-                        	//write out image data
-                        	
-                        	
-                        	int tS = options.getBeginTime();
-                        	int tEnd = options.getEndTime();
-                        	int s3d = options.getBeginSlice() * sliceLength;
-                        	int e3d = (options.getEndSlice() + 1) * sliceLength;
-                        	int s4d = 0;
-                        	int s =0;
-                        	int end = 0;
-                        	int e4d = 0;
-                        	
-                        	for(int tStart=tS;tStart<=tEnd;tStart++) {
-                        		if(image.is4DImage()) {
-                        			
-                        			s4d = s3d + (tStart * image.getExtents()[2] * sliceLength);
-                        			e4d = e3d + (tStart * image.getExtents()[2] * sliceLength);
-                        			s = s4d;
-                        			end = e4d;
-                        		}else {
-                        			s = s3d;
-                        			end = e3d;
-                        		}
-                        		
-                        		for(int start=s;start<end;start=start+sliceLength) {
-                            		sliceByteData = getByteImageData(image,start,sliceLength);
-                            		for(int k=0;k<sliceByteData.length;k=k+1024) {
-                                		int zipLen = 1024;
-                                		for(int b=0,c=k;b<buf.length;b++,c++) {
-                                			if(c<sliceByteData.length) {
-                                				buf[b] = sliceByteData[c];
-                                			}else {
-                                				zipLen = b;
-                                				break;
-                                			}
-                                		}
-                                		try {
-                                			zout.write(buf, 0, zipLen);	
-                                		}catch (Exception e) {
-                                			e.printStackTrace();
-                                			MipavUtil.displayError("IOException on byte transfer to zip file");
-                                            return;
-                                		}
-                                	}
-                            	}
-                        		
-                        	}
-                        	
-                        	
-                        	
-                        	
-                        	success = true;
-                        	
-                        }else if(fileType == FileUtility.XML) {
-                        	//header has already been writen out
-                        	buf = new byte[1024];
-                        	int sliceLength = image.getExtents()[0] * image.getExtents()[1];
-                        	if(image.isColorImage()) {
-                        		sliceLength = sliceLength * 4;
-                        	}
+                            byte[] sliceByteData;
+                            progVal = progVal + (20 / numFiles);
+                            progressBar.updateValue(progVal, false);
+                            // write out image data
 
-                        	byte[] sliceByteData;
-                        	progVal = progVal + (int)(20/numFiles);
-                        	progressBar.updateValue(progVal, false);
-                        	//write out image data
-                        	
-                        	int tS = options.getBeginTime();
-                        	int tEnd = options.getEndTime();
-                        	int s3d = options.getBeginSlice() * sliceLength;
-                        	int e3d = (options.getEndSlice() + 1) * sliceLength;
-                        	int s4d = 0;
-                        	int s =0;
-                        	int end = 0;
-                        	int e4d = 0;
-                        	
-                        	for(int tStart=tS;tStart<=tEnd;tStart++) {
-                        		if(image.is4DImage()) {
-                        			
-                        			s4d = s3d + (tStart * image.getExtents()[2] * sliceLength);
-                        			e4d = e3d + (tStart * image.getExtents()[2] * sliceLength);
-                        			s = s4d;
-                        			end = e4d;
-                        		}else {
-                        			s = s3d;
-                        			end = e3d;
-                        		}
-                        		
-                        		for(int start=s;start<end;start=start+sliceLength) {
-                            		sliceByteData = getByteImageData(image,start,sliceLength);
-                            		for(int k=0;k<sliceByteData.length;k=k+1024) {
-                                		int zipLen = 1024;
-                                		for(int b=0,c=k;b<buf.length;b++,c++) {
-                                			if(c<sliceByteData.length) {
-                                				buf[b] = sliceByteData[c];
-                                			}else {
-                                				zipLen = b;
-                                				break;
-                                			}
-                                		}
-                                		try {
-                                			zout.write(buf, 0, zipLen);	
-                                		}catch (Exception e) {
-                                			e.printStackTrace();
-                                			MipavUtil.displayError("IOException on byte transfer to zip file");
+                            final int tS = options.getBeginTime();
+                            final int tEnd = options.getEndTime();
+                            final int s3d = options.getBeginSlice() * sliceLength;
+                            final int e3d = (options.getEndSlice() + 1) * sliceLength;
+                            int s4d = 0;
+                            int s = 0;
+                            int end = 0;
+                            int e4d = 0;
+
+                            for (int tStart = tS; tStart <= tEnd; tStart++) {
+                                if (image.is4DImage()) {
+
+                                    s4d = s3d + (tStart * image.getExtents()[2] * sliceLength);
+                                    e4d = e3d + (tStart * image.getExtents()[2] * sliceLength);
+                                    s = s4d;
+                                    end = e4d;
+                                } else {
+                                    s = s3d;
+                                    end = e3d;
+                                }
+
+                                for (int start = s; start < end; start = start + sliceLength) {
+                                    sliceByteData = getByteImageData(image, start, sliceLength);
+                                    for (int k = 0; k < sliceByteData.length; k = k + 1024) {
+                                        int zipLen = 1024;
+                                        for (int b = 0, c = k; b < buf.length; b++, c++) {
+                                            if (c < sliceByteData.length) {
+                                                buf[b] = sliceByteData[c];
+                                            } else {
+                                                zipLen = b;
+                                                break;
+                                            }
+                                        }
+                                        try {
+                                            zout.write(buf, 0, zipLen);
+                                        } catch (final Exception e) {
+                                            e.printStackTrace();
+                                            MipavUtil.displayError("IOException on byte transfer to zip file");
                                             return;
-                                		}
-                                	}
-                            	}
-                        	}
-                        	
-                        	
-                        	
-                        	success = true; 
-                           
-                        }else {
-                        	// Open the input file
+                                        }
+                                    }
+                                }
+
+                            }
+
+                            success = true;
+
+                        } else if (fileType == FileUtility.XML) {
+                            // header has already been writen out
+                            buf = new byte[1024];
+                            int sliceLength = image.getExtents()[0] * image.getExtents()[1];
+                            if (image.isColorImage()) {
+                                sliceLength = sliceLength * 4;
+                            }
+
+                            byte[] sliceByteData;
+                            progVal = progVal + (20 / numFiles);
+                            progressBar.updateValue(progVal, false);
+                            // write out image data
+
+                            final int tS = options.getBeginTime();
+                            final int tEnd = options.getEndTime();
+                            final int s3d = options.getBeginSlice() * sliceLength;
+                            final int e3d = (options.getEndSlice() + 1) * sliceLength;
+                            int s4d = 0;
+                            int s = 0;
+                            int end = 0;
+                            int e4d = 0;
+
+                            for (int tStart = tS; tStart <= tEnd; tStart++) {
+                                if (image.is4DImage()) {
+
+                                    s4d = s3d + (tStart * image.getExtents()[2] * sliceLength);
+                                    e4d = e3d + (tStart * image.getExtents()[2] * sliceLength);
+                                    s = s4d;
+                                    end = e4d;
+                                } else {
+                                    s = s3d;
+                                    end = e3d;
+                                }
+
+                                for (int start = s; start < end; start = start + sliceLength) {
+                                    sliceByteData = getByteImageData(image, start, sliceLength);
+                                    for (int k = 0; k < sliceByteData.length; k = k + 1024) {
+                                        int zipLen = 1024;
+                                        for (int b = 0, c = k; b < buf.length; b++, c++) {
+                                            if (c < sliceByteData.length) {
+                                                buf[b] = sliceByteData[c];
+                                            } else {
+                                                zipLen = b;
+                                                break;
+                                            }
+                                        }
+                                        try {
+                                            zout.write(buf, 0, zipLen);
+                                        } catch (final Exception e) {
+                                            e.printStackTrace();
+                                            MipavUtil.displayError("IOException on byte transfer to zip file");
+                                            return;
+                                        }
+                                    }
+                                }
+                            }
+
+                            success = true;
+
+                        } else {
+                            // Open the input file
                             try {
                                 in = new FileInputStream(inputFileName[i]);
                             } catch (final IOException e) {
                                 MipavUtil.displayError("IOException on new FileInputStream for " + inputFileName[i]);
                                 return;
                             }
-                            progVal = progVal + (int)(20/numFiles);
-                        	progressBar.updateValue(progVal, false);
+                            progVal = progVal + (20 / numFiles);
+                            progressBar.updateValue(progVal, false);
                             // Tranfer the bytes from the input file to the Zip output stream
                             buf = new byte[1024];
                             try {
@@ -3256,8 +3227,8 @@ public class FileIO {
                                 MipavUtil.displayError("IOException on byte transfer to zip file");
                                 return;
                             }
-                            progVal = progVal + (int)(20/numFiles);
-                        	progressBar.updateValue(progVal, false);
+                            progVal = progVal + (20 / numFiles);
+                            progressBar.updateValue(progVal, false);
                             try {
                                 in.close();
                             } catch (final IOException e) {
@@ -3269,11 +3240,12 @@ public class FileIO {
                             try {
                                 inputFile.delete();
                             } catch (final SecurityException sc) {
-                                MipavUtil.displayError("Security error occurs while trying to delete " + inputFileName[i]);
+                                MipavUtil.displayError("Security error occurs while trying to delete "
+                                        + inputFileName[i]);
                             }
 
                         }
-                        
+
                         // complete the zip file
                         try {
                             zout.finish();
@@ -3281,8 +3253,8 @@ public class FileIO {
                             MipavUtil.displayError("IOException on zout.finish()");
                             return;
                         }
-                        progVal = progVal + (int)(20/numFiles);
-                    	progressBar.updateValue(progVal, false);
+                        progVal = progVal + (20 / numFiles);
+                        progressBar.updateValue(progVal, false);
                         try {
                             zout.close();
                         } catch (final IOException e) {
@@ -3291,8 +3263,8 @@ public class FileIO {
                         }
                     } // if (zip)
                     else if (gzip) {
-                    	progVal = progVal + (int)(20/numFiles);
-                    	progressBar.updateValue(progVal, false);
+                        progVal = progVal + (20 / numFiles);
+                        progressBar.updateValue(progVal, false);
                         try {
                             // Create the GZIP output stream
                             gzout = new GZIPOutputStream(new FileOutputStream(outputFileName[i]));
@@ -3300,171 +3272,169 @@ public class FileIO {
                             MipavUtil.displayError("IOException on new GZIPOutputStream");
                             return;
                         }
-                        progVal = progVal + (int)(20/numFiles);
-                    	progressBar.updateValue(progVal, false);
-                        if(singleFileNIFTI) {
-                        	//for single file nifti....we write out to gzout directly from image data
-                        	FileNIFTI fileNIFTI = new FileNIFTI(options.getFileName(), options.getFileDirectory());
-                        	int nImagesSaved = options.getEndSlice() - options.getBeginSlice() + 1;
-                        	int nTimePeriodsSaved = options.getEndTime() - options.getBeginTime() + 1;
-                        	try {
-                        		fileNIFTI.writeHeader(image, nImagesSaved, nTimePeriodsSaved, options.getFileName(), options.getFileDirectory(),true);
-                        	}catch (IOException e) {
-                        		MipavUtil.displayError("IOException wrting header " + inputFileName[i]);
+                        progVal = progVal + (20 / numFiles);
+                        progressBar.updateValue(progVal, false);
+                        if (singleFileNIFTI) {
+                            // for single file nifti....we write out to gzout directly from image data
+                            final FileNIFTI fileNIFTI = new FileNIFTI(options.getFileName(), options.getFileDirectory());
+                            final int nImagesSaved = options.getEndSlice() - options.getBeginSlice() + 1;
+                            final int nTimePeriodsSaved = options.getEndTime() - options.getBeginTime() + 1;
+                            try {
+                                fileNIFTI.writeHeader(image, nImagesSaved, nTimePeriodsSaved, options.getFileName(),
+                                        options.getFileDirectory(), true);
+                            } catch (final IOException e) {
+                                MipavUtil.displayError("IOException wrting header " + inputFileName[i]);
                                 return;
-                        	}
-                        	byte[] headerByteData = fileNIFTI.getBufferByte();
-                        	 progVal = progVal + (int)(20/numFiles);
-                         	progressBar.updateValue(progVal, false);
-                        	//write out headerByteData
-                        	buf = new byte[1024];
-                        	for(int k=0;k<headerByteData.length;k=k+1024) {
-                        		int gzipLen = 1024;
-                        		for(int b=0,c=k;b<buf.length;b++,c++) {
-                        			if(c<headerByteData.length) {
-                        				buf[b] = headerByteData[c];
-                        			}else {
-                        				gzipLen = b;
-                        				break;
-                        			}
-                        		}
-                        		try {
-                        			gzout.write(buf, 0, gzipLen);	
-                        		}catch (IOException e) {
-                        			MipavUtil.displayError("IOException on byte transfer to gzip file");
+                            }
+                            final byte[] headerByteData = fileNIFTI.getBufferByte();
+                            progVal = progVal + (20 / numFiles);
+                            progressBar.updateValue(progVal, false);
+                            // write out headerByteData
+                            buf = new byte[1024];
+                            for (int k = 0; k < headerByteData.length; k = k + 1024) {
+                                int gzipLen = 1024;
+                                for (int b = 0, c = k; b < buf.length; b++, c++) {
+                                    if (c < headerByteData.length) {
+                                        buf[b] = headerByteData[c];
+                                    } else {
+                                        gzipLen = b;
+                                        break;
+                                    }
+                                }
+                                try {
+                                    gzout.write(buf, 0, gzipLen);
+                                } catch (final IOException e) {
+                                    MipavUtil.displayError("IOException on byte transfer to gzip file");
                                     return;
-                        		}
-                        	}
-                        	int sliceLength = image.getExtents()[0] * image.getExtents()[1];
-                        	if(image.isColorImage()) {
-                        		sliceLength = sliceLength * 4;
-                        	}
+                                }
+                            }
+                            int sliceLength = image.getExtents()[0] * image.getExtents()[1];
+                            if (image.isColorImage()) {
+                                sliceLength = sliceLength * 4;
+                            }
 
-                        	byte[] sliceByteData;
-                        	 progVal = progVal + (int)(20/numFiles);
-                         	progressBar.updateValue(progVal, false);
-                        	//write out image data
-                         	
-                         	
-                         	int tS = options.getBeginTime();
-                        	int tEnd = options.getEndTime();
-                        	int s3d = options.getBeginSlice() * sliceLength;
-                        	int e3d = (options.getEndSlice() + 1) * sliceLength;
-                        	int s4d = 0;
-                        	int s =0;
-                        	int end = 0;
-                        	int e4d = 0;
-                        	
-                        	for(int tStart=tS;tStart<=tEnd;tStart++) {
-                        		if(image.is4DImage()) {
-                        			
-                        			s4d = s3d + (tStart * image.getExtents()[2] * sliceLength);
-                        			e4d = e3d + (tStart * image.getExtents()[2] * sliceLength);
-                        			s = s4d;
-                        			end = e4d;
-                        		}else {
-                        			s = s3d;
-                        			end = e3d;
-                        		}
-                        		
-                        		for(int start=s;start<end;start=start+sliceLength) {
-                            		sliceByteData = getByteImageData(image,start,sliceLength);
-                            		for(int k=0;k<sliceByteData.length;k=k+1024) {
-                                		int gzipLen = 1024;
-                                		for(int b=0,c=k;b<buf.length;b++,c++) {
-                                			if(c<sliceByteData.length) {
-                                				buf[b] = sliceByteData[c];
-                                			}else {
-                                				gzipLen = b;
-                                				break;
-                                			}
-                                		}
-                                		try {
-                                			gzout.write(buf, 0, gzipLen);	
-                                		}catch (Exception e) {
-                                			e.printStackTrace();
-                                			MipavUtil.displayError("IOException on byte transfer to gzip file");
-                                            return;
-                                		}
-                                	}
-                            	}
-                        		
-                        	}
-                         	
-                         	
-                        	
-                        	success = true;
-                        }else if(fileType == FileUtility.XML) {
-                        	buf = new byte[1024];
-                        	int sliceLength = image.getExtents()[0] * image.getExtents()[1];
-                        	if(image.isColorImage()) {
-                        		sliceLength = sliceLength * 4;
-                        	}
+                            byte[] sliceByteData;
+                            progVal = progVal + (20 / numFiles);
+                            progressBar.updateValue(progVal, false);
+                            // write out image data
 
-                        	byte[] sliceByteData;
-                        	 progVal = progVal + (int)(20/numFiles);
-                         	progressBar.updateValue(progVal, false);
-                        	//write out image data
-                         	int tS = options.getBeginTime();
-                        	int tEnd = options.getEndTime();
-                        	int s3d = options.getBeginSlice() * sliceLength;
-                        	int e3d = (options.getEndSlice() + 1) * sliceLength;
-                        	int s4d = 0;
-                        	int s =0;
-                        	int end = 0;
-                        	int e4d = 0;
-                        	
-                        	for(int tStart=tS;tStart<=tEnd;tStart++) {
-                        		if(image.is4DImage()) {
-                        			
-                        			s4d = s3d + (tStart * image.getExtents()[2] * sliceLength);
-                        			e4d = e3d + (tStart * image.getExtents()[2] * sliceLength);
-                        			s = s4d;
-                        			end = e4d;
-                        		}else {
-                        			s = s3d;
-                        			end = e3d;
-                        		}
-                        		
-                        		for(int start=s;start<end;start=start+sliceLength) {
-                            		sliceByteData = getByteImageData(image,start,sliceLength);
-                            		for(int k=0;k<sliceByteData.length;k=k+1024) {
-                                		int gzipLen = 1024;
-                                		for(int b=0,c=k;b<buf.length;b++,c++) {
-                                			if(c<sliceByteData.length) {
-                                				buf[b] = sliceByteData[c];
-                                			}else {
-                                				gzipLen = b;
-                                				break;
-                                			}
-                                		}
-                                		try {
-                                			gzout.write(buf, 0, gzipLen);	
-                                		}catch (Exception e) {
-                                			e.printStackTrace();
-                                			MipavUtil.displayError("IOException on byte transfer to gzip file");
+                            final int tS = options.getBeginTime();
+                            final int tEnd = options.getEndTime();
+                            final int s3d = options.getBeginSlice() * sliceLength;
+                            final int e3d = (options.getEndSlice() + 1) * sliceLength;
+                            int s4d = 0;
+                            int s = 0;
+                            int end = 0;
+                            int e4d = 0;
+
+                            for (int tStart = tS; tStart <= tEnd; tStart++) {
+                                if (image.is4DImage()) {
+
+                                    s4d = s3d + (tStart * image.getExtents()[2] * sliceLength);
+                                    e4d = e3d + (tStart * image.getExtents()[2] * sliceLength);
+                                    s = s4d;
+                                    end = e4d;
+                                } else {
+                                    s = s3d;
+                                    end = e3d;
+                                }
+
+                                for (int start = s; start < end; start = start + sliceLength) {
+                                    sliceByteData = getByteImageData(image, start, sliceLength);
+                                    for (int k = 0; k < sliceByteData.length; k = k + 1024) {
+                                        int gzipLen = 1024;
+                                        for (int b = 0, c = k; b < buf.length; b++, c++) {
+                                            if (c < sliceByteData.length) {
+                                                buf[b] = sliceByteData[c];
+                                            } else {
+                                                gzipLen = b;
+                                                break;
+                                            }
+                                        }
+                                        try {
+                                            gzout.write(buf, 0, gzipLen);
+                                        } catch (final Exception e) {
+                                            e.printStackTrace();
+                                            MipavUtil.displayError("IOException on byte transfer to gzip file");
                                             return;
-                                		}
-                                	}
-                            	}
-                        		
-                        	}
-                        	
-                        	success = true;
+                                        }
+                                    }
+                                }
+
+                            }
+
+                            success = true;
+                        } else if (fileType == FileUtility.XML) {
+                            buf = new byte[1024];
+                            int sliceLength = image.getExtents()[0] * image.getExtents()[1];
+                            if (image.isColorImage()) {
+                                sliceLength = sliceLength * 4;
+                            }
+
+                            byte[] sliceByteData;
+                            progVal = progVal + (20 / numFiles);
+                            progressBar.updateValue(progVal, false);
+                            // write out image data
+                            final int tS = options.getBeginTime();
+                            final int tEnd = options.getEndTime();
+                            final int s3d = options.getBeginSlice() * sliceLength;
+                            final int e3d = (options.getEndSlice() + 1) * sliceLength;
+                            int s4d = 0;
+                            int s = 0;
+                            int end = 0;
+                            int e4d = 0;
+
+                            for (int tStart = tS; tStart <= tEnd; tStart++) {
+                                if (image.is4DImage()) {
+
+                                    s4d = s3d + (tStart * image.getExtents()[2] * sliceLength);
+                                    e4d = e3d + (tStart * image.getExtents()[2] * sliceLength);
+                                    s = s4d;
+                                    end = e4d;
+                                } else {
+                                    s = s3d;
+                                    end = e3d;
+                                }
+
+                                for (int start = s; start < end; start = start + sliceLength) {
+                                    sliceByteData = getByteImageData(image, start, sliceLength);
+                                    for (int k = 0; k < sliceByteData.length; k = k + 1024) {
+                                        int gzipLen = 1024;
+                                        for (int b = 0, c = k; b < buf.length; b++, c++) {
+                                            if (c < sliceByteData.length) {
+                                                buf[b] = sliceByteData[c];
+                                            } else {
+                                                gzipLen = b;
+                                                break;
+                                            }
+                                        }
+                                        try {
+                                            gzout.write(buf, 0, gzipLen);
+                                        } catch (final Exception e) {
+                                            e.printStackTrace();
+                                            MipavUtil.displayError("IOException on byte transfer to gzip file");
+                                            return;
+                                        }
+                                    }
+                                }
+
+                            }
+
+                            success = true;
                         }
-                        
+
                         else {
-                        	// Open the input file
-                        	try {
+                            // Open the input file
+                            try {
                                 in = new FileInputStream(inputFileName[i]);
-                                
+
                             } catch (final IOException e) {
                                 MipavUtil.displayError("IOException on new FileInputStream for " + inputFileName[i]);
                                 return;
                             }
-                            progVal = progVal + (int)(20/numFiles);
-                        	progressBar.updateValue(progVal, false);
-                            //Tranfer the bytes from the input file to the GZIP output stream
+                            progVal = progVal + (20 / numFiles);
+                            progressBar.updateValue(progVal, false);
+                            // Tranfer the bytes from the input file to the GZIP output stream
                             buf = new byte[1024];
                             try {
                                 while ( (len = in.read(buf)) > 0) {
@@ -3474,8 +3444,8 @@ public class FileIO {
                                 MipavUtil.displayError("IOException on byte transfer to gzip file");
                                 return;
                             }
-                            progVal = progVal + (int)(20/numFiles);
-                        	progressBar.updateValue(progVal, false);
+                            progVal = progVal + (20 / numFiles);
+                            progressBar.updateValue(progVal, false);
                             try {
                                 in.close();
                             } catch (final IOException e) {
@@ -3487,12 +3457,10 @@ public class FileIO {
                             try {
                                 inputFile.delete();
                             } catch (final SecurityException sc) {
-                                MipavUtil.displayError("Security error occurs while trying to delete " + inputFileName[i]);
+                                MipavUtil.displayError("Security error occurs while trying to delete "
+                                        + inputFileName[i]);
                             }
                         }
-                        
-
-                        
 
                         // complete the gzip file
                         try {
@@ -3501,8 +3469,8 @@ public class FileIO {
                             MipavUtil.displayError("IOException on gzout.finish()");
                             return;
                         }
-                        progVal = progVal + (int)(20/numFiles);
-                    	progressBar.updateValue(progVal, false);
+                        progVal = progVal + (20 / numFiles);
+                        progressBar.updateValue(progVal, false);
                         try {
                             gzout.close();
                         } catch (final IOException e) {
@@ -3511,8 +3479,8 @@ public class FileIO {
                         }
                     } // if (gzip)
                     else { // bz2zip
-                    	 progVal = progVal + (int)(20/numFiles);
-                     	progressBar.updateValue(progVal, false);
+                        progVal = progVal + (20 / numFiles);
+                        progressBar.updateValue(progVal, false);
                         try {
                             out = new FileOutputStream(outputFileName[i]);
                             out.write('B');
@@ -3523,168 +3491,163 @@ public class FileIO {
                             MipavUtil.displayError("IOException on new CBZip2OutputStream");
                             return;
                         }
-                        progVal = progVal + (int)(20/numFiles);
-                    	progressBar.updateValue(progVal, false);
-                        if(singleFileNIFTI) {
-                        	//for single file nifti....we write out to gzout directly from image data
-                        	FileNIFTI fileNIFTI = new FileNIFTI(options.getFileName(), options.getFileDirectory());
-                        	int nImagesSaved = options.getEndSlice() - options.getBeginSlice() + 1;
-                        	int nTimePeriodsSaved = options.getEndTime() - options.getBeginTime() + 1;
-                        	try {
-                        		fileNIFTI.writeHeader(image, nImagesSaved, nTimePeriodsSaved, options.getFileName(), options.getFileDirectory(),true);
-                        	}catch (IOException e) {
-                        		MipavUtil.displayError("IOException wrting header " + inputFileName[i]);
+                        progVal = progVal + (20 / numFiles);
+                        progressBar.updateValue(progVal, false);
+                        if (singleFileNIFTI) {
+                            // for single file nifti....we write out to gzout directly from image data
+                            final FileNIFTI fileNIFTI = new FileNIFTI(options.getFileName(), options.getFileDirectory());
+                            final int nImagesSaved = options.getEndSlice() - options.getBeginSlice() + 1;
+                            final int nTimePeriodsSaved = options.getEndTime() - options.getBeginTime() + 1;
+                            try {
+                                fileNIFTI.writeHeader(image, nImagesSaved, nTimePeriodsSaved, options.getFileName(),
+                                        options.getFileDirectory(), true);
+                            } catch (final IOException e) {
+                                MipavUtil.displayError("IOException wrting header " + inputFileName[i]);
                                 return;
-                        	}
-                        	byte[] headerByteData = fileNIFTI.getBufferByte();
-                        	 progVal = progVal + (int)(20/numFiles);
-                         	progressBar.updateValue(progVal, false);
-                        	//write out headerByteData
-                        	buf = new byte[1024];
-                        	for(int k=0;k<headerByteData.length;k=k+1024) {
-                        		int bzipLen = 1024;
-                        		for(int b=0,c=k;b<buf.length;b++,c++) {
-                        			if(c<headerByteData.length) {
-                        				buf[b] = headerByteData[c];
-                        			}else {
-                        				bzipLen = b;
-                        				break;
-                        			}
-                        		}
-                        		try {
-                        			bz2out.write(buf, 0, bzipLen);	
-                        		}catch (IOException e) {
-                        			MipavUtil.displayError("IOException on byte transfer to bz2zip file");
+                            }
+                            final byte[] headerByteData = fileNIFTI.getBufferByte();
+                            progVal = progVal + (20 / numFiles);
+                            progressBar.updateValue(progVal, false);
+                            // write out headerByteData
+                            buf = new byte[1024];
+                            for (int k = 0; k < headerByteData.length; k = k + 1024) {
+                                int bzipLen = 1024;
+                                for (int b = 0, c = k; b < buf.length; b++, c++) {
+                                    if (c < headerByteData.length) {
+                                        buf[b] = headerByteData[c];
+                                    } else {
+                                        bzipLen = b;
+                                        break;
+                                    }
+                                }
+                                try {
+                                    bz2out.write(buf, 0, bzipLen);
+                                } catch (final IOException e) {
+                                    MipavUtil.displayError("IOException on byte transfer to bz2zip file");
                                     return;
-                        		}
-                        	}
-                        	int sliceLength = image.getExtents()[0] * image.getExtents()[1];
-                        	if(image.isColorImage()) {
-                        		sliceLength = sliceLength * 4;
-                        	}
-          
-                        	byte[] sliceByteData;
-                        	 progVal = progVal + (int)(20/numFiles);
-                         	progressBar.updateValue(progVal, false);
-                        	//write out image data
-                         	
-                         	
-                         	
-                         	int tS = options.getBeginTime();
-                        	int tEnd = options.getEndTime();
-                        	int s3d = options.getBeginSlice() * sliceLength;
-                        	int e3d = (options.getEndSlice() + 1) * sliceLength;
-                        	int s4d = 0;
-                        	int s =0;
-                        	int end = 0;
-                        	int e4d = 0;
-                        	
-                        	for(int tStart=tS;tStart<=tEnd;tStart++) {
-                        		if(image.is4DImage()) {
-                        			
-                        			s4d = s3d + (tStart * image.getExtents()[2] * sliceLength);
-                        			e4d = e3d + (tStart * image.getExtents()[2] * sliceLength);
-                        			s = s4d;
-                        			end = e4d;
-                        		}else {
-                        			s = s3d;
-                        			end = e3d;
-                        		}
-                        		
-                        		for(int start=s;start<end;start=start+sliceLength) {
-                            		sliceByteData = getByteImageData(image,start,sliceLength);
-                            		for(int k=0;k<sliceByteData.length;k=k+1024) {
-                                		int bzipLen = 1024;
-                                		for(int b=0,c=k;b<buf.length;b++,c++) {
-                                			if(c<sliceByteData.length) {
-                                				buf[b] = sliceByteData[c];
-                                			}else {
-                                				bzipLen = b;
-                                				break;
-                                			}
-                                		}
-                                		try {
-                                			bz2out.write(buf, 0, bzipLen);	
-                                		}catch (Exception e) {
-                                			e.printStackTrace();
-                                			MipavUtil.displayError("IOException on byte transfer to bz2zip file");
+                                }
+                            }
+                            int sliceLength = image.getExtents()[0] * image.getExtents()[1];
+                            if (image.isColorImage()) {
+                                sliceLength = sliceLength * 4;
+                            }
+
+                            byte[] sliceByteData;
+                            progVal = progVal + (20 / numFiles);
+                            progressBar.updateValue(progVal, false);
+                            // write out image data
+
+                            final int tS = options.getBeginTime();
+                            final int tEnd = options.getEndTime();
+                            final int s3d = options.getBeginSlice() * sliceLength;
+                            final int e3d = (options.getEndSlice() + 1) * sliceLength;
+                            int s4d = 0;
+                            int s = 0;
+                            int end = 0;
+                            int e4d = 0;
+
+                            for (int tStart = tS; tStart <= tEnd; tStart++) {
+                                if (image.is4DImage()) {
+
+                                    s4d = s3d + (tStart * image.getExtents()[2] * sliceLength);
+                                    e4d = e3d + (tStart * image.getExtents()[2] * sliceLength);
+                                    s = s4d;
+                                    end = e4d;
+                                } else {
+                                    s = s3d;
+                                    end = e3d;
+                                }
+
+                                for (int start = s; start < end; start = start + sliceLength) {
+                                    sliceByteData = getByteImageData(image, start, sliceLength);
+                                    for (int k = 0; k < sliceByteData.length; k = k + 1024) {
+                                        int bzipLen = 1024;
+                                        for (int b = 0, c = k; b < buf.length; b++, c++) {
+                                            if (c < sliceByteData.length) {
+                                                buf[b] = sliceByteData[c];
+                                            } else {
+                                                bzipLen = b;
+                                                break;
+                                            }
+                                        }
+                                        try {
+                                            bz2out.write(buf, 0, bzipLen);
+                                        } catch (final Exception e) {
+                                            e.printStackTrace();
+                                            MipavUtil.displayError("IOException on byte transfer to bz2zip file");
                                             return;
-                                		}
-                                	}
-                            	}
-                        	}
-                         	
-                         	
-                        	
-                        	success = true;
-                        }else if(fileType == FileUtility.XML) {
-                        	buf = new byte[1024];
-                        	int sliceLength = image.getExtents()[0] * image.getExtents()[1];
-                        	if(image.isColorImage()) {
-                        		sliceLength = sliceLength * 4;
-                        	}
-                        
-                        	byte[] sliceByteData;
-                        	 progVal = progVal + (int)(20/numFiles);
-                         	progressBar.updateValue(progVal, false);
-                        	//write out image data
-                         	int tS = options.getBeginTime();
-                        	int tEnd = options.getEndTime();
-                        	int s3d = options.getBeginSlice() * sliceLength;
-                        	int e3d = (options.getEndSlice() + 1) * sliceLength;
-                        	int s4d = 0;
-                        	int s =0;
-                        	int end = 0;
-                        	int e4d = 0;
-                        	
-                        	for(int tStart=tS;tStart<=tEnd;tStart++) {
-                        		if(image.is4DImage()) {
-                        			
-                        			s4d = s3d + (tStart * image.getExtents()[2] * sliceLength);
-                        			e4d = e3d + (tStart * image.getExtents()[2] * sliceLength);
-                        			s = s4d;
-                        			end = e4d;
-                        		}else {
-                        			s = s3d;
-                        			end = e3d;
-                        		}
-                        		
-                        		
-                        		for(int start=s;start<end;start=start+sliceLength) {
-                            		sliceByteData = getByteImageData(image,start,sliceLength);
-                            		for(int k=0;k<sliceByteData.length;k=k+1024) {
-                                		int bzipLen = 1024;
-                                		for(int b=0,c=k;b<buf.length;b++,c++) {
-                                			if(c<sliceByteData.length) {
-                                				buf[b] = sliceByteData[c];
-                                			}else {
-                                				bzipLen = b;
-                                				break;
-                                			}
-                                		}
-                                		try {
-                                			bz2out.write(buf, 0, bzipLen);	
-                                		}catch (Exception e) {
-                                			e.printStackTrace();
-                                			MipavUtil.displayError("IOException on byte transfer to bz2zip file");
+                                        }
+                                    }
+                                }
+                            }
+
+                            success = true;
+                        } else if (fileType == FileUtility.XML) {
+                            buf = new byte[1024];
+                            int sliceLength = image.getExtents()[0] * image.getExtents()[1];
+                            if (image.isColorImage()) {
+                                sliceLength = sliceLength * 4;
+                            }
+
+                            byte[] sliceByteData;
+                            progVal = progVal + (20 / numFiles);
+                            progressBar.updateValue(progVal, false);
+                            // write out image data
+                            final int tS = options.getBeginTime();
+                            final int tEnd = options.getEndTime();
+                            final int s3d = options.getBeginSlice() * sliceLength;
+                            final int e3d = (options.getEndSlice() + 1) * sliceLength;
+                            int s4d = 0;
+                            int s = 0;
+                            int end = 0;
+                            int e4d = 0;
+
+                            for (int tStart = tS; tStart <= tEnd; tStart++) {
+                                if (image.is4DImage()) {
+
+                                    s4d = s3d + (tStart * image.getExtents()[2] * sliceLength);
+                                    e4d = e3d + (tStart * image.getExtents()[2] * sliceLength);
+                                    s = s4d;
+                                    end = e4d;
+                                } else {
+                                    s = s3d;
+                                    end = e3d;
+                                }
+
+                                for (int start = s; start < end; start = start + sliceLength) {
+                                    sliceByteData = getByteImageData(image, start, sliceLength);
+                                    for (int k = 0; k < sliceByteData.length; k = k + 1024) {
+                                        int bzipLen = 1024;
+                                        for (int b = 0, c = k; b < buf.length; b++, c++) {
+                                            if (c < sliceByteData.length) {
+                                                buf[b] = sliceByteData[c];
+                                            } else {
+                                                bzipLen = b;
+                                                break;
+                                            }
+                                        }
+                                        try {
+                                            bz2out.write(buf, 0, bzipLen);
+                                        } catch (final Exception e) {
+                                            e.printStackTrace();
+                                            MipavUtil.displayError("IOException on byte transfer to bz2zip file");
                                             return;
-                                		}
-                                	}
-                            	}
-                        	}
-                         	
-                        	
-                        	success = true;
-                        }else {
-                        	 // Open the input file
+                                        }
+                                    }
+                                }
+                            }
+
+                            success = true;
+                        } else {
+                            // Open the input file
                             try {
                                 in = new FileInputStream(inputFileName[i]);
                             } catch (final IOException e) {
                                 MipavUtil.displayError("IOException on new FileInputStream for " + inputFileName[i]);
                                 return;
                             }
-                            progVal = progVal + (int)(20/numFiles);
-                        	progressBar.updateValue(progVal, false);
+                            progVal = progVal + (20 / numFiles);
+                            progressBar.updateValue(progVal, false);
                             // Tranfer the bytes from the input file to the BZIP2 output stream
                             buf = new byte[1024];
                             try {
@@ -3695,8 +3658,8 @@ public class FileIO {
                                 MipavUtil.displayError("IOException on byte transfer to bz2zip file");
                                 return;
                             }
-                            progVal = progVal + (int)(20/numFiles);
-                        	progressBar.updateValue(progVal, false);
+                            progVal = progVal + (20 / numFiles);
+                            progressBar.updateValue(progVal, false);
                             try {
                                 in.close();
                             } catch (final IOException e) {
@@ -3708,12 +3671,13 @@ public class FileIO {
                             try {
                                 inputFile.delete();
                             } catch (final SecurityException sc) {
-                                MipavUtil.displayError("Security error occurs while trying to delete " + inputFileName[i]);
+                                MipavUtil.displayError("Security error occurs while trying to delete "
+                                        + inputFileName[i]);
                             }
                         }
-                       
-                        progVal = progVal + (int)(20/numFiles);
-                    	progressBar.updateValue(progVal, false);
+
+                        progVal = progVal + (20 / numFiles);
+                        progressBar.updateValue(progVal, false);
                         // complete the bz2zip file
                         try {
                             bz2out.close();
@@ -3835,161 +3799,152 @@ public class FileIO {
             ScriptRecorder.getReference().addLine(action);
         }
     }
-    
-    
-    
-    public byte[] getByteImageData(ModelImage image, int start, int length) {
-    	byte[] byteData = null;
-    	int type;
 
-    	boolean bigEndianness = image.getFileInfo(0).getEndianess();
-    	type = image.getType();
-    	
-    	
-    	if(type == ModelStorageBase.BYTE || type == ModelStorageBase.UBYTE) {
-    		byteData = new byte[length];
-    		try {
-	        	 image.exportData(start, length, byteData);
-	         } catch (IOException error) {
-	             System.out.println("IO exception");
-	             //setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-	             return null;
-	         }
-    	}else if(type == ModelStorageBase.SHORT || type == ModelStorageBase.USHORT ) {
-    		short[] shortData = new short[length];
-    		try {
-	        	 image.exportData(start, length, shortData);
-	         } catch (IOException error) {
-	             System.out.println("IO exception");
-	             //setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-	             return null;
-	         }
-	        byteData = new byte[length*2];
-	        byte[] buff = new byte[2];
-    		for(int i=0,k=0;i<shortData.length;i++,k=k+2) {
-    			short val = shortData[i];
-    			byte[] byteVal = FileBase.shortToBytes(val, bigEndianness,buff);
-    			byteData[k] = byteVal[0];
-    			byteData[k+1] = byteVal[1];
-    		}	
-    	}else if(type == ModelStorageBase.INTEGER || type == ModelStorageBase.UINTEGER) {
-    		int[] intData = new int[length];
-    		try {
-	        	 image.exportData(start, length, intData);
-	         } catch (IOException error) {
-	             System.out.println("IO exception");
-	             //setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-	             return null;
-	         }
-	         byteData = new byte[length*4];
-	         byte[] buff = new byte[4];
-	         for(int i=0,k=0;i<intData.length;i++,k=k+4) {
-	    			int val = intData[i];
-	    			byte[] byteVal = FileBase.intToBytes(val, bigEndianness,buff);
-	    			byteData[k] = byteVal[0];
-	    			byteData[k+1] = byteVal[1];
-	    			byteData[k+2] = byteVal[2];
-	    			byteData[k+3] = byteVal[3];
-	    		}
-    	}else if(type == ModelStorageBase.LONG) {
-    		long[] longData = new long[length];
-    		try {
-	        	 image.exportData(start, length, longData);
-	         } catch (IOException error) {
-	             System.out.println("IO exception");
-	             //setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-	             return null;
-	         }
-	         byteData = new byte[length*8];
-	         byte[] buff = new byte[8];
-	         for(int i=0,k=0;i<longData.length;i++,k=k+8) {
-	    			long val = longData[i];
-	    			byte[] byteVal = FileBase.longToBytes(val, bigEndianness,buff);
-	    			byteData[k] = byteVal[0];
-	    			byteData[k+1] = byteVal[1];
-	    			byteData[k+2] = byteVal[2];
-	    			byteData[k+3] = byteVal[3];
-	    			byteData[k+4] = byteVal[4];
-	    			byteData[k+5] = byteVal[5];
-	    			byteData[k+6] = byteVal[6];
-	    			byteData[k+7] = byteVal[7];
-	    		}
-    	}else if(type == ModelStorageBase.FLOAT) {
-    		float[] floatData = new float[length];
-    		try {
-	        	 image.exportData(start, length, floatData);
-	         } catch (IOException error) {
-	             System.out.println("IO exception");
-	             //setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-	             return null;
-	         }
-	         byteData = new byte[length*4];
-	         byte[] buff = new byte[4];
-	         for(int i=0,k=0;i<floatData.length;i++,k=k+4) {
-	    			float val = floatData[i];
-	    			byte[] byteVal = FileBase.floatToBytes(val, bigEndianness,buff);
-	    			byteData[k] = byteVal[0];
-	    			byteData[k+1] = byteVal[1];
-	    			byteData[k+2] = byteVal[2];
-	    			byteData[k+3] = byteVal[3];
-	    		}
-    	}else if(type == ModelStorageBase.DOUBLE) {
-    		//TO DO
-    	}else if(type == ModelStorageBase.ARGB) {
-    		byteData = new byte[length];
-    		try {
-	        	 image.exportData(start, length, byteData);
-	         } catch (IOException error) {
-	             System.out.println("IO exception");
-	             //setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-	             return null;
-	         }
-    	}else if(type == ModelStorageBase.ARGB_USHORT) {
-    		short[] shortData = new short[length];
-    		try {
-	        	 image.exportData(start, length, shortData);
-	         } catch (IOException error) {
-	             System.out.println("IO exception");
-	             //setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-	             return null;
-	         }
-	        byteData = new byte[length*2];
-	        byte[] buff = new byte[2];
-    		for(int i=0,k=0;i<shortData.length;i++,k=k+2) {
-    			short val = shortData[i];
-    			byte[] byteVal = FileBase.shortToBytes(val, bigEndianness,buff);
-    			byteData[k] = byteVal[0];
-    			byteData[k+1] = byteVal[1];
-    		}
-    	}else if(type == ModelStorageBase.ARGB_FLOAT) {
-    		float[] floatData = new float[length];
-    		try {
-	        	 image.exportData(start, length, floatData);
-	         } catch (IOException error) {
-	             System.out.println("IO exception");
-	             //setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-	             return null;
-	         }
-	         byteData = new byte[length*4];
-	         byte[] buff = new byte[4];
-	         for(int i=0,k=0;i<floatData.length;i++,k=k+4) {
-	    			float val = floatData[i];
-	    			byte[] byteVal = FileBase.floatToBytes(val, bigEndianness,buff);
-	    			byteData[k] = byteVal[0];
-	    			byteData[k+1] = byteVal[1];
-	    			byteData[k+2] = byteVal[2];
-	    			byteData[k+3] = byteVal[3];
-	    		}
-    	}
-    	
-    	
-    	return byteData;
+    public byte[] getByteImageData(final ModelImage image, final int start, final int length) {
+        byte[] byteData = null;
+        int type;
+
+        final boolean bigEndianness = image.getFileInfo(0).getEndianess();
+        type = image.getType();
+
+        if (type == ModelStorageBase.BYTE || type == ModelStorageBase.UBYTE) {
+            byteData = new byte[length];
+            try {
+                image.exportData(start, length, byteData);
+            } catch (final IOException error) {
+                System.out.println("IO exception");
+                // setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+                return null;
+            }
+        } else if (type == ModelStorageBase.SHORT || type == ModelStorageBase.USHORT) {
+            final short[] shortData = new short[length];
+            try {
+                image.exportData(start, length, shortData);
+            } catch (final IOException error) {
+                System.out.println("IO exception");
+                // setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+                return null;
+            }
+            byteData = new byte[length * 2];
+            final byte[] buff = new byte[2];
+            for (int i = 0, k = 0; i < shortData.length; i++, k = k + 2) {
+                final short val = shortData[i];
+                final byte[] byteVal = FileBase.shortToBytes(val, bigEndianness, buff);
+                byteData[k] = byteVal[0];
+                byteData[k + 1] = byteVal[1];
+            }
+        } else if (type == ModelStorageBase.INTEGER || type == ModelStorageBase.UINTEGER) {
+            final int[] intData = new int[length];
+            try {
+                image.exportData(start, length, intData);
+            } catch (final IOException error) {
+                System.out.println("IO exception");
+                // setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+                return null;
+            }
+            byteData = new byte[length * 4];
+            final byte[] buff = new byte[4];
+            for (int i = 0, k = 0; i < intData.length; i++, k = k + 4) {
+                final int val = intData[i];
+                final byte[] byteVal = FileBase.intToBytes(val, bigEndianness, buff);
+                byteData[k] = byteVal[0];
+                byteData[k + 1] = byteVal[1];
+                byteData[k + 2] = byteVal[2];
+                byteData[k + 3] = byteVal[3];
+            }
+        } else if (type == ModelStorageBase.LONG) {
+            final long[] longData = new long[length];
+            try {
+                image.exportData(start, length, longData);
+            } catch (final IOException error) {
+                System.out.println("IO exception");
+                // setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+                return null;
+            }
+            byteData = new byte[length * 8];
+            final byte[] buff = new byte[8];
+            for (int i = 0, k = 0; i < longData.length; i++, k = k + 8) {
+                final long val = longData[i];
+                final byte[] byteVal = FileBase.longToBytes(val, bigEndianness, buff);
+                byteData[k] = byteVal[0];
+                byteData[k + 1] = byteVal[1];
+                byteData[k + 2] = byteVal[2];
+                byteData[k + 3] = byteVal[3];
+                byteData[k + 4] = byteVal[4];
+                byteData[k + 5] = byteVal[5];
+                byteData[k + 6] = byteVal[6];
+                byteData[k + 7] = byteVal[7];
+            }
+        } else if (type == ModelStorageBase.FLOAT) {
+            final float[] floatData = new float[length];
+            try {
+                image.exportData(start, length, floatData);
+            } catch (final IOException error) {
+                System.out.println("IO exception");
+                // setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+                return null;
+            }
+            byteData = new byte[length * 4];
+            final byte[] buff = new byte[4];
+            for (int i = 0, k = 0; i < floatData.length; i++, k = k + 4) {
+                final float val = floatData[i];
+                final byte[] byteVal = FileBase.floatToBytes(val, bigEndianness, buff);
+                byteData[k] = byteVal[0];
+                byteData[k + 1] = byteVal[1];
+                byteData[k + 2] = byteVal[2];
+                byteData[k + 3] = byteVal[3];
+            }
+        } else if (type == ModelStorageBase.DOUBLE) {
+            // TO DO
+        } else if (type == ModelStorageBase.ARGB) {
+            byteData = new byte[length];
+            try {
+                image.exportData(start, length, byteData);
+            } catch (final IOException error) {
+                System.out.println("IO exception");
+                // setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+                return null;
+            }
+        } else if (type == ModelStorageBase.ARGB_USHORT) {
+            final short[] shortData = new short[length];
+            try {
+                image.exportData(start, length, shortData);
+            } catch (final IOException error) {
+                System.out.println("IO exception");
+                // setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+                return null;
+            }
+            byteData = new byte[length * 2];
+            final byte[] buff = new byte[2];
+            for (int i = 0, k = 0; i < shortData.length; i++, k = k + 2) {
+                final short val = shortData[i];
+                final byte[] byteVal = FileBase.shortToBytes(val, bigEndianness, buff);
+                byteData[k] = byteVal[0];
+                byteData[k + 1] = byteVal[1];
+            }
+        } else if (type == ModelStorageBase.ARGB_FLOAT) {
+            final float[] floatData = new float[length];
+            try {
+                image.exportData(start, length, floatData);
+            } catch (final IOException error) {
+                System.out.println("IO exception");
+                // setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+                return null;
+            }
+            byteData = new byte[length * 4];
+            final byte[] buff = new byte[4];
+            for (int i = 0, k = 0; i < floatData.length; i++, k = k + 4) {
+                final float val = floatData[i];
+                final byte[] byteVal = FileBase.floatToBytes(val, bigEndianness, buff);
+                byteData[k] = byteVal[0];
+                byteData[k + 1] = byteVal[1];
+                byteData[k + 2] = byteVal[2];
+                byteData[k + 3] = byteVal[3];
+            }
+        }
+
+        return byteData;
     }
-    
-    
-    
-    
-    
 
     /**
      * Writes project information to a file.
@@ -4064,7 +4019,16 @@ public class FileIO {
         if (sourceInfo instanceof FileInfoDicom) {
             tags2save = getDicomSaveList((FileInfoDicom) sourceInfo, destInfo instanceof FileInfoImageXML);
         } else if (sourceInfo instanceof FileInfoMincHDF) {
-            tags2save = ((FileInfoMincHDF) sourceInfo).getDicomTable();
+            final Hashtable<String, String> mincTags = ((FileInfoMincHDF) sourceInfo).getDicomTable();
+            final Enumeration<String> e = mincTags.keys();
+            tags2save = new Hashtable<FileDicomKey, FileDicomTag>(mincTags.size());
+            while (e.hasMoreElements()) {
+                final String keyStr = e.nextElement();
+                final FileDicomKey key = new FileDicomKey(keyStr);
+                final FileDicomTag tag = new FileDicomTag(DicomDictionary.getInfo(key));
+                tag.setValue(mincTags.get(keyStr));
+                tags2save.put(key, tag);
+            }
         }
 
         if (tags2save == null) {
@@ -4148,8 +4112,6 @@ public class FileIO {
                     }
                 }
             }
-        } else if (destInfo instanceof FileInfoMincHDF) {
-            ((FileInfoMincHDF) destInfo).setDicomTable(tags2save);
         }
 
         return true;
@@ -8994,7 +8956,7 @@ public class FileIO {
         imageFile = null;
         return image;
     }
-    
+
     /**
      * Reads a Zeiss ZVI file by calling the read method of the file.
      * 
@@ -9392,7 +9354,8 @@ public class FileIO {
      * 
      * @return The image that was read in, or null if failure.
      */
-    public ModelImage readXML(final String fileName, final String fileDir, final boolean one, final boolean bDisplayProgress) {
+    public ModelImage readXML(final String fileName, final String fileDir, final boolean one,
+            final boolean bDisplayProgress) {
         ModelImage image = null;
         FileImageXML imageFile;
         // don't show splash screen:
@@ -9401,8 +9364,7 @@ public class FileIO {
             imageFile = new FileImageXML(fileName, fileDir);
 
             if ( ! (fileName.equals("splash.xml") || (one == true))) {
-                if ( bDisplayProgress )
-                {
+                if (bDisplayProgress) {
                     createProgressBar(imageFile, fileName, FileIO.FILE_READ);
                 }
             }
@@ -10033,7 +9995,7 @@ public class FileIO {
                     case FileInfoBase.INCHES:
                         meterResols[i] = 0.0254f * image.getFileInfo()[0].getResolutions()[i];
                         break;
-                        
+
                     case FileInfoBase.MILS:
                         meterResols[i] = 2.54e-5f * image.getFileInfo()[0].getResolutions()[i];
                         break;
@@ -11739,13 +11701,12 @@ public class FileIO {
      * 
      * @return True if the file was successfully saved to a file.
      */
-    private boolean writeXML(final ModelImage image, final FileWriteOptions options, final boolean bDisplayProgress ) {
+    private boolean writeXML(final ModelImage image, final FileWriteOptions options, final boolean bDisplayProgress) {
         FileImageXML xmlFile;
 
         try {
             xmlFile = new FileImageXML(options.getFileName(), options.getFileDirectory());
-            if ( bDisplayProgress )
-            {
+            if (bDisplayProgress) {
                 createProgressBar(xmlFile, options.getFileName(), FileIO.FILE_WRITE);
             }
 

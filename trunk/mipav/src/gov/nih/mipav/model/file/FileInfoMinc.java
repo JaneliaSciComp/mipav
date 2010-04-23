@@ -429,7 +429,7 @@ public class FileInfoMinc extends FileInfoBase {
      * 
      * @return a tag-value hashtable
      */
-    public Hashtable convertTagsToTable() {
+    public Hashtable<String, String> convertTagsToTable() {
         final Hashtable<String, String> table = new Hashtable<String, String>();
 
         final String groupPrefix = "dicom_0x";

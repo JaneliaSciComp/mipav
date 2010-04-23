@@ -484,7 +484,7 @@ public class FileMincHDF extends FileBase {
                                 tag.setValue( ((Object[]) attr.getValue())[0]);
                             }
 
-                            fileInfo.getDicomTable().put(key, tag);
+                            fileInfo.getDicomTable().put(key.getKey(), (String) tag.getValue(true));
                         } catch (final Exception e) {
                             e.printStackTrace();
                             System.err.println(dicomGroup + "\t" + dicomElement + "\t"
@@ -1204,15 +1204,16 @@ public class FileMincHDF extends FileBase {
         }
 
         // build the dicom nodes
-        final Hashtable<FileDicomKey, FileDicomTag> dTable = fileInfo.getDicomTable();
-        final Enumeration<FileDicomKey> e = dTable.keys();
+        final Hashtable<String, String> dTable = fileInfo.getDicomTable();
+        final Enumeration<String> e = dTable.keys();
 
         final Hashtable<String, H5ScalarDS> groupTable = new Hashtable<String, H5ScalarDS>();
 
         // create nodes for each unique group
         while (e.hasMoreElements()) {
-            final FileDicomKey tagKey = e.nextElement();
-            final FileDicomTag dicomTag = dTable.get(tagKey);
+            final String tagKeyString = e.nextElement();
+            final FileDicomKey tagKey = new FileDicomKey(tagKeyString);
+            final String dicomTagValue = dTable.get(tagKeyString);
             if (groupTable.get(tagKey.getGroup()) == null) {
                 final H5ScalarDS dicomGroupObject = (H5ScalarDS) fileFormat.createScalarDS(
                         FileMincHDF.DICOM_GROUP_PREFIX + tagKey.getGroup(), infoGroup, datatype, dims, maxdims, null,
@@ -1223,7 +1224,7 @@ public class FileMincHDF extends FileBase {
             final H5ScalarDS dGroupObj = groupTable.get(tagKey.getGroup());
             // add the attribute to the dicom group
 
-            final String[] elementStr = new String[] {dicomTag.getValue(true).toString()};
+            final String[] elementStr = new String[] {dicomTagValue};
             final Datatype dType = fileFormat.createDatatype(Datatype.CLASS_STRING, elementStr[0].length() + 1,
                     Datatype.NATIVE, -1);
             final long[] attrDims = {1};

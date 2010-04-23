@@ -48,7 +48,7 @@ public class FileInfoMincHDF extends FileInfoBase {
     /**
      * Hashtable to hold the tags for conversion to->from dicom and to-> mipav XML format
      */
-    private transient Hashtable<FileDicomKey, FileDicomTag> dicomTable = new Hashtable<FileDicomKey, FileDicomTag>();
+    private transient Hashtable<String, String> dicomTable = new Hashtable<String, String>();
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -73,17 +73,15 @@ public class FileInfoMincHDF extends FileInfoBase {
      * @return a tag-value hashtable
      */
     public Hashtable<String, String> convertTagsToTable() {
-        // create the dicom table so that it has <String><String>
-        final Hashtable<String, String> dicomTagStrings = new Hashtable<String, String>();
+        /*
+         * // create the dicom table so that it has <String><String> final Hashtable<String, String> dicomTagStrings =
+         * new Hashtable<String, String>(); // TODO FileDicomKey key; final Enumeration<FileDicomKey> keyList =
+         * dicomTable.keys(); while (keyList.hasMoreElements()) { key = keyList.nextElement();
+         * 
+         * dicomTagStrings.put("(" + key + ")", (String) dicomTable.get(key).getValue(false)); }
+         */
 
-        // TODO
-        FileDicomKey key;
-        final Enumeration<FileDicomKey> keyList = dicomTable.keys();
-        while (keyList.hasMoreElements()) {
-            key = keyList.nextElement();
-
-            dicomTagStrings.put("(" + key + ")", (String) dicomTable.get(key).getValue(false));
-        }
+        return dicomTable;
 
         /*
          * if (informationNode != null) { DefaultMutableTreeNode currentNode; String group; String element; for (int i =
@@ -106,7 +104,7 @@ public class FileInfoMincHDF extends FileInfoBase {
          * (final Exception e) { e.printStackTrace(); continue; } } } }
          */
 
-        return dicomTagStrings;
+        // return dicomTagStrings;
     }
 
     /**
@@ -222,7 +220,7 @@ public class FileInfoMincHDF extends FileInfoBase {
      * 
      * @param dTable hashtable holding dicom keys and tags
      */
-    public void setDicomTable(final Hashtable<FileDicomKey, FileDicomTag> dTable) {
+    public void setDicomTable(final Hashtable<String, String> dTable) {
         this.dicomTable = dTable;
     }
 
@@ -231,7 +229,7 @@ public class FileInfoMincHDF extends FileInfoBase {
      * 
      * @return the dicom hashtable
      */
-    public Hashtable<FileDicomKey, FileDicomTag> getDicomTable() {
+    public Hashtable<String, String> getDicomTable() {
         return this.dicomTable;
     }
 
