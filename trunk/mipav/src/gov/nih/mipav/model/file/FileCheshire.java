@@ -138,7 +138,7 @@ public class FileCheshire extends FileBase {
     }
 
     /**
-     * Reads the analyze header and stores the information in fileInfo.
+     * Reads the header and stores the information in fileInfo.
      *
      * @param      imageFileName  File name of image.
      * @param      fileDir        Directory.
