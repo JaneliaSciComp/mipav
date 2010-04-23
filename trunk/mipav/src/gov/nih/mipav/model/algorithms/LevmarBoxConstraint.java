@@ -101,10 +101,6 @@ public abstract class LevmarBoxConstraint {
     private double safmn2;
     private double safmx2;
     
-    private boolean dlasq2Error = false;
-    private double dOrg[];
-    private double dSort[];
-    
     /** Found in routine xlaenv */
     private int iparms[];
     
@@ -15273,19 +15269,11 @@ public abstract class LevmarBoxConstraint {
              work[i-1] = work[i-1] * work[i-1];
          }
          work[2*n-1] = 0.0;
-         dOrg = new double[2*n];
-         dSort = new double[4*n];
-         int p;
-         for (p = 0; p < 2*n; p++) {
-             dOrg[p] = work[p];
-         }
+         
          
          dlasq2(n, work, info);
          if (info[0] != 0) {
         	 Preferences.debug("dlasq2 returned info[0] = " + info[0] + "\n");
-         }
-         for (p = 0; p < 4*n; p++) {
-             dSort[p] = work[p];
          }
          
          if (info[0] == 0) {
@@ -15364,24 +15352,6 @@ public abstract class LevmarBoxConstraint {
      *              = 3, termination criterion of outer while loop not met 
      *                   (program created more than N unreduced blocks)
      *                   
-     Dear LAPACK:
-
-    The introductory comments to DLASQ2 state that if INFO = 2, the algorithm failed because
-    the current block of Z was not diagonalized after 30*N iterations (in inner while loop).
-    The inner while loop is only executed if NBIG > 0.  NBIG = 30 * (N0 -I0 + 1) so the
-    inner while loop is only executed if I0 <= N0.  In order for the inner while loop not to fail
-    I0 must become greater than N0 causing a GO TO 150 to be executed. Inside the inner while loop
-    the call to DLASQ3 only uses I0 and N0 as input arguments leaving them unchanged.  In the
-    IF (PP  .EQ. 0 .AND. N0 - I0 .GE. 3) clause,  SPLT can only be set to I0 - 1 or I4/4.  I4 has
-    a maximum value of 4*(N0-3), so the statement I0 = SPLT +1 either leaves I0 unchanged or increases
-    it up to a maximum value of N0 - 2.  In summary, the inner while loop is entered by values of
-    I0 <= N0, but the execution of the inner while loop can only increase I0 up to a maximum of N0 - 2,
-    so the statement IF (I0 .GT. N0) GO TO 150 needed to prevent an inner loop failure will never be
-    executed.  Therefore, the inner while loop always fails.
-
-                                     Sincerely,
-
-                                  William Gandler
 
      *
      *  Further Details
@@ -15393,7 +15363,7 @@ public abstract class LevmarBoxConstraint {
      private void dlasq2(int n, double z[], int info[]) {
          double cbias = 1.50;
          boolean ieee;
-         int i0;
+         int i0[] = new int[1];
          int i4;
          int iinfo[] = new int[1];
          int ipn4;
@@ -15402,7 +15372,7 @@ public abstract class LevmarBoxConstraint {
          int iwhilb;
          int k;
          int kmin;
-         int n0;
+         int n0[] = new int[1];
          int nbig;
          int ndiv[] = new int[1];
          int nfail[] = new int[1];
@@ -15564,30 +15534,30 @@ public abstract class LevmarBoxConstraint {
              z[2*k-4] = z[k-2];
          } // for (k = 2*n; k >= 2; k -= 2)
          
-         i0 = 1;
-         n0 = n;
+         i0[0] = 1;
+         n0[0] = n;
          
          // Reverse the qd-array, if warranted
          
-         if (cbias * z[4*i0-4] < z[4*n0-4]) {
-             ipn4 = 4 * (i0 + n0);
-             for (i4 = 4*i0; i4 <= 2*(i0+n0-1); i4 += 4) {
+         if (cbias * z[4*i0[0]-4] < z[4*n0[0]-4]) {
+             ipn4 = 4 * (i0[0] + n0[0]);
+             for (i4 = 4*i0[0]; i4 <= 2*(i0[0]+n0[0]-1); i4 += 4) {
                  temp = z[i4-4];
                  z[i4-4] = z[ipn4 -i4 - 4];
                  z[ipn4 - i4 - 4] = temp;
                  temp = z[i4-2];
                  z[i4-2] = z[ipn4 - i4 - 6];
                  z[ipn4 - i4 - 6] = temp;
-             } // for (i4 = 4*i0; i4 <= 2*(i0+n0-1); i4 += 4)
-         } // if (cbias * z[4*i0-4] < z[4*n0-4])
+             } // for (i4 = 4*i0[0]; i4 <= 2*(i0[0]+n0[0]-1); i4 += 4)
+         } // if (cbias * z[4*i0[0]-4] < z[4*n0[0]-4])
          
          // Initial split checking via dqd and Li's test.
          
          pp[0] = 0;
          
          for (k = 1; k <= 2; k++) {
-             d = z[4*n0+pp[0]-4];
-             for (i4 = 4*(n0-1) + pp[0]; i4 >= 4*i0 + pp[0]; i4 -= 4) {
+             d = z[4*n0[0]+pp[0]-4];
+             for (i4 = 4*(n0[0]-1) + pp[0]; i4 >= 4*i0[0] + pp[0]; i4 -= 4) {
                  if (z[i4-2] <= tol2*d) {
                      z[i4-2] = -0.0;
                      d = z[i4-4];
@@ -15595,13 +15565,13 @@ public abstract class LevmarBoxConstraint {
                  else {
                      d = z[i4-4]*(d/(d + z[i4-2]));
                  }
-             } // for (i4 = 4*(n0-1) + pp[0]; i4 >= 4*i0 + pp[0]; i4 -= 4)
+             } // for (i4 = 4*(n0[0]-1) + pp[0]; i4 >= 4*i0[0] + pp[0]; i4 -= 4)
              
              // dqd maps z to zz plus Li's test
              
-             emin = z[4*i0+pp[0]];
-             d = z[4*i0+pp[0]-4];
-             for (i4 = 4*i0 + pp[0]; i4 <= 4*(n0-1) + pp[0]; i4 += 4) {
+             emin = z[4*i0[0]+pp[0]];
+             d = z[4*i0[0]+pp[0]-4];
+             for (i4 = 4*i0[0] + pp[0]; i4 <= 4*(n0[0]-1) + pp[0]; i4 += 4) {
                  z[i4-2*pp[0]-3] = d + z[i4-2];
                  if (z[i4-2] <= tol2*d) {
                      z[i4-2] = -0.0;
@@ -15619,13 +15589,13 @@ public abstract class LevmarBoxConstraint {
                      d = z[i4] * (d/z[i4-2*pp[0]-3]);
                  }
                  emin = Math.min(emin, z[i4-2*pp[0]-1]);
-             } // for (i4 = 4*i0 + pp[0]; i4 <= 4*(n0-1) + pp[0]; i4 += 4)
-             z[4*n0 - pp[0] - 3] = d;
+             } // for (i4 = 4*i0[0] + pp[0]; i4 <= 4*(n0[0]-1) + pp[0]; i4 += 4)
+             z[4*n0[0] - pp[0] - 3] = d;
              
              // Now find qmax.
              
-             qmax = z[4*i0-pp[0]-3];
-             for (i4 = 4*i0 - pp[0] + 2; i4 <= 4*n0 - pp[0] - 2; i4 += 4) {
+             qmax = z[4*i0[0]-pp[0]-3];
+             for (i4 = 4*i0[0] - pp[0] + 2; i4 <= 4*n0[0] - pp[0] - 2; i4 += 4) {
                  qmax = Math.max(qmax, z[i4-1]);
              }
              
@@ -15646,11 +15616,11 @@ public abstract class LevmarBoxConstraint {
          
          iter[0] = 2;
          nfail[0] = 0;
-         ndiv[0] = 2*(n0 - i0);
+         ndiv[0] = 2*(n0[0] - i0[0]);
          
          loop1: {
              loop2: for (iwhila = 1; iwhila <= n + 1; iwhila++) {
-                 if (n0 < 1) {
+                 if (n0[0] < 1) {
                      break loop1;
                  }
                  
@@ -15660,11 +15630,11 @@ public abstract class LevmarBoxConstraint {
                  // splits from the rest of the array, but is negated.
                  
                  desig[0] = 0.0;
-                 if (n0 == n) {
+                 if (n0[0] == n) {
                      sigma[0] = 0.0;
                  }
                  else {
-                     sigma[0] = -z[4*n0-2];
+                     sigma[0] = -z[4*n0[0]-2];
                  }
                  if (sigma[0] < 0.0) {
                      info[0] = 1;
@@ -15675,16 +15645,16 @@ public abstract class LevmarBoxConstraint {
                  // emin.  Find Gershgorin-type bound if Q's much greater than E's.
                  
                  emax = 0.0;
-                 if (n0 > i0) {
-                     emin = Math.abs(z[4*n0-6]);
+                 if (n0[0] > i0[0]) {
+                     emin = Math.abs(z[4*n0[0]-6]);
                  }
                  else {
                      emin = 0.0;
                  }
-                 qmin = z[4*n0-4];
+                 qmin = z[4*n0[0]-4];
                  qmax = qmin;
                  loop3: {
-                     for (i4 = 4*n0; i4 >= 8; i4 -= 4) {
+                     for (i4 = 4*n0[0]; i4 >= 8; i4 -= 4) {
                          if (z[i4-6] <= 0.0) {
                              break loop3;
                          }
@@ -15694,28 +15664,28 @@ public abstract class LevmarBoxConstraint {
                          }
                          qmax = Math.max(qmax, z[i4-8] + z[i4-6]);
                          emin = Math.min(emin, z[i4-6]);
-                     } // for (i4 = 4*n0; i4 >= 8; i4 -= 4)
+                     } // for (i4 = 4*n0[0]; i4 >= 8; i4 -= 4)
                      i4 = 4;
                  } // loop3
                  
-                 i0 = i4/4;
+                 i0[0] = i4/4;
                  pp[0] = 0;
                  
-                 if (n0 - i0 > 1) {
-                     dee = z[4*i0 - 4];
+                 if (n0[0] - i0[0] > 1) {
+                     dee = z[4*i0[0] - 4];
                      deemin = dee;
-                     kmin = i0;
-                     for (i4 = 4*i0+1; i4 <= 4*n0-3; i4 += 4) {
+                     kmin = i0[0];
+                     for (i4 = 4*i0[0]+1; i4 <= 4*n0[0]-3; i4 += 4) {
                          dee = z[i4-1] * (dee/(dee + z[i4-3]));
                          if (dee <= deemin) {
                              deemin = dee;
                              kmin = (i4+3)/4;
                          }
-                     } // for (i4 = 4*i0+1; i4 <= 4*n0-3; i4 += 4)
-                     if ((2*(kmin - i0) < n0 - kmin) && (deemin <= 0.5 * z[4*n0-4])) {
-                         ipn4 = 4*(i0+n0);
+                     } // for (i4 = 4*i0[0]+1; i4 <= 4*n0[0]-3; i4 += 4)
+                     if ((2*(kmin - i0[0]) < n0[0] - kmin) && (deemin <= 0.5 * z[4*n0[0]-4])) {
+                         ipn4 = 4*(i0[0]+n0[0]);
                          pp[0] = 2;
-                         for (i4 = 4*i0; i4 <= 2*(i0 + n0 - 1); i4 += 4) {
+                         for (i4 = 4*i0[0]; i4 <= 2*(i0[0] + n0[0] - 1); i4 += 4) {
                              temp = z[i4-4];
                              z[i4-4] = z[ipn4-i4-4];
                              z[ipn4-i4-4] = temp;
@@ -15728,9 +15698,9 @@ public abstract class LevmarBoxConstraint {
                              temp = z[i4-1];
                              z[i4-1] = z[ipn4-i4-5];
                              z[ipn4-i4-5] = temp;
-                         } // for (i4 = 4*i0; i4 <= 2*(i0 + n0 - 1); i4 += 4)
-                     } // if ((2*(kmin - i0) < n0 - kmin) && (deemin <= 0.5 * z[4*n0-4]))
-                 } // if (n0 - i0 > 1)
+                         } // for (i4 = 4*i0[0]; i4 <= 2*(i0[0] + n0[0] - 1); i4 += 4)
+                     } // if ((2*(kmin - i0[0]) < n0[0] - kmin) && (deemin <= 0.5 * z[4*n0[0]-4]))
+                 } // if (n0[0] - i0[0] > 1)
                  
                  // Put -(initial shift) into dmin.
                  
@@ -15742,9 +15712,9 @@ public abstract class LevmarBoxConstraint {
                  // that the tests for deflation upon entry in dlasq3 should not
                  // be performed.
                  
-                 nbig = 30*(n0 - i0 + 1);
+                 nbig = 30*(n0[0] - i0[0] + 1);
                  for (iwhilb = 1; iwhilb <= nbig; iwhilb++) {
-                     if (i0 > n0) {
+                     if (i0[0] > n0[0]) {
                          continue loop2;
                      }
                      
@@ -15755,13 +15725,13 @@ public abstract class LevmarBoxConstraint {
                      pp[0] = 1 - pp[0];
                      
                      // When emin is very small check for splits
-                     if ((pp[0] == 0) && (n0 - i0 >= 3)) {
-                         if ((z[4*n0-1] <= tol2*qmax) || (z[4*n0-2] <= tol2*sigma[0])) {
-                             splt = i0 - 1;
-                             qmax = z[4*i0-4];
-                             emin = z[4*i0-2];
-                             oldemn = z[4*i0-1];
-                             for (i4 = 4*i0; i4 <= 4*(n0-3); i4 += 4) {
+                     if ((pp[0] == 0) && (n0[0] - i0[0] >= 3)) {
+                         if ((z[4*n0[0]-1] <= tol2*qmax) || (z[4*n0[0]-2] <= tol2*sigma[0])) {
+                             splt = i0[0] - 1;
+                             qmax = z[4*i0[0]-4];
+                             emin = z[4*i0[0]-2];
+                             oldemn = z[4*i0[0]-1];
+                             for (i4 = 4*i0[0]; i4 <= 4*(n0[0]-3); i4 += 4) {
                                  if ((z[i4-1] <= tol2*z[i4-4]) || (z[i4-2] <= tol2*sigma[0])) {
                                      z[i4-2] = -sigma[0];
                                      splt = i4/4;
@@ -15775,13 +15745,12 @@ public abstract class LevmarBoxConstraint {
                                      oldemn = Math.min(oldemn, z[i4-1]);
                                  }
                              } // for (i4 = 4*i0; i4 <= 4*(n0-3); i4 += 4)
-                             z[4*n0-2] = emin;
-                             z[4*n0-1] = oldemn;
-                             i0 = splt + 1;
-                         } // if ((z[4*n0-1] <= tol2*qmax) || (z[4*n0-2] <= tol2*sigma[0]))
-                     } // if ((pp[0] == 0) && (n0 - i0 >= 3))
+                             z[4*n0[0]-2] = emin;
+                             z[4*n0[0]-1] = oldemn;
+                             i0[0] = splt + 1;
+                         } // if ((z[4*n0[0]-1] <= tol2*qmax) || (z[4*n0[0]-2] <= tol2*sigma[0]))
+                     } // if ((pp[0] == 0) && (n0[0] - i0[0] >= 3))
                  } // for (iwhilb = 1; iwhilb <= nbig; iwhilb++)
-                 dlasq2Error = true;
                  info[0] = 2;
                  return;
              } // loop2: for (iwhila = 1; iwhila <= n + 1; iwhila++)
@@ -16082,10 +16051,10 @@ public abstract class LevmarBoxConstraint {
         *  Arguments
         *  =========
         *
-        *  I0     (input) INTEGER
+        *  I0     (input/output) INTEGER
         *         First index.
         *
-        *  N0     (input) INTEGER
+        *  N0     (inputoutput) INTEGER
         *         Last index.
         *
         *  Z      (input) DOUBLE PRECISION array, dimension ( 4*N )
@@ -16128,7 +16097,7 @@ public abstract class LevmarBoxConstraint {
         *         These are passed as arguments in order to save their values
         *         between calls to DLASQ3.
         */
-     private void dlasq3(int i0, int n0, double z[], int pp[], double dmin[], double sigma[],
+     private void dlasq3(int i0[], int n0[], double z[], int pp[], double dmin[], double sigma[],
                     double desig[], double qmax, int nfail[], int iter[], int ndiv[],
                     boolean ieee, int ttype[], double dmin1[], double dmin2[], double dn[],
                     double dn1[], double dn2[], double g[], double tau[]) {
@@ -16145,35 +16114,35 @@ public abstract class LevmarBoxConstraint {
          double tol2;
          boolean calldlasq6;
          
-         n0in = n0;
+         n0in = n0[0];
          eps = dlamch('P'); // Precision
          tol = 100.0 * eps;
          tol2 = tol * tol;
          
          // Check for deflation.
          while (true) {
-             if (n0 < i0) {
+             if (n0[0] < i0[0]) {
                  return;
              }
-             if (n0 == i0) {
-                 z[4*n0-4] = z[4*n0+pp[0]-4] + sigma[0];
-                 n0 = n0 - 1;
+             if (n0[0] == i0[0]) {
+                 z[4*n0[0]-4] = z[4*n0[0]+pp[0]-4] + sigma[0];
+                 n0[0] = n0[0] - 1;
                  continue;
              }
-             nn = 4*n0 + pp[0];
-             if (n0 != (i0+1)) {
-                 // Check whether e[n0-2] is negligible, 1 eigenvalue.
+             nn = 4*n0[0] + pp[0];
+             if (n0[0] != (i0[0]+1)) {
+                 // Check whether e[n0[0]-2] is negligible, 1 eigenvalue.
                  if ((z[nn-6] <= tol2*(sigma[0]+z[nn-4])) ||
                      (z[nn-2*pp[0]-5] <= tol2*z[nn-8])) {
-                     z[4*n0-4] = z[4*n0+pp[0]-4] + sigma[0];
-                     n0 = n0 - 1;
+                     z[4*n0[0]-4] = z[4*n0[0]+pp[0]-4] + sigma[0];
+                     n0[0] = n0[0] - 1;
                      continue;    
                  }
-                 // Check whether e[n0-3] is negligible, 2 eigenvalues.
+                 // Check whether e[n0[0]-3] is negligible, 2 eigenvalues.
                  if ((z[nn-10] > tol2*sigma[0]) && (z[nn-2*pp[0]-9] > tol2*z[nn-12])) {
                      break;
                  }
-             } // if (n0 != (i0 + 1))
+             } // if (n0[0] != (i0[0] + 1))
              
              if (z[nn - 4] > z[nn-8]) {
                  s = z[nn-4];
@@ -16193,9 +16162,9 @@ public abstract class LevmarBoxConstraint {
                  z[nn-4] = z[nn-4] * (z[nn-8]/t);
                  z[nn-8] = t;
              } // if (z[nn-6] > z[nn-4]*tol2)
-             z[4*n0-8] = z[nn-8] + sigma[0];
-             z[4*n0-4] = z[nn-4] + sigma[0];
-             n0 = n0 - 2;
+             z[4*n0[0]-8] = z[nn-8] + sigma[0];
+             z[4*n0[0]-4] = z[nn-4] + sigma[0];
+             n0[0] = n0[0] - 2;
          } // while (true)
          
          if (pp[0] == 2) {
@@ -16204,10 +16173,10 @@ public abstract class LevmarBoxConstraint {
          
          // Reverse the qd-array, if warranted.
          
-         if ((dmin[0] <= 0.0) || (n0 < n0in)) {
-             if (cbias*z[4*i0+pp[0]-4] < z[4*n0+pp[0]-4]) {
-                 ipn4 = 4 * (i0 + n0);
-                 for (j4 = 4*i0; j4 <= 2*(i0 + n0 - 1); j4 += 4) {
+         if ((dmin[0] <= 0.0) || (n0[0] < n0in)) {
+             if (cbias*z[4*i0[0]+pp[0]-4] < z[4*n0[0]+pp[0]-4]) {
+                 ipn4 = 4 * (i0[0] + n0[0]);
+                 for (j4 = 4*i0[0]; j4 <= 2*(i0[0] + n0[0] - 1); j4 += 4) {
                      temp = z[j4-4];
                      z[j4-4] = z[ipn4-j4-4];
                      z[ipn4-j4-4] = temp;
@@ -16220,30 +16189,30 @@ public abstract class LevmarBoxConstraint {
                      temp = z[j4-1];
                      z[j4-1] = z[ipn4-j4-5];
                      z[ipn4-j4-5] = temp;
-                 } // for (j4 = 4*i0; j4 <= 2*(i0 + n0 - 1); j4 += 4)
-                 if (n0 - i0 <= 4) {
-                     z[4*n0+pp[0]-2] = z[4*i0+pp[0]-2];
-                     z[4*n0-pp[0]-1] = z[4*i0-pp[0]-1];
+                 } // for (j4 = 4*i0[0]; j4 <= 2*(i0[0] + n0[0] - 1); j4 += 4)
+                 if (n0[0] - i0[0] <= 4) {
+                     z[4*n0[0]+pp[0]-2] = z[4*i0[0]+pp[0]-2];
+                     z[4*n0[0]-pp[0]-1] = z[4*i0[0]-pp[0]-1];
                  }
-                 dmin2[0] = Math.min(dmin2[0], z[4*n0+pp[0]-2]);
-                 z[4*n0+pp[0]-2] = Math.min(z[4*n0+pp[0]-2], Math.min(z[4*i0+pp[0]-2],
-                                            z[4*i0+pp[0]+2]));
-                 z[4*n0-pp[0]-1] = Math.min(z[4*n0-pp[0]-1], Math.min(z[4*i0-pp[0]-1], 
-                                            z[4*i0-pp[0]+3]));
-                 qmax = Math.max(qmax, Math.max(z[4*i0+pp[0]-4], z[4*i0+pp[0]]));
+                 dmin2[0] = Math.min(dmin2[0], z[4*n0[0]+pp[0]-2]);
+                 z[4*n0[0]+pp[0]-2] = Math.min(z[4*n0[0]+pp[0]-2], Math.min(z[4*i0[0]+pp[0]-2],
+                                            z[4*i0[0]+pp[0]+2]));
+                 z[4*n0[0]-pp[0]-1] = Math.min(z[4*n0[0]-pp[0]-1], Math.min(z[4*i0[0]-pp[0]-1], 
+                                            z[4*i0[0]-pp[0]+3]));
+                 qmax = Math.max(qmax, Math.max(z[4*i0[0]+pp[0]-4], z[4*i0[0]+pp[0]]));
                  dmin[0] = -0.0;
-             } // if (cbias*z[4*i0+pp[0]-4] < z[4*n0+pp[0]-4])
-         } // if ((dmin[0] <= 0.0) || (n0 < n0in))
+             } // if (cbias*z[4*i0[0]+pp[0]-4] < z[4*n0[0]+pp[0]-4])
+         } // if ((dmin[0] <= 0.0) || (n0[0] < n0in))
          
          // Choose a shift
-         dlasq4(i0, n0, z, pp[0], n0in, dmin[0], dmin1[0], dmin2[0], dn[0], dn1[0], dn2[0], tau, ttype, g);
+         dlasq4(i0[0], n0[0], z, pp[0], n0in, dmin[0], dmin1[0], dmin2[0], dn[0], dn1[0], dn2[0], tau, ttype, g);
          
          // Call dqds until dmin > 0
          
          while (true) {
-             dlasq5(i0, n0, z, pp[0], tau[0], dmin, dmin1, dmin2, dn, dn1, dn2, ieee);
+             dlasq5(i0[0], n0[0], z, pp[0], tau[0], dmin, dmin1, dmin2, dn, dn1, dn2, ieee);
              
-             ndiv[0] = ndiv[0] + (n0 - i0 + 2);
+             ndiv[0] = ndiv[0] + (n0[0] - i0[0] + 2);
              iter[0] = iter[0] + 1;
              
              // Check status
@@ -16265,10 +16234,10 @@ public abstract class LevmarBoxConstraint {
                  break;
              }
              else if ((dmin[0] < 0.0) && (dmin1[0] > 0.0) && 
-                     (z[4*(n0-1)-pp[0]-1] < tol*(sigma[0]+dn1[0])) &&
+                     (z[4*(n0[0]-1)-pp[0]-1] < tol*(sigma[0]+dn1[0])) &&
                      (Math.abs(dn[0]) < tol*sigma[0])) {
                  // Convergence hidden by negative dn[0]
-                 z[4*(n0-1)-pp[0]+1] = 0.0;
+                 z[4*(n0[0]-1)-pp[0]+1] = 0.0;
                  dmin[0] = 0.0;
                  calldlasq6 = false;
                  break;
@@ -16299,8 +16268,8 @@ public abstract class LevmarBoxConstraint {
          
          if (calldlasq6) {
              // Risk of underflow
-             dlasq6(i0, n0, z, pp[0], dmin, dmin1, dmin2, dn, dn1, dn2);
-             ndiv[0] = ndiv[0] + (n0 - i0 + 2);
+             dlasq6(i0[0], n0[0], z, pp[0], dmin, dmin1, dmin2, dn, dn1, dn2);
+             ndiv[0] = ndiv[0] + (n0[0] - i0[0] + 2);
              iter[0] = iter[0] + 1;
              tau[0] = 0.0;
          } // if (calldlasq6)
