@@ -31,7 +31,7 @@ Hi William,
 
 Yes. The qoffset_{x,y,z} values are explicitly LR, PA, IS, as the
 transformations always describe resulting coordinates in LPI (sign
-and order) orientaion. The sign of those coordinates corresponds
+and order) orientation. The sign of those coordinates corresponds
 to LPI being the negative directions.
 
 This is much like Dicom images, which give coordinates in RAI,
@@ -49,7 +49,7 @@ nifti.h standard for details:
 http://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h
 
 - rick
- * <p>MIPAV only has 1 transformation matrix associated with an image. NIFTI can have 2 different transformaton matrices
+ * <p>NIFTI can have 2 different transformaton matrices
  * associated with an image - one stored in the qform_code parameters and one stored in the sform_code parameters. While
  * MIPAV separately stores axis orientation and matrix information, NIFTI does not store axis orientation information.
  * NIFTI uses a routine to derive axis orientations from the upper 3 by 3 parameters of the 4 by 4 matrix. The 4 by 4
@@ -2839,6 +2839,33 @@ public class FileNIFTI extends FileBase {
         zi = mat.Get(2, 0);
         zj = mat.Get(2, 1);
         zk = mat.Get(2, 2);
+        /*xi = mat.Get(0, 0);
+        xj = mat.Get(1, 0);
+        xk = mat.Get(2, 0);
+        yi = mat.Get(0, 1);
+        yj = mat.Get(1, 1);
+        yk = mat.Get(2, 1);
+        zi = mat.Get(0, 2);
+        zj = mat.Get(1, 2);
+        zk = mat.Get(2, 2);
+        xi = mat.Get(0, 0);
+        yi = mat.Get(0, 1);
+        zi = mat.Get(0, 2);
+        xj = mat.Get(1, 0);
+        yj = mat.Get(1, 1);
+        zj = mat.Get(1, 2);
+        xk = mat.Get(2, 0);
+        yk = mat.Get(2, 1);
+        zk = mat.Get(2, 2);
+        xi = mat.Get(0, 0);
+        yi = mat.Get(1, 0);
+        zi = mat.Get(2, 0);
+        xj = mat.Get(0, 1);
+        yj = mat.Get(1, 1);
+        zj = mat.Get(2, 1);
+        xk = mat.Get(0, 2);
+        yk = mat.Get(1, 2);
+        zk = mat.Get(2, 2);*/
 
         /* normalize column vectors to get unit vectors along each ijk-axis */
 
@@ -3392,6 +3419,9 @@ public class FileNIFTI extends FileBase {
         int qform_code = 0;
         int sform_code = 0;
         int j;
+        FileInfoDicom fileInfoDicom;
+        TransMatrix dicomMatrix = null;
+        TransMatrix transposeMatrix;
 
         myFileInfo = image.getFileInfo(0); // A safeguard in case the file is not NIFTI
         endianess = myFileInfo.getEndianess();
@@ -3403,6 +3433,14 @@ public class FileNIFTI extends FileBase {
             // and make a new fileInfo
             fileInfo = new FileInfoNIFTI(fileName, fileDir, FileUtility.NIFTI);
             isNIFTI = false; // Write the header without all the NIFTI info
+            
+            try { // see if it is DICOM
+            	fileInfoDicom = (FileInfoDicom)image.getFileInfo(0);
+            	dicomMatrix = fileInfoDicom.getPatientOrientation();
+            }
+            catch (ClassCastException ed) {
+            	
+            }
         }
 
         if (oneFile) {
@@ -3993,6 +4031,40 @@ public class FileNIFTI extends FileBase {
                         niftiOrigin[2] = -Math.abs(matrixQ.get(j, 3));
                     } else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE) {
                         niftiOrigin[2] = Math.abs(matrixQ.get(j, 3));
+                    }
+                }
+            } else if (dicomMatrix != null) {
+            	transposeMatrix = new TransMatrix(4);
+            	for (i = 0; i < 4; i++) {
+            		for (j = 0; j < 4; j ++) {
+            			transposeMatrix.set(i, j, dicomMatrix.get(j, i));
+            		}
+            	}
+            	axisOrientation = getAxisOrientation(transposeMatrix);
+            	qform_code = FileInfoNIFTI.NIFTI_XFORM_SCANNER_ANAT;
+                r00 = -transposeMatrix.get(0, 0);
+                r01 = -transposeMatrix.get(0, 1);
+                r02 = -transposeMatrix.get(0, 2);
+                r10 = -transposeMatrix.get(1, 0);
+                r11 = -transposeMatrix.get(1, 1);
+                r12 = -transposeMatrix.get(1, 2);
+                r20 = transposeMatrix.get(2, 0);
+                r21 = transposeMatrix.get(2, 1);
+                r22 = transposeMatrix.get(2, 2);
+                for (j = 0; j < 3; j++) {
+
+                    if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE) {
+                        niftiOrigin[0] = -Math.abs(origin[j]);
+                    } else if (axisOrientation[j] == FileInfoBase.ORI_R2L_TYPE) {
+                        niftiOrigin[0] = Math.abs(origin[j]);
+                    } else if (axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE) {
+                        niftiOrigin[1] = -Math.abs(origin[j]);
+                    } else if (axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE) {
+                        niftiOrigin[1] = Math.abs(origin[j]);
+                    } else if (axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE) {
+                        niftiOrigin[2] = -Math.abs(origin[j]);
+                    } else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE) {
+                        niftiOrigin[2] = Math.abs(origin[j]);
                     }
                 }
             } else { // matrixQ == null
