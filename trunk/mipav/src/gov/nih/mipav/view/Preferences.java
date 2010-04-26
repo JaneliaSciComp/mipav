@@ -78,8 +78,6 @@ public class Preferences {
      */
     public static final int ARCH_PA_RISC = 10;
 
-    /** Constant that indicates use of saving XML and Analyze headers. */
-    public static final String PREF_SAVE_XML_ON_HDR_SAVE = "SaveXMLOnHDRSave";
 
     /** Constant that indicates use of saving images, vois, and transfer functions. */
     public static final String PREF_SAVE_ALL_ON_SAVE = "SaveAllOnSave";
