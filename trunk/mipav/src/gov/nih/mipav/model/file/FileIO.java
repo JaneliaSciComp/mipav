@@ -9810,44 +9810,6 @@ public class FileIO {
 
         FileAnalyze analyzeFile;
 
-        if (Preferences.is(Preferences.PREF_SAVE_XML_ON_HDR_SAVE)) {
-            FileImageXML xmlFile;
-
-            try {
-                xmlFile = new FileImageXML(options.getFileName(), options.getFileDirectory());
-
-                String fBase;
-                final String fName = options.getFileName();
-                final int index = fName.lastIndexOf(".");
-
-                if (index != -1) {
-                    fBase = fName.substring(0, index);
-                } else {
-                    fBase = fName.substring(0);
-                }
-
-                xmlFile.setRawExtension(".img");
-                xmlFile.writeHeader(image, options, fBase, options.getFileDirectory(), false);
-            } catch (final IOException error) {
-
-                if ( !quiet) {
-                    MipavUtil.displayError("FileIO: " + error);
-                }
-
-                error.printStackTrace();
-
-                return false;
-            } catch (final OutOfMemoryError error) {
-
-                if ( !quiet) {
-                    MipavUtil.displayError("FileIO: " + error);
-                }
-
-                error.printStackTrace();
-
-                return false;
-            }
-        }
 
         try { // Construct a new file object
             analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());

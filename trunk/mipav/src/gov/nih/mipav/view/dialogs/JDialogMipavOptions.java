@@ -285,7 +285,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         // makeSaveDefaultsOptions(gbc, gbl);
         makeSaveHdrImgOptions(gbc, gbl);
         makeSaveMncOptions(gbc, gbl);
-        makeSaveXMLOnHDRSaveOptions(gbc, gbl);
+        //makeSaveXMLOnHDRSaveOptions(gbc, gbl);
         makeSaveXMLThumbnailOptions(gbc, gbl);
         makeFrameRateOptions(gbc, gbl);
         makeFlipNIFTIReadOptions(gbc, gbl);
@@ -476,8 +476,6 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                     .getSelectedIndex() == 1));
             Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_MNC_AS_MINC2, String.valueOf(comboBoxSaveMncMethod
                     .getSelectedIndex() == 2));
-            Preferences.setProperty(Preferences.PREF_SAVE_XML_ON_HDR_SAVE, String.valueOf(saveXMLOnHDRSaveCheckBox
-                    .isSelected()));
             Preferences.setProperty(Preferences.PREF_SAVE_ALL_ON_SAVE, String.valueOf(saveAllCheckBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_SAVE_DEFAULTS, String.valueOf(saveDefaultsCheckBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_SAVE_PROMPT_OVERWRITE, String.valueOf(savePromptOverwriteBox
@@ -1647,26 +1645,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         savePromptOverwriteBox.setSelected(Preferences.is(Preferences.PREF_SAVE_PROMPT_OVERWRITE));
     }
 
-    /**
-     * Makes the "Save XML header with Analyze images" option line in the otherPanel.
-     * 
-     * @param gbc the constraints used in the globalChangesPanel
-     * @param gbl the layout used in the globablChangesPanel
-     */
-    protected void makeSaveXMLOnHDRSaveOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
-        saveXMLOnHDRSaveCheckBox = new JCheckBox("Save MIPAV XML header with Analyze images");
-        saveXMLOnHDRSaveCheckBox.setFont(MipavUtil.font12);
-        saveXMLOnHDRSaveCheckBox.setForeground(Color.black);
-        saveXMLOnHDRSaveCheckBox.addActionListener(this);
-        gbc.insets = new Insets(0, 0, 0, 0);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbl.setConstraints(saveXMLOnHDRSaveCheckBox, gbc);
-        fileSavePanel.add(saveXMLOnHDRSaveCheckBox);
-
-        // preset the choices.
-        saveXMLOnHDRSaveCheckBox.setSelected(Preferences.is(Preferences.PREF_SAVE_XML_ON_HDR_SAVE));
-    }
+  
 
     /**
      * Makes the "Save Thumbnail for XML Files" option line in the globalChangesPanel.
