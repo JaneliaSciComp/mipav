@@ -503,6 +503,8 @@ public class FileInfoNIFTI extends FileInfoBase {
     private TransMatrix matrixQ = null;
     
     private TransMatrix matrixS = null;
+    
+    private String patientOrientationString = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -1271,6 +1273,14 @@ public class FileInfoNIFTI extends FileInfoBase {
     public float getVoxOffset() {
         return vox_offset;
     }
+    
+    /**
+     * Return String put in DICOM 0020,0037 field
+     * @return
+     */
+    public String getPatientOrientationString() {
+    	return patientOrientationString;
+    }
 
     /**
      * supplies auxiliary-file string; permits no more than 24 characters.
@@ -1583,6 +1593,14 @@ public class FileInfoNIFTI extends FileInfoBase {
      */
     public void setEcode3(int ecode3) {
         this.ecode3 = ecode3;
+    }
+    
+    /**
+     * Set String put in DICOM 0020, 0037
+     * @param patientOrientationString
+     */
+    public void setPatientOrientationString(String patientOrientationString) {
+    	this.patientOrientationString = patientOrientationString;
     }
 
     /**
