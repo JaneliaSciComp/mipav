@@ -14,18 +14,18 @@ import java.util.*;
  * algorithm to apply an adaptive histogram to an image, placing it in a new ModelImage, or returning the changed
  * picture to the same image.
  *
- * <p>This is an algorithm to apply within a neighborhood, that is it selectes a region of adjacent pixels, the number
+ * <p>This is an algorithm to apply within a neighborhood, that is it selects a region of adjacent pixels, the number
  * of adjacent pixels is of a user-selected size, and forms the histogram from that region. The region selection routine
  * is adopted from AlgorithmMedian. The value of the cell (the brightness of the pixel at a particular location) is then
  * mapped to the region. Over the entire image, this means that all pixels will still be brighter or darker than other
  * pixels, but the brightness has been shifted making minor variations more apparent. The cumulative distribution is
- * changed so that it becomes step-wise linear, making the darker pixels use the lowest possible values availble to the
+ * changed so that it becomes step-wise linear, making the darker pixels use the lowest possible values available to the
  * image, the brightest use the highest possible values.</p>
  *
  * <p>This algorithm may be used to perform a contrast-limited or 'clamped' histogram equalization. It is set by
  * supplying a percentage of the maximum number of pixels in any particular brightness level. As the regional histograms
  * are tabulated, the brightness with the maximum number of pixels attributed to it is remembered. The algorithm will
- * then evenly redistibute the total number of pixels from any brightness which has a greater number than the max times
+ * then evenly redistribute the total number of pixels from any brightness which has a greater number than the max times
  * this fraction to all other (less populous) brightnesses. (If the supplied percentage is 80, for instance, the maximum
  * number of pixels to any brightness level, will be four-fifths the largest number number of pixels of any shade found.
  * </p>
@@ -49,7 +49,7 @@ import java.util.*;
  *
  * <p>According to Freedman and Diaconis as summarized in "Recent Developments in NonParametric Density Estimation" by
  * Alan Julian Izenman, Journal of the American Statistical Association, March, 1991, Vol. 86, No. 413, pp. 205 - 224:
- * The ideal histogram bin width W is given by W = 2(IQR)pow(N,-1/3) where IQR is the inrterquartile range(the 75
+ * The ideal histogram bin width W is given by W = 2(IQR)pow(N,-1/3) where IQR is the interquartile range(the 75
  * percentile minus the 25th percentile) and N is the number of available samples.</p>
  *
  * @version  1.00; 24 Sep 2001
@@ -1066,7 +1066,7 @@ public class AlgorithmAHElocal extends AlgorithmBase {
      *
      * @param  histogram  array where the brightness values of all pixels in the image have been counted.
      * @param  clipLimit  no brightness may have any more than this number of pixels. Obviously, this method will not
-     *                    achieve anthing when <code>clipLimit</code> is as large or larger than the largest brightness
+     *                    achieve anything when <code>clipLimit</code> is as large or larger than the largest brightness
      *                    in <code>histogram</code>.
      */
     protected final void clip(int[] histogram, int clipLimit) {
@@ -1119,7 +1119,7 @@ public class AlgorithmAHElocal extends AlgorithmBase {
 
     /**
      * Copies all values from the srcbuffer to the destination buffer. the format is intended to envision the
-     * organisation of dest[i] := src[i] float dest destination array float src source array
+     * Organization of dest[i] := src[i] float dest destination array float src source array
      *
      * @param  dest  DOCUMENT ME!
      * @param  src   DOCUMENT ME!
@@ -1429,16 +1429,6 @@ public class AlgorithmAHElocal extends AlgorithmBase {
         int sliceLength = width * height;
         float maxValue;
 
-        // these bounds "frame" the interior of the slice which may be filtered (&adjusted);
-        // image outside the frame may not
-        // int upperBound, lowerBound,     // bounds on the row
-        // leftBound, rightBound;      // bounds on the column
-
-
-        // upperBound = leftBound = halfK;
-        // rightBound = width - halfK - 1;
-        // lowerBound = height - halfK -1;
-
         int onePercent = sliceLength / 100; // mod is 1% of total number
 
         if (maxScaleRule == scaleOnSlice) {
@@ -1483,17 +1473,6 @@ public class AlgorithmAHElocal extends AlgorithmBase {
             // then do adjusting
             if (entireImage || mask.get(i)) {
 
-                // row = i/width;
-                // col = i%width;
-                // if ( (row < upperBound) || (row > lowerBound) ) {
-                // // row too far up or down--out of bounds
-                // destBuffer[i] = srcBuffer[i];
-                // }
-                // else if ((col < leftBound) || (col > rightBound)) {
-                // // column too far left or right--out of bounds
-                // destBuffer[i] = srcBuffer[i];
-                // }
-                // else {          // in bounds
                 if (thresholdingIsNecessary) {
                     destBuffer[i] = thresholdProcPixel(i, srcBuffer);
                 } else {
