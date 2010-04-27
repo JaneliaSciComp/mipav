@@ -522,7 +522,7 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
 
         float[] imgBuffer;
         int slice;
-        int baseNPts, nPts;
+        int nPts;
         Polygon tempGon;
         Polygon baseGon;
         float[] xPoints, yPoints;
@@ -618,7 +618,6 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
                     resultGon = new Polygon();
                     setPoints(xPoints, yPoints, gons[j]);
                     runSnake(xPoints, yPoints, uVal, vVal, resultGon);
-                    baseNPts = resultGon.npoints;
                     resultVOI.importPolygon(resultGon, slice);
                     ((VOIContour) (resultVOI.getCurves()[slice].lastElement())).trimPoints(Preferences.getTrim(),
                                                                                            Preferences.getTrimAdjacient());
@@ -939,23 +938,17 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
     private void calc3D() {
 
         float[] imgBuffer;
-        float[] xB, yB, zB;
         int i;
-        int sliceNum;
 
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
         zDim = srcImage.getExtents()[2];
-        sliceNum = srcImage.getExtents()[2];
         extents = new int[3];
         extents[0] = xDim;
         extents[1] = yDim;
         extents[2] = zDim;
 
         try {
-            xB = new float[2];
-            yB = new float[2];
-            zB = new float[2];
             length = xDim * yDim * zDim;
             imgBuffer = new float[length];
             gvfBuffer = new float[length];
@@ -2163,20 +2156,6 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
         gvfImage = null;
 
         return;
-    }
-
-    /**
-     * Calculates the euclidian distance between two points.
-     *
-     * @param   x1  first x coord.
-     * @param   x2  seconde x coord.
-     * @param   y1  first y1 coord.
-     * @param   y2  seconde y2 coord.
-     *
-     * @return  DOCUMENT ME!
-     */
-    private double distance(int x1, int x2, int y1, int y2) {
-        return Math.sqrt(((x2 - x1) * (x2 - x1)) + ((y2 - y1) * (y2 - y1)));
     }
 
     /**
