@@ -10509,6 +10509,7 @@ public class FileIO {
         ModelImage clonedImage = null;
         final ModelImage originalImage = image;
         boolean didClone = false;
+        String patientOrientationString = null;
 
         // if a file is being 'saved as' a dicom file, then
         // actually save it to a subdirectory, named by the base of the FileName
@@ -10606,6 +10607,7 @@ public class FileIO {
             final boolean isCheshireFloat = image.getFileInfo(0).getFileFormat() == FileUtility.CHESHIRE
                     && image.getType() == ModelStorageBase.FLOAT;
             final boolean isNotPet = myFileInfo.getModality() != FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY;
+            final boolean isNIFTI = image.getFileInfo(0).getFileFormat() == FileUtility.NIFTI;
 
             // necessary to save (non-pet) floating point minc/analyze/cheshire files to dicom
             if ( (isMincFloatNotPet || isAnalyzeFloat || isCheshireFloat) && isNotPet) {
@@ -10623,6 +10625,13 @@ public class FileIO {
                 convertType.run();
 
                 image = clonedImage;
+            }
+            if (isNIFTI) {
+                patientOrientationString = ((FileInfoNIFTI)image.getFileInfo(0)).getPatientOrientationString();	
+                if (patientOrientationString != null) {
+                	myFileInfo.getTagTable().setValue("0020,0037", patientOrientationString, 
+                			                          patientOrientationString.length());
+                }
             }
             if ( (image.getType() == ModelStorageBase.SHORT) || (image.getType() == ModelStorageBase.USHORT)
                     || (image.getFileInfo(0).getDataType() == ModelStorageBase.SHORT)
