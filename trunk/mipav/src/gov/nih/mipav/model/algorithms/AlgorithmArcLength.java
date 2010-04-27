@@ -6,11 +6,10 @@ import gov.nih.mipav.view.*;
 
 
 /**
- * This algorigthm calculates the arc-length of a Bspline fit to user defined control points. This algorithm calculates
+ * This algorithm calculates the arc-length of a Bspline fit to user defined control points. This algorithm calculates
  * the entire curve length and also is able to calculate the arc-length between two points.
  *
  * @version  0.1 April 27, 1998
- * @author   David Eberly, adapted by Matthew McAuliffe
  */
 public class AlgorithmArcLength extends AlgorithmBase {
 
@@ -111,8 +110,7 @@ public class AlgorithmArcLength extends AlgorithmBase {
     }
 
     /**
-     * Finds the point at some percentage along the curve using Newtons method of root finding - should be faster but I
-     * was unable to get it to work correctly and the above worked well.
+     * Finds the point at some percentage along the curve using Newtons method of root finding.
      *
      * @param   pct  percentage indicating where one would
      *
@@ -197,7 +195,7 @@ public class AlgorithmArcLength extends AlgorithmBase {
      * The length is calculated between to points a,b using Romberg integration.
      *
      * @param   a  starting position
-     * @param   b  endting position b > a and b range
+     * @param   b  ending position b > a and b range
      *
      * @return  length returns arc-length of the segment
      */
