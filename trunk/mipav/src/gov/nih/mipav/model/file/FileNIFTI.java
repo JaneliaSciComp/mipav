@@ -9,6 +9,7 @@ import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
 import java.io.*;
+import java.text.*;
 
 
 /**
@@ -292,6 +293,8 @@ public class FileNIFTI extends FileBase {
     private double r00, r01, r02;
     private double r10, r11, r12;
     private double r20, r21, r22;
+    // Used in writing the DICOM (0020, 0037) patient orientation tag
+    private String patientOrientationString = null;
 
     /** NIFTI pixdim information is converted into MIPAV resolutions information
      *  Only those pixdim[i] for which the niftiExtents[i] > 1 are passed into
@@ -850,6 +853,7 @@ public class FileNIFTI extends FileBase {
         double a, b, c, d;
         boolean isQform = true;
         byte extension0 = 0;
+        DecimalFormat nf;
 
         bufferByte = new byte[headerSize];
 
@@ -1847,13 +1851,19 @@ public class FileNIFTI extends FileBase {
             r11 = (a * a) + (c * c) - (b * b) - (d * d);
             matrix.set(1, 1, -r11 * resolutions[1]);
             r12 = 2.0 * ((c * d) - (a * b));
-            matrix.set(1, 2, -r12 * qfac * resolutions[2]);
             r20 = 2.0 * ((b * d) - (a * c));
             matrix.set(2, 0, r20 * resolutions[0]);
             r21 = 2.0 * ((c * d) + (a * b));
             matrix.set(2, 1, r21 * resolutions[1]);
             r22 = (a * a) + (d * d) - (c * c) - (b * b);
             matrix.set(2, 2, r22 * qfac * resolutions[2]);
+            patientOrientationString = new String();
+            nf = new DecimalFormat("##0.0000000");
+
+            patientOrientationString = nf.format(-r00) + "\\" + nf.format(-r10) + "\\" + nf.format(r20) +
+                        "\\" + nf.format(-r01) + "\\" + nf.format(-r11) + "\\" + nf.format(r21);
+            fileInfo.setPatientOrientationString(patientOrientationString);
+            matrix.set(1, 2, -r12 * qfac * resolutions[2]);
             qoffset_x = getBufferFloat(bufferByte, 268, endianess);
             qoffset_y = getBufferFloat(bufferByte, 272, endianess);
             qoffset_z = getBufferFloat(bufferByte, 276, endianess);
@@ -2839,33 +2849,6 @@ public class FileNIFTI extends FileBase {
         zi = mat.Get(2, 0);
         zj = mat.Get(2, 1);
         zk = mat.Get(2, 2);
-        /*xi = mat.Get(0, 0);
-        xj = mat.Get(1, 0);
-        xk = mat.Get(2, 0);
-        yi = mat.Get(0, 1);
-        yj = mat.Get(1, 1);
-        yk = mat.Get(2, 1);
-        zi = mat.Get(0, 2);
-        zj = mat.Get(1, 2);
-        zk = mat.Get(2, 2);
-        xi = mat.Get(0, 0);
-        yi = mat.Get(0, 1);
-        zi = mat.Get(0, 2);
-        xj = mat.Get(1, 0);
-        yj = mat.Get(1, 1);
-        zj = mat.Get(1, 2);
-        xk = mat.Get(2, 0);
-        yk = mat.Get(2, 1);
-        zk = mat.Get(2, 2);
-        xi = mat.Get(0, 0);
-        yi = mat.Get(1, 0);
-        zi = mat.Get(2, 0);
-        xj = mat.Get(0, 1);
-        yj = mat.Get(1, 1);
-        zj = mat.Get(2, 1);
-        xk = mat.Get(0, 2);
-        yk = mat.Get(1, 2);
-        zk = mat.Get(2, 2);*/
 
         /* normalize column vectors to get unit vectors along each ijk-axis */
 
