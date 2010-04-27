@@ -769,7 +769,7 @@ public class AlgorithmAHE extends AlgorithmBase {
      * @param  binNumber  the number of brightness levels available in the histogram
      * @param  histogram  array where the brightness values of all pixels in the image have been counted.
      * @param  clipLimit  no brightness may have any more than this number of pixels. Obviously, this method will not
-     *                    acheive anthing when <code>clipLimit</code> is as large or larger than the largest brightness
+     *                    achieve anything when <code>clipLimit</code> is as large or larger than the largest brightness
      *                    in <code>histogram</code>.
      */
     private void clip(int binNumber, int[] histogram, int clipLimit) {
@@ -838,31 +838,6 @@ public class AlgorithmAHE extends AlgorithmBase {
         }
     }
 
-    /**
-     * Finds the local maximum and minimum values in the given range in order, as given by the starting and stoping
-     * values.
-     *
-     * @param  buf       float array of values
-     * @param  bufStart  where to begin looking
-     * @param  bufEnd    where to stop
-     */
-    private void findBufferMinMax(float[] buf, int bufStart, int bufEnd) {
-        int i;
-        bufMin = Float.MAX_VALUE; // preset the min to an absurdly high value
-        bufMax = -Float.MAX_VALUE; // preset the max to an absurdly low value
-
-        for (i = bufStart; i < bufEnd; i++) { // then find the min/max in the buffer
-
-            if (buf[i] < bufMin) {
-                bufMin = buf[i];
-            }
-
-            if (buf[i] > bufMax) {
-                bufMax = buf[i];
-            }
-        }
-    }
-
 
     /**
      * Allows a single monochrome image slice to be filtered. Any color image may be processed in this so long as each
@@ -882,7 +857,6 @@ public class AlgorithmAHE extends AlgorithmBase {
     private void monoSliceFilter(float[] srcBuffer, float[] destBuffer) {
 
         int sliceLength = srcImage.getSliceSize();
-        int sectorLength;
         int width = srcImage.getExtents()[0]; // width of slice in number of pixels (
         int height = srcImage.getExtents()[1]; // height of slice in number of pixels
 
@@ -943,7 +917,6 @@ public class AlgorithmAHE extends AlgorithmBase {
 
         float pXsize = width / (float) wDivisions; // partition size in the X dir
         float pYsize = height / (float) hDivisions; // partition size in the Y dir
-        sectorLength = (int) (pXsize * pYsize);
 
         for (r = 0; (r < hDivisions) && !threadStopped; r++) {
             yStart = (int) (r * pYsize);
@@ -956,7 +929,7 @@ public class AlgorithmAHE extends AlgorithmBase {
             for (c = 0; (c < wDivisions) && !threadStopped; c++) {
                 maxScale = -Float.MAX_VALUE;
 
-                // calculate bounding recangle for sector
+                // calculate bounding rectangle for sector
                 xStart = (int) (c * pXsize);
                 xEnd = (int) ((c + 1) * pXsize);
 
@@ -1097,7 +1070,7 @@ public class AlgorithmAHE extends AlgorithmBase {
         }
 
         // four corner partitions of image
-        // calculate bounding recangle for sector
+        // calculate bounding rectangle for sector
         xStart = (int) (pXsize / 2); // account for color elsewhere
         xEnd = (int) (((wDivisions - 1) * pXsize) + (pXsize / 2)); // account for color elsewhere
 
@@ -1159,7 +1132,7 @@ public class AlgorithmAHE extends AlgorithmBase {
         // get the top & bottom of the image
         for (c = 0; c < (wDivisions - 1); c++) {
 
-            // calculate bounding recangle for sector
+            // calculate bounding rectangle for sector
             xStart = (int) ((c * pXsize) + (pXsize / 2));
             xEnd = (int) (((c + 1) * pXsize) + (pXsize / 2));
 
