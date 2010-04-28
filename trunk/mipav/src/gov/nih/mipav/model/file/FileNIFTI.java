@@ -9,6 +9,8 @@ import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
 import java.io.*;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipInputStream;
 import java.text.*;
 
 
@@ -431,6 +433,16 @@ public class FileNIFTI extends FileBase {
     private int esize3 = 0;
     
     private int ecode3;
+    
+    /**
+     * File object and input streams 
+     * needed for NIFTI compressed files
+     */
+    private File file;
+    private FileInputStream fis;
+    private ZipInputStream zin;
+    private GZIPInputStream gzin;
+    private CBZip2InputStream bz2in;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -829,18 +841,18 @@ public class FileNIFTI extends FileBase {
      *
      * @param      imageFileName  File name of image.
      * @param      fileDir        Directory.
-     *
+     * @param      niftiCompressed boolean indicating if file is a NIFTI compressed type
      * @return     Flag to confirm a successful read.
      *
      * @exception  IOException  if there is an error reading the header
      *
      * @see        FileInfoNIFTI
      */
-    public boolean readHeader(String imageFileName, String fileDir) throws IOException {
+    public boolean readHeader(String imageFileName, String fileDir, boolean niftiCompressed) throws IOException {
         int i, j;
         int index;
         String fileHeaderName;
-        long fileLength;
+        long fileLength = 348;
         boolean endianess;
         int[] niftiExtents = new int[5];
         int numDims = 0;
@@ -857,56 +869,85 @@ public class FileNIFTI extends FileBase {
 
         bufferByte = new byte[headerSize];
 
-        // index         = fileName.toLowerCase().indexOf(".img");
-        index = fileName.lastIndexOf(".");
+        
+        
+        if(niftiCompressed) {
+        	byte[] buffer = new byte[348];
+        	int bytesRead;
+        	if (fileName.endsWith("zip")) {
+        		zin.getNextEntry();
+        		 bytesRead = zin.read(buffer);
+                 if(bytesRead != 348) {
+                	 buffer = getFullBuffer(zin,buffer,bytesRead,348); 
+                 }
+                 bufferByte = buffer;
+        	}else if(fileName.endsWith("gz")) {
+        		bytesRead = gzin.read(buffer);
+                if(bytesRead != 348) {
+               	 buffer = getFullBuffer(gzin,buffer,bytesRead,348); 
+                }
+                bufferByte = buffer;
+        	}else if(fileName.endsWith("bz2")) {
+        		bytesRead = bz2in.read(buffer);
+                if(bytesRead != 348) {
+               	 buffer = getFullBuffer(bz2in,buffer,bytesRead,348); 
+                }
+                bufferByte = buffer;
+        	}
+        }else {
+        	// index         = fileName.toLowerCase().indexOf(".img");
+            index = fileName.lastIndexOf(".");
 
-        if (index == -1) {
-            oneFile = false;
-            fileHeaderName = fileName + ".hdr";
-            fileHeader = new File(fileDir + fileHeaderName);
-
-            if (fileHeader.exists() == false) {
-                fileHeaderName = fileName + ".HDR";
-                fileHeader = new File(fileDir + fileHeaderName);
-            }
-
-            if (fileHeader.exists() == false) {
-                return false;
-            }
-
-        } else {
-
-            if (fileName.substring(index + 1).equalsIgnoreCase("nii")) {
-                oneFile = true;
-                fileHeaderName = fileName;
-            } else {
+            if (index == -1) {
                 oneFile = false;
-                fileHeaderName = fileName.substring(0, index) + ".hdr";
-            }
-
-            fileHeader = new File(fileDir + fileHeaderName);
-
-            if (fileHeader.exists() == false) {
-                fileHeaderName = fileName.substring(0, index) + ".HDR";
+                fileHeaderName = fileName + ".hdr";
                 fileHeader = new File(fileDir + fileHeaderName);
+
+                if (fileHeader.exists() == false) {
+                    fileHeaderName = fileName + ".HDR";
+                    fileHeader = new File(fileDir + fileHeaderName);
+                }
 
                 if (fileHeader.exists() == false) {
                     return false;
                 }
+
+            } else {
+
+                if (fileName.substring(index + 1).equalsIgnoreCase("nii")) {
+                    oneFile = true;
+                    fileHeaderName = fileName;
+                } else {
+                    oneFile = false;
+                    fileHeaderName = fileName.substring(0, index) + ".hdr";
+                }
+
+                fileHeader = new File(fileDir + fileHeaderName);
+
+                if (fileHeader.exists() == false) {
+                    fileHeaderName = fileName.substring(0, index) + ".HDR";
+                    fileHeader = new File(fileDir + fileHeaderName);
+
+                    if (fileHeader.exists() == false) {
+                        return false;
+                    }
+                }
+
             }
 
+            //for multi-file
+            if (fileInfo == null) { // if the file info does not yet exist: make it
+            	fileInfo = new FileInfoNIFTI(imageFileName, fileDir, FileUtility.NIFTI);
+            }
+
+
+            raFile = new RandomAccessFile(fileHeader, "r");
+            raFile.read(bufferByte);
+            fileLength = raFile.length();
+            Preferences.debug("\nThe size of the file with the header information = " + fileLength + "\n");
         }
-
-        //for multi-file
-        if (fileInfo == null) { // if the file info does not yet exist: make it
-        	fileInfo = new FileInfoNIFTI(imageFileName, fileDir, FileUtility.NIFTI);
-        }
-
-
-        raFile = new RandomAccessFile(fileHeader, "r");
-        raFile.read(bufferByte);
-        fileLength = raFile.length();
-        Preferences.debug("\nThe size of the file with the header information = " + fileLength + "\n");
+        
+        
 
         fileInfo.setEndianess(BIG_ENDIAN);
         fileInfo.setSizeOfHeader(getBufferInt(bufferByte, 0, BIG_ENDIAN));
@@ -2224,8 +2265,9 @@ public class FileNIFTI extends FileBase {
                 }
             }
         }
-        
-        raFile.close();
+        if(raFile != null) {
+        	raFile.close();
+        }
         return true; // If it got this far, it has successfully read in the header
     }
 
@@ -2234,6 +2276,7 @@ public class FileNIFTI extends FileBase {
      * file list. Only the one file directory (currently) supported.
      *
      * @param      one  flag indicating one image of a 3D dataset should be read in.
+     * @param	   niftiCompressed  boolean indicating if file being read is a compressed nifti    .nii.gz, .nii.zip, or .nii.bz2
      *
      * @exception  IOException  if there is an error reading the file
      *
@@ -2241,7 +2284,7 @@ public class FileNIFTI extends FileBase {
      *
      * @see        FileRaw
      */
-    public ModelImage readImage(boolean one) throws IOException, OutOfMemoryError {
+    public ModelImage readImage(boolean one, boolean niftiCompressed) throws IOException, OutOfMemoryError {
         int offset;
         double m1, m2;
         boolean needFloat;
@@ -2251,10 +2294,88 @@ public class FileNIFTI extends FileBase {
         fileInfo = new FileInfoNIFTI(fileName, fileDir, FileUtility.NIFTI);
         boolean flip = false;
         int i;
+        
+        
+        if(niftiCompressed) {
+        	file = new File(fileDir + File.separator + fileName); 
+        	String ext = fileName.substring(fileName.lastIndexOf(".")+1, fileName.length());
+        	if (ext.equalsIgnoreCase("zip")) {
 
-        if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
-            throw (new IOException(" NIFTI header file error"));
+                try {
+                    fis = new FileInputStream(file);
+                } catch (FileNotFoundException e) {
+                    MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for " +
+                            (fileDir + File.separator + fileName));
+                    return null;
+                }
+                try {
+                    zin = new ZipInputStream(new BufferedInputStream(fis));
+                } catch (Exception e) {
+                    MipavUtil.displayError("Exception on ZipInputStream for " + fileName);
+                    return null;
+                }
+                if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory(),true)) {
+                    throw (new IOException(" NIFTI header file error"));
+                }
+        	}else if(ext.equalsIgnoreCase("gz")) {
+        		try {
+                    fis = new FileInputStream(file);
+                } catch (FileNotFoundException e) {
+                    MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for " +
+                            (fileDir + File.separator + fileName));
+                    return null;
+                }
+                try {
+                    gzin = new GZIPInputStream(new BufferedInputStream(fis));
+                } catch (IOException e) {
+                    MipavUtil.displayError("IOException on GZIPInputStream for " + fileName);
+                    return null;
+                }
+                if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory(),true)) {
+                    throw (new IOException(" NIFTI header file error"));
+                }
+        	}else if(ext.equalsIgnoreCase("bz2")) {
+        		try {
+                    fis = new FileInputStream(file);
+                } catch (FileNotFoundException e) {
+                    MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for " + 
+                            (fileDir + File.separator + fileName));
+                    return null;
+                }
+                
+                try {
+                fis.read();
+                }
+                catch (IOException e) {
+                    MipavUtil.displayError("IOException on fis.read() trying to read byte B");
+                    return null;
+                }
+                
+                try {
+                    fis.read();
+                    }
+                    catch (IOException e) {
+                        MipavUtil.displayError("IOException on fis.read() trying to read byte Z");
+                        return null;
+                    }
+
+                try {
+                    bz2in = new CBZip2InputStream(new BufferedInputStream(fis));
+                } catch (Exception e) {
+                    MipavUtil.displayError("Exception on CBZip2InputStream for " + fileName);
+                    return null;
+                }
+                if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory(),true)) {
+                    throw (new IOException(" NIFTI header file error"));
+                }
+        	}
+        }else {
+        	if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory(),false)) {
+                throw (new IOException(" NIFTI header file error"));
+            }
         }
+
+        
 
         int[] extents = null;
 
@@ -2362,8 +2483,7 @@ public class FileNIFTI extends FileBase {
 
         try { // Construct a FileRaw to actually read the image.
 
-            FileRaw rawFile;
-            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
+            
 
             if (oneFile) {
                 offset = (int) Math.abs(vox_offset);
@@ -2381,9 +2501,318 @@ public class FileNIFTI extends FileBase {
                     offset = offset + getOffset(fileInfo);
                 }
             }
+            
+            
+            if(niftiCompressed) {
+            	byte[] buffer = new byte[256];
+            	int bytesRead;
+            	byte[] offsetBuff = new byte[offset];
+            	String ext = fileName.substring(fileName.lastIndexOf(".")+1, fileName.length());
+            	if (ext.equalsIgnoreCase("zip")) {
+            		//skip past offset
+                    if(offset != 0) {
+	                     try {
+	                         bytesRead = zin.read(offsetBuff);
+	                         if(bytesRead != 256) {
+                           	 buffer = getFullBuffer(zin,offsetBuff,bytesRead,offset); 
+                            }
+	                     } catch (IOException e) {
+	                    	 e.printStackTrace();
+	                         MipavUtil.displayError("IOException on gzin.read(buffer) for " + fileName);
+	                         return null;
+	                     }
+                    }
+                    int start = 0;
+                    boolean endianness = fileInfo.getEndianess();
+                    int type = image.getType();
+                    while (true) {
+                        try {
+                            bytesRead = zin.read(buffer);
+                            if(bytesRead == -1) {
+                           	 break;
+                            }
+                            if(bytesRead != 256) {
+                           	 buffer = getFullBuffer(zin,buffer,bytesRead,256); 
+                            }
 
-            linkProgress(rawFile);
-            rawFile.readImage(image, offset);
+                        	if(type == ModelStorageBase.BYTE || type == ModelStorageBase.UBYTE) {
+                        		image.importData(start, buffer, false);
+                        		if(start < image.getDataSize()) {
+                        			start = start + buffer.length;
+                        		}
+                        	}else if(type == ModelStorageBase.SHORT || type == ModelStorageBase.USHORT ) {
+                        		short[] shortBuff = new short[buffer.length/2];
+                        		for(int m=0,k=0;m<buffer.length;m=m+2,k++) {
+                        			byte[] b = {buffer[m],buffer[m+1]};
+                        			shortBuff[k] = FileBase.bytesToShort(endianness, 0, b);
+                        		}
+                        		if(start < image.getDataSize()) {
+                        			image.importData(start, shortBuff, false);
+                        		}
+                        		start = start + shortBuff.length;
+                        	}else if(type == ModelStorageBase.INTEGER || type == ModelStorageBase.UINTEGER) {
+                        		int[] intBuff = new int[buffer.length/4];
+                        		for(int m=0,k=0;m<buffer.length;m=m+4,k++) {
+                        			byte[] b = {buffer[m],buffer[m+1],buffer[m+2],buffer[m+3]};
+                        			intBuff[k] = FileBase.bytesToInt(endianness, 0, b);
+                        		}
+                        		if(start < image.getDataSize()) {
+                        			image.importData(start, intBuff, false);
+                        		}
+                        		start = start + intBuff.length;
+                        	}else if(type == ModelStorageBase.FLOAT) {
+                        		float[] floatBuff = new float[buffer.length/4];
+                        		for(int m=0,k=0;m<buffer.length;m=m+4,k++) {
+                        			byte[] b = {buffer[m],buffer[m+1],buffer[m+2],buffer[m+3]};
+                        			floatBuff[k] = FileBase.bytesToFloat(endianness, 0, b);
+                        		}
+                        		if(start < image.getDataSize()) {
+                        			image.importData(start, floatBuff, false);
+                        		}
+                        		start = start + floatBuff.length;                             
+                        		                              
+                        	}else if(type == ModelStorageBase.ARGB) {
+                        		if(start < image.getDataSize()) {
+                        			image.importData(start, buffer, false);
+                        		}
+                        		start = start + buffer.length;
+                        	}else if(type == ModelStorageBase.ARGB_USHORT) {
+                        		short[] shortBuff = new short[buffer.length/2];
+                        		for(int m=0,k=0;m<buffer.length;m=m+2,k++) {
+                        			byte[] b = {buffer[m],buffer[m+1]};
+                        			shortBuff[k] = FileBase.bytesToShort(endianness, 0, b);
+                        		}
+                        		if(start < image.getDataSize()) {
+                        			image.importData(start, shortBuff, false);
+                        		}
+                        		start = start + shortBuff.length;
+                        	}else if(type == ModelStorageBase.ARGB_FLOAT) {
+                        		float[] floatBuff = new float[buffer.length/4];
+                        		for(int m=0,k=0;m<buffer.length;m=m+4,k++) {
+                        			byte[] b = {buffer[m],buffer[m+1],buffer[m+2],buffer[m+3]};
+                        			floatBuff[k] = FileBase.bytesToFloat(endianness, 0, b);
+                        		}
+                        		if(start < image.getDataSize()) {
+                        			image.importData(start, floatBuff, false);
+                        		}
+                        		start = start + floatBuff.length;
+                        	}
+                        } catch (IOException e) {
+                        	e.printStackTrace();
+                            MipavUtil.displayError("IOException on gzin.read(buffer) for " + fileName);
+                            return null;
+                        } 
+                    }
+            	}else if(ext.equalsIgnoreCase("gz")) {
+            		//skip past offset
+                    if(offset != 0) {
+	                     try {
+	                         bytesRead = gzin.read(offsetBuff);
+	                         if(bytesRead != 256) {
+                           	 buffer = getFullBuffer(gzin,offsetBuff,bytesRead,offset); 
+                            }
+	                     } catch (IOException e) {
+	                    	 e.printStackTrace();
+	                         MipavUtil.displayError("IOException on gzin.read(buffer) for " + fileName);
+	                         return null;
+	                     }
+                    }
+                    int start = 0;
+                    boolean endianness = fileInfo.getEndianess();
+                    int type = image.getType();
+                    System.out.println(image.getDataSize());
+                    while (true) {
+                        try {
+                            bytesRead = gzin.read(buffer);
+                            if(bytesRead == -1) {
+                           	 break;
+                            }
+                            if(bytesRead != 256) {
+                           	 buffer = getFullBuffer(gzin,buffer,bytesRead,256); 
+                            }
+
+                        	if(type == ModelStorageBase.BYTE || type == ModelStorageBase.UBYTE) {
+                        		if(start < image.getDataSize()) {
+                        			image.importData(start, buffer, false);
+                        		}
+                        		start = start + buffer.length;
+                        	}else if(type == ModelStorageBase.SHORT || type == ModelStorageBase.USHORT ) {
+                        		short[] shortBuff = new short[buffer.length/2];
+                        		for(int m=0,k=0;m<buffer.length;m=m+2,k++) {
+                        			byte[] b = {buffer[m],buffer[m+1]};
+                        			shortBuff[k] = FileBase.bytesToShort(endianness, 0, b);
+                        		}
+                        		if(start < image.getDataSize()) {
+                        			image.importData(start, shortBuff, false);
+                        		}
+                        		
+                        		start = start + shortBuff.length;
+                        	}else if(type == ModelStorageBase.INTEGER || type == ModelStorageBase.UINTEGER) {
+                        		int[] intBuff = new int[buffer.length/4];
+                        		for(int m=0,k=0;m<buffer.length;m=m+4,k++) {
+                        			byte[] b = {buffer[m],buffer[m+1],buffer[m+2],buffer[m+3]};
+                        			intBuff[k] = FileBase.bytesToInt(endianness, 0, b);
+                        		}
+                        		if(start < image.getDataSize()) {
+                        			image.importData(start, intBuff, false);
+                        		}
+                        		start = start + intBuff.length;
+                        	}else if(type == ModelStorageBase.FLOAT) {
+                        		float[] floatBuff = new float[buffer.length/4];
+                        		for(int m=0,k=0;m<buffer.length;m=m+4,k++) {
+                        			byte[] b = {buffer[m],buffer[m+1],buffer[m+2],buffer[m+3]};
+                        			floatBuff[k] = FileBase.bytesToFloat(endianness, 0, b);
+                        		}
+                        		if(start < image.getDataSize()) {
+                        			image.importData(start, floatBuff, false);
+                        		}
+                        		start = start + floatBuff.length;                             
+                        		                              
+                        	}else if(type == ModelStorageBase.ARGB) {
+                        		if(start < image.getDataSize()) {
+                        			image.importData(start, buffer, false);
+                        		}
+                        		start = start + buffer.length;
+                        	}else if(type == ModelStorageBase.ARGB_USHORT) {
+                        		short[] shortBuff = new short[buffer.length/2];
+                        		for(int m=0,k=0;m<buffer.length;m=m+2,k++) {
+                        			byte[] b = {buffer[m],buffer[m+1]};
+                        			shortBuff[k] = FileBase.bytesToShort(endianness, 0, b);
+                        		}
+                        		if(start < image.getDataSize()) {
+                        			image.importData(start, shortBuff, false);
+                        		}
+                        		start = start + shortBuff.length;
+                        	}else if(type == ModelStorageBase.ARGB_FLOAT) {
+                        		float[] floatBuff = new float[buffer.length/4];
+                        		for(int m=0,k=0;m<buffer.length;m=m+4,k++) {
+                        			byte[] b = {buffer[m],buffer[m+1],buffer[m+2],buffer[m+3]};
+                        			floatBuff[k] = FileBase.bytesToFloat(endianness, 0, b);
+                        		}
+                        		if(start < image.getDataSize()) {
+                        			image.importData(start, floatBuff, false);
+                        		}
+                        		start = start + floatBuff.length;
+                        	}
+                        } catch (IOException e) {
+                        	e.printStackTrace();
+                            MipavUtil.displayError("IOException on gzin.read(buffer) for " + fileName);
+                            return null;
+                        } 
+                    }
+            	}else if(ext.equalsIgnoreCase("bz2")) {
+            		//skip past offset
+                    if(offset != 0) {
+	                     try {
+	                         bytesRead = bz2in.read(offsetBuff);
+	                         if(bytesRead != 256) {
+                           	 buffer = getFullBuffer(bz2in,offsetBuff,bytesRead,offset); 
+                            }
+	                     } catch (IOException e) {
+	                    	 e.printStackTrace();
+	                         MipavUtil.displayError("IOException on gzin.read(buffer) for " + fileName);
+	                         return null;
+	                     }
+                    }
+                    int start = 0;
+                    boolean endianness = fileInfo.getEndianess();
+                    int type = image.getType();
+                    while (true) {
+                        try {
+                            bytesRead = bz2in.read(buffer);
+                            if(bytesRead == -1) {
+                           	 break;
+                            }
+                            if(bytesRead != 256) {
+                           	 buffer = getFullBuffer(bz2in,buffer,bytesRead,256); 
+                            }
+
+                        	if(type == ModelStorageBase.BYTE || type == ModelStorageBase.UBYTE) {
+                        		if(start < image.getDataSize()) {
+                        			image.importData(start, buffer, false);
+                        		}
+                        		start = start + buffer.length;
+                        	}else if(type == ModelStorageBase.SHORT || type == ModelStorageBase.USHORT ) {
+                        		short[] shortBuff = new short[buffer.length/2];
+                        		for(int m=0,k=0;m<buffer.length;m=m+2,k++) {
+                        			byte[] b = {buffer[m],buffer[m+1]};
+                        			shortBuff[k] = FileBase.bytesToShort(endianness, 0, b);
+                        		}
+                        		if(start < image.getDataSize()) {
+                        			image.importData(start, shortBuff, false);
+                        		}
+                        		start = start + shortBuff.length;
+                        	}else if(type == ModelStorageBase.INTEGER || type == ModelStorageBase.UINTEGER) {
+                        		int[] intBuff = new int[buffer.length/4];
+                        		for(int m=0,k=0;m<buffer.length;m=m+4,k++) {
+                        			byte[] b = {buffer[m],buffer[m+1],buffer[m+2],buffer[m+3]};
+                        			intBuff[k] = FileBase.bytesToInt(endianness, 0, b);
+                        		}
+                        		if(start < image.getDataSize()) {
+                        			image.importData(start, intBuff, false);
+                        		}
+                        		start = start + intBuff.length;
+                        	}else if(type == ModelStorageBase.FLOAT) {
+                        		float[] floatBuff = new float[buffer.length/4];
+                        		for(int m=0,k=0;m<buffer.length;m=m+4,k++) {
+                        			byte[] b = {buffer[m],buffer[m+1],buffer[m+2],buffer[m+3]};
+                        			floatBuff[k] = FileBase.bytesToFloat(endianness, 0, b);
+                        		}
+                        		if(start < image.getDataSize()) {
+                        			image.importData(start, floatBuff, false);
+                        		}
+                        		start = start + floatBuff.length;                             
+                        		                              
+                        	}else if(type == ModelStorageBase.ARGB) {
+                        		if(start < image.getDataSize()) {
+                        			image.importData(start, buffer, false);
+                        		}
+                        		start = start + buffer.length;
+                        	}else if(type == ModelStorageBase.ARGB_USHORT) {
+                        		short[] shortBuff = new short[buffer.length/2];
+                        		for(int m=0,k=0;m<buffer.length;m=m+2,k++) {
+                        			byte[] b = {buffer[m],buffer[m+1]};
+                        			shortBuff[k] = FileBase.bytesToShort(endianness, 0, b);
+                        		}
+                        		if(start < image.getDataSize()) {
+                        			image.importData(start, shortBuff, false);
+                        		}
+                        		start = start + shortBuff.length;
+                        	}else if(type == ModelStorageBase.ARGB_FLOAT) {
+                        		float[] floatBuff = new float[buffer.length/4];
+                        		for(int m=0,k=0;m<buffer.length;m=m+4,k++) {
+                        			byte[] b = {buffer[m],buffer[m+1],buffer[m+2],buffer[m+3]};
+                        			floatBuff[k] = FileBase.bytesToFloat(endianness, 0, b);
+                        		}
+                        		if(start < image.getDataSize()) {
+                        			image.importData(start, floatBuff, false);
+                        		}
+                        		start = start + floatBuff.length;
+                        	}
+                        } catch (IOException e) {
+                        	e.printStackTrace();
+                            MipavUtil.displayError("IOException on gzin.read(buffer) for " + fileName);
+                            return null;
+                        } 
+                    }
+            	}
+            }else {
+            	FileRaw rawFile;
+                rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
+                linkProgress(rawFile);
+                rawFile.readImage(image, offset);
+            }
+            
+            //close the compressed streams if open
+            if(zin != null) {
+            	zin.close();
+            }
+            if(gzin != null) {
+            	gzin.close();
+            }
+            if(bz2in != null) {
+            	bz2in.close();
+            }
 
             if (vox_offset < 0.0f) {
                 absoluteValue(image);
@@ -2484,6 +2913,58 @@ public class FileNIFTI extends FileBase {
 
         return image;
     }
+    
+    
+    /**
+     * 
+     * @param in
+     * @param buff
+     * @param off
+     * @param fullBufferSize
+     * @return
+     */
+    private byte[] getFullBuffer(InputStream in, byte[] buff, int off, int fullBufferSize) {
+    	
+    	int bytesRead = 0;
+    	int offset = off;
+    	while(offset != fullBufferSize || bytesRead != -1)
+    	
+    		
+    	 try {
+    		 
+             bytesRead = in.read(buff,offset,fullBufferSize-offset);
+
+             if(bytesRead == -1) {
+            	 break;
+             }
+             if(bytesRead == 0) {
+            	 break;
+             }
+             offset = offset + bytesRead;
+
+             if(offset == fullBufferSize) {
+            	 break;
+             }
+           
+         } catch (IOException e) {
+        	 e.printStackTrace();
+             MipavUtil.displayError("IOException on gzin.read(buffer)");
+             
+         }
+    	
+         if(offset != 256) {
+        	 //this means that we reached the end of file...so lets return the appropriate sized buffer
+        	 byte[] buffShortened = new byte[offset];
+        	 for(int i=0;i<offset;i++) {
+        		 buffShortened[i] = buff[i];
+        	 }
+        	 return buffShortened;
+         }else {
+        	 return buff;
+         }
+    	
+    	
+    }
 
     /**
      * Reads a NIFTI image file by reading the header then making a FileRaw to read the file. Image data is left in
@@ -2503,7 +2984,7 @@ public class FileNIFTI extends FileBase {
         if (fileInfo == null) { // if no file info yet, make it.
             fileInfo = new FileInfoNIFTI(fileName, fileDir, FileUtility.NIFTI);
 
-            if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
+            if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory(),false)) {
                 throw (new IOException("Cannot read image because of NIFTI header file error"));
             }
         }
