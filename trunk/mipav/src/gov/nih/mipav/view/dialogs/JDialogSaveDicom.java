@@ -397,6 +397,8 @@ public class JDialogSaveDicom extends JDialogBase {
 
                         // special case for a US tag with VM 4 (0018,1310) which the minc people convert to a strange
                         // format "0x80, 0, 0, 0, 0, 0, 0x80, 0" -> "128, 0, 0, 128"
+                        // also handles spliting the tag when the values are delimited by backslashes (as normal in
+                        // dicom)
                         if (tag.equals("0018,1310")) {
                             final String[] vals = value.split(", ");
                             valueArray = new Short[vals.length / 2];
@@ -1927,11 +1929,13 @@ public class JDialogSaveDicom extends JDialogBase {
         final Enumeration<String> keys = table.keys();
 
         String tag;
+        String tagNoParens;
         String value;
 
         while (keys.hasMoreElements()) {
-            tag = keys.nextElement();
-            value = table.get(tag);
+            tagNoParens = keys.nextElement();
+            tag = "(" + tagNoParens + ")";
+            value = table.get(tagNoParens);
 
             // handle chooser fields differently
             if (tag.equals("(0008,0060)") || tag.equals("(0010,0040)") || tag.equals("(0018,0015)")
