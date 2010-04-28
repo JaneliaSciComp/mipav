@@ -42,9 +42,6 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
     /** Used to initialize the stack size when finding the largest segmented region (i.e. the brain). */
     private static final float regionPointStackRatio = 0.4f;
 
-    /** The amount to increase the progress bar at the end of each step. */
-    private static final int progInc = 100 / 9;
-
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** The size of the region we have identified as the brain. */
