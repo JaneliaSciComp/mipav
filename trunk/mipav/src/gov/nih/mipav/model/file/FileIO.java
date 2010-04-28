@@ -10734,13 +10734,28 @@ public class FileIO {
             FileDicomTag tag = null;
             Object obj = null;
             double slLoc;
+            int RLIndex;
+            int APIndex;
+            int ISIndex;
+            boolean increaseRes;
+            int originFlip[] = new int[3];
+            originFlip[0] = 1;
+            originFlip[1] = 1;
+            originFlip[2] = 1;
             final double sliceResolution = myFileInfo.getResolution(2);
             if (image.getNDims() > 2) { // This sets the fileinfo to the same for all slices !!
                 final FileInfoBase[] fBase = new FileInfoBase[image.getExtents()[2]];
 
                 final double[] axialOrigin = new double[3];
-                final double[] dicomOrigin = new double[3];
                 TransMatrix matrix = myFileInfo.getPatientOrientation();
+                TransMatrix transposeMatrix = new TransMatrix(4);
+            	for (i = 0; i < 4; i++) {
+            		for (int j = 0; j < 4; j ++) {
+            			transposeMatrix.set(i, j, matrix.get(j, i));
+            		}
+            	}
+            	matrix = null;
+            	matrix = transposeMatrix;
 
                 if (matrix == null) {
                     matrix = image.getMatrix();
@@ -10750,17 +10765,54 @@ public class FileIO {
                 invMatrix.Inverse();
 
                 final float[] imageOrg = image.getFileInfo(0).getOrigin();
+                double dicomOrigin[] = new double[imageOrg.length];
 
-                final double[] imageOrgDbl = new double[image.getNDims()];
-
-                for (int k = 0; k < imageOrgDbl.length; k++) {
-                    imageOrgDbl[k] = imageOrg[k];
+                for (int k = 0; k < imageOrg.length; k++) {
+                    dicomOrigin[k] = imageOrg[k];
                 }
 
-                matrix.transform(imageOrgDbl, axialOrigin);
-
-
-                slLoc = axialOrigin[2];
+                matrix.transform(dicomOrigin, axialOrigin);
+                
+                RLIndex = 0;
+                APIndex = 1;
+                ISIndex = 2;
+                increaseRes = true;
+                for (i = 0; i <= 2; i++) {
+                	if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_R2L_TYPE) {
+                		originFlip[0] = i;
+                		RLIndex = 0;
+                	}
+                	else if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_L2R_TYPE) {
+                		originFlip[0] = -1;
+                		RLIndex = i;
+                		if (i == 2) {
+                		    increaseRes = false;
+                		}
+                	}
+                	else if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_A2P_TYPE) {
+                		APIndex = i;
+                		originFlip[1] = 1;
+                	}
+                	else if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_P2A_TYPE) {
+                		APIndex = i;
+                		originFlip[1] = -1;
+                		if (i == 2) {
+                			increaseRes = false;
+                		}
+                	}
+                	else if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_I2S_TYPE) {
+                		ISIndex = i;
+                		originFlip[2] = 1;
+                	}
+                	else if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_S2I_TYPE) {
+                		ISIndex = i;
+                	    originFlip[2] = -1;
+                		if (i == 2) {
+                			increaseRes = false;
+                		}
+                	}
+                }
+                slLoc = axialOrigin[2]*originFlip[2];
 
                 // see if the original dicom a minc was created from was part of a larger volume. if so, preserve the
                 // instance number it had
@@ -10842,18 +10894,24 @@ public class FileIO {
                     // Add code to modify the slice location attribute (0020, 1041) VR = DS = decimal string
                     ((FileInfoDicom) (fBase[k])).getTagTable().setValue("0020,1041", Double.toString(slLoc),
                             Double.toString(slLoc).length());
-                    slLoc += sliceResolution;
+                    
+                    if (increaseRes) {
+                    	slLoc += sliceResolution;
+                    }
+                    else {
+                    	slLoc -= sliceResolution;
+                    }
+                    
 
-                    // transform the slice position back into dicom space and store it in the file info
-                    invMatrix.transform(axialOrigin, dicomOrigin);
+                    final String tmpStr = new String(Float.toString((float) dicomOrigin[RLIndex]) + "\\"
+                            + Float.toString((float) dicomOrigin[APIndex]) + "\\" 
+                            + Float.toString((float) dicomOrigin[ISIndex]));
 
-                    final String tmpStr = new String(Float.toString((float) dicomOrigin[0]) + "\\"
-                            + Float.toString((float) dicomOrigin[1]) + "\\" + Float.toString((float) dicomOrigin[2]));
-
-                    ((FileInfoDicom) (fBase[k])).getTagTable().setValue("0020,0032", tmpStr, tmpStr.length());
-
-                    // move the slice position to the next slice in the image
-                    axialOrigin[2] += sliceResolution;
+                    ((FileInfoDicom)(fBase[k])).getTagTable().setValue("0020,0032", tmpStr, tmpStr.length());
+                    
+                    dicomOrigin[RLIndex] += matrix.get(0, 2)*sliceResolution;
+                    dicomOrigin[APIndex] += matrix.get(1, 2)*sliceResolution;
+                    dicomOrigin[ISIndex] += matrix.get(2, 2)*sliceResolution;
 
                     if (baseInstanceNumber != -1) {
                         final String instanceStr = "" + (baseInstanceNumber + k);
@@ -10922,13 +10980,12 @@ public class FileIO {
                         ((FileInfoDicom) fBase[k]).getTagTable().setValue("0028,1053", "" + fBase[k].getRescaleSlope());
                     }
                 }
-
                 image.setFileInfo(fBase);
             } else {
                 image.setFileInfo(myFileInfo, 0);
             }
         }
-
+        
         createProgressBar(null, options.getFileName(), FileIO.FILE_WRITE);
 
         if (options.isSaveAs()) {
@@ -11039,7 +11096,8 @@ public class FileIO {
             }
         } else {
             originalImage.setFileInfo(originalFileInfos);
-        }
+        }	
+        
         /*
          * if(dicomFile != null) { dicomFile.finalize(); dicomFile = null; }
          */
