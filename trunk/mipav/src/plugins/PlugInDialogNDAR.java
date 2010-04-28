@@ -48,7 +48,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     private JButton addSourceButton, finishButton, removeSourceButton, completeDataElementsButton, outputDirButton;
 
     private JPanel outputDirPanel;
-    
+
     private JPanel previewPanel, leftPanel;
 
     private JTextField outputDirTextField;
@@ -85,34 +85,33 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     private OMElement documentElement, dataStructElement;
 
     private String namespace;
-    
-    private ArrayList<ViewJComponentPreviewImage> previewImages = new ArrayList<ViewJComponentPreviewImage>();
-    
-    private ArrayList<float[]> previewImagesWinLevs = new ArrayList<float[]>();
-    
+
+    private final ArrayList<ViewJComponentPreviewImage> previewImages = new ArrayList<ViewJComponentPreviewImage>();
+
+    private final ArrayList<float[]> previewImagesWinLevs = new ArrayList<float[]>();
+
     /** DOCUMENT ME! */
-    private int origBrightness = 0;
-    
+    private final int origBrightness = 0;
+
     private JLabel current, current2;
-    
+
     private JSlider brightnessSlider, contrastSlider;
-    
+
     /** DOCUMENT ME! */
     private NumberFormat nfc;
-    
+
     /** DOCUMENT ME! */
-    private float origContrast = 1;
-    
+    private final float origContrast = 1;
+
     private JPanel brightnessContrastPanel;
-    
+
     private ViewJComponentPreviewImage previewImg;
-    
+
     /** DOCUMENT ME! */
     private float contrast = 1;
-    
+
     /** DOCUMENT ME! */
     private int brightness = 0;
-    
 
     /** Text of the NDAR privacy notice displayed to the user before the plugin can be used. */
     public static final String NDAR_PRIVACY_NOTICE = "MIPAV is a collaborative environment with privacy rules that pertain to the collection\n"
@@ -224,39 +223,37 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                         sourceTable.setRowSelectionInterval(sourceTableModel.getRowCount() - 1, sourceTableModel
                                 .getRowCount() - 1);
                         multiFileTable.put(files[i], new Boolean(isMultiFile));
-                        
+
                         final FileIO fileIO = new FileIO();
                         fileIO.setQuiet(true);
-                        File imageFile = files[i];
-                        ModelImage srcImage = fileIO.readImage(imageFile.getName(), imageFile.getParent() + File.separator,
-                                multiFileTable.get(imageFile), null);
-                        
-                        
-                        int[] extents = new int[] {srcImage.getExtents()[0], srcImage.getExtents()[1]};
+                        final File imageFile = files[i];
+                        ModelImage srcImage = fileIO.readImage(imageFile.getName(), imageFile.getParent()
+                                + File.separator, multiFileTable.get(imageFile), null);
+
+                        final int[] extents = new int[] {srcImage.getExtents()[0], srcImage.getExtents()[1]};
 
                         previewImg = new ViewJComponentPreviewImage(srcImage, extents, this);
                         int slice = 0;
-                        if(!srcImage.is2DImage()) {
-                        	slice = (int)(srcImage.getExtents()[2]/2);
+                        if ( !srcImage.is2DImage()) {
+                            slice = (srcImage.getExtents()[2] / 2);
                         }
                         previewImg.createImg(slice);
-                        
-                        
+
                         previewImages.add(previewImg);
-                        
+
                         previewPanel.removeAll();
                         previewPanel.repaint();
-                        
+
                         previewPanel.add(previewImg);
-                        
+
                         previewImages.get(sourceTable.getSelectedRow()).setSliceBrightness(brightness, contrast);
 
                         previewPanel.validate();
                         previewPanel.repaint();
-                        
+
                         srcImage.disposeLocal();
                         srcImage = null;
-                        
+
                         new InfoDialog(this, files[i], false);
                     }
                 }
@@ -266,14 +263,14 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             listPane.setBorder(buildTitledBorder(sourceTableModel.getRowCount() + " image(s) "));
 
         } else if (command.equals("RemoveSource")) {
-            int selected = sourceTable.getSelectedRow();
+            final int selected = sourceTable.getSelectedRow();
 
-        	final File f = (File) sourceTableModel.getValueAt(selected, 0);
+            final File f = (File) sourceTableModel.getValueAt(selected, 0);
             sourceTableModel.removeRow(selected);
             multiFileTable.remove(f);
             infoTable.remove(f);
             outputFileNameBaseTable.remove(f);
-            
+
             previewImages.remove(selected);
             previewPanel.removeAll();
             previewPanel.repaint();
@@ -282,11 +279,12 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             completeDataElementsButton.setEnabled(sourceTableModel.getRowCount() > 0);
             if (sourceTableModel.getRowCount() > 0) {
                 enableDisableFinishButton();
-                
-                if(selected >= sourceTableModel.getRowCount()) {
-                	sourceTable.setRowSelectionInterval(sourceTableModel.getRowCount()-1, sourceTableModel.getRowCount()-1);
-                }else {
-                	sourceTable.setRowSelectionInterval(selected,selected);
+
+                if (selected >= sourceTableModel.getRowCount()) {
+                    sourceTable.setRowSelectionInterval(sourceTableModel.getRowCount() - 1, sourceTableModel
+                            .getRowCount() - 1);
+                } else {
+                    sourceTable.setRowSelectionInterval(selected, selected);
                 }
                 previewPanel.add(previewImages.get(sourceTable.getSelectedRow()));
                 previewImages.get(sourceTable.getSelectedRow()).setSliceBrightness(brightness, contrast);
@@ -294,7 +292,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 previewPanel.repaint();
             } else {
                 finishButton.setEnabled(false);
-                
+
             }
             listPane.setBorder(buildTitledBorder(sourceTableModel.getRowCount() + " image(s) "));
         } else if (command.equals("Help")) {
@@ -302,7 +300,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             // MipavUtil.showHelp("ISPImages01");
 
         } else if (command.equals("Finish")) {
-            final SwingWorker<Object,Object> worker = new SwingWorker<Object,Object>() {
+            final SwingWorker<Object, Object> worker = new SwingWorker<Object, Object>() {
                 public Object doInBackground() {
                     createSubmissionFiles();
 
@@ -379,8 +377,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
      * 
      * @param e Event that triggered this function
      */
-    public void stateChanged(ChangeEvent e) {
-        Object source = e.getSource();
+    public void stateChanged(final ChangeEvent e) {
+        final Object source = e.getSource();
 
         if (source == brightnessSlider) {
             brightness = brightnessSlider.getValue();
@@ -388,7 +386,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
             // Change only the brightness and contrast of the current slice
             if (previewImg != null) {
-            	previewImages.get(sourceTable.getSelectedRow()).setSliceBrightness(brightness, contrast);
+                previewImages.get(sourceTable.getSelectedRow()).setSliceBrightness(brightness, contrast);
             }
         } else if (source == contrastSlider) {
             contrast = (float) Math.pow(10.0, contrastSlider.getValue() / 200.0);
@@ -396,12 +394,10 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
             // Change only the brightness and contrast of the current slice
             if (previewImg != null) {
-            	previewImages.get(sourceTable.getSelectedRow()).setSliceBrightness(brightness, contrast);
+                previewImages.get(sourceTable.getSelectedRow()).setSliceBrightness(brightness, contrast);
             }
         }
     }
-    
-    
 
     public void itemStateChanged(final ItemEvent e) {
 
@@ -413,49 +409,42 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         multiFileTable = new Hashtable<File, Boolean>();
         infoTable = new Hashtable<File, LinkedHashMap<String, String>>();
         outputFileNameBaseTable = new Hashtable<File, String>();
-        JPanel topPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc2 = new GridBagConstraints();
-        GridBagConstraints gbc3 = new GridBagConstraints();
+        final JPanel topPanel = new JPanel(new GridBagLayout());
+        final GridBagConstraints gbc2 = new GridBagConstraints();
+        final GridBagConstraints gbc3 = new GridBagConstraints();
         gbc2.anchor = GridBagConstraints.NORTHWEST;
 
         buildBrightnessContrastPanel();
-        
-        /*leftPanel = new JPanel(new GridBagLayout());
-        leftPanel.setBorder(buildTitledBorder("Preview image"));
-        leftPanel.setPreferredSize(new Dimension(200, 350)); */
-        
-        
-        
-        
+
+        /*
+         * leftPanel = new JPanel(new GridBagLayout()); leftPanel.setBorder(buildTitledBorder("Preview image"));
+         * leftPanel.setPreferredSize(new Dimension(200, 350));
+         */
+
         previewPanel = new JPanel();
         previewPanel.setBorder(buildTitledBorder("Preview image"));
         previewPanel.setPreferredSize(new Dimension(200, 300));
-        /*gbc3.gridy = 0;
-        gbc3.gridx = 0;
-        gbc3.fill = GridBagConstraints.BOTH;
-        leftPanel.add(previewPanel, gbc3);
-        gbc3.gridy = 1;
-        leftPanel.add(brightnessContrastPanel, gbc3);*/
-        
-        
-        
+        /*
+         * gbc3.gridy = 0; gbc3.gridx = 0; gbc3.fill = GridBagConstraints.BOTH; leftPanel.add(previewPanel, gbc3);
+         * gbc3.gridy = 1; leftPanel.add(brightnessContrastPanel, gbc3);
+         */
+
         gbc2.gridy = 0;
         gbc2.gridx = 0;
         gbc2.fill = GridBagConstraints.BOTH;
         gbc2.weightx = 0;
         gbc2.weighty = 0;
-        topPanel.add(previewPanel,gbc2);
+        topPanel.add(previewPanel, gbc2);
         gbc2.gridy = 1;
-        topPanel.add(brightnessContrastPanel,gbc2);
-        
-        
+        topPanel.add(brightnessContrastPanel, gbc2);
+
         gbc2.gridy = 0;
         gbc2.gridx = 1;
         gbc2.weightx = 1;
         gbc2.weighty = 1;
         gbc2.gridheight = 2;
-        topPanel.add(buildSourcePanel(),gbc2);
-        
+        topPanel.add(buildSourcePanel(), gbc2);
+
         getContentPane().add(topPanel, BorderLayout.NORTH);
 
         getContentPane().add(buildLogPanel(), BorderLayout.CENTER);
@@ -463,7 +452,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         pack();
         validate();
         this.setMinimumSize(this.getSize());
-        //this.setSize(new Dimension(610, 537));
+        // this.setSize(new Dimension(610, 537));
     }
 
     /**
@@ -472,7 +461,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     private JPanel buildLogPanel() {
         final JPanel destPanel = new JPanel(new GridBagLayout());
 
-        GridBagConstraints gbc2 = new GridBagConstraints();
+        final GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.anchor = GridBagConstraints.CENTER;
 
         gbc2.gridy = 0;
@@ -511,12 +500,12 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     }
 
     private JScrollPane buildSourcePanel() {
-        //final GridBagConstraints gbc = new GridBagConstraints();
+        // final GridBagConstraints gbc = new GridBagConstraints();
 
-        //gbc.anchor = GridBagConstraints.NORTHWEST;
-        //gbc.weightx = 1;
-        //gbc.weighty = 1;
-        //gbc.fill = GridBagConstraints.BOTH;
+        // gbc.anchor = GridBagConstraints.NORTHWEST;
+        // gbc.weightx = 1;
+        // gbc.weighty = 1;
+        // gbc.fill = GridBagConstraints.BOTH;
 
         sourceTableModel = new ViewTableModel();
         sourceTableModel.addColumn("Image Name");
@@ -586,12 +575,11 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         return false;
     }
-    
-    
-    private ModelImage createThumbnailImage(ModelImage origImage) {
-    	ModelImage thumbnailImage = null;
-    	
-    	// create a thumbnail image...4 colums, 2 rows
+
+    private ModelImage createThumbnailImage(final ModelImage origImage) {
+        ModelImage thumbnailImage = null;
+
+        // create a thumbnail image...4 colums, 2 rows
         // grab the middle 8 slices from the image for the thumbnail
         // need to determine by what percentage...so...need to figure out by what percebtahe the xdim will go down
         // to 128
@@ -614,7 +602,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         int numSlices = 0;
         int middleSlice = 0;
         LightboxGenerator lightGen;
-        
+
         if (origImage.is2DImage()) {
             // Creating a blank TransMatrix for resampling
             final TransMatrix percentSizer = new TransMatrix(4);
@@ -622,8 +610,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
             // Resample image size based on percent inputted
             final AlgorithmTransform transformer = new AlgorithmTransform(origImage, percentSizer, 1,
-                    (float) (origImage.getResolutions(0)[0] / (percentage * .01)), (float) (origImage
-                            .getResolutions(0)[1] / (percentage * .01)), (int) (origImage.getExtents()[0]
+                    (float) (origImage.getResolutions(0)[0] / (percentage * .01)),
+                    (float) (origImage.getResolutions(0)[1] / (percentage * .01)), (int) (origImage.getExtents()[0]
                             * percentage * .01), (int) (origImage.getExtents()[1] * percentage * .01), origImage
                             .getUnitsOfMeasure(), false, true, false, true, origImage.getImageCentermm(false));
             transformer.runAlgorithm();
@@ -710,8 +698,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
             }
         }
-    	
-    	return thumbnailImage;
+
+        return thumbnailImage;
     }
 
     /**
@@ -737,8 +725,6 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
             final List<String> origFiles = FileUtility.getFileNameList(origImage);
 
-            
-
             final int modality = origImage.getFileInfo(0).getModality();
             final String modalityString = FileInfoBase.getModalityStr(modality).replaceAll("\\s+", "");
 
@@ -751,9 +737,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
             final String zipFilePath = outputDirBase + outputFileNameBase + ".zip";
 
-            
             ModelImage thumbnailImage = createThumbnailImage(origImage);
-            
+
             // write out thumbnail image
             final FileWriteOptions opts = new FileWriteOptions(outputFileNameBase + ".jpg", outputDirBase, true);
             writeThumbnailJIMI(thumbnailImage, opts);
@@ -810,8 +795,12 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             bw.write(xmlHeader);
             bw.newLine();
             openTag("data_set xmlns:xsi=\"" + xmlSchema + "\" xsi:noNamespaceSchemaLocation=\"" + xsd + "\"", true);
-            final String n = imageDataStruct.getName();
-            final String v = imageDataStruct.getVersion();
+            // TODO: temporarily changed data structure name to lower case, since that's what the Validation Tool
+            // expects
+            final String n = imageDataStruct.getName().toLowerCase();
+            // TODO: temporarily changed data structure version to remove leading zero, which was also causing
+            // Validation Tool problems
+            final String v = imageDataStruct.getVersion().replaceFirst("^0", "");
             openTag("data_structure name=\"" + n + "\" version=\"" + v + "\"", true);
             parse(imageDataStruct, imageFile, outputFileNameBase);
             openTag("data_structure", false);
@@ -1060,12 +1049,11 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         return buttonPanel1;
     }
 
-  
-	public Dimension getPanelSize() {
-    	return new Dimension(previewPanel.getBounds().width, previewPanel.getBounds().height);
-	}
+    public Dimension getPanelSize() {
+        return new Dimension(previewPanel.getBounds().width, previewPanel.getBounds().height);
+    }
 
-	/**
+    /**
      * Writes a JIMI file to store the image.
      * 
      * @param image The image to write.
@@ -1161,21 +1149,21 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     public void mouseClicked(final MouseEvent e) {
         final Component c = e.getComponent();
         if (c instanceof JTable) {
-        	if(sourceTable.getSelectedRow() == -1) {
-        		completeDataElementsButton.setEnabled(false);
-        		removeSourceButton.setEnabled(false);
-        		previewPanel.removeAll();
+            if (sourceTable.getSelectedRow() == -1) {
+                completeDataElementsButton.setEnabled(false);
+                removeSourceButton.setEnabled(false);
+                previewPanel.removeAll();
                 previewPanel.repaint();
-        		return;
-        	}else {
-        		completeDataElementsButton.setEnabled(true);
-        		removeSourceButton.setEnabled(true);
-        	}
+                return;
+            } else {
+                completeDataElementsButton.setEnabled(true);
+                removeSourceButton.setEnabled(true);
+            }
             final File f = (File) sourceTableModel.getValueAt(sourceTable.getSelectedRow(), 0);
-            
+
             previewPanel.removeAll();
             previewPanel.repaint();
-            
+
             previewPanel.add(previewImages.get(sourceTable.getSelectedRow()));
             previewImages.get(sourceTable.getSelectedRow()).setSliceBrightness(brightness, contrast);
             previewPanel.validate();
@@ -1243,19 +1231,16 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         }
 
     }
-    
-    
-    
-    
+
     private void buildBrightnessContrastPanel() {
-        brightnessSlider = new JSlider(JSlider.HORIZONTAL, -255, 255, origBrightness);
+        brightnessSlider = new JSlider(SwingConstants.HORIZONTAL, -255, 255, origBrightness);
 
         brightnessSlider.setMajorTickSpacing(102);
         brightnessSlider.setPaintTicks(true);
         brightnessSlider.setEnabled(true);
         brightnessSlider.addChangeListener(this);
 
-        JLabel maximum = new JLabel(String.valueOf(255));
+        final JLabel maximum = new JLabel(String.valueOf(255));
 
         maximum.setForeground(Color.black);
         maximum.setFont(serif12);
@@ -1264,13 +1249,13 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         current.setForeground(Color.black);
         current.setFont(serif12B);
 
-        JLabel minimum = new JLabel(String.valueOf( -255));
+        final JLabel minimum = new JLabel(String.valueOf( -255));
 
         minimum.setForeground(Color.black);
         minimum.setFont(serif12);
 
-        JPanel sliderPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
+        final JPanel sliderPanel = new JPanel(new GridBagLayout());
+        final GridBagConstraints gbc = new GridBagConstraints();
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -1303,7 +1288,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         sliderPanel.add(maximum, gbc);
         sliderPanel.setBorder(buildTitledBorder("Level"));
 
-        contrastSlider = new JSlider(JSlider.HORIZONTAL, -200, 200, (int) (Math.round(86.85889638 * Math
+        contrastSlider = new JSlider(SwingConstants.HORIZONTAL, -200, 200, (int) (Math.round(86.85889638 * Math
                 .log(origContrast))));
 
         contrastSlider.setMajorTickSpacing(80);
@@ -1311,7 +1296,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         contrastSlider.setEnabled(true);
         contrastSlider.addChangeListener(this);
 
-        JLabel maximum2 = new JLabel(String.valueOf(10));
+        final JLabel maximum2 = new JLabel(String.valueOf(10));
 
         maximum2.setForeground(Color.black);
         maximum2.setFont(serif12);
@@ -1323,12 +1308,12 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         current2.setForeground(Color.black);
         current2.setFont(serif12B);
 
-        JLabel minimum2 = new JLabel(String.valueOf(0.100));
+        final JLabel minimum2 = new JLabel(String.valueOf(0.100));
 
         minimum2.setForeground(Color.black);
         minimum2.setFont(serif12);
 
-        JPanel sliderPanel2 = new JPanel(new GridBagLayout());
+        final JPanel sliderPanel2 = new JPanel(new GridBagLayout());
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -1361,9 +1346,9 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         sliderPanel2.add(maximum2, gbc);
         sliderPanel2.setBorder(buildTitledBorder("Window"));
 
-        JPanel centerPanel = new JPanel(new GridBagLayout());
+        final JPanel centerPanel = new JPanel(new GridBagLayout());
 
-        GridBagConstraints gbc2 = new GridBagConstraints();
+        final GridBagConstraints gbc2 = new GridBagConstraints();
 
         gbc2.gridx = 0;
         gbc2.gridy = 0;
@@ -1383,18 +1368,6 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         brightnessContrastPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 
     /**
      * 
@@ -1561,31 +1534,31 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 populateFields();
             }
             requiredLabel = new JLabel("<html>* Required data elements are in <font color=\"red\">red</font></html>");
-            
+
             gbc.fill = GridBagConstraints.BOTH;
             gbc.anchor = GridBagConstraints.EAST;
             gbc.weightx = 0;
             gbc.gridx = 0;
             gbc.gridy = 0;
-            mainPanel.add(requiredLabel,gbc);
+            mainPanel.add(requiredLabel, gbc);
             gbc.gridy = 1;
             gbc.weightx = 1;
             gbc.weighty = 1;
-            mainPanel.add(scrollPane,gbc);
+            mainPanel.add(scrollPane, gbc);
             gbc.weightx = 0;
             gbc.weighty = 0;
             if (tabbedPane.getTabCount() > 0) {
-            	gbc.gridy = 2;
-            	mainPanel.add(tabbedPane,gbc);
-            	gbc.gridy = 3;
-                mainPanel.add(OKPanel,gbc);
-            }else {
-            	gbc.gridy = 2;
-                mainPanel.add(OKPanel,gbc);
+                gbc.gridy = 2;
+                mainPanel.add(tabbedPane, gbc);
+                gbc.gridy = 3;
+                mainPanel.add(OKPanel, gbc);
+            } else {
+                gbc.gridy = 2;
+                mainPanel.add(OKPanel, gbc);
             }
-            
+
             getContentPane().add(mainPanel);
-            
+
             pack();
             MipavUtil.centerInWindow(owner, this);
             this.setMinimumSize(this.getSize());
