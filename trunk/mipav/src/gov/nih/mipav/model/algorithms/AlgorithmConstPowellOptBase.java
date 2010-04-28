@@ -46,12 +46,6 @@ public abstract class AlgorithmConstPowellOptBase extends AlgorithmBase {
      */
     private static final double GOLD = 1.618034;
 
-    /** Golden ratio is .38197 and .61803. */
-    private static final double RGOLD = 0.618034;
-
-    /** Golden ratio - second part. */
-    private static final double CGOLD = 0.3819660;
-
     /** Used to prevent division by zero. */
     private static final double TINY = 1.0 * Math.pow(10, -20);
 
@@ -163,22 +157,22 @@ public abstract class AlgorithmConstPowellOptBase extends AlgorithmBase {
     public abstract TransMatrix convertToMatrix(double[] vector);
 
     /**
-     * Accessor that returns the final point with translations, rotations, scales, and skews representing the best
-     * tranformation.
+     * Returns the final point with translations, rotations, scales, and skews representing the best
+     * Transformation.
      *
      * @return  A vector representing the best transformation in terms of translations, rotations, scales, and skews.
      */
     public abstract double[] getFinal();
 
     /**
-     * Accessor that returns the matrix representing the best tranformation.
+     * Returns the matrix representing the best transformation.
      *
      * @return  A matrix representing the best transformation.
      */
     public abstract TransMatrix getMatrix();
 
     /**
-     * Accessor that returns the matrix representing the best tranformation. The passed in parameter represents the
+     * Returns the matrix representing the best transformation. The passed in parameter represents the
      * resolution (same in all directions and for both input and reference images, since resampled isotropically). Since
      * the optimization was done in pixel space, not millimeter space, the translation parameters need to be scaled by
      * the sample value.
@@ -190,7 +184,7 @@ public abstract class AlgorithmConstPowellOptBase extends AlgorithmBase {
     public abstract TransMatrix getMatrix(float sample);
 
     /**
-     * Calls cost function with inputted point and saves result in functionAtBest.
+     * Calls cost function with inputed point and saves result in functionAtBest.
      */
     public abstract void measureCost();
 
@@ -209,9 +203,9 @@ public abstract class AlgorithmConstPowellOptBase extends AlgorithmBase {
     public abstract void setLimits(float[][] limits);
 
     /**
-     * Accessor the returns whether or not a minimum was found.
+     * Returns whether or not a minimum was found.
      *
-     * @return  whether or not a min was found.
+     * @return  whether or not a minimum was found.
      */
     public boolean didSucceed() {
         return success;
@@ -231,7 +225,7 @@ public abstract class AlgorithmConstPowellOptBase extends AlgorithmBase {
     }
 
     /**
-     * Accessor the returns the cost of the best transformation.
+     * Returns the cost of the best transformation.
      *
      * @return  The cost of the best transformation.
      */
@@ -240,7 +234,7 @@ public abstract class AlgorithmConstPowellOptBase extends AlgorithmBase {
     }
 
     /**
-     * Accessor that returns the optimized point, with length == degrees of freedom.
+     * Returns the optimized point, with length == degrees of freedom.
      *
      * @return  The optimized point.
      */
@@ -255,7 +249,7 @@ public abstract class AlgorithmConstPowellOptBase extends AlgorithmBase {
     }
 
     /**
-     * Accessor that sets the maximum number of iterations.
+     * Sets the maximum number of iterations.
      *
      * @param  max  The max number of iterations.
      */
