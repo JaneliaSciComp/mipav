@@ -465,26 +465,78 @@ public class FileMincHDF extends FileBase {
                     if (dicomElement.startsWith(FileMincHDF.DICOM_ELEMENT_PREFIX)) {
                         dicomElement = dicomElement.substring(FileMincHDF.DICOM_ELEMENT_PREFIX.length());
                         try {
-                            final FileDicomKey key = new FileDicomKey(Integer.parseInt(dicomGroup, 16), Integer
-                                    .parseInt(dicomElement, 16));
-                            FileDicomTagInfo info = DicomDictionary.getInfo(key);
+                            final String keyStr = (dicomGroup + "," + dicomElement).toUpperCase();
 
-                            if (info == null) {
-                                info = new FileDicomTagInfo(key, "UT", 1, "Private Tag", "Private Tag");
+                            final long dataLen = attr.getDataDims()[0];
+
+                            final Datatype dataType = attr.getType();
+
+                            String value;
+                            if (dataType.getDatatypeClass() == Datatype.CLASS_CHAR) {
+                                final byte[] bytes = (byte[]) attr.getValue();
+
+                                final FileDicomKey key = new FileDicomKey(keyStr);
+                                final String dicomTypeStr = DicomDictionary.getType(key);
+                                if (dicomTypeStr == null) {
+                                    // TODO: better way to handle private tags?
+                                    /*
+                                     * if (dataType.isUnsigned()) { value = "" + (bytes[0] & 0xFF); } else { value = "" +
+                                     * bytes[0]; }
+                                     * 
+                                     * for (int j = 1; j < dataLen; j++) { if (dataType.isUnsigned()) { value += ", " +
+                                     * (bytes[j] & 0xFF); } else { value += ", " + bytes[j]; } }
+                                     */
+                                    // TODO: skipping all private tags, for now
+                                    System.err.println("Skipping private tag: " + keyStr);
+                                    continue;
+                                } else if (dicomTypeStr.equals(FileDicomBase.TYPE_INT)) {
+                                    final int vm = DicomDictionary.getVM(key);
+                                    value = "" + FileBase.bytesToInt(false, 0, bytes);
+                                    for (int j = 1; j < vm; j++) {
+                                        value += ", " + FileBase.bytesToInt(false, j * 4, bytes);
+                                    }
+                                } else if (dicomTypeStr.equals(FileDicomBase.TYPE_SHORT)) {
+                                    final int vm = DicomDictionary.getVM(key);
+                                    value = "" + FileBase.bytesToShort(false, 0, bytes);
+                                    for (int j = 1; j < vm; j++) {
+                                        value += ", " + FileBase.bytesToShort(false, j * 2, bytes);
+                                    }
+                                } else if (dicomTypeStr.equals(FileDicomBase.TYPE_DOUBLE)) {
+                                    final int vm = DicomDictionary.getVM(key);
+                                    value = "" + FileBase.bytesToDouble(false, 0, bytes);
+                                    for (int j = 1; j < vm; j++) {
+                                        value += ", " + FileBase.bytesToDouble(false, j * 8, bytes);
+                                    }
+                                } else if (dicomTypeStr.equals(FileDicomBase.TYPE_FLOAT)) {
+                                    final int vm = DicomDictionary.getVM(key);
+                                    value = "" + FileBase.bytesToFloat(false, 0, bytes);
+                                    for (int j = 1; j < vm; j++) {
+                                        value += ", " + FileBase.bytesToFloat(false, j * 4, bytes);
+                                    }
+                                } else if (dicomTypeStr.equals(FileDicomBase.TYPE_STRING)) {
+                                    value = new String(bytes);
+                                } else if (dicomTypeStr.equals(FileDicomBase.TYPE_SEQUENCE)) {
+                                    // TODO: convert bytes to sequence... for now, we remove them until we handle them
+                                    System.err.println("Skipped DICOM sequence: " + keyStr);
+                                    continue;
+                                } else {
+                                    // TODO: TYPE_UNKNOWN
+                                    System.err.println("Unknown type for tag: " + keyStr);
+                                    continue;
+                                }
+                            } else if (dataType.getDatatypeClass() == Datatype.CLASS_STRING) {
+                                final String[] strArray = (String[]) attr.getValue();
+                                value = strArray[0];
+
+                                for (int j = 1; j < dataLen; j++) {
+                                    value += ", " + strArray;
+                                }
                             } else {
-                                //is is required if DicomDictionary contains wild card characters
-                                info.setKey(key);
+                                System.err.println("Unsupported minc2 attribute datatype for tag: " + keyStr);
+                                continue;
                             }
 
-                            final FileDicomTag tag = new FileDicomTag(info);
-
-                            if (attr.getValue() instanceof byte[]) {
-                                tag.setValue(attr.getValue());
-                            } else {
-                                tag.setValue( ((Object[]) attr.getValue())[0]);
-                            }
-
-                            fileInfo.getDicomTable().put(key.getKey(), (String) tag.getValue(true));
+                            fileInfo.getDicomTable().put(keyStr, value);
                         } catch (final Exception e) {
                             e.printStackTrace();
                             System.err.println(dicomGroup + "\t" + dicomElement + "\t"
