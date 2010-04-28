@@ -1,20 +1,11 @@
 package gov.nih.mipav.model.algorithms;
-import gov.nih.mipav.model.algorithms.AlgorithmFRAP.Fit24DModel;
-import gov.nih.mipav.model.algorithms.AlgorithmFRAP.FitWholeNLConInt2;
+
 import gov.nih.mipav.model.file.FileInfoBase;
-
-
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
-
 import java.util.BitSet;
-
-import java.awt.*;
-
 import java.io.*;
 
-import java.text.*;
 
 
 /**
@@ -531,8 +522,6 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
             // nPoints data points, 3 coefficients, and exponential fitting
             super(nPoints, 3, xData, yData);
 
-            int i;
-
             bounds = 2; // bounds = 0 means unconstrained
 
             // bounds = 1 means same lower and upper bounds for
@@ -785,8 +774,6 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
             // nPoints data points, 3 coefficients, and exponential fitting
             super(nPoints, 3, xData, yData);
 
-            int i;
-
             bounds = 2; // bounds = 0 means unconstrained
 
             // bounds = 1 means same lower and upper bounds for
@@ -894,8 +881,6 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
 
             // nPoints data points, 3 coefficients, and exponential fitting
             super(nPoints, 3, xData, yData);
-
-            int i;
 
             bounds = 2; // bounds = 0 means unconstrained
 
