@@ -35,10 +35,6 @@ public class AlgorithmConvolver extends AlgorithmBase {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** The image data to convolve. */
-    private float[] imgBuffer;
-
-    /** The convolution kernel. */
-    private ModelImage kernel;
 
     private int[] kExtents;
     
@@ -152,19 +148,18 @@ public class AlgorithmConvolver extends AlgorithmBase {
 		this.blue = blue;
 	}
     
+
 	/**
+	 * 
      * Sets the source and kernel images and calls the appropriate method based on image dimensionality.
-     *
-     * @param  srcImg   Source image to be convolved with kernel.
-     * @param  kern     Kernel image.
-     */
-    public AlgorithmConvolver(ModelImage srcImg, ModelImage kern) {
-        super(null, srcImg);
-        kernel = kern;
-
-        init();
-    }
-
+     * 
+	 * @param srcImage
+	 * @param kernel
+	 * @param kExtents
+	 * @param entireImage
+	 * @param image25D
+	 */
+    
     public AlgorithmConvolver(ModelImage srcImage, float[] kernel, int[] kExtents, boolean entireImage, boolean image25D){
     	super(null, srcImage);
     	kernelBuffer = kernel;
@@ -3270,14 +3265,37 @@ public class AlgorithmConvolver extends AlgorithmBase {
 	 */
     public void finalize() {
 
-        kernel = null;
         srcImage = null;
-        imgBuffer = null;
+        outputBuffer = null;
+        kExtents = null;
+        kernelBuffer = null;
+        kernelBufferX = null;
+        kernelBufferY = null;
+        kernelBufferZ = null;
+        kernelBufferX2 = null;
+        kernelBufferY2 = null;
+        kernelBufferXX = null;
+        kernelBufferXY = null;
+        kernelBufferYY = null;
+        kernelBufferXZ = null;
+        kernelBufferYZ = null;
+        kernelBufferZZ = null;
+        kernelBufferXXX = null;
+        kernelBufferXXY = null;
+        kernelBufferXYY = null;
+        kernelBufferYYY = null;
+        kernelBufferXXZ = null;
+        kernelBufferXZZ = null;
+        kernelBufferXYZ = null;
+        kernelBufferYYZ = null;
+        kernelBufferYZZ = null;
+        kernelBufferZZZ = null;
+        
         super.finalize();
     }
 
     /**
-     * Begins the excution of the 2D convolver.
+     * Begins the execution of the 2D convolver.
      */
     public void run2D() {
         if (srcImage == null) {
@@ -3345,7 +3363,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
     }
 
     /**
-     * Begins the excution of the 3D convolver.
+     * Begins the execution of the 3D convolver.
      */
     public void run3D() {
         if (srcImage == null) {
@@ -3696,15 +3714,6 @@ public class AlgorithmConvolver extends AlgorithmBase {
     }
 
     /**
-     * Accessor that sets the and kernel image.
-     *
-     * @param  kern     Kernel image.
-     */
-    public void setKernelImage(ModelImage kern) {
-        kernel = kern;
-    }
-
-    /**
      * Performs bilinear interpolation of image data.
      *
      * @param   i         index into image
@@ -3885,44 +3894,11 @@ public class AlgorithmConvolver extends AlgorithmBase {
         return rgb;
     }
     
-    
-    
-    
-    
-    
 
     /**
-     * Initializes the convolver.
+     * Returns the output buffer
+     * @return buffer that contains the data after convolution
      */
-    private void init() {
-
-        if (srcImage == null) {
-            displayError("Source Image is null");
-
-            return;
-        }
-
-        try {
-            int length = srcImage.getSliceSize();
-            if(srcImage.getNDims() == 3){
-            	length *= srcImage.getExtents()[2];
-            }
-
-            imgBuffer = new float[length];
-            srcImage.exportData(0, length, imgBuffer); // locks and releases lock
-        } catch (IOException error) {
-            displayError("Algorithm Convolver: Image(s) locked");
-            setCompleted(false);
-
-            return;
-        } catch (OutOfMemoryError e) {
-            displayError("Algorithm Convolver: Out of memory");
-            setCompleted(false);
-
-            return;
-        }
-    }
-
 	public float[] getOutputBuffer() {
 		return outputBuffer;
 	}
