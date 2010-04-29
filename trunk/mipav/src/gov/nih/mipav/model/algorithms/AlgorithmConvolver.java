@@ -3770,21 +3770,30 @@ public class AlgorithmConvolver extends AlgorithmBase {
 
         int xDim = iExtents[0];
         int yDim = iExtents[1];
-        int imageSize = xDim * yDim;
+        int zDim = iExtents[2];
+        int sliceSize = xDim * yDim;
         int i2, ix1, ix2, iy;
+        int sliceIndex;
+        int xIndex;
+        int yIndex;
+        int zIndex;
+        
+        sliceIndex = (i1 % sliceSize);
+        xIndex = sliceIndex % xDim;
+        yIndex = sliceIndex / xDim;
+        zIndex = i1 / sliceSize;
 
         float a1, a2;
         float b1, b2;
 
-        // The following code prevents an out of bounds array index from occurring
-        // in the case when the z coordinate exactly equals zdim - 1.
-        if (dz == 0.0f) {
+        
+        if ((dz == 0.0f) || (zIndex == (zDim - 1))) {
             i2 = i1;
         } else {
-            i2 = i1 + imageSize;
+            i2 = i1 + sliceSize;
         }
 
-        if (dx == 0.0f) {
+        if ((dx == 0.0f) || (xIndex == (xDim - 1))) {
             ix1 = i1;
             ix2 = i2;
         } else {
@@ -3792,7 +3801,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
             ix2 = i2 + 1;
         }
 
-        if (dy == 0.0f) {
+        if ((dy == 0.0f) || (yIndex == (yDim - 1))) {
             iy = 0;
         } else {
             iy = xDim;
@@ -3828,8 +3837,18 @@ public class AlgorithmConvolver extends AlgorithmBase {
 
         int xDim = iExtents[0];
         int yDim = iExtents[1];
-        int imageSize = xDim * yDim * 4;
+        int zDim = iExtents[2];
+        int sliceSize = xDim * yDim * 4;
         int i2, ix1, ix2, iy;
+        int sliceIndex;
+        int xIndex;
+        int yIndex;
+        int zIndex;
+        
+        sliceIndex = (i1 % sliceSize);
+        xIndex = sliceIndex % (4*xDim);
+        yIndex = sliceIndex / (4*xDim);
+        zIndex = i1 / sliceSize;
 
         float a1, a2;
         float b1, b2;
@@ -3842,7 +3861,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
         if (dz == 0.0f) {
             i2 = i1;
         } else {
-            i2 = i1 + imageSize;
+            i2 = i1 + sliceSize;
         }
 
         if (dx == 0.0f) {
