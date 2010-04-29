@@ -3727,18 +3727,22 @@ public class AlgorithmConvolver extends AlgorithmBase {
     private static float getBilinear(int i, float dx, float dy, int[] iExtents, float[] image) {
 
         int xDim = iExtents[0];
+        int yDim = iExtents[1];
         float x1, x2;
         int ix, iy;
+        int xIndex;
+        int yIndex;
+        
+        xIndex = i % xDim;
+        yIndex = i / xDim;
 
-        // The below code prevents an out of bounds index being used for image
-        // when the y coordinate is exactly equal to ydim - 1.
-        if (dx == 0.0f) {
+        if ((dx == 0.0f) || (xIndex == (xDim - 1))) {
             ix = i;
         } else {
             ix = i + 1;
         }
 
-        if (dy == 0.0f) {
+        if ((dy == 0.0f) || (yIndex == (yDim - 1))) {
             iy = 0;
         } else {
             iy = xDim;
