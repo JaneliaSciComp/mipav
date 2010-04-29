@@ -10085,7 +10085,7 @@ public class FileIO {
             return false;
         }
 
-        progressBar.updateValue(Math.round((float) sliceNumber / (options.getEndSlice()) * 100), false);
+        progressBar.updateValue(Math.round((float) (sliceNumber - options.getBeginSlice()) / (options.getEndSlice()-options.getBeginSlice()) * 100), false);
 
         // create the directory
         fileName = options.getFileName();
@@ -10350,7 +10350,17 @@ public class FileIO {
                 		}
                 	}
                 }
+                dicomOrigin[RLIndex] += matrix.get(0, 2)*sliceResolution*(sliceNumber - options.getBeginSlice());
+                dicomOrigin[APIndex] += matrix.get(1, 2)*sliceResolution*(sliceNumber - options.getBeginSlice());
+                dicomOrigin[ISIndex] += matrix.get(2, 2)*sliceResolution*(sliceNumber - options.getBeginSlice());
+                
                 slLoc = axialOrigin[2]*originFlip[2];
+                if (increaseRes) {
+                	slLoc += sliceResolution*(sliceNumber - options.getBeginSlice());
+                }
+                else {
+                	slLoc -= sliceResolution*(sliceNumber - options.getBeginSlice());
+                }
 
                 // see if the original dicom a minc was created from was part of a larger volume. if so, preserve the
                 // instance number it had
@@ -10428,23 +10438,12 @@ public class FileIO {
                 ((FileInfoDicom) (fBase)).getTagTable().setValue("0020,1041", Double.toString(slLoc),
                         Double.toString(slLoc).length());
                 
-                if (increaseRes) {
-                	slLoc += sliceResolution;
-                }
-                else {
-                	slLoc -= sliceResolution;
-                }
-                
 
                 final String tmpStr = new String(Float.toString((float) dicomOrigin[RLIndex]) + "\\"
                         + Float.toString((float) dicomOrigin[APIndex]) + "\\" 
                         + Float.toString((float) dicomOrigin[ISIndex]));
 
                 ((FileInfoDicom)(fBase)).getTagTable().setValue("0020,0032", tmpStr, tmpStr.length());
-                
-                dicomOrigin[RLIndex] += matrix.get(0, 2)*sliceResolution;
-                dicomOrigin[APIndex] += matrix.get(1, 2)*sliceResolution;
-                dicomOrigin[ISIndex] += matrix.get(2, 2)*sliceResolution;
 
                 if (baseInstanceNumber != -1) {
                     final String instanceStr = "" + (baseInstanceNumber + sliceNumber);
