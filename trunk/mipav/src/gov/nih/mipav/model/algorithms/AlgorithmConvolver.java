@@ -3856,15 +3856,14 @@ public class AlgorithmConvolver extends AlgorithmBase {
         i1 = i1 + 1; //get on red channel
         
 
-        // The following code prevents an out of bounds array index from occurring
-        // in the case when the z coordinate exactly equals zdim - 1.
-        if (dz == 0.0f) {
+        
+        if ((dz == 0.0f) || (zIndex == (zDim - 1))) {
             i2 = i1;
         } else {
             i2 = i1 + sliceSize;
         }
 
-        if (dx == 0.0f) {
+        if ((dx == 0.0f) || (xIndex == (xDim - 1))) {
             ix1 = i1;
             ix2 = i2;
         } else {
@@ -3872,7 +3871,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
             ix2 = i2 + 4;
         }
 
-        if (dy == 0.0f) {
+        if ((dy == 0.0f) || (yIndex == (yDim - 1))) {
             iy = 0;
         } else {
             iy = xDim * 4;
