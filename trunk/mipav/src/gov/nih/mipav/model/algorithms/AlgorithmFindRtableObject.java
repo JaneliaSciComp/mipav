@@ -20,7 +20,7 @@ import java.util.LinkedList;
  * </pre>
  * 
  * The algorithm works as follows: I have implemented the Generalized Hough transform scheme originally sketched out by
- * Dana H. Ballard. At every point on a curve the gradient angle omega, perpindicular to the tangent and going into the
+ * Dana H. Ballard. At every point on a curve the gradient angle omega, perpendicular to the tangent and going into the
  * object, is found. Then, the distance r and angle beta of the line segment from the center of mass of the object to
  * the point on the curve is found. An R-table of gradient angle bins, linked to lists of all possible r, beta values is
  * created. In matching the object searching must occur over different scale factors and rotations of the object.
@@ -2910,18 +2910,4 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
         return;
     }
 
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the history
-     * logging procedure is turned on.
-     */
-    private void constructLog() {
-        String historyString;
-
-        historyString = new String("FindRtableObject(" + String.valueOf(omegaBins) + ", "
-                + String.valueOf(sidePointsForTangent) + ", " + String.valueOf(maxPixelBinWidth) + ", "
-                + String.valueOf(maxBufferSize) + ", " + String.valueOf(allowRotation) + ", "
-                + String.valueOf(maxDegreesBinWidth) + ", " + String.valueOf(allowScaling) + ", "
-                + String.valueOf(minScaleFactor) + ", " + String.valueOf(maxScaleFactor) + ", "
-                + String.valueOf(scaleBins) + ", " + String.valueOf(objectsToFind) + ")\n");
-    }
 }
