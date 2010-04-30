@@ -1,15 +1,9 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.model.algorithms.AlgorithmSphereGeneration.IntTorquato95ModelMean;
-import gov.nih.mipav.model.algorithms.AlgorithmSphereGeneration.IntTorquato95ModelMean2;
-import gov.nih.mipav.model.algorithms.AlgorithmSphereGeneration.IntTorquatoModelMean;
-import gov.nih.mipav.model.algorithms.AlgorithmSphereGeneration.IntTorquatoModelMean2;
+
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.*;
-
 import java.io.*;
 import java.util.*;
 
@@ -260,11 +254,11 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
         double totalDeviateFourth;
         double skewness;
         double kurtosis;
-        double chiSquaredOfTwo;
+        //double chiSquaredOfTwo;
         double density;
-        double observedFrequency[] = new double[7];
-        double theoreticalFrequency[] = new double[7];
-        double chiSquaredOfFour;
+        //double observedFrequency[] = new double[7];
+        //double theoreticalFrequency[] = new double[7];
+        //double chiSquaredOfFour;
         double z;
         int boundaryDistance;
         int circlesLeft;
