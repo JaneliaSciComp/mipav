@@ -1,46 +1,18 @@
 package gov.nih.mipav.model.algorithms;
 
-import WildMagic.LibFoundation.Mathematics.Vector3f;
 
-import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
-
 import java.awt.*;
-
 import java.io.*;
-
 import java.util.*;
 
 
 /**
- * Two-Dimensional mathmatical morphology class. Kernels of 3x3 (4 or 8 connected) and 5x5 (12 connected) are available
+ * Two-Dimensional mathematical morphology class applied to Gray scale images. Kernels of 3x3 (4 or 8 connected) and 5x5 (12 connected) are available
  * or user defined kernels can be supplied.
  *
- * <p>Methods include:</p>
- *
- * <ul>
- *   <li>Background Distance Map</li>
- *   <li>Bottom hat</li>
- *   <li>close</li>
- *   <li>Delete objects</li>
- *   <li>dilate</li>
- *   <li>Distance Map</li>
- *   <li>erode</li>
- *   <li>fill holes</li>
- *   <li>find edges</li>
- *   <li>Identify objects</li>
- *   <li>Morphological gradient</li>
- *   <li>Morphological laplacian</li>
- *   <li>open</li>
- *   <li>Particle Analysis</li>
- *   <li>Skeletonize with pruning option</li>
- *   <li>Top hat</li>
- *   <li>ultimate erode</li>
- * </ul>
- *
- * @version  1.0 March 15, 1998
+ * @version  1.0 March 15, 1998 
  * @author   Matthew J. McAuliffe, Ph.D.
  */
 public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
