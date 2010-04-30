@@ -185,9 +185,6 @@ import java.util.*;
  * <p>3.) Measurement of co-localization of objects in dual-colour confocal images by E.M.M.Manders, F.J.Verbeek, and
  * J.A.Aten, Journal of Microscopy, Vol. 169, Pt. 3, March, 1993, pp. 375-382.</p>
  *
- * <p>4.) Eigenvalue software for solving the orthogonal least squares problem is found at the site
- * www.magic-software.com</p>
- *
  * <p>5.) Equations for slope and offset of the orthogonal least squares problem from A Critical Examination of
  * Orthogonal Regression and an application to tests of firm size interchangeability by Gishan Dissanaike and Shiyun
  * Wang</p>
@@ -6042,7 +6039,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         boolean transformVOI = false;
         boolean clip = true;
         TransMatrix xfrm;
-        double[][] mat;
         double min1, min2, max1, max2, range1, range2, scale1, scale2;
         double averagex, averagey;
         double diffx, diffy;
@@ -7711,12 +7707,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 }
             }
 
-            /*kES = new AlgorithmEigensolver(2);
-             * kES.setMatrix(0,0,sumy2); kES.setMatrix(0,1,-sumxy); kES.setMatrix(1,0,-sumxy); kES.setMatrix(1,1,sumx2);
-             * kES.solve(); // Eigenvectors are stored in increasing order // Get the eigenvector for the smallest value
-             * // The eigenvector of the ith eigenvalue is stored in // the ith column directionx =
-             * kES.getEigenvector(0,0); directiony = kES.getEigenvector(1,0); delta = directiony/directionx; a =
-             * (float)(delta);*/
             varx = sumx2 / (count - 1);
             vary = sumy2 / (count - 1);
             covarxy = sumxy / (count - 1);
@@ -8404,9 +8394,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         boolean morex, morey;
         float lastx, lasty;
 
-        // AlgorithmEigensolver kES;
-        // double directionx;
-        // double directiony;
         int ch1, ch2;
         float ch1f, ch2f;
         double lineMax1, lineMax2;
@@ -9375,12 +9362,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 sumy2 += diffy * diffy;
             }
 
-            /*kES = new AlgorithmEigensolver(2);
-             * kES.setMatrix(0,0,sumy2); kES.setMatrix(0,1,-sumxy); kES.setMatrix(1,0,-sumxy); kES.setMatrix(1,1,sumx2);
-             * kES.solve(); // Eigenvectors are stored in increasing order // Get the eigenvector for the smallest value
-             * // The eigenvector of the ith eigenvalue is stored in // the ith column directionx =
-             * kES.getEigenvector(0,0); directiony = kES.getEigenvector(1,0); delta = directiony/directionx; a =
-             * (float)(delta);*/
             float aa;
             varx = sumx2 / (count - 1);
             vary = sumy2 / (count - 1);
@@ -10135,12 +10116,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 }
             }
 
-            /*kES = new AlgorithmEigensolver(2);
-             * kES.setMatrix(0,0,sumy2); kES.setMatrix(0,1,-sumxy); kES.setMatrix(1,0,-sumxy); kES.setMatrix(1,1,sumx2);
-             * kES.solve(); // Eigenvectors are stored in increasing order // Get the eigenvector for the smallest value
-             * // The eigenvector of the ith eigenvalue is stored in // the ith column directionx =
-             * kES.getEigenvector(0,0); directiony = kES.getEigenvector(1,0); delta = directiony/directionx; a =
-             * (float)(delta);*/
+
             varx = sumx2 / (count - 1);
             vary = sumy2 / (count - 1);
             covarxy = sumxy / (count - 1);
@@ -10876,7 +10852,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         boolean clip = true;
         int c;
         TransMatrix xfrm;
-        double[][] mat;
         double max1, max2, range1, range2;
         double averagex, averagey;
         double diffx, diffy;
@@ -10891,9 +10866,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         boolean morex, morey;
         float lastx, lasty;
 
-        // AlgorithmEigensolver kES;
-        // double directionx;
-        // double directiony;
         int ch1, ch2;
         float ch1f, ch2f;
         double lineMax1, lineMax2;
@@ -11967,12 +11939,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 sumy2 += diffy * diffy;
             }
 
-            /*kES = new AlgorithmEigensolver(2);
-             * kES.setMatrix(0,0,sumy2); kES.setMatrix(0,1,-sumxy); kES.setMatrix(1,0,-sumxy); kES.setMatrix(1,1,sumx2);
-             * kES.solve(); // Eigenvectors are stored in increasing order // Get the eigenvector for the smallest value
-             * // The eigenvector of the ith eigenvalue is stored in // the ith column directionx =
-             * kES.getEigenvector(0,0); directiony = kES.getEigenvector(1,0); delta = directiony/directionx; a =
-             * (float)(delta);*/
+
             float aa;
             varx = sumx2 / (count - 1);
             vary = sumy2 / (count - 1);
@@ -12724,12 +12691,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 }
             }
 
-            /*kES = new AlgorithmEigensolver(2);
-             * kES.setMatrix(0,0,sumy2); kES.setMatrix(0,1,-sumxy); kES.setMatrix(1,0,-sumxy); kES.setMatrix(1,1,sumx2);
-             * kES.solve(); // Eigenvectors are stored in increasing order // Get the eigenvector for the smallest value
-             * // The eigenvector of the ith eigenvalue is stored in // the ith column directionx =
-             * kES.getEigenvector(0,0); directiony = kES.getEigenvector(1,0); delta = directiony/directionx; a =
-             * (float)(delta);*/
+
             float aa;
             varx = sumx2 / (count - 1);
             vary = sumy2 / (count - 1);
