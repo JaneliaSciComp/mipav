@@ -156,8 +156,6 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
             }
         }
 
-        final int length1 = i;
-
         fireProgressStateChanged("Building vertex data.");
         fireProgressStateChanged(60);
 
@@ -183,8 +181,6 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
                 cVertex[i++] = new Vector3f(x - (xDim / 2), - (y - (yDim / 2)), height);
             }
         }
-
-        final int length2 = i;
 
         if (threadStopped) {
             finalize();
