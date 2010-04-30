@@ -4,13 +4,10 @@ import WildMagic.LibFoundation.Mathematics.Vector2f;
 
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
-
 import java.io.*;
-
 import java.util.*;
 
 
@@ -2156,32 +2153,5 @@ public class AlgorithmGVF extends AlgorithmBase implements AlgorithmInterface {
             outputBuffer = convolver.getOutputBuffer();
         }
     }
-
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
-
-    /**
-     * Simple structure to use in the AlgorithmGVF for special purpose.
-     */
-    private class PointGM {
-
-        /** DOCUMENT ME! */
-        public float gradMag;
-
-        /** DOCUMENT ME! */
-        public int index;
-
-        /**
-         * Creates a new PointGM object.
-         *
-         * @param  i         DOCUMENT ME!
-         * @param  _gradMag  DOCUMENT ME!
-         */
-        public PointGM(int i, float _gradMag) {
-            index = i;
-            gradMag = _gradMag;
-
-        }
-    }
-    
     
 }
