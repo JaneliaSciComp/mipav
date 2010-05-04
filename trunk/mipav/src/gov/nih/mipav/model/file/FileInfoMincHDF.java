@@ -311,8 +311,13 @@ public class FileInfoMincHDF extends FileInfoBase {
             startLocs[1] = mincStartLoc[1];
             startLocs[2] = mincStartLoc[2] + (step[2] * slice);
         }
-
-        final TransMatrix matrix = new TransMatrix(getExtents().length + 1);
+        TransMatrix matrix;
+        if(getExtents().length == 4) {
+        	matrix = new TransMatrix(4);
+        }else {
+        	matrix = new TransMatrix(getExtents().length + 1);
+        }
+        
         matrix.MakeIdentity();
 
         for (int i = 0; i < 3; i++) {
