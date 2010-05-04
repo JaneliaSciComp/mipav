@@ -1,9 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
-
 public class Statistics {
     
     /** Also known as the normal probability function */
