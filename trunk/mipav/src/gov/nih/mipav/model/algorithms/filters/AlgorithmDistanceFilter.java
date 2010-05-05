@@ -2,67 +2,23 @@ package gov.nih.mipav.model.algorithms.filters;
 
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.ViewJFrameImage;
 
-import java.awt.Dimension;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Vector;
-
 
 
 public class AlgorithmDistanceFilter extends AlgorithmBase {
 
-    
-    
-    /** DOCUMENT ME! */
-    private float[] finalData; // final data
-
-    /** DOCUMENT ME! */
-    private float[] iKernel; // ideal kernel data
 
     /** DOCUMENT ME! */
     private float[] imagData; // imaginary data
 
-    /** DOCUMENT ME! */
-    private float[] imagKernelData; // imaginary kernel data
 
-    /** DOCUMENT ME! */
-    private int kDim; // kernel diameter
-
-    /** DOCUMENT ME! */
-    private float minimum, maximum;
-
-    /** DOCUMENT ME! */
-    private int ndim; // number of dimensions
-
-    /** DOCUMENT ME! */
-    private int newArrayLength; // size of zero padded buffers
-
-    /** DOCUMENT ME! */
-    private int[] newDimLengths; // zero padded dimension sizes
-
-    /** DOCUMENT ME! */
-    private int newSliceSize;
-
-    /** DOCUMENT ME! */
-    private int originalArrayLength; // size of original buffers (realData and imagData)
-
-    /** DOCUMENT ME! */
-    private int[] originalDimLengths; // original dimension sizes
-
-    /** DOCUMENT ME! */
-    private float[] realData; // real data
-
-    /** DOCUMENT ME! */
-    private float[] realKernelData; // real kernel data
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     private float[] originalBuffer;
@@ -85,16 +41,9 @@ public class AlgorithmDistanceFilter extends AlgorithmBase {
      * Prepares this class for destruction.
      */
     public void finalize() {
-        /*
-        realData = null; // real data
-        imagData = null; // imaginary data
-        realKernelData = null; // real kernel data
-        imagKernelData = null; // imaginary kernel data
-        iKernel = null; // ideal kernel data
-        destImage = null;
-        srcImage = null;
-        super.finalize();
-        */
+    	imagData = null; 
+    	super.finalize();
+        
     }
 
     /**
@@ -104,15 +53,6 @@ public class AlgorithmDistanceFilter extends AlgorithmBase {
      */
     public float[] getImaginaryData() {
         return imagData;
-    }
-
-        /**
-     * Returns reference to real data array.
-     *
-     * @return  the reference the the real datat array
-     */
-    public float[] getRealData() {
-        return realData;
     }
 
     /**
@@ -127,7 +67,6 @@ public class AlgorithmDistanceFilter extends AlgorithmBase {
         }
 
         calcDistance();
-        
     }
 
 
