@@ -4048,9 +4048,18 @@ public class FileIO {
             while (e.hasMoreElements()) {
                 final String keyStr = e.nextElement();
                 final FileDicomKey key = new FileDicomKey(keyStr);
-                final FileDicomTag tag = new FileDicomTag(DicomDictionary.getInfo(key));
-                tag.setValue(mincTags.get(keyStr));
-                tags2save.put(key, tag);
+                if(DicomDictionary.getInfo(key) != null) {
+                	FileDicomTag tag = new FileDicomTag(DicomDictionary.getInfo(key));
+                    try {
+                    	tag.setValue(mincTags.get(keyStr));
+                    	tags2save.put(key, tag);
+                    }catch(Exception ex) {
+                    	Preferences.debug("Error in setting value: " + mincTags.get(keyStr)+ " of tag: " + keyStr + "\n",Preferences.DEBUG_FILEIO);
+                    }
+                }else {
+                	Preferences.debug("Tag not in Dicom Dictionary..skipping over tag: " + keyStr + "\n",Preferences.DEBUG_FILEIO);
+                }
+                
             }
         }
 
