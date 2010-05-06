@@ -493,7 +493,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
         else
         {
-            if ( !kVOI.lastElement().equals( kFilePt ) )
+            if ( (kVOI.size() == 0) || !kVOI.lastElement().equals( kFilePt ) )
             {
                 kVOI.add( kFilePt );
             }
