@@ -500,20 +500,8 @@ public abstract class NLConstrainedEngine {
     /** scalar containing the predicted reduction in the objective if pseudoRank from previous step is used. */
     private double prekm1;
 
-    /**
-     * integer scalar containing the pseudo rank of the matrix jhat at the termination point a. jhat is the Jacobian
-     * matrix with columns corresponding to active constraints deleted
-     */
-    private int pseudoRank;
-
-    /** Create wrapper for routine gndunc. */
-    private int[] pseudoRankMat = new int[1];
-
     /** DOCUMENT ME! */
     private double rabs;
-
-    /** DOCUMENT ME! */
-    private int rank;
 
     /** DOCUMENT ME! */
     private boolean restart;
@@ -2084,7 +2072,7 @@ public abstract class NLConstrainedEngine {
     /**
      * DOCUMENT ME!
      */
-    private void analuc() {
+    private void analuc(int prank[]) {
         // CHECK IF PREVIOUS STEP WAS SUFFICIENTLY GOOD AND DECIDE IF THE SEARCH
         // DIRECTION (DX=GAUSS-NEWTON DIRECTION) FOR CURRENT STEP SHALL BE RECOMPUTED
 
@@ -2200,6 +2188,7 @@ public abstract class NLConstrainedEngine {
         // COMPLETELY DESTROYED IF ABS(kod)=2 ON RETURN
         // w0      UNCHANGED IF kod=-1 ON RETURN
         // COMPLETELY DESTROYED IF ABS(kod)=2 ON RETURN
+    	int rank[] = new int[1];
 
         eval = 0;
 
@@ -2227,14 +2216,14 @@ public abstract class NLConstrainedEngine {
         if (Math.abs(secind) != 2) {
             // USE MINIMIZATION IN SUBSPACE TO RECOMPUTE
 
-            subuc();
+            subuc(prank, rank);
             kod = -1;
 
-            if (rank == pseudoRank) {
+            if (rank[0] == prank[0]) {
                 kod = 1;
             }
 
-            pseudoRank = rank;
+            prank[0] = rank[0];
             errorStatus = 0;
             restart = false;
 
@@ -2249,7 +2238,7 @@ public abstract class NLConstrainedEngine {
         } else {
             secuc();
             kod = secind;
-            pseudoRank = -(param - constraintAct);
+            prank[0] = -(param - constraintAct);
             dxnorm = dnrm2(param, dx, 1);
         } // else
 
@@ -2264,7 +2253,7 @@ public abstract class NLConstrainedEngine {
      * @param  internalScaling  DOCUMENT ME!
      * @param  work             DOCUMENT ME!
      */
-    private void btrunc(boolean internalScaling, double[] work) {
+    private void btrunc(int prank[], boolean internalScaling, double[] work) {
         // BACKTRANSFORM SO THAT   DY:=D*E*DX
         // WHERE DX IS A param-VECTOR
         // E IS A PERMUTATION MATRIX param*param
@@ -2293,9 +2282,9 @@ public abstract class NLConstrainedEngine {
             return;
         }
 
-        if (pseudoRank != param) {
+        if (prank[0] != param) {
 
-            for (i = pseudoRank; i < param; i++) {
+            for (i = prank[0]; i < param; i++) {
                 dx[i] = 0.0;
             }
         }
@@ -2538,7 +2527,7 @@ public abstract class NLConstrainedEngine {
     /**
      * DOCUMENT ME!
      */
-    private void dimsub() {
+    private void dimsub(int prank[], int rank[]) {
         // FIND APPROPRIATE DIMENSION OF SUBSPACE WHERE MINIMIZATION SHALL BE DONE
 
         // ON ENTRY
@@ -2617,7 +2606,7 @@ public abstract class NLConstrainedEngine {
                 w1[i] = -residuals[i];
             }
 
-            sqrsl(covarMat, nPts, pseudoRank, w0, w1, dummy, w1, dummy, dummy, dummy, 1000);
+            sqrsl(covarMat, nPts, prank[0], w0, w1, dummy, w1, dummy, dummy, dummy, 1000);
 
             // COMPUTE ESTIMATES OF STEPLENGTHS w1[i] AND PROGRESS WORK[i]
 
@@ -2630,7 +2619,7 @@ public abstract class NLConstrainedEngine {
                 w1[0] = w1[0] * diag[j] / covarMat[0][0];
             }
 
-            for (i = 1; i < pseudoRank; i++) {
+            for (i = 1; i < prank[0]; i++) {
                 work[i] = w1[i];
 
                 if (internalScaling) {
@@ -2648,12 +2637,12 @@ public abstract class NLConstrainedEngine {
                 work[i] = dnrm2(2, temp, 1);
             } // for (i = 1; i < pseudoRank; i++)
 
-            sn = w1[pseudoRank - 1];
-            bn = work[pseudoRank - 1];
+            sn = w1[prank[0] - 1];
+            bn = work[prank[0] - 1];
 
             // DETERMINE THE LOWEST POSSIBLE DIMENSION
 
-            for (i = 0; i < pseudoRank; i++) {
+            for (i = 0; i < prank[0]; i++) {
                 mindim = i + 1;
 
                 if (work[i] > (rabs * bn)) {
@@ -2662,11 +2651,11 @@ public abstract class NLConstrainedEngine {
             } // for (i = 0; i <  pseduoRank; i++)
 
             if (kod == 1) {
-                pregn(work, mindim);
+                pregn(work, mindim, prank, rank);
             }
 
             if (kod == -1) {
-                presub(work);
+                presub(work, prank, rank);
             }
 
             return;
@@ -2687,10 +2676,10 @@ public abstract class NLConstrainedEngine {
             irank = lattry;
         }
 
-        rank = lattry - 1;
+        rank[0] = lattry - 1;
 
         if (lattry <= 1) {
-            rank = irank;
+            rank[0] = irank;
             iters++;
             lattry = 0;
         }
@@ -2989,7 +2978,7 @@ mainLoop:
     /**
      * DOCUMENT ME!
      */
-    private void evreuc() {
+    private void evreuc(int prank[]) {
         // CHECK IF PREVIOUS STEP WAS A COMPLETE FAILURE
         // I.E.  IF THE VALUE OF THE OBJECTIVE FUNCTION INCREASED
         // IN CURRENT STEP WE RESTART AT PREVIOUS POINT
@@ -3076,7 +3065,7 @@ mainLoop:
         	}
             itotal++;
             icount++;
-            lattry = pseudoRank;
+            lattry = prank[0];
             philat = phi;
         } // if restart
         else if (errorStatus == -5) {
@@ -3091,7 +3080,7 @@ mainLoop:
             // NO RESTART.UPDATE HISTORY VARIABLES
 
             icount = 0;
-            lattry = pseudoRank;
+            lattry = prank[0];
             betkm2 = betkm1;
             alfkm2 = alfkm1;
             kodkm2 = kodkm1;
@@ -3101,7 +3090,7 @@ mainLoop:
             dxnkm1 = dxnorm;
             alfkm1 = alpha;
             aupkm1 = alphup;
-            rngkm1 = pseudoRank;
+            rngkm1 = prank[0];
             kodkm1 = kod;
 
             // CHECK IF ANY BOUND IS CROSSED.IF SO, MAKE THE
@@ -3464,7 +3453,7 @@ mainLoop:
      *
      * @return  DOCUMENT ME!
      */
-    private double gndunc(boolean internalScaling, int[] pseudoRankMat, double[] work) {
+    private double gndunc(boolean internalScaling, int[] prank, double[] work) {
         // COMPUTE THE SOLUTION (DX) OF THE SYSTEM              T R*D*E*DX = -Q *residuals WHERE R IS param*param UPPER
         // TRIANGULAR D IS param*param DIAGONAL MATRIX E IS param*param PERMUTATION MATRIX Q IS nPts*nPts ORTHOGONAL
         // MATRIX residuals IS AN nPts-VECTOR THE SOLUTION WILL BE COMPUTED BY ONLY USING THE FIRST PRANK <= param
@@ -3500,31 +3489,28 @@ mainLoop:
         // -Q *F
 
         double d1sqs;
-        int pseudoRank;
         int i, j;
         double[] dummy = new double[1];
         double temp;
 
-        pseudoRank = pseudoRankMat[0];
         d1sqs = 0.0;
 
         for (j = 0; j < nPts; j++) {
             w1[j] = -residuals[j];
         }
 
-        if ((param == 0) || (pseudoRank <= 0)) {
+        if ((param == 0) || (prank[0] <= 0)) {
             return d1sqs;
         }
         // T
         // COMPUTE THE SOLUTION DX,THE PROJECTION  -V  AND w1 = -Q * residuals
 
-        sqrsl(covarMat, nPts, pseudoRank, w0, w1, dummy, w1, dx, dummy, v, 1101);
-        temp = dnrm2(pseudoRank, w1, 1);
+        sqrsl(covarMat, nPts, prank[0], w0, w1, dummy, w1, dx, dummy, v, 1101);
+        temp = dnrm2(prank[0], w1, 1);
         d1sqs = temp * temp;
 
         if (info == 0) {
-            btrunc(internalScaling, work);
-            pseudoRankMat[0] = pseudoRank;
+            btrunc(prank, internalScaling, work);
 
             return d1sqs;
         }
@@ -3533,20 +3519,19 @@ mainLoop:
         // INFO = INDEX OF THE FIRST ZERO DIAGONAL ELEMENT OF R+1
         // SOLVE UPPER TRIANGULAR SYSTEM
 
-        pseudoRank = info-1;
+        prank[0] = info-1;
 
         for (j = 0; j < param; j++) {
             dx[j] = w1[j];
         }
 
-        if (pseudoRank <= 0) {
-            btrunc(internalScaling, work);
-            pseudoRankMat[0] = pseudoRank;
+        if (prank[0] <= 0) {
+            btrunc(prank,internalScaling, work);
 
             return d1sqs;
         }
 
-        strsl(w1);
+        strsl(prank,w1);
 
         // MOVE SOLUTION OF TRIANGULAR SYSTEM TO DX
 
@@ -3558,8 +3543,7 @@ mainLoop:
 
         // DO BACKTRANSFORMATIONS   DX:=D*E*DX
 
-        btrunc(internalScaling, work);
-        pseudoRankMat[0] = pseudoRank;
+        btrunc(prank,internalScaling, work);
 
         return d1sqs;
     }
@@ -4246,6 +4230,7 @@ mainLoop:
         // J *J = D  *E*R *R*E *D     (J *J)   = D*E*R  *(R )  *E *D
 
         // WHICH IS THE MAIN PART OF THE COVARIANCE MATRIX
+    	int prank[] = new int[1];
         int i, paramCons;
 
         // a small positive value used to determine the pseudo rank
@@ -4367,7 +4352,7 @@ mainLoop:
         while (loop) {
 
             if (doSoliuc) {
-                soliuc(tau);
+                soliuc(tau, prank);
 
                 if (errorStatus < -10) {
                     exitStatus = errorStatus;
@@ -4406,7 +4391,7 @@ mainLoop:
             doSoliuc = true;
 
             // Check main termination criteria
-            termuc(aNorm);
+            termuc(prank, aNorm);
 
             // If exitStatus <> 0, the iteration is finished
             if (exitStatus != 0) {
@@ -4420,7 +4405,7 @@ mainLoop:
             }
 
             // Analyze the past and sometimes recompute the search direction
-            analuc();
+            analuc(prank);
             if (outputMes) {
 	            Preferences.debug("POINT\n");
 	
@@ -4428,7 +4413,7 @@ mainLoop:
 	                Preferences.debug(a[i] + "\n");
 	            }
 	
-	            Preferences.debug("pseudorank = " + pseudoRank + "\n");
+	            Preferences.debug("prank[0] = " + prank[0] + "\n");
 	            Preferences.debug("DIRECTION\n");
 	
 	            for (i = 0; i < param; i++) {
@@ -4467,7 +4452,7 @@ mainLoop:
             }
 
             // Compute step length and take a step
-            stepuc();
+            stepuc(prank);
 
             if (errorStatus < -10) {
                 exitStatus = errorStatus;
@@ -4482,7 +4467,7 @@ mainLoop:
             // Possibly a restart is done
             // If no restart is done, variables representing the past
             // are updated
-            evreuc();
+            evreuc(prank);
 
             if (errorStatus < -10) {
                 exitStatus = errorStatus;
@@ -5023,7 +5008,7 @@ mainLoop:
      * @param  work    DOCUMENT ME!
      * @param  mindim  DOCUMENT ME!
      */
-    private void pregn(double[] work, int mindim) {
+    private void pregn(double[] work, int mindim, int prank[], int dim[]) {
         // GN-STEP IN PREVIOUS STEP
         // TAKE rank AS THE LARGEST k (mindim<=k<=pseudoRank-1) FOR WHICH
         // w1[k-1] < smax*sn AND work[-1k] > rmin*bn
@@ -5034,11 +5019,11 @@ mainLoop:
 
         smax = 0.2;
         rmin = 0.5;
-        m1 = pseudoRank - 1;
-        k = pseudoRank;
+        m1 = prank[0] - 1;
+        k = prank[0];
 
         if (mindim > m1) {
-            rank = k;
+            dim[0] = k;
 
             return;
         }
@@ -5047,13 +5032,13 @@ mainLoop:
             k = m1 - i + mindim;
 
             if ((w1[k - 1] < (smax * sn)) && (work[k - 1] > (rmin * bn))) {
-                rank = k;
+                dim[0] = k;
 
                 return;
             }
         } // for (i = mindim; i <= m1; i++)
 
-        rank = Math.max(mindim, pseudoRank - 1);
+        dim[0] = Math.max(mindim, prank[0] - 1);
 
         return;
     }
@@ -5063,7 +5048,7 @@ mainLoop:
      *
      * @param  work  DOCUMENT ME!
      */
-    private void presub(double[] work) {
+    private void presub(double[] work, int prank[], int rank[]) {
         // SUBSPACE MINIMIZATION IN LATEST STEP
 
         int i, i1;
@@ -5083,28 +5068,28 @@ mainLoop:
 
             // A BAD STEP
 
-            rank = Math.max(1, rngkm1 - 1);
+            rank[0] = Math.max(1, rngkm1 - 1);
 
-            if ((rngkm1 > 1) && (work[rank - 1] > (rabs * bn))) {
+            if ((rngkm1 > 1) && (work[rank[0] - 1] > (rabs * bn))) {
                 return;
             }
         }
 
-        rank = rngkm1;
+        rank[0] = rngkm1;
 
-        if ((work[rank - 1] > (predb * bn)) && ((rlenb * w1[rank - 1]) < w1[rank])) {
+        if ((work[rank[0] - 1] > (predb * bn)) && ((rlenb * w1[rank[0] - 1]) < w1[rank[0]])) {
             return;
         }
 
         i1 = rngkm1 + 1;
 
-        for (i = i1; i <= pseudoRank; i++) {
-            rank = i;
+        for (i = i1; i <= prank[0]; i++) {
+            rank[0] = i;
 
             if (work[i - 1] > (predb * bn)) {
                 break;
             }
-        } // for (i = i1; i <= pseudoRank; i++)
+        } // for (i = i1; i <= prank[0]; i++)
 
         return;
     }
@@ -5856,7 +5841,7 @@ mainLoop:
      *
      * @param  tau  DOCUMENT ME!
      */
-    private void soliuc(double tau) {
+    private void soliuc(double tau, int prank[]) {
 
         /**
          * @param tau double scalar containing a small positive value used           to determine the pseudo rank of the
@@ -5874,7 +5859,8 @@ mainLoop:
 
         // pseudoRank scalar containing the pseudo rank of the matrix J
         // that was used to compute dx
-        int i, j, jj, k, inds, kk, ii, lprank, mr, kmax;
+        int i, j, jj, k, inds, kk, ii, mr, kmax;
+        int lprank[] = new int[1];
         int[] ip = new int[1];
         double tol, d1max, d1new;
         double ymax = 0.0;
@@ -5928,7 +5914,7 @@ mainLoop:
         // ALSO DETERMINE PSEUDO RANK OF MATRIX J*D
 
         tol = Math.sqrt(param) * tau;
-        pseudoRank = triunc(tol, constraintAct);
+        triunc(tol, constraintAct, prank);
 
         // COMPUTE THE "PSEUDO INVERSE" SOLUTION (DX) BY USING pseudoRank AS
         // PSEUDO RANK OF MATRIX J*D
@@ -5936,9 +5922,7 @@ mainLoop:
         // AND       D1SQS= PREDICTED REDUCTION IN THE OBJECTIVE
         // BETA = THE NORM OF ORTH. PROJ. OF residuals ONTO COLUMN
         // SPACE OF THE JACOBIAN J
-        pseudoRankMat[0] = pseudoRank;
-        d1sqs = gndunc(internalScaling, pseudoRankMat, work);
-        pseudoRank = pseudoRankMat[0];
+        d1sqs = gndunc(internalScaling, prank, work);
         if (outputMes) {
 	        Preferences.debug("The right hand side\n");
 	
@@ -5965,7 +5949,7 @@ mainLoop:
         // reduction in the objective
         if (outputMes) {
 	        Preferences.debug("constraintAct = " + constraintAct + "\n");
-	        Preferences.debug("pseudoRank = " + pseudoRank + "\n");
+	        Preferences.debug("prank[0] = " + prank[0] + "\n");
 	        Preferences.debug("imax = " + imax + "\n");
         }
 
@@ -5996,11 +5980,11 @@ mainLoop:
                 continue;
             }
 
-            if (pseudoRank < (param - constraintAct)) {
+            if (prank[0] < (param - constraintAct)) {
                 k = 0;
                 kk = 0;
                 if (outputMes) {
-                    Preferences.debug("Not full rank: pseudoRank = " + pseudoRank + "\n");
+                    Preferences.debug("Not full rank: prank[0] = " + prank[0] + "\n");
                 }
                 inds = aset[i];
                 aset[i] = 0;
@@ -6010,13 +5994,11 @@ mainLoop:
                     System.exit(errorStatus);
                 }
 
-                lprank = triunc(tol, constraintAct - 1);
+                triunc(tol, constraintAct - 1,lprank);
                 if (outputMes) {
                     Preferences.debug("lprank = " + lprank + "\n");
-                }
-                pseudoRankMat[0] = lprank;
-                d1new = gndunc(false, pseudoRankMat, work);
-                lprank = pseudoRankMat[0];
+                }     
+                d1new = gndunc(false, lprank, work);
                 if (outputMes) {
 	                Preferences.debug("New search direction\n");
 	
@@ -6030,7 +6012,7 @@ mainLoop:
                 if ((dx[i] * inds * (bu[i] - bl[i])) <= 0.0) {
                     continue;
                 }
-            } // if (pseudoRank < (param - constraintAct))
+            } // if (prank[0] < (param - constraintAct))
             else {
                 k = param - constraintAct + ii;
                 ii++;
@@ -6127,7 +6109,7 @@ mainLoop:
             imax = i;
         } // for (i = 0; i < param; i++)
 
-        if (pseudoRank < (param - constraintAct)) {
+        if (prank[0] < (param - constraintAct)) {
 
             if (imax != -1) {
                 ival = aset[imax];
@@ -6136,10 +6118,8 @@ mainLoop:
             } // if (imax != -1)
 
             newunc();
-            pseudoRank = triunc(tol, constraintAct);
-            pseudoRankMat[0] = pseudoRank;
-            d1sqs = gndunc(false, pseudoRankMat, work);
-            pseudoRank = pseudoRankMat[0];
+            triunc(tol, constraintAct,prank);
+            d1sqs = gndunc(false, prank, work);
             beta = dnrm2(param - constraintAct, w1, 1);
             prekm1 = beta;
         } // if (pseudoRank < (param - constraintAct))
@@ -6220,7 +6200,7 @@ mainLoop:
 
             ival = aset[imax];
             aset[imax] = 0;
-            pseudoRank++;
+            prank[0]++;
             constraintAct--;
             beta = dnrm2(param - constraintAct, w1, 1);
             prekm1 = beta;
@@ -6233,10 +6213,10 @@ mainLoop:
             }
 
             dx[kk] = ymax;
-            strsl(dx);
+            strsl(prank, dx);
 
             // back transform
-            btrunc(internalScaling, w2);
+            btrunc(prank, internalScaling, w2);
             if (outputMes) {
 	            Preferences.debug("Full rank new search direction\n");
 	
@@ -6948,7 +6928,7 @@ mainLoop:
     /**
      * DOCUMENT ME!
      */
-    private void stepuc() {
+    private void stepuc(int prank[]) {
         // COMPUTE THE STEPLENGTH ALPHA IN THE ITERATION
         // aNew := aOld + alpha*dx           (1)
 
@@ -7078,7 +7058,7 @@ mainLoop:
         if (Math.abs(kod) != 2) {
             magfy = 3.0;
 
-            if (pseudoRank < rngkm1) {
+            if (prank[0] < rngkm1) {
                 magfy = 6.0;
             }
 
@@ -7172,7 +7152,7 @@ mainLoop:
      *
      * @param  b  DOCUMENT ME!
      */
-    private void strsl(double[] b) {
+    private void strsl(int prank[], double[] b) {
         // STRSL SOLVES SYSTEMS OF THE FORM
 
         // covarMat * X = B
@@ -7192,7 +7172,7 @@ mainLoop:
         double temp;
         int j, jj, k;
 
-        for (info = 0; info < pseudoRank; info++) {
+        for (info = 0; info < prank[0]; info++) {
 
             if (covarMat[info][info] == 0.0) {
             	info++;
@@ -7205,10 +7185,10 @@ mainLoop:
 
         // SOLVE covarMat*X=B FOR covarMat UPPER TRIANGULAR.
 
-        b[pseudoRank - 1] = b[pseudoRank - 1] / covarMat[pseudoRank - 1][pseudoRank - 1];
+        b[prank[0] - 1] = b[prank[0] - 1] / covarMat[prank[0] - 1][prank[0] - 1];
 
-        for (jj = 2; jj <= pseudoRank; jj++) {
-            j = pseudoRank - jj;
+        for (jj = 2; jj <= prank[0]; jj++) {
+            j = prank[0] - jj;
             temp = -b[j + 1];
 
             for (k = 0; k <= j; k++) {
@@ -7224,7 +7204,7 @@ mainLoop:
     /**
      * DOCUMENT ME!
      */
-    private void subuc() {
+    private void subuc(int prank[], int rank[]) {
         // COMPUTE A SEARCH DIRECTION dx BY MINIMIZING IN A SUBSPACE
         // I.E.  SOLVE THE UPPER TRIANGULAR SYSTEM            T
         // R*dx = -Q *residuals
@@ -7292,13 +7272,11 @@ mainLoop:
 
         // FIND APPROPRIATE SUBSPACE
 
-        dimsub();
+        dimsub(prank, rank);
 
         // COMPUTE SEARCH DIRECTION BY MINIMIZING IN A SUBSPACE OF DIMENSION RANK
 
-        pseudoRankMat[0] = rank;
-        d1sqs = gndunc(internalScaling, pseudoRankMat, work);
-        rank = pseudoRankMat[0];
+        d1sqs = gndunc(internalScaling, rank, work);
         dxnorm = dnrm2(param, dx, 1);
 
         return;
@@ -7309,7 +7287,7 @@ mainLoop:
      *
      * @param  aNorm  DOCUMENT ME!
      */
-    private void termuc(double aNorm) {
+    private void termuc(int prank[], double aNorm) {
         // CHECK IF ANY OF THE TERMINATION CRITERIA ARE SATISFIED
         // THE CONVERGENCE CRITERIA ARE ONLY CHECKED IF THE LATEST SEARCH
         // DIRECTION WAS COMPUTED USING THE GAUSS-NEWTON WITH FULL PSEUDO
@@ -7542,7 +7520,7 @@ mainLoop:
             return;
         }
 
-        if (pseudoRank != (param - constraintAct)) {
+        if (prank[0] != (param - constraintAct)) {
             exitStatus = exitStatus + 1;
 
             return;
@@ -7571,7 +7549,7 @@ mainLoop:
      *
      * @return  DOCUMENT ME!
      */
-    private int triunc(double tol, int constraintAct) {
+    private void triunc(double tol, int constraintAct, int prank[]) {
         // MAKE A QR-DECOMPOSITION OF THE nPts*param MATRIX covarMat BY USING THE ROUTINE SQRDC FROM LINPACK I.E.
         // DETEMINE MATRICES Q,E,R SO THAT      T                                          Q *covarMat*E = (R)
         //                                                (0) WHERE  Q IS nPts*nPts ORTHOGONAL E IS param*param
@@ -7601,8 +7579,9 @@ mainLoop:
         int i, j, k, nn;
         double r11;
 
+        prank[0] = param;
         if (param == 0) {
-            return 0;
+            return;
         }
 
         // INITIATE PIVOT VECTOR SO THAT ALL COLUMNS CORRESPONDING TO
@@ -7627,7 +7606,8 @@ mainLoop:
         nn = param - constraintAct;
 
         if (nn == 0) {
-            return 0;
+        	prank[0] = 0;
+            return;
         }
 
         for (i = 0; i < nn; i++) {
@@ -7649,7 +7629,8 @@ mainLoop:
             } // for (j = 0; j < nn; j++)
         } // if (k == -1)
 
-        return (k + 1);
+        prank[0] = k + 1;
+        return;
     }
 
     /**
