@@ -1102,6 +1102,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             }
             m_bDrawVOI = false;
             m_iNearStatus = NearNone;
+            m_kParent.setDefaultCursor();
         } 
     }
 

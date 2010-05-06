@@ -220,8 +220,10 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
         String command = event.getActionCommand();
         if ( command.equals(CustomUIBuilder.PARAM_VOI_COLOR.getActionCommand()) ) {
             showColorDialog();
+            setDefaultCursor();
         } else if (command.equals(CustomUIBuilder.PARAM_VOI_NEW.getActionCommand()) ) {
             newVOI(true);
+            setDefaultCursor();
         } else if ( command.equals(CustomUIBuilder.PARAM_VOI_LIVEWIRE.getActionCommand()) )
         {
             final JDialogLivewire dialog = new JDialogLivewire(null);
@@ -233,24 +235,32 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
                 }
                 m_kParent.PointerActive(iActive);
             }
+            setDefaultCursor();
         } else if (command.equals(CustomUIBuilder.PARAM_VOI_UNDO.getActionCommand()) ) {
             undoVOI();
+            setDefaultCursor();
         }  else if (command.equals(CustomUIBuilder.PARAM_VOI_REDO.getActionCommand()) ) {
             redoVOI();
+            setDefaultCursor();
         } else if (command.equals("OpacityPaint")) {
             new JDialogOpacityControls(null, this, m_fOpacity);
         } else if ( command.equals(CustomUIBuilder.PARAM_VOI_QUICK_AND_OP.getActionCommand() ) ) {
             saveImage(CustomUIBuilder.PARAM_VOI_QUICK_AND_OP.getActionCommand());
             createMask( m_kParent.getActiveImage(), true );
+            setDefaultCursor();
         } else if ( command.equals(CustomUIBuilder.PARAM_VOI_QUICK_NOT_OP.getActionCommand() ) ) {
             saveImage(CustomUIBuilder.PARAM_VOI_QUICK_NOT_OP.getActionCommand());
             createMask( m_kParent.getActiveImage(), false );
+            setDefaultCursor();
         } else if (command.equals(CustomUIBuilder.PARAM_VOI_3D_INTERSECTION.getActionCommand()) ) {
             m_kParent.create3DVOI(true);
+            setDefaultCursor();
         } else if (command.equals(CustomUIBuilder.PARAM_VOI_3D_UNION.getActionCommand()) ) {
             m_kParent.create3DVOI(false);
+            setDefaultCursor();
         } else if (command.equals(CustomUIBuilder.PARAM_VOI_PROPERTIES.getActionCommand())) {
             showVOIProperties();
+            setDefaultCursor();
         } else {
             doVOI(command);
         }
@@ -578,6 +588,7 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
             Vector3f kCenter = m_kParent.PropUp(m_iActive);
             setCenter( kCenter );
             paste();
+            setDefaultCursor();
         }
         else if ( kCommand.equals(CustomUIBuilder.PARAM_VOI_PROPAGATE_DOWN.getActionCommand()) )
         {
@@ -586,11 +597,13 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
             Vector3f kCenter = m_kParent.PropDown(m_iActive);
             setCenter( kCenter );
             paste();
+            setDefaultCursor();
         }
         else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_PROPAGATE_ALL.getActionCommand()) ) {
             saveVOIs(kCommand);
             cut();
             pasteAll();
+            setDefaultCursor();
         }
         else if ( kCommand.equals(CustomUIBuilder.PARAM_VOI_POINT_DELETE.getActionCommand()) ) 
         {
@@ -609,13 +622,16 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
         else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_CUT.getActionCommand()) ) {
             saveVOIs(kCommand);
             cut();
+            setDefaultCursor();
         } 
         else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_COPY.getActionCommand()) ) {
             copy();
+            setDefaultCursor();
         } 
         else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_PASTE.getActionCommand()) ) {
             saveVOIs(kCommand);
             paste();
+            setDefaultCursor();
         }
         else if ( kCommand.equals("MoveUP") )
         {
@@ -637,14 +653,15 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
             saveVOIs(kCommand);
             moveVOI( m_kVOIManagers[m_iActive], new Vector3f( 1, 0, 0 ), -1, true  );
         }        
-
-
-        boolean iActive = false;
-        for (int i = 0; i < m_kVOIManagers.length; i++) {
-            m_kVOIManagers[i].doVOI( kCommand, bDraw );
-            iActive |= m_kVOIManagers[i].isActive();
+        else
+        {
+            boolean iActive = false;
+            for (int i = 0; i < m_kVOIManagers.length; i++) {
+                m_kVOIManagers[i].doVOI( kCommand, bDraw );
+                iActive |= m_kVOIManagers[i].isActive();
+            }
+            m_kParent.PointerActive(iActive);
         }
-        m_kParent.PointerActive(iActive);
     }
 
 
@@ -1620,8 +1637,10 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
     }
 
     public void setDefaultCursor() {
-        m_kParent.setDefaultCursor();     
-        doVOI("");
+        toolbarBuilder.setPointerSelected();
+        actionPerformed( new ActionEvent ( this, 0, CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER.getActionCommand()) );
+        //m_kParent.setDefaultCursor();     
+        //doVOI( CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER.getActionCommand() );
     }
 
     public void setEnabled( boolean flag )

@@ -6132,10 +6132,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      */
     public Vector3f fileToScreen(Vector3f kFile) {
         Vector3f patientPt = new Vector3f(kFile);
-        if ( orientation != imageA.getImageOrientation() && orientation != FileInfoBase.UNKNOWN_ORIENT )
-        {
+        //if ( orientation != imageA.getImageOrientation() && orientation != FileInfoBase.UNKNOWN_ORIENT )
+        //{
             MipavCoordinateSystems.fileToPatient( kFile, patientPt, imageA, orientation );
-        }
+        //}
         Vector3f screenPt = new Vector3f();
         super.LocalToScreen( patientPt, screenPt );
         return screenPt;
@@ -6168,14 +6168,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             bClipped = true;
         }
         
-        if ( orientation != imageA.getImageOrientation() && orientation != FileInfoBase.UNKNOWN_ORIENT )
-        {
+        //if ( orientation != imageA.getImageOrientation() && orientation != FileInfoBase.UNKNOWN_ORIENT )
+        //{
             MipavCoordinateSystems.patientToFile( patientPt, kVolumePt, imageA, orientation );
-        }
-        else
-        {
-            kVolumePt.Copy(patientPt);
-        }
+        //}
+        //else
+        //{
+        //   kVolumePt.Copy(patientPt);
+        //}
         return bClipped;
     }
 
@@ -6196,14 +6196,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         {
             bClipped = true;
         }
-        if ( orientation != imageA.getImageOrientation() && orientation != FileInfoBase.UNKNOWN_ORIENT )
-        {
+        //if ( orientation != imageA.getImageOrientation() && orientation != FileInfoBase.UNKNOWN_ORIENT )
+        //{
             MipavCoordinateSystems.patientToFile( patientPt, kFile, imageA, orientation );
-        }
-        else
-        {
-            kFile.Copy(patientPt);
-        }
+        //}
+        //else
+        //{
+        //    kFile.Copy(patientPt);
+        //}
         return bClipped;
     }
 
@@ -6214,14 +6214,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         Vector3f patientPt = new Vector3f();
         super.ScreenToLocal( kScreen, patientPt );
         Vector3f kFile = new Vector3f();
-        if ( orientation != imageA.getImageOrientation() && orientation != FileInfoBase.UNKNOWN_ORIENT )
-        {
+        //if ( orientation != imageA.getImageOrientation() && orientation != FileInfoBase.UNKNOWN_ORIENT )
+        //{
             MipavCoordinateSystems.patientToFile( patientPt, kFile, imageA, orientation );
-        }
-        else
-        {
-            kFile.Copy(patientPt);
-        }
+        //}
+        //else
+        //{
+        //    kFile.Copy(patientPt);
+        //}
         return kFile;
     }
 
