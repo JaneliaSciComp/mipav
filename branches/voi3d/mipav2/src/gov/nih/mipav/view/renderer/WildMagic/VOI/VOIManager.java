@@ -676,7 +676,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_bSelected = false;
             if ( m_kCurrentVOI != null && !m_bQuickLUT )
             {
-                m_kCurrentVOI.setActive(false);
+                if ( !kCommand.equals(CustomUIBuilder.PARAM_VOI_SPLITTER.getActionCommand()) )
+                {
+                    m_kCurrentVOI.setActive(false);
+                }
                 m_kCurrentVOI = null;
             }
 
@@ -1250,6 +1253,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             }
             kSplitDialog = null;
             m_bDrawVOI = false;
+            m_kParent.setDefaultCursor( );
             return;
         }
         else if ( m_bDrawVOI && (m_iDrawType == LIVEWIRE) )
@@ -2036,7 +2040,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_fMouseX = iX;
             m_fMouseY = iY;
         }
-
         m_kCurrentVOI.setActive(false);
         if ( kOld != m_kCurrentVOI )
         {

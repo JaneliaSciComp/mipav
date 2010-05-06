@@ -15,7 +15,7 @@ public interface VOIManagerListener
     public void doVOI(String command);
     public void quickLUT(VOIBase kLUT);
     public void moveVOI( VOIManager kActive, Vector3f kDiff, int iPlane, boolean bFirstMove );
-    public void newVOI( boolean bPropagate );
+    public void newVOI( boolean bPropagate, boolean bSplit );
     public void saveVOIs( String kCommand );
     public void setActive( VOIManager kManager );
     public void setCurrentColor( );

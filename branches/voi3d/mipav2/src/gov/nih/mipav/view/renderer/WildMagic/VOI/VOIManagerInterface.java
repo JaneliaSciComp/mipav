@@ -222,7 +222,7 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
             showColorDialog();
             setDefaultCursor();
         } else if (command.equals(CustomUIBuilder.PARAM_VOI_NEW.getActionCommand()) ) {
-            newVOI(true);
+            newVOI(true, false);
             setDefaultCursor();
         } else if ( command.equals(CustomUIBuilder.PARAM_VOI_LIVEWIRE.getActionCommand()) )
         {
@@ -1349,9 +1349,12 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
         updateDisplay();
     }
 
-    public void newVOI( boolean bPropagate )
+    public void newVOI( boolean bPropagate, boolean bSplit )
     {
-        selectAllVOIs(false);
+        if ( !bSplit )
+        {
+            selectAllVOIs(false);
+        }
         if ( bPropagate )
         {
             doVOI(CustomUIBuilder.PARAM_VOI_NEW.getActionCommand());
@@ -2093,7 +2096,7 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
                             || (kImage.isRegistered( m_kCurrentVOIGroup ) == -1)) )
             {
                 m_kCurrentVOIGroup = null;
-                newVOI(false);
+                newVOI(false, kNew.isSplit());
             }
             if ( m_kCurrentVOIGroup == null )
             {
