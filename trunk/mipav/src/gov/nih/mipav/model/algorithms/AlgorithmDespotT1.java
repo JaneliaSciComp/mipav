@@ -39,13 +39,13 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
     
     private ModelImage largestImage = null;
     
-    private double despotTR = 5.00;
+    private double treTR = 5.00;
     private double irspgrTR = 5.00;
     private double irspgrKy = 96.00;
     private double irspgrFA = 5.00;
     private double maxT1 = 5000;
     private double maxMo = 10000;
-    private double[] despotFA;
+    private double[] treFA;
     private double[] irspgrTr;
     private double[] irspgrTI;
     
@@ -64,9 +64,9 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
     private double maxAngle = 20;
     
     private boolean smoothB1Field = true;
-    private boolean performStraightDESPOT1 = true;
-    private boolean performDESPOT1withPreCalculatedB1Map = false;
-    private boolean performDESPOT1HIFI = false;
+    private boolean performStraighttre1 = true;
+    private boolean performtre1withPreCalculatedB1Map = false;
+    private boolean performtre1HIFI = false;
     private boolean doubleInversion = true;
     private boolean singleInversion = false;
     private boolean geScanner = true;
@@ -95,17 +95,17 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
     private ViewJFrameImage r1ResultWindow = null;
     private ViewJFrameImage b1ResultWindow = null;
     
-    public AlgorithmDespotT1(double despotTR, double irspgrTR,
+    public AlgorithmDespotT1(double treTR, double irspgrTR,
             double irspgrKy, double irspgrFA, double maxT1, double maxMo,
-            double[] despotFA, double[] irspgrTr2, double[] irspgrTI,
+            double[] treFA, double[] irspgrTr2, double[] irspgrTI,
             double[] spgrData, double[] irspgrData, double scale,
             double pointScale, double scaleIncrement, double[] estimates,
             double[] residuals, int[] direction, int[] spgrImageIndex,
             int[] irspgrImageIndex, int b1ImageIndex, double angleIncrement,
             int nsa, int nti, double maxAngle, boolean smoothB1Field,
-            boolean performStraightDESPOT1,
-            boolean performDESPOT1withPreCalculatedB1Map,
-            boolean performDESPOT1HIFI, boolean doubleInversion,
+            boolean performStraighttre1,
+            boolean performtre1withPreCalculatedB1Map,
+            boolean performtre1HIFI, boolean doubleInversion,
             boolean singleInversion, boolean geScanner, boolean siemensScanner,
             boolean threeTField, boolean onefiveTField, boolean calculateT1,
             boolean showB1Map, boolean calculateMo, boolean invertT1toR1,
@@ -116,13 +116,13 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
             float noiseScale, float hardNoiseThreshold, String[] wList,
             String[] titles) {
         super();
-        this.despotTR = despotTR;
+        this.treTR = treTR;
         this.irspgrTR = irspgrTR;
         this.irspgrKy = irspgrKy;
         this.irspgrFA = irspgrFA;
         this.maxT1 = maxT1;
         this.maxMo = maxMo;
-        this.despotFA = despotFA;
+        this.treFA = treFA;
         irspgrTr = irspgrTr2;
         this.irspgrTI = irspgrTI;
         this.spgrData = spgrData;
@@ -141,9 +141,9 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
         Nti = nti;
         this.maxAngle = maxAngle;
         this.smoothB1Field = smoothB1Field;
-        this.performStraightDESPOT1 = performStraightDESPOT1;
-        this.performDESPOT1withPreCalculatedB1Map = performDESPOT1withPreCalculatedB1Map;
-        this.performDESPOT1HIFI = performDESPOT1HIFI;
+        this.performStraighttre1 = performStraighttre1;
+        this.performtre1withPreCalculatedB1Map = performtre1withPreCalculatedB1Map;
+        this.performtre1HIFI = performtre1HIFI;
         this.doubleInversion = doubleInversion;
         this.singleInversion = singleInversion;
         this.geScanner = geScanner;
@@ -171,16 +171,16 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
     }
 
     public AlgorithmDespotT1(ModelImage destImage, ModelImage srcImage,
-            double despotTR, double irspgrTR, double irspgrKy, double irspgrFA,
-            double maxT1, double maxMo, double[] despotFA, double[] irspgrTr2,
+            double treTR, double irspgrTR, double irspgrKy, double irspgrFA,
+            double maxT1, double maxMo, double[] treFA, double[] irspgrTr2,
             double[] irspgrTI, double[] spgrData, double[] irspgrData,
             double scale, double pointScale, double scaleIncrement,
             double[] estimates, double[] residuals, int[] direction,
             int[] spgrImageIndex, int[] irspgrImageIndex, int b1ImageIndex,
             double angleIncrement, int nsa, int nti, double maxAngle,
-            boolean smoothB1Field, boolean performStraightDESPOT1,
-            boolean performDESPOT1withPreCalculatedB1Map,
-            boolean performDESPOT1HIFI, boolean doubleInversion,
+            boolean smoothB1Field, boolean performStraighttre1,
+            boolean performtre1withPreCalculatedB1Map,
+            boolean performtre1HIFI, boolean doubleInversion,
             boolean singleInversion, boolean geScanner, boolean siemensScanner,
             boolean threeTField, boolean onefiveTField, boolean calculateT1,
             boolean showB1Map, boolean calculateMo, boolean invertT1toR1,
@@ -191,13 +191,13 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
             float noiseScale, float hardNoiseThreshold, String[] wList,
             String[] titles) {
         super(destImage, srcImage);
-        this.despotTR = despotTR;
+        this.treTR = treTR;
         this.irspgrTR = irspgrTR;
         this.irspgrKy = irspgrKy;
         this.irspgrFA = irspgrFA;
         this.maxT1 = maxT1;
         this.maxMo = maxMo;
-        this.despotFA = despotFA;
+        this.treFA = treFA;
         irspgrTr = irspgrTr2;
         this.irspgrTI = irspgrTI;
         this.spgrData = spgrData;
@@ -216,9 +216,9 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
         Nti = nti;
         this.maxAngle = maxAngle;
         this.smoothB1Field = smoothB1Field;
-        this.performStraightDESPOT1 = performStraightDESPOT1;
-        this.performDESPOT1withPreCalculatedB1Map = performDESPOT1withPreCalculatedB1Map;
-        this.performDESPOT1HIFI = performDESPOT1HIFI;
+        this.performStraighttre1 = performStraighttre1;
+        this.performtre1withPreCalculatedB1Map = performtre1withPreCalculatedB1Map;
+        this.performtre1HIFI = performtre1HIFI;
         this.doubleInversion = doubleInversion;
         this.singleInversion = singleInversion;
         this.geScanner = geScanner;
@@ -246,7 +246,7 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
     }
     
     /**
-     * Initializes local variables that are internal to DESPOT.
+     * Initializes local variables that are internal to tre.
      */
     private void init() {
         computeProcessors();
@@ -366,36 +366,36 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
      */
     protected void displayImages() {
         String prefix = new String();
-        if(performDESPOT1HIFI) {
+        if(performtre1HIFI) {
             prefix = "-HIFI";
         }
         
         if (calculateT1) {
             t1ResultWindow = new ViewJFrameImage(t1ResultStack);
-            t1ResultWindow.setTitle("DESPOT1"+prefix+"_T1_Map");
+            t1ResultWindow.setTitle("tre1"+prefix+"_T1_Map");
             t1ResultWindow.setVisible(true);
         } 
          
         if (calculateMo) {
             moResultWindow = new ViewJFrameImage(moResultStack);
-            moResultWindow.setTitle("DESPOT1"+prefix+"_Mo_Map");
+            moResultWindow.setTitle("tre1"+prefix+"_Mo_Map");
             moResultWindow.setVisible(true);
         } 
         
         if (invertT1toR1) {
             r1ResultWindow = new ViewJFrameImage(r1ResultStack);
-            r1ResultWindow.setTitle("DESPOT1"+prefix+"_R1_Map");
+            r1ResultWindow.setTitle("tre1"+prefix+"_R1_Map");
             r1ResultWindow.setVisible(true);
         } 
         
-        if (performDESPOT1HIFI && showB1Map) {
+        if (performtre1HIFI && showB1Map) {
             b1ResultWindow = new ViewJFrameImage(b1ResultStack);
-            b1ResultWindow.setTitle("DESPOT1"+prefix+"_B1_Map");
+            b1ResultWindow.setTitle("tre1"+prefix+"_B1_Map");
             b1ResultWindow.setVisible(true);
         } 
     }
 
-    public boolean calculateT1UsingDESPOT1HIFI() {
+    public boolean calculateT1Usingtre1HIFI() {
         fireProgressStateChanged("Prepping data..hang on");
         fireProgressStateChanged(5);
         
@@ -462,7 +462,7 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
         ExecutorService exec = Executors.newFixedThreadPool(computeDataThreads); 
         // start by calculaing the B1 field
         for(int t=0; t<tSeries; t++) {     
-            exec.execute(new CalculteT1UsingDESPOT1HIFIInner(largestImage, width, height, irspgrSlices, t));    
+            exec.execute(new CalculteT1Usingtre1HIFIInner(largestImage, width, height, irspgrSlices, t));    
         }
         exec.shutdown();
         
@@ -481,7 +481,7 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
         return true;
     }
 
-    public boolean calculateT1UsingConventionalDESPOT1() {
+    public boolean calculateT1UsingConventionaltre1() {
         ModelImage image;
          
         int width, height, tSeries;
@@ -514,7 +514,7 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
         ExecutorService exec = Executors.newFixedThreadPool(computeDataThreads); 
     
         for(int t=0; t<tSeries; t++) {     
-            exec.submit(new CalculateT1UsingConventionalDESPOT1Inner(largestImage, width, height, t));    
+            exec.submit(new CalculateT1UsingConventionaltre1Inner(largestImage, width, height, t));    
         }
         exec.shutdown();
         
@@ -555,11 +555,11 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
     }
     
     public void runAlgorithm() {
-        if (performDESPOT1HIFI) {
-            completed = calculateT1UsingDESPOT1HIFI();
+        if (performtre1HIFI) {
+            completed = calculateT1Usingtre1HIFI();
         }
         else {
-            completed = calculateT1UsingConventionalDESPOT1();
+            completed = calculateT1UsingConventionaltre1();
         }
         
         dataListener.localInterrupt();
@@ -576,17 +576,17 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
         setCompleted(completed);
     }
 
-    public double signalResiduals(double x, double[] spgrData, double[] irspgrData, double Inversion, int Nfa, int Nti, double[] despotFA, double despotTR, double[] irspgrTr, double[] irspgrTI, double irspgrFA) {
+    public double signalResiduals(double x, double[] spgrData, double[] irspgrData, double Inversion, int Nfa, int Nti, double[] treFA, double treTR, double[] irspgrTr, double[] irspgrTI, double irspgrFA) {
         
         double sumX, sumY, sumXY, sumXX, slope, intercept, residuals;
         double t1Guess, moGuess;
-        double[] despotGuess, irspgrGuess, guess;
+        double[] treGuess, irspgrGuess, guess;
         
         double MoScale;
         
         int p, pulse, i,j;
         
-        despotGuess = new double[Nfa];
+        treGuess = new double[Nfa];
         irspgrGuess = new double[Nti];
         
         sumX = 0.00;
@@ -594,16 +594,16 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
         sumXY = 0.00;
         sumXX = 0.00;
         for (p=0; p<Nfa; p++) {
-            sumX += spgrData[p]/Math.tan(x*despotFA[p]*3.14159265/180.00);
-            sumY += spgrData[p]/Math.sin(x*despotFA[p]*3.14159265/180.00);
-            sumXY += spgrData[p]/Math.tan(x*despotFA[p]*3.14159265/180.00) * spgrData[p]/Math.sin(x*despotFA[p]*3.14159265/180.00);
-            sumXX += spgrData[p]/Math.tan(x*despotFA[p]*3.14159265/180.00) * spgrData[p]/Math.tan(x*despotFA[p]*3.14159265/180.00);
+            sumX += spgrData[p]/Math.tan(x*treFA[p]*3.14159265/180.00);
+            sumY += spgrData[p]/Math.sin(x*treFA[p]*3.14159265/180.00);
+            sumXY += spgrData[p]/Math.tan(x*treFA[p]*3.14159265/180.00) * spgrData[p]/Math.sin(x*treFA[p]*3.14159265/180.00);
+            sumXX += spgrData[p]/Math.tan(x*treFA[p]*3.14159265/180.00) * spgrData[p]/Math.tan(x*treFA[p]*3.14159265/180.00);
         }
         slope = (Nfa*sumXY - sumX*sumY) / (Nfa*sumXX - sumX*sumX);
         intercept = (sumY - slope*sumX)/Nfa;
         
         if (slope > 0.00 && slope < 1.00) {
-            t1Guess = -despotTR/Math.log(slope);
+            t1Guess = -treTR/Math.log(slope);
             moGuess = intercept/(1.00-slope);
         }
         else {
@@ -613,12 +613,12 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
         
         if (t1Guess > 0) {
             for (p=0; p<Nfa; p++) {
-                despotGuess[p] = moGuess*(1.00-Math.exp(-despotTR/t1Guess))*Math.sin(x*despotFA[p]*3.14159265/180.00)/(1.00-Math.exp(-despotTR/t1Guess)*Math.cos(x*despotFA[p]*3.14159265/180.00));
+                treGuess[p] = moGuess*(1.00-Math.exp(-treTR/t1Guess))*Math.sin(x*treFA[p]*3.14159265/180.00)/(1.00-Math.exp(-treTR/t1Guess)*Math.cos(x*treFA[p]*3.14159265/180.00));
             }
         }
         else {
             for (p=0; p<Nfa; p++) {
-                despotGuess[p] = 0.00;
+                treGuess[p] = 0.00;
             }
         }
         
@@ -637,7 +637,7 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
         }
         
         residuals = 0.00;
-        for (p=0; p<Nfa; p++) residuals += Math.pow( (spgrData[p]-despotGuess[p]), 2.00);
+        for (p=0; p<Nfa; p++) residuals += Math.pow( (spgrData[p]-treGuess[p]), 2.00);
         for (p=0; p<Nti; p++) residuals += Math.pow( (irspgrData[p]-irspgrGuess[p]), 2.00);
         
         return residuals;
@@ -680,7 +680,7 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
             r1ResultStack = nearCloneImage(image, r1ResultStack);
         }
          
-        if(performDESPOT1HIFI && showB1Map) {
+        if(performtre1HIFI && showB1Map) {
             b1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "b1_results");
             b1ResultStack = nearCloneImage(image, b1ResultStack);
         }
@@ -788,7 +788,7 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
                 //r1ResultLocalVolume = nearCloneImage(image, r1ResultLocalVolume);
             }
              
-            if(performDESPOT1HIFI && showB1Map) {
+            if(performtre1HIFI && showB1Map) {
                 b1ResultLocalVolume = new ModelImage(ModelImage.DOUBLE, localExtents, "b1_results_volume"+t);
                 //b1ResultLocalVolume = nearCloneImage(image, b1ResultLocalVolume);
             }
@@ -819,12 +819,12 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
         }
     }
 
-    private class CalculteT1UsingDESPOT1HIFIInner extends CalculateT1 implements Runnable {
+    private class CalculteT1Usingtre1HIFIInner extends CalculateT1 implements Runnable {
     
         
         private int irspgrSlices;
     
-        public CalculteT1UsingDESPOT1HIFIInner(ModelImage image, int width, int height, int irspgrSlices, int t) {
+        public CalculteT1Usingtre1HIFIInner(ModelImage image, int width, int height, int irspgrSlices, int t) {
             super(image, t);
             this.width = width;
             this.height = height;
@@ -890,7 +890,7 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
             fa = new double[Nsa];
             scaledFA = new double[Nsa];
             for (angle=0; angle<Nsa;angle++) {
-                fa[angle] = Math.toRadians(despotFA[angle]);
+                fa[angle] = Math.toRadians(treFA[angle]);
             }
             double irFA = Math.toRadians(irspgrFA);
             
@@ -953,13 +953,13 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
                             // define the initial fitting points
                             ax = 0.3; // lower bound
                             cx = 1.5; // upper bound
-                            fax = signalResiduals(ax, spgrData, irspgrData, Inversion, Nsa, Nti, despotFA, despotTR, irspgrTr, irspgrTI, irspgrFA);
-                            fcx = signalResiduals(cx, spgrData, irspgrData, Inversion, Nsa, Nti, despotFA, despotTR, irspgrTr, irspgrTI, irspgrFA);
+                            fax = signalResiduals(ax, spgrData, irspgrData, Inversion, Nsa, Nti, treFA, treTR, irspgrTr, irspgrTI, irspgrFA);
+                            fcx = signalResiduals(cx, spgrData, irspgrData, Inversion, Nsa, Nti, treFA, treTR, irspgrTr, irspgrTI, irspgrFA);
                             
                             // choose bx such that ax < bx < cx and f(bx) < f(ax) and f(bx) < f(cx)
                             if (fax < fcx) bx = ax + 0.2;
                             else bx = cx - 0.2;
-                            fbx = signalResiduals(bx, spgrData, irspgrData, Inversion, Nsa, Nti, despotFA, despotTR, irspgrTr, irspgrTI, irspgrFA);
+                            fbx = signalResiduals(bx, spgrData, irspgrData, Inversion, Nsa, Nti, treFA, treTR, irspgrTr, irspgrTI, irspgrFA);
                             
                             x0 = ax;
                             x3 = cx;
@@ -972,8 +972,8 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
                                 x1 = bx - C*(bx-ax);
                             }
                             
-                            f1 = signalResiduals(x1, spgrData, irspgrData, Inversion, Nsa, Nti, despotFA, despotTR, irspgrTr, irspgrTI, irspgrFA);
-                            f2 = signalResiduals(x2, spgrData, irspgrData, Inversion, Nsa, Nti, despotFA, despotTR, irspgrTr, irspgrTI, irspgrFA);
+                            f1 = signalResiduals(x1, spgrData, irspgrData, Inversion, Nsa, Nti, treFA, treTR, irspgrTr, irspgrTI, irspgrFA);
+                            f2 = signalResiduals(x2, spgrData, irspgrData, Inversion, Nsa, Nti, treFA, treTR, irspgrTr, irspgrTI, irspgrFA);
                             
                             while ( Math.abs(x3-x0) > precision*(Math.abs(x1)+Math.abs(x2)) ) {
                                 if (f2 < f1) {
@@ -981,14 +981,14 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
                                     x1 = x2;
                                     x2 = R*x1 + C*x3;
                                     f1 = f2;
-                                    f2 = signalResiduals(x2, spgrData, irspgrData, Inversion, Nsa, Nti, despotFA, despotTR, irspgrTr, irspgrTI, irspgrFA);
+                                    f2 = signalResiduals(x2, spgrData, irspgrData, Inversion, Nsa, Nti, treFA, treTR, irspgrTr, irspgrTI, irspgrFA);
                                 }
                                 else {
                                     x3 = x2;
                                     x2 = x1;
                                     x1 = R*x2 + C*x0;
                                     f2 = f1;
-                                    f1 = signalResiduals(x1, spgrData, irspgrData, Inversion, Nsa, Nti, despotFA, despotTR, irspgrTr, irspgrTI, irspgrFA);
+                                    f1 = signalResiduals(x1, spgrData, irspgrData, Inversion, Nsa, Nti, treFA, treTR, irspgrTr, irspgrTI, irspgrFA);
                                 }
                             }
                             
@@ -1172,8 +1172,8 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
                                 intercept = (sumY-slope*sumX)/Nsa;
                                 lnslope = -1.00*Math.log(slope);
                                 if (lnslope > 0.00 && lnslope < 1.00) {
-                                    t1 = despotTR/lnslope;
-                                    mo = intercept/(1.00-Math.exp(-despotTR/t1));
+                                    t1 = treTR/lnslope;
+                                    mo = intercept/(1.00-Math.exp(-treTR/t1));
                                 }
                                 else {
                                     mo = maxMo;
@@ -1214,7 +1214,7 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
                                     r1 = 0;
                                 }
                                 else {
-                                    e1 = Math.exp(-1.00*despotTR/t1);
+                                    e1 = Math.exp(-1.00*treTR/t1);
                                     ernstAngle = Math.acos(e1);
                                     ernstSignal = (1.00-e1)*Math.sin(ernstAngle)/(1.00-e1*Math.cos(ernstAngle));
                                     for (angle=0; angle<Nsa; angle++) {
@@ -1234,8 +1234,8 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
                                         intercept = (sumY - slope*sumX)/sumWeights;
                                         lnslope = -1.00*Math.log(slope);
                                         if (lnslope > 0.00 && lnslope < 1.00) {
-                                            t1 = despotTR/lnslope;
-                                            mo = intercept/(1.00-Math.exp(-despotTR/t1));
+                                            t1 = treTR/lnslope;
+                                            mo = intercept/(1.00-Math.exp(-treTR/t1));
                                         }
                                         else {
                                             mo = maxMo;
@@ -1305,9 +1305,9 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
         
     }
 
-    private class CalculateT1UsingConventionalDESPOT1Inner extends CalculateT1 implements Runnable {
+    private class CalculateT1UsingConventionaltre1Inner extends CalculateT1 implements Runnable {
     
-        public CalculateT1UsingConventionalDESPOT1Inner(ModelImage image, int width, int height, int t) {
+        public CalculateT1UsingConventionaltre1Inner(ModelImage image, int width, int height, int t) {
             super(image, t);
             this.width = width;
             this.height = height;
@@ -1345,7 +1345,7 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
             
             fa = new double[Nsa];
             for (angle=0; angle<Nsa;angle++) {
-                fa[angle] = Math.toRadians(despotFA[angle]);
+                fa[angle] = Math.toRadians(treFA[angle]);
             }
             
             for (k=0; k<nSlices; k++) { //changed slice size
@@ -1365,7 +1365,7 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
                     return;
                 }
                 
-                if (performDESPOT1withPreCalculatedB1Map) {
+                if (performtre1withPreCalculatedB1Map) {
                     b1FieldImage = ViewUserInterface.getReference().getRegisteredImageByName(wList[b1ImageIndex]);
                     
                     b1Values = new double[width*height]; 
@@ -1387,7 +1387,7 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
                             } else {
                                 pixelValues[angle][pixelIndex] = image.getDouble(x, y, k, t);
                             }
-                            if (performDESPOT1withPreCalculatedB1Map) {
+                            if (performtre1withPreCalculatedB1Map) {
                                 if(b1FieldImage.getNDims() < 4) {
                                     b1Values[pixelIndex] = b1FieldImage.getDouble(x, y, k); 
                                 } else {
@@ -1406,7 +1406,7 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
                         sumXY = 0.00;
                         sumXX = 0.00;
                         
-                        if (performDESPOT1withPreCalculatedB1Map) {
+                        if (performtre1withPreCalculatedB1Map) {
                             b1 = b1Values[pixelIndex];
                             if (b1 == 0) { 
                                 b1 = 1.00;
@@ -1429,8 +1429,8 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
                             intercept = (sumY-slope*sumX)/Nsa;
                             lnslope = -1.00*Math.log(slope);
                             if (lnslope > 0.00 && lnslope < 1.00) {
-                                t1 = despotTR/lnslope;
-                                mo = intercept/(1.00-Math.exp(-despotTR/t1));
+                                t1 = treTR/lnslope;
+                                mo = intercept/(1.00-Math.exp(-treTR/t1));
                             } 
                             else {
                                 mo = maxMo;
@@ -1467,7 +1467,7 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
                                 r1 = 0;
                             }
                             else {
-                                e1 = Math.exp(-1.00*despotTR/t1);
+                                e1 = Math.exp(-1.00*treTR/t1);
                                 ernstAngle = Math.acos(e1);
                                 ernstSignal = (1.00-e1)*Math.sin(ernstAngle)/(1.00-e1*Math.cos(ernstAngle));
                                 for (angle=0; angle<Nsa; angle++) {
@@ -1487,8 +1487,8 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
                                     intercept = (sumY - slope*sumX)/sumWeights;
                                     lnslope = -1.00*Math.log(slope);
                                     if (lnslope > 0.00 && lnslope < 1.00) {
-                                        t1 = despotTR/lnslope;
-                                        mo = intercept/(1.00-Math.exp(-despotTR/t1));
+                                        t1 = treTR/lnslope;
+                                        mo = intercept/(1.00-Math.exp(-treTR/t1));
                                     }
                                     else {
                                         mo = maxMo;
