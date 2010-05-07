@@ -137,7 +137,6 @@ public class ViewMenuBar {
                                 false),
                         menuBuilder.buildMenuItem("Midsagittal line alignment", "Midsagittal", 0, null, false),
                         menuBuilder.buildMenuItem("Talairach transform", "talairachTransform", 0, null, false),}),
-                menuBuilder.buildMenuItem("Density based clustering", "DENCLUE", 0, null, false),
                 menuBuilder.makeMenu("Edge detection", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Zero X laplacian", null, 0, null, false),
                         menuBuilder.buildMenuItem("Zero X non-maximum suppression", "zxsuppression", 0, null, false)}),
@@ -189,17 +188,13 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Histogram summary", "HistoSummary", 0, null, false),}),
                 menuBuilder.makeMenu("Hough transform", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Circle detection", "HoughCircle", 0, null, false),
-                        menuBuilder.buildMenuItem("Create R-table", "Rtable", 0, null, false),
                         menuBuilder.buildMenuItem("Ellipse detection", "HoughEllipse", 0, null, false),
-                        menuBuilder.buildMenuItem("Find R-table object", "FindRObject", 0, null, false),
                         menuBuilder.buildMenuItem("Line filling", "HoughLine", 0, null, false),
                         menuBuilder.buildMenuItem("Parabola detection", "HoughParabola", 0, null, false)}),
                 menuBuilder.makeMenu("Insight toolkit (auto ITK)", false, new JMenuItem[] {}),
                 menuBuilder.makeMenu("Microscopy", false,
                         new JMenuItem[] {
                                 menuBuilder.makeMenu("Colocalization", false, new JMenuItem[] {
-
-                                        // menuBuilder.buildMenuItem("DENCLUE","colocDENCLUE",null,null),
                                         menuBuilder
                                                 .buildMenuItem("Expectation maximization", "colocEM", 0, null, false),
                                         menuBuilder.buildMenuItem("Orthogonal regression", "colocRegression", 0, null,
@@ -290,7 +285,6 @@ public class ViewMenuBar {
                         menuBuilder.makeMenu("Fuzzy C-means", false, new JMenuItem[] {
                                 menuBuilder.buildMenuItem("Multispectral", null, 0, null, false),
                                 menuBuilder.buildMenuItem("Single channel", null, 0, null, false),}),
-                        menuBuilder.buildMenuItem("Graph based", "graphBasedSeg", 0, null, false),
                         menuBuilder.buildMenuItem("Levelset", "Levelset", 0, null, false),
                         menuBuilder.buildMenuItem("Levelset diffusion", "LevelsetDiffusion", 0, null, false),
 
@@ -456,9 +450,7 @@ public class ViewMenuBar {
                 saveImageItem, saveImageAsItem, captureMenu, ViewMenuBar.separator, dicomMenu, ViewMenuBar.separator,
                 menuBuilder.buildQuickList(), ViewMenuBar.separator,
                 menuBuilder.buildMenuItem("DCCIE image conversion", "dccieconvert", 0, null, true),
-
-                ViewMenuBar.// menuBuilder.buildMenuItem("Convert old XML", "convertXML", 0, null, true),
-                separator, menuBuilder.buildMenuItem("Exit", "Exit", 'x', null, true)});
+                ViewMenuBar.separator, menuBuilder.buildMenuItem("Exit", "Exit", 'x', null, true)});
     }
 
     /**
@@ -848,8 +840,8 @@ public class ViewMenuBar {
                                                         "ProstateFeaturesClassification", 0, null, false),
                                                 menuBuilder.buildMenuItem("Load Mask", "LoadProstateMask", 0, null,
                                                         false),
-                                                menuBuilder.buildMenuItem("Save DicomMatrix", "SaveDicomMatrix", 0, null,
-                                                                false),
+                                                menuBuilder.buildMenuItem("Save DicomMatrix", "SaveDicomMatrix", 0,
+                                                        null, false),
                                                 menuBuilder.buildMenuItem("Extract Surface", "ProstateExtract", 0,
                                                         null, false)}),
                                 ViewMenuBar.separator,
@@ -860,9 +852,10 @@ public class ViewMenuBar {
                                                 true),
                                         menuBuilder.buildMenuItem("Total intensity", "totalIntensity", 0, null, true),
                                         menuBuilder.buildMenuItem("Average intensity", "avgIntensity", 0, null, true),
-                                        menuBuilder.buildMenuItem("Total intensity with threshold","totalIntensityThreshold", 0, null, true),
-                                        menuBuilder.buildMenuItem("Average intensity with threshold","avgIntensityThreshold", 0, null, true)
-                                        }), ViewMenuBar.separator,
+                                        menuBuilder.buildMenuItem("Total intensity with threshold",
+                                                "totalIntensityThreshold", 0, null, true),
+                                        menuBuilder.buildMenuItem("Average intensity with threshold",
+                                                "avgIntensityThreshold", 0, null, true)}), ViewMenuBar.separator,
                                 menuBuilder.buildMenuItem("Properties...", "VOIProperties", 'P', null, true),
                                 menuBuilder.buildMenuItem("Statistics generator...", "VOIStatistics", 'G', null, true),});
     }
