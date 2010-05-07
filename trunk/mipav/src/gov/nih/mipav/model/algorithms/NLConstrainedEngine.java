@@ -2635,7 +2635,7 @@ public abstract class NLConstrainedEngine {
                 temp[0] = work[i - 1];
                 temp[1] = work[i];
                 work[i] = dnrm2(2, temp, 1);
-            } // for (i = 1; i < pseudoRank; i++)
+            } // for (i = 1; i < prank[0]; i++)
 
             sn = w1[prank[0] - 1];
             bn = work[prank[0] - 1];
@@ -2648,7 +2648,7 @@ public abstract class NLConstrainedEngine {
                 if (work[i] > (rabs * bn)) {
                     break;
                 }
-            } // for (i = 0; i <  pseduoRank; i++)
+            } // for (i = 0; i <  prank[0]; i++)
 
             if (kod == 1) {
                 pregn(work, mindim, prank, rank);
@@ -5996,7 +5996,7 @@ mainLoop:
 
                 triunc(tol, constraintAct - 1,lprank);
                 if (outputMes) {
-                    Preferences.debug("lprank = " + lprank + "\n");
+                    Preferences.debug("lprank[0] = " + lprank[0] + "\n");
                 }     
                 d1new = gndunc(false, lprank, work);
                 if (outputMes) {
@@ -6122,7 +6122,7 @@ mainLoop:
             d1sqs = gndunc(false, prank, work);
             beta = dnrm2(param - constraintAct, w1, 1);
             prekm1 = beta;
-        } // if (pseudoRank < (param - constraintAct))
+        } // if (prank[0] < (param - constraintAct))
         else if (kmax != -1) {
 
             // FORM J*DX WHERE DX IS THE AUGMENTED GN-DIRECTION.
