@@ -11464,8 +11464,8 @@ public class FileIO {
     private boolean writeMincHDF(final ModelImage image, FileWriteOptions options) {
         FileMincHDF mincFile;
 
-        if (image.getNDims() != 3) {
-            MipavUtil.displayError("FileIO: MINC writer only writes 3D images.");
+        if (image.getNDims() != 3 && image.getNDims() != 4) {
+            MipavUtil.displayError("FileIO: MINC writer only writes 3D and 4D images.");
 
             return false;
         }

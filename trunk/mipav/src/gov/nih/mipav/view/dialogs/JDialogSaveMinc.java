@@ -62,6 +62,13 @@ public class JDialogSaveMinc extends JDialogBase {
 
     /** DOCUMENT ME! */
     private float defaultZStart;
+    
+    /** DOCUMENT ME! */
+    private float defaultTSpace;
+
+    
+    /** DOCUMENT ME! */
+    private float defaultTStart;
 
     /** Variables for holding and storing file information. */
     private FileInfoBase fileInfo;
@@ -98,6 +105,10 @@ public class JDialogSaveMinc extends JDialogBase {
 
     /** DOCUMENT ME! */
     private JTextField zStart;
+    
+    private JTextField tStart;
+    
+    private JTextField tSpace;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -135,12 +146,20 @@ public class JDialogSaveMinc extends JDialogBase {
                 if (zStart.isEnabled()) {
                     test = Float.valueOf(zStart.getText()).floatValue();
                 }
+                
+                if (tStart.isEnabled()) {
+                    test = Float.valueOf(tStart.getText()).floatValue();
+                }
 
                 test = Float.valueOf(xSpace.getText()).floatValue();
                 test = Float.valueOf(ySpace.getText()).floatValue();
 
                 if (zSpace.isEnabled()) {
                     test = Float.valueOf(zSpace.getText()).floatValue();
+                }
+                
+                if (tSpace.isEnabled()) {
+                    test = Float.valueOf(tSpace.getText()).floatValue();
                 }
 
                 setOptions();
@@ -180,6 +199,10 @@ public class JDialogSaveMinc extends JDialogBase {
         if (zStart.isEnabled()) {
             options.setZStart(defaultZStart);
         }
+        
+        if (tStart.isEnabled()) {
+            options.setTStart(defaultTStart);
+        }
 
         options.setXSpace(defaultXSpace);
         options.setYSpace(defaultYSpace);
@@ -188,6 +211,10 @@ public class JDialogSaveMinc extends JDialogBase {
             options.setZSpace(defaultZSpace);
         }
 
+        if (tSpace.isEnabled()) {
+            options.setTSpace(defaultTSpace);
+        }
+        
         options.setAxisOrientation(defaultAxisOrient);
 
         return options;
@@ -462,6 +489,11 @@ public class JDialogSaveMinc extends JDialogBase {
         zStart = setTextField("", layout, setGBC(gbc, 1, 7, 1, 1), panel);
         createLabel("  I/S Space:", layout, setGBC(gbc, 2, 7, 1, 1), panel);
         zSpace = setTextField("", layout, setGBC(gbc, 3, 7, 1, 1), panel);
+        
+        createLabel("Time Start:", layout, setGBC(gbc, 0, 8, 1, 1), panel);
+        tStart = setTextField("", layout, setGBC(gbc, 1, 8, 1, 1), panel);
+        createLabel("  Time Space:", layout, setGBC(gbc, 2, 8, 1, 1), panel);
+        tSpace = setTextField("", layout, setGBC(gbc, 3, 8, 1, 1), panel);
 
         createLabel(" ", layout, setGBC(gbc, 0, 8, GridBagConstraints.REMAINDER, 1), panel);
 
@@ -510,12 +542,20 @@ public class JDialogSaveMinc extends JDialogBase {
         if (zStart.isEnabled()) {
             options.setZStart(Float.valueOf(zStart.getText()).floatValue());
         }
+        
+        if (tStart.isEnabled()) {
+            options.setTStart(Float.valueOf(tStart.getText()).floatValue());
+        }
 
         options.setXSpace(Float.valueOf(xSpace.getText()).floatValue());
         options.setYSpace(Float.valueOf(ySpace.getText()).floatValue());
 
         if (zSpace.isEnabled()) {
             options.setZSpace(Float.valueOf(zSpace.getText()).floatValue());
+        }
+        
+        if (tSpace.isEnabled()) {
+            options.setTSpace(Float.valueOf(tSpace.getText()).floatValue());
         }
 
         options.setAxisOrientation(ori);
@@ -549,7 +589,7 @@ public class JDialogSaveMinc extends JDialogBase {
      */
     private void setSpace() {
 
-        float lr = 0, pa = 0, is = 0, xRes = 1, yRes = 1, zRes = 1;
+        float lr = 0, pa = 0, is = 0, xRes = 1, yRes = 1, zRes = 1, tRes = 1;;
 
         switch (ori[2]) {
 
@@ -651,6 +691,17 @@ public class JDialogSaveMinc extends JDialogBase {
         if (fileInfo.getExtents().length == 2) {
             zStart.setEnabled(false);
             zSpace.setEnabled(false);
+            tStart.setEnabled(false);
+            tSpace.setEnabled(false);
+        }
+        
+        if (fileInfo.getExtents().length == 3) {
+            tStart.setEnabled(false);
+            tSpace.setEnabled(false);
+        }
+        
+        if (fileInfo.getExtents().length == 4) {
+        	tRes = fileInfo.getResolutions()[3];
         }
 
         if (fileInfo.getFileFormat() == FileUtility.MINC) {
@@ -663,6 +714,10 @@ public class JDialogSaveMinc extends JDialogBase {
         if (zStart.isEnabled()) {
             zStart.setText("" + is);
         }
+        
+        if (tStart.isEnabled()) {
+            tStart.setText("" + 0.0);
+        }
 
         xSpace.setText("" + xRes);
         ySpace.setText("" + yRes);
@@ -670,6 +725,12 @@ public class JDialogSaveMinc extends JDialogBase {
         if (zSpace.isEnabled()) {
             zSpace.setText("" + zRes);
         }
+        
+        if (tSpace.isEnabled()) {
+            tSpace.setText("" + tRes);
+        }
+        
+        
 
         if (!defaultSet) {
             defaultXStart = lr;
@@ -684,6 +745,10 @@ public class JDialogSaveMinc extends JDialogBase {
 
             if (zSpace.isEnabled()) {
                 defaultZSpace = zRes;
+            }
+            
+            if (tSpace.isEnabled()) {
+                defaultTSpace = tRes;
             }
 
             defaultAxisOrient = ori;

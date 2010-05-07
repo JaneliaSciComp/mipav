@@ -144,7 +144,7 @@ public class FileMincHDF extends FileBase {
      * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
      * files and sets other elements to <code>null</code>.
      */
-    public void finalize() {
+   /* public void finalize() {
         int i;
         fileName = null;
         fileDir = null;
@@ -173,7 +173,7 @@ public class FileMincHDF extends FileBase {
             super.finalize();
         } catch (final Throwable er) {}
     }
-
+*/
     public void readHeader(final DefaultMutableTreeNode rootNode) throws Exception {
         // before recursively parsing the tree, get the image dim order from the image var attributes
         parseImageDimOrder(rootNode);
@@ -278,7 +278,6 @@ public class FileMincHDF extends FileBase {
             final Attribute imageAttr = it.next();
             if (imageAttr.getName().equals(FileMincHDF.ATTR_IMAGE_DIM_ORDER)) {
                 final String dimOrderString = ((String[]) imageAttr.getValue())[0];
-
                 if (dimOrderString.startsWith("zspace")) {
                     fileInfo.setImageOrientation(FileInfoBase.AXIAL);
                 } else if (dimOrderString.startsWith("xspace")) {
@@ -383,6 +382,7 @@ public class FileMincHDF extends FileBase {
         for (int i = 0; i < dimensionNode.getChildCount(); i++) {
             currentDimNode = (DefaultMutableTreeNode) dimensionNode.getChildAt(i);
             if(is4D) {
+
             	if (currentDimNode.toString().equals(FileMincHDF.LEAF_X_SPACE)) {
                     for (int k = 0; k < dimReorderIndexes.length; k++) {
                         if (dimReorderIndexes[k] == 2) {
@@ -415,6 +415,7 @@ public class FileMincHDF extends FileBase {
                     }
                 }
             }else {
+
             	if (currentDimNode.toString().equals(FileMincHDF.LEAF_X_SPACE)) {
                     for (int k = 0; k < dimReorderIndexes.length; k++) {
                         if (dimReorderIndexes[k] == 2) {
@@ -989,6 +990,10 @@ public class FileMincHDF extends FileBase {
      */
     private void buildDimensionNode(final ModelImage image, final FileWriteOptions options, final FileFormat format,
             final HDFNode mincNode, final DefaultTreeModel model) throws Exception {
+    	boolean is4D = false;
+    	if(image.is4DImage()) {
+    		is4D = true;
+    	}
         HDFNode dimNode = null;
         final Group dimGroup = format.createGroup("dimensions", (Group) mincNode.getUserObject());
 
@@ -1058,6 +1063,13 @@ public class FileMincHDF extends FileBase {
 
         double xstart, ystart, zstart;
         double xstep, ystep, zstep;
+        double tstart = 0;
+        double tstep = 1;
+        
+        if(is4D) {
+        	tstart = options.getTStart();
+        	tstep = options.getTSpace();
+        }
 
         switch (options.getAxisOrientation()[2]) {
 
@@ -1288,7 +1300,7 @@ public class FileMincHDF extends FileBase {
         ySpaceObj.writeMetadata(lengthAttr);
 
         if (image.getExtents().length > 2) {
-            // YSPACE NODE
+            // ZSPACE NODE
             final H5ScalarDS zSpaceObj = (H5ScalarDS) fileFormat.createScalarDS("zspace", dimGroup, datatype, dims,
                     maxdims, null, 0, null);
             final DefaultMutableTreeNode zSpaceNode = new DefaultMutableTreeNode(zSpaceObj);
@@ -1351,6 +1363,60 @@ public class FileMincHDF extends FileBase {
             length = new int[] {image.getExtents()[2]};
             lengthAttr.setValue(length);
             zSpaceObj.writeMetadata(lengthAttr);
+            
+            
+            if(is4D) {
+            	// ZSPACE NODE
+                final H5ScalarDS tSpaceObj = (H5ScalarDS) fileFormat.createScalarDS("time", dimGroup, datatype, dims,
+                        maxdims, null, 0, null);
+                final DefaultMutableTreeNode tSpaceNode = new DefaultMutableTreeNode(tSpaceObj);
+                model.insertNodeInto(tSpaceNode, dimNode, dimNode.getChildCount());
+                
+                // varid
+                zSpaceObj.writeMetadata(varIDAttr);
+
+                // vartype
+                zSpaceObj.writeMetadata(varTypeAttr);
+
+                // version
+                zSpaceObj.writeMetadata(versionAttr);
+                
+                // alignment
+                zSpaceObj.writeMetadata(alignmentAttr);
+
+                // step (resolution)
+                dType = fileFormat.createDatatype(Datatype.CLASS_FLOAT, 8, Datatype.NATIVE, Datatype.SIGN_NONE);
+                stepAttr = new Attribute("step", dType, attrDims);
+                stepAttr.setValue(new double[] {tstep});
+                tSpaceObj.writeMetadata(stepAttr);
+
+                // start (origin)
+                startAttr.setValue(new double[] {tstart});
+                tSpaceObj.writeMetadata(startAttr);
+                
+                
+                // units
+                attrDims[0] = 1;
+                unitsString = new String[] {FileInfoBase.getUnitsOfMeasureAbbrevStr()[image.getFileInfo()[0]
+                        .getUnitsOfMeasure(3)]};
+                dType = fileFormat.createDatatype(Datatype.CLASS_STRING, alignmentString[0].length() + 1, -1, -1);
+                unitsAttr = new Attribute("units", dType, attrDims);
+                unitsAttr.setValue(unitsString);
+                tSpaceObj.writeMetadata(unitsAttr);
+
+                // spacetype
+                tSpaceObj.writeMetadata(spaceTypeAttr);
+
+                // length
+                length = new int[] {image.getExtents()[3]};
+                lengthAttr.setValue(length);
+                tSpaceObj.writeMetadata(lengthAttr);
+                
+                
+
+            }
+            
+            
         }
 
     }
@@ -1449,6 +1515,12 @@ public class FileMincHDF extends FileBase {
      */
     private void buildImageNode(final ModelImage image, final FileWriteOptions options, final FileFormat format,
             final HDFNode mincNode, final DefaultTreeModel model) throws Exception {
+    	
+    	boolean is4D = false;
+    	if(image.is4DImage()) {
+    		is4D = true;
+    	}
+    	
         // create the image node (root of image)
         HDFNode imageNode = null;
         final Group imageGroup = format.createGroup("image", (Group) mincNode.getUserObject());
@@ -1532,14 +1604,28 @@ public class FileMincHDF extends FileBase {
             maxdims[0] = dims[0];
             maxdims[1] = dims[1];
         } else {
-            // order is z, y, x
-            dims[0] = image.getExtents()[2];
-            dims[1] = image.getExtents()[1];
-            dims[2] = image.getExtents()[0];
+        	if(is4D) {
+        		// order is t, z, y, x
+                dims[0] = image.getExtents()[3];
+                dims[1] = image.getExtents()[2];
+                dims[2] = image.getExtents()[1];
+                dims[3] = image.getExtents()[0];
 
-            maxdims[0] = dims[0];
-            maxdims[1] = dims[1];
-            maxdims[2] = dims[2];
+                maxdims[0] = dims[0];
+                maxdims[1] = dims[1];
+                maxdims[2] = dims[2];
+                maxdims[3] = dims[3];
+        	}else {
+        		// order is z, y, x
+                dims[0] = image.getExtents()[2];
+                dims[1] = image.getExtents()[1];
+                dims[2] = image.getExtents()[0];
+
+                maxdims[0] = dims[0];
+                maxdims[1] = dims[1];
+                maxdims[2] = dims[2];
+        	}
+            
         }
 
         // create the Dataset (H5ScalarDS) that will hold the image data
@@ -1555,9 +1641,12 @@ public class FileMincHDF extends FileBase {
 
         final int sliceSize = image.getSliceSize();
         int numImages = 1;
-        if (image.getExtents().length > 2) {
+        if (image.getExtents().length == 3) {
             numImages = image.getExtents()[2];
+        } else if (image.getExtents().length == 4) {
+            numImages = image.getExtents()[2] * image.getExtents()[3];
         }
+        
 
         Object dataImportObj = null;
         switch (mDataType) {
@@ -1584,29 +1673,68 @@ public class FileMincHDF extends FileBase {
                 Preferences.debug("Second switch(mDataType) not valid mDataType = " + mDataType + "\n");
                 return;
         }
-
+        int sliceCounter = 0;
+        int volCounter = 0;
+        int counter = 0;
+        int numVols = 0;
+        if(is4D) {
+        	numVols = image.getExtents()[3];
+        }
         for (int j = 0; j < numImages; j++) {
-            start[0] = j;
+
+        	if(is4D) {
+        		if(j%image.getExtents()[2] == 0) {
+    				start[1] = sliceCounter;
+    				sliceCounter++;
+    			}
+				if(volCounter >= numVols) {
+					volCounter = 0;
+				}
+				start[0] = volCounter;
+        	}else {
+        		start[0] = j;
+        	}
             // System.err.println(imageData.getStartDims()[0]);
             // data = imageData.read();
             switch (mDataType) {
                 case ModelStorageBase.UBYTE:
                 case ModelStorageBase.BYTE:
-                    image.exportData(j * sliceSize, sliceSize, (byte[]) dataImportObj);
+                	if(is4D) {
+                		image.exportData((image.getExtents()[2] * sliceSize * volCounter) + (sliceSize * counter), sliceSize, (byte[]) dataImportObj);
+                	}else {
+                		image.exportData(j * sliceSize, sliceSize, (byte[]) dataImportObj);
+                	}
                     break;
                 case ModelStorageBase.USHORT:
                 case ModelStorageBase.SHORT:
-                    image.exportData(j * sliceSize, sliceSize, (short[]) dataImportObj);
+                	if(is4D) {
+                		image.exportData((image.getExtents()[2] * sliceSize * volCounter) + (sliceSize * counter), sliceSize, (short[]) dataImportObj);
+                	}else {
+                		image.exportData(j * sliceSize, sliceSize, (short[]) dataImportObj);
+                	}
                     break;
                 case ModelStorageBase.UINTEGER:
                 case ModelStorageBase.INTEGER:
-                    image.exportData(j * sliceSize, sliceSize, (int[]) dataImportObj);
+                	if(is4D) {
+                		image.exportData((image.getExtents()[2] * sliceSize * volCounter) + (sliceSize * counter), sliceSize, (int[]) dataImportObj);
+                	}else {
+                		image.exportData(j * sliceSize, sliceSize, (int[]) dataImportObj);
+                	}
+                    
                     break;
                 case ModelStorageBase.FLOAT:
-                    image.exportData(j * sliceSize, sliceSize, (float[]) dataImportObj);
+                	if(is4D) {
+                		image.exportData((image.getExtents()[2] * sliceSize * volCounter) + (sliceSize * counter), sliceSize, (float[]) dataImportObj);
+                	}else {
+                		image.exportData(j * sliceSize, sliceSize, (float[]) dataImportObj);
+                	}
                     break;
                 case ModelStorageBase.DOUBLE:
-                    image.exportData(j * sliceSize, sliceSize, (double[]) dataImportObj);
+                	if(is4D) {
+                		image.exportData((image.getExtents()[2] * sliceSize * volCounter) + (sliceSize * counter), sliceSize, (double[]) dataImportObj);
+                	}else {
+                		image.exportData(j * sliceSize, sliceSize, (double[]) dataImportObj);
+                	}
                     break;
                 default:
                     System.err.println("Third switch(mDataType) not valid yet mDataType = " + mDataType);
@@ -1615,12 +1743,21 @@ public class FileMincHDF extends FileBase {
                     return;
             }
             imageObj.write(dataImportObj);
+            if(is4D) {
+            	volCounter++;
+				if(j!=0 && j%numVols == 0) {
+					counter++;
+				}
+            }
             fireProgressStateChanged(Math.round(5 + ((float) j / numImages) * 95));
         }
 
         // dimorder based on orientation
         // orientation of the image.
         String dimOrder = new String();
+        if(is4D) {
+        	dimOrder = "time,";
+        }
         switch (options.getAxisOrientation()[2]) {
 
             case FileInfoBase.ORI_L2R_TYPE:
@@ -1736,13 +1873,28 @@ public class FileMincHDF extends FileBase {
         // create the image-max and image-min arrays (always 64bit float?)
         tsize = 8;
         final Datatype imageRangeDatatype = fileFormat.createDatatype(Datatype.CLASS_FLOAT, tsize, -1, Datatype.SIGN_2);
-        dims = new long[1];
-        maxdims = new long[1];
-        dims[0] = 1;
-        if (image.getExtents().length > 2) {
-            dims[0] = image.getExtents()[2];
+        if(is4D) {
+        	dims = new long[2];
+        	maxdims = new long[2];
+        }else {
+        	dims = new long[1];
+        	maxdims = new long[1];
         }
-        maxdims[0] = dims[0];
+        
+        int numSlices = 1;
+        dims[0] = 1;
+        if (image.getExtents().length == 3) {
+            dims[0] = image.getExtents()[2];
+            maxdims[0] = dims[0];
+            numSlices = image.getExtents()[2];
+        }else if(image.getExtents().length == 4) {
+        	dims[0] = image.getExtents()[3];
+        	dims[1] = image.getExtents()[2];
+        	maxdims[0] = dims[0];
+        	maxdims[1] = dims[1];
+        	numSlices = image.getExtents()[2] * image.getExtents()[3];
+        }
+        
 
         final H5ScalarDS imageMaxObj = (H5ScalarDS) fileFormat.createScalarDS("image-max", imageNumGroup,
                 imageRangeDatatype, dims, maxdims, null, 0, null);
@@ -1754,16 +1906,36 @@ public class FileMincHDF extends FileBase {
         final DefaultMutableTreeNode imageMinNode = new DefaultMutableTreeNode(imageMinObj);
         model.insertNodeInto(imageMinNode, imageNumNode, imageNumNode.getChildCount());
 
-        final double[] imageMax = new double[(int) dims[0]];
-        final double[] imageMin = new double[(int) dims[0]];
+       double[] imageMax = new double[numSlices];
+       double[] imageMin = new double[numSlices];
 
         double rescaleIntercept = 0;
         double rescaleSlope = 0;
 
         final double[] imageSliceBuffer = new double[image.getSliceSize()];
-
-        for (int i = 0; i < dims[0]; i++) {
-            image.exportData(i * sliceSize, sliceSize, imageSliceBuffer);
+        sliceCounter = 0;
+        volCounter = 0;
+        counter = 0;
+        if(is4D) {
+        	numVols = image.getExtents()[3];
+        }
+        for (int i = 0; i < numSlices; i++) {
+        	if(is4D) {
+        		if(i%image.getExtents()[2] == 0) {
+    				sliceCounter++;
+    			}
+				if(volCounter >= numVols) {
+					volCounter = 0;
+				}
+        		image.exportData((image.getExtents()[2] * sliceSize * volCounter) + (sliceSize * counter), sliceSize, imageSliceBuffer);
+        		volCounter++;
+				if(i!=0 && i%numVols == 0) {
+					counter++;
+				}
+        	}else {
+        		 image.exportData(i * sliceSize, sliceSize, imageSliceBuffer);
+        	}
+           
             rescaleSlope = image.getFileInfo()[i].getRescaleSlope();
             rescaleIntercept = image.getFileInfo()[i].getRescaleIntercept();
 
@@ -1788,7 +1960,10 @@ public class FileMincHDF extends FileBase {
         imageMinObj.write(imageMin);
 
         // write the dimorder attribute to the image-max and image-min nodes
-        final String[] rangeDimString = new String[] {"zspace"};
+        String[] rangeDimString = new String[] {"zspace"};
+        if(is4D) {
+        	rangeDimString[0] = "time,zspace";
+        }
         dType = fileFormat.createDatatype(Datatype.CLASS_STRING, rangeDimString[0].length() + 1, Datatype.NATIVE, -1);
         attrDims[0] = 1;
         attr = new Attribute("dimorder", dType, attrDims);
@@ -1847,9 +2022,10 @@ public class FileMincHDF extends FileBase {
         // if image was MINC_HDF, the first slice's fileinfo contains the dimension and info nodes
         if (fileInfo instanceof FileInfoMincHDF) {
             final DefaultMutableTreeNode dimNode = ((FileInfoMincHDF) fileInfo).getDimensionNode();
-            format.copy((HObject) dimNode.getUserObject(), mincGroup, "dimensions");
+            DefaultMutableTreeNode dimNode2 = (DefaultMutableTreeNode)dimNode.clone();
+            format.copy((HObject) dimNode2.getUserObject(), mincGroup, "dimensions");
 
-            model.insertNodeInto(dimNode, mincNode, mincNode.getChildCount());
+            model.insertNodeInto(dimNode2, mincNode, mincNode.getChildCount());
 
             final DefaultMutableTreeNode infoNode = ((FileInfoMincHDF) fileInfo).getInfoNode();
             format.copy((HObject) infoNode.getUserObject(), mincGroup, "info");
