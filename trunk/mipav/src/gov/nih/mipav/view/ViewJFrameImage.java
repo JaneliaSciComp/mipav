@@ -682,15 +682,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.windowClosing(null);
         } else if (command.equals("dccieconvert")) {
             new JDialogDCCIEConversion();
-        } else if (command.equals("convertXML")) {
-            final ViewDirectoryChooser chooser = new ViewDirectoryChooser();
-            final String dir = chooser.getImageDirectory();
-
-            if (dir != null) {
-                final AlgorithmConvertOldXML algo = new AlgorithmConvertOldXML(dir);
-
-                algo.run();
-            }
         } else if (command.equals("loadLeica")) {
             // open a file chooser to select .txt header
 
@@ -1662,8 +1653,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogMRIShadingCorrection(this, getActiveImage());
         } else if (command.equals("sm2")) {
             new JDialogSM2(this, getActiveImage());
-        } else if (command.equals("graphBasedSeg")) {
-            new JDialogGraphBasedSegmentation(this, getActiveImage());
         } else if (command.equals("evalSeg")) {
             new JDialogEvaluateSegmentation(this, getActiveImage());
         } else if (command.equals("evalSegMask")) {
@@ -1759,8 +1748,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogHistogram2Dim(this, getActiveImage());
         } else if (command.equals("cumHistogram")) {
             new JDialogCumulativeHistogram(this, getActiveImage());
-        } else if (command.equals("DENCLUE")) {
-            new JDialogDENCLUE(this, getActiveImage());
         } else if (command.equals("colocEM")) {
             new JDialogColocalizationEM(this, getActiveImage());
         } else if (command.equals("colocRegression")) {
@@ -1832,10 +1819,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogHoughLine(this, getActiveImage());
         } else if (command.equals("HoughParabola")) {
             new JDialogHoughParabola(this, getActiveImage());
-        } else if (command.equals("Rtable")) {
-            new JDialogCreateRtable(this, getActiveImage());
-        } else if (command.equals("FindRObject")) {
-            new JDialogFindRtableObject(this, getActiveImage());
         } else if (command.equals("gFilter")) {
             new JDialogGaborFilter(this, getActiveImage());
         } else if (command.equals("hFilter")) {
@@ -5088,7 +5071,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         // update plugins menu, if it already exists
         final int index = menuBar.getComponentIndex(menuBarMaker.getPlugInMenu());
-        if(index != -1) {
+        if (index != -1) {
             menuBar.remove(index);
             menuBarMaker.setPlugInMenu(userInterface.buildPlugInsMenu(this));
             menuBar.add(menuBarMaker.getPlugInMenu(), index);
@@ -5543,7 +5526,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"), menuBuilder
                 .isMenuItemSelected("VOI toolbar"), menuBuilder.isMenuItemSelected("Paint toolbar"), menuBuilder
                 .isMenuItemSelected("Scripting toolbar"), componentImage.getVOIHandler().getVOI_ID());
-        
+
         if (getActiveImage().getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
 
             // menuBuilder.setMenuItemEnabled("Show image/DICOM overlay", true);
@@ -5587,7 +5570,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         // User interface will have list of frames and sets controls
         userInterface.registerFrame(this);
-        
+
         addComponentListener(this);
 
         pack(); // Pack before making visible.
@@ -5599,14 +5582,14 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         final JMenuItem kAutoITKMenu = menuBuilder.getMenuItem("Insight toolkit (auto ITK)");
         m_kAutoItkLoader = new AutoItkLoader(this, (JMenu) kAutoITKMenu);
-        
+
         updateImages(true);
 
-        if(controls.getTImageSlider() != null) {
-        	((ViewJSlider)controls.getTImageSlider()).resizeSlider();
+        if (controls.getTImageSlider() != null) {
+            ((ViewJSlider) controls.getTImageSlider()).resizeSlider();
         }
-        if(controls.getZImageSlider() != null) {
-        	((ViewJSlider)controls.getZImageSlider()).resizeSlider();
+        if (controls.getZImageSlider() != null) {
+            ((ViewJSlider) controls.getZImageSlider()).resizeSlider();
         }
     } // end init()
 
