@@ -1,11 +1,16 @@
 package gov.nih.mipav.view.dialogs;
 
 import java.awt.BorderLayout;
+
 import java.awt.FlowLayout;
 import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.Enumeration;
 
@@ -43,14 +48,14 @@ import gov.nih.mipav.view.ViewUserInterface;
 
 public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery {
 
-    private static String title = "DESPOT1 T1 Mapper";
-    private double despotTR = 5.00;
+    private static String title = "tre T1 Mapper";
+    private double treTR = 5.00;
     private double irspgrTR = 5.00;
     private double irspgrKy = 96.00;
     private double irspgrFA = 5.00;
     private double maxT1 = 5000;
     private double maxMo = 10000;
-    private double[] despotFA;
+    private double[] treFA;
     private double[] irspgrTr;
     private double[] irspgrTI;
     
@@ -70,9 +75,9 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
     
     private boolean smoothB1Field = true;
     /**The following GUI choices change algorithm operation in binary ways*/
-    private boolean performStraightDESPOT1 = true;
-    private boolean performDESPOT1withPreCalculatedB1Map = false;
-    private boolean performDESPOT1HIFI = false;
+    private boolean performStraightTreT1 = true;
+    private boolean performTreT1withPreCalculatedB1Map = false;
+    private boolean performTreT1HIFI = false;
     private boolean doubleInversion = true;
     private boolean singleInversion = false;
     private boolean geScanner = true;
@@ -108,6 +113,19 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
     private String[] titles;
 
     private AlgorithmDespotT1 cAlgo;
+	private JRadioButton doConvTre;
+	private JRadioButton doHifiTre;
+	private GuiBuilder guiHelp;
+	private JPanel hifiPanel;
+	private JPanel straightPanel;
+	private JPanel spgrPanel;
+	private JPanel irspgrGEPanel;
+	private JPanel irspgrSiemensPanel;
+	private JPanel convSpec;
+	private JPanel hifiSpec;
+	private JPanel hardThreshold;
+	private JPanel smartThreshold;
+	private JPanel treLong;
     
     /**
      * Empty constructor needed for dynamic instantiation.
@@ -127,7 +145,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
     
     public void algorithmPerformed(AlgorithmBase algorithm) {
         if (algorithm instanceof AlgorithmDespotT1) {
-            Preferences.debug("DespotT1: " + algorithm.getElapsedTime());
+            Preferences.debug("TreT1: " + algorithm.getElapsedTime());
         } 
 
         if (algorithm.isCompleted()) {
@@ -174,36 +192,38 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
                 titles[i] = "";
         }
         
-        if (!showOpeningDialog()) return;
+        if (!showTotalDialog()) return;
         
-        if (performDESPOT1HIFI == true) {
-            if (!showHIFIDialog()) return;
+        if (performTreT1HIFI == true) {
+            //if (!showHIFIDialog()) return;
         }
         else {
-            if (!showConventionalDESPOT1Dialog()) return;
+            //if (!showConventionaltre1Dialog()) return;
         }
     
         System.out.println("number of flip angles: "+Nsa);
         
-        despotFA = new double[Nsa];
+        treFA = new double[Nsa];
         if (Nsa == 2) {
-            despotFA[0] = 4.00;
-            despotFA[1] = 18.0;
+            treFA[0] = 4.00;
+            treFA[1] = 18.0;
         }
         spgrImageIndex = new int[Nsa];
         
         spgrData = new double[Nsa];
         
-        if (performDESPOT1HIFI == true) {
+        /*if (performtre1HIFI == true) {
             irspgrTI = new double[Nti];
-            if (Nti == 1) irspgrTI[0] = 450.00;
+            if (Nti == 1) {
+            	irspgrTI[0] = 450.00;
+            }
             irspgrTr = new double[Nti];
             irspgrImageIndex = new int[Nti];
             irspgrData = new double[Nti];
             
             if (!showSPGRDialog()) return;
             
-            irspgrTR = despotTR;
+            irspgrTR = treTR;
             
             if (geScanner == true) {
                 if (!showIRSPGRDialogGE()) return;
@@ -212,12 +232,12 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
                 if (!showIRSPGRDialogSiemens()) return;
             }
             
-            if (!showDESPOT1HIFISpecificsDialog()) return;
+            if (!showtre1HIFISpecificsDialog()) return;
             
         }
         else {
-            if (!showDESPOT1LongDialog()) return; 
-            if (!showDESPOT1SpecificsDialog()) return;
+            if (!showtre1LongDialog()) return; 
+            if (!showtre1SpecificsDialog()) return;
         }
         
         //note that smart/hard thresholding are not required methods
@@ -236,22 +256,22 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
             MipavUtil.displayError("Dialog Circle Generation: unable to allocate enough memory");
     
             return;
-        }
+        }*/
     }
     
     protected void callAlgorithm() {
         // Make algorithm
-        cAlgo = new AlgorithmDespotT1(despotTR, irspgrTR,
+        cAlgo = new AlgorithmDespotT1(treTR, irspgrTR,
                 irspgrKy, irspgrFA, maxT1, maxMo,
-                despotFA,  irspgrTr,  irspgrTI,
+                treFA,  irspgrTr,  irspgrTI,
                 spgrData,  irspgrData, scale,
                 pointScale, scaleIncrement,  estimates,
                 residuals,  direction,  spgrImageIndex,
                 irspgrImageIndex,  b1ImageIndex, angleIncrement,
                 Nsa,  Nti, maxAngle,  smoothB1Field,
-                performStraightDESPOT1,
-                performDESPOT1withPreCalculatedB1Map,
-                performDESPOT1HIFI,  doubleInversion,
+                performStraightTreT1,
+                performTreT1withPreCalculatedB1Map,
+                performTreT1HIFI,  doubleInversion,
                 singleInversion,  geScanner,  siemensScanner,
                 threeTField,  onefiveTField,  calculateT1,
                 showB1Map,  calculateMo,  invertT1toR1,
@@ -318,15 +338,15 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
     }
     
     protected void setGUIFromParams() {
-        despotTR = scriptParameters.getParams().getDouble("despot_TR");
+        treTR = scriptParameters.getParams().getDouble("tre_TR");
         irspgrTR = scriptParameters.getParams().getDouble("irspgr_TR");
         irspgrKy = scriptParameters.getParams().getDouble("irspgr_Ky");
         irspgrFA = scriptParameters.getParams().getDouble("irspgr_FA");
         maxT1 = scriptParameters.getParams().getDouble("max_T1");
         maxMo = scriptParameters.getParams().getDouble("max_Mo");
         //double[], note all non-string arrays are stored as parameter lists
-        if(scriptParameters.getParams().containsParameter("despot_FA")) {
-            despotFA = scriptParameters.getParams().getList("despot_FA").getAsDoubleArray();
+        if(scriptParameters.getParams().containsParameter("tre_FA")) {
+            treFA = scriptParameters.getParams().getList("tre_FA").getAsDoubleArray();
         }
         if(scriptParameters.getParams().containsParameter("irspgr_Tr")) {
             irspgrTr = scriptParameters.getParams().getList("irspgr_Tr").getAsDoubleArray();
@@ -368,9 +388,9 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         Nti = scriptParameters.getParams().getInt("Nti");
         maxAngle = scriptParameters.getParams().getDouble("max_Angle");
         smoothB1Field = scriptParameters.getParams().getBoolean("smooth_B1_Field");
-        performStraightDESPOT1 = scriptParameters.getParams().getBoolean("perform_Straight_DESPOT1");
-        performDESPOT1withPreCalculatedB1Map = scriptParameters.getParams().getBoolean("perform_DESPOT1_with_PreCalculatedB1Map");
-        performDESPOT1HIFI = scriptParameters.getParams().getBoolean("perform_DESPOT1_HIFI");
+        performStraightTreT1 = scriptParameters.getParams().getBoolean("perform_Straight_tre1");
+        performTreT1withPreCalculatedB1Map = scriptParameters.getParams().getBoolean("perform_tre1_with_PreCalculatedB1Map");
+        performTreT1HIFI = scriptParameters.getParams().getBoolean("perform_tre1_HIFI");
         doubleInversion = scriptParameters.getParams().getBoolean("double_Inversion");
         singleInversion = scriptParameters.getParams().getBoolean("single_Inversion");
         geScanner = scriptParameters.getParams().getBoolean("ge_Scanner");
@@ -417,15 +437,15 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
     }
 
     protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.getParams().put(ParameterFactory.newParameter("despot_TR", despotTR));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("tre_TR", treTR));
         scriptParameters.getParams().put(ParameterFactory.newParameter("irspgr_TR", irspgrTR));
         scriptParameters.getParams().put(ParameterFactory.newParameter("irspgr_Ky", irspgrKy)); 
         scriptParameters.getParams().put(ParameterFactory.newParameter("irspgr_FA", irspgrFA));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_T1", maxT1));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_Mo", maxMo));
         //double[], note all non-string arrays are stored as parameter lists
-        if(despotFA != null) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("despot_FA", despotFA));
+        if(treFA != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("tre_FA", treFA));
         }
         if(irspgrTr != null) {
             scriptParameters.getParams().put(ParameterFactory.newParameter("irspgr_Tr", irspgrTr));
@@ -467,9 +487,9 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         scriptParameters.getParams().put(ParameterFactory.newParameter("Nti", Nti));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_Angle", maxAngle));
         scriptParameters.getParams().put(ParameterFactory.newParameter("smooth_B1_Field", smoothB1Field));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("perform_Straight_DESPOT1", performStraightDESPOT1));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("perform_DESPOT1_with_PreCalculatedB1Map", performDESPOT1withPreCalculatedB1Map));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("perform_DESPOT1_HIFI", performDESPOT1HIFI));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("perform_Straight_tre1", performStraightTreT1));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("perform_tre1_with_PreCalculatedB1Map", performTreT1withPreCalculatedB1Map));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("perform_tre1_HIFI", performTreT1HIFI));
         scriptParameters.getParams().put(ParameterFactory.newParameter("double_Inversion", doubleInversion));
         scriptParameters.getParams().put(ParameterFactory.newParameter("single_Inversion", singleInversion));
         scriptParameters.getParams().put(ParameterFactory.newParameter("ge_Scanner", geScanner));  
@@ -521,76 +541,136 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         	}
         }
     }
+    
+    private class ChoiceListener implements ActionListener {
+		
+		private void varSet() {
+			if (doConvTre.isSelected()) {
+				//showHIFIDialog();
+				performStraightTreT1 = true;
+				performTreT1withPreCalculatedB1Map = false;
+	            performTreT1HIFI = false;
+	        }
+	        if (doHifiTre.isSelected()) {
+	        	//showConventionalDialog();
+	        	performTreT1HIFI = true;
+	        	performStraightTreT1 = false;
+	            performTreT1withPreCalculatedB1Map = false;
+	        }
+		}
 
-    public boolean showOpeningDialog() {
-        BorderLayout b = new BorderLayout();
-        JDialog dialog = new JDialog();
-        dialog.setLayout(b);
-        GuiBuilder guiHelp = new GuiBuilder(dialog);
-        dialog.setTitle("DESPOT1: Opening Dialog");
-        JPanel panel = new JPanel();
-        LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
-        panel.setLayout(panelLayout);
+		public void actionPerformed(ActionEvent e) {
+			varSet();
+			System.out.println("Action: "+e.getActionCommand()+"\t "+e.getSource());
+		}
+    }
+
+    public boolean showTotalDialog() {
+        GridBagLayout gb = new GridBagLayout();
+        setLayout(gb);
+        GridBagConstraints gbc = new GridBagConstraints();
+        guiHelp = new GuiBuilder(this);
+        setTitle("tre1: Opening Dialog");
+
+        JPanel methodPanel = new JPanel();
+        LayoutManager panelLayout = new BoxLayout(methodPanel, BoxLayout.X_AXIS);
+        methodPanel.setLayout(panelLayout);
+        methodPanel.setBorder(MipavUtil.buildTitledBorder("Processing method"));
         
-        JRadioButton button1 = guiHelp.buildRadioButton("Perform Conventional DESPOT1 Processing", performStraightDESPOT1);
-        JRadioButton button2 = guiHelp.buildRadioButton("Perform DESPOT1 with Pre-calculated B1 Map", performDESPOT1withPreCalculatedB1Map);
-        JRadioButton button3 = guiHelp.buildRadioButton("Perform DESPOT1-HIFI Processing", performDESPOT1HIFI);
+        doConvTre = guiHelp.buildRadioButton("Conventional TRE", performStraightTreT1);
+        doHifiTre = guiHelp.buildRadioButton("TRE-HIFI Processing", performTreT1HIFI);
+        ActionListener c = new ChoiceListener();
+        doConvTre.addActionListener(c);
+        doHifiTre.addActionListener(c);
         
         ButtonGroup processType = new ButtonGroup();
-        processType.add(button1);
-        processType.add(button2);
-        processType.add(button3);
+        processType.add(doConvTre);
+        processType.add(doHifiTre);
         
-        panel.add(button1.getParent(), panelLayout);
-        panel.add(button2.getParent(), panelLayout);
-        panel.add(button3.getParent(), panelLayout);
+        //guiHelp envelopes elements in JPanels, so need to add parent
+        methodPanel.add(doConvTre.getParent(), panelLayout);
+        methodPanel.add(doHifiTre.getParent(), panelLayout);
         
-        dialog.add(panel, BorderLayout.CENTER);
-        dialog.add(guiHelp.buildOKCancelPanel(), BorderLayout.SOUTH);
-        dialog.setLocationRelativeTo(null);
-        dialog.pack();
-        dialog.setModal(true);
-        dialog.setVisible(true);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.weighty = 0;
+        add(methodPanel, gbc);
+       
+        //construct Hifi, do not show
+        hifiPanel = buildHIFIDialog();
         
-        if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
+        //construct general, show if performStraighttre1
+        straightPanel = buildConventionaltre1Dialog();
+        
+        //add both general and hifi at same location
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.weightx = 1;
+        gbc.weighty = .5;
+        add(hifiPanel, gbc);
+        add(straightPanel, gbc);
+        hifiPanel.setVisible(false);
+        straightPanel.setVisible(true);
+        
+        //hifi panels for next section
+        spgrPanel = buildSPGRDialog();
+        irspgrGEPanel = buildIRSPGRDialogGE();
+        irspgrSiemensPanel = buildIRSPGRDialogSiemens();
+        
+        //fit these HIFI elements into one panel, with either/or siemens
+        JPanel hifiSuper = new JPanel();
+        LayoutManager hifiLayout = new BoxLayout(hifiSuper, BoxLayout.Y_AXIS);
+        hifiSuper.add(spgrPanel, hifiLayout);
+        hifiSuper.add(irspgrGEPanel, hifiLayout);
+        hifiSuper.add(irspgrSiemensPanel, hifiLayout);
+        
+        //conventional panels for next section
+        treLong = buildtre1LongDialog();
+ 
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.weightx = 1;
+        gbc.weighty = 0;
+        
+        
+        //specifics section
+        convSpec = buildtre1SpecificsDialog();
+        hifiSpec = buildtre1HIFISpecificsDialog();
+
+        //threshold
+        hardThreshold = buildHardThresholdDialog();
+        smartThreshold = buildSmartThresholdDialog();
+        
+        
+        add(guiHelp.buildOKCancelPanel(), gbc);
+        setLocationRelativeTo(null);
+        pack();
+        setModal(true);
+        setVisible(true);
+        
+        /*if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
                 guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
             return false;
         }
         
-        performStraightDESPOT1 = button1.isSelected();
-        performDESPOT1withPreCalculatedB1Map = button2.isSelected();
-        performDESPOT1HIFI = button3.isSelected();
+        
 
         if(processType.getSelection() == null) {
             MipavUtil.displayInfo("Please select a processing method");
             dialog.dispose();
             return showOpeningDialog();
-        }   
+        }   */
         
-        if (performStraightDESPOT1 == true) {
-            performDESPOT1withPreCalculatedB1Map = false;
-            performDESPOT1HIFI = false;
-        }
-        if (performDESPOT1withPreCalculatedB1Map == true) {
-            performStraightDESPOT1 = false;
-            performDESPOT1HIFI = false;
-        }
-        if (performDESPOT1HIFI == true) {
-            performStraightDESPOT1 = false;
-            performDESPOT1withPreCalculatedB1Map = false;
-        }
+        
         
         return true;
     }
     
-    public boolean showHIFIDialog() {
-        BorderLayout b = new BorderLayout();
-        JDialog dialog = new JDialog();
-        dialog.setLayout(b);
-        GuiBuilder guiHelp = new GuiBuilder(dialog);
-        dialog.setTitle("DESPOT1-HIFI: General Information");
+    public JPanel buildHIFIDialog() {
         JPanel panel = new JPanel();
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
+        panel.setBorder(MipavUtil.buildTitledBorder("HIFI information"));
         panel.setLayout(panelLayout);
         
         JTextField field1 = guiHelp.buildDecimalField("Number of SPGR Flip Angles:", Nsa);
@@ -602,19 +682,15 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         scannerType.add(button1);
         scannerType.add(button2);
         
+        //guiHelp envelopes elements in JPanels, so need to add parent
         panel.add(field1.getParent(), panelLayout);
         panel.add(field2.getParent(), panelLayout);
         panel.add(button1.getParent(), panelLayout);
         panel.add(button2.getParent(), panelLayout);
         
-        dialog.add(panel, BorderLayout.CENTER);
-        dialog.add(guiHelp.buildOKCancelPanel(), BorderLayout.SOUTH);
-        dialog.setLocationRelativeTo(null);
-        dialog.pack();
-        dialog.setModal(true);
-        dialog.setVisible(true);
+        return panel;
         
-        if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
+        /*if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
                 guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
             return false;
         }
@@ -646,21 +722,18 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
             MipavUtil.displayError("T1 and Mo calculations require at least two SPGR images.");
             return false;
         }
+        
         if (Nti < 1) {
             MipavUtil.displayError("B1 correction requires at least one IR-SPGR image.");
             return false;
         }
         
-        return true;
+        return true;*/
     }
     
-    public boolean showConventionalDESPOT1Dialog() {
-        BorderLayout b = new BorderLayout();
-        JDialog dialog = new JDialog();
-        dialog.setLayout(b);
-        GuiBuilder guiHelp = new GuiBuilder(dialog);
-        dialog.setTitle("DESPOT1: General Information");
+    public JPanel buildConventionaltre1Dialog() {
         JPanel panel = new JPanel();
+        panel.setBorder(MipavUtil.buildTitledBorder("tre1: General Information"));
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(panelLayout);
         
@@ -668,17 +741,14 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         
         panel.add(field1.getParent(), panelLayout);
         
-        dialog.add(panel, BorderLayout.CENTER);
-        dialog.add(guiHelp.buildOKCancelPanel(), BorderLayout.SOUTH);
-        dialog.setLocationRelativeTo(null);
-        dialog.pack();
-        dialog.setModal(true);
-        dialog.setVisible(true);
+        return panel;
         
-        if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
+        /*if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
                 guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
             return false;
         }
+        
+        
         
         Nsa = (int) Double.valueOf(field1.getText()).doubleValue();
         
@@ -690,25 +760,21 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
             MipavUtil.displayError("T1 and Mo calculations require at least two SPGR images.");
             return false;
         }
-        if (performDESPOT1withPreCalculatedB1Map) {
+        if (performtre1withPreCalculatedB1Map) {
             if (Nsa+1 > wList.length) {
                 MipavUtil.displayError("Please import all nessesary images first.");
                 return false;
             }
         }
         
-        return true;
+        return true;*/
     }
     
-     public boolean showSPGRDialog() {
-        BorderLayout b = new BorderLayout();
-        JDialog dialog = new JDialog();
-        dialog.setLayout(b);
-        GuiBuilder guiHelp = new GuiBuilder(dialog);
-        dialog.setTitle("DESPOT1-HIFI: SPGR Image Information");
+     public JPanel buildSPGRDialog() {
         JPanel panel = new JPanel();
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(panelLayout);
+        panel.setBorder(MipavUtil.buildTitledBorder("tre1-HIFI: SPGR Image Information"));
         
         JComboBox[] comboArr = new JComboBox[Nsa];
         JTextField[] fieldArr = new JTextField[Nsa];
@@ -716,47 +782,37 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
             comboArr[i] = guiHelp.buildComboBox("SPGR Image #"+i, titles, i);
             panel.add(comboArr[i].getParent(), panelLayout);
             
-            fieldArr[i] = guiHelp.buildDecimalField("SPGR Flip Angle #"+i, despotFA[i]);
+            fieldArr[i] = guiHelp.buildDecimalField("SPGR Flip Angle #"+i, treFA[i]);
             panel.add(fieldArr[i].getParent(), panelLayout);
         }
-        JTextField fieldTime = guiHelp.buildDecimalField("SPGR Repetition Time (ms):", despotTR);
+        JTextField fieldTime = guiHelp.buildDecimalField("SPGR Repetition Time (ms):", treTR);
         panel.add(fieldTime.getParent(), panelLayout);
         
-        dialog.add(panel, BorderLayout.CENTER);
-        dialog.add(guiHelp.buildOKCancelPanel(), BorderLayout.SOUTH);
-        dialog.setLocationRelativeTo(null);
-        dialog.pack();
-        dialog.setModal(true);
-        dialog.setVisible(true);
+        return panel;
         
-        if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
+        /*if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
                 guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
             return false;
         }
         
         for(int i=0; i<Nsa; i++) {
             spgrImageIndex[i] = comboArr[i].getSelectedIndex();
-            despotFA[i] = Float.valueOf(fieldArr[i].getText()).floatValue();
+            treFA[i] = Float.valueOf(fieldArr[i].getText()).floatValue();
         }
-        despotTR = Double.valueOf(fieldTime.getText()).doubleValue();
+        treTR = Double.valueOf(fieldTime.getText()).doubleValue();
          
-        return true;
+        return true;*/
      }
     
-    public boolean showIRSPGRDialogGE() {
-        BorderLayout b = new BorderLayout();
-        JDialog dialog = new JDialog();
-        dialog.setLayout(b);
-        GuiBuilder guiHelp = new GuiBuilder(dialog);
-        dialog.setTitle("DESPOT1-HIFI: IR-SPGR Image Information");
+    public JPanel buildIRSPGRDialogGE() {
         JPanel panel = new JPanel();
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(panelLayout);
+        panel.setBorder(MipavUtil.buildTitledBorder("tre1-HIFI: IR-SPGR GE Image Information"));
         
         JComboBox[] comboArr = new JComboBox[Nti];
         JTextField[] fieldArr = new JTextField[Nti];
         for (int i=0; i<Nti; i++) {
-            //TODO: See if addition of nsa is possible bug
             comboArr[i] = guiHelp.buildComboBox("IR-SPGR Image #"+i, titles, Nsa+i);
             panel.add(comboArr[i].getParent(), panelLayout);
             
@@ -790,14 +846,9 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         panel.add(radio4.getParent(), panelLayout);
         panel.add(box1.getParent(), panelLayout);
         
-        dialog.add(panel, BorderLayout.CENTER);
-        dialog.add(guiHelp.buildOKCancelPanel(), BorderLayout.SOUTH);
-        dialog.setLocationRelativeTo(null);
-        dialog.pack();
-        dialog.setModal(true);
-        dialog.setVisible(true);
+        return panel;
         
-        if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
+        /*if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
                 guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
             return false;
         }
@@ -864,23 +915,18 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         
         for (int i=0; i<Nti; i++) irspgrTr[i] = irspgrTI[i] + irspgrTR*irspgrKy;
         
-        return true;
+        return true;*/
     }
     
-    public boolean showIRSPGRDialogSiemens() {
-        BorderLayout b = new BorderLayout();
-        JDialog dialog = new JDialog();
-        dialog.setLayout(b);
-        GuiBuilder guiHelp = new GuiBuilder(dialog);
-        dialog.setTitle("DESPOT1-HIFI: IR-SPGR Image Information");
+    public JPanel buildIRSPGRDialogSiemens() {
         JPanel panel = new JPanel();
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(panelLayout);
+        panel.setBorder(MipavUtil.buildTitledBorder("tre1-HIFI: IR-SPGR Siemens Image Information"));
         
         JComboBox[] comboArr = new JComboBox[Nti];
         JTextField[] fieldArr = new JTextField[Nti];
         for (int i=0; i<Nti; i++) {
-            //TODO: find out why this is i+2
             comboArr[i] = guiHelp.buildComboBox("IR-SPGR Image #"+i, titles, i+2);
             panel.add(comboArr[i].getParent(), panelLayout);
             
@@ -914,7 +960,9 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         panel.add(radio4.getParent(), panelLayout);
         panel.add(box1.getParent(), panelLayout);
         
-        dialog.add(panel, BorderLayout.CENTER);
+        return panel;
+        
+        /*dialog.add(panel, BorderLayout.CENTER);
         dialog.add(guiHelp.buildOKCancelPanel(), BorderLayout.SOUTH);
         dialog.setLocationRelativeTo(null);
         dialog.pack();
@@ -986,12 +1034,12 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         
         for (int i=0; i<Nti; i++) irspgrTr[i] = irspgrTI[i] + irspgrTR*irspgrKy;
         
-        return true;
+        return true;*/
     }
         
         
 
-    public boolean showDESPOT1LongDialog() {
+    public JPanel buildtre1LongDialog() {
         BorderLayout b = new BorderLayout();
         JDialog dialog = new JDialog();
         dialog.setLayout(b);
@@ -1000,9 +1048,10 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         JPanel panel = new JPanel();
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(panelLayout);
+        panel.setBorder(MipavUtil.buildTitledBorder("tre-Conv: Long"));
         
         JComboBox combo1 = null;
-        if(performDESPOT1withPreCalculatedB1Map) {
+        if(performTreT1withPreCalculatedB1Map) {
             combo1 = guiHelp.buildComboBox("B1 Field Map:", titles, 0);
             panel.add(combo1.getParent(), panelLayout);
         }
@@ -1013,10 +1062,10 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
             comboAr[i] = guiHelp.buildComboBox("Image #"+i, titles, i);
             panel.add(comboAr[i].getParent(), panelLayout);
             
-            fieldAr[i] = guiHelp.buildDecimalField("Flip Angle #"+i, despotFA[i]);
+            fieldAr[i] = guiHelp.buildDecimalField("Flip Angle #"+i, treFA[i]);
             panel.add(fieldAr[i].getParent(), panelLayout);
         }
-        JTextField field1 = guiHelp.buildDecimalField("Repetition Time (ms):", despotTR);
+        JTextField field1 = guiHelp.buildDecimalField("Repetition Time (ms):", treTR);
         panel.add(field1.getParent(), panelLayout);
         
         JCheckBox check1 = null;
@@ -1025,44 +1074,35 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
             panel.add(check1.getParent(), panelLayout);
         }
         
-        dialog.add(panel, BorderLayout.CENTER);
-        dialog.add(guiHelp.buildOKCancelPanel(), BorderLayout.SOUTH);
-        dialog.setLocationRelativeTo(null);
-        dialog.pack();
-        dialog.setModal(true);
-        dialog.setVisible(true);
+        return panel;
         
-        if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
+        /*if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
                 guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
             return false;
         }
     
-        if (performDESPOT1withPreCalculatedB1Map) {
+        if (performtre1withPreCalculatedB1Map) {
             b1ImageIndex = combo1.getSelectedIndex();
         }
         
         for (int i=0; i<Nsa; i++) {
             spgrImageIndex[i] = comboAr[i].getSelectedIndex();
-            despotFA[i] = Float.valueOf(fieldAr[i].getText()).floatValue();
+            treFA[i] = Float.valueOf(fieldAr[i].getText()).floatValue();
         }
         
-        despotTR = Double.valueOf(field1.getText()).doubleValue();
+        treTR = Double.valueOf(field1.getText()).doubleValue();
         if (Nsa > 2) {
             useWeights = check1.isSelected();
         }
         
-        return true;
+        return true;*/
     }
         
-    public boolean showDESPOT1SpecificsDialog() {
-        BorderLayout b = new BorderLayout();
-        JDialog dialog = new JDialog();
-        dialog.setLayout(b);
-        GuiBuilder guiHelp = new GuiBuilder(dialog);
-        dialog.setTitle("DESPOT1-HIFI: IR-SPGR Image Information");
+    public JPanel buildtre1SpecificsDialog() {
         JPanel panel = new JPanel();
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(panelLayout);
+        panel.setBorder(MipavUtil.buildTitledBorder("tre1: Specifics"));
         
         JTextField field1 = guiHelp.buildDecimalField("Maximum Allowable T1:", maxT1);
         JTextField field2 = guiHelp.buildDecimalField("Maximum Allowable Mo:", maxMo);
@@ -1080,7 +1120,9 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         panel.add(check4.getParent(), panelLayout);
         panel.add(check5.getParent(), panelLayout);
         
-        dialog.add(panel, BorderLayout.CENTER);
+        return panel;
+        
+        /*dialog.add(panel, BorderLayout.CENTER);
         dialog.add(guiHelp.buildOKCancelPanel(), BorderLayout.SOUTH);
         dialog.setLocationRelativeTo(null);
         dialog.pack();
@@ -1102,19 +1144,15 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         if (useSmartThresholding) {
             useHardThresholding = false;
         }
-        return true;
+        return true;*/
     }
     
    
-    public boolean showDESPOT1HIFISpecificsDialog() {
-        BorderLayout b = new BorderLayout();
-        JDialog dialog = new JDialog();
-        dialog.setLayout(b);
-        GuiBuilder guiHelp = new GuiBuilder(dialog);
-        dialog.setTitle("DESPOT1-HIFI: IR-SPGR Image Information");
+    public JPanel buildtre1HIFISpecificsDialog() {
         JPanel panel = new JPanel();
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(panelLayout);
+        panel.setBorder(MipavUtil.buildTitledBorder("tre1-HIFI: IR-SPGR Image Information"));
         
         JTextField field1 = guiHelp.buildDecimalField("Maximum Allowable T1:", maxT1);
         JTextField field2 = guiHelp.buildDecimalField("Maximum Allowable Mo:", maxMo);
@@ -1141,14 +1179,9 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         panel.add(check6.getParent(), panelLayout);
         panel.add(check7.getParent(), panelLayout);
         
-        dialog.add(panel, BorderLayout.CENTER);
-        dialog.add(guiHelp.buildOKCancelPanel(), BorderLayout.SOUTH);
-        dialog.setLocationRelativeTo(null);
-        dialog.pack();
-        dialog.setModal(true);
-        dialog.setVisible(true);
+        return panel;
         
-        if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
+        /*if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
                 guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
             return false;
         }
@@ -1168,15 +1201,14 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
             useHardThresholding = false;
         }
         
-        return true;
+        return true;*/
     }
     
-    public boolean showHardThresholdDialog() {
-        BorderLayout b = new BorderLayout();
-        JDialog dialog = new JDialog();
-        dialog.setLayout(b);
-        GuiBuilder guiHelp = new GuiBuilder(dialog);
-        dialog.setTitle("DESPOT1 T1: Threshold Information");
+    /**
+     * No border
+     * @return
+     */
+    public JPanel buildHardThresholdDialog() {
         JPanel panel = new JPanel();
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(panelLayout);
@@ -1185,29 +1217,19 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         
         panel.add(field1.getParent(), panelLayout);
         
-        dialog.add(panel, BorderLayout.CENTER);
-        dialog.add(guiHelp.buildOKCancelPanel(), BorderLayout.SOUTH);
-        dialog.setLocationRelativeTo(null);
-        dialog.pack();
-        dialog.setModal(true);
-        dialog.setVisible(true);
+        return panel;
         
-        if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
+        /*if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
                 guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
             return false;
         }
         
         hardNoiseThreshold = Float.valueOf(field1.getText()).floatValue();
         
-        return true;
+        return true;*/
     }
     
-    public boolean showSmartThresholdDialog() {
-        BorderLayout b = new BorderLayout();
-        JDialog dialog = new JDialog();
-        dialog.setLayout(b);
-        GuiBuilder guiHelp = new GuiBuilder(dialog);
-        dialog.setTitle("DESPOT1 T1: Threshold Information");
+    public JPanel buildSmartThresholdDialog() {
         JPanel panel = new JPanel();
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(panelLayout);
@@ -1224,14 +1246,9 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         panel.add(box3.getParent(), panelLayout);
         panel.add(box4.getParent(), panelLayout);
         
-        dialog.add(panel, BorderLayout.CENTER);
-        dialog.add(guiHelp.buildOKCancelPanel(), BorderLayout.SOUTH);
-        dialog.setLocationRelativeTo(null);
-        dialog.pack();
-        dialog.setModal(true);
-        dialog.setVisible(true);
+        return panel;
         
-        if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
+        /*if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
                 guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
             return false;
         }
@@ -1241,16 +1258,8 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         upperRightCorner = box2.isSelected();
         lowerLeftCorner = box3.isSelected();
         lowerRightCorner = box4.isSelected();
-        return true;
+        return true;*/
     }
-    
-   
-    public String itos(int num) {
-        String str = new Integer(num).toString();
-        return str;
-    }
-    
-   
 
     public enum ExitStatus {
         
@@ -1449,7 +1458,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         final ParameterTable table = new ParameterTable();
 
         try {
-            table.put(new ParameterDouble("despot_TR", despotTR));
+            table.put(new ParameterDouble("tre_TR", treTR));
             table.put(new ParameterDouble("irspgr_TR", irspgrTR));
             table.put(new ParameterDouble("irspgr_Ky", irspgrKy));
             table.put(new ParameterDouble("irspgr_FA", irspgrFA));
@@ -1457,7 +1466,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
             table.put(new ParameterDouble("max_Mo", maxMo));
             
             //double[], note all non-string arrays are stored as parameter lists
-            table.put(new ParameterList("despot_FA", Parameter.PARAM_DOUBLE, "0,0,0"));
+            table.put(new ParameterList("tre_FA", Parameter.PARAM_DOUBLE, "0,0,0"));
             table.put(new ParameterList("irspgr_Tr", Parameter.PARAM_DOUBLE, "0,0,0"));
             table.put(new ParameterList("irspgr_TI", Parameter.PARAM_DOUBLE, "0,0,0")); 
             table.put(new ParameterList("spgr_Data", Parameter.PARAM_DOUBLE, "0,0,0"));
@@ -1486,9 +1495,9 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
             table.put(new ParameterDouble("max_Angle", maxAngle));
             
             table.put(new ParameterBoolean("smooth_B1_Field", smoothB1Field));
-            table.put(new ParameterBoolean("perform_Straight_DESPOT1", performStraightDESPOT1));
-            table.put(new ParameterBoolean("perform_DESPOT1_with_PreCalculatedB1Map", performDESPOT1withPreCalculatedB1Map));
-            table.put(new ParameterBoolean("perform_DESPOT1_HIFI", performDESPOT1HIFI));
+            table.put(new ParameterBoolean("perform_Straight_tre1", performStraightTreT1));
+            table.put(new ParameterBoolean("perform_tre1_with_PreCalculatedB1Map", performTreT1withPreCalculatedB1Map));
+            table.put(new ParameterBoolean("perform_tre1_HIFI", performTreT1HIFI));
             table.put(new ParameterBoolean("double_Inversion", doubleInversion));
             table.put(new ParameterBoolean("single_Inversion", singleInversion));
             table.put(new ParameterBoolean("ge_Scanner", geScanner));
