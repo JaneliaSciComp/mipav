@@ -61,9 +61,7 @@ public class JDialogVOIShapeInterpolation extends JDialogBase implements Algorit
          int nVOI = VOIs.size();
          int nActiveContour = 0;
          VOIContour VOI1 = null;
-         int sliceIndex1 = 0;
          VOIContour VOI2 = null;
-         int sliceIndex2 = 0;
          VOI VOIHandle = null;
          
          if(nVOI == 0) {
@@ -76,31 +74,23 @@ public class JDialogVOIShapeInterpolation extends JDialogBase implements Algorit
              if (VOIs.VOIAt(i).isActive() && (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)) {
              	VOI tempVOI = (VOI)(VOIs.VOIAt(i).clone());
              	tempVOI.setUID(tempVOI.hashCode());
-             	Vector[] contours = tempVOI.getCurvesTemp();
-             	int nSlices = contours.length;
-             	
-             	
-             	for (int j = 0; j < nSlices; j++) {
-                     int nContours = contours[j].size();
-                     for (int k = 0; k < nContours; k++) {
-                         if (((VOIContour) contours[j].elementAt(k)).isActive()) {
-                         	nActiveContour = nActiveContour + 1;
-                         	if(VOI1 == null) {
-                         		VOI1 = (VOIContour)(VOIContour)contours[j].elementAt(k);
-                         		VOIHandle = (VOI)(VOIs.VOIAt(i));
-                         		sliceIndex1 = j;
+             	Vector contours = tempVOI.getCurves();
 
-                         	}else {
-                         		if((VOI)(VOIs.VOIAt(i)) != VOIHandle) {
-                         			MipavUtil.displayError("Contours must be from the same VOI");
-                                    return;
-                         		}
-                         		VOI2 = (VOIContour)(VOIContour)contours[j].elementAt(k);
-                         		sliceIndex2 = j;
-
-                         	}
-                         }
-                     }
+             	int nContours = contours.size();
+             	for (int k = 0; k < nContours; k++) {
+             	    if (((VOIContour) contours.elementAt(k)).isActive()) {
+             	        nActiveContour = nActiveContour + 1;
+             	        if(VOI1 == null) {
+             	            VOI1 = (VOIContour)(VOIContour)contours.elementAt(k);
+             	            VOIHandle = (VOI)(VOIs.VOIAt(i));
+             	        }else {
+             	            if((VOI)(VOIs.VOIAt(i)) != VOIHandle) {
+             	                MipavUtil.displayError("Contours must be from the same VOI");
+             	                return;
+             	            }
+             	            VOI2 = (VOIContour)(VOIContour)contours.elementAt(k);
+             	        }
+             	    }
              	}
              }
          }
@@ -111,6 +101,14 @@ public class JDialogVOIShapeInterpolation extends JDialogBase implements Algorit
          	MipavUtil.displayWarning("Please select 2 closed VOI contours in non-contiguous slices");
              return;
          }
+         
+         if ( VOI1.getPlane() != VOI2.getPlane() )
+         {
+            MipavUtil.displayWarning("VOIs must have the same orientation.");
+             return;
+         }
+         int sliceIndex1 = VOI1.slice();
+         int sliceIndex2 = VOI2.slice();
          
          if(sliceIndex1 == sliceIndex2) {
          	MipavUtil.displayWarning("Please select 2 closed VOI contours in non-contiguous slices");
@@ -123,7 +121,7 @@ public class JDialogVOIShapeInterpolation extends JDialogBase implements Algorit
         }
         
         //ok now we have 2 selected closed VOI contours in non-contiguous slices
-        alg = new AlgorithmVOIShapeInterpolation(imageA,sliceIndex1,VOI1,sliceIndex2,VOI2,VOIHandle); 
+        alg = new AlgorithmVOIShapeInterpolation(imageA,sliceIndex1,(VOIContour)VOI1.clone(),sliceIndex2,(VOIContour)VOI2.clone(),VOIHandle); 
         alg.addListener(this);
         createProgressBar(imageA.getImageName(), alg);
         progressBar.setMessage("Interpolating VOIs...");

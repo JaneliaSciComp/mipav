@@ -1619,12 +1619,13 @@ public class VOIContour extends VOIBase {
 	 * @param yT
 	 *            translate this amount in the y direction
 	 */
-	public void translate(float xT, float yT) {
+	public void translate(float xT, float yT, float zT) {
 		int i;
 
 		for (i = 0; i < size(); i++) {
 			((elementAt(i))).X += xT;
-			((elementAt(i))).Y += yT;
+            ((elementAt(i))).Y += yT;
+            ((elementAt(i))).Z += zT;
 		}
 	}
 

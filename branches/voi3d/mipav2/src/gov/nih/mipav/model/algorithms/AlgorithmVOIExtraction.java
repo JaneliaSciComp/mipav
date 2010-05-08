@@ -169,7 +169,6 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
         short grayScaleNumber = 0;
         int nCurves;
         Polygon contourPolygon;
-        Vector[] curves;
         boolean newGrayScale;
         ViewVOIVector VOIs = null;
 

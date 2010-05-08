@@ -215,7 +215,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
 
         for ( int i = 0; i < kBase.size(); i++ )
         {
-            add( kBase.get(i) );
+            add( new Vector3f(kBase.get(i)) );
         } 
 
         this.m_iVOIType = kBase.m_iVOIType;

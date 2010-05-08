@@ -2555,6 +2555,8 @@ public class VOI extends ModelSerialCloneable {
      * @deprecated
      */
     public void moveVOI(int slice, int xDim, int yDim, int zDim, int xM, int yM, int zM) {
+        System.err.println( "moveVOI Deprecated" );
+        /*
         int i;
 
         if (fixed) {
@@ -2677,11 +2679,11 @@ public class VOI extends ModelSerialCloneable {
             if (slice == -1) {
                 getBounds(xBounds, yBounds, zBounds);
 
-                /*
-                 * if (xBounds[0] + xM >= xDim || xBounds[0] + xM < 0) return; if (xBounds[1] + xM >= xDim || xBounds[1]
-                 * + xM < 0) return; if (yBounds[0] + yM >= yDim || yBounds[0] + yM < 0) return; if (yBounds[1] + yM >=
-                 * yDim || yBounds[1] + yM < 0) return;
-                 */
+                //
+               // if (xBounds[0] + xM >= xDim || xBounds[0] + xM < 0) return; if (xBounds[1] + xM >= xDim || xBounds[1]
+                // + xM < 0) return; if (yBounds[0] + yM >= yDim || yBounds[0] + yM < 0) return; if (yBounds[1] + yM >=
+                // yDim || yBounds[1] + yM < 0) return;
+                 //
                 for (int j = 0; j < curves.size(); j++) {
                     ((VOIText) (curves.elementAt(j))).moveVOIPoint(xM, yM, zM);
                 }
@@ -2697,6 +2699,7 @@ public class VOI extends ModelSerialCloneable {
         } else {
             return;
         }
+*/
     }
 
     /**

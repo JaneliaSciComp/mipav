@@ -5326,6 +5326,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      */
     public void setModified() {
         updateImages();
+        getActiveImage().notifyImageDisplayListeners();
+        //System.err.println( "setModified" );
     }
 
     /* (non-Javadoc)
