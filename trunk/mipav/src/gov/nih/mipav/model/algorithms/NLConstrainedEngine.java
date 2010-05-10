@@ -6776,8 +6776,9 @@ mainLoop:
                 t = 0.0;
 
                 for (i = j; i < n; i++) {
-                    t = t - (x[i][j] * qy[i] / x[j][j]);
+                    t = t - (x[i][j] * qy[i]);
                 }
+                t = t/x[j][j];
 
                 for (i = j; i < n; i++) {
                     qy[i] = qy[i] + (t * x[i][j]);
@@ -6802,8 +6803,9 @@ mainLoop:
                 t = 0.0;
 
                 for (i = j; i < n; i++) {
-                    t = t - (x[i][j] * qty[i] / x[j][j]);
+                    t = t - (x[i][j] * qty[i]);
                 }
+                t = t/x[j][j];
 
                 for (i = j; i < n; i++) {
                     qty[i] = qty[i] + (t * x[i][j]);
@@ -6899,8 +6901,9 @@ mainLoop:
                 t = 0.0;
 
                 for (i = j; i < n; i++) {
-                    t = t - (x[i][j] * rsd[i] / x[j][j]);
+                    t = t - (x[i][j] * rsd[i]);
                 }
+                t = t/x[j][j];
 
                 for (i = j; i < n; i++) {
                     rsd[i] = rsd[i] + (t * x[i][j]);
@@ -6911,8 +6914,9 @@ mainLoop:
                 t = 0.0;
 
                 for (i = j; i < n; i++) {
-                    t = t - (x[i][j] * xb[i] / x[j][j]);
+                    t = t - (x[i][j] * xb[i]);
                 }
+                t = t/x[j][j];
 
                 for (i = j; i < n; i++) {
                     xb[i] = xb[i] + (t * x[i][j]);
