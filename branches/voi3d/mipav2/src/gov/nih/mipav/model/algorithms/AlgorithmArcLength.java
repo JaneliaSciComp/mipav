@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 import WildMagic.LibFoundation.Mathematics.Vector2f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.view.*;
 
@@ -40,6 +41,9 @@ public class AlgorithmArcLength extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private float[] yPoints;
+    
+    /** DOCUMENT ME! */
+    private float[] zPoints = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -51,6 +55,16 @@ public class AlgorithmArcLength extends AlgorithmBase {
      */
     public AlgorithmArcLength(float[] xPts, float[] yPts) {
         setPoints(xPts, yPts);
+    }
+    
+    /**
+     * Algorithm constructor.
+     *
+     * @param  xPts  x coordinate control points
+     * @param  yPts  y coordinate control points
+     */
+    public AlgorithmArcLength(float[] xPts, float[] yPts, float[] zPts) {
+        setPoints(xPts, yPts, zPts);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -183,9 +197,21 @@ public class AlgorithmArcLength extends AlgorithmBase {
      * @param  yPts  y coordinate control points
      */
     public void setPoints(float[] xPts, float[] yPts) {
+        setPoints(xPts,yPts,null);
+    }
+
+
+    /**
+     * Sets the controls points of the Bspline and calculates the total arc-length.
+     *
+     * @param  xPts  x coordinate control points
+     * @param  yPts  y coordinate control points
+     */
+    public void setPoints(float[] xPts, float[] yPts, float[] zPts) {
 
         xPoints = xPts;
         yPoints = yPts;
+        zPoints = zPts;
 
         totalLen = length(2, yPoints.length - 3);
     }
@@ -244,12 +270,18 @@ public class AlgorithmArcLength extends AlgorithmBase {
      * @return  speed the speed ( magnitude ) is returned
      */
     private float speed(float q) {
-        Vector2f pt;
         float speed;
-
-        pt = bSpline.bSplineJetXY(1, q, xPoints, yPoints); // calc 1st deriv.
-        speed = (float) Math.sqrt((pt.X * pt.X) + (pt.Y * pt.Y));
-
+        
+        if ( zPoints == null )
+        {
+            Vector2f pt = bSpline.bSplineJetXY(1, q, xPoints, yPoints); // calc 1st deriv.
+            speed = (float) Math.sqrt((pt.X * pt.X) + (pt.Y * pt.Y));
+        }
+        else
+        {
+            Vector3f pt = bSpline.bSplineJetXYZ(1, q, xPoints, yPoints, zPoints); // calc 1st deriv.
+            speed = pt.Length();            
+        }
         return speed;
     }
 }

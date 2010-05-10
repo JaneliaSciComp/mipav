@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 import WildMagic.LibFoundation.Mathematics.Vector2f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.structures.*;
 
@@ -32,9 +33,6 @@ public class AlgorithmBSmooth extends AlgorithmBase {
 
     /** The resultant polygon and the evolution has completed. */
     private VOI resultVOI;
-
-    /** The initial polygon to initialize the evolution process. */
-    private Polygon srcGon;
 
     /** Source image. */
     private ModelImage srcImage;
@@ -104,53 +102,44 @@ public class AlgorithmBSmooth extends AlgorithmBase {
      * Prepares the data and runs the algorithm for a 2D image.
      */
     private void calc2D() {
-        float[] xPoints = new float[1];
-        float[] yPoints = new float[1];
-        Polygon resultGon = new Polygon();
-        int elementNum;
-        int nContours;
-        Vector contours;
-
-
         fireProgressStateChanged(srcImage.getImageName(), "Bspline smooth: Evolving boundary ...");
 
         fireProgressStateChanged(25);
 
         resultVOI = new VOI((short) srcImage.getVOIs().size(), "Bsmooth-VOI", 1, VOI.CONTOUR, -1.0f);
-        contours = activeVOI.getCurves();
-        nContours = contours.size();
+        Vector<VOIBase> contours = activeVOI.getCurves();
+        int nContours = contours.size();
 
-        for (elementNum = 0; elementNum < nContours; elementNum++) {
+        for (int elementNum = 0; elementNum < nContours; elementNum++) {
             fireProgressStateChanged((int) (25 + (75 * (((float) elementNum) / nContours))));
 
             if (((VOIContour) (contours.elementAt(elementNum))).isActive()) {
-                srcGon = ((VOIContour) (contours.elementAt(elementNum))).exportPolygon(1, 1, 1, 1);
+                int nPoints = contours.elementAt(elementNum).size();
                 //System.err.println("Element number is: " + elementNum);
-                if (srcGon.npoints > 5) {
-                    xPoints = new float[srcGon.npoints + 5];
-                    yPoints = new float[srcGon.npoints + 5];
+                if (nPoints > 5) {
+                    float[] xPoints = new float[nPoints + 5];
+                    float[] yPoints = new float[nPoints + 5];
+                    float[] zPoints = new float[nPoints + 5];
                     fireProgressStateChanged(25 + (((75 * elementNum) + 5) / nContours));
-                    setPoints(xPoints, yPoints, srcGon);
+                    setPoints(xPoints, yPoints, zPoints, contours.elementAt(elementNum));
                     fireProgressStateChanged(25 + (((75 * elementNum) + 25) / nContours));
-                    runSmooth(xPoints, yPoints, resultGon);
+                    VOIContour resultContour = new VOIContour( false, contours.elementAt(elementNum).isClosed());
+                    runSmooth(xPoints, yPoints, zPoints, resultContour);
                     fireProgressStateChanged(25 + (((75 * elementNum) + 50) / nContours));
-                    
-                    resultVOI.importPolygon(resultGon, 0);
-                    resultGon = new Polygon();
+
+                    if (trim) {
+                        resultContour.trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
+                    }
+                    resultVOI.importCurve(resultContour);
 
                     if (threadStopped) {
                         finalize();
 
                         return;
                     }
-
-                    if (trim) {
-                        ((VOIContour) (resultVOI.getCurves().lastElement())).trimPoints(Preferences.getTrim(),
-                                                                                           Preferences.getTrimAdjacient());
-                    }
                 } else {
                 	// nPoints is less than 5.  doesn't mean we want to scrap the contour though!
-                	resultVOI.importPolygon(srcGon, 0);
+                	resultVOI.importCurve(contours.elementAt(elementNum));
                 	
                 }
             } // if ( ((VOIContour)(contours[0].elementAt(elementNum))).isActive() )
@@ -165,50 +154,39 @@ public class AlgorithmBSmooth extends AlgorithmBase {
      * Prepares the data and runs the algorithm for a 3D image.
      */
     private void calc3D() {
-
-        int slice;
-        Polygon resultGon = new Polygon();
-        float[] xPoints, yPoints;
-        int elementNum;
-        int nContours;
-        Vector contours;
-
-        resultVOI = new VOI((short) srcImage.getVOIs().size(), "BsmoothVOI.voi", srcImage.getExtents()[2], VOI.CONTOUR,
+        resultVOI = new VOI((short) srcImage.getVOIs().size(), "BsmoothVOI.voi", 1, VOI.CONTOUR,
                             -1.0f);
 
         fireProgressStateChanged(srcImage.getImageName(), "Bspline smooth: Evolving boundary ...");
 
         fireProgressStateChanged(0);
-        contours = activeVOI.getCurves();
+        Vector<VOIBase> contours = activeVOI.getCurves();
 
-        nContours = contours.size();
+        int nContours = contours.size();
 
-        for (elementNum = 0; elementNum < nContours; elementNum++) {
+        for (int elementNum = 0; elementNum < nContours; elementNum++) {
 
             if (((VOIContour) (contours.elementAt(elementNum))).isActive()) {
-                srcGon = ((VOIContour) (contours.elementAt(elementNum))).exportPolygon(1, 1, 1, 1);
-
-                if (srcGon.npoints > 5) {
-                    xPoints = new float[srcGon.npoints + 5];
-                    yPoints = new float[srcGon.npoints + 5];
-                    setPoints(xPoints, yPoints, srcGon);
-                    runSmooth(xPoints, yPoints, resultGon);
-                    resultVOI.importPolygon(resultGon, 0);
-                    resultGon = new Polygon();
+                if (contours.elementAt(elementNum).size() > 5) {
+                    float[] xPoints = new float[contours.elementAt(elementNum).size() + 5];
+                    float[] yPoints = new float[contours.elementAt(elementNum).size() + 5];
+                    float[] zPoints = new float[contours.elementAt(elementNum).size() + 5];
+                    setPoints(xPoints, yPoints, zPoints, contours.elementAt(elementNum));
+                    VOIContour resultContour = new VOIContour(false, contours.elementAt(elementNum).isClosed());
+                    runSmooth(xPoints, yPoints, zPoints, resultContour);
 
                     if (threadStopped) {
                         finalize();
-
                         return;
                     }
 
                     if (trim) {
-                        ((VOIContour) (resultVOI.getCurves().lastElement())).trimPoints(Preferences.getTrim(),
-                                Preferences.getTrimAdjacient());
+                        resultContour.trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
                     }
+                    resultVOI.importCurve(resultContour);
                 } else {
                     // nPoints is less than 5.  doesn't mean we want to scrap the contour though!
-                    resultVOI.importPolygon(srcGon, 0);
+                    resultVOI.importCurve(contours.elementAt(elementNum));
 
                 }
             }
@@ -231,33 +209,31 @@ public class AlgorithmBSmooth extends AlgorithmBase {
      * @param  yPoints    y coordinates that describe the contour
      * @param  resultGon  resultant polygon
      */
-    private void runSmooth(float[] xPoints, float[] yPoints, Polygon resultGon) {
-        int i, j;
+    private void runSmooth(float[] xPoints, float[] yPoints, float[] zPoints, VOIBase resultContour) {
         float pct;
         float index;
-        Vector2f interpPt = new Vector2f();
 
-        float[] newXPts, newYPts;
-
-        AlgorithmArcLength arcLength = new AlgorithmArcLength(xPoints, yPoints);
+        AlgorithmArcLength arcLength = new AlgorithmArcLength(xPoints, yPoints, zPoints);
         AlgorithmBSpline bSpline = new AlgorithmBSpline();
 
-        newXPts = new float[nPts];
-        newYPts = new float[nPts];
+        float[] newXPts = new float[nPts];
+        float[] newYPts = new float[nPts];
+        float[] newZPts = new float[nPts];
 
-        for (i = 0; i < nPts; i++) {
+        for (int i = 0; i < nPts; i++) {
             pct = i / (float) (nPts);
 
             /** Note that pct = 0 returns an index = 2 while pct = 1.0
              * returns an index 2 below the maximum array index */
             index = arcLength.invlen(pct);
-            interpPt = bSpline.bSplineJetXY(0, index, xPoints, yPoints);
+            Vector3f interpPt = bSpline.bSplineJetXYZ(0, index, xPoints, yPoints, zPoints);
             newXPts[i] = interpPt.X;
             newYPts[i] = interpPt.Y;
+            newZPts[i] = interpPt.Z;
         }
 
-        for (j = 0; j < nPts; j++) {
-            resultGon.addPoint(Math.round(newXPts[j]), Math.round(newYPts[j]));
+        for (int i = 0; i < nPts; i++) {
+            resultContour.add(new Vector3f( Math.round(newXPts[i]), Math.round(newYPts[i]), Math.round(newZPts[i])));
         }
     }
 
@@ -268,31 +244,38 @@ public class AlgorithmBSmooth extends AlgorithmBase {
      * @param  yPoints  storage location array of y coord. points
      * @param  gon      initial polygon
      */
-    private void setPoints(float[] xPoints, float[] yPoints, Polygon gon) {
+    private void setPoints(float[] xPoints, float[] yPoints, float[] zPoints, VOIBase contour) {
 
         /** Note that 0 is used twice - once in the 0 to 1 segment and once
          * in the n-1 to zero segment. */
-        int i;
 
-        xPoints[0] = gon.xpoints[gon.npoints - 2];
-        yPoints[0] = gon.ypoints[gon.npoints - 2];
+        int nPoints = contour.size();
+        xPoints[0] = contour.elementAt(nPoints - 2).X;
+        yPoints[0] = contour.elementAt(nPoints - 2).Y;
+        zPoints[0] = contour.elementAt(nPoints - 2).Z;
+        
+        xPoints[1] = contour.elementAt(nPoints - 1).X;
+        yPoints[1] = contour.elementAt(nPoints - 1).Y;
+        zPoints[1] = contour.elementAt(nPoints - 1).Z;
 
-        xPoints[1] = gon.xpoints[gon.npoints - 1];
-        yPoints[1] = gon.ypoints[gon.npoints - 1];
 
-        for (i = 0; i < gon.npoints; i++) {
-            xPoints[i + 2] = gon.xpoints[i];
-            yPoints[i + 2] = gon.ypoints[i];
+        for (int i = 0; i < nPoints; i++) {
+            xPoints[i + 2] = contour.elementAt(i).X;
+            yPoints[i + 2] = contour.elementAt(i).Y;
+            zPoints[i + 2] = contour.elementAt(i).Z;
         }
-
-        xPoints[gon.npoints + 2] = gon.xpoints[0];
-        yPoints[gon.npoints + 2] = gon.ypoints[0];
-
-        xPoints[gon.npoints + 3] = gon.xpoints[1];
-        yPoints[gon.npoints + 3] = gon.ypoints[1];
-
-        xPoints[gon.npoints + 4] = gon.xpoints[2];
-        yPoints[gon.npoints + 4] = gon.ypoints[2];
+        
+        xPoints[nPoints + 2] = contour.elementAt(0).X;
+        yPoints[nPoints + 2] = contour.elementAt(0).Y;
+        zPoints[nPoints + 2] = contour.elementAt(0).Z;
+        
+        xPoints[nPoints + 3] = contour.elementAt(1).X;
+        yPoints[nPoints + 3] = contour.elementAt(1).Y;
+        zPoints[nPoints + 3] = contour.elementAt(1).Z;
+        
+        xPoints[nPoints + 4] = contour.elementAt(2).X;
+        yPoints[nPoints + 4] = contour.elementAt(2).Y;
+        zPoints[nPoints + 4] = contour.elementAt(2).Z;
     }
 
 }

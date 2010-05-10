@@ -3080,6 +3080,15 @@ public class VOI extends ModelSerialCloneable {
      *
      * @param  slice  index of slice of curves to remove
      */
+    public void removeCurve(VOIBase kCurve) {
+        curves.removeElement(kCurve);
+    }
+    
+    /**
+     * Clears VOI of all curves at a slice.
+     *
+     * @param  slice  index of slice of curves to remove
+     */
     public void removeCurves() {
         curves.removeAllElements();
         elementLabel = 1;

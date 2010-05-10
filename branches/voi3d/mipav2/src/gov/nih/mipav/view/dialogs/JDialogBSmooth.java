@@ -38,9 +38,6 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
     private int elementNum;
 
     /** DOCUMENT ME! */
-    private Polygon[] gons = null;
-
-    /** DOCUMENT ME! */
     private int groupNum;
 
     /** DOCUMENT ME! */
@@ -89,10 +86,11 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
         super(theParentFrame, false);
 
         int i;
-        Vector contours;
+        Vector<VOIBase> contours;
         int nVOI, nContours;
         float[] xPoints = null;
         float[] yPoints = null;
+        float[] zPoints = null;
 
         image = im;
         VOIs = image.getVOIs();
@@ -136,32 +134,40 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
             return;
         }
 
-        gons = VOIs.VOIAt(groupNum).exportPolygons();
+        VOIBase activeContour = contours.elementAt(elementNum);
+        int nPoints = activeContour.size();
 
-        xPoints = new float[gons[elementNum].npoints + 5];
-        yPoints = new float[gons[elementNum].npoints + 5];
+        xPoints = new float[nPoints + 5];
+        yPoints = new float[nPoints + 5];
+        zPoints = new float[nPoints + 5];
 
-        xPoints[0] = gons[elementNum].xpoints[gons[elementNum].npoints - 2];
-        yPoints[0] = gons[elementNum].ypoints[gons[elementNum].npoints - 2];
+        xPoints[0] = activeContour.elementAt(nPoints - 2).X;
+        yPoints[0] = activeContour.elementAt(nPoints - 2).Y;
+        zPoints[0] = activeContour.elementAt(nPoints - 2).Z;
 
-        xPoints[1] = gons[elementNum].xpoints[gons[elementNum].npoints - 1];
-        yPoints[1] = gons[elementNum].ypoints[gons[elementNum].npoints - 1];
+        xPoints[1] = activeContour.elementAt(nPoints - 1).X;
+        yPoints[1] = activeContour.elementAt(nPoints - 1).Y;
+        zPoints[1] = activeContour.elementAt(nPoints - 1).Z;
 
-        for (i = 0; i < gons[elementNum].npoints; i++) {
-            xPoints[i + 2] = gons[elementNum].xpoints[i];
-            yPoints[i + 2] = gons[elementNum].ypoints[i];
+        for (i = 0; i < nPoints; i++) {
+            xPoints[1 + 2] = activeContour.elementAt(i).X;
+            yPoints[1 + 2] = activeContour.elementAt(i).Y;
+            zPoints[1 + 2] = activeContour.elementAt(i).Z;
         }
 
-        xPoints[gons[elementNum].npoints + 2] = gons[elementNum].xpoints[0];
-        yPoints[gons[elementNum].npoints + 2] = gons[elementNum].ypoints[0];
-
-        xPoints[gons[elementNum].npoints + 3] = gons[elementNum].xpoints[1];
-        yPoints[gons[elementNum].npoints + 3] = gons[elementNum].ypoints[1];
-
-        xPoints[gons[elementNum].npoints + 4] = gons[elementNum].xpoints[2];
-        yPoints[gons[elementNum].npoints + 4] = gons[elementNum].ypoints[2];
-
-        AlgorithmArcLength arcLength = new AlgorithmArcLength(xPoints, yPoints);
+        xPoints[nPoints + 2] = activeContour.elementAt(0).X;
+        yPoints[nPoints + 2] = activeContour.elementAt(0).Y;
+        zPoints[nPoints + 2] = activeContour.elementAt(0).Z;
+        
+        xPoints[nPoints + 3] = activeContour.elementAt(1).X;
+        yPoints[nPoints + 3] = activeContour.elementAt(1).Y;
+        zPoints[nPoints + 3] = activeContour.elementAt(1).Z;
+        
+        xPoints[nPoints + 4] = activeContour.elementAt(2).X;
+        yPoints[nPoints + 4] = activeContour.elementAt(2).Y;
+        zPoints[nPoints + 4] = activeContour.elementAt(2).Z;
+        
+        AlgorithmArcLength arcLength = new AlgorithmArcLength(xPoints, yPoints, zPoints);
         defaultPts = Math.round(arcLength.getTotalArcLength() / 3);
 
         init();
@@ -258,7 +264,7 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
         VOI resultVOI;
         int slice;
         int element;
-        Vector contours;
+        Vector<VOIBase> contours;
         int sliceNum;
         int nContours;
 
@@ -289,7 +295,7 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
                         if (((VOIContour) (contours.elementAt(element))).isActive()) {
                             //System.err.println("slice is: " + slice + " element is: " + element + " groupnum is: " +
                             //groupNum);
-                            VOIs.VOIAt(groupNum).removeCurve(element, 0);
+                            VOIs.VOIAt(groupNum).removeCurve(contours.elementAt(element));
 
                             VOIs.VOIAt(groupNum).importCurve((VOIContour) resultVOI.getCurves().elementAt(resultIndex++));
                             //  VOIs.VOIAt(groupNum).importCurve((VOIContour) resultVOI.getActiveContour(slice), slice);
