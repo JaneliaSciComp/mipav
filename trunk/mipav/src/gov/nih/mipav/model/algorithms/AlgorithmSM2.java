@@ -287,10 +287,9 @@ public class AlgorithmSM2 extends AlgorithmBase {
         } // if (selfTest)
         
         if (selfTest2) {
-        	// If your initial guesses are 0.495, 0.495, 0.495, then only 30 out of 108 
-        	// runs are correct.
-        	// If your initial guesses are the same as the final answers, then all
-        	// 108 runs are correct.
+        	// If your initial guesses are 0.495, 0.495, 0.495, then the 90 out of 108 
+        	// runs where ktrans does not equal zero are correct.  The model cannot 
+        	// presently converge to ktrans equals zero in 18 out of the 108 cases.
         	double ktransArray[] = new double[]{0.0, 0.01, 0.02, 0.05, 0.1, 0.2};
             double veArray[] = new double[]{0.1, 0.2, 0.5};
             double vpArray[] = new double[]{0.001, 0.005, 0.01, 0.02, 0.05, 0.1};
