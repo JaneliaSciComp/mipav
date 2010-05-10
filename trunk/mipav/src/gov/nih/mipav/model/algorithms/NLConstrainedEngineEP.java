@@ -6689,20 +6689,20 @@ mainLoop:
         boolean negj, swapj;
         DoubleDouble[] tempMat = new DoubleDouble[n];
 
-        pl = 0;
-        pu = -1;
+        pl = 1;
+        pu = 0;
 
         if (job != 0) {
 
             // PIVOTING HAS BEEN REQUESTED.REARRANGE THE COLUMNS ACCORDING TO JPVT.
 
-            for (j = 0; j < p; j++) {
-                swapj = jpvt[j] > 0;
-                negj = jpvt[j] < 0;
-                jpvt[j] = j;
+            for (j = 1; j <= p; j++) {
+                swapj = jpvt[j-1] > 0;
+                negj = jpvt[j-1] < 0;
+                jpvt[j-1] = j;
 
                 if (negj) {
-                	jpvt[j] = -j;
+                	jpvt[j-1] = -j;
                 }
 
                 if (!swapj) {
@@ -6712,42 +6712,46 @@ mainLoop:
                 if (j != pl) {
 
                     for (jj = 0; jj < n; jj++) {
-                        temp = x[jj][pl];
-                        x[jj][pl] = x[jj][j];
-                        x[jj][j] = temp;
+                        temp = x[jj][pl-1];
+                        x[jj][pl-1] = x[jj][j-1];
+                        x[jj][j-1] = temp;
                     }
                 }
 
-                jpvt[j] = jpvt[pl];
-                jpvt[pl] = j;
+                jpvt[j-1] = jpvt[pl-1];
+                jpvt[pl-1] = j;
                 pl++;
             } // for (j = 0; j < p; j++)
 
-            pu = p - 1;
+            pu = p;
 
             for (jj = 1; jj <= p; jj++) {
-                j = p - jj;
+                j = p - jj + 1;
 
-                if (jpvt[j] >= 0) {
+                if (jpvt[j-1] >= 0) {
                 	continue;
                 }
-                jpvt[j] = -jpvt[j];
+                jpvt[j-1] = -jpvt[j-1];
 
                 if (j != pu) {
 
                     for (i = 0; i < n; i++) {
-                        temp = x[i][pu];
-                        x[i][pu] = x[i][j];
-                        x[i][j] = temp;
+                        temp = x[i][pu-1];
+                        x[i][pu-1] = x[i][j-1];
+                        x[i][j-1] = temp;
                     }
 
-                    jp = jpvt[pu];
-                    jpvt[pu] = jpvt[j];
-                    jpvt[j] = jp;
+                    jp = jpvt[pu-1];
+                    jpvt[pu-1] = jpvt[j-1];
+                    jpvt[j-1] = jp;
                 } // if (j != pu)
 
                 pu--;
             } // for (jj = 1; jj <= p; jj++)
+            
+            for (j = 0; j < p; j++) {
+            	jpvt[j] = jpvt[j] - 1;
+            }
 
         } // if (job != 0)
         
@@ -6756,18 +6760,18 @@ mainLoop:
         for (j = pl; j <= pu; j++) {
 
 	        for (i = 0; i < n; i++) {
-	            tempMat[i] = x[i][j];
+	            tempMat[i] = x[i][j-1];
 	        }
 	
-	        qraux[j] = dnrm2(n, tempMat, 1);
-	        work[j] = qraux[j];
+	        qraux[j-1] = dnrm2(n, tempMat, 1);
+	        work[j-1] = qraux[j-1];
         } // for (j = pl; j <= pu; j++)
 
         // PERFORM THE HOUSEHOLDER REDUCTION OF X.
 
         lup = Math.min(n, p);
 
-        for (l = 0; l < lup; l++) {
+        for (l = 1; l <= lup; l++) {
 
             if ((l >= pl) && (l < pu)) {
 
@@ -6778,111 +6782,112 @@ mainLoop:
 
                 for (j = l; j <= pu; j++) {
 
-                    if (qraux[j].le(maxnrm)) {
+                    if (qraux[j-1].le(maxnrm)) {
                         continue;
                     }
 
-                    maxnrm = qraux[j];
+                    maxnrm = qraux[j-1];
                     maxj = j;
                 } // for (j = l; j <= pu; j++)
 
                 if (maxj != l) {
 
                     for (i = 0; i < n; i++) {
-                        temp = x[i][l];
-                        x[i][l] = x[i][maxj];
-                        x[i][maxj] = temp;
+                        temp = x[i][l-1];
+                        x[i][l-1] = x[i][maxj-1];
+                        x[i][maxj-1] = temp;
                     }
 
-                    qraux[maxj] = qraux[l];
-                    work[maxj] = work[l];
-                    jp = jpvt[maxj];
-                    jpvt[maxj] = jpvt[l];
-                    jpvt[l] = jp;
+                    qraux[maxj-1] = qraux[l-1];
+                    work[maxj-1] = work[l-1];
+                    jp = jpvt[maxj-1];
+                    jpvt[maxj-1] = jpvt[l-1];
+                    jpvt[l-1] = jp;
                 } // if (maxj != l)
             } // if ((l >= pl) && (l < pu))
 
-            qraux[l] = DoubleDouble.valueOf(0.0);
+            qraux[l-1] = DoubleDouble.valueOf(0.0);
 
-            if (l == (n - 1)) {
+            if (l == n) {
                 continue;
             }
 
             // COMPUTE THE HOUSEHOLDER TRANSFORMATION FOR COLUMN L.
-            for (i = 0; i < (n - l); i++) {
-                tempMat[i] = x[l + i][l];
+            for (i = 0; i < (n - l + 1); i++) {
+                tempMat[i] = x[l + i - 1][l - 1];
             }
 
-            nrmxl = dnrm2(n - l, tempMat, 1);
+            nrmxl = dnrm2(n - l + 1, tempMat, 1);
 
             if (nrmxl.equals(DoubleDouble.valueOf(0.0))) {
                 continue;
             }
 
-            if (!(x[l][l].equals(DoubleDouble.valueOf(0.0)))) {
+            if (!(x[l-1][l-1].equals(DoubleDouble.valueOf(0.0)))) {
 
-                if (x[l][l].ge(DoubleDouble.valueOf(0.0))) {
+                if (x[l-1][l-1].ge(DoubleDouble.valueOf(0.0))) {
                     nrmxl = nrmxl.abs();
                 } else {
                     nrmxl = (nrmxl.abs()).negate();
                 }
             }
 
-            for (i = l; i < n; i++) {
-                x[i][l] = x[i][l].divide(nrmxl);
+            for (i = l; i <= n; i++) {
+                x[i-1][l-1] = x[i-1][l-1].divide(nrmxl);
             }
 
-            x[l][l] = x[l][l].add(DoubleDouble.valueOf(1.0));
+            x[l-1][l-1] = x[l-1][l-1].add(DoubleDouble.valueOf(1.0));
 
             // APPLY THE TRANSFORMATION TO THE REMAINING COLUMNS,
             // UPDATING THE NORMS.
 
             lp1 = l + 1;
 
-            for (j = lp1; j < p; j++) {
+            for (j = lp1; j <= p; j++) {
                 t = DoubleDouble.valueOf(0.0);
 
-                for (i = l; i < n; i++) {
-                    t = t.subtract((x[i][l].multiply(x[i][j])).divide(x[l][l]));
+                for (i = l; i <= n; i++) {
+                    t = t.subtract(x[i-1][l-1].multiply(x[i-1][j-1]));
                 }
+                t = t.divide(x[l-1][l-1]);
 
-                for (i = l; i < n; i++) {
-                    x[i][j] = x[i][j].add(t.multiply(x[i][l]));
+                for (i = l; i <= n; i++) {
+                    x[i-1][j-1] = x[i-1][j-1].add(t.multiply(x[i-1][l-1]));
                 }
 
                 if ((j < pl) || (j > pu)) {
                     continue;
                 }
 
-                if (qraux[j].equals(DoubleDouble.valueOf(0.0))) {
+                if (qraux[j-1].equals(DoubleDouble.valueOf(0.0))) {
                     continue;
                 }
 
-                temp = (x[l][j].abs()).divide(qraux[j]);
+                temp = (x[l-1][j-1].abs()).divide(qraux[j-1]);
                 tt = (DoubleDouble.valueOf(1.0)).subtract(temp.multiply(temp));
                 tt = tt.max(DoubleDouble.valueOf(0.0));
                 t = tt;
-                temp = qraux[j].divide(work[j]);
+                temp = qraux[j-1].divide(work[j-1]);
                 tt = (DoubleDouble.valueOf(1.0)).add((((DoubleDouble.valueOf(0.05)).multiply(tt)).multiply(temp)).multiply(temp));
 
                 if (!(tt.equals(DoubleDouble.valueOf(1.0)))) {
-                    qraux[j] = qraux[j].multiply(t.sqrt());
+                    qraux[j-1] = qraux[j-1].multiply(t.sqrt());
                 } else {
 
-                    for (i = 0; i < (n - l - 1); i++) {
-                        tempMat[i] = x[l + 1 + i][j];
+                    for (i = 0; i < (n - l); i++) {
+                        tempMat[i] = x[l + i][j-1];
                     }
 
-                    qraux[j] = dnrm2(n - l - 1, tempMat, 1);
-                    work[j] = qraux[j];
+                    qraux[j-1] = dnrm2(n - l, tempMat, 1);
+                    work[j-1] = qraux[j-1];
                 }
-            } // for (j = lp1; j < p; j++)
+            } // for (j = lp1; j <= p; j++)
 
             // SAVE THE TRANSFORMATION.
 
-            qraux[l] = x[l][l];
-            x[l][l] = nrmxl.negate();
-        } // for (l = 0; l < lup; l++)
+            qraux[l-1] = x[l-1][l-1];
+            x[l-1][l-1] = nrmxl.negate();
+        } // for (l = 1; l <= lup; l++)
 
         return;
     }
@@ -7102,8 +7107,9 @@ mainLoop:
                 t = DoubleDouble.valueOf(0.0);
 
                 for (i = j; i < n; i++) {
-                    t = t.subtract((x[i][j].multiply(qy[i])).divide(x[j][j]));
+                    t = t.subtract(x[i][j].multiply(qy[i]));
                 }
+                t = t.divide(x[j][j]);
 
                 for (i = j; i < n; i++) {
                     qy[i] = qy[i].add(t.multiply(x[i][j]));
@@ -7128,8 +7134,9 @@ mainLoop:
                 t = DoubleDouble.valueOf(0.0);
 
                 for (i = j; i < n; i++) {
-                    t = t.subtract((x[i][j].multiply(qty[i])).divide(x[j][j]));
+                    t = t.subtract(x[i][j].multiply(qty[i]));
                 }
+                t = t.divide(x[j][j]);
 
                 for (i = j; i < n; i++) {
                     qty[i] = qty[i].add(t.multiply(x[i][j]));
@@ -7225,8 +7232,9 @@ mainLoop:
                 t = DoubleDouble.valueOf(0.0);
 
                 for (i = j; i < n; i++) {
-                    t = t.subtract((x[i][j].multiply(rsd[i])).divide(x[j][j]));
+                    t = t.subtract(x[i][j].multiply(rsd[i]));
                 }
+                t = t.divide(x[j][j]);
 
                 for (i = j; i < n; i++) {
                     rsd[i] = rsd[i].add(t.multiply(x[i][j]));
@@ -7237,8 +7245,9 @@ mainLoop:
                 t = DoubleDouble.valueOf(0.0);
 
                 for (i = j; i < n; i++) {
-                    t = t.subtract((x[i][j].multiply(xb[i])).divide(x[j][j]));
+                    t = t.subtract(x[i][j].multiply(xb[i]));
                 }
+                t = t.divide(x[j][j]);
 
                 for (i = j; i < n; i++) {
                     xb[i] = xb[i].add(t.multiply(x[i][j]));
