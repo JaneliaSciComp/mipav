@@ -2253,28 +2253,6 @@ public class VOI extends ModelSerialCloneable {
         }
     }
 
-
-
-    /**
-     * Imports the curve into the VOI.
-     *
-     * @param  curve  curve to import
-     * @deprecated
-     */
-    public void importCurve(VOIText curve, int slice) {
-        Vector3f pt1 = curve.elementAt(0);
-        Vector3f pt2 = curve.elementAt(1);
-
-        pt1.Z = slice;
-        pt2.Z = slice;
-        curve.removeAllElements();
-        curve.addElement(pt1);
-        curve.addElement(pt2);
-
-        curve.setGroup(this);
-        curves.addElement(curve);
-    }
-
     /**
      * Imports just the VOIs in a slice into this VOI.
      *
@@ -2365,45 +2343,6 @@ public class VOI extends ModelSerialCloneable {
         ((VOIPoint) (curves.lastElement())).setLabel(String.valueOf(elementLabel++));
     }
 
-
-
-    /**
-     * Imports the point into the VOI (must be a VOI.POINT).
-     *
-     * @param  point  point to import
-     * @param  slice  index of slice of new point
-     * @deprecated
-    public void importPoint(Vector3f point, int slice) {
-        VOIPoint voiPt = null;
-
-        if (curveType == POINT) {
-            voiPt = new VOIPoint();
-        } else {
-            return;
-        }
-
-        voiPt.set(0, point);
-        curves.addElement(voiPt);
-        ((VOIPoint) (curves.lastElement())).setLabel(String.valueOf(elementLabel++));
-    }
-     */
-    
-
-    /**
-     * Imports the point into the VOI (must be a VOI.POINT).
-     *
-     * @param  points  point to import
-     * @param  slice   index of slice of new point
-     * @deprecated
-     */
-    public void importPoints(Vector3f[] points, int slice) {
-        if (curveType != POINT) {
-            return;
-        }
-        for (int i = 0; i < points.length; i++) {
-            importPoint(points[i]);
-        }
-    }
 
     /**
      * Imports the polygon into the VOI (must be a contour).

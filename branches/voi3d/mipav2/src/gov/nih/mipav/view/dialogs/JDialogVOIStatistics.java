@@ -2344,6 +2344,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
          * @param flag DOCUMENT ME!
          */
         public void setBySliceEnabled(final boolean flag) {
+            byContourSlice.setEnabled(flag);
             bySlice.setEnabled(flag);
         }
 

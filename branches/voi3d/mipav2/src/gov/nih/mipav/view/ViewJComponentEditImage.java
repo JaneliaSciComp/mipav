@@ -603,20 +603,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      */
     public static final String[] getScannerPositionLabels(final ModelImage image, final Vector3f position) {
         final DecimalFormat nf = new DecimalFormat("#####0.0##");
-        final Vector3f kOut = new Vector3f();
-        if (image.getNDims() < 3) {
-            // return null;
-        }
-
-        MipavCoordinateSystems.fileToScanner(position, kOut, image);
-        final Vector3f kTest = new Vector3f();
-        MipavCoordinateSystems.scannerToFile(kOut, kTest, image);
-        if (Math.round(kTest.X) != Math.round(position.X) || Math.round(kTest.Y) != Math.round(position.Y)
-                || Math.round(kTest.Z) != Math.round(position.Z)) {
-            System.err.println("scannerToFile broken");
-            System.err.println(kTest);
-            System.err.println(position);
-            MipavCoordinateSystems.scannerToFile(kOut, kTest, image);
+        final Vector3f kOut = new Vector3f(position);
+        if (image.getNDims() >= 3) {
+            MipavCoordinateSystems.fileToScanner(position, kOut, image);
         }
 
         final float[] tCoord = new float[3];
