@@ -311,7 +311,9 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
                 try {
                     ubyteImage = new ModelImage(ModelImage.UBYTE, image.getExtents(), name);
 
-                    AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(ubyteImage, image, 0, 1, 0, 1, false);
+                    boolean useNativeFormat = false;
+                    AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(ubyteImage, image, 0, 1, 0, 1, false,
+                    		                             useNativeFormat);
 
                     changeTypeAlgo.run();
 
@@ -409,7 +411,9 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
                 try {
                     ubyteImage = new ModelImage(ModelImage.UBYTE, image.getExtents(), name);
 
-                    AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(ubyteImage, image, 0, 1, 0, 1, false);
+                    boolean useNativeFormat = false;
+                    AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(ubyteImage, image, 0, 1, 0, 1, false,
+                    		                             useNativeFormat);
 
                     changeTypeAlgo.run();
 
@@ -486,7 +490,9 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
                 try {
                     ubyteImage = new ModelImage(ModelImage.UBYTE, image.getExtents(), name);
 
-                    AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(ubyteImage, image, 0, 1, 0, 1, true);
+                    boolean useNativeFormat = false;
+                    AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(ubyteImage, image, 0, 1, 0, 1, true,
+                    		                             useNativeFormat);
 
                     changeTypeAlgo.run();
 
