@@ -44,6 +44,9 @@ public class AlgorithmChangeType extends AlgorithmBase {
 
     /** The starting range value of the output image. */
     private double stRange2 = Double.NaN;
+    
+    /** If true, keep the file in the original format, such as NIFTI kept as NIFTI */
+    private boolean useNativeFormat = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -57,9 +60,10 @@ public class AlgorithmChangeType extends AlgorithmBase {
      * @param  stRge2   starting value of intensities of the destination image
      * @param  endRge2  ending value of intensities of the destination image
      * @param  img25D   DOCUMENT ME!
+     * @param  useNativeFormat If true, keep the file in native format
      */
     public AlgorithmChangeType(ModelImage destImg, ModelImage srcImg, double stRge1, double endRge1, double stRge2,
-                               double endRge2, boolean img25D) {
+                               double endRge2, boolean img25D, boolean useNativeFormat) {
 
         super(destImg, srcImg);
         stRange1 = stRge1;
@@ -67,6 +71,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
         stRange2 = stRge2;
         endRange2 = endRge2;
         image25D = img25D;
+        this.useNativeFormat = useNativeFormat;
     }
 
     /**
@@ -79,9 +84,10 @@ public class AlgorithmChangeType extends AlgorithmBase {
      * @param  stRge2   starting value of intensities of the destination image
      * @param  endRge2  ending value of intensities of the destination image
      * @param  img25D   DOCUMENT ME!
+     * @param  useNativeFormat If true, keep the file in native format
      */
     public AlgorithmChangeType(ModelImage srcImg, int newType, double stRge1, double endRge1, double stRge2,
-                               double endRge2, boolean img25D) {
+                               double endRge2, boolean img25D, boolean useNativeFormat) {
 
         super(null, srcImg);
         this.newType = newType;
@@ -90,6 +96,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
         stRange2 = stRge2;
         endRange2 = endRge2;
         image25D = img25D;
+        this.useNativeFormat = useNativeFormat;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
