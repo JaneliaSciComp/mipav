@@ -1120,12 +1120,13 @@ public class VolumeImage implements Serializable {
                 if (kImageGMGM != null) {
                     kImageGMGM.calcMinMax();
                     AlgorithmChangeType changeTypeAlgo = null;
+                    boolean useNativeFormat = false;
                     if (kImageGMGM.isColorImage()) {
                         changeTypeAlgo = new AlgorithmChangeType(kImageGMGM, ModelStorageBase.ARGB,
-                                kImageGMGM.getMin(), kImageGMGM.getMax(), 0, 255, false);
+                                kImageGMGM.getMin(), kImageGMGM.getMax(), 0, 255, false, useNativeFormat);
                     } else {
                         changeTypeAlgo = new AlgorithmChangeType(kImageGMGM, ModelStorageBase.UBYTE, kImageGMGM
-                                .getMin(), kImageGMGM.getMax(), 0, 255, false);
+                                .getMin(), kImageGMGM.getMax(), 0, 255, false, useNativeFormat);
                     }
                     changeTypeAlgo.setRunningInSeparateThread(false);
                     changeTypeAlgo.run();
@@ -1471,14 +1472,15 @@ public class VolumeImage implements Serializable {
         if ( (kNewRes.getType() != ModelStorageBase.UBYTE)
                 || (kNewRes.isColorImage() && (kNewRes.getType() != ModelStorageBase.ARGB))) {
             AlgorithmChangeType changeTypeAlgo = null;
+            boolean useNativeFormat = false;
             if (kNewRes.isColorImage()) {
                 kNewType = new ModelImage(ModelStorageBase.ARGB, kNewRes.getExtents(), kImageName);
                 changeTypeAlgo = new AlgorithmChangeType(kNewType, kNewRes, kNewRes.getMin(), kNewRes.getMax(), 0, 255,
-                        false);
+                        false, useNativeFormat);
             } else {
                 kNewType = new ModelImage(ModelStorageBase.UBYTE, kNewRes.getExtents(), kImageName);
                 changeTypeAlgo = new AlgorithmChangeType(kNewType, kNewRes, kNewRes.getMin(), kNewRes.getMax(), 0, 255,
-                        false);
+                        false, useNativeFormat);
             }
             changeTypeAlgo.setRunningInSeparateThread(false);
             changeTypeAlgo.run();
