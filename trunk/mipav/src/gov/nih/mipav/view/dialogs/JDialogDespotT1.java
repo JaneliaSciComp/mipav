@@ -115,7 +115,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
     private AlgorithmDespotT1 cAlgo;
 	private JRadioButton doConvTre;
 	private JRadioButton doHifiTre;
-	private GuiBuilder guiHelp;
+	private GuiBuilder guiBuilder;
 	private JPanel hifiPanel;
 	private JPanel straightPanel;
 	private JPanel spgrPanel;
@@ -569,7 +569,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         GridBagLayout gb = new GridBagLayout();
         setLayout(gb);
         GridBagConstraints gbc = new GridBagConstraints();
-        guiHelp = new GuiBuilder(this);
+        guiBuilder = new GuiBuilder(this);
         setTitle("tre1: Opening Dialog");
 
         JPanel methodPanel = new JPanel();
@@ -577,8 +577,8 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         methodPanel.setLayout(panelLayout);
         methodPanel.setBorder(MipavUtil.buildTitledBorder("Processing method"));
         
-        doConvTre = guiHelp.buildRadioButton("Conventional TRE", performStraightTreT1);
-        doHifiTre = guiHelp.buildRadioButton("TRE-HIFI Processing", performTreT1HIFI);
+        doConvTre = guiBuilder.buildRadioButton("Conventional TRE", performStraightTreT1);
+        doHifiTre = guiBuilder.buildRadioButton("TRE-HIFI Processing", performTreT1HIFI);
         ActionListener c = new ChoiceListener();
         doConvTre.addActionListener(c);
         doHifiTre.addActionListener(c);
@@ -643,7 +643,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         smartThreshold = buildSmartThresholdDialog();
         
         
-        add(guiHelp.buildOKCancelPanel(), gbc);
+        add(guiBuilder.buildOKCancelPanel(), gbc);
         setLocationRelativeTo(null);
         pack();
         setModal(true);
@@ -673,10 +673,10 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         panel.setBorder(MipavUtil.buildTitledBorder("HIFI information"));
         panel.setLayout(panelLayout);
         
-        JTextField field1 = guiHelp.buildDecimalField("Number of SPGR Flip Angles:", Nsa);
-        JTextField field2 = guiHelp.buildDecimalField("Number of IR-SPGR TI Times:", Nti);
-        JRadioButton button1 = guiHelp.buildRadioButton("Scan Performed on a GE Scanner", geScanner);
-        JRadioButton button2 = guiHelp.buildRadioButton("Scan Performed on a Siemens Scanner", siemensScanner);
+        JTextField field1 = guiBuilder.buildDecimalField("Number of SPGR Flip Angles:", Nsa);
+        JTextField field2 = guiBuilder.buildDecimalField("Number of IR-SPGR TI Times:", Nti);
+        JRadioButton button1 = guiBuilder.buildRadioButton("Scan Performed on a GE Scanner", geScanner);
+        JRadioButton button2 = guiBuilder.buildRadioButton("Scan Performed on a Siemens Scanner", siemensScanner);
         
         ButtonGroup scannerType = new ButtonGroup();
         scannerType.add(button1);
@@ -737,7 +737,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(panelLayout);
         
-        JTextField field1 = guiHelp.buildDecimalField("Number of SPGR Flip Angles:", Nsa);
+        JTextField field1 = guiBuilder.buildDecimalField("Number of SPGR Flip Angles:", Nsa);
         
         panel.add(field1.getParent(), panelLayout);
         
@@ -779,13 +779,13 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         JComboBox[] comboArr = new JComboBox[Nsa];
         JTextField[] fieldArr = new JTextField[Nsa];
         for (int i=0; i<Nsa; i++) {
-            comboArr[i] = guiHelp.buildComboBox("SPGR Image #"+i, titles, i);
+            comboArr[i] = guiBuilder.buildComboBox("SPGR Image #"+i, titles, i);
             panel.add(comboArr[i].getParent(), panelLayout);
             
-            fieldArr[i] = guiHelp.buildDecimalField("SPGR Flip Angle #"+i, treFA[i]);
+            fieldArr[i] = guiBuilder.buildDecimalField("SPGR Flip Angle #"+i, treFA[i]);
             panel.add(fieldArr[i].getParent(), panelLayout);
         }
-        JTextField fieldTime = guiHelp.buildDecimalField("SPGR Repetition Time (ms):", treTR);
+        JTextField fieldTime = guiBuilder.buildDecimalField("SPGR Repetition Time (ms):", treTR);
         panel.add(fieldTime.getParent(), panelLayout);
         
         return panel;
@@ -813,21 +813,21 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         JComboBox[] comboArr = new JComboBox[Nti];
         JTextField[] fieldArr = new JTextField[Nti];
         for (int i=0; i<Nti; i++) {
-            comboArr[i] = guiHelp.buildComboBox("IR-SPGR Image #"+i, titles, Nsa+i);
+            comboArr[i] = guiBuilder.buildComboBox("IR-SPGR Image #"+i, titles, Nsa+i);
             panel.add(comboArr[i].getParent(), panelLayout);
             
-            fieldArr[i] = guiHelp.buildDecimalField("IR-SPGR TI #"+i, irspgrTI[i]);
+            fieldArr[i] = guiBuilder.buildDecimalField("IR-SPGR TI #"+i, irspgrTI[i]);
             panel.add(fieldArr[i].getParent(), panelLayout);
         }
         
-        JTextField field1 = guiHelp.buildDecimalField("IR-SPGR Repetition Time (ms)", irspgrTR);
-        JTextField field2 = guiHelp.buildDecimalField("IR-SPGR Flip Angle", irspgrFA);
-        JTextField field3 = guiHelp.buildDecimalField("Total Number of Acquired Slices", irspgrKy);
-        JRadioButton radio1 = guiHelp.buildRadioButton("Double Inversion Regime", doubleInversion);
-        JRadioButton radio2 = guiHelp.buildRadioButton("Single Inversion Regime", singleInversion);
-        JRadioButton radio3 = guiHelp.buildRadioButton("1.5T Field Strength", onefiveTField);
-        JRadioButton radio4 = guiHelp.buildRadioButton("3.0T Field Strength", threeTField);
-        JCheckBox box1 = guiHelp.buildCheckBox("Smooth B1 Field Prior to T1 Calculations", smoothB1Field);
+        JTextField field1 = guiBuilder.buildDecimalField("IR-SPGR Repetition Time (ms)", irspgrTR);
+        JTextField field2 = guiBuilder.buildDecimalField("IR-SPGR Flip Angle", irspgrFA);
+        JTextField field3 = guiBuilder.buildDecimalField("Total Number of Acquired Slices", irspgrKy);
+        JRadioButton radio1 = guiBuilder.buildRadioButton("Double Inversion Regime", doubleInversion);
+        JRadioButton radio2 = guiBuilder.buildRadioButton("Single Inversion Regime", singleInversion);
+        JRadioButton radio3 = guiBuilder.buildRadioButton("1.5T Field Strength", onefiveTField);
+        JRadioButton radio4 = guiBuilder.buildRadioButton("3.0T Field Strength", threeTField);
+        JCheckBox box1 = guiBuilder.buildCheckBox("Smooth B1 Field Prior to T1 Calculations", smoothB1Field);
         
         ButtonGroup inversion = new ButtonGroup();
         inversion.add(radio1);
@@ -927,21 +927,21 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         JComboBox[] comboArr = new JComboBox[Nti];
         JTextField[] fieldArr = new JTextField[Nti];
         for (int i=0; i<Nti; i++) {
-            comboArr[i] = guiHelp.buildComboBox("IR-SPGR Image #"+i, titles, i+2);
+            comboArr[i] = guiBuilder.buildComboBox("IR-SPGR Image #"+i, titles, i+2);
             panel.add(comboArr[i].getParent(), panelLayout);
             
-            fieldArr[i] = guiHelp.buildDecimalField("IR-SPGR TI #"+i, irspgrTI[i]);
+            fieldArr[i] = guiBuilder.buildDecimalField("IR-SPGR TI #"+i, irspgrTI[i]);
             panel.add(fieldArr[i].getParent(), panelLayout);
         }
         
-        JTextField field1 = guiHelp.buildDecimalField("IR-SPGR Repetition Time (ms)", irspgrTR);
-        JTextField field2 = guiHelp.buildDecimalField("IR-SPGR Flip Angle", irspgrFA);
-        JTextField field3 = guiHelp.buildDecimalField("Total Number of Acquired Slices", irspgrKy);
-        JRadioButton radio1 = guiHelp.buildRadioButton("Double Inversion Regime", doubleInversion);
-        JRadioButton radio2 = guiHelp.buildRadioButton("Single Inversion Regime", singleInversion);
-        JRadioButton radio3 = guiHelp.buildRadioButton("1.5T Field Strength", onefiveTField);
-        JRadioButton radio4 = guiHelp.buildRadioButton("3.0T Field Strength", threeTField);
-        JCheckBox box1 = guiHelp.buildCheckBox("Smooth B1 Field Prior to T1 Calculations", smoothB1Field);
+        JTextField field1 = guiBuilder.buildDecimalField("IR-SPGR Repetition Time (ms)", irspgrTR);
+        JTextField field2 = guiBuilder.buildDecimalField("IR-SPGR Flip Angle", irspgrFA);
+        JTextField field3 = guiBuilder.buildDecimalField("Total Number of Acquired Slices", irspgrKy);
+        JRadioButton radio1 = guiBuilder.buildRadioButton("Double Inversion Regime", doubleInversion);
+        JRadioButton radio2 = guiBuilder.buildRadioButton("Single Inversion Regime", singleInversion);
+        JRadioButton radio3 = guiBuilder.buildRadioButton("1.5T Field Strength", onefiveTField);
+        JRadioButton radio4 = guiBuilder.buildRadioButton("3.0T Field Strength", threeTField);
+        JCheckBox box1 = guiBuilder.buildCheckBox("Smooth B1 Field Prior to T1 Calculations", smoothB1Field);
         
         ButtonGroup inversion = new ButtonGroup();
         inversion.add(radio1);
@@ -1104,13 +1104,13 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         panel.setLayout(panelLayout);
         panel.setBorder(MipavUtil.buildTitledBorder("tre1: Specifics"));
         
-        JTextField field1 = guiHelp.buildDecimalField("Maximum Allowable T1:", maxT1);
-        JTextField field2 = guiHelp.buildDecimalField("Maximum Allowable Mo:", maxMo);
-        JCheckBox check1 = guiHelp.buildCheckBox("Show T1 Map", calculateT1);
-        JCheckBox check2 = guiHelp.buildCheckBox("Show Mo Map", calculateMo);
-        JCheckBox check3 = guiHelp.buildCheckBox("Show R1 Map", invertT1toR1);
-        JCheckBox check4 = guiHelp.buildCheckBox("Use Smart Thresholding?", useSmartThresholding);
-        JCheckBox check5 = guiHelp.buildCheckBox("Use Hard Thresholding?", useHardThresholding);
+        JTextField field1 = guiBuilder.buildDecimalField("Maximum Allowable T1:", maxT1);
+        JTextField field2 = guiBuilder.buildDecimalField("Maximum Allowable Mo:", maxMo);
+        JCheckBox check1 = guiBuilder.buildCheckBox("Show T1 Map", calculateT1);
+        JCheckBox check2 = guiBuilder.buildCheckBox("Show Mo Map", calculateMo);
+        JCheckBox check3 = guiBuilder.buildCheckBox("Show R1 Map", invertT1toR1);
+        JCheckBox check4 = guiBuilder.buildCheckBox("Use Smart Thresholding?", useSmartThresholding);
+        JCheckBox check5 = guiBuilder.buildCheckBox("Use Hard Thresholding?", useHardThresholding);
         
         panel.add(field1.getParent(), panelLayout);
         panel.add(field2.getParent(), panelLayout);
@@ -1154,18 +1154,18 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         panel.setLayout(panelLayout);
         panel.setBorder(MipavUtil.buildTitledBorder("tre1-HIFI: IR-SPGR Image Information"));
         
-        JTextField field1 = guiHelp.buildDecimalField("Maximum Allowable T1:", maxT1);
-        JTextField field2 = guiHelp.buildDecimalField("Maximum Allowable Mo:", maxMo);
-        JCheckBox check1 = guiHelp.buildCheckBox("Show T1 Map", calculateT1);
-        JCheckBox check2 = guiHelp.buildCheckBox("Show Mo Map", calculateMo);
-        JCheckBox check3 = guiHelp.buildCheckBox("Show B1 Map", true);
-        JCheckBox check4 = guiHelp.buildCheckBox("Show R1 Map", invertT1toR1);
+        JTextField field1 = guiBuilder.buildDecimalField("Maximum Allowable T1:", maxT1);
+        JTextField field2 = guiBuilder.buildDecimalField("Maximum Allowable Mo:", maxMo);
+        JCheckBox check1 = guiBuilder.buildCheckBox("Show T1 Map", calculateT1);
+        JCheckBox check2 = guiBuilder.buildCheckBox("Show Mo Map", calculateMo);
+        JCheckBox check3 = guiBuilder.buildCheckBox("Show B1 Map", true);
+        JCheckBox check4 = guiBuilder.buildCheckBox("Show R1 Map", invertT1toR1);
         JCheckBox checkOpt = null; 
         if (Nsa > 2) { 
-            checkOpt = guiHelp.buildCheckBox("Calculate T1 Using Weighted Least-Squares", useWeights);
+            checkOpt = guiBuilder.buildCheckBox("Calculate T1 Using Weighted Least-Squares", useWeights);
         }
-        JCheckBox check6 = guiHelp.buildCheckBox("Use Smart Thresholding?", useSmartThresholding);
-        JCheckBox check7 = guiHelp.buildCheckBox("Use Hard Thresholding?", useHardThresholding);
+        JCheckBox check6 = guiBuilder.buildCheckBox("Use Smart Thresholding?", useSmartThresholding);
+        JCheckBox check7 = guiBuilder.buildCheckBox("Use Hard Thresholding?", useHardThresholding);
         
         panel.add(field1.getParent(), panelLayout);
         panel.add(field2.getParent(), panelLayout);
@@ -1213,7 +1213,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(panelLayout);
         
-        JTextField field1 = guiHelp.buildDecimalField("Hard Noise Level", hardNoiseThreshold);
+        JTextField field1 = guiBuilder.buildDecimalField("Hard Noise Level", hardNoiseThreshold);
         
         panel.add(field1.getParent(), panelLayout);
         
@@ -1234,11 +1234,11 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(panelLayout);
         
-        JTextField field1 = guiHelp.buildDecimalField("Noise Level Scale", noiseScale);
-        JCheckBox box1 = guiHelp.buildCheckBox("Calculate Noise from TOP LEFT Corner?", upperLeftCorner);
-        JCheckBox box2 = guiHelp.buildCheckBox("Calculate Noise from TOP RIGHT Corner?", upperRightCorner);
-        JCheckBox box3 = guiHelp.buildCheckBox("Calculate Noise from BOTTOM LEFT Corner?", lowerLeftCorner);
-        JCheckBox box4 = guiHelp.buildCheckBox("Calculate Noise from BOTTOM RIGHT Corner?", lowerRightCorner);
+        JTextField field1 = guiBuilder.buildDecimalField("Noise Level Scale", noiseScale);
+        JCheckBox box1 = guiBuilder.buildCheckBox("Calculate Noise from TOP LEFT Corner?", upperLeftCorner);
+        JCheckBox box2 = guiBuilder.buildCheckBox("Calculate Noise from TOP RIGHT Corner?", upperRightCorner);
+        JCheckBox box3 = guiBuilder.buildCheckBox("Calculate Noise from BOTTOM LEFT Corner?", lowerLeftCorner);
+        JCheckBox box4 = guiBuilder.buildCheckBox("Calculate Noise from BOTTOM RIGHT Corner?", lowerRightCorner);
         
         panel.add(field1.getParent(), panelLayout);
         panel.add(box1.getParent(), panelLayout);

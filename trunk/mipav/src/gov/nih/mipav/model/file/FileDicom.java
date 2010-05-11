@@ -72,7 +72,7 @@ public class FileDicom extends FileDicomBase {
     private int elementWord;
 
     /**
-     * When dicom image data is 'encapsulated,' it may be in pieces, or 'fragments.' don't know quite why, or if pieces
+     * When Dicom image data is 'encapsulated,' it may be in pieces, or 'fragments.' don't know quite why, or if pieces
      * should be kept together. If in fragments, the image data may span several slices, called a 'frame.'
      */
     private boolean encapsulated = false;
