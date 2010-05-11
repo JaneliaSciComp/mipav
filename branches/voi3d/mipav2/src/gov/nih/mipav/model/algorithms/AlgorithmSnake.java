@@ -472,12 +472,7 @@ public class AlgorithmSnake extends AlgorithmBase {
         int end;
 
         end = pts.size() - 2;
-
-        double magV1, magV2;
         double angle;
-        double pt1x, pt1y, pt2x, pt2y, pt3x, pt3y;
-        double v1x, v1y, v2x, v2y;
-
         Vector3f v1 = new Vector3f();
         Vector3f v2 = new Vector3f();
         while (flag == true) {
@@ -491,30 +486,6 @@ public class AlgorithmSnake extends AlgorithmBase {
                 v1.Normalize();
                 v2.Normalize();
                 angle = Vector3f.Angle(v1,v2);
-                /*
-                pt1x = ((pts.elementAt(i))).X;
-                pt1y = ((pts.elementAt(i))).Y;
-                pt2x = ((pts.elementAt(i + 1))).X;
-                pt2y = ((pts.elementAt(i + 1))).Y;
-                pt3x = ((pts.elementAt(i + 2))).X;
-                pt3y = ((pts.elementAt(i + 2))).Y;
-
-                v1x = pt1x - pt2x;
-                v1y = pt1y - pt2y;
-
-                v2x = pt3x - pt2x;
-                v2y = pt3y - pt2y;
-
-                magV1 = Math.sqrt((v1x * v1x) + (v1y * v1y));
-                v1x = v1x / magV1;
-                v1y = v1y / magV1;
-
-                magV2 = Math.sqrt((v2x * v2x) + (v2y * v2y));
-                v2x = v2x / magV2;
-                v2y = v2y / magV2;
-
-                angle = Math.acos((v1x * v2x) + (v1y * v2y));
-                 */
                 // Smooth points
                 if (angle < smoothness) {
                     pts.removeElementAt(i + 1);

@@ -428,7 +428,7 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
         int i;
         double distance;
         float midX, midY, midZ;
-        Vector<Vector3f> pts = new Vector<Vector3f>(50, 50);
+        Vector<Vector3f> pts = new Vector<Vector3f>();
 
         for (i = 0; i < xPts.length; i++) {
             pts.addElement(new Vector3f(xPts[i], yPts[i], zPts[i]));
@@ -610,9 +610,7 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
 
             for (int z = 0; (z < boundaryIterations) && (!finished) && (!threadStopped); z++) {
                 finished = true;
-
                 ptsArray = cleanLine(xPoints, yPoints, zPoints);
-
                 xPoints = new float[ptsArray.size()];
                 yPoints = new float[ptsArray.size()];
                 zPoints = new float[ptsArray.size()];
@@ -660,8 +658,6 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
                 zPoints = newZPts;
             }
         }
-
-        // resultGon = new Polygon();
         for (j = 1; j < (yPoints.length - 1); j++) {
             resultContour.add( new Vector3f( Math.round(xPoints[j]), Math.round(yPoints[j]), Math.round(zPoints[j])) );
         }
@@ -677,17 +673,12 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
         float[] imgBuffer;
         int slice;
         int nPts;
-        Polygon tempGon;
-        Polygon baseGon;
-        float[] xPoints, yPoints;
+        float[] xPoints, yPoints, zPoints;
         float[] xB, yB, zB;
         int i;
         int nSlice;
         int slicesDone = 0;
-
-        Polygon resultGon = null;
-        Polygon[] gons = null;
-        Vector contours;
+        Vector<VOIBase> contours;
         int nContours;
 
         xDim = srcImage.getExtents()[0];
@@ -725,7 +716,8 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
         // System.out.println("DestImage " + destImage.toString());
 
         srcVOI.getBounds(xB, yB, zB);
-
+        
+        VOIContour resultContour = null;
         for (slice = (int) zB[0]; slice <= zB[1]; slice++) {
             fireProgressStateChanged((int) (30 + (((float) slice / (nSlice - 1)) * 70)));
 
@@ -766,19 +758,19 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
             for (int j = 0; j < nContours; j++) {
 
                 if (((VOIContour) (contours.elementAt(j))).isActive()) {
-                    gons = srcVOI.exportPolygons(slice);
-                    xPoints = new float[gons[j].npoints + 2];
-                    yPoints = new float[gons[j].npoints + 2];
-                    resultGon = new Polygon();
-                    setPoints(xPoints, yPoints, gons[j]);
-                    runSnake(xPoints, yPoints, uVal, vVal, resultGon);
-                    resultVOI.importPolygon(resultGon, slice);
-                    ((VOIContour) (resultVOI.getCurvesTemp()[slice].lastElement())).trimPoints(Preferences.getTrim(),
-                                                                                           Preferences.getTrimAdjacient());
+                    int nPoints = contours.elementAt(j).size();
+                    xPoints = new float[nPoints + 2];
+                    yPoints = new float[nPoints + 2];
+                    zPoints = new float[nPoints + 2];
+                    setPoints(xPoints, yPoints, zPoints, contours.elementAt(j));
+                    resultContour = new VOIContour(false, true);
+                    runSnake(xPoints, yPoints, zPoints, uVal, vVal, resultContour);
+                    resultContour.trimPoints(Preferences.getTrim(),
+                            Preferences.getTrimAdjacient());
+                    resultVOI.importCurve(resultContour);
                     stSlice = slice;
                 } else {
-                    gons = srcVOI.exportPolygons(slice);
-                    resultVOI.importPolygon(gons[j], slice);
+                    resultVOI.importCurve( contours.elementAt(j) );
                 }
             }
         }
@@ -789,7 +781,7 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
             return;
         }
 
-        if (propagationFlag == false) {
+        if (propagationFlag == false || resultContour == null ) {
 
             if (destFlag == true) {
                 destImage.calcMinMax();
@@ -804,12 +796,8 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
         }
 
         slice = stSlice;
-        baseGon = resultGon;
         slice++;
-        tempGon = resultGon;
-        xPoints = new float[tempGon.npoints + 2];
-        yPoints = new float[tempGon.npoints + 2];
-        resultGon = new Polygon();
+        VOIContour tempContour = new VOIContour( resultContour, 1 );
 
         if (slice < nSlice) {
 
@@ -825,9 +813,7 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
 
                     return;
                 }
-
                 calcGVF(slice, imgBuffer);
-
                 if (destFlag == true) {
 
                     for (i = 0; i < length; i++) {
@@ -847,26 +833,24 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
                     }
                 }
 
+                xPoints = new float[tempContour.size() + 2];
+                yPoints = new float[tempContour.size() + 2];
+                zPoints = new float[tempContour.size() + 2];
                 // this is where I need to add simplex optimization algo stuff
-                setPoints(xPoints, yPoints, tempGon);
-
-                runSnake(xPoints, yPoints, uVal, vVal, resultGon);
+                setPoints(xPoints, yPoints, zPoints, tempContour);
+                tempContour.clear();
+                runSnake(xPoints, yPoints, zPoints, uVal, vVal, tempContour);
                 slicesDone++;
                 fireProgressStateChanged(slicesDone * 100 / nSlice);
-                nPts = resultGon.npoints;
+                nPts = tempContour.size();
 
                 if (nPts < 8) {
                     break;
                 } else {
-                    resultVOI.importPolygon(resultGon, slice);
-                    ((VOIContour) (resultVOI.getCurvesTemp()[slice].lastElement())).trimPoints(Preferences.getTrim(),
-                                                                                           Preferences.getTrimAdjacient());
+                    tempContour.trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
+                    resultVOI.importCurve(tempContour);
                 }
-
-                xPoints = new float[resultGon.npoints + 2];
-                yPoints = new float[resultGon.npoints + 2];
-                tempGon = resultGon;
-                resultGon = new Polygon();
+                tempContour = new VOIContour(tempContour, 1);
                 slice++;
 
                 if (slice >= srcImage.getExtents()[2]) {
@@ -882,10 +866,10 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
         }
 
         slice = stSlice - 1;
-        tempGon = baseGon;
-        xPoints = new float[tempGon.npoints + 2];
-        yPoints = new float[tempGon.npoints + 2];
-        resultGon = new Polygon();
+        tempContour = new VOIContour( resultContour, -1 );
+        xPoints = new float[tempContour.size() + 2];
+        yPoints = new float[tempContour.size() + 2];
+        zPoints = new float[tempContour.size() + 2];
         slicesDone = nSlice - stSlice;
         fireProgressStateChanged(100 * slicesDone / nSlice);
 
@@ -926,24 +910,24 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
                 }
 
                 // this is where I need to add simplex optimization algo stuff
-                setPoints(xPoints, yPoints, tempGon);
-                runSnake(xPoints, yPoints, uVal, vVal, resultGon);
+                setPoints(xPoints, yPoints, zPoints, tempContour);
+                tempContour.clear();
+                runSnake(xPoints, yPoints, zPoints, uVal, vVal, tempContour);
                 slicesDone++;
                 fireProgressStateChanged(slicesDone * 100 / nSlice);
-                nPts = resultGon.npoints;
+                nPts = tempContour.size();
 
                 if (nPts < 8) {
                     break;
                 } else {
-                    resultVOI.importPolygon(resultGon, slice);
-                    ((VOIContour) (resultVOI.getCurvesTemp()[slice].lastElement())).trimPoints(Preferences.getTrim(),
-                                                                                           Preferences.getTrimAdjacient());
+                    tempContour.trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
+                    resultVOI.importCurve(tempContour);
                 }
 
-                xPoints = new float[resultGon.npoints + 2];
-                yPoints = new float[resultGon.npoints + 2];
-                tempGon = resultGon;
-                resultGon = new Polygon();
+                xPoints = new float[tempContour.size() + 2];
+                yPoints = new float[tempContour.size() + 2];
+                zPoints = new float[tempContour.size() + 2];
+                tempContour = new VOIContour( tempContour, -1 );
                 slice--;
 
                 if (slice < 0) {
@@ -977,8 +961,6 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
         float[] xPoints = null;
         float[] yPoints = null;
         float[] zPoints = null;
-        Polygon resultGon = null;
-        Polygon[] gons = null;
         Vector<VOIBase> contours;
         int nContours;
 
