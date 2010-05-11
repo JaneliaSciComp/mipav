@@ -122,6 +122,9 @@ public class AlgorithmImageMath extends AlgorithmBase {
     private double valueI;
     
     private double valueB;
+    
+    /** used in AlgorithmChangeType constructor */
+    private boolean useNativeFormat = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -276,7 +279,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                 return;
             } else if (srcImage.getType() != ModelStorageBase.ARGB_FLOAT) {
                 AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(srcImage, ModelStorageBase.ARGB_FLOAT,
-                                                     min, max, min, max, false);
+                                                     min, max, min, max, false, useNativeFormat);
                 changeTypeAlgo.setRunningInSeparateThread(runningInSeparateThread);
                 changeTypeAlgo.run();
 
@@ -296,7 +299,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                 return;
             } else if (srcImage.getType() != ModelStorageBase.ARGB_FLOAT) {
                 AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(srcImage, ModelStorageBase.ARGB_FLOAT,
-                                                     min, max, min, max, false);
+                                                     min, max, min, max, false, useNativeFormat);
                 changeTypeAlgo.setRunningInSeparateThread(runningInSeparateThread);
                 changeTypeAlgo.run();
 
@@ -422,7 +425,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
             }
             
             AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(srcImage, newType, min, max, min, max,
-                                                                        false);
+                                                                        false, useNativeFormat);
             changeTypeAlgo.setRunningInSeparateThread(runningInSeparateThread);
             changeTypeAlgo.run();
 
@@ -512,7 +515,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                
                 if (newType != srcImage.getType()) {
                     AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(srcImage, newType, min, max, min, max,
-                                                                                 false);
+                                                                                 false, useNativeFormat);
                     changeTypeAlgo.setRunningInSeparateThread(runningInSeparateThread);
                     changeTypeAlgo.run();
 
@@ -738,7 +741,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
             } else if ((srcImage.getType() != ModelStorageBase.FLOAT) &&
                            (srcImage.getType() != ModelStorageBase.DOUBLE)) {
                 AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(srcImage, ModelStorageBase.FLOAT, min, max,
-                                                                             min, max, false);
+                                                                             min, max, false, useNativeFormat);
                 changeTypeAlgo.setRunningInSeparateThread(runningInSeparateThread);
                 changeTypeAlgo.run();
 
@@ -759,7 +762,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
             } else if ((srcImage.getType() != ModelStorageBase.FLOAT) &&
                            (srcImage.getType() != ModelStorageBase.DOUBLE)) {
                 AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(srcImage, ModelStorageBase.FLOAT, min, max,
-                                                                             min, max, false);
+                                                                             min, max, false, useNativeFormat);
                 changeTypeAlgo.setRunningInSeparateThread(runningInSeparateThread);
                 changeTypeAlgo.run();
 
@@ -824,7 +827,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
         	}
         	
         	AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(srcImage, newType, min, max, min, max,
-                    													false);
+                    													false, useNativeFormat);
         	changeTypeAlgo.setRunningInSeparateThread(runningInSeparateThread);
         	changeTypeAlgo.run();
 
@@ -894,7 +897,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                
                 if (newType != srcImage.getType()) {
                     AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(srcImage, newType, min, max, min, max,
-                                                                                 false);
+                                                                                 false, useNativeFormat);
                     changeTypeAlgo.setRunningInSeparateThread(runningInSeparateThread);
                     changeTypeAlgo.run();
 
