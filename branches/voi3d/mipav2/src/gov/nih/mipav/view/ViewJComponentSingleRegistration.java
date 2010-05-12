@@ -90,7 +90,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage {
             VOIs.removeElementAt(i);
         }
 
-        voiHandler.setVOI_ID(-1);
+        getVOIHandler().setVOI_ID(-1);
         centerPtLocation = -1;
     }
 

@@ -159,7 +159,9 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
     /** Popup Menu for VOIPoints. */
     protected ViewJPopupPt popupPt = null;
 
-
+    protected Color currentColor = null;
+    protected VOI saveGroup = null;
+    
     private Vector<VOIBase> m_kActiveList = new Vector<VOIBase>();
 
 
@@ -235,7 +237,10 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
                 }
                 m_kParent.PointerActive(iActive);
             }
-            setDefaultCursor();
+            else
+            {
+                setDefaultCursor();
+            }
         } else if (command.equals(CustomUIBuilder.PARAM_VOI_UNDO.getActionCommand()) ) {
             undoVOI();
             setDefaultCursor();
@@ -580,6 +585,14 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
     {        
         boolean bDraw = isDrawCommand(kCommand);
         m_kParent.enableBoth(!bDraw);
+        
+        if ( kCommand.equals("quickLUT") )
+        {
+            saveGroup = m_kCurrentVOIGroup;
+            m_kCurrentVOIGroup = null;
+            currentColor = toolbarBuilder.getVOIColorButton().getBackground();
+            toolbarBuilder.getVOIColorButton().setBackground( Color.yellow );
+        }
 
         if ( kCommand.equals(CustomUIBuilder.PARAM_VOI_PROPAGATE_UP.getActionCommand()) )
         {
@@ -1445,7 +1458,10 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
             getActiveImage().getHistoRGBFrame().update();
         } else if (getActiveImage().getHistoLUTFrame() != null) {
             getActiveImage().getHistoLUTFrame().update();
-        }
+        }    
+
+        toolbarBuilder.getVOIColorButton().setBackground( currentColor );
+        m_kCurrentVOIGroup = saveGroup;
     }
 
     public void redoImage( )
@@ -1577,6 +1593,10 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
             if ( kManager == m_kVOIManagers[i] )
             {
                 m_iActive = i;
+                if ( m_kVOIManagers[i].getActiveImage() != m_kParent.getActiveImage() )
+                {
+                    m_kParent.setActiveImage( m_kVOIManagers[i].getActiveImage() );
+                }
                 break;
             }
         }
@@ -2091,9 +2111,11 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
         if ( kNew.getGroup() == null )
         {
             saveVOIs("addVOI");
-            if ( (m_kCurrentVOIGroup != null) && 
-                    ( (m_kCurrentVOIGroup.getCurveType() != kNew.getType() ) 
-                            || (kImage.isRegistered( m_kCurrentVOIGroup ) == -1)) )
+            if ( (m_kCurrentVOIGroup != null) && (kImage.isRegistered( m_kCurrentVOIGroup ) == -1))
+            {
+                findCompatibleType(kImage, kNew);
+            }
+            if ( (m_kCurrentVOIGroup != null) && (m_kCurrentVOIGroup.getCurveType() != kNew.getType()) )
             {
                 m_kCurrentVOIGroup = null;
                 newVOI(false, kNew.isSplit());
@@ -2201,6 +2223,28 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
         if ( m_kImageB != null ) { m_kImageB.unregisterAllVOIs(); }
     }
 
+    private void findCompatibleType( ModelImage kImage, VOIBase kNew)
+    {
+        VOIVector kVOIs = kImage.getVOIs();
+        for ( int i = 0; i < kVOIs.size(); i++ )
+        {
+            if ( kVOIs.get(i).isActive() && kVOIs.get(i).getCurveType() == kNew.getType() )
+            {
+                m_kCurrentVOIGroup = kVOIs.get(i);
+                return;
+            }
+        }
+        for ( int i = 0; i < kVOIs.size(); i++ )
+        {
+            if ( kVOIs.get(i).getCurveType() == kNew.getType() )
+            {
+                m_kCurrentVOIGroup = kVOIs.get(i);
+                return;
+            }
+        }
+        m_kCurrentVOIGroup = null;
+    }
+    
     private void initDataBuffer()
     {
         int iSize = m_kImageA.getDataSize();

@@ -1349,8 +1349,8 @@ public class ViewJComponentRegistration
                 return;
             }
             super.paintComponent(g);
-/*
             // Draw VOIs (unless told not to by showVOIs = false)
+            /*
             if (showVOIs) {
                 if (useDualVOIs) {
 
@@ -1423,8 +1423,7 @@ public class ViewJComponentRegistration
                         } // end if slice != -99
                     }
                 }
-            } 
-            */
+            } */
         } catch (OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ComponentRegistration.paintComponent.");
@@ -1578,7 +1577,7 @@ public class ViewJComponentRegistration
      */
     public void setCursorMode(int mode) {
         this.cursorMode = mode;
-        voiHandler.setMode(mode);
+        //getVOIHandler().setMode(mode);
         switch (mode) {
 
             case DEFAULT:

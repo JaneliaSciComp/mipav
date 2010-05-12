@@ -2417,154 +2417,42 @@ public class VOI extends ModelSerialCloneable {
      * @param  xM     amount in pixels to move the line in the x direction
      * @param  yM     amount in pixels to move the line in the y direction
      * @param  zM     amount in pixels to move the line in the z direction
-     * @deprecated
      */
     public void moveVOI(int slice, int xDim, int yDim, int zDim, int xM, int yM, int zM) {
-        System.err.println( "moveVOI Deprecated" );
-        /*
-        int i;
-
-        if (fixed) {
+        if (fixed || curveType != POINT) {
             return;
         }
+        if (slice == -1) {
+            getBounds(xBounds, yBounds, zBounds);
 
-        if ((curveType != POINT) && (curveType != ANNOTATION) && (curveType != POLYLINE_SLICE)) {
-
-            if (slice == -1) {
-                getBounds(xBounds, yBounds, zBounds);
-
-                if (((xBounds[0] + xM) >= xDim) || ((xBounds[0] + xM) < 0)) {
-                    return;
-                }
-
-                if (((xBounds[1] + xM) >= xDim) || ((xBounds[1] + xM) < 0)) {
-                    return;
-                }
-
-                if (((yBounds[0] + yM) >= yDim) || ((yBounds[0] + yM) < 0)) {
-                    return;
-                }
-
-                if (((yBounds[1] + yM) >= yDim) || ((yBounds[1] + yM) < 0)) {
-                    return;
-                }
-
-                int j;
-
-                for (j = 0; j < curves.size(); j++) {
-                    if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
-                        ((VOIContour) (curves.elementAt(j))).translate(xM, yM);
-                    } else if (curveType == PROTRACTOR) {
-                        ((VOIProtractor) (curves.elementAt(j))).translate(xM, yM);
-                    } else if (curveType == LINE) {
-                        ((VOILine) (curves.elementAt(j))).translate(xM, yM);
-                    }
-                }
-
-                return;
-            } else {
-                getSliceBounds(slice, xBounds, yBounds);
-
-                for (i = 0; i < curves.size(); i++) {
-                    boolean isActive = false;
-
-                    if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
-                        isActive = ((VOIContour) (curves.elementAt(i))).isActive();
-                    } else if (curveType == PROTRACTOR) {
-                        isActive = ((VOIProtractor) (curves.elementAt(i))).isActive();
-                    } else if (curveType == LINE) {
-                        isActive = ((VOILine) (curves.elementAt(i))).isActive();
-                    }
-
-                    if (isActive) {
-
-                        if (((xBounds[0] + xM) >= xDim) || ((xBounds[0] + xM) < 0)) {
-                            return;
-                        }
-
-                        if (((xBounds[1] + xM) >= xDim) || ((xBounds[1] + xM) < 0)) {
-                            return;
-                        }
-
-                        if (((yBounds[0] + yM) >= yDim) || ((yBounds[0] + yM) < 0)) {
-                            return;
-                        }
-
-                        if (((yBounds[1] + yM) >= yDim) || ((yBounds[1] + yM) < 0)) {
-                            return;
-                        }
-
-                        if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
-                            ((VOIContour) (curves.elementAt(i))).translate(xM, yM);
-                        } else if (curveType == PROTRACTOR) {
-                            ((VOIProtractor) (curves.elementAt(i))).translate(xM, yM);
-                        } else if (curveType == LINE) {
-                            ((VOILine) (curves.elementAt(i))).translate(xM, yM);
-                        }
-                    }
-                }
-
+            if (((xBounds[0] + xM) >= xDim) || ((xBounds[0] + xM) < 0)) {
                 return;
             }
-        } else if (curveType == POINT) {
 
-            if (slice == -1) {
-                getBounds(xBounds, yBounds, zBounds);
-
-                if (((xBounds[0] + xM) >= xDim) || ((xBounds[0] + xM) < 0)) {
-                    return;
-                }
-
-                if (((xBounds[1] + xM) >= xDim) || ((xBounds[1] + xM) < 0)) {
-                    return;
-                }
-
-                if (((yBounds[0] + yM) >= yDim) || ((yBounds[0] + yM) < 0)) {
-                    return;
-                }
-
-                if (((yBounds[1] + yM) >= yDim) || ((yBounds[1] + yM) < 0)) {
-                    return;
-                }
-
-                for (int j = 0; j < curves.size(); j++) {
-                    ((VOIPoint) (curves.elementAt(j))).moveVOIPoint(xM, yM, zM, xDim, yDim, zDim);
-                }
-            } else {
-
-                for (i = 0; i < curves.size(); i++) {
-
-                    if (((VOIPoint) (curves.elementAt(i))).isActive()) {
-                        ((VOIPoint) (curves.elementAt(i))).moveVOIPoint(xM, yM, zM, xDim, yDim, zDim);
-                    }
-                }
+            if (((xBounds[1] + xM) >= xDim) || ((xBounds[1] + xM) < 0)) {
+                return;
             }
-        } else if (curveType == ANNOTATION) {
 
-            if (slice == -1) {
-                getBounds(xBounds, yBounds, zBounds);
+            if (((yBounds[0] + yM) >= yDim) || ((yBounds[0] + yM) < 0)) {
+                return;
+            }
 
-                //
-               // if (xBounds[0] + xM >= xDim || xBounds[0] + xM < 0) return; if (xBounds[1] + xM >= xDim || xBounds[1]
-                // + xM < 0) return; if (yBounds[0] + yM >= yDim || yBounds[0] + yM < 0) return; if (yBounds[1] + yM >=
-                // yDim || yBounds[1] + yM < 0) return;
-                 //
-                for (int j = 0; j < curves.size(); j++) {
-                    ((VOIText) (curves.elementAt(j))).moveVOIPoint(xM, yM, zM);
-                }
-            } else {
+            if (((yBounds[1] + yM) >= yDim) || ((yBounds[1] + yM) < 0)) {
+                return;
+            }
 
-                for (i = 0; i < curves.size(); i++) {
-
-                    if (((VOIText) (curves.elementAt(i))).isActive()) {
-                        ((VOIText) (curves.elementAt(i))).moveVOIPoint(xM, yM, zM);
-                    }
-                }
+            for (int j = 0; j < curves.size(); j++) {
+                ((VOIPoint) (curves.elementAt(j))).moveVOIPoint(xM, yM, zM, xDim, yDim, zDim);
             }
         } else {
-            return;
+
+            for (int i = 0; i < curves.size(); i++) {
+
+                if (((VOIPoint) (curves.elementAt(i))).isActive()) {
+                    ((VOIPoint) (curves.elementAt(i))).moveVOIPoint(xM, yM, zM, xDim, yDim, zDim);
+                }
+            }
         }
-*/
     }
 
     /**

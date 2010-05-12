@@ -371,7 +371,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
     private int[] m_aiLocalImageExtents;
 
-    private VOIManagerListener m_kParent;
+    private VOIManagerInterface m_kParent;
 
     private Vector2f[][] m_akSteps = new Vector2f[7][7];
 
@@ -448,7 +448,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     private int m_iPlane = -1;
     
 
-    public VOIManager (VOIManagerListener kParent )
+    public VOIManager (VOIManagerInterface kParent )
     {
         m_kParent = kParent;
     }
@@ -912,9 +912,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     }
 
 
-    public ModelImage[] getActiveImage()
+    public ModelImage getActiveImage()
     {
-        return m_akImages;
+        return m_kImageActive;
     }
     
     public Component getComponent()
@@ -931,6 +931,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     public int getOrientation()
     {
         return m_iPlaneOrientation;
+    }
+    
+    public VOIManagerInterface getParent()
+    {
+        return m_kParent;
     }
 
     public int getPlane()
@@ -2803,7 +2808,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         
         if (kVOI.isActive() /*&& getSType() != VOIManager.LEVELSET
                 && getSType() != VOIManager.LIVEWIRE */) {
-/*
             // if active draw little boxes at points
             for (j = 0; j < kVOI.size(); j++) {
 
@@ -2831,9 +2835,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 g.setColor(Color.GREEN);
                 g.fillRect((int) (gon.xpoints[kVOI.getSelectedPoint()] - 1.5 + 0.5f),
                         (int) (gon.ypoints[kVOI.getSelectedPoint()] - 1.5 + 0.5f), 3, 3);
-            }
-            */
-            
+            }                       
             
 /*
             if (boundingBox == true) {

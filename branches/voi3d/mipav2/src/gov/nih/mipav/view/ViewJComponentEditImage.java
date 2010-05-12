@@ -337,9 +337,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
     /** Visible rectangle to draw topped. */
     protected Rectangle visRect;
 
-    /** Handles all aspects of VOIs, including mouse responses, movements, VOI graphing etc. */
-    protected VOIHandlerInterface voiHandler = null;
-
     /** User invokes window and level adjustment with right mouse drag in DEFAULT mode. */
     protected boolean winLevelSet = false;
 
@@ -530,24 +527,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         this.logMagDisplay = logMagDisplay;
 
         super.setZoom(zoom, zoom);
-/*
-        if (this instanceof ViewJComponentSingleRegistration) {
-            voiHandler = new VOIRegistrationHandler(this);
-        } else {
-            voiHandler = new VOIHandler(this);
-        }
-
-        if (imageA.isDicomImage()) {
-            voiHandler.setOverlay(Preferences.is(Preferences.PREF_SHOW_DICOM_OVERLAYS));
-        } else {
-            voiHandler.setOverlay(Preferences.is(Preferences.PREF_SHOW_IMAGE_OVERLAYS));
-        }
-
-        if ( ! (this instanceof ViewJComponentTriImage)) {
-            addMouseListener(voiHandler);
-            addMouseMotionListener(voiHandler);
-        }
-        */
 
         addMouseMotionListener(this);
         addMouseListener(this);
@@ -2198,7 +2177,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @return DOCUMENT ME!
      */
     public VOIHandlerInterface getVOIHandler() {
-        return this.voiHandler;
+        return this.voiManager.getParent();
     }
 
     /**
@@ -2536,7 +2515,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             return;
         }
 
-        if ( (g == null) || (modifyFlag == false) || (slice == -99)) {
+        if ( (g == null) || (modifyFlag == false) || (slice == -99) || (imageActive == null)) {
             return;
         }
 
@@ -2986,10 +2965,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                 makePaintBitmapBorder(paintImageBuffer, paintBitmap, slice, frame);
             }
 
-            if ( ! (this instanceof ViewJComponentRegistration)) {
+            //if ( ! (this instanceof ViewJComponentRegistration)) {
                 //voiHandler.paintSolidVOIinImage(offscreenGraphics2d);
                 draw3DVOIs(offscreenGraphics2d);
-            }
+            //}
 
             if (memImageA == null) { // create imageA if it hasn't already been created
                 memImageA = new MemoryImageSource(imageDim.width, imageDim.height, pixBuffer, 0, imageDim.width);
@@ -3071,9 +3050,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                 repaintPaintBrushCursorFast(offscreenGraphics2d);
             }
 
+            draw3DVOIs(offscreenGraphics2d);
             if ( ! (this instanceof ViewJComponentRegistration)) {
                 //voiHandler.drawVOIs(offscreenGraphics2d); // draw all VOI regions
-                draw3DVOIs(offscreenGraphics2d);
 
 
                 if (overlayOn) {
@@ -5036,16 +5015,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             return;
         }
         ViewVOIVector VOIs = (ViewVOIVector) imageA.getVOIs().clone();
-/*
-        if ((this == triImageFrame.getTriImage(ViewJFrameTriImage.AXIAL_AB)) ||
-                (this == triImageFrame.getTriImage(ViewJFrameTriImage.SAGITTAL_AB)) ||
-                (this == triImageFrame.getTriImage(ViewJFrameTriImage.CORONAL_AB))) {
-
-            if (imageB != null) {
-                VOIs.addAll((ViewVOIVector) imageB.get3DVOIs().clone());
-            }
+        
+        if (imageB != null) {
+            VOIs.addAll((ViewVOIVector) imageB.getVOIs().clone());
         }
- */
         if (VOIs != null && voiManager != null) {
             int nVOI = VOIs.size();
 

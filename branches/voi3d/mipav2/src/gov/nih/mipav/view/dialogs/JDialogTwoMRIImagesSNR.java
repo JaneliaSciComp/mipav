@@ -658,20 +658,17 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
 
         signalCurveFound = false;
 
-        for (i = 0; (i < zDim) && !signalCurveFound; i++) {
+        if (signalImage == 1) {
 
-            if (signalImage == 1) {
-
-                if (VOIs.VOIAt(signalIndex).getCurvesTemp()[i].size() > 0) {
-                    signalCurveFound = true;
-                }
-            } else {
-
-                if (VOIs2.VOIAt(signalIndex).getCurvesTemp()[i].size() > 0) {
-                    signalCurveFound = true;
-                }
+            if (VOIs.VOIAt(signalIndex).getCurves().size() > 0) {
+                signalCurveFound = true;
             }
-        } // for (i = 0; i < zDim && !signalCurveFound; i++)
+        } else {
+
+            if (VOIs2.VOIAt(signalIndex).getCurves().size() > 0) {
+                signalCurveFound = true;
+            }
+        }
 
         if (!signalCurveFound) {
             MipavUtil.displayError("Signal VOI has no curves");

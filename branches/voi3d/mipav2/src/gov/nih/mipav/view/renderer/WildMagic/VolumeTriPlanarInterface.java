@@ -3375,4 +3375,9 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         return null;
     }  
     public void enableBoth( boolean bEnable ) {}
+
+    @Override
+    public void setActiveImage(ModelImage kImage) {
+        // TODO Auto-generated method stub        
+    }
 }

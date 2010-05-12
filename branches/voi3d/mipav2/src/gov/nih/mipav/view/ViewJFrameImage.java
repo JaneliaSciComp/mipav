@@ -5989,6 +5989,18 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         kImage.calcMinMax();
         new JDialogExtractSurfaceCubes(this, kImage, true);
     }
+
+    @Override
+    public void setActiveImage(ModelImage kImage) {
+        if ( kImage == imageA )
+        {
+            setActiveImage( IMAGE_A );
+        }
+        else
+        {
+            setActiveImage( IMAGE_B );
+        }
+    }
     
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#setCenter(WildMagic.LibFoundation.Mathematics.Vector3f)

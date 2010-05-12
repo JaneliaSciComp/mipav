@@ -19,6 +19,7 @@ public interface VOIManagerInterfaceListener
     public Vector3f PropDown(int iActive);
     public Vector3f PropUp(int iActive);
     public void setActiveImage( int active );
+    public void setActiveImage( ModelImage kImage );
     public void setCenter( Vector3f kCenter );
     public void setCursor( Cursor kCursor );
     public void setDefaultCursor();

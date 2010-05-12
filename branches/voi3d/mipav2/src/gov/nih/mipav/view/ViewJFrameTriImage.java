@@ -5334,4 +5334,16 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#updateData(boolean)
      */
     public void updateData(boolean bCopyToCPU) {}
+
+    @Override
+    public void setActiveImage(ModelImage kImage) {
+        if ( kImage == imageA )
+        {
+            setActiveImage( IMAGE_A );
+        }
+        else
+        {
+            setActiveImage( IMAGE_B );
+        }
+    }
 }
