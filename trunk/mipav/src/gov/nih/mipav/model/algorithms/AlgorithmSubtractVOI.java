@@ -248,9 +248,8 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
             }
 
             if (newType != srcImage.getType()) {
-            	boolean useNativeFormat = false;
                 AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(srcImage, newType, min, max, min, max,
-                                                                             false, useNativeFormat);
+                                                                             false);
 
                 changeTypeAlgo.setRunningInSeparateThread(runningInSeparateThread);
                 changeTypeAlgo.run();
