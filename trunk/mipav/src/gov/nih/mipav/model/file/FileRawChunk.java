@@ -1620,7 +1620,7 @@ public class FileRawChunk extends FileBase {
                         break;
 
                     case ModelStorageBase.UINTEGER:
-                        bufferInt = new int[bufferSize];
+                        bufferLong = new long[bufferSize];
                         bufferByte = new byte[4 * bufferSize];
                         break;
 
