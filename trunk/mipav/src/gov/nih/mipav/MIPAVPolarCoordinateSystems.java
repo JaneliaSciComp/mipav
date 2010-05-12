@@ -50,7 +50,7 @@ public class MIPAVPolarCoordinateSystems {
 	 * Reference: imageJ Polar coordinate transformer. 
 	 * @param image
 	 */
-	public void polarToCartisian(ModelImage image) {
+	public void PolarToCartisian2D(ModelImage image, ModelSimpleImage imageR, ModelSimpleImage imageTheta) {
 
 		// get the center of Cartesian space
 		Vector3f center = image.getImageCenter();
@@ -61,7 +61,7 @@ public class MIPAVPolarCoordinateSystems {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
 
-		// longest radius from then center of image to the 4 corners.
+		// longest radius from the center of image to the 4 corners.
 		double radius_longest;
 
 		// Set up the Polar Grid:
@@ -98,14 +98,16 @@ public class MIPAVPolarCoordinateSystems {
 
 				// For each polar pixel, need to convert it to Cartesian
 				// coordinates
-				double r = xx;
-				double angle = (yy / (double) 360) * Math.PI * 2;
+				float r = xx;
+				float angle = (float)((yy / (float) 360) * Math.PI * 2);
 
 				// -- Need convert (x,y) into pixel coordinates
-				double x = getCartesianX(r, angle) + centerX;
-				double y = getCartesianY(r, angle) + centerY;
+				int x = (int)(getCartesianX(r, angle) + centerX);
+				int y = (int)(getCartesianY(r, angle) + centerY);
 
-				// where to save it????????
+				imageR.setValue(x, y, r);
+				imageTheta.setValue(x, y, angle);
+				
 			}
 		}
 
@@ -117,8 +119,8 @@ public class MIPAVPolarCoordinateSystems {
 	 * @param angle  poloar coordinate theta value.
 	 * @return  Cartesian coordinate X value.  
 	 */
-	private static double getCartesianX(double r, double angle) {
-		return r * Math.cos(angle);
+	private static float getCartesianX(float r, float angle) {
+		return (float)(r * Math.cos(angle));
 	}
 
 	/**
@@ -128,8 +130,8 @@ public class MIPAVPolarCoordinateSystems {
 	 * @return  Cartesian coordinate Y value.  
 	 */
 	
-	private static double getCartesianY(double r, double angle) {
-		double y = r * Math.sin(angle);
+	private static float getCartesianY(float r, float angle) {
+		float y = (float)(r * Math.sin(angle));
 		return clockWise ? -y : y;
 	}
 
