@@ -2778,6 +2778,100 @@ public class ModelImage extends ModelStorageBase {
         } catch (final IOException ioError) {
             MipavUtil.displayError("" + ioError);
         }
+        
+        if (fileInfo[0] instanceof FileInfoNIFTI) {
+        	short niftiType;
+        	short niftiBits;
+        	switch (type) {
+
+            case ModelStorageBase.BOOLEAN:
+                niftiType = FileInfoNIFTI.DT_BINARY;
+                niftiBits = (short)1;
+                break;
+
+            case ModelStorageBase.BYTE:
+                niftiType = FileInfoNIFTI.NIFTI_TYPE_INT8;
+                niftiBits = (short)8;
+                break;
+
+            case ModelStorageBase.UBYTE:
+                niftiType = FileInfoNIFTI.NIFTI_TYPE_UINT8;
+                niftiBits = (short)8;
+                break;
+
+            case ModelStorageBase.SHORT:
+                niftiType = FileInfoNIFTI.NIFTI_TYPE_INT16;
+                niftiBits = (short)16;
+                break;
+
+            case ModelStorageBase.USHORT:
+                niftiType = FileInfoNIFTI.NIFTI_TYPE_UINT16;
+                niftiBits = (short)16;
+                break;
+
+            case ModelStorageBase.INTEGER:
+                niftiType = FileInfoNIFTI.NIFTI_TYPE_INT32;
+                niftiBits = (short)32;
+                break;
+
+            case ModelStorageBase.UINTEGER:
+                niftiType = FileInfoNIFTI.NIFTI_TYPE_UINT32;
+                niftiBits = (short)32;
+
+            case ModelStorageBase.LONG:
+                niftiType = FileInfoNIFTI.NIFTI_TYPE_INT64;
+                niftiBits = (short)64;
+                break;
+
+            case ModelStorageBase.FLOAT:
+                niftiType = FileInfoNIFTI.NIFTI_TYPE_FLOAT32;
+                niftiBits = (short)32;
+                break;
+
+            case ModelStorageBase.DOUBLE:
+                niftiType = FileInfoNIFTI.NIFTI_TYPE_FLOAT64;
+                niftiBits = (short)64;
+                break;
+
+            case ModelStorageBase.ARGB: // only RGB for NIFTI images
+                niftiType = FileInfoNIFTI.NIFTI_TYPE_RGB24;
+                niftiBits = (short)24;
+                break;
+
+            case ModelStorageBase.COMPLEX:
+                niftiType = FileInfoNIFTI.NIFTI_TYPE_COMPLEX64;
+                niftiBits = (short)64;
+                break;
+
+            case ModelStorageBase.DCOMPLEX:
+                niftiType = FileInfoNIFTI.NIFTI_TYPE_COMPLEX128;
+                niftiBits = (short)128;
+                break;
+            default:
+            	niftiType = FileInfoNIFTI.NIFTI_TYPE_UINT8;
+            	niftiBits = (short)8;
+            
+        } 
+        	
+    	if (dimExtents.length == 2) {
+    		((FileInfoNIFTI)(fileInfo[0])).setSourceType(niftiType);
+    		((FileInfoNIFTI)(fileInfo[0])).setBitPix(niftiBits);
+        } else if (dimExtents.length == 3) {
+
+            for (int i = 0; i < dimExtents[2]; i++) {
+            	((FileInfoNIFTI)(fileInfo[i])).setSourceType(niftiType);
+            	((FileInfoNIFTI)(fileInfo[i])).setBitPix(niftiBits);
+            }
+        } else if (dimExtents.length == 4) {
+
+            for (int i = 0; i < (dimExtents[2] * dimExtents[3]); i++) {
+            	((FileInfoNIFTI)(fileInfo[i])).setSourceType(niftiType);
+            	((FileInfoNIFTI)(fileInfo[i])).setBitPix(niftiBits);
+            }
+        }
+
+        	
+        } // if (fileInfo[0] instanceof FileInfoNIFTI)
     }
 
     /**
