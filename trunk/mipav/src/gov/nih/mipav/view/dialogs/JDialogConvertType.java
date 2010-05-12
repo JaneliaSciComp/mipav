@@ -135,10 +135,6 @@ public class JDialogConvertType extends JDialogScriptableBase
 
     /** DOCUMENT ME! */
     private JRadioButton replaceImage;
-    
-    private JCheckBox nativeFormatBox;
-    
-    private boolean useNativeFormat = false;
 
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
@@ -903,7 +899,7 @@ public class JDialogConvertType extends JDialogScriptableBase
 
                     // Make algorithm
                     changeTypeAlgo = new AlgorithmChangeType(resultImage, image, inTempMin, inTempMax, outTempMin,
-                                                             outTempMax, processIndep, useNativeFormat);
+                                                             outTempMax, processIndep);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -944,7 +940,7 @@ public class JDialogConvertType extends JDialogScriptableBase
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
                     changeTypeAlgo = new AlgorithmChangeType(image, dataType, inTempMin, inTempMax, outTempMin,
-                                                             outTempMax, processIndep, useNativeFormat);
+                                                             outTempMax, processIndep);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -1026,7 +1022,7 @@ public class JDialogConvertType extends JDialogScriptableBase
 
                     // Make algorithm
                     changeTypeAlgo = new AlgorithmChangeType(resultImage, image, inTempMin, inTempMax, outTempMin,
-                                                             outTempMax, processIndep, useNativeFormat);
+                                                             outTempMax, processIndep);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -1068,7 +1064,7 @@ public class JDialogConvertType extends JDialogScriptableBase
 
                     // Make algorithm
                     changeTypeAlgo = new AlgorithmChangeType(image, dataType, inTempMin, inTempMax, outTempMin,
-                                                             outTempMax, processIndep, useNativeFormat);
+                                                             outTempMax, processIndep);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -1137,8 +1133,6 @@ public class JDialogConvertType extends JDialogScriptableBase
         } else {
             displayLoc = REPLACE;
         }
-        
-        useNativeFormat = scriptParameters.getParams().getBoolean("use_native_format");
 
         processIndep = scriptParameters.doProcess3DAs25D();
 
@@ -1196,7 +1190,6 @@ public class JDialogConvertType extends JDialogScriptableBase
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
         scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("use_native_format", useNativeFormat));
 
         scriptParameters.storeProcess3DAs25D(processIndep);
 
@@ -1487,17 +1480,6 @@ public class JDialogConvertType extends JDialogScriptableBase
         replaceImage = new JRadioButton("Replace image", false);
         replaceImage.setFont(serif12);
         destinationGroup.add(replaceImage);
-        
-        nativeFormatBox = new JCheckBox("Maintain native file format");
-        nativeFormatBox.setFont(serif12);
-        nativeFormatBox.setSelected(false);
-        if ((image.getFileInfo()[0] instanceof FileInfoNIFTI) &&
-            (!image.isColorImage())) {
-            nativeFormatBox.setEnabled(true);
-        }
-        else {
-        	nativeFormatBox.setEnabled(false);
-        }
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -1509,8 +1491,6 @@ public class JDialogConvertType extends JDialogScriptableBase
         destinationPanel.add(newImage, gbc);
         gbc.gridy = 1;
         destinationPanel.add(replaceImage, gbc);
-        gbc.gridy = 2;
-        destinationPanel.add(nativeFormatBox, gbc);
 
         if (image.getLockStatus() == ModelStorageBase.UNLOCKED) { // Only if the image is unlocked can it be replaced.
             replaceImage.setEnabled(true);
@@ -1899,8 +1879,6 @@ public class JDialogConvertType extends JDialogScriptableBase
         } else if (newImage.isSelected()) {
             displayLoc = NEW;
         }
-        
-        useNativeFormat = nativeFormatBox.isSelected();
 
         if (littleEnd.isSelected()) {
             endianess = FileBase.LITTLE_ENDIAN;
