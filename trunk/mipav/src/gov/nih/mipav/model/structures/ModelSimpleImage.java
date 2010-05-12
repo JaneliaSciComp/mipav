@@ -780,6 +780,26 @@ public class ModelSimpleImage extends ModelSerialCloneable {
     }
 
     /**
+     * Get the value at the x, y position of the data array. 
+     * @param x  input x pixel coordinate
+     * @param y  input y pixel coordinate
+     * @return   data value at the given position.
+     */
+    public final float getValue(int x, int y) {
+    	return data[y * xDim + x];	
+    }
+    
+    /**
+     * Set the value at the x, y position of the data array. 
+     * @param x  input x pixel coordinate. 
+     * @param y  input y pixel coordinate
+     * @param value  data value. 
+     */
+    public final void setValue(int x, int y, float value) {
+    	data[y * xDim + x] = value;
+    }
+    
+    /**
      * Version of get that performs bi-linear interpoloation. Note - does NOT perform bounds checking
      *
      * @param   x  input x coordinate
