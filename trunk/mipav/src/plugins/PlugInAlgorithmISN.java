@@ -264,10 +264,8 @@ public class PlugInAlgorithmISN extends AlgorithmBase {
                         histoMatchAlgo.run();
 
                         // intensity remapping
-                        boolean useNativeFormat = false;
                         changeTypeAlgo = new AlgorithmChangeType(sliceImage2D, sliceImage2D.getType(), sliceMin[i],
-                                                                 sliceMax[i], startRange, endRange, processIndep,
-                                                                 useNativeFormat);
+                                                                 sliceMax[i], startRange, endRange, processIndep);
                         changeTypeAlgo.run();
 
                         sliceImage2D.exportData(0, imgBuffer.length, imgBuffer);
@@ -290,10 +288,8 @@ public class PlugInAlgorithmISN extends AlgorithmBase {
                         histoMatchAlgo.run();
 
                         // intensity remapping
-                        boolean useNativeFormat = false;
                         changeTypeAlgo = new AlgorithmChangeType(sliceImage3D, sliceImage3D.getType(), sliceMin[i],
-                                                                 sliceMax[i], startRange, endRange, processIndep,
-                                                                 useNativeFormat);
+                                                                 sliceMax[i], startRange, endRange, processIndep);
                         changeTypeAlgo.run();
 
                         sliceImage3D.exportData(0, imgBuffer.length, imgBuffer);
@@ -464,10 +460,8 @@ public class PlugInAlgorithmISN extends AlgorithmBase {
                         sliceImage2D.importData(0, imgBuffer, true);
 
                         // intensity remapping
-                        boolean useNativeFormat = false;
                         changeTypeAlgo = new AlgorithmChangeType(sliceImage2D, sliceImage2D.getType(), sliceMin[i],
-                                                                 sliceMax[i], startRange, endRange, processIndep,
-                                                                 useNativeFormat);
+                                                                 sliceMax[i], startRange, endRange, processIndep);
                         changeTypeAlgo.run();
 
 
@@ -493,10 +487,8 @@ public class PlugInAlgorithmISN extends AlgorithmBase {
                         sliceImage3D.importData(imgBuffer.length, imgBuffer, true);
 
                         // intensity remapping
-                        boolean useNativeFormat = false;
                         changeTypeAlgo = new AlgorithmChangeType(sliceImage3D, sliceImage3D.getType(), sliceMin[i],
-                                                                 sliceMax[i], startRange, endRange, processIndep,
-                                                                 useNativeFormat);
+                                                                 sliceMax[i], startRange, endRange, processIndep);
                         changeTypeAlgo.run();
 
                         // histogram matching
