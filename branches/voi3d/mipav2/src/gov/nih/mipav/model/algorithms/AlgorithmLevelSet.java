@@ -360,7 +360,7 @@ public class AlgorithmLevelSet extends AlgorithmBase implements AlgorithmInterfa
         for (i = 0; (i < length) && !threadStopped; i++) {
             yPos = i / xDim;
             xPos = i % xDim;
-            phiImage[i] = contourVOI.slicePointToContour(0, xPos, yPos);
+            phiImage[i] = contourVOI.pointToContour(xPos, yPos, 0);
             phiNext[i] = phiImage[i];
             originalPhi[i] = phiImage[i];
         }
