@@ -897,9 +897,8 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
                     resultImage = new ModelImage(ModelStorageBase.UBYTE, imageA.getExtents(), imageA.getImageName()
                             + "_change");
 
-                    boolean useNativeFormat = false;
                     AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(resultImage, imageA, imageA.getMin(),
-                            imageA.getMax(), 0.0, 255.0, false, useNativeFormat);
+                            imageA.getMax(), 0.0, 255.0, false);
 
                     // changeTypeAlgo.setSeparateThread(false);
                     changeTypeAlgo.run();
