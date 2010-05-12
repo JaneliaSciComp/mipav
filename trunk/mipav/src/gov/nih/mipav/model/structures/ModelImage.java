@@ -2833,7 +2833,7 @@ public class ModelImage extends ModelStorageBase {
                 niftiBits = (short)64;
                 break;
 
-            case ModelStorageBase.ARGB: // only RGB for NIFTI images
+            case ModelStorageBase.ARGB: 
                 niftiType = FileInfoNIFTI.NIFTI_TYPE_RGB24;
                 niftiBits = (short)24;
                 break;
@@ -2848,8 +2848,8 @@ public class ModelImage extends ModelStorageBase {
                 niftiBits = (short)128;
                 break;
             default:
-            	niftiType = FileInfoNIFTI.NIFTI_TYPE_UINT8;
-            	niftiBits = (short)8;
+            	MipavUtil.displayError("Illegal NIFTI data type");
+            	return;
             
         } 
         	
@@ -2872,6 +2872,93 @@ public class ModelImage extends ModelStorageBase {
 
         	
         } // if (fileInfo[0] instanceof FileInfoNIFTI)
+        else if (fileInfo[0] instanceof FileInfoAnalyze) {
+        	short analyzeType;
+        	short analyzeBits;
+        	switch (type) {
+
+            case ModelStorageBase.BOOLEAN:
+                analyzeType = FileInfoAnalyze.DT_BINARY;
+                analyzeBits = (short)1;
+                break;
+
+            case ModelStorageBase.BYTE:
+                analyzeType = FileInfoAnalyze.DT_UNSIGNED_CHAR;
+                analyzeBits = (short)8;
+                break;
+
+            case ModelStorageBase.UBYTE:
+                analyzeType = FileInfoAnalyze.DT_UNSIGNED_CHAR;
+                analyzeBits = (short)8;
+                break;
+
+            case ModelStorageBase.SHORT:
+                analyzeType = FileInfoAnalyze.DT_SIGNED_SHORT;
+                analyzeBits = (short)16;
+                break;
+
+            case ModelStorageBase.USHORT:
+                analyzeType = FileInfoAnalyze.DT_UNSIGNED_SHORT;
+                analyzeBits = (short)16;
+                break;
+
+            case ModelStorageBase.INTEGER:
+                analyzeType = FileInfoAnalyze.DT_SIGNED_INT;
+                analyzeBits = (short)32;
+                break;
+
+            case ModelStorageBase.UINTEGER:
+                analyzeType = FileInfoAnalyze.DT_SIGNED_INT;
+                analyzeBits = (short)32;
+
+            case ModelStorageBase.LONG:
+                MipavUtil.displayError("LONG data type illegal in Analyze");
+                return;
+
+            case ModelStorageBase.FLOAT:
+                analyzeType = FileInfoAnalyze.DT_FLOAT;
+                analyzeBits = (short)32;
+                break;
+
+            case ModelStorageBase.DOUBLE:
+                analyzeType = FileInfoAnalyze.DT_DOUBLE;
+                analyzeBits = (short)64;
+                break;
+
+            case ModelStorageBase.ARGB:
+                analyzeType = FileInfoAnalyze.DT_RGB;
+                analyzeBits = (short)24;
+                break;
+
+            case ModelStorageBase.COMPLEX:
+                analyzeType = FileInfoAnalyze.DT_COMPLEX;
+                analyzeBits = (short)64;
+                break;
+
+            default:
+            	MipavUtil.displayError("Illegal Analyze data type");
+            	return;
+            
+        } 
+        	
+    	if (dimExtents.length == 2) {
+    		((FileInfoAnalyze)(fileInfo[0])).setDataType(analyzeType);
+    		((FileInfoAnalyze)(fileInfo[0])).setBitPix(analyzeBits);
+        } else if (dimExtents.length == 3) {
+
+            for (int i = 0; i < dimExtents[2]; i++) {
+            	((FileInfoAnalyze)(fileInfo[i])).setDataType(analyzeType);
+            	((FileInfoAnalyze)(fileInfo[i])).setBitPix(analyzeBits);
+            }
+        } else if (dimExtents.length == 4) {
+
+            for (int i = 0; i < (dimExtents[2] * dimExtents[3]); i++) {
+            	((FileInfoAnalyze)(fileInfo[i])).setDataType(analyzeType);
+            	((FileInfoAnalyze)(fileInfo[i])).setBitPix(analyzeBits);
+            }
+        }
+        	
+        } // else if (fileInfo[0] instanceof FileInfoAnalyze)
     }
 
     /**
