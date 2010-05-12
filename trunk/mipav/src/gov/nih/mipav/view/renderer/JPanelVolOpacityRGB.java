@@ -806,10 +806,9 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
                 rendererProgressBar.setValue(20);
                 rendererProgressBar.update(rendererProgressBar.getGraphics());
 
-                boolean useNativeFormat = false;
                 AlgorithmChangeType changeTypeAlgo_A = new AlgorithmChangeType(gradMagRescale_A, gradMag_A,
                                                                                gradMag_A.getMin(), gradMag_A.getMax(),
-                                                                               0, 255, false, useNativeFormat);
+                                                                               0, 255, false);
 
                 changeTypeAlgo_A.setRunningInSeparateThread(isActiveImage);
                 changeTypeAlgo_A.run();
@@ -885,10 +884,9 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
                 rendererProgressBar.setValue(70);
                 rendererProgressBar.update(rendererProgressBar.getGraphics());
 
-                boolean useNativeFormat = false;
                 AlgorithmChangeType changeTypeAlgo_B = new AlgorithmChangeType(gradMagRescale_B, gradMag_B,
                                                                                gradMag_B.getMin(), gradMag_B.getMax(),
-                                                                               0, 255, false, useNativeFormat);
+                                                                               0, 255, false);
 
                 changeTypeAlgo_B.setRunningInSeparateThread(isActiveImage);
                 changeTypeAlgo_B.run();
