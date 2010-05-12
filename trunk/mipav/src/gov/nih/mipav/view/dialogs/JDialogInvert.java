@@ -303,9 +303,8 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
                     resultImage = new ModelImage(dataType, destExtents, makeImageName(image.getImageName(), "_invert"));
 
                     // Make algorithm
-                    boolean useNativeFormat = false;
                     changeTypeAlgo = new AlgorithmChangeType(resultImage, image, inTempMin, inTempMax, outTempMin,
-                                                             outTempMax, false, useNativeFormat);
+                                                             outTempMax, false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -342,9 +341,8 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                	boolean useNativeFormat = false;
                     changeTypeAlgo = new AlgorithmChangeType(image, dataType, inTempMin, inTempMax, outTempMin,
-                                                             outTempMax, false, useNativeFormat);
+                                                             outTempMax, false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -417,9 +415,8 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
 
                     // Make algorithm
                     System.out.println(inTempMin + " " + inTempMax + " " + outTempMin + " " + outTempMax);
-                    boolean useNativeFormat = false;
                     changeTypeAlgo = new AlgorithmChangeType(resultImage, image, inTempMin, inTempMax, outTempMin,
-                                                             outTempMax, false, useNativeFormat);
+                                                             outTempMax, false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -454,9 +451,8 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
 
                     // Make algorithm
                     System.out.println(inTempMin + " " + inTempMax + " " + outTempMin + " " + outTempMax);
-                    boolean useNativeFormat = false;
                     changeTypeAlgo = new AlgorithmChangeType(image, dataType, inTempMin, inTempMax, outTempMin,
-                                                             outTempMax, false, useNativeFormat);
+                                                             outTempMax, false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
