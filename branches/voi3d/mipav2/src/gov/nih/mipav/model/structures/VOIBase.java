@@ -708,7 +708,43 @@ public abstract class VOIBase extends Vector<Vector3f> {
         {
             Vector3f kPos0 = get(i);
             Vector3f kPos1 = get(i+1);
+            
+            float fDist = Float.MAX_VALUE;
+            if ( kVOIPoint.equals(kPos0) ) {
+                return 0.0f;
+            } else if ( kVOIPoint.equals(kPos1) ) {
+                return 0.0f;
+            } else if (kPos0.equals(kPos1) ) {
+                // 2 contour points coincide - do nothing
+            }
+            else
+            {
+                Vector3f kDir = new Vector3f();
+                kDir.Sub( kPos1, kPos0 );
+                float fLength = kDir.Normalize();
+                Segment3f kSegment = new Segment3f(kPos0, kDir, fLength);
+                DistanceVector3Segment3 kDist = new DistanceVector3Segment3( kVOIPoint, kSegment );
+                fDist = kDist.Get();
+            }
+            if ( fDist < fMin )
+            {
+                fMin = fDist;
+                nearPoint = i;
+            }
+        }
 
+        Vector3f kPos0 = get(size() - 1);
+        Vector3f kPos1 = get(0);
+        
+        if ( kVOIPoint.equals(kPos0) ) {
+            return 0.0f;
+        } else if ( kVOIPoint.equals(kPos1) ) {
+            return 0.0f;
+        } else if (kPos0.equals(kPos1) ) {
+            // 2 contour points coincide - do nothing
+        }
+        else
+        {           
             Vector3f kDir = new Vector3f();
             kDir.Sub( kPos1, kPos0 );
             float fLength = kDir.Normalize();
@@ -718,23 +754,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
             if ( fDist < fMin )
             {
                 fMin = fDist;
-                nearPoint = i;
+                nearPoint = size()-1;
             }
-        }
-
-        Vector3f kPos0 = get(0);
-        Vector3f kPos1 = get(size() - 1);
-
-        Vector3f kDir = new Vector3f();
-        kDir.Sub( kPos1, kPos0 );
-        float fLength = kDir.Normalize();
-        Segment3f kSegment = new Segment3f(kPos0, kDir, fLength);
-        DistanceVector3Segment3 kDist = new DistanceVector3Segment3( kVOIPoint, kSegment );
-        float fDist = kDist.Get();
-        if ( fDist < fMin )
-        {
-            fMin = fDist;
-            nearPoint = size()-1;
         }
         return fMin;
     }

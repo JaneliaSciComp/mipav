@@ -397,7 +397,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         // no updating of the GUI table (never created)
 
         VOIStatisticalProperties properties;
-        Vector[] contours;
+        Vector<VOIBase> contours;
 
         int numStats = 1;
 
@@ -408,97 +408,73 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             }
         }
 
-        if ( (processType == AlgorithmVOIProps.PROCESS_PER_SLICE)
-                || (processType == AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR)) {
+        if ( processType != AlgorithmVOIProps.PROCESS_PER_VOI )
+        {
             final ListModel list = selectedList.getModel();
 
             // for each element in the list ....
             for (int i = 0; i < list.getSize(); i++) {
                 properties = calculator.getVOIProperties((VOI) list.getElementAt(i));
-                contours = ((VOI) list.getElementAt(i)).getCurvesTemp();
 
                 final String[] logRowData = new String[numStats];
                 final String[] logTotalData = new String[numStats];
 
-                for (int slice = 0; slice < contours.length; slice++) {
+                if ( processType == AlgorithmVOIProps.PROCESS_PER_CONTOUR )
+                {   
+                    contours = ((VOI) list.getElementAt(i)).getCurves();
                     int count = 0;
-                    int stop = 1;
-                    String end = slice + ";";
-
-                    if (processType == AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR) {
-                        stop = contours[slice].size();
-                    }
-
-                    if (contours[slice].size() < 1) {
-                        stop = 0;
-                    }
+                    String end = "";
 
                     // for each contour only print titles and calculations once,
                     // if not "calculate by contour" (ie., if we only want totals):
-                    for (int num = 0; num < stop; num++) {
-
+                    for (int num = 0; num < contours.size(); num++) {
                         // first: set up row title:
                         logRowData[0] = list.getElementAt(i).toString() + ", " + // VOI name
-                                (slice) + ", " + // slice #, irrellevent to where contour is in image
-                                ((VOIBase) contours[slice].get(num)).getLabel(); // contour #, held in label
+                        //(slice) + ", " + // slice #, irrellevent to where contour is in image
+                        //((VOIBase) contours[slice].get(num)).getLabel(); // contour #, held in label
+                        ((VOIBase) contours.get(num)).getLabel(); // contour #, held in label
                         logTotalData[0] = "Totals:";
 
-                        if (calculator.getProcessType() == AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR) {
-                            end = slice + ";" + num;
+                        if (calculator.getProcessType() == AlgorithmVOIProps.PROCESS_PER_CONTOUR) {
+                            //end = slice + ";" + num;
+                            end = 0 + ";" + num;
                         }
 
                         // for each column in the row, print the statistic:
                         for (int k = 0; k < VOIStatisticList.statisticDescription.length; k++) {
-
                             if (checkList[k]) {
-
                                 // if it's a color image and the property is min intensity, max intensity, avg
                                 // intensity, or standard deviation of intensity, those properties were entered as Red,
                                 // Green, Blue and we should display them differently.
                                 if (calculator.isColor()
                                         && (VOIStatisticList.statisticDescription[k].indexOf("Intensity") != -1)) {
-                                    String temp = "R: "
-                                            + properties.getProperty(VOIStatisticList.statisticDescription[k] + "Red"
-                                                    + end);
-                                    temp += " G: "
-                                            + properties.getProperty(VOIStatisticList.statisticDescription[k] + "Green"
-                                                    + end);
-                                    temp += " B: "
-                                            + properties.getProperty(VOIStatisticList.statisticDescription[k] + "Blue"
-                                                    + end);
+                                    String temp = "R: " + properties.getProperty(VOIStatisticList.statisticDescription[k] + "Red"  + end);
+                                    temp += " G: " + properties.getProperty(VOIStatisticList.statisticDescription[k] + "Green" + end);
+                                    temp += " B: " + properties.getProperty(VOIStatisticList.statisticDescription[k] + "Blue" + end);
                                     logRowData[count] = temp;
 
                                     if (showTotals) {
-                                        temp = " R: "
-                                                + properties.getProperty(VOIStatisticList.statisticDescription[k]
-                                                        + "RedTotal");
-                                        temp += " G: "
-                                                + properties.getProperty(VOIStatisticList.statisticDescription[k]
-                                                        + "GreenTotal");
-                                        temp += " B: "
-                                                + properties.getProperty(VOIStatisticList.statisticDescription[k]
-                                                        + "BlueTotal");
+                                        temp = " R: " + properties.getProperty(VOIStatisticList.statisticDescription[k] + "RedTotal");
+                                        temp += " G: " + properties.getProperty(VOIStatisticList.statisticDescription[k] + "GreenTotal");
+                                        temp += " B: " + properties.getProperty(VOIStatisticList.statisticDescription[k] + "BlueTotal");
                                         logTotalData[count] = temp;
                                     }
                                 } else {
-
-                                    logRowData[count] = properties.getProperty(VOIStatisticList.statisticDescription[k]
-                                            + end);
+                                    if (k != 18) {
+                                        // Exclude largest distance
+                                        logRowData[count] = properties.getProperty(VOIStatisticList.statisticDescription[k] + end);
+                                    }
 
                                     if (showTotals) {
-                                        logTotalData[count] = properties
-                                                .getProperty(VOIStatisticList.statisticDescription[k] + "Total");
+                                        logTotalData[count] = properties.getProperty(VOIStatisticList.statisticDescription[k] + "Total");
                                     }
                                 }
-
-                                count++;
                             }
                         } // end for each column
 
                         count = 0;
-
                         String logText = "";
-
+                        
                         for (final String element : logRowData) {
                             logText += element + "\t";
                         }
@@ -506,7 +482,99 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
                         writeLogfileEntry(logText);
                     } // end for contours
                 }
+                else
+                {
 
+                    Vector<VOIBase>[] sortedContoursZ = ((VOI) list.getElementAt(i)).getSortedCurves( VOIBase.ZPLANE, image.getExtents()[2] );
+                    
+
+                    for (int slice = 0; slice < sortedContoursZ.length; slice++) {
+                        int count = 0;
+                        int stop = 1;
+                        String end = slice + ";";
+                        
+                        if (processType == AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR) {
+                            stop = sortedContoursZ[slice].size();
+                        }
+                        
+                        if (sortedContoursZ[slice].size() < 1) {
+                            stop = 0;
+                        }
+                        
+                        // for each contour only print titles and calculations once,
+                        // if not "calculate by contour" (ie., if we only want totals):
+                        for (int num = 0; num < stop; num++) {
+                            
+                            // first: set up row title:
+                            logRowData[0] = list.getElementAt(i).toString() + ", " + // VOI name
+                                (slice) + ", " + // slice #, irrellevent to where contour is in image
+                                ((VOIBase) sortedContoursZ[slice].get(num)).getLabel(); // contour #, held in label
+                            logTotalData[0] = "Totals:";
+                            
+                            if (calculator.getProcessType() == AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR) {
+                                end = slice + ";" + num;
+                            }
+                            
+                            // for each column in the row, print the statistic:
+                            for (int k = 0; k < VOIStatisticList.statisticDescription.length; k++) {
+                                
+                                if (checkList[k]) {
+                                    
+                                    // if it's a color image and the property is min intensity, max intensity, avg
+                                    // intensity, or standard deviation of intensity, those properties were entered as Red,
+                                    // Green, Blue and we should display them differently.
+                                    if (calculator.isColor()
+                                        && (VOIStatisticList.statisticDescription[k].indexOf("Intensity") != -1)) {
+                                        String temp = "R: "
+                                            + properties.getProperty(VOIStatisticList.statisticDescription[k] + "Red"
+                                                                     + end);
+                                        temp += " G: "
+                                            + properties.getProperty(VOIStatisticList.statisticDescription[k] + "Green"
+                                                                     + end);
+                                        temp += " B: "
+                                            + properties.getProperty(VOIStatisticList.statisticDescription[k] + "Blue"
+                                                                     + end);
+                                        logRowData[count] = temp;
+                                        
+                                        if (showTotals) {
+                                            temp = " R: "
+                                                + properties.getProperty(VOIStatisticList.statisticDescription[k]
+                                                                         + "RedTotal");
+                                            temp += " G: "
+                                                + properties.getProperty(VOIStatisticList.statisticDescription[k]
+                                                                         + "GreenTotal");
+                                            temp += " B: "
+                                                + properties.getProperty(VOIStatisticList.statisticDescription[k]
+                                                                         + "BlueTotal");
+                                            logTotalData[count] = temp;
+                                        }
+                                    } else {
+                                        
+                                        logRowData[count] = properties.getProperty(VOIStatisticList.statisticDescription[k]
+                                                                                   + end);
+                                        
+                                        if (showTotals) {
+                                            logTotalData[count] = properties
+                                                .getProperty(VOIStatisticList.statisticDescription[k] + "Total");
+                                        }
+                                    }
+                                    
+                                    count++;
+                                }
+                            } // end for each column
+
+                            count = 0;
+
+                            String logText = "";
+                            
+                            for (final String element : logRowData) {
+                                logText += element + "\t";
+                            }
+                            
+                            writeLogfileEntry(logText);
+                        } // end for contours
+                    }
+                }
                 if (showTotals) {
                     String logText = "";
 
@@ -530,8 +598,6 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             // column-by-column:
             for (int i = 0; i < list.getSize(); i++) {
                 properties = calculator.getVOIProperties((VOI) list.getElementAt(i));
-                contours = ((VOI) list.getElementAt(i)).getCurvesTemp();
-
                 final String[] rowData = new String[numStats];
                 rowData[0] = list.getElementAt(i).toString();
 

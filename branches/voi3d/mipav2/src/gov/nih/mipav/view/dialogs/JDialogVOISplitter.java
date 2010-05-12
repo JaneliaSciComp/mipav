@@ -217,7 +217,7 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
     		//System.err.println(voiIndex + ", " + currentVOI.getCurveType());
     		if (currentVOI.getCurveType() == VOI.CONTOUR && (!onlyActive || currentVOI.isActive())) {
     			
-    			curves = currentVOI.getCurvesTemp();
+    			curves = currentVOI.getSortedCurves( VOIBase.ZPLANE, zDim );
     			
     			
     				for (int slice = startSlice; slice < endSlice; slice++) {

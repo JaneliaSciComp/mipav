@@ -833,7 +833,7 @@ public class AlgorithmLevelSet extends AlgorithmBase implements AlgorithmInterfa
         }
 
         contourVOI = VOIs.VOIAt(i);
-        curves = contourVOI.getCurvesTemp();
+        curves = contourVOI.getSortedCurves( VOIBase.ZPLANE, zDim );
         
 
         int[] imageExtents = srcImage.getExtents();
@@ -901,7 +901,7 @@ public class AlgorithmLevelSet extends AlgorithmBase implements AlgorithmInterfa
             for (i = 0; (i < length) && !threadStopped; i++) {
                 yPos = i / xDim;
                 xPos = i % xDim;
-                phiImage[i] = contourVOI.slicePointToContour(z, xPos, yPos);
+                phiImage[i] = contourVOI.pointToContour(xPos, yPos, z);
                 phiNext[i] = phiImage[i];
                 originalPhi[i] = phiImage[i];
             }
