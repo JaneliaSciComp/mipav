@@ -1158,9 +1158,8 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
             }
 
             if (newType != srcImageA.getType()) {
-            	boolean useNativeFormat = false;
                 AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(srcImageA, newType, minA, maxA, minA, maxA,
-                                                                             false, useNativeFormat);
+                                                                             false);
                 changeTypeAlgo.setRunningInSeparateThread(runningInSeparateThread);
                 changeTypeAlgo.run();
 
