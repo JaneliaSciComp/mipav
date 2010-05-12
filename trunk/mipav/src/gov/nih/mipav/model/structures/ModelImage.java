@@ -2779,6 +2779,8 @@ public class ModelImage extends ModelStorageBase {
             MipavUtil.displayError("" + ioError);
         }
         
+        // Afni only uses setDataType in FileInfoBase
+        
         if (fileInfo[0] instanceof FileInfoNIFTI) {
         	short niftiType;
         	short niftiBits;
@@ -2817,6 +2819,7 @@ public class ModelImage extends ModelStorageBase {
             case ModelStorageBase.UINTEGER:
                 niftiType = FileInfoNIFTI.NIFTI_TYPE_UINT32;
                 niftiBits = (short)32;
+                break;
 
             case ModelStorageBase.LONG:
                 niftiType = FileInfoNIFTI.NIFTI_TYPE_INT64;
@@ -2910,6 +2913,7 @@ public class ModelImage extends ModelStorageBase {
             case ModelStorageBase.UINTEGER:
                 analyzeType = FileInfoAnalyze.DT_SIGNED_INT;
                 analyzeBits = (short)32;
+                break;
 
             case ModelStorageBase.LONG:
                 MipavUtil.displayError("LONG data type illegal in Analyze");
@@ -2934,6 +2938,10 @@ public class ModelImage extends ModelStorageBase {
                 analyzeType = FileInfoAnalyze.DT_COMPLEX;
                 analyzeBits = (short)64;
                 break;
+                
+            case ModelStorageBase.DCOMPLEX:
+            	MipavUtil.displayError("DCOMPLEX illegal analyze data type");
+            	return;
 
             default:
             	MipavUtil.displayError("Illegal Analyze data type");
@@ -2959,6 +2967,191 @@ public class ModelImage extends ModelStorageBase {
         }
         	
         } // else if (fileInfo[0] instanceof FileInfoAnalyze)
+        /*else if (fileInfo[0] instanceof FileInfoMinc) {
+        	FileMincVarElem varArray[] = null;
+            int numSlices = 1;
+            if (dimExtents.length >= 3) {
+            	numSlices *= dimExtents[2];
+            }
+            if (dimExtents.length >= 4) {
+            	numSlices *= dimExtents[3];
+            }
+            for (int i = 0; i < numSlices; i++) {
+            	try {
+            		image.exportData()
+            	}
+            }
+                varArray = ((FileInfoMinc)fileInfo[i]).getVarArray();
+                if (varArray != null) {
+                	for (int j = 0; j < varArray.length; j++) {
+
+                        if (varArray[j].name.equals("image")) {
+                            fileInfo[i].setOffset(varArray[j].begin);
+                            switch (type) {
+
+                            case ModelStorageBase.BOOLEAN:
+                                MipavUtil.displayError("BOOLEAN illegal Minc data type");
+                                return;
+
+                            case ModelStorageBase.BYTE:
+                                varArray[j].signtype = new String("signed__");
+                                varArray[j].nc_type = FileInfoMinc.NC_BYTE;
+                                break;
+
+                            case ModelStorageBase.UBYTE:
+                            	varArray[j].signtype = new String("unsigned");
+                                varArray[j].nc_type = FileInfoMinc.NC_BYTE;
+                                break;
+
+                            case ModelStorageBase.SHORT:
+                            	varArray[j].signtype = new String("signed__");
+                                varArray[j].nc_type = FileInfoMinc.NC_SHORT;
+                                break;
+
+                            case ModelStorageBase.USHORT:
+                            	varArray[j].signtype = new String("unsigned");
+                                varArray[j].nc_type = FileInfoMinc.NC_SHORT;
+                                break;
+
+                            case ModelStorageBase.INTEGER:
+                            	varArray[j].signtype = new String("signed__");
+                                varArray[j].nc_type = FileInfoMinc.NC_INT;
+                                break;
+
+                            case ModelStorageBase.UINTEGER:
+                            	varArray[j].signtype = new String("unsigned");
+                                varArray[j].nc_type = FileInfoMinc.NC_INT;
+                                break;
+                               
+                            case ModelStorageBase.LONG:
+                                MipavUtil.displayError("LONG illegal Minc data type");
+                                return;
+
+                            case ModelStorageBase.FLOAT:
+                            	varArray[j].nc_type = FileInfoMinc.NC_FLOAT;
+                                break;
+
+                            case ModelStorageBase.DOUBLE:
+                            	varArray[j].nc_type = FileInfoMinc.NC_DOUBLE;
+                                break;
+
+                            case ModelStorageBase.ARGB: 
+                                MipavUtil.displayError("ARGB illegal Minc data type");
+                                return;
+
+                            case ModelStorageBase.COMPLEX:
+                                MipavUtil.displayError("COMPLEX illegal Minc data type");
+                                return;
+
+                            case ModelStorageBase.DCOMPLEX:
+                                MipavUtil.displayError("DCOMPLEX illegal Minc data type");
+                                return;
+                            default:
+                            	MipavUtil.displayError("Illegal Minc data type");
+                            	return;
+                            
+                        } 
+                        } // 
+                        for (final FileMincAttElem elem : varArray[j].vattArray) {
+                            if (elem.name.equals("valid_range")) {
+
+                                switch (elem.nc_type) {
+
+                                    case FileInfoMinc.NC_BYTE:
+                                        vmin = ((Byte) elem.values[0]).byteValue();
+                                        vmax = ((Byte) elem.values[1]).byteValue();
+                                        break;
+
+                                    case FileInfoMinc.NC_CHAR:
+                                        vmin = ((Character) elem.values[0]).charValue();
+                                        vmax = ((Character) elem.values[1]).charValue();
+                                        break;
+
+                                    case FileInfoMinc.NC_SHORT:
+                                        vmin = ((Short) elem.values[0]).shortValue();
+                                        vmax = ((Short) elem.values[1]).shortValue();
+                                        break;
+
+                                    case FileInfoMinc.NC_INT:
+                                        vmin = ((Integer) elem.values[0]).intValue();
+                                        vmax = ((Integer) elem.values[1]).intValue();
+                                        break;
+
+                                    case FileInfoMinc.NC_FLOAT:
+                                        vmin = ((Float) elem.values[0]).floatValue();
+                                        vmax = ((Float) elem.values[1]).floatValue();
+                                        break;
+
+                                    case NC_DOUBLE:
+                                        vmin = ((Double) elem.values[0]).doubleValue();
+                                        vmax = ((Double) elem.values[1]).doubleValue();
+                                }
+
+                                Preferences.debug("vmin = " + vmin + "\n");
+                                Preferences.debug("vmax = " + vmax + "\n");
+                            } else if (elem.name.equals("valid_max")) {
+
+                                switch (elem.nc_type) {
+
+                                    case NC_BYTE:
+                                        vmax = ((Byte) elem.values[0]).byteValue();
+                                        break;
+
+                                    case NC_CHAR:
+                                        vmax = ((Character) elem.values[0]).charValue();
+                                        break;
+
+                                    case NC_SHORT:
+                                        vmax = ((Short) elem.values[0]).shortValue();
+                                        break;
+
+                                    case NC_INT:
+                                        vmax = ((Integer) elem.values[0]).intValue();
+                                        break;
+
+                                    case NC_FLOAT:
+                                        vmax = ((Float) elem.values[0]).floatValue();
+                                        break;
+
+                                    case NC_DOUBLE:
+                                        vmax = ((Double) elem.values[0]).doubleValue();
+                                }
+
+                                Preferences.debug("vmax = " + vmax + "\n");
+                            } else if (elem.name.equals("valid_min")) {
+
+                                switch (elem.nc_type) {
+
+                                    case NC_BYTE:
+                                        vmin = ((Byte) elem.values[0]).byteValue();
+                                        break;
+
+                                    case NC_CHAR:
+                                        vmin = ((Character) elem.values[0]).charValue();
+                                        break;
+
+                                    case NC_SHORT:
+                                        vmin = ((Short) elem.values[0]).shortValue();
+                                        break;
+
+                                    case NC_INT:
+                                        vmin = ((Integer) elem.values[0]).intValue();
+                                        break;
+
+                                    case NC_FLOAT:
+                                        vmin = ((Float) elem.values[0]).floatValue();
+                                        break;
+
+                                    case NC_DOUBLE:
+                                        vmin = ((Double) elem.values[0]).doubleValue();
+                                }
+
+                                Preferences.debug("vmin = " + vmin + "\n");
+                            }
+                	} // for (int j = 0; j < varArray.length; j++)
+                } // if (varArray != null)
+            } // for (int i = 0; i < numSlices; i++)
+        } // else if (fileInfo[0] instanceof FileInfoMinc)*/
     }
 
     /**
