@@ -1635,9 +1635,8 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
                 imageAvi = new ModelImage(ModelStorageBase.ARGB, imageA.getExtents(), fileName + "ARGB");
 
-                boolean useNativeFormat = false;
                 AlgorithmChangeType algoChange = new AlgorithmChangeType(imageAvi, imageA, (float) imageA.getMin(),
-                        (float) imageA.getMax(), 0, 255, false, useNativeFormat);
+                        (float) imageA.getMax(), 0, 255, false);
 
                 algoChange.setRunningInSeparateThread(false);
                 algoChange.run();
