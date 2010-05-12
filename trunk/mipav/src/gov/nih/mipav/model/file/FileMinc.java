@@ -2201,6 +2201,9 @@ public class FileMinc extends FileBase {
         } else {
             writeName("signed__", 1, endianess);
         }
+        
+        
+        
 
         writeName("valid_range", 0, endianess);
         writeInt(FileInfoMinc.NC_DOUBLE, endianess);
