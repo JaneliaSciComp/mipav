@@ -44,6 +44,8 @@ public class FileInfoMincHDF extends FileInfoBase {
      * The valid range for image pixel values
      */
     private double[] validRange = null;
+    
+   
 
     /**
      * Hashtable to hold the tags for conversion to->from dicom and to-> mipav XML format
@@ -438,7 +440,7 @@ public class FileInfoMincHDF extends FileInfoBase {
                 rescaleIntercept[i] = FileInfoMinc.calculateIntercept(imageMin[i], rescaleSlope[i], valid_range[0]);
             }
         } catch (final ArrayIndexOutOfBoundsException error) {
-
+        	error.printStackTrace();
             for (int i = 0; i < rescaleSlope.length; i++) {
                 rescaleSlope[i] = 1.0;
                 rescaleIntercept[i] = 0.0;
