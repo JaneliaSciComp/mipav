@@ -46,11 +46,19 @@ public class MIPAVPolarCoordinateSystems {
 		}
 	}
 
-	/**
+	
+    /**
+     * Whether this routine is necessary, the question will to be decided in the future.
+     * This approach just converts x, y Cartesian from polar coordinate perspective. 
+     * Actually, the imageR and imageTheta should be the input images, and the source image should hold
+     * the Cartesian coordinate results.   We need to decide this later.   
 	 * Reference: imageJ Polar coordinate transformer. 
-	 * @param image
-	 */
-	public void PolarToCartisian2D(ModelImage image, ModelSimpleImage imageR, ModelSimpleImage imageTheta) {
+	 * 
+     * @param image       source image
+     * @param imageR      polar coordinate R image. 
+     * @param imageTheta  polar coordinate Theta image. 
+     */
+	public static void PolarToCartisian2D(ModelImage image, ModelSimpleImage imageR, ModelSimpleImage imageTheta) {
 
 		// get the center of Cartesian space
 		Vector3f center = image.getImageCenter();
