@@ -732,7 +732,8 @@ public class FileMinc extends FileBase {
                     || (fileInfo.getDataType() == ModelStorageBase.USHORT)) {
                 imgTypeFac = 2;
             } else if ( (fileInfo.getDataType() == ModelStorageBase.FLOAT)
-                    || (fileInfo.getDataType() == ModelStorageBase.INTEGER)) {
+                    || (fileInfo.getDataType() == ModelStorageBase.INTEGER) ||
+                       (fileInfo.getDataType() == ModelStorageBase.UINTEGER)) {
                 imgTypeFac = 4;
             } else if ( (fileInfo.getDataType() == ModelStorageBase.DOUBLE)
                     || (fileInfo.getDataType() == ModelStorageBase.LONG)) {
