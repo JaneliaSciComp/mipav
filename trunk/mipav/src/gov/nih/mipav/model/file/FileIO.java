@@ -10187,9 +10187,8 @@ public class FileIO {
                 }
 
                 // in-place conversion is required so that the minc file info is retained
-                boolean useNativeFormat = false;
                 final AlgorithmChangeType convertType = new AlgorithmChangeType(clonedImage, newType, originalImageMin,
-                        originalImageMax, clonedImage.getMin(), clonedImage.getMax(), false, useNativeFormat);
+                        originalImageMax, clonedImage.getMin(), clonedImage.getMax(), false);
                 convertType.run();
 
                 image = clonedImage;
@@ -10416,9 +10415,8 @@ public class FileIO {
                     volMin = newMin;
                     volMax = newMax;
 
-                    boolean useNativeFormat = false;
                     final AlgorithmChangeType convertType = new AlgorithmChangeType(clonedImage, newType,
-                            originalImageMin, originalImageMax, newMin, newMax, true, useNativeFormat);
+                            originalImageMin, originalImageMax, newMin, newMax, true);
                     convertType.run();
 
                     image = clonedImage;
@@ -10723,10 +10721,8 @@ public class FileIO {
                     newType = ModelStorageBase.SHORT;
                 }
                 // in-place conversion is required so that the minc file info is retained
-                boolean useNativeFormat = false;
                 final AlgorithmChangeType convertType = new AlgorithmChangeType(clonedImage, newType, clonedImage
-                        .getMin(), clonedImage.getMax(), clonedImage.getMin(), clonedImage.getMax(), false,
-                        useNativeFormat);
+                        .getMin(), clonedImage.getMax(), clonedImage.getMin(), clonedImage.getMax(), false);
                 convertType.run();
 
                 image = clonedImage;
@@ -10932,9 +10928,8 @@ public class FileIO {
                         newMax = Short.MAX_VALUE;
                     }
 
-                    boolean useNativeFormat = false;
                     final AlgorithmChangeType convertType = new AlgorithmChangeType(clonedImage, newType, clonedImage
-                            .getMin(), clonedImage.getMax(), newMin, newMax, false, useNativeFormat);
+                            .getMin(), clonedImage.getMax(), newMin, newMax, false);
                     convertType.run();
 
                     clonedImage.calcMinMax();
