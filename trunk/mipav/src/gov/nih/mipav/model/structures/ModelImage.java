@@ -2967,7 +2967,7 @@ public class ModelImage extends ModelStorageBase {
         }
         	
         } // else if (fileInfo[0] instanceof FileInfoAnalyze)
-        /*else if (fileInfo[0] instanceof FileInfoMinc) {
+        else if (fileInfo[0] instanceof FileInfoMinc) {
         	FileMincVarElem varArray[] = null;
             int numSlices = 1;
             if (dimExtents.length >= 3) {
@@ -2976,11 +2976,12 @@ public class ModelImage extends ModelStorageBase {
             if (dimExtents.length >= 4) {
             	numSlices *= dimExtents[3];
             }
-            for (int i = 0; i < numSlices; i++) {
-            	try {
-            		image.exportData()
-            	}
-            }
+            double defaultMin = -Double.MIN_VALUE;
+            double defaultMax = Double.MAX_VALUE;
+            // Note that the new buffer of values is not imported until
+            // after the reallocation so valid_min, valid_max, and
+            // valid_range values cannot be obtained from the image
+            for (int i = 0; i  < numSlices; i++) {
                 varArray = ((FileInfoMinc)fileInfo[i]).getVarArray();
                 if (varArray != null) {
                 	for (int j = 0; j < varArray.length; j++) {
@@ -2996,31 +2997,43 @@ public class ModelImage extends ModelStorageBase {
                             case ModelStorageBase.BYTE:
                                 varArray[j].signtype = new String("signed__");
                                 varArray[j].nc_type = FileInfoMinc.NC_BYTE;
+                                defaultMin = -128.0;
+                                defaultMax = 127.0;
                                 break;
 
                             case ModelStorageBase.UBYTE:
                             	varArray[j].signtype = new String("unsigned");
                                 varArray[j].nc_type = FileInfoMinc.NC_BYTE;
+                                defaultMin = 0.0;
+                                defaultMax = 255.0;
                                 break;
 
                             case ModelStorageBase.SHORT:
                             	varArray[j].signtype = new String("signed__");
                                 varArray[j].nc_type = FileInfoMinc.NC_SHORT;
+                                defaultMin = -32768.0;
+                                defaultMax = 32767.0;
                                 break;
 
                             case ModelStorageBase.USHORT:
                             	varArray[j].signtype = new String("unsigned");
                                 varArray[j].nc_type = FileInfoMinc.NC_SHORT;
+                                defaultMin = 0.0;
+                                defaultMax = 65535.0;
                                 break;
 
                             case ModelStorageBase.INTEGER:
                             	varArray[j].signtype = new String("signed__");
                                 varArray[j].nc_type = FileInfoMinc.NC_INT;
+                                defaultMin = -2147483648.0;
+                                defaultMax = 2147483647.0;
                                 break;
 
                             case ModelStorageBase.UINTEGER:
                             	varArray[j].signtype = new String("unsigned");
                                 varArray[j].nc_type = FileInfoMinc.NC_INT;
+                                defaultMin = 0.0;
+                                defaultMax = 4294967295.0;
                                 break;
                                
                             case ModelStorageBase.LONG:
@@ -3029,10 +3042,14 @@ public class ModelImage extends ModelStorageBase {
 
                             case ModelStorageBase.FLOAT:
                             	varArray[j].nc_type = FileInfoMinc.NC_FLOAT;
+                            	defaultMin = -Float.MAX_VALUE;
+                            	defaultMax = Float.MAX_VALUE;
                                 break;
 
                             case ModelStorageBase.DOUBLE:
                             	varArray[j].nc_type = FileInfoMinc.NC_DOUBLE;
+                            	defaultMin = -Double.MAX_VALUE;
+                            	defaultMax = Double.MAX_VALUE;
                                 break;
 
                             case ModelStorageBase.ARGB: 
@@ -3051,107 +3068,173 @@ public class ModelImage extends ModelStorageBase {
                             	return;
                             
                         } 
-                        } // 
-                        for (final FileMincAttElem elem : varArray[j].vattArray) {
-                            if (elem.name.equals("valid_range")) {
-
-                                switch (elem.nc_type) {
+                        for (int k = 0; k < varArray[j].vattArray.length; k++) {
+                        	if (varArray[j].vattArray[k].name.equals("signtype")) {
+                        		Character c[] = new Character[8];
+                        		if ((type == ModelStorageBase.UBYTE) || (type == ModelStorageBase.USHORT) ||
+                        		    (type == ModelStorageBase.UINTEGER)) {
+                        			c[0] = Character.valueOf('u');
+                        			c[1] = Character.valueOf('n');
+                        			c[2] = Character.valueOf('s');
+                        			c[3] = Character.valueOf('i');
+                        			c[4] = Character.valueOf('g');
+                        			c[5] = Character.valueOf('n');
+                        			c[6] = Character.valueOf('e');
+                        			c[7] = Character.valueOf('d');
+                        		}
+                        		else {
+                        			c[0] = Character.valueOf('s');
+                        			c[1] = Character.valueOf('i');
+                        			c[2] = Character.valueOf('g');
+                        			c[3] = Character.valueOf('n');
+                        			c[4] = Character.valueOf('e');
+                        			c[5] = Character.valueOf('d');
+                        			c[6] = Character.valueOf('_');
+                        			c[7] = Character.valueOf('_');
+                        		}
+                        		for (int m = 0; m < 8; m++) {
+                        			varArray[j].vattArray[k].setValue(c[m], m);
+                        		}
+                        	}
+                            if (varArray[j].vattArray[k].name.equals("valid_range")) {
+                                switch (varArray[j].vattArray[k].nc_type) {
 
                                     case FileInfoMinc.NC_BYTE:
-                                        vmin = ((Byte) elem.values[0]).byteValue();
-                                        vmax = ((Byte) elem.values[1]).byteValue();
-                                        break;
-
-                                    case FileInfoMinc.NC_CHAR:
-                                        vmin = ((Character) elem.values[0]).charValue();
-                                        vmax = ((Character) elem.values[1]).charValue();
+                                    	varArray[j].vattArray[k].setValue(Byte.valueOf((byte)defaultMin), 0);
+                                    	varArray[j].vattArray[k].setValue(Byte.valueOf((byte)defaultMax), 1);
                                         break;
 
                                     case FileInfoMinc.NC_SHORT:
-                                        vmin = ((Short) elem.values[0]).shortValue();
-                                        vmax = ((Short) elem.values[1]).shortValue();
+                                        varArray[j].vattArray[k].setValue(Short.valueOf((short)defaultMin), 0);
+                                        varArray[j].vattArray[k].setValue(Short.valueOf((short)defaultMax), 1);
                                         break;
 
                                     case FileInfoMinc.NC_INT:
-                                        vmin = ((Integer) elem.values[0]).intValue();
-                                        vmax = ((Integer) elem.values[1]).intValue();
+                                    	varArray[j].vattArray[k].setValue(Integer.valueOf((int)defaultMin), 0);
+                                        varArray[j].vattArray[k].setValue(Integer.valueOf((int)defaultMax), 1);
                                         break;
 
                                     case FileInfoMinc.NC_FLOAT:
-                                        vmin = ((Float) elem.values[0]).floatValue();
-                                        vmax = ((Float) elem.values[1]).floatValue();
+                                    	varArray[j].vattArray[k].setValue(Float.valueOf((float)defaultMin), 0);
+                                        varArray[j].vattArray[k].setValue(Float.valueOf((float)defaultMax), 1);
                                         break;
 
-                                    case NC_DOUBLE:
-                                        vmin = ((Double) elem.values[0]).doubleValue();
-                                        vmax = ((Double) elem.values[1]).doubleValue();
+                                    case FileInfoMinc.NC_DOUBLE:
+                                    	varArray[j].vattArray[k].setValue(Double.valueOf(defaultMin), 0);
+                                        varArray[j].vattArray[k].setValue(Double.valueOf(defaultMax), 1);
+                                        break;
                                 }
 
-                                Preferences.debug("vmin = " + vmin + "\n");
-                                Preferences.debug("vmax = " + vmax + "\n");
-                            } else if (elem.name.equals("valid_max")) {
+                            } 
+                            if (varArray[j].vattArray[k].name.equals("valid_max")) {
+                                switch (varArray[j].vattArray[k].nc_type) {
+                                case FileInfoMinc.NC_BYTE:
+                                	varArray[j].vattArray[k].setValue(Byte.valueOf((byte)defaultMax), 0);
+                                    break;
 
-                                switch (elem.nc_type) {
+                                case FileInfoMinc.NC_SHORT:
+                                    varArray[j].vattArray[k].setValue(Short.valueOf((short)defaultMax), 0);
+                                    break;
 
-                                    case NC_BYTE:
-                                        vmax = ((Byte) elem.values[0]).byteValue();
-                                        break;
+                                case FileInfoMinc.NC_INT:
+                                	varArray[j].vattArray[k].setValue(Integer.valueOf((int)defaultMax), 0);
+                                    break;
 
-                                    case NC_CHAR:
-                                        vmax = ((Character) elem.values[0]).charValue();
-                                        break;
+                                case FileInfoMinc.NC_FLOAT:
+                                	varArray[j].vattArray[k].setValue(Float.valueOf((float)defaultMax), 0);
+                                    break;
 
-                                    case NC_SHORT:
-                                        vmax = ((Short) elem.values[0]).shortValue();
-                                        break;
-
-                                    case NC_INT:
-                                        vmax = ((Integer) elem.values[0]).intValue();
-                                        break;
-
-                                    case NC_FLOAT:
-                                        vmax = ((Float) elem.values[0]).floatValue();
-                                        break;
-
-                                    case NC_DOUBLE:
-                                        vmax = ((Double) elem.values[0]).doubleValue();
+                                case FileInfoMinc.NC_DOUBLE:
+                                	varArray[j].vattArray[k].setValue(Double.valueOf(defaultMax), 0);
+                                    break;
+                                    
                                 }
 
-                                Preferences.debug("vmax = " + vmax + "\n");
-                            } else if (elem.name.equals("valid_min")) {
+                            } 
+                            if (varArray[j].vattArray[k].name.equals("valid_min")) {
+                                switch (varArray[j].vattArray[k].nc_type) {
+                                case FileInfoMinc.NC_BYTE:
+                                	varArray[j].vattArray[k].setValue(Byte.valueOf((byte)defaultMin), 0);
+                                    break;
 
-                                switch (elem.nc_type) {
+                                case FileInfoMinc.NC_SHORT:
+                                    varArray[j].vattArray[k].setValue(Short.valueOf((short)defaultMin), 0);
+                                    break;
 
-                                    case NC_BYTE:
-                                        vmin = ((Byte) elem.values[0]).byteValue();
-                                        break;
+                                case FileInfoMinc.NC_INT:
+                                	varArray[j].vattArray[k].setValue(Integer.valueOf((int)defaultMin), 0);
+                                    break;
 
-                                    case NC_CHAR:
-                                        vmin = ((Character) elem.values[0]).charValue();
-                                        break;
+                                case FileInfoMinc.NC_FLOAT:
+                                	varArray[j].vattArray[k].setValue(Float.valueOf((float)defaultMin), 0);
+                                    break;
 
-                                    case NC_SHORT:
-                                        vmin = ((Short) elem.values[0]).shortValue();
-                                        break;
-
-                                    case NC_INT:
-                                        vmin = ((Integer) elem.values[0]).intValue();
-                                        break;
-
-                                    case NC_FLOAT:
-                                        vmin = ((Float) elem.values[0]).floatValue();
-                                        break;
-
-                                    case NC_DOUBLE:
-                                        vmin = ((Double) elem.values[0]).doubleValue();
+                                case FileInfoMinc.NC_DOUBLE:
+                                	varArray[j].vattArray[k].setValue(Double.valueOf(defaultMin), 0);
+                                    break;
+                                    
                                 }
 
-                                Preferences.debug("vmin = " + vmin + "\n");
+                            } 
+                            if (varArray[j].vattArray[k].name.equals("image-max")) {
+                                switch (varArray[j].vattArray[k].nc_type) {
+                                case FileInfoMinc.NC_BYTE:
+                                	varArray[j].vattArray[k].setValue(Byte.valueOf((byte)defaultMax), 0);
+                                    break;
+
+                                case FileInfoMinc.NC_SHORT:
+                                    varArray[j].vattArray[k].setValue(Short.valueOf((short)defaultMax), 0);
+                                    break;
+
+                                case FileInfoMinc.NC_INT:
+                                	varArray[j].vattArray[k].setValue(Integer.valueOf((int)defaultMax), 0);
+                                    break;
+
+                                case FileInfoMinc.NC_FLOAT:
+                                	varArray[j].vattArray[k].setValue(Float.valueOf((float)defaultMax), 0);
+                                    break;
+
+                                case FileInfoMinc.NC_DOUBLE:
+                                	varArray[j].vattArray[k].setValue(Double.valueOf(defaultMax), 0);
+                                    break;
+                                    
+                                }
+
+                            } 
+                            if (varArray[j].vattArray[k].name.equals("image-min")) {
+                                switch (varArray[j].vattArray[k].nc_type) {
+                                case FileInfoMinc.NC_BYTE:
+                                	varArray[j].vattArray[k].setValue(Byte.valueOf((byte)defaultMin), 0);
+                                    break;
+
+                                case FileInfoMinc.NC_SHORT:
+                                    varArray[j].vattArray[k].setValue(Short.valueOf((short)defaultMin), 0);
+                                    break;
+
+                                case FileInfoMinc.NC_INT:
+                                	varArray[j].vattArray[k].setValue(Integer.valueOf((int)defaultMin), 0);
+                                    break;
+
+                                case FileInfoMinc.NC_FLOAT:
+                                	varArray[j].vattArray[k].setValue(Float.valueOf((float)defaultMin), 0);
+                                    break;
+
+                                case FileInfoMinc.NC_DOUBLE:
+                                	varArray[j].vattArray[k].setValue(Double.valueOf(defaultMin), 0);
+                                    break;
+                                    
+                                    
+                                }
+
                             }
+                        } // for (int k = 0; k < varArray[j].vattArray.length; k++)
+                        } // if (varArray[j].name.equals("image"))
                 	} // for (int j = 0; j < varArray.length; j++)
                 } // if (varArray != null)
+                ((FileInfoMinc)fileInfo[i]).vmin = defaultMin;
+                ((FileInfoMinc)fileInfo[i]).vmax = defaultMax;
             } // for (int i = 0; i < numSlices; i++)
-        } // else if (fileInfo[0] instanceof FileInfoMinc)*/
+        } // else if (fileInfo[0] instanceof FileInfoMinc)
     }
 
     /**
