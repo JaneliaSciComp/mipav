@@ -2889,7 +2889,7 @@ public class FileInterfile extends FileBase {
                         for (i = 0; i < bufferSize; i++) {
 
                             if (bufferBitSet.get(i)) {
-                                bufferByte[i >> 3] |= (1 << (i % 8));
+                                bufferByte[i >> 3] |= (1 << (7-(i % 8)));
                             }
                         }
 
