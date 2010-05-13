@@ -60,6 +60,12 @@ import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
+
+//import com.mentorgen.tools.profile.runtime.Profile;
+// -javaagent:E:\MagicConsulting\mipav\src\lib\profile.jar
+// -Dprofile.properties=E:\MagicConsulting\mipav\src\lib\profile.properties
+
+
 public class VOIManagerInterface implements ActionListener, KeyListener, VOIManagerListener, VOIHandlerInterface
 {
     /**
@@ -164,7 +170,6 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
     
     private Vector<VOIBase> m_kActiveList = new Vector<VOIBase>();
 
-
     public VOIManagerInterface ( VOIManagerInterfaceListener kParent,
             ModelImage kImageA, ModelStorageBase kLUTa, ModelImage kImageB, ModelStorageBase kLUTb, int iNViews, boolean bGPU, ButtonGroup kVOIGroup )
     {
@@ -215,6 +220,8 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
             m_kVOIManagers[i].setPopupVOI(popup);
             m_kVOIManagers[i].setPopupPt(popupPt);
         }
+        //Profile.clear();
+        //Profile.start();
     }
 
     public void actionPerformed(ActionEvent event) {
@@ -482,11 +489,14 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
     public void deleteVOI(VOIBase kOld) {
         m_kCurrentVOIGroup = null;
         VOI kGroup = kOld.getGroup();
-        kGroup.getCurves().remove(kOld);
-        if ( kGroup.isEmpty() )
+        if ( kGroup != null )
         {
-            if ( m_kImageA != null ) { m_kImageA.unregisterVOI(kGroup); }
-            if ( m_kImageB != null ) { m_kImageB.unregisterVOI(kGroup); }
+            kGroup.getCurves().remove(kOld);
+            if ( kGroup.isEmpty() )
+            {
+                if ( m_kImageA != null ) { m_kImageA.unregisterVOI(kGroup); }
+                if ( m_kImageB != null ) { m_kImageB.unregisterVOI(kGroup); }
+            }
         }
         updateDisplay();
     }
@@ -547,6 +557,10 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
 
     public void disposeLocal(boolean flag)
     {
+        //Profile.stop();
+        //Profile.setFileName( "profile_out" );
+        //Profile.shutdown();
+        
         if (popup != null) {
             popup = null;
         }

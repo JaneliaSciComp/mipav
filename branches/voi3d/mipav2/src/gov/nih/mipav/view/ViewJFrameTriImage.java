@@ -677,6 +677,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
             updateImages(true);
         } else if (command.equals("traverse")) {
+            voiManager.actionPerformed(event);
             if ((imageB != null) && (!radioImageBoth.isEnabled())) {
                 radioImageBoth.setEnabled(true);
             }
@@ -1048,43 +1049,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             } else if (getSelectedImage() == ViewJComponentBase.BOTH) {
                 dialog = new JDialogTriImageTransformation(this, imageA, imageB);
             }
-        } else if (command.equals(CustomUIBuilder.PARAM_VOI_POINT_ADD.getActionCommand())) {
-
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
-
-                if (triImage[i] != null) {
-                    triImage[i].setCursorMode(ViewJComponentBase.POINT_VOI);
-                    //triImage[i].setProtractorVisible(false);
-                    triImage[i].clearProtractor();
-                    triImage[i].repaint();
-                }
-            }
-        } /*
-        else if (command.equals(CustomUIBuilder.PARAM_VOI_NEW.getActionCommand())) {
-
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
-
-                if (triImage[i] != null) {
-                    triImage[i].setCursorMode(ViewJComponentBase.NEW_VOI);
-                }
-            }
+        } else if (command.equals(CustomUIBuilder.PARAM_VOI_POINT.getActionCommand())) {
+            voiManager.actionPerformed(event);
+        }  else if (command.equals(CustomUIBuilder.PARAM_VOI_POINT_DELETE.getActionCommand())) {
+            voiManager.actionPerformed(event);
         } 
-        else if (command.equals(CustomUIBuilder.PARAM_VOI_POINT_DELETE.getActionCommand())) {
-
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
-
-                if (triImage[i] != null) {
-                    triImage[i].deleteSelectedContours();
-                }
-            }
-
-            imageA.notifyImageDisplayListeners();
-
-            if (imageB != null) {
-                imageB.notifyImageDisplayListeners();
-            }
-        } 
-        */
         
         else if (command.equals("boundingBox")) {
 
@@ -1223,10 +1192,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         else if (command.equals("VOIToolbar")) 
         {
-            if ( voiManager == null )
-            {
-                initVOI();
-            }
             voiManager.getToolBar().setVisible(menuObj.isMenuItemSelected("VOI toolbar"));
             updateLayout();
         }
@@ -3464,7 +3429,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                                                         "createTransformation"));
         imageAlignToolBar.add(ViewToolBarBuilder.makeSeparator());
 
-        addPointToggleButton = toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_VOI_POINT_ADD, VOIGroup);
+        addPointToggleButton = toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_VOI_POINT, VOIGroup);
         addPointToggleButton.addItemListener(this);
         imageAlignToolBar.add(addPointToggleButton);
 
@@ -3785,6 +3750,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         setVisible(true);
         updateImages(true);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        
+        initVOI();
     }
 
     /**

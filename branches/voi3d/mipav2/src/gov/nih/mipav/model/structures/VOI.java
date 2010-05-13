@@ -1954,11 +1954,6 @@ public class VOI extends ModelSerialCloneable {
 
                 polygonIndex = curves.size() - 2;
             }
-        } else if (curveType == PROTRACTOR) {
-
-            for (int i = 0; i < curves.size(); i++) {
-                ((VOIProtractor) (curves.elementAt(i))).setColor(color);
-            }
         } else if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
             ((VOIContour) (curves.lastElement())).setLabel(String.valueOf(elementLabel++));
         }
@@ -2013,11 +2008,6 @@ public class VOI extends ModelSerialCloneable {
 
                 polygonIndex = curves.size() - 2;
             }
-        } else if (curveType == PROTRACTOR) {
-
-            for (int i = 0; i < curves.size(); i++) {
-                ((VOIProtractor) (curves.elementAt(i))).setColor(color);
-            }
         } else if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
             ((VOIContour) (curves.lastElement())).setLabel(String.valueOf(elementLabel++));
         }
@@ -2046,11 +2036,6 @@ public class VOI extends ModelSerialCloneable {
 
         if (curveType == POINT) {
             ((VOIPoint) (curves.lastElement())).setLabel(String.valueOf(elementLabel++));
-        } else if (curveType == PROTRACTOR) {
-
-            for (int i = 0; i < curves.size(); i++) {
-                ((VOIProtractor) (curves.elementAt(i))).setColor(color);
-            }
         } else if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
             ((VOIContour) (curves.lastElement())).setLabel(String.valueOf(elementLabel++));
         }
@@ -2088,11 +2073,6 @@ public class VOI extends ModelSerialCloneable {
 
         if (curveType == POINT) {
             ((VOIPoint) (curves.lastElement())).setLabel(String.valueOf(elementLabel++));
-        } else if (curveType == PROTRACTOR) {
-
-            for (int i = 0; i < curves.size(); i++) {
-                ((VOIProtractor) (curves.elementAt(i))).setColor(color);
-            }
         } else if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
             ((VOIContour) (curves.lastElement())).setLabel(String.valueOf(elementLabel++));
         }
@@ -2128,11 +2108,6 @@ public class VOI extends ModelSerialCloneable {
 
         if (curveType == POINT) {
             ((VOIPoint) (curves.lastElement())).setLabel(String.valueOf(elementLabel++));
-        } else if (curveType == PROTRACTOR) {
-
-            for (int i = 0; i < curves.size(); i++) {
-                ((VOIProtractor) (curves.elementAt(i))).setColor(color);
-            }
         } else if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
             ((VOIContour) (curves.lastElement())).setLabel(String.valueOf(elementLabel++));
         }
@@ -2148,12 +2123,7 @@ public class VOI extends ModelSerialCloneable {
         curve.setGroup(this);
         curves.addElement(curve.clone());
 
-        if (curveType == PROTRACTOR) {
-
-            for (int i = 0; i < curves.size(); i++) {
-                ((VOIProtractor) (curves.elementAt(i))).setColor(color);
-            }
-        } else if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+        if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
             ((VOIContour) (curves.lastElement())).setLabel(String.valueOf(elementLabel++));
         }
     }
@@ -2169,12 +2139,7 @@ public class VOI extends ModelSerialCloneable {
         curve.setGroup(this);
         curves.addElement(curve.clone());
 
-        if (curveType == PROTRACTOR) {
-
-            for (int i = 0; i < curves.size(); i++) {
-                ((VOIProtractor) (curves.elementAt(i))).setColor(color);
-            }
-        } else if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
+        if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
             ((VOIContour) (curves.lastElement())).setLabel(String.valueOf(elementLabel++));
         }
     }
@@ -3254,20 +3219,6 @@ public class VOI extends ModelSerialCloneable {
 
                 if (listeners[i] == VOIListener.class) {
                     ((VOIListener) listeners[i + 1]).colorChanged(color);
-                }
-            }
-        }
-
-        if (curveType == PROTRACTOR) {
-
-            for (int i = 0; i < curves.size(); i++) {
-                if ( curves.elementAt(i) instanceof VOIProtractor )
-                {
-                    ((VOIProtractor) (curves.elementAt(i))).setColor(color);
-                }
-                else
-                {
-                    return;
                 }
             }
         }

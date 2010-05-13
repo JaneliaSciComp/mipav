@@ -623,23 +623,25 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             voiProtractor = new VOIProtractor(); 
             // first end point
             Vector3f kVolumePt = new Vector3f();
-            screenToFile( 4 * imageDim.width / 8, (imageDim.height - 1) / 2, slice, kVolumePt );
+            int halfWidth = (int)(getWidth() / 2f);
+            int halfHeight = (int)(getHeight() / 2f);
+            screenToFile( halfWidth + 20, halfHeight, slice, kVolumePt );
             voiProtractor.add( kVolumePt );
             // middle point
             kVolumePt = new Vector3f();
-            screenToFile( 3 * imageDim.width / 8, (imageDim.height - 1) / 2, slice, kVolumePt );
+            screenToFile( halfWidth - 20, halfHeight, slice, kVolumePt );
             voiProtractor.add( kVolumePt );
             // second end point
             kVolumePt = new Vector3f();
-            screenToFile( 5 * imageDim.width / 8, (imageDim.height - 1) / 2, slice, kVolumePt );
+            screenToFile( halfWidth + 30, halfHeight, slice, kVolumePt );
             voiProtractor.add( kVolumePt );
-            //voiProtractor.add( kVolumePt );
+            
             voiProtractor.setActive(true);
             voiProtractor.setAllSlices(true);
             voiProtractor.setSnap(snapProtractor90);
             if ( voiManager != null )
             {
-                System.err.println( orientation + " " + voiManager );
+                voiProtractor.setPlane(voiManager.getPlane());
                 voiManager.add( voiProtractor, presetHue[orientation] );
             }
 

@@ -2332,7 +2332,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
     public void mouseClicked(final MouseEvent mouseEvent) {
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
-
+        
         if (frame instanceof ViewJFrameLightBox) {
 
             // on a double click, or a single click from the
@@ -2375,6 +2375,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param mouseEvent event that triggered function
      */
     public void mouseDragged(final MouseEvent mouseEvent) {
+        
         final int mouseMods = mouseEvent.getModifiers();
 
         int xS, yS;
@@ -2385,7 +2386,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         if ( (pixBuffer == null) || (imageBufferActive == null) || (modifyFlag == false)) {
             return;
         }
-
+        
         xS = getScaledX(mouseEvent.getX()); // zoomed x. Used as cursor
         yS = getScaledY(mouseEvent.getY()); // zoomed y. Used as cursor
 
@@ -2396,12 +2397,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             return;
         }
 
-        // if((mouseEvent.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) == InputEvent.BUTTON1_DOWN_MASK) {
         processDefaultMouseDrag(mouseEvent, xS, yS);
-        // }
 
         if (cursorMode == ViewJComponentBase.DROPPER_PAINT) {
-
             if (imageActive.isColorImage() == true) {
                 dropperColor = new Color(
                         (int) imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 1],
@@ -2447,6 +2445,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
     public void mouseExited(final MouseEvent mouseEvent) {
         lastMouseX = OUT_OF_BOUNDS;
         lastMouseY = OUT_OF_BOUNDS;
+        
         if ( (cursorMode == ViewJComponentBase.MAG_REGION) || (cursorMode == ViewJComponentBase.PAINT_VOI)
                 || (cursorMode == ViewJComponentBase.ERASER_PAINT) || (cursorMode == ViewJComponentBase.WIN_REGION)) {
 
@@ -2473,7 +2472,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
         shiftDown = mouseEvent.isShiftDown();
-
+        
         if ( (cursorMode == ViewJComponentBase.ZOOMING_IN) || (cursorMode == ViewJComponentBase.ZOOMING_OUT)) {
 
             // if we are in zoom mode, we don't care about any of the other things
@@ -2568,9 +2567,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
             return;
         }
-        else if (cursorMode == ViewJComponentBase.VOI_3D) {
-            return;
-        } 
 
         // System.err.println("got to end...");
 
@@ -2586,7 +2582,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
     public void mousePressed(final MouseEvent mouseEvent) {
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
-
+        
         final int xS = getScaledX(mouseEvent.getX());
         final int yS = getScaledY(mouseEvent.getY());
 
@@ -2602,8 +2598,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             setPixelInformationAtLocation(xS, yS);
 
             if (mouseEvent.getButton() == MouseEvent.BUTTON1) {
-                intensityLabel = true;
-                paintComponent(getGraphics());
+                //intensityLabel = true;
+                //paintComponent(getGraphics());
             }
         }
 
@@ -2665,10 +2661,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param mouseEvent event that triggered function
      */
     public void mouseReleased(final MouseEvent mouseEvent) {
-
-        // calling garbage collect here to clean up any memory used while getting the LPS coordinates
-        System.gc();
-
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
 
@@ -2702,7 +2694,18 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             }
         }
 
-        if (cursorMode == ViewJComponentBase.POINT_VOI) {} else if (cursorMode == ViewJComponentBase.POLYLINE_SLICE_VOI) {} else if (cursorMode == ViewJComponentBase.ANNOTATION) {} else if (cursorMode == ViewJComponentBase.LEVELSET) {} else if (cursorMode == ViewJComponentBase.RECTANGLE) {} else if (cursorMode == ViewJComponentBase.RECTANGLE3D) {} else if (cursorMode == ViewJComponentBase.ELLIPSE) {} else if (cursorMode == ViewJComponentBase.LINE) {} else if (cursorMode == ViewJComponentBase.PROTRACTOR) {} else if (cursorMode == ViewJComponentBase.NEW_POINT) {} else if (cursorMode == ViewJComponentBase.DELETE_POINT) {} else if (cursorMode == ViewJComponentBase.PAINT_CAN) {
+        if (cursorMode == ViewJComponentBase.POINT_VOI) {}
+        else if (cursorMode == ViewJComponentBase.POLYLINE_SLICE_VOI) {}
+        else if (cursorMode == ViewJComponentBase.ANNOTATION) {}
+        else if (cursorMode == ViewJComponentBase.LEVELSET) {}
+        else if (cursorMode == ViewJComponentBase.RECTANGLE) {}
+        else if (cursorMode == ViewJComponentBase.RECTANGLE3D) {}
+        else if (cursorMode == ViewJComponentBase.ELLIPSE) {}
+        else if (cursorMode == ViewJComponentBase.LINE) {}
+        else if (cursorMode == ViewJComponentBase.PROTRACTOR) {}
+        else if (cursorMode == ViewJComponentBase.NEW_POINT) {}
+        else if (cursorMode == ViewJComponentBase.DELETE_POINT) {} 
+        else if (cursorMode == ViewJComponentBase.PAINT_CAN) {
             xPG = (short) xS;
             yPG = (short) yS;
             zPG = (short) slice;
@@ -2732,50 +2735,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                     (short) xS, (short) yS, (short) z, value);
             imageActive.notifyImageDisplayListeners(null, true);
         }
-        /*
-        else if (cursorMode == QUICK_LUT) {
-            int wS, hS;
-
-            System.err.println( "ViewJComponentEditImage.mouseReleased voiHandler" );
-            xS = MipavMath.round(voiHandler.getRubberband().getBounds().x / (getZoomX() * resolutionX));
-            yS = MipavMath.round(voiHandler.getRubberband().getBounds().y / (getZoomY() * resolutionY));
-            wS = MipavMath.round(voiHandler.getRubberband().getBounds().width / (getZoomX() * resolutionX));
-            hS = MipavMath.round(voiHandler.getRubberband().getBounds().height / (getZoomY() * resolutionY));
-	            if (imageA.isColorImage() == false) {
-	
-	                if (imageA == imageActive) {
-	                    this.quickLUT(xS, wS, yS, hS, imageBufferA, imageA, LUTa);
-	                    imageActive.notifyImageDisplayListeners(LUTa, true);
-	                } else if ( (imageB != null) && (imageActive == imageB)) {
-	                    this.quickLUT(xS, wS, yS, hS, imageBufferB, imageB, LUTb);
-	                    imageActive.notifyImageDisplayListeners(LUTb, true);
-	                }
-	            } else { // RGB image
-	
-	                if (imageA == imageActive) {
-	                    this.quickRGB(xS, wS, yS, hS, imageBufferA, imageA, RGBTA);
-	                    imageActive.notifyImageDisplayListeners(true, 1, RGBTA);
-	                } else if ( (imageBufferB != null) && (imageB != null) && (imageB == imageActive)) {
-	                    this.quickRGB(xS, wS, yS, hS, imageBufferB, imageB, RGBTB);
-	                    imageActive.notifyImageDisplayListeners(true, 1, RGBTB);
-	                }
-	            }
-	
-	            if ( (getActiveImage().isColorImage()) && (getActiveImage().getHistoRGBFrame() != null)) {
-	                getActiveImage().getHistoRGBFrame().update();
-	            } else if (getActiveImage().getHistoLUTFrame() != null) {
-	                getActiveImage().getHistoLUTFrame().update();
-	            }
-	
-	            if ( ! ( (mouseEvent.isShiftDown() == true) || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
-	                setCursorMode(DEFAULT);
-	            }
-            
-        } 
-        */
         else if (cursorMode == DEFAULT) {
-            intensityLabel = false;
-            paintComponent(getGraphics());
+            //intensityLabel = false;
+            //paintComponent(getGraphics());
         }
 
         // reset mousePressIsShiftDown for next mouse click
@@ -2967,7 +2929,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
             //if ( ! (this instanceof ViewJComponentRegistration)) {
                 //voiHandler.paintSolidVOIinImage(offscreenGraphics2d);
-                draw3DVOIs(offscreenGraphics2d);
+                //draw3DVOIs(offscreenGraphics2d);
             //}
 
             if (memImageA == null) { // create imageA if it hasn't already been created
@@ -3091,15 +3053,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                 paintMagComponent(offscreenGraphics2d);
             } else if (cursorMode == ViewJComponentBase.DEFAULT) {
 
-                if ( ! (this instanceof ViewJComponentSingleRegistration) && ! (frame instanceof ViewJFrameLightBox)) {
-
-                    if (intensityLabel) {
-                        if (frame instanceof ViewJFrameImage) {
-                            // display intensity values on screen
-                            repaintImageIntensityLabelFast(offscreenGraphics2d);
-                        }
-                    }
-                }
+                //if ( ! (this instanceof ViewJComponentSingleRegistration) && ! (frame instanceof ViewJFrameLightBox)) {
+                //    if (intensityLabel) {
+                //        if (frame instanceof ViewJFrameImage) {
+                //            // display intensity values on screen
+                //            repaintImageIntensityLabelFast(offscreenGraphics2d);
+                //        }
+                //    }
+                //}
             }
 
             if (onTop) {
@@ -5007,17 +4968,17 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
     }
 
 
-
     protected void draw3DVOIs(Graphics offscreenGraphics2d)
     {
+
         if ( imageA.getVOIs() == null )
         {
             return;
         }
-        ViewVOIVector VOIs = (ViewVOIVector) imageA.getVOIs().clone();
+        ViewVOIVector VOIs = (ViewVOIVector) imageA.getVOIs();//.clone();
         
         if (imageB != null) {
-            VOIs.addAll((ViewVOIVector) imageB.getVOIs().clone());
+            //VOIs.addAll((ViewVOIVector) imageB.getVOIs().clone());
         }
         if (VOIs != null && voiManager != null) {
             int nVOI = VOIs.size();
@@ -5301,7 +5262,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         String str;
 
         try {
-
             if (cursorMode == ViewJComponentBase.DEFAULT) {
 
                 if ( (mouseEvent.getModifiers() & InputEvent.BUTTON3_MASK) != 0) {
@@ -5325,10 +5285,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                 } // if ((mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0)
 
                 // check is left mouse button was pressed...if so...we need to show intensity values
-                if ( (mouseEvent.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) == InputEvent.BUTTON1_DOWN_MASK) {
-                    intensityLabel = true;
-                    paintComponent(getGraphics());
-                }
+                //if ( (mouseEvent.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) == InputEvent.BUTTON1_DOWN_MASK) {
+                //    intensityLabel = true;
+                //    paintComponent(getGraphics());
+                //}
 
                 setPixelInformationAtLocation(xS, yS);
             } // if (mode == DEFAULT))

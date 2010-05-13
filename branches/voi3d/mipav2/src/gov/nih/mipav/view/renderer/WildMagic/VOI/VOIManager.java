@@ -470,9 +470,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
     public void add( VOIBase kVOI, float fHue )
     {
+        m_kParent.newVOI( false, false );
         m_kParent.addVOI( kVOI, true );
         m_kParent.setPresetHue(fHue);
-        //m_kParent.doVOI( CustomUIBuilder.PARAM_VOI_PROPAGATE_ALL.getActionCommand() );
+        kVOI.setActive(true);
+        m_kParent.setDefaultCursor();
     }
 
     public boolean add( VOIBase kVOI, int iPos, Vector3f kNewPoint, boolean bIsFile  )
@@ -1137,7 +1139,16 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 
 
-    public void mouseExited(MouseEvent arg0) {}
+    public void mouseExited(MouseEvent arg0) 
+    {
+        if ( m_bDrawVOI && (m_iDrawType == LEVELSET) )
+        {
+            if ( m_kCurrentVOI != null )
+            {
+                m_kParent.deleteVOI(m_kCurrentVOI);
+            }
+        } 
+    }
 
     public void mouseMoved(MouseEvent kEvent) 
     {      
@@ -1880,7 +1891,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         case SPLITLINE:
             kVOI = new VOILine(); break;
         case PROTRACTOR:
-            kVOI = new VOIProtractor(); break;           
+            kVOI = new VOIProtractor(); ((VOIProtractor)kVOI).setPlane(m_iPlane); break;           
         }
         
         if ( kVOI == null )

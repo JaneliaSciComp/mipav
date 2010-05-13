@@ -5955,7 +5955,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         //{
         //    componentImage.setCursorMode(ViewJComponentBase.VOI_3D);
         //}
-        //else
+       //else
         //{
             componentImage.setCursorMode(ViewJComponentBase.DEFAULT);
         //}
@@ -6028,7 +6028,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#setModified()
      */
     public void setModified() {
-        updateImages(true);
+        updateImages();
     }
 
     /* (non-Javadoc)
