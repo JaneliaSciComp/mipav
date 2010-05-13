@@ -10,6 +10,35 @@ public class MIPAVPolarCoordinateSystems {
 	private static boolean clockWise = false;
 
 	/**
+	 * Convert the Cartesian coordinate into the Polar coordinate, point based. 
+	 * 
+	 * @param in     image pixel coordinate, in.x = x, in.y = y.
+	 * @param out    polar coordinate  out.x = r, out.y = theta. 
+	 * @param image  source image. 
+	 */
+	public static final void CartesianToPolar2D(Vector2f in, Vector2f out, ModelImage image) {
+		// get the Pixel coordinate center
+		Vector3f center = image.getImageCenter();
+
+		float centerX = center.X;
+		float centerY = center.Y;
+
+		float xx = in.X;
+		float yy = in.Y;
+		
+		// Convert the pixel coordinate to Cartesian coordinate. 
+		float x = xx - centerX;
+		float y = yy - centerY;
+		
+		// calculate the Polar coordinate  
+		float r = getRadius(x, y);
+		float angle = getAngleInDegree(x, y);
+		
+		out.X = r;
+		out.Y = angle;
+	}
+	
+	/**
 	 * Convert the Cartesian coordinate into the Polar coordinate.
 	 * 
 	 * @param image       source model image.
@@ -46,6 +75,29 @@ public class MIPAVPolarCoordinateSystems {
 		}
 	}
 
+	/**
+	 * Convert the Polar coordinate to Cartesian coordinate, point based. 
+	 * @param in     polar coordinate,  in.x = r, in.y = theta.
+	 * @param out    image pixel coordinate, out.x = x, out.y = y;
+	 * @param image  source image. 
+	 */
+	public static void PolarToCartesian2D(Vector2f in, Vector2f out, ModelImage image) {
+		// get the center of Cartesian space
+		Vector3f center = image.getImageCenter();
+
+		float centerX = center.X;
+		float centerY = center.Y;
+		
+		float r = in.X;
+		float angle = (float)((in.Y / (float) 360) * Math.PI * 2);
+
+		// -- Need convert (x,y) into pixel coordinates
+		int x = (int)(getCartesianX(r, angle) + centerX);
+		int y = (int)(getCartesianY(r, angle) + centerY);
+
+		out.X = x;
+		out.Y = y;
+	}
 	
     /**
      * Whether this routine is necessary, the question will to be decided in the future.
