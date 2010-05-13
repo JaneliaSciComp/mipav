@@ -3545,6 +3545,8 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
                 componentImageB, componentImageB,
                 componentImageB.getOrientation(), componentImageB.getSlice() );
         componentImageB.setVOIManager(voiManager.getVOIManager(1));
+        
+        componentImage.setVOIManager(voiManager.getVOIManager(0));
     }
 
 }

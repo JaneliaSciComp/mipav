@@ -2412,10 +2412,7 @@ public class VOI extends ModelSerialCloneable {
         } else {
 
             for (int i = 0; i < curves.size(); i++) {
-
-                if (((VOIPoint) (curves.elementAt(i))).isActive()) {
-                    ((VOIPoint) (curves.elementAt(i))).moveVOIPoint(xM, yM, zM, xDim, yDim, zDim);
-                }
+                ((VOIPoint) (curves.elementAt(i))).moveVOIPoint(xM, yM, zM, xDim, yDim, zDim);
             }
         }
     }
@@ -2533,70 +2530,23 @@ public class VOI extends ModelSerialCloneable {
      * @param   resolutionY  Y resolution (aspect ratio)
      *
      * @return  result of test
-     * @deprecated
      */
     public boolean nearPoint(int x, int y, int slice, float zoom, float resolutionX, float resolutionY) {
 
         if (isEmpty()) {
             return false;
         }
+        if ( curveType != POINT )
+        {
+            return false;
+        }
 
-        int i;
+        for (int i = 0; i < curves.size(); i++)
+        {
+            if (((VOIPoint) (curves.elementAt(i))).nearPoint(x, y, slice)) {
+                polygonIndex = i;
 
-        // System.err.println("doing nearPoint");
-        for (i = 0; i < curves.size(); i++) {
-
-            if (curveType == LINE) {
-
-                if (((VOILine) (curves.elementAt(i))).isActive() &&
-                        ((VOILine) (curves.elementAt(i))).nearPoint(x, y, slice)) {
-                    polygonIndex = i;
-
-                    return true;
-                }
-            } else if (curveType == PROTRACTOR) {
-
-                if (((VOIProtractor) (curves.elementAt(i))).isActive() &&
-                        ((VOIProtractor) (curves.elementAt(i))).nearPoint(x, y, slice)) {
-                    polygonIndex = i;
-
-                    return true;
-                }
-            } else if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
-                ((VOIContour) (curves.elementAt(i))).getBounds(xBounds, yBounds, zBounds);
-/*
-                if (((VOIContour) (curves.elementAt(i))).isActive() && (boundingBox == true)) {
-                    nearBoundPoint = ((VOIContour) (curves.elementAt(i))).nearBoundPoint(x, y, zoom, resolutionX,
-                            resolutionY);
-
-                    if (nearBoundPoint != NOT_A_POINT) {
-                        polygonIndex = -99;
-                        resizeIndex = i;
-
-                        return true;
-                    }
-                }
-*/
-                if (((VOIContour) (curves.elementAt(i))).isActive() &&
-                        ((VOIContour) (curves.elementAt(i))).nearPoint(x, y, slice)) {
-                    polygonIndex = i;
-                    resizeIndex = -99;
-
-                    return true;
-                }
-            } else if ((curveType == VOI.POINT) || (curveType == VOI.POLYLINE_SLICE)) {
-                if (((VOIPoint) (curves.elementAt(i))).nearPoint(x, y, slice)) {
-                    polygonIndex = i;
-
-                    return true;
-                }
-            } else if (curveType == VOI.ANNOTATION) {
-
-                //check to see if this is near the VOIText's arrow tip
-                if (((VOIText) (curves.elementAt(i))).nearPoint(x, y, slice)) {
-                    polygonIndex = i;
-                    return true;
-                }
+                return true;
             }
         }
 

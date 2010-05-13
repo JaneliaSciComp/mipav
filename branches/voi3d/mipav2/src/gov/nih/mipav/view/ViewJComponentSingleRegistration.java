@@ -118,14 +118,14 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage {
             if (centerPtLocation != -1) {
                 return 0;
             } else {
-                return ((VOI) VOIs.elementAt(0)).getCurvesTemp()[0].size();
+                return ((VOI) VOIs.elementAt(0)).getCurves().size();
             }
         } else {
 
             if (centerPtLocation == 0) {
-                return ((VOI) VOIs.elementAt(1)).getCurvesTemp()[0].size();
+                return ((VOI) VOIs.elementAt(1)).getCurves().size();
             } else {
-                return ((VOI) VOIs.elementAt(0)).getCurvesTemp()[0].size();
+                return ((VOI) VOIs.elementAt(0)).getCurves().size();
             }
         }
     }
@@ -151,7 +151,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage {
             index = 1;
         }
 
-        Vector ptVector = ((VOI) VOIs.elementAt(index)).getCurvesTemp()[0];
+        Vector ptVector = ((VOI) VOIs.elementAt(index)).getCurves();
         VOIPoint pt = null;
 
         // System.err.println("Point vector size: " + ptVector.size());
@@ -193,7 +193,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage {
             index = 1;
         }
 
-        Vector ptVector = ((VOI) VOIs.elementAt(index)).getCurvesTemp()[0];
+        Vector ptVector = ((VOI) VOIs.elementAt(index)).getCurves();
         VOIPoint pt = null;
 
         try {
@@ -247,10 +247,10 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage {
         for (i = 0; i < pointSetA[0].length; i++) {
             deltaX = (int) (pointSetA[0][i] - pointSetB[0][i]);
             deltaY = (int) (pointSetA[1][i] - pointSetB[1][i]);
-            ((VOIPoint) (((VOI) VOIs.elementAt(index)).getCurvesTemp()[0]).elementAt(i)).moveVOIPoint(deltaX, deltaY, 0,
-                                                                                                  imageActive.getExtents()[0],
-                                                                                                  imageActive.getExtents()[1],
-                                                                                                  1);
+            ((VOIPoint) (((VOI) VOIs.elementAt(index)).getCurves()).elementAt(i)).moveVOIPoint(deltaX, deltaY, 0,
+                    imageActive.getExtents()[0],
+                    imageActive.getExtents()[1],
+                    1);
         }
     }
 

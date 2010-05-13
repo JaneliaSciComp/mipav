@@ -983,19 +983,11 @@ public class ViewJComponentRegistration
 
                     if (VOIs.VOIAt(i).nearPoint(x, y, slice, getZoomX(), resolutionX, resolutionY)) {
 
-                        VOIs.VOIAt(i).setActive(true);
-                        ((VOIPoint) (VOIs.VOIAt(i).getCurvesTemp()[slice].elementAt(0))).setActive(true);
-                        /*  DRAWING DISABLED
-                        VOIs.VOIAt(i).drawVOISpecial(slice, getGraphics(), imageActive.getFileInfo(0).getResolutions(),
-                                                     imageActive.getFileInfo(0).getUnitsOfMeasure(),
-                                                     imageActive.getExtents()[0], imageActive.getExtents()[1],
-                                                     getZoomX(), getZoomY(), resolutionX, resolutionY);
-*/
+                        VOIs.VOIAt(i).setAllActive(true);
                         if (oldFrame) {
                             frame.updateImages(true);
                         } else {
                             toolFrame.updateImages(true);
-                            // imageActive.notifyImageDisplayListeners();
                         }
 
                         return;
@@ -1050,9 +1042,9 @@ public class ViewJComponentRegistration
                 deltaX = xS - xOrg[centerid];
                 deltaY = yS - yOrg[centerid];
 
-                ((VOIPoint) (centerVOI.getCurvesTemp()[0].elementAt(0))).moveVOIPoint(deltaX, deltaY, 0,
-                                                                                  imageActive.getExtents()[0],
-                                                                                  imageActive.getExtents()[1], 1);
+                ((VOIPoint) (centerVOI.getCurves().elementAt(0))).moveVOIPoint(deltaX, deltaY, 0,
+                        imageActive.getExtents()[0],
+                        imageActive.getExtents()[1], 1);
                 xOrg[centerid] = xS;
                 yOrg[centerid] = yS;
                 xRotation = xS * resolutionX;
@@ -1494,7 +1486,7 @@ public class ViewJComponentRegistration
                 yR[0] = yS;
                 zR[0] = 0.0f;
                 newVOI.importCurve(xR, yR, zR);
-                ((VOIPoint) newVOI.getCurvesTemp()[0].elementAt(0)).setLabel("C");
+                ((VOIPoint) newVOI.getCurves().elementAt(0)).setLabel("C");
             } catch (OutOfMemoryError error) {
                 System.gc();
                 MipavUtil.displayError("Out of memory: ComponentRegistration.setCenter");

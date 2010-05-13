@@ -4971,29 +4971,45 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
     protected void draw3DVOIs(Graphics offscreenGraphics2d)
     {
 
-        if ( imageA.getVOIs() == null )
+        if ( imageA.getVOIs() != null )
         {
-            return;
-        }
-        ViewVOIVector VOIs = (ViewVOIVector) imageA.getVOIs();//.clone();
-        
-        if (imageB != null) {
-            //VOIs.addAll((ViewVOIVector) imageB.getVOIs().clone());
-        }
-        if (VOIs != null && voiManager != null) {
-            int nVOI = VOIs.size();
+            ViewVOIVector VOIs = (ViewVOIVector) imageA.getVOIs();
+            if (VOIs != null && voiManager != null) {
+                int nVOI = VOIs.size();
 
-            for (int i = nVOI - 1; i >= 0; i--) {    
-                VOI kVOI = VOIs.get(i);
-                Vector<VOIBase> kCurves = kVOI.getCurves();
-                for ( int k = 0; k < kCurves.size(); k++ )
-                {
-                    VOIBase kVOI3D = kCurves.get(k);
-                    offscreenGraphics2d.setColor( kVOI.getColor() );
-                    voiManager.draw( kVOI3D, 
-                            imageActive.getResolutions(0, orientation), 
-                            imageActive.getUnitsOfMeasure(0, orientation), slice, orientation, 
-                            offscreenGraphics2d );
+                for (int i = nVOI - 1; i >= 0; i--) {    
+                    VOI kVOI = VOIs.get(i);
+                    Vector<VOIBase> kCurves = kVOI.getCurves();
+                    for ( int k = 0; k < kCurves.size(); k++ )
+                    {
+                        VOIBase kVOI3D = kCurves.get(k);
+                        offscreenGraphics2d.setColor( kVOI.getColor() );
+                        voiManager.draw( kVOI3D, 
+                                imageA.getResolutions(0, orientation), 
+                                imageA.getUnitsOfMeasure(0, orientation), slice, orientation, 
+                                offscreenGraphics2d );
+                    }
+                }
+            }
+        }
+        if ( (imageB != null) && (imageB.getVOIs() != null) )
+        {
+            ViewVOIVector VOIs = (ViewVOIVector) imageB.getVOIs();
+            if (VOIs != null && voiManager != null) {
+                int nVOI = VOIs.size();
+
+                for (int i = nVOI - 1; i >= 0; i--) {    
+                    VOI kVOI = VOIs.get(i);
+                    Vector<VOIBase> kCurves = kVOI.getCurves();
+                    for ( int k = 0; k < kCurves.size(); k++ )
+                    {
+                        VOIBase kVOI3D = kCurves.get(k);
+                        offscreenGraphics2d.setColor( kVOI.getColor() );
+                        voiManager.draw( kVOI3D, 
+                                imageB.getResolutions(0, orientation), 
+                                imageB.getUnitsOfMeasure(0, orientation), slice, orientation, 
+                                offscreenGraphics2d );
+                    }
                 }
             }
         }

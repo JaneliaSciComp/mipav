@@ -1461,9 +1461,9 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                                 }
 
                                 int slice = ((ViewJComponentEditImage) (component)).getSlice();
-                                VOIs.VOIAt(i).getCurvesTemp()[slice].removeElement(contour);
-                                VOIs.VOIAt(i).getCurvesTemp()[slice].addElement((VOIContour)
-                                                                                smoothAlgo.getResultVOI().getCurvesTemp()[slice].lastElement());
+                                VOIs.VOIAt(i).getCurves().removeElement(contour);
+                                VOIs.VOIAt(i).getCurves().addElement((VOIContour)
+                                                                                smoothAlgo.getResultVOI().getCurves().lastElement());
                             } else {
                                 contour.trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
                                 contour.setClosed(!open);

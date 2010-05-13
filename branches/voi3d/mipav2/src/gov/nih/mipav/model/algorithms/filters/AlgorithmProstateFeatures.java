@@ -1508,7 +1508,7 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 						// resultBufferClass[currentResult-1][pos] = -1;
 						
 						Vector<VOIBase>[] vArray = VOIs.VOIAt(0)
-								.getCurvesTemp();
+								.getSortedCurves(VOIBase.ZPLANE, zDim);
 
 						if (vArray != null) {
 							if (vArray[z] != null && vArray[z].size() > 0) {
@@ -1559,7 +1559,7 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 								resultBufferClass[currentResult][pos] = -1;
 							}
 							Vector<VOIBase>[] vArray = VOIs.VOIAt(0)
-									.getCurvesTemp();
+                            .getSortedCurves(VOIBase.ZPLANE, zDim);
 
 							if (vArray != null) {
 								if (vArray[z] != null && vArray[z].size() > 0) {
@@ -1610,7 +1610,7 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 								resultBufferClass[currentResult][pos] = -1;
 							}
 							Vector<VOIBase>[] vArray = VOIs.VOIAt(0)
-									.getCurvesTemp();
+                            .getSortedCurves(VOIBase.ZPLANE, zDim);
 
 							if (vArray != null) {
 								if (vArray[z] != null && vArray[z].size() > 0) {
@@ -1672,7 +1672,7 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 									resultBufferClass[currentResult][pos] = -1;
 								}
 								Vector<VOIBase>[] vArray = VOIs.VOIAt(0)
-										.getCurvesTemp();
+                                .getSortedCurves(VOIBase.ZPLANE, zDim);
 
 								if (vArray != null) {
 									if (vArray[z] != null
