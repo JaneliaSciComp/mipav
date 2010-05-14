@@ -1,9 +1,9 @@
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
 import gov.nih.mipav.model.structures.ModelImage;
 
 /**
  * The algorithm
- * 
  * 
  * @author senseneyj
  *
@@ -18,6 +18,9 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
 
 	    /** Slice size for xDim*yDim */
 	    private int sliceSize;
+
+	    /** Whether to perform a gaussian blur */
+		private boolean doGaussian;
 	    
 	    /**
 	     * Constructor.
@@ -32,6 +35,10 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
 	    
 		//  ~ Methods --------------------------------------------------------------------------------------------------------
 		
+		public void doGaussian(boolean doGaussian) {
+			this.doGaussian = doGaussian;
+		}
+
 		/**
 		 * Prepares this class for destruction.
 		 */
@@ -60,6 +67,16 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
 
 	    private void calc2D() {
 	    	fireProgressStateChanged("Message 2D: "+srcImage.getImageName());
+	    	
+	    	if(doGaussian) {
+	    		final float[] sigmas = {1.0f, 1.0f};
+	    		
+		    	AlgorithmGaussianBlur gaussianBlurAlgo = new AlgorithmGaussianBlur(destImage, srcImage, sigmas, true, false);
+		    	gaussianBlurAlgo.setRunningInSeparateThread(false);
+		    	linkProgressToAlgorithm(gaussianBlurAlgo);
+		    	gaussianBlurAlgo.runAlgorithm();
+	    	}
+	    	
 	    	for(int i=1; i<100; i++) {
 	    		fireProgressStateChanged(i);
 	    	}
@@ -67,6 +84,16 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
 	    
 	    private void calc3D() {
 	    	fireProgressStateChanged("Message 3D: "+srcImage.getImageName());
+	    	
+	    	if(doGaussian) {
+	    		final float[] sigmas = {1.0f, 1.0f, 1.0f};
+	    		
+		    	AlgorithmGaussianBlur gaussianBlurAlgo = new AlgorithmGaussianBlur(destImage, srcImage, sigmas, true, false);
+		    	gaussianBlurAlgo.setRunningInSeparateThread(false);
+		    	linkProgressToAlgorithm(gaussianBlurAlgo);
+		    	gaussianBlurAlgo.runAlgorithm();
+	    	}
+	    	
 	    	for(int i=1; i<100; i++) {
 	    		fireProgressStateChanged(i);
 	    	}
