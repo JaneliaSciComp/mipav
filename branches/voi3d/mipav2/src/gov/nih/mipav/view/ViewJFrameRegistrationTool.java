@@ -880,8 +880,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
 
             xfrm.MakeIdentity();
             imageB.calcMinMax();
-            componentImageA.deleteVOIs();
-            componentImageB.deleteVOIs();
+            voiManager.deleteVOIs();
             componentImage.deleteVOIs();
             xRotation = xRes * (image.getExtents()[0] / 2);
             yRotation = yRes * (image.getExtents()[1] / 2);

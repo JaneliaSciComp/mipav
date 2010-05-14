@@ -72,29 +72,6 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage {
     //~ Methods --------------------------------------------------------------------------------------------------------
     
     /**
-     * Deletes all VOIs.
-     */
-    public void deleteVOIs() {
-        int i;
-        int nVOI;
-
-        ViewVOIVector VOIs = imageActive.getVOIs();
-
-        nVOI = VOIs.size();
-
-        if (nVOI == 0) {
-            return;
-        }
-
-        for (i = (nVOI - 1); i >= 0; i--) {
-            VOIs.removeElementAt(i);
-        }
-
-        getVOIHandler().setVOI_ID(-1);
-        centerPtLocation = -1;
-    }
-
-    /**
      * Gets the center point of rotation.
      *
      * @return  int
