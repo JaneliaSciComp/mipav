@@ -28,7 +28,7 @@ public class MIPAVPolarCoordinateSystems {
 		
 		// Convert the pixel coordinate to Cartesian coordinate. 
 		float x = xx - centerX;
-		float y = centerY - yy;
+		float y = yy - centerY;
 		
 		// calculate the Polar coordinate  
 		float r = getRadius(x, y);
@@ -61,7 +61,7 @@ public class MIPAVPolarCoordinateSystems {
 			for (int xx = 0; xx < xDim; xx++) {
 				// Convert the pixel coordinate to Cartesian coordinate. 
 				float x = xx - centerX;
-				float y = centerY - yy;
+				float y = yy - centerY;
 
 				// calculate the Polar coordinate  
 				float r = getRadius(x, y);
@@ -93,7 +93,7 @@ public class MIPAVPolarCoordinateSystems {
 
 		// -- Need convert (x,y) into pixel coordinates
 		int x = (int)(getCartesianX(r, angle) + centerX);
-		int y = (int)(centerY - getCartesianY(r, angle));
+		int y = (int)(getCartesianY(r, angle) + centerY);
 
 		out.X = x;
 		out.Y = y;
@@ -163,7 +163,7 @@ public class MIPAVPolarCoordinateSystems {
 
 				// -- Need convert (x,y) into pixel coordinates
 				int x = (int)(getCartesianX(r, angle) + centerX);
-				int y = (int)(centerY - getCartesianY(r, angle));
+				int y = (int)(getCartesianY(r, angle) + centerY);
 
 				imageR.setValue(x, y, r);
 				imageTheta.setValue(x, y, angle);
