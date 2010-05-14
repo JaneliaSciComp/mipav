@@ -1689,22 +1689,13 @@ public class FileRawChunk extends FileBase {
                     for (i = 0; i < bufferByte.length; i++) {
                         bufferByte[i] = 0;
                     }
-                    System.out.println(bufferByte.length);
-                    File f;
-                    BufferedWriter writer = new BufferedWriter(new FileWriter(f = new File(System.getProperty("user.home")+File.separator+"bool.txt")));
-                    System.out.println(f.getAbsolutePath());
-                    String ln = new String();
+                    
                     for (i = 0; i < bufferSize; i++) {
-                    	ln = new String();
                         if (bufferBitSet.get(i)) {
-                        	//originally bufferByte[i >> 3] |= (1 << (i % 8)); but this yields pieces that do not connect when dealing with bits at 
-                        	//the boundary
+                        	//originally bufferByte[i >> 3] |= (1 << (i % 8));, but this yields the mirror image of the correct result
                         	bufferByte[i >> 3] |= (1 << (7-(i % 8)));  
                         }
                     }
-                    
-                    writer.flush();
-                    writer.close();
 
                     if (compressionType == FileInfoBase.COMPRESSION_NONE) {
                         raFile.write(bufferByte);
