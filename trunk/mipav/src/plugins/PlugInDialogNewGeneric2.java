@@ -9,6 +9,8 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.io.FileNotFoundException;
+
 import javax.swing.*;
 
 /**
@@ -202,6 +204,11 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
     private void init() {
         setForeground(Color.black);
         setTitle("Generic Plugin");
+        try {
+			setIconImage(MipavUtil.getIconImage("divinci.gif"));
+		} catch (FileNotFoundException e) {
+			Preferences.debug("Failed to load default icon", Preferences.DEBUG_MINOR);
+		}
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
