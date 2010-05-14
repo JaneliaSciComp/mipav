@@ -1,6 +1,7 @@
 import gov.nih.mipav.model.algorithms.*;
 
 import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -35,7 +36,13 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
     private ModelImage image; // 
     
     /** This is your algorithm */
-    private AlgorithmBase genericAlgo = null;
+    private PlugInAlgorithmNewGeneric2 genericAlgo = null;
+
+    /** The check box for whether a blur should be performed. */
+	private JCheckBox check;
+
+	/** The variable representing whether the blur should be performed. */
+	private boolean doGaussian;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -141,6 +148,7 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
             resultImage.setImageName(name);
             
             genericAlgo = new PlugInAlgorithmNewGeneric2(resultImage, image);
+            genericAlgo.doGaussian(doGaussian);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -166,7 +174,7 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
                 resultImage = null;
             }
 
-            MipavUtil.displayError("Kidney segmentation: unable to allocate enough memory");
+            MipavUtil.displayError("Generic algorithm: unable to allocate enough memory");
 
             return;
         }
@@ -177,14 +185,18 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
      * Used in turning your plugin into a script
      */
     protected void setGUIFromParams() {
-    // TODO Auto-generated method stub, no params yet
+    	image = scriptParameters.retrieveInputImage();
+    	
+    	doGaussian = scriptParameters.getParams().getBoolean("do_gaussian");
     } //end setGUIFromParams()
 
     /**
      * Used in turning your plugin into a script
      */
     protected void storeParamsFromGUI() throws ParserException {
-    // TODO Auto-generated method stub, no params yet
+    	scriptParameters.storeInputImage(image);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_gaussian", doGaussian));
     } //end storeParamsFromGUI()
    
     private void init() {
@@ -192,7 +204,6 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
         setTitle("Generic Plugin");
 
         GridBagConstraints gbc = new GridBagConstraints();
-        int yPos = 0;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
         gbc.anchor = GridBagConstraints.WEST;
@@ -200,7 +211,7 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
-        gbc.gridy = yPos++;
+        gbc.gridy = 0;
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setForeground(Color.black);
@@ -210,6 +221,13 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
         labelVOI.setForeground(Color.black);
         labelVOI.setFont(serif12);
         mainPanel.add(labelVOI, gbc);
+        
+        gbc.gridy = 1;
+        
+        check = new JCheckBox("Do gaussian blur");
+        check.setFont(serif12);
+        check.setSelected(false);
+        mainPanel.add(check, gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
 
@@ -238,6 +256,7 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
      * @return
      */
 	private boolean setVariables() {
+		doGaussian = check.isSelected();
 		return true;
 	} //end setVariables()
 }
