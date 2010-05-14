@@ -1,4 +1,5 @@
 import gov.nih.mipav.model.algorithms.*;
+
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -10,10 +11,13 @@ import java.awt.event.ActionEvent;
 import javax.swing.*;
 
 /**
- * @version  June 4, 2007
+ * This dialog will show up as a completed script.
+ * 
+ * @version  June 4, 2010
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
+ * @author senseneyj
  */
 public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements AlgorithmInterface {
     
@@ -27,10 +31,10 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
     /** Result image. */
     private ModelImage resultImage = null;
 
-    /** DOCUMENT ME! */
-    private ModelImage image; // source image
+    /** This source image is typically set by the constructor */
+    private ModelImage image; // 
     
-    /** DOCUMENT ME! */
+    /** This is your algorithm */
     private AlgorithmBase genericAlgo = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -68,20 +72,15 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
         String command = event.getActionCommand();
 
         if (command.equals("OK")) {
-
-            //if (setVariables()) {
+            if (setVariables()) {
                 callAlgorithm();
-            //}
+            }
         } else if (command.equals("Script")) {
             callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
         }
-    }
-
-    // ************************************************************************
-    // ************************** Algorithm Events ****************************
-    // ************************************************************************
+    } // end actionPerformed()
 
     /**
      * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithm when it
@@ -90,10 +89,7 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        
-        
-
-        if (algorithm instanceof AlgorithmBase) {
+       if (algorithm instanceof PlugInAlgorithmNewGeneric2) {
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
             image.clearMask();
             
@@ -131,7 +127,7 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
             dispose();
         }
 
-    } // end AlgorithmPerformed()
+    } // end algorithmPerformed()
 
     
     /**
@@ -143,8 +139,8 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
             String name = makeImageName(image.getImageName(), "_kidneys");
             resultImage = (ModelImage) image.clone();
             resultImage.setImageName(name);
+            
             genericAlgo = new PlugInAlgorithmNewGeneric2(resultImage, image);
-            //genericAlgo = new PlugInAlgorithmNewGeneric2(resultImage, image);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -177,17 +173,23 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
 
     } // end callAlgorithm()
 
+    /**
+     * Used in turning your plugin into a script
+     */
     protected void setGUIFromParams() {
     // TODO Auto-generated method stub, no params yet
-    }
+    } //end setGUIFromParams()
 
+    /**
+     * Used in turning your plugin into a script
+     */
     protected void storeParamsFromGUI() throws ParserException {
     // TODO Auto-generated method stub, no params yet
-    }
+    } //end storeParamsFromGUI()
    
     private void init() {
         setForeground(Color.black);
-        setTitle("3D Thigh CT detector");
+        setTitle("Generic Plugin");
 
         GridBagConstraints gbc = new GridBagConstraints();
         int yPos = 0;
@@ -202,9 +204,9 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setForeground(Color.black);
-        mainPanel.setBorder(buildTitledBorder(""));
+        mainPanel.setBorder(buildTitledBorder("A titled border"));
 
-        JLabel labelVOI = new JLabel("TBA");
+        JLabel labelVOI = new JLabel("Blank text");
         labelVOI.setForeground(Color.black);
         labelVOI.setFont(serif12);
         mainPanel.add(labelVOI, gbc);
@@ -229,4 +231,13 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
         System.gc();
 
     } // end init()
+
+    /**
+     * This method could ensure everything in your dialog box has been set correctly
+     * 
+     * @return
+     */
+	private boolean setVariables() {
+		return true;
+	} //end setVariables()
 }
