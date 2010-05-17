@@ -170,7 +170,11 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
         bValuePanel.add(bValueLabel);
         bValuePanel.add(bValueTextField);
         bValuePanel.add(bValueButton);
-
+        
+        
+        final JButton dirBrowseButton = new JButton("Load DWI Directory");
+        dirBrowseButton.addActionListener(this);
+        dirBrowseButton.setActionCommand("dirBrowse");
         final JButton srcBrowseButton = new JButton("Load DWI Volume");
         srcBrowseButton.addActionListener(this);
         srcBrowseButton.setActionCommand("srcBrowse");
@@ -178,6 +182,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
         loadBValGradFileButton.addActionListener(this);
         loadBValGradFileButton.setActionCommand("bvalGradBrowse");
         final JPanel DWIButtonPanel = new JPanel();
+        DWIButtonPanel.add(dirBrowseButton);
         DWIButtonPanel.add(srcBrowseButton);
         DWIButtonPanel.add(loadBValGradFileButton);
         DWIButtonPanel.add(bValuePanel);
@@ -354,8 +359,26 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
     public void actionPerformed(final ActionEvent e) {
         final String command = e.getActionCommand();
 
-        if (command.equalsIgnoreCase("srcBrowse")) {
-            final JFileChooser chooser = new JFileChooser();
+        
+        if(command.equalsIgnoreCase("dirBrowse")) {
+        	JFileChooser chooser = new JFileChooser();
+
+            if (currDir != null) {
+                chooser.setCurrentDirectory(new File(currDir));
+            }
+            chooser.setDialogTitle("Choose directory");
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            final int returnValue = chooser.showOpenDialog(this);
+            if (returnValue == JFileChooser.APPROVE_OPTION) {
+            	currDir = chooser.getSelectedFile().getAbsolutePath();
+                File file = new File(currDir);
+                parse(file);
+            	
+            }
+
+        	
+        }else if (command.equalsIgnoreCase("srcBrowse")) {
+            JFileChooser chooser = new JFileChooser();
 
             if (currDir != null) {
                 chooser.setCurrentDirectory(new File(currDir));
@@ -365,355 +388,20 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
             final int returnValue = chooser.showOpenDialog(this);
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 currDir = chooser.getSelectedFile().getAbsolutePath();
-                final FileIO fileIO = new FileIO();
+                FileIO fileIO = new FileIO();
                 fileIO.setQuiet(true);
 
                 srcImage = fileIO.readImage(chooser.getSelectedFile().getName(), chooser.getCurrentDirectory()
                         + File.separator, true, null);
 
-                final boolean isMultifile = srcImage.getFileInfo()[0].getMultiFile();
-                final int numDims = srcImage.getNDims();
+                
 
-                if (isMultifile && numDims == 4) {
-                    MipavUtil.displayError("Multifile 4D images are not currently supported");
-                    srcImage.disposeLocal();
+                boolean succ = populateFields();
+                
+                if(!succ) {
+                	srcImage.disposeLocal();
                     srcImage = null;
                     return;
-
-                }
-
-                if (srcImage.isDicomImage()) {
-                    if (formatTextField.getText().trim().equals("")) {
-                        formatTextField.setText("dicom");
-                        formatTextField.setEditable(false);
-                    } else {
-                        if ( !formatTextField.getText().trim().equals("dicom")) {
-                            MipavUtil.displayError("Image format for this volume does not match previous image format");
-                            return;
-                        }
-                    }
-                } else {
-                    final int type = srcImage.getType();
-                    if (type == ModelStorageBase.INTEGER) {
-                        if (formatTextField.getText().trim().equals("")) {
-                            formatTextField.setText("integer");
-                            formatTextField.setEditable(false);
-                        } else {
-                            if ( !formatTextField.getText().trim().equals("integer")) {
-                                MipavUtil
-                                        .displayError("Image format for this volume does not match previous image format");
-                                return;
-                            }
-                        }
-                    } else if (type == ModelStorageBase.FLOAT) {
-                        if (formatTextField.getText().trim().equals("")) {
-                            formatTextField.setText("float");
-                            formatTextField.setEditable(false);
-                        } else {
-                            if ( !formatTextField.getText().trim().equals("float")) {
-                                MipavUtil
-                                        .displayError("Image format for this volume does not match previous image format");
-                                return;
-                            }
-                        }
-                    }
-                }
-
-                final int xDim = srcImage.getExtents()[0];
-                if (xdimTextField.getText().trim().equals("")) {
-                    xdimTextField.setText(String.valueOf(xDim));
-                    xdimTextField.setEditable(false);
-                } else {
-                    if ( !xdimTextField.getText().trim().equals(String.valueOf(xDim))) {
-                        MipavUtil
-                                .displayError("Image X Dimension for this volume does not match previous image X dimension");
-                        return;
-                    }
-                }
-                final int yDim = srcImage.getExtents()[1];
-                if (ydimTextField.getText().trim().equals("")) {
-                    ydimTextField.setText(String.valueOf(yDim));
-                    ydimTextField.setEditable(false);
-                } else {
-                    if ( !ydimTextField.getText().trim().equals(String.valueOf(yDim))) {
-                        MipavUtil
-                                .displayError("Image Y Dimension for this volume does not match previous image Y dimension");
-                        return;
-                    }
-                }
-
-                final int orientation = srcImage.getImageOrientation();
-                if (orientation == FileInfoBase.AXIAL) {
-                    if (imagePlaneTextField.getText().trim().equals("")) {
-                        imagePlaneTextField.setText("axial");
-                        imagePlaneTextField.setEditable(false);
-                    } else {
-                        if ( !imagePlaneTextField.getText().trim().equals("axial")) {
-                            MipavUtil.displayError("Image plane for this volume does not match previous image plane");
-                            return;
-                        }
-                    }
-                } else if (orientation == FileInfoBase.SAGITTAL) {
-                    if (imagePlaneTextField.getText().trim().equals("")) {
-                        imagePlaneTextField.setText("sagittal");
-                        imagePlaneTextField.setEditable(false);
-                    } else {
-                        if ( !imagePlaneTextField.getText().trim().equals("sagittal")) {
-                            MipavUtil.displayError("Image plane for this volume does not match previous image plane");
-                            return;
-                        }
-                    }
-                } else if (orientation == FileInfoBase.CORONAL) {
-                    if (imagePlaneTextField.getText().trim().equals("")) {
-                        imagePlaneTextField.setText("coronal");
-                        imagePlaneTextField.setEditable(false);
-                    } else {
-                        if ( !imagePlaneTextField.getText().trim().equals("coronal")) {
-                            MipavUtil.displayError("Image plane for this volume does not match previous image plane");
-                            return;
-                        }
-                    }
-                }
-
-                if (srcImage.isDicomImage()) {
-                    final FileInfoDicom fileInfoDicom = (FileInfoDicom) srcImage.getFileInfo(0);
-
-                    final String sliceThickness = ((String) (fileInfoDicom.getTagTable().getValue("0018,0050"))).trim();
-                    final float sliceTh = new Float(sliceThickness.trim()).floatValue();
-
-                    String sliceGap = ((String) (fileInfoDicom.getTagTable().getValue("0018,0088"))).trim();
-                    float sliceGp = new Float(sliceGap.trim()).floatValue();
-
-                    sliceGp = sliceTh - sliceGp;
-                    sliceGap = String.valueOf(sliceGp);
-
-                    if (sliceThicknessTextField.getText().trim().equals("")) {
-                        sliceThicknessTextField.setText(sliceThickness);
-                        sliceThicknessTextField.setEditable(false);
-                    } else {
-                        if ( !sliceThicknessTextField.getText().trim().equals(sliceThickness)) {
-                            MipavUtil
-                                    .displayError("Slice thickness for this volume does not match previous slice thickness");
-                            return;
-                        }
-                    }
-                    if (gapTextField.getText().trim().equals("")) {
-                        gapTextField.setText(String.valueOf(sliceGap));
-                        gapTextField.setEditable(false);
-                    } else {
-                        if ( !gapTextField.getText().trim().equals(String.valueOf(sliceGap))) {
-                            MipavUtil
-                                    .displayError("Gap thickness for this volume does not match previous gap thickness");
-                            return;
-                        }
-                    }
-
-                    final String fieldOfView = (String) (fileInfoDicom.getTagTable().getValue("0018,1100"));
-
-                    if ( (fieldOfView == null) || fieldOfView.trim().equals("")) {
-
-                        // get pixel space in x direction
-                        final String xyPixelSpacingString = ((String) (fileInfoDicom.getTagTable()
-                                .getValue("0028,0030"))).trim();
-                        final int index = xyPixelSpacingString.indexOf("\\");
-                        final String xPixelSpacingString = xyPixelSpacingString.substring(0, index);
-                        final float xPixelSpacing = new Float(xPixelSpacingString).floatValue();
-                        final float xFieldOfViewFloat = xPixelSpacing * xDim;
-
-                        final String yPixelSpacingString = xyPixelSpacingString.substring(index + 1,
-                                xyPixelSpacingString.length());
-                        final float yPixelSpacing = new Float(yPixelSpacingString).floatValue();
-                        final float yFieldOfViewFloat = yPixelSpacing * xDim;
-
-                        final String xFieldOfView = String.valueOf(xFieldOfViewFloat);
-                        final String yFieldOfView = String.valueOf(yFieldOfViewFloat);
-                        if (hFOVTextField.getText().trim().equals("")) {
-                            hFOVTextField.setText(xFieldOfView);
-                            hFOVTextField.setEditable(false);
-                        } else {
-                            if ( !hFOVTextField.getText().trim().equals(xFieldOfView.trim())) {
-                                MipavUtil
-                                        .displayError("Horizontal FOV for this volume does not match previous horizontal FOV");
-                                return;
-                            }
-                        }
-
-                        if (vFOVTextField.getText().trim().equals("")) {
-                            vFOVTextField.setText(yFieldOfView);
-                            vFOVTextField.setEditable(false);
-                        } else {
-                            if ( !vFOVTextField.getText().trim().equals(yFieldOfView.trim())) {
-                                MipavUtil
-                                        .displayError("Vertical FOV for this volume does not match previous vertical FOV");
-                                return;
-                            }
-                        }
-
-                    } else {
-                        if (hFOVTextField.getText().trim().equals("")) {
-                            hFOVTextField.setText(fieldOfView);
-                            hFOVTextField.setEditable(false);
-                        } else {
-                            if ( !hFOVTextField.getText().trim().equals(fieldOfView.trim())) {
-                                MipavUtil
-                                        .displayError("Horizontal FOV for this volume does not match previous horizontal FOV");
-                                return;
-                            }
-                        }
-
-                        if (vFOVTextField.getText().trim().equals("")) {
-                            vFOVTextField.setText(fieldOfView);
-                            vFOVTextField.setEditable(false);
-                        } else {
-                            if ( !vFOVTextField.getText().trim().equals(fieldOfView.trim())) {
-                                MipavUtil
-                                        .displayError("Vertical FOV for this volume does not match previous vertical FOV");
-                                return;
-                            }
-                        }
-
-                    }
-
-                    final String dir = ((String) (fileInfoDicom.getTagTable().getValue("0018,1312"))).trim();
-                    String phaseEncodeDirection = "";
-
-                    if (dir.equalsIgnoreCase("col")) {
-                        phaseEncodeDirection = "vertical";
-                    } else if (dir.equalsIgnoreCase("row")) {
-                        phaseEncodeDirection = "horizontal";
-                    }
-
-                    if (phaseEncodingTextField.getText().trim().equals("")) {
-                        phaseEncodingTextField.setText(phaseEncodeDirection);
-                        phaseEncodingTextField.setEditable(false);
-                    } else {
-                        if ( !phaseEncodingTextField.getText().trim().equals(phaseEncodeDirection)) {
-                            MipavUtil
-                                    .displayError("Phase encoding orientaion for this volume does not match previous phase encoding orientation");
-                            return;
-                        }
-                    }
-
-                } else {
-                    final float sliceTh = srcImage.getFileInfo()[0].getSliceThickness();
-
-                    if (sliceThicknessTextField.getText().trim().equals("")) {
-                        sliceThicknessTextField.setText(String.valueOf(sliceTh));
-                        sliceThicknessTextField.setEditable(false);
-                    } else {
-                        if ( !sliceThicknessTextField.getText().trim().equals(String.valueOf(sliceTh))) {
-                            MipavUtil
-                                    .displayError("Slice thickness for this volume does not match previous slice thickness");
-                            return;
-                        }
-                    }
-                }
-
-                if (numDims == 3) {
-                    final int numSlices = srcImage.getExtents()[2];
-                    if (numSlicesTextField.getText().trim().equals("")) {
-                        numSlicesTextField.setText(String.valueOf(numSlices));
-                        numSlicesTextField.setEditable(false);
-                    } else {
-                        if ( !numSlicesTextField.getText().trim().equals(String.valueOf(numSlices))) {
-                            MipavUtil.displayError("Num slices for this volume does not match previous num slices");
-                            return;
-                        }
-                    }
-
-                    if (isMultifile) {
-                        final String firstImageSliceAbsPath = srcImage.getFileInfo(0).getFileDirectory()
-                                + srcImage.getFileInfo(0).getFileName();
-                        final String firstImageSliceName = srcImage.getFileInfo(0).getFileName();
-                        final ArrayList<String> slicesArrayList = new ArrayList<String>();
-                        for (int i = 0; i < numSlices; i++) {
-                            final String absPath = srcImage.getFileInfo(i).getFileDirectory()
-                                    + srcImage.getFileInfo(i).getFileName();
-                            // System.out.println(absPath);
-                            slicesArrayList.add(absPath);
-                        }
-                        slicesVector.add(slicesArrayList);
-
-                        // we will display the full path
-                        final Vector rowData = new Vector();
-                        rowData.add(firstImageSliceName + " - multifile");
-                        rowData.add("");
-                        rowData.add("");
-                        rowData.add("");
-                        rowData.add("");
-
-                        srcTableModel.addRow(rowData);
-                    } else {
-                        // to do
-                        final String imageAbsPath = srcImage.getFileInfo(0).getFileDirectory()
-                                + srcImage.getFileInfo(0).getFileName();
-                        final String imageName = srcImage.getFileInfo(0).getFileName();
-
-                        final ArrayList<String> slicesArrayList = new ArrayList<String>();
-
-                        for (int i = 0; i < numSlices; i++) {
-                            final String slicePath = imageAbsPath + "_3D_numSlices_" + numSlices + "_slice_" + i;
-                            // System.out.println(absPath);
-                            slicesArrayList.add(slicePath);
-                        }
-                        slicesVector.add(slicesArrayList);
-
-                        final Vector rowData = new Vector();
-                        rowData.add(imageName);
-                        rowData.add("");
-                        rowData.add("");
-                        rowData.add("");
-                        rowData.add("");
-
-                        srcTableModel.addRow(rowData);
-
-                    }
-
-                    numVolumesTextField.setText(String.valueOf(srcTableModel.getRowCount()));
-                    numVolumesTextField.setEditable(false);
-                } else if (numDims == 4) {
-                    final int numVolumes = srcImage.getExtents()[3];
-                    final int numSlices = srcImage.getExtents()[2];
-
-                    if (numSlicesTextField.getText().trim().equals("")) {
-                        numSlicesTextField.setText(String.valueOf(numSlices));
-                        numSlicesTextField.setEditable(false);
-                    } else {
-                        if ( !numSlicesTextField.getText().trim().equals(String.valueOf(numSlices))) {
-                            MipavUtil.displayError("Num slices for this volume does not match previous num slices");
-                            return;
-                        }
-                    }
-
-                    final String imageAbsPath = srcImage.getFileInfo(0).getFileDirectory()
-                            + srcImage.getFileInfo(0).getFileName();
-                    final String imageName = srcImage.getFileInfo(0).getFileName();
-
-                    int i = 0;
-                    for (i = 0; i < numVolumes; i++) {
-                        final ArrayList<String> slicesArrayList = new ArrayList<String>();
-                        for (int k = 0; k < numSlices; k++) {
-                            final String slicePath = imageAbsPath + "_4D_numVols_" + numVolumes + "_numSlices_"
-                                    + numSlices + "_vol_" + i + "_slice_" + k;
-                            slicesArrayList.add(slicePath);
-                        }
-
-                        slicesVector.add(slicesArrayList);
-
-                        final Vector rowData = new Vector();
-                        rowData.add(imageName + "_vol_" + i);
-                        rowData.add("");
-                        rowData.add("");
-                        rowData.add("");
-                        rowData.add("");
-
-                        srcTableModel.addRow(rowData);
-
-                    }
-
-                    numVolumesTextField.setText(String.valueOf(srcTableModel.getRowCount()));
-                    numVolumesTextField.setEditable(false);
-
                 }
 
                 srcImage.disposeLocal();
@@ -827,6 +515,413 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
         }
 
     }
+    
+    
+    /**
+     * Parses study directory
+     * @param file
+     * @return
+     */
+    public boolean parse(File file){
+
+    	
+    	
+    	File[] children = file.listFiles();
+    	FileIO fileIO = new FileIO();
+        fileIO.setQuiet(true);
+    	 try {
+
+             
+                 if (children[0].isDirectory()) {
+                	 for(int i=0;i<children.length;i++) {
+                		 parse(children[i]);
+                	 }
+                 } else {
+                	 currDir = children[0].getParent();
+                	 if(fileIO == null) {
+                		 System.out.println("null");
+                	 }
+                	 srcImage = fileIO.readImage(children[0].getName(), currDir
+                             + File.separator, true, null);
+
+                     
+
+                     boolean succ = populateFields();
+                     
+                     if(!succ) {
+                     	srcImage.disposeLocal();
+                         srcImage = null;
+                         return false;
+                     }
+
+                     srcImage.disposeLocal();
+                     srcImage = null;
+                	 
+                 }
+             
+    	
+    	 }catch(Exception e) {
+    		 e.printStackTrace();
+    		 return false;
+    	 }
+    	return true;
+    	
+    	
+    }
+    
+    
+    
+    private boolean populateFields() {
+    	
+    	boolean isMultifile = srcImage.getFileInfo()[0].getMultiFile();
+        int numDims = srcImage.getNDims();
+
+        if (isMultifile && numDims == 4) {
+            MipavUtil.displayError("Multifile 4D images are not currently supported");
+            srcImage.disposeLocal();
+            srcImage = null;
+            return false;
+
+        }
+    	if (srcImage.isDicomImage()) {
+            if (formatTextField.getText().trim().equals("")) {
+                formatTextField.setText("dicom");
+                formatTextField.setEditable(false);
+            } else {
+                if ( !formatTextField.getText().trim().equals("dicom")) {
+                    MipavUtil.displayError("Image format for this volume does not match previous image format");
+                    return false;
+                }
+            }
+        } else {
+            final int type = srcImage.getType();
+            if (type == ModelStorageBase.INTEGER) {
+                if (formatTextField.getText().trim().equals("")) {
+                    formatTextField.setText("integer");
+                    formatTextField.setEditable(false);
+                } else {
+                    if ( !formatTextField.getText().trim().equals("integer")) {
+                        MipavUtil
+                                .displayError("Image format for this volume does not match previous image format");
+                        return false;
+                    }
+                }
+            } else if (type == ModelStorageBase.FLOAT) {
+                if (formatTextField.getText().trim().equals("")) {
+                    formatTextField.setText("float");
+                    formatTextField.setEditable(false);
+                } else {
+                    if ( !formatTextField.getText().trim().equals("float")) {
+                        MipavUtil
+                                .displayError("Image format for this volume does not match previous image format");
+                        return false;
+                    }
+                }
+            }
+        }
+
+        final int xDim = srcImage.getExtents()[0];
+        if (xdimTextField.getText().trim().equals("")) {
+            xdimTextField.setText(String.valueOf(xDim));
+            xdimTextField.setEditable(false);
+        } else {
+            if ( !xdimTextField.getText().trim().equals(String.valueOf(xDim))) {
+                MipavUtil
+                        .displayError("Image X Dimension for this volume does not match previous image X dimension");
+                return false;
+            }
+        }
+        final int yDim = srcImage.getExtents()[1];
+        if (ydimTextField.getText().trim().equals("")) {
+            ydimTextField.setText(String.valueOf(yDim));
+            ydimTextField.setEditable(false);
+        } else {
+            if ( !ydimTextField.getText().trim().equals(String.valueOf(yDim))) {
+                MipavUtil
+                        .displayError("Image Y Dimension for this volume does not match previous image Y dimension");
+                return false;
+            }
+        }
+
+        final int orientation = srcImage.getImageOrientation();
+        if (orientation == FileInfoBase.AXIAL) {
+            if (imagePlaneTextField.getText().trim().equals("")) {
+                imagePlaneTextField.setText("axial");
+                imagePlaneTextField.setEditable(false);
+            } else {
+                if ( !imagePlaneTextField.getText().trim().equals("axial")) {
+                    MipavUtil.displayError("Image plane for this volume does not match previous image plane");
+                    return false;
+                }
+            }
+        } else if (orientation == FileInfoBase.SAGITTAL) {
+            if (imagePlaneTextField.getText().trim().equals("")) {
+                imagePlaneTextField.setText("sagittal");
+                imagePlaneTextField.setEditable(false);
+            } else {
+                if ( !imagePlaneTextField.getText().trim().equals("sagittal")) {
+                    MipavUtil.displayError("Image plane for this volume does not match previous image plane");
+                    return false;
+                }
+            }
+        } else if (orientation == FileInfoBase.CORONAL) {
+            if (imagePlaneTextField.getText().trim().equals("")) {
+                imagePlaneTextField.setText("coronal");
+                imagePlaneTextField.setEditable(false);
+            } else {
+                if ( !imagePlaneTextField.getText().trim().equals("coronal")) {
+                    MipavUtil.displayError("Image plane for this volume does not match previous image plane");
+                    return false;
+                }
+            }
+        }
+
+        if (srcImage.isDicomImage()) {
+            final FileInfoDicom fileInfoDicom = (FileInfoDicom) srcImage.getFileInfo(0);
+
+            final String sliceThickness = ((String) (fileInfoDicom.getTagTable().getValue("0018,0050"))).trim();
+            final float sliceTh = new Float(sliceThickness.trim()).floatValue();
+
+            String sliceGap = ((String) (fileInfoDicom.getTagTable().getValue("0018,0088"))).trim();
+            float sliceGp = new Float(sliceGap.trim()).floatValue();
+
+            sliceGp = sliceTh - sliceGp;
+            sliceGap = String.valueOf(sliceGp);
+
+            if (sliceThicknessTextField.getText().trim().equals("")) {
+                sliceThicknessTextField.setText(sliceThickness);
+                sliceThicknessTextField.setEditable(false);
+            } else {
+                if ( !sliceThicknessTextField.getText().trim().equals(sliceThickness)) {
+                    MipavUtil
+                            .displayError("Slice thickness for this volume does not match previous slice thickness");
+                    return false;
+                }
+            }
+            if (gapTextField.getText().trim().equals("")) {
+                gapTextField.setText(String.valueOf(sliceGap));
+                gapTextField.setEditable(false);
+            } else {
+                if ( !gapTextField.getText().trim().equals(String.valueOf(sliceGap))) {
+                    MipavUtil
+                            .displayError("Gap thickness for this volume does not match previous gap thickness");
+                    return false;
+                }
+            }
+
+            final String fieldOfView = (String) (fileInfoDicom.getTagTable().getValue("0018,1100"));
+
+            if ( (fieldOfView == null) || fieldOfView.trim().equals("")) {
+
+                // get pixel space in x direction
+                final String xyPixelSpacingString = ((String) (fileInfoDicom.getTagTable()
+                        .getValue("0028,0030"))).trim();
+                final int index = xyPixelSpacingString.indexOf("\\");
+                final String xPixelSpacingString = xyPixelSpacingString.substring(0, index);
+                final float xPixelSpacing = new Float(xPixelSpacingString).floatValue();
+                final float xFieldOfViewFloat = xPixelSpacing * xDim;
+
+                final String yPixelSpacingString = xyPixelSpacingString.substring(index + 1,
+                        xyPixelSpacingString.length());
+                final float yPixelSpacing = new Float(yPixelSpacingString).floatValue();
+                final float yFieldOfViewFloat = yPixelSpacing * xDim;
+
+                final String xFieldOfView = String.valueOf(xFieldOfViewFloat);
+                final String yFieldOfView = String.valueOf(yFieldOfViewFloat);
+                if (hFOVTextField.getText().trim().equals("")) {
+                    hFOVTextField.setText(xFieldOfView);
+                    hFOVTextField.setEditable(false);
+                } else {
+                    if ( !hFOVTextField.getText().trim().equals(xFieldOfView.trim())) {
+                        MipavUtil
+                                .displayError("Horizontal FOV for this volume does not match previous horizontal FOV");
+                        return false;
+                    }
+                }
+
+                if (vFOVTextField.getText().trim().equals("")) {
+                    vFOVTextField.setText(yFieldOfView);
+                    vFOVTextField.setEditable(false);
+                } else {
+                    if ( !vFOVTextField.getText().trim().equals(yFieldOfView.trim())) {
+                        MipavUtil
+                                .displayError("Vertical FOV for this volume does not match previous vertical FOV");
+                        return false;
+                    }
+                }
+
+            } else {
+                if (hFOVTextField.getText().trim().equals("")) {
+                    hFOVTextField.setText(fieldOfView);
+                    hFOVTextField.setEditable(false);
+                } else {
+                    if ( !hFOVTextField.getText().trim().equals(fieldOfView.trim())) {
+                        MipavUtil
+                                .displayError("Horizontal FOV for this volume does not match previous horizontal FOV");
+                        return false;
+                    }
+                }
+
+                if (vFOVTextField.getText().trim().equals("")) {
+                    vFOVTextField.setText(fieldOfView);
+                    vFOVTextField.setEditable(false);
+                } else {
+                    if ( !vFOVTextField.getText().trim().equals(fieldOfView.trim())) {
+                        MipavUtil
+                                .displayError("Vertical FOV for this volume does not match previous vertical FOV");
+                        return false;
+                    }
+                }
+
+            }
+
+            final String dir = ((String) (fileInfoDicom.getTagTable().getValue("0018,1312"))).trim();
+            String phaseEncodeDirection = "";
+
+            if (dir.equalsIgnoreCase("col")) {
+                phaseEncodeDirection = "vertical";
+            } else if (dir.equalsIgnoreCase("row")) {
+                phaseEncodeDirection = "horizontal";
+            }
+
+            if (phaseEncodingTextField.getText().trim().equals("")) {
+                phaseEncodingTextField.setText(phaseEncodeDirection);
+                phaseEncodingTextField.setEditable(false);
+            } else {
+                if ( !phaseEncodingTextField.getText().trim().equals(phaseEncodeDirection)) {
+                    MipavUtil
+                            .displayError("Phase encoding orientaion for this volume does not match previous phase encoding orientation");
+                    return false;
+                }
+            }
+
+        } else {
+            final float sliceTh = srcImage.getFileInfo()[0].getSliceThickness();
+
+            if (sliceThicknessTextField.getText().trim().equals("")) {
+                sliceThicknessTextField.setText(String.valueOf(sliceTh));
+                sliceThicknessTextField.setEditable(false);
+            } else {
+                if ( !sliceThicknessTextField.getText().trim().equals(String.valueOf(sliceTh))) {
+                    MipavUtil
+                            .displayError("Slice thickness for this volume does not match previous slice thickness");
+                    return false;
+                }
+            }
+        }
+
+        if (numDims == 3) {
+            final int numSlices = srcImage.getExtents()[2];
+            if (numSlicesTextField.getText().trim().equals("")) {
+                numSlicesTextField.setText(String.valueOf(numSlices));
+                numSlicesTextField.setEditable(false);
+            } else {
+                if ( !numSlicesTextField.getText().trim().equals(String.valueOf(numSlices))) {
+                    MipavUtil.displayError("Num slices for this volume does not match previous num slices");
+                    return false;
+                }
+            }
+
+            if (isMultifile) {
+                final String firstImageSliceAbsPath = srcImage.getFileInfo(0).getFileDirectory()
+                        + srcImage.getFileInfo(0).getFileName();
+                final String firstImageSliceName = srcImage.getFileInfo(0).getFileName();
+                final ArrayList<String> slicesArrayList = new ArrayList<String>();
+                for (int i = 0; i < numSlices; i++) {
+                    final String absPath = srcImage.getFileInfo(i).getFileDirectory()
+                            + srcImage.getFileInfo(i).getFileName();
+                    // System.out.println(absPath);
+                    slicesArrayList.add(absPath);
+                }
+                slicesVector.add(slicesArrayList);
+
+                // we will display the full path
+                final Vector rowData = new Vector();
+                rowData.add(firstImageSliceName + " - multifile");
+                rowData.add("");
+                rowData.add("");
+                rowData.add("");
+                rowData.add("");
+
+                srcTableModel.addRow(rowData);
+            } else {
+                // to do
+                final String imageAbsPath = srcImage.getFileInfo(0).getFileDirectory()
+                        + srcImage.getFileInfo(0).getFileName();
+                final String imageName = srcImage.getFileInfo(0).getFileName();
+
+                final ArrayList<String> slicesArrayList = new ArrayList<String>();
+
+                for (int i = 0; i < numSlices; i++) {
+                    final String slicePath = imageAbsPath + "_3D_numSlices_" + numSlices + "_slice_" + i;
+                    // System.out.println(absPath);
+                    slicesArrayList.add(slicePath);
+                }
+                slicesVector.add(slicesArrayList);
+
+                final Vector rowData = new Vector();
+                rowData.add(imageName);
+                rowData.add("");
+                rowData.add("");
+                rowData.add("");
+                rowData.add("");
+
+                srcTableModel.addRow(rowData);
+
+            }
+
+            numVolumesTextField.setText(String.valueOf(srcTableModel.getRowCount()));
+            numVolumesTextField.setEditable(false);
+        } else if (numDims == 4) {
+            final int numVolumes = srcImage.getExtents()[3];
+            final int numSlices = srcImage.getExtents()[2];
+
+            if (numSlicesTextField.getText().trim().equals("")) {
+                numSlicesTextField.setText(String.valueOf(numSlices));
+                numSlicesTextField.setEditable(false);
+            } else {
+                if ( !numSlicesTextField.getText().trim().equals(String.valueOf(numSlices))) {
+                    MipavUtil.displayError("Num slices for this volume does not match previous num slices");
+                    return false;
+                }
+            }
+
+            final String imageAbsPath = srcImage.getFileInfo(0).getFileDirectory()
+                    + srcImage.getFileInfo(0).getFileName();
+            final String imageName = srcImage.getFileInfo(0).getFileName();
+
+            int i = 0;
+            for (i = 0; i < numVolumes; i++) {
+                final ArrayList<String> slicesArrayList = new ArrayList<String>();
+                for (int k = 0; k < numSlices; k++) {
+                    final String slicePath = imageAbsPath + "_4D_numVols_" + numVolumes + "_numSlices_"
+                            + numSlices + "_vol_" + i + "_slice_" + k;
+                    slicesArrayList.add(slicePath);
+                }
+
+                slicesVector.add(slicesArrayList);
+
+                final Vector rowData = new Vector();
+                rowData.add(imageName + "_vol_" + i);
+                rowData.add("");
+                rowData.add("");
+                rowData.add("");
+                rowData.add("");
+
+                srcTableModel.addRow(rowData);
+
+            }
+
+            numVolumesTextField.setText(String.valueOf(srcTableModel.getRowCount()));
+            numVolumesTextField.setEditable(false);
+
+        }
+        
+        return true;
+    }
+    
+    
+    
 
     /**
      * reads the bval/gradient file...both dti studio format and fsl format are accepted
