@@ -507,6 +507,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 			
 			subFilePanel = new JFileTreePanel();
 			subFilePanel.setBorder(MipavUtil.buildTitledBorder("Select class files"));
+			subFilePanel.setFont(MipavUtil.font12);
 			fileTree = subFilePanel.getFileTree();
 			mainSelectorPanel.add(subFilePanel);
 			
@@ -518,12 +519,15 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 			selected = new JList();
 			selected.setModel(new DefaultListModel());
 			selected.setCellRenderer(new FileCellRenderer());
+			selected.setFont(MipavUtil.font12);
 			JScrollPane scrollPane = new JScrollPane(selected);
+			scrollPane.setFont(MipavUtil.font12);
 			scrollPane.setPreferredSize(new Dimension(288, 317));
 			scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 			scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 			fileListPanel.setPreferredSize(new Dimension(300, 350));
 			fileListPanel.add(scrollPane);
+			fileListPanel.setFont(MipavUtil.font12);
 			mainSelectorPanel.add(fileListPanel);
 			add(mainSelectorPanel);
 			
@@ -1046,7 +1050,6 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 	 	}
 
 	 	setEnabled(list.isEnabled());
-	 	setFont(list.getFont());
          
          Border border = null;
          if(chf) {
@@ -1270,6 +1273,9 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     		return (getChildCount() == 0);
     	}
     	
+    	/**
+    	 * Whether file qualifies as being a Java container (this is anything that may include or is a class file).
+    	 */
     	private boolean isAJavaContainer(File file) {
     		if(file.isDirectory()) {
     			return true;
