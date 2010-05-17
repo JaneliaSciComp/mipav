@@ -1,3 +1,31 @@
+//MIPAV is freely available from http://mipav.cit.nih.gov
+
+//Pursuant to Title 17, Section 105 of the United States Code, this 
+//software is not subject to copyright protection and is in the public 
+//domain.  It is a work of the United States Government.
+
+//THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
+//EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
+//OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
+//NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
+//HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
+//WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+//FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
+//OR OTHER DEALINGS IN THE SOFTWARE. 
+
+/*****************************************************************
+******************************************************************
+
+The MIPAV application is intended for research use only.
+This application has NOT been approved for ANY diagnostic use 
+by the Food and Drug Administration. There is currently no 
+approval process pending. 
+
+This software may NOT be used for diagnostic purposes.
+
+******************************************************************
+******************************************************************/
+
 import gov.nih.mipav.model.algorithms.*;
 
 import gov.nih.mipav.model.scripting.*;
@@ -14,13 +42,16 @@ import java.io.FileNotFoundException;
 import javax.swing.*;
 
 /**
- * This dialog will show up as a completed script.
+ * This class displays a basic dialog for a MIPAV plug-in.  The dialog has been made scriptable, 
+ * meaning it can be executed and recorded as part of a script.  It implements AlgorithmInterface,
+ * meaning it has methods for listening to and recording the progress of an algorithm.
  * 
  * @version  June 4, 2010
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
- * @author senseneyj
+ * @author Justin Senseney (SenseneyJ@mail.nih.gov)
+ * @see http://mipav.cit.nih.gov
  */
 public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements AlgorithmInterface {
     
