@@ -2758,20 +2758,25 @@ public class ModelImage extends ModelStorageBase {
      */
     public void reallocate(final int type) {
         final int[] dimExtents = getExtents();
-
+        int length = dimExtents[0]*dimExtents[1];
+        int originalType = this.getFileInfo()[0].getDataType();
+        double imageMin = this.getMin();
+        double imageMax = this.getMax();
+        int originalLength;
         if (dimExtents.length == 2) {
             fileInfo[0].setDataType(type);
         } else if (dimExtents.length == 3) {
-
+            length *= dimExtents[2];
             for (int i = 0; i < dimExtents[2]; i++) {
                 fileInfo[i].setDataType(type);
             }
         } else if (dimExtents.length == 4) {
-
+            length *= dimExtents[2]*dimExtents[3];
             for (int i = 0; i < (dimExtents[2] * dimExtents[3]); i++) {
                 fileInfo[i].setDataType(type);
             }
         }
+        originalLength = length;
 
         try {
             super.reallocate(type);
@@ -3003,21 +3008,25 @@ public class ModelImage extends ModelStorageBase {
             case ModelStorageBase.SHORT:
                 defaultMin = -32768.0;
                 defaultMax = 32767.0;
+                length *= 2;
                 break;
 
             case ModelStorageBase.USHORT:
                 defaultMin = 0.0;
                 defaultMax = 65535.0;
+                length *= 2;
                 break;
 
             case ModelStorageBase.INTEGER:
                 defaultMin = -2147483648.0;
                 defaultMax = 2147483647.0;
+                length *= 4;
                 break;
 
             case ModelStorageBase.UINTEGER:
                 defaultMin = 0.0;
                 defaultMax = 4294967295.0;
+                length *= 4;
                 break;
                
             case ModelStorageBase.LONG:
@@ -3027,11 +3036,13 @@ public class ModelImage extends ModelStorageBase {
             case ModelStorageBase.FLOAT:
             	defaultMin = -Float.MAX_VALUE;
             	defaultMax = Float.MAX_VALUE;
+            	length *= 4;
                 break;
 
             case ModelStorageBase.DOUBLE:
             	defaultMin = -Double.MAX_VALUE;
             	defaultMax = Double.MAX_VALUE;
+            	length *= 8;
                 break;
 
             case ModelStorageBase.ARGB: 
@@ -3049,21 +3060,41 @@ public class ModelImage extends ModelStorageBase {
             	MipavUtil.displayError("Illegal Minc data type");
             	return;
             }
+            while ((length % 4) != 0) {
+            	length++;
+            }
+            switch (originalType) {
+            case SHORT:
+            case USHORT:
+            	originalLength *= 2;
+            	break;
+            case INTEGER:
+            case UINTEGER:
+            case FLOAT:
+            	originalLength *= 4;
+            	break;
+            case DOUBLE:
+            	originalLength *= 8;
+            }
+            while ((originalLength % 4) != 0) {
+                originalLength++;	
+            }
             // Note that the new buffer of values is not imported until
             // after the reallocation so valid_min, valid_max, and
             // valid_range values cannot be obtained from the image
-            // set vmin = 0.0 and vmax = 0.0 so slope = 1 and intercept = 0.
-            vmin = 0.0;
-            vmax = 0.0;
+            vmin = defaultMin;
+            vmax = defaultMax;
             for (int i = 0; i  < numSlices; i++) {
                 ((FileInfoMinc)fileInfo[i]).vmin = vmin;	
                 ((FileInfoMinc)fileInfo[i]).vmax = vmax;
                 varArray = ((FileInfoMinc)fileInfo[i]).getVarArray();
                 if (varArray != null) {
-                	//increaseBegin = 0;
+                	increaseBegin = 0;
                 	for (int j = 0; j < varArray.length; j++) {	
-                		//varArray[j].begin += increaseBegin;
+                		varArray[j].begin += increaseBegin;
                         if (varArray[j].name.equals("image")) {
+                        	increaseBegin = length - originalLength;
+                        	varArray[j].vsize = length;
                             switch (type) {
                             case ModelStorageBase.BYTE:
                                 varArray[j].signtype = new String("signed__");
@@ -3163,13 +3194,12 @@ public class ModelImage extends ModelStorageBase {
                      	    varArray[j].addVattElem("valid_range", FileInfoMinc.NC_DOUBLE, 2, k);	
                      	    varArray[j].vattArray[k].setValue(Double.valueOf(vmin), 0);
                             varArray[j].vattArray[k].setValue(Double.valueOf(vmax), 1);
-                            varArray[j].vsize = varArray[j].vsize + 4; // length of string name
-                            varArray[j].vsize = varArray[j].vsize + 11; // bytes in string name
-                            varArray[j].vsize = varArray[j].vsize + 1; // pad to 4 byte boundary
-                            varArray[j].vsize = varArray[j].vsize + 4; // 4 bytes for nc_type
-                            varArray[j].vsize = varArray[j].vsize + 4; // 4 bytes for length of vattArray[k]
-                            varArray[j].vsize = varArray[j].vsize + 16; // 16 bytes in 2 doubles
-                            //increaseBegin = 4 + 11 + 1 + 4 + 4 + 16;
+                            increaseBegin += 4; // length of string name
+                            increaseBegin += 11; // bytes in string name
+                            increaseBegin += 1; // pad to 4 byte boundary
+                            increaseBegin += 4; // 4 bytes for nc_type
+                            increaseBegin += 4; // 4 bytes for length of vattArray[k]
+                            increaseBegin += 16; // 16 bytes in 2 doubles
                      	}
                         } // if (varArray[j].name.equals("image"))
                         if (varArray[j].name.equals("image-max")) {
