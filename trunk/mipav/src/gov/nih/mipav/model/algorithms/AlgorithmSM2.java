@@ -26,6 +26,38 @@ import java.text.*;
  * 3) f_vp in [0, 0.99]
  
  * srcImage is a dynamic "4D volume" of MRI signal (3D over time).
+ * The equation used here is virtually identical to equation 10.3 in T1-w DCE-MRI.
+ * Ct(t) = vpCp(t) + ktrans*integral from 0 to t of 
+ * Cp(t') * exp[-ktrans*(t - t')/ve]dt' (10.3)
+ * Cp is the concentration of agent in the vascular plasma space, vp.
+ * ve is the volume of the extravascular extracellular space per unit volume of tissue.
+ * ktrans is the volume transfer constant between vp and ve.
+ * Ct is the tracer concentration in the tissue as a whole.
+ * Our equation is:
+ * R1(t) - R10 = vp * [R1,p(t) - R10,p] + ktrans*integral from 0 to t of
+ * [R1,p(tau) - R10,p]*exp[-ktrans*(t - tau)/ve]d(tau)
+ * where R10 is the tissue R1 map in the absence of contrast material, a 3D volume
+ * R1(tj) is the tissue R1 map during contrast infusion, a 4D data set.
+ * With the sagittal sinus VOI:
+ * Average over this VOI to extract the constant R10,p from the R10 map.
+ * Average over this VOI to extract the time series R1,p(tj) from the
+ * R1(tj) 4D data set.
+ * tj is a vector of the center times for each volume, where j = 1,...,n and 
+ * a is the number of post-contrast volumes.
+ * 
+ * Solve the equation numerically assuming piecewise linearity and using the
+ * trapezoid rule.
+ * 
+The pre-injection volumes are actually averaged together to generate the R10 map. So you're right, they wouldn't provide any additional information,
+ and we don't need to fit them.
+After injection (t=t1), the first volume usually has no contrast in it. That's because the contrast has to circulate to the brain. 
+So R1,p(t1) should be the same as R10,p, but in our scheme R1,p(t1) wasn't used to generate the R10 map. Any differences should be due to noise.
+ Does that help explain things?
+
+For monomeric gadolinium chelates, Ktrans for the normal blood brain barrier is approximately 10^-4 min^-1 
+(from the legend to Fig 5 of Li, Rooney, and Springer (MRM, 2005)). So a lower bound of 10^-5 should be ok.
+If R1,p(t1) = R10,p except for noise, then R1,p(t1) - R10,p is purely noise and contains no useful information
+
  
  
  References:
