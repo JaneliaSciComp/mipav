@@ -55,8 +55,6 @@ public class JDialogLoadProstateMask extends JDialogBase implements AlgorithmInt
     private Color voiColor;
     /** DOCUMENT ME! */
     private int elementNum;
-    /** DOCUMENT ME! */
-    private Polygon[] gons = null;
     private int defaultPts;
     /** DOCUMENT ME! */
     private boolean trim = true;
@@ -296,6 +294,7 @@ public class JDialogLoadProstateMask extends JDialogBase implements AlgorithmInt
         int nVOI, nContours;
         float[] xPoints = null;
         float[] yPoints = null;
+        float[] zPoints = null;
 
         VOIs = image.getVOIs();
         VOIs.VOIAt(0).setActive(true);
@@ -331,15 +330,17 @@ public class JDialogLoadProstateMask extends JDialogBase implements AlgorithmInt
         contours = VOIs.VOIAt(groupNum).getCurves();
         nContours = contours.size();
 
+        VOIContour activeContour = null;
         for (elementNum = 0; elementNum < nContours; elementNum++) {
             ((VOIContour)(contours.elementAt(elementNum))).setActive(true);
             if (((VOIContour) (contours.elementAt(elementNum)))
                     .isActive()) {
+                activeContour = (VOIContour) (contours.elementAt(elementNum));
                 break;
             }
         }
 
-        if (elementNum == nContours) {
+        if (elementNum == nContours || activeContour == null) {
 
             // Don't think this should happen under normal operations
             dispose();
@@ -347,32 +348,39 @@ public class JDialogLoadProstateMask extends JDialogBase implements AlgorithmInt
             return;
         }
         System.err.println("ruida pass");
-        gons = VOIs.VOIAt(groupNum).exportPolygons();
 
-        xPoints = new float[gons[elementNum].npoints + 5];
-        yPoints = new float[gons[elementNum].npoints + 5];
+        int npoints = activeContour.size();
+        xPoints = new float[npoints + 5];
+        yPoints = new float[npoints + 5];
+        zPoints = new float[npoints + 5];
 
-        xPoints[0] = gons[elementNum].xpoints[gons[elementNum].npoints - 2];
-        yPoints[0] = gons[elementNum].ypoints[gons[elementNum].npoints - 2];
+        xPoints[0] = activeContour.elementAt(npoints - 2).X;
+        yPoints[0] = activeContour.elementAt(npoints - 2).Y;
+        zPoints[0] = activeContour.elementAt(npoints - 2).Z;
 
-        xPoints[1] = gons[elementNum].xpoints[gons[elementNum].npoints - 1];
-        yPoints[1] = gons[elementNum].ypoints[gons[elementNum].npoints - 1];
+        xPoints[1] = activeContour.elementAt(npoints - 1).X;
+        yPoints[1] = activeContour.elementAt(npoints - 1).Y;
+        zPoints[1] = activeContour.elementAt(npoints - 1).Z;
 
-        for (i = 0; i < gons[elementNum].npoints; i++) {
-            xPoints[i + 2] = gons[elementNum].xpoints[i];
-            yPoints[i + 2] = gons[elementNum].ypoints[i];
+        for (i = 0; i < npoints; i++) {
+            xPoints[i + 2] = activeContour.elementAt(i).X;
+            yPoints[i + 2] = activeContour.elementAt(i).Y;
+            zPoints[i + 2] = activeContour.elementAt(i).Z;
         }
 
-        xPoints[gons[elementNum].npoints + 2] = gons[elementNum].xpoints[0];
-        yPoints[gons[elementNum].npoints + 2] = gons[elementNum].ypoints[0];
+        xPoints[npoints + 2] = activeContour.elementAt(0).X;
+        yPoints[npoints + 2] = activeContour.elementAt(0).Y;
+        zPoints[npoints + 2] = activeContour.elementAt(0).Z;
 
-        xPoints[gons[elementNum].npoints + 3] = gons[elementNum].xpoints[1];
-        yPoints[gons[elementNum].npoints + 3] = gons[elementNum].ypoints[1];
+        xPoints[npoints + 3] = activeContour.elementAt(1).X;
+        yPoints[npoints + 3] = activeContour.elementAt(1).Y;
+        zPoints[npoints + 3] = activeContour.elementAt(1).Z;
 
-        xPoints[gons[elementNum].npoints + 4] = gons[elementNum].xpoints[2];
-        yPoints[gons[elementNum].npoints + 4] = gons[elementNum].ypoints[2];
+        xPoints[npoints + 4] = activeContour.elementAt(2).X;
+        yPoints[npoints + 4] = activeContour.elementAt(2).Y;
+        zPoints[npoints + 4] = activeContour.elementAt(2).Z;
 
-        AlgorithmArcLength arcLength = new AlgorithmArcLength(xPoints, yPoints);
+        AlgorithmArcLength arcLength = new AlgorithmArcLength(xPoints, yPoints, zPoints);
         defaultPts = Math.round(arcLength.getTotalArcLength() / 3);
 
         try {

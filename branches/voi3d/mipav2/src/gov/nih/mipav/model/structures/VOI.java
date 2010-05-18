@@ -1262,24 +1262,6 @@ public class VOI extends ModelSerialCloneable {
      */
 
     /**
-     * @return
-     */
-    public Polygon[] exportPolygons() {
-        if ((curveType == LINE) || (curveType == POINT) || (curveType == PROTRACTOR) || (curveType == ANNOTATION) ||
-                (curveType == POLYLINE_SLICE)) {
-            return null;
-        }
-
-        Vector<Polygon> polygons = new Vector<Polygon>();
-
-        for (int i = 0; i < curves.size(); i++) {
-            polygons.add( ((VOIContour) (curves.elementAt(i))).exportPolygon(1, 1, 1, 1) );
-        }
-
-        return (Polygon[])polygons.toArray();
-    }
-
-    /**
      * Gets polygons from the VOI; can only use with Contour.
      *
      * @param   slice  index of slice
