@@ -85,6 +85,7 @@ public class JDialogFileInfoMincHDF extends JDialogBase implements ActionListene
                         final Attribute currentAttribute = it.next();
                         dataDims = currentAttribute.getDataDims();
                         final String name = currentAttribute.getName();
+
                         if ( !name.equals("varid") && !name.equals("vartype") && !name.equals("version")) {
                             rowData[1] = name;
 

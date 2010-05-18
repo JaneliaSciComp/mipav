@@ -689,15 +689,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.windowClosing(null);
         } else if (command.equals("dccieconvert")) {
             new JDialogDCCIEConversion();
-        } else if (command.equals("convertXML")) {
-            final ViewDirectoryChooser chooser = new ViewDirectoryChooser();
-            final String dir = chooser.getImageDirectory();
-
-            if (dir != null) {
-                final AlgorithmConvertOldXML algo = new AlgorithmConvertOldXML(dir);
-
-                algo.run();
-            }
         } else if (command.equals("loadLeica")) {
             // open a file chooser to select .txt header
 
@@ -1540,8 +1531,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogMRIShadingCorrection(this, getActiveImage());
         } else if (command.equals("sm2")) {
             new JDialogSM2(this, getActiveImage());
-        } else if (command.equals("graphBasedSeg")) {
-            new JDialogGraphBasedSegmentation(this, getActiveImage());
         } else if (command.equals("evalSeg")) {
             new JDialogEvaluateSegmentation(this, getActiveImage());
         } else if (command.equals("evalSegMask")) {
@@ -1637,8 +1626,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogHistogram2Dim(this, getActiveImage());
         } else if (command.equals("cumHistogram")) {
             new JDialogCumulativeHistogram(this, getActiveImage());
-        } else if (command.equals("DENCLUE")) {
-            new JDialogDENCLUE(this, getActiveImage());
         } else if (command.equals("colocEM")) {
             new JDialogColocalizationEM(this, getActiveImage());
         } else if (command.equals("colocRegression")) {
@@ -1710,10 +1697,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogHoughLine(this, getActiveImage());
         } else if (command.equals("HoughParabola")) {
             new JDialogHoughParabola(this, getActiveImage());
-        } else if (command.equals("Rtable")) {
-            new JDialogCreateRtable(this, getActiveImage());
-        } else if (command.equals("FindRObject")) {
-            new JDialogFindRtableObject(this, getActiveImage());
         } else if (command.equals("gFilter")) {
             new JDialogGaborFilter(this, getActiveImage());
         } else if (command.equals("hFilter")) {

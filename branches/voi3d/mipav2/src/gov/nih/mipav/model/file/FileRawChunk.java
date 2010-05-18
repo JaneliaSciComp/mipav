@@ -440,7 +440,7 @@ public class FileRawChunk extends FileBase {
 
                     for (i = 0; i < bufferSize; i++) {
 
-                        if ((bufferByte[i >> 3] & (1 << (i % 8))) != 0) {
+                        if ((bufferByte[i >> 3] & (1 << (7-(i % 8)))) != 0) {
                             bufferBitSet.set(i);
                         } else {
                             bufferBitSet.clear(i);
@@ -1620,7 +1620,7 @@ public class FileRawChunk extends FileBase {
                         break;
 
                     case ModelStorageBase.UINTEGER:
-                        bufferInt = new int[bufferSize];
+                        bufferLong = new long[bufferSize];
                         bufferByte = new byte[4 * bufferSize];
                         break;
 
@@ -1691,9 +1691,9 @@ public class FileRawChunk extends FileBase {
                     }
 
                     for (i = 0; i < bufferSize; i++) {
-
                         if (bufferBitSet.get(i)) {
-                            bufferByte[i >> 3] |= (1 << (i % 8));
+                        	//originally bufferByte[i >> 3] |= (1 << (i % 8));, but this yields the mirror image of the correct result
+                        	bufferByte[i >> 3] |= (1 << (7-(i % 8)));  
                         }
                     }
 

@@ -1,5 +1,31 @@
+//MIPAV is freely available from http://mipav.cit.nih.gov
+
+//THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
+//EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
+//OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
+//NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
+//HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
+//WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+//FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
+//OR OTHER DEALINGS IN THE SOFTWARE. 
+
+/*****************************************************************
+******************************************************************
+
+The MIPAV application is intended for research use only.
+This application has NOT been approved for ANY diagnostic use 
+by the Food and Drug Administration. There is currently no 
+approval process pending. 
+
+This software may NOT be used for diagnostic purposes.
+
+******************************************************************
+******************************************************************/
+
 import gov.nih.mipav.model.algorithms.*;
+
 import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -7,13 +33,21 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.io.FileNotFoundException;
+
 import javax.swing.*;
 
 /**
- * @version  June 4, 2007
+ * This class displays a basic dialog for a MIPAV plug-in.  The dialog has been made scriptable, 
+ * meaning it can be executed and recorded as part of a script.  It implements AlgorithmInterface,
+ * meaning it has methods for listening to and recording the progress of an algorithm.
+ * 
+ * @version  June 4, 2010
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
+ * @author Justin Senseney (SenseneyJ@mail.nih.gov)
+ * @see http://mipav.cit.nih.gov
  */
 public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements AlgorithmInterface {
     
@@ -27,11 +61,17 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
     /** Result image. */
     private ModelImage resultImage = null;
 
-    /** DOCUMENT ME! */
-    private ModelImage image; // source image
+    /** This source image is typically set by the constructor */
+    private ModelImage image; // 
     
-    /** DOCUMENT ME! */
-    private AlgorithmBase genericAlgo = null;
+    /** This is your algorithm */
+    private PlugInAlgorithmNewGeneric2 genericAlgo = null;
+
+    /** The check box for whether a blur should be performed. */
+	private JCheckBox check;
+
+	/** The variable representing whether the blur should be performed. */
+	private boolean doGaussian;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -68,20 +108,15 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
         String command = event.getActionCommand();
 
         if (command.equals("OK")) {
-
-            //if (setVariables()) {
+            if (setVariables()) {
                 callAlgorithm();
-            //}
+            }
         } else if (command.equals("Script")) {
             callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
         }
-    }
-
-    // ************************************************************************
-    // ************************** Algorithm Events ****************************
-    // ************************************************************************
+    } // end actionPerformed()
 
     /**
      * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithm when it
@@ -90,10 +125,7 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        
-        
-
-        if (algorithm instanceof AlgorithmBase) {
+       if (algorithm instanceof PlugInAlgorithmNewGeneric2) {
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
             image.clearMask();
             
@@ -131,7 +163,7 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
             dispose();
         }
 
-    } // end AlgorithmPerformed()
+    } // end algorithmPerformed()
 
     
     /**
@@ -143,8 +175,9 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
             String name = makeImageName(image.getImageName(), "_kidneys");
             resultImage = (ModelImage) image.clone();
             resultImage.setImageName(name);
+            
             genericAlgo = new PlugInAlgorithmNewGeneric2(resultImage, image);
-            //genericAlgo = new PlugInAlgorithmNewGeneric2(resultImage, image);
+            genericAlgo.doGaussian(doGaussian);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -170,27 +203,41 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
                 resultImage = null;
             }
 
-            MipavUtil.displayError("Kidney segmentation: unable to allocate enough memory");
+            MipavUtil.displayError("Generic algorithm: unable to allocate enough memory");
 
             return;
         }
 
     } // end callAlgorithm()
 
+    /**
+     * Used in turning your plugin into a script
+     */
     protected void setGUIFromParams() {
-    // TODO Auto-generated method stub, no params yet
-    }
+    	image = scriptParameters.retrieveInputImage();
 
+    	doGaussian = scriptParameters.getParams().getBoolean("do_gaussian");
+    } //end setGUIFromParams()
+
+    /**
+     * Used in turning your plugin into a script
+     */
     protected void storeParamsFromGUI() throws ParserException {
-    // TODO Auto-generated method stub, no params yet
-    }
+    	scriptParameters.storeInputImage(image);
+   
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_gaussian", doGaussian));
+    } //end storeParamsFromGUI()
    
     private void init() {
         setForeground(Color.black);
-        setTitle("3D Thigh CT detector");
+        setTitle("Generic Plugin");
+        try {
+			setIconImage(MipavUtil.getIconImage("divinci.gif"));
+		} catch (FileNotFoundException e) {
+			Preferences.debug("Failed to load default icon", Preferences.DEBUG_MINOR);
+		}
 
         GridBagConstraints gbc = new GridBagConstraints();
-        int yPos = 0;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
         gbc.anchor = GridBagConstraints.WEST;
@@ -198,16 +245,23 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
-        gbc.gridy = yPos++;
+        gbc.gridy = 0;
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setForeground(Color.black);
-        mainPanel.setBorder(buildTitledBorder(""));
+        mainPanel.setBorder(buildTitledBorder("A titled border"));
 
-        JLabel labelVOI = new JLabel("TBA");
+        JLabel labelVOI = new JLabel("Blank text");
         labelVOI.setForeground(Color.black);
         labelVOI.setFont(serif12);
         mainPanel.add(labelVOI, gbc);
+
+        gbc.gridy = 1;
+        
+        check = new JCheckBox("Do gaussian blur");
+        check.setFont(serif12);
+        check.setSelected(false);
+        mainPanel.add(check, gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
 
@@ -229,4 +283,14 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
         System.gc();
 
     } // end init()
+
+    /**
+     * This method could ensure everything in your dialog box has been set correctly
+     * 
+     * @return
+     */
+	private boolean setVariables() {
+		doGaussian = check.isSelected();
+		return true;
+	} //end setVariables()
 }

@@ -2640,26 +2640,465 @@ public class ModelImage extends ModelStorageBase {
      */
     public void reallocate(final int type) {
         final int[] dimExtents = getExtents();
-
+        int length = dimExtents[0]*dimExtents[1];
+        int originalType = this.getFileInfo()[0].getDataType();
+        double imageMin = this.getMin();
+        double imageMax = this.getMax();
+        int originalLength;
         if (dimExtents.length == 2) {
             fileInfo[0].setDataType(type);
         } else if (dimExtents.length == 3) {
-
+            length *= dimExtents[2];
             for (int i = 0; i < dimExtents[2]; i++) {
                 fileInfo[i].setDataType(type);
             }
         } else if (dimExtents.length == 4) {
-
+            length *= dimExtents[2]*dimExtents[3];
             for (int i = 0; i < (dimExtents[2] * dimExtents[3]); i++) {
                 fileInfo[i].setDataType(type);
             }
         }
+        originalLength = length;
 
         try {
             super.reallocate(type);
         } catch (final IOException ioError) {
             MipavUtil.displayError("" + ioError);
         }
+        
+        // Afni only uses setDataType in FileInfoBase
+        
+        if (fileInfo[0] instanceof FileInfoNIFTI) {
+        	short niftiType;
+        	short niftiBits;
+        	switch (type) {
+
+            case ModelStorageBase.BOOLEAN:
+                niftiType = FileInfoNIFTI.DT_BINARY;
+                niftiBits = (short)1;
+                break;
+
+            case ModelStorageBase.BYTE:
+                niftiType = FileInfoNIFTI.NIFTI_TYPE_INT8;
+                niftiBits = (short)8;
+                break;
+
+            case ModelStorageBase.UBYTE:
+                niftiType = FileInfoNIFTI.NIFTI_TYPE_UINT8;
+                niftiBits = (short)8;
+                break;
+
+            case ModelStorageBase.SHORT:
+                niftiType = FileInfoNIFTI.NIFTI_TYPE_INT16;
+                niftiBits = (short)16;
+                break;
+
+            case ModelStorageBase.USHORT:
+                niftiType = FileInfoNIFTI.NIFTI_TYPE_UINT16;
+                niftiBits = (short)16;
+                break;
+
+            case ModelStorageBase.INTEGER:
+                niftiType = FileInfoNIFTI.NIFTI_TYPE_INT32;
+                niftiBits = (short)32;
+                break;
+
+            case ModelStorageBase.UINTEGER:
+                niftiType = FileInfoNIFTI.NIFTI_TYPE_UINT32;
+                niftiBits = (short)32;
+                break;
+
+            case ModelStorageBase.LONG:
+                niftiType = FileInfoNIFTI.NIFTI_TYPE_INT64;
+                niftiBits = (short)64;
+                break;
+
+            case ModelStorageBase.FLOAT:
+                niftiType = FileInfoNIFTI.NIFTI_TYPE_FLOAT32;
+                niftiBits = (short)32;
+                break;
+
+            case ModelStorageBase.DOUBLE:
+                niftiType = FileInfoNIFTI.NIFTI_TYPE_FLOAT64;
+                niftiBits = (short)64;
+                break;
+
+            case ModelStorageBase.ARGB: 
+                niftiType = FileInfoNIFTI.NIFTI_TYPE_RGB24;
+                niftiBits = (short)24;
+                break;
+
+            case ModelStorageBase.COMPLEX:
+                niftiType = FileInfoNIFTI.NIFTI_TYPE_COMPLEX64;
+                niftiBits = (short)64;
+                break;
+
+            case ModelStorageBase.DCOMPLEX:
+                niftiType = FileInfoNIFTI.NIFTI_TYPE_COMPLEX128;
+                niftiBits = (short)128;
+                break;
+            default:
+            	MipavUtil.displayError("Illegal NIFTI data type");
+            	return;
+            
+    }
+
+    	if (dimExtents.length == 2) {
+    		((FileInfoNIFTI)(fileInfo[0])).setSourceType(niftiType);
+    		((FileInfoNIFTI)(fileInfo[0])).setBitPix(niftiBits);
+        } else if (dimExtents.length == 3) {
+
+            for (int i = 0; i < dimExtents[2]; i++) {
+            	((FileInfoNIFTI)(fileInfo[i])).setSourceType(niftiType);
+            	((FileInfoNIFTI)(fileInfo[i])).setBitPix(niftiBits);
+            }
+        } else if (dimExtents.length == 4) {
+
+            for (int i = 0; i < (dimExtents[2] * dimExtents[3]); i++) {
+            	((FileInfoNIFTI)(fileInfo[i])).setSourceType(niftiType);
+            	((FileInfoNIFTI)(fileInfo[i])).setBitPix(niftiBits);
+            }
+        }
+
+        	
+        } // if (fileInfo[0] instanceof FileInfoNIFTI)
+        else if (fileInfo[0] instanceof FileInfoAnalyze) {
+        	short analyzeType;
+        	short analyzeBits;
+        	switch (type) {
+
+            case ModelStorageBase.BOOLEAN:
+                analyzeType = FileInfoAnalyze.DT_BINARY;
+                analyzeBits = (short)1;
+                break;
+
+            case ModelStorageBase.BYTE:
+                analyzeType = FileInfoAnalyze.DT_UNSIGNED_CHAR;
+                analyzeBits = (short)8;
+                break;
+
+            case ModelStorageBase.UBYTE:
+                analyzeType = FileInfoAnalyze.DT_UNSIGNED_CHAR;
+                analyzeBits = (short)8;
+                break;
+
+            case ModelStorageBase.SHORT:
+                analyzeType = FileInfoAnalyze.DT_SIGNED_SHORT;
+                analyzeBits = (short)16;
+                break;
+
+            case ModelStorageBase.USHORT:
+                analyzeType = FileInfoAnalyze.DT_UNSIGNED_SHORT;
+                analyzeBits = (short)16;
+                break;
+
+            case ModelStorageBase.INTEGER:
+                analyzeType = FileInfoAnalyze.DT_SIGNED_INT;
+                analyzeBits = (short)32;
+                break;
+
+            case ModelStorageBase.UINTEGER:
+                analyzeType = FileInfoAnalyze.DT_SIGNED_INT;
+                analyzeBits = (short)32;
+                break;
+
+            case ModelStorageBase.LONG:
+                MipavUtil.displayError("LONG data type illegal in Analyze");
+                return;
+
+            case ModelStorageBase.FLOAT:
+                analyzeType = FileInfoAnalyze.DT_FLOAT;
+                analyzeBits = (short)32;
+                break;
+
+            case ModelStorageBase.DOUBLE:
+                analyzeType = FileInfoAnalyze.DT_DOUBLE;
+                analyzeBits = (short)64;
+                break;
+
+            case ModelStorageBase.ARGB:
+                analyzeType = FileInfoAnalyze.DT_RGB;
+                analyzeBits = (short)24;
+                break;
+
+            case ModelStorageBase.COMPLEX:
+                analyzeType = FileInfoAnalyze.DT_COMPLEX;
+                analyzeBits = (short)64;
+                break;
+                
+            case ModelStorageBase.DCOMPLEX:
+            	MipavUtil.displayError("DCOMPLEX illegal analyze data type");
+            	return;
+
+            default:
+            	MipavUtil.displayError("Illegal Analyze data type");
+            	return;
+            
+        } 
+        	
+    	if (dimExtents.length == 2) {
+    		((FileInfoAnalyze)(fileInfo[0])).setDataType(analyzeType);
+    		((FileInfoAnalyze)(fileInfo[0])).setBitPix(analyzeBits);
+        } else if (dimExtents.length == 3) {
+
+            for (int i = 0; i < dimExtents[2]; i++) {
+            	((FileInfoAnalyze)(fileInfo[i])).setDataType(analyzeType);
+            	((FileInfoAnalyze)(fileInfo[i])).setBitPix(analyzeBits);
+            }
+        } else if (dimExtents.length == 4) {
+
+            for (int i = 0; i < (dimExtents[2] * dimExtents[3]); i++) {
+            	((FileInfoAnalyze)(fileInfo[i])).setDataType(analyzeType);
+            	((FileInfoAnalyze)(fileInfo[i])).setBitPix(analyzeBits);
+            }
+        }
+        	
+        } // else if (fileInfo[0] instanceof FileInfoAnalyze)
+        else if (fileInfo[0] instanceof FileInfoMinc) {
+        	boolean haveValidRange;
+        	boolean haveValidMin;
+        	boolean haveValidMax;
+        	FileMincVarElem varArray[] = null;
+        	int increaseBegin;
+            int numSlices = 1;
+            if (dimExtents.length >= 3) {
+            	numSlices *= dimExtents[2];
+            }
+            if (dimExtents.length >= 4) {
+            	numSlices *= dimExtents[3];
+            }
+            double defaultMin = -Double.MIN_VALUE;
+            double defaultMax = Double.MAX_VALUE;
+            double vmin;
+            double vmax;
+            switch (type) {
+
+            case ModelStorageBase.BOOLEAN:
+                MipavUtil.displayError("BOOLEAN illegal Minc data type");
+                return;
+
+            case ModelStorageBase.BYTE:
+                defaultMin = -128.0;
+                defaultMax = 127.0;
+                break;
+
+            case ModelStorageBase.UBYTE:
+                defaultMin = 0.0;
+                defaultMax = 255.0;
+                break;
+
+            case ModelStorageBase.SHORT:
+                defaultMin = -32768.0;
+                defaultMax = 32767.0;
+                length *= 2;
+                break;
+
+            case ModelStorageBase.USHORT:
+                defaultMin = 0.0;
+                defaultMax = 65535.0;
+                length *= 2;
+                break;
+
+            case ModelStorageBase.INTEGER:
+                defaultMin = -2147483648.0;
+                defaultMax = 2147483647.0;
+                length *= 4;
+                break;
+
+            case ModelStorageBase.UINTEGER:
+                defaultMin = 0.0;
+                defaultMax = 4294967295.0;
+                length *= 4;
+                break;
+               
+            case ModelStorageBase.LONG:
+                MipavUtil.displayError("LONG illegal Minc data type");
+                return;
+
+            case ModelStorageBase.FLOAT:
+            	defaultMin = -Float.MAX_VALUE;
+            	defaultMax = Float.MAX_VALUE;
+            	length *= 4;
+                break;
+
+            case ModelStorageBase.DOUBLE:
+            	defaultMin = -Double.MAX_VALUE;
+            	defaultMax = Double.MAX_VALUE;
+            	length *= 8;
+                break;
+
+            case ModelStorageBase.ARGB: 
+                MipavUtil.displayError("ARGB illegal Minc data type");
+                return;
+
+            case ModelStorageBase.COMPLEX:
+                MipavUtil.displayError("COMPLEX illegal Minc data type");
+                return;
+
+            case ModelStorageBase.DCOMPLEX:
+                MipavUtil.displayError("DCOMPLEX illegal Minc data type");
+                return;
+            default:
+            	MipavUtil.displayError("Illegal Minc data type");
+            	return;
+            }
+            while ((length % 4) != 0) {
+            	length++;
+            }
+            switch (originalType) {
+            case SHORT:
+            case USHORT:
+            	originalLength *= 2;
+            	break;
+            case INTEGER:
+            case UINTEGER:
+            case FLOAT:
+            	originalLength *= 4;
+            	break;
+            case DOUBLE:
+            	originalLength *= 8;
+            }
+            while ((originalLength % 4) != 0) {
+                originalLength++;	
+            }
+            // Note that the new buffer of values is not imported until
+            // after the reallocation so valid_min, valid_max, and
+            // valid_range values cannot be obtained from the image
+            vmin = defaultMin;
+            vmax = defaultMax;
+            for (int i = 0; i  < numSlices; i++) {
+                ((FileInfoMinc)fileInfo[i]).vmin = vmin;	
+                ((FileInfoMinc)fileInfo[i]).vmax = vmax;
+                varArray = ((FileInfoMinc)fileInfo[i]).getVarArray();
+                if (varArray != null) {
+                	increaseBegin = 0;
+                	for (int j = 0; j < varArray.length; j++) {	
+                		varArray[j].begin += increaseBegin;
+                        if (varArray[j].name.equals("image")) {
+                        	increaseBegin = length - originalLength;
+                        	varArray[j].vsize = length;
+                            switch (type) {
+                            case ModelStorageBase.BYTE:
+                                varArray[j].signtype = new String("signed__");
+                                varArray[j].nc_type = FileInfoMinc.NC_BYTE;
+                                break;
+
+                            case ModelStorageBase.UBYTE:
+                            	varArray[j].signtype = new String("unsigned");
+                                varArray[j].nc_type = FileInfoMinc.NC_BYTE;
+                                break;
+
+                            case ModelStorageBase.SHORT:
+                            	varArray[j].signtype = new String("signed__");
+                                varArray[j].nc_type = FileInfoMinc.NC_SHORT;
+                                break;
+
+                            case ModelStorageBase.USHORT:
+                            	varArray[j].signtype = new String("unsigned");
+                                varArray[j].nc_type = FileInfoMinc.NC_SHORT;
+                                break;
+
+                            case ModelStorageBase.INTEGER:
+                            	varArray[j].signtype = new String("signed__");
+                                varArray[j].nc_type = FileInfoMinc.NC_INT;
+                                break;
+
+                            case ModelStorageBase.UINTEGER:
+                            	varArray[j].signtype = new String("unsigned");
+                                varArray[j].nc_type = FileInfoMinc.NC_INT;
+                                break;
+
+                            case ModelStorageBase.FLOAT:
+                            	varArray[j].nc_type = FileInfoMinc.NC_FLOAT;
+                                break;
+
+                            case ModelStorageBase.DOUBLE:
+                            	varArray[j].nc_type = FileInfoMinc.NC_DOUBLE;
+                                break;
+                            
+                        } 
+                        haveValidRange = false;
+                        haveValidMin = false;
+                        haveValidMax = false;
+                        for (int k = 0; k < varArray[j].vattArray.length; k++) {
+                        	if (varArray[j].vattArray[k].name.equals("signtype")) {
+                        		Character c[] = new Character[8];
+                        		if ((type == ModelStorageBase.UBYTE) || (type == ModelStorageBase.USHORT) ||
+                        		    (type == ModelStorageBase.UINTEGER)) {
+                        			c[0] = Character.valueOf('u');
+                        			c[1] = Character.valueOf('n');
+                        			c[2] = Character.valueOf('s');
+                        			c[3] = Character.valueOf('i');
+                        			c[4] = Character.valueOf('g');
+                        			c[5] = Character.valueOf('n');
+                        			c[6] = Character.valueOf('e');
+                        			c[7] = Character.valueOf('d');
+                        		}
+                        		else {
+                        			c[0] = Character.valueOf('s');
+                        			c[1] = Character.valueOf('i');
+                        			c[2] = Character.valueOf('g');
+                        			c[3] = Character.valueOf('n');
+                        			c[4] = Character.valueOf('e');
+                        			c[5] = Character.valueOf('d');
+                        			c[6] = Character.valueOf('_');
+                        			c[7] = Character.valueOf('_');
+                        		}
+                        		for (int m = 0; m < 8; m++) {
+                        			varArray[j].vattArray[k].setValue(c[m], m);
+                        		}
+                        	}
+                        	 if (varArray[j].vattArray[k].name.equals("valid_range")) {
+                                 haveValidRange = true;	
+                                 varArray[j].vattArray[k].setValue(Double.valueOf(vmin), 0);
+                                 varArray[j].vattArray[k].setValue(Double.valueOf(vmax), 1);
+                             }
+                             if (varArray[j].vattArray[k].name.equals("valid_min")) {
+                                 haveValidMin = true;
+                                 varArray[j].vattArray[k].setValue(Double.valueOf(vmin), 0);
+                             }
+                             if (varArray[j].vattArray[k].name.equals("valid_max")) {
+                             	haveValidMax = true;
+                             	varArray[j].vattArray[k].setValue(Double.valueOf(vmax), 0);
+                             }
+                        } // for (int k = 0; k < varArray[j].vattArray.length; k++)
+                        if ((!haveValidRange) && (!haveValidMin) && (!haveValidMax)) {
+                        	int k = varArray[j].vattArray.length;
+                        	FileMincAttElem vattArray2[] = new FileMincAttElem[k+1];
+
+                            for (int m = 0; m < k; m++) {
+                                vattArray2[m] = (FileMincAttElem) varArray[j].vattArray[m].clone();
+                            }
+                            varArray[j].createVattArray(k+1);
+                            for (int m = 0; m < k; m++) {
+                                varArray[j].vattArray[m] = (FileMincAttElem)vattArray2[m].clone();
+                            }
+                     	    varArray[j].addVattElem("valid_range", FileInfoMinc.NC_DOUBLE, 2, k);	
+                     	    varArray[j].vattArray[k].setValue(Double.valueOf(vmin), 0);
+                            varArray[j].vattArray[k].setValue(Double.valueOf(vmax), 1);
+                            increaseBegin += 4; // length of string name
+                            increaseBegin += 11; // bytes in string name
+                            increaseBegin += 1; // pad to 4 byte boundary
+                            increaseBegin += 4; // 4 bytes for nc_type
+                            increaseBegin += 4; // 4 bytes for length of vattArray[k]
+                            increaseBegin += 16; // 16 bytes in 2 doubles
+                     	}
+                        } // if (varArray[j].name.equals("image"))
+                        if (varArray[j].name.equals("image-max")) {
+                            for (int k = 0; k < varArray[j].values.size(); k++) {
+                                varArray[j].values.setElementAt(Double.valueOf(defaultMax), k);
+                            }
+                        } // if (varArray[j].name.equals("image-max"))
+                        if (varArray[j].name.equals("image-min")) {
+                        	for (int k = 0; k < varArray[j].values.size(); k++) {
+                                varArray[j].values.setElementAt(Double.valueOf(defaultMin), k);
+                            }	
+                        } // if (varArray[j].name.equals("image-min"))
+                       
+                	} // for (int j = 0; j < varArray.length; j++)
+                } // if (varArray != null)
+            } // for (int i = 0; i < numSlices; i++)
+        } // else if (fileInfo[0] instanceof FileInfoMinc)
     }
 
     /**
@@ -2898,7 +3337,7 @@ public class ModelImage extends ModelStorageBase {
                 getFileInfo(i).setFileDirectory(dir);
             }
         }
-    }
+        }
 
     /**
      * Sets the image type (MRI, CT, ...).

@@ -3315,7 +3315,7 @@ public class FileLSM extends FileBase {
                                 fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                             }
 
-                            buffer[i] = byteBuffer[j >> 3] & (1 << (j % 8));
+                            buffer[i] = byteBuffer[j >> 3] & (1 << (7-(j % 8)));
                         }
 
                         break;
@@ -7386,7 +7386,7 @@ public class FileLSM extends FileBase {
                                                                                 100));
                                     }
 
-                                    buffer[x + (y * xDim)] = decomp[j >> 3] & (1 << (j % 8));
+                                    buffer[x + (y * xDim)] = decomp[j >> 3] & (1 << (7-(j % 8)));
                                     i++;
 
                                 }
@@ -7411,7 +7411,7 @@ public class FileLSM extends FileBase {
                                                                                 100));
                                     }
 
-                                    buffer[x + (y * xDim)] = byteBuffer[j >> 3] & (1 << (j % 8));
+                                    buffer[x + (y * xDim)] = byteBuffer[j >> 3] & (1 << (7-(j % 8)));
                                     i++;
                                 } // if ((x < xDim) && (y < yDim))
 

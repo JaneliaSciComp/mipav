@@ -176,18 +176,14 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
      * Calculates the final output and stores it in the source image.
      */
     private void extractSlices() {
-        int plate;
-        int zSrc, zDest; // zSrc is slice-depth of srcImage; zDest is slice-depth of destination
-        int axisOfChange;
+        int zSrc; // zSrc is slice-depth of srcImage; zDest is slice-depth of destination
         float[] imageBuffer;
-        float[] resultBuffer = null;
         ModelImage resultImage = null;
         int t;
         int tDim;
-        int tDestOffset, tSrcOffset;
+        int tSrcOffset;
         int colorFactor;
         int[] newExtents;
-        int newNDims;
 
         if (srcImage.getNDims() == 4) {
             tDim = srcImage.getExtents()[3];
@@ -227,8 +223,6 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
         if (srcImage.getExtents().length > 3) {
             newExtents[2] = srcImage.getExtents()[3];
         }
-
-        newNDims = newExtents.length;
 
         float progress = 0;
         float numToExtract = 0;
@@ -297,8 +291,6 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
                     resultImage = new ModelImage(srcImage.getType(), newExtents,
                                                  srcImage.getImageName() + "_slice" + (zSrc));
 
-                    tDestOffset = 0;
-
                     for (t = 0; (t < tDim) && !threadStopped; t++) {
                         tSrcOffset = getOffset(srcImage, colorFactor, t);
 
@@ -346,28 +338,6 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
     } // extractSlices
 
     /**
-     * computes and returns the number of slices to extract.
-     *
-     * @return  DOCUMENT ME!
-     */
-    private int getNumRemoved() {
-
-        int num = 0;
-
-        // cycle through the array of slices to extract and
-        // only count the ones that are set to true
-        for (int i = 0; i < oldZdim; i++) {
-
-            if (extract[i]) {
-                num++;
-            }
-        }
-
-        return num;
-
-    } // end getNumRemoved()
-
-    /**
      * Calculate and return the offset for the given image and time slice.
      *
      * @param   img          -- ModelImage whose offset is being computed
@@ -390,73 +360,4 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
 
     } // end getOffset()
 
-    /**
-     * Calculate and return the offset for the given image and time slice.
-     *
-     * @param   ndims        -- number of dimensions
-     * @param   extents      -- the extents for the image offset
-     * @param   colorFactor  -- the image's colorFactor
-     * @param   t            -- current time slice
-     *
-     * @return  -- the computed offset into the data buffer
-     */
-    private int getOffset(int ndims, int[] extents, int colorFactor, int t) {
-
-        int offset = 0;
-
-        if (ndims > 3) {
-            offset = extents[0] * extents[1] * extents[2] * colorFactor * t;
-        } else {
-            offset = extents[0] * extents[1] * colorFactor * t;
         }
-
-        return offset;
-
-    } // end getOffset()
-
-    /**
-     * Build and return the fileInfo for the current slice based on the source slice, the destination slice and time
-     * slice.
-     *
-     * @param   srcSlice    the current slice index for the src image
-     * @param   destSlice   the current slice index for the result (dest) image
-     * @param   t           current time slice
-     * @param   newExtents  the extents for the result (dest) image
-     *
-     * @return  the fileInfo for destSlice
-     */
-    private FileInfoBase getSliceFileInfo(int srcSlice, int destSlice, int t, int[] newExtents) {
-
-        // used for DICOM images
-        // float[] nextPositionCoords = new float[3];
-        // float[] imagePositionCoords = new float[3]; // image position along the XYZ-axis
-
-        // If src is a DICOM image, then need to do some special stuff
-        if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-            FileInfoDicom fileInfoBuffer; // buffer of type DICOM
-            fileInfoBuffer = (FileInfoDicom) srcImage.getFileInfo(srcSlice).clone(); // copy into buffer
-
-            fileInfoBuffer.setExtents(newExtents); // get the extents of this image and put it in the new filebuffer
-
-            // change the slice number ("0020,0013"):
-            // Image slice numbers start at 1; index starts at 0, so compensate by adding 1
-            fileInfoBuffer.getTagTable().setValue("0020,0013", String.valueOf(destSlice + 1),
-                                                  fileInfoBuffer.getTagTable().get("0020,0013").getLength()); // Reset the image
-                                                                                                              // (slice) number with
-                                                                                                              // the new number
-                                                                                                              // ordering
-
-            return fileInfoBuffer;
-        }
-
-        // from this point on, image is not a DICOM image
-        FileInfoBase fileInfoBuffer; // buffer of any old type
-
-        fileInfoBuffer = (FileInfoBase) srcImage.getFileInfo((t * oldZdim) + srcSlice).clone();
-        fileInfoBuffer.setExtents(newExtents);
-
-        return fileInfoBuffer;
-
-    } // end getSliceFileInfo()
-
-}

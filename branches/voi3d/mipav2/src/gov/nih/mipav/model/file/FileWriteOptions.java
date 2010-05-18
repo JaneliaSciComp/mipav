@@ -155,6 +155,13 @@ public class FileWriteOptions {
     /** DOCUMENT ME! */
     private float zStart;
 
+
+    /** DOCUMENT ME! */
+    private float tSpace;
+
+    /** DOCUMENT ME! */
+    private float tStart;
+
     /**
      * Tells FileIO whether or not to insert the saved image into the Quicklist (recently used image list) after
      * successful saving
@@ -596,6 +603,25 @@ public class FileWriteOptions {
      */
     public float getZStart() {
         return zStart;
+    }
+
+    
+    /**
+     * Accessor that returns value of T Space text field.
+     * 
+     * @return Value typed in field.
+     */
+    public float getTSpace() {
+        return tSpace;
+    }
+
+    /**
+     * Accessor that returns value of T Start text field.
+     * 
+     * @return Value typed in field.
+     */
+    public float getTStart() {
+        return tStart;
     }
 
     /**
@@ -1111,6 +1137,28 @@ public class FileWriteOptions {
         zStart = value;
     }
     
+    /**
+     * Accessor that sets t space (used for MINC images).
+     * 
+     * @param value Value to set the t space to.
+     * 
+     * @see gov.nih.mipav.view.dialogs.JDialogSaveMinc
+     */
+    public void setTSpace(float value) {
+        tSpace = value;
+    }
+    
+    /**
+     * Accessor that sets t start (used for MINC images).
+     * 
+     * @param value Value to set the t start to.
+     * 
+     * @see gov.nih.mipav.view.dialogs.JDialogSaveMinc
+     */
+    public void setTStart(float value) {
+        tStart = value;
+    }
+
     
 
     public boolean isGzip() {

@@ -1078,7 +1078,7 @@ public class JDialogConvertType extends JDialogScriptableBase
 
                     // These next lines set the titles in all frames where the source image is displayed to
                     // "locked - " image name so as to indicate that the image is now read/write locked!
-                    // The image frames are disabled and then unregisted from the userinterface until the
+                    // The image frames are disabled and then unregistered from the userinterface until the
                     // algorithm has completed.
                     Vector imageFrames = image.getImageFrameVector();
                     titles = new String[imageFrames.size()];
