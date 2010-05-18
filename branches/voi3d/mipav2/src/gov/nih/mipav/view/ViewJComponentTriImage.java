@@ -592,6 +592,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      * @param e KeyEvent
      */
     public void keyPressed(final KeyEvent e) {
+        //System.err.println("ViewJComponentTriImage keyPressed" );
         final int keyCode = e.getKeyCode();
 
         switch (keyCode) {

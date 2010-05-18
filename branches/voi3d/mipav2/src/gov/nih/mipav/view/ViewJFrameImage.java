@@ -3858,6 +3858,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @param e DOCUMENT ME!
      */
     public void keyPressed(final KeyEvent e) {
+        //System.err.println("ViewJFrame keyPressed" );
 
         final int keyCode = e.getKeyCode();
 
@@ -3935,6 +3936,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @param e DOCUMENT ME!
      */
     public void keyReleased(final KeyEvent e) {
+        //System.err.println("ViewJFrame keyReleased" );
         final int keyCode = e.getKeyCode();
         switch (keyCode) {
 
@@ -4048,7 +4050,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * 
      * @param e DOCUMENT ME!
      */
-    public void keyTyped(final KeyEvent e) {}
+    public void keyTyped(final KeyEvent e) {
+        //System.err.println("ViewJFrame keyTyped" );
+    }
 
     /**
      * DOCUMENT ME!
@@ -5401,7 +5405,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @throws OutOfMemoryError if enough memory cannot be allocated for the GUI
      */
     private void init(final ModelLUT LUTa, final Dimension loc, final boolean logMagDisplay) throws OutOfMemoryError {
-
+        addKeyListener(this);
+        
         try {
             setIconImage(MipavUtil.getIconImage("davinci_32x32.gif"));
         } catch (final FileNotFoundException error) {
@@ -5466,8 +5471,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         setBackground(Color.black);
 
-        addKeyListener(this);
-
         // MUST register frame to image models
         imageA.addImageDisplayListener(this);
 
@@ -5529,6 +5532,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else {
             componentImage.setResolutions(widthResFactor, 1);
         }
+        componentImage.addKeyListener(this);
 
         // if this is a color image, then update the RGB info in the component
         if (imageA.isColorImage()) {

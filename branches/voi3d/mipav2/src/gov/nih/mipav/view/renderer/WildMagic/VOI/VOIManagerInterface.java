@@ -66,7 +66,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 // -Dprofile.properties=E:\MagicConsulting\mipav\src\lib\profile.properties
 
 
-public class VOIManagerInterface implements ActionListener, KeyListener, VOIManagerListener, VOIHandlerInterface
+public class VOIManagerInterface implements ActionListener, VOIManagerListener, VOIHandlerInterface
 {
     /**
      * Pick up the selected color and call method to change the color.
@@ -1261,22 +1261,6 @@ public class VOIManagerInterface implements ActionListener, KeyListener, VOIMana
 
     public boolean isNewVoiNeeded(int voiType) {
         return false;
-    }
-
-
-    public void keyPressed(KeyEvent arg0) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void keyReleased(KeyEvent arg0) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void keyTyped(KeyEvent arg0) {
-        // TODO Auto-generated method stub
-
     }
 
     public boolean make3DVOI( boolean bIntersection, ModelImage kVolume  )

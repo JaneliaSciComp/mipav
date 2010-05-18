@@ -563,7 +563,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
         else
         {
-            m_kCurrentVOI.setSize( m_kCurrentVOI.getAnchor()-1 );
+            //m_kCurrentVOI.setSize( m_kCurrentVOI.getAnchor()-1 );
         }
     }
 
@@ -981,6 +981,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 
     public void keyPressed(KeyEvent e) {
+        //System.err.println("VOIManager keyPressed" );
         if ( e.getKeyChar() == 'q' || e.getKeyChar() == 'Q' )
         {
             if ( !m_bQuickLUT && m_kCurrentVOI != null )
@@ -1008,6 +1009,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 
     public void keyReleased(KeyEvent e) {
+        //System.err.println("VOIManager keyReleased" );
         if ( e.getKeyChar() == 'q' || e.getKeyChar() == 'Q' )
         {
             m_bQuickLUT = false;
@@ -1036,6 +1038,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
     public void keyTyped(KeyEvent e)
     {
+        //System.err.println("VOIManager keyTyped" );
         if ( e.getKeyChar() == 'q' || e.getKeyChar() == 'Q' )
         {
             if ( !m_bQuickLUT && m_kCurrentVOI != null )
@@ -1110,6 +1113,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             {
                 anchorPolyline( kEvent.getX(), kEvent.getY(), true );                
             }
+            m_kCurrentVOI.trimPoints(0,true);
             m_bDrawVOI = false;
             m_iNearStatus = NearNone;
             m_kParent.setDefaultCursor();
@@ -1274,13 +1278,59 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
         else if ( m_bDrawVOI && (m_iDrawType == LIVEWIRE) )
         {
-            anchor( kEvent.getX(), kEvent.getY(), true );
-            return;
+            showSelectedVOI( kEvent.getX(), kEvent.getY() );
+            if ( (m_iNearStatus == NearPoint) && (m_kCurrentVOI.getNearPoint() == 0) && (m_kCurrentVOI.size() > 2) )
+            {
+                m_kCurrentVOI.setClosed(true);
+                m_kCurrentVOI.trimPoints(0,true);
+                if ( m_kCurrentVOI.getGroup() != null )
+                {
+                    if ( m_kCurrentVOI.getGroup().getCurveType() != m_kCurrentVOI.getType() )
+                    {
+                        VOI kGroup = m_kCurrentVOI.getGroup();
+                        kGroup.getCurves().remove(m_kCurrentVOI);
+                        m_kCurrentVOI.setGroup(null);
+                        m_kParent.addVOI(m_kCurrentVOI, true);
+                    }
+                }
+                m_bDrawVOI = false;
+                m_iNearStatus = NearNone;
+                m_kParent.setDefaultCursor();
+                return;
+            }
+            else
+            {
+                anchor( kEvent.getX(), kEvent.getY(), true );
+                return;
+            }
         }
         else if ( m_bDrawVOI && (m_iDrawType == POLYLINE) )
-        {
-            anchorPolyline( kEvent.getX(), kEvent.getY(), false );
-            return;
+        {   
+            showSelectedVOI( kEvent.getX(), kEvent.getY() );
+            if ( (m_iNearStatus == NearPoint) && (m_kCurrentVOI.getNearPoint() == 0) && (m_kCurrentVOI.size() > 2) )
+            {
+                m_kCurrentVOI.setClosed(true);
+                m_kCurrentVOI.trimPoints(0,true);
+                if ( m_kCurrentVOI.getGroup() != null )
+                {
+                    if ( m_kCurrentVOI.getGroup().getCurveType() != m_kCurrentVOI.getType() )
+                    {
+                        VOI kGroup = m_kCurrentVOI.getGroup();
+                        kGroup.getCurves().remove(m_kCurrentVOI);
+                        m_kCurrentVOI.setGroup(null);
+                        m_kParent.addVOI(m_kCurrentVOI, true);
+                    }
+                }
+                m_bDrawVOI = false;
+                m_iNearStatus = NearNone;
+                m_kParent.setDefaultCursor();
+                return;
+            }
+            else
+            {
+                anchorPolyline( kEvent.getX(), kEvent.getY(), false );
+                return;
+            }
         }
 
 
@@ -1404,7 +1454,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
     }
 
-    public void setCanvas (Component kComponent)
+    private void setCanvas (Component kComponent)
     {
         m_kComponent = kComponent;
         m_kComponent.addKeyListener( this );
@@ -4192,10 +4242,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     
     private VOIBase selectVOI( int iX, int iY, boolean bShiftDown )
     {
-        if ( m_kCurrentVOI != null )
-        {
-            m_kCurrentVOI.setActive(false);
-        }
+        m_kParent.selectAllVOIs(false);
         m_bSelected = false;
         m_kCurrentVOI = null;
         VOIVector kVOIs = m_kImageActive.getVOIs();
@@ -4351,7 +4398,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             }
         }
         m_iNearStatus = NearNone;
-        m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+        m_kParent.setDefaultCursor();
     }
 
     /**
@@ -4588,7 +4635,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             kPatientPt.Set( levelSetStack.getPointX(0), levelSetStack.getPointY(0), m_iSlice );   
             kScreenPt = m_kDrawingContext.patientToScreen( kPatientPt );
             kPositions.add( kScreenPt );
-            return createVOI( m_iDrawType, true, true, kPositions );
+            VOIBase kVOI = createVOI( m_iDrawType, true, true, kPositions );
+            kVOI.trimPoints(0,true);
+            return kVOI;
         } 
         return null;
     }

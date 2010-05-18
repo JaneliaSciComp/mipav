@@ -1581,6 +1581,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @param  e  KeyEvent
      */
     public void keyPressed(KeyEvent e) {
+        //System.err.println("ViewJFrameTriImage keyPressed" );
         int keyCode = e.getKeyCode();
 
         if (!e.isControlDown()) {
@@ -1648,6 +1649,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @param  e  KeyEvent
      */
     public void keyReleased(KeyEvent e) {
+        //System.err.println("ViewJFrameTriImage keyReleased" );
         int keyCode = e.getKeyCode();
 
         switch (keyCode) {
@@ -1700,7 +1702,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      *
      * @param  e  DOCUMENT ME!
      */
-    public void keyTyped(KeyEvent e) { }
+    public void keyTyped(KeyEvent e) {
+        //System.err.println("ViewJFrameTriImage keyTyped" );
+    }
 
     /**
      * DOCUMENT ME!
@@ -3539,7 +3543,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             triImage.setResolutions(1, 1);
         }
 
-        triImage.addKeyListener(this);
+        //triImage.addKeyListener(this);
 
         return triImage;
     }

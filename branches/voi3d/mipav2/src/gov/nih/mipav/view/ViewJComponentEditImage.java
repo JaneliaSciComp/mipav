@@ -2198,7 +2198,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param e event
      */
-    public void keyPressed(final KeyEvent e) {}
+    public void keyPressed(final KeyEvent e) {
+        //System.err.println("ViewJComponentEditImage keyPressed" );
+        
+    }
 
     /**
      * If the shift key is pressed, updates the graphics.
@@ -2206,6 +2209,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param e the key released event
      */
     public void keyReleased(final KeyEvent e) {
+        //System.err.println("ViewJComponentEditImage keyReleased" );
         final int keyCode = e.getKeyCode();
 
         if (cursorMode == ViewJComponentBase.WIN_REGION) {
@@ -2223,7 +2227,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @param e event
      */
-    public void keyTyped(final KeyEvent e) {}
+    public void keyTyped(final KeyEvent e) {
+        //System.err.println("ViewJComponentEditImage keyTyped" );
+    }
 
     /**
      * Reads in an image icon from either the set of mipav icons or the user's $HOME/mipav/brushes/ directory.
