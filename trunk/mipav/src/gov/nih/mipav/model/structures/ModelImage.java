@@ -2979,6 +2979,7 @@ public class ModelImage extends ModelStorageBase {
         	FileMincVarElem varArray[] = null;
         	int increaseBegin;
             int numSlices = 1;
+            int imageIndex = 0;
             if (dimExtents.length >= 3) {
             	numSlices *= dimExtents[2];
             }
@@ -3091,9 +3092,8 @@ public class ModelImage extends ModelStorageBase {
                 if (varArray != null) {
                 	increaseBegin = 0;
                 	for (int j = 0; j < varArray.length; j++) {	
-                		varArray[j].begin += increaseBegin;
                         if (varArray[j].name.equals("image")) {
-                        	increaseBegin = length - originalLength;
+                        	imageIndex = j;
                         	varArray[j].vsize = length;
                             switch (type) {
                             case ModelStorageBase.BYTE:
@@ -3214,6 +3214,14 @@ public class ModelImage extends ModelStorageBase {
                         } // if (varArray[j].name.equals("image-min"))
                        
                 	} // for (int j = 0; j < varArray.length; j++)
+                	for (int j = 0; j < varArray.length; j++) {
+                		if (j <= imageIndex) {
+                			varArray[j].begin += increaseBegin;
+                		}
+                		else {
+                			varArray[j].begin += increaseBegin + length - originalLength;
+                		}
+                	}
                 } // if (varArray != null)
             } // for (int i = 0; i < numSlices; i++)
         } // else if (fileInfo[0] instanceof FileInfoMinc)
