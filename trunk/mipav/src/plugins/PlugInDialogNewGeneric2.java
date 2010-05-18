@@ -1,9 +1,5 @@
 //MIPAV is freely available from http://mipav.cit.nih.gov
 
-//Pursuant to Title 17, Section 105 of the United States Code, this 
-//software is not subject to copyright protection and is in the public 
-//domain.  It is a work of the United States Government.
-
 //THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
 //EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
 //OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
