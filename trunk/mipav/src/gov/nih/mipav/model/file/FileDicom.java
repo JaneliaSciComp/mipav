@@ -1909,10 +1909,7 @@ public class FileDicom extends FileDicomBase {
             // if (fileInfo.getModality() == fileInfo.POSITRON_EMISSION_TOMOGRAPHY) {
             if (fileInfo.getDataType() == ModelStorageBase.ARGB) {
                 dataRGB = new short[4 * (end - start)];
-            } else if ((fileInfo.getDataType() == ModelStorageBase.INTEGER) ||
-            		   (fileInfo.getDataType() == ModelStorageBase.UINTEGER) ||
-            		   (fileInfo.getDataType() == ModelStorageBase.LONG) ||
-            		   (fileInfo.getDataType() == ModelStorageBase.DOUBLE)) {
+            } else if (fileInfo.getDataType() == ModelStorageBase.UINTEGER) {
             	doubleData = new double[(end - start)];
             } else {
                 data = new float[ (end - start)];
@@ -2036,18 +2033,6 @@ public class FileDicom extends FileDicomBase {
                         data5 = null;
                         break;
                         
-                    case ModelStorageBase.INTEGER:
-                        // Not a normal DICOM data type but required for data reallocation
-                        int[] data6 = new int[end - start];
-                        image.exportData(index * length, length, doubleData);
-                        for (int i = 0; i < doubleData.length; i++) {
-                            data6[i] = MipavMath.round( (doubleData[i] - intercept) / invSlope);
-                        }
-
-                        rawChunkFile.writeBufferInt(data6, 0, length, image.getFileInfo(0).getEndianess());
-                        data6 = null;
-                        break;
-                        
                     case ModelStorageBase.UINTEGER:
                     	// Required for RT Doses
                     	// C.8.8.3.4.3 Bits Allocated
@@ -2060,53 +2045,18 @@ public class FileDicom extends FileDicomBase {
                     	// Enumerated Values:
                     	// 0001H = two's complement integer, when Dose Type (3004,0004) = ERROR
                     	// 0000H = unsigned integer, otherwise
-                    	long[] data7 = new long[length];
+                    	long[] data6 = new long[length];
                     	image.exportData(index * length, length, doubleData);
                     	
                     	for (int i = 0; i < doubleData.length; i++) {
-                            data7[i] = Math.round( (doubleData[i] - intercept) / invSlope);
+                            data6[i] = Math.round( (doubleData[i] - intercept) / invSlope);
                         }
                     	
-                    	rawChunkFile.writeBufferUInt(data7, 0, length, image.getFileInfo(0).getEndianess());
-                        data7 = null;
+                    	rawChunkFile.writeBufferUInt(data6, 0, length, image.getFileInfo(0).getEndianess());
+                        data6 = null;
                         break;
                         
-                    case ModelStorageBase.LONG:
-                        // Not a normal DICOM data type but required for data reallocation
-                        long[] data8 = new long[end - start];
-                        image.exportData(index * length, length, doubleData);
-                        for (int i = 0; i < doubleData.length; i++) {
-                            data8[i] = Math.round( (doubleData[i] - intercept) / invSlope);
-                        }
-
-                        rawChunkFile.writeBufferLong(data8, 0, length, image.getFileInfo(0).getEndianess());
-                        data8 = null;
-                        break;
-                        
-                    case ModelStorageBase.FLOAT:
-                        // Not a normal DICOM data type but required for data reallocation
-                        float[] data9 = new float[end - start];
-                        image.exportData(index * length, length, data);
-                        for (int i = 0; i < data.length; i++) {
-                            data9[i] = (float)( (data[i] - intercept) / invSlope);
-                        }
-
-                        rawChunkFile.writeBufferFloat(data9, 0, length, image.getFileInfo(0).getEndianess());
-                        data9 = null;
-                        break;
-                        
-                    case ModelStorageBase.DOUBLE:
-                        // Not a normal DICOM data type but required for data reallocation
-                        double[] data10 = new double[end - start];
-                        image.exportData(index * length, length, doubleData);
-                        for (int i = 0; i < doubleData.length; i++) {
-                            data10[i] = ( (doubleData[i] - intercept) / invSlope);
-                        }
-
-                        rawChunkFile.writeBufferDouble(data10, 0, length, image.getFileInfo(0).getEndianess());
-                        data10 = null;
-                        break;
-
+                    
                     case ModelStorageBase.ARGB:
 
                         short[] dRGB = new short[3 * length];
