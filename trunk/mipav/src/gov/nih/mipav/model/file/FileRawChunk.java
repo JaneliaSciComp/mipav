@@ -1483,7 +1483,7 @@ public class FileRawChunk extends FileBase {
      *
      * @throws  IOException  DOCUMENT ME!
      */
-    public void writeBufferUInt(int[] buffer, int start, int end, boolean endianess) throws IOException {
+    public void writeBufferUInt(long[] buffer, int start, int end, boolean endianess) throws IOException {
         int i, index;
 
         // boolean endianess = image.getFileInfo(0).getEndianess();
@@ -1500,25 +1500,25 @@ public class FileRawChunk extends FileBase {
         }
 
         try {
-            int tmpInt;
+            long tmpLong;
 
             if (endianess == BIG_ENDIAN) {
 
                 for (i = 0, index = 0; i < bufferSize; i++) {
-                    tmpInt = buffer[i];
-                    bufferByte[index++] = (byte) (tmpInt >>> 24);
-                    bufferByte[index++] = (byte) (tmpInt >>> 16);
-                    bufferByte[index++] = (byte) (tmpInt >>> 8);
-                    bufferByte[index++] = (byte) (tmpInt & 0xff);
+                    tmpLong = buffer[i];
+                    bufferByte[index++] = (byte) (tmpLong >>> 24);
+                    bufferByte[index++] = (byte) (tmpLong >>> 16);
+                    bufferByte[index++] = (byte) (tmpLong >>> 8);
+                    bufferByte[index++] = (byte) (tmpLong & 0xff);
                 }
             } else {
 
                 for (i = 0, index = 0; i < bufferSize; i++) {
-                    tmpInt = buffer[i];
-                    bufferByte[index++] = (byte) (tmpInt & 0xff);
-                    bufferByte[index++] = (byte) (tmpInt >>> 8);
-                    bufferByte[index++] = (byte) (tmpInt >>> 16);
-                    bufferByte[index++] = (byte) (tmpInt >>> 24);
+                    tmpLong = buffer[i];
+                    bufferByte[index++] = (byte) (tmpLong & 0xff);
+                    bufferByte[index++] = (byte) (tmpLong >>> 8);
+                    bufferByte[index++] = (byte) (tmpLong >>> 16);
+                    bufferByte[index++] = (byte) (tmpLong >>> 24);
                 }
             }
 
