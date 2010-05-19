@@ -2029,6 +2029,29 @@ public class FileDicom extends FileDicomBase {
                         rawChunkFile.writeBufferUShort(data5, 0, length, image.getFileInfo(0).getEndianess());
                         data5 = null;
                         break;
+                        
+                    case ModelStorageBase.UINTEGER:
+                    	// Required for RT Doses
+                    	// C.8.8.3.4.3 Bits Allocated
+                    	// For RT Doses, Bits Allocated (0028,0100) shall have an enumerated Value of 16 or 32
+                    	// C.8.8.3.4.4 Bits Stored
+                    	// For RT Doses, Bits Stored (0028,0101) shall have an Enumerated Value equal to Bits
+                    	// Allocated (0028,0100)
+                    	// C.8.8.3.4.6 Pixel Representation
+                    	// For RT Doses, Pixel Representation (0028,0101) is specified to use the following
+                    	// Enumerated Values:
+                    	// 0001H = two's complement integer, when Dose Type (3004,0004) = ERROR
+                    	// 0000H = unsigned integer, otherwise
+                    	long[] data6 = new long[length];
+                    	image.exportData(index * length, length, data);
+                    	
+                    	for (int i = 0; i < data.length; i++) {
+                            data6[i] = MipavMath.round( (data[i] - intercept) / invSlope);
+                        }
+                    	
+                    	rawChunkFile.writeBufferUInt(data6, 0, length, image.getFileInfo(0).getEndianess());
+                        data6 = null;
+                        break;
 
                     case ModelStorageBase.ARGB:
 
