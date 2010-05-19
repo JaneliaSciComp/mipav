@@ -1887,6 +1887,7 @@ public class FileDicom extends FileDicomBase {
             final boolean saveAsEncapJP2) throws IOException {
         float[] data = null;
         double[] doubleData = null;
+        BitSet bufferBitSet = null;
         short[] dataRGB = null;
 
         fileInfo = (FileInfoDicom) image.getFileInfo(index);
@@ -1911,6 +1912,8 @@ public class FileDicom extends FileDicomBase {
                 dataRGB = new short[4 * (end - start)];
             } else if (fileInfo.getDataType() == ModelStorageBase.UINTEGER) {
             	doubleData = new double[(end - start)];
+            } else if (fileInfo.getDataType() == ModelStorageBase.BOOLEAN) {
+                bufferBitSet = new BitSet(end - start);	
             } else {
                 data = new float[ (end - start)];
             }
@@ -1980,6 +1983,33 @@ public class FileDicom extends FileDicomBase {
             } else {
 
                 switch (fileInfo.getDataType()) {
+                
+                    case ModelStorageBase.BOOLEAN:
+                    	// Required for Segmentation Image Module
+                    	// Bits Allocated (0028,0100) If segmentation type (0062,0001) is
+                    	// BINARY, shall be 1.  Otherwise, it shall be 8.
+                    	// Bits Stored (0028,0101) If segmentation type (0062,0001) is
+                    	// BINARY, shall be 1.  Otherwise, it shall be 8.
+                    	// C.8.20.2.1 Bits Allocated and Bits Stored
+                    	// As a consequence of the enumerated Bits Allocated and Bits Stored
+                    	// attribute values, single bit pixels shall be packed 8 to a byte
+                    	// as defined by the encoding rules in PS 3.5.
+                        byte bufferByte[] = new byte[(length + 7) >> 3];
+                        image.exportData(index * length, length, bufferBitSet);
+                        
+                        for (int i = 0; i < bufferByte.length; i++) {
+                            bufferByte[i] = 0;
+                        }
+
+                        for (int i = 0; i < length; i++) {
+
+                            if (bufferBitSet.get(i)) {
+                                bufferByte[i >> 3] |= (1 << (7-(i % 8)));
+                            }
+                        }
+
+                        raFile.write(bufferByte);
+                        break;
 
                     case ModelStorageBase.BYTE:
 
