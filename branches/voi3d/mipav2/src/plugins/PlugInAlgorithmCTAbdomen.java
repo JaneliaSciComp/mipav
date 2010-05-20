@@ -292,7 +292,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         srcImage.unregisterAllVOIs();
         srcImage.registerVOI(abdomenVOI);
         srcImage.registerVOI(subcutaneousVOI);
-} // end calc25D()
+    } // end calc25D()
 
     
     
@@ -835,7 +835,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         theVOI.setName("Abdomen");
 
         abdomenVOI = theVOI;
-
+        
         // Keep only the largest curve on each slice
         int numCurves, maxIdx = 0, maxCurveLength;
         Vector<VOIBase>[] curves = theVOI.getSortedCurves(zDim);
@@ -1062,7 +1062,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         VOI theVOI = vois.get(0);
 
         // there should be only one curve on each slice corresponding to the external abdomen boundary
-        VOIContour curve = ((VOIContour)theVOI.getCurves().get(sliceNum));
+        VOIContour curve = ((VOIContour)theVOI.getCurves().elementAt(sliceNum));        
         int[] xVals;
         int[] yVals;
         int[] zVals;
@@ -1473,7 +1473,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
      */
     private void fixSubcutaneousFatVOIs() {
         VOI theVOI = subcutaneousVOI;
-
+        
         if (theVOI.getName() != "Subcutaneous area") {
             MipavUtil.displayError("fixSubcutaneousFatVOIs(): SubcutaneousVOI is not properly set");
             return;
@@ -1521,7 +1521,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             // make a binary image out of the subcutaneousVOI on the 2D VOI
             System.out.print("    Making a binary image from the VOI: ");
             time = System.currentTimeMillis();
-            ModelImage binImage = sliceImage.generateBinaryImage();            
+            ModelImage binImage = sliceImage.generateBinaryImage();   
             System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
 
             System.out.print("    Smoothing Image with "+sliceVOI.getNumPoints()+"points: ");
@@ -1555,7 +1555,6 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             VOI theFixedVOI = vois.get(0);
             
             // Keep only the largest VOI as the subcutaneous fat
-            int numRemoved = 0;
             numCurves = theFixedVOI.getCurves().size();
                 
             int maxIdx = 0;
@@ -1565,10 +1564,9 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
                     maxIdx = idx;
                 }
             } // end for (int idx = 0; ...)
-            for (int idx = 0; idx < numCurves; idx++) {
+            for (int idx = numCurves-1; idx >= 0; idx--) {
                 if (idx != maxIdx) {
-                    theFixedVOI.getCurves().remove(idx - numRemoved);
-                    numRemoved++;
+                    theFixedVOI.getCurves().remove(idx);
                 }
             } // end for (int idx = 0; ...)
             System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
@@ -1693,7 +1691,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 //        System.out.println("resample VOI number of points: " +xValsAbdomenVOI.size());
         curve.clear();
         for(int idx = 0; idx < xValsVOI.size(); idx++) {
-            curve.add( new Vector3f( xValsVOI.get(idx), yValsVOI.get(idx), 0 ) );
+            curve.add( new Vector3f( xValsVOI.get(idx), yValsVOI.get(idx), sliceIdx ) );
         }
     } // end resampleCurve(...)
 
