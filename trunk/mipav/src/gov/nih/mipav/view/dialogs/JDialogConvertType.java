@@ -878,6 +878,19 @@ public class JDialogConvertType extends JDialogScriptableBase
      */
     protected void callAlgorithm() {
 
+    	if (image.getNDims() == 2) {
+    	    image.getFileInfo(0).setOriginalEndianess(image.getFileInfo(0).getEndianess());
+    	}
+    	else if (image.getNDims() == 3) {
+    		for (int i = 0; i < image.getExtents()[2]; i++) {
+    			image.getFileInfo(i).setOriginalEndianess(image.getFileInfo(i).getEndianess());	
+    		}
+     	}
+    	else {
+    		for (int i = 0; i < image.getExtents()[2]*image.getExtents()[3]; i++) {
+    			image.getFileInfo(i).setOriginalEndianess(image.getFileInfo(i).getEndianess());	
+    		}	
+    	}
         if (image.getNDims() == 2) { // source image is 2D
 
             int[] destExtents = new int[2];
@@ -1016,8 +1029,15 @@ public class JDialogConvertType extends JDialogScriptableBase
                     resultImage = new ModelImage(dataType, destExtents,
                                                  makeImageName(image.getImageName(), "_changed"));
 
-                    for (int n = 0; n < resultImage.getExtents()[2]; n++) {
-                        resultImage.getFileInfo(n).setEndianess(endianess);
+                    if (image.getNDims() == 3) {
+	                    for (int n = 0; n < resultImage.getExtents()[2]; n++) {
+	                        resultImage.getFileInfo(n).setEndianess(endianess);
+	                    }
+                    }
+                    else {
+                    	for (int n = 0; n < resultImage.getExtents()[2]*resultImage.getExtents()[3]; n++) {
+	                        resultImage.getFileInfo(n).setEndianess(endianess);
+	                    }	
                     }
 
                     // Make algorithm
@@ -1058,8 +1078,15 @@ public class JDialogConvertType extends JDialogScriptableBase
 
                 try {
 
-                    for (int n = 0; n < image.getExtents()[2]; n++) {
-                        image.getFileInfo(n).setEndianess(endianess);
+                    if (image.getNDims() == 3) {
+	                	for (int n = 0; n < image.getExtents()[2]; n++) {
+	                        image.getFileInfo(n).setEndianess(endianess);
+	                    }
+                    }
+                    else {
+                    	for (int n = 0; n < image.getExtents()[2]*image.getExtents()[3]; n++) {
+	                        image.getFileInfo(n).setEndianess(endianess);
+	                    }	
                     }
 
                     // Make algorithm
