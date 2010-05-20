@@ -784,10 +784,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         
         float fY = iY;
         Vector3f kNewPoint = new Vector3f( iX, fY, m_iSlice ) ;
-        if ( add( m_kCurrentVOI, kNewPoint, false ) )
-        {
-            m_kParent.updateDisplay( );
-        }
+        add( m_kCurrentVOI, kNewPoint, false );
 
         Vector3f kFile = new Vector3f();
         m_kDrawingContext.screenToFile(iX, (int)fY, m_iSlice, kFile);
@@ -1113,7 +1110,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             {
                 anchorPolyline( kEvent.getX(), kEvent.getY(), true );                
             }
-            m_kCurrentVOI.trimPoints(0,true);
+            m_kCurrentVOI.trimPoints(Preferences.getTrim(),
+                    Preferences.getTrimAdjacient());
             m_bDrawVOI = false;
             m_iNearStatus = NearNone;
             m_kParent.setDefaultCursor();
@@ -1276,61 +1274,43 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_kParent.setDefaultCursor( );
             return;
         }
-        else if ( m_bDrawVOI && (m_iDrawType == LIVEWIRE) )
-        {
-            showSelectedVOI( kEvent.getX(), kEvent.getY() );
-            if ( (m_iNearStatus == NearPoint) && (m_kCurrentVOI.getNearPoint() == 0) && (m_kCurrentVOI.size() > 2) )
+        else if ( m_bDrawVOI && ((m_iDrawType == POLYLINE) || (m_iDrawType == LIVEWIRE)) )
+        {   
+            if ( m_kCurrentVOI != null && m_kCurrentVOI.size() > 2 )
             {
-                m_kCurrentVOI.setClosed(true);
-                m_kCurrentVOI.trimPoints(0,true);
-                if ( m_kCurrentVOI.getGroup() != null )
+                showSelectedVOI( kEvent.getX(), kEvent.getY() );
+                if ( (m_iNearStatus == NearPoint) &&
+                        ((m_kCurrentVOI.getNearPoint() == 0) || (m_kCurrentVOI.getNearPoint() == m_kCurrentVOI.size()-2)) )
                 {
-                    if ( m_kCurrentVOI.getGroup().getCurveType() != m_kCurrentVOI.getType() )
+                    m_kCurrentVOI.setClosed((m_kCurrentVOI.getNearPoint() == 0));
+                    m_kCurrentVOI.removeElementAt( m_kCurrentVOI.size() -1 );
+                    m_kCurrentVOI.trimPoints(Preferences.getTrim(),
+                            Preferences.getTrimAdjacient());
+                    if ( m_kCurrentVOI.getGroup() != null )
                     {
-                        VOI kGroup = m_kCurrentVOI.getGroup();
-                        kGroup.getCurves().remove(m_kCurrentVOI);
-                        m_kCurrentVOI.setGroup(null);
-                        m_kParent.addVOI(m_kCurrentVOI, true);
+                        if ( m_kCurrentVOI.getGroup().getCurveType() != m_kCurrentVOI.getType() )
+                        {
+                            VOI kGroup = m_kCurrentVOI.getGroup();
+                            kGroup.getCurves().remove(m_kCurrentVOI);
+                            m_kCurrentVOI.setGroup(null);
+                            m_kParent.addVOI(m_kCurrentVOI, true);
+                        }
                     }
+                    m_bDrawVOI = false;
+                    m_iNearStatus = NearNone;
+                    m_kParent.setDefaultCursor();
+                    return;
                 }
-                m_bDrawVOI = false;
-                m_iNearStatus = NearNone;
-                m_kParent.setDefaultCursor();
-                return;
             }
-            else
+            if ( m_iDrawType == LIVEWIRE )
             {
                 anchor( kEvent.getX(), kEvent.getY(), true );
-                return;
-            }
-        }
-        else if ( m_bDrawVOI && (m_iDrawType == POLYLINE) )
-        {   
-            showSelectedVOI( kEvent.getX(), kEvent.getY() );
-            if ( (m_iNearStatus == NearPoint) && (m_kCurrentVOI.getNearPoint() == 0) && (m_kCurrentVOI.size() > 2) )
-            {
-                m_kCurrentVOI.setClosed(true);
-                m_kCurrentVOI.trimPoints(0,true);
-                if ( m_kCurrentVOI.getGroup() != null )
-                {
-                    if ( m_kCurrentVOI.getGroup().getCurveType() != m_kCurrentVOI.getType() )
-                    {
-                        VOI kGroup = m_kCurrentVOI.getGroup();
-                        kGroup.getCurves().remove(m_kCurrentVOI);
-                        m_kCurrentVOI.setGroup(null);
-                        m_kParent.addVOI(m_kCurrentVOI, true);
-                    }
-                }
-                m_bDrawVOI = false;
-                m_iNearStatus = NearNone;
-                m_kParent.setDefaultCursor();
-                return;
             }
             else
             {
                 anchorPolyline( kEvent.getX(), kEvent.getY(), false );
-                return;
             }
+            return;
         }
 
 
@@ -1995,6 +1975,22 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         {
             float fRadiusX = Math.abs(m_fMouseX - iX);
             float fRadiusY = Math.abs(fYStart - fY);
+            if ( m_fMouseX + fRadiusX >= m_aiLocalImageExtents[0] )
+            {
+                fRadiusX = m_aiLocalImageExtents[0] - m_fMouseX;
+            }
+            if ( m_fMouseY + fRadiusY >= m_aiLocalImageExtents[1] )
+            {
+                fRadiusY = m_aiLocalImageExtents[1] - m_fMouseY;
+            }
+            if ( m_fMouseX - fRadiusX < 0 )
+            {
+                fRadiusX = m_fMouseX;
+            }
+            if ( m_fMouseY - fRadiusY < 0 )
+            {
+                fRadiusY = m_fMouseY;
+            }
             if ( m_kCurrentVOI == null )
             {            
                 Vector<Vector3f> kPositions = new Vector<Vector3f>();
@@ -4635,8 +4631,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             kPatientPt.Set( levelSetStack.getPointX(0), levelSetStack.getPointY(0), m_iSlice );   
             kScreenPt = m_kDrawingContext.patientToScreen( kPatientPt );
             kPositions.add( kScreenPt );
-            VOIBase kVOI = createVOI( m_iDrawType, true, true, kPositions );
-            kVOI.trimPoints(0,true);
+            VOIBase kVOI = createVOI( m_iDrawType, true, false, kPositions );
+            kVOI.trimPoints(Preferences.getTrim(),
+                    Preferences.getTrimAdjacient());
             return kVOI;
         } 
         return null;

@@ -488,7 +488,7 @@ public class JDialogLoadProstateMask extends JDialogBase implements AlgorithmInt
                         if (((VOIContour) (contours.elementAt(element))).isActive()) {
                             //System.err.println("slice is: " + slice + " element is: " + element + " groupnum is: " +
                             //groupNum);
-                            VOIs.VOIAt(groupNum).removeCurve(element, 0);
+                            contours.removeElementAt(element);
 
                             VOIs.VOIAt(groupNum).importCurve((VOIContour) resultVOI.getCurves().elementAt(resultIndex++));
                             //  VOIs.VOIAt(groupNum).importCurve((VOIContour) resultVOI.getActiveContour(slice), slice);

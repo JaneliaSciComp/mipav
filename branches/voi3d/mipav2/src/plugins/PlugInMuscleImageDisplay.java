@@ -459,25 +459,23 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	 */
 	public void algorithmPerformed(AlgorithmBase algorithm) {
 			
-		Vector<VOIBase>[] firstVOI = null;
-		Vector<VOIBase>[] secondVOI = null;
+		Vector<VOIBase> firstVOI = null;
+		Vector<VOIBase> secondVOI = null;
 		PlugInSelectableVOI firstBufferVOI = null;
 		PlugInSelectableVOI secondBufferVOI = null;
 		if(algorithm instanceof PlugInAlgorithmCTThigh) {
 			if(((PlugInAlgorithmCTThigh)algorithm).getLeftThighVOI() != null && 
 					((PlugInAlgorithmCTThigh)algorithm).getRightThighVOI() != null) {
 				System.out.println("Thigh VOIs completed correctly");
-				firstVOI = ((PlugInAlgorithmCTThigh)algorithm).getLeftThighVOI().getCurvesTemp();
-				secondVOI = ((PlugInAlgorithmCTThigh)algorithm).getRightThighVOI().getCurvesTemp();
+				firstVOI = ((PlugInAlgorithmCTThigh)algorithm).getLeftThighVOI().getCurves();
+				secondVOI = ((PlugInAlgorithmCTThigh)algorithm).getRightThighVOI().getCurves();
 				firstBufferVOI = voiBuffer.get("Left Thigh");
 				secondBufferVOI = voiBuffer.get("Right Thigh");
-				for(int i=0; i<firstVOI.length; i++) {
-					for(int j=0; j<firstVOI[i].size(); j++) {
-						firstBufferVOI.importCurve((VOIContour)firstVOI[i].get(j), i);
-					}
-					for(int j=0; j<secondVOI[i].size(); j++) {
-						secondBufferVOI.importCurve((VOIContour)secondVOI[i].get(j), i);
-					}
+				for(int j=0; j<firstVOI.size(); j++) {
+				    firstBufferVOI.importCurve((VOIContour)firstVOI.get(j));
+				}
+				for(int j=0; j<secondVOI.size(); j++) {
+				    secondBufferVOI.importCurve((VOIContour)secondVOI.get(j));
 				}
 				firstBufferVOI.setComputerGenerated(true);
 				secondBufferVOI.setComputerGenerated(true);
@@ -488,17 +486,15 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			if(((PlugInAlgorithmCTMarrow)algorithm).getLeftMarrowVOI() != null && 
 					((PlugInAlgorithmCTMarrow)algorithm).getRightMarrowVOI() != null) {
 				System.out.println("Marrow VOIs completed correctly");
-				firstVOI = ((PlugInAlgorithmCTMarrow)algorithm).getLeftMarrowVOI().getCurvesTemp();
-				secondVOI = ((PlugInAlgorithmCTMarrow)algorithm).getRightMarrowVOI().getCurvesTemp();
+				firstVOI = ((PlugInAlgorithmCTMarrow)algorithm).getLeftMarrowVOI().getCurves();
+				secondVOI = ((PlugInAlgorithmCTMarrow)algorithm).getRightMarrowVOI().getCurves();
 				firstBufferVOI = voiBuffer.get("Left Marrow");
 				secondBufferVOI = voiBuffer.get("Right Marrow");
-				for(int i=0; i<firstVOI.length; i++) {
-					for(int j=0; j<firstVOI[i].size(); j++) {
-						firstBufferVOI.importCurve((VOIContour)firstVOI[i].get(j), i);
-					}
-					for(int j=0; j<secondVOI[i].size(); j++) {
-						secondBufferVOI.importCurve((VOIContour)secondVOI[i].get(j), i);
-					}
+				for(int j=0; j<firstVOI.size(); j++) {
+				    firstBufferVOI.importCurve((VOIContour)firstVOI.get(j));
+				}
+				for(int j=0; j<secondVOI.size(); j++) {
+				    secondBufferVOI.importCurve((VOIContour)secondVOI.get(j));
 				}
 				firstBufferVOI.setComputerGenerated(true);
 				secondBufferVOI.setComputerGenerated(true);
@@ -509,17 +505,15 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			if(((PlugInAlgorithmCTBone)algorithm).getLeftBoneVOI() != null && 
 					((PlugInAlgorithmCTBone)algorithm).getRightBoneVOI() != null) {
 				System.out.println("Bone VOIs completed correctly");
-				firstVOI = ((PlugInAlgorithmCTBone)algorithm).getLeftBoneVOI().getCurvesTemp();
-				secondVOI = ((PlugInAlgorithmCTBone)algorithm).getRightBoneVOI().getCurvesTemp();
+				firstVOI = ((PlugInAlgorithmCTBone)algorithm).getLeftBoneVOI().getCurves();
+				secondVOI = ((PlugInAlgorithmCTBone)algorithm).getRightBoneVOI().getCurves();
 				firstBufferVOI = voiBuffer.get("Left Bone");
 				secondBufferVOI = voiBuffer.get("Right Bone");
-				for(int i=0; i<firstVOI.length; i++) {
-					for(int j=0; j<firstVOI[i].size(); j++) {
-						firstBufferVOI.importCurve((VOIContour)firstVOI[i].get(j), i);
-					}
-					for(int j=0; j<secondVOI[i].size(); j++) {
-						secondBufferVOI.importCurve((VOIContour)secondVOI[i].get(j), i);
-					}
+				for(int j=0; j<firstVOI.size(); j++) {
+				    firstBufferVOI.importCurve((VOIContour)firstVOI.get(j));
+				}
+				for(int j=0; j<secondVOI.size(); j++) {
+				    secondBufferVOI.importCurve((VOIContour)secondVOI.get(j));
 				}
 				firstBufferVOI.setComputerGenerated(true);
 				secondBufferVOI.setComputerGenerated(true);
@@ -529,23 +523,19 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		} else if(algorithm instanceof PlugInAlgorithmCTAbdomen) {
 			if(((PlugInAlgorithmCTAbdomen)algorithm).getAbdomenVOI() != null) {
 				System.out.println("Abdomen alg completed");
-				firstVOI = ((PlugInAlgorithmCTAbdomen)algorithm).getAbdomenVOI().getCurvesTemp();
+				firstVOI = ((PlugInAlgorithmCTAbdomen)algorithm).getAbdomenVOI().getCurves();
 				firstBufferVOI = voiBuffer.get("Abdomen");
-				for(int i=0; i<firstVOI.length; i++) {
-					for(int j=0; j<firstVOI[i].size(); j++) {
-						firstBufferVOI.importCurve((VOIContour)firstVOI[i].get(j), i);
-					}
+				for(int j=0; j<firstVOI.size(); j++) {
+				    firstBufferVOI.importCurve((VOIContour)firstVOI.get(j));
 				}
 				firstBufferVOI.setComputerGenerated(true);
 				firstBufferVOI.setSegmentationTime(((PlugInAlgorithmCTAbdomen)algorithm).getSegmentationTimeAbd());
 			}
 			if(((PlugInAlgorithmCTAbdomen)algorithm).getSubcutaneousVOI() != null) {
-				secondVOI = ((PlugInAlgorithmCTAbdomen)algorithm).getSubcutaneousVOI().getCurvesTemp();
+				secondVOI = ((PlugInAlgorithmCTAbdomen)algorithm).getSubcutaneousVOI().getCurves();
 				secondBufferVOI = voiBuffer.get("Subcutaneous area");
-				for(int i=0; i<secondVOI.length; i++) {
-					for(int j=0; j<secondVOI[i].size(); j++) {
-						secondBufferVOI.importCurve((VOIContour)secondVOI[i].get(j), i);
-					}
+				for(int j=0; j<secondVOI.size(); j++) {
+				    secondBufferVOI.importCurve((VOIContour)secondVOI.get(j));
 				}
 				secondBufferVOI.setComputerGenerated(true);
 				secondBufferVOI.setSegmentationTime(((PlugInAlgorithmCTAbdomen)algorithm).getSegmentationTimeSub());
@@ -748,7 +738,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	 * Easy curveExists for checks if curveExists for viewableSlice(). (so no bounds check)
 	 */
 	public boolean curveExists(String name) {
-		if(voiBuffer.get(name).getCurvesTemp()[getViewableSlice()].size() > 0) {
+		if(voiBuffer.get(name).getSliceSize(getViewableSlice()) > 0) {
 			return true;
 		}
 		return false;
@@ -875,9 +865,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+File.separator;
 		String ext = name.contains(".xml") ? "" : ".xml";
 		PlugInSelectableVOI temp = voiBuffer.get(name);
-		for(int i=0; i<temp.getZDim(); i++) {
-			temp.removeCurves(i);
-		}
+		temp.getCurves().removeAllElements();
+		
 	    if(new File(fileDir+name+ext).exists()) {
 	        FileVOI v;
 	        VOI[] voiVec = null;
@@ -892,12 +881,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	        	//though VOI could contain multiple curves, no file loaded should contain multiple VOIs
 	            MipavUtil.displayError("Invalid VOI from location:\n"+fileDir+"\nWith name: "+name);
 	        } else {
-	        	Vector <VOIBase>[] voiVecTemp = voiVec[0].getCurvesTemp();
-	        	for(int i=0; i<voiVecTemp.length; i++) {
-	    			for(int j=0; j<voiVecTemp[i].size(); j++) { 
-	    				temp.importCurve((VOIContour)(voiVecTemp[i].get(j)), i);
-	    			}
-	    		}
+	            Vector <VOIBase> voiVecTemp = voiVec[0].getCurves();
+	            for(int j=0; j<voiVecTemp.size(); j++) { 
+	                temp.importCurve((VOIContour)(voiVecTemp.get(j)));
+	            }
 	        }
 	    }
 	    return temp;
@@ -989,7 +976,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		if(!multipleSlices) {
 			return voiExists(name);
 		}
-		if(voiBuffer.get(name).getCurvesTemp()[slice].size() > 0) {
+		if(voiBuffer.get(name).getSliceSize(slice) > 0) {
 			return true;
 		}
 		return false;
@@ -1806,7 +1793,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
     	VOIVector vec = getActiveImage().getVOIs();
     	PlugInSelectableVOI temp = null;
     	for(int i=0; i<vec.size(); i++) 	
-        	if((temp = voiBuffer.get(vec.get(i).getName())) != null && temp.getCurvesTemp()[getViewableSlice()].size() > 0) 
+        	if((temp = voiBuffer.get(vec.get(i).getName())) != null && temp.getSliceSize(getViewableSlice()) > 0) 
         		((MuscleDialogPrompt)tabs[pane]).setButton(temp);
     }
     
@@ -2525,7 +2512,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		    boolean curveReplace = false;
 		    for(int i=0; i<srcVOI.size(); i++) {
 		        if(srcVOI.get(i).getName().equals(objectName)) {
-		            if(srcVOI.get(i).getCurvesTemp()[getViewableSlice()].size() > 0) {
+		            if(srcVOI.get(i).getSliceSize(getViewableSlice()) > 0) {
 		            	goodVOI = (VOI)srcVOI.get(i).clone();
 		            	countQualifiedVOIs++;
 		            	curveReplace = true;
@@ -2549,8 +2536,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		        return null;  
 		    }
 		    
-		    
-		    Vector<VOIBase>[] curves = goodVOI.getCurvesTemp();           
+		    int zDim = muscleFrame.getActiveImage().getExtents().length > 2 ? 
+		            muscleFrame.getActiveImage().getExtents()[2] : 1;
+		    Vector<VOIBase>[] curves = goodVOI.getSortedCurves(zDim);           
 		
 		    boolean maxCurve = false, closedProblem = false;
 		    int sliceCurves = 0, sliceClosed = 0, slice=0;
@@ -2586,12 +2574,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		    	return null;
 		    }
 		    
-		    
+
+            if(curveReplace) 
+                voiBuffer.get(objectName).getCurves().removeAllElements();
 			for(int i=0; i<curves.length; i++) { 
 				for(int j=0; j<curves[i].size(); j++) {
-					if(curveReplace) 
-						voiBuffer.get(objectName).removeCurve(j, i);
-				    voiBuffer.get(objectName).importCurve((VOIContour)curves[i].get(j), i);
+				    voiBuffer.get(objectName).importCurve((VOIContour)curves[i].get(j));
 				}
 			}
 		    
@@ -2839,7 +2827,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         public void setSlice(int slice) {
         	PlugInSelectableVOI temp;
         	for(int i=0; i<mirrorCheckArr.length; i++) {
-        		if((temp = voiBuffer.get(mirrorButtonArr[i].getText())).getCurvesTemp()[slice].size() == 0) {
+        		if((temp = voiBuffer.get(mirrorButtonArr[i].getText())).getSliceSize(slice) == 0) {
 	        		mirrorCheckArr[i].setColor(Color.black);
 	        		mirrorCheckArr[i].getColorButton().colorChanged(Color.black);
         		} else {
@@ -2849,7 +2837,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         		//System.out.println("Size of "+temp.getName()+": "+temp.getCurves()[slice].size());
         	}
         	for(int i=0; i<noMirrorCheckArr.length; i++) {
-        		if((temp = voiBuffer.get(noMirrorButtonArr[i].getText())).getCurvesTemp()[slice].size() == 0) {
+        		if((temp = voiBuffer.get(noMirrorButtonArr[i].getText())).getSliceSize(slice) == 0) {
 	        		noMirrorCheckArr[i].setColor(Color.black);
 	        		noMirrorCheckArr[i].getColorButton().colorChanged(Color.black);
         		} else {
@@ -4367,18 +4355,24 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			
 			//note that even for 3D images this will still be called area, even though refers to volume
 			performCalculations(v, PlugInSelectableVOI.WHOLE_VOLUME_SLICE_NUMBER, wholeMultiplier);
-			
-			System.out.println("Number of slices: "+temp.getZDim());
+
+	        int[] iX = new int[]{0,0};
+	        int[] iY = new int[]{0,0};
+	        int[] iZ = new int[]{0,0};
+	        temp.getBounds(iX,iY,iZ);
+			System.out.println("Number of slices: "+ (iZ[1] - iZ[0] + 1));
 			//in the case of a 3D image, each VOI is cloned for a particular slice, relevant statistics are caluclated
 			//for that slice only
-			for(int k=0; k<temp.getZDim(); k++) {
+			for(int k = iZ[0]; k <= iZ[1]; k++) {
 				//progressBar.setMessage("Calculating "+name.toLowerCase()+" slice "+k+"...");
-				VOI v2 = (VOI)v.clone();
-				for(int n=0; n<temp.getZDim(); n++) {
-					if(n != k)
-						v2.removeCurves(n);
-					performCalculations(v2, k, sliceMultiplier);
+				VOI v2 = new VOI( (short)0, "temp", 1 );
+				Vector<VOIBase> sliceCurves = temp.getSliceCurves(k);
+                System.err.println( k + " " + sliceCurves.size() );
+				for ( int s = 0; s < sliceCurves.size(); s++ )
+				{
+				    v2.importCurve( sliceCurves.elementAt(s) );
 				}
+				performCalculations(v2, k, sliceMultiplier);
 			}
 			time = System.currentTimeMillis() - time;
 			calculateVOI.setCalculationTime(time);
@@ -4650,7 +4644,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    }
 	
 	    private void initThighAxes() {
-	        Vector[][] contours = new Vector[2][]; //either 2 or 3 dimensions
 	        defaultPts = new int[2];
 	        int nVOI;//, nContours;
 	        float[] xPoints = null;
@@ -4683,37 +4676,35 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	            return;
 	        }
 	        
-	        for(int i=0; i<thighVOIs.length; i++) {
-	            
-	            contours[i] = thighVOIs[i].getCurvesTemp();
-	            //nContours = contours[i][zSlice].size();
-	    
+	        for(int i=0; i<thighVOIs.length; i++) {            	    
 	            int elementNum = 0;
 	       
-	            Polygon[] gons = thighVOIs[i].exportPolygons(zSlice);
-	
-	            xPoints = new float[gons[elementNum].npoints + 5];
-	            yPoints = new float[gons[elementNum].npoints + 5];
-	
-	            xPoints[0] = gons[elementNum].xpoints[gons[elementNum].npoints - 2];
-	            yPoints[0] = gons[elementNum].ypoints[gons[elementNum].npoints - 2];
-	
-	            	xPoints[1] = gons[elementNum].xpoints[gons[elementNum].npoints - 1];
-	            	yPoints[1] = gons[elementNum].ypoints[gons[elementNum].npoints - 1];
+	            Vector<VOIBase> contours = thighVOIs[i].getSliceCurves(zSlice);
+	            VOIBase selectedContour = contours.elementAt(elementNum);
+	            int npoints = selectedContour.size();
 	            
-	            for (i = 0; i < gons[elementNum].npoints; i++) {
-	                xPoints[i + 2] = gons[elementNum].xpoints[i];
-	                yPoints[52*i + 2] = gons[elementNum].ypoints[i];
+	            xPoints = new float[npoints + 5];
+	            yPoints = new float[npoints + 5];
+	
+	            xPoints[0] = selectedContour.elementAt(npoints - 2).X;
+	            yPoints[0] = selectedContour.elementAt(npoints - 2).Y;
+	
+	            	xPoints[1] = selectedContour.elementAt(npoints - 1).X;
+	            	yPoints[1] = selectedContour.elementAt(npoints - 1).Y;
+	            
+	            for (i = 0; i < npoints; i++) {
+	                xPoints[i + 2] = selectedContour.elementAt(i).X;
+	                yPoints[52*i + 2] = selectedContour.elementAt(i).Y;
 	            }
 	
-	            xPoints[gons[elementNum].npoints + 2] = gons[elementNum].xpoints[0];
-	            yPoints[gons[elementNum].npoints + 2] = gons[elementNum].ypoints[0];
+	            xPoints[npoints + 2] = selectedContour.elementAt(0).X;
+	            yPoints[npoints + 2] = selectedContour.elementAt(0).Y;
 	
-	            xPoints[gons[elementNum].npoints + 3] = gons[elementNum].xpoints[1];
-	            yPoints[gons[elementNum].npoints + 3] = gons[elementNum].ypoints[1];
+	            xPoints[npoints + 3] = selectedContour.elementAt(1).X;
+	            yPoints[npoints + 3] = selectedContour.elementAt(1).Y;
 	
-	            xPoints[gons[elementNum].npoints + 4] = gons[elementNum].xpoints[2];
-	            yPoints[gons[elementNum].npoints + 4] = gons[elementNum].ypoints[2];
+	            xPoints[npoints + 4] = selectedContour.elementAt(2).X;
+	            yPoints[npoints + 4] = selectedContour.elementAt(2).Y;
 	
 	            AlgorithmArcLength arcLength = new AlgorithmArcLength(xPoints, yPoints);
 	            defaultPts[i] = Math.round(arcLength.getTotalArcLength() / 6); //larger denom.
@@ -5052,7 +5043,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	            // for each element in the list ....
 	            for (int i = 0; i < list.getSize(); i++) {
 	                properties = calculator.getVOIProperties((VOI) list.getElementAt(i));
-	                contours = ((VOI) list.getElementAt(i)).getCurvesTemp();
+	                int zDim = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+	                contours = ((VOI) list.getElementAt(i)).getSortedCurves(zDim);
 
 	                String[] rowData = new String[logModel.getColumnCount()];
 	                String[] totalData = new String[logModel.getColumnCount()];
@@ -5266,7 +5258,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	            // column-by-column:
 	            for (int i = 0; i < list.getSize(); i++) {
 	                properties = calculator.getVOIProperties((VOI) list.getElementAt(i));
-	                contours = ((VOI) list.getElementAt(i)).getCurvesTemp();
 
 	                String[] rowData = new String[logModel.getColumnCount()];
 	                rowData[0] = list.getElementAt(i).toString();

@@ -335,11 +335,11 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
     								//System.err.println("current side for second contour: " + currentSideB + "\n\n");
     								
     								if (currentSide == 1) {
-    									firstVOI.importCurve(firstContour, slice);
-    									secondVOI.importCurve(secondContour, slice);
+    									firstVOI.importCurve(firstContour);
+    									secondVOI.importCurve(secondContour);
     								} else {
-    									firstVOI.importCurve(secondContour, slice);
-    									secondVOI.importCurve(firstContour, slice);
+    									firstVOI.importCurve(secondContour);
+    									secondVOI.importCurve(firstContour);
     								}
     								
     								firstIntersectionPt = null;
@@ -361,11 +361,11 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
     						//		System.err.println("current side: " + currentSide);
     								if (currentSide == 1) {
     									//System.err.println("Did not find two intersection points, adding contour to firstVOI" + "\n\n");
-    									firstVOI.importCurve(currentContour, slice);
+    									firstVOI.importCurve(currentContour);
     									
     								} else {
     									//System.err.println("Did not find two intersection points, adding contour to secondVOI" + "\n\n");
-    									secondVOI.importCurve(currentContour, slice);
+    									secondVOI.importCurve(currentContour);
     								}
     								
     								curves[slice].remove(voiBaseIndex);

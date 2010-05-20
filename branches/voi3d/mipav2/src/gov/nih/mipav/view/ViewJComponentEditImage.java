@@ -2573,9 +2573,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
             return;
         }
-
-        // System.err.println("got to end...");
-
         setCursorMode(ViewJComponentBase.DEFAULT);
     } // end mouseMoved
 
@@ -4030,9 +4027,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      */
     public void setCursorMode(final int mode) {
         this.cursorMode = mode;
-
-
-
         boolean isImageFrame = frame instanceof ViewJFrameImage;
 
         switch (mode) {

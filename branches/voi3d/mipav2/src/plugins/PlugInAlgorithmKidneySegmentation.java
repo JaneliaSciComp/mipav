@@ -2204,7 +2204,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
                 for (i = 0; i < nCurves; i++) {
 
                     if (setMem[i] == 1) {
-                        VOI1.importCurve((VOIContour) (curves2[z].elementAt(i)), 0);
+                        VOI1.importCurve((VOIContour) (curves2[z].elementAt(i)));
                     } // if (setMem[i] == 1)
                 } // for (i = 0; i < nCurves; i++)
 
@@ -2220,7 +2220,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
                 for (i = 0; i < nCurves; i++) {
 
                     if (setMem[i] == 2) {
-                        VOI2.importCurve((VOIContour) (curves2[z].elementAt(i)), 0);
+                        VOI2.importCurve((VOIContour) (curves2[z].elementAt(i)));
                     } // if (setMem[i] == 2)
                 } // for (i = 0; i < nCurves; i++)
 
@@ -2270,11 +2270,11 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
                 } // for (z = 0; z < zDim; z++)
 
                 if (curves3[0].size() > 0) {
-                    nextVOI.importCurve((VOIContour) (curves3[0].elementAt(0)), 0);
+                    nextVOI.importCurve((VOIContour) (curves3[0].elementAt(0)));
                 }
 
                 if (curves3[zDim - 1].size() > 0) {
-                    nextVOI.importCurve((VOIContour) (curves3[zDim - 1].elementAt(0)), zDim - 1);
+                    nextVOI.importCurve((VOIContour) (curves3[zDim - 1].elementAt(0)));
                 }
 
                 for (z = 1; z < (zDim - 1); z++) {
@@ -2300,12 +2300,12 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
                         }
 
                         VOI1 = new VOI((short) 1, "one.voi", 1, VOI.CONTOUR, -1.0f);
-                        VOI1.importCurve((VOIContour) (curves3[z].elementAt(0)), 0);
+                        VOI1.importCurve((VOIContour) (curves3[z].elementAt(0)));
                         (sliceImage.getVOIs()).addVOI(VOI1);
                         sliceCorrect(vIters, true);
 
                         if (!finished) {
-                            nextVOI.importCurve((VOIContour) (curves3[z].elementAt(0)), z);
+                            nextVOI.importCurve((VOIContour) (curves3[z].elementAt(0)));
                         }
 
                         (sliceImage.getVOIs()).removeAllElements();
@@ -2313,7 +2313,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
                     else {
 
                         if (curves3[z].size() > 0) {
-                            nextVOI.importCurve((VOIContour) (curves3[z].elementAt(0)), z);
+                            nextVOI.importCurve((VOIContour) (curves3[z].elementAt(0)));
                         }
                     } // else
                 } // for (z = 1; z < zDim - 1; z++)

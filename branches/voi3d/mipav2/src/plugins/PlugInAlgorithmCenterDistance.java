@@ -1780,7 +1780,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     arcLength = new AlgorithmArcLength(xPoints, yPoints);
                     defaultPts = Math.round(arcLength.getTotalArcLength() / interpolationDivisor);
                     newVOI.removeCurves(0);
-                    newVOI.importCurve((VOIContour)contours[0].elementAt(maxElement),0);
+                    newVOI.importCurve((VOIContour)contours[0].elementAt(maxElement));
                     newVOI.setAllActive(true);
                     blueVOIs.VOIAt(0).setAllActive(true);
                     smoothAlgo = new AlgorithmBSmooth(grayImage, newVOI, defaultPts, trim);
@@ -1789,7 +1789,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                         // The algorithm has completed and produced a VOI
                         resultVOI = smoothAlgo.getResultVOI();
                         blueVOIs.VOIAt(0).removeCurves(0);
-                        blueVOIs.VOIAt(0).importCurve((VOIContour)resultVOI.getCurvesTemp()[0].elementAt(0),0);
+                        blueVOIs.VOIAt(0).importCurve((VOIContour)resultVOI.getCurvesTemp()[0].elementAt(0));
                         // Change IDArray to reflect the changed boundaries of the voi
                         Arrays.fill(shortMask, (short) -1);
                         shortMask = grayImage.generateVOIMask(shortMask, 0);
@@ -3739,7 +3739,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                             arcLength = new AlgorithmArcLength(xPoints, yPoints);
                             defaultPts = Math.round(arcLength.getTotalArcLength() / interpolationDivisor);
                             newVOI.removeCurves(0);
-                            newVOI.importCurve((VOIContour)contours[z].elementAt(maxElement),0);
+                            newVOI.importCurve((VOIContour)contours[z].elementAt(maxElement));
                             newVOI.setAllActive(true);
                             smoothAlgo = new AlgorithmBSmooth(grayImage2D, newVOI, defaultPts, trim);
                             smoothAlgo.run();
@@ -3747,7 +3747,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                                 // The algorithm has completed and produced a VOI
                                 resultVOI = smoothAlgo.getResultVOI();
                                 blueVOIs.VOIAt(0).removeCurves(z);
-                                blueVOIs.VOIAt(0).importCurve((VOIContour)resultVOI.getCurvesTemp()[0].elementAt(0),z);
+                                blueVOIs.VOIAt(0).importCurve((VOIContour)resultVOI.getCurvesTemp()[0].elementAt(0));
                             } // if (smoothAlgo.isCompleted())
                             smoothAlgo.finalize();
                             smoothAlgo = null;
@@ -3871,7 +3871,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                 xArr[0] = xPosGrav[i];
                 yArr[0] = yPosGrav[i];
                 zArr[0] = zPosGrav[i];
-                newPtVOI.importCurve(xArr, yArr, zArr, Math.round(zPosGrav[i]));
+                newPtVOI.importCurve(xArr, yArr, zArr);
                 ((VOIPoint) (newPtVOI.getCurvesTemp()[Math.round(zPosGrav[i])].elementAt(0))).setFixed(true);
                 ((VOIPoint) (newPtVOI.getCurvesTemp()[Math.round(zPosGrav[i])].elementAt(0))).setLabel(voiName);
                 srcImage.registerVOI(newPtVOI);    
@@ -3998,7 +3998,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             xArr[0] = xCenter[i];
             yArr[0] = yCenter[i];
             zArr[0] = zCenter[i];
-            newPtVOI.importCurve(xArr, yArr, zArr, Math.round(zArr[0]));
+            newPtVOI.importCurve(xArr, yArr, zArr);
             ((VOIPoint) (newPtVOI.getCurvesTemp()[Math.round(zArr[0])].elementAt(0))).setFixed(true);
             ((VOIPoint) (newPtVOI.getCurvesTemp()[Math.round(zArr[0])].elementAt(0))).setLabel("Cen" + (i + 1));
             srcImage.registerVOI(newPtVOI);

@@ -2,8 +2,10 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.view.*;
+
 import java.awt.*;
 import java.awt.event.*;
+import java.io.FileNotFoundException;
 
 import javax.swing.*;
 
@@ -100,6 +102,13 @@ public class JDialogLivewire extends JDialogBase{
      * Initialized GUI components and displays dialog.
      */
     private void init() {
+        try {
+            setIconImage(MipavUtil.getIconImage("davinci_32x32.gif"));
+        } catch (final FileNotFoundException error) {
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage()
+                    + ">.  Check that this file is available.\n");
+        }
+        
         setTitle("Live wire cost function");
 
         mainDialogPanel.setLayout(new GridLayout(3, 1));

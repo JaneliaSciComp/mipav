@@ -1834,7 +1834,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     xPt[0] = xmin;
                     yPt[0] = ymin;
                     zPt[0] = zmin;
-                    globalPtVOI.importCurve(xPt, yPt, zPt, zmin);
+                    globalPtVOI.importCurve(xPt, yPt, zPt);
 
                 } catch (OutOfMemoryError error) {
                     System.gc();
@@ -1863,7 +1863,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                         zmin = index / xydim;
                         yPt[0] = (index % xydim) / 201;
                         xPt[0] = (index % xydim) % 201;
-                        localPtVOI[i].importCurve(xPt, yPt, zPt, zmin);
+                        localPtVOI[i].importCurve(xPt, yPt, zPt);
                     } catch (OutOfMemoryError error) {
                         System.gc();
                         MipavUtil.displayError("Out of memory on localPtVOI" + (i + 1) + " creation");

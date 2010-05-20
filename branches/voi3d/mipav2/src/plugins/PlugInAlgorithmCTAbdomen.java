@@ -963,7 +963,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             z1[idx] = 0;
         }
         abdomenVOI.removeCurves(sliceIdx);
-        abdomenVOI.importCurve(x1, y1, z1, sliceIdx);
+        abdomenVOI.importCurve(x1, y1, z1);
     } // end resampleAbdomenVOI(...)
 
     
@@ -1058,7 +1058,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             z1[idx] = 0;
         }
         abdomenVOI.removeCurves(0);
-        abdomenVOI.importCurve(x1, y1, z1, 0);
+        abdomenVOI.importCurve(x1, y1, z1);
     } // end resampleAbdomenVOI()
     
     
@@ -1414,7 +1414,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
        } // end for (int idx = 0; ...)
 
         // make the VOI's and add the points to them
-        subcutaneousVOI.importCurve(xLocsSubcutaneousVOI, yLocsSubcutaneousVOI, zVals, sliceNum);
+        subcutaneousVOI.importCurve(xLocsSubcutaneousVOI, yLocsSubcutaneousVOI, zVals);
 
     } // makeSubcutaneousFatVOIfromIntensityProfiles(...)
     
@@ -1484,7 +1484,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             v[idx] = new Vector();
         }
         subcutaneousVOI.setCurvesTemp(v);
-        subcutaneousVOI.importCurve(xLocsSubcutaneousVOI, yLocsSubcutaneousVOI, zVals, 0);
+        subcutaneousVOI.importCurve(xLocsSubcutaneousVOI, yLocsSubcutaneousVOI, zVals);
 
     } // makeSubcutaneousFatVOIfromIntensityProfiles()
     
@@ -1550,7 +1550,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             curve.exportArrays(xVals, yVals, zVals);
             theVOI.removeCurve(0, sliceIdx);
             
-            sliceVOI.importCurve(xVals, yVals, zVals, 0);
+            sliceVOI.importCurve(xVals, yVals, zVals);
             sliceImage.registerVOI(sliceVOI);
             
             System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
@@ -1641,7 +1641,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             theVOI.importCurve(newXVals, newYVals, newZVals, sliceIdx);
 */
             curve.exportArrays(xVals, yVals, zVals);
-            theVOI.importCurve(xVals, yVals, zVals, sliceIdx);
+            theVOI.importCurve(xVals, yVals, zVals);
             System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
             
             // need to remove the curve because registering a VOI makes a copy of it
@@ -1740,7 +1740,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         }
 
         theVOI.removeCurves(0);
-        theVOI.importCurve(x1, y1, z1, 0);
+        theVOI.importCurve(x1, y1, z1);
     } // end resampleCurve(...)
 
     
@@ -1962,7 +1962,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             v[idx] = new Vector();
         }
         subcutaneousVOI.setCurvesTemp(v);
-        subcutaneousVOI.importCurve(xValsSubcutaneousVOI, yValsSubcutaneousVOI, zVals, 0);
+        subcutaneousVOI.importCurve(xValsSubcutaneousVOI, yValsSubcutaneousVOI, zVals);
 
     } // end makeSubcutaneousFat2DVOI()
     
@@ -2024,7 +2024,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             v[idx] = new Vector();
         }
         abdomenVOI.setCurvesTemp(v);
-        abdomenVOI.importCurve(x1, y1, z1, 0);
+        abdomenVOI.importCurve(x1, y1, z1);
         
 
         for(int idx = 0; idx < xArrVis.size(); idx++) {
@@ -2033,7 +2033,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         }
 
         subcutaneousVOI = new VOI((short)0, "Subcutaneous area", 1);
-        subcutaneousVOI.importCurve(x1, y1, z1, 0);
+        subcutaneousVOI.importCurve(x1, y1, z1);
         
 /*
         System.out.println("Xcm: " +xcm +"  Ycm: " +ycm);
@@ -2157,7 +2157,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             v[idx] = new Vector();
         }
         abdomenVOI.setCurvesTemp(v);
-        abdomenVOI.importCurve(x1, y1, z1, 0);
+        abdomenVOI.importCurve(x1, y1, z1);
 
 
     } // end findAbdomenVOI(...)

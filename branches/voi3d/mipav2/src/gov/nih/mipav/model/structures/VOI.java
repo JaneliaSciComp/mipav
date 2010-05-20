@@ -584,15 +584,33 @@ public class VOI extends ModelSerialCloneable {
     /**
      * Clone function that calls the super (modelserializable) clone and then manually copies references 
      * to the transient VOIListeners (eventlistenerlist)
-     */
     public Object clone() {
-        //Object obj = super.clone();
         Object obj = new VOI(this);
 
         if (listenerList != null) {
             VOIListener [] voiList = listenerList.getListeners(VOIListener.class);
             for (int i = 0; i < voiList.length; i++) {
                 ((VOI)obj).addVOIListener(voiList[i]);
+            }
+        }
+
+        return obj;
+    }
+     */
+    
+    /**
+     * Clone function that calls the super (modelserializable) clone and then manually copies references to the
+     * transient VOIListeners (eventlistenerlist)
+     */
+    public Object clone() {
+        final Object obj = super.clone();
+
+        if (listenerList != null) {
+            final int listeners = listenerList.getListenerCount(VOIListener.class);
+            final VOIListener[] voiList = listenerList.getListeners(VOIListener.class);
+
+            for (final VOIListener element : voiList) {
+                ((VOI) obj).addVOIListener(element);
             }
         }
 
@@ -1536,6 +1554,9 @@ public class VOI extends ModelSerialCloneable {
         */
         return kTemp;
     }
+    public Vector<VOIBase>[] getSortedCurves( int iDim ) {
+        return getSortedCurves( VOIBase.ZPLANE, iDim );
+    }
 
     public Vector<VOIBase>[] getSortedCurves( int iPlane, int iDim ) {
         Vector<VOIBase>[] kTemp = new Vector[iDim];
@@ -1554,6 +1575,42 @@ public class VOI extends ModelSerialCloneable {
         }
         
         return kTemp;
+    }
+    
+    public int getSliceSize( int iSlice )
+    {
+        return getSliceSize( VOIBase.ZPLANE, iSlice );
+    }
+    
+    public int getSliceSize( int iPlane, int iSlice )
+    {
+        int sliceSize = 0;
+        for ( int i = 0; i < curves.size(); i++ )
+        {
+            if ( (curves.elementAt(i).getPlane() & iPlane) == iPlane && curves.elementAt(i).slice() == iSlice )
+            {
+                sliceSize++;
+            }
+        }
+        return sliceSize;
+    }
+    
+    public Vector<VOIBase> getSliceCurves( int iSlice )
+    {
+        return getSliceCurves( VOIBase.ZPLANE, iSlice );
+    }
+    
+    public Vector<VOIBase> getSliceCurves( int iPlane, int iSlice )
+    {
+        Vector<VOIBase> sliceCurves = new Vector<VOIBase>();      
+        for ( int i = 0; i < curves.size(); i++ )
+        {
+            if ( (curves.elementAt(i).getPlane() & iPlane) == iPlane && curves.elementAt(i).slice() == iSlice )
+            {
+                sliceCurves.add( curves.elementAt(i) );
+            }
+        }
+        return sliceCurves;
     }
 
     /**
@@ -1886,15 +1943,6 @@ public class VOI extends ModelSerialCloneable {
      */
     public short getWatershedID() {
         return watershedID;
-    }
-
-    /**
-     * Accessor that returns number of slices.
-     * 
-     * @return
-     */
-    public int getZDim() {
-        return 1;
     }
 
     public VOIBase importCurve(float[] x, float[] y, float[] z) {
