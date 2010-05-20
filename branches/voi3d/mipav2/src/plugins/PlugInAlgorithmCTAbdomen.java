@@ -13,6 +13,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.Point3D;
 import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIVector;
 
@@ -25,6 +26,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Vector;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
@@ -232,18 +235,18 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         
         // Keep only the largest VOI as the abdomen
         int numCurves, numRemoved = 0;
-        numCurves = theVOI.getCurvesTemp()[0].size();
+        numCurves = theVOI.getCurves().size();
             
         int maxIdx = 0;
-        int maxNumPoints = ((VOIContour)theVOI.getCurvesTemp()[0].get(maxIdx)).size();
+        int maxNumPoints = ((VOIContour)theVOI.getCurves().get(maxIdx)).size();
         for (int idx = 1; idx < numCurves; idx++) {
-            if (((VOIContour)theVOI.getCurvesTemp()[0].get(idx)).size() > maxNumPoints) {
+            if (((VOIContour)theVOI.getCurves().get(idx)).size() > maxNumPoints) {
                 maxIdx = idx;
             }
         } // end for (int idx = 0; ...)
         for (int idx = 0; idx < numCurves; idx++) {
             if (idx != maxIdx) {
-                theVOI.getCurvesTemp()[0].remove(idx - numRemoved);
+                theVOI.getCurves().remove(idx - numRemoved);
                 numRemoved++;
             }
         } // end for (int idx = 0; ...)
@@ -272,12 +275,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         
         totalTime = System.currentTimeMillis();
         
-        subcutaneousVOI = new VOI((short)0, "Subcutaneous area", 0);
-        Vector<VOIContour>[] v = new Vector[zDim];
-        for(int idx = 0; idx < zDim; idx++) {
-            v[idx] = new Vector<VOIContour>();
-        }
-        subcutaneousVOI.setCurvesTemp(v);
+        subcutaneousVOI = new VOI((short)0, "Subcutaneous area", 1);
         
         for (int sliceIdx = 0; sliceIdx < zDim; sliceIdx++) {
             System.out.println("Making intensity profiles for slice: " +sliceIdx);
@@ -391,7 +389,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         
         // set the subcutaneous VOI as active
         subcutaneousVOI.setActive(true);
-        subcutaneousVOI.getCurvesTemp()[0].elementAt(0).setActive(true);
+        subcutaneousVOI.getCurves().elementAt(0).setActive(true);
         
         float[] sigmas = new float[2];
         sigmas[0] = 1.0f;
@@ -775,18 +773,18 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 
         // Keep only the largest VOI as the abdomen
         int numCurves, numRemoved = 0;
-        numCurves = theVOI.getCurvesTemp()[0].size();
+        numCurves = theVOI.getCurves().size();
             
         int maxIdx = 0;
-        int maxNumPoints = ((VOIContour)theVOI.getCurvesTemp()[0].get(maxIdx)).size();
+        int maxNumPoints = ((VOIContour)theVOI.getCurves().get(maxIdx)).size();
         for (int idx = 1; idx < numCurves; idx++) {
-            if (((VOIContour)theVOI.getCurvesTemp()[0].get(idx)).size() > maxNumPoints) {
+            if (((VOIContour)theVOI.getCurves().get(idx)).size() > maxNumPoints) {
                 maxIdx = idx;
             }
         } // end for (int idx = 0; ...)
         for (int idx = 0; idx < numCurves; idx++) {
             if (idx != maxIdx) {
-                theVOI.getCurvesTemp()[0].remove(idx - numRemoved);
+                theVOI.getCurves().remove(idx - numRemoved);
                 numRemoved++;
             }
         } // end for (int idx = 0; ...)
@@ -839,32 +837,31 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         abdomenVOI = theVOI;
 
         // Keep only the largest curve on each slice
-        int numCurves, maxIdx = 0, numRemoved, maxCurveLength;
+        int numCurves, maxIdx = 0, maxCurveLength;
+        Vector<VOIBase>[] curves = theVOI.getSortedCurves(zDim);
         for (int sliceIdx = 0; sliceIdx < zDim; sliceIdx++) {
 //            System.out.println("  Slice: " +sliceIdx);
-            numCurves = theVOI.getCurvesTemp()[sliceIdx].size();
+            numCurves = curves[sliceIdx].size();
             maxIdx = 0;
-            maxCurveLength = ((VOIContour)theVOI.getCurvesTemp()[sliceIdx].get(maxIdx)).size();
+            maxCurveLength = ((VOIContour)curves[sliceIdx].get(maxIdx)).size();
             
             // find the index of the larges curve on each slice
             for (int curveIdx = 1; curveIdx < numCurves; curveIdx++) {
 //                System.out.println("    curve: " +curveIdx +"  size: " +((VOIContour)theVOI.getCurves()[sliceIdx].get(curveIdx)).size());
-                if (((VOIContour)theVOI.getCurvesTemp()[sliceIdx].get(curveIdx)).size() > maxCurveLength) {
+                if (((VOIContour)curves[sliceIdx].get(curveIdx)).size() > maxCurveLength) {
                     maxIdx = curveIdx;
-                    maxCurveLength = ((VOIContour)theVOI.getCurvesTemp()[sliceIdx].get(curveIdx)).size();
+                    maxCurveLength = ((VOIContour)curves[sliceIdx].get(curveIdx)).size();
                 }
             } // end for (int curveIdx = 0; ...)
             
             // remove all the curves except the one with the maxIdx
-            numRemoved = 0;
             for (int curveIdx = 0; curveIdx < numCurves; curveIdx++) {
                 if (curveIdx != maxIdx) {
-                    theVOI.getCurvesTemp()[sliceIdx].remove(curveIdx - numRemoved);
-                    numRemoved++;
+                    theVOI.getCurves().removeElement(curves[sliceIdx].elementAt(curveIdx));
                 }
             } // end for (int curveIdx = 0; ...)
             
-            resampleAbdomenVOI(sliceIdx);
+            resampleAbdomenVOI( sliceIdx, (VOIContour)curves[sliceIdx].elementAt(0) );
         } // end for (sliceIdx = 0; ...)
 
         System.out.println("makeAbdomen3DVOI(): End");
@@ -879,11 +876,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
     /**
      * Resample the abdominal VOI every angularResolution degrees
      */
-    private void resampleAbdomenVOI(int sliceIdx) {
-        VOIVector vois = abdomenImage.getVOIs();
-        VOI theVOI = vois.get(0);
-
-        VOIContour curve = ((VOIContour)theVOI.getCurvesTemp()[sliceIdx].get(0));
+    private void resampleAbdomenVOI( int sliceIdx, VOIContour curve ) {
         
         // find the center of mass of the single label object in the sliceBuffer (abdomenImage)
         findAbdomenCM(sliceIdx);
@@ -954,16 +947,10 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         
 //        System.out.println("resample VOI number of points: " +xValsAbdomenVOI.size());
 
-        int[] x1 = new int[xValsAbdomenVOI.size()];
-        int[] y1 = new int[xValsAbdomenVOI.size()];
-        int[] z1 = new int[xValsAbdomenVOI.size()];
+        curve.clear();
         for(int idx = 0; idx < xValsAbdomenVOI.size(); idx++) {
-            x1[idx] = xValsAbdomenVOI.get(idx);
-            y1[idx] = yValsAbdomenVOI.get(idx);
-            z1[idx] = 0;
+            curve.add( new Vector3f( xValsAbdomenVOI.get(idx), yValsAbdomenVOI.get(idx), sliceIdx ) );
         }
-        abdomenVOI.removeCurves(sliceIdx);
-        abdomenVOI.importCurve(x1, y1, z1);
     } // end resampleAbdomenVOI(...)
 
     
@@ -978,7 +965,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         VOIVector vois = abdomenImage.getVOIs();
         VOI theVOI = vois.get(0);
 
-        VOIContour curve = ((VOIContour)theVOI.getCurvesTemp()[0].get(0));
+        VOIContour curve = ((VOIContour)theVOI.getCurves().get(0));
         
         // find the center of mass of the single label object in the sliceBuffer (abdomenImage)
         findAbdomenCM();
@@ -1048,17 +1035,10 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
          } // end for (angle = 0; ...
         
 //        System.out.println("resample VOI number of points: " +xValsAbdomenVOI.size());
-
-        int[] x1 = new int[xValsAbdomenVOI.size()];
-        int[] y1 = new int[xValsAbdomenVOI.size()];
-        int[] z1 = new int[xValsAbdomenVOI.size()];
+        curve.clear();
         for(int idx = 0; idx < xValsAbdomenVOI.size(); idx++) {
-            x1[idx] = xValsAbdomenVOI.get(idx);
-            y1[idx] = yValsAbdomenVOI.get(idx);
-            z1[idx] = 0;
+            curve.add( new Vector3f( xValsAbdomenVOI.get(idx), yValsAbdomenVOI.get(idx), 0 ) );
         }
-        abdomenVOI.removeCurves(0);
-        abdomenVOI.importCurve(x1, y1, z1);
     } // end resampleAbdomenVOI()
     
     
@@ -1082,7 +1062,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         VOI theVOI = vois.get(0);
 
         // there should be only one curve on each slice corresponding to the external abdomen boundary
-        VOIContour curve = ((VOIContour)theVOI.getCurvesTemp()[sliceNum].get(0));
+        VOIContour curve = ((VOIContour)theVOI.getCurves().get(sliceNum));
         int[] xVals;
         int[] yVals;
         int[] zVals;
@@ -1227,7 +1207,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         VOI theVOI = vois.get(0);
 
         // there should be only one curve corresponding to the external abdomen boundary
-        VOIContour curve = ((VOIContour)theVOI.getCurvesTemp()[0].get(0));
+        VOIContour curve = ((VOIContour)theVOI.getCurves().get(0));
         int[] xVals;
         int[] yVals;
         int[] zVals;
@@ -1478,12 +1458,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
        } // end for (int idx = 0; ...)
 
         // make the VOI's and add the points to them
-        subcutaneousVOI = new VOI((short)0, "Subcutaneous area", 0);
-        Vector[] v = new Vector[zDim];
-        for(int idx = 0; idx < zDim; idx++) {
-            v[idx] = new Vector();
-        }
-        subcutaneousVOI.setCurvesTemp(v);
+        subcutaneousVOI = new VOI((short)0, "Subcutaneous area", 1);
         subcutaneousVOI.importCurve(xLocsSubcutaneousVOI, yLocsSubcutaneousVOI, zVals);
 
     } // makeSubcutaneousFatVOIfromIntensityProfiles()
@@ -1512,7 +1487,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 
         // There should be one curve on each slice and
         // each curve should have the same number of points since each was resampled
-        int numPoints = ((VOIContour)theVOI.getCurvesTemp()[0].get(0)).size();
+        int numPoints = ((VOIContour)theVOI.getCurves().get(0)).size();
         int[] xVals;
         int[] yVals;
         int[] zVals;
@@ -1532,25 +1507,12 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             System.out.print("  Extracting VOI for slice: " +sliceIdx +"  ");
             long time = System.currentTimeMillis();
 
-            numCurves = theVOI.getCurvesTemp()[sliceIdx].size();
-            if (numCurves > 1) {
-                MipavUtil.displayError("fixSubcutaneousFatVOIs(): more than one curve on slice: " +sliceIdx);
-                continue;
-            }
             // make a new VOI
             VOI sliceVOI = new VOI((short)0, "SliceVOI", 1);
-            Vector[] v = new Vector[1];
-            for(int idx = 0; idx < 1; idx++) {
-                v[idx] = new Vector();
-            }
-            sliceVOI.setCurvesTemp(v);
             
             // copy and remove a curve from the 3D image into the 2D image
-            curve = ((VOIContour)theVOI.getCurvesTemp()[sliceIdx].get(0));
-            curve.exportArrays(xVals, yVals, zVals);
-            theVOI.removeCurve(0, sliceIdx);
-            
-            sliceVOI.importCurve(xVals, yVals, zVals);
+            curve = ((VOIContour)theVOI.getCurves().remove(0));
+            sliceVOI.importCurve(curve);
             sliceImage.registerVOI(sliceVOI);
             
             System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
@@ -1594,18 +1556,18 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             
             // Keep only the largest VOI as the subcutaneous fat
             int numRemoved = 0;
-            numCurves = theFixedVOI.getCurvesTemp()[0].size();
+            numCurves = theFixedVOI.getCurves().size();
                 
             int maxIdx = 0;
-            int maxNumPoints = ((VOIContour)theFixedVOI.getCurvesTemp()[0].get(maxIdx)).size();
+            int maxNumPoints = ((VOIContour)theFixedVOI.getCurves().get(maxIdx)).size();
             for (int idx = 1; idx < numCurves; idx++) {
-                if (((VOIContour)theFixedVOI.getCurvesTemp()[0].get(idx)).size() > maxNumPoints) {
+                if (((VOIContour)theFixedVOI.getCurves().get(idx)).size() > maxNumPoints) {
                     maxIdx = idx;
                 }
             } // end for (int idx = 0; ...)
             for (int idx = 0; idx < numCurves; idx++) {
                 if (idx != maxIdx) {
-                    theFixedVOI.getCurvesTemp()[0].remove(idx - numRemoved);
+                    theFixedVOI.getCurves().remove(idx - numRemoved);
                     numRemoved++;
                 }
             } // end for (int idx = 0; ...)
@@ -1622,7 +1584,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             // sampes as the abdomen VOI. Furthermore, the samples will be on a
             // throught the center of mass of the abdomen and the abdomen VOI samples
             resampleCurve(theFixedVOI, sliceIdx);
-            curve = ((VOIContour)theFixedVOI.getCurvesTemp()[0].get(0));
+            curve = ((VOIContour)theFixedVOI.getCurves().get(0));
 /*
             int[] newXVals;
             int[] newYVals;
@@ -1645,7 +1607,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
             
             // need to remove the curve because registering a VOI makes a copy of it
-            sliceVOI.removeCurves(0);
+            sliceVOI.removeCurves();
             sliceImage.unregisterAllVOIs();
 
         } // end for (int sliceIdx = 0; ...)
@@ -1659,7 +1621,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
     
     private void resampleCurve(VOI theVOI, int sliceIdx) {
         
-        VOIContour curve = ((VOIContour)theVOI.getCurvesTemp()[0].get(0));
+        VOIContour curve = ((VOIContour)theVOI.getCurves().get(0));
         
         // use the same CM as for the abdomen VOI
         findAbdomenCM(sliceIdx);
@@ -1729,18 +1691,10 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
          } // end for (angle = 0; ...
         
 //        System.out.println("resample VOI number of points: " +xValsAbdomenVOI.size());
-
-        int[] x1 = new int[xValsVOI.size()];
-        int[] y1 = new int[xValsVOI.size()];
-        int[] z1 = new int[xValsVOI.size()];
+        curve.clear();
         for(int idx = 0; idx < xValsVOI.size(); idx++) {
-            x1[idx] = xValsVOI.get(idx);
-            y1[idx] = yValsVOI.get(idx);
-            z1[idx] = 0;
+            curve.add( new Vector3f( xValsVOI.get(idx), yValsVOI.get(idx), 0 ) );
         }
-
-        theVOI.removeCurves(0);
-        theVOI.importCurve(x1, y1, z1);
     } // end resampleCurve(...)
 
     
@@ -1751,11 +1705,12 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
     private void printVOI(VOI theVOI) {
         int numCurves;
         VOIContour curve;
+        Vector<VOIBase>[] curves = theVOI.getSortedCurves(zDim);
         for (int sliceIdx = 0; sliceIdx < zDim; sliceIdx++) {
-            numCurves = theVOI.getCurvesTemp()[sliceIdx].size();
+            numCurves = curves[sliceIdx].size();
             System.out.println("Slice number: " +sliceIdx +"  number of curves: " +numCurves);
             for (int curveIdx = 0; curveIdx < numCurves; curveIdx++) {
-                curve = ((VOIContour)theVOI.getCurvesTemp()[sliceIdx].get(curveIdx));
+                curve = ((VOIContour)curves[sliceIdx].get(curveIdx));
                 System.out.println("  Curve: " +curveIdx +"  number of points: " +curve.size());
             } // end for (int curveIdx = 0; ...)
         } // end for (int sliceIdx = 0; ...)
@@ -1780,7 +1735,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         VOI theVOI = vois.get(0);
 
         // there should be only one VOI and one curve
-        VOIContour curve = ((VOIContour)theVOI.getCurvesTemp()[0].get(0));
+        VOIContour curve = ((VOIContour)theVOI.getCurves().get(0));
         int[] xVals = new int [curve.size()];
         int[] yVals = new int [curve.size()];
         int[] zVals = new int [curve.size()];
@@ -1956,12 +1911,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 
 
         // make the VOI's and add the points to them
-        subcutaneousVOI = new VOI((short)0, "Subcutaneous area", 0);
-        Vector[] v = new Vector[zDim];
-        for(int idx = 0; idx < zDim; idx++) {
-            v[idx] = new Vector();
-        }
-        subcutaneousVOI.setCurvesTemp(v);
+        subcutaneousVOI = new VOI((short)0, "Subcutaneous area", 1);
         subcutaneousVOI.importCurve(xValsSubcutaneousVOI, yValsSubcutaneousVOI, zVals);
 
     } // end makeSubcutaneousFat2DVOI()
@@ -2018,12 +1968,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         }
 
         // make the VOI's and add the points to them
-        abdomenVOI = new VOI((short)0, "Abdomen", 0);
-        Vector[] v = new Vector[zDim];
-        for(int idx = 0; idx < zDim; idx++) {
-            v[idx] = new Vector();
-        }
-        abdomenVOI.setCurvesTemp(v);
+        abdomenVOI = new VOI((short)0, "Abdomen", 1);
         abdomenVOI.importCurve(x1, y1, z1);
         
 
@@ -2151,12 +2096,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         }
 
         // make the VOI's and add the points to them
-        abdomenVOI = new VOI((short)0, "Abdomen", 0);
-        Vector[] v = new Vector[zDim];
-        for(int idx = 0; idx < zDim; idx++) {
-            v[idx] = new Vector();
-        }
-        abdomenVOI.setCurvesTemp(v);
+        abdomenVOI = new VOI((short)0, "Abdomen", 1);
         abdomenVOI.importCurve(x1, y1, z1);
 
 
@@ -2436,7 +2376,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         VOI theVOI = vois.get(0);
  
         // find the center-of-mass of the contour
-        VOIContour maxContour = ((VOIContour)theVOI.getCurvesTemp()[0].get(0));
+        VOIContour maxContour = ((VOIContour)theVOI.getCurves().get(0));
         int[] xVals = new int [maxContour.size()];
         int[] yVals = new int [maxContour.size()];
         int[] zVals = new int [maxContour.size()];
