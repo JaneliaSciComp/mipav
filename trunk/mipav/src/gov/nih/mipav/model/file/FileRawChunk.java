@@ -1097,7 +1097,7 @@ public class FileRawChunk extends FileBase {
      * @throws  IOException  DOCUMENT ME!
      */
     public void writeBufferDouble(double[] buffer, int start, int end, boolean endianess) throws IOException {
-        int i;
+        int i, index;
 
         if ((end - start) != bufferSize) {
             bufferSize = end - start;
@@ -1111,12 +1111,37 @@ public class FileRawChunk extends FileBase {
             }
         }
 
+        
+
         try {
             long tmpLong;
 
-            for (i = 0; i < bufferSize; i++) {
-                tmpLong = Double.doubleToLongBits(bufferDouble[i]);
-                setBufferLong(bufferByte, tmpLong, i * 8, endianess);
+            if (endianess == BIG_ENDIAN) {
+
+                for (i = 0, index = 0; i < bufferSize; i++) {
+                    tmpLong = Double.doubleToLongBits(buffer[i]);
+                    bufferByte[index++] = (byte) (tmpLong >>> 56);
+                    bufferByte[index++] = (byte) (tmpLong >>> 48);
+                    bufferByte[index++] = (byte) (tmpLong >>> 40);
+                    bufferByte[index++] = (byte) (tmpLong >>> 32);
+                    bufferByte[index++] = (byte) (tmpLong >>> 24);
+                    bufferByte[index++] = (byte) (tmpLong >>> 16);
+                    bufferByte[index++] = (byte) (tmpLong >>> 8);
+                    bufferByte[index++] = (byte) (tmpLong & 0xff);
+                }
+            } else {
+
+                for (i = 0, index = 0; i < bufferSize; i++) {
+                    tmpLong = Double.doubleToLongBits(buffer[i]);
+                    bufferByte[index++] = (byte) (tmpLong & 0xff);
+                    bufferByte[index++] = (byte) (tmpLong >>> 8);
+                    bufferByte[index++] = (byte) (tmpLong >>> 16);
+                    bufferByte[index++] = (byte) (tmpLong >>> 24);
+                    bufferByte[index++] = (byte) (tmpLong >>> 32);
+                    bufferByte[index++] = (byte) (tmpLong >>> 40);
+                    bufferByte[index++] = (byte) (tmpLong >>> 48);
+                    bufferByte[index++] = (byte) (tmpLong >>> 56);
+                }
             }
 
             raFile.write(bufferByte);
