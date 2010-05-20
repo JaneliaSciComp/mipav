@@ -1359,6 +1359,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         }
         
         for(int idx = 0; idx < 360 / angularResolution; idx++) {
+            // fixSubcutaneiousFat2DVOI requires the zVal to be 0 (does VOI extraction on a 2D slice image)
             zVals[idx] = 0;
         }
         
@@ -1691,6 +1692,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 //        System.out.println("resample VOI number of points: " +xValsAbdomenVOI.size());
         curve.clear();
         for(int idx = 0; idx < xValsVOI.size(); idx++) {
+            // sliceIdx puts the curve on the correct slice... for z-ordered VOIs
             curve.add( new Vector3f( xValsVOI.get(idx), yValsVOI.get(idx), sliceIdx ) );
         }
     } // end resampleCurve(...)
