@@ -1082,18 +1082,8 @@ public class FileRawChunk extends FileBase {
      * @throws  IOException  DOCUMENT ME!
      */
     public void writeBufferByte(byte[] buffer, int start, int end) throws IOException {
-    	if ((end - start) != bufferSize) {
-            bufferSize = end - start;
-
-            try {
-                bufferByte = new byte[bufferSize];
-            } catch (OutOfMemoryError error) {
-                bufferByte = null;
-                System.gc();
-                throw error;
-            }
-        }
-        raFile.write(bufferByte);
+    	
+        raFile.write(buffer);
     }
 
     /**
