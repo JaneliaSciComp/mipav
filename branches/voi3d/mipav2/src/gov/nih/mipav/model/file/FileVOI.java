@@ -947,7 +947,7 @@ public class FileVOI extends FileXML {
 
                     // save old format if image dim is 2
                     if (is2D || !saveAsLPS) {
-                        closedTag("Slice-number", Float.toString(z[0]));
+                        closedTag("Slice-number", Integer.toString((int)z[0]));
                     }
 
                     if ( !is2D && saveAsLPS) {
@@ -1017,7 +1017,7 @@ public class FileVOI extends FileXML {
 
                                 // save old format if image dim is 2
                                 if (image.getNDims() == 2) {
-                                    closedTag("Slice-number", Float.toString(z[0]));
+                                    closedTag("Slice-number", Integer.toString((int)z[0]));
                                 }
 
                                 if (image.getNDims() > 2) {
