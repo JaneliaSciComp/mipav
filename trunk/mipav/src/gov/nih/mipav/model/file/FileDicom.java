@@ -1199,6 +1199,11 @@ public class FileDicom extends FileDicomBase {
             }
 
             if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
+                    && (fileInfo.bitsAllocated == 1)) {
+                fileInfo.setDataType(ModelStorageBase.BOOLEAN);
+                fileInfo.displayType = ModelStorageBase.BOOLEAN;
+                fileInfo.bytesPerPixel = 1;
+            } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
                     && (fileInfo.pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP)
                     && (fileInfo.bitsAllocated == 8)) {
                 fileInfo.setDataType(ModelStorageBase.UBYTE);
@@ -1621,7 +1626,7 @@ public class FileDicom extends FileDicomBase {
                     rawFile.raFile = null;
                 } else {
                     rawFile.readImage(buffer,
-                            fileInfo.getOffset() + (imageNo * buffer.length * fileInfo.bytesPerPixel), imageType);
+                        fileInfo.getOffset() + (imageNo * buffer.length * fileInfo.bytesPerPixel), imageType);
                     rawFile.raFile.close();
                     rawFile.raFile = null;
                 }
