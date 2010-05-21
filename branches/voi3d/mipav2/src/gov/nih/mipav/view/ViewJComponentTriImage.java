@@ -276,6 +276,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         removeMouseWheelListener(this); // remove listener from superclass
         addMouseWheelListener(this);
+        addKeyListener(this);
     }
     
     public void clearProtractor()
@@ -592,7 +593,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      * @param e KeyEvent
      */
     public void keyPressed(final KeyEvent e) {
-        //System.err.println("ViewJComponentTriImage keyPressed" );
         final int keyCode = e.getKeyCode();
 
         switch (keyCode) {
@@ -607,6 +607,14 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         }
     }
 
+
+    @Override
+    public void keyReleased(KeyEvent e) {}
+
+    @Override
+    public void keyTyped(KeyEvent e) {}
+    
+    
     /**
      * Constructs and initializes one of the 3 protractors, depending on which component this is.
      */
@@ -1294,7 +1302,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             drawCenterMark(offscreenGraphics2d);
         }
 
-        drawTriPlanarVOIs(offscreenGraphics2d);
+        //drawTriPlanarVOIs(offscreenGraphics2d);
 
         offscreenGraphics2d.dispose();
 
@@ -2430,7 +2438,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                 */
         }
 
-        draw3DVOIs(offscreenGraphics2d);
+        draw3DVOIs(offscreenGraphics2d, false);
     }
 
     /**

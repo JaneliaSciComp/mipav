@@ -2739,6 +2739,103 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
         */
     }
+    
+    public void drawBlendContour( VOIBase kVOI, int[] pixBuffer, float opacity, Color color, int slice, int orientation, Graphics g )
+    {
+        if (g == null) {
+            MipavUtil.displayError("Draw VOI: grapics = null");
+            return;
+        }
+        if ( (m_iPlane != (m_iPlane & kVOI.getPlane())) || (getSlice(kVOI)!= slice) )
+        {
+            return;
+        }
+        int iNumPoints = kVOI.size();
+        if ( iNumPoints == 0 )
+        {
+            return;
+        }
+        Vector3f[] kVolumePts = new Vector3f[iNumPoints + 1];
+        int iXMin = Integer.MAX_VALUE;
+        int iYMin = Integer.MAX_VALUE;
+        int iXMax = Integer.MIN_VALUE;
+        int iYMax = Integer.MIN_VALUE;
+
+        for ( int i = 0; i < iNumPoints; i++ )
+        {
+            Vector3f kVolumePt = kVOI.get(i);
+            Vector3f kPt = fileCoordinatesToPatient( kVolumePt );
+
+            //kPt.Z = iSlice;/
+            kVolumePts[i] = kPt;
+            iXMin = (int)Math.min( iXMin, kVolumePts[i].X );
+            iYMin = (int)Math.min( iYMin, kVolumePts[i].Y );
+            iXMax = (int)Math.max( iXMax, kVolumePts[i].X );
+            iYMax = (int)Math.max( iYMax, kVolumePts[i].Y );
+        }
+        Vector3f kVolumePt = kVOI.get(0);
+        Vector3f kPt = fileCoordinatesToPatient( kVolumePt );
+
+        //Vector3f kPt = kPoly.VBuffer.GetPosition3(0);
+        //kPt.Mult( m_kVolumeScaleInv );
+        //kPt.Z = iSlice;
+        kVolumePts[iNumPoints] = kPt;
+        iXMin = (int)Math.min( iXMin, kVolumePts[iNumPoints].X );
+        iYMin = (int)Math.min( iYMin, kVolumePts[iNumPoints].Y );
+        iXMax = (int)Math.max( iXMax, kVolumePts[iNumPoints].X );
+        iYMax = (int)Math.max( iYMax, kVolumePts[iNumPoints].Y );
+        iNumPoints++;
+
+        int[][] aaiCrossingPoints = new int[iXMax - iXMin + 1][];
+        int[] aiNumCrossings = new int[iXMax - iXMin + 1];
+
+        for (int i = 0; i < (iXMax - iXMin + 1); i++) {
+            aaiCrossingPoints[i] = new int[iNumPoints];
+        }
+
+        outlineRegion(aaiCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax, kVolumePts, null);
+        
+
+
+
+        Vector3f kLocalPt = new Vector3f();
+        int iColumn = 0;
+        /* Loop over the width of the sculpt region bounding-box: */
+        for (int iX = iXMin; iX < iXMax; iX++) {
+            boolean bInside = false;
+
+            /* Loop over the height of the sculpt region bounding-box: */
+            for (int iY = iYMin; iY < iYMax; iY++) {
+
+                /* loop over each crossing point for this column: */
+                for (int iCross = 0; iCross < aiNumCrossings[iColumn]; iCross++) {
+
+                    if (iY == aaiCrossingPoints[iColumn][iCross]) {
+
+                        /* Each time an edge is cross the point alternates
+                         * from outside to inside: */
+                        bInside = !bInside;
+                    }
+                }
+
+                if (bInside == true) {
+
+                    /* The current pixel is inside the sculpt region.  Get the
+                     * image color from the canvas image and alpha-blend the sculpt color ontop, storing the result in
+                     * the canvas image.
+                     */
+                    int index = iY * m_aiLocalImageExtents[0] + iX;
+                    int opacityInt = (int) (opacity * 255);
+                    opacityInt = opacityInt << 24;
+
+                    int colorInt = color.getRGB() & 0x00ffffff;
+                    pixBuffer[index] = colorInt | opacityInt;
+                }
+            }
+
+            iColumn++;
+        }      
+    }
 
     private void drawVOI( VOIBase kVOI, float[] resols, int[] unitsOfMeasure, Graphics g, int thickness ) {
         Polygon gon = null;
