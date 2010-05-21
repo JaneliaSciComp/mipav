@@ -2642,8 +2642,12 @@ public class ModelImage extends ModelStorageBase {
         final int[] dimExtents = getExtents();
         int length = dimExtents[0]*dimExtents[1];
         int originalType = this.getFileInfo()[0].getDataType();
-        double imageMin = this.getMin();
-        double imageMax = this.getMax();
+        boolean endianess = this.getFileInfo()[0].getEndianess();
+        boolean originalEndianess = this.getFileInfo()[0].getOriginalEndianess();
+        boolean changedEndianess = false;
+        if (endianess != originalEndianess) {
+        	changedEndianess = true;
+        }
         int originalLength;
         if (dimExtents.length == 2) {
             fileInfo[0].setDataType(type);
@@ -2861,6 +2865,7 @@ public class ModelImage extends ModelStorageBase {
         	FileMincVarElem varArray[] = null;
         	int increaseBegin;
             int numSlices = 1;
+            int imageIndex = 0;
             if (dimExtents.length >= 3) {
             	numSlices *= dimExtents[2];
             }
@@ -2973,9 +2978,8 @@ public class ModelImage extends ModelStorageBase {
                 if (varArray != null) {
                 	increaseBegin = 0;
                 	for (int j = 0; j < varArray.length; j++) {	
-                		varArray[j].begin += increaseBegin;
                         if (varArray[j].name.equals("image")) {
-                        	increaseBegin = length - originalLength;
+                        	imageIndex = j;
                         	varArray[j].vsize = length;
                             switch (type) {
                             case ModelStorageBase.BYTE:
@@ -3096,9 +3100,129 @@ public class ModelImage extends ModelStorageBase {
                         } // if (varArray[j].name.equals("image-min"))
                        
                 	} // for (int j = 0; j < varArray.length; j++)
+                	for (int j = 0; j < varArray.length; j++) {
+                		if (j <= imageIndex) {
+                			varArray[j].begin += increaseBegin;
+                		}
+                		else {
+                			varArray[j].begin += increaseBegin + length - originalLength;
+                		}
+                	}
                 } // if (varArray != null)
             } // for (int i = 0; i < numSlices; i++)
         } // else if (fileInfo[0] instanceof FileInfoMinc)
+        else if (fileInfo[0] instanceof FileInfoDicom) {
+            // Under a rigid adherence to the DICOM standard most reallocations would be illegal
+        	// because most image formats permit only 1 or 2 values in the (0028,0100) bits allocated
+        	// field.  C.8.2.1.1.4 Bits Allocated says:
+        	// "For CT Images, Bits Allocated (0028,0100) shall have the Enumerated Value of 16.
+        	// C.8.3.1.1.4 Bits Allocated says:
+        	// "For MR Images, Bits Allocated (0028,0100) shall have the Enumerated Value of 16.
+        	// These and other similar requirements are ignored so that a type reallocation can be performed.
+        	if (changedEndianess) {
+        	    MipavUtil.displayError("Cannot change endianess of dicom file");
+        	    return;
+        	} // if (changedEndianess)
+        	short UNSIGNED_INTEGER = (short)0;
+        	short SIGNED_INTEGER = (short)1;
+        	short bitsAllocated = 8;
+        	short bitsStored = 8;
+        	short highBit = 7;
+        	short pixelRepresentation = -1;
+        	short bytesPerPixel;
+        	switch (type) {
+
+            case ModelStorageBase.BOOLEAN:
+                bitsAllocated = (short)1;
+                bitsStored  = (short)1;
+                highBit = (short)0;
+                bytesPerPixel = 1;
+                break;
+
+            case ModelStorageBase.BYTE:
+                bitsAllocated = (short)8;
+                bitsStored = (short)8;
+                highBit = (short)7;
+                pixelRepresentation = SIGNED_INTEGER;
+                bytesPerPixel = 1;
+                break;
+
+            case ModelStorageBase.UBYTE:
+            	bitsAllocated = (short)8;
+                bitsStored = (short)8;
+                highBit = (short)7;
+                pixelRepresentation = UNSIGNED_INTEGER;
+                bytesPerPixel = 1;
+                break;
+
+            case ModelStorageBase.SHORT:
+            	bitsAllocated = (short)16;
+                bitsStored = (short)16;
+                highBit = (short)15;
+                pixelRepresentation = SIGNED_INTEGER;
+                bytesPerPixel = 2;
+                break;
+
+            case ModelStorageBase.USHORT:
+            	bitsAllocated = (short)16;
+                bitsStored = (short)16;
+                highBit = (short)15;
+                pixelRepresentation = UNSIGNED_INTEGER;
+                bytesPerPixel = 2;
+                break;
+
+            case ModelStorageBase.UINTEGER:
+            	bitsAllocated = (short)32;
+                bitsStored = (short)32;
+                highBit = (short)31;
+                pixelRepresentation = UNSIGNED_INTEGER;
+                bytesPerPixel = 4;
+                break;
+
+            case ModelStorageBase.ARGB:
+            	bitsAllocated = (short)24;
+                bitsStored = (short)24;
+                highBit = (short)23;
+                bytesPerPixel = 3;
+                break;
+
+            default:
+            	MipavUtil.displayError("Illegal Dicom data type");
+            	return;
+    }
+
+        	if (dimExtents.length == 2) {
+        		((FileInfoDicom)fileInfo[0]).bytesPerPixel = bytesPerPixel;
+        		((FileInfoDicom)fileInfo[0]).getTagTable().setValue("0028,0100", new Short(bitsAllocated), 2);
+        		((FileInfoDicom)fileInfo[0]).getTagTable().setValue("0028,0101", new Short(bitsStored), 2);
+        		((FileInfoDicom)fileInfo[0]).getTagTable().setValue("0028,0102", new Short(highBit), 2);
+        		if (pixelRepresentation != -1) {
+        		  ((FileInfoDicom)fileInfo[0]).getTagTable().setValue("0028,0103", new Short(pixelRepresentation), 2);
+        		}
+            } else if (dimExtents.length == 3) {
+
+                for (int i = 0; i < dimExtents[2]; i++) {
+                	((FileInfoDicom)fileInfo[i]).bytesPerPixel = bytesPerPixel;
+                	((FileInfoDicom)fileInfo[i]).getTagTable().setValue("0028,0100", new Short(bitsAllocated), 2);
+            		((FileInfoDicom)fileInfo[i]).getTagTable().setValue("0028,0101", new Short(bitsStored), 2);
+            		((FileInfoDicom)fileInfo[i]).getTagTable().setValue("0028,0102", new Short(highBit), 2);
+            		if (pixelRepresentation != -1) {
+            		  ((FileInfoDicom)fileInfo[i]).getTagTable().setValue("0028,0103", new Short(pixelRepresentation), 2);
+            		}
+                }
+            } else if (dimExtents.length == 4) {
+
+                for (int i = 0; i < (dimExtents[2] * dimExtents[3]); i++) {
+                	((FileInfoDicom)fileInfo[i]).bytesPerPixel = bytesPerPixel;
+                	((FileInfoDicom)fileInfo[i]).getTagTable().setValue("0028,0100", new Short(bitsAllocated), 2);
+            		((FileInfoDicom)fileInfo[i]).getTagTable().setValue("0028,0101", new Short(bitsStored), 2);
+            		((FileInfoDicom)fileInfo[i]).getTagTable().setValue("0028,0102", new Short(highBit), 2);
+            		if (pixelRepresentation != -1) {
+            		  ((FileInfoDicom)fileInfo[i]).getTagTable().setValue("0028,0103", new Short(pixelRepresentation), 2);
+            		}	
+                }
+            }
+        } // else if (fileInfo[0] instanceof FileInfoDicom)
     }
 
     /**

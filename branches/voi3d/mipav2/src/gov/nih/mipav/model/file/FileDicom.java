@@ -1886,6 +1886,8 @@ public class FileDicom extends FileDicomBase {
     public void writeImage(final ModelImage image, final int start, final int end, final int index,
             final boolean saveAsEncapJP2) throws IOException {
         float[] data = null;
+        double[] doubleData = null;
+        BitSet bufferBitSet = null;
         short[] dataRGB = null;
 
         fileInfo = (FileInfoDicom) image.getFileInfo(index);
@@ -1908,6 +1910,10 @@ public class FileDicom extends FileDicomBase {
             // if (fileInfo.getModality() == fileInfo.POSITRON_EMISSION_TOMOGRAPHY) {
             if (fileInfo.getDataType() == ModelStorageBase.ARGB) {
                 dataRGB = new short[4 * (end - start)];
+            } else if (fileInfo.getDataType() == ModelStorageBase.UINTEGER) {
+            	doubleData = new double[(end - start)];
+            } else if (fileInfo.getDataType() == ModelStorageBase.BOOLEAN) {
+                bufferBitSet = new BitSet(end - start);	
             } else {
                 data = new float[ (end - start)];
             }
@@ -1978,6 +1984,33 @@ public class FileDicom extends FileDicomBase {
 
                 switch (fileInfo.getDataType()) {
 
+                    case ModelStorageBase.BOOLEAN:
+                    	// Required for Segmentation Image Module
+                    	// Bits Allocated (0028,0100) If segmentation type (0062,0001) is
+                    	// BINARY, shall be 1.  Otherwise, it shall be 8.
+                    	// Bits Stored (0028,0101) If segmentation type (0062,0001) is
+                    	// BINARY, shall be 1.  Otherwise, it shall be 8.
+                    	// C.8.20.2.1 Bits Allocated and Bits Stored
+                    	// As a consequence of the enumerated Bits Allocated and Bits Stored
+                    	// attribute values, single bit pixels shall be packed 8 to a byte
+                    	// as defined by the encoding rules in PS 3.5.
+                        byte bufferByte[] = new byte[(length + 7) >> 3];
+                        image.exportData(index * length, length, bufferBitSet);
+                        
+                        for (int i = 0; i < bufferByte.length; i++) {
+                            bufferByte[i] = 0;
+                        }
+
+                        for (int i = 0; i < length; i++) {
+
+                            if (bufferBitSet.get(i)) {
+                                bufferByte[i >> 3] |= (1 << (7-(i % 8)));
+                            }
+                        }
+
+                        raFile.write(bufferByte);
+                        break;
+
                     case ModelStorageBase.BYTE:
 
                         byte[] data2 = new byte[length];
@@ -2030,6 +2063,30 @@ public class FileDicom extends FileDicomBase {
                         data5 = null;
                         break;
 
+                    case ModelStorageBase.UINTEGER:
+                    	// Required for RT Doses
+                    	// C.8.8.3.4.3 Bits Allocated
+                    	// For RT Doses, Bits Allocated (0028,0100) shall have an enumerated Value of 16 or 32
+                    	// C.8.8.3.4.4 Bits Stored
+                    	// For RT Doses, Bits Stored (0028,0101) shall have an Enumerated Value equal to Bits
+                    	// Allocated (0028,0100)
+                    	// C.8.8.3.4.6 Pixel Representation
+                    	// For RT Doses, Pixel Representation (0028,0101) is specified to use the following
+                    	// Enumerated Values:
+                    	// 0001H = two's complement integer, when Dose Type (3004,0004) = ERROR
+                    	// 0000H = unsigned integer, otherwise
+                    	long[] data6 = new long[length];
+                    	image.exportData(index * length, length, doubleData);
+                    	
+                    	for (int i = 0; i < doubleData.length; i++) {
+                            data6[i] = Math.round( (doubleData[i] - intercept) / invSlope);
+                        }
+                    	
+                    	rawChunkFile.writeBufferUInt(data6, 0, length, image.getFileInfo(0).getEndianess());
+                        data6 = null;
+                        break;
+                        
+                    
                     case ModelStorageBase.ARGB:
 
                         short[] dRGB = new short[3 * length];

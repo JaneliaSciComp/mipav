@@ -1082,7 +1082,8 @@ public class FileRawChunk extends FileBase {
      * @throws  IOException  DOCUMENT ME!
      */
     public void writeBufferByte(byte[] buffer, int start, int end) throws IOException {
-        raFile.write(bufferByte);
+    	
+        raFile.write(buffer);
     }
 
     /**
@@ -1096,7 +1097,7 @@ public class FileRawChunk extends FileBase {
      * @throws  IOException  DOCUMENT ME!
      */
     public void writeBufferDouble(double[] buffer, int start, int end, boolean endianess) throws IOException {
-        int i;
+        int i, index;
 
         if ((end - start) != bufferSize) {
             bufferSize = end - start;
@@ -1110,12 +1111,37 @@ public class FileRawChunk extends FileBase {
             }
         }
 
+        
+
         try {
             long tmpLong;
 
-            for (i = 0; i < bufferSize; i++) {
-                tmpLong = Double.doubleToLongBits(bufferDouble[i]);
-                setBufferLong(bufferByte, tmpLong, i * 8, endianess);
+            if (endianess == BIG_ENDIAN) {
+
+                for (i = 0, index = 0; i < bufferSize; i++) {
+                    tmpLong = Double.doubleToLongBits(buffer[i]);
+                    bufferByte[index++] = (byte) (tmpLong >>> 56);
+                    bufferByte[index++] = (byte) (tmpLong >>> 48);
+                    bufferByte[index++] = (byte) (tmpLong >>> 40);
+                    bufferByte[index++] = (byte) (tmpLong >>> 32);
+                    bufferByte[index++] = (byte) (tmpLong >>> 24);
+                    bufferByte[index++] = (byte) (tmpLong >>> 16);
+                    bufferByte[index++] = (byte) (tmpLong >>> 8);
+                    bufferByte[index++] = (byte) (tmpLong & 0xff);
+            }
+            } else {
+
+                for (i = 0, index = 0; i < bufferSize; i++) {
+                    tmpLong = Double.doubleToLongBits(buffer[i]);
+                    bufferByte[index++] = (byte) (tmpLong & 0xff);
+                    bufferByte[index++] = (byte) (tmpLong >>> 8);
+                    bufferByte[index++] = (byte) (tmpLong >>> 16);
+                    bufferByte[index++] = (byte) (tmpLong >>> 24);
+                    bufferByte[index++] = (byte) (tmpLong >>> 32);
+                    bufferByte[index++] = (byte) (tmpLong >>> 40);
+                    bufferByte[index++] = (byte) (tmpLong >>> 48);
+                    bufferByte[index++] = (byte) (tmpLong >>> 56);
+                }
             }
 
             raFile.write(bufferByte);
@@ -1224,6 +1250,69 @@ public class FileRawChunk extends FileBase {
                     bufferByte[index++] = (byte) (tmpInt >>> 8);
                     bufferByte[index++] = (byte) (tmpInt >>> 16);
                     bufferByte[index++] = (byte) (tmpInt >>> 24);
+                }
+            }
+
+            raFile.write(bufferByte);
+        } catch (IOException error) {
+            throw error;
+        }
+    }
+
+    /**
+     * This method writes a int buffer to a file.
+     *
+     * @param   buffer     the image data buffer
+     * @param   start      start of data in the read image file in units of extents[0]*extents[1]
+     * @param   end        end of data in the read image file in units of extents[0]*extents[1]
+     * @param   endianess  the endianess of the data
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    public void writeBufferLong(long[] buffer, int start, int end, boolean endianess) throws IOException {
+        int i, index;
+
+        // boolean endianess = image.getFileInfo(0).getEndianess();
+        if ((end - start) != bufferSize) {
+            bufferSize = end - start;
+
+            try {
+                bufferByte = new byte[8 * bufferSize];
+            } catch (OutOfMemoryError error) {
+                bufferByte = null;
+                System.gc();
+                throw error;
+            }
+        }
+
+        try {
+            long tmpLong;
+
+            if (endianess == BIG_ENDIAN) {
+
+                for (i = 0, index = 0; i < bufferSize; i++) {
+                    tmpLong = buffer[i];
+                    bufferByte[index++] = (byte) (tmpLong >>> 56);
+                    bufferByte[index++] = (byte) (tmpLong >>> 48);
+                    bufferByte[index++] = (byte) (tmpLong >>> 40);
+                    bufferByte[index++] = (byte) (tmpLong >>> 32);
+                    bufferByte[index++] = (byte) (tmpLong >>> 24);
+                    bufferByte[index++] = (byte) (tmpLong >>> 16);
+                    bufferByte[index++] = (byte) (tmpLong >>> 8);
+                    bufferByte[index++] = (byte) (tmpLong & 0xff);
+                }
+            } else {
+
+                for (i = 0, index = 0; i < bufferSize; i++) {
+                    tmpLong = buffer[i];
+                    bufferByte[index++] = (byte) (tmpLong & 0xff);
+                    bufferByte[index++] = (byte) (tmpLong >>> 8);
+                    bufferByte[index++] = (byte) (tmpLong >>> 16);
+                    bufferByte[index++] = (byte) (tmpLong >>> 24);
+                    bufferByte[index++] = (byte) (tmpLong >>> 32);
+                    bufferByte[index++] = (byte) (tmpLong >>> 40);
+                    bufferByte[index++] = (byte) (tmpLong >>> 48);
+                    bufferByte[index++] = (byte) (tmpLong >>> 56);
                 }
             }
 
@@ -1472,7 +1561,7 @@ public class FileRawChunk extends FileBase {
      *
      * @throws  IOException  DOCUMENT ME!
      */
-    public void writeBufferUInt(int[] buffer, int start, int end, boolean endianess) throws IOException {
+    public void writeBufferUInt(long[] buffer, int start, int end, boolean endianess) throws IOException {
         int i, index;
 
         // boolean endianess = image.getFileInfo(0).getEndianess();
@@ -1489,25 +1578,25 @@ public class FileRawChunk extends FileBase {
         }
 
         try {
-            int tmpInt;
+            long tmpLong;
 
             if (endianess == BIG_ENDIAN) {
 
                 for (i = 0, index = 0; i < bufferSize; i++) {
-                    tmpInt = buffer[i];
-                    bufferByte[index++] = (byte) (tmpInt >>> 24);
-                    bufferByte[index++] = (byte) (tmpInt >>> 16);
-                    bufferByte[index++] = (byte) (tmpInt >>> 8);
-                    bufferByte[index++] = (byte) (tmpInt & 0xff);
+                    tmpLong = buffer[i];
+                    bufferByte[index++] = (byte) (tmpLong >>> 24);
+                    bufferByte[index++] = (byte) (tmpLong >>> 16);
+                    bufferByte[index++] = (byte) (tmpLong >>> 8);
+                    bufferByte[index++] = (byte) (tmpLong & 0xff);
                 }
             } else {
 
                 for (i = 0, index = 0; i < bufferSize; i++) {
-                    tmpInt = buffer[i];
-                    bufferByte[index++] = (byte) (tmpInt & 0xff);
-                    bufferByte[index++] = (byte) (tmpInt >>> 8);
-                    bufferByte[index++] = (byte) (tmpInt >>> 16);
-                    bufferByte[index++] = (byte) (tmpInt >>> 24);
+                    tmpLong = buffer[i];
+                    bufferByte[index++] = (byte) (tmpLong & 0xff);
+                    bufferByte[index++] = (byte) (tmpLong >>> 8);
+                    bufferByte[index++] = (byte) (tmpLong >>> 16);
+                    bufferByte[index++] = (byte) (tmpLong >>> 24);
                 }
             }
 

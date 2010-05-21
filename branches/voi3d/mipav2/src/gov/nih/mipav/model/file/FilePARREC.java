@@ -12,12 +12,6 @@ import java.util.Vector;
 /**
  * The class reads and writes PAR/REC files.
  *
- * @version  0.1 Oct 14, 1997
- * @author   Matthew J. McAuliffe, Ph.D.
- * @see      gov.nih.mipav.model.file.FileIO
- * @see      gov.nih.mipav.model.file.FileInfoAnalyze
- * @see      gov.nih.mipav.model.file.FileRaw
- * 
  * A right handed coordinate system is used with the positive axis pointing (Anterior/Posterior)A->P, (Foot/Head)F->H,
  * and (Right/Left)R->L.
  */
