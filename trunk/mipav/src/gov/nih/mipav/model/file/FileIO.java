@@ -3930,7 +3930,28 @@ public class FileIO {
                 byteData[k + 3] = byteVal[3];
             }
         } else if (type == ModelStorageBase.DOUBLE) {
-            // TO DO
+            final double[] doubleData = new double[length];
+            try {
+                image.exportData(start, length, doubleData);
+            } catch (final IOException error) {
+                System.out.println("IO exception");
+                // setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+                return null;
+            }
+            byteData = new byte[length * 8];
+            final byte[] buff = new byte[8];
+            for (int i = 0, k = 0; i < doubleData.length; i++, k = k + 8) {
+                final double val = doubleData[i];
+                final byte[] byteVal = FileBase.doubleToBytes(val, bigEndianness, buff);
+                byteData[k] = byteVal[0];
+                byteData[k + 1] = byteVal[1];
+                byteData[k + 2] = byteVal[2];
+                byteData[k + 3] = byteVal[3];
+                byteData[k + 4] = byteVal[4];
+                byteData[k + 5] = byteVal[5];
+                byteData[k + 6] = byteVal[6];
+                byteData[k + 7] = byteVal[7];
+            }  
         } else if (type == ModelStorageBase.ARGB) {
             byteData = new byte[length];
             try {
