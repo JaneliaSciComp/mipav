@@ -114,7 +114,7 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
 
         ViewVOIVector VOIs = null;
         int nVOIs;
-        Vector[] contours;
+        Vector<VOIBase> contours;
         int nContours;
 
         if ((xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
@@ -226,8 +226,8 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
                 fireProgressStateChanged(100 * (i + 1) / nVOIs);
                 UI.setDataText("VOI ID = " + VOIs.VOIAt(i).getID() + "\n");
                 dataString += "VOI ID = " + VOIs.VOIAt(i).getID() + "\n";
-                contours = VOIs.VOIAt(i).getCurvesTemp();
-                nContours = contours[0].size();
+                contours = VOIs.VOIAt(i).getCurves();
+                nContours = contours.size();
 
                 for (k = 0; k < nContours; k++) {
                     /*
@@ -235,7 +235,7 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
                                                                                     yUnits, pAxis, eccentricity,
                                                                                     majorAxis, minorAxis); */
 
-                    ((VOIContour) (contours[0].elementAt(k))).secondOrderAttributes(srcImage, pAxis, eccentricity,
+                    ((VOIContour) (contours.elementAt(k))).secondOrderAttributes(srcImage, pAxis, eccentricity,
                                                                                     majorAxis, minorAxis);
 
                     if (nContours > 1) {
@@ -272,11 +272,11 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
                 fireProgressStateChanged(100 * (i + 1) / nVOIs);
                 UI.setDataText("VOI ID = " + VOIs.VOIAt(i).getID() + "\n");
                 dataString += "VOI ID = " + VOIs.VOIAt(i).getID() + "\n";
-                contours = VOIs.VOIAt(i).getCurvesTemp();
-                nContours = contours[0].size();
+                contours = VOIs.VOIAt(i).getCurves();
+                nContours = contours.size();
 
                 for (k = 0; k < nContours; k++) {
-                    ((VOIContour) (contours[0].elementAt(k))).secondOrderAttributeslsq(xRes, yRes, xUnits, yUnits,
+                    ((VOIContour) (contours.elementAt(k))).secondOrderAttributeslsq(xRes, yRes, xUnits, yUnits,
                                                                                        pAxis, eccentricity, majorAxis,
                                                                                        minorAxis);
 
@@ -516,7 +516,7 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
                 fireProgressStateChanged(100 * (i + 1) / nVOIs);
                 UI.setDataText("VOI ID = " + VOIs.VOIAt(i).getID() + "\n");
                 dataString += "VOI ID = " + VOIs.VOIAt(i).getID() + "\n";
-                contours = VOIs.VOIAt(i).getCurvesTemp();
+                contours = VOIs.VOIAt(i).getSortedCurves(srcImage.getExtents()[2]);
                 nSlices = contours.length;
                 usedSlices = 0;
                 maxElement = 0;
@@ -773,7 +773,7 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
                 fireProgressStateChanged(100 * (i + 1) / nVOIs);
                 UI.setDataText("VOI ID = " + VOIs.VOIAt(i).getID() + "\n");
                 dataString += "VOI ID = " + VOIs.VOIAt(i).getID() + "\n";
-                contours = VOIs.VOIAt(i).getCurvesTemp();
+                contours = VOIs.VOIAt(i).getSortedCurves(srcImage.getExtents()[2]);
                 nSlices = contours.length;
                 usedSlices = 0;
                 maxElement = 0;

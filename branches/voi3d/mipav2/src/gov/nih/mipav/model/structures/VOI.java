@@ -692,6 +692,7 @@ public class VOI extends ModelSerialCloneable {
      * @param   slice  slice to create mask at
      *
      * @return  mask the binary mask
+     * @deprecated
      */
     public BitSet createBinaryMask(int xDim, int yDim, int slice) {
         BitSet mask;
