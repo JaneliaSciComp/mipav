@@ -49,46 +49,46 @@ public class FileInfoSPM extends FileInfoBase {
     private static final long serialVersionUID = -3655260345861989046L;
 
     /** DOCUMENT ME! */
-    private static final int DT_NONE = 0;
+    public static final int DT_NONE = 0;
 
     /** DOCUMENT ME! */
-    private static final int DT_UNKNOWN = 0;
+    public static final int DT_UNKNOWN = 0;
 
     /** DOCUMENT ME! */
-    private static final int DT_BINARY = 1;
+    public static final int DT_BINARY = 1;
 
     /** DOCUMENT ME! */
-    private static final int DT_BYTE = 130;
+    public static final int DT_BYTE = 130;
 
     /** DOCUMENT ME! */
-    private static final int DT_UNSIGNED_CHAR = 2;
+    public static final int DT_UNSIGNED_CHAR = 2;
 
     /** DOCUMENT ME! */
-    private static final int DT_SIGNED_SHORT = 4;
+    public static final int DT_SIGNED_SHORT = 4;
 
     /** DOCUMENT ME! */
-    private static final int DT_UNSIGNED_SHORT = 132;
+    public static final int DT_UNSIGNED_SHORT = 132;
 
     /** DOCUMENT ME! */
-    private static final int DT_SIGNED_INT = 8;
+    public static final int DT_SIGNED_INT = 8;
 
     /** DOCUMENT ME! */
-    private static final int DT_UNSIGNED_INT = 136;
+    public static final int DT_UNSIGNED_INT = 136;
 
     /** DOCUMENT ME! */
-    private static final int DT_FLOAT = 16;
+    public static final int DT_FLOAT = 16;
 
     /** DOCUMENT ME! */
-    private static final int DT_COMPLEX = 32;
+    public static final int DT_COMPLEX = 32;
 
     /** DOCUMENT ME! */
-    private static final int DT_DOUBLE = 64;
+    public static final int DT_DOUBLE = 64;
 
     /** DOCUMENT ME! */
-    private static final int DT_RGB = 128;
+    public static final int DT_RGB = 128;
 
     /** DOCUMENT ME! */
-    private static final int DT_ALL = 255;
+    public static final int DT_ALL = 255;
 
     /**
      * The data_history substructure is not required, but the orient element is used to indicate individual slice
