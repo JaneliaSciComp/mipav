@@ -9,6 +9,7 @@ import gov.nih.mipav.util.MipavMath;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
+import java.util.*;
 
 
 /**
@@ -1964,10 +1965,15 @@ public class FileRaw extends FileBase {
                 try {
                     fileRW.readImage(ModelStorageBase.BOOLEAN, offset, bufferSize);
 
-                    byte[] tmpBuffer = fileRW.getByteBuffer();
-
+                    BitSet bufferBitSet = fileRW.getBitSetBuffer();
+ 
                     for (i = 0; i < bufferSize; i++) {
-                        buffer[i] = tmpBuffer[i];
+                    	if (bufferBitSet.get(i)) {
+                            buffer[i] = 1;
+                    	}
+                    	else {
+                    		buffer[i] = 0;
+                    	}
                     }
                 } catch (IOException error) {
                     throw error;
@@ -2286,10 +2292,15 @@ public class FileRaw extends FileBase {
                 try {
                     fileRW.readImage(ModelStorageBase.BOOLEAN, offset, bufferSize);
 
-                    byte[] tmpBuffer = fileRW.getByteBuffer();
-
+                    BitSet bufferBitSet = fileRW.getBitSetBuffer();
+                    
                     for (i = 0; i < bufferSize; i++) {
-                        buffer[i] = tmpBuffer[i];
+                    	if (bufferBitSet.get(i)) {
+                            buffer[i] = 1;
+                    	}
+                    	else {
+                    		buffer[i] = 0;
+                    	}
                     }
                 } catch (IOException error) {
                     throw error;
