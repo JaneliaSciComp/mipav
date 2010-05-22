@@ -4947,8 +4947,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                         if ( kVOI.getDisplayMode() == VOI.SOLID && kVOI3D.getType() == VOI.CONTOUR && bBlend )
                         {
                             voiManager.drawBlendContour( kVOI3D, getPaintBuffer(), kVOI.getOpacity(), kVOI.getColor(), 
-                                    slice, orientation, 
-                                    offscreenGraphics2d );
+                                    slice );
                         }
                         else
                         {

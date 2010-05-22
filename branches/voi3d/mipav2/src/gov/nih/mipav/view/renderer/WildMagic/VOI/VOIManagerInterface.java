@@ -220,8 +220,6 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
             m_kVOIManagers[i].setPopupVOI(popup);
             m_kVOIManagers[i].setPopupPt(popupPt);
         }
-        //Profile.clear();
-        //Profile.start();
     }
 
     public void actionPerformed(ActionEvent event) {
@@ -557,10 +555,6 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
 
     public void disposeLocal(boolean flag)
     {
-        //Profile.stop();
-        //Profile.setFileName( "profile_out" );
-        //Profile.shutdown();
-        
         if (popup != null) {
             popup = null;
         }

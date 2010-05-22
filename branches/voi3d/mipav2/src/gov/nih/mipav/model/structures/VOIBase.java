@@ -115,8 +115,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
 
     /** Set to true if the contour bounding-box needs updating. */
     protected boolean m_bUpdateBounds = true;    
-    /** Set to true if the contour center needs updating. */
-    protected boolean m_bUpdateCenter = true;
+    protected boolean m_bUpdateGeometricCenter = true;
     /** Set to true if the contour plane needs updating. */
     protected boolean m_bUpdatePlane = true;
 
@@ -582,6 +581,49 @@ public abstract class VOIBase extends Vector<Vector3f> {
         float fY = iY + 0.49f;
         float fZ = iZ + 0.49f;
 
+        if ( iPlane == XPLANE )
+        {
+            int iLast = size() -1;
+            for ( int i = 0; i < size(); i++ )
+            {
+                Vector3f kPos = get(i);
+                Vector3f kPosL = get(iLast);
+                if ( isInside( kPosL.Y, kPosL.Z, kPos.Y, kPos.Z, fY, fZ ) )
+                { 
+                    isInside = !isInside; 
+                }  
+                iLast = i;
+            }
+        }
+        else if ( iPlane == YPLANE )
+        {
+            int iLast = size() -1;
+            for ( int i = 0; i < size(); i++ )
+            {
+                Vector3f kPos = get(i);
+                Vector3f kPosL = get(iLast);
+                if ( isInside( kPosL.X, kPosL.Z, kPos.X, kPos.Z, fX, fZ ) )
+                { 
+                    isInside = !isInside; 
+                }  
+                iLast = i;
+            }
+        }
+        else
+        {
+            int iLast = size() -1;
+            for ( int i = 0; i < size(); i++ )
+            {
+                Vector3f kPos = get(i);
+                Vector3f kPosL = get(iLast);
+                if ( isInside( kPosL.X, kPosL.Y, kPos.X, kPos.Y, fX, fY ) )
+                { 
+                    isInside = !isInside; 
+                }  
+                iLast = i;
+            }
+        }
+        /*
         int iLast = size() -1;
         for ( int i = 0; i < size(); i++ )
         {
@@ -611,6 +653,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             }
             iLast = i;
         }
+        */
         return isInside;
     }
 
@@ -1088,6 +1131,11 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @return returns the geometric center
      */
     public Vector3f getGeometricCenter() {
+
+        if ( !m_bUpdateGeometricCenter )
+        {
+            return gcPt;
+        }  
         Vector3f[] kBounds = getImageBoundingBox();
         int nPts = 0;
         Vector3f kSum = new Vector3f();
@@ -1100,15 +1148,18 @@ public abstract class VOIBase extends Vector<Vector3f> {
                     if ( contains( x, y, z ) )
                     {
                         nPts++;
+                        //kSum.X += x;
+                        //kSum.Y += y;
+                        //kSum.Z += z;
                         kSum.Add( x, y, z );
                     }
                 }
             }
         }
-
         gcPt.X = MipavMath.round( kSum.X / nPts);
         gcPt.Y = MipavMath.round( kSum.Y / nPts);
-        gcPt.Z = MipavMath.round( kSum.Z / nPts);
+        gcPt.Z = MipavMath.round( kSum.Z / nPts);        
+        m_bUpdateGeometricCenter = false;
         return gcPt;
     }
 
@@ -1684,8 +1735,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
     public void update()
     {
         m_bUpdateBounds = true;
-        m_bUpdateCenter = true;
         m_bUpdatePlane = true;
+        m_bUpdateGeometricCenter = true;
 
         if ( m_kVolumeVOI != null )
         {
@@ -1745,6 +1796,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
      */
     private boolean isInside( float fX1, float fY1, float fX2, float fY2, float fX, float fY )
     {
+        if ( !(((fY1 <= fY) && (fY < fY2)) || ((fY2 <= fY) && (fY < fY1))) )
+            return false;
         return ( ((fY1 <= fY) && (fY < fY2) && (areaTwice(fX2, fY2, fX1, fY1, fX, fY) >= 0)) ||
                 ((fY2 <= fY) && (fY < fY1) && (areaTwice(fX1, fY1, fX2, fY2, fX, fY) >= 0)) );
     }

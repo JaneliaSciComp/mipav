@@ -48,6 +48,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 
+import com.mentorgen.tools.profile.runtime.Profile;
+
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
@@ -1354,7 +1356,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     
     public void move( VOIBase kVOI, Vector3f kDiff )
     {
-        if ( kVOI.isFixed() )
+        if ( kVOI.isFixed() || kDiff.equals( Vector3f.ZERO ) )
         {
             return;
         }
@@ -2192,44 +2194,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 
 
-    /**
-     * Draws itself with the interior blended with the image pasted in as a
-     * buffer. The color 0f the VOI and the opacity of the VOI are parameters of
-     * this method.
-     * 
-     */
-    private void drawBlendVOI( VOIBase kVOI, float[] resols, int[] unitsOfMeasure, Graphics g,  int[] pixBuffer,
-            float opacity, Color color, int xDim, float zoomX, float resolutionX) {
-
-        if (g == null) {
-            MipavUtil.displayError("VOIContour.drawBlendSelf: graphics = null");
-
-            return;
-        }
-        int zoomXDim = MipavMath.round(xDim * zoomX * resolutionX);
-        
-        Vector3f[] kBounds = kVOI.getImageBoundingBox();
-        for ( int z = (int)kBounds[0].Z; z <= (int)kBounds[1].Z; z++ )
-        {
-            for ( int y = (int)kBounds[0].Y; y <= (int)kBounds[1].Y; y++ )
-            {
-                for ( int x = (int)kBounds[0].X; x <= (int)kBounds[1].X; x++ )
-                {
-                    if ( kVOI.contains( x, y, z ) )
-                    {
-                        int index = (y * zoomXDim) + x;
-
-                        int opacityInt = (int) (opacity * 255);
-                        opacityInt = opacityInt << 24;
-
-                        int colorInt = color.getRGB() & 0x00ffffff;
-                        pixBuffer[index] = colorInt | opacityInt;
-                    }
-                }
-            }
-        }
-    }
-
     private void drawGeometricCenter(VOIBase kVOI, Graphics g) {
         int xS, yS;
 
@@ -2241,6 +2205,17 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
 
         Vector3f gcFilePt = kVOI.getGeometricCenter();
+        //Profile.clear();
+        //Profile.start();
+        //for ( int i = 0; i < 100; i++ )
+        //{
+        //    kVOI.update();
+        //    gcFilePt = kVOI.getGeometricCenter();
+        //}
+        //Profile.stop();
+        //Profile.setFileName( "profile_out" );
+        //Profile.shutdown();
+        
         Vector3f gcPt = m_kDrawingContext.fileToScreen( gcFilePt );
         xS = (int)gcPt.X;
         yS = (int)gcPt.Y;
@@ -2740,20 +2715,16 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         */
     }
     
-    public void drawBlendContour( VOIBase kVOI, int[] pixBuffer, float opacity, Color color, int slice, int orientation, Graphics g )
+    public Vector3f drawBlendContour( VOIBase kVOI, int[] pixBuffer, float opacity, Color color, int slice )
     {
-        if (g == null) {
-            MipavUtil.displayError("Draw VOI: grapics = null");
-            return;
-        }
         if ( (m_iPlane != (m_iPlane & kVOI.getPlane())) || (getSlice(kVOI)!= slice) )
         {
-            return;
+            return null;
         }
         int iNumPoints = kVOI.size();
         if ( iNumPoints == 0 )
         {
-            return;
+            return null;
         }
         Vector3f[] kVolumePts = new Vector3f[iNumPoints + 1];
         int iXMin = Integer.MAX_VALUE;
@@ -2796,8 +2767,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         outlineRegion(aaiCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax, kVolumePts, null);
         
 
-
-
+        int numPts = 0;
+        Vector3f kCenterMass = new Vector3f();
         Vector3f kLocalPt = new Vector3f();
         int iColumn = 0;
         /* Loop over the width of the sculpt region bounding-box: */
@@ -2824,17 +2795,29 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                      * image color from the canvas image and alpha-blend the sculpt color ontop, storing the result in
                      * the canvas image.
                      */
-                    int index = iY * m_aiLocalImageExtents[0] + iX;
-                    int opacityInt = (int) (opacity * 255);
-                    opacityInt = opacityInt << 24;
+                    if ( pixBuffer != null )
+                    {
+                        int index = iY * m_aiLocalImageExtents[0] + iX;
+                        int opacityInt = (int) (opacity * 255);
+                        opacityInt = opacityInt << 24;
 
-                    int colorInt = color.getRGB() & 0x00ffffff;
-                    pixBuffer[index] = colorInt | opacityInt;
+                        int colorInt = color.getRGB() & 0x00ffffff;
+                        pixBuffer[index] = colorInt | opacityInt;
+                    }
+                    else
+                    {
+                        kCenterMass.Add( patientCoordinatesToFile( new Vector3f( iX, iY, m_iSlice ) ) );
+                        numPts++;
+                    }
                 }
             }
 
             iColumn++;
         }      
+        kCenterMass.X = MipavMath.round( kCenterMass.X / numPts );
+        kCenterMass.Y = MipavMath.round( kCenterMass.Y / numPts );
+        kCenterMass.Z = MipavMath.round( kCenterMass.Z / numPts );
+        return kCenterMass;
     }
 
     private void drawVOI( VOIBase kVOI, float[] resols, int[] unitsOfMeasure, Graphics g, int thickness ) {

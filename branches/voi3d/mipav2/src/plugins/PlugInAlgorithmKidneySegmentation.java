@@ -1142,7 +1142,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
 
         contourVOI = VOIs.VOIAt(i);
 
-        curves = contourVOI.getCurvesTemp();
+        curves = contourVOI.getSortedCurves(zDim);
 
         for (z = 0; z < zDim; z++) {
 
@@ -1436,7 +1436,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             contourVOI2 = threshImage.getVOIs().VOIAt(0);
             contourVOI2.setName("contourVOI2");
             contourVOI2.setAllActive(true);
-            curves2 = contourVOI2.getCurvesTemp();
+            curves2 = contourVOI2.getSortedCurves(zDim);
             sliceBuffer = new float[sliceSize];
             contourVOI3 = new VOI((short) 3, "contourVOI3", zDim, VOI.CONTOUR, -1.0f);
             fireProgressStateChanged("Redoing some slices...");
@@ -1515,7 +1515,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
                 area = new int[zDim];
                 nextVOI = contourVOI4;
 
-                curves3 = contourVOI3.getCurvesTemp();
+                curves3 = contourVOI3.getSortedCurves(zDim);
                 mask.clear();
                 contourVOI3.createBinaryMask3D(mask, xDim, yDim, xor, onlyActive);
 
@@ -1851,7 +1851,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
 
         contourVOI = VOIs.VOIAt(i);
 
-        curves = contourVOI.getCurvesTemp();
+        curves = contourVOI.getSortedCurves(zDim);
 
         for (z = 0; z < zDim; z++) {
 
@@ -2105,7 +2105,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         contourVOI2 = threshImage.getVOIs().VOIAt(0);
         contourVOI2.setName("contourVOI2");
         contourVOI2.setAllActive(true);
-        curves2 = contourVOI2.getCurvesTemp();
+        curves2 = contourVOI2.getSortedCurves(zDim);
         sliceBuffer = new float[sliceSize];
         contourVOI3L = new VOI((short) 3, "contourVOI3L", zDim, VOI.CONTOUR, -1.0f);
         contourVOI3R = new VOI((short) 4, "contourVOI3R", zDim, VOI.CONTOUR, -1.0f);
@@ -2253,7 +2253,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
                     nextVOI = contourVOI4R;
                 }
 
-                curves3 = currentVOI.getCurvesTemp();
+                curves3 = currentVOI.getSortedCurves(zDim);
                 mask.clear();
                 currentVOI.createBinaryMask3D(mask, xDim, yDim, xor, onlyActive);
 
@@ -2553,7 +2553,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             // System.out.println("threshSliceImage.getVOIs().size = " + threshSliceImage.getVOIs().size());
 
             if (doingArea && (threshSliceImage.getVOIs().size() > 0) &&
-                    (threshSliceImage.getVOIs().VOIAt(0).getCurvesTemp()[0].size() > 0)) {
+                    (threshSliceImage.getVOIs().VOIAt(0).getCurves().size() > 0)) {
                 sliceMask.clear();
                 threshSliceImage.getVOIs().VOIAt(0).createBinaryMask3D(sliceMask, xDim, yDim, xor, onlyActive);
                 area[z] = 0;
@@ -2568,7 +2568,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
 
             if (threshSliceImage.getVOIs().size() > 0) {
                 gons = threshSliceImage.getVOIs().VOIAt(0).exportPolygons(0);
-                nCurves = threshSliceImage.getVOIs().VOIAt(0).getCurvesTemp()[0].size();
+                nCurves = threshSliceImage.getVOIs().VOIAt(0).getCurves().size();
 
                 if (!doingArea && (nCurves == 1)) {
                     finished = true;
@@ -2802,7 +2802,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             // System.out.println("threshSliceImage.getVOIs().size = " + threshSliceImage.getVOIs().size());
 
             if (doingArea && (threshSliceImage.getVOIs().size() > 0) &&
-                    (threshSliceImage.getVOIs().VOIAt(0).getCurvesTemp()[0].size() > 0)) {
+                    (threshSliceImage.getVOIs().VOIAt(0).getCurves().size() > 0)) {
                 sliceMask.clear();
                 threshSliceImage.getVOIs().VOIAt(0).createBinaryMask3D(sliceMask, xDim, yDim, xor, onlyActive);
                 area[z] = 0;
@@ -2817,7 +2817,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
 
             if (threshSliceImage.getVOIs().size() > 0) {
                 gons = threshSliceImage.getVOIs().VOIAt(0).exportPolygons(0);
-                nCurves = threshSliceImage.getVOIs().VOIAt(0).getCurvesTemp()[0].size();
+                nCurves = threshSliceImage.getVOIs().VOIAt(0).getCurves().size();
 
                 if (!doingArea && (nCurves == 1)) {
                     finished = true;

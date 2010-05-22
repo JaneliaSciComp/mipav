@@ -835,7 +835,7 @@ public class PlugInAlgorithmSUV_PET extends AlgorithmBase {
                 fireProgressStateChanged(100 * (i + 1) / nVOIs);
                 UI.setDataText("VOI ID = " + VOIs.VOIAt(i).getID() + "\n");
                 dataString += "VOI ID = " + VOIs.VOIAt(i).getID() + "\n";
-                contours = VOIs.VOIAt(i).getCurvesTemp();
+                contours = VOIs.VOIAt(i).getSortedCurves(zDim);
 
                 for (z = 0; z < zDim; z++) {
                     voiSliceNumber = 0;
