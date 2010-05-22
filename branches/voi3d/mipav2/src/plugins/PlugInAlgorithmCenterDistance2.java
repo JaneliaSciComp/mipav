@@ -1407,7 +1407,7 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
                         }
                     }
                     ((VOIContour) (contours.elementAt(maxElement))).trimPoints(1.0, true);
-                    srcGon = ((VOIContour) (contours.elementAt(maxElement))).exportPolygon(1,1,1,1);
+                    srcGon = ((VOIContour) (contours.elementAt(maxElement))).exportPolygon();
                     xPoints = new float[srcGon.npoints + 5];
                     yPoints = new float[srcGon.npoints + 5];
         
@@ -3053,7 +3053,7 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
                                 }
                             }
                             ((VOIContour) (contours[z].elementAt(maxElement))).trimPoints(1.0, true);
-                            srcGon = ((VOIContour) (contours[z].elementAt(maxElement))).exportPolygon(1,1,1,1);
+                            srcGon = ((VOIContour) (contours[z].elementAt(maxElement))).exportPolygon();
                             
                             xPoints = new float[srcGon.npoints + 5];
                             yPoints = new float[srcGon.npoints + 5];

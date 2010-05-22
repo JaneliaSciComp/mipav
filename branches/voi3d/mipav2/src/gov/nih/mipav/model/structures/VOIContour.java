@@ -289,24 +289,6 @@ public class VOIContour extends VOIBase {
 		return gon;
 	}
 
-	/**
-	 * Returns a scaled polygon of the contour.
-	 * 
-	 * @param scaleX
-	 *            scale of polygon's x coordinates
-	 * @param scaleY
-	 *            scale of polygon's y coordinates
-	 * @param resolutionX
-	 *            pixel resolution int the x direction (aspect ratio)
-	 * @param resolutionY
-	 *            pixel resolution int the y direction (aspect ratio)
-	 * 
-	 * @return return the polygon
-	 */
-	public Polygon exportPolygon(float scaleX, float scaleY, float resolutionX,
-			float resolutionY) {
-		return (scalePolygon(scaleX, scaleY, resolutionX, resolutionY));
-	}
 
 	/**
 	 * Return the VOI crop region's origin of rectangle.
@@ -1797,42 +1779,4 @@ public class VOIContour extends VOIBase {
 		return Math.sqrt(largestDistanceSq);
 	}
     
-    /**
-	 * Takes a scale and returns a scaled polygon.
-	 * 
-	 * @param zoomX
-	 *            scale for the x coordinate
-	 * @param zoomY
-	 *            scale for the y coordinate
-	 * @param resolutionX
-	 *            resolution of the pixel in the X direction (aspect ratio)
-	 * @param resolutionY
-	 *            resolution of the pixel in the Y direction (aspect ratio)
-	 * 
-	 * @return returns scaled polygon
-	 */
-	private Polygon scalePolygon(float zoomX, float zoomY, float resolutionX,
-			float resolutionY) {
-		int i;
-		int x;
-		int y;
-		Polygon scaledGon = null;
-
-		try {
-			scaledGon = new Polygon();
-		} catch (OutOfMemoryError error) {
-			System.gc();
-			throw error;
-		}
-
-		for (i = 0; i < size(); i++) {
-			x = (int) ((((elementAt(i))).X * zoomX * resolutionX) + 0.5);
-			y = (int) ((((elementAt(i))).Y * zoomY * resolutionY) + 0.5);
-			scaledGon.addPoint(x, y);
-		}
-
-		return scaledGon;
-	}
-
-
 }

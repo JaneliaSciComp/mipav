@@ -692,7 +692,6 @@ public class VOI extends ModelSerialCloneable {
      * @param   slice  slice to create mask at
      *
      * @return  mask the binary mask
-     * @deprecated
      */
     public BitSet createBinaryMask(int xDim, int yDim, int slice) {
         BitSet mask;
@@ -704,26 +703,20 @@ public class VOI extends ModelSerialCloneable {
             return null;
         }
 
-        int x, y;
-        int i, nGons;
-        int offset; // from corner
-        nGons = curves.size();
-
         if ((process == true) && (curveType == CONTOUR)) {
 
-            for (i = 0; i < nGons; i++) {
-                ((VOIContour) (curves.elementAt(i))).contains(0, 0, slice);
-                getBounds(xBounds, yBounds, zBounds);
+            for (int i = 0; i < curves.size(); i++) {
+                curves.elementAt(i).getBounds(xBounds, yBounds, zBounds);
 
                 int xbs = (int) xBounds[0];
                 int xbe = (int) xBounds[1];
                 int ybs = (int) yBounds[0];
                 int ybe = (int) yBounds[1];
 
-                for (y = ybs; y < ybe; y++) {
-                    offset = y * xDim; // a horizontal offset
+                for (int y = ybs; y < ybe; y++) {
+                    int offset = y * xDim; // a horizontal offset
 
-                    for (x = xbs; x < xbe; x++) {
+                    for (int x = xbs; x < xbe; x++) {
 
                         if (((VOIContour) (curves.elementAt(i))).contains(x, y, slice) &&
                                 (polarity == ADDITIVE)) {
@@ -750,11 +743,11 @@ public class VOI extends ModelSerialCloneable {
             Vector3f pt;
             int size = curves.size();
 
-            for (i = 0; i < size; i++) {
+            for (int i = 0; i < size; i++) {
                 pt = ((VOIPoint) (curves.elementAt(i))).exportPoint();
                 if ( pt.Z == slice )
                 {
-                    offset = MipavMath.round((pt.Y * xDim) + pt.X);
+                    int offset = MipavMath.round((pt.Y * xDim) + pt.X);
 
                     if (polarity == ADDITIVE) {
 
@@ -784,27 +777,18 @@ public class VOI extends ModelSerialCloneable {
      * @param  mask        the binary mask
      * @param  XOR         indicates that nested VOI contours will be exclusive ORed with other contours of the VOI
      * @param  onlyActive  Only mask regions that are active (i.e. selected )
-     * @deprecated
      */
     public void createBinaryMask(int xDim, int yDim, int slice, BitSet mask, boolean XOR, boolean onlyActive) {
 
-        // System.err.println("doing create binary mask");
-        int x = 0, y;
-        int i, nGons;
-        int offset;
-        int offsetZ;
-        nGons = curves.size();
-        offsetZ = slice * xDim * yDim;
+        int offsetZ = slice * xDim * yDim;
 
         if ((process == true) && (curveType == CONTOUR)) {
             //System.err.println("XOR is " + XOR);
             //System.err.println("polarity additive?: " + (polarity == ADDITIVE));
-            for (i = 0; i < nGons; i++) {
+            for (int i = 0; i < curves.size(); i++) {
 
                 if (!onlyActive || ((VOIContour) (curves.elementAt(i))).isActive()) {
-                    ((VOIContour) (curves.elementAt(i))).contains(0, 0);
-                    ((VOIContour) (curves.elementAt(i))).getBounds(xBounds, yBounds, zBounds);
-
+                    curves.elementAt(i).getBounds(xBounds, yBounds, zBounds);
                     // Keep the next four lines!!
                     int xbs = (int) xBounds[0];
                     int xbe = (int) xBounds[1];
@@ -812,10 +796,10 @@ public class VOI extends ModelSerialCloneable {
                     int ybe = (int) yBounds[1];
 
                     // System.err.println("Xbounds 0 = " + xBounds[0] + " Xbounds 1 = " + xBounds[1]);
-                    for (y = ybs; y < ybe; y++) {
-                        offset = offsetZ + (y * xDim);
+                    for (int y = ybs; y < ybe; y++) {
+                        int offset = offsetZ + (y * xDim);
 
-                        for (x = xbs; x < xbe; x++) {
+                        for (int x = xbs; x < xbe; x++) {
 
                             if (((VOIContour) (curves.elementAt(i))).contains(x, y) &&
                                     (polarity == ADDITIVE)) {
@@ -841,11 +825,11 @@ public class VOI extends ModelSerialCloneable {
             Vector3f pt;
             int size = curves.size();
 
-            for (i = 0; i < size; i++) {
+            for (int i = 0; i < size; i++) {
                 pt = ((VOIPoint) (curves.elementAt(i))).exportPoint();
 
                 if (!onlyActive || ((VOIPoint) (curves.elementAt(i))).isActive()) {
-                    offset = MipavMath.round((slice * xDim * yDim) + (pt.Y * xDim) + pt.X);
+                    int offset = MipavMath.round((slice * xDim * yDim) + (pt.Y * xDim) + pt.X);
 
                     if (polarity == ADDITIVE) {
 
@@ -874,7 +858,7 @@ public class VOI extends ModelSerialCloneable {
      *
      * @return  mask the binary mask
      */
-    public BitSet createBinaryMask(int xDim, int yDim, int slice, int element) {
+    public BitSet createBinaryMask(int xDim, int yDim, int slice, VOIBase contour) {
         BitSet mask;
 
         // System.err.println("creating binary mask");
@@ -883,33 +867,20 @@ public class VOI extends ModelSerialCloneable {
         } catch (OutOfMemoryError oome) {
             return null;
         }
-
-        int x, y;
-        int nGons;
-        int offset; // from corner
-        nGons = curves.size();
-
-        if (element >= nGons) {
-            MipavUtil.displayError("element " + element + " does not exist");
-
-            return null;
-        }
-
         if ((process == true) && (curveType == CONTOUR)) {
-            ((VOIContour) (curves.elementAt(element))).contains(0, 0, slice);
-            getBounds(xBounds, yBounds, zBounds);
+            contour.getBounds(xBounds, yBounds, zBounds);
 
             int xbs = (int) xBounds[0];
             int xbe = (int) xBounds[1];
             int ybs = (int) yBounds[0];
             int ybe = (int) yBounds[1];
 
-            for (y = ybs; y < ybe; y++) {
-                offset = y * xDim; // a horizontal offset
+            for (int y = ybs; y < ybe; y++) {
+                int offset = y * xDim; // a horizontal offset
 
-                for (x = xbs; x < xbe; x++) {
+                for (int x = xbs; x < xbe; x++) {
 
-                    if (((VOIContour) (curves.elementAt(element))).contains(x, y, slice) &&
+                    if (contour.contains(x, y, slice) &&
                             (polarity == ADDITIVE)) {
 
                         if (mask.get(offset + x)) {
@@ -919,7 +890,7 @@ public class VOI extends ModelSerialCloneable {
                         } else {
                             mask.set(offset + x);
                         }
-                    } else if (((VOIContour) (curves.elementAt(element))).contains(x, y, slice) &&
+                    } else if (contour.contains(x, y, slice) &&
                             (polarity == SUBTRACTIVE)) {
 
                         // System.err.println("doing subtractive");
@@ -932,10 +903,10 @@ public class VOI extends ModelSerialCloneable {
         } else if ((process == true) && (curveType == POINT)) {
             Vector3f pt;
             curves.size();
-            pt = ((VOIPoint) (curves.elementAt(element))).exportPoint();
+            pt = ((VOIPoint)contour).exportPoint();
             if ( pt.Z == slice )
             {
-                offset = MipavMath.round((pt.Y * xDim) + pt.X);
+                int offset = MipavMath.round((pt.Y * xDim) + pt.X);
 
                 if (polarity == ADDITIVE) {
 
@@ -1226,9 +1197,8 @@ public class VOI extends ModelSerialCloneable {
      * @param   slice  index of slice
      *
      * @return  array of points at the slice
-     * @deprecated
      */
-    public Vector3f[] exportPoints(int slice) {
+    public Vector<Vector3f> exportPoints(int slice) {
 
         if (curveType != POINT) {
             return null;
@@ -1242,7 +1212,7 @@ public class VOI extends ModelSerialCloneable {
             }
         }
 
-        return (Vector3f[])points.toArray();
+        return points;
     }
 
     /**
@@ -1280,30 +1250,6 @@ public class VOI extends ModelSerialCloneable {
     }
      */
 
-    /**
-     * Gets polygons from the VOI; can only use with Contour.
-     *
-     * @param   slice  index of slice
-     *
-     * @return  array of polygons at the slice
-     */
-    public Polygon[] exportPolygons(int slice) {
-        if ((curveType == LINE) || (curveType == POINT) || (curveType == PROTRACTOR) || (curveType == ANNOTATION) ||
-                (curveType == POLYLINE_SLICE)) {
-            return null;
-        }
-
-        Vector<Polygon> polygons = new Vector<Polygon>();
-
-        for (int i = 0; i < curves.size(); i++) {
-            if ( curves.elementAt(i).slice() == slice)
-            {
-                polygons.add( ((VOIContour) (curves.elementAt(i))).exportPolygon(1, 1, 1, 1) );
-            }
-        }
-
-        return (Polygon[])polygons.toArray();
-    }
 
     /**
      * Prepares the class for cleanup.
@@ -1530,31 +1476,6 @@ public class VOI extends ModelSerialCloneable {
         return curves;
     }
     
-    /**
-     * Accessor that returns the curves making up the VOI.
-     *
-     * @return  the curves
-     */
-    public Vector<VOIBase>[] getCurvesTemp() {
-        Vector<VOIBase>[] kTemp = new Vector[1];
-        kTemp[0] = curves;
-        /*
-        Vector<VOIBase>[] kTemp = new Vector[zDim];
-        for ( int i = 0; i < curves.size(); i++ )
-        {
-            if ( (curves.get(i).getPlane() == VOIBase.ZPLANE) )
-            {
-                int slice = (int)curves.get(i).get(0).Z;
-                if ( kTemp[slice] == null )
-                {
-                    kTemp[slice] = new Vector<VOIBase>();
-                    kTemp[slice].add(curves.get(i) );
-                }
-            }
-        }
-        */
-        return kTemp;
-    }
     public Vector<VOIBase>[] getSortedCurves( int iDim ) {
         return getSortedCurves( VOIBase.ZPLANE, iDim );
     }
@@ -2076,68 +1997,26 @@ public class VOI extends ModelSerialCloneable {
      * @param  voiSlice  voiSlice indicates the slice where the contour(s) is to be copied from
      * @param  voi       added to VOI
      * @param  newZDim   indicates the new Z dimenions to be set
-     * @deprecated
      */
     public void importNewVOI(int slice, int voiSlice, VOI voi, int newZDim, boolean resize) {
-        /*
-        zDim = newZDim;
-
-        float[] x, y, z;
-        int n = 2;
-
-        try {
-
-            if (curveType == PROTRACTOR) {
-                n = 3;
-            } else if (curveType == LINE) {
-                n = 2;
-            }
-
-            x = new float[n];
-            y = new float[n];
-            z = new float[n];
-
-            if (resize) {
-                curves = new Vector[zDim];
-
-                for (int i = 0; i < zDim; i++) {
-                    curves[i] = new Vector();
-                }
-
-            }
-
-            elementLabel = 1;
-        } catch (OutOfMemoryError e) {
-            System.gc();
-            throw e;
+        if ( resize )
+        {
+            curves.clear();
         }
-
-        if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
-            Polygon[] gons = voi.exportPolygons(voiSlice);
-
-            for (int i = 0; i < gons.length; i++) {
-                importPolygon(gons[i], slice);
+        Vector<VOIBase> sliceCurves = voi.getSliceCurves(voiSlice);
+        for ( int i = 0; i < sliceCurves.size(); i++ )
+        {
+            float[] x = new float[sliceCurves.elementAt(i).size()];
+            float[] y = new float[sliceCurves.elementAt(i).size()];
+            float[] z = new float[sliceCurves.elementAt(i).size()];
+            float[] z2 = new float[sliceCurves.elementAt(i).size()];
+            for ( int j = 0; j < sliceCurves.elementAt(i).size(); j++ )
+            {
+                z2[j] = slice;
             }
-        } else if (curveType == POINT) {
-
-            Vector3f [] pts = voi.exportPoints(voiSlice);
-            for (int i = 0; i < pts.length; i++) {
-                System.err.println("i: " + i + ", pt: " + pts[i]);
-            }
-
-            importPoints(pts, slice);
-        } else if (curveType == ANNOTATION) {
-            if (isEmpty()) {
-                curves[slice].addElement(voi.getCurves()[voiSlice].elementAt(0));
-            }
-        } else if (curveType == LINE) {
-            voi.exportArrays(x, y, z, voiSlice);
-            importCurve(x, y, z, slice);
-        } else if (curveType == PROTRACTOR) {
-            voi.exportArrays(x, y, z, voiSlice);
-            importCurve(x, y, z, slice);
+            sliceCurves.elementAt(i).exportArrays(x, y, z);
+            importCurve(x, y, z2);
         }
-        */
     }
 
 
@@ -2519,8 +2398,11 @@ public class VOI extends ModelSerialCloneable {
      * @deprecated
      */
     public void removeCurves(int slice) {
-        curves.removeAllElements();
-        elementLabel = 1;
+        Vector<VOIBase> removeCurves = getSliceCurves(slice);
+        for ( int i = 0; i < removeCurves.size(); i++ )
+        {
+            curves.removeElement(removeCurves.elementAt(i));
+        }
     }
     
     /**

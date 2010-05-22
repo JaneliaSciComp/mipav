@@ -1099,7 +1099,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         // destImage.getVOIs().addVOI(VOIEllipseR);
         maskL = new BitSet(sliceSize);
         maskR = new BitSet(sliceSize);
-        VOIEllipseL.createBinaryMask3D(maskL,xDim, yDim,  xor, onlyActive);
+        VOIEllipseL.createBinaryMask3D(maskL, xDim, yDim, xor, onlyActive);
         VOIEllipseR.createBinaryMask3D(maskR, xDim, yDim, xor, onlyActive);
 
         for (z = 0; z < zDim; z++) {
@@ -2147,14 +2147,14 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
 
                 // contourVOI3.importCurve((VOIContour)(curves2[z].elementAt(i)), z); causes these curves to disappear
                 // when threshImage.disposeLocal(); occurs.
-                gons = contourVOI2.exportPolygons(z);
+                Vector<VOIBase> sliceCurves = contourVOI2.getSliceCurves(z);
 
                 for (i = 0; i < nCurves; i++) {
 
                     if (setMem[i] == 1) {
-                        contourVOI3L.importPolygon(gons[i], z);
+                        contourVOI3L.importCurve(sliceCurves.elementAt(i));
                     } else {
-                        contourVOI3R.importPolygon(gons[i], z);
+                        contourVOI3R.importCurve(sliceCurves.elementAt(i));
                     }
                 }
 
@@ -2567,7 +2567,6 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             } // if (doingArea && threshSliceImage.getVOIs().size() > 0)
 
             if (threshSliceImage.getVOIs().size() > 0) {
-                gons = threshSliceImage.getVOIs().VOIAt(0).exportPolygons(0);
                 nCurves = threshSliceImage.getVOIs().VOIAt(0).getCurves().size();
 
                 if (!doingArea && (nCurves == 1)) {
@@ -2583,7 +2582,8 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
                 if ((!tooBig) && (finished || (sliceIter == finalIter))) {
 
                     for (i = 0; i < nCurves; i++) {
-                        nextVOI.importPolygon(gons[i], z);
+                        VOIContour polygonContour = (VOIContour)threshSliceImage.getVOIs().VOIAt(0).getCurves().elementAt(i);
+                        nextVOI.importPolygon(polygonContour.exportPolygon(), z);
                     }
                 }
             }
@@ -2816,7 +2816,6 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             } // if (doingArea && threshSliceImage.getVOIs().size() > 0)
 
             if (threshSliceImage.getVOIs().size() > 0) {
-                gons = threshSliceImage.getVOIs().VOIAt(0).exportPolygons(0);
                 nCurves = threshSliceImage.getVOIs().VOIAt(0).getCurves().size();
 
                 if (!doingArea && (nCurves == 1)) {
@@ -2832,7 +2831,8 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
                 if ((!tooBig) && (finished || (sliceIter == finalIter))) {
 
                     for (i = 0; i < nCurves; i++) {
-                        nextVOI.importPolygon(gons[i], z);
+                        VOIContour polygonContour = (VOIContour)threshSliceImage.getVOIs().VOIAt(0).getCurves().elementAt(i);
+                        nextVOI.importPolygon(polygonContour.exportPolygon(), z);
                     }
                 }
             }

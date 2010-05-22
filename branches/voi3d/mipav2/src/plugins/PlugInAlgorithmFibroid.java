@@ -362,7 +362,7 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
 
         ViewVOIVector VOIs = null;
         int nVOIs;
-        Vector[] contours;
+        Vector<VOIBase>[] contours;
         int nContours;
         int nSlices;
         BitSet mask;
@@ -570,7 +570,7 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
                         }
 
                         if (usedSlices > 1) {
-                            mask = VOIs.VOIAt(i).createBinaryMask(xDim, yDim, z, k);
+                            mask = VOIs.VOIAt(i).createBinaryMask(xDim, yDim, z, contours[z].elementAt(k));
 
                             for (y = 0; y < yDim; y++) {
                                 offset = y * xDim;
@@ -618,7 +618,7 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
                         nContours = contours[z].size();
 
                         for (k = 0; k < nContours; k++) {
-                            mask = VOIs.VOIAt(i).createBinaryMask(xDim, yDim, z, k);
+                            mask = VOIs.VOIAt(i).createBinaryMask(xDim, yDim, z, contours[z].elementAt(k));
 
                             for (y = 0; y < yDim; y++) {
                                 offset = y * xDim;

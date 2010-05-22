@@ -350,7 +350,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
     private VOI voi = null;
 
     /** DOCUMENT ME! */
-    private Vector3f[] VOIPoints;
+    private Vector<Vector3f> VOIPoints;
 
     /** DOCUMENT ME! */
     private int xDim;
@@ -1467,12 +1467,12 @@ public class ViewJFrameRegistration extends ViewJFrameBase
                     VOIPoints = null;
                     VOIPoints = voi.exportPoints(zSlice);
 
-                    if ((VOIPoints != null) && (VOIPoints.length > 0)) {
+                    if ((VOIPoints != null) && (VOIPoints.size() > 0)) {
 
                         componentImage.deleteReferenceVOIs();
 
-                        for (i = 0; i < VOIPoints.length; i++) {
-                            componentImage.makeReferenceVOI(VOIPoints[i]);
+                        for (i = 0; i < VOIPoints.size(); i++) {
+                            componentImage.makeReferenceVOI(VOIPoints.elementAt(i));
                         }
                     }
                 } // end of if (haveVOIPoints)
@@ -1537,12 +1537,12 @@ public class ViewJFrameRegistration extends ViewJFrameBase
                     VOIPoints = null;
                     VOIPoints = voi.exportPoints(zSlice2);
 
-                    if ((VOIPoints != null) && (VOIPoints.length > 0)) {
+                    if ((VOIPoints != null) && (VOIPoints.size() > 0)) {
 
                         componentImage.deleteAdjustableVOIs();
 
-                        for (i = 0; i < VOIPoints.length; i++) {
-                            componentImage.makeAdjustableVOI(VOIPoints[i]);
+                        for (i = 0; i < VOIPoints.size(); i++) {
+                            componentImage.makeAdjustableVOI(VOIPoints.elementAt(i));
                         }
                     }
                 } // end of if ((haveVOIPoints) && (zSlice != zSlice2))

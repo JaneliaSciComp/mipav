@@ -278,7 +278,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
         VOIVector VOIs;
         int nCurves;
         AlgorithmRegOAR25D2 regAlgo = null;
-        Polygon[] gons = null;
         boolean haveLower;
         boolean haveUpper;
         int lower;
@@ -684,30 +683,33 @@ public class AlgorithmFRAP extends AlgorithmBase {
             // Propagate the 2 photobleach and whole organ VOIs to all the slices
             haveLower = false;
             lower = 0;
-
+            Vector<VOIBase>[] sortedCurves = VOIs.VOIAt(photoBleachedIndex).getSortedCurves(zDim);
             for (z = 0; (z < zDim) && (!haveLower); z++) {
 
-                if (VOIs.VOIAt(photoBleachedIndex).getCurvesTemp()[z].size() > 0) {
+                if (sortedCurves[z].size() > 0) {
                     haveLower = true;
                     lower = z;
                 }
             }
 
-            gons = VOIs.VOIAt(photoBleachedIndex).exportPolygons(lower);
-
+            Vector<VOIBase> copyCurves = new Vector<VOIBase>();
+            for (j = 0; j < sortedCurves[lower].size(); j++) {
+                copyCurves.add(sortedCurves[lower].elementAt(j));
+            }
+            
             for (z = lower - 1; z >= 0; z--) {
 
-                for (j = 0; j < gons.length; j++) {
-                    VOIs.VOIAt(photoBleachedIndex).importPolygon(gons[j], z);
+                for (j = 0; j < copyCurves.size(); j++) {
+                    VOIs.VOIAt(photoBleachedIndex).importPolygon(((VOIContour)copyCurves.elementAt(j)).exportPolygon(), z);
                 }
             }
 
             haveUpper = false;
             upper = zDim - 1;
-
+            sortedCurves = VOIs.VOIAt(photoBleachedIndex).getSortedCurves(zDim);
             for (z = zDim - 1; (z >= lower) && (!haveUpper); z--) {
 
-                if (VOIs.VOIAt(photoBleachedIndex).getCurvesTemp()[z].size() > 0) {
+                if (sortedCurves[z].size() > 0) {
                     haveUpper = true;
                     upper = z;
                 }
@@ -715,8 +717,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
             for (z = upper + 1; z < zDim; z++) {
 
-                for (j = 0; j < gons.length; j++) {
-                    VOIs.VOIAt(photoBleachedIndex).importPolygon(gons[j], z);
+                for (j = 0; j < copyCurves.size(); j++) {
+                    VOIs.VOIAt(photoBleachedIndex).importPolygon(((VOIContour)copyCurves.elementAt(j)).exportPolygon(), z);
                 }
             }
 
@@ -724,29 +726,34 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 haveLower = false;
                 lower = 0;
 
+                sortedCurves = VOIs.VOIAt(wholeOrganIndex).getSortedCurves(zDim);
                 for (z = 0; (z < zDim) && (!haveLower); z++) {
 
-                    if (VOIs.VOIAt(wholeOrganIndex).getCurvesTemp()[z].size() > 0) {
+                    if (sortedCurves[z].size() > 0) {
                         haveLower = true;
                         lower = z;
                     }
                 }
 
-                gons = VOIs.VOIAt(wholeOrganIndex).exportPolygons(lower);
+                copyCurves = new Vector<VOIBase>();
+                for (j = 0; j < sortedCurves[lower].size(); j++) {
+                    copyCurves.add(sortedCurves[lower].elementAt(j));
+                }
 
                 for (z = lower - 1; z >= 0; z--) {
 
-                    for (j = 0; j < gons.length; j++) {
-                        VOIs.VOIAt(wholeOrganIndex).importPolygon(gons[j], z);
+                    for (j = 0; j < copyCurves.size(); j++) {
+                        VOIs.VOIAt(wholeOrganIndex).importPolygon(((VOIContour)copyCurves.elementAt(j)).exportPolygon(), z);
                     }
                 }
 
                 upper = zDim - 1;
                 haveUpper = false;
 
+                sortedCurves = VOIs.VOIAt(wholeOrganIndex).getSortedCurves(zDim);
                 for (z = zDim - 1; (z >= lower) && (!haveUpper); z--) {
 
-                    if (VOIs.VOIAt(wholeOrganIndex).getCurvesTemp()[z].size() > 0) {
+                    if (sortedCurves[z].size() > 0) {
                         haveUpper = true;
                         upper = z;
                     }
@@ -754,8 +761,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
                 for (z = upper + 1; z < zDim; z++) {
 
-                    for (j = 0; j < gons.length; j++) {
-                        VOIs.VOIAt(wholeOrganIndex).importPolygon(gons[j], z);
+                    for (j = 0; j < copyCurves.size(); j++) {
+                        VOIs.VOIAt(wholeOrganIndex).importPolygon(((VOIContour)copyCurves.elementAt(j)).exportPolygon(), z);
                     }
                 }
             } // if (wholeOrganIndex >= 0)
@@ -876,29 +883,34 @@ public class AlgorithmFRAP extends AlgorithmBase {
             haveLower = false;
             lower = 0;
 
+            Vector<VOIBase>[] sortedCurves = VOIs.VOIAt(photoBleachedIndex).getSortedCurves(zDim);
             for (z = 0; (z < zDim) && (!haveLower); z++) {
 
-                if (VOIs.VOIAt(photoBleachedIndex).getCurvesTemp()[z].size() > 0) {
+                if (sortedCurves[z].size() > 0) {
                     haveLower = true;
                     lower = z;
                 }
             }
 
-            gons = VOIs.VOIAt(photoBleachedIndex).exportPolygons(lower);
+            Vector<VOIBase> copyCurves = new Vector<VOIBase>();
+            for (j = 0; j < sortedCurves[lower].size(); j++) {
+                copyCurves.add(sortedCurves[lower].elementAt(j));
+            }
+            
 
             for (z = lower - 1; z >= 0; z--) {
 
-                for (j = 0; j < gons.length; j++) {
-                    VOIs.VOIAt(photoBleachedIndex).importPolygon(gons[j], z);
+                for (j = 0; j < copyCurves.size(); j++) {
+                    VOIs.VOIAt(photoBleachedIndex).importPolygon(((VOIContour)copyCurves.elementAt(j)).exportPolygon(), z);
                 }
             }
 
             haveUpper = false;
             upper = zDim - 1;
-
+            sortedCurves = VOIs.VOIAt(photoBleachedIndex).getSortedCurves(zDim);
             for (z = zDim - 1; (z >= lower) && (!haveUpper); z--) {
 
-                if (VOIs.VOIAt(photoBleachedIndex).getCurvesTemp()[z].size() > 0) {
+                if (sortedCurves[z].size() > 0) {
                     haveUpper = true;
                     upper = z;
                 }
@@ -906,8 +918,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
             for (z = upper + 1; z < zDim; z++) {
 
-                for (j = 0; j < gons.length; j++) {
-                    VOIs.VOIAt(photoBleachedIndex).importPolygon(gons[j], z);
+                for (j = 0; j < copyCurves.size(); j++) {
+                    VOIs.VOIAt(photoBleachedIndex).importPolygon(((VOIContour)copyCurves.elementAt(j)).exportPolygon(), z);
                 }
             }
 
@@ -915,29 +927,33 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 haveLower = false;
                 lower = 0;
 
+                sortedCurves = VOIs.VOIAt(wholeOrganIndex).getSortedCurves(zDim);
                 for (z = 0; (z < zDim) && (!haveLower); z++) {
-
-                    if (VOIs.VOIAt(wholeOrganIndex).getCurvesTemp()[z].size() > 0) {
+                    if (sortedCurves[z].size() > 0) {
                         haveLower = true;
                         lower = z;
                     }
                 }
 
-                gons = VOIs.VOIAt(wholeOrganIndex).exportPolygons(lower);
+                copyCurves = new Vector<VOIBase>();
+                for (j = 0; j < sortedCurves[lower].size(); j++) {
+                    copyCurves.add(sortedCurves[lower].elementAt(j));
+                }
+                
 
                 for (z = lower - 1; z >= 0; z--) {
 
-                    for (j = 0; j < gons.length; j++) {
-                        VOIs.VOIAt(wholeOrganIndex).importPolygon(gons[j], z);
+                    for (j = 0; j < copyCurves.size(); j++) {
+                        VOIs.VOIAt(wholeOrganIndex).importPolygon(((VOIContour)copyCurves.elementAt(j)).exportPolygon(), z);
                     }
                 }
 
                 haveUpper = false;
                 upper = zDim - 1;
 
+                sortedCurves = VOIs.VOIAt(wholeOrganIndex).getSortedCurves(zDim);
                 for (z = zDim - 1; (z >= lower) && (!haveUpper); z--) {
-
-                    if (VOIs.VOIAt(wholeOrganIndex).getCurvesTemp()[z].size() > 0) {
+                    if (sortedCurves[z].size() > 0) {
                         haveUpper = true;
                         upper = z;
                     }
@@ -945,8 +961,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
                 for (z = upper + 1; z < zDim; z++) {
 
-                    for (j = 0; j < gons.length; j++) {
-                        VOIs.VOIAt(wholeOrganIndex).importPolygon(gons[j], z);
+                    for (j = 0; j < copyCurves.size(); j++) {
+                        VOIs.VOIAt(wholeOrganIndex).importPolygon(((VOIContour)copyCurves.elementAt(j)).exportPolygon(), z);
                     }
                 }
             } // if (wholeOrganIndex >= 0)
@@ -1080,10 +1096,10 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
             boolean haveBackground = false;
             int backgroundSlice = 0;
-
+            Vector<VOIBase>[] sortedCurves = VOIs.VOIAt(backgroundIndex).getSortedCurves(zDim);
             for (z = 0; (z < zDim) && (!haveBackground); z++) {
 
-                if (VOIs.VOIAt(backgroundIndex).getCurvesTemp()[z].size() > 0) {
+                if (sortedCurves[z].size() > 0) {
                     haveBackground = true;
                     backgroundSlice = z;
                 }
@@ -1846,7 +1862,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
                 errorImage.registerVOI(globalPtVOI);
                 globalPtVOI.setActive(true);
-                ((VOIPoint) (globalPtVOI.getCurvesTemp()[zmin].elementAt(0))).setActive(true);
+                ((VOIPoint) (globalPtVOI.getCurves().elementAt(0))).setActive(true);
 
                 if (localMinNumber > 0) {
                     localPtVOI = new VOI[localMinNumber];
@@ -1874,7 +1890,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
                     errorImage.registerVOI(localPtVOI[i]);
                     localPtVOI[i].setActive(true);
-                    ((VOIPoint) (localPtVOI[i].getCurvesTemp()[zmin].elementAt(0))).setActive(true);
+                    ((VOIPoint) (localPtVOI[i].getCurves().elementAt(0))).setActive(true);
                 } // for (i = 0; i < localMinNumber; i++)
 
                 errorFrame.updateImages();
@@ -2248,7 +2264,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
                 errorImage.registerVOI(globalPtVOI);
                 globalPtVOI.setActive(true);
-                ((VOIPoint) (globalPtVOI.getCurvesTemp()[0].elementAt(0))).setActive(true);
+                ((VOIPoint) (globalPtVOI.getCurves().elementAt(0))).setActive(true);
 
                 if (localMinNumber > 0) {
                     localPtVOI = new VOI[localMinNumber];
@@ -2275,7 +2291,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
                     errorImage.registerVOI(localPtVOI[i]);
                     localPtVOI[i].setActive(true);
-                    ((VOIPoint) (localPtVOI[i].getCurvesTemp()[0].elementAt(0))).setActive(true);
+                    ((VOIPoint) (localPtVOI[i].getCurves().elementAt(0))).setActive(true);
                 } // for (i = 0; i < localMinNumber; i++)
 
                 errorFrame.updateImages();
