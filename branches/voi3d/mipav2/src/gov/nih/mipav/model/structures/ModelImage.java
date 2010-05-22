@@ -2858,6 +2858,98 @@ public class ModelImage extends ModelStorageBase {
         }
         	
         } // else if (fileInfo[0] instanceof FileInfoAnalyze)
+        else if (fileInfo[0] instanceof FileInfoSPM) {
+        	int spmType;
+        	short spmBits;
+        	switch (type) {
+
+            case ModelStorageBase.BOOLEAN:
+                spmType = FileInfoSPM.DT_BINARY;
+                spmBits = (short)1;
+                break;
+
+            case ModelStorageBase.BYTE:
+                spmType = FileInfoSPM.DT_BYTE;
+                spmBits = (short)8;
+                break;
+
+            case ModelStorageBase.UBYTE:
+                spmType = FileInfoSPM.DT_UNSIGNED_CHAR;
+                spmBits = (short)8;
+                break;
+
+            case ModelStorageBase.SHORT:
+                spmType = FileInfoSPM.DT_SIGNED_SHORT;
+                spmBits = (short)16;
+                break;
+
+            case ModelStorageBase.USHORT:
+                spmType = FileInfoSPM.DT_UNSIGNED_SHORT;
+                spmBits = (short)16;
+                break;
+
+            case ModelStorageBase.INTEGER:
+                spmType = FileInfoSPM.DT_SIGNED_INT;
+                spmBits = (short)32;
+                break;
+
+            case ModelStorageBase.UINTEGER:
+                spmType = FileInfoSPM.DT_UNSIGNED_INT;
+                spmBits = (short)32;
+                break;
+
+            case ModelStorageBase.LONG:
+                MipavUtil.displayError("LONG data type illegal in SPM");
+                return;
+
+            case ModelStorageBase.FLOAT:
+                spmType = FileInfoSPM.DT_FLOAT;
+                spmBits = (short)32;
+                break;
+
+            case ModelStorageBase.DOUBLE:
+                spmType = FileInfoSPM.DT_DOUBLE;
+                spmBits = (short)64;
+                break;
+
+            case ModelStorageBase.ARGB:
+                spmType = FileInfoSPM.DT_RGB;
+                spmBits = (short)24;
+                break;
+
+            case ModelStorageBase.COMPLEX:
+                spmType = FileInfoSPM.DT_COMPLEX;
+                spmBits = (short)64;
+                break;
+                
+            case ModelStorageBase.DCOMPLEX:
+            	MipavUtil.displayError("DCOMPLEX illegal SPM data type");
+            	return;
+
+            default:
+            	MipavUtil.displayError("Illegal SPM data type");
+            	return;
+            
+        } 
+        	
+    	if (dimExtents.length == 2) {
+    		((FileInfoSPM)(fileInfo[0])).setDataType(spmType);
+    		((FileInfoSPM)(fileInfo[0])).setBitPix(spmBits);
+        } else if (dimExtents.length == 3) {
+
+            for (int i = 0; i < dimExtents[2]; i++) {
+            	((FileInfoSPM)(fileInfo[i])).setDataType(spmType);
+            	((FileInfoSPM)(fileInfo[i])).setBitPix(spmBits);
+            }
+        } else if (dimExtents.length == 4) {
+
+            for (int i = 0; i < (dimExtents[2] * dimExtents[3]); i++) {
+            	((FileInfoSPM)(fileInfo[i])).setDataType(spmType);
+            	((FileInfoSPM)(fileInfo[i])).setBitPix(spmBits);
+            }
+        }
+        	
+        } // else if (fileInfo[0] instanceof FileInfoSPM)
         else if (fileInfo[0] instanceof FileInfoMinc) {
         	boolean haveValidRange;
         	boolean haveValidMin;

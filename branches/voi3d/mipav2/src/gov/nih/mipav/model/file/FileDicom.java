@@ -1199,6 +1199,11 @@ public class FileDicom extends FileDicomBase {
             }
 
             if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
+                    && (fileInfo.bitsAllocated == 1)) {
+                fileInfo.setDataType(ModelStorageBase.BOOLEAN);
+                fileInfo.displayType = ModelStorageBase.BOOLEAN;
+                fileInfo.bytesPerPixel = 1;
+            } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
                     && (fileInfo.pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP)
                     && (fileInfo.bitsAllocated == 8)) {
                 fileInfo.setDataType(ModelStorageBase.UBYTE);
@@ -1210,6 +1215,12 @@ public class FileDicom extends FileDicomBase {
                 fileInfo.setDataType(ModelStorageBase.BYTE);
                 fileInfo.displayType = ModelStorageBase.BYTE;
                 fileInfo.bytesPerPixel = 1;
+            } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
+                    && (fileInfo.pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP)
+                    && (fileInfo.bitsAllocated > 16)) {
+                fileInfo.setDataType(ModelStorageBase.UINTEGER);
+                fileInfo.displayType = ModelStorageBase.UINTEGER;
+                fileInfo.bytesPerPixel = 4;
             } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
                     && (fileInfo.pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP)
                     && (fileInfo.bitsAllocated > 8)) {
@@ -1745,6 +1756,176 @@ public class FileDicom extends FileDicomBase {
         fileInfo = fiDicom;
         hasHeaderBeenRead = true;
     }
+
+    /**
+     * Reads a DICOM image file and stores the data into the given short buffer. This method reads the image header
+     * (@see readHeader()) then sets various fields within the FileInfo which are relevant to correctly interpreting the
+     * image. This list includes:
+     * 
+     * <ul>
+     * <li>units of measure</li>
+     * <li>pixel pad</li>
+     * <li>file info minimum and maximum</li>
+     * </ul>
+     * 
+     * <p>
+     * This method would be used for short- (byte-) size image datasuch as PET data. This method is faster than the
+     * float buffer version of this method since not as much type-conversion is needed.
+     * </p>
+     * 
+     * @param buffer 2D buffer used for temporary storage of data
+     * @param imageType The type of image (i.e. SHORT, BYTE, ...)
+     * @param imageNo For multiFrame images, imageNo >=1. For single slice image imageNo = 0.
+     * 
+     * @return The image
+     * 
+     * @exception IOException if there is an error reading the file
+     * 
+     * @see FileRaw
+     */
+    public void readImage(final int[] buffer, final int imageType, final int imageNo) throws IOException {
+        // System.out.println("in read image short");
+        // Read in header info, if something goes wrong, print out error
+        if (hasHeaderBeenRead == false) {
+
+            if ( !readHeader(true)) {
+                throw (new IOException("DICOM header file error"));
+            }
+        }
+
+        if (fileInfo.getUnitsOfMeasure(0) != FileInfoBase.CENTIMETERS) {
+            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
+        }
+
+        if (fileInfo.getUnitsOfMeasure(1) != FileInfoBase.CENTIMETERS) {
+            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
+        }
+
+        fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 2);
+
+        // Needed for correct display of the image
+        // set to null if there is no pixel pad value
+        fileInfo.setPixelPadValue(fileInfo.pixelPaddingValue);
+
+        if ( !encapsulated) {
+
+            try { // rafile (type RandomAccessFile) for header, rawfile (type FileRaw) for image data.
+                rawFile.setImageFile(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ); 
+                rawFile.readImage(buffer,
+                        fileInfo.getOffset() + (imageNo * buffer.length * fileInfo.bytesPerPixel), imageType);
+                rawFile.raFile.close();
+                rawFile.raFile = null;
+            } catch (final IOException error) {
+                error.printStackTrace();
+                // System.err.println("ReadDICOM IOexception error");
+                MipavUtil.displayError("FileDicom: " + error);
+                throw (error);
+            }
+        } else { // encapsulated
+
+            if (jpegData == null) {
+                if (encapsulatedJP2) {
+                    System.out.println("calling encapsulatedJP2ImageData");
+                    jpegData = encapsulatedJP2ImageData(imageType);
+
+                } else {
+                    System.out.println("Calling encapsulatedImageData");
+                    jpegData = encapsulatedImageData();
+                }
+            }
+
+            if (jpegData != null) {
+
+                try {
+                    int j = imageNo * buffer.length;
+
+                    for (int i = 0; i < buffer.length; i++) {
+                        buffer[i] = (short) jpegData[j];
+                        j++;
+                    }
+                } catch (final ArrayIndexOutOfBoundsException aioobe) {
+                    MipavUtil.displayError("Image is smaller than expected.  Showing as much as available.");
+                }
+
+                // this means there was only one image - not multiframe.
+                // if image WAS multiframe, we don't want to keep reading in the jpegData buffer
+                // it will be non null the second time through, and won't be read in again.
+                if (jpegData.length == buffer.length) {
+                    jpegData = null;
+                }
+            }
+        }
+
+        // Matt changed from double to float for speed purposes 2/2003 not great increase but 5-10%.
+        int tmp;
+        short pixelPad = Short.MIN_VALUE;
+        int min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
+
+        // fix pixel padding and remap to HU units
+        if (fileInfo.getPixelPadValue() != null) {   
+            pixelPad = fileInfo.getPixelPadValue().shortValue();
+        }
+        // System.out.println("pixel _pad = "+ pixelPad);
+
+        float slope = (float) fileInfo.getRescaleSlope();
+        final float intercept = (float) fileInfo.getRescaleIntercept();
+        if (slope == 0) {
+            slope = 1;
+        }
+
+        // System.out.println(" slope = " + slope + " intercept = " + intercept);
+        // Why is this here? It overwrites the slope and intercept.
+        // if (fileInfo.getModality() == FileInfoBase.MAGNETIC_RESONANCE) {
+        // slope = 1;
+        // intercept = 0;
+        // }
+
+        boolean setOneMinMax = false;
+        for (final int element : buffer) {
+            tmp = element;
+
+            if (tmp != pixelPad) {
+                setOneMinMax = true;
+                if (tmp < min) {
+                    min = tmp;
+                }
+                if (tmp > max) {
+                    max = tmp;
+                }
+            }
+        }
+        if (setOneMinMax == false) {
+            min = max = buffer[0];
+        }
+
+        fileInfo.setMin(min);
+        fileInfo.setMax(max);
+
+        // System.out.println("min = " + min + " max = " + max);
+        if ( (pixelPad <= min) || (pixelPad >= max)) {
+
+            for (int i = 0; i < buffer.length; i++) {
+
+                // tmp = buffer[i];
+                // need to fix - we're altering image data so that when the file is
+                // written, it is not exactly the same as when it was read in, i.e.,
+                // there are no pixel pad values stored in the buffer; they've all been
+                // converted to the minimum value.
+                if (buffer[i] != pixelPad) {
+                    buffer[i] = (int) MipavMath.round( (buffer[i] * slope) + intercept);
+                } else {
+                    buffer[i] = (int) MipavMath.round( (min * slope) + intercept);
+                }
+            }
+        } else {
+            if ( (slope != 1) || (intercept != 0)) {
+                for (int i = 0; i < buffer.length; i++) {
+                    buffer[i] = (int) MipavMath.round( (buffer[i] * slope) + intercept); // Rescale data
+                }
+            }
+        }
+    }
+
 
     /**
      * Accessor that sets the file name and allocates new FileInfo, File and RandomAccess file objects based on the new

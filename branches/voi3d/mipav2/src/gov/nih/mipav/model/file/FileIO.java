@@ -379,8 +379,9 @@ public class FileIO {
         FileInfoDicom refFileInfo;
         FileInfoDicom[] savedFileInfos;
 
-        float[] bufferFloat;
-        short[] bufferShort;
+        float[] bufferFloat = null;
+        short[] bufferShort = null;
+        int[] bufferInt = null;
         int[] extents;
         int length = 0;
         int nImages = 0;
@@ -480,9 +481,15 @@ public class FileIO {
 
             // TODO: should both of these always be allocated?
             bufferFloat = new float[length];
+            if (refFileInfo.getDataType() == ModelStorageBase.UINTEGER) {
+            	bufferInt = new int[length];
+            }
+            else {
             bufferShort = new short[length];
+            }
         } catch (final OutOfMemoryError error) {
             bufferFloat = null;
+            bufferInt = null;
             bufferShort = null;
             System.gc();
 
@@ -1160,6 +1167,8 @@ public class FileIO {
                         progressBar.dispose();
                     }
                     return null;
+                } else if (curFileInfo.getDataType() == ModelStorageBase.UINTEGER) {
+                	imageFile.readImage(bufferInt, curFileInfo.getDataType(), start);	
                 } else {
                     imageFile.readImage(bufferShort, curFileInfo.getDataType(), start);
                 }
@@ -1224,6 +1233,8 @@ public class FileIO {
 
                 if (image.getType() == ModelStorageBase.FLOAT) {
                     image.importData(location * length, bufferFloat, false);
+                } else if (image.getType() == ModelStorageBase.UINTEGER) {
+                	image.importData(location * length, bufferInt, false);
                 } else {
                     image.importData(location * length, bufferShort, false);
                 }
@@ -3919,7 +3930,28 @@ public class FileIO {
                 byteData[k + 3] = byteVal[3];
             }
         } else if (type == ModelStorageBase.DOUBLE) {
-            // TO DO
+            final double[] doubleData = new double[length];
+            try {
+                image.exportData(start, length, doubleData);
+            } catch (final IOException error) {
+                System.out.println("IO exception");
+                // setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+                return null;
+            }
+            byteData = new byte[length * 8];
+            final byte[] buff = new byte[8];
+            for (int i = 0, k = 0; i < doubleData.length; i++, k = k + 8) {
+                final double val = doubleData[i];
+                final byte[] byteVal = FileBase.doubleToBytes(val, bigEndianness, buff);
+                byteData[k] = byteVal[0];
+                byteData[k + 1] = byteVal[1];
+                byteData[k + 2] = byteVal[2];
+                byteData[k + 3] = byteVal[3];
+                byteData[k + 4] = byteVal[4];
+                byteData[k + 5] = byteVal[5];
+                byteData[k + 6] = byteVal[6];
+                byteData[k + 7] = byteVal[7];
+            }  
         } else if (type == ModelStorageBase.ARGB) {
             byteData = new byte[length];
             try {

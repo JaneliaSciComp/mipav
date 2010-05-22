@@ -42,8 +42,8 @@ import java.io.*;
  * distance(x,y,z) from the origin multiplied by the vox_units(x,y,z).</p>
  *
  * <p>In SPM the signed byte datatype was added with DT_BYTE = 130. MIPAV ANALYZE uses UNSIGNED_SHORT = 6 while
- * SPM uses DT_UNSIGNED_SHORT = 132. The SPM standard also provides for an unsigned int = 136, but MIPAV does not
- * used the unsigned int data type. Note that in SPM while DATA = datatype * 256 for swapped bytes, only datatype
+ * SPM uses DT_UNSIGNED_SHORT = 132. The SPM standard also provides for an unsigned int = 136.
+ * Note that in SPM while DATA = datatype * 256 for swapped bytes, only datatype
  * and not DATA is written to the file, so in this program we need never consider the multiplicative factors of
  * 256.</p>
  * 

@@ -2571,6 +2571,17 @@ public class FileNIFTI extends FileBase {
                         		}
                         		start = start + floatBuff.length;                             
                         		                              
+                        	}else if(type == ModelStorageBase.DOUBLE) {
+                        		double[] doubleBuff = new double[buffer.length/8];
+                        		for(int m=0,k=0;m<buffer.length;m=m+8,k++) {
+                        			byte[] b = {buffer[m],buffer[m+1],buffer[m+2],buffer[m+3],buffer[m+4],buffer[m+5],buffer[m+6],buffer[m+7]};
+                        			doubleBuff[k] = FileBase.bytesToDouble(endianness, 0, b);
+                        		}
+                        		if(start < image.getDataSize()) {
+                        			image.importData(start, doubleBuff, false);
+                        		}
+                        		start = start + doubleBuff.length;                             
+                        		                              
                         	}else if(type == ModelStorageBase.ARGB) {
                         		if(start < image.getDataSize()) {
                         			image.importData(start, buffer, false);
@@ -2670,6 +2681,17 @@ public class FileNIFTI extends FileBase {
                         		}
                         		start = start + floatBuff.length;                             
                         		                              
+                        	}else if(type == ModelStorageBase.DOUBLE) {
+                        		double[] doubleBuff = new double[buffer.length/8];
+                        		for(int m=0,k=0;m<buffer.length;m=m+8,k++) {
+                        			byte[] b = {buffer[m],buffer[m+1],buffer[m+2],buffer[m+3],buffer[m+4],buffer[m+5],buffer[m+6],buffer[m+7]};
+                        			doubleBuff[k] = FileBase.bytesToDouble(endianness, 0, b);
+                        		}
+                        		if(start < image.getDataSize()) {
+                        			image.importData(start, doubleBuff, false);
+                        		}
+                        		start = start + doubleBuff.length;                             
+                        		                              
                         	}else if(type == ModelStorageBase.ARGB) {
                         		if(start < image.getDataSize()) {
                         			image.importData(start, buffer, false);
@@ -2763,6 +2785,17 @@ public class FileNIFTI extends FileBase {
                         			image.importData(start, floatBuff, false);
                         		}
                         		start = start + floatBuff.length;                             
+                        		                              
+                        	}else if(type == ModelStorageBase.DOUBLE) {
+                        		double[] doubleBuff = new double[buffer.length/8];
+                        		for(int m=0,k=0;m<buffer.length;m=m+8,k++) {
+                        			byte[] b = {buffer[m],buffer[m+1],buffer[m+2],buffer[m+3],buffer[m+4],buffer[m+5],buffer[m+6],buffer[m+7]};
+                        			doubleBuff[k] = FileBase.bytesToDouble(endianness, 0, b);
+                        		}
+                        		if(start < image.getDataSize()) {
+                        			image.importData(start, doubleBuff, false);
+                        		}
+                        		start = start + doubleBuff.length;                             
                         		                              
                         	}else if(type == ModelStorageBase.ARGB) {
                         		if(start < image.getDataSize()) {

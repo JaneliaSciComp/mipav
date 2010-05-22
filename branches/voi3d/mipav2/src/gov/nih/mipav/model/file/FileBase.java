@@ -201,6 +201,31 @@ public abstract class FileBase {
         return FileBase.intToBytes(tmpInt, bigEndian, buffer);
     }
 
+    
+    
+    /**
+     * converts from double to bytes
+     * 
+     * @param data
+     * @param bigEndian
+     * 
+     * @return byte array
+     */
+    public final static byte[] doubleToBytes(final double data, final boolean bigEndian, final byte[] buffer) {
+        long tmpLong;
+
+        tmpLong = Double.doubleToLongBits(data);
+
+
+        return FileBase.longToBytes(tmpLong, bigEndian, buffer);
+    }
+    
+    
+    
+    
+    
+    
+
     /**
      * converts from int to bytes
      * 
