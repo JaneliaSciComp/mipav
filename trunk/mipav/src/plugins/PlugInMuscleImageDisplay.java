@@ -379,7 +379,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    }
 	}
 
-	@Override
     public void actionPerformed(ActionEvent e) {
     	System.out.println("An action: "+e);
     	String command = e.getActionCommand();
@@ -1058,8 +1057,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	} // end saveAllVOIsTo()
 
 	/**Loads relevant VOIs for the particular slice. */
-	
-	@Override
 	public void setSlice(int slice) {
 		
 		componentImage.setSlice(slice);
