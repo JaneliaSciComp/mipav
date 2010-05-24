@@ -1397,9 +1397,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			spTable.addCell("mA:");
 			String mA = (String)fileInfo.getTagTable().getValue("0018,1151");
 			spTable.addCell((mA != null ? mA.trim() : "Unknown"));
-			spTable.addCell("Pixel Size: (mm)");
+			spTable.addCell("Pixel Size: ("+FileInfoBase.getUnitsOfMeasureAbbrevStr(getActiveImage().getUnitsOfMeasure(0))+")");
 			spTable.addCell(Double.toString(getActiveImage().getResolutions(0)[0]));
-			spTable.addCell("Slice Thickness: (mm)");
+			spTable.addCell("Slice Thickness: ("+FileInfoBase.getUnitsOfMeasureAbbrevStr(getActiveImage().getUnitsOfMeasure(2))+")");
 			spTable.addCell(Float.toString(getActiveImage().getResolutions(0)[2]));
 			spTable.addCell("Table Height: (cm)");
 			String height = (String)fileInfo.getTagTable().getValue("0018,1130");
