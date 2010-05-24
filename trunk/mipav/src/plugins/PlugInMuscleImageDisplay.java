@@ -5141,29 +5141,49 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    	                    	//Guaranteed to not be color image
 	    	                    	DecimalFormat dec = new DecimalFormat("0.00");
 	    	                    	VOI v = (VOI) list.getElementAt(i);
+	    	                    	boolean doAdd = false;
+	    	                    	double addAmount = 0.0;
 	    	                    	if(v instanceof PlugInSelectableVOI && ((PlugInSelectableVOI)v).getCalcEligible()) {
 	    	                    		if(allNames[k].equals(TOTAL_AREA)) {
 	                        				rowData[count] = dec.format(((PlugInSelectableVOI)v).getTotalArea(slice));
-	                        				logTotalData[count] = dec.format(((PlugInSelectableVOI)v).getTotalArea(slice));
+	                        				logRowData[count] = dec.format(((PlugInSelectableVOI)v).getTotalArea(slice));
+	                        				addAmount = ((PlugInSelectableVOI)v).getTotalArea(slice);
+	                        				doAdd = true;
 	    	                    		} else if(allNames[k].equals(FAT_AREA)) {
 	                        				rowData[count] = dec.format(((PlugInSelectableVOI)v).getFatArea(slice));
-	                        				logTotalData[count] = dec.format(((PlugInSelectableVOI)v).getFatArea(slice));
+	                        				logRowData[count] = dec.format(((PlugInSelectableVOI)v).getFatArea(slice));
+	                        				addAmount = ((PlugInSelectableVOI)v).getFatArea(slice);
+	                        				doAdd = true;
 	    	                    		} else if(allNames[k].equals(LEAN_AREA)) {
 	                        				rowData[count] = dec.format(((PlugInSelectableVOI)v).getLeanArea(slice));
-	                        				logTotalData[count] = dec.format(((PlugInSelectableVOI)v).getLeanArea(slice));
+	                        				logRowData[count] = dec.format(((PlugInSelectableVOI)v).getLeanArea(slice));
+	                        				addAmount = ((PlugInSelectableVOI)v).getLeanArea(slice);
+	                        				doAdd = true;
 	    	                    		} else if(allNames[k].equals(MEAN_TOTAL_HU)) {
 	                        				rowData[count] = dec.format(((PlugInSelectableVOI)v).getMeanTotalH(slice));
-	                        				logTotalData[count] = dec.format(((PlugInSelectableVOI)v).getMeanTotalH(slice));
+	                        				logRowData[count] = dec.format(((PlugInSelectableVOI)v).getMeanTotalH(slice));
+	                        				addAmount = ((PlugInSelectableVOI)v).getMeanTotalH(slice);
+	                        				doAdd = true;
 	    	                    		} else if(allNames[k].equals(MEAN_FAT_HU)) {
 	                        				rowData[count] = dec.format(((PlugInSelectableVOI)v).getMeanFatH(slice));
-	                        				logTotalData[count] = dec.format(((PlugInSelectableVOI)v).getMeanFatH(slice));
+	                        				logRowData[count] = dec.format(((PlugInSelectableVOI)v).getMeanFatH(slice));
+	                        				addAmount = ((PlugInSelectableVOI)v).getMeanFatH(slice);
+	                        				doAdd = true;
 	    	                    		} else if(allNames[k].equals(MEAN_LEAN_HU)) {
 	                        				rowData[count] = dec.format(((PlugInSelectableVOI)v).getMeanLeanH(slice));
-	                        				logTotalData[count] = dec.format(((PlugInSelectableVOI)v).getMeanLeanH(slice));
+	                        				logRowData[count] = dec.format(((PlugInSelectableVOI)v).getMeanLeanH(slice));
+	                        				addAmount = ((PlugInSelectableVOI)v).getMeanLeanH(slice);
+	                        				doAdd = true;
 	    	                    		}
+	    	                    		if(doAdd) {
+	    	                    			if(logTotalData[count] != null) {
+	    	                    				logTotalData[count] = dec.format(Double.valueOf(logTotalData[count])+addAmount);
+	    	                    			} else {
+	    	                    				logTotalData[count] = dec.format(addAmount);
+	    	                    			}
+	    	                    		} 
 	    	                    	}
 	    	                    }
-	    	                	
 	    	                }
 
 	                        count = 0;
@@ -5185,7 +5205,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	                    String logText = "";
 
 	                    for (int j = 0; j < logTotalData.length; j++) {
-	                        logText += logTotalData[j] + "\t";
+	                        //logTotalData[j] are simply summed area elements, these are not anatomically interesting
+	                    	logText += logTotalData[j] + "\t";
 	                    }
 
 	                    writeLogfileEntry(logText);
