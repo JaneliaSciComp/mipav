@@ -3874,13 +3874,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 return;
 
-            case KeyEvent.VK_UP:
-            case KeyEvent.VK_DOWN:
-            case KeyEvent.VK_LEFT:
-            case KeyEvent.VK_RIGHT:
-                //getComponentImage().getVOIHandler().handleArrowKeysVOI(e);
-
-                return;
+            case KeyEvent.VK_UP:     voiManager.doVOI("MoveUP"); return;
+            case KeyEvent.VK_DOWN:   voiManager.doVOI("MoveDown"); return;
+            case KeyEvent.VK_LEFT:   voiManager.doVOI("MoveLeft"); return;
+            case KeyEvent.VK_RIGHT:  voiManager.doVOI("MoveRight"); return;
         }
 
         if ( !e.isControlDown()) {
@@ -3954,55 +3951,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             case KeyEvent.VK_DELETE:
                 if (e.isShiftDown()) {
-                    //componentImage.getVOIHandler().deleteVOIActivePt();
-                } else {
-                    //componentImage.getVOIHandler().deleteSelectedVOI(true);
-
-                }
-
-                return;
-
-            case KeyEvent.VK_C:
-                if (e.isControlDown()) {
-                    //componentImage.getVOIHandler().copyVOItoClipBrd();
-                }
-
-                return;
-
-            case KeyEvent.VK_V:
-                if (e.isControlDown()) {
-                    //componentImage.getVOIHandler().pasteVOI();
-                }
-
-                return;
-
-            case KeyEvent.VK_X:
-                if (e.isControlDown()) {
-
-                    //if (componentImage.getVOIHandler().copyVOItoClipBrd()) {
-                    //    componentImage.getVOIHandler().deleteSelectedVOI(true);
-                    //}
-                }
-
-                return;
-
-            case KeyEvent.VK_A:
-                //if (e.isControlDown()) {
-                //    componentImage.getVOIHandler().selectAllVOIs(true);
-                //}
-
-                return;
-
-            case KeyEvent.VK_Z:
-                //if (e.isControlDown()) {
-                //    componentImage.getVOIHandler().undoLastVOI();
-                //}
-
-                return;
-
-            case KeyEvent.VK_Q:
-                if (componentImage.getCursorMode() == ViewJComponentBase.QUICK_LUT) {
-                    componentImage.setCursorMode(ViewJComponentBase.DEFAULT);
+                    voiManager.doVOI("deleteVOIActivePt");
+                } 
+                else 
+                {
+                    voiManager.doVOI(CustomUIBuilder.PARAM_VOI_POINT_DELETE.getActionCommand());
                 }
 
                 return;
@@ -4050,9 +4003,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * 
      * @param e DOCUMENT ME!
      */
-    public void keyTyped(final KeyEvent e) {
-        //System.err.println("ViewJFrame keyTyped" );
-    }
+    public void keyTyped(final KeyEvent e) {}
 
     /**
      * DOCUMENT ME!
