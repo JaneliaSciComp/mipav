@@ -356,7 +356,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    progressBar.dispose();
 	    setVisible(true);
 	    
-	    //end automatic segmentation, prepare buffer for automatic calculations
+	    forceVoiRecalc();
+	}
+	
+	public void forceVoiRecalc() {
+		//end automatic segmentation, prepare buffer for automatic calculations
 	    Iterator<String> itr = voiBuffer.keySet().iterator();
 	    
 	    while(itr.hasNext()) {
@@ -3094,11 +3098,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		/** Buttons for all non-symmetric objects. */
 		private JButton[][] noMirrorButtonCalcItemsArr;
 		
-		/** Check box for whether volumes should be shown */
-		private JCheckBox doVolumeBox;
+		/** Check box for whether slices sould be shown when outputting a VOI to  MIPAV's output panel */
+		private JCheckBox showPerSliceCalc;
 		
 		/** Combo box for selecting output units */
 	    private JComboBox outputUnits;
+	    
+	    /** Stores the last output units */
+	    private String currentOutputUnits;
 		
 		/**Seed for random color chooser for VOIs that have not had a color assigned to them. */
 		private int colorChoice = 0;
@@ -3221,6 +3228,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	        }
 		}
 
+		public boolean calcOutputSuccess() {
+			return ucsdOutput.isSuccess();
+		}
+
 		/**
 		 * Enables buttons that rely on calculating being completed.
 		 */
@@ -3236,10 +3247,21 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		    }
 		}
 		
-		public boolean calcOutputSuccess() {
-			return ucsdOutput.isSuccess();
+		/**
+		 * Returns the units that this plugin will output in.
+		 * 
+		 */
+		public String getSelectedOutput() {
+			return outputUnits.getSelectedItem().toString();
 		}
-
+		
+		/**
+		 * Returns whether the output button should show all slice calculations of the selected VOI.
+		 */
+		public boolean showPerSliceCalc() {
+			return showPerSliceCalc.isSelected();
+		}
+		
 		/**
 		 * Presses all enabled buttons.  Boolean selectMode has following actions:
 		 * when true - any available unselected buttons are pressed
@@ -3448,11 +3470,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			    gbc.gridy = 1;
 			    gbc.weightx = 1;
 		    	gbc.fill = GridBagConstraints.CENTER;
-			    doVolumeBox = new JCheckBox("Show per-slice volume calculations");
-			    doVolumeBox.setFont(MipavUtil.font12);
-			    doVolumeBox.setBorder(new EmptyBorder(10, 0, 0, 0));
+			    showPerSliceCalc = new JCheckBox("Show per-slice volume calculations");
+			    showPerSliceCalc.setFont(MipavUtil.font12);
+			    showPerSliceCalc.setBorder(new EmptyBorder(10, 0, 0, 0));
 		    	JPanel blankPanel = new JPanel();
-		    	blankPanel.add(doVolumeBox);
+		    	blankPanel.add(showPerSliceCalc);
 			    instructionPanel.add(blankPanel, gbc);
 		    }
 		    
@@ -3463,7 +3485,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	        optionPanel.add(unitLabel);
 		    
 		    int measure = imageA.getUnitsOfMeasure()[0];
-		    String measureText = FileInfoBase.getUnitsOfMeasureStr(measure);
+		    String measureText = "Centimeters"; //default output is in cm by user request
 	        int[] allSameMeasure = FileInfoBase.getAllSameDimUnits(measure);
 	        String[] unitArr = new String[allSameMeasure.length];
 	        for(int i=0; i<allSameMeasure.length; i++) {
@@ -3473,6 +3495,23 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	        outputUnits = new JComboBox(unitArr);
 	        outputUnits.setFont(MipavUtil.font12);
 	        outputUnits.setSelectedItem(measureText);
+	        currentOutputUnits = measureText;
+	        outputUnits.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					if(!currentOutputUnits.equals(outputUnits.getSelectedItem())) {
+						int option = JOptionPane.showConfirmDialog(getParent(), 
+								"Changing the output units requires recalculation, would you like to continue?", 
+								"Output units", JOptionPane.YES_NO_OPTION);
+						if(option == JOptionPane.YES_OPTION) {
+							forceVoiRecalc();
+							currentOutputUnits = outputUnits.getSelectedItem().toString();
+						} else {
+							outputUnits.setSelectedItem(currentOutputUnits);
+						}
+					}
+					System.out.println(e.paramString());
+				}
+	        });
 	        optionPanel.add(outputUnits);
 		    
 	        gbc.gridy = gbc.gridy+1;
@@ -4311,12 +4350,21 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			VOI v = calculateVOI;
 			double wholeMultiplier = 0.0, sliceMultiplier = 0.0;
 			
-			//multiply x and y resolutions, notice the .1 refers to conversion factor for standard resolution
+			//allows for calculation unit conversion from the source images base units, NIA requests that cm are normally used, but most scanners return mm resolutions
+			int resultUnitLoc = FileInfoBase.getUnitsOfMeasureFromStr(((AnalysisDialogPrompt)tabs[resultTabLoc]).getSelectedOutput());
+	        int res0Unit = getActiveImage().getUnitsOfMeasure(0);
+	        int res1Unit = getActiveImage().getUnitsOfMeasure(1);
+	        int res2Unit = getActiveImage().getUnitsOfMeasure(2);
+	        
+	        float xRes = (float) (getActiveImage().getResolutions(0)[0] * ModelImage.getConversionFactor(resultUnitLoc, res0Unit));
+	        float yRes = (float) (getActiveImage().getResolutions(0)[1] * ModelImage.getConversionFactor(resultUnitLoc, res1Unit));
+	        float zRes = (float) (getActiveImage().getResolutions(0)[2] * ModelImage.getConversionFactor(resultUnitLoc, res2Unit));
+			
 			//TODO: convert the .1 for other choices of units
-			wholeMultiplier = sliceMultiplier = getActiveImage().getResolutions(0)[0]*0.1*getActiveImage().getResolutions(0)[1]*0.1;
+			wholeMultiplier = sliceMultiplier = xRes*yRes;
 			//for 3D images, also need to include z-resolution
 			if(multipleSlices)
-				wholeMultiplier *= (getActiveImage().getResolutions(0)[2]*0.1);
+				wholeMultiplier *= zRes;
 			System.out.println("Whole Multiplier: "+wholeMultiplier+"\tSliceMultiplier: "+sliceMultiplier);
 			PlugInSelectableVOI temp = voiBuffer.get(name);
 			children = temp.getChildren();
