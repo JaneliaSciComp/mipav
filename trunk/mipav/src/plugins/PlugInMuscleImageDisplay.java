@@ -1862,7 +1862,18 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		
 		//if this is standalone (app frame hidden), add the tabbedpane from the messageframe to the bottom of the plugin's frame
 		if (ViewUserInterface.getReference().isAppFrameVisible()) {
-			getContentPane().add(mainPanel, BorderLayout.CENTER);
+			setLayout(new GridBagLayout());
+			GridBagConstraints gbc = new GridBagConstraints();
+			gbc.gridx = 0;
+			gbc.gridy = 0;
+			gbc.weightx = 1;
+			gbc.weighty = 1;
+			System.err.println("Here");
+			Frame f = new Frame();
+			f.add(mainPanel);
+			f.setVisible(true);
+			f.setSize(new Dimension(1000, 600));
+			pack();
 		} else {
 			JTabbedPane messageTabs = ViewUserInterface.getReference().getMessageFrame().getTabbedPane();
 			messageTabs.setPreferredSize(new Dimension(this.getWidth(), 100));
