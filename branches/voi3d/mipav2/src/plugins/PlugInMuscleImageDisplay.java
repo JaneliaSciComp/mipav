@@ -4470,7 +4470,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				//progressBar.setMessage("Calculating "+name.toLowerCase()+" slice "+k+"...");
 				VOI v2 = new VOI( (short)0, "temp", 1 );
 				Vector<VOIBase> sliceCurves = temp.getSliceCurves(k);
-                System.err.println( k + " " + sliceCurves.size() );
 				for ( int s = 0; s < sliceCurves.size(); s++ )
 				{
 				    v2.importCurve( sliceCurves.elementAt(s) );
