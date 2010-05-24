@@ -4377,8 +4377,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				for(int n=0; n<temp.getZDim(); n++) {
 					if(n != k)
 						v2.removeCurves(n);
-					performCalculations(v2, k, sliceMultiplier);
 				}
+				performCalculations(v2, k, sliceMultiplier);
 			}
 			time = System.currentTimeMillis() - time;
 			calculateVOI.setCalculationTime(time);
@@ -4470,6 +4470,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			temp.setLeanArea(leanArea, sliceNumber);
 			temp.setPartialArea(partialArea, sliceNumber);
 			temp.setTotalArea(totalAreaCount, sliceNumber);
+			
 			
 			double meanFatH = getMeanH(v2, FAT_LOWER_BOUND, FAT_UPPER_BOUND);// + OFFSET;
 			double meanLeanH = getMeanH(v2, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND);// + OFFSET;
