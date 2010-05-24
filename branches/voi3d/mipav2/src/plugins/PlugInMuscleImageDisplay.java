@@ -142,6 +142,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
     /** Whether the algorithm is being run in standAlone mode.*/
     private boolean standAlone;
     
+    /**All MuscleCalculations currently in progress */
+    private ArrayList<MuscleCalculation> muscleCalcList;
+    
     public enum ImageType{
         
         /** denotes that the srcImg is an abdomen */
@@ -332,8 +335,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	}
 
 	private void commonInitializer(PlugInSelectableVOI[][] voiList) {
+		//store musclecalculations for tracking
+		muscleCalcList = new ArrayList<MuscleCalculation>();
+		
 		//Automatic segmentation here
-	    
 	    progressBar.setMessage("Creating algorithms...");
 	    progressBar.setSeparateThread(true);
 	    long time = System.currentTimeMillis();
@@ -356,7 +361,31 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    progressBar.dispose();
 	    setVisible(true);
 	    
-	    //end automatic segmentation, prepare buffer for automatic calculations
+	    forceVoiRecalc();
+	}
+	
+	public void forceVoiRecalc() {
+		
+		long time = System.currentTimeMillis();
+		ViewJProgressBar interruptStatus = new ViewJProgressBar("Interrupting", "Restarting calculations...", 0, 100, false);
+		
+		if(!muscleCalcList.isEmpty()) {
+			interruptStatus.setVisible(true);
+		}
+		
+		int index = 0;
+		while(!muscleCalcList.isEmpty()) {
+			index = muscleCalcList.size()-1;
+			if(index > -1) {
+				muscleCalcList.get(index).interrupt();
+			} 
+		}
+		
+		interruptStatus.setVisible(false);
+		
+		System.err.println("Finished interrupting in "+(System.currentTimeMillis() - time));
+		
+		//end automatic segmentation, prepare buffer for automatic calculations
 	    Iterator<String> itr = voiBuffer.keySet().iterator();
 	    
 	    while(itr.hasNext()) {
@@ -367,7 +396,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    	}
 	    }
 	    
-	    //always perform new calculation here, no need to check
+	    //always perform new calculation here, no need to check, kill any previous calculations
 	    itr = voiBuffer.keySet().iterator();
 	    while(itr.hasNext()) {
 	    	PlugInSelectableVOI voi = voiBuffer.get(itr.next());
@@ -379,7 +408,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    }
 	}
 
-	@Override
     public void actionPerformed(ActionEvent e) {
     	System.out.println("An action: "+e);
     	String command = e.getActionCommand();
@@ -1045,8 +1073,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	} // end saveAllVOIsTo()
 
 	/**Loads relevant VOIs for the particular slice. */
-	
-	@Override
 	public void setSlice(int slice) {
 		
 		componentImage.setSlice(slice);
@@ -1358,9 +1384,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			spTable.addCell("mA:");
 			String mA = (String)fileInfo.getTagTable().getValue("0018,1151");
 			spTable.addCell((mA != null ? mA.trim() : "Unknown"));
-			spTable.addCell("Pixel Size: (mm)");
+			spTable.addCell("Pixel Size: ("+FileInfoBase.getUnitsOfMeasureAbbrevStr(getActiveImage().getUnitsOfMeasure(0))+")");
 			spTable.addCell(Double.toString(getActiveImage().getResolutions(0)[0]));
-			spTable.addCell("Slice Thickness: (mm)");
+			spTable.addCell("Slice Thickness: ("+FileInfoBase.getUnitsOfMeasureAbbrevStr(getActiveImage().getUnitsOfMeasure(2))+")");
 			spTable.addCell(Float.toString(getActiveImage().getResolutions(0)[2]));
 			spTable.addCell("Table Height: (cm)");
 			String height = (String)fileInfo.getTagTable().getValue("0018,1130");
@@ -1377,11 +1403,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			wholeTable = new PdfPTable(new float[] {1.8f, 1f, 1f, 1f, 1f, 1f, 1f});
 			// add Column Titles (in bold)
 			String type = new String();
+			String unit = FileInfoBase.getUnitsOfMeasureAbbrevStr(
+										FileInfoBase.getUnitsOfMeasureFromStr(
+												((AnalysisDialogPrompt)tabs[resultTabLoc]).getSelectedOutput()));
 			if(multipleSlices) {
-				wholeTable.addCell(new PdfPCell(new Paragraph("Volume (cm^3)", fontBold)));
+				wholeTable.addCell(new PdfPCell(new Paragraph("Volume ("+unit+"^3)", fontBold)));
 				type = "Vol";	
 			} else {
-				wholeTable.addCell(new PdfPCell(new Paragraph("Area (cm^2)", fontBold)));
+				wholeTable.addCell(new PdfPCell(new Paragraph("Area ("+unit+"^2)", fontBold)));
 				type = "Area";
 			}
 			wholeTable.addCell(new PdfPCell(new Paragraph("Total "+type, fontBold)));
@@ -1395,7 +1424,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				sliceTable = new PdfPTable[getActiveImage().getExtents()[2]];
 				for(int i=0; i<getActiveImage().getExtents()[2]; i++) {
 					sliceTable[i] = new PdfPTable(new float[] {1.8f, 1f, 1f, 1f, 1f, 1f, 1f});
-					sliceTable[i].addCell(new PdfPCell(new Paragraph("Area (cm^2)", fontBold)));
+					sliceTable[i].addCell(new PdfPCell(new Paragraph("Area ("+unit+"^2)", fontBold)));
 					type = "Area";
 					sliceTable[i].addCell(new PdfPCell(new Paragraph("Total "+type, fontBold)));
 					sliceTable[i].addCell(new PdfPCell(new Paragraph("Fat "+type, fontBold)));
@@ -3085,11 +3114,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		/** Buttons for all non-symmetric objects. */
 		private JButton[][] noMirrorButtonCalcItemsArr;
 		
-		/** Check box for whether volumes should be shown */
-		private JCheckBox doVolumeBox;
+		/** Check box for whether slices sould be shown when outputting a VOI to  MIPAV's output panel */
+		private JCheckBox showPerSliceCalc;
 		
 		/** Combo box for selecting output units */
 	    private JComboBox outputUnits;
+	    
+	    /** Stores the last output units */
+	    private String currentOutputUnits;
 		
 		/**Seed for random color chooser for VOIs that have not had a color assigned to them. */
 		private int colorChoice = 0;
@@ -3212,6 +3244,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	        }
 		}
 
+		public boolean calcOutputSuccess() {
+			return ucsdOutput.isSuccess();
+		}
+
 		/**
 		 * Enables buttons that rely on calculating being completed.
 		 */
@@ -3227,10 +3263,21 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		    }
 		}
 		
-		public boolean calcOutputSuccess() {
-			return ucsdOutput.isSuccess();
+		/**
+		 * Returns the units that this plugin will output in.
+		 * 
+		 */
+		public String getSelectedOutput() {
+			return outputUnits.getSelectedItem().toString();
 		}
-
+		
+		/**
+		 * Returns whether the output button should show all slice calculations of the selected VOI.
+		 */
+		public boolean showPerSliceCalc() {
+			return showPerSliceCalc.isSelected();
+		}
+		
 		/**
 		 * Presses all enabled buttons.  Boolean selectMode has following actions:
 		 * when true - any available unselected buttons are pressed
@@ -3439,11 +3486,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			    gbc.gridy = 1;
 			    gbc.weightx = 1;
 		    	gbc.fill = GridBagConstraints.CENTER;
-			    doVolumeBox = new JCheckBox("Show per-slice volume calculations");
-			    doVolumeBox.setFont(MipavUtil.font12);
-			    doVolumeBox.setBorder(new EmptyBorder(10, 0, 0, 0));
+			    showPerSliceCalc = new JCheckBox("Show per-slice volume calculations");
+			    showPerSliceCalc.setFont(MipavUtil.font12);
+			    showPerSliceCalc.setBorder(new EmptyBorder(10, 0, 0, 0));
 		    	JPanel blankPanel = new JPanel();
-		    	blankPanel.add(doVolumeBox);
+		    	blankPanel.add(showPerSliceCalc);
 			    instructionPanel.add(blankPanel, gbc);
 		    }
 		    
@@ -3454,7 +3501,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	        optionPanel.add(unitLabel);
 		    
 		    int measure = imageA.getUnitsOfMeasure()[0];
-		    String measureText = FileInfoBase.getUnitsOfMeasureStr(measure);
+		    String measureText = "Centimeters"; //default output is in cm by user request
 	        int[] allSameMeasure = FileInfoBase.getAllSameDimUnits(measure);
 	        String[] unitArr = new String[allSameMeasure.length];
 	        for(int i=0; i<allSameMeasure.length; i++) {
@@ -3464,6 +3511,23 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	        outputUnits = new JComboBox(unitArr);
 	        outputUnits.setFont(MipavUtil.font12);
 	        outputUnits.setSelectedItem(measureText);
+	        currentOutputUnits = measureText;
+	        outputUnits.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					if(!currentOutputUnits.equals(outputUnits.getSelectedItem())) {
+						int option = JOptionPane.showConfirmDialog(getParent(), 
+								"Changing the output units requires recalculation, would you like to continue?", 
+								"Output units", JOptionPane.YES_NO_OPTION);
+						if(option == JOptionPane.YES_OPTION) {
+							forceVoiRecalc();
+							currentOutputUnits = outputUnits.getSelectedItem().toString();
+						} else {
+							outputUnits.setSelectedItem(currentOutputUnits);
+						}
+					}
+					System.out.println(e.paramString());
+				}
+	        });
 	        optionPanel.add(outputUnits);
 		    
 	        gbc.gridy = gbc.gridy+1;
@@ -3727,13 +3791,25 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 							}
 						}
 					} else {
-						DecimalFormat dec = new DecimalFormat("0.#");
-						String appMessage = itrObj+" calculations:\n"+"Fat Area: "+dec.format(fatArea)+
-						"\t\t\t\tMean H: "+dec.format(meanFatH)+"\nLean Area: "+dec.format(leanArea)+
-						"\t\t\tMean H: "+dec.format(meanLeanH)+"\nTotal Area: "+dec.format(totalAreaCount)+
-						"\t\t\tMean H: "+dec.format(meanTotalH) + "\n\n";
+						DecimalFormat dec = new DecimalFormat("0.##");
+						StringBuffer build = new StringBuffer();
+						String type = multipleSlices ? "Volume" : "Area";
+						
+						build.append(itrObj).append(" calculations:\n"+"Fat ").append(type).append(": ").append(dec.format(fatArea)).append(
+						"\t\t\t\tMean H: ").append(dec.format(meanFatH)+"\nLean ").append(type).append(": ").append(dec.format(leanArea)).append(
+						"\t\t\tMean H: ").append(dec.format(meanLeanH)+"\nTotal ").append(type).append(": ").append(dec.format(totalAreaCount)).append(
+						"\t\t\tMean H: ").append(dec.format(meanTotalH) + "\n\n");
+						
+						if(showPerSliceCalc.isSelected() && multipleSlices) {
+							for(int i=0; i<getActiveImage().getExtents()[2]; i++) {
+								build.append("Slice ").append(i).append(":\n").append("Fat Area: ").append(dec.format(temp.getFatArea(i))).append(
+								"\t\t\t\tMean H: ").append(dec.format(temp.getMeanFatH(i))).append("\nLean Area: ").append(dec.format(temp.getLeanArea(i))).append(
+								"\t\t\tMean H: ").append(dec.format(temp.getMeanLeanH(i))).append("\nTotal Area: ").append(dec.format(temp.getTotalArea(i))).append(
+								"\t\t\tMean H: ").append(dec.format(temp.getMeanTotalH(i))).append("\n\n");
+							}
+						}
 					
-						ViewUserInterface.getReference().getMessageFrame().append(appMessage, ViewJFrameMessage.DATA);
+						ViewUserInterface.getReference().getMessageFrame().append(build.toString(), ViewJFrameMessage.DATA);
 					}	
 				}
 			}
@@ -4242,7 +4318,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	 * @author senseneyj
 	 *
 	 */
-	private class MuscleCalculation implements Runnable {
+	private class MuscleCalculation extends Thread {
 		
 		//~ Static fields/initializers -------------------------------------------------------------------------------------
 		
@@ -4272,6 +4348,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		 */
 		public MuscleCalculation(PlugInSelectableVOI newVOI, String name) {
 			super();
+			muscleCalcList.add(this);
 			this.calculateVOI = newVOI;
 			this.name = name;
 		}
@@ -4302,18 +4379,32 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			VOI v = calculateVOI;
 			double wholeMultiplier = 0.0, sliceMultiplier = 0.0;
 			
-			//multiply x and y resolutions, notice the .1 refers to conversion factor for standard resolution
+			//allows for calculation unit conversion from the source images base units, NIA requests that cm are normally used, but most scanners return mm resolutions
+			int resultUnitLoc = FileInfoBase.getUnitsOfMeasureFromStr(((AnalysisDialogPrompt)tabs[resultTabLoc]).getSelectedOutput());
+	        int res0Unit = getActiveImage().getUnitsOfMeasure(0);
+	        int res1Unit = getActiveImage().getUnitsOfMeasure(1);
+	        int res2Unit = getActiveImage().getUnitsOfMeasure(2);
+	        
+	        float xRes = (float) (getActiveImage().getResolutions(0)[0] * ModelImage.getConversionFactor(resultUnitLoc, res0Unit));
+	        float yRes = (float) (getActiveImage().getResolutions(0)[1] * ModelImage.getConversionFactor(resultUnitLoc, res1Unit));
+	        float zRes = (float) (getActiveImage().getResolutions(0)[2] * ModelImage.getConversionFactor(resultUnitLoc, res2Unit));
+			
 			//TODO: convert the .1 for other choices of units
-			wholeMultiplier = sliceMultiplier = getActiveImage().getResolutions(0)[0]*0.1*getActiveImage().getResolutions(0)[1]*0.1;
+			wholeMultiplier = sliceMultiplier = xRes*yRes;
 			//for 3D images, also need to include z-resolution
 			if(multipleSlices)
-				wholeMultiplier *= (getActiveImage().getResolutions(0)[2]*0.1);
+				wholeMultiplier *= zRes;
 			System.out.println("Whole Multiplier: "+wholeMultiplier+"\tSliceMultiplier: "+sliceMultiplier);
 			PlugInSelectableVOI temp = voiBuffer.get(name);
 			children = temp.getChildren();
 			ArrayList<Thread> calc = new ArrayList<Thread>(children.length);
 			Thread tempThread = null;
+			
 			for(int i=0; i<children.length; i++) {
+				if(isInterrupted()) {
+					muscleCalcList.remove(this);
+					return;
+				}
 				if(children[i].getLastCalculated() == null || children[i].getLastModified() == null || 
 						children[i].getLastCalculated().compareTo(children[i].getLastModified()) < 0) {
 					//since enumerate silently ignores threads greater than array size
@@ -4343,18 +4434,30 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			}
 			long time2 = System.currentTimeMillis();
 			System.out.println("Waiting for threads to complete");
+			if(isInterrupted()) {
+				muscleCalcList.remove(this);
+				return;
+			}
 			try {
 				for(int i=0; i<calc.size(); i++) {
 					calc.get(i).join();
 				}
 			} catch(InterruptedException e) {
 				System.err.println("Algorithm failed, calculations may be inaccurate.");
+				muscleCalcList.remove(this);
 				e.printStackTrace();
+				return;
 			}
 			System.out.println("Time spent waiting: "+(System.currentTimeMillis() - time2)+" so that "+name+" can finish.");
 			
 			//note that even for 3D images this will still be called area, even though refers to volume
 			performCalculations(v, PlugInSelectableVOI.WHOLE_VOLUME_SLICE_NUMBER, wholeMultiplier);
+			
+			if(isInterrupted()) {
+				muscleCalcList.remove(this);
+				return;
+			}
+			
 
 	        int[] iX = new int[]{0,0};
 	        int[] iY = new int[]{0,0};
@@ -4379,6 +4482,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			//only place where calculations are generated, setLastCalculated should only appear here
 			temp.setLastCalculated(System.currentTimeMillis());
 			
+			if(isInterrupted()) {
+				muscleCalcList.remove(this);
+				return;
+			}
+			
 			System.out.println("Finished "+calculateVOI.getName()+" in "+time);
 			
 			if(Preferences.getDebugLevels()[1]) {
@@ -4386,8 +4494,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			}
 			
 			done = true;
+			muscleCalcList.remove(this);
 		}
-		
+
 		/**
 		 * Writes the statistics about this voi to a new line
 		 */
@@ -4464,6 +4573,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			temp.setLeanArea(leanArea, sliceNumber);
 			temp.setPartialArea(partialArea, sliceNumber);
 			temp.setTotalArea(totalAreaCount, sliceNumber);
+			
 			
 			double meanFatH = getMeanH(v2, FAT_LOWER_BOUND, FAT_UPPER_BOUND);// + OFFSET;
 			double meanLeanH = getMeanH(v2, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND);// + OFFSET;
@@ -5133,29 +5243,49 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    	                    	//Guaranteed to not be color image
 	    	                    	DecimalFormat dec = new DecimalFormat("0.00");
 	    	                    	VOI v = (VOI) list.getElementAt(i);
+	    	                    	boolean doAdd = false;
+	    	                    	double addAmount = 0.0;
 	    	                    	if(v instanceof PlugInSelectableVOI && ((PlugInSelectableVOI)v).getCalcEligible()) {
 	    	                    		if(allNames[k].equals(TOTAL_AREA)) {
 	                        				rowData[count] = dec.format(((PlugInSelectableVOI)v).getTotalArea(slice));
-	                        				logTotalData[count] = dec.format(((PlugInSelectableVOI)v).getTotalArea(slice));
+	                        				logRowData[count] = dec.format(((PlugInSelectableVOI)v).getTotalArea(slice));
+	                        				addAmount = ((PlugInSelectableVOI)v).getTotalArea(slice);
+	                        				doAdd = true;
 	    	                    		} else if(allNames[k].equals(FAT_AREA)) {
 	                        				rowData[count] = dec.format(((PlugInSelectableVOI)v).getFatArea(slice));
-	                        				logTotalData[count] = dec.format(((PlugInSelectableVOI)v).getFatArea(slice));
+	                        				logRowData[count] = dec.format(((PlugInSelectableVOI)v).getFatArea(slice));
+	                        				addAmount = ((PlugInSelectableVOI)v).getFatArea(slice);
+	                        				doAdd = true;
 	    	                    		} else if(allNames[k].equals(LEAN_AREA)) {
 	                        				rowData[count] = dec.format(((PlugInSelectableVOI)v).getLeanArea(slice));
-	                        				logTotalData[count] = dec.format(((PlugInSelectableVOI)v).getLeanArea(slice));
+	                        				logRowData[count] = dec.format(((PlugInSelectableVOI)v).getLeanArea(slice));
+	                        				addAmount = ((PlugInSelectableVOI)v).getLeanArea(slice);
+	                        				doAdd = true;
 	    	                    		} else if(allNames[k].equals(MEAN_TOTAL_HU)) {
 	                        				rowData[count] = dec.format(((PlugInSelectableVOI)v).getMeanTotalH(slice));
-	                        				logTotalData[count] = dec.format(((PlugInSelectableVOI)v).getMeanTotalH(slice));
+	                        				logRowData[count] = dec.format(((PlugInSelectableVOI)v).getMeanTotalH(slice));
+	                        				addAmount = ((PlugInSelectableVOI)v).getMeanTotalH(slice);
+	                        				doAdd = true;
 	    	                    		} else if(allNames[k].equals(MEAN_FAT_HU)) {
 	                        				rowData[count] = dec.format(((PlugInSelectableVOI)v).getMeanFatH(slice));
-	                        				logTotalData[count] = dec.format(((PlugInSelectableVOI)v).getMeanFatH(slice));
+	                        				logRowData[count] = dec.format(((PlugInSelectableVOI)v).getMeanFatH(slice));
+	                        				addAmount = ((PlugInSelectableVOI)v).getMeanFatH(slice);
+	                        				doAdd = true;
 	    	                    		} else if(allNames[k].equals(MEAN_LEAN_HU)) {
 	                        				rowData[count] = dec.format(((PlugInSelectableVOI)v).getMeanLeanH(slice));
-	                        				logTotalData[count] = dec.format(((PlugInSelectableVOI)v).getMeanLeanH(slice));
+	                        				logRowData[count] = dec.format(((PlugInSelectableVOI)v).getMeanLeanH(slice));
+	                        				addAmount = ((PlugInSelectableVOI)v).getMeanLeanH(slice);
+	                        				doAdd = true;
 	    	                    		}
+	    	                    		if(doAdd) {
+	    	                    			if(logTotalData[count] != null) {
+	    	                    				logTotalData[count] = dec.format(Double.valueOf(logTotalData[count])+addAmount);
+	    	                    			} else {
+	    	                    				logTotalData[count] = dec.format(addAmount);
+	    	                    			}
+	    	                    		} 
 	    	                    	}
 	    	                    }
-	    	                	
 	    	                }
 
 	                        count = 0;
@@ -5177,7 +5307,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	                    String logText = "";
 
 	                    for (int j = 0; j < logTotalData.length; j++) {
-	                        logText += logTotalData[j] + "\t";
+	                        //logTotalData[j] are simply summed area elements, these are not anatomically interesting
+	                    	logText += logTotalData[j] + "\t";
 	                    }
 
 	                    writeLogfileEntry(logText);

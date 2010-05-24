@@ -10,6 +10,8 @@ import java.awt.*;
 import java.awt.event.*;
 
 import java.io.*;
+import java.util.Stack;
+import java.util.Vector;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -17,10 +19,7 @@ import javax.swing.border.*;
 
 /**
  * Algorithm that adds, subtracts, multiplies, or divides an image by by another image. In addition, two images can be
- * ANDed, ORed or XORed together. Also, more advanced operator expressions can be entered in a dialog text field. The
- * parsing of the advanced operator expression is largely based on the file Func.java by Leen Ammeraal. The Func.java
- * file appears at ftp://ftp.expa.fnt.hvu.nl/pub/ammeraal and http://home.wxs.nl/~ammeraal. It is also contained in
- * chapter 8 of Computer Graphics for Java Programmers by Leen Ammeraal, copyright 1998 by John Wiley & Sons Ltd.
+ * ANDed, ORed or XORed together. Also, more advanced operator expressions can be entered in a dialog text field.
  *
  * @version  1.0 Oct 1, 2000
  * @author   Matthew J. McAuliffe, Ph.D.
@@ -128,12 +127,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
     private JButton expButton, lnButton, sevenButton, eightButton, nineButton, divButton;
 
     /** DOCUMENT ME! */
-    private char lastChar;
-
-    /** DOCUMENT ME! */
-    private double lastNum;
-
-    /** DOCUMENT ME! */
     private JButton logButton, absButton;
 
     /** /**. */
@@ -184,7 +177,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
     /** when performing bulk operations via Image Calculator (Bulk Images) dialog, this array is populated */
     private ModelImage[] srcImages;
     
-    private ViewJProgressBar progressBar;
+    private String rpn;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -292,6 +285,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
         if (event.getActionCommand().equals("Help")) {
             MipavUtil.showHelp("U4031");
         } else if (source == OKButton) {
+  
             adOpString = textOperator.getText();
             adOpDialog.dispose();
             pressedOK = true;
@@ -1213,6 +1207,17 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 
         boolean doneOnce = false;
 
+        
+        if(opType ==  ADVANCED) {
+        	rpn = evaluateToRPN(adOpString);
+        	if(rpn.equals("")) {
+    			MipavUtil.displayError("Error in formula expression");
+    			setCompleted(false);
+                setThreadStopped(true);
+    			return;
+    		}
+        }
+
         int totalLength = f * t * z * length;
         //The current "slice" of srcImageA
         int pseudoSliceNum = 0;
@@ -1371,7 +1376,15 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                                     break;
 
                                 case ADVANCED:
-                                    bufferA[i] = eval(bufferA[i], bufferB[i]);
+                                	double d = evaluateRPNExpression(bufferA[i], bufferB[i], rpn);
+                                	if(d != Double.NaN) {
+                                		bufferA[i] = d;
+                                	}else {
+                                		displayError("Algorithm ImageCalculator: Error evaluating expression");
+                                		setCompleted(false);
+                                        setThreadStopped(true);
+                                        return;
+                                	}
                                     if (OK == false) {
                                         displayError("Algorithm ImageCalculator: Illegal operator expression");
                                         setCompleted(false);
@@ -2149,6 +2162,16 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
         //The current "slice" of srcImageA
         int pseudoSliceNum = 0;
 
+        if(opType ==  ADVANCED) {
+        	rpn = evaluateToRPN(adOpString);
+        	if(rpn.equals("")) {
+    			MipavUtil.displayError("Error in formula expression");
+    			setCompleted(false);
+                setThreadStopped(true);
+    			return;
+    		}
+        }
+
         // System.err.println("Length is: " + length + " totalLength is: " + totalLength);
         // System.err.println("Dest image type is: " + destImage.getType());
         for (m = 0; (m < f) && !threadStopped; m++) {
@@ -2307,7 +2330,15 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                                     break;
 
                                 case ADVANCED:
-                                    bufferA[i] = eval(bufferA[i], bufferB[i]);
+                                	double d = evaluateRPNExpression(bufferA[i], bufferB[i], rpn);
+                                	if(d != Double.NaN) {
+                                		bufferA[i] = d;
+                                	}else {
+                                		displayError("Algorithm ImageCalculator: Error evaluating expression");
+                                		setCompleted(false);
+                                        setThreadStopped(true);
+                                        return;
+                                	}
                                     if (OK == false) {
                                         displayError("Algorithm ImageCalculator: Illegal operator expression");
                                         setCompleted(false);
@@ -2821,162 +2852,985 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
      *
      * @return  DOCUMENT ME!
      */
-    private double eval(double a, double b) {
+    /*private Double eval(double a, double b) {
         this.aVal = a;
         this.bVal = b;
         pos = 0;
         OK = true;
 
-        return expression();
+
+        Double d = evaluateRPNExpression(rpn);
+        return d;
+    }*/
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    
+    
+    
+    /**
+     * Method that evaluates the RPN expression and returns the value
+     */
+    public double evaluateRPNExpression(double a, double b, String rpn) {
+    	this.aVal = a;
+        this.bVal = b;
+        pos = 0;
+        OK = true;
+		double finalAnswer = Double.NaN;
+		try {
+			Double result;
+			String[] rpnTokens = rpn.split("\\|");
+			Stack<Double> rpnStack = new Stack<Double>();
+			for(int i=0;i<rpnTokens.length;i++) {
+				String token = rpnTokens[i];
+				//System.out.println("**" + token + "**");
+				if(isOperator(token)) {
+					//pop 2 items from stack
+					Double operand2 = rpnStack.pop();
+					Double operand1 = rpnStack.pop();
+					result = new Double(0);
+					//result = evaluateOperatorExpression(token,operand1,operand2);
+
+
+					double d = 0;
+					if(token.equals("+")) {
+						d = operand1.doubleValue() + operand2.doubleValue();
+					}else if(token.equals("-")) {
+						d = operand1.doubleValue() - operand2.doubleValue();
+					}else if(token.equals("*")) {
+						d = operand1.doubleValue() * operand2.doubleValue();
+					}else if(token.equals("/")) {
+						d = operand1.doubleValue() / operand2.doubleValue();
+					}else if(token.equals("mod")) {
+						d = operand1.doubleValue()%operand2.doubleValue();
+					}
+					
+					result = new Double(d);
+					
+					
+					
+					
+					
+					//push answer on stack
+					rpnStack.push(result);
+					
+				}else if(isFunction(token)) {
+					if(token.equals("pow")) {
+						//pop 2 items from stack
+						Double operand2 = rpnStack.pop();
+						Double operand1 = rpnStack.pop();
+						result = new Double(0);
+						//result = evaluatePowExpression(operand1,operand2);
+						
+					
+						double d = 0;
+						
+						d = Math.pow(operand1.doubleValue(), operand2.doubleValue());
+						
+						result = new Double(d);
+						
+						
+						//push answer on stack
+						rpnStack.push(result);
+						
+            } else {
+						//pop 1 item from stack
+						Double operand1 = rpnStack.pop();
+						result = new Double(0);
+						//result = evaluateFuncExpression(token,operand1);
+						
+						
+						double d = 0;
+						
+						if(token.equals("abs")) {
+							d = Math.abs(operand1);
+						}else if(token.equals("log")) {
+							d = Math.log10(operand1);
+						}else if(token.equals("exp")) {
+							d = Math.exp(operand1);
+						}else if(token.equals("ln")) {
+							d = Math.log(operand1);
+						}else if(token.equals("sin")) {
+							d = Math.sin(operand1);
+						}else if(token.equals("cos")) {
+							d = Math.cos(operand1);
+						}else if(token.equals("tan")) {
+							d = Math.tan(operand1);
+            }
+						
+						
+						
+						result = new Double(d);
+						
+						//push answer on stack
+						rpnStack.push(result);
+						
+        }
+				}else {
+					if(token.equals("A")) {
+						Double doubleA = new Double(this.aVal);
+						rpnStack.push(doubleA);
+					}else if(token.equals("B")) {
+						Double doubleB = new Double(this.bVal);
+						rpnStack.push(doubleB);
+					}else if(token.equals("pi")) {
+						Double doublePi = new Double(Math.PI);
+						rpnStack.push(doublePi);
+					}else {
+						//System.out.println(token);
+						Double operandValue = new Double(token);
+						rpnStack.push(operandValue);
+					}
+
     }
 
+
+        }
+
+			finalAnswer = rpnStack.pop().doubleValue();
+		}catch(Exception e) {
+			e.printStackTrace();
+			return Double.NaN;
+        }
+
+		return finalAnswer;
+        }
+
+    
+    
     /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * method that determines the RPN
+     * @param expression
+     * @return
      */
-    private double expression() {
-        double x = term();
+    public  String evaluateToRPN(String expression) {
+		String rpnString = "";
+		Vector<String> tokens = new Vector<String>();
+		boolean success;
+		success = initialValidate(expression);
+		if(!success) {
+			return "";
+        }
 
-        for (;;) {
+		success = tokenize(expression,tokens);
+		if(!success) {
+			return "";
+		}
+		//System.out.println(tokens.size());
+		//for(int i=0;i<tokens.size();i++) {
+			//System.out.println(tokens.get(i));
+		//}
 
-            if (nextIs('+')) {
-                x += term();
-            } else if (nextIs('-')) {
-                x -= term();
+		rpnString = convertToRPN(tokens);
+
+		return rpnString;
+		
+            }
+
+    /**
+     * method that does some of the function calculations
+     * @param token
+     * @param operand1
+     * @return
+     */
+   /* public  Double evaluateFuncExpression(String token, Double operand1) {
+		Double value;
+		double d = 0;
+		
+		if(token.equals("abs")) {
+			d = Math.abs(operand1);
+		}else if(token.equals("log")) {
+			d = Math.log10(operand1);
+		}else if(token.equals("exp")) {
+			d = Math.exp(operand1);
+		}else if(token.equals("ln")) {
+			d = Math.log(operand1);
+		}else if(token.equals("sin")) {
+			d = Math.sin(operand1);
+		}else if(token.equals("cos")) {
+			d = Math.cos(operand1);
+		}else if(token.equals("tan")) {
+			d = Math.tan(operand1);
+        }
+
+
+
+		value = new Double(d);
+
+		return value;
+	}*/
+
+    /**
+     * method that calculates the POW function
+     * @param operand1
+     * @param operand2
+     * @return
+     */
+   /* public Double evaluatePowExpression(Double operand1, Double operand2) {
+		Double value;
+		double d = 0;
+
+		d = Math.pow(operand1.doubleValue(), operand2.doubleValue());
+
+		value = new Double(d);
+		
+		return value;
+	}*/
+    
+    
+    /**
+     * method that calculates some of the basic operations
+     * @param token
+     * @param operand1
+     * @param operand2
+     * @return
+     */
+    /*public Double evaluateOperatorExpression(String token, Double operand1, Double operand2) {
+		Double value;
+		double d = 0;
+		if(token.equals("+")) {
+			d = operand1.doubleValue() + operand2.doubleValue();
+		}else if(token.equals("-")) {
+			d = operand1.doubleValue() - operand2.doubleValue();
+		}else if(token.equals("*")) {
+			d = operand1.doubleValue() * operand2.doubleValue();
+		}else if(token.equals("/")) {
+			d = operand1.doubleValue() / operand2.doubleValue();
+		}else if(token.equals("mod")) {
+			d = operand1.doubleValue()%operand2.doubleValue();
+            }
+
+		value = new Double(d);
+		return value;
+	}*/
+
+    /**
+     * method that does some initial validation of the expression
+     * @param expression
+     * @return
+     */
+    public boolean initialValidate(String expression){
+		boolean success = true;
+		// validate num of parentheses
+		int numOccurencesOfLeftParen = 0;
+		int numOccurencesOfRightParen = 0;
+		for(int i=0;i<expression.length();i++) {
+			if(expression.charAt(i) == '(') {
+				numOccurencesOfLeftParen++;
+			}else if(expression.charAt(i) == ')') {
+				numOccurencesOfRightParen++;
+            }
+		}
+		if(numOccurencesOfLeftParen != numOccurencesOfRightParen) {
+			return false;
+		}
+		//validate that first occurrence of right paren does not come before left paren
+		if(numOccurencesOfLeftParen > 0) {
+			if(expression.indexOf(")") < expression.indexOf("(")) {
+				return false;
+			}
+		}
+
+
+		if(expression.contains("abs")) {
+			int index = 0;
+			do{
+				index = expression.indexOf("abs",index);
+				if(index != -1) {
+					index = index + 3;
+					if(index < expression.length()) {
+						char c = expression.charAt(index);
+						//System.out.println(c);
+						if(c != '(') {
+							MipavUtil.displayError("abs function must be followed by a (");
+							return false;
+
+                }
             } else {
+						MipavUtil.displayError("abs function must be followed by a (");
+						return false;
+            }
+				}else {
+					break;
+				}
+			}while(index < expression.length());
+		}
+
+
+		if(expression.contains("log")) {
+			int index = 0;
+			do{
+				index = expression.indexOf("log",index);
+				if(index != -1) {
+					index = index + 3;
+					if(index < expression.length()) {
+						char c = expression.charAt(index);
+						//System.out.println(c);
+						if(c != '(') {
+							MipavUtil.displayError("log function must be followed by a (");
+							return false;
+						
+            }
+					}else {
+						MipavUtil.displayError("log function must be followed by a (");
+						return false;
+					}
+				}else {
+					break;
+				}
+			}while(index < expression.length());
+		}
+
+		if(expression.contains("exp")) {
+			int index = 0;
+			do{
+				index = expression.indexOf("exp",index);
+				if(index != -1) {
+					index = index + 3;
+					if(index < expression.length()) {
+						char c = expression.charAt(index);
+						//System.out.println(c);
+						if(c != '(') {
+							MipavUtil.displayError("exp function must be followed by a (");
+							return false;
+						
+        }
+					}else {
+						MipavUtil.displayError("exp function must be followed by a (");
+						return false;
+					}
+				}else {
+					break;
+				}
+			}while(index < expression.length());
+		}
+
+
+		if(expression.contains("ln")) {
+			int index = 0;
+			do{
+				index = expression.indexOf("ln",index);
+				if(index != -1) {
+					index = index + 2;
+					if(index < expression.length()) {
+						char c = expression.charAt(index);
+						//System.out.println(c);
+						if(c != '(') {
+							MipavUtil.displayError("ln function must be followed by a (");
+							return false;
+						
+        }
+					}else {
+						MipavUtil.displayError("ln function must be followed by a (");
+						return false;
+					}
+				}else {
+					break;
+				}
+			}while(index < expression.length());
+		}
+
+
+		if(expression.contains("pow")) {
+			int index = 0;
+			do{
+				index = expression.indexOf("pow",index);
+				if(index != -1) {
+					index = index + 3;
+					if(index < expression.length()) {
+						char c = expression.charAt(index);
+						//System.out.println(c);
+						if(c != '(') {
+							MipavUtil.displayError("pow function must be followed by a (");
+							return false;
+						
+    }
+					}else {
+						MipavUtil.displayError("pow function must be followed by a (");
+						return false;
+					}
+				}else {
+					break;
+				}
+			}while(index < expression.length());
+		}
+
+
+		if(expression.contains("sin")) {
+			int index = 0;
+			do{
+				index = expression.indexOf("sin",index);
+				if(index != -1) {
+					index = index + 3;
+					if(index < expression.length()) {
+						char c = expression.charAt(index);
+						//System.out.println(c);
+						if(c != '(') {
+							MipavUtil.displayError("sin function must be followed by a (");
+							return false;
+
+        }
+					}else {
+						MipavUtil.displayError("sin function must be followed by a (");
+						return false;
+					}
+				}else {
+					break;
+				}
+			}while(index < expression.length());
+		}
+
+
+
+		if(expression.contains("cos")) {
+			int index = 0;
+			do{
+				index = expression.indexOf("cos",index);
+				if(index != -1) {
+					index = index + 3;
+					if(index < expression.length()) {
+						char c = expression.charAt(index);
+						//System.out.println(c);
+						if(c != '(') {
+							MipavUtil.displayError("cos function must be followed by a (");
+							return false;
+
+                        }
+                    } else {
+						MipavUtil.displayError("cos function must be followed by a (");
+						return false;
+                    }
+				}else {
+					break;
+                }
+			}while(index < expression.length());
+		}
+
+
+		
+		if(expression.contains("tan")) {
+			int index = 0;
+			do{
+				index = expression.indexOf("tan",index);
+				if(index != -1) {
+					index = index + 3;
+					if(index < expression.length()) {
+						char c = expression.charAt(index);
+						//System.out.println(c);
+						if(c != '(') {
+							MipavUtil.displayError("tan function must be followed by a (");
+							return false;
+						
+						}
+					}else {
+						MipavUtil.displayError("tan function must be followed by a (");
+						return false;
+					}
+				}else {
                 break;
-            }
+        }
+			}while(index < expression.length());
+		}
+
+		
+		
+		return success;
+
+    }
+
+    
+    
+    
+    /**
+     * method that tokenizes the expression
+     * @param expression
+     * @param tokens
+     * @return
+     */
+    public boolean tokenize(String expression, Vector<String> tokens){
+		int pos = 0;
+		boolean success = true;
+		try{
+			char c;
+			String s;
+			StringBuffer sb;
+			//System.out.println(expression.length());
+			//System.out.println();
+			while(pos < expression.length()) {
+				//System.out.println(pos);
+				c = readChar(expression,pos);
+				//System.out.println("char: " + c + " pos: " + pos);
+				if(c == ' ') {
+					pos++;
+				} else if(c == '(') {
+					s = String.valueOf(c);
+					tokens.add(s);
+					pos++;
+				}else if(c == ')') {
+					s = String.valueOf(c);
+					tokens.add(s);
+					pos++;
+				}else if(c == '/') {
+					s = String.valueOf(c);
+					tokens.add(s);
+					pos++;
+				}
+				else if(c == '*') {
+					s = String.valueOf(c);
+					tokens.add(s);
+					pos++;
+				}
+				else if(c == '-') {
+					s = String.valueOf(c);
+					tokens.add(s);
+					pos++;
+				}
+				else if(c == '+') {
+					s = String.valueOf(c);
+					tokens.add(s);
+					pos++;
+				}else if(c == '.') {
+					s = String.valueOf(c);
+					tokens.add(s);
+					pos++;
+				}else if(c == ',') {
+					s = String.valueOf(c);
+					tokens.add(s);
+					pos++;
+				}else if(c == 'A') {
+					s = String.valueOf(c);
+					tokens.add(s);
+					pos++;
+					//check to make sure next char is not a letter
+					char c2;
+					if(pos < expression.length()) {
+						c2 = readChar(expression,pos);
+						if(Character.isLetter(c2)) {
+							return false;
+						}
+					}
+				}else if(c == 'B') {
+					s = String.valueOf(c);
+					tokens.add(s);
+					pos++;
+					//check to make sure next char is not a letter
+					char c2;
+					if(pos < expression.length()) {
+						c2 = readChar(expression,pos);
+						if(Character.isLetter(c2)) {
+							return false;
+						}
+					}
+				}else if(isDigit(c)) {
+					sb = new StringBuffer();
+					while(isDigit(c)) {
+						s = String.valueOf(c);
+						sb.append(s);
+						pos++;
+						if(pos < expression.length()) {
+							c = readChar(expression,pos);
+						}else {
+							break;
+						}
+					}
+					tokens.add(sb.toString());
+					//pos--;
+				}else if(c == 'a') {
+					//check if word is "abs"
+					char c2,c3;
+					sb = new StringBuffer();
+					s = String.valueOf(c);
+					sb.append(s);
+					pos++;
+					if(pos+1 < expression.length()) {
+						c2 = readChar(expression,pos);
+						pos++;
+						c3 = readChar(expression,pos);
+						pos++;
+						if(c2 == 'b' && c3 == 's') {
+							s = String.valueOf(c2);
+							sb.append(s);
+							s = String.valueOf(c3);
+							sb.append(s);
+							tokens.add(sb.toString());
+						}else {
+							return false;
+						}
+					}else {
+						return false;
+					}
+				}else if(c == 'e') {
+					//check if word is "exp"
+					char c2,c3;
+					sb = new StringBuffer();
+					s = String.valueOf(c);
+					sb.append(s);
+					pos++;
+					if(pos+1 < expression.length()) {
+						c2 = readChar(expression,pos);
+						pos++;
+						c3 = readChar(expression,pos);
+						pos++;
+						if(c2 == 'x' && c3 == 'p') {
+							s = String.valueOf(c2);
+							sb.append(s);
+							s = String.valueOf(c3);
+							sb.append(s);
+							tokens.add(sb.toString());
+						}else {
+							return false;
+						}
+					}else {
+						return false;
+					}
+				}else if(c == 's') {
+					//check if word is "sin"
+					char c2,c3;
+					sb = new StringBuffer();
+					s = String.valueOf(c);
+					sb.append(s);
+					pos++;
+					if(pos+1 < expression.length()) {
+						c2 = readChar(expression,pos);
+						pos++;
+						c3 = readChar(expression,pos);
+						pos++;
+						if(c2 == 'i' && c3 == 'n') {
+							s = String.valueOf(c2);
+							sb.append(s);
+							s = String.valueOf(c3);
+							sb.append(s);
+							tokens.add(sb.toString());
+						}else {
+							return false;
+						}
+					}else {
+						return false;
+					}
+				}else if(c == 'c') {
+					//check if word is "cos"
+					char c2,c3;
+					sb = new StringBuffer();
+					s = String.valueOf(c);
+					sb.append(s);
+					pos++;
+					if(pos+1 < expression.length()) {
+						c2 = readChar(expression,pos);
+						pos++;
+						c3 = readChar(expression,pos);
+						pos++;
+						if(c2 == 'o' && c3 == 's') {
+							s = String.valueOf(c2);
+							sb.append(s);
+							s = String.valueOf(c3);
+							sb.append(s);
+							tokens.add(sb.toString());
+						}else {
+							return false;
+						}
+					}else {
+						return false;
+					}
+				}else if(c == 't') {
+					//check if word is "tan"
+					char c2,c3;
+					sb = new StringBuffer();
+					s = String.valueOf(c);
+					sb.append(s);
+					pos++;
+					if(pos+1 < expression.length()) {
+						c2 = readChar(expression,pos);
+						pos++;
+						c3 = readChar(expression,pos);
+						pos++;
+						if(c2 == 'a' && c3 == 'n') {
+							s = String.valueOf(c2);
+							sb.append(s);
+							s = String.valueOf(c3);
+							sb.append(s);
+							tokens.add(sb.toString());
+						}else {
+							return false;
+						}
+					}else {
+						return false;
+					}
+				}else if(c == 'm') {
+					//check if word is "mod"
+					char c2,c3;
+					sb = new StringBuffer();
+					s = String.valueOf(c);
+					sb.append(s);
+					pos++;
+					if(pos+1 < expression.length()) {
+						c2 = readChar(expression,pos);
+						pos++;
+						c3 = readChar(expression,pos);
+						pos++;
+						if(c2 == 'o' && c3 == 'd') {
+							s = String.valueOf(c2);
+							sb.append(s);
+							s = String.valueOf(c3);
+							sb.append(s);
+							tokens.add(sb.toString());
+						}else {
+							return false;
+						}
+					}else {
+						return false;
+					}
+				}else if(c == 'p') {
+					//check if word is pow or pi
+					char c2,c3;
+					sb = new StringBuffer();
+					s = String.valueOf(c);
+					sb.append(s);
+					pos++;
+					if(pos < expression.length()) {
+						c2 = readChar(expression,pos);
+						if(c2 == 'i') {
+							s = String.valueOf(c2);
+							sb.append(s);
+							pos++;
+							tokens.add(sb.toString());
+						}else if(c2 == 'o') {
+							s = String.valueOf(c2);
+							sb.append(s);
+							pos++;
+							if(pos < expression.length()) {
+								c3 = readChar(expression,pos);
+								if(c3 == 'w') {
+									s = String.valueOf(c3);
+									sb.append(s);
+									pos++;
+									tokens.add(sb.toString());
+								}else {
+									return false;
+								}
+							}else {
+								return false;
+							}
+						}else {
+							return false;
+						}
+					}else {
+						return false;
+					}		
+				}else if(c == 'l') {
+					//check if word is log or ln
+					char c2,c3;
+					sb = new StringBuffer();
+					s = String.valueOf(c);
+					sb.append(s);
+					pos++;
+					if(pos < expression.length()) {
+						c2 = readChar(expression,pos);
+						if(c2 == 'n') {
+							s = String.valueOf(c2);
+							sb.append(s);
+							pos++;
+							tokens.add(sb.toString());
+						}else if(c2 == 'o') {
+							s = String.valueOf(c2);
+							sb.append(s);
+							pos++;
+							if(pos < expression.length()) {
+								c3 = readChar(expression,pos);
+								if(c3 == 'g') {
+									s = String.valueOf(c3);
+									sb.append(s);
+									pos++;
+									tokens.add(sb.toString());
+								}else {
+									return false;
+								}
+							}else {
+								return false;
+							}
+						}else {
+							return false;
+						}
+					}else {
+						return false;
+					}		
+				}else {
+					return false;
+				}
+
+
+
+				
         }
 
-        return x;
+
+			
+		}catch(Exception e) {
+			e.printStackTrace();
+			success = false;
+			return success;
     }
+
+		return success;
+	}
+    
+    
+    /**
+     * method that converts the tokens to RPN
+     * @param tokens
+     * @return
+     */
+    public String convertToRPN(Vector<String> tokens) {
+		String rpnString = "";
+		Stack<String> operatorStack = new Stack<String>();
+		try{
+			for(int i=0;i<tokens.size();i++) {
+				String token = tokens.get(i);
+				//System.out.println("***" + token);
+				if(token.equals("(")) {
+					operatorStack.push(token);
+				}else if (token.equals(")")) {
+					while(!operatorStack.peek().equals("(")) {
+						String pop = operatorStack.pop();
+						rpnString = rpnString + "|" + pop;
+					}
+					if(!operatorStack.isEmpty() && operatorStack.peek().equals("(")) {
+						operatorStack.pop();
+					}
+					if(!operatorStack.isEmpty() && isFunction(operatorStack.peek())) {
+						String pop = operatorStack.pop();
+						rpnString = rpnString + "|" + pop;
+					}
+
+				}else if(isOperator(token)) {
+					String peek1 = "";
+					if(!operatorStack.isEmpty()) {
+						peek1 = operatorStack.peek();
+					}
+					if(operatorStack.isEmpty() || peek1.equals("(") || (precedence(peek1) < precedence(token))) {
+						//System.out.println("pushing " + token);
+						operatorStack.push(token);
+					}else {
+						String peek2 = "";
+        do {
+							String pop = operatorStack.pop();
+							rpnString = rpnString + "|" + pop;
+							if(!operatorStack.isEmpty()) {
+								peek2 = operatorStack.peek();
+							}
+
+						}while(!operatorStack.isEmpty() && !peek2.equals("(") || (precedence(token) < precedence(peek2)));
+						
+						operatorStack.push(token);
+            }
+				}else if(isFunction(token)) {
+					operatorStack.push(token);
+				}else if(token.equals(",")) {
+					if(!operatorStack.isEmpty() && isOperator(operatorStack.peek())) {
+						String pop = operatorStack.pop();
+						rpnString = rpnString + "|" + pop;
+					}
+				}else {
+					rpnString = rpnString + "|" + token;
+				}
+
+			}
+			while(!operatorStack.isEmpty()) {
+				String pop = operatorStack.pop();
+				rpnString = rpnString + "|" + pop;
+			}
+			rpnString = rpnString.trim();
+
+			//take away first pipe
+			rpnString = rpnString.substring(1, rpnString.length());
+
+			return rpnString;
+			
+		}catch(Exception e) {
+			e.printStackTrace();
+			rpnString = "";
+			return rpnString;
+                }
+
+		
+            }
 
     /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * method that determines precedence
+     * @param op
+     * @return
      */
-    private double factor() {
-        String tmpStr;
-        char[] ch = new char[10];
-        int index = 0;
-        double v = 0;
-        double arg;
-        double exponent;
+    public int precedence(String op) {
+		int precedence = 0;
+		if(op.equals("mod")) {
+			precedence = 2;
+		}else if (op.equals("*") || op.equals("/")){
+			precedence = 1;
+		}else {
+			precedence = 0;
+		}
+		return precedence;
+	}
 
-        for (index = 0; index < ch.length; index++) {
-            ch[index] = 0;
-        }
 
-        if (!readChar()) {
-            return 0;
-        }
-
-        if (lastChar == 'A') {
-            return aVal;
-        }
-
-        if (lastChar == 'B') {
-            return bVal;
-        }
-
-        if (lastChar == '(') {
-            v = expression();
-
-            if (!nextIs(')')) {
-                MipavUtil.displayError("Closing parenthesis missing for expression");
-                OK = false;
-
-                return 0;
+    /**
+     * method determining if token is an operator
+     * @param token
+     * @return
+     */
+    public boolean isOperator(String token) {
+		boolean isOperator = false;
+		if(token.equals("+") || token.equals("-") || token.equals("*") || token.equals("/") || token.equals("mod")) {
+			isOperator = true;
             }
 
-            return v;
+		return isOperator;
         }
 
-        ch[0] = lastChar;
 
-        if ((ch[0] == 'a') || (ch[0] == 'c') || (ch[0] == 'e') || (ch[0] == 'l') || (ch[0] == 'p') || (ch[0] == 's') ||
-                (ch[0] == 't')) {
+	/**
+	 * method determining if token is function
+	 * @param token
+	 * @return
+	 */
+	public boolean isFunction(String token) {
+		boolean isSingleFunction = false;
+		if(token.equals("abs") || token.equals("log") || token.equals("exp") || token.equals("ln") || token.equals("sin") || token.equals("cos") || token.equals("tan") || token.equals("pow") ) {
+			isSingleFunction = true;
+        }
+		return isSingleFunction;
+	}
 
-            if (ch[0] == 'p') {
+	/**
+	 * reads char
+	 * @param exp
+	 * @param pos
+	 * @return
+	 */
+	public char readChar(String exp,int pos) {
+		char c;
+		c = exp.charAt(pos);
+		return c;
+	}
 
-                if (nextIs('i')) {
-                    v = Math.PI;
 
-                    return v;
+	/**
+	 * determines if char is a digit
+	 * @param c
+	 * @return
+	 */
+	public boolean isDigit(char c) {
+		boolean isDigit = false;
+		if(c == '0' || c == '1' || c == '2' || c == '3' || c == '4' || c == '5' || c == '6' || c == '7' || c == '8' || c == '9') {
+			isDigit = true;
                 }
-            }
+		return isDigit;
+	}
 
-            index = 1;
+    
+    
+    
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-            while ((OK = readChar()) && (lastChar != '(')) {
-                ch[index++] = lastChar;
-            }
-
-            if (!OK) {
-                tmpStr = new String(ch);
-                MipavUtil.displayError("Opening parenthesis not found for " + tmpStr);
-
-                return 0;
-            }
-
-            arg = expression();
-
-            if ((ch[0] == 'p') && (ch[1] == 'o') && (ch[2] == 'w')) {
-
-                if (!nextIs(',')) {
-                    MipavUtil.displayError("Comma between argument and exponent missing in pow");
-                    OK = false;
-
-                    return 0;
-                }
-
-                exponent = expression();
-                v = Math.pow(arg, exponent);
-            } else if ((ch[0] == 'e') && (ch[1] == 'x') && (ch[2] == 'p')) {
-                v = Math.exp(arg);
-            } else if ((ch[0] == 'l') && (ch[1] == 'n')) {
-                v = Math.log(arg);
-            } else if ((ch[0] == 'l') && (ch[1] == 'o') && (ch[2] == 'g')) {
-                v = 0.434294481903251 * Math.log(arg);
-            } else if ((ch[0] == 's') && (ch[1] == 'i') && (ch[2] == 'n')) {
-                v = Math.sin(arg);
-            } else if ((ch[0] == 'c') && (ch[1] == 'o') && (ch[2] == 's')) {
-                v = Math.cos(arg);
-            } else if ((ch[0] == 't') && (ch[1] == 'a') && (ch[2] == 'n')) {
-                v = Math.tan(arg);
-            } else if ((ch[0] == 'a') && (ch[1] == 'b') && (ch[2] == 's')) {
-                v = Math.abs(arg);
-            } else {
-                tmpStr = new String(ch);
-                MipavUtil.displayError("Illegal: " + tmpStr);
-                OK = false;
-
-                return 0;
-            }
-
-            if (!nextIs(')')) {
-                tmpStr = new String(ch);
-                MipavUtil.displayError("Closing parenthesis not found for function " + tmpStr);
-                OK = false;
-
-                return 0;
-            }
-
-            return v;
-        }
-
-        pos--;
-
-        if (number()) {
-            return lastNum;
-        }
-
-        OK = false;
-
-        return 0;
-    }
+    
 
     /**
      * Find the type able to contain the full range of the data.
@@ -3017,7 +3871,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                                 (endType == ModelStorageBase.DCOMPLEX)) {
                             loop = false;
                         }
-                    } else {
+            } else {
                         loop = false;
                     }
                 }
@@ -3026,112 +3880,12 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 
             default:
                 break;
-        }
+            }
 
         return endType;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param   ch  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    private boolean nextIs(char ch) {
-        char ch0 = lastChar;
-
-        if (readChar()) {
-
-            if (ch == lastChar) {
-                return true;
-            }
-
-            pos--;
         }
 
-        lastChar = ch0;
 
-        return false;
-    }
-
-    /**
-     * Determines.
-     *
-     * @return  DOCUMENT ME!
-     */
-    private boolean number() {
-        double x = 0;
-        int nDec = -1;
-        boolean neg = false;
-
-        do {
-
-            if (!readChar()) {
-                return false;
-            }
-
-            if (lastChar == '-') {
-                neg = true;
-
-                if (!readChar()) {
-                    MipavUtil.displayError("No character found after minus sign");
-
-                    return false;
-                }
-
-                break;
-            }
-        } while (Character.isWhitespace(lastChar));
-
-        if (lastChar == '.') {
-
-            if (!readChar()) {
-                MipavUtil.displayError("No character found after period");
-
-                return false;
-            }
-
-            nDec = 0;
-        }
-
-        if (!Character.isDigit(lastChar)) {
-            MipavUtil.displayError("Number has character other than minus sign, period, or digit");
-            OK = false;
-
-            return false;
-        }
-
-        for (;;) {
-
-            if ((lastChar == '.') && (nDec < 0)) {
-                nDec = 0;
-            } else if (Character.isDigit(lastChar)) {
-                x = (10 * x) + (lastChar - '0');
-
-                if (nDec >= 0) {
-                    nDec++;
-                }
-            } else {
-                pos--;
-
-                break;
-            }
-
-            if (!readChar()) {
-                break;
-            }
-        }
-
-        while (nDec > 0) {
-            x *= 0.1;
-            nDec--;
-        }
-
-        lastNum = (neg ? -x : x);
-
-        return true;
-    }
 
     /**
      * DOCUMENT ME!
@@ -3200,29 +3954,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
     //
     /*******************************************************************************************/
 
-
-    /**
-     * Reads a character from equation.
-     *
-     * @return  DOCUMENT ME!
-     */
-    private boolean readChar() {
-        char ch;
-
-        do {
-
-            if (pos == adOpString.length()) {
-                return false;
-            }
-
-            ch = adOpString.charAt(pos++);
-        } while (ch == ' ');
-
-        lastChar = ch;
-
-        return true;
-    }
-
     /**
      * Sets the minimum and maximum clipping values.
      */
@@ -3273,29 +4004,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
         }
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    private double term() {
-        double x = factor();
-
-        for (;;) {
-
-            if (nextIs('*')) {
-                x *= factor();
-            } else if (nextIs('/')) {
-                x /= factor();
-            } else if (nextIs('m') && nextIs('o') && nextIs('d')) {
-                x = x % factor();
-            } else {
-                break;
-            }
-        }
-
-        return x;
-    }
 
     /**
      * Determine if the min and max values are in the image types range.
