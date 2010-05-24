@@ -4064,7 +4064,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             break;
 
         }
-        //voiHandler.setMode(mode);
     }
 
     /**

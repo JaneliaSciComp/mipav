@@ -5286,13 +5286,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     }
 
     /* (non-Javadoc)
-     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#setDefaultCursor()
-     */
-    public void setDefaultCursor() {
-        PointerActive(false);
-    }
-
-    /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#setModified()
      */
     public void setModified() {

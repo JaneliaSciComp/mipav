@@ -3549,12 +3549,6 @@ public class ViewJFrameRegistration extends ViewJFrameBase
     }
 
     @Override
-    public void setDefaultCursor() {
-        // TODO Auto-generated method stub
-        
-    }
-
-    @Override
     public void setModified() {
         // TODO Auto-generated method stub
         

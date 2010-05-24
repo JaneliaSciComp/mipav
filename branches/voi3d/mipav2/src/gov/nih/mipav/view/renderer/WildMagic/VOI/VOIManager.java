@@ -970,9 +970,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
     }
 
-
-
-
     public boolean isActive()
     {
         return (m_bDrawVOI || m_bPointer);
@@ -4474,7 +4471,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             }
         }
         m_iNearStatus = NearNone;
-        m_kParent.setDefaultCursor();
+        m_kParent.setCursor(MipavUtil.defaultCursor);
+        // not: m_kParent.setDefaultCursor() which changes the cursorMode...
     }
 
     /**

@@ -5903,7 +5903,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#PropDown(int)
      */
     public Vector3f PropDown(int iActive) {
-        return componentImage.downSlice();
+        Vector3f kReturn = componentImage.downSlice();
+        updateImages(true);
+        return kReturn;
     }
 
 
@@ -5911,7 +5913,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#PropUp(int)
      */
     public Vector3f PropUp(int iActive) {
-        return componentImage.upSlice();
+        Vector3f kReturn = componentImage.upSlice();
+        updateImages(true);
+        return kReturn;
     }
 
 
@@ -5955,13 +5959,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         componentImage.setCursor(kCursor);
     }
     
-    /* (non-Javadoc)
-     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#setDefaultCursor()
-     */
-    public void setDefaultCursor() {
-        PointerActive(true);
-    }
-
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#setModified()
      */

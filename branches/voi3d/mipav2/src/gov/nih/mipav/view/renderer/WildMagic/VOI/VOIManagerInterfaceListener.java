@@ -22,7 +22,6 @@ public interface VOIManagerInterfaceListener
     public void setActiveImage( ModelImage kImage );
     public void setCenter( Vector3f kCenter );
     public void setCursor( Cursor kCursor );
-    public void setDefaultCursor();
     public void setModified();
     public void updateData(boolean bCopyToCPU);
 }
