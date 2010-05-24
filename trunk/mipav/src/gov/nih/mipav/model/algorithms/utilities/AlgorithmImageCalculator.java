@@ -19,10 +19,7 @@ import javax.swing.border.*;
 
 /**
  * Algorithm that adds, subtracts, multiplies, or divides an image by by another image. In addition, two images can be
- * ANDed, ORed or XORed together. Also, more advanced operator expressions can be entered in a dialog text field. The
- * parsing of the advanced operator expression is largely based on the file Func.java by Leen Ammeraal. The Func.java
- * file appears at ftp://ftp.expa.fnt.hvu.nl/pub/ammeraal and http://home.wxs.nl/~ammeraal. It is also contained in
- * chapter 8 of Computer Graphics for Java Programmers by Leen Ammeraal, copyright 1998 by John Wiley & Sons Ltd.
+ * ANDed, ORed or XORed together. Also, more advanced operator expressions can be entered in a dialog text field.
  *
  * @version  1.0 Oct 1, 2000
  * @author   Matthew J. McAuliffe, Ph.D.
@@ -130,12 +127,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
     private JButton expButton, lnButton, sevenButton, eightButton, nineButton, divButton;
 
     /** DOCUMENT ME! */
-    private char lastChar;
-
-    /** DOCUMENT ME! */
-    private double lastNum;
-
-    /** DOCUMENT ME! */
     private JButton logButton, absButton;
 
     /** /**. */
@@ -185,8 +176,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
     
     /** when performing bulk operations via Image Calculator (Bulk Images) dialog, this array is populated */
     private ModelImage[] srcImages;
-    
-    private ViewJProgressBar progressBar;
     
     private String rpn;
 
@@ -296,6 +285,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
         if (event.getActionCommand().equals("Help")) {
             MipavUtil.showHelp("U4031");
         } else if (source == OKButton) {
+  
             adOpString = textOperator.getText();
             adOpDialog.dispose();
             pressedOK = true;
@@ -1386,9 +1376,9 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                                     break;
 
                                 case ADVANCED:
-                                	Double d = eval(bufferA[i], bufferB[i]);
-                                	if(d != null) {
-                                		bufferA[i] = d.doubleValue();
+                                	double d = evaluateRPNExpression(bufferA[i], bufferB[i], rpn);
+                                	if(d != Double.NaN) {
+                                		bufferA[i] = d;
                                 	}else {
                                 		displayError("Algorithm ImageCalculator: Error evaluating expression");
                                 		setCompleted(false);
@@ -2340,9 +2330,9 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                                     break;
 
                                 case ADVANCED:
-                                	Double d = eval(bufferA[i], bufferB[i]);
-                                	if(d != null) {
-                                		bufferA[i] = d.doubleValue();
+                                	double d = evaluateRPNExpression(bufferA[i], bufferB[i], rpn);
+                                	if(d != Double.NaN) {
+                                		bufferA[i] = d;
                                 	}else {
                                 		displayError("Algorithm ImageCalculator: Error evaluating expression");
                                 		setCompleted(false);
@@ -2862,7 +2852,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
      *
      * @return  DOCUMENT ME!
      */
-    private Double eval(double a, double b) {
+    /*private Double eval(double a, double b) {
         this.aVal = a;
         this.bVal = b;
         pos = 0;
@@ -2871,7 +2861,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 
         Double d = evaluateRPNExpression(rpn);
         return d;
-    }
+    }*/
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
     
     
@@ -2880,8 +2870,12 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
     /**
      * Method that evaluates the RPN expression and returns the value
      */
-    public Double evaluateRPNExpression(String rpn) {
-		Double finalAnswer = null;
+    public double evaluateRPNExpression(double a, double b, String rpn) {
+    	this.aVal = a;
+        this.bVal = b;
+        pos = 0;
+        OK = true;
+		double finalAnswer = Double.NaN;
 		try {
 			Double result;
 			String[] rpnTokens = rpn.split("\\|");
@@ -2894,7 +2888,27 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 					Double operand2 = rpnStack.pop();
 					Double operand1 = rpnStack.pop();
 					result = new Double(0);
-					result = evaluateOperatorExpression(token,operand1,operand2);
+					//result = evaluateOperatorExpression(token,operand1,operand2);
+					
+					
+					double d = 0;
+					if(token.equals("+")) {
+						d = operand1.doubleValue() + operand2.doubleValue();
+					}else if(token.equals("-")) {
+						d = operand1.doubleValue() - operand2.doubleValue();
+					}else if(token.equals("*")) {
+						d = operand1.doubleValue() * operand2.doubleValue();
+					}else if(token.equals("/")) {
+						d = operand1.doubleValue() / operand2.doubleValue();
+					}else if(token.equals("mod")) {
+						d = operand1.doubleValue()%operand2.doubleValue();
+					}
+					
+					result = new Double(d);
+					
+					
+					
+					
 					
 					//push answer on stack
 					rpnStack.push(result);
@@ -2905,7 +2919,15 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 						Double operand2 = rpnStack.pop();
 						Double operand1 = rpnStack.pop();
 						result = new Double(0);
-						result = evaluatePowExpression(operand1,operand2);
+						//result = evaluatePowExpression(operand1,operand2);
+						
+					
+						double d = 0;
+						
+						d = Math.pow(operand1.doubleValue(), operand2.doubleValue());
+						
+						result = new Double(d);
+						
 						
 						//push answer on stack
 						rpnStack.push(result);
@@ -2914,7 +2936,30 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 						//pop 1 item from stack
 						Double operand1 = rpnStack.pop();
 						result = new Double(0);
-						result = evaluateFuncExpression(token,operand1);
+						//result = evaluateFuncExpression(token,operand1);
+						
+						
+						double d = 0;
+						
+						if(token.equals("abs")) {
+							d = Math.abs(operand1);
+						}else if(token.equals("log")) {
+							d = Math.log10(operand1);
+						}else if(token.equals("exp")) {
+							d = Math.exp(operand1);
+						}else if(token.equals("ln")) {
+							d = Math.log(operand1);
+						}else if(token.equals("sin")) {
+							d = Math.sin(operand1);
+						}else if(token.equals("cos")) {
+							d = Math.cos(operand1);
+						}else if(token.equals("tan")) {
+							d = Math.tan(operand1);
+						}
+						
+						
+						
+						result = new Double(d);
 						
 						//push answer on stack
 						rpnStack.push(result);
@@ -2941,10 +2986,10 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 				
 			}
 			
-			finalAnswer = rpnStack.pop();
+			finalAnswer = rpnStack.pop().doubleValue();
 		}catch(Exception e) {
 			e.printStackTrace();
-			return null;
+			return Double.NaN;
 		}
 		
 		return finalAnswer;
@@ -2987,7 +3032,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
      * @param operand1
      * @return
      */
-    public  Double evaluateFuncExpression(String token, Double operand1) {
+   /* public  Double evaluateFuncExpression(String token, Double operand1) {
 		Double value;
 		double d = 0;
 		
@@ -3012,7 +3057,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 		value = new Double(d);
 		
 		return value;
-	}
+	}*/
     
     /**
      * method that calculates the POW function
@@ -3020,7 +3065,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
      * @param operand2
      * @return
      */
-    public Double evaluatePowExpression(Double operand1, Double operand2) {
+   /* public Double evaluatePowExpression(Double operand1, Double operand2) {
 		Double value;
 		double d = 0;
 		
@@ -3029,7 +3074,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 		value = new Double(d);
 		
 		return value;
-	}
+	}*/
     
     
     /**
@@ -3039,7 +3084,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
      * @param operand2
      * @return
      */
-    public Double evaluateOperatorExpression(String token, Double operand1, Double operand2) {
+    /*public Double evaluateOperatorExpression(String token, Double operand1, Double operand2) {
 		Double value;
 		double d = 0;
 		if(token.equals("+")) {
@@ -3056,7 +3101,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 		
 		value = new Double(d);
 		return value;
-	}
+	}*/
     
     /**
      * method that does some initial validation of the expression
