@@ -3330,8 +3330,118 @@ public class ModelImage extends ModelStorageBase {
         	// "For MR Images, Bits Allocated (0028,0100) shall have the Enumerated Value of 16.
         	// These and other similar requirements are ignored so that a type reallocation can be performed.
         	if (changedEndianess) {
-        	    MipavUtil.displayError("Cannot change endianess of dicom file");
-        	    return;
+        		FileDicomTagTable tagTable;
+        		Hashtable tagsList;
+        		Enumeration e;
+        		String name;
+        		FileDicomKey key;
+        		FileDicomTag tag;
+        		String tagType;
+        		Object tagValueList[];
+        		Short ShortValueList[] = null;
+        		short shortValue;
+        		int intValue;
+        		float floatValue;
+        		long longValue;
+        		double doubleValue;
+        		int i;
+        		int ii;
+        		int j;
+        		byte byteValues[] = new byte[8];
+        		int group;
+        		int element;
+        		int tagLength;
+        		int numSlices = 1;
+        		if (dimExtents.length >= 3) {
+        			numSlices *= dimExtents[2];
+        		}
+        		if (dimExtents.length >= 4) {
+        			numSlices *= dimExtents[3];
+        		}
+        		for (i = 0; i < numSlices; i++) {
+        		    tagTable = ((FileInfoDicom)fileInfo[i]).getTagTable();
+        		    tagsList = tagTable.getTagList();
+        		    for (ii = 0, e = tagsList.keys(); e.hasMoreElements(); ii++) {
+        		       key = (FileDicomKey)e.nextElement();
+        		       name = key.getKey();
+        		       tag = (FileDicomTag)tagsList.get(key);
+        		       group = tag.getGroup();
+        		       byteValues[0] = (byte)(group & 0x00ff);
+		    	       byteValues[1] = (byte)((group >>> 8) & 0x00ff);
+		    	       group = (short)(byteValues[1] & 0xff) | ((byteValues[0] & 0xff) << 8);
+		    	       tag.setGroup(group);
+		    	       element = tag.getElement();
+        		       byteValues[0] = (byte)(element & 0x00ff);
+		    	       byteValues[1] = (byte)((element >>> 8) & 0x00ff);
+		    	       element = (short)((byteValues[1] & 0xff) | ((byteValues[0] & 0xff) << 8));
+		    	       tag.setElement(element);
+		    	       tagLength = tag.getLength();
+		    	       byteValues[0] = (byte)(tagLength & 0x00ff);
+		    	       byteValues[1] = (byte)((tagLength >>> 8) & 0x00ff);
+		    	       byteValues[2] = (byte)((tagLength >>> 16) & 0x00ff);
+		    	       byteValues[3] = (byte)((tagLength >>> 24) & 0x00ff);
+		    	       tagLength = ((byteValues[3] & 0xff) | ((byteValues[2] & 0xff) << 8) |
+		    	    		      ((byteValues[1] & 0xff) << 16) | ((byteValues[0] & 0xff) << 24));
+		    	       tag.setLength(tagLength);
+        		       tagType = tag.getType();
+        		       tagValueList = tag.getValueList();
+        		       if (tagType.equals("typeShort")) {
+        		    	   for (j = 0; j < tagValueList.length; j++) {
+        		    	       shortValue = ((Short)tagValueList[j]).shortValue();
+        		    	       byteValues[0] = (byte)(shortValue & 0x00ff);
+        		    	       byteValues[1] = (byte)((shortValue >>> 8) & 0x00ff);
+        		    	       shortValue = (short)((byteValues[1] & 0xff) | ((byteValues[0] & 0xff) << 8));
+        		    	       tagValueList[j] = Short.valueOf(shortValue);
+        		    	   }
+        		       }
+        		       else if (tagType.equals("typeInt")) {
+        		    	   for (j = 0; j < tagValueList.length; j++) {
+        		    	       intValue = ((Integer)tagValueList[j]).intValue();
+        		    	       byteValues[0] = (byte)(intValue & 0x00ff);
+        		    	       byteValues[1] = (byte)((intValue >>> 8) & 0x00ff);
+        		    	       byteValues[2] = (byte)((intValue >>> 16) & 0x00ff);
+        		    	       byteValues[3] = (byte)((intValue >>> 24) & 0x00ff);
+        		    	       intValue = ((byteValues[3] & 0xff) | ((byteValues[2] & 0xff) << 8) |
+        		    	    		      ((byteValues[1] & 0xff) << 16) | ((byteValues[0] & 0xff) << 24));
+        		    	       tagValueList[j] = Integer.valueOf(intValue);   
+        		    	   }
+        		       }
+        		       else if (tagType.equals("typeFloat")) {
+        		    	   for (j = 0; j < tagValueList.length; j++) {
+        		    	       floatValue = ((Float)tagValueList[j]).floatValue();
+        		    	       intValue = Float.floatToIntBits(floatValue);
+        		    	       byteValues[0] = (byte)(intValue & 0x00ff);
+        		    	       byteValues[1] = (byte)((intValue >>> 8) & 0x00ff);
+        		    	       byteValues[2] = (byte)((intValue >>> 16) & 0x00ff);
+        		    	       byteValues[3] = (byte)((intValue >>> 24) & 0x00ff);
+        		    	       intValue = ((byteValues[3] & 0xff) | ((byteValues[2] & 0xff) << 8) |
+        		    	    		      ((byteValues[1] & 0xff) << 16) | ((byteValues[0] & 0xff) << 24));
+        		    	       floatValue = Float.intBitsToFloat(intValue);
+        		    	       tagValueList[j] = Integer.valueOf(intValue);
+        		    	   } 
+        		       }
+        		       else if (tagType.equals("typeDouble")) {
+        		    	   for (j = 0; j < tagValueList.length; j++) {
+        		    	       doubleValue = ((Double)tagValueList[j]).doubleValue();
+        		    	       longValue = Double.doubleToLongBits(doubleValue);
+        		    	       byteValues[0] = (byte)(longValue & 0x00ffL);
+        		    	       byteValues[1] = (byte)((longValue >>> 8) & 0x00ffL);
+        		    	       byteValues[2] = (byte)((longValue >>> 16) & 0x00ffL);
+        		    	       byteValues[3] = (byte)((longValue >>> 24) & 0x00ffL);
+        		    	       byteValues[4] = (byte)((longValue >>> 32) & 0x00ffL);
+        		    	       byteValues[5] = (byte)((longValue >>> 40) & 0x00ffL);
+        		    	       byteValues[6] = (byte)((longValue >>> 48) & 0x00ffL);
+        		    	       byteValues[7] = (byte)((longValue >>> 56) & 0x00ffL);
+        		    	       longValue = ((byteValues[7] & 0xffL) | ((byteValues[6] & 0xffL) << 8) |
+        		    	    		       ((byteValues[5] & 0xffL) << 16) | ((byteValues[4] & 0xffL) << 24) |
+        		    	    		       ((byteValues[3] & 0xffL) << 32) | ((byteValues[2] & 0xffL) << 40) |
+        		    	    		       ((byteValues[1] & 0xffL) << 48) | ((byteValues[0] & 0xffL) << 56));
+        		    	       doubleValue = Double.longBitsToDouble(longValue);
+        		    	       tagValueList[j] = Double.valueOf(doubleValue);
+        		    	   }
+        		       }
+        		    } // for (ii = 0, e = tagsList.keys(); e.hasMoreElements(); ii++)
+        		} // for (i = 0; i < numSlices; i++)
         	} // if (changedEndianess)
         	short UNSIGNED_INTEGER = (short)0;
         	short SIGNED_INTEGER = (short)1;
