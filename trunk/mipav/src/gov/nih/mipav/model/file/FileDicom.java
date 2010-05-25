@@ -619,11 +619,8 @@ public class FileDicom extends FileDicomBase {
         int[] extents;
         String type, // type of data; there are 7, see FileInfoDicom
         name; // string representing the tag
-        boolean endWrapper[] = new boolean[1];
 
         boolean endianess = FileBase.LITTLE_ENDIAN; // all DICOM files start as little endian (tags 0002)
-        boolean group2Completed = false;
-        boolean endianCheck = false;
         boolean flag = true;
 
         if (loadTagBuffer == true) {
@@ -671,36 +668,18 @@ public class FileDicom extends FileDicomBase {
                 // endianess is defined in a tag and set here, after the transfer
                 // syntax group has been read in
                 if (getFilePointer() >= (ID_OFFSET + 4 + metaGroupLength)) {
-                	if (metaGroupLength > 0) {
-                        group2Completed = true;
-                	}
                     endianess = fileInfo.getEndianess();
                     // Preferences.debug("endianess = " + endianess + "\n", Preferences.DEBUG_FILEIO);
                 }
             } else {
 
                 if (getFilePointer() >= metaGroupLength) {
-                	if (metaGroupLength > 0) {
-                	    group2Completed = true;
-                	}
                     endianess = fileInfo.getEndianess();
                 }
             }
 
             // ******* Gets the next element
-            if (group2Completed && (!endianCheck)) {
-            	// Increase chance of correctly reading big endian dicom files
-            	// If first group number after the transfer syntax group has been
-            	// read in is >= 256, then switch endianess.
-            	endWrapper[0] = endianess;
-                getNextElement(endWrapper);	
-                endianCheck = true;
-                endianess = endWrapper[0];
-                fileInfo.setEndianess(endianess);
-            }
-            else {
-                getNextElement(endianess); // gets group, element, length
-            }
+            getNextElement(endianess); // gets group, element, length
             name = convertGroupElement(groupWord, elementWord);
 
             final FileDicomKey key = new FileDicomKey(name);
@@ -3457,54 +3436,6 @@ public class FileDicom extends FileDicomBase {
             // either IMPLICIT or group element is not SEQ_ITEM_BEGIN
             read(byteBuffer4);
             elementLength = getLength(bigEndian, byteBuffer4[0], byteBuffer4[1], byteBuffer4[2], byteBuffer4[3]);
-        }
-    }
-    
-    /**
-     * Increments the location, then reads the elementWord, groupWord, and elementLength. It also tests for an end of
-     * file and resets the elementWord if it encounters one.
-     * 
-     * @param bigEndian <code>true</code> indicates big endian byte order, <code>false</code> indicates little
-     *            endian.
-     * 
-     * @throws IOException DOCUMENT ME!
-     */
-    private void getNextElement(boolean endianWrapper[]) throws IOException {
-        groupWord = getUnsignedShort(endianWrapper[0]);
-        byte b0, b1;
-        if (groupWord >= 256) {
-        	endianWrapper[0] = !endianWrapper[0];
-        	b0 = (byte)(groupWord & 0x00ff);
- 	        b1 = (byte)((groupWord >>> 8) & 0x00ff);
- 	        groupWord = (short)((b1 & 0xff) | ((b0 & 0xff) << 8));
-        }
-        elementWord = getUnsignedShort(endianWrapper[0]);
-        // Preferences.debug("(just found: )"+Integer.toString(groupWord, 0x10) + ":"+Integer.toString(elementWord,
-        // 0x10)+" - " ); System.err.print("( just found: ) "+ Integer.toString(groupWord, 0x10) +
-        // ":"+Integer.toString(elementWord, 0x10)+ " - ");
-
-        if (fileInfo.vr_type == FileInfoDicom.EXPLICIT) {
-
-            /*
-             * explicit tags carry an extra 4 bytes after the tag (group, element) information to describe the type of
-             * tag. the element dictionary describes this info, so we skip past it here. (apr 2004)
-             */
-            final String tagname = convertGroupElement(groupWord, elementWord);
-
-            if (tagname.equals(FileDicom.SEQ_ITEM_BEGIN) || tagname.equals(FileDicom.SEQ_ITEM_END)
-                    || tagname.equals(FileDicom.SEQ_ITEM_UNDEF_END) || tagname.equals("FFFE,EEEE")) // reserved
-            {
-                elementLength = getInt(endianWrapper[0]);
-            } else {
-                read(byteBuffer4); // Reads the explicit VR and following two bytes.
-                elementLength = getLength(endianWrapper[0], byteBuffer4[0], byteBuffer4[1], byteBuffer4[2], byteBuffer4[3]);
-                // Preferences.debug(" length " + Integer.toString(elementLength, 0x10) + "\n");
-            }
-        } else { // this is what is standardly used.
-
-            // either IMPLICIT or group element is not SEQ_ITEM_BEGIN
-            read(byteBuffer4);
-            elementLength = getLength(endianWrapper[0], byteBuffer4[0], byteBuffer4[1], byteBuffer4[2], byteBuffer4[3]);
         }
     }
 
