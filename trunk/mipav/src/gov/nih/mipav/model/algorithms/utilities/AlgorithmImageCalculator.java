@@ -2963,6 +2963,23 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 		if(!success) {
 			return "";
 		}
+		
+		//check that there are tokens where there are operators back to back or digits back to back
+		for(int i=0;i<tokens.size();i++) {
+			String t = tokens.get(i);
+			if(i+1 < tokens.size()) {
+				String t2 = tokens.get(i+1);
+				if(isOperator(t) && isOperator(t2)) {
+					return "";
+				}
+				if(isDigit(t) && isDigit(t2)) {
+					return "";
+				}
+			}
+			
+		}
+		
+		
 		rpnString = convertToRPN(tokens);
 		return rpnString;
 		
@@ -3635,6 +3652,20 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 		return isDigit;
 	}
 
+	
+	
+	/**
+	 * determines if char is a digit
+	 * @param c
+	 * @return
+	 */
+	public boolean isDigit(String s) {
+		boolean isDigit = false;
+		if(s.equals("0") || s.equals("1") || s.equals("2") || s.equals("3") || s.equals("4") || s.equals("5") || s.equals("6") || s.equals("7") || s.equals("8") || s.equals("9")) {
+			isDigit = true;
+		}
+		return isDigit;
+	}
     
     
     
