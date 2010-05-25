@@ -2975,7 +2975,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 				if(isOperator(t) && isOperator(t2)) {
 					return "";
 				}
-				if((isValidNumber(t)||t.equals("A")||t.equals("b")) && (isValidNumber(t2)||t.equals("A")||t.equals("B"))) {
+				if((isValidNumber(t)||t.equals("A")||t.equals("B")) && (isValidNumber(t2)||t2.equals("A")||t2.equals("B"))) {
 					return "";
 				}
 				if(t.equals(")") && t2.equals("(")) {
