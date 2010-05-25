@@ -933,35 +933,8 @@ public class VOI extends ModelSerialCloneable {
             for (int i = 0; i < nGons; i++) {
 
                 if (!onlyActive || ((VOIContour) (curves.elementAt(i))).isActive()) {
-                    ((VOIContour) (curves.elementAt(i))).getBounds(xBounds, yBounds, zBounds);
 
-                    int xbs = (int) xBounds[0];
-                    int xbe = (int) xBounds[1];
-                    int ybs = (int) yBounds[0];
-                    int ybe = (int) yBounds[1];
-                    int zbs = (int) zBounds[0];
-                    int zbe = (int) zBounds[1];
-                    
-                    for (int z = zbs; z <= zbe; z++) {
-                        for (int y = ybs; y <= ybe; y++) {
-                            for (int x = xbs; x <= xbe; x++) {
-                                int offset = z * xDim * yDim + y * xDim + x;                                
-                                if (curves.elementAt(i).contains(x, y, z) )
-                                {
-                                    if (polarity == ADDITIVE) {
-                                        if (XOR && mask.get(offset)) {
-                                            mask.clear(offset);
-                                        } else {
-                                            mask.set(offset);
-                                        }
-                                    }
-                                    else if (polarity == SUBTRACTIVE) {
-                                        mask.clear(offset);
-                                    } 
-                                } 
-                            }
-                        }
-                    }
+                    curves.elementAt(i).fillVolume( mask, xDim, yDim, XOR, polarity );     
                 }
             }
         } else if ((process == true) && (curveType == POINT)) {

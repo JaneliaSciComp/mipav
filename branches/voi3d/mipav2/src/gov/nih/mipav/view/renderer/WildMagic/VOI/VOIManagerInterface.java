@@ -256,11 +256,30 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
             new JDialogOpacityControls(null, this, m_fOpacity);
         } else if ( command.equals(CustomUIBuilder.PARAM_VOI_QUICK_AND_OP.getActionCommand() ) ) {
             saveImage(CustomUIBuilder.PARAM_VOI_QUICK_AND_OP.getActionCommand());
-            createMask( m_kParent.getActiveImage(), true );
+            if (getActiveImage().getVOIs().size() < 1) {
+                MipavUtil.displayWarning("Must have at least one VOI to perform quick mask");
+
+                return;
+            }
+            System.err.println( "start" );
+            long time = System.currentTimeMillis();
+
+            new JDialogMask(getActiveImage(), false, false);
+            time = System.currentTimeMillis() - time;
+            System.err.println( "done " + time );
             setDefaultCursor();
         } else if ( command.equals(CustomUIBuilder.PARAM_VOI_QUICK_NOT_OP.getActionCommand() ) ) {
             saveImage(CustomUIBuilder.PARAM_VOI_QUICK_NOT_OP.getActionCommand());
-            createMask( m_kParent.getActiveImage(), false );
+            if (getActiveImage().getVOIs().size() < 1) {
+                MipavUtil.displayWarning("Must have at least one VOI to perform quick mask");
+
+                return;
+            }
+            System.err.println( "start" );
+            long time = System.currentTimeMillis();
+            new JDialogMask(getActiveImage(), false, true);
+            time = System.currentTimeMillis() - time;
+            System.err.println( "done " + time );
             setDefaultCursor();
         } else if (command.equals(CustomUIBuilder.PARAM_VOI_3D_INTERSECTION.getActionCommand()) ) {
             m_kParent.create3DVOI(true);
@@ -420,6 +439,8 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         }
 
 
+        System.err.println( "start" );
+        long time = System.currentTimeMillis();
         //ModelImage kImage = new ModelImage( ModelStorageBase.INTEGER, 
         //       m_kVolumeImage.GetImage().getExtents(), "Temp" );
         int iSize = kActive.getSize();
@@ -448,6 +469,8 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         {
             new JDialogMask(kActive, false, false, false);
         }
+        time = System.currentTimeMillis() - time;
+        System.err.println( "done " + time );
     }
 
 
@@ -2328,19 +2351,10 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
             for ( int j = 0; j < kCurrentGroup.getCurves().size(); j++ )
             {
                 VOIBase kCurrentVOI = kCurrentGroup.getCurves().get(j);
-                VOIManager kManager = m_kVOIManagers[0];
-                for ( int k = 0; k < m_kVOIManagers.length; k++ )
-                {
-                    if ( kCurrentVOI.getPlane() == m_kVOIManagers[k].getPlane() )
-                    {
-                        kManager = m_kVOIManagers[k];
-                        break;
-                    }
-                }
                 if ( kCurrentVOI.isActive() )
                 {
                     bCreated = true;
-                    kManager.fillVolume(  kCurrentVOI, kVolume, kMask, bIntersection, iValue );     
+                    kCurrentVOI.fillVolume( kVolume, kMask, bIntersection, iValue );     
                 }
             }
         }

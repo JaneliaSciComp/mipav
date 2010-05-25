@@ -880,8 +880,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     voiManager.selectAllVOIs(true);
                 }
 
-                System.err.println( "BinearyMask");
+                System.err.println( "start" );
+                long time = System.currentTimeMillis();
                 maskImage = getActiveImage().generateBinaryImage(useXOR, false);
+                time = System.currentTimeMillis() - time;
+                System.err.println( "done " + time );
 
                 if (maskImage != null) {
                     maskImage.setImageName(getActiveImage().getImageName() + "_bmask");
