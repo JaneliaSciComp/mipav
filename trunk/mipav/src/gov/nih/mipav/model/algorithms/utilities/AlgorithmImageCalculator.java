@@ -285,7 +285,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
         if (event.getActionCommand().equals("Help")) {
             MipavUtil.showHelp("U4031");
         } else if (source == OKButton) {
-  
+        	this.getProgressChangeListener().setVisible(true);
             adOpString = textOperator.getText();
             adOpDialog.dispose();
             pressedOK = true;
@@ -2845,29 +2845,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
     }
 
     /**
-     * DOCUMENT ME!
-     *
-     * @param   a  DOCUMENT ME!
-     * @param   b  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    /*private Double eval(double a, double b) {
-        this.aVal = a;
-        this.bVal = b;
-        pos = 0;
-        OK = true;
-        
-
-        Double d = evaluateRPNExpression(rpn);
-        return d;
-    }*/
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
-    
-    
-    
-    /**
      * Method that evaluates the RPN expression and returns the value
      */
     public double evaluateRPNExpression(double a, double b, String rpn) {
@@ -2882,15 +2859,12 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 			Stack<Double> rpnStack = new Stack<Double>();
 			for(int i=0;i<rpnTokens.length;i++) {
 				String token = rpnTokens[i];
-				//System.out.println("**" + token + "**");
 				if(isOperator(token)) {
 					//pop 2 items from stack
 					Double operand2 = rpnStack.pop();
 					Double operand1 = rpnStack.pop();
+					
 					result = new Double(0);
-					//result = evaluateOperatorExpression(token,operand1,operand2);
-					
-					
 					double d = 0;
 					if(token.equals("+")) {
 						d = operand1.doubleValue() + operand2.doubleValue();
@@ -2903,44 +2877,29 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 					}else if(token.equals("mod")) {
 						d = operand1.doubleValue()%operand2.doubleValue();
 					}
-					
 					result = new Double(d);
-					
-					
-					
-					
 					
 					//push answer on stack
 					rpnStack.push(result);
-					
 				}else if(isFunction(token)) {
 					if(token.equals("pow")) {
 						//pop 2 items from stack
 						Double operand2 = rpnStack.pop();
 						Double operand1 = rpnStack.pop();
+						
 						result = new Double(0);
-						//result = evaluatePowExpression(operand1,operand2);
-						
-					
 						double d = 0;
-						
 						d = Math.pow(operand1.doubleValue(), operand2.doubleValue());
-						
 						result = new Double(d);
-						
 						
 						//push answer on stack
 						rpnStack.push(result);
-						
 					}else {
 						//pop 1 item from stack
 						Double operand1 = rpnStack.pop();
+						
 						result = new Double(0);
-						//result = evaluateFuncExpression(token,operand1);
-						
-						
 						double d = 0;
-						
 						if(token.equals("abs")) {
 							d = Math.abs(operand1);
 						}else if(token.equals("log")) {
@@ -2956,14 +2915,10 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 						}else if(token.equals("tan")) {
 							d = Math.tan(operand1);
 						}
-						
-						
-						
 						result = new Double(d);
 						
 						//push answer on stack
 						rpnStack.push(result);
-						
 					}
 				}else {
 					if(token.equals("A")) {
@@ -2976,22 +2931,16 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 						Double doublePi = new Double(Math.PI);
 						rpnStack.push(doublePi);
 					}else {
-						//System.out.println(token);
 						Double operandValue = new Double(token);
 						rpnStack.push(operandValue);
 					}
-					
 				}
-				
-				
 			}
-			
 			finalAnswer = rpnStack.pop().doubleValue();
 		}catch(Exception e) {
 			e.printStackTrace();
 			return Double.NaN;
 		}
-		
 		return finalAnswer;
 	}
    
@@ -3010,99 +2959,15 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 		if(!success) {
 			return "";
 		}
-		
 		success = tokenize(expression,tokens);
 		if(!success) {
 			return "";
 		}
-		//System.out.println(tokens.size());
-		//for(int i=0;i<tokens.size();i++) {
-			//System.out.println(tokens.get(i));
-		//}
-		
 		rpnString = convertToRPN(tokens);
-		
 		return rpnString;
 		
 	}
-    
-    /**
-     * method that does some of the function calculations
-     * @param token
-     * @param operand1
-     * @return
-     */
-   /* public  Double evaluateFuncExpression(String token, Double operand1) {
-		Double value;
-		double d = 0;
-		
-		if(token.equals("abs")) {
-			d = Math.abs(operand1);
-		}else if(token.equals("log")) {
-			d = Math.log10(operand1);
-		}else if(token.equals("exp")) {
-			d = Math.exp(operand1);
-		}else if(token.equals("ln")) {
-			d = Math.log(operand1);
-		}else if(token.equals("sin")) {
-			d = Math.sin(operand1);
-		}else if(token.equals("cos")) {
-			d = Math.cos(operand1);
-		}else if(token.equals("tan")) {
-			d = Math.tan(operand1);
-		}
-		
-		
-		
-		value = new Double(d);
-		
-		return value;
-	}*/
-    
-    /**
-     * method that calculates the POW function
-     * @param operand1
-     * @param operand2
-     * @return
-     */
-   /* public Double evaluatePowExpression(Double operand1, Double operand2) {
-		Double value;
-		double d = 0;
-		
-		d = Math.pow(operand1.doubleValue(), operand2.doubleValue());
-		
-		value = new Double(d);
-		
-		return value;
-	}*/
-    
-    
-    /**
-     * method that calculates some of the basic operations
-     * @param token
-     * @param operand1
-     * @param operand2
-     * @return
-     */
-    /*public Double evaluateOperatorExpression(String token, Double operand1, Double operand2) {
-		Double value;
-		double d = 0;
-		if(token.equals("+")) {
-			d = operand1.doubleValue() + operand2.doubleValue();
-		}else if(token.equals("-")) {
-			d = operand1.doubleValue() - operand2.doubleValue();
-		}else if(token.equals("*")) {
-			d = operand1.doubleValue() * operand2.doubleValue();
-		}else if(token.equals("/")) {
-			d = operand1.doubleValue() / operand2.doubleValue();
-		}else if(token.equals("mod")) {
-			d = operand1.doubleValue()%operand2.doubleValue();
-		}
-		
-		value = new Double(d);
-		return value;
-	}*/
-    
+
     /**
      * method that does some initial validation of the expression
      * @param expression
@@ -3129,8 +2994,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 				return false;
 			}
 		}
-		
-		
 		if(expression.contains("abs")) {
 			int index = 0;
 			do{
@@ -3139,11 +3002,9 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 					index = index + 3;
 					if(index < expression.length()) {
 						char c = expression.charAt(index);
-						//System.out.println(c);
 						if(c != '(') {
 							MipavUtil.displayError("abs function must be followed by a (");
 							return false;
-						
 						}
 					}else {
 						MipavUtil.displayError("abs function must be followed by a (");
@@ -3154,8 +3015,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 				}
 			}while(index < expression.length());
 		}
-		
-		
 		if(expression.contains("log")) {
 			int index = 0;
 			do{
@@ -3164,11 +3023,9 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 					index = index + 3;
 					if(index < expression.length()) {
 						char c = expression.charAt(index);
-						//System.out.println(c);
 						if(c != '(') {
 							MipavUtil.displayError("log function must be followed by a (");
 							return false;
-						
 						}
 					}else {
 						MipavUtil.displayError("log function must be followed by a (");
@@ -3179,7 +3036,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 				}
 			}while(index < expression.length());
 		}
-		
 		if(expression.contains("exp")) {
 			int index = 0;
 			do{
@@ -3188,11 +3044,9 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 					index = index + 3;
 					if(index < expression.length()) {
 						char c = expression.charAt(index);
-						//System.out.println(c);
 						if(c != '(') {
 							MipavUtil.displayError("exp function must be followed by a (");
 							return false;
-						
 						}
 					}else {
 						MipavUtil.displayError("exp function must be followed by a (");
@@ -3203,8 +3057,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 				}
 			}while(index < expression.length());
 		}
-		
-		
 		if(expression.contains("ln")) {
 			int index = 0;
 			do{
@@ -3213,11 +3065,9 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 					index = index + 2;
 					if(index < expression.length()) {
 						char c = expression.charAt(index);
-						//System.out.println(c);
 						if(c != '(') {
 							MipavUtil.displayError("ln function must be followed by a (");
 							return false;
-						
 						}
 					}else {
 						MipavUtil.displayError("ln function must be followed by a (");
@@ -3228,8 +3078,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 				}
 			}while(index < expression.length());
 		}
-		
-		
 		if(expression.contains("pow")) {
 			int index = 0;
 			do{
@@ -3238,11 +3086,9 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 					index = index + 3;
 					if(index < expression.length()) {
 						char c = expression.charAt(index);
-						//System.out.println(c);
 						if(c != '(') {
 							MipavUtil.displayError("pow function must be followed by a (");
 							return false;
-						
 						}
 					}else {
 						MipavUtil.displayError("pow function must be followed by a (");
@@ -3253,8 +3099,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 				}
 			}while(index < expression.length());
 		}
-		
-		
 		if(expression.contains("sin")) {
 			int index = 0;
 			do{
@@ -3263,11 +3107,9 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 					index = index + 3;
 					if(index < expression.length()) {
 						char c = expression.charAt(index);
-						//System.out.println(c);
 						if(c != '(') {
 							MipavUtil.displayError("sin function must be followed by a (");
 							return false;
-						
 						}
 					}else {
 						MipavUtil.displayError("sin function must be followed by a (");
@@ -3278,9 +3120,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 				}
 			}while(index < expression.length());
 		}
-		
-		
-		
 		if(expression.contains("cos")) {
 			int index = 0;
 			do{
@@ -3289,11 +3128,9 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 					index = index + 3;
 					if(index < expression.length()) {
 						char c = expression.charAt(index);
-						//System.out.println(c);
 						if(c != '(') {
 							MipavUtil.displayError("cos function must be followed by a (");
 							return false;
-						
 						}
 					}else {
 						MipavUtil.displayError("cos function must be followed by a (");
@@ -3304,9 +3141,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 				}
 			}while(index < expression.length());
 		}
-		
-		
-		
 		if(expression.contains("tan")) {
 			int index = 0;
 			do{
@@ -3315,11 +3149,9 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 					index = index + 3;
 					if(index < expression.length()) {
 						char c = expression.charAt(index);
-						//System.out.println(c);
 						if(c != '(') {
 							MipavUtil.displayError("tan function must be followed by a (");
 							return false;
-						
 						}
 					}else {
 						MipavUtil.displayError("tan function must be followed by a (");
@@ -3330,11 +3162,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 				}
 			}while(index < expression.length());
 		}
-		
-		
-		
 		return success;
-
 	}
     
     
@@ -3353,12 +3181,8 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 			char c;
 			String s;
 			StringBuffer sb;
-			//System.out.println(expression.length());
-			//System.out.println();
 			while(pos < expression.length()) {
-				//System.out.println(pos);
 				c = readChar(expression,pos);
-				//System.out.println("char: " + c + " pos: " + pos);
 				if(c == ' ') {
 					pos++;
 				} else if(c == '(') {
@@ -3433,7 +3257,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 						}
 					}
 					tokens.add(sb.toString());
-					//pos--;
 				}else if(c == 'a') {
 					//check if word is "abs"
 					char c2,c3;
@@ -3655,20 +3478,12 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 				}else {
 					return false;
 				}
-				
-				
-				
-				
-			}
-			
-			
-			
+			}	
 		}catch(Exception e) {
 			e.printStackTrace();
 			success = false;
 			return success;
 		}
-		
 		return success;
 	}
     
@@ -3684,7 +3499,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 		try{
 			for(int i=0;i<tokens.size();i++) {
 				String token = tokens.get(i);
-				//System.out.println("***" + token);
 				if(token.equals("(")) {
 					operatorStack.push(token);
 				}else if (token.equals(")")) {
@@ -3706,7 +3520,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 						peek1 = operatorStack.peek();
 					}
 					if(operatorStack.isEmpty() || peek1.equals("(") || (precedence(peek1) < precedence(token))) {
-						//System.out.println("pushing " + token);
 						operatorStack.push(token);
 					}else {
 						String peek2 = "";
@@ -3716,9 +3529,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 							if(!operatorStack.isEmpty()) {
 								peek2 = operatorStack.peek();
 							}
-							
 						}while(!operatorStack.isEmpty() && !peek2.equals("(") || (precedence(token) < precedence(peek2)));
-						
 						operatorStack.push(token);
 					}
 				}else if(isFunction(token)) {
@@ -3731,7 +3542,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 				}else {
 					rpnString = rpnString + "|" + token;
 				}
-				
 			}
 			while(!operatorStack.isEmpty()) {
 				String pop = operatorStack.pop();
