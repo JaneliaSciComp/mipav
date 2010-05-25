@@ -3330,78 +3330,8 @@ public class ModelImage extends ModelStorageBase {
         	// "For MR Images, Bits Allocated (0028,0100) shall have the Enumerated Value of 16.
         	// These and other similar requirements are ignored so that a type reallocation can be performed.
         	if (changedEndianess) {
-        		FileDicomTagTable tagTable;
-        		Hashtable tagsList;
-        		Enumeration e;
-        		String name;
-        		FileDicomKey key;
-        		FileDicomTag tag;
-        		String tagType;
-        		Object tagValueList[];
-        		Short ShortValueList[] = null;
-        		short shortValue;
-        		int intValue;
-        		float floatValue;
-        		long longValue;
-        		double doubleValue;
-        		int i;
-        		int ii;
-        		int j;
-        		byte byteValues[] = new byte[8];
-        		int group;
-        		int element;
-        		int tagLength;
-        		int numSlices = 1;
-        		if (dimExtents.length >= 3) {
-        			numSlices *= dimExtents[2];
-        		}
-        		if (dimExtents.length >= 4) {
-        			numSlices *= dimExtents[3];
-        		}
-        		for (i = 0; i < numSlices; i++) {
-        		    tagTable = ((FileInfoDicom)fileInfo[i]).getTagTable();
-        		    tagsList = tagTable.getTagList();
-        		    for (ii = 0, e = tagsList.keys(); e.hasMoreElements(); ii++) {
-        		       key = (FileDicomKey)e.nextElement();
-        		       name = key.getKey();
-        		       tag = (FileDicomTag)tagsList.get(key);
-        		       group = tag.getGroup();
-        		       int originalGroup = group;
-        		       byteValues[0] = (byte)(group & 0x00ff);
-		    	       byteValues[1] = (byte)((group >>> 8) & 0x00ff);
-		    	       group = (short)(byteValues[1] & 0xff) | ((byteValues[0] & 0xff) << 8);
-		    	       tag.setGroup(group);
-		    	       element = tag.getElement();
-		    	       int originalElement = element;
-        		       byteValues[0] = (byte)(element & 0x00ff);
-		    	       byteValues[1] = (byte)((element >>> 8) & 0x00ff);
-		    	       element = (short)((byteValues[1] & 0xff) | ((byteValues[0] & 0xff) << 8));
-		    	       tag.setElement(element);
-		    	       tagLength = tag.getLength();
-		    	       int originalTagLength = tagLength;
-		    	       byteValues[0] = (byte)(tagLength & 0x00ff);
-		    	       byteValues[1] = (byte)((tagLength >>> 8) & 0x00ff);
-		    	       byteValues[2] = (byte)((tagLength >>> 16) & 0x00ff);
-		    	       byteValues[3] = (byte)((tagLength >>> 24) & 0x00ff);
-		    	       tagLength = ((byteValues[3] & 0xff) | ((byteValues[2] & 0xff) << 8) |
-		    	    		      ((byteValues[1] & 0xff) << 16) | ((byteValues[0] & 0xff) << 24));
-		    	       tag.setLength(tagLength);
-        		       tagType = tag.getType();
-        		       tagValueList = tag.getValueList();
-        		       /*if ((originalGroup == 2) && (originalElement == 1) && 
-        		    	   (tagType.equals("otherByteString")) && (originalTagLength == 2)) {
-        		    	   // File Meta Information Version 
-        		    	   // tagType = "otherByteString"
-        		    	   // tagLength = 2
-        		    	   Object temp;
-        		    	   temp = tagValueList[0];
-        		    	   tagValueList[0] = tagValueList[1];
-        		    	   tagValueList[1] = temp;
-        		    	   System.out.println("originalTagLength = " + originalTagLength + " tagLength = " + tagLength);
-        		    	   tagTable.setValue("0002,0001", tagValueList, originalTagLength);
-        		       }*/
-        		    } // for (ii = 0, e = tagsList.keys(); e.hasMoreElements(); ii++)
-        		} // for (i = 0; i < numSlices; i++)
+        		MipavUtil.displayError("Cannot change dicom endianess");
+        		return;
         	} // if (changedEndianess)
         	short UNSIGNED_INTEGER = (short)0;
         	short SIGNED_INTEGER = (short)1;
