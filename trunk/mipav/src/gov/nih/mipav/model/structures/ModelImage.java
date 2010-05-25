@@ -3366,16 +3366,19 @@ public class ModelImage extends ModelStorageBase {
         		       name = key.getKey();
         		       tag = (FileDicomTag)tagsList.get(key);
         		       group = tag.getGroup();
+        		       int originalGroup = group;
         		       byteValues[0] = (byte)(group & 0x00ff);
 		    	       byteValues[1] = (byte)((group >>> 8) & 0x00ff);
 		    	       group = (short)(byteValues[1] & 0xff) | ((byteValues[0] & 0xff) << 8);
 		    	       tag.setGroup(group);
 		    	       element = tag.getElement();
+		    	       int originalElement = element;
         		       byteValues[0] = (byte)(element & 0x00ff);
 		    	       byteValues[1] = (byte)((element >>> 8) & 0x00ff);
 		    	       element = (short)((byteValues[1] & 0xff) | ((byteValues[0] & 0xff) << 8));
 		    	       tag.setElement(element);
 		    	       tagLength = tag.getLength();
+		    	       int originalTagLength = tagLength;
 		    	       byteValues[0] = (byte)(tagLength & 0x00ff);
 		    	       byteValues[1] = (byte)((tagLength >>> 8) & 0x00ff);
 		    	       byteValues[2] = (byte)((tagLength >>> 16) & 0x00ff);
@@ -3385,61 +3388,18 @@ public class ModelImage extends ModelStorageBase {
 		    	       tag.setLength(tagLength);
         		       tagType = tag.getType();
         		       tagValueList = tag.getValueList();
-        		       if (tagType.equals("typeShort")) {
-        		    	   for (j = 0; j < tagValueList.length; j++) {
-        		    	       shortValue = ((Short)tagValueList[j]).shortValue();
-        		    	       byteValues[0] = (byte)(shortValue & 0x00ff);
-        		    	       byteValues[1] = (byte)((shortValue >>> 8) & 0x00ff);
-        		    	       shortValue = (short)((byteValues[1] & 0xff) | ((byteValues[0] & 0xff) << 8));
-        		    	       tagValueList[j] = Short.valueOf(shortValue);
-        		    	   }
-        		       }
-        		       else if (tagType.equals("typeInt")) {
-        		    	   for (j = 0; j < tagValueList.length; j++) {
-        		    	       intValue = ((Integer)tagValueList[j]).intValue();
-        		    	       byteValues[0] = (byte)(intValue & 0x00ff);
-        		    	       byteValues[1] = (byte)((intValue >>> 8) & 0x00ff);
-        		    	       byteValues[2] = (byte)((intValue >>> 16) & 0x00ff);
-        		    	       byteValues[3] = (byte)((intValue >>> 24) & 0x00ff);
-        		    	       intValue = ((byteValues[3] & 0xff) | ((byteValues[2] & 0xff) << 8) |
-        		    	    		      ((byteValues[1] & 0xff) << 16) | ((byteValues[0] & 0xff) << 24));
-        		    	       tagValueList[j] = Integer.valueOf(intValue);   
-        		    	   }
-        		       }
-        		       else if (tagType.equals("typeFloat")) {
-        		    	   for (j = 0; j < tagValueList.length; j++) {
-        		    	       floatValue = ((Float)tagValueList[j]).floatValue();
-        		    	       intValue = Float.floatToIntBits(floatValue);
-        		    	       byteValues[0] = (byte)(intValue & 0x00ff);
-        		    	       byteValues[1] = (byte)((intValue >>> 8) & 0x00ff);
-        		    	       byteValues[2] = (byte)((intValue >>> 16) & 0x00ff);
-        		    	       byteValues[3] = (byte)((intValue >>> 24) & 0x00ff);
-        		    	       intValue = ((byteValues[3] & 0xff) | ((byteValues[2] & 0xff) << 8) |
-        		    	    		      ((byteValues[1] & 0xff) << 16) | ((byteValues[0] & 0xff) << 24));
-        		    	       floatValue = Float.intBitsToFloat(intValue);
-        		    	       tagValueList[j] = Integer.valueOf(intValue);
-        		    	   } 
-        		       }
-        		       else if (tagType.equals("typeDouble")) {
-        		    	   for (j = 0; j < tagValueList.length; j++) {
-        		    	       doubleValue = ((Double)tagValueList[j]).doubleValue();
-        		    	       longValue = Double.doubleToLongBits(doubleValue);
-        		    	       byteValues[0] = (byte)(longValue & 0x00ffL);
-        		    	       byteValues[1] = (byte)((longValue >>> 8) & 0x00ffL);
-        		    	       byteValues[2] = (byte)((longValue >>> 16) & 0x00ffL);
-        		    	       byteValues[3] = (byte)((longValue >>> 24) & 0x00ffL);
-        		    	       byteValues[4] = (byte)((longValue >>> 32) & 0x00ffL);
-        		    	       byteValues[5] = (byte)((longValue >>> 40) & 0x00ffL);
-        		    	       byteValues[6] = (byte)((longValue >>> 48) & 0x00ffL);
-        		    	       byteValues[7] = (byte)((longValue >>> 56) & 0x00ffL);
-        		    	       longValue = ((byteValues[7] & 0xffL) | ((byteValues[6] & 0xffL) << 8) |
-        		    	    		       ((byteValues[5] & 0xffL) << 16) | ((byteValues[4] & 0xffL) << 24) |
-        		    	    		       ((byteValues[3] & 0xffL) << 32) | ((byteValues[2] & 0xffL) << 40) |
-        		    	    		       ((byteValues[1] & 0xffL) << 48) | ((byteValues[0] & 0xffL) << 56));
-        		    	       doubleValue = Double.longBitsToDouble(longValue);
-        		    	       tagValueList[j] = Double.valueOf(doubleValue);
-        		    	   }
-        		       }
+        		       /*if ((originalGroup == 2) && (originalElement == 1) && 
+        		    	   (tagType.equals("otherByteString")) && (originalTagLength == 2)) {
+        		    	   // File Meta Information Version 
+        		    	   // tagType = "otherByteString"
+        		    	   // tagLength = 2
+        		    	   Object temp;
+        		    	   temp = tagValueList[0];
+        		    	   tagValueList[0] = tagValueList[1];
+        		    	   tagValueList[1] = temp;
+        		    	   System.out.println("originalTagLength = " + originalTagLength + " tagLength = " + tagLength);
+        		    	   tagTable.setValue("0002,0001", tagValueList, originalTagLength);
+        		       }*/
         		    } // for (ii = 0, e = tagsList.keys(); e.hasMoreElements(); ii++)
         		} // for (i = 0; i < numSlices; i++)
         	} // if (changedEndianess)
