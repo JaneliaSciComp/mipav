@@ -2975,7 +2975,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 				if(isOperator(t) && isOperator(t2)) {
 					return "";
 				}
-				if(isDigit(t) && isDigit(t2)) {
+				if((isValidNumber(t)||t.equals("A")||t.equals("b")) && (isValidNumber(t2)||t.equals("A")||t.equals("B"))) {
 					return "";
 				}
 				if(t.equals(")") && t2.equals("(")) {
@@ -3236,9 +3236,31 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 					tokens.add(s);
 					pos++;
 				}else if(c == '.') {
+					sb = new StringBuffer();
 					s = String.valueOf(c);
-					tokens.add(s);
+					sb.append(s);
 					pos++;
+					if(pos < expression.length()) {
+						char c2;
+						c2 = readChar(expression,pos);
+						if(isDigit(c2)) {
+							while(isDigit(c2)) {
+								s = String.valueOf(c2);
+								sb.append(s);
+								pos++;
+								if(pos < expression.length()) {
+									c2 = readChar(expression,pos);
+								}else {
+									break;
+								}
+							}
+						}else {
+							return false;
+						}
+						tokens.add(sb.toString());
+					}else {
+						return false;
+					}
 				}else if(c == ',') {
 					s = String.valueOf(c);
 					tokens.add(s);
@@ -3269,7 +3291,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 					}
 				}else if(isDigit(c)) {
 					sb = new StringBuffer();
-					while(isDigit(c)) {
+					while(isDigit(c) || c == '.') {
 						s = String.valueOf(c);
 						sb.append(s);
 						pos++;
@@ -3657,21 +3679,23 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 		}
 		return isDigit;
 	}
+	
+	
+	
+	public boolean isValidNumber(String s) {
+		
+		try{
+			Double.parseDouble(s);
+		}catch(Exception e) {
+			return false;
+		}
+		
+		return true;
+	}
 
 	
 	
-	/**
-	 * determines if char is a digit
-	 * @param c
-	 * @return
-	 */
-	public boolean isDigit(String s) {
-		boolean isDigit = false;
-		if(s.equals("0") || s.equals("1") || s.equals("2") || s.equals("3") || s.equals("4") || s.equals("5") || s.equals("6") || s.equals("7") || s.equals("8") || s.equals("9")) {
-			isDigit = true;
-		}
-		return isDigit;
-	}
+	
     
     
     
