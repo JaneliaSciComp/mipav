@@ -2018,7 +2018,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                             if (value.trim().equals("")) {
                                 errs.add(labelText + " is a required field");
                             } else {
-                                if (key.equals("image_subject_id")) {
+                                if (key.equals("subjectkey")) {
                                     if ( !value.trim().startsWith("NDAR")) {
                                         errs.add(labelText + " must begin with NDAR");
                                     }
@@ -2122,7 +2122,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             while (iter.hasNext()) {
                 final JLabel label = (JLabel) iter.next();
                 final JComponent comp = labelsAndComps.get(label);
-                if (label.getName().equals("image_subject_id")) {
+                if (label.getName().equals("subjectkey")) {
                     guid = ((JTextField) comp).getText().trim();
                     outputFileNameBaseTable.put(file, guid);
                 }
@@ -2347,6 +2347,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     public class WebServiceThread extends Thread {
 
         PlugInDialogNDAR dial;
+        
+        String ndarServer,ndarDataStructName;
 
         WebServiceThread(final PlugInDialogNDAR dial) {
             super();
@@ -2355,14 +2357,20 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         public void run() {
             try {
+
+            	ndarServer = Preferences.getProperty(Preferences.PREF_NDAR_PLUGIN_SERVER);
+            	ndarDataStructName = Preferences.getProperty(Preferences.PREF_NDAR_PLUGIN_DATASTRUCT_NAME);
+            	
+            	
+            	
                 // get OMElement from web service
                 progressBar = new ViewJProgressBar("NDAR", "Connecting to NDAR data dictionary web service...", 0, 100,
                         true);
                 progressBar.setVisible(true);
                 progressBar.updateValue(20);
-                final VToolSimpleAccessionClient client = Startup.getClient("DEMO");
+                final VToolSimpleAccessionClient client = Startup.getClient(ndarServer);
                 try {
-                    final String DataStructureNames = "image01";
+                    final String DataStructureNames = ndarDataStructName;
                     progressBar.updateValue(60);
                     documentElement = client.getDataDictionary(DataStructureNames);
                 } catch (final AxisFault e) {
