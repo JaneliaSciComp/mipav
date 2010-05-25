@@ -2964,7 +2964,10 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 			return "";
 		}
 		
-		//check that there are tokens where there are operators back to back or digits back to back
+		//check that there are tokens where there are operators back to back or digits back to back or right and left paren
+		//like A + + B
+		//like 7 + 8 4
+		//like (A+B)(C-D)
 		for(int i=0;i<tokens.size();i++) {
 			String t = tokens.get(i);
 			if(i+1 < tokens.size()) {
@@ -2973,6 +2976,9 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 					return "";
 				}
 				if(isDigit(t) && isDigit(t2)) {
+					return "";
+				}
+				if(t.equals(")") && t2.equals("(")) {
 					return "";
 				}
 			}
