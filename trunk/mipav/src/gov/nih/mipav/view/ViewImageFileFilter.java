@@ -52,43 +52,40 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
     /** Optical Files (for ophthalmology) (*.avi; *.bmp; *.jpg; *.pict; *.tif; *.tiff; *.img; *.psd). */
     public static final int OPTICAL = 11;
 
-    /** Filter project files (*.xml). */
-    public static final int PROJECT = 12;
-
     /** Script Files (*.sct). */
-    public static final int SCRIPT = 13;
+    public static final int SCRIPT = 12;
 
     /** Surface Files (*.sur). */
-    public static final int SURFACE = 14;
+    public static final int SURFACE = 13;
 
     /** Transfer Function Files (*.fun). */
-    public static final int FUNCT = 15;
+    public static final int FUNCT = 14;
 
     /** VOI Files (*.voi). */
-    public static final int VOI = 16;
+    public static final int VOI = 15;
 
     /** B-Spline Nonlinear Transformation Files (*.nlt). */
-    public static final int NLT = 17;
+    public static final int NLT = 16;
 
     /** Filter made up on-the-fly. */
-    public static final int DYNAMIC = 18;
+    public static final int DYNAMIC = 17;
 
     /** All plugin related files (.class, .jar, .zip, .tar, .tar.gz). */
-    public static final int PLUGIN = 19;
+    public static final int PLUGIN = 18;
 
     /** User defined */
-    public static final int UDEF = 20;
+    public static final int UDEF = 19;
 
     /** R-table (*.rtb) */
-    public static final int RTABLE = 21;
+    public static final int RTABLE = 20;
 
     /** mipav data provenance (*.xmp) files */
-    public static final int DATA_PROVENANCE = 22;
+    public static final int DATA_PROVENANCE = 21;
 
-    public static final int TIFF = 23;
+    public static final int TIFF = 22;
 
     /** Dicom Matrix info Files (*.dicomMatrix). */
-    public static final int DICOMMATRIX = 24;
+    public static final int DICOMMATRIX = 23;
 
     /** description strings for each filterType. */
     // note that the order must match the order of filterType definitions above!!
@@ -105,7 +102,6 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
             "Microscopy (*.avi; *.ics; *.liff; *.lsm; *.pic; *.stk; *.tif; *.tiff; *.xml)", // MICROSCOPY
             "Misc.(*.avi; *.bmp; *.pcx; *.png; *.tga; *.xbm; *.xpm)", // MISC
             "Optical (*.avi; *.bmp; *.img; *.jpg; *.pict; *.psd; *.tif; *.tiff; *.xml)", // OPTICAL
-            "Project (*.xml)", // PROJECT
             "Script Files (*.sct)", // SCRIPT
             "Surface Files (*.sur; *.wrl; *.xml; *.vtk; *.vtp; *.stla; *.stlb; *.ply; *.gii)", // SURFACE
             "Transfer Function Files (*.fun)", // FUNCT
@@ -128,7 +124,6 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
             "Microscopy", // MICROSCOPY
             "Misc.", // MISC
             "Optical", // OPTICAL
-            "Project", // PROJECT
             "Script Files", // SCRIPT
             "Surface Files", // SURFACE
             "Transfer Function Files", // FUNCT
@@ -348,8 +343,6 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
         } else if ( (filterType == ViewImageFileFilter.FREESURFER) && (extension.equals(".asc"))) {
             return true;
         } else if ( (filterType == ViewImageFileFilter.AVI) && (extension.equals(".avi"))) {
-            return true;
-        } else if ( (filterType == ViewImageFileFilter.PROJECT) && (extension.equals(".xml"))) {
             return true;
         } else if ( (filterType == ViewImageFileFilter.MICROSCOPY)
                 && ( (extension.equals(".avi")) || (extension.equals(".ics")) || (extension.equals(".liff"))
