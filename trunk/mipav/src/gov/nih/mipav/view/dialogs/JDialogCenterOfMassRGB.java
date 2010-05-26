@@ -28,7 +28,7 @@ import javax.swing.*;
  * @author   William Gandler
  * @version  1.0
  */
-public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements AlgorithmInterface {
+public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -673,5 +673,103 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
 
         return true;
     }
+
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Utilities");
+            }
+
+            public String getDescription() {
+                return new String("Finds Center of Mass");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Finds Center of Mass");
+            }
+
+            public String getShortLabel() {
+                return new String("CoM_2D");
+            }
+
+            public String getLabel() {
+                return new String("Center of Mass");
+            }
+
+            public String getName() {
+                return new String("Ceneter of Mass");
+            }
+        };
+    }
+
+	@Override
+	public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, true));
+            table.put(new ParameterFloat("min_threshold", 99999));
+            table.put(new ParameterFloat("max_threshold", -99999));
+           } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+
+	}
+
+	@Override
+	public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+        	table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        	table.put(new ParameterFloat("X-axis Center (R)", comAlgoRGB.getThresholdR()[0]));
+        	table.put(new ParameterFloat("X-axis Center (G)", comAlgoRGB.getThresholdG()[0]));
+        	table.put(new ParameterFloat("X-axis Center (B)", comAlgoRGB.getThresholdB()[0]));
+        	table.put(new ParameterFloat("Y-axis Center (R)", comAlgoRGB.getThresholdR()[1]));
+        	table.put(new ParameterFloat("Y-axis Center (G)", comAlgoRGB.getThresholdG()[1]));
+        	table.put(new ParameterFloat("Y-axis Center (B)", comAlgoRGB.getThresholdB()[1]));
+
+        	
+        	if(comAlgoRGB.getThresholdR().length>2){
+        		table.put(new ParameterFloat("Z-axis Center (R)", comAlgoRGB.getThresholdR()[2]));
+        		table.put(new ParameterFloat("Z-axis Center (G)", comAlgoRGB.getThresholdG()[2]));
+        		table.put(new ParameterFloat("Z-axis Center (B)", comAlgoRGB.getThresholdB()[2]));
+       	}
+        		
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+
+	}
+	
+	@Override
+	public String getOutputImageName(String imageParamName) {
+	    /**
+	     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+	     * (which can be used to retrieve the image object from the image registry).
+	     * 
+	     * @param imageParamName The output image parameter label for which to get the image name.
+	     * @return The image name of the requested output image parameter label.
+	     */
+		return image.getImageName();
+
+	}
+
+	@Override
+	public boolean isActionComplete() {
+		return isComplete;
+	}
+
 
 }
