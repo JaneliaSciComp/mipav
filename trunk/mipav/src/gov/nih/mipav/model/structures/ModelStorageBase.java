@@ -1,32 +1,33 @@
 package gov.nih.mipav.model.structures;
 
-import WildMagic.LibFoundation.Mathematics.*;
 
 import gov.nih.mipav.MipavCoordinateSystems;
+
 import gov.nih.mipav.model.file.FileInfoBase;
-import gov.nih.mipav.model.file.FileInfoProject;
+
 import gov.nih.mipav.view.MipavUtil;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
-import java.util.BitSet;
-import java.util.Vector;
+import java.util.*;
 
+import WildMagic.LibFoundation.Mathematics.*;
 
 
 /**
  * N-dimensional buffer (physically stored as a 1D buffer).
- *
- * @version  1.0 Sept 1, 1998
- * @author   Matthew J. McAuliffe
+ * 
+ * @version 1.0 Sept 1, 1998
+ * @author Matthew J. McAuliffe
  */
 /**
  * @author pandyan
- *
+ * 
  */
 public class ModelStorageBase extends ModelSerialCloneable {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -3710345290762731636L;
@@ -137,10 +138,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
     public static final String ARGB_USHORT_STRING = "ARGB Ushort";
 
     /** Used to indicate, as a String, that the data buffer is of type color (ARGB - floats). */
-    public static final String ARGB_FLOAT_STRING = "ARGB Float"; // 4 * FLOAT(32 bits)  = 16 bytes
+    public static final String ARGB_FLOAT_STRING = "ARGB Float"; // 4 * FLOAT(32 bits) = 16 bytes
 
     /** Used to indicate, as a String, that the data buffer is of type complex (float). */
-    public static final String COMPLEX_STRING = "Complex"; // 2 * FLOAT(32 bits)  = 8  bytes
+    public static final String COMPLEX_STRING = "Complex"; // 2 * FLOAT(32 bits) = 8 bytes
 
     /** Used to indicate, as a String, that the data buffer is of type complex (double). */
     public static final String DCOMPLEX_STRING = "Complex Double"; // 2 * DOUBLE(64 bits) = 16 bytes
@@ -149,13 +150,15 @@ public class ModelStorageBase extends ModelSerialCloneable {
     public static final String UINTEGER_STRING = "Unsigned Integer";
 
     /** String representations of the data types supported by ModelStorageBase. */
-    public static final String[] bufferTypeStr = {
-        BOOLEAN_STRING, BYTE_STRING, UBYTE_STRING, SHORT_STRING, USHORT_STRING, INTEGER_STRING, LONG_STRING,
-        FLOAT_STRING, DOUBLE_STRING, ARGB_STRING, ARGB_USHORT_STRING, ARGB_FLOAT_STRING, COMPLEX_STRING,
-        DCOMPLEX_STRING, UINTEGER_STRING
-    };
+    public static final String[] bufferTypeStr = {ModelStorageBase.BOOLEAN_STRING, ModelStorageBase.BYTE_STRING,
+            ModelStorageBase.UBYTE_STRING, ModelStorageBase.SHORT_STRING, ModelStorageBase.USHORT_STRING,
+            ModelStorageBase.INTEGER_STRING, ModelStorageBase.LONG_STRING, ModelStorageBase.FLOAT_STRING,
+            ModelStorageBase.DOUBLE_STRING, ModelStorageBase.ARGB_STRING, ModelStorageBase.ARGB_USHORT_STRING,
+            ModelStorageBase.ARGB_FLOAT_STRING, ModelStorageBase.COMPLEX_STRING, ModelStorageBase.DCOMPLEX_STRING,
+            ModelStorageBase.UINTEGER_STRING};
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** Each image slice has a information that describes aspects of each slice of an image. */
     protected FileInfoBase[] fileInfo;
@@ -165,12 +168,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * transfer function.
      */
     protected double lastMin, lastMax;
-
-    /**
-     * Information about the project which the image is a part of (or null if the image was not opened as part of a
-     * project).
-     */
-    protected FileInfoProject projectInfo;
 
     /** Type of image buffer (i.e. BOOLEAN, BYTE, UBYTE, SHORT ...) */
     private int bufferType;
@@ -183,24 +180,24 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Bounds of the image where.
-     *
+     * 
      * <ul>
-     *   <li>dimExtents[0] = x dimension</li>
-     *   <li>dimExtents[1] = y dimension</li>
-     *   <li>dimExtents[2] = z dimension (typically)</li>
-     *   <li>dimExtents[3] = fourth dimension (ie time)...</li>
+     * <li>dimExtents[0] = x dimension</li>
+     * <li>dimExtents[1] = y dimension</li>
+     * <li>dimExtents[2] = z dimension (typically)</li>
+     * <li>dimExtents[3] = fourth dimension (ie time)...</li>
      * </ul>
      */
     private int[] dimExtents;
 
     /**
      * Bounds of the image where.
-     *
+     * 
      * <ul>
-     *   <li>dimOriginalExtents[0] = x dimension</li>
-     *   <li>dimOriginalExtents[1] = y dimension</li>
-     *   <li>dimOriginalExtents[2] = z dimension (typically)</li>
-     *   <li>dimOriginalExtents[3] = fourth dimension (ie time)...</li>
+     * <li>dimOriginalExtents[0] = x dimension</li>
+     * <li>dimOriginalExtents[1] = y dimension</li>
+     * <li>dimOriginalExtents[2] = z dimension (typically)</li>
+     * <li>dimOriginalExtents[3] = fourth dimension (ie time)...</li>
      * </ul>
      */
     private int[] dimOriginalExtents;
@@ -227,7 +224,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     private boolean image25D;
 
     /** Locking status of the image. Default = UNLOCKED */
-    private int lockStatus = UNLOCKED;
+    private int lockStatus = ModelStorageBase.UNLOCKED;
 
     /** Boolean telling if log magnitude display is used in complex image. - TO BE MOVED - redesigned */
     private boolean logMagDisp;
@@ -242,13 +239,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
     private boolean m_bRadiologicalView = true;
 
     /** Surface color vector. - TO BE MOVED - redesigned */
-    private Vector m_kColorVector = new Vector();
+    private final Vector m_kColorVector = new Vector();
 
     /** Surface mask color vector. - TO BE MOVED - redesigned */
-    private Vector m_kMaskColorVector = new Vector();
+    private final Vector m_kMaskColorVector = new Vector();
 
     /** Surface mask vector.- TO BE MOVED - redesigned. */
-    private Vector m_kMaskVector = new Vector();
+    private final Vector m_kMaskVector = new Vector();
 
     /** Minimum and maximum image intensity. */
     private double min, max;
@@ -306,7 +303,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /** smallest magnitude negative and positive. */
     private double smallestMagnitudeNegativeR, smallestMagnitudePositiveR, smallestMagnitudeNegativeG,
-                   smallestMagnitudePositiveG, smallestMagnitudeNegativeB, smallestMagnitudePositiveB;
+            smallestMagnitudePositiveG, smallestMagnitudeNegativeB, smallestMagnitudePositiveB;
 
     /** DOCUMENT ME! - TO BE MOVED - redesigned */
     private float theta = 0.0f; // angle or rotation in radians
@@ -316,14 +313,15 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /** Locking write count. */
     private int writeLockCount = 0;
-    
+
     private float avgInten, avgIntenR, avgIntenG, avgIntenB, stdDeviation, stdDeviationR, stdDeviationG, stdDeviationB;
-    
+
     private int numPixels;
-    
+
     private double sumPixelInten, sumPixelIntenR, sumPixelIntenG, sumPixelIntenB;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Default constructor.
@@ -334,44 +332,45 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Allocates buffer memory of the specified type.
-     *
-     * @param  type        type of buffer to allocate
-     * @param  dimExtents  extents of the buffer in each dimension (multipleid together produces the size of the buffer
-     *                     to be allocated
+     * 
+     * @param type type of buffer to allocate
+     * @param dimExtents extents of the buffer in each dimension (multipleid together produces the size of the buffer to
+     *            be allocated
      */
-    public ModelStorageBase(int type, int[] dimExtents) {
+    public ModelStorageBase(final int type, final int[] dimExtents) {
         construct(type, dimExtents);
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Returns the string for a particular buffer type.
-     *
-     * @param   type  int representing the buffer type (see the static definitions)
-     *
-     * @return  string representing the buffer type
+     * 
+     * @param type int representing the buffer type (see the static definitions)
+     * 
+     * @return string representing the buffer type
      */
-    public static String getBufferTypeStr(int type) {
+    public static String getBufferTypeStr(final int type) {
 
         try {
             return ModelStorageBase.bufferTypeStr[type];
-        } catch (ArrayIndexOutOfBoundsException ae) { }
+        } catch (final ArrayIndexOutOfBoundsException ae) {}
 
         return "";
 
     } // end getBufferTypeStr()
 
-
     /**
      * Adds a surface mask to this image.
-     *
-     * @param  index        the index of the mask.
-     * @param  kMask        the surface mask
-     * @param  kMaskColors  the per-voxel colors for the mask
-     * @param  kColor       the overall mask color if per-voxel mask colors are not defined.
+     * 
+     * @param index the index of the mask.
+     * @param kMask the surface mask
+     * @param kMaskColors the per-voxel colors for the mask
+     * @param kColor the overall mask color if per-voxel mask colors are not defined.
      */
-    public void addSurfaceMask(int index, BitSet kMask, ColorRGBA[] kMaskColors, ColorRGBA kColor) {
+    public void addSurfaceMask(final int index, final BitSet kMask, final ColorRGBA[] kMaskColors,
+            final ColorRGBA kColor) {
 
         if (kColor != null) {
 
@@ -403,65 +402,54 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Calculates the min and max values for the image array.
-     *
+     * 
      */
     public void calcMinMax() {
         calcMinMax(logMagDisp);
     }
-    
+
     /**
-     * @param  logMagDisplay  if true calculate min and max for log10 of 1 + magnitude
-     * Calculates the min and max values for the image array.
+     * @param logMagDisplay if true calculate min and max for log10 of 1 + magnitude Calculates the min and max values
+     *            for the image array.
      */
-    public void calcMinMax(boolean logMagDisplay) {
+    public void calcMinMax(final boolean logMagDisplay) {
 
         // before computing the new min, max, save the last values.
         lastMin = min;
         lastMax = max;
-        
+
         min = Double.POSITIVE_INFINITY;
         max = Double.NEGATIVE_INFINITY;
 
         int i;
         double value;
-       
-        if ((bufferType == COMPLEX) || (bufferType == DCOMPLEX)) {
-            calcMinMaxMag(logMagDisplay);
-        }
-        else if ((bufferType != ARGB) && (bufferType != ARGB_USHORT) && (bufferType != ARGB_FLOAT)) {
 
-        	/*if (bufferType == SHORT) {  // I thought this would be faster but it is not -- Matt 9/5/2008
-        		short minShort;	
-                short maxShort;
-                short valueShort;
-        		minShort = Short.MAX_VALUE;
-                maxShort = Short.MIN_VALUE;
-                for (i = 0; i < dataSize; i++) {
-                	valueShort = data.getShort(i);
-	
-	                if (valueShort > maxShort) {
-	                	maxShort = valueShort;
-	                }
-	
-	                if (valueShort < minShort) {
-	                	minShort = valueShort;
-	                }
-	            }
-                min = minShort;
-                max = maxShort;
-        	}*/
-        	//else if (bufferType == DOUBLE) {
-	            for (i = 0; i < dataSize; i++) {
-	                value = data.getDouble(i);
-	                if (value > max) {
-	                    max = value;
-	                }
-	
-	                if (value < min) {
-	                    min = value;
-	                }
-	            }
-	        //}
+        if ( (bufferType == ModelStorageBase.COMPLEX) || (bufferType == ModelStorageBase.DCOMPLEX)) {
+            calcMinMaxMag(logMagDisplay);
+        } else if ( (bufferType != ModelStorageBase.ARGB) && (bufferType != ModelStorageBase.ARGB_USHORT)
+                && (bufferType != ModelStorageBase.ARGB_FLOAT)) {
+
+            /*
+             * if (bufferType == SHORT) { // I thought this would be faster but it is not -- Matt 9/5/2008 short
+             * minShort; short maxShort; short valueShort; minShort = Short.MAX_VALUE; maxShort = Short.MIN_VALUE; for
+             * (i = 0; i < dataSize; i++) { valueShort = data.getShort(i);
+             * 
+             * if (valueShort > maxShort) { maxShort = valueShort; }
+             * 
+             * if (valueShort < minShort) { minShort = valueShort; } } min = minShort; max = maxShort; }
+             */
+            // else if (bufferType == DOUBLE) {
+            for (i = 0; i < dataSize; i++) {
+                value = data.getDouble(i);
+                if (value > max) {
+                    max = value;
+                }
+
+                if (value < min) {
+                    min = value;
+                }
+            }
+            // }
         } else { // color
             minR = Double.POSITIVE_INFINITY;
             maxR = Double.NEGATIVE_INFINITY;
@@ -510,10 +498,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Calculates the min and max magnitude values for the image array.
-     *
-     * @param  logMagDisplay  if true calculate min and max for log10 of 1 + magnitude
+     * 
+     * @param logMagDisplay if true calculate min and max for log10 of 1 + magnitude
      */
-    public void calcMinMaxMag(boolean logMagDisplay) {
+    public void calcMinMaxMag(final boolean logMagDisplay) {
         min = Double.POSITIVE_INFINITY;
         max = Double.NEGATIVE_INFINITY;
         noLogMin = Double.POSITIVE_INFINITY;
@@ -526,7 +514,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         for (i = 0; i < dataSize; i = i + 2) {
             valuer = data.getDouble(i);
             valuei = data.getDouble(i + 1);
-            value = java.lang.Math.sqrt((valuer * valuer) + (valuei * valuei));
+            value = java.lang.Math.sqrt( (valuer * valuer) + (valuei * valuei));
 
             if (logMagDisplay) {
 
@@ -538,7 +526,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                     noLogMin = value;
                 }
 
-                if ((value > 0) && (value < noLogMinNonZero)) {
+                if ( (value > 0) && (value < noLogMinNonZero)) {
                     noLogMinNonZero = value;
                 }
 
@@ -602,12 +590,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
         int i;
         double value;
 
-        if (bufferType == BOOLEAN) {
+        if (bufferType == ModelStorageBase.BOOLEAN) {
             nonZeroMin = 1;
             nonZeroMax = 1;
             smallestMagnitudeNegative = Double.NaN;
             smallestMagnitudePositive = 1;
-        } else if ((bufferType != ARGB) && (bufferType != ARGB_USHORT) && (bufferType != ARGB_FLOAT)) {
+        } else if ( (bufferType != ModelStorageBase.ARGB) && (bufferType != ModelStorageBase.ARGB_USHORT)
+                && (bufferType != ModelStorageBase.ARGB_FLOAT)) {
             foundNonZeroMin = false;
             foundNonZeroMax = false;
             foundSmallestMagnitudeNegative = false;
@@ -628,31 +617,31 @@ public class ModelStorageBase extends ModelSerialCloneable {
                         foundNonZeroMin = true;
                     }
 
-                    if ((value > 0.0) && (value < smallestMagnitudePositive)) {
+                    if ( (value > 0.0) && (value < smallestMagnitudePositive)) {
                         smallestMagnitudePositive = value;
                         foundSmallestMagnitudePositive = true;
                     }
 
-                    if ((value < 0.0) && (value > smallestMagnitudeNegative)) {
+                    if ( (value < 0.0) && (value > smallestMagnitudeNegative)) {
                         smallestMagnitudeNegative = value;
                         foundSmallestMagnitudeNegative = true;
                     }
                 } // if (value != 0.0)
             } // for(i= 0; i < dataSize; i++)
 
-            if (!foundNonZeroMin) {
+            if ( !foundNonZeroMin) {
                 nonZeroMin = Double.NaN;
             }
 
-            if (!foundNonZeroMax) {
+            if ( !foundNonZeroMax) {
                 nonZeroMax = Double.NaN;
             }
 
-            if (!foundSmallestMagnitudePositive) {
+            if ( !foundSmallestMagnitudePositive) {
                 smallestMagnitudePositive = Double.NaN;
             }
 
-            if (!foundSmallestMagnitudeNegative) {
+            if ( !foundSmallestMagnitudeNegative) {
                 smallestMagnitudeNegative = Double.NaN;
             }
         } // else if (bufferType != ARGB &&...)
@@ -685,12 +674,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
                         foundNonZeroMinR = true;
                     }
 
-                    if ((value > 0.0) && (value < smallestMagnitudePositiveR)) {
+                    if ( (value > 0.0) && (value < smallestMagnitudePositiveR)) {
                         smallestMagnitudePositiveR = value;
                         foundSmallestMagnitudePositiveR = true;
                     }
 
-                    if ((value < 0.0) && (value > smallestMagnitudeNegativeR)) {
+                    if ( (value < 0.0) && (value > smallestMagnitudeNegativeR)) {
                         smallestMagnitudeNegativeR = value;
                         foundSmallestMagnitudeNegativeR = true;
                     }
@@ -710,12 +699,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
                         foundNonZeroMinG = true;
                     }
 
-                    if ((value > 0.0) && (value < smallestMagnitudePositiveG)) {
+                    if ( (value > 0.0) && (value < smallestMagnitudePositiveG)) {
                         smallestMagnitudePositiveG = value;
                         foundSmallestMagnitudePositiveG = true;
                     }
 
-                    if ((value < 0.0) && (value > smallestMagnitudeNegativeG)) {
+                    if ( (value < 0.0) && (value > smallestMagnitudeNegativeG)) {
                         smallestMagnitudeNegativeG = value;
                         foundSmallestMagnitudeNegativeG = true;
                     }
@@ -735,63 +724,63 @@ public class ModelStorageBase extends ModelSerialCloneable {
                         foundNonZeroMinB = true;
                     }
 
-                    if ((value > 0.0) && (value < smallestMagnitudePositiveB)) {
+                    if ( (value > 0.0) && (value < smallestMagnitudePositiveB)) {
                         smallestMagnitudePositiveB = value;
                         foundSmallestMagnitudePositiveB = true;
                     }
 
-                    if ((value < 0.0) && (value > smallestMagnitudeNegativeB)) {
+                    if ( (value < 0.0) && (value > smallestMagnitudeNegativeB)) {
                         smallestMagnitudeNegativeB = value;
                         foundSmallestMagnitudeNegativeB = true;
                     }
                 } // if (value != 0.0)
             } // for(i= 0; i < dataSize; i+=4)
 
-            if (!foundNonZeroMinR) {
+            if ( !foundNonZeroMinR) {
                 nonZeroMinR = Double.NaN;
             }
 
-            if (!foundNonZeroMaxR) {
+            if ( !foundNonZeroMaxR) {
                 nonZeroMaxR = Double.NaN;
             }
 
-            if (!foundSmallestMagnitudePositiveR) {
+            if ( !foundSmallestMagnitudePositiveR) {
                 smallestMagnitudePositiveR = Double.NaN;
             }
 
-            if (!foundSmallestMagnitudeNegativeR) {
+            if ( !foundSmallestMagnitudeNegativeR) {
                 smallestMagnitudeNegativeR = Double.NaN;
             }
 
-            if (!foundNonZeroMinG) {
+            if ( !foundNonZeroMinG) {
                 nonZeroMinG = Double.NaN;
             }
 
-            if (!foundNonZeroMaxG) {
+            if ( !foundNonZeroMaxG) {
                 nonZeroMaxG = Double.NaN;
             }
 
-            if (!foundSmallestMagnitudePositiveG) {
+            if ( !foundSmallestMagnitudePositiveG) {
                 smallestMagnitudePositiveG = Double.NaN;
             }
 
-            if (!foundSmallestMagnitudeNegativeG) {
+            if ( !foundSmallestMagnitudeNegativeG) {
                 smallestMagnitudeNegativeG = Double.NaN;
             }
 
-            if (!foundNonZeroMinB) {
+            if ( !foundNonZeroMinB) {
                 nonZeroMinB = Double.NaN;
             }
 
-            if (!foundNonZeroMaxB) {
+            if ( !foundNonZeroMaxB) {
                 nonZeroMaxB = Double.NaN;
             }
 
-            if (!foundSmallestMagnitudePositiveB) {
+            if ( !foundSmallestMagnitudePositiveB) {
                 smallestMagnitudePositiveB = Double.NaN;
             }
 
-            if (!foundSmallestMagnitudeNegativeB) {
+            if ( !foundSmallestMagnitudeNegativeB) {
                 smallestMagnitudeNegativeB = Double.NaN;
             }
         } // else color
@@ -800,8 +789,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Copies the object.
-     *
-     * @return  Returns the cloned object.
+     * 
+     * @return Returns the cloned object.
      */
     public Object clone() {
         Object obj = null;
@@ -809,7 +798,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         try {
             setLock(ModelStorageBase.W_LOCKED);
             obj = super.clone();
-        } catch (IOException error) {
+        } catch (final IOException error) {
             MipavUtil.displayError("" + error);
 
             return null;
@@ -823,30 +812,30 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Disposes of old data and constructs a new buffer of the user specific type if the image in NOT locked.
-     *
-     * @exception  IOException  throws an exception if the image model is locked.
+     * 
+     * @exception IOException throws an exception if the image model is locked.
      */
     public synchronized void convertToFloat() throws IOException {
 
-        if (lockStatus == UNLOCKED) {
+        if (lockStatus == ModelStorageBase.UNLOCKED) {
 
             // disposeLocal(); // delete old memory and reallocate
             // data = null;
             // System.gc();
-            if (getType() != FLOAT) {
+            if (getType() != ModelStorageBase.FLOAT) {
                 int i;
 
                 for (this.dataSize = 1, i = 0; i < this.nDims; i++) {
                     this.dataSize *= dimExtents[i];
                 }
 
-                float[] imgBuf = new float[dataSize];
+                final float[] imgBuf = new float[dataSize];
 
                 exportData(0, dataSize, imgBuf);
 
                 data = null;
                 System.gc();
-                construct(FLOAT, dimExtents);
+                construct(ModelStorageBase.FLOAT, dimExtents);
                 importData(0, imgBuf, true);
             } else {
                 return;
@@ -866,12 +855,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 data.finalize();
-            } catch (Throwable t) { }
+            } catch (final Throwable t) {}
         }
 
         data = null;
-
-        projectInfo = null;
 
         if (fileInfo != null) {
 
@@ -890,24 +877,22 @@ public class ModelStorageBase extends ModelSerialCloneable {
         dimOriginalExtents = null;
     }
 
-
-    
     /**
      * Exports data based on the mapping from ModelImage space to Patient space.
-     *
-     * @param   orientation  The Patient Orientation of the slice to export
-     * @param   tSlice       Index into the forth dimension
-     * @param   slice        Indicates slice of data to be exported
-     * @param   values       The array in which to write the data
-     *
-     * @return  A float array of the data mapped to patient space.
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param orientation The Patient Orientation of the slice to export
+     * @param tSlice Index into the forth dimension
+     * @param slice Indicates slice of data to be exported
+     * @param values The array in which to write the data
+     * 
+     * @return A float array of the data mapped to patient space.
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized float[] export(int orientation, int tSlice, int slice, float[] values)
-            throws IOException {
-        int[] axisOrder = MipavCoordinateSystems.getAxisOrder(this, orientation);
-        boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip(this, orientation);
+    public final synchronized float[] export(final int orientation, final int tSlice, final int slice,
+            final float[] values) throws IOException {
+        final int[] axisOrder = MipavCoordinateSystems.getAxisOrder(this, orientation);
+        final boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip(this, orientation);
 
         return export(axisOrder, axisFlip, tSlice, slice, values);
     }
@@ -915,40 +900,41 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Exports data based on the mapping from ModelImage space to Patient space. The mapping parameters are passed in as
      * the axisOrder and axisFlip arrays.
-     *
-     * @param   axisOrder  The mapping of ModelImage space volume axes to Patient space axes
-     * @param   axisFlip   The mapping of ModelImage space volume axes to Patient space axes (invert flags)
-     * @param   tSlice     Index into the forth dimension
-     * @param   slice      Indicates slice of data to be exported
-     * @param   values     The array to write the data into
-     *
-     * @return  A float array of the data mapped to patient space.
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param axisOrder The mapping of ModelImage space volume axes to Patient space axes
+     * @param axisFlip The mapping of ModelImage space volume axes to Patient space axes (invert flags)
+     * @param tSlice Index into the forth dimension
+     * @param slice Indicates slice of data to be exported
+     * @param values The array to write the data into
+     * 
+     * @return A float array of the data mapped to patient space.
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized float[] export(int[] axisOrder, boolean[] axisFlip, int tSlice, int slice, float[] values)
-            throws IOException {
+    public final synchronized float[] export(final int[] axisOrder, final boolean[] axisFlip, final int tSlice,
+            final int slice, final float[] values) throws IOException {
         float[] fReturn = null;
 
         try {
-            setLock(W_LOCKED);
+            setLock(ModelStorageBase.W_LOCKED);
 
-            /* Get the loop bounds, based on the coordinate-systems: transformation:  */
-            int iBound = (dimExtents.length > 0) ? dimExtents[axisOrder[0]] : 1;
-            int jBound = (dimExtents.length > 1) ? dimExtents[axisOrder[1]] : 1;
-            int kBound = (dimExtents.length > 2) ? dimExtents[axisOrder[2]] : 1;
+            /* Get the loop bounds, based on the coordinate-systems: transformation: */
+            final int iBound = (dimExtents.length > 0) ? dimExtents[axisOrder[0]] : 1;
+            final int jBound = (dimExtents.length > 1) ? dimExtents[axisOrder[1]] : 1;
+            final int kBound = (dimExtents.length > 2) ? dimExtents[axisOrder[2]] : 1;
 
-            /* Get the loop multiplication factors for indexing into the 1D array
-             * with 3 index variables: based on the coordinate-systems:
-             * transformation:  */
-            int[] aiFactors = new int[3];
+            /*
+             * Get the loop multiplication factors for indexing into the 1D array with 3 index variables: based on the
+             * coordinate-systems: transformation:
+             */
+            final int[] aiFactors = new int[3];
             aiFactors[0] = 1;
             aiFactors[1] = (dimExtents.length > 1) ? dimExtents[0] : 1;
             aiFactors[2] = (dimExtents.length > 2) ? (dimExtents[0] * dimExtents[1]) : 1;
 
-            int iFactor = aiFactors[axisOrder[0]];
-            int jFactor = aiFactors[axisOrder[1]];
-            int kFactor = aiFactors[axisOrder[2]];
+            final int iFactor = aiFactors[axisOrder[0]];
+            final int jFactor = aiFactors[axisOrder[1]];
+            final int kFactor = aiFactors[axisOrder[2]];
 
             int kIndex = slice;
 
@@ -956,14 +942,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 kIndex = (kBound - 1) - slice;
             }
 
-            int tFactor = (dimExtents.length > 2)
-                          ? (dimExtents[0] * dimExtents[1] * dimExtents[2])
-                          : ((dimExtents.length > 1) ? (dimExtents[0] * dimExtents[1])
-                                                     : ((dimExtents.length > 0) ? dimExtents[0] : 1));
+            final int tFactor = (dimExtents.length > 2) ? (dimExtents[0] * dimExtents[1] * dimExtents[2])
+                    : ( (dimExtents.length > 1) ? (dimExtents[0] * dimExtents[1])
+                            : ( (dimExtents.length > 0) ? dimExtents[0] : 1));
 
-            boolean exportComplex = (values.length == (2 * iBound * jBound)) ? true : false;
+            final boolean exportComplex = (values.length == (2 * iBound * jBound)) ? true : false;
             double real, imaginary, mag;
-
 
             /* loop over the 2D image (values) we're writing into */
             for (int j = 0; j < jBound; j++) {
@@ -982,7 +966,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                         jIndex = (jBound - 1) - j;
                     }
 
-                    int index = (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor);
+                    final int index = (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor);
 
                     /* surface Mask? */
                     ColorRGBA kMaskColor = null;
@@ -990,9 +974,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
                     if (m_kMaskVector != null) {
 
                         for (int iMask = 0; iMask < m_kMaskVector.size(); iMask++) {
-                            BitSet kMaskSet = (BitSet) m_kMaskVector.elementAt(iMask);
+                            final BitSet kMaskSet = (BitSet) m_kMaskVector.elementAt(iMask);
 
-                            if ((kMaskSet != null) && kMaskSet.get(index)) {
+                            if ( (kMaskSet != null) && kMaskSet.get(index)) {
 
                                 if (fReturn == null) {
                                     fReturn = new float[jBound * iBound * 4];
@@ -1003,7 +987,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                                 }
 
                                 if (m_kMaskColorVector.size() > iMask) {
-                                	ColorRGBA[] kMaskColors = (ColorRGBA[]) m_kMaskColorVector.elementAt(iMask);
+                                    final ColorRGBA[] kMaskColors = (ColorRGBA[]) m_kMaskColorVector.elementAt(iMask);
 
                                     if (kMaskColors[index] != null) {
                                         kMaskColor = kMaskColors[index];
@@ -1011,47 +995,48 @@ public class ModelStorageBase extends ModelSerialCloneable {
                                 }
 
                                 if (kMaskColor != null) {
-                                    fReturn[(((j * iBound) + i) * 4) + 0] = kMaskColor.A;
-                                    fReturn[(((j * iBound) + i) * 4) + 1] = 255 * kMaskColor.R;
-                                    fReturn[(((j * iBound) + i) * 4) + 2] = 255 * kMaskColor.G;
-                                    fReturn[(((j * iBound) + i) * 4) + 3] = 255 * kMaskColor.B;
+                                    fReturn[ ( ( (j * iBound) + i) * 4) + 0] = kMaskColor.A;
+                                    fReturn[ ( ( (j * iBound) + i) * 4) + 1] = 255 * kMaskColor.R;
+                                    fReturn[ ( ( (j * iBound) + i) * 4) + 2] = 255 * kMaskColor.G;
+                                    fReturn[ ( ( (j * iBound) + i) * 4) + 3] = 255 * kMaskColor.B;
                                 }
                             }
                         }
                     }
 
                     /* if color: */
-                    if ((bufferType == ARGB) || (bufferType == ARGB_USHORT) || (bufferType == ARGB_FLOAT)) {
-                        values[(((j * iBound) + i) * 4) + 0] = getFloat((index * 4) + 0);
-                        values[(((j * iBound) + i) * 4) + 1] = getFloat((index * 4) + 1);
-                        values[(((j * iBound) + i) * 4) + 2] = getFloat((index * 4) + 2);
-                        values[(((j * iBound) + i) * 4) + 3] = getFloat((index * 4) + 3);
+                    if ( (bufferType == ModelStorageBase.ARGB) || (bufferType == ModelStorageBase.ARGB_USHORT)
+                            || (bufferType == ModelStorageBase.ARGB_FLOAT)) {
+                        values[ ( ( (j * iBound) + i) * 4) + 0] = getFloat( (index * 4) + 0);
+                        values[ ( ( (j * iBound) + i) * 4) + 1] = getFloat( (index * 4) + 1);
+                        values[ ( ( (j * iBound) + i) * 4) + 2] = getFloat( (index * 4) + 2);
+                        values[ ( ( (j * iBound) + i) * 4) + 3] = getFloat( (index * 4) + 3);
                     }
                     /* if complex: */
-                    else if ((bufferType == COMPLEX) || (bufferType == DCOMPLEX)) {
+                    else if ( (bufferType == ModelStorageBase.COMPLEX) || (bufferType == ModelStorageBase.DCOMPLEX)) {
 
                         if (exportComplex) {
-                            values[(((j * iBound) + i) * 2) + 0] = getFloat(index * 2);
-                            values[(((j * iBound) + i) * 2) + 1] = getFloat((index * 2) + 1);
+                            values[ ( ( (j * iBound) + i) * 2) + 0] = getFloat(index * 2);
+                            values[ ( ( (j * iBound) + i) * 2) + 1] = getFloat( (index * 2) + 1);
                         } else {
                             real = getFloat(index * 2);
-                            imaginary = getFloat((index * 2) + 1);
+                            imaginary = getFloat( (index * 2) + 1);
 
                             if (logMagDisp == true) {
-                                mag = Math.sqrt((real * real) + (imaginary * imaginary));
-                                values[(j * iBound) + i] = (float) (0.4342944819 * Math.log((1.0 + mag)));
+                                mag = Math.sqrt( (real * real) + (imaginary * imaginary));
+                                values[ (j * iBound) + i] = (float) (0.4342944819 * Math.log( (1.0 + mag)));
                             } else {
-                                values[(j * iBound) + i] = (float) Math.sqrt((real * real) + (imaginary * imaginary));
+                                values[ (j * iBound) + i] = (float) Math.sqrt( (real * real) + (imaginary * imaginary));
                             }
                         }
                     }
                     /* not color: */
                     else {
-                        values[(j * iBound) + i] = getFloat(index);
+                        values[ (j * iBound) + i] = getFloat(index);
                     }
                 }
             }
-        } catch (IOException error) {
+        } catch (final IOException error) {
             throw error;
         } finally {
             releaseLock();
@@ -1062,30 +1047,30 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Export data to the real values and the images values arrays.
-     *
-     * @param   start    Indicates starting position in data array
-     * @param   length   Length of complex data (in 2 float units) to be copied from data array
-     * @param   valuesR  Array where real data is to be deposited
-     * @param   valuesI  Array where imaginary data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start Indicates starting position in data array
+     * @param length Length of complex data (in 2 float units) to be copied from data array
+     * @param valuesR Array where real data is to be deposited
+     * @param valuesI Array where imaginary data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void exportComplexData(int start, int length, float[] valuesR, float[] valuesI)
-            throws IOException {
+    public final synchronized void exportComplexData(final int start, final int length, final float[] valuesR,
+            final float[] valuesI) throws IOException {
         int i, j;
 
-        if ((start >= 0) && ((start + (2 * length)) <= dataSize) && (length <= valuesR.length) &&
-                (length <= valuesI.length)) {
+        if ( (start >= 0) && ( (start + (2 * length)) <= dataSize) && (length <= valuesR.length)
+                && (length <= valuesI.length)) {
 
             try {
-                setLock(W_LOCKED);
+                setLock(ModelStorageBase.W_LOCKED);
 
                 for (i = start, j = 0; j < length; i += 2, j++) {
                     valuesR[j] = data.getFloat(i);
                     valuesI[j] = data.getFloat(i + 1);
                 }
 
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -1100,17 +1085,18 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Export XY slice magnitude data into values array.
-     *
-     * @param   slice          indicates slice of data to be exported
-     * @param   values         array where data is to be deposited
-     * @param   logMagDisplay  if true display log10 of 1 + data
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param slice indicates slice of data to be exported
+     * @param values array where data is to be deposited
+     * @param logMagDisplay if true display log10 of 1 + data
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final void exportComplexSliceXY(int slice, float[] values, boolean logMagDisplay) throws IOException {
+    public final void exportComplexSliceXY(final int slice, final float[] values, final boolean logMagDisplay)
+            throws IOException {
 
         int i;
-        int length = dimExtents[0] * dimExtents[1];
+        final int length = dimExtents[0] * dimExtents[1];
 
         exportMagData(2 * slice * length, length, values);
 
@@ -1119,39 +1105,41 @@ public class ModelStorageBase extends ModelSerialCloneable {
             for (i = 0; i < length; i++) {
 
                 // log10(x) = loge(x)/loge(10)
-                values[i] = (float) (0.4342944819 * java.lang.Math.log((double) (1.0 + values[i])));
+                values[i] = (float) (0.4342944819 * java.lang.Math.log( (1.0 + values[i])));
             }
         }
     }
 
     /**
      * Export data into values array, in the native type of the model image.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @return  Object, new array where data has been deposited
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param length length of data to be copied from data array
+     * @return Object, new array where data has been deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final Object exportData(int start, int length) throws IOException {
+    public final Object exportData(final int start, final int length) throws IOException {
         int i, j;
 
         Object value_array = null;
 
-        if ((start >= 0) && ((start + length) <= dataSize)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize)) {
 
             try {
-                setLock(W_LOCKED);
-                
-                Class<?> buffer_type = data.getType();
-                if (buffer_type == null) return null;
+                setLock(ModelStorageBase.W_LOCKED);
+
+                final Class<?> buffer_type = data.getType();
+                if (buffer_type == null) {
+                    return null;
+                }
 
                 value_array = Array.newInstance(buffer_type, length);
 
                 for (i = start, j = 0; j < length; i++, j++) {
                     Array.set(value_array, j, data.get(i));
                 }
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -1165,44 +1153,44 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Import Object. Imports Object array that is exported with the exportData function.
+     * 
      * @param value_array Object storing data.
      * @throws IOException
      */
-    public final void importData(Object value_array) throws IOException {
+    public final void importData(final Object value_array) throws IOException {
         try {
-            setLock(W_LOCKED);
-            for (int i = 0; i < Math.min( Array.getLength(value_array), dataSize ); i++) {
-                data.set(i, (Number)Array.get(value_array, i) );
+            setLock(ModelStorageBase.W_LOCKED);
+            for (int i = 0; i < Math.min(Array.getLength(value_array), dataSize); i++) {
+                data.set(i, (Number) Array.get(value_array, i));
             }
-        } catch (IOException error) {
+        } catch (final IOException error) {
             throw error;
         } finally {
             releaseLock();
         }
     }
 
-    
     /**
      * Export data into values array.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param length length of data to be copied from data array
+     * @param values array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final void exportData(int start, int length, Number[] values) throws IOException {
+    public final void exportData(final int start, final int length, final Number[] values) throws IOException {
         int i, j;
 
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize) && (length <= values.length)) {
 
             try {
-                setLock(W_LOCKED);
+                setLock(ModelStorageBase.W_LOCKED);
 
                 for (i = start, j = 0; j < length; i++, j++) {
                     values[j] = data.get(i);
                 }
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -1216,20 +1204,21 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Export data into values array.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param length length of data to be copied from data array
+     * @param values array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void exportData(int start, int length, BitSet values) throws IOException {
+    public final synchronized void exportData(final int start, final int length, final BitSet values)
+            throws IOException {
         int i, j;
 
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.size())) {
+        if ( (start >= 0) && ( (start + length) <= dataSize) && (length <= values.size())) {
 
             try {
-                setLock(W_LOCKED);
+                setLock(ModelStorageBase.W_LOCKED);
 
                 for (i = start, j = 0; j < length; i++, j++) {
 
@@ -1239,7 +1228,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                         values.clear(j);
                     }
                 }
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -1253,26 +1242,27 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Export data into values array.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param length length of data to be copied from data array
+     * @param values array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void exportData(int start, int length, byte[] values) throws IOException {
+    public final synchronized void exportData(final int start, final int length, final byte[] values)
+            throws IOException {
         int i, j;
 
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize) && (length <= values.length)) {
 
             try {
-                setLock(W_LOCKED);
+                setLock(ModelStorageBase.W_LOCKED);
 
                 for (i = start, j = 0; j < length; i++, j++) {
                     values[j] = data.getByte(i);
                 }
 
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -1286,26 +1276,27 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Export data into values array.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param length length of data to be copied from data array
+     * @param values array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void exportData(int start, int length, short[] values) throws IOException {
+    public final synchronized void exportData(final int start, final int length, final short[] values)
+            throws IOException {
         int i, j;
 
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize) && (length <= values.length)) {
 
             try {
-                setLock(W_LOCKED);
+                setLock(ModelStorageBase.W_LOCKED);
 
                 for (i = start, j = 0; j < length; i++, j++) {
                     values[j] = data.getShort(i);
                 }
 
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -1319,26 +1310,26 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Export data into values array.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param length length of data to be copied from data array
+     * @param values array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void exportData(int start, int length, int[] values) throws IOException {
+    public final synchronized void exportData(final int start, final int length, final int[] values) throws IOException {
         int i, j;
 
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize) && (length <= values.length)) {
 
             try {
-                setLock(W_LOCKED);
+                setLock(ModelStorageBase.W_LOCKED);
 
                 for (i = start, j = 0; j < length; i++, j++) {
                     values[j] = data.getInt(i);
                 }
 
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -1352,25 +1343,26 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Export data into values array.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param length length of data to be copied from data array
+     * @param values array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void exportData(int start, int length, long[] values) throws IOException {
+    public final synchronized void exportData(final int start, final int length, final long[] values)
+            throws IOException {
         int i, j;
 
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize) && (length <= values.length)) {
 
             try {
-                setLock(W_LOCKED);
+                setLock(ModelStorageBase.W_LOCKED);
 
                 for (i = start, j = 0; j < length; i++, j++) {
                     values[j] = data.getLong(i);
                 }
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -1384,26 +1376,27 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Export data to values array.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param length length of data to be copied from data array
+     * @param values array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void exportData(int start, int length, float[] values) throws IOException {
+    public final synchronized void exportData(final int start, final int length, final float[] values)
+            throws IOException {
         int i, j;
 
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize) && (length <= values.length)) {
 
             try {
-                setLock(W_LOCKED);
+                setLock(ModelStorageBase.W_LOCKED);
 
                 for (i = start, j = 0; j < length; i++, j++) {
                     values[j] = data.getFloat(i);
                 }
 
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -1418,26 +1411,27 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Export data in values array.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param length length of data to be copied from data array
+     * @param values array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void exportData(int start, int length, double[] values) throws IOException {
+    public final synchronized void exportData(final int start, final int length, final double[] values)
+            throws IOException {
         int i, j;
 
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize) && (length <= values.length)) {
 
             try {
-                setLock(W_LOCKED);
+                setLock(ModelStorageBase.W_LOCKED);
 
                 for (i = start, j = 0; j < length; i++, j++) {
                     values[j] = data.getDouble(i);
                 }
 
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -1451,23 +1445,24 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * export data to values array.
-     *
-     * @param   start    indicates starting position in data array
-     * @param   length0  length of first dimension of data to be copied from data array
-     * @param   length1  length of second dimension of data to be copied from data array
-     * @param   values   array where data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param length0 length of first dimension of data to be copied from data array
+     * @param length1 length of second dimension of data to be copied from data array
+     * @param values array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void exportData(int start, int length0, int length1, float[] values) throws IOException {
+    public final synchronized void exportData(final int start, final int length0, final int length1,
+            final float[] values) throws IOException {
         int i, j;
         int x, y;
-        int length = length0 * length1;
+        final int length = length0 * length1;
 
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize) && (length <= values.length)) {
 
             try {
-                setLock(W_LOCKED);
+                setLock(ModelStorageBase.W_LOCKED);
 
                 for (y = 0, j = 0; y < length1; y++) {
 
@@ -1476,7 +1471,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                         values[j] = data.getFloat(i);
                     }
                 }
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -1491,17 +1486,17 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * export data into values array WITHOUT locking.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param length length of data to be copied from data array
+     * @param values array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a bounds error.
      */
-    public final void exportDataNoLock(int start, int length, Number[] values) throws IOException {
+    public final void exportDataNoLock(final int start, final int length, final Number[] values) throws IOException {
         int i, j;
 
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize) && (length <= values.length)) {
 
             for (i = start, j = 0; j < length; i++, j++) {
                 values[j] = data.get(i);
@@ -1515,17 +1510,18 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * export data into values array WITHOUT locking.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param length length of data to be copied from data array
+     * @param values array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a bounds error.
      */
-    public final synchronized void exportDataNoLock(int start, int length, BitSet values) throws IOException {
+    public final synchronized void exportDataNoLock(final int start, final int length, final BitSet values)
+            throws IOException {
         int i, j;
 
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.size())) {
+        if ( (start >= 0) && ( (start + length) <= dataSize) && (length <= values.size())) {
 
             for (i = start, j = 0; j < length; i++, j++) {
 
@@ -1544,17 +1540,18 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Export data into values array WITHOUT locking.
-     *
-     * @param   start   Indicates starting position in data array
-     * @param   length  Length of data to be copied from data array
-     * @param   values  Array where data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a bounds error.
+     * 
+     * @param start Indicates starting position in data array
+     * @param length Length of data to be copied from data array
+     * @param values Array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a bounds error.
      */
-    public final synchronized void exportDataNoLock(int start, int length, byte[] values) throws IOException {
+    public final synchronized void exportDataNoLock(final int start, final int length, final byte[] values)
+            throws IOException {
         int i, j;
 
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize) && (length <= values.length)) {
 
             for (i = start, j = 0; j < length; i++, j++) {
                 values[j] = data.getByte(i);
@@ -1568,17 +1565,18 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Export data into values array WITHOUT locking.
-     *
-     * @param   start   Indicates starting position in data array
-     * @param   length  Length of data to be copied from data array
-     * @param   values  Array where data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a bounds error.
+     * 
+     * @param start Indicates starting position in data array
+     * @param length Length of data to be copied from data array
+     * @param values Array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a bounds error.
      */
-    public final synchronized void exportDataNoLock(int start, int length, short[] values) throws IOException {
+    public final synchronized void exportDataNoLock(final int start, final int length, final short[] values)
+            throws IOException {
         int i, j;
 
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize) && (length <= values.length)) {
 
             for (i = start, j = 0; j < length; i++, j++) {
                 values[j] = data.getShort(i);
@@ -1592,17 +1590,18 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Export data into values array WITHOUT locking.
-     *
-     * @param   start   Indicates starting position in data array
-     * @param   length  Length of data to be copied from data array
-     * @param   values  Array where data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a bounds error.
+     * 
+     * @param start Indicates starting position in data array
+     * @param length Length of data to be copied from data array
+     * @param values Array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a bounds error.
      */
-    public final synchronized void exportDataNoLock(int start, int length, int[] values) throws IOException {
+    public final synchronized void exportDataNoLock(final int start, final int length, final int[] values)
+            throws IOException {
         int i, j;
 
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize) && (length <= values.length)) {
 
             for (i = start, j = 0; j < length; i++, j++) {
                 values[j] = data.getInt(i);
@@ -1616,17 +1615,18 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * export data into values array WITHOUT locking.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param length length of data to be copied from data array
+     * @param values array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a bounds error.
      */
-    public final synchronized void exportDataNoLock(int start, int length, long[] values) throws IOException {
+    public final synchronized void exportDataNoLock(final int start, final int length, final long[] values)
+            throws IOException {
         int i, j;
 
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize) && (length <= values.length)) {
 
             for (i = start, j = 0; j < length; i++, j++) {
                 values[j] = data.getLong(i);
@@ -1640,17 +1640,18 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * export data in values array WITHOUT using locking.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param length length of data to be copied from data array
+     * @param values array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a bounds error.
      */
-    public final synchronized void exportDataNoLock(int start, int length, float[] values) throws IOException {
+    public final synchronized void exportDataNoLock(final int start, final int length, final float[] values)
+            throws IOException {
         int i, j;
 
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize) && (length <= values.length)) {
 
             for (i = start, j = 0; j < length; i++, j++) {
                 values[j] = data.getFloat(i);
@@ -1664,17 +1665,18 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * export data into values array WITHOUT locking.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param length length of data to be copied from data array
+     * @param values array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a bounds error.
      */
-    public final synchronized void exportDataNoLock(int start, int length, double[] values) throws IOException {
+    public final synchronized void exportDataNoLock(final int start, final int length, final double[] values)
+            throws IOException {
         int i, j;
 
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize) && (length <= values.length)) {
 
             for (i = start, j = 0; j < length; i++, j++) {
                 values[j] = data.getDouble(i);
@@ -1688,29 +1690,29 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Export data to the real values and the imaginary values arrays.
-     *
-     * @param   start    indicates starting position in data array
-     * @param   length   length of complex data (in 2 float units) to be copied from data array
-     * @param   valuesR  array where real data is to be deposited
-     * @param   valuesI  array where imaginary data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param length length of complex data (in 2 float units) to be copied from data array
+     * @param valuesR array where real data is to be deposited
+     * @param valuesI array where imaginary data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void exportDComplexData(int start, int length, double[] valuesR, double[] valuesI)
-            throws IOException {
+    public final synchronized void exportDComplexData(final int start, final int length, final double[] valuesR,
+            final double[] valuesI) throws IOException {
         int i, j;
 
-        if ((start >= 0) && ((start + (2 * length)) <= dataSize) && (length <= valuesR.length) &&
-                (length <= valuesI.length)) {
+        if ( (start >= 0) && ( (start + (2 * length)) <= dataSize) && (length <= valuesR.length)
+                && (length <= valuesI.length)) {
 
             try {
-                setLock(W_LOCKED);
+                setLock(ModelStorageBase.W_LOCKED);
 
                 for (i = start, j = 0; j < length; i += 2, j++) {
                     valuesR[j] = data.getDouble(i);
                     valuesI[j] = data.getDouble(i + 1);
                 }
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -1726,46 +1728,50 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * ShowDiagonal samples the ModelImage data along a non-axis aligned plane. The plane may intersect the ModelImage
      * volume, defined in x,y,z space, along a diagonal direction.
-     *
-     * <p>This function steps through the image, using the four transformed points to step through the ModelImage along
-     * the diagonal directions, read the corresonding point in the ModelImage and write the value into the image array.
-     * If bInterpolate is set to true, the ModelImage data for non-interger vertices is interpolated using tri-linear
+     * 
+     * <p>
+     * This function steps through the image, using the four transformed points to step through the ModelImage along the
+     * diagonal directions, read the corresonding point in the ModelImage and write the value into the image array. If
+     * bInterpolate is set to true, the ModelImage data for non-interger vertices is interpolated using tri-linear
      * interpolation. Note: there is one loop for steping though he data, no matter which type of plane this object
-     * represents (XY, XZ, or ZY).</p>
-     *
-     * @param   tSlice        Index into the forth dimension
-     * @param   slice         Indicates slice of data to be exported
-     * @param   extents       Image extents in the local coordinate system.
-     * @param   verts         The rotated non-axis aligned corners of the slice
-     * @param   values        The array in which to write the data.
-     * @param   bInterpolate  If true then use interpolation.
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * represents (XY, XZ, or ZY).
+     * </p>
+     * 
+     * @param tSlice Index into the forth dimension
+     * @param slice Indicates slice of data to be exported
+     * @param extents Image extents in the local coordinate system.
+     * @param verts The rotated non-axis aligned corners of the slice
+     * @param values The array in which to write the data.
+     * @param bInterpolate If true then use interpolation.
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void exportDiagonal(int tSlice, int slice, int[] extents, Vector3f[] verts,
-                                                  float[] values, boolean bInterpolate) throws IOException {
+    public final synchronized void exportDiagonal(final int tSlice, final int slice, final int[] extents,
+            final Vector3f[] verts, final float[] values, final boolean bInterpolate) throws IOException {
 
         try {
-            setLock(W_LOCKED);
-        } catch (IOException error) {
+            setLock(ModelStorageBase.W_LOCKED);
+        } catch (final IOException error) {
             releaseLock();
             throw error;
         }
 
-        int iBound = extents[0];
-        int jBound = extents[1];
+        final int iBound = extents[0];
+        final int jBound = extents[1];
 
-        /* Get the loop multiplication factors for indexing into the 1D array
-         * with 3 index variables: based on the coordinate-systems:
-         * transformation:  */
-        int iFactor = 1;
-        int jFactor = dimExtents[0];
-        int kFactor = dimExtents[0] * dimExtents[1];
-        int tFactor = dimExtents[0] * dimExtents[1] * dimExtents[2];
+        /*
+         * Get the loop multiplication factors for indexing into the 1D array with 3 index variables: based on the
+         * coordinate-systems: transformation:
+         */
+        final int iFactor = 1;
+        final int jFactor = dimExtents[0];
+        final int kFactor = dimExtents[0] * dimExtents[1];
+        final int tFactor = dimExtents[0] * dimExtents[1] * dimExtents[2];
 
         int buffFactor = 1;
 
-        if ((bufferType == ARGB) || (bufferType == ARGB_USHORT) || (bufferType == ARGB_FLOAT)) {
+        if ( (bufferType == ModelStorageBase.ARGB) || (bufferType == ModelStorageBase.ARGB_USHORT)
+                || (bufferType == ModelStorageBase.ARGB_FLOAT)) {
             buffFactor = 4;
         }
 
@@ -1782,17 +1788,16 @@ public class ModelStorageBase extends ModelSerialCloneable {
         float y0 = verts[0].Y;
         float z0 = verts[0].Z;
 
-        xSlopeX /= (float) (iBound - 1);
-        ySlopeX /= (float) (iBound - 1);
-        zSlopeX /= (float) (iBound - 1);
+        xSlopeX /= (iBound - 1);
+        ySlopeX /= (iBound - 1);
+        zSlopeX /= (iBound - 1);
 
-        xSlopeY /= (float) (jBound - 1);
-        ySlopeY /= (float) (jBound - 1);
-        zSlopeY /= (float) (jBound - 1);
+        xSlopeY /= (jBound - 1);
+        ySlopeY /= (jBound - 1);
+        zSlopeY /= (jBound - 1);
 
-        boolean exportComplex = (values.length == (2 * iBound * jBound)) ? true : false;
+        final boolean exportComplex = (values.length == (2 * iBound * jBound)) ? true : false;
         double real, imaginary, mag;
-
 
         /* loop over the 2D image (values) we're writing into */
         float x = x0;
@@ -1807,51 +1812,53 @@ public class ModelStorageBase extends ModelSerialCloneable {
             z = z0;
 
             for (int i = 0; i < iBound; i++) {
-                int iIndex = (int) x;
-                int jIndex = (int) y;
-                int kIndex = (int) z;
+                final int iIndex = (int) x;
+                final int jIndex = (int) y;
+                final int kIndex = (int) z;
 
                 /* calculate the ModelImage space index: */
-                int index = (int) ((iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor));
+                final int index = ( (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor));
 
                 /* Bounds checking, if out of bounds, set to zero: */
-                if (((x < 0) || (x >= dimExtents[0])) || ((y < 0) || (y >= dimExtents[1])) ||
-                        ((z < 0) || (z >= dimExtents[2])) || ((index < 0) || ((index * buffFactor) > dataSize))) {
+                if ( ( (x < 0) || (x >= dimExtents[0])) || ( (y < 0) || (y >= dimExtents[1]))
+                        || ( (z < 0) || (z >= dimExtents[2])) || ( (index < 0) || ( (index * buffFactor) > dataSize))) {
 
-                    if ((bufferType == ARGB) || (bufferType == ARGB_USHORT) || (bufferType == ARGB_FLOAT)) {
-                        values[(((j * iBound) + i) * 4) + 0] = 0;
-                        values[(((j * iBound) + i) * 4) + 1] = 0;
-                        values[(((j * iBound) + i) * 4) + 2] = 0;
-                        values[(((j * iBound) + i) * 4) + 3] = 0;
+                    if ( (bufferType == ModelStorageBase.ARGB) || (bufferType == ModelStorageBase.ARGB_USHORT)
+                            || (bufferType == ModelStorageBase.ARGB_FLOAT)) {
+                        values[ ( ( (j * iBound) + i) * 4) + 0] = 0;
+                        values[ ( ( (j * iBound) + i) * 4) + 1] = 0;
+                        values[ ( ( (j * iBound) + i) * 4) + 2] = 0;
+                        values[ ( ( (j * iBound) + i) * 4) + 3] = 0;
                     }
                     /* not color: */
                     else {
-                        values[(j * iBound) + i] = (float) this.min;
+                        values[ (j * iBound) + i] = (float) this.min;
                     }
                 } else {
 
                     /* if color: */
-                    if ((bufferType == ARGB) || (bufferType == ARGB_USHORT) || (bufferType == ARGB_FLOAT)) {
-                        values[(((j * iBound) + i) * 4) + 0] = getFloat((index * 4) + 0);
-                        values[(((j * iBound) + i) * 4) + 1] = getFloat((index * 4) + 1);
-                        values[(((j * iBound) + i) * 4) + 2] = getFloat((index * 4) + 2);
-                        values[(((j * iBound) + i) * 4) + 3] = getFloat((index * 4) + 3);
+                    if ( (bufferType == ModelStorageBase.ARGB) || (bufferType == ModelStorageBase.ARGB_USHORT)
+                            || (bufferType == ModelStorageBase.ARGB_FLOAT)) {
+                        values[ ( ( (j * iBound) + i) * 4) + 0] = getFloat( (index * 4) + 0);
+                        values[ ( ( (j * iBound) + i) * 4) + 1] = getFloat( (index * 4) + 1);
+                        values[ ( ( (j * iBound) + i) * 4) + 2] = getFloat( (index * 4) + 2);
+                        values[ ( ( (j * iBound) + i) * 4) + 3] = getFloat( (index * 4) + 3);
                     }
                     /* if complex: */
-                    else if (bufferType == COMPLEX) {
+                    else if (bufferType == ModelStorageBase.COMPLEX) {
 
                         if (exportComplex) {
-                            values[(((j * iBound) + i) * 2) + 0] = getFloat(index * 2);
-                            values[(((j * iBound) + i) * 2) + 1] = getFloat((index * 2) + 1);
+                            values[ ( ( (j * iBound) + i) * 2) + 0] = getFloat(index * 2);
+                            values[ ( ( (j * iBound) + i) * 2) + 1] = getFloat( (index * 2) + 1);
                         } else {
                             real = getFloat(index * 2);
-                            imaginary = getFloat((index * 2) + 1);
+                            imaginary = getFloat( (index * 2) + 1);
 
                             if (logMagDisp == true) {
-                                mag = Math.sqrt((real * real) + (imaginary * imaginary));
-                                values[(j * iBound) + i] = (float) (0.4342944819 * Math.log((1.0 + mag)));
+                                mag = Math.sqrt( (real * real) + (imaginary * imaginary));
+                                values[ (j * iBound) + i] = (float) (0.4342944819 * Math.log( (1.0 + mag)));
                             } else {
-                                values[(j * iBound) + i] = (float) Math.sqrt((real * real) + (imaginary * imaginary));
+                                values[ (j * iBound) + i] = (float) Math.sqrt( (real * real) + (imaginary * imaginary));
                             }
                         }
                     }
@@ -1859,24 +1866,26 @@ public class ModelStorageBase extends ModelSerialCloneable {
                     else {
 
                         if (bInterpolate) {
-                            values[(j * iBound) + i] = getFloatTriLinearBounds(x, y, z);
+                            values[ (j * iBound) + i] = getFloatTriLinearBounds(x, y, z);
                         } else {
-                            values[(j * iBound) + i] = getFloat(index);
+                            values[ (j * iBound) + i] = getFloat(index);
                         }
                     }
                 }
 
-                /* Inner loop: Move to the next diagonal point along the
-                 * x-direction of the plane, using the xSlopeX, ySlopeX and
-                 * zSlopeX values: */
+                /*
+                 * Inner loop: Move to the next diagonal point along the x-direction of the plane, using the xSlopeX,
+                 * ySlopeX and zSlopeX values:
+                 */
                 x = x + xSlopeX;
                 y = y + ySlopeX;
                 z = z + zSlopeX;
             }
 
-            /* Outer loop: Move to the next diagonal point along the
-             * y-direction of the plane, using the xSlopeY, ySlopeY and
-             * zSlopeY values: */
+            /*
+             * Outer loop: Move to the next diagonal point along the y-direction of the plane, using the xSlopeY,
+             * ySlopeY and zSlopeY values:
+             */
             x0 = x0 + xSlopeY;
             y0 = y0 + ySlopeY;
             z0 = z0 + zSlopeY;
@@ -1885,28 +1894,29 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Export magnitude data to values array.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   length  length of magnitude data to be copied from data array
-     * @param   values  array where magnitude data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param length length of magnitude data to be copied from data array
+     * @param values array where magnitude data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void exportDMagData(int start, int length, double[] values) throws IOException {
+    public final synchronized void exportDMagData(final int start, final int length, final double[] values)
+            throws IOException {
         int i, j;
         double real, imaginary;
 
-        if ((start >= 0) && ((start + (2 * length)) <= dataSize) && (length <= values.length)) {
+        if ( (start >= 0) && ( (start + (2 * length)) <= dataSize) && (length <= values.length)) {
 
             try {
-                setLock(W_LOCKED);
+                setLock(ModelStorageBase.W_LOCKED);
 
                 for (i = start, j = 0; j < length; i += 2, j++) {
                     real = data.getDouble(i);
                     imaginary = data.getDouble(i + 1);
-                    values[j] = Math.sqrt((real * real) + (imaginary * imaginary));
+                    values[j] = Math.sqrt( (real * real) + (imaginary * imaginary));
                 }
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -1920,29 +1930,30 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * export magnitude data to values array.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   length  length of magnitude data to be copied from data array
-     * @param   values  array where magnitude data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param length length of magnitude data to be copied from data array
+     * @param values array where magnitude data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void exportMagData(int start, int length, float[] values) throws IOException {
+    public final synchronized void exportMagData(final int start, final int length, final float[] values)
+            throws IOException {
         int i, j;
         double real, imaginary;
 
-        if ((start >= 0) && ((start + (2 * length)) <= dataSize) && (length <= values.length)) {
+        if ( (start >= 0) && ( (start + (2 * length)) <= dataSize) && (length <= values.length)) {
 
             try {
-                setLock(W_LOCKED);
+                setLock(ModelStorageBase.W_LOCKED);
 
                 for (i = start, j = 0; j < length; i += 2, j++) {
-                    real = (double) data.getFloat(i);
-                    imaginary = (double) data.getFloat(i + 1);
-                    values[j] = (float) Math.sqrt((real * real) + (imaginary * imaginary));
+                    real = data.getFloat(i);
+                    imaginary = data.getFloat(i + 1);
+                    values[j] = (float) Math.sqrt( (real * real) + (imaginary * imaginary));
                 }
 
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 releaseLock();
                 throw error;
             } finally {
@@ -1957,33 +1968,36 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * export data in values array.
-     *
-     * @param   offset  correct offset for RED, GREEN, or BLUE component to be exported
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @return  Object, new array where data has been deposited
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param offset correct offset for RED, GREEN, or BLUE component to be exported
+     * @param start indicates starting position in data array
+     * @param length length of data to be copied from data array
+     * @return Object, new array where data has been deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized Object exportRGBData(int offset, int start, int length) throws IOException {
+    public final synchronized Object exportRGBData(final int offset, final int start, final int length)
+            throws IOException {
         int i, j;
 
         Object value_array = null;
 
-        if ((start >= 0) && ((start + (4 * length)) <= dataSize)) {
+        if ( (start >= 0) && ( (start + (4 * length)) <= dataSize)) {
 
             try {
-                setLock(W_LOCKED);
+                setLock(ModelStorageBase.W_LOCKED);
 
-                Class<?> buffer_type = data.getType();
-                if (buffer_type == null) return null;
+                final Class<?> buffer_type = data.getType();
+                if (buffer_type == null) {
+                    return null;
+                }
 
                 value_array = Array.newInstance(buffer_type, length);
 
                 for (i = start + offset, j = 0; j < length; i += 4, j++) {
                     Array.set(value_array, j, data.get(i));
                 }
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -1997,26 +2011,27 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * export data in values array.
-     *
-     * @param   offset  correct offset for RED, GREEN, or BLUE component to be exported
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param offset correct offset for RED, GREEN, or BLUE component to be exported
+     * @param start indicates starting position in data array
+     * @param length length of data to be copied from data array
+     * @param values array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void exportRGBData(int offset, int start, int length, byte[] values) throws IOException {
+    public final synchronized void exportRGBData(final int offset, final int start, final int length,
+            final byte[] values) throws IOException {
         int i, j;
 
-        if ((start >= 0) && ((start + (4 * length)) <= dataSize) && (length <= values.length)) {
+        if ( (start >= 0) && ( (start + (4 * length)) <= dataSize) && (length <= values.length)) {
 
             try {
-                setLock(W_LOCKED);
+                setLock(ModelStorageBase.W_LOCKED);
 
                 for (i = start + offset, j = 0; j < length; i += 4, j++) {
                     values[j] = data.getByte(i);
                 }
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -2030,27 +2045,28 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * export data in values array.
-     *
-     * @param   offset  correct offset for RED, GREEN, or BLUE component to be exported
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param offset correct offset for RED, GREEN, or BLUE component to be exported
+     * @param start indicates starting position in data array
+     * @param length length of data to be copied from data array
+     * @param values array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void exportRGBData(int offset, int start, int length, short[] values) throws IOException {
+    public final synchronized void exportRGBData(final int offset, final int start, final int length,
+            final short[] values) throws IOException {
         int i, j;
 
-        if ((start >= 0) && ((start + (4 * length)) <= dataSize) && (length <= values.length)) {
+        if ( (start >= 0) && ( (start + (4 * length)) <= dataSize) && (length <= values.length)) {
 
             try {
-                setLock(W_LOCKED);
+                setLock(ModelStorageBase.W_LOCKED);
 
                 for (i = start + offset, j = 0; j < length; i += 4, j++) {
                     values[j] = data.getShort(i);
                 }
 
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -2064,26 +2080,27 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * export data in values array.
-     *
-     * @param   offset  correct offset for RED, GREEN, or BLUE component to be exported
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param offset correct offset for RED, GREEN, or BLUE component to be exported
+     * @param start indicates starting position in data array
+     * @param length length of data to be copied from data array
+     * @param values array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void exportRGBData(int offset, int start, int length, float[] values) throws IOException {
+    public final synchronized void exportRGBData(final int offset, final int start, final int length,
+            final float[] values) throws IOException {
         int i, j;
 
-        if ((start >= 0) && ((start + (4 * length)) <= dataSize) && (length <= values.length)) {
+        if ( (start >= 0) && ( (start + (4 * length)) <= dataSize) && (length <= values.length)) {
 
             try {
-                setLock(W_LOCKED);
+                setLock(ModelStorageBase.W_LOCKED);
 
                 for (i = start + offset, j = 0; j < length; i += 4, j++) {
                     values[j] = data.getFloat(i);
                 }
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -2097,19 +2114,19 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Export data in values array WITHOUT using locking.
-     *
-     * @param   offset  offset into the data array
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param offset offset into the data array
+     * @param start indicates starting position in data array
+     * @param length length of data to be copied from data array
+     * @param values array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void exportRGBDataNoLock(int offset, int start, int length, float[] values)
-            throws IOException {
+    public final synchronized void exportRGBDataNoLock(final int offset, final int start, final int length,
+            final float[] values) throws IOException {
         int i, j;
 
-        if ((start >= 0) && ((start + (4 * length)) <= dataSize) && (length <= values.length)) {
+        if ( (start >= 0) && ( (start + (4 * length)) <= dataSize) && (length <= values.length)) {
 
             for (i = start, j = 0; j < length; i += 4, j++) {
                 values[j] = data.getFloat(i + offset);
@@ -2121,102 +2138,100 @@ public class ModelStorageBase extends ModelSerialCloneable {
         throw new IOException("Export RGB data error - bounds incorrect");
     }
 
-
     /**
      * Export XY slice into values array.
-     *
-     * @param   slice   Indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param slice Indicates slice of data to be exported
+     * @param values array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final void exportSliceXY(int slice, byte[] values) throws IOException {
-        int length = dimExtents[0] * dimExtents[1];
-
-        exportData(slice * length, length, values);
-    }
-
-    /**
-     * Export XY slice into values array.
-     *
-     * @param   slice   Indicates slice of data to be exported.
-     * @param   values  Array where data is to be deposited.
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
-     */
-    public final void exportSliceXY(int slice, short[] values) throws IOException {
-        int length = dimExtents[0] * dimExtents[1];
+    public final void exportSliceXY(final int slice, final byte[] values) throws IOException {
+        final int length = dimExtents[0] * dimExtents[1];
 
         exportData(slice * length, length, values);
     }
 
     /**
      * Export XY slice into values array.
-     *
-     * @param   slice   Indicates slice of data to be exported.
-     * @param   values  Array where data is to be deposited.
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param slice Indicates slice of data to be exported.
+     * @param values Array where data is to be deposited.
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final void exportSliceXY(int slice, int[] values) throws IOException {
-        int length = dimExtents[0] * dimExtents[1];
+    public final void exportSliceXY(final int slice, final short[] values) throws IOException {
+        final int length = dimExtents[0] * dimExtents[1];
+
+        exportData(slice * length, length, values);
+    }
+
+    /**
+     * Export XY slice into values array.
+     * 
+     * @param slice Indicates slice of data to be exported.
+     * @param values Array where data is to be deposited.
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
+     */
+    public final void exportSliceXY(final int slice, final int[] values) throws IOException {
+        final int length = dimExtents[0] * dimExtents[1];
 
         exportData(slice * length, length, values);
     }
 
     /**
      * export XY slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param slice indicates slice of data to be exported
+     * @param values array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final void exportSliceXY(int slice, long[] values) throws IOException {
-        int length = dimExtents[0] * dimExtents[1];
+    public final void exportSliceXY(final int slice, final long[] values) throws IOException {
+        final int length = dimExtents[0] * dimExtents[1];
 
         exportData(slice * length, length, values);
     }
 
     /**
      * export XY slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param slice indicates slice of data to be exported
+     * @param values array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final void exportSliceXY(int slice, float[] values) throws IOException {
-        int length = dimExtents[0] * dimExtents[1];
+    public final void exportSliceXY(final int slice, final float[] values) throws IOException {
+        final int length = dimExtents[0] * dimExtents[1];
 
         exportData(slice * length, length, values);
     }
 
     /**
      * export XY slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param slice indicates slice of data to be exported
+     * @param values array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final void exportSliceXY(int slice, double[] values) throws IOException {
-        int length = dimExtents[0] * dimExtents[1];
+    public final void exportSliceXY(final int slice, final double[] values) throws IOException {
+        final int length = dimExtents[0] * dimExtents[1];
 
         exportData(slice * length, length, values);
     }
-
 
     /**
      * function to get data where bounds checking is performed.
-     *
-     * @param   position  position in one dimensional array
-     *
-     * @return  returns value if position in data array range
+     * 
+     * @param position position in one dimensional array
+     * 
+     * @return returns value if position in data array range
      */
-    public final Number get(int position) {
+    public final Number get(final int position) {
 
-        if ((position >= 0) && (position < dataSize)) {
+        if ( (position >= 0) && (position < dataSize)) {
             return (data.get(position));
         }
 
@@ -2225,15 +2240,15 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * nD get data fuction where bounds checking is performed.
-     *
-     * @param   position  array of coordinate values
-     *
-     * @return  returns true if position in data array range
+     * 
+     * @param position array of coordinate values
+     * 
+     * @return returns true if position in data array range
      */
-    public final Number get(int[] position) {
+    public final Number get(final int[] position) {
         int i;
         int location = 0;
-        int dimensions = position.length;
+        final int dimensions = position.length;
 
         if (nDims == dimensions) {
 
@@ -2243,7 +2258,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             location += position[0];
 
-            if ((location >= 0) && (location < dataSize)) {
+            if ( (location >= 0) && (location < dataSize)) {
                 return data.get(location);
             }
 
@@ -2255,19 +2270,19 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * 2D get data fuction where bounds checking is performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     *
-     * @return  returns value if position in data array range
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * 
+     * @return returns value if position in data array range
      */
-    public final Number get(int x, int y) {
+    public final Number get(final int x, final int y) {
         int position;
 
         if (nDims == 2) {
             position = (y * dimExtents[0]) + x;
 
-            if ((position >= 0) && (position < dataSize)) {
+            if ( (position >= 0) && (position < dataSize)) {
                 return data.get(position);
             }
 
@@ -2279,20 +2294,20 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * 3D get data fuction where bounds checking is performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     *
-     * @return  returns value if position in data array range
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * 
+     * @return returns value if position in data array range
      */
-    public final Number get(int x, int y, int z) {
+    public final Number get(final int x, final int y, final int z) {
         int position;
 
         if (nDims == 3) {
             position = (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x;
 
-            if ((position >= 0) && (position < dataSize)) {
+            if ( (position >= 0) && (position < dataSize)) {
                 return data.get(position);
             }
 
@@ -2304,22 +2319,22 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * 4D get data fuction where bounds checking is performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     * @param   b  b coordinate (ie. multi-modality images or time)
-     *
-     * @return  returns true if position in data array range
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param b b coordinate (ie. multi-modality images or time)
+     * 
+     * @return returns true if position in data array range
      */
-    public final Number get(int x, int y, int z, int b) {
+    public final Number get(final int x, final int y, final int z, final int b) {
         int position;
 
         if (nDims == 4) {
-            position = (b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1])) +
-                       (y * dimExtents[0]) + x;
+            position = (b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1]))
+                    + (y * dimExtents[0]) + x;
 
-            if ((position >= 0) && (position < dataSize)) {
+            if ( (position >= 0) && (position < dataSize)) {
                 return data.get(position);
             }
 
@@ -2331,8 +2346,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Returns the axis orientation of image.
-     *
-     * @return  the axis orientation of image
+     * 
+     * @return the axis orientation of image
      */
     public int[] getAxisOrientation() {
 
@@ -2345,15 +2360,15 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * version of get that performs bi-linear interpoloation. Note - does perform bounds checking
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     *
-     * @return  The Number of the bilinearly interpolated data.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * 
+     * @return The Number of the bilinearly interpolated data.
      */
-    public final Number getBiLinear(float x, float y) {
+    public final Number getBiLinear(final float x, final float y) {
 
-        int xDim = dimExtents[0];
+        final int xDim = dimExtents[0];
         int position;
         float dx, dy;
         float x1, x2;
@@ -2366,13 +2381,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
         dy = y - intY;
         position = (intY * xDim) + intX;
 
-        if ((position >= 0) && (position < (dataSize - xDim - 1))) {
-            x1 = ((1 - dx) * (data.get(position)).floatValue()) + (dx * (data.get(position + 1)).floatValue());
+        if ( (position >= 0) && (position < (dataSize - xDim - 1))) {
+            x1 = ( (1 - dx) * (data.get(position)).floatValue()) + (dx * (data.get(position + 1)).floatValue());
 
-            x2 = ((1 - dx) * (data.get(position + xDim)).floatValue()) +
-                 (dx * (data.get(position + xDim + 1)).floatValue());
+            x2 = ( (1 - dx) * (data.get(position + xDim)).floatValue())
+                    + (dx * (data.get(position + xDim + 1)).floatValue());
 
-            return (new Float(((1 - dy) * x1) + (dy * x2)));
+            return (new Float( ( (1 - dy) * x1) + (dy * x2)));
         } else {
             return (new Byte((byte) 0));
         }
@@ -2380,26 +2395,26 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Version of get that does NOT perform bounds checking.
-     *
-     * @param   position  index into the data.
-     *
-     * @return  The boolean value from the data array.
+     * 
+     * @param position index into the data.
+     * 
+     * @return The boolean value from the data array.
      */
-    public final boolean getBoolean(int position) {
+    public final boolean getBoolean(final int position) {
         return (data.getBoolean(position));
     }
 
     /**
      * n-Dimensional get data fuction where bounds checking is NOT performed.
-     *
-     * @param   position  index into the data
-     *
-     * @return  returns true if position in data array range
+     * 
+     * @param position index into the data
+     * 
+     * @return returns true if position in data array range
      */
-    public final boolean getBoolean(int[] position) {
+    public final boolean getBoolean(final int[] position) {
         int i;
         int location = 0;
-        int dimensions = position.length;
+        final int dimensions = position.length;
 
         for (i = dimensions - 1; i > 0; i--) {
             location += (position[i] * dimExtents[i]);
@@ -2412,67 +2427,68 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * 2D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     *
-     * @return  value
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * 
+     * @return value
      */
-    public final boolean getBoolean(int x, int y) {
-        return (data.getBoolean((y * dimExtents[0]) + x));
+    public final boolean getBoolean(final int x, final int y) {
+        return (data.getBoolean( (y * dimExtents[0]) + x));
     }
 
     /**
      * 3D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate*
-     *
-     * @return  The value at that position in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate*
+     * 
+     * @return The value at that position in the data array.
      */
-    public final boolean getBoolean(int x, int y, int z) {
-        return (data.getBoolean((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
+    public final boolean getBoolean(final int x, final int y, final int z) {
+        return (data.getBoolean( (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
 
     /**
      * 4D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     * @param   b  4th dimension coordinate.*
-     *
-     * @return  The value at that position in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param b 4th dimension coordinate.*
+     * 
+     * @return The value at that position in the data array.
      */
-    public final boolean getBoolean(int x, int y, int z, int b) {
-        return (data.getBoolean((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
-                                (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
+    public final boolean getBoolean(final int x, final int y, final int z, final int b) {
+        return (data.getBoolean( (b * (dimExtents[0] * dimExtents[1] * dimExtents[2]))
+                + (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
 
-
     /**
-     * Version of get that does NOT perform bounds checking @param position position in one dimensional array.
-     *
-     * @param   position  Indexe into the data array.
-     *
-     * @return  The value at that position in the data array.
+     * Version of get that does NOT perform bounds checking
+     * 
+     * @param position position in one dimensional array.
+     * 
+     * @param position Indexe into the data array.
+     * 
+     * @return The value at that position in the data array.
      */
-    public final byte getByte(int position) {
+    public final byte getByte(final int position) {
         return (data.getByte(position));
     }
 
     /**
      * nD get data fuction where bounds checking is NOT performed.
-     *
-     * @param   position  array of coordinate values
-     *
-     * @return  returns true if position in data array range
+     * 
+     * @param position array of coordinate values
+     * 
+     * @return returns true if position in data array range
      */
-    public final byte getByte(int[] position) {
+    public final byte getByte(final int[] position) {
         int i;
         int location = 0;
-        int dimensions = position.length;
+        final int dimensions = position.length;
 
         for (i = dimensions - 1; i > 0; i--) {
             location += (position[i] * dimExtents[i]);
@@ -2485,55 +2501,55 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * 2D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     *
-     * @return  value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * 
+     * @return value at that position in the data array
      */
-    public final byte getByte(int x, int y) {
-        return (data.getByte((y * dimExtents[0]) + x));
+    public final byte getByte(final int x, final int y) {
+        return (data.getByte( (y * dimExtents[0]) + x));
     }
 
     /**
      * 3D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     *
-     * @return  value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * 
+     * @return value at that position in the data array
      */
-    public final byte getByte(int x, int y, int z) {
-        return (data.getByte((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
+    public final byte getByte(final int x, final int y, final int z) {
+        return (data.getByte( (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
 
     /**
      * 4D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate (usually the slice plane index)
-     * @param   t  t coordinate (usually the volume index)
-     *
-     * @return  value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate (usually the slice plane index)
+     * @param t t coordinate (usually the volume index)
+     * 
+     * @return value at that position in the data array
      */
-    public final byte getByte(int x, int y, int z, int t) {
-        return (data.getByte((t * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
-                             (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
+    public final byte getByte(final int x, final int y, final int z, final int t) {
+        return (data.getByte( (t * (dimExtents[0] * dimExtents[1] * dimExtents[2]))
+                + (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
 
     /**
      * version of get that performs bi-linear interpoloation. Note - does NOT perform bounds checking
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     *
-     * @return  The interpolated value from the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * 
+     * @return The interpolated value from the data array.
      */
-    public final byte getByteBiLinear(float x, float y) {
+    public final byte getByteBiLinear(final float x, final float y) {
 
-        int xDim = dimExtents[0];
+        final int xDim = dimExtents[0];
         int position;
         int intX, intY;
         float dx, dy;
@@ -2547,26 +2563,26 @@ public class ModelStorageBase extends ModelSerialCloneable {
         position = (intY * xDim) + intX;
 
         // if ((position >= 0) && (position < size-xDim-1) ) {
-        x1 = ((1 - dx) * data.getByte(position)) + (dx * data.getByte(position + 1));
-        x2 = ((1 - dx) * data.getByte(position + xDim)) + (dx * data.getByte(position + xDim + 1));
+        x1 = ( (1 - dx) * data.getByte(position)) + (dx * data.getByte(position + 1));
+        x2 = ( (1 - dx) * data.getByte(position + xDim)) + (dx * data.getByte(position + xDim + 1));
 
-        return (byte) (((1 - dy) * x1) + (dy * x2));
+        return (byte) ( ( (1 - dy) * x1) + (dy * x2));
     }
 
     /**
      * version of get that performs tri-linear interpoloation. <b>Note - does NOT perform bounds checking</b>
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     *
-     * @return  The interpolated value from the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * 
+     * @return The interpolated value from the data array.
      */
-    public final byte getByteTriLinear(float x, float y, float z) {
+    public final byte getByteTriLinear(final float x, final float y, final float z) {
 
-        int xDim = dimExtents[0];
-        int yDim = dimExtents[1];
-        int imageSize = xDim * yDim;
+        final int xDim = dimExtents[0];
+        final int yDim = dimExtents[1];
+        final int imageSize = xDim * yDim;
         int position1, position2;
         int intX, intY, intZ;
         float dx, dy, dz;
@@ -2584,30 +2600,29 @@ public class ModelStorageBase extends ModelSerialCloneable {
         position1 = (intZ * imageSize) + (intY * xDim) + intX;
         position2 = position1 + imageSize;
 
-        a1 = ((1 - dx) * data.getByte(position1)) + (dx * data.getByte(position1 + 1));
-        a2 = ((1 - dx) * data.getByte(position1 + xDim)) + (dx * data.getByte(position1 + xDim + 1));
-        b1 = ((1 - dy) * a1) + (dy * a2);
+        a1 = ( (1 - dx) * data.getByte(position1)) + (dx * data.getByte(position1 + 1));
+        a2 = ( (1 - dx) * data.getByte(position1 + xDim)) + (dx * data.getByte(position1 + xDim + 1));
+        b1 = ( (1 - dy) * a1) + (dy * a2);
 
-        a1 = ((1 - dx) * data.getByte(position2)) + (dx * data.getByte(position2 + 1));
-        a2 = ((1 - dx) * data.getByte(position2 + xDim)) + (dx * data.getByte(position2 + xDim + 1));
-        b2 = ((1 - dy) * a1) + (dy * a2);
+        a1 = ( (1 - dx) * data.getByte(position2)) + (dx * data.getByte(position2 + 1));
+        a2 = ( (1 - dx) * data.getByte(position2 + xDim)) + (dx * data.getByte(position2 + xDim + 1));
+        b2 = ( (1 - dy) * a1) + (dy * a2);
 
-        return (byte) (((1 - dz) * b1) + (dz * b2));
+        return (byte) ( ( (1 - dz) * b1) + (dz * b2));
     }
-
 
     /**
      * Color function to get data where bounds checking is performed.
-     *
-     * @param   position  position in one dimensional array
-     * @param   color     DOCUMENT ME!
-     *
-     * @return  returns value if position in data array range
+     * 
+     * @param position position in one dimensional array
+     * @param color DOCUMENT ME!
+     * 
+     * @return returns value if position in data array range
      */
-    public final Number getC(int position, int color) {
+    public final Number getC(final int position, final int color) {
 
-        if ((position >= 0) && (((4 * position) + color) < dataSize)) {
-            return (data.get((4 * position) + color));
+        if ( (position >= 0) && ( ( (4 * position) + color) < dataSize)) {
+            return (data.get( (4 * position) + color));
         }
 
         return (new Byte((byte) 0));
@@ -2615,36 +2630,35 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor method for the m_bConvolve data memeber.
-     *
-     * @return  m_bConvolve, true when this images is the product of fft( imageA ) fft( imageB )
+     * 
+     * @return m_bConvolve, true when this images is the product of fft( imageA ) fft( imageB )
      */
     public boolean getConvolve() {
         return m_bConvolve;
     }
 
-
     /**
      * The interpolated value from the data array.ersion of get that does NOT perform bounds checking.
-     *
-     * @param   position  index into one dimensional array
-     *
-     * @return  The value from the data array.
+     * 
+     * @param position index into one dimensional array
+     * 
+     * @return The value from the data array.
      */
-    public final double getDouble(int position) {
+    public final double getDouble(final int position) {
         return (data.getDouble(position));
     }
 
     /**
      * nD get data fuction where bounds checking is NOT performed.
-     *
-     * @param   position  Index into one dimensional array
-     *
-     * @return  The value from the data array.
+     * 
+     * @param position Index into one dimensional array
+     * 
+     * @return The value from the data array.
      */
-    public final double getDouble(int[] position) {
+    public final double getDouble(final int[] position) {
         int i;
         int location = 0;
-        int dimensions = position.length;
+        final int dimensions = position.length;
 
         for (i = dimensions - 1; i > 0; i--) {
             location += (position[i] * dimExtents[i]);
@@ -2657,55 +2671,55 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * 2D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     *
-     * @return  Value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * 
+     * @return Value at that position in the data array
      */
-    public final double getDouble(int x, int y) {
-        return (data.getDouble((y * dimExtents[0]) + x));
+    public final double getDouble(final int x, final int y) {
+        return (data.getDouble( (y * dimExtents[0]) + x));
     }
 
     /**
      * 3D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     *
-     * @return  Value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * 
+     * @return Value at that position in the data array
      */
-    public final double getDouble(int x, int y, int z) {
-        return (data.getDouble((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
+    public final double getDouble(final int x, final int y, final int z) {
+        return (data.getDouble( (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
 
     /**
      * 4D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     * @param   t  t coordinate (usually the volume index)*
-     *
-     * @return  The value at that position in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param t t coordinate (usually the volume index)*
+     * 
+     * @return The value at that position in the data array.
      */
-    public final double getDouble(int x, int y, int z, int t) {
-        return (data.getDouble((t * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
-                               (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
+    public final double getDouble(final int x, final int y, final int z, final int t) {
+        return (data.getDouble( (t * (dimExtents[0] * dimExtents[1] * dimExtents[2]))
+                + (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
 
     /**
      * version of get that performs bi-linear interpoloation. Note - does NOT perform bounds checking
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     *
-     * @return  The interpolated value at that position in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * 
+     * @return The interpolated value at that position in the data array.
      */
-    public final double getDoubleBiLinear(float x, float y) {
+    public final double getDoubleBiLinear(final float x, final float y) {
 
-        int xDim = dimExtents[0];
+        final int xDim = dimExtents[0];
         int position;
         int intX, intY;
         double dx, dy;
@@ -2719,26 +2733,26 @@ public class ModelStorageBase extends ModelSerialCloneable {
         position = (intY * xDim) + intX;
 
         // if ((position >= 0) && (position < size-xDim-1) ) {
-        x1 = ((1 - dx) * data.getDouble(position)) + (dx * data.getDouble(position + 1));
-        x2 = ((1 - dx) * data.getDouble(position + xDim)) + (dx * data.getDouble(position + xDim + 1));
+        x1 = ( (1 - dx) * data.getDouble(position)) + (dx * data.getDouble(position + 1));
+        x2 = ( (1 - dx) * data.getDouble(position + xDim)) + (dx * data.getDouble(position + xDim + 1));
 
-        return (((1 - dy) * x1) + (dy * x2));
+        return ( ( (1 - dy) * x1) + (dy * x2));
     }
 
     /**
      * version of get that performs tri-linear interpoloation. <b>Note - does NOT perform bounds checking</b>
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     *
-     * @return  The value at that position in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * 
+     * @return The value at that position in the data array.
      */
-    public final double getDoubleTriLinear(float x, float y, float z) {
+    public final double getDoubleTriLinear(final float x, final float y, final float z) {
 
-        int xDim = dimExtents[0];
-        int yDim = dimExtents[1];
-        int imageSize = xDim * yDim;
+        final int xDim = dimExtents[0];
+        final int yDim = dimExtents[1];
+        final int imageSize = xDim * yDim;
         int position1, position2;
         int intX, intY, intZ;
         double dx, dy, dz;
@@ -2756,21 +2770,21 @@ public class ModelStorageBase extends ModelSerialCloneable {
         position1 = (intZ * imageSize) + (intY * xDim) + intX;
         position2 = position1 + imageSize;
 
-        a1 = ((1 - dx) * data.getDouble(position1)) + (dx * data.getDouble(position1 + 1));
-        a2 = ((1 - dx) * data.getDouble(position1 + xDim)) + (dx * data.getDouble(position1 + xDim + 1));
-        b1 = ((1 - dy) * a1) + (dy * a2);
+        a1 = ( (1 - dx) * data.getDouble(position1)) + (dx * data.getDouble(position1 + 1));
+        a2 = ( (1 - dx) * data.getDouble(position1 + xDim)) + (dx * data.getDouble(position1 + xDim + 1));
+        b1 = ( (1 - dy) * a1) + (dy * a2);
 
-        a1 = ((1 - dx) * data.getDouble(position2)) + (dx * data.getDouble(position2 + 1));
-        a2 = ((1 - dx) * data.getDouble(position2 + xDim)) + (dx * data.getDouble(position2 + xDim + 1));
-        b2 = ((1 - dy) * a1) + (dy * a2);
+        a1 = ( (1 - dx) * data.getDouble(position2)) + (dx * data.getDouble(position2 + 1));
+        a2 = ( (1 - dx) * data.getDouble(position2 + xDim)) + (dx * data.getDouble(position2 + xDim + 1));
+        b2 = ( (1 - dy) * a1) + (dy * a2);
 
-        return (((1 - dz) * b1) + (dz * b2));
+        return ( ( (1 - dz) * b1) + (dz * b2));
     }
 
     /**
      * Accessor that returns the extents of the image.
-     *
-     * @return  array of ints indicating the extents in each dimension
+     * 
+     * @return array of ints indicating the extents in each dimension
      */
     public final int[] getExtents() {
         return dimExtents;
@@ -2778,20 +2792,20 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Returns the image extents translated into the Patient-Coordinate systsm:
-     *
-     * @param   orientation  the Patient-Coordinate view for which the extents are needed:
-     *
-     * @return  Extents for the image in Patient Coordinates
+     * 
+     * @param orientation the Patient-Coordinate view for which the extents are needed:
+     * 
+     * @return Extents for the image in Patient Coordinates
      */
-    public final int[] getExtents(int orientation) {
+    public final int[] getExtents(final int orientation) {
 
         /* Do not reorder the extents if this is less than a 3D image: */
         if (dimExtents.length < 3) {
             return dimExtents;
         }
 
-        int[] extentsReturn = new int[3];
-        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(this, orientation);
+        final int[] extentsReturn = new int[3];
+        final int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(this, orientation);
 
         for (int i = 0; i < 3; i++) {
             extentsReturn[i] = dimExtents[aiAxisOrder[i]];
@@ -2800,13 +2814,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return extentsReturn;
     }
 
-    public final int[] getExtentsSize(int orientation) {
+    public final int[] getExtentsSize(final int orientation) {
 
-        int[] aiSizes = new int[]
-                                { 1, dimExtents[0], dimExtents[0] * dimExtents[1] };
-        
-        int[] extentsSizesReturn = new int[3];
-        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(this, orientation);
+        final int[] aiSizes = new int[] {1, dimExtents[0], dimExtents[0] * dimExtents[1]};
+
+        final int[] extentsSizesReturn = new int[3];
+        final int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(this, orientation);
 
         for (int i = 0; i < 3; i++) {
             extentsSizesReturn[i] = aiSizes[aiAxisOrder[i]];
@@ -2817,8 +2830,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the fileInfo array (one per slice).
-     *
-     * @return  fileInfo array structure
+     * 
+     * @return fileInfo array structure
      */
     public FileInfoBase[] getFileInfo() {
         return fileInfo;
@@ -2826,47 +2839,46 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the fileInfo of a specific image slice.
-     *
-     * @param   i  index that indicates image slice
-     *
-     * @return  fileInfo array structure for a specific image slice
+     * 
+     * @param i index that indicates image slice
+     * 
+     * @return fileInfo array structure for a specific image slice
      */
-    public FileInfoBase getFileInfo(int i) {
+    public FileInfoBase getFileInfo(final int i) {
         return fileInfo[i];
     }
 
     /**
      * returns type of filter - low, high, bandpass, or bandstop. - TO BE MOVED
-     *
-     * @return  filterType
+     * 
+     * @return filterType
      */
     public final int getFilterType() {
         return filterType;
     }
 
-
     /**
      * Version of get that does NOT perform bounds checking.
-     *
-     * @param   position  index into the one dimensional data array
-     *
-     * @return  The value at that position in the data array.
+     * 
+     * @param position index into the one dimensional data array
+     * 
+     * @return The value at that position in the data array.
      */
-    public final float getFloat(int position) {
+    public final float getFloat(final int position) {
         return (data.getFloat(position));
     }
 
     /**
      * nD get data function where bounds checking is NOT performed.
-     *
-     * @param   position  index into the one dimensional data array
-     *
-     * @return  The value at that position in the data array.
+     * 
+     * @param position index into the one dimensional data array
+     * 
+     * @return The value at that position in the data array.
      */
-    public final float getFloat(int[] position) {
+    public final float getFloat(final int[] position) {
         int i;
         int location = 0;
-        int dimensions = position.length;
+        final int dimensions = position.length;
 
         for (i = dimensions - 1; i > 0; i--) {
             location += (position[i] * dimExtents[i]);
@@ -2879,56 +2891,55 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * 2D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     *
-     * @return  The value at that position in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * 
+     * @return The value at that position in the data array.
      */
-    public final float getFloat(int x, int y) {
-        return (data.getFloat((y * dimExtents[0]) + x));
+    public final float getFloat(final int x, final int y) {
+        return (data.getFloat( (y * dimExtents[0]) + x));
     }
-
 
     /**
      * 3D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     *
-     * @return  The value at that position in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * 
+     * @return The value at that position in the data array.
      */
-    public final float getFloat(int x, int y, int z) {
-        return (data.getFloat((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
+    public final float getFloat(final int x, final int y, final int z) {
+        return (data.getFloat( (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
 
     /**
      * 4D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     * @param   t  t coordinate
-     *
-     * @return  The value at that position in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param t t coordinate
+     * 
+     * @return The value at that position in the data array.
      */
-    public final float getFloat(int x, int y, int z, int t) {
-        return (data.getFloat((t * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
-                              (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
+    public final float getFloat(final int x, final int y, final int z, final int t) {
+        return (data.getFloat( (t * (dimExtents[0] * dimExtents[1] * dimExtents[2]))
+                + (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
 
     /**
      * version of get that performs bi-linear interpoloation. Note - does NOT perform bounds checking
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     *
-     * @return  The interpolated value at that position in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * 
+     * @return The interpolated value at that position in the data array.
      */
-    public final float getFloatBiLinear(float x, float y) {
+    public final float getFloatBiLinear(final float x, final float y) {
 
-        int xDim = dimExtents[0];
+        final int xDim = dimExtents[0];
         int position;
         int intX, intY;
         float dx, dy;
@@ -2942,70 +2953,69 @@ public class ModelStorageBase extends ModelSerialCloneable {
         position = (intY * xDim) + intX;
 
         // if ((position >= 0) && (position < size-xDim-1) ) {
-        x1 = ((1 - dx) * data.getFloat(position)) + (dx * data.getFloat(position + 1));
-        x2 = ((1 - dx) * data.getFloat(position + xDim)) + (dx * data.getFloat(position + xDim + 1));
+        x1 = ( (1 - dx) * data.getFloat(position)) + (dx * data.getFloat(position + 1));
+        x2 = ( (1 - dx) * data.getFloat(position + xDim)) + (dx * data.getFloat(position + xDim + 1));
 
-        return (float) (((1 - dy) * x1) + (dy * x2));
+        return ( ( (1 - dy) * x1) + (dy * x2));
     }
 
     /**
      * 2D color get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   c  color channel index
-     *
-     * @return  value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param c color channel index
+     * 
+     * @return value at that position in the data array
      */
-    public final float getFloatC(int x, int y, int c) {
-        return (data.getFloat((4 * ((y * dimExtents[0]) + x)) + c));
+    public final float getFloatC(final int x, final int y, final int c) {
+        return (data.getFloat( (4 * ( (y * dimExtents[0]) + x)) + c));
     }
 
     /**
      * 3D color get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     * @param   c  color channel index
-     *
-     * @return  value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param c color channel index
+     * 
+     * @return value at that position in the data array
      */
-    public final float getFloatC(int x, int y, int z, int c) {
-        return (data.getFloat(4 * ((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x)) + c);
+    public final float getFloatC(final int x, final int y, final int z, final int c) {
+        return (data.getFloat(4 * ( (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x)) + c);
     }
 
     /**
      * 4D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     * @param   t  t coordinate
-     * @param   c  color channel index
-     *
-     * @return  The value at that position in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param t t coordinate
+     * @param c color channel index
+     * 
+     * @return The value at that position in the data array.
      */
-    public final float getFloatC(int x, int y, int z, int t, int c) {
-        return (data.getFloat(4 *
-                                  ((t * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
-                                       (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x)) + c);
+    public final float getFloatC(final int x, final int y, final int z, final int t, final int c) {
+        return (data.getFloat(4 * ( (t * (dimExtents[0] * dimExtents[1] * dimExtents[2]))
+                + (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x)) + c);
     }
 
     /**
      * version of get that performs tri-linear interpoloation. Note - does NOT perform bounds checking
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     *
-     * @return  The value at that position in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * 
+     * @return The value at that position in the data array.
      */
-    public final float getFloatTriLinear(float x, float y, float z) {
+    public final float getFloatTriLinear(final float x, final float y, final float z) {
 
-        int xDim = dimExtents[0];
-        int yDim = dimExtents[1];
-        int imageSize = xDim * yDim;
+        final int xDim = dimExtents[0];
+        final int yDim = dimExtents[1];
+        final int imageSize = xDim * yDim;
         int position1, position2;
         int intX, intY, intZ;
         float dx, dy, dz;
@@ -3023,32 +3033,32 @@ public class ModelStorageBase extends ModelSerialCloneable {
         position1 = (intZ * imageSize) + (intY * xDim) + intX;
         position2 = position1 + imageSize;
 
-        a1 = ((1 - dx) * data.getFloat(position1)) + (dx * data.getFloat(position1 + 1));
-        a2 = ((1 - dx) * data.getFloat(position1 + xDim)) + (dx * data.getFloat(position1 + xDim + 1));
-        b1 = ((1 - dy) * a1) + (dy * a2);
+        a1 = ( (1 - dx) * data.getFloat(position1)) + (dx * data.getFloat(position1 + 1));
+        a2 = ( (1 - dx) * data.getFloat(position1 + xDim)) + (dx * data.getFloat(position1 + xDim + 1));
+        b1 = ( (1 - dy) * a1) + (dy * a2);
 
-        a1 = ((1 - dx) * data.getFloat(position2)) + (dx * data.getFloat(position2 + 1));
-        a2 = ((1 - dx) * data.getFloat(position2 + xDim)) + (dx * data.getFloat(position2 + xDim + 1));
-        b2 = ((1 - dy) * a1) + (dy * a2);
+        a1 = ( (1 - dx) * data.getFloat(position2)) + (dx * data.getFloat(position2 + 1));
+        a2 = ( (1 - dx) * data.getFloat(position2 + xDim)) + (dx * data.getFloat(position2 + xDim + 1));
+        b2 = ( (1 - dy) * a1) + (dy * a2);
 
-        return (float) (((1 - dz) * b1) + (dz * b2));
+        return ( ( (1 - dz) * b1) + (dz * b2));
     }
 
     /**
      * Get a value using tri-linear interpoloation. Note - DOES perform bounds checking (both that x,y,z are valid and
      * that the interp indicies don't cause exceptions).
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     *
-     * @return  interpolated value if in bounds, 0 if not.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * 
+     * @return interpolated value if in bounds, 0 if not.
      */
-    public final float getFloatTriLinearBounds(float x, float y, float z) {
+    public final float getFloatTriLinearBounds(final float x, final float y, final float z) {
 
-        int xDim = dimExtents[0];
-        int yDim = dimExtents[1];
-        int imageSize = xDim * yDim;
+        final int xDim = dimExtents[0];
+        final int yDim = dimExtents[1];
+        final int imageSize = xDim * yDim;
         int position1, position2;
         int intX, intY, intZ;
         float dx, dy, dz;
@@ -3066,18 +3076,18 @@ public class ModelStorageBase extends ModelSerialCloneable {
         position1 = (intZ * imageSize) + (intY * xDim) + intX;
         position2 = position1 + imageSize;
 
-        if ((x >= 0) && (y >= 0) && (z >= 0) && (x < xDim) && (y < yDim) && (z < dimExtents[2]) && (position1 >= 0) &&
-                (position1 < (dataSize - (xDim * yDim) - 1)) && (position2 >= 0) &&
-                (position2 < (dataSize - (xDim * yDim) - 1))) {
-            a1 = ((1 - dx) * data.getFloat(position1)) + (dx * data.getFloat(position1 + 1));
-            a2 = ((1 - dx) * data.getFloat(position1 + xDim)) + (dx * data.getFloat(position1 + xDim + 1));
-            b1 = ((1 - dy) * a1) + (dy * a2);
+        if ( (x >= 0) && (y >= 0) && (z >= 0) && (x < xDim) && (y < yDim) && (z < dimExtents[2]) && (position1 >= 0)
+                && (position1 < (dataSize - (xDim * yDim) - 1)) && (position2 >= 0)
+                && (position2 < (dataSize - (xDim * yDim) - 1))) {
+            a1 = ( (1 - dx) * data.getFloat(position1)) + (dx * data.getFloat(position1 + 1));
+            a2 = ( (1 - dx) * data.getFloat(position1 + xDim)) + (dx * data.getFloat(position1 + xDim + 1));
+            b1 = ( (1 - dy) * a1) + (dy * a2);
 
-            a1 = ((1 - dx) * data.getFloat(position2)) + (dx * data.getFloat(position2 + 1));
-            a2 = ((1 - dx) * data.getFloat(position2 + xDim)) + (dx * data.getFloat(position2 + xDim + 1));
-            b2 = ((1 - dy) * a1) + (dy * a2);
+            a1 = ( (1 - dx) * data.getFloat(position2)) + (dx * data.getFloat(position2 + 1));
+            a2 = ( (1 - dx) * data.getFloat(position2 + xDim)) + (dx * data.getFloat(position2 + xDim + 1));
+            b2 = ( (1 - dy) * a1) + (dy * a2);
 
-            return (float) (((1 - dz) * b1) + (dz * b2));
+            return ( ( (1 - dz) * b1) + (dz * b2));
         } else {
             return 0;
         }
@@ -3086,19 +3096,19 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Get a value using tri-linear interpoloation. Note - DOES perform bounds checking (both that x,y,z are valid and
      * that the interp indicies don't cause exceptions).
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     * @param   c  color-coordinate
-     *
-     * @return  interpolated value if in bounds, 0 if not.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param c color-coordinate
+     * 
+     * @return interpolated value if in bounds, 0 if not.
      */
-    public final float getFloatTriLinearBounds(float x, float y, float z, int c) {
+    public final float getFloatTriLinearBounds(final float x, final float y, final float z, final int c) {
 
-        int xDim = dimExtents[0];
-        int yDim = dimExtents[1];
-        int imageSize = xDim * yDim;
+        final int xDim = dimExtents[0];
+        final int yDim = dimExtents[1];
+        final int imageSize = xDim * yDim;
         int position1, position2;
         int intX, intY, intZ;
         float dx, dy, dz;
@@ -3116,22 +3126,20 @@ public class ModelStorageBase extends ModelSerialCloneable {
         position1 = (intZ * imageSize) + (intY * xDim) + intX;
         position2 = position1 + imageSize;
 
-        if ((x >= 0) && (y >= 0) && (z >= 0) && (x < xDim) && (y < yDim) && (z < dimExtents[2]) && (position1 >= 0) &&
-                (position1 < (dataSize - (xDim * yDim) - 1)) && (position2 >= 0) &&
-                (position2 < (dataSize - (xDim * yDim) - 1))) {
-            a1 = ((1 - dx) * data.getFloat(c + (int) (4 * (position1)))) +
-                 (dx * data.getFloat(c + (int) (4 * (position1 + 1))));
-            a2 = ((1 - dx) * data.getFloat(c + (int) (4 * (position1 + xDim)))) +
-                 (dx * data.getFloat(c + (int) (4 * (position1 + xDim + 1))));
-            b1 = ((1 - dy) * a1) + (dy * a2);
+        if ( (x >= 0) && (y >= 0) && (z >= 0) && (x < xDim) && (y < yDim) && (z < dimExtents[2]) && (position1 >= 0)
+                && (position1 < (dataSize - (xDim * yDim) - 1)) && (position2 >= 0)
+                && (position2 < (dataSize - (xDim * yDim) - 1))) {
+            a1 = ( (1 - dx) * data.getFloat(c + (4 * (position1)))) + (dx * data.getFloat(c + (4 * (position1 + 1))));
+            a2 = ( (1 - dx) * data.getFloat(c + (4 * (position1 + xDim))))
+                    + (dx * data.getFloat(c + (4 * (position1 + xDim + 1))));
+            b1 = ( (1 - dy) * a1) + (dy * a2);
 
-            a1 = ((1 - dx) * data.getFloat(c + (int) (4 * (position2)))) +
-                 (dx * data.getFloat(c + (int) (4 * (position2 + 1))));
-            a2 = ((1 - dx) * data.getFloat(c + (int) (4 * (position2 + xDim)))) +
-                 (dx * data.getFloat(c + (int) (4 * (position2 + xDim + 1))));
-            b2 = ((1 - dy) * a1) + (dy * a2);
+            a1 = ( (1 - dx) * data.getFloat(c + (4 * (position2)))) + (dx * data.getFloat(c + (4 * (position2 + 1))));
+            a2 = ( (1 - dx) * data.getFloat(c + (4 * (position2 + xDim))))
+                    + (dx * data.getFloat(c + (4 * (position2 + xDim + 1))));
+            b2 = ( (1 - dy) * a1) + (dy * a2);
 
-            return (float) (((1 - dz) * b1) + (dz * b2));
+            return ( ( (1 - dz) * b1) + (dz * b2));
         } else {
             return 0;
         }
@@ -3139,8 +3147,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * returns frequency 1 of filter.
-     *
-     * @return  freq1
+     * 
+     * @return freq1
      */
     public final float getFreq1() {
         return freq1;
@@ -3148,8 +3156,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * returns frequency 2 of filter.
-     *
-     * @return  freq2
+     * 
+     * @return freq2
      */
     public final float getFreq2() {
         return freq2;
@@ -3157,8 +3165,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * returns frequency U of filter.
-     *
-     * @return  freqU
+     * 
+     * @return freqU
      */
     public final float getFreqU() {
         return freqU;
@@ -3166,8 +3174,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * returns frequency V of filter.
-     *
-     * @return  freqV
+     * 
+     * @return freqV
      */
     public final float getFreqV() {
         return freqV;
@@ -3175,8 +3183,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * DOCUMENT ME! - TO BE MOVED
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public final boolean getHaveWindowed() {
         return haveWindowed;
@@ -3184,26 +3192,26 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Returns the image height, based on the Patient Coordinates orientation from which the data will be viewed:
-     *
-     * @param   orientation  the Patient-Viewing orientation
-     *
-     * @return  The image height for the viewing orientation
+     * 
+     * @param orientation the Patient-Viewing orientation
+     * 
+     * @return The image height for the viewing orientation
      */
-    public int getHeight(int orientation) {
+    public int getHeight(final int orientation) {
 
         if (dimExtents.length < 3) {
             return dimExtents[1];
         }
 
-        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(this, orientation);
+        final int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(this, orientation);
 
         return dimExtents[aiAxisOrder[1]];
     }
 
     /**
      * Accessor that returns the boolean indicating if 3D images are processed one slice at a time.
-     *
-     * @return  boolean telling if slice by slice processing occurs in 3D
+     * 
+     * @return boolean telling if slice by slice processing occurs in 3D
      */
     public boolean getImage25D() {
         return image25D;
@@ -3211,8 +3219,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Gets the image orientation (sagittal, axial, ...).
-     *
-     * @return  integer representing the orientation
+     * 
+     * @return integer representing the orientation
      */
     public int getImageOrientation() {
 
@@ -3223,29 +3231,28 @@ public class ModelStorageBase extends ModelSerialCloneable {
         }
     }
 
-
     /**
      * Version of get that does NOT perform bounds checking.
-     *
-     * @param   position  position in one dimensional array
-     *
-     * @return  value at that position in the data array
+     * 
+     * @param position position in one dimensional array
+     * 
+     * @return value at that position in the data array
      */
-    public final int getInt(int position) {
+    public final int getInt(final int position) {
         return (data.getInt(position));
     }
 
     /**
      * nD get data fuction where bounds checking is NOT performed.
-     *
-     * @param   position  array of coordinate values
-     *
-     * @return  returns true if position in data array range
+     * 
+     * @param position array of coordinate values
+     * 
+     * @return returns true if position in data array range
      */
-    public final int getInt(int[] position) {
+    public final int getInt(final int[] position) {
         int i;
         int location = 0;
-        int dimensions = position.length;
+        final int dimensions = position.length;
 
         for (i = dimensions - 1; i > 0; i--) {
             location += (position[i] * dimExtents[i]);
@@ -3258,55 +3265,55 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * 2D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     *
-     * @return  value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * 
+     * @return value at that position in the data array
      */
-    public final int getInt(int x, int y) {
-        return (data.getInt((y * dimExtents[0]) + x));
+    public final int getInt(final int x, final int y) {
+        return (data.getInt( (y * dimExtents[0]) + x));
     }
 
     /**
      * 3D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     *
-     * @return  value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * 
+     * @return value at that position in the data array
      */
-    public final int getInt(int x, int y, int z) {
-        return (data.getInt((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
+    public final int getInt(final int x, final int y, final int z) {
+        return (data.getInt( (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
 
     /**
      * 4D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     * @param   t  t coordinate
-     *
-     * @return  The value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param t t coordinate
+     * 
+     * @return The value at that position in the data array
      */
-    public final int getInt(int x, int y, int z, int t) {
-        return (data.getInt((t * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
-                            (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
+    public final int getInt(final int x, final int y, final int z, final int t) {
+        return (data.getInt( (t * (dimExtents[0] * dimExtents[1] * dimExtents[2]))
+                + (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
 
     /**
      * version of get that performs bi-linear interpoloation. Note - does NOT perform bounds checking
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     *
-     * @return  The interpolated value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * 
+     * @return The interpolated value at that position in the data array
      */
-    public final int getIntBiLinear(float x, float y) {
+    public final int getIntBiLinear(final float x, final float y) {
 
-        int xDim = dimExtents[0];
+        final int xDim = dimExtents[0];
         int position;
         int intX, intY;
         float dx, dy;
@@ -3320,26 +3327,26 @@ public class ModelStorageBase extends ModelSerialCloneable {
         position = (intY * xDim) + intX;
 
         // if ((position >= 0) && (position < size-xDim-1) ) {
-        x1 = ((1 - dx) * data.getInt(position)) + (dx * data.getInt(position + 1));
-        x2 = ((1 - dx) * data.getInt(position + xDim)) + (dx * data.getInt(position + xDim + 1));
+        x1 = ( (1 - dx) * data.getInt(position)) + (dx * data.getInt(position + 1));
+        x2 = ( (1 - dx) * data.getInt(position + xDim)) + (dx * data.getInt(position + xDim + 1));
 
-        return (int) (((1 - dy) * x1) + (dy * x2));
+        return (int) ( ( (1 - dy) * x1) + (dy * x2));
     }
 
     /**
      * Version of get that performs tri-linear interpoloation. Note - does NOT perform bounds checking
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     *
-     * @return  The value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * 
+     * @return The value at that position in the data array
      */
-    public final int getIntTriLinear(float x, float y, float z) {
+    public final int getIntTriLinear(final float x, final float y, final float z) {
 
-        int xDim = dimExtents[0];
-        int yDim = dimExtents[1];
-        int imageSize = xDim * yDim;
+        final int xDim = dimExtents[0];
+        final int yDim = dimExtents[1];
+        final int imageSize = xDim * yDim;
         int position1, position2;
         int intX, intY, intZ;
         float dx, dy, dz;
@@ -3357,21 +3364,21 @@ public class ModelStorageBase extends ModelSerialCloneable {
         position1 = (intZ * imageSize) + (intY * xDim) + intX;
         position2 = position1 + imageSize;
 
-        a1 = ((1 - dx) * data.getInt(position1)) + (dx * data.getInt(position1 + 1));
-        a2 = ((1 - dx) * data.getInt(position1 + xDim)) + (dx * data.getInt(position1 + xDim + 1));
-        b1 = ((1 - dy) * a1) + (dy * a2);
+        a1 = ( (1 - dx) * data.getInt(position1)) + (dx * data.getInt(position1 + 1));
+        a2 = ( (1 - dx) * data.getInt(position1 + xDim)) + (dx * data.getInt(position1 + xDim + 1));
+        b1 = ( (1 - dy) * a1) + (dy * a2);
 
-        a1 = ((1 - dx) * data.getShort(position2)) + (dx * data.getShort(position2 + 1));
-        a2 = ((1 - dx) * data.getShort(position2 + xDim)) + (dx * data.getShort(position2 + xDim + 1));
-        b2 = ((1 - dy) * a1) + (dy * a2);
+        a1 = ( (1 - dx) * data.getShort(position2)) + (dx * data.getShort(position2 + 1));
+        a2 = ( (1 - dx) * data.getShort(position2 + xDim)) + (dx * data.getShort(position2 + xDim + 1));
+        b2 = ( (1 - dy) * a1) + (dy * a2);
 
-        return (int) (((1 - dz) * b1) + (dz * b2));
+        return (int) ( ( (1 - dz) * b1) + (dz * b2));
     }
 
     /**
      * Accessor that returns the lock status of the image.
-     *
-     * @return  lock status
+     * 
+     * @return lock status
      */
     public final int getLockStatus() {
         return lockStatus;
@@ -3379,36 +3386,35 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the boolean indicating if log magnitude displays are used in complex images.
-     *
-     * @return  boolean telling if log display is used
+     * 
+     * @return boolean telling if log display is used
      */
     public boolean getLogMagDisplay() {
         return logMagDisp;
     }
 
-
     /**
      * Version of get that does NOT perform bounds checking.
-     *
-     * @param   position  The index in one dimensional array
-     *
-     * @return  The value at that position in the data array
+     * 
+     * @param position The index in one dimensional array
+     * 
+     * @return The value at that position in the data array
      */
-    public final long getLong(int position) {
+    public final long getLong(final int position) {
         return (data.getLong(position));
     }
 
     /**
      * nD get data fuction where bounds checking is NOT performed.
-     *
-     * @param   position  The index in one dimensional array
-     *
-     * @return  The value at that position in the data array
+     * 
+     * @param position The index in one dimensional array
+     * 
+     * @return The value at that position in the data array
      */
-    public final long getLong(int[] position) {
+    public final long getLong(final int[] position) {
         int i;
         int location = 0;
-        int dimensions = position.length;
+        final int dimensions = position.length;
 
         for (i = dimensions - 1; i > 0; i--) {
             location += (position[i] * dimExtents[i]);
@@ -3421,55 +3427,55 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * 2D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     *
-     * @return  value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * 
+     * @return value at that position in the data array
      */
-    public final long getLong(int x, int y) {
-        return (data.getLong((y * dimExtents[0]) + x));
+    public final long getLong(final int x, final int y) {
+        return (data.getLong( (y * dimExtents[0]) + x));
     }
 
     /**
      * 3D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     *
-     * @return  value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * 
+     * @return value at that position in the data array
      */
-    public final long getLong(int x, int y, int z) {
-        return (data.getLong((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
+    public final long getLong(final int x, final int y, final int z) {
+        return (data.getLong( (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
 
     /**
      * 4D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     * @param   t  t coordinate
-     *
-     * @return  value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param t t coordinate
+     * 
+     * @return value at that position in the data array
      */
-    public final long getLong(int x, int y, int z, int t) {
-        return (data.getLong((t * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
-                             (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
+    public final long getLong(final int x, final int y, final int z, final int t) {
+        return (data.getLong( (t * (dimExtents[0] * dimExtents[1] * dimExtents[2]))
+                + (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
 
     /**
      * version of get that performs bi-linear interpoloation. <b>Note - does NOT perform bounds checking</b>
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     *
-     * @return  The interpolated value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * 
+     * @return The interpolated value at that position in the data array
      */
-    public final long getLongBiLinear(float x, float y) {
+    public final long getLongBiLinear(final float x, final float y) {
 
-        int xDim = dimExtents[0];
+        final int xDim = dimExtents[0];
         int position;
         int intX, intY;
         float dx, dy;
@@ -3483,26 +3489,26 @@ public class ModelStorageBase extends ModelSerialCloneable {
         position = (intY * xDim) + intX;
 
         // if ((position >= 0) && (position < size-xDim-1) ) {
-        x1 = ((1 - dx) * data.getLong(position)) + (dx * data.getLong(position + 1));
-        x2 = ((1 - dx) * data.getLong(position + xDim)) + (dx * data.getLong(position + xDim + 1));
+        x1 = ( (1 - dx) * data.getLong(position)) + (dx * data.getLong(position + 1));
+        x2 = ( (1 - dx) * data.getLong(position + xDim)) + (dx * data.getLong(position + xDim + 1));
 
-        return (long) (((1 - dy) * x1) + (dy * x2));
+        return (long) ( ( (1 - dy) * x1) + (dy * x2));
     }
 
     /**
      * Version of get that performs tri-linear interpoloation. <b>Note - does NOT perform bounds checking</b>
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     *
-     * @return  The interpolated value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * 
+     * @return The interpolated value at that position in the data array
      */
-    public final long getLongTriLinear(float x, float y, float z) {
+    public final long getLongTriLinear(final float x, final float y, final float z) {
 
-        int xDim = dimExtents[0];
-        int yDim = dimExtents[1];
-        int imageSize = xDim * yDim;
+        final int xDim = dimExtents[0];
+        final int yDim = dimExtents[1];
+        final int imageSize = xDim * yDim;
         int position1, position2;
         int intX, intY, intZ;
         float dx, dy, dz;
@@ -3520,21 +3526,21 @@ public class ModelStorageBase extends ModelSerialCloneable {
         position1 = (intZ * imageSize) + (intY * xDim) + intX;
         position2 = position1 + imageSize;
 
-        a1 = ((1 - dx) * data.getLong(position1)) + (dx * data.getLong(position1 + 1));
-        a2 = ((1 - dx) * data.getLong(position1 + xDim)) + (dx * data.getLong(position1 + xDim + 1));
-        b1 = ((1 - dy) * a1) + (dy * a2);
+        a1 = ( (1 - dx) * data.getLong(position1)) + (dx * data.getLong(position1 + 1));
+        a2 = ( (1 - dx) * data.getLong(position1 + xDim)) + (dx * data.getLong(position1 + xDim + 1));
+        b1 = ( (1 - dy) * a1) + (dy * a2);
 
-        a1 = ((1 - dx) * data.getLong(position2)) + (dx * data.getLong(position2 + 1));
-        a2 = ((1 - dx) * data.getLong(position2 + xDim)) + (dx * data.getLong(position2 + xDim + 1));
-        b2 = ((1 - dy) * a1) + (dy * a2);
+        a1 = ( (1 - dx) * data.getLong(position2)) + (dx * data.getLong(position2 + 1));
+        a2 = ( (1 - dx) * data.getLong(position2 + xDim)) + (dx * data.getLong(position2 + xDim + 1));
+        b2 = ( (1 - dy) * a1) + (dy * a2);
 
-        return (long) (((1 - dz) * b1) + (dz * b2));
+        return (long) ( ( (1 - dz) * b1) + (dz * b2));
     }
 
     /**
      * Accessor that returns the maximum value in the dataArray.
-     *
-     * @return  double indicating maximum value in the dataArray
+     * 
+     * @return double indicating maximum value in the dataArray
      */
     public double getMax() {
         return max;
@@ -3542,8 +3548,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the maximum blue value in the dataArray.
-     *
-     * @return  double indicating maximum blue value in the dataArray
+     * 
+     * @return double indicating maximum blue value in the dataArray
      */
     public double getMaxB() {
         return maxB;
@@ -3551,8 +3557,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the maximum green value in the dataArray.
-     *
-     * @return  double indicating maximum green value in the dataArray
+     * 
+     * @return double indicating maximum green value in the dataArray
      */
     public double getMaxG() {
         return maxG;
@@ -3560,8 +3566,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the maximum red value in the dataArray.
-     *
-     * @return  double indicating maximum red value in the dataArray
+     * 
+     * @return double indicating maximum red value in the dataArray
      */
     public double getMaxR() {
         return maxR;
@@ -3569,8 +3575,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the minimum value in the dataArray.
-     *
-     * @return  double indicating minimum value in the dataArray
+     * 
+     * @return double indicating minimum value in the dataArray
      */
     public double getMin() {
         return min;
@@ -3578,8 +3584,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the minimum blue value in the dataArray.
-     *
-     * @return  double indicating minimum blue value in the dataArray
+     * 
+     * @return double indicating minimum blue value in the dataArray
      */
     public double getMinB() {
         return minB;
@@ -3587,8 +3593,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * getMinG - Accessor that returns the minimum green value in the dataArray.
-     *
-     * @return  double indicating minimum green value in the dataArray
+     * 
+     * @return double indicating minimum green value in the dataArray
      */
     public double getMinG() {
         return minG;
@@ -3596,8 +3602,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the minimum red value in the dataArray.
-     *
-     * @return  double indicating minimum red value in the dataArray
+     * 
+     * @return double indicating minimum red value in the dataArray
      */
     public double getMinR() {
         return minR;
@@ -3605,8 +3611,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the dimensionality of the image.
-     *
-     * @return  int indicating the number of dimensions
+     * 
+     * @return int indicating the number of dimensions
      */
     public final int getNDims() {
         return nDims;
@@ -3614,8 +3620,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the maximum value without log processing in the dataArray.
-     *
-     * @return  double indicating maximum value in the dataArray
+     * 
+     * @return double indicating maximum value in the dataArray
      */
     public double getNoLogMax() {
         return noLogMax;
@@ -3623,8 +3629,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the minimum value without log processing in the dataArray.
-     *
-     * @return  double indicating minimum value in the dataArray
+     * 
+     * @return double indicating minimum value in the dataArray
      */
     public double getNoLogMin() {
         return noLogMin;
@@ -3632,8 +3638,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the minimum nonzero value without log processing in the dataArray.
-     *
-     * @return  double indicating minimum value in the dataArray
+     * 
+     * @return double indicating minimum value in the dataArray
      */
     public double getNoLogMinNonZero() {
         return noLogMinNonZero;
@@ -3641,8 +3647,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the smallest magnitude negative value in the dataArray.
-     *
-     * @return  double indicating maximum nonzero value in the dataArray NaN if no nonzero value present
+     * 
+     * @return double indicating maximum nonzero value in the dataArray NaN if no nonzero value present
      */
     public double getNonZeroMax() {
         return nonZeroMax;
@@ -3650,8 +3656,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the maximum nonzero blue value in the dataArray.
-     *
-     * @return  double indicating maximum nonzero blue value in the dataArray NaN if no nonzero blue value present
+     * 
+     * @return double indicating maximum nonzero blue value in the dataArray NaN if no nonzero blue value present
      */
     public double getNonZeroMaxB() {
         return nonZeroMaxB;
@@ -3659,8 +3665,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the maximum nonzero green value in the dataArray.
-     *
-     * @return  double indicating maximum nonzero green value in the dataArray NaN if no nonzero green value present
+     * 
+     * @return double indicating maximum nonzero green value in the dataArray NaN if no nonzero green value present
      */
     public double getNonZeroMaxG() {
         return nonZeroMaxG;
@@ -3668,8 +3674,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the maximum nonzero red value in the dataArray.
-     *
-     * @return  double indicating maximum nonzero red value in the dataArray NaN if no nonzero red value present
+     * 
+     * @return double indicating maximum nonzero red value in the dataArray NaN if no nonzero red value present
      */
     public double getNonZeroMaxR() {
         return nonZeroMaxR;
@@ -3677,8 +3683,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the minimum nonzero value in the dataArray.
-     *
-     * @return  double indicating minimum nonzero value in the dataArray NaN if no nonzero value present
+     * 
+     * @return double indicating minimum nonzero value in the dataArray NaN if no nonzero value present
      */
     public double getNonZeroMin() {
         return nonZeroMin;
@@ -3686,8 +3692,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the minimum nonzero blue value in the dataArray.
-     *
-     * @return  double indicating minimum nonzero blue value in the dataArray NaN if no nonzero blue value present
+     * 
+     * @return double indicating minimum nonzero blue value in the dataArray NaN if no nonzero blue value present
      */
     public double getNonZeroMinB() {
         return nonZeroMinB;
@@ -3695,8 +3701,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the minimum nonzero green value in the dataArray.
-     *
-     * @return  double indicating minimum nonzero green value in the dataArray NaN if no nonzero green value present
+     * 
+     * @return double indicating minimum nonzero green value in the dataArray NaN if no nonzero green value present
      */
     public double getNonZeroMinG() {
         return nonZeroMinG;
@@ -3704,18 +3710,17 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the minimum nonzero red value in the dataArray.
-     *
-     * @return  double indicating minimum nonzero red value in the dataArray NaN if no nonzero red value present
+     * 
+     * @return double indicating minimum nonzero red value in the dataArray NaN if no nonzero red value present
      */
     public double getNonZeroMinR() {
         return nonZeroMinR;
     }
 
-
     /**
      * Returns the origin of the image.
-     *
-     * @return  the origin of the image
+     * 
+     * @return the origin of the image
      */
     public float[] getOrigin() {
 
@@ -3728,27 +3733,27 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Returns the image origin for the image translated into the Patient-Coordinate systsm:
-     *
-     * @param   index        the fileInfo index
-     * @param   orientation  the Patient-Coordinate view for which the origin are needed:
-     *
-     * @return  the origin of the image in Patient Coordinates
+     * 
+     * @param index the fileInfo index
+     * @param orientation the Patient-Coordinate view for which the origin are needed:
+     * 
+     * @return the origin of the image in Patient Coordinates
      */
-    public float[] getOrigin(int index, int orientation) {
+    public float[] getOrigin(final int index, final int orientation) {
 
         if (fileInfo == null) {
             return null;
         }
 
-        float[] originTemp = fileInfo[index].getOrigin();
+        final float[] originTemp = fileInfo[index].getOrigin();
 
         /* Do not reorder the origin if this is less than a 3D image: */
         if (dimExtents.length < 3) {
             return originTemp;
         }
 
-        float[] originReturn = new float[3];
-        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(this, orientation);
+        final float[] originReturn = new float[3];
+        final int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(this, orientation);
 
         for (int i = 0; i < 3; i++) {
             originReturn[i] = originTemp[aiAxisOrder[i]];
@@ -3759,8 +3764,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * returns integer telling Butterworth order. - TO BE MOVED
-     *
-     * @return  value indicating the Butterworth filter order;
+     * 
+     * @return value indicating the Butterworth filter order;
      */
     public final int getOriginalButterworthOrder() {
         return originalButterworthOrder;
@@ -3768,8 +3773,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * DOCUMENT ME! - TO BE MOVED
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public final boolean getOriginalCropCheckbox() {
         return originalCropCheckbox;
@@ -3777,8 +3782,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * DOCUMENT ME! - TO BE MOVED
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public final boolean getOriginalDoCrop() {
         return originalDoCrop;
@@ -3786,8 +3791,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * DOCUMENT ME! -TO BE MOVED
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public final int[] getOriginalEnd() {
         return originalEnd;
@@ -3795,8 +3800,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the original extents of the image.
-     *
-     * @return  array of ints indicating the original extents in each dimension
+     * 
+     * @return array of ints indicating the original extents in each dimension
      */
     public final int[] getOriginalExtents() {
         return dimOriginalExtents;
@@ -3804,8 +3809,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * returns integer telling filter construction method.
-     *
-     * @return  int showing original filter construction method
+     * 
+     * @return int showing original filter construction method
      */
 
     public final int getOriginalFilterConstruction() {
@@ -3814,8 +3819,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * returns kernel diameter chosen on forward FFT.
-     *
-     * @return  int showing original kernel diameter chosen on forward FFT
+     * 
+     * @return int showing original kernel diameter chosen on forward FFT
      */
     public final int getOriginalKernelDimension() {
         return originalKernelDimension;
@@ -3823,8 +3828,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * DOCUMENT ME! - TO BE MOVED
-     *
-     * @return  DOCUMENT ME! - to be moved
+     * 
+     * @return DOCUMENT ME! - to be moved
      */
     public final float getOriginalMaximum() {
         return originalMaximum;
@@ -3832,8 +3837,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * DOCUMENT ME! - TO BE MOVED
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public final float getOriginalMinimum() {
         return originalMinimum;
@@ -3841,27 +3846,17 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * DOCUMENT ME! - TO BE MOVED
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public final int[] getOriginalStart() {
         return originalStart;
     }
 
-
-    /**
-     * Accessor that returns the project information for this image.
-     *
-     * @return  ProjectInfo structure
-     */
-    public FileInfoProject getProjectInfo() {
-        return projectInfo;
-    }
-
     /**
      * Gets the radiological view flag:
-     *
-     * @return  the RadiologicalView on/off
+     * 
+     * @return the RadiologicalView on/off
      */
     public boolean getRadiologicalView() {
         return m_bRadiologicalView;
@@ -3869,12 +3864,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Returns the resolutions for the image without regarding resolution difference between slices.
-     *
-     * @param   index  The index indicating which data slice to exact the resolutions
-     *
-     * @return  the resolutions for the data slice
+     * 
+     * @param index The index indicating which data slice to exact the resolutions
+     * 
+     * @return the resolutions for the data slice
      */
-    public float[] getResolutions(int index) {
+    public float[] getResolutions(final int index) {
 
         if (fileInfo == null) {
             return null;
@@ -3885,27 +3880,27 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Returns the resolutions for the image translated into the Patient-Coordinate systsm:
-     *
-     * @param   index        the fileInfo index
-     * @param   orientation  the Patient-Coordinate view for which the resolutions are needed:
-     *
-     * @return  the resolutions for the image in Patient Coordinates
+     * 
+     * @param index the fileInfo index
+     * @param orientation the Patient-Coordinate view for which the resolutions are needed:
+     * 
+     * @return the resolutions for the image in Patient Coordinates
      */
-    public float[] getResolutions(int index, int orientation) {
+    public float[] getResolutions(final int index, final int orientation) {
 
         if (fileInfo == null) {
             return null;
         }
 
-        float[] resTemp = (float[]) fileInfo[index].getResolutions();
+        final float[] resTemp = fileInfo[index].getResolutions();
 
         /* Do not reorder the resolutions if this is less than a 3D image: */
         if (dimExtents.length < 3) {
             return resTemp;
         }
 
-        float[] resReturn = new float[3];
-        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(this, orientation);
+        final float[] resReturn = new float[3];
+        final int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(this, orientation);
 
         for (int i = 0; i < 3; i++) {
             resReturn[i] = resTemp[aiAxisOrder[i]];
@@ -3914,29 +3909,28 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return resReturn;
     }
 
-
     /**
      * Version of get that does NOT perform bounds checking.
-     *
-     * @param   position  The index into the one dimensional array
-     *
-     * @return  The value at that position in the data array
+     * 
+     * @param position The index into the one dimensional array
+     * 
+     * @return The value at that position in the data array
      */
-    public final short getShort(int position) {
+    public final short getShort(final int position) {
         return (data.getShort(position));
     }
 
     /**
      * nD get data fuction where bounds checking is NOT performed.
-     *
-     * @param   position  The index into the one dimensional array
-     *
-     * @return  The value at that position in the data array
+     * 
+     * @param position The index into the one dimensional array
+     * 
+     * @return The value at that position in the data array
      */
-    public final short getShort(int[] position) {
+    public final short getShort(final int[] position) {
         int i;
         int location = 0;
-        int dimensions = position.length;
+        final int dimensions = position.length;
 
         for (i = dimensions - 1; i > 0; i--) {
             location += (position[i] * dimExtents[i]);
@@ -3949,55 +3943,55 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * 2D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     *
-     * @return  value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * 
+     * @return value at that position in the data array
      */
-    public final short getShort(int x, int y) {
-        return (data.getShort((y * dimExtents[0]) + x));
+    public final short getShort(final int x, final int y) {
+        return (data.getShort( (y * dimExtents[0]) + x));
     }
 
     /**
      * 3D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     *
-     * @return  value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * 
+     * @return value at that position in the data array
      */
-    public final short getShort(int x, int y, int z) {
-        return (data.getShort((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
+    public final short getShort(final int x, final int y, final int z) {
+        return (data.getShort( (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
 
     /**
      * 4D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     * @param   t  t coordinate
-     *
-     * @return  value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param t t coordinate
+     * 
+     * @return value at that position in the data array
      */
-    public final short getShort(int x, int y, int z, int t) {
-        return (data.getShort((t * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
-                              (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
+    public final short getShort(final int x, final int y, final int z, final int t) {
+        return (data.getShort( (t * (dimExtents[0] * dimExtents[1] * dimExtents[2]))
+                + (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
 
     /**
      * version of get that performs bi-linear interpoloation. Note - does NOT perform bounds checking
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     *
-     * @return  The value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * 
+     * @return The value at that position in the data array
      */
-    public final short getShortBiLinear(float x, float y) {
+    public final short getShortBiLinear(final float x, final float y) {
 
-        int xDim = dimExtents[0];
+        final int xDim = dimExtents[0];
         int position;
         int intX, intY;
         float dx, dy;
@@ -4011,26 +4005,26 @@ public class ModelStorageBase extends ModelSerialCloneable {
         position = (intY * xDim) + intX;
 
         // if ((position >= 0) && (position < size-xDim-1) ) {
-        x1 = ((1 - dx) * data.getShort(position)) + (dx * data.getShort(position + 1));
-        x2 = ((1 - dx) * data.getShort(position + xDim)) + (dx * data.getShort(position + xDim + 1));
+        x1 = ( (1 - dx) * data.getShort(position)) + (dx * data.getShort(position + 1));
+        x2 = ( (1 - dx) * data.getShort(position + xDim)) + (dx * data.getShort(position + xDim + 1));
 
-        return (short) (((1 - dy) * x1) + (dy * x2));
+        return (short) ( ( (1 - dy) * x1) + (dy * x2));
     }
 
     /**
      * version of get that performs tri-linear interpoloation. <b>Note - does NOT perform bounds checking</b>
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     *
-     * @return  The intoplated value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * 
+     * @return The intoplated value at that position in the data array
      */
-    public final short getShortTriLinear(float x, float y, float z) {
+    public final short getShortTriLinear(final float x, final float y, final float z) {
 
-        int xDim = dimExtents[0];
-        int yDim = dimExtents[1];
-        int imageSize = xDim * yDim;
+        final int xDim = dimExtents[0];
+        final int yDim = dimExtents[1];
+        final int imageSize = xDim * yDim;
         int position1, position2;
         int intX, intY, intZ;
         float dx, dy, dz;
@@ -4048,21 +4042,21 @@ public class ModelStorageBase extends ModelSerialCloneable {
         position1 = (intZ * imageSize) + (intY * xDim) + intX;
         position2 = position1 + imageSize;
 
-        a1 = ((1 - dx) * data.getShort(position1)) + (dx * data.getShort(position1 + 1));
-        a2 = ((1 - dx) * data.getShort(position1 + xDim)) + (dx * data.getShort(position1 + xDim + 1));
-        b1 = ((1 - dy) * a1) + (dy * a2);
+        a1 = ( (1 - dx) * data.getShort(position1)) + (dx * data.getShort(position1 + 1));
+        a2 = ( (1 - dx) * data.getShort(position1 + xDim)) + (dx * data.getShort(position1 + xDim + 1));
+        b1 = ( (1 - dy) * a1) + (dy * a2);
 
-        a1 = ((1 - dx) * data.getShort(position2)) + (dx * data.getShort(position2 + 1));
-        a2 = ((1 - dx) * data.getShort(position2 + xDim)) + (dx * data.getShort(position2 + xDim + 1));
-        b2 = ((1 - dy) * a1) + (dy * a2);
+        a1 = ( (1 - dx) * data.getShort(position2)) + (dx * data.getShort(position2 + 1));
+        a2 = ( (1 - dx) * data.getShort(position2 + xDim)) + (dx * data.getShort(position2 + xDim + 1));
+        b2 = ( (1 - dy) * a1) + (dy * a2);
 
-        return (short) (((1 - dz) * b1) + (dz * b2));
+        return (short) ( ( (1 - dz) * b1) + (dz * b2));
     }
 
     /**
      * returns standard deviation U of filter. TO BE MOVED
-     *
-     * @return  sigmaU
+     * 
+     * @return sigmaU
      */
     public final float getSigmaU() {
         return sigmaU;
@@ -4070,8 +4064,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * returns standard deviation V of filter. TO BE MOVED
-     *
-     * @return  sigmaV
+     * 
+     * @return sigmaV
      */
     public final float getSigmaV() {
         return sigmaV;
@@ -4079,8 +4073,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the total size(length) of the data array.
-     *
-     * @return  Value indicating the number of data points in the data array
+     * 
+     * @return Value indicating the number of data points in the data array
      */
     public final int getSize() {
         return dataSize;
@@ -4088,8 +4082,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Get the nuber of pixels in a slice of the image.
-     *
-     * @return  the number of pixels in a slice
+     * 
+     * @return the number of pixels in a slice
      */
     public final int getSliceSize() {
         return dimExtents[0] * dimExtents[1];
@@ -4097,8 +4091,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the smallest magnitude negative value in the dataArray.
-     *
-     * @return  value indicating smallest magnitude negative value in the dataArray NaN if no negative value is present
+     * 
+     * @return value indicating smallest magnitude negative value in the dataArray NaN if no negative value is present
      */
     public double getSmallestMagnitudeNegative() {
         return smallestMagnitudeNegative;
@@ -4106,9 +4100,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the smallest magnitude negative blue value in the dataArray.
-     *
-     * @return  value indicating smallest magnitude negative blue value in the dataArray NaN if no negative blue value
-     *          is present
+     * 
+     * @return value indicating smallest magnitude negative blue value in the dataArray NaN if no negative blue value is
+     *         present
      */
     public double getSmallestMagnitudeNegativeB() {
         return smallestMagnitudeNegativeB;
@@ -4116,9 +4110,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the smallest magnitude negative green value in the dataArray.
-     *
-     * @return  value indicating smallest magnitude negative green value in the dataArray NaN if no negative green value
-     *          is present
+     * 
+     * @return value indicating smallest magnitude negative green value in the dataArray NaN if no negative green value
+     *         is present
      */
     public double getSmallestMagnitudeNegativeG() {
         return smallestMagnitudeNegativeG;
@@ -4126,9 +4120,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the smallest magnitude negative red value in the dataArray.
-     *
-     * @return  value indicating smallest magnitude negative red value in the dataArray NaN if no negative red value is
-     *          present
+     * 
+     * @return value indicating smallest magnitude negative red value in the dataArray NaN if no negative red value is
+     *         present
      */
     public double getSmallestMagnitudeNegativeR() {
         return smallestMagnitudeNegativeR;
@@ -4136,8 +4130,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the smallest magnitude positive value in the dataArray.
-     *
-     * @return  value indicating smallest magnitude positive value in the dataArray NaN if no positive value is present
+     * 
+     * @return value indicating smallest magnitude positive value in the dataArray NaN if no positive value is present
      */
     public double getSmallestMagnitudePositive() {
         return smallestMagnitudePositive;
@@ -4145,9 +4139,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the smallest magnitude positive blue value in the dataArray.
-     *
-     * @return  value indicating smallest magnitude positive blue value in the dataArray NaN if no positive blue value
-     *          is present
+     * 
+     * @return value indicating smallest magnitude positive blue value in the dataArray NaN if no positive blue value is
+     *         present
      */
     public double getSmallestMagnitudePositiveB() {
         return smallestMagnitudePositiveB;
@@ -4155,9 +4149,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the smallest magnitude positive green value in the dataArray.
-     *
-     * @return  value indicating smallest magnitude positive green value in the dataArray NaN if no positive green value
-     *          is present
+     * 
+     * @return value indicating smallest magnitude positive green value in the dataArray NaN if no positive green value
+     *         is present
      */
     public double getSmallestMagnitudePositiveG() {
         return smallestMagnitudePositiveG;
@@ -4165,23 +4159,22 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the smallest magnitude positive red value in the dataArray.
-     *
-     * @return  value indicating smallest magnitude positive red value in the dataArray NaN if no positive red value is
-     *          present
+     * 
+     * @return value indicating smallest magnitude positive red value in the dataArray NaN if no positive red value is
+     *         present
      */
     public double getSmallestMagnitudePositiveR() {
         return smallestMagnitudePositiveR;
     }
 
-
     /**
      * Returns the surface mask from this image.
-     *
-     * @param   index  the index of the mask to remove.
-     *
-     * @return  the BitSet mask
+     * 
+     * @param index the index of the mask to remove.
+     * 
+     * @return the BitSet mask
      */
-    public BitSet getSurfaceMask(int index) {
+    public BitSet getSurfaceMask(final int index) {
 
         if (m_kMaskVector.size() > index) {
             return (BitSet) m_kMaskVector.get(index);
@@ -4192,12 +4185,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Returns the surface mask from this image.
-     *
-     * @param   index  the index of the mask to remove.
-     *
-     * @return  the BitSet mask
+     * 
+     * @param index the index of the mask to remove.
+     * 
+     * @return the BitSet mask
      */
-    public ColorRGBA getSurfaceMaskColor(int index) {
+    public ColorRGBA getSurfaceMaskColor(final int index) {
 
         if (m_kColorVector.size() > index) {
             return (ColorRGBA) m_kColorVector.get(index);
@@ -4208,8 +4201,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Returns roation angle theta in radians of filter. TO BE MOVED
-     *
-     * @return  theta
+     * 
+     * @return theta
      */
     public final float getTheta() {
         return theta;
@@ -4217,18 +4210,18 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * version of get that performs tri-linear interpoloation. <b>Note - does perform bounds checking</b>
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     *
-     * @return  The introplated value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * 
+     * @return The introplated value at that position in the data array
      */
-    public final Number getTriLinear(float x, float y, float z) {
+    public final Number getTriLinear(final float x, final float y, final float z) {
 
-        int xDim = dimExtents[0];
-        int yDim = dimExtents[1];
-        int imageSize = xDim * yDim;
+        final int xDim = dimExtents[0];
+        final int yDim = dimExtents[1];
+        final int imageSize = xDim * yDim;
         int position1, position2;
         int intX, intY, intZ;
         float dx, dy, dz;
@@ -4246,19 +4239,19 @@ public class ModelStorageBase extends ModelSerialCloneable {
         position1 = (intZ * imageSize) + (intY * xDim) + intX;
         position2 = position1 + imageSize;
 
-        if ((position1 >= 0) && (position1 < (dataSize - (xDim * yDim) - 1)) && (position2 >= 0) &&
-                (position2 < (dataSize - (xDim * yDim) - 1))) {
-            a1 = ((1 - dx) * data.get(position1).floatValue()) + (dx * data.get(position1 + 1).floatValue());
-            a2 = ((1 - dx) * data.get(position1 + xDim).floatValue()) +
-                 (dx * data.get(position1 + xDim + 1).floatValue());
-            b1 = ((1 - dy) * a1) + (dy * a2);
+        if ( (position1 >= 0) && (position1 < (dataSize - (xDim * yDim) - 1)) && (position2 >= 0)
+                && (position2 < (dataSize - (xDim * yDim) - 1))) {
+            a1 = ( (1 - dx) * data.get(position1).floatValue()) + (dx * data.get(position1 + 1).floatValue());
+            a2 = ( (1 - dx) * data.get(position1 + xDim).floatValue())
+                    + (dx * data.get(position1 + xDim + 1).floatValue());
+            b1 = ( (1 - dy) * a1) + (dy * a2);
 
-            a1 = ((1 - dx) * data.get(position2).floatValue()) + (dx * data.get(position2 + 1).floatValue());
-            a2 = ((1 - dx) * data.get(position2 + xDim).floatValue()) +
-                 (dx * data.get(position2 + xDim + 1).floatValue());
-            b2 = ((1 - dy) * a1) + (dy * a2);
+            a1 = ( (1 - dx) * data.get(position2).floatValue()) + (dx * data.get(position2 + 1).floatValue());
+            a2 = ( (1 - dx) * data.get(position2 + xDim).floatValue())
+                    + (dx * data.get(position2 + xDim + 1).floatValue());
+            b2 = ( (1 - dy) * a1) + (dy * a2);
 
-            return (new Float(((1 - dz) * b1) + (dz * b2)));
+            return (new Float( ( (1 - dz) * b1) + (dz * b2)));
         } else {
             return (new Byte((byte) 0));
         }
@@ -4266,8 +4259,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the image buffer type.
-     *
-     * @return  Indicates the data buffer type
+     * 
+     * @return Indicates the data buffer type
      */
     public final int getType() {
         return bufferType;
@@ -4275,65 +4268,64 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor that returns the image type.
-     *
-     * @return  The data buffer type as a String.
+     * 
+     * @return The data buffer type as a String.
      */
     public final String getTypeString() {
 
         if (bufferType == ModelStorageBase.BOOLEAN) {
-            return BOOLEAN_STRING;
+            return ModelStorageBase.BOOLEAN_STRING;
         } else if (bufferType == ModelStorageBase.BYTE) {
-            return BYTE_STRING;
+            return ModelStorageBase.BYTE_STRING;
         } else if (bufferType == ModelStorageBase.UBYTE) {
-            return UBYTE_STRING;
+            return ModelStorageBase.UBYTE_STRING;
         } else if (bufferType == ModelStorageBase.SHORT) {
-            return SHORT_STRING;
+            return ModelStorageBase.SHORT_STRING;
         } else if (bufferType == ModelStorageBase.USHORT) {
-            return USHORT_STRING;
+            return ModelStorageBase.USHORT_STRING;
         } else if (bufferType == ModelStorageBase.INTEGER) {
-            return INTEGER_STRING;
+            return ModelStorageBase.INTEGER_STRING;
         } else if (bufferType == ModelStorageBase.UINTEGER) {
-            return UINTEGER_STRING;
+            return ModelStorageBase.UINTEGER_STRING;
         } else if (bufferType == ModelStorageBase.LONG) {
-            return LONG_STRING;
+            return ModelStorageBase.LONG_STRING;
         } else if (bufferType == ModelStorageBase.FLOAT) {
-            return FLOAT_STRING;
+            return ModelStorageBase.FLOAT_STRING;
         } else if (bufferType == ModelStorageBase.DOUBLE) {
-            return DOUBLE_STRING;
+            return ModelStorageBase.DOUBLE_STRING;
         } else if (bufferType == ModelStorageBase.ARGB) {
-            return ARGB_STRING;
+            return ModelStorageBase.ARGB_STRING;
         } else if (bufferType == ModelStorageBase.ARGB_USHORT) {
-            return ARGB_USHORT_STRING;
+            return ModelStorageBase.ARGB_USHORT_STRING;
         } else if (bufferType == ModelStorageBase.ARGB_FLOAT) {
-            return ARGB_FLOAT_STRING;
+            return ModelStorageBase.ARGB_FLOAT_STRING;
         } else {
             return "Unknown";
         }
     }
 
-
     /**
      * version of get that does NOT perform bounds checking.
-     *
-     * @param   position  The index into the one dimensional array
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param position The index into the one dimensional array
+     * 
+     * @return DOCUMENT ME!
      */
-    public final short getUByte(int position) {
+    public final short getUByte(final int position) {
         return (data.getUByte(position));
     }
 
     /**
      * nD get data fuction where bounds checking is NOT performed.
-     *
-     * @param   position  The index into the one dimensional array
-     *
-     * @return  The value at that position in the data array
+     * 
+     * @param position The index into the one dimensional array
+     * 
+     * @return The value at that position in the data array
      */
-    public final short getUByte(int[] position) {
+    public final short getUByte(final int[] position) {
         int i;
         int location = 0;
-        int dimensions = position.length;
+        final int dimensions = position.length;
 
         for (i = dimensions - 1; i > 0; i--) {
             location += (position[i] * dimExtents[i]);
@@ -4346,55 +4338,55 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * 2D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     *
-     * @return  The interpolated value at that position in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * 
+     * @return The interpolated value at that position in the data array.
      */
-    public final short getUByte(int x, int y) {
-        return (data.getUByte((y * dimExtents[0]) + x));
+    public final short getUByte(final int x, final int y) {
+        return (data.getUByte( (y * dimExtents[0]) + x));
     }
 
     /**
      * 3D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     *
-     * @return  The value at that position in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * 
+     * @return The value at that position in the data array.
      */
-    public final short getUByte(int x, int y, int z) {
-        return (data.getUByte((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
+    public final short getUByte(final int x, final int y, final int z) {
+        return (data.getUByte( (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
-    
+
     /**
      * 4D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     * @param   t  t coordinate
-     *
-     * @return  The value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param t t coordinate
+     * 
+     * @return The value at that position in the data array
      */
-    public final short getUByte(int x, int y, int z, int t) {
-        return (data.getUByte((t * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
-                              (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
+    public final short getUByte(final int x, final int y, final int z, final int t) {
+        return (data.getUByte( (t * (dimExtents[0] * dimExtents[1] * dimExtents[2]))
+                + (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
 
     /**
      * Version of get that performs bi-linear interpoloation. Note - does NOT perform bounds checking
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     *
-     * @return  The interpolated value at that position in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * 
+     * @return The interpolated value at that position in the data array.
      */
-    public final short getUByteBiLinear(float x, float y) {
+    public final short getUByteBiLinear(final float x, final float y) {
 
-        int xDim = dimExtents[0];
+        final int xDim = dimExtents[0];
         int position;
         int intX, intY;
         float dx, dy;
@@ -4408,26 +4400,26 @@ public class ModelStorageBase extends ModelSerialCloneable {
         position = (intY * xDim) + intX;
 
         // if ((position >= 0) && (position < size-xDim-1) ) {
-        x1 = ((1 - dx) * data.getUByte(position)) + (dx * data.getUByte(position + 1));
-        x2 = ((1 - dx) * data.getUByte(position + xDim)) + (dx * data.getUByte(position + xDim + 1));
+        x1 = ( (1 - dx) * data.getUByte(position)) + (dx * data.getUByte(position + 1));
+        x2 = ( (1 - dx) * data.getUByte(position + xDim)) + (dx * data.getUByte(position + xDim + 1));
 
-        return (short) (((1 - dy) * x1) + (dy * x2));
+        return (short) ( ( (1 - dy) * x1) + (dy * x2));
     }
 
     /**
      * Version of get that performs tri-linear interpoloation. <b>Note - does NOT perform bounds checking</b>
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     *
-     * @return  The interpolated value at that position in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * 
+     * @return The interpolated value at that position in the data array.
      */
-    public final short getUByteTriLinear(float x, float y, float z) {
+    public final short getUByteTriLinear(final float x, final float y, final float z) {
 
-        int xDim = dimExtents[0];
-        int yDim = dimExtents[1];
-        int imageSize = xDim * yDim;
+        final int xDim = dimExtents[0];
+        final int yDim = dimExtents[1];
+        final int imageSize = xDim * yDim;
         int position1, position2;
         int intX, intY, intZ;
         float dx, dy, dz;
@@ -4444,40 +4436,39 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
         position1 = (intZ * imageSize) + (intY * xDim) + intX;
         position2 = position1 + imageSize;
-        a1 = ((1 - dx) * data.getByte(position1)) + (dx * data.getByte(position1 + 1));
-        a2 = ((1 - dx) * data.getByte(position1 + xDim)) + (dx * data.getByte(position1 + xDim + 1));
-        b1 = ((1 - dy) * a1) + (dy * a2);
+        a1 = ( (1 - dx) * data.getByte(position1)) + (dx * data.getByte(position1 + 1));
+        a2 = ( (1 - dx) * data.getByte(position1 + xDim)) + (dx * data.getByte(position1 + xDim + 1));
+        b1 = ( (1 - dy) * a1) + (dy * a2);
 
-        a1 = ((1 - dx) * data.getByte(position2)) + (dx * data.getByte(position2 + 1));
-        a2 = ((1 - dx) * data.getByte(position2 + xDim)) + (dx * data.getByte(position2 + xDim + 1));
-        b2 = ((1 - dy) * a1) + (dy * a2);
+        a1 = ( (1 - dx) * data.getByte(position2)) + (dx * data.getByte(position2 + 1));
+        a2 = ( (1 - dx) * data.getByte(position2 + xDim)) + (dx * data.getByte(position2 + xDim + 1));
+        b2 = ( (1 - dy) * a1) + (dy * a2);
 
-        return (short) (((1 - dz) * b1) + (dz * b2));
+        return (short) ( ( (1 - dz) * b1) + (dz * b2));
     }
-
 
     /**
      * version of get that does NOT perform bounds checking.
-     *
-     * @param   position  position in one dimensional array
-     *
-     * @return  The value at that position in the data array.
+     * 
+     * @param position position in one dimensional array
+     * 
+     * @return The value at that position in the data array.
      */
-    public final long getUInt(int position) {
+    public final long getUInt(final int position) {
         return (data.getUInt(position));
     }
 
     /**
      * nD get data fuction where bounds checking is NOT performed.
-     *
-     * @param   position  The index into the array of data.
-     *
-     * @return  The value at that position in the data array.
+     * 
+     * @param position The index into the array of data.
+     * 
+     * @return The value at that position in the data array.
      */
-    public final long getUInt(int[] position) {
+    public final long getUInt(final int[] position) {
         int i;
         int location = 0;
-        int dimensions = position.length;
+        final int dimensions = position.length;
 
         for (i = dimensions - 1; i > 0; i--) {
             location += (position[i] * dimExtents[i]);
@@ -4490,55 +4481,55 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * 2D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     *
-     * @return  value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * 
+     * @return value at that position in the data array
      */
-    public final long getUInt(int x, int y) {
-        return (data.getUInt((y * dimExtents[0]) + x));
+    public final long getUInt(final int x, final int y) {
+        return (data.getUInt( (y * dimExtents[0]) + x));
     }
 
     /**
      * 3D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     *
-     * @return  value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * 
+     * @return value at that position in the data array
      */
-    public final long getUInt(int x, int y, int z) {
-        return (data.getUInt((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
+    public final long getUInt(final int x, final int y, final int z) {
+        return (data.getUInt( (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
 
     /**
      * 4D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     * @param   t  t coordinate
-     *
-     * @return  The value at that position in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param t t coordinate
+     * 
+     * @return The value at that position in the data array.
      */
-    public final long getUInt(int x, int y, int z, int t) {
-        return (data.getUInt((t * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
-                             (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
+    public final long getUInt(final int x, final int y, final int z, final int t) {
+        return (data.getUInt( (t * (dimExtents[0] * dimExtents[1] * dimExtents[2]))
+                + (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
 
     /**
      * version of get that performs bi-linear interpoloation. Note - does NOT perform bounds checking
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     *
-     * @return  The value at that position in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * 
+     * @return The value at that position in the data array.
      */
-    public final long getUIntBiLinear(float x, float y) {
+    public final long getUIntBiLinear(final float x, final float y) {
 
-        int xDim = dimExtents[0];
+        final int xDim = dimExtents[0];
         int position;
         int intX, intY;
         float dx, dy;
@@ -4552,26 +4543,26 @@ public class ModelStorageBase extends ModelSerialCloneable {
         position = (intY * xDim) + intX;
 
         // if ((position >= 0) && (position < size-xDim-1) ) {
-        x1 = ((1 - dx) * data.getUInt(position)) + (dx * data.getUInt(position + 1));
-        x2 = ((1 - dx) * data.getUInt(position + xDim)) + (dx * data.getUInt(position + xDim + 1));
+        x1 = ( (1 - dx) * data.getUInt(position)) + (dx * data.getUInt(position + 1));
+        x2 = ( (1 - dx) * data.getUInt(position + xDim)) + (dx * data.getUInt(position + xDim + 1));
 
-        return (long) (((1 - dy) * x1) + (dy * x2));
+        return (long) ( ( (1 - dy) * x1) + (dy * x2));
     }
 
     /**
      * version of get that performs tri-linear interpoloation. Note - does NOT perform bounds checking
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     *
-     * @return  The interpolated value at that position in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * 
+     * @return The interpolated value at that position in the data array.
      */
-    public final long getUIntTriLinear(float x, float y, float z) {
+    public final long getUIntTriLinear(final float x, final float y, final float z) {
 
-        int xDim = dimExtents[0];
-        int yDim = dimExtents[1];
-        int imageSize = xDim * yDim;
+        final int xDim = dimExtents[0];
+        final int yDim = dimExtents[1];
+        final int imageSize = xDim * yDim;
         int position1, position2;
         int intX, intY, intZ;
         float dx, dy, dz;
@@ -4589,21 +4580,21 @@ public class ModelStorageBase extends ModelSerialCloneable {
         position1 = (intZ * imageSize) + (intY * xDim) + intX;
         position2 = position1 + imageSize;
 
-        a1 = ((1 - dx) * data.getUInt(position1)) + (dx * data.getUInt(position1 + 1));
-        a2 = ((1 - dx) * data.getUInt(position1 + xDim)) + (dx * data.getUInt(position1 + xDim + 1));
-        b1 = ((1 - dy) * a1) + (dy * a2);
+        a1 = ( (1 - dx) * data.getUInt(position1)) + (dx * data.getUInt(position1 + 1));
+        a2 = ( (1 - dx) * data.getUInt(position1 + xDim)) + (dx * data.getUInt(position1 + xDim + 1));
+        b1 = ( (1 - dy) * a1) + (dy * a2);
 
-        a1 = ((1 - dx) * data.getUInt(position2)) + (dx * data.getUInt(position2 + 1));
-        a2 = ((1 - dx) * data.getUInt(position2 + xDim)) + (dx * data.getUInt(position2 + xDim + 1));
-        b2 = ((1 - dy) * a1) + (dy * a2);
+        a1 = ( (1 - dx) * data.getUInt(position2)) + (dx * data.getUInt(position2 + 1));
+        a2 = ( (1 - dx) * data.getUInt(position2 + xDim)) + (dx * data.getUInt(position2 + xDim + 1));
+        b2 = ( (1 - dy) * a1) + (dy * a2);
 
-        return (long) (((1 - dz) * b1) + (dz * b2));
+        return (long) ( ( (1 - dz) * b1) + (dz * b2));
     }
 
     /**
      * Accessor that returns the boolean indicating if unequal dimensions are allowed in complex images. TO BE MOVED
-     *
-     * @return  Indicated if unequal dimensions are allowed
+     * 
+     * @return Indicated if unequal dimensions are allowed
      */
     public boolean getUnequalDim() {
         return unequalDim;
@@ -4611,8 +4602,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Returns the units used to measure all dimensions of the image.
-     *
-     * @return  The units used to measure all dimensions of the image.
+     * 
+     * @return The units used to measure all dimensions of the image.
      */
     public int[] getUnitsOfMeasure() {
 
@@ -4625,12 +4616,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Returns the unit used to measure the specific dimension of image.
-     *
-     * @param   index  The index of specific dimension
-     *
-     * @return  The unit used to measure the specific dimension
+     * 
+     * @param index The index of specific dimension
+     * 
+     * @return The unit used to measure the specific dimension
      */
-    public int getUnitsOfMeasure(int index) {
+    public int getUnitsOfMeasure(final int index) {
 
         if (fileInfo == null) {
             return -1;
@@ -4640,30 +4631,29 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     }
 
-
     /**
      * Returns the units of measure for the image translated into the Patient-Coordinate systsm:
-     *
-     * @param   index        the fileInfo index
-     * @param   orientation  the Patient-Coordinate view for which the units of measure are needed:
-     *
-     * @return  the units of measure for the image in Patient Coordinates
+     * 
+     * @param index the fileInfo index
+     * @param orientation the Patient-Coordinate view for which the units of measure are needed:
+     * 
+     * @return the units of measure for the image in Patient Coordinates
      */
-    public int[] getUnitsOfMeasure(int index, int orientation) {
+    public int[] getUnitsOfMeasure(final int index, final int orientation) {
 
         if (fileInfo == null) {
             return null;
         }
 
-        int[] unitsTemp = fileInfo[index].getUnitsOfMeasure();
+        final int[] unitsTemp = fileInfo[index].getUnitsOfMeasure();
 
         /* Do not reorder the units if this is less than a 3D image: */
         if (dimExtents.length < 3) {
             return unitsTemp;
         }
 
-        int[] unitsReturn = new int[3];
-        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(this, orientation);
+        final int[] unitsReturn = new int[3];
+        final int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(this, orientation);
 
         for (int i = 0; i < 3; i++) {
             unitsReturn[i] = unitsTemp[aiAxisOrder[i]];
@@ -4672,29 +4662,28 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return unitsReturn;
     }
 
-
     /**
      * version of get that does NOT perform bounds checking.
-     *
-     * @param   position  The index into the one dimensional array
-     *
-     * @return  The value at that position in the data array
+     * 
+     * @param position The index into the one dimensional array
+     * 
+     * @return The value at that position in the data array
      */
-    public final int getUShort(int position) {
+    public final int getUShort(final int position) {
         return (data.getUShort(position));
     }
 
     /**
      * nD get data fuction where bounds checking is NOT performed.
-     *
-     * @param   position  The index into the one dimensional array
-     *
-     * @return  The value at that position in the data array
+     * 
+     * @param position The index into the one dimensional array
+     * 
+     * @return The value at that position in the data array
      */
-    public final int getUShort(int[] position) {
+    public final int getUShort(final int[] position) {
         int i;
         int location = 0;
-        int dimensions = position.length;
+        final int dimensions = position.length;
 
         for (i = dimensions - 1; i > 0; i--) {
             location += (position[i] * dimExtents[i]);
@@ -4707,55 +4696,55 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * 2D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     *
-     * @return  The value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * 
+     * @return The value at that position in the data array
      */
-    public final int getUShort(int x, int y) {
-        return (data.getUShort((y * dimExtents[0]) + x));
+    public final int getUShort(final int x, final int y) {
+        return (data.getUShort( (y * dimExtents[0]) + x));
     }
 
     /**
      * 3D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     *
-     * @return  The value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * 
+     * @return The value at that position in the data array
      */
-    public final int getUShort(int x, int y, int z) {
-        return (data.getUShort((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
+    public final int getUShort(final int x, final int y, final int z) {
+        return (data.getUShort( (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
 
     /**
      * 4D get data fuction where bounds checking is NOT performed.
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     * @param   t  t coordinate
-     *
-     * @return  The value at that position in the data array
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param t t coordinate
+     * 
+     * @return The value at that position in the data array
      */
-    public final int getUShort(int x, int y, int z, int t) {
-        return (data.getUShort((t * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
-                               (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
+    public final int getUShort(final int x, final int y, final int z, final int t) {
+        return (data.getUShort( (t * (dimExtents[0] * dimExtents[1] * dimExtents[2]))
+                + (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
 
     /**
      * Version of get that performs bi-linear interpoloation. Note - does NOT perform bounds checking
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     *
-     * @return  The interpolated value at that position in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * 
+     * @return The interpolated value at that position in the data array.
      */
-    public final int getUShortBiLinear(float x, float y) {
+    public final int getUShortBiLinear(final float x, final float y) {
 
-        int xDim = dimExtents[0];
+        final int xDim = dimExtents[0];
         int position;
         int intX, intY;
         float dx, dy;
@@ -4769,26 +4758,26 @@ public class ModelStorageBase extends ModelSerialCloneable {
         position = (intY * xDim) + intX;
 
         // if ((position >= 0) && (position < size-xDim-1) ) {
-        x1 = ((1 - dx) * data.getUShort(position)) + (dx * data.getUShort(position + 1));
-        x2 = ((1 - dx) * data.getUShort(position + xDim)) + (dx * data.getUShort(position + xDim + 1));
+        x1 = ( (1 - dx) * data.getUShort(position)) + (dx * data.getUShort(position + 1));
+        x2 = ( (1 - dx) * data.getUShort(position + xDim)) + (dx * data.getUShort(position + xDim + 1));
 
-        return (int) (((1 - dy) * x1) + (dy * x2));
+        return (int) ( ( (1 - dy) * x1) + (dy * x2));
     }
 
     /**
      * version of get that performs tri-linear interpoloation. Note - does NOT perform bounds checking
-     *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
-     * @param   z  z coordinate
-     *
-     * @return  The interpolated value at that position in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * 
+     * @return The interpolated value at that position in the data array.
      */
-    public final int getUShortTriLinear(float x, float y, float z) {
+    public final int getUShortTriLinear(final float x, final float y, final float z) {
 
-        int xDim = dimExtents[0];
-        int yDim = dimExtents[1];
-        int imageSize = xDim * yDim;
+        final int xDim = dimExtents[0];
+        final int yDim = dimExtents[1];
+        final int imageSize = xDim * yDim;
         int position1, position2;
         int intX, intY, intZ;
         float dx, dy, dz;
@@ -4806,66 +4795,66 @@ public class ModelStorageBase extends ModelSerialCloneable {
         position1 = (intZ * imageSize) + (intY * xDim) + intX;
         position2 = position1 + imageSize;
 
-        a1 = ((1 - dx) * data.getUShort(position1)) + (dx * data.getUShort(position1 + 1));
-        a2 = ((1 - dx) * data.getUShort(position1 + xDim)) + (dx * data.getUShort(position1 + xDim + 1));
-        b1 = ((1 - dy) * a1) + (dy * a2);
+        a1 = ( (1 - dx) * data.getUShort(position1)) + (dx * data.getUShort(position1 + 1));
+        a2 = ( (1 - dx) * data.getUShort(position1 + xDim)) + (dx * data.getUShort(position1 + xDim + 1));
+        b1 = ( (1 - dy) * a1) + (dy * a2);
 
-        a1 = ((1 - dx) * data.getUShort(position2)) + (dx * data.getUShort(position2 + 1));
-        a2 = ((1 - dx) * data.getUShort(position2 + xDim)) + (dx * data.getUShort(position2 + xDim + 1));
-        b2 = ((1 - dy) * a1) + (dy * a2);
+        a1 = ( (1 - dx) * data.getUShort(position2)) + (dx * data.getUShort(position2 + 1));
+        a2 = ( (1 - dx) * data.getUShort(position2 + xDim)) + (dx * data.getUShort(position2 + xDim + 1));
+        b2 = ( (1 - dy) * a1) + (dy * a2);
 
-        return (int) (((1 - dz) * b1) + (dz * b2));
+        return (int) ( ( (1 - dz) * b1) + (dz * b2));
     }
 
     /**
      * Get the factors needed to iterate through the image volume. Can be multiplied against iterators to retreive the
      * index into the image volume data.
-     *
-     * @return  multiples of dimExtents[] for the image
+     * 
+     * @return multiples of dimExtents[] for the image
      */
     public int[] getVolumeIterationFactors() {
-        return new int[] { 1, dimExtents[0], dimExtents[0] * dimExtents[1] };
+        return new int[] {1, dimExtents[0], dimExtents[0] * dimExtents[1]};
     }
 
     /**
      * Returns the image width, based on the Patient Coordinates orientation from which the data will be viewed:
-     *
-     * @param   orientation  the Patient-Viewing orientation
-     *
-     * @return  dimExtents representing the image width for the viewing orientation
+     * 
+     * @param orientation the Patient-Viewing orientation
+     * 
+     * @return dimExtents representing the image width for the viewing orientation
      */
-    public int getWidth(int orientation) {
+    public int getWidth(final int orientation) {
 
         if (dimExtents.length < 3) {
             return dimExtents[0];
         }
 
-        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(this, orientation);
+        final int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(this, orientation);
 
         return dimExtents[aiAxisOrder[0]];
     }
 
     /**
      * import Complex data (in 2 float units) into data array.
-     *
-     * @param   start          indicates starting position in data array
-     * @param   valuesR        array where real data is to be acquired
-     * @param   valuesI        array where imaginary data is to be acquired
-     * @param   mmFlag         whether or not to calculate min and max magnitude values for the image
-     * @param   logMagDisplay  whether or not min and max are calculated for log10 of 1 + magnitude array
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param valuesR array where real data is to be acquired
+     * @param valuesI array where imaginary data is to be acquired
+     * @param mmFlag whether or not to calculate min and max magnitude values for the image
+     * @param logMagDisplay whether or not min and max are calculated for log10 of 1 + magnitude array
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void importComplexData(int start, float[] valuesR, float[] valuesI, boolean mmFlag,
-                                                     boolean logMagDisplay) throws IOException {
-        int length = valuesR.length;
-        int lengthi = valuesI.length;
+    public final synchronized void importComplexData(final int start, final float[] valuesR, final float[] valuesI,
+            final boolean mmFlag, final boolean logMagDisplay) throws IOException {
+        final int length = valuesR.length;
+        final int lengthi = valuesI.length;
         int ptr;
 
-        if ((length == lengthi) && (start >= 0) && ((start + (2 * length)) <= dataSize)) {
+        if ( (length == lengthi) && (start >= 0) && ( (start + (2 * length)) <= dataSize)) {
 
             try {
-                setLock(RW_LOCKED);
+                setLock(ModelStorageBase.RW_LOCKED);
                 ptr = start;
 
                 for (int i = 0; i < length; i++, ptr += 2) {
@@ -4878,7 +4867,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 if (mmFlag) {
                     calcMinMaxMag(logMagDisplay);
                 }
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -4892,21 +4881,22 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * import Number data into data array.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   values  array where data is to be acquired
-     * @param   mmFlag  whether or not to calculate min and max values for the image array
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param values array where data is to be acquired
+     * @param mmFlag whether or not to calculate min and max values for the image array
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void importData(int start, Number[] values, boolean mmFlag) throws IOException {
-        int length = values.length;
+    public final synchronized void importData(final int start, final Number[] values, final boolean mmFlag)
+            throws IOException {
+        final int length = values.length;
         int ptr;
 
-        if ((start >= 0) && ((start + length) <= dataSize)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize)) {
 
             try {
-                setLock(RW_LOCKED);
+                setLock(ModelStorageBase.RW_LOCKED);
                 ptr = start;
 
                 for (int i = 0; i < length; i++, ptr++) {
@@ -4917,12 +4907,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
                     calcMinMax();
                 }
 
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
             }
-
 
             return;
         }
@@ -4932,22 +4921,23 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Import boolean (BitSet) data into data array.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   values  array where data is to be acquired
-     * @param   mmFlag  whether or not to calculate min and max values for the image array
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param values array where data is to be acquired
+     * @param mmFlag whether or not to calculate min and max values for the image array
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void importData(int start, BitSet values, boolean mmFlag) throws IOException {
+    public final synchronized void importData(final int start, final BitSet values, final boolean mmFlag)
+            throws IOException {
 
-        int length = values.size();
+        final int length = values.size();
         int ptr;
 
-        if ((start >= 0) && ((start + length) <= dataSize)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize)) {
 
             try {
-                setLock(RW_LOCKED);
+                setLock(ModelStorageBase.RW_LOCKED);
                 ptr = start;
 
                 for (int i = 0; i < length; i++, ptr++) {
@@ -4957,7 +4947,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 if (mmFlag) {
                     calcMinMax();
                 }
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -4971,21 +4961,22 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Import boolean data into data array.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   values  array where data is to be acquired
-     * @param   mmFlag  whether or not to calculate min and max values for the image array
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param values array where data is to be acquired
+     * @param mmFlag whether or not to calculate min and max values for the image array
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void importData(int start, boolean[] values, boolean mmFlag) throws IOException {
-        int length = values.length;
+    public final synchronized void importData(final int start, final boolean[] values, final boolean mmFlag)
+            throws IOException {
+        final int length = values.length;
         int ptr;
 
-        if ((start >= 0) && ((start + length) <= dataSize)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize)) {
 
             try {
-                setLock(RW_LOCKED);
+                setLock(ModelStorageBase.RW_LOCKED);
                 ptr = start;
 
                 for (int i = 0; i < length; i++, ptr++) {
@@ -4995,7 +4986,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 if (mmFlag) {
                     calcMinMax();
                 }
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -5009,21 +5000,22 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Import byte data into data array.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   values  array where data is to be acquired
-     * @param   mmFlag  whether or not to calculate min and max values for the image array
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param values array where data is to be acquired
+     * @param mmFlag whether or not to calculate min and max values for the image array
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void importData(int start, byte[] values, boolean mmFlag) throws IOException {
-        int length = values.length;
+    public final synchronized void importData(final int start, final byte[] values, final boolean mmFlag)
+            throws IOException {
+        final int length = values.length;
         int ptr;
 
-        if ((start >= 0) && ((start + length) <= dataSize)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize)) {
 
             try {
-                setLock(RW_LOCKED);
+                setLock(ModelStorageBase.RW_LOCKED);
                 ptr = start;
 
                 for (int i = 0; i < length; i++, ptr++) {
@@ -5033,12 +5025,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 if (mmFlag) {
                     calcMinMax();
                 }
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
             }
-
 
             return;
         }
@@ -5048,22 +5039,23 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * import short data into data array.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   values  array where data is to be acquired
-     * @param   mmFlag  whether or not to calculate min and max values for the image array
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param values array where data is to be acquired
+     * @param mmFlag whether or not to calculate min and max values for the image array
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void importData(int start, short[] values, boolean mmFlag) throws IOException {
+    public final synchronized void importData(final int start, final short[] values, final boolean mmFlag)
+            throws IOException {
 
-        int length = values.length;
+        final int length = values.length;
         int ptr;
 
-        if ((start >= 0) && ((start + length) <= dataSize)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize)) {
 
             try {
-                setLock(RW_LOCKED);
+                setLock(ModelStorageBase.RW_LOCKED);
                 ptr = start;
 
                 for (int i = 0; i < length; i++, ptr++) {
@@ -5073,7 +5065,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 if (mmFlag) {
                     calcMinMax();
                 }
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -5087,21 +5079,22 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * import integer data into data array.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   values  array where data is to be acquired
-     * @param   mmFlag  whether or not to calculate min and max values for the image array
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param values array where data is to be acquired
+     * @param mmFlag whether or not to calculate min and max values for the image array
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void importData(int start, int[] values, boolean mmFlag) throws IOException {
-        int length = values.length;
+    public final synchronized void importData(final int start, final int[] values, final boolean mmFlag)
+            throws IOException {
+        final int length = values.length;
         int ptr;
 
-        if ((start >= 0) && ((start + length) <= dataSize)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize)) {
 
             try {
-                setLock(RW_LOCKED);
+                setLock(ModelStorageBase.RW_LOCKED);
                 ptr = start;
 
                 for (int i = 0; i < length; i++, ptr++) {
@@ -5112,7 +5105,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                     calcMinMax();
                 }
 
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -5126,21 +5119,22 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * import long data into data array.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   values  array where data is to be acquired
-     * @param   mmFlag  whether or not to calculate min and max values for the image array
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param values array where data is to be acquired
+     * @param mmFlag whether or not to calculate min and max values for the image array
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void importData(int start, long[] values, boolean mmFlag) throws IOException {
-        int length = values.length;
+    public final synchronized void importData(final int start, final long[] values, final boolean mmFlag)
+            throws IOException {
+        final int length = values.length;
         int ptr;
 
-        if ((start >= 0) && ((start + length) <= dataSize)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize)) {
 
             try {
-                setLock(RW_LOCKED);
+                setLock(ModelStorageBase.RW_LOCKED);
                 ptr = start;
 
                 for (int i = 0; i < length; i++, ptr++) {
@@ -5150,7 +5144,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 if (mmFlag) {
                     calcMinMax();
                 }
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -5164,21 +5158,22 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * import float data into data array.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   values  array where data is to be acquired
-     * @param   mmFlag  whether or not to calculate min and max values for the image array
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param values array where data is to be acquired
+     * @param mmFlag whether or not to calculate min and max values for the image array
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void importData(int start, float[] values, boolean mmFlag) throws IOException {
-        int length = values.length;
+    public final synchronized void importData(final int start, final float[] values, final boolean mmFlag)
+            throws IOException {
+        final int length = values.length;
         int ptr;
 
-        if ((start >= 0) && ((start + length) <= dataSize)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize)) {
 
             try {
-                setLock(RW_LOCKED);
+                setLock(ModelStorageBase.RW_LOCKED);
                 ptr = start;
 
                 for (int i = 0; i < length; i++, ptr++) {
@@ -5188,7 +5183,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 if (mmFlag) {
                     calcMinMax();
                 }
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -5199,24 +5194,25 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
         throw new IOException("Import data error: bounds incorrect");
     }
-  
+
     /**
      * import double data into data array.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   values  array where data is to be acquired
-     * @param   mmFlag  whether or not to calculate min and max values for the image array
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param values array where data is to be acquired
+     * @param mmFlag whether or not to calculate min and max values for the image array
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void importData(int start, double[] values, boolean mmFlag) throws IOException {
-        int length = values.length;
+    public final synchronized void importData(final int start, final double[] values, final boolean mmFlag)
+            throws IOException {
+        final int length = values.length;
         int ptr;
 
-        if ((start >= 0) && ((start + length) <= dataSize)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize)) {
 
             try {
-                setLock(RW_LOCKED);
+                setLock(ModelStorageBase.RW_LOCKED);
                 ptr = start;
 
                 for (int i = 0; i < length; i++, ptr++) {
@@ -5226,7 +5222,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 if (mmFlag) {
                     calcMinMax();
                 }
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -5240,25 +5236,25 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * import Complex data (in 2 double units) into data array.
-     *
-     * @param   start          indicates starting position in data array
-     * @param   valuesR        array where real data is to be acquired
-     * @param   valuesI        array where imaginary data is to be acquired
-     * @param   mmFlag         whether or not to calculate min and max magnitude values for the image
-     * @param   logMagDisplay  whether or not min and max are calculated for log10 of 1 + magnitude array
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param valuesR array where real data is to be acquired
+     * @param valuesI array where imaginary data is to be acquired
+     * @param mmFlag whether or not to calculate min and max magnitude values for the image
+     * @param logMagDisplay whether or not min and max are calculated for log10 of 1 + magnitude array
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void importDComplexData(int start, double[] valuesR, double[] valuesI, boolean mmFlag,
-                                                      boolean logMagDisplay) throws IOException {
-        int length = valuesR.length;
-        int lengthi = valuesI.length;
+    public final synchronized void importDComplexData(final int start, final double[] valuesR, final double[] valuesI,
+            final boolean mmFlag, final boolean logMagDisplay) throws IOException {
+        final int length = valuesR.length;
+        final int lengthi = valuesI.length;
         int ptr;
 
-        if ((length == lengthi) && (start >= 0) && ((start + (2 * length)) <= dataSize)) {
+        if ( (length == lengthi) && (start >= 0) && ( (start + (2 * length)) <= dataSize)) {
 
             try {
-                setLock(RW_LOCKED);
+                setLock(ModelStorageBase.RW_LOCKED);
                 ptr = start;
 
                 for (int i = 0; i < length; i++, ptr += 2) {
@@ -5271,7 +5267,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 if (mmFlag) {
                     calcMinMaxMag(logMagDisplay);
                 }
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -5282,29 +5278,34 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
         throw new IOException("Import data error: bounds incorrect");
     }
-    
+
     /**
      * Import byte data into data array.
-     *
-     * @param   color            color planes are interleaved, so color offsets the appropriate interleave interval
-     * @param   alphaIndexStart  indicates starting position in data array which points to the alpha value
-     * @param   values  array where data is to be acquired
-     * @param   mmFlag  whether or not to calculate min and max values for the image array
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param color color planes are interleaved, so color offsets the appropriate interleave interval
+     * @param alphaIndexStart indicates starting position in data array which points to the alpha value
+     * @param values array where data is to be acquired
+     * @param mmFlag whether or not to calculate min and max values for the image array
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void importRGBData(int color, int alphaIndexStart, byte[] values, boolean mmFlag) throws IOException {
-        int length = values.length;
+    public final synchronized void importRGBData(final int color, final int alphaIndexStart, final byte[] values,
+            final boolean mmFlag) throws IOException {
+        final int length = values.length;
         int ptr;
-        
-        if ((bufferType != ARGB) && (bufferType != ARGB_USHORT) && (bufferType != ARGB_FLOAT)) { // not a color image
+
+        if ( (bufferType != ModelStorageBase.ARGB) && (bufferType != ModelStorageBase.ARGB_USHORT)
+                && (bufferType != ModelStorageBase.ARGB_FLOAT)) { // not
+            // a
+            // color
+            // image
             return; // so don't do anything
         }
 
-        if ((alphaIndexStart >= 0) && ((alphaIndexStart + length) <= dataSize)) {
+        if ( (alphaIndexStart >= 0) && ( (alphaIndexStart + length) <= dataSize)) {
 
             try {
-                setLock(RW_LOCKED);
+                setLock(ModelStorageBase.RW_LOCKED);
                 ptr = alphaIndexStart + color;
 
                 for (int i = 0; i < length; i++, ptr += 4) {
@@ -5314,12 +5315,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 if (mmFlag) {
                     calcMinMax();
                 }
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
             }
-
 
             return;
         }
@@ -5329,27 +5329,31 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * import float data into data array.
-     *
-     * @param   color            color planes are interleaved, so color offsets the appropriate interleave interval
-     * @param   alphaIndexStart  indicates starting position in data array which points to the alpha value
-     * @param   values           array where data is to be acquired
-     * @param   mmFlag           whether or not to calculate min and max values for the image array
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param color color planes are interleaved, so color offsets the appropriate interleave interval
+     * @param alphaIndexStart indicates starting position in data array which points to the alpha value
+     * @param values array where data is to be acquired
+     * @param mmFlag whether or not to calculate min and max values for the image array
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void importRGBData(int color, int alphaIndexStart, float[] values, boolean mmFlag)
-            throws IOException {
-        int length = values.length;
+    public final synchronized void importRGBData(final int color, final int alphaIndexStart, final float[] values,
+            final boolean mmFlag) throws IOException {
+        final int length = values.length;
         int ptr;
 
-        if ((bufferType != ARGB) && (bufferType != ARGB_USHORT) && (bufferType != ARGB_FLOAT)) { // not a color image
+        if ( (bufferType != ModelStorageBase.ARGB) && (bufferType != ModelStorageBase.ARGB_USHORT)
+                && (bufferType != ModelStorageBase.ARGB_FLOAT)) { // not
+            // a
+            // color
+            // image
             return; // so don't do anything
         }
 
-        if ((alphaIndexStart >= 0) && ((alphaIndexStart + length) <= dataSize)) {
+        if ( (alphaIndexStart >= 0) && ( (alphaIndexStart + length) <= dataSize)) {
 
             try {
-                setLock(RW_LOCKED);
+                setLock(ModelStorageBase.RW_LOCKED);
                 ptr = alphaIndexStart + color;
 
                 for (int i = 0; i < length; i++, ptr += 4) {
@@ -5359,7 +5363,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 if (mmFlag) {
                     calcMinMax();
                 }
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -5373,21 +5377,22 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * import short data into data array.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   values  array where data is to be acquired
-     * @param   mmFlag  whether or not to calculate min and max values for the image array
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param values array where data is to be acquired
+     * @param mmFlag whether or not to calculate min and max values for the image array
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void importUData(int start, short[] values, boolean mmFlag) throws IOException {
-        int length = values.length;
+    public final synchronized void importUData(final int start, final short[] values, final boolean mmFlag)
+            throws IOException {
+        final int length = values.length;
         int ptr;
 
-        if ((start >= 0) && ((start + length) <= dataSize)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize)) {
 
             try {
-                setLock(RW_LOCKED);
+                setLock(ModelStorageBase.RW_LOCKED);
                 ptr = start;
 
                 for (int i = 0; i < length; i++, ptr++) {
@@ -5398,7 +5403,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                     calcMinMax();
                 }
 
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -5412,21 +5417,22 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * import int data into data array.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   values  array where data is to be acquired
-     * @param   mmFlag  whether or not to calculate min and max values for the image array
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param values array where data is to be acquired
+     * @param mmFlag whether or not to calculate min and max values for the image array
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void importUData(int start, int[] values, boolean mmFlag) throws IOException {
-        int length = values.length;
+    public final synchronized void importUData(final int start, final int[] values, final boolean mmFlag)
+            throws IOException {
+        final int length = values.length;
         int ptr;
 
-        if ((start >= 0) && ((start + length) <= dataSize)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize)) {
 
             try {
-                setLock(RW_LOCKED);
+                setLock(ModelStorageBase.RW_LOCKED);
                 ptr = start;
 
                 for (int i = 0; i < length; i++, ptr++) {
@@ -5436,7 +5442,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 if (mmFlag) {
                     calcMinMax();
                 }
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -5450,21 +5456,22 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * import int data into data array.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   values  array where data is to be acquired
-     * @param   mmFlag  whether or not to calculate min and max values for the image array
-     *
-     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     * 
+     * @param start indicates starting position in data array
+     * @param values array where data is to be acquired
+     * @param mmFlag whether or not to calculate min and max values for the image array
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void importUData(int start, long[] values, boolean mmFlag) throws IOException {
-        int length = values.length;
+    public final synchronized void importUData(final int start, final long[] values, final boolean mmFlag)
+            throws IOException {
+        final int length = values.length;
         int ptr;
 
-        if ((start >= 0) && ((start + length) <= dataSize)) {
+        if ( (start >= 0) && ( (start + length) <= dataSize)) {
 
             try {
-                setLock(RW_LOCKED);
+                setLock(ModelStorageBase.RW_LOCKED);
                 ptr = start;
 
                 for (int i = 0; i < length; i++, ptr++) {
@@ -5475,7 +5482,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                     calcMinMax();
                 }
 
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 throw error;
             } finally {
                 releaseLock();
@@ -5489,14 +5496,14 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Disposes of old data and constructs a new buffer of the user specific type if the image in NOT locked.
-     *
-     * @param      type  type of new buffer
-     *
-     * @exception  IOException  throws an exception if the image model is locked.
+     * 
+     * @param type type of new buffer
+     * 
+     * @exception IOException throws an exception if the image model is locked.
      */
-    public synchronized void reallocate(int type) throws IOException {
+    public synchronized void reallocate(final int type) throws IOException {
 
-        if (lockStatus == UNLOCKED) {
+        if (lockStatus == ModelStorageBase.UNLOCKED) {
 
             // disposeLocal(); // delete old memory and reallocate
             data = null;
@@ -5509,15 +5516,15 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Disposes of old data and constructs a new buffer of the user specific type if the image in NOT locked.
-     *
-     * @param      dimExtents  extents of the buffer in each dimension (multipleid together produces the size of the
-     *                         buffer to be allocated
-     *
-     * @exception  IOException  throws an exception if the image model is locked.
+     * 
+     * @param dimExtents extents of the buffer in each dimension (multipleid together produces the size of the buffer to
+     *            be allocated
+     * 
+     * @exception IOException throws an exception if the image model is locked.
      */
-    public synchronized void reallocate(int[] dimExtents) throws IOException {
+    public synchronized void reallocate(final int[] dimExtents) throws IOException {
 
-        if (lockStatus == UNLOCKED) {
+        if (lockStatus == ModelStorageBase.UNLOCKED) {
 
             // disposeLocal(); // delete old memory and reallocate
             data = null;
@@ -5530,16 +5537,16 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Disposes of old data and constructs a new buffer of the user specific type if the image in NOT locked.
-     *
-     * @param      type        type of new buffer
-     * @param      dimExtents  extents of the buffer in each dimension (multiplied together produces the size of the
-     *                         buffer to be allocated
-     *
-     * @exception  IOException  throws an exception if the image model is locked.
+     * 
+     * @param type type of new buffer
+     * @param dimExtents extents of the buffer in each dimension (multiplied together produces the size of the buffer to
+     *            be allocated
+     * 
+     * @exception IOException throws an exception if the image model is locked.
      */
-    public synchronized void reallocate(int type, int[] dimExtents) throws IOException {
+    public synchronized void reallocate(final int type, final int[] dimExtents) throws IOException {
 
-        if (lockStatus == UNLOCKED) {
+        if (lockStatus == ModelStorageBase.UNLOCKED) {
 
             // disposeLocal(); // delete old memory and reallocate
             data = null;
@@ -5554,11 +5561,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * Recomputes the datasize based on the type of buffer. If the datasize has changed, then the data array needs to be
      * reallocated. So this method will also reconstruct the data array in this case. This method must be called if the
      * extents of an buffer have been changed.
-     *
-     * <p>WARNING: This will clear any existing data if the dataSize is changed.</p>
+     * 
+     * <p>
+     * WARNING: This will clear any existing data if the dataSize is changed.
+     * </p>
      */
     public void recomputeDataSize() {
-        int oldDataSize = this.dataSize;
+        final int oldDataSize = this.dataSize;
 
         this.computeDataSize();
 
@@ -5573,15 +5582,15 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     public final synchronized void releaseLock() {
 
-        if (lockStatus == W_LOCKED) {
+        if (lockStatus == ModelStorageBase.W_LOCKED) {
             writeLockCount--;
 
             if (writeLockCount <= 0) {
-                lockStatus = UNLOCKED;
+                lockStatus = ModelStorageBase.UNLOCKED;
                 writeLockCount = 0; // Just make sure its zero.
             }
-        } else if (lockStatus == RW_LOCKED) {
-            lockStatus = UNLOCKED;
+        } else if (lockStatus == ModelStorageBase.RW_LOCKED) {
+            lockStatus = ModelStorageBase.UNLOCKED;
             writeLockCount = 0; // Just make sure its zero.
         } else {
             writeLockCount = 0; // Just make sure its zero.
@@ -5591,10 +5600,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Removes the surface mask from this image.
-     *
-     * @param  index  The index of the mask to remove.
+     * 
+     * @param index The index of the mask to remove.
      */
-    public void removeSurfaceMask(int index) {
+    public void removeSurfaceMask(final int index) {
 
         if (m_kColorVector.size() > index) {
             m_kColorVector.removeElementAt(index);
@@ -5611,11 +5620,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Returns the array of BitSet masks for backup.
-     *
-     * @return  the BitSet mask array.
+     * 
+     * @return the BitSet mask array.
      */
     public BitSet[] removeSurfaceMasks() {
-        BitSet[] masks = new BitSet[m_kMaskVector.size()];
+        final BitSet[] masks = new BitSet[m_kMaskVector.size()];
 
         for (int i = 0; i < m_kMaskVector.size(); i++) {
             masks[i] = (BitSet) m_kMaskVector.get(i);
@@ -5628,10 +5637,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Restores the mask list from the array.
-     *
-     * @param  masks  array of BitSet masks
+     * 
+     * @param masks array of BitSet masks
      */
-    public void restoreSurfaceMasks(BitSet[] masks) {
+    public void restoreSurfaceMasks(final BitSet[] masks) {
         m_kMaskVector.removeAllElements();
 
         for (int i = 0; i < masks.length; i++) {
@@ -5641,15 +5650,15 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Set that does perform bounds checking.
-     *
-     * @param   position  position in one dimensional array
-     * @param   value     The value to stored in the data array.
-     *
-     * @return  returns value if position in data array range
+     * 
+     * @param position position in one dimensional array
+     * @param value The value to stored in the data array.
+     * 
+     * @return returns value if position in data array range
      */
-    public final boolean set(int position, Number value) {
+    public final boolean set(final int position, final Number value) {
 
-        if ((position >= 0) && (position < dataSize)) {
+        if ( (position >= 0) && (position < dataSize)) {
             data.set(position, value);
 
             return true;
@@ -5660,16 +5669,16 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * nD set data fuction where bounds checking is performed.
-     *
-     * @param   position  The coordinate into the 1D data array
-     * @param   value     The value to stored in the data array.
-     *
-     * @return  returns true if position in data array range
+     * 
+     * @param position The coordinate into the 1D data array
+     * @param value The value to stored in the data array.
+     * 
+     * @return returns true if position in data array range
      */
-    public final boolean set(int[] position, Number value) {
+    public final boolean set(final int[] position, final Number value) {
         int i;
         int location = 0;
-        int dimensions = position.length;
+        final int dimensions = position.length;
 
         if (nDims == dimensions) {
 
@@ -5679,7 +5688,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             location += position[0];
 
-            if ((location >= 0) && (location < dataSize)) {
+            if ( (location >= 0) && (location < dataSize)) {
                 data.set(location, value);
 
                 return true;
@@ -5692,25 +5701,27 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * version of set that does NOT perform bounds checking @param position position in one dimensional array.
-     *
-     * @param  position  The index into the data array.
-     * @param  value     The value to stored in the data array.
+     * version of set that does NOT perform bounds checking
+     * 
+     * @param position position in one dimensional array.
+     * 
+     * @param position The index into the data array.
+     * @param value The value to stored in the data array.
      */
-    public final void set(int position, boolean value) {
+    public final void set(final int position, final boolean value) {
         data.setBoolean(position, value);
     }
 
     /**
      * nD set data fuction where bounds checking is NOT performed.
-     *
-     * @param  position  array of coordinate values
-     * @param  value     The value to stored in the data array.
+     * 
+     * @param position array of coordinate values
+     * @param value The value to stored in the data array.
      */
-    public final void set(int[] position, boolean value) {
+    public final void set(final int[] position, final boolean value) {
         int i;
         int location = 0;
-        int dimensions = position.length;
+        final int dimensions = position.length;
 
         for (i = dimensions - 1; i > 0; i--) {
             location += (position[i] * dimExtents[i]);
@@ -5722,24 +5733,24 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Version of set that does NOT perform bounds checking.
-     *
-     * @param  position  The position in one dimensional array
-     * @param  value     The value to stored in the data array.
+     * 
+     * @param position The position in one dimensional array
+     * @param value The value to stored in the data array.
      */
-    public final void set(int position, byte value) {
+    public final void set(final int position, final byte value) {
         data.setByte(position, value);
     }
 
     /**
      * nD set data fuction where bounds checking is NOT performed.
-     *
-     * @param  position  array of coordinate values
-     * @param  value     data that will be stored in the data array
+     * 
+     * @param position array of coordinate values
+     * @param value data that will be stored in the data array
      */
-    public final void set(int[] position, byte value) {
+    public final void set(final int[] position, final byte value) {
         int i;
         int location = 0;
-        int dimensions = position.length;
+        final int dimensions = position.length;
 
         for (i = dimensions - 1; i > 0; i--) {
             location += (position[i] * dimExtents[i]);
@@ -5751,14 +5762,14 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * nD set data fuction where bounds checking is NOT performed.
-     *
-     * @param  position  array of coordinate values
-     * @param  value     data that will be stored in the data array
+     * 
+     * @param position array of coordinate values
+     * @param value data that will be stored in the data array
      */
-    public final void set(int[] position, short value) {
+    public final void set(final int[] position, final short value) {
         int i;
         int location = 0;
-        int dimensions = position.length;
+        final int dimensions = position.length;
 
         for (i = dimensions - 1; i > 0; i--) {
             location += (position[i] * dimExtents[i]);
@@ -5768,27 +5779,26 @@ public class ModelStorageBase extends ModelSerialCloneable {
         data.setShort(location, value);
     }
 
-
     /**
      * Version of set that does NOT perform bounds checking.
-     *
-     * @param  position  position in one dimensional array
-     * @param  value     The value to stored in the data array.
+     * 
+     * @param position position in one dimensional array
+     * @param value The value to stored in the data array.
      */
-    public final void set(int position, int value) {
+    public final void set(final int position, final int value) {
         data.setInt(position, value);
     }
 
     /**
      * nD set data fuction where bounds checking is NOT performed.
-     *
-     * @param  position  array of coordinate values
-     * @param  value     data that will be stored in the data array
+     * 
+     * @param position array of coordinate values
+     * @param value data that will be stored in the data array
      */
-    public final void set(int[] position, int value) {
+    public final void set(final int[] position, final int value) {
         int i;
         int location = 0;
-        int dimensions = position.length;
+        final int dimensions = position.length;
 
         for (i = dimensions - 1; i > 0; i--) {
             location += (position[i] * dimExtents[i]);
@@ -5800,24 +5810,24 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * version of set that does NOT perform bounds checking.
-     *
-     * @param  position  position in one dimensional array
-     * @param  value     The value to stored in the data array.
+     * 
+     * @param position position in one dimensional array
+     * @param value The value to stored in the data array.
      */
-    public final void set(int position, long value) {
+    public final void set(final int position, final long value) {
         data.setLong(position, value);
     }
 
     /**
      * nD set data fuction where bounds checking is NOT performed.
-     *
-     * @param  position  array of coordinate values
-     * @param  value     data that will be stored in the data array
+     * 
+     * @param position array of coordinate values
+     * @param value data that will be stored in the data array
      */
-    public final void set(int[] position, long value) {
+    public final void set(final int[] position, final long value) {
         int i;
         int location = 0;
-        int dimensions = position.length;
+        final int dimensions = position.length;
 
         for (i = dimensions - 1; i > 0; i--) {
             location += (position[i] * dimExtents[i]);
@@ -5829,24 +5839,24 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * version of set that does NOT perform bounds checking.
-     *
-     * @param  position  position in one dimensional array
-     * @param  value     data that will be stored in the data array
+     * 
+     * @param position position in one dimensional array
+     * @param value data that will be stored in the data array
      */
-    public final void set(int position, float value) {
+    public final void set(final int position, final float value) {
         data.setFloat(position, value);
     }
 
     /**
      * nD set data fuction where bounds checking is NOT performed.
-     *
-     * @param  position  array of coordinate values
-     * @param  value     data that will be stored in the data array
+     * 
+     * @param position array of coordinate values
+     * @param value data that will be stored in the data array
      */
-    public final void set(int[] position, float value) {
+    public final void set(final int[] position, final float value) {
         int i;
         int location = 0;
-        int dimensions = position.length;
+        final int dimensions = position.length;
 
         for (i = dimensions - 1; i > 0; i--) {
             location += (position[i] * dimExtents[i]);
@@ -5856,27 +5866,26 @@ public class ModelStorageBase extends ModelSerialCloneable {
         data.setFloat(location, value);
     }
 
-
     /**
      * version of set that does NOT perform bounds checking.
-     *
-     * @param  position  position in one dimensional array
-     * @param  value     The value to stored in the data array.
+     * 
+     * @param position position in one dimensional array
+     * @param value The value to stored in the data array.
      */
-    public final void set(int position, double value) {
+    public final void set(final int position, final double value) {
         data.setDouble(position, value);
     }
 
     /**
      * nD set data fuction where bounds checking is NOT performed.
-     *
-     * @param  position  array of coordinate values
-     * @param  value     data that will be stored in the data array
+     * 
+     * @param position array of coordinate values
+     * @param value data that will be stored in the data array
      */
-    public final void set(int[] position, double value) {
+    public final void set(final int[] position, final double value) {
         int i;
         int location = 0;
-        int dimensions = position.length;
+        final int dimensions = position.length;
 
         for (i = dimensions - 1; i > 0; i--) {
             location += (position[i] * dimExtents[i]);
@@ -5888,20 +5897,20 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * 2D get data fuction where bounds checking is performed.
-     *
-     * @param   x      x coordinate
-     * @param   y      y coordinate
-     * @param   value  set data array to this value
-     *
-     * @return  returns true if position in data array range
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param value set data array to this value
+     * 
+     * @return returns true if position in data array range
      */
-    public final boolean set(int x, int y, Number value) {
+    public final boolean set(final int x, final int y, final Number value) {
         int position;
 
         if (nDims == 2) {
             position = (y * dimExtents[0]) + x;
 
-            if ((position >= 0) && (position < dataSize)) {
+            if ( (position >= 0) && (position < dataSize)) {
                 data.set(position, value);
 
                 return true;
@@ -5915,87 +5924,87 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * 2D fast version of set that does NOT perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  value  The value to stored in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param value The value to stored in the data array.
      */
-    public final void set(int x, int y, boolean value) {
-        data.setBoolean((y * dimExtents[0]) + x, value);
+    public final void set(final int x, final int y, final boolean value) {
+        data.setBoolean( (y * dimExtents[0]) + x, value);
     }
 
     /**
      * 2D fast version of set that does NOT perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  value  The value to stored in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param value The value to stored in the data array.
      */
-    public final void set(int x, int y, byte value) {
-        data.setByte((y * dimExtents[0]) + x, value);
+    public final void set(final int x, final int y, final byte value) {
+        data.setByte( (y * dimExtents[0]) + x, value);
     }
 
     /**
      * 2D fast version of set that does NOT perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  value  The value to stored in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param value The value to stored in the data array.
      */
-    public final void set(int x, int y, int value) {
-        data.setInt((y * dimExtents[0]) + x, value);
+    public final void set(final int x, final int y, final int value) {
+        data.setInt( (y * dimExtents[0]) + x, value);
     }
 
     /**
      * 2D fast version of set that does NOT perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  value  The value to stored in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param value The value to stored in the data array.
      */
-    public final void set(int x, int y, long value) {
-        data.setLong((y * dimExtents[0]) + x, value);
+    public final void set(final int x, final int y, final long value) {
+        data.setLong( (y * dimExtents[0]) + x, value);
     }
 
     /**
      * 2D fast version of set that does NOT perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  value  The value to stored in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param value The value to stored in the data array.
      */
-    public final void set(int x, int y, float value) {
-        data.setFloat((y * dimExtents[0]) + x, value);
+    public final void set(final int x, final int y, final float value) {
+        data.setFloat( (y * dimExtents[0]) + x, value);
     }
 
     /**
      * 2D fast version of set that does NOT perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  value  The value to stored in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param value The value to stored in the data array.
      */
-    public final void set(int x, int y, double value) {
-        data.setDouble((y * dimExtents[0]) + x, value);
+    public final void set(final int x, final int y, final double value) {
+        data.setDouble( (y * dimExtents[0]) + x, value);
     }
 
     /**
      * 3D set data fuction where bounds checking is performed.
-     *
-     * @param   x      x coordinate
-     * @param   y      y coordinate
-     * @param   z      z coordinate
-     * @param   value  set data array to this value
-     *
-     * @return  returns true if position in data array range
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param value set data array to this value
+     * 
+     * @return returns true if position in data array range
      */
-    public final boolean set(int x, int y, int z, Number value) {
+    public final boolean set(final int x, final int y, final int z, final Number value) {
         int position;
 
         if (nDims == 3) {
             position = (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x;
 
-            if ((position >= 0) && (position < dataSize)) {
+            if ( (position >= 0) && (position < dataSize)) {
                 data.set(position, value);
 
                 return true;
@@ -6009,107 +6018,107 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * 3D fast version of set that does NOT perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  z      z coordinate
-     * @param  value  The value to stored in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param value The value to stored in the data array.
      */
-    public final void set(int x, int y, int z, boolean value) {
-        data.setBoolean((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
+    public final void set(final int x, final int y, final int z, final boolean value) {
+        data.setBoolean( (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
     }
 
     /**
      * 3D fast version of set that does NOT perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  z      z coordinate
-     * @param  value  The value to stored in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param value The value to stored in the data array.
      */
-    public final void set(int x, int y, int z, byte value) {
-        data.setByte((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
+    public final void set(final int x, final int y, final int z, final byte value) {
+        data.setByte( (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
     }
 
     /**
      * 3D fast version of set that does NOT perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  z      z coordinate
-     * @param  value  The value to stored in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param value The value to stored in the data array.
      */
-    public final void set(int x, int y, int z, short value) {
-        data.setShort((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
+    public final void set(final int x, final int y, final int z, final short value) {
+        data.setShort( (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
     }
 
     /**
      * 3D fast version of set that does NOT perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  z      z coordinate
-     * @param  value  The value to stored in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param value The value to stored in the data array.
      */
-    public final void set(int x, int y, int z, int value) {
-        data.setInt((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
+    public final void set(final int x, final int y, final int z, final int value) {
+        data.setInt( (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
     }
 
     /**
      * 3D fast version of set that does NOT perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  z      z coordinate
-     * @param  value  The value to stored in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param value The value to stored in the data array.
      */
-    public final void set(int x, int y, int z, long value) {
-        data.setLong((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
+    public final void set(final int x, final int y, final int z, final long value) {
+        data.setLong( (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
     }
 
     /**
      * 3D fast version of set that does NOT perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  z      z coordinate
-     * @param  value  The value to stored in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param value The value to stored in the data array.
      */
-    public final void set(int x, int y, int z, float value) {
-        data.setFloat((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
+    public final void set(final int x, final int y, final int z, final float value) {
+        data.setFloat( (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
     }
 
     /**
      * 3D fast version of set that does NOT perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  z      z coordinate
-     * @param  value  The value to stored in the data array.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param value The value to stored in the data array.
      */
-    public final void set(int x, int y, int z, double value) {
-        data.setDouble((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
+    public final void set(final int x, final int y, final int z, final double value) {
+        data.setDouble( (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
     }
 
     /**
      * 4D get data fuction where bounds checking is performed.
-     *
-     * @param   x      x coordinate
-     * @param   y      y coordinate
-     * @param   z      z coordinate
-     * @param   b      b coordinate (ie. multi modality images or time)
-     * @param   value  The value to stored in the data array.
-     *
-     * @return  returns true if position in data array range
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param b b coordinate (ie. multi modality images or time)
+     * @param value The value to stored in the data array.
+     * 
+     * @return returns true if position in data array range
      */
-    public final boolean set(int x, int y, int z, int b, Number value) {
+    public final boolean set(final int x, final int y, final int z, final int b, final Number value) {
         int position;
 
         if (nDims == 4) {
-            position = (b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1])) +
-                       (y * dimExtents[0]) + x;
+            position = (b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1]))
+                    + (y * dimExtents[0]) + x;
 
-            if ((position >= 0) && (position < dataSize)) {
+            if ( (position >= 0) && (position < dataSize)) {
                 data.set(position, value);
 
                 return true;
@@ -6123,108 +6132,108 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * 4D fast version of set that does NOT perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  z      z coordinate
-     * @param  b      b coordinate
-     * @param  value  set data array to this value
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param b b coordinate
+     * @param value set data array to this value
      */
-    public final void set(int x, int y, int z, int b, boolean value) {
-        data.setBoolean((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1])) +
-                        (y * dimExtents[0]) + x, value);
+    public final void set(final int x, final int y, final int z, final int b, final boolean value) {
+        data.setBoolean( (b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1]))
+                + (y * dimExtents[0]) + x, value);
     }
 
     /**
      * 4D fast version of set that does NOT perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  z      z coordinate
-     * @param  b      b coordinate
-     * @param  value  set data array to this value
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param b b coordinate
+     * @param value set data array to this value
      */
-    public final void set(int x, int y, int z, int b, byte value) {
-        data.setByte((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1])) +
-                     (y * dimExtents[0]) + x, value);
+    public final void set(final int x, final int y, final int z, final int b, final byte value) {
+        data.setByte( (b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1]))
+                + (y * dimExtents[0]) + x, value);
     }
 
     /**
      * 4D fast version of set that does NOT perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  z      z coordinate
-     * @param  b      b coordinate
-     * @param  value  set data array to this value
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param b b coordinate
+     * @param value set data array to this value
      */
-    public final void set(int x, int y, int z, int b, short value) {
-        data.setShort((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1])) +
-                      (y * dimExtents[0]) + x, value);
+    public final void set(final int x, final int y, final int z, final int b, final short value) {
+        data.setShort( (b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1]))
+                + (y * dimExtents[0]) + x, value);
     }
 
     /**
      * 4D fast version of set that does NOT perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  z      z coordinate
-     * @param  b      b coordinate
-     * @param  value  set data array to this value
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param b b coordinate
+     * @param value set data array to this value
      */
-    public final void set(int x, int y, int z, int b, int value) {
-        data.setInt((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1])) +
-                    (y * dimExtents[0]) + x, value);
+    public final void set(final int x, final int y, final int z, final int b, final int value) {
+        data.setInt( (b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1]))
+                + (y * dimExtents[0]) + x, value);
     }
 
     /**
      * 4D fast version of set that does NOT perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  z      z coordinate
-     * @param  b      b coordinate
-     * @param  value  set data array to this value
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param b b coordinate
+     * @param value set data array to this value
      */
-    public final void set(int x, int y, int z, int b, long value) {
-        data.setLong((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1])) +
-                     (y * dimExtents[0]) + x, value);
+    public final void set(final int x, final int y, final int z, final int b, final long value) {
+        data.setLong( (b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1]))
+                + (y * dimExtents[0]) + x, value);
     }
 
     /**
      * 4D fast version of set that does NOT perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  z      z coordinate
-     * @param  b      b coordinate
-     * @param  value  set data array to this value
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param b b coordinate
+     * @param value set data array to this value
      */
-    public final void set(int x, int y, int z, int b, float value) {
-        data.setFloat((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1])) +
-                      (y * dimExtents[0]) + x, value);
+    public final void set(final int x, final int y, final int z, final int b, final float value) {
+        data.setFloat( (b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1]))
+                + (y * dimExtents[0]) + x, value);
     }
 
     /**
      * 4D fast version of set that does NOT perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  z      z coordinate
-     * @param  b      b coordinate
-     * @param  value  set data array to this value
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param b b coordinate
+     * @param value set data array to this value
      */
-    public final void set(int x, int y, int z, int b, double value) {
-        data.setDouble((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1])) +
-                       (y * dimExtents[0]) + x, value);
+    public final void set(final int x, final int y, final int z, final int b, final double value) {
+        data.setDouble( (b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1]))
+                + (y * dimExtents[0]) + x, value);
     }
 
     /**
      * Sets the entire buffer to value passed to this method.
-     *
-     * @param  value  float data that will be stored in the data array
+     * 
+     * @param value float data that will be stored in the data array
      */
-    public final void setAll(float value) {
+    public final void setAll(final float value) {
 
         for (int i = 0; i < data.length(); i++) {
             data.setFloat(i, value);
@@ -6234,11 +6243,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Sets the entire buffer to value passed to this method.
-     *
-     * @param  value  byte data that will be stored in the data array
+     * 
+     * @param value byte data that will be stored in the data array
      */
 
-    public final void setAll(byte value) {
+    public final void setAll(final byte value) {
 
         for (int i = 0; i < data.length(); i++) {
             data.setByte(i, value);
@@ -6248,11 +6257,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Sets the entire buffer to value passed to this method.
-     *
-     * @param  value  short data that will be stored in the data array
+     * 
+     * @param value short data that will be stored in the data array
      */
 
-    public final void setAll(short value) {
+    public final void setAll(final short value) {
 
         for (int i = 0; i < data.length(); i++) {
             data.setShort(i, value);
@@ -6262,11 +6271,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Sets the entire buffer to value passed to this method.
-     *
-     * @param  value  int data that will be stored in the data array
+     * 
+     * @param value int data that will be stored in the data array
      */
 
-    public final void setAll(int value) {
+    public final void setAll(final int value) {
 
         for (int i = 0; i < data.length(); i++) {
             data.setInt(i, value);
@@ -6276,11 +6285,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Sets the entire buffer to value passed to this method.
-     *
-     * @param  value  double data that will be stored in the data array
+     * 
+     * @param value double data that will be stored in the data array
      */
 
-    public final void setAll(double value) {
+    public final void setAll(final double value) {
 
         for (int i = 0; i < data.length(); i++) {
             data.setDouble(i, value);
@@ -6290,11 +6299,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Sets the entire buffer to value passed to this method.
-     *
-     * @param  value  UByte data that will be stored in the data array
+     * 
+     * @param value UByte data that will be stored in the data array
      */
 
-    public final void setAllUByte(short value) {
+    public final void setAllUByte(final short value) {
 
         for (int i = 0; i < data.length(); i++) {
             data.setUByte(i, value);
@@ -6304,11 +6313,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Sets the entire buffer to value passed to this method.
-     *
-     * @param  value  UShort data that will be stored in the data array
+     * 
+     * @param value UShort data that will be stored in the data array
      */
 
-    public final void setAllUShort(int value) {
+    public final void setAllUShort(final int value) {
 
         for (int i = 0; i < data.length(); i++) {
             data.setUShort(i, value);
@@ -6318,17 +6327,17 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Sets the entire buffer to value passed to this method.
-     *
-     * @param   position  position in one dimensional array
-     * @param   color     The color channel to be modified
-     * @param   value     set data array to this value
-     *
-     * @return  returns value if position in data array range
+     * 
+     * @param position position in one dimensional array
+     * @param color The color channel to be modified
+     * @param value set data array to this value
+     * 
+     * @return returns value if position in data array range
      */
-    public final boolean setC(int position, int color, Number value) {
+    public final boolean setC(final int position, final int color, final Number value) {
 
-        if ((position >= 0) && (((4 * position) + color) < dataSize)) {
-            data.set(((4 * position) + color), value);
+        if ( (position >= 0) && ( ( (4 * position) + color) < dataSize)) {
+            data.set( ( (4 * position) + color), value);
 
             return true;
         }
@@ -6336,48 +6345,47 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return false;
     }
 
-
     /**
      * color version of setC that does NOT perform bounds checking.
-     *
-     * @param  position  position in one dimensional array
-     * @param  c         The color channel to be modified
-     * @param  value     set data array to this value
+     * 
+     * @param position position in one dimensional array
+     * @param c The color channel to be modified
+     * @param value set data array to this value
      */
-    public final void setC(int position, int c, float value) {
-        data.setFloat((4 * position) + c, value);
+    public final void setC(final int position, final int c, final float value) {
+        data.setFloat( (4 * position) + c, value);
     }
 
     /**
      * 2D fast color version of set that does NOT perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  c      The color channel to be modified
-     * @param  value  set data array to this value
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param c The color channel to be modified
+     * @param value set data array to this value
      */
-    public final void setC(int x, int y, int c, float value) {
-        data.setFloat((4 * ((y * dimExtents[0]) + x)) + c, value);
+    public final void setC(final int x, final int y, final int c, final float value) {
+        data.setFloat( (4 * ( (y * dimExtents[0]) + x)) + c, value);
     }
 
     /**
      * 3D color set data fuction where bounds checking is performed.
-     *
-     * @param   x      x coordinate
-     * @param   y      y coordinate
-     * @param   z      z coordinate
-     * @param   c      A,R,G, or B
-     * @param   value  set data array to this value
-     *
-     * @return  returns true if position in data array range
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param c A,R,G, or B
+     * @param value set data array to this value
+     * 
+     * @return returns true if position in data array range
      */
-    public final boolean setC(int x, int y, int z, int c, Number value) {
+    public final boolean setC(final int x, final int y, final int z, final int c, final Number value) {
         int position;
 
         if (nDims == 3) {
-            position = (4 * ((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x)) + c;
+            position = (4 * ( (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x)) + c;
 
-            if ((position >= 0) && (position < dataSize)) {
+            if ( (position >= 0) && (position < dataSize)) {
                 data.set(position, value);
 
                 return true;
@@ -6391,140 +6399,139 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * 3D fast color version of set that does NOT perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  z      z coordinate
-     * @param  c      The color channel to be modified
-     * @param  value  set data array to this value
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param c The color channel to be modified
+     * @param value set data array to this value
      */
-    public final void setC(int x, int y, int z, int c, float value) {
-        data.setFloat((4 * ((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x)) + c, value);
+    public final void setC(final int x, final int y, final int z, final int c, final float value) {
+        data.setFloat( (4 * ( (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x)) + c, value);
     }
 
     /**
      * Accessor method for the m_bConvolve data memeber.
-     *
-     * @param  bConvolve  true when this images is the product of fft( imageA ) fft( imageB )
+     * 
+     * @param bConvolve true when this images is the product of fft( imageA ) fft( imageB )
      */
-    public void setConvolve(boolean bConvolve) {
+    public void setConvolve(final boolean bConvolve) {
         m_bConvolve = bConvolve;
     }
 
     /**
      * Sets the dimExtents for this structure.
-     *
-     * @param  dims  The data's dimensionality.
+     * 
+     * @param dims The data's dimensionality.
      */
-    public void setExtents(int[] dims) {
-        this.dimExtents = (int[]) dims.clone();
+    public void setExtents(final int[] dims) {
+        this.dimExtents = dims.clone();
         this.nDims = dims.length;
     } // end setExtents()
 
     /**
      * Accessor that sets the entire fileInfo array of the image.
-     *
-     * @param  fInfo  structure
+     * 
+     * @param fInfo structure
      */
-    public void setFileInfo(FileInfoBase[] fInfo) {
-    	
-        if ((fInfo != null) && (fileInfo != fInfo)) {
-        	//for(int i=0;i<fileInfo.length;i++) {
-        	//	fileInfo[i].finalize();
-        	//}
+    public void setFileInfo(final FileInfoBase[] fInfo) {
+
+        if ( (fInfo != null) && (fileInfo != fInfo)) {
+            // for(int i=0;i<fileInfo.length;i++) {
+            // fileInfo[i].finalize();
+            // }
             fileInfo = fInfo;
-        }      
+        }
     }
 
     /**
      * Accessor that sets the fileInfo class for the image.
-     *
-     * @param  fInfo  fileInfo structure.
-     * @param  idx    index that typically indicates image slice.
+     * 
+     * @param fInfo fileInfo structure.
+     * @param idx index that typically indicates image slice.
      */
-    public void setFileInfo(FileInfoBase fInfo, int idx) {
-    	//if(fileInfo == null) {
-    	//	return;
-    	//}
-    	//if((fileInfo[idx] != null) && (fileInfo[idx] != fInfo)) {
-    	//	fileInfo[idx].finalize();
-    	//}
+    public void setFileInfo(final FileInfoBase fInfo, final int idx) {
+        // if(fileInfo == null) {
+        // return;
+        // }
+        // if((fileInfo[idx] != null) && (fileInfo[idx] != fInfo)) {
+        // fileInfo[idx].finalize();
+        // }
         fileInfo[idx] = fInfo;
     }
 
     /**
      * DOCUMENT ME! TO BE MOVED
-     *
-     * @param  _filterType  int
+     * 
+     * @param _filterType int
      */
-    public void setFilterType(int _filterType) {
+    public void setFilterType(final int _filterType) {
         filterType = _filterType;
     }
 
     /**
      * DOCUMENT ME! TO BE MOVED
-     *
-     * @param  _freq1  float
+     * 
+     * @param _freq1 float
      */
-    public void setFreq1(float _freq1) {
+    public void setFreq1(final float _freq1) {
         freq1 = _freq1;
     }
 
     /**
      * DOCUMENT ME! TO BE MOVED
-     *
-     * @param  _freq2  float
+     * 
+     * @param _freq2 float
      */
-    public void setFreq2(float _freq2) {
+    public void setFreq2(final float _freq2) {
         freq2 = _freq2;
     }
 
     /**
      * DOCUMENT ME! TO BE MOVED
-     *
-     * @param  _freqU  float
+     * 
+     * @param _freqU float
      */
-    public void setFreqU(float _freqU) {
+    public void setFreqU(final float _freqU) {
         freqU = _freqU;
     }
 
     /**
      * DOCUMENT ME! TO BE MOVED
-     *
-     * @param  _freqV  float
+     * 
+     * @param _freqV float
      */
-    public void setFreqV(float _freqV) {
+    public void setFreqV(final float _freqV) {
         freqV = _freqV;
     }
 
     /**
      * DOCUMENT ME! TO BE MOVED
-     *
-     * @param  window  boolean
+     * 
+     * @param window boolean
      */
-    public void setHaveWindowed(boolean window) {
+    public void setHaveWindowed(final boolean window) {
         haveWindowed = window;
     }
 
     /**
      * Accessor that sets the boolean telling if 3D images are processed one slice at a time.
-     *
-     * @param  _image25D  Set true if images are processed one slice at a time.
+     * 
+     * @param _image25D Set true if images are processed one slice at a time.
      */
-    public void setImage25D(boolean _image25D) {
+    public void setImage25D(final boolean _image25D) {
         image25D = _image25D;
     }
 
-
     /**
      * Sets the lockFlag to protect data. When the flag is set no other processes can read or write the data
-     *
-     * @throws  IOException  Throws an error if image is already locked.
+     * 
+     * @throws IOException Throws an error if image is already locked.
      */
     public void setLock() throws IOException {
 
-        if (lockStatus == UNLOCKED) {
-            lockStatus = RW_LOCKED;
+        if (lockStatus == ModelStorageBase.UNLOCKED) {
+            lockStatus = ModelStorageBase.RW_LOCKED;
         } else {
             throw new IOException("ModelStorageBase: Image locked !");
         }
@@ -6532,171 +6539,158 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Sets the lockFlag to protect data. When the flag is set no other processes can read or write the data
-     *
-     * @param   lockType  The type of read/write lock that is to be set.
-     *
-     * @throws  IOException  Throws an error if image is already locked.
+     * 
+     * @param lockType The type of read/write lock that is to be set.
+     * 
+     * @throws IOException Throws an error if image is already locked.
      */
-    public final synchronized void setLock(int lockType) throws IOException {
+    public final synchronized void setLock(final int lockType) throws IOException {
 
-        if (lockStatus == RW_LOCKED) {
+        if (lockStatus == ModelStorageBase.RW_LOCKED) {
             throw new IOException("ModelStorageBase: Image locked !");
-        } else if ((lockStatus == UNLOCKED) && (lockType == W_LOCKED)) {
+        } else if ( (lockStatus == ModelStorageBase.UNLOCKED) && (lockType == ModelStorageBase.W_LOCKED)) {
             lockStatus = lockType;
-        } else if ((lockStatus == W_LOCKED) && (lockType == W_LOCKED)) { }
-        else if ((lockStatus == W_LOCKED) && (lockType == RW_LOCKED)) {
+        } else if ( (lockStatus == ModelStorageBase.W_LOCKED) && (lockType == ModelStorageBase.W_LOCKED)) {} else if ( (lockStatus == ModelStorageBase.W_LOCKED)
+                && (lockType == ModelStorageBase.RW_LOCKED)) {
             throw new IOException("ModelStorageBase: Image locked !");
-        } else if ((lockStatus == UNLOCKED) && (lockType == RW_LOCKED)) {
+        } else if ( (lockStatus == ModelStorageBase.UNLOCKED) && (lockType == ModelStorageBase.RW_LOCKED)) {
             lockStatus = lockType;
         }
     }
 
-
     /**
      * Accessor that sets the boolean telling if log magnitude display is used in a complex image. TO BE MOVED
-     *
-     * @param  logMagDisplay  DOCUMENT ME!
+     * 
+     * @param logMagDisplay DOCUMENT ME!
      */
-    public void setLogMagDisplay(boolean logMagDisplay) {
+    public void setLogMagDisplay(final boolean logMagDisplay) {
         logMagDisp = logMagDisplay;
     }
 
     /**
      * Accessor that sets the maximum value in the dataArray.
-     *
-     * @param  _max  Indicates the maximum value in the data array
+     * 
+     * @param _max Indicates the maximum value in the data array
      */
-    public void setMax(double _max) {
+    public void setMax(final double _max) {
         max = _max;
     }
 
     /**
      * Accessor that sets the minimum value in the dataArray.
-     *
-     * @param  _min  Indicates the minimum value in the data array
+     * 
+     * @param _min Indicates the minimum value in the data array
      */
-    public void setMin(double _min) {
+    public void setMin(final double _min) {
         min = _min;
     }
 
     /**
      * DOCUMENT ME! TO BE MOVED
-     *
-     * @param  butterworthOrder  DOCUMENT ME!
+     * 
+     * @param butterworthOrder DOCUMENT ME!
      */
-    public void setOriginalButterworthOrder(int butterworthOrder) {
+    public void setOriginalButterworthOrder(final int butterworthOrder) {
         originalButterworthOrder = butterworthOrder;
     }
 
     /**
      * DOCUMENT ME! TO BE MOVED
-     *
-     * @param  cropCheckbox  boolean
+     * 
+     * @param cropCheckbox boolean
      */
-    public void setOriginalCropCheckbox(boolean cropCheckbox) {
+    public void setOriginalCropCheckbox(final boolean cropCheckbox) {
         originalCropCheckbox = cropCheckbox;
     }
 
     /**
      * DOCUMENT ME! TO BE MOVED
-     *
-     * @param  doCrop  boolean
+     * 
+     * @param doCrop boolean
      */
-    public void setOriginalDoCrop(boolean doCrop) {
+    public void setOriginalDoCrop(final boolean doCrop) {
         originalDoCrop = doCrop;
     }
 
     /**
      * DOCUMENT ME! TO BE MOVED
-     *
-     * @param  end  int[]
+     * 
+     * @param end int[]
      */
-    public void setOriginalEnd(int[] end) {
+    public void setOriginalEnd(final int[] end) {
         originalEnd = end;
     }
 
     /**
      * Sets original dimensionality of the images. TO BE MOVED
-     *
-     * @param  dims  int[] dimensionality for x,y, and z ... dimensions
+     * 
+     * @param dims int[] dimensionality for x,y, and z ... dimensions
      */
-    public void setOriginalExtents(int[] dims) {
+    public void setOriginalExtents(final int[] dims) {
         dimOriginalExtents = dims;
     }
 
     /**
      * DOCUMENT ME! TO BE MOVED
-     *
-     * @param  filterConstruction  DOCUMENT ME!
+     * 
+     * @param filterConstruction DOCUMENT ME!
      */
-    public void setOriginalFilterConstruction(int filterConstruction) {
+    public void setOriginalFilterConstruction(final int filterConstruction) {
         originalFilterConstruction = filterConstruction;
     }
 
     /**
      * DOCUMENT ME! TO BE MOVED
-     *
-     * @param  kDim  DOCUMENT ME!
+     * 
+     * @param kDim DOCUMENT ME!
      */
-    public void setOriginalKernelDimension(int kDim) {
+    public void setOriginalKernelDimension(final int kDim) {
         originalKernelDimension = kDim;
     }
 
     /**
      * DOCUMENT ME! TO BE MOVED
-     *
-     * @param  maximum  float
+     * 
+     * @param maximum float
      */
-    public void setOriginalMaximum(float maximum) {
+    public void setOriginalMaximum(final float maximum) {
         originalMaximum = maximum;
     }
 
     /**
      * DOCUMENT ME! TO BE MOVED
-     *
-     * @param  minimum  float
+     * 
+     * @param minimum float
      */
-    public void setOriginalMinimum(float minimum) {
+    public void setOriginalMinimum(final float minimum) {
         originalMinimum = minimum;
     }
 
     /**
      * DOCUMENT ME! TO BE MOVED
-     *
-     * @param  start  int[]
+     * 
+     * @param start int[]
      */
-    public void setOriginalStart(int[] start) {
+    public void setOriginalStart(final int[] start) {
         originalStart = start;
     }
 
     /**
-     * Accessor that sets the project information for this image.
-     *
-     * @param  pInfo  structure
-     */
-    public void setProjectInfo(FileInfoProject pInfo) {
-
-        if (pInfo != null) {
-            projectInfo = pInfo;
-        }
-    }
-
-    /**
      * Sets the radiological view flag.
-     *
-     * @param  bEnabled  when true the radiological view is displayed, when false the neurological view is displayed.
+     * 
+     * @param bEnabled when true the radiological view is displayed, when false the neurological view is displayed.
      */
-    public void setRadiologicalView(boolean bEnabled) {
+    public void setRadiologicalView(final boolean bEnabled) {
         m_bRadiologicalView = bEnabled;
     }
 
     /**
      * Sets the resolutions to the specific value for a specific slice indicated by the index parameter.
-     *
-     * @param  index        index that typically indicates image slice.
-     * @param  resolutions  the image's voxel resolutions
+     * 
+     * @param index index that typically indicates image slice.
+     * @param resolutions the image's voxel resolutions
      */
-    public void setResolutions(int index, float[] resolutions) {
+    public void setResolutions(final int index, final float[] resolutions) {
 
         if (fileInfo == null) {
             return;
@@ -6705,86 +6699,84 @@ public class ModelStorageBase extends ModelSerialCloneable {
         fileInfo[index].setResolutions(resolutions);
     }
 
-
     /**
      * Sets the image voxel at the specified position to the specified value.
-     *
-     * @param  position  position in one dimensional array.
-     * @param  value     the new voxel value.
+     * 
+     * @param position position in one dimensional array.
+     * @param value the new voxel value.
      */
-    public final void setShort(int position, short value) {
+    public final void setShort(final int position, final short value) {
         data.setShort(position, value);
     }
 
     /**
      * 2D fast version of set that does NOT perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  value  the new voxel value.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param value the new voxel value.
      */
-    public final void setShort(int x, int y, short value) {
-        data.setShort((y * dimExtents[0]) + x, value);
+    public final void setShort(final int x, final int y, final short value) {
+        data.setShort( (y * dimExtents[0]) + x, value);
     }
 
     /**
      * DOCUMENT ME! TO BE MOVED
-     *
-     * @param  _sigmaU  float
+     * 
+     * @param _sigmaU float
      */
-    public void setSigmaU(float _sigmaU) {
+    public void setSigmaU(final float _sigmaU) {
         sigmaU = _sigmaU;
     }
 
     /**
      * DOCUMENT ME! TO BE MOVED
-     *
-     * @param  _sigmaV  float
+     * 
+     * @param _sigmaV float
      */
-    public void setSigmaV(float _sigmaV) {
+    public void setSigmaV(final float _sigmaV) {
         sigmaV = _sigmaV;
     }
 
     /**
      * DOCUMENT ME! TO BE MOVED
-     *
-     * @param  _theta  float
+     * 
+     * @param _theta float
      */
-    public void setTheta(float _theta) {
+    public void setTheta(final float _theta) {
         theta = _theta;
     }
 
     /**
      * Sets the type of data.
-     *
-     * @param  type  the type of data
+     * 
+     * @param type the type of data
      */
-    public final void setType(int type) {
+    public final void setType(final int type) {
         bufferType = type;
     }
 
-
     /**
      * Sets the image voxel at the specified position to the specified value.
-     *
-     * @param  position  position in one dimensional array
-     * @param  value     the new voxel value.
+     * 
+     * @param position position in one dimensional array
+     * @param value the new voxel value.
      */
-    public final void setUByte(int position, short value) {
+    public final void setUByte(final int position, final short value) {
         data.setUByte(position, value);
     }
 
     /**
      * Sets the image voxel at the specified position to the specified value. nD set data fuction where bounds checking
      * is NOT performed.
-     *
-     * @param  position  array of coordinate values
-     * @param  value     data that will be stored in the data array
+     * 
+     * @param position array of coordinate values
+     * @param value data that will be stored in the data array
      */
-    public final void setUByte(int[] position, short value) {
+    public final void setUByte(final int[] position, final short value) {
         int i;
         int location = 0;
-        int dimensions = position.length;
+        final int dimensions = position.length;
 
         for (i = dimensions - 1; i > 0; i--) {
             location += (position[i] * dimExtents[i]);
@@ -6797,65 +6789,65 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Sets the image voxel at the specified position to the specified value. 2D fast version of set that does NOT
      * perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  value  the new voxel value.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param value the new voxel value.
      */
-    public final void setUByte(int x, int y, short value) {
-        data.setUByte((y * dimExtents[0]) + x, value);
+    public final void setUByte(final int x, final int y, final short value) {
+        data.setUByte( (y * dimExtents[0]) + x, value);
     }
 
     /**
      * Sets the image voxel at the specified position to the specified value. 3D fast version of set that does NOT
      * perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  z      z coordinate
-     * @param  value  the new voxel value.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param value the new voxel value.
      */
-    public final void setUByte(int x, int y, int z, short value) {
-        data.setUByte((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
+    public final void setUByte(final int x, final int y, final int z, final short value) {
+        data.setUByte( (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
     }
 
     /**
      * Sets the image voxel at the specified position to the specified value. 4D fast version of set that does NOT
      * perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  z      z coordinate
-     * @param  b      b coordinate
-     * @param  value  the new voxel value.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param b b coordinate
+     * @param value the new voxel value.
      */
-    public final void setUByte(int x, int y, int z, int b, short value) {
-        data.setUByte((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1])) +
-                      (y * dimExtents[0]) + x, value);
+    public final void setUByte(final int x, final int y, final int z, final int b, final short value) {
+        data.setUByte( (b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1]))
+                + (y * dimExtents[0]) + x, value);
     }
 
     /**
      * Sets the image voxel at the specified position to the specified value. version of set that does NOT perform
      * bounds checking.
-     *
-     * @param  position  position in one dimensional array
-     * @param  value     the new voxel value.
+     * 
+     * @param position position in one dimensional array
+     * @param value the new voxel value.
      */
-    public final void setUInt(int position, long value) {
+    public final void setUInt(final int position, final long value) {
         data.setUInt(position, value);
     }
 
     /**
      * Sets the image voxel at the specified position to the specified value. nD set data fuction where bounds checking
      * is NOT performed.
-     *
-     * @param  position  array of coordinate values
-     * @param  value     data that will be stored in the data array
+     * 
+     * @param position array of coordinate values
+     * @param value data that will be stored in the data array
      */
-    public final void setUInt(int[] position, long value) {
+    public final void setUInt(final int[] position, final long value) {
         int i;
         int location = 0;
-        int dimensions = position.length;
+        final int dimensions = position.length;
 
         for (i = dimensions - 1; i > 0; i--) {
             location += (position[i] * dimExtents[i]);
@@ -6868,74 +6860,73 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Sets the image voxel at the specified position to the specified value. 2D fast version of set that does NOT
      * perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  value  the new voxel value.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param value the new voxel value.
      */
-    public final void setUInt(int x, int y, long value) {
-        data.setUInt((y * dimExtents[0]) + x, value);
+    public final void setUInt(final int x, final int y, final long value) {
+        data.setUInt( (y * dimExtents[0]) + x, value);
     }
 
     /**
      * Sets the image voxel at the specified position to the specified value. 3D fast version of set that does NOT
      * perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  z      z coordinate
-     * @param  value  the new voxel value.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param value the new voxel value.
      */
-    public final void setUInt(int x, int y, int z, long value) {
-        data.setUInt((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
+    public final void setUInt(final int x, final int y, final int z, final long value) {
+        data.setUInt( (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
     }
 
     /**
      * Sets the image voxel at the specified position to the specified value. 4D fast version of set that does NOT
      * perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  z      z coordinate
-     * @param  t      t coordinate
-     * @param  value  the new voxel value.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param t t coordinate
+     * @param value the new voxel value.
      */
-    public final void setUInt(int x, int y, int z, int t, long value) {
-        data.setUInt((t * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1])) +
-                     (y * dimExtents[0]) + x, value);
+    public final void setUInt(final int x, final int y, final int z, final int t, final long value) {
+        data.setUInt( (t * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1]))
+                + (y * dimExtents[0]) + x, value);
     }
 
     /**
      * Accessor that sets the boolean telling if unequal dimesnions are allowed in a complex image. TO BE MOVED
-     *
-     * @param  unequalDimension  DOCUMENT ME!
+     * 
+     * @param unequalDimension DOCUMENT ME!
      */
-    public void setUnequalDim(boolean unequalDimension) {
+    public void setUnequalDim(final boolean unequalDimension) {
         unequalDim = unequalDimension;
     }
 
-
     /**
      * Sets the image voxel at the specified position to the specified value.
-     *
-     * @param  position  position in one dimensional array
-     * @param  value     The value to stored in the data array.
+     * 
+     * @param position position in one dimensional array
+     * @param value The value to stored in the data array.
      */
-    public final void setUShort(int position, int value) {
+    public final void setUShort(final int position, final int value) {
         data.setUShort(position, value);
     }
 
     /**
      * Sets the image voxel at the specified position to the specified value. nD set data fuction where bounds checking
      * is NOT performed.
-     *
-     * @param  position  array of coordinate values
-     * @param  value     data that will be stored in the data array
+     * 
+     * @param position array of coordinate values
+     * @param value data that will be stored in the data array
      */
-    public final void setUShort(int[] position, int value) {
+    public final void setUShort(final int[] position, final int value) {
         int i;
         int location = 0;
-        int dimensions = position.length;
+        final int dimensions = position.length;
 
         for (i = dimensions - 1; i > 0; i--) {
             location += (position[i] * dimExtents[i]);
@@ -6948,41 +6939,41 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Sets the image voxel at the specified position to the specified value. 2D fast version of set that does NOT
      * perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  value  the new voxel value.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param value the new voxel value.
      */
-    public final void setUShort(int x, int y, int value) {
-        data.setUShort((y * dimExtents[0]) + x, value);
+    public final void setUShort(final int x, final int y, final int value) {
+        data.setUShort( (y * dimExtents[0]) + x, value);
     }
 
     /**
      * Sets the image voxel at the specified position to the specified value. 3D fast version of set that does NOT
      * perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  z      z coordinate
-     * @param  value  the new voxel value.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param value the new voxel value.
      */
-    public final void setUShort(int x, int y, int z, int value) {
-        data.setUShort((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
+    public final void setUShort(final int x, final int y, final int z, final int value) {
+        data.setUShort( (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
     }
 
     /**
      * Sets the image voxel at the specified position to the specified value. 4D fast version of set that does NOT
      * perform bounds checking.
-     *
-     * @param  x      x coordinate
-     * @param  y      y coordinate
-     * @param  z      z coordinate
-     * @param  b      b coordinate
-     * @param  value  the new voxel value.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param b b coordinate
+     * @param value the new voxel value.
      */
-    public final void setUShort(int x, int y, int z, int b, int value) {
-        data.setUShort((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1])) +
-                       (y * dimExtents[0]) + x, value);
+    public final void setUShort(final int x, final int y, final int z, final int b, final int value) {
+        data.setUShort( (b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1]))
+                + (y * dimExtents[0]) + x, value);
     }
 
     /**
@@ -7010,7 +7001,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 for (this.dataSize = 1, i = 0; i < this.nDims; i++) {
                     this.dataSize *= this.dimExtents[i];
                     if (i == 1) {
-                        this.dataSize = 64 * ((this.dataSize + 63) >> 6);
+                        this.dataSize = 64 * ( (this.dataSize + 63) >> 6);
                     }
                 }
 
@@ -7019,7 +7010,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                     // Reset dataSize to reflect change in buffer size
                     // because BitSet structure may increase buffer.
                     this.dataSize = ((BufferBoolean) (this.data)).dataArray.size();
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate boolean data");
                     throw (error);
@@ -7030,7 +7021,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case BYTE:
                 try {
                     this.data = new BufferByte(this.dataSize);
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate byte data");
                     throw (error);
@@ -7041,7 +7032,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case UBYTE:
                 try {
                     this.data = new BufferUByte(this.dataSize);
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate unsigned byte data");
                     throw (error);
@@ -7052,7 +7043,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case SHORT:
                 try {
                     this.data = new BufferShort(this.dataSize);
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate short data");
                     throw (error);
@@ -7063,7 +7054,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case USHORT:
                 try {
                     this.data = new BufferUShort(this.dataSize);
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate unsigned short data");
                     throw (error);
@@ -7074,7 +7065,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case INTEGER:
                 try {
                     this.data = new BufferInt(this.dataSize);
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate integer data buffer");
                     throw (error);
@@ -7085,7 +7076,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case UINTEGER:
                 try {
                     this.data = new BufferUInt(this.dataSize);
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate unsigned integer data buffer");
                     throw (error);
@@ -7096,7 +7087,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case LONG:
                 try {
                     this.data = new BufferLong(this.dataSize);
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate long data buffer");
                     throw (error);
@@ -7107,7 +7098,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case FLOAT:
                 try {
                     this.data = new BufferFloat(this.dataSize);
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate float data buffer");
                     throw (error);
@@ -7118,7 +7109,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case COMPLEX:
                 try {
                     this.data = new BufferFloat(this.dataSize);
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate complex data buffer");
                     throw (error);
@@ -7129,7 +7120,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case DOUBLE:
                 try {
                     this.data = new BufferDouble(this.dataSize);
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate double data buffer");
                     throw (error);
@@ -7140,7 +7131,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case DCOMPLEX:
                 try {
                     this.data = new BufferDouble(this.dataSize);
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate double complex data buffer");
                     throw (error);
@@ -7151,7 +7142,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case ARGB:
                 try {
                     this.data = new BufferUByte(this.dataSize);
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate ARGB-UByte data buffer");
                     throw (error);
@@ -7167,7 +7158,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case ARGB_USHORT:
                 try {
                     this.data = new BufferUShort(this.dataSize);
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate ARGB-UShort data buffer");
                     throw (error);
@@ -7183,7 +7174,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case ARGB_FLOAT:
                 try {
                     this.data = new BufferFloat(this.dataSize);
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate ARGB- float data buffer");
                     throw (error);
@@ -7202,298 +7193,290 @@ public class ModelStorageBase extends ModelSerialCloneable {
         }
 
     } // end allocateData()
-    
-    
-    
+
     /**
      * his method return the min value allowed of the type
+     * 
      * @param type
      * @return
      */
-    public static double getTypeMin(int type) {
-    	if (type == ModelStorageBase.BOOLEAN) {
-    		return 0;
+    public static double getTypeMin(final int type) {
+        if (type == ModelStorageBase.BOOLEAN) {
+            return 0;
         } else if (type == ModelStorageBase.BYTE) {
-        	return -128;
+            return -128;
         } else if (type == ModelStorageBase.UBYTE) {
-        	return 0;
+            return 0;
         } else if (type == ModelStorageBase.SHORT) {
-        	return -32768;
+            return -32768;
         } else if (type == ModelStorageBase.USHORT) {
-        	return 0;
+            return 0;
         } else if (type == ModelStorageBase.INTEGER) {
-        	return Integer.MIN_VALUE;
+            return Integer.MIN_VALUE;
         } else if (type == ModelStorageBase.UINTEGER) {
-        	return 0;
+            return 0;
         } else if (type == ModelStorageBase.LONG) {
-        	return Long.MIN_VALUE;
+            return Long.MIN_VALUE;
         } else if (type == ModelStorageBase.FLOAT) {
-        	return -Float.MAX_VALUE;
+            return -Float.MAX_VALUE;
         } else if (type == ModelStorageBase.DOUBLE) {
-        	return -Double.MAX_VALUE;
+            return -Double.MAX_VALUE;
         } else if (type == ModelStorageBase.ARGB) {
-        	return 0;
+            return 0;
         } else if (type == ModelStorageBase.ARGB_USHORT) {
-        	return 0;
+            return 0;
         } else if (type == ModelStorageBase.ARGB_FLOAT) {
-        	return -Float.MAX_VALUE;
+            return -Float.MAX_VALUE;
         } else {
             return 0;
         }
     }
-    
-    
-    
+
     /**
      * This method return the max value allowed of the type
+     * 
      * @param type
      * @return
      */
-    public static double getTypeMax(int type) {
-    	if (type == ModelStorageBase.BOOLEAN) {
-    		return 1;
+    public static double getTypeMax(final int type) {
+        if (type == ModelStorageBase.BOOLEAN) {
+            return 1;
         } else if (type == ModelStorageBase.BYTE) {
-        	return 127;
+            return 127;
         } else if (type == ModelStorageBase.UBYTE) {
-        	return 255;
+            return 255;
         } else if (type == ModelStorageBase.SHORT) {
-        	return 32767;
+            return 32767;
         } else if (type == ModelStorageBase.USHORT) {
-        	return 65535;
+            return 65535;
         } else if (type == ModelStorageBase.INTEGER) {
-        	return Integer.MAX_VALUE;
+            return Integer.MAX_VALUE;
         } else if (type == ModelStorageBase.UINTEGER) {
-        	return 4294967295L;
+            return 4294967295L;
         } else if (type == ModelStorageBase.LONG) {
-        	return Long.MAX_VALUE;
+            return Long.MAX_VALUE;
         } else if (type == ModelStorageBase.FLOAT) {
-        	return Float.MAX_VALUE;
+            return Float.MAX_VALUE;
         } else if (type == ModelStorageBase.DOUBLE) {
-        	return Double.MAX_VALUE;
+            return Double.MAX_VALUE;
         } else if (type == ModelStorageBase.ARGB) {
-        	return 255;
+            return 255;
         } else if (type == ModelStorageBase.ARGB_USHORT) {
-        	return 65535;
+            return 65535;
         } else if (type == ModelStorageBase.ARGB_FLOAT) {
-        	return Float.MAX_VALUE;
+            return Float.MAX_VALUE;
         } else {
             return 0;
         }
     }
-    
-    
+
     /**
      * computes the avg intensity got 2d and 3d greyscale and color images
+     * 
      * @return
      */
     public void calcAvgIntenStdDev() {
-    	if(getNDims() == 2) {
-    		int numPixelsPerSlice = getSliceSize();
-    		if ((bufferType != ARGB) && (bufferType != ARGB_USHORT) && (bufferType != ARGB_FLOAT)) { //greyscale image
-	    		float[] imageBuffer = new float[numPixelsPerSlice];
-	    		
-	    		try {
-	    			exportData(0, imageBuffer.length, imageBuffer);
-	    		}catch(Exception e){
-	    			e.printStackTrace();
-	    		}
-	
-	    		for(int i=0;i<imageBuffer.length;i++) {
-	    			numPixels = numPixels + 1;
-	    			sumPixelInten = sumPixelInten + imageBuffer[i];
-	    		}
-	
-	    		avgInten = (float)(sumPixelInten/numPixels);
-	    		
-	    		float dev;
-	    		float devSqrd;
-	    		double sumDevSqrd= 0;
-	    		for(int i=0;i<imageBuffer.length;i++) {
-	    			dev = imageBuffer[i] - avgInten;
-	    			devSqrd = dev * dev;
-	    			sumDevSqrd = sumDevSqrd + devSqrd;
-	    		}
-	    		
-	    		stdDeviation = (float) Math.sqrt(sumDevSqrd / (imageBuffer.length-1));
-    		}else { //color image
-    			float[] imageBuffer = new float[numPixelsPerSlice * 4];
-    			
-    			try {
-	    			exportData(0, imageBuffer.length, imageBuffer);
-	    		}catch(Exception e){
-	    			e.printStackTrace();
-	    		}
-	    		
-	    		for(int i=0;i<imageBuffer.length;i=i+4) {
-	    			numPixels = numPixels + 1;
-	    			sumPixelIntenR = sumPixelIntenR + imageBuffer[i+1];
-	    			sumPixelIntenG = sumPixelIntenG + imageBuffer[i+2];
-	    			sumPixelIntenB = sumPixelIntenB + imageBuffer[i+3];
-	    		}
-	    		
-	    		avgIntenR = (float)(sumPixelIntenR/numPixels);
-	    		avgIntenG = (float)(sumPixelIntenG/numPixels);
-	    		avgIntenB = (float)(sumPixelIntenB/numPixels);
-	    		
-	    		float devR,devG,devB;
-	    		float devSqrdR,devSqrdG,devSqrdB;
-	    		double sumDevSqrdR= 0, sumDevSqrdG= 0, sumDevSqrdB= 0;
-	    		
-	    		for(int i=0;i<imageBuffer.length;i=i+4) {
-	    			devR = imageBuffer[i+1] - avgIntenR;
-	    			devSqrdR = devR * devR;
-	    			sumDevSqrdR = sumDevSqrdR + devSqrdR;
-	    			
-	    			devG = imageBuffer[i+2] - avgIntenG;
-	    			devSqrdG = devG * devG;
-	    			sumDevSqrdG = sumDevSqrdG + devSqrdG;
-	    			
-	    			devB = imageBuffer[i+3] - avgIntenB;
-	    			devSqrdB = devB * devB;
-	    			sumDevSqrdB = sumDevSqrdB + devSqrdB;
-	    		}
-	    		
-	    		stdDeviationR = (float) Math.sqrt(sumDevSqrdR / (imageBuffer.length-1));
-	    		stdDeviationG = (float) Math.sqrt(sumDevSqrdG / (imageBuffer.length-1));
-	    		stdDeviationB = (float) Math.sqrt(sumDevSqrdB / (imageBuffer.length-1));
-    		}
-    	}else if(getNDims() == 3) {
-    		int numSlices = getExtents()[2];
-    		int numPixelsPerSlice = getSliceSize();
-    		if ((bufferType != ARGB) && (bufferType != ARGB_USHORT) && (bufferType != ARGB_FLOAT)) { //greyscale image
-	    		float[] imageBuffer = new float[numSlices * numPixelsPerSlice];
-	    		
-	    		try {
-	    			exportData(0, imageBuffer.length, imageBuffer);
-	    		}catch(Exception e){
-	    			e.printStackTrace();
-	    		}
-	
-	    		for(int i=0;i<imageBuffer.length;i++) {
-	    			numPixels = numPixels + 1;
-	    			sumPixelInten = sumPixelInten + imageBuffer[i];
-	    		}
-	
-	    		avgInten = (float)(sumPixelInten/numPixels);
-	    		
-	    		float dev;
-	    		float devSqrd;
-	    		double sumDevSqrd= 0;
-	    		for(int i=0;i<imageBuffer.length;i++) {
-	    			dev = imageBuffer[i] - avgInten;
-	    			devSqrd = dev * dev;
-	    			sumDevSqrd = sumDevSqrd + devSqrd;
-	    		}
-	    		
-	    		stdDeviation = (float) Math.sqrt(sumDevSqrd / (imageBuffer.length-1));
-    		}else { //color image
-    			float[] imageBuffer = new float[numSlices * numPixelsPerSlice * 4];
-    			
-    			try {
-	    			exportData(0, imageBuffer.length, imageBuffer);
-	    		}catch(Exception e){
-	    			e.printStackTrace();
-	    		}
-	    		
-	    		for(int i=0;i<imageBuffer.length;i=i+4) {
-	    			numPixels = numPixels + 1;
-	    			sumPixelIntenR = sumPixelIntenR + imageBuffer[i+1];
-	    			sumPixelIntenG = sumPixelIntenG + imageBuffer[i+2];
-	    			sumPixelIntenB = sumPixelIntenB + imageBuffer[i+3];
-	    		}
-	    		
-	    		avgIntenR = (float)(sumPixelIntenR/numPixels);
-	    		avgIntenG = (float)(sumPixelIntenG/numPixels);
-	    		avgIntenB = (float)(sumPixelIntenB/numPixels);
-	    		
-	    		float devR,devG,devB;
-	    		float devSqrdR,devSqrdG,devSqrdB;
-	    		double sumDevSqrdR= 0, sumDevSqrdG= 0, sumDevSqrdB= 0;
-	    		
-	    		for(int i=0;i<imageBuffer.length;i=i+4) {
-	    			devR = imageBuffer[i+1] - avgIntenR;
-	    			devSqrdR = devR * devR;
-	    			sumDevSqrdR = sumDevSqrdR + devSqrdR;
-	    			
-	    			devG = imageBuffer[i+2] - avgIntenG;
-	    			devSqrdG = devG * devG;
-	    			sumDevSqrdG = sumDevSqrdG + devSqrdG;
-	    			
-	    			devB = imageBuffer[i+3] - avgIntenB;
-	    			devSqrdB = devB * devB;
-	    			sumDevSqrdB = sumDevSqrdB + devSqrdB;
-	    		}
-	    		stdDeviationR = (float) Math.sqrt(sumDevSqrdR / ((imageBuffer.length/4)-1));
-	    		stdDeviationG = (float) Math.sqrt(sumDevSqrdG / ((imageBuffer.length/4)-1));
-	    		stdDeviationB = (float) Math.sqrt(sumDevSqrdB / ((imageBuffer.length/4)-1));
-	    		
-	    		
-    		}
-    	}
+        if (getNDims() == 2) {
+            final int numPixelsPerSlice = getSliceSize();
+            if ( (bufferType != ModelStorageBase.ARGB) && (bufferType != ModelStorageBase.ARGB_USHORT)
+                    && (bufferType != ModelStorageBase.ARGB_FLOAT)) { // greyscale
+                // image
+                final float[] imageBuffer = new float[numPixelsPerSlice];
+
+                try {
+                    exportData(0, imageBuffer.length, imageBuffer);
+                } catch (final Exception e) {
+                    e.printStackTrace();
+                }
+
+                for (final float element : imageBuffer) {
+                    numPixels = numPixels + 1;
+                    sumPixelInten = sumPixelInten + element;
+                }
+
+                avgInten = (float) (sumPixelInten / numPixels);
+
+                float dev;
+                float devSqrd;
+                double sumDevSqrd = 0;
+                for (final float element : imageBuffer) {
+                    dev = element - avgInten;
+                    devSqrd = dev * dev;
+                    sumDevSqrd = sumDevSqrd + devSqrd;
+                }
+
+                stdDeviation = (float) Math.sqrt(sumDevSqrd / (imageBuffer.length - 1));
+            } else { // color image
+                final float[] imageBuffer = new float[numPixelsPerSlice * 4];
+
+                try {
+                    exportData(0, imageBuffer.length, imageBuffer);
+                } catch (final Exception e) {
+                    e.printStackTrace();
+                }
+
+                for (int i = 0; i < imageBuffer.length; i = i + 4) {
+                    numPixels = numPixels + 1;
+                    sumPixelIntenR = sumPixelIntenR + imageBuffer[i + 1];
+                    sumPixelIntenG = sumPixelIntenG + imageBuffer[i + 2];
+                    sumPixelIntenB = sumPixelIntenB + imageBuffer[i + 3];
+                }
+
+                avgIntenR = (float) (sumPixelIntenR / numPixels);
+                avgIntenG = (float) (sumPixelIntenG / numPixels);
+                avgIntenB = (float) (sumPixelIntenB / numPixels);
+
+                float devR, devG, devB;
+                float devSqrdR, devSqrdG, devSqrdB;
+                double sumDevSqrdR = 0, sumDevSqrdG = 0, sumDevSqrdB = 0;
+
+                for (int i = 0; i < imageBuffer.length; i = i + 4) {
+                    devR = imageBuffer[i + 1] - avgIntenR;
+                    devSqrdR = devR * devR;
+                    sumDevSqrdR = sumDevSqrdR + devSqrdR;
+
+                    devG = imageBuffer[i + 2] - avgIntenG;
+                    devSqrdG = devG * devG;
+                    sumDevSqrdG = sumDevSqrdG + devSqrdG;
+
+                    devB = imageBuffer[i + 3] - avgIntenB;
+                    devSqrdB = devB * devB;
+                    sumDevSqrdB = sumDevSqrdB + devSqrdB;
+                }
+
+                stdDeviationR = (float) Math.sqrt(sumDevSqrdR / (imageBuffer.length - 1));
+                stdDeviationG = (float) Math.sqrt(sumDevSqrdG / (imageBuffer.length - 1));
+                stdDeviationB = (float) Math.sqrt(sumDevSqrdB / (imageBuffer.length - 1));
+            }
+        } else if (getNDims() == 3) {
+            final int numSlices = getExtents()[2];
+            final int numPixelsPerSlice = getSliceSize();
+            if ( (bufferType != ModelStorageBase.ARGB) && (bufferType != ModelStorageBase.ARGB_USHORT)
+                    && (bufferType != ModelStorageBase.ARGB_FLOAT)) { // greyscale
+                // image
+                final float[] imageBuffer = new float[numSlices * numPixelsPerSlice];
+
+                try {
+                    exportData(0, imageBuffer.length, imageBuffer);
+                } catch (final Exception e) {
+                    e.printStackTrace();
+                }
+
+                for (final float element : imageBuffer) {
+                    numPixels = numPixels + 1;
+                    sumPixelInten = sumPixelInten + element;
+                }
+
+                avgInten = (float) (sumPixelInten / numPixels);
+
+                float dev;
+                float devSqrd;
+                double sumDevSqrd = 0;
+                for (final float element : imageBuffer) {
+                    dev = element - avgInten;
+                    devSqrd = dev * dev;
+                    sumDevSqrd = sumDevSqrd + devSqrd;
+                }
+
+                stdDeviation = (float) Math.sqrt(sumDevSqrd / (imageBuffer.length - 1));
+            } else { // color image
+                final float[] imageBuffer = new float[numSlices * numPixelsPerSlice * 4];
+
+                try {
+                    exportData(0, imageBuffer.length, imageBuffer);
+                } catch (final Exception e) {
+                    e.printStackTrace();
+                }
+
+                for (int i = 0; i < imageBuffer.length; i = i + 4) {
+                    numPixels = numPixels + 1;
+                    sumPixelIntenR = sumPixelIntenR + imageBuffer[i + 1];
+                    sumPixelIntenG = sumPixelIntenG + imageBuffer[i + 2];
+                    sumPixelIntenB = sumPixelIntenB + imageBuffer[i + 3];
+                }
+
+                avgIntenR = (float) (sumPixelIntenR / numPixels);
+                avgIntenG = (float) (sumPixelIntenG / numPixels);
+                avgIntenB = (float) (sumPixelIntenB / numPixels);
+
+                float devR, devG, devB;
+                float devSqrdR, devSqrdG, devSqrdB;
+                double sumDevSqrdR = 0, sumDevSqrdG = 0, sumDevSqrdB = 0;
+
+                for (int i = 0; i < imageBuffer.length; i = i + 4) {
+                    devR = imageBuffer[i + 1] - avgIntenR;
+                    devSqrdR = devR * devR;
+                    sumDevSqrdR = sumDevSqrdR + devSqrdR;
+
+                    devG = imageBuffer[i + 2] - avgIntenG;
+                    devSqrdG = devG * devG;
+                    sumDevSqrdG = sumDevSqrdG + devSqrdG;
+
+                    devB = imageBuffer[i + 3] - avgIntenB;
+                    devSqrdB = devB * devB;
+                    sumDevSqrdB = sumDevSqrdB + devSqrdB;
+                }
+                stdDeviationR = (float) Math.sqrt(sumDevSqrdR / ( (imageBuffer.length / 4) - 1));
+                stdDeviationG = (float) Math.sqrt(sumDevSqrdG / ( (imageBuffer.length / 4) - 1));
+                stdDeviationB = (float) Math.sqrt(sumDevSqrdB / ( (imageBuffer.length / 4) - 1));
+
+            }
+        }
     }
-    
-    
-    
-    
-    
-    
-    
 
     public float getStdDeviation() {
-		return stdDeviation;
-	}
+        return stdDeviation;
+    }
 
-	public float getAvgInten() {
-		return avgInten;
-	}
+    public float getAvgInten() {
+        return avgInten;
+    }
 
-	public int getNumPixels() {
-		return numPixels;
-	}
+    public int getNumPixels() {
+        return numPixels;
+    }
 
-	public double getSumPixelInten() {
-		return sumPixelInten;
-	}
-	
-	
+    public double getSumPixelInten() {
+        return sumPixelInten;
+    }
 
-	public float getAvgIntenB() {
-		return avgIntenB;
-	}
+    public float getAvgIntenB() {
+        return avgIntenB;
+    }
 
-	public float getAvgIntenG() {
-		return avgIntenG;
-	}
+    public float getAvgIntenG() {
+        return avgIntenG;
+    }
 
-	public float getAvgIntenR() {
-		return avgIntenR;
-	}
+    public float getAvgIntenR() {
+        return avgIntenR;
+    }
 
-	public float getStdDeviationB() {
-		return stdDeviationB;
-	}
+    public float getStdDeviationB() {
+        return stdDeviationB;
+    }
 
-	public float getStdDeviationG() {
-		return stdDeviationG;
-	}
+    public float getStdDeviationG() {
+        return stdDeviationG;
+    }
 
-	public float getStdDeviationR() {
-		return stdDeviationR;
-	}
+    public float getStdDeviationR() {
+        return stdDeviationR;
+    }
 
-	public double getSumPixelIntenB() {
-		return sumPixelIntenB;
-	}
+    public double getSumPixelIntenB() {
+        return sumPixelIntenB;
+    }
 
-	public double getSumPixelIntenG() {
-		return sumPixelIntenG;
-	}
+    public double getSumPixelIntenG() {
+        return sumPixelIntenG;
+    }
 
-	public double getSumPixelIntenR() {
-		return sumPixelIntenR;
-	}
+    public double getSumPixelIntenR() {
+        return sumPixelIntenR;
+    }
 
-	/**
+    /**
      * Computes the datasize based on the type of buffer.
      */
     protected void computeDataSize() {
@@ -7505,7 +7488,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             this.dataSize *= dimExtents[i];
             longSize *= dimExtents[i];
         }
-        
+
         if (longSize > Integer.MAX_VALUE) {
             MipavUtil.displayError("Product of dimExtents exceeds maximum allowable array size = " + Integer.MAX_VALUE);
             return;
@@ -7526,7 +7509,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                     // clean up the temporary buffer
                     tmpdata = null;
                     System.gc();
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate boolean data");
                     throw (error);
@@ -7552,7 +7535,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 this.dataSize *= 2;
                 longSize *= 2;
                 if (longSize > Integer.MAX_VALUE) {
-                    MipavUtil.displayError("2 times product of dimExtents exceeds maximum allowable array size = " + Integer.MAX_VALUE);
+                    MipavUtil.displayError("2 times product of dimExtents exceeds maximum allowable array size = "
+                            + Integer.MAX_VALUE);
                     return;
                 }
                 break;
@@ -7564,13 +7548,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 this.dataSize *= 4;
                 longSize *= 4;
                 if (longSize > Integer.MAX_VALUE) {
-                    MipavUtil.displayError("4 times product of dimExtents exceeds maximum allowable array size = " + Integer.MAX_VALUE);
+                    MipavUtil.displayError("4 times product of dimExtents exceeds maximum allowable array size = "
+                            + Integer.MAX_VALUE);
                     return;
                 }
                 break;
 
-            default: 
-            {
+            default: {
                 MipavUtil.displayError("ModelStorageArray: Unknown data type - dataSize not computed");
                 break;
             }
@@ -7580,15 +7564,15 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Allocates buffer memory of the specified type.
-     *
-     * @param  type        type of buffer to allocate
-     * @param  dimExtents  extents of the buffer in each dimension (multiplied together produces the size of the buffer
-     *                     to be allocated
+     * 
+     * @param type type of buffer to allocate
+     * @param dimExtents extents of the buffer in each dimension (multiplied together produces the size of the buffer to
+     *            be allocated
      */
-    protected void construct(int type, int[] dimExtents) {
+    protected void construct(final int type, final int[] dimExtents) {
 
         this.bufferType = type;
-        this.dimExtents = (int[]) dimExtents.clone();
+        this.dimExtents = dimExtents.clone();
         this.nDims = dimExtents.length;
 
         // compute the dataSize based on the extents
@@ -7603,17 +7587,16 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Calls disposeLocal of this class to ensure this class nulls the references to global class variables so that
      * memory will be recovered.
-     *
-     * @throws  Throwable  Throws an error if the finalization failed.
+     * 
+     * @throws Throwable Throws an error if the finalization failed.
      */
     protected void finalize() throws Throwable {
         disposeLocal();
         super.finalize();
     }
 
-	public int getDataSize() {
-		return dataSize;
-	}
-    
-    
+    public int getDataSize() {
+        return dataSize;
+    }
+
 }

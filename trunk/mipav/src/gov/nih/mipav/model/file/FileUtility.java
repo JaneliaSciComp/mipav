@@ -50,8 +50,9 @@ public class FileUtility {
      */
     public static final int BRUKER = 7;
 
-    /** Cheshire file type (a kind of Analyze). extension: .imc
-     *  Can also have .img extension */
+    /**
+     * Cheshire file type (a kind of Analyze). extension: .imc Can also have .img extension
+     */
     public static final int CHESHIRE = 8;
 
     /** Cheshire overlay file type. Contains VOIs. extension: .oly */
@@ -168,95 +169,90 @@ public class FileUtility {
     /** extension: .png. */
     public static final int PNG = 44;
 
-    /** MIPAV project format. project file format (.xml) */
-    public static final int PROJECT = 45;
-
     /** extension: .psd. */
-    public static final int PSD = 46;
+    public static final int PSD = 45;
 
     /** Quicktime file type. extension: .mov, .qt */
-    public static final int QT = 47;
+    public static final int QT = 46;
 
     /** RAW image data, no header. extension: .raw */
-    public static final int RAW = 48;
+    public static final int RAW = 47;
 
     /** RAW MULTIFLE image data, no header. */
-    public static final int RAW_MULTIFILE = 49;
+    public static final int RAW_MULTIFILE = 48;
 
-    /** SPM file format.
-     *  SPM99 and SPM2 are slight variants of analyze with the same 
-     *  .img, .hdr file extensions.  The user could also change
-     *  the extension .img to .spm to indicate SPM.
-     *  The header extension would remain .hdr */
-    public static final int SPM = 50;
+    /**
+     * SPM file format. SPM99 and SPM2 are slight variants of analyze with the same .img, .hdr file extensions. The user
+     * could also change the extension .img to .spm to indicate SPM. The header extension would remain .hdr
+     */
+    public static final int SPM = 49;
 
     /** MetaMorph Stack (STK) file type. extension: .stk */
-    public static final int STK = 51;
+    public static final int STK = 50;
 
     /** MIPAV Surface XML file format. extension: .xml */
-    public static final int SURFACE_XML = 52;
+    public static final int SURFACE_XML = 51;
 
     /** extension: .tga. */
-    public static final int TGA = 53;
+    public static final int TGA = 52;
 
     /** TIFF file; tagged header. extension: .tif, .tiff */
-    public static final int TIFF = 54;
+    public static final int TIFF = 53;
 
     /** Multiple files of TIFF images. */
-    public static final int TIFF_MULTIFILE = 55;
+    public static final int TIFF_MULTIFILE = 54;
 
     /** Optical coherence tomography. extension: .tmg */
-    public static final int TMG = 56;
+    public static final int TMG = 55;
 
     /** VOI file, used to read VOIs. extension: .voi */
-    public static final int VOI_FILE = 57;
+    public static final int VOI_FILE = 56;
 
     /** extension: .xbm. */
-    public static final int XBM = 58;
+    public static final int XBM = 57;
 
     /** MIPAV XML file format. mipav xml image format. extension: .xml */
-    public static final int XML = 59;
+    public static final int XML = 58;
 
     /** MIPAV XML file format. */
-    public static final int XML_MULTIFILE = 60;
+    public static final int XML_MULTIFILE = 59;
 
     /** extension: .xpm. */
-    public static final int XPM = 61;
+    public static final int XPM = 60;
 
     /** extension: "par","parv2","rec","frec". */
-    public static final int PARREC = 62;
+    public static final int PARREC = 61;
 
     /** MIPAV Surface XML file format. extension: .xml */
-    public static final int SURFACEREF_XML = 63;
+    public static final int SURFACEREF_XML = 62;
 
     /** MINC 2.0 (HDF5) */
-    public static final int MINC_HDF = 64;
+    public static final int MINC_HDF = 63;
 
     /** Improvision OpenLab LIFF .liff */
     /** Do not confuse with Leica image file format .lif */
-    public static final int LIFF = 65;
+    public static final int LIFF = 64;
 
     /** Extension: .hdr for header, .bfloat for data */
-    public static final int BFLOAT = 66;
-    
+    public static final int BFLOAT = 65;
+
     /** Extension: .hdr for header, .img for data */
-    public static final int SIEMENSTEXT = 67;
-    
+    public static final int SIEMENSTEXT = 66;
+
     /** Zeiss ZVI has extension .zvi */
-    public static final int ZVI = 68;
-    
-    public static final int JP2 = 100;
-    
-    private static final String[] fileTypeStr = {"error", "undefined", "afni", "analyze", "analyze multifile", "avi", "biorad", "bmp", "bruker", "cheshire",
-    	"cheshire overlay", "cor", "cur", "dib", "dicom", "dm3", "fits", "GE genesis", "GE genisis multifile", "GE signa4x",
-    	"GE Signa4x multifile", "gif", "ico", "ics", "interfile", "jimi", "jpeg", "lsm", "lsm multifile", "magnetom vision",
-    	"Megnatom vision multifile", "map", "medivision", "mgh", "micro cat", "minc", "mipav", "mrc", "nifti", "nifti multifile",
-    	"nrrd", "osm", "pcx", "pic", "pict", "png", "project", "psd", "qt", "raw", "raw multifile", "spm", "stk", "surface xml", "tga",
-    	"tiff", "tiff multifile", "tmg", "voi file", "xbm", "xml", "xml multifile", "xpm", "parrec", "surfaceref xml", "minc hdf", 
-    	"liff", "bfloat", "siemens text", "zvi", "jp2"};
+    public static final int ZVI = 67;
 
+    public static final int JP2 = 68;
 
-    
+    private static final String[] fileTypeStr = {"error", "undefined", "afni", "analyze", "analyze multifile", "avi",
+            "biorad", "bmp", "bruker", "cheshire", "cheshire overlay", "cor", "cur", "dib", "dicom", "dm3", "fits",
+            "GE genesis", "GE genisis multifile", "GE signa4x", "GE Signa4x multifile", "gif", "ico", "ics",
+            "interfile", "jimi", "jpeg", "lsm", "lsm multifile", "magnetom vision", "Megnatom vision multifile", "map",
+            "medivision", "mgh", "micro cat", "minc", "mipav", "mrc", "nifti", "nifti multifile", "nrrd", "osm", "pcx",
+            "pic", "pict", "png", "psd", "qt", "raw", "raw multifile", "spm", "stk", "surface xml", "tga", "tiff",
+            "tiff multifile", "tmg", "voi file", "xbm", "xml", "xml multifile", "xpm", "parrec", "surfaceref xml",
+            "minc hdf", "liff", "bfloat", "siemens text", "zvi", "jp2"};
+
     /**
      * Returns the file type associated with a string.
      * 
@@ -264,20 +260,19 @@ public class FileUtility {
      * 
      * @return axis orientation
      */
-    public static int getFileTypeFromStr(String s) {
+    public static int getFileTypeFromStr(final String s) {
 
         // look through the array of strings to see if there's a match.
         try {
 
-            for (int i = 0; i < fileTypeStr.length; i++) {
+            for (int i = 0; i < FileUtility.fileTypeStr.length; i++) {
 
-                if (FileUtility.getFileTypeStr(i).regionMatches(true, 0, s, 0,
-                		FileUtility.getFileTypeStr(i).length())) {
-                	//because fileType indicies start at -1, must decrement
-                	return i-1;
+                if (FileUtility.getFileTypeStr(i).regionMatches(true, 0, s, 0, FileUtility.getFileTypeStr(i).length())) {
+                    // because fileType indicies start at -1, must decrement
+                    return i - 1;
                 }
             }
-        } catch (ArrayIndexOutOfBoundsException aie) {
+        } catch (final ArrayIndexOutOfBoundsException aie) {
             return FileUtility.ERROR;
         }
 
@@ -292,12 +287,12 @@ public class FileUtility {
      * 
      * @return String representing the string associated with the file type.
      */
-    public static String getFileTypeStr(int m) {
+    public static String getFileTypeStr(final int m) {
 
         try {
-        	//because fileType indicies start at -1, must increment
-            return FileUtility.fileTypeStr[m+1];
-        } catch (ArrayIndexOutOfBoundsException aie) {}
+            // because fileType indicies start at -1, must increment
+            return FileUtility.fileTypeStr[m + 1];
+        } catch (final ArrayIndexOutOfBoundsException aie) {}
 
         return "";
 
@@ -316,7 +311,8 @@ public class FileUtility {
      * 
      * @throws OutOfMemoryError If there is a problem allocating required memory.
      */
-    public static final String[] getCORFileList(String fileDir, String fileName, boolean quiet) throws OutOfMemoryError {
+    public static final String[] getCORFileList(final String fileDir, final String fileName, boolean quiet)
+            throws OutOfMemoryError {
         int i;
         int j = 0;
         int k;
@@ -338,7 +334,7 @@ public class FileUtility {
         fileListBuffer = imageDir.list();
         fileList = new String[fileListBuffer.length];
 
-        String subName = FileUtility.trimCOR(fileName); // subName = name without indexing numbers at end
+        final String subName = FileUtility.trimCOR(fileName); // subName = name without indexing numbers at end
 
         for (i = 0; i < fileListBuffer.length; i++) {
             fileName2 = fileListBuffer[i].trim();
@@ -412,7 +408,7 @@ public class FileUtility {
      * @return The suffix or file-extension. For example,
      *         <q>-info</q>. Note that suffix includes the separator '-'
      */
-    public static final String getCORSuffixFrom(String fn) {
+    public static final String getCORSuffixFrom(final String fn) {
         int s;
         String sfx = "";
 
@@ -434,13 +430,13 @@ public class FileUtility {
      * 
      * @return The file's extension.
      */
-    public static final String getExtension(String absolutePath) {
+    public static final String getExtension(final String absolutePath) {
 
         if ( (absolutePath == null) || (absolutePath.length() == 0)) {
             return "";
         }
 
-        int index = absolutePath.lastIndexOf(".");
+        final int index = absolutePath.lastIndexOf(".");
 
         if (index >= 0) {
             return absolutePath.substring(index);
@@ -456,13 +452,13 @@ public class FileUtility {
      * 
      * @return The path information.
      */
-    public static final String getFileDirectory(String fileName) {
+    public static final String getFileDirectory(final String fileName) {
 
         if ( (fileName == null) || (fileName.length() == 0)) {
             return null;
         }
 
-        int index = fileName.lastIndexOf(File.separator);
+        final int index = fileName.lastIndexOf(File.separator);
 
         if (index >= 0) {
             return fileName.substring(0, index + 1);
@@ -479,11 +475,11 @@ public class FileUtility {
      * 
      * @return String (index string)
      */
-    public static final int getFileIndex(String fName) {
+    public static final int getFileIndex(final String fName) {
         int i;
 
         // char ch;
-        int length = fName.lastIndexOf("."); // Start before suffix.
+        final int length = fName.lastIndexOf("."); // Start before suffix.
 
         for (i = length - 1; i > -1; i--) {
 
@@ -511,7 +507,8 @@ public class FileUtility {
      * 
      * @throws OutOfMemoryError If there is a problem allocating required memory.
      */
-    public static final String[] getFileList(String fileDir, String fileName, boolean quiet) throws OutOfMemoryError {
+    public static final String[] getFileList(final String fileDir, final String fileName, boolean quiet)
+            throws OutOfMemoryError {
         int i;
         int j = 0;
         int k;
@@ -540,9 +537,10 @@ public class FileUtility {
 
         fileList = new String[fileListBuffer.length];
 
-        String subName = FileUtility.trimNumbersAndSpecial(fileName); // subName = name without indexing numbers at
+        final String subName = FileUtility.trimNumbersAndSpecial(fileName); // subName = name without indexing numbers
+                                                                            // at
         // end
-        String suffix = FileUtility.getExtension(fileName); // suffix = ie. .ima or .img ...
+        final String suffix = FileUtility.getExtension(fileName); // suffix = ie. .ima or .img ...
 
         Preferences.debug("Suffix = _" + suffix + "_" + " subName = " + subName, Preferences.DEBUG_FILEIO);
 
@@ -597,8 +595,8 @@ public class FileUtility {
             for (i = 0; i < fileListBuffer.length; i++) {
 
                 if ( !files[i].isDirectory()) {
-                    String fileSubName = FileUtility.trimNumbersAndSpecial(fileListBuffer[i].trim());
-                    String fileExtension = FileUtility.getExtension(fileListBuffer[i]);
+                    final String fileSubName = FileUtility.trimNumbersAndSpecial(fileListBuffer[i].trim());
+                    final String fileExtension = FileUtility.getExtension(fileListBuffer[i]);
 
                     if (fileSubName.trim().equals(subName) && fileExtension.equalsIgnoreCase(suffix)) {
                         fileList[j] = fileListBuffer[i];
@@ -618,7 +616,7 @@ public class FileUtility {
 
                     if (fileListBuffer[i].trim().toLowerCase().endsWith(suffix.toLowerCase())) { // note: not case
                         // sensitive!
-                    	String text = FileUtility.trimNumbersAndSpecial(fileListBuffer[i].trim());
+                        final String text = FileUtility.trimNumbersAndSpecial(fileListBuffer[i].trim());
                         if (FileUtility.trimNumbersAndSpecial(fileListBuffer[i].trim()).equals(subName)) {
                             fileList[j] = fileListBuffer[i];
                             j++;
@@ -677,13 +675,13 @@ public class FileUtility {
      * 
      * @return The file name without path information.
      */
-    public static final String getFileName(String absolutePath) {
+    public static final String getFileName(final String absolutePath) {
 
         if ( (absolutePath == null) || (absolutePath.length() == 0)) {
             return null;
         }
 
-        int index = absolutePath.lastIndexOf(File.separator);
+        final int index = absolutePath.lastIndexOf(File.separator);
 
         if (index >= 0) {
 
@@ -709,8 +707,8 @@ public class FileUtility {
      * 
      * @see FileBase
      */
-    public static final int getFileType(String fileName, String fileDir, boolean quiet) {
-        return getFileType(fileName, fileDir, false, quiet);
+    public static final int getFileType(final String fileName, final String fileDir, final boolean quiet) {
+        return FileUtility.getFileType(fileName, fileDir, false, quiet);
     }
 
     /**
@@ -726,11 +724,11 @@ public class FileUtility {
      * 
      * @see FileBase
      */
-    public static final int getFileType(String fileName, String fileDir, boolean doWrite, boolean quiet) {
+    public static final int getFileType(final String fileName, final String fileDir, boolean doWrite, boolean quiet) {
         int fileType;
         int i;
 
-        String beginString = FileUtility.stripExtension(fileName);
+        final String beginString = FileUtility.stripExtension(fileName);
 
         if ( (beginString.equalsIgnoreCase("d3proc")) || (beginString.equalsIgnoreCase("reco"))
                 || (beginString.equalsIgnoreCase("2dseq"))) {
@@ -741,7 +739,7 @@ public class FileUtility {
 
         fileName.trim();
 
-        String suffix = FileUtility.getExtension(fileName);
+        final String suffix = FileUtility.getExtension(fileName);
 
         fileType = FileTypeTable.getFileTypeFromSuffix(suffix);
 
@@ -754,26 +752,28 @@ public class FileUtility {
         if (fileType == FileUtility.MINC) {
             try {
                 if (doWrite) {
-                	if(!quiet) {
-                		fileType = new JDialogSaveMincVersionChoice(ViewUserInterface.getReference().getMainFrame()).fileType();
-                	}else {
-                		if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_MNC_AS_MINC1)) {
-                			fileType = FileUtility.MINC;
-                        }else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_MNC_AS_MINC2)) {
-                        	fileType = FileUtility.MINC_HDF;
-                        }else {
-                        	fileType = FileUtility.MINC;
-                        	System.err.println("Could not determine default filetype from preferences...saving in MINC-1.0 format");
+                    if ( !quiet) {
+                        fileType = new JDialogSaveMincVersionChoice(ViewUserInterface.getReference().getMainFrame())
+                                .fileType();
+                    } else {
+                        if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_MNC_AS_MINC1)) {
+                            fileType = FileUtility.MINC;
+                        } else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_MNC_AS_MINC2)) {
+                            fileType = FileUtility.MINC_HDF;
+                        } else {
+                            fileType = FileUtility.MINC;
+                            System.err
+                                    .println("Could not determine default filetype from preferences...saving in MINC-1.0 format");
                         }
-                	}
-                    
+                    }
+
                 }
                 // inspect the file to see if it is really a MINC1 (suppressing any error dialogs).
                 // if not, set the file type using isMincHDF()
-                else if (isMinc(fileName, fileDir, true) != FileUtility.MINC) {
-                    fileType = isMincHDF(fileName, fileDir, quiet);
+                else if (FileUtility.isMinc(fileName, fileDir, true) != FileUtility.MINC) {
+                    fileType = FileUtility.isMincHDF(fileName, fileDir, quiet);
                 }
-            } catch (IOException ioe) {
+            } catch (final IOException ioe) {
                 if (ioe instanceof FileNotFoundException) {
                     MipavUtil.displayError("File does not exist '" + fileDir + fileName + "'.");
                     ioe.printStackTrace();
@@ -800,15 +800,15 @@ public class FileUtility {
 
                 // Both Biorad and JIMI use the pic suffix
                 try {
-                    File file = new File(fileDir + fileName);
-                    RandomAccessFile raFile = new RandomAccessFile(file, "r");
+                    final File file = new File(fileDir + fileName);
+                    final RandomAccessFile raFile = new RandomAccessFile(file, "r");
 
                     raFile.seek(54L);
 
                     // little endian unsigned short
-                    int b1 = raFile.readUnsignedByte();
-                    int b2 = raFile.readUnsignedByte();
-                    int fileID = ( (b2 << 8) | b1); // Little Endian
+                    final int b1 = raFile.readUnsignedByte();
+                    final int b2 = raFile.readUnsignedByte();
+                    final int fileID = ( (b2 << 8) | b1); // Little Endian
 
                     raFile.close();
 
@@ -817,84 +817,83 @@ public class FileUtility {
                     } else {
                         fileType = FileUtility.JIMI;
                     }
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     System.gc();
-                } catch (FileNotFoundException e) {
+                } catch (final FileNotFoundException e) {
                     System.gc();
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     System.gc();
                 }
             } else if (suffix.equalsIgnoreCase(".img")) {
 
                 // ANALYZE, Interfile, and NIFTI use .img and .hdr
                 if (doWrite) {
-                	if(!quiet) {
-                		JDialogAnalyzeNIFTIChoice choice = new JDialogAnalyzeNIFTIChoice(ViewUserInterface.getReference()
-                                .getMainFrame());
+                    if ( !quiet) {
+                        final JDialogAnalyzeNIFTIChoice choice = new JDialogAnalyzeNIFTIChoice(ViewUserInterface
+                                .getReference().getMainFrame());
 
                         if ( !choice.okayPressed()) {
                             fileType = FileUtility.ERROR;
                         } else {
                             fileType = choice.fileType();
                         }
-                	}else {
-                		//when in quiet mode, we will default to NIFTI format if Prefs are not there
-                		if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_ANALYZE)) {
-                			fileType = FileUtility.ANALYZE;
-                        }else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_INTERFILE)) {
-                        	fileType = FileUtility.INTERFILE;
-                        }else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_NIFTI)) {
-                        	fileType = FileUtility.NIFTI;
-                        }else {
-                        	fileType = FileUtility.NIFTI;
-                        	System.err.println("Could not determine default filetype from preferences...saving in NIFTI format");
+                    } else {
+                        // when in quiet mode, we will default to NIFTI format if Prefs are not there
+                        if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_ANALYZE)) {
+                            fileType = FileUtility.ANALYZE;
+                        } else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_INTERFILE)) {
+                            fileType = FileUtility.INTERFILE;
+                        } else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_NIFTI)) {
+                            fileType = FileUtility.NIFTI;
+                        } else {
+                            fileType = FileUtility.NIFTI;
+                            System.err
+                                    .println("Could not determine default filetype from preferences...saving in NIFTI format");
                         }
-                	}
-                    
+                    }
+
                 } else { // read
                     if (FileCheshire.isCheshire(fileName, fileDir)) {
                         fileType = FileUtility.CHESHIRE;
-                    }
-                    else {
-                        int p = fileName.lastIndexOf(".");
-                        String fileHeaderName = fileName.substring(0, p + 1) + "hdr";
-                        String headerFile = FileInterfile.isInterfile(fileHeaderName, fileDir);
+                    } else {
+                        final int p = fileName.lastIndexOf(".");
+                        final String fileHeaderName = fileName.substring(0, p + 1) + "hdr";
+                        final String headerFile = FileInterfile.isInterfile(fileHeaderName, fileDir);
                         if (headerFile != null) {
                             fileType = FileUtility.INTERFILE;
                         } else {
-                            //  Note that SPM99 and SPM2 Analyze variant files are read as Mayo Analyze 7.5
-                            //  unless a SPM2 with extended header size > 348 is present.
+                            // Note that SPM99 and SPM2 Analyze variant files are read as Mayo Analyze 7.5
+                            // unless a SPM2 with extended header size > 348 is present.
                             try {
                                 fileType = FileUtility.isAnalyzeOrSPM(fileHeaderName, fileDir, quiet);
-                            }
-                            catch (IOException ex) {}
+                            } catch (final IOException ex) {}
                             if (fileType == FileUtility.UNDEFINED) {
                                 fileType = FileUtility.SPM;
                             }
-    
+
                             try {
-                                File file = new File(fileDir + fileHeaderName);
-                                RandomAccessFile raFile = new RandomAccessFile(file, "r");
-    
+                                final File file = new File(fileDir + fileHeaderName);
+                                final RandomAccessFile raFile = new RandomAccessFile(file, "r");
+
                                 raFile.seek(344L);
-    
-                                char[] niftiName = new char[4];
-    
+
+                                final char[] niftiName = new char[4];
+
                                 for (i = 0; i < 4; i++) {
                                     niftiName[i] = (char) raFile.readUnsignedByte();
                                 }
-    
+
                                 raFile.close();
-    
+
                                 if ( (niftiName[0] == 'n') && ( (niftiName[1] == 'i') || (niftiName[1] == '+'))
                                         && (niftiName[2] == '1') && (niftiName[3] == '\0')) {
                                     fileType = FileUtility.NIFTI;
                                 }
-                            } catch (OutOfMemoryError error) {
+                            } catch (final OutOfMemoryError error) {
                                 System.gc();
-                            } catch (FileNotFoundException e) {
+                            } catch (final FileNotFoundException e) {
                                 System.gc();
-                            } catch (IOException e) {
+                            } catch (final IOException e) {
                                 System.gc();
                             }
                         }
@@ -902,43 +901,43 @@ public class FileUtility {
                 }
             } else if (suffix.equalsIgnoreCase(".hdr")) {
                 if (doWrite) {
-                	if(!quiet) {
-	                    // ANALYZE, Interfile, and NIFTI use .img and .hdr
-	                    JDialogAnalyzeNIFTIChoice choice = new JDialogAnalyzeNIFTIChoice(ViewUserInterface.getReference()
-	                            .getMainFrame());
-	
-	                    if ( !choice.okayPressed()) {
-	                        fileType = FileUtility.ERROR;
-	                    } else {
-	                        fileType = choice.fileType();
-	                    }
-                	}else {
-                		//when in quiet mode, we will default to NIFTI format if Prefs are not there
-                		if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_ANALYZE)) {
-                			fileType = FileUtility.ANALYZE;
-                        }else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_INTERFILE)) {
-                        	fileType = FileUtility.INTERFILE;
-                        }else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_NIFTI)) {
-                        	fileType = FileUtility.NIFTI;
-                        }else {
-                        	fileType = FileUtility.NIFTI;
-                        	System.err.println("Could not determine default filetype from preferences...saving in NIFTI format");
+                    if ( !quiet) {
+                        // ANALYZE, Interfile, and NIFTI use .img and .hdr
+                        final JDialogAnalyzeNIFTIChoice choice = new JDialogAnalyzeNIFTIChoice(ViewUserInterface
+                                .getReference().getMainFrame());
+
+                        if ( !choice.okayPressed()) {
+                            fileType = FileUtility.ERROR;
+                        } else {
+                            fileType = choice.fileType();
                         }
-                	}
+                    } else {
+                        // when in quiet mode, we will default to NIFTI format if Prefs are not there
+                        if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_ANALYZE)) {
+                            fileType = FileUtility.ANALYZE;
+                        } else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_INTERFILE)) {
+                            fileType = FileUtility.INTERFILE;
+                        } else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_NIFTI)) {
+                            fileType = FileUtility.NIFTI;
+                        } else {
+                            fileType = FileUtility.NIFTI;
+                            System.err
+                                    .println("Could not determine default filetype from preferences...saving in NIFTI format");
+                        }
+                    }
                 } else { // read
-                    int p = fileName.lastIndexOf(".");
-                    String bfloatDataName = fileName.substring(0, p + 1) + "bfloat";
-                    File bfloatFile = new File(fileDir + bfloatDataName);
+                    final int p = fileName.lastIndexOf(".");
+                    final String bfloatDataName = fileName.substring(0, p + 1) + "bfloat";
+                    final File bfloatFile = new File(fileDir + bfloatDataName);
                     if (bfloatFile.exists()) {
                         fileType = FileUtility.BFLOAT;
                     } else {
-                        String spmDataName = fileName.substring(0, p + 1) + "spm";
-                        File spmFile = new File(fileDir + spmDataName);
+                        final String spmDataName = fileName.substring(0, p + 1) + "spm";
+                        final File spmFile = new File(fileDir + spmDataName);
                         if (spmFile.exists()) {
                             fileType = FileUtility.SPM;
-                        }
-                        else {
-                            String headerFile = FileInterfile.isInterfile(fileName, fileDir);
+                        } else {
+                            final String headerFile = FileInterfile.isInterfile(fileName, fileDir);
                             if (headerFile != null) {
                                 fileType = FileUtility.INTERFILE;
                             } else {
@@ -946,52 +945,52 @@ public class FileUtility {
                                 // unless a SPM2 with extended header size > 348 is present.
                                 try {
                                     fileType = FileUtility.isAnalyzeOrSPM(fileName, fileDir, quiet);
-                                }
-                                catch (IOException ex) {}
-                                if (fileType == FileUtility.UNDEFINED  && FileSiemensText.isSiemensText(fileDir + fileName)) {
+                                } catch (final IOException ex) {}
+                                if (fileType == FileUtility.UNDEFINED
+                                        && FileSiemensText.isSiemensText(fileDir + fileName)) {
                                     fileType = FileUtility.SIEMENSTEXT;
                                 }
-    
+
                                 try {
-                                    File file = new File(fileDir + fileName);
-                                    RandomAccessFile raFile = new RandomAccessFile(file, "r");
-    
+                                    final File file = new File(fileDir + fileName);
+                                    final RandomAccessFile raFile = new RandomAccessFile(file, "r");
+
                                     raFile.seek(344L);
-    
-                                    char[] niftiName = new char[4];
-    
+
+                                    final char[] niftiName = new char[4];
+
                                     for (i = 0; i < 4; i++) {
                                         niftiName[i] = (char) raFile.readUnsignedByte();
                                     }
-    
+
                                     raFile.close();
-    
+
                                     if ( (niftiName[0] == 'n') && ( (niftiName[1] == 'i') || (niftiName[1] == '+'))
                                             && (niftiName[2] == '1') && (niftiName[3] == '\0')) {
                                         fileType = FileUtility.NIFTI;
                                     }
-                                } catch (OutOfMemoryError error) {
+                                } catch (final OutOfMemoryError error) {
                                     System.gc();
-                                } catch (FileNotFoundException e) {
+                                } catch (final FileNotFoundException e) {
                                     System.gc();
-                                } catch (IOException e) {
+                                } catch (final IOException e) {
                                     System.gc();
                                 }
                             } // else headerFile == null
                         } // else !spmFile.exists()
                     } // else !bfloatFile.exists()
                 } // else read
-            } // else if (suffix.equalsIgnoreCase(".hdr")) 
+            } // else if (suffix.equalsIgnoreCase(".hdr"))
             else if (suffix.equalsIgnoreCase(".ima")) {
 
                 // Both Dicom and Siemens Magnetom Vision file type have the ima suffix
                 try {
-                    File file = new File(fileDir + fileName);
-                    RandomAccessFile raFile = new RandomAccessFile(file, "r");
+                    final File file = new File(fileDir + fileName);
+                    final RandomAccessFile raFile = new RandomAccessFile(file, "r");
 
                     raFile.seek(281L);
 
-                    char[] ModelName = new char[15];
+                    final char[] ModelName = new char[15];
 
                     for (i = 0; i < 15; i++) {
                         ModelName[i] = (char) raFile.readUnsignedByte();
@@ -999,18 +998,18 @@ public class FileUtility {
 
                     raFile.close();
 
-                    String ModelNameString = new String(ModelName);
+                    final String ModelNameString = new String(ModelName);
 
                     if (ModelNameString.equals("MAGNETOM VISION")) {
                         fileType = FileUtility.MAGNETOM_VISION;
                     } else {
                         fileType = FileUtility.DICOM;
                     }
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     System.gc();
-                } catch (FileNotFoundException e) {
+                } catch (final FileNotFoundException e) {
                     System.gc();
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     System.gc();
                 }
             } else if (suffix.equalsIgnoreCase("") && doWrite) {
@@ -1021,7 +1020,7 @@ public class FileUtility {
             }
         }
 
-        String strFileType = Preferences.getProperty(Preferences.PREF_USER_FILETYPE_ASSOC);
+        final String strFileType = Preferences.getProperty(Preferences.PREF_USER_FILETYPE_ASSOC);
         String[] assoc = new String[0];
 
         if (strFileType != null) {
@@ -1029,10 +1028,10 @@ public class FileUtility {
         }
 
         // check to see if there are any user defined associations
-        for (int k = 0; k < assoc.length; k++) {
+        for (final String element : assoc) {
 
-            if (suffix.equals(assoc[k].split(Preferences.DEFINITION_SEPARATOR)[0])) {
-                fileType = new Integer(assoc[k].split(Preferences.DEFINITION_SEPARATOR)[1]).intValue();
+            if (suffix.equals(element.split(Preferences.DEFINITION_SEPARATOR)[0])) {
+                fileType = new Integer(element.split(Preferences.DEFINITION_SEPARATOR)[1]).intValue();
             }
         }
 
@@ -1041,7 +1040,7 @@ public class FileUtility {
             if (fileType == FileUtility.UNDEFINED) {
                 fileType = FileUtility.isDicom(fileName, fileDir, quiet);
             }
-            
+
             if (fileType == FileUtility.UNDEFINED) {
                 fileType = FileUtility.isDicom_ver2(fileName, fileDir, quiet);
             }
@@ -1063,13 +1062,13 @@ public class FileUtility {
             }
 
             if (fileType == FileUtility.UNDEFINED) {
-                fileType = isMincHDF(fileName, fileDir, quiet);
+                fileType = FileUtility.isMincHDF(fileName, fileDir, quiet);
             }
 
             if (fileType == FileUtility.UNDEFINED) {
                 // This will accept Mayo Analyze 7.5, SPM99, and
                 // SPM2 with regular header size == 348 bytes
-                // Only SPM2 with extended header size > 348 will 
+                // Only SPM2 with extended header size > 348 will
                 // not be classified as analyze.
                 fileType = FileUtility.isAnalyzeOrSPM(fileName, fileDir, quiet);
             }
@@ -1085,7 +1084,7 @@ public class FileUtility {
             if (fileType == FileUtility.UNDEFINED) {
                 fileType = FileUtility.isSPM(fileName, fileDir, quiet);
             }
-        } catch (IOException ioe) {
+        } catch (final IOException ioe) {
 
             if (ioe instanceof FileNotFoundException) {
                 MipavUtil.displayError("File does not exist '" + fileDir + fileName + "'.");
@@ -1116,21 +1115,19 @@ public class FileUtility {
      * @param fileDir Directory of the image file to read.
      * @param quiet Whether to avoid any user interaction (ie, from error popups).
      * 
-     * @return <code>FileUtility.ANALYZE</code> if the file is a ANALYZE type, 
-     *         <code>FileUtility.SPM</code> if the file is a SPM type, 
-     *         and <code>FileUtility.UNDEFINED</code>
-     *         otherwise
+     * @return <code>FileUtility.ANALYZE</code> if the file is a ANALYZE type, <code>FileUtility.SPM</code> if the
+     *         file is a SPM type, and <code>FileUtility.UNDEFINED</code> otherwise
      * 
      * @throws IOException If there is a problem determining the type of the given file.
      */
-    public static final int isAnalyzeOrSPM(String fileName, String fileDir, boolean quiet) throws IOException {
+    public static final int isAnalyzeOrSPM(final String fileName, final String fileDir, boolean quiet)
+            throws IOException {
 
         try {
 
             return FileAnalyze.isAnalyzeOrSPM(fileDir + fileName);
 
-            
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
 
             if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
@@ -1155,13 +1152,13 @@ public class FileUtility {
      * 
      * @throws IOException If there is a problem determining the type of the given file.
      */
-    public static final int isDicom(String fileName, String fileDir, boolean quiet) throws IOException {
+    public static final int isDicom(final String fileName, final String fileDir, boolean quiet) throws IOException {
 
         try {
             FileDicom imageFile = new FileDicom(fileName, fileDir);
 
             if (imageFile != null) {
-                boolean isDicom = imageFile.isDICOM();
+                final boolean isDicom = imageFile.isDICOM();
 
                 imageFile.close();
                 imageFile = null;
@@ -1172,7 +1169,7 @@ public class FileUtility {
             }
 
             return FileUtility.UNDEFINED;
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
 
             if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
@@ -1185,23 +1182,22 @@ public class FileUtility {
         }
 
     }
-    
-    
-    
+
     /**
      * tests if unknown file is of type 2.0 dicom
+     * 
      * @param fileName
      * @param fileDir
      * @param quiet
      * @return
      * @throws IOException
      */
-    public static final int isDicom_ver2(String fileName, String fileDir, boolean quiet) throws IOException {
-    	try {
+    public static final int isDicom_ver2(final String fileName, final String fileDir, boolean quiet) throws IOException {
+        try {
             FileDicom imageFile = new FileDicom(fileName, fileDir);
 
             if (imageFile != null) {
-                boolean isDicom = imageFile.isDICOM_ver2();
+                final boolean isDicom = imageFile.isDICOM_ver2();
 
                 imageFile.close();
                 imageFile = null;
@@ -1212,7 +1208,7 @@ public class FileUtility {
             }
 
             return FileUtility.UNDEFINED;
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
 
             if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
@@ -1224,7 +1220,6 @@ public class FileUtility {
             return FileUtility.UNDEFINED;
         }
     }
-    
 
     /**
      * Tests if the unknown file is of type GE Signa 4X type.
@@ -1239,13 +1234,13 @@ public class FileUtility {
      * 
      * @throws IOException If there is a problem determining the type of the given file.
      */
-    public static final int isGESigna4X(String fileName, String fileDir, boolean quiet) throws IOException {
+    public static final int isGESigna4X(final String fileName, final String fileDir, boolean quiet) throws IOException {
 
         try {
-            FileGESigna4X imageFile = new FileGESigna4X(fileName, fileDir);
+            final FileGESigna4X imageFile = new FileGESigna4X(fileName, fileDir);
 
             if (imageFile != null) {
-                boolean isGESigna4X = imageFile.isGESigna4X();
+                final boolean isGESigna4X = imageFile.isGESigna4X();
 
                 if (isGESigna4X) {
                     return FileUtility.GE_SIGNA4X;
@@ -1253,7 +1248,7 @@ public class FileUtility {
             }
 
             return FileUtility.UNDEFINED;
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
 
             if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
@@ -1279,13 +1274,13 @@ public class FileUtility {
      * 
      * @throws IOException If there is a problem determining the type of the given file.
      */
-    public static final int isGESigna5X(String fileName, String fileDir, boolean quiet) throws IOException {
+    public static final int isGESigna5X(final String fileName, final String fileDir, boolean quiet) throws IOException {
 
         try {
-            FileGESigna5X imageFile = new FileGESigna5X(fileName, fileDir);
+            final FileGESigna5X imageFile = new FileGESigna5X(fileName, fileDir);
 
             if (imageFile != null) {
-                boolean isGESigna5X = imageFile.isGESigna5X();
+                final boolean isGESigna5X = imageFile.isGESigna5X();
 
                 if (isGESigna5X) {
                     return FileUtility.GE_GENESIS;
@@ -1293,7 +1288,7 @@ public class FileUtility {
             }
 
             return FileUtility.UNDEFINED;
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
 
             if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
@@ -1318,18 +1313,18 @@ public class FileUtility {
      * 
      * @throws IOException If there is a problem determining the type of the given file.
      */
-    public static final int isInterfile(String fileName, String fileDir, boolean quiet) throws IOException {
+    public static final int isInterfile(final String fileName, final String fileDir, boolean quiet) throws IOException {
 
         try {
 
-            String fileHeaderName = FileInterfile.isInterfile(fileName, fileDir);
+            final String fileHeaderName = FileInterfile.isInterfile(fileName, fileDir);
 
             if (fileHeaderName != null) {
                 return FileUtility.INTERFILE;
             }
 
             return FileUtility.UNDEFINED;
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
 
             if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
@@ -1355,13 +1350,14 @@ public class FileUtility {
      * 
      * @throws IOException If there is a problem determining the type of the given file.
      */
-    public static final int isMagnetomVision(String fileName, String fileDir, boolean quiet) throws IOException {
+    public static final int isMagnetomVision(final String fileName, final String fileDir, boolean quiet)
+            throws IOException {
 
         try {
-            FileMagnetomVision imageFile = new FileMagnetomVision(fileName, fileDir);
+            final FileMagnetomVision imageFile = new FileMagnetomVision(fileName, fileDir);
 
             if (imageFile != null) {
-                boolean isMagnetomVision = imageFile.isMagnetomVision();
+                final boolean isMagnetomVision = imageFile.isMagnetomVision();
 
                 if (isMagnetomVision) {
                     return FileUtility.MAGNETOM_VISION;
@@ -1369,7 +1365,7 @@ public class FileUtility {
             }
 
             return FileUtility.UNDEFINED;
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
 
             if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
@@ -1394,13 +1390,13 @@ public class FileUtility {
      * 
      * @throws IOException If there is a problem determining the type of the given file.
      */
-    public static final int isMinc(String fileName, String fileDir, boolean quiet) throws IOException {
+    public static final int isMinc(final String fileName, final String fileDir, boolean quiet) throws IOException {
 
         try {
-            FileMinc imageFile = new FileMinc(fileName, fileDir);
+            final FileMinc imageFile = new FileMinc(fileName, fileDir);
 
             if (imageFile != null) {
-                boolean isMinc = imageFile.isMinc();
+                final boolean isMinc = imageFile.isMinc();
 
                 if (isMinc) {
                     return FileUtility.MINC;
@@ -1408,7 +1404,7 @@ public class FileUtility {
             }
 
             return FileUtility.UNDEFINED;
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
 
             if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
@@ -1429,9 +1425,9 @@ public class FileUtility {
      * @param quiet
      * @return whether the file is HDF5 type
      */
-    public static final int isMincHDF(String fileName, String fileDir, boolean quiet) {
+    public static final int isMincHDF(final String fileName, final String fileDir, boolean quiet) {
         try {
-            FileFormat h5F = FileFormat.getFileFormat(FileFormat.FILE_TYPE_HDF5);
+            final FileFormat h5F = FileFormat.getFileFormat(FileFormat.FILE_TYPE_HDF5);
 
             // if the FileFormat object is null, there was probably a problem loading the hdf5 libraries
             if (h5F == null) {
@@ -1442,13 +1438,13 @@ public class FileUtility {
                 return FileUtility.ERROR;
             }
 
-            boolean isMincHDF = h5F.isThisType(fileDir + File.separator + fileName);
+            final boolean isMincHDF = h5F.isThisType(fileDir + File.separator + fileName);
             if (isMincHDF) {
                 return FileUtility.MINC_HDF;
             } else {
                 return FileUtility.UNDEFINED;
             }
-        } catch (NoClassDefFoundError e) {
+        } catch (final NoClassDefFoundError e) {
             if ( !quiet) {
                 MipavUtil.displayError("Unable to load HDF libraries: " + e.getMessage());
             }
@@ -1456,7 +1452,7 @@ public class FileUtility {
             e.printStackTrace();
 
             return FileUtility.ERROR;
-        } catch (SecurityException e) {
+        } catch (final SecurityException e) {
             if ( !quiet) {
                 MipavUtil.displayError("Unable to load HDF libraries: " + e.getMessage());
             }
@@ -1464,7 +1460,7 @@ public class FileUtility {
             e.printStackTrace();
 
             return FileUtility.ERROR;
-        } catch (UnsatisfiedLinkError e) {
+        } catch (final UnsatisfiedLinkError e) {
             if ( !quiet) {
                 MipavUtil.displayError("Unable to load HDF libraries: " + e.getMessage());
             }
@@ -1487,17 +1483,17 @@ public class FileUtility {
      * 
      * @throws IOException If there is a problem determining the type of the given file.
      */
-    public static final int isNIFTI(String fileName, String fileDir, boolean quiet) throws IOException {
+    public static final int isNIFTI(final String fileName, final String fileDir, boolean quiet) throws IOException {
 
         try {
-            boolean isNIFTI = FileNIFTI.isNIFTI(fileName, fileDir);
+            final boolean isNIFTI = FileNIFTI.isNIFTI(fileName, fileDir);
 
             if (isNIFTI) {
                 return FileUtility.NIFTI;
             }
 
             return FileUtility.UNDEFINED;
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
 
             if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
@@ -1522,17 +1518,17 @@ public class FileUtility {
      * 
      * @throws IOException If there is a problem determining the type of the given file.
      */
-    public static final int isSPM(String fileName, String fileDir, boolean quiet) throws IOException {
+    public static final int isSPM(final String fileName, final String fileDir, boolean quiet) throws IOException {
 
         try {
-            boolean isSPM = FileSPM.isSPM(fileDir + fileName);
+            final boolean isSPM = FileSPM.isSPM(fileDir + fileName);
 
             if (isSPM) {
                 return FileUtility.SPM;
             }
 
             return FileUtility.UNDEFINED;
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
 
             if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
@@ -1553,8 +1549,8 @@ public class FileUtility {
      * 
      * @return Name without extension, or original name if there was no extension.
      */
-    public static final String stripExtension(String fileName) {
-        int index = fileName.lastIndexOf(".");
+    public static final String stripExtension(final String fileName) {
+        final int index = fileName.lastIndexOf(".");
 
         if (index != -1) {
             return fileName.substring(0, index);
@@ -1575,8 +1571,8 @@ public class FileUtility {
      * 
      * @return File name without numbers on the end.
      */
-    public static final String trimCOR(String fName) {
-        int length = fName.lastIndexOf("-");
+    public static final String trimCOR(final String fName) {
+        final int length = fName.lastIndexOf("-");
 
         if (length >= 0) {
             return (new String(fName.substring(0, length + 1)));
@@ -1594,12 +1590,12 @@ public class FileUtility {
      * 
      * @return File name without numbers on the end.
      */
-    public static final String trimNumbersAndSpecial(String fName) {
+    public static final String trimNumbersAndSpecial(final String fName) {
         int i;
         char ch;
         int length = fName.lastIndexOf("."); // Start before suffix.
-        if(length == -1) {
-        	length = fName.length();
+        if (length == -1) {
+            length = fName.length();
         }
 
         for (i = length - 1; i > -1; i--) {
@@ -1612,9 +1608,7 @@ public class FileUtility {
 
         String tmpStr;
 
-
         tmpStr = fName.substring(0, i + 1);
-
 
         boolean aCharIsPresent = false;
 
@@ -1629,7 +1623,6 @@ public class FileUtility {
             }
         }
 
-
         // If yes, then remove remaining numbers
         if (aCharIsPresent) {
 
@@ -1637,7 +1630,7 @@ public class FileUtility {
                 ch = tmpStr.charAt(i);
 
                 if (Character.isDigit(ch)) {
-                    tmpStr = tmpStr.substring(0,i)+tmpStr.substring(i+1);
+                    tmpStr = tmpStr.substring(0, i) + tmpStr.substring(i + 1);
                     i = -1;
                 }
             }
@@ -1653,20 +1646,20 @@ public class FileUtility {
      * 
      * @return the actual file name list.
      */
-    public static final List<String> getFileNameList(ModelImage image) {
+    public static final List<String> getFileNameList(final ModelImage image) {
 
         if (image == null) {
             return null;
         }
 
-        FileInfoBase[] fileInfoList = image.getFileInfo();
+        final FileInfoBase[] fileInfoList = image.getFileInfo();
 
         if ( (fileInfoList == null) || (fileInfoList.length == 0)) {
             return null;
         }
 
-        FileInfoBase fileInfo = fileInfoList[0];
-        int fileFormat = fileInfo.getFileFormat();
+        final FileInfoBase fileInfo = fileInfoList[0];
+        final int fileFormat = fileInfo.getFileFormat();
         Vector<String> fileNameList = new Vector<String>();
 
         // TODO: maybe move out to FileUtility?
@@ -1678,8 +1671,8 @@ public class FileUtility {
             case FileUtility.NIFTI_MULTIFILE:
                 if (fileInfoList[0].getFileName().toLowerCase().endsWith(".nii")) {
                     String file;
-                    for (int i = 0; i < fileInfoList.length; i++) {
-                        file = fileInfo.getFileDirectory() + File.separator + fileInfoList[i].getFileName();
+                    for (final FileInfoBase element : fileInfoList) {
+                        file = fileInfo.getFileDirectory() + File.separator + element.getFileName();
                         if (file != null && !fileNameList.contains(file)) {
                             fileNameList.add(file);
                         }
@@ -1688,8 +1681,8 @@ public class FileUtility {
                     // TODO: what about extension case?
                     String imgFileName;
                     String hdrFileName;
-                    for (int i = 0; i < fileInfoList.length; i++) {
-                        imgFileName = fileInfoList[i].getFileName();
+                    for (final FileInfoBase element : fileInfoList) {
+                        imgFileName = element.getFileName();
                         hdrFileName = imgFileName.replaceFirst(".img", ".hdr");
 
                         if (imgFileName != null
@@ -1703,16 +1696,16 @@ public class FileUtility {
 
             case FileUtility.BFLOAT:
                 // TODO: what about extension case?
-                String bfloatFileName = fileInfo.getFileName();
-                String hdrFileName = bfloatFileName.replaceFirst(".bfloat", ".hdr");
+                final String bfloatFileName = fileInfo.getFileName();
+                final String hdrFileName = bfloatFileName.replaceFirst(".bfloat", ".hdr");
                 fileNameList.add(fileInfo.getFileDirectory() + File.separator + hdrFileName);
                 fileNameList.add(fileInfo.getFileDirectory() + File.separator + bfloatFileName);
                 break;
 
             case FileUtility.AFNI:
                 // TODO: what about extension case?
-                String headFileName = fileInfo.getFileName();
-                String brikFileName = headFileName.replaceFirst(".HEAD", ".BRIK");
+                final String headFileName = fileInfo.getFileName();
+                final String brikFileName = headFileName.replaceFirst(".HEAD", ".BRIK");
                 fileNameList.add(fileInfo.getFileDirectory() + File.separator + headFileName);
                 fileNameList.add(fileInfo.getFileDirectory() + File.separator + brikFileName);
                 break;
@@ -1721,9 +1714,9 @@ public class FileUtility {
             case FileUtility.XML_MULTIFILE:
                 String xmlFileName;
                 String rawFileName;
-                for (int i = 0; i < fileInfoList.length; i++) {
-                    xmlFileName = fileInfoList[i].getFileName();
-                    rawFileName = ((FileInfoXML) fileInfoList[i]).getImageDataFileName();
+                for (final FileInfoBase element : fileInfoList) {
+                    xmlFileName = element.getFileName();
+                    rawFileName = ((FileInfoXML) element).getImageDataFileName();
 
                     if (xmlFileName != null
                             && !fileNameList.contains(fileInfo.getFileDirectory() + File.separator + xmlFileName)) {
@@ -1735,8 +1728,8 @@ public class FileUtility {
 
             case FileUtility.PARREC:
                 // TODO: what about extension case? need to support other parrec extensions
-                String parFileName = fileInfo.getFileName();
-                String recFileName = parFileName.replaceFirst(".par", ".rec");
+                final String parFileName = fileInfo.getFileName();
+                final String recFileName = parFileName.replaceFirst(".par", ".rec");
                 fileNameList.add(fileInfo.getFileDirectory() + File.separator + parFileName);
                 fileNameList.add(fileInfo.getFileDirectory() + File.separator + recFileName);
                 break;
@@ -1746,31 +1739,30 @@ public class FileUtility {
             case FileUtility.VOI_FILE:
             case FileUtility.MIPAV:
             case FileUtility.CHESHIRE_OVERLAY:
-            case FileUtility.PROJECT:
             case FileUtility.SURFACE_XML:
             case FileUtility.SURFACEREF_XML:
                 fileNameList = null;
                 break;
             case FileUtility.DICOM:
-            	boolean isEnhancedDicom = ((FileInfoDicom)fileInfoList[0]).isEnhancedDicom();
-            	if(isEnhancedDicom) {
-            		String file = fileInfo.getFileDirectory() + File.separator + fileInfoList[0].getFileName();
-            		fileNameList.add(file);
-            		
-            	}else {
-            		String file;
-                    for (int i = 0; i < fileInfoList.length; i++) {
-                        file = fileInfo.getFileDirectory() + File.separator + fileInfoList[i].getFileName();
+                final boolean isEnhancedDicom = ((FileInfoDicom) fileInfoList[0]).isEnhancedDicom();
+                if (isEnhancedDicom) {
+                    final String file = fileInfo.getFileDirectory() + File.separator + fileInfoList[0].getFileName();
+                    fileNameList.add(file);
+
+                } else {
+                    String file;
+                    for (final FileInfoBase element : fileInfoList) {
+                        file = fileInfo.getFileDirectory() + File.separator + element.getFileName();
                         if (file != null && !fileNameList.contains(file)) {
                             fileNameList.add(file);
                         }
                     }
-            	}
-            	break;
+                }
+                break;
             default:
                 String file;
-                for (int i = 0; i < fileInfoList.length; i++) {
-                    file = fileInfo.getFileDirectory() + File.separator + fileInfoList[i].getFileName();
+                for (final FileInfoBase element : fileInfoList) {
+                    file = fileInfo.getFileDirectory() + File.separator + element.getFileName();
                     if (file != null && !fileNameList.contains(file)) {
                         fileNameList.add(file);
                     }
