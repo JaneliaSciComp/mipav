@@ -512,11 +512,11 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
             }
 
             public String getLabel() {
-                return new String("Center of Mass (2D)");
+                return new String("Center of Mass");
             }
 
             public String getName() {
-                return new String("Ceneter of Mass (2D)");
+                return new String("Ceneter of Mass");
             }
         };
     }
@@ -524,9 +524,6 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
 	@Override
 	public ParameterTable createInputParameters() {
         final ParameterTable table = new ParameterTable();
-
-        setThres1(scriptParameters.getParams().getFloat("min_threshold"));
-        setThres2(scriptParameters.getParams().getFloat("max_threshold"));
         try {
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
             table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, true));
@@ -549,6 +546,11 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
         	table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
         	table.put(new ParameterDouble("X-axis Center", comAlgo.getCenterOfMass()[0]));
         	table.put(new ParameterDouble("Y-axis Center", comAlgo.getCenterOfMass()[1]));
+        	
+        	if(comAlgo.getCenterOfMass().length>2){
+        		table.put(new ParameterDouble("Z-axis Center", comAlgo.getCenterOfMass()[2]));
+        	}
+        		
         } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
