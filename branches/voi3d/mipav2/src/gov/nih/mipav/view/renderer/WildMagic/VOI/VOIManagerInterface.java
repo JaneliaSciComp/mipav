@@ -256,30 +256,11 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
             new JDialogOpacityControls(null, this, m_fOpacity);
         } else if ( command.equals(CustomUIBuilder.PARAM_VOI_QUICK_AND_OP.getActionCommand() ) ) {
             saveImage(CustomUIBuilder.PARAM_VOI_QUICK_AND_OP.getActionCommand());
-            if (getActiveImage().getVOIs().size() < 1) {
-                MipavUtil.displayWarning("Must have at least one VOI to perform quick mask");
-
-                return;
-            }
-            System.err.println( "start" );
-            long time = System.currentTimeMillis();
-
-            new JDialogMask(getActiveImage(), false, false);
-            time = System.currentTimeMillis() - time;
-            System.err.println( "done " + time );
+            createMask( CustomUIBuilder.PARAM_VOI_QUICK_AND_OP.getActionCommand() );
             setDefaultCursor();
         } else if ( command.equals(CustomUIBuilder.PARAM_VOI_QUICK_NOT_OP.getActionCommand() ) ) {
             saveImage(CustomUIBuilder.PARAM_VOI_QUICK_NOT_OP.getActionCommand());
-            if (getActiveImage().getVOIs().size() < 1) {
-                MipavUtil.displayWarning("Must have at least one VOI to perform quick mask");
-
-                return;
-            }
-            System.err.println( "start" );
-            long time = System.currentTimeMillis();
-            new JDialogMask(getActiveImage(), false, true);
-            time = System.currentTimeMillis() - time;
-            System.err.println( "done " + time );
+            createMask( CustomUIBuilder.PARAM_VOI_QUICK_NOT_OP.getActionCommand() );
             setDefaultCursor();
         } else if (command.equals(CustomUIBuilder.PARAM_VOI_3D_INTERSECTION.getActionCommand()) ) {
             m_kParent.create3DVOI(true);
@@ -428,21 +409,28 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         return (m_kCopyList.size() > 0);
     }
 
-
-
-    public void createMask( ModelImage kActive, boolean bInside )
+    public void createMask( String command )
     {
-
-        if (kActive.getVOIs().size() < 1) {
+        if (getActiveImage().getVOIs().size() < 1) {
             MipavUtil.displayWarning("Must have at least one VOI to perform quick mask");
             return;
         }
-
-
-        System.err.println( "start" );
-        long time = System.currentTimeMillis();
-        //ModelImage kImage = new ModelImage( ModelStorageBase.INTEGER, 
-        //       m_kVolumeImage.GetImage().getExtents(), "Temp" );
+        //System.err.println( "start" );
+        //long time = System.currentTimeMillis();
+        if ( m_bGPURenderer )
+        {
+            createMask( getActiveImage(), command.equals(CustomUIBuilder.PARAM_VOI_QUICK_AND_OP.getActionCommand()) );
+        }
+        else
+        {
+            new JDialogMask(getActiveImage(), false, command.equals(CustomUIBuilder.PARAM_VOI_QUICK_NOT_OP.getActionCommand()));
+        }
+        //time = System.currentTimeMillis() - time;
+        //System.err.println( "done " + time );
+    }
+    
+    public void createMask( ModelImage kActive, boolean bInside )
+    {
         int iSize = kActive.getSize();
         if ( kActive.isColorImage() )
         {
@@ -463,14 +451,6 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         }
         kActive.useMask(true);
         m_kParent.updateData(false);
-        //new ViewJFrameImage(kImage);
-
-        if ( !m_bGPURenderer )
-        {
-            new JDialogMask(kActive, false, false, false);
-        }
-        time = System.currentTimeMillis() - time;
-        System.err.println( "done " + time );
     }
 
 

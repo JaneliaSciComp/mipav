@@ -1811,11 +1811,11 @@ public abstract class VOIBase extends Vector<Vector3f> {
             return;
         }
         getImageBoundingBox();
-        int iXMin = (int)m_akImageMinMax[0].X;
-        int iXMax = (int)m_akImageMinMax[1].X;
+        int iXMin = (int)(m_akImageMinMax[0].X);
+        int iXMax = (int)(m_akImageMinMax[1].X);
 
-        int iYMin = (int)m_akImageMinMax[0].Y;
-        int iYMax = (int)m_akImageMinMax[1].Y;
+        int iYMin = (int)(m_akImageMinMax[0].Y);
+        int iYMax = (int)(m_akImageMinMax[1].Y);
 
         int[][] aaiCrossingPoints = new int[iXMax - iXMin + 1][];
         int[] aiNumCrossings = new int[iXMax - iXMin + 1];
@@ -1950,16 +1950,14 @@ public abstract class VOIBase extends Vector<Vector3f> {
             BitSet kMask, int xDim, int yDim, boolean XOR, int polarity )
     {
         int iColumn = 0;
-        /* Loop over the width of the sculpt region bounding-box: */
+        /* Loop over the bounding-box: */
         for (int iX = iXMin; iX < iXMax; iX++) {
             boolean bInside = false;
 
-            /* Loop over the height of the sculpt region bounding-box: */
             for (int iY = iYMin; iY < iYMax; iY++) {
 
                 /* loop over each crossing point for this column: */
                 for (int iCross = 0; iCross < aiNumCrossings[iColumn]; iCross++) {
-
                     if (iY == aaiCrossingPoints[iColumn][iCross]) {
 
                         /* Each time an edge is cross the point alternates
@@ -1969,11 +1967,6 @@ public abstract class VOIBase extends Vector<Vector3f> {
                 }
 
                 if (bInside == true) {
-
-                    /* The current pixel is inside the sculpt region.  Get the
-                     * image color from the canvas image and alpha-blend the sculpt color ontop, storing the result in
-                     * the canvas image.
-                     */
                     if ( kMask != null )
                     {
                         int iIndex = iZ * xDim * yDim;
@@ -2026,7 +2019,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         /*
          * Compute the crossing points for this column and produce spans.
          */
-        for (int iColumn = iXMin; iColumn <= iXMax; iColumn++) {
+        for (int iColumn = iXMin; iColumn < iXMax; iColumn++) {
             int iIndex = iColumn - iXMin;
 
             /* for each edge, figure out if it crosses this column and add its
@@ -2053,8 +2046,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
 
                     double dYCross = (dM * iColumn) + dB;
                     double dRound = 0.5;
-                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (dYCross < 0) ? (int) (dYCross - dRound)
-                            : (int) (dYCross + dRound);
+                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (dDY < 0) ? (int) (dYCross - dRound) :
+                        (int) (dYCross + dRound);
                     aiNumCrossings[iIndex]++;
                 }
             }
