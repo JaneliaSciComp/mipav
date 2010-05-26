@@ -664,9 +664,7 @@ public class FileDicom extends FileDicomBase {
         tagTable = fileInfo.getTagTable();
 
         while (flag == true) {
-
             if (fileInfo.containsDICM) {
-
                 // endianess is defined in a tag and set here, after the transfer
                 // syntax group has been read in
                 if (getFilePointer() >= (ID_OFFSET + 4 + metaGroupLength)) {

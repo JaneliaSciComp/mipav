@@ -3212,7 +3212,7 @@ public class ModelImage extends ModelStorageBase {
         	// "For MR Images, Bits Allocated (0028,0100) shall have the Enumerated Value of 16.
         	// These and other similar requirements are ignored so that a type reallocation can be performed.
         	if (changedEndianess) {
-        	    MipavUtil.displayError("Cannot change endianess of dicom file");
+        		MipavUtil.displayError("Cannot change dicom endianess");
         	    return;
         	} // if (changedEndianess)
         	short UNSIGNED_INTEGER = (short)0;

@@ -6,6 +6,7 @@ import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
+import gov.nih.mipav.util.MipavMath;
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
@@ -24,7 +25,7 @@ import javax.swing.*;
  * @version  1.0 February 26, 2008
  * @author   William Gandler
  */
-public class JDialogCenterOfMass extends JDialogScriptableBase implements AlgorithmInterface {
+public class JDialogCenterOfMass extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -158,6 +159,7 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
 
         if (algorithm.isCompleted()) {
             insertScriptLine();
+            setComplete(true);
         }
 
         comAlgo.finalize();
@@ -486,5 +488,92 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
             }
         }
     }
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Utilities");
+            }
+
+            public String getDescription() {
+                return new String("Finds Center of Mass");
+}
+
+            public String getDescriptionLong() {
+                return new String("Finds Center of Mass");
+            }
+
+            public String getShortLabel() {
+                return new String("CoM_2D");
+            }
+
+            public String getLabel() {
+                return new String("Center of Mass (2D)");
+            }
+
+            public String getName() {
+                return new String("Ceneter of Mass (2D)");
+            }
+        };
+    }
+
+	@Override
+	public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        setThres1(scriptParameters.getParams().getFloat("min_threshold"));
+        setThres2(scriptParameters.getParams().getFloat("max_threshold"));
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, true));
+            table.put(new ParameterFloat("min_threshold", 99999));
+            table.put(new ParameterFloat("max_threshold", -99999));
+           } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+
+	}
+
+	@Override
+	public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+        	table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        	table.put(new ParameterDouble("X-axis Center", comAlgo.getCenterOfMass()[0]));
+        	table.put(new ParameterDouble("Y-axis Center", comAlgo.getCenterOfMass()[1]));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+
+	}
+
+	@Override
+	public String getOutputImageName(String imageParamName) {
+	    /**
+	     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+	     * (which can be used to retrieve the image object from the image registry).
+	     * 
+	     * @param imageParamName The output image parameter label for which to get the image name.
+	     * @return The image name of the requested output image parameter label.
+	     */
+		return image.getImageName();
+
+	}
+
+	@Override
+	public boolean isActionComplete() {
+		return isComplete;
+	}
 
 }

@@ -14,7 +14,7 @@ import java.util.*;
 import javax.swing.*;
 import javax.xml.parsers.*;
 
-import org.apache.xerces.jaxp.SAXParserImpl;
+import org.apache.xerces.jaxp.JAXPConstants;
 import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -63,29 +63,29 @@ public class JDialogSaveMergedVOIs extends JDialogBase {
     /**
      * Axial VOI instance
      */
-    private InstanceVOI AxialVOIs;
+    private final InstanceVOI AxialVOIs;
 
     /**
      * Sagittal VOI instance
      */
-    private InstanceVOI SagittalVOIs;
+    private final InstanceVOI SagittalVOIs;
 
     /**
      * Coronal VOI instance
      */
-    private InstanceVOI CoronalVOIs;
+    private final InstanceVOI CoronalVOIs;
 
     /**
      * Ply file instance. This instance only uses the file dir and file name.
      */
-    private InstanceVOI PlyInstance;
+    private final InstanceVOI PlyInstance;
 
     /**
      * Constructor for Merging the 3 VOIs and save into one cloudy points file.
      * 
      * @param theParentFrame
      */
-    public JDialogSaveMergedVOIs(Frame theParentFrame) {
+    public JDialogSaveMergedVOIs(final Frame theParentFrame) {
         super(theParentFrame, false);
 
         init();
@@ -99,8 +99,8 @@ public class JDialogSaveMergedVOIs extends JDialogBase {
     /**
      * handler the button click evens.
      */
-    public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
+    public void actionPerformed(final ActionEvent event) {
+        final String command = event.getActionCommand();
 
         if (command.equals("ChooseAxial")) {
             AxialVOIs.selectFile();
@@ -131,7 +131,7 @@ public class JDialogSaveMergedVOIs extends JDialogBase {
         FileWriter fwp;
         File filePly = null;
         PrintWriter plyFileWriter;
-        int ptSize = AxialVOIs.myContourVector.size() + SagittalVOIs.myContourVector.size()
+        final int ptSize = AxialVOIs.myContourVector.size() + SagittalVOIs.myContourVector.size()
                 + CoronalVOIs.myContourVector.size();
 
         try {
@@ -178,7 +178,7 @@ public class JDialogSaveMergedVOIs extends JDialogBase {
 
             plyFileWriter.close();
             dispose();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             System.err.println("CAUGHT EXCEPTION WITHIN writeXML() of FileVOI");
             e.printStackTrace();
         }
@@ -193,10 +193,10 @@ public class JDialogSaveMergedVOIs extends JDialogBase {
         //setResizable(false);
         cancelFlag = false;
 
-        JPanel mainPanel = new JPanel();
+        final JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 
-        GridBagConstraints gbc = new GridBagConstraints();
+        final GridBagConstraints gbc = new GridBagConstraints();
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -206,11 +206,11 @@ public class JDialogSaveMergedVOIs extends JDialogBase {
 
         // message Panel
         msgPanel = new JPanel(new GridLayout(4, 1));
-        JLabel msg1 = new JLabel(
+        final JLabel msg1 = new JLabel(
                 "This panel is used for the prostate surface analysis. When the axial, sagittal, and coronal VOIs\n");
-        JLabel msg2 = new JLabel(
+        final JLabel msg2 = new JLabel(
                 "are extracted from each corresponding images, this panel merges the 3 VOIs into one cloudy\n");
-        JLabel msg3 = new JLabel(
+        final JLabel msg3 = new JLabel(
                 "points dataset. And, the dataset is saved as points data file of the .ply file format.\n\n");
         gbc.gridy = 1;
         msgPanel.add(msg1, gbc);
@@ -342,7 +342,7 @@ public class JDialogSaveMergedVOIs extends JDialogBase {
      * @return JPanel that has ok, cancel, and help buttons
      */
     protected JPanel buildButtons() {
-        JPanel buttonPanel = new JPanel();
+        final JPanel buttonPanel = new JPanel();
 
         buttonPanel.add(buildOKButton());
         buttonPanel.add(buildCancelButton());
@@ -428,7 +428,7 @@ class InstanceVOI {
     JFileChooser chooser = new JFileChooser();
 
     // default user interface.
-    private ViewUserInterface UI;
+    private final ViewUserInterface UI;
 
     // XML file parser handler
     MyXMLHandler handler;
@@ -442,7 +442,7 @@ class InstanceVOI {
     /*
      * Constructor to hold the basic attributes in InstanceVOI.
      */
-    public InstanceVOI(String _suffix, JTextField _textField) {
+    public InstanceVOI(final String _suffix, final JTextField _textField) {
 
         file_suffix = _suffix;
         textField = _textField;
@@ -456,7 +456,7 @@ class InstanceVOI {
         chooser.setDialogTitle("Open VOI");
 
         if (UI.getDefaultDirectory() != null) {
-            File file = new File(UI.getDefaultDirectory());
+            final File file = new File(UI.getDefaultDirectory());
 
             if (file != null) {
                 chooser.setCurrentDirectory(file);
@@ -469,7 +469,7 @@ class InstanceVOI {
 
         chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] {file_suffix}));
 
-        int returnValue = chooser.showOpenDialog(UI.getMainFrame());
+        final int returnValue = chooser.showOpenDialog(UI.getMainFrame());
 
         if (returnValue == JFileChooser.APPROVE_OPTION) {
             fileName = chooser.getSelectedFile().getName();
@@ -491,7 +491,7 @@ class InstanceVOI {
      */
     public boolean readXML() {
 
-        SAXParserFactory spf = SAXParserFactory.newInstance();
+        final SAXParserFactory spf = SAXParserFactory.newInstance();
 
         spf.setNamespaceAware(true);
         spf.setValidating(true);
@@ -499,12 +499,12 @@ class InstanceVOI {
         try {
 
             // Create a JAXP SAXParser
-            SAXParser saxParser = spf.newSAXParser();
+            final SAXParser saxParser = spf.newSAXParser();
 
             // Validation part 2a: set the schema language if necessary
-            saxParser.setProperty(SAXParserImpl.JAXP_SCHEMA_LANGUAGE, W3C_XML_SCHEMA);
+            saxParser.setProperty(JAXPConstants.JAXP_SCHEMA_LANGUAGE, InstanceVOI.W3C_XML_SCHEMA);
 
-            URL xsdURL = getClass().getClassLoader().getResource("voi_coord.xsd");
+            final URL xsdURL = getClass().getClassLoader().getResource("voi_coord.xsd");
 
             if (xsdURL == null) {
                 MipavUtil.displayError("Unable to find VOI XML schema.");
@@ -512,10 +512,10 @@ class InstanceVOI {
                 return false;
             }
 
-            saxParser.setProperty(SAXParserImpl.JAXP_SCHEMA_SOURCE, xsdURL.toExternalForm());
+            saxParser.setProperty(JAXPConstants.JAXP_SCHEMA_SOURCE, xsdURL.toExternalForm());
 
             // Get the encapsulated SAX XMLReader
-            XMLReader xmlReader = saxParser.getXMLReader();
+            final XMLReader xmlReader = saxParser.getXMLReader();
 
             // Set the ContentHandler of the XMLReader
             handler = new MyXMLHandler();
@@ -529,7 +529,7 @@ class InstanceVOI {
 
             myContourVector = handler.getContourVector();
 
-        } catch (Exception error) {
+        } catch (final Exception error) {
             MipavUtil.displayError("Error: " + error.getMessage());
 
             return false;
@@ -549,7 +549,7 @@ class InstanceVOI {
 class MyXMLHandler extends DefaultHandler {
 
     /** The contours of the VOI we are building. */
-    private Vector contourVector;
+    private final Vector contourVector;
 
     /** The current XML tag we are parsing. */
     private String currentKey;
@@ -585,8 +585,8 @@ class MyXMLHandler extends DefaultHandler {
      * @param start int
      * @param length int
      */
-    public void characters(char[] ch, int start, int length) {
-        String s = new String(ch, start, length);
+    public void characters(final char[] ch, final int start, final int length) {
+        final String s = new String(ch, start, length);
 
         // don't need to de-entity-ize the string because the parser does
         // that automatically
@@ -605,7 +605,7 @@ class MyXMLHandler extends DefaultHandler {
      * 
      * @throws SAXException if there is a problem with the parser
      */
-    public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
+    public void endElement(final String namespaceURI, final String localName, final String qName) throws SAXException {
         currentKey = localName;
 
         if (currentKey.equals("Unique-ID")) {
@@ -614,7 +614,7 @@ class MyXMLHandler extends DefaultHandler {
             Integer.parseInt(elementBuffer);
         } else if (currentKey.equals("Color")) {
             int a = 0, r = 0, g = 0, b = 0;
-            StringTokenizer st = new StringTokenizer(elementBuffer, ",");
+            final StringTokenizer st = new StringTokenizer(elementBuffer, ",");
 
             try {
                 a = Integer.parseInt(st.nextToken());
@@ -623,7 +623,7 @@ class MyXMLHandler extends DefaultHandler {
                 b = Integer.parseInt(st.nextToken());
 
                 // voi.setColor(new Color(r, g, b, a));
-            } catch (NumberFormatException ex) {
+            } catch (final NumberFormatException ex) {
                 Preferences.debug("Point is incorrectly formatted: " + ex.toString() + "\n", Preferences.DEBUG_FILEIO);
             }
         } else if (currentKey.equals("Thickness")) {
@@ -632,14 +632,14 @@ class MyXMLHandler extends DefaultHandler {
             sliceNumber = Integer.parseInt(elementBuffer);
         } else if (currentKey.equals("Pt")) {
             float x = 0f, y = 0f, z = 0f;
-            StringTokenizer st = new StringTokenizer(elementBuffer, ",");
+            final StringTokenizer st = new StringTokenizer(elementBuffer, ",");
 
             try {
                 x = Float.parseFloat(st.nextToken());
                 y = Float.parseFloat(st.nextToken());
                 z = Float.parseFloat(st.nextToken());
                 contourVector.addElement(new Vector3f(x, y, z));
-            } catch (NumberFormatException nfex) {
+            } catch (final NumberFormatException nfex) {
                 Preferences.debug("Error reading pt: " + nfex.toString() + "\n", Preferences.DEBUG_FILEIO);
             }
         } else if (currentKey.equals("Contour")) {
@@ -672,7 +672,8 @@ class MyXMLHandler extends DefaultHandler {
      * 
      * @throws SAXException if there is a problem with the parser
      */
-    public void startElement(String namespaceURI, String localName, String qName, Attributes atts) throws SAXException {
+    public void startElement(final String namespaceURI, final String localName, final String qName,
+            final Attributes atts) throws SAXException {
         currentKey = localName;
         elementBuffer = "";
 
@@ -691,7 +692,6 @@ class MyXMLHandler extends DefaultHandler {
  * SAX docs for more info.
  * 
  * @see FileOME
- * @see FileProject
  * @see FileVOI
  * @see FileXML
  */
@@ -707,8 +707,8 @@ class XMLErrorHandler implements ErrorHandler {
      * 
      * @throws SAXException passed up with the parse exception info
      */
-    public void error(SAXParseException spe) throws SAXException {
-        String message = "Error: " + getParseExceptionInfo(spe);
+    public void error(final SAXParseException spe) throws SAXException {
+        final String message = "Error: " + getParseExceptionInfo(spe);
 
         throw new SAXException(message);
     }
@@ -720,8 +720,8 @@ class XMLErrorHandler implements ErrorHandler {
      * 
      * @throws SAXException passed up with the parse exception info
      */
-    public void fatalError(SAXParseException spe) throws SAXException {
-        String message = "Fatal Error: " + getParseExceptionInfo(spe);
+    public void fatalError(final SAXParseException spe) throws SAXException {
+        final String message = "Fatal Error: " + getParseExceptionInfo(spe);
 
         throw new SAXException(message);
     }
@@ -733,7 +733,7 @@ class XMLErrorHandler implements ErrorHandler {
      * 
      * @throws SAXException not reported for warnings
      */
-    public void warning(SAXParseException spe) throws SAXException {
+    public void warning(final SAXParseException spe) throws SAXException {
         Preferences.debug("Warning: " + getParseExceptionInfo(spe), Preferences.DEBUG_FILEIO);
     }
 
@@ -744,14 +744,14 @@ class XMLErrorHandler implements ErrorHandler {
      * 
      * @return a string containing information about the exception
      */
-    private String getParseExceptionInfo(SAXParseException spe) {
+    private String getParseExceptionInfo(final SAXParseException spe) {
         String systemId = spe.getSystemId();
 
         if (systemId == null) {
             systemId = "null";
         }
 
-        String info = "URI=" + systemId + " Line=" + spe.getLineNumber() + ": " + spe.getMessage();
+        final String info = "URI=" + systemId + " Line=" + spe.getLineNumber() + ": " + spe.getMessage();
 
         return info;
     }

@@ -1,12 +1,17 @@
 package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.ScriptableActionInterface;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJColorChooser;
 import gov.nih.mipav.view.ViewJComponentEditImage;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewUserInterface;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -28,7 +33,7 @@ import javax.swing.JTextField;
  *
  *
  */
-public class JDialogGenerateGrid extends JDialogBase {
+public class JDialogGenerateGrid extends JDialogScriptableBase {
 	
 	private String unitsStr;
 	
@@ -50,15 +55,53 @@ public class JDialogGenerateGrid extends JDialogBase {
 	
 	private ViewJColorChooser colorChooser;
 	
+	private int zDim, yDim, xDim;
+	
+	private float resX, resY;
+	
+	private float numVertical, numHorizontal; 
+	
+	private int verticalSpacing, horizontalSpacing;
+	
+	private ModelImage im;
+	
+    /** DOCUMENT ME! */
+    private ViewUserInterface userInterface;
+
+	
+	   /**
+     * Empty constructor needed for dynamic instantiation (used during scripting).
+     */
+	public JDialogGenerateGrid() {}
 	
 	public JDialogGenerateGrid(Frame theParentFrame, ViewJComponentEditImage componentImage) {
         super(theParentFrame, false);
+        userInterface = ViewUserInterface.getReference();
         this.componentImage = componentImage;
         type = componentImage.getActiveImage().getType();
         isColor = componentImage.getActiveImage().isColorImage();
         width = componentImage.getGridSpacingX();
         height = componentImage.getGridSpacingY();
         unitsStr = FileInfoBase.getUnitsOfMeasureAbbrevStr(componentImage.getActiveImage().getFileInfo()[0].getUnitsOfMeasure(0));
+        
+    	xDim = componentImage.getActiveImage().getExtents()[0];
+        yDim = componentImage.getActiveImage().getExtents()[1];
+        
+        if (componentImage.getActiveImage().is3DImage())
+        	zDim = componentImage.getActiveImage().getExtents()[2];
+        else
+        	zDim = 1;
+
+        resX = componentImage.getActiveImage().getResolutions(0)[0];
+        resY = componentImage.getActiveImage().getResolutions(0)[1];
+
+        numVertical = (xDim * resX) / width;
+        numHorizontal = (yDim * resY) / height;
+        
+
+        verticalSpacing = (int)((xDim / numVertical) * componentImage.getZoomX());
+        horizontalSpacing = (int)((yDim / numHorizontal) * componentImage.getZoomY());
+        
         init();
         
         
@@ -178,6 +221,7 @@ public class JDialogGenerateGrid extends JDialogBase {
         
 
 	public void actionPerformed(ActionEvent e) {
+		
 		String command = e.getActionCommand();
 		if(command.equalsIgnoreCase("OK")) {
 			if(setVariables()) {
@@ -237,26 +281,81 @@ public class JDialogGenerateGrid extends JDialogBase {
 	
 	
 	  protected void writeGridOverlay() {
-	    	int xDim = componentImage.getActiveImage().getExtents()[0];
-	        int yDim = componentImage.getActiveImage().getExtents()[1];
-	        int zDim = componentImage.getActiveImage().getExtents()[2];
 
-	        float resX = componentImage.getActiveImage().getResolutions(0)[0];
-	        float resY = componentImage.getActiveImage().getResolutions(0)[1];
 
-	        float numVertical = (xDim * resX) / width;
-	        float numHorizontal = (yDim * resY) / height;
-	        
-	        
-	        
-	 
-	        
-
-	        int verticalSpacing = (int)((xDim / numVertical) * componentImage.getZoomX());
-	        int horizontalSpacing = (int)((yDim / numHorizontal) * componentImage.getZoomY());
-
-	        ModelImage im = (ModelImage)componentImage.getActiveImage().clone();
+	        im = (ModelImage)componentImage.getActiveImage().clone();
 	        String name = ((ModelImage)componentImage.getActiveImage()).getImageName();
+	        im.setImageName(name + "_grid");
+	        for(int z=0;z<zDim;z++) {
+	        	for(int y=0;y<yDim;y++) {
+	        		for(int x=0;x<xDim;x++) {
+	        			int modX  = (x+1)%verticalSpacing;
+	        			int modY  = (y+1)%horizontalSpacing;
+	        
+	        			if(x!=0 && modX==0) {
+	        				if(isColor) {
+	        					im.setC(x, y, z, 1, intensityR);
+	        					im.setC(x, y, z, 2, intensityG);
+	        					im.setC(x, y, z, 3, intensityB);
+	        				}else {
+	        					im.set(x,y,z, intensity);
+	        				}
+	        			}
+	        
+	        
+	        			if(y!=0 && modY==0) {
+	        				if(isColor) {
+	        					im.setC(x, y, z, 1, intensityR);
+	        					im.setC(x, y, z, 2, intensityG);
+	        					im.setC(x, y, z, 3, intensityB);
+	        				}else {
+	        					im.set(x,y,z, intensity);
+	        				}
+	 
+	        			}
+	        
+
+	        		}
+	        	}
+	        }
+	        im.calcMinMax();
+	        setComplete(true);
+	        new ViewJFrameImage(im);
+	        insertScriptLine();
+	        dispose();
+
+	    }
+
+
+
+
+	@Override
+	protected void callAlgorithm() {
+		
+        type = im.getType();
+        isColor = im.isColorImage();
+        unitsStr = FileInfoBase.getUnitsOfMeasureAbbrevStr(im.getFileInfo()[0].getUnitsOfMeasure(0));
+        
+    	xDim = im.getExtents()[0];
+        yDim = im.getExtents()[1];
+        
+        if (im.is3DImage())
+        	zDim = im.getExtents()[2];
+        else
+        	zDim = 1;
+        	
+        
+
+        resX = im.getResolutions(0)[0];
+        resY = im.getResolutions(0)[1];
+
+        numVertical = (xDim * resX) / width;
+        numHorizontal = (yDim * resY) / height;
+        
+
+        verticalSpacing = (int)(xDim / numVertical);
+        horizontalSpacing = (int)(yDim / numHorizontal);
+        String name = im.getImageName();
 	        im.setImageName(name + "_grid");
 	        for(int z=0;z<zDim;z++) {
 	        	for(int y=0;y<yDim;y++) {
@@ -291,9 +390,157 @@ public class JDialogGenerateGrid extends JDialogBase {
 	        	}
 	        }
 	        im.calcMinMax();
-	        new ViewJFrameImage(im);
+        setComplete(true);
 	        dispose();
 	        
+		
 	    }
+
+
+
+
+	@Override
+	protected void setGUIFromParams() {
+		im = scriptParameters.retrieveInputImage();
+		userInterface = ViewUserInterface.getReference();
+		parentFrame = im.getParentFrame();
+		
+		width = scriptParameters.getParams().getFloat("width");
+		height = scriptParameters.getParams().getFloat("height");
+		intensity = scriptParameters.getParams().getFloat("grid_value");
+			
+		
+}
+
+
+
+
+	@Override
+	protected void storeParamsFromGUI() throws ParserException {
+		scriptParameters.storeInputImage(componentImage.getActiveImage());
+		scriptParameters.storeOutputImageParams(im, true);
+		try {
+	        scriptParameters.getParams().put(ParameterFactory.newParameter("width", width));
+	        scriptParameters.getParams().put(ParameterFactory.newParameter("height", height));
+	        scriptParameters.getParams().put(ParameterFactory.newParameter("grid_value", intensity));
+			} catch (ParserException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		
+	}
+	
+	protected void doPostAlgorithmActions(){
+		AlgorithmParameters.storeImageInRunner(im);
+	}
+	
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Utilities");
+            }
+
+            public String getDescription() {
+                return new String("Adds a grid to image.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Adds a grid to image.");
+            }
+
+            public String getShortLabel() {
+                return new String("Grid");
+            }
+
+            public String getLabel() {
+                return new String("Generate Grid");
+            }
+
+            public String getName() {
+                return new String("Generate Grid");
+            }
+        };
+    }
+    
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+        
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterFloat("width"));
+            table.put(new ParameterFloat("height"));
+            table.put(new ParameterFloat("grid_value"));
+            } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+    
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+    
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            if (im  != null) {
+                // algo produced a new result image
+                return im.getImageName();
+            }
+            }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+    
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
+    }
+
+
+
+
+
 
 }

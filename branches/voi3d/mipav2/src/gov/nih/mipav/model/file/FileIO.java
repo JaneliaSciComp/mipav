@@ -483,8 +483,7 @@ public class FileIO {
             bufferFloat = new float[length];
             if (refFileInfo.getDataType() == ModelStorageBase.UINTEGER) {
             	bufferInt = new int[length];
-            }
-            else {
+            } else {
             bufferShort = new short[length];
             }
         } catch (final OutOfMemoryError error) {
@@ -1639,7 +1638,7 @@ public class FileIO {
         boolean niftiCompressed = false;
         if (unzip || gunzip || bz2unzip) {
         	//if NIFTI....dont unzip/gunzip/bz2 and write out to temp dir here..we will directly stream in FileNIFTI
-        	String sub = fileName.substring(0, index);
+            final String sub = fileName.substring(0, index);
         	if(sub.substring(sub.lastIndexOf(".")+1, sub.length()).equalsIgnoreCase("nii")) {
         		niftiCompressed = true;
         	}else {
@@ -1663,7 +1662,8 @@ public class FileIO {
                     try {
                         fis = new FileInputStream(file);
                     } catch (final FileNotFoundException e) {
-                        MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for " + fileName);
+                        MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for "
+                                + fileName);
                         return null;
                     }
 
@@ -1718,7 +1718,8 @@ public class FileIO {
                     try {
                         fis = new FileInputStream(file);
                     } catch (final FileNotFoundException e) {
-                        MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for " + fileName);
+                        MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for "
+                                + fileName);
                         return null;
                     }
 
@@ -1774,7 +1775,8 @@ public class FileIO {
                     try {
                         fis = new FileInputStream(file);
                     } catch (final FileNotFoundException e) {
-                        MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for " + fileName);
+                        MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for "
+                                + fileName);
                         return null;
                     }
 
@@ -1841,8 +1843,6 @@ public class FileIO {
         		
         	}
         	
-        	
-        	
         }
         if(niftiCompressed) {
         	fileType = FileUtility.NIFTI;
@@ -1869,9 +1869,6 @@ public class FileIO {
             fileType = FileIO.chkMultiFile(fileType, multiFile); // for multifile support...
         }
          
-
-        
-
         try {
 
             switch (fileType) {
@@ -4003,45 +4000,6 @@ public class FileIO {
     }
 
     /**
-     * Writes project information to a file.
-     * 
-     * @param projectInfo The project information to be written to the file
-     * @param options Write options that control aspects of writing the project information.
-     * 
-     * @return True if the file was successfully saved to a file.
-     */
-    public boolean writeProject(final FileInfoProject projectInfo, final FileWriteOptions options) {
-        FileProject projectFile;
-
-        try {
-            projectFile = new FileProject(options.getFileName(), options.getFileDirectory());
-
-            // System.out.println( "writing project" );
-            projectFile.writeProject(projectInfo, options.getFileName(), options.getFileDirectory());
-        } catch (final IOException error) {
-
-            if ( !quiet) {
-                MipavUtil.displayError("FileIO: " + error);
-            }
-
-            error.printStackTrace();
-
-            return false;
-        } catch (final OutOfMemoryError error) {
-
-            if ( !quiet) {
-                MipavUtil.displayError("FileIO: " + error);
-            }
-
-            error.printStackTrace();
-
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
      * Provides a method of conversion from <code>FileInfoDicom</CODE> to <CODE>FileInfoImageXML</CODE>, by filling
      * the <CODE>FileInfoImageXML</CODE> with sets of chosen image information (from the DICOM tags).
      * 
@@ -4082,15 +4040,17 @@ public class FileIO {
                 final String keyStr = e.nextElement();
                 final FileDicomKey key = new FileDicomKey(keyStr);
                 if(DicomDictionary.getInfo(key) != null) {
-                	FileDicomTag tag = new FileDicomTag(DicomDictionary.getInfo(key));
+                    final FileDicomTag tag = new FileDicomTag(DicomDictionary.getInfo(key));
                     try {
                     	tag.setValue(mincTags.get(keyStr));
                     	tags2save.put(key, tag);
-                    }catch(Exception ex) {
-                    	Preferences.debug("Error in setting value: " + mincTags.get(keyStr)+ " of tag: " + keyStr + "\n",Preferences.DEBUG_FILEIO);
+                    } catch (final Exception ex) {
+                        Preferences.debug("Error in setting value: " + mincTags.get(keyStr) + " of tag: " + keyStr
+                                + "\n", Preferences.DEBUG_FILEIO);
                     }
                 }else {
-                	Preferences.debug("Tag not in Dicom Dictionary..skipping over tag: " + keyStr + "\n",Preferences.DEBUG_FILEIO);
+                    Preferences.debug("Tag not in Dicom Dictionary..skipping over tag: " + keyStr + "\n",
+                            Preferences.DEBUG_FILEIO);
                 }
                 
             }
@@ -7729,7 +7689,8 @@ public class FileIO {
      * 
      * @return The image that was read in, or null if failure.
      */
-    private ModelImage readNIFTI(final String fileName, final String fileDir, final boolean one, final boolean niftiCompressed) {
+    private ModelImage readNIFTI(final String fileName, final String fileDir, final boolean one,
+            final boolean niftiCompressed) {
         ModelImage image = null;
         FileNIFTI imageFile;
 
@@ -9880,7 +9841,6 @@ public class FileIO {
 
         FileAnalyze analyzeFile;
 
-
         try { // Construct a new file object
             analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
             createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
@@ -10127,7 +10087,8 @@ public class FileIO {
             return false;
         }
 
-        progressBar.updateValue(Math.round((float) (sliceNumber - options.getBeginSlice()) / (options.getEndSlice()-options.getBeginSlice()) * 100), false);
+        progressBar.updateValue(Math.round((float) (sliceNumber - options.getBeginSlice())
+                / (options.getEndSlice() - options.getBeginSlice()) * 100), false);
 
         // create the directory
         fileName = options.getFileName();
@@ -10316,7 +10277,7 @@ public class FileIO {
             int APIndex;
             int ISIndex;
             boolean increaseRes;
-            int originFlip[] = new int[3];
+            final int originFlip[] = new int[3];
             originFlip[0] = 1;
             originFlip[1] = 1;
             originFlip[2] = 1;
@@ -10331,7 +10292,7 @@ public class FileIO {
                 final double[] axialOrigin = new double[3];
                 TransMatrix matrix = fileDicom.getPatientOrientation();
                 if (matrix != null) {
-	                TransMatrix transposeMatrix = new TransMatrix(4);
+                    final TransMatrix transposeMatrix = new TransMatrix(4);
 	            	for (int i = 0; i < 4; i++) {
 	            		for (int j = 0; j < 4; j ++) {
 	            			transposeMatrix.set(i, j, matrix.get(j, i));
@@ -10339,13 +10300,12 @@ public class FileIO {
 	            	}
 	            	matrix = null;
 	            	matrix = transposeMatrix;
-                }
-                else  {
+                } else {
                     matrix = originalImageMatrix;
                 }
 
                 final float[] imageOrg = originalFileInfo.getOrigin();
-                double dicomOrigin[] = new double[imageOrg.length];
+                final double dicomOrigin[] = new double[imageOrg.length];
 
                 for (int k = 0; k < imageOrg.length; k++) {
                     dicomOrigin[k] = imageOrg[k];
@@ -10361,30 +10321,25 @@ public class FileIO {
                 	if (originalFileInfo.getAxisOrientation()[i] == FileInfoBase.ORI_R2L_TYPE) {
                 		originFlip[0] = i;
                 		RLIndex = 0;
-                	}
-                	else if (originalFileInfo.getAxisOrientation()[i] == FileInfoBase.ORI_L2R_TYPE) {
+                    } else if (originalFileInfo.getAxisOrientation()[i] == FileInfoBase.ORI_L2R_TYPE) {
                 		originFlip[0] = -1;
                 		RLIndex = i;
                 		if (i == 2) {
                 		    increaseRes = false;
                 		}
-                	}
-                	else if (originalFileInfo.getAxisOrientation()[i] == FileInfoBase.ORI_A2P_TYPE) {
+                    } else if (originalFileInfo.getAxisOrientation()[i] == FileInfoBase.ORI_A2P_TYPE) {
                 		APIndex = i;
                 		originFlip[1] = 1;
-                	}
-                	else if (originalFileInfo.getAxisOrientation()[i] == FileInfoBase.ORI_P2A_TYPE) {
+                    } else if (originalFileInfo.getAxisOrientation()[i] == FileInfoBase.ORI_P2A_TYPE) {
                 		APIndex = i;
                 		originFlip[1] = -1;
                 		if (i == 2) {
                 			increaseRes = false;
                 		}
-                	}
-                	else if (originalFileInfo.getAxisOrientation()[i] == FileInfoBase.ORI_I2S_TYPE) {
+                    } else if (originalFileInfo.getAxisOrientation()[i] == FileInfoBase.ORI_I2S_TYPE) {
                 		ISIndex = i;
                 		originFlip[2] = 1;
-                	}
-                	else if (originalFileInfo.getAxisOrientation()[i] == FileInfoBase.ORI_S2I_TYPE) {
+                    } else if (originalFileInfo.getAxisOrientation()[i] == FileInfoBase.ORI_S2I_TYPE) {
                 		ISIndex = i;
                 	    originFlip[2] = -1;
                 		if (i == 2) {
@@ -10399,8 +10354,7 @@ public class FileIO {
                 slLoc = axialOrigin[2]*originFlip[2];
                 if (increaseRes) {
                 	slLoc += sliceResolution*(sliceNumber - options.getBeginSlice());
-                }
-                else {
+                } else {
                 	slLoc -= sliceResolution*(sliceNumber - options.getBeginSlice());
                 }
 
@@ -10480,7 +10434,6 @@ public class FileIO {
                 ((FileInfoDicom) (fBase)).getTagTable().setValue("0020,1041", Double.toString(slLoc),
                         Double.toString(slLoc).length());
                 
-
                 final String tmpStr = new String(Float.toString((float) dicomOrigin[RLIndex]) + "\\"
                         + Float.toString((float) dicomOrigin[APIndex]) + "\\" 
                         + Float.toString((float) dicomOrigin[ISIndex]));
@@ -10844,7 +10797,7 @@ public class FileIO {
             int APIndex;
             int ISIndex;
             boolean increaseRes;
-            int originFlip[] = new int[3];
+            final int originFlip[] = new int[3];
             originFlip[0] = 1;
             originFlip[1] = 1;
             originFlip[2] = 1;
@@ -10855,7 +10808,7 @@ public class FileIO {
                 final double[] axialOrigin = new double[3];
                 TransMatrix matrix = myFileInfo.getPatientOrientation();
                 if (matrix != null) {
-	                TransMatrix transposeMatrix = new TransMatrix(4);
+                    final TransMatrix transposeMatrix = new TransMatrix(4);
 	            	for (i = 0; i < 4; i++) {
 	            		for (int j = 0; j < 4; j ++) {
 	            			transposeMatrix.set(i, j, matrix.get(j, i));
@@ -10863,13 +10816,12 @@ public class FileIO {
 	            	}
 	            	matrix = null;
 	            	matrix = transposeMatrix;
-                }
-                else {
+                } else {
                     matrix = image.getMatrix();
                 }
 
                 final float[] imageOrg = image.getFileInfo(0).getOrigin();
-                double dicomOrigin[] = new double[imageOrg.length];
+                final double dicomOrigin[] = new double[imageOrg.length];
 
                 for (int k = 0; k < imageOrg.length; k++) {
                     dicomOrigin[k] = imageOrg[k];
@@ -10885,30 +10837,25 @@ public class FileIO {
                 	if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_R2L_TYPE) {
                 		originFlip[0] = i;
                 		RLIndex = 0;
-                	}
-                	else if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_L2R_TYPE) {
+                    } else if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_L2R_TYPE) {
                 		originFlip[0] = -1;
                 		RLIndex = i;
                 		if (i == 2) {
                 		    increaseRes = false;
                 		}
-                	}
-                	else if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_A2P_TYPE) {
+                    } else if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_A2P_TYPE) {
                 		APIndex = i;
                 		originFlip[1] = 1;
-                	}
-                	else if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_P2A_TYPE) {
+                    } else if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_P2A_TYPE) {
                 		APIndex = i;
                 		originFlip[1] = -1;
                 		if (i == 2) {
                 			increaseRes = false;
                 		}
-                	}
-                	else if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_I2S_TYPE) {
+                    } else if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_I2S_TYPE) {
                 		ISIndex = i;
                 		originFlip[2] = 1;
-                	}
-                	else if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_S2I_TYPE) {
+                    } else if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_S2I_TYPE) {
                 		ISIndex = i;
                 	    originFlip[2] = -1;
                 		if (i == 2) {
@@ -11001,12 +10948,10 @@ public class FileIO {
                     
                     if (increaseRes) {
                     	slLoc += sliceResolution;
-                    }
-                    else {
+                    } else {
                     	slLoc -= sliceResolution;
                     }
                     
-
                     final String tmpStr = new String(Float.toString((float) dicomOrigin[RLIndex]) + "\\"
                             + Float.toString((float) dicomOrigin[APIndex]) + "\\" 
                             + Float.toString((float) dicomOrigin[ISIndex]));
