@@ -2519,7 +2519,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             aaiCrossingPoints[i] = new int[iNumPoints];
         }
 
-        kVOI.outlineRegion(aaiCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax);
+        VOIBase.outlineRegion(aaiCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax, kVolumePts);
         
 
         int numPts = 0;

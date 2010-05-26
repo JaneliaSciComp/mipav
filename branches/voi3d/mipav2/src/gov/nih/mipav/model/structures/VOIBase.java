@@ -2046,7 +2046,65 @@ public abstract class VOIBase extends Vector<Vector3f> {
 
                     double dYCross = (dM * iColumn) + dB;
                     double dRound = 0.5;
-                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (dDY < 0) ? (int) (dYCross - dRound) :
+                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (dYCross < 0) ? (int) (dYCross - dRound) :
+                        (int) (dYCross + dRound);
+                    aiNumCrossings[iIndex]++;
+                }
+            }
+
+            /* sort the set of crossings for this column: */
+            sortCrossingPoints(aaiCrossingPoints[iIndex], aiNumCrossings[iIndex]);
+        }
+        aaadEdgeList = null;
+    }
+
+
+
+    public static void outlineRegion(int[][] aaiCrossingPoints, int[] aiNumCrossings,
+            int iXMin, int iYMin, int iXMax, int iYMax, Vector3f[] akPoints )
+    {        
+        int iNumPts = akPoints.length;
+        double dNudge = 0.1;       
+        double[][][] aaadEdgeList = new double[iNumPts][2][2];
+
+        for (int i = 0; i < (iNumPts - 1); i++) {
+            aaadEdgeList[i][0][0] = akPoints[i].X - dNudge;
+            aaadEdgeList[i][0][1] = akPoints[i].Y - dNudge;
+            aaadEdgeList[i][1][0] = akPoints[i+1].X - dNudge;
+            aaadEdgeList[i][1][1] = akPoints[i+1].Y - dNudge;
+        }
+
+        /*
+         * Compute the crossing points for this column and produce spans.
+         */
+        for (int iColumn = iXMin; iColumn < iXMax; iColumn++) {
+            int iIndex = iColumn - iXMin;
+
+            /* for each edge, figure out if it crosses this column and add its
+             * crossing point to the list if so. */
+            aiNumCrossings[iIndex] = 0;
+
+            for (int iPoint = 0; iPoint < (iNumPts - 1); iPoint++) {
+                double dX0 = aaadEdgeList[iPoint][0][0];
+                double dX1 = aaadEdgeList[iPoint][1][0];
+                double dY0 = aaadEdgeList[iPoint][0][1];
+                double dY1 = aaadEdgeList[iPoint][1][1];
+                double dMinX = (dX0 <= dX1) ? dX0 : dX1;
+                double dMaxX = (dX0 > dX1) ? dX0 : dX1;
+
+                if ((dMinX < iColumn) && (dMaxX > iColumn)) {
+
+                    /* The edge crosses this column, so compute the
+                     * intersection.
+                     */
+                    double dDX = dX1 - dX0;
+                    double dDY = dY1 - dY0;
+                    double dM = (dDX == 0) ? 0 : (dDY / dDX);
+                    double dB = (dDX == 0) ? 0 : (((dX1 * dY0) - (dY1 * dX0)) / dDX);
+
+                    double dYCross = (dM * iColumn) + dB;
+                    double dRound = 0.5;
+                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (dYCross < 0) ? (int) (dYCross - dRound) :
                         (int) (dYCross + dRound);
                     aiNumCrossings[iIndex]++;
                 }
@@ -2067,7 +2125,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @param  aiList        list of positions
      * @param  iNumElements  number of positions.
      */
-    protected void sortCrossingPoints(int[] aiList, int iNumElements) {
+    protected static void sortCrossingPoints(int[] aiList, int iNumElements) {
         boolean bDidSwap = true;
 
         while (bDidSwap) {
