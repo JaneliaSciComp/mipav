@@ -135,7 +135,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
         //is equal to blank string if image is not run-time defined
         this.fileName = fileName;
         this.imageDir = srcImg.getImageDirectory();
-        
+
         tabs = new ArrayList<JPanel>();
     }
     
@@ -688,6 +688,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		
 		//if this is standalone (app frame hidden), add the tabbedpane from the messageframe to the bottom of the plugin's frame
 		if (ViewUserInterface.getReference().isAppFrameVisible()) {
+			ViewUserInterface.getReference().getMessageFrame().append("Working on GUI2", ViewJFrameMessage.DATA);
+			customPane.setBackground(ViewUserInterface.getReference().getMainFrame().getBackground());
+			customPane.getContentPane().setBackground(ViewUserInterface.getReference().getMainFrame().getBackground());
 			customPane.getContentPane().add(mainPanel, BorderLayout.CENTER);
 		} else {
 			JTabbedPane messageTabs = ViewUserInterface.getReference().getMessageFrame().getTabbedPane();
