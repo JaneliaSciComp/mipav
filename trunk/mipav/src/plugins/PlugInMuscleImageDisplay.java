@@ -36,6 +36,12 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
+/**
+ * 
+ * 
+ * @author Justin Senseney (senseneyj@mail.nih.gov)
+ *
+ */
 public class PlugInMuscleImageDisplay extends ViewJFrameImage implements AlgorithmInterface {
     
     //~ Static fields --------------------------------------------------------------------------------------------------
@@ -1862,17 +1868,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		
 		//if this is standalone (app frame hidden), add the tabbedpane from the messageframe to the bottom of the plugin's frame
 		if (ViewUserInterface.getReference().isAppFrameVisible()) {
-			setLayout(new GridBagLayout());
-			GridBagConstraints gbc = new GridBagConstraints();
-			gbc.gridx = 0;
-			gbc.gridy = 0;
-			gbc.weightx = 1;
-			gbc.weighty = 1;
-			System.err.println("Here");
-			Frame f = new Frame();
-			f.add(mainPanel);
-			f.setVisible(true);
-			f.setSize(new Dimension(1000, 600));
+			ViewUserInterface.getReference().getMessageFrame().append("Working on GUI", ViewJFrameMessage.DATA);
+			mainPanel.setBackground(ViewUserInterface.getReference().getMainFrame().getBackground());
+			getContentPane().setBackground(ViewUserInterface.getReference().getMainFrame().getBackground());
+			setBackground(ViewUserInterface.getReference().getMainFrame().getBackground());
+			getContentPane().add(mainPanel, BorderLayout.NORTH);
+			getContentPane().update(getContentPane().getGraphics());
+			getContentPane().validate();
+			validate();
 			pack();
 		} else {
 			JTabbedPane messageTabs = ViewUserInterface.getReference().getMessageFrame().getTabbedPane();
@@ -3823,7 +3826,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 						"\t\t\tMean H: ").append(dec.format(meanLeanH)+"\nTotal ").append(type).append(": ").append(dec.format(totalAreaCount)).append(
 						"\t\t\tMean H: ").append(dec.format(meanTotalH) + "\n\n");
 						
-						if(showPerSliceCalc.isSelected() && multipleSlices) {
+						if(multipleSlices && showPerSliceCalc.isSelected()) {
 							for(int i=0; i<getActiveImage().getExtents()[2]; i++) {
 								build.append("Slice ").append(i).append(":\n").append("Fat Area: ").append(dec.format(temp.getFatArea(i))).append(
 								"\t\t\t\tMean H: ").append(dec.format(temp.getMeanFatH(i))).append("\nLean Area: ").append(dec.format(temp.getLeanArea(i))).append(
@@ -4406,17 +4409,19 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			int resultUnitLoc = FileInfoBase.getUnitsOfMeasureFromStr(((AnalysisDialogPrompt)tabs[resultTabLoc]).getSelectedOutput());
 	        int res0Unit = getActiveImage().getUnitsOfMeasure(0);
 	        int res1Unit = getActiveImage().getUnitsOfMeasure(1);
-	        int res2Unit = getActiveImage().getUnitsOfMeasure(2);
-	        
+	        int res2Unit; //only used in 3D images
+
 	        float xRes = (float) (getActiveImage().getResolutions(0)[0] * ModelImage.getConversionFactor(resultUnitLoc, res0Unit));
 	        float yRes = (float) (getActiveImage().getResolutions(0)[1] * ModelImage.getConversionFactor(resultUnitLoc, res1Unit));
-	        float zRes = (float) (getActiveImage().getResolutions(0)[2] * ModelImage.getConversionFactor(resultUnitLoc, res2Unit));
-			
-			//TODO: convert the .1 for other choices of units
+	        float zRes; //only used in 3D images
+	        
 			wholeMultiplier = sliceMultiplier = xRes*yRes;
 			//for 3D images, also need to include z-resolution
-			if(multipleSlices)
+			if(multipleSlices) {
+				res2Unit = getActiveImage().getUnitsOfMeasure(2);
+				zRes = (float) (getActiveImage().getResolutions(0)[2] * ModelImage.getConversionFactor(resultUnitLoc, res2Unit));
 				wholeMultiplier *= zRes;
+			}
 			System.out.println("Whole Multiplier: "+wholeMultiplier+"\tSliceMultiplier: "+sliceMultiplier);
 			PlugInSelectableVOI temp = voiBuffer.get(name);
 			children = temp.getChildren();
