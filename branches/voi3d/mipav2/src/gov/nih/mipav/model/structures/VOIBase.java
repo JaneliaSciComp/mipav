@@ -1811,22 +1811,65 @@ public abstract class VOIBase extends Vector<Vector3f> {
             return;
         }
         getImageBoundingBox();
-        int iXMin = (int)(m_akImageMinMax[0].X);
-        int iXMax = (int)(m_akImageMinMax[1].X);
+        if ( m_iPlane == ZPLANE )
+        {
+            int iXMin = (int)(m_akImageMinMax[0].X);
+            int iXMax = (int)(m_akImageMinMax[1].X);
 
-        int iYMin = (int)(m_akImageMinMax[0].Y);
-        int iYMax = (int)(m_akImageMinMax[1].Y);
+            int iYMin = (int)(m_akImageMinMax[0].Y);
+            int iYMax = (int)(m_akImageMinMax[1].Y);
 
-        int[][] aaiCrossingPoints = new int[iXMax - iXMin + 1][];
-        int[] aiNumCrossings = new int[iXMax - iXMin + 1];
+            int[][] aaiCrossingPoints = new int[iXMax - iXMin + 1][];
+            int[] aiNumCrossings = new int[iXMax - iXMin + 1];
 
-        for (int i = 0; i < (iXMax - iXMin + 1); i++) {
-            aaiCrossingPoints[i] = new int[size()+2];
+            for (int i = 0; i < (iXMax - iXMin + 1); i++) {
+                aaiCrossingPoints[i] = new int[size()+2];
+            }
+
+            outlineRegion(aaiCrossingPoints, aiNumCrossings, iXMin, iXMax);
+            fill(aaiCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax, (int)elementAt(0).Z, 
+                    kMask, xDim, yDim, XOR, polarity );
         }
+        else if ( m_iPlane == XPLANE )
+        {
 
-        outlineRegion(aaiCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax);
-        fill(aaiCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax, (int)elementAt(0).Z, 
-                kMask, xDim, yDim, XOR, polarity );
+            int iYMin = (int)(m_akImageMinMax[0].Y);
+            int iYMax = (int)(m_akImageMinMax[1].Y);
+            
+            int iZMin = (int)(m_akImageMinMax[0].Z);
+            int iZMax = (int)(m_akImageMinMax[1].Z);
+
+            int[][] aaiCrossingPoints = new int[iYMax - iYMin + 1][];
+            int[] aiNumCrossings = new int[iYMax - iYMin + 1];
+
+            for (int i = 0; i < (iYMax - iYMin + 1); i++) {
+                aaiCrossingPoints[i] = new int[size()+2];
+            }
+
+            outlineRegion_X(aaiCrossingPoints, aiNumCrossings, iYMin, iYMax);
+            fill_X(aaiCrossingPoints, aiNumCrossings, iYMin, iZMin, iYMax, iZMax, (int)elementAt(0).X, 
+                    kMask, xDim, yDim, XOR, polarity );            
+        }
+        else
+        {
+            int iXMin = (int)(m_akImageMinMax[0].X);
+            int iXMax = (int)(m_akImageMinMax[1].X);
+            
+            int iZMin = (int)(m_akImageMinMax[0].Z);
+            int iZMax = (int)(m_akImageMinMax[1].Z);
+
+            int[][] aaiCrossingPoints = new int[iXMax - iXMin + 1][];
+            int[] aiNumCrossings = new int[iXMax - iXMin + 1];
+
+            for (int i = 0; i < (iXMax - iXMin + 1); i++) {
+                aaiCrossingPoints[i] = new int[size()+2];
+            }
+
+            outlineRegion_Y(aaiCrossingPoints, aiNumCrossings, iXMin, iXMax);
+            fill_Y(aaiCrossingPoints, aiNumCrossings, iXMin, iZMin, iXMax, iZMax, (int)elementAt(0).Y, 
+                    kMask, xDim, yDim, XOR, polarity );      
+            
+        }
 
     }
 
@@ -1851,7 +1894,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             aaiCrossingPoints[i] = new int[size()+2];
         }
 
-        outlineRegion(aaiCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax);
+        outlineRegion(aaiCrossingPoints, aiNumCrossings, iXMin, iXMax);
         fill(aaiCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax, (int)elementAt(0).Z, kVolume, kMask, bIntersection, iValue);
 
     }
@@ -1990,6 +2033,96 @@ public abstract class VOIBase extends Vector<Vector3f> {
         }
     }
 
+    protected void fill_Y(int[][] aaiCrossingPoints, int[] aiNumCrossings,
+            int iXMin, int iZMin, int iXMax, int iZMax, int iY, 
+            BitSet kMask, int xDim, int yDim, boolean XOR, int polarity )
+    {
+        int iColumn = 0;
+        /* Loop over the bounding-box: */
+        for (int iX = iXMin; iX < iXMax; iX++) {
+            boolean bInside = false;
+
+            for (int iZ = iZMin; iZ < iZMax; iZ++) {
+
+                /* loop over each crossing point for this column: */
+                for (int iCross = 0; iCross < aiNumCrossings[iColumn]; iCross++) {
+                    if (iZ == aaiCrossingPoints[iColumn][iCross]) {
+
+                        /* Each time an edge is cross the point alternates
+                         * from outside to inside: */
+                        bInside = !bInside;
+                    }
+                }
+
+                if (bInside == true) {
+                    if ( kMask != null )
+                    {
+                        int iIndex = iZ * xDim * yDim;
+                        iIndex += iY * xDim;
+                        iIndex += iX;
+                        if (polarity == VOI.ADDITIVE) {
+                            if (XOR && kMask.get(iIndex)) {
+                                kMask.clear(iIndex);
+                            } else {
+                                kMask.set(iIndex);
+                            }
+                        }
+                        else if (polarity == VOI.SUBTRACTIVE) {
+                            kMask.clear(iIndex);
+                        } 
+                    }
+                }
+            }
+
+            iColumn++;
+        }
+    }
+
+    protected void fill_X(int[][] aaiCrossingPoints, int[] aiNumCrossings,
+            int iYMin, int iZMin, int iYMax, int iZMax, int iX, 
+            BitSet kMask, int xDim, int yDim, boolean XOR, int polarity )
+    {
+        int iColumn = 0;
+        /* Loop over the bounding-box: */
+        for (int iY = iYMin; iY < iYMax; iY++) {
+            boolean bInside = false;
+
+            for (int iZ = iZMin; iZ < iZMax; iZ++) {
+
+                /* loop over each crossing point for this column: */
+                for (int iCross = 0; iCross < aiNumCrossings[iColumn]; iCross++) {
+                    if (iZ == aaiCrossingPoints[iColumn][iCross]) {
+
+                        /* Each time an edge is cross the point alternates
+                         * from outside to inside: */
+                        bInside = !bInside;
+                    }
+                }
+
+                if (bInside == true) {
+                    if ( kMask != null )
+                    {
+                        int iIndex = iZ * xDim * yDim;
+                        iIndex += iY * xDim;
+                        iIndex += iX;
+                        if (polarity == VOI.ADDITIVE) {
+                            if (XOR && kMask.get(iIndex)) {
+                                kMask.clear(iIndex);
+                            } else {
+                                kMask.set(iIndex);
+                            }
+                        }
+                        else if (polarity == VOI.SUBTRACTIVE) {
+                            kMask.clear(iIndex);
+                        } 
+                    }
+                }
+            }
+
+            iColumn++;
+        }
+    }
+
     /**
      * This function computes the set of spans indicated by column crossings for the sculpt outline drawn by the user,
      * by doing a polygon scan conversion in gridded space. The outline must be closed with last point = first point.
@@ -1997,8 +2130,69 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @param  aaiCrossingPoints  DOCUMENT ME!
      * @param  aiNumCrossings     DOCUMENT ME!
      */
-    public void outlineRegion(int[][] aaiCrossingPoints, int[] aiNumCrossings,
-            int iXMin, int iYMin, int iXMax, int iYMax)
+    public void outlineRegion_X(int[][] aaiCrossingPoints, int[] aiNumCrossings, int iYMin, int iYMax)
+    {        
+        int iNumPts = size();
+        double dNudge = 0.1;       
+        double[][][] aaadEdgeList = new double[iNumPts][2][2];
+
+        for (int i = 0; i < (iNumPts - 1); i++) {
+            aaadEdgeList[i][0][0] = elementAt(i).Y - dNudge;
+            aaadEdgeList[i][0][1] = elementAt(i).Z - dNudge;
+            aaadEdgeList[i][1][0] = elementAt(i+1).Y - dNudge;
+            aaadEdgeList[i][1][1] = elementAt(i+1).Z - dNudge;
+        }
+        aaadEdgeList[iNumPts-1][0][0] = lastElement().Y - dNudge;
+        aaadEdgeList[iNumPts-1][0][1] = lastElement().Z - dNudge;
+        aaadEdgeList[iNumPts-1][1][0] = firstElement().Y - dNudge;
+        aaadEdgeList[iNumPts-1][1][1] = firstElement().Z - dNudge;
+        iNumPts++;
+
+        /*
+         * Compute the crossing points for this column and produce spans.
+         */
+        for (int iColumn = iYMin; iColumn < iYMax; iColumn++) {
+            int iIndex = iColumn - iYMin;
+
+            /* for each edge, figure out if it crosses this column and add its
+             * crossing point to the list if so. */
+            aiNumCrossings[iIndex] = 0;
+
+            for (int iPoint = 0; iPoint < (iNumPts - 1); iPoint++) {
+                double dY0 = aaadEdgeList[iPoint][0][0];
+                double dY1 = aaadEdgeList[iPoint][1][0];
+                double dZ0 = aaadEdgeList[iPoint][0][1];
+                double dZ1 = aaadEdgeList[iPoint][1][1];
+                double dMinY = (dY0 <= dY1) ? dY0 : dY1;
+                double dMaxY = (dY0 > dY1) ? dY0 : dY1;
+
+                if ((dMinY < iColumn) && (dMaxY > iColumn)) {
+
+                    /* The edge crosses this column, so compute the
+                     * intersection.
+                     */
+                    double dDY = dY1 - dY0;
+                    double dDZ = dZ1 - dZ0;
+                    double dM = (dDY == 0) ? 0 : (dDZ / dDY);
+                    double dB = (dDY == 0) ? 0 : (((dY1 * dZ0) - (dZ1 * dY0)) / dDY);
+
+                    double dZCross = (dM * iColumn) + dB;
+                    double dRound = 0.5;
+                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (dZCross < 0) ? (int) (dZCross - dRound) :
+                        (int) (dZCross + dRound);
+                    aiNumCrossings[iIndex]++;
+                }
+            }
+
+            /* sort the set of crossings for this column: */
+            sortCrossingPoints(aaiCrossingPoints[iIndex], aiNumCrossings[iIndex]);
+        }
+        aaadEdgeList = null;
+    }
+
+
+
+    public void outlineRegion(int[][] aaiCrossingPoints, int[] aiNumCrossings, int iXMin, int iXMax)
     {        
         int iNumPts = size();
         double dNudge = 0.1;       
@@ -2014,6 +2208,68 @@ public abstract class VOIBase extends Vector<Vector3f> {
         aaadEdgeList[iNumPts-1][0][1] = lastElement().Y - dNudge;
         aaadEdgeList[iNumPts-1][1][0] = firstElement().X - dNudge;
         aaadEdgeList[iNumPts-1][1][1] = firstElement().Y - dNudge;
+        iNumPts++;
+
+        /*
+         * Compute the crossing points for this column and produce spans.
+         */
+        for (int iColumn = iXMin; iColumn < iXMax; iColumn++) {
+            int iIndex = iColumn - iXMin;
+
+            /* for each edge, figure out if it crosses this column and add its
+             * crossing point to the list if so. */
+            aiNumCrossings[iIndex] = 0;
+
+            for (int iPoint = 0; iPoint < (iNumPts - 1); iPoint++) {
+                double dX0 = aaadEdgeList[iPoint][0][0];
+                double dX1 = aaadEdgeList[iPoint][1][0];
+                double dY0 = aaadEdgeList[iPoint][0][1];
+                double dY1 = aaadEdgeList[iPoint][1][1];
+                double dMinX = (dX0 <= dX1) ? dX0 : dX1;
+                double dMaxX = (dX0 > dX1) ? dX0 : dX1;
+
+                if ((dMinX < iColumn) && (dMaxX > iColumn)) {
+
+                    /* The edge crosses this column, so compute the
+                     * intersection.
+                     */
+                    double dDX = dX1 - dX0;
+                    double dDY = dY1 - dY0;
+                    double dM = (dDX == 0) ? 0 : (dDY / dDX);
+                    double dB = (dDX == 0) ? 0 : (((dX1 * dY0) - (dY1 * dX0)) / dDX);
+
+                    double dYCross = (dM * iColumn) + dB;
+                    double dRound = 0.5;
+                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (dYCross < 0) ? (int) (dYCross - dRound) :
+                        (int) (dYCross + dRound);
+                    aiNumCrossings[iIndex]++;
+                }
+            }
+
+            /* sort the set of crossings for this column: */
+            sortCrossingPoints(aaiCrossingPoints[iIndex], aiNumCrossings[iIndex]);
+        }
+        aaadEdgeList = null;
+    }
+
+
+
+    public void outlineRegion_Y(int[][] aaiCrossingPoints, int[] aiNumCrossings, int iXMin, int iXMax)
+    {        
+        int iNumPts = size();
+        double dNudge = 0.1;       
+        double[][][] aaadEdgeList = new double[iNumPts][2][2];
+
+        for (int i = 0; i < (iNumPts - 1); i++) {
+            aaadEdgeList[i][0][0] = elementAt(i).X - dNudge;
+            aaadEdgeList[i][0][1] = elementAt(i).Z - dNudge;
+            aaadEdgeList[i][1][0] = elementAt(i+1).X - dNudge;
+            aaadEdgeList[i][1][1] = elementAt(i+1).Z - dNudge;
+        }
+        aaadEdgeList[iNumPts-1][0][0] = lastElement().X - dNudge;
+        aaadEdgeList[iNumPts-1][0][1] = lastElement().Z - dNudge;
+        aaadEdgeList[iNumPts-1][1][0] = firstElement().X - dNudge;
+        aaadEdgeList[iNumPts-1][1][1] = firstElement().Z - dNudge;
         iNumPts++;
 
         /*
