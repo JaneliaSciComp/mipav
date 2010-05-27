@@ -1749,6 +1749,23 @@ public abstract class VOIBase extends Vector<Vector3f> {
 
 
     /**
+     * The contour has changed, set the update flags so statistics are recalculated when needed.
+     */
+    public void update(Vector3f kTranslate)
+    {
+        gcPt.Add(kTranslate);
+        m_akImageMinMax[0].Add(kTranslate);
+        m_akImageMinMax[1].Add(kTranslate);
+        if ( m_kVolumeVOI != null )
+        {
+            m_kVolumeVOI.setVOI(this);
+        }
+    }
+
+
+
+
+    /**
      * Set the color of this contour.
      * @param kColor
      */

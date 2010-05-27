@@ -448,13 +448,13 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     protected ViewJPopupPt m_kPopupPt = null;
 
     private int m_iPlane = -1;
-    
+
 
     public VOIManager (VOIManagerInterface kParent )
     {
         m_kParent = kParent;
     }
-    
+
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
 
@@ -516,7 +516,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     {
         return add( kVOI, kVOI.size() - 1, kNewPoint, bIsFile );
     }
-    
+
     public void anchor(int iX, int iY, boolean bSeed) {
         Vector3f kNewPoint = new Vector3f( iX, iY, m_iSlice ) ;
         if ( m_kCurrentVOI == null )
@@ -771,7 +771,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             drawVOIProtractor( kVOI, resolutions, unitsOfMeasure, g );
             return;
         }
-        
+
     }
 
     public void drawNext(int iX, int iY) {
@@ -783,7 +783,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         {
             m_kCurrentVOI.delete(m_kCurrentVOI.getAnchor()+1);
         }
-        
+
         float fY = iY;
         Vector3f kNewPoint = new Vector3f( iX, fY, m_iSlice ) ;
         add( m_kCurrentVOI, kNewPoint, false );
@@ -841,7 +841,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         {
             return;
         }
-        
+
         m_kCurrentVOI.setSize( m_kCurrentVOI.getAnchor()+1 );
 
         float fY = iY;
@@ -865,7 +865,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     {
         return m_kImageActive;
     }
-    
+
     public Component getComponent()
     {
         return m_kComponent;
@@ -881,7 +881,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     {
         return m_iPlaneOrientation;
     }
-    
+
     public VOIManagerInterface getParent()
     {
         return m_kParent;
@@ -1287,6 +1287,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
         Vector3f kScreenMax = m_kDrawingContext.fileToScreen( akMinMax[1] );
         kScreenMax.Add(kDiff);
+        if ( m_fMouseX < kScreenMin.X || m_fMouseX > kScreenMax.X ||
+                m_fMouseY < kScreenMin.Y || m_fMouseY > kScreenMax.Y )
+        {
+            return false;
+        }
         Vector3f kTestMin = new Vector3f();       
         Vector3f kTestMax = new Vector3f();       
         if ( m_kDrawingContext.screenToFile( kScreenMin, kTestMin ) || 
@@ -1298,7 +1303,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         akMinMax[1].Copy( kTestMax );
         return true;
     }
-    
+
     public void move( VOIBase kVOI, Vector3f kDiff )
     {
         if ( kVOI.isFixed() || kDiff.equals( Vector3f.ZERO ) )
@@ -1308,20 +1313,29 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         int iNumPoints = kVOI.size();
         if ( iNumPoints > 0 )
         {
+            Vector3f kVolumeDiff = new Vector3f();
             for ( int i = 0; i < iNumPoints; i++ )
             {                
-                Vector3f kPos = kVOI.elementAt( i );
-                Vector3f kLocal = m_kDrawingContext.fileToScreen( kPos );
-                kLocal.Add( kDiff );
-                Vector3f kVolumePt = new Vector3f();
-                m_kDrawingContext.screenToFile( (int)kLocal.X, (int)kLocal.Y, (int)kLocal.Z, kVolumePt );
-                kVOI.set( i, kVolumePt );
+                if ( i == 0 )
+                {
+                    Vector3f kPos = kVOI.elementAt( i );
+                    Vector3f kLocal = m_kDrawingContext.fileToScreen( kPos );
+                    kLocal.Add( kDiff );
+                    Vector3f kVolumePt = new Vector3f();
+                    m_kDrawingContext.screenToFile( (int)kLocal.X, (int)kLocal.Y, (int)kLocal.Z, kVolumePt );
+                    kVolumeDiff.Sub( kVolumePt, kPos );
+                    kVOI.set( i, kVolumePt );
+                }
+                else
+                {
+                    kVOI.elementAt(i).Add(kVolumeDiff);
+                }
             }
-        }
-        kVOI.update();
-        if ( kVOI.getGroup().getContourGraph() != null )
-        {
-            m_kParent.updateGraph(kVOI);
+            kVOI.update(kVolumeDiff);
+            if ( kVOI.getGroup().getContourGraph() != null )
+            {
+                m_kParent.updateGraph(kVOI);
+            }
         }
     }
 
@@ -1657,7 +1671,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
     private VOIBase createVOI( int iType, boolean bClosed, boolean bFixed, Vector<Vector3f> kPositions )
     {
-        
+
         VOIBase kVOI = null;
 
         switch( iType )
@@ -1680,12 +1694,12 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         case PROTRACTOR:
             kVOI = new VOIProtractor(); ((VOIProtractor)kVOI).setPlane(m_iPlane); break;           
         }
-        
+
         if ( kVOI == null )
         {
             return null;
         }
-        
+
         for ( int i = 0; i < kPositions.size(); i++ )
         {
             Vector3f kVolumePt = new Vector3f();
@@ -1877,19 +1891,19 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
     private void drawArrow( VOIText kVOI, Graphics2D g2d, int xCenter, int yCenter, int x, int y, float stroke) {
         double aDir=Math.atan2(xCenter-x,yCenter-y);
-        
+
         g2d.setColor(kVOI.getBackgroundColor());
         g2d.drawLine(x + 1, y + 1, xCenter + 1, yCenter + 1);
         g2d.drawLine(x - 1, y - 1, xCenter - 1, yCenter - 1);
-                
-                        // make the arrow head solid even if dash pattern has been specified
+
+        // make the arrow head solid even if dash pattern has been specified
         Polygon tmpPoly=new Polygon();
         Polygon backPoly1 = new Polygon();
         Polygon backPoly2 = new Polygon();
         Polygon backPoly3 = new Polygon();
         Polygon backPoly4 = new Polygon();
-        
-        
+
+
         int i1=12+(int)(stroke*2);
         int i2=6+(int)stroke;                           // make the arrow head the same size regardless of the length length
         tmpPoly.addPoint(x,y);                          // arrow tip
@@ -1897,7 +1911,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         backPoly2.addPoint(x - 1, y);
         backPoly3.addPoint(x, y + 1);
         backPoly4.addPoint(x, y - 1);
-        
+
         int x2 = x+ VOIText.xCor(i1,aDir+.5);
         int y2 = y+ VOIText.yCor(i1,aDir+.5);
         tmpPoly.addPoint(x2, y2);
@@ -1905,8 +1919,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         backPoly2.addPoint(x2 - 1, y2);
         backPoly3.addPoint(x2, y2 + 1);
         backPoly4.addPoint(x2, y2 - 1);
-        
-        
+
+
         int x3 = x+ VOIText.xCor(i2,aDir);
         int y3 = y+ VOIText.yCor(i2,aDir);
         tmpPoly.addPoint(x3, y3);
@@ -1914,7 +1928,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         backPoly2.addPoint(x3 - 1, y3);
         backPoly3.addPoint(x3, y3 + 1);
         backPoly4.addPoint(x3, y3 - 1);
-        
+
         int x4 = x+ VOIText.xCor(i1,aDir-.5);
         int y4 = y+ VOIText.yCor(i1,aDir-.5);
         tmpPoly.addPoint(x4, y4);
@@ -1922,13 +1936,13 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         backPoly2.addPoint(x4 - 1, y4 - 1);
         backPoly1.addPoint(x4, y4 + 1);
         backPoly2.addPoint(x4, y4 - 1);
-        
+
         tmpPoly.addPoint(x,y);                          // arrow tip
         backPoly1.addPoint(x + 1, y + 1);
         backPoly2.addPoint(x - 1, y - 1);
         backPoly3.addPoint(x, y + 1);
         backPoly4.addPoint(x, y - 1);        
-        
+
         g2d.setStroke(new BasicStroke(1f)); 
         g2d.drawPolygon(backPoly1);
         //g2d.fillPolygon(backPoly1);
@@ -1936,16 +1950,16 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         //g2d.fillPolygon(backPoly2);
         g2d.drawPolygon(backPoly3);
         g2d.drawPolygon(backPoly4);
-        
-        
+
+
         g2d.setColor( kVOI.getColor() );
-        
+
         g2d.drawLine(x,y,xCenter,yCenter);
-        
-        
+
+
         g2d.drawPolygon(tmpPoly);
         g2d.fillPolygon(tmpPoly);                       // remove this line to leave arrow head unpainted
-     }
+    }
 
 
 
@@ -1954,7 +1968,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
         if (g == null) {
             MipavUtil
-                    .displayError("VOIContour.drawGeometricCenter: grapics = null");
+            .displayError("VOIContour.drawGeometricCenter: grapics = null");
 
             return;
         }
@@ -1970,7 +1984,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         //Profile.stop();
         //Profile.setFileName( "profile_out" );
         //Profile.shutdown();
-        
+
         Vector3f gcPt = m_kDrawingContext.fileToScreen( gcFilePt );
         xS = (int)gcPt.X;
         yS = (int)gcPt.Y;
@@ -1982,7 +1996,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         {
             kVOI.setLabel( String.valueOf(iContourID) );
         }
-        
+
         if (Preferences.is(Preferences.PREF_SHOW_VOI_NAME) && (kVOI.getName() != null)) {
             g.drawString(kVOI.getName(), xS - 10, yS - 5);
         } else if (kVOI.getLabel() != null) {
@@ -2009,7 +2023,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
         Vector3f gcFilePt = kVOI.getGeometricCenter();
         Vector3f pt = m_kDrawingContext.fileToScreen( gcFilePt );
-        
+
         g.setColor(Color.black);
         g.drawString(tmpString, (int) (pt.X), (int) ((pt.Y) - 1));
         g.drawString(tmpString, (int) (pt.X), (int) ((pt.Y) + 1));
@@ -2028,7 +2042,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         {
             return;
         }              
-        
+
         float[] x = new float[2];
         x[0] = kStart.X;
         x[1] = kEnd.X;
@@ -2180,22 +2194,22 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
             return;
         }
-        
+
         Color currentColor = g.getColor();
 
         g.setPaintMode();
         g.setFont(MipavUtil.font12);
-        
+
         Vector3f kStart = m_kDrawingContext.fileToScreen( kVOI.get(0) );
         Vector3f kMiddle = m_kDrawingContext.fileToScreen( kVOI.get(1) );
         Vector3f kEnd = m_kDrawingContext.fileToScreen( kVOI.get(2) );
-        
+
 
         if ( kStart.equals( kEnd ) )
         {
             return;
         }
-        
+
         //0 is middle, 1 is start, 2 is end:
         float[] x = new float[3];
         x[0] = kMiddle.X;
@@ -2342,7 +2356,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         } // end of if (showLengths)
 
         g.setColor( currentColor );
-        
+
         for (i = 0; i < 2; i++) {
             getEndLinesProtractor(x2, y2, i, coords);
             g.drawLine((int) coords[0], (int) coords[1], (int) coords[2], (int) coords[3]);
@@ -2385,7 +2399,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             g.drawRect((int) (gon.xpoints[0] - 1.5 + 0.5f),
                     (int) (gon.ypoints[0] - 1.5 + 0.5f), 3, 3);
         }
-/*
+        /*
         if (boundingBox == true) {
             int x0, x1, y0, y1;
             x0 = (int) ((xBounds[0] * zoomX * resolutionX) + 0.5f);
@@ -2467,9 +2481,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 break;
             }
         }
-        */
+         */
     }
-    
+
     public Vector3f drawBlendContour( VOIBase kVOI, int[] pixBuffer, float opacity, Color color, int slice )
     {
         if ( (m_iPlane != (m_iPlane & kVOI.getPlane())) || (getSlice(kVOI)!= slice) )
@@ -2520,7 +2534,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
 
         VOIBase.outlineRegion(aaiCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax, kVolumePts);
-        
+
 
         int numPts = 0;
         Vector3f kCenterMass = new Vector3f();
@@ -2591,7 +2605,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         } else if ( kVOI.getDoGeometricCenterLabel() && kVOI.isClosed()) {
             drawGeometricCenter(kVOI, g);
         }
-        
+
         if ( thickness == 1) {
             if (kVOI.isClosed() == true) {
                 g.drawPolygon(gon);
@@ -2612,12 +2626,12 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 Vector3f kScreen = m_kDrawingContext.fileToScreen( kVolumePt );                
                 x1 = (int) kScreen.X;
                 y1 = (int) kScreen.Y;
-                
+
                 kVolumePt = kVOI.elementAt(i+1);
                 kScreen = m_kDrawingContext.fileToScreen( kVolumePt );                
                 x2 = (int) kScreen.X;
                 y2 = (int) kScreen.Y;
-                
+
                 // now draw the connecting lines as polygons with thickness
                 dX = x2 - x1;
                 dY = y2 - y1;
@@ -2656,7 +2670,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 Vector3f kScreen = m_kDrawingContext.fileToScreen( kVolumePt );                
                 x1 = (int) kScreen.X;
                 y1 = (int) kScreen.Y;
-                
+
                 kVolumePt = kVOI.elementAt(0);
                 kScreen = m_kDrawingContext.fileToScreen( kVolumePt );                
                 x2 = (int) kScreen.X;
@@ -2696,8 +2710,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             }
 
         }
-        
-        
+
+
         if (kVOI.isActive() /*&& getSType() != VOIManager.LEVELSET
                 && getSType() != VOIManager.LIVEWIRE */) {
             // if active draw little boxes at points
@@ -2728,8 +2742,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 g.fillRect((int) (gon.xpoints[kVOI.getSelectedPoint()] - 1.5 + 0.5f),
                         (int) (gon.ypoints[kVOI.getSelectedPoint()] - 1.5 + 0.5f), 3, 3);
             }                       
-            
-/*
+
+            /*
             if (boundingBox == true) {
                 int x0, x1, y0, y1;
                 x0 = (int) ((xBounds[0] * zoomX * resolutionX) + 0.5);
@@ -2999,7 +3013,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                     break;
                 }
             }
-            */
+             */
         }
     }
 
@@ -3281,7 +3295,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
     private void drawVOIPolyLineSlice( VOIPolyLineSlice kVOI, float[] resols, int[] unitsOfMeasure, Graphics g, int slice, int orientation ) {
         Color color = g.getColor();
-        
+
         String totalDistance = kVOI.getTotalLengthString(resols, unitsOfMeasure);
         String dist = new String();
         for ( int i = 0; i < kVOI.size(); i++ )
@@ -3309,7 +3323,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     }
 
     private void drawVOIProtractor( VOIBase kVOI, float[] resols, int[] unitsOfMeasure, Graphics g ) {
-      
+
         Vector3f kStart = m_kDrawingContext.fileToScreen( kVOI.get(0) );
         Vector3f kMiddle = m_kDrawingContext.fileToScreen( kVOI.get(1) );
         Vector3f kEnd = m_kDrawingContext.fileToScreen( kVOI.get(2) );
@@ -3472,11 +3486,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         coords[3] = (int) (y1 - vector2 + 0.5);
     }
 
-    
-    
-    
-    
-      
+
+
+
+
+
 
     private void getEndLinesLine(float[] linePtsX, float[] linePtsY, int line, float[] coords) {
         double vector1, vector2, tmp;
@@ -3512,7 +3526,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             coords[3] = (int) (linePtsY[0] - vector1 + 0.5);
         }
     }
-    
+
     private void getEndLinesProtractor(float[] x, float[] y, int line, float[] coords) {
         double vector1, vector2, tmp;
         double length;
@@ -3538,9 +3552,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
     }
 
-     
 
-    
+
+
     private int getSlice( VOIBase kVOI )
     {
         if ( kVOI.getType() == VOI.PROTRACTOR && ((VOIProtractor)kVOI).getAllSlices() )
@@ -3549,8 +3563,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
         return (int)fileCoordinatesToPatient( kVOI.get(0) ).Z;
     }
-    
-    
+
+
 
     /**
      * DOCUMENT ME!
@@ -3574,7 +3588,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 
 
-    
+
 
     private void initLiveWire( int iSlice, boolean bLiveWire )
     {
@@ -3677,7 +3691,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
     }
 
-    
+
 
     private void pasteVOI( int iSlice )
     {
@@ -3693,14 +3707,14 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             kPos.Z = iSlice;
             m_kCurrentVOI.add( patientCoordinatesToFile( kPos ) );
         }
-        
-        
+
+
         m_kParent.pasteVOI(m_kCurrentVOI);
         m_kCurrentVOI.setActive(false);
     }
 
-    
-    
+
+
 
     /**
      * Generates the possible paths of the level set and pushes them onto a stack. Looks in the 8 neighborhood
@@ -3801,7 +3815,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
     } 
 
-    
+
 
     /**
      * @param  kEvent  the mouse event generated by a mouse drag
@@ -3854,7 +3868,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         for (i = 0; i < kVOI.size(); i++) {
             Vector3f kVolumePt = kVOI.elementAt(i);
             Vector3f kScreen = m_kDrawingContext.fileToScreen( kVolumePt );
-            
+
             x = (int) kScreen.X;
             y = (int) kScreen.Y;
             scaledGon.addPoint(x, y);
@@ -3862,7 +3876,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
         return scaledGon;
     }
-    
+
 
 
     /**
@@ -4070,7 +4084,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 
     }
-    
+
     private VOIBase selectVOI( int iX, int iY, boolean bShiftDown )
     {
         m_kParent.selectAllVOIs(false);
@@ -4796,8 +4810,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         return null;       
     }
 
-    
-    
+
+
     private void splitVOIs( boolean bAllSlices, boolean bOnlyActive, VOIBase kSplitVOI )
     {
         VOIVector kVOIs = m_kImageActive.getVOIs();
@@ -4852,5 +4866,5 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
         m_kCurrentVOI = null;
     }
-    
+
 }
