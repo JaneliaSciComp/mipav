@@ -583,6 +583,8 @@ public abstract class NLConstrainedEngine {
     
     private final int FREUDENSTEIN_AND_ROTH = 2;
     
+    private final int JENNRICH_AND_SAMPSON = 6;
+    
     private final int HELICAL_VALLEY = 7;
     
     private final int BARD = 8;
@@ -595,7 +597,7 @@ public abstract class NLConstrainedEngine {
     
     private final int KOWALIK_AND_OSBORNE = 15;
     
-    private final int BROWN_AND_DENIS = 16;
+    private final int BROWN_AND_DENNIS = 16;
     
     private final int OSBORNE1 = 17;
     
@@ -1112,6 +1114,28 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
+        // Below is an example to fit y(i-1) = 2 + 2*i -(exp(i*a0) + exp(i*a1))
+        // for i = 1 to 10
+        Preferences.debug("Jennrich and Sampson function at standard starting point unconstrained\n");
+        Preferences.debug("y(i-1) = 2 + 2*i - (exp(i*a0) + exp(i*a1)\n");
+        Preferences.debug("for i = 1 to 10\n");
+        Preferences.debug("Correct answer has chi-squared = 124.362 at a0 = 0.257825, a1 = 0.257825\n");
+        testMode = true;
+        testCase = JENNRICH_AND_SAMPSON;
+        nPts = 10;
+        param = 2;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 0.3;
+        gues[1] = 0.4;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
         // Below is an example to fit y(0) = 10*[a2 - 10*theta(a0,a1)]
         //                            y(1) = 10*[sqrt(a0**2 + a1**2) - 1]
         //                            y(2) = a2
@@ -1347,6 +1371,84 @@ public abstract class NLConstrainedEngine {
         gues[1] = -100.0;
         gues[2] = 0.0;
         gues[3] = 100.0;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is an example to fit y(i) = (a0 + ti*a1 - exp(ti))**2 + (a2 +a3*sin(ti) - cos(ti))**2
+        // ti = 0.2*i for i = 1 to 20
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Brown and Dennis function at standard starting point unconstrained\n");
+        Preferences.debug("y(i) = (a0 + a1*ti - exp(ti))**2 + (a2 + a3*sin(ti) - cos(ti))**2\n");
+        Preferences.debug("For ti = 0.2*i for i = 1 to 20\n");
+        Preferences.debug("Correct answer has a0 = -11.59, a1 = 13.20, a2 = -0.4034, a3 = 0.2367\n");
+        Preferences.debug("Correct answer has chi-squared = 85822.2\n");
+        testMode = true;
+        testCase = BROWN_AND_DENNIS;
+        nPts = 20;
+        param = 4;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 25.0;
+        gues[1] = 5.0;
+        gues[2] = -5.0;
+        gues[3] = -1.0;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is an example to fit y(i) = (a0 + ti*a1 - exp(ti))**2 + (a2 +a3*sin(ti) - cos(ti))**2
+        // ti = 0.2*i for i = 1 to 20
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Brown and Dennis function at 10 * standard starting point unconstrained\n");
+        Preferences.debug("y(i) = (a0 + a1*ti - exp(ti))**2 + (a2 + a3*sin(ti) - cos(ti))**2\n");
+        Preferences.debug("For ti = 0.2*i for i = 1 to 20\n");
+        Preferences.debug("Correct answer has a0 = -11.59, a1 = 13.20, a2 = -0.4034, a3 = 0.2367\n");
+        Preferences.debug("Correct answer has chi-squared = 85822.2\n");
+        testMode = true;
+        testCase = BROWN_AND_DENNIS;
+        nPts = 20;
+        param = 4;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 250.0;
+        gues[1] = 50.0;
+        gues[2] = -50.0;
+        gues[3] = -10.0;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is an example to fit y(i) = (a0 + ti*a1 - exp(ti))**2 + (a2 +a3*sin(ti) - cos(ti))**2
+        // ti = 0.2*i for i = 1 to 20
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Brown and Dennis function at 100 * standard starting point unconstrained\n");
+        Preferences.debug("y(i) = (a0 + a1*ti - exp(ti))**2 + (a2 + a3*sin(ti) - cos(ti))**2\n");
+        Preferences.debug("For ti = 0.2*i for i = 1 to 20\n");
+        Preferences.debug("Correct answer has a0 = -11.59, a1 = 13.20, a2 = -0.4034, a3 = 0.2367\n");
+        Preferences.debug("Correct answer has chi-squared = 85822.2\n");
+        testMode = true;
+        testCase = BROWN_AND_DENNIS;
+        nPts = 20;
+        param = 4;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 2500.0;
+        gues[1] = 500.0;
+        gues[2] = -500.0;
+        gues[3] = -100.0;
         bounds = 0; // bounds = 0 means unconstrained
         // bounds = 1 means same lower and upper bounds for
         // all parameters
@@ -1773,6 +1875,25 @@ public abstract class NLConstrainedEngine {
                 		}
                 	} // else if (ctrl == 2)
                 	break;
+                case JENNRICH_AND_SAMPSON:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                	     for (i = 0; i < 10; i++) {
+                	    	 residuals[i] = 2.0 + 2.0*(i+1.0) - (Math.exp((i+1.0)*a[0]) + Math.exp((i+1.0)*a[1]));
+                	     }
+                	} // if ((ctrl == -1) || (ctrl == 1))
+                	else if (ctrl == 2) {
+                	    if (analyticalJacobian) {
+                	        for (i = 0; i < 10; i++) {
+                	    	    covarMat[i][0] = -Math.exp((i+1.0)*a[0])*(i + 1.0);
+                	    	    covarMat[i][1] = -Math.exp((i+1.0)*a[1])*(i + 1.0);
+                	        }
+                	    }
+                	    else {
+                	    	// If the user wishes to calculate the Jacobian numerically
+                	    	ctrlMat[0] = 0;
+                	    }
+                	} // else if (ctrl == 2)
+                	break;
                 case HELICAL_VALLEY:
                 	double theta;
                 	if ((ctrl == -1) || (ctrl == 1)) {
@@ -1888,6 +2009,39 @@ public abstract class NLConstrainedEngine {
                 		    covarMat[3][1] = 0.0;
                 		    covarMat[3][2] = 0.0;
                 		    covarMat[3][3] = 2.0*Math.sqrt(10.0)*a[3] - 2.0*Math.sqrt(10.0)*a[0];
+                		}
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case BROWN_AND_DENNIS:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		double t[] = new double[20];
+                		double part1;
+                		double part2;
+                		for (i = 0; i <20; i++) {
+                		    t[i] = 0.2*(i+1.0);
+                		    part1 = a[0] + a[1]*t[i] - Math.exp(t[i]);
+                		    part2 = a[2] + a[3]*Math.sin(t[i]) - Math.cos(t[i]);
+                		    residuals[i] = part1*part1 + part2*part2;
+                		}
+                	} // if ((ctrl == -1) || (ctrl == 1))
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                			double t[] = new double[20];
+                    		double part1;
+                    		double part2;
+                    		for (i = 0; i <20; i++) {
+                    		    t[i] = 0.2*(i+1.0);
+                    		    part1 = a[0] + a[1]*t[i] - Math.exp(t[i]);
+                    		    part2 = a[2] + a[3]*Math.sin(t[i]) - Math.cos(t[i]);
+                		        covarMat[i][0] = 2.0*part1;
+                		        covarMat[i][1] = 2.0*part1*t[i];
+                		        covarMat[i][2] = 2.0*part2;
+                		        covarMat[i][3] = 2.0*part2*Math.sin(t[i]);
+                    		}
                 		}
                 		else {
                 			// If the user wishes to calculate the Jacobian numerically
