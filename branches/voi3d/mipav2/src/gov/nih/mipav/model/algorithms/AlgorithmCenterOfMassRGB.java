@@ -334,4 +334,14 @@ public class AlgorithmCenterOfMassRGB extends AlgorithmBase {
 
     }
 
+    public float[] getThresholdR(){
+    	return thresholdR;
+}
+    public float[] getThresholdG(){
+    	return thresholdG;
+    }
+    public float[] getThresholdB(){
+    	return thresholdB;
+    }
+
 }

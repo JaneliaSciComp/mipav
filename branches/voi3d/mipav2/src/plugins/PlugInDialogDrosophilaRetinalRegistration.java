@@ -137,7 +137,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
      */
     public void init() {
         setForeground(Color.black);
-        setTitle("Drosophila Retinal Registration v2.1");
+        setTitle("Drosophila Retinal Registration v2.2");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
 
@@ -173,7 +173,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
         transform1BrowseButton.addActionListener(this);
         transform1BrowseButton.setActionCommand("transform1Browse");
 
-        final JLabel transform2Label = new JLabel("Transformation 2 - Affine");
+        final JLabel transform2Label = new JLabel("Transformation 2 - Affine (optional)");
         transform2FilePathTextField = new JTextField(35);
         transform2FilePathTextField.setEditable(false);
         transform2FilePathTextField.setBackground(Color.white);
@@ -539,11 +539,11 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
             valid = false;
             return valid;
         }
-        if (transform2FilePathTextField.getText().equals("")) {
+        /*if (transform2FilePathTextField.getText().equals("")) {
             MipavUtil.displayError("Transformation 2-Affine must be entered");
             valid = false;
             return valid;
-        }
+        }*/
 
         return valid;
     }

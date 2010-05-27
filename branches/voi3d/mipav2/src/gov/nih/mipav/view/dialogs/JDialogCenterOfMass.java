@@ -161,7 +161,7 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
             insertScriptLine();
             setComplete(true);
         }
-
+        
         comAlgo.finalize();
         comAlgo = null;
         dispose();
@@ -501,7 +501,7 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
 
             public String getDescription() {
                 return new String("Finds Center of Mass");
-}
+            }
 
             public String getDescriptionLong() {
                 return new String("Finds Center of Mass");
@@ -512,21 +512,19 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
             }
 
             public String getLabel() {
-                return new String("Center of Mass (2D)");
+                return new String("Center of Mass");
             }
 
             public String getName() {
-                return new String("Ceneter of Mass (2D)");
+                return new String("Ceneter of Mass");
             }
         };
     }
 
-	@Override
-	public ParameterTable createInputParameters() {
-        final ParameterTable table = new ParameterTable();
 
-        setThres1(scriptParameters.getParams().getFloat("min_threshold"));
-        setThres2(scriptParameters.getParams().getFloat("max_threshold"));
+    @Override
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
         try {
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
             table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, true));
@@ -539,16 +537,21 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
 
         return table;
 
-	}
+    }
 
-	@Override
-	public ParameterTable createOutputParameters() {
+    @Override
+    public ParameterTable createOutputParameters() {
         final ParameterTable table = new ParameterTable();
 
         try {
-        	table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
-        	table.put(new ParameterDouble("X-axis Center", comAlgo.getCenterOfMass()[0]));
-        	table.put(new ParameterDouble("Y-axis Center", comAlgo.getCenterOfMass()[1]));
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+            table.put(new ParameterDouble("X-axis Center", comAlgo.getCenterOfMass()[0]));
+            table.put(new ParameterDouble("Y-axis Center", comAlgo.getCenterOfMass()[1]));
+            
+            if(comAlgo.getCenterOfMass().length>2){
+                table.put(new ParameterDouble("Z-axis Center", comAlgo.getCenterOfMass()[2]));
+            }
+                
         } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
@@ -556,24 +559,25 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
 
         return table;
 
-	}
+    }
 
-	@Override
-	public String getOutputImageName(String imageParamName) {
-	    /**
-	     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
-	     * (which can be used to retrieve the image object from the image registry).
-	     * 
-	     * @param imageParamName The output image parameter label for which to get the image name.
-	     * @return The image name of the requested output image parameter label.
-	     */
-		return image.getImageName();
+    @Override
+    public String getOutputImageName(String imageParamName) {
+        /**
+         * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+         * (which can be used to retrieve the image object from the image registry).
+         * 
+         * @param imageParamName The output image parameter label for which to get the image name.
+         * @return The image name of the requested output image parameter label.
+         */
+        return image.getImageName();
 
-	}
+    }
 
-	@Override
-	public boolean isActionComplete() {
-		return isComplete;
-	}
+    @Override
+    public boolean isActionComplete() {
+        return isComplete;
+    }
+
 
 }

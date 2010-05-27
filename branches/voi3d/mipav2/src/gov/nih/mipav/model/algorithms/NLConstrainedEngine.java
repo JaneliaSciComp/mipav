@@ -579,11 +579,23 @@ public abstract class NLConstrainedEngine {
     
     private final int DRAPER24D = 0;
     
+    private final int ROSENBROCK = 1;
+    
+    private final int FREUDENSTEIN_AND_ROTH = 2;
+    
+    private final int HELICAL_VALLEY = 7;
+    
     private final int BARD = 8;
     
     private final int MEYER = 10;
     
+    private final int BOX_3D = 12;
+    
+    private final int POWELL_SINGULAR = 13;
+    
     private final int KOWALIK_AND_OSBORNE = 15;
+    
+    private final int BROWN_AND_DENIS = 16;
     
     private final int OSBORNE1 = 17;
     
@@ -923,10 +935,253 @@ public abstract class NLConstrainedEngine {
         bl[3] = 0;
         bu[3] = 100.0;
         driverCalls();
+        // Below is an example to fit y(0) = 10.0*(a1 - a0**2)
+        //                            y(1) = 1.0 - a[0]
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Rosenbrock function standard starting point unconstrained\n");
+        Preferences.debug("y(0) = 10*(a1 - a0**2)\n");
+        Preferences.debug("y(1) = 1.0 - a0\n");
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 1\n");
+        testMode = true;
+        testCase = ROSENBROCK;
+        nPts = 2;
+        param = 2;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = -1.2;
+        gues[1] = 1.0;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is an example to fit y(0) = 10.0*(a1 - a0**2)
+        //                            y(1) = 1.0 - a[0]
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Rosenbrock function at 10 * standard starting point unconstrained\n");
+        Preferences.debug("y(0) = 10*(a1 - a0**2)\n");
+        Preferences.debug("y(1) = 1.0 - a0\n");
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 1\n");
+        testMode = true;
+        testCase = ROSENBROCK;
+        nPts = 2;
+        param = 2;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = -12.0;
+        gues[1] = 10.0;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is an example to fit y(0) = 10.0*(a1 - a0**2)
+        //                            y(1) = 1.0 - a[0]
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Rosenbrock function at 100 * standard starting point unconstrained\n");
+        Preferences.debug("y(0) = 10*(a1 - a0**2)\n");
+        Preferences.debug("y(1) = 1.0 - a0\n");
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 1\n");
+        testMode = true;
+        testCase = ROSENBROCK;
+        nPts = 2;
+        param = 2;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = -120.0;
+        gues[1] = 100.0;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is an example to fit y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1
+        //                            y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Freudenstein and Roth function at standard starting point unconstrained\n");
+        Preferences.debug("y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1\n");
+        Preferences.debug("y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1\n");
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 5, a1 = 4\n");
+        Preferences.debug("Also Chi-squared = 48.9842... at a0 = 11.41..., a1 = -0.8968...\n");
+        Preferences.debug("Second solution obtained by original ELSUNC\n");
+        testMode = true;
+        testCase = FREUDENSTEIN_AND_ROTH;
+        nPts = 2;
+        param = 2;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 0.5;
+        gues[1] = -2.0;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is an example to fit y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1
+        //                            y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Freudenstein and Roth function at 10 * standard starting point unconstrained\n");
+        Preferences.debug("y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1\n");
+        Preferences.debug("y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1\n");
+        Preferences.debug("One correct answer is chi-squared = 0 at a0 = 5, a1 = 4\n");
+        Preferences.debug("Also Chi-squared = 48.9842... at a0 = 11.41..., a1 = -0.8968...\n");
+        Preferences.debug("Second solution obtained by original ELSUNC\n");
+        testMode = true;
+        testCase = FREUDENSTEIN_AND_ROTH;
+        nPts = 2;
+        param = 2;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 5.0;
+        gues[1] = -20.0;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is an example to fit y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1
+        //                            y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Freudenstein and Roth function at 100 * standard starting point unconstrained\n");
+        Preferences.debug("y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1\n");
+        Preferences.debug("y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1\n");
+        Preferences.debug("One correct answer is Chi-squared = 0 at a0 = 5, a1 = 4\n");
+        Preferences.debug("Also Chi-squared = 48.9842... at a0 = 11.41..., a1 = -0.8968...\n");
+        Preferences.debug("Second solution obtained by original ELSUNC\n");
+        testMode = true;
+        testCase = FREUDENSTEIN_AND_ROTH;
+        nPts = 2;
+        param = 2;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 50.0;
+        gues[1] = -200.0;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is an example to fit y(0) = 10*[a2 - 10*theta(a0,a1)]
+        //                            y(1) = 10*[sqrt(a0**2 + a1**2) - 1]
+        //                            y(2) = a2
+        // where theta(a0,a1) = (1/(2*PI))*arctan(a1/a0) if a0 > 0
+        //                    = (1/(2*PI))*arctan(a1/a0) if a0 < 0
+        //                    = 0.25 if a0 = 0 and a1 >= 0
+        //                    = -0.25 if a0 = 0 and a1 < 0
+        Preferences.debug("Helical valley function at standard starting point unconstrained\n");
+        Preferences.debug("y(0) = 10*[a2 - 10*theta(a0,a1)]\n");
+        Preferences.debug("y(1) = 10*{Math.sqrt(a0*a0 + a1*a1) - 1]\n");
+        Preferences.debug("y(2) = a2\n");
+        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 > 0\n");
+        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 < 0\n");
+        Preferences.debug("theta = 0.25 if a0 = 0 and a1 >= 0\n");
+        Preferences.debug("theta = -0.25 if a0 = 0 and a1 < 0\n");
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 0, a2 = 0\n");
+        testMode = true;
+        testCase = HELICAL_VALLEY;
+        nPts = 3;
+        param = 3;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = -1.0;
+        gues[1] = 0.0;
+        gues[2] = 0.0;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is an example to fit y(0) = 10*[a2 - 10*theta(a0,a1)]
+        //                            y(1) = 10*[sqrt(a0**2 + a1**2) - 1]
+        //                            y(2) = a2
+        // where theta(a0,a1) = (1/(2*PI))*arctan(a1/a0) if a0 > 0
+        //                    = (1/(2*PI))*arctan(a1/a0) if a0 < 0
+        //                    = 0.25 if a0 = 0 and a1 >= 0
+        //                    = -0.25 if a0 = 0 and a1 < 0
+        Preferences.debug("Helical valley function at 10 * standard starting point unconstrained\n");
+        Preferences.debug("y(0) = 10*[a2 - 10*theta(a0,a1)]\n");
+        Preferences.debug("y(1) = 10*{Math.sqrt(a0*a0 + a1*a1) - 1]\n");
+        Preferences.debug("y(2) = a2\n");
+        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 > 0\n");
+        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 < 0\n");
+        Preferences.debug("theta = 0.25 if a0 = 0 and a1 >= 0\n");
+        Preferences.debug("theta = -0.25 if a0 = 0 and a1 < 0\n");
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 0, a2 = 0\n");
+        testMode = true;
+        testCase = HELICAL_VALLEY;
+        nPts = 3;
+        param = 3;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = -10.0;
+        gues[1] = 0.0;
+        gues[2] = 0.0;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is an example to fit y(0) = 10*[a2 - 10*theta(a0,a1)]
+        //                            y(1) = 10*[sqrt(a0**2 + a1**2) - 1]
+        //                            y(2) = a2
+        // where theta(a0,a1) = (1/(2*PI))*arctan(a1/a0) if a0 > 0
+        //                    = (1/(2*PI))*arctan(a1/a0) if a0 < 0
+        //                    = 0.25 if a0 = 0 and a1 >= 0
+        //                    = -0.25 if a0 = 0 and a1 < 0
+        Preferences.debug("Helical valley function at 100 * standard starting point unconstrained\n");
+        Preferences.debug("y(0) = 10*[a2 - 10*theta(a0,a1)]\n");
+        Preferences.debug("y(1) = 10*{Math.sqrt(a0*a0 + a1*a1) - 1]\n");
+        Preferences.debug("y(2) = a2\n");
+        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 > 0\n");
+        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 < 0\n");
+        Preferences.debug("theta = 0.25 if a0 = 0 and a1 >= 0\n");
+        Preferences.debug("theta = -0.25 if a0 = 0 and a1 < 0\n");
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 0, a2 = 0\n");
+        testMode = true;
+        testCase = HELICAL_VALLEY;
+        nPts = 3;
+        param = 3;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = -100.0;
+        gues[1] = 0.0;
+        gues[2] = 0.0;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
         // Below is an example to fit y = a0*exp[a1/(x + a2)]
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Meyer function standard starting point unconstrained\n");
-        Preferences.debug("Y = a0*exp[a1/(x + a2)]\n");
+        Preferences.debug("Meyer function at standard starting point unconstrained\n");
+        Preferences.debug("y = a0*exp[a1/(x + a2)]\n");
         Preferences.debug("Correct answers are a0 = 0.0056096, a1 = 6181.3, a2 = 345.22\n");
         Preferences.debug("Correct answer has Chi-squared = 87.9458\n");
         testMode = true;
@@ -986,6 +1241,119 @@ public abstract class NLConstrainedEngine {
         bu[1] = 100000.0;
         bl[2] = 100.0;
         bu[2] = 3000.0;                                             
+        driverCalls();
+        // Below is an expample to fit y(i) = exp(-ti*a0) - exp(-ti*a1) - a2*(exp(-ti) - exp(-10*ti))
+        // For ti = 0.1*i for i = 1 to 10
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Box three-dimensional function unconstrained\n");
+        Preferences.debug("y(i) = exp(-ti*a0) = exp(-ti*a1) - a2*(exp(-ti) - exp(-10*ti))\n");
+        Preferences.debug("For ti = 0.1*i for i = 1 to 10\n");
+        Preferences.debug("Correct answer has chi-squared = 0 at a0 = 1, a1 = 10, a2 = 1\n");
+        Preferences.debug("Also chi-squared = 0 at a0 = 10, a1 = 1, a2 = -1\n");
+        Preferences.debug("Also chi-squared = 0 wherever a0 = a1 and a2 = 0\n");
+        testMode = true;
+        testCase = BOX_3D;
+        nPts = 10;
+        param = 3;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 0.0;
+        gues[1] = 10.0;
+        gues[2] = 20.0;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is an example to fit y(0) = a0 + 10*a1
+        //                            y(1) = sqrt(5)*(a2 - a3)
+        //                            y(2) = (a1 - 2*a2)**2
+        //                            y(3) = sqrt(10)*(a0 - a3)**2
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Powell singular function at standard starting point unconstrained\n");
+        Preferences.debug("y(0) = a0 + 10*a1\n");
+        Preferences.debug("y(1) = sqrt(5)*(a2 - a3)\n");
+        Preferences.debug("y(2) = (a1 - 2*a2)**2\n");
+        Preferences.debug("y(3) = sqrt(10)*(a0 - a3)**2\n");
+        Preferences.debug("Correct answer has chi-squared = 0 at a0 = 0, a1= 0, a2 = 0, a3 = 0\n");
+        testMode = true;
+        testCase = POWELL_SINGULAR;
+        nPts = 4;
+        param = 4;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 3.0;
+        gues[1] = -1.0;
+        gues[2] = 0.0;
+        gues[3] = 1.0;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is an example to fit y(0) = a0 + 10*a1
+        //                            y(1) = sqrt(5)*(a2 - a3)
+        //                            y(2) = (a1 - 2*a2)**2
+        //                            y(3) = sqrt(10)*(a0 - a3)**2
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Powell singular function at 10 * standard starting point unconstrained\n");
+        Preferences.debug("y(0) = a0 + 10*a1\n");
+        Preferences.debug("y(1) = sqrt(5)*(a2 - a3)\n");
+        Preferences.debug("y(2) = (a1 - 2*a2)**2\n");
+        Preferences.debug("y(3) = sqrt(10)*(a0 - a3)**2\n");
+        Preferences.debug("Correct answer has chi-squared = 0 at a0 = 0, a1= 0, a2 = 0, a3 = 0\n");
+        testMode = true;
+        testCase = POWELL_SINGULAR;
+        nPts = 4;
+        param = 4;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 30.0;
+        gues[1] = -10.0;
+        gues[2] = 0.0;
+        gues[3] = 10.0;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is an example to fit y(0) = a0 + 10*a1
+        //                            y(1) = sqrt(5)*(a2 - a3)
+        //                            y(2) = (a1 - 2*a2)**2
+        //                            y(3) = sqrt(10)*(a0 - a3)**2
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Powell singular function at 100 * standard starting point unconstrained\n");
+        Preferences.debug("y(0) = a0 + 10*a1\n");
+        Preferences.debug("y(1) = sqrt(5)*(a2 - a3)\n");
+        Preferences.debug("y(2) = (a1 - 2*a2)**2\n");
+        Preferences.debug("y(3) = sqrt(10)*(a0 - a3)**2\n");
+        Preferences.debug("Correct answer has chi-squared = 0 at a0 = 0, a1= 0, a2 = 0, a3 = 0\n");
+        testMode = true;
+        testCase = POWELL_SINGULAR;
+        nPts = 4;
+        param = 4;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 300.0;
+        gues[1] = -100.0;
+        gues[2] = 0.0;
+        gues[3] = 100.0;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
         driverCalls();
         // Below is an example to fit y = a0 + a1*exp(-a3*x) + a2*exp(-a4*x)
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
@@ -1369,6 +1737,81 @@ public abstract class NLConstrainedEngine {
 	                    }
 	                } // else if (ctrl == 2)
                 	break;
+                case ROSENBROCK:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                	    residuals[0] = 10.0*(a[1] - a[0]*a[0]);
+                	    residuals[1] = 1.0 - a[0];
+                	} // if ((ctrl == -1) || (ctrl == 1))
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                		    covarMat[0][0] = -20.0*a[0];
+                		    covarMat[0][1] = 10.0;
+                		    covarMat[1][0] = -1.0;
+                		    covarMat[1][1] = 0.0;
+                		}
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case FREUDENSTEIN_AND_ROTH:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		residuals[0] = -13.0 + a[0] + ((5.0 - a[1])*a[1] - 2.0)*a[1];
+                		residuals[1] = -29.0 + a[0] + ((a[1] + 1)*a[1] - 14.0)*a[1];
+                	} // if ((ctrl == -1) || (ctrl == 1))
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                		    covarMat[0][0] = 1.0;
+                		    covarMat[0][1] = 10.0*a[1] - 3.0*a[1]*a[1] - 2.0;
+                		    covarMat[1][0] = 1.0;
+                		    covarMat[1][1] = 3.0*a[1]*a[1] + 2.0*a[1] - 14.0;
+                		}
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case HELICAL_VALLEY:
+                	double theta;
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		if (a[0] > 0) {
+                	        theta = Math.atan(a[1]/a[0])/(2.0*Math.PI);
+                		}
+                		else if (a[0] < 0) {
+                	    	theta = Math.atan(a[1]/a[0])/(2.0*Math.PI) + 0.5;
+                	    }
+                	    else if (a[1] >= 0) {
+                	    	theta = 0.25;
+                	    }
+                	    else {
+                	    	theta = -0.25;
+                	    }
+                	    residuals[0] = 10.0*(a[2] - 10.0*theta);
+                	    residuals[1] = 10.0*(Math.sqrt(a[0]*a[0] + a[1]*a[1]) - 1.0);
+                	    residuals[2] = a[2];
+                	} // if ((ctrl == -1) || (ctrl == 1))
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                			double tmp;
+                			tmp = a[0]*a[0] + a[1]*a[1];
+                		    covarMat[0][0] = (50.0*a[1])/(Math.PI * tmp);
+                			covarMat[0][1] = (-50.0*a[0])/(Math.PI * tmp);
+                			covarMat[0][2] = 10.0;
+                			covarMat[1][0]= 10.0*a[0]/Math.sqrt(tmp);
+                			covarMat[1][1] = 10.0*a[1]/Math.sqrt(tmp);
+                			covarMat[1][2] = 0.0;
+                			covarMat[2][0] = 0.0;
+                			covarMat[2][1] = 0.0;
+                			covarMat[2][2] = 1.0;
+                		}
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
                 case MEYER:
                 	if ((ctrl == -1) || (ctrl == 1)) {
 
@@ -1394,6 +1837,63 @@ public abstract class NLConstrainedEngine {
 	                         ctrlMat[0] = 0; 	
 	                    }
 	                } // else if (ctrl == 2)
+                	break;
+                case BOX_3D:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		double t[] = new double[10];
+                		for (i = 0; i <10; i++) {
+                		    t[i] = 0.1*(i+1.0);	
+                		    residuals[i] = Math.exp(-a[0]*t[i]) - Math.exp(-a[1]*t[i])
+                		                   - a[2]*(Math.exp(-t[i]) - Math.exp(-10.0*t[i]));
+                		}	
+                	} // if ((ctrl == -1) || (ctrl == 1))
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                			double t[] = new double[10];
+                			for (i = 0; i <10; i++) {
+                    		    t[i] = 0.1*(i+1.0);	
+                    		    covarMat[i][0] = -t[i]*Math.exp(-a[0]*t[i]);
+                    		    covarMat[i][1] = t[i]*Math.exp(-a[1]*t[i]);
+                    		    covarMat[i][2] = Math.exp(-10.0*t[i]) - Math.exp(-t[i]);
+                    		}	
+                		}
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case POWELL_SINGULAR:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                	    residuals[0] = a[0] + 10.0*a[1];
+                	    residuals[1] = Math.sqrt(5.0)*(a[2] - a[3]);
+                	    residuals[2] = (a[1] - 2.0*a[2])*(a[1] - 2.0*a[2]);
+                	    residuals[3] = Math.sqrt(10.0)*(a[0] - a[3])*(a[0] - a[3]);
+                	} // if ((ctrl == -1) || (ctrl == 1))
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                		    covarMat[0][0] = 1.0;
+                		    covarMat[0][1] = 10.0;
+                		    covarMat[0][2] = 0.0;
+                		    covarMat[0][3] = 0.0;
+                		    covarMat[1][0] = 0.0;
+                		    covarMat[1][1] = 0.0;
+                		    covarMat[1][2] = Math.sqrt(5.0);
+                		    covarMat[1][3] = -Math.sqrt(5.0);
+                		    covarMat[2][0] = 0.0;
+                		    covarMat[2][1] = 2.0*a[1] - 4.0*a[2];
+                		    covarMat[2][2] = 8.0*a[2] - 4.0*a[1];
+                		    covarMat[2][3] = 0.0;
+                		    covarMat[3][0] = 2.0*Math.sqrt(10.0)*a[0] - 2.0*Math.sqrt(10.0)*a[3];
+                		    covarMat[3][1] = 0.0;
+                		    covarMat[3][2] = 0.0;
+                		    covarMat[3][3] = 2.0*Math.sqrt(10.0)*a[3] - 2.0*Math.sqrt(10.0)*a[0];
+                		}
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
                 	break;
                 case OSBORNE1:
                 	if ((ctrl == -1) || (ctrl == 1)) {
