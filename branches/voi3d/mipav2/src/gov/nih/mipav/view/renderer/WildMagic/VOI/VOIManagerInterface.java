@@ -107,8 +107,6 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
     private ModelStorageBase m_kLUTa;
     private ModelStorageBase m_kLUTb;
 
-    private byte[] m_aucBufferA;
-    private byte[] m_aucBufferB;
 
     private ViewToolBarBuilder toolbarBuilder;
 
@@ -195,8 +193,6 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
             m_kVOIManagers[i] = new VOIManager(this);
         }
         m_bGPURenderer = bGPU;
-        initDataBuffer();
-
 
 
         /**
@@ -2240,65 +2236,6 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         m_kCurrentVOIGroup = null;
     }
     
-    private void initDataBuffer()
-    {
-        int iSize = m_kImageA.getDataSize();
-        if ( m_kImageA.isColorImage() )
-        {
-            m_aucBufferA = new byte[iSize/4];
-            byte[] aucTemp = new byte[iSize];
-            try {
-                m_kImageA.exportData( 0, iSize, aucTemp );
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            for ( int i = 0; i < m_aucBufferA.length; i++ )
-            {
-                m_aucBufferA[i] = (byte)((aucTemp[i*4 + 1] + aucTemp[i*4 + 2] + aucTemp[i*4 + 3])/3.0f);
-            }
-        }
-        else
-        {
-            m_aucBufferA = new byte[iSize];
-            try {
-                m_kImageA.exportData( 0, iSize, m_aucBufferA );
-            } catch (IOException e) {
-                e.printStackTrace();
-            } 
-        }
-        if ( m_kImageB != null )
-        {
-            iSize = m_kImageB.getDataSize();
-            if ( m_kImageB.isColorImage() )
-            {
-                m_aucBufferB = new byte[iSize/4];
-                byte[] aucTemp = new byte[iSize];
-                try {
-                    m_kImageB.exportData( 0, iSize, aucTemp );
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                for ( int i = 0; i < m_aucBufferB.length; i++ )
-                {
-                    m_aucBufferB[i] = (byte)((aucTemp[i*4 + 1] + aucTemp[i*4 + 2] + aucTemp[i*4 + 3])/3.0f);
-                }
-            }
-            else
-            {
-                m_aucBufferB = new byte[iSize];
-                try {
-                    m_kImageB.exportData( 0, iSize, m_aucBufferB );
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } 
-            }
-        }
-        for ( int i = 0; i < m_kVOIManagers.length; i++ )
-        {
-            m_kVOIManagers[i].setDataBuffers( m_aucBufferA, m_aucBufferB );
-        }
-    }
-
     private boolean isDrawCommand( String kCommand )
     {
         if ( kCommand.equals(CustomUIBuilder.PARAM_VOI_PROTRACTOR.getActionCommand()) ||

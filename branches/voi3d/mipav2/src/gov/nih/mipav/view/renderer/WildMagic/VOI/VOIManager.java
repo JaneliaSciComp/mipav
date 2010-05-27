@@ -18,8 +18,10 @@ import gov.nih.mipav.view.CustomUIBuilder;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.RubberbandLivewire;
+import gov.nih.mipav.view.ViewJComponentEditImage;
 import gov.nih.mipav.view.ViewJPopupPt;
 import gov.nih.mipav.view.ViewJPopupVOI;
+import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.dialogs.JDialogAnnotation;
 import gov.nih.mipav.view.dialogs.JDialogVOISplitter;
 
@@ -367,30 +369,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     private ModelImage m_kImageActive;
     private ModelImage m_kLocalImage;
 
-    private byte[] m_aucBufferA;
-    private byte[] m_aucBufferB;
-    private byte[] m_aucBufferActive;
-
     private int[] m_aiLocalImageExtents;
 
     private VOIManagerInterface m_kParent;
 
-    private Vector2f[][] m_akSteps = new Vector2f[7][7];
-
-    private int[][] m_aiIndexValues = new int[7][7];   
-
-    private float[][] m_afAverages = new float[7][7];
-
-
-    private int m_iMM = 1;
-
-    private int m_iM = 2;
-
-    private int m_i_ = 3;
-
-
-    private int m_iP = 4;
-    private int m_iPP = 5;
     private boolean m_bFirstVOI = true;
     private int m_iCirclePts = 32;
 
@@ -536,7 +518,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         m_kCurrentVOI.setAnchor();
         if ( bSeed )
         {
-            initLiveWire( m_iSlice, true );
             seed(iX, iY);
         }
     }
@@ -613,10 +594,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         levelSetStack = null;
         map = null;
         stack = null;
-        m_aucBufferA = null;
-        m_aucBufferB = null;
-        m_aucBufferActive = null;
-
         m_akImages[0] = null;
         m_akImages[1] = null;
         m_akImages = null;
@@ -629,10 +606,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
         m_aiLocalImageExtents = null;
         m_kParent = null;
-
-        m_akSteps = null;
-        m_aiIndexValues = null;
-        m_afAverages = null;
 
         m_adCos = null;
         m_adSin = null;
@@ -1015,6 +988,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         m_bPointer = false;
         m_bSelected = false;
         m_iDrawType = LIVEWIRE;
+        initLiveWire( m_iSlice, true );
     }
 
     public void mouseClicked(MouseEvent kEvent) {
@@ -1287,6 +1261,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
         Vector3f kScreenMax = m_kDrawingContext.fileToScreen( akMinMax[1] );
         kScreenMax.Add(kDiff);
+        Vector3f kTemp = new Vector3f( kScreenMin );
+        kScreenMin.Min( kScreenMax );
+        kScreenMax.Max( kTemp );
         if ( m_fMouseX < kScreenMin.X || m_fMouseX > kScreenMax.X ||
                 m_fMouseY < kScreenMin.Y || m_fMouseY > kScreenMax.Y )
         {
@@ -1385,14 +1362,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         {
             m_kImageActive = m_akImages[iActive];
         }
-        if ( m_kImageActive == m_akImages[0] )
-        {
-            m_aucBufferActive = m_aucBufferA;
-        }
-        else
-        {
-            m_aucBufferActive = m_aucBufferB;
-        }
     }
 
     private void setCanvas (Component kComponent)
@@ -1414,21 +1383,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         m_kCurrentVOI = kCurrentVOI;
     }
 
-
-
-    public void setDataBuffers(byte[] bufferA, byte[] bufferB)
-    {
-        m_aucBufferA = bufferA;
-        m_aucBufferB = bufferB;
-        if ( m_kImageActive == m_akImages[0] )
-        {
-            m_aucBufferActive = m_aucBufferA;
-        }
-        else
-        {
-            m_aucBufferActive = m_aucBufferB;
-        }
-    }
 
     public void setDrawingContext( ScreenCoordinateListener kContext )
     {
@@ -1510,65 +1464,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_iNearStatus = NearPoint;
             m_kParent.updateDisplay();
         }
-    }
-
-
-
-    /**
-     * This method calculates the average pixel value based on the four neighbors (N, S, E, W).
-     *
-     * @param   index  the center pixel where the average pixel value is to be calculated.
-     *
-     * @return  the average pixel value as a float.
-     */
-    private float avgPix(int index) {
-        int xDim = m_kLocalImage.getExtents()[0];
-
-        if ((index > xDim) && (index < (imageBufferActive.length - xDim))) {
-
-            float sum = imageBufferActive[index];
-
-            sum += imageBufferActive[index - xDim];
-            sum += imageBufferActive[index - 1];
-            sum += imageBufferActive[index + 1];
-            sum += imageBufferActive[index + xDim];
-
-            return sum / 5.0f;
-        }
-        return (imageBufferActive[index]);
-    }
-
-
-
-    /**
-     * This method calculates the average pixel value based on the four neighbors (N, S, E, W).
-     *
-     * @param   index  the center pixel where the average pixel value is to be calculated.
-     *
-     * @return  the average pixel value as a float.
-     */
-    private float avgPix( int iX, int iY )
-    {
-        int index = m_aiIndexValues[iY][iX];
-        int[] extents = m_kImageActive.getExtents();
-        if ((index > extents[0]) && (index < (m_kImageActive.getSize() - extents[0]))) {
-
-            int sum = (m_aucBufferActive[index] & 0x00ff);
-
-            index = m_aiIndexValues[iY-1][iX];
-            sum += (m_aucBufferActive[index] & 0x00ff);
-
-            index = m_aiIndexValues[iY][iX-1];
-            sum += (m_aucBufferActive[index] & 0x00ff);
-
-            index = m_aiIndexValues[iY][iX+1];
-            sum += (m_aucBufferActive[index] & 0x00ff);
-
-            index = m_aiIndexValues[iY+1][iX];
-            sum += (m_aucBufferActive[index] & 0x00ff);
-            return sum / 5.0f;
-        } 
-        return (m_aucBufferActive[index] & 0x00ff);
     }
 
     /**
@@ -1783,8 +1678,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
         else if ( m_iDrawType == LEVELSET )
         {
-            //initLiveWire( m_iSlice, false );
-            VOIBase kTemp = singleLevelSet(iX, fY);
+            initLiveWire( m_iSlice, false );
+            VOIBase kTemp = singleLevelSet2(iX, fY);
+            //VOIBase kTemp = singleLevelSet(iX, fY);
             if ( kTemp == null )
             {
                 return;
@@ -3592,7 +3488,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
     private void initLiveWire( int iSlice, boolean bLiveWire )
     {
-        m_kParent.setCursor( MipavUtil.waitCursor );
         if ( !m_bLiveWireInit )
         {
             if ( m_iPlaneOrientation != m_kImageActive.getImageOrientation() && 
@@ -3617,7 +3512,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
         if ( m_abInitLiveWire[iSlice] )
         {
-            //m_kParent.setDefaultCursor();
             return;
         }
 
@@ -3656,9 +3550,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
         if ( bLiveWire )
         {
+            ViewJProgressBar progressBar = new ViewJProgressBar(m_kImageActive.getImageName(),
+                    "Livewire: Computing cost function ...", 0, 100, false, this, null);
             localCosts = RubberbandLivewire.getLocalCosts( m_kLocalImage, m_iLiveWireSelection, 
                     imageBufferActive,
-                    xDirections, yDirections, null );
+                    xDirections, yDirections, progressBar );
 
             costGraph = new byte[localCosts.length]; // Graph with arrows from each node to next one
 
@@ -3672,8 +3568,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 
             m_abInitLiveWire[iSlice] = true;
+            if (progressBar != null) {
+                progressBar.dispose();
+            }
         }
-        //m_kParent.setDefaultCursor();
     }
 
     private void moveVOIPoint( int iX, int iY )
@@ -3713,107 +3611,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         m_kCurrentVOI.setActive(false);
     }
 
-
-
-
-    /**
-     * Generates the possible paths of the level set and pushes them onto a stack. Looks in the 8 neighborhood
-     * directions for the possible paths.
-     *
-     * @param  index  image location
-     * @param  i      DOCUMENT ME!
-     */
-    private void paths(int index, int i, float level) {
-
-        int[] intPtr = null;
-
-        try {
-            intPtr = new int[1];
-        } catch (OutOfMemoryError error) {
-            System.gc();
-            MipavUtil.displayError("Out of memory: ComponentEditImage.mouseDragged");
-
-            return;
-        }
-
-        intPtr[0] = levelSetStack.size() - 1;
-        int xDim = m_kLocalImage.getExtents()[0];
-
-        if ((i != 0) && (imageBufferActive[index - xDim - 1] <= level) && (map.get(index - xDim - 1) == false)) {
-            stack.push(intPtr);
-        } else if ((i != 1) && (imageBufferActive[index - xDim] <= level) && (map.get(index - xDim) == false)) {
-            stack.push(intPtr);
-        } else if ((i != 2) && (imageBufferActive[index - xDim + 1] <= level) && (map.get(index - xDim + 1) == false)) {
-            stack.push(intPtr);
-        } else if ((i != 3) && (imageBufferActive[index + 1] <= level) && (map.get(index + 1) == false)) {
-            stack.push(intPtr);
-        } else if ((i != 4) && (imageBufferActive[index + xDim + 1] <= level) && (map.get(index + xDim + 1) == false)) {
-            stack.push(intPtr);
-        } else if ((i != 5) && (imageBufferActive[index + xDim] <= level) && (map.get(index + xDim) == false)) {
-            stack.push(intPtr);
-        } else if ((i != 6) && (imageBufferActive[index + xDim - 1] <= level) && (map.get(index + xDim - 1) == false)) {
-            stack.push(intPtr);
-        } else if ((i != 7) && (imageBufferActive[index - 1] <= level) && (map.get(index - 1) == false)) {
-            stack.push(intPtr);
-        }
-    }
-
-
-
-
-    /**
-     * Generates the possible paths of the level set and pushes them onto a stack. Looks in the 8 neighborhood
-     * directions for the possible paths.
-     *
-     */
-    private void paths(int iX, int iY, int iZ, int i, float level) {
-
-        int[] intPtr = null;
-
-        try {
-            intPtr = new int[1];
-        } catch (OutOfMemoryError error) {
-            System.gc();
-            MipavUtil.displayError("Out of memory: ComponentEditImage.mouseDragged");
-
-            return;
-        }
-
-        intPtr[0] = levelSetStack.size() - 1;
-
-        //indexMM
-        if ((i != 0) && (m_afAverages[m_iM][m_iM] <= level) && (map.get(m_aiIndexValues[m_iM][m_iM]) == false)) {
-            stack.push(intPtr);
-        } 
-        //indexM_
-        else if ((i != 1) && (m_afAverages[m_iM][m_i_] <= level) && (map.get(m_aiIndexValues[m_iM][m_i_]) == false)) {
-            stack.push(intPtr);
-        }
-        //indexMP
-        else if ((i != 2) && (m_afAverages[m_iM][m_iP] <= level) && (map.get(m_aiIndexValues[m_iM][m_iP]) == false)) {
-            stack.push(intPtr);
-        } 
-        //index_P
-        else if ((i != 3) && (m_afAverages[m_i_][m_iP] <= level) && (map.get(m_aiIndexValues[m_i_][m_iP]) == false)) {
-            stack.push(intPtr);
-        }
-        //indexPP
-        else if ((i != 4) && (m_afAverages[m_iP][m_iP] <= level) && (map.get(m_aiIndexValues[m_iP][m_iP]) == false)) {
-            stack.push(intPtr);
-        }
-        //indexP_
-        else if ((i != 5) && (m_afAverages[m_iP][m_i_] <= level) && (map.get(m_aiIndexValues[m_iP][m_i_]) == false)) {
-            stack.push(intPtr);
-        }
-        //indexPM
-        else if ((i != 6) && (m_afAverages[m_iP][m_iM] <= level) && (map.get(m_aiIndexValues[m_iP][m_iM]) == false)) {
-            stack.push(intPtr);
-        }
-        // index_M
-        else if ((i != 7) && (m_afAverages[m_i_][m_iM] <= level) && (map.get(m_aiIndexValues[m_i_][m_iM]) == false)) {
-            stack.push(intPtr);
-        }
-    } 
 
 
 
@@ -4113,53 +3910,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     }
 
 
-
-
-    private void setIndices( int iX, int iY, int iZ )
-    {
-        for ( int i = 0; i < 7; i++ )
-        {
-            for ( int j = 0; j < 7; j++ )
-            {
-                if ( m_akSteps[i][j] == null )
-                {
-                    m_akSteps[i][j] = new Vector2f( iX + j-3, iY + i - 3 );
-                }
-                else
-                {
-                    m_akSteps[i][j].Set( iX + j-3, iY + i - 3 );
-                }
-            }
-        }
-
-        int[] extents = m_kImageActive.getExtents();  
-        Vector3f kVolumePt = new Vector3f();
-        Vector3f kPatientPt = new Vector3f();    
-
-        for ( int i = 0; i < 7; i++ )
-        {
-            for ( int j = 0; j < 7; j++ )
-            {
-                kPatientPt.Set( Math.min( m_aiLocalImageExtents[0]-1, Math.max( 0, m_akSteps[i][j].X ) ),
-                        Math.min( m_aiLocalImageExtents[1]-1, Math.max( 0, m_akSteps[i][j].Y ) ), iZ );
-                MipavCoordinateSystems.patientToFile( kPatientPt, kVolumePt, m_kImageActive, m_iPlaneOrientation );     
-                m_aiIndexValues[i][j] = (int)(kVolumePt.Z * extents[0] * extents[1] + kVolumePt.Y * extents[0] + kVolumePt.X);
-            }
-        }
-
-        for ( int i = 1; i < 6; i++ )
-        { 
-            for ( int j = 1; j < 6; j++ )
-            {
-                m_afAverages[i][j] = avgPix( j, i );
-            }
-        }
-    }
-
-
-
-
-
     private void setPosition( VOIBase kVOI, int iPos, float fX, float fY, float fZ )
     {
         setPosition( kVOI, iPos, new Vector3f( fX, fY, fZ ) );
@@ -4247,6 +3997,236 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         // not: m_kParent.setDefaultCursor() which changes the cursorMode...
     }
 
+
+    private VOIBase split( VOIBase kVOI, Vector3f kStartPt, Vector3f kEndPt )
+    {
+        if ( kVOI.getType() != VOI.CONTOUR )
+        {
+            return null;
+        }
+        int iVOISlice = (int)fileCoordinatesToPatient(kVOI.get(0)).Z;
+        int iPoints = kVOI.size();
+        Vector3f kFirstIntersectionPt = null;
+        Vector3f kSecondIntersectionPt = null;
+        int iFirstIndex = -1;
+        int iSecondIndex = -1;
+        for ( int iP = 0; iP < (iPoints - 1) && (kSecondIntersectionPt == null); iP++ )
+        {
+            Vector3f kLocal1 = fileCoordinatesToPatient(kVOI.get(iP));
+            Vector3f kLocal2 = fileCoordinatesToPatient(kVOI.get(iP+1));
+            Vector3f kIntersection = new Vector3f();
+
+            if (JDialogVOISplitter.intersects( kLocal1, kLocal2, kStartPt, kEndPt, kIntersection )) {
+                if (kFirstIntersectionPt == null)
+                {
+                    kFirstIntersectionPt = kIntersection;
+                    iFirstIndex = iP;
+                } 
+                else 
+                {
+                    kSecondIntersectionPt = kIntersection;
+                    iSecondIndex = iP;
+                }
+            }
+        }
+        if ( kSecondIntersectionPt == null )
+        {
+            Vector3f kLocal1 = fileCoordinatesToPatient(kVOI.lastElement());
+            Vector3f kLocal2 = fileCoordinatesToPatient(kVOI.firstElement());
+            Vector3f kIntersection = new Vector3f();
+
+            if (JDialogVOISplitter.intersects( kLocal1, kLocal2, kStartPt, kEndPt, kIntersection )) {
+
+                kSecondIntersectionPt = kIntersection;
+                iSecondIndex = iPoints - 1;
+            }
+        }
+
+        if (kFirstIntersectionPt != null && kSecondIntersectionPt != null) 
+        {        
+            kFirstIntersectionPt.Z = iVOISlice;
+            kFirstIntersectionPt = patientCoordinatesToFile(kFirstIntersectionPt);
+            kSecondIntersectionPt.Z = iVOISlice;
+            kSecondIntersectionPt = patientCoordinatesToFile(kSecondIntersectionPt);
+
+
+            Vector<Vector3f> kPositions = new Vector<Vector3f>();
+            kPositions.add( kSecondIntersectionPt );  
+            //check if there are points from second index to 0-index, add those first
+            for (int iP = iSecondIndex + 1; iP < iPoints; iP++) {
+                kPositions.add(kVOI.get(iP));
+            }
+            for (int iP = 0; iP < iFirstIndex + 1; iP++) {
+                kPositions.add(kVOI.get(iP));
+            }
+            kPositions.add( kFirstIntersectionPt );  
+
+            for (int iP = 00; iP < kPositions.size(); iP++) {
+                kVOI.remove(kPositions.get(iP));
+            }
+            kVOI.add(0, new Vector3f(kFirstIntersectionPt) );
+            kVOI.add(0, new Vector3f(kSecondIntersectionPt) );      
+
+            kVOI.setSelectedPoint(0);
+            kVOI.update();
+
+            return new VOIContour( kVOI.isFixed(), kVOI.isClosed(), kPositions );
+        }
+        return null;       
+    }
+
+
+
+    private void splitVOIs( boolean bAllSlices, boolean bOnlyActive, VOIBase kSplitVOI )
+    {
+        VOIVector kVOIs = m_kImageActive.getVOIs();
+        if ( !kSplitVOI.isSplit() || (kVOIs.size() == 0) )
+        {
+            return;
+        }
+        Vector<VOIBase> kNewVOIs = new Vector<VOIBase>();
+
+        Vector3f kStartPt = fileCoordinatesToPatient(kSplitVOI.get(0)); 
+        Vector3f kEndPt = fileCoordinatesToPatient(kSplitVOI.get(1)); 
+
+        int iStartSlice = bAllSlices? 0 : m_iSlice;
+        int nSlices = m_aiLocalImageExtents.length > 2 ? m_aiLocalImageExtents[2] : 1;
+        int iEndSlice = bAllSlices? nSlices : m_iSlice + 1;
+
+
+        for ( int i = 0; i < kVOIs.size(); i++ )
+        {
+            VOI kVOI = kVOIs.get(i);
+            for ( int j = 0; j < kVOI.getCurves().size(); j++ )
+            {
+                VOIBase kVOI3D = kVOI.getCurves().get(j);
+                if ( m_iPlane != (m_iPlane & kVOI3D.getPlane() ))
+                {
+                    continue;
+                }
+                int iVOISlice = kVOI3D.slice();
+                if ( !((iVOISlice >= iStartSlice) && (iVOISlice < iEndSlice)) )
+                {
+                    continue;
+                }
+                if ( !(!bOnlyActive || kVOI3D.isActive()) )
+                {
+                    continue;
+                }
+                VOIBase kNew = split( kVOI3D, kStartPt, kEndPt );
+                if ( kNew != null )
+                {  
+                    //m_kParent.updateCurrentVOI( kVOI, kVOI );
+                    kNewVOIs.add(kNew);
+                }
+            }
+        }
+        m_kParent.deleteVOI( kSplitVOI );  
+        kSplitVOI.dispose();
+        kSplitVOI = null;
+
+        for ( int i = 0; i < kNewVOIs.size(); i++ )
+        {
+            m_kParent.addVOI(kNewVOIs.get(i), true);
+        }
+        m_kCurrentVOI = null;
+    }
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    /**
+     * This method calculates the average pixel value based on the four neighbors (N, S, E, W).
+     *
+     * @param   index  the center pixel where the average pixel value is to be calculated.
+     *
+     * @return  the average pixel value as a float.
+     */
+    private float avgPix(int index) {
+        int xDim = m_aiLocalImageExtents[0];
+
+        if ((index > xDim) && (index < (imageBufferActive.length - xDim))) {
+
+            float sum = imageBufferActive[index];
+
+            sum += imageBufferActive[index - xDim];
+            sum += imageBufferActive[index - 1];
+            sum += imageBufferActive[index + 1];
+            sum += imageBufferActive[index + xDim];
+
+            return sum / 5.0f;
+        } else {
+            return (imageBufferActive[index]);
+        }
+    }
+
+    /**
+     * Generates the possible paths of the level set and pushes them onto a stack. Looks in the 8 neighborhood
+     * directions for the possible paths.
+     *
+     * @param  index  image location
+     * @param  i      DOCUMENT ME!
+     */
+    private void paths(int index, int i, float level) {
+
+        int[] intPtr = null;
+
+        try {
+            intPtr = new int[1];
+        } catch (OutOfMemoryError error) {
+            System.gc();
+            MipavUtil.displayError("Out of memory: ComponentEditImage.mouseDragged");
+
+            return;
+        }
+
+        int xDim = m_aiLocalImageExtents[0];
+        intPtr[0] = levelSetStack.size() - 1;
+
+        if ((i != 0) && (imageBufferActive[index - xDim - 1] <= level) && (map.get(index - xDim - 1) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 1) && (imageBufferActive[index - xDim] <= level) && (map.get(index - xDim) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 2) && (imageBufferActive[index - xDim + 1] <= level) && (map.get(index - xDim + 1) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 3) && (imageBufferActive[index + 1] <= level) && (map.get(index + 1) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 4) && (imageBufferActive[index + xDim + 1] <= level) && (map.get(index + xDim + 1) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 5) && (imageBufferActive[index + xDim] <= level) && (map.get(index + xDim) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 6) && (imageBufferActive[index + xDim - 1] <= level) && (map.get(index + xDim - 1) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 7) && (imageBufferActive[index - 1] <= level) && (map.get(index - 1) == false)) {
+            stack.push(intPtr);
+        }
+    }
+
     /**
      * Creates a single level set. Takes a starting point and finds a closed path along the levelset back to the
      * starting point.
@@ -4254,123 +4234,125 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
      * @param  startPtX  the start point
      * @param  startPtY  the start point
      * @param  level     the level of the level set
-     */
-    private VOIBase singleLevelSet(float startPtX, float startPtY ) {
+    private VOIBase singleLevelSet(float startPtX, float startPtY, float level) {
+
+        int x, y;
+        int index;
         double distance;
         stack.removeAllElements();
+
+        if (imageBufferActive == null) {
+            return;
+        }
+
+        int xDim = m_aiLocalImageExtents[0];
+        int yDim = m_aiLocalImageExtents[1];
 
         for (int i = 0; i < map.size(); i++) {
             map.clear(i);
         }
 
-        new Vector3f( startPtX, startPtY, m_iSlice );
-        Vector3f kVolumePt = new Vector3f();
-        m_kDrawingContext.screenToFile( (int)startPtX, (int)startPtY, m_iSlice, kVolumePt );
-        Vector3f kPatientPt = new Vector3f();
-        MipavCoordinateSystems.fileToPatient( kVolumePt, kPatientPt, m_kImageActive, m_iPlaneOrientation );
+        if (startPtX >= (xDim - 1)) {
+            return;
+        }
 
-        startPtX = kPatientPt.X;
-        startPtY = kPatientPt.Y;
-        int x = (int) ( kPatientPt.X + 0.5);
-        int y = (int) ( kPatientPt.Y + 0.5);
-        int z = (int)kPatientPt.Z;
+        if (startPtY >= (yDim - 1)) {
+            return;
+        }
 
-        setIndices( x, y, z );
-
-        int index = m_aiIndexValues[m_i_][m_i_];
-        int level = (m_aucBufferActive[index] & 0x00ff);
+        x = (int) (startPtX + 0.5);
+        y = (int) (startPtY + 0.5);
 
         levelSetStack.reset();
         levelSetStack.addPoint(x, y);
-        map.set(m_aiIndexValues[m_i_][m_i_]);
+        map.set((y * xDim) + x);
 
         int dir = -1;
         float diff = 100000;
-        int mapIndex = 0;
 
         do {
+            index = (y * xDim) + x;
 
-            if ((x >= 2) && (x < (m_aiLocalImageExtents[0] - 2)) && (y >= 2) && (y < (m_aiLocalImageExtents[1] - 2))) {
+            if ((x >= 2) && (x < (xDim - 2)) && (y >= 2) && (y < (yDim - 2))) {
 
-                mapIndex = m_aiIndexValues[m_iM][m_i_];
-                if ((m_afAverages[m_iM][m_i_] >= level) &&
-                        ((m_afAverages[m_iM][m_iP] < level) || (m_afAverages[m_i_][m_i_] < level) ||
-                                (m_afAverages[m_iM][m_iM] < level) || (m_afAverages[m_iMM][m_i_] < level)) &&
-                                (map.get(mapIndex) == false)) {
+                if ((avgPix(index - xDim) >= level) &&
+                        ((avgPix(index - xDim + 1) < level) || (avgPix(index) < level) ||
+                             (avgPix(index - xDim - 1) < level) || (avgPix(index - (2 * xDim)) < level)) &&
+                        (map.get(index - xDim) == false)) {
                     dir = 1;
-                    diff = Math.abs(m_afAverages[m_iM][m_i_] - m_afAverages[m_i_][m_i_]);
+                    diff = Math.abs(avgPix(index - xDim) - avgPix(index));
                 }
-                mapIndex = m_aiIndexValues[m_iM][m_iP];
-                if ((m_afAverages[m_iM][m_iP] >= level) &&
-                        ((m_afAverages[m_iM][m_iPP] < level) || (m_afAverages[m_i_][m_iP] < level) ||
-                                (m_afAverages[m_iM][m_i_] < level) || (m_afAverages[m_iMM][m_iP] < level)) &&
-                                (map.get(mapIndex) == false)) {
 
-                    if (Math.abs(m_afAverages[m_iM][m_iP] - m_afAverages[m_i_][m_i_]) < diff) {
+                if ((avgPix(index - xDim + 1) >= level) &&
+                        ((avgPix(index - xDim + 2) < level) || (avgPix(index + 1) < level) ||
+                             (avgPix(index - xDim) < level) || (avgPix(index - (2 * xDim) + 1) < level)) &&
+                        (map.get(index - xDim + 1) == false)) {
+
+                    if (Math.abs(avgPix(index - xDim + 1) - avgPix(index)) < diff) {
                         dir = 2;
-                        diff = Math.abs(m_afAverages[m_iM][m_iP] - m_afAverages[m_i_][m_i_]);
+                        diff = Math.abs(avgPix(index - xDim + 1) - avgPix(index));
                     }
                 }
-                mapIndex = m_aiIndexValues[m_i_][m_iP];
-                if ((m_afAverages[m_i_][m_iP] >= level) &&
-                        ((m_afAverages[m_i_][m_iPP] < level) || (m_afAverages[m_iP][m_iP] < level) || (m_afAverages[m_i_][m_i_] < level) ||
-                                (m_afAverages[m_iM][m_iP] < level)) && (map.get(mapIndex) == false)) {
 
-                    if (Math.abs(m_afAverages[m_i_][m_iP] - m_afAverages[m_i_][m_i_]) < diff) {
+                if ((avgPix(index + 1) >= level) &&
+                        ((avgPix(index + 2) < level) || (avgPix(index + xDim + 1) < level) || (avgPix(index) < level) ||
+                             (avgPix(index - xDim + 1) < level)) && (map.get(index + 1) == false)) {
+
+                    if (Math.abs(avgPix(index + 1) - avgPix(index)) < diff) {
                         dir = 3;
-                        diff = Math.abs(m_afAverages[m_i_][m_iP] - m_afAverages[m_i_][m_i_]);
+                        diff = Math.abs(avgPix(index + 1) - avgPix(index));
                     }
                 }
-                mapIndex = m_aiIndexValues[m_iP][m_iP];
-                if ((m_afAverages[m_iP][m_iP] >= level) &&
-                        ((m_afAverages[m_iP][m_iPP] < level) || (m_afAverages[m_iPP][m_iP] < level) ||
-                                (m_afAverages[m_i_][m_iP] < level) || (m_afAverages[m_iP][m_i_] < level)) &&
-                                (map.get(mapIndex) == false)) {
 
-                    if (Math.abs(m_afAverages[m_iP][m_iP] - m_afAverages[m_i_][m_i_]) < diff) {
+                if ((avgPix(index + xDim + 1) >= level) &&
+                        ((avgPix(index + xDim + 2) < level) || (avgPix(index + (2 * xDim) + 1) < level) ||
+                             (avgPix(index + 1) < level) || (avgPix(index + xDim) < level)) &&
+                        (map.get(index + xDim + 1) == false)) {
+
+                    if (Math.abs(avgPix(index + xDim + 1) - avgPix(index)) < diff) {
                         dir = 4;
-                        diff = Math.abs(m_afAverages[m_iP][m_iP] - m_afAverages[m_i_][m_i_]);
+                        diff = Math.abs(avgPix(index + xDim + 1) - avgPix(index));
                     }
                 }
-                mapIndex = m_aiIndexValues[m_iP][m_i_];
-                if ((m_afAverages[m_iP][m_i_] >= level) &&
-                        ((m_afAverages[m_iP][m_iP] < level) || (m_afAverages[m_iPP][m_i_] < level) ||
-                                (m_afAverages[m_iP][m_iM] < level) || (m_afAverages[m_i_][m_i_] < level)) &&
-                                (map.get(mapIndex) == false)) {
 
-                    if (Math.abs(m_afAverages[m_iP][m_i_] - m_afAverages[m_i_][m_i_]) < diff) {
+                if ((avgPix(index + xDim) >= level) &&
+                        ((avgPix(index + xDim + 1) < level) || (avgPix(index + (2 * xDim)) < level) ||
+                             (avgPix(index + xDim - 1) < level) || (avgPix(index) < level)) &&
+                        (map.get(index + xDim) == false)) {
+
+                    if (Math.abs(avgPix(index + xDim) - avgPix(index)) < diff) {
                         dir = 5;
-                        diff = Math.abs(m_afAverages[m_iP][m_i_] - m_afAverages[m_i_][m_i_]);
+                        diff = Math.abs(avgPix(index + xDim) - avgPix(index));
                     }
                 }
-                mapIndex = m_aiIndexValues[m_iP][m_iM];
-                if ((m_afAverages[m_iP][m_iM] >= level) &&
-                        ((m_afAverages[m_iP][m_i_] < level) || (m_afAverages[m_iPP][m_iM] < level) ||
-                                (m_afAverages[m_iP][m_iMM] < level) || (m_afAverages[m_i_][m_iM] < level)) &&
-                                (map.get(mapIndex) == false)) {
 
-                    if (Math.abs(m_afAverages[m_iP][m_iM] - m_afAverages[m_i_][m_i_]) < diff) {
+                if ((avgPix(index + xDim - 1) >= level) &&
+                        ((avgPix(index + xDim) < level) || (avgPix(index + (2 * xDim) - 1) < level) ||
+                             (avgPix(index + xDim - 2) < level) || (avgPix(index - 1) < level)) &&
+                        (map.get(index + xDim - 1) == false)) {
+
+                    if (Math.abs(avgPix(index + xDim - 1) - avgPix(index)) < diff) {
                         dir = 6;
-                        diff = Math.abs(m_afAverages[m_iP][m_iM] - m_afAverages[m_i_][m_i_]);
+                        diff = Math.abs(avgPix(index + xDim - 1) - avgPix(index));
                     }
                 }
-                mapIndex = m_aiIndexValues[m_i_][m_iM];
-                if ((m_afAverages[m_i_][m_iM] >= level) &&
-                        ((m_afAverages[m_i_][m_i_] < level) || (m_afAverages[m_iP][m_iM] < level) || (m_afAverages[m_i_][m_iMM] < level) ||
-                                (m_afAverages[m_iM][m_iM] < level)) && (map.get(mapIndex) == false)) {
 
-                    if (Math.abs(m_afAverages[m_i_][m_iM] - m_afAverages[m_i_][m_i_]) < diff) {
+                if ((avgPix(index - 1) >= level) &&
+                        ((avgPix(index) < level) || (avgPix(index + xDim - 1) < level) || (avgPix(index - 2) < level) ||
+                             (avgPix(index - xDim - 1) < level)) && (map.get(index - 1) == false)) {
+
+                    if (Math.abs(avgPix(index - 1) - avgPix(index)) < diff) {
                         dir = 7;
-                        diff = Math.abs(m_afAverages[m_i_][m_iM] - m_afAverages[m_i_][m_i_]);
+                        diff = Math.abs(avgPix(index - 1) - avgPix(index));
                     }
                 }
-                mapIndex = m_aiIndexValues[m_iM][m_iM];
-                if ((m_afAverages[m_iM][m_iM] >= level) &&
-                        ((m_afAverages[m_iM][m_i_] < level) || (m_afAverages[m_i_][m_iM] < level) ||
-                                (m_afAverages[m_iM][m_iMM] < level) || (m_afAverages[m_iMM][m_iM] < level)) &&
-                                (map.get(mapIndex) == false))  {
 
-                    if (Math.abs(m_afAverages[m_iM][m_iM] - m_afAverages[m_i_][m_i_]) < diff) {
+                if ((avgPix(index - xDim - 1) >= level) &&
+                        ((avgPix(index - xDim) < level) || (avgPix(index - 1) < level) ||
+                             (avgPix(index - xDim - 2) < level) || (avgPix(index - (2 * xDim) - 1) < level)) &&
+                        (map.get(index - xDim - 1) == false)) {
+
+                    if (Math.abs(avgPix(index - xDim - 1) - avgPix(index)) < diff) {
                         dir = 0;
                         // diff = Math.abs(imageBufferActive[index-xDim-1] - imageBufferActive[index]);
                     }
@@ -4378,70 +4360,53 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
                 diff = 1000000;
 
-                if (dir == 1) {          
-                    mapIndex = m_aiIndexValues[m_iM][m_i_];
-                    map.set(mapIndex);
-                    paths(x,y,z, dir, level);
+                if (dir == 1) {
                     // x = x;
-                    y = y - 1;     
-                    setIndices( x, y, z );
+                    y = y - 1;
+                    map.set(index - xDim);
+                    paths(index, 1, level);
                 } else if (dir == 2) {
-                    mapIndex = m_aiIndexValues[m_iM][m_iP];
-                    map.set(mapIndex);
-                    paths(x,y,z, dir, level);
                     x = x + 1;
-                    y = y - 1;               
-                    setIndices( x, y, z );
+                    y = y - 1;
+                    map.set(index - xDim + 1);
+                    paths(index, 2, level);
                 } else if (dir == 3) {
-                    mapIndex = m_aiIndexValues[m_i_][m_iP];
-                    map.set(mapIndex);
-                    paths(x,y,z, dir, level);
                     x = x + 1;
-                    // y = y;               
-                    setIndices( x, y, z );
+                    // y = y;
+                    map.set(index + 1);
+                    paths(index, 3, level);
                 } else if (dir == 4) {
-                    mapIndex = m_aiIndexValues[m_iP][m_iP];
-                    map.set(mapIndex);
-                    paths(x,y,z, dir, level);
                     x = x + 1;
-                    y = y + 1;               
-                    setIndices( x, y, z );
+                    y = y + 1;
+                    map.set(index + xDim + 1);
+                    paths(index, 4, level);
                 } else if (dir == 5) {
-                    mapIndex = m_aiIndexValues[m_iP][m_i_];
-                    map.set(mapIndex);
-                    paths(x,y,z, dir, level);
                     // x = x;
-                    y = y + 1;               
-                    setIndices( x, y, z );
+                    y = y + 1;
+                    map.set(index + xDim);
+                    paths(index, 5, level);
                 } else if (dir == 6) {
-                    mapIndex = m_aiIndexValues[m_iP][m_iM];
-                    map.set(mapIndex);
-                    paths(x,y,z, dir, level);
                     x = x - 1;
-                    y = y + 1;               
-                    setIndices( x, y, z );
+                    y = y + 1;
+                    map.set(index + xDim - 1);
+                    paths(index, 6, level);
                 } else if (dir == 7) {
-                    mapIndex = m_aiIndexValues[m_i_][m_iM];
-                    map.set(mapIndex);
-                    paths(x,y,z, dir, level);
                     x = x - 1;
-                    // y = y;               
-                    setIndices( x, y, z );
+                    // y = y;
+                    map.set(index - 1);
+                    paths(index, 7, level);
                 } else if (dir == 0) {
-                    mapIndex = m_aiIndexValues[m_iM][m_iM];
-                    map.set(mapIndex);
-                    paths(x,y,z, dir, level);
                     x = x - 1;
-                    y = y - 1;               
-                    setIndices( x, y, z );
+                    y = y - 1;
+                    map.set(index - xDim - 1);
+                    paths(index, 0, level);
                 } else {
 
                     if (!stack.empty()) {
-                        int ptr = stack.pop()[0];
+                        int ptr = ((int[]) stack.pop())[0];
                         x = levelSetStack.getPointX(ptr);
                         y = levelSetStack.getPointY(ptr);
                         levelSetStack.setIndex(ptr);
-                        setIndices( x, y, z );
                     } else {
                         x = y = -1;
                     }
@@ -4461,35 +4426,26 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             }
 
             levelSetStack.addPoint(x, y);
-            distance = ((x - startPtX) * (x - startPtX)) + ((y - startPtY) * (y - startPtY));if ((distance < 2.1) && (levelSetStack.size() < 10)) {
+
+            distance = ((x - startPtX) * (x - startPtX)) + ((y - startPtY) * (y - startPtY));
+
+            if ((distance < 2.1) && (levelSetStack.size() < 10)) {
                 distance = 10;
             }
         } while (distance > 2.1);
 
 
         if (levelSetStack.size() != 0) {
-            new Vector3f();
-            Vector3f kScreenPt = new Vector3f();
-
-            Vector<Vector3f> kPositions = new Vector<Vector3f>();
-            for ( int i = 0; i < levelSetStack.size(); i++ )
-            {
-                kPatientPt.Set( levelSetStack.getPointX(i), levelSetStack.getPointY(i), m_iSlice );
-                kScreenPt = m_kDrawingContext.patientToScreen( kPatientPt );
-                kPositions.add( kScreenPt );
-            }
-            kPatientPt.Set( levelSetStack.getPointX(0), levelSetStack.getPointY(0), m_iSlice );   
-            kScreenPt = m_kDrawingContext.patientToScreen( kPatientPt );
-            kPositions.add( kScreenPt );
-            VOIBase kVOI = createVOI( m_iDrawType, true, false, kPositions );
-            kVOI.trimPoints(Preferences.getTrim(),
-                    Preferences.getTrimAdjacient());
-            return kVOI;
-        } 
-        return null;
+            return levelSetStack.exportPolygon();
+        } else {
+            System.err.println( "singleLevelSet return null" );
+            return null;
+        }
     }
-
-
+    
+     */
+    
+    
     /**
      * Creates a single level set. Takes a starting point and finds a closed path along the levelset back to the
      * starting point.
@@ -4498,7 +4454,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
      * @param  startPtY  the start point
      * @param  level     the level of the level set
      */
-    private VOIBase singleLevelSet(float startPtX, float startPtY, float level) {
+    private VOIBase singleLevelSet2(float startPtX, float startPtY) {
 
         int x, y;
         int index;
@@ -4534,11 +4490,13 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             return null;
         }
 
+
         x = (int) (startPtX + 0.5);
         y = (int) (startPtY + 0.5);
+        
+        float level = imageBufferActive[ y * xDim + x ];
 
         index = (y * xDim) + x;
-        level = (m_aucBufferActive[index] & 0x00ff);
 
         levelSetStack.reset();
         levelSetStack.addPoint(x, y);
@@ -4733,138 +4691,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         } 
         return null;
     }
-    private VOIBase split( VOIBase kVOI, Vector3f kStartPt, Vector3f kEndPt )
-    {
-        if ( kVOI.getType() != VOI.CONTOUR )
-        {
-            return null;
-        }
-        int iVOISlice = (int)fileCoordinatesToPatient(kVOI.get(0)).Z;
-        int iPoints = kVOI.size();
-        Vector3f kFirstIntersectionPt = null;
-        Vector3f kSecondIntersectionPt = null;
-        int iFirstIndex = -1;
-        int iSecondIndex = -1;
-        for ( int iP = 0; iP < (iPoints - 1) && (kSecondIntersectionPt == null); iP++ )
-        {
-            Vector3f kLocal1 = fileCoordinatesToPatient(kVOI.get(iP));
-            Vector3f kLocal2 = fileCoordinatesToPatient(kVOI.get(iP+1));
-            Vector3f kIntersection = new Vector3f();
-
-            if (JDialogVOISplitter.intersects( kLocal1, kLocal2, kStartPt, kEndPt, kIntersection )) {
-                if (kFirstIntersectionPt == null)
-                {
-                    kFirstIntersectionPt = kIntersection;
-                    iFirstIndex = iP;
-                } 
-                else 
-                {
-                    kSecondIntersectionPt = kIntersection;
-                    iSecondIndex = iP;
-                }
-            }
-        }
-        if ( kSecondIntersectionPt == null )
-        {
-            Vector3f kLocal1 = fileCoordinatesToPatient(kVOI.lastElement());
-            Vector3f kLocal2 = fileCoordinatesToPatient(kVOI.firstElement());
-            Vector3f kIntersection = new Vector3f();
-
-            if (JDialogVOISplitter.intersects( kLocal1, kLocal2, kStartPt, kEndPt, kIntersection )) {
-
-                kSecondIntersectionPt = kIntersection;
-                iSecondIndex = iPoints - 1;
-            }
-        }
-
-        if (kFirstIntersectionPt != null && kSecondIntersectionPt != null) 
-        {        
-            kFirstIntersectionPt.Z = iVOISlice;
-            kFirstIntersectionPt = patientCoordinatesToFile(kFirstIntersectionPt);
-            kSecondIntersectionPt.Z = iVOISlice;
-            kSecondIntersectionPt = patientCoordinatesToFile(kSecondIntersectionPt);
-
-
-            Vector<Vector3f> kPositions = new Vector<Vector3f>();
-            kPositions.add( kSecondIntersectionPt );  
-            //check if there are points from second index to 0-index, add those first
-            for (int iP = iSecondIndex + 1; iP < iPoints; iP++) {
-                kPositions.add(kVOI.get(iP));
-            }
-            for (int iP = 0; iP < iFirstIndex + 1; iP++) {
-                kPositions.add(kVOI.get(iP));
-            }
-            kPositions.add( kFirstIntersectionPt );  
-
-            for (int iP = 00; iP < kPositions.size(); iP++) {
-                kVOI.remove(kPositions.get(iP));
-            }
-            kVOI.add(0, new Vector3f(kFirstIntersectionPt) );
-            kVOI.add(0, new Vector3f(kSecondIntersectionPt) );      
-
-            kVOI.setSelectedPoint(0);
-            kVOI.update();
-
-            return new VOIContour( kVOI.isFixed(), kVOI.isClosed(), kPositions );
-        }
-        return null;       
-    }
-
-
-
-    private void splitVOIs( boolean bAllSlices, boolean bOnlyActive, VOIBase kSplitVOI )
-    {
-        VOIVector kVOIs = m_kImageActive.getVOIs();
-        if ( !kSplitVOI.isSplit() || (kVOIs.size() == 0) )
-        {
-            return;
-        }
-        Vector<VOIBase> kNewVOIs = new Vector<VOIBase>();
-
-        Vector3f kStartPt = fileCoordinatesToPatient(kSplitVOI.get(0)); 
-        Vector3f kEndPt = fileCoordinatesToPatient(kSplitVOI.get(1)); 
-
-        int iStartSlice = bAllSlices? 0 : m_iSlice;
-        int nSlices = m_aiLocalImageExtents.length > 2 ? m_aiLocalImageExtents[2] : 1;
-        int iEndSlice = bAllSlices? nSlices : m_iSlice + 1;
-
-
-        for ( int i = 0; i < kVOIs.size(); i++ )
-        {
-            VOI kVOI = kVOIs.get(i);
-            for ( int j = 0; j < kVOI.getCurves().size(); j++ )
-            {
-                VOIBase kVOI3D = kVOI.getCurves().get(j);
-                if ( m_iPlane != (m_iPlane & kVOI3D.getPlane() ))
-                {
-                    continue;
-                }
-                int iVOISlice = kVOI3D.slice();
-                if ( !((iVOISlice >= iStartSlice) && (iVOISlice < iEndSlice)) )
-                {
-                    continue;
-                }
-                if ( !(!bOnlyActive || kVOI3D.isActive()) )
-                {
-                    continue;
-                }
-                VOIBase kNew = split( kVOI3D, kStartPt, kEndPt );
-                if ( kNew != null )
-                {  
-                    //m_kParent.updateCurrentVOI( kVOI, kVOI );
-                    kNewVOIs.add(kNew);
-                }
-            }
-        }
-        m_kParent.deleteVOI( kSplitVOI );  
-        kSplitVOI.dispose();
-        kSplitVOI = null;
-
-        for ( int i = 0; i < kNewVOIs.size(); i++ )
-        {
-            m_kParent.addVOI(kNewVOIs.get(i), true);
-        }
-        m_kCurrentVOI = null;
-    }
-
+    
+    
+    
+    
+    
 }
