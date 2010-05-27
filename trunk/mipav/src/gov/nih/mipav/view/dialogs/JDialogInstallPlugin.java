@@ -210,7 +210,22 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
         	String name = files.get(i).getName();
         	name = name.substring(0, name.indexOf(".class"));
         	try {
-				Class c = Class.forName(name);
+        		//temporary detection of class path
+        		ClassLoader sysClassLoader = ClassLoader.getSystemClassLoader();
+
+		        //Get the URLs
+		        URL[] urls = ((URLClassLoader)sysClassLoader).getURLs();
+
+		        for(int j=0; j< urls.length; j++)
+		        {
+		            System.out.println(urls[j].getFile());
+		            if(urls[j].getFile().indexOf("plugin") != -1) {
+		            	System.err.println("Plugins found");
+		            }
+		        }      
+		        
+        		Class c = Class.forName(name);
+				 
 				boolean isPlugin = false;
 				Class[] inter = c.getInterfaces();
 				for(int j=0; j<inter.length; j++) {
@@ -240,6 +255,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 					}
 				}
 			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
 				//name could not likely be resolved given the current classpath
 			}
         }
