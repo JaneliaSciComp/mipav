@@ -580,6 +580,8 @@ public abstract class NLConstrainedEngineEP {
     
     private final int DRAPER24D = 0;
     
+    private final int JENNRICH_AND_SAMPSON = 6;
+    
     private final int BARD = 8;
     
     private final int MEYER = 10;
@@ -1060,6 +1062,28 @@ public abstract class NLConstrainedEngineEP {
         bl[2] = DoubleDouble.valueOf(100.0);
         bu[2] = DoubleDouble.valueOf(3000.0);                                             
         driverCalls();
+        // Below is an example to fit y(i-1) = 2 + 2*i -(exp(i*a0) + exp(i*a1))
+        // for i = 1 to 10
+        Preferences.debug("Jennrich and Sampson function at standard starting point unconstrained\n");
+        Preferences.debug("y(i-1) = 2 + 2*i - (exp(i*a0) + exp(i*a1)\n");
+        Preferences.debug("for i = 1 to 10\n");
+        Preferences.debug("Correct answer has chi-squared = 124.362 at a0 = 0.257825, a1 = 0.257825\n");
+        testMode = true;
+        testCase = JENNRICH_AND_SAMPSON;
+        nPts = 10;
+        param = 2;
+        gues = new DoubleDouble[param];
+        fitTestModel();
+        gues[0] = DoubleDouble.valueOf(0.3);
+        gues[1] = DoubleDouble.valueOf(0.4);
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new DoubleDouble[param];
+        bu = new DoubleDouble[param];
+        driverCalls();
         // Below is an example to fit y = a0 + a1*exp(-a3*x) + a2*exp(-a4*x)
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Osborne 1 function unconstrained\n");
@@ -1532,6 +1556,44 @@ public abstract class NLConstrainedEngineEP {
 	                         ctrlMat[0] = 0; 	
 	                    }
 	                } // else if (ctrl == 2)
+                	break;
+                    case JENNRICH_AND_SAMPSON:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		DoubleDouble exp1;
+                		DoubleDouble exp2;
+                	     for (i = 0; i < 10; i++) {
+                	    	 residuals[i] = DoubleDouble.valueOf(2.0 + 2.0*(i + 1.0));
+                	    	 exp1 = a[0].multiply(DoubleDouble.valueOf(i+1.0));
+                	    	 exp1 = exp1.exp();
+                	    	 exp2 = a[1].multiply(DoubleDouble.valueOf(i+1.0));
+                	    	 exp2 = exp2.exp();
+                	    	 residuals[i] = residuals[i].subtract(exp1);
+                	    	 residuals[i] = residuals[i].subtract(exp2);
+                	    	 //residuals[i] = 2.0 + 2.0*(i+1.0) - (Math.exp((i+1.0)*a[0]) + Math.exp((i+1.0)*a[1]));
+                	     }
+                	} // if ((ctrl == -1) || (ctrl == 1))
+                	else if (ctrl == 2) {
+                	    if (analyticalJacobian) {
+                	    	DoubleDouble exp1;
+                	    	DoubleDouble exp2;
+                	        for (i = 0; i < 10; i++) {
+                	        	exp1 = a[0].multiply(DoubleDouble.valueOf(i+1.0));
+                   	    	    exp1 = exp1.exp();
+                   	    	    exp2 = a[1].multiply(DoubleDouble.valueOf(i+1.0));
+                   	    	    exp2 = exp2.exp();
+                   	    	    covarMat[i][0] = exp1.multiply(DoubleDouble.valueOf(i+1.0));
+                   	    	    covarMat[i][0] = covarMat[i][0].negate();
+                   	    	    covarMat[i][1] = exp2.multiply(DoubleDouble.valueOf(i+1.0));
+                   	    	    covarMat[i][1] = covarMat[i][1].negate();
+                	    	    //covarMat[i][0] = -Math.exp((i+1.0)*a[0])*(i + 1.0);
+                	    	    //covarMat[i][1] = -Math.exp((i+1.0)*a[1])*(i + 1.0);
+                	        }
+                	    }
+                	    else {
+                	    	// If the user wishes to calculate the Jacobian numerically
+                	    	ctrlMat[0] = 0;
+                	    }
+                	} // else if (ctrl == 2)
                 	break;
                 case MEYER:
                 	if ((ctrl == -1) || (ctrl == 1)) {
