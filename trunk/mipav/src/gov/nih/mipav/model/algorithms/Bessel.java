@@ -1,11 +1,11 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.*;
 
 
 /**
+ * <p>
  * This module computes Bessel functions of complex arguments and a nonnegative order. This work is the port of FORTRAN
  * code written by Donald E. Amos at the Sandia National Laboratories. This is an installation of his Algorithm 644,
  * Collected Algorithms form ACM. The original FORTRAN code was downloaded from http://www.netlib.org/toms/644. The
@@ -17,20 +17,58 @@ import gov.nih.mipav.view.Preferences;
  * Functions by Shanjie Zhang and Jianming Jin, copyright 1966 by John Wiley & Sons, Inc. The I and K Bessel functions
  * obtained in this code were found to match the values in these 2 sources. Note that the Zhang and Jin book also
  * contains code for Bessel functions of complex arguments.
- *
- * <p>REFERENCES 1. Abramowitz, M. and Stegun, I. A., Handbook of Mathematical Functions, NBS Applied Math Series 55,
- * U.S. Dept. of Commerce, Washington, D.C., 1955 2. Amos, D. E., Algorithm 644, A Portable Package For Bessel Functions
- * of a Complex Argument and Nonnegative Order, ACM Transactions on Mathematical Software, Vol. 12, No. 3, September
- * 1986, Pages 265-273 3. Amos, D. E., Remark on Algorithm 644, ACM Transactions on Mathematical Software, Vol. 16, No.
- * 4, December 1990, Page 404 4. Amos, D. E., Remark on Algorithm 644 (Improvements in Algorithm 644), ACM Transactions
- * on Mathematical Software, Vol. 21, No. 4, December 1995, Pages 388-393. 5. Cody, W. J., Algorithm 665, MACHAR: A
- * Subroutine to Dynamically Determine Machine Parameters, ACM Transactions on Mathematical Software, Vol. 14, No. 4,
- * December 1988, Pages 303-311</p>
+ * </p>
+ * 
+ * <p>
+ * REFERENCES:
+ * <ol>
+ * <li>Abramowitz, M. and Stegun, I. A., Handbook of Mathematical Functions, NBS Applied Math Series 55, U.S. Dept. of
+ * Commerce, Washington, D.C., 1955</li>
+ * <li>Amos, D. E., Algorithm 644, A Portable Package For Bessel Functions of a Complex Argument and Nonnegative Order,
+ * ACM Transactions on Mathematical Software, Vol. 12, No. 3, September 1986, Pages 265-273</li>
+ * <li>Amos, D. E., Remark on Algorithm 644, ACM Transactions on Mathematical Software, Vol. 16, No. 4, December 1990,
+ * Page 404</li>
+ * <li>4. Amos, D. E., Remark on Algorithm 644 (Improvements in Algorithm 644), ACM Transactions on Mathematical
+ * Software, Vol. 21, No. 4, December 1995, Pages 388-393.</li>
+ * <li>5. Cody, W. J., Algorithm 665, MACHAR: A Subroutine to Dynamically Determine Machine Parameters, ACM
+ * Transactions on Mathematical Software, Vol. 14, No. 4, December 1988, Pages 303-311</li>
+ * </ol>
+ * </p>
+ * 
+ * <hr>
+ * 
+ * <p>
+ * From <a href="http://www.acm.org/publications/policies/softwarecrnotice/">the ACM website</a>:
+ * 
+ * <pre>
+ * ACM Software License Agreement
+ * 
+ *  All software, both binary and source published by the Association for Computing Machinery (hereafter, Software) is copyrighted by the Association (hereafter, ACM) and ownership of all right, title and interest in and to the Software remains with ACM. By using or copying the Software, User agrees to abide by the terms of this Agreement.
+ *  Noncommercial Use
+ * 
+ *  The ACM grants to you (hereafter, User) a royalty-free, nonexclusive right to execute, copy, modify and distribute both the binary and source code solely for academic, research and other similar noncommercial uses, subject to the following conditions:
+ * 
+ *  1. User acknowledges that the Software is still in the development stage and that it is being supplied &quot;as is,&quot; without any support services from ACM. Neither ACM nor the author makes any representations or warranties, express or implied, including, without limitation, any representations or warranties of the merchantability or fitness for any particular purpose, or that the application of the software, will not infringe on any patents or other proprietary rights of others.
+ *  2. ACM shall not be held liable for direct, indirect, incidental or consequential damages arising from any claim by User or any third party with respect to uses allowed under this Agreement, or from any use of the Software.
+ *  3. User agrees to fully indemnify and hold harmless ACM and/or the author(s) of the original work from and against any and all claims, demands, suits, losses, damages, costs and expenses arising out of the User's use of the Software, including, without limitation, arising out of the User's modification of the Software.
+ *  4. User may modify the Software and distribute that modified work to third parties provided that: (a) if posted separately, it clearly acknowledges that it contains material copyrighted by ACM (b) no charge is associated with such copies, (c) User agrees to notify ACM and the Author(s) of the distribution, and (d) User clearly notifies secondary users that such modified work is not the original Software.
+ *  5. User agrees that ACM, the authors of the original work and others may enjoy a royalty-free, non-exclusive license to use, copy, modify and redistribute these modifications to the Software made by the User and distributed to third parties as a derivative work under this agreement.
+ *  6. This agreement will terminate immediately upon User's breach of, or non-compliance with, any of its terms. User may be held liable for any copyright infringement or the infringement of any other proprietary rights in the Software that is caused or facilitated by the User's failure to abide by the terms of this agreement.
+ *  7. This agreement will be construed and enforced in accordance with the law of the state of New York applicable to contracts performed entirely within the State. The parties irrevocably consent to the exclusive jurisdiction of the state or federal courts located in the City of New York for all disputes concerning this agreement. 
+ * 
+ *  Commercial Use
+ * 
+ *  Any User wishing to make a commercial use of the Software must contact ACM at permissions@acm.org to arrange an appropriate license. Commercial use includes (1) integrating or incorporating all or part of the source code into a product for sale or license by, or on behalf of, User to third parties, or (2) distribution of the binary or source code to third parties for use with a commercial product sold or licensed by, or on behalf of, User.
+ * 
+ *  Revised 6/98
+ * </pre>
+ * 
+ * </p>
  */
-
 public class Bessel {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Bessel functions of the third kind, Hankel functions. */
     public static final int BESSEL_H = 1;
@@ -59,14 +97,14 @@ public class Bessel {
     /** multiplied by exp(-abs(Real(z))). */
     public static final int SCALED_FUNCTION = 2;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private double alim;
 
-
     /** DOCUMENT ME! */
-    private int BesselType;
+    private final int BesselType;
 
     /** DOCUMENT ME! */
     private double[] cyi;
@@ -153,16 +191,16 @@ public class Bessel {
     /** zr and zi are the real and imaginary parts of the complex argument. */
     private double zr;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
-
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates a new Bessel object.
-     *
-     * @param  BesselType    DOCUMENT ME!
-     * @param  overflowTest  DOCUMENT ME!
+     * 
+     * @param BesselType DOCUMENT ME!
+     * @param overflowTest DOCUMENT ME!
      */
-    public Bessel(int BesselType, boolean overflowTest) {
+    public Bessel(final int BesselType, final boolean overflowTest) {
         doTest = true;
         this.BesselType = BesselType;
         this.overflowTest = overflowTest;
@@ -170,19 +208,19 @@ public class Bessel {
 
     /**
      * This constructor is used for Ai and Bi Airy functions.
-     *
-     * @param  BesselType       int
-     * @param  zr               double
-     * @param  zi               double
-     * @param  derivativeOrder  int
-     * @param  scalingOption    int
-     * @param  cyr              double[]
-     * @param  cyi              double[]
-     * @param  nz               int[]
-     * @param  errorFlag        int[]
+     * 
+     * @param BesselType int
+     * @param zr double
+     * @param zi double
+     * @param derivativeOrder int
+     * @param scalingOption int
+     * @param cyr double[]
+     * @param cyi double[]
+     * @param nz int[]
+     * @param errorFlag int[]
      */
-    public Bessel(int BesselType, double zr, double zi, int derivativeOrder, int scalingOption, double[] cyr,
-                  double[] cyi, int[] nz, int[] errorFlag) {
+    public Bessel(final int BesselType, final double zr, final double zi, final int derivativeOrder,
+            final int scalingOption, final double[] cyr, final double[] cyi, final int[] nz, final int[] errorFlag) {
         this.BesselType = BesselType;
         this.zr = zr;
         this.zi = zi;
@@ -197,20 +235,21 @@ public class Bessel {
 
     /**
      * This construtor used for I, J, K, and Y Bessel functions.
-     *
-     * @param  BesselType      int
-     * @param  zr              double
-     * @param  zi              double
-     * @param  initialOrder    double
-     * @param  scalingOption   int
-     * @param  sequenceNumber  int
-     * @param  cyr             double[]
-     * @param  cyi             double[]
-     * @param  nz              int[]
-     * @param  errorFlag       int[]
+     * 
+     * @param BesselType int
+     * @param zr double
+     * @param zi double
+     * @param initialOrder double
+     * @param scalingOption int
+     * @param sequenceNumber int
+     * @param cyr double[]
+     * @param cyi double[]
+     * @param nz int[]
+     * @param errorFlag int[]
      */
-    public Bessel(int BesselType, double zr, double zi, double initialOrder, int scalingOption, int sequenceNumber,
-                  double[] cyr, double[] cyi, int[] nz, int[] errorFlag) {
+    public Bessel(final int BesselType, final double zr, final double zi, final double initialOrder,
+            final int scalingOption, final int sequenceNumber, final double[] cyr, final double[] cyi, final int[] nz,
+            final int[] errorFlag) {
         this.BesselType = BesselType;
         this.zr = zr;
         this.zi = zi;
@@ -225,21 +264,22 @@ public class Bessel {
 
     /**
      * This constructor used for H functions of kind 1 and 2.
-     *
-     * @param  BesselType      int
-     * @param  zr              double
-     * @param  zi              double
-     * @param  initialOrder    double
-     * @param  scalingOption   int
-     * @param  HankelKind      int
-     * @param  sequenceNumber  int
-     * @param  cyr             double[]
-     * @param  cyi             double[]
-     * @param  nz              int[]
-     * @param  errorFlag       int[]
+     * 
+     * @param BesselType int
+     * @param zr double
+     * @param zi double
+     * @param initialOrder double
+     * @param scalingOption int
+     * @param HankelKind int
+     * @param sequenceNumber int
+     * @param cyr double[]
+     * @param cyi double[]
+     * @param nz int[]
+     * @param errorFlag int[]
      */
-    public Bessel(int BesselType, double zr, double zi, double initialOrder, int scalingOption, int HankelKind,
-                  int sequenceNumber, double[] cyr, double[] cyi, int[] nz, int[] errorFlag) {
+    public Bessel(final int BesselType, final double zr, final double zi, final double initialOrder,
+            final int scalingOption, final int HankelKind, final int sequenceNumber, final double[] cyr,
+            final double[] cyi, final int[] nz, final int[] errorFlag) {
         this.BesselType = BesselType;
         this.zr = zr;
         this.zi = zi;
@@ -253,12 +293,13 @@ public class Bessel {
         this.errorFlag = errorFlag;
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Cleanup memory.
-     *
-     * @throws  Throwable  DOCUMENT ME!
+     * 
+     * @throws Throwable DOCUMENT ME!
      */
     public void finalize() throws Throwable {
 
@@ -284,16 +325,17 @@ public class Bessel {
             return;
         }
 
-        if ((BesselType != BESSEL_H) && (BesselType != BESSEL_I) && (BesselType != BESSEL_J) &&
-                (BesselType != BESSEL_K) && (BesselType != BESSEL_Y) && (BesselType != AIRY_AI) &&
-                (BesselType != AIRY_BI)) {
-            MipavUtil.displayError("Bessel type must be Airy Ai, Airy BI, BESSEL_H, BESSEL_I, BESSEL_J, BESSEL_K, or BESSEL_Y");
+        if ( (BesselType != Bessel.BESSEL_H) && (BesselType != Bessel.BESSEL_I) && (BesselType != Bessel.BESSEL_J)
+                && (BesselType != Bessel.BESSEL_K) && (BesselType != Bessel.BESSEL_Y) && (BesselType != Bessel.AIRY_AI)
+                && (BesselType != Bessel.AIRY_BI)) {
+            MipavUtil
+                    .displayError("Bessel type must be Airy Ai, Airy BI, BESSEL_H, BESSEL_I, BESSEL_J, BESSEL_K, or BESSEL_Y");
             errorFlag[0] = 1;
 
             return;
         }
 
-        if ((BesselType != AIRY_AI) && (BesselType != AIRY_BI)) {
+        if ( (BesselType != Bessel.AIRY_AI) && (BesselType != Bessel.AIRY_BI)) {
 
             if (initialOrder < 0) {
                 MipavUtil.displayError("initialOrder must be >= 0.0");
@@ -303,9 +345,9 @@ public class Bessel {
             }
         }
 
-        if ((BesselType == AIRY_AI) || (BesselType == AIRY_BI)) {
+        if ( (BesselType == Bessel.AIRY_AI) || (BesselType == Bessel.AIRY_BI)) {
 
-            if ((derivativeOrder < 0) || (derivativeOrder > 1)) {
+            if ( (derivativeOrder < 0) || (derivativeOrder > 1)) {
                 MipavUtil.displayError("Derivative order can only be 0 or 1");
                 errorFlag[0] = 1;
 
@@ -313,7 +355,7 @@ public class Bessel {
             }
         }
 
-        if ((scalingOption != UNSCALED_FUNCTION) && (scalingOption != SCALED_FUNCTION)) {
+        if ( (scalingOption != Bessel.UNSCALED_FUNCTION) && (scalingOption != Bessel.SCALED_FUNCTION)) {
             MipavUtil.displayError("scalingOption must be UNSCALED_FUNCTION or " + "SCALED_FUNCTION");
             errorFlag[0] = 1;
 
@@ -355,7 +397,7 @@ public class Bessel {
             return;
         }
 
-        if (BesselType != AIRY_BI) {
+        if (BesselType != Bessel.AIRY_BI) {
 
             if (nz == null) {
                 MipavUtil.displayError("Array nz must not be null");
@@ -367,23 +409,23 @@ public class Bessel {
 
         errorFlag[0] = 0;
 
-        if (BesselType != AIRY_BI) {
+        if (BesselType != Bessel.AIRY_BI) {
             nz[0] = 0;
         }
 
         switch (BesselType) {
 
             case BESSEL_H:
-                if ((zr == 0.0) && (zi == 0.0)) {
+                if ( (zr == 0.0) && (zi == 0.0)) {
                     MipavUtil.displayError("BesselH must not have both zr and zi = 0.0");
                     errorFlag[0] = 1;
 
                     return;
                 } // if ((zr == 0.00 && (zi == 0.0))
 
-                if ((HankelKind < 1) || (HankelKind > 2)) {
-                    MipavUtil.displayError("BesselH must not have Hankel function kind" +
-                                           " less than 1 or greater than 2");
+                if ( (HankelKind < 1) || (HankelKind > 2)) {
+                    MipavUtil.displayError("BesselH must not have Hankel function kind"
+                            + " less than 1 or greater than 2");
                     errorFlag[0] = 1;
 
                     return;
@@ -401,7 +443,7 @@ public class Bessel {
                 break;
 
             case BESSEL_K:
-                if ((zr == 0.0) && (zi == 0.0)) {
+                if ( (zr == 0.0) && (zi == 0.0)) {
                     MipavUtil.displayError("BesselK must not have both zr and zi = 0.0");
                     errorFlag[0] = 1;
 
@@ -414,7 +456,7 @@ public class Bessel {
             case BESSEL_Y:
                 cwrkr = new double[sequenceNumber];
                 cwrki = new double[sequenceNumber];
-                if ((zr == 0.0) && (zi == 0.0)) {
+                if ( (zr == 0.0) && (zi == 0.0)) {
                     MipavUtil.displayError("BesselY must not have both zr and zi = 0.0");
                     errorFlag[0] = 1;
 
@@ -440,64 +482,52 @@ public class Bessel {
      * VALUES GREATER THAN ZMIN WHICH ARE ADJUSTED BY THE RECURSION G(Z+1)=Z*G(Z) FOR Z.LE.ZMIN. THE FUNCTION WAS MADE
      * AS PORTABLE AS POSSIBLE BY COMPUTIMG ZMIN FROM THE NUMBER OF BASE 10 DIGITS IN A WORD,
      * RLN=AMAX1(-ALOG10(R1MACH(4)),0.5E-18) LIMITED TO 18 DIGITS OF (RELATIVE) ACCURACY.
-     *
-     * <p>SINCE INTEGER ARGUMENTS ARE COMMON, A TABLE LOOK UP ON 100 VALUES IS USED FOR SPEED OF EXECUTION.</p>
-     *
-     * @param   z     double, z > 0.0
-     * @param   ierr  int[] error flag IERR=0, NORMAL RETURN, COMPUTATION COMPLETED IERR=1, Z.LE.0.0D0, NO COMPUTATION
-     *
-     * @return  double NATURAL LOG OF THE GAMMA FUNCTION AT Z.NE.0.0D0
+     * 
+     * <p>
+     * SINCE INTEGER ARGUMENTS ARE COMMON, A TABLE LOOK UP ON 100 VALUES IS USED FOR SPEED OF EXECUTION.
+     * </p>
+     * 
+     * @param z double, z > 0.0
+     * @param ierr int[] error flag IERR=0, NORMAL RETURN, COMPUTATION COMPLETED IERR=1, Z.LE.0.0D0, NO COMPUTATION
+     * 
+     * @return double NATURAL LOG OF THE GAMMA FUNCTION AT Z.NE.0.0D0
      */
-    private double dgamln(double z, int[] ierr) {
-        double[] gln = new double[] {
-                           0.00000000000000000E+00, 0.00000000000000000E+00, 6.93147180559945309E-01,
-                           1.79175946922805500E+00, 3.17805383034794562E+00, 4.78749174278204599E+00,
-                           6.57925121201010100E+00, 8.52516136106541430E+00, 1.06046029027452502E+01,
-                           1.28018274800814696E+01, 1.51044125730755153E+01, 1.75023078458738858E+01,
-                           1.99872144956618861E+01, 2.25521638531234229E+01, 2.51912211827386815E+01,
-                           2.78992713838408916E+01, 3.06718601060806728E+01, 3.35050734501368889E+01,
-                           3.63954452080330536E+01, 3.93398841871994940E+01, 4.23356164607534850E+01,
-                           4.53801388984769080E+01, 4.84711813518352239E+01, 5.16066755677643736E+01,
-                           5.47847293981123192E+01, 5.80036052229805199E+01, 6.12617017610020020E+01,
-                           6.45575386270063311E+01, 6.78897431371815350E+01, 7.12570389671680090E+01,
-                           7.46582363488301644E+01, 7.80922235533153106E+01, 8.15579594561150372E+01,
-                           8.50544670175815174E+01, 8.85808275421976788E+01, 9.21361756036870925E+01,
-                           9.57196945421432025E+01, 9.93306124547874269E+01, 1.02968198614513813E+02,
-                           1.06631760260643459E+02, 1.10320639714757395E+02, 1.14034211781461703E+02,
-                           1.17771881399745072E+02, 1.21533081515438634E+02, 1.25317271149356895E+02,
-                           1.29123933639127215E+02, 1.32952575035616310E+02, 1.36802722637326368E+02,
-                           1.40673923648234259E+02, 1.44565743946344886E+02, 1.48477766951773032E+02,
-                           1.52409592584497358E+02, 1.56360836303078785E+02, 1.60331128216630907E+02,
-                           1.64320112263195181E+02, 1.68327445448427652E+02, 1.72352797139162802E+02,
-                           1.76395848406997352E+02, 1.80456291417543771E+02, 1.84533828861449491E+02,
-                           1.88628173423671591E+02, 1.92739047287844902E+02, 1.96866181672889994E+02,
-                           2.01009316399281527E+02, 2.05168199482641199E+02, 2.09342586752536836E+02,
-                           2.13532241494563261E+02, 2.17736934113954227E+02, 2.21956441819130334E+02,
-                           2.26190548323727593E+02, 2.30439043565776952E+02, 2.34701723442818268E+02,
-                           2.38978389561834323E+02, 2.43268849002982714E+02, 2.47572914096186884E+02,
-                           2.51890402209723194E+02, 2.56221135550009525E+02, 2.60564940971863209E+02,
-                           2.64921649798552801E+02, 2.69291097651019823E+02, 2.73673124285693704E+02,
-                           2.78067573440366143E+02, 2.82474292687630396E+02, 2.86893133295426994E+02,
-                           2.91323950094270308E+02, 2.95766601350760624E+02, 3.00220948647014132E+02,
-                           3.04686856765668715E+02, 3.09164193580146922E+02, 3.13652829949879062E+02,
-                           3.18152639620209327E+02, 3.22663499126726177E+02, 3.27185287703775217E+02,
-                           3.31717887196928473E+02, 3.36261181979198477E+02, 3.40815058870799018E+02,
-                           3.45379407062266854E+02, 3.49954118040770237E+02, 3.54539085519440809E+02,
-                           3.59134205369575399E+02
-                       };
-        double[] cf = new double[] {
-                          8.33333333333333333E-02, -2.77777777777777778E-03, 7.93650793650793651E-04,
-                          -5.95238095238095238E-04, 8.41750841750841751E-04, -1.91752691752691753E-03,
-                          6.41025641025641026E-03, -2.95506535947712418E-02, 1.79644372368830573E-01,
-                          -1.39243221690590112E+00, 1.34028640441683920E+01, -1.56848284626002017E+02,
-                          2.19310333333333333E+03, -3.61087712537249894E+04, 6.91472268851313067E+05,
-                          -1.52382215394074162E+07, 3.82900751391414141E+08, -1.08822660357843911E+10,
-                          3.47320283765002252E+11, -1.23696021422692745E+13, 4.88788064793079335E+14,
-                          -2.13203339609193739E+16
-                      };
+    private double dgamln(final double z, final int[] ierr) {
+        final double[] gln = new double[] {0.00000000000000000E+00, 0.00000000000000000E+00, 6.93147180559945309E-01,
+                1.79175946922805500E+00, 3.17805383034794562E+00, 4.78749174278204599E+00, 6.57925121201010100E+00,
+                8.52516136106541430E+00, 1.06046029027452502E+01, 1.28018274800814696E+01, 1.51044125730755153E+01,
+                1.75023078458738858E+01, 1.99872144956618861E+01, 2.25521638531234229E+01, 2.51912211827386815E+01,
+                2.78992713838408916E+01, 3.06718601060806728E+01, 3.35050734501368889E+01, 3.63954452080330536E+01,
+                3.93398841871994940E+01, 4.23356164607534850E+01, 4.53801388984769080E+01, 4.84711813518352239E+01,
+                5.16066755677643736E+01, 5.47847293981123192E+01, 5.80036052229805199E+01, 6.12617017610020020E+01,
+                6.45575386270063311E+01, 6.78897431371815350E+01, 7.12570389671680090E+01, 7.46582363488301644E+01,
+                7.80922235533153106E+01, 8.15579594561150372E+01, 8.50544670175815174E+01, 8.85808275421976788E+01,
+                9.21361756036870925E+01, 9.57196945421432025E+01, 9.93306124547874269E+01, 1.02968198614513813E+02,
+                1.06631760260643459E+02, 1.10320639714757395E+02, 1.14034211781461703E+02, 1.17771881399745072E+02,
+                1.21533081515438634E+02, 1.25317271149356895E+02, 1.29123933639127215E+02, 1.32952575035616310E+02,
+                1.36802722637326368E+02, 1.40673923648234259E+02, 1.44565743946344886E+02, 1.48477766951773032E+02,
+                1.52409592584497358E+02, 1.56360836303078785E+02, 1.60331128216630907E+02, 1.64320112263195181E+02,
+                1.68327445448427652E+02, 1.72352797139162802E+02, 1.76395848406997352E+02, 1.80456291417543771E+02,
+                1.84533828861449491E+02, 1.88628173423671591E+02, 1.92739047287844902E+02, 1.96866181672889994E+02,
+                2.01009316399281527E+02, 2.05168199482641199E+02, 2.09342586752536836E+02, 2.13532241494563261E+02,
+                2.17736934113954227E+02, 2.21956441819130334E+02, 2.26190548323727593E+02, 2.30439043565776952E+02,
+                2.34701723442818268E+02, 2.38978389561834323E+02, 2.43268849002982714E+02, 2.47572914096186884E+02,
+                2.51890402209723194E+02, 2.56221135550009525E+02, 2.60564940971863209E+02, 2.64921649798552801E+02,
+                2.69291097651019823E+02, 2.73673124285693704E+02, 2.78067573440366143E+02, 2.82474292687630396E+02,
+                2.86893133295426994E+02, 2.91323950094270308E+02, 2.95766601350760624E+02, 3.00220948647014132E+02,
+                3.04686856765668715E+02, 3.09164193580146922E+02, 3.13652829949879062E+02, 3.18152639620209327E+02,
+                3.22663499126726177E+02, 3.27185287703775217E+02, 3.31717887196928473E+02, 3.36261181979198477E+02,
+                3.40815058870799018E+02, 3.45379407062266854E+02, 3.49954118040770237E+02, 3.54539085519440809E+02,
+                3.59134205369575399E+02};
+        final double[] cf = new double[] {8.33333333333333333E-02, -2.77777777777777778E-03, 7.93650793650793651E-04,
+                -5.95238095238095238E-04, 8.41750841750841751E-04, -1.91752691752691753E-03, 6.41025641025641026E-03,
+                -2.95506535947712418E-02, 1.79644372368830573E-01, -1.39243221690590112E+00, 1.34028640441683920E+01,
+                -1.56848284626002017E+02, 2.19310333333333333E+03, -3.61087712537249894E+04, 6.91472268851313067E+05,
+                -1.52382215394074162E+07, 3.82900751391414141E+08, -1.08822660357843911E+10, 3.47320283765002252E+11,
+                -1.23696021422692745E+13, 4.88788064793079335E+14, -2.13203339609193739E+16};
 
         // ln(2*PI)
-        double con = 1.83787706640934548E+00;
+        final double con = 1.83787706640934548E+00;
         int nz;
         double fz;
         double wdtol;
@@ -532,7 +562,7 @@ public class Bessel {
         if (z <= 101.0) {
             fz = z - nz;
 
-            if ((fz <= 0.0) && (nz <= 100)) {
+            if ( (fz <= 0.0) && (nz <= 100)) {
                 return gln[nz - 1];
             }
         } // if (z <= 101.0)
@@ -600,7 +630,7 @@ public class Bessel {
      */
     private void runTest() {
 
-        if (BesselType == BESSEL_H) {
+        if (BesselType == Bessel.BESSEL_H) {
 
             if (overflowTest) {
                 zqcbh(2);
@@ -608,7 +638,7 @@ public class Bessel {
                 zqcbh(1);
             }
         } // if (BesselType == BESSEL_H)
-        else if (BesselType == BESSEL_I) {
+        else if (BesselType == Bessel.BESSEL_I) {
 
             if (overflowTest) {
                 zqcbi(2);
@@ -616,7 +646,7 @@ public class Bessel {
                 zqcbi(1);
             }
         } // else if (BesselType == BESSEL_I);
-        else if (BesselType == BESSEL_J) {
+        else if (BesselType == Bessel.BESSEL_J) {
 
             if (overflowTest) {
                 zqcbj(2);
@@ -624,7 +654,7 @@ public class Bessel {
                 zqcbj(1);
             }
         } // else if (BesselType == BESSEL_J);
-        else if (BesselType == BESSEL_K) {
+        else if (BesselType == Bessel.BESSEL_K) {
 
             if (overflowTest) {
                 zqcbk(2);
@@ -632,7 +662,7 @@ public class Bessel {
                 zqcbk(1);
             }
         } // else if (BesselType == BESSEL_K)
-        else if (BesselType == BESSEL_Y) {
+        else if (BesselType == Bessel.BESSEL_Y) {
 
             if (overflowTest) {
                 zqcby(2);
@@ -640,7 +670,7 @@ public class Bessel {
                 zqcby(1);
             }
         } // else if (BesselType == BESSEL_Y)
-        else if ((BesselType == AIRY_AI) || (BesselType == AIRY_BI)) {
+        else if ( (BesselType == Bessel.AIRY_AI) || (BesselType == Bessel.AIRY_BI)) {
 
             if (overflowTest) {
                 zqcai(2);
@@ -649,18 +679,17 @@ public class Bessel {
             }
         } // else if ((BesselType == AIRY_AI)|| (BesselType == AIRY_BI))
 
-
     }
 
     /**
      * zabs computes the absolute value or magnitude of a double precision complex variable zr + j*zi.
-     *
-     * @param   zr  double
-     * @param   zi  double
-     *
-     * @return  double
+     * 
+     * @param zr double
+     * @param zi double
+     * 
+     * @return double
      */
-    private double zabs(double zr, double zi) {
+    private double zabs(final double zr, final double zi) {
         double u, v, q, s;
         u = Math.abs(zr);
         v = Math.abs(zi);
@@ -685,32 +714,37 @@ public class Bessel {
 
     /**
      * ZACAI APPLIES THE ANALYTIC CONTINUATION FORMULA.
-     *
-     * <p>K(FNU,ZN*EXP(MP))=K(FNU,ZN)*EXP(-MP*FNU) - MP*I(FNU,ZN) MP=PI*MR*CMPLX(0.0,1.0)</p>
-     *
-     * <p>TO CONTINUE THE K FUNCTION FROM THE RIGHT HALF TO THE LEFT HALF Z PLANE FOR USE WITH ZAIRY WHERE FNU=1/3 OR
-     * 2/3 AND N=1. ZACAI IS THE SAME AS ZACON WITH THE PARTS FOR LARGER ORDERS AND RECURRENCE REMOVED. A RECURSIVE CALL
-     * TO ZACON CAN RESULT IF ZACON IS CALLED FROM ZAIRY.</p>
-     *
-     * @param  zr    double
-     * @param  zi    double
-     * @param  fnu   double
-     * @param  kode  int
-     * @param  mr    int
-     * @param  n     int
-     * @param  yr    double[]
-     * @param  yi    double[]
-     * @param  nz    int[]
+     * 
+     * <p>
+     * K(FNU,ZN*EXP(MP))=K(FNU,ZN)*EXP(-MP*FNU) - MP*I(FNU,ZN) MP=PI*MR*CMPLX(0.0,1.0)
+     * </p>
+     * 
+     * <p>
+     * TO CONTINUE THE K FUNCTION FROM THE RIGHT HALF TO THE LEFT HALF Z PLANE FOR USE WITH ZAIRY WHERE FNU=1/3 OR 2/3
+     * AND N=1. ZACAI IS THE SAME AS ZACON WITH THE PARTS FOR LARGER ORDERS AND RECURRENCE REMOVED. A RECURSIVE CALL TO
+     * ZACON CAN RESULT IF ZACON IS CALLED FROM ZAIRY.
+     * </p>
+     * 
+     * @param zr double
+     * @param zi double
+     * @param fnu double
+     * @param kode int
+     * @param mr int
+     * @param n int
+     * @param yr double[]
+     * @param yi double[]
+     * @param nz int[]
      */
-    private void zacai(double zr, double zi, double fnu, int kode, int mr, int n, double[] yr, double[] yi, int[] nz) {
-        double[] cyr = new double[2];
-        double[] cyi = new double[2];
+    private void zacai(double zr, double zi, final double fnu, final int kode, final int mr, final int n,
+            final double[] yr, final double[] yi, final int[] nz) {
+        final double[] cyr = new double[2];
+        final double[] cyi = new double[2];
         double znr;
         double zni;
         double az;
         int nn;
         double dfnu;
-        int[] nw = new int[1];
+        final int[] nw = new int[1];
         double fmr;
         double sgn;
         double csgnr;
@@ -720,11 +754,11 @@ public class Bessel {
         double arg;
         double cspnr;
         double cspni;
-        double[] c1r = new double[1];
-        double[] c1i = new double[1];
-        double[] c2r = new double[1];
-        double[] c2i = new double[1];
-        int[] iuf = new int[1];
+        final double[] c1r = new double[1];
+        final double[] c1i = new double[1];
+        final double[] c2r = new double[1];
+        final double[] c2i = new double[1];
+        final int[] iuf = new int[1];
         double ascle;
 
         nz[0] = 0;
@@ -734,7 +768,7 @@ public class Bessel {
         nn = n;
         dfnu = fnu + n - 1.0;
 
-        if ((az <= 2.0) || ((az > 2.0) && ((az * az * 0.25) <= (dfnu + 1.0)))) {
+        if ( (az <= 2.0) || ( (az > 2.0) && ( (az * az * 0.25) <= (dfnu + 1.0)))) {
 
             // Power series for the I function
             zseri(znr, zni, fnu, kode, nn, yr, yi, nw);
@@ -810,7 +844,7 @@ public class Bessel {
         cspnr = Math.cos(arg);
         cspni = Math.sin(arg);
 
-        if ((inu % 2) != 0) {
+        if ( (inu % 2) != 0) {
             cspnr = -cspnr;
             cspni = -cspni;
         } // if ((inu%2) != 0)
@@ -835,39 +869,44 @@ public class Bessel {
 
     /**
      * ZACON APPLIES THE ANALYTIC CONTINUATION FORMULA.
-     *
-     * <p>K(FNU,ZN*EXP(MP))=K(FNU,ZN)*EXP(-MP*FNU) - MP*I(FNU,ZN) MP=PI*MR*CMPLX(0.0,1.0)</p>
-     *
-     * <p>TO CONTINUE THE K FUNCTION FROM THE RIGHT HALF TO THE LEFT HALF Z PLANE</p>
-     *
-     * @param  zr    double
-     * @param  zi    double
-     * @param  fnu   double
-     * @param  kode  int
-     * @param  mr    int
-     * @param  n     int
-     * @param  yr    double[]
-     * @param  yi    double[]
-     * @param  nz    int[]
+     * 
+     * <p>
+     * K(FNU,ZN*EXP(MP))=K(FNU,ZN)*EXP(-MP*FNU) - MP*I(FNU,ZN) MP=PI*MR*CMPLX(0.0,1.0)
+     * </p>
+     * 
+     * <p>
+     * TO CONTINUE THE K FUNCTION FROM THE RIGHT HALF TO THE LEFT HALF Z PLANE
+     * </p>
+     * 
+     * @param zr double
+     * @param zi double
+     * @param fnu double
+     * @param kode int
+     * @param mr int
+     * @param n int
+     * @param yr double[]
+     * @param yi double[]
+     * @param nz int[]
      */
-    private void zacon(double zr, double zi, double fnu, int kode, int mr, int n, double[] yr, double[] yi, int[] nz) {
-        double[] cyr = new double[2];
-        double[] cyi = new double[2];
-        double[] cssr = new double[3];
-        double[] csrr = new double[3];
-        double[] bry = new double[3];
+    private void zacon(double zr, double zi, final double fnu, final int kode, final int mr, final int n,
+            final double[] yr, final double[] yi, final int[] nz) {
+        final double[] cyr = new double[2];
+        final double[] cyi = new double[2];
+        final double[] cssr = new double[3];
+        final double[] csrr = new double[3];
+        final double[] bry = new double[3];
         double znr;
         double zni;
         int nn;
-        int[] nw = new int[1];
+        final int[] nw = new int[1];
         double s1r;
         double s1i;
         double s2r;
         double s2i;
         double fmr;
         double sgn;
-        double[] csgnr = new double[1];
-        double[] csgni = new double[1];
+        final double[] csgnr = new double[1];
+        final double[] csgni = new double[1];
         double yy;
         double cpn;
         double spn;
@@ -875,18 +914,18 @@ public class Bessel {
         double arg;
         double cspnr;
         double cspni;
-        int[] iuf = new int[1];
-        double[] c1r = new double[1];
-        double[] c1i = new double[1];
-        double[] c2r = new double[1];
-        double[] c2i = new double[1];
+        final int[] iuf = new int[1];
+        final double[] c1r = new double[1];
+        final double[] c1i = new double[1];
+        final double[] c2r = new double[1];
+        final double[] c2i = new double[1];
         double ascle;
         double sc1r;
         double sc1i;
-        double[] str = new double[1];
-        double[] sti = new double[1];
-        double[] ptr = new double[1];
-        double[] pti = new double[1];
+        final double[] str = new double[1];
+        final double[] sti = new double[1];
+        final double[] ptr = new double[1];
+        final double[] pti = new double[1];
         double sc2r = 0.0;
         double sc2i = 0.0;
         double azn;
@@ -964,7 +1003,7 @@ public class Bessel {
         cspnr = cpn;
         cspni = spn;
 
-        if ((inu % 2) != 0) {
+        if ( (inu % 2) != 0) {
             cspnr = -cspnr;
             cspni = -cspni;
         } // if ((inu%2) != 0)
@@ -1047,7 +1086,7 @@ public class Bessel {
         if (as2 <= bry[0]) {
             kflag = 1;
         } // if (as2 <= bry[0])
-        else if ((as2 > bry[0]) && (as2 >= bry[1])) {
+        else if ( (as2 > bry[0]) && (as2 >= bry[1])) {
             kflag = 3;
         } // else if ((as2 > bry[0]) && (as2 >= bry[1]))
 
@@ -1072,7 +1111,7 @@ public class Bessel {
             c2r[0] = yr[i - 1];
             c2i[0] = yi[i - 1];
 
-            if ((kode != 1) && (iuf[0] >= 0)) {
+            if ( (kode != 1) && (iuf[0] >= 0)) {
                 zs1s2(znr, zni, c1r, c1i, c2r, c2i, nw, ascle, iuf);
                 nz[0] = nz[0] + nw[0];
                 sc1r = sc2r;
@@ -1133,8 +1172,9 @@ public class Bessel {
      * RESPECTIVELY. ON KODE=2, A SCALING OPTION CEXP(ZTA)*AI(Z) OR CEXP(ZTA)* DAI(Z)/DZ IS PROVIDED TO REMOVE THE
      * EXPONENTIAL DECAY IN -PI/3.LT.ARG(Z).LT.PI/3 AND THE EXPONENTIAL GROWTH IN PI/3.LT.ABS(ARG(Z)).LT.PI WHERE
      * ZTA=(2/3)*Z*CSQRT(Z).
-     *
-     * <p>WHILE THE AIRY FUNCTIONS AI(Z) AND DAI(Z)/DZ ARE ANALYTIC IN THE WHOLE Z PLANE, THE CORRESPONDING SCALED
+     * 
+     * <p>
+     * WHILE THE AIRY FUNCTIONS AI(Z) AND DAI(Z)/DZ ARE ANALYTIC IN THE WHOLE Z PLANE, THE CORRESPONDING SCALED
      * FUNCTIONS DEFINED FOR KODE=2 HAVE A CUT ALONG THE NEGATIVE REAL AXIS. DEFINTIONS AND NOTATION ARE FOUND IN THE
      * NBS HANDBOOK OF C MATHEMATICAL FUNCTIONS (REF. 1). C C INPUT ZR,ZI ARE DOUBLE PRECISION C ZR,ZI - Z=CMPLX(ZR,ZI)
      * C ID - ORDER OF DERIVATIVE, ID=0 OR ID=1 C KODE - A PARAMETER TO INDICATE THE SCALING OPTION C KODE= 1 RETURNS C
@@ -1176,29 +1216,31 @@ public class Bessel {
      * AMOS, SAND83-0643, MAY, 1983 C C A SUBROUTINE PACKAGE FOR BESSEL FUNCTIONS OF A COMPLEX C ARGUMENT AND
      * NONNEGATIVE ORDER BY D. E. AMOS, SAND85- C 1018, MAY, 1985 C C A PORTABLE PACKAGE FOR BESSEL FUNCTIONS OF A
      * COMPLEX C ARGUMENT AND NONNEGATIVE ORDER BY D. E. AMOS, ACM C TRANS. MATH. SOFTWARE, VOL. 12, NO. 3, SEPTEMBER
-     * 1986, C PP 265-273.</p>
-     *
-     * @param  zr    double
-     * @param  zi    double
-     * @param  id    int
-     * @param  kode  int
-     * @param  air   double[]
-     * @param  aii   double[]
-     * @param  nz    int[]
-     * @param  ierr  int[]
+     * 1986, C PP 265-273.
+     * </p>
+     * 
+     * @param zr double
+     * @param zi double
+     * @param id int
+     * @param kode int
+     * @param air double[]
+     * @param aii double[]
+     * @param nz int[]
+     * @param ierr int[]
      */
-    private void zairy(double zr, double zi, int id, int kode, double[] air, double[] aii, int[] nz, int[] ierr) {
-        double[] cyr = new double[1];
-        double[] cyi = new double[1];
-        double tth = 2.0 / 3.0;
-        double c1 = 3.55028053887817240E-01;
+    private void zairy(final double zr, final double zi, final int id, final int kode, final double[] air,
+            final double[] aii, final int[] nz, final int[] ierr) {
+        final double[] cyr = new double[1];
+        final double[] cyi = new double[1];
+        final double tth = 2.0 / 3.0;
+        final double c1 = 3.55028053887817240E-01;
         double c2 = 2.58819403792806799E-01;
-        double coef = 1.83776298473930683E-01;
-        double[] str = new double[1];
-        double[] sti = new double[1];
-        double[] csqr = new double[1];
-        double[] csqi = new double[1];
-        int[] nn = new int[1];
+        final double coef = 1.83776298473930683E-01;
+        final double[] str = new double[1];
+        final double[] sti = new double[1];
+        final double[] csqr = new double[1];
+        final double[] csqi = new double[1];
+        final int[] nn = new int[1];
         double az;
         double fid;
         double s1r;
@@ -1228,7 +1270,7 @@ public class Bessel {
         double cc;
         double fnu;
         int k1;
-        int k2;
+        final int k2;
         double dig;
         double alaz;
         double bb;
@@ -1240,7 +1282,7 @@ public class Bessel {
         ierr[0] = 0;
         nz[0] = 0;
 
-        if ((id < 0) || (id > 1) || (kode < 1) || (kode > 2)) {
+        if ( (id < 0) || (id > 1) || (kode < 1) || (kode > 2)) {
             ierr[0] = 1;
 
             return;
@@ -1290,7 +1332,7 @@ public class Bessel {
                     aa = Math.sqrt(aa);
 
                     if (az > aa) {
-                        s1r = 0.5 * ((zr * zr) - (zi * zi));
+                        s1r = 0.5 * ( (zr * zr) - (zi * zi));
                         s1i = zr * zi;
                     } // if (az > aa)
 
@@ -1337,13 +1379,13 @@ public class Bessel {
                 bk = 30.0 - (9.0 * fid);
 
                 for (k = 1; k <= 25; k++) {
-                    str[0] = ((trm1r * z3r) - (trm1i * z3i)) / d1;
-                    trm1i = ((trm1r * z3i) + (trm1i * z3r)) / d1;
+                    str[0] = ( (trm1r * z3r) - (trm1i * z3i)) / d1;
+                    trm1i = ( (trm1r * z3i) + (trm1i * z3r)) / d1;
                     trm1r = str[0];
                     s1r = s1r + trm1r;
                     s1i = s1i + trm1i;
-                    str[0] = ((trm2r * z3r) - (trm2i * z3i)) / d2;
-                    trm2i = ((trm2r * z3i) + (trm2i * z3r)) / d2;
+                    str[0] = ( (trm2r * z3r) - (trm2i * z3i)) / d2;
+                    trm2i = ( (trm2r * z3i) + (trm2i * z3r)) / d2;
                     trm2r = str[0];
                     s2r = s2r + trm2r;
                     s2i = s2i + trm2i;
@@ -1361,16 +1403,16 @@ public class Bessel {
             } // if (aa >= (tol/az))
 
             if (id != 1) {
-                air[0] = (s1r * c1) - (c2 * ((zr * s2r) - (zi * s2i)));
-                aii[0] = (s1i * c1) - (c2 * ((zr * s2i) + (zi * s2r)));
+                air[0] = (s1r * c1) - (c2 * ( (zr * s2r) - (zi * s2i)));
+                aii[0] = (s1i * c1) - (c2 * ( (zr * s2i) + (zi * s2r)));
 
                 if (kode == 1) {
                     return;
                 } // if (kode == 1)
 
                 zsqrt(zr, zi, str, sti);
-                ztar = tth * ((zr * str[0]) - (zi * sti[0]));
-                ztai = tth * ((zr * sti[0]) + (zi * str[0]));
+                ztar = tth * ( (zr * str[0]) - (zi * sti[0]));
+                ztai = tth * ( (zr * sti[0]) + (zi * str[0]));
                 zexp(ztar, ztai, str, sti);
                 ptr = (air[0] * str[0]) - (aii[0] * sti[0]);
                 aii[0] = (air[0] * sti[0]) + (aii[0] * str[0]);
@@ -1386,8 +1428,8 @@ public class Bessel {
                 str[0] = (zr * s1r) - (zi * s1i);
                 sti[0] = (zr * s1i) + (zi * s1r);
                 cc = c1 / (1.0 + fid);
-                air[0] = air[0] + (cc * ((str[0] * zr) - (sti[0] * zi)));
-                aii[0] = aii[0] + (cc * ((str[0] * zi) + (sti[0] * zr)));
+                air[0] = air[0] + (cc * ( (str[0] * zr) - (sti[0] * zi)));
+                aii[0] = aii[0] + (cc * ( (str[0] * zi) + (sti[0] * zr)));
             } // if (az > tol)
 
             if (kode == 1) {
@@ -1395,8 +1437,8 @@ public class Bessel {
             } // if (kode == 1)
 
             zsqrt(zr, zi, str, sti);
-            ztar = tth * ((zr * str[0]) - (zi * sti[0]));
-            ztai = tth * ((zr * sti[0]) + (zi * str[0]));
+            ztar = tth * ( (zr * str[0]) - (zi * sti[0]));
+            ztai = tth * ( (zr * sti[0]) + (zi * str[0]));
             zexp(ztar, ztai, str, sti);
             ptr = (str[0] * air[0]) - (sti[0] * aii[0]);
             aii[0] = (str[0] * aii[0]) + (sti[0] * air[0]);
@@ -1411,8 +1453,8 @@ public class Bessel {
         // SET PARAMETERS RELATED TO MACHINE CONSTANTS.
         // TOL IS THE APPROXIMATE UNIT ROUNDOFF LIMITED TO 1.0E-18.
         // ELIM IS THE APPROXIMATE EXPONENTIAL OVER- AND UNDERFLOW LIMIT.
-        // EXP(-ELIM).LT.EXP(-ALIM)=EXP(-ELIM)/TOL    AND
-        // EXP(ELIM).GT.EXP(ALIM)=EXP(ELIM)*TOL       ARE INTERVALS NEAR
+        // EXP(-ELIM).LT.EXP(-ALIM)=EXP(-ELIM)/TOL AND
+        // EXP(ELIM).GT.EXP(ALIM)=EXP(ELIM)*TOL ARE INTERVALS NEAR
         // UNDERFLOW AND OVERFLOW LIMITS WHERE SCALED ARITHMETIC IS DONE.
         // RL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC EXPANSION FOR LARGE Z.
         // DIG = NUMBER OF BASE 10 DIGITS IN TOL = 10**(-DIG).
@@ -1432,14 +1474,14 @@ public class Bessel {
         // r1m5 = log10(2), which is D1MACH(5)
         r1m5 = 0.434294481903251 * Math.log(2.0);
         k = Math.min(Math.abs(emin), Math.abs(emax));
-        elim = 2.303 * ((k * r1m5) - 3.0);
+        elim = 2.303 * ( (k * r1m5) - 3.0);
 
         // doubleDigits is I1MACH(14), the number of base-B digits for double
-        // precision.  IEEE 754 double precision has 64 bits with 1 sign bit,
+        // precision. IEEE 754 double precision has 64 bits with 1 sign bit,
         // 11 exponent bits, and 52 fraction, mantissa, or signficand bits.
         // Floating-point numbers are typically stored in normalized form,
-        // with the radix point after the first non-zero digit.  In base two,
-        // the only possible non-zero digit is 1.  Thus, a leading digit of 1
+        // with the radix point after the first non-zero digit. In base two,
+        // the only possible non-zero digit is 1. Thus, a leading digit of 1
         // can always be assumed and need not be explicitly represented.
         // Therefore, the mantissa effectively has 53 bits of resolution.
         doubleDigits = 53;
@@ -1447,7 +1489,7 @@ public class Bessel {
         aa = r1m5 * k1;
         dig = Math.min(aa, 18.0);
         aa = 2.303 * aa;
-        alim = elim + Math.max(-aa, -41.45);
+        alim = elim + Math.max( -aa, -41.45);
         rl = (1.2 * dig) + 3.0;
         alaz = Math.log(az);
 
@@ -1471,8 +1513,8 @@ public class Bessel {
         } // if (az > aa)
 
         zsqrt(zr, zi, csqr, csqi);
-        ztar = tth * ((zr * csqr[0]) - (zi * csqi[0]));
-        ztai = tth * ((zr * csqi[0]) + (zi * csqr[0]));
+        ztar = tth * ( (zr * csqr[0]) - (zi * csqi[0]));
+        ztai = tth * ( (zr * csqi[0]) + (zi * csqr[0]));
 
         // Re(zta) <= 0 when Re(z) < 0, especially when Im(z) is small
         iflag = 0;
@@ -1486,21 +1528,21 @@ public class Bessel {
             ztai = ak;
         } // if (zr < 0.0)
 
-        if ((zi == 0.0) && (zr <= 0.0)) {
+        if ( (zi == 0.0) && (zr <= 0.0)) {
             ztar = 0.0;
             ztai = ak;
         } // if ((zi == 0.0) && (zr <= 0.0))
 
         aa = ztar;
 
-        if ((aa >= 0.0) && (zr > 0.0)) {
+        if ( (aa >= 0.0) && (zr > 0.0)) {
 
-            if ((kode != 2) && (aa >= alim)) {
+            if ( (kode != 2) && (aa >= alim)) {
                 aa = -aa - (0.25 * alaz);
                 iflag = 2;
                 sfac = 1.0 / tol;
 
-                if (aa < (-elim)) {
+                if (aa < ( -elim)) {
                     nz[0] = 1;
                     air[0] = 0.0;
                     aii[0] = 0.0;
@@ -1518,8 +1560,8 @@ public class Bessel {
                 s1i = s1i * sfac;
 
                 if (id == 1) {
-                    str[0] = -((s1r * zr) - (s1i * zi));
-                    s1i = -((s1r * zi) + (s1i * zr));
+                    str[0] = - ( (s1r * zr) - (s1i * zi));
+                    s1i = - ( (s1r * zi) + (s1i * zr));
                     s1r = str[0];
                     air[0] = s1r / sfac;
                     aii[0] = s1i / sfac;
@@ -1537,8 +1579,8 @@ public class Bessel {
                 } // else id != 1
             } // if (iflag != 0)
             else if (id == 1) {
-                air[0] = -((zr * s1r) - (zi * s1i));
-                aii[0] = -((zr * s1i) + (zi * s1r));
+                air[0] = - ( (zr * s1r) - (zi * s1i));
+                aii[0] = - ( (zr * s1i) + (zi * s1r));
 
                 return;
             } // else if (id == 1)
@@ -1550,7 +1592,7 @@ public class Bessel {
             } // else
         } // if ((aa >= 0.0) && (zr > 0.0))
 
-        if ((kode != 2) && (aa <= (-alim))) {
+        if ( (kode != 2) && (aa <= ( -alim))) {
             aa = -aa + (0.25 * alaz);
             iflag = 1;
             sfac = tol;
@@ -1596,8 +1638,8 @@ public class Bessel {
             s1i = s1i * sfac;
 
             if (id == 1) {
-                str[0] = -((s1r * zr) - (s1i * zi));
-                s1i = -((s1r * zi) + (s1i * zr));
+                str[0] = - ( (s1r * zr) - (s1i * zi));
+                s1i = - ( (s1r * zi) + (s1i * zr));
                 s1r = str[0];
                 air[0] = s1r / sfac;
                 aii[0] = s1i / sfac;
@@ -1615,8 +1657,8 @@ public class Bessel {
             } // else id != 1
         } // if (iflag != 0)
         else if (id == 1) {
-            air[0] = -((zr * s1r) - (zi * s1i));
-            aii[0] = -((zr * s1i) + (zi * s1r));
+            air[0] = - ( (zr * s1r) - (zi * s1i));
+            aii[0] = - ( (zr * s1i) + (zi * s1r));
 
             return;
         } // else if (id == 1)
@@ -1632,28 +1674,29 @@ public class Bessel {
      * ZASYI COMPUTES THE I BESSEL FUNCTION FOR REAL(Z).GE.0.0 BY MEANS OF THE ASYMPTOTIC EXPANSION FOR LARGE CABS(Z) IN
      * THE REGION CABS(Z).GT.MAX(RL,fnu*fnu/2). NZ=0 IS A NORMAL RETURN. NZ.LT.0 INDICATES AN OVERFLOW ON
      * kode=UNSCALED_FUNCTION.
-     *
-     * @param  zr    double
-     * @param  zi    double
-     * @param  fnu   double
-     * @param  kode  int
-     * @param  n     int
-     * @param  yr    double[]
-     * @param  yi    double[]
-     * @param  nz    int[]
+     * 
+     * @param zr double
+     * @param zi double
+     * @param fnu double
+     * @param kode int
+     * @param n int
+     * @param yr double[]
+     * @param yi double[]
+     * @param nz int[]
      */
-    private void zasyi(double zr, double zi, double fnu, int kode, int n, double[] yr, double[] yi, int[] nz) {
-        double rtpi = 0.159154943091895336;
+    private void zasyi(final double zr, double zi, final double fnu, final int kode, final int n, final double[] yr,
+            final double[] yi, final int[] nz) {
+        final double rtpi = 0.159154943091895336;
         double az;
         double arm;
         double rtr1;
         int il;
         double dfnu;
         double raz;
-        double[] str = new double[1];
-        double[] sti = new double[1];
-        double[] ak1r = new double[1];
-        double[] ak1i = new double[1];
+        final double[] str = new double[1];
+        final double[] sti = new double[1];
+        final double[] ak1r = new double[1];
+        final double[] ak1i = new double[1];
         double czr;
         double czi;
         double dnu2;
@@ -1678,8 +1721,8 @@ public class Bessel {
         double cs1i;
         double cs2r;
         double cs2i;
-        double[] ckr = new double[1];
-        double[] cki = new double[1];
+        final double[] ckr = new double[1];
+        final double[] cki = new double[1];
         double aa;
         double bb;
         double dkr;
@@ -1726,7 +1769,7 @@ public class Bessel {
         dnu2 = dfnu + dfnu;
         koded = 1;
 
-        if ((Math.abs(czr) <= alim) || (n <= 2)) {
+        if ( (Math.abs(czr) <= alim) || (n <= 2)) {
             koded = 0;
             zexp(czr, czi, str, sti);
             zmlt(ak1r[0], ak1i[0], str[0], sti[0], ak1r, ak1i);
@@ -1767,7 +1810,7 @@ public class Bessel {
             p1r = ak;
             p1i = bk;
 
-            if ((inu % 2) == 1) {
+            if ( (inu % 2) == 1) {
                 p1r = -p1r;
                 p1i = -p1i;
             }
@@ -1789,7 +1832,7 @@ public class Bessel {
             dkr = ezr;
             dki = ezi;
 
-group:       {
+            group: {
 
                 for (j = 1; j <= jl; j++) {
                     zdiv(ckr[0], cki[0], dkr, dki, str, sti);
@@ -1820,10 +1863,10 @@ group:       {
             s2r = cs1r;
             s2i = cs1i;
 
-            if ((zr + zr) < elim) {
+            if ( (zr + zr) < elim) {
                 tzr = zr + zr;
                 tzi = zi + zi;
-                zexp(-tzr, -tzi, str, sti);
+                zexp( -tzr, -tzi, str, sti);
                 zmlt(str[0], sti[0], p1r, p1i, str, sti);
                 zmlt(str[0], sti[0], cs2r, cs2i, str, sti);
                 s2r = s2r + str[0];
@@ -1852,8 +1895,8 @@ group:       {
         ib = 3;
 
         for (i = ib; i <= nn; i++) {
-            yr[k - 1] = ((ak + fnu) * ((rzr * yr[k]) - (rzi * yi[k]))) + yr[k + 1];
-            yi[k - 1] = ((ak + fnu) * ((rzr * yi[k]) + (rzi * yr[k]))) + yi[k + 1];
+            yr[k - 1] = ( (ak + fnu) * ( (rzr * yr[k]) - (rzi * yi[k]))) + yr[k + 1];
+            yi[k - 1] = ( (ak + fnu) * ( (rzr * yi[k]) + (rzi * yr[k]))) + yi[k + 1];
             ak = ak - 1.0;
             k = k - 1;
         } // for (i = ib; i <= nn; i++)
@@ -1875,94 +1918,80 @@ group:       {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  zr    double
-     * @param  zi    double
-     * @param  fnu   double
-     * @param  kode  int
-     * @param  m     int
-     * @param  n     int
-     * @param  cyr   double[]
-     * @param  cyi   double[]
-     * @param  nz    int[]
-     * @param  ierr  int[]
+     * 
+     * @param zr double
+     * @param zi double
+     * @param fnu double
+     * @param kode int
+     * @param m int
+     * @param n int
+     * @param cyr double[]
+     * @param cyi double[]
+     * @param nz int[]
+     * @param ierr int[]
      */
-    private void zbesh(double zr, double zi, double fnu, int kode, int m, int n, double[] cyr, double[] cyi, int[] nz,
-                       int[] ierr) {
+    private void zbesh(final double zr, final double zi, final double fnu, final int kode, final int m, final int n,
+            final double[] cyr, final double[] cyi, final int[] nz, final int[] ierr) {
 
-        /** ON KODE=1, ZBESH COMPUTES AN N MEMBER SEQUENCE OF COMPLEX
-         * C         HANKEL (BESSEL) FUNCTIONS CY(J)=H(M,FNU+J-1,Z) FOR KINDS M=1 C         OR 2, REAL, NONNEGATIVE
-         * ORDERS FNU+J-1, J=1,...,N, AND COMPLEX C         Z.NE.CMPLX(0.0,0.0) IN THE CUT PLANE -PI.LT.ARG(Z).LE.PI. C
-         *        ON KODE=2, ZBESH RETURNS THE SCALED HANKEL FUNCTIONS C C         CY(I)=EXP(-MM*Z*I)*H(M,FNU+J-1,Z)
-         *   MM=3-2*M,   I**2=-1. C C         WHICH REMOVES THE EXPONENTIAL BEHAVIOR IN BOTH THE UPPER AND C
-         * LOWER HALF PLANES. DEFINITIONS AND NOTATION ARE FOUND IN THE C         NBS HANDBOOK OF MATHEMATICAL FUNCTIONS
-         * (REF. 1). C C         INPUT      ZR,ZI,FNU ARE DOUBLE PRECISION C           ZR,ZI  - Z=CMPLX(ZR,ZI),
-         * Z.NE.CMPLX(0.0D0,0.0D0), C                    -PT.LT.ARG(Z).LE.PI C           FNU    - ORDER OF INITIAL H
-         * FUNCTION, FNU.GE.0.0D0 C           KODE   - A PARAMETER TO INDICATE THE SCALING OPTION C
-         * KODE= 1  RETURNS C                             CY(J)=H(M,FNU+J-1,Z),   J=1,...,N C                        = 2
-         *  RETURNS C                             CY(J)=H(M,FNU+J-1,Z)*EXP(-I*Z*(3-2M)) C
-         *   J=1,...,N  ,  I**2=-1 C           M      - KIND OF HANKEL FUNCTION, M=1 OR 2 C           N      - NUMBER OF
-         * MEMBERS IN THE SEQUENCE, N.GE.1 C C         OUTPUT     CYR,CYI ARE DOUBLE PRECISION C           CYR,CYI-
-         * DOUBLE PRECISION VECTORS WHOSE FIRST N COMPONENTS C                    CONTAIN REAL AND IMAGINARY PARTS FOR
-         * THE SEQUENCE C                    CY(J)=H(M,FNU+J-1,Z)  OR C
-         * CY(J)=H(M,FNU+J-1,Z)*EXP(-I*Z*(3-2M))  J=1,...,N C                    DEPENDING ON KODE, I**2=-1. C
-         * NZ     - NUMBER OF COMPONENTS SET TO ZERO DUE TO UNDERFLOW, C                    NZ= 0   , NORMAL RETURN C
-         *                 NZ.GT.0 , FIRST NZ COMPONENTS OF CY SET TO ZERO DUE C                              TO
-         * UNDERFLOW, CY(J)=CMPLX(0.0D0,0.0D0) C                              J=1,...,NZ WHEN Y.GT.0.0 AND M=1 OR C
-         *                         Y.LT.0.0 AND M=2. FOR THE COMPLMENTARY C                              HALF PLANES, NZ
-         * STATES ONLY THE NUMBER C                              OF UNDERFLOWS. C           IERR   - ERROR FLAG C
-         *             IERR=0, NORMAL RETURN - COMPUTATION COMPLETED C                    IERR=1, INPUT ERROR   - NO
-         * COMPUTATION C                    IERR=2, OVERFLOW      - NO COMPUTATION, FNU TOO C
-         * LARGE OR CABS(Z) TOO SMALL OR BOTH C                    IERR=3, CABS(Z) OR FNU+N-1 LARGE - COMPUTATION DONE C
-         *                            BUT LOSSES OF SIGNIFCANCE BY ARGUMENT C                            REDUCTION
-         * PRODUCE LESS THAN HALF OF MACHINE C                            ACCURACY C                    IERR=4, CABS(Z)
-         * OR FNU+N-1 TOO LARGE - NO COMPUTA- C                            TION BECAUSE OF COMPLETE LOSSES OF SIGNIFI- C
-         *                            CANCE BY ARGUMENT REDUCTION C                    IERR=5, ERROR              - NO
-         * COMPUTATION, C                            ALGORITHM TERMINATION CONDITION NOT MET C C***LONG DESCRIPTION C C
-         *        THE COMPUTATION IS CARRIED OUT BY THE RELATION C C
-         * H(M,FNU,Z)=(1/MP)*EXP(-MP*FNU)*K(FNU,Z*EXP(-MP)) C             MP=MM*HPI*I,  MM=3-2*M,  HPI=PI/2,  I**2=-1 C
-         * C         FOR M=1 OR 2 WHERE THE K BESSEL FUNCTION IS COMPUTED FOR THE C         RIGHT HALF PLANE
-         * RE(Z).GE.0.0. THE K FUNCTION IS CONTINUED C         TO THE LEFT HALF PLANE BY THE RELATION C C
-         * K(FNU,Z*EXP(MP)) = EXP(-MP*FNU)*K(FNU,Z)-MP*I(FNU,Z) C         MP=MR*PI*I, MR=+1 OR -1, RE(Z).GT.0, I**2=-1 C
-         * C         WHERE I(FNU,Z) IS THE I BESSEL FUNCTION. C C         EXPONENTIAL DECAY OF H(M,FNU,Z) OCCURS IN THE
-         * UPPER HALF Z C         PLANE FOR M=1 AND THE LOWER HALF Z PLANE FOR M=2.  EXPONENTIAL C         GROWTH OCCURS
-         * IN THE COMPLEMENTARY HALF PLANES.  SCALING C         BY EXP(-MM*Z*I) REMOVES THE EXPONENTIAL BEHAVIOR IN THE
-         * C         WHOLE Z PLANE FOR Z TO INFINITY. C C         FOR NEGATIVE ORDERS,THE FORMULAE C C
-         * H(1,-FNU,Z) = H(1,FNU,Z)*CEXP( PI*FNU*I) C               H(2,-FNU,Z) = H(2,FNU,Z)*CEXP(-PI*FNU*I) C
-         *               I**2=-1 C C         CAN BE USED. C C         IN MOST COMPLEX VARIABLE COMPUTATION, ONE MUST
-         * EVALUATE ELE- C         MENTARY FUNCTIONS. WHEN THE MAGNITUDE OF Z OR FNU+N-1 IS C         LARGE, LOSSES OF
-         * SIGNIFICANCE BY ARGUMENT REDUCTION OCCUR. C         CONSEQUENTLY, IF EITHER ONE EXCEEDS U1=SQRT(0.5/UR), THEN
-         * C         LOSSES EXCEEDING HALF PRECISION ARE LIKELY AND AN ERROR FLAG C         IERR=3 IS TRIGGERED WHERE
-         * UR=DMAX1(D1MACH(4),1.0D-18) IS C         DOUBLE PRECISION UNIT ROUNDOFF LIMITED TO 18 DIGITS PRECISION. C
-         *     IF EITHER IS LARGER THAN U2=0.5/UR, THEN ALL SIGNIFICANCE IS C         LOST AND IERR=4. IN ORDER TO USE
-         * THE INT FUNCTION, ARGUMENTS C         MUST BE FURTHER RESTRICTED NOT TO EXCEED THE LARGEST MACHINE C
-         * INTEGER, U3=I1MACH(9). THUS, THE MAGNITUDE OF Z AND FNU+N-1 IS C         RESTRICTED BY MIN(U2,U3). ON 32 BIT
-         * MACHINES, U1,U2, AND U3 C         ARE APPROXIMATELY 2.0E+3, 4.2E+6, 2.1E+9 IN SINGLE PRECISION C
-         * ARITHMETIC AND 1.3E+8, 1.8E+16, 2.1E+9 IN DOUBLE PRECISION C         ARITHMETIC RESPECTIVELY. THIS MAKES U2
-         * AND U3 LIMITING IN C         THEIR RESPECTIVE ARITHMETICS. THIS MEANS THAT ONE CAN EXPECT C         TO
-         * RETAIN, IN THE WORST CASES ON 32 BIT MACHINES, NO DIGITS C         IN SINGLE AND ONLY 7 DIGITS IN DOUBLE
-         * PRECISION ARITHMETIC. C         SIMILAR CONSIDERATIONS HOLD FOR OTHER MACHINES. C C         THE APPROXIMATE
-         * RELATIVE ERROR IN THE MAGNITUDE OF A COMPLEX C         BESSEL FUNCTION CAN BE EXPRESSED BY P*10**S WHERE
-         * P=MAX(UNIT C         ROUNDOFF,1.0D-18) IS THE NOMINAL PRECISION AND 10**S REPRE- C         SENTS THE INCREASE
-         * IN ERROR DUE TO ARGUMENT REDUCTION IN THE C         ELEMENTARY FUNCTIONS. HERE, S=MAX(1,ABS(LOG10(CABS(Z))),
-         * C         ABS(LOG10(FNU))) APPROXIMATELY (I.E. S=MAX(1,ABS(EXPONENT OF C         CABS(Z),ABS(EXPONENT OF
-         * FNU)) ). HOWEVER, THE PHASE ANGLE MAY C         HAVE ONLY ABSOLUTE ACCURACY. THIS IS MOST LIKELY TO OCCUR
-         * WHEN C         ONE COMPONENT (IN ABSOLUTE VALUE) IS LARGER THAN THE OTHER BY C         SEVERAL ORDERS OF
-         * MAGNITUDE. IF ONE COMPONENT IS 10**K LARGER C         THAN THE OTHER, THEN ONE CAN EXPECT ONLY
-         * MAX(ABS(LOG10(P))-K, C         0) SIGNIFICANT DIGITS; OR, STATED ANOTHER WAY, WHEN K EXCEEDS C         THE
-         * EXPONENT OF P, NO SIGNIFICANT DIGITS REMAIN IN THE SMALLER C         COMPONENT. HOWEVER, THE PHASE ANGLE
-         * RETAINS ABSOLUTE ACCURACY C         BECAUSE, IN COMPLEX ARITHMETIC WITH PRECISION P, THE SMALLER C
-         * COMPONENT WILL NOT (AS A RULE) DECREASE BELOW P TIMES THE C         MAGNITUDE OF THE LARGER COMPONENT. IN
-         * THESE EXTREME CASES, C         THE PRINCIPAL PHASE ANGLE IS ON THE ORDER OF +P, -P, PI/2-P, C         OR
-         * -PI/2+P. C C***REFERENCES  HANDBOOK OF MATHEMATICAL FUNCTIONS BY M. ABRAMOWITZ C                 AND I. A.
-         * STEGUN, NBS AMS SERIES 55, U.S. DEPT. OF C                 COMMERCE, 1955. C C               COMPUTATION OF
-         * BESSEL FUNCTIONS OF COMPLEX ARGUMENT C                 BY D. E. AMOS, SAND83-0083, MAY, 1983. C C
-         *   COMPUTATION OF BESSEL FUNCTIONS OF COMPLEX ARGUMENT C                 AND LARGE ORDER BY D. E. AMOS,
-         * SAND83-0643, MAY, 1983 C C               A SUBROUTINE PACKAGE FOR BESSEL FUNCTIONS OF A COMPLEX C
-         *     ARGUMENT AND NONNEGATIVE ORDER BY D. E. AMOS, SAND85- C                 1018, MAY, 1985 C C
-         * A PORTABLE PACKAGE FOR BESSEL FUNCTIONS OF A COMPLEX C                 ARGUMENT AND NONNEGATIVE ORDER BY D.
-         * E. AMOS, ACM C                 TRANS. MATH. SOFTWARE, VOL. 12, NO. 3, SEPTEMBER 1986,C                 PP
-         * 265-273. */
+        /**
+         * ON KODE=1, ZBESH COMPUTES AN N MEMBER SEQUENCE OF COMPLEX C HANKEL (BESSEL) FUNCTIONS CY(J)=H(M,FNU+J-1,Z)
+         * FOR KINDS M=1 C OR 2, REAL, NONNEGATIVE ORDERS FNU+J-1, J=1,...,N, AND COMPLEX C Z.NE.CMPLX(0.0,0.0) IN THE
+         * CUT PLANE -PI.LT.ARG(Z).LE.PI. C ON KODE=2, ZBESH RETURNS THE SCALED HANKEL FUNCTIONS C C
+         * CY(I)=EXP(-MM*Z*I)*H(M,FNU+J-1,Z) MM=3-2*M, I**2=-1. C C WHICH REMOVES THE EXPONENTIAL BEHAVIOR IN BOTH THE
+         * UPPER AND C LOWER HALF PLANES. DEFINITIONS AND NOTATION ARE FOUND IN THE C NBS HANDBOOK OF MATHEMATICAL
+         * FUNCTIONS (REF. 1). C C INPUT ZR,ZI,FNU ARE DOUBLE PRECISION C ZR,ZI - Z=CMPLX(ZR,ZI),
+         * Z.NE.CMPLX(0.0D0,0.0D0), C -PT.LT.ARG(Z).LE.PI C FNU - ORDER OF INITIAL H FUNCTION, FNU.GE.0.0D0 C KODE - A
+         * PARAMETER TO INDICATE THE SCALING OPTION C KODE= 1 RETURNS C CY(J)=H(M,FNU+J-1,Z), J=1,...,N C = 2 RETURNS C
+         * CY(J)=H(M,FNU+J-1,Z)*EXP(-I*Z*(3-2M)) C J=1,...,N , I**2=-1 C M - KIND OF HANKEL FUNCTION, M=1 OR 2 C N -
+         * NUMBER OF MEMBERS IN THE SEQUENCE, N.GE.1 C C OUTPUT CYR,CYI ARE DOUBLE PRECISION C CYR,CYI- DOUBLE PRECISION
+         * VECTORS WHOSE FIRST N COMPONENTS C CONTAIN REAL AND IMAGINARY PARTS FOR THE SEQUENCE C CY(J)=H(M,FNU+J-1,Z)
+         * OR C CY(J)=H(M,FNU+J-1,Z)*EXP(-I*Z*(3-2M)) J=1,...,N C DEPENDING ON KODE, I**2=-1. C NZ - NUMBER OF
+         * COMPONENTS SET TO ZERO DUE TO UNDERFLOW, C NZ= 0 , NORMAL RETURN C NZ.GT.0 , FIRST NZ COMPONENTS OF CY SET TO
+         * ZERO DUE C TO UNDERFLOW, CY(J)=CMPLX(0.0D0,0.0D0) C J=1,...,NZ WHEN Y.GT.0.0 AND M=1 OR C Y.LT.0.0 AND M=2.
+         * FOR THE COMPLMENTARY C HALF PLANES, NZ STATES ONLY THE NUMBER C OF UNDERFLOWS. C IERR - ERROR FLAG C IERR=0,
+         * NORMAL RETURN - COMPUTATION COMPLETED C IERR=1, INPUT ERROR - NO COMPUTATION C IERR=2, OVERFLOW - NO
+         * COMPUTATION, FNU TOO C LARGE OR CABS(Z) TOO SMALL OR BOTH C IERR=3, CABS(Z) OR FNU+N-1 LARGE - COMPUTATION
+         * DONE C BUT LOSSES OF SIGNIFCANCE BY ARGUMENT C REDUCTION PRODUCE LESS THAN HALF OF MACHINE C ACCURACY C
+         * IERR=4, CABS(Z) OR FNU+N-1 TOO LARGE - NO COMPUTA- C TION BECAUSE OF COMPLETE LOSSES OF SIGNIFI- C CANCE BY
+         * ARGUMENT REDUCTION C IERR=5, ERROR - NO COMPUTATION, C ALGORITHM TERMINATION CONDITION NOT MET C C***LONG
+         * DESCRIPTION C C THE COMPUTATION IS CARRIED OUT BY THE RELATION C C
+         * H(M,FNU,Z)=(1/MP)*EXP(-MP*FNU)*K(FNU,Z*EXP(-MP)) C MP=MM*HPI*I, MM=3-2*M, HPI=PI/2, I**2=-1 C C FOR M=1 OR 2
+         * WHERE THE K BESSEL FUNCTION IS COMPUTED FOR THE C RIGHT HALF PLANE RE(Z).GE.0.0. THE K FUNCTION IS CONTINUED
+         * C TO THE LEFT HALF PLANE BY THE RELATION C C K(FNU,Z*EXP(MP)) = EXP(-MP*FNU)*K(FNU,Z)-MP*I(FNU,Z) C
+         * MP=MR*PI*I, MR=+1 OR -1, RE(Z).GT.0, I**2=-1 C C WHERE I(FNU,Z) IS THE I BESSEL FUNCTION. C C EXPONENTIAL
+         * DECAY OF H(M,FNU,Z) OCCURS IN THE UPPER HALF Z C PLANE FOR M=1 AND THE LOWER HALF Z PLANE FOR M=2.
+         * EXPONENTIAL C GROWTH OCCURS IN THE COMPLEMENTARY HALF PLANES. SCALING C BY EXP(-MM*Z*I) REMOVES THE
+         * EXPONENTIAL BEHAVIOR IN THE C WHOLE Z PLANE FOR Z TO INFINITY. C C FOR NEGATIVE ORDERS,THE FORMULAE C C
+         * H(1,-FNU,Z) = H(1,FNU,Z)*CEXP( PI*FNU*I) C H(2,-FNU,Z) = H(2,FNU,Z)*CEXP(-PI*FNU*I) C I**2=-1 C C CAN BE
+         * USED. C C IN MOST COMPLEX VARIABLE COMPUTATION, ONE MUST EVALUATE ELE- C MENTARY FUNCTIONS. WHEN THE
+         * MAGNITUDE OF Z OR FNU+N-1 IS C LARGE, LOSSES OF SIGNIFICANCE BY ARGUMENT REDUCTION OCCUR. C CONSEQUENTLY, IF
+         * EITHER ONE EXCEEDS U1=SQRT(0.5/UR), THEN C LOSSES EXCEEDING HALF PRECISION ARE LIKELY AND AN ERROR FLAG C
+         * IERR=3 IS TRIGGERED WHERE UR=DMAX1(D1MACH(4),1.0D-18) IS C DOUBLE PRECISION UNIT ROUNDOFF LIMITED TO 18
+         * DIGITS PRECISION. C IF EITHER IS LARGER THAN U2=0.5/UR, THEN ALL SIGNIFICANCE IS C LOST AND IERR=4. IN ORDER
+         * TO USE THE INT FUNCTION, ARGUMENTS C MUST BE FURTHER RESTRICTED NOT TO EXCEED THE LARGEST MACHINE C INTEGER,
+         * U3=I1MACH(9). THUS, THE MAGNITUDE OF Z AND FNU+N-1 IS C RESTRICTED BY MIN(U2,U3). ON 32 BIT MACHINES, U1,U2,
+         * AND U3 C ARE APPROXIMATELY 2.0E+3, 4.2E+6, 2.1E+9 IN SINGLE PRECISION C ARITHMETIC AND 1.3E+8, 1.8E+16,
+         * 2.1E+9 IN DOUBLE PRECISION C ARITHMETIC RESPECTIVELY. THIS MAKES U2 AND U3 LIMITING IN C THEIR RESPECTIVE
+         * ARITHMETICS. THIS MEANS THAT ONE CAN EXPECT C TO RETAIN, IN THE WORST CASES ON 32 BIT MACHINES, NO DIGITS C
+         * IN SINGLE AND ONLY 7 DIGITS IN DOUBLE PRECISION ARITHMETIC. C SIMILAR CONSIDERATIONS HOLD FOR OTHER MACHINES.
+         * C C THE APPROXIMATE RELATIVE ERROR IN THE MAGNITUDE OF A COMPLEX C BESSEL FUNCTION CAN BE EXPRESSED BY
+         * P*10**S WHERE P=MAX(UNIT C ROUNDOFF,1.0D-18) IS THE NOMINAL PRECISION AND 10**S REPRE- C SENTS THE INCREASE
+         * IN ERROR DUE TO ARGUMENT REDUCTION IN THE C ELEMENTARY FUNCTIONS. HERE, S=MAX(1,ABS(LOG10(CABS(Z))), C
+         * ABS(LOG10(FNU))) APPROXIMATELY (I.E. S=MAX(1,ABS(EXPONENT OF C CABS(Z),ABS(EXPONENT OF FNU)) ). HOWEVER, THE
+         * PHASE ANGLE MAY C HAVE ONLY ABSOLUTE ACCURACY. THIS IS MOST LIKELY TO OCCUR WHEN C ONE COMPONENT (IN ABSOLUTE
+         * VALUE) IS LARGER THAN THE OTHER BY C SEVERAL ORDERS OF MAGNITUDE. IF ONE COMPONENT IS 10**K LARGER C THAN THE
+         * OTHER, THEN ONE CAN EXPECT ONLY MAX(ABS(LOG10(P))-K, C 0) SIGNIFICANT DIGITS; OR, STATED ANOTHER WAY, WHEN K
+         * EXCEEDS C THE EXPONENT OF P, NO SIGNIFICANT DIGITS REMAIN IN THE SMALLER C COMPONENT. HOWEVER, THE PHASE
+         * ANGLE RETAINS ABSOLUTE ACCURACY C BECAUSE, IN COMPLEX ARITHMETIC WITH PRECISION P, THE SMALLER C COMPONENT
+         * WILL NOT (AS A RULE) DECREASE BELOW P TIMES THE C MAGNITUDE OF THE LARGER COMPONENT. IN THESE EXTREME CASES,
+         * C THE PRINCIPAL PHASE ANGLE IS ON THE ORDER OF +P, -P, PI/2-P, C OR -PI/2+P. C C***REFERENCES HANDBOOK OF
+         * MATHEMATICAL FUNCTIONS BY M. ABRAMOWITZ C AND I. A. STEGUN, NBS AMS SERIES 55, U.S. DEPT. OF C COMMERCE,
+         * 1955. C C COMPUTATION OF BESSEL FUNCTIONS OF COMPLEX ARGUMENT C BY D. E. AMOS, SAND83-0083, MAY, 1983. C C
+         * COMPUTATION OF BESSEL FUNCTIONS OF COMPLEX ARGUMENT C AND LARGE ORDER BY D. E. AMOS, SAND83-0643, MAY, 1983 C
+         * C A SUBROUTINE PACKAGE FOR BESSEL FUNCTIONS OF A COMPLEX C ARGUMENT AND NONNEGATIVE ORDER BY D. E. AMOS,
+         * SAND85- C 1018, MAY, 1985 C C A PORTABLE PACKAGE FOR BESSEL FUNCTIONS OF A COMPLEX C ARGUMENT AND NONNEGATIVE
+         * ORDER BY D. E. AMOS, ACM C TRANS. MATH. SOFTWARE, VOL. 12, NO. 3, SEPTEMBER 1986,C PP 265-273.
+         */
         int nn;
         double neweps;
         int k;
@@ -1979,9 +2008,9 @@ group:       {
         double ufl;
         double arg;
         double aln;
-        int[] nuf = new int[1];
+        final int[] nuf = new int[1];
         int mr;
-        int[] nw = new int[1];
+        final int[] nw = new int[1];
         double sgn;
         int inu;
         int inuh;
@@ -2000,13 +2029,13 @@ group:       {
 
         nn = n;
 
-        /** SET PARAMETERS RELATED TO MACHINE CONSTANTS.
-         * C         TOL IS THE APPROXIMATE UNIT ROUNDOFF LIMITED TO 1.0E-18. C         ELIM IS THE APPROXIMATE
-         * EXPONENTIAL OVER- AND UNDERFLOW LIMIT. C         EXP(-ELIM).LT.EXP(-ALIM)=EXP(-ELIM)/TOL    AND C
-         * EXP(ELIM).GT.EXP(ALIM)=EXP(ELIM)*TOL       ARE INTERVALS NEAR C         UNDERFLOW AND OVERFLOW LIMITS WHERE
-         * SCALED ARITHMETIC IS DONE. C         RL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC EXPANSION FOR LARGE Z. C
-         *    DIG = NUMBER OF BASE 10 DIGITS IN TOL = 10**(-DIG).C         FNUL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC
-         * SERIES FOR LARGE FNU.*/
+        /**
+         * SET PARAMETERS RELATED TO MACHINE CONSTANTS. C TOL IS THE APPROXIMATE UNIT ROUNDOFF LIMITED TO 1.0E-18. C
+         * ELIM IS THE APPROXIMATE EXPONENTIAL OVER- AND UNDERFLOW LIMIT. C EXP(-ELIM).LT.EXP(-ALIM)=EXP(-ELIM)/TOL AND
+         * C EXP(ELIM).GT.EXP(ALIM)=EXP(ELIM)*TOL ARE INTERVALS NEAR C UNDERFLOW AND OVERFLOW LIMITS WHERE SCALED
+         * ARITHMETIC IS DONE. C RL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC EXPANSION FOR LARGE Z. C DIG = NUMBER OF
+         * BASE 10 DIGITS IN TOL = 10**(-DIG).C FNUL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC SERIES FOR LARGE FNU.
+         */
         // epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
         // (1.0 + epsilon) != 1.0.
@@ -2045,14 +2074,14 @@ group:       {
         // r1m5 = log10(2), which is D1MACH(5)
         r1m5 = 0.434294481903251 * Math.log(2.0);
         k = Math.min(Math.abs(emin), Math.abs(emax));
-        elim = 2.303 * ((k * r1m5) - 3.0);
+        elim = 2.303 * ( (k * r1m5) - 3.0);
 
         // doubleDigits is I1MACH(14), the number of base-B digits for double
-        // precision.  IEEE 754 double precision has 64 bits with 1 sign bit,
+        // precision. IEEE 754 double precision has 64 bits with 1 sign bit,
         // 11 exponent bits, and 52 fraction, mantissa, or signficand bits.
         // Floating-point numbers are typically stored in normalized form,
-        // with the radix point after the first non-zero digit.  In base two,
-        // the only possible non-zero digit is 1.  Thus, a leading digit of 1
+        // with the radix point after the first non-zero digit. In base two,
+        // the only possible non-zero digit is 1. Thus, a leading digit of 1
         // can always be assumed and need not be explicitly represented.
         // Therefore, the mantissa effectively has 53 bits of resolution.
         doubleDigits = 53;
@@ -2060,7 +2089,7 @@ group:       {
         aa = r1m5 * k1;
         dig = Math.min(aa, 18.0);
         aa = 2.303 * aa;
-        alim = elim + Math.max(-aa, -41.45);
+        alim = elim + Math.max( -aa, -41.45);
         fnul = 10.0 + (6.0 * (dig - 3.0));
         rl = (1.2 * dig) + 3.0;
         fn = fnu + nn - 1.0;
@@ -2075,7 +2104,7 @@ group:       {
         bb = 0.5 * Integer.MAX_VALUE;
         aa = Math.min(aa, bb);
 
-        if ((az > aa) || (fn > aa)) {
+        if ( (az > aa) || (fn > aa)) {
             nz[0] = 0;
             ierr[0] = 4;
 
@@ -2084,7 +2113,7 @@ group:       {
 
         aa = Math.sqrt(aa);
 
-        if ((az > aa) || (fn > aa)) {
+        if ( (az > aa) || (fn > aa)) {
             ierr[0] = 3;
         } // if ((az > aa) || (fn > aa))
 
@@ -2100,7 +2129,7 @@ group:       {
 
         if (fnu <= fnul) {
 
-            if ((fn > 1.0) && (fn <= 2.0) && (az <= tol)) {
+            if ( (fn > 1.0) && (fn <= 2.0) && (az <= tol)) {
                 arg = 0.5 * az;
                 aln = -fn * Math.log(arg);
 
@@ -2125,7 +2154,7 @@ group:       {
                 nn = nn - nuf[0];
 
                 // Here nn = n or nn = 0 since nuf = 0, nn, or -1 on return from
-                // zuoik.  If nuf =nn, then cy[i] = czero for all i
+                // zuoik. If nuf =nn, then cy[i] = czero for all i
                 if (nn == 0) {
 
                     if (znr < 0.0) {
@@ -2137,11 +2166,11 @@ group:       {
                 } // if (nn == 0)
             } // else if (fn > 2.0)
 
-            if ((znr >= 0.0) && ((znr != 0.0) || (zni >= 0.0) || (m != 2))) {
+            if ( (znr >= 0.0) && ( (znr != 0.0) || (zni >= 0.0) || (m != 2))) {
 
                 // Right half plane computation
                 zbknu(znr, zni, fnu, kode, nn, cyr, cyi, nz);
-            } // if ((znr >= 0.0) && ((znr != 0.0) || (zni >= 0.0) ||  (m != 2)))
+            } // if ((znr >= 0.0) && ((znr != 0.0) || (zni >= 0.0) || (m != 2)))
             else {
 
                 // Left half plane computation
@@ -2169,10 +2198,10 @@ group:       {
             // Uniform asymptotic expansions for fnu > fnul
             mr = 0;
 
-            if ((znr < 0.0) || ((znr == 0.0) && (zni < 0.0) && (m == 2))) {
+            if ( (znr < 0.0) || ( (znr == 0.0) && (zni < 0.0) && (m == 2))) {
                 mr = -mm;
 
-                if ((znr == 0.0) && (zni < 0.0)) {
+                if ( (znr == 0.0) && (zni < 0.0)) {
                     znr = -znr;
                     zni = -zni;
                 } // if ((znr == 0.0) && (zni < 0.0)
@@ -2198,7 +2227,7 @@ group:       {
 
         // H(m,fnu,z) = -fmm*(i/hpi)*(zt**fnu)*K(fnu,-z*zt)
         // zt = exp(-fmm*hpi*i) = cmplx(0.0,-fmm), fmm = 3 - 2*m, m = 1,2
-        if (-fmm >= 0.0) {
+        if ( -fmm >= 0.0) {
             sgn = hpi;
         } else {
             sgn = -hpi;
@@ -2214,7 +2243,7 @@ group:       {
         csgni = rhpi * Math.cos(arg);
         csgnr = -rhpi * Math.sin(arg);
 
-        if ((inuh % 2) != 0) {
+        if ( (inuh % 2) != 0) {
             csgnr = -csgnr;
             csgni = -csgni;
         } // if ((inuh%2) != 0)
@@ -2248,60 +2277,56 @@ group:       {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  zr    double
-     * @param  zi    double
-     * @param  fnu   double
-     * @param  kode  int
-     * @param  n     int
-     * @param  cyr   double[]
-     * @param  cyi   double[]
-     * @param  nz    int[]
-     * @param  ierr  int[]
+     * 
+     * @param zr double
+     * @param zi double
+     * @param fnu double
+     * @param kode int
+     * @param n int
+     * @param cyr double[]
+     * @param cyi double[]
+     * @param nz int[]
+     * @param ierr int[]
      */
-    private void zbesi(double zr, double zi, double fnu, int kode, int n, double[] cyr, double[] cyi, int[] nz,
-                       int[] ierr) {
+    private void zbesi(double zr, double zi, final double fnu, final int kode, final int n, final double[] cyr,
+            final double[] cyi, final int[] nz, final int[] ierr) {
 
-        /** LONG DESCRIPTION
-         * C C         THE COMPUTATION IS CARRIED OUT BY THE POWER SERIES FOR C         SMALL CABS(Z), THE ASYMPTOTIC
-         * EXPANSION FOR LARGE CABS(Z), C         THE MILLER ALGORITHM NORMALIZED BY THE WRONSKIAN AND A C
-         * NEUMANN SERIES FOR IMTERMEDIATE MAGNITUDES, AND THE C         UNIFORM ASYMPTOTIC EXPANSIONS FOR I(FNU,Z) AND
-         * J(FNU,Z) C         FOR LARGE ORDERS. BACKWARD RECURRENCE IS USED TO GENERATE C         SEQUENCES OR REDUCE
-         * ORDERS WHEN NECESSARY. C C         THE CALCULATIONS ABOVE ARE DONE IN THE RIGHT HALF PLANE AND C
-         * CONTINUED INTO THE LEFT HALF PLANE BY THE FORMULA C C         I(FNU,Z*EXP(M*PI)) = EXP(M*PI*FNU)*I(FNU,Z)
-         * REAL(Z).GT.0.0 C                       M = +I OR -I,  I**2=-1 C C         FOR NEGATIVE ORDERS,THE FORMULA C C
-         *              I(-FNU,Z) = I(FNU,Z) + (2/PI)*SIN(PI*FNU)*K(FNU,Z) C C         CAN BE USED. HOWEVER,FOR LARGE
-         * ORDERS CLOSE TO INTEGERS, THE C         THE FUNCTION CHANGES RADICALLY. WHEN FNU IS A LARGE POSITIVE C
-         *  INTEGER,THE MAGNITUDE OF I(-FNU,Z)=I(FNU,Z) IS A LARGE C         NEGATIVE POWER OF TEN. BUT WHEN FNU IS NOT
-         * AN INTEGER, C         K(FNU,Z) DOMINATES IN MAGNITUDE WITH A LARGE POSITIVE POWER OF C         TEN AND THE
-         * MOST THAT THE SECOND TERM CAN BE REDUCED IS BY C         UNIT ROUNDOFF FROM THE COEFFICIENT. THUS, WIDE
-         * CHANGES CAN C         OCCUR WITHIN UNIT ROUNDOFF OF A LARGE INTEGER FOR FNU. HERE, C         LARGE MEANS
-         * FNU.GT.CABS(Z). C C         IN MOST COMPLEX VARIABLE COMPUTATION, ONE MUST EVALUATE ELE- C         MENTARY
-         * FUNCTIONS. WHEN THE MAGNITUDE OF Z OR FNU+N-1 IS C         LARGE, LOSSES OF SIGNIFICANCE BY ARGUMENT
-         * REDUCTION OCCUR. C         CONSEQUENTLY, IF EITHER ONE EXCEEDS U1=SQRT(0.5/UR), THEN C         LOSSES
-         * EXCEEDING HALF PRECISION ARE LIKELY AND AN ERROR FLAG C         IERR=3 IS TRIGGERED WHERE
-         * UR=DMAX1(D1MACH(4),1.0D-18) IS C         DOUBLE PRECISION UNIT ROUNDOFF LIMITED TO 18 DIGITS PRECISION. C
-         *     IF EITHER IS LARGER THAN U2=0.5/UR, THEN ALL SIGNIFICANCE IS C         LOST AND IERR=4. IN ORDER TO USE
-         * THE INT FUNCTION, ARGUMENTS C         MUST BE FURTHER RESTRICTED NOT TO EXCEED THE LARGEST MACHINE C
-         * INTEGER, U3=I1MACH(9). THUS, THE MAGNITUDE OF Z AND FNU+N-1 IS C         RESTRICTED BY MIN(U2,U3). ON 32 BIT
-         * MACHINES, U1,U2, AND U3 C         ARE APPROXIMATELY 2.0E+3, 4.2E+6, 2.1E+9 IN SINGLE PRECISION C
-         * ARITHMETIC AND 1.3E+8, 1.8E+16, 2.1E+9 IN DOUBLE PRECISION C         ARITHMETIC RESPECTIVELY. THIS MAKES U2
-         * AND U3 LIMITING IN C         THEIR RESPECTIVE ARITHMETICS. THIS MEANS THAT ONE CAN EXPECT C         TO
-         * RETAIN, IN THE WORST CASES ON 32 BIT MACHINES, NO DIGITS C         IN SINGLE AND ONLY 7 DIGITS IN DOUBLE
-         * PRECISION ARITHMETIC. C         SIMILAR CONSIDERATIONS HOLD FOR OTHER MACHINES. C C         THE APPROXIMATE
-         * RELATIVE ERROR IN THE MAGNITUDE OF A COMPLEX C         BESSEL FUNCTION CAN BE EXPRESSED BY P*10**S WHERE
-         * P=MAX(UNIT C         ROUNDOFF,1.0E-18) IS THE NOMINAL PRECISION AND 10**S REPRE- C         SENTS THE INCREASE
-         * IN ERROR DUE TO ARGUMENT REDUCTION IN THE C         ELEMENTARY FUNCTIONS. HERE, S=MAX(1,ABS(LOG10(CABS(Z))),
-         * C         ABS(LOG10(FNU))) APPROXIMATELY (I.E. S=MAX(1,ABS(EXPONENT OF C         CABS(Z),ABS(EXPONENT OF
-         * FNU)) ). HOWEVER, THE PHASE ANGLE MAY C         HAVE ONLY ABSOLUTE ACCURACY. THIS IS MOST LIKELY TO OCCUR
-         * WHEN C         ONE COMPONENT (IN ABSOLUTE VALUE) IS LARGER THAN THE OTHER BY C         SEVERAL ORDERS OF
-         * MAGNITUDE. IF ONE COMPONENT IS 10**K LARGER C         THAN THE OTHER, THEN ONE CAN EXPECT ONLY
-         * MAX(ABS(LOG10(P))-K, C         0) SIGNIFICANT DIGITS; OR, STATED ANOTHER WAY, WHEN K EXCEEDS C         THE
-         * EXPONENT OF P, NO SIGNIFICANT DIGITS REMAIN IN THE SMALLER C         COMPONENT. HOWEVER, THE PHASE ANGLE
-         * RETAINS ABSOLUTE ACCURACY C         BECAUSE, IN COMPLEX ARITHMETIC WITH PRECISION P, THE SMALLER C
-         * COMPONENT WILL NOT (AS A RULE) DECREASE BELOW P TIMES THE C         MAGNITUDE OF THE LARGER COMPONENT. IN
-         * THESE EXTREME CASES, C         THE PRINCIPAL PHASE ANGLE IS ON THE ORDER OF +P, -P, PI/2-P,C         OR
-         * -PI/2+P.*/
+        /**
+         * LONG DESCRIPTION C C THE COMPUTATION IS CARRIED OUT BY THE POWER SERIES FOR C SMALL CABS(Z), THE ASYMPTOTIC
+         * EXPANSION FOR LARGE CABS(Z), C THE MILLER ALGORITHM NORMALIZED BY THE WRONSKIAN AND A C NEUMANN SERIES FOR
+         * IMTERMEDIATE MAGNITUDES, AND THE C UNIFORM ASYMPTOTIC EXPANSIONS FOR I(FNU,Z) AND J(FNU,Z) C FOR LARGE
+         * ORDERS. BACKWARD RECURRENCE IS USED TO GENERATE C SEQUENCES OR REDUCE ORDERS WHEN NECESSARY. C C THE
+         * CALCULATIONS ABOVE ARE DONE IN THE RIGHT HALF PLANE AND C CONTINUED INTO THE LEFT HALF PLANE BY THE FORMULA C
+         * C I(FNU,Z*EXP(M*PI)) = EXP(M*PI*FNU)*I(FNU,Z) REAL(Z).GT.0.0 C M = +I OR -I, I**2=-1 C C FOR NEGATIVE
+         * ORDERS,THE FORMULA C C I(-FNU,Z) = I(FNU,Z) + (2/PI)*SIN(PI*FNU)*K(FNU,Z) C C CAN BE USED. HOWEVER,FOR LARGE
+         * ORDERS CLOSE TO INTEGERS, THE C THE FUNCTION CHANGES RADICALLY. WHEN FNU IS A LARGE POSITIVE C INTEGER,THE
+         * MAGNITUDE OF I(-FNU,Z)=I(FNU,Z) IS A LARGE C NEGATIVE POWER OF TEN. BUT WHEN FNU IS NOT AN INTEGER, C
+         * K(FNU,Z) DOMINATES IN MAGNITUDE WITH A LARGE POSITIVE POWER OF C TEN AND THE MOST THAT THE SECOND TERM CAN BE
+         * REDUCED IS BY C UNIT ROUNDOFF FROM THE COEFFICIENT. THUS, WIDE CHANGES CAN C OCCUR WITHIN UNIT ROUNDOFF OF A
+         * LARGE INTEGER FOR FNU. HERE, C LARGE MEANS FNU.GT.CABS(Z). C C IN MOST COMPLEX VARIABLE COMPUTATION, ONE MUST
+         * EVALUATE ELE- C MENTARY FUNCTIONS. WHEN THE MAGNITUDE OF Z OR FNU+N-1 IS C LARGE, LOSSES OF SIGNIFICANCE BY
+         * ARGUMENT REDUCTION OCCUR. C CONSEQUENTLY, IF EITHER ONE EXCEEDS U1=SQRT(0.5/UR), THEN C LOSSES EXCEEDING HALF
+         * PRECISION ARE LIKELY AND AN ERROR FLAG C IERR=3 IS TRIGGERED WHERE UR=DMAX1(D1MACH(4),1.0D-18) IS C DOUBLE
+         * PRECISION UNIT ROUNDOFF LIMITED TO 18 DIGITS PRECISION. C IF EITHER IS LARGER THAN U2=0.5/UR, THEN ALL
+         * SIGNIFICANCE IS C LOST AND IERR=4. IN ORDER TO USE THE INT FUNCTION, ARGUMENTS C MUST BE FURTHER RESTRICTED
+         * NOT TO EXCEED THE LARGEST MACHINE C INTEGER, U3=I1MACH(9). THUS, THE MAGNITUDE OF Z AND FNU+N-1 IS C
+         * RESTRICTED BY MIN(U2,U3). ON 32 BIT MACHINES, U1,U2, AND U3 C ARE APPROXIMATELY 2.0E+3, 4.2E+6, 2.1E+9 IN
+         * SINGLE PRECISION C ARITHMETIC AND 1.3E+8, 1.8E+16, 2.1E+9 IN DOUBLE PRECISION C ARITHMETIC RESPECTIVELY. THIS
+         * MAKES U2 AND U3 LIMITING IN C THEIR RESPECTIVE ARITHMETICS. THIS MEANS THAT ONE CAN EXPECT C TO RETAIN, IN
+         * THE WORST CASES ON 32 BIT MACHINES, NO DIGITS C IN SINGLE AND ONLY 7 DIGITS IN DOUBLE PRECISION ARITHMETIC. C
+         * SIMILAR CONSIDERATIONS HOLD FOR OTHER MACHINES. C C THE APPROXIMATE RELATIVE ERROR IN THE MAGNITUDE OF A
+         * COMPLEX C BESSEL FUNCTION CAN BE EXPRESSED BY P*10**S WHERE P=MAX(UNIT C ROUNDOFF,1.0E-18) IS THE NOMINAL
+         * PRECISION AND 10**S REPRE- C SENTS THE INCREASE IN ERROR DUE TO ARGUMENT REDUCTION IN THE C ELEMENTARY
+         * FUNCTIONS. HERE, S=MAX(1,ABS(LOG10(CABS(Z))), C ABS(LOG10(FNU))) APPROXIMATELY (I.E. S=MAX(1,ABS(EXPONENT OF
+         * C CABS(Z),ABS(EXPONENT OF FNU)) ). HOWEVER, THE PHASE ANGLE MAY C HAVE ONLY ABSOLUTE ACCURACY. THIS IS MOST
+         * LIKELY TO OCCUR WHEN C ONE COMPONENT (IN ABSOLUTE VALUE) IS LARGER THAN THE OTHER BY C SEVERAL ORDERS OF
+         * MAGNITUDE. IF ONE COMPONENT IS 10**K LARGER C THAN THE OTHER, THEN ONE CAN EXPECT ONLY MAX(ABS(LOG10(P))-K, C
+         * 0) SIGNIFICANT DIGITS; OR, STATED ANOTHER WAY, WHEN K EXCEEDS C THE EXPONENT OF P, NO SIGNIFICANT DIGITS
+         * REMAIN IN THE SMALLER C COMPONENT. HOWEVER, THE PHASE ANGLE RETAINS ABSOLUTE ACCURACY C BECAUSE, IN COMPLEX
+         * ARITHMETIC WITH PRECISION P, THE SMALLER C COMPONENT WILL NOT (AS A RULE) DECREASE BELOW P TIMES THE C
+         * MAGNITUDE OF THE LARGER COMPONENT. IN THESE EXTREME CASES, C THE PRINCIPAL PHASE ANGLE IS ON THE ORDER OF +P,
+         * -P, PI/2-P,C OR -PI/2+P.
+         */
         double neweps;
         int k;
         int k1;
@@ -2324,15 +2349,13 @@ group:       {
         double sti;
         int i;
 
-        /**       SET PARAMETERS RELATED TO MACHINE CONSTANTS.
-        C         TOL IS THE APPROXIMATE UNIT ROUNDOFF LIMITED TO 1.0E-18.
-        C         ELIM IS THE APPROXIMATE EXPONENTIAL OVER- AND UNDERFLOW LIMIT.
-        C         EXP(-ELIM).LT.EXP(-ALIM)=EXP(-ELIM)/TOL    AND
-        C         EXP(ELIM).GT.EXP(ALIM)=EXP(ELIM)*TOL       ARE INTERVALS NEAR
-        C         UNDERFLOW AND OVERFLOW LIMITS WHERE SCALED ARITHMETIC IS DONE.
-        C         RL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC EXPANSION FOR LARGE Z.
-        C         DIG = NUMBER OF BASE 10 DIGITS IN TOL = 10**(-DIG).
-        C         FNUL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC SERIES FOR LARGE FNU.*/
+        /**
+         * SET PARAMETERS RELATED TO MACHINE CONSTANTS. C TOL IS THE APPROXIMATE UNIT ROUNDOFF LIMITED TO 1.0E-18. C
+         * ELIM IS THE APPROXIMATE EXPONENTIAL OVER- AND UNDERFLOW LIMIT. C EXP(-ELIM).LT.EXP(-ALIM)=EXP(-ELIM)/TOL AND
+         * C EXP(ELIM).GT.EXP(ALIM)=EXP(ELIM)*TOL ARE INTERVALS NEAR C UNDERFLOW AND OVERFLOW LIMITS WHERE SCALED
+         * ARITHMETIC IS DONE. C RL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC EXPANSION FOR LARGE Z. C DIG = NUMBER OF
+         * BASE 10 DIGITS IN TOL = 10**(-DIG). C FNUL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC SERIES FOR LARGE FNU.
+         */
         // epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
         // (1.0 + epsilon) != 1.0.
@@ -2371,14 +2394,14 @@ group:       {
         // r1m5 = log10(2), which is D1MACH(5)
         r1m5 = 0.434294481903251 * Math.log(2.0);
         k = Math.min(Math.abs(emin), Math.abs(emax));
-        elim = 2.303 * ((k * r1m5) - 3.0);
+        elim = 2.303 * ( (k * r1m5) - 3.0);
 
         // doubleDigits is I1MACH(14), the number of base-B digits for double
-        // precision.  IEEE 754 double precision has 64 bits with 1 sign bit,
+        // precision. IEEE 754 double precision has 64 bits with 1 sign bit,
         // 11 exponent bits, and 52 fraction, mantissa, or signficand bits.
         // Floating-point numbers are typically stored in normalized form,
-        // with the radix point after the first non-zero digit.  In base two,
-        // the only possible non-zero digit is 1.  Thus, a leading digit of 1
+        // with the radix point after the first non-zero digit. In base two,
+        // the only possible non-zero digit is 1. Thus, a leading digit of 1
         // can always be assumed and need not be explicitly represented.
         // Therefore, the mantissa effectively has 53 bits of resolution.
         doubleDigits = 53;
@@ -2386,7 +2409,7 @@ group:       {
         aa = r1m5 * k1;
         dig = Math.min(aa, 18.0);
         aa = 2.303 * aa;
-        alim = elim + Math.max(-aa, -41.45);
+        alim = elim + Math.max( -aa, -41.45);
         rl = (1.2 * dig) + 3.0;
         fnul = 10.0 + (6.0 * (dig - 3.0));
 
@@ -2399,7 +2422,7 @@ group:       {
         bb = 0.5 * Integer.MAX_VALUE;
         aa = Math.min(aa, bb);
 
-        if ((az > aa) || (fn > aa)) {
+        if ( (az > aa) || (fn > aa)) {
             nz[0] = 0;
             ierr[0] = 4;
 
@@ -2408,7 +2431,7 @@ group:       {
 
         aa = Math.sqrt(aa);
 
-        if ((az > aa) || (fn > aa)) {
+        if ( (az > aa) || (fn > aa)) {
             ierr[0] = 3;
         }
 
@@ -2433,7 +2456,7 @@ group:       {
             csgnr = Math.cos(arg);
             csgni = Math.sin(arg);
 
-            if ((inu % 2) != 0) {
+            if ( (inu % 2) != 0) {
                 csgnr = -csgnr;
                 csgni = -csgni;
             }
@@ -2489,162 +2512,80 @@ group:       {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  zr    double
-     * @param  zi    double
-     * @param  fnu   double
-     * @param  kode  int
-     * @param  n     int
-     * @param  cyr   double[]
-     * @param  cyi   double[]
-     * @param  nz    int[]
-     * @param  ierr  int[]
+     * 
+     * @param zr double
+     * @param zi double
+     * @param fnu double
+     * @param kode int
+     * @param n int
+     * @param cyr double[]
+     * @param cyi double[]
+     * @param nz int[]
+     * @param ierr int[]
      */
-    private void zbesj(double zr, double zi, double fnu, int kode, int n, double[] cyr, double[] cyi, int[] nz,
-                       int[] ierr) {
+    private void zbesj(double zr, final double zi, final double fnu, final int kode, final int n, final double[] cyr,
+            final double[] cyi, final int[] nz, final int[] ierr) {
 
-        /***BEGIN PROLOGUE  ZBESJ
-        C***DATE WRITTEN   830501   (YYMMDD)
-        C***REVISION DATE  890801, 930101   (YYMMDD)
-        C***CATEGORY NO.  B5K
-        C***KEYWORDS  J-BESSEL FUNCTION,BESSEL FUNCTION OF COMPLEX ARGUMENT,
-        C             BESSEL FUNCTION OF FIRST KIND
-        C***AUTHOR  AMOS, DONALD E., SANDIA NATIONAL LABORATORIES
-        C***PURPOSE  TO COMPUTE THE J-BESSEL FUNCTION OF A COMPLEX ARGUMENT
-        C***DESCRIPTION
-        C
-        C                      ***A DOUBLE PRECISION ROUTINE***
-        C         ON KODE=1, ZBESJ COMPUTES AN N MEMBER  SEQUENCE OF COMPLEX
-        C         BESSEL FUNCTIONS CY(I)=J(FNU+I-1,Z) FOR REAL, NONNEGATIVE
-        C         ORDERS FNU+I-1, I=1,...,N AND COMPLEX Z IN THE CUT PLANE
-        C         -PI.LT.ARG(Z).LE.PI. ON KODE=2, ZBESJ RETURNS THE SCALED
-        C         FUNCTIONS
-        C
-        C         CY(I)=EXP(-ABS(Y))*J(FNU+I-1,Z)   I = 1,...,N , Y=AIMAG(Z)
-        C
-        C         WHICH REMOVE THE EXPONENTIAL GROWTH IN BOTH THE UPPER AND
-        C         LOWER HALF PLANES FOR Z TO INFINITY. DEFINITIONS AND NOTATION
-        C         ARE FOUND IN THE NBS HANDBOOK OF MATHEMATICAL FUNCTIONS
-        C         (REF. 1).
-        C
-        C         INPUT      ZR,ZI,FNU ARE DOUBLE PRECISION
-        C           ZR,ZI  - Z=CMPLX(ZR,ZI),  -PI.LT.ARG(Z).LE.PI
-        C           FNU    - ORDER OF INITIAL J FUNCTION, FNU.GE.0.0D0
-        C           KODE   - A PARAMETER TO INDICATE THE SCALING OPTION
-        C                    KODE= 1  RETURNS
-        C                             CY(I)=J(FNU+I-1,Z), I=1,...,N
-        C                        = 2  RETURNS
-        C                             CY(I)=J(FNU+I-1,Z)EXP(-ABS(Y)), I=1,...,N
-        C           N      - NUMBER OF MEMBERS OF THE SEQUENCE, N.GE.1
-        C
-        C         OUTPUT     CYR,CYI ARE DOUBLE PRECISION
-        C           CYR,CYI- DOUBLE PRECISION VECTORS WHOSE FIRST N COMPONENTS
-        C                    CONTAIN REAL AND IMAGINARY PARTS FOR THE SEQUENCE
-        C                    CY(I)=J(FNU+I-1,Z)  OR
-        C                    CY(I)=J(FNU+I-1,Z)EXP(-ABS(Y))  I=1,...,N
-        C                    DEPENDING ON KODE, Y=AIMAG(Z).
-        C           NZ     - NUMBER OF COMPONENTS SET TO ZERO DUE TO UNDERFLOW,
-        C                    NZ= 0   , NORMAL RETURN
-        C                    NZ.GT.0 , LAST NZ COMPONENTS OF CY SET  ZERO DUE
-        C                              TO UNDERFLOW, CY(I)=CMPLX(0.0D0,0.0D0),
-        C                              I = N-NZ+1,...,N
-        C           IERR   - ERROR FLAG
-        C                    IERR=0, NORMAL RETURN - COMPUTATION COMPLETED
-        C                    IERR=1, INPUT ERROR   - NO COMPUTATION
-        C                    IERR=2, OVERFLOW      - NO COMPUTATION, AIMAG(Z)
-        C                            TOO LARGE ON KODE=1
-        C                    IERR=3, CABS(Z) OR FNU+N-1 LARGE - COMPUTATION DONE
-        C                            BUT LOSSES OF SIGNIFCANCE BY ARGUMENT
-        C                            REDUCTION PRODUCE LESS THAN HALF OF MACHINE
-        C                            ACCURACY
-        C                    IERR=4, CABS(Z) OR FNU+N-1 TOO LARGE - NO COMPUTA-
-        C                            TION BECAUSE OF COMPLETE LOSSES OF SIGNIFI-
-        C                            CANCE BY ARGUMENT REDUCTION
-        C                    IERR=5, ERROR              - NO COMPUTATION,
-        C                            ALGORITHM TERMINATION CONDITION NOT MET
-        C
-        C***LONG DESCRIPTION
-        C
-        C         THE COMPUTATION IS CARRIED OUT BY THE FORMULA
-        C
-        C         J(FNU,Z)=EXP( FNU*PI*I/2)*I(FNU,-I*Z)    AIMAG(Z).GE.0.0
-        C
-        C         J(FNU,Z)=EXP(-FNU*PI*I/2)*I(FNU, I*Z)    AIMAG(Z).LT.0.0
-        C
-        C         WHERE I**2 = -1 AND I(FNU,Z) IS THE I BESSEL FUNCTION.
-        C
-        C         FOR NEGATIVE ORDERS,THE FORMULA
-        C
-        C              J(-FNU,Z) = J(FNU,Z)*COS(PI*FNU) - Y(FNU,Z)*SIN(PI*FNU)
-        C
-        C         CAN BE USED. HOWEVER,FOR LARGE ORDERS CLOSE TO INTEGERS, THE
-        C         THE FUNCTION CHANGES RADICALLY. WHEN FNU IS A LARGE POSITIVE
-        C         INTEGER,THE MAGNITUDE OF J(-FNU,Z)=J(FNU,Z)*COS(PI*FNU) IS A
-        C         LARGE NEGATIVE POWER OF TEN. BUT WHEN FNU IS NOT AN INTEGER,
-        C         Y(FNU,Z) DOMINATES IN MAGNITUDE WITH A LARGE POSITIVE POWER OF
-        C         TEN AND THE MOST THAT THE SECOND TERM CAN BE REDUCED IS BY
-        C         UNIT ROUNDOFF FROM THE COEFFICIENT. THUS, WIDE CHANGES CAN
-        C         OCCUR WITHIN UNIT ROUNDOFF OF A LARGE INTEGER FOR FNU. HERE,
-        C         LARGE MEANS FNU.GT.CABS(Z).
-        C
-        C         IN MOST COMPLEX VARIABLE COMPUTATION, ONE MUST EVALUATE ELE-
-        C         MENTARY FUNCTIONS. WHEN THE MAGNITUDE OF Z OR FNU+N-1 IS
-        C         LARGE, LOSSES OF SIGNIFICANCE BY ARGUMENT REDUCTION OCCUR.
-        C         CONSEQUENTLY, IF EITHER ONE EXCEEDS U1=SQRT(0.5/UR), THEN
-        C         LOSSES EXCEEDING HALF PRECISION ARE LIKELY AND AN ERROR FLAG
-        C         IERR=3 IS TRIGGERED WHERE UR=DMAX1(D1MACH(4),1.0D-18) IS
-        C         DOUBLE PRECISION UNIT ROUNDOFF LIMITED TO 18 DIGITS PRECISION.
-        C         IF EITHER IS LARGER THAN U2=0.5/UR, THEN ALL SIGNIFICANCE IS
-        C         LOST AND IERR=4. IN ORDER TO USE THE INT FUNCTION, ARGUMENTS
-        C         MUST BE FURTHER RESTRICTED NOT TO EXCEED THE LARGEST MACHINE
-        C         INTEGER, U3=I1MACH(9). THUS, THE MAGNITUDE OF Z AND FNU+N-1 IS
-        C         RESTRICTED BY MIN(U2,U3). ON 32 BIT MACHINES, U1,U2, AND U3
-        C         ARE APPROXIMATELY 2.0E+3, 4.2E+6, 2.1E+9 IN SINGLE PRECISION
-        C         ARITHMETIC AND 1.3E+8, 1.8E+16, 2.1E+9 IN DOUBLE PRECISION
-        C         ARITHMETIC RESPECTIVELY. THIS MAKES U2 AND U3 LIMITING IN
-        C         THEIR RESPECTIVE ARITHMETICS. THIS MEANS THAT ONE CAN EXPECT
-        C         TO RETAIN, IN THE WORST CASES ON 32 BIT MACHINES, NO DIGITS
-        C         IN SINGLE AND ONLY 7 DIGITS IN DOUBLE PRECISION ARITHMETIC.
-        C         SIMILAR CONSIDERATIONS HOLD FOR OTHER MACHINES.
-        C
-        C         THE APPROXIMATE RELATIVE ERROR IN THE MAGNITUDE OF A COMPLEX
-        C         BESSEL FUNCTION CAN BE EXPRESSED BY P*10**S WHERE P=MAX(UNIT
-        C         ROUNDOFF,1.0E-18) IS THE NOMINAL PRECISION AND 10**S REPRE-
-        C         SENTS THE INCREASE IN ERROR DUE TO ARGUMENT REDUCTION IN THE
-        C         ELEMENTARY FUNCTIONS. HERE, S=MAX(1,ABS(LOG10(CABS(Z))),
-        C         ABS(LOG10(FNU))) APPROXIMATELY (I.E. S=MAX(1,ABS(EXPONENT OF
-        C         CABS(Z),ABS(EXPONENT OF FNU)) ). HOWEVER, THE PHASE ANGLE MAY
-        C         HAVE ONLY ABSOLUTE ACCURACY. THIS IS MOST LIKELY TO OCCUR WHEN
-        C         ONE COMPONENT (IN ABSOLUTE VALUE) IS LARGER THAN THE OTHER BY
-        C         SEVERAL ORDERS OF MAGNITUDE. IF ONE COMPONENT IS 10**K LARGER
-        C         THAN THE OTHER, THEN ONE CAN EXPECT ONLY MAX(ABS(LOG10(P))-K,
-        C         0) SIGNIFICANT DIGITS; OR, STATED ANOTHER WAY, WHEN K EXCEEDS
-        C         THE EXPONENT OF P, NO SIGNIFICANT DIGITS REMAIN IN THE SMALLER
-        C         COMPONENT. HOWEVER, THE PHASE ANGLE RETAINS ABSOLUTE ACCURACY
-        C         BECAUSE, IN COMPLEX ARITHMETIC WITH PRECISION P, THE SMALLER
-        C         COMPONENT WILL NOT (AS A RULE) DECREASE BELOW P TIMES THE
-        C         MAGNITUDE OF THE LARGER COMPONENT. IN THESE EXTREME CASES,
-        C         THE PRINCIPAL PHASE ANGLE IS ON THE ORDER OF +P, -P, PI/2-P,
-        C         OR -PI/2+P.
-        C
-        C***REFERENCES  HANDBOOK OF MATHEMATICAL FUNCTIONS BY M. ABRAMOWITZ
-        C                 AND I. A. STEGUN, NBS AMS SERIES 55, U.S. DEPT. OF
-        C                 COMMERCE, 1955.
-        C
-        C               COMPUTATION OF BESSEL FUNCTIONS OF COMPLEX ARGUMENT
-        C                 BY D. E. AMOS, SAND83-0083, MAY, 1983.
-        C
-        C               COMPUTATION OF BESSEL FUNCTIONS OF COMPLEX ARGUMENT
-        C                 AND LARGE ORDER BY D. E. AMOS, SAND83-0643, MAY, 1983
-        C
-        C               A SUBROUTINE PACKAGE FOR BESSEL FUNCTIONS OF A COMPLEX
-        C                 ARGUMENT AND NONNEGATIVE ORDER BY D. E. AMOS, SAND85-
-        C                 1018, MAY, 1985
-        C
-        C               A PORTABLE PACKAGE FOR BESSEL FUNCTIONS OF A COMPLEX
-        C                 ARGUMENT AND NONNEGATIVE ORDER BY D. E. AMOS, ACM
-        C                 TRANS. MATH. SOFTWARE, VOL. 12, NO. 3, SEPTEMBER 1986,
-        C                 PP 265-273. */
+        /**
+         * *BEGIN PROLOGUE ZBESJ C***DATE WRITTEN 830501 (YYMMDD) C***REVISION DATE 890801, 930101 (YYMMDD) C***CATEGORY
+         * NO. B5K C***KEYWORDS J-BESSEL FUNCTION,BESSEL FUNCTION OF COMPLEX ARGUMENT, C BESSEL FUNCTION OF FIRST KIND
+         * C***AUTHOR AMOS, DONALD E., SANDIA NATIONAL LABORATORIES C***PURPOSE TO COMPUTE THE J-BESSEL FUNCTION OF A
+         * COMPLEX ARGUMENT C***DESCRIPTION C C ***A DOUBLE PRECISION ROUTINE*** C ON KODE=1, ZBESJ COMPUTES AN N MEMBER
+         * SEQUENCE OF COMPLEX C BESSEL FUNCTIONS CY(I)=J(FNU+I-1,Z) FOR REAL, NONNEGATIVE C ORDERS FNU+I-1, I=1,...,N
+         * AND COMPLEX Z IN THE CUT PLANE C -PI.LT.ARG(Z).LE.PI. ON KODE=2, ZBESJ RETURNS THE SCALED C FUNCTIONS C C
+         * CY(I)=EXP(-ABS(Y))*J(FNU+I-1,Z) I = 1,...,N , Y=AIMAG(Z) C C WHICH REMOVE THE EXPONENTIAL GROWTH IN BOTH THE
+         * UPPER AND C LOWER HALF PLANES FOR Z TO INFINITY. DEFINITIONS AND NOTATION C ARE FOUND IN THE NBS HANDBOOK OF
+         * MATHEMATICAL FUNCTIONS C (REF. 1). C C INPUT ZR,ZI,FNU ARE DOUBLE PRECISION C ZR,ZI - Z=CMPLX(ZR,ZI),
+         * -PI.LT.ARG(Z).LE.PI C FNU - ORDER OF INITIAL J FUNCTION, FNU.GE.0.0D0 C KODE - A PARAMETER TO INDICATE THE
+         * SCALING OPTION C KODE= 1 RETURNS C CY(I)=J(FNU+I-1,Z), I=1,...,N C = 2 RETURNS C
+         * CY(I)=J(FNU+I-1,Z)EXP(-ABS(Y)), I=1,...,N C N - NUMBER OF MEMBERS OF THE SEQUENCE, N.GE.1 C C OUTPUT CYR,CYI
+         * ARE DOUBLE PRECISION C CYR,CYI- DOUBLE PRECISION VECTORS WHOSE FIRST N COMPONENTS C CONTAIN REAL AND
+         * IMAGINARY PARTS FOR THE SEQUENCE C CY(I)=J(FNU+I-1,Z) OR C CY(I)=J(FNU+I-1,Z)EXP(-ABS(Y)) I=1,...,N C
+         * DEPENDING ON KODE, Y=AIMAG(Z). C NZ - NUMBER OF COMPONENTS SET TO ZERO DUE TO UNDERFLOW, C NZ= 0 , NORMAL
+         * RETURN C NZ.GT.0 , LAST NZ COMPONENTS OF CY SET ZERO DUE C TO UNDERFLOW, CY(I)=CMPLX(0.0D0,0.0D0), C I =
+         * N-NZ+1,...,N C IERR - ERROR FLAG C IERR=0, NORMAL RETURN - COMPUTATION COMPLETED C IERR=1, INPUT ERROR - NO
+         * COMPUTATION C IERR=2, OVERFLOW - NO COMPUTATION, AIMAG(Z) C TOO LARGE ON KODE=1 C IERR=3, CABS(Z) OR FNU+N-1
+         * LARGE - COMPUTATION DONE C BUT LOSSES OF SIGNIFCANCE BY ARGUMENT C REDUCTION PRODUCE LESS THAN HALF OF
+         * MACHINE C ACCURACY C IERR=4, CABS(Z) OR FNU+N-1 TOO LARGE - NO COMPUTA- C TION BECAUSE OF COMPLETE LOSSES OF
+         * SIGNIFI- C CANCE BY ARGUMENT REDUCTION C IERR=5, ERROR - NO COMPUTATION, C ALGORITHM TERMINATION CONDITION
+         * NOT MET C C***LONG DESCRIPTION C C THE COMPUTATION IS CARRIED OUT BY THE FORMULA C C J(FNU,Z)=EXP(
+         * FNU*PI*I/2)*I(FNU,-I*Z) AIMAG(Z).GE.0.0 C C J(FNU,Z)=EXP(-FNU*PI*I/2)*I(FNU, I*Z) AIMAG(Z).LT.0.0 C C WHERE
+         * I**2 = -1 AND I(FNU,Z) IS THE I BESSEL FUNCTION. C C FOR NEGATIVE ORDERS,THE FORMULA C C J(-FNU,Z) =
+         * J(FNU,Z)*COS(PI*FNU) - Y(FNU,Z)*SIN(PI*FNU) C C CAN BE USED. HOWEVER,FOR LARGE ORDERS CLOSE TO INTEGERS, THE
+         * C THE FUNCTION CHANGES RADICALLY. WHEN FNU IS A LARGE POSITIVE C INTEGER,THE MAGNITUDE OF
+         * J(-FNU,Z)=J(FNU,Z)*COS(PI*FNU) IS A C LARGE NEGATIVE POWER OF TEN. BUT WHEN FNU IS NOT AN INTEGER, C Y(FNU,Z)
+         * DOMINATES IN MAGNITUDE WITH A LARGE POSITIVE POWER OF C TEN AND THE MOST THAT THE SECOND TERM CAN BE REDUCED
+         * IS BY C UNIT ROUNDOFF FROM THE COEFFICIENT. THUS, WIDE CHANGES CAN C OCCUR WITHIN UNIT ROUNDOFF OF A LARGE
+         * INTEGER FOR FNU. HERE, C LARGE MEANS FNU.GT.CABS(Z). C C IN MOST COMPLEX VARIABLE COMPUTATION, ONE MUST
+         * EVALUATE ELE- C MENTARY FUNCTIONS. WHEN THE MAGNITUDE OF Z OR FNU+N-1 IS C LARGE, LOSSES OF SIGNIFICANCE BY
+         * ARGUMENT REDUCTION OCCUR. C CONSEQUENTLY, IF EITHER ONE EXCEEDS U1=SQRT(0.5/UR), THEN C LOSSES EXCEEDING HALF
+         * PRECISION ARE LIKELY AND AN ERROR FLAG C IERR=3 IS TRIGGERED WHERE UR=DMAX1(D1MACH(4),1.0D-18) IS C DOUBLE
+         * PRECISION UNIT ROUNDOFF LIMITED TO 18 DIGITS PRECISION. C IF EITHER IS LARGER THAN U2=0.5/UR, THEN ALL
+         * SIGNIFICANCE IS C LOST AND IERR=4. IN ORDER TO USE THE INT FUNCTION, ARGUMENTS C MUST BE FURTHER RESTRICTED
+         * NOT TO EXCEED THE LARGEST MACHINE C INTEGER, U3=I1MACH(9). THUS, THE MAGNITUDE OF Z AND FNU+N-1 IS C
+         * RESTRICTED BY MIN(U2,U3). ON 32 BIT MACHINES, U1,U2, AND U3 C ARE APPROXIMATELY 2.0E+3, 4.2E+6, 2.1E+9 IN
+         * SINGLE PRECISION C ARITHMETIC AND 1.3E+8, 1.8E+16, 2.1E+9 IN DOUBLE PRECISION C ARITHMETIC RESPECTIVELY. THIS
+         * MAKES U2 AND U3 LIMITING IN C THEIR RESPECTIVE ARITHMETICS. THIS MEANS THAT ONE CAN EXPECT C TO RETAIN, IN
+         * THE WORST CASES ON 32 BIT MACHINES, NO DIGITS C IN SINGLE AND ONLY 7 DIGITS IN DOUBLE PRECISION ARITHMETIC. C
+         * SIMILAR CONSIDERATIONS HOLD FOR OTHER MACHINES. C C THE APPROXIMATE RELATIVE ERROR IN THE MAGNITUDE OF A
+         * COMPLEX C BESSEL FUNCTION CAN BE EXPRESSED BY P*10**S WHERE P=MAX(UNIT C ROUNDOFF,1.0E-18) IS THE NOMINAL
+         * PRECISION AND 10**S REPRE- C SENTS THE INCREASE IN ERROR DUE TO ARGUMENT REDUCTION IN THE C ELEMENTARY
+         * FUNCTIONS. HERE, S=MAX(1,ABS(LOG10(CABS(Z))), C ABS(LOG10(FNU))) APPROXIMATELY (I.E. S=MAX(1,ABS(EXPONENT OF
+         * C CABS(Z),ABS(EXPONENT OF FNU)) ). HOWEVER, THE PHASE ANGLE MAY C HAVE ONLY ABSOLUTE ACCURACY. THIS IS MOST
+         * LIKELY TO OCCUR WHEN C ONE COMPONENT (IN ABSOLUTE VALUE) IS LARGER THAN THE OTHER BY C SEVERAL ORDERS OF
+         * MAGNITUDE. IF ONE COMPONENT IS 10**K LARGER C THAN THE OTHER, THEN ONE CAN EXPECT ONLY MAX(ABS(LOG10(P))-K, C
+         * 0) SIGNIFICANT DIGITS; OR, STATED ANOTHER WAY, WHEN K EXCEEDS C THE EXPONENT OF P, NO SIGNIFICANT DIGITS
+         * REMAIN IN THE SMALLER C COMPONENT. HOWEVER, THE PHASE ANGLE RETAINS ABSOLUTE ACCURACY C BECAUSE, IN COMPLEX
+         * ARITHMETIC WITH PRECISION P, THE SMALLER C COMPONENT WILL NOT (AS A RULE) DECREASE BELOW P TIMES THE C
+         * MAGNITUDE OF THE LARGER COMPONENT. IN THESE EXTREME CASES, C THE PRINCIPAL PHASE ANGLE IS ON THE ORDER OF +P,
+         * -P, PI/2-P, C OR -PI/2+P. C C***REFERENCES HANDBOOK OF MATHEMATICAL FUNCTIONS BY M. ABRAMOWITZ C AND I. A.
+         * STEGUN, NBS AMS SERIES 55, U.S. DEPT. OF C COMMERCE, 1955. C C COMPUTATION OF BESSEL FUNCTIONS OF COMPLEX
+         * ARGUMENT C BY D. E. AMOS, SAND83-0083, MAY, 1983. C C COMPUTATION OF BESSEL FUNCTIONS OF COMPLEX ARGUMENT C
+         * AND LARGE ORDER BY D. E. AMOS, SAND83-0643, MAY, 1983 C C A SUBROUTINE PACKAGE FOR BESSEL FUNCTIONS OF A
+         * COMPLEX C ARGUMENT AND NONNEGATIVE ORDER BY D. E. AMOS, SAND85- C 1018, MAY, 1985 C C A PORTABLE PACKAGE FOR
+         * BESSEL FUNCTIONS OF A COMPLEX C ARGUMENT AND NONNEGATIVE ORDER BY D. E. AMOS, ACM C TRANS. MATH. SOFTWARE,
+         * VOL. 12, NO. 3, SEPTEMBER 1986, C PP 265-273.
+         */
         double neweps;
         int k;
         int k1;
@@ -2667,17 +2608,17 @@ group:       {
         double ascle;
         double str;
         double sti;
-        double hpi = Math.PI / 2.0;
+        final double hpi = Math.PI / 2.0;
         int i;
         double atol;
 
-        /** SET PARAMETERS RELATED TO MACHINE CONSTANTS.
-         * C         TOL IS THE APPROXIMATE UNIT ROUNDOFF LIMITED TO 1.0E-18. C         ELIM IS THE APPROXIMATE
-         * EXPONENTIAL OVER- AND UNDERFLOW LIMIT. C         EXP(-ELIM).LT.EXP(-ALIM)=EXP(-ELIM)/TOL    AND C
-         * EXP(ELIM).GT.EXP(ALIM)=EXP(ELIM)*TOL       ARE INTERVALS NEAR C         UNDERFLOW AND OVERFLOW LIMITS WHERE
-         * SCALED ARITHMETIC IS DONE. C         RL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC EXPANSION FOR LARGE Z. C
-         *    DIG = NUMBER OF BASE 10 DIGITS IN TOL = 10**(-DIG).C         FNUL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC
-         * SERIES FOR LARGE FNU.*/
+        /**
+         * SET PARAMETERS RELATED TO MACHINE CONSTANTS. C TOL IS THE APPROXIMATE UNIT ROUNDOFF LIMITED TO 1.0E-18. C
+         * ELIM IS THE APPROXIMATE EXPONENTIAL OVER- AND UNDERFLOW LIMIT. C EXP(-ELIM).LT.EXP(-ALIM)=EXP(-ELIM)/TOL AND
+         * C EXP(ELIM).GT.EXP(ALIM)=EXP(ELIM)*TOL ARE INTERVALS NEAR C UNDERFLOW AND OVERFLOW LIMITS WHERE SCALED
+         * ARITHMETIC IS DONE. C RL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC EXPANSION FOR LARGE Z. C DIG = NUMBER OF
+         * BASE 10 DIGITS IN TOL = 10**(-DIG).C FNUL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC SERIES FOR LARGE FNU.
+         */
         // epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
         // (1.0 + epsilon) != 1.0.
@@ -2716,14 +2657,14 @@ group:       {
         // r1m5 = log10(2), which is D1MACH(5)
         r1m5 = 0.434294481903251 * Math.log(2.0);
         k = Math.min(Math.abs(emin), Math.abs(emax));
-        elim = 2.303 * ((k * r1m5) - 3.0);
+        elim = 2.303 * ( (k * r1m5) - 3.0);
 
         // doubleDigits is I1MACH(14), the number of base-B digits for double
-        // precision.  IEEE 754 double precision has 64 bits with 1 sign bit,
+        // precision. IEEE 754 double precision has 64 bits with 1 sign bit,
         // 11 exponent bits, and 52 fraction, mantissa, or signficand bits.
         // Floating-point numbers are typically stored in normalized form,
-        // with the radix point after the first non-zero digit.  In base two,
-        // the only possible non-zero digit is 1.  Thus, a leading digit of 1
+        // with the radix point after the first non-zero digit. In base two,
+        // the only possible non-zero digit is 1. Thus, a leading digit of 1
         // can always be assumed and need not be explicitly represented.
         // Therefore, the mantissa effectively has 53 bits of resolution.
         doubleDigits = 53;
@@ -2731,7 +2672,7 @@ group:       {
         aa = r1m5 * k1;
         dig = Math.min(aa, 18.0);
         aa = 2.303 * aa;
-        alim = elim + Math.max(-aa, -41.45);
+        alim = elim + Math.max( -aa, -41.45);
         rl = (1.2 * dig) + 3.0;
         fnul = 10.0 + (6.0 * (dig - 3.0));
 
@@ -2744,7 +2685,7 @@ group:       {
         bb = 0.5 * Integer.MAX_VALUE;
         aa = Math.min(aa, bb);
 
-        if ((az > aa) || (fn > aa)) {
+        if ( (az > aa) || (fn > aa)) {
             nz[0] = 0;
             ierr[0] = 4;
 
@@ -2753,7 +2694,7 @@ group:       {
 
         aa = Math.sqrt(aa);
 
-        if ((az > aa) || (fn > aa)) {
+        if ( (az > aa) || (fn > aa)) {
             ierr[0] = 3;
         }
 
@@ -2767,7 +2708,7 @@ group:       {
         csgnr = Math.cos(arg);
         csgni = Math.sin(arg);
 
-        if ((inuh % 2) != 0) {
+        if ( (inuh % 2) != 0) {
             csgnr = -csgnr;
             csgni = -csgni;
         } // if ((inuh%2) != 0)
@@ -2830,170 +2771,81 @@ group:       {
         return;
     }
 
-
     /**
      * DOCUMENT ME!
-     *
-     * @param  zr    double
-     * @param  zi    double
-     * @param  fnu   double
-     * @param  kode  int
-     * @param  n     int
-     * @param  cyr   double[]
-     * @param  cyi   double[]
-     * @param  nz    int[]
-     * @param  ierr  int[]
+     * 
+     * @param zr double
+     * @param zi double
+     * @param fnu double
+     * @param kode int
+     * @param n int
+     * @param cyr double[]
+     * @param cyi double[]
+     * @param nz int[]
+     * @param ierr int[]
      */
-    private void zbesk(double zr, double zi, double fnu, int kode, int n, double[] cyr, double[] cyi, int[] nz,
-                       int[] ierr) {
+    private void zbesk(final double zr, final double zi, final double fnu, final int kode, final int n,
+            final double[] cyr, final double[] cyi, final int[] nz, final int[] ierr) {
 
-        /***DATE WRITTEN   830501   (YYMMDD)
-        C***REVISION DATE  890801, 930101   (YYMMDD)
-        C***CATEGORY NO.  B5K
-        C***KEYWORDS  K-BESSEL FUNCTION,COMPLEX BESSEL FUNCTION,
-        C             MODIFIED BESSEL FUNCTION OF THE SECOND KIND,
-        C             BESSEL FUNCTION OF THE THIRD KIND
-        C***AUTHOR  AMOS, DONALD E., SANDIA NATIONAL LABORATORIES
-        C***PURPOSE  TO COMPUTE K-BESSEL FUNCTIONS OF COMPLEX ARGUMENT
-        C***DESCRIPTION
-        C
-        C                      ***A DOUBLE PRECISION ROUTINE***
-        C
-        C         ON KODE=1, ZBESK COMPUTES AN N MEMBER SEQUENCE OF COMPLEX
-        C         BESSEL FUNCTIONS CY(J)=K(FNU+J-1,Z) FOR REAL, NONNEGATIVE
-        C         ORDERS FNU+J-1, J=1,...,N AND COMPLEX Z.NE.CMPLX(0.0,0.0)
-        C         IN THE CUT PLANE -PI.LT.ARG(Z).LE.PI. ON KODE=2, ZBESK
-        C         RETURNS THE SCALED K FUNCTIONS,
-        C
-        C         CY(J)=EXP(Z)*K(FNU+J-1,Z) , J=1,...,N,
-        C
-        C         WHICH REMOVE THE EXPONENTIAL BEHAVIOR IN BOTH THE LEFT AND
-        C         RIGHT HALF PLANES FOR Z TO INFINITY. DEFINITIONS AND
-        C         NOTATION ARE FOUND IN THE NBS HANDBOOK OF MATHEMATICAL
-        C         FUNCTIONS (REF. 1).
-        C
-        C         INPUT      ZR,ZI,FNU ARE DOUBLE PRECISION
-        C           ZR,ZI  - Z=CMPLX(ZR,ZI), Z.NE.CMPLX(0.0D0,0.0D0),
-        C                    -PI.LT.ARG(Z).LE.PI
-        C           FNU    - ORDER OF INITIAL K FUNCTION, FNU.GE.0.0D0
-        C           N      - NUMBER OF MEMBERS OF THE SEQUENCE, N.GE.1
-        C           KODE   - A PARAMETER TO INDICATE THE SCALING OPTION
-        C                    KODE= 1  RETURNS
-        C                             CY(I)=K(FNU+I-1,Z), I=1,...,N
-        C                        = 2  RETURNS
-        C                             CY(I)=K(FNU+I-1,Z)*EXP(Z), I=1,...,N
-        C
-        C         OUTPUT     CYR,CYI ARE DOUBLE PRECISION
-        C           CYR,CYI- DOUBLE PRECISION VECTORS WHOSE FIRST N COMPONENTS
-        C                    CONTAIN REAL AND IMAGINARY PARTS FOR THE SEQUENCE
-        C                    CY(I)=K(FNU+I-1,Z), I=1,...,N OR
-        C                    CY(I)=K(FNU+I-1,Z)*EXP(Z), I=1,...,N
-        C                    DEPENDING ON KODE
-        C           NZ     - NUMBER OF COMPONENTS SET TO ZERO DUE TO UNDERFLOW.
-        C                    NZ= 0   , NORMAL RETURN
-        C                    NZ.GT.0 , FIRST NZ COMPONENTS OF CY SET TO ZERO DUE
-        C                              TO UNDERFLOW, CY(I)=CMPLX(0.0D0,0.0D0),
-        C                              I=1,...,N WHEN X.GE.0.0. WHEN X.LT.0.0
-        C                              NZ STATES ONLY THE NUMBER OF UNDERFLOWS
-        C                              IN THE SEQUENCE.
-        C
-        C           IERR   - ERROR FLAG
-        C                    IERR=0, NORMAL RETURN - COMPUTATION COMPLETED
-        C                    IERR=1, INPUT ERROR   - NO COMPUTATION
-        C                    IERR=2, OVERFLOW      - NO COMPUTATION, FNU IS
-        C                            TOO LARGE OR CABS(Z) IS TOO SMALL OR BOTH
-        C                    IERR=3, CABS(Z) OR FNU+N-1 LARGE - COMPUTATION DONE
-        C                            BUT LOSSES OF SIGNIFCANCE BY ARGUMENT
-        C                            REDUCTION PRODUCE LESS THAN HALF OF MACHINE
-        C                            ACCURACY
-        C                    IERR=4, CABS(Z) OR FNU+N-1 TOO LARGE - NO COMPUTA-
-        C                            TION BECAUSE OF COMPLETE LOSSES OF SIGNIFI-
-        C                            CANCE BY ARGUMENT REDUCTION
-        C                    IERR=5, ERROR              - NO COMPUTATION,
-        C                            ALGORITHM TERMINATION CONDITION NOT MET
-        C
-        C***LONG DESCRIPTION
-        C
-        C         EQUATIONS OF THE REFERENCE ARE IMPLEMENTED FOR SMALL ORDERS
-        C         DNU AND DNU+1.0 IN THE RIGHT HALF PLANE X.GE.0.0. FORWARD
-        C         RECURRENCE GENERATES HIGHER ORDERS. K IS CONTINUED TO THE LEFT
-        C         HALF PLANE BY THE RELATION
-        C
-        C         K(FNU,Z*EXP(MP)) = EXP(-MP*FNU)*K(FNU,Z)-MP*I(FNU,Z)
-        C         MP=MR*PI*I, MR=+1 OR -1, RE(Z).GT.0, I**2=-1
-        C
-        C         WHERE I(FNU,Z) IS THE I BESSEL FUNCTION.
-        C
-        C         FOR LARGE ORDERS, FNU.GT.FNUL, THE K FUNCTION IS COMPUTED
-        C         BY MEANS OF ITS UNIFORM ASYMPTOTIC EXPANSIONS.
-        C
-        C         FOR NEGATIVE ORDERS, THE FORMULA
-        C
-        C                       K(-FNU,Z) = K(FNU,Z)
-        C
-        C         CAN BE USED.
-        C
-        C         ZBESK ASSUMES THAT A SIGNIFICANT DIGIT SINH(X) FUNCTION IS
-        C         AVAILABLE.
-        C
-        C         IN MOST COMPLEX VARIABLE COMPUTATION, ONE MUST EVALUATE ELE-
-        C         MENTARY FUNCTIONS. WHEN THE MAGNITUDE OF Z OR FNU+N-1 IS
-        C         LARGE, LOSSES OF SIGNIFICANCE BY ARGUMENT REDUCTION OCCUR.
-        C         CONSEQUENTLY, IF EITHER ONE EXCEEDS U1=SQRT(0.5/UR), THEN
-        C         LOSSES EXCEEDING HALF PRECISION ARE LIKELY AND AN ERROR FLAG
-        C         IERR=3 IS TRIGGERED WHERE UR=DMAX1(D1MACH(4),1.0D-18) IS
-        C         DOUBLE PRECISION UNIT ROUNDOFF LIMITED TO 18 DIGITS PRECISION.
-        C         IF EITHER IS LARGER THAN U2=0.5/UR, THEN ALL SIGNIFICANCE IS
-        C         LOST AND IERR=4. IN ORDER TO USE THE INT FUNCTION, ARGUMENTS
-        C         MUST BE FURTHER RESTRICTED NOT TO EXCEED THE LARGEST MACHINE
-        C         INTEGER, U3=I1MACH(9). THUS, THE MAGNITUDE OF Z AND FNU+N-1 IS
-        C         RESTRICTED BY MIN(U2,U3). ON 32 BIT MACHINES, U1,U2, AND U3
-        C         ARE APPROXIMATELY 2.0E+3, 4.2E+6, 2.1E+9 IN SINGLE PRECISION
-        C         ARITHMETIC AND 1.3E+8, 1.8E+16, 2.1E+9 IN DOUBLE PRECISION
-        C         ARITHMETIC RESPECTIVELY. THIS MAKES U2 AND U3 LIMITING IN
-        C         THEIR RESPECTIVE ARITHMETICS. THIS MEANS THAT ONE CAN EXPECT
-        C         TO RETAIN, IN THE WORST CASES ON 32 BIT MACHINES, NO DIGITS
-        C         IN SINGLE AND ONLY 7 DIGITS IN DOUBLE PRECISION ARITHMETIC.
-        C         SIMILAR CONSIDERATIONS HOLD FOR OTHER MACHINES.
-        C
-        C         THE APPROXIMATE RELATIVE ERROR IN THE MAGNITUDE OF A COMPLEX
-        C         BESSEL FUNCTION CAN BE EXPRESSED BY P*10**S WHERE P=MAX(UNIT
-        C         ROUNDOFF,1.0E-18) IS THE NOMINAL PRECISION AND 10**S REPRE-
-        C         SENTS THE INCREASE IN ERROR DUE TO ARGUMENT REDUCTION IN THE
-        C         ELEMENTARY FUNCTIONS. HERE, S=MAX(1,ABS(LOG10(CABS(Z))),
-        C         ABS(LOG10(FNU))) APPROXIMATELY (I.E. S=MAX(1,ABS(EXPONENT OF
-        C         CABS(Z),ABS(EXPONENT OF FNU)) ). HOWEVER, THE PHASE ANGLE MAY
-        C         HAVE ONLY ABSOLUTE ACCURACY. THIS IS MOST LIKELY TO OCCUR WHEN
-        C         ONE COMPONENT (IN ABSOLUTE VALUE) IS LARGER THAN THE OTHER BY
-        C         SEVERAL ORDERS OF MAGNITUDE. IF ONE COMPONENT IS 10**K LARGER
-        C         THAN THE OTHER, THEN ONE CAN EXPECT ONLY MAX(ABS(LOG10(P))-K,
-        C         0) SIGNIFICANT DIGITS; OR, STATED ANOTHER WAY, WHEN K EXCEEDS
-        C         THE EXPONENT OF P, NO SIGNIFICANT DIGITS REMAIN IN THE SMALLER
-        C         COMPONENT. HOWEVER, THE PHASE ANGLE RETAINS ABSOLUTE ACCURACY
-        C         BECAUSE, IN COMPLEX ARITHMETIC WITH PRECISION P, THE SMALLER
-        C         COMPONENT WILL NOT (AS A RULE) DECREASE BELOW P TIMES THE
-        C         MAGNITUDE OF THE LARGER COMPONENT. IN THESE EXTREME CASES,
-        C         THE PRINCIPAL PHASE ANGLE IS ON THE ORDER OF +P, -P, PI/2-P,
-        C         OR -PI/2+P.
-        C
-        C***REFERENCES  HANDBOOK OF MATHEMATICAL FUNCTIONS BY M. ABRAMOWITZ
-        C                 AND I. A. STEGUN, NBS AMS SERIES 55, U.S. DEPT. OF
-        C                 COMMERCE, 1955.
-        C
-        C               COMPUTATION OF BESSEL FUNCTIONS OF COMPLEX ARGUMENT
-        C                 BY D. E. AMOS, SAND83-0083, MAY, 1983.
-        C
-        C               COMPUTATION OF BESSEL FUNCTIONS OF COMPLEX ARGUMENT
-        C                 AND LARGE ORDER BY D. E. AMOS, SAND83-0643, MAY, 1983.
-        C
-        C               A SUBROUTINE PACKAGE FOR BESSEL FUNCTIONS OF A COMPLEX
-        C                 ARGUMENT AND NONNEGATIVE ORDER BY D. E. AMOS, SAND85-
-        C                 1018, MAY, 1985
-        C
-        C               A PORTABLE PACKAGE FOR BESSEL FUNCTIONS OF A COMPLEX
-        C                 ARGUMENT AND NONNEGATIVE ORDER BY D. E. AMOS, ACM
-        C                 TRANS. MATH. SOFTWARE, VOL. 12, NO. 3, SEPTEMBER 1986,
-        C                 PP 265-273.*/
+        /**
+         * *DATE WRITTEN 830501 (YYMMDD) C***REVISION DATE 890801, 930101 (YYMMDD) C***CATEGORY NO. B5K C***KEYWORDS
+         * K-BESSEL FUNCTION,COMPLEX BESSEL FUNCTION, C MODIFIED BESSEL FUNCTION OF THE SECOND KIND, C BESSEL FUNCTION
+         * OF THE THIRD KIND C***AUTHOR AMOS, DONALD E., SANDIA NATIONAL LABORATORIES C***PURPOSE TO COMPUTE K-BESSEL
+         * FUNCTIONS OF COMPLEX ARGUMENT C***DESCRIPTION C C ***A DOUBLE PRECISION ROUTINE*** C C ON KODE=1, ZBESK
+         * COMPUTES AN N MEMBER SEQUENCE OF COMPLEX C BESSEL FUNCTIONS CY(J)=K(FNU+J-1,Z) FOR REAL, NONNEGATIVE C ORDERS
+         * FNU+J-1, J=1,...,N AND COMPLEX Z.NE.CMPLX(0.0,0.0) C IN THE CUT PLANE -PI.LT.ARG(Z).LE.PI. ON KODE=2, ZBESK C
+         * RETURNS THE SCALED K FUNCTIONS, C C CY(J)=EXP(Z)*K(FNU+J-1,Z) , J=1,...,N, C C WHICH REMOVE THE EXPONENTIAL
+         * BEHAVIOR IN BOTH THE LEFT AND C RIGHT HALF PLANES FOR Z TO INFINITY. DEFINITIONS AND C NOTATION ARE FOUND IN
+         * THE NBS HANDBOOK OF MATHEMATICAL C FUNCTIONS (REF. 1). C C INPUT ZR,ZI,FNU ARE DOUBLE PRECISION C ZR,ZI -
+         * Z=CMPLX(ZR,ZI), Z.NE.CMPLX(0.0D0,0.0D0), C -PI.LT.ARG(Z).LE.PI C FNU - ORDER OF INITIAL K FUNCTION,
+         * FNU.GE.0.0D0 C N - NUMBER OF MEMBERS OF THE SEQUENCE, N.GE.1 C KODE - A PARAMETER TO INDICATE THE SCALING
+         * OPTION C KODE= 1 RETURNS C CY(I)=K(FNU+I-1,Z), I=1,...,N C = 2 RETURNS C CY(I)=K(FNU+I-1,Z)*EXP(Z), I=1,...,N
+         * C C OUTPUT CYR,CYI ARE DOUBLE PRECISION C CYR,CYI- DOUBLE PRECISION VECTORS WHOSE FIRST N COMPONENTS C
+         * CONTAIN REAL AND IMAGINARY PARTS FOR THE SEQUENCE C CY(I)=K(FNU+I-1,Z), I=1,...,N OR C
+         * CY(I)=K(FNU+I-1,Z)*EXP(Z), I=1,...,N C DEPENDING ON KODE C NZ - NUMBER OF COMPONENTS SET TO ZERO DUE TO
+         * UNDERFLOW. C NZ= 0 , NORMAL RETURN C NZ.GT.0 , FIRST NZ COMPONENTS OF CY SET TO ZERO DUE C TO UNDERFLOW,
+         * CY(I)=CMPLX(0.0D0,0.0D0), C I=1,...,N WHEN X.GE.0.0. WHEN X.LT.0.0 C NZ STATES ONLY THE NUMBER OF UNDERFLOWS
+         * C IN THE SEQUENCE. C C IERR - ERROR FLAG C IERR=0, NORMAL RETURN - COMPUTATION COMPLETED C IERR=1, INPUT
+         * ERROR - NO COMPUTATION C IERR=2, OVERFLOW - NO COMPUTATION, FNU IS C TOO LARGE OR CABS(Z) IS TOO SMALL OR
+         * BOTH C IERR=3, CABS(Z) OR FNU+N-1 LARGE - COMPUTATION DONE C BUT LOSSES OF SIGNIFCANCE BY ARGUMENT C
+         * REDUCTION PRODUCE LESS THAN HALF OF MACHINE C ACCURACY C IERR=4, CABS(Z) OR FNU+N-1 TOO LARGE - NO COMPUTA- C
+         * TION BECAUSE OF COMPLETE LOSSES OF SIGNIFI- C CANCE BY ARGUMENT REDUCTION C IERR=5, ERROR - NO COMPUTATION, C
+         * ALGORITHM TERMINATION CONDITION NOT MET C C***LONG DESCRIPTION C C EQUATIONS OF THE REFERENCE ARE IMPLEMENTED
+         * FOR SMALL ORDERS C DNU AND DNU+1.0 IN THE RIGHT HALF PLANE X.GE.0.0. FORWARD C RECURRENCE GENERATES HIGHER
+         * ORDERS. K IS CONTINUED TO THE LEFT C HALF PLANE BY THE RELATION C C K(FNU,Z*EXP(MP)) =
+         * EXP(-MP*FNU)*K(FNU,Z)-MP*I(FNU,Z) C MP=MR*PI*I, MR=+1 OR -1, RE(Z).GT.0, I**2=-1 C C WHERE I(FNU,Z) IS THE I
+         * BESSEL FUNCTION. C C FOR LARGE ORDERS, FNU.GT.FNUL, THE K FUNCTION IS COMPUTED C BY MEANS OF ITS UNIFORM
+         * ASYMPTOTIC EXPANSIONS. C C FOR NEGATIVE ORDERS, THE FORMULA C C K(-FNU,Z) = K(FNU,Z) C C CAN BE USED. C C
+         * ZBESK ASSUMES THAT A SIGNIFICANT DIGIT SINH(X) FUNCTION IS C AVAILABLE. C C IN MOST COMPLEX VARIABLE
+         * COMPUTATION, ONE MUST EVALUATE ELE- C MENTARY FUNCTIONS. WHEN THE MAGNITUDE OF Z OR FNU+N-1 IS C LARGE,
+         * LOSSES OF SIGNIFICANCE BY ARGUMENT REDUCTION OCCUR. C CONSEQUENTLY, IF EITHER ONE EXCEEDS U1=SQRT(0.5/UR),
+         * THEN C LOSSES EXCEEDING HALF PRECISION ARE LIKELY AND AN ERROR FLAG C IERR=3 IS TRIGGERED WHERE
+         * UR=DMAX1(D1MACH(4),1.0D-18) IS C DOUBLE PRECISION UNIT ROUNDOFF LIMITED TO 18 DIGITS PRECISION. C IF EITHER
+         * IS LARGER THAN U2=0.5/UR, THEN ALL SIGNIFICANCE IS C LOST AND IERR=4. IN ORDER TO USE THE INT FUNCTION,
+         * ARGUMENTS C MUST BE FURTHER RESTRICTED NOT TO EXCEED THE LARGEST MACHINE C INTEGER, U3=I1MACH(9). THUS, THE
+         * MAGNITUDE OF Z AND FNU+N-1 IS C RESTRICTED BY MIN(U2,U3). ON 32 BIT MACHINES, U1,U2, AND U3 C ARE
+         * APPROXIMATELY 2.0E+3, 4.2E+6, 2.1E+9 IN SINGLE PRECISION C ARITHMETIC AND 1.3E+8, 1.8E+16, 2.1E+9 IN DOUBLE
+         * PRECISION C ARITHMETIC RESPECTIVELY. THIS MAKES U2 AND U3 LIMITING IN C THEIR RESPECTIVE ARITHMETICS. THIS
+         * MEANS THAT ONE CAN EXPECT C TO RETAIN, IN THE WORST CASES ON 32 BIT MACHINES, NO DIGITS C IN SINGLE AND ONLY
+         * 7 DIGITS IN DOUBLE PRECISION ARITHMETIC. C SIMILAR CONSIDERATIONS HOLD FOR OTHER MACHINES. C C THE
+         * APPROXIMATE RELATIVE ERROR IN THE MAGNITUDE OF A COMPLEX C BESSEL FUNCTION CAN BE EXPRESSED BY P*10**S WHERE
+         * P=MAX(UNIT C ROUNDOFF,1.0E-18) IS THE NOMINAL PRECISION AND 10**S REPRE- C SENTS THE INCREASE IN ERROR DUE TO
+         * ARGUMENT REDUCTION IN THE C ELEMENTARY FUNCTIONS. HERE, S=MAX(1,ABS(LOG10(CABS(Z))), C ABS(LOG10(FNU)))
+         * APPROXIMATELY (I.E. S=MAX(1,ABS(EXPONENT OF C CABS(Z),ABS(EXPONENT OF FNU)) ). HOWEVER, THE PHASE ANGLE MAY C
+         * HAVE ONLY ABSOLUTE ACCURACY. THIS IS MOST LIKELY TO OCCUR WHEN C ONE COMPONENT (IN ABSOLUTE VALUE) IS LARGER
+         * THAN THE OTHER BY C SEVERAL ORDERS OF MAGNITUDE. IF ONE COMPONENT IS 10**K LARGER C THAN THE OTHER, THEN ONE
+         * CAN EXPECT ONLY MAX(ABS(LOG10(P))-K, C 0) SIGNIFICANT DIGITS; OR, STATED ANOTHER WAY, WHEN K EXCEEDS C THE
+         * EXPONENT OF P, NO SIGNIFICANT DIGITS REMAIN IN THE SMALLER C COMPONENT. HOWEVER, THE PHASE ANGLE RETAINS
+         * ABSOLUTE ACCURACY C BECAUSE, IN COMPLEX ARITHMETIC WITH PRECISION P, THE SMALLER C COMPONENT WILL NOT (AS A
+         * RULE) DECREASE BELOW P TIMES THE C MAGNITUDE OF THE LARGER COMPONENT. IN THESE EXTREME CASES, C THE PRINCIPAL
+         * PHASE ANGLE IS ON THE ORDER OF +P, -P, PI/2-P, C OR -PI/2+P. C C***REFERENCES HANDBOOK OF MATHEMATICAL
+         * FUNCTIONS BY M. ABRAMOWITZ C AND I. A. STEGUN, NBS AMS SERIES 55, U.S. DEPT. OF C COMMERCE, 1955. C C
+         * COMPUTATION OF BESSEL FUNCTIONS OF COMPLEX ARGUMENT C BY D. E. AMOS, SAND83-0083, MAY, 1983. C C COMPUTATION
+         * OF BESSEL FUNCTIONS OF COMPLEX ARGUMENT C AND LARGE ORDER BY D. E. AMOS, SAND83-0643, MAY, 1983. C C A
+         * SUBROUTINE PACKAGE FOR BESSEL FUNCTIONS OF A COMPLEX C ARGUMENT AND NONNEGATIVE ORDER BY D. E. AMOS, SAND85-
+         * C 1018, MAY, 1985 C C A PORTABLE PACKAGE FOR BESSEL FUNCTIONS OF A COMPLEX C ARGUMENT AND NONNEGATIVE ORDER
+         * BY D. E. AMOS, ACM C TRANS. MATH. SOFTWARE, VOL. 12, NO. 3, SEPTEMBER 1986, C PP 265-273.
+         */
         int nn;
         double neweps;
         int k;
@@ -3006,19 +2858,19 @@ group:       {
         double ufl;
         double arg;
         double aln;
-        int[] nuf = new int[1];
-        int[] nw = new int[1];
+        final int[] nuf = new int[1];
+        final int[] nw = new int[1];
         int mr;
 
         nn = n;
 
-        /**       SET PARAMETERS RELATED TO MACHINE CONSTANTS.
-         * C         TOL IS THE APPROXIMATE UNIT ROUNDOFF LIMITED TO 1.0E-18. C         ELIM IS THE APPROXIMATE
-         * EXPONENTIAL OVER- AND UNDERFLOW LIMIT. C         EXP(-ELIM).LT.EXP(-ALIM)=EXP(-ELIM)/TOL    AND C
-         * EXP(ELIM).GT.EXP(ALIM)=EXP(ELIM)*TOL       ARE INTERVALS NEAR C         UNDERFLOW AND OVERFLOW LIMITS WHERE
-         * SCALED ARITHMETIC IS DONE. C         RL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC EXPANSION FOR LARGE Z. C
-         *    DIG = NUMBER OF BASE 10 DIGITS IN TOL = 10**(-DIG).C         FNUL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC
-         * SERIES FOR LARGE FNU.*/
+        /**
+         * SET PARAMETERS RELATED TO MACHINE CONSTANTS. C TOL IS THE APPROXIMATE UNIT ROUNDOFF LIMITED TO 1.0E-18. C
+         * ELIM IS THE APPROXIMATE EXPONENTIAL OVER- AND UNDERFLOW LIMIT. C EXP(-ELIM).LT.EXP(-ALIM)=EXP(-ELIM)/TOL AND
+         * C EXP(ELIM).GT.EXP(ALIM)=EXP(ELIM)*TOL ARE INTERVALS NEAR C UNDERFLOW AND OVERFLOW LIMITS WHERE SCALED
+         * ARITHMETIC IS DONE. C RL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC EXPANSION FOR LARGE Z. C DIG = NUMBER OF
+         * BASE 10 DIGITS IN TOL = 10**(-DIG).C FNUL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC SERIES FOR LARGE FNU.
+         */
         // epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
         // (1.0 + epsilon) != 1.0.
@@ -3057,14 +2909,14 @@ group:       {
         // r1m5 = log10(2), which is D1MACH(5)
         r1m5 = 0.434294481903251 * Math.log(2.0);
         k = Math.min(Math.abs(emin), Math.abs(emax));
-        elim = 2.303 * ((k * r1m5) - 3.0);
+        elim = 2.303 * ( (k * r1m5) - 3.0);
 
         // doubleDigits is I1MACH(14), the number of base-B digits for double
-        // precision.  IEEE 754 double precision has 64 bits with 1 sign bit,
+        // precision. IEEE 754 double precision has 64 bits with 1 sign bit,
         // 11 exponent bits, and 52 fraction, mantissa, or signficand bits.
         // Floating-point numbers are typically stored in normalized form,
-        // with the radix point after the first non-zero digit.  In base two,
-        // the only possible non-zero digit is 1.  Thus, a leading digit of 1
+        // with the radix point after the first non-zero digit. In base two,
+        // the only possible non-zero digit is 1. Thus, a leading digit of 1
         // can always be assumed and need not be explicitly represented.
         // Therefore, the mantissa effectively has 53 bits of resolution.
         doubleDigits = 53;
@@ -3072,7 +2924,7 @@ group:       {
         aa = r1m5 * k1;
         dig = Math.min(aa, 18.0);
         aa = 2.303 * aa;
-        alim = elim + Math.max(-aa, -41.45);
+        alim = elim + Math.max( -aa, -41.45);
         rl = (1.2 * dig) + 3.0;
         fnul = 10.0 + (6.0 * (dig - 3.0));
 
@@ -3085,7 +2937,7 @@ group:       {
         bb = 0.5 * Integer.MAX_VALUE;
         aa = Math.min(aa, bb);
 
-        if ((az > aa) || (fn > aa)) {
+        if ( (az > aa) || (fn > aa)) {
             nz[0] = 0;
             ierr[0] = 4;
 
@@ -3094,7 +2946,7 @@ group:       {
 
         aa = Math.sqrt(aa);
 
-        if ((az > aa) || (fn > aa)) {
+        if ( (az > aa) || (fn > aa)) {
             ierr[0] = 3;
         }
 
@@ -3146,7 +2998,7 @@ group:       {
             if (zr < 0.0) {
 
                 // Left half plane computation
-                // PI/2 < arg(z) <= PI and -PI  < arg(z) < -PI/2
+                // PI/2 < arg(z) <= PI and -PI < arg(z) < -PI/2
                 if (nz[0] != 0) {
                     nz[0] = 0;
                     ierr[0] = 2;
@@ -3231,7 +3083,7 @@ group:       {
             if (zr < 0.0) {
 
                 // Left half plane computation
-                // PI/2 < arg(z) <= PI and -PI  < arg(z) < -PI/2
+                // PI/2 < arg(z) <= PI and -PI < arg(z) < -PI/2
                 if (nz[0] != 0) {
                     nz[0] = 0;
                     ierr[0] = 2;
@@ -3291,7 +3143,7 @@ group:       {
             if (zr < 0.0) {
 
                 // Left half plane computation
-                // PI/2 < arg(z) <= PI and -PI  < arg(z) < -PI/2
+                // PI/2 < arg(z) <= PI and -PI < arg(z) < -PI/2
                 if (nz[0] != 0) {
                     nz[0] = 0;
                     ierr[0] = 2;
@@ -3359,7 +3211,7 @@ group:       {
         if (zr < 0.0) {
 
             // Left half plane computation
-            // PI/2 < arg(z) <= PI and -PI  < arg(z) < -PI/2
+            // PI/2 < arg(z) <= PI and -PI < arg(z) < -PI/2
             if (nz[0] != 0) {
                 nz[0] = 0;
                 ierr[0] = 2;
@@ -3416,178 +3268,93 @@ group:       {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  zr     double
-     * @param  zi     double
-     * @param  fnu    double
-     * @param  kode   int
-     * @param  n      int
-     * @param  cyr    double[]
-     * @param  cyi    double[]
-     * @param  nz     int[]
-     * @param  cwrkr  double[]
-     * @param  cwrki  double[]
-     * @param  ierr   int[]
+     * 
+     * @param zr double
+     * @param zi double
+     * @param fnu double
+     * @param kode int
+     * @param n int
+     * @param cyr double[]
+     * @param cyi double[]
+     * @param nz int[]
+     * @param cwrkr double[]
+     * @param cwrki double[]
+     * @param ierr int[]
      */
-    private void zbesy(double zr, double zi, double fnu, int kode, int n, double[] cyr, double[] cyi, int[] nz,
-                       double[] cwrkr, double[] cwrki, int[] ierr) {
+    private void zbesy(final double zr, final double zi, final double fnu, final int kode, final int n,
+            final double[] cyr, final double[] cyi, final int[] nz, final double[] cwrkr, final double[] cwrki,
+            final int[] ierr) {
 
-        /***BEGIN PROLOGUE  ZBESY
-        C***DATE WRITTEN   830501   (YYMMDD)
-        C***REVISION DATE  890801, 930101   (YYMMDD)
-        C***CATEGORY NO.  B5K
-        C***KEYWORDS  Y-BESSEL FUNCTION,BESSEL FUNCTION OF COMPLEX ARGUMENT,
-        C             BESSEL FUNCTION OF SECOND KIND
-        C***AUTHOR  AMOS, DONALD E., SANDIA NATIONAL LABORATORIES
-        C***PURPOSE  TO COMPUTE THE Y-BESSEL FUNCTION OF A COMPLEX ARGUMENT
-        C***DESCRIPTION
-        C
-        C                      ***A DOUBLE PRECISION ROUTINE***
-        C
-        C         ON KODE=1, ZBESY COMPUTES AN N MEMBER SEQUENCE OF COMPLEX
-        C         BESSEL FUNCTIONS CY(I)=Y(FNU+I-1,Z) FOR REAL, NONNEGATIVE
-        C         ORDERS FNU+I-1, I=1,...,N AND COMPLEX Z IN THE CUT PLANE
-        C         -PI.LT.ARG(Z).LE.PI. ON KODE=2, ZBESY RETURNS THE SCALED
-        C         FUNCTIONS
-        C
-        C         CY(I)=EXP(-ABS(Y))*Y(FNU+I-1,Z)   I = 1,...,N , Y=AIMAG(Z)
-        C
-        C         WHICH REMOVE THE EXPONENTIAL GROWTH IN BOTH THE UPPER AND
-        C         LOWER HALF PLANES FOR Z TO INFINITY. DEFINITIONS AND NOTATION
-        C         ARE FOUND IN THE NBS HANDBOOK OF MATHEMATICAL FUNCTIONS
-        C         (REF. 1).
-        C
-        C         INPUT      ZR,ZI,FNU ARE DOUBLE PRECISION
-        C           ZR,ZI  - Z=CMPLX(ZR,ZI), Z.NE.CMPLX(0.0D0,0.0D0),
-        C                    -PI.LT.ARG(Z).LE.PI
-        C           FNU    - ORDER OF INITIAL Y FUNCTION, FNU.GE.0.0D0
-        C           KODE   - A PARAMETER TO INDICATE THE SCALING OPTION
-        C                    KODE= 1  RETURNS
-        C                             CY(I)=Y(FNU+I-1,Z), I=1,...,N
-        C                        = 2  RETURNS
-        C                             CY(I)=Y(FNU+I-1,Z)*EXP(-ABS(Y)), I=1,...,N
-        C                             WHERE Y=AIMAG(Z)
-        C           N      - NUMBER OF MEMBERS OF THE SEQUENCE, N.GE.1
-        C           CWRKR, - DOUBLE PRECISION WORK VECTORS OF DIMENSION AT
-        C           CWRKI    AT LEAST N
-        C
-        C         OUTPUT     CYR,CYI ARE DOUBLE PRECISION
-        C           CYR,CYI- DOUBLE PRECISION VECTORS WHOSE FIRST N COMPONENTS
-        C                    CONTAIN REAL AND IMAGINARY PARTS FOR THE SEQUENCE
-        C                    CY(I)=Y(FNU+I-1,Z)  OR
-        C                    CY(I)=Y(FNU+I-1,Z)*EXP(-ABS(Y))  I=1,...,N
-        C                    DEPENDING ON KODE.
-        C           NZ     - NZ=0 , A NORMAL RETURN
-        C                    NZ.GT.0 , NZ COMPONENTS OF CY SET TO ZERO DUE TO
-        C                    UNDERFLOW (GENERALLY ON KODE=2)
-        C           IERR   - ERROR FLAG
-        C                    IERR=0, NORMAL RETURN - COMPUTATION COMPLETED
-        C                    IERR=1, INPUT ERROR   - NO COMPUTATION
-        C                    IERR=2, OVERFLOW      - NO COMPUTATION, FNU IS
-        C                            TOO LARGE OR CABS(Z) IS TOO SMALL OR BOTH
-        C                    IERR=3, CABS(Z) OR FNU+N-1 LARGE - COMPUTATION DONE
-        C                            BUT LOSSES OF SIGNIFCANCE BY ARGUMENT
-        C                            REDUCTION PRODUCE LESS THAN HALF OF MACHINE
-        C                            ACCURACY
-        C                    IERR=4, CABS(Z) OR FNU+N-1 TOO LARGE - NO COMPUTA-
-        C                            TION BECAUSE OF COMPLETE LOSSES OF SIGNIFI-
-        C                            CANCE BY ARGUMENT REDUCTION
-        C                    IERR=5, ERROR              - NO COMPUTATION,
-        C                            ALGORITHM TERMINATION CONDITION NOT MET
-        C
-        C***LONG DESCRIPTION
-        C
-        C         THE COMPUTATION IS CARRIED OUT IN TERMS OF THE I(FNU,Z) AND
-        C         K(FNU,Z) BESSEL FUNCTIONS IN THE RIGHT HALF PLANE BY
-        C
-        C             Y(FNU,Z) = I*CC*I(FNU,ARG) - (2/PI)*CONJG(CC)*K(FNU,ARG)
-        C
-        C             Y(FNU,Z) = CONJG(Y(FNU,CONJG(Z)))
-        C
-        C         FOR AIMAG(Z).GE.0 AND AIMAG(Z).LT.0 RESPECTIVELY, WHERE
-        C         CC=EXP(I*PI*FNU/2), ARG=Z*EXP(-I*PI/2) AND I**2=-1.
-        C
-        C         FOR NEGATIVE ORDERS,THE FORMULA
-        C
-        C              Y(-FNU,Z) = Y(FNU,Z)*COS(PI*FNU) + J(FNU,Z)*SIN(PI*FNU)
-        C
-        C         CAN BE USED. HOWEVER,FOR LARGE ORDERS CLOSE TO HALF ODD
-        C         INTEGERS THE FUNCTION CHANGES RADICALLY. WHEN FNU IS A LARGE
-        C         POSITIVE HALF ODD INTEGER,THE MAGNITUDE OF Y(-FNU,Z)=J(FNU,Z)*
-        C         SIN(PI*FNU) IS A LARGE NEGATIVE POWER OF TEN. BUT WHEN FNU IS
-        C         NOT A HALF ODD INTEGER, Y(FNU,Z) DOMINATES IN MAGNITUDE WITH A
-        C         LARGE POSITIVE POWER OF TEN AND THE MOST THAT THE SECOND TERM
-        C         CAN BE REDUCED IS BY UNIT ROUNDOFF FROM THE COEFFICIENT. THUS,
-        C         WIDE CHANGES CAN OCCUR WITHIN UNIT ROUNDOFF OF A LARGE HALF
-        C         ODD INTEGER. HERE, LARGE MEANS FNU.GT.CABS(Z).
-        C
-        C         IN MOST COMPLEX VARIABLE COMPUTATION, ONE MUST EVALUATE ELE-
-        C         MENTARY FUNCTIONS. WHEN THE MAGNITUDE OF Z OR FNU+N-1 IS
-        C         LARGE, LOSSES OF SIGNIFICANCE BY ARGUMENT REDUCTION OCCUR.
-        C         CONSEQUENTLY, IF EITHER ONE EXCEEDS U1=SQRT(0.5/UR), THEN
-        C         LOSSES EXCEEDING HALF PRECISION ARE LIKELY AND AN ERROR FLAG
-        C         IERR=3 IS TRIGGERED WHERE UR=DMAX1(D1MACH(4),1.0D-18) IS
-        C         DOUBLE PRECISION UNIT ROUNDOFF LIMITED TO 18 DIGITS PRECISION.
-        C         IF EITHER IS LARGER THAN U2=0.5/UR, THEN ALL SIGNIFICANCE IS
-        C         LOST AND IERR=4. IN ORDER TO USE THE INT FUNCTION, ARGUMENTS
-        C         MUST BE FURTHER RESTRICTED NOT TO EXCEED THE LARGEST MACHINE
-        C         INTEGER, U3=I1MACH(9). THUS, THE MAGNITUDE OF Z AND FNU+N-1 IS
-        C         RESTRICTED BY MIN(U2,U3). ON 32 BIT MACHINES, U1,U2, AND U3
-        C         ARE APPROXIMATELY 2.0E+3, 4.2E+6, 2.1E+9 IN SINGLE PRECISION
-        C         ARITHMETIC AND 1.3E+8, 1.8E+16, 2.1E+9 IN DOUBLE PRECISION
-        C         ARITHMETIC RESPECTIVELY. THIS MAKES U2 AND U3 LIMITING IN
-        C         THEIR RESPECTIVE ARITHMETICS. THIS MEANS THAT ONE CAN EXPECT
-        C         TO RETAIN, IN THE WORST CASES ON 32 BIT MACHINES, NO DIGITS
-        C         IN SINGLE AND ONLY 7 DIGITS IN DOUBLE PRECISION ARITHMETIC.
-        C         SIMILAR CONSIDERATIONS HOLD FOR OTHER MACHINES.
-        C
-        C         THE APPROXIMATE RELATIVE ERROR IN THE MAGNITUDE OF A COMPLEX
-        C         BESSEL FUNCTION CAN BE EXPRESSED BY P*10**S WHERE P=MAX(UNIT
-        C         ROUNDOFF,1.0E-18) IS THE NOMINAL PRECISION AND 10**S REPRE-
-        C         SENTS THE INCREASE IN ERROR DUE TO ARGUMENT REDUCTION IN THE
-        C         ELEMENTARY FUNCTIONS. HERE, S=MAX(1,ABS(LOG10(CABS(Z))),
-        C         ABS(LOG10(FNU))) APPROXIMATELY (I.E. S=MAX(1,ABS(EXPONENT OF
-        C         CABS(Z),ABS(EXPONENT OF FNU)) ). HOWEVER, THE PHASE ANGLE MAY
-        C         HAVE ONLY ABSOLUTE ACCURACY. THIS IS MOST LIKELY TO OCCUR WHEN
-        C         ONE COMPONENT (IN ABSOLUTE VALUE) IS LARGER THAN THE OTHER BY
-        C         SEVERAL ORDERS OF MAGNITUDE. IF ONE COMPONENT IS 10**K LARGER
-        C         THAN THE OTHER, THEN ONE CAN EXPECT ONLY MAX(ABS(LOG10(P))-K,
-        C         0) SIGNIFICANT DIGITS; OR, STATED ANOTHER WAY, WHEN K EXCEEDS
-        C         THE EXPONENT OF P, NO SIGNIFICANT DIGITS REMAIN IN THE SMALLER
-        C         COMPONENT. HOWEVER, THE PHASE ANGLE RETAINS ABSOLUTE ACCURACY
-        C         BECAUSE, IN COMPLEX ARITHMETIC WITH PRECISION P, THE SMALLER
-        C         COMPONENT WILL NOT (AS A RULE) DECREASE BELOW P TIMES THE
-        C         MAGNITUDE OF THE LARGER COMPONENT. IN THESE EXTREME CASES,
-        C         THE PRINCIPAL PHASE ANGLE IS ON THE ORDER OF +P, -P, PI/2-P,
-        C         OR -PI/2+P.
-        C
-        C***REFERENCES  HANDBOOK OF MATHEMATICAL FUNCTIONS BY M. ABRAMOWITZ
-        C                 AND I. A. STEGUN, NBS AMS SERIES 55, U.S. DEPT. OF
-        C                 COMMERCE, 1955.
-        C
-        C               COMPUTATION OF BESSEL FUNCTIONS OF COMPLEX ARGUMENT
-        C                 BY D. E. AMOS, SAND83-0083, MAY, 1983.
-        C
-        C               COMPUTATION OF BESSEL FUNCTIONS OF COMPLEX ARGUMENT
-        C                 AND LARGE ORDER BY D. E. AMOS, SAND83-0643, MAY, 1983
-        C
-        C               A SUBROUTINE PACKAGE FOR BESSEL FUNCTIONS OF A COMPLEX
-        C                 ARGUMENT AND NONNEGATIVE ORDER BY D. E. AMOS, SAND85-
-        C                 1018, MAY, 1985
-        C
-        C               A PORTABLE PACKAGE FOR BESSEL FUNCTIONS OF A COMPLEX
-        C                 ARGUMENT AND NONNEGATIVE ORDER BY D. E. AMOS, ACM
-        C                 TRANS. MATH. SOFTWARE, VOL. 12, NO. 3, SEPTEMBER 1986,
-        C                 PP 265-273.*/
-        double[] cipr = new double[] { 1.0, 0.0, -1.0, 0.0 };
-        double[] cipi = new double[] { 0.0, 1.0, 0.0, -1.0 };
-        double hpi = Math.PI / 2.0;
+        /**
+         * *BEGIN PROLOGUE ZBESY C***DATE WRITTEN 830501 (YYMMDD) C***REVISION DATE 890801, 930101 (YYMMDD) C***CATEGORY
+         * NO. B5K C***KEYWORDS Y-BESSEL FUNCTION,BESSEL FUNCTION OF COMPLEX ARGUMENT, C BESSEL FUNCTION OF SECOND KIND
+         * C***AUTHOR AMOS, DONALD E., SANDIA NATIONAL LABORATORIES C***PURPOSE TO COMPUTE THE Y-BESSEL FUNCTION OF A
+         * COMPLEX ARGUMENT C***DESCRIPTION C C ***A DOUBLE PRECISION ROUTINE*** C C ON KODE=1, ZBESY COMPUTES AN N
+         * MEMBER SEQUENCE OF COMPLEX C BESSEL FUNCTIONS CY(I)=Y(FNU+I-1,Z) FOR REAL, NONNEGATIVE C ORDERS FNU+I-1,
+         * I=1,...,N AND COMPLEX Z IN THE CUT PLANE C -PI.LT.ARG(Z).LE.PI. ON KODE=2, ZBESY RETURNS THE SCALED C
+         * FUNCTIONS C C CY(I)=EXP(-ABS(Y))*Y(FNU+I-1,Z) I = 1,...,N , Y=AIMAG(Z) C C WHICH REMOVE THE EXPONENTIAL
+         * GROWTH IN BOTH THE UPPER AND C LOWER HALF PLANES FOR Z TO INFINITY. DEFINITIONS AND NOTATION C ARE FOUND IN
+         * THE NBS HANDBOOK OF MATHEMATICAL FUNCTIONS C (REF. 1). C C INPUT ZR,ZI,FNU ARE DOUBLE PRECISION C ZR,ZI -
+         * Z=CMPLX(ZR,ZI), Z.NE.CMPLX(0.0D0,0.0D0), C -PI.LT.ARG(Z).LE.PI C FNU - ORDER OF INITIAL Y FUNCTION,
+         * FNU.GE.0.0D0 C KODE - A PARAMETER TO INDICATE THE SCALING OPTION C KODE= 1 RETURNS C CY(I)=Y(FNU+I-1,Z),
+         * I=1,...,N C = 2 RETURNS C CY(I)=Y(FNU+I-1,Z)*EXP(-ABS(Y)), I=1,...,N C WHERE Y=AIMAG(Z) C N - NUMBER OF
+         * MEMBERS OF THE SEQUENCE, N.GE.1 C CWRKR, - DOUBLE PRECISION WORK VECTORS OF DIMENSION AT C CWRKI AT LEAST N C
+         * C OUTPUT CYR,CYI ARE DOUBLE PRECISION C CYR,CYI- DOUBLE PRECISION VECTORS WHOSE FIRST N COMPONENTS C CONTAIN
+         * REAL AND IMAGINARY PARTS FOR THE SEQUENCE C CY(I)=Y(FNU+I-1,Z) OR C CY(I)=Y(FNU+I-1,Z)*EXP(-ABS(Y)) I=1,...,N
+         * C DEPENDING ON KODE. C NZ - NZ=0 , A NORMAL RETURN C NZ.GT.0 , NZ COMPONENTS OF CY SET TO ZERO DUE TO C
+         * UNDERFLOW (GENERALLY ON KODE=2) C IERR - ERROR FLAG C IERR=0, NORMAL RETURN - COMPUTATION COMPLETED C IERR=1,
+         * INPUT ERROR - NO COMPUTATION C IERR=2, OVERFLOW - NO COMPUTATION, FNU IS C TOO LARGE OR CABS(Z) IS TOO SMALL
+         * OR BOTH C IERR=3, CABS(Z) OR FNU+N-1 LARGE - COMPUTATION DONE C BUT LOSSES OF SIGNIFCANCE BY ARGUMENT C
+         * REDUCTION PRODUCE LESS THAN HALF OF MACHINE C ACCURACY C IERR=4, CABS(Z) OR FNU+N-1 TOO LARGE - NO COMPUTA- C
+         * TION BECAUSE OF COMPLETE LOSSES OF SIGNIFI- C CANCE BY ARGUMENT REDUCTION C IERR=5, ERROR - NO COMPUTATION, C
+         * ALGORITHM TERMINATION CONDITION NOT MET C C***LONG DESCRIPTION C C THE COMPUTATION IS CARRIED OUT IN TERMS OF
+         * THE I(FNU,Z) AND C K(FNU,Z) BESSEL FUNCTIONS IN THE RIGHT HALF PLANE BY C C Y(FNU,Z) = I*CC*I(FNU,ARG) -
+         * (2/PI)*CONJG(CC)*K(FNU,ARG) C C Y(FNU,Z) = CONJG(Y(FNU,CONJG(Z))) C C FOR AIMAG(Z).GE.0 AND AIMAG(Z).LT.0
+         * RESPECTIVELY, WHERE C CC=EXP(I*PI*FNU/2), ARG=Z*EXP(-I*PI/2) AND I**2=-1. C C FOR NEGATIVE ORDERS,THE FORMULA
+         * C C Y(-FNU,Z) = Y(FNU,Z)*COS(PI*FNU) + J(FNU,Z)*SIN(PI*FNU) C C CAN BE USED. HOWEVER,FOR LARGE ORDERS CLOSE
+         * TO HALF ODD C INTEGERS THE FUNCTION CHANGES RADICALLY. WHEN FNU IS A LARGE C POSITIVE HALF ODD INTEGER,THE
+         * MAGNITUDE OF Y(-FNU,Z)=J(FNU,Z)* C SIN(PI*FNU) IS A LARGE NEGATIVE POWER OF TEN. BUT WHEN FNU IS C NOT A HALF
+         * ODD INTEGER, Y(FNU,Z) DOMINATES IN MAGNITUDE WITH A C LARGE POSITIVE POWER OF TEN AND THE MOST THAT THE
+         * SECOND TERM C CAN BE REDUCED IS BY UNIT ROUNDOFF FROM THE COEFFICIENT. THUS, C WIDE CHANGES CAN OCCUR WITHIN
+         * UNIT ROUNDOFF OF A LARGE HALF C ODD INTEGER. HERE, LARGE MEANS FNU.GT.CABS(Z). C C IN MOST COMPLEX VARIABLE
+         * COMPUTATION, ONE MUST EVALUATE ELE- C MENTARY FUNCTIONS. WHEN THE MAGNITUDE OF Z OR FNU+N-1 IS C LARGE,
+         * LOSSES OF SIGNIFICANCE BY ARGUMENT REDUCTION OCCUR. C CONSEQUENTLY, IF EITHER ONE EXCEEDS U1=SQRT(0.5/UR),
+         * THEN C LOSSES EXCEEDING HALF PRECISION ARE LIKELY AND AN ERROR FLAG C IERR=3 IS TRIGGERED WHERE
+         * UR=DMAX1(D1MACH(4),1.0D-18) IS C DOUBLE PRECISION UNIT ROUNDOFF LIMITED TO 18 DIGITS PRECISION. C IF EITHER
+         * IS LARGER THAN U2=0.5/UR, THEN ALL SIGNIFICANCE IS C LOST AND IERR=4. IN ORDER TO USE THE INT FUNCTION,
+         * ARGUMENTS C MUST BE FURTHER RESTRICTED NOT TO EXCEED THE LARGEST MACHINE C INTEGER, U3=I1MACH(9). THUS, THE
+         * MAGNITUDE OF Z AND FNU+N-1 IS C RESTRICTED BY MIN(U2,U3). ON 32 BIT MACHINES, U1,U2, AND U3 C ARE
+         * APPROXIMATELY 2.0E+3, 4.2E+6, 2.1E+9 IN SINGLE PRECISION C ARITHMETIC AND 1.3E+8, 1.8E+16, 2.1E+9 IN DOUBLE
+         * PRECISION C ARITHMETIC RESPECTIVELY. THIS MAKES U2 AND U3 LIMITING IN C THEIR RESPECTIVE ARITHMETICS. THIS
+         * MEANS THAT ONE CAN EXPECT C TO RETAIN, IN THE WORST CASES ON 32 BIT MACHINES, NO DIGITS C IN SINGLE AND ONLY
+         * 7 DIGITS IN DOUBLE PRECISION ARITHMETIC. C SIMILAR CONSIDERATIONS HOLD FOR OTHER MACHINES. C C THE
+         * APPROXIMATE RELATIVE ERROR IN THE MAGNITUDE OF A COMPLEX C BESSEL FUNCTION CAN BE EXPRESSED BY P*10**S WHERE
+         * P=MAX(UNIT C ROUNDOFF,1.0E-18) IS THE NOMINAL PRECISION AND 10**S REPRE- C SENTS THE INCREASE IN ERROR DUE TO
+         * ARGUMENT REDUCTION IN THE C ELEMENTARY FUNCTIONS. HERE, S=MAX(1,ABS(LOG10(CABS(Z))), C ABS(LOG10(FNU)))
+         * APPROXIMATELY (I.E. S=MAX(1,ABS(EXPONENT OF C CABS(Z),ABS(EXPONENT OF FNU)) ). HOWEVER, THE PHASE ANGLE MAY C
+         * HAVE ONLY ABSOLUTE ACCURACY. THIS IS MOST LIKELY TO OCCUR WHEN C ONE COMPONENT (IN ABSOLUTE VALUE) IS LARGER
+         * THAN THE OTHER BY C SEVERAL ORDERS OF MAGNITUDE. IF ONE COMPONENT IS 10**K LARGER C THAN THE OTHER, THEN ONE
+         * CAN EXPECT ONLY MAX(ABS(LOG10(P))-K, C 0) SIGNIFICANT DIGITS; OR, STATED ANOTHER WAY, WHEN K EXCEEDS C THE
+         * EXPONENT OF P, NO SIGNIFICANT DIGITS REMAIN IN THE SMALLER C COMPONENT. HOWEVER, THE PHASE ANGLE RETAINS
+         * ABSOLUTE ACCURACY C BECAUSE, IN COMPLEX ARITHMETIC WITH PRECISION P, THE SMALLER C COMPONENT WILL NOT (AS A
+         * RULE) DECREASE BELOW P TIMES THE C MAGNITUDE OF THE LARGER COMPONENT. IN THESE EXTREME CASES, C THE PRINCIPAL
+         * PHASE ANGLE IS ON THE ORDER OF +P, -P, PI/2-P, C OR -PI/2+P. C C***REFERENCES HANDBOOK OF MATHEMATICAL
+         * FUNCTIONS BY M. ABRAMOWITZ C AND I. A. STEGUN, NBS AMS SERIES 55, U.S. DEPT. OF C COMMERCE, 1955. C C
+         * COMPUTATION OF BESSEL FUNCTIONS OF COMPLEX ARGUMENT C BY D. E. AMOS, SAND83-0083, MAY, 1983. C C COMPUTATION
+         * OF BESSEL FUNCTIONS OF COMPLEX ARGUMENT C AND LARGE ORDER BY D. E. AMOS, SAND83-0643, MAY, 1983 C C A
+         * SUBROUTINE PACKAGE FOR BESSEL FUNCTIONS OF A COMPLEX C ARGUMENT AND NONNEGATIVE ORDER BY D. E. AMOS, SAND85-
+         * C 1018, MAY, 1985 C C A PORTABLE PACKAGE FOR BESSEL FUNCTIONS OF A COMPLEX C ARGUMENT AND NONNEGATIVE ORDER
+         * BY D. E. AMOS, ACM C TRANS. MATH. SOFTWARE, VOL. 12, NO. 3, SEPTEMBER 1986, C PP 265-273.
+         */
+        final double[] cipr = new double[] {1.0, 0.0, -1.0, 0.0};
+        final double[] cipi = new double[] {0.0, 1.0, 0.0, -1.0};
+        final double hpi = Math.PI / 2.0;
         double zzr;
         double zzi;
         double znr;
         double zni;
-        int[] nz1 = new int[1];
-        int[] nz2 = new int[1];
+        final int[] nz1 = new int[1];
+        final int[] nz2 = new int[1];
         int ifnu;
         double ffnu;
         double arg;
@@ -3625,7 +3392,7 @@ group:       {
         zni = -zzr;
         zbesi(znr, zni, fnu, kode, n, cyr, cyi, nz1, ierr);
 
-        if ((ierr[0] != 0) && (ierr[0] != 3)) {
+        if ( (ierr[0] != 0) && (ierr[0] != 3)) {
             nz[0] = 0;
 
             return;
@@ -3633,7 +3400,7 @@ group:       {
 
         zbesk(znr, zni, fnu, kode, n, cwrkr, cwrki, nz2, ierr);
 
-        if ((ierr[0] != 0) && (ierr[0] != 3)) {
+        if ( (ierr[0] != 0) && (ierr[0] != 3)) {
             nz[0] = 0;
 
             return;
@@ -3660,9 +3427,9 @@ group:       {
 
             for (i = 1; i <= n; i++) {
                 str = (csgnr * cyr[i - 1]) - (csgni * cyi[i - 1]);
-                str = str - ((cspnr * cwrkr[i - 1]) - (cspni * cwrki[i - 1]));
+                str = str - ( (cspnr * cwrkr[i - 1]) - (cspni * cwrki[i - 1]));
                 sti = (csgnr * cyi[i - 1]) + (csgni * cyr[i - 1]);
-                sti = sti - ((cspnr * cwrki[i - 1]) + (cspni * cwrkr[i - 1]));
+                sti = sti - ( (cspnr * cwrki[i - 1]) + (cspni * cwrkr[i - 1]));
                 cyr[i - 1] = str;
                 cyi[i - 1] = sti;
                 str = -csgni;
@@ -3727,16 +3494,16 @@ group:       {
         k = Math.min(Math.abs(emin), Math.abs(emax));
 
         // elim is the approximate under- and overflow limit
-        elim = 2.303 * ((k * r1m5) - 3.0);
+        elim = 2.303 * ( (k * r1m5) - 3.0);
         ey = 0.0;
         tay = Math.abs(zi + zi);
 
         if (tay < elim) {
-            ey = Math.exp(-tay);
+            ey = Math.exp( -tay);
         } // if (tay < elim)
 
-        str = ((exr * cspnr) - (exi * cspni)) * ey;
-        cspni = ((exr * cspni) + (exi * cspnr)) * ey;
+        str = ( (exr * cspnr) - (exi * cspni)) * ey;
+        cspni = ( (exr * cspni) + (exi * cspnr)) * ey;
         cspnr = str;
         nz[0] = 0;
         rtol = 1.0 / tol;
@@ -3757,8 +3524,8 @@ group:       {
                 atol = tol;
             } // if (Math.max(Math.abs(zvr),Math.abs(zvi)) <= ascle)
 
-            str = ((zvr * cspnr) - (zvi * cspni)) * atol;
-            zvi = ((zvr * cspni) + (zvi * cspnr)) * atol;
+            str = ( (zvr * cspnr) - (zvi * cspni)) * atol;
+            zvi = ( (zvr * cspni) + (zvi * cspnr)) * atol;
             zvr = str;
             zur = cyr[i - 1];
             zui = cyi[i - 1];
@@ -3770,8 +3537,8 @@ group:       {
                 atol = tol;
             } // if (Math.max(Math.abs(zur),Math.abs(zui)) <= ascle)
 
-            str = ((zur * csgnr) - (zui * csgni)) * atol;
-            zui = ((zur * csgni) + (zui * csgnr)) * atol;
+            str = ( (zur * csgnr) - (zui * csgni)) * atol;
+            zui = ( (zur * csgni) + (zui * csgnr)) * atol;
             zur = str;
             cyr[i - 1] = zur - zvr;
             cyi[i - 1] = zui - zvi;
@@ -3780,7 +3547,7 @@ group:       {
                 cyi[i - 1] = -cyi[i - 1];
             } // if (zi < 0.0)
 
-            if ((cyr[i - 1] == 0.0) && (cyi[i - 1] == 0.0) && (ey == 0.0)) {
+            if ( (cyr[i - 1] == 0.0) && (cyi[i - 1] == 0.0) && (ey == 0.0)) {
                 nz[0] = nz[0] + 1;
             } // if ((cyr[i-1] == 0.0) && (cyi[i-1] == 0.0) && (ey == 0.0))
 
@@ -3795,171 +3562,88 @@ group:       {
         return;
     }
 
-
     /**
      * An older version of zbesy used by the ZQCBY quick check routine.
-     *
-     * @param  zr     double
-     * @param  zi     double
-     * @param  fnu    double
-     * @param  kode   int
-     * @param  n      int
-     * @param  cyr    double[]
-     * @param  cyi    double[]
-     * @param  nz     int[]
-     * @param  cwrkr  double[]
-     * @param  cwrki  double[]
-     * @param  ierr   int[]
+     * 
+     * @param zr double
+     * @param zi double
+     * @param fnu double
+     * @param kode int
+     * @param n int
+     * @param cyr double[]
+     * @param cyi double[]
+     * @param nz int[]
+     * @param cwrkr double[]
+     * @param cwrki double[]
+     * @param ierr int[]
      */
-    private void zbesyh(double zr, double zi, double fnu, int kode, int n, double[] cyr, double[] cyi, int[] nz,
-                        double[] cwrkr, double[] cwrki, int[] ierr) {
+    private void zbesyh(final double zr, final double zi, final double fnu, final int kode, final int n,
+            final double[] cyr, final double[] cyi, final int[] nz, final double[] cwrkr, final double[] cwrki,
+            final int[] ierr) {
 
-        /***BEGIN PROLOGUE  ZBESYH
-        C***DATE WRITTEN   830501   (YYMMDD)
-        C***REVISION DATE  890801, 930101   (YYMMDD)
-        C***CATEGORY NO.  B5K
-        C***KEYWORDS  Y-BESSEL FUNCTION,BESSEL FUNCTION OF COMPLEX ARGUMENT,
-        C             BESSEL FUNCTION OF SECOND KIND
-        C***AUTHOR  AMOS, DONALD E., SANDIA NATIONAL LABORATORIES
-        C***PURPOSE  TO COMPUTE THE Y-BESSEL FUNCTION OF A COMPLEX ARGUMENT
-        C***DESCRIPTION
-        C
-        C                ***A DOUBLE PRECISION ROUTINE***
-        C
-        C         ON KODE=1, ZBESYH COMPUTES AN N MEMBER SEQUENCE OF COMPLEX
-        C         BESSEL FUNCTIONS CY(I)=Y(FNU+I-1,Z) FOR REAL, NONNEGATIVE
-        C         ORDERS FNU+I-1, I=1,...,N AND COMPLEX Z IN THE CUT PLANE
-        C         -PI.LT.ARG(Z).LE.PI. ON KODE=2, ZBESYH RETURNS THE SCALED
-        C         FUNCTIONS
-        C
-        C         CY(I)=EXP(-ABS(Y))*Y(FNU+I-1,Z)   I = 1,...,N , Y=AIMAG(Z)
-        C
-        C         WHICH REMOVE THE EXPONENTIAL GROWTH IN BOTH THE UPPER AND
-        C         LOWER HALF PLANES FOR Z TO INFINITY. DEFINITIONS AND NOTATION
-        C         ARE FOUND IN THE NBS HANDBOOK OF MATHEMATICAL FUNCTIONS
-        C         (REF. 1).
-        C
-        C         INPUT      ZR,ZI,FNU ARE DOUBLE PRECISION
-        C           ZR,ZI  - Z=CMPLX(ZR,ZI), Z.NE.CMPLX(0.0D0,0.0D0),
-        C                    -PI.LT.ARG(Z).LE.PI
-        C           FNU    - ORDER OF INITIAL Y FUNCTION, FNU.GE.0.0D0
-        C           KODE   - A PARAMETER TO INDICATE THE SCALING OPTION
-        C                    KODE= 1  RETURNS
-        C                             CY(I)=Y(FNU+I-1,Z), I=1,...,N
-        C                        = 2  RETURNS
-        C                             CY(I)=Y(FNU+I-1,Z)*EXP(-ABS(Y)), I=1,...,N
-        C                             WHERE Y=AIMAG(Z)
-        C           N      - NUMBER OF MEMBERS OF THE SEQUENCE, N.GE.1
-        C           CWRKR, - DOUBLE PRECISION WORK VECTORS OF DIMENSION AT
-        C           CWRKI    AT LEAST N
-        C
-        C         OUTPUT     CYR,CYI ARE DOUBLE PRECISION
-        C           CYR,CYI- DOUBLE PRECISION VECTORS WHOSE FIRST N COMPONENTS
-        C                    CONTAIN REAL AND IMAGINARY PARTS FOR THE SEQUENCE
-        C                    CY(I)=Y(FNU+I-1,Z)  OR
-        C                    CY(I)=Y(FNU+I-1,Z)*EXP(-ABS(Y))  I=1,...,N
-        C                    DEPENDING ON KODE.
-        C           NZ     - NZ=0 , A NORMAL RETURN
-        C                    NZ.GT.0 , NZ COMPONENTS OF CY SET TO ZERO DUE TO
-        C                    UNDERFLOW (GENERALLY ON KODE=2)
-        C           IERR   - ERROR FLAG
-        C                    IERR=0, NORMAL RETURN - COMPUTATION COMPLETED
-        C                    IERR=1, INPUT ERROR   - NO COMPUTATION
-        C                    IERR=2, OVERFLOW      - NO COMPUTATION, FNU IS
-        C                            TOO LARGE OR CABS(Z) IS TOO SMALL OR BOTH
-        C                    IERR=3, CABS(Z) OR FNU+N-1 LARGE - COMPUTATION DONE
-        C                            BUT LOSSES OF SIGNIFCANCE BY ARGUMENT
-        C                            REDUCTION PRODUCE LESS THAN HALF OF MACHINE
-        C                            ACCURACY
-        C                    IERR=4, CABS(Z) OR FNU+N-1 TOO LARGE - NO COMPUTA-
-        C                            TION BECAUSE OF COMPLETE LOSSES OF SIGNIFI-
-        C                            CANCE BY ARGUMENT REDUCTION
-        C                    IERR=5, ERROR              - NO COMPUTATION,
-        C                            ALGORITHM TERMINATION CONDITION NOT MET
-        C
-        C***LONG DESCRIPTION
-        C
-        C         THE COMPUTATION IS CARRIED OUT BY THE FORMULA
-        C
-        C              Y(FNU,Z)=0.5*(H(1,FNU,Z)-H(2,FNU,Z))/I
-        C
-        C         WHERE I**2 = -1 AND THE HANKEL BESSEL FUNCTIONS H(1,FNU,Z)
-        C         AND H(2,FNU,Z) ARE CALCULATED IN ZBESH.
-        C
-        C         FOR NEGATIVE ORDERS,THE FORMULA
-        C
-        C              Y(-FNU,Z) = Y(FNU,Z)*COS(PI*FNU) + J(FNU,Z)*SIN(PI*FNU)
-        C
-        C         CAN BE USED. HOWEVER,FOR LARGE ORDERS CLOSE TO HALF ODD
-        C         INTEGERS THE FUNCTION CHANGES RADICALLY. WHEN FNU IS A LARGE
-        C         POSITIVE HALF ODD INTEGER,THE MAGNITUDE OF Y(-FNU,Z)=J(FNU,Z)*
-        C         SIN(PI*FNU) IS A LARGE NEGATIVE POWER OF TEN. BUT WHEN FNU IS
-        C         NOT A HALF ODD INTEGER, Y(FNU,Z) DOMINATES IN MAGNITUDE WITH A
-        C         LARGE POSITIVE POWER OF TEN AND THE MOST THAT THE SECOND TERM
-        C         CAN BE REDUCED IS BY UNIT ROUNDOFF FROM THE COEFFICIENT. THUS,
-        C         WIDE CHANGES CAN OCCUR WITHIN UNIT ROUNDOFF OF A LARGE HALF
-        C         ODD INTEGER. HERE, LARGE MEANS FNU.GT.CABS(Z).
-        C
-        C         IN MOST COMPLEX VARIABLE COMPUTATION, ONE MUST EVALUATE ELE-
-        C         MENTARY FUNCTIONS. WHEN THE MAGNITUDE OF Z OR FNU+N-1 IS
-        C         LARGE, LOSSES OF SIGNIFICANCE BY ARGUMENT REDUCTION OCCUR.
-        C         CONSEQUENTLY, IF EITHER ONE EXCEEDS U1=SQRT(0.5/UR), THEN
-        C         LOSSES EXCEEDING HALF PRECISION ARE LIKELY AND AN ERROR FLAG
-        C         IERR=3 IS TRIGGERED WHERE UR=DMAX1(D1MACH(4),1.0D-18) IS
-        C         DOUBLE PRECISION UNIT ROUNDOFF LIMITED TO 18 DIGITS PRECISION.
-        C         IF EITHER IS LARGER THAN U2=0.5/UR, THEN ALL SIGNIFICANCE IS
-        C         LOST AND IERR=4. IN ORDER TO USE THE INT FUNCTION, ARGUMENTS
-        C         MUST BE FURTHER RESTRICTED NOT TO EXCEED THE LARGEST MACHINE
-        C         INTEGER, U3=I1MACH(9). THUS, THE MAGNITUDE OF Z AND FNU+N-1 IS
-        C         RESTRICTED BY MIN(U2,U3). ON 32 BIT MACHINES, U1,U2, AND U3
-        C         ARE APPROXIMATELY 2.0E+3, 4.2E+6, 2.1E+9 IN SINGLE PRECISION
-        C         ARITHMETIC AND 1.3E+8, 1.8E+16, 2.1E+9 IN DOUBLE PRECISION
-        C         ARITHMETIC RESPECTIVELY. THIS MAKES U2 AND U3 LIMITING IN
-        C         THEIR RESPECTIVE ARITHMETICS. THIS MEANS THAT ONE CAN EXPECT
-        C         TO RETAIN, IN THE WORST CASES ON 32 BIT MACHINES, NO DIGITS
-        C         IN SINGLE AND ONLY 7 DIGITS IN DOUBLE PRECISION ARITHMETIC.
-        C         SIMILAR CONSIDERATIONS HOLD FOR OTHER MACHINES.
-        C
-        C         THE APPROXIMATE RELATIVE ERROR IN THE MAGNITUDE OF A COMPLEX
-        C         BESSEL FUNCTION CAN BE EXPRESSED BY P*10**S WHERE P=MAX(UNIT
-        C         ROUNDOFF,1.0E-18) IS THE NOMINAL PRECISION AND 10**S REPRE-
-        C         SENTS THE INCREASE IN ERROR DUE TO ARGUMENT REDUCTION IN THE
-        C         ELEMENTARY FUNCTIONS. HERE, S=MAX(1,ABS(LOG10(CABS(Z))),
-        C         ABS(LOG10(FNU))) APPROXIMATELY (I.E. S=MAX(1,ABS(EXPONENT OF
-        C         CABS(Z),ABS(EXPONENT OF FNU)) ). HOWEVER, THE PHASE ANGLE MAY
-        C         HAVE ONLY ABSOLUTE ACCURACY. THIS IS MOST LIKELY TO OCCUR WHEN
-        C         ONE COMPONENT (IN ABSOLUTE VALUE) IS LARGER THAN THE OTHER BY
-        C         SEVERAL ORDERS OF MAGNITUDE. IF ONE COMPONENT IS 10**K LARGER
-        C         THAN THE OTHER, THEN ONE CAN EXPECT ONLY MAX(ABS(LOG10(P))-K,
-        C         0) SIGNIFICANT DIGITS; OR, STATED ANOTHER WAY, WHEN K EXCEEDS
-        C         THE EXPONENT OF P, NO SIGNIFICANT DIGITS REMAIN IN THE SMALLER
-        C         COMPONENT. HOWEVER, THE PHASE ANGLE RETAINS ABSOLUTE ACCURACY
-        C         BECAUSE, IN COMPLEX ARITHMETIC WITH PRECISION P, THE SMALLER
-        C         COMPONENT WILL NOT (AS A RULE) DECREASE BELOW P TIMES THE
-        C         MAGNITUDE OF THE LARGER COMPONENT. IN THESE EXTREME CASES,
-        C         THE PRINCIPAL PHASE ANGLE IS ON THE ORDER OF +P, -P, PI/2-P,
-        C         OR -PI/2+P.
-        C
-        C***REFERENCES  HANDBOOK OF MATHEMATICAL FUNCTIONS BY M. ABRAMOWITZ
-        C                 AND I. A. STEGUN, NBS AMS SERIES 55, U.S. DEPT. OF
-        C                 COMMERCE, 1955.
-        C
-        C               COMPUTATION OF BESSEL FUNCTIONS OF COMPLEX ARGUMENT
-        C                 BY D. E. AMOS, SAND83-0083, MAY, 1983.
-        C
-        C               COMPUTATION OF BESSEL FUNCTIONS OF COMPLEX ARGUMENT
-        C                 AND LARGE ORDER BY D. E. AMOS, SAND83-0643, MAY, 1983
-        C
-        C               A SUBROUTINE PACKAGE FOR BESSEL FUNCTIONS OF A COMPLEX
-        C                 ARGUMENT AND NONNEGATIVE ORDER BY D. E. AMOS, SAND85-
-        C                 1018, MAY, 1985
-        C
-        C               A PORTABLE PACKAGE FOR BESSEL FUNCTIONS OF A COMPLEX
-        C                 ARGUMENT AND NONNEGATIVE ORDER BY D. E. AMOS, TRANS.
-        C                 MATH. SOFTWARE, 12, NO. 3, SEPTEMBER 1986, PP 265-273.*/
+        /**
+         * *BEGIN PROLOGUE ZBESYH C***DATE WRITTEN 830501 (YYMMDD) C***REVISION DATE 890801, 930101 (YYMMDD)
+         * C***CATEGORY NO. B5K C***KEYWORDS Y-BESSEL FUNCTION,BESSEL FUNCTION OF COMPLEX ARGUMENT, C BESSEL FUNCTION OF
+         * SECOND KIND C***AUTHOR AMOS, DONALD E., SANDIA NATIONAL LABORATORIES C***PURPOSE TO COMPUTE THE Y-BESSEL
+         * FUNCTION OF A COMPLEX ARGUMENT C***DESCRIPTION C C ***A DOUBLE PRECISION ROUTINE*** C C ON KODE=1, ZBESYH
+         * COMPUTES AN N MEMBER SEQUENCE OF COMPLEX C BESSEL FUNCTIONS CY(I)=Y(FNU+I-1,Z) FOR REAL, NONNEGATIVE C ORDERS
+         * FNU+I-1, I=1,...,N AND COMPLEX Z IN THE CUT PLANE C -PI.LT.ARG(Z).LE.PI. ON KODE=2, ZBESYH RETURNS THE SCALED
+         * C FUNCTIONS C C CY(I)=EXP(-ABS(Y))*Y(FNU+I-1,Z) I = 1,...,N , Y=AIMAG(Z) C C WHICH REMOVE THE EXPONENTIAL
+         * GROWTH IN BOTH THE UPPER AND C LOWER HALF PLANES FOR Z TO INFINITY. DEFINITIONS AND NOTATION C ARE FOUND IN
+         * THE NBS HANDBOOK OF MATHEMATICAL FUNCTIONS C (REF. 1). C C INPUT ZR,ZI,FNU ARE DOUBLE PRECISION C ZR,ZI -
+         * Z=CMPLX(ZR,ZI), Z.NE.CMPLX(0.0D0,0.0D0), C -PI.LT.ARG(Z).LE.PI C FNU - ORDER OF INITIAL Y FUNCTION,
+         * FNU.GE.0.0D0 C KODE - A PARAMETER TO INDICATE THE SCALING OPTION C KODE= 1 RETURNS C CY(I)=Y(FNU+I-1,Z),
+         * I=1,...,N C = 2 RETURNS C CY(I)=Y(FNU+I-1,Z)*EXP(-ABS(Y)), I=1,...,N C WHERE Y=AIMAG(Z) C N - NUMBER OF
+         * MEMBERS OF THE SEQUENCE, N.GE.1 C CWRKR, - DOUBLE PRECISION WORK VECTORS OF DIMENSION AT C CWRKI AT LEAST N C
+         * C OUTPUT CYR,CYI ARE DOUBLE PRECISION C CYR,CYI- DOUBLE PRECISION VECTORS WHOSE FIRST N COMPONENTS C CONTAIN
+         * REAL AND IMAGINARY PARTS FOR THE SEQUENCE C CY(I)=Y(FNU+I-1,Z) OR C CY(I)=Y(FNU+I-1,Z)*EXP(-ABS(Y)) I=1,...,N
+         * C DEPENDING ON KODE. C NZ - NZ=0 , A NORMAL RETURN C NZ.GT.0 , NZ COMPONENTS OF CY SET TO ZERO DUE TO C
+         * UNDERFLOW (GENERALLY ON KODE=2) C IERR - ERROR FLAG C IERR=0, NORMAL RETURN - COMPUTATION COMPLETED C IERR=1,
+         * INPUT ERROR - NO COMPUTATION C IERR=2, OVERFLOW - NO COMPUTATION, FNU IS C TOO LARGE OR CABS(Z) IS TOO SMALL
+         * OR BOTH C IERR=3, CABS(Z) OR FNU+N-1 LARGE - COMPUTATION DONE C BUT LOSSES OF SIGNIFCANCE BY ARGUMENT C
+         * REDUCTION PRODUCE LESS THAN HALF OF MACHINE C ACCURACY C IERR=4, CABS(Z) OR FNU+N-1 TOO LARGE - NO COMPUTA- C
+         * TION BECAUSE OF COMPLETE LOSSES OF SIGNIFI- C CANCE BY ARGUMENT REDUCTION C IERR=5, ERROR - NO COMPUTATION, C
+         * ALGORITHM TERMINATION CONDITION NOT MET C C***LONG DESCRIPTION C C THE COMPUTATION IS CARRIED OUT BY THE
+         * FORMULA C C Y(FNU,Z)=0.5*(H(1,FNU,Z)-H(2,FNU,Z))/I C C WHERE I**2 = -1 AND THE HANKEL BESSEL FUNCTIONS
+         * H(1,FNU,Z) C AND H(2,FNU,Z) ARE CALCULATED IN ZBESH. C C FOR NEGATIVE ORDERS,THE FORMULA C C Y(-FNU,Z) =
+         * Y(FNU,Z)*COS(PI*FNU) + J(FNU,Z)*SIN(PI*FNU) C C CAN BE USED. HOWEVER,FOR LARGE ORDERS CLOSE TO HALF ODD C
+         * INTEGERS THE FUNCTION CHANGES RADICALLY. WHEN FNU IS A LARGE C POSITIVE HALF ODD INTEGER,THE MAGNITUDE OF
+         * Y(-FNU,Z)=J(FNU,Z)* C SIN(PI*FNU) IS A LARGE NEGATIVE POWER OF TEN. BUT WHEN FNU IS C NOT A HALF ODD INTEGER,
+         * Y(FNU,Z) DOMINATES IN MAGNITUDE WITH A C LARGE POSITIVE POWER OF TEN AND THE MOST THAT THE SECOND TERM C CAN
+         * BE REDUCED IS BY UNIT ROUNDOFF FROM THE COEFFICIENT. THUS, C WIDE CHANGES CAN OCCUR WITHIN UNIT ROUNDOFF OF A
+         * LARGE HALF C ODD INTEGER. HERE, LARGE MEANS FNU.GT.CABS(Z). C C IN MOST COMPLEX VARIABLE COMPUTATION, ONE
+         * MUST EVALUATE ELE- C MENTARY FUNCTIONS. WHEN THE MAGNITUDE OF Z OR FNU+N-1 IS C LARGE, LOSSES OF SIGNIFICANCE
+         * BY ARGUMENT REDUCTION OCCUR. C CONSEQUENTLY, IF EITHER ONE EXCEEDS U1=SQRT(0.5/UR), THEN C LOSSES EXCEEDING
+         * HALF PRECISION ARE LIKELY AND AN ERROR FLAG C IERR=3 IS TRIGGERED WHERE UR=DMAX1(D1MACH(4),1.0D-18) IS C
+         * DOUBLE PRECISION UNIT ROUNDOFF LIMITED TO 18 DIGITS PRECISION. C IF EITHER IS LARGER THAN U2=0.5/UR, THEN ALL
+         * SIGNIFICANCE IS C LOST AND IERR=4. IN ORDER TO USE THE INT FUNCTION, ARGUMENTS C MUST BE FURTHER RESTRICTED
+         * NOT TO EXCEED THE LARGEST MACHINE C INTEGER, U3=I1MACH(9). THUS, THE MAGNITUDE OF Z AND FNU+N-1 IS C
+         * RESTRICTED BY MIN(U2,U3). ON 32 BIT MACHINES, U1,U2, AND U3 C ARE APPROXIMATELY 2.0E+3, 4.2E+6, 2.1E+9 IN
+         * SINGLE PRECISION C ARITHMETIC AND 1.3E+8, 1.8E+16, 2.1E+9 IN DOUBLE PRECISION C ARITHMETIC RESPECTIVELY. THIS
+         * MAKES U2 AND U3 LIMITING IN C THEIR RESPECTIVE ARITHMETICS. THIS MEANS THAT ONE CAN EXPECT C TO RETAIN, IN
+         * THE WORST CASES ON 32 BIT MACHINES, NO DIGITS C IN SINGLE AND ONLY 7 DIGITS IN DOUBLE PRECISION ARITHMETIC. C
+         * SIMILAR CONSIDERATIONS HOLD FOR OTHER MACHINES. C C THE APPROXIMATE RELATIVE ERROR IN THE MAGNITUDE OF A
+         * COMPLEX C BESSEL FUNCTION CAN BE EXPRESSED BY P*10**S WHERE P=MAX(UNIT C ROUNDOFF,1.0E-18) IS THE NOMINAL
+         * PRECISION AND 10**S REPRE- C SENTS THE INCREASE IN ERROR DUE TO ARGUMENT REDUCTION IN THE C ELEMENTARY
+         * FUNCTIONS. HERE, S=MAX(1,ABS(LOG10(CABS(Z))), C ABS(LOG10(FNU))) APPROXIMATELY (I.E. S=MAX(1,ABS(EXPONENT OF
+         * C CABS(Z),ABS(EXPONENT OF FNU)) ). HOWEVER, THE PHASE ANGLE MAY C HAVE ONLY ABSOLUTE ACCURACY. THIS IS MOST
+         * LIKELY TO OCCUR WHEN C ONE COMPONENT (IN ABSOLUTE VALUE) IS LARGER THAN THE OTHER BY C SEVERAL ORDERS OF
+         * MAGNITUDE. IF ONE COMPONENT IS 10**K LARGER C THAN THE OTHER, THEN ONE CAN EXPECT ONLY MAX(ABS(LOG10(P))-K, C
+         * 0) SIGNIFICANT DIGITS; OR, STATED ANOTHER WAY, WHEN K EXCEEDS C THE EXPONENT OF P, NO SIGNIFICANT DIGITS
+         * REMAIN IN THE SMALLER C COMPONENT. HOWEVER, THE PHASE ANGLE RETAINS ABSOLUTE ACCURACY C BECAUSE, IN COMPLEX
+         * ARITHMETIC WITH PRECISION P, THE SMALLER C COMPONENT WILL NOT (AS A RULE) DECREASE BELOW P TIMES THE C
+         * MAGNITUDE OF THE LARGER COMPONENT. IN THESE EXTREME CASES, C THE PRINCIPAL PHASE ANGLE IS ON THE ORDER OF +P,
+         * -P, PI/2-P, C OR -PI/2+P. C C***REFERENCES HANDBOOK OF MATHEMATICAL FUNCTIONS BY M. ABRAMOWITZ C AND I. A.
+         * STEGUN, NBS AMS SERIES 55, U.S. DEPT. OF C COMMERCE, 1955. C C COMPUTATION OF BESSEL FUNCTIONS OF COMPLEX
+         * ARGUMENT C BY D. E. AMOS, SAND83-0083, MAY, 1983. C C COMPUTATION OF BESSEL FUNCTIONS OF COMPLEX ARGUMENT C
+         * AND LARGE ORDER BY D. E. AMOS, SAND83-0643, MAY, 1983 C C A SUBROUTINE PACKAGE FOR BESSEL FUNCTIONS OF A
+         * COMPLEX C ARGUMENT AND NONNEGATIVE ORDER BY D. E. AMOS, SAND85- C 1018, MAY, 1985 C C A PORTABLE PACKAGE FOR
+         * BESSEL FUNCTIONS OF A COMPLEX C ARGUMENT AND NONNEGATIVE ORDER BY D. E. AMOS, TRANS. C MATH. SOFTWARE, 12,
+         * NO. 3, SEPTEMBER 1986, PP 265-273.
+         */
         double hcii;
-        int[] nz1 = new int[1];
-        int[] nz2 = new int[1];
+        final int[] nz1 = new int[1];
+        final int[] nz2 = new int[1];
         int i;
         double str;
         double sti;
@@ -3982,7 +3666,7 @@ group:       {
         ierr[0] = 0;
         nz[0] = 0;
 
-        if ((zr == 0.0) && (zi == 0.0)) {
+        if ( (zr == 0.0) && (zi == 0.0)) {
             ierr[0] = 1;
         } // if ((zr == 0.0) && (zi == 0.0))
 
@@ -3990,7 +3674,7 @@ group:       {
             ierr[0] = 1;
         } // if (fnu < 0.0)
 
-        if ((kode < 1) || (kode > 2)) {
+        if ( (kode < 1) || (kode > 2)) {
             ierr[0] = 1;
         } // if ((kode < 1) || (kode > 2))
 
@@ -4005,7 +3689,7 @@ group:       {
         hcii = 0.5;
         zbesh(zr, zi, fnu, kode, 1, n, cyr, cyi, nz1, ierr);
 
-        if ((ierr[0] != 0) && (ierr[0] != 3)) {
+        if ( (ierr[0] != 0) && (ierr[0] != 3)) {
             nz[0] = 0;
 
             return;
@@ -4013,7 +3697,7 @@ group:       {
 
         zbesh(zr, zi, fnu, kode, 2, n, cwrkr, cwrki, nz2, ierr);
 
-        if ((ierr[0] != 0) && (ierr[0] != 3)) {
+        if ( (ierr[0] != 0) && (ierr[0] != 3)) {
             nz[0] = 0;
 
             return;
@@ -4074,14 +3758,14 @@ group:       {
         k = Math.min(Math.abs(emin), Math.abs(emax));
 
         // elim is the approximate under- and overflow limit
-        elim = 2.303 * ((k * r1m5) - 3.0);
+        elim = 2.303 * ( (k * r1m5) - 3.0);
         exr = Math.cos(zr);
         exi = Math.sin(zr);
         ey = 0.0;
         tay = Math.abs(zi + zi);
 
         if (tay < elim) {
-            ey = Math.exp(-tay);
+            ey = Math.exp( -tay);
         } // if (tay < elim)
 
         if (zi < 0.0) {
@@ -4112,8 +3796,8 @@ group:       {
                 atol = tol;
             } // if (Math.max(Math.abs(aa),Math.abs(bb)) <= ascle)
 
-            str = ((aa * c2r) - (bb * c2i)) * atol;
-            sti = ((aa * c2i) + (bb * c2r)) * atol;
+            str = ( (aa * c2r) - (bb * c2i)) * atol;
+            sti = ( (aa * c2i) + (bb * c2r)) * atol;
             aa = cyr[i - 1];
             bb = cyi[i - 1];
             atol = 1.0;
@@ -4124,12 +3808,12 @@ group:       {
                 atol = tol;
             } // if (Math.max(Math.abs(aa),Math.abs(bb)) <= ascle)
 
-            str = str - (((aa * c1r) - (bb * c1i)) * atol);
-            sti = sti - (((aa * c1i) + (bb * c1r)) * atol);
+            str = str - ( ( (aa * c1r) - (bb * c1i)) * atol);
+            sti = sti - ( ( (aa * c1i) + (bb * c1r)) * atol);
             cyr[i - 1] = -sti * hcii;
             cyi[i - 1] = str * hcii;
 
-            if ((str == 0.0) && (sti == 0.0) && (ey == 0.0)) {
+            if ( (str == 0.0) && (sti == 0.0) && (ey == 0.0)) {
                 nz[0] = nz[0] + 1;
             } // if ((str == 0.0) && (sti== 0.0) && (ey == 0.0))
         } // for (i = 1; i <= n; i++)
@@ -4139,37 +3823,38 @@ group:       {
 
     /**
      * zbinu calculates the I function in the right half z plane.
-     *
-     * @param  zr    double
-     * @param  zi    double
-     * @param  fnu   double
-     * @param  kode  int
-     * @param  n     int
-     * @param  cyr   double[]
-     * @param  cyi   double[]
-     * @param  nz    int[]
+     * 
+     * @param zr double
+     * @param zi double
+     * @param fnu double
+     * @param kode int
+     * @param n int
+     * @param cyr double[]
+     * @param cyi double[]
+     * @param nz int[]
      */
-    private void zbinu(double zr, double zi, double fnu, int kode, int n, double[] cyr, double[] cyi, int[] nz) {
+    private void zbinu(final double zr, final double zi, final double fnu, final int kode, final int n,
+            final double[] cyr, final double[] cyi, final int[] nz) {
         double az;
         int nn;
         double dfnu;
-        int[] nw = new int[1];
+        final int[] nw = new int[1];
         int inw;
         boolean doMiller = true;
         boolean doOverflow = true;
         boolean doTest = true;
-        double[] cwr = new double[2];
-        double[] cwi = new double[2];
+        final double[] cwr = new double[2];
+        final double[] cwi = new double[2];
         int i;
         int nui;
-        int[] nlast = new int[1];
+        final int[] nlast = new int[1];
 
         nz[0] = 0;
         az = zabs(zr, zi);
         nn = n;
         dfnu = fnu + n - 1.0;
 
-        if ((az <= 2.0) || ((0.25 * az * az) <= (dfnu + 1.0))) {
+        if ( (az <= 2.0) || ( (0.25 * az * az) <= (dfnu + 1.0))) {
 
             // power series
             zseri(zr, zi, fnu, kode, nn, cyr, cyi, nw);
@@ -4177,14 +3862,14 @@ group:       {
             nz[0] = nz[0] + inw;
             nn = nn - inw;
 
-            if ((nn == 0) || (nw[0] >= 0)) {
+            if ( (nn == 0) || (nw[0] >= 0)) {
                 return;
             }
 
             dfnu = fnu + nn - 1.0;
         } // if ((az <= 2.0) || (0.25*az*az <= (dfnu+1.0)))
 
-        if ((az >= rl) && ((dfnu <= 1.0) || ((dfnu > 1.0) && ((2.0 * az) >= (dfnu * dfnu))))) {
+        if ( (az >= rl) && ( (dfnu <= 1.0) || ( (dfnu > 1.0) && ( (2.0 * az) >= (dfnu * dfnu))))) {
 
             // Asymptotic expansion for large z
             zasyi(zr, zi, fnu, kode, nn, cyr, cyi, nw);
@@ -4197,9 +3882,9 @@ group:       {
 
             return;
         } // if ((az >= rl) && ((dfnu <= 1.0) ||
-          // ((dfnu > 1.0) && ((2.0*az) >= (dfnu*dfnu)))))
+        // ((dfnu > 1.0) && ((2.0*az) >= (dfnu*dfnu)))))
 
-        if (((az >= rl) && (dfnu > 1.0) && ((2.0 * az) < (dfnu * dfnu))) || ((az < rl) && (dfnu > 1.0))) {
+        if ( ( (az >= rl) && (dfnu > 1.0) && ( (2.0 * az) < (dfnu * dfnu))) || ( (az < rl) && (dfnu > 1.0))) {
 
             // overflow and underflow test on I sequence for Miller algorithm
             zuoik(zr, zi, fnu, kode, 1, nn, cyr, cyi, nw);
@@ -4223,7 +3908,7 @@ group:       {
 
             dfnu = fnu + nn - 1.0;
 
-            if ((dfnu > fnul) || (az > fnul)) {
+            if ( (dfnu > fnul) || (az > fnul)) {
                 doMiller = false;
                 doOverflow = false;
             }
@@ -4317,143 +4002,75 @@ group:       {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  zr    double
-     * @param  zi    double
-     * @param  id    int
-     * @param  kode  int
-     * @param  bir   double[]
-     * @param  bii   double[]
-     * @param  ierr  int[]
+     * 
+     * @param zr double
+     * @param zi double
+     * @param id int
+     * @param kode int
+     * @param bir double[]
+     * @param bii double[]
+     * @param ierr int[]
      */
-    private void zbiry(double zr, double zi, int id, int kode, double[] bir, double[] bii, int[] ierr) {
+    private void zbiry(final double zr, final double zi, final int id, final int kode, final double[] bir,
+            final double[] bii, final int[] ierr) {
 
-        /***BEGIN PROLOGUE  ZBIRY
-        C***DATE WRITTEN   830501   (YYMMDD)
-        C***REVISION DATE  890801, 930101   (YYMMDD)
-        C***CATEGORY NO.  B5K
-        C***KEYWORDS  AIRY FUNCTION,BESSEL FUNCTIONS OF ORDER ONE THIRD
-        C***AUTHOR  AMOS, DONALD E., SANDIA NATIONAL LABORATORIES
-        C***PURPOSE  TO COMPUTE AIRY FUNCTIONS BI(Z) AND DBI(Z) FOR COMPLEX Z
-        C***DESCRIPTION
-        C
-        C                      ***A DOUBLE PRECISION ROUTINE***
-        C         ON KODE=1, CBIRY COMPUTES THE COMPLEX AIRY FUNCTION BI(Z) OR
-        C         ITS DERIVATIVE DBI(Z)/DZ ON ID=0 OR ID=1 RESPECTIVELY. ON
-        C         KODE=2, A SCALING OPTION CEXP(-AXZTA)*BI(Z) OR CEXP(-AXZTA)*
-        C         DBI(Z)/DZ IS PROVIDED TO REMOVE THE EXPONENTIAL BEHAVIOR IN
-        C         BOTH THE LEFT AND RIGHT HALF PLANES WHERE
-        C         ZTA=(2/3)*Z*CSQRT(Z)=CMPLX(XZTA,YZTA) AND AXZTA=ABS(XZTA).
-        C         DEFINTIONS AND NOTATION ARE FOUND IN THE NBS HANDBOOK OF
-        C         MATHEMATICAL FUNCTIONS (REF. 1).
-        C
-        C         INPUT      ZR,ZI ARE DOUBLE PRECISION
-        C           ZR,ZI  - Z=CMPLX(ZR,ZI)
-        C           ID     - ORDER OF DERIVATIVE, ID=0 OR ID=1
-        C           KODE   - A PARAMETER TO INDICATE THE SCALING OPTION
-        C                    KODE= 1  RETURNS
-        C                             BI=BI(Z)                 ON ID=0 OR
-        C                             BI=DBI(Z)/DZ             ON ID=1
-        C                        = 2  RETURNS
-        C                             BI=CEXP(-AXZTA)*BI(Z)     ON ID=0 OR
-        C                             BI=CEXP(-AXZTA)*DBI(Z)/DZ ON ID=1 WHERE
-        C                             ZTA=(2/3)*Z*CSQRT(Z)=CMPLX(XZTA,YZTA)
-        C                             AND AXZTA=ABS(XZTA)
-        C
-        C         OUTPUT     BIR,BII ARE DOUBLE PRECISION
-        C           BIR,BII- COMPLEX ANSWER DEPENDING ON THE CHOICES FOR ID AND
-        C                    KODE
-        C           IERR   - ERROR FLAG
-        C                    IERR=0, NORMAL RETURN - COMPUTATION COMPLETED
-        C                    IERR=1, INPUT ERROR   - NO COMPUTATION
-        C                    IERR=2, OVERFLOW      - NO COMPUTATION, REAL(Z)
-        C                            TOO LARGE ON KODE=1
-        C                    IERR=3, CABS(Z) LARGE      - COMPUTATION COMPLETED
-        C                            LOSSES OF SIGNIFCANCE BY ARGUMENT REDUCTION
-        C                            PRODUCE LESS THAN HALF OF MACHINE ACCURACY
-        C                    IERR=4, CABS(Z) TOO LARGE  - NO COMPUTATION
-        C                            COMPLETE LOSS OF ACCURACY BY ARGUMENT
-        C                            REDUCTION
-        C                    IERR=5, ERROR              - NO COMPUTATION,
-        C                            ALGORITHM TERMINATION CONDITION NOT MET
-        C
-        C***LONG DESCRIPTION
-        C
-        C         BI AND DBI ARE COMPUTED FOR CABS(Z).GT.1.0 FROM THE I BESSEL
-        C         FUNCTIONS BY
-        C
-        C                BI(Z)=C*SQRT(Z)*( I(-1/3,ZTA) + I(1/3,ZTA) )
-        C               DBI(Z)=C *  Z  * ( I(-2/3,ZTA) + I(2/3,ZTA) )
-        C                               C=1.0/SQRT(3.0)
-        C                             ZTA=(2/3)*Z**(3/2)
-        C
-        C         WITH THE POWER SERIES FOR CABS(Z).LE.1.0.
-        C
-        C         IN MOST COMPLEX VARIABLE COMPUTATION, ONE MUST EVALUATE ELE-
-        C         MENTARY FUNCTIONS. WHEN THE MAGNITUDE OF Z IS LARGE, LOSSES
-        C         OF SIGNIFICANCE BY ARGUMENT REDUCTION OCCUR. CONSEQUENTLY, IF
-        C         THE MAGNITUDE OF ZETA=(2/3)*Z**1.5 EXCEEDS U1=SQRT(0.5/UR),
-        C         THEN LOSSES EXCEEDING HALF PRECISION ARE LIKELY AND AN ERROR
-        C         FLAG IERR=3 IS TRIGGERED WHERE UR=DMAX1(D1MACH(4),1.0D-18) IS
-        C         DOUBLE PRECISION UNIT ROUNDOFF LIMITED TO 18 DIGITS PRECISION.
-        C         ALSO, IF THE MAGNITUDE OF ZETA IS LARGER THAN U2=0.5/UR, THEN
-        C         ALL SIGNIFICANCE IS LOST AND IERR=4. IN ORDER TO USE THE INT
-        C         FUNCTION, ZETA MUST BE FURTHER RESTRICTED NOT TO EXCEED THE
-        C         LARGEST INTEGER, U3=I1MACH(9). THUS, THE MAGNITUDE OF ZETA
-        C         MUST BE RESTRICTED BY MIN(U2,U3). ON 32 BIT MACHINES, U1,U2,
-        C         AND U3 ARE APPROXIMATELY 2.0E+3, 4.2E+6, 2.1E+9 IN SINGLE
-        C         PRECISION ARITHMETIC AND 1.3E+8, 1.8E+16, 2.1E+9 IN DOUBLE
-        C         PRECISION ARITHMETIC RESPECTIVELY. THIS MAKES U2 AND U3 LIMIT-
-        C         ING IN THEIR RESPECTIVE ARITHMETICS. THIS MEANS THAT THE MAG-
-        C         NITUDE OF Z CANNOT EXCEED 3.1E+4 IN SINGLE AND 2.1E+6 IN
-        C         DOUBLE PRECISION ARITHMETIC. THIS ALSO MEANS THAT ONE CAN
-        C         EXPECT TO RETAIN, IN THE WORST CASES ON 32 BIT MACHINES,
-        C         NO DIGITS IN SINGLE PRECISION AND ONLY 7 DIGITS IN DOUBLE
-        C         PRECISION ARITHMETIC. SIMILAR CONSIDERATIONS HOLD FOR OTHER
-        C         MACHINES.
-        C
-        C         THE APPROXIMATE RELATIVE ERROR IN THE MAGNITUDE OF A COMPLEX
-        C         BESSEL FUNCTION CAN BE EXPRESSED BY P*10**S WHERE P=MAX(UNIT
-        C         ROUNDOFF,1.0E-18) IS THE NOMINAL PRECISION AND 10**S REPRE-
-        C         SENTS THE INCREASE IN ERROR DUE TO ARGUMENT REDUCTION IN THE
-        C         ELEMENTARY FUNCTIONS. HERE, S=MAX(1,ABS(LOG10(CABS(Z))),
-        C         ABS(LOG10(FNU))) APPROXIMATELY (I.E. S=MAX(1,ABS(EXPONENT OF
-        C         CABS(Z),ABS(EXPONENT OF FNU)) ). HOWEVER, THE PHASE ANGLE MAY
-        C         HAVE ONLY ABSOLUTE ACCURACY. THIS IS MOST LIKELY TO OCCUR WHEN
-        C         ONE COMPONENT (IN ABSOLUTE VALUE) IS LARGER THAN THE OTHER BY
-        C         SEVERAL ORDERS OF MAGNITUDE. IF ONE COMPONENT IS 10**K LARGER
-        C         THAN THE OTHER, THEN ONE CAN EXPECT ONLY MAX(ABS(LOG10(P))-K,
-        C         0) SIGNIFICANT DIGITS; OR, STATED ANOTHER WAY, WHEN K EXCEEDS
-        C         THE EXPONENT OF P, NO SIGNIFICANT DIGITS REMAIN IN THE SMALLER
-        C         COMPONENT. HOWEVER, THE PHASE ANGLE RETAINS ABSOLUTE ACCURACY
-        C         BECAUSE, IN COMPLEX ARITHMETIC WITH PRECISION P, THE SMALLER
-        C         COMPONENT WILL NOT (AS A RULE) DECREASE BELOW P TIMES THE
-        C         MAGNITUDE OF THE LARGER COMPONENT. IN THESE EXTREME CASES,
-        C         THE PRINCIPAL PHASE ANGLE IS ON THE ORDER OF +P, -P, PI/2-P,
-        C         OR -PI/2+P.
-        C
-        C***REFERENCES  HANDBOOK OF MATHEMATICAL FUNCTIONS BY M. ABRAMOWITZ
-        C                 AND I. A. STEGUN, NBS AMS SERIES 55, U.S. DEPT. OF
-        C                 COMMERCE, 1955.
-        C
-        C               COMPUTATION OF BESSEL FUNCTIONS OF COMPLEX ARGUMENT
-        C                 AND LARGE ORDER BY D. E. AMOS, SAND83-0643, MAY, 1983
-        C
-        C               A SUBROUTINE PACKAGE FOR BESSEL FUNCTIONS OF A COMPLEX
-        C                 ARGUMENT AND NONNEGATIVE ORDER BY D. E. AMOS, SAND85-
-        C                 1018, MAY, 1985
-        C
-        C               A PORTABLE PACKAGE FOR BESSEL FUNCTIONS OF A COMPLEX
-        C                 ARGUMENT AND NONNEGATIVE ORDER BY D. E. AMOS, ACM
-        C                 TRANS. MATH. SOFTWARE, VOL. 12, NO. 3, SEPTEMBER 1986,
-        C                 PP 265-273.*/
-        double[] cyr = new double[2];
-        double[] cyi = new double[2];
-        double tth = 2.0 / 3.0;
-        double c1 = 6.14926627446000736E-01;
-        double c2 = 4.48288357353826359E-01;
-        double coef = 5.77350269189625765E-01;
-        int[] nz = new int[1];
+        /**
+         * *BEGIN PROLOGUE ZBIRY C***DATE WRITTEN 830501 (YYMMDD) C***REVISION DATE 890801, 930101 (YYMMDD) C***CATEGORY
+         * NO. B5K C***KEYWORDS AIRY FUNCTION,BESSEL FUNCTIONS OF ORDER ONE THIRD C***AUTHOR AMOS, DONALD E., SANDIA
+         * NATIONAL LABORATORIES C***PURPOSE TO COMPUTE AIRY FUNCTIONS BI(Z) AND DBI(Z) FOR COMPLEX Z C***DESCRIPTION C
+         * C ***A DOUBLE PRECISION ROUTINE*** C ON KODE=1, CBIRY COMPUTES THE COMPLEX AIRY FUNCTION BI(Z) OR C ITS
+         * DERIVATIVE DBI(Z)/DZ ON ID=0 OR ID=1 RESPECTIVELY. ON C KODE=2, A SCALING OPTION CEXP(-AXZTA)*BI(Z) OR
+         * CEXP(-AXZTA)* C DBI(Z)/DZ IS PROVIDED TO REMOVE THE EXPONENTIAL BEHAVIOR IN C BOTH THE LEFT AND RIGHT HALF
+         * PLANES WHERE C ZTA=(2/3)*Z*CSQRT(Z)=CMPLX(XZTA,YZTA) AND AXZTA=ABS(XZTA). C DEFINTIONS AND NOTATION ARE FOUND
+         * IN THE NBS HANDBOOK OF C MATHEMATICAL FUNCTIONS (REF. 1). C C INPUT ZR,ZI ARE DOUBLE PRECISION C ZR,ZI -
+         * Z=CMPLX(ZR,ZI) C ID - ORDER OF DERIVATIVE, ID=0 OR ID=1 C KODE - A PARAMETER TO INDICATE THE SCALING OPTION C
+         * KODE= 1 RETURNS C BI=BI(Z) ON ID=0 OR C BI=DBI(Z)/DZ ON ID=1 C = 2 RETURNS C BI=CEXP(-AXZTA)*BI(Z) ON ID=0 OR
+         * C BI=CEXP(-AXZTA)*DBI(Z)/DZ ON ID=1 WHERE C ZTA=(2/3)*Z*CSQRT(Z)=CMPLX(XZTA,YZTA) C AND AXZTA=ABS(XZTA) C C
+         * OUTPUT BIR,BII ARE DOUBLE PRECISION C BIR,BII- COMPLEX ANSWER DEPENDING ON THE CHOICES FOR ID AND C KODE C
+         * IERR - ERROR FLAG C IERR=0, NORMAL RETURN - COMPUTATION COMPLETED C IERR=1, INPUT ERROR - NO COMPUTATION C
+         * IERR=2, OVERFLOW - NO COMPUTATION, REAL(Z) C TOO LARGE ON KODE=1 C IERR=3, CABS(Z) LARGE - COMPUTATION
+         * COMPLETED C LOSSES OF SIGNIFCANCE BY ARGUMENT REDUCTION C PRODUCE LESS THAN HALF OF MACHINE ACCURACY C
+         * IERR=4, CABS(Z) TOO LARGE - NO COMPUTATION C COMPLETE LOSS OF ACCURACY BY ARGUMENT C REDUCTION C IERR=5,
+         * ERROR - NO COMPUTATION, C ALGORITHM TERMINATION CONDITION NOT MET C C***LONG DESCRIPTION C C BI AND DBI ARE
+         * COMPUTED FOR CABS(Z).GT.1.0 FROM THE I BESSEL C FUNCTIONS BY C C BI(Z)=C*SQRT(Z)*( I(-1/3,ZTA) + I(1/3,ZTA) )
+         * C DBI(Z)=C * Z * ( I(-2/3,ZTA) + I(2/3,ZTA) ) C C=1.0/SQRT(3.0) C ZTA=(2/3)*Z**(3/2) C C WITH THE POWER
+         * SERIES FOR CABS(Z).LE.1.0. C C IN MOST COMPLEX VARIABLE COMPUTATION, ONE MUST EVALUATE ELE- C MENTARY
+         * FUNCTIONS. WHEN THE MAGNITUDE OF Z IS LARGE, LOSSES C OF SIGNIFICANCE BY ARGUMENT REDUCTION OCCUR.
+         * CONSEQUENTLY, IF C THE MAGNITUDE OF ZETA=(2/3)*Z**1.5 EXCEEDS U1=SQRT(0.5/UR), C THEN LOSSES EXCEEDING HALF
+         * PRECISION ARE LIKELY AND AN ERROR C FLAG IERR=3 IS TRIGGERED WHERE UR=DMAX1(D1MACH(4),1.0D-18) IS C DOUBLE
+         * PRECISION UNIT ROUNDOFF LIMITED TO 18 DIGITS PRECISION. C ALSO, IF THE MAGNITUDE OF ZETA IS LARGER THAN
+         * U2=0.5/UR, THEN C ALL SIGNIFICANCE IS LOST AND IERR=4. IN ORDER TO USE THE INT C FUNCTION, ZETA MUST BE
+         * FURTHER RESTRICTED NOT TO EXCEED THE C LARGEST INTEGER, U3=I1MACH(9). THUS, THE MAGNITUDE OF ZETA C MUST BE
+         * RESTRICTED BY MIN(U2,U3). ON 32 BIT MACHINES, U1,U2, C AND U3 ARE APPROXIMATELY 2.0E+3, 4.2E+6, 2.1E+9 IN
+         * SINGLE C PRECISION ARITHMETIC AND 1.3E+8, 1.8E+16, 2.1E+9 IN DOUBLE C PRECISION ARITHMETIC RESPECTIVELY. THIS
+         * MAKES U2 AND U3 LIMIT- C ING IN THEIR RESPECTIVE ARITHMETICS. THIS MEANS THAT THE MAG- C NITUDE OF Z CANNOT
+         * EXCEED 3.1E+4 IN SINGLE AND 2.1E+6 IN C DOUBLE PRECISION ARITHMETIC. THIS ALSO MEANS THAT ONE CAN C EXPECT TO
+         * RETAIN, IN THE WORST CASES ON 32 BIT MACHINES, C NO DIGITS IN SINGLE PRECISION AND ONLY 7 DIGITS IN DOUBLE C
+         * PRECISION ARITHMETIC. SIMILAR CONSIDERATIONS HOLD FOR OTHER C MACHINES. C C THE APPROXIMATE RELATIVE ERROR IN
+         * THE MAGNITUDE OF A COMPLEX C BESSEL FUNCTION CAN BE EXPRESSED BY P*10**S WHERE P=MAX(UNIT C ROUNDOFF,1.0E-18)
+         * IS THE NOMINAL PRECISION AND 10**S REPRE- C SENTS THE INCREASE IN ERROR DUE TO ARGUMENT REDUCTION IN THE C
+         * ELEMENTARY FUNCTIONS. HERE, S=MAX(1,ABS(LOG10(CABS(Z))), C ABS(LOG10(FNU))) APPROXIMATELY (I.E.
+         * S=MAX(1,ABS(EXPONENT OF C CABS(Z),ABS(EXPONENT OF FNU)) ). HOWEVER, THE PHASE ANGLE MAY C HAVE ONLY ABSOLUTE
+         * ACCURACY. THIS IS MOST LIKELY TO OCCUR WHEN C ONE COMPONENT (IN ABSOLUTE VALUE) IS LARGER THAN THE OTHER BY C
+         * SEVERAL ORDERS OF MAGNITUDE. IF ONE COMPONENT IS 10**K LARGER C THAN THE OTHER, THEN ONE CAN EXPECT ONLY
+         * MAX(ABS(LOG10(P))-K, C 0) SIGNIFICANT DIGITS; OR, STATED ANOTHER WAY, WHEN K EXCEEDS C THE EXPONENT OF P, NO
+         * SIGNIFICANT DIGITS REMAIN IN THE SMALLER C COMPONENT. HOWEVER, THE PHASE ANGLE RETAINS ABSOLUTE ACCURACY C
+         * BECAUSE, IN COMPLEX ARITHMETIC WITH PRECISION P, THE SMALLER C COMPONENT WILL NOT (AS A RULE) DECREASE BELOW
+         * P TIMES THE C MAGNITUDE OF THE LARGER COMPONENT. IN THESE EXTREME CASES, C THE PRINCIPAL PHASE ANGLE IS ON
+         * THE ORDER OF +P, -P, PI/2-P, C OR -PI/2+P. C C***REFERENCES HANDBOOK OF MATHEMATICAL FUNCTIONS BY M.
+         * ABRAMOWITZ C AND I. A. STEGUN, NBS AMS SERIES 55, U.S. DEPT. OF C COMMERCE, 1955. C C COMPUTATION OF BESSEL
+         * FUNCTIONS OF COMPLEX ARGUMENT C AND LARGE ORDER BY D. E. AMOS, SAND83-0643, MAY, 1983 C C A SUBROUTINE
+         * PACKAGE FOR BESSEL FUNCTIONS OF A COMPLEX C ARGUMENT AND NONNEGATIVE ORDER BY D. E. AMOS, SAND85- C 1018,
+         * MAY, 1985 C C A PORTABLE PACKAGE FOR BESSEL FUNCTIONS OF A COMPLEX C ARGUMENT AND NONNEGATIVE ORDER BY D. E.
+         * AMOS, ACM C TRANS. MATH. SOFTWARE, VOL. 12, NO. 3, SEPTEMBER 1986, C PP 265-273.
+         */
+        final double[] cyr = new double[2];
+        final double[] cyi = new double[2];
+        final double tth = 2.0 / 3.0;
+        final double c1 = 6.14926627446000736E-01;
+        final double c2 = 4.48288357353826359E-01;
+        final double coef = 5.77350269189625765E-01;
+        final int[] nz = new int[1];
         double az;
         double fid;
         double s1r;
@@ -4466,8 +4083,8 @@ group:       {
         double trm2r;
         double trm2i;
         double atrm;
-        double[] str = new double[1];
-        double[] sti = new double[1];
+        final double[] str = new double[1];
+        final double[] sti = new double[1];
         double z3r;
         double z3i;
         double az3;
@@ -4486,8 +4103,8 @@ group:       {
         double neweps;
         double dig;
         double bb;
-        double[] csqr = new double[1];
-        double[] csqi = new double[1];
+        final double[] csqr = new double[1];
+        final double[] csqi = new double[1];
         double sfac;
         double fmr;
         double fnu;
@@ -4496,11 +4113,11 @@ group:       {
         ierr[0] = 0;
         nz[0] = 0;
 
-        if ((id < 0) || (id > 1)) {
+        if ( (id < 0) || (id > 1)) {
             ierr[0] = 1;
         } // if ((id < 0) || (id > 1))
 
-        if ((kode < 1) || (kode > 2)) {
+        if ( (kode < 1) || (kode > 2)) {
             ierr[0] = 1;
         } // if ((kode < 1) || (kode > 2)
 
@@ -4572,13 +4189,13 @@ group:       {
                 bk = 30.0 - (9.0 * fid);
 
                 for (k = 1; k <= 25; k++) {
-                    str[0] = ((trm1r * z3r) - (trm1i * z3i)) / d1;
-                    trm1i = ((trm1r * z3i) + (trm1i * z3r)) / d1;
+                    str[0] = ( (trm1r * z3r) - (trm1i * z3i)) / d1;
+                    trm1i = ( (trm1r * z3i) + (trm1i * z3r)) / d1;
                     trm1r = str[0];
                     s1r = s1r + trm1r;
                     s1i = s1i + trm1i;
-                    str[0] = ((trm2r * z3r) - (trm2i * z3i)) / d2;
-                    trm2i = ((trm2r * z3i) + (trm2i * z3r)) / d2;
+                    str[0] = ( (trm2r * z3r) - (trm2i * z3i)) / d2;
+                    trm2i = ( (trm2r * z3i) + (trm2i * z3r)) / d2;
                     trm2r = str[0];
                     s2r = s2r + trm2r;
                     s2i = s2i + trm2i;
@@ -4597,16 +4214,16 @@ group:       {
             } // if (aa >= (tol/az))
 
             if (id != 1) {
-                bir[0] = (c1 * s1r) + (c2 * ((zr * s2r) - (zi * s2i)));
-                bii[0] = (c1 * s1i) + (c2 * ((zr * s2i) + (zi * s2r)));
+                bir[0] = (c1 * s1r) + (c2 * ( (zr * s2r) - (zi * s2i)));
+                bii[0] = (c1 * s1i) + (c2 * ( (zr * s2i) + (zi * s2r)));
 
                 if (kode == 1) {
                     return;
                 } // if (kode == 1)
 
                 zsqrt(zr, zi, str, sti);
-                ztar = tth * ((zr * str[0]) - (zi * sti[0]));
-                ztai = tth * ((zr * sti[0]) + (zi * str[0]));
+                ztar = tth * ( (zr * str[0]) - (zi * sti[0]));
+                ztai = tth * ( (zr * sti[0]) + (zi * str[0]));
                 aa = ztar;
                 aa = -Math.abs(aa);
                 eaa = Math.exp(aa);
@@ -4623,8 +4240,8 @@ group:       {
                 cc = c1 / (1.0 + fid);
                 str[0] = (s1r * zr) - (s1i * zi);
                 sti[0] = (s1r * zi) + (s1i * zr);
-                bir[0] = bir[0] + (cc * ((str[0] * zr) - (sti[0] * zi)));
-                bii[0] = bii[0] + (cc * ((str[0] * zi) + (sti[0] * zr)));
+                bir[0] = bir[0] + (cc * ( (str[0] * zr) - (sti[0] * zi)));
+                bii[0] = bii[0] + (cc * ( (str[0] * zi) + (sti[0] * zr)));
             } // if (az > tol)
 
             if (kode == 1) {
@@ -4632,8 +4249,8 @@ group:       {
             } // if (kode == 1)
 
             zsqrt(zr, zi, str, sti);
-            ztar = tth * ((zr * str[0]) - (zi * sti[0]));
-            ztai = tth * ((zr * sti[0]) + (zi * str[0]));
+            ztar = tth * ( (zr * str[0]) - (zi * sti[0]));
+            ztai = tth * ( (zr * sti[0]) + (zi * str[0]));
             aa = ztar;
             aa = -Math.abs(aa);
             eaa = Math.exp(aa);
@@ -4646,13 +4263,13 @@ group:       {
         // Case for CABS(z) > 1.0
         fnu = (1.0 + fid) / 3.0;
 
-        /**       SET PARAMETERS RELATED TO MACHINE CONSTANTS.
-         * C         TOL IS THE APPROXIMATE UNIT ROUNDOFF LIMITED TO 1.0E-18. C         ELIM IS THE APPROXIMATE
-         * EXPONENTIAL OVER- AND UNDERFLOW LIMIT. C         EXP(-ELIM).LT.EXP(-ALIM)=EXP(-ELIM)/TOL    AND C
-         * EXP(ELIM).GT.EXP(ALIM)=EXP(ELIM)*TOL       ARE INTERVALS NEAR C         UNDERFLOW AND OVERFLOW LIMITS WHERE
-         * SCALED ARITHMETIC IS DONE. C         RL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC EXPANSION FOR LARGE Z. C
-         *    DIG = NUMBER OF BASE 10 DIGITS IN TOL = 10**(-DIG).C         FNUL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC
-         * SERIES FOR LARGE FNU.*/
+        /**
+         * SET PARAMETERS RELATED TO MACHINE CONSTANTS. C TOL IS THE APPROXIMATE UNIT ROUNDOFF LIMITED TO 1.0E-18. C
+         * ELIM IS THE APPROXIMATE EXPONENTIAL OVER- AND UNDERFLOW LIMIT. C EXP(-ELIM).LT.EXP(-ALIM)=EXP(-ELIM)/TOL AND
+         * C EXP(ELIM).GT.EXP(ALIM)=EXP(ELIM)*TOL ARE INTERVALS NEAR C UNDERFLOW AND OVERFLOW LIMITS WHERE SCALED
+         * ARITHMETIC IS DONE. C RL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC EXPANSION FOR LARGE Z. C DIG = NUMBER OF
+         * BASE 10 DIGITS IN TOL = 10**(-DIG).C FNUL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC SERIES FOR LARGE FNU.
+         */
 
         // emin, the smallest exponent E for double precision, is I1MACH(15)
         // tiny = D1MACH(1) = 2**(emin - 1) = 2**(-1022)
@@ -4671,14 +4288,14 @@ group:       {
         // r1m5 = log10(2), which is D1MACH(5)
         r1m5 = 0.434294481903251 * Math.log(2.0);
         k = Math.min(Math.abs(emin), Math.abs(emax));
-        elim = 2.303 * ((k * r1m5) - 3.0);
+        elim = 2.303 * ( (k * r1m5) - 3.0);
 
         // doubleDigits is I1MACH(14), the number of base-B digits for double
-        // precision.  IEEE 754 double precision has 64 bits with 1 sign bit,
+        // precision. IEEE 754 double precision has 64 bits with 1 sign bit,
         // 11 exponent bits, and 52 fraction, mantissa, or signficand bits.
         // Floating-point numbers are typically stored in normalized form,
-        // with the radix point after the first non-zero digit.  In base two,
-        // the only possible non-zero digit is 1.  Thus, a leading digit of 1
+        // with the radix point after the first non-zero digit. In base two,
+        // the only possible non-zero digit is 1. Thus, a leading digit of 1
         // can always be assumed and need not be explicitly represented.
         // Therefore, the mantissa effectively has 53 bits of resolution.
         doubleDigits = 53;
@@ -4686,7 +4303,7 @@ group:       {
         aa = r1m5 * k1;
         dig = Math.min(aa, 18.0);
         aa = 2.303 * aa;
-        alim = elim + Math.max(-aa, -41.45);
+        alim = elim + Math.max( -aa, -41.45);
         rl = (1.2 * dig) + 3.0;
         fnul = 10.0 + (6.0 * (dig - 3.0));
 
@@ -4712,8 +4329,8 @@ group:       {
         } // if (az > aa)
 
         zsqrt(zr, zi, csqr, csqi);
-        ztar = tth * ((zr * csqr[0]) - (zi * csqi[0]));
-        ztai = tth * ((zr * csqi[0]) + (zi * csqr[0]));
+        ztar = tth * ( (zr * csqr[0]) - (zi * csqi[0]));
+        ztai = tth * ( (zr * csqi[0]) + (zi * csqr[0]));
 
         // Re(zta) <= 0 when Re(z) < 0, especially when Im(z) is small
         sfac = 1.0;
@@ -4726,7 +4343,7 @@ group:       {
             ztai = ak;
         } // if (zr < 0.0)
 
-        if ((zi == 0.0) && (zr <= 0.0)) {
+        if ( (zi == 0.0) && (zr <= 0.0)) {
             ztar = 0.0;
             ztai = ak;
         } // if ((zi == 0.0) && (zr <= 0.0))
@@ -4753,7 +4370,7 @@ group:       {
 
         fmr = 0.0;
 
-        if ((aa < 0.0) || (zr <= 0.0)) {
+        if ( (aa < 0.0) || (zr <= 0.0)) {
             fmr = Math.PI;
 
             if (zi < 0.0) {
@@ -4785,8 +4402,8 @@ group:       {
         z3r = sfac;
         str[0] = Math.cos(aa);
         sti[0] = Math.sin(aa);
-        s1r = ((str[0] * cyr[0]) - (sti[0] * cyi[0])) * z3r;
-        s1i = ((str[0] * cyi[0]) + (sti[0] * cyr[0])) * z3r;
+        s1r = ( (str[0] * cyr[0]) - (sti[0] * cyi[0])) * z3r;
+        s1i = ( (str[0] * cyi[0]) + (sti[0] * cyr[0])) * z3r;
         fnu = (2.0 - fid) / 3.0;
         zbinu(ztar, ztai, fnu, kode, 2, cyr, cyi, nz);
         cyr[0] = cyr[0] * z3r;
@@ -4796,8 +4413,8 @@ group:       {
 
         // Backward recur one step for orders -1/3 or -2/3
         zdiv(cyr[0], cyi[0], ztar, ztai, str, sti);
-        s2r = ((fnu + fnu) * str[0]) + cyr[1];
-        s2i = ((fnu + fnu) * sti[0]) + cyi[1];
+        s2r = ( (fnu + fnu) * str[0]) + cyr[1];
+        s2i = ( (fnu + fnu) * sti[0]) + cyi[1];
         aa = fmr * (fnu - 1.0);
         str[0] = Math.cos(aa);
         sti[0] = Math.sin(aa);
@@ -4826,57 +4443,56 @@ group:       {
 
     /**
      * zbknu computes the k Bessel function in the right half z plane.
-     *
-     * @param  zr    double
-     * @param  zi    double
-     * @param  fnu   double
-     * @param  kode  int
-     * @param  n     int
-     * @param  yr    double[]
-     * @param  yi    double[]
-     * @param  nz    int[]
+     * 
+     * @param zr double
+     * @param zi double
+     * @param fnu double
+     * @param kode int
+     * @param n int
+     * @param yr double[]
+     * @param yi double[]
+     * @param nz int[]
      */
-    private void zbknu(double zr, double zi, double fnu, int kode, int n, double[] yr, double[] yi, int[] nz) {
-        int kmax = 30;
-        double ctwor = 2.0;
-        double r1 = 2.0;
-        double dpi = Math.PI;
-        double rthpi = 1.25331413731550025;
-        double spi = 1.90985931710274403;
-        double hpi = Math.PI / 2.0;
-        double fpi = 1.89769999331517738;
-        double tth = 2.0 / 3.0;
-        double[] cc = new double[] {
-                          5.77215664901532861E-01, -4.20026350340952355E-02, -4.21977345555443367E-02,
-                          7.21894324666309954E-03, -2.15241674114950973E-04, -2.01348547807882387E-05,
-                          1.13302723198169588E-06, 6.11609510448141582E-09
-                      };
+    private void zbknu(double zr, double zi, final double fnu, final int kode, final int n, final double[] yr,
+            final double[] yi, final int[] nz) {
+        final int kmax = 30;
+        final double ctwor = 2.0;
+        final double r1 = 2.0;
+        final double dpi = Math.PI;
+        final double rthpi = 1.25331413731550025;
+        final double spi = 1.90985931710274403;
+        final double hpi = Math.PI / 2.0;
+        final double fpi = 1.89769999331517738;
+        final double tth = 2.0 / 3.0;
+        final double[] cc = new double[] {5.77215664901532861E-01, -4.20026350340952355E-02, -4.21977345555443367E-02,
+                7.21894324666309954E-03, -2.15241674114950973E-04, -2.01348547807882387E-05, 1.13302723198169588E-06,
+                6.11609510448141582E-09};
         double caz;
         double csclr;
         double crscr;
-        double[] cssr = new double[3];
-        double[] csrr = new double[3];
-        double[] bry = new double[3];
+        final double[] cssr = new double[3];
+        final double[] csrr = new double[3];
+        final double[] bry = new double[3];
         int iflag;
         int koded;
         double rcaz;
-        double[] str = new double[1];
-        double[] sti = new double[1];
+        final double[] str = new double[1];
+        final double[] sti = new double[1];
         double rzr;
         double rzi;
         int inu;
         double dnu;
         double dnu2 = 0.0;
         double fc;
-        double[] smur = new double[1];
-        double[] smui = new double[1];
-        int[] idum = new int[1];
+        final double[] smur = new double[1];
+        final double[] smui = new double[1];
+        final int[] idum = new int[1];
         double fmur;
         double fmui;
-        double[] cshr = new double[1];
-        double[] cshi = new double[1];
-        double[] cchr = new double[1];
-        double[] cchi = new double[1];
+        final double[] cshr = new double[1];
+        final double[] cshi = new double[1];
+        final double[] cchr = new double[1];
+        final double[] cchi = new double[1];
         double a2;
         double t2;
         double t1;
@@ -4886,30 +4502,30 @@ group:       {
         double tm;
         double g1;
         double g2;
-        double[] fr = new double[1];
-        double[] fi = new double[1];
+        final double[] fr = new double[1];
+        final double[] fi = new double[1];
         double pr;
         double pi;
-        double[] ptr = new double[1];
-        double[] pti = new double[1];
+        final double[] ptr = new double[1];
+        final double[] pti = new double[1];
         double qr;
         double qi;
-        double[] s1r = new double[1];
-        double[] s1i = new double[1];
-        double[] s2r = new double[1];
-        double[] s2i = new double[1];
+        final double[] s1r = new double[1];
+        final double[] s1i = new double[1];
+        final double[] s2r = new double[1];
+        final double[] s2i = new double[1];
         double a1;
         double ckr = 0.0;
         double cki = 0.0;
         double bk;
-        double[] czr = new double[1];
-        double[] czi = new double[1];
+        final double[] czr = new double[1];
+        final double[] czi = new double[1];
         double rak;
-        double[] yr0 = new double[1];
-        double[] yi0 = new double[1];
+        final double[] yr0 = new double[1];
+        final double[] yi0 = new double[1];
         int kflag = 0;
-        double[] coefr = new double[1];
-        double[] coefi = new double[1];
+        final double[] coefr = new double[1];
+        final double[] coefi = new double[1];
         double fhs = 0.0;
         double etest;
         double fk = 0.0;
@@ -4938,7 +4554,7 @@ group:       {
         int j;
         double as;
         double alas;
-        int[] nw = new int[1];
+        final int[] nw = new int[1];
         boolean seg1 = true;
         boolean seg2 = true;
         boolean seg3 = true;
@@ -5001,7 +4617,7 @@ group:       {
 
                 // gam(1-z)*gam(1+z) = PI*z/sin(PI*z), t1 = 1/gam(1-dnu),
                 // t2 = 1/(gam+dnu)
-                t2 = Math.exp(-dgamln(a2, idum));
+                t2 = Math.exp( -dgamln(a2, idum));
                 t1 = 1.0 / (t2 * fc);
 
                 if (Math.abs(dnu) <= 0.1) {
@@ -5027,8 +4643,8 @@ group:       {
                 } // else
 
                 g2 = 0.5 * (t1 + t2);
-                fr[0] = fc * ((cchr[0] * g1) + (smur[0] * g2));
-                fi[0] = fc * ((cchi[0] * g1) + (smui[0] * g2));
+                fr[0] = fc * ( (cchr[0] * g1) + (smur[0] * g2));
+                fi[0] = fc * ( (cchi[0] * g1) + (smui[0] * g2));
                 zexp(fmur, fmui, str, sti);
                 pr = 0.5 * str[0] / t2;
                 pi = 0.5 * sti[0] / t2;
@@ -5045,7 +4661,7 @@ group:       {
                 cki = 0.0;
                 bk = 1.0 - dnu2;
 
-                if ((inu <= 0) && (n <= 1)) {
+                if ( (inu <= 0) && (n <= 1)) {
 
                     // Generate K(fnu,z), 0.0 <= fnu < 0.5 and n=1
                     if (caz >= tol) {
@@ -5055,8 +4671,8 @@ group:       {
                         t1 = 0.25 * caz * caz;
 
                         while (true) {
-                            fr[0] = ((fr[0] * ak) + pr + qr) / bk;
-                            fi[0] = ((fi[0] * ak) + pi + qi) / bk;
+                            fr[0] = ( (fr[0] * ak) + pr + qr) / bk;
+                            fi[0] = ( (fi[0] * ak) + pi + qi) / bk;
                             str[0] = 1.0 / (ak - dnu);
                             pr = pr * str[0];
                             pi = pi * str[0];
@@ -5065,7 +4681,7 @@ group:       {
                             qi = qi * str[0];
                             str[0] = (ckr * czr[0]) - (cki * czi[0]);
                             rak = 1.0 / ak;
-                            cki = ((ckr * czi[0]) + (cki * czr[0])) * rak;
+                            cki = ( (ckr * czi[0]) + (cki * czr[0])) * rak;
                             ckr = str[0] * rak;
                             s1r[0] = (ckr * fr[0]) - (cki * fi[0]) + s1r[0];
                             s1i[0] = (ckr * fi[0]) + (cki * fr[0]) + s1i[0];
@@ -5101,8 +4717,8 @@ group:       {
                     t1 = 0.25 * caz * caz;
 
                     while (true) {
-                        fr[0] = ((fr[0] * ak) + pr + qr) / bk;
-                        fi[0] = ((fi[0] * ak) + pi + qi) / bk;
+                        fr[0] = ( (fr[0] * ak) + pr + qr) / bk;
+                        fi[0] = ( (fi[0] * ak) + pi + qi) / bk;
                         str[0] = 1.0 / (ak - dnu);
                         pr = pr * str[0];
                         pi = pi * str[0];
@@ -5111,7 +4727,7 @@ group:       {
                         qi = qi * str[0];
                         str[0] = (ckr * czr[0]) - (cki * czi[0]);
                         rak = 1.0 / ak;
-                        cki = ((ckr * czi[0]) + (cki * czr[0])) * rak;
+                        cki = ( (ckr * czi[0]) + (cki * czr[0])) * rak;
                         ckr = str[0] * rak;
                         s1r[0] = (ckr * fr[0]) - (cki * fi[0]) + s1r[0];
                         s1i[0] = (ckr * fi[0]) + (cki * fr[0]) + s1i[0];
@@ -5174,7 +4790,7 @@ group:       {
                     kflag = 2;
                 } // if (zr > alim)
                 else {
-                    str[0] = Math.exp(-zr) * cssr[kflag - 1];
+                    str[0] = Math.exp( -zr) * cssr[kflag - 1];
                     sti[0] = -str[0] * Math.sin(zi);
                     str[0] = str[0] * Math.cos(zi);
                     zmlt(coefr[0], coefi[0], str[0], sti[0], coefr, coefi);
@@ -5217,8 +4833,8 @@ group:       {
             if (seg2) {
 
                 // Compute r2 = F(e). If CABS(Z) >= r2, use forward recurrence to
-                // determine the bakcward index k.  r2 = F(e) is a straight line on
-                // 12 <= e <= 60.  e is computed from 2**(-e) = 2**(1 - I1MACH(14)) =
+                // determine the bakcward index k. r2 = F(e) is a straight line on
+                // 12 <= e <= 60. e is computed from 2**(-e) = 2**(1 - I1MACH(14)) =
                 // tol
                 t1 = doubleDigits - 1.0;
                 t1 = t1 * r1m5 * 3.321928094;
@@ -5251,7 +4867,7 @@ group:       {
                         p1r = 0.0;
                         p2r = 1.0;
 
-group:                   {
+                        group: {
 
                             for (i = 1; i <= kmax; i++) {
                                 ak = fhs / fks;
@@ -5315,8 +4931,8 @@ group:                   {
                     cbi = zi * rak;
                     ptr[0] = p2r;
                     pti[0] = p2i;
-                    p2r = ((ptr[0] * cbr) - (pti[0] * cbi) - p1r) * ak;
-                    p2i = ((pti[0] * cbr) + (ptr[0] * cbi) - p1i) * ak;
+                    p2r = ( (ptr[0] * cbr) - (pti[0] * cbi) - p1r) * ak;
+                    p2i = ( (pti[0] * cbr) + (ptr[0] * cbi) - p1i) * ak;
                     p1r = ptr[0];
                     p1i = pti[0];
                     csr = csr + p2r;
@@ -5336,7 +4952,7 @@ group:                   {
                 zmlt(coefr[0], coefi[0], s1r[0], s1i[0], str, sti);
                 zmlt(str[0], sti[0], csr, csi, s1r, s1i);
 
-                if ((inu <= 0) && (n <= 1)) {
+                if ( (inu <= 0) && (n <= 1)) {
                     zdr = zr;
                     zdi = zi;
                     seg5 = false;
@@ -5547,7 +5163,7 @@ group:                   {
             // iflag = 1 cases, forward recurrence on scaled values on underflow
             if (seg10) {
                 helim = 0.5 * elim;
-                elm = Math.exp(-elim);
+                elm = Math.exp( -elim);
                 celmr = elm;
                 ascle = bry[0];
                 zdr = zr;
@@ -5555,7 +5171,7 @@ group:                   {
                 ic = -1;
                 j = 2;
 
-group2:          {
+                group2: {
 
                     for (i = 1; i <= inu; i++) {
                         str[0] = s2r[0];
@@ -5570,7 +5186,7 @@ group2:          {
                         alas = Math.log(as);
                         p2r = -zdr + alas;
 
-                        if (p2r >= (-elim)) {
+                        if (p2r >= ( -elim)) {
                             zlog(s2r[0], s2i[0], str, sti, idum);
                             p2r = -zdr + str[0];
                             p2i = -zdi + sti[0];
@@ -5692,31 +5308,31 @@ group2:          {
      * ZBUNI COMPUTES THE I BESSEL FUNCTION FOR LARGE CABS(Z).GT. FNUL AND fnu+N-1.LT.FNUL. THE ORDER IS INCREASED FROM
      * fnu+N-1 GREATER THAN FNUL BY ADDING NUI AND COMPUTING ACCORDING TO THE UNIFORM ASYMPTOTIC EXPANSION FOR I(fnu,Z)
      * ON IFORM=1 AND THE EXPANSION FOR J(fnu,Z) ON IFORM=2
-     *
-     * @param  zr     double
-     * @param  zi     double
-     * @param  fnu    double
-     * @param  kode   int
-     * @param  n      int
-     * @param  yr     double[]
-     * @param  yi     double[]
-     * @param  nz     int[]
-     * @param  nui    int
-     * @param  nlast  int[]
-     * @param  fnul   double
+     * 
+     * @param zr double
+     * @param zi double
+     * @param fnu double
+     * @param kode int
+     * @param n int
+     * @param yr double[]
+     * @param yi double[]
+     * @param nz int[]
+     * @param nui int
+     * @param nlast int[]
+     * @param fnul double
      */
-    private void zbuni(double zr, double zi, double fnu, int kode, int n, double[] yr, double[] yi, int[] nz, int nui,
-                       int[] nlast, double fnul) {
+    private void zbuni(final double zr, double zi, final double fnu, final int kode, final int n, final double[] yr,
+            final double[] yi, final int[] nz, final int nui, final int[] nlast, final double fnul) {
         double ax;
         double ay;
         int iform;
         double fnui;
         double dfnu;
-        double[] cyr = new double[2];
-        double[] cyi = new double[2];
-        double[] bry = new double[3];
+        final double[] cyr = new double[2];
+        final double[] cyi = new double[2];
+        final double[] bry = new double[3];
         double gnu;
-        int[] nw = new int[1];
+        final int[] nw = new int[1];
         double str;
         int iflag;
         double ascle;
@@ -5848,8 +5464,8 @@ group2:          {
         for (i = 1; i <= nui; i++) {
             str = s2r;
             sti = s2i;
-            s2r = ((dfnu + fnui) * ((rzr * str) - (rzi * sti))) + s1r;
-            s2i = ((dfnu + fnui) * ((rzr * sti) + (rzi * str))) + s1i;
+            s2r = ( (dfnu + fnui) * ( (rzr * str) - (rzi * sti))) + s1r;
+            s2i = ( (dfnu + fnui) * ( (rzr * sti) + (rzi * str))) + s1i;
             s1r = str;
             s1i = sti;
             fnui = fnui - 1.0;
@@ -5896,8 +5512,8 @@ group2:          {
         for (i = 1; i <= nl; i++) {
             str = s2r;
             sti = s2i;
-            s2r = ((fnu + fnui) * ((rzr * str) - (rzi * sti))) + s1r;
-            s2i = ((fnu + fnui) * ((rzr * sti) + (rzi * str))) + s1i;
+            s2r = ( (fnu + fnui) * ( (rzr * str) - (rzi * sti))) + s1r;
+            s2i = ( (fnu + fnui) * ( (rzr * sti) + (rzi * str))) + s1i;
             s1r = str;
             s1i = sti;
             str = s2r * cscrr;
@@ -5939,18 +5555,19 @@ group2:          {
     /**
      * ZBUNK COMPUTES THE K BESSEL FUNCTION FOR FNU.GT.FNUL. ACCORDING TO THE UNIFORM ASYMPTOTIC EXPANSION FOR K(FNU,Z)
      * IN ZUNK1 AND THE EXPANSION FOR H(2,FNU,Z) IN ZUNK2
-     *
-     * @param  zr    double
-     * @param  zi    double
-     * @param  fnu   double
-     * @param  kode  int
-     * @param  mr    int
-     * @param  n     int
-     * @param  yr    double[]
-     * @param  yi    double[]
-     * @param  nz    int[]
+     * 
+     * @param zr double
+     * @param zi double
+     * @param fnu double
+     * @param kode int
+     * @param mr int
+     * @param n int
+     * @param yr double[]
+     * @param yi double[]
+     * @param nz int[]
      */
-    private void zbunk(double zr, double zi, double fnu, int kode, int mr, int n, double[] yr, double[] yi, int[] nz) {
+    private void zbunk(final double zr, final double zi, final double fnu, final int kode, final int mr, final int n,
+            final double[] yr, final double[] yi, final int[] nz) {
         double ax;
         double ay;
 
@@ -5977,22 +5594,23 @@ group2:          {
 
     /**
      * complex divide c = a/b.
-     *
-     * @param  ar  double
-     * @param  ai  double
-     * @param  br  double
-     * @param  bi  double
-     * @param  cr  double[]
-     * @param  ci  double[]
+     * 
+     * @param ar double
+     * @param ai double
+     * @param br double
+     * @param bi double
+     * @param cr double[]
+     * @param ci double[]
      */
-    private void zdiv(double ar, double ai, double br, double bi, double[] cr, double[] ci) {
+    private void zdiv(final double ar, final double ai, final double br, final double bi, final double[] cr,
+            final double[] ci) {
         double bm, cc, cd, ca, cb;
 
         bm = 1.0 / zabs(br, bi);
         cc = br * bm;
         cd = bi * bm;
-        ca = ((ar * cc) + (ai * cd)) * bm;
-        cb = ((ai * cc) - (ar * cd)) * bm;
+        ca = ( (ar * cc) + (ai * cd)) * bm;
+        cb = ( (ai * cc) - (ar * cd)) * bm;
         cr[0] = ca;
         ci[0] = cb;
 
@@ -6001,13 +5619,13 @@ group2:          {
 
     /**
      * complex exponential function b = exp(a).
-     *
-     * @param  ar  double
-     * @param  ai  double
-     * @param  br  double[]
-     * @param  bi  double[]
+     * 
+     * @param ar double
+     * @param ai double
+     * @param br double[]
+     * @param bi double[]
      */
-    private void zexp(double ar, double ai, double[] br, double[] bi) {
+    private void zexp(final double ar, final double ai, final double[] br, final double[] bi) {
         double zm, ca, cb;
         zm = Math.exp(ar);
         ca = zm * Math.cos(ai);
@@ -6021,32 +5639,32 @@ group2:          {
     /**
      * Set K functions to zero on underflow, continue recurrence on scaled functions until two members come on scale,
      * then return with min(zn[0]+2,n) values scaled by 1/tol.
-     *
-     * @param  zrr    double
-     * @param  zri    double
-     * @param  fnu    double
-     * @param  n      int
-     * @param  yr     double[]
-     * @param  yi     double[]
-     * @param  nz     int[]
-     * @param  rzr    double
-     * @param  rzi    double
-     * @param  ascle  double
+     * 
+     * @param zrr double
+     * @param zri double
+     * @param fnu double
+     * @param n int
+     * @param yr double[]
+     * @param yi double[]
+     * @param nz int[]
+     * @param rzr double
+     * @param rzi double
+     * @param ascle double
      */
-    private void zkscl(double zrr, double zri, double fnu, int n, double[] yr, double[] yi, int[] nz, double rzr,
-                       double rzi, double ascle) {
+    private void zkscl(double zrr, final double zri, final double fnu, final int n, final double[] yr,
+            final double[] yi, final int[] nz, final double rzr, final double rzi, final double ascle) {
         int ic;
         int nn;
         int i;
         double s1r;
         double s1i;
-        double[] cyr = new double[2];
-        double[] cyi = new double[2];
+        final double[] cyr = new double[2];
+        final double[] cyi = new double[2];
         double as;
         double acs;
-        double[] csr = new double[1];
-        double[] csi = new double[1];
-        int[] idum = new int[1];
+        final double[] csr = new double[1];
+        final double[] csi = new double[1];
+        final int[] idum = new int[1];
         double str;
         double fn;
         double ckr;
@@ -6060,7 +5678,7 @@ group2:          {
         double zdi;
         int kk;
         double alas;
-        int[] nw = new int[1];
+        final int[] nw = new int[1];
         int i2;
 
         nz[0] = 0;
@@ -6078,7 +5696,7 @@ group2:          {
             yr[i - 1] = 0.0;
             yi[i - 1] = 0.0;
 
-            if (acs < (-elim)) {
+            if (acs < ( -elim)) {
                 continue;
             } // if (acs < (-elim))
 
@@ -6110,7 +5728,7 @@ group2:          {
             nz[0] = 2;
         } // if (ic <= 1)
 
-        if ((n == 2) || (nz[0] == 0)) {
+        if ( (n == 2) || (nz[0] == 0)) {
             return;
         } // if ((n == 2) || (nz[0] == 0))
 
@@ -6122,12 +5740,12 @@ group2:          {
         s2r = cyr[1];
         s2i = cyi[1];
         helim = 0.5 * elim;
-        elm = Math.exp(-elim);
+        elm = Math.exp( -elim);
         celmr = elm;
         zdr = zrr;
         zdi = zri;
 
-        // Find two consecutive Y values on scale.  Scale recurrence if s2
+        // Find two consecutive Y values on scale. Scale recurrence if s2
         // gets larger than exp(elim/2)
         for (i = 3; i <= n; i++) {
             kk = i;
@@ -6146,7 +5764,7 @@ group2:          {
             yr[i - 1] = 0.0;
             yi[i - 1] = 0.0;
 
-            if (acs >= (-elim)) {
+            if (acs >= ( -elim)) {
                 zlog(s2r, s2i, csr, csi, idum);
                 csr[0] = csr[0] - zdr;
                 csi[0] = csi[0] - zdi;
@@ -6204,14 +5822,14 @@ group2:          {
 
     /**
      * complex logarithm b = clog(a).
-     *
-     * @param  ar    double
-     * @param  ai    double
-     * @param  br    double[]
-     * @param  bi    double[]
-     * @param  ierr  int[] ierr = 0, normal return ierr = 1, z = cmplx(0.0, 0.0)
+     * 
+     * @param ar double
+     * @param ai double
+     * @param br double[]
+     * @param bi double[]
+     * @param ierr int[] ierr = 0, normal return ierr = 1, z = cmplx(0.0, 0.0)
      */
-    private void zlog(double ar, double ai, double[] br, double[] bi, int[] ierr) {
+    private void zlog(final double ar, final double ai, final double[] br, final double[] bi, final int[] ierr) {
         double theta;
         double zm;
         ierr[0] = 0;
@@ -6253,7 +5871,7 @@ group2:          {
 
         theta = Math.atan(ai / ar);
 
-        if ((theta <= 0.0) && (ar < 0.0)) {
+        if ( (theta <= 0.0) && (ar < 0.0)) {
             theta = theta + Math.PI;
         } else if (ar < 0.0) {
             theta = theta - Math.PI;
@@ -6269,17 +5887,18 @@ group2:          {
     /**
      * zmlri computes the I Bessel function for the Real(z) >= 0.0 by the Miller Algorithm normalized by a Neumann
      * series.
-     *
-     * @param  zr    double
-     * @param  zi    double
-     * @param  fnu   double
-     * @param  kode  int
-     * @param  n     int
-     * @param  yr    double[]
-     * @param  yi    double[]
-     * @param  nz    int[]
+     * 
+     * @param zr double
+     * @param zi double
+     * @param fnu double
+     * @param kode int
+     * @param n int
+     * @param yr double[]
+     * @param yi double[]
+     * @param nz int[]
      */
-    private void zmlri(double zr, double zi, double fnu, int kode, int n, double[] yr, double[] yi, int[] nz) {
+    private void zmlri(final double zr, double zi, final double fnu, final int kode, final int n, final double[] yr,
+            final double[] yi, final int[] nz) {
         double scle;
         double az;
         int iaz;
@@ -6287,8 +5906,8 @@ group2:          {
         int inu;
         double at;
         double raz;
-        double[] str = new double[1];
-        double[] sti = new double[1];
+        final double[] str = new double[1];
+        final double[] sti = new double[1];
         double ckr;
         double cki;
         double rzr;
@@ -6315,13 +5934,13 @@ group2:          {
         double fnf;
         double tfnf;
         double bk;
-        int[] idum = new int[1];
+        final int[] idum = new int[1];
         double sumr;
         double sumi;
         int km;
         int m;
-        double[] cnormr = new double[1];
-        double[] cnormi = new double[1];
+        final double[] cnormr = new double[1];
+        final double[] cnormi = new double[1];
 
         scle = tiny / tol;
         nz[0] = 0;
@@ -6342,21 +5961,21 @@ group2:          {
         p2r = 1.0;
         p2i = 0.0;
         ack = (at + 1.0) * raz;
-        rho = ack + Math.sqrt((ack * ack) - 1.0);
+        rho = ack + Math.sqrt( (ack * ack) - 1.0);
         rho2 = rho * rho;
-        tst = (rho2 + rho2) / ((rho2 - 1.0) * (rho - 1.0));
+        tst = (rho2 + rho2) / ( (rho2 - 1.0) * (rho - 1.0));
         tst = tst / tol;
 
         // Compute relative truncation error index for series
         ak = at;
 
-group:   {
+        group: {
 
             for (i = 1; i <= 80; i++) {
                 ptr = p2r;
                 pti = p2i;
-                p2r = p1r - ((ckr * ptr) - (cki * pti));
-                p2i = p1i - ((cki * ptr) + (ckr * pti));
+                p2r = p1r - ( (ckr * ptr) - (cki * pti));
+                p2i = p1i - ( (cki * ptr) + (ckr * pti));
                 p1r = ptr;
                 p1i = pti;
                 ckr = ckr + rzr;
@@ -6394,13 +6013,13 @@ group:   {
             tst = Math.sqrt(ack / tol);
             itime = 1;
 
-group2:      {
+            group2: {
 
                 for (k = 1; k <= 80; k++) {
                     ptr = p2r;
                     pti = p2i;
-                    p2r = p1r - ((ckr * ptr) - (cki * pti));
-                    p2i = p1i - ((ckr * pti) + (cki * ptr));
+                    p2r = p1r - ( (ckr * ptr) - (cki * pti));
+                    p2i = p1i - ( (ckr * pti) + (cki * ptr));
                     p1r = ptr;
                     p1i = pti;
                     ckr = ckr + rzr;
@@ -6416,10 +6035,10 @@ group2:      {
                     } // if (itime == 2)
 
                     ack = zabs(ckr, cki);
-                    flam = ack + Math.sqrt((ack * ack) - 1.0);
+                    flam = ack + Math.sqrt( (ack * ack) - 1.0);
                     fkap = ap / zabs(p1r, p1i);
                     rho = Math.min(flam, fkap);
-                    tst = tst * Math.sqrt(rho / ((rho * rho) - 1.0));
+                    tst = tst * Math.sqrt(rho / ( (rho * rho) - 1.0));
                     itime = 2;
                 } // for (k = 1; k <= 80; k++)
 
@@ -6450,14 +6069,14 @@ group2:      {
         for (i = 1; i <= km; i++) {
             ptr = p2r;
             pti = p2i;
-            p2r = p1r + ((fkk + fnf) * ((rzr * ptr) - (rzi * pti)));
-            p2i = p1i + ((fkk + fnf) * ((rzi * ptr) + (rzr * pti)));
+            p2r = p1r + ( (fkk + fnf) * ( (rzr * ptr) - (rzi * pti)));
+            p2i = p1i + ( (fkk + fnf) * ( (rzi * ptr) + (rzr * pti)));
             p1r = ptr;
             p1i = pti;
             ak = 1.0 - (tfnf / (fkk + tfnf));
             ack = bk * ak;
-            sumr = sumr + ((ack + bk) * p1r);
-            sumi = sumi + ((ack + bk) * p1i);
+            sumr = sumr + ( (ack + bk) * p1r);
+            sumi = sumi + ( (ack + bk) * p1i);
             bk = ack;
             fkk = fkk - 1.0;
         } // for (i = 1; i <= km; i++)
@@ -6470,14 +6089,14 @@ group2:      {
             for (i = 2; i <= n; i++) {
                 ptr = p2r;
                 pti = p2i;
-                p2r = p1r + ((fkk + fnf) * ((rzr * ptr) - (rzi * pti)));
-                p2i = p1i + ((fkk + fnf) * ((rzi * ptr) + (rzr * pti)));
+                p2r = p1r + ( (fkk + fnf) * ( (rzr * ptr) - (rzi * pti)));
+                p2i = p1i + ( (fkk + fnf) * ( (rzi * ptr) + (rzr * pti)));
                 p1r = ptr;
                 p1i = pti;
                 ak = 1.0 - (tfnf / (fkk + tfnf));
                 ack = bk * ak;
-                sumr = sumr + ((ack + bk) * p1r);
-                sumi = sumi + ((ack + bk) * p1i);
+                sumr = sumr + ( (ack + bk) * p1r);
+                sumi = sumi + ( (ack + bk) * p1i);
                 bk = ack;
                 fkk = fkk - 1.0;
                 m = n - i + 1;
@@ -6491,14 +6110,14 @@ group2:      {
             for (i = 1; i <= ifnu; i++) {
                 ptr = p2r;
                 pti = p2i;
-                p2r = p1r + ((fkk + fnf) * ((rzr * ptr) - (rzi * pti)));
-                p2i = p1i + ((fkk + fnf) * ((rzr * pti) + (rzi * ptr)));
+                p2r = p1r + ( (fkk + fnf) * ( (rzr * ptr) - (rzi * pti)));
+                p2i = p1i + ( (fkk + fnf) * ( (rzr * pti) + (rzi * ptr)));
                 p1r = ptr;
                 p1i = pti;
                 ak = 1.0 - (tfnf / (fkk + tfnf));
                 ack = bk * ak;
-                sumr = sumr + ((ack + bk) * p1r);
-                sumi = sumi + ((ack + bk) * p1i);
+                sumr = sumr + ( (ack + bk) * p1r);
+                sumi = sumi + ( (ack + bk) * p1i);
                 bk = ack;
                 fkk = fkk - 1.0;
             } // for (i = 1; i <= ifnu; i++)
@@ -6512,8 +6131,8 @@ group2:      {
         } // if (kode == 2)
 
         zlog(rzr, rzi, str, sti, idum);
-        p1r = (-fnf * str[0]) + ptr;
-        p1i = (-fnf * sti[0]) + pti;
+        p1r = ( -fnf * str[0]) + ptr;
+        p1i = ( -fnf * sti[0]) + pti;
         ap = dgamln(fnf + 1.0, idum);
         ptr = p1r - ap;
         pti = p1i;
@@ -6542,15 +6161,16 @@ group2:      {
 
     /**
      * complex multiply c = a * b.
-     *
-     * @param  ar  double
-     * @param  ai  double
-     * @param  br  double
-     * @param  bi  double
-     * @param  cr  double[]
-     * @param  ci  double[]
+     * 
+     * @param ar double
+     * @param ai double
+     * @param br double
+     * @param bi double
+     * @param cr double[]
+     * @param ci double[]
      */
-    private void zmlt(double ar, double ai, double br, double bi, double[] cr, double[] ci) {
+    private void zmlt(final double ar, final double ai, final double br, final double bi, final double[] cr,
+            final double[] ci) {
         double ca, cb;
 
         ca = (ar * br) - (ai * bi);
@@ -6563,51 +6183,34 @@ group2:      {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  mqc  int Default is mqc = 1 does not check underflow limits and overflow limits. mqc != 1 checks
-     *              underflow and overflow limits
+     * 
+     * @param mqc int Default is mqc = 1 does not check underflow limits and overflow limits. mqc != 1 checks underflow
+     *            and overflow limits
      */
-    private void zqcai(int mqc) {
+    private void zqcai(final int mqc) {
 
-        /***DATE WRITTEN   830501   (YYMMDD)
-        C***REVISION DATE  890801, 930101   (YYMMDD)
-        C
-        C                *** A DOUBLE PRECISION ROUTINE ***
-        C
-        C     ZQCAI IS A QUICK CHECK ROUTINE FOR THE COMPLEX AIRY FUNCTIONS
-        C     GENERATED BY SUBROUTINES ZAIRY AND ZBIRY.
-        C
-        C     ZQCAI GENERATES AIRY FUNCTIONS AND THEIR DERIVATIVES FROM ZAIRY
-        C     AND ZBIRY AND CHECKS THEM AGAINST THE WRONSKIAN EVALUATION IN THE
-        C     REGION -PI/3 .LE. ARG(Z) .LE. PI/3:
-        C
-        C                 AI(Z)*BI'(Z)-AI'(Z)*BI(Z)=1/PI.
-        C
-        C     IN THE REMAINDER OF THE CUT PLANE, THE IDENTITIES
-        C
-        C              AI(Z)  = SQRT(-Z)*( J(-1/3,ZR) + J(1/3,ZR) )/3
-        C
-        C              AI'(Z) =        Z*( J(-2/3,ZR) - J(2/3,ZR) )/3
-        C
-        C       BI(Z)  =   I*SQRT(-Z/3)*( C1*H(1/3,1,ZR) - C2*H(1/3,2,ZR) )/2
-        C
-        C       BI'(Z) = I*(-Z)/SQRT(3)*( C2*H(2/3,1,ZR) - C1*H(2/3,2,ZR) )/2
-        C
-        C     ARE CHECKED WHERE ZR = (2/3)(-Z)**(3/2) WITH C1 = EXP(PI*I/6),
-        C     C2 = CONJG(C1) AND I**2 = -1.
-        C
-        C     THE PARAMETER MQC CAN HAVE VALUES 1 (THE DEFAULT) FOR A FASTER,
-        C     LESS DEFINITIVE TEST OR 2 FOR A SLOWER, MORE DEFINITIVE TEST.*/
-        double[] er = new double[5];
-        double[] t = new double[20];
-        double[] yr = new double[20];
-        double[] yi = new double[20];
-        double[] yyr = new double[20];
-        double[] yyi = new double[20];
-        double[] wr = new double[20];
-        double[] wi = new double[20];
-        int[] keps = new int[20];
-        int[] kdo = new int[20];
+        /**
+         * *DATE WRITTEN 830501 (YYMMDD) C***REVISION DATE 890801, 930101 (YYMMDD) C C *** A DOUBLE PRECISION ROUTINE
+         * *** C C ZQCAI IS A QUICK CHECK ROUTINE FOR THE COMPLEX AIRY FUNCTIONS C GENERATED BY SUBROUTINES ZAIRY AND
+         * ZBIRY. C C ZQCAI GENERATES AIRY FUNCTIONS AND THEIR DERIVATIVES FROM ZAIRY C AND ZBIRY AND CHECKS THEM
+         * AGAINST THE WRONSKIAN EVALUATION IN THE C REGION -PI/3 .LE. ARG(Z) .LE. PI/3: C C
+         * AI(Z)*BI'(Z)-AI'(Z)*BI(Z)=1/PI. C C IN THE REMAINDER OF THE CUT PLANE, THE IDENTITIES C C AI(Z) = SQRT(-Z)*(
+         * J(-1/3,ZR) + J(1/3,ZR) )/3 C C AI'(Z) = Z*( J(-2/3,ZR) - J(2/3,ZR) )/3 C C BI(Z) = I*SQRT(-Z/3)*(
+         * C1*H(1/3,1,ZR) - C2*H(1/3,2,ZR) )/2 C C BI'(Z) = I*(-Z)/SQRT(3)*( C2*H(2/3,1,ZR) - C1*H(2/3,2,ZR) )/2 C C ARE
+         * CHECKED WHERE ZR = (2/3)(-Z)**(3/2) WITH C1 = EXP(PI*I/6), C C2 = CONJG(C1) AND I**2 = -1. C C THE PARAMETER
+         * MQC CAN HAVE VALUES 1 (THE DEFAULT) FOR A FASTER, C LESS DEFINITIVE TEST OR 2 FOR A SLOWER, MORE DEFINITIVE
+         * TEST.
+         */
+        final double[] er = new double[5];
+        final double[] t = new double[20];
+        final double[] yr = new double[20];
+        final double[] yi = new double[20];
+        final double[] yyr = new double[20];
+        final double[] yyi = new double[20];
+        final double[] wr = new double[20];
+        final double[] wi = new double[20];
+        final int[] keps = new int[20];
+        final int[] kdo = new int[20];
         double neweps;
         int k;
         int k1;
@@ -6617,10 +6220,10 @@ group2:      {
         double ertol;
         double rm;
         double atol;
-        double fpi = Math.PI / 4.0;
-        double hpi = Math.PI / 2.0;
-        double rpi = 1.0 / Math.PI;
-        double spi = Math.PI / 6.0;
+        final double fpi = Math.PI / 4.0;
+        final double hpi = Math.PI / 2.0;
+        final double rpi = 1.0 / Math.PI;
+        final double spi = Math.PI / 6.0;
         double con1r;
         double con1i;
         double con2r;
@@ -6654,20 +6257,20 @@ group2:      {
         double st;
         double zr;
         double zi;
-        int[] nz = new int[1];
-        int[] ierr = new int[1];
-        double[] cwr = new double[1];
-        double[] cwi = new double[1];
-        double[] cyr = new double[1];
-        double[] cyi = new double[1];
-        double[] cvr = new double[1];
-        double[] cvi = new double[1];
-        double[] car = new double[1];
-        double[] cai = new double[1];
+        final int[] nz = new int[1];
+        final int[] ierr = new int[1];
+        final double[] cwr = new double[1];
+        final double[] cwi = new double[1];
+        final double[] cyr = new double[1];
+        final double[] cyi = new double[1];
+        final double[] cvr = new double[1];
+        final double[] cvi = new double[1];
+        final double[] car = new double[1];
+        final double[] cai = new double[1];
         double zrr;
         double zri;
-        double[] str = new double[1];
-        double[] sti = new double[1];
+        final double[] str = new double[1];
+        final double[] sti = new double[1];
         double ptr;
         int jb;
         int jl;
@@ -6684,29 +6287,29 @@ group2:      {
         double conci;
         double condr;
         double condi;
-        double[] yr0 = new double[1];
-        double[] yi0 = new double[1];
-        double[] yr1 = new double[1];
-        double[] yi1 = new double[1];
-        double[] yr2 = new double[1];
-        double[] yi2 = new double[1];
-        double[] yr3 = new double[1];
-        double[] yi3 = new double[1];
-        double[] yr4 = new double[1];
-        double[] yi4 = new double[1];
-        double[] wr0 = new double[1];
-        double[] wi0 = new double[1];
-        double[] wr1 = new double[1];
-        double[] wi1 = new double[1];
+        final double[] yr0 = new double[1];
+        final double[] yi0 = new double[1];
+        final double[] yr1 = new double[1];
+        final double[] yi1 = new double[1];
+        final double[] yr2 = new double[1];
+        final double[] yi2 = new double[1];
+        final double[] yr3 = new double[1];
+        final double[] yi3 = new double[1];
+        final double[] yr4 = new double[1];
+        final double[] yi4 = new double[1];
+        final double[] wr0 = new double[1];
+        final double[] wi0 = new double[1];
+        final double[] wr1 = new double[1];
+        final double[] wi1 = new double[1];
         int j;
 
-
-        /** SET PARAMETERS RELATED TO MACHINE CONSTANTS.
-         *  TOL IS THE APPROXIMATE UNIT ROUNDOFF LIMITED TO 1.0E-18. ELIM IS THE APPROXIMATE EXPONENTIAL OVER- AND
-         * UNDERFLOW LIMIT. EXP(-ELIM).LT.EXP(-ALIM)=EXP(-ELIM)/TOL    AND EXP(ELIM).GT.EXP(ALIM)=EXP(ELIM)*TOL
-         * ARE INTERVALS NEAR UNDERFLOW AND OVERFLOW LIMITS WHERE SCALED ARITHMETIC IS DONE. RL IS THE LOWER BOUNDARY OF
-         * THE ASYMPTOTIC EXPANSION FOR LARGE Z. DIG = NUMBER OF BASE 10 DIGITS IN TOL = 10**(-DIG). FNUL IS THE LOWER
-         * BOUNDARY OF THE ASYMPTOTIC SERIES FOR LARGE FNU */
+        /**
+         * SET PARAMETERS RELATED TO MACHINE CONSTANTS. TOL IS THE APPROXIMATE UNIT ROUNDOFF LIMITED TO 1.0E-18. ELIM IS
+         * THE APPROXIMATE EXPONENTIAL OVER- AND UNDERFLOW LIMIT. EXP(-ELIM).LT.EXP(-ALIM)=EXP(-ELIM)/TOL AND
+         * EXP(ELIM).GT.EXP(ALIM)=EXP(ELIM)*TOL ARE INTERVALS NEAR UNDERFLOW AND OVERFLOW LIMITS WHERE SCALED ARITHMETIC
+         * IS DONE. RL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC EXPANSION FOR LARGE Z. DIG = NUMBER OF BASE 10 DIGITS IN
+         * TOL = 10**(-DIG). FNUL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC SERIES FOR LARGE FNU
+         */
         // epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
         // (1.0 + epsilon) != 1.0.
@@ -6745,14 +6348,14 @@ group2:      {
         // r1m5 = log10(2), which is D1MACH(5)
         r1m5 = 0.434294481903251 * Math.log(2.0);
         k = Math.min(Math.abs(emin), Math.abs(emax));
-        elim = 2.303 * ((k * r1m5) - 3.0);
+        elim = 2.303 * ( (k * r1m5) - 3.0);
 
         // doubleDigits is I1MACH(14), the number of base-B digits for double
-        // precision.  IEEE 754 double precision has 64 bits with 1 sign bit,
+        // precision. IEEE 754 double precision has 64 bits with 1 sign bit,
         // 11 exponent bits, and 52 fraction, mantissa, or signficand bits.
         // Floating-point numbers are typically stored in normalized form,
-        // with the radix point after the first non-zero digit.  In base two,
-        // the only possible non-zero digit is 1.  Thus, a leading digit of 1
+        // with the radix point after the first non-zero digit. In base two,
+        // the only possible non-zero digit is 1. Thus, a leading digit of 1
         // can always be assumed and need not be explicitly represented.
         // Therefore, the mantissa effectively has 53 bits of resolution.
         doubleDigits = 53;
@@ -6760,10 +6363,10 @@ group2:      {
         aa = r1m5 * k1;
         dig = Math.min(aa, 18.0);
         aa = 2.303 * aa;
-        alim = elim + Math.max(-aa, -41.45);
+        alim = elim + Math.max( -aa, -41.45);
         rl = (1.2 * dig) + 3.0;
         fnul = 10.0 + (6.0 * (dig - 3.0));
-        slak = 3.0 + (4.0 * ((-0.434294481903251 * Math.log(tol)) - 7.0) / 11.0);
+        slak = 3.0 + (4.0 * ( ( -0.434294481903251 * Math.log(tol)) - 7.0) / 11.0);
         slak = Math.max(slak, 3.0);
         ertol = tol * Math.pow(10.0, slak);
         rm = 0.5 * (alim + elim);
@@ -6793,16 +6396,17 @@ group2:      {
         cii = 1.0;
         Preferences.debug("Checks in the (z,fnu) space with mqc = " + mqc + "\n");
 
-        /**     TEST VALUES OF Z IN -PI.LT.ARG(Z).LE.PI
+        /**
+         * TEST VALUES OF Z IN -PI.LT.ARG(Z).LE.PI
          * C-----------------------------------------------------------------------
-         * C----------------------------------------------------------------------- C     KDO(K), K=1,IL  DETERMINES
-         * WHICH OF THE IL ANGLES IN -PI TO PI C     ARE USE TO COMPUTE VALUES OF Z C       KDO(K) = 0  MEANS THAT THE
-         * INDEX K WILL BE USED FOR ONE OR TWO C                   VALUES OF Z, DEPENDING ON THE CHOICE OF KEPS(K) C
-         *          = 1  MEANS THAT THE INDEX K AND THE CORRESPONDING ANGLE C                   WILL BE SKIPPED C
-         * KEPS(K), K=1,IL DETERMINES WHICH OF THE ANGLES GET INCREMENTED C     UP AND DOWN TO PUT VALUES OF Z IN
-         * REGIONS WHERE DIFFERENT C     FORMULAE ARE USED. C       KEPS(K) =0  MEANS THAT THE ANGLE WILL BE USED
-         * WITHOUT CHANGE C               =1  MEANS THAT THE ANGLE WILL BE INCREMENTED UP AND C                   DOWN
-         * BY EPSC     THE ANGLES TO BE USED ARE STORED IN THE T(I) ARRAY, I=1,ITL */
+         * C----------------------------------------------------------------------- C KDO(K), K=1,IL DETERMINES WHICH OF
+         * THE IL ANGLES IN -PI TO PI C ARE USE TO COMPUTE VALUES OF Z C KDO(K) = 0 MEANS THAT THE INDEX K WILL BE USED
+         * FOR ONE OR TWO C VALUES OF Z, DEPENDING ON THE CHOICE OF KEPS(K) C = 1 MEANS THAT THE INDEX K AND THE
+         * CORRESPONDING ANGLE C WILL BE SKIPPED C KEPS(K), K=1,IL DETERMINES WHICH OF THE ANGLES GET INCREMENTED C UP
+         * AND DOWN TO PUT VALUES OF Z IN REGIONS WHERE DIFFERENT C FORMULAE ARE USED. C KEPS(K) =0 MEANS THAT THE ANGLE
+         * WILL BE USED WITHOUT CHANGE C =1 MEANS THAT THE ANGLE WILL BE INCREMENTED UP AND C DOWN BY EPSC THE ANGLES TO
+         * BE USED ARE STORED IN THE T(I) ARRAY, I=1,ITL
+         */
         if (mqc != 2) {
             icl = 1;
             il = 5;
@@ -6835,7 +6439,7 @@ group2:      {
         for (k = 2; k <= il; k++) {
 
             if (kdo[k - 1] == 0) {
-                t[i - 1] = Math.PI * (-il + (2.0 * k) - 1.0) / film;
+                t[i - 1] = Math.PI * ( -il + (2.0 * k) - 1.0) / film;
 
                 if (keps[k - 1] != 0) {
                     ts = t[i - 1];
@@ -6861,13 +6465,13 @@ group2:      {
                     for (ir = irb; ir <= 4; ir++) {
 
                         if (irset == 1) {
-                            r = ((0.2 * (4.0 - ir)) + (2.0 * (ir - 1.0))) / 3.0;
+                            r = ( (0.2 * (4.0 - ir)) + (2.0 * (ir - 1.0))) / 3.0;
                         } // if (irset == 1)
                         else if (irset == 2) {
-                            r = ((2.0 * (4.0 - ir)) + (rl * (ir - 1.0))) / 3.0;
+                            r = ( (2.0 * (4.0 - ir)) + (rl * (ir - 1.0))) / 3.0;
                         } // else if (irset == 2)
                         else {
-                            r = ((rl * (4.0 - ir)) + (rm * (ir - 1.0))) / 3.0;
+                            r = ( (rl * (4.0 - ir)) + (rm * (ir - 1.0))) / 3.0;
                         } // else
 
                         for (it = 1; it <= itl; it++) {
@@ -6892,7 +6496,7 @@ group2:      {
                                 yr[0] = yr0[0];
                                 yi[0] = yi0[0];
 
-                                if ((nz[0] != 0) || (ierr[0] != 0)) {
+                                if ( (nz[0] != 0) || (ierr[0] != 0)) {
                                     continue;
                                 } // if ((nz[0] != 0) || (ierr[0] != 0))
 
@@ -6900,7 +6504,7 @@ group2:      {
                                 yr[1] = yr1[0];
                                 yi[1] = yi1[0];
 
-                                if ((nz[0] != 0) || (ierr[0] != 0)) {
+                                if ( (nz[0] != 0) || (ierr[0] != 0)) {
                                     continue;
                                 } // if ((nz[0] != 0) || (ierr[0] != 0))
 
@@ -6919,8 +6523,8 @@ group2:      {
 
                                 if (kode == 2) {
                                     zsqrt(zr, zi, car, cai);
-                                    zrr = ((zr * car[0]) - (zi * cai[0])) * c23;
-                                    zri = ((zr * cai[0]) + (zi * car[0])) * c23;
+                                    zrr = ( (zr * car[0]) - (zi * cai[0])) * c23;
+                                    zri = ( (zr * cai[0]) + (zi * car[0])) * c23;
                                     aa = Math.abs(zrr);
                                     car[0] = zrr - aa;
                                     cai[0] = zri;
@@ -6941,19 +6545,19 @@ group2:      {
                                 yr[1] = yr1[0];
                                 yi[1] = yi1[0];
 
-                                if ((nz[0] != 0) || (ierr[0] != 0)) {
+                                if ( (nz[0] != 0) || (ierr[0] != 0)) {
                                     continue;
                                 } // if ((nz[0] != 0) || (ierr[0] != 0))
 
                                 zrr = -zr;
                                 zri = -zi;
                                 zsqrt(zrr, zri, cvr, cvi);
-                                ptr = ((zrr * cvr[0]) - (zri * cvi[0])) * c23;
-                                zri = ((zrr * cvi[0]) + (zri * cvr[0])) * c23;
+                                ptr = ( (zrr * cvr[0]) - (zri * cvi[0])) * c23;
+                                zri = ( (zrr * cvi[0]) + (zri * cvr[0])) * c23;
                                 zrr = ptr;
                                 zbesj(zrr, zri, c23, kode, 2, yyr, yyi, nz, ierr);
 
-                                if ((nz[0] != 0) || (ierr[0] != 0)) {
+                                if ( (nz[0] != 0) || (ierr[0] != 0)) {
                                     continue;
                                 } // if ((nz[0] != 0) || (ierr[0] != 0))
 
@@ -6966,15 +6570,15 @@ group2:      {
                                 cai[0] = yyi[0];
                                 zbesj(zrr, zri, c13, kode, 2, yyr, yyi, nz, ierr);
 
-                                if ((nz[0] != 0) || (ierr[0] != 0)) {
+                                if ( (nz[0] != 0) || (ierr[0] != 0)) {
                                     continue;
                                 } // if ((nz[0] != 0) || (ierr[0] != 0))
 
                                 if (kode == 2) {
                                     ab = Math.abs(zri);
                                     zsqrt(zr, zi, cwr, cwi);
-                                    zwr = ((zr * cwr[0]) - (zi * cwi[0])) * c23;
-                                    zwi = ((zr * cwi[0]) + (zi * cwr[0])) * c23;
+                                    zwr = ( (zr * cwr[0]) - (zi * cwi[0])) * c23;
+                                    zwi = ( (zr * cwi[0]) + (zi * cwr[0])) * c23;
                                     cwr[0] = zwr + ab;
                                     cwi[0] = zwi;
                                     zexp(cwr[0], cwi[0], str, sti);
@@ -7004,7 +6608,7 @@ group2:      {
                                 sti[0] = yi[1] - wi[1];
                                 er[1] = zabs(str[0], sti[0]);
 
-                                if ((zi != 0.0) || (zr >= 0.0)) {
+                                if ( (zi != 0.0) || (zr >= 0.0)) {
                                     er[1] = er[1] / zabs(yr[1], yi[1]);
                                 } // if ((zi != 0.0) || (zr >= 0.0))
                                 else if (kode == 2) {
@@ -7017,15 +6621,15 @@ group2:      {
                                 zdiv(str[0], sti[0], zrr, zri, cyr, cyi);
                                 cyr[0] = cyr[0] - yyr[1] - car[0];
                                 cyi[0] = cyi[0] - yyi[1] - cai[0];
-                                wr[2] = ((zr * cyr[0]) - (zi * cyi[0])) * c13;
-                                wi[2] = ((zr * cyi[0]) + (zi * cyr[0])) * c13;
+                                wr[2] = ( (zr * cyr[0]) - (zi * cyi[0])) * c13;
+                                wi[2] = ( (zr * cyi[0]) + (zi * cyr[0])) * c13;
                                 zairy(zr, zi, 1, kode, yr2, yi2, nz, ierr);
                                 yr[2] = yr2[0];
                                 yi[2] = yi2[0];
                                 str[0] = yr[2] - wr[2];
                                 sti[0] = yi[2] - wi[2];
 
-                                if ((zi != 0.0) || (zr >= 0.0)) {
+                                if ( (zi != 0.0) || (zr >= 0.0)) {
                                     er[2] = er[2] / zabs(yr[2], yi[2]);
                                 } // if ((zi != 0.0) || (zr >= 0.0))
                                 else if (kode == 2) {
@@ -7035,13 +6639,13 @@ group2:      {
                                 // Check Bi Test #4
                                 zbesh(zrr, zri, c13, kode, 1, 1, yr, yi, nz, ierr);
 
-                                if ((nz[0] != 0) || (ierr[0] != 0)) {
+                                if ( (nz[0] != 0) || (ierr[0] != 0)) {
                                     continue;
                                 } // if ((nz[0] != 0) || (ierr[0] != 0))
 
                                 zbesh(zrr, zri, c13, kode, 2, 1, yyr, yyi, nz, ierr);
 
-                                if ((nz[0] != 0) || (ierr[0] != 0)) {
+                                if ( (nz[0] != 0) || (ierr[0] != 0)) {
                                     continue;
                                 } // if (nz[0] != 0) || (ierr[0] != 0))
 
@@ -7065,8 +6669,8 @@ group2:      {
                                     str[0] = (concr * cwr[0]) - (conci * cwi[0]);
                                     conci = (concr * cwi[0]) + (conci * cwr[0]);
                                     concr = str[0];
-                                    zwr = -((cir * zrr) - (cii * zri)) - aa;
-                                    zwi = -((cir * zri) + (cii * zrr));
+                                    zwr = - ( (cir * zrr) - (cii * zri)) - aa;
+                                    zwi = - ( (cir * zri) + (cii * zrr));
                                     zexp(zwr, zwi, cwr, cwi);
                                     str[0] = (conbr * cwr[0]) - (conbi * cwi[0]);
                                     conbi = (conbr * cwi[0]) + (conbi * cwr[0]);
@@ -7080,8 +6684,8 @@ group2:      {
 
                                 cwr[0] = (conar * yr[0]) - (conai * yi[0]);
                                 cwi[0] = (conar * yi[0]) + (conai * yr[0]);
-                                cwr[0] = cwr[0] - ((conbr * yyr[0]) - (conbi * yyi[0]));
-                                cwi[0] = cwi[0] - ((conbr * yyi[0]) + (conbi * yyr[0]));
+                                cwr[0] = cwr[0] - ( (conbr * yyr[0]) - (conbi * yyi[0]));
+                                cwi[0] = cwi[0] - ( (conbr * yyi[0]) + (conbi * yyr[0]));
                                 str[0] = (cvr[0] * cavr) - (cvi[0] * cavi);
                                 sti[0] = (cvr[0] * cavi) + (cvi[0] * cavr);
                                 ptr = (str[0] * cwr[0]) - (sti[0] * cwi[0]);
@@ -7096,7 +6700,7 @@ group2:      {
                                 sti[0] = yi[3] - wi[3];
                                 er[3] = zabs(str[0], sti[0]);
 
-                                if ((zi != 0.0) || (zr >= 0.0)) {
+                                if ( (zi != 0.0) || (zr >= 0.0)) {
                                     er[3] = er[3] / zabs(yr[3], yi[3]);
                                 } // if ((zi != 0.0) || (zr >= 0.0))
                                 else if (kode == 2) {
@@ -7106,22 +6710,22 @@ group2:      {
                                 // Check Bi' Test #5
                                 zbesh(zrr, zri, c23, kode, 1, 1, yr, yi, nz, ierr);
 
-                                if ((nz[0] != 0) || (ierr[0] != 0)) {
+                                if ( (nz[0] != 0) || (ierr[0] != 0)) {
                                     continue;
                                 } // if ((nz[0] != 0) || (ierr[0] != 0))
 
                                 zbesh(zrr, zri, c23, kode, 2, 1, yyr, yyi, nz, ierr);
 
-                                if ((nz[0] != 0) || (ierr[0] != 0)) {
+                                if ( (nz[0] != 0) || (ierr[0] != 0)) {
                                     continue;
                                 } // if ((nz[0] != 0) || (ierr[0] != 0))
 
                                 cwr[0] = (concr * yr[0]) - (conci * yi[0]);
                                 cwi[0] = (concr * yi[0]) + (conci * yr[0]);
-                                cwr[0] = cwr[0] - ((condr * yyr[0]) - (condi * yyi[0]));
-                                cwi[0] = cwi[0] - ((condr * yyi[0]) + (condi * yyr[0]));
-                                str[0] = -((zr * cavr) - (zi * cavi));
-                                sti[0] = -((zr * cavi) + (zi * cavr));
+                                cwr[0] = cwr[0] - ( (condr * yyr[0]) - (condi * yyi[0]));
+                                cwi[0] = cwi[0] - ( (condr * yyi[0]) + (condi * yyr[0]));
+                                str[0] = - ( (zr * cavr) - (zi * cavi));
+                                sti[0] = - ( (zr * cavi) + (zi * cavr));
                                 ptr = (str[0] * cwr[0]) - (sti[0] * cwi[0]);
                                 cwi[0] = (str[0] * cwi[0]) + (sti[0] * cwr[0]);
                                 cwr[0] = ptr;
@@ -7134,7 +6738,7 @@ group2:      {
                                 sti[0] = yi[4] - wi[4];
                                 er[4] = zabs(str[0], sti[0]);
 
-                                if ((zi != 0.0) || (zr >= 0.0)) {
+                                if ( (zi != 0.0) || (zr >= 0.0)) {
                                     er[4] = er[4] / zabs(yr[4], yi[4]);
                                 } // if ((zi != 0.00 || (zr >= 0.0))
                                 else if (kode == 2) {
@@ -7152,8 +6756,8 @@ group2:      {
                                 } // if (er[j-1] < ertol)
 
                                 if (lflg != 1) {
-                                    Preferences.debug("Cases which violate the relative error " + "test with ertol = " +
-                                                      ertol + "\n");
+                                    Preferences.debug("Cases which violate the relative error " + "test with ertol = "
+                                            + ertol + "\n");
                                     Preferences.debug("OUTPUT FORMAT kode,ir,it,irset,icase\n");
                                     Preferences.debug("er j z, y[j-1] w[j-1], on the jth test, " + "j = 1,5\n");
                                     lflg = 1;
@@ -7188,55 +6792,37 @@ group2:      {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  mqc  int Default is mqc = 1 does not check underflow limits and overflow limits. mqc != 1 checks
-     *              underflow and overflow limits
+     * 
+     * @param mqc int Default is mqc = 1 does not check underflow limits and overflow limits. mqc != 1 checks underflow
+     *            and overflow limits
      */
-    private void zqcbh(int mqc) {
+    private void zqcbh(final int mqc) {
 
-        /**C  ZQCBH IS A QUICK CHECK ROUTINE FOR THE COMPLEX H BESSEL FUNCTIONS
-        C     GENERATED BY SUBROUTINE ZBESH.
-        C
-        C     ZQCBH GENERATES SEQUENCES OF H BESSEL FUNCTIONS FOR KIND 2 FROM
-        C     ZBESH AND CHECKS THEM AGAINST ANALYTIC CONTINUATION FORMULAS
-        C     IN THE (Z,FNU) SPACE:
-        C
-        C     KODE = 1 TESTS (ANALYTIC CONTINUATION FORMULAE, I**2 = -1):
-        C
-        C     H(FNU,2,Z)=-EXP(I*PI*FNU)*H(FNU,1,-Z),       -PI.LT.ARG(Z).LE.0
-        C
-        C               = 2*COS(PI*FNU)*H(FNU,2,-Z) + EXP(I*PI*FNU)*H(FNU,1,-Z),
-        C
-        C                                                   0.LT.ARG(Z).LE.PI
-        C
-        C     KODE = 2 TESTS FOR KINDS 1 AND 2:
-        C
-        C            EXP(-I*Z)*H(FNU,1,Z) = [EXP(-I*Z)*H(FNU,1,Z)]
-        C
-        C            EXP( I*Z)*H(FNU,2,Z) = [EXP( I*Z)*H(FNU,2,Z)]
-        C
-        C     WHERE THE LEFT SIDE IS COMPUTED WITH KODE = 1 AND THE RIGHT SIDE
-        C     WITH KODE = 2.
-        C
-        C     THE PARAMETER MQC CAN HAVE VALUES 1 (THE DEFAULT) FOR A FASTER,
-        C     LESS DEFINITIVE TEST OR 2 FOR A SLOWER, MORE DEFINITIVE TEST.
-        C
-        C     MACHINE CONSTANTS ARE DEFINED IN FUNCTIONS I1MACH, R1MACH, AND
-        C     D1MACH. THESE MUST BE SELECTED BY THE USER OR SET ACCORDING TO
-        C     PROLOGUE INSTRUCTIONS. */
-        double[] t = new double[20];
-        double[] aer = new double[20];
-        double[] xnu = new double[20];
-        double[] ur = new double[20];
-        double[] ui = new double[20];
-        double[] vr = new double[20];
-        double[] vi = new double[20];
-        double[] wr = new double[20];
-        double[] wi = new double[20];
-        double[] yr = new double[20];
-        double[] yi = new double[20];
-        int[] keps = new int[20];
-        int[] kdo = new int[20];
+        /**
+         * C ZQCBH IS A QUICK CHECK ROUTINE FOR THE COMPLEX H BESSEL FUNCTIONS C GENERATED BY SUBROUTINE ZBESH. C C
+         * ZQCBH GENERATES SEQUENCES OF H BESSEL FUNCTIONS FOR KIND 2 FROM C ZBESH AND CHECKS THEM AGAINST ANALYTIC
+         * CONTINUATION FORMULAS C IN THE (Z,FNU) SPACE: C C KODE = 1 TESTS (ANALYTIC CONTINUATION FORMULAE, I**2 = -1):
+         * C C H(FNU,2,Z)=-EXP(I*PI*FNU)*H(FNU,1,-Z), -PI.LT.ARG(Z).LE.0 C C = 2*COS(PI*FNU)*H(FNU,2,-Z) +
+         * EXP(I*PI*FNU)*H(FNU,1,-Z), C C 0.LT.ARG(Z).LE.PI C C KODE = 2 TESTS FOR KINDS 1 AND 2: C C
+         * EXP(-I*Z)*H(FNU,1,Z) = [EXP(-I*Z)*H(FNU,1,Z)] C C EXP( I*Z)*H(FNU,2,Z) = [EXP( I*Z)*H(FNU,2,Z)] C C WHERE THE
+         * LEFT SIDE IS COMPUTED WITH KODE = 1 AND THE RIGHT SIDE C WITH KODE = 2. C C THE PARAMETER MQC CAN HAVE VALUES
+         * 1 (THE DEFAULT) FOR A FASTER, C LESS DEFINITIVE TEST OR 2 FOR A SLOWER, MORE DEFINITIVE TEST. C C MACHINE
+         * CONSTANTS ARE DEFINED IN FUNCTIONS I1MACH, R1MACH, AND C D1MACH. THESE MUST BE SELECTED BY THE USER OR SET
+         * ACCORDING TO C PROLOGUE INSTRUCTIONS.
+         */
+        final double[] t = new double[20];
+        final double[] aer = new double[20];
+        final double[] xnu = new double[20];
+        final double[] ur = new double[20];
+        final double[] ui = new double[20];
+        final double[] vr = new double[20];
+        final double[] vi = new double[20];
+        final double[] wr = new double[20];
+        final double[] wi = new double[20];
+        final double[] yr = new double[20];
+        final double[] yi = new double[20];
+        final int[] keps = new int[20];
+        final int[] kdo = new int[20];
         double neweps;
         int k;
         int k1;
@@ -7270,13 +6856,13 @@ group2:      {
         double zr;
         double zi;
         int m;
-        int[] ierr = new int[1];
-        int[] nz1 = new int[1];
+        final int[] ierr = new int[1];
+        final int[] nz1 = new int[1];
         int ihp;
-        double[] znr = new double[1];
-        double[] zni = new double[1];
-        int[] nz2 = new int[1];
-        int[] nz3 = new int[1];
+        final double[] znr = new double[1];
+        final double[] zni = new double[1];
+        final int[] nz2 = new int[1];
+        final int[] nz3 = new int[1];
         double ab;
         double csgnr;
         double csgni;
@@ -7284,18 +6870,19 @@ group2:      {
         double av;
         double er;
         int kk;
-        double[] str = new double[1];
-        double[] sti = new double[1];
+        final double[] str = new double[1];
+        final double[] sti = new double[1];
         double err;
         double cwr;
         double cwi;
 
-        /** SET PARAMETERS RELATED TO MACHINE CONSTANTS.
-         *   TOL IS THE APPROXIMATE UNIT ROUNDOFF LIMITED TO 1.0E-18.  ELIM IS THE APPROXIMATE EXPONENTIAL OVER- AND
-         * UNDERFLOW LIMIT.  EXP(-ELIM).LT.EXP(-ALIM)=EXP(-ELIM)/TOL    AND  EXP(ELIM).GT.EXP(ALIM)=EXP(ELIM)*TOL
-         * ARE INTERVALS NEAR  UNDERFLOW AND OVERFLOW LIMITS WHERE SCALED ARITHMETIC IS DONE.  RL IS THE LOWER BOUNDARY
-         * OF THE ASYMPTOTIC EXPANSION FOR LARGE Z.  DIG = NUMBER OF BASE 10 DIGITS IN TOL = 10**(-DIG).  FNUL IS THE
-         * LOWER BOUNDARY OF THE ASYMPTOTIC SERIES FOR LARGE FNU */
+        /**
+         * SET PARAMETERS RELATED TO MACHINE CONSTANTS. TOL IS THE APPROXIMATE UNIT ROUNDOFF LIMITED TO 1.0E-18. ELIM IS
+         * THE APPROXIMATE EXPONENTIAL OVER- AND UNDERFLOW LIMIT. EXP(-ELIM).LT.EXP(-ALIM)=EXP(-ELIM)/TOL AND
+         * EXP(ELIM).GT.EXP(ALIM)=EXP(ELIM)*TOL ARE INTERVALS NEAR UNDERFLOW AND OVERFLOW LIMITS WHERE SCALED ARITHMETIC
+         * IS DONE. RL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC EXPANSION FOR LARGE Z. DIG = NUMBER OF BASE 10 DIGITS IN
+         * TOL = 10**(-DIG). FNUL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC SERIES FOR LARGE FNU
+         */
         // epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
         // (1.0 + epsilon) != 1.0.
@@ -7334,14 +6921,14 @@ group2:      {
         // r1m5 = log10(2), which is D1MACH(5)
         r1m5 = 0.434294481903251 * Math.log(2.0);
         k = Math.min(Math.abs(emin), Math.abs(emax));
-        elim = 2.303 * ((k * r1m5) - 3.0);
+        elim = 2.303 * ( (k * r1m5) - 3.0);
 
         // doubleDigits is I1MACH(14), the number of base-B digits for double
-        // precision.  IEEE 754 double precision has 64 bits with 1 sign bit,
+        // precision. IEEE 754 double precision has 64 bits with 1 sign bit,
         // 11 exponent bits, and 52 fraction, mantissa, or signficand bits.
         // Floating-point numbers are typically stored in normalized form,
-        // with the radix point after the first non-zero digit.  In base two,
-        // the only possible non-zero digit is 1.  Thus, a leading digit of 1
+        // with the radix point after the first non-zero digit. In base two,
+        // the only possible non-zero digit is 1. Thus, a leading digit of 1
         // can always be assumed and need not be explicitly represented.
         // Therefore, the mantissa effectively has 53 bits of resolution.
         doubleDigits = 53;
@@ -7349,10 +6936,10 @@ group2:      {
         aa = r1m5 * k1;
         dig = Math.min(aa, 18.0);
         aa = 2.303 * aa;
-        alim = elim + Math.max(-aa, -41.45);
+        alim = elim + Math.max( -aa, -41.45);
         rl = (1.2 * dig) + 3.0;
         fnul = 10.0 + (6.0 * (dig - 3.0));
-        slak = 3.0 + (4.0 * ((-0.434294481903251 * Math.log(tol)) - 7.0) / 11.0);
+        slak = 3.0 + (4.0 * ( ( -0.434294481903251 * Math.log(tol)) - 7.0) / 11.0);
         slak = Math.max(slak, 3.0);
         ertol = tol * Math.pow(10.0, slak);
         rm = 0.5 * (alim + elim);
@@ -7369,16 +6956,17 @@ group2:      {
         atol = 100.0 * tol;
         Preferences.debug("Checks in the (z,fnu) space with mqc = " + mqc + "\n");
 
-        /**     TEST VALUES OF Z IN -PI.LT.ARG(Z).LE.PI NEAR FORMULA BOUNDARIES
+        /**
+         * TEST VALUES OF Z IN -PI.LT.ARG(Z).LE.PI NEAR FORMULA BOUNDARIES
          * C-----------------------------------------------------------------------
-         * C----------------------------------------------------------------------- C     KDO(K), K=1,IL  DETERMINES
-         * WHICH OF THE IL ANGLES IN -PI TO PI C     ARE USE TO COMPUTE VALUES OF Z C       KDO(K) = 0  MEANS THAT THE
-         * INDEX K WILL BE USED FOR ONE OR TWO C                   VALUES OF Z, DEPENDING ON THE CHOICE OF KEPS(K) C
-         *          = 1  MEANS THAT THE INDEX K AND THE CORRESPONDING ANGLE C                   WILL BE SKIPPED C
-         * KEPS(K), K=1,IL DETERMINES WHICH OF THE ANGLES GET INCREMENTED C     UP AND DOWN TO PUT VALUES OF Z IN
-         * REGIONS WHERE DIFFERENT C     FORMULAE ARE USED. C       KEPS(K) =0  MEANS THAT THE ANGLE WILL BE USED
-         * WITHOUT CHANGE C               =1  MEANS THAT THE ANGLE WILL BE INCREMENTED UP AND C                   DOWN
-         * BY EPSC     THE ANGLES TO BE USED ARE STORED IN THE T(I) ARRAY, I=1,ITL */
+         * C----------------------------------------------------------------------- C KDO(K), K=1,IL DETERMINES WHICH OF
+         * THE IL ANGLES IN -PI TO PI C ARE USE TO COMPUTE VALUES OF Z C KDO(K) = 0 MEANS THAT THE INDEX K WILL BE USED
+         * FOR ONE OR TWO C VALUES OF Z, DEPENDING ON THE CHOICE OF KEPS(K) C = 1 MEANS THAT THE INDEX K AND THE
+         * CORRESPONDING ANGLE C WILL BE SKIPPED C KEPS(K), K=1,IL DETERMINES WHICH OF THE ANGLES GET INCREMENTED C UP
+         * AND DOWN TO PUT VALUES OF Z IN REGIONS WHERE DIFFERENT C FORMULAE ARE USED. C KEPS(K) =0 MEANS THAT THE ANGLE
+         * WILL BE USED WITHOUT CHANGE C =1 MEANS THAT THE ANGLE WILL BE INCREMENTED UP AND C DOWN BY EPSC THE ANGLES TO
+         * BE USED ARE STORED IN THE T(I) ARRAY, I=1,ITL
+         */
         if (mqc != 2) {
             nL = 2;
             il = 5;
@@ -7431,7 +7019,7 @@ group2:      {
         for (k = 2; k <= il; k++) {
 
             if (kdo[k - 1] == 0) {
-                t[i - 1] = Math.PI * (-il + (2.0 * k) - 1.0) / film;
+                t[i - 1] = Math.PI * ( -il + (2.0 * k) - 1.0) / film;
 
                 if (keps[k - 1] != 0) {
                     ts = t[i - 1];
@@ -7454,23 +7042,22 @@ group2:      {
                 for (nu = 1; nu <= nul; nu++) {
                     fnu = xnu[nu - 1];
 
-group:
-                    for (icase = 1; icase <= 3; icase++) {
+                    group: for (icase = 1; icase <= 3; icase++) {
                         irb = Math.min(icase, 2);
 
                         for (ir = irb; ir <= 3; ir++) {
 
                             if (icase == 1) {
-                                r = ((eps * (3.0 - ir)) + (2.0 * (ir - 1.0))) / 2.0;
+                                r = ( (eps * (3.0 - ir)) + (2.0 * (ir - 1.0))) / 2.0;
                             } // if (icase == 1)
                             else if (icase == 2) {
-                                r = ((2.0 * (3.0 - ir)) + (r2 * (ir - 1.0))) / 2.0;
+                                r = ( (2.0 * (3.0 - ir)) + (r2 * (ir - 1.0))) / 2.0;
                             } // else if (icase == 2)
-                            else if ((icase == 3) && (r2 >= rm)) {
+                            else if ( (icase == 3) && (r2 >= rm)) {
                                 continue group;
                             } // else if ((icase == 3) && (r2 >= rm))
                             else {
-                                r = ((r2 * (3.0 - ir)) + (rm * (ir - 1.0))) / 2.0;
+                                r = ( (r2 * (3.0 - ir)) + (rm * (ir - 1.0))) / 2.0;
                             } // else
 
                             for (it = 1; it <= itl; it++) {
@@ -7492,18 +7079,18 @@ group:
                                     m = 2;
                                     zbesh(zr, zi, fnu, kode, m, n, yr, yi, nz1, ierr);
 
-                                    if ((ierr[0] != 0) || (nz1[0] != 0)) {
+                                    if ( (ierr[0] != 0) || (nz1[0] != 0)) {
                                         continue;
                                     } // if ((ierr[0] != 0) || (nz1[0] != 0)
 
-                                    if ((st < 0.0) || ((st == 0.0) && (ct > 0.0))) {
+                                    if ( (st < 0.0) || ( (st == 0.0) && (ct > 0.0))) {
                                         ihp = 1;
                                         znr[0] = -zr;
                                         zni[0] = -zi;
                                         m = 1;
                                         zbesh(znr[0], zni[0], fnu, kode, m, n, wr, wi, nz2, ierr);
 
-                                        if ((ierr[0] != 0) || (nz2[0] != 0)) {
+                                        if ( (ierr[0] != 0) || (nz2[0] != 0)) {
                                             continue;
                                         } // if ((ierr[0] != 0) || (nz2[0] != 0))
                                     } // if ((st < 0.0) || ((st == 0.0) && (ct > 0.0)))
@@ -7514,14 +7101,14 @@ group:
                                         m = 2;
                                         zbesh(znr[0], zni[0], fnu, kode, m, n, wr, wi, nz3, ierr);
 
-                                        if ((ierr[0] != 0) || (nz3[0] != 0)) {
+                                        if ( (ierr[0] != 0) || (nz3[0] != 0)) {
                                             continue;
                                         } // if ((ierr[0] != 0) || (nz3[0] != 0))
 
                                         m = 1;
                                         zbesh(znr[0], zni[0], fnu, kode, m, n, vr, vi, nz2, ierr);
 
-                                        if ((ierr[0] != 0) || (nz2[0] != 0)) {
+                                        if ( (ierr[0] != 0) || (nz2[0] != 0)) {
                                             continue;
                                         } // if ((ierr[0] != 0) || (nz2[0] != 0)
                                     } // else
@@ -7536,8 +7123,8 @@ group:
                                         aa = Math.max(0.5, ab);
 
                                         if (ihp == 1) {
-                                            vr[i - 1] = -((csgnr * wr[i - 1]) - (csgni * wi[i - 1]));
-                                            vi[i - 1] = -((csgnr * wi[i - 1]) + (csgni * wr[i - 1]));
+                                            vr[i - 1] = - ( (csgnr * wr[i - 1]) - (csgni * wi[i - 1]));
+                                            vi[i - 1] = - ( (csgnr * wi[i - 1]) + (csgni * wr[i - 1]));
                                             cwr = yr[i - 1] - vr[i - 1];
                                             cwi = yi[i - 1] - vi[i - 1];
                                         } // if (ihp == 1)
@@ -7578,13 +7165,13 @@ group:
                                     kk = 1;
                                     zbesh(zr, zi, fnu, kk, m, n, ur, ui, nz1, ierr);
 
-                                    if ((ierr[0] != 0) || (nz1[0] != 0)) {
+                                    if ( (ierr[0] != 0) || (nz1[0] != 0)) {
                                         continue;
                                     } // if ((ierr[0] != 0) || (nz1[0] != 0)
 
                                     zbesh(zr, zi, fnu, kode, m, n, vr, vi, nz2, ierr);
 
-                                    if ((ierr[0] != 0) || (nz2[0] != 0)) {
+                                    if ( (ierr[0] != 0) || (nz2[0] != 0)) {
                                         continue;
                                     } // if ((ierr[0] != 0) || (nz2[0] != 0)
 
@@ -7592,13 +7179,13 @@ group:
                                     kk = 1;
                                     zbesh(zr, zi, fnu, kk, m, n, wr, wi, nz1, ierr);
 
-                                    if ((ierr[0] != 0) || (nz1[0] != 0)) {
+                                    if ( (ierr[0] != 0) || (nz1[0] != 0)) {
                                         continue;
                                     } // if ((ierr[0] != 0) || (nz1[0] != 0)
 
                                     zbesh(zr, zi, fnu, kode, m, n, yr, yi, nz2, ierr);
 
-                                    if ((ierr[0] != 0) || (nz2[0] != 0)) {
+                                    if ( (ierr[0] != 0) || (nz2[0] != 0)) {
                                         continue;
                                     } // if ((ierr[0] != 0) || (nz2[0] != 0)
 
@@ -7660,8 +7247,8 @@ group:
                                 } // if (mflg == 0)
 
                                 if (lflg != 1) {
-                                    Preferences.debug("Cases which violate the relative error " + "test with ertol = " +
-                                                      ertol + "\n");
+                                    Preferences.debug("Cases which violate the relative error " + "test with ertol = "
+                                            + ertol + "\n");
                                     Preferences.debug("OUTPUT FORMAT kode,n,ir,it,icase\n");
                                     Preferences.debug("aer[k-1], k=1,n z,fnu,v[0],y[0]\n");
                                     lflg = 1;
@@ -7700,21 +7287,22 @@ group:
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  mqc  int Default is mqc = 1 does not check underflow limits and overflow limits. mqc != 1 checks
-     *              underflow and overflow limits
+     * 
+     * @param mqc int Default is mqc = 1 does not check underflow limits and overflow limits. mqc != 1 checks underflow
+     *            and overflow limits
      */
-    private void zqcbi(int mqc) {
+    private void zqcbi(final int mqc) {
 
-        /**ZQCBI IS A QUICK CHECK ROUTINE FOR THE COMPLEX I BESSEL FUNCTION
-         * C     GENERATED BY SUBROUTINE ZBESI. C C     ZQCBK GENERATES SEQUENCES OF I AND K BESSEL FUNCTIONS FROM C
-         * ZBESI AND CBESK AND CHECKS THE WRONSKIAN EVALUATION C C           I(FNU,Z)*K(FNU+1,Z) + I(FNU+1,Z)*K(FNU,Z) =
-         * 1/Z C C     IN THE RIGHT HALF PLANE AND A MODIFIED FORM C C          I(FNU+1,Z)*K(FNU,ZR) -
-         * I(FNU,Z)*K(FNU+1,ZR) = C/Z C C     IN THE LEFT HALF PLANE WHERE ZR=-Z AND C=EXP(I*FNU*SGN) WITH C     SGN=+1
-         * FOR IM(Z).GE.0 AND SGN=-1 FOR IM(Z).LT.0. C C     THE PARAMETER MQC CAN HAVE VALUES 1 (THE DEFAULT) FOR A
-         * FASTER, C     LESS DEFINITIVE TEST OR 2 FOR A SLOWER, MORE DEFINITIVE TEST. C C     MACHINE CONSTANTS ARE
-         * DEFINED IN FUNCTIONS I1MACH, R1MACH, AND C     D1MACH. THESE MUST BE SELECTED BY THE USER OR SET ACCORDING
-         * TOC     PROLOGUE INSTRUCTIONS. */
+        /**
+         * ZQCBI IS A QUICK CHECK ROUTINE FOR THE COMPLEX I BESSEL FUNCTION C GENERATED BY SUBROUTINE ZBESI. C C ZQCBK
+         * GENERATES SEQUENCES OF I AND K BESSEL FUNCTIONS FROM C ZBESI AND CBESK AND CHECKS THE WRONSKIAN EVALUATION C
+         * C I(FNU,Z)*K(FNU+1,Z) + I(FNU+1,Z)*K(FNU,Z) = 1/Z C C IN THE RIGHT HALF PLANE AND A MODIFIED FORM C C
+         * I(FNU+1,Z)*K(FNU,ZR) - I(FNU,Z)*K(FNU+1,ZR) = C/Z C C IN THE LEFT HALF PLANE WHERE ZR=-Z AND C=EXP(I*FNU*SGN)
+         * WITH C SGN=+1 FOR IM(Z).GE.0 AND SGN=-1 FOR IM(Z).LT.0. C C THE PARAMETER MQC CAN HAVE VALUES 1 (THE DEFAULT)
+         * FOR A FASTER, C LESS DEFINITIVE TEST OR 2 FOR A SLOWER, MORE DEFINITIVE TEST. C C MACHINE CONSTANTS ARE
+         * DEFINED IN FUNCTIONS I1MACH, R1MACH, AND C D1MACH. THESE MUST BE SELECTED BY THE USER OR SET ACCORDING TOC
+         * PROLOGUE INSTRUCTIONS.
+         */
         // default is mqc = 1
         double neweps;
         int k;
@@ -7726,18 +7314,18 @@ group:
         double rm;
         double r2;
         double atol;
-        double hpi = Math.PI / 2.0;
+        final double hpi = Math.PI / 2.0;
         int nL;
         int il;
-        double[] t = new double[20];
-        double[] aer = new double[20];
-        double[] yr = new double[20];
-        double[] yi = new double[20];
-        double[] wr = new double[20];
-        double[] wi = new double[20];
-        double[] xnu = new double[20];
-        int[] keps = new int[20];
-        int[] kdo = new int[20];
+        final double[] t = new double[20];
+        final double[] aer = new double[20];
+        final double[] yr = new double[20];
+        final double[] yi = new double[20];
+        final double[] wr = new double[20];
+        final double[] wi = new double[20];
+        final double[] xnu = new double[20];
+        final int[] keps = new int[20];
+        final int[] kdo = new int[20];
         int i;
         int nul;
         double eps;
@@ -7762,12 +7350,12 @@ group:
         double st;
         double zr;
         double zi;
-        int[] nz = new int[1];
-        int[] ierr = new int[1];
-        double[] cvr = new double[1];
-        double[] cvi = new double[1];
-        double[] str = new double[1];
-        double[] sti = new double[1];
+        final int[] nz = new int[1];
+        final int[] ierr = new int[1];
+        final double[] cvr = new double[1];
+        final double[] cvi = new double[1];
+        final double[] str = new double[1];
+        final double[] sti = new double[1];
         double ccr;
         double zrr;
         double zri;
@@ -7783,12 +7371,13 @@ group:
         double cyi;
         int iprnt;
 
-        /** SET PARAMETERS RELATED TO MACHINE CONSTANTS.
-         *  TOL IS THE APPROXIMATE UNIT ROUNDOFF LIMITED TO 1.0E-18. ELIM IS THE APPROXIMATE EXPONENTIAL OVER- AND
-         * UNDERFLOW LIMIT. EXP(-ELIM).LT.EXP(-ALIM)=EXP(-ELIM)/TOL    AND EXP(ELIM).GT.EXP(ALIM)=EXP(ELIM)*TOL
-         * ARE INTERVALS NEAR UNDERFLOW AND OVERFLOW LIMITS WHERE SCALED ARITHMETIC IS DONE. RL IS THE LOWER BOUNDARY OF
-         * THE ASYMPTOTIC EXPANSION FOR LARGE Z. DIG = NUMBER OF BASE 10 DIGITS IN TOL = 10**(-DIG). FNUL IS THE LOWER
-         * BOUNDARY OF THE ASYMPTOTIC SERIES FOR LARGE FNU */
+        /**
+         * SET PARAMETERS RELATED TO MACHINE CONSTANTS. TOL IS THE APPROXIMATE UNIT ROUNDOFF LIMITED TO 1.0E-18. ELIM IS
+         * THE APPROXIMATE EXPONENTIAL OVER- AND UNDERFLOW LIMIT. EXP(-ELIM).LT.EXP(-ALIM)=EXP(-ELIM)/TOL AND
+         * EXP(ELIM).GT.EXP(ALIM)=EXP(ELIM)*TOL ARE INTERVALS NEAR UNDERFLOW AND OVERFLOW LIMITS WHERE SCALED ARITHMETIC
+         * IS DONE. RL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC EXPANSION FOR LARGE Z. DIG = NUMBER OF BASE 10 DIGITS IN
+         * TOL = 10**(-DIG). FNUL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC SERIES FOR LARGE FNU
+         */
         // epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
         // (1.0 + epsilon) != 1.0.
@@ -7827,14 +7416,14 @@ group:
         // r1m5 = log10(2), which is D1MACH(5)
         r1m5 = 0.434294481903251 * Math.log(2.0);
         k = Math.min(Math.abs(emin), Math.abs(emax));
-        elim = 2.303 * ((k * r1m5) - 3.0);
+        elim = 2.303 * ( (k * r1m5) - 3.0);
 
         // doubleDigits is I1MACH(14), the number of base-B digits for double
-        // precision.  IEEE 754 double precision has 64 bits with 1 sign bit,
+        // precision. IEEE 754 double precision has 64 bits with 1 sign bit,
         // 11 exponent bits, and 52 fraction, mantissa, or signficand bits.
         // Floating-point numbers are typically stored in normalized form,
-        // with the radix point after the first non-zero digit.  In base two,
-        // the only possible non-zero digit is 1.  Thus, a leading digit of 1
+        // with the radix point after the first non-zero digit. In base two,
+        // the only possible non-zero digit is 1. Thus, a leading digit of 1
         // can always be assumed and need not be explicitly represented.
         // Therefore, the mantissa effectively has 53 bits of resolution.
         doubleDigits = 53;
@@ -7842,10 +7431,10 @@ group:
         aa = r1m5 * k1;
         dig = Math.min(aa, 18.0);
         aa = 2.303 * aa;
-        alim = elim + Math.max(-aa, -41.45);
+        alim = elim + Math.max( -aa, -41.45);
         rl = (1.2 * dig) + 3.0;
         fnul = 10.0 + (6.0 * (dig - 3.0));
-        slak = 3.0 + (4.0 * ((-0.434294481903251 * Math.log(tol)) - 7.0) / 11.0);
+        slak = 3.0 + (4.0 * ( ( -0.434294481903251 * Math.log(tol)) - 7.0) / 11.0);
         slak = Math.max(slak, 3.0);
         ertol = tol * Math.pow(10.0, slak);
         rm = 0.5 * (alim + elim);
@@ -7862,16 +7451,17 @@ group:
         atol = 100.0 * tol;
         Preferences.debug("Checks in the (z,fnu) space with mqc = " + mqc + "\n");
 
-        /**     TEST VALUES OF Z IN -PI.LT.ARG(Z).LE.PI NEAR FORMULA BOUNDARIES
+        /**
+         * TEST VALUES OF Z IN -PI.LT.ARG(Z).LE.PI NEAR FORMULA BOUNDARIES
          * C-----------------------------------------------------------------------
-         * C----------------------------------------------------------------------- C     KDO(K), K=1,IL  DETERMINES
-         * WHICH OF THE IL ANGLES IN -PI TO PI C     ARE USE TO COMPUTE VALUES OF Z C       KDO(K) = 0  MEANS THAT THE
-         * INDEX K WILL BE USED FOR ONE OR TWO C                   VALUES OF Z, DEPENDING ON THE CHOICE OF KEPS(K) C
-         *          = 1  MEANS THAT THE INDEX K AND THE CORRESPONDING ANGLE C                   WILL BE SKIPPED C
-         * KEPS(K), K=1,IL DETERMINES WHICH OF THE ANGLES GET INCREMENTED C     UP AND DOWN TO PUT VALUES OF Z IN
-         * REGIONS WHERE DIFFERENT C     FORMULAE ARE USED. C       KEPS(K) =0  MEANS THAT THE ANGLE WILL BE USED
-         * WITHOUT CHANGE C               =1  MEANS THAT THE ANGLE WILL BE INCREMENTED UP AND C                   DOWN
-         * BY EPSC     THE ANGLES TO BE USED ARE STORED IN THE T(I) ARRAY, I=1,ITL */
+         * C----------------------------------------------------------------------- C KDO(K), K=1,IL DETERMINES WHICH OF
+         * THE IL ANGLES IN -PI TO PI C ARE USE TO COMPUTE VALUES OF Z C KDO(K) = 0 MEANS THAT THE INDEX K WILL BE USED
+         * FOR ONE OR TWO C VALUES OF Z, DEPENDING ON THE CHOICE OF KEPS(K) C = 1 MEANS THAT THE INDEX K AND THE
+         * CORRESPONDING ANGLE C WILL BE SKIPPED C KEPS(K), K=1,IL DETERMINES WHICH OF THE ANGLES GET INCREMENTED C UP
+         * AND DOWN TO PUT VALUES OF Z IN REGIONS WHERE DIFFERENT C FORMULAE ARE USED. C KEPS(K) =0 MEANS THAT THE ANGLE
+         * WILL BE USED WITHOUT CHANGE C =1 MEANS THAT THE ANGLE WILL BE INCREMENTED UP AND C DOWN BY EPSC THE ANGLES TO
+         * BE USED ARE STORED IN THE T(I) ARRAY, I=1,ITL
+         */
         if (mqc != 2) {
             nL = 2;
             il = 5;
@@ -7924,7 +7514,7 @@ group:
         for (k = 2; k <= il; k++) {
 
             if (kdo[k - 1] == 0) {
-                t[i - 1] = Math.PI * (-il + (2.0 * k) - 1.0) / film;
+                t[i - 1] = Math.PI * ( -il + (2.0 * k) - 1.0) / film;
 
                 if (keps[k - 1] != 0) {
                     ts = t[i - 1];
@@ -7945,8 +7535,7 @@ group:
             for (n = 1; n <= nL; n++) {
                 nONE = n + 1;
 
-group:
-                for (nu = 1; nu <= nul; nu++) {
+                group: for (nu = 1; nu <= nul; nu++) {
                     fnu = xnu[nu - 1];
                     ifnu = (int) (fnu);
                     ffnu = fnu - ifnu;
@@ -7954,7 +7543,7 @@ group:
                     csgnr = Math.cos(arg);
                     csgni = Math.sin(arg);
 
-                    if ((ifnu % 2) != 0) {
+                    if ( (ifnu % 2) != 0) {
                         csgnr = -csgnr;
                         csgni = -csgni;
                     } // if ((ifnu%2) != 0)
@@ -7965,16 +7554,16 @@ group:
                         for (ir = irb; ir <= 4; ir++) {
 
                             if (icase == 1) {
-                                r = ((0.2 * (4.0 - ir)) + (2.0 * (ir - 1.0))) / 3.0;
+                                r = ( (0.2 * (4.0 - ir)) + (2.0 * (ir - 1.0))) / 3.0;
                             } // if (icase == 1)
                             else if (icase == 2) {
-                                r = ((2.0 * (4.0 - ir)) + (r2 * (ir - 1.0))) / 3.0;
+                                r = ( (2.0 * (4.0 - ir)) + (r2 * (ir - 1.0))) / 3.0;
                             } // else if (icase == 2)
-                            else if ((icase == 3) && (r2 == rm)) {
+                            else if ( (icase == 3) && (r2 == rm)) {
                                 continue group;
                             } // else if ((icase == 3) && (r2 == rm))
                             else { // icase == 3
-                                r = ((r2 * (4.0 - ir)) + (rm * (ir - 1.0))) / 3.0;
+                                r = ( (r2 * (4.0 - ir)) + (rm * (ir - 1.0))) / 3.0;
                             } // else icase == 3
 
                             for (it = 1; it <= itl; it++) {
@@ -7997,13 +7586,13 @@ group:
                                     // Wronskian checks in the right half plane
                                     zbesi(zr, zi, fnu, kode, nONE, wr, wi, nz, ierr);
 
-                                    if ((nz[0] != 0) || (ierr[0] != 0)) {
+                                    if ( (nz[0] != 0) || (ierr[0] != 0)) {
                                         continue;
                                     } // if ((nz[0] != 0) || (ierr[0] != 0))
 
                                     zbesk(zr, zi, fnu, kode, nONE, yr, yi, nz, ierr);
 
-                                    if ((nz[0] != 0) || (ierr[0] != 0)) {
+                                    if ( (nz[0] != 0) || (ierr[0] != 0)) {
                                         continue;
                                     } // if ((nz[0] != 0) || (ierr[0] != 0))
 
@@ -8028,13 +7617,13 @@ group:
                                     zri = -zi;
                                     zbesi(zr, zi, fnu, kode, nONE, yr, yi, nz, ierr);
 
-                                    if ((nz[0] != 0) || (ierr[0] != 0)) {
+                                    if ( (nz[0] != 0) || (ierr[0] != 0)) {
                                         continue;
                                     } // if ((nz[0] != 0) || (ierr[0] != 0))
 
                                     zbesk(zrr, zri, fnu, kode, nONE, wr, wi, nz, ierr);
 
-                                    if ((nz[0] != 0) || (ierr[0] != 0)) {
+                                    if ( (nz[0] != 0) || (ierr[0] != 0)) {
                                         continue;
                                     } // if ((nz[0] != 0) || (ierr[0] != 0))
 
@@ -8050,7 +7639,7 @@ group:
                                     if (kode == 2) {
 
                                         // Adjustments to Wronskian due to scaling of I and K
-                                        // functions on kode = 2.  Scale factor = exp(-i*yy)
+                                        // functions on kode = 2. Scale factor = exp(-i*yy)
                                         // for Re(z) < 0.0
                                         cwr = Math.cos(zi);
                                         cwi = -Math.sin(zi);
@@ -8077,7 +7666,7 @@ group:
                                     er = zabs(cyr, cyi) / zabs(cvr[0], cvi[0]);
                                     aer[i - 1] = er;
 
-                                    if ((er > ertol) && (kk == 0)) {
+                                    if ( (er > ertol) && (kk == 0)) {
                                         mflg = 1;
                                         kk = i;
                                     } // if ((er > ertol) && (kk == 0))
@@ -8093,8 +7682,8 @@ group:
                                 } // if (mflg == 0)
 
                                 if (lflg != 1) {
-                                    Preferences.debug("Cases which violate the relative error" + " test with ertol = " +
-                                                      ertol + "\n");
+                                    Preferences.debug("Cases which violate the relative error" + " test with ertol = "
+                                            + ertol + "\n");
                                     Preferences.debug("Output format\n");
                                     Preferences.debug("kode, n, ir, it, icase kk\n");
                                     Preferences.debug("aer[k-1], k = 1,n z, fnu, y[kk-1]\n");
@@ -8244,27 +7833,29 @@ group:
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  mqc  int Default is mqc = 1 does not check underflow limits and overflow limits. mqc != 1 checks
-     *              underflow and overflow limits
+     * 
+     * @param mqc int Default is mqc = 1 does not check underflow limits and overflow limits. mqc != 1 checks underflow
+     *            and overflow limits
      */
-    private void zqcbj(int mqc) {
+    private void zqcbj(final int mqc) {
 
-        /** ZQCBJ IS A QUICK CHECK ROUTINE FOR THE COMPLEX J BESSEL FUNCTION
-         * C     GENERATED BY SUBROUTINE ZBESJ. C C     ZQCBJ GENERATES SEQUENCES OF J AND H BESSEL FUNCTIONS FROM ZBESJ
-         * C     AND ZBESH AND CHECKS THE WRONSKIANS C C     J(FNU,Z)*H(FNU+1,1,Z)-J(FNU+1,Z)*H(FNU,1,Z)=2/(PI*I*Z)
-         * Y.GE.0 C C     J(FNU,Z)*H(FNU+1,2,Z)-J(FNU+1,Z)*H(FNU,2,Z)=-2/(PI*I*Z)  Y.LT.0 C C     IN THEIR RESPECTIVE
-         * HALF PLANES. C C     THE PARAMETER MQC CAN HAVE VALUES 1 (THE DEFAULT) FOR A FASTER,C     LESS DEFINITIVE
-         * TEST OR 2 FOR A SLOWER, MORE DEFINITIVE TEST. */
-        double[] t = new double[20];
-        double[] aer = new double[25];
-        double[] xnu = new double[20];
-        double[] cjr = new double[20];
-        double[] cji = new double[20];
-        double[] chr = new double[20];
-        double[] chi = new double[20];
-        int[] keps = new int[20];
-        int[] kdo = new int[20];
+        /**
+         * ZQCBJ IS A QUICK CHECK ROUTINE FOR THE COMPLEX J BESSEL FUNCTION C GENERATED BY SUBROUTINE ZBESJ. C C ZQCBJ
+         * GENERATES SEQUENCES OF J AND H BESSEL FUNCTIONS FROM ZBESJ C AND ZBESH AND CHECKS THE WRONSKIANS C C
+         * J(FNU,Z)*H(FNU+1,1,Z)-J(FNU+1,Z)*H(FNU,1,Z)=2/(PI*I*Z) Y.GE.0 C C
+         * J(FNU,Z)*H(FNU+1,2,Z)-J(FNU+1,Z)*H(FNU,2,Z)=-2/(PI*I*Z) Y.LT.0 C C IN THEIR RESPECTIVE HALF PLANES. C C THE
+         * PARAMETER MQC CAN HAVE VALUES 1 (THE DEFAULT) FOR A FASTER,C LESS DEFINITIVE TEST OR 2 FOR A SLOWER, MORE
+         * DEFINITIVE TEST.
+         */
+        final double[] t = new double[20];
+        final double[] aer = new double[25];
+        final double[] xnu = new double[20];
+        final double[] cjr = new double[20];
+        final double[] cji = new double[20];
+        final double[] chr = new double[20];
+        final double[] chi = new double[20];
+        final int[] keps = new int[20];
+        final int[] kdo = new int[20];
         double neweps;
         int k;
         int k1;
@@ -8275,7 +7866,7 @@ group:
         double rm;
         double r2;
         double atol;
-        double hpi = Math.PI / 2.0;
+        final double hpi = Math.PI / 2.0;
         int nL;
         int il;
         int i;
@@ -8302,13 +7893,13 @@ group:
         double st;
         double zr;
         double zi;
-        double[] wrr = new double[1];
-        double[] wri = new double[1];
+        final double[] wrr = new double[1];
+        final double[] wri = new double[1];
         int m;
-        int[] nzj = new int[1];
-        int[] ierrj = new int[1];
-        int[] nzh = new int[1];
-        int[] ierrh = new int[1];
+        final int[] nzj = new int[1];
+        final int[] ierrj = new int[1];
+        final int[] nzh = new int[1];
+        final int[] ierrh = new int[1];
         double sgn;
         double str;
         double sti;
@@ -8322,12 +7913,13 @@ group:
         double ceri;
         double er;
 
-        /** SET PARAMETERS RELATED TO MACHINE CONSTANTS.
-         *  TOL IS THE APPROXIMATE UNIT ROUNDOFF LIMITED TO 1.0E-18. ELIM IS THE APPROXIMATE EXPONENTIAL OVER- AND
-         * UNDERFLOW LIMIT. EXP(-ELIM).LT.EXP(-ALIM)=EXP(-ELIM)/TOL    AND EXP(ELIM).GT.EXP(ALIM)=EXP(ELIM)*TOL
-         * ARE INTERVALS NEAR UNDERFLOW AND OVERFLOW LIMITS WHERE SCALED ARITHMETIC IS DONE. RL IS THE LOWER BOUNDARY OF
-         * THE ASYMPTOTIC EXPANSION FOR LARGE Z. DIG = NUMBER OF BASE 10 DIGITS IN TOL = 10**(-DIG). FNUL IS THE LOWER
-         * BOUNDARY OF THE ASYMPTOTIC SERIES FOR LARGE FNU */
+        /**
+         * SET PARAMETERS RELATED TO MACHINE CONSTANTS. TOL IS THE APPROXIMATE UNIT ROUNDOFF LIMITED TO 1.0E-18. ELIM IS
+         * THE APPROXIMATE EXPONENTIAL OVER- AND UNDERFLOW LIMIT. EXP(-ELIM).LT.EXP(-ALIM)=EXP(-ELIM)/TOL AND
+         * EXP(ELIM).GT.EXP(ALIM)=EXP(ELIM)*TOL ARE INTERVALS NEAR UNDERFLOW AND OVERFLOW LIMITS WHERE SCALED ARITHMETIC
+         * IS DONE. RL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC EXPANSION FOR LARGE Z. DIG = NUMBER OF BASE 10 DIGITS IN
+         * TOL = 10**(-DIG). FNUL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC SERIES FOR LARGE FNU
+         */
         // epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
         // (1.0 + epsilon) != 1.0.
@@ -8366,14 +7958,14 @@ group:
         // r1m5 = log10(2), which is D1MACH(5)
         r1m5 = 0.434294481903251 * Math.log(2.0);
         k = Math.min(Math.abs(emin), Math.abs(emax));
-        elim = 2.303 * ((k * r1m5) - 3.0);
+        elim = 2.303 * ( (k * r1m5) - 3.0);
 
         // doubleDigits is I1MACH(14), the number of base-B digits for double
-        // precision.  IEEE 754 double precision has 64 bits with 1 sign bit,
+        // precision. IEEE 754 double precision has 64 bits with 1 sign bit,
         // 11 exponent bits, and 52 fraction, mantissa, or signficand bits.
         // Floating-point numbers are typically stored in normalized form,
-        // with the radix point after the first non-zero digit.  In base two,
-        // the only possible non-zero digit is 1.  Thus, a leading digit of 1
+        // with the radix point after the first non-zero digit. In base two,
+        // the only possible non-zero digit is 1. Thus, a leading digit of 1
         // can always be assumed and need not be explicitly represented.
         // Therefore, the mantissa effectively has 53 bits of resolution.
         doubleDigits = 53;
@@ -8381,10 +7973,10 @@ group:
         aa = r1m5 * k1;
         dig = Math.min(aa, 18.0);
         aa = 2.303 * aa;
-        alim = elim + Math.max(-aa, -41.45);
+        alim = elim + Math.max( -aa, -41.45);
         rl = (1.2 * dig) + 3.0;
         fnul = 10.0 + (6.0 * (dig - 3.0));
-        slak = 3.0 + (4.0 * ((-0.434294481903251 * Math.log(tol)) - 7.0) / 11.0);
+        slak = 3.0 + (4.0 * ( ( -0.434294481903251 * Math.log(tol)) - 7.0) / 11.0);
         slak = Math.max(slak, 3.0);
         ertol = tol * Math.pow(10.0, slak);
         rm = 0.5 * (alim + elim);
@@ -8403,16 +7995,17 @@ group:
         coni = -1.0 / hpi;
         Preferences.debug("Checks in the (z,fnu) space with mqc = " + mqc + "\n");
 
-        /**     TEST VALUES OF Z IN -PI.LT.ARG(Z).LE.PI NEAR FORMULA BOUNDARIES
+        /**
+         * TEST VALUES OF Z IN -PI.LT.ARG(Z).LE.PI NEAR FORMULA BOUNDARIES
          * C-----------------------------------------------------------------------
-         * C----------------------------------------------------------------------- C     KDO(K), K=1,IL  DETERMINES
-         * WHICH OF THE IL ANGLES IN -PI TO PI C     ARE USE TO COMPUTE VALUES OF Z C       KDO(K) = 0  MEANS THAT THE
-         * INDEX K WILL BE USED FOR ONE OR TWO C                   VALUES OF Z, DEPENDING ON THE CHOICE OF KEPS(K) C
-         *          = 1  MEANS THAT THE INDEX K AND THE CORRESPONDING ANGLE C                   WILL BE SKIPPED C
-         * KEPS(K), K=1,IL DETERMINES WHICH OF THE ANGLES GET INCREMENTED C     UP AND DOWN TO PUT VALUES OF Z IN
-         * REGIONS WHERE DIFFERENT C     FORMULAE ARE USED. C       KEPS(K) =0  MEANS THAT THE ANGLE WILL BE USED
-         * WITHOUT CHANGE C               =1  MEANS THAT THE ANGLE WILL BE INCREMENTED UP AND C                   DOWN
-         * BY EPSC     THE ANGLES TO BE USED ARE STORED IN THE T(I) ARRAY, I=1,ITL */
+         * C----------------------------------------------------------------------- C KDO(K), K=1,IL DETERMINES WHICH OF
+         * THE IL ANGLES IN -PI TO PI C ARE USE TO COMPUTE VALUES OF Z C KDO(K) = 0 MEANS THAT THE INDEX K WILL BE USED
+         * FOR ONE OR TWO C VALUES OF Z, DEPENDING ON THE CHOICE OF KEPS(K) C = 1 MEANS THAT THE INDEX K AND THE
+         * CORRESPONDING ANGLE C WILL BE SKIPPED C KEPS(K), K=1,IL DETERMINES WHICH OF THE ANGLES GET INCREMENTED C UP
+         * AND DOWN TO PUT VALUES OF Z IN REGIONS WHERE DIFFERENT C FORMULAE ARE USED. C KEPS(K) =0 MEANS THAT THE ANGLE
+         * WILL BE USED WITHOUT CHANGE C =1 MEANS THAT THE ANGLE WILL BE INCREMENTED UP AND C DOWN BY EPSC THE ANGLES TO
+         * BE USED ARE STORED IN THE T(I) ARRAY, I=1,ITL
+         */
         if (mqc != 2) {
             nL = 2;
             il = 5;
@@ -8465,7 +8058,7 @@ group:
         for (k = 2; k <= il; k++) {
 
             if (kdo[k - 1] == 0) {
-                t[i - 1] = Math.PI * (-il + (2.0 * k) - 1.0) / film;
+                t[i - 1] = Math.PI * ( -il + (2.0 * k) - 1.0) / film;
 
                 if (keps[k - 1] != 0) {
                     ts = t[i - 1];
@@ -8492,23 +8085,22 @@ group:
                     gnu = Math.sqrt(gnu);
                     gnu = Math.min(gnu, 0.5 * rl);
 
-group:
-                    for (icase = 1; icase <= 3; icase++) {
+                    group: for (icase = 1; icase <= 3; icase++) {
                         irb = Math.min(2, icase);
 
                         for (ir = irb; ir <= 4; ir++) {
 
                             if (icase == 1) {
-                                r = ((gnu * (4.0 - ir)) + (2.0 * (ir - 1.0))) / 3.0;
+                                r = ( (gnu * (4.0 - ir)) + (2.0 * (ir - 1.0))) / 3.0;
                             } // if (icase == 1)
                             else if (icase == 2) {
-                                r = ((2.0 * (4.0 - ir)) + (r2 * (ir - 1.0))) / 3.0;
+                                r = ( (2.0 * (4.0 - ir)) + (r2 * (ir - 1.0))) / 3.0;
                             } // else if (icase == 2)
-                            else if ((icase == 3) && (r2 >= rm)) {
+                            else if ( (icase == 3) && (r2 >= rm)) {
                                 continue group;
                             } // else if ((icase == 3) && (r2 >= rm))
                             else {
-                                r = ((r2 * (4.0 - ir)) + (rm * (ir - 1.0))) / 3.0;
+                                r = ( (r2 * (4.0 - ir)) + (rm * (ir - 1.0))) / 3.0;
                             } // else
 
                             for (it = 1; it <= itl; it++) {
@@ -8526,7 +8118,7 @@ group:
                                 zr = r * ct;
                                 zi = r * st;
 
-                                if ((zr == 0.0) && (zi == 0.0)) {
+                                if ( (zr == 0.0) && (zi == 0.0)) {
                                     continue;
                                 } // if ((zr == 0.0) && (zi == 0.0))
 
@@ -8542,7 +8134,7 @@ group:
                                 zbesj(zr, zi, fnu, kode, np, cjr, cji, nzj, ierrj);
                                 zbesh(zr, zi, fnu, kode, m, np, chr, chi, nzh, ierrh);
 
-                                if ((nzj[0] != 0) || (nzh[0] != 0) || (ierrj[0] != 0) || (ierrh[0] != 0)) {
+                                if ( (nzj[0] != 0) || (nzh[0] != 0) || (ierrj[0] != 0) || (ierrh[0] != 0)) {
                                     continue;
                                 }
 
@@ -8569,7 +8161,7 @@ group:
                                     ceri = t1i - t2i - wri[0];
                                     er = zabs(cerr, ceri) / zabs(wrr[0], wri[0]);
 
-                                    if ((er > ertol) && (mflg == 0)) {
+                                    if ( (er > ertol) && (mflg == 0)) {
                                         mflg = 1;
                                         kk = i;
                                     } // if ((er > ertol) && (mflg == 0))
@@ -8582,11 +8174,11 @@ group:
                                 } // if (mflg == 0)
 
                                 if (lflg != 1) {
-                                    Preferences.debug("Cases which violate the relative error " + "test with ertol = " +
-                                                      ertol + "\n");
+                                    Preferences.debug("Cases which violate the relative error " + "test with ertol = "
+                                            + ertol + "\n");
                                     Preferences.debug("OUTPUT FORMAT kode,n,ir,it,nzj,nzh,icase\n");
-                                    Preferences.debug("aer[k-1], k=1,n z,fnu,cj[kk-1],ch[kk-1], " +
-                                                      "kk = index of first non-zero y,w pair\n");
+                                    Preferences.debug("aer[k-1], k=1,n z,fnu,cj[kk-1],ch[kk-1], "
+                                            + "kk = index of first non-zero y,w pair\n");
                                     lflg = 1;
                                 } // if (lflg != 1)
 
@@ -8623,24 +8215,24 @@ group:
         return;
     }
 
-
     /**
      * DOCUMENT ME!
-     *
-     * @param  mqc  int Default is mqc = 1 does not check underflow limits and overflow limits. mqc != 1 checks
-     *              underflow and overflow limits
+     * 
+     * @param mqc int Default is mqc = 1 does not check underflow limits and overflow limits. mqc != 1 checks underflow
+     *            and overflow limits
      */
-    private void zqcbk(int mqc) {
+    private void zqcbk(final int mqc) {
 
-        /**ZQCBK IS A QUICK CHECK ROUTINE FOR THE COMPLEX K BESSEL FUNCTION
-         * C     GENERATED BY SUBROUTINE ZBESK. C C     ZQCBK GENERATES SEQUENCES OF I AND K BESSEL FUNCTIONS FROM C
-         * ZBESI AND ZBESK AND CHECKS THEM AGAINST THE WRONSKIAN EVALUATION C C           I(FNU,Z)*K(FNU+1,Z) +
-         * I(FNU+1,Z)*K(FNU,Z) = 1/Z C C     IN THE RIGHT HALF PLANE AND THE ANALYTIC CONTINUATION FORMULA C     FOR
-         * H(FNU,2,Z) IN TERMS OF THE K FUNCTION C C           K(FNU,Z) = C3*H(FNU,2,ZR) + C4*H(FNU,1,ZR)    IM(Z).GE.0
-         * C C                    = CONJG(K(FNU,CONJG(Z)))             IM(Z).LT.0 C C     IN THE LEFT HALF PLANE WHERE
-         * C3=C1*CONJG(C2)*C5, C4 = C2*C5 C     C1=2*COS(PI*FNU),   C2=EXP(PI*FNU*I/2),   C5 =-PI*I/2   AND C     ZR =
-         * Z*EXP(-3*PI*I/2) = Z*I C C     THE PARAMETER MQC CAN HAVE VALUES 1 (THE DEFAULT) FOR A FASTER,C     LESS
-         * DEFINITIVE TEST OR 2 FOR A SLOWER, MORE DEFINITIVE TEST. */
+        /**
+         * ZQCBK IS A QUICK CHECK ROUTINE FOR THE COMPLEX K BESSEL FUNCTION C GENERATED BY SUBROUTINE ZBESK. C C ZQCBK
+         * GENERATES SEQUENCES OF I AND K BESSEL FUNCTIONS FROM C ZBESI AND ZBESK AND CHECKS THEM AGAINST THE WRONSKIAN
+         * EVALUATION C C I(FNU,Z)*K(FNU+1,Z) + I(FNU+1,Z)*K(FNU,Z) = 1/Z C C IN THE RIGHT HALF PLANE AND THE ANALYTIC
+         * CONTINUATION FORMULA C FOR H(FNU,2,Z) IN TERMS OF THE K FUNCTION C C K(FNU,Z) = C3*H(FNU,2,ZR) +
+         * C4*H(FNU,1,ZR) IM(Z).GE.0 C C = CONJG(K(FNU,CONJG(Z))) IM(Z).LT.0 C C IN THE LEFT HALF PLANE WHERE
+         * C3=C1*CONJG(C2)*C5, C4 = C2*C5 C C1=2*COS(PI*FNU), C2=EXP(PI*FNU*I/2), C5 =-PI*I/2 AND C ZR =
+         * Z*EXP(-3*PI*I/2) = Z*I C C THE PARAMETER MQC CAN HAVE VALUES 1 (THE DEFAULT) FOR A FASTER,C LESS DEFINITIVE
+         * TEST OR 2 FOR A SLOWER, MORE DEFINITIVE TEST.
+         */
         double neweps;
         int k;
         int k1;
@@ -8654,19 +8246,19 @@ group:
         double hpi = Math.PI / 2.0;
         int nL;
         int il;
-        double[] t = new double[20];
-        double[] aer = new double[25];
-        double[] xnu = new double[20];
-        double[] vr = new double[20];
-        double[] vi = new double[20];
-        double[] yr = new double[20];
-        double[] yi = new double[20];
-        double[] wr = new double[20];
-        double[] wi = new double[20];
-        int[] keps = new int[20];
-        int[] kdo = new int[20];
-        double[] cipr = new double[] { 1.0, 0.0, -1.0, 0.0 };
-        double[] cipi = new double[] { 0.0, 1.0, 0.0, -1.0 };
+        final double[] t = new double[20];
+        final double[] aer = new double[25];
+        final double[] xnu = new double[20];
+        final double[] vr = new double[20];
+        final double[] vi = new double[20];
+        final double[] yr = new double[20];
+        final double[] yi = new double[20];
+        final double[] wr = new double[20];
+        final double[] wi = new double[20];
+        final int[] keps = new int[20];
+        final int[] kdo = new int[20];
+        final double[] cipr = new double[] {1.0, 0.0, -1.0, 0.0};
+        final double[] cipi = new double[] {0.0, 1.0, 0.0, -1.0};
         int i;
         int nul;
         double eps;
@@ -8695,10 +8287,10 @@ group:
         double st;
         double zr;
         double zi;
-        int[] nz = new int[1];
-        int[] ierr = new int[1];
-        double[] cvr = new double[1];
-        double[] cvi = new double[1];
+        final int[] nz = new int[1];
+        final int[] ierr = new int[1];
+        final double[] cvr = new double[1];
+        final double[] cvi = new double[1];
         int mflg;
         int kk;
         double er;
@@ -8723,13 +8315,13 @@ group:
         double cwr;
         double cwi;
 
-
-        /** SET PARAMETERS RELATED TO MACHINE CONSTANTS.
-         *   TOL IS THE APPROXIMATE UNIT ROUNDOFF LIMITED TO 1.0E-18.  ELIM IS THE APPROXIMATE EXPONENTIAL OVER- AND
-         * UNDERFLOW LIMIT.  EXP(-ELIM).LT.EXP(-ALIM)=EXP(-ELIM)/TOL    AND  EXP(ELIM).GT.EXP(ALIM)=EXP(ELIM)*TOL
-         * ARE INTERVALS NEAR  UNDERFLOW AND OVERFLOW LIMITS WHERE SCALED ARITHMETIC IS DONE.  RL IS THE LOWER BOUNDARY
-         * OF THE ASYMPTOTIC EXPANSION FOR LARGE Z.  DIG = NUMBER OF BASE 10 DIGITS IN TOL = 10**(-DIG).  FNUL IS THE
-         * LOWER BOUNDARY OF THE ASYMPTOTIC SERIES FOR LARGE FNU */
+        /**
+         * SET PARAMETERS RELATED TO MACHINE CONSTANTS. TOL IS THE APPROXIMATE UNIT ROUNDOFF LIMITED TO 1.0E-18. ELIM IS
+         * THE APPROXIMATE EXPONENTIAL OVER- AND UNDERFLOW LIMIT. EXP(-ELIM).LT.EXP(-ALIM)=EXP(-ELIM)/TOL AND
+         * EXP(ELIM).GT.EXP(ALIM)=EXP(ELIM)*TOL ARE INTERVALS NEAR UNDERFLOW AND OVERFLOW LIMITS WHERE SCALED ARITHMETIC
+         * IS DONE. RL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC EXPANSION FOR LARGE Z. DIG = NUMBER OF BASE 10 DIGITS IN
+         * TOL = 10**(-DIG). FNUL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC SERIES FOR LARGE FNU
+         */
         // epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
         // (1.0 + epsilon) != 1.0.
@@ -8768,14 +8360,14 @@ group:
         // r1m5 = log10(2), which is D1MACH(5)
         r1m5 = 0.434294481903251 * Math.log(2.0);
         k = Math.min(Math.abs(emin), Math.abs(emax));
-        elim = 2.303 * ((k * r1m5) - 3.0);
+        elim = 2.303 * ( (k * r1m5) - 3.0);
 
         // doubleDigits is I1MACH(14), the number of base-B digits for double
-        // precision.  IEEE 754 double precision has 64 bits with 1 sign bit,
+        // precision. IEEE 754 double precision has 64 bits with 1 sign bit,
         // 11 exponent bits, and 52 fraction, mantissa, or signficand bits.
         // Floating-point numbers are typically stored in normalized form,
-        // with the radix point after the first non-zero digit.  In base two,
-        // the only possible non-zero digit is 1.  Thus, a leading digit of 1
+        // with the radix point after the first non-zero digit. In base two,
+        // the only possible non-zero digit is 1. Thus, a leading digit of 1
         // can always be assumed and need not be explicitly represented.
         // Therefore, the mantissa effectively has 53 bits of resolution.
         doubleDigits = 53;
@@ -8783,10 +8375,10 @@ group:
         aa = r1m5 * k1;
         dig = Math.min(aa, 18.0);
         aa = 2.303 * aa;
-        alim = elim + Math.max(-aa, -41.45);
+        alim = elim + Math.max( -aa, -41.45);
         rl = (1.2 * dig) + 3.0;
         fnul = 10.0 + (6.0 * (dig - 3.0));
-        slak = 3.0 + (4.0 * ((-0.434294481903251 * Math.log(tol)) - 7.0) / 11.0);
+        slak = 3.0 + (4.0 * ( ( -0.434294481903251 * Math.log(tol)) - 7.0) / 11.0);
         slak = Math.max(slak, 3.0);
         ertol = tol * Math.pow(10.0, slak);
         rm = 0.5 * (alim + elim);
@@ -8804,16 +8396,17 @@ group:
         atol = 100.0 * tol;
         Preferences.debug("Checks in the (z,fnu) space with mqc = " + mqc + "\n");
 
-        /**     TEST VALUES OF Z IN -PI.LT.ARG(Z).LE.PI NEAR FORMULA BOUNDARIES
+        /**
+         * TEST VALUES OF Z IN -PI.LT.ARG(Z).LE.PI NEAR FORMULA BOUNDARIES
          * C-----------------------------------------------------------------------
-         * C----------------------------------------------------------------------- C     KDO(K), K=1,IL  DETERMINES
-         * WHICH OF THE IL ANGLES IN -PI TO PI C     ARE USE TO COMPUTE VALUES OF Z C       KDO(K) = 0  MEANS THAT THE
-         * INDEX K WILL BE USED FOR ONE OR TWO C                   VALUES OF Z, DEPENDING ON THE CHOICE OF KEPS(K) C
-         *          = 1  MEANS THAT THE INDEX K AND THE CORRESPONDING ANGLE C                   WILL BE SKIPPED C
-         * KEPS(K), K=1,IL DETERMINES WHICH OF THE ANGLES GET INCREMENTED C     UP AND DOWN TO PUT VALUES OF Z IN
-         * REGIONS WHERE DIFFERENT C     FORMULAE ARE USED. C       KEPS(K) =0  MEANS THAT THE ANGLE WILL BE USED
-         * WITHOUT CHANGE C               =1  MEANS THAT THE ANGLE WILL BE INCREMENTED UP AND C                   DOWN
-         * BY EPSC     THE ANGLES TO BE USED ARE STORED IN THE T(I) ARRAY, I=1,ITL */
+         * C----------------------------------------------------------------------- C KDO(K), K=1,IL DETERMINES WHICH OF
+         * THE IL ANGLES IN -PI TO PI C ARE USE TO COMPUTE VALUES OF Z C KDO(K) = 0 MEANS THAT THE INDEX K WILL BE USED
+         * FOR ONE OR TWO C VALUES OF Z, DEPENDING ON THE CHOICE OF KEPS(K) C = 1 MEANS THAT THE INDEX K AND THE
+         * CORRESPONDING ANGLE C WILL BE SKIPPED C KEPS(K), K=1,IL DETERMINES WHICH OF THE ANGLES GET INCREMENTED C UP
+         * AND DOWN TO PUT VALUES OF Z IN REGIONS WHERE DIFFERENT C FORMULAE ARE USED. C KEPS(K) =0 MEANS THAT THE ANGLE
+         * WILL BE USED WITHOUT CHANGE C =1 MEANS THAT THE ANGLE WILL BE INCREMENTED UP AND C DOWN BY EPSC THE ANGLES TO
+         * BE USED ARE STORED IN THE T(I) ARRAY, I=1,ITL
+         */
         if (mqc != 2) {
             nL = 2;
             il = 5;
@@ -8866,7 +8459,7 @@ group:
         for (k = 2; k <= il; k++) {
 
             if (kdo[k - 1] == 0) {
-                t[i - 1] = Math.PI * (-il + (2.0 * k) - 1.0) / film;
+                t[i - 1] = Math.PI * ( -il + (2.0 * k) - 1.0) / film;
 
                 if (keps[k - 1] != 0) {
                     ts = t[i - 1];
@@ -8887,8 +8480,7 @@ group:
             for (n = 1; n <= nL; n++) {
                 nONE = n + 1;
 
-group:
-                for (nu = 1; nu <= nul; nu++) {
+                group: for (nu = 1; nu <= nul; nu++) {
                     fnu = xnu[nu - 1];
                     ifnu = (int) (fnu);
                     ffnu = fnu - ifnu;
@@ -8906,20 +8498,19 @@ group:
                         for (ir = irb; ir <= 4; ir++) {
 
                             if (icase == 1) {
-                                r = ((0.2 * (4.0 - ir)) + (2.0 * (ir - 1.0))) / 3.0;
+                                r = ( (0.2 * (4.0 - ir)) + (2.0 * (ir - 1.0))) / 3.0;
                             } // if (icase == 1)
                             else if (icase == 2) {
-                                r = ((2.0 * (4.0 - ir)) + (r2 * (ir - 1.0))) / 3.0;
+                                r = ( (2.0 * (4.0 - ir)) + (r2 * (ir - 1.0))) / 3.0;
                             } // else if (icase == 2)
-                            else if ((icase == 3) && (r2 == rm)) {
+                            else if ( (icase == 3) && (r2 == rm)) {
                                 continue group;
                             } // else if ((icase == 3) && (r2 == rm))
                             else { // icase == 3
-                                r = ((r2 * (4.0 - ir)) + (rm * (ir - 1.0))) / 3.0;
+                                r = ( (r2 * (4.0 - ir)) + (rm * (ir - 1.0))) / 3.0;
                             } // else icase == 3
 
-group2:
-                            for (it = 1; it <= itl; it++) {
+                            group2: for (it = 1; it <= itl; it++) {
                                 ct = Math.cos(t[it - 1]);
                                 st = Math.sin(t[it - 1]);
 
@@ -8939,13 +8530,13 @@ group2:
                                     // Wronskian checks in the right half plane
                                     zbesi(zr, zi, fnu, kode, nONE, wr, wi, nz, ierr);
 
-                                    if ((nz[0] != 0) || (ierr[0] != 0)) {
+                                    if ( (nz[0] != 0) || (ierr[0] != 0)) {
                                         continue;
                                     } // if ((nz[0] != 0) || (ierr[0] != 0))
 
                                     zbesk(zr, zi, fnu, kode, nONE, yr, yi, nz, ierr);
 
-                                    if ((nz[0] != 0) || (ierr[0] != 0)) {
+                                    if ( (nz[0] != 0) || (ierr[0] != 0)) {
                                         continue;
                                     } // if ((nz[0] != 0) || (ierr[0] != 0))
 
@@ -8974,7 +8565,7 @@ group2:
                                         er = zabs(cyr, cyi) / zabs(cvr[0], cvi[0]);
                                         aer[i - 1] = er;
 
-                                        if ((er > ertol) && (kk == 0)) {
+                                        if ( (er > ertol) && (kk == 0)) {
                                             mflg = 1;
                                             kk = i;
                                         } // if (er > ertol) && (kk == 0))
@@ -9009,7 +8600,7 @@ group2:
 
                                     zbesk(zr, zi, fnu, kode, n, yr, yi, nz, ierr);
 
-                                    if ((nz[0] != 0) || (ierr[0] != 0)) {
+                                    if ( (nz[0] != 0) || (ierr[0] != 0)) {
                                         continue;
                                     } // if ((nz[0] != 0) || (ierr[0] != 0))
 
@@ -9018,7 +8609,7 @@ group2:
                                     kk = 0;
                                     aa = 2.0 * Math.cos(Math.PI * ffnu);
 
-                                    if ((ifnu % 2) != 0) {
+                                    if ( (ifnu % 2) != 0) {
                                         aa = -aa;
                                     } // if ((ifnu%2) != 0)
 
@@ -9059,7 +8650,7 @@ group2:
                                         } // if (kode == 2)
 
                                         str = (c3r * c2r) + (c3i * c2i);
-                                        sti = (-c3r * c2i) + (c3i * c2r);
+                                        sti = ( -c3r * c2i) + (c3i * c2r);
                                         cyr = (str * vr[i - 1]) - (sti * vi[i - 1]);
                                         cyi = (str * vi[i - 1]) + (sti * vr[i - 1]);
                                         cyr = cyr + (c4r * wr[i - 1]) - (c4i * wi[i - 1]);
@@ -9077,7 +8668,7 @@ group2:
                                         er = zabs(str, sti) / zabs(yr[i - 1], yi[i - 1]);
                                         aer[i - 1] = er;
 
-                                        if ((er > ertol) && (kk == 0)) {
+                                        if ( (er > ertol) && (kk == 0)) {
                                             mflg = 1;
                                             kk = i;
                                         } // if (er > ertol) && (kk == 0)
@@ -9095,11 +8686,11 @@ group2:
                                 } // if (mflg == 0)
 
                                 if (lflg != 1) {
-                                    Preferences.debug("Cases which violate the relative error" + " test with ertol = " +
-                                                      ertol + "\n");
+                                    Preferences.debug("Cases which violate the relative error" + " test with ertol = "
+                                            + ertol + "\n");
                                     Preferences.debug("Output format kode,n,ir,it,icase,kk\n");
-                                    Preferences.debug("aer[k-1], k=1,n z,fnu,y[kk-1] " +
-                                                      "kk = index of first non-zero pair\n");
+                                    Preferences.debug("aer[k-1], k=1,n z,fnu,y[kk-1] "
+                                            + "kk = index of first non-zero pair\n");
                                     lflg = 1;
                                 } // if (lflg != 1)
 
@@ -9135,18 +8726,19 @@ group2:
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  mqc  int Default is mqc = 1 does not check underflow limits and overflow limits. mqc != 1 checks
-     *              underflow and overflow limits
+     * 
+     * @param mqc int Default is mqc = 1 does not check underflow limits and overflow limits. mqc != 1 checks underflow
+     *            and overflow limits
      */
-    private void zqcby(int mqc) {
+    private void zqcby(final int mqc) {
 
-        /**ZQCBY IS A QUICK CHECK ROUTINE FOR THE COMPLEX Y BESSEL FUNCTION
-         * C     GENERATED BY SUBROUTINE ZBESY. C C     ZQCBY GENERATES SEQUENCES OF Y BESSEL FUNCTIONS FROM ZBESY AND C
-         *     ZBESYH AND COMPARES THEM FOR A VARIETY OF VALUES IN THE (Z,FNU) C     SPACE. ZBESYH IS AN OLD VERSION OF
-         * ZBESY WHICH COMPUTES THE Y C     FUNCTION FROM THE H FUNCTIONS OF KINDS 1 AND 2. C C     THE PARAMETER MQC
-         * CAN HAVE VALUES 1 (THE DEFAULT) FOR A FASTER,C     LESS DEFINITIVE TEST OR 2 FOR A SLOWER, MORE DEFINITIVE
-         * TEST.*/
+        /**
+         * ZQCBY IS A QUICK CHECK ROUTINE FOR THE COMPLEX Y BESSEL FUNCTION C GENERATED BY SUBROUTINE ZBESY. C C ZQCBY
+         * GENERATES SEQUENCES OF Y BESSEL FUNCTIONS FROM ZBESY AND C ZBESYH AND COMPARES THEM FOR A VARIETY OF VALUES
+         * IN THE (Z,FNU) C SPACE. ZBESYH IS AN OLD VERSION OF ZBESY WHICH COMPUTES THE Y C FUNCTION FROM THE H
+         * FUNCTIONS OF KINDS 1 AND 2. C C THE PARAMETER MQC CAN HAVE VALUES 1 (THE DEFAULT) FOR A FASTER,C LESS
+         * DEFINITIVE TEST OR 2 FOR A SLOWER, MORE DEFINITIVE TEST.
+         */
         double neweps;
         int k;
         int k1;
@@ -9157,20 +8749,20 @@ group2:
         double rm;
         double r2;
         double atol;
-        double hpi = Math.PI / 2.0;
+        final double hpi = Math.PI / 2.0;
         int nL;
         int il;
-        double[] t = new double[20];
-        double[] aer = new double[20];
-        double[] xnu = new double[20];
-        double[] wr = new double[20];
-        double[] wi = new double[20];
-        double[] vr = new double[20];
-        double[] vi = new double[20];
-        double[] cwrkr = new double[20];
-        double[] cwrki = new double[20];
-        int[] kdo = new int[20];
-        int[] keps = new int[20];
+        final double[] t = new double[20];
+        final double[] aer = new double[20];
+        final double[] xnu = new double[20];
+        final double[] wr = new double[20];
+        final double[] wi = new double[20];
+        final double[] vr = new double[20];
+        final double[] vi = new double[20];
+        final double[] cwrkr = new double[20];
+        final double[] cwrki = new double[20];
+        final int[] kdo = new int[20];
+        final int[] keps = new int[20];
         int i;
         int nul;
         double eps;
@@ -9193,9 +8785,9 @@ group2:
         double st;
         double zr;
         double zi;
-        int[] nz2 = new int[1];
-        int[] ierr = new int[1];
-        int[] nz1 = new int[1];
+        final int[] nz2 = new int[1];
+        final int[] ierr = new int[1];
+        final int[] nz1 = new int[1];
         int mflg;
         double ab;
         double cwr;
@@ -9204,13 +8796,13 @@ group2:
         double er;
         int kk;
 
-
-        /** SET PARAMETERS RELATED TO MACHINE CONSTANTS.
-         * TOL IS THE APPROXIMATE UNIT ROUNDOFF LIMITED TO 1.0E-18. ELIM IS THE APPROXIMATE EXPONENTIAL OVER- AND
-         * UNDERFLOW LIMIT. EXP(-ELIM).LT.EXP(-ALIM)=EXP(-ELIM)/TOL    AND EXP(ELIM).GT.EXP(ALIM)=EXP(ELIM)*TOL
-         * ARE INTERVALS NEAR UNDERFLOW AND OVERFLOW LIMITS WHERE SCALED ARITHMETIC IS DONE. RL IS THE LOWER BOUNDARY OF
-         * THE ASYMPTOTIC EXPANSION FOR LARGE Z. DIG = NUMBER OF BASE 10 DIGITS IN TOL = 10**(-DIG).FNUL IS THE LOWER
-         * BOUNDARY OF THE ASYMPTOTIC SERIES FOR LARGE FNU */
+        /**
+         * SET PARAMETERS RELATED TO MACHINE CONSTANTS. TOL IS THE APPROXIMATE UNIT ROUNDOFF LIMITED TO 1.0E-18. ELIM IS
+         * THE APPROXIMATE EXPONENTIAL OVER- AND UNDERFLOW LIMIT. EXP(-ELIM).LT.EXP(-ALIM)=EXP(-ELIM)/TOL AND
+         * EXP(ELIM).GT.EXP(ALIM)=EXP(ELIM)*TOL ARE INTERVALS NEAR UNDERFLOW AND OVERFLOW LIMITS WHERE SCALED ARITHMETIC
+         * IS DONE. RL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC EXPANSION FOR LARGE Z. DIG = NUMBER OF BASE 10 DIGITS IN
+         * TOL = 10**(-DIG).FNUL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC SERIES FOR LARGE FNU
+         */
         // epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
         // (1.0 + epsilon) != 1.0.
@@ -9249,14 +8841,14 @@ group2:
         // r1m5 = log10(2), which is D1MACH(5)
         r1m5 = 0.434294481903251 * Math.log(2.0);
         k = Math.min(Math.abs(emin), Math.abs(emax));
-        elim = 2.303 * ((k * r1m5) - 3.0);
+        elim = 2.303 * ( (k * r1m5) - 3.0);
 
         // doubleDigits is I1MACH(14), the number of base-B digits for double
-        // precision.  IEEE 754 double precision has 64 bits with 1 sign bit,
+        // precision. IEEE 754 double precision has 64 bits with 1 sign bit,
         // 11 exponent bits, and 52 fraction, mantissa, or signficand bits.
         // Floating-point numbers are typically stored in normalized form,
-        // with the radix point after the first non-zero digit.  In base two,
-        // the only possible non-zero digit is 1.  Thus, a leading digit of 1
+        // with the radix point after the first non-zero digit. In base two,
+        // the only possible non-zero digit is 1. Thus, a leading digit of 1
         // can always be assumed and need not be explicitly represented.
         // Therefore, the mantissa effectively has 53 bits of resolution.
         doubleDigits = 53;
@@ -9264,10 +8856,10 @@ group2:
         aa = r1m5 * k1;
         dig = Math.min(aa, 18.0);
         aa = 2.303 * aa;
-        alim = elim + Math.max(-aa, -41.45);
+        alim = elim + Math.max( -aa, -41.45);
         rl = (1.2 * dig) + 3.0;
         fnul = 10.0 + (6.0 * (dig - 3.0));
-        slak = 3.0 + (4.0 * ((-0.434294481903251 * Math.log(tol)) - 7.0) / 11.0);
+        slak = 3.0 + (4.0 * ( ( -0.434294481903251 * Math.log(tol)) - 7.0) / 11.0);
         slak = Math.max(slak, 3.0);
         ertol = tol * Math.pow(10.0, slak);
         rm = 0.5 * (alim + elim);
@@ -9284,16 +8876,17 @@ group2:
         atol = 100.0 * tol;
         Preferences.debug("Checks in the (z,fnu) space with mqc = " + mqc + "\n");
 
-        /**     TEST VALUES OF Z IN -PI/2.LT.ARG(Z).LE.PI NEAR FORMULA BOUNDARIES
+        /**
+         * TEST VALUES OF Z IN -PI/2.LT.ARG(Z).LE.PI NEAR FORMULA BOUNDARIES
          * C-----------------------------------------------------------------------
-         * C----------------------------------------------------------------------- C     KDO(K), K=1,IL  DETERMINES
-         * WHICH OF THE IL ANGLES IN -PI TO PI C     ARE USE TO COMPUTE VALUES OF Z C       KDO(K) = 0  MEANS THAT THE
-         * INDEX K WILL BE USED FOR ONE OR TWO C                   VALUES OF Z, DEPENDING ON THE CHOICE OF KEPS(K) C
-         *          = 1  MEANS THAT THE INDEX K AND THE CORRESPONDING ANGLE C                   WILL BE SKIPPED C
-         * KEPS(K), K=1,IL DETERMINES WHICH OF THE ANGLES GET INCREMENTED C     UP AND DOWN TO PUT VALUES OF Z IN
-         * REGIONS WHERE DIFFERENT C     FORMULAE ARE USED. C       KEPS(K) =0  MEANS THAT THE ANGLE WILL BE USED
-         * WITHOUT CHANGE C               =1  MEANS THAT THE ANGLE WILL BE INCREMENTED UP AND C                   DOWN
-         * BY EPSC     THE ANGLES TO BE USED ARE STORED IN THE T(I) ARRAY, I=1,ITL */
+         * C----------------------------------------------------------------------- C KDO(K), K=1,IL DETERMINES WHICH OF
+         * THE IL ANGLES IN -PI TO PI C ARE USE TO COMPUTE VALUES OF Z C KDO(K) = 0 MEANS THAT THE INDEX K WILL BE USED
+         * FOR ONE OR TWO C VALUES OF Z, DEPENDING ON THE CHOICE OF KEPS(K) C = 1 MEANS THAT THE INDEX K AND THE
+         * CORRESPONDING ANGLE C WILL BE SKIPPED C KEPS(K), K=1,IL DETERMINES WHICH OF THE ANGLES GET INCREMENTED C UP
+         * AND DOWN TO PUT VALUES OF Z IN REGIONS WHERE DIFFERENT C FORMULAE ARE USED. C KEPS(K) =0 MEANS THAT THE ANGLE
+         * WILL BE USED WITHOUT CHANGE C =1 MEANS THAT THE ANGLE WILL BE INCREMENTED UP AND C DOWN BY EPSC THE ANGLES TO
+         * BE USED ARE STORED IN THE T(I) ARRAY, I=1,ITL
+         */
         if (mqc != 2) {
             nL = 2;
             il = 5;
@@ -9347,7 +8940,7 @@ group2:
         for (k = 2; k <= il; k++) {
 
             if (kdo[k - 1] == 0) {
-                t[i - 1] = Math.PI * (-il + (2.0 * k) - 1.0) / film;
+                t[i - 1] = Math.PI * ( -il + (2.0 * k) - 1.0) / film;
 
                 if (keps[k - 1] != 0) {
                     ts = t[i - 1];
@@ -9372,23 +8965,22 @@ group2:
                     ifnu = (int) (fnu);
                     ffnu = fnu - ifnu;
 
-group:
-                    for (icase = 1; icase <= 3; icase++) {
+                    group: for (icase = 1; icase <= 3; icase++) {
                         irb = Math.min(2, icase);
 
                         for (ir = irb; ir <= 4; ir++) {
 
                             if (icase == 1) {
-                                r = ((eps * (4.0 - ir)) + (2.0 * (ir - 1.0))) / 3.0;
+                                r = ( (eps * (4.0 - ir)) + (2.0 * (ir - 1.0))) / 3.0;
                             } // if (icase == 1)
                             else if (icase == 2) {
-                                r = ((2.0 * (4.0 - ir)) + (r2 * (ir - 1.0))) / 3.0;
+                                r = ( (2.0 * (4.0 - ir)) + (r2 * (ir - 1.0))) / 3.0;
                             } // else if (icase == 2)
-                            else if ((icase == 3) && (rm == r2)) {
+                            else if ( (icase == 3) && (rm == r2)) {
                                 continue group;
                             } // else if ((icase == 3) && (rm == r2))
                             else {
-                                r = ((r2 * (4.0 - ir)) + (rm * (ir - 1.0))) / 3.0;
+                                r = ( (r2 * (4.0 - ir)) + (rm * (ir - 1.0))) / 3.0;
                             } // else
 
                             for (it = 1; it <= itl; it++) {
@@ -9407,13 +8999,13 @@ group:
                                 zi = r * st;
                                 zbesy(zr, zi, fnu, kode, n, vr, vi, nz2, cwrkr, cwrki, ierr);
 
-                                if ((nz2[0] != 0) || (ierr[0] != 0)) {
+                                if ( (nz2[0] != 0) || (ierr[0] != 0)) {
                                     continue;
                                 } // if ((nz2[0] != 0) || (ierr[0] != 0))
 
                                 zbesyh(zr, zi, fnu, kode, n, wr, wi, nz1, cwrkr, cwrki, ierr);
 
-                                if ((nz1[0] != 0) || (ierr[0] != 0)) {
+                                if ( (nz1[0] != 0) || (ierr[0] != 0)) {
                                     continue;
                                 } // if ((nz1[0] != 0) || (ierr[0] != 0))
 
@@ -9467,8 +9059,8 @@ group:
                                 } // if (mflg == 0)
 
                                 if (lflg != 1) {
-                                    Preferences.debug("Cases which violate relative error test " + "with ertol = " +
-                                                      ertol + "\n");
+                                    Preferences.debug("Cases which violate relative error test " + "with ertol = "
+                                            + ertol + "\n");
                                     Preferences.debug("OUTPUT FORMAT kode,n,ir,it,nz1,nz2,icase\n");
                                     Preferences.debug("aer[k-1], k = 1,n z,fnu,w[kk-1],v[kk-1]\n");
                                     Preferences.debug("kk = index of first non-zero w,v pair\n");
@@ -9514,16 +9106,17 @@ group:
      * ZRATI COMPUTES RATIOS OF I BESSEL FUNCTIONS BY BACKWARD RECURRENCE. THE STARTING INDEX IS DETERMINED BY FORWARD
      * RECURRENCE AS DESCRIBED IN J. RES. OF NAT. BUR. OF STANDARDS-B, MATHEMATICAL SCIENCES, VOL 77B, P111-114,
      * SEPTEMBER, 1973, BESSEL FUNCTIONS I AND J OF COMPLEX ARGUMENT AND INTEGER ORDER, BY D. J. SOOKNE.
-     *
-     * @param  zr   double
-     * @param  zi   double
-     * @param  fnu  double
-     * @param  n    int
-     * @param  cyr  double[]
-     * @param  cyi  double[]
+     * 
+     * @param zr double
+     * @param zi double
+     * @param fnu double
+     * @param n int
+     * @param cyr double[]
+     * @param cyi double[]
      */
-    private void zrati(double zr, double zi, double fnu, int n, double[] cyr, double[] cyi) {
-        double rt2 = Math.sqrt(2.0);
+    private void zrati(final double zr, final double zi, final double fnu, final int n, final double[] cyr,
+            final double[] cyi) {
+        final double rt2 = Math.sqrt(2.0);
         double az;
         int inu;
         int idnu;
@@ -9557,8 +9150,8 @@ group:
         double pti;
         double ttr;
         double tti;
-        double[] cyrnm1 = new double[1];
-        double[] cyinm1 = new double[1];
+        final double[] cyrnm1 = new double[1];
+        final double[] cyinm1 = new double[1];
         double cdfnur;
         double cdfnui;
         double rak;
@@ -9594,7 +9187,7 @@ group:
         ap1 = zabs(p1r, p1i);
 
         // The overflow test on K(fnu+i-1,z) before the call to cbknu
-        // guarantees that p2 is on scale.  Scale test1 and all subsequent
+        // guarantees that p2 is on scale. Scale test1 and all subsequent
         // p2 values by ap1 to ensure that an overflow does not occur
         // prematurely.
         arg = (ap2 + ap2) / (ap1 * tol);
@@ -9612,8 +9205,8 @@ group:
             ap1 = ap2;
             ptr = p2r;
             pti = p2i;
-            p2r = p1r - ((t1r * ptr) - (t1i * pti));
-            p2i = p1i - ((t1r * pti) + (t1i * ptr));
+            p2r = p1r - ( (t1r * ptr) - (t1i * pti));
+            p2i = p1i - ( (t1r * pti) + (t1i * ptr));
             p1r = ptr;
             p1i = pti;
             t1r = t1r + rzr;
@@ -9629,9 +9222,9 @@ group:
             } // if (itime == 2)
 
             ak = 0.5 * zabs(t1r, t1i);
-            flam = ak + Math.sqrt((ak * ak) - 1.0);
+            flam = ak + Math.sqrt( (ak * ak) - 1.0);
             rho = Math.min(ap2 / ap1, flam);
-            test = test1 * Math.sqrt(rho / ((rho * rho) - 1.0));
+            test = test1 * Math.sqrt(rho / ( (rho * rho) - 1.0));
             itime = 2;
         } // while (true)
 
@@ -9651,14 +9244,14 @@ group:
             rap1 = dfnu + t1r;
             ttr = rzr * rap1;
             tti = rzi * rap1;
-            p1r = ((ptr * ttr) - (pti * tti)) + p2r;
-            p1i = ((ptr * tti) + (pti * ttr)) + p2i;
+            p1r = ( (ptr * ttr) - (pti * tti)) + p2r;
+            p1i = ( (ptr * tti) + (pti * ttr)) + p2i;
             p2r = ptr;
             p2i = pti;
             t1r = t1r - 1.0;
         } // for ( i = 1; i <= kk; i++)
 
-        if ((p1r == 0.0) && (p1i == 0.0)) {
+        if ( (p1r == 0.0) && (p1i == 0.0)) {
             p1r = tol;
             p1i = tol;
         } // if ((p1r == 0.0) && (p1i == 0.0))
@@ -9679,8 +9272,8 @@ group:
         cdfnui = fnu * rzi;
 
         for (i = 2; i <= n; i++) {
-            ptr = cdfnur + ((t1r * rzr) - (t1i * rzi)) + cyr[k];
-            pti = cdfnui + ((t1r * rzi) + (t1i * rzr)) + cyi[k];
+            ptr = cdfnur + ( (t1r * rzr) - (t1i * rzi)) + cyr[k];
+            pti = cdfnui + ( (t1r * rzi) + (t1i * rzr)) + cyi[k];
             ak = zabs(ptr, pti);
 
             if (ak == 0.0) {
@@ -9704,34 +9297,34 @@ group:
      * TINUATION FORMULA WHERE S1=K FUNCTION AND S2=I FUNCTION. ON KODE=1 THE I AND K FUNCTIONS ARE DIFFERENT ORDERS OF
      * MAGNITUDE, BUT FOR KODE=2 THEY CAN BE OF THE SAME ORDER OF MAGNITUDE AND THE MAXIMUM MUST BE AT LEAST ONE
      * PRECISION ABOVE THE UNDERFLOW LIMIT.
-     *
-     * @param  zrr    double
-     * @param  zri    double
-     * @param  s1r    double[]
-     * @param  s1i    double[]
-     * @param  s2r    double[]
-     * @param  s2i    double[]
-     * @param  nz     int[]
-     * @param  ascle  double
-     * @param  iuf    int[]
+     * 
+     * @param zrr double
+     * @param zri double
+     * @param s1r double[]
+     * @param s1i double[]
+     * @param s2r double[]
+     * @param s2i double[]
+     * @param nz int[]
+     * @param ascle double
+     * @param iuf int[]
      */
-    private void zs1s2(double zrr, double zri, double[] s1r, double[] s1i, double[] s2r, double[] s2i, int[] nz,
-                       double ascle, int[] iuf) {
+    private void zs1s2(double zrr, final double zri, final double[] s1r, final double[] s1i, final double[] s2r,
+            final double[] s2i, final int[] nz, final double ascle, final int[] iuf) {
         double as1;
         double as2;
         double aln;
         double s1dr;
         double s1di;
-        double[] c1r = new double[1];
-        double[] c1i = new double[1];
-        int[] idum = new int[1];
+        final double[] c1r = new double[1];
+        final double[] c1i = new double[1];
+        final int[] idum = new int[1];
         double aa;
 
         nz[0] = 0;
         as1 = zabs(s1r[0], s1i[0]);
         as2 = zabs(s2r[0], s2i[0]);
 
-        if (((s1r[0] != 0.0) || (s1i[0] != 0.0)) && (as1 != 0.0)) {
+        if ( ( (s1r[0] != 0.0) || (s1i[0] != 0.0)) && (as1 != 0.0)) {
             aln = -zrr - zrr + Math.log(as1);
             s1dr = s1r[0];
             s1di = s1i[0];
@@ -9739,7 +9332,7 @@ group:
             s1i[0] = 0.0;
             as1 = 0.0;
 
-            if (aln >= (-alim)) {
+            if (aln >= ( -alim)) {
                 zlog(s1dr, s1di, c1r, c1i, idum);
                 c1r[0] = c1r[0] - zrr - zrr;
                 c1i[0] = c1i[0] - zri - zri;
@@ -9765,23 +9358,23 @@ group:
         return;
     }
 
-
     /**
      * ZSERI COMPUTES THE I BESSEL FUNCTION FOR REAL(Z).GE.0.0 BY MEANS OF THE POWER SERIES FOR LARGE CABS(Z) IN THE
      * REGION CABS(Z).LE.2*SQRT(fnu+1). NZ=0 IS A NORMAL RETURN. NZ.GT.0 MEANS THAT THE LAST NZ COMPONENTS WERE SET TO
      * ZERO DUE TO UNDERFLOW. NZ.LT.0 MEANS UNDERFLOW OCCURRED, BUT THE CONDITION CABS(Z).LE.2*SQRT(fnu+1) WAS VIOLATED
      * AND THE COMPUTATION MUST BE COMPLETED IN ANOTHER ROUTINE WITH N=N-ABS(NZ).
-     *
-     * @param  zr    double
-     * @param  zi    double
-     * @param  fnu   double
-     * @param  kode  int
-     * @param  n     int
-     * @param  yr    double[]
-     * @param  yi    double[]
-     * @param  nz    int[]
+     * 
+     * @param zr double
+     * @param zi double
+     * @param fnu double
+     * @param kode int
+     * @param n int
+     * @param yr double[]
+     * @param yi double[]
+     * @param nz int[]
      */
-    private void zseri(double zr, double zi, double fnu, int kode, int n, double[] yr, double[] yi, int[] nz) {
+    private void zseri(final double zr, double zi, final double fnu, final int kode, final int n, final double[] yr,
+            final double[] yi, final int[] nz) {
         double az;
         int i;
         double arm;
@@ -9790,13 +9383,13 @@ group:
         int iflag;
         double hzr;
         double hzi;
-        double[] czr = new double[1];
-        double[] czi = new double[1];
+        final double[] czr = new double[1];
+        final double[] czi = new double[1];
         double acz;
         int nn;
-        double[] ckr = new double[1];
-        double[] cki = new double[1];
-        int[] idum = new int[1];
+        final double[] ckr = new double[1];
+        final double[] cki = new double[1];
+        final int[] idum = new int[1];
         double dfnu = 0.0;
         double fnup = 1.0;
         double ak1r = 0.0;
@@ -9818,10 +9411,10 @@ group:
         double s1i = 0.0;
         double s = 1.0;
         double rs;
-        double[] str = new double[1];
-        double[] sti = new double[1];
-        double[] wr = new double[2];
-        double[] wi = new double[2];
+        final double[] str = new double[1];
+        final double[] sti = new double[1];
+        final double[] wr = new double[2];
+        final double[] wi = new double[2];
         int m;
         int k;
         double raz;
@@ -9830,7 +9423,7 @@ group:
         int ib = 0;
         double s2r;
         double s2i;
-        int[] nw = new int[1];
+        final int[] nw = new int[1];
         int l;
 
         nz[0] = 0;
@@ -9900,8 +9493,7 @@ group:
         nn = n;
         zlog(hzr, hzi, ckr, cki, idum);
 
-loop:
-        while (true) {
+        loop: while (true) {
 
             if (seg1) {
                 dfnu = fnu + nn - 1.0;
@@ -9917,7 +9509,7 @@ loop:
                     ak1r = ak1r - zr;
                 }
 
-                if (ak1r > (-elim)) {
+                if (ak1r > ( -elim)) {
                     seg2 = false;
                 }
             } // if (seg1)
@@ -9946,7 +9538,7 @@ loop:
 
             seg2 = true;
 
-            if (ak1r <= (-alim)) {
+            if (ak1r <= ( -alim)) {
                 iflag = 1;
                 ss = 1.0 / tol;
                 crscr = tol;
@@ -10051,8 +9643,8 @@ loop:
             ib = 3;
 
             for (i = ib; i <= nn; i++) {
-                yr[k - 1] = ((ak + fnu) * ((rzr * yr[k]) - (rzi * yi[k]))) + yr[k + 1];
-                yi[k - 1] = ((ak + fnu) * ((rzr * yi[k]) + (rzi * yr[k]))) + yi[k + 1];
+                yr[k - 1] = ( (ak + fnu) * ( (rzr * yr[k]) - (rzi * yi[k]))) + yr[k + 1];
+                yi[k - 1] = ( (ak + fnu) * ( (rzr * yi[k]) + (rzi * yr[k]))) + yi[k + 1];
                 ak = ak - 1.0;
                 k = k - 1;
             } // for (i = ib; i <= nn; i++)
@@ -10070,13 +9662,13 @@ loop:
         s2r = wr[1];
         s2i = wi[1];
 
-group:   {
+        group: {
 
             for (l = 3; l <= nn; l++) {
                 ckr[0] = s2r;
                 cki[0] = s2i;
-                s2r = s1r + ((ak + fnu) * ((rzr * ckr[0]) - (rzi * cki[0])));
-                s2i = s1i + ((ak + fnu) * ((rzr * cki[0]) + (rzi * ckr[0])));
+                s2r = s1r + ( (ak + fnu) * ( (rzr * ckr[0]) - (rzi * cki[0])));
+                s2i = s1i + ( (ak + fnu) * ( (rzr * cki[0]) + (rzi * ckr[0])));
                 s1r = ckr[0];
                 s1i = cki[0];
                 ckr[0] = s2r * crscr;
@@ -10101,8 +9693,8 @@ group:   {
         }
 
         for (i = ib; i <= nn; i++) {
-            yr[k - 1] = ((ak + fnu) * ((rzr * yr[k]) - (rzi * yi[k]))) + yr[k + 1];
-            yi[k - 1] = ((ak + fnu) * ((rzr * yi[k]) + (rzi * yr[k]))) + yi[k + 1];
+            yr[k - 1] = ( (ak + fnu) * ( (rzr * yr[k]) - (rzi * yi[k]))) + yr[k + 1];
+            yi[k - 1] = ( (ak + fnu) * ( (rzr * yi[k]) + (rzi * yr[k]))) + yi[k + 1];
             ak = ak - 1.0;
             k = k - 1;
         } // for (i = ib; i <= nn; i++)
@@ -10110,18 +9702,18 @@ group:   {
         return;
     }
 
-
     /**
      * zshch computes the complex hyperbolic functions csh = sinh(x+i*y) and cch = cosh(x+i*y).
-     *
-     * @param  zr    double
-     * @param  zi    double
-     * @param  cshr  double[]
-     * @param  cshi  double[]
-     * @param  cchr  double[]
-     * @param  cchi  double[]
+     * 
+     * @param zr double
+     * @param zi double
+     * @param cshr double[]
+     * @param cshi double[]
+     * @param cchr double[]
+     * @param cchi double[]
      */
-    private void zshch(double zr, double zi, double[] cshr, double[] cshi, double[] cchr, double[] cchi) {
+    private void zshch(double zr, final double zi, final double[] cshr, final double[] cshi, final double[] cchr,
+            final double[] cchi) {
         double pexp;
         double mexp;
         double sh;
@@ -10130,7 +9722,7 @@ group:   {
         double cn;
 
         pexp = Math.exp(zr);
-        mexp = Math.exp(-zr);
+        mexp = Math.exp( -zr);
         sh = 0.5 * (pexp - mexp);
         ch = 0.5 * (pexp + mexp);
         sn = Math.sin(zi);
@@ -10145,14 +9737,14 @@ group:   {
 
     /**
      * complex square root b = csqrt(a).
-     *
-     * @param  ar  double
-     * @param  ai  double
-     * @param  br  double[]
-     * @param  bi  double[]
+     * 
+     * @param ar double
+     * @param ai double
+     * @param br double[]
+     * @param bi double[]
      */
-    private void zsqrt(double ar, double ai, double[] br, double[] bi) {
-        double drt = 1.0 / Math.sqrt(2.0);
+    private void zsqrt(final double ar, final double ai, final double[] br, final double[] bi) {
+        final double drt = 1.0 / Math.sqrt(2.0);
         double zm;
         double theta;
 
@@ -10219,13 +9811,13 @@ group:   {
      * MADE TO SEE IF THE MAGNITUDE OF THE REAL OR IMAGINARY PART WOULD UNDERFLOW WHEN Y IS SCALED (BY TOL) TO ITS
      * PROPER VALUE. Y IS ACCEPTED IF THE UNDERFLOW IS AT LEAST ONE PRECISION BELOW THE MAGNITUDE OF THE LARGEST
      * COMPONENT; OTHERWISE THE PHASE ANGLE DOES NOT HAVE ABSOLUTE ACCURACY AND AN UNDERFLOW IS ASSUMED.
-     *
-     * @param  yr     double
-     * @param  yi     double
-     * @param  nz     int[]
-     * @param  ascle  double
+     * 
+     * @param yr double
+     * @param yi double
+     * @param nz int[]
+     * @param ascle double
      */
-    private void zuchk(double yr, double yi, int[] nz, double ascle) {
+    private void zuchk(final double yr, final double yi, final int[] nz, final double ascle) {
         double wr, wi, ss, st;
         nz[0] = 0;
         wr = Math.abs(yr);
@@ -10249,245 +9841,205 @@ group:   {
     /**
      * REFERENCES HANDBOOK OF MATHEMATICAL FUNCTIONS BY M. ABRAMOWITZ AND I.A. STEGUN, AMS55, NATIONAL BUREAU OF
      * STANDARDS, 1965, CHAPTER 9.
-     *
-     * <p>ASYMPTOTICS AND SPECIAL FUNCTIONS BY F.W.J. OLVER, ACADEMIC PRESS, N.Y., 1974, PAGE 420</p>
-     *
-     * <p>ABSTRACT ZUNHJ COMPUTES PARAMETERS FOR BESSEL FUNCTIONS C(FNU,Z) = J(FNU,Z), Y(FNU,Z) OR H(I,FNU,Z) I=1,2 FOR
-     * LARGE ORDERS FNU BY MEANS OF THE UNIFORM ASYMPTOTIC EXPANSION</p>
-     *
-     * <p>C(FNU,Z)=C1*PHI*( ASUM*AIRY(ARG) + C2*BSUM*DAIRY(ARG) )</p>
-     *
-     * <p>FOR PROPER CHOICES OF C1, C2, AIRY AND DAIRY WHERE AIRY IS AN AIRY FUNCTION AND DAIRY IS ITS DERIVATIVE.</p>
-     *
-     * <p>(2/3)*FNU*ZETA**1.5 = ZETA1-ZETA2,</p>
-     *
-     * <p>ZETA1=0.5*FNU*CLOG((1+W)/(1-W)), ZETA2=FNU*W FOR SCALING PURPOSES IN AIRY FUNCTIONS FROM CAIRY OR CBIRY.</p>
-     *
-     * <p>MCONJ=SIGN OF AIMAG(Z), BUT IS AMBIGUOUS WHEN Z IS REAL AND MUST BE SPECIFIED. IPMTR=0 RETURNS ALL PARAMETERS.
-     * IPMTR=1 COMPUTES ALL EXCEPT ASUM AND BSUM.</p>
-     *
-     * @param  zr      double
-     * @param  zi      double
-     * @param  fnu     double
-     * @param  ipmtr   int
-     * @param  phir    double[]
-     * @param  phii    double[]
-     * @param  argr    double[]
-     * @param  argi    double[]
-     * @param  zeta1r  double[]
-     * @param  zeta1i  double[]
-     * @param  zeta2r  double[]
-     * @param  zeta2i  double[]
-     * @param  asumr   double[]
-     * @param  asumi   double[]
-     * @param  bsumr   double[]
-     * @param  bsumi   double[]
+     * 
+     * <p>
+     * ASYMPTOTICS AND SPECIAL FUNCTIONS BY F.W.J. OLVER, ACADEMIC PRESS, N.Y., 1974, PAGE 420
+     * </p>
+     * 
+     * <p>
+     * ABSTRACT ZUNHJ COMPUTES PARAMETERS FOR BESSEL FUNCTIONS C(FNU,Z) = J(FNU,Z), Y(FNU,Z) OR H(I,FNU,Z) I=1,2 FOR
+     * LARGE ORDERS FNU BY MEANS OF THE UNIFORM ASYMPTOTIC EXPANSION
+     * </p>
+     * 
+     * <p>
+     * C(FNU,Z)=C1*PHI*( ASUM*AIRY(ARG) + C2*BSUM*DAIRY(ARG) )
+     * </p>
+     * 
+     * <p>
+     * FOR PROPER CHOICES OF C1, C2, AIRY AND DAIRY WHERE AIRY IS AN AIRY FUNCTION AND DAIRY IS ITS DERIVATIVE.
+     * </p>
+     * 
+     * <p>
+     * (2/3)*FNU*ZETA**1.5 = ZETA1-ZETA2,
+     * </p>
+     * 
+     * <p>
+     * ZETA1=0.5*FNU*CLOG((1+W)/(1-W)), ZETA2=FNU*W FOR SCALING PURPOSES IN AIRY FUNCTIONS FROM CAIRY OR CBIRY.
+     * </p>
+     * 
+     * <p>
+     * MCONJ=SIGN OF AIMAG(Z), BUT IS AMBIGUOUS WHEN Z IS REAL AND MUST BE SPECIFIED. IPMTR=0 RETURNS ALL PARAMETERS.
+     * IPMTR=1 COMPUTES ALL EXCEPT ASUM AND BSUM.
+     * </p>
+     * 
+     * @param zr double
+     * @param zi double
+     * @param fnu double
+     * @param ipmtr int
+     * @param phir double[]
+     * @param phii double[]
+     * @param argr double[]
+     * @param argi double[]
+     * @param zeta1r double[]
+     * @param zeta1i double[]
+     * @param zeta2r double[]
+     * @param zeta2i double[]
+     * @param asumr double[]
+     * @param asumi double[]
+     * @param bsumr double[]
+     * @param bsumi double[]
      */
-    private void zunhj(double zr, double zi, double fnu, int ipmtr, double[] phir, double[] phii, double[] argr,
-                       double[] argi, double[] zeta1r, double[] zeta1i, double[] zeta2r, double[] zeta2i,
-                       double[] asumr, double[] asumi, double[] bsumr, double[] bsumi) {
-        double[] ar = new double[] {
-                          1.00000000000000000E+00, 1.04166666666666667E-01, 8.35503472222222222E-02,
-                          1.28226574556327160E-01, 2.91849026464140464E-01, 8.81627267443757652E-01,
-                          3.32140828186276754E+00, 1.49957629868625547E+01, 7.89230130115865181E+01,
-                          4.74451538868264323E+02, 3.20749009089066193E+03, 2.40865496408740049E+04,
-                          1.98923119169509794E+05, 1.79190200777534383E+06
-                      };
-        double[] br = new double[] {
-                          1.00000000000000000E+00, -1.45833333333333333E-01, -9.87413194444444444E-02,
-                          -1.43312053915895062E-01, -3.17227202678413548E-01, -9.42429147957120249E-01,
-                          -3.51120304082635426E+00, -1.57272636203680451E+01, -8.22814390971859444E+01,
-                          -4.92355370523670524E+02, -3.31621856854797251E+03, -2.48276742452085896E+04,
-                          -2.04526587315129788E+05, -1.83844491706820990E+06
-                      };
-        double[] c = new double[] {
-                         1.00000000000000000E+00, -2.08333333333333333E-01, 1.25000000000000000E-01,
-                         3.34201388888888889E-01, -4.01041666666666667E-01, 7.03125000000000000E-02,
-                         -1.02581259645061728E+00, 1.84646267361111111E+00, -8.91210937500000000E-01,
-                         7.32421875000000000E-02, 4.66958442342624743E+00, -1.12070026162229938E+01,
-                         8.78912353515625000E+00, -2.36408691406250000E+00, 1.12152099609375000E-01,
-                         -2.82120725582002449E+01, 8.46362176746007346E+01, -9.18182415432400174E+01,
-                         4.25349987453884549E+01, -7.36879435947963170E+00, 2.27108001708984375E-01,
-                         2.12570130039217123E+02, -7.65252468141181642E+02, 1.05999045252799988E+03,
-                         -6.99579627376132541E+02, 2.18190511744211590E+02, -2.64914304869515555E+01,
-                         5.72501420974731445E-01, -1.91945766231840700E+03, 8.06172218173730938E+03,
-                         -1.35865500064341374E+04, 1.16553933368645332E+04, -5.30564697861340311E+03,
-                         1.20090291321635246E+03, -1.08090919788394656E+02, 1.72772750258445740E+00,
-                         2.02042913309661486E+04, -9.69805983886375135E+04, 1.92547001232531532E+05,
-                         -2.03400177280415534E+05, 1.22200464983017460E+05, -4.11926549688975513E+04,
-                         7.10951430248936372E+03, -4.93915304773088012E+02, 6.07404200127348304E+00,
-                         -2.42919187900551333E+05, 1.31176361466297720E+06, -2.99801591853810675E+06,
-                         3.76327129765640400E+06, -2.81356322658653411E+06, 1.26836527332162478E+06,
-                         -3.31645172484563578E+05, 4.52187689813627263E+04, -2.49983048181120962E+03,
-                         2.43805296995560639E+01, 3.28446985307203782E+06, -1.97068191184322269E+07,
-                         5.09526024926646422E+07, -7.41051482115326577E+07, 6.63445122747290267E+07,
-                         -3.75671766607633513E+07, 1.32887671664218183E+07, -2.78561812808645469E+06,
-                         3.08186404612662398E+05, -1.38860897537170405E+04, 1.10017140269246738E+02,
-                         -4.93292536645099620E+07, 3.25573074185765749E+08, -9.39462359681578403E+08,
-                         1.55359689957058006E+09, -1.62108055210833708E+09, 1.10684281682301447E+09,
-                         -4.95889784275030309E+08, 1.42062907797533095E+08, -2.44740627257387285E+07,
-                         2.24376817792244943E+06, -8.40054336030240853E+04, 5.51335896122020586E+02,
-                         8.14789096118312115E+08, -5.86648149205184723E+09, 1.86882075092958249E+10,
-                         -3.46320433881587779E+10, 4.12801855797539740E+10, -3.30265997498007231E+10,
-                         1.79542137311556001E+10, -6.56329379261928433E+09, 1.55927986487925751E+09,
-                         -2.25105661889415278E+08, 1.73951075539781645E+07, -5.49842327572288687E+05,
-                         3.03809051092238427E+03, -1.46792612476956167E+10, 1.14498237732025810E+11,
-                         -3.99096175224466498E+11, 8.19218669548577329E+11, -1.09837515608122331E+12,
-                         1.00815810686538209E+12, -6.45364869245376503E+11, 2.87900649906150589E+11,
-                         -8.78670721780232657E+10, 1.76347306068349694E+10, -2.16716498322379509E+09,
-                         1.43157876718888981E+08, -3.87183344257261262E+06, 1.82577554742931747E+04
-                     };
-        double[] alfa = new double[] {
-                            -4.44444444444444444E-03, -9.22077922077922078E-04, -8.84892884892884893E-05,
-                            1.65927687832449737E-04, 2.46691372741792910E-04, 2.65995589346254780E-04,
-                            2.61824297061500945E-04, 2.48730437344655609E-04, 2.32721040083232098E-04,
-                            2.16362485712365082E-04, 2.00738858762752355E-04, 1.86267636637545172E-04,
-                            1.73060775917876493E-04, 1.61091705929015752E-04, 1.50274774160908134E-04,
-                            1.40503497391269794E-04, 1.31668816545922806E-04, 1.23667445598253261E-04,
-                            1.16405271474737902E-04, 1.09798298372713369E-04, 1.03772410422992823E-04,
-                            9.82626078369363448E-05, 9.32120517249503256E-05, 8.85710852478711718E-05,
-                            8.42963105715700223E-05, 8.03497548407791151E-05, 7.66981345359207388E-05,
-                            7.33122157481777809E-05, 7.01662625163141333E-05, 6.72375633790160292E-05,
-                            6.93735541354588974E-04, 2.32241745182921654E-04, -1.41986273556691197E-05,
-                            -1.16444931672048640E-04, -1.50803558053048762E-04, -1.55121924918096223E-04,
-                            -1.46809756646465549E-04, -1.33815503867491367E-04, -1.19744975684254051E-04,
-                            -1.06184319207974020E-04, -9.37699549891194492E-05, -8.26923045588193274E-05,
-                            -7.29374348155221211E-05, -6.44042357721016283E-05, -5.69611566009369048E-05,
-                            -5.04731044303561628E-05, -4.48134868008882786E-05, -3.98688727717598864E-05,
-                            -3.55400532972042498E-05, -3.17414256609022480E-05, -2.83996793904174811E-05,
-                            -2.54522720634870566E-05, -2.28459297164724555E-05, -2.05352753106480604E-05,
-                            -1.84816217627666085E-05, -1.66519330021393806E-05, -1.50179412980119482E-05,
-                            -1.35554031379040526E-05, -1.22434746473858131E-05, -1.10641884811308169E-05,
-                            -3.54211971457743841E-04, -1.56161263945159416E-04, 3.04465503594936410E-05,
-                            1.30198655773242693E-04, 1.67471106699712269E-04, 1.70222587683592569E-04,
-                            1.56501427608594704E-04, 1.36339170977445120E-04, 1.14886692029825128E-04,
-                            9.45869093034688111E-05, 7.64498419250898258E-05, 6.07570334965197354E-05,
-                            4.74394299290508799E-05, 3.62757512005344297E-05, 2.69939714979224901E-05,
-                            1.93210938247939253E-05, 1.30056674793963203E-05, 7.82620866744496661E-06,
-                            3.59257485819351583E-06, 1.44040049814251817E-07, -2.65396769697939116E-06,
-                            -4.91346867098485910E-06, -6.72739296091248287E-06, -8.17269379678657923E-06,
-                            -9.31304715093561232E-06, -1.02011418798016441E-05, -1.08805962510592880E-05,
-                            -1.13875481509603555E-05, -1.17519675674556414E-05, -1.19987364870944141E-05,
-                            3.78194199201772914E-04, 2.02471952761816167E-04, -6.37938506318862408E-05,
-                            -2.38598230603005903E-04, -3.10916256027361568E-04, -3.13680115247576316E-04,
-                            -2.78950273791323387E-04, -2.28564082619141374E-04, -1.75245280340846749E-04,
-                            -1.25544063060690348E-04, -8.22982872820208365E-05, -4.62860730588116458E-05,
-                            -1.72334302366962267E-05, 5.60690482304602267E-06, 2.31395443148286800E-05,
-                            3.62642745856793957E-05, 4.58006124490188752E-05, 5.24595294959114050E-05,
-                            5.68396208545815266E-05, 5.94349820393104052E-05, 6.06478527578421742E-05,
-                            6.08023907788436497E-05, 6.01577894539460388E-05, 5.89199657344698500E-05,
-                            5.72515823777593053E-05, 5.52804375585852577E-05, 5.31063773802880170E-05,
-                            5.08069302012325706E-05, 4.84418647620094842E-05, 4.60568581607475370E-05,
-                            -6.91141397288294174E-04, -4.29976633058871912E-04, 1.83067735980039018E-04,
-                            6.60088147542014144E-04, 8.75964969951185931E-04, 8.77335235958235514E-04,
-                            7.49369585378990637E-04, 5.63832329756980918E-04, 3.68059319971443156E-04,
-                            1.88464535514455599E-04, 3.70663057664904149E-05, -8.28520220232137023E-05,
-                            -1.72751952869172998E-04, -2.36314873605872983E-04, -2.77966150694906658E-04,
-                            -3.02079514155456919E-04, -3.12594712643820127E-04, -3.12872558758067163E-04,
-                            -3.05678038466324377E-04, -2.93226470614557331E-04, -2.77255655582934777E-04,
-                            -2.59103928467031709E-04, -2.39784014396480342E-04, -2.20048260045422848E-04,
-                            -2.00443911094971498E-04, -1.81358692210970687E-04, -1.63057674478657464E-04,
-                            -1.45712672175205844E-04, -1.29425421983924587E-04, -1.14245691942445952E-04,
-                            1.92821964248775885E-03, 1.35592576302022234E-03, -7.17858090421302995E-04,
-                            -2.58084802575270346E-03, -3.49271130826168475E-03, -3.46986299340960628E-03,
-                            -2.82285233351310182E-03, -1.88103076404891354E-03, -8.89531718383947600E-04,
-                            3.87912102631035228E-06, 7.28688540119691412E-04, 1.26566373053457758E-03,
-                            1.62518158372674427E-03, 1.83203153216373172E-03, 1.91588388990527909E-03,
-                            1.90588846755546138E-03, 1.82798982421825727E-03, 1.70389506421121530E-03,
-                            1.55097127171097686E-03, 1.38261421852276159E-03, 1.20881424230064774E-03,
-                            1.03676532638344962E-03, 8.71437918068619115E-04, 7.16080155297701002E-04,
-                            5.72637002558129372E-04, 4.42089819465802277E-04, 3.24724948503090564E-04,
-                            2.20342042730246599E-04, 1.28412898401353882E-04, 4.82005924552095464E-05
-                        };
-        double[] beta = new double[] {
-                            1.79988721413553309E-02, 5.59964911064388073E-03, 2.88501402231132779E-03,
-                            1.80096606761053941E-03, 1.24753110589199202E-03, 9.22878876572938311E-04,
-                            7.14430421727287357E-04, 5.71787281789704872E-04, 4.69431007606481533E-04,
-                            3.93232835462916638E-04, 3.34818889318297664E-04, 2.88952148495751517E-04,
-                            2.52211615549573284E-04, 2.22280580798883327E-04, 1.97541838033062524E-04,
-                            1.76836855019718004E-04, 1.59316899661821081E-04, 1.44347930197333986E-04,
-                            1.31448068119965379E-04, 1.20245444949302884E-04, 1.10449144504599392E-04,
-                            1.01828770740567258E-04, 9.41998224204237509E-05, 8.74130545753834437E-05,
-                            8.13466262162801467E-05, 7.59002269646219339E-05, 7.09906300634153481E-05,
-                            6.65482874842468183E-05, 6.25146958969275078E-05, 5.88403394426251749E-05,
-                            -1.49282953213429172E-03, -8.78204709546389328E-04, -5.02916549572034614E-04,
-                            -2.94822138512746025E-04, -1.75463996970782828E-04, -1.04008550460816434E-04,
-                            -5.96141953046457895E-05, -3.12038929076098340E-05, -1.26089735980230047E-05,
-                            -2.42892608575730389E-07, 8.05996165414273571E-06, 1.36507009262147391E-05,
-                            1.73964125472926261E-05, 1.98672978842133780E-05, 2.14463263790822639E-05,
-                            2.23954659232456514E-05, 2.28967783814712629E-05, 2.30785389811177817E-05,
-                            2.30321976080909144E-05, 2.28236073720348722E-05, 2.25005881105292418E-05,
-                            2.20981015361991429E-05, 2.16418427448103905E-05, 2.11507649256220843E-05,
-                            2.06388749782170737E-05, 2.01165241997081666E-05, 1.95913450141179244E-05,
-                            1.90689367910436740E-05, 1.85533719641636667E-05, 1.80475722259674218E-05,
-                            5.52213076721292790E-04, 4.47932581552384646E-04, 2.79520653992020589E-04,
-                            1.52468156198446602E-04, 6.93271105657043598E-05, 1.76258683069991397E-05,
-                            -1.35744996343269136E-05, -3.17972413350427135E-05, -4.18861861696693365E-05,
-                            -4.69004889379141029E-05, -4.87665447413787352E-05, -4.87010031186735069E-05,
-                            -4.74755620890086638E-05, -4.55813058138628452E-05, -4.33309644511266036E-05,
-                            -4.09230193157750364E-05, -3.84822638603221274E-05, -3.60857167535410501E-05,
-                            -3.37793306123367417E-05, -3.15888560772109621E-05, -2.95269561750807315E-05,
-                            -2.75978914828335759E-05, -2.58006174666883713E-05, -2.41308356761280200E-05,
-                            -2.25823509518346033E-05, -2.11479656768912971E-05, -1.98200638885294927E-05,
-                            -1.85909870801065077E-05, -1.74532699844210224E-05, -1.63997823854497997E-05,
-                            -4.74617796559959808E-04, -4.77864567147321487E-04, -3.20390228067037603E-04,
-                            -1.61105016119962282E-04, -4.25778101285435204E-05, 3.44571294294967503E-05,
-                            7.97092684075674924E-05, 1.03138236708272200E-04, 1.12466775262204158E-04,
-                            1.13103642108481389E-04, 1.08651634848774268E-04, 1.01437951597661973E-04,
-                            9.29298396593363896E-05, 8.40293133016089978E-05, 7.52727991349134062E-05,
-                            6.69632521975730872E-05, 5.92564547323194704E-05, 5.22169308826975567E-05,
-                            4.58539485165360646E-05, 4.01445513891486808E-05, 3.50481730031328081E-05,
-                            3.05157995034346659E-05, 2.64956119950516039E-05, 2.29363633690998152E-05,
-                            1.97893056664021636E-05, 1.70091984636412623E-05, 1.45547428261524004E-05,
-                            1.23886640995878413E-05, 1.04775876076583236E-05, 8.79179954978479373E-06,
-                            7.36465810572578444E-04, 8.72790805146193976E-04, 6.22614862573135066E-04,
-                            2.85998154194304147E-04, 3.84737672879366102E-06, -1.87906003636971558E-04,
-                            -2.97603646594554535E-04, -3.45998126832656348E-04, -3.53382470916037712E-04,
-                            -3.35715635775048757E-04, -3.04321124789039809E-04, -2.66722723047612821E-04,
-                            -2.27654214122819527E-04, -1.89922611854562356E-04, -1.55058918599093870E-04,
-                            -1.23778240761873630E-04, -9.62926147717644187E-05, -7.25178327714425337E-05,
-                            -5.22070028895633801E-05, -3.50347750511900522E-05, -2.06489761035551757E-05,
-                            -8.70106096849767054E-06, 1.13698686675100290E-06, 9.16426474122778849E-06,
-                            1.56477785428872620E-05, 2.08223629482466847E-05, 2.48923381004595156E-05,
-                            2.80340509574146325E-05, 3.03987774629861915E-05, 3.21156731406700616E-05,
-                            -1.80182191963885708E-03, -2.43402962938042533E-03, -1.83422663549856802E-03,
-                            -7.62204596354009765E-04, 2.39079475256927218E-04, 9.49266117176881141E-04,
-                            1.34467449701540359E-03, 1.48457495259449178E-03, 1.44732339830617591E-03,
-                            1.30268261285657186E-03, 1.10351597375642682E-03, 8.86047440419791759E-04,
-                            6.73073208165665473E-04, 4.77603872856582378E-04, 3.05991926358789362E-04,
-                            1.60315694594721630E-04, 4.00749555270613286E-05, -5.66607461635251611E-05,
-                            -1.32506186772982638E-04, -1.90296187989614057E-04, -2.32811450376937408E-04,
-                            -2.62628811464668841E-04, -2.82050469867598672E-04, -2.93081563192861167E-04,
-                            -2.97435962176316616E-04, -2.96557334239348078E-04, -2.91647363312090861E-04,
-                            -2.83696203837734166E-04, -2.73512317095673346E-04, -2.61750155806768580E-04,
-                            6.38585891212050914E-03, 9.62374215806377941E-03, 7.61878061207001043E-03,
-                            2.83219055545628054E-03, -2.09841352012720090E-03, -5.73826764216626498E-03,
-                            -7.70804244495414620E-03, -8.21011692264844401E-03, -7.65824520346905413E-03,
-                            -6.47209729391045177E-03, -4.99132412004966473E-03, -3.45612289713133280E-03,
-                            -2.01785580014170775E-03, -7.59430686781961401E-04, 2.84173631523859138E-04,
-                            1.10891667586337403E-03, 1.72901493872728771E-03, 2.16812590802684701E-03,
-                            2.45357710494539735E-03, 2.61281821058334862E-03, 2.67141039656276912E-03,
-                            2.65203073395980430E-03, 2.57411652877287315E-03, 2.45389126236094427E-03,
-                            2.30460058071795494E-03, 2.13684837686712662E-03, 1.95896528478870911E-03,
-                            1.77737008679454412E-03, 1.59690280765839059E-03, 1.42111975664438546E-03
-                        };
-        double[] gama = new double[] {
-                            6.29960524947436582E-01, 2.51984209978974633E-01, 1.54790300415655846E-01,
-                            1.10713062416159013E-01, 8.57309395527394825E-02, 6.97161316958684292E-02,
-                            5.86085671893713576E-02, 5.04698873536310685E-02, 4.42600580689154809E-02,
-                            3.93720661543509966E-02, 3.54283195924455368E-02, 3.21818857502098231E-02,
-                            2.94646240791157679E-02, 2.71581677112934479E-02, 2.51768272973861779E-02,
-                            2.34570755306078891E-02, 2.19508390134907203E-02, 2.06210828235646240E-02,
-                            1.94388240897880846E-02, 1.83810633800683158E-02, 1.74293213231963172E-02,
-                            1.65685837786612353E-02, 1.57865285987918445E-02, 1.50729501494095594E-02,
-                            1.44193250839954639E-02, 1.38184805735341786E-02, 1.32643378994276568E-02,
-                            1.27517121970498651E-02, 1.22761545318762767E-02, 1.18338262398482403E-02
-                        };
-        double ex1 = 3.33333333333333333E-01;
-        double ex2 = 6.66666666666666667E-01;
-        double hpi = Math.PI / 2.0;
-        double gpi = Math.PI;
-        double thpi = 1.5 * Math.PI;
+    private void zunhj(final double zr, final double zi, final double fnu, final int ipmtr, final double[] phir,
+            final double[] phii, final double[] argr, final double[] argi, final double[] zeta1r,
+            final double[] zeta1i, final double[] zeta2r, final double[] zeta2i, final double[] asumr,
+            final double[] asumi, final double[] bsumr, final double[] bsumi) {
+        final double[] ar = new double[] {1.00000000000000000E+00, 1.04166666666666667E-01, 8.35503472222222222E-02,
+                1.28226574556327160E-01, 2.91849026464140464E-01, 8.81627267443757652E-01, 3.32140828186276754E+00,
+                1.49957629868625547E+01, 7.89230130115865181E+01, 4.74451538868264323E+02, 3.20749009089066193E+03,
+                2.40865496408740049E+04, 1.98923119169509794E+05, 1.79190200777534383E+06};
+        final double[] br = new double[] {1.00000000000000000E+00, -1.45833333333333333E-01, -9.87413194444444444E-02,
+                -1.43312053915895062E-01, -3.17227202678413548E-01, -9.42429147957120249E-01, -3.51120304082635426E+00,
+                -1.57272636203680451E+01, -8.22814390971859444E+01, -4.92355370523670524E+02, -3.31621856854797251E+03,
+                -2.48276742452085896E+04, -2.04526587315129788E+05, -1.83844491706820990E+06};
+        final double[] c = new double[] {1.00000000000000000E+00, -2.08333333333333333E-01, 1.25000000000000000E-01,
+                3.34201388888888889E-01, -4.01041666666666667E-01, 7.03125000000000000E-02, -1.02581259645061728E+00,
+                1.84646267361111111E+00, -8.91210937500000000E-01, 7.32421875000000000E-02, 4.66958442342624743E+00,
+                -1.12070026162229938E+01, 8.78912353515625000E+00, -2.36408691406250000E+00, 1.12152099609375000E-01,
+                -2.82120725582002449E+01, 8.46362176746007346E+01, -9.18182415432400174E+01, 4.25349987453884549E+01,
+                -7.36879435947963170E+00, 2.27108001708984375E-01, 2.12570130039217123E+02, -7.65252468141181642E+02,
+                1.05999045252799988E+03, -6.99579627376132541E+02, 2.18190511744211590E+02, -2.64914304869515555E+01,
+                5.72501420974731445E-01, -1.91945766231840700E+03, 8.06172218173730938E+03, -1.35865500064341374E+04,
+                1.16553933368645332E+04, -5.30564697861340311E+03, 1.20090291321635246E+03, -1.08090919788394656E+02,
+                1.72772750258445740E+00, 2.02042913309661486E+04, -9.69805983886375135E+04, 1.92547001232531532E+05,
+                -2.03400177280415534E+05, 1.22200464983017460E+05, -4.11926549688975513E+04, 7.10951430248936372E+03,
+                -4.93915304773088012E+02, 6.07404200127348304E+00, -2.42919187900551333E+05, 1.31176361466297720E+06,
+                -2.99801591853810675E+06, 3.76327129765640400E+06, -2.81356322658653411E+06, 1.26836527332162478E+06,
+                -3.31645172484563578E+05, 4.52187689813627263E+04, -2.49983048181120962E+03, 2.43805296995560639E+01,
+                3.28446985307203782E+06, -1.97068191184322269E+07, 5.09526024926646422E+07, -7.41051482115326577E+07,
+                6.63445122747290267E+07, -3.75671766607633513E+07, 1.32887671664218183E+07, -2.78561812808645469E+06,
+                3.08186404612662398E+05, -1.38860897537170405E+04, 1.10017140269246738E+02, -4.93292536645099620E+07,
+                3.25573074185765749E+08, -9.39462359681578403E+08, 1.55359689957058006E+09, -1.62108055210833708E+09,
+                1.10684281682301447E+09, -4.95889784275030309E+08, 1.42062907797533095E+08, -2.44740627257387285E+07,
+                2.24376817792244943E+06, -8.40054336030240853E+04, 5.51335896122020586E+02, 8.14789096118312115E+08,
+                -5.86648149205184723E+09, 1.86882075092958249E+10, -3.46320433881587779E+10, 4.12801855797539740E+10,
+                -3.30265997498007231E+10, 1.79542137311556001E+10, -6.56329379261928433E+09, 1.55927986487925751E+09,
+                -2.25105661889415278E+08, 1.73951075539781645E+07, -5.49842327572288687E+05, 3.03809051092238427E+03,
+                -1.46792612476956167E+10, 1.14498237732025810E+11, -3.99096175224466498E+11, 8.19218669548577329E+11,
+                -1.09837515608122331E+12, 1.00815810686538209E+12, -6.45364869245376503E+11, 2.87900649906150589E+11,
+                -8.78670721780232657E+10, 1.76347306068349694E+10, -2.16716498322379509E+09, 1.43157876718888981E+08,
+                -3.87183344257261262E+06, 1.82577554742931747E+04};
+        final double[] alfa = new double[] { -4.44444444444444444E-03, -9.22077922077922078E-04,
+                -8.84892884892884893E-05, 1.65927687832449737E-04, 2.46691372741792910E-04, 2.65995589346254780E-04,
+                2.61824297061500945E-04, 2.48730437344655609E-04, 2.32721040083232098E-04, 2.16362485712365082E-04,
+                2.00738858762752355E-04, 1.86267636637545172E-04, 1.73060775917876493E-04, 1.61091705929015752E-04,
+                1.50274774160908134E-04, 1.40503497391269794E-04, 1.31668816545922806E-04, 1.23667445598253261E-04,
+                1.16405271474737902E-04, 1.09798298372713369E-04, 1.03772410422992823E-04, 9.82626078369363448E-05,
+                9.32120517249503256E-05, 8.85710852478711718E-05, 8.42963105715700223E-05, 8.03497548407791151E-05,
+                7.66981345359207388E-05, 7.33122157481777809E-05, 7.01662625163141333E-05, 6.72375633790160292E-05,
+                6.93735541354588974E-04, 2.32241745182921654E-04, -1.41986273556691197E-05, -1.16444931672048640E-04,
+                -1.50803558053048762E-04, -1.55121924918096223E-04, -1.46809756646465549E-04, -1.33815503867491367E-04,
+                -1.19744975684254051E-04, -1.06184319207974020E-04, -9.37699549891194492E-05, -8.26923045588193274E-05,
+                -7.29374348155221211E-05, -6.44042357721016283E-05, -5.69611566009369048E-05, -5.04731044303561628E-05,
+                -4.48134868008882786E-05, -3.98688727717598864E-05, -3.55400532972042498E-05, -3.17414256609022480E-05,
+                -2.83996793904174811E-05, -2.54522720634870566E-05, -2.28459297164724555E-05, -2.05352753106480604E-05,
+                -1.84816217627666085E-05, -1.66519330021393806E-05, -1.50179412980119482E-05, -1.35554031379040526E-05,
+                -1.22434746473858131E-05, -1.10641884811308169E-05, -3.54211971457743841E-04, -1.56161263945159416E-04,
+                3.04465503594936410E-05, 1.30198655773242693E-04, 1.67471106699712269E-04, 1.70222587683592569E-04,
+                1.56501427608594704E-04, 1.36339170977445120E-04, 1.14886692029825128E-04, 9.45869093034688111E-05,
+                7.64498419250898258E-05, 6.07570334965197354E-05, 4.74394299290508799E-05, 3.62757512005344297E-05,
+                2.69939714979224901E-05, 1.93210938247939253E-05, 1.30056674793963203E-05, 7.82620866744496661E-06,
+                3.59257485819351583E-06, 1.44040049814251817E-07, -2.65396769697939116E-06, -4.91346867098485910E-06,
+                -6.72739296091248287E-06, -8.17269379678657923E-06, -9.31304715093561232E-06, -1.02011418798016441E-05,
+                -1.08805962510592880E-05, -1.13875481509603555E-05, -1.17519675674556414E-05, -1.19987364870944141E-05,
+                3.78194199201772914E-04, 2.02471952761816167E-04, -6.37938506318862408E-05, -2.38598230603005903E-04,
+                -3.10916256027361568E-04, -3.13680115247576316E-04, -2.78950273791323387E-04, -2.28564082619141374E-04,
+                -1.75245280340846749E-04, -1.25544063060690348E-04, -8.22982872820208365E-05, -4.62860730588116458E-05,
+                -1.72334302366962267E-05, 5.60690482304602267E-06, 2.31395443148286800E-05, 3.62642745856793957E-05,
+                4.58006124490188752E-05, 5.24595294959114050E-05, 5.68396208545815266E-05, 5.94349820393104052E-05,
+                6.06478527578421742E-05, 6.08023907788436497E-05, 6.01577894539460388E-05, 5.89199657344698500E-05,
+                5.72515823777593053E-05, 5.52804375585852577E-05, 5.31063773802880170E-05, 5.08069302012325706E-05,
+                4.84418647620094842E-05, 4.60568581607475370E-05, -6.91141397288294174E-04, -4.29976633058871912E-04,
+                1.83067735980039018E-04, 6.60088147542014144E-04, 8.75964969951185931E-04, 8.77335235958235514E-04,
+                7.49369585378990637E-04, 5.63832329756980918E-04, 3.68059319971443156E-04, 1.88464535514455599E-04,
+                3.70663057664904149E-05, -8.28520220232137023E-05, -1.72751952869172998E-04, -2.36314873605872983E-04,
+                -2.77966150694906658E-04, -3.02079514155456919E-04, -3.12594712643820127E-04, -3.12872558758067163E-04,
+                -3.05678038466324377E-04, -2.93226470614557331E-04, -2.77255655582934777E-04, -2.59103928467031709E-04,
+                -2.39784014396480342E-04, -2.20048260045422848E-04, -2.00443911094971498E-04, -1.81358692210970687E-04,
+                -1.63057674478657464E-04, -1.45712672175205844E-04, -1.29425421983924587E-04, -1.14245691942445952E-04,
+                1.92821964248775885E-03, 1.35592576302022234E-03, -7.17858090421302995E-04, -2.58084802575270346E-03,
+                -3.49271130826168475E-03, -3.46986299340960628E-03, -2.82285233351310182E-03, -1.88103076404891354E-03,
+                -8.89531718383947600E-04, 3.87912102631035228E-06, 7.28688540119691412E-04, 1.26566373053457758E-03,
+                1.62518158372674427E-03, 1.83203153216373172E-03, 1.91588388990527909E-03, 1.90588846755546138E-03,
+                1.82798982421825727E-03, 1.70389506421121530E-03, 1.55097127171097686E-03, 1.38261421852276159E-03,
+                1.20881424230064774E-03, 1.03676532638344962E-03, 8.71437918068619115E-04, 7.16080155297701002E-04,
+                5.72637002558129372E-04, 4.42089819465802277E-04, 3.24724948503090564E-04, 2.20342042730246599E-04,
+                1.28412898401353882E-04, 4.82005924552095464E-05};
+        final double[] beta = new double[] {1.79988721413553309E-02, 5.59964911064388073E-03, 2.88501402231132779E-03,
+                1.80096606761053941E-03, 1.24753110589199202E-03, 9.22878876572938311E-04, 7.14430421727287357E-04,
+                5.71787281789704872E-04, 4.69431007606481533E-04, 3.93232835462916638E-04, 3.34818889318297664E-04,
+                2.88952148495751517E-04, 2.52211615549573284E-04, 2.22280580798883327E-04, 1.97541838033062524E-04,
+                1.76836855019718004E-04, 1.59316899661821081E-04, 1.44347930197333986E-04, 1.31448068119965379E-04,
+                1.20245444949302884E-04, 1.10449144504599392E-04, 1.01828770740567258E-04, 9.41998224204237509E-05,
+                8.74130545753834437E-05, 8.13466262162801467E-05, 7.59002269646219339E-05, 7.09906300634153481E-05,
+                6.65482874842468183E-05, 6.25146958969275078E-05, 5.88403394426251749E-05, -1.49282953213429172E-03,
+                -8.78204709546389328E-04, -5.02916549572034614E-04, -2.94822138512746025E-04, -1.75463996970782828E-04,
+                -1.04008550460816434E-04, -5.96141953046457895E-05, -3.12038929076098340E-05, -1.26089735980230047E-05,
+                -2.42892608575730389E-07, 8.05996165414273571E-06, 1.36507009262147391E-05, 1.73964125472926261E-05,
+                1.98672978842133780E-05, 2.14463263790822639E-05, 2.23954659232456514E-05, 2.28967783814712629E-05,
+                2.30785389811177817E-05, 2.30321976080909144E-05, 2.28236073720348722E-05, 2.25005881105292418E-05,
+                2.20981015361991429E-05, 2.16418427448103905E-05, 2.11507649256220843E-05, 2.06388749782170737E-05,
+                2.01165241997081666E-05, 1.95913450141179244E-05, 1.90689367910436740E-05, 1.85533719641636667E-05,
+                1.80475722259674218E-05, 5.52213076721292790E-04, 4.47932581552384646E-04, 2.79520653992020589E-04,
+                1.52468156198446602E-04, 6.93271105657043598E-05, 1.76258683069991397E-05, -1.35744996343269136E-05,
+                -3.17972413350427135E-05, -4.18861861696693365E-05, -4.69004889379141029E-05, -4.87665447413787352E-05,
+                -4.87010031186735069E-05, -4.74755620890086638E-05, -4.55813058138628452E-05, -4.33309644511266036E-05,
+                -4.09230193157750364E-05, -3.84822638603221274E-05, -3.60857167535410501E-05, -3.37793306123367417E-05,
+                -3.15888560772109621E-05, -2.95269561750807315E-05, -2.75978914828335759E-05, -2.58006174666883713E-05,
+                -2.41308356761280200E-05, -2.25823509518346033E-05, -2.11479656768912971E-05, -1.98200638885294927E-05,
+                -1.85909870801065077E-05, -1.74532699844210224E-05, -1.63997823854497997E-05, -4.74617796559959808E-04,
+                -4.77864567147321487E-04, -3.20390228067037603E-04, -1.61105016119962282E-04, -4.25778101285435204E-05,
+                3.44571294294967503E-05, 7.97092684075674924E-05, 1.03138236708272200E-04, 1.12466775262204158E-04,
+                1.13103642108481389E-04, 1.08651634848774268E-04, 1.01437951597661973E-04, 9.29298396593363896E-05,
+                8.40293133016089978E-05, 7.52727991349134062E-05, 6.69632521975730872E-05, 5.92564547323194704E-05,
+                5.22169308826975567E-05, 4.58539485165360646E-05, 4.01445513891486808E-05, 3.50481730031328081E-05,
+                3.05157995034346659E-05, 2.64956119950516039E-05, 2.29363633690998152E-05, 1.97893056664021636E-05,
+                1.70091984636412623E-05, 1.45547428261524004E-05, 1.23886640995878413E-05, 1.04775876076583236E-05,
+                8.79179954978479373E-06, 7.36465810572578444E-04, 8.72790805146193976E-04, 6.22614862573135066E-04,
+                2.85998154194304147E-04, 3.84737672879366102E-06, -1.87906003636971558E-04, -2.97603646594554535E-04,
+                -3.45998126832656348E-04, -3.53382470916037712E-04, -3.35715635775048757E-04, -3.04321124789039809E-04,
+                -2.66722723047612821E-04, -2.27654214122819527E-04, -1.89922611854562356E-04, -1.55058918599093870E-04,
+                -1.23778240761873630E-04, -9.62926147717644187E-05, -7.25178327714425337E-05, -5.22070028895633801E-05,
+                -3.50347750511900522E-05, -2.06489761035551757E-05, -8.70106096849767054E-06, 1.13698686675100290E-06,
+                9.16426474122778849E-06, 1.56477785428872620E-05, 2.08223629482466847E-05, 2.48923381004595156E-05,
+                2.80340509574146325E-05, 3.03987774629861915E-05, 3.21156731406700616E-05, -1.80182191963885708E-03,
+                -2.43402962938042533E-03, -1.83422663549856802E-03, -7.62204596354009765E-04, 2.39079475256927218E-04,
+                9.49266117176881141E-04, 1.34467449701540359E-03, 1.48457495259449178E-03, 1.44732339830617591E-03,
+                1.30268261285657186E-03, 1.10351597375642682E-03, 8.86047440419791759E-04, 6.73073208165665473E-04,
+                4.77603872856582378E-04, 3.05991926358789362E-04, 1.60315694594721630E-04, 4.00749555270613286E-05,
+                -5.66607461635251611E-05, -1.32506186772982638E-04, -1.90296187989614057E-04, -2.32811450376937408E-04,
+                -2.62628811464668841E-04, -2.82050469867598672E-04, -2.93081563192861167E-04, -2.97435962176316616E-04,
+                -2.96557334239348078E-04, -2.91647363312090861E-04, -2.83696203837734166E-04, -2.73512317095673346E-04,
+                -2.61750155806768580E-04, 6.38585891212050914E-03, 9.62374215806377941E-03, 7.61878061207001043E-03,
+                2.83219055545628054E-03, -2.09841352012720090E-03, -5.73826764216626498E-03, -7.70804244495414620E-03,
+                -8.21011692264844401E-03, -7.65824520346905413E-03, -6.47209729391045177E-03, -4.99132412004966473E-03,
+                -3.45612289713133280E-03, -2.01785580014170775E-03, -7.59430686781961401E-04, 2.84173631523859138E-04,
+                1.10891667586337403E-03, 1.72901493872728771E-03, 2.16812590802684701E-03, 2.45357710494539735E-03,
+                2.61281821058334862E-03, 2.67141039656276912E-03, 2.65203073395980430E-03, 2.57411652877287315E-03,
+                2.45389126236094427E-03, 2.30460058071795494E-03, 2.13684837686712662E-03, 1.95896528478870911E-03,
+                1.77737008679454412E-03, 1.59690280765839059E-03, 1.42111975664438546E-03};
+        final double[] gama = new double[] {6.29960524947436582E-01, 2.51984209978974633E-01, 1.54790300415655846E-01,
+                1.10713062416159013E-01, 8.57309395527394825E-02, 6.97161316958684292E-02, 5.86085671893713576E-02,
+                5.04698873536310685E-02, 4.42600580689154809E-02, 3.93720661543509966E-02, 3.54283195924455368E-02,
+                3.21818857502098231E-02, 2.94646240791157679E-02, 2.71581677112934479E-02, 2.51768272973861779E-02,
+                2.34570755306078891E-02, 2.19508390134907203E-02, 2.06210828235646240E-02, 1.94388240897880846E-02,
+                1.83810633800683158E-02, 1.74293213231963172E-02, 1.65685837786612353E-02, 1.57865285987918445E-02,
+                1.50729501494095594E-02, 1.44193250839954639E-02, 1.38184805735341786E-02, 1.32643378994276568E-02,
+                1.27517121970498651E-02, 1.22761545318762767E-02, 1.18338262398482403E-02};
+        final double ex1 = 3.33333333333333333E-01;
+        final double ex2 = 6.66666666666666667E-01;
+        final double hpi = Math.PI / 2.0;
+        final double gpi = Math.PI;
+        final double thpi = 1.5 * Math.PI;
         double rfnu;
         double test;
         double ac;
@@ -10501,16 +10053,16 @@ group:   {
         double w2i;
         double aw2;
         int k;
-        double[] pr = new double[30];
-        double[] pi = new double[30];
+        final double[] pr = new double[30];
+        final double[] pi = new double[30];
         double sumar;
         double sumai;
-        double[] ap = new double[30];
+        final double[] ap = new double[30];
         int kmax;
-        double[] zar = new double[1];
-        double[] zai = new double[1];
-        double[] str = new double[1];
-        double[] sti = new double[1];
+        final double[] zar = new double[1];
+        final double[] zai = new double[1];
+        final double[] str = new double[1];
+        final double[] sti = new double[1];
         double sumbr;
         double sumbi;
         int l1;
@@ -10521,19 +10073,19 @@ group:   {
         int ias;
         int ibs;
         int m;
-        double[] wr = new double[1];
-        double[] wi = new double[1];
-        double[] zcr = new double[1];
-        double[] zci = new double[1];
-        int[] idum = new int[1];
+        final double[] wr = new double[1];
+        final double[] wi = new double[1];
+        final double[] zcr = new double[1];
+        final double[] zci = new double[1];
+        final int[] idum = new int[1];
         double zthr;
         double zthi;
         double azth;
         double ang;
         double zetar;
         double zetai;
-        double[] rtztr = new double[1];
-        double[] rtzti = new double[1];
+        final double[] rtztr = new double[1];
+        final double[] rtzti = new double[1];
         double tzar;
         double tzai;
         double raw;
@@ -10545,8 +10097,8 @@ group:   {
         double raw2;
         double t2r;
         double t2i;
-        double[] upr = new double[14];
-        double[] upi = new double[14];
+        final double[] upr = new double[14];
+        final double[] upi = new double[14];
         double przthr;
         double przthi;
         double ptfnr;
@@ -10556,10 +10108,10 @@ group:   {
         int l;
         int lr;
         int lrp1;
-        double[] crr = new double[14];
-        double[] cri = new double[14];
-        double[] drr = new double[14];
-        double[] dri = new double[14];
+        final double[] crr = new double[14];
+        final double[] cri = new double[14];
+        final double[] drr = new double[14];
+        final double[] dri = new double[14];
         int ju;
         int jr;
         int is;
@@ -10571,7 +10123,7 @@ group:   {
         test = 1.0E3 * tiny;
         ac = fnu * test;
 
-        if ((Math.abs(zr) <= ac) && (Math.abs(zi) <= ac)) {
+        if ( (Math.abs(zr) <= ac) && (Math.abs(zi) <= ac)) {
             zeta1r[0] = (2.0 * Math.abs(Math.log(test))) + fnu;
             zeta1i[0] = 0.0;
             zeta2r[0] = fnu;
@@ -10606,7 +10158,7 @@ group:   {
             sumai = 0.0;
             ap[0] = 1.0;
 
-group:       {
+            group: {
 
                 if (aw2 >= tol) {
 
@@ -10635,8 +10187,8 @@ group:       {
             zsqrt(w2r, w2i, str, sti);
             zeta2r[0] = str[0] * fnu;
             zeta2i[0] = sti[0] * fnu;
-            str[0] = 1.0 + (ex2 * ((zetar * zar[0]) - (zetai * zai[0])));
-            sti[0] = ex2 * ((zetar * zai[0]) + (zetai * zar[0]));
+            str[0] = 1.0 + (ex2 * ( (zetar * zar[0]) - (zetai * zai[0])));
+            sti[0] = ex2 * ( (zetar * zai[0]) + (zetai * zar[0]));
             zeta1r[0] = (str[0] * zeta2r[0]) - (sti[0] * zeta2i[0]);
             zeta1i[0] = (str[0] * zeta2i[0]) + (sti[0] * zeta2r[0]);
             zar[0] = zar[0] + zar[0];
@@ -10727,7 +10279,7 @@ group:       {
                     }
                 } // if (ibs != 1)
 
-                if ((ias == 1) && (ibs == 1)) {
+                if ( (ias == 1) && (ibs == 1)) {
                     asumr[0] = asumr[0] + 1.0;
                     pp = rfnu * rfn13;
                     bsumr[0] = bsumr[0] * pp;
@@ -10785,7 +10337,7 @@ group:       {
         azth = zabs(zthr, zthi);
         ang = thpi;
 
-        if ((zthr < 0.0) || (zthi >= 0.0)) {
+        if ( (zthr < 0.0) || (zthi >= 0.0)) {
             ang = hpi;
 
             if (zthr != 0.0) {
@@ -10919,7 +10471,7 @@ group:       {
                 asumi[0] = asumi[0] + sumai;
                 test = Math.abs(sumar) + Math.abs(sumai);
 
-                if ((pp < tol) && (test < tol)) {
+                if ( (pp < tol) && (test < tol)) {
                     ias = 1;
                 }
             } // if (ias != 1)
@@ -10939,12 +10491,12 @@ group:       {
                 bsumi[0] = bsumi[0] + sumbi;
                 test = Math.abs(sumbr) + Math.abs(sumbi);
 
-                if ((pp < btol) && (test < btol)) {
+                if ( (pp < btol) && (test < btol)) {
                     ibs = 1;
                 }
             } // if (ibs != 1)
 
-            if ((ias == 1) && (ibs == 1)) {
+            if ( (ias == 1) && (ibs == 1)) {
                 break;
             }
         } // for (lr = 2; lr <= 12; lr+=2)
@@ -10959,44 +10511,46 @@ group:       {
 
     /**
      * ZUNI1 COMPUTES I(FNU,Z) BY MEANS OF THE UNIFORM ASYMPTOTIC EXPANSION FOR I(FNU,Z) IN -PI/3.LE.ARG Z.LE.PI/3.
-     *
-     * <p>NUL IS THE SMALLEST ORDER PERMITTED FOR THE ASYMPTOTIC EXPANSION. NLAST=0 MEANS ALL OF THE Y VALUES WERE SET.
+     * 
+     * <p>
+     * NUL IS THE SMALLEST ORDER PERMITTED FOR THE ASYMPTOTIC EXPANSION. NLAST=0 MEANS ALL OF THE Y VALUES WERE SET.
      * NLAST.NE.0 IS THE NUMBER LEFT TO BE COMPUTED BY ANOTHER FORMULA FOR ORDERS FNU TO FNU+NLAST-1 BECAUSE
-     * FNU+NLAST-1.LT.FNUL. Y(I)=CZERO FOR I=NLAST+1,N</p>
-     *
-     * @param  zr     double
-     * @param  zi     double
-     * @param  fnu    double
-     * @param  kode   int
-     * @param  n      int
-     * @param  yr     double[]
-     * @param  yi     double[]
-     * @param  nz     int[]
-     * @param  nlast  int[]
-     * @param  fnul   double
+     * FNU+NLAST-1.LT.FNUL. Y(I)=CZERO FOR I=NLAST+1,N
+     * </p>
+     * 
+     * @param zr double
+     * @param zi double
+     * @param fnu double
+     * @param kode int
+     * @param n int
+     * @param yr double[]
+     * @param yi double[]
+     * @param nz int[]
+     * @param nlast int[]
+     * @param fnul double
      */
-    private void zuni1(double zr, double zi, double fnu, int kode, int n, double[] yr, double[] yi, int[] nz,
-                       int[] nlast, double fnul) {
-        double[] bry = new double[3];
-        double[] cwrkr = new double[16];
-        double[] cwrki = new double[16];
-        double[] cssr = new double[3];
-        double[] csrr = new double[3];
-        double[] cyr = new double[2];
-        double[] cyi = new double[2];
+    private void zuni1(final double zr, double zi, final double fnu, final int kode, final int n, final double[] yr,
+            final double[] yi, final int[] nz, final int[] nlast, final double fnul) {
+        final double[] bry = new double[3];
+        final double[] cwrkr = new double[16];
+        final double[] cwrki = new double[16];
+        final double[] cssr = new double[3];
+        final double[] csrr = new double[3];
+        final double[] cyr = new double[2];
+        final double[] cyi = new double[2];
         int nd;
         double cscl;
         double crsc;
         double fn;
         int init;
-        double[] phir = new double[1];
-        double[] phii = new double[1];
-        double[] zeta1r = new double[1];
-        double[] zeta1i = new double[1];
-        double[] zeta2r = new double[1];
-        double[] zeta2i = new double[1];
-        double[] sumr = new double[1];
-        double[] sumi = new double[1];
+        final double[] phir = new double[1];
+        final double[] phii = new double[1];
+        final double[] zeta1r = new double[1];
+        final double[] zeta1i = new double[1];
+        final double[] zeta2r = new double[1];
+        final double[] zeta2i = new double[1];
+        final double[] sumr = new double[1];
+        final double[] sumi = new double[1];
         double str;
         double sti;
         double rast;
@@ -11006,7 +10560,7 @@ group:       {
         double aphi;
         double s2r;
         double s2i;
-        int[] nw = new int[1];
+        final int[] nw = new int[1];
         int m;
         double rzr;
         double rzi;
@@ -11017,7 +10571,7 @@ group:       {
         double c2r;
         double c2i;
         double c2m;
-        int[] nuf = new int[1];
+        final int[] nuf = new int[1];
         int nn;
         int iflag = 1;
 
@@ -11080,7 +10634,7 @@ group:       {
         while (true) {
             nn = Math.min(2, nd);
 
-group:       {
+            group: {
 
                 for (i = 1; i <= nn; i++) {
                     fn = fnu + nd - i;
@@ -11126,7 +10680,7 @@ group:       {
                             iflag = 1;
                         } // if (i == 1)
 
-                        if ((rs1 >= 0.0) && (i == 1)) {
+                        if ( (rs1 >= 0.0) && (i == 1)) {
                             iflag = 3;
                         } // if ((rs1 >= 0.0) && (i == 1))
                     } // if (Math.abs(rs1) >= alim)
@@ -11179,8 +10733,8 @@ group:       {
                 for (i = 3; i <= nd; i++) {
                     c2r = s2r;
                     c2i = s2i;
-                    s2r = s1r + ((fnu + fn) * ((rzr * c2r) - (rzi * c2i)));
-                    s2i = s1i + ((fnu + fn) * ((rzr * c2i) + (rzi * c2r)));
+                    s2r = s1r + ( (fnu + fn) * ( (rzr * c2r) - (rzi * c2i)));
+                    s2i = s1i + ( (fnu + fn) * ( (rzr * c2i) + (rzi * c2r)));
                     s1r = c2r;
                     s1i = c2i;
                     c2r = s2r * c1r;
@@ -11262,33 +10816,35 @@ group:       {
     /**
      * ZUNI2 COMPUTES I(FNU,Z) IN THE RIGHT HALF PLANE BY MEANS OF UNIFORM ASYMPTOTIC EXPANSION FOR J(FNU,ZN) WHERE ZN
      * IS Z*I OR -Z*I AND ZN IS IN THE RIGHT HALF PLANE ALSO.
-     *
-     * <p>FNUL IS THE SMALLEST ORDER PERMITTED FOR THE ASYMPTOTIC EXPANSION. NLAST=0 MEANS ALL OF THE Y VALUES WERE SET.
+     * 
+     * <p>
+     * FNUL IS THE SMALLEST ORDER PERMITTED FOR THE ASYMPTOTIC EXPANSION. NLAST=0 MEANS ALL OF THE Y VALUES WERE SET.
      * NLAST.NE.0 IS THE NUMBER LEFT TO BE COMPUTED BY ANOTHER FORMULA FOR ORDERS FNU TO FNU+NLAST-1 BECAUSE
-     * FNU+NLAST-1.LT.FNUL. Y(I)=CZERO FOR I=NLAST+1,N</p>
-     *
-     * @param  zr     double
-     * @param  zi     double
-     * @param  fnu    double
-     * @param  kode   int
-     * @param  n      int
-     * @param  yr     double[]
-     * @param  yi     double[]
-     * @param  nz     int[]
-     * @param  nlast  int[]
-     * @param  fnul   double
+     * FNU+NLAST-1.LT.FNUL. Y(I)=CZERO FOR I=NLAST+1,N
+     * </p>
+     * 
+     * @param zr double
+     * @param zi double
+     * @param fnu double
+     * @param kode int
+     * @param n int
+     * @param yr double[]
+     * @param yi double[]
+     * @param nz int[]
+     * @param nlast int[]
+     * @param fnul double
      */
-    private void zuni2(double zr, double zi, double fnu, int kode, int n, double[] yr, double[] yi, int[] nz,
-                       int[] nlast, double fnul) {
-        double[] bry = new double[3];
-        double[] cipr = new double[] { 1.0, 0.0, -1.0, 0.0 };
-        double[] cipi = new double[] { 0.0, 1.0, 0.0, -1.0 };
-        double[] cssr = new double[3];
-        double[] csrr = new double[3];
-        double[] cyr = new double[2];
-        double[] cyi = new double[2];
-        double hpi = Math.PI / 2.0;
-        double aic = 1.265512123484645396;
+    private void zuni2(double zr, double zi, final double fnu, final int kode, final int n, final double[] yr,
+            final double[] yi, final int[] nz, final int[] nlast, final double fnul) {
+        final double[] bry = new double[3];
+        final double[] cipr = new double[] {1.0, 0.0, -1.0, 0.0};
+        final double[] cipi = new double[] {0.0, 1.0, 0.0, -1.0};
+        final double[] cssr = new double[3];
+        final double[] csrr = new double[3];
+        final double[] cyr = new double[2];
+        final double[] cyi = new double[2];
+        final double hpi = Math.PI / 2.0;
+        final double aic = 1.265512123484645396;
         int nd;
         double cscl;
         double crsc;
@@ -11306,18 +10862,18 @@ group:       {
         int in;
         double str;
         double fn;
-        double[] phir = new double[1];
-        double[] phii = new double[1];
-        double[] argr = new double[1];
-        double[] argi = new double[1];
-        double[] zeta1r = new double[1];
-        double[] zeta1i = new double[1];
-        double[] zeta2r = new double[1];
-        double[] zeta2i = new double[1];
-        double[] asumr = new double[1];
-        double[] asumi = new double[1];
-        double[] bsumr = new double[1];
-        double[] bsumi = new double[1];
+        final double[] phir = new double[1];
+        final double[] phii = new double[1];
+        final double[] argr = new double[1];
+        final double[] argi = new double[1];
+        final double[] zeta1r = new double[1];
+        final double[] zeta1i = new double[1];
+        final double[] zeta2r = new double[1];
+        final double[] zeta2i = new double[1];
+        final double[] asumr = new double[1];
+        final double[] asumi = new double[1];
+        final double[] bsumr = new double[1];
+        final double[] bsumi = new double[1];
         double sti;
         double rast;
         double s1r;
@@ -11328,25 +10884,25 @@ group:       {
         int iflag = 1;
         double aphi;
         double aarg;
-        int[] nw = new int[1];
+        final int[] nw = new int[1];
         int j;
         double c1r;
         double ascle;
         int k;
         double c2m;
-        int[] idum = new int[1];
-        double[] air = new double[1];
-        double[] aii = new double[1];
-        int[] nai = new int[1];
-        double[] dair = new double[1];
-        double[] daii = new double[1];
-        int[] ndai = new int[1];
+        final int[] idum = new int[1];
+        final double[] air = new double[1];
+        final double[] aii = new double[1];
+        final int[] nai = new int[1];
+        final double[] dair = new double[1];
+        final double[] daii = new double[1];
+        final int[] ndai = new int[1];
         double s2r;
         double s2i;
         double raz;
         double rzr;
         double rzi;
-        int[] nuf = new int[1];
+        final int[] nuf = new int[1];
 
         nz[0] = 0;
         nd = n;
@@ -11431,12 +10987,12 @@ group:       {
         while (true) {
             nn = Math.min(2, nd);
 
-group:       {
+            group: {
 
                 for (i = 1; i <= nn; i++) {
                     fn = fnu + nd - i;
                     zunhj(znr, zni, fn, 0, phir, phii, argr, argi, zeta1r, zeta1i, zeta2r, zeta2i, asumr, asumi, bsumr,
-                          bsumi);
+                            bsumi);
 
                     if (kode != 1) {
                         str = zbr + zeta2r[0];
@@ -11478,7 +11034,7 @@ group:       {
                             iflag = 1;
                         } // if (i == 1)
 
-                        if ((rs1 >= 0.0) && (i == 1)) {
+                        if ( (rs1 >= 0.0) && (i == 1)) {
                             iflag = 3;
                         } // if ((rs1 >= 0.0) && (i == 1))
                     } // if Math.abs(rs1) >= alim)
@@ -11489,8 +11045,8 @@ group:       {
                     zairy(argr[0], argi[0], 1, 2, dair, daii, ndai, idum);
                     str = (dair[0] * bsumr[0]) - (daii[0] * bsumi[0]);
                     sti = (dair[0] * bsumi[0]) + (daii[0] * bsumr[0]);
-                    str = str + ((air[0] * asumr[0]) - (aii[0] * asumi[0]));
-                    sti = sti + ((air[0] * asumi[0]) + (aii[0] * asumr[0]));
+                    str = str + ( (air[0] * asumr[0]) - (aii[0] * asumi[0]));
+                    sti = sti + ( (air[0] * asumi[0]) + (aii[0] * asumr[0]));
                     s2r = (phir[0] * str) - (phii[0] * sti);
                     s2i = (phir[0] * sti) + (phii[0] * str);
                     str = Math.exp(s1r) * cssr[iflag - 1];
@@ -11548,8 +11104,8 @@ group:       {
                 for (i = 3; i <= nd; i++) {
                     c2r = s2r;
                     c2i = s2i;
-                    s2r = s1r + ((fnu + fn) * ((rzr * c2r) - (rzi * c2i)));
-                    s2i = s1i + ((fnu + fn) * ((rzr * c2i) + (rzi * c2r)));
+                    s2r = s1r + ( (fnu + fn) * ( (rzr * c2r) - (rzi * c2i)));
+                    s2i = s1i + ( (fnu + fn) * ( (rzr * c2i) + (rzi * c2r)));
                     s1r = c2r;
                     s1i = c2i;
                     c2r = s2r * c1r;
@@ -11637,103 +11193,98 @@ group:       {
         } // while (true)
     }
 
-
     /**
      * ZUNIK COMPUTES PARAMETERS FOR THE UNIFORM ASYMPTOTIC EXPANSIONS OF THE I AND K FUNCTIONS ON IKFLG= 1 OR 2
      * RESPECTIVELY BY.
-     *
-     * <p>W(fnu,ZR) = PHI*EXP(ZETA)*SUM</p>
-     *
-     * <p>WHERE ZETA=-ZETA1 + ZETA2 OR ZETA1 - ZETA2</p>
-     *
-     * <p>THE FIRST CALL MUST HAVE INIT=0. SUBSEQUENT CALLS WITH THE SAME ZR AND FNU WILL RETURN THE I OR K FUNCTION ON
+     * 
+     * <p>
+     * W(fnu,ZR) = PHI*EXP(ZETA)*SUM
+     * </p>
+     * 
+     * <p>
+     * WHERE ZETA=-ZETA1 + ZETA2 OR ZETA1 - ZETA2
+     * </p>
+     * 
+     * <p>
+     * THE FIRST CALL MUST HAVE INIT=0. SUBSEQUENT CALLS WITH THE SAME ZR AND FNU WILL RETURN THE I OR K FUNCTION ON
      * IKFLG= 1 OR 2 WITH NO CHANGE IN INIT. CWRK IS A COMPLEX WORK ARRAY. IPMTR=0 COMPUTES ALL PARAMETERS. IPMTR=1
-     * COMPUTES PHI, ZETA1,ZETA2.</p>
-     *
-     * @param  zrr     double
-     * @param  zri     double
-     * @param  fnu     double
-     * @param  ikflg   int
-     * @param  ipmtr   int
-     * @param  init    int
-     * @param  phir    double[]
-     * @param  phii    double[]
-     * @param  zeta1r  double[]
-     * @param  zeta1i  double[]
-     * @param  zeta2r  double[]
-     * @param  zeta2i  double[]
-     * @param  sumr    double[]
-     * @param  sumi    double[]
-     * @param  cwrkr   double[]
-     * @param  cwrki   double[]
+     * COMPUTES PHI, ZETA1,ZETA2.
+     * </p>
+     * 
+     * @param zrr double
+     * @param zri double
+     * @param fnu double
+     * @param ikflg int
+     * @param ipmtr int
+     * @param init int
+     * @param phir double[]
+     * @param phii double[]
+     * @param zeta1r double[]
+     * @param zeta1i double[]
+     * @param zeta2r double[]
+     * @param zeta2i double[]
+     * @param sumr double[]
+     * @param sumi double[]
+     * @param cwrkr double[]
+     * @param cwrki double[]
      */
-    private void zunik(double zrr, double zri, double fnu, int ikflg, int ipmtr, int init, double[] phir, double[] phii,
-                       double[] zeta1r, double[] zeta1i, double[] zeta2r, double[] zeta2i, double[] sumr, double[] sumi,
-                       double[] cwrkr, double[] cwrki) {
-        double[] con = new double[] { 3.98942280401432678E-01, 1.25331413731550025 };
-        double[] c = new double[] {
-                         1.00000000000000000E+00, -2.08333333333333333E-01, 1.25000000000000000E-01,
-                         3.34201388888888889E-01, -4.01041666666666667E-01, 7.03125000000000000E-02,
-                         -1.02581259645061728E+00, 1.84646267361111111E+00, -8.91210937500000000E-01,
-                         7.32421875000000000E-02, 4.66958442342624743E+00, -1.12070026162229938E+01,
-                         8.78912353515625000E+00, -2.36408691406250000E+00, 1.12152099609375000E-01,
-                         -2.82120725582002449E+01, 8.46362176746007346E+01, -9.18182415432400174E+01,
-                         4.25349987453884549E+01, -7.36879435947963170E+00, 2.27108001708984375E-01,
-                         2.12570130039217123E+02, -7.65252468141181642E+02, 1.05999045252799988E+03,
-                         -6.99579627376132541E+02, 2.18190511744211590E+02, -2.64914304869515555E+01,
-                         5.72501420974731445E-01, -1.91945766231840700E+03, 8.06172218173730938E+03,
-                         -1.35865500064341374E+04, 1.16553933368645332E+04, -5.30564697861340311E+03,
-                         1.20090291321635246E+03, -1.08090919788394656E+02, 1.72772750258445740E+00,
-                         2.02042913309661486E+04, -9.69805983886375135E+04, 1.92547001232531532E+05,
-                         -2.03400177280415534E+05, 1.22200464983017460E+05, -4.11926549688975513E+04,
-                         7.10951430248936372E+03, -4.93915304773088012E+02, 6.07404200127348304E+00,
-                         -2.42919187900551333E+05, 1.31176361466297720E+06, -2.99801591853810675E+06,
-                         3.76327129765640400E+06, -2.81356322658653411E+06, 1.26836527332162478E+06,
-                         -3.31645172484563578E+05, 4.52187689813627263E+04, -2.49983048181120962E+03,
-                         2.43805296995560639E+01, 3.28446985307203782E+06, -1.97068191184322269E+07,
-                         5.09526024926646422E+07, -7.41051482115326577E+07, 6.63445122747290267E+07,
-                         -3.75671766607633513E+07, 1.32887671664218183E+07, -2.78561812808645469E+06,
-                         3.08186404612662398E+05, -1.38860897537170405E+04, 1.10017140269246738E+02,
-                         -4.93292536645099620E+07, 3.25573074185765749E+08, -9.39462359681578403E+08,
-                         1.55359689957058006E+09, -1.62108055210833708E+09, 1.10684281682301447E+09,
-                         -4.95889784275030309E+08, 1.42062907797533095E+08, -2.44740627257387285E+07,
-                         2.24376817792244943E+06, -8.40054336030240853E+04, 5.51335896122020586E+02,
-                         8.14789096118312115E+08, -5.86648149205184723E+09, 1.86882075092958249E+10,
-                         -3.46320433881587779E+10, 4.12801855797539740E+10, -3.30265997498007231E+10,
-                         1.79542137311556001E+10, -6.56329379261928433E+09, 1.55927986487925751E+09,
-                         -2.25105661889415278E+08, 1.73951075539781645E+07, -5.49842327572288687E+05,
-                         3.03809051092238427E+03, -1.46792612476956167E+10, 1.14498237732025810E+11,
-                         -3.99096175224466498E+11, 8.19218669548577329E+11, -1.09837515608122331E+12,
-                         1.00815810686538209E+12, -6.45364869245376503E+11, 2.87900649906150589E+11,
-                         -8.78670721780232657E+10, 1.76347306068349694E+10, -2.16716498322379509E+09,
-                         1.43157876718888981E+08, -3.87183344257261262E+06, 1.82577554742931747E+04,
-                         2.86464035717679043E+11, -2.40629790002850396E+12, 9.10934118523989896E+12,
-                         -2.05168994109344374E+13, 3.05651255199353206E+13, -3.16670885847851584E+13,
-                         2.33483640445818409E+13, -1.23204913055982872E+13, 4.61272578084913197E+12,
-                         -1.19655288019618160E+12, 2.05914503232410016E+11, -2.18229277575292237E+10,
-                         1.24700929351271032E+09, -2.91883881222208134E+07, 1.18838426256783253E+05
-                     };
+    private void zunik(final double zrr, final double zri, final double fnu, final int ikflg, final int ipmtr,
+            int init, final double[] phir, final double[] phii, final double[] zeta1r, final double[] zeta1i,
+            final double[] zeta2r, final double[] zeta2i, final double[] sumr, final double[] sumi,
+            final double[] cwrkr, final double[] cwrki) {
+        final double[] con = new double[] {3.98942280401432678E-01, 1.25331413731550025};
+        final double[] c = new double[] {1.00000000000000000E+00, -2.08333333333333333E-01, 1.25000000000000000E-01,
+                3.34201388888888889E-01, -4.01041666666666667E-01, 7.03125000000000000E-02, -1.02581259645061728E+00,
+                1.84646267361111111E+00, -8.91210937500000000E-01, 7.32421875000000000E-02, 4.66958442342624743E+00,
+                -1.12070026162229938E+01, 8.78912353515625000E+00, -2.36408691406250000E+00, 1.12152099609375000E-01,
+                -2.82120725582002449E+01, 8.46362176746007346E+01, -9.18182415432400174E+01, 4.25349987453884549E+01,
+                -7.36879435947963170E+00, 2.27108001708984375E-01, 2.12570130039217123E+02, -7.65252468141181642E+02,
+                1.05999045252799988E+03, -6.99579627376132541E+02, 2.18190511744211590E+02, -2.64914304869515555E+01,
+                5.72501420974731445E-01, -1.91945766231840700E+03, 8.06172218173730938E+03, -1.35865500064341374E+04,
+                1.16553933368645332E+04, -5.30564697861340311E+03, 1.20090291321635246E+03, -1.08090919788394656E+02,
+                1.72772750258445740E+00, 2.02042913309661486E+04, -9.69805983886375135E+04, 1.92547001232531532E+05,
+                -2.03400177280415534E+05, 1.22200464983017460E+05, -4.11926549688975513E+04, 7.10951430248936372E+03,
+                -4.93915304773088012E+02, 6.07404200127348304E+00, -2.42919187900551333E+05, 1.31176361466297720E+06,
+                -2.99801591853810675E+06, 3.76327129765640400E+06, -2.81356322658653411E+06, 1.26836527332162478E+06,
+                -3.31645172484563578E+05, 4.52187689813627263E+04, -2.49983048181120962E+03, 2.43805296995560639E+01,
+                3.28446985307203782E+06, -1.97068191184322269E+07, 5.09526024926646422E+07, -7.41051482115326577E+07,
+                6.63445122747290267E+07, -3.75671766607633513E+07, 1.32887671664218183E+07, -2.78561812808645469E+06,
+                3.08186404612662398E+05, -1.38860897537170405E+04, 1.10017140269246738E+02, -4.93292536645099620E+07,
+                3.25573074185765749E+08, -9.39462359681578403E+08, 1.55359689957058006E+09, -1.62108055210833708E+09,
+                1.10684281682301447E+09, -4.95889784275030309E+08, 1.42062907797533095E+08, -2.44740627257387285E+07,
+                2.24376817792244943E+06, -8.40054336030240853E+04, 5.51335896122020586E+02, 8.14789096118312115E+08,
+                -5.86648149205184723E+09, 1.86882075092958249E+10, -3.46320433881587779E+10, 4.12801855797539740E+10,
+                -3.30265997498007231E+10, 1.79542137311556001E+10, -6.56329379261928433E+09, 1.55927986487925751E+09,
+                -2.25105661889415278E+08, 1.73951075539781645E+07, -5.49842327572288687E+05, 3.03809051092238427E+03,
+                -1.46792612476956167E+10, 1.14498237732025810E+11, -3.99096175224466498E+11, 8.19218669548577329E+11,
+                -1.09837515608122331E+12, 1.00815810686538209E+12, -6.45364869245376503E+11, 2.87900649906150589E+11,
+                -8.78670721780232657E+10, 1.76347306068349694E+10, -2.16716498322379509E+09, 1.43157876718888981E+08,
+                -3.87183344257261262E+06, 1.82577554742931747E+04, 2.86464035717679043E+11, -2.40629790002850396E+12,
+                9.10934118523989896E+12, -2.05168994109344374E+13, 3.05651255199353206E+13, -3.16670885847851584E+13,
+                2.33483640445818409E+13, -1.23204913055982872E+13, 4.61272578084913197E+12, -1.19655288019618160E+12,
+                2.05914503232410016E+11, -2.18229277575292237E+10, 1.24700929351271032E+09, -2.91883881222208134E+07,
+                1.18838426256783253E+05};
         double rfn;
         double test;
         double ac;
-        double[] tr = new double[1];
-        double[] ti = new double[1];
+        final double[] tr = new double[1];
+        final double[] ti = new double[1];
         double sr;
         double si;
-        double[] srr = new double[1];
-        double[] sri = new double[1];
-        double[] str = new double[1];
-        double[] sti = new double[1];
-        double[] znr = new double[1];
-        double[] zni = new double[1];
+        final double[] srr = new double[1];
+        final double[] sri = new double[1];
+        final double[] str = new double[1];
+        final double[] sti = new double[1];
+        final double[] znr = new double[1];
+        final double[] zni = new double[1];
         int l;
         int k;
         int j;
-        double[] t2r = new double[1];
-        double[] t2i = new double[1];
-        double[] cwrkr15 = new double[1];
-        double[] cwrki15 = new double[1];
-        int[] idum = new int[1];
+        final double[] t2r = new double[1];
+        final double[] t2i = new double[1];
+        final double[] cwrkr15 = new double[1];
+        final double[] cwrki15 = new double[1];
+        final int[] idum = new int[1];
         double crfnr;
         double crfni;
         int i;
@@ -11747,7 +11298,7 @@ group:       {
             test = 1.0E3 * tiny;
             ac = fnu * test;
 
-            if ((Math.abs(zrr) <= ac) && (Math.abs(zri) <= ac)) {
+            if ( (Math.abs(zrr) <= ac) && (Math.abs(zri) <= ac)) {
                 zeta1r[0] = (2.0 * Math.abs(Math.log(test))) + fnu;
                 zeta1i[0] = 0.0;
                 zeta2r[0] = fnu;
@@ -11760,7 +11311,7 @@ group:       {
 
             tr[0] = zrr * rfn;
             ti[0] = zri * rfn;
-            sr = 1.0 + ((tr[0] * tr[0]) - (ti[0] * ti[0]));
+            sr = 1.0 + ( (tr[0] * tr[0]) - (ti[0] * ti[0]));
             si = 2.0 * tr[0] * ti[0];
             zsqrt(sr, si, srr, sri);
             str[0] = 1.0 + srr[0];
@@ -11792,7 +11343,7 @@ group:       {
             ac = 1.0;
             l = 1;
 
-group:       {
+            group: {
 
                 for (k = 2; k <= 15; k++) {
                     sr = 0.0;
@@ -11813,7 +11364,7 @@ group:       {
                     ac = ac * rfn;
                     test = Math.abs(cwrkr[k - 1]) + Math.abs(cwrki[k - 1]);
 
-                    if ((ac < tol) && (test < tol)) {
+                    if ( (ac < tol) && (test < tol)) {
                         break group;
                     }
                 } // for (k = 2; k <= 15; k++)
@@ -11866,34 +11417,35 @@ group:       {
      * ZUNK1 COMPUTES K(FNU,Z) AND ITS ANALYTIC CONTINUATION FROM THE RIGHT HALF PLANE TO THE LEFT HALF PLANE BY MEANS
      * OF THE UNIFORM ASYMPTOTIC EXPANSION. MR INDICATES THE DIRECTION OF ROTATION FOR ANALYTIC CONTINUATION. NZ=-1
      * MEANS AN OVERFLOW WILL OCCUR
-     *
-     * @param  zr    double
-     * @param  zi    double
-     * @param  fnu   double
-     * @param  kode  int
-     * @param  mr    int
-     * @param  n     int
-     * @param  yr    double[]
-     * @param  yi    double[]
-     * @param  nz    int[]
+     * 
+     * @param zr double
+     * @param zi double
+     * @param fnu double
+     * @param kode int
+     * @param mr int
+     * @param n int
+     * @param yr double[]
+     * @param yi double[]
+     * @param nz int[]
      */
-    private void zunk1(double zr, double zi, double fnu, int kode, int mr, int n, double[] yr, double[] yi, int[] nz) {
-        double[] bry = new double[3];
-        int[] init = new int[2];
-        double[] sumr = new double[2];
-        double[] sumi = new double[2];
-        double[] zeta1r = new double[2];
-        double[] zeta1i = new double[2];
-        double[] zeta2r = new double[2];
-        double[] zeta2i = new double[2];
-        double[] cyr = new double[2];
-        double[] cyi = new double[2];
-        double[][] cwrkr = new double[16][3];
-        double[][] cwrki = new double[16][3];
-        double[] cssr = new double[3];
-        double[] csrr = new double[3];
-        double[] phir = new double[2];
-        double[] phii = new double[2];
+    private void zunk1(double zr, double zi, final double fnu, final int kode, final int mr, final int n,
+            final double[] yr, final double[] yi, final int[] nz) {
+        final double[] bry = new double[3];
+        final int[] init = new int[2];
+        final double[] sumr = new double[2];
+        final double[] sumi = new double[2];
+        final double[] zeta1r = new double[2];
+        final double[] zeta1i = new double[2];
+        final double[] zeta2r = new double[2];
+        final double[] zeta2i = new double[2];
+        final double[] cyr = new double[2];
+        final double[] cyi = new double[2];
+        final double[][] cwrkr = new double[16][3];
+        final double[][] cwrki = new double[16][3];
+        final double[] cssr = new double[3];
+        final double[] csrr = new double[3];
+        final double[] phir = new double[2];
+        final double[] phii = new double[2];
         double cscl;
         double crsc;
         double zrr;
@@ -11901,27 +11453,27 @@ group:       {
         int j;
         int i;
         double fn = 0.0;
-        double[] phirj = new double[1];
-        double[] phiij = new double[1];
-        double[] zeta1rj = new double[1];
-        double[] zeta1ij = new double[1];
-        double[] zeta2rj = new double[1];
-        double[] zeta2ij = new double[1];
-        double[] sumrj = new double[1];
-        double[] sumij = new double[1];
-        double[] cwrkrj = new double[16];
-        double[] cwrkij = new double[16];
+        final double[] phirj = new double[1];
+        final double[] phiij = new double[1];
+        final double[] zeta1rj = new double[1];
+        final double[] zeta1ij = new double[1];
+        final double[] zeta2rj = new double[1];
+        final double[] zeta2ij = new double[1];
+        final double[] sumrj = new double[1];
+        final double[] sumij = new double[1];
+        final double[] cwrkrj = new double[16];
+        final double[] cwrkij = new double[16];
         double str;
         double sti;
-        double[] s1r = new double[1];
-        double[] s1i = new double[1];
+        final double[] s1r = new double[1];
+        final double[] s1i = new double[1];
         double rast;
         double rs1;
         int kdflg;
         int kflag = 0;
-        double[] s2r = new double[1];
-        double[] s2i = new double[1];
-        int[] nw = new int[1];
+        final double[] s2r = new double[1];
+        final double[] s2i = new double[1];
+        final int[] nw = new int[1];
         double razr;
         double rzr;
         double rzi;
@@ -11930,22 +11482,22 @@ group:       {
         int ib;
         int ipard;
         int initd = 0;
-        double[] phidr = new double[1];
-        double[] phidi = new double[1];
-        double[] zet1dr = new double[1];
-        double[] zet1di = new double[1];
-        double[] zet2dr = new double[1];
-        double[] zet2di = new double[1];
-        double[] sumdr = new double[1];
-        double[] sumdi = new double[1];
-        double[] cwrkr3 = new double[16];
-        double[] cwrki3 = new double[16];
+        final double[] phidr = new double[1];
+        final double[] phidi = new double[1];
+        final double[] zet1dr = new double[1];
+        final double[] zet1di = new double[1];
+        final double[] zet2dr = new double[1];
+        final double[] zet2di = new double[1];
+        final double[] sumdr = new double[1];
+        final double[] sumdi = new double[1];
+        final double[] cwrkr3 = new double[16];
+        final double[] cwrki3 = new double[16];
         double aphi;
-        double[] c1r = new double[1];
-        double[] c1i = new double[1];
+        final double[] c1r = new double[1];
+        final double[] c1i = new double[1];
         double ascle;
-        double[] c2r = new double[1];
-        double[] c2i = new double[1];
+        final double[] c2r = new double[1];
+        final double[] c2i = new double[1];
         double c2m;
         double fmr;
         double sgn;
@@ -11957,11 +11509,11 @@ group:       {
         double cspnr;
         double cspni;
         double asc;
-        int[] iuf = new int[1];
+        final int[] iuf = new int[1];
         int kk;
         int ic;
-        double[] cwrkrm = new double[16];
-        double[] cwrkim = new double[16];
+        final double[] cwrkrm = new double[16];
+        final double[] cwrkim = new double[16];
         int iflag = 0;
         int il;
         double csr;
@@ -12005,7 +11557,7 @@ group:       {
 
         j = 2;
 
-group:   {
+        group: {
 
             for (i = 1; i <= n; i++) {
 
@@ -12014,7 +11566,7 @@ group:   {
                 fn = fnu + i - 1.0;
                 init[j - 1] = 0;
                 zunik(zrr, zri, fn, 2, 0, init[j - 1], phirj, phiij, zeta1rj, zeta1ij, zeta2rj, zeta2ij, sumrj, sumij,
-                      cwrkrj, cwrkij);
+                        cwrkrj, cwrkij);
                 phir[j - 1] = phirj[0];
                 phii[j - 1] = phiij[0];
                 zeta1r[j - 1] = zeta1rj[0];
@@ -12069,7 +11621,7 @@ group:   {
                                 kflag = 1;
                             } // if (kdflg == 1)
 
-                            if ((rs1 >= 0.0) && (kdflg == 1)) {
+                            if ( (rs1 >= 0.0) && (kdflg == 1)) {
                                 kflag = 3;
                             } // if ((rs1 >= 0.0) && (kdflg == 1))
                         } // if (seg1)
@@ -12141,7 +11693,7 @@ group:   {
                     continue;
                 } // if (i == 1)
 
-                if ((yr[i - 2] == 0.0) && (yi[i - 2] == 0.0)) {
+                if ( (yr[i - 2] == 0.0) && (yi[i - 2] == 0.0)) {
                     continue;
                 } // if ((yr[i-2] == 0.0) && (yi[i-2] == 0.0))
 
@@ -12164,7 +11716,7 @@ group:   {
 
         if (n >= ib) {
 
-            // test last member for underflow and overflow.  Set sequence to zero
+            // test last member for underflow and overflow. Set sequence to zero
             // on underflow
             fn = fnu + n - 1.0;
             ipard = 1;
@@ -12175,7 +11727,7 @@ group:   {
 
             initd = 0;
             zunik(zrr, zri, fn, 2, ipard, initd, phidr, phidi, zet1dr, zet1di, zet2dr, zet2di, sumdr, sumdi, cwrkr3,
-                  cwrki3);
+                    cwrki3);
 
             for (p = 0; p < 16; p++) {
                 cwrkr[p][2] = cwrkr3[p];
@@ -12317,7 +11869,7 @@ group:   {
         cspnr = Math.cos(ang);
         cspni = Math.sin(ang);
 
-        if ((ifn % 2) != 0) {
+        if ( (ifn % 2) != 0) {
             cspnr = -cspnr;
             cspni = -cspni;
         } // if ((ifn%2) != 0)
@@ -12329,7 +11881,7 @@ group:   {
         ib = ib - 1;
         ic = ib - 1;
 
-group2:  {
+        group2: {
 
             for (k = 1; k <= n; k++) {
                 fn = fnu + kk - 1.0;
@@ -12362,11 +11914,11 @@ group2:  {
 
                     seg6 = true;
 
-                    if ((kk == n) && (ib < n)) {
+                    if ( (kk == n) && (ib < n)) {
                         break;
                     } // if ((kk == n) && (ib < n))
 
-                    if ((kk == ib) || (kk == ic)) {
+                    if ( (kk == ib) || (kk == ic)) {
                         continue;
                     } // if ((kk == ib) || (kk == ic))
 
@@ -12376,7 +11928,7 @@ group2:  {
                 } // while (true)
 
                 zunik(zrr, zri, fn, 1, 0, initd, phidr, phidi, zet1dr, zet1di, zet2dr, zet2di, sumdr, sumdi, cwrkrm,
-                      cwrkim);
+                        cwrkim);
 
                 for (p = 0; p < 16; p++) {
                     cwrkr[p][m - 1] = cwrkrm[p];
@@ -12430,7 +11982,7 @@ group2:  {
                                 iflag = 1;
                             } // if (kdflg == 1)
 
-                            if ((rs1 >= 0.0) && (kdflg == 1)) {
+                            if ( (rs1 >= 0.0) && (kdflg == 1)) {
                                 iflag = 3;
                             } // if ((rs1 >= 0.0) && (kdflg == 1))
                         } // if (seg8)
@@ -12490,7 +12042,7 @@ group2:  {
                         cspnr = -cspnr;
                         cspni = -cspni;
 
-                        if ((c2r[0] == 0.0) && (c2i[0] == 0.0)) {
+                        if ( (c2r[0] == 0.0) && (c2i[0] == 0.0)) {
                             kdflg = 1;
 
                             break;
@@ -12541,8 +12093,8 @@ group2:  {
         for (i = 1; i <= il; i++) {
             c2r[0] = s2r[0];
             c2i[0] = s2i[0];
-            s2r[0] = s1r[0] + ((fn + fnf) * ((rzr * c2r[0]) - (rzi * c2i[0])));
-            s2i[0] = s1i[0] + ((fn + fnf) * ((rzr * c2i[0]) + (rzi * c2r[0])));
+            s2r[0] = s1r[0] + ( (fn + fnf) * ( (rzr * c2r[0]) - (rzi * c2i[0])));
+            s2i[0] = s1i[0] + ( (fn + fnf) * ( (rzr * c2i[0]) + (rzi * c2r[0])));
             s1r[0] = c2r[0];
             s1i[0] = c2i[0];
             fn = fn - 1.0;
@@ -12598,43 +12150,44 @@ group2:  {
      * KIND=(3-MR)/2, MR=+1 OR -1. HERE ZN=ZR*I OR -ZR*I WHERE ZR=Z IF Z IS IN THE RIGHT HALF PLANE OR ZR=-Z IF Z IS IN
      * THE LEFT HALF PLANE. MR INDIC- ATES THE DIRECTION OF ROTATION FOR ANALYTIC CONTINUATION. NZ=-1 MEANS AN OVERFLOW
      * WILL OCCUR
-     *
-     * @param  zr    double
-     * @param  zi    double
-     * @param  fnu   double
-     * @param  kode  int
-     * @param  mr    int
-     * @param  n     int
-     * @param  yr    double[]
-     * @param  yi    double[]
-     * @param  nz    int[]
+     * 
+     * @param zr double
+     * @param zi double
+     * @param fnu double
+     * @param kode int
+     * @param mr int
+     * @param n int
+     * @param yr double[]
+     * @param yi double[]
+     * @param nz int[]
      */
-    private void zunk2(double zr, double zi, double fnu, int kode, int mr, int n, double[] yr, double[] yi, int[] nz) {
-        double cr1r = 1.0;
-        double cr1i = 1.73205080756887729;
-        double cr2r = -0.5;
-        double cr2i = -8.66025403784438647E-01;
+    private void zunk2(double zr, double zi, final double fnu, final int kode, final int mr, final int n,
+            final double[] yr, final double[] yi, final int[] nz) {
+        final double cr1r = 1.0;
+        final double cr1i = 1.73205080756887729;
+        final double cr2r = -0.5;
+        final double cr2i = -8.66025403784438647E-01;
         double hpi = Math.PI / 2.0;
-        double aic = 1.26551212348464539;
-        double[] cipr = new double[] { 1.0, 0.0, -1.0, 0.0 };
-        double[] cipi = new double[] { 0.0, -1.0, 0.0, 1.0 };
-        double[] bry = new double[3];
-        double[] asumr = new double[2];
-        double[] asumi = new double[2];
-        double[] bsumr = new double[2];
-        double[] bsumi = new double[2];
-        double[] phir = new double[2];
-        double[] phii = new double[2];
-        double[] argr = new double[2];
-        double[] argi = new double[2];
-        double[] zeta1r = new double[2];
-        double[] zeta1i = new double[2];
-        double[] zeta2r = new double[2];
-        double[] zeta2i = new double[2];
-        double[] cyr = new double[2];
-        double[] cyi = new double[2];
-        double[] cssr = new double[3];
-        double[] csrr = new double[3];
+        final double aic = 1.26551212348464539;
+        final double[] cipr = new double[] {1.0, 0.0, -1.0, 0.0};
+        final double[] cipi = new double[] {0.0, -1.0, 0.0, 1.0};
+        final double[] bry = new double[3];
+        final double[] asumr = new double[2];
+        final double[] asumi = new double[2];
+        final double[] bsumr = new double[2];
+        final double[] bsumi = new double[2];
+        final double[] phir = new double[2];
+        final double[] phii = new double[2];
+        final double[] argr = new double[2];
+        final double[] argi = new double[2];
+        final double[] zeta1r = new double[2];
+        final double[] zeta1i = new double[2];
+        final double[] zeta2r = new double[2];
+        final double[] zeta2i = new double[2];
+        final double[] cyr = new double[2];
+        final double[] cyi = new double[2];
+        final double[] cssr = new double[3];
+        final double[] csrr = new double[3];
         int kdflg;
         double cscl;
         double crsc;
@@ -12650,8 +12203,8 @@ group2:  {
         double ang;
         double car;
         double sar;
-        double[] c2r = new double[1];
-        double[] c2i = new double[1];
+        final double[] c2r = new double[1];
+        final double[] c2i = new double[1];
         int kk;
         double str;
         double sti;
@@ -12660,37 +12213,37 @@ group2:  {
         int j;
         int i;
         double fn = 0.0;
-        double[] phirj = new double[1];
-        double[] phiij = new double[1];
-        double[] argrj = new double[1];
-        double[] argij = new double[1];
-        double[] zeta1rj = new double[1];
-        double[] zeta1ij = new double[1];
-        double[] zeta2rj = new double[1];
-        double[] zeta2ij = new double[1];
-        double[] asumrj = new double[1];
-        double[] asumij = new double[1];
-        double[] bsumrj = new double[1];
-        double[] bsumij = new double[1];
+        final double[] phirj = new double[1];
+        final double[] phiij = new double[1];
+        final double[] argrj = new double[1];
+        final double[] argij = new double[1];
+        final double[] zeta1rj = new double[1];
+        final double[] zeta1ij = new double[1];
+        final double[] zeta2rj = new double[1];
+        final double[] zeta2ij = new double[1];
+        final double[] asumrj = new double[1];
+        final double[] asumij = new double[1];
+        final double[] bsumrj = new double[1];
+        final double[] bsumij = new double[1];
         double rast;
-        double[] s1r = new double[1];
-        double[] s1i = new double[1];
+        final double[] s1r = new double[1];
+        final double[] s1i = new double[1];
         double rs1;
         int kflag = 0;
         double aphi;
         double aarg;
-        double[] air = new double[1];
-        double[] aii = new double[1];
-        int[] nai = new int[1];
-        int[] idum = new int[1];
-        double[] dair = new double[1];
-        double[] daii = new double[1];
-        int[] ndai = new int[1];
+        final double[] air = new double[1];
+        final double[] aii = new double[1];
+        final int[] nai = new int[1];
+        final int[] idum = new int[1];
+        final double[] dair = new double[1];
+        final double[] daii = new double[1];
+        final int[] ndai = new int[1];
         double ptr;
         double pti;
-        double[] s2r = new double[1];
-        double[] s2i = new double[1];
-        int[] nw = new int[1];
+        final double[] s2r = new double[1];
+        final double[] s2i = new double[1];
+        final int[] nw = new int[1];
         double razr;
         double rzr;
         double rzi;
@@ -12698,18 +12251,18 @@ group2:  {
         double cki;
         int ib;
         int ipard;
-        double[] phidr = new double[1];
-        double[] phidi = new double[1];
-        double[] argdr = new double[1];
-        double[] argdi = new double[1];
-        double[] zet1dr = new double[1];
-        double[] zet1di = new double[1];
-        double[] zet2dr = new double[1];
-        double[] zet2di = new double[1];
-        double[] asumdr = new double[1];
-        double[] asumdi = new double[1];
-        double[] bsumdr = new double[1];
-        double[] bsumdi = new double[1];
+        final double[] phidr = new double[1];
+        final double[] phidi = new double[1];
+        final double[] argdr = new double[1];
+        final double[] argdi = new double[1];
+        final double[] zet1dr = new double[1];
+        final double[] zet1di = new double[1];
+        final double[] zet2dr = new double[1];
+        final double[] zet2di = new double[1];
+        final double[] asumdr = new double[1];
+        final double[] asumdi = new double[1];
+        final double[] bsumdr = new double[1];
+        final double[] bsumdi = new double[1];
         double c2m;
         double fmr;
         double sgn;
@@ -12722,10 +12275,10 @@ group2:  {
         int ic;
         int iflag = 0;
         int il;
-        double[] c1r = new double[1];
-        double[] c1i = new double[1];
+        final double[] c1r = new double[1];
+        final double[] c1i = new double[1];
         double ascle;
-        int[] iuf = new int[1];
+        final int[] iuf = new int[1];
         int k;
         boolean seg1 = true;
         boolean seg2 = true;
@@ -12786,11 +12339,11 @@ group2:  {
         } // if (yy <= 0.0)
 
         // K(fnu,z) is computed form H(2,fnu,-i*z) where z is in the first
-        // quadrant.  Fourth quadrant values (yy <= 0.0) are computed by
+        // quadrant. Fourth quadrant values (yy <= 0.0) are computed by
         // conjugation since the K function is real on the positive real axis.
         j = 2;
 
-group:   {
+        group: {
 
             for (i = 1; i <= n; i++) {
 
@@ -12798,7 +12351,7 @@ group:   {
                 j = 3 - j;
                 fn = fnu + i - 1.0;
                 zunhj(znr, zni, fn, 0, phirj, phiij, argrj, argij, zeta1rj, zeta1ij, zeta2rj, zeta2ij, asumrj, asumij,
-                      bsumrj, bsumij);
+                        bsumrj, bsumij);
                 phir[j - 1] = phirj[0];
                 phii[j - 1] = phiij[0];
                 argr[j - 1] = argrj[0];
@@ -12853,7 +12406,7 @@ group:   {
                                 kflag = 1;
                             } // if (kdflg == 1)
 
-                            if ((rs1 >= 0.0) && (kdflg == 1)) {
+                            if ( (rs1 >= 0.0) && (kdflg == 1)) {
                                 kflag = 3;
                             } // if ((rs1 >= 0.0) && (kdflg == 1))
                         } // if (seg1)
@@ -12873,8 +12426,8 @@ group:   {
                         sti = (dair[0] * bsumi[j - 1]) + (daii[0] * bsumr[j - 1]);
                         ptr = (str * cr2r) - (sti * cr2i);
                         pti = (str * cr2i) + (sti * cr2r);
-                        str = ptr + ((air[0] * asumr[j - 1]) - (aii[0] * asumi[j - 1]));
-                        sti = pti + ((air[0] * asumi[j - 1]) + (aii[0] * asumr[j - 1]));
+                        str = ptr + ( (air[0] * asumr[j - 1]) - (aii[0] * asumi[j - 1]));
+                        sti = pti + ( (air[0] * asumi[j - 1]) + (aii[0] * asumr[j - 1]));
                         ptr = (str * phir[j - 1]) - (sti * phii[j - 1]);
                         pti = (str * phii[j - 1]) + (sti * phir[j - 1]);
                         s2r[0] = (ptr * csr) - (pti * csi);
@@ -12948,7 +12501,7 @@ group:   {
                     continue;
                 } // if (i == 1)
 
-                if ((yr[i - 2] == 0.0) && (yi[i - 2] == 0.0)) {
+                if ( (yr[i - 2] == 0.0) && (yi[i - 2] == 0.0)) {
                     continue;
                 } // if ((yr[i-2] == 0.0) && (yi[i-2] == 0.0))
 
@@ -12971,7 +12524,7 @@ group:   {
 
         if (n >= ib) {
 
-            // Test last member for underflow and overflow.  Set sequence to zero
+            // Test last member for underflow and overflow. Set sequence to zero
             // on underflow
             fn = fnu + n - 1.0;
             ipard = 1;
@@ -12981,7 +12534,7 @@ group:   {
             } // if (mr != 0)
 
             zunhj(znr, zni, fn, ipard, phidr, phidi, argdr, argdi, zet1dr, zet1di, zet2dr, zet2di, asumdr, asumdi,
-                  bsumdr, bsumdi);
+                    bsumdr, bsumdi);
 
             if (kode != 1) {
                 str = zbr + zet2dr[0];
@@ -13119,14 +12672,14 @@ group:   {
         cspnr = Math.cos(ang);
         cspni = Math.sin(ang);
 
-        if ((ifn % 2) != 0) {
+        if ( (ifn % 2) != 0) {
             cspnr = -cspnr;
             cspni = -cspni;
         } // if ((ifn%2) != 0)
 
-        // cs = coeff of the J function to get the I function.  I(fnu,z) is
+        // cs = coeff of the J function to get the I function. I(fnu,z) is
         // computed from exp(i*fnu*hpi)*J(fnu,-i*z) where z is in the first
-        // quadrant.  Fourth quadrant values (yy <= 0.0) are computed by
+        // quadrant. Fourth quadrant values (yy <= 0.0) are computed by
         // conjugation since the I function is real on the positive real axis
         csr = sar * csgni;
         csi = car * csgni;
@@ -13134,7 +12687,7 @@ group:   {
         c2r[0] = cipr[in - 1];
         c2i[0] = cipi[in - 1];
         str = (csr * c2r[0]) + (csi * c2i[0]);
-        csi = (-csr * c2i[0]) + (csi * c2r[0]);
+        csi = ( -csr * c2i[0]) + (csi * c2r[0]);
         csr = str;
         asc = bry[0];
         iuf[0] = 0;
@@ -13143,7 +12696,7 @@ group:   {
         ib = ib - 1;
         ic = ib - 1;
 
-group2:  {
+        group2: {
 
             for (k = 1; k <= n; k++) {
                 fn = fnu + kk - 1.0;
@@ -13176,16 +12729,16 @@ group2:  {
 
                     seg6 = true;
 
-                    if ((kk == n) && (ib < n)) {
+                    if ( (kk == n) && (ib < n)) {
                         break;
                     } // if ((kk == n) && (ib < n))
 
-                    if ((kk == ib) || (kk == ic)) {
+                    if ( (kk == ib) || (kk == ic)) {
                         continue;
                     } // if ((kk == ib) || (kk == ic))
 
                     zunhj(znr, zni, fn, 0, phidr, phidi, argdr, argdi, zet1dr, zet1di, zet2dr, zet2di, asumdr, asumdi,
-                          bsumdr, bsumdi);
+                            bsumdr, bsumdi);
 
                     break;
                 } // while (true)
@@ -13237,7 +12790,7 @@ group2:  {
                                 iflag = 1;
                             } // if (kdflg == 1)
 
-                            if ((rs1 >= 0.0) && (kdflg == 1)) {
+                            if ( (rs1 >= 0.0) && (kdflg == 1)) {
                                 iflag = 3;
                             } // if (rs1 >= 0.0) && (kdflg == 1)
                         } // if (seg9)
@@ -13250,8 +12803,8 @@ group2:  {
                         zairy(argdr[0], argdi[0], 1, 2, dair, daii, ndai, idum);
                         str = (dair[0] * bsumdr[0]) - (daii[0] * bsumdi[0]);
                         sti = (dair[0] * bsumdi[0]) + (daii[0] * bsumdr[0]);
-                        str = str + ((air[0] * asumdr[0]) - (aii[0] * asumdi[0]));
-                        sti = sti + ((air[0] * asumdi[0]) + (aii[0] * asumdr[0]));
+                        str = str + ( (air[0] * asumdr[0]) - (aii[0] * asumdi[0]));
+                        sti = sti + ( (air[0] * asumdi[0]) + (aii[0] * asumdr[0]));
                         ptr = (str * phidr[0]) - (sti * phidi[0]);
                         pti = (str * phidi[0]) + (sti * phidr[0]);
                         s2r[0] = (ptr * csr) - (pti * csi);
@@ -13311,7 +12864,7 @@ group2:  {
                         csi = -csr;
                         csr = str;
 
-                        if ((c2r[0] == 0.0) && (c2i[0] == 0.0)) {
+                        if ( (c2r[0] == 0.0) && (c2i[0] == 0.0)) {
                             kdflg = 1;
 
                             break;
@@ -13362,8 +12915,8 @@ group2:  {
         for (i = 1; i <= il; i++) {
             c2r[0] = s2r[0];
             c2i[0] = s2i[0];
-            s2r[0] = s1r[0] + ((fn + fnf) * ((rzr * c2r[0]) - (rzi * c2i[0])));
-            s2i[0] = s1i[0] + ((fn + fnf) * ((rzr * c2i[0]) + (rzi * c2r[0])));
+            s2r[0] = s1r[0] + ( (fn + fnf) * ( (rzr * c2r[0]) - (rzi * c2i[0])));
+            s2i[0] = s1i[0] + ( (fn + fnf) * ( (rzr * c2i[0]) + (rzi * c2r[0])));
             s1r[0] = c2r[0];
             s1i[0] = c2i[0];
             fn = fn - 1.0;
@@ -13419,25 +12972,27 @@ group2:  {
      * LEADING EXPONENTIAL, IS LESS THAN ALIM OR GREATER THAN -ALIM, THEN THE RESULT IS ON SCALE. IF NOT, THEN A REFINED
      * TEST USING OTHER MULTIPLIERS (IN LOGARITHMIC FORM) IS MADE BASED ON ELIM. HERE EXP(-ELIM)=SMALLEST MACHINE
      * NUMBER*1.0E+3 AND EXP(-ALIM)= EXP(-ELIM)/TOL
-     *
-     * <p>IKFLG=1 MEANS THE I SEQUENCE IS TESTED =2 MEANS THE K SEQUENCE IS TESTED NUF = 0 MEANS THE LAST MEMBER OF THE
+     * 
+     * <p>
+     * IKFLG=1 MEANS THE I SEQUENCE IS TESTED =2 MEANS THE K SEQUENCE IS TESTED NUF = 0 MEANS THE LAST MEMBER OF THE
      * SEQUENCE IS ON SCALE =-1 MEANS AN OVERFLOW WOULD OCCUR IKFLG=1 AND NUF.GT.0 MEANS THE LAST NUF Y VALUES WERE SET
      * TO ZERO THE FIRST N-NUF VALUES MUST BE SET BY ANOTHER ROUTINE IKFLG=2 AND NUF.EQ.N MEANS ALL Y VALUES WERE SET TO
-     * ZERO IKFLG=2 AND 0.LT.NUF.LT.N NOT CONSIDERED. Y MUST BE SET BY ANOTHER ROUTINE</p>
-     *
-     * @param  zr     double
-     * @param  zi     double
-     * @param  fnu    double
-     * @param  kode   int
-     * @param  ikflg  int
-     * @param  n      int
-     * @param  yr     double[]
-     * @param  yi     double[]
-     * @param  nuf    int[]
+     * ZERO IKFLG=2 AND 0.LT.NUF.LT.N NOT CONSIDERED. Y MUST BE SET BY ANOTHER ROUTINE
+     * </p>
+     * 
+     * @param zr double
+     * @param zi double
+     * @param fnu double
+     * @param kode int
+     * @param ikflg int
+     * @param n int
+     * @param yr double[]
+     * @param yi double[]
+     * @param nuf int[]
      */
-    private void zuoik(double zr, double zi, double fnu, int kode, int ikflg, int n, double[] yr, double[] yi,
-                       int[] nuf) {
-        double aic = 1.265512123484645396;
+    private void zuoik(double zr, double zi, final double fnu, final int kode, final int ikflg, final int n,
+            final double[] yr, final double[] yi, final int[] nuf) {
+        final double aic = 1.265512123484645396;
         int nn;
         double zrr;
         double zri;
@@ -13454,35 +13009,35 @@ group2:  {
         double czi;
         double znr = 0.0;
         double zni = 0.0;
-        double[] zeta1r = new double[1];
-        double[] zeta2r = new double[1];
-        double[] zeta1i = new double[1];
-        double[] zeta2i = new double[1];
-        double[] cwrkr = new double[16];
-        double[] cwrki = new double[16];
-        double[] phir = new double[1];
-        double[] phii = new double[1];
-        double[] argr = new double[1];
-        double[] argi = new double[1];
+        final double[] zeta1r = new double[1];
+        final double[] zeta2r = new double[1];
+        final double[] zeta1i = new double[1];
+        final double[] zeta2i = new double[1];
+        final double[] cwrkr = new double[16];
+        final double[] cwrki = new double[16];
+        final double[] phir = new double[1];
+        final double[] phii = new double[1];
+        final double[] argr = new double[1];
+        final double[] argi = new double[1];
         double aphi;
         double rcz;
-        double[] sumr = new double[1];
-        double[] sumi = new double[1];
-        double[] asumr = new double[1];
-        double[] asumi = new double[1];
-        double[] bsumr = new double[1];
-        double[] bsumi = new double[1];
+        final double[] sumr = new double[1];
+        final double[] sumi = new double[1];
+        final double[] asumr = new double[1];
+        final double[] asumi = new double[1];
+        final double[] bsumr = new double[1];
+        final double[] bsumi = new double[1];
         int i;
         double ascle;
-        int[] idum = new int[1];
+        final int[] idum = new int[1];
         double aarg = 1.0;
         boolean seg1 = true;
         boolean seg2 = true;
         boolean seg3 = true;
         boolean seg4 = true;
-        double[] str = new double[1];
-        double[] sti = new double[1];
-        int[] nw = new int[1];
+        final double[] str = new double[1];
+        final double[] sti = new double[1];
+        final int[] nw = new int[1];
 
         nuf[0] = 0;
         nn = n;
@@ -13513,7 +13068,7 @@ group2:  {
         } // if (ikflg != 1)
 
         // Only the magnitude of arg and phi are needed along with the real
-        // parts of zeta1, zeta2, and zb.  No attempt is made to get the sign
+        // parts of zeta1, zeta2, and zb. No attempt is made to get the sign
         // of the imaginary part correct
         if (iform != 2) {
             init = 0;
@@ -13576,9 +13131,9 @@ group2:  {
                 } // if (rcz >= alim)
 
                 // Underflow test
-                if (rcz >= (-elim)) {
+                if (rcz >= ( -elim)) {
 
-                    if (rcz > (-alim)) {
+                    if (rcz > ( -alim)) {
                         break;
                     }
 
@@ -13588,7 +13143,7 @@ group2:  {
                         rcz = rcz - (0.25 * Math.log(aarg)) - aic;
                     } // if (iform == 2)
 
-                    if (rcz > (-elim)) {
+                    if (rcz > ( -elim)) {
                         seg2 = false;
                     }
                 } // if (rcz >= -elim)
@@ -13633,7 +13188,7 @@ group2:  {
             seg1 = false;
         } // while (true)
 
-        if ((ikflg == 2) || (n == 1)) {
+        if ( (ikflg == 2) || (n == 1)) {
             return;
         }
 
@@ -13645,13 +13200,13 @@ group2:  {
                 if (iform != 2) {
                     init = 0;
                     zunik(zrr, zri, gnu, ikflg, 1, init, phir, phii, zeta1r, zeta1i, zeta2r, zeta2i, sumr, sumi, cwrkr,
-                          cwrki);
+                            cwrki);
                     czr = -zeta1r[0] + zeta2r[0];
                     czi = -zeta1i[0] + zeta2i[0];
                 } // if (iform != 2)
                 else {
-                    zunhj(znr, zni, gnu, 1, phir, phii, argr, argi, zeta1r, zeta1i, zeta2r, zeta2i, asumr, asumi, bsumr,
-                          bsumi);
+                    zunhj(znr, zni, gnu, 1, phir, phii, argr, argi, zeta1r, zeta1i, zeta2r, zeta2i, asumr, asumi,
+                            bsumr, bsumi);
                     czr = -zeta1r[0] + zeta2r[0];
                     czi = -zeta1i[0] + zeta2i[0];
                     aarg = zabs(argr[0], argi[0]);
@@ -13665,9 +13220,9 @@ group2:  {
                 aphi = zabs(phir[0], phii[0]);
                 rcz = czr;
 
-                if (rcz >= (-elim)) {
+                if (rcz >= ( -elim)) {
 
-                    if (rcz > (-alim)) {
+                    if (rcz > ( -alim)) {
                         return;
                     } // if (rcz > (-alim)
 
@@ -13677,7 +13232,7 @@ group2:  {
                         rcz = rcz - (0.25 * Math.log(aarg)) - aic;
                     }
 
-                    if (rcz > (-elim)) {
+                    if (rcz > ( -elim)) {
                         seg4 = false;
                     } // if (rcz > (-elim))
                 } // if (rcz >= (-elim))
@@ -13729,21 +13284,21 @@ group2:  {
     /**
      * zwrsk computes the I Bessel function for Real(z) >- 0.0 by normalizing the I function ratios from zrati by the
      * Wronskian.
-     *
-     * @param  zrr   double
-     * @param  zri   double
-     * @param  fnu   double
-     * @param  kode  int
-     * @param  n     int
-     * @param  yr    double[]
-     * @param  yi    double[]
-     * @param  nz    int[]
-     * @param  cwr   double[]
-     * @param  cwi   double[]
+     * 
+     * @param zrr double
+     * @param zri double
+     * @param fnu double
+     * @param kode int
+     * @param n int
+     * @param yr double[]
+     * @param yi double[]
+     * @param nz int[]
+     * @param cwr double[]
+     * @param cwi double[]
      */
-    private void zwrsk(double zrr, double zri, double fnu, int kode, int n, double[] yr, double[] yi, int[] nz,
-                       double[] cwr, double[] cwi) {
-        int[] nw = new int[1];
+    private void zwrsk(final double zrr, final double zri, final double fnu, final int kode, final int n,
+            final double[] yr, final double[] yi, final int[] nz, final double[] cwr, final double[] cwi) {
+        final int[] nw = new int[1];
         double cinur;
         double cinui;
         double acw;
@@ -13794,7 +13349,7 @@ group2:  {
 
         // On low exponent machines the k functions can be close to both the
         // under and overflow limits and the normalization must be scaled to
-        // prevent over or underflow.  zuoik has determined that the result is
+        // prevent over or underflow. zuoik has determined that the result is
         // on scale.
         acw = zabs(cwr[1], cwi[1]);
         ascle = 1.0E3 * tiny / tol;
