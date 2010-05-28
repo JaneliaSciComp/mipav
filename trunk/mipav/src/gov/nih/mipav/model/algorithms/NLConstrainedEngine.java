@@ -27,53 +27,22 @@ import gov.nih.mipav.view.*;
  *  For the self tests:
  *  DRAPER24D OK.
  *  HOCK25 OK.
- *  BARD Unconstrained only worked at the standard  starting point.  This is as expected
- *  because a[1] is a root in the denominator and so with unconstrained for large
- *  ranges a[1] = 0 will result in an infinity.  Constrained with a[1] >= 0.1
- *  works at 10.0 * starting point and at 100.0 * starting point.
- *  KOWALIK_AND_OSBORNE at standard initial starting point OK.  At 10 * standard initial starting point only
- *  constrained OK.  At 100 * starting point does not work
- *  Note that the article Gauss-Newton Based Algorithms for Constrained Nonlinear Least Squares Problems by 
- *  Per Lindstrom and Per-ake Wedin says, "However, on the problems BARD and KOWALIK_AND_OSBORNE commented ELSUNC
- *  started at 10*Xs and 100*Xs, converges towards a reported unbounded local minimizer.
- *  I found the following statement about SolvOpt at http://www.uni-graz.at/imawww/kuntsevich/solvopt/results/moreset.html
- *  in Something about More set of test functions.
- *  Function #15 - Kowalik and Osborne
-    This function has the global minimum f0=0.000307506
-    at the point [0.192807; 0.191282; 0.123056; 0.136062].
-    Additionally, it takes a local minimum f=0.00179453906640 on a big flat plateau. The following are the minimum points found on this plateau by SolvOpt:
-    [0.816961; 2045080438; 7189803671; 2927176299],
-    [0.734588; 2648629959; 8372807699; 3408733052],
-    [0.537138; 1852002979; 4280874360; 1742904647].
-    These particular points appear to be "false" local minima on a flat plateau, the fact caused by the finite accuracy of calculations. 
- *  MEYER starting point okay.  At 10 * standard starting point constrained does not work.
- *  Remember that Java is limited to 64 bits whereas the FORTRAN used by the ELSUNC program has access to the full 80 processor bits.
- *  >There are basically 2 problems with Java precision. 1.) The Intel Pentium uses 80 bit numbers in floating point
- * registers. However, Java must round each number back to 64 bits whenever a Java variable is assigned. There used to
- * be a proposal to introduce a special keyword extendedfp to fully use whatever math the platform had, but it didn't
- * get thru. Apparently the Java designers felt for Java being consistent is more important than being successful. 2.)
- * Java also forbids the use of fused multiply-add (FMA) operations. This operation computes the quantity ax + y as a
- * single floating-point operation. Operations of this type are found in many compute-intensive applications,
- * particularly matrix operations. With this instruction, only a single rounding occurs for the two arithmetic
- * operations, yielding a more accurate result in less time than would be required for two separate operations. Java's
- * strict language definition does not permit use of FMAs and thus sacrifices up to 50% of performance on some
- * platforms.  
- * The smaller number of bits on Java would be particularly prevalent for the big flat plateau of the Kowalik and
- * Osborne function.  With the Kowalik and Osborne run from 10 * the standard starting point, all 4 runs terminate
- * normally purely because we are computing at the noise level.
- * 
- *  >The only obvious cure for this problem would be to use the Java BigDecimal class. However, the use of BigDecimal
- * would involve much more work than just changing doubles to BigDecimals. For example, with doubles I would write: f =
- * f/g; With BigDecimal I would write: f = f.divide(g, mc); where mc is the mathematical context settings. Likewise,
- * instead of the ordinary arithmetic operators I would have to use add, compareTo, equals, negate, plus, remainder, and
- * subtract. Using BigDecimal would undoubtedly slow the program down considerably.  In addition, BigDecimal cannot do
- * many functions, such as log, exp, and trigonometric functions.
- * 
- * While Meyer with 10 * the original starting point works for the original ELSUNC program, it requires far more
- * iterations than any of the other test problems - 770 for unconstrained and 782 for constrained.  Since it barely
- * works for 80 bit FORTRAN, one would not expect it to work for 64 bit Java.
- *  OSBRONE1 at starting point unconstrained okay.
- *  OSBORNE2 at starting point unconstrained okay.
+ *  BARD OK.
+ *  MEYER OK.
+ *  KOWALIK_AND_OSBORNE OK.
+ *  MEYER OK.
+ *  OSBRONE1 OK.
+ *  OSBORNE2 OK.
+ *  ROSENBROCK OK.
+ *  HELICAL VALLEY OK.
+ *  POWELL SINGULAR OK.
+ *  FREUDENSTEIN_AND_ROTH OK.
+ *  BOX 3D OK.
+ *  JENNRICH_AND SAMPSON NUMERICAL JACOBIAN WORKS WITH BOTH INTERNAL SCALING FALSE AND INTERNAL SCALING TRUE.
+ *  JENNRICH_AND_SAMPSON ANALYTICAL JACOBIAN AND INTERNAL SCALING FALSE WORKS.
+ *  JENNRICH_AND_SAMPSON ANALYTICAL JACOBIAN AND INTERNAL SCALING TRUE GENERATES A -INFINITY IN fnew[9] 
+ *  inside fsumsq after iteration 22.  THE ORIGINAL FORTRAN CODE WORKS.
+ *  WATSON6, WATSON9, and WATSON12 OK.
  *   
  */
 
@@ -602,6 +571,8 @@ public abstract class NLConstrainedEngine {
     private final int OSBORNE1 = 17;
     
     private final int OSBORNE2 = 19;
+    
+    private final int WATSON = 20;
     
     private final int HOCK25 = 25;
 
@@ -1535,6 +1506,63 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
+        // Below is an example to fit the Watson function with 6 parameters
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Watson with 6 parameters at standard starting point unconstrained\n");
+        Preferences.debug("Correct chi-squared = 2.28767E-3\n");
+        testMode = true;
+        testCase = WATSON;
+        nPts = 31;
+        param = 6;
+        // Guess all parameters are 0.0.
+        gues = new double[param];
+        fitTestModel();
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is an example to fit the Watson function with 9 parameters
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Watson with 9 parameters at standard starting point unconstrained\n");
+        Preferences.debug("Correct chi-squared = 1.39976E-6\n");
+        testMode = true;
+        testCase = WATSON;
+        nPts = 31;
+        param = 9;
+        // Guess all parameters are 0.0.
+        gues = new double[param];
+        fitTestModel();
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is an example to fit the Watson function with 12 parameters
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Watson with 12 parameters at standard starting point unconstrained\n");
+        Preferences.debug("Correct chi-squared = 4.72238E-10\n");
+        testMode = true;
+        testCase = WATSON;
+        nPts = 31;
+        param = 12;
+        // Guess all parameters are 0.0.
+        gues = new double[param];
+        fitTestModel();
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
     }
     
     /**
@@ -2116,6 +2144,71 @@ public abstract class NLConstrainedEngine {
 	                    }
 	                } // else if (ctrl == 2)
                 	break;
+                case WATSON:
+                	if ((ctrl == -1 ) || (ctrl == 1)) {
+                		double sum1;
+                		double sum2;
+                		double t[] = new double[29];
+                		int j;
+                	    for (i = 0; i < 31; i++) {
+                	    	if (i < 29) {
+                	            t[i] = (i+1.0)/29.0;
+	                	        sum1 = 0.0;
+	                	        for (j = 2; j <= param; j++) {
+	                	            sum1 += (j - 1.0)*a[j-1]*Math.pow(t[i], j-2.0);	
+	                	        }
+	                	        sum2 = 0.0;
+	                	        for (j = 1; j <= param; j++) {
+	                	            sum2 += a[j-1]*Math.pow(t[i], j-1.0);	
+	                	        }
+                	        	residuals[i] = sum1 - sum2*sum2 - 1.0;
+                	        }
+                	        else if (i == 29) {
+                	        	residuals[i] = a[0];
+                	        }
+                	        else if (i == 30) {
+                	        	residuals[i] = a[1] - a[0]*a[0] - 1.0; 
+                	        }
+                	    }
+                	} // if ((ctrl == -1) || (ctrl == 1))
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                    		double sum2;
+                    		double t[] = new double[29];
+                    		int j;
+                    	    for (i = 0; i < 31; i++) {
+                    	    	if (i < 29) {
+                    	            t[i] = (i+1.0)/29.0;
+                    	            sum2 = 0.0;
+    	                	        for (j = 1; j <= param; j++) {
+    	                	            sum2 += a[j-1]*Math.pow(t[i], j-1.0);	
+    	                	        }
+                    	            covarMat[i][0] = -2.0*sum2;
+                    	            for (j = 2; j <= param; j++) {
+                    	            	covarMat[i][j-1] = (j-1.0)*Math.pow(t[i],j-2.0) - 2.0*sum2*Math.pow(t[i],j-1.0);
+                    	            }
+                    	    	} // if (i < 29)
+                    	    	else if (i == 29) {
+                    	    		covarMat[i][0] = 1.0;
+                    	    		for (j = 1; j < param; j++) {
+                    	    			covarMat[i][j] = 0.0;
+                    	    		}
+                    	    	}
+                    	    	else if (i == 30) {
+                    	    		covarMat[i][0] = -2.0*a[0];
+                    	    		covarMat[i][1] = 1.0;
+                    	    		for (j = 2; j < param; j++) {
+                    	    			covarMat[i][j] = 0.0;
+                    	    		}
+                    	    	}
+                    	    } // for (i = 0; i < 31; i++)
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                    break;
                 } // switch (testCase)
             } catch (Exception e) {
                 Preferences.debug("function error: " + e.getMessage() + "\n");
