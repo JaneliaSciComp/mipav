@@ -3201,8 +3201,11 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
      * Updates the image with the new Matrix information (for matrix replacement).
      */
     private void updateMatrixInfo() {
+    	FileInfoBase[] fileInfo;
 
         final String type = (String) transformIDBox.getSelectedItem();
+        // matrixType = type with a 0 or 1 appended at the end
+        final String matrixType = (String)matrixBox.getSelectedItem();
         int id = -1;
 
         if (type == "Scanner Anatomical") {
@@ -3224,7 +3227,54 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         final TransMatrix tMat = new TransMatrix(matrix.length, id);
         updateTransformInfo(tMat);
 
-        image.getMatrixHolder().replaceMatrix(type, tMat);
+        image.getMatrixHolder().replaceMatrix(matrixType, tMat);
+        
+        fileInfo = image.getFileInfo();
+        if (fileInfo[0] instanceof FileInfoNIFTI) {
+            MatrixHolder matHolder = null;
+            int i;
+            matHolder = image.getMatrixHolder();
+
+            if (matHolder != null) {
+                final LinkedHashMap<String, TransMatrix> matrixMap = matHolder.getMatrixMap();
+                final Iterator<String> iter = matrixMap.keySet().iterator();
+                String nextKey = null;
+
+                TransMatrix tempMatrix = null;
+
+                while (iter.hasNext()) {
+                    nextKey = iter.next();
+                    tempMatrix = matrixMap.get(nextKey);
+                    if (tempMatrix.isNIFTI()) {
+                        
+                        if (tempMatrix.isQform()) {
+                            if (image.getNDims() == 3) {
+                                for (i = 0; i < image.getExtents()[2]; i++) {
+                                    ((FileInfoNIFTI) fileInfo[i]).setMatrixQ(tempMatrix);
+                                }
+                            } else if (image.getNDims() == 4) {
+                                for (i = 0; i < image.getExtents()[2] * image.getExtents()[3]; i++) {
+                                    ((FileInfoNIFTI) fileInfo[i]).setMatrixQ(tempMatrix);
+                                }
+                            }
+                        } // if (tempMatrix.isQform() && changeQ)
+                        else if ( ( !tempMatrix.isQform())) {
+                            if (image.getNDims() == 3) {
+                                for (i = 0; i < image.getExtents()[2]; i++) {
+                                    ((FileInfoNIFTI) fileInfo[i]).setMatrixS(tempMatrix);
+                                }
+                            } else if (image.getNDims() == 4) {
+                                for (i = 0; i < image.getExtents()[2] * image.getExtents()[3]; i++) {
+                                    ((FileInfoNIFTI) fileInfo[i]).setMatrixS(tempMatrix);
+                                }
+                            }
+                        } // else if ((!tempMatrix.isQform()) && changeS)
+                    } // if (tempMatrix.isNIFTI())
+                } // while (iter.hasNext())
+                
+
+            } // if (matHolder != null)
+        } // if (fileInfo[0] instanceof FileInfoNIFTI)
 
         // script line if recording
         ScriptRecorder.getReference().addLine(new ActionChangeTransformInfo(image, tMat));
