@@ -6,17 +6,15 @@ import gov.nih.mipav.util.MipavMath;
 
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.*;
-
-import gov.nih.mipav.view.renderer.WildMagic.Render.LocalVolumeVOI;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.ScreenCoordinateListener;
 
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 
-import javax.swing.*;
+import WildMagic.LibFoundation.Mathematics.Vector2f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
-import WildMagic.LibFoundation.Mathematics.*;
 
 
 /**
@@ -45,7 +43,7 @@ import WildMagic.LibFoundation.Mathematics.*;
  * @see ViewJComponentDualTriImage
  */
 public class ViewJComponentTriImage extends ViewJComponentEditImage implements MouseWheelListener, KeyListener,
-        ActionListener, ScreenCoordinateListener {
+        ScreenCoordinateListener {
 
     // ~ Static fields/initializers
     // -------------------------------------------------------------------------------------
@@ -86,23 +84,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     /** Talairach: Right reference point. Used for conversions by the dialogs that create new Talairach images. */
     public static final int RIGHT_PT = 10;
 
-    /** used in the popup menu when the user right-clicks over a voi intensity line. */
-    public static final String DELETE_INTENSITY_LINE = "delete_inensity_line";
-
-    /** DOCUMENT ME! */
-    public static final String SHOW_INTENSITY_GRAPH = "show_intensity_graph";
-
-    // ~ Instance fields
-    // ------------------------------------------------------------------------------------------------
-
     /** DOCUMENT ME! */
     protected boolean dragCenterPt = false;
-
-    /** DOCUMENT ME! */
-    protected boolean intensityLineVisible = false;
-
-    /** DOCUMENT ME! */
-    protected boolean protractorVisible = false;
 
     /**
      * <code>anchorPt</code> is used to determine movements. <code>mousePressed()</code> establishes the coordinates
@@ -142,9 +125,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     /** DOCUMENT ME! */
     private int[] horizontalTalGridPts;
 
-    /** VOI line used to measure distance and show intensity value graphs. */
-    private VOI intensityLine = null;
-
     /**
      * In mousePressed, in mode == DEFAULT for a VOI point, the z value is saved as lastZOrg. In mouseDragged, in mode ==
      * MOVE_VOIPOINT the points at the lastZOrg value can be removed and replaced with points at the new z value. The
@@ -164,24 +144,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     /** Cursor 3D point in FileCoordinates. */
     private Vector3f m_kVolumePoint = new Vector3f();
 
-    /**
-     * Together with <code>moveProtractor</code>, ensures that the user can either move the protractor or the line
-     * VOI, but not both at the same time. Which one can be moved depends on which one the mouse is closer to.
-     * 
-     * @see #moveProtractor
-     */
-    private boolean moveLine = false;
-
-    /** DOCUMENT ME! */
-    private boolean moveLineEndpoint = false;
-
-    /**
-     * Together with <code>moveLine</code>, ensures that the user can either move the protractor or the line VOI, but
-     * not both at the same time. Which one can be moved depends on which one the mouse is closer to.
-     * 
-     * @see #moveLine
-     */
-    private boolean moveProtractor = false;
 
     /**
      * Reordered resolutions according to orientation. See ModelStorageBase.getResolutions( int index, int orientation ).
@@ -190,8 +152,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      */
     private float[] res = new float[3];
 
-    /** DOCUMENT ME! */
-    private float seg1Length;
 
     /** If true, show XY, XZ, or ZY orientation axes in a corner of the component. */
     private boolean showAxes = true;
@@ -217,27 +177,14 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     /** DOCUMENT ME! */
     private final Color talairachMinorLineColor = new Color(213, 178, 183);
 
-    /** Protractor angle, ranging from -180 to 180 degrees. */
-    private double theta = 0.0;
-
-    /** DOCUMENT ME! */
-    private double theta2;
-
     /** The tri image frame of which this object is a component. */
     private final ViewJFrameTriImage triImageFrame;
-
-    /**
-     * Reordered unitsOfMeasure according to orientation. See ModelStorageBase.getUnitsOfMeasure( int indes, int
-     * orientation ). The orientation parameter may be either: FileInfoBase.AXIAL, FileInfoBase.CORONAL,
-     * FileInfoBase.SAGITTAL for oriented slices, or FileInfoBase.UNKNOWN_ORIENT for the default slice orientation.
-     */
-    private int[] unitsOfMeasure = new int[3];
 
     /** DOCUMENT ME! */
     private int[] verticalTalGridPts;
 
     /** The protractor VOI. */
-    private VOI voiProtractor = null;
+    private VOIProtractor voiProtractor = null;
 
     /** color of the crosshairs. */
     private final Color[] xColor = {Color.yellow, Color.yellow, Color.green};
@@ -306,8 +253,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         triImageFrame = (ViewJFrameTriImage) frame;
 
-        removeMouseListener(voiHandler.getPopupVOI());
-        removeMouseListener(voiHandler.getPopupPt());
+        //removeMouseListener(voiHandler.getPopupVOI());
+        //removeMouseListener(voiHandler.getPopupPt());
 
         /* res is ordered based on orientation: */
         res = imageActive.getResolutions(0, orientation);
@@ -317,9 +264,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             res[1] = 1.0f;
             res[2] = 1.0f;
         }
-
-        /* unitsOfMeasure is ordered based on orientation: */
-        unitsOfMeasure = imageActive.getUnitsOfMeasure(0, orientation);
 
         /* localImageExtents is ordered based on orientation: */
         localImageExtents = imageActive.getExtents(orientation);
@@ -332,29 +276,16 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         removeMouseWheelListener(this); // remove listener from superclass
         addMouseWheelListener(this);
+        addKeyListener(this);
     }
-
-    // ~ Methods
-    // --------------------------------------------------------------------------------------------------------
-
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param event DOCUMENT ME!
-     */
-    public void actionPerformed(final ActionEvent event) {
-        final String command = event.getActionCommand();
-
-        if (command.equals(ViewJComponentTriImage.DELETE_INTENSITY_LINE)) // handling the popup menu for the VOI
-        // intensity line
+    
+    public void clearProtractor()
+    {
+        if ( voiManager != null && voiProtractor != null )
         {
-            intensityLine = null;
-            repaint();
-        } else if (command.equals(ViewJComponentTriImage.SHOW_INTENSITY_GRAPH)) // handling the popup menu for the VOI
-        // intensity line
-        {
-            showIntensityGraph();
+            voiManager.deleteVOI(voiProtractor);
         }
+        voiProtractor = null;
     }
 
     /**
@@ -461,7 +392,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
     /**
      * Delete all VOIs in the active image.
-     */
     public void deleteAllVOIs() {
         int i;
         int nVOI;
@@ -478,9 +408,11 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             VOIs.removeElementAt(i);
         }
 
-        voiHandler.setVOI_ID( -1);
+        System.err.println( "    TRIImage.deleteAllVOIs" );
+        voiHandler.setVOI_ID(-1);
         imageActive.notifyImageDisplayListeners(null, true);
     }
+     */
 
     /**
      * Sets whether axes (either anatomical or x,y,z if no orientation info) are shown or not in one of the corners of
@@ -508,8 +440,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      */
     public void disposeLocal(final boolean flag) {
         voiProtractor = null;
-        intensityLine = null;
-
         anchorPt = null;
 
         if (flag == true) {
@@ -580,7 +510,11 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      * @return the protractor angle
      */
     public double getTheta() {
-        return theta;
+        if ( voiProtractor != null )
+        {
+            return voiProtractor.getTheta(res);
+        }
+        return 0;
     }
 
     /**
@@ -645,24 +579,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     }
 
     /**
-     * Returns a boolean indicating whether the intensity line is currently visible or invisible.
-     * 
-     * @return true if the intensity line is visible, false otherwise
-     */
-    public boolean isIntensityLineVisible() {
-        return intensityLineVisible;
-    }
-
-    /**
-     * Gets the status of the protractor.
-     * 
-     * @return boolean indicating whether the protractor is visible or invisible
-     */
-    public boolean isProtractorVisible() {
-        return protractorVisible;
-    }
-
-    /**
      * Returns whether the bounding rectangle should be drawn.
      * 
      * @return whether the bounding rectangle should be drawn
@@ -691,21 +607,20 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         }
     }
 
+
+    @Override
+    public void keyReleased(KeyEvent e) {}
+
+    @Override
+    public void keyTyped(KeyEvent e) {}
+    
+    
     /**
      * Constructs and initializes one of the 3 protractors, depending on which component this is.
      */
     public void makeProtractor() {
 
         try {
-            int j;
-            int[] x = null;
-            int[] y = null;
-            int[] z = null;
-
-            x = new int[3];
-            y = new int[3];
-            z = new int[3];
-
             if (voiProtractor != null) {
                 imageActive.notifyImageDisplayListeners();
 
@@ -714,37 +629,29 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
             /* presetHue: 0.0f for first segment red hue, 1/3 for green, 1/6 for blue: */
             final float[] presetHue = {0.0f, 0.3333f, 0.1667f};
-            voiProtractor = new VOI((short) imageActive.getVOIs().size(), "protractor.voi", localImageExtents[2],
-                    VOI.PROTRACTOR, presetHue[orientation]);
-
-            for (j = 0; j < localImageExtents[2]; j++) {
-                x[0] = 3 * imageDim.width / 8;
-                x[1] = 4 * imageDim.width / 8;
-                x[2] = 5 * imageDim.width / 8;
-                y[0] = (imageDim.height - 1) / 2;
-                y[1] = y[0];
-                y[2] = y[0];
-                z[0] = j;
-                z[1] = j;
-                z[2] = j;
-
-                if (voiProtractor != null) {
-                    voiProtractor.importCurve(x, y, z, j);
-                }
-
-                ((VOIProtractor) (voiProtractor.getCurves()[j].elementAt(0))).setSnap(false);
-
-                if (voiProtractor != null) {
-                    ((VOIProtractor) (voiProtractor.getCurves()[j].elementAt(0))).setActive(true);
-                }
-            } // end of for (j = 0; j < imageActive.getExtents()[idx2]; j++)
-
-            if (voiProtractor != null) {
-                voiProtractor.setXYDim(imageDim.width, imageDim.height);
-            }
-
-            if (voiProtractor != null) {
-                voiProtractor.setActive(true);
+            voiProtractor = new VOIProtractor(); 
+            // first end point
+            Vector3f kVolumePt = new Vector3f();
+            int halfWidth = (int)(getWidth() / 2f);
+            int halfHeight = (int)(getHeight() / 2f);
+            screenToFile( halfWidth + 20, halfHeight, slice, kVolumePt );
+            voiProtractor.add( kVolumePt );
+            // middle point
+            kVolumePt = new Vector3f();
+            screenToFile( halfWidth - 20, halfHeight, slice, kVolumePt );
+            voiProtractor.add( kVolumePt );
+            // second end point
+            kVolumePt = new Vector3f();
+            screenToFile( halfWidth + 30, halfHeight, slice, kVolumePt );
+            voiProtractor.add( kVolumePt );
+            
+            voiProtractor.setActive(true);
+            voiProtractor.setAllSlices(true);
+            voiProtractor.setSnap(snapProtractor90);
+            if ( voiManager != null )
+            {
+                voiProtractor.setPlane(voiManager.getPlane());
+                voiManager.add( voiProtractor, presetHue[orientation] );
             }
 
             repaint();
@@ -787,7 +694,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             return;
         }
 
-        ViewVOIVector VOIs = imageActive.getVOIs();
+        //ViewVOIVector VOIs = imageActive.getVOIs();
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
 
@@ -795,40 +702,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         int yS = Math.max(getScaledY(mouseEvent.getY()), 0);
         xS = Math.min(xS, imageDim.width - 1);
         yS = Math.min(yS, imageDim.height - 1);
-
-        if (moveLineEndpoint) // if user is dragging the intensityLineEndpoint
-        {
-
-            if ( (intensityLine != null) && intensityLine.isVisible()) {
-                intensityLine.rubberbandVOI(xS, yS, slice, imageDim.width, imageDim.height, false);
-                repaint();
-            }
-
-            return;
-        }
-
-        if (moveLine) // if user is moving the intensityLine
-        {
-
-            if ( (intensityLine != null) && intensityLine.isVisible()) {
-                distX = xS - anchorPt.x; // distance from original to cursor
-                distY = yS - anchorPt.y;
-
-                intensityLine.setActive(true);
-                ((VOILine) (intensityLine.getCurves()[slice].elementAt(0))).setActive(true);
-
-                for (j = 0; j < localImageExtents[2]; j++) {
-                    intensityLine.moveVOI(j, imageDim.width, imageDim.height, 0, distX, distY, 0);
-                }
-
-                anchorPt.x = xS;
-                anchorPt.y = yS;
-                repaint();
-            }
-
-            return;
-        }
-
         if (dragCenterPt) // if user is moving the center point
         {
 
@@ -848,8 +721,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             }
         }
 
-        if ( (cursorMode == ViewJComponentBase.DEFAULT) || (cursorMode == ViewJComponentBase.MOVE_VOIPOINT)
-                || (cursorMode == ViewJComponentBase.PROTRACTOR)) {
+        if ((cursorMode == DEFAULT) || (cursorMode == MOVE_VOIPOINT) ) {
 
             if ( (mouseEvent.getModifiers() & InputEvent.BUTTON3_MASK) != 0) {
 
@@ -872,30 +744,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             if (cursorMode == ViewJComponentBase.DEFAULT) {
                 return;
             }
-        } // if (mode == DEFAULT || mode == MOVE_VOIPOINT || mode == CUBE_BOUNDS || mode == PROTRACTOR)
-        else if (cursorMode == ViewJComponentBase.MOVE) {
-            distX = xS - anchorPt.x; // distance from original to cursor
-            distY = yS - anchorPt.y;
-
-            if ( (voiProtractor != null) && voiProtractor.isVisible() && moveProtractor) {
-
-                for (j = 0; j < localImageExtents[2]; j++) {
-                    voiProtractor.moveVOI(j, imageDim.width, imageDim.height, 0, distX, distY, 0);
-                }
-            }
-
-            if ( (intensityLine != null) && intensityLine.isVisible() && moveLine) {
-
-                for (j = 0; j < localImageExtents[2]; j++) {
-                    intensityLine.moveVOI(j, imageDim.width, imageDim.height, 0, distX, distY, 0);
-                }
-            }
-
-            anchorPt.x = xS;
-            anchorPt.y = yS;
-
-        } // end of else if (mode == MOVE)
-
+        } // if (mode == DEFAULT || mode == MOVE_VOIPOINT || mode == CUBE_BOUNDS || mode == PROTRACTOR)/
+/*
         if (cursorMode == ViewJComponentBase.MOVE_VOIPOINT) {
             nVOI = VOIs.size();
 
@@ -968,7 +818,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
             return;
         } // end of else if (mode == MOVE_VOIPOINT)
-        else if (cursorMode == ViewJComponentBase.CUBE_BOUNDS) {
+        */
+        else if (cursorMode == CUBE_BOUNDS) {
 
             final Vector2f mousePoint = new Vector2f(mouseEvent.getX(), mouseEvent.getY());
 
@@ -990,64 +841,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             if (dragBBpt != -1) {
                 updateCrop(dragBBpt, mousePoint);
             }
-        } else if ( (cursorMode == ViewJComponentBase.LINE) && (intensityLine == null) && intensityLineVisible
-                && ( (anchorPt.x != getScaledX(mouseEvent.getX())) || (anchorPt.y != getScaledY(mouseEvent.getY())))) {
-
-            int[] x = null;
-            int[] y = null;
-            int[] z = null;
-
-            try {
-                x = new int[2];
-                y = new int[2];
-                z = new int[2];
-            } catch (final OutOfMemoryError error) {
-                System.gc();
-                MipavUtil.displayError("Out of memory: ComponentTriImage.mouseReleased");
-                setCursorMode(ViewJComponentBase.DEFAULT);
-
-                return;
-            }
-
-            VOIs = imageActive.getVOIs(); // Get the VOIs from the active image.
-
-            final float[] presetHue = {0.0f, 0.3333f, 0.1667f};
-            intensityLine = new VOI((short) imageActive.getVOIs().size(), "xyline.voi", localImageExtents[2], VOI.LINE,
-                    presetHue[orientation]);
-
-            for (j = 0; j < localImageExtents[2]; j++) {
-                x[0] = anchorPt.x;
-                x[1] = xS;
-                y[0] = anchorPt.y;
-                y[1] = yS;
-                z[0] = j;
-                z[1] = j;
-                intensityLine.importCurve(x, y, z, j);
-                ((VOILine) (intensityLine.getCurves()[j].elementAt(0))).setActive(true);
-            }
-
-            intensityLine.setXYDim(imageDim.width, imageDim.height);
-            intensityLine.setActive(true);
-            repaint();
-
-            if (intensityLine.nearLinePoint(MipavMath.round(xS * getZoomX() * resolutionX), MipavMath.round(yS
-                    * getZoomY() * resolutionY), slice, 0, getZoomX(), resolutionX, resolutionY)) {
-                setCursorMode(ViewJComponentBase.MOVE_POINT);
-                moveProtractor = false;
-            }
-        } // else if ((mode == LINE) && (startLine) &&
-
-        // ((anchorPt.X != xSOrg) || (anchorPt.Y != ySOrg)))
-        else if (cursorMode == ViewJComponentBase.MOVE_POINT) {
-
-            if ( (voiProtractor != null) && voiProtractor.isActive() && moveProtractor) {
-                voiProtractor.rubberbandVOI(xS, yS, slice, imageDim.width, imageDim.height, false);
-            }
-
-            if (intensityLine != null) {
-                intensityLine.rubberbandVOI(xS, yS, slice, imageDim.width, imageDim.height, false);
-            }
-        } // end of else if (mode == MOVE_POINT)
+        } 
         else if (cursorMode == ViewJComponentBase.PAINT_VOI) {
             final boolean isLeftMouseButtonDown = mouseEvent.getModifiers() == InputEvent.BUTTON1_MASK;
             updatePaintBitmap(isLeftMouseButtonDown, xS, yS);
@@ -1135,15 +929,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                 (yS < 0) || (yS >= imageDim.height)) {
             return;
         }
-
-        if ( (intensityLine == null) && intensityLineVisible) {
-
-            // if we get here, it means the intensity line button is pressed, but there is no line present
-            cursorMode = ViewJComponentBase.LINE;
-
-            return;
-        }
-
         if ( (cursorMode == ViewJComponentBase.POINT_VOI) || (cursorMode == ViewJComponentBase.DROPPER_PAINT)
                 || (cursorMode == ViewJComponentBase.CUBE_BOUNDS)) {
             return;
@@ -1176,19 +961,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
             return;
         }
-
-        if (voiProtractor != null) {
-
-            if (voiProtractor.nearOuterPoint(x, y, slice, 0, getZoomX(), resolutionX, resolutionY)) {
-                setCursorMode(ViewJComponentBase.MOVE_POINT);
-                moveProtractor = true;
-            } else if (voiProtractor.isVisible() && voiProtractor.nearLine(xS, yS, slice)) {
-                setCursorMode(ViewJComponentBase.MOVE);
-                moveProtractor = true;
-            }
-
-            return;
-        } else if ( (cursorMode == ViewJComponentBase.LINE) || (cursorMode == ViewJComponentBase.MOVE_POINT)) {
+        else if ((cursorMode == LINE) || (cursorMode == MOVE_POINT)) {
             return;
         } else if (cursorMode == ViewJComponentBase.ZOOMING_IN) {
             return;
@@ -1225,34 +998,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         }
 
         if (mouseEvent.getModifiers() == InputEvent.BUTTON1_MASK) {
-
-            if ( (intensityLine != null) && intensityLineVisible) {
-                intensityLine.setActive(true);
-                ((VOILine) (intensityLine.getCurves()[slice].elementAt(0))).setActive(true);
-
-                if (intensityLine.nearLinePoint(mouseEvent.getX(), mouseEvent.getY(), slice, 0, getZoomX(),
-                        resolutionX, resolutionY)) {
-                    moveLineEndpoint = true;
-
-                    return;
-                } else {
-                    moveLineEndpoint = false;
-                }
-            }
-
-            if ( (intensityLine != null) && intensityLineVisible) {
-
-                if (intensityLine.nearLine(xS, yS, slice)) {
-                    anchorPt.x = xS;
-                    anchorPt.y = yS;
-                    moveLine = true;
-
-                    return;
-                } else {
-                    moveLine = false;
-                }
-            }
-
             if (doCenter) {
 
                 if ( (Math.abs(getScaledX(mouseEvent.getX()) - crosshairPt.X) < 6)
@@ -1264,35 +1009,15 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             }
 
             if (cursorMode == ViewJComponentBase.DEFAULT) {
-                handleVOIProcessing(mouseEvent);
+                //handleVOIProcessing(mouseEvent);
             }
         }
 
-        if (mouseEvent.getModifiers() == InputEvent.BUTTON3_MASK) {
-
-            // check to see if the user right-clicked over the intensity line
-            handleIntensityLineBtn3(mouseEvent);
-
-            return;
-        } // if (mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK)
-
         if (cursorMode == ViewJComponentBase.DEFAULT) {
             return;
-        } else if ( (cursorMode == ViewJComponentBase.LINE) && (intensityLine == null)) {
-            anchorPt.setLocation(xS, yS);
-
-            return;
-        } // else if (mode == LINE)
+        } 
         else if (cursorMode == ViewJComponentBase.MOVE) {
             anchorPt.setLocation(xS, yS); // For use in dragging VOIs
-
-            if ( (voiProtractor != null) && voiProtractor.nearLine(xS, yS, slice) && moveProtractor) {
-                voiProtractor.setActive(true);
-                ((VOIProtractor) (voiProtractor.getCurves()[slice].elementAt(0))).setActive(true);
-            } else {
-                setCursorMode(ViewJComponentBase.DEFAULT);
-            }
-
             return;
             // do not do a notifyImageDisplayListeners in mode MOVE or VOISpecial labels will disappear
         } // end of if (mode == MOVE)
@@ -1356,102 +1081,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             return;
         }
 
-        moveLine = false;
-        moveLineEndpoint = false;
-
         if ( (cursorMode == ViewJComponentBase.PAINT_VOI) || (cursorMode == ViewJComponentBase.ERASER_PAINT)) {
             imageActive.notifyImageDisplayListeners();
-        } else if (cursorMode == ViewJComponentBase.MOVE_POINT) {
-            int j;
-
-            if ( (voiProtractor != null) && moveProtractor) {
-                final float[] x = new float[3];
-                final float[] y = new float[3];
-                final float[] z = new float[3];
-
-                voiProtractor.exportArrays(x, y, z, slice);
-
-                if (snapProtractor90) {
-                    theta = (180.0 / Math.PI) * Math.atan2( ( (y[1] - y[0]) * res[1]), ( (x[1] - x[0]) * res[0]));
-                    seg1Length = (float) Math
-                            .sqrt( ( ( (x[1] - x[0]) * (x[1] - x[0]) * res[0] * res[0]) + ( (y[1] - y[0])
-                                    * (y[1] - y[0]) * res[1] * res[1])));
-
-                    if ( (theta >= -45.0) && (theta <= 45.0)) {
-                        x[1] = Math.min(x[0] + (seg1Length / res[0]), localImageExtents[0] - 1.0f);
-                        y[1] = y[0];
-                        theta = 0.0;
-                    } else if ( (theta > 45.0) && (theta <= 135.0)) {
-                        x[1] = x[0];
-                        y[1] = Math.min(y[0] + (seg1Length / res[1]), localImageExtents[1] - 1.0f);
-                        theta = 90.0;
-                    } else if ( (theta < -45.0) && (theta >= -135.0)) {
-                        x[1] = x[0];
-                        y[1] = Math.max(y[0] - (seg1Length / res[1]), 0.0f);
-                        theta = -90.0;
-                    } else {
-                        x[1] = Math.max(x[0] - (seg1Length / res[0]), 0.0f);
-                        y[1] = y[0];
-                        theta = 180.0;
-                    }
-
-                    theta2 = (180.0 / Math.PI) * Math.atan2( ( (y[2] - y[0]) * res[1]), ( (x[2] - x[0]) * res[0]));
-                    theta2 = theta2 - theta;
-
-                    if (theta2 < -180.0) {
-                        theta2 = theta2 + 360.0;
-                    }
-
-                    if (theta2 > 180.0) {
-                        theta2 = theta2 - 360.0;
-                    }
-
-                    theta = theta2;
-                } // if (snapProtractor90)
-                else {
-                    theta = ((VOIProtractor) (voiProtractor.getCurves()[slice].elementAt(0))).getTheta2();
-                }
-
-                for (j = 0; j < localImageExtents[2]; j++) {
-                    voiProtractor.removeCurves(j);
-                    z[0] = j;
-                    z[1] = j;
-                    z[2] = j;
-                    voiProtractor.importCurve(x, y, z, j);
-                    // ( (VOIProtractor) (voiProtractor.getCurves()[j].elementAt(0))).setSnap(true);
-                }
-
-                ((VOIProtractor) (voiProtractor.getCurves()[slice].elementAt(0))).setActive(true);
-                voiProtractor.setActive(true);
-                repaint();
-
-                // the call below is needed because nearOuterPoint actually changes the state of the
-                // voiProtractor. this prevents an exception that happened when the user dragged the
-                // outer point of the protractor and released the mouse, and then re-dragged it without
-                // moving the mouse position again -- lorsino
-                voiProtractor.nearOuterPoint(mouseEvent.getX(), mouseEvent.getY(), slice, 0, getZoomX(), resolutionX,
-                        resolutionY);
-            }
-
-            if (intensityLine != null) {
-                final float[] x = new float[2];
-                final float[] y = new float[2];
-                final float[] z = new float[2];
-
-                intensityLine.exportArrays(x, y, z, slice);
-
-                for (j = 0; j < localImageExtents[2]; j++) {
-                    intensityLine.removeCurves(j);
-                    z[0] = j;
-                    z[1] = j;
-                    intensityLine.importCurve(x, y, z, j);
-                }
-
-                intensityLine.setXYDim(imageDim.width, imageDim.height);
-            }
-
-            return;
-        } // else if (mode == MOVE_POINT)
+        }
         else if (cursorMode == ViewJComponentBase.MOVE_VOIPOINT) {
             setCursorMode(ViewJComponentBase.DEFAULT);
             imageActive.notifyImageDisplayListeners(null, true);
@@ -1479,7 +1111,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
             triImageFrame.updatePaint(paintBitmap);
         } // end of else if (mode == PAINT_CAN)
-        else if (cursorMode == ViewJComponentBase.POINT_VOI) {
+        /*
+        else if (cursorMode == POINT_VOI) {
 
             if ( (mouseEvent.getModifiers() & InputEvent.BUTTON1_MASK) != 0) {
                 final Vector3f patientMousePoint = new Vector3f();
@@ -1511,6 +1144,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                 VOI newPointVOI;
 
                 try {
+                    System.err.println( "    TRIImage.mouseReleased" );
                     voiHandler.setVOI_ID(imageActive.getVOIs().size());
                     newPointVOI = new VOI((short) imageActive.getVOIs().size(), "point3D_"
                             + (voiHandler.getVOI_ID() + 1), imageActive.getExtents()[2], VOI.POINT, -1.0f);
@@ -1534,12 +1168,13 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                 newPointVOI.setActive(true);
                 ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setActive(true);
 
-                /*
-                 * Used to be frame.updateImages() but it was changed to updateImageSubset() because we don't want all
-                 * the images to be updated. The reason is to facilitate the placement of VOIs during image
-                 * registration.
-                 */
+                //
+                // Used to be frame.updateImages() but it was changed to updateImageSubset() because we don't want all
+                // the images to be updated. The reason is to facilitate the placement of VOIs during image
+                // registration.
+                //
                 triImageFrame.updateImageSubset(this);
+                System.err.println( "     TRIImage.mouseReleased" );
                 triImageFrame.updatevoiID(voiHandler.getVOI_ID());
 
                 if (mouseEvent.isShiftDown() != true) {
@@ -1549,7 +1184,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
             } // end of if ((mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0)
         } // end of else if (mode == POINT_VOI)
-
+*/
         return;
     }
 
@@ -1663,19 +1298,11 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         drawCrosshairs(offscreenGraphics2d);
 
-        if (protractorVisible) {
-            drawProtractor(offscreenGraphics2d);
-        }
-
-        if (intensityLineVisible) {
-            drawVOIIntensityLine(offscreenGraphics2d);
-        }
-
         if (doCenter) {
             drawCenterMark(offscreenGraphics2d);
         }
 
-        drawTriPlanarVOIs(offscreenGraphics2d);
+        //drawTriPlanarVOIs(offscreenGraphics2d);
 
         offscreenGraphics2d.dispose();
 
@@ -1701,19 +1328,15 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         }
 
         for (i = 0; (i < nVOI) && ( !found); i++) {
-
             if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
+                Vector3f[] voiPoints = VOIs.VOIAt(i).exportAllPoints();
 
-                for (k = 0; (k < imageActive.getExtents()[2]) && ( !found); k++) {
-                    final Vector3f[] voiPoints = VOIs.VOIAt(i).exportPoints(k);
+                for (j = 0; (j < voiPoints.length) && (!found); j++) {
+                    label2 = ((VOIPoint) (VOIs.VOIAt(i).getCurves().elementAt(j))).getLabel();
 
-                    for (j = 0; (j < voiPoints.length) && ( !found); j++) {
-                        label2 = ((VOIPoint) (VOIs.VOIAt(i).getCurves()[k].elementAt(j))).getLabel();
-
-                        if (label.equals(label2)) {
-                            VOIs.VOIAt(i).getCurves()[k].removeElementAt(j);
-                            found = true;
-                        }
+                    if (label.equals(label2)) {
+                        VOIs.VOIAt(i).getCurves().removeElementAt(j);
+                        found = true;
                     }
                 }
             }
@@ -1788,14 +1411,10 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         if (newMode == ViewJComponentBase.MOVE_POINT) {
             this.cursorMode = newMode;
-            voiHandler.getRubberband().setActive(false);
+            //voiHandler.getRubberband().setActive(false);
             setCursor(crosshairCursor);
-        } else if (newMode == ViewJComponentBase.LINE) {
-
-            if (intensityLine != null) {
-                return;
-            }
-        } else {
+        } 
+         else {
             super.setCursorMode(newMode);
         }
 
@@ -1814,24 +1433,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      */
     public void setDoCenter(final boolean doCenter) {
         this.doCenter = doCenter;
-    }
-
-    /**
-     * Sets the intensity line to visible or invisible.
-     * 
-     * @param visible true if the intensity line should be made visible, false otherwise
-     */
-    public void setIntensityLineVisible(final boolean visible) {
-        intensityLineVisible = visible;
-    }
-
-    /**
-     * Sets the protractor to either a visible or invisible state.
-     * 
-     * @param visible true to set the protractor visible, false to set it invisible
-     */
-    public void setProtractorVisible(final boolean visible) {
-        protractorVisible = visible;
     }
 
     /**
@@ -1855,16 +1456,20 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         y[0] = pt.Y;
         z[0] = pt.Z;
 
+        VOIBase newCurve = null;
         try {
-            voiHandler.setVOI_ID(imageActive.getVOIs().size());
-            newPointVOI = new VOI((short) imageActive.getVOIs().size(), "point3D_" + (voiHandler.getVOI_ID() + 1),
+            //voiHandler.setVOI_ID(imageActive.getVOIs().size());
+            newPointVOI = new VOI((short) imageActive.getVOIs().size(), "point3D_" + (imageActive.getVOIs().size() + 1),
                     imageActive.getExtents()[2], VOI.POINT, -1.0f);
-            newPointVOI.importCurve(x, y, z, (int) z[0]);
+            newCurve = newPointVOI.importCurve(x, y, z);
         } catch (final OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ComponentTriImage.setReferenceXY");
             setCursorMode(ViewJComponentBase.DEFAULT);
-
+            return;
+        }
+        if ( newCurve == null )
+        {
             return;
         }
 
@@ -1872,64 +1477,53 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         // voiHandler.setLastPointVOI_ID(voiID);
 
         imageActive.registerVOI(newPointVOI);
-        triImageFrame.updatevoiID(voiHandler.getVOI_ID());
-        ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setFixed(true);
+        //triImageFrame.updatevoiID(voiHandler.getVOI_ID());
+        newCurve.setFixed(true);
 
         switch (pointType) {
 
             case SUPERIOR_EDGE:
-                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setLabel("ACS");
-                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setName("ACS");
+                newCurve.setLabel("ACS");
                 break;
 
             case POSTERIOR_MARGIN:
-                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setLabel("ACP");
-                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setName("ACP");
+                newCurve.setLabel("ACP");
                 break;
 
             case INFERIOR_EDGE:
-                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setLabel("PC");
-                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setName("PC");
+                newCurve.setLabel("PC");
                 break;
 
             case FIRST_PT:
-                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setLabel("MS1");
-                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setName("MS1");
+                newCurve.setLabel("MS1");
                 break;
 
             case ANOTHER_PT:
-                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setLabel("MS2");
-                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setName("MS2");
+                newCurve.setLabel("MS2");
                 break;
 
             case ANTERIOR_PT:
-                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setLabel("A");
-                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setName("A");
+                newCurve.setLabel("A");
                 break;
 
             case POSTERIOR_PT:
-                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setLabel("P");
-                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setName("P");
+                newCurve.setLabel("P");
                 break;
 
             case SUPERIOR_PT:
-                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setLabel("S");
-                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setName("S");
+                newCurve.setLabel("S");
                 break;
 
             case INFERIOR_PT:
-                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setLabel("I");
-                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setName("I");
+                newCurve.setLabel("I");
                 break;
 
             case LEFT_PT:
-                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setLabel("L");
-                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setName("L");
+                newCurve.setLabel("L");
                 break;
 
             case RIGHT_PT:
-                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setLabel("R");
-                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setName("R");
+                newCurve.setLabel("R");
                 break;
         }
 
@@ -2364,18 +1958,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         offscreenGraphics2d.drawLine(getSize().width, (int) crosshairPt.Y, getSize().width - 10, (int) crosshairPt.Y);
     }
 
-    /**
-     * Draws the protractor.
-     * 
-     * @param offscreenGraphics2d the graphics context to drw in
-     */
-    private void drawProtractor(final Graphics2D offscreenGraphics2d) {
-
-        if (voiProtractor != null) {
-            voiProtractor.drawSelf(getZoomX(), getZoomY(), resolutionX, resolutionY, 0f, 0f, res, unitsOfMeasure,
-                    slice, orientation, offscreenGraphics2d);
-        }
-    }
 
     /**
      * Convenience method called by paintComponent(). Inserted here for simplicity's sake.
@@ -2823,7 +2405,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         if (VOIs != null) {
             final int nVOI = VOIs.size();
-
+/*
             for (int i = nVOI - 1; i >= 0; i--) {
                 if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
 
@@ -2840,8 +2422,11 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                             if ( ( ! ( ((int) screenPt.X == -1) && ((int) screenPt.Y == -1))) && (patientPt.Z == slice)) {
                                 offscreenGraphics2d.setColor(VOIs.VOIAt(i).getColor());
 
-                                ((VOIPoint) (VOIs.VOIAt(i).getCurves()[k].elementAt(j))).drawAxialSelf(
-                                        offscreenGraphics2d, (int) screenPt.X, (int) screenPt.Y,
+                                ((VOIPoint) (VOIs.VOIAt(i).getCurvesTemp()[k].elementAt(j))).drawAxialSelf(offscreenGraphics2d,
+                                        (int)
+                                        screenPt.X,
+                                        (int)
+                                        screenPt.Y,
 
                                         // voiPoints[j] );
                                         patientPt);
@@ -2850,62 +2435,10 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                     }
                 }
             } // if (VOIs != null)
+                */
         }
 
-        drawTriPlanar3DVOIs(offscreenGraphics2d);
-    }
-
-    private void drawTriPlanar3DVOIs(final Graphics2D offscreenGraphics2d) {
-        if (imageA.get3DVOIs() == null) {
-            return;
-        }
-        final ViewVOIVector VOIs = (ViewVOIVector) imageA.get3DVOIs().clone();
-
-        if ( (this == triImageFrame.getTriImage(ViewJFrameTriImage.AXIAL_AB))
-                || (this == triImageFrame.getTriImage(ViewJFrameTriImage.SAGITTAL_AB))
-                || (this == triImageFrame.getTriImage(ViewJFrameTriImage.CORONAL_AB))) {
-
-            if (imageB != null) {
-                VOIs.addAll((ViewVOIVector) imageB.get3DVOIs().clone());
-            }
-        }
-
-        if (VOIs != null) {
-            final int nVOI = VOIs.size();
-
-            for (int i = nVOI - 1; i >= 0; i--) {
-                final VOI kVOI = VOIs.get(i);
-                final Vector<VOIBase>[] kCurves = kVOI.getCurves();
-
-                for (final Vector<VOIBase> element : kCurves) {
-                    if (element != null) {
-                        for (int k = 0; k < element.size(); k++) {
-                            final VOIBase kVOI3D = element.get(k);
-                            if (kVOI3D instanceof LocalVolumeVOI) {
-                                offscreenGraphics2d.setColor(kVOI.getColor());
-                                ((LocalVolumeVOI) kVOI3D).draw(zoomX, zoomY, res, unitsOfMeasure, slice, orientation,
-                                        offscreenGraphics2d);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Draws the VOI intensity line.
-     * 
-     * @param offscreenGraphics2d the graphics context to draw in
-     */
-    private void drawVOIIntensityLine(final Graphics2D offscreenGraphics2d) {
-
-        if (intensityLine != null) {
-            intensityLine.setActive(true);
-            ((VOILine) (intensityLine.getCurves()[slice].elementAt(0))).setActive(true);
-            intensityLine.drawSelf(getZoomX(), getZoomY(), resolutionX, resolutionY, 0f, 0f, res, unitsOfMeasure,
-                    slice, orientation, offscreenGraphics2d);
-        }
+        draw3DVOIs(offscreenGraphics2d, false);
     }
 
     /**
@@ -2921,40 +2454,10 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     }
 
     /**
-     * DOCUMENT ME!
-     * 
-     * @param mouseEvent DOCUMENT ME!
-     */
-    private void handleIntensityLineBtn3(final MouseEvent mouseEvent) {
-
-        if (intensityLineVisible == true) {
-            final int xSOrg = getScaledX(mouseEvent.getX());
-            final int ySOrg = getScaledY(mouseEvent.getY());
-
-            if ( (intensityLine != null)
-                    && ( ((VOILine) intensityLine.getCurves()[slice].elementAt(0))).nearLine(xSOrg, ySOrg)) {
-
-                // build VOI intensity popup menu
-                final JPopupMenu popupMenu = new JPopupMenu();
-                JMenuItem menuItem = new JMenuItem("Show intensity graph");
-                popupMenu.add(menuItem);
-                menuItem.addActionListener(this);
-                menuItem.setActionCommand(ViewJComponentTriImage.SHOW_INTENSITY_GRAPH);
-                menuItem = new JMenuItem("Delete this intensity line");
-                popupMenu.add(menuItem);
-                menuItem.addActionListener(this);
-                menuItem.setActionCommand(ViewJComponentTriImage.DELETE_INTENSITY_LINE);
-                popupMenu.show(this, mouseEvent.getX(), mouseEvent.getY());
-            }
-        }
-    }
-
-    /**
      * Convenience method called by mousePressed(). Inserted here for simplicity's sake because this method is quite
      * long. Handles the mouse pressed event when in the DEFAULT mode.
      * 
      * @param mouseEvent Graphics2D
-     */
     private void handleVOIProcessing(final MouseEvent mouseEvent) {
         int j;
         Vector3f pt;
@@ -2996,6 +2499,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                                 .nearPointInPlane(volumeMousePoint)) {
                             VOIs.VOIAt(i).setActive(true);
                             ((VOIPoint) (VOIs.VOIAt(i).getCurves()[p].elementAt(j))).setActive(true);
+                            
+                            System.err.println( "    TRIImage.handleVOIProcessing" );
                             voiHandler.setVOI_ID(VOIs.VOIAt(i).getID());
                             pt = ((VOIPoint) (VOIs.VOIAt(i).getCurves()[p].elementAt(j))).exportPoint();
                         }
@@ -3012,95 +2517,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         } // for (i = 0; i < nVOI; i++)
     }
 
-    /**
-     * DOCUMENT ME!
      */
-    private void showIntensityGraph() {
-        ViewJFrameGraph lineGraph;
-        int length;
-        int c;
-        int pts;
-        int m;
-        float[] lineX, lineY, lineZ;
-        float[][] rgbPositions = null;
-        float[][] rgbIntensities = null;
-        float[][] rgbPos = null;
-        float[][] rgbInten = null;
-        float[] pos = null;
-        float[] inten = null;
-        float[] position = null;
-        float[] intensity = null;
-
-        lineX = new float[2];
-        lineY = new float[2];
-        lineZ = new float[2];
-        intensityLine.exportArrays(lineX, lineY, lineZ, slice, 0);
-
-        if (imageActive.isColorImage() == true) {
-            length = (int) (Math.sqrt( ( (lineX[1] - lineX[0]) * (lineX[1] - lineX[0]))
-                    + ( (lineY[1] - lineY[0]) * (lineY[1] - lineY[0]))));
-            rgbPositions = new float[3][ (length * 2) + 1];
-            rgbIntensities = new float[3][ (length * 2) + 1];
-
-            for (c = 0; c < 3; c++) {
-                pts = ((VOILine) (intensityLine.getCurves()[slice].elementAt(0))).findPositionAndIntensityRGB(
-                        rgbPositions[c], rgbIntensities[c], c, getActiveImageBuffer(), res, localImageExtents[0],
-                        localImageExtents[0]);
-
-                if (c == 0) {
-                    rgbPos = new float[3][pts];
-                    rgbInten = new float[3][pts];
-                }
-
-                for (m = 0; m < pts; m++) {
-                    rgbPos[c][m] = rgbPositions[c][m];
-                    rgbInten[c][m] = rgbIntensities[c][m];
-                }
-            }
-
-            if (intensityLine.getContourGraph() == null) {
-                final ViewJFrameGraph contourGraph = new ViewJFrameGraph(rgbPos, rgbInten, "Intensity Graph",
-                        intensityLine, FileInfoBase.getUnitsOfMeasureAbbrevStr(unitsOfMeasure[0]));
-
-                contourGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
-                contourGraph.setVisible(true);
-                intensityLine.setContourGraph(contourGraph);
-                contourGraph.setVOI(intensityLine);
-            } else {
-                intensityLine.getContourGraph().setUnitsInLabel(
-                        FileInfoBase.getUnitsOfMeasureAbbrevStr(unitsOfMeasure[1]));
-                intensityLine.getContourGraph().saveNewFunction(rgbPos, rgbInten, 0);
-            }
-        } else {
-            length = (int) (Math.sqrt( ( (lineX[1] - lineX[0]) * (lineX[1] - lineX[0]))
-                    + ( (lineY[1] - lineY[0]) * (lineY[1] - lineY[0]))));
-            position = new float[ (length * 2) + 1];
-            intensity = new float[ (length * 2) + 1];
-            pts = intensityLine.findPositionAndIntensity(slice, 0, position, intensity, imageBufferActive, res,
-                    localImageExtents[0], localImageExtents[1], null);
-            pos = new float[pts];
-            inten = new float[pts];
-
-            for (m = 0; m < pts; m++) {
-                pos[m] = position[m];
-                inten[m] = intensity[m];
-            }
-
-            if (intensityLine.getContourGraph() == null) {
-                lineGraph = new ViewJFrameGraph(pos, inten, "Line VOI Graph", intensityLine, FileInfoBase
-                        .getUnitsOfMeasureAbbrevStr(unitsOfMeasure[0]), null);
-                lineGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
-                lineGraph.setVisible(true);
-                intensityLine.setContourGraph(lineGraph);
-                lineGraph.setVOI(intensityLine);
-            } else {
-                intensityLine.getContourGraph().setUnitsInLabel(
-                        FileInfoBase.getUnitsOfMeasureAbbrevStr(unitsOfMeasure[1]));
-                intensityLine.getContourGraph().replaceFunction(pos, inten, null, intensityLine, 0);
-            }
-        }
-    }
-
+    
+    
     /**
      * For generating the display of 1 or 2 RGB images.
      * 
@@ -3187,32 +2606,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     /*
      * (non-Javadoc)
      * 
-     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.ScreenCoordinateListener#fileToScreen(WildMagic.LibFoundation.Mathematics.Vector3f)
-     */
-    public Vector3f fileToScreen(final Vector3f kFile) {
-        final Vector3f patientPt = new Vector3f();
-        MipavCoordinateSystems.fileToPatient(kFile, patientPt, imageA, orientation);
-        final Vector3f screenPt = new Vector3f();
-        super.LocalToScreen(patientPt, screenPt);
-        return screenPt;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.ScreenCoordinateListener#patientToScreen(WildMagic.LibFoundation.Mathematics.Vector3f)
-     */
-    public Vector3f patientToScreen(final Vector3f kPt) {
-        final Vector3f screenPt = new Vector3f();
-        super.LocalToScreen(kPt, screenPt);
-        return screenPt;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.ScreenCoordinateListener#screenToFile(int, int, int,
-     *      WildMagic.LibFoundation.Mathematics.Vector3f)
+     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.ScreenCoordinateListener#screenToFile(int, int, int, WildMagic.LibFoundation.Mathematics.Vector3f)
      */
     public boolean screenToFile(final int iX, final int iY, final int iZ, final Vector3f kVolumePt) {
         boolean bClipped = false;

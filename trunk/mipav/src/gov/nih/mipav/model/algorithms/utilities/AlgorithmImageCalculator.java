@@ -1206,7 +1206,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
         
 
         boolean doneOnce = false;
-        
+
         
         if(opType ==  ADVANCED) {
         	rpn = evaluateToRPN(adOpString);
@@ -2161,7 +2161,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
         int totalLength = f * t * z * length;
         //The current "slice" of srcImageA
         int pseudoSliceNum = 0;
-        
+
         if(opType ==  ADVANCED) {
         	rpn = evaluateToRPN(adOpString);
         	if(rpn.equals("")) {
@@ -2863,7 +2863,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 					//pop 2 items from stack
 					Double operand2 = rpnStack.pop();
 					Double operand1 = rpnStack.pop();
-					
+
 					result = new Double(0);
 					double d = 0;
 					if(token.equals("+")) {
@@ -2894,7 +2894,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 						
 						//push answer on stack
 						rpnStack.push(result);
-					}else {
+            } else {
 						//pop 1 item from stack
 						Double operand1 = rpnStack.pop();
 						
@@ -2914,12 +2914,12 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 							d = Math.cos(operand1);
 						}else if(token.equals("tan")) {
 							d = Math.tan(operand1);
-						}
+            }
 						result = new Double(d);
 						
 						//push answer on stack
 						rpnStack.push(result);
-					}
+        }
 				}else {
 					if(token.equals("A")) {
 						Double doubleA = new Double(this.aVal);
@@ -2934,16 +2934,16 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 						Double operandValue = new Double(token);
 						rpnStack.push(operandValue);
 					}
-				}
-			}
+    }
+        }
 			finalAnswer = rpnStack.pop().doubleValue();
 		}catch(Exception e) {
 			e.printStackTrace();
 			return Double.NaN;
-		}
+        }
 		return finalAnswer;
-	}
-   
+        }
+
     
     
     /**
@@ -2958,12 +2958,12 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 		success = initialValidate(expression);
 		if(!success) {
 			return "";
-		}
+        }
 		success = tokenize(expression,tokens);
 		if(!success) {
 			return "";
 		}
-		
+
 		//check that there are tokens where there are operators back to back or digits back to back or right and left paren
 		//like A + + B
 		//like 7 + 8 4
@@ -2974,7 +2974,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 				String t2 = tokens.get(i+1);
 				if(isOperator(t) && isOperator(t2)) {
 					return "";
-				}
+            }
 				if((isValidNumber(t)||t.equals("A")||t.equals("B")) && (isValidNumber(t2)||t2.equals("A")||t2.equals("B"))) {
 					return "";
 				}
@@ -2982,14 +2982,14 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 					return "";
 				}
 			}
-			
-		}
-		
-		
+
+        }
+
+
 		rpnString = convertToRPN(tokens);
 		return rpnString;
-		
-	}
+
+            }
 
     /**
      * method that does some initial validation of the expression
@@ -3006,7 +3006,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 				numOccurencesOfLeftParen++;
 			}else if(expression.charAt(i) == ')') {
 				numOccurencesOfRightParen++;
-			}
+            }
 		}
 		if(numOccurencesOfLeftParen != numOccurencesOfRightParen) {
 			return false;
@@ -3028,11 +3028,11 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 						if(c != '(') {
 							MipavUtil.displayError("abs function must be followed by a (");
 							return false;
-						}
-					}else {
+                }
+            } else {
 						MipavUtil.displayError("abs function must be followed by a (");
 						return false;
-					}
+            }
 				}else {
 					break;
 				}
@@ -3049,7 +3049,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 						if(c != '(') {
 							MipavUtil.displayError("log function must be followed by a (");
 							return false;
-						}
+            }
 					}else {
 						MipavUtil.displayError("log function must be followed by a (");
 						return false;
@@ -3070,7 +3070,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 						if(c != '(') {
 							MipavUtil.displayError("exp function must be followed by a (");
 							return false;
-						}
+        }
 					}else {
 						MipavUtil.displayError("exp function must be followed by a (");
 						return false;
@@ -3091,7 +3091,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 						if(c != '(') {
 							MipavUtil.displayError("ln function must be followed by a (");
 							return false;
-						}
+        }
 					}else {
 						MipavUtil.displayError("ln function must be followed by a (");
 						return false;
@@ -3112,7 +3112,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 						if(c != '(') {
 							MipavUtil.displayError("pow function must be followed by a (");
 							return false;
-						}
+    }
 					}else {
 						MipavUtil.displayError("pow function must be followed by a (");
 						return false;
@@ -3133,7 +3133,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 						if(c != '(') {
 							MipavUtil.displayError("sin function must be followed by a (");
 							return false;
-						}
+        }
 					}else {
 						MipavUtil.displayError("sin function must be followed by a (");
 						return false;
@@ -3154,14 +3154,14 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 						if(c != '(') {
 							MipavUtil.displayError("cos function must be followed by a (");
 							return false;
-						}
-					}else {
+                        }
+                    } else {
 						MipavUtil.displayError("cos function must be followed by a (");
 						return false;
-					}
+                    }
 				}else {
 					break;
-				}
+                }
 			}while(index < expression.length());
 		}
 		if(expression.contains("tan")) {
@@ -3181,13 +3181,13 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 						return false;
 					}
 				}else {
-					break;
-				}
+                break;
+        }
 			}while(index < expression.length());
 		}
 		return success;
-	}
-    
+    }
+
     
     
     
@@ -3523,12 +3523,12 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 				}else {
 					return false;
 				}
-			}	
+        }
 		}catch(Exception e) {
 			e.printStackTrace();
 			success = false;
 			return success;
-		}
+    }
 		return success;
 	}
     
@@ -3558,7 +3558,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 						String pop = operatorStack.pop();
 						rpnString = rpnString + "|" + pop;
 					}
-					
+
 				}else if(isOperator(token)) {
 					String peek1 = "";
 					if(!operatorStack.isEmpty()) {
@@ -3568,7 +3568,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 						operatorStack.push(token);
 					}else {
 						String peek2 = "";
-						do {
+        do {
 							String pop = operatorStack.pop();
 							rpnString = rpnString + "|" + pop;
 							if(!operatorStack.isEmpty()) {
@@ -3576,7 +3576,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 							}
 						}while(!operatorStack.isEmpty() && !peek2.equals("(") || (precedence(token) < precedence(peek2)));
 						operatorStack.push(token);
-					}
+            }
 				}else if(isFunction(token)) {
 					operatorStack.push(token);
 				}else if(token.equals(",")) {
@@ -3593,21 +3593,21 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 				rpnString = rpnString + "|" + pop;
 			}
 			rpnString = rpnString.trim();
-			
+
 			//take away first pipe
 			rpnString = rpnString.substring(1, rpnString.length());
-			
+
 			return rpnString;
 			
 		}catch(Exception e) {
 			e.printStackTrace();
 			rpnString = "";
 			return rpnString;
-		}
+                }
+
 		
-		
-	}
-    
+            }
+
     /**
      * method that determines precedence
      * @param op
@@ -3624,8 +3624,8 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 		}
 		return precedence;
 	}
-    
-    
+
+
     /**
      * method determining if token is an operator
      * @param token
@@ -3635,12 +3635,12 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 		boolean isOperator = false;
 		if(token.equals("+") || token.equals("-") || token.equals("*") || token.equals("/") || token.equals("mod")) {
 			isOperator = true;
-		}
-		
+            }
+
 		return isOperator;
-	}
-	
-	
+        }
+
+
 	/**
 	 * method determining if token is function
 	 * @param token
@@ -3650,10 +3650,10 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 		boolean isSingleFunction = false;
 		if(token.equals("abs") || token.equals("log") || token.equals("exp") || token.equals("ln") || token.equals("sin") || token.equals("cos") || token.equals("tan") || token.equals("pow") ) {
 			isSingleFunction = true;
-		}
+        }
 		return isSingleFunction;
 	}
-	
+
 	/**
 	 * reads char
 	 * @param exp
@@ -3665,8 +3665,8 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 		c = exp.charAt(pos);
 		return c;
 	}
-	
-	
+
+
 	/**
 	 * determines if char is a digit
 	 * @param c
@@ -3676,14 +3676,14 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 		boolean isDigit = false;
 		if(c == '0' || c == '1' || c == '2' || c == '3' || c == '4' || c == '5' || c == '6' || c == '7' || c == '8' || c == '9') {
 			isDigit = true;
-		}
+                }
 		return isDigit;
 	}
-	
-	
-	
+
+    
+    
 	public boolean isValidNumber(String s) {
-		
+    
 		try{
 			Double.parseDouble(s);
 		}catch(Exception e) {
@@ -3742,7 +3742,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                                 (endType == ModelStorageBase.DCOMPLEX)) {
                             loop = false;
                         }
-                    } else {
+            } else {
                         loop = false;
                     }
                 }
@@ -3751,12 +3751,12 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 
             default:
                 break;
-        }
+            }
 
         return endType;
-    }
+        }
 
-    
+
 
     /**
      * DOCUMENT ME!

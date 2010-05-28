@@ -13,6 +13,8 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelSimpleImage;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIBase;
+import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -1630,10 +1632,10 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
 
                 for (i = 0; i < nVOIs; i++) {
                     newVOI[i] = new VOI(id[i], name[i], 1, curveType[i], presetHue[i]);
-                    gons = VOIs.VOIAt(i).exportPolygons(iNumber);
+                    Vector<VOIBase> sliceCurves = VOIs.VOIAt(i).getSliceCurves(iNumber);
 
-                    for (j = 0; j < gons.length; j++) {
-                        newVOI[i].importPolygon(gons[j], 0);
+                    for (j = 0; j < sliceCurves.size(); j++) {
+                        newVOI[i].importPolygon(((VOIContour)sliceCurves.elementAt(j)).exportPolygon(), 0);
                     }
 
                     VOI2s.addElement(newVOI[i]);
@@ -1789,11 +1791,11 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                 VOI2s = output_1.getVOIs();
 
                 for (i = 0; i < nVOIs; i++) {
-                    gons = VOI2s.VOIAt(i).exportPolygons(0);
+                    Vector<VOIBase> sliceCurves = VOI2s.VOIAt(i).getCurves();
                     VOIs.VOIAt(i).removeCurves(iNumber);
 
-                    for (j = 0; j < gons.length; j++) {
-                        VOIs.VOIAt(i).importPolygon(gons[j], iNumber);
+                    for (j = 0; j < sliceCurves.size(); j++) {
+                        VOIs.VOIAt(i).importPolygon(((VOIContour)sliceCurves.elementAt(j)).exportPolygon(), iNumber);
                     }
                 }
             } // if (transformVOIs)

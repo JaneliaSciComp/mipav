@@ -62,7 +62,7 @@ public class JDialogSaveMinc extends JDialogBase {
 
     /** DOCUMENT ME! */
     private float defaultZStart;
-    
+
     /** DOCUMENT ME! */
     private float defaultTSpace;
 
@@ -105,7 +105,7 @@ public class JDialogSaveMinc extends JDialogBase {
 
     /** DOCUMENT ME! */
     private JTextField zStart;
-    
+
     private JTextField tStart;
     
     private JTextField tSpace;
@@ -146,7 +146,7 @@ public class JDialogSaveMinc extends JDialogBase {
                 if (zStart.isEnabled()) {
                     test = Float.valueOf(zStart.getText()).floatValue();
                 }
-                
+
                 if (tStart.isEnabled()) {
                     test = Float.valueOf(tStart.getText()).floatValue();
                 }
@@ -157,7 +157,7 @@ public class JDialogSaveMinc extends JDialogBase {
                 if (zSpace.isEnabled()) {
                     test = Float.valueOf(zSpace.getText()).floatValue();
                 }
-                
+
                 if (tSpace.isEnabled()) {
                     test = Float.valueOf(tSpace.getText()).floatValue();
                 }
@@ -199,7 +199,7 @@ public class JDialogSaveMinc extends JDialogBase {
         if (zStart.isEnabled()) {
             options.setZStart(defaultZStart);
         }
-        
+
         if (tStart.isEnabled()) {
             options.setTStart(defaultTStart);
         }
@@ -489,7 +489,7 @@ public class JDialogSaveMinc extends JDialogBase {
         zStart = setTextField("", layout, setGBC(gbc, 1, 7, 1, 1), panel);
         createLabel("  I/S Space:", layout, setGBC(gbc, 2, 7, 1, 1), panel);
         zSpace = setTextField("", layout, setGBC(gbc, 3, 7, 1, 1), panel);
-        
+
         createLabel("Time Start:", layout, setGBC(gbc, 0, 8, 1, 1), panel);
         tStart = setTextField("", layout, setGBC(gbc, 1, 8, 1, 1), panel);
         createLabel("  Time Space:", layout, setGBC(gbc, 2, 8, 1, 1), panel);
@@ -542,7 +542,7 @@ public class JDialogSaveMinc extends JDialogBase {
         if (zStart.isEnabled()) {
             options.setZStart(Float.valueOf(zStart.getText()).floatValue());
         }
-        
+
         if (tStart.isEnabled()) {
             options.setTStart(Float.valueOf(tStart.getText()).floatValue());
         }
@@ -553,7 +553,7 @@ public class JDialogSaveMinc extends JDialogBase {
         if (zSpace.isEnabled()) {
             options.setZSpace(Float.valueOf(zSpace.getText()).floatValue());
         }
-        
+
         if (tSpace.isEnabled()) {
             options.setTSpace(Float.valueOf(tSpace.getText()).floatValue());
         }
@@ -694,7 +694,7 @@ public class JDialogSaveMinc extends JDialogBase {
             tStart.setEnabled(false);
             tSpace.setEnabled(false);
         }
-        
+
         if (fileInfo.getExtents().length == 3) {
             tStart.setEnabled(false);
             tSpace.setEnabled(false);
@@ -714,7 +714,7 @@ public class JDialogSaveMinc extends JDialogBase {
         if (zStart.isEnabled()) {
             zStart.setText("" + is);
         }
-        
+
         if (tStart.isEnabled()) {
             tStart.setText("" + 0.0);
         }
@@ -725,7 +725,7 @@ public class JDialogSaveMinc extends JDialogBase {
         if (zSpace.isEnabled()) {
             zSpace.setText("" + zRes);
         }
-        
+
         if (tSpace.isEnabled()) {
             tSpace.setText("" + tRes);
         }
@@ -746,7 +746,7 @@ public class JDialogSaveMinc extends JDialogBase {
             if (zSpace.isEnabled()) {
                 defaultZSpace = zRes;
             }
-            
+
             if (tSpace.isEnabled()) {
                 defaultTSpace = tRes;
             }

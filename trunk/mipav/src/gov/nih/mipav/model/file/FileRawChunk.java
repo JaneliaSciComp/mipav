@@ -1128,7 +1128,7 @@ public class FileRawChunk extends FileBase {
                     bufferByte[index++] = (byte) (tmpLong >>> 16);
                     bufferByte[index++] = (byte) (tmpLong >>> 8);
                     bufferByte[index++] = (byte) (tmpLong & 0xff);
-                }
+            }
             } else {
 
                 for (i = 0, index = 0; i < bufferSize; i++) {
@@ -1258,7 +1258,7 @@ public class FileRawChunk extends FileBase {
             throw error;
         }
     }
-    
+
     /**
      * This method writes a int buffer to a file.
      *
@@ -1778,7 +1778,7 @@ public class FileRawChunk extends FileBase {
                     for (i = 0; i < bufferByte.length; i++) {
                         bufferByte[i] = 0;
                     }
-                    
+
                     for (i = 0; i < bufferSize; i++) {
                         if (bufferBitSet.get(i)) {
                         	//originally bufferByte[i >> 3] |= (1 << (i % 8));, but this yields the mirror image of the correct result

@@ -215,7 +215,7 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
      */
     protected void setGUIFromParams() {
     	image = scriptParameters.retrieveInputImage();
-    	
+
     	doGaussian = scriptParameters.getParams().getBoolean("do_gaussian");
     } //end setGUIFromParams()
 
@@ -224,7 +224,7 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
      */
     protected void storeParamsFromGUI() throws ParserException {
     	scriptParameters.storeInputImage(image);
-
+   
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_gaussian", doGaussian));
     } //end storeParamsFromGUI()
    
@@ -255,7 +255,7 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
         labelVOI.setForeground(Color.black);
         labelVOI.setFont(serif12);
         mainPanel.add(labelVOI, gbc);
-        
+
         gbc.gridy = 1;
         
         check = new JCheckBox("Do gaussian blur");

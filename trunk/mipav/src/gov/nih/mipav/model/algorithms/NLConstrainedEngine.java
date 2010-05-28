@@ -6651,7 +6651,7 @@ mainLoop:
                 triunc(tol, constraintAct - 1,lprank);
                 if (outputMes) {
                     Preferences.debug("lprank[0] = " + lprank[0] + "\n");
-                }     
+                }
                 d1new = gndunc(false, lprank, work);
                 if (outputMes) {
 	                Preferences.debug("New search direction\n");
@@ -7077,7 +7077,7 @@ mainLoop:
 
                 pu--;
             } // for (jj = 1; jj <= p; jj++)
-            
+
             for (j = 0; j < p; j++) {
             	jpvt[j] = jpvt[j] - 1;
             }

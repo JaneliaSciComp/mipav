@@ -2373,7 +2373,7 @@ public class FileRaw extends FileBase {
                 }
 
                 break;
-                
+
             case ModelStorageBase.INTEGER:
                 try {
                     fileRW.readImage(ModelStorageBase.INTEGER, offset, bufferSize);

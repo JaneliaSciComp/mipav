@@ -47,6 +47,8 @@ public class FileInfoMincHDF extends FileInfoBase {
     
    
 
+   
+
     /**
      * Hashtable to hold the tags for conversion to->from dicom and to-> mipav XML format
      */

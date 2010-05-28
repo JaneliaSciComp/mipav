@@ -41,7 +41,6 @@ public class CustomUIBuilder {
 			"Split VOI Contour", "split", true);
 	public static final UIParams PARAM_VOI_POINT_DELETE = new UIParams("Delete point VOI", "deleteVOI", UIParams.INVALID_MNEMONIC, 
 			"Delete point VOI", "delete", false);
-	public static final UIParams PARAM_VOI_POINT_ADD = new UIParams("Add point", "addPoint", UIParams.INVALID_MNEMONIC, "Add point", "pointROI", false);
 	
 	/** VOI Actions/Properties */
 	public static final UIParams PARAM_VOI_PROPERTIES = new UIParams("VOIProperties", "View VOI Properties", "voiquestion");

@@ -11,7 +11,7 @@ import java.util.Vector;
 
 /**
  * The class reads and writes PAR/REC files.
- * 
+ *
  * A right handed coordinate system is used with the positive axis pointing (Anterior/Posterior)A->P, (Foot/Head)F->H,
  * and (Right/Left)R->L.
  */

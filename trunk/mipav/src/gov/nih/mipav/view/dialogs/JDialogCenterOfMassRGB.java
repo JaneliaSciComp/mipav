@@ -683,7 +683,7 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
         return new MipavActionMetadata() {
             public String getCategory() {
                 return new String("Utilities");
-            }
+}
 
             public String getDescription() {
                 return new String("Finds Center of Mass");

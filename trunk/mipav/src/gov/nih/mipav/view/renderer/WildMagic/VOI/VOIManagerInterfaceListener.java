@@ -14,12 +14,12 @@ public interface VOIManagerInterfaceListener
     public void PointerActive(boolean bActive);
     public Vector3f PropDown(int iActive);    
     public Vector3f PropUp(int iActive);
+    public void setActiveImage( ModelImage kImage );
     public void setCenter( Vector3f kCenter );
     public Vector3f getCenterPt();
     public ModelImage getActiveImage();
     public void setActiveImage( int active );
     public void setCursor( Cursor kCursor );
-    public void setDefaultCursor();
     public void setModified();
     public void updateData(boolean bCopyToCPU);
 }

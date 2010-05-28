@@ -154,7 +154,7 @@ public class FileWriteOptions {
 
     /** DOCUMENT ME! */
     private float zStart;
-    
+
 
     /** DOCUMENT ME! */
     private float tSpace;
@@ -604,7 +604,7 @@ public class FileWriteOptions {
     public float getZStart() {
         return zStart;
     }
-    
+
     
     /**
      * Accessor that returns value of T Space text field.
@@ -1147,7 +1147,7 @@ public class FileWriteOptions {
     public void setTSpace(float value) {
         tSpace = value;
     }
-
+    
     /**
      * Accessor that sets t start (used for MINC images).
      * 
@@ -1158,7 +1158,7 @@ public class FileWriteOptions {
     public void setTStart(float value) {
         tStart = value;
     }
-    
+
     
 
     public boolean isGzip() {

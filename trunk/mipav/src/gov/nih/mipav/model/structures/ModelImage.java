@@ -106,9 +106,6 @@ public class ModelImage extends ModelStorageBase {
     /** List of VOIs that are displayed with this image. */
     private VOIVector voiVector = null;
 
-    /** List of VOIs that are displayed with this image. */
-    private VOIVector voiVector3D = null;
-
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -211,7 +208,6 @@ public class ModelImage extends ModelStorageBase {
 
         frameList = new Vector<ViewImageUpdateInterface>();
         voiVector = new VOIVector();
-        voiVector3D = new VOIVector();
     }
 
     /**
@@ -294,21 +290,6 @@ public class ModelImage extends ModelStorageBase {
 
         for (int i = 0; i < nVOI; i++) {
             voiVector.add((VOI) VOIs.VOIAt(i).clone());
-        }
-
-        System.gc();
-    }
-
-    /**
-     * adds VOI vector for with new VOIs.
-     * 
-     * @param VOIs VOIs to add to image
-     */
-    public void add3DVOIs(final VOIVector VOIs) {
-        final int nVOI = VOIs.size();
-
-        for (int i = 0; i < nVOI; i++) {
-            voiVector3D.add((VOI) VOIs.VOIAt(i).clone());
         }
 
         System.gc();
@@ -1125,12 +1106,9 @@ public class ModelImage extends ModelStorageBase {
         if (voiVector.size() != 0) {
 
             for (i = 0; i < voiVector.size(); i++) {
-
-                // System.out.println( "ModelImage: generateVOIMask(boolean XOR) voi = " + i );
-                voiVector.VOIAt(i).createBinaryMask(mask, extents[0], extents[1], XOR, false);
+                voiVector.VOIAt(i).createBinaryMask3D(mask, extents[0], extents[1], XOR, false);
             }
-        }
-
+        } 
         return mask;
     }
 
@@ -1161,7 +1139,7 @@ public class ModelImage extends ModelStorageBase {
         if (voiVector.size() != 0) {
 
             for (i = 0; i < voiVector.size(); i++) {
-                voiVector.VOIAt(i).createBinaryMask(mask, extents[0], extents[1], XOR, onlyActive);
+                voiVector.VOIAt(i).createBinaryMask3D( mask, extents[0], extents[1], XOR, onlyActive);
             }
         }
 
@@ -1180,10 +1158,10 @@ public class ModelImage extends ModelStorageBase {
     public short[] generateVOIMask(final short[] mask, final int index, final boolean XOR) {
 
         if (voiVector.size() != 0) {
-            return ( (voiVector.elementAt(index)).createShortMask(getExtents()[0], getExtents()[1], mask, XOR));
-        } else {
-            return null;
+            int zDim = getExtents().length > 2 ?  getExtents()[2] : 1;
+            return ( (voiVector.elementAt(index)).createShortMask(mask, getExtents()[0], getExtents()[1], zDim, XOR));
         }
+        return null;
     }
 
     /**
@@ -1838,19 +1816,13 @@ public class ModelImage extends ModelStorageBase {
         return voiVector;
     }
 
-    /**
-     * Accessor that returns.
-     * 
-     * @return VOI vector
-     */
-    public VOIVector get3DVOIs() {
-        return voiVector3D;
-    }
-
-    public VOIVector get3DVOIsCopy() {
-        final VOIVector kCopy = new VOIVector();
-        for (int i = 0; i < voiVector3D.size(); i++) {
-            kCopy.add(new VOI(voiVector3D.get(i)));
+    
+    public VOIVector getVOIsCopy()
+    {
+        VOIVector kCopy = new VOIVector();
+        for ( int i = 0; i < voiVector.size(); i++ )
+        {
+            kCopy.add ( new VOI( voiVector.get(i) ) );
         }
         return kCopy;
     }
@@ -1864,7 +1836,7 @@ public class ModelImage extends ModelStorageBase {
         int nSlices;
         int nContours, nPoints;
         int index = 1;
-        Vector[] contours;
+        Vector contours;
         Vector3f[] points;
         final Vector3f[] point1 = new Vector3f[1];
         VOI newVOI = null;
@@ -1897,33 +1869,21 @@ public class ModelImage extends ModelStorageBase {
                     newVOI = new VOI((short) 0, "joinedContour", slices, VOI.CONTOUR, -1.0f);
                     newVOI.setAllActive(true);
                 }
-
-                nSlices = tempVOIs.VOIAt(i).getCurves().length;
                 contours = tempVOIs.VOIAt(i).getCurves();
-
-                for (j = 0; j < nSlices; j++) {
-                    nContours = contours[j].size();
-
-                    for (k = nContours - 1; k >= 0; k--) {
-
-                        if ( ((VOIBase) contours[j].elementAt(k)).isActive()) {
-                            tempBase = (VOIContour) contours[j].elementAt(k);
-                            contours[j].removeElementAt(k);
-                            tempBase.setName(newVOI.getName());
-                            newVOI.getCurves()[j].addElement(tempBase);
-                        }
+                nContours = contours.size();
+                for (k = nContours - 1; k >= 0; k--) {
+                    if (((VOIBase) contours.elementAt(k)).isActive()) {
+                        tempBase = (VOIContour) contours.elementAt(k);
+                        contours.removeElementAt(k);
+                        newVOI.getCurves().addElement(tempBase);
                     }
                 }
 
                 // re-label all of the elements in the old contour
                 index = 1;
-
-                for (j = 0; j < nSlices; j++) {
-                    nContours = contours[j].size();
-
-                    for (k = 0; k < nContours; k++) {
-                        ((VOIBase) contours[j].elementAt(k)).setLabel(String.valueOf( (index++)));
-                    }
+                nContours = contours.size();
+                for (k = 0; k < nContours; k++) {
+                    ((VOIBase) contours.elementAt(k)).setLabel(String.valueOf((index++)));
                 }
 
                 // if the old contour is now empty, remove it
@@ -1938,32 +1898,23 @@ public class ModelImage extends ModelStorageBase {
                     newPLineVOI.setAllActive(true);
                 }
 
-                nSlices = tempVOIs.VOIAt(i).getCurves().length;
                 contours = tempVOIs.VOIAt(i).getCurves();
+                nContours = contours.size();
 
-                for (j = 0; j < nSlices; j++) {
-                    nContours = contours[j].size();
+                for (k = nContours - 1; k >= 0; k--) {
 
-                    for (k = nContours - 1; k >= 0; k--) {
-
-                        if ( ((VOIBase) contours[j].elementAt(k)).isActive()) {
-                            tempBase = (VOIContour) contours[j].elementAt(k);
-                            contours[j].removeElementAt(k);
-                            tempBase.setName(newPLineVOI.getName());
-                            newPLineVOI.getCurves()[j].addElement(tempBase);
-                        }
+                    if (((VOIBase) contours.elementAt(k)).isActive()) {
+                        tempBase = (VOIContour) contours.elementAt(k);
+                        contours.removeElementAt(k);
+                        newPLineVOI.getCurves().addElement(tempBase);
                     }
                 }
 
                 // re-label all elements
                 index = 1;
-
-                for (j = 0; j < nSlices; j++) {
-                    nContours = contours[j].size();
-
-                    for (k = 0; k < nContours; k++) {
-                        ((VOIBase) contours[j].elementAt(k)).setLabel(String.valueOf( (index++)));
-                    }
+                nContours = contours.size();
+                for (k = 0; k < nContours; k++) {
+                    ((VOIBase) contours.elementAt(k)).setLabel(String.valueOf((index++)));
                 }
 
                 // if the old contour is now empty, remove it
@@ -1977,33 +1928,22 @@ public class ModelImage extends ModelStorageBase {
                     newLineVOI = new VOI((short) 0, "line" + nameExt, slices, VOI.LINE, -1.0f);
                     newLineVOI.setAllActive(true);
                 }
-
-                nSlices = tempVOIs.VOIAt(i).getCurves().length;
                 contours = tempVOIs.VOIAt(i).getCurves();
+                nContours = contours.size();
 
-                for (j = 0; j < nSlices; j++) {
-                    nContours = contours[j].size();
+                for (k = nContours - 1; k >= 0; k--) {
 
-                    for (k = nContours - 1; k >= 0; k--) {
-
-                        if ( ((VOIBase) contours[j].elementAt(k)).isActive()) {
-                            tempBase = (VOILine) contours[j].elementAt(k);
-                            contours[j].removeElementAt(k);
-                            tempBase.setName(newLineVOI.getName());
-                            newLineVOI.getCurves()[j].addElement(tempBase);
-                        }
+                    if (((VOIBase) contours.elementAt(k)).isActive()) {
+                        tempBase = (VOILine) contours.elementAt(k);
+                        contours.removeElementAt(k);
+                        newLineVOI.getCurves().addElement(tempBase);
                     }
                 }
 
                 // re-label all elements
-                index = 1;
-
-                for (j = 0; j < nSlices; j++) {
-                    nContours = contours[j].size();
-
-                    for (k = 0; k < nContours; k++) {
-                        ((VOIBase) contours[j].elementAt(k)).setLabel(String.valueOf( (index++)));
-                    }
+                index = 1;                
+                for (k = 0; k < nContours; k++) {
+                    ((VOIBase) contours.elementAt(k)).setLabel(String.valueOf((index++)));
                 }
 
                 // if the old contour is now empty, remove it
@@ -2017,38 +1957,28 @@ public class ModelImage extends ModelStorageBase {
                     newPtVOI = new VOI((short) 0, "point" + nameExt, slices, VOI.POINT, -1.0f);
                     newPtVOI.setAllActive(true);
                 }
+                contours = tempVOIs.VOIAt(i).getCurves();
+                nContours = contours.size();
+                for (k = nContours - 1; k >= 0; k--) {
 
-                nSlices = tempVOIs.VOIAt(i).getCurves().length;
-
-                for (j = 0; j < nSlices; j++) {
-                    points = tempVOIs.VOIAt(i).exportPoints(j);
-                    nPoints = points.length;
-
-                    for (k = nPoints - 1; k >= 0; k--) {
-
-                        if ( (tempVOIs.VOIAt(i).getCurves()[j].elementAt(k)).isActive()) {
-                            point1[0] = points[k];
-                            newPtVOI.importCurve(point1, j);
-                            tempVOIs.VOIAt(i).getCurves()[j].removeElementAt(k);
-                        }
+                    if (tempVOIs.VOIAt(i).getCurves().elementAt(k).isActive()) {
+                        tempBase = (VOIPoint) contours.elementAt(k);
+                        contours.removeElementAt(k);
+                        newProtractorVOI.getCurves().addElement(tempBase);
                     }
+                }
+                // re-label all elements
+                index = 1;
+                contours = tempVOIs.VOIAt(i).getCurves();
+                nContours = contours.size();
 
-                    // re-label all elements
-                    index = 1;
-                    contours = tempVOIs.VOIAt(i).getCurves();
+                for (k = 0; k < nContours; k++) {
+                    ((VOIBase) contours.elementAt(k)).setLabel(String.valueOf(index++));
+                }
 
-                    for (j = 0; j < nSlices; j++) {
-                        nContours = contours[j].size();
-
-                        for (k = 0; k < nContours; k++) {
-                            ((VOIBase) contours[j].elementAt(k)).setLabel(String.valueOf(index++));
-                        }
-                    }
-
-                    // if the old contour is now empty, remove it
-                    if (tempVOIs.VOIAt(i).isEmpty()) {
-                        tempVOIs.removeElementAt(i);
-                    }
+                // if the old contour is now empty, remove it
+                if (tempVOIs.VOIAt(i).isEmpty()) {
+                    tempVOIs.removeElementAt(i);
                 }
             } else if ( (tempVOIs.VOIAt(i).getCurveType() == VOI.PROTRACTOR) && tempVOIs.VOIAt(i).isActive()) {
 
@@ -2056,40 +1986,29 @@ public class ModelImage extends ModelStorageBase {
                     newProtractorVOI = new VOI((short) 0, "protractor" + nameExt, slices, VOI.PROTRACTOR, -1.0f);
                     newProtractorVOI.setAllActive(true);
                 }
-
-                nSlices = tempVOIs.VOIAt(i).getCurves().length;
                 contours = tempVOIs.VOIAt(i).getCurves();
+                nContours = contours.size();
 
-                for (j = 0; j < nSlices; j++) {
-                    nContours = contours[j].size();
+                for (k = nContours - 1; k >= 0; k--) {
 
-                    for (k = nContours - 1; k >= 0; k--) {
-
-                        if ( (tempVOIs.VOIAt(i).getCurves()[j].elementAt(k)).isActive()) {
-                            tempBase = (VOIProtractor) contours[j].elementAt(k);
-                            contours[j].removeElementAt(k);
-                            tempBase.setName(newProtractorVOI.getName());
-                            newProtractorVOI.getCurves()[j].addElement(tempBase);
-                        }
+                    if (((VOIBase) tempVOIs.VOIAt(i).getCurves().elementAt(k)).isActive()) {
+                        tempBase = (VOIProtractor) contours.elementAt(k);
+                        contours.removeElementAt(k);
+                        newProtractorVOI.getCurves().addElement(tempBase);
                     }
                 }
-
                 // re-label all elements
                 index = 1;
+                nContours = contours.size();
 
-                for (j = 0; j < nSlices; j++) {
-                    nContours = contours[j].size();
-
-                    for (k = 0; k < nContours; k++) {
-                        ((VOIBase) contours[j].elementAt(k)).setLabel(String.valueOf(index++));
-                    }
+                for (k = 0; k < nContours; k++) {
+                    ((VOIBase) contours.elementAt(k)).setLabel(String.valueOf(index++));
                 }
 
                 // if the old contour is now empty, remove it
                 if (tempVOIs.VOIAt(i).isEmpty()) {
                     tempVOIs.removeElementAt(i);
                 }
-
             }
         }
 
@@ -2098,12 +2017,8 @@ public class ModelImage extends ModelStorageBase {
         index = 1;
 
         if (newVOI != null) {
-
-            for (sliceNum = 0; sliceNum < newVOI.getCurves().length; sliceNum++) {
-
-                for (curveNum = 0; curveNum < newVOI.getCurves()[sliceNum].size(); curveNum++) {
-                    (newVOI.getCurves()[sliceNum].elementAt(curveNum)).setLabel(String.valueOf(index++));
-                }
+            for (curveNum = 0; curveNum < newVOI.getCurves().size(); curveNum++) {
+                newVOI.getCurves().elementAt(curveNum).setLabel(String.valueOf(index++));
             }
         }
 
@@ -2160,7 +2075,7 @@ public class ModelImage extends ModelStorageBase {
         int nVOIs;
         int nSlices;
         int nContours, nPoints;
-        Vector<VOIBase>[] contours;
+        Vector<VOIBase> contours;
         Vector3f[] points;
         final Vector3f[] point1 = new Vector3f[1];
 
@@ -2190,81 +2105,52 @@ public class ModelImage extends ModelStorageBase {
                 if (newVOI == null) {
                     newVOI = new VOI((short) 0, "polygon", slices, VOI.CONTOUR, -1.0f);
                 }
-
-                nSlices = newVOIVector.VOIAt(i).getCurves().length;
                 contours = newVOIVector.VOIAt(i).getCurves();
-
-                for (j = 0; j < nSlices; j++) {
-                    nContours = contours[j].size();
-
-                    for (k = 0; k < nContours; k++) {
-                        newVOI.getCurves()[j].addElement(contours[j].elementAt(k));
-                    }
+                nContours = contours.size();
+                for (k = 0; k < nContours; k++) {
+                    newVOI.getCurves().addElement(contours.elementAt(k));
                 }
             } else if (newVOIVector.VOIAt(i).getCurveType() == VOI.POLYLINE) {
 
                 if (newPLineVOI == null) {
                     newPLineVOI = new VOI((short) 0, "polyline" + nameExt, slices, VOI.POLYLINE, -1.0f);
                 }
-
-                nSlices = voiVector.VOIAt(i).getCurves().length;
                 contours = voiVector.VOIAt(i).getCurves();
-
-                for (j = 0; j < nSlices; j++) {
-                    nContours = contours[j].size();
-
-                    for (k = 0; k < nContours; k++) {
-                        newPLineVOI.getCurves()[j].addElement(contours[j].elementAt(k));
-                    }
+                nContours = contours.size();
+                for (k = 0; k < nContours; k++) {
+                    newPLineVOI.getCurves().addElement(contours.elementAt(k));
                 }
             } else if (newVOIVector.VOIAt(i).getCurveType() == VOI.LINE) {
 
                 if (newLineVOI == null) {
                     newLineVOI = new VOI((short) 0, "line" + nameExt, slices, VOI.LINE, -1.0f);
                 }
-
-                nSlices = voiVector.VOIAt(i).getCurves().length;
                 contours = voiVector.VOIAt(i).getCurves();
+                nContours = contours.size();
 
-                for (j = 0; j < nSlices; j++) {
-                    nContours = contours[j].size();
-
-                    for (k = 0; k < nContours; k++) {
-                        newLineVOI.getCurves()[j].addElement(contours[j].elementAt(k));
-                    }
+                for (k = 0; k < nContours; k++) {
+                    newLineVOI.getCurves().addElement(contours.elementAt(k));
                 }
             } else if (newVOIVector.VOIAt(i).getCurveType() == VOI.POINT) {
 
                 if (newPtVOI == null) {
                     newPtVOI = new VOI((short) 0, "point" + nameExt, slices, VOI.POINT, -1.0f);
                 }
-
-                nSlices = voiVector.VOIAt(i).getCurves().length;
-
-                for (j = 0; j < nSlices; j++) {
-                    points = voiVector.VOIAt(i).exportPoints(j);
-                    nPoints = points.length;
-
-                    for (k = 0; k < nPoints; k++) {
-                        point1[0] = points[k];
-                        newPtVOI.importCurve(point1, j);
-                    }
+                contours = newVOIVector.VOIAt(i).getCurves();
+                nContours = contours.size();
+                for (k = 0; k < nContours; k++) {
+                    newVOI.getCurves().addElement(contours.elementAt(k));
                 }
             } else if (voiVector.VOIAt(i).getCurveType() == VOI.PROTRACTOR) {
 
                 if (newProtractorVOI == null) {
                     newProtractorVOI = new VOI((short) 0, "protractor" + nameExt, slices, VOI.PROTRACTOR, -1.0f);
                 }
-
-                nSlices = voiVector.VOIAt(i).getCurves().length;
                 contours = voiVector.VOIAt(i).getCurves();
+                nContours = contours.size();
 
-                for (j = 0; j < nSlices; j++) {
-                    nContours = contours[j].size();
-
-                    for (k = 0; k < nContours; k++) {
-                        newProtractorVOI.getCurves()[j].addElement(contours[j].elementAt(k));
-                    }
+                for (k = 0; k < nContours; k++) {
+                    newProtractorVOI.getCurves().addElement(contours.elementAt(k));
                 }
             }
         }
@@ -2305,24 +2191,20 @@ public class ModelImage extends ModelStorageBase {
         }
 
         for (i = 0; i < voiVector.size(); i++) {
-            (voiVector.elementAt(i)).setID((short) i);
+            voiVector.elementAt(i).setID((short) i);
         }
 
         int sliceNum, curveNum, voiNum;
         int index = 1;
 
         for (voiNum = 0; voiNum < voiVector.size(); voiNum++) {
-
-            if ( (voiVector.elementAt(voiNum)).getName().equals(name)) {
-
-                for (sliceNum = 0; sliceNum < (voiVector.elementAt(voiNum)).getCurves().length; sliceNum++) {
-
-                    for (curveNum = 0; curveNum < (voiVector.elementAt(voiNum)).getCurves()[sliceNum].size(); curveNum++) {
-                        ( (voiVector.elementAt(voiNum)).getCurves()[sliceNum].elementAt(curveNum)).setLabel(String
-                                .valueOf(index++));
-                    }
+            if (voiVector.elementAt(voiNum).getName().equals(name)) {
+                for (curveNum = 0; 
+                curveNum < voiVector.elementAt(voiNum).getCurves().size();
+                curveNum++) {
+                    voiVector.elementAt(voiNum).getCurves().elementAt(curveNum)
+                    .setLabel(String.valueOf(index++));
                 }
-
             }
         }
 
@@ -2863,8 +2745,8 @@ public class ModelImage extends ModelStorageBase {
             	MipavUtil.displayError("Illegal NIFTI data type");
             	return;
             
-        } 
-        	
+    }
+
     	if (dimExtents.length == 2) {
     		((FileInfoNIFTI)(fileInfo[0])).setSourceType(niftiType);
     		((FileInfoNIFTI)(fileInfo[0])).setBitPix(niftiBits);
@@ -3331,7 +3213,7 @@ public class ModelImage extends ModelStorageBase {
         	// These and other similar requirements are ignored so that a type reallocation can be performed.
         	if (changedEndianess) {
         		MipavUtil.displayError("Cannot change dicom endianess");
-        		return;
+        	    return;
         	} // if (changedEndianess)
         	short UNSIGNED_INTEGER = (short)0;
         	short SIGNED_INTEGER = (short)1;
@@ -3399,8 +3281,8 @@ public class ModelImage extends ModelStorageBase {
             default:
             	MipavUtil.displayError("Illegal Dicom data type");
             	return;
-        	}
-        	
+    }
+
         	if (dimExtents.length == 2) {
         		((FileInfoDicom)fileInfo[0]).bytesPerPixel = bytesPerPixel;
         		((FileInfoDicom)fileInfo[0]).getTagTable().setValue("0028,0100", new Short(bitsAllocated), 2);
@@ -3445,17 +3327,8 @@ public class ModelImage extends ModelStorageBase {
         // need to add voi to list object!!!
     }
 
-    /**
-     * Method that register an VOI to this image.
-     * 
-     * @param voi Region of interest (VOI) to be registered with the image model
-     */
-    public void register3DVOI(final VOI voi) {
-        voiVector3D.addVOI(voi);
-    }
-
     public int isRegistered(final VOI voi) {
-        return voiVector3D.indexOf(voi);
+        return voiVector.indexOf(voi);
     }
 
     /**
@@ -3680,7 +3553,7 @@ public class ModelImage extends ModelStorageBase {
                 getFileInfo(i).setFileDirectory(dir);
             }
         }
-    }
+        }
 
     /**
      * Sets the image type (MRI, CT, ...).
@@ -3920,19 +3793,6 @@ public class ModelImage extends ModelStorageBase {
     }
 
     /**
-     * Sets VOI vector for with new VOIs.
-     * 
-     * @param VOIs VOIs to image VOIs
-     */
-    public void set3DVOIs(final VOIVector VOIs) {
-        voiVector3D = new VOIVector();
-        final int nVOI = VOIs.size();
-        for (int i = 0; i < nVOI; i++) {
-            voiVector3D.add(new VOI(VOIs.VOIAt(i)));
-        }
-    }
-
-    /**
      * Gives a readable representation of the ModelImage, including file name and extents.
      * 
      * @return the string representation
@@ -3998,6 +3858,15 @@ public class ModelImage extends ModelStorageBase {
         return s;
     }
 
+    public void trimVOIs()
+    {
+        for ( int i = 0; i < voiVector.size(); i++ )
+        {
+            voiVector.get(i).trim();
+        }
+        notifyImageDisplayListeners();
+    }
+    
     /**
      * Forms separate VOIs from all the VOI structures presently loaded in the imageModel.
      */
@@ -4022,7 +3891,7 @@ public class ModelImage extends ModelStorageBase {
         VOI[] newLineVOI = null;
         VOI[] newProtractorVOI = null;
 
-        Vector<VOIBase>[] contours;
+        Vector<VOIBase> contours;
         final Vector3f[] point1 = new Vector3f[1];
         int nPoints;
         int nContours;
@@ -4039,35 +3908,15 @@ public class ModelImage extends ModelStorageBase {
             if (tempVOIs.VOIAt(i).isActive() == true) {
 
                 if (tempVOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
-                    nSlices = tempVOIs.VOIAt(i).getCurves().length;
-
-                    for (j = 0; j < nSlices; j++) {
-                        numContours += tempVOIs.VOIAt(i).getCurves()[j].size();
-                    }
+                    numContours += tempVOIs.VOIAt(i).getCurves().size();
                 } else if (tempVOIs.VOIAt(i).getCurveType() == VOI.POINT) {
-                    nSlices = tempVOIs.VOIAt(i).getCurves().length;
-
-                    for (j = 0; j < nSlices; j++) {
-                        numPoints += tempVOIs.VOIAt(i).exportPoints(j).length;
-                    }
+                    numPoints += tempVOIs.VOIAt(i).getCurves().size();
                 } else if (tempVOIs.VOIAt(i).getCurveType() == VOI.POLYLINE) {
-                    nSlices = tempVOIs.VOIAt(i).getCurves().length;
-
-                    for (j = 0; j < nSlices; j++) {
-                        numPLines += tempVOIs.VOIAt(i).getCurves()[j].size();
-                    }
+                    numPLines += tempVOIs.VOIAt(i).getCurves().size();
                 } else if (tempVOIs.VOIAt(i).getCurveType() == VOI.LINE) {
-                    nSlices = tempVOIs.VOIAt(i).getCurves().length;
-
-                    for (j = 0; j < nSlices; j++) {
-                        numLines += tempVOIs.VOIAt(i).getCurves()[j].size();
-                    }
+                    numLines += tempVOIs.VOIAt(i).getCurves().size();
                 } else if (tempVOIs.VOIAt(i).getCurveType() == VOI.PROTRACTOR) {
-                    nSlices = tempVOIs.VOIAt(i).getCurves().length;
-
-                    for (j = 0; j < nSlices; j++) {
-                        numProtractors += tempVOIs.VOIAt(i).getCurves()[j].size();
-                    }
+                    numProtractors += tempVOIs.VOIAt(i).getCurves().size();
                 }
             } // if (tempVOIs.VOIAt(i).isActive() == true)
         } // for (i = 0; i < nVOIs; i++)
@@ -4137,81 +3986,53 @@ public class ModelImage extends ModelStorageBase {
             if (tempVOIs.VOIAt(i).isActive() == true) {
 
                 if (tempVOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
-                    nSlices = tempVOIs.VOIAt(i).getCurves().length;
                     contours = tempVOIs.VOIAt(i).getCurves();
-
-                    for (j = 0; j < nSlices; j++) {
-                        nContours = contours[j].size();
-
-                        for (k = 0; k < nContours; k++) {
-                            tempBase = contours[j].elementAt(k);
-                            tempBase.setName(newVOI[n].getName());
-                            newVOI[n].getCurves()[j].addElement(tempBase);
-                            n++;
-                        }
+                    nContours = contours.size();
+                    for (k = 0; k < nContours; k++) {
+                        tempBase = contours.elementAt(k);
+                        newVOI[n].getCurves().addElement(tempBase);
+                        n++;
                     }
 
                     tempVOIs.removeElementAt(i);
                 } else if (tempVOIs.VOIAt(i).getCurveType() == VOI.POLYLINE) {
-                    nSlices = tempVOIs.VOIAt(i).getCurves().length;
                     contours = tempVOIs.VOIAt(i).getCurves();
-
-                    for (j = 0; j < nSlices; j++) {
-                        nContours = contours[j].size();
-
-                        for (k = 0; k < nContours; k++) {
-                            tempBase = contours[j].elementAt(k);
-                            tempBase.setName(newPLineVOI[nPLine].getName());
-                            newPLineVOI[nPLine].getCurves()[j].addElement(tempBase);
-                            nPLine++;
-                        }
+                    nContours = contours.size();
+                    for (k = 0; k < nContours; k++) {
+                        tempBase = contours.elementAt(k);
+                        newPLineVOI[nPLine].getCurves().addElement(tempBase);
+                        nPLine++;
                     }
 
                     tempVOIs.removeElementAt(i);
                 } else if (tempVOIs.VOIAt(i).getCurveType() == VOI.LINE) {
-                    nSlices = tempVOIs.VOIAt(i).getCurves().length;
                     contours = tempVOIs.VOIAt(i).getCurves();
-
-                    for (j = 0; j < nSlices; j++) {
-                        nContours = contours[j].size();
-
-                        for (k = 0; k < nContours; k++) {
-                            tempBase = contours[j].elementAt(k);
-                            tempBase.setName(newLineVOI[nLine].getName());
-                            newLineVOI[nLine].getCurves()[j].addElement(tempBase);
-                            nLine++;
-                        }
+                    nContours = contours.size();
+                    for (k = 0; k < nContours; k++) {
+                        tempBase = contours.elementAt(k);
+                        newLineVOI[nLine].getCurves().addElement(tempBase);
+                        nLine++;
                     }
 
                     tempVOIs.removeElementAt(i);
                 } else if (tempVOIs.VOIAt(i).getCurveType() == VOI.POINT) {
-                    nSlices = tempVOIs.VOIAt(i).getCurves().length;
-
-                    for (j = 0; j < nSlices; j++) {
-                        points = tempVOIs.VOIAt(i).exportPoints(j);
-                        nPoints = points.length;
-
-                        for (k = 0; k < nPoints; k++) {
-                            point1[0] = points[k];
-                            newPtVOI[nPt].importCurve(point1, j);
-                            nPt++;
-                        }
+                    contours = tempVOIs.VOIAt(i).getCurves();
+                    nContours = contours.size();
+                    for (k = 0; k < nContours; k++) {
+                        tempBase = contours.elementAt(k);
+                        newLineVOI[nLine].getCurves().addElement(tempBase);
+                        nPt++;
                     }
 
                     tempVOIs.removeElementAt(i);
                 } else if (tempVOIs.VOIAt(i).getCurveType() == VOI.PROTRACTOR) {
-                    nSlices = tempVOIs.VOIAt(i).getCurves().length;
                     contours = tempVOIs.VOIAt(i).getCurves();
+                    nContours = contours.size();
 
-                    for (j = 0; j < nSlices; j++) {
-                        nContours = contours[j].size();
-
-                        for (k = 0; k < nContours; k++) {
-                            tempBase = contours[j].elementAt(k);
-                            tempBase.setName(newProtractorVOI[nProtractor].getName());
-                            newProtractorVOI[nProtractor].getCurves()[j].addElement(contours[j].elementAt(k));
-                            nProtractor++;
-                        }
+                    for (k = 0; k < nContours; k++) {
+                        tempBase = contours.elementAt(k);
+                        newProtractorVOI[nProtractor].getCurves().addElement(contours.elementAt(k));
+                        nProtractor++;
                     }
 
                     tempVOIs.removeElementAt(i);
@@ -4263,14 +4084,10 @@ public class ModelImage extends ModelStorageBase {
      * Unregisters all VOIs from this image model.
      */
     public void unregisterAllVOIs() {
-        voiVector.removeAllElements();
-    }
-
-    /**
-     * Unregisters all VOIs from this image model.
-     */
-    public void unregisterAll3DVOIs() {
-        voiVector3D.removeAllElements();
+        if ( voiVector != null )
+        {
+            voiVector.removeAllElements();
+        }
     }
 
     /**
@@ -4294,22 +4111,7 @@ public class ModelImage extends ModelStorageBase {
         for (int i = 0; i < voiVector.size(); i++) { // ((VOI)(voiVector.elementAt(i))).setID((short)i);
         }
     }
-
-    /**
-     * Method that unregisters an VOI.
-     * 
-     * @param voi Volume of interest (VOI) to be removed from the image model
-     */
-    public void unregister3DVOI(final VOI voi) {
-        voiVector3D.removeElement(voi);
-    }
-
-    public void printVOIs() {
-        for (int i = 0; i < voiVector.size(); i++) {
-            voiVector.get(i).print();
-        }
-    }
-
+    
     /**
      * Give the image a new image name, updates frame (if not null), and file infos.
      * 
@@ -5123,24 +4925,6 @@ public class ModelImage extends ModelStorageBase {
             } // for (j = i-1; j >= 0; j--)
 
             voiVector = null;
-        } // if ( voiVector != null )
-
-        if (voiVector3D != null) {
-
-            // voiVector.removeAllElements();
-            i = voiVector3D.size();
-
-            for (j = i - 1; j >= 0; j--) {
-                VOI voi = (VOI) ( ((Vector) voiVector3D).remove(j));
-
-                try {
-                    voi.finalize();
-                } catch (final Throwable e) {}
-
-                voi = null;
-            } // for (j = i-1; j >= 0; j--)
-
-            voiVector3D = null;
         } // if ( voiVector != null )
 
         matrixHolder = null;

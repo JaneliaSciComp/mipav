@@ -80,8 +80,8 @@ public class JDialogGenerateGrid extends JDialogScriptableBase {
         this.componentImage = componentImage;
         type = componentImage.getActiveImage().getType();
         isColor = componentImage.getActiveImage().isColorImage();
-        width = componentImage.getVOIHandler().getGridSpacingX();
-        height = componentImage.getVOIHandler().getGridSpacingY();
+        width = componentImage.getGridSpacingX();
+        height = componentImage.getGridSpacingY();
         unitsStr = FileInfoBase.getUnitsOfMeasureAbbrevStr(componentImage.getActiveImage().getFileInfo()[0].getUnitsOfMeasure(0));
         
     	xDim = componentImage.getActiveImage().getExtents()[0];
@@ -291,7 +291,7 @@ public class JDialogGenerateGrid extends JDialogScriptableBase {
 	        		for(int x=0;x<xDim;x++) {
 	        			int modX  = (x+1)%verticalSpacing;
 	        			int modY  = (y+1)%horizontalSpacing;
-	        			
+	        
 	        			if(x!=0 && modX==0) {
 	        				if(isColor) {
 	        					im.setC(x, y, z, 1, intensityR);
@@ -301,8 +301,8 @@ public class JDialogGenerateGrid extends JDialogScriptableBase {
 	        					im.set(x,y,z, intensity);
 	        				}
 	        			}
-	        			
-	        			
+	        
+	        
 	        			if(y!=0 && modY==0) {
 	        				if(isColor) {
 	        					im.setC(x, y, z, 1, intensityR);
@@ -311,10 +311,10 @@ public class JDialogGenerateGrid extends JDialogScriptableBase {
 	        				}else {
 	        					im.set(x,y,z, intensity);
 	        				}
-	        				
+	 
 	        			}
-	        			
-	        			
+	        
+
 	        		}
 	        	}
 	        }
@@ -323,7 +323,7 @@ public class JDialogGenerateGrid extends JDialogScriptableBase {
 	        new ViewJFrameImage(im);
 	        insertScriptLine();
 	        dispose();
-	        
+
 	    }
 
 
@@ -356,45 +356,45 @@ public class JDialogGenerateGrid extends JDialogScriptableBase {
         verticalSpacing = (int)(xDim / numVertical);
         horizontalSpacing = (int)(yDim / numHorizontal);
         String name = im.getImageName();
-        im.setImageName(name + "_grid");
-        for(int z=0;z<zDim;z++) {
-        	for(int y=0;y<yDim;y++) {
-        		for(int x=0;x<xDim;x++) {
-        			int modX  = (x+1)%verticalSpacing;
-        			int modY  = (y+1)%horizontalSpacing;
-        			
-        			if(x!=0 && modX==0) {
-        				if(isColor) {
-        					im.setC(x, y, z, 1, intensityR);
-        					im.setC(x, y, z, 2, intensityG);
-        					im.setC(x, y, z, 3, intensityB);
-        				}else {
-        					im.set(x,y,z, intensity);
-        				}
-        			}
-        			
-        			
-        			if(y!=0 && modY==0) {
-        				if(isColor) {
-        					im.setC(x, y, z, 1, intensityR);
-        					im.setC(x, y, z, 2, intensityG);
-        					im.setC(x, y, z, 3, intensityB);
-        				}else {
-        					im.set(x,y,z, intensity);
-        				}
-        				
-        			}
-        			
-        			
-        		}
-        	}
-        }
-        im.calcMinMax();
+	        im.setImageName(name + "_grid");
+	        for(int z=0;z<zDim;z++) {
+	        	for(int y=0;y<yDim;y++) {
+	        		for(int x=0;x<xDim;x++) {
+	        			int modX  = (x+1)%verticalSpacing;
+	        			int modY  = (y+1)%horizontalSpacing;
+	        			
+	        			if(x!=0 && modX==0) {
+	        				if(isColor) {
+	        					im.setC(x, y, z, 1, intensityR);
+	        					im.setC(x, y, z, 2, intensityG);
+	        					im.setC(x, y, z, 3, intensityB);
+	        				}else {
+	        					im.set(x,y,z, intensity);
+	        				}
+	        			}
+	        			
+	        			
+	        			if(y!=0 && modY==0) {
+	        				if(isColor) {
+	        					im.setC(x, y, z, 1, intensityR);
+	        					im.setC(x, y, z, 2, intensityG);
+	        					im.setC(x, y, z, 3, intensityB);
+	        				}else {
+	        					im.set(x,y,z, intensity);
+	        				}
+	        				
+	        			}
+	        			
+	        			
+	        		}
+	        	}
+	        }
+	        im.calcMinMax();
         setComplete(true);
-        dispose();
-        
+	        dispose();
+	        
 		
-	}
+	    }
 
 
 
@@ -410,7 +410,7 @@ public class JDialogGenerateGrid extends JDialogScriptableBase {
 		intensity = scriptParameters.getParams().getFloat("grid_value");
 			
 		
-	}
+}
 
 
 

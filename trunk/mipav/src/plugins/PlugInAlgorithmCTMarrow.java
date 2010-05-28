@@ -10,6 +10,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.Point3D;
 import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIVector;
 
@@ -21,6 +22,7 @@ import java.awt.Point;
 import java.io.File;
 import java.io.IOException;
 import java.util.BitSet;
+import java.util.Vector;
 
 
 public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
@@ -195,19 +197,19 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
             int[] rightBoundsY = new int [2];
             int[] rightBoundsZ = new int [2];
             VOIContour rightCurve;
-            rightCurve = ((VOIContour)rightMarrowVOI.getCurves()[0].get(0));
+            rightCurve = ((VOIContour)rightMarrowVOI.getCurves().get(0));
             rightCurve.getBounds(rightBoundsX, rightBoundsY, rightBoundsZ);
         
             int[] leftBoundsX = new int [2];
             int[] leftBoundsY = new int [2];
             int[] leftBoundsZ = new int [2];
             VOIContour leftCurve;
-            leftCurve = ((VOIContour)leftMarrowVOI.getCurves()[0].get(0));
+            leftCurve = ((VOIContour)leftMarrowVOI.getCurves().get(0));
             leftCurve.getBounds(leftBoundsX, leftBoundsY, leftBoundsZ);
             
           //rightX should be to the LEFT of leftx in this orientation
-            float rightX = ((VOIContour)rightMarrowVOI.getCurves()[0].get(0)).get(0).X;
-            float leftX = ((VOIContour)leftMarrowVOI.getCurves()[0].get(0)).get(0).X;
+            float rightX = ((VOIContour)rightMarrowVOI.getCurves().get(0)).get(0).X;
+            float leftX = ((VOIContour)leftMarrowVOI.getCurves().get(0)).get(0).X;
             
             // the rightBoneVOI should be the leftmost
             if (rightX > leftX) {
@@ -242,8 +244,9 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
      */
     private VOI makeLeftMarrowVOI(VOI totalVOI) {
     	VOI tempVOI = (VOI)totalVOI.clone();
+        Vector<VOIBase>[] curves = totalVOI.getSortedCurves(zDim);
     	for(int i=0; i<zDim; i++) 
-    		tempVOI.removeCurve(1, i);
+    		tempVOI.getCurves().removeElement( curves[i].elementAt(1) );
     	tempVOI.setName("Left Marrow");
     	tempVOI.setColor(voiColor);
     	return tempVOI;
@@ -256,8 +259,9 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
      */
     private VOI makeRightMarrowVOI(VOI totalVOI) {
     	VOI tempVOI = (VOI)totalVOI.clone();
+        Vector<VOIBase>[] curves = totalVOI.getSortedCurves(zDim);
     	for(int i=0; i<zDim; i++) 
-    		tempVOI.removeCurve(0, i);
+            tempVOI.getCurves().removeElement( curves[i].elementAt(0) );
     	tempVOI.setName("Right Marrow");
     	tempVOI.setColor(voiColor);
     	return tempVOI;
@@ -299,7 +303,7 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
         }
         VOI theVOI = vois.get(0);
         theVOI.setName("Bone Marrow");
-        if (theVOI.getCurves()[0].size() != 2) {
+        if (theVOI.getCurves().size()/zDim != 2) { // 2 curves per slice expected
             MipavUtil.displayError("makeBoneMarrowVOI() Error, did not get 2 curves in the VOI");
             return null;
         }

@@ -473,6 +473,11 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      */
     private boolean originalEndianess = FileBase.LITTLE_ENDIAN;
 
+    /**
+     * Used for checking for endianess changes in the ModelImage.reallocate(final int type) function.
+     */
+    private boolean originalEndianess = FileBase.LITTLE_ENDIAN;
+
     /** Image extents as decribed by the image file format. */
     private int[] extents = new int[5];
 
@@ -1546,6 +1551,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     	return originalEndianess;
     }
 
+    public final boolean getOriginalEndianess() {
+    	return originalEndianess;
+    }
+
     /**
      * Returns the dimensionality of the image.
      * 
@@ -2074,6 +2083,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         endianess = endness;
     }
     
+    public void setOriginalEndianess(final boolean originalEndness) {
+    	originalEndianess = originalEndness;
+    }
+
     public void setOriginalEndianess(final boolean originalEndness) {
     	originalEndianess = originalEndness;
     }

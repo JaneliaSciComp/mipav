@@ -8,6 +8,8 @@ import gov.nih.mipav.model.structures.*;
 import Jama.*;
 
 import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -81,7 +83,7 @@ import javax.swing.event.*;
  * @version  1.0
  */
 public class ViewJFrameRegistration extends ViewJFrameBase
-        implements ItemListener, ChangeListener, FocusListener, MouseMotionListener, MouseListener {
+        implements ItemListener, ChangeListener, FocusListener, MouseMotionListener, MouseListener, VOIManagerInterfaceListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -348,7 +350,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
     private VOI voi = null;
 
     /** DOCUMENT ME! */
-    private Vector3f[] VOIPoints;
+    private Vector<Vector3f> VOIPoints;
 
     /** DOCUMENT ME! */
     private int xDim;
@@ -414,6 +416,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
     
     private AlgorithmCostFunctions2D algoCost;
 
+    private VOIManagerInterface voiManager;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -1464,12 +1467,12 @@ public class ViewJFrameRegistration extends ViewJFrameBase
                     VOIPoints = null;
                     VOIPoints = voi.exportPoints(zSlice);
 
-                    if ((VOIPoints != null) && (VOIPoints.length > 0)) {
+                    if ((VOIPoints != null) && (VOIPoints.size() > 0)) {
 
                         componentImage.deleteReferenceVOIs();
 
-                        for (i = 0; i < VOIPoints.length; i++) {
-                            componentImage.makeReferenceVOI(VOIPoints[i]);
+                        for (i = 0; i < VOIPoints.size(); i++) {
+                            componentImage.makeReferenceVOI(VOIPoints.elementAt(i));
                         }
                     }
                 } // end of if (haveVOIPoints)
@@ -1534,12 +1537,12 @@ public class ViewJFrameRegistration extends ViewJFrameBase
                     VOIPoints = null;
                     VOIPoints = voi.exportPoints(zSlice2);
 
-                    if ((VOIPoints != null) && (VOIPoints.length > 0)) {
+                    if ((VOIPoints != null) && (VOIPoints.size() > 0)) {
 
                         componentImage.deleteAdjustableVOIs();
 
-                        for (i = 0; i < VOIPoints.length; i++) {
-                            componentImage.makeAdjustableVOI(VOIPoints[i]);
+                        for (i = 0; i < VOIPoints.size(); i++) {
+                            componentImage.makeAdjustableVOI(VOIPoints.elementAt(i));
                         }
                     }
                 } // end of if ((haveVOIPoints) && (zSlice != zSlice2))
@@ -2654,7 +2657,10 @@ public class ViewJFrameRegistration extends ViewJFrameBase
 
         setResizable(true);
         setVisible(true);
+        
+        initVOI();
     }
+    
 
     /**
      * This code comes from matchBtoA() and buildXfrm(double p1[],double p2[], Matrix R) in AlgorithmRegLeastSquares.
@@ -3470,6 +3476,97 @@ public class ViewJFrameRegistration extends ViewJFrameBase
             setVisible(true);
 
         }
+    }
+
+
+    @Override
+    public void PointerActive(boolean bActive) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public Vector3f PropDown(int iActive) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Vector3f PropUp(int iActive) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void create3DVOI(boolean bIntersection) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void enableBoth(boolean bEnable) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public ModelImage getActiveImage() {
+        if (componentImage != null) {
+            return componentImage.getActiveImage();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public Vector3f getCenterPt() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public JFrame getFrame() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void setActiveImage(ModelImage kImage) {
+        if ( kImage == imageA )
+        {
+            setActiveImage( IMAGE_A );
+        }
+        else
+        {
+            setActiveImage( IMAGE_B );
+        }
+    }
+    
+    @Override
+    public void setCenter(Vector3f kCenter) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void setModified() {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void updateData(boolean bCopyToCPU) {
+        // TODO Auto-generated method stub
+        
+    }
+    
+    private void initVOI()
+    {
+        voiManager = new VOIManagerInterface( this, imageA, LUTa, imageB, LUTb, 1, false, null );
+        voiManager.getVOIManager(0).init( imageA, imageB,
+                componentImage, componentImage,
+                componentImage.getOrientation(), componentImage.getSlice() );
+        componentImage.setVOIManager(voiManager.getVOIManager(0));
     }
 
 }

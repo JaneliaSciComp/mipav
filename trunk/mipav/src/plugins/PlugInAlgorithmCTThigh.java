@@ -9,6 +9,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.Point3D;
 import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIVector;
 
@@ -21,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Vector;
 
 
 
@@ -216,12 +218,11 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
      */
     private VOI makeRightThighVOI(VOI totalVOI) {
     	VOI tempVOI = (VOI)totalVOI.clone();
-    	int size = 0;
-    	for(int i=0; i<zDim; i++) {
-    		size = tempVOI.getCurves()[i].size();
-    		for(int j=1; j<size; j++)
-    			tempVOI.removeCurve(1, i);
-    	}
+        Vector<VOIBase>[] curves = totalVOI.getSortedCurves(zDim);
+        for(int i=0; i<zDim; i++) {
+            for(int j=1; j<curves[i].size(); j++)
+                tempVOI.getCurves().removeElement( curves[i].elementAt(j) );
+        }
     	tempVOI.setName("Right Thigh");
     	tempVOI.setColor(voiColor);
     	return tempVOI;
@@ -234,16 +235,13 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
      */
     private VOI makeLeftThighVOI(VOI totalVOI) {
     	VOI tempVOI = (VOI)totalVOI.clone();
-    	int size = 0;
-    	for(int i=0; i<zDim; i++) {
-    		size = tempVOI.getCurves()[i].size();
-    		for(int j=0; j<size-1; j++) {
-    			if(j == 0)
-    				tempVOI.removeCurve(0, i);
-    			else 
-    				tempVOI.removeCurve(1, i);
-    		}
-    	}
+        Vector<VOIBase>[] curves = totalVOI.getSortedCurves(zDim);
+        for(int i=0; i<zDim; i++) {
+            for(int j=0; j<curves[i].size(); j++) {
+                if ( j != 1 )
+                    tempVOI.getCurves().removeElement( curves[i].elementAt(j) );
+            }
+        }
     	tempVOI.setName("Left Thigh");
     	tempVOI.setColor(voiColor);
     	return tempVOI;
@@ -293,24 +291,13 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
         theVOI.setName("Thigh Tissue");
 
         // Remove small (10 points or less) curves from the VOI
-        int numCurves, numPoints;
-        VOIContour curve;
-        for (int idx = 0; idx < zDim; idx++) {
-            numCurves = theVOI.getCurves()[idx].size();
-            
-            int idx2 = 0;
-            while(idx2 < numCurves) {
-                curve = ((VOIContour)theVOI.getCurves()[idx].get(idx2));
-                numPoints = curve.size();
-                if (numPoints < 10) {
-                    // remove the curve
-                    theVOI.getCurves()[idx].remove(idx2);
-                    numCurves--;
-                } else {
-                    idx2++;
-                }
-            } // end while(idx2 < numCurves)
-         } // end for (int idx = 0; ...)
+        for ( int idx = theVOI.getCurves().size()-1; idx >= 0; idx-- )
+        {
+            if ( theVOI.getCurves().elementAt(idx).size() < 10 )
+            {
+                theVOI.getCurves().removeElementAt(idx);
+            }
+        }
 
 /*
         // print out the curves and their sizes
@@ -333,20 +320,19 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
         
         // remove all the curves from the VOI's.  I will import the ones corresponding to
         // the right and left thigh once it has been split
-        for (int sliceIdx = 0; sliceIdx < zDim; sliceIdx++) {
-            leftThighVOI.getCurves()[sliceIdx].removeAllElements();
-            rightThighVOI.getCurves()[sliceIdx].removeAllElements();
-        }
+        leftThighVOI.getCurves().removeAllElements();
+        rightThighVOI.getCurves().removeAllElements();
 
         // split the thigh curves when the legs touch (there are only 3 curves, not 4)
+        Vector<VOIBase>[] sortedCurves = theVOI.getSortedCurves(zDim);
         for (int sliceIdx = 0; sliceIdx < zDim; sliceIdx++) {
-            if (theVOI.getCurves()[sliceIdx].size() == 3) {
+            if (sortedCurves[sliceIdx].size() == 3) {
                 
                 // find the curve with the greatest area (the thigh curve)
-                float maxArea = ((VOIContour)theVOI.getCurves()[sliceIdx].get(0)).area();
+                float maxArea = ((VOIContour)sortedCurves[sliceIdx].get(0)).area();
                 int maxIdx = 0;
-                for (int idx = 1; idx < theVOI.getCurves()[sliceIdx].size(); idx++) {
-                    if (((VOIContour)theVOI.getCurves()[sliceIdx].get(idx)).area() > maxArea) {
+                for (int idx = 1; idx < sortedCurves[sliceIdx].size(); idx++) {
+                    if (((VOIContour)sortedCurves[sliceIdx].get(idx)).area() > maxArea) {
                         maxIdx = idx;
                     }
                 }
@@ -365,7 +351,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                  
                  */
                 // split the curve through its middle with the maxIdx
-                VOIContour maxContour = ((VOIContour)theVOI.getCurves()[sliceIdx].get(maxIdx));
+                VOIContour maxContour = ((VOIContour)sortedCurves[sliceIdx].get(maxIdx));
                 int[] xVals = new int [maxContour.size()];
                 int[] yVals = new int [maxContour.size()];
                 int[] zVals = new int [maxContour.size()];
@@ -471,7 +457,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                     z1[idx] = z1Arr.get(idx);
                 }
 
-                leftThighVOI.importCurve(x1, y1, z1, sliceIdx);
+                leftThighVOI.importCurve(x1, y1, z1);
                 
                 int[] x2 = new int[x2Arr.size()];
                 int[] y2 = new int[x2Arr.size()];
@@ -482,9 +468,9 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                     z2[idx] = z2Arr.get(idx);
                 }
 
-                rightThighVOI.importCurve(x2, y2, z2, sliceIdx);
+                rightThighVOI.importCurve(x2, y2, z2);
                                                
-            } else if (theVOI.getCurves()[0].size() != 4) {
+            } else if (sortedCurves[0].size() != 4) {
                 boneImage.unregisterAllVOIs();
                 boneImage.registerVOI(theVOI);            
                 //new ViewJFrameImage(boneImage).updateImages(true);
@@ -499,14 +485,14 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                 int[] rightBoundsY = new int [2];
                 int[] rightBoundsZ = new int [2];
                 VOIContour rightCurve;
-                rightCurve = ((VOIContour)rightThighVOI.getCurves()[0].get(0));
+                rightCurve = ((VOIContour)rightThighVOI.getCurves().get(0));
                 rightCurve.getBounds(rightBoundsX, rightBoundsY, rightBoundsZ);
             
                 int[] leftBoundsX = new int [2];
                 int[] leftBoundsY = new int [2];
                 int[] leftBoundsZ = new int [2];
                 VOIContour leftCurve;
-                leftCurve = ((VOIContour)leftThighVOI.getCurves()[0].get(0));
+                leftCurve = ((VOIContour)leftThighVOI.getCurves().get(0));
                 leftCurve.getBounds(leftBoundsX, leftBoundsY, leftBoundsZ);
                 
                 // the rightBoneVOI should be the leftmost

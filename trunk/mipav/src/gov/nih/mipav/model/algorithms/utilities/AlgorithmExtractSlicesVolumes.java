@@ -360,4 +360,4 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
 
     } // end getOffset()
 
-}
+        }

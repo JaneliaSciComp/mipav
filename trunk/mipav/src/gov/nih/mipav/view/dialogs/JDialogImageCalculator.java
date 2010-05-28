@@ -356,7 +356,7 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
                                                             adOpString);
                     
                     //createProgressBar(imageA.getImageName(), mathAlgo);
-                    
+
                     progressBar = new ViewJProgressBar(imageA.getImageName(), " ...", 0, 100, true, null, null, false);
                     progressBar.setSeparateThread(runInSeparateThread);
                     mathAlgo.addProgressChangeListener(progressBar);

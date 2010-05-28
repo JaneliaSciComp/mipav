@@ -1030,9 +1030,9 @@ public class JDialogConvertType extends JDialogScriptableBase
                                                  makeImageName(image.getImageName(), "_changed"));
 
                     if (image.getNDims() == 3) {
-	                    for (int n = 0; n < resultImage.getExtents()[2]; n++) {
-	                        resultImage.getFileInfo(n).setEndianess(endianess);
-	                    }
+                    for (int n = 0; n < resultImage.getExtents()[2]; n++) {
+                        resultImage.getFileInfo(n).setEndianess(endianess);
+                    }
                     }
                     else {
                     	for (int n = 0; n < resultImage.getExtents()[2]*resultImage.getExtents()[3]; n++) {
@@ -1079,9 +1079,9 @@ public class JDialogConvertType extends JDialogScriptableBase
                 try {
 
                     if (image.getNDims() == 3) {
-	                	for (int n = 0; n < image.getExtents()[2]; n++) {
-	                        image.getFileInfo(n).setEndianess(endianess);
-	                    }
+                    for (int n = 0; n < image.getExtents()[2]; n++) {
+                        image.getFileInfo(n).setEndianess(endianess);
+                    }
                     }
                     else {
                     	for (int n = 0; n < image.getExtents()[2]*image.getExtents()[3]; n++) {

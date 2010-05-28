@@ -2511,17 +2511,17 @@ public class FileNIFTI extends FileBase {
             	String ext = fileName.substring(fileName.lastIndexOf(".")+1, fileName.length());
             	if (ext.equalsIgnoreCase("zip")) {
             		//we have already readin the header...now skip over the 4 extension bytes
-                    try {
+	                     try {
                         bytesRead = gzin.read(offsetBuff);
                         if(bytesRead != 4) {
                       	 buffer = getFullBuffer(gzin,offsetBuff,bytesRead,4); 
                       	 
-                       }
-                    } catch (IOException e) {
-                   	 e.printStackTrace();
-                        MipavUtil.displayError("IOException on gzin.read(buffer) for " + fileName);
-                        return null;
-                    }
+                            }
+	                     } catch (IOException e) {
+	                    	 e.printStackTrace();
+	                         MipavUtil.displayError("IOException on gzin.read(buffer) for " + fileName);
+	                         return null;
+	                     }
                     int start = 0;
                     boolean endianness = fileInfo.getEndianess();
                     int type = image.getType();
@@ -2616,17 +2616,17 @@ public class FileNIFTI extends FileBase {
                     }
             	}else if(ext.equalsIgnoreCase("gz")) {
             		//we have already readin the header...now skip over the 4 extension bytes
-                     try {
-                         bytesRead = gzin.read(offsetBuff);
+	                     try {
+	                         bytesRead = gzin.read(offsetBuff);
                          if(bytesRead != 4) {
                        	 buffer = getFullBuffer(gzin,offsetBuff,bytesRead,4); 
                        	 
-                        }
-                     } catch (IOException e) {
-                    	 e.printStackTrace();
-                         MipavUtil.displayError("IOException on gzin.read(buffer) for " + fileName);
-                         return null;
-                     }
+                            }
+	                     } catch (IOException e) {
+	                    	 e.printStackTrace();
+	                         MipavUtil.displayError("IOException on gzin.read(buffer) for " + fileName);
+	                         return null;
+	                     }
                    
                     int start = 0;
                     boolean endianness = fileInfo.getEndianess();
@@ -2642,7 +2642,7 @@ public class FileNIFTI extends FileBase {
                             if(bytesRead != 256) {
                            	 buffer = getFullBuffer(gzin,buffer,bytesRead,256); 
                             }
-                            
+
 
                         	if(type == ModelStorageBase.BYTE || type == ModelStorageBase.UBYTE) {
                         		if(start < image.getDataSize()) {
@@ -2726,17 +2726,17 @@ public class FileNIFTI extends FileBase {
                     }
             	}else if(ext.equalsIgnoreCase("bz2")) {
             		//we have already readin the header...now skip over the 4 extension bytes
-                    try {
+	                     try {
                         bytesRead = gzin.read(offsetBuff);
                         if(bytesRead != 4) {
                       	 buffer = getFullBuffer(gzin,offsetBuff,bytesRead,4); 
                       	 
-                       }
-                    } catch (IOException e) {
-                   	 e.printStackTrace();
-                        MipavUtil.displayError("IOException on gzin.read(buffer) for " + fileName);
-                        return null;
-                    }
+                            }
+	                     } catch (IOException e) {
+	                    	 e.printStackTrace();
+	                         MipavUtil.displayError("IOException on gzin.read(buffer) for " + fileName);
+	                         return null;
+	                     }
                     int start = 0;
                     boolean endianness = fileInfo.getEndianess();
                     int type = image.getType();
