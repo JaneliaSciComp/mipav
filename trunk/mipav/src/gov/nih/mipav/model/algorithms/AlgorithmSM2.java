@@ -53,11 +53,11 @@ The pre-injection volumes are actually averaged together to generate the R10 map
 After injection (t=t1), the first volume usually has no contrast in it. That's because the contrast has to circulate to the brain. 
 So R1,p(t1) should be the same as R10,p, but in our scheme R1,p(t1) wasn't used to generate the R10 map. Any differences should be due to noise.
  Does that help explain things?
-
+ 
 For monomeric gadolinium chelates, Ktrans for the normal blood brain barrier is approximately 10^-4 min^-1 
 (from the legend to Fig 5 of Li, Rooney, and Springer (MRM, 2005)). So a lower bound of 10^-5 should be ok.
 If R1,p(t1) = R10,p except for noise, then R1,p(t1) - R10,p is purely noise and contains no useful information
-
+ 
  
  
  References:

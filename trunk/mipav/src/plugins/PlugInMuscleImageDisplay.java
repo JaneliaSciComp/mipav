@@ -493,8 +493,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	 */
 	public void algorithmPerformed(AlgorithmBase algorithm) {
 			
-		Vector<VOIBase>[] firstVOI = null;
-		Vector<VOIBase>[] secondVOI = null;
+		Vector<VOIBase> firstVOI = null;
+		Vector<VOIBase> secondVOI = null;
 		PlugInSelectableVOI firstBufferVOI = null;
 		PlugInSelectableVOI secondBufferVOI = null;
 		if(algorithm instanceof PlugInAlgorithmCTThigh) {
@@ -505,13 +505,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				secondVOI = ((PlugInAlgorithmCTThigh)algorithm).getRightThighVOI().getCurves();
 				firstBufferVOI = voiBuffer.get("Left Thigh");
 				secondBufferVOI = voiBuffer.get("Right Thigh");
-				for(int i=0; i<firstVOI.length; i++) {
-					for(int j=0; j<firstVOI[i].size(); j++) {
-						firstBufferVOI.importCurve((VOIContour)firstVOI[i].get(j), i);
-					}
-					for(int j=0; j<secondVOI[i].size(); j++) {
-						secondBufferVOI.importCurve((VOIContour)secondVOI[i].get(j), i);
-					}
+				for(int j=0; j<firstVOI.size(); j++) {
+				    firstBufferVOI.importCurve((VOIContour)firstVOI.get(j));
+				}
+				for(int j=0; j<secondVOI.size(); j++) {
+				    secondBufferVOI.importCurve((VOIContour)secondVOI.get(j));
 				}
 				firstBufferVOI.setComputerGenerated(true);
 				secondBufferVOI.setComputerGenerated(true);
@@ -526,13 +524,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				secondVOI = ((PlugInAlgorithmCTMarrow)algorithm).getRightMarrowVOI().getCurves();
 				firstBufferVOI = voiBuffer.get("Left Marrow");
 				secondBufferVOI = voiBuffer.get("Right Marrow");
-				for(int i=0; i<firstVOI.length; i++) {
-					for(int j=0; j<firstVOI[i].size(); j++) {
-						firstBufferVOI.importCurve((VOIContour)firstVOI[i].get(j), i);
-					}
-					for(int j=0; j<secondVOI[i].size(); j++) {
-						secondBufferVOI.importCurve((VOIContour)secondVOI[i].get(j), i);
-					}
+				for(int j=0; j<firstVOI.size(); j++) {
+				    firstBufferVOI.importCurve((VOIContour)firstVOI.get(j));
+				}
+				for(int j=0; j<secondVOI.size(); j++) {
+				    secondBufferVOI.importCurve((VOIContour)secondVOI.get(j));
 				}
 				firstBufferVOI.setComputerGenerated(true);
 				secondBufferVOI.setComputerGenerated(true);
@@ -547,13 +543,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				secondVOI = ((PlugInAlgorithmCTBone)algorithm).getRightBoneVOI().getCurves();
 				firstBufferVOI = voiBuffer.get("Left Bone");
 				secondBufferVOI = voiBuffer.get("Right Bone");
-				for(int i=0; i<firstVOI.length; i++) {
-					for(int j=0; j<firstVOI[i].size(); j++) {
-						firstBufferVOI.importCurve((VOIContour)firstVOI[i].get(j), i);
-					}
-					for(int j=0; j<secondVOI[i].size(); j++) {
-						secondBufferVOI.importCurve((VOIContour)secondVOI[i].get(j), i);
-					}
+				for(int j=0; j<firstVOI.size(); j++) {
+				    firstBufferVOI.importCurve((VOIContour)firstVOI.get(j));
+				}
+				for(int j=0; j<secondVOI.size(); j++) {
+				    secondBufferVOI.importCurve((VOIContour)secondVOI.get(j));
 				}
 				firstBufferVOI.setComputerGenerated(true);
 				secondBufferVOI.setComputerGenerated(true);
@@ -565,10 +559,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				System.out.println("Abdomen alg completed");
 				firstVOI = ((PlugInAlgorithmCTAbdomen)algorithm).getAbdomenVOI().getCurves();
 				firstBufferVOI = voiBuffer.get("Abdomen");
-				for(int i=0; i<firstVOI.length; i++) {
-					for(int j=0; j<firstVOI[i].size(); j++) {
-						firstBufferVOI.importCurve((VOIContour)firstVOI[i].get(j), i);
-					}
+				for(int j=0; j<firstVOI.size(); j++) {
+				    firstBufferVOI.importCurve((VOIContour)firstVOI.get(j));
 				}
 				firstBufferVOI.setComputerGenerated(true);
 				firstBufferVOI.setSegmentationTime(((PlugInAlgorithmCTAbdomen)algorithm).getSegmentationTimeAbd());
@@ -576,10 +568,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			if(((PlugInAlgorithmCTAbdomen)algorithm).getSubcutaneousVOI() != null) {
 				secondVOI = ((PlugInAlgorithmCTAbdomen)algorithm).getSubcutaneousVOI().getCurves();
 				secondBufferVOI = voiBuffer.get("Subcutaneous area");
-				for(int i=0; i<secondVOI.length; i++) {
-					for(int j=0; j<secondVOI[i].size(); j++) {
-						secondBufferVOI.importCurve((VOIContour)secondVOI[i].get(j), i);
-					}
+				for(int j=0; j<secondVOI.size(); j++) {
+				    secondBufferVOI.importCurve((VOIContour)secondVOI.get(j));
 				}
 				secondBufferVOI.setComputerGenerated(true);
 				secondBufferVOI.setSegmentationTime(((PlugInAlgorithmCTAbdomen)algorithm).getSegmentationTimeSub());
@@ -782,7 +772,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	 * Easy curveExists for checks if curveExists for viewableSlice(). (so no bounds check)
 	 */
 	public boolean curveExists(String name) {
-		if(voiBuffer.get(name).getCurves()[getViewableSlice()].size() > 0) {
+		if(voiBuffer.get(name).getSliceSize(getViewableSlice()) > 0) {
 			return true;
 		}
 		return false;
@@ -909,9 +899,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+File.separator;
 		String ext = name.contains(".xml") ? "" : ".xml";
 		PlugInSelectableVOI temp = voiBuffer.get(name);
-		for(int i=0; i<temp.getZDim(); i++) {
-			temp.removeCurves(i);
-		}
+		temp.getCurves().removeAllElements();
+		
 	    if(new File(fileDir+name+ext).exists()) {
 	        FileVOI v;
 	        VOI[] voiVec = null;
@@ -926,12 +915,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	        	//though VOI could contain multiple curves, no file loaded should contain multiple VOIs
 	            MipavUtil.displayError("Invalid VOI from location:\n"+fileDir+"\nWith name: "+name);
 	        } else {
-	        	Vector <VOIBase>[] voiVecTemp = voiVec[0].getCurves();
-	        	for(int i=0; i<voiVecTemp.length; i++) {
-	    			for(int j=0; j<voiVecTemp[i].size(); j++) { 
-	    				temp.importCurve((VOIContour)(voiVecTemp[i].get(j)), i);
-	    			}
-	    		}
+	            Vector <VOIBase> voiVecTemp = voiVec[0].getCurves();
+	            for(int j=0; j<voiVecTemp.size(); j++) { 
+	                temp.importCurve((VOIContour)(voiVecTemp.get(j)));
+	            }
 	        }
 	    }
 	    return temp;
@@ -1023,7 +1010,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		if(!multipleSlices) {
 			return voiExists(name);
 		}
-		if(voiBuffer.get(name).getCurves()[slice].size() > 0) {
+		if(voiBuffer.get(name).getSliceSize(slice) > 0) {
 			return true;
 		}
 		return false;
@@ -1841,7 +1828,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
     	VOIVector vec = getActiveImage().getVOIs();
     	PlugInSelectableVOI temp = null;
     	for(int i=0; i<vec.size(); i++) 	
-        	if((temp = voiBuffer.get(vec.get(i).getName())) != null && temp.getCurves()[getViewableSlice()].size() > 0) 
+        	if((temp = voiBuffer.get(vec.get(i).getName())) != null && temp.getSliceSize(getViewableSlice()) > 0) 
         		((MuscleDialogPrompt)tabs[pane]).setButton(temp);
     }
     
@@ -2568,7 +2555,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		    boolean curveReplace = false;
 		    for(int i=0; i<srcVOI.size(); i++) {
 		        if(srcVOI.get(i).getName().equals(objectName)) {
-		            if(srcVOI.get(i).getCurves()[getViewableSlice()].size() > 0) {
+		            if(srcVOI.get(i).getSliceSize(getViewableSlice()) > 0) {
 		            	goodVOI = (VOI)srcVOI.get(i).clone();
 		            	countQualifiedVOIs++;
 		            	curveReplace = true;
@@ -2592,8 +2579,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		        return null;  
 		    }
 		    
-		    
-		    Vector<VOIBase>[] curves = goodVOI.getCurves();           
+		    int zDim = muscleFrame.getActiveImage().getExtents().length > 2 ? 
+		            muscleFrame.getActiveImage().getExtents()[2] : 1;
+		    Vector<VOIBase>[] curves = goodVOI.getSortedCurves(zDim);           
 		
 		    boolean maxCurve = false, closedProblem = false;
 		    int sliceCurves = 0, sliceClosed = 0, slice=0;
@@ -2629,12 +2617,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		    	return null;
 		    }
 		    
-		    
+
+            if(curveReplace) 
+                voiBuffer.get(objectName).getCurves().removeAllElements();
 			for(int i=0; i<curves.length; i++) { 
 				for(int j=0; j<curves[i].size(); j++) {
-					if(curveReplace) 
-						voiBuffer.get(objectName).removeCurve(j, i);
-				    voiBuffer.get(objectName).importCurve((VOIContour)curves[i].get(j), i);
+				    voiBuffer.get(objectName).importCurve((VOIContour)curves[i].get(j));
 				}
 			}
 		    
@@ -2882,7 +2870,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         public void setSlice(int slice) {
         	PlugInSelectableVOI temp;
         	for(int i=0; i<mirrorCheckArr.length; i++) {
-        		if((temp = voiBuffer.get(mirrorButtonArr[i].getText())).getCurves()[slice].size() == 0) {
+        		if((temp = voiBuffer.get(mirrorButtonArr[i].getText())).getSliceSize(slice) == 0) {
 	        		mirrorCheckArr[i].setColor(Color.black);
 	        		mirrorCheckArr[i].getColorButton().colorChanged(Color.black);
         		} else {
@@ -2892,7 +2880,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         		//System.out.println("Size of "+temp.getName()+": "+temp.getCurves()[slice].size());
         	}
         	for(int i=0; i<noMirrorCheckArr.length; i++) {
-        		if((temp = voiBuffer.get(noMirrorButtonArr[i].getText())).getCurves()[slice].size() == 0) {
+        		if((temp = voiBuffer.get(noMirrorButtonArr[i].getText())).getSliceSize(slice) == 0) {
 	        		noMirrorCheckArr[i].setColor(Color.black);
 	        		noMirrorCheckArr[i].getColorButton().colorChanged(Color.black);
         		} else {
@@ -4410,11 +4398,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	        int res0Unit = getActiveImage().getUnitsOfMeasure(0);
 	        int res1Unit = getActiveImage().getUnitsOfMeasure(1);
 	        int res2Unit; //only used in 3D images
-
+	        
 	        float xRes = (float) (getActiveImage().getResolutions(0)[0] * ModelImage.getConversionFactor(resultUnitLoc, res0Unit));
 	        float yRes = (float) (getActiveImage().getResolutions(0)[1] * ModelImage.getConversionFactor(resultUnitLoc, res1Unit));
 	        float zRes; //only used in 3D images
-	        
+			
 			wholeMultiplier = sliceMultiplier = xRes*yRes;
 			//for 3D images, also need to include z-resolution
 			if(multipleSlices) {
@@ -4486,15 +4474,21 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				return;
 			}
 			
-			System.out.println("Number of slices: "+temp.getZDim());
+
+	        int[] iX = new int[]{0,0};
+	        int[] iY = new int[]{0,0};
+	        int[] iZ = new int[]{0,0};
+	        temp.getBounds(iX,iY,iZ);
+			System.out.println("Number of slices: "+ (iZ[1] - iZ[0] + 1));
 			//in the case of a 3D image, each VOI is cloned for a particular slice, relevant statistics are caluclated
 			//for that slice only
-			for(int k=0; k<temp.getZDim(); k++) {
+			for(int k = iZ[0]; k <= iZ[1]; k++) {
 				//progressBar.setMessage("Calculating "+name.toLowerCase()+" slice "+k+"...");
-				VOI v2 = (VOI)v.clone();
-				for(int n=0; n<temp.getZDim(); n++) {
-					if(n != k)
-						v2.removeCurves(n);
+				VOI v2 = new VOI( (short)0, "temp", 1 );
+				Vector<VOIBase> sliceCurves = temp.getSliceCurves(k);
+				for ( int s = 0; s < sliceCurves.size(); s++ )
+				{
+				    v2.importCurve( sliceCurves.elementAt(s) );
 				}
 				performCalculations(v2, k, sliceMultiplier);
 			}
@@ -4640,7 +4634,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			int area = 0;
 			double meanH = 0;
 			BitSet fullMask = new BitSet();
-			v.createBinaryMask(fullMask, getActiveImage().getExtents()[0], getActiveImage().getExtents()[1]);
+			v.createBinaryMask3D(fullMask, getActiveImage().getExtents()[0], getActiveImage().getExtents()[1], false, false);
 			double mark = 0;
 			for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
 		        mark = getImageA().getDouble(i);
@@ -4663,7 +4657,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		private double getPieceCount(VOI v, int lowerBound, int upperBound) {
 			int area = 0;
 			BitSet fullMask = new BitSet();
-			v.createBinaryMask(fullMask, getActiveImage().getExtents()[0], getActiveImage().getExtents()[1]);
+            v.createBinaryMask3D(fullMask, getActiveImage().getExtents()[0], getActiveImage().getExtents()[1], false, false);
 			double mark = 0;
 			for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
 		        mark = getImageA().getDouble(i);
@@ -4680,7 +4674,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		private double getTotalAreaCount(VOI v) {
 			int totalArea = 0;
 			BitSet fullMask = new BitSet();
-			v.createBinaryMask(fullMask, getActiveImage().getExtents()[0], getActiveImage().getExtents()[1]);
+            v.createBinaryMask3D(fullMask, getActiveImage().getExtents()[0], getActiveImage().getExtents()[1], false, false);
 			for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
 		        totalArea++;
 			}
@@ -4775,7 +4769,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    }
 	
 	    private void initThighAxes() {
-	        Vector[][] contours = new Vector[2][]; //either 2 or 3 dimensions
 	        defaultPts = new int[2];
 	        int nVOI;//, nContours;
 	        float[] xPoints = null;
@@ -4808,37 +4801,35 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	            return;
 	        }
 	        
-	        for(int i=0; i<thighVOIs.length; i++) {
-	            
-	            contours[i] = thighVOIs[i].getCurves();
-	            //nContours = contours[i][zSlice].size();
-	    
+	        for(int i=0; i<thighVOIs.length; i++) {            	    
 	            int elementNum = 0;
 	       
-	            Polygon[] gons = thighVOIs[i].exportPolygons(zSlice);
-	
-	            xPoints = new float[gons[elementNum].npoints + 5];
-	            yPoints = new float[gons[elementNum].npoints + 5];
-	
-	            xPoints[0] = gons[elementNum].xpoints[gons[elementNum].npoints - 2];
-	            yPoints[0] = gons[elementNum].ypoints[gons[elementNum].npoints - 2];
-	
-	            	xPoints[1] = gons[elementNum].xpoints[gons[elementNum].npoints - 1];
-	            	yPoints[1] = gons[elementNum].ypoints[gons[elementNum].npoints - 1];
+	            Vector<VOIBase> contours = thighVOIs[i].getSliceCurves(zSlice);
+	            VOIBase selectedContour = contours.elementAt(elementNum);
+	            int npoints = selectedContour.size();
 	            
-	            for (i = 0; i < gons[elementNum].npoints; i++) {
-	                xPoints[i + 2] = gons[elementNum].xpoints[i];
-	                yPoints[52*i + 2] = gons[elementNum].ypoints[i];
+	            xPoints = new float[npoints + 5];
+	            yPoints = new float[npoints + 5];
+	
+	            xPoints[0] = selectedContour.elementAt(npoints - 2).X;
+	            yPoints[0] = selectedContour.elementAt(npoints - 2).Y;
+	
+	            	xPoints[1] = selectedContour.elementAt(npoints - 1).X;
+	            	yPoints[1] = selectedContour.elementAt(npoints - 1).Y;
+	            
+	            for (i = 0; i < npoints; i++) {
+	                xPoints[i + 2] = selectedContour.elementAt(i).X;
+	                yPoints[52*i + 2] = selectedContour.elementAt(i).Y;
 	            }
 	
-	            xPoints[gons[elementNum].npoints + 2] = gons[elementNum].xpoints[0];
-	            yPoints[gons[elementNum].npoints + 2] = gons[elementNum].ypoints[0];
+	            xPoints[npoints + 2] = selectedContour.elementAt(0).X;
+	            yPoints[npoints + 2] = selectedContour.elementAt(0).Y;
 	
-	            xPoints[gons[elementNum].npoints + 3] = gons[elementNum].xpoints[1];
-	            yPoints[gons[elementNum].npoints + 3] = gons[elementNum].ypoints[1];
+	            xPoints[npoints + 3] = selectedContour.elementAt(1).X;
+	            yPoints[npoints + 3] = selectedContour.elementAt(1).Y;
 	
-	            xPoints[gons[elementNum].npoints + 4] = gons[elementNum].xpoints[2];
-	            yPoints[gons[elementNum].npoints + 4] = gons[elementNum].ypoints[2];
+	            xPoints[npoints + 4] = selectedContour.elementAt(2).X;
+	            yPoints[npoints + 4] = selectedContour.elementAt(2).Y;
 	
 	            AlgorithmArcLength arcLength = new AlgorithmArcLength(xPoints, yPoints);
 	            defaultPts[i] = Math.round(arcLength.getTotalArcLength() / 6); //larger denom.
@@ -5177,7 +5168,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	            // for each element in the list ....
 	            for (int i = 0; i < list.getSize(); i++) {
 	                properties = calculator.getVOIProperties((VOI) list.getElementAt(i));
-	                contours = ((VOI) list.getElementAt(i)).getCurves();
+	                int zDim = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+	                contours = ((VOI) list.getElementAt(i)).getSortedCurves(zDim);
 
 	                String[] rowData = new String[logModel.getColumnCount()];
 	                String[] totalData = new String[logModel.getColumnCount()];
@@ -5412,7 +5404,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	            // column-by-column:
 	            for (int i = 0; i < list.getSize(); i++) {
 	                properties = calculator.getVOIProperties((VOI) list.getElementAt(i));
-	                contours = ((VOI) list.getElementAt(i)).getCurves();
 
 	                String[] rowData = new String[logModel.getColumnCount()];
 	                rowData[0] = list.getElementAt(i).toString();
@@ -5534,394 +5525,394 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 
 	 //TODO: Work with right mouse click
 	
-	private class PlugInVOIStats extends JDialogVOIStats {
-		
-	    public PlugInVOIStats(Frame theParentFrame, ModelImage img, VOI _voi) {
-	        super(theParentFrame, img, _voi);
-	    }
-
-	    protected void init() {
-
-	        // setTitle("VOI Statistics");
-	        frameBorder = BorderFactory.createCompoundBorder(BorderFactory.createRaisedBevelBorder(),
-	                                                         BorderFactory.createLoweredBevelBorder());
-
-	        JLabel labelName = new JLabel("Name of VOI:");
-	        labelName.setFont(serif12);
-	        labelName.setForeground(Color.black);
-
-	        JLabel labelColor = new JLabel("Color of VOI:");
-	        labelColor.setFont(serif12);
-	        labelColor.setForeground(Color.black);
-
-	        JLabel labelThickness = new JLabel("Thickness of VOI:");
-	        labelThickness.setFont(serif12);
-	        labelThickness.setForeground(Color.black);
-
-	        colorButton = new JButton();
-	        colorButton.setPreferredSize(new Dimension(25, 25));
-	        colorButton.setToolTipText("Change VOI color");
-	        colorButton.addActionListener(this);
-
-	        VOIName = new JTextField(15);
-	        VOIName.setFont(serif12);
-
-	        VOIThicknessField = new JTextField(3);
-	        VOIThicknessField.setFont(serif12);
-	        MipavUtil.makeNumericsOnly(VOIThicknessField, false);
-
-	        JPanel namePanel = new JPanel(new GridBagLayout());
-	        GridBagConstraints gbc = new GridBagConstraints();
-	        gbc.insets = new Insets(5, 5, 5, 5);
-	        gbc.anchor = GridBagConstraints.WEST;
-	        gbc.weightx = 0;
-	        gbc.weighty = 0;
-	        gbc.fill = GridBagConstraints.NONE;
-	        namePanel.add(labelName, gbc);
-
-	        gbc.weightx = 1;
-	        gbc.weighty = 1;
-	        gbc.gridx = 1;
-	        gbc.fill = GridBagConstraints.HORIZONTAL;
-	        namePanel.add(VOIName, gbc);
-
-	        gbc.weightx = 0;
-	        gbc.weighty = 0;
-	        gbc.gridx = 0;
-	        gbc.gridy = 1;
-	        gbc.fill = GridBagConstraints.NONE;
-	        namePanel.add(labelThickness, gbc);
-
-	        gbc.weightx = 1;
-	        gbc.weighty = 1;
-	        gbc.gridx = 1;
-	        gbc.fill = GridBagConstraints.HORIZONTAL;
-	        namePanel.add(VOIThicknessField, gbc);
-
-	        gbc.gridx = 0;
-	        gbc.gridy = 2;
-	        gbc.weightx = 0;
-	        gbc.weighty = 0;
-	        gbc.fill = GridBagConstraints.NONE;
-	        namePanel.add(labelColor, gbc);
-
-	        gbc.gridx = 1;
-	        gbc.weightx = 1;
-	        gbc.weighty = 1;
-	        namePanel.add(colorButton, gbc);
-
-	        gbc.insets = new Insets(0, 0, 0, 0);
-
-	        checkboxBoundingBox = new JCheckBox("Show contour bounding box");
-	        checkboxBoundingBox.setFont(serif12);
-
-	        checkboxAdditiveOrSubtractive = new JCheckBox("Use additive polarity for VOI");
-	        checkboxAdditiveOrSubtractive.setFont(serif12);
-
-	        checkboxIncludeForProcessing = new JCheckBox("Include for processing");
-	        checkboxIncludeForProcessing.setFont(serif12);
-
-	        checkboxBoundary = new JCheckBox("Display VOI shading");
-	        checkboxBoundary.setFont(serif12);
-	        checkboxBoundary.addItemListener(this);
-
-	        checkboxVOIName = new JCheckBox("Show VOI name");
-	        checkboxVOIName.setFont(serif12);
-	        checkboxVOIName.setSelected(Preferences.is(Preferences.PREF_SHOW_VOI_NAME));
-
-	        JPanel checkboxPanel = new JPanel();
-	        checkboxPanel.setLayout(new BoxLayout(checkboxPanel, BoxLayout.Y_AXIS));
-	        checkboxPanel.add(checkboxBoundingBox);
-	        checkboxPanel.add(checkboxAdditiveOrSubtractive);
-	        checkboxPanel.add(checkboxIncludeForProcessing);
-	        checkboxPanel.add(checkboxVOIName);
-	        checkboxPanel.add(checkboxBoundary);
-
-	        opacitySlider = new JSlider(SwingConstants.HORIZONTAL, 0, 100, 30);
-
-	        opacitySlider.setMajorTickSpacing(20);
-	        opacitySlider.setValue(30);
-	        opacitySlider.setPaintTicks(true);
-	        opacitySlider.setEnabled(false);
-	        opacitySlider.addChangeListener(this);
-
-	        JLabel maximum = new JLabel(String.valueOf(1));
-	        maximum.setForeground(Color.black);
-	        maximum.setFont(serif12);
-
-	        current = new JLabel(String.valueOf(opacitySlider.getValue() / 100.0f));
-	        current.setForeground(Color.black);
-	        current.setFont(serif12B);
-
-	        JLabel minimum = new JLabel(String.valueOf(0));
-	        minimum.setForeground(Color.black);
-	        minimum.setFont(serif12);
-
-	        JPanel sliderPanel = new JPanel(new GridBagLayout());
-
-	        gbc.gridx = 0;
-	        gbc.gridy = 0;
-	        gbc.gridwidth = 3;
-	        gbc.weightx = 1;
-	        gbc.gridheight = 1;
-	        gbc.fill = GridBagConstraints.HORIZONTAL;
-
-	        sliderPanel.add(opacitySlider, gbc);
-
-	        gbc.gridx = 0;
-	        gbc.gridy = 1;
-	        gbc.gridwidth = 1;
-	        gbc.weightx = 0;
-	        gbc.anchor = GridBagConstraints.WEST;
-	        gbc.fill = GridBagConstraints.NONE;
-
-	        sliderPanel.add(minimum, gbc);
-
-	        gbc.gridx = 1;
-	        gbc.anchor = GridBagConstraints.CENTER;
-	        gbc.weightx = .5;
-
-	        sliderPanel.add(current, gbc);
-
-	        gbc.gridx = 2;
-	        gbc.anchor = GridBagConstraints.EAST;
-	        gbc.weightx = 0;
-
-	        sliderPanel.add(maximum, gbc);
-	        sliderPanel.setBorder(buildTitledBorder("Opacity"));
-
-	        JPanel panelVOIProps = new JPanel(new GridBagLayout());
-	        panelVOIProps.setBorder(buildTitledBorder("VOI properties"));
-	        gbc.gridx = 0;
-	        gbc.gridy = 0;
-	        gbc.gridwidth = 1;
-	        gbc.gridheight = 1;
-	        gbc.weightx = 1;
-	        gbc.anchor = GridBagConstraints.WEST;
-	        gbc.fill = GridBagConstraints.HORIZONTAL;
-	        panelVOIProps.add(namePanel, gbc);
-	        gbc.gridy = 1;
-	        panelVOIProps.add(checkboxPanel, gbc);
-	        gbc.gridy = 2;
-	        gbc.weighty = 1;
-	        gbc.anchor = GridBagConstraints.NORTH; // gbc.fill = GridBagConstraints.BOTH;
-	        panelVOIProps.add(sliderPanel, gbc);
-
-	        listPanel = new PlugInStatisticsList();
-
-	        try {
-	            listPanel.setSliceCount(image.getExtents()[2]);
-	        } catch (ArrayIndexOutOfBoundsException aioobe) {
-	            // otherwise, this must be a 2d image.
-	            listPanel.setSliceCount(1);
-	        } finally {
-	            listPanel.setCheckBoxesEnabled();
-	        }
-
-	        checkboxExclude = new JCheckBox("Exclude intensity range");
-	        checkboxExclude.setFont(serif12);
-	        checkboxExclude.addActionListener(this);
-	        
-	        labelMin = new JLabel("Range: ");
-	        labelMin.setFont(serif12);
-	        labelMin.setForeground(Color.black);
-	        labelMin.setEnabled(false);
-
-	        textMin = new JTextField(5);
-	        textMin.setEnabled(false);
-	        textMin.setFont(serif12);
-
-	        labelMax = new JLabel(" to ");
-	        labelMax.setFont(serif12);
-	        labelMax.setForeground(Color.black);
-	        labelMax.setEnabled(false);
-
-	        textMax = new JTextField(5);
-	        textMax.setEnabled(false);
-	        textMax.setFont(serif12);
-	        
-	        checkboxSaveStats = new JCheckBox("Save statistics in header");
-	        checkboxSaveStats.setFont(serif12);
-	        //checkboxSaveStats.addActionListener(this);
-
-	        JPanel checkPanel = new JPanel(new GridBagLayout());
-	        GridBagConstraints gbc2 = new GridBagConstraints();
-	        gbc2.anchor = GridBagConstraints.WEST;
-	        gbc2.fill = GridBagConstraints.BOTH;
-	        gbc2.weightx = 1;
-	        gbc2.weighty = 1;
-	        gbc2.gridx = 0;
-	        gbc2.gridy = 0;
-	        checkPanel.add(checkboxExclude, gbc2);
-	        gbc2.gridy++;
-	        checkPanel.add(checkboxSaveStats, gbc2);
-
-	        JPanel rangePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-
-	        rangePanel.add(labelMin);
-	        rangePanel.add(textMin);
-	        rangePanel.add(labelMax);
-	        rangePanel.add(textMax);
-
-	        JPanel intensityPanel = new JPanel();
-	        intensityPanel.setLayout(new BoxLayout(intensityPanel, BoxLayout.Y_AXIS));
-	        intensityPanel.add(checkPanel);
-	        intensityPanel.add(rangePanel);
-
-	        statsPanel = new JPanel(new BorderLayout());
-	        statsPanel.add(listPanel);
-	        statsPanel.add(intensityPanel, BorderLayout.SOUTH);
-
-	        JLabel labelSeed = new JLabel("Seed value (0-32K)");
-	        labelSeed.setFont(serif12);
-	        labelSeed.setForeground(Color.black);
-
-	        seedValueTF = new JTextField(5);
-	        seedValueTF.setFont(serif12);
-	        seedValueTF.addFocusListener(this);
-
-	        JPanel seedValuePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-	        seedValuePanel.setBorder(buildTitledBorder("Watershed seed value"));
-	        seedValuePanel.add(labelSeed);
-	        seedValuePanel.add(seedValueTF);
-
-	        JPanel calcPanel = new JPanel(new BorderLayout());
-	        calcPanel.add(statsPanel);
-	        calcPanel.add(seedValuePanel, BorderLayout.SOUTH);
-
-	        applyButton = new JButton("Apply");
-	        applyButton.setPreferredSize(MipavUtil.defaultButtonSize);
-	        applyButton.setFont(serif12B);
-	        applyButton.addActionListener(this);
-
-	        cancelButton = buildCancelButton();
-	        cancelButton.setPreferredSize(MipavUtil.defaultButtonSize);
-	        
-	        helpButton = buildHelpButton();
-	        helpButton.setPreferredSize(MipavUtil.defaultButtonSize);
-
-	        // build the VOI tree
-	        buildVOITree();
-	        buildVOIContourPane();
-
-	        GridBagConstraints gb = new GridBagConstraints();
-
-	        JPanel mainTreePanel = new JPanel(new GridBagLayout());
-	        mainTreePanel.setBorder(buildTitledBorder("VOI Browser"));
-
-	        gb.anchor = GridBagConstraints.CENTER;
-	        gb.gridx = 0;
-	        gbc.gridy = 0;
-	        gb.weightx = 1.0;
-	        gb.weighty = 1.0;
-	        gb.fill = GridBagConstraints.BOTH;
-
-	        mainTreePanel.add(voiTreePane, gb);
-
-	        JPanel treeOptionPanel = new JPanel(new BorderLayout());
-	        treeOptionPanel.setBorder(buildTitledBorder("Tree options"));
-	        followVOISelectionBox = new JCheckBox("Frame follows VOI selection", true);
-	        followVOISelectionBox.setFont(MipavUtil.font12);
-	        followVOISelectionBox.addActionListener(this);
-	        followVOISelectionBox.setEnabled(image.getNDims() > 2);
-	        treeOptionPanel.add(followVOISelectionBox, BorderLayout.CENTER);
-
-	        gb.gridy = 1;
-	        gb.weightx = 1;
-	        gb.weighty = 0;
-	        gb.fill = GridBagConstraints.HORIZONTAL;
-	        mainTreePanel.add(treeOptionPanel, gb);
-
-	        gb.gridy = 2;
-	        gb.weightx = .5;
-	        gb.weighty = .5;
-	        gb.fill = GridBagConstraints.BOTH;
-	        mainTreePanel.add(voiContourPane, gb);
-
-	        JPanel leftButton = new JPanel();
-	        leftButton.add(applyButton);
-	        leftButton.add(cancelButton);
-	        leftButton.add(helpButton);
-
-	        JPanel leftWholePanel = new JPanel(new BorderLayout());
-	        leftWholePanel.add(panelVOIProps, BorderLayout.NORTH);
-	        leftWholePanel.add(mainTreePanel, BorderLayout.CENTER);
-
-	        JPanel leftPanel = new JPanel(new BorderLayout());
-	        leftPanel.add(leftWholePanel);
-	        leftPanel.add(leftButton, BorderLayout.SOUTH);
-
-	        calcButton = new JButton("Calculate");
-	        calcButton.setPreferredSize(new Dimension(100, 30));
-	        calcButton.setFont(serif12B);
-	        calcButton.addActionListener(this);
-
-	        JPanel rightButton = new JPanel();
-	        rightButton.add(calcButton);
-	        //rightButton.add(helpButton);
-
-	        JPanel rightPanel = new JPanel(new BorderLayout());
-	        rightPanel.add(calcPanel);
-	        rightPanel.add(rightButton, BorderLayout.SOUTH);
-
-	        mainDialogPanel.setLayout(new GridBagLayout());
-	        gb.gridx = 0;
-	        gb.gridy = 0;
-	        gb.weightx = 1;
-	        gb.weighty = 1;
-	        gb.fill = GridBagConstraints.BOTH;
-	        mainDialogPanel.add(leftPanel, gb);
-
-	        gb.gridx = 1;
-	        mainDialogPanel.add(rightPanel, gb);
-
-
-	        // mainDialogPanel.setLayout(new BorderLayout());
-	        // mainDialogPanel.add(leftPanel, BorderLayout.WEST);
-	        // mainDialogPanel.add(rightPanel);
-	        mainDialogPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-	        getContentPane().add(mainDialogPanel);
-	        pack();
-	    }
-	}
+//	private class PlugInVOIStats extends JDialogVOIStats {
+//		
+//	    public PlugInVOIStats(Frame theParentFrame, ModelImage img, VOI _voi) {
+//	        super(theParentFrame, img, _voi);
+//	    }
+//
+//	    protected void init() {
+//
+//	        // setTitle("VOI Statistics");
+//	        frameBorder = BorderFactory.createCompoundBorder(BorderFactory.createRaisedBevelBorder(),
+//	                                                         BorderFactory.createLoweredBevelBorder());
+//
+//	        JLabel labelName = new JLabel("Name of VOI:");
+//	        labelName.setFont(serif12);
+//	        labelName.setForeground(Color.black);
+//
+//	        JLabel labelColor = new JLabel("Color of VOI:");
+//	        labelColor.setFont(serif12);
+//	        labelColor.setForeground(Color.black);
+//
+//	        JLabel labelThickness = new JLabel("Thickness of VOI:");
+//	        labelThickness.setFont(serif12);
+//	        labelThickness.setForeground(Color.black);
+//
+//	        colorButton = new JButton();
+//	        colorButton.setPreferredSize(new Dimension(25, 25));
+//	        colorButton.setToolTipText("Change VOI color");
+//	        colorButton.addActionListener(this);
+//
+//	        VOIName = new JTextField(15);
+//	        VOIName.setFont(serif12);
+//
+//	        VOIThicknessField = new JTextField(3);
+//	        VOIThicknessField.setFont(serif12);
+//	        MipavUtil.makeNumericsOnly(VOIThicknessField, false);
+//
+//	        JPanel namePanel = new JPanel(new GridBagLayout());
+//	        GridBagConstraints gbc = new GridBagConstraints();
+//	        gbc.insets = new Insets(5, 5, 5, 5);
+//	        gbc.anchor = GridBagConstraints.WEST;
+//	        gbc.weightx = 0;
+//	        gbc.weighty = 0;
+//	        gbc.fill = GridBagConstraints.NONE;
+//	        namePanel.add(labelName, gbc);
+//
+//	        gbc.weightx = 1;
+//	        gbc.weighty = 1;
+//	        gbc.gridx = 1;
+//	        gbc.fill = GridBagConstraints.HORIZONTAL;
+//	        namePanel.add(VOIName, gbc);
+//
+//	        gbc.weightx = 0;
+//	        gbc.weighty = 0;
+//	        gbc.gridx = 0;
+//	        gbc.gridy = 1;
+//	        gbc.fill = GridBagConstraints.NONE;
+//	        namePanel.add(labelThickness, gbc);
+//
+//	        gbc.weightx = 1;
+//	        gbc.weighty = 1;
+//	        gbc.gridx = 1;
+//	        gbc.fill = GridBagConstraints.HORIZONTAL;
+//	        namePanel.add(VOIThicknessField, gbc);
+//
+//	        gbc.gridx = 0;
+//	        gbc.gridy = 2;
+//	        gbc.weightx = 0;
+//	        gbc.weighty = 0;
+//	        gbc.fill = GridBagConstraints.NONE;
+//	        namePanel.add(labelColor, gbc);
+//
+//	        gbc.gridx = 1;
+//	        gbc.weightx = 1;
+//	        gbc.weighty = 1;
+//	        namePanel.add(colorButton, gbc);
+//
+//	        gbc.insets = new Insets(0, 0, 0, 0);
+//
+//	        checkboxBoundingBox = new JCheckBox("Show contour bounding box");
+//	        checkboxBoundingBox.setFont(serif12);
+//
+//	        checkboxAdditiveOrSubtractive = new JCheckBox("Use additive polarity for VOI");
+//	        checkboxAdditiveOrSubtractive.setFont(serif12);
+//
+//	        checkboxIncludeForProcessing = new JCheckBox("Include for processing");
+//	        checkboxIncludeForProcessing.setFont(serif12);
+//
+//	        checkboxBoundary = new JCheckBox("Display VOI shading");
+//	        checkboxBoundary.setFont(serif12);
+//	        checkboxBoundary.addItemListener(this);
+//
+//	        checkboxVOIName = new JCheckBox("Show VOI name");
+//	        checkboxVOIName.setFont(serif12);
+//	        checkboxVOIName.setSelected(Preferences.is(Preferences.PREF_SHOW_VOI_NAME));
+//
+//	        JPanel checkboxPanel = new JPanel();
+//	        checkboxPanel.setLayout(new BoxLayout(checkboxPanel, BoxLayout.Y_AXIS));
+//	        checkboxPanel.add(checkboxBoundingBox);
+//	        checkboxPanel.add(checkboxAdditiveOrSubtractive);
+//	        checkboxPanel.add(checkboxIncludeForProcessing);
+//	        checkboxPanel.add(checkboxVOIName);
+//	        checkboxPanel.add(checkboxBoundary);
+//
+//	        opacitySlider = new JSlider(SwingConstants.HORIZONTAL, 0, 100, 30);
+//
+//	        opacitySlider.setMajorTickSpacing(20);
+//	        opacitySlider.setValue(30);
+//	        opacitySlider.setPaintTicks(true);
+//	        opacitySlider.setEnabled(false);
+//	        opacitySlider.addChangeListener(this);
+//
+//	        JLabel maximum = new JLabel(String.valueOf(1));
+//	        maximum.setForeground(Color.black);
+//	        maximum.setFont(serif12);
+//
+//	        current = new JLabel(String.valueOf(opacitySlider.getValue() / 100.0f));
+//	        current.setForeground(Color.black);
+//	        current.setFont(serif12B);
+//
+//	        JLabel minimum = new JLabel(String.valueOf(0));
+//	        minimum.setForeground(Color.black);
+//	        minimum.setFont(serif12);
+//
+//	        JPanel sliderPanel = new JPanel(new GridBagLayout());
+//
+//	        gbc.gridx = 0;
+//	        gbc.gridy = 0;
+//	        gbc.gridwidth = 3;
+//	        gbc.weightx = 1;
+//	        gbc.gridheight = 1;
+//	        gbc.fill = GridBagConstraints.HORIZONTAL;
+//
+//	        sliderPanel.add(opacitySlider, gbc);
+//
+//	        gbc.gridx = 0;
+//	        gbc.gridy = 1;
+//	        gbc.gridwidth = 1;
+//	        gbc.weightx = 0;
+//	        gbc.anchor = GridBagConstraints.WEST;
+//	        gbc.fill = GridBagConstraints.NONE;
+//
+//	        sliderPanel.add(minimum, gbc);
+//
+//	        gbc.gridx = 1;
+//	        gbc.anchor = GridBagConstraints.CENTER;
+//	        gbc.weightx = .5;
+//
+//	        sliderPanel.add(current, gbc);
+//
+//	        gbc.gridx = 2;
+//	        gbc.anchor = GridBagConstraints.EAST;
+//	        gbc.weightx = 0;
+//
+//	        sliderPanel.add(maximum, gbc);
+//	        sliderPanel.setBorder(buildTitledBorder("Opacity"));
+//
+//	        JPanel panelVOIProps = new JPanel(new GridBagLayout());
+//	        panelVOIProps.setBorder(buildTitledBorder("VOI properties"));
+//	        gbc.gridx = 0;
+//	        gbc.gridy = 0;
+//	        gbc.gridwidth = 1;
+//	        gbc.gridheight = 1;
+//	        gbc.weightx = 1;
+//	        gbc.anchor = GridBagConstraints.WEST;
+//	        gbc.fill = GridBagConstraints.HORIZONTAL;
+//	        panelVOIProps.add(namePanel, gbc);
+//	        gbc.gridy = 1;
+//	        panelVOIProps.add(checkboxPanel, gbc);
+//	        gbc.gridy = 2;
+//	        gbc.weighty = 1;
+//	        gbc.anchor = GridBagConstraints.NORTH; // gbc.fill = GridBagConstraints.BOTH;
+//	        panelVOIProps.add(sliderPanel, gbc);
+//
+//	        listPanel = new PlugInStatisticsList();
+//
+//	        try {
+//	            listPanel.setSliceCount(image.getExtents()[2]);
+//	        } catch (ArrayIndexOutOfBoundsException aioobe) {
+//	            // otherwise, this must be a 2d image.
+//	            listPanel.setSliceCount(1);
+//	        } finally {
+//	            listPanel.setCheckBoxesEnabled();
+//	        }
+//
+//	        checkboxExclude = new JCheckBox("Exclude intensity range");
+//	        checkboxExclude.setFont(serif12);
+//	        checkboxExclude.addActionListener(this);
+//	        
+//	        labelMin = new JLabel("Range: ");
+//	        labelMin.setFont(serif12);
+//	        labelMin.setForeground(Color.black);
+//	        labelMin.setEnabled(false);
+//
+//	        textMin = new JTextField(5);
+//	        textMin.setEnabled(false);
+//	        textMin.setFont(serif12);
+//
+//	        labelMax = new JLabel(" to ");
+//	        labelMax.setFont(serif12);
+//	        labelMax.setForeground(Color.black);
+//	        labelMax.setEnabled(false);
+//
+//	        textMax = new JTextField(5);
+//	        textMax.setEnabled(false);
+//	        textMax.setFont(serif12);
+//	        
+//	        checkboxSaveStats = new JCheckBox("Save statistics in header");
+//	        checkboxSaveStats.setFont(serif12);
+//	        //checkboxSaveStats.addActionListener(this);
+//
+//	        JPanel checkPanel = new JPanel(new GridBagLayout());
+//	        GridBagConstraints gbc2 = new GridBagConstraints();
+//	        gbc2.anchor = GridBagConstraints.WEST;
+//	        gbc2.fill = GridBagConstraints.BOTH;
+//	        gbc2.weightx = 1;
+//	        gbc2.weighty = 1;
+//	        gbc2.gridx = 0;
+//	        gbc2.gridy = 0;
+//	        checkPanel.add(checkboxExclude, gbc2);
+//	        gbc2.gridy++;
+//	        checkPanel.add(checkboxSaveStats, gbc2);
+//
+//	        JPanel rangePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+//
+//	        rangePanel.add(labelMin);
+//	        rangePanel.add(textMin);
+//	        rangePanel.add(labelMax);
+//	        rangePanel.add(textMax);
+//
+//	        JPanel intensityPanel = new JPanel();
+//	        intensityPanel.setLayout(new BoxLayout(intensityPanel, BoxLayout.Y_AXIS));
+//	        intensityPanel.add(checkPanel);
+//	        intensityPanel.add(rangePanel);
+//
+//	        statsPanel = new JPanel(new BorderLayout());
+//	        statsPanel.add(listPanel);
+//	        statsPanel.add(intensityPanel, BorderLayout.SOUTH);
+//
+//	        JLabel labelSeed = new JLabel("Seed value (0-32K)");
+//	        labelSeed.setFont(serif12);
+//	        labelSeed.setForeground(Color.black);
+//
+//	        seedValueTF = new JTextField(5);
+//	        seedValueTF.setFont(serif12);
+//	        seedValueTF.addFocusListener(this);
+//
+//	        JPanel seedValuePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+//	        seedValuePanel.setBorder(buildTitledBorder("Watershed seed value"));
+//	        seedValuePanel.add(labelSeed);
+//	        seedValuePanel.add(seedValueTF);
+//
+//	        JPanel calcPanel = new JPanel(new BorderLayout());
+//	        calcPanel.add(statsPanel);
+//	        calcPanel.add(seedValuePanel, BorderLayout.SOUTH);
+//
+//	        applyButton = new JButton("Apply");
+//	        applyButton.setPreferredSize(MipavUtil.defaultButtonSize);
+//	        applyButton.setFont(serif12B);
+//	        applyButton.addActionListener(this);
+//
+//	        cancelButton = buildCancelButton();
+//	        cancelButton.setPreferredSize(MipavUtil.defaultButtonSize);
+//	        
+//	        helpButton = buildHelpButton();
+//	        helpButton.setPreferredSize(MipavUtil.defaultButtonSize);
+//
+//	        // build the VOI tree
+//	        buildVOITree();
+//	        buildVOIContourPane();
+//
+//	        GridBagConstraints gb = new GridBagConstraints();
+//
+//	        JPanel mainTreePanel = new JPanel(new GridBagLayout());
+//	        mainTreePanel.setBorder(buildTitledBorder("VOI Browser"));
+//
+//	        gb.anchor = GridBagConstraints.CENTER;
+//	        gb.gridx = 0;
+//	        gbc.gridy = 0;
+//	        gb.weightx = 1.0;
+//	        gb.weighty = 1.0;
+//	        gb.fill = GridBagConstraints.BOTH;
+//
+//	        mainTreePanel.add(voiTreePane, gb);
+//
+//	        JPanel treeOptionPanel = new JPanel(new BorderLayout());
+//	        treeOptionPanel.setBorder(buildTitledBorder("Tree options"));
+//	        followVOISelectionBox = new JCheckBox("Frame follows VOI selection", true);
+//	        followVOISelectionBox.setFont(MipavUtil.font12);
+//	        followVOISelectionBox.addActionListener(this);
+//	        followVOISelectionBox.setEnabled(image.getNDims() > 2);
+//	        treeOptionPanel.add(followVOISelectionBox, BorderLayout.CENTER);
+//
+//	        gb.gridy = 1;
+//	        gb.weightx = 1;
+//	        gb.weighty = 0;
+//	        gb.fill = GridBagConstraints.HORIZONTAL;
+//	        mainTreePanel.add(treeOptionPanel, gb);
+//
+//	        gb.gridy = 2;
+//	        gb.weightx = .5;
+//	        gb.weighty = .5;
+//	        gb.fill = GridBagConstraints.BOTH;
+//	        mainTreePanel.add(voiContourPane, gb);
+//
+//	        JPanel leftButton = new JPanel();
+//	        leftButton.add(applyButton);
+//	        leftButton.add(cancelButton);
+//	        leftButton.add(helpButton);
+//
+//	        JPanel leftWholePanel = new JPanel(new BorderLayout());
+//	        leftWholePanel.add(panelVOIProps, BorderLayout.NORTH);
+//	        leftWholePanel.add(mainTreePanel, BorderLayout.CENTER);
+//
+//	        JPanel leftPanel = new JPanel(new BorderLayout());
+//	        leftPanel.add(leftWholePanel);
+//	        leftPanel.add(leftButton, BorderLayout.SOUTH);
+//
+//	        calcButton = new JButton("Calculate");
+//	        calcButton.setPreferredSize(new Dimension(100, 30));
+//	        calcButton.setFont(serif12B);
+//	        calcButton.addActionListener(this);
+//
+//	        JPanel rightButton = new JPanel();
+//	        rightButton.add(calcButton);
+//	        //rightButton.add(helpButton);
+//
+//	        JPanel rightPanel = new JPanel(new BorderLayout());
+//	        rightPanel.add(calcPanel);
+//	        rightPanel.add(rightButton, BorderLayout.SOUTH);
+//
+//	        mainDialogPanel.setLayout(new GridBagLayout());
+//	        gb.gridx = 0;
+//	        gb.gridy = 0;
+//	        gb.weightx = 1;
+//	        gb.weighty = 1;
+//	        gb.fill = GridBagConstraints.BOTH;
+//	        mainDialogPanel.add(leftPanel, gb);
+//
+//	        gb.gridx = 1;
+//	        mainDialogPanel.add(rightPanel, gb);
+//
+//
+//	        // mainDialogPanel.setLayout(new BorderLayout());
+//	        // mainDialogPanel.add(leftPanel, BorderLayout.WEST);
+//	        // mainDialogPanel.add(rightPanel);
+//	        mainDialogPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+//	        getContentPane().add(mainDialogPanel);
+//	        pack();
+//	    }
+//	}
 	
-	private class PlugInHandler extends VOIHandler {
-		
-		public PlugInHandler(ViewJComponentEditImage compImage) {
-			super(compImage);
-			voiDialog = new PlugInVOIStats(compImage.getFrame(), compImage.getActiveImage(), null);
-	        /*if (compImage.getFrame() != null) {
-	            voiDialog = new JDialogVOIStats(compImage.getFrame(), compImage.getActiveImage(), null);
-	            addVOIUpdateListener(voiDialog);
-	        }*/
-		}
-
-		public void deleteContour(VOI voi, int slice) {
-			// TODO Auto-generated method stub
-			System.out.println("Working2");
-			super.deleteContour(voi, slice);
-			System.out.println("Working2");
-		}
-
-		public void deleteSelectedVOI(boolean contoursOnly) {
-			// TODO Auto-generated method stub
-			System.out.println("Working");
-			super.deleteSelectedVOI(contoursOnly);
-			System.out.println("Working");
-		}
-
-		public void deleteVOIActivePt() {
-			// TODO Auto-generated method stub
-			super.deleteVOIActivePt();
-			System.out.println("Working3");
-		}
-
-		public void deleteVOIs() {
-			// TODO Auto-generated method stub
-			super.deleteVOIs();
-			System.out.println("Working4");
-		}
-	}
+//	private class PlugInHandler extends VOIHandler {
+//		
+//		public PlugInHandler(ViewJComponentEditImage compImage) {
+//			super(compImage);
+//			voiDialog = new PlugInVOIStats(compImage.getFrame(), compImage.getActiveImage(), null);
+//	        /*if (compImage.getFrame() != null) {
+//	            voiDialog = new JDialogVOIStats(compImage.getFrame(), compImage.getActiveImage(), null);
+//	            addVOIUpdateListener(voiDialog);
+//	        }*/
+//		}
+//
+//		public void deleteContour(VOI voi, int slice) {
+//			// TODO Auto-generated method stub
+//			System.out.println("Working2");
+//			super.deleteContour(voi, slice);
+//			System.out.println("Working2");
+//		}
+//
+//		public void deleteSelectedVOI(boolean contoursOnly) {
+//			// TODO Auto-generated method stub
+//			System.out.println("Working");
+//			super.deleteSelectedVOI(contoursOnly);
+//			System.out.println("Working");
+//		}
+//
+//		public void deleteVOIActivePt() {
+//			// TODO Auto-generated method stub
+//			super.deleteVOIActivePt();
+//			System.out.println("Working3");
+//		}
+//
+//		public void deleteVOIs() {
+//			// TODO Auto-generated method stub
+//			super.deleteVOIs();
+//			System.out.println("Working4");
+//		}
+//	}
 	
 	/**
 	 * Another extended MIPAV class.  Designed to allow for overwriting of VOIs without prompt during plugin. 

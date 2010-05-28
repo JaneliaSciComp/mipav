@@ -286,7 +286,7 @@ public class FileVOI extends FileXML {
             final int numVOIs = VOIs.size();
 
             VOI currentVOI = null;
-            Vector[] curves = null;
+            Vector curves = null;
             VOIText vText = null;
 
             Vector3f arrowPt, textPt, arrowPtScanner, textPtScanner;
@@ -308,14 +308,14 @@ public class FileVOI extends FileXML {
 
                     curves = currentVOI.getCurves();
 
-                    for (int j = 0; j < curves.length; j++) {
+                    //for (int j = 0; j < curves.length; j++) {
 
-                        for (int k = 0; k < curves[j].size(); k++) {
+                        for (int k = 0; k < curves.size(); k++) {
 
                             openTag("Label", true);
 
                             // there's only one per VOI
-                            vText = (VOIText) curves[j].elementAt(k);
+                            vText = (VOIText) curves.elementAt(k);
                             voiString = vText.getText();
                             noteString = vText.getNote();
                             doNote = !noteString.equals(JDialogAnnotation.DEFAULT_NOTES) && noteString.length() > 0;
@@ -344,8 +344,8 @@ public class FileVOI extends FileXML {
                                 // System.err.println("Text location: " + textPtScanner + ", arrow location: " +
                                 // arrowPtScanner);
                             } else {
-                                textPt.Z = j;
-                                arrowPt.Z = j;
+                                //textPt.Z = j;
+                                //arrowPt.Z = j;
                                 closedTag("TextLocation", Float.toString(textPt.X) + "," + Float.toString(textPt.Y)
                                         + "," + Float.toString(textPt.Z));
                                 closedTag("ArrowLocation", Float.toString(arrowPt.X) + "," + Float.toString(arrowPt.Y)
@@ -378,7 +378,7 @@ public class FileVOI extends FileXML {
                         }
                     }
 
-                }
+                //}
             }
 
             openTag("Annotation", false);
@@ -441,7 +441,7 @@ public class FileVOI extends FileXML {
             final int numVOIs = VOIs.size();
 
             VOI currentVOI = null;
-            Vector[] curves = null;
+            Vector curves = null;
             VOIText vText = null;
 
             Vector3f arrowPt, textPt, arrowPtScanner, textPtScanner;
@@ -463,11 +463,11 @@ public class FileVOI extends FileXML {
 
                     curves = currentVOI.getCurves();
 
-                    for (int j = 0; j < curves.length; j++) {
+                    //for (int j = 0; j < curves.length; j++) {
 
-                        for (int k = 0; k < curves[j].size(); k++) {
+                        for (int k = 0; k < curves.size(); k++) {
 
-                            vText = (VOIText) curves[j].elementAt(k);
+                            vText = (VOIText) curves.elementAt(k);
                             voiString = vText.getText();
                             noteString = vText.getNote();
                             doNote = !noteString.equals(JDialogAnnotation.DEFAULT_NOTES) && noteString.length() > 0;
@@ -504,8 +504,8 @@ public class FileVOI extends FileXML {
                                     // System.err.println("Text location: " + textPtScanner + ", arrow location: " +
                                     // arrowPtScanner);
                                 } else {
-                                    textPt.Z = j;
-                                    arrowPt.Z = j;
+                                    //textPt.Z = j;
+                                    //arrowPt.Z = j;
                                     closedTag("TextLocation", Float.toString(textPt.X) + "," + Float.toString(textPt.Y)
                                             + "," + Float.toString(textPt.Z));
                                     closedTag("ArrowLocation", Float.toString(arrowPt.X) + ","
@@ -540,7 +540,7 @@ public class FileVOI extends FileXML {
                         }
                     }
 
-                }
+                //}
             }
 
             openTag("Annotation", false);
@@ -580,8 +580,9 @@ public class FileVOI extends FileXML {
             // open save as file dialog
         }
 
-        contours = voi.getCurves();
-        nSlices = voi.getCurves().length;
+        int length = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+        contours = voi.getSortedCurves( VOIBase.ZPLANE, length );
+        nSlices = contours.length;
 
         if (image.getNDims() > 2) {
             raFile.writeBytes("S " + Integer.toString(image.getExtents()[2]) + "\n");
@@ -652,9 +653,10 @@ public class FileVOI extends FileXML {
         }
 
         raFile.writeBytes("MIPAV PTS FILE\r\n");
-
-        contours = voi.getCurves();
-        length = voi.getCurves().length;
+        
+        length = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+        contours = voi.getSortedCurves( VOIBase.ZPLANE, length );
+        length = contours.length;
         curveType = voi.getCurveType();
         color = voi.getColor();
 
@@ -755,8 +757,9 @@ public class FileVOI extends FileXML {
 
         raFile.writeBytes("MIPAV VOI FILE\r\n");
 
-        contours = voi.getCurves();
-        length = voi.getCurves().length;
+        length = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+        contours = voi.getSortedCurves( VOIBase.ZPLANE, length );
+        length = contours.length;
         curveType = voi.getCurveType();
         color = voi.getColor();
 
@@ -839,7 +842,7 @@ public class FileVOI extends FileXML {
         float[] x = new float[100];
         float[] y = new float[100];
         float[] z = new float[100];
-        Vector[] contours;
+        Vector contours;
 
         FileWriter fw;
 
@@ -882,7 +885,7 @@ public class FileVOI extends FileXML {
             bw = new BufferedWriter(fw);
 
             contours = voi.getCurves();
-            length = voi.getCurves().length;
+            length = contours.size();
 
             bw.write(FileVOI.XML_HEADER);
             bw.newLine();
@@ -901,39 +904,17 @@ public class FileVOI extends FileXML {
             if ( (voi.getCurveType() == VOI.CONTOUR) || (voi.getCurveType() == VOI.POLYLINE)
                     || (voi.getCurveType() == VOI.POINT)) {
 
-                // run through once and count how many TOTAL contours are there
-                int totalContours = 0;
-
-                long totalPoints = 0;
-                int index;
-
-                for (i = 0; i < length; i++) {
-                    nContours = contours[i].size();
-                    totalContours += nContours;
-
-                    for (index = 0; index < nContours; index++) {
-                        totalPoints += ((VOIBase) contours[i].elementAt(index)).size();
-                    }
-
-                }
-
-                // System.err.println("TOTAL CONTOURS of VOI " + voi.getName() + ": " + totalContours);
-                // System.err.println("Number of points for all contours combined: " + totalPoints);
-
                 Vector pointVector = new Vector();
 
                 // add all contours to a vector for sorting
+                nContours = contours.size();
 
-                for (i = 0; i < contours.length; i++) {
-                    nContours = contours[i].size();
+                for (k = 0; k < nContours; k++) {
 
-                    for (k = 0; k < nContours; k++) {
+                    if ( (saveAllContours || ((VOIBase) contours.elementAt(k)).isActive())) {
+                        pointVector.add(new VOISortItem((VOIBase) contours.elementAt(k), Integer
+                                .parseInt( ((VOIBase) contours.elementAt(k)).getLabel())));
 
-                        if ( (saveAllContours || ((VOIBase) contours[i].elementAt(k)).isActive())) {
-                            pointVector.add(new VOISortItem((VOIBase) contours[i].elementAt(k), Integer
-                                    .parseInt( ((VOIBase) contours[i].elementAt(k)).getLabel()), i));
-
-                        }
                     }
                 }
 
@@ -954,11 +935,6 @@ public class FileVOI extends FileXML {
 
                     openTag("Contour", true);
 
-                    // save old format if image dim is 2
-                    if (is2D || !saveAsLPS) {
-                        closedTag("Slice-number", Integer.toString(tempVOIItem.getSlice()));
-                    }
-
                     nPts = tempBase.size();
 
                     if (nPts > x.length) {
@@ -969,15 +945,20 @@ public class FileVOI extends FileXML {
 
                     tempBase.exportArrays(x, y, z);
 
+                    // save old format if image dim is 2
+                    if (is2D || !saveAsLPS) {
+                        closedTag("Slice-number", Integer.toString((int)z[0]));
+                    }
+
                     if ( !is2D && saveAsLPS) {
                         final Vector3f ptIn = new Vector3f();
                         final Vector3f ptOut = new Vector3f();
-                        final int slice = tempVOIItem.getSlice();
+                        //final int slice = tempVOIItem.getSlice();
 
                         for (m = 0; m < nPts; m++) {
                             ptIn.X = x[m];
                             ptIn.Y = y[m];
-                            ptIn.Z = slice;
+                            ptIn.Z = z[m];
                             MipavCoordinateSystems.fileToScanner(ptIn, ptOut, image);
 
                             // System.err.println("Pt in: " + ptIn + ", Pt out: " + ptOut);
@@ -1001,8 +982,8 @@ public class FileVOI extends FileXML {
 
             } else {
 
-                for (i = 0; i < length; i++) {
-                    nContours = contours[i].size();
+                //for (i = 0; i < length; i++) {
+                    nContours = contours.size();
                     nActiveContours = 0;
 
                     if (saveAllContours) {
@@ -1011,7 +992,7 @@ public class FileVOI extends FileXML {
 
                         for (j = 0; j < nContours; j++) {
 
-                            if ( ((VOIBase) contours[i].elementAt(j)).isActive()) {
+                            if ( ((VOIBase) contours.elementAt(j)).isActive()) {
                                 nActiveContours++;
                             }
                         }
@@ -1021,15 +1002,10 @@ public class FileVOI extends FileXML {
 
                         for (j = 0; j < nContours; j++) {
 
-                            if (saveAllContours || ((VOIBase) contours[i].elementAt(j)).isActive()) {
+                            if (saveAllContours || ((VOIBase) contours.elementAt(j)).isActive()) {
                                 openTag("Contour", true);
 
-                                // save old format if image dim is 2
-                                if (image.getNDims() == 2) {
-                                    closedTag("Slice-number", Integer.toString(i));
-                                }
-
-                                nPts = ((Vector) (contours[i].elementAt(j))).size();
+                                nPts = ((Vector) (contours.elementAt(j))).size();
 
                                 if (x.length < nPts) {
                                     x = new float[nPts];
@@ -1037,17 +1013,22 @@ public class FileVOI extends FileXML {
                                     z = new float[nPts];
                                 }
 
-                                ((VOIBase) (contours[i].elementAt(j))).exportArrays(x, y, z);
+                                ((VOIBase) (contours.elementAt(j))).exportArrays(x, y, z);
+
+                                // save old format if image dim is 2
+                                if (image.getNDims() == 2) {
+                                    closedTag("Slice-number", Integer.toString((int)z[0]));
+                                }
 
                                 if (image.getNDims() > 2) {
                                     final Vector3f ptIn = new Vector3f();
                                     final Vector3f ptOut = new Vector3f();
-                                    final int slice = i;
+                                    //final int slice = i;
 
                                     for (m = 0; m < nPts; m++) {
                                         ptIn.X = x[m];
                                         ptIn.Y = y[m];
-                                        ptIn.Z = slice;
+                                        ptIn.Z = z[m];
                                         MipavCoordinateSystems.fileToScanner(ptIn, ptOut, image);
                                         closedTag("Pt", Float.toString(ptOut.X) + "," + Float.toString(ptOut.Y) + ","
                                                 + Float.toString(ptOut.Z));
@@ -1064,7 +1045,7 @@ public class FileVOI extends FileXML {
                             }
                         }
                     }
-                }
+                //}
             }
 
             openTag("VOI", false);
@@ -1220,7 +1201,7 @@ public class FileVOI extends FileXML {
                         z[k] = sliceNo;
                     }
 
-                    newVOI.importCurve(x, y, z, sliceNo);
+                    newVOI.importCurve(x, y, z);
                 }
             } else {
                 raFile.close();
@@ -1409,7 +1390,7 @@ public class FileVOI extends FileXML {
                             z[j] = sliceNo;
                         }
 
-                        newVOI.importCurve(x, y, z, sliceNo);
+                        newVOI.importCurve(x, y, z);
                     } else {
                         throw (new IOException("Error reading VOI file"));
                     }
@@ -1489,7 +1470,7 @@ public class FileVOI extends FileXML {
                         z[k] = sliceNo;
                     }
 
-                    newVOI.importCurve(x, y, z, sliceNo);
+                    newVOI.importCurve(x, y, z);
                 }
             }
         }
@@ -1679,7 +1660,7 @@ public class FileVOI extends FileXML {
                     z[index] = sliceNumber;
                 }
 
-                voi.importCurve(x, y, z, sliceNumber);
+                voi.importCurve(x, y, z);
             }
 
         }
@@ -1746,9 +1727,6 @@ public class FileVOI extends FileXML {
         private final int index;
 
         /** DOCUMENT ME! */
-        private final int slice;
-
-        /** DOCUMENT ME! */
         private final VOIBase vBase;
 
         /**
@@ -1758,10 +1736,9 @@ public class FileVOI extends FileXML {
          * @param idx DOCUMENT ME!
          * @param z DOCUMENT ME!
          */
-        public VOISortItem(final VOIBase base, final int idx, final int z) {
+        public VOISortItem(final VOIBase base, final int idx) {
             vBase = base;
             index = idx;
-            slice = z;
         }
 
         /**
@@ -1771,15 +1748,6 @@ public class FileVOI extends FileXML {
          */
         public int getIndex() {
             return index;
-        }
-
-        /**
-         * DOCUMENT ME!
-         * 
-         * @return DOCUMENT ME!
-         */
-        public int getSlice() {
-            return slice;
         }
 
         /**
@@ -1880,7 +1848,7 @@ public class FileVOI extends FileXML {
                 voiText.setFontSize(fontSize);
                 voiText.setFontDescriptors(fontStyle);
 
-                voi.importCurve(voiText, slice);
+                voi.importCurve(voiText);
                 voiVector.addVOI(voi);
             }
 
@@ -2135,7 +2103,7 @@ public class FileVOI extends FileXML {
                     }
                 }
 
-                voi.importCurve(x, y, z, (int) z[0]);
+                voi.importCurve(x, y, z);
             }
 
         }

@@ -2206,6 +2206,9 @@ public class FileMinc extends FileBase {
         
         
 
+        
+        
+
         writeName("valid_range", 0, endianess);
         writeInt(FileInfoMinc.NC_DOUBLE, endianess);
         writeInt(2, endianess);

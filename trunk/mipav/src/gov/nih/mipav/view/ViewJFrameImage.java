@@ -19,6 +19,8 @@ import gov.nih.mipav.view.renderer.JDialogVolViewResample;
 import gov.nih.mipav.view.renderer.J3D.surfaceview.plotterview.ViewJFramePlotterView;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarDialog;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogDTIInput;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -27,6 +29,8 @@ import java.util.*;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
@@ -37,7 +41,7 @@ import javax.swing.event.ChangeEvent;
  * @see ViewJComponentEditImage
  */
 public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, MouseListener, MouseMotionListener,
-        ViewOpenFrameInterface {
+        ViewOpenFrameInterface, VOIManagerInterfaceListener {
 
     // ~ Static fields/initializers
     // -------------------------------------------------------------------------------------
@@ -166,6 +170,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
     /** reference to the JDialogMultiPaint for shortcuts */
     protected JDialogMultiPaint multipaintDialog = null;
+    
+
+
+    ButtonGroup VOIGroup = new ButtonGroup();
+    private VOIManagerInterface voiManager;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -438,10 +447,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     componentImage.setSlice( (imageB.getExtents()[2] - 1) / 2);
                     nImage = imageB.getExtents()[2];
                     menuBar = menuBarMaker.getMenuBar(this, 4, imageB.getType(), imageB.isDicomImage());
-                    controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"), menuBuilder
-                            .isMenuItemSelected("VOI toolbar"), menuBuilder.isMenuItemSelected("Paint toolbar"),
-                            menuBuilder.isMenuItemSelected("Scripting toolbar"), componentImage.getVOIHandler()
-                                    .getVOI_ID());
+                    controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"), 
+                            voiManager.getToolBar(), menuBuilder.isMenuItemSelected("Paint toolbar"),
+                            menuBuilder.isMenuItemSelected("Scripting toolbar"));
                 }
 
                 if (this.canCloseImageBAfterLoad()) {
@@ -617,10 +625,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     componentImage.setSlice( (imageA.getExtents()[2] - 1) / 2);
                     nImage = imageA.getExtents()[2];
                     menuBar = menuBarMaker.getMenuBar(this, 3, imageA.getType(), imageA.isDicomImage());
-                    controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"), menuBuilder
-                            .isMenuItemSelected("VOI toolbar"), menuBuilder.isMenuItemSelected("Paint toolbar"),
-                            menuBuilder.isMenuItemSelected("Scripting toolbar"), componentImage.getVOIHandler()
-                                    .getVOI_ID());
+                    controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"), 
+                            voiManager.getToolBar(), menuBuilder.isMenuItemSelected("Paint toolbar"),
+                            menuBuilder.isMenuItemSelected("Scripting toolbar"));
                 }
 
                 closeImageB();
@@ -702,7 +709,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new ViewOpenImageSequence();
         } else if (command.equals("VOIToolbar") || command.equals("PaintToolbar") || command.equals("ImageToolbar")
                 || command.equals("ScriptToolbar")) {
-
+            
+            if (command.equals("VOIToolbar")) {
+                voiManager.getToolBar().setVisible(menuBuilder.isMenuItemSelected("VOI toolbar"));
+            } 
+            
             removeControls();
             controls = new ViewControlsImage(this);
 
@@ -716,8 +727,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             Preferences.setProperty(Preferences.PREF_IMAGE_TOOLBAR_ON, String.valueOf(showImage));
             Preferences.setProperty(Preferences.PREF_PAINT_TOOLBAR_ON, String.valueOf(showPaint));
 
-            controls
-                    .buildToolbar(showImage, showVOI, showPaint, showScript, componentImage.getVOIHandler().getVOI_ID());
+            controls.buildToolbar(showImage, voiManager.getToolBar(), showPaint, showScript);
             setControls();
         } else if (command.equals("PaintBrush")) {
             componentImage.setCursorMode(ViewJComponentBase.PAINT_VOI);
@@ -729,16 +739,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             componentImage.eraseAllPaint(false);
         } else if (command.equals("EraseCurrent")) {
             componentImage.eraseAllPaint(true);
-        } // VOIs
-        else if (command.equals("undoVOI")) {
-            componentImage.getVOIHandler().undoLastVOI();
-        } else if (command.equals("XOR")) {
+        }
+        else if (command.equals("XOR")) {
             userInterface.setUseVOIXOR(menuBuilder.isMenuItemSelected("Allow VOI holes (XOR)"));
         } else if (command.equals("PaintMask")) {
             if ( !checkForActiveVOIs()) {
                 MipavUtil.displayWarning("Please select a VOI!");
                 return;
             }
+            System.err.println("PaintMask");
             getActiveImage().setMask(getActiveImage().generateVOIMask(useXOR, true));
             componentImage.setPaintMask(getActiveImage().getMask());
             updateImages(true);
@@ -746,221 +755,93 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         } else if (command.equals(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER.getActionCommand())) {
             componentImage.setCursorMode(ViewJComponentBase.DEFAULT);
-        } else if (command.equals(CustomUIBuilder.PARAM_VOI_POINT.getActionCommand())) {
+        }
+        
+        else if (command.equals(CustomUIBuilder.PARAM_VOI_POINT.getActionCommand())  ||
+                command.equals(CustomUIBuilder.PARAM_VOI_LINE.getActionCommand()) ||
+                command.equals(CustomUIBuilder.PARAM_VOI_PROTRACTOR.getActionCommand()) ||
+                        command.equals(CustomUIBuilder.PARAM_VOI_POLYGON.getActionCommand()) ||
+                        command.equals(CustomUIBuilder.PARAM_VOI_TEXT.getActionCommand()) ||
+                        command.equals(CustomUIBuilder.PARAM_VOI_RECTANGLE.getActionCommand()) ||
+                        command.equals(CustomUIBuilder.PARAM_VOI_ELLIPSE.getActionCommand()) ||
+                        command.equals(CustomUIBuilder.PARAM_VOI_3D_RECTANGLE.getActionCommand()) ||
+                        command.equals(CustomUIBuilder.PARAM_VOI_LEVELSET.getActionCommand()) ||
+                        command.equals(CustomUIBuilder.PARAM_VOI_UNDO.getActionCommand()) ||
+                        command.equals(CustomUIBuilder.PARAM_VOI_PROPERTIES.getActionCommand()) ||
+                        command.equals(CustomUIBuilder.PARAM_VOI_COLOR.getActionCommand()) ||
+                        command.equals(CustomUIBuilder.PARAM_VOI_LIVEWIRE.getActionCommand()) ||
+                        command.equals(CustomUIBuilder.PARAM_VOI_NEW.getActionCommand()) ||
+                        command.equals(CustomUIBuilder.PARAM_VOI_CUT.getActionCommand()) ||
+                        command.equals(CustomUIBuilder.PARAM_VOI_COPY.getActionCommand()) ||
+                        command.equals(CustomUIBuilder.PARAM_VOI_PASTE.getActionCommand()) ||
+                        command.equals(CustomUIBuilder.PARAM_VOI_POINT_DELETE.getActionCommand()) ||
+                        command.equals(CustomUIBuilder.PARAM_VOI_PROPAGATE_UP.getActionCommand()) ||
+                        command.equals(CustomUIBuilder.PARAM_VOI_PROPAGATE_DOWN.getActionCommand()) ||
+                        command.equals(CustomUIBuilder.PARAM_VOI_PROPAGATE_ALL.getActionCommand())
+                        
+        ) {
 
-            if ( !componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.POINT,
-                    getControls())) {
-                componentImage.setCursorMode(ViewJComponentBase.NEW_VOI);
+            if ( voiManager != null )
+            {
+                voiManager.actionPerformed( event );
             }
+        }  // VOIs
 
-            componentImage.setCursorMode(ViewJComponentBase.POINT_VOI);
-        } else if (command.equals(CustomUIBuilder.PARAM_VOI_LINE.getActionCommand())) {
-
-            if ( !componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.LINE,
-                    getControls())) {
-                componentImage.setCursorMode(ViewJComponentBase.NEW_VOI);
-            }
-
-            componentImage.setCursorMode(ViewJComponentBase.LINE);
-        } else if (command.equals("SplitVOI")) {
-            componentImage.setCursorMode(ViewJComponentBase.SPLIT_VOI);
-        } else if (command.equals(CustomUIBuilder.PARAM_VOI_POLY_SLICE.getActionCommand())) {
-
-            if ( !componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(),
-                    VOI.POLYLINE_SLICE, getControls())) {
-                componentImage.setCursorMode(ViewJComponentBase.NEW_VOI);
-            }
-
-            componentImage.setCursorMode(ViewJComponentBase.POLYLINE_SLICE_VOI);
-        } else if (command.equals("protractor")) {
-
-            if ( !componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.PROTRACTOR,
-                    getControls())) {
-                componentImage.setCursorMode(ViewJComponentBase.NEW_VOI);
-            }
-
-            componentImage.setCursorMode(ViewJComponentBase.PROTRACTOR);
-        } else if (command.equals("Polyline")) {
-
-            if ( !componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.POLYLINE,
-                    getControls())) {
-                componentImage.setCursorMode(ViewJComponentBase.NEW_VOI);
-            }
-
-            componentImage.setCursorMode(ViewJComponentBase.POLYLINE);
-        } else if (command.equals(CustomUIBuilder.PARAM_VOI_TEXT.getActionCommand())) {
-            if ( !componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.CONTOUR,
-                    getControls())) {
-                componentImage.setCursorMode(ViewJComponentBase.NEW_VOI);
-            }
-
-            componentImage.setCursorMode(ViewJComponentBase.ANNOTATION);
-        } else if (command.equals("RectVOI")) {
-
-            if ( !componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.CONTOUR,
-                    getControls())) {
-                componentImage.setCursorMode(ViewJComponentBase.NEW_VOI);
-            }
-
-            componentImage.setCursorMode(ViewJComponentBase.RECTANGLE);
-        } else if (command.equals("EllipseVOI")) {
-            if ( !componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.CONTOUR,
-                    getControls())) {
-                componentImage.setCursorMode(ViewJComponentBase.NEW_VOI);
-            }
-
-            componentImage.setCursorMode(ViewJComponentBase.ELLIPSE);
-        } else if (command.equals("LevelSetVOI")) {
-            componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.CONTOUR,
-                    getControls());
-            componentImage.setCursorMode(ViewJComponentBase.LEVELSET);
-        } else if (command.equals("Rect3DVOI")) {
-            componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.CONTOUR,
-                    getControls());
-            componentImage.setCursorMode(ViewJComponentBase.RECTANGLE3D);
-        } else if (command.equals("LiveWireVOI")) {
-            componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.CONTOUR,
-                    getControls());
-
-            if (componentImage.getVOIHandler().isLivewireNull()) {
-                final JDialogLivewire dialog = new JDialogLivewire(this);
-
-                if ( !dialog.isCancelled()) {
-                    componentImage.getVOIHandler().setModeLivewire(dialog.getSelection());
-                    componentImage.setCursorMode(ViewJComponentBase.LIVEWIRE);
-                }
-            } else {
-                componentImage.setCursorMode(ViewJComponentBase.LIVEWIRE);
-            }
-        } else if (command.equals("NewVOI")) {
-            componentImage.setCursorMode(ViewJComponentBase.NEW_VOI);
-
-            // if (getActiveImage().getVOIs().size() > 0)
-            // System.err.println(" NEW ID: " + (((VOI)(getActiveImage().getVOIs().lastElement())).getID() + 1));
-
-            final int id = (getActiveImage().getVOIs().size() > 0) ? ( ( (getActiveImage().getVOIs().lastElement()))
-                    .getID() + 1) : -1;
-
-            /*
-             * Color voiColor = new Color(0,0,0);
-             * 
-             * if (getActiveImage().getVOIs().size() > 0) { Color lastColor = ( (VOI) (
-             * getActiveImage().getVOIs().lastElement() ) ).getColor();
-             * 
-             * //convert rgb to hsb float [] hsb = new float[3]; int red = lastColor.getRed(); int green =
-             * lastColor.getGreen(); int blue = lastColor.getBlue(); Color.RGBtoHSB(red, green, blue, hsb);
-             * 
-             * hsb[0] *= 360.0; // System.err.println("HSB Value: " + hsb[0]); hsb[0] = Math.round(hsb[0]/35.0);
-             * System.err.println("HSB Value (div 35 int): " + hsb[0]);
-             * 
-             * hsb[0]++;
-             * 
-             * float hue = (float)(((((hsb[0])*35)%360)/360.0)); getControls().setVOIColor( Color.getHSBColor(hue,
-             * (float)1.0, (float)1.0) ); }
-             */
-
-            getControls().setVOIColor(id);
-        } else if (command.equals("cutVOI")) {
-
-            if (componentImage.getVOIHandler().copyVOItoClipBrd()) {
-                componentImage.getVOIHandler().deleteSelectedVOI(true);
-            }
-        } else if (command.equals("copyVOI")) {
-            componentImage.getVOIHandler().copyVOItoClipBrd();
-        } else if (command.equals("pasteVOI")) {
-            componentImage.getVOIHandler().pasteVOI();
-        } else if (command.equals("selectAllVOIs")) {
+        else if (command.equals("selectAllVOIs")) {
             if (componentImage.getActiveImage().getVOIs().size() == 0) {
                 MipavUtil.displayWarning("There are no VOIs in this image");
                 return;
             }
-            componentImage.getVOIHandler().selectAllVOIs(true);
+            voiManager.selectAllVOIs(true);
         } else if (event.getActionCommand().equals("voiSelectNone")) {
-            componentImage.getVOIHandler().selectAllVOIs(false);
-        } else if (command.equals("deleteVOI")) {
-            componentImage.getVOIHandler().deleteSelectedVOI(true);
-        } else if (command.equals("BringToFront")) {
-            componentImage.getVOIHandler().changeVOIOrder(false, VOIHandler.FRONT);
+            voiManager.selectAllVOIs(false);
+        } 
+        else if (command.equals("BringToFront")) {
+            voiManager.changeVOIOrder(false, VOI.FRONT);
         } else if (command.equals("SendToBack")) {
-            componentImage.getVOIHandler().changeVOIOrder(false, VOIHandler.BACK);
+            voiManager.changeVOIOrder(false, VOI.BACK);
         } else if (command.equals("BringContourToFront")) {
-            componentImage.getVOIHandler().changeVOIOrder(true, VOIHandler.FRONT);
+            voiManager.changeVOIOrder(true, VOI.FRONT);
         } else if (command.equals("SendContourToBack")) {
-            componentImage.getVOIHandler().changeVOIOrder(false, VOIHandler.BACK);
-        } else if (command.equals("PropVOIUp")) {
+            voiManager.changeVOIOrder(false, VOI.BACK);
+        } 
+
+        else if (command.equals("PropVOIActiveUp")) {
             if ( !checkForActiveVOIs()) {
                 MipavUtil.displayWarning("Please select a VOI!");
                 return;
             }
             // It appears JButtons don't pass key modifiers
             // if((event.getModifiers() & ActionEvent.SHIFT_MASK) != 0) {}
-            final int oldSlice = componentImage.getSlice();
-            if (componentImage.getVOIHandler().propVOI(1, false) == true) {
-                if (oldSlice == componentImage.getSlice()) {
-                    // means some other handler has not already updated to the new slice
-                    incSlice();
-                }
-            }
-        } else if (command.equals("PropVOIDown")) {
-            if ( !checkForActiveVOIs()) {
-                MipavUtil.displayWarning("Please select a VOI!");
-                return;
-            }
-            final int oldSlice = componentImage.getSlice();
-            if (componentImage.getVOIHandler().propVOI( -1, false) == true) {
-                if (oldSlice == componentImage.getSlice()) {
-                    // means some other handler has not already updated to the new slice
-                    decSlice();
-                }
-            }
-        } else if (command.equals("PropVOIActiveUp")) {
-            if ( !checkForActiveVOIs()) {
-                MipavUtil.displayWarning("Please select a VOI!");
-                return;
-            }
-            // It appears JButtons don't pass key modifiers
-            // if((event.getModifiers() & ActionEvent.SHIFT_MASK) != 0) {}
-            if (componentImage.getVOIHandler().propVOI(1, true) == true) {
-                incSlice();
+            if (voiManager.propVOI(1, true) == true) {
+                //incSlice();
             }
         } else if (command.equals("PropVOIActiveDown")) {
             if ( !checkForActiveVOIs()) {
                 MipavUtil.displayWarning("Please select a VOI!");
                 return;
             }
-            if (componentImage.getVOIHandler().propVOI( -1, true) == true) {
-                decSlice();
+            if (voiManager.propVOI( -1, true) == true) {
+                //decSlice();
             }
-        } else if (command.equals("PropVOIAll")) {
-            if ( !checkForActiveVOIs()) {
-                MipavUtil.displayWarning("Please select a VOI!");
-                return;
-            }
-            componentImage.getVOIHandler().propVOIAll();
-        } else if (command.equals("BringForward")) {
-            componentImage.getVOIHandler().changeVOIOrder(false, VOIHandler.FORWARD);
+        }
+        else if (command.equals("BringForward")) {
+            voiManager.changeVOIOrder(false, VOI.FORWARD);
         } else if (command.equals("SendBackward")) {
-            componentImage.getVOIHandler().changeVOIOrder(false, VOIHandler.BACKWARD);
+            voiManager.changeVOIOrder(false, VOI.BACKWARD);
         } else if (command.equals("SendContourForward")) {
-            componentImage.getVOIHandler().changeVOIOrder(true, VOIHandler.FORWARD);
+            voiManager.changeVOIOrder(true, VOI.FORWARD);
         } else if (command.equals("SendContourBackward")) {
-            componentImage.getVOIHandler().changeVOIOrder(true, VOIHandler.BACKWARD);
-        } else if (command.equals("VOIProperties")) {
-
-            componentImage.getVOIHandler().showVOIProperties();
-
-        } else if (command.equals("VOIColor")) {
-
-            getComponentImage().getVOIHandler().showColorDialog();
-
-        } else if (command.equals("VOIStatistics")) {
+            voiManager.changeVOIOrder(true, VOI.BACKWARD);
+        } 
+        else if (command.equals("VOIStatistics")) {
             componentImage.showStatisticsCalculator();
         } else if (command.equals("boundaryIntensity")) {
-            componentImage.getVOIHandler().graphVOI();
+            voiManager.graphVOI();
         } else if (command.equals("totalIntensity")) {
-            componentImage.getVOIHandler().graph25VOI_CalcInten(true, false, 0);
+            voiManager.graph25VOI_CalcInten(true, false, 0);
         } else if (command.equals("avgIntensity")) {
-            componentImage.getVOIHandler().graph25VOI_CalcInten(false, false, 0);
+            voiManager.graph25VOI_CalcInten(false, false, 0);
         } else if (command.equals("totalIntensityThreshold")) {
             new JDialogIntensityThreshold(this, componentImage, false);
         } else if (command.equals("avgIntensityThreshold")) {
@@ -976,7 +857,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 imageB.groupVOIs();
             }
 
-            componentImage.getVOIHandler().fireVOISelectionChange(null);
+            voiManager.fireVOISelectionChange(null);
         } else if (command.equals("UngroupVOIs")) {
 
             if (displayMode == ViewJFrameBase.IMAGE_A) {
@@ -985,9 +866,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 imageB.ungroupVOIs();
             }
 
-            componentImage.getVOIHandler().fireVOISelectionChange(null);
-        } else if (command.equals("Cardio")) {
-            new JDialogCardiology(this, imageA);
+            voiManager.fireVOISelectionChange(null);
         } else if (command.equals("BinaryMask")) {
             if (componentImage.getActiveImage().getVOIs().size() == 0) {
                 MipavUtil.displayWarning("There are no VOIs in this image");
@@ -997,11 +876,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             try {
 
-                if (componentImage.getVOIHandler().getActiveVOICount() == 0) {
-                    componentImage.getVOIHandler().selectAllVOIs(true);
+                if (voiManager.getActiveVOICount() == 0) {
+                    voiManager.selectAllVOIs(true);
                 }
 
-                maskImage = getActiveImage().generateBinaryImage(useXOR, true);
+                System.err.println( "start" );
+                long time = System.currentTimeMillis();
+                maskImage = getActiveImage().generateBinaryImage(useXOR, false);
+                time = System.currentTimeMillis() - time;
+                System.err.println( "done " + time );
 
                 if (maskImage != null) {
                     maskImage.setImageName(getActiveImage().getImageName() + "_bmask");
@@ -1034,11 +917,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             try {
 
-                if (componentImage.getVOIHandler().getActiveVOICount() == 0) {
-                    componentImage.getVOIHandler().selectAllVOIs(true);
+                if (voiManager.getActiveVOICount() == 0) {
+                    voiManager.selectAllVOIs(true);
                 }
+                
+                System.err.println("ShortMask");
 
-                shortImage = getActiveImage().generateShortImage(1, useXOR, true);
+                shortImage = getActiveImage().generateShortImage(1, useXOR, false);
 
                 if (shortImage != null) {
                     shortImage.setImageName(getActiveImage().getImageName() + "_smask");
@@ -1071,11 +956,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             try {
 
-                if (componentImage.getVOIHandler().getActiveVOICount() == 0) {
-                    componentImage.getVOIHandler().selectAllVOIs(true);
+                if (voiManager.getActiveVOICount() == 0) {
+                    voiManager.selectAllVOIs(true);
                 }
-
-                uByteImage = getActiveImage().generateUnsignedByteImage(1, useXOR, true);
+                System.err.println("UnsignedByteMask");
+                uByteImage = getActiveImage().generateUnsignedByteImage(1, useXOR, false);
 
                 if (uByteImage != null) {
                     uByteImage.setImageName(getActiveImage().getImageName() + "_ubmask");
@@ -1246,11 +1131,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 return;
             }
 
-            if ((short) componentImage.getVOIHandler().getVOI_ID() == -1) {
-                voiID = (short) getActiveImage().getVOIs().size();
-            } else {
-                voiID = (short) componentImage.getVOIHandler().getVOI_ID();
-            }
+            voiID = (short) getActiveImage().getVOIs().size();
 
             final AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint(getActiveImage(),
                     componentImage.getPaintBitmap(), xDim, yDim, zDim, voiID);
@@ -1825,7 +1706,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogHomomorphicFilter(this, getActiveImage());
         } else if (command.equals("Fill image")) {
             new JDialogMask(this, getActiveImage());
-        } else if (command.equals("QuickMask")) {
+        } 
+        /*
+        else if (command.equals(CustomUIBuilder.PARAM_VOI_QUICK_AND_OP.getActionCommand())) {
 
             if (getActiveImage().getVOIs().size() < 1) {
                 MipavUtil.displayWarning("Must have at least one VOI to perform quick mask");
@@ -1834,7 +1717,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
             new JDialogMask(getActiveImage(), false, false);
-        } else if (command.equals("QuickMaskReverse")) {
+        }
+        else if (command.equals(CustomUIBuilder.PARAM_VOI_QUICK_NOT_OP.getActionCommand())) {
 
             if (getActiveImage().getVOIs().size() < 1) {
                 MipavUtil.displayWarning("Must have at least one VOI to perform quick mask");
@@ -1843,7 +1727,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
             new JDialogMask(getActiveImage(), false, true);
-        } else if (command.equals("Mean")) {
+        }  */
+        else if (command.equals("Mean")) {
             new JDialogMean(this, getActiveImage());
         } else if (command.equals("Median")) {
             new JDialogMedian(this, getActiveImage());
@@ -2543,7 +2428,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
          * (command.equals("GearsDebug")) { new GearsDebug(); }
          */
         else if (command.equals("Trim")) {
-            final JDialogTrim trimSettings = new JDialogTrim(this);
+            final JDialogTrim trimSettings = new JDialogTrim(this, getActiveImage());
 
             trimSettings.setVisible(true);
         } else if (command.equals("ShowSliceNum")) {
@@ -2552,9 +2437,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("ShowGrid")) {
 
             if ( ((JCheckBoxMenuItem) event.getSource()).isSelected()) {
-                componentImage.getVOIHandler().setGridOverlay(true);
+                componentImage.setGridOverlay(true);
             } else {
-                componentImage.getVOIHandler().setGridOverlay(false);
+                componentImage.setGridOverlay(false);
             }
 
             componentImage.paintComponent(componentImage.getGraphics());
@@ -2572,7 +2457,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
         } else if (command.equals("ShowOverlay")) {
 
-            componentImage.getVOIHandler().setOverlay( ((JCheckBoxMenuItem) event.getSource()).isSelected());
+            componentImage.setOverlay( ((JCheckBoxMenuItem) event.getSource()).isSelected());
 
             // save into preferences
             if (componentImage.getActiveImage().isDicomImage()) {
@@ -2756,6 +2641,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             componentImage.saveUDLUT();
         } else if (command.equals("quickLUT")) {
             componentImage.setCursorMode(ViewJComponentBase.QUICK_LUT);
+            if ( voiManager != null )
+            {
+                voiManager.doVOI(CustomUIBuilder.PARAM_LUT_QUICK.getActionCommand());
+            }
         } else if (command.equals("resetLUTs")) {
             componentImage.resetLUTs();
 
@@ -3363,7 +3252,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
             // livewire grad mag. should be recalculated for the new slice
-            componentImage.getVOIHandler().resetLivewire();
+            voiManager.resetLivewire();
 
             // componentImage.deactivateAllVOI();
             setTitle();
@@ -3399,6 +3288,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             updateImages(true);
 
             // registeredFramedImages = null;
+        }
+        if ( voiManager != null )
+        {
+            voiManager.setCenter( new Vector3f( 0, 0, componentImage.getSlice() ) );
         }
     }
 
@@ -3474,6 +3367,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         controls = null;
 
+        if ( voiManager != null )
+        {
+            voiManager.disposeLocal(true);
+            voiManager = null;
+        }
+        
         super.finalize();
         // System.gc();
     }
@@ -3892,7 +3791,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
             // livewire grad mag. should be recalculated for the new slice
-            componentImage.getVOIHandler().resetLivewire();
+            voiManager.resetLivewire();
 
             // componentImage.deactivateAllVOI();
             setTitle();
@@ -3929,6 +3828,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // registeredFramedImages = null;
 
         }
+        if ( voiManager != null )
+        {
+            voiManager.setCenter( new Vector3f( 0, 0, componentImage.getSlice() ) );
+        }
     }
 
     /**
@@ -3958,6 +3861,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @param e DOCUMENT ME!
      */
     public void keyPressed(final KeyEvent e) {
+        //System.err.println("ViewJFrame keyPressed" );
 
         final int keyCode = e.getKeyCode();
 
@@ -3973,13 +3877,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 return;
 
-            case KeyEvent.VK_UP:
-            case KeyEvent.VK_DOWN:
-            case KeyEvent.VK_LEFT:
-            case KeyEvent.VK_RIGHT:
-                getComponentImage().getVOIHandler().handleArrowKeysVOI(e);
-
-                return;
+            case KeyEvent.VK_UP:     voiManager.doVOI("MoveUP"); return;
+            case KeyEvent.VK_DOWN:   voiManager.doVOI("MoveDown"); return;
+            case KeyEvent.VK_LEFT:   voiManager.doVOI("MoveLeft"); return;
+            case KeyEvent.VK_RIGHT:  voiManager.doVOI("MoveRight"); return;
         }
 
         if ( !e.isControlDown()) {
@@ -4035,6 +3936,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @param e DOCUMENT ME!
      */
     public void keyReleased(final KeyEvent e) {
+        //System.err.println("ViewJFrame keyReleased" );
         final int keyCode = e.getKeyCode();
         switch (keyCode) {
 
@@ -4052,55 +3954,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             case KeyEvent.VK_DELETE:
                 if (e.isShiftDown()) {
-                    componentImage.getVOIHandler().deleteVOIActivePt();
-                } else {
-                    componentImage.getVOIHandler().deleteSelectedVOI(true);
-
-                }
-
-                return;
-
-            case KeyEvent.VK_C:
-                if (e.isControlDown()) {
-                    componentImage.getVOIHandler().copyVOItoClipBrd();
-                }
-
-                return;
-
-            case KeyEvent.VK_V:
-                if (e.isControlDown()) {
-                    componentImage.getVOIHandler().pasteVOI();
-                }
-
-                return;
-
-            case KeyEvent.VK_X:
-                if (e.isControlDown()) {
-
-                    if (componentImage.getVOIHandler().copyVOItoClipBrd()) {
-                        componentImage.getVOIHandler().deleteSelectedVOI(true);
-                    }
-                }
-
-                return;
-
-            case KeyEvent.VK_A:
-                if (e.isControlDown()) {
-                    componentImage.getVOIHandler().selectAllVOIs(true);
-                }
-
-                return;
-
-            case KeyEvent.VK_Z:
-                if (e.isControlDown()) {
-                    componentImage.getVOIHandler().undoLastVOI();
-                }
-
-                return;
-
-            case KeyEvent.VK_Q:
-                if (componentImage.getCursorMode() == ViewJComponentBase.QUICK_LUT) {
-                    componentImage.setCursorMode(ViewJComponentBase.DEFAULT);
+                    voiManager.doVOI("deleteVOIActivePt");
+                } 
+                else 
+                {
+                    voiManager.doVOI(CustomUIBuilder.PARAM_VOI_POINT_DELETE.getActionCommand());
                 }
 
                 return;
@@ -4168,8 +4026,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 }
             } else if (event.getSource() instanceof JButton) {
 
-                if ( ((JButton) event.getSource()).getActionCommand().equals("QuickMask")
-                        || ((JButton) event.getSource()).getActionCommand().equals("QuickMaskReverse")) {
+                if ( ((JButton) event.getSource()).getActionCommand().equals(CustomUIBuilder.PARAM_VOI_QUICK_AND_OP.getActionCommand())
+                        || ((JButton) event.getSource()).getActionCommand().equals(CustomUIBuilder.PARAM_VOI_QUICK_NOT_OP.getActionCommand())) {
                     ViewJFrameBase.handleMaskPopupMenu((Component) event.getSource(), event);
                 } else if ( ((JButton) event.getSource()).getActionCommand().equals("CommitPaint")
                         || ((JButton) event.getSource()).getActionCommand().equals("CommitPaintExt")) {
@@ -4347,6 +4205,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         if (componentImage != null) {
             componentImage.setActiveImage(active);
         }
+        if ( voiManager != null )
+        {
+            voiManager.getVOIManager(0).setActiveImage(active);
+        }
 
         if (active == ViewJFrameBase.IMAGE_A) {
             displayMode = ViewJFrameBase.IMAGE_A;
@@ -4416,10 +4278,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 nImage = imageB.getExtents()[2];
                 menuBar = menuBarMaker.getMenuBar(this, 4, imageB.getType(), imageB.isDicomImage());
                 controls
-                        .buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"), menuBuilder
-                                .isMenuItemSelected("VOI toolbar"), menuBuilder.isMenuItemSelected("Paint toolbar"),
-                                menuBuilder.isMenuItemSelected("Scripting toolbar"), componentImage.getVOIHandler()
-                                        .getVOI_ID());
+                        .buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"), 
+                                voiManager.getToolBar(), menuBuilder.isMenuItemSelected("Paint toolbar"),
+                                menuBuilder.isMenuItemSelected("Scripting toolbar"));
             }
 
             menuBuilder.setMenuItemEnabled("Close image(B)", true);
@@ -4468,6 +4329,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         if (componentImage != null) {
             componentImage.setEnabled(flag);
+        }
+        if ( voiManager != null )
+        {
+            voiManager.setEnabled(flag);
         }
     }
 
@@ -4681,7 +4546,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             // livewire grad mag. should be recalculated for the new slice
             // componentImage.deactivateAllVOI();
-            componentImage.getVOIHandler().resetLivewire();
+            voiManager.resetLivewire();
             setTitle();
 
             if (linkFrame != null) {
@@ -4695,6 +4560,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             if (infoDialogB != null) {
                 infoDialogB.setSlice(componentImage.getSlice(), componentImage.getTimeSlice());
             }
+        }
+        
+        if ( voiManager != null )
+        {
+            voiManager.setCenter( new Vector3f( 0, 0, componentImage.getSlice() ) );
         }
     }
 
@@ -4722,7 +4592,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 controls.setTSlider(slice);
 
                 // livewire grad mag. should be recalculated for the new slice
-                componentImage.getVOIHandler().resetLivewire();
+                voiManager.resetLivewire();
                 setTitle();
                 updateImages(true);
 
@@ -4759,7 +4629,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 controls.setTSlider(slice);
 
                 // livewire grad mag. should be recalculated for the new slice
-                componentImage.getVOIHandler().resetLivewire();
+                voiManager.resetLivewire();
                 setTitle();
                 updateImages(true);
 
@@ -4954,9 +4824,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         removeControls();
         controls = new ViewControlsImage(this);
 
-        controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"), menuBuilder
-                .isMenuItemSelected("VOI toolbar"), menuBuilder.isMenuItemSelected("Paint toolbar"), menuBuilder
-                .isMenuItemSelected("Scripting toolbar"), componentImage.getVOIHandler().getVOI_ID());
+        controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"), 
+                voiManager.getToolBar(), menuBuilder.isMenuItemSelected("Paint toolbar"), menuBuilder
+                .isMenuItemSelected("Scripting toolbar"));
 
         // controls.setZSlider(zSlice);
         setControls();
@@ -5071,7 +4941,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         // update plugins menu, if it already exists
         final int index = menuBar.getComponentIndex(menuBarMaker.getPlugInMenu());
-        if (index != -1) {
+        if(index != -1) {
             menuBar.remove(index);
             menuBarMaker.setPlugInMenu(userInterface.buildPlugInsMenu(this));
             menuBar.add(menuBarMaker.getPlugInMenu(), index);
@@ -5489,7 +5359,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @throws OutOfMemoryError if enough memory cannot be allocated for the GUI
      */
     private void init(final ModelLUT LUTa, final Dimension loc, final boolean logMagDisplay) throws OutOfMemoryError {
-
+        addKeyListener(this);
+        
         try {
             setIconImage(MipavUtil.getIconImage("davinci_32x32.gif"));
         } catch (final FileNotFoundException error) {
@@ -5521,12 +5392,17 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         menuBar.addKeyListener(this);
 
+
+        if ( voiManager == null )
+        {
+            initVOI();
+        }
         // imageA.
         controls = new ViewControlsImage(this); // Build controls used in this frame
-        controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"), menuBuilder
-                .isMenuItemSelected("VOI toolbar"), menuBuilder.isMenuItemSelected("Paint toolbar"), menuBuilder
-                .isMenuItemSelected("Scripting toolbar"), componentImage.getVOIHandler().getVOI_ID());
-
+        controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"), 
+                voiManager.getToolBar(), menuBuilder.isMenuItemSelected("Paint toolbar"), menuBuilder
+                .isMenuItemSelected("Scripting toolbar"));
+        
         if (getActiveImage().getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
 
             // menuBuilder.setMenuItemEnabled("Show image/DICOM overlay", true);
@@ -5549,8 +5425,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         setBackground(Color.black);
 
-        addKeyListener(this);
-
         // MUST register frame to image models
         imageA.addImageDisplayListener(this);
 
@@ -5570,7 +5444,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         // User interface will have list of frames and sets controls
         userInterface.registerFrame(this);
-
+        
         addComponentListener(this);
 
         pack(); // Pack before making visible.
@@ -5582,14 +5456,14 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         final JMenuItem kAutoITKMenu = menuBuilder.getMenuItem("Insight toolkit (auto ITK)");
         m_kAutoItkLoader = new AutoItkLoader(this, (JMenu) kAutoITKMenu);
-
+        
         updateImages(true);
 
-        if (controls.getTImageSlider() != null) {
-            ((ViewJSlider) controls.getTImageSlider()).resizeSlider();
+        if(controls.getTImageSlider() != null) {
+        	((ViewJSlider)controls.getTImageSlider()).resizeSlider();
         }
-        if (controls.getZImageSlider() != null) {
-            ((ViewJSlider) controls.getZImageSlider()).resizeSlider();
+        if(controls.getZImageSlider() != null) {
+        	((ViewJSlider)controls.getZImageSlider()).resizeSlider();
         }
     } // end init()
 
@@ -5612,6 +5486,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else {
             componentImage.setResolutions(widthResFactor, 1);
         }
+        componentImage.addKeyListener(this);
 
         // if this is a color image, then update the RGB info in the component
         if (imageA.isColorImage()) {
@@ -5973,5 +5848,130 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             getActiveImage().notifyImageDisplayListeners(null, false);
         }
     }
+    
+    /**
+     * Initialize the 3D VOI interface.
+     */
+    private void initVOI()
+    {
+        voiManager = new VOIManagerInterface( this, imageA, LUTa, imageB, LUTb, 1, false, VOIGroup );
+        voiManager.getVOIManager(0).init( imageA, imageB,
+                componentImage, componentImage,
+                componentImage.getOrientation(), componentImage.getSlice() );
+        voiManager.getToolBar().setVisible(true);
+        componentImage.setVOIManager(voiManager.getVOIManager(0));
+        
+        if (imageA.isDicomImage()) {
+            voiManager.setOverlay(Preferences.is(Preferences.PREF_SHOW_DICOM_OVERLAYS));
+        } else {
+            voiManager.setOverlay(Preferences.is(Preferences.PREF_SHOW_IMAGE_OVERLAYS));
+        }
+    }
+    
+
+
+    public void enableBoth( boolean bEnable )
+    {
+        //radioImageBoth.setEnabled(bEnable);
+    }
+
+
+    public Vector3f getCenterPt() {
+        return new Vector3f(0,0,componentImage.getSlice());
+    }
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#getFrame()
+     */
+    public JFrame getFrame()
+    {
+        return this;
+    }
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#PointerActive(boolean)
+     */
+    public void PointerActive(boolean bActive) {
+        //if ( bActive )
+        //{
+        //    componentImage.setCursorMode(ViewJComponentBase.VOI_3D);
+        //}
+       //else
+        //{
+            componentImage.setCursorMode(ViewJComponentBase.DEFAULT);
+        //}
+    }
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#PropDown(int)
+     */
+    public Vector3f PropDown(int iActive) {
+        Vector3f kReturn = componentImage.downSlice();
+        updateImages(true);
+        return kReturn;
+    }
+
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#PropUp(int)
+     */
+    public Vector3f PropUp(int iActive) {
+        Vector3f kReturn = componentImage.upSlice();
+        updateImages(true);
+        return kReturn;
+    }
+
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#create3DVOI(boolean)
+     */
+    public void create3DVOI(boolean bIntersection) {
+        ModelImage kImage = new ModelImage( ModelStorageBase.INTEGER, 
+                imageA.getExtents(), "Temp" );
+        kImage.copyFileTypeInfo(imageA);
+
+        voiManager.make3DVOI(bIntersection, kImage);
+        kImage.calcMinMax();
+        new JDialogExtractSurfaceCubes(this, kImage, true);
+    }
+
+    @Override
+    public void setActiveImage(ModelImage kImage) {
+        if ( kImage == imageA )
+        {
+            setActiveImage( IMAGE_A );
+        }
+        else
+        {
+            setActiveImage( IMAGE_B );
+        }
+    }
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#setCenter(WildMagic.LibFoundation.Mathematics.Vector3f)
+     */
+    public void setCenter( Vector3f kCenter )
+    {
+        setSlice( (int)kCenter.Z );
+    }
+
+    /* (non-Javadoc)
+     * @see java.awt.Window#setCursor(java.awt.Cursor)
+     */
+    public void setCursor(Cursor kCursor) {
+        componentImage.setCursor(kCursor);
+    }
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#setModified()
+     */
+    public void setModified() {
+        updateImages();
+    }
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#updateData(boolean)
+     */
+    public void updateData(boolean bCopyToCPU) {}
 
 }

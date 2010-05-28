@@ -14,7 +14,7 @@ public interface VOIManagerListener
     public void pasteVOI(LocalVolumeVOI kNew);
     public void doVOI(String command);
     public void moveVOI( Vector3f kDiff );
-    public void newVOI( boolean bPropagate );
+    public void newVOI( boolean bPropagate, boolean bSplit );
     public void saveVOIs( String kCommand );
     public void setActive( VOIManager kManager );
     public void setCurrentColor( );

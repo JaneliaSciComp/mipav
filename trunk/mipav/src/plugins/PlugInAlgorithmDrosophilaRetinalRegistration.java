@@ -292,17 +292,17 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
             imageX.calcMinMax();
         }// done rescaling
 
-        
+
         TransMatrix intermMatrix1;
         if(matrixAffine == null) {
         	intermMatrix1 = new TransMatrix(matrixGreen);
-        	intermMatrix1.Inverse();
+        intermMatrix1.Inverse();
         }else {
         	intermMatrix1 = new TransMatrix(4);
             intermMatrix1.Mult(matrixAffine, matrixGreen); // pretty sure this is correct
             intermMatrix1.Inverse();
         }
-        
+
 
         final int[] extents = {512, 512, 512};
         resultImage = new ModelImage(ModelStorageBase.ARGB, extents, "resultImage");

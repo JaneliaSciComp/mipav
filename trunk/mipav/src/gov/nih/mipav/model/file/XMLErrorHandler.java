@@ -9,10 +9,10 @@ import org.xml.sax.*;
 /**
  * Error handler to report errors and warnings from the XML parser. Implements standard SAX ErrorHandler methods, see
  * SAX docs for more info.
- * 
- * @see FileOME
- * @see FileVOI
- * @see FileXML
+ *
+ * @see  FileOME
+ * @see  FileVOI
+ * @see  FileXML
  */
 class XMLErrorHandler implements ErrorHandler {
 
@@ -21,10 +21,10 @@ class XMLErrorHandler implements ErrorHandler {
 
     /**
      * Handles parse exception errors by passing the parse exception up as a SAXException.
-     * 
-     * @param spe the parse exception
-     * 
-     * @throws SAXException passed up with the parse exception info
+     *
+     * @param   spe  the parse exception
+     *
+     * @throws  SAXException  passed up with the parse exception info
      */
     public void error(final SAXParseException spe) throws SAXException {
         final String message = "Error: " + getParseExceptionInfo(spe);
@@ -34,10 +34,10 @@ class XMLErrorHandler implements ErrorHandler {
 
     /**
      * Handles parse exception fatal errors by passing the parse exception up as a SAXException.
-     * 
-     * @param spe the parse exception
-     * 
-     * @throws SAXException passed up with the parse exception info
+     *
+     * @param   spe  the parse exception
+     *
+     * @throws  SAXException  passed up with the parse exception info
      */
     public void fatalError(final SAXParseException spe) throws SAXException {
         final String message = "Fatal Error: " + getParseExceptionInfo(spe);
@@ -47,10 +47,10 @@ class XMLErrorHandler implements ErrorHandler {
 
     /**
      * Handles parse exception warnings by outputting them to the debug window.
-     * 
-     * @param spe the parse exception
-     * 
-     * @throws SAXException not reported for warnings
+     *
+     * @param   spe  the parse exception
+     *
+     * @throws  SAXException  not reported for warnings
      */
     public void warning(final SAXParseException spe) throws SAXException {
         Preferences.debug("Warning: " + getParseExceptionInfo(spe), Preferences.DEBUG_FILEIO);
@@ -58,10 +58,10 @@ class XMLErrorHandler implements ErrorHandler {
 
     /**
      * Returns a string describing parse exception details.
-     * 
-     * @param spe the parse exception
-     * 
-     * @return a string containing information about the exception
+     *
+     * @param   spe  the parse exception
+     *
+     * @return  a string containing information about the exception
      */
     private String getParseExceptionInfo(final SAXParseException spe) {
         String systemId = spe.getSystemId();

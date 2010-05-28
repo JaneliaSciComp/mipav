@@ -470,17 +470,17 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
             VOI cRGVOIs = allRGVOIs.VOIAt(rgvoisCnt);
             Vector3f geomCentercRGVOIs = cRGVOIs.getGeometricCenter();
             int areacRGVOIs = cRGVOIs.area();
-            Polygon[] cRGVOIsPoly = cRGVOIs.exportPolygons(0);
+            VOIBase cRGVOIsPoly = cRGVOIs.getCurves().elementAt(0);
             // UI.setDataText("\n Number of polygons in C = " + rgvoisCnt + ", " + cRGVOIsPoly.length);
 
             for (int rgvoisCnt1 = rgvoisCnt + 1; rgvoisCnt1 < allRGVOIs.size(); rgvoisCnt1++) {
                 VOI nRGVOIs = allRGVOIs.VOIAt(rgvoisCnt1);
                 Vector3f centmassnRGVOIs = nRGVOIs.getGeometricCenter();
                 int areanRGVOIs = nRGVOIs.area();
-                Polygon[] nRGVOIsPoly = nRGVOIs.exportPolygons(0);
+                VOIBase nRGVOIsPoly = nRGVOIs.getCurves().elementAt(0);
 
                 // UI.setDataText("\n  Number of polygons in N = "  + rgvoisCnt1 + ", " +  nRGVOIsPoly.length);
-                if (nRGVOIsPoly[0].contains(geomCentercRGVOIs.X, geomCentercRGVOIs.Y)) {
+                if (nRGVOIsPoly.contains(geomCentercRGVOIs.X, geomCentercRGVOIs.Y)) {
 
                     if (areanRGVOIs < areacRGVOIs) {
                         newallRGVOIs.addElement(cRGVOIs);
@@ -494,7 +494,7 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
                         // UI.setDataText("\nAdding ie = " + rgvoisCnt1);
                         flagVOI = true;
                     }
-                } else if (cRGVOIsPoly[0].contains(centmassnRGVOIs.X, centmassnRGVOIs.Y)) {
+                } else if (cRGVOIsPoly.contains(centmassnRGVOIs.X, centmassnRGVOIs.Y)) {
 
                     if (areacRGVOIs < areanRGVOIs) {
                         newallRGVOIs.addElement(nRGVOIs);

@@ -117,10 +117,8 @@ public class RubberbandLevelSet implements MouseMotionListener, MouseListener {
                     ((VOIContour) (tempContours[0].elementAt(0))).trimPoints(Preferences.getTrim(),
                                                                              Preferences.getTrimAdjacient());
 
-                    Polygon[] gons = newVOI.exportPolygons(0);
-
                     // add this to potential list
-                    potentialGons.add(gons[0]);
+                    potentialGons.add(((VOIContour) (tempContours.elementAt(0))).exportPolygon());
                     potentialLevels.add(new Float(tmpLevel));
                 }
             }
@@ -150,11 +148,8 @@ public class RubberbandLevelSet implements MouseMotionListener, MouseListener {
                         Vector[] tempContours = newVOI.getCurves();
                         ((VOIContour) (tempContours[0].elementAt(0))).trimPoints(Preferences.getTrim(),
                                                                                  Preferences.getTrimAdjacient());
-
-                        Polygon[] gons = newVOI.exportPolygons(0);
-
                         // add this to potential list
-                        potentialGons.add(gons[0]);
+                        potentialGons.add(((VOIContour) (tempContours.elementAt(0))).exportPolygon());
                         potentialLevels.add(new Float(tmpLevel));
                     }
                 }

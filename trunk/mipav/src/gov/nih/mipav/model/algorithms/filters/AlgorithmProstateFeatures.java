@@ -1508,14 +1508,13 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 						// resultBufferClass[currentResult-1][pos] = -1;
 						
 						Vector<VOIBase>[] vArray = VOIs.VOIAt(0)
-								.getCurves();
+								.getSortedCurves(VOIBase.ZPLANE, zDim);
 
 						if (vArray != null) {
 							if (vArray[z] != null && vArray[z].size() > 0) {
 								VOIBase v = vArray[z].get(0);
 								if (v instanceof VOIContour) {
-									if (((VOIContour) v).contains(x, y,
-											false)) {
+									if (((VOIContour) v).contains(x, y)) {
 										for (int q = 0; q < currentResult; q++) {
 											
 											resultBufferClass[q][pos] = 1;
@@ -1560,14 +1559,13 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 								resultBufferClass[currentResult][pos] = -1;
 							}
 							Vector<VOIBase>[] vArray = VOIs.VOIAt(0)
-									.getCurves();
+                            .getSortedCurves(VOIBase.ZPLANE, zDim);
 
 							if (vArray != null) {
 								if (vArray[z] != null && vArray[z].size() > 0) {
 									VOIBase v = vArray[z].get(0);
 									if (v instanceof VOIContour) {
-										if (((VOIContour) v).contains(x, y,
-												false)) {
+										if (((VOIContour) v).contains(x, y)) {
 											/*
 											for (int q = 0; q < currentResult; q++) {
 												// resultBuffer[q][pos] = 255;
@@ -1612,14 +1610,13 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 								resultBufferClass[currentResult][pos] = -1;
 							}
 							Vector<VOIBase>[] vArray = VOIs.VOIAt(0)
-									.getCurves();
+                            .getSortedCurves(VOIBase.ZPLANE, zDim);
 
 							if (vArray != null) {
 								if (vArray[z] != null && vArray[z].size() > 0) {
 									VOIBase v = vArray[z].get(0);
 									if (v instanceof VOIContour) {
-										if (((VOIContour) v).contains(x, y,
-												false)) {
+										if (((VOIContour) v).contains(x, y)) {
 											/*
 											for (int q = 0; q < currentResult; q++) {
 												// resultBuffer[q][pos] = 255;
@@ -1675,15 +1672,14 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 									resultBufferClass[currentResult][pos] = -1;
 								}
 								Vector<VOIBase>[] vArray = VOIs.VOIAt(0)
-										.getCurves();
+                                .getSortedCurves(VOIBase.ZPLANE, zDim);
 
 								if (vArray != null) {
 									if (vArray[z] != null
 											&& vArray[z].size() > 0) {
 										VOIBase v = vArray[z].get(0);
 										if (v instanceof VOIContour) {
-											if (((VOIContour) v).contains(x, y,
-													false)) {
+											if (((VOIContour) v).contains(x, y)) {
 												/*
 												for (int q = 0; q < currentResult; q++) {
 													// resultBuffer[q][pos] =

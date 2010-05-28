@@ -465,6 +465,12 @@ public class Preferences {
     
     
 
+    public static final String PREF_NDAR_PLUGIN_SERVER = "NDARPluginServer";
+    
+    public static final String PREF_NDAR_PLUGIN_DATASTRUCT_NAME = "image01";
+    
+    
+
     /**
      * The character that separates an item from its value in a definition or mapping (such as in the user file type
      * definitions).

@@ -119,7 +119,7 @@ public class FileMincHDF extends FileBase {
     private int[] dimReorderIndexes = null;
     
     private boolean is4D;
-    
+
     
 
     // ~ Constructors
@@ -870,7 +870,7 @@ public class FileMincHDF extends FileBase {
         double[] rescaleIntercept = null;
         // if imageMax and imageMin were present, do the rescaleintercept here
         if (imageMax != null && imageMin != null && fileInfo.getValidRange() != null) {
-        	
+
             rescaleSlope = new double[numImages];
             rescaleIntercept = new double[numImages];
 
@@ -1147,7 +1147,7 @@ public class FileMincHDF extends FileBase {
         double xstep, ystep, zstep;
         double tstart = 0;
         double tstep = 1;
-        
+
         if(is4D) {
         	tstart = options.getTStart();
         	tstep = options.getTSpace();
@@ -1496,10 +1496,10 @@ public class FileMincHDF extends FileBase {
                 
                 
 
-            }
-            
-            
         }
+
+            
+    }
 
     }
 
@@ -1698,16 +1698,16 @@ public class FileMincHDF extends FileBase {
                 maxdims[2] = dims[2];
                 maxdims[3] = dims[3];
         	}else {
-        		// order is z, y, x
-                dims[0] = image.getExtents()[2];
-                dims[1] = image.getExtents()[1];
-                dims[2] = image.getExtents()[0];
+            // order is z, y, x
+            dims[0] = image.getExtents()[2];
+            dims[1] = image.getExtents()[1];
+            dims[2] = image.getExtents()[0];
 
-                maxdims[0] = dims[0];
-                maxdims[1] = dims[1];
-                maxdims[2] = dims[2];
-        	}
-            
+            maxdims[0] = dims[0];
+            maxdims[1] = dims[1];
+            maxdims[2] = dims[2];
+        }
+
         }
 
         // create the Dataset (H5ScalarDS) that will hold the image data
@@ -1728,7 +1728,7 @@ public class FileMincHDF extends FileBase {
         } else if (image.getExtents().length == 4) {
             numImages = image.getExtents()[2] * image.getExtents()[3];
         }
-        
+
 
         Object dataImportObj = null;
         switch (mDataType) {
@@ -1851,7 +1851,7 @@ public class FileMincHDF extends FileBase {
 				start[0] = volCounter;
 
         	}else {
-        		start[0] = j;
+            start[0] = j;
 
         	}
             // System.err.println(imageData.getStartDims()[0]);
@@ -1866,7 +1866,7 @@ public class FileMincHDF extends FileBase {
                 			((byte[]) dataImportObj)[k] = (byte)f;
                 		}
                 	}else {
-                		image.exportData(j * sliceSize, sliceSize, (byte[]) dataImportObj);
+                    image.exportData(j * sliceSize, sliceSize, (byte[]) dataImportObj);
                 		for(int k=0;k<((byte[]) dataImportObj).length;k++) {
                 			f = (float)((((byte[]) dataImportObj)[k] - intercepts[j]) / slopes[j]);
                 			((byte[]) dataImportObj)[k] = (byte)(Math.round(f));
@@ -1882,7 +1882,7 @@ public class FileMincHDF extends FileBase {
                 			((short[]) dataImportObj)[k] = (short)f;
                 		}
                 	}else {
-                		image.exportData(j * sliceSize, sliceSize, (short[]) dataImportObj);
+                    image.exportData(j * sliceSize, sliceSize, (short[]) dataImportObj);
                 		for(int k=0;k<((short[]) dataImportObj).length;k++) {
                 			f = (float)((((short[]) dataImportObj)[k] - intercepts[j]) / slopes[j]);
                 			((short[]) dataImportObj)[k] = (short)(Math.round(f));
@@ -1898,7 +1898,7 @@ public class FileMincHDF extends FileBase {
                 			((int[]) dataImportObj)[k] = (int)f;
                 		}
                 	}else {
-                		image.exportData(j * sliceSize, sliceSize, (int[]) dataImportObj);
+                    image.exportData(j * sliceSize, sliceSize, (int[]) dataImportObj);
                 		for(int k=0;k<((int[]) dataImportObj).length;k++) {
                 			f = (float)((((int[]) dataImportObj)[k] - intercepts[j]) / slopes[j]);
                 			((int[]) dataImportObj)[k] = (int)(Math.round(f));
@@ -1913,7 +1913,7 @@ public class FileMincHDF extends FileBase {
                 			((float[]) dataImportObj)[k] = (float)f;
                 		}
                 	}else {
-                		image.exportData(j * sliceSize, sliceSize, (float[]) dataImportObj);
+                    image.exportData(j * sliceSize, sliceSize, (float[]) dataImportObj);
                 		for(int k=0;k<((float[]) dataImportObj).length;k++) {
                 			f = (float)((((float[]) dataImportObj)[k] - intercepts[j]) / slopes[j]);
                 			((float[]) dataImportObj)[k] = (float)(Math.round(f));
@@ -1928,7 +1928,7 @@ public class FileMincHDF extends FileBase {
                 			((double[]) dataImportObj)[k] = (double)f;
                 		}
                 	}else {
-                		image.exportData(j * sliceSize, sliceSize, (double[]) dataImportObj);
+                    image.exportData(j * sliceSize, sliceSize, (double[]) dataImportObj);
                 		for(int k=0;k<((double[]) dataImportObj).length;k++) {
                 			f = (float)((((double[]) dataImportObj)[k] - intercepts[j]) / slopes[j]);
                 			((double[]) dataImportObj)[k] = (double)(Math.round(f));
@@ -2079,8 +2079,8 @@ public class FileMincHDF extends FileBase {
         	dims = new long[2];
         	maxdims = new long[2];
         }else {
-        	dims = new long[1];
-        	maxdims = new long[1];
+        dims = new long[1];
+        maxdims = new long[1];
         }
         
         int numSlices = 1;
@@ -2096,7 +2096,7 @@ public class FileMincHDF extends FileBase {
         	maxdims[1] = dims[1];
         	numSlices = image.getExtents()[2] * image.getExtents()[3];
         }
-        
+
 
         final H5ScalarDS imageMaxObj = (H5ScalarDS) fileFormat.createScalarDS("image-max", imageNumGroup,
                 imageRangeDatatype, dims, maxdims, null, 0, null);
@@ -2122,17 +2122,17 @@ public class FileMincHDF extends FileBase {
         	numVols = image.getExtents()[3];
         }
         for (int i = 0; i < numSlices; i++) {
-    		 image.exportData(i * sliceSize, sliceSize, imageSliceBuffer);
+            image.exportData(i * sliceSize, sliceSize, imageSliceBuffer);
 
-             imageMax[i] = imageSliceBuffer[0];
-             imageMin[i] = imageSliceBuffer[0];
-             for (final double element : imageSliceBuffer) {
-                 if (element > imageMax[i]) {
-                     imageMax[i] = element;
-                 } else if (element < imageMin[i]) {
-                     imageMin[i] = element;
-                 }
-             }
+            imageMax[i] = imageSliceBuffer[0];
+            imageMin[i] = imageSliceBuffer[0];
+            for (final double element : imageSliceBuffer) {
+                if (element > imageMax[i]) {
+                    imageMax[i] = element;
+                } else if (element < imageMin[i]) {
+                    imageMin[i] = element;
+                }
+            }
         }
         // init and then read in the two arrays
         imageMaxObj.init();

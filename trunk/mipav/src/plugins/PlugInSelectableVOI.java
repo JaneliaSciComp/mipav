@@ -70,6 +70,8 @@ public class PlugInSelectableVOI extends VOI {
 	
 	/** Amount of time taken to calculate VOI in ms*/
 	private long calculationTime;
+	
+	private int zDim = 1;
 
 	//~ Static fields --------------------------------------------------------------------------------------------------
 	
@@ -108,6 +110,7 @@ public class PlugInSelectableVOI extends VOI {
 		this.computerGenerated = false;
 		this.outputLoc = outputLoc;
 		
+		this.zDim = imageSize;
 		this.totalArea = new double[imageSize+1];
 		this.partialArea = new double[imageSize+1];
 		this.fatArea = new double[imageSize+1];
@@ -136,7 +139,7 @@ public class PlugInSelectableVOI extends VOI {
 		
 		setColor(color);
 	}
-
+	
 	/**
 	 * Method for adding a child to the list of VOIs this VOI uses for its calculations.
 	 * Can only add a calc eligible child, can not add itself.
@@ -231,7 +234,7 @@ public class PlugInSelectableVOI extends VOI {
 	}
 
 	public double getTotalArea() {
-		return totalArea[getZDim()];
+		return totalArea[zDim];
 	}
 	
 	/**
@@ -246,7 +249,7 @@ public class PlugInSelectableVOI extends VOI {
 	}
 	
 	public void setTotalArea(double totalAreaCount) {
-		this.totalArea[getZDim()] = totalAreaCount;
+		this.totalArea[zDim] = totalAreaCount;
 	}
 	
 	/**
@@ -262,7 +265,7 @@ public class PlugInSelectableVOI extends VOI {
 	}
 
 	public double getPartialArea() {
-		return partialArea[getZDim()];
+		return partialArea[zDim];
 	}
 	
 	/**
@@ -277,7 +280,7 @@ public class PlugInSelectableVOI extends VOI {
 	}
 
 	public void setPartialArea(double partialArea) {
-		this.partialArea[getZDim()] = partialArea;
+		this.partialArea[zDim] = partialArea;
 	}
 	
 	/**
@@ -293,7 +296,7 @@ public class PlugInSelectableVOI extends VOI {
 	}
 
 	public double getFatArea() {
-		return fatArea[getZDim()];
+		return fatArea[zDim];
 	}
 	
 	/**
@@ -308,7 +311,7 @@ public class PlugInSelectableVOI extends VOI {
 	}
 
 	public void setFatArea(double fatArea) {
-		this.fatArea[getZDim()] = fatArea;
+		this.fatArea[zDim] = fatArea;
 	}
 	
 	/**
@@ -324,7 +327,7 @@ public class PlugInSelectableVOI extends VOI {
 	}
 
 	public double getLeanArea() {
-		return leanArea[getZDim()];
+		return leanArea[zDim];
 	}
 	
 	/**
@@ -339,7 +342,7 @@ public class PlugInSelectableVOI extends VOI {
 	}
 
 	public void setLeanArea(double leanArea) {
-		this.leanArea[getZDim()] = leanArea;
+		this.leanArea[zDim] = leanArea;
 	}
 	
 	/**
@@ -355,7 +358,7 @@ public class PlugInSelectableVOI extends VOI {
 	}
 
 	public double getMeanFatH() {
-		return meanFatH[getZDim()];
+		return meanFatH[zDim];
 	}
 	
 	/**
@@ -370,7 +373,7 @@ public class PlugInSelectableVOI extends VOI {
 	}
 
 	public void setMeanFatH(double meanFatH) {
-		this.meanFatH[getZDim()] = meanFatH;
+		this.meanFatH[zDim] = meanFatH;
 	}
 	
 	/**
@@ -386,7 +389,7 @@ public class PlugInSelectableVOI extends VOI {
 	}
 
 	public double getMeanLeanH() {
-		return meanLeanH[getZDim()];
+		return meanLeanH[zDim];
 	}
 	
 	/**
@@ -401,7 +404,7 @@ public class PlugInSelectableVOI extends VOI {
 	}
 
 	public void setMeanLeanH(double meanLeanH) {
-		this.meanLeanH[getZDim()] = meanLeanH;
+		this.meanLeanH[zDim] = meanLeanH;
 	}
 	
 	/**
@@ -417,7 +420,7 @@ public class PlugInSelectableVOI extends VOI {
 	}
 
 	public double getMeanTotalH() {
-		return meanTotalH[getZDim()];
+		return meanTotalH[zDim];
 	}
 	
 	/**
@@ -432,7 +435,7 @@ public class PlugInSelectableVOI extends VOI {
 	}
 
 	public void setMeanTotalH(double meanTotalH) {
-		this.meanTotalH[getZDim()] = meanTotalH;
+		this.meanTotalH[zDim] = meanTotalH;
 	}
 	
 	/**

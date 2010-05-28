@@ -7,6 +7,8 @@ import gov.nih.mipav.model.structures.*;
 import Jama.*;
 
 import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -18,6 +20,8 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.event.*;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
@@ -88,7 +92,7 @@ import javax.swing.event.*;
  * @version  1.0
  */
 public class ViewJFrameRegistrationTool extends ViewJFrameBase
-        implements ItemListener, ChangeListener, FocusListener, WindowListener {
+        implements ItemListener, ChangeListener, FocusListener, WindowListener, VOIManagerInterfaceListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -431,6 +435,8 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
     private AlgorithmCostFunctions2D algoCost;
     
     private JButton calculateCostButton;
+    
+    private VOIManagerInterface voiManager;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -550,43 +556,12 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
                 updateImages(true);
             }
         } else if (command.equals("copyRefAdj")) {
-
-            VOIVector VOIs = componentImageA.getActiveImage().getVOIs();
-
-            for (int i = 0; i < VOIs.size(); i++) {
-                VOIs.VOIAt(i).setAllActive(true);
-            }
-
-            if (componentImageA.getVOIHandler().copyVOItoClipBrd()) {
-                componentImageB.getActiveImage().getVOIs().removeAllElements();
-                this.defaultModeButton.setSelected(true);
-                actionPerformed(new ActionEvent("DummySource", 0, "defaultMode"));
-                componentImageB.getVOIHandler().pasteVOI();
-            }
-
-            for (int i = 0; i < VOIs.size(); i++) {
-                VOIs.VOIAt(i).setAllActive(false);
-            }
-
+            VOIVector VOIs = componentImageA.getActiveImage().getVOIsCopy();
+            componentImageB.getActiveImage().setVOIs(VOIs);
             componentImageA.getActiveImage().notifyImageDisplayListeners();
         } else if (command.equals("copyAdjRef")) {
-            VOIVector VOIs = componentImageB.getActiveImage().getVOIs();
-
-            for (int i = 0; i < VOIs.size(); i++) {
-                VOIs.VOIAt(i).setAllActive(true);
-            }
-
-            if (componentImageB.getVOIHandler().copyVOItoClipBrd()) {
-                componentImageA.getActiveImage().getVOIs().removeAllElements();
-                this.defaultModeButton.setSelected(true);
-                actionPerformed(new ActionEvent("DummySource", 0, "defaultMode"));
-                componentImageA.getVOIHandler().pasteVOI();
-            }
-
-            for (int i = 0; i < VOIs.size(); i++) {
-                VOIs.VOIAt(i).setAllActive(false);
-            }
-
+            VOIVector VOIs = componentImageB.getActiveImage().getVOIsCopy();
+            componentImageA.getActiveImage().setVOIs(VOIs);
             componentImageB.getActiveImage().notifyImageDisplayListeners();
         } else if (command.equals("DisplayLUT")) {
 
@@ -770,11 +745,13 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             rightButton.setEnabled(true);
             leftButton.setEnabled(true);
             mode = ViewJComponentBase.POINT_VOI;
+            setActiveImage(IMAGE_A);
             componentImageA.setCursorMode(ViewJComponentBase.POINT_VOI);
             componentImage.setCenter(false);
             componentImage.setCursorMode(ViewJComponentRegistration.DEFAULT);
             componentImageB.setCursorMode(ViewJComponentRegistration.DEFAULT);
-            componentImageB.getVOIHandler().selectAllVOIs(false);
+            voiManager.selectAllVOIs(false);
+            voiManager.actionPerformed(new ActionEvent(this,0,CustomUIBuilder.PARAM_VOI_POINT.getActionCommand()));
         } else if (command.equals("adjMark")) {
             cwButton.setEnabled(false);
             ccwButton.setEnabled(false);
@@ -783,15 +760,19 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             rightButton.setEnabled(true);
             leftButton.setEnabled(true);
             mode = ViewJComponentBase.POINT_VOI;
+            setActiveImage(IMAGE_B);
             componentImageB.setCursorMode(ViewJComponentBase.POINT_VOI);
             componentImage.setCenter(false);
             componentImage.setCursorMode(ViewJComponentRegistration.DEFAULT);
             componentImageA.setCursorMode(ViewJComponentRegistration.DEFAULT);
-            componentImageA.getVOIHandler().selectAllVOIs(false);
+            voiManager.selectAllVOIs(false);
+            voiManager.actionPerformed(new ActionEvent(this,0,CustomUIBuilder.PARAM_VOI_POINT.getActionCommand()));
         } else if (command.equals("refMarkMinus")) {
-            componentImageA.deleteSelectedContours(componentImageA.getCenterPtLocation(), true);
+            setActiveImage(IMAGE_A);
+            voiManager.deleteSelectedVOI(true);
         } else if (command.equals("adjMarkMinus")) {
-            componentImageB.deleteSelectedContours(componentImageB.getCenterPtLocation(), true);
+            setActiveImage(IMAGE_B);
+            voiManager.deleteSelectedVOI(true);
         } else if (command.equals("defaultMode")) {
             adjMarkButton.setSelected(false);
             refMarkButton.setSelected(false);
@@ -806,6 +787,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             componentImage.setCursorMode(ViewJComponentRegistration.DEFAULT);
             componentImageA.setCursorMode(ViewJComponentBase.DEFAULT);
             componentImageB.setCursorMode(ViewJComponentBase.DEFAULT);
+            voiManager.actionPerformed(new ActionEvent(this,0,CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER.getActionCommand()));
             setDefaultMode();
         } else if (command.equals("degreeIncrement")) {
             JDialogIncrement dialog = new JDialogIncrement(this, false);
@@ -898,8 +880,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
 
             xfrm.MakeIdentity();
             imageB.calcMinMax();
-            componentImageA.deleteVOIs();
-            componentImageB.deleteVOIs();
+            voiManager.deleteVOIs();
             componentImage.deleteVOIs();
             xRotation = xRes * (image.getExtents()[0] / 2);
             yRotation = yRes * (image.getExtents()[1] / 2);
@@ -2633,6 +2614,8 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
         setTitle();
         //pack();
         setVisible(true);
+        
+        initVOI();
     }
 
     /**
@@ -3462,6 +3445,101 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             setVisible(true);
 
         }
+    }
+
+
+    @Override
+    public void PointerActive(boolean bActive) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public Vector3f PropDown(int iActive) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Vector3f PropUp(int iActive) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void create3DVOI(boolean bIntersection) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void enableBoth(boolean bEnable) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public ModelImage getActiveImage() {
+        if (componentImage != null) {
+            return componentImage.getActiveImage();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public Vector3f getCenterPt() {
+        return new Vector3f();
+    }
+
+    @Override
+    public JFrame getFrame() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+    @Override
+    public void setActiveImage(ModelImage kImage) {
+        if ( kImage == imageA )
+        {
+            setActiveImage( IMAGE_A );
+        }
+        else
+        {
+            setActiveImage( IMAGE_B );
+        }
+    }
+
+    @Override
+    public void setCenter(Vector3f kCenter) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void setModified() {
+        updateImages();
+    }
+
+    @Override
+    public void updateData(boolean bCopyToCPU) {
+        // TODO Auto-generated method stub
+        
+    }
+    
+    private void initVOI()
+    {
+        voiManager = new VOIManagerInterface( this, imageA, LUTa, imageB, LUTb, 2, false, null );
+        voiManager.getVOIManager(0).init( imageA, null,
+                componentImageA, componentImageA,
+                componentImageA.getOrientation(), componentImageA.getSlice() );
+        componentImageA.setVOIManager(voiManager.getVOIManager(0));
+        
+        voiManager.getVOIManager(1).init( imageB, null,
+                componentImageB, componentImageB,
+                componentImageB.getOrientation(), componentImageB.getSlice() );
+        componentImageB.setVOIManager(voiManager.getVOIManager(1));
+        
+        componentImage.setVOIManager(voiManager.getVOIManager(0));
     }
 
 }

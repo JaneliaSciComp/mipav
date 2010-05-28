@@ -1187,6 +1187,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
             Graphics g = super.component.getGraphics();
             ((ViewJComponentEditImage) component).update(g);
             g.setColor(Color.yellow);
+            /*
             contour.drawSelf(((ViewJComponentEditImage) (component)).getZoomX(),
                              ((ViewJComponentEditImage) (component)).getZoomY(),
                              ((ViewJComponentEditImage) (component)).getResolutionX(),
@@ -1194,7 +1195,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                              ((ViewJComponentEditImage) (component)).getActiveImage().getFileInfo(0).getResolutions(),
                              ((ViewJComponentEditImage) (component)).getActiveImage().getFileInfo(0).getUnitsOfMeasure(),
                              ((ViewJComponentEditImage) (component)).getOrientation(), g, false, Preferences.getVOIThickness());
-
+*/
             // draw boxes around the first and last points on the curve
             g.setXORMode(Color.black);
 
@@ -1355,7 +1356,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
 
                     contour.setClosed(!open);
                     contour.setActive(true);
-                    newVOI.importCurve(contour, ((ViewJComponentEditImage) (component)).getSlice());
+                    newVOI.importCurve(contour);
 
                     try {
                         smoothAlgo = new AlgorithmBSmooth(image, newVOI, nPts, true);
@@ -1372,7 +1373,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                 } else {
                     contour.trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
                     contour.setClosed(!open);
-                    newVOI.importCurve(contour, ((ViewJComponentEditImage) (component)).getSlice());
+                    newVOI.importCurve(contour);
                 }
 
                 image.registerVOI(newVOI);
@@ -1448,7 +1449,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                                 contour.setActive(true);
 
                                 // VOIs.VOIAt(i).getCurves()[((ViewJComponentEditImage)(component)).getSlice()].addElement(contour);
-                                VOIs.VOIAt(i).importCurve(contour, ((ViewJComponentEditImage) (component)).getSlice());
+                                VOIs.VOIAt(i).importCurve(contour);
 
                                 try {
                                     smoothAlgo = new AlgorithmBSmooth(image, VOIs.VOIAt(i), nPts, true);
@@ -1460,15 +1461,15 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                                 }
 
                                 int slice = ((ViewJComponentEditImage) (component)).getSlice();
-                                VOIs.VOIAt(i).getCurves()[slice].removeElement(contour);
-                                VOIs.VOIAt(i).getCurves()[slice].addElement((VOIContour)
-                                                                                smoothAlgo.getResultVOI().getCurves()[slice].lastElement());
+                                VOIs.VOIAt(i).getCurves().removeElement(contour);
+                                VOIs.VOIAt(i).getCurves().addElement((VOIContour)
+                                                                                smoothAlgo.getResultVOI().getCurves().lastElement());
                             } else {
                                 contour.trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
                                 contour.setClosed(!open);
                                 //                                VOIs.VOIAt(i).getCurves()[((ViewJComponentEditImage)(component)).getSlice()].addElement(contour);
 
-                                VOIs.VOIAt(i).importCurve(contour, ((ViewJComponentEditImage) (component)).getSlice());
+                                VOIs.VOIAt(i).importCurve(contour);
                             }
                         } else {
                             MipavUtil.displayError("Can't add Livewire VOI to other VOI structure.");

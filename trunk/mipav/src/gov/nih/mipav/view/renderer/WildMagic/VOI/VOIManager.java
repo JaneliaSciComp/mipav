@@ -1,42 +1,61 @@
 package gov.nih.mipav.view.renderer.WildMagic.VOI;
 
 import gov.nih.mipav.MipavCoordinateSystems;
+import gov.nih.mipav.MipavMath;
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.PointStack;
 import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIBase;
+import gov.nih.mipav.model.structures.VOIContour;
+import gov.nih.mipav.model.structures.VOILine;
+import gov.nih.mipav.model.structures.VOIPoint;
+import gov.nih.mipav.model.structures.VOIPolyLineSlice;
+import gov.nih.mipav.model.structures.VOIProtractor;
 import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
+import gov.nih.mipav.view.CustomUIBuilder;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.RubberbandLivewire;
+import gov.nih.mipav.view.ViewJComponentEditImage;
+import gov.nih.mipav.view.ViewJPopupPt;
+import gov.nih.mipav.view.ViewJPopupVOI;
+import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.dialogs.JDialogAnnotation;
 import gov.nih.mipav.view.dialogs.JDialogVOISplitter;
-import gov.nih.mipav.view.renderer.WildMagic.Render.LocalVolumeVOI;
-import gov.nih.mipav.view.renderer.WildMagic.Render.VOIContour3D;
-import gov.nih.mipav.view.renderer.WildMagic.Render.VOILine3D;
-import gov.nih.mipav.view.renderer.WildMagic.Render.VOIPoint3D;
-import gov.nih.mipav.view.renderer.WildMagic.Render.VOIProtractor3D;
-import gov.nih.mipav.view.renderer.WildMagic.Render.VOIText3D;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Polygon;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.BitSet;
 import java.util.Stack;
 import java.util.Vector;
 
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
+
+import com.mentorgen.tools.profile.runtime.Profile;
 
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
-public class VOIManager implements KeyListener, MouseListener, MouseMotionListener
+public class VOIManager implements ActionListener, KeyListener, MouseListener, MouseMotionListener
 {
     /**
      * Binary search tree, modified so it will work with elements that have the same cost. In theory this should not be
@@ -312,6 +331,11 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
     private boolean m_bPointer = false;
     private boolean m_bSelected = false;
 
+
+    /** used in the popup menu when the user right-clicks over a voi intensity line. */
+    public static final String DELETE_INTENSITY_LINE = "delete_inensity_line";
+    public static final String SHOW_INTENSITY_GRAPH = "show_intensity_graph";
+
     private static final int TEXT = 0;
     private static final int POINT = 1;
     public static final int POLYPOINT = 2;
@@ -319,15 +343,16 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
     private static final int PROTRACTOR = 4;
     private static final int RECTANGLE = 5;
     private static final int OVAL = 6;
-    public static final int POLYLINE = 7;
-    public static final int LEVELSET = 8;
-    public static final int LIVEWIRE = 9;
+    private static final int POLYLINE = 7;
+    private static final int LEVELSET = 8;
+    private static final int LIVEWIRE = 9;
     private static final int RECTANGLE3D = 10;
-    public static final int SPLITLINE = 11;
+    private static final int SPLITLINE = 11;
+    private static final int LUT = 12;
     private int m_iDrawType;
 
-    private LocalVolumeVOI m_kCurrentVOI = null;
-    private LocalVolumeVOI m_kCopyVOI = null;
+    private VOIBase m_kCurrentVOI = null;
+    private VOIBase m_kCopyVOI = null;
     protected ScreenCoordinateListener m_kDrawingContext = null;
     private PointStack levelSetStack = new PointStack(500);
     private BitSet map = null;
@@ -344,30 +369,10 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
     private ModelImage m_kImageActive;
     private ModelImage m_kLocalImage;
 
-    private byte[] m_aucBufferA;
-    private byte[] m_aucBufferB;
-    private byte[] m_aucBufferActive;
-
     private int[] m_aiLocalImageExtents;
 
-    private VOIManagerListener m_kParent;
+    private VOIManagerInterface m_kParent;
 
-    private Vector2f[][] m_akSteps = new Vector2f[7][7];
-
-    private int[][] m_aiIndexValues = new int[7][7];   
-
-    private float[][] m_afAverages = new float[7][7];
-
-
-    private int m_iMM = 1;
-
-    private int m_iM = 2;
-
-    private int m_i_ = 3;
-
-
-    private int m_iP = 4;
-    private int m_iPP = 5;
     private boolean m_bFirstVOI = true;
     private int m_iCirclePts = 32;
 
@@ -412,10 +417,86 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
     private float[] yDirections;
 
     private float[] imageBufferActive;
-    
-    public VOIManager (VOIManagerListener kParent )
+
+    private boolean m_bQuickLUT = false;
+
+
+
+
+    /** Popup Menu for VOIs (non-point). */
+    protected ViewJPopupVOI m_kPopupVOI = null;
+
+    /** Popup Menu for VOIPoints. */
+    protected ViewJPopupPt m_kPopupPt = null;
+
+    private int m_iPlane = -1;
+
+
+    public VOIManager (VOIManagerInterface kParent )
     {
         m_kParent = kParent;
+    }
+
+    public void actionPerformed(ActionEvent event) {
+        String command = event.getActionCommand();
+
+        if (command.equals(DELETE_INTENSITY_LINE)) // handling the popup menu for the VOI intensity line
+        {
+            m_kParent.deleteVOI( m_kCurrentVOI );
+            m_kParent.setDefaultCursor();
+        }
+        else if (command.equals(SHOW_INTENSITY_GRAPH)) // handling the popup menu for the VOI intensity line
+        {
+            m_kParent.showIntensityGraph( m_kCurrentVOI );
+        }
+    }
+
+
+    public void add( VOIBase kVOI, float fHue )
+    {
+        m_kParent.newVOI( false, false );
+        m_kParent.addVOI( kVOI, true );
+        m_kParent.setPresetHue(fHue);
+        kVOI.setActive(true);
+        m_kParent.setDefaultCursor();
+    }
+
+    public boolean add( VOIBase kVOI, int iPos, Vector3f kNewPoint, boolean bIsFile  )
+    {
+        if ( kVOI.isFixed() )
+        {
+            return false;
+        }        
+        Vector3f kFilePt = kNewPoint;
+        if ( !bIsFile )
+        {            
+            kFilePt = new Vector3f();
+            m_kDrawingContext.screenToFile( (int)kNewPoint.X, (int)kNewPoint.Y, (int)kNewPoint.Z, kFilePt);
+        }
+        if ( (iPos + 1) < kVOI.size() )
+        {
+            kVOI.insertElementAt( kFilePt, iPos + 1);
+        }
+        else
+        {
+            if ( (kVOI.size() == 0) || !kVOI.lastElement().equals( kFilePt ) )
+            {
+                kVOI.add( kFilePt );
+            }
+            else
+            {
+                return false;
+            }
+        }
+        kVOI.setSelectedPoint( iPos + 1 );     
+        kVOI.update();
+
+        return true;
+    }
+
+    public boolean add( VOIBase kVOI, Vector3f kNewPoint, boolean bIsFile  )
+    {
+        return add( kVOI, kVOI.size() - 1, kNewPoint, bIsFile );
     }
 
     public void anchor(int iX, int iY, boolean bSeed) {
@@ -424,12 +505,12 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         {
             Vector<Vector3f> kPositions = new Vector<Vector3f>();
             kPositions.add( kNewPoint );
-            m_kCurrentVOI = new VOIContour3D( this, m_kDrawingContext, m_iPlaneOrientation, m_iDrawType, m_iDrawType, kPositions, false);
+            m_kCurrentVOI = createVOI( m_iDrawType, false, false, kPositions );
             m_kParent.addVOI( m_kCurrentVOI, true );
         }
         else
         {
-            if ( m_kCurrentVOI.add( kNewPoint, false ) )
+            if ( add( m_kCurrentVOI, kNewPoint, false ) )
             {
                 m_kParent.updateDisplay();
             }
@@ -437,7 +518,6 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         m_kCurrentVOI.setAnchor();
         if ( bSeed )
         {
-            initLiveWire( m_iSlice, true );
             seed(iX, iY);
         }
     }
@@ -448,12 +528,13 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         {
             Vector<Vector3f> kPositions = new Vector<Vector3f>();
             kPositions.add( kNewPoint );
-            m_kCurrentVOI = new VOIContour3D( this, m_kDrawingContext, m_iPlaneOrientation, m_iDrawType, m_iDrawType, kPositions, false);
+            m_kCurrentVOI = createVOI( m_iDrawType, false, false, kPositions );
             m_kParent.addVOI( m_kCurrentVOI, true );
         }
         else
         {
-            if ( m_kCurrentVOI.add( kNewPoint, false ) )
+            m_kCurrentVOI.setSize( m_kCurrentVOI.getAnchor()+1 );
+            if ( add( m_kCurrentVOI, kNewPoint, false ) )
             {
                 m_kParent.updateDisplay();
             }
@@ -463,9 +544,34 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         {
             m_kCurrentVOI.setActive(true);
         }
+        else
+        {
+            //m_kCurrentVOI.setSize( m_kCurrentVOI.getAnchor()-1 );
+        }
     }
 
-    public int deleteVOIActivePt( LocalVolumeVOI kVOI )
+
+    public boolean contains( VOIBase kVOI, int iX, int iY, int iZ ) {
+
+        Vector3f kVolumePt = new Vector3f();
+        m_kDrawingContext.screenToFile( iX, iY, m_iSlice, kVolumePt );
+        if ( kVOI.contains( kVolumePt.X, kVolumePt.Y, kVolumePt.Z ) )
+        {
+            return true;
+        }
+        if ( kVOI.nearLine( (int)kVolumePt.X, (int)kVolumePt.Y, (int)kVolumePt.Z ) )
+        {
+            return true;
+        }
+        return kVOI.nearPoint( iX, iY, iZ );
+    }
+
+
+    public void deleteVOI( VOIBase kVOI )
+    {
+        m_kParent.deleteVOI( kVOI );
+    }
+    public int deleteVOIActivePt( VOIBase kVOI )
     {
         int iPos = kVOI.getSelectedPoint();
         if ( iPos < 0 )
@@ -480,7 +586,6 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         return kVOI.size();
     }
 
-
     public void dispose() 
     {
         m_kCurrentVOI = null;
@@ -489,10 +594,6 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         levelSetStack = null;
         map = null;
         stack = null;
-        m_aucBufferA = null;
-        m_aucBufferB = null;
-        m_aucBufferActive = null;
-
         m_akImages[0] = null;
         m_akImages[1] = null;
         m_akImages = null;
@@ -505,10 +606,6 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
 
         m_aiLocalImageExtents = null;
         m_kParent = null;
-
-        m_akSteps = null;
-        m_aiIndexValues = null;
-        m_afAverages = null;
 
         m_adCos = null;
         m_adSin = null;
@@ -527,7 +624,6 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         yDirections = null;
     }
 
-
     public void doVOI( String kCommand, boolean isDrawCommand )
     {
         if ( m_bFirstVOI )
@@ -543,10 +639,11 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         m_bPointer = false;
 
 
-        if (kCommand.equals("Pointer") ) {
+        if (kCommand.equals(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER.getActionCommand()) ) {
             m_bPointer = true;
         }
-        else if ( kCommand.equals("NewVOI") )
+        else if ( kCommand.equals(CustomUIBuilder.PARAM_VOI_NEW.getActionCommand()) || 
+                kCommand.equals("ResetVOI") )
         {
             m_kCurrentVOI = null;
         }
@@ -554,55 +651,102 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         {
             m_bDrawVOI = true;
             m_bSelected = false;
-            if ( m_kCurrentVOI != null )
+            if ( m_kCurrentVOI != null && !m_bQuickLUT )
             {
-                m_kCurrentVOI.setActive(false);
+                if ( !kCommand.equals(CustomUIBuilder.PARAM_VOI_SPLITTER.getActionCommand()) )
+                {
+                    m_kCurrentVOI.setActive(false);
+                }
                 m_kCurrentVOI = null;
             }
 
-            if ( kCommand.equals("protractor") )
+            if ( kCommand.equals(CustomUIBuilder.PARAM_VOI_PROTRACTOR.getActionCommand()) )
             {
                 m_iDrawType = PROTRACTOR;
             }
-            else if ( kCommand.equals("LiveWireVOI") )
+            else if ( kCommand.equals(CustomUIBuilder.PARAM_VOI_LIVEWIRE.getActionCommand()) )
             {
                 m_iDrawType = LIVEWIRE;
             }
-            else if ( kCommand.equals("SplitVOI") )
+            else if ( kCommand.equals(CustomUIBuilder.PARAM_VOI_SPLITTER.getActionCommand()) )
             {
                 m_iDrawType = SPLITLINE;
             }
-            else if ( kCommand.equals("Line") )
+            else if ( kCommand.equals(CustomUIBuilder.PARAM_VOI_LINE.getActionCommand()) )
             {
                 m_iDrawType = LINE;
             }
-            else if ( kCommand.equals("Polyslice") )
+            else if ( kCommand.equals(CustomUIBuilder.PARAM_VOI_POLY_SLICE.getActionCommand()) )
             {
                 m_iDrawType = POLYPOINT;
             }
-            else if ( kCommand.equals("Point") ) {
+            else if ( kCommand.equals(CustomUIBuilder.PARAM_VOI_POINT.getActionCommand()) ) {
                 m_iDrawType = POINT;
             }
-            else if ( kCommand.equals("TextVOI") ) {
+            else if ( kCommand.equals(CustomUIBuilder.PARAM_VOI_TEXT.getActionCommand()) ) {
                 m_iDrawType = TEXT;
             }
-            else if (kCommand.equals("Rect3DVOI") ) {
+            else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_3D_RECTANGLE.getActionCommand()) ) {
                 m_iDrawType = RECTANGLE3D;
             } 
-            else if (kCommand.equals("RectVOI") ) {
+            else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_RECTANGLE.getActionCommand()) ) {
                 m_iDrawType = RECTANGLE;
             } 
-            else if (kCommand.equals("EllipseVOI") ) {
+            else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_ELLIPSE.getActionCommand()) ) {
                 m_iDrawType = OVAL;
             } 
-            else if (kCommand.equals("Polyline") ) {
+            else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_POLYGON.getActionCommand()) ) {
                 m_iDrawType = POLYLINE;
             } 
-            else if (kCommand.equals("LevelSetVOI") ) {
+            else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_LEVELSET.getActionCommand()) ) {
                 m_iDrawType = LEVELSET;
             } 
+            else if ( kCommand.equals(CustomUIBuilder.PARAM_LUT_QUICK.getActionCommand()) ) {
+                m_iDrawType = LUT;
+            }
         }
     }
+
+    public void draw( VOIBase kVOI, float[] resolutions, int[] unitsOfMeasure, 
+            int slice, int orientation, Graphics g ) 
+    {
+        if (g == null) {
+            MipavUtil.displayError("Draw VOI: grapics = null");
+            return;
+        }
+        if ( kVOI.getType() == VOI.POLYLINE_SLICE )
+        {
+            drawVOIPolyLineSlice( (VOIPolyLineSlice)kVOI, resolutions, unitsOfMeasure, g, slice, orientation );
+        }
+        if ( (m_iPlane != (m_iPlane & kVOI.getPlane())) || (getSlice(kVOI)!= slice) )
+        {
+            return;
+        }
+        switch ( kVOI.getType() )
+        {
+        case VOI.CONTOUR:
+        case VOI.POLYLINE:
+            drawVOI( kVOI, resolutions, unitsOfMeasure, g, 1 );
+            return;
+
+        case VOI.LINE:
+            drawVOILine( kVOI, resolutions, unitsOfMeasure, g, 1 );
+            return;
+        case VOI.POINT:
+            drawVOIPoint( kVOI, resolutions, unitsOfMeasure, g );
+            return;
+        case VOI.POLYLINE_SLICE:
+            return;
+        case VOI.ANNOTATION:
+            drawVOIText( ((VOIText)kVOI), g );
+            return;
+        case VOI.PROTRACTOR:
+            drawVOIProtractor( kVOI, resolutions, unitsOfMeasure, g );
+            return;
+        }
+
+    }
+
     public void drawNext(int iX, int iY) {
         if ( m_kCurrentVOI == null )
         {
@@ -615,10 +759,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
 
         float fY = iY;
         Vector3f kNewPoint = new Vector3f( iX, fY, m_iSlice ) ;
-        if ( m_kCurrentVOI.add( kNewPoint, false ) )
-        {
-            m_kParent.updateDisplay( );
-        }
+        add( m_kCurrentVOI, kNewPoint, false );
 
         Vector3f kFile = new Vector3f();
         m_kDrawingContext.screenToFile(iX, (int)fY, m_iSlice, kFile);
@@ -642,7 +783,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             y = (mouseIndex - x)/xDim;
             kNewPoint = new Vector3f( x, y, m_iSlice ) ;
             Vector3f kVolumePt = patientCoordinatesToFile(kNewPoint);
-            if ( m_kCurrentVOI.add( iAnchor, kVolumePt, true ) )
+            if ( add( m_kCurrentVOI, iAnchor, kVolumePt, true ) )
             {
                 bPointsAdded = true;
             }
@@ -658,7 +799,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         y = (mouseIndex - x)/xDim;
         kNewPoint = new Vector3f( x, y, m_iSlice ) ;
         Vector3f kVolumePt = patientCoordinatesToFile(kNewPoint);
-        if ( m_kCurrentVOI.add( iAnchor, kVolumePt, true ) )
+        if ( add( m_kCurrentVOI, iAnchor, kVolumePt, true ) )
         {
             bPointsAdded = true;
         }
@@ -673,14 +814,12 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         {
             return;
         }
-        while ( m_kCurrentVOI.getAnchor() < (m_kCurrentVOI.size()-1) )
-        {
-            m_kCurrentVOI.delete(m_kCurrentVOI.getAnchor()+1);
-        }
+
+        m_kCurrentVOI.setSize( m_kCurrentVOI.getAnchor()+1 );
 
         float fY = iY;
         Vector3f kNewPoint = new Vector3f( iX, fY, m_iSlice ) ;
-        if ( m_kCurrentVOI.add( kNewPoint, false ) )
+        if ( add( m_kCurrentVOI, kNewPoint, false ) )
         {
             m_kParent.updateDisplay();
         }
@@ -693,72 +832,37 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         return kPatient;
     }
 
-    public void fillVolume( Vector<Vector3f> kPositions, ModelImage kVolume, BitSet kMask, boolean bIntersection, int iValue )
+
+
+    public ModelImage getActiveImage()
     {
-        int iNumPoints = kPositions.size();
-        if ( iNumPoints == 0 )
-        {
-            return;
-        }
-        Vector3f[] kVolumePts = new Vector3f[iNumPoints + 1];
-        int iXMin = Integer.MAX_VALUE;
-        int iYMin = Integer.MAX_VALUE;
-        int iXMax = Integer.MIN_VALUE;
-        int iYMax = Integer.MIN_VALUE;
-
-        for ( int i = 0; i < iNumPoints; i++ )
-        {
-            Vector3f kVolumePt = kPositions.get(i);
-            Vector3f kPt = new Vector3f();
-            MipavCoordinateSystems.fileToPatient( kVolumePt, kPt, m_kImageActive, m_iPlaneOrientation );
-
-            //kPt.Z = iSlice;/
-            kVolumePts[i] = kPt;
-            iXMin = (int)Math.min( iXMin, kVolumePts[i].X );
-            iYMin = (int)Math.min( iYMin, kVolumePts[i].Y );
-            iXMax = (int)Math.max( iXMax, kVolumePts[i].X );
-            iYMax = (int)Math.max( iYMax, kVolumePts[i].Y );
-        }
-        Vector3f kVolumePt = kPositions.get(0);
-        Vector3f kPt = new Vector3f();
-        MipavCoordinateSystems.fileToPatient( kVolumePt, kPt, m_kImageActive, m_iPlaneOrientation );
-
-        //Vector3f kPt = kPoly.VBuffer.GetPosition3(0);
-        //kPt.Mult( m_kVolumeScaleInv );
-        //kPt.Z = iSlice;
-        kVolumePts[iNumPoints] = kPt;
-        iXMin = (int)Math.min( iXMin, kVolumePts[iNumPoints].X );
-        iYMin = (int)Math.min( iYMin, kVolumePts[iNumPoints].Y );
-        iXMax = (int)Math.max( iXMax, kVolumePts[iNumPoints].X );
-        iYMax = (int)Math.max( iYMax, kVolumePts[iNumPoints].Y );
-        iNumPoints++;
-
-        int[][] aaiCrossingPoints = new int[iXMax - iXMin + 1][];
-        int[] aiNumCrossings = new int[iXMax - iXMin + 1];
-
-        for (int i = 0; i < (iXMax - iXMin + 1); i++) {
-            aaiCrossingPoints[i] = new int[iNumPoints];
-        }
-
-        outlineRegion(aaiCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax, kVolumePts, kVolume);
-        fill(aaiCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax, (int)kVolumePts[0].Z, kVolume, kMask, bIntersection, iValue);
-
+        return m_kImageActive;
     }
 
-    public ModelImage[] getActiveImage()
+    public Component getComponent()
     {
-        return m_akImages;
+        return m_kComponent;
     }
 
-    public LocalVolumeVOI getCurrentVOI()
+
+    public VOIBase getCurrentVOI()
     {
         return m_kCurrentVOI;
     }
 
-
     public int getOrientation()
     {
         return m_iPlaneOrientation;
+    }
+
+    public VOIManagerInterface getParent()
+    {
+        return m_kParent;
+    }
+
+    public int getPlane()
+    {
+        return m_iPlane;
     }
 
     public void init( ModelImage kImageA, ModelImage kImageB, Component kComponent, 
@@ -778,17 +882,33 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         setDrawingContext(kContext);
         setOrientation(iOrientation);
         setSlice(iSlice);
+        int iPlane = MipavCoordinateSystems.getAxisOrder( kImageA, iOrientation)[2];
+        switch ( iPlane )
+        {
+        case 0: m_iPlane = VOIBase.XPLANE; break;
+        case 1: m_iPlane = VOIBase.YPLANE; break;
+        case 2: m_iPlane = VOIBase.ZPLANE; break;
+        }
     }
-
 
     public boolean isActive()
     {
         return (m_bDrawVOI || m_bPointer);
     }
 
-    public void keyPressed(KeyEvent e) {
-        final int keyCode = e.getKeyCode();
 
+    public void keyPressed(KeyEvent e) {
+        //System.err.println("VOIManager keyPressed" );
+        if ( e.getKeyChar() == 'q' || e.getKeyChar() == 'Q' )
+        {
+            if ( !m_bQuickLUT && m_kCurrentVOI != null )
+            {
+                m_kCurrentVOI.setActive(false);
+                m_kCurrentVOI = null;
+            }
+            m_bQuickLUT = true;
+        }
+        final int keyCode = e.getKeyCode();        
         switch (keyCode) {
         case KeyEvent.VK_UP:     m_kParent.doVOI("MoveUP"); return;
         case KeyEvent.VK_DOWN:   m_kParent.doVOI("MoveDown"); return;
@@ -802,7 +922,22 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         }
     }
 
+
+
+
     public void keyReleased(KeyEvent e) {
+        //System.err.println("VOIManager keyReleased" );
+        if ( e.getKeyChar() == 'q' || e.getKeyChar() == 'Q' )
+        {
+            m_bQuickLUT = false;
+            if ( m_kCurrentVOI != null )
+            {
+                m_bLeftMousePressed = false;
+                m_bFirstDrag = true;
+                m_kParent.quickLUT(m_kCurrentVOI);
+                m_bDrawVOI = false;
+            }
+        }
         final int keyCode = e.getKeyCode();
         switch (keyCode) {
         case KeyEvent.VK_DELETE:
@@ -812,16 +947,25 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             } 
             else 
             {
-                m_kParent.doVOI("deleteVOI");
+                m_kParent.doVOI(CustomUIBuilder.PARAM_VOI_POINT_DELETE.getActionCommand());
             }
             return;
         }
     }
 
-    public void keyTyped(KeyEvent e) {}
-
-
-
+    public void keyTyped(KeyEvent e)
+    {
+        //System.err.println("VOIManager keyTyped" );
+        if ( e.getKeyChar() == 'q' || e.getKeyChar() == 'Q' )
+        {
+            if ( !m_bQuickLUT && m_kCurrentVOI != null )
+            {
+                m_kCurrentVOI.setActive(false);
+                m_kCurrentVOI = null;
+            }
+            m_bQuickLUT = true;
+        }
+    }
 
     public void liveWire( int iSelection )
     {
@@ -844,8 +988,8 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         m_bPointer = false;
         m_bSelected = false;
         m_iDrawType = LIVEWIRE;
+        initLiveWire( m_iSlice, true );
     }
-
 
     public void mouseClicked(MouseEvent kEvent) {
         m_fMouseX = kEvent.getX();
@@ -873,7 +1017,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
                     if ( m_kCurrentVOI.getGroup().getCurveType() != m_kCurrentVOI.getType() )
                     {
                         VOI kGroup = m_kCurrentVOI.getGroup();
-                        kGroup.getCurves()[0].remove(m_kCurrentVOI);
+                        kGroup.getCurves().remove(m_kCurrentVOI);
                         m_kCurrentVOI.setGroup(null);
                         m_kParent.addVOI(m_kCurrentVOI, true);
                     }
@@ -887,13 +1031,13 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             {
                 anchorPolyline( kEvent.getX(), kEvent.getY(), true );                
             }
+            m_kCurrentVOI.trimPoints(Preferences.getTrim(),
+                    Preferences.getTrimAdjacient());
             m_bDrawVOI = false;
             m_iNearStatus = NearNone;
+            m_kParent.setDefaultCursor();
         } 
     }
-
-
-
 
     /* (non-Javadoc)
      * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mouseDragged(java.awt.event.MouseEvent)
@@ -912,11 +1056,22 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
     public void mouseEntered(MouseEvent arg0) {
         if ( isActive() )
         {
-            m_kParent.setActive(this);
+            //m_kParent.setActive(this);
         }        
     }
 
-    public void mouseExited(MouseEvent arg0) {}
+
+
+    public void mouseExited(MouseEvent arg0) 
+    {
+        if ( m_bDrawVOI && (m_iDrawType == LEVELSET) )
+        {
+            if ( m_kCurrentVOI != null )
+            {
+                m_kParent.deleteVOI(m_kCurrentVOI);
+            }
+        } 
+    }
 
     public void mouseMoved(MouseEvent kEvent) 
     {      
@@ -942,6 +1097,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             drawNextPolyline( kEvent.getX(), kEvent.getY() );
         } 
     }
+
 
     /* (non-Javadoc)
      * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mousePressed(java.awt.event.MouseEvent)
@@ -976,6 +1132,20 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             m_bLeftMousePressed = true;
             processLeftMouseDrag( kEvent );
         }
+        else if ( kEvent.getButton() == MouseEvent.BUTTON3 )
+        {
+            if ( selectVOI( kEvent.getX(), kEvent.getY(), kEvent.isShiftDown() ) != null )
+            {
+                if ( m_kCurrentVOI.getType() == VOI.LINE )
+                {
+                    handleIntensityLineBtn3(kEvent);
+                }
+                else
+                {
+                    addPopup( m_kCurrentVOI );
+                }
+            }
+        }
     }
 
     /* (non-Javadoc)
@@ -1004,7 +1174,13 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         else if ( m_bDrawVOI && (m_iDrawType == RECTANGLE3D) )
         {
             m_kCurrentVOI.setActive(true);
-            m_kParent.doVOI("PropVOIAll");
+            m_kParent.doVOI(CustomUIBuilder.PARAM_VOI_PROPAGATE_ALL.getActionCommand());
+            m_bDrawVOI = false;
+            return;
+        }
+        else if ( m_bDrawVOI && (m_iDrawType == LUT) )
+        {
+            m_kParent.quickLUT(m_kCurrentVOI);
             m_bDrawVOI = false;
             return;
         }
@@ -1016,16 +1192,45 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             }
             kSplitDialog = null;
             m_bDrawVOI = false;
+            m_kParent.setDefaultCursor( );
             return;
         }
-        else if ( m_bDrawVOI && (m_iDrawType == LIVEWIRE) )
-        {
-            anchor( kEvent.getX(), kEvent.getY(), true );
-            return;
-        }
-        else if ( m_bDrawVOI && (m_iDrawType == POLYLINE) )
-        {
-            anchorPolyline( kEvent.getX(), kEvent.getY(), false );
+        else if ( m_bDrawVOI && ((m_iDrawType == POLYLINE) || (m_iDrawType == LIVEWIRE)) )
+        {   
+            if ( m_kCurrentVOI != null && m_kCurrentVOI.size() > 2 )
+            {
+                showSelectedVOI( kEvent.getX(), kEvent.getY() );
+                if ( (m_iNearStatus == NearPoint) &&
+                        ((m_kCurrentVOI.getNearPoint() == 0) || (m_kCurrentVOI.getNearPoint() == m_kCurrentVOI.size()-2)) )
+                {
+                    m_kCurrentVOI.setClosed((m_kCurrentVOI.getNearPoint() == 0));
+                    m_kCurrentVOI.removeElementAt( m_kCurrentVOI.size() -1 );
+                    m_kCurrentVOI.trimPoints(Preferences.getTrim(),
+                            Preferences.getTrimAdjacient());
+                    if ( m_kCurrentVOI.getGroup() != null )
+                    {
+                        if ( m_kCurrentVOI.getGroup().getCurveType() != m_kCurrentVOI.getType() )
+                        {
+                            VOI kGroup = m_kCurrentVOI.getGroup();
+                            kGroup.getCurves().remove(m_kCurrentVOI);
+                            m_kCurrentVOI.setGroup(null);
+                            m_kParent.addVOI(m_kCurrentVOI, true);
+                        }
+                    }
+                    m_bDrawVOI = false;
+                    m_iNearStatus = NearNone;
+                    m_kParent.setDefaultCursor();
+                    return;
+                }
+            }
+            if ( m_iDrawType == LIVEWIRE )
+            {
+                anchor( kEvent.getX(), kEvent.getY(), true );
+            }
+            else
+            {
+                anchorPolyline( kEvent.getX(), kEvent.getY(), false );
+            }
             return;
         }
 
@@ -1049,7 +1254,87 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         }
     }
 
-    public void pasteAllVOI( LocalVolumeVOI kVOI )
+    public boolean testMove( Vector3f kDiff, Vector3f[] akMinMax )
+    {            
+        Vector3f kScreenMin = m_kDrawingContext.fileToScreen( akMinMax[0] );
+        kScreenMin.Add(kDiff);
+
+        Vector3f kScreenMax = m_kDrawingContext.fileToScreen( akMinMax[1] );
+        kScreenMax.Add(kDiff);
+        Vector3f kTemp = new Vector3f( kScreenMin );
+        kScreenMin.Min( kScreenMax );
+        kScreenMax.Max( kTemp );
+        if ( m_fMouseX < kScreenMin.X || m_fMouseX > kScreenMax.X ||
+                m_fMouseY < kScreenMin.Y || m_fMouseY > kScreenMax.Y )
+        {
+            return false;
+        }
+        Vector3f kTestMin = new Vector3f();       
+        Vector3f kTestMax = new Vector3f();       
+        if ( m_kDrawingContext.screenToFile( kScreenMin, kTestMin ) || 
+                m_kDrawingContext.screenToFile( kScreenMax, kTestMax )  )
+        {
+            return false;
+        }         
+        akMinMax[0].Copy( kTestMin );
+        akMinMax[1].Copy( kTestMax );
+        return true;
+    }
+
+    public void move( VOIBase kVOI, Vector3f kDiff )
+    {
+        if ( kVOI.isFixed() || kDiff.equals( Vector3f.ZERO ) )
+        {
+            return;
+        }
+        int iNumPoints = kVOI.size();
+        if ( iNumPoints > 0 )
+        {
+            Vector3f kVolumeDiff = new Vector3f();
+            for ( int i = 0; i < iNumPoints; i++ )
+            {                
+                if ( i == 0 )
+                {
+                    Vector3f kPos = kVOI.elementAt( i );
+                    Vector3f kLocal = m_kDrawingContext.fileToScreen( kPos );
+                    kLocal.Add( kDiff );
+                    Vector3f kVolumePt = new Vector3f();
+                    m_kDrawingContext.screenToFile( (int)kLocal.X, (int)kLocal.Y, (int)kLocal.Z, kVolumePt );
+                    kVolumeDiff.Sub( kVolumePt, kPos );
+                    kVOI.set( i, kVolumePt );
+                }
+                else
+                {
+                    kVOI.elementAt(i).Add(kVolumeDiff);
+                }
+            }
+            kVOI.update(kVolumeDiff);
+            if ( kVOI.getGroup().getContourGraph() != null )
+            {
+                m_kParent.updateGraph(kVOI);
+            }
+        }
+    }
+
+    public boolean nearPoint( VOIBase kVOI, int iX, int iY, int iZ) {
+
+        Vector3f kVOIPoint = new Vector3f(iX, iY, iZ );
+        for ( int i = 0; i < kVOI.size(); i++ )
+        {
+            Vector3f kFilePos = kVOI.get(i);
+            Vector3f kPos = m_kDrawingContext.fileToScreen(kFilePos);
+            Vector3f kDiff = new Vector3f();
+            kDiff.Sub( kPos, kVOIPoint );
+            if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
+            {
+                kVOI.setNearPoint(i);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void pasteAllVOI( VOIBase kVOI )
     {
         m_kCopyVOI = kVOI;
         for ( int i = 0; i < m_aiLocalImageExtents[2]; i++ )
@@ -1059,13 +1344,11 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         m_kCurrentVOI = null;
     }
 
-
-    public void pasteVOI( LocalVolumeVOI kVOI )
+    public void pasteVOI( VOIBase kVOI )
     {
         m_kCopyVOI = kVOI;
         pasteVOI(m_iSlice);
     }
-
     public Vector3f patientCoordinatesToFile( Vector3f patientPt )
     {       
         Vector3f volumePt = new Vector3f();
@@ -1079,17 +1362,9 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         {
             m_kImageActive = m_akImages[iActive];
         }
-        if ( m_kImageActive == m_akImages[0] )
-        {
-            m_aucBufferActive = m_aucBufferA;
-        }
-        else
-        {
-            m_aucBufferActive = m_aucBufferB;
-        }
     }
 
-    public void setCanvas (Component kComponent)
+    private void setCanvas (Component kComponent)
     {
         m_kComponent = kComponent;
         m_kComponent.addKeyListener( this );
@@ -1103,34 +1378,34 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         setSlice( m_kCenter.Z );
     }
 
-    public void setCurrentVOI( LocalVolumeVOI kCurrentVOI )
+    public void setCurrentVOI( VOIBase kCurrentVOI )
     {
         m_kCurrentVOI = kCurrentVOI;
     }
-    public void setDataBuffers(byte[] bufferA, byte[] bufferB)
-    {
-        m_aucBufferA = bufferA;
-        m_aucBufferB = bufferB;
-        if ( m_kImageActive == m_akImages[0] )
-        {
-            m_aucBufferActive = m_aucBufferA;
-        }
-        else
-        {
-            m_aucBufferActive = m_aucBufferB;
-        }
-    }
+
 
     public void setDrawingContext( ScreenCoordinateListener kContext )
     {
         m_kDrawingContext = kContext;
     }
 
+
+
     public void setOrientation( int iOrientation )
     {
         m_iPlaneOrientation = iOrientation;
         m_aiLocalImageExtents = m_kImageActive.getExtents( m_iPlaneOrientation );
         map = new BitSet(m_aiLocalImageExtents[0] * m_aiLocalImageExtents[1]);
+    }
+
+    public void setPopupPt( ViewJPopupPt kPopupPt )
+    {
+        m_kPopupPt = kPopupPt;
+    }
+
+    public void setPopupVOI(ViewJPopupVOI kPopupVOI)
+    {
+        m_kPopupVOI = kPopupVOI;
     }
 
     /**
@@ -1141,10 +1416,12 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         int iSlice = (int)fSlice;
 
         /* Check bounds: */
-        if (iSlice > (m_aiLocalImageExtents[2] - 1)) {
-            iSlice = m_aiLocalImageExtents[2] - 1;
+        if ( m_aiLocalImageExtents.length > 3 )
+        {
+            if (iSlice > (m_aiLocalImageExtents[2] - 1)) {
+                iSlice = m_aiLocalImageExtents[2] - 1;
+            }
         }
-
         if (iSlice < 0) {
             iSlice = 0;
         }
@@ -1154,193 +1431,23 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         }
     }
 
-    /**
-     * fill: fill the sculpt outline drawn by the user. Pixels are determined to be inside or outside the sculpt region
-     * based on the parameters, aaiCrossingPoints and aiNumCrossings, using a scan-conversion algorithm that traverses
-     * each row and column of the bounding box of the sculpt region coloring inside points as it goes.
-     *
-     * @param  aaiCrossingPoints  DOCUMENT ME!
-     * @param  aiNumCrossings     DOCUMENT ME!
-     */
-    protected void fill(int[][] aaiCrossingPoints, int[] aiNumCrossings,
-            int iXMin, int iYMin, int iXMax, int iYMax, int iZ,
-            ModelImage kVolume, BitSet kMask, boolean bIntersection, int iValue)
+
+    private void addPopup( VOIBase kVOI )
     {
-        Vector3f kLocalPt = new Vector3f();
-        Vector3f kVolumePt = new Vector3f();
-        int iColumn = 0;
-        /* Loop over the width of the sculpt region bounding-box: */
-        for (int iX = iXMin; iX < iXMax; iX++) {
-            boolean bInside = false;
-
-            /* Loop over the height of the sculpt region bounding-box: */
-            for (int iY = iYMin; iY < iYMax; iY++) {
-
-                /* loop over each crossing point for this column: */
-                for (int iCross = 0; iCross < aiNumCrossings[iColumn]; iCross++) {
-
-                    if (iY == aaiCrossingPoints[iColumn][iCross]) {
-
-                        /* Each time an edge is cross the point alternates
-                         * from outside to inside: */
-                        bInside = !bInside;
-                    }
-                }
-
-                if (bInside == true) {
-
-                    /* The current pixel is inside the sculpt region.  Get the
-                     * image color from the canvas image and alpha-blend the sculpt color ontop, storing the result in
-                     * the canvas image.
-                     */
-                    kLocalPt.Set(iX, iY, iZ);
-                    //kVolumePt = VOIToFileCoordinates(kLocalPt, false);
-                    MipavCoordinateSystems.patientToFile( kLocalPt, kVolumePt, m_kImageActive, m_iPlaneOrientation );
-
-                    if ( bIntersection )
-                    {
-                        int iTemp = kVolume.getInt( (int)kVolumePt.X, (int)kVolumePt.Y, (int)kVolumePt.Z );
-
-                        if ( kMask != null )
-                        {
-                            int iIndex = (int)kVolumePt.Z * kVolume.getExtents()[0] * kVolume.getExtents()[1];
-                            iIndex += kVolumePt.Y * kVolume.getExtents()[0];
-                            iIndex += kVolumePt.X;
-                            if ( iValue == 0 )
-                            {
-                                kMask.set( iIndex );
-                            }
-                            else if ( kMask.get( iIndex ) )
-                            {
-                                kMask.set( iIndex );
-                            }
-                        }
-                        else
-                        {
-                            if ( iValue == 0 )
-                            {
-                                kVolume.set( (int)kVolumePt.X, (int)kVolumePt.Y, (int)kVolumePt.Z, 85 );
-                            }
-                            else if ( iTemp != 0 )
-                            {
-                                kVolume.set( (int)kVolumePt.X, (int)kVolumePt.Y, (int)kVolumePt.Z, 255 );
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if ( kMask != null )
-                        {
-                            int iIndex = (int)kVolumePt.Z * kVolume.getExtents()[0] * kVolume.getExtents()[1];
-                            iIndex += kVolumePt.Y * kVolume.getExtents()[0];
-                            iIndex += kVolumePt.X;
-                            kMask.set( iIndex );
-                        }
-                        else
-                        {
-                            kVolume.set( (int)kVolumePt.X, (int)kVolumePt.Y, (int)kVolumePt.Z, 255 );
-                        }
-                    }
-                }
-            }
-
-            iColumn++;
+        if ( kVOI.getType() == VOI.POINT )
+        {
+            //m_kPopupPt.setSelectedVOI( kVOI );
+            m_kComponent.addMouseListener(m_kPopupPt);
+        }
+        if ( kVOI.getType() == VOI.CONTOUR || kVOI.getType() == VOI.POLYLINE )
+        {
+            m_kPopupVOI.setSelectedVOI( kVOI );
+            m_kComponent.addMouseListener(m_kPopupVOI);
         }
     }
 
-    /**
-     * This function computes the set of spans indicated by column crossings for the sculpt outline drawn by the user,
-     * by doing a polygon scan conversion in gridded space. The outline must be closed with last point = first point.
-     *
-     * @param  aaiCrossingPoints  DOCUMENT ME!
-     * @param  aiNumCrossings     DOCUMENT ME!
-     */
-    protected void outlineRegion(int[][] aaiCrossingPoints, int[] aiNumCrossings,
-            int iXMin, int iYMin, int iXMax, int iYMax,
-            Vector3f[] kVolumePts, ModelImage kVolume)
-    {
-        int iNumPts = kVolumePts.length;
 
-        /*
-         * nudge the vertices off of the exact integer coords by a factor of 0.1 to avoid vertices on pixel centers,
-         * which would create spans of zero length
-         */
-        double dNudge = 0.1;       
-        double[][][] aaadEdgeList = new double[iNumPts][2][2];
 
-        for (int iPoint = 0; iPoint < (iNumPts - 1); iPoint++) {
-            aaadEdgeList[iPoint][0][0] = kVolumePts[iPoint].X - dNudge;
-            aaadEdgeList[iPoint][0][1] = kVolumePts[iPoint].Y - dNudge;
-            aaadEdgeList[iPoint][1][0] = kVolumePts[iPoint + 1].X - dNudge;
-            aaadEdgeList[iPoint][1][1] = kVolumePts[iPoint + 1].Y - dNudge;
-        }
-
-        /*
-         * Compute the crossing points for this column and produce spans.
-         */
-        for (int iColumn = iXMin; iColumn <= iXMax; iColumn++) {
-            int iIndex = iColumn - iXMin;
-
-            /* for each edge, figure out if it crosses this column and add its
-             * crossing point to the list if so. */
-            aiNumCrossings[iIndex] = 0;
-
-            for (int iPoint = 0; iPoint < (iNumPts - 1); iPoint++) {
-                double dX0 = aaadEdgeList[iPoint][0][0];
-                double dX1 = aaadEdgeList[iPoint][1][0];
-                double dY0 = aaadEdgeList[iPoint][0][1];
-                double dY1 = aaadEdgeList[iPoint][1][1];
-                double dMinX = (dX0 <= dX1) ? dX0 : dX1;
-                double dMaxX = (dX0 > dX1) ? dX0 : dX1;
-
-                if ((dMinX < iColumn) && (dMaxX > iColumn)) {
-
-                    /* The edge crosses this column, so compute the
-                     * intersection.
-                     */
-                    double dDX = dX1 - dX0;
-                    double dDY = dY1 - dY0;
-                    double dM = (dDX == 0) ? 0 : (dDY / dDX);
-                    double dB = (dDX == 0) ? 0 : (((dX1 * dY0) - (dY1 * dX0)) / dDX);
-
-                    double dYCross = (dM * iColumn) + dB;
-                    double dRound = 0.5;
-                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (dYCross < 0) ? (int) (dYCross - dRound)
-                            : (int) (dYCross + dRound);
-                    aiNumCrossings[iIndex]++;
-                }
-            }
-
-            /* sort the set of crossings for this column: */
-            sortCrossingPoints(aaiCrossingPoints[iIndex], aiNumCrossings[iIndex]);
-        }
-
-        aaadEdgeList = null;
-    }
-
-    /**
-     * Sorts the edge crossing points in place.
-     *
-     * @param  aiList        list of positions
-     * @param  iNumElements  number of positions.
-     */
-    protected void sortCrossingPoints(int[] aiList, int iNumElements) {
-        boolean bDidSwap = true;
-
-        while (bDidSwap) {
-            bDidSwap = false;
-
-            for (int iPoint = 0; iPoint < (iNumElements - 1); iPoint++) {
-
-                if (aiList[iPoint] > aiList[iPoint + 1]) {
-                    int iTmp = aiList[iPoint];
-                    aiList[iPoint] = aiList[iPoint + 1];
-                    aiList[iPoint + 1] = iTmp;
-                    bDidSwap = true;
-                }
-            }
-        }
-    }
 
 
 
@@ -1351,43 +1458,14 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             return;
         }     
         int iPos = m_kCurrentVOI.getNearPoint();
-        if ( m_kCurrentVOI.add( iPos, new Vector3f(iX, iY, m_iSlice), false ) )
+        if ( add( m_kCurrentVOI, iPos, new Vector3f(iX, iY, m_iSlice), false ) )
         {
             m_kParent.setCursor(MipavUtil.crosshairCursor);        
             m_iNearStatus = NearPoint;
             m_kParent.updateDisplay();
         }
     }
-    /**
-     * This method calculates the average pixel value based on the four neighbors (N, S, E, W).
-     *
-     * @param   index  the center pixel where the average pixel value is to be calculated.
-     *
-     * @return  the average pixel value as a float.
-     */
-    private float avgPix( int iX, int iY )
-    {
-        int index = m_aiIndexValues[iY][iX];
-        int[] extents = m_kImageActive.getExtents();
-        if ((index > extents[0]) && (index < (m_kImageActive.getSize() - extents[0]))) {
 
-            int sum = (m_aucBufferActive[index] & 0x00ff);
-
-            index = m_aiIndexValues[iY-1][iX];
-            sum += (m_aucBufferActive[index] & 0x00ff);
-
-            index = m_aiIndexValues[iY][iX-1];
-            sum += (m_aucBufferActive[index] & 0x00ff);
-
-            index = m_aiIndexValues[iY][iX+1];
-            sum += (m_aucBufferActive[index] & 0x00ff);
-
-            index = m_aiIndexValues[iY+1][iX];
-            sum += (m_aucBufferActive[index] & 0x00ff);
-            return sum / 5.0f;
-        } 
-        return (m_aucBufferActive[index] & 0x00ff);
-    }
     /**
      * Takes a byte and gets appropriate addition from current position.
      *
@@ -1430,13 +1508,12 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
     private void createTextVOI( int iX, int iY )
     {
         int colorID = 0;
-        VOI newTextVOI = new VOI((short) colorID, "annotation3d.voi",
-                m_kImageActive.getExtents()[2], VOI.ANNOTATION, -1.0f);
+        VOI newTextVOI = new VOI((short) colorID, "annotation3d.voi", 1, VOI.ANNOTATION, -1.0f);
 
-
-        Vector<Vector3f> kPositions = new Vector<Vector3f>();
-        kPositions.add( new Vector3f (iX, iY, m_iSlice));
-
+        m_kCurrentVOI = new VOIText( );
+        Vector3f kVolumePt = new Vector3f();
+        m_kDrawingContext.screenToFile( new Vector3f (iX, iY, m_iSlice), kVolumePt );
+        m_kCurrentVOI.add( kVolumePt );
 
         // decide where to put the second point (arrow tip) so that it is within bounds
         int[] extents = m_aiLocalImageExtents;
@@ -1458,22 +1535,11 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             iY2 = iY;
         }
 
-        kPositions.add( new Vector3f (iX2, iY2, m_iSlice));
-        m_kCurrentVOI = new VOIText3D( this, m_kDrawingContext, m_iPlaneOrientation, m_iDrawType, kPositions, false);
+        kVolumePt = new Vector3f();
+        m_kDrawingContext.screenToFile( new Vector3f (iX2, iY2, m_iSlice), kVolumePt );
+        m_kCurrentVOI.add( kVolumePt );
 
-
-        float[] x = new float[2];
-        float[] y = new float[2];
-        float[] z = new float[2];
-        for ( int i = 0; i < 2; i++ )
-        {
-            x[i] = m_kCurrentVOI.get(i).X;
-            y[i] = m_kCurrentVOI.get(i).Y;
-            z[i] = m_kCurrentVOI.get(i).Z;
-        }
-
-        int iFileSlice = (int)z[0];
-        newTextVOI.importCurve(x, y, z, iFileSlice);
+        newTextVOI.getCurves().add( m_kCurrentVOI );
         newTextVOI.setUID(newTextVOI.hashCode());
 
         String prefColor = Preferences.getProperty(Preferences.PREF_VOI_TEXT_COLOR);
@@ -1487,12 +1553,8 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             newTextVOI.setColor(Color.white);
         }
         newTextVOI.setActive(false);
-        new JDialogAnnotation(m_kImageActive, newTextVOI, iFileSlice, false, true);
+        new JDialogAnnotation(m_kImageActive, newTextVOI, (int)kVolumePt.Z, false, true);
         if ( newTextVOI.isActive() ) {
-            VOIText vt = (VOIText) newTextVOI.getCurves()[iFileSlice].elementAt(0);
-            ((VOIText3D)m_kCurrentVOI).copyInfo(vt);
-            m_kCurrentVOI.setLabel(vt.getName());
-            m_kCurrentVOI.setActive(true);
             m_kParent.addVOI( m_kCurrentVOI, true );
         }
         else
@@ -1502,21 +1564,62 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
 
     }
 
+    private VOIBase createVOI( int iType, boolean bClosed, boolean bFixed, Vector<Vector3f> kPositions )
+    {
+
+        VOIBase kVOI = null;
+
+        switch( iType )
+        {
+        case POINT:
+            kVOI = new VOIPoint( VOI.POINT );  break;
+        case POLYPOINT:
+            kVOI = new VOIPoint( VOI.POLYLINE_SLICE ); break;
+        case RECTANGLE:
+        case RECTANGLE3D:
+        case LUT:
+        case LEVELSET:
+        case OVAL:
+        case POLYLINE:
+        case LIVEWIRE:
+            kVOI = new VOIContour( bFixed, bClosed ); break;
+        case LINE:
+        case SPLITLINE:
+            kVOI = new VOILine(); break;
+        case PROTRACTOR:
+            kVOI = new VOIProtractor(); ((VOIProtractor)kVOI).setPlane(m_iPlane); break;           
+        }
+
+        if ( kVOI == null )
+        {
+            return null;
+        }
+
+        for ( int i = 0; i < kPositions.size(); i++ )
+        {
+            Vector3f kVolumePt = new Vector3f();
+            m_kDrawingContext.screenToFile( kPositions.elementAt(i), kVolumePt );
+            kVOI.add( kVolumePt );
+        }
+        return kVOI;
+    }
+
+
     private void createVOI( int iX, int iY )
     {
         float fYStart = m_fMouseY;
         float fY = iY;
 
-        LocalVolumeVOI kOld = m_kCurrentVOI;
+        VOIBase kOld = m_kCurrentVOI;
         if ( (m_iDrawType == POINT) || (m_iDrawType == POLYPOINT) )
         { 
             Vector<Vector3f> kPositions = new Vector<Vector3f>();
             kPositions.add( new Vector3f (iX, fY, m_iSlice ) );
 
-            m_kCurrentVOI = new VOIPoint3D( this, m_kDrawingContext, m_iPlaneOrientation, m_iDrawType, kPositions, false);
+            m_kCurrentVOI = createVOI( m_iDrawType, false, false, kPositions );
 
         }
-        else if ( m_iDrawType == RECTANGLE || m_iDrawType == RECTANGLE3D )
+        else if ( m_iDrawType == RECTANGLE || m_iDrawType == RECTANGLE3D || m_iDrawType == LUT )
         {
             if ( m_kCurrentVOI == null )
             {            
@@ -1525,19 +1628,35 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
                 kPositions.add( new Vector3f (iX, fYStart, m_iSlice));
                 kPositions.add( new Vector3f (iX, fY, m_iSlice));
                 kPositions.add( new Vector3f (m_fMouseX, fY, m_iSlice));
-                m_kCurrentVOI = new VOIContour3D( this, m_kDrawingContext, m_iPlaneOrientation, m_iDrawType, m_iDrawType, kPositions, false);
+                m_kCurrentVOI = createVOI( m_iDrawType, true, false, kPositions );
             }
             else
             {
-                m_kCurrentVOI.setPosition( this, 1, iX, fYStart, m_iSlice);
-                m_kCurrentVOI.setPosition( this, 2, iX, fY, m_iSlice);
-                m_kCurrentVOI.setPosition( this, 3, m_fMouseX, fY, m_iSlice);       
+                setPosition( m_kCurrentVOI, 1, iX, fYStart, m_iSlice);
+                setPosition( m_kCurrentVOI, 2, iX, fY, m_iSlice);
+                setPosition( m_kCurrentVOI, 3, m_fMouseX, fY, m_iSlice);       
             }
         }
         else if ( m_iDrawType == OVAL )
         {
             float fRadiusX = Math.abs(m_fMouseX - iX);
             float fRadiusY = Math.abs(fYStart - fY);
+            if ( m_fMouseX + fRadiusX >= m_aiLocalImageExtents[0] )
+            {
+                fRadiusX = m_aiLocalImageExtents[0] - m_fMouseX;
+            }
+            if ( m_fMouseY + fRadiusY >= m_aiLocalImageExtents[1] )
+            {
+                fRadiusY = m_aiLocalImageExtents[1] - m_fMouseY;
+            }
+            if ( m_fMouseX - fRadiusX < 0 )
+            {
+                fRadiusX = m_fMouseX;
+            }
+            if ( m_fMouseY - fRadiusY < 0 )
+            {
+                fRadiusY = m_fMouseY;
+            }
             if ( m_kCurrentVOI == null )
             {            
                 Vector<Vector3f> kPositions = new Vector<Vector3f>();
@@ -1546,21 +1665,22 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
                     kPositions.add( new Vector3f ((float)(m_fMouseX + fRadiusX * m_adCos[i]),
                             (float)(fYStart + fRadiusY * m_adSin[i]), m_iSlice));
                 }
-                m_kCurrentVOI = new VOIContour3D( this, m_kDrawingContext, m_iPlaneOrientation, m_iDrawType, m_iDrawType, kPositions, false );
+                m_kCurrentVOI = createVOI( m_iDrawType, true, false, kPositions );
             }
             else
             {
                 for ( int i = 0; i < m_iCirclePts; i++ )
                 {
-                    m_kCurrentVOI.setPosition( this, i, (float)(m_fMouseX + fRadiusX * m_adCos[i]),
+                    setPosition( m_kCurrentVOI, i, (float)(m_fMouseX + fRadiusX * m_adCos[i]),
                             (float)(fYStart + fRadiusY * m_adSin[i]), m_iSlice);
                 }
             }
         }
         else if ( m_iDrawType == LEVELSET )
         {
-            //initLiveWire( m_iSlice, false );
-            LocalVolumeVOI kTemp = singleLevelSet(iX, fY);
+            initLiveWire( m_iSlice, false );
+            VOIBase kTemp = singleLevelSet2(iX, fY);
+            //VOIBase kTemp = singleLevelSet(iX, fY);
             if ( kTemp == null )
             {
                 return;
@@ -1575,13 +1695,14 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
                 kPositions.add( new Vector3f( m_fMouseX, fYStart, m_iSlice) ) ;
                 kPositions.add( new Vector3f( iX, fY, m_iSlice) ) ;
 
-                m_kCurrentVOI = new VOIContour3D( this, m_kDrawingContext, m_iPlaneOrientation, m_iDrawType, m_iDrawType, kPositions, false);
+                m_kCurrentVOI = createVOI( m_iDrawType, false, false, kPositions );
             }
             else
             {
                 Vector3f kNewPoint = new Vector3f( iX, fY, m_iSlice ) ;
-                if ( m_kCurrentVOI.add( kNewPoint, false ) )
+                if ( add( m_kCurrentVOI, kNewPoint, false ) )
                 {
+                    m_kCurrentVOI.setAnchor();
                     m_kParent.updateDisplay( );
                 }
             }
@@ -1597,16 +1718,16 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
                 kPositions.add( new Vector3f( m_fMouseX, fYStart, m_iSlice) ) ;
                 kPositions.add( new Vector3f( iX, fY, m_iSlice) ) ;
 
-                m_kCurrentVOI = new VOILine3D( this, m_kDrawingContext, m_iPlaneOrientation, m_iDrawType, kPositions, false);
+                m_kCurrentVOI = createVOI( m_iDrawType, false, false, kPositions );
                 if ( m_iDrawType == SPLITLINE )
                 {
-                    m_kCurrentVOI.setSType( SPLITLINE );
+                    m_kCurrentVOI.setSplit( true);
                 }
             }
             else
             {
                 Vector3f kNewPoint = new Vector3f( iX, fY, m_iSlice ) ;
-                m_kCurrentVOI.setPosition( this, 1, kNewPoint );
+                setPosition( m_kCurrentVOI, 1, kNewPoint );
             }
 
             m_fMouseX = iX;
@@ -1630,7 +1751,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
                 kPositions.add( kStart );
                 kPositions.add( kEnd );
 
-                m_kCurrentVOI = new VOIProtractor3D( this, m_kDrawingContext, m_iPlaneOrientation, m_iDrawType, kPositions, false);
+                m_kCurrentVOI = createVOI( m_iDrawType, false, false, kPositions );
             }
             else
             {
@@ -1641,14 +1762,13 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
                 kMiddle.Scale( .4f );
                 kMiddle.Add(kStart);
 
-                m_kCurrentVOI.setPosition( this, 0, kMiddle );
-                m_kCurrentVOI.setPosition( this, 2, kEnd );
+                setPosition( m_kCurrentVOI, 0, kMiddle );
+                setPosition( m_kCurrentVOI, 2, kEnd );
             }
 
             m_fMouseX = iX;
             m_fMouseY = iY;
         }
-
         m_kCurrentVOI.setActive(false);
         if ( kOld != m_kCurrentVOI )
         {
@@ -1659,19 +1779,1732 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
                 m_kParent.deleteVOI(kOld);
             }
         }
+        else
+        {
+            m_kParent.updateDisplay();
+        }
     }
+
+    private void drawArrow( VOIText kVOI, Graphics2D g2d, int xCenter, int yCenter, int x, int y, float stroke) {
+        double aDir=Math.atan2(xCenter-x,yCenter-y);
+
+        g2d.setColor(kVOI.getBackgroundColor());
+        g2d.drawLine(x + 1, y + 1, xCenter + 1, yCenter + 1);
+        g2d.drawLine(x - 1, y - 1, xCenter - 1, yCenter - 1);
+
+        // make the arrow head solid even if dash pattern has been specified
+        Polygon tmpPoly=new Polygon();
+        Polygon backPoly1 = new Polygon();
+        Polygon backPoly2 = new Polygon();
+        Polygon backPoly3 = new Polygon();
+        Polygon backPoly4 = new Polygon();
+
+
+        int i1=12+(int)(stroke*2);
+        int i2=6+(int)stroke;                           // make the arrow head the same size regardless of the length length
+        tmpPoly.addPoint(x,y);                          // arrow tip
+        backPoly1.addPoint(x + 1, y);
+        backPoly2.addPoint(x - 1, y);
+        backPoly3.addPoint(x, y + 1);
+        backPoly4.addPoint(x, y - 1);
+
+        int x2 = x+ VOIText.xCor(i1,aDir+.5);
+        int y2 = y+ VOIText.yCor(i1,aDir+.5);
+        tmpPoly.addPoint(x2, y2);
+        backPoly1.addPoint(x2 + 1, y2);
+        backPoly2.addPoint(x2 - 1, y2);
+        backPoly3.addPoint(x2, y2 + 1);
+        backPoly4.addPoint(x2, y2 - 1);
+
+
+        int x3 = x+ VOIText.xCor(i2,aDir);
+        int y3 = y+ VOIText.yCor(i2,aDir);
+        tmpPoly.addPoint(x3, y3);
+        backPoly1.addPoint(x3 + 1, y3);
+        backPoly2.addPoint(x3 - 1, y3);
+        backPoly3.addPoint(x3, y3 + 1);
+        backPoly4.addPoint(x3, y3 - 1);
+
+        int x4 = x+ VOIText.xCor(i1,aDir-.5);
+        int y4 = y+ VOIText.yCor(i1,aDir-.5);
+        tmpPoly.addPoint(x4, y4);
+        backPoly1.addPoint(x4 + 1, y4 + 1);
+        backPoly2.addPoint(x4 - 1, y4 - 1);
+        backPoly1.addPoint(x4, y4 + 1);
+        backPoly2.addPoint(x4, y4 - 1);
+
+        tmpPoly.addPoint(x,y);                          // arrow tip
+        backPoly1.addPoint(x + 1, y + 1);
+        backPoly2.addPoint(x - 1, y - 1);
+        backPoly3.addPoint(x, y + 1);
+        backPoly4.addPoint(x, y - 1);        
+
+        g2d.setStroke(new BasicStroke(1f)); 
+        g2d.drawPolygon(backPoly1);
+        //g2d.fillPolygon(backPoly1);
+        g2d.drawPolygon(backPoly2);
+        //g2d.fillPolygon(backPoly2);
+        g2d.drawPolygon(backPoly3);
+        g2d.drawPolygon(backPoly4);
+
+
+        g2d.setColor( kVOI.getColor() );
+
+        g2d.drawLine(x,y,xCenter,yCenter);
+
+
+        g2d.drawPolygon(tmpPoly);
+        g2d.fillPolygon(tmpPoly);                       // remove this line to leave arrow head unpainted
+    }
+
+
+
+    private void drawGeometricCenter(VOIBase kVOI, Graphics g) {
+        int xS, yS;
+
+        if (g == null) {
+            MipavUtil
+            .displayError("VOIContour.drawGeometricCenter: grapics = null");
+
+            return;
+        }
+
+        Vector3f gcFilePt = kVOI.getGeometricCenter();
+        //Profile.clear();
+        //Profile.start();
+        //for ( int i = 0; i < 100; i++ )
+        //{
+        //    kVOI.update();
+        //    gcFilePt = kVOI.getGeometricCenter();
+        //}
+        //Profile.stop();
+        //Profile.setFileName( "profile_out" );
+        //Profile.shutdown();
+
+        Vector3f gcPt = m_kDrawingContext.fileToScreen( gcFilePt );
+        xS = (int)gcPt.X;
+        yS = (int)gcPt.Y;
+        g.drawLine(xS, yS - 3, xS, yS + 3);
+        g.drawLine(xS - 3, yS, xS + 3, yS);
+
+        int iContourID = kVOI.getContourID();
+        if ( iContourID != -1 )
+        {
+            kVOI.setLabel( String.valueOf(iContourID) );
+        }
+
+        if (Preferences.is(Preferences.PREF_SHOW_VOI_NAME) && (kVOI.getName() != null)) {
+            g.drawString(kVOI.getName(), xS - 10, yS - 5);
+        } else if (kVOI.getLabel() != null) {
+            g.drawString(kVOI.getLabel(), xS - 10, yS - 5);
+        }
+    }
+
+    /**
+     * Draws the length of open contour (Polyline).
+     * 
+     * @param g
+     *            graphics to draw in
+     * @param zoomX
+     *            magnification for the x coordinate
+     * @param zoomY
+     *            magnification for the y coordinate
+     * @param unitsOfMeasure
+     *            units of measure to be displayed on line.
+     * @param res
+     *            DOCUMENT ME!
+     */
+    private void drawLength(Graphics g, VOIBase kVOI, float[] resols, int[] unitsOfMeasure ) {
+        String tmpString = kVOI.getTotalLengthString( resols, unitsOfMeasure );
+
+        Vector3f gcFilePt = kVOI.getGeometricCenter();
+        Vector3f pt = m_kDrawingContext.fileToScreen( gcFilePt );
+
+        g.setColor(Color.black);
+        g.drawString(tmpString, (int) (pt.X), (int) ((pt.Y) - 1));
+        g.drawString(tmpString, (int) (pt.X), (int) ((pt.Y) + 1));
+        g.drawString(tmpString, (int) ((pt.X) + 1), (int) (pt.Y));
+        g.drawString(tmpString, (int) ((pt.X) - 1), (int) (pt.Y));
+        g.setColor(Color.white);
+        g.drawString(tmpString, (int) (pt.X), (int) (pt.Y));
+    }
+
+    private void drawTickMarks(VOIBase kVOI, Graphics g, Color color, int[] unitsOfMeasure, int xD, int yD, float[] res) {
+        g.setFont(MipavUtil.font12);
+
+        Vector3f kStart = m_kDrawingContext.fileToScreen( kVOI.get(0) );
+        Vector3f kEnd = m_kDrawingContext.fileToScreen( kVOI.get(1) );
+        if ( kStart.equals( kEnd ) )
+        {
+            return;
+        }              
+
+        float[] x = new float[2];
+        x[0] = kStart.X;
+        x[1] = kEnd.X;
+
+        float[] y = new float[2];
+        y[0] = kStart.Y;
+        y[1] = kEnd.Y;
+
+
+        double length = MipavMath.length(x, y, res );
+
+        float slope;
+        if ((x[1] - x[0]) != 0) {
+            slope = (y[1] - y[0]) / (x[1] - x[0]);
+        } else {
+            slope = Float.MAX_VALUE;
+        }
+
+        boolean close = (((y[0] <= (yD / 2)) && (slope < 1) && (slope > -1)) || (x[0] >= (xD / 2)));
+        float[] coords = new float[4];
+        getCoordsLine(x, y, .5, coords); // get coordinates for tick marks
+
+        // g.setColor(Color.yellow);
+        String tmpString = String.valueOf(length);
+        int i = tmpString.indexOf('.');
+
+        if (tmpString.length() >= (i + 3)) {
+            tmpString = tmpString.substring(0, i + 3);
+        }
+
+        tmpString = tmpString + " " + FileInfoBase.getUnitsOfMeasureAbbrevStr(unitsOfMeasure[0]);
+        int stringX = (int) coords[0];
+        int stringY = (int) coords[1];
+        boolean drawAngle = Preferences.is(Preferences.PREF_SHOW_LINE_ANGLE);
+
+        double theta = 0;
+        if ((x[1] > x[0]) && (y[0] > y[1])) {
+            theta = 90.0 - ((180.0 / Math.PI) * Math.atan2((y[0] - y[1]), x[1] - x[0]));
+        } else if ((x[1] > x[0]) && (y[1] > y[0])) {
+            theta = -(90.0 + ((180.0 / Math.PI) * Math.atan2(y[0] - y[1], x[1] - x[0])));
+        } else if ((x[0] > x[1]) && (y[0] > y[1])) {
+            theta = -(90.0 - ((180.0 / Math.PI) * Math.atan2(y[0] - y[1], x[0] - x[1])));
+        } else if ((x[0] > x[1]) && (y[1] > y[0])) {
+            theta = 90.0 - ((180.0 / Math.PI) * Math.atan2(y[1] - y[0], x[0] - x[1]));
+        } else if (x[0] == x[1]) {
+
+            // zero angle
+            theta = 0;
+        } else if (y[0] == y[1]) {
+
+            // 90deg angle
+            theta = 90;
+        }
+
+        if (drawAngle) {
+            String tmpString2 = String.valueOf(theta);
+            i = tmpString2.indexOf('.');
+
+            if (tmpString2.length() >= (i + 3)) {
+                tmpString2 = tmpString2.substring(0, i + 3);
+            }
+
+            tmpString += ", " + tmpString2 + " deg";
+        }
+
+        if (close == true) {
+
+            if ((yD - y[0]) < 20) {
+
+                if ((stringY - 21) < 20) {
+                    stringY += 45;
+                }
+
+                if ((stringX - 21) < 10) {
+                    stringX += 25;
+                }
+
+                g.setColor(Color.black);
+                g.drawString(tmpString, stringX - 20, stringY - 21);
+                g.drawString(tmpString, stringX - 20, stringY - 19);
+                g.drawString(tmpString, stringX - 21, stringY - 20);
+                g.drawString(tmpString, stringX - 19, stringY - 20);
+                g.setColor(Color.white);
+                g.drawString(tmpString, stringX - 20, stringY - 20);
+            } else if ((xD - x[0]) < 20) {
+                g.setColor(Color.black);
+                g.drawString(tmpString, stringX - 50, stringY + 21);
+                g.drawString(tmpString, stringX - 50, stringY + 19);
+                g.drawString(tmpString, stringX - 51, stringY + 20);
+                g.drawString(tmpString, stringX - 49, stringY + 20);
+                g.setColor(Color.white);
+                g.drawString(tmpString, stringX - 50, stringY + 20);
+            } else {
+                g.setColor(Color.black);
+                g.drawString(tmpString, stringX - 20, stringY + 21);
+                g.drawString(tmpString, stringX - 20, stringY + 19);
+                g.drawString(tmpString, stringX - 19, stringY + 20);
+                g.drawString(tmpString, stringX - 21, stringY + 20);
+                g.setColor(Color.white);
+                g.drawString(tmpString, stringX - 20, stringY + 20);
+            }
+        } else {
+
+            if ((slope > 0) || (slope < -.5)) {
+                g.setColor(Color.black);
+                g.drawString(tmpString, stringX + 20, stringY + 21);
+                g.drawString(tmpString, stringX + 20, stringY + 19);
+                g.drawString(tmpString, stringX + 21, stringY + 20);
+                g.drawString(tmpString, stringX + 19, stringY + 20);
+                g.setColor(Color.white);
+                g.drawString(tmpString, stringX + 20, stringY + 20);
+            } else {
+                g.setColor(Color.black);
+                g.drawString(tmpString, stringX - 40, stringY - 21);
+                g.drawString(tmpString, stringX - 40, stringY - 19);
+                g.drawString(tmpString, stringX - 41, stringY - 20);
+                g.drawString(tmpString, stringX - 39, stringY - 20);
+                g.setColor(Color.white);
+                g.drawString(tmpString, stringX - 40, stringY - 20);
+            }
+        }
+
+        g.setColor(color);
+        g.drawLine((int) coords[0], (int) coords[1], (int) coords[2], (int) coords[3]);
+        getCoordsLine(x, y, .25, coords);
+        g.drawLine((int) coords[0], (int) coords[1], (int) coords[2], (int) coords[3]);
+        getCoordsLine(x, y, .75, coords);
+        g.drawLine((int) coords[0], (int) coords[1], (int) coords[2], (int) coords[3]);
+        g.setColor(color);
+
+        for (i = 0; i < 4; i++) {
+            getEndLinesLine(x, y, i, coords);
+            g.drawLine((int) coords[0], (int) coords[1], (int) coords[2], (int) coords[3]);
+        }
+    }
+
+
+
+    private void drawTickMarks( VOIBase kVOI, Graphics g, int[] unitsOfMeasure, int xD, int yD, float[] res)
+    {
+        int i;
+        double slope;
+        boolean close;
+        float[] x2 = new float[2];
+        float[] y2 = new float[2];
+
+        if (g == null) {
+            MipavUtil.displayError("VOIprotractor drawTickMarks: graphics = null");
+
+            return;
+        }
+
+        Color currentColor = g.getColor();
+
+        g.setPaintMode();
+        g.setFont(MipavUtil.font12);
+
+        Vector3f kStart = m_kDrawingContext.fileToScreen( kVOI.get(0) );
+        Vector3f kMiddle = m_kDrawingContext.fileToScreen( kVOI.get(1) );
+        Vector3f kEnd = m_kDrawingContext.fileToScreen( kVOI.get(2) );
+
+
+        if ( kStart.equals( kEnd ) )
+        {
+            return;
+        }
+
+        //0 is middle, 1 is start, 2 is end:
+        float[] x = new float[3];
+        x[0] = kMiddle.X;
+        x[1] = kStart.X;
+        x[2] = kEnd.X;
+
+        //0 is middle, 1 is start, 2 is end:
+        float[] y = new float[3];
+        y[0] = kMiddle.Y;
+        y[1] = kStart.Y;
+        y[2] = kEnd.Y;
+
+        if ((x[1] - x[0]) != 0) {
+            slope = (y[1] - y[0]) / (x[1] - x[0]);
+        } else {
+            slope = Double.MAX_VALUE;
+        }
+
+        close = (((y[0] <= (yD / 2)) && (slope < 1) && (slope > -1)) || (x[0] >= (xD / 2)));
+        float[] coords = new float[4];
+        getCoordsProtractor(x, y, .5, coords); // get coordinates for tick marks
+
+        String degreeString = ((VOIProtractor)kVOI).getAngleString( res );
+
+        if (close == true) {
+
+            if ((yD - y[0]) < 20) {
+                g.setColor(Color.black);
+                g.drawString(degreeString, (int) coords[0] - 20, (int) coords[1] - 21);
+                g.drawString(degreeString, (int) coords[0] - 20, (int) coords[1] - 19);
+                g.drawString(degreeString, (int) coords[0] - 21, (int) coords[1] - 20);
+                g.drawString(degreeString, (int) coords[0] - 19, (int) coords[1] - 20);
+                g.setColor(Color.white);
+                g.drawString(degreeString, (int) coords[0] - 20, (int) coords[1] - 20);
+            } else if ((xD - x[0]) < 20) {
+                g.setColor(Color.black);
+                g.drawString(degreeString, (int) coords[0] - 50, (int) coords[1] + 21);
+                g.drawString(degreeString, (int) coords[0] - 50, (int) coords[1] + 19);
+                g.drawString(degreeString, (int) coords[0] - 51, (int) coords[1] + 20);
+                g.drawString(degreeString, (int) coords[0] - 49, (int) coords[1] + 20);
+                g.setColor(Color.white);
+                g.drawString(degreeString, (int) coords[0] - 50, (int) coords[1] + 20);
+            } else {
+                g.setColor(Color.black);
+                g.drawString(degreeString, (int) coords[0] - 20, (int) coords[1] + 21);
+                g.drawString(degreeString, (int) coords[0] - 20, (int) coords[1] + 19);
+                g.drawString(degreeString, (int) coords[0] - 19, (int) coords[1] + 20);
+                g.drawString(degreeString, (int) coords[0] - 21, (int) coords[1] + 20);
+                g.setColor(Color.white);
+                g.drawString(degreeString, (int) coords[0] - 20, (int) coords[1] + 20);
+            }
+        } else {
+
+            if ((slope > 0) || (slope < -.5)) {
+                g.setColor(Color.black);
+                g.drawString(degreeString, (int) coords[0] + 20, (int) coords[1] + 21);
+                g.drawString(degreeString, (int) coords[0] + 20, (int) coords[1] + 19);
+                g.drawString(degreeString, (int) coords[0] + 21, (int) coords[1] + 20);
+                g.drawString(degreeString, (int) coords[0] + 19, (int) coords[1] + 20);
+                g.setColor(Color.white);
+                g.drawString(degreeString, (int) coords[0] + 20, (int) coords[1] + 20);
+            } else {
+                g.setColor(Color.black);
+                g.drawString(degreeString, (int) coords[0] - 40, (int) coords[1] - 21);
+                g.drawString(degreeString, (int) coords[0] - 40, (int) coords[1] - 19);
+                g.drawString(degreeString, (int) coords[0] - 41, (int) coords[1] - 20);
+                g.drawString(degreeString, (int) coords[0] - 39, (int) coords[1] - 20);
+                g.setColor(Color.white);
+                g.drawString(degreeString, (int) coords[0] - 40, (int) coords[1] - 20);
+            }
+        }
+
+        g.setColor( currentColor );
+
+        for (i = 0; i < 2; i++) {
+            getEndLinesProtractor(x, y, i, coords);
+            g.drawLine((int) coords[0], (int) coords[1], (int) coords[2], (int) coords[3]);
+        }
+
+        if ((x[2] - x[0]) != 0) {
+            slope = (y[2] - y[0]) / (x[2] - x[0]);
+        } else {
+            slope = Double.MAX_VALUE;
+        }
+
+        close = (((y[2] <= (yD / 2)) && (slope < 1) && (slope > -1)) || (x[2] >= (xD / 2)));
+        x2[0] = x[0];
+        x2[1] = x[2];
+        y2[0] = y[0];
+        y2[1] = y[2];
+        getCoordsProtractor(x2, y2, .5, coords); // get coordinates for tick marks
+
+        boolean showLengths = true;
+        if (showLengths) {
+
+            String lengthString = kVOI.getLengthString( 0, 1, res, unitsOfMeasure );
+            if (close == true) {
+
+                if ((yD - y2[1]) < 20) {
+                    g.setColor(Color.black);
+                    g.drawString(lengthString, (int) coords[0] - 20, (int) coords[1] - 21);
+                    g.drawString(lengthString, (int) coords[0] - 20, (int) coords[1] - 19);
+                    g.drawString(lengthString, (int) coords[0] - 21, (int) coords[1] - 20);
+                    g.drawString(lengthString, (int) coords[0] - 19, (int) coords[1] - 20);
+                    g.setColor(Color.white);
+                    g.drawString(lengthString, (int) coords[0] - 20, (int) coords[1] - 20);
+                } else if ((xD - x2[1]) < 20) {
+                    g.setColor(Color.black);
+                    g.drawString(lengthString, (int) coords[0] - 50, (int) coords[1] + 21);
+                    g.drawString(lengthString, (int) coords[0] - 50, (int) coords[1] + 19);
+                    g.drawString(lengthString, (int) coords[0] - 51, (int) coords[1] + 20);
+                    g.drawString(lengthString, (int) coords[0] - 49, (int) coords[1] + 20);
+                    g.setColor(Color.white);
+                    g.drawString(lengthString, (int) coords[0] - 50, (int) coords[1] + 20);
+                } else {
+                    g.setColor(Color.black);
+                    g.drawString(lengthString, (int) coords[0] - 20, (int) coords[1] + 21);
+                    g.drawString(lengthString, (int) coords[0] - 20, (int) coords[1] + 19);
+                    g.drawString(lengthString, (int) coords[0] - 19, (int) coords[1] + 20);
+                    g.drawString(lengthString, (int) coords[0] - 21, (int) coords[1] + 20);
+                    g.setColor(Color.white);
+                    g.drawString(lengthString, (int) coords[0] - 20, (int) coords[1] + 20);
+                }
+            } else {
+
+                if ((slope > 0) || (slope < -.5)) {
+                    g.setColor(Color.black);
+                    g.drawString(lengthString, (int) coords[0] + 20, (int) coords[1] + 21);
+                    g.drawString(lengthString, (int) coords[0] + 20, (int) coords[1] + 19);
+                    g.drawString(lengthString, (int) coords[0] + 21, (int) coords[1] + 20);
+                    g.drawString(lengthString, (int) coords[0] + 19, (int) coords[1] + 20);
+                    g.setColor(Color.white);
+                    g.drawString(lengthString, (int) coords[0] + 20, (int) coords[1] + 20);
+                } else {
+                    g.setColor(Color.black);
+                    g.drawString(lengthString, (int) coords[0] - 40, (int) coords[1] - 21);
+                    g.drawString(lengthString, (int) coords[0] - 40, (int) coords[1] - 19);
+                    g.drawString(lengthString, (int) coords[0] - 41, (int) coords[1] - 20);
+                    g.drawString(lengthString, (int) coords[0] - 39, (int) coords[1] - 20);
+                    g.setColor(Color.white);
+                    g.drawString(lengthString, (int) coords[0] - 40, (int) coords[1] - 20);
+                }
+            }
+        } // end of if (showLengths)
+
+        g.setColor( currentColor );
+
+        for (i = 0; i < 2; i++) {
+            getEndLinesProtractor(x2, y2, i, coords);
+            g.drawLine((int) coords[0], (int) coords[1], (int) coords[2], (int) coords[3]);
+        }
+    }
+
+
+    /**
+     * Draws the vertices of the contour.
+     */
+    private void drawVertices( VOIBase kVOI, float[] resols, int[] unitsOfMeasure, Graphics g, int thickness, boolean boundingBox) {
+        Polygon gon = null;
+        int j;
+
+        if (g == null) {
+            MipavUtil.displayError("VOIContour.drawSelf: grapics = null");
+
+            return;
+        }
+
+        gon = scalePolygon(kVOI);
+
+        // if active draw little boxes at points
+        if ( kVOI.isActive() ) {
+
+            // drawCenterOfMass(scaleX, scaleY, g);
+            for (j = 0; j < kVOI.size(); j++) {
+
+                if (kVOI.getNearPoint() != j) { // Highlight Active point
+                    g.setColor(Color.white);
+                    g.fillRect((int) (gon.xpoints[j] - 1.5 + 0.5f),
+                            (int) (gon.ypoints[j] - 1.5 + 0.5f), 3, 3);
+                    g.setColor(Color.black);
+                    g.drawRect((int) (gon.xpoints[j] - 1.5 + 0.5f),
+                            (int) (gon.ypoints[j] - 1.5 + 0.5f), 3, 3);
+                }
+            }
+
+            g.setColor(Color.yellow);
+            g.drawRect((int) (gon.xpoints[0] - 1.5 + 0.5f),
+                    (int) (gon.ypoints[0] - 1.5 + 0.5f), 3, 3);
+        }
+        /*
+        if (boundingBox == true) {
+            int x0, x1, y0, y1;
+            x0 = (int) ((xBounds[0] * zoomX * resolutionX) + 0.5f);
+            x1 = (int) ((xBounds[1] * zoomX * resolutionX) + 0.5f);
+            y0 = (int) ((yBounds[0] * zoomY * resolutionY) + 0.5f);
+            y1 = (int) ((yBounds[1] * zoomY * resolutionY) + 0.5f);
+            g.setColor(Color.yellow.darker());
+            g.drawRect(x0, y0, x1 - x0, y1 - y0);
+
+            // draw corners of bounding box to make handles for resizing VOI
+            g.fillRect(x0 - 2, y0 - 2, 5, 5);
+            g.fillRect(x1 - 2, y0 - 2, 5, 5);
+            g.fillRect(x0 - 2, y1 - 2, 5, 5);
+            g.fillRect(x1 - 2, y1 - 2, 5, 5);
+
+            // draw mid points of bounding box to make handles for resizing VOI
+            g.fillRect(MipavMath.round(x0 + ((x1 - x0) / 2) - 2), y0 - 2, 5, 5);
+            g.fillRect(x1 - 2, Math.round(y0 + ((y1 - y0) / 2) - 2), 5, 5);
+            g.fillRect(MipavMath.round(x0 + ((x1 - x0) / 2) - 2), y1 - 2, 5, 5);
+            g.fillRect(x0 - 2, Math.round(y0 + ((y1 - y0) / 2) - 2), 5, 5);
+            g.setColor(Color.yellow.brighter());
+
+            switch (nearBoundPoint) {
+
+            case 1:
+                g.fillRect(x0 - 2, y0 - 2, 5, 5);
+                g.setColor(Color.black);
+                g.drawRect(x0 - 2, y0 - 2, 4, 4);
+                break;
+
+            case 2:
+                g.fillRect(x1 - 2, y0 - 2, 5, 5);
+                g.setColor(Color.black);
+                g.drawRect(x1 - 2, y0 - 2, 4, 4);
+                break;
+
+            case 3:
+                g.fillRect(x1 - 2, y1 - 2, 5, 5);
+                g.setColor(Color.black);
+                g.drawRect(x1 - 2, y1 - 2, 4, 4);
+                break;
+
+            case 4:
+                g.fillRect(x0 - 2, y1 - 2, 5, 5);
+                g.setColor(Color.black);
+                g.drawRect(x0 - 2, y1 - 2, 4, 4);
+                break;
+
+            case 5:
+                g.fillRect(MipavMath.round(x0 + ((x1 - x0) / 2) - 2), y0 - 2,
+                        5, 5);
+                g.setColor(Color.black);
+                g.drawRect(MipavMath.round(x0 + ((x1 - x0) / 2) - 2), y0 - 2,
+                        4, 4);
+                break;
+
+            case 6:
+                g.fillRect(x1 - 2, MipavMath.round(y0 + ((y1 - y0) / 2) - 2),
+                        5, 5);
+                g.setColor(Color.black);
+                g.drawRect(x1 - 2, MipavMath.round(y0 + ((y1 - y0) / 2) - 2),
+                        4, 4);
+                break;
+
+            case 7:
+                g.fillRect(MipavMath.round(x0 + ((x1 - x0) / 2) - 2), y1 - 2,
+                        5, 5);
+                g.setColor(Color.black);
+                g.drawRect(MipavMath.round(x0 + ((x1 - x0) / 2) - 2), y1 - 2,
+                        4, 4);
+                break;
+
+            case 8:
+                g.fillRect(x0 - 2, MipavMath.round(y0 + ((y1 - y0) / 2) - 2),
+                        5, 5);
+                g.setColor(Color.black);
+                g.drawRect(x0 - 2, MipavMath.round(y0 + ((y1 - y0) / 2) - 2),
+                        4, 4);
+                break;
+            }
+        }
+         */
+    }
+
+    public Vector3f drawBlendContour( VOIBase kVOI, int[] pixBuffer, float opacity, Color color, int slice )
+    {
+        if ( (m_iPlane != (m_iPlane & kVOI.getPlane())) || (getSlice(kVOI)!= slice) )
+        {
+            return null;
+        }
+        int iNumPoints = kVOI.size();
+        if ( iNumPoints == 0 )
+        {
+            return null;
+        }
+        Vector3f[] kVolumePts = new Vector3f[iNumPoints + 1];
+        int iXMin = Integer.MAX_VALUE;
+        int iYMin = Integer.MAX_VALUE;
+        int iXMax = Integer.MIN_VALUE;
+        int iYMax = Integer.MIN_VALUE;
+
+        for ( int i = 0; i < iNumPoints; i++ )
+        {
+            Vector3f kVolumePt = kVOI.get(i);
+            Vector3f kPt = fileCoordinatesToPatient( kVolumePt );
+
+            //kPt.Z = iSlice;/
+            kVolumePts[i] = kPt;
+            iXMin = (int)Math.min( iXMin, kVolumePts[i].X );
+            iYMin = (int)Math.min( iYMin, kVolumePts[i].Y );
+            iXMax = (int)Math.max( iXMax, kVolumePts[i].X );
+            iYMax = (int)Math.max( iYMax, kVolumePts[i].Y );
+        }
+        Vector3f kVolumePt = kVOI.get(0);
+        Vector3f kPt = fileCoordinatesToPatient( kVolumePt );
+
+        //Vector3f kPt = kPoly.VBuffer.GetPosition3(0);
+        //kPt.Mult( m_kVolumeScaleInv );
+        //kPt.Z = iSlice;
+        kVolumePts[iNumPoints] = kPt;
+        iXMin = (int)Math.min( iXMin, kVolumePts[iNumPoints].X );
+        iYMin = (int)Math.min( iYMin, kVolumePts[iNumPoints].Y );
+        iXMax = (int)Math.max( iXMax, kVolumePts[iNumPoints].X );
+        iYMax = (int)Math.max( iYMax, kVolumePts[iNumPoints].Y );
+        iNumPoints++;
+
+        int[][] aaiCrossingPoints = new int[iXMax - iXMin + 1][];
+        int[] aiNumCrossings = new int[iXMax - iXMin + 1];
+
+        for (int i = 0; i < (iXMax - iXMin + 1); i++) {
+            aaiCrossingPoints[i] = new int[iNumPoints];
+        }
+
+        VOIBase.outlineRegion(aaiCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax, kVolumePts);
+
+
+        int numPts = 0;
+        Vector3f kCenterMass = new Vector3f();
+        Vector3f kLocalPt = new Vector3f();
+        int iColumn = 0;
+        /* Loop over the width of the sculpt region bounding-box: */
+        for (int iX = iXMin; iX < iXMax; iX++) {
+            boolean bInside = false;
+
+            /* Loop over the height of the sculpt region bounding-box: */
+            for (int iY = iYMin; iY < iYMax; iY++) {
+
+                /* loop over each crossing point for this column: */
+                for (int iCross = 0; iCross < aiNumCrossings[iColumn]; iCross++) {
+
+                    if (iY == aaiCrossingPoints[iColumn][iCross]) {
+
+                        /* Each time an edge is cross the point alternates
+                         * from outside to inside: */
+                        bInside = !bInside;
+                    }
+                }
+
+                if (bInside == true) {
+
+                    /* The current pixel is inside the sculpt region.  Get the
+                     * image color from the canvas image and alpha-blend the sculpt color ontop, storing the result in
+                     * the canvas image.
+                     */
+                    if ( pixBuffer != null )
+                    {
+                        int index = iY * m_aiLocalImageExtents[0] + iX;
+                        int opacityInt = (int) (opacity * 255);
+                        opacityInt = opacityInt << 24;
+
+                        int colorInt = color.getRGB() & 0x00ffffff;
+                        pixBuffer[index] = colorInt | opacityInt;
+                    }
+                    else
+                    {
+                        kCenterMass.Add( patientCoordinatesToFile( new Vector3f( iX, iY, m_iSlice ) ) );
+                        numPts++;
+                    }
+                }
+            }
+
+            iColumn++;
+        }      
+        kCenterMass.X = MipavMath.round( kCenterMass.X / numPts );
+        kCenterMass.Y = MipavMath.round( kCenterMass.Y / numPts );
+        kCenterMass.Z = MipavMath.round( kCenterMass.Z / numPts );
+        return kCenterMass;
+    }
+
+    private void drawVOI( VOIBase kVOI, float[] resols, int[] unitsOfMeasure, Graphics g, int thickness ) {
+        Polygon gon = null;
+        int j;
+        new DecimalFormat(".##");
+
+        gon = scalePolygon(kVOI);
+
+        if (kVOI.isActive()) {
+            if (kVOI.isClosed()) {
+                drawGeometricCenter(kVOI, g);
+            } else {
+                drawLength( g, kVOI, resols, unitsOfMeasure );
+            }
+        } else if ( kVOI.getDoGeometricCenterLabel() && kVOI.isClosed()) {
+            drawGeometricCenter(kVOI, g);
+        }
+
+        if ( thickness == 1) {
+            if (kVOI.isClosed() == true) {
+                g.drawPolygon(gon);
+
+            } else {
+                g.drawPolyline(gon.xpoints, gon.ypoints, gon.npoints);
+            }
+        }  else {
+            // thickness is greater than 1... must draw differently
+
+            int x1, x2, y1, y2;
+            int dX, dY, dx, dy;
+            double ddx, ddy, lineLength, scale;
+
+            for (int i = 0; i < kVOI.size() - 1; i++) {
+
+                Vector3f kVolumePt = kVOI.elementAt(i);
+                Vector3f kScreen = m_kDrawingContext.fileToScreen( kVolumePt );                
+                x1 = (int) kScreen.X;
+                y1 = (int) kScreen.Y;
+
+                kVolumePt = kVOI.elementAt(i+1);
+                kScreen = m_kDrawingContext.fileToScreen( kVolumePt );                
+                x2 = (int) kScreen.X;
+                y2 = (int) kScreen.Y;
+
+                // now draw the connecting lines as polygons with thickness
+                dX = x2 - x1;
+                dY = y2 - y1;
+                // line length
+                lineLength = Math.sqrt(dX * dX + dY * dY);
+
+                scale = (thickness) / (2 * lineLength);
+
+                // The x,y increments from an endpoint needed to create a
+                // rectangle...
+                ddx = -scale * dY;
+                ddy = scale * dX;
+                ddx += (ddx > 0) ? 0.5 : -0.5;
+                ddy += (ddy > 0) ? 0.5 : -0.5;
+                dx = (int) ddx;
+                dy = (int) ddy;
+
+                // Now we can compute the corner points...
+                int xPoints[] = new int[4];
+                int yPoints[] = new int[4];
+
+                xPoints[0] = x1 + dx;
+                yPoints[0] = y1 + dy;
+                xPoints[1] = x1 - dx;
+                yPoints[1] = y1 - dy;
+                xPoints[2] = x2 - dx;
+                yPoints[2] = y2 - dy;
+                xPoints[3] = x2 + dx;
+                yPoints[3] = y2 + dy;
+
+                g.fillPolygon(xPoints, yPoints, 4);
+            }
+            // if it's closed... connect the last and first points
+            if ( kVOI.isClosed() ) {
+                Vector3f kVolumePt = kVOI.elementAt( kVOI.size() - 1);
+                Vector3f kScreen = m_kDrawingContext.fileToScreen( kVolumePt );                
+                x1 = (int) kScreen.X;
+                y1 = (int) kScreen.Y;
+
+                kVolumePt = kVOI.elementAt(0);
+                kScreen = m_kDrawingContext.fileToScreen( kVolumePt );                
+                x2 = (int) kScreen.X;
+                y2 = (int) kScreen.Y;
+
+                // now draw the connecting lines as polygons with thickness
+                dX = x2 - x1;
+                dY = y2 - y1;
+                // line length
+                lineLength = Math.sqrt(dX * dX + dY * dY);
+
+                scale = (thickness) / (2 * lineLength);
+
+                // The x,y increments from an endpoint needed to create a
+                // rectangle...
+                ddx = -scale * dY;
+                ddy = scale * dX;
+                ddx += (ddx > 0) ? 0.5 : -0.5;
+                ddy += (ddy > 0) ? 0.5 : -0.5;
+                dx = (int) ddx;
+                dy = (int) ddy;
+
+                // Now we can compute the corner points...
+                int xPoints[] = new int[4];
+                int yPoints[] = new int[4];
+
+                xPoints[0] = x1 + dx;
+                yPoints[0] = y1 + dy;
+                xPoints[1] = x1 - dx;
+                yPoints[1] = y1 - dy;
+                xPoints[2] = x2 - dx;
+                yPoints[2] = y2 - dy;
+                xPoints[3] = x2 + dx;
+                yPoints[3] = y2 + dy;
+
+                g.fillPolygon(xPoints, yPoints, 4);
+            }
+
+        }
+
+
+        if (kVOI.isActive() /*&& getSType() != VOIManager.LEVELSET
+                && getSType() != VOIManager.LIVEWIRE */) {
+            // if active draw little boxes at points
+            for (j = 0; j < kVOI.size(); j++) {
+
+                if ( kVOI.getSelectedPoint() == j) { // Do not draw (dragging point)
+                } else {
+                    g.setColor(Color.white);
+                    g.fillRect((int) (gon.xpoints[j] - 1.5 + 0.5f),
+                            (int) (gon.ypoints[j] - 1.5 + 0.5f), 3, 3);
+                    g.setColor(Color.black);
+                    g.drawRect((int) (gon.xpoints[j] - 1.5 + 0.5f),
+                            (int) (gon.ypoints[j] - 1.5 + 0.5f), 3, 3);
+                }
+            }
+
+            // draw the 1st point only if not dragging the first point and if
+            // the active point (lastPoint)
+            // is not the first point
+            if (kVOI.getSelectedPoint() != 0) {
+                g.setColor(Color.yellow);
+                g.drawRect((int) (gon.xpoints[0] - 1.5 + 0.5f),
+                        (int) (gon.ypoints[0] - 1.5 + 0.5f), 3, 3);
+            }
+            // draw the active point dragging is taking place
+            if ((kVOI.getSelectedPoint() >= 0) && (kVOI.size() > kVOI.getSelectedPoint())) {
+                g.setColor(Color.GREEN);
+                g.fillRect((int) (gon.xpoints[kVOI.getSelectedPoint()] - 1.5 + 0.5f),
+                        (int) (gon.ypoints[kVOI.getSelectedPoint()] - 1.5 + 0.5f), 3, 3);
+            }                       
+
+            /*
+            if (boundingBox == true) {
+                int x0, x1, y0, y1;
+                x0 = (int) ((xBounds[0] * zoomX * resolutionX) + 0.5);
+                x1 = (int) ((xBounds[1] * zoomX * resolutionX) + 0.5);
+                y0 = (int) ((yBounds[0] * zoomY * resolutionY) + 0.5);
+                y1 = (int) ((yBounds[1] * zoomY * resolutionY) + 0.5);
+                g.setColor(Color.yellow.darker());
+                g.drawRect(x0, y0, x1 - x0, y1 - y0);
+
+                // draw corners of bounding box to make handles for resizing VOI
+                g.fillRect(x0 - 2, y0 - 2, 5, 5);
+                g.fillRect(x1 - 2, y0 - 2, 5, 5);
+                g.fillRect(x0 - 2, y1 - 2, 5, 5);
+                g.fillRect(x1 - 2, y1 - 2, 5, 5);
+
+                // draw mid points of bounding box to make handles for resizing
+                // VOI
+                g.fillRect(x0 + ((x1 - x0) / 2) - 2, y0 - 2, 5, 5);
+                g.fillRect(x1 - 2, y0 + ((y1 - y0) / 2) - 2, 5, 5);
+                g.fillRect(x0 + ((x1 - x0) / 2) - 2, y1 - 2, 5, 5);
+                g.fillRect(x0 - 2, y0 + ((y1 - y0) / 2) - 2, 5, 5);
+
+                // display the height/width of the bounding box above (or below)
+                // the top
+                // midpoint and to the right of (or left of) the right midpoint
+                String widthString, heightString;
+                String measuredWidthString, measuredHeightString;
+                String upperLeftLocationString;
+                String lowerXYmmString;
+                int width = (int) ((xBounds[1] - xBounds[0]) + 0.5f);
+                int height = (int) ((yBounds[1] - yBounds[0]) + 0.5f);
+                widthString = String.valueOf(width);
+                heightString = String.valueOf(height);
+                measuredWidth = (xBounds[1] - xBounds[0]) * resols[0];
+                measuredHeight = (yBounds[1] - yBounds[0]) * resols[1];
+                xUnitsString = FileInfoBase
+                        .getUnitsOfMeasureAbbrevStr(unitsOfMeasure[0]);
+                yUnitsString = FileInfoBase
+                        .getUnitsOfMeasureAbbrevStr(unitsOfMeasure[1]);
+                measuredWidthString = String.valueOf(nf.format(measuredWidth))
+                        + " " + xUnitsString;
+                measuredHeightString = String
+                        .valueOf(nf.format(measuredHeight))
+                        + " " + yUnitsString;
+
+                // System.err.println("width: " + widthString + " height: " +
+                // heightString);
+                float lowerXmm = originX + (resols[0] * xBounds[0]);
+                float lowerYmm = originY + (resols[1] * yBounds[0]);
+                lowerXYmmString = "(" + String.valueOf(nf.format(lowerXmm))
+                        + " " + xUnitsString + ", "
+                        + String.valueOf(nf.format(lowerYmm)) + " "
+                        + yUnitsString + ")";
+                upperLeftLocationString = "("
+                        + String.valueOf((int) (xBounds[0] + 0.5f)) + ","
+                        + String.valueOf((int) (yBounds[0] + 0.5f)) + ")";
+                g.setColor(Color.black);
+
+                // System.err.println(xBounds[0] + " " + xBounds[1] + " " +
+                // yBounds[0] + " " + yBounds[1]);
+                if ((y1 - 45) < 0) {
+                    g.drawString(measuredWidthString,
+                            (x0 + ((x1 - x0) / 2)) - 20, y1 + 21);
+                    g.drawString(measuredWidthString,
+                            (x0 + ((x1 - x0) / 2)) - 20, y1 + 19);
+                    g.drawString(measuredWidthString,
+                            (x0 + ((x1 - x0) / 2)) - 21, y1 + 20);
+                    g.drawString(measuredWidthString,
+                            (x0 + ((x1 - x0) / 2)) - 19, y1 + 20);
+                    g.drawString(widthString, (x0 + ((x1 - x0) / 2)) - 20,
+                            y1 + 36);
+                    g.drawString(widthString, (x0 + ((x1 - x0) / 2)) - 20,
+                            y1 + 34);
+                    g.drawString(widthString, (x0 + ((x1 - x0) / 2)) - 21,
+                            y1 + 35);
+                    g.drawString(widthString, (x0 + ((x1 - x0) / 2)) - 19,
+                            y1 + 35);
+                    g.setColor(Color.white);
+                    g.drawString(measuredWidthString,
+                            (x0 + ((x1 - x0) / 2)) - 20, y1 + 20);
+                    g.drawString(widthString, (x0 + ((x1 - x0) / 2)) - 20,
+                            y1 + 35);
+                } else {
+                    g.drawString(measuredWidthString,
+                            (x0 + ((x1 - x0) / 2)) - 20, y1 - 24);
+                    g.drawString(measuredWidthString,
+                            (x0 + ((x1 - x0) / 2)) - 20, y1 - 26);
+                    g.drawString(measuredWidthString,
+                            (x0 + ((x1 - x0) / 2)) - 21, y1 - 25);
+                    g.drawString(measuredWidthString,
+                            (x0 + ((x1 - x0) / 2)) - 19, y1 - 25);
+                    g.drawString(widthString, (x0 + ((x1 - x0) / 2)) - 20,
+                            y1 - 9);
+                    g.drawString(widthString, (x0 + ((x1 - x0) / 2)) - 20,
+                            y1 - 11);
+                    g.drawString(widthString, (x0 + ((x1 - x0) / 2)) - 21,
+                            y1 - 10);
+                    g.drawString(widthString, (x0 + ((x1 - x0) / 2)) - 19,
+                            y1 - 10);
+                    g.setColor(Color.white);
+                    g.drawString(measuredWidthString,
+                            (x0 + ((x1 - x0) / 2)) - 20, y1 - 25);
+                    g.drawString(widthString, (x0 + ((x1 - x0) / 2)) - 20,
+                            y1 - 10);
+                }
+
+                g.setColor(Color.black);
+
+                if ((x0 - 40) < 0) {
+                    g.drawString(measuredHeightString, x0 + 10, y0 + 10
+                            + ((y1 - y0) / 2) + 1);
+                    g.drawString(measuredHeightString, x0 + 10, y0 + 10
+                            + ((y1 - y0) / 2) - 1);
+                    g.drawString(measuredHeightString, x0 + 9, y0 + 10
+                            + ((y1 - y0) / 2));
+                    g.drawString(measuredHeightString, x0 + 11, y0 + 10
+                            + ((y1 - y0) / 2));
+                    g.drawString(heightString, x0 + 10, y0 + 25
+                            + ((y1 - y0) / 2) + 1);
+                    g.drawString(heightString, x0 + 10, y0 + 25
+                            + ((y1 - y0) / 2) - 1);
+                    g.drawString(heightString, x0 + 9, y0 + 25
+                            + ((y1 - y0) / 2));
+                    g.drawString(heightString, x0 + 11, y0 + 25
+                            + ((y1 - y0) / 2));
+                    g.setColor(Color.white);
+                    g.drawString(measuredHeightString, x0 + 10, y0 + 10
+                            + ((y1 - y0) / 2));
+                    g.drawString(heightString, x0 + 10, y0 + 25
+                            + ((y1 - y0) / 2));
+                } else {
+                    g.drawString(measuredHeightString, x0 - 35, y0 + 10
+                            + ((y1 - y0) / 2) + 1);
+                    g.drawString(measuredHeightString, x0 - 35, y0 + 10
+                            + ((y1 - y0) / 2) - 1);
+                    g.drawString(measuredHeightString, x0 - 36, y0 + 10
+                            + ((y1 - y0) / 2));
+                    g.drawString(measuredHeightString, x0 - 34, y0 + 10
+                            + ((y1 - y0) / 2));
+                    g.drawString(heightString, x0 - 35, y0 + 25
+                            + ((y1 - y0) / 2) + 1);
+                    g.drawString(heightString, x0 - 35, y0 + 25
+                            + ((y1 - y0) / 2) - 1);
+                    g.drawString(heightString, x0 - 36, y0 + 25
+                            + ((y1 - y0) / 2));
+                    g.drawString(heightString, x0 - 34, y0 + 25
+                            + ((y1 - y0) / 2));
+                    g.setColor(Color.white);
+                    g.drawString(measuredHeightString, x0 - 35, y0 + 10
+                            + ((y1 - y0) / 2));
+                    g.drawString(heightString, x0 - 35, y0 + 25
+                            + ((y1 - y0) / 2));
+                }
+
+                g.setColor(Color.black);
+
+                if (((x0 - 40) <= 0) && ((y0 - 45) <= 0)) {
+                    g.drawString(lowerXYmmString, x0 + 10, y0 + 11);
+                    g.drawString(lowerXYmmString, x0 + 10, y0 + 13);
+                    g.drawString(lowerXYmmString, x0 + 9, y0 + 12);
+                    g.drawString(lowerXYmmString, x0 + 11, y0 + 12);
+                    g.setColor(Color.white);
+                    g.drawString(lowerXYmmString, x0 + 10, y0 + 12);
+                    g.setColor(Color.black);
+                    g.drawString(upperLeftLocationString, x0 + 10, y0 + 29);
+                    g.drawString(upperLeftLocationString, x0 + 10, y0 + 17);
+                    g.drawString(upperLeftLocationString, x0 + 9, y0 + 28);
+                    g.drawString(upperLeftLocationString, x0 + 11, y0 + 28);
+                    g.setColor(Color.white);
+                    g.drawString(upperLeftLocationString, x0 + 10, y0 + 28);
+                } else if (((x0 - 40) <= 0) && ((y0 - 45) > 0)) {
+                    g.drawString(lowerXYmmString, x0 + 10, y0 - 25);
+                    g.drawString(lowerXYmmString, x0 + 10, y0 - 27);
+                    g.drawString(lowerXYmmString, x0 + 9, y0 - 26);
+                    g.drawString(lowerXYmmString, x0 + 11, y0 - 26);
+                    g.setColor(Color.white);
+                    g.drawString(lowerXYmmString, x0 + 10, y0 - 26);
+                    g.setColor(Color.black);
+                    g.drawString(upperLeftLocationString, x0 + 10, y0 - 9);
+                    g.drawString(upperLeftLocationString, x0 + 10, y0 - 21);
+                    g.drawString(upperLeftLocationString, x0 + 9, y0 - 10);
+                    g.drawString(upperLeftLocationString, x0 + 11, y0 - 10);
+                    g.setColor(Color.white);
+                    g.drawString(upperLeftLocationString, x0 + 10, y0 - 10);
+                } else if (((x0 - 40) > 0) && ((y0 - 45) <= 0)) {
+                    g.drawString(lowerXYmmString, x0 - 35, y0 + 11);
+                    g.drawString(lowerXYmmString, x0 - 35, y0 + 13);
+                    g.drawString(lowerXYmmString, x0 - 36, y0 + 12);
+                    g.drawString(lowerXYmmString, x0 - 34, y0 + 12);
+                    g.setColor(Color.white);
+                    g.drawString(lowerXYmmString, x0 - 35, y0 + 12);
+                    g.setColor(Color.black);
+                    g.drawString(upperLeftLocationString, x0 - 35, y0 + 29);
+                    g.drawString(upperLeftLocationString, x0 - 35, y0 + 17);
+                    g.drawString(upperLeftLocationString, x0 - 36, y0 + 28);
+                    g.drawString(upperLeftLocationString, x0 - 34, y0 + 28);
+                    g.setColor(Color.white);
+                    g.drawString(upperLeftLocationString, x0 - 35, y0 + 28);
+                } else {
+                    g.drawString(lowerXYmmString, x0 - 35, y0 - 25);
+                    g.drawString(lowerXYmmString, x0 - 35, y0 - 27);
+                    g.drawString(lowerXYmmString, x0 - 36, y0 - 26);
+                    g.drawString(lowerXYmmString, x0 - 34, y0 - 26);
+                    g.setColor(Color.white);
+                    g.drawString(lowerXYmmString, x0 - 35, y0 - 26);
+                    g.setColor(Color.black);
+                    g.drawString(upperLeftLocationString, x0 - 35, y0 - 9);
+                    g.drawString(upperLeftLocationString, x0 - 35, y0 - 11);
+                    g.drawString(upperLeftLocationString, x0 - 36, y0 - 10);
+                    g.drawString(upperLeftLocationString, x0 - 34, y0 - 10);
+                    g.setColor(Color.white);
+                    g.drawString(upperLeftLocationString, x0 - 35, y0 - 10);
+                }
+
+                // System.err.println("height: " + heightString + " width: " +
+                // widthString);
+                g.setColor(Color.yellow.brighter());
+
+                switch (nearBoundPoint) {
+
+                case 1:
+                    g.fillRect(x0 - 2, y0 - 2, 5, 5);
+                    g.setColor(Color.black);
+                    g.drawRect(x0 - 2, y0 - 2, 4, 4);
+                    break;
+
+                case 2:
+                    g.fillRect(x1 - 2, y0 - 2, 5, 5);
+                    g.setColor(Color.black);
+                    g.drawRect(x1 - 2, y0 - 2, 4, 4);
+                    break;
+
+                case 3:
+                    g.fillRect(x1 - 2, y1 - 2, 5, 5);
+                    g.setColor(Color.black);
+                    g.drawRect(x1 - 2, y1 - 2, 4, 4);
+                    break;
+
+                case 4:
+                    g.fillRect(x0 - 2, y1 - 2, 5, 5);
+                    g.setColor(Color.black);
+                    g.drawRect(x0 - 2, y1 - 2, 4, 4);
+                    break;
+
+                case 5:
+                    g.fillRect(x0 + ((x1 - x0) / 2) - 2, y0 - 2, 5, 5);
+                    g.setColor(Color.black);
+                    g.drawRect(x0 + ((x1 - x0) / 2) - 2, y0 - 2, 4, 4);
+                    break;
+
+                case 6:
+                    g.fillRect(x1 - 2, y0 + ((y1 - y0) / 2) - 2, 5, 5);
+                    g.setColor(Color.black);
+                    g.drawRect(x1 - 2, y0 + ((y1 - y0) / 2) - 2, 4, 4);
+                    break;
+
+                case 7:
+                    g.fillRect(x0 + ((x1 - x0) / 2) - 2, y1 - 2, 5, 5);
+                    g.setColor(Color.black);
+                    g.drawRect(x0 + ((x1 - x0) / 2) - 2, y1 - 2, 4, 4);
+                    break;
+
+                case 8:
+                    g.fillRect(x0 - 2, y0 + ((y1 - y0) / 2) - 2, 5, 5);
+                    g.setColor(Color.black);
+                    g.drawRect(x0 - 2, y0 + ((y1 - y0) / 2) - 2, 4, 4);
+                    break;
+                }
+            }
+             */
+        }
+    }
+
+
+
+
+    private void drawVOILine( VOIBase kVOI, float[] resols, int[] unitsOfMeasure, Graphics g, int thickness  ) {
+
+        Vector3f kStart = m_kDrawingContext.fileToScreen( kVOI.get(0) );
+        Vector3f kEnd = m_kDrawingContext.fileToScreen( kVOI.get(1) );
+        float[] x = new float[2];
+        x[0] = kStart.X;
+        x[1] = kEnd.X;
+
+        float[] y = new float[2];
+        y[0] = kStart.Y;
+        y[1] = kEnd.Y;
+
+
+        MipavMath.length(x, y, resols );
+
+        if (thickness == 1) {
+            g.drawLine((int) x[0], (int) y[0], (int) x[1], (int) y[1]);
+        } else {
+
+            int dX = (int) (x[1] - x[0]);
+            int dY = (int) (y[1] - y[0]);
+            // line length
+            double lineLength = Math.sqrt(dX * dX + dY * dY);
+
+            double scale = (thickness) / (2 * lineLength);
+
+            // The x,y increments from an endpoint needed to create a rectangle...
+            double ddx = -scale * dY;
+            double ddy = scale * dX;
+            ddx += (ddx > 0) ? 0.5 : -0.5;
+            ddy += (ddy > 0) ? 0.5 : -0.5;
+            int dx = (int)ddx;
+            int dy = (int)ddy;
+
+            // Now we can compute the corner points...
+            int xPoints[] = new int[4];
+            int yPoints[] = new int[4];
+
+            xPoints[0] = (int)x[0] + dx; yPoints[0] = (int)y[0] + dy;
+            xPoints[1] = (int)x[0] - dx; yPoints[1] = (int)y[0] - dy;
+            xPoints[2] = (int)x[1] - dx; yPoints[2] = (int)y[1] - dy;
+            xPoints[3] = (int)x[1] + dx; yPoints[3] = (int)y[1] + dy;
+
+            g.fillPolygon(xPoints, yPoints, 4);
+
+
+
+        }
+
+        Color currentColor = g.getColor();
+
+        if ( kVOI.isActive() ) {
+            // draw the active point dragging is taking place
+            if (( kVOI.getSelectedPoint() >= 0) && (kVOI.size() > kVOI.getSelectedPoint())) {
+                g.setColor(Color.GREEN);
+                g.fillRect((int) (x[kVOI.getSelectedPoint()] - 1.5 + 0.5f), (int) (y[kVOI.getSelectedPoint()] - 1.5 + 0.5f), 3, 3);
+            }
+
+            if ( !kVOI.isSplit() )
+            {
+                drawTickMarks( kVOI, g, currentColor, unitsOfMeasure, m_kDrawingContext.getWidth(), m_kDrawingContext.getHeight(), resols);
+            }
+        }
+    }
+
+
+    private void drawVOIPoint( VOIBase kVOI, float[] resols, int[] unitsOfMeasure, Graphics g  ) {
+        int iContourID = kVOI.getContourID();
+        if ( iContourID != -1 )
+        {
+            iContourID++;
+            kVOI.setLabel( String.valueOf(iContourID) );
+        }
+        drawVOIPoint( kVOI, g, kVOI.getLabel() );
+    }
+
+    private void drawVOIPoint( VOIBase kVOI, Graphics g, String label )
+    {
+        boolean doName = (Preferences.is(Preferences.PREF_SHOW_VOI_NAME) && kVOI.getName() != null);
+
+        Vector3f kFile = kVOI.get(0);
+        Vector3f kScreen = m_kDrawingContext.fileToScreen( kFile );
+        int x = Math.round( kFile.X );
+        int y = Math.round( kFile.Y );
+        int xS = Math.round( kScreen.X );
+        int yS = Math.round( kScreen.Y );
+
+        String str;
+        if (  kVOI.getType() != VOI.POLYLINE_SLICE )
+        {
+            str = new String("(" + x + "," + y + ")");
+            //Create the string that will be drawn for label and name
+            if (doName) {
+                str = new String(kVOI.getName() + ": (" + x + "," + y + ")");
+            } else if (label != null) {
+                str = new String(label + ": (" + x + "," + y + ")");
+            }
+
+            int type = 0;
+            String typeStr = Preferences.getProperty(Preferences.PREF_VOI_POINT_DRAW_TYPE);
+            if (typeStr != null) {
+                try {
+                    type = Integer.parseInt(typeStr);
+                    if (type < 0 || type > 3) {
+                        type = 0;
+                    }
+                } catch (Exception ex) {}
+            }
+
+            switch (type) {
+            case 0:
+                g.drawLine(xS, yS - 4, xS, yS + 4);
+                g.drawLine(xS - 4, yS, xS + 4, yS);
+                break;
+            case 1:
+                g.drawLine(xS, yS - 4, xS, yS - 1);
+                g.drawLine(xS, yS + 1, xS, yS + 4);
+                g.drawLine(xS - 4, yS, xS - 1, yS);
+                g.drawLine(xS + 1, yS, xS + 4, yS);
+                break;
+            case 2:
+                g.drawLine(xS - 4, yS - 4, xS + 4, yS + 4);
+                g.drawLine(xS - 4, yS + 4, xS + 4, yS - 4);
+                break;
+            case 3:
+                g.drawLine(xS - 4, yS - 4, xS - 1, yS - 1);
+                g.drawLine(xS + 1, yS + 1, xS + 4, yS + 4);
+                g.drawLine(xS - 4, yS + 4, xS - 1, yS + 1);
+                g.drawLine(xS + 1, yS - 1, xS + 4, yS - 4);
+                break;
+            }
+
+            if ( !kVOI.isActive() ) {
+                if (doName) {
+                    if (xS < 20) {
+                        g.drawString(kVOI.getName(), xS + 10, yS);
+                    } else {
+                        g.drawString(kVOI.getName(), xS - 15, yS - 5);
+                    }
+                } else {
+                    if (xS < 20) {
+                        g.drawString(label, xS + 10, yS);
+                    } else {
+                        g.drawString(label, xS - 15, yS - 5);
+                    }
+                }
+            } else {
+
+                if (type != 1 && type != 3) {
+                    g.setColor(Color.black);
+                    g.fillRect((int) (xS - 1.5), (int) (yS - 1.5), 4, 4);
+                    g.setColor(Color.white);
+                    g.drawRect((int) (xS - 1.5), (int) (yS - 1.5), 4, 4);
+                }
+
+                g.setFont(MipavUtil.font12);
+                g.setColor(Color.yellow);
+
+                int xPos = xS;
+                int yPos = yS;
+                if (xS < 70) {
+                    xPos += 10;
+                } else {
+                    xPos -= 60;
+                }
+                if (yS < 30) {
+                    yPos += 20;
+                } else {
+                    yPos -= 10;
+                }
+                g.drawString(str, xPos, yPos);
+            }
+        }
+        else
+        {
+            VOIPoint kPolyPoint = (VOIPoint)kVOI;
+            if (kPolyPoint.isActivePoint()) {
+                str = new String(label + ": (" + x + "," + y + ")");
+            } else {
+                str = new String(label);
+            }
+
+            if (kPolyPoint.isActive()) {
+                if (kPolyPoint.isActivePoint()) {
+                    g.setColor(Color.GREEN);
+                    g.fillRect((int) (xS - 1.5), (int) (yS - 1.5), 4, 4);
+                    g.setColor(Color.white);
+                    g.drawRect((int) (xS - 1.5), (int) (yS - 1.5), 4, 4);
+                } else {
+                    g.setColor(Color.black);
+                    g.fillRect((int) (xS - 1.5), (int) (yS - 1.5), 4, 4);
+                    g.setColor(Color.white);
+                    g.drawRect((int) (xS - 1.5), (int) (yS - 1.5), 4, 4);
+                }
+            } else {
+                g.drawRect((int) (xS - 1.5), (int) (yS - 1.5), 4, 4);
+                g.setColor(Color.white);
+                g.fillRect((xS), (yS), 1, 1);
+            }
+
+            if (kPolyPoint.isActive()) {
+                g.setFont(MipavUtil.font12);
+                g.setColor(Color.yellow);
+
+                int xPos = xS;
+                int yPos = yS;
+
+                boolean displaySegmentDistance = false;
+                if (kPolyPoint.distanceString() != null) {
+                    displaySegmentDistance = true;
+                    displaySegmentDistance = !(kPolyPoint.distanceString().startsWith("0.00"));
+                }
+
+                if (kPolyPoint.isFirstSlicePoint() && kPolyPoint.isActivePoint()) {
+                    if (xS < 20) {
+                        g.drawString(label, xPos + 10, yPos - 5);
+                        g.drawString("total: " + kPolyPoint.totalDistanceString(), xPos + 10, yPos - 18);
+                        if (displaySegmentDistance)
+                            g.drawString("segment: " + kPolyPoint.distanceString(), xPos + 10, yPos - 31);
+
+
+                    } else {
+                        g.drawString(label, xPos - 15, yPos - 5);
+                        g.drawString("total: " + kPolyPoint.totalDistanceString(), xPos - 15, yPos - 18);
+                        if (displaySegmentDistance)
+                            g.drawString("segment: " + kPolyPoint.distanceString(), xPos - 15, yPos - 31);
+
+                    }
+                } else if (kPolyPoint.isFirstSlicePoint()) {
+                    if (xS < 20) {
+                        g.drawString(label, xPos + 10, yPos - 5);
+                        g.drawString("total: " + kPolyPoint.totalDistanceString(), xPos + 10, yPos - 18);
+                    } else {
+                        g.drawString(label, xPos - 15, yPos - 5);
+                        g.drawString("total: " + kPolyPoint.totalDistanceString(), xPos - 15, yPos - 18);
+                    }
+                } else if (kPolyPoint.isActivePoint()) {
+                    if (xS < 20) {
+                        g.drawString(label, xPos + 10, yPos - 5);
+
+                        if (displaySegmentDistance)
+                            g.drawString("segment: " + kPolyPoint.distanceString(), xPos + 10, yPos - 18);
+                    }
+                    else {
+                        g.drawString(label, xPos - 15, yPos - 5);
+                        if (displaySegmentDistance)
+                            g.drawString("segment: " + kPolyPoint.distanceString(), xPos - 15, yPos - 18);
+                    }
+                } else {
+                    if (xS < 20) {
+                        g.drawString(label, xPos + 10, yPos - 5);
+                    } else {
+                        g.drawString(label, xPos - 15, yPos - 5);
+                    }
+                }
+            } else {
+                g.setFont(MipavUtil.font12);
+                if (xS < 20) {
+                    g.drawString(label, xS + 10, yS);
+                } else {
+                    g.drawString(label, xS - 15, yS - 5);
+                }
+
+            }
+
+        }
+    }
+
+
+
+
+
+
+    private void drawVOIPolyLineSlice( VOIPolyLineSlice kVOI, float[] resols, int[] unitsOfMeasure, Graphics g, int slice, int orientation ) {
+        Color color = g.getColor();
+
+        String totalDistance = kVOI.getTotalLengthString(resols, unitsOfMeasure);
+        String dist = new String();
+        for ( int i = 0; i < kVOI.size(); i++ )
+        {
+            dist = kVOI.getLengthString( i, i+1, resols, unitsOfMeasure );
+            kVOI.getPoints().get(i).setFirstPoint( i==0, i==kVOI.getSelectedPoint(), totalDistance, dist, i+1);
+            int sliceI = getSlice( kVOI.getPoints().get(i) );
+            if ( sliceI == m_iSlice )
+            {
+                drawVOIPoint( kVOI.getPoints().get(i), g, new Integer(i+1).toString() );
+            }
+        }
+        for ( int i = 0; i < kVOI.size() - 1; i++ )
+        {
+            int sliceI = getSlice( kVOI.getPoints().get(i) );
+            int sliceIP1 = getSlice( kVOI.getPoints().get(i+1) );
+            if ( sliceI == sliceIP1 && sliceI == m_iSlice )
+            {
+                Vector3f kStart = m_kDrawingContext.fileToScreen( kVOI.get(i) );
+                Vector3f kEnd = m_kDrawingContext.fileToScreen( kVOI.get(i+1) );
+                g.setColor(color);
+                g.drawLine((int) kStart.X, (int)kStart.Y, (int)kEnd.X, (int)kEnd.Y);
+            }
+        }
+    }
+
+    private void drawVOIProtractor( VOIBase kVOI, float[] resols, int[] unitsOfMeasure, Graphics g ) {
+
+        Vector3f kStart = m_kDrawingContext.fileToScreen( kVOI.get(0) );
+        Vector3f kMiddle = m_kDrawingContext.fileToScreen( kVOI.get(1) );
+        Vector3f kEnd = m_kDrawingContext.fileToScreen( kVOI.get(2) );
+        //0 is middle, 1 is start, 2 is end:
+        float[] x = new float[3];
+        x[0] = kMiddle.X;
+        x[1] = kStart.X;
+        x[2] = kEnd.X;
+
+        //0 is middle, 1 is start, 2 is end:
+        float[] y = new float[3];
+        y[0] = kMiddle.Y;
+        y[1] = kStart.Y;
+        y[2] = kEnd.Y;
+
+        if (Math.abs(y[1] - y[0]) > Math.abs(x[1] - x[0])) {
+            g.drawLine((int) (x[0] - 1), (int) y[0], (int) (x[1] - 1), (int) y[1]);
+            g.drawLine((int) x[0], (int) y[0], (int) x[1], (int) y[1]);
+            g.drawLine((int) (x[0] + 1), (int) y[0], (int) (x[1] + 1), (int) y[1]);
+        } else {
+            g.drawLine((int) x[0], (int) (y[0] - 1), (int) x[1], (int) (y[1] - 1));
+            g.drawLine((int) x[0], (int) y[0], (int) x[1], (int) y[1]);
+            g.drawLine((int) x[0], (int) (y[0] + 1), (int) x[1], (int) (y[1] + 1));
+        }
+
+        g.drawLine((int) x[0], (int) y[0], (int) x[2], (int) y[2]);
+
+        if (kVOI.isActive()) {
+            this.drawTickMarks( kVOI, g, unitsOfMeasure, m_kDrawingContext.getWidth(), m_kDrawingContext.getHeight(), resols);
+        } 
+    }
+
+
+
+    private void drawVOIText( VOIText kVOI, Graphics g) {
+
+        Vector3f kScreen = m_kDrawingContext.fileToScreen( kVOI.get(0) );
+        int xS = Math.round(kScreen.X);
+        int yS = Math.round(kScreen.Y);
+
+        kScreen = m_kDrawingContext.fileToScreen( kVOI.get(1) );
+        int xS2 = Math.round(kScreen.X);
+        int yS2 = Math.round(kScreen.Y);
+
+        // draw the arrow if useMarker is true
+        if ( kVOI.useMarker() ) {
+            // determine the width/height of the TEXT (for marker line location)
+            int width = (g.getFontMetrics(kVOI.getTextFont()).stringWidth( kVOI.getText()));
+            int ascentValue = (int) (g.getFontMetrics(kVOI.getTextFont()).getStringBounds(kVOI.getText(), g).getHeight() / 2);
+
+            int markerX = xS;
+            int markerY = yS;
+
+            if (xS2 > (xS + width)) {
+                markerX = xS + width;
+            } else if (xS2 <= xS) {
+                markerX = xS - 2;
+            } else {
+                markerX = xS + width/2;
+            }
+
+            if (yS2 > yS) {
+                markerY = yS + 3;
+            } else if (yS2 <= (yS - ascentValue)) {
+                markerY = yS - ascentValue - 5;
+            } else {
+                markerY = yS - ascentValue/2;
+            }
+
+            this.drawArrow( kVOI, (Graphics2D)g, markerX, markerY, xS2, yS2, .1f);
+        } //arrow not off
+        if ((kVOI.getTextFont() != null) && (kVOI.getTextFont().getName() == kVOI.getFontName()) && (kVOI.getTextFont().getStyle() == kVOI.getFontDescriptors())) {
+            kVOI.setTextFont( kVOI.getTextFont().deriveFont(kVOI.getFontSize()) );
+
+        } else {
+            kVOI.setTextFont( new Font(kVOI.getFontName(), kVOI.getFontDescriptors(), kVOI.getFontSize()) );
+        }
+
+        Font previousFont = g.getFont();
+
+        g.setFont(kVOI.getTextFont());
+
+        if (kVOI.isActive()) {
+            g.setColor(Color.RED);            
+            g.drawString( kVOI.getText(), xS, yS + 1);
+            g.drawString(kVOI.getText(), xS + 1, yS);
+        } else {
+            g.setColor( kVOI.getBackgroundColor() );
+            g.drawString(kVOI.getText(), xS + 1, yS);
+            g.drawString(kVOI.getText(), xS - 1, yS);
+            g.drawString(kVOI.getText(), xS, yS - 1);
+            g.drawString(kVOI.getText(), xS, yS + 1);
+        }
+
+
+        g.setColor( kVOI.getColor() );
+        g.drawString(kVOI.getText(), xS, yS);
+        g.setFont(previousFont);
+
+    }
+
+
+
+
+    private void getCoordsLine(float[] linePtsX, float[] linePtsY, double fraction, float[] coords) {
+        float x1, y1;
+        double vector1, vector2, tmp;
+        double length;
+        x1 = (linePtsX[0] + linePtsX[1]) / 2;
+        y1 = (linePtsY[0] + linePtsY[1]) / 2;
+
+        if (fraction == .25) {
+            x1 = (linePtsX[0] + x1) / 2;
+            y1 = (linePtsY[0] + y1) / 2;
+        } else if (fraction == .75) {
+            x1 = (x1 + linePtsX[1]) / 2;
+            y1 = (y1 + linePtsY[1]) / 2;
+        }
+
+        vector1 = (linePtsX[1] - linePtsX[0]);
+        vector2 = (linePtsY[1] - linePtsY[0]);
+        length = Math.sqrt((vector1 * vector1) + (vector2 * vector2));
+        vector1 = (linePtsX[1] - linePtsX[0]) / length;
+        vector2 = (linePtsY[1] - linePtsY[0]) / length;
+        tmp = vector1;
+        vector1 = 5 * (-vector2);
+        vector2 = 5 * tmp;
+        coords[0] = (int) (x1 + vector1 + 0.5);
+        coords[1] = (int) (y1 + vector2 + 0.5);
+        coords[2] = (int) (x1 - vector1 + 0.5);
+        coords[3] = (int) (y1 - vector2 + 0.5);
+    }
+
+    private void getCoordsProtractor(float[] x, float[] y, double fraction, float[] coords) {
+        float x1, y1;
+        double vector1, vector2, tmp;
+        double length;
+        x1 = (x[0] + x[1]) / 2;
+        y1 = (y[0] + y[1]) / 2;
+
+        if (fraction == .25) {
+            x1 = (x[0] + x1) / 2;
+            y1 = (y[0] + y1) / 2;
+        } else if (fraction == .75) {
+            x1 = (x1 + x[1]) / 2;
+            y1 = (y1 + y[1]) / 2;
+        }
+
+        vector1 = (x[1] - x[0]);
+        vector2 = (y[1] - y[0]);
+        length = Math.sqrt((vector1 * vector1) + (vector2 * vector2));
+        vector1 = (x[1] - x[0]) / length;
+        vector2 = (y[1] - y[0]) / length;
+        tmp = vector1;
+        vector1 = 5 * (-vector2);
+        vector2 = 5 * tmp;
+        coords[0] = (int) (x1 + vector1 + 0.5);
+        coords[1] = (int) (y1 + vector2 + 0.5);
+        coords[2] = (int) (x1 - vector1 + 0.5);
+        coords[3] = (int) (y1 - vector2 + 0.5);
+    }
+
+
+
+
+
+
+
+    private void getEndLinesLine(float[] linePtsX, float[] linePtsY, int line, float[] coords) {
+        double vector1, vector2, tmp;
+        double length;
+        vector1 = (linePtsX[1] - linePtsX[0]);
+        vector2 = (linePtsY[1] - linePtsY[0]);
+        length = Math.sqrt((vector1 * vector1) + (vector2 * vector2));
+        vector1 = (linePtsX[1] - linePtsX[0]) / length;
+        vector2 = (linePtsY[1] - linePtsY[0]) / length;
+        tmp = vector1;
+        vector1 = 10 * ((vector1 * 0.707) + (vector2 * 0.707));
+        vector2 = 10 * ((-tmp * 0.707) + (vector2 * 0.707));
+
+        if (line == 0) {
+            coords[0] = (int) (linePtsX[1]);
+            coords[1] = (int) (linePtsY[1]);
+            coords[2] = (int) (linePtsX[1] + vector1 + 0.5);
+            coords[3] = (int) (linePtsY[1] + vector2 + 0.5);
+        } else if (line == 1) {
+            coords[0] = (int) (linePtsX[1]);
+            coords[1] = (int) (linePtsY[1]);
+            coords[2] = (int) (linePtsX[1] - vector2 + 0.5);
+            coords[3] = (int) (linePtsY[1] + vector1 + 0.5);
+        } else if (line == 2) {
+            coords[0] = (int) (linePtsX[0]);
+            coords[1] = (int) (linePtsY[0]);
+            coords[2] = (int) (linePtsX[0] - vector1 + 0.5);
+            coords[3] = (int) (linePtsY[0] - vector2 + 0.5);
+        } else if (line == 3) {
+            coords[0] = (int) (linePtsX[0]);
+            coords[1] = (int) (linePtsY[0]);
+            coords[2] = (int) (linePtsX[0] + vector2 + 0.5);
+            coords[3] = (int) (linePtsY[0] - vector1 + 0.5);
+        }
+    }
+
+    private void getEndLinesProtractor(float[] x, float[] y, int line, float[] coords) {
+        double vector1, vector2, tmp;
+        double length;
+        vector1 = (x[1] - x[0]);
+        vector2 = (y[1] - y[0]);
+        length = Math.sqrt((vector1 * vector1) + (vector2 * vector2));
+        vector1 = (x[1] - x[0]) / length;
+        vector2 = (y[1] - y[0]) / length;
+        tmp = vector1;
+        vector1 = -10 * ((vector1 * 0.707) + (vector2 * 0.707));
+        vector2 = 10 * ((tmp * 0.707) - (vector2 * 0.707));
+
+        if (line == 0) {
+            coords[0] = (int) (x[1]);
+            coords[1] = (int) (y[1]);
+            coords[2] = (int) (x[1] + vector1 + 0.5);
+            coords[3] = (int) (y[1] + vector2 + 0.5);
+        } else if (line == 1) {
+            coords[0] = (int) (x[1]);
+            coords[1] = (int) (y[1]);
+            coords[2] = (int) (x[1] - vector2 + 0.5);
+            coords[3] = (int) (y[1] + vector1 + 0.5);
+        }
+    }
+
+
+
+
+    private int getSlice( VOIBase kVOI )
+    {
+        if ( kVOI.getType() == VOI.PROTRACTOR && ((VOIProtractor)kVOI).getAllSlices() )
+        {
+            return m_iSlice;
+        }
+        return (int)fileCoordinatesToPatient( kVOI.get(0) ).Z;
+    }
+
+
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  mouseEvent  DOCUMENT ME!
+     */
+    private void handleIntensityLineBtn3(MouseEvent mouseEvent) {
+
+        // build VOI intensity popup menu
+        JPopupMenu popupMenu = new JPopupMenu();
+        JMenuItem menuItem = new JMenuItem("Show intensity graph");
+        popupMenu.add(menuItem);
+        menuItem.addActionListener(this);
+        menuItem.setActionCommand(SHOW_INTENSITY_GRAPH);
+        menuItem = new JMenuItem("Delete this intensity line");
+        popupMenu.add(menuItem);
+        menuItem.addActionListener(this);
+        menuItem.setActionCommand(DELETE_INTENSITY_LINE);
+        popupMenu.show(m_kComponent, mouseEvent.getX(), mouseEvent.getY());
+    }
+
+
+
+
 
     private void initLiveWire( int iSlice, boolean bLiveWire )
     {
-        m_kParent.setCursor( MipavUtil.waitCursor );
         if ( !m_bLiveWireInit )
         {
-            int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(m_kImageActive, m_iPlaneOrientation);
-            boolean[] abAxisFlip = MipavCoordinateSystems.getAxisFlip(m_kImageActive, m_iPlaneOrientation);
-            m_kLocalImage = m_kImageActive.export( aiAxisOrder, abAxisFlip );
+            if ( m_iPlaneOrientation != m_kImageActive.getImageOrientation() && 
+                    m_iPlaneOrientation != FileInfoBase.UNKNOWN_ORIENT )
+            {
+                int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(m_kImageActive, m_iPlaneOrientation);
+                boolean[] abAxisFlip = MipavCoordinateSystems.getAxisFlip(m_kImageActive, m_iPlaneOrientation);
+                m_kLocalImage = m_kImageActive.export( aiAxisOrder, abAxisFlip );
+            }
+            else
+            {
+                m_kLocalImage = m_kImageActive;
+            }
 
             m_bLiveWireInit = true;
-            m_abInitLiveWire = new boolean[m_aiLocalImageExtents[2] ];
+            int nSlices = m_aiLocalImageExtents.length > 2 ? m_aiLocalImageExtents[2] : 1;
+            m_abInitLiveWire = new boolean[ nSlices ];
             for ( int i = 0; i < m_abInitLiveWire.length; i++ )
             {
                 m_abInitLiveWire[i] = false;
@@ -1679,7 +3512,6 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         }
         if ( m_abInitLiveWire[iSlice] )
         {
-            m_kParent.setDefaultCursor();
             return;
         }
 
@@ -1715,12 +3547,14 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         } catch (IOException error) {
             MipavUtil.displayError("Error while trying to retrieve RGB data.");
         }
-        
+
         if ( bLiveWire )
         {
+            ViewJProgressBar progressBar = new ViewJProgressBar(m_kImageActive.getImageName(),
+                    "Livewire: Computing cost function ...", 0, 100, false, this, null);
             localCosts = RubberbandLivewire.getLocalCosts( m_kLocalImage, m_iLiveWireSelection, 
                     imageBufferActive,
-                    xDirections, yDirections, null );
+                    xDirections, yDirections, progressBar );
 
             costGraph = new byte[localCosts.length]; // Graph with arrows from each node to next one
 
@@ -1734,8 +3568,10 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
 
 
             m_abInitLiveWire[iSlice] = true;
+            if (progressBar != null) {
+                progressBar.dispose();
+            }
         }
-        m_kParent.setDefaultCursor();
     }
 
     private void moveVOIPoint( int iX, int iY )
@@ -1744,10 +3580,16 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         {            
             return;
         }
-        m_kCurrentVOI.setPosition( this, m_kCurrentVOI.getNearPoint(), iX, iY, m_iSlice );  
-
-        m_kParent.setCursor(MipavUtil.crosshairCursor);
+        setPosition( m_kCurrentVOI, m_kCurrentVOI.getNearPoint(), iX, iY, m_iSlice ); 
+        m_kParent.setCursor(MipavUtil.crosshairCursor); 
+        m_kParent.updateDisplay();
+        if ( m_kCurrentVOI.getGroup().getContourGraph() != null )
+        {
+            m_kParent.updateGraph(m_kCurrentVOI);
+        }
     }
+
+
 
     private void pasteVOI( int iSlice )
     {
@@ -1755,64 +3597,20 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         {
             return;
         }
-        m_kCurrentVOI = m_kCopyVOI.clone(iSlice);
+        m_kCurrentVOI = m_kCopyVOI.clone();
+        m_kCurrentVOI.clear();
+        for ( int i = 0; i < m_kCopyVOI.size(); i++ )
+        {
+            Vector3f kPos = fileCoordinatesToPatient( m_kCopyVOI.get(i) );
+            kPos.Z = iSlice;
+            m_kCurrentVOI.add( patientCoordinatesToFile( kPos ) );
+        }
+
+
         m_kParent.pasteVOI(m_kCurrentVOI);
         m_kCurrentVOI.setActive(false);
     }
 
-    /**
-     * Generates the possible paths of the level set and pushes them onto a stack. Looks in the 8 neighborhood
-     * directions for the possible paths.
-     *
-     */
-    private void paths(int iX, int iY, int iZ, int i, float level) {
-
-        int[] intPtr = null;
-
-        try {
-            intPtr = new int[1];
-        } catch (OutOfMemoryError error) {
-            System.gc();
-            MipavUtil.displayError("Out of memory: ComponentEditImage.mouseDragged");
-
-            return;
-        }
-
-        intPtr[0] = levelSetStack.size() - 1;
-
-        //indexMM
-        if ((i != 0) && (m_afAverages[m_iM][m_iM] <= level) && (map.get(m_aiIndexValues[m_iM][m_iM]) == false)) {
-            stack.push(intPtr);
-        } 
-        //indexM_
-        else if ((i != 1) && (m_afAverages[m_iM][m_i_] <= level) && (map.get(m_aiIndexValues[m_iM][m_i_]) == false)) {
-            stack.push(intPtr);
-        }
-        //indexMP
-        else if ((i != 2) && (m_afAverages[m_iM][m_iP] <= level) && (map.get(m_aiIndexValues[m_iM][m_iP]) == false)) {
-            stack.push(intPtr);
-        } 
-        //index_P
-        else if ((i != 3) && (m_afAverages[m_i_][m_iP] <= level) && (map.get(m_aiIndexValues[m_i_][m_iP]) == false)) {
-            stack.push(intPtr);
-        }
-        //indexPP
-        else if ((i != 4) && (m_afAverages[m_iP][m_iP] <= level) && (map.get(m_aiIndexValues[m_iP][m_iP]) == false)) {
-            stack.push(intPtr);
-        }
-        //indexP_
-        else if ((i != 5) && (m_afAverages[m_iP][m_i_] <= level) && (map.get(m_aiIndexValues[m_iP][m_i_]) == false)) {
-            stack.push(intPtr);
-        }
-        //indexPM
-        else if ((i != 6) && (m_afAverages[m_iP][m_iM] <= level) && (map.get(m_aiIndexValues[m_iP][m_iM]) == false)) {
-            stack.push(intPtr);
-        }
-        // index_M
-        else if ((i != 7) && (m_afAverages[m_i_][m_iM] <= level) && (map.get(m_aiIndexValues[m_i_][m_iM]) == false)) {
-            stack.push(intPtr);
-        }
-    }
 
 
 
@@ -1843,13 +3641,39 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
                 {
                     m_kParent.saveVOIs( "moveVOI" );
                     m_bFirstDrag = false;
-                }
-                m_kParent.moveVOI( new Vector3f( kEvent.getX() - m_fMouseX, kEvent.getY() - m_fMouseY, 0 ) );
+                }    
+                m_kParent.moveVOI( this, new Vector3f( kEvent.getX() - m_fMouseX, kEvent.getY() - m_fMouseY, 0 ), m_iPlane, m_bFirstDrag );
                 m_fMouseX = kEvent.getX();
                 m_fMouseY = kEvent.getY();
             }
         }
     }
+
+    private Polygon scalePolygon( VOIBase kVOI ) {
+        int i;
+        int x;
+        int y;
+        Polygon scaledGon = null;
+
+        try {
+            scaledGon = new Polygon();
+        } catch (OutOfMemoryError error) {
+            System.gc();
+            throw error;
+        }
+
+        for (i = 0; i < kVOI.size(); i++) {
+            Vector3f kVolumePt = kVOI.elementAt(i);
+            Vector3f kScreen = m_kDrawingContext.fileToScreen( kVolumePt );
+
+            x = (int) kScreen.X;
+            y = (int) kScreen.Y;
+            scaledGon.addPoint(x, y);
+        }
+
+        return scaledGon;
+    }
+
 
 
     /**
@@ -2058,95 +3882,86 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
 
     }
 
-    private void selectVOI( int iX, int iY, boolean bShiftDown )
+    private VOIBase selectVOI( int iX, int iY, boolean bShiftDown )
     {
-        if ( m_kCurrentVOI != null )
-        {
-            m_kCurrentVOI.setActive(false);
-        }
+        m_kParent.selectAllVOIs(false);
         m_bSelected = false;
         m_kCurrentVOI = null;
-        VOIVector kVOIs = m_kImageActive.get3DVOIs();
-        for ( int i = 0; i < kVOIs.size(); i++ )
+        VOIVector kVOIs = m_kImageActive.getVOIs();
+        for ( int i = kVOIs.size()-1; i >=0; i-- )
         {
             VOI kVOI = kVOIs.get(i);
-            for ( int j = 0; j < kVOI.getCurves()[0].size(); j++ )
+            for ( int j = kVOI.getCurves().size()-1; j >= 0; j-- )
             {
-                LocalVolumeVOI kVOI3D = ((LocalVolumeVOI)kVOI.getCurves()[0].get(j));
-                if ( kVOI3D.contains( m_iPlaneOrientation, iX, iY, m_iSlice ) )
+                VOIBase kVOI3D = kVOI.getCurves().get(j);
+                if ( (m_iPlane == (m_iPlane & kVOI3D.getPlane())) &&
+                        (m_iSlice == getSlice( kVOI3D )) && 
+                        contains( kVOI3D, iX, iY, m_iSlice ) )
                 {
                     m_kCurrentVOI = kVOI3D;
                     m_kParent.setSelectedVOI( m_kCurrentVOI.getGroup(), bShiftDown );
                     m_kCurrentVOI.setActive(true);
                     m_bSelected = true;
-                    return;
+                    return m_kCurrentVOI;
                 }
             }
         }
+        return m_kCurrentVOI;
+    }
+
+
+    private void setPosition( VOIBase kVOI, int iPos, float fX, float fY, float fZ )
+    {
+        setPosition( kVOI, iPos, new Vector3f( fX, fY, fZ ) );
     }
 
 
 
-
-    private void setIndices( int iX, int iY, int iZ )
+    private void setPosition( VOIBase kVOI, int iPos, Vector3f kPos )
     {
-        for ( int i = 0; i < 7; i++ )
+        if ( kVOI.isFixed() )
         {
-            for ( int j = 0; j < 7; j++ )
-            {
-                if ( m_akSteps[i][j] == null )
-                {
-                    m_akSteps[i][j] = new Vector2f( iX + j-3, iY + i - 3 );
-                }
-                else
-                {
-                    m_akSteps[i][j].Set( iX + j-3, iY + i - 3 );
-                }
-            }
+            return;
         }
 
-        int[] extents = m_kImageActive.getExtents();  
         Vector3f kVolumePt = new Vector3f();
-        Vector3f kPatientPt = new Vector3f();    
-
-        for ( int i = 0; i < 7; i++ )
+        if ( iPos < kVOI.size() )
         {
-            for ( int j = 0; j < 7; j++ )
-            {
-                kPatientPt.Set( Math.min( m_aiLocalImageExtents[0]-1, Math.max( 0, m_akSteps[i][j].X ) ),
-                        Math.min( m_aiLocalImageExtents[1]-1, Math.max( 0, m_akSteps[i][j].Y ) ), iZ );
-                MipavCoordinateSystems.patientToFile( kPatientPt, kVolumePt, m_kImageActive, m_iPlaneOrientation );     
-                m_aiIndexValues[i][j] = (int)(kVolumePt.Z * extents[0] * extents[1] + kVolumePt.Y * extents[0] + kVolumePt.X);
-            }
-        }
-
-        for ( int i = 1; i < 6; i++ )
-        { 
-            for ( int j = 1; j < 6; j++ )
-            {
-                m_afAverages[i][j] = avgPix( j, i );
-            }
+            m_kDrawingContext.screenToFile( (int)kPos.X, (int)kPos.Y, (int)kPos.Z, kVolumePt );
+            kVOI.set( iPos, kVolumePt );
+            kVOI.setSelectedPoint( iPos );
+            kVOI.update();
         }
     }
 
 
     private void showSelectedVOI( int iX, int iY )
     {
-        if ( m_kCurrentVOI != null )
+        m_kComponent.removeMouseListener(m_kPopupPt);
+        m_kComponent.removeMouseListener(m_kPopupVOI);
+        Vector3f kVolumePt = new Vector3f();
+        m_kDrawingContext.screenToFile( iX, iY, m_iSlice, kVolumePt );
+
+        if ( m_kCurrentVOI != null && (m_iSlice == getSlice( m_kCurrentVOI )) )
         {
-            if ( m_kCurrentVOI.nearPoint( iX, iY, m_iSlice ) )
+            if ( nearPoint( m_kCurrentVOI, iX, iY, m_iSlice ) )
             {
-                m_kParent.setCursor(MipavUtil.crosshairCursor);
-                m_iNearStatus = NearPoint;
+                if ( m_kCurrentVOI.getType() == VOI.POINT )
+                {
+                    m_kParent.setCursor(MipavUtil.moveCursor);
+                    m_iNearStatus = NearNone;
+                }
+                else
+                {
+                    m_kParent.setCursor(MipavUtil.crosshairCursor);
+                    m_iNearStatus = NearPoint;
+                }
                 return;
             }
-            else if ( m_kCurrentVOI.nearLine( iX, iY, m_iSlice ) )
+            else if ( m_kCurrentVOI.nearLine( (int)kVolumePt.X, (int)kVolumePt.Y, (int)kVolumePt.Z ) )
             {
-                if ( (m_kCurrentVOI.getType() != VOI.POINT_3D) && 
-                        (m_kCurrentVOI.getType() != VOI.LINE_3D) &&
-                        (m_kCurrentVOI.getType() != VOI.POLYLINE_SLICE_3D) &&
-                        (m_kCurrentVOI.getType() != VOI.PROTRACTOR_3D) &&
-                        (m_kCurrentVOI.getType() != VOI.ANNOTATION_3D) )
+                if ( (m_kCurrentVOI.getType() == VOI.CONTOUR) ||
+                        (m_kCurrentVOI.getType() == VOI.POLYLINE) )
                 {
                     m_kParent.setCursor(MipavUtil.addPointCursor);
                     m_iNearStatus = NearLine;
@@ -2160,14 +3975,16 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             }
         }
 
-        VOIVector kVOIs = m_kImageActive.get3DVOIs();
-        for ( int i = 0; i < kVOIs.size(); i++ )
+        VOIVector kVOIs = m_kImageActive.getVOIs();
+        for ( int i = kVOIs.size()-1; i >=0; i-- )
         {
             VOI kVOI = kVOIs.get(i);
-            for ( int j = 0; j < kVOI.getCurves()[0].size(); j++ )
+            for ( int j = kVOI.getCurves().size()-1; j >= 0; j-- )
             {
-                LocalVolumeVOI kVOI3D = ((LocalVolumeVOI)kVOI.getCurves()[0].get(j));
-                if ( kVOI3D.contains( m_iPlaneOrientation, iX, iY, m_iSlice ) )
+                VOIBase kVOI3D = kVOI.getCurves().get(j);
+                if ( (m_iPlane == (m_iPlane & kVOI3D.getPlane())) &&
+                        (m_iSlice == getSlice( kVOI3D )) &&
+                        contains( kVOI3D, iX, iY, m_iSlice ) )
                 {
                     m_iNearStatus = NearNone;
                     m_kParent.setCursor(MipavUtil.moveCursor);
@@ -2176,253 +3993,173 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             }
         }
         m_iNearStatus = NearNone;
-        m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+        m_kParent.setCursor(MipavUtil.defaultCursor);
+        // not: m_kParent.setDefaultCursor() which changes the cursorMode...
     }
 
-    /**
-     * Creates a single level set. Takes a starting point and finds a closed path along the levelset back to the
-     * starting point.
-     *
-     * @param  startPtX  the start point
-     * @param  startPtY  the start point
-     * @param  level     the level of the level set
-     */
-    private LocalVolumeVOI singleLevelSet(float startPtX, float startPtY ) {
-        double distance;
-        stack.removeAllElements();
 
-        for (int i = 0; i < map.size(); i++) {
-            map.clear(i);
+    private VOIBase split( VOIBase kVOI, Vector3f kStartPt, Vector3f kEndPt )
+    {
+        if ( kVOI.getType() != VOI.CONTOUR )
+        {
+            return null;
+        }
+        int iVOISlice = (int)fileCoordinatesToPatient(kVOI.get(0)).Z;
+        int iPoints = kVOI.size();
+        Vector3f kFirstIntersectionPt = null;
+        Vector3f kSecondIntersectionPt = null;
+        int iFirstIndex = -1;
+        int iSecondIndex = -1;
+        for ( int iP = 0; iP < (iPoints - 1) && (kSecondIntersectionPt == null); iP++ )
+        {
+            Vector3f kLocal1 = fileCoordinatesToPatient(kVOI.get(iP));
+            Vector3f kLocal2 = fileCoordinatesToPatient(kVOI.get(iP+1));
+            Vector3f kIntersection = new Vector3f();
+
+            if (JDialogVOISplitter.intersects( kLocal1, kLocal2, kStartPt, kEndPt, kIntersection )) {
+                if (kFirstIntersectionPt == null)
+                {
+                    kFirstIntersectionPt = kIntersection;
+                    iFirstIndex = iP;
+                } 
+                else 
+                {
+                    kSecondIntersectionPt = kIntersection;
+                    iSecondIndex = iP;
+                }
+            }
+        }
+        if ( kSecondIntersectionPt == null )
+        {
+            Vector3f kLocal1 = fileCoordinatesToPatient(kVOI.lastElement());
+            Vector3f kLocal2 = fileCoordinatesToPatient(kVOI.firstElement());
+            Vector3f kIntersection = new Vector3f();
+
+            if (JDialogVOISplitter.intersects( kLocal1, kLocal2, kStartPt, kEndPt, kIntersection )) {
+
+                kSecondIntersectionPt = kIntersection;
+                iSecondIndex = iPoints - 1;
+            }
         }
 
-        new Vector3f( startPtX, startPtY, m_iSlice );
-        Vector3f kVolumePt = new Vector3f();
-        m_kDrawingContext.screenToFile( (int)startPtX, (int)startPtY, m_iSlice, kVolumePt );
-        Vector3f kPatientPt = new Vector3f();
-        MipavCoordinateSystems.fileToPatient( kVolumePt, kPatientPt, m_kImageActive, m_iPlaneOrientation );
+        if (kFirstIntersectionPt != null && kSecondIntersectionPt != null) 
+        {        
+            kFirstIntersectionPt.Z = iVOISlice;
+            kFirstIntersectionPt = patientCoordinatesToFile(kFirstIntersectionPt);
+            kSecondIntersectionPt.Z = iVOISlice;
+            kSecondIntersectionPt = patientCoordinatesToFile(kSecondIntersectionPt);
 
-        startPtX = kPatientPt.X;
-        startPtY = kPatientPt.Y;
-        int x = (int) ( kPatientPt.X + 0.5);
-        int y = (int) ( kPatientPt.Y + 0.5);
-        int z = (int)kPatientPt.Z;
-
-        setIndices( x, y, z );
-
-        int index = m_aiIndexValues[m_i_][m_i_];
-        int level = (m_aucBufferActive[index] & 0x00ff);
-
-        levelSetStack.reset();
-        levelSetStack.addPoint(x, y);
-        map.set(m_aiIndexValues[m_i_][m_i_]);
-
-        int dir = -1;
-        float diff = 100000;
-        int mapIndex = 0;
-
-        do {
-
-            if ((x >= 2) && (x < (m_aiLocalImageExtents[0] - 2)) && (y >= 2) && (y < (m_aiLocalImageExtents[1] - 2))) {
-
-                mapIndex = m_aiIndexValues[m_iM][m_i_];
-                if ((m_afAverages[m_iM][m_i_] >= level) &&
-                        ((m_afAverages[m_iM][m_iP] < level) || (m_afAverages[m_i_][m_i_] < level) ||
-                                (m_afAverages[m_iM][m_iM] < level) || (m_afAverages[m_iMM][m_i_] < level)) &&
-                                (map.get(mapIndex) == false)) {
-                    dir = 1;
-                    diff = Math.abs(m_afAverages[m_iM][m_i_] - m_afAverages[m_i_][m_i_]);
-                }
-                mapIndex = m_aiIndexValues[m_iM][m_iP];
-                if ((m_afAverages[m_iM][m_iP] >= level) &&
-                        ((m_afAverages[m_iM][m_iPP] < level) || (m_afAverages[m_i_][m_iP] < level) ||
-                                (m_afAverages[m_iM][m_i_] < level) || (m_afAverages[m_iMM][m_iP] < level)) &&
-                                (map.get(mapIndex) == false)) {
-
-                    if (Math.abs(m_afAverages[m_iM][m_iP] - m_afAverages[m_i_][m_i_]) < diff) {
-                        dir = 2;
-                        diff = Math.abs(m_afAverages[m_iM][m_iP] - m_afAverages[m_i_][m_i_]);
-                    }
-                }
-                mapIndex = m_aiIndexValues[m_i_][m_iP];
-                if ((m_afAverages[m_i_][m_iP] >= level) &&
-                        ((m_afAverages[m_i_][m_iPP] < level) || (m_afAverages[m_iP][m_iP] < level) || (m_afAverages[m_i_][m_i_] < level) ||
-                                (m_afAverages[m_iM][m_iP] < level)) && (map.get(mapIndex) == false)) {
-
-                    if (Math.abs(m_afAverages[m_i_][m_iP] - m_afAverages[m_i_][m_i_]) < diff) {
-                        dir = 3;
-                        diff = Math.abs(m_afAverages[m_i_][m_iP] - m_afAverages[m_i_][m_i_]);
-                    }
-                }
-                mapIndex = m_aiIndexValues[m_iP][m_iP];
-                if ((m_afAverages[m_iP][m_iP] >= level) &&
-                        ((m_afAverages[m_iP][m_iPP] < level) || (m_afAverages[m_iPP][m_iP] < level) ||
-                                (m_afAverages[m_i_][m_iP] < level) || (m_afAverages[m_iP][m_i_] < level)) &&
-                                (map.get(mapIndex) == false)) {
-
-                    if (Math.abs(m_afAverages[m_iP][m_iP] - m_afAverages[m_i_][m_i_]) < diff) {
-                        dir = 4;
-                        diff = Math.abs(m_afAverages[m_iP][m_iP] - m_afAverages[m_i_][m_i_]);
-                    }
-                }
-                mapIndex = m_aiIndexValues[m_iP][m_i_];
-                if ((m_afAverages[m_iP][m_i_] >= level) &&
-                        ((m_afAverages[m_iP][m_iP] < level) || (m_afAverages[m_iPP][m_i_] < level) ||
-                                (m_afAverages[m_iP][m_iM] < level) || (m_afAverages[m_i_][m_i_] < level)) &&
-                                (map.get(mapIndex) == false)) {
-
-                    if (Math.abs(m_afAverages[m_iP][m_i_] - m_afAverages[m_i_][m_i_]) < diff) {
-                        dir = 5;
-                        diff = Math.abs(m_afAverages[m_iP][m_i_] - m_afAverages[m_i_][m_i_]);
-                    }
-                }
-                mapIndex = m_aiIndexValues[m_iP][m_iM];
-                if ((m_afAverages[m_iP][m_iM] >= level) &&
-                        ((m_afAverages[m_iP][m_i_] < level) || (m_afAverages[m_iPP][m_iM] < level) ||
-                                (m_afAverages[m_iP][m_iMM] < level) || (m_afAverages[m_i_][m_iM] < level)) &&
-                                (map.get(mapIndex) == false)) {
-
-                    if (Math.abs(m_afAverages[m_iP][m_iM] - m_afAverages[m_i_][m_i_]) < diff) {
-                        dir = 6;
-                        diff = Math.abs(m_afAverages[m_iP][m_iM] - m_afAverages[m_i_][m_i_]);
-                    }
-                }
-                mapIndex = m_aiIndexValues[m_i_][m_iM];
-                if ((m_afAverages[m_i_][m_iM] >= level) &&
-                        ((m_afAverages[m_i_][m_i_] < level) || (m_afAverages[m_iP][m_iM] < level) || (m_afAverages[m_i_][m_iMM] < level) ||
-                                (m_afAverages[m_iM][m_iM] < level)) && (map.get(mapIndex) == false)) {
-
-                    if (Math.abs(m_afAverages[m_i_][m_iM] - m_afAverages[m_i_][m_i_]) < diff) {
-                        dir = 7;
-                        diff = Math.abs(m_afAverages[m_i_][m_iM] - m_afAverages[m_i_][m_i_]);
-                    }
-                }
-                mapIndex = m_aiIndexValues[m_iM][m_iM];
-                if ((m_afAverages[m_iM][m_iM] >= level) &&
-                        ((m_afAverages[m_iM][m_i_] < level) || (m_afAverages[m_i_][m_iM] < level) ||
-                                (m_afAverages[m_iM][m_iMM] < level) || (m_afAverages[m_iMM][m_iM] < level)) &&
-                                (map.get(mapIndex) == false))  {
-
-                    if (Math.abs(m_afAverages[m_iM][m_iM] - m_afAverages[m_i_][m_i_]) < diff) {
-                        dir = 0;
-                        // diff = Math.abs(imageBufferActive[index-xDim-1] - imageBufferActive[index]);
-                    }
-                }
-
-                diff = 1000000;
-
-                if (dir == 1) {          
-                    mapIndex = m_aiIndexValues[m_iM][m_i_];
-                    map.set(mapIndex);
-                    paths(x,y,z, dir, level);
-                    // x = x;
-                    y = y - 1;     
-                    setIndices( x, y, z );
-                } else if (dir == 2) {
-                    mapIndex = m_aiIndexValues[m_iM][m_iP];
-                    map.set(mapIndex);
-                    paths(x,y,z, dir, level);
-                    x = x + 1;
-                    y = y - 1;               
-                    setIndices( x, y, z );
-                } else if (dir == 3) {
-                    mapIndex = m_aiIndexValues[m_i_][m_iP];
-                    map.set(mapIndex);
-                    paths(x,y,z, dir, level);
-                    x = x + 1;
-                    // y = y;               
-                    setIndices( x, y, z );
-                } else if (dir == 4) {
-                    mapIndex = m_aiIndexValues[m_iP][m_iP];
-                    map.set(mapIndex);
-                    paths(x,y,z, dir, level);
-                    x = x + 1;
-                    y = y + 1;               
-                    setIndices( x, y, z );
-                } else if (dir == 5) {
-                    mapIndex = m_aiIndexValues[m_iP][m_i_];
-                    map.set(mapIndex);
-                    paths(x,y,z, dir, level);
-                    // x = x;
-                    y = y + 1;               
-                    setIndices( x, y, z );
-                } else if (dir == 6) {
-                    mapIndex = m_aiIndexValues[m_iP][m_iM];
-                    map.set(mapIndex);
-                    paths(x,y,z, dir, level);
-                    x = x - 1;
-                    y = y + 1;               
-                    setIndices( x, y, z );
-                } else if (dir == 7) {
-                    mapIndex = m_aiIndexValues[m_i_][m_iM];
-                    map.set(mapIndex);
-                    paths(x,y,z, dir, level);
-                    x = x - 1;
-                    // y = y;               
-                    setIndices( x, y, z );
-                } else if (dir == 0) {
-                    mapIndex = m_aiIndexValues[m_iM][m_iM];
-                    map.set(mapIndex);
-                    paths(x,y,z, dir, level);
-                    x = x - 1;
-                    y = y - 1;               
-                    setIndices( x, y, z );
-                } else {
-
-                    if (!stack.empty()) {
-                        int ptr = stack.pop()[0];
-                        x = levelSetStack.getPointX(ptr);
-                        y = levelSetStack.getPointY(ptr);
-                        levelSetStack.setIndex(ptr);
-                        setIndices( x, y, z );
-                    } else {
-                        x = y = -1;
-                    }
-                }
-
-                dir = -1;
-            } else { // near edge of image
-                levelSetStack.reset();
-
-                break;
-            }
-
-            if ((x == -1) || (y == -1)) {
-                levelSetStack.reset();
-
-                break;
-            }
-
-            levelSetStack.addPoint(x, y);
-            distance = ((x - startPtX) * (x - startPtX)) + ((y - startPtY) * (y - startPtY));if ((distance < 2.1) && (levelSetStack.size() < 10)) {
-                distance = 10;
-            }
-        } while (distance > 2.1);
-
-
-        if (levelSetStack.size() != 0) {
-            new Vector3f();
-            Vector3f kScreenPt = new Vector3f();
 
             Vector<Vector3f> kPositions = new Vector<Vector3f>();
-            for ( int i = 0; i < levelSetStack.size(); i++ )
-            {
-                kPatientPt.Set( levelSetStack.getPointX(i), levelSetStack.getPointY(i), m_iSlice );
-                kScreenPt = m_kDrawingContext.patientToScreen( kPatientPt );
-                kPositions.add( kScreenPt );
+            kPositions.add( kSecondIntersectionPt );  
+            //check if there are points from second index to 0-index, add those first
+            for (int iP = iSecondIndex + 1; iP < iPoints; iP++) {
+                kPositions.add(kVOI.get(iP));
             }
-            kPatientPt.Set( levelSetStack.getPointX(0), levelSetStack.getPointY(0), m_iSlice );   
-            kScreenPt = m_kDrawingContext.patientToScreen( kPatientPt );
-            kPositions.add( kScreenPt );
-            return new VOIContour3D(this, m_kDrawingContext, m_iPlaneOrientation, m_iDrawType, m_iDrawType, kPositions, false);
-        } 
-        return null;
+            for (int iP = 0; iP < iFirstIndex + 1; iP++) {
+                kPositions.add(kVOI.get(iP));
+            }
+            kPositions.add( kFirstIntersectionPt );  
+
+            for (int iP = 00; iP < kPositions.size(); iP++) {
+                kVOI.remove(kPositions.get(iP));
+            }
+            kVOI.add(0, new Vector3f(kFirstIntersectionPt) );
+            kVOI.add(0, new Vector3f(kSecondIntersectionPt) );      
+
+            kVOI.setSelectedPoint(0);
+            kVOI.update();
+
+            return new VOIContour( kVOI.isFixed(), kVOI.isClosed(), kPositions );
+        }
+        return null;       
     }
-    
-    
-    
-    
 
 
+
+    private void splitVOIs( boolean bAllSlices, boolean bOnlyActive, VOIBase kSplitVOI )
+    {
+        VOIVector kVOIs = m_kImageActive.getVOIs();
+        if ( !kSplitVOI.isSplit() || (kVOIs.size() == 0) )
+        {
+            return;
+        }
+        Vector<VOIBase> kNewVOIs = new Vector<VOIBase>();
+
+        Vector3f kStartPt = fileCoordinatesToPatient(kSplitVOI.get(0)); 
+        Vector3f kEndPt = fileCoordinatesToPatient(kSplitVOI.get(1)); 
+
+        int iStartSlice = bAllSlices? 0 : m_iSlice;
+        int nSlices = m_aiLocalImageExtents.length > 2 ? m_aiLocalImageExtents[2] : 1;
+        int iEndSlice = bAllSlices? nSlices : m_iSlice + 1;
+
+
+        for ( int i = 0; i < kVOIs.size(); i++ )
+        {
+            VOI kVOI = kVOIs.get(i);
+            for ( int j = 0; j < kVOI.getCurves().size(); j++ )
+            {
+                VOIBase kVOI3D = kVOI.getCurves().get(j);
+                if ( m_iPlane != (m_iPlane & kVOI3D.getPlane() ))
+                {
+                    continue;
+                }
+                int iVOISlice = kVOI3D.slice();
+                if ( !((iVOISlice >= iStartSlice) && (iVOISlice < iEndSlice)) )
+                {
+                    continue;
+                }
+                if ( !(!bOnlyActive || kVOI3D.isActive()) )
+                {
+                    continue;
+                }
+                VOIBase kNew = split( kVOI3D, kStartPt, kEndPt );
+                if ( kNew != null )
+                {  
+                    //m_kParent.updateCurrentVOI( kVOI, kVOI );
+                    kNewVOIs.add(kNew);
+                }
+            }
+        }
+        m_kParent.deleteVOI( kSplitVOI );  
+        kSplitVOI.dispose();
+        kSplitVOI = null;
+
+        for ( int i = 0; i < kNewVOIs.size(); i++ )
+        {
+            m_kParent.addVOI(kNewVOIs.get(i), true);
+        }
+        m_kCurrentVOI = null;
+    }
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     /**
      * This method calculates the average pixel value based on the four neighbors (N, S, E, W).
      *
@@ -2431,7 +4168,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
      * @return  the average pixel value as a float.
      */
     private float avgPix(int index) {
-        int xDim = m_kLocalImage.getExtents()[0];
+        int xDim = m_aiLocalImageExtents[0];
 
         if ((index > xDim) && (index < (imageBufferActive.length - xDim))) {
 
@@ -2468,8 +4205,8 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             return;
         }
 
+        int xDim = m_aiLocalImageExtents[0];
         intPtr[0] = levelSetStack.size() - 1;
-        int xDim = m_kLocalImage.getExtents()[0];
 
         if ((i != 0) && (imageBufferActive[index - xDim - 1] <= level) && (map.get(index - xDim - 1) == false)) {
             stack.push(intPtr);
@@ -2497,8 +4234,7 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
      * @param  startPtX  the start point
      * @param  startPtY  the start point
      * @param  level     the level of the level set
-     */
-    private LocalVolumeVOI singleLevelSet(float startPtX, float startPtY, float level) {
+    private VOIBase singleLevelSet(float startPtX, float startPtY, float level) {
 
         int x, y;
         int index;
@@ -2506,39 +4242,26 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         stack.removeAllElements();
 
         if (imageBufferActive == null) {
-            return null;
+            return;
         }
 
-        int xDim = m_kLocalImage.getExtents()[0];
-        int yDim = m_kLocalImage.getExtents()[1];
+        int xDim = m_aiLocalImageExtents[0];
+        int yDim = m_aiLocalImageExtents[1];
 
         for (int i = 0; i < map.size(); i++) {
             map.clear(i);
         }
-        
-
-        new Vector3f( startPtX, startPtY, m_iSlice );
-        Vector3f kVolumePt = new Vector3f();
-        m_kDrawingContext.screenToFile( (int)startPtX, (int)startPtY, m_iSlice, kVolumePt );
-        Vector3f kPatientPt = new Vector3f();
-        MipavCoordinateSystems.fileToPatient( kVolumePt, kPatientPt, m_kImageActive, m_iPlaneOrientation );
-
-        startPtX = kPatientPt.X;
-        startPtY = kPatientPt.Y;        
 
         if (startPtX >= (xDim - 1)) {
-            return null;
+            return;
         }
 
         if (startPtY >= (yDim - 1)) {
-            return null;
+            return;
         }
 
         x = (int) (startPtX + 0.5);
         y = (int) (startPtY + 0.5);
-        
-        index = (y * xDim) + x;
-        level = (m_aucBufferActive[index] & 0x00ff);
 
         levelSetStack.reset();
         levelSetStack.addPoint(x, y);
@@ -2712,6 +4435,241 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
         } while (distance > 2.1);
 
 
+        if (levelSetStack.size() != 0) {
+            return levelSetStack.exportPolygon();
+        } else {
+            System.err.println( "singleLevelSet return null" );
+            return null;
+        }
+    }
+    
+     */
+    
+    
+    /**
+     * Creates a single level set. Takes a starting point and finds a closed path along the levelset back to the
+     * starting point.
+     *
+     * @param  startPtX  the start point
+     * @param  startPtY  the start point
+     * @param  level     the level of the level set
+     */
+    private VOIBase singleLevelSet2(float startPtX, float startPtY) {
+
+        int x, y;
+        int index;
+        double distance;
+        stack.removeAllElements();
+
+        if (imageBufferActive == null) {
+            return null;
+        }
+
+        int xDim = m_kLocalImage.getExtents()[0];
+        int yDim = m_kLocalImage.getExtents()[1];
+
+        for (int i = 0; i < map.size(); i++) {
+            map.clear(i);
+        }
+
+
+        new Vector3f( startPtX, startPtY, m_iSlice );
+        Vector3f kVolumePt = new Vector3f();
+        m_kDrawingContext.screenToFile( (int)startPtX, (int)startPtY, m_iSlice, kVolumePt );
+        Vector3f kPatientPt = new Vector3f();
+        MipavCoordinateSystems.fileToPatient( kVolumePt, kPatientPt, m_kImageActive, m_iPlaneOrientation );
+
+        startPtX = kPatientPt.X;
+        startPtY = kPatientPt.Y;        
+
+        if (startPtX >= (xDim - 1)) {
+            return null;
+        }
+
+        if (startPtY >= (yDim - 1)) {
+            return null;
+        }
+
+
+        x = (int) (startPtX + 0.5);
+        y = (int) (startPtY + 0.5);
+        
+        float level = imageBufferActive[ y * xDim + x ];
+
+        index = (y * xDim) + x;
+
+        levelSetStack.reset();
+        levelSetStack.addPoint(x, y);
+        map.set((y * xDim) + x);
+
+        int dir = -1;
+        float diff = 100000;
+
+        do {
+            index = (y * xDim) + x;
+
+            if ((x >= 2) && (x < (xDim - 2)) && (y >= 2) && (y < (yDim - 2))) {
+
+                if ((avgPix(index - xDim) >= level) &&
+                        ((avgPix(index - xDim + 1) < level) || (avgPix(index) < level) ||
+                                (avgPix(index - xDim - 1) < level) || (avgPix(index - (2 * xDim)) < level)) &&
+                                (map.get(index - xDim) == false)) {
+                    dir = 1;
+                    diff = Math.abs(avgPix(index - xDim) - avgPix(index));
+                }
+
+                if ((avgPix(index - xDim + 1) >= level) &&
+                        ((avgPix(index - xDim + 2) < level) || (avgPix(index + 1) < level) ||
+                                (avgPix(index - xDim) < level) || (avgPix(index - (2 * xDim) + 1) < level)) &&
+                                (map.get(index - xDim + 1) == false)) {
+
+                    if (Math.abs(avgPix(index - xDim + 1) - avgPix(index)) < diff) {
+                        dir = 2;
+                        diff = Math.abs(avgPix(index - xDim + 1) - avgPix(index));
+                    }
+                }
+
+                if ((avgPix(index + 1) >= level) &&
+                        ((avgPix(index + 2) < level) || (avgPix(index + xDim + 1) < level) || (avgPix(index) < level) ||
+                                (avgPix(index - xDim + 1) < level)) && (map.get(index + 1) == false)) {
+
+                    if (Math.abs(avgPix(index + 1) - avgPix(index)) < diff) {
+                        dir = 3;
+                        diff = Math.abs(avgPix(index + 1) - avgPix(index));
+                    }
+                }
+
+                if ((avgPix(index + xDim + 1) >= level) &&
+                        ((avgPix(index + xDim + 2) < level) || (avgPix(index + (2 * xDim) + 1) < level) ||
+                                (avgPix(index + 1) < level) || (avgPix(index + xDim) < level)) &&
+                                (map.get(index + xDim + 1) == false)) {
+
+                    if (Math.abs(avgPix(index + xDim + 1) - avgPix(index)) < diff) {
+                        dir = 4;
+                        diff = Math.abs(avgPix(index + xDim + 1) - avgPix(index));
+                    }
+                }
+
+                if ((avgPix(index + xDim) >= level) &&
+                        ((avgPix(index + xDim + 1) < level) || (avgPix(index + (2 * xDim)) < level) ||
+                                (avgPix(index + xDim - 1) < level) || (avgPix(index) < level)) &&
+                                (map.get(index + xDim) == false)) {
+
+                    if (Math.abs(avgPix(index + xDim) - avgPix(index)) < diff) {
+                        dir = 5;
+                        diff = Math.abs(avgPix(index + xDim) - avgPix(index));
+                    }
+                }
+
+                if ((avgPix(index + xDim - 1) >= level) &&
+                        ((avgPix(index + xDim) < level) || (avgPix(index + (2 * xDim) - 1) < level) ||
+                                (avgPix(index + xDim - 2) < level) || (avgPix(index - 1) < level)) &&
+                                (map.get(index + xDim - 1) == false)) {
+
+                    if (Math.abs(avgPix(index + xDim - 1) - avgPix(index)) < diff) {
+                        dir = 6;
+                        diff = Math.abs(avgPix(index + xDim - 1) - avgPix(index));
+                    }
+                }
+
+                if ((avgPix(index - 1) >= level) &&
+                        ((avgPix(index) < level) || (avgPix(index + xDim - 1) < level) || (avgPix(index - 2) < level) ||
+                                (avgPix(index - xDim - 1) < level)) && (map.get(index - 1) == false)) {
+
+                    if (Math.abs(avgPix(index - 1) - avgPix(index)) < diff) {
+                        dir = 7;
+                        diff = Math.abs(avgPix(index - 1) - avgPix(index));
+                    }
+                }
+
+                if ((avgPix(index - xDim - 1) >= level) &&
+                        ((avgPix(index - xDim) < level) || (avgPix(index - 1) < level) ||
+                                (avgPix(index - xDim - 2) < level) || (avgPix(index - (2 * xDim) - 1) < level)) &&
+                                (map.get(index - xDim - 1) == false)) {
+
+                    if (Math.abs(avgPix(index - xDim - 1) - avgPix(index)) < diff) {
+                        dir = 0;
+                        // diff = Math.abs(imageBufferActive[index-xDim-1] - imageBufferActive[index]);
+                    }
+                }
+
+                diff = 1000000;
+
+                if (dir == 1) {
+                    // x = x;
+                    y = y - 1;
+                    map.set(index - xDim);
+                    paths(index, 1, level);
+                } else if (dir == 2) {
+                    x = x + 1;
+                    y = y - 1;
+                    map.set(index - xDim + 1);
+                    paths(index, 2, level);
+                } else if (dir == 3) {
+                    x = x + 1;
+                    // y = y;
+                    map.set(index + 1);
+                    paths(index, 3, level);
+                } else if (dir == 4) {
+                    x = x + 1;
+                    y = y + 1;
+                    map.set(index + xDim + 1);
+                    paths(index, 4, level);
+                } else if (dir == 5) {
+                    // x = x;
+                    y = y + 1;
+                    map.set(index + xDim);
+                    paths(index, 5, level);
+                } else if (dir == 6) {
+                    x = x - 1;
+                    y = y + 1;
+                    map.set(index + xDim - 1);
+                    paths(index, 6, level);
+                } else if (dir == 7) {
+                    x = x - 1;
+                    // y = y;
+                    map.set(index - 1);
+                    paths(index, 7, level);
+                } else if (dir == 0) {
+                    x = x - 1;
+                    y = y - 1;
+                    map.set(index - xDim - 1);
+                    paths(index, 0, level);
+                } else {
+
+                    if (!stack.empty()) {
+                        int ptr = (stack.pop())[0];
+                        x = levelSetStack.getPointX(ptr);
+                        y = levelSetStack.getPointY(ptr);
+                        levelSetStack.setIndex(ptr);
+                    } else {
+                        x = y = -1;
+                    }
+                }
+
+                dir = -1;
+            } else { // near edge of image
+                levelSetStack.reset();
+
+                break;
+            }
+
+            if ((x == -1) || (y == -1)) {
+                levelSetStack.reset();
+
+                break;
+            }
+
+            levelSetStack.addPoint(x, y);
+
+            distance = ((x - startPtX) * (x - startPtX)) + ((y - startPtY) * (y - startPtY));
+
+            if ((distance < 2.1) && (levelSetStack.size() < 10)) {
+                distance = 10;
+            }
+        } while (distance > 2.1);
+
+
 
         if (levelSetStack.size() != 0) {
             new Vector3f();
@@ -2729,65 +4687,13 @@ public class VOIManager implements KeyListener, MouseListener, MouseMotionListen
             kScreenPt = m_kDrawingContext.patientToScreen( kPatientPt );
             kScreenPt.Y = kScreenPt.Y;
             kPositions.add( kScreenPt );
-            return new VOIContour3D(this, m_kDrawingContext, m_iPlaneOrientation, m_iDrawType, m_iDrawType, kPositions, false);
+            return createVOI( m_iDrawType, true, true, kPositions );
         } 
         return null;
     }
     
     
     
-
-    private void splitVOIs( boolean bAllSlices, boolean bOnlyActive, LocalVolumeVOI kSplitVOI )
-    {
-        VOIVector kVOIs = m_kImageActive.get3DVOIs();
-        if ( (kSplitVOI.getSType() != SPLITLINE) || (kVOIs.size() == 0) )
-        {
-            return;
-        }
-        Vector<LocalVolumeVOI> kNewVOIs = new Vector<LocalVolumeVOI>();
-
-        Vector3f kStartPt = fileCoordinatesToPatient(kSplitVOI.get(0)); 
-        Vector3f kEndPt = fileCoordinatesToPatient(kSplitVOI.get(1)); 
-
-        int iStartSlice = bAllSlices? 0 : m_iSlice;
-        int iEndSlice = bAllSlices? m_aiLocalImageExtents[2] : m_iSlice + 1;
-
-
-        for ( int i = 0; i < kVOIs.size(); i++ )
-        {
-            VOI kVOI = kVOIs.get(i);
-            for ( int j = 0; j < kVOI.getCurves()[0].size(); j++ )
-            {
-                LocalVolumeVOI kVOI3D = ((LocalVolumeVOI)kVOI.getCurves()[0].get(j));
-                if ( kVOI3D.getOrientation() != m_iPlaneOrientation )
-                {
-                    continue;
-                }
-                int iVOISlice = kVOI3D.slice();
-                if ( !((iVOISlice >= iStartSlice) && (iVOISlice < iEndSlice)) )
-                {
-                    continue;
-                }
-                if ( !(!bOnlyActive || kVOI3D.isActive()) )
-                {
-                    continue;
-                }
-                LocalVolumeVOI kNew = kVOI3D.split( kStartPt, kEndPt );
-                if ( kNew != null )
-                {  
-                    //m_kParent.updateCurrentVOI( kVOI, kVOI );
-                    kNewVOIs.add(kNew);
-                }
-            }
-        }
-        m_kParent.deleteVOI( kSplitVOI );  
-        kSplitVOI.dispose();
-        kSplitVOI = null;
-
-        for ( int i = 0; i < kNewVOIs.size(); i++ )
-        {
-            m_kParent.addVOI(kNewVOIs.get(i), true);
-        }
-        m_kCurrentVOI = null;
-    }
+    
+    
 }

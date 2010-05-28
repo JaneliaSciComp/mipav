@@ -423,7 +423,7 @@ public class ViewJComponentColocalizationRegression extends ViewJComponentBase
             return;
         }
 
-        ((VOILine) (lineVOI.getCurves()[0].elementAt(0))).exportArrays(xArray, yArray, zArray);
+        ((VOILine) (lineVOI.getCurves().elementAt(0))).exportArrays(xArray, yArray, zArray);
 
         lineSlope = (yArray[1] - yArray[0]) / (xArray[1] - xArray[0]);
         lineOffset = yArray[0] - (xArray[0] * lineSlope);
@@ -873,7 +873,7 @@ public class ViewJComponentColocalizationRegression extends ViewJComponentBase
             secondIndex = index2;
 
             if (!haveFreeRangeThreshold[index]) {
-                ((VOIPoint) (pointVOI.getCurves()[0].elementAt(0))).locateVOIPoint(xS, yS, 0, xDim, yDim, 1);
+                ((VOIPoint) (pointVOI.getCurves().elementAt(0))).locateVOIPoint(xS, yS, 0, xDim, yDim, 1);
                 paintComponent(getGraphics());
 
                 return;
@@ -923,7 +923,7 @@ public class ViewJComponentColocalizationRegression extends ViewJComponentBase
 
             localizeFrame.setCurrentLabels(currentColoc, currentIntensity1, currentIntensity2, currentThreshold);
 
-            ((VOIPoint) (pointVOI.getCurves()[0].elementAt(0))).locateVOIPoint(xS, yS, 0, xDim, yDim, 1);
+            ((VOIPoint) (pointVOI.getCurves().elementAt(0))).locateVOIPoint(xS, yS, 0, xDim, yDim, 1);
         } // if (freeRangeMode)
         else { // !freeRangeMode
 
@@ -960,7 +960,7 @@ public class ViewJComponentColocalizationRegression extends ViewJComponentBase
                 secondIndex = index2f;
 
                 if (!haveThreshold[index1 - lineMin]) {
-                    ((VOIPoint) (pointVOI.getCurves()[0].elementAt(0))).locateVOIPoint(xIntersect, yIntersect, 0, xDim,
+                    ((VOIPoint) (pointVOI.getCurves().elementAt(0))).locateVOIPoint(xIntersect, yIntersect, 0, xDim,
                                                                                        yDim, 1);
                     paintComponent(getGraphics());
 
@@ -990,7 +990,7 @@ public class ViewJComponentColocalizationRegression extends ViewJComponentBase
                 secondIndex = index2;
 
                 if (!haveThreshold[index2 - lineMin]) {
-                    ((VOIPoint) (pointVOI.getCurves()[0].elementAt(0))).locateVOIPoint(xIntersect, yIntersect, 0, xDim,
+                    ((VOIPoint) (pointVOI.getCurves().elementAt(0))).locateVOIPoint(xIntersect, yIntersect, 0, xDim,
                                                                                        yDim, 1);
                     paintComponent(getGraphics());
 
@@ -1056,7 +1056,7 @@ public class ViewJComponentColocalizationRegression extends ViewJComponentBase
 
             localizeFrame.setCurrentLabels(currentColoc, currentIntensity1, currentIntensity2, currentThreshold);
 
-            ((VOIPoint) (pointVOI.getCurves()[0].elementAt(0))).locateVOIPoint(xIntersect, yIntersect, 0, xDim, yDim,
+            ((VOIPoint) (pointVOI.getCurves().elementAt(0))).locateVOIPoint(xIntersect, yIntersect, 0, xDim, yDim,
                                                                                1);
         } // else !freeRangeMode
 
@@ -1260,7 +1260,7 @@ public class ViewJComponentColocalizationRegression extends ViewJComponentBase
             userInterface.setDataText(dataLine2);
             userInterface.setDataText("\n");
 
-            ((VOIPoint) (pointVOI.getCurves()[0].elementAt(0))).locateVOIPoint(xS, yS, 0, xDim, yDim, 1);
+            ((VOIPoint) (pointVOI.getCurves().elementAt(0))).locateVOIPoint(xS, yS, 0, xDim, yDim, 1);
         } // if (freeRangeMode)
         else { // !freeRangeMode
 
@@ -1420,7 +1420,7 @@ public class ViewJComponentColocalizationRegression extends ViewJComponentBase
             userInterface.setDataText(dataLine2);
             userInterface.setDataText("\n");
 
-            ((VOIPoint) (pointVOI.getCurves()[0].elementAt(0))).locateVOIPoint(xIntersect, yIntersect, 0, xDim, yDim,
+            ((VOIPoint) (pointVOI.getCurves().elementAt(0))).locateVOIPoint(xIntersect, yIntersect, 0, xDim, yDim,
                                                                                1);
         } // !freeRangeMode
 
@@ -1510,9 +1510,10 @@ public class ViewJComponentColocalizationRegression extends ViewJComponentBase
                     g.drawImage(imgDest, 0, 0, this);
                 }
 
+                /*  DRAWING DISABLED
                 lineVOI.drawSelf(zoomX, zoomY, resX, resY, 0, 0, destImage.getFileInfo(0).getResolutions(),
                                  destImage.getFileInfo(0).getUnitsOfMeasure(), 0, FileInfoBase.UNKNOWN_ORIENT, g);
-
+*/
                 pt = pointVOI.exportPoint();
                 xPos = (int) Math.round(pt.X * zoomX * resX);
                 yPos = (int) Math.round(pt.Y * zoomY * resY);
@@ -1751,7 +1752,7 @@ public class ViewJComponentColocalizationRegression extends ViewJComponentBase
             return;
         }
 
-        ((VOILine) (lineVOI.getCurves()[0].elementAt(0))).exportArrays(xArray, yArray, zArray);
+        ((VOILine) (lineVOI.getCurves().elementAt(0))).exportArrays(xArray, yArray, zArray);
 
         lineSlope = (yArray[1] - yArray[0]) / (xArray[1] - xArray[0]);
         lineOffset = yArray[0] - (xArray[0] * lineSlope);
@@ -1909,7 +1910,7 @@ public class ViewJComponentColocalizationRegression extends ViewJComponentBase
             userInterface.setDataText(dataLine2);
             userInterface.setDataText("\n");
 
-            ((VOIPoint) (pointVOI.getCurves()[0].elementAt(0))).locateVOIPoint(xS, yS, 0, xDim, yDim, 1);
+            ((VOIPoint) (pointVOI.getCurves().elementAt(0))).locateVOIPoint(xS, yS, 0, xDim, yDim, 1);
         } // if (freeRangeMode)
         else { // !freeRangeMode
 
@@ -2020,7 +2021,7 @@ public class ViewJComponentColocalizationRegression extends ViewJComponentBase
 
             localizeFrame.setCurrentLabels(currentColoc, currentIntensity1, currentIntensity2, currentThreshold);
 
-            ((VOIPoint) (pointVOI.getCurves()[0].elementAt(0))).locateVOIPoint(xIntersect, yIntersect, 0, xDim, yDim,
+            ((VOIPoint) (pointVOI.getCurves().elementAt(0))).locateVOIPoint(xIntersect, yIntersect, 0, xDim, yDim,
                                                                                1);
         } // else not freeRangeMode
 

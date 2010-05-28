@@ -687,8 +687,8 @@ public class FileDicom extends FileDicomBase {
             // Should be removed
             // final int dirLength;
 
-            //Preferences.debug("group = " + groupWord + " element = " + elementWord + " length = " +
-            //elementLength + "\n", Preferences.DEBUG_FILEIO);
+            // Preferences.debug("group = " + groupWord + " element = " + elementWord + " length = " +
+            // elementLength + "\n", Preferences.DEBUG_FILEIO);
 
             if ( (fileInfo.vr_type == FileInfoDicom.IMPLICIT) || (groupWord == 2)) {
 
@@ -1624,7 +1624,7 @@ public class FileDicom extends FileDicomBase {
                     rawFile.raFile = null;
                 } else {
                     rawFile.readImage(buffer,
-                        fileInfo.getOffset() + (imageNo * buffer.length * fileInfo.bytesPerPixel), imageType);
+                            fileInfo.getOffset() + (imageNo * buffer.length * fileInfo.bytesPerPixel), imageType);
                     rawFile.raFile.close();
                     rawFile.raFile = null;
                 }
@@ -1754,7 +1754,7 @@ public class FileDicom extends FileDicomBase {
         fileInfo = fiDicom;
         hasHeaderBeenRead = true;
     }
-    
+
     /**
      * Reads a DICOM image file and stores the data into the given short buffer. This method reads the image header
      * (@see readHeader()) then sets various fields within the FileInfo which are relevant to correctly interpreting the
@@ -2162,7 +2162,7 @@ public class FileDicom extends FileDicomBase {
             } else {
 
                 switch (fileInfo.getDataType()) {
-                
+
                     case ModelStorageBase.BOOLEAN:
                     	// Required for Segmentation Image Module
                     	// Bits Allocated (0028,0100) If segmentation type (0062,0001) is
@@ -2241,7 +2241,7 @@ public class FileDicom extends FileDicomBase {
                         rawChunkFile.writeBufferUShort(data5, 0, length, image.getFileInfo(0).getEndianess());
                         data5 = null;
                         break;
-                        
+
                     case ModelStorageBase.UINTEGER:
                     	// Required for RT Doses
                     	// C.8.8.3.4.3 Bits Allocated

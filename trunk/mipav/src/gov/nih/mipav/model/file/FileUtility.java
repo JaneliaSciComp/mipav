@@ -235,15 +235,15 @@ public class FileUtility {
 
     /** Extension: .hdr for header, .bfloat for data */
     public static final int BFLOAT = 65;
-
+    
     /** Extension: .hdr for header, .img for data */
     public static final int SIEMENSTEXT = 66;
-
+    
     /** Zeiss ZVI has extension .zvi */
     public static final int ZVI = 67;
-
+    
     public static final int JP2 = 68;
-
+    
     private static final String[] fileTypeStr = {"error", "undefined", "afni", "analyze", "analyze multifile", "avi",
             "biorad", "bmp", "bruker", "cheshire", "cheshire overlay", "cor", "cur", "dib", "dicom", "dm3", "fits",
             "GE genesis", "GE genisis multifile", "GE signa4x", "GE Signa4x multifile", "gif", "ico", "ics",
@@ -268,8 +268,8 @@ public class FileUtility {
             for (int i = 0; i < FileUtility.fileTypeStr.length; i++) {
 
                 if (FileUtility.getFileTypeStr(i).regionMatches(true, 0, s, 0, FileUtility.getFileTypeStr(i).length())) {
-                    // because fileType indicies start at -1, must decrement
-                    return i - 1;
+                	//because fileType indicies start at -1, must decrement
+                	return i-1;
                 }
             }
         } catch (final ArrayIndexOutOfBoundsException aie) {
@@ -290,8 +290,8 @@ public class FileUtility {
     public static String getFileTypeStr(final int m) {
 
         try {
-            // because fileType indicies start at -1, must increment
-            return FileUtility.fileTypeStr[m + 1];
+        	//because fileType indicies start at -1, must increment
+            return FileUtility.fileTypeStr[m+1];
         } catch (final ArrayIndexOutOfBoundsException aie) {}
 
         return "";
@@ -752,21 +752,21 @@ public class FileUtility {
         if (fileType == FileUtility.MINC) {
             try {
                 if (doWrite) {
-                    if ( !quiet) {
+                	if(!quiet) {
                         fileType = new JDialogSaveMincVersionChoice(ViewUserInterface.getReference().getMainFrame())
                                 .fileType();
-                    } else {
-                        if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_MNC_AS_MINC1)) {
-                            fileType = FileUtility.MINC;
-                        } else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_MNC_AS_MINC2)) {
-                            fileType = FileUtility.MINC_HDF;
-                        } else {
-                            fileType = FileUtility.MINC;
+                	}else {
+                		if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_MNC_AS_MINC1)) {
+                			fileType = FileUtility.MINC;
+                        }else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_MNC_AS_MINC2)) {
+                        	fileType = FileUtility.MINC_HDF;
+                        }else {
+                        	fileType = FileUtility.MINC;
                             System.err
                                     .println("Could not determine default filetype from preferences...saving in MINC-1.0 format");
                         }
-                    }
-
+                	}
+                    
                 }
                 // inspect the file to see if it is really a MINC1 (suppressing any error dialogs).
                 // if not, set the file type using isMincHDF()
@@ -828,7 +828,7 @@ public class FileUtility {
 
                 // ANALYZE, Interfile, and NIFTI use .img and .hdr
                 if (doWrite) {
-                    if ( !quiet) {
+                	if(!quiet) {
                         final JDialogAnalyzeNIFTIChoice choice = new JDialogAnalyzeNIFTIChoice(ViewUserInterface
                                 .getReference().getMainFrame());
 
@@ -837,21 +837,21 @@ public class FileUtility {
                         } else {
                             fileType = choice.fileType();
                         }
-                    } else {
-                        // when in quiet mode, we will default to NIFTI format if Prefs are not there
-                        if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_ANALYZE)) {
-                            fileType = FileUtility.ANALYZE;
-                        } else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_INTERFILE)) {
-                            fileType = FileUtility.INTERFILE;
-                        } else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_NIFTI)) {
-                            fileType = FileUtility.NIFTI;
-                        } else {
-                            fileType = FileUtility.NIFTI;
+                	}else {
+                		//when in quiet mode, we will default to NIFTI format if Prefs are not there
+                		if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_ANALYZE)) {
+                			fileType = FileUtility.ANALYZE;
+                        }else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_INTERFILE)) {
+                        	fileType = FileUtility.INTERFILE;
+                        }else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_NIFTI)) {
+                        	fileType = FileUtility.NIFTI;
+                        }else {
+                        	fileType = FileUtility.NIFTI;
                             System.err
                                     .println("Could not determine default filetype from preferences...saving in NIFTI format");
                         }
-                    }
-
+                	}
+                    
                 } else { // read
                     if (FileCheshire.isCheshire(fileName, fileDir)) {
                         fileType = FileUtility.CHESHIRE;
@@ -862,29 +862,29 @@ public class FileUtility {
                         if (headerFile != null) {
                             fileType = FileUtility.INTERFILE;
                         } else {
-                            // Note that SPM99 and SPM2 Analyze variant files are read as Mayo Analyze 7.5
-                            // unless a SPM2 with extended header size > 348 is present.
+                            //  Note that SPM99 and SPM2 Analyze variant files are read as Mayo Analyze 7.5
+                            //  unless a SPM2 with extended header size > 348 is present.
                             try {
                                 fileType = FileUtility.isAnalyzeOrSPM(fileHeaderName, fileDir, quiet);
                             } catch (final IOException ex) {}
                             if (fileType == FileUtility.UNDEFINED) {
                                 fileType = FileUtility.SPM;
                             }
-
+    
                             try {
                                 final File file = new File(fileDir + fileHeaderName);
                                 final RandomAccessFile raFile = new RandomAccessFile(file, "r");
-
+    
                                 raFile.seek(344L);
-
+    
                                 final char[] niftiName = new char[4];
-
+    
                                 for (i = 0; i < 4; i++) {
                                     niftiName[i] = (char) raFile.readUnsignedByte();
                                 }
-
+    
                                 raFile.close();
-
+    
                                 if ( (niftiName[0] == 'n') && ( (niftiName[1] == 'i') || (niftiName[1] == '+'))
                                         && (niftiName[2] == '1') && (niftiName[3] == '\0')) {
                                     fileType = FileUtility.NIFTI;
@@ -901,30 +901,30 @@ public class FileUtility {
                 }
             } else if (suffix.equalsIgnoreCase(".hdr")) {
                 if (doWrite) {
-                    if ( !quiet) {
-                        // ANALYZE, Interfile, and NIFTI use .img and .hdr
+                	if(!quiet) {
+	                    // ANALYZE, Interfile, and NIFTI use .img and .hdr
                         final JDialogAnalyzeNIFTIChoice choice = new JDialogAnalyzeNIFTIChoice(ViewUserInterface
                                 .getReference().getMainFrame());
-
-                        if ( !choice.okayPressed()) {
-                            fileType = FileUtility.ERROR;
-                        } else {
-                            fileType = choice.fileType();
-                        }
-                    } else {
-                        // when in quiet mode, we will default to NIFTI format if Prefs are not there
-                        if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_ANALYZE)) {
-                            fileType = FileUtility.ANALYZE;
-                        } else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_INTERFILE)) {
-                            fileType = FileUtility.INTERFILE;
-                        } else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_NIFTI)) {
-                            fileType = FileUtility.NIFTI;
-                        } else {
-                            fileType = FileUtility.NIFTI;
+	
+	                    if ( !choice.okayPressed()) {
+	                        fileType = FileUtility.ERROR;
+	                    } else {
+	                        fileType = choice.fileType();
+	                    }
+                	}else {
+                		//when in quiet mode, we will default to NIFTI format if Prefs are not there
+                		if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_ANALYZE)) {
+                			fileType = FileUtility.ANALYZE;
+                        }else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_INTERFILE)) {
+                        	fileType = FileUtility.INTERFILE;
+                        }else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_NIFTI)) {
+                        	fileType = FileUtility.NIFTI;
+                        }else {
+                        	fileType = FileUtility.NIFTI;
                             System.err
                                     .println("Could not determine default filetype from preferences...saving in NIFTI format");
                         }
-                    }
+                	}
                 } else { // read
                     final int p = fileName.lastIndexOf(".");
                     final String bfloatDataName = fileName.substring(0, p + 1) + "bfloat";
@@ -950,21 +950,21 @@ public class FileUtility {
                                         && FileSiemensText.isSiemensText(fileDir + fileName)) {
                                     fileType = FileUtility.SIEMENSTEXT;
                                 }
-
+    
                                 try {
                                     final File file = new File(fileDir + fileName);
                                     final RandomAccessFile raFile = new RandomAccessFile(file, "r");
-
+    
                                     raFile.seek(344L);
-
+    
                                     final char[] niftiName = new char[4];
-
+    
                                     for (i = 0; i < 4; i++) {
                                         niftiName[i] = (char) raFile.readUnsignedByte();
                                     }
-
+    
                                     raFile.close();
-
+    
                                     if ( (niftiName[0] == 'n') && ( (niftiName[1] == 'i') || (niftiName[1] == '+'))
                                             && (niftiName[2] == '1') && (niftiName[3] == '\0')) {
                                         fileType = FileUtility.NIFTI;
@@ -980,7 +980,7 @@ public class FileUtility {
                         } // else !spmFile.exists()
                     } // else !bfloatFile.exists()
                 } // else read
-            } // else if (suffix.equalsIgnoreCase(".hdr"))
+            } // else if (suffix.equalsIgnoreCase(".hdr")) 
             else if (suffix.equalsIgnoreCase(".ima")) {
 
                 // Both Dicom and Siemens Magnetom Vision file type have the ima suffix
@@ -1040,7 +1040,7 @@ public class FileUtility {
             if (fileType == FileUtility.UNDEFINED) {
                 fileType = FileUtility.isDicom(fileName, fileDir, quiet);
             }
-
+            
             if (fileType == FileUtility.UNDEFINED) {
                 fileType = FileUtility.isDicom_ver2(fileName, fileDir, quiet);
             }
@@ -1068,7 +1068,7 @@ public class FileUtility {
             if (fileType == FileUtility.UNDEFINED) {
                 // This will accept Mayo Analyze 7.5, SPM99, and
                 // SPM2 with regular header size == 348 bytes
-                // Only SPM2 with extended header size > 348 will
+                // Only SPM2 with extended header size > 348 will 
                 // not be classified as analyze.
                 fileType = FileUtility.isAnalyzeOrSPM(fileName, fileDir, quiet);
             }
@@ -1128,7 +1128,7 @@ public class FileUtility {
             return FileAnalyze.isAnalyzeOrSPM(fileDir + fileName);
 
         } catch (final OutOfMemoryError error) {
-
+            
             if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
                 Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
@@ -1182,7 +1182,7 @@ public class FileUtility {
         }
 
     }
-
+    
     /**
      * tests if unknown file is of type 2.0 dicom
      * 
@@ -1193,7 +1193,7 @@ public class FileUtility {
      * @throws IOException
      */
     public static final int isDicom_ver2(final String fileName, final String fileDir, boolean quiet) throws IOException {
-        try {
+    	try {
             FileDicom imageFile = new FileDicom(fileName, fileDir);
 
             if (imageFile != null) {
@@ -1220,7 +1220,7 @@ public class FileUtility {
             return FileUtility.UNDEFINED;
         }
     }
-
+    
     /**
      * Tests if the unknown file is of type GE Signa 4X type.
      * 
@@ -1594,8 +1594,8 @@ public class FileUtility {
         int i;
         char ch;
         int length = fName.lastIndexOf("."); // Start before suffix.
-        if (length == -1) {
-            length = fName.length();
+        if(length == -1) {
+        	length = fName.length();
         }
 
         for (i = length - 1; i > -1; i--) {
@@ -1630,7 +1630,7 @@ public class FileUtility {
                 ch = tmpStr.charAt(i);
 
                 if (Character.isDigit(ch)) {
-                    tmpStr = tmpStr.substring(0, i) + tmpStr.substring(i + 1);
+                    tmpStr = tmpStr.substring(0,i)+tmpStr.substring(i+1);
                     i = -1;
                 }
             }
@@ -1745,20 +1745,20 @@ public class FileUtility {
                 break;
             case FileUtility.DICOM:
                 final boolean isEnhancedDicom = ((FileInfoDicom) fileInfoList[0]).isEnhancedDicom();
-                if (isEnhancedDicom) {
+            	if(isEnhancedDicom) {
                     final String file = fileInfo.getFileDirectory() + File.separator + fileInfoList[0].getFileName();
-                    fileNameList.add(file);
-
-                } else {
-                    String file;
+            		fileNameList.add(file);
+            		
+            	}else {
+            		String file;
                     for (final FileInfoBase element : fileInfoList) {
                         file = fileInfo.getFileDirectory() + File.separator + element.getFileName();
                         if (file != null && !fileNameList.contains(file)) {
                             fileNameList.add(file);
                         }
                     }
-                }
-                break;
+            	}
+            	break;
             default:
                 String file;
                 for (final FileInfoBase element : fileInfoList) {

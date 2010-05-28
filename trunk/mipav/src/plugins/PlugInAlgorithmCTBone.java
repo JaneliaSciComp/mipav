@@ -6,6 +6,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmVOIExtractionPaint;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIVector;
 
@@ -16,6 +17,7 @@ import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.util.BitSet;
+import java.util.Vector;
 
 
 
@@ -181,19 +183,19 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
             int[] rightBoundsY = new int [2];
             int[] rightBoundsZ = new int [2];
             VOIContour rightCurve;
-            rightCurve = ((VOIContour)rightBoneVOI.getCurves()[0].get(0));
+            rightCurve = ((VOIContour)rightBoneVOI.getCurves().get(0));
             rightCurve.getBounds(rightBoundsX, rightBoundsY, rightBoundsZ);
         
             int[] leftBoundsX = new int [2];
             int[] leftBoundsY = new int [2];
             int[] leftBoundsZ = new int [2];
             VOIContour leftCurve;
-            leftCurve = ((VOIContour)leftBoneVOI.getCurves()[0].get(0));
+            leftCurve = ((VOIContour)leftBoneVOI.getCurves().get(0));
             leftCurve.getBounds(leftBoundsX, leftBoundsY, leftBoundsZ);
             
             //rightX should be to the LEFT of leftx in this orientation
-            float rightX = ((VOIContour)rightBoneVOI.getCurves()[0].get(0)).get(0).X;
-            float leftX = ((VOIContour)leftBoneVOI.getCurves()[0].get(0)).get(0).X;
+            float rightX = ((VOIContour)rightBoneVOI.getCurves().get(0)).get(0).X;
+            float leftX = ((VOIContour)leftBoneVOI.getCurves().get(0)).get(0).X;
             
             // the rightBoneVOI should be the leftmost
             if (rightX > leftX) {
@@ -227,11 +229,10 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
      */
     private VOI makeRightBoneVOI(VOI totalVOI) {
     	VOI tempVOI = (VOI)totalVOI.clone();
-    	int size = 0;
+    	Vector<VOIBase>[] curves = totalVOI.getSortedCurves(zDim);
     	for(int i=0; i<zDim; i++) {
-    		size = tempVOI.getCurves()[i].size();
-    		for(int j=1; j<size; j++)
-    			tempVOI.removeCurve(1, i);
+    		for(int j=1; j<curves[i].size(); j++)
+    			tempVOI.getCurves().removeElement( curves[i].elementAt(j) );
     	}
     	tempVOI.setName("Right Bone");
     	tempVOI.setColor(voiColor);
@@ -245,14 +246,11 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
      */
     private VOI makeLeftBoneVOI(VOI totalVOI) {
     	VOI tempVOI = (VOI)totalVOI.clone();
-    	int size = 0;
+        Vector<VOIBase>[] curves = totalVOI.getSortedCurves(zDim);
     	for(int i=0; i<zDim; i++) {
-    		size = tempVOI.getCurves()[i].size();
-    		for(int j=0; j<size-1; j++) {
-    			if(j == 0)
-    				tempVOI.removeCurve(0, i);
-    			else 
-    				tempVOI.removeCurve(1, i);
+            for(int j=0; j<curves[i].size(); j++) {
+                if ( j != 1 )
+                    tempVOI.getCurves().removeElement( curves[i].elementAt(j) );
     		}
     	}
     	tempVOI.setName("Left Bone");
@@ -296,7 +294,7 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
         }
         VOI theVOI = vois.get(0);
         theVOI.setName("Bone");
-        if (theVOI.getCurves()[0].size() != 4) {
+        if (theVOI.getCurves().size()/zDim != 4) { //4 curves per slice expected
         	System.err.println("makeBoneVOI() Error, did not get 4 curves in the VOI.  Expected 1 outside and 1 inside for both legs.");
             return null;
         }

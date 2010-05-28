@@ -695,7 +695,7 @@ public class ViewJComponentRegistration
             x[0] = adjPoint.X;
             y[0] = adjPoint.Y;
             z[0] = 0.0f;
-            newVOI.importCurve(x, y, z, (int) z[0]);
+            newVOI.importCurve(x, y, z);
         } catch (OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ComponentRegistration.mouseReleased");
@@ -736,7 +736,7 @@ public class ViewJComponentRegistration
             x[0] = refPoint.X;
             y[0] = refPoint.Y;
             z[0] = 0.0f;
-            newVOI.importCurve(x, y, z, (int) z[0]);
+            newVOI.importCurve(x, y, z);
         } catch (OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ComponentRegistration.mouseReleased");
@@ -983,18 +983,11 @@ public class ViewJComponentRegistration
 
                     if (VOIs.VOIAt(i).nearPoint(x, y, slice, getZoomX(), resolutionX, resolutionY)) {
 
-                        VOIs.VOIAt(i).setActive(true);
-                        ((VOIPoint) (VOIs.VOIAt(i).getCurves()[slice].elementAt(0))).setActive(true);
-                        VOIs.VOIAt(i).drawVOISpecial(slice, getGraphics(), imageActive.getFileInfo(0).getResolutions(),
-                                                     imageActive.getFileInfo(0).getUnitsOfMeasure(),
-                                                     imageActive.getExtents()[0], imageActive.getExtents()[1],
-                                                     getZoomX(), getZoomY(), resolutionX, resolutionY);
-
+                        VOIs.VOIAt(i).setAllActive(true);
                         if (oldFrame) {
                             frame.updateImages(true);
                         } else {
                             toolFrame.updateImages(true);
-                            // imageActive.notifyImageDisplayListeners();
                         }
 
                         return;
@@ -1018,7 +1011,7 @@ public class ViewJComponentRegistration
                     xR[0] = xS;
                     yR[0] = yS;
                     zR[0] = 0.0f;
-                    newVOI.importCurve(xR, yR, zR, 0);
+                    newVOI.importCurve(xR, yR, zR);
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: ComponentRegistration.mouseReleased");
@@ -1049,9 +1042,9 @@ public class ViewJComponentRegistration
                 deltaX = xS - xOrg[centerid];
                 deltaY = yS - yOrg[centerid];
 
-                ((VOIPoint) (centerVOI.getCurves()[0].elementAt(0))).moveVOIPoint(deltaX, deltaY, 0,
-                                                                                  imageActive.getExtents()[0],
-                                                                                  imageActive.getExtents()[1], 1);
+                ((VOIPoint) (centerVOI.getCurves().elementAt(0))).moveVOIPoint(deltaX, deltaY, 0,
+                        imageActive.getExtents()[0],
+                        imageActive.getExtents()[1], 1);
                 xOrg[centerid] = xS;
                 yOrg[centerid] = yS;
                 xRotation = xS * resolutionX;
@@ -1186,7 +1179,7 @@ public class ViewJComponentRegistration
                     x[0] = xS;
                     y[0] = yS;
                     z[0] = slice;
-                    newVOI.importCurve(x, y, z, slice);
+                    newVOI.importCurve(x, y, z);
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: ComponentRegistration.mouseReleased");
@@ -1227,7 +1220,7 @@ public class ViewJComponentRegistration
                     x[0] = xS;
                     y[0] = yS;
                     z[0] = slice;
-                    newVOI.importCurve(x, y, z, slice);
+                    newVOI.importCurve(x, y, z);
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: ComponentRegistration.mouseReleased");
@@ -1348,8 +1341,8 @@ public class ViewJComponentRegistration
                 return;
             }
             super.paintComponent(g);
-
             // Draw VOIs (unless told not to by showVOIs = false)
+            /*
             if (showVOIs) {
                 if (useDualVOIs) {
 
@@ -1402,7 +1395,7 @@ public class ViewJComponentRegistration
                                 } // end of if (markerType[i] == ROTATIONCENTER)
                                 else if (markerType[i] == REFMARK) {
                                     VOIs.VOIAt(i).setColor(Color.red);
-                                    ((VOIPoint) (VOIs.VOIAt(i).getCurves()[slice].elementAt(0))).setLabel(String.valueOf(curRefMark));
+                                    ((VOIPoint) (VOIs.VOIAt(i).getCurvesTemp()[slice].elementAt(0))).setLabel(String.valueOf(curRefMark));
                                     VOIs.VOIAt(i).drawSelf(getZoomX(), getZoomY(), resolutionX, resolutionY, 0f, 0f,
                                                            imageActive.getFileInfo(0).getResolutions(),
                                                            imageActive.getFileInfo(0).getUnitsOfMeasure(), slice,
@@ -1411,7 +1404,7 @@ public class ViewJComponentRegistration
                                 } // end of else if (markerType[i] == REFMARK)
                                 else if (markerType[i] == ADJMARK) {
                                     VOIs.VOIAt(i).setColor(Color.green);
-                                    ((VOIPoint) (VOIs.VOIAt(i).getCurves()[slice].elementAt(0))).setLabel(String.valueOf(curAdjMark));
+                                    ((VOIPoint) (VOIs.VOIAt(i).getCurvesTemp()[slice].elementAt(0))).setLabel(String.valueOf(curAdjMark));
                                     VOIs.VOIAt(i).drawSelf(getZoomX(), getZoomY(), resolutionX, resolutionY, 0f, 0f,
                                                            imageActive.getFileInfo(0).getResolutions(),
                                                            imageActive.getFileInfo(0).getUnitsOfMeasure(), slice,
@@ -1422,7 +1415,7 @@ public class ViewJComponentRegistration
                         } // end if slice != -99
                     }
                 }
-            } 
+            } */
         } catch (OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ComponentRegistration.paintComponent.");
@@ -1492,8 +1485,8 @@ public class ViewJComponentRegistration
                 xR[0] = xS;
                 yR[0] = yS;
                 zR[0] = 0.0f;
-                newVOI.importCurve(xR, yR, zR, 0);
-                ((VOIPoint) newVOI.getCurves()[0].elementAt(0)).setLabel("C");
+                newVOI.importCurve(xR, yR, zR);
+                ((VOIPoint) newVOI.getCurves().elementAt(0)).setLabel("C");
             } catch (OutOfMemoryError error) {
                 System.gc();
                 MipavUtil.displayError("Out of memory: ComponentRegistration.setCenter");
@@ -1576,7 +1569,7 @@ public class ViewJComponentRegistration
      */
     public void setCursorMode(int mode) {
         this.cursorMode = mode;
-        voiHandler.setMode(mode);
+        //getVOIHandler().setMode(mode);
         switch (mode) {
 
             case DEFAULT:

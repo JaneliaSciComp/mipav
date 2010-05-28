@@ -30,11 +30,14 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage {
     /** Temporary buffer used when extracting points from a VOI. Save reallocating memory often. */
     private float[] ptCoord;
 
-    /** Buffers used to save the X coordinates fo the points that make up a VOI. */
+    /** Buffers used to save the X coordinates for the points that make up a VOI. */
     private int[] xCoords;
 
-    /** Buffers used to save the Y coordinates fo the points that make up a VOI. */
+    /** Buffers used to save the Y coordinates for the points that make up a VOI. */
     private int[] yCoords;
+    
+    /** Buffers used to save the Z coordinates for the points that make up a VOI. */
+    private int[] zCoords;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -62,35 +65,12 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage {
 
         xCoords = new int[100];
         yCoords = new int[100];
-        ptCoord = new float[2];
+        ptCoord = new float[3];
         
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
     
-    /**
-     * Deletes all VOIs.
-     */
-    public void deleteVOIs() {
-        int i;
-        int nVOI;
-
-        ViewVOIVector VOIs = imageActive.getVOIs();
-
-        nVOI = VOIs.size();
-
-        if (nVOI == 0) {
-            return;
-        }
-
-        for (i = (nVOI - 1); i >= 0; i--) {
-            VOIs.removeElementAt(i);
-        }
-
-        voiHandler.setVOI_ID(-1);
-        centerPtLocation = -1;
-    }
-
     /**
      * Gets the center point of rotation.
      *
@@ -115,14 +95,14 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage {
             if (centerPtLocation != -1) {
                 return 0;
             } else {
-                return ((VOI) VOIs.elementAt(0)).getCurves()[0].size();
+                return ((VOI) VOIs.elementAt(0)).getCurves().size();
             }
         } else {
 
             if (centerPtLocation == 0) {
-                return ((VOI) VOIs.elementAt(1)).getCurves()[0].size();
+                return ((VOI) VOIs.elementAt(1)).getCurves().size();
             } else {
-                return ((VOI) VOIs.elementAt(0)).getCurves()[0].size();
+                return ((VOI) VOIs.elementAt(0)).getCurves().size();
             }
         }
     }
@@ -148,7 +128,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage {
             index = 1;
         }
 
-        Vector ptVector = ((VOI) VOIs.elementAt(index)).getCurves()[0];
+        Vector ptVector = ((VOI) VOIs.elementAt(index)).getCurves();
         VOIPoint pt = null;
 
         // System.err.println("Point vector size: " + ptVector.size());
@@ -190,7 +170,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage {
             index = 1;
         }
 
-        Vector ptVector = ((VOI) VOIs.elementAt(index)).getCurves()[0];
+        Vector ptVector = ((VOI) VOIs.elementAt(index)).getCurves();
         VOIPoint pt = null;
 
         try {
@@ -244,10 +224,10 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage {
         for (i = 0; i < pointSetA[0].length; i++) {
             deltaX = (int) (pointSetA[0][i] - pointSetB[0][i]);
             deltaY = (int) (pointSetA[1][i] - pointSetB[1][i]);
-            ((VOIPoint) (((VOI) VOIs.elementAt(index)).getCurves()[0]).elementAt(i)).moveVOIPoint(deltaX, deltaY, 0,
-                                                                                                  imageActive.getExtents()[0],
-                                                                                                  imageActive.getExtents()[1],
-                                                                                                  1);
+            ((VOIPoint) (((VOI) VOIs.elementAt(index)).getCurves()).elementAt(i)).moveVOIPoint(deltaX, deltaY, 0,
+                    imageActive.getExtents()[0],
+                    imageActive.getExtents()[1],
+                    1);
         }
     }
 

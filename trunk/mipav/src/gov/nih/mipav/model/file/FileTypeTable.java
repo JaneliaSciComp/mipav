@@ -152,7 +152,7 @@ public class FileTypeTable {
         FileTypeTable.FILE_EXT_TABLE.put(".MGH", FileUtility.MGH);
         FileTypeTable.FILE_EXT_TABLE.put(".MGZ", FileUtility.MGH);
         FileTypeTable.FILE_EXT_TABLE.put(".MGH.GZ", FileUtility.MGH);
-
+        
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.MICRO_CAT, new FileTypeInfo("Micro CAT", ".log,.ct"));
         FileTypeTable.FILE_EXT_TABLE.put(".log", FileUtility.MICRO_CAT);
         FileTypeTable.FILE_EXT_TABLE.put(".ct", FileUtility.MICRO_CAT);
@@ -272,10 +272,10 @@ public class FileTypeTable {
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.BFLOAT, new FileTypeInfo("BFLOAT", ".bfloat"));
         FileTypeTable.FILE_EXT_TABLE.put(".bfloat", FileUtility.BFLOAT);
         FileTypeTable.FILE_EXT_TABLE.put(".BFLOAT", FileUtility.BFLOAT);
-
+        
         FileTypeTable.FILE_EXT_TABLE.put(".jp2", FileUtility.JP2);
         FileTypeTable.FILE_EXT_TABLE.put(".JP2", FileUtility.JP2);
-
+        
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.ZVI, new FileTypeInfo("ZVI", ".zvi"));
         FileTypeTable.FILE_EXT_TABLE.put(".zvi", FileUtility.ZVI);
         FileTypeTable.FILE_EXT_TABLE.put(".ZVI", FileUtility.ZVI);

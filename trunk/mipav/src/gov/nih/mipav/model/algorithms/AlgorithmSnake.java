@@ -1,7 +1,9 @@
 package gov.nih.mipav.model.algorithms;
 
 import WildMagic.LibFoundation.Mathematics.Vector2f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
+import gov.nih.mipav.MipavMath;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -111,7 +113,7 @@ public class AlgorithmSnake extends AlgorithmBase {
      * @param  boundDir             indicates the boundary direction (in and/or out)
      */
     public AlgorithmSnake(ModelImage _srcImg, float[] _sigmas, int _boundaryIterations, float _smoothness, VOI srcVOI,
-                          int boundDir) {
+            int boundDir) {
 
         srcImage = _srcImg;
         sigmas = _sigmas;
@@ -134,7 +136,7 @@ public class AlgorithmSnake extends AlgorithmBase {
             }
 
             resultVOI = new VOI((short) srcImage.getVOIs().size(), "snakeVOI", srcImage.getExtents()[2], VOI.CONTOUR,
-                                -1.0f);
+                    -1.0f);
         }
     }
 
@@ -171,13 +173,11 @@ public class AlgorithmSnake extends AlgorithmBase {
             displayError("Source Image is null");
 
             return;
-        } else {
-
-            if (srcImage.getNDims() == 2) {
-                calc2D();
-            } else if (srcImage.getNDims() > 2) {
-                calc3D();
-            }
+        }
+        if (srcImage.getNDims() == 2) {
+            calc2D();
+        } else if (srcImage.getNDims() > 2) {
+            calc3D();
         }
     }
 
@@ -203,9 +203,10 @@ public class AlgorithmSnake extends AlgorithmBase {
         int xDim, yDim, length;
         float[] xPoints = null;
         float[] yPoints = null;
+        float[] zPoints = null;
         Polygon resultGon = null;
         Polygon[] gons = null;
-        Vector[] contours;
+        Vector<VOIBase> contours;
         int nContours;
 
         xDim = srcImage.getExtents()[0];
@@ -217,7 +218,7 @@ public class AlgorithmSnake extends AlgorithmBase {
             srcImage.exportData(0, length, imgBuffer); // locks and releases lock
 
             fireProgressStateChanged(srcImage.getImageName(), "Evolving boundary ...");
-            
+
         } catch (IOException error) {
             displayError("Algorithm Snake: Image(s) locked");
             setCompleted(false);
@@ -233,33 +234,32 @@ public class AlgorithmSnake extends AlgorithmBase {
         fireProgressStateChanged(25);
 
         contours = srcVOI.getCurves();
-        nContours = contours[0].size();
+        nContours = contours.size();
         fireProgressStateChanged(30);
 
         for (int j = 0; j < nContours; j++) {
+            if (((VOIContour) (contours.elementAt(j))).isActive()) {
+                ((VOIContour) (contours.elementAt(j))).makeClockwise();
 
-            if (((VOIContour) (contours[0].elementAt(j))).isActive()) {
-
-                ((VOIContour) (contours[0].elementAt(j))).makeClockwise();
-                gons = srcVOI.exportPolygons(0);
-                xPoints = new float[gons[j].npoints + 2];
-                yPoints = new float[gons[j].npoints + 2];
-                resultGon = new Polygon();
-                setPoints(xPoints, yPoints, gons[j]);
-                runSnake(xPoints, yPoints, imgBuffer, resultGon);
-                resultVOI.importPolygon(resultGon, 0);
-                ((VOIContour) (resultVOI.getCurves()[0].lastElement())).trimPoints(Preferences.getTrim(),
-                                                                                   Preferences.getTrimAdjacient());
+                int nPoints = contours.elementAt(j).size();
+                xPoints = new float[nPoints + 2];
+                yPoints = new float[nPoints + 2];
+                zPoints = new float[nPoints + 2];
+                setPoints(xPoints, yPoints, zPoints, contours.elementAt(j));
+                VOIContour resultContour = new VOIContour( false, true );
+                runSnake(xPoints, yPoints, zPoints, imgBuffer, resultContour );
+                resultContour.trimPoints(Preferences.getTrim(),
+                        Preferences.getTrimAdjacient());
+                resultVOI.importCurve(resultContour);
             } else {
-                gons = srcVOI.exportPolygons(0);
-                resultVOI.importPolygon(gons[j], 0);
+                resultVOI.importCurve(contours.elementAt(j));
             }
 
             fireProgressStateChanged(30 + (((j / nContours) - 1) * 70));
         }
 
         fireProgressStateChanged(100);
-        
+
 
         setCompleted(true);
 
@@ -269,269 +269,70 @@ public class AlgorithmSnake extends AlgorithmBase {
      * Prepares the data and runs the algorithm for a 3D image.
      */
     private void calc3D() {
+        float baseEnergy = 0;
+        int baseNPts = 0;
+
+        VOIContour resultContour;
+        float[] xPoints, yPoints, zPoints;
+
+        boolean failureFlag = false;
+
+        int[] extents = srcImage.getExtents();
+
+        Vector<VOIBase> contours = srcVOI.getCurves();
+        fireProgressStateChanged(30);
 
         int length;
         float[] imgBuffer;
-        int slice;
-        float baseEnergy = 0, energy, tempEnergy;
-        int baseNPts = 0, nPts;
-        Polygon tempGon;
-        Polygon baseGon;
-        float[] xPoints, yPoints;
-
-        Polygon resultGon = null;
-        Polygon[] gons = null;
-        Vector[] contours;
-        int nContours;
-        int nSlices = srcImage.getExtents()[2];
-        boolean failureFlag = false;
-
         try {
             length = srcImage.getSliceSize();
             imgBuffer = new float[length];
-            fireProgressStateChanged(srcImage.getImageName(), "Evolving boundary ...");
+
+            fireProgressStateChanged(srcImage.getImageName(), "Bspline snake: Evolving boundary ...");
             
         } catch (OutOfMemoryError e) {
-            displayError("Algorithm snake: Out of memory");
+            displayError("Algorithm Bsnake: Out of memory");
             setCompleted(false);
 
             return;
         }
-
-        contours = srcVOI.getCurves();
-        fireProgressStateChanged(30);
-
-        for (slice = 0; slice < nSlices; slice++) {
-            fireProgressStateChanged((int) (30 + (((float) slice / (nSlices - 1)) * 70)));
-
-            try {
-                srcImage.exportData(slice * length, length, imgBuffer);
-            } catch (IOException error) {
-                displayError("Algorithm snake: Image(s) locked");
-                setCompleted(false);
-
-                return;
-            }
-
-            nContours = contours[slice].size();
-
-            for (int j = 0; j < nContours; j++) {
-
-                if (((VOIContour) (contours[slice].elementAt(j))).isActive()) {
-
-                    ((VOIContour) (contours[slice].elementAt(j))).makeClockwise();
-
-                    gons = srcVOI.exportPolygons(slice);
-
-                    // @todo + 5 in AlgorithmBSnake (why?)
-                    xPoints = new float[gons[j].npoints + 2];
-                    yPoints = new float[gons[j].npoints + 2];
-
-                    resultGon = new Polygon();
-                    setPoints(xPoints, yPoints, gons[j]);
-
-                    baseEnergy = runSnake(xPoints, yPoints, imgBuffer, resultGon);
-
-                    baseNPts = resultGon.npoints;
-                    resultVOI.importPolygon(resultGon, slice);
-                    ((VOIContour) (resultVOI.getCurves()[slice].lastElement())).trimPoints(Preferences.getTrim(),
-                                                                                           Preferences.getTrimAdjacient());
-                    stSlice = slice;
-                } else {
-                    gons = srcVOI.exportPolygons(slice);
-                    resultVOI.importPolygon(gons[j], slice);
-                }
-            }
-        }
-
-        if (propagationType == PROP_SINGLE) {
-            fireProgressStateChanged(100);
-            setCompleted(true);
-            
-
-            return;
-        }
-
-        slice = stSlice + 1;
-        baseGon = new Polygon(resultGon.xpoints, resultGon.ypoints, resultGon.npoints);
-        tempGon = resultGon;
-        resultGon = new Polygon();
-
-        Polygon optGon = null;
-
-        tempEnergy = baseEnergy;
-
-        // @todo + 5 in AlgorithmBSnake (why?)
-        xPoints = new float[tempGon.npoints + 2];
-        yPoints = new float[tempGon.npoints + 2];
-        fireProgressStateChanged(25);
-
-        int percent = 25;
-        int increment = (100 - percent) / (nSlices);
-
-        AlgorithmVOISimplexOpt voiSimplex = new AlgorithmVOISimplexOpt(srcImage, sigmas, AlgorithmVOISimplexOpt.MAXSUM);
-
-        if (propagationType != PROP_PREV) {
-
-            while (!threadStopped) {
+        
+        int nContours = contours.size();
+        for (int j = 0; j < nContours; j++) {
+            if (((VOIContour) (contours.elementAt(j))).isActive()) {
+                
+                ((VOIContour) (contours.elementAt(j))).makeClockwise();
+                int nPoints = contours.elementAt(j).size();
+                xPoints = new float[nPoints + 2];
+                yPoints = new float[nPoints + 2];
+                zPoints = new float[nPoints + 2];
+                setPoints(xPoints, yPoints, zPoints, contours.elementAt(j));
 
                 try {
-                    srcImage.exportData(slice * length, length, imgBuffer);
-                } catch (IOException error) {
-                    displayError("Algorithm Snake: Image(s) locked");
-                    setCompleted(false);
-                    
-
-                    return;
-                }
-
-                optGon = voiSimplex.goOptimize(imgBuffer, tempGon);
-                percent += increment;
-                fireProgressStateChanged(percent);
-                setPoints(xPoints, yPoints, optGon);
-
-                energy = runSnake(xPoints, yPoints, imgBuffer, resultGon);
-                nPts = resultGon.npoints;
-
-                if ((nPts < 8) || (Math.abs((energy / tempEnergy) - 1) > PROP_THRESHOLD) ||
-                        (Math.abs(((energy / nPts) / (baseEnergy / baseNPts)) - 1) > PROP_THRESHOLD)) {
-
-                    // if the energy sum changed too much, then the single propagation that we wanted to do has failed
-                    if (propagationType == PROP_NEXT) {
-                        setCompleted(false);
-                        failureFlag = true;
-                    }
-
-                    break;
-                } else {
-                    resultVOI.importPolygon(resultGon, slice);
-                    ((VOIContour) (resultVOI.getCurves()[slice].lastElement())).trimPoints(Preferences.getTrim(),
-                                                                                           Preferences.getTrimAdjacient());
-                }
-
-                // @todo + 5 in AlgorithmBSnake (why?)
-                xPoints = new float[resultGon.npoints + 2];
-                yPoints = new float[resultGon.npoints + 2];
-                tempGon = resultGon;
-                resultGon = new Polygon();
-                tempEnergy = energy;
-                slice++;
-
-                if (slice >= srcImage.getExtents()[2]) {
-
-                    // if we tried to propagate to the next slice, which doesn't exist
-                    if (propagationType == PROP_NEXT) {
-                        setCompleted(false);
-                        failureFlag = true;
-                    }
-
-                    break;
-                }
-
-                // stop after propagating to one slice if PROP_NEXT
-                if (propagationType == PROP_NEXT) {
-                    fireProgressStateChanged(100);
-
-                    if (!failureFlag) {
-                        setCompleted(true);
-                    }
-
-                    
-
-                    return;
-                }
-            }
-
-            if (threadStopped) {
-                finalize();
-
-                return;
-            }
-        }
-
-        if (propagationType != PROP_NEXT) {
-            slice = stSlice - 1;
-            tempEnergy = baseEnergy;
-            tempGon = baseGon;
-
-            // @todo + 5 in AlgorithmBSnake (why?)
-            xPoints = new float[tempGon.npoints + 2];
-            yPoints = new float[tempGon.npoints + 2];
-            resultGon = new Polygon();
-            fireProgressStateChanged(percent);
-
-            while (!threadStopped) {
-
-                try {
-                    srcImage.exportData(slice * length, length, imgBuffer);
+                    srcImage.exportData((int)zPoints[0] * length, length, imgBuffer);
                 } catch (IOException error) {
                     displayError("Algorithm Bsnake: Image(s) locked");
                     setCompleted(false);
-                    
 
                     return;
                 }
+                
+                resultContour = new VOIContour( false, true );
+                baseEnergy = runSnake(xPoints, yPoints, zPoints, imgBuffer, resultContour );
+                baseNPts = resultContour.size();
+                System.err.println( baseNPts );
+                
+                
+                resultContour.trimPoints(Preferences.getTrim(),
+                        Preferences.getTrimAdjacient());
+                resultVOI.importCurve(resultContour);
 
-                optGon = voiSimplex.goOptimize(imgBuffer, tempGon);
-                percent += increment;
-                fireProgressStateChanged(percent);
-                setPoints(xPoints, yPoints, optGon);
-                energy = runSnake(xPoints, yPoints, imgBuffer, resultGon);
-                nPts = resultGon.npoints;
-
-                if ((nPts < 8) || (Math.abs((energy / tempEnergy) - 1) > PROP_THRESHOLD) ||
-                        (Math.abs(((energy / nPts) / (baseEnergy / baseNPts)) - 1) > PROP_THRESHOLD)) {
-
-                    // if the energy sum changed too much, then the single propagation that we wanted to do has failed
-                    if (propagationType == PROP_PREV) {
-                        setCompleted(false);
-                        failureFlag = true;
-                    }
-
-                    break;
-                } else {
-                    resultVOI.importPolygon(resultGon, slice);
-                    ((VOIContour) (resultVOI.getCurves()[slice].lastElement())).trimPoints(Preferences.getTrim(),
-                                                                                           Preferences.getTrimAdjacient());
+                if (propagationType != PROP_SINGLE) {
+                    propUp( resultContour, resultVOI, baseEnergy, baseNPts );
+                    propDown( resultContour, resultVOI, baseEnergy, baseNPts  );
                 }
-
-                // @todo + 5 in AlgorithmBSnake (why?)
-                xPoints = new float[resultGon.npoints + 2];
-                yPoints = new float[resultGon.npoints + 2];
-                tempGon = resultGon;
-                resultGon = new Polygon();
-                tempEnergy = energy;
-                slice--;
-
-                if (slice < 0) {
-
-                    // if we tried to propagate to the previous slice, which doesn't exsist
-                    if (propagationType == PROP_PREV) {
-                        setCompleted(false);
-                        failureFlag = true;
-                    }
-
-                    break;
-                }
-
-                // stop after propagating to one slice if PROP_PREV
-                if (propagationType == PROP_PREV) {
-                    fireProgressStateChanged(100);
-
-                    if (!failureFlag) {
-                        setCompleted(true);
-                    }
-
-                    
-
-                    return;
-                }
-            }
-
-            if (threadStopped) {
-                finalize();
-
-                return;
+            } else {
+                resultVOI.importCurve(contours.elementAt(j));
             }
         }
 
@@ -541,7 +342,7 @@ public class AlgorithmSnake extends AlgorithmBase {
             setCompleted(true);
         }
 
-        
+
     }
 
     /**
@@ -568,7 +369,7 @@ public class AlgorithmSnake extends AlgorithmBase {
         for (i = 1; i < (pts.size() - 1); i++) {
 
             distance = distance(((Vector2f) (pts.elementAt(i))).X, ((Vector2f) (pts.elementAt(i + 1))).X,
-                                ((Vector2f) (pts.elementAt(i))).Y, ((Vector2f) (pts.elementAt(i + 1))).Y);
+                    ((Vector2f) (pts.elementAt(i))).Y, ((Vector2f) (pts.elementAt(i + 1))).Y);
 
             if (distance > 3) {
                 midX = (float) ((((Vector2f) (pts.elementAt(i))).X + ((Vector2f) (pts.elementAt(i + 1))).X) / 2.0);
@@ -634,6 +435,71 @@ public class AlgorithmSnake extends AlgorithmBase {
 
         return pts;
     }
+
+
+    private Vector<Vector3f> cleanLine(float[] xPts, float[] yPts, float[] zPts) {
+        int i;
+        double distance;
+        float midX, midY, midZ;
+        Vector<Vector3f> pts = new Vector<Vector3f>(50, 50);
+
+        for (i = 0; i < xPts.length; i++) {
+            pts.addElement(new Vector3f(xPts[i], yPts[i], zPts[i]));
+        }
+
+        // add points to contour where points are separated by a some distance
+        // also remove adjacent points
+        for (i = 1; i < (pts.size() - 1); i++) {
+
+            distance = MipavMath.distance( pts.elementAt(i), pts.elementAt(i+1) );
+
+            if (distance > 3) {
+                midX = (float) ((((pts.elementAt(i))).X + ((pts.elementAt(i + 1))).X) / 2.0);
+                midY = (float) ((((pts.elementAt(i))).Y + ((pts.elementAt(i + 1))).Y) / 2.0);
+                midZ = (float) ((((pts.elementAt(i))).Z + ((pts.elementAt(i + 1))).Z) / 2.0);
+
+                pts.insertElementAt(new Vector3f(midX, midY, midZ), i + 1);
+                i--;
+            } else if (distance > 1) { }
+            else {
+                pts.removeElementAt(i + 1);
+                i--;
+            }
+        }
+
+        // find angle -- remove points that have too sharp an angle, i.e. smooth boundary
+        boolean flag = true;
+        int end;
+
+        end = pts.size() - 2;
+        double angle;
+        Vector3f v1 = new Vector3f();
+        Vector3f v2 = new Vector3f();
+        while (flag == true) {
+            flag = false;
+
+            for (i = 0; i < end; i++) {
+
+                v1.Sub( pts.elementAt(i), pts.elementAt(i+1) );
+                v2.Sub( pts.elementAt(i+2), pts.elementAt(i+1) );
+
+                v1.Normalize();
+                v2.Normalize();
+                angle = Vector3f.Angle(v1,v2);
+                // Smooth points
+                if (angle < smoothness) {
+                    pts.removeElementAt(i + 1);
+                    i--;
+                    end = pts.size() - 2;
+                    flag = true;
+                }
+            }
+        }
+
+        return pts;
+    }
+
+
 
     /**
      * Calculates the euclidian distance between two points.
@@ -903,6 +769,357 @@ public class AlgorithmSnake extends AlgorithmBase {
         return energy;
     }
 
+
+
+    private float runSnake(float[] xPoints, float[] yPoints, float[] zPoints, float[] image, VOIBase contour) {
+        int i, j;
+        int nPts;
+        Vector3f inPlane = new Vector3f();
+        Vector3f midPt = new Vector3f();
+        Vector3f interpPt = new Vector3f();
+        Vector3f inNormPt = new Vector3f();
+        Vector3f outNormPt = new Vector3f();
+        Vector3f tangentDir = new Vector3f();
+        Vector3f normDir = new Vector3f();
+        Vector3f normStep = new Vector3f();
+        float normLength = 0;
+        float[] newXPts = null, newYPts = null, newZPts = null;
+        float stepPct = (float) 0.45;
+        float ix = 1, iy = 1, iz = 1;
+        float gradMag, inGradMag, outGradMag;
+        float energy = 0, oldEnergy = 0;
+
+        Vector3f center = contour.getGeometricCenter();
+        Vector<Vector3f> ptsArray;
+
+        Vector3f kPlaneFactor = new Vector3f( 1, 1, 1 );
+        if ( GxData == null ) kPlaneFactor.X = 0;
+        if ( GyData == null ) kPlaneFactor.Y = 0;
+        if ( GzData == null ) kPlaneFactor.Z = 0;
+
+        for (int s = 2; s >= 2.0; s--) {
+
+            for (int z = 0; (z < boundaryIterations) && (!threadStopped); z++) {
+                energy = 0;
+
+                ptsArray = cleanLine(xPoints, yPoints, zPoints);
+
+                xPoints = new float[ptsArray.size()];
+                yPoints = new float[ptsArray.size()];
+                zPoints = new float[ptsArray.size()];
+
+                for (i = 0; i < ptsArray.size(); i++) {
+                    xPoints[i] = ((ptsArray.elementAt(i))).X;
+                    yPoints[i] = ((ptsArray.elementAt(i))).Y;
+                    zPoints[i] = ((ptsArray.elementAt(i))).Z;
+                }
+
+                nPts = xPoints.length;
+                newXPts = new float[xPoints.length];
+                newYPts = new float[xPoints.length];
+                newZPts = new float[xPoints.length];
+
+                for (i = 1; i < (nPts - 1); i++) {
+
+                    tangentDir.X = (xPoints[i] - xPoints[i - 1] + xPoints[i + 1] - xPoints[i]) / 2;
+                    tangentDir.Y = (yPoints[i] - yPoints[i - 1] + yPoints[i + 1] - yPoints[i]) / 2;
+
+                    interpPt.X = xPoints[i];
+                    interpPt.Y = yPoints[i];
+
+                    normLength = (float) Math.sqrt((tangentDir.X * tangentDir.X) + (tangentDir.Y * tangentDir.Y));
+                    normDir.X = -tangentDir.Y / normLength;
+                    normDir.Y = tangentDir.X / normLength;
+
+                    normStep.X = stepPct * normDir.X;
+                    normStep.Y = stepPct * normDir.Y;
+
+                    outNormPt.X = -normStep.X + interpPt.X;
+                    outNormPt.Y = -normStep.Y + interpPt.Y;
+
+                    inNormPt.X = normStep.X + interpPt.X;
+                    inNormPt.Y = normStep.Y + interpPt.Y;
+
+                    ix = AlgorithmConvolver.convolve2DPt( new Vector2f(interpPt.X, interpPt.Y), srcImage.getExtents(), image, kExtents, GxData);
+                    iy = AlgorithmConvolver.convolve2DPt( new Vector2f(interpPt.X, interpPt.Y), srcImage.getExtents(), image, kExtents, GyData);
+
+                    // gradMag = (float)Math.sqrt(ix*ix + iy*iy);
+                    gradMag = ((ix * ix) + (iy * iy));
+
+                    if (evolveDirection == OUT_DIR) {
+                        inGradMag = -1;
+                    } else {
+                        ix = AlgorithmConvolver.convolve2DPt(new Vector2f(inNormPt.X, inNormPt.Y), srcImage.getExtents(), image, kExtents, GxData);
+                        iy = AlgorithmConvolver.convolve2DPt(new Vector2f(inNormPt.X, inNormPt.Y), srcImage.getExtents(), image, kExtents, GyData);
+
+                        // inGradMag = (float)Math.sqrt(ix*ix + iy*iy);
+                        inGradMag = ((ix * ix) + (iy * iy));
+                    }
+
+                    if (evolveDirection == IN_DIR) {
+                        outGradMag = -1;
+                    } else {
+                        ix = AlgorithmConvolver.convolve2DPt(new Vector2f(outNormPt.X, outNormPt.Y), srcImage.getExtents(), image, kExtents, GxData);
+                        iy = AlgorithmConvolver.convolve2DPt(new Vector2f(outNormPt.X, outNormPt.Y), srcImage.getExtents(), image, kExtents, GyData);
+
+                        // outGradMag = (float)Math.sqrt(ix*ix + iy*iy);
+                        outGradMag = ((ix * ix) + (iy * iy));
+                    }
+
+                    if ((outGradMag > gradMag) || (inGradMag > gradMag)) {
+
+                        if (outGradMag > inGradMag) {
+                            newXPts[i] = outNormPt.X;
+                            newYPts[i] = outNormPt.Y;
+                            energy += outGradMag;
+                        } else {
+                            newXPts[i] = inNormPt.X;
+                            newYPts[i] = inNormPt.Y;
+                            energy += inGradMag;
+                        }
+                    } else {
+                        newXPts[i] = interpPt.X;
+                        newYPts[i] = interpPt.Y;
+                        energy += gradMag;
+                    }
+                    newZPts[i] = zPoints[i];
+                }
+
+                if (Math.abs((energy / oldEnergy) - 1) < 0.0001) {
+                    break;
+                }
+
+                oldEnergy = energy;
+
+                newXPts[0] = newXPts[i - 1];
+                newYPts[0] = newYPts[i - 1];
+                newZPts[0] = newZPts[i - 1];
+
+                newXPts[i] = newXPts[1];
+                newYPts[i] = newYPts[1];
+                newZPts[i] = newZPts[1];
+
+                xPoints = newXPts;
+                yPoints = newYPts;
+                zPoints = newZPts;
+            }
+
+        }
+
+        // resultGon = new Polygon();
+        for (j = 1; j < (yPoints.length - 1); j++) {
+            contour.add( new Vector3f( Math.round(xPoints[j]), Math.round(yPoints[j]), Math.round(zPoints[j])) );
+        }
+
+        return energy;
+    }
+
+    private void propDown( VOIContour resultContour, VOI resultVOI, float baseEnergy, int baseNPts )
+    {
+
+        if (propagationType != PROP_NEXT) {
+            VOIContour tempContour = new VOIContour(resultContour, -1);
+            int slice = (int)tempContour.get(0).Z;
+            resultContour = new VOIContour( false, true );
+
+            VOIContour optContour = null;
+            
+            float tempEnergy = baseEnergy;
+
+            float[] xPoints;
+            float[] yPoints;
+            float[] zPoints;
+            resultContour = new VOIContour( false, true );
+
+            int percent = 25;
+            int increment = (100 - percent) / (srcImage.getExtents()[2]);
+            fireProgressStateChanged(percent);
+
+            boolean failureFlag = false;
+            AlgorithmVOISimplexOpt voiSimplex = new AlgorithmVOISimplexOpt(srcImage, sigmas, AlgorithmVOISimplexOpt.MAXSUM);
+            
+            int[] extents = srcImage.getExtents();
+            int length = extents[0] * extents[1];
+            float[] sliceBuf = new float[length];
+
+            while (!threadStopped) {
+
+                try {
+                    srcImage.exportData(slice * length, length, sliceBuf);
+                } catch (IOException error) {
+                    displayError("Algorithm Bsnake: Image(s) locked");
+                    setCompleted(false);
+                    return;
+                }
+
+                optContour = voiSimplex.goOptimize(sliceBuf, tempContour);
+                percent += increment;
+                fireProgressStateChanged(percent);
+                // @todo + 5 in AlgorithmBSnake (why?)
+                xPoints = new float[optContour.size() + 2];
+                yPoints = new float[optContour.size() + 2];
+                zPoints = new float[optContour.size() + 2];
+                setPoints(xPoints, yPoints, zPoints, optContour);
+                float energy = runSnake(xPoints, yPoints, zPoints, sliceBuf, resultContour);
+                int nPts = resultContour.size();
+
+                if ((nPts < 8) || (Math.abs((energy / tempEnergy) - 1) > PROP_THRESHOLD) ||
+                        (Math.abs(((energy / nPts) / (baseEnergy / baseNPts)) - 1) > PROP_THRESHOLD)) {
+
+                    // if the energy sum changed too much, then the single propagation that we wanted to do has failed
+                    if (propagationType == PROP_PREV) {
+                        setCompleted(false);
+                        failureFlag = true;
+                    }
+
+                    break;
+                }
+                resultContour.trimPoints(Preferences.getTrim(),
+                        Preferences.getTrimAdjacient());
+                resultVOI.importCurve(resultContour);
+
+                tempContour = new VOIContour(resultContour, -1);
+                resultContour = new VOIContour( false, true );
+                tempEnergy = energy;
+                slice--;
+
+                if (slice < 0) {
+
+                    // if we tried to propagate to the previous slice, which doesn't exist
+                    if (propagationType == PROP_PREV) {
+                        setCompleted(false);
+                        failureFlag = true;
+                    }
+
+                    break;
+                }
+
+                // stop after propagating to one slice if PROP_PREV
+                if (propagationType == PROP_PREV) {
+                    fireProgressStateChanged(100);
+
+                    if (!failureFlag) {
+                        setCompleted(true);
+                    }
+
+
+
+                    return;
+                }
+            }
+
+            if (threadStopped) {
+                finalize();
+
+                return;
+            }
+        }
+    }
+
+    private void propUp( VOIContour resultContour, VOI resultVOI, float baseEnergy, int baseNPts )
+    {
+
+        if (propagationType != PROP_PREV) {
+
+            VOIContour tempContour = new VOIContour(resultContour, 1);
+            int slice = (int)tempContour.get(0).Z;
+            resultContour = new VOIContour( false, true );
+
+            VOIContour optContour = null;
+
+            float tempEnergy = baseEnergy;
+
+            float[] xPoints;
+            float[] yPoints;
+            float[] zPoints;
+            fireProgressStateChanged(25);
+
+            int percent = 25;
+            int increment = (100 - percent) / (srcImage.getExtents()[2]);
+
+            boolean failureFlag = false;
+            AlgorithmVOISimplexOpt voiSimplex = new AlgorithmVOISimplexOpt(srcImage, sigmas, AlgorithmVOISimplexOpt.MAXSUM);
+            
+            int[] extents = srcImage.getExtents();
+            int length = extents[0] * extents[1];
+            float[] sliceBuf = new float[length];
+
+            while (!threadStopped) {
+
+                try {
+                    srcImage.exportData(slice * length, length, sliceBuf);
+                } catch (IOException error) {
+                    displayError("Algorithm Bsnake: Image(s) locked");
+                    setCompleted(false);
+                    return;
+                }
+                optContour = voiSimplex.goOptimize(sliceBuf, tempContour);
+                percent += increment;
+                fireProgressStateChanged(percent);
+                // @todo + 5 in AlgorithmBSnake (why?)
+                xPoints = new float[optContour.size() + 2];
+                yPoints = new float[optContour.size() + 2];
+                zPoints = new float[optContour.size() + 2];
+                setPoints(xPoints, yPoints, zPoints, optContour);
+
+                float energy = runSnake(xPoints, yPoints, zPoints, sliceBuf, resultContour);
+                int nPts = resultContour.size();
+
+                if ((nPts < 8) || (Math.abs((energy / tempEnergy) - 1) > PROP_THRESHOLD) ||
+                        (Math.abs(((energy / nPts) / (baseEnergy / baseNPts)) - 1) > PROP_THRESHOLD)) {
+
+                    // if the energy sum changed too much, then the single propagation that we wanted to do has failed
+                    if (propagationType == PROP_NEXT) {
+                        setCompleted(false);
+                        failureFlag = true;
+                    }
+
+                    break;
+                }
+                resultContour.trimPoints(Preferences.getTrim(),
+                        Preferences.getTrimAdjacient());
+                resultVOI.importCurve(resultContour);
+
+                tempContour = new VOIContour(resultContour, 1);
+                resultContour = new VOIContour( false, true );
+                tempEnergy = energy;
+                slice++;
+
+                if (slice >= srcImage.getExtents()[2]) {
+
+                    // if we tried to propagate to the next slice, which doesn't exist
+                    if (propagationType == PROP_NEXT) {
+                        setCompleted(false);
+                        failureFlag = true;
+                    }
+
+                    break;
+                }
+
+                // stop after propagating to one slice if PROP_NEXT
+                if (propagationType == PROP_NEXT) {
+                    fireProgressStateChanged(100);
+
+                    if (!failureFlag) {
+                        setCompleted(true);
+                    }
+
+
+
+                    return;
+                }
+            }
+
+            if (threadStopped) {
+                finalize();
+
+                return;
+            }
+        }
+
+    }
+
+
     /**
      * Takes the polygon and forms two special arrays for use in runSnake.
      *
@@ -923,6 +1140,22 @@ public class AlgorithmSnake extends AlgorithmBase {
 
         xPoints[gon.npoints + 1] = gon.xpoints[0];
         yPoints[gon.npoints + 1] = gon.ypoints[0];
+    }
+
+    private void setPoints(float[] xPoints, float[] yPoints, float[] zPoints, VOIBase contour) {
+        xPoints[0] = contour.get(contour.size() - 1).X;
+        yPoints[0] = contour.get(contour.size() - 1).Y;
+        zPoints[0] = contour.get(contour.size() - 1).Z;
+
+        for (int i = 0; i < contour.size(); i++) {
+            xPoints[i + 1] = contour.get(i).X;
+            yPoints[i + 1] = contour.get(i).Y;
+            zPoints[i + 1] = contour.get(i).Z;
+        }
+
+        xPoints[contour.size() + 1] = contour.get(0).X;
+        yPoints[contour.size() + 1] = contour.get(0).Y;
+        zPoints[contour.size() + 1] = contour.get(0).Z;
     }
 
 }

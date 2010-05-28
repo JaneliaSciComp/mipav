@@ -232,7 +232,6 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         newPtVOI = new VOI((short) 0, "point3D.voi", 512, VOI.POINT, -1.0f);
         newPtVOI.setUID(newPtVOI.hashCode());
         standardColumnImage.registerVOI(newPtVOI);
-        Vector<VOIBase>[] curves = newPtVOI.getCurves();
 
         // std column vals
         // top
@@ -278,165 +277,165 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         x[0] = 188;
         y[0] = 256;
         z[0] = zStart;
-        newPtVOI.importCurve(x, y, z, (int) z[0]);
+        newPtVOI.importCurve(x, y, z);
 
         standardColumnImage.set(222, 290, 40, 100);
         x[0] = 222;
         y[0] = 290;
         z[0] = zStart;
-        newPtVOI.importCurve(x, y, z, (int) z[0]);
+        newPtVOI.importCurve(x, y, z);
 
         standardColumnImage.set(256, 324, 40, 100);
         x[0] = 256;
         y[0] = 324;
         z[0] = zStart;
-        newPtVOI.importCurve(x, y, z, (int) z[0]);
+        newPtVOI.importCurve(x, y, z);
 
         standardColumnImage.set(290, 290, 40, 100);
         x[0] = 290;
         y[0] = 290;
         z[0] = zStart;
-        newPtVOI.importCurve(x, y, z, (int) z[0]);
+        newPtVOI.importCurve(x, y, z);
 
         standardColumnImage.set(324, 256, 40, 100);
         x[0] = 324;
         y[0] = 256;
         z[0] = zStart;
-        newPtVOI.importCurve(x, y, z, (int) z[0]);
+        newPtVOI.importCurve(x, y, z);
 
         standardColumnImage.set(290, 222, 40, 100);
         x[0] = 290;
         y[0] = 222;
         z[0] = zStart;
-        newPtVOI.importCurve(x, y, z, (int) z[0]);
+        newPtVOI.importCurve(x, y, z);
 
         standardColumnImage.set(256, 188, 40, 100);
         x[0] = 256;
         y[0] = 188;
         z[0] = zStart;
-        newPtVOI.importCurve(x, y, z, (int) z[0]);
+        newPtVOI.importCurve(x, y, z);
 
         standardColumnImage.set(222, 222, 40, 100);
         x[0] = 222;
         y[0] = 222;
         z[0] = zStart;
-        newPtVOI.importCurve(x, y, z, (int) z[0]);
+        newPtVOI.importCurve(x, y, z);
 
         standardColumnImage.set(256, 256, 40, 100);
         x[0] = 256;
         y[0] = 256;
         z[0] = zStart;
-        newPtVOI.importCurve(x, y, z, (int) z[0]);
+        newPtVOI.importCurve(x, y, z);
 
         // r8
         standardColumnImage.set(188, 256, 316, 100);
         x[0] = 188;
         y[0] = 256;
         z[0] = zMiddle;
-        newPtVOI.importCurve(x, y, z, (int) z[0]);
+        newPtVOI.importCurve(x, y, z);
 
         standardColumnImage.set(222, 290, 316, 100);
         x[0] = 222;
         y[0] = 290;
         z[0] = zMiddle;
-        newPtVOI.importCurve(x, y, z, (int) z[0]);
+        newPtVOI.importCurve(x, y, z);
 
         standardColumnImage.set(256, 324, 316, 100);
         x[0] = 256;
         y[0] = 324;
         z[0] = zMiddle;
-        newPtVOI.importCurve(x, y, z, (int) z[0]);
+        newPtVOI.importCurve(x, y, z);
 
         standardColumnImage.set(290, 290, 316, 100);
         x[0] = 290;
         y[0] = 290;
         z[0] = zMiddle;
-        newPtVOI.importCurve(x, y, z, (int) z[0]);
+        newPtVOI.importCurve(x, y, z);
 
         standardColumnImage.set(324, 256, 316, 100);
         x[0] = 324;
         y[0] = 256;
         z[0] = zMiddle;
-        newPtVOI.importCurve(x, y, z, (int) z[0]);
+        newPtVOI.importCurve(x, y, z);
 
         standardColumnImage.set(290, 222, 316, 100);
         x[0] = 290;
         y[0] = 222;
         z[0] = zMiddle;
-        newPtVOI.importCurve(x, y, z, (int) z[0]);
+        newPtVOI.importCurve(x, y, z);
 
         standardColumnImage.set(256, 188, 316, 100);
         x[0] = 256;
         y[0] = 188;
         z[0] = zMiddle;
-        newPtVOI.importCurve(x, y, z, (int) z[0]);
+        newPtVOI.importCurve(x, y, z);
 
         standardColumnImage.set(222, 222, 316, 100);
         x[0] = 222;
         y[0] = 222;
         z[0] = zMiddle;
-        newPtVOI.importCurve(x, y, z, (int) z[0]);
+        newPtVOI.importCurve(x, y, z);
 
         standardColumnImage.set(256, 256, 316, 100);
         x[0] = 256;
         y[0] = 256;
         z[0] = zMiddle;
-        newPtVOI.importCurve(x, y, z, (int) z[0]);
+        newPtVOI.importCurve(x, y, z);
 
         // r7
         standardColumnImage.set(188, 256, 472, 100);
         x[0] = 188;
         y[0] = 256;
         z[0] = zEnd;
-        newPtVOI.importCurve(x, y, z, (int) z[0]);
+        newPtVOI.importCurve(x, y, z);
 
         standardColumnImage.set(222, 290, 472, 100);
         x[0] = 222;
         y[0] = 290;
         z[0] = zEnd;
-        newPtVOI.importCurve(x, y, z, (int) z[0]);
+        newPtVOI.importCurve(x, y, z);
 
         standardColumnImage.set(256, 324, 472, 100);
         x[0] = 256;
         y[0] = 324;
         z[0] = zEnd;
-        newPtVOI.importCurve(x, y, z, (int) z[0]);
+        newPtVOI.importCurve(x, y, z);
 
         standardColumnImage.set(290, 290, 472, 100);
         x[0] = 290;
         y[0] = 290;
         z[0] = zEnd;
-        newPtVOI.importCurve(x, y, z, (int) z[0]);
+        newPtVOI.importCurve(x, y, z);
 
         standardColumnImage.set(324, 256, 472, 100);
         x[0] = 324;
         y[0] = 256;
         z[0] = zEnd;
-        newPtVOI.importCurve(x, y, z, (int) z[0]);
+        newPtVOI.importCurve(x, y, z);
 
         standardColumnImage.set(290, 222, 472, 100);
         x[0] = 290;
         y[0] = 222;
         z[0] = zEnd;
-        newPtVOI.importCurve(x, y, z, (int) z[0]);
+        newPtVOI.importCurve(x, y, z);
 
         standardColumnImage.set(256, 188, 472, 100);
         x[0] = 256;
         y[0] = 188;
         z[0] = zEnd;
-        newPtVOI.importCurve(x, y, z, (int) z[0]);
+        newPtVOI.importCurve(x, y, z);
 
         standardColumnImage.set(222, 222, 472, 100);
         x[0] = 222;
         y[0] = 222;
         z[0] = zEnd;
-        newPtVOI.importCurve(x, y, z, (int) z[0]);
+        newPtVOI.importCurve(x, y, z);
 
         standardColumnImage.set(256, 256, 472, 100);
         x[0] = 256;
         y[0] = 256;
         z[0] = zEnd;
-        newPtVOI.importCurve(x, y, z, (int) z[0]);
+        newPtVOI.importCurve(x, y, z);
 
         standardColumnImage.calcMinMax();
 
@@ -444,7 +443,6 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         newPtVOI = new VOI((short) 0, "point3D.voi", 512, VOI.POINT, -1.0f);
         newPtVOI.setUID(newPtVOI.hashCode());
         neuronImage_grey.registerVOI(newPtVOI);
-        curves = newPtVOI.getCurves();
         int key;
         float[] f;
         for (int i = 0; i < pointsMap.size(); i++) {
@@ -473,7 +471,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
                 inputPointsList.add(null);
             }
             transformedPointsList.add(null);
-            newPtVOI.importCurve(x, y, z, (int) z[0]);
+            newPtVOI.importCurve(x, y, z);
         }
 
         // remove whatever points from both std column and neuron image that were not available in the points file
@@ -481,28 +479,16 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         int nCurves;
         String label;
         VOI voi = stdColumnVOIs.elementAt(0);
-        curves = voi.getCurves();
-        final ArrayList<Integer> indexAL_std = new ArrayList<Integer>();
-        final ArrayList<Integer> sliceAL_std = new ArrayList<Integer>();
-        for (int s = 0; s < standardColumnImage.getExtents()[2]; s++) {
-            nCurves = curves[s].size();
-            for (int j = 0; j < nCurves; j++) {
-                final VOIPoint voiPoint = (VOIPoint) (curves[s].elementAt(j));
-                label = voiPoint.getLabel();
-                for (int k = 0; k < removePointsLabels.size(); k++) {
-                    final String removeLabel = removePointsLabels.get(k);
-                    if (label.equals(removeLabel)) {
-                        indexAL_std.add(new Integer(j));
-                        sliceAL_std.add(new Integer(s));
-                    }
+        Vector<VOIBase> curves = voi.getCurves();
+        nCurves = curves.size();
+        for (int j = nCurves-1; j >= 0; j--) {
+            final VOIPoint voiPoint = (VOIPoint) (curves.elementAt(j));
+            label = voiPoint.getLabel();
+            for (int k = 0; k < removePointsLabels.size(); k++) {
+                final String removeLabel = removePointsLabels.get(k);
+                if (label.equals(removeLabel)) {
+                    curves.removeElement(voiPoint);
                 }
-            }
-        }
-        if (indexAL_std.size() > 0) {
-            for (int i = indexAL_std.size(); i > 0; i--) {
-                final int ind = indexAL_std.get(i - 1);
-                final int slice = sliceAL_std.get(i - 1);
-                voi.removeCurve(ind, slice);
             }
         }
         standardColumnImage.notifyImageDisplayListeners();
@@ -510,29 +496,17 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         final VOIVector neuronVOIs = neuronImage_grey.getVOIs();
         voi = neuronVOIs.elementAt(0);
         curves = voi.getCurves();
-        final ArrayList<Integer> indexAL_neuron = new ArrayList<Integer>();
-        final ArrayList<Integer> sliceAL_neuron = new ArrayList<Integer>();
-        for (int s = 0; s < neuronImage_grey.getExtents()[2]; s++) {
-            nCurves = curves[s].size();
-            for (int j = 0; j < nCurves; j++) {
-                final VOIPoint voiPoint = (VOIPoint) (curves[s].elementAt(j));
-                label = voiPoint.getLabel();
-                for (int k = 0; k < removePointsLabels.size(); k++) {
-                    final String removeLabel = removePointsLabels.get(k);
-                    if (label.equals(removeLabel)) {
-                        indexAL_neuron.add(new Integer(j));
-                        sliceAL_neuron.add(new Integer(s));
-                    }
+        nCurves = curves.size();
+        for (int j = nCurves-1; j >= 0; j--) {
+            final VOIPoint voiPoint = (VOIPoint) (curves.elementAt(j));
+            label = voiPoint.getLabel();
+            for (int k = 0; k < removePointsLabels.size(); k++) {
+                final String removeLabel = removePointsLabels.get(k);
+                if (label.equals(removeLabel)) {
+                    curves.removeElement(voiPoint);
                 }
+            }
 
-            }
-        }
-        if (indexAL_neuron.size() > 0) {
-            for (int i = indexAL_neuron.size(); i > 0; i--) {
-                final int ind = indexAL_neuron.get(i - 1);
-                final int slice = sliceAL_neuron.get(i - 1);
-                voi.removeCurve(ind, slice);
-            }
         }
 
         neuronImage_grey.notifyImageDisplayListeners();
@@ -594,22 +568,16 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         Vector3f[] ptB = null; // new Vector3f[nPtsB];
         int i, s;
         int ptNum = 0;
-        Vector[] curvesB;
-        Vector[] curvesM;
+        Vector<VOIBase> curvesB;
+        Vector<VOIBase> curvesM;
 
         curvesB = standardColumnImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
-
-        for (s = 0; s < standardColumnImage.getExtents()[2]; s++) {
-            nPtsA += curvesB[s].size();
-        }
+        nPtsA = curvesB.size();
 
         Preferences.debug("thin plate spline - nPtsA = " + nPtsA);
 
         curvesM = resultImage1.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
-
-        for (s = 0; s < resultImage1.getExtents()[2]; s++) {
-            nPtsB += curvesM[s].size();
-        }
+        nPtsB = curvesM.size();
 
         Preferences.debug("thin plate spline nPtsB = " + nPtsB);
 
@@ -625,22 +593,12 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
             return;
         }
 
-        for (s = 0; s < standardColumnImage.getExtents()[2]; s++) {
-            tmpptA = standardColumnImage.getVOIs().VOIAt(0).exportPoints(s);
-
-            for (i = 0; i < tmpptA.length; i++) {
-                ptNum = (Short.valueOf( ((VOIPoint) curvesB[s].elementAt(i)).getLabel()).shortValue()) - 1;
-                ptA[ptNum] = tmpptA[i];
-            }
+        for (i = 0; i < nPtsA; i++) {
+            ptA[i] = ((VOIPoint) curvesB.elementAt(i)).exportPoint();
         }
 
-        for (s = 0; s < resultImage1.getExtents()[2]; s++) {
-            tmpptB = resultImage1.getVOIs().VOIAt(0).exportPoints(s);
-
-            for (i = 0; i < tmpptB.length; i++) {
-                ptNum = (Short.valueOf( ((VOIPoint) curvesM[s].elementAt(i)).getLabel()).shortValue()) - 1;
-                ptB[ptNum] = tmpptB[i];
-            }
+        for (i = 0; i < nPtsB; i++) {
+            ptB[i] = ((VOIPoint) curvesM.elementAt(i)).exportPoint();
         }
 
         // DIM == 3
@@ -755,30 +713,20 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         Vector3f[] ptA = null; // new Vector3f[nPtsA];
         Vector3f[] ptB = null; // new Vector3f[nPtsB];
         int i, s, ptNum;
-        Vector[] curves;
+        Vector<VOIBase> curves;
 
         curves = standardColumnImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
-
-        for (s = 0; s < standardColumnImage.getExtents()[2]; s++) {
-            nPtsA += curves[s].size();
-        }
+        nPtsA = curves.size();
 
         Preferences.debug("nPtsA = " + nPtsA + "\n");
         ptA = new Vector3f[nPtsA];
-        for (s = 0; s < standardColumnImage.getExtents()[2]; s++) {
-            tmpptA = standardColumnImage.getVOIs().VOIAt(0).exportPoints(s);
 
-            for (i = 0; i < tmpptA.length; i++) {
-                ptNum = (Short.valueOf( ((VOIPoint) curves[s].elementAt(i)).getLabel()).shortValue()) - 1;
-                ptA[ptNum] = tmpptA[i];
-            }
+        for (i = 0; i < nPtsA; i++) {
+            ptA[i] = ((VOIPoint)curves.elementAt(i)).exportPoint();
         }
 
         curves = neuronImage_grey.getVOIs().VOIAt(0).getCurves();
-
-        for (s = 0; s < neuronImage_grey.getExtents()[2]; s++) {
-            nPtsB += curves[s].size();
-        }
+        nPtsB = curves.size();
 
         if (nPtsA != nPtsB) {
             MipavUtil.displayError("Both images must have the same number of points");
@@ -788,15 +736,9 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
         Preferences.debug("nPtsB = " + nPtsB + "\n");
         ptB = new Vector3f[nPtsB];
-        for (s = 0; s < neuronImage_grey.getExtents()[2]; s++) {
-            tmpptB = neuronImage_grey.getVOIs().VOIAt(0).exportPoints(s);
-
-            for (i = 0; i < tmpptB.length; i++) {
-                ptNum = (Short.valueOf( ((VOIPoint) curves[s].elementAt(i)).getLabel()).shortValue()) - 1;
-
-                // ptNum = (int)(Short.valueOf(((VOIPoint)tmpptB[i]).getLabel()).shortValue());
-                ptB[ptNum] = tmpptB[i];
-            }
+        for (i = 0; i < nPtsB; i++) {
+            // ptNum = (int)(Short.valueOf(((VOIPoint)tmpptB[i]).getLabel()).shortValue());
+            ptB[i] = ((VOIPoint)curves.elementAt(i)).exportPoint();
         }
 
         Vector3f[] ptAmm = new Vector3f[nPtsA];
@@ -869,8 +811,6 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         // need to transform points if there were any
         final VOIVector srcVOIs = neuronImage_grey.getVOIs();
         VOI newVOI;
-        Vector[] curves;
-        Vector[] newCurves;
         int nCurves;
         Vector3f pt, tPt;
 
@@ -883,8 +823,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         VOI voi = srcVOIs.elementAt(0);
         newVOI = new VOI((short) 0, "point3D.voi", resultImage1.getExtents()[2], VOI.POINT, -1.0f);
         newVOI.setUID(newVOI.hashCode());
-        curves = voi.getCurves();
-        newCurves = newVOI.getCurves();
+        Vector<VOIBase>[] curves = voi.getSortedCurves(neuronImage_grey.getExtents()[2]);
 
         Integer labelInt;
         for (int s = 0; s < neuronImage_grey.getExtents()[2]; s++) {
@@ -929,14 +868,14 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         while (iter.hasNext()) {
             key = (Integer) iter.next();
             v = addCurvesMap.get(key);
-            newVOI.importCurve(v.getXPt(), v.getYPt(), v.getZPt(), (int) (v.getZPt()[0]));
+            newVOI.importCurve(v.getXPt(), v.getYPt(), v.getZPt());
         }
 
         // need to remove the corresponding out of bounds points from the standard column image
         if (labelAL_std.size() > 0) {
             final VOIVector stdVOIs = standardColumnImage.getVOIs();
             voi = stdVOIs.elementAt(0);
-            curves = voi.getCurves();
+            curves = voi.getSortedCurves(standardColumnImage.getExtents()[2]);
             String removeLabel;
             for (int s = standardColumnImage.getExtents()[2] - 1; s >= 0; s--) {
                 nCurves = curves[s].size();
@@ -947,7 +886,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
                         removeLabel = labelAL_std.get(i);
                         if (label.equals(removeLabel)) {
                             outputTextArea.append("removing point from standard column image - " + label + "\n");
-                            voi.removeCurve(j, s);
+                            voi.getCurves().removeElement(voiPoint);
                         }
                     }
                 }

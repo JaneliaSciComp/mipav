@@ -2472,7 +2472,7 @@ public abstract class NLConstrainedEngineEP {
         // w0      UNCHANGED IF kod=-1 ON RETURN
         // COMPLETELY DESTROYED IF ABS(kod)=2 ON RETURN
         int rank[] = new int[1];
-    	
+
         eval = 0;
 
         // SET gndok = true IF SEARCH DIRECTION CONTAINED IN dx ON ENTRY IS ACCEPTED
@@ -6748,7 +6748,7 @@ mainLoop:
 
                 pu--;
             } // for (jj = 1; jj <= p; jj++)
-            
+
             for (j = 0; j < p; j++) {
             	jpvt[j] = jpvt[j] - 1;
             }

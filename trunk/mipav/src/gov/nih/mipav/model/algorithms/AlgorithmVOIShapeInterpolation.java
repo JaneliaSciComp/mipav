@@ -135,6 +135,9 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
 	public void runAlgorithm() {
         fireProgressStateChanged(10);
 		
+        VOI1.translate( 0, 0, -sliceIndex1 );
+        VOI2.translate( 0, 0, -sliceIndex2 );
+        
 		//extract 2D slices...and place voi contours in them
 		int[] destExtents = new int[2];
         destExtents[0] = srcImage.getExtents()[0];
@@ -149,7 +152,7 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
 		AlgorithmExtractSlices extractSlicesAlg1 = new AlgorithmExtractSlices(srcImage, imageSlice1, extractSlices1);
 		extractSlicesAlg1.run();
 		VOI newVOI1 = new VOI((short)0,"voi1",1);
-		newVOI1.importCurve(VOI1, 0);
+		newVOI1.importCurve(VOI1);
 		imageSlice1.registerVOI(newVOI1);
 		//lets get original center for VOI1
 		geomCenter1 = VOI1.getGeometricCenter();
@@ -157,11 +160,10 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
 		AlgorithmExtractSlices extractSlicesAlg2 = new AlgorithmExtractSlices(srcImage, imageSlice2, extractSlices2);
 		extractSlicesAlg2.run();
 		VOI newVOI2 = new VOI((short)0,"voi2",1);
-		newVOI2.importCurve(VOI2, 0);
+		newVOI2.importCurve(VOI2);
 		imageSlice2.registerVOI(newVOI2);
 		//lets get original centerfor VOI2
 		geomCenter2 = VOI2.getGeometricCenter();
-
 
 		//get center of image...since imageSlice1 and imageSlice2 are slices from same image, get it from either
 		imageCenter = imageSlice1.getImageCenter();
@@ -171,8 +173,8 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
 		float transY1 = imageCenter.Y - geomCenter1.Y;
 		float transX2 = imageCenter.X - geomCenter2.X;
 		float transY2 = imageCenter.Y - geomCenter2.Y;
-		VOI1.translate(transX1, transY1);
-		VOI2.translate(transX2, transY2);
+		VOI1.translate(transX1, transY1, 0);
+		VOI2.translate(transX2, transY2, 0);
 
 		fireProgressStateChanged(20);
 		
@@ -182,6 +184,7 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
 		maskImage2 = imageSlice2.generateBinaryImage(false, true);
 		maskImage2.setImageName(imageSlice2.getImageName() + "_mask2");
 
+		
         //generate distance map image for shape interpolation
         distanceMap1 = (ModelImage) maskImage1.clone();
         distanceMap1.setImageName(imageSlice1.getImageName() + "_dMap1");
@@ -229,16 +232,14 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
         	fireProgressStateChanged(60);
             AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(inBetweenBooleanShapes[0]);
             VOIExtractionAlgo.run();
-
             
             fireProgressStateChanged(80);
             //we are only working with one contour on a 2d slice here
             ViewVOIVector VOIs = (ViewVOIVector) inBetweenBooleanShapes[0].getVOIs();
-            int nVOI = VOIs.size();
             VOI tempVOI = (VOI)(VOIs.VOIAt(0).clone());
         	tempVOI.setUID(tempVOI.hashCode());
-            Vector[] contours = tempVOI.getCurves();
-            finalContours[0] = (VOIContour)(VOIContour)contours[0].elementAt(0);
+            Vector contours = tempVOI.getCurves();
+            finalContours[0] = (VOIContour)(VOIContour)contours.elementAt(0);
             
             boolean isLineVertical = false;
             float diffX = Math.abs(geomCenter1.X - geomCenter2.X);
@@ -274,10 +275,9 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
 
             float transX = newX - imageCenter.X;
     		float transY = newY - imageCenter.Y;
-    		finalContours[0].translate(transX, transY);
+    		finalContours[0].translate(transX, transY, sliceIndex1 + 1);
             
-            int index = sliceIndex1 + 1;
-            VOIHandle.importCurve(finalContours[0], index);
+            VOIHandle.importCurve(finalContours[0]);
     		fireProgressStateChanged(100);
 
             
@@ -349,11 +349,10 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
             	
                 //we are only working with one contour on a 2d slice here
                 ViewVOIVector VOIs = (ViewVOIVector) inBetweenBooleanShapes[index].getVOIs();
-                int nVOI = VOIs.size();
                 VOI tempVOI = (VOI)(VOIs.VOIAt(0).clone());
             	tempVOI.setUID(tempVOI.hashCode());
-                Vector[] contours = tempVOI.getCurves();
-                finalContours[index] = (VOIContour)(VOIContour)contours[0].elementAt(0);
+                Vector contours = tempVOI.getCurves();
+                finalContours[index] = (VOIContour)(VOIContour)contours.elementAt(0);
                 
                 boolean isLineVertical = false;
                 float diffX = Math.abs(geomCenter1.X - geomCenter2.X);
@@ -389,10 +388,8 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
 
                 float transX = newX - imageCenter.X;
         		float transY = newY - imageCenter.Y;
-        		finalContours[index].translate(transX, transY);
-                
-                int ind = sliceIndex1 + i;
-                VOIHandle.importCurve(finalContours[index], ind);
+        		finalContours[index].translate(transX, transY, sliceIndex1 + i);
+                VOIHandle.importCurve(finalContours[index]);
                 if(tempA != null) {
                 	tempA.disposeLocal();
                 	tempA = null;
