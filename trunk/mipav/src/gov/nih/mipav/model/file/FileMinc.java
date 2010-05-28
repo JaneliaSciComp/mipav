@@ -2202,9 +2202,6 @@ public class FileMinc extends FileBase {
         } else {
             writeName("signed__", 1, endianess);
         }
-        
-        
-        
 
         
         

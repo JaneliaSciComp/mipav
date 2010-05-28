@@ -113,8 +113,8 @@ public class RubberbandLevelSet implements MouseMotionListener, MouseListener {
                     VOI newVOI = new VOI((short) 0, "temp", 1, VOI.CONTOUR, presetHue);
                     newVOI.importPolygon(levelSet, 0);
 
-                    Vector[] tempContours = newVOI.getCurves();
-                    ((VOIContour) (tempContours[0].elementAt(0))).trimPoints(Preferences.getTrim(),
+                    Vector tempContours = newVOI.getCurves();
+                    ((VOIContour) (tempContours.elementAt(0))).trimPoints(Preferences.getTrim(),
                                                                              Preferences.getTrimAdjacient());
 
                     // add this to potential list
@@ -145,8 +145,8 @@ public class RubberbandLevelSet implements MouseMotionListener, MouseListener {
                         VOI newVOI = new VOI((short) 0, "temp", 1, VOI.CONTOUR, presetHue);
                         newVOI.importPolygon(levelSet, 0);
 
-                        Vector[] tempContours = newVOI.getCurves();
-                        ((VOIContour) (tempContours[0].elementAt(0))).trimPoints(Preferences.getTrim(),
+                        Vector tempContours = newVOI.getCurves();
+                        ((VOIContour) (tempContours.elementAt(0))).trimPoints(Preferences.getTrim(),
                                                                                  Preferences.getTrimAdjacient());
                         // add this to potential list
                         potentialGons.add(((VOIContour) (tempContours.elementAt(0))).exportPolygon());
@@ -340,8 +340,8 @@ public class RubberbandLevelSet implements MouseMotionListener, MouseListener {
 
                     newVOI.importPolygon(levelSet, component.getSlice());
 
-                    Vector[] tempContours = newVOI.getCurves();
-                    ((VOIContour) (tempContours[component.getSlice()].elementAt(0))).trimPoints(Preferences.getTrim(),
+                    Vector tempContours = newVOI.getCurves();
+                    ((VOIContour) (tempContours.elementAt(0))).trimPoints(Preferences.getTrim(),
                                                                                                 Preferences.getTrimAdjacient());
                     newVOI.setLevel(level);
                 } catch (OutOfMemoryError error) {
@@ -367,11 +367,11 @@ public class RubberbandLevelSet implements MouseMotionListener, MouseListener {
 
                 for (i = 0; i < nVOI; i++) {
 
-                    if (VOIs.VOIAt(i).getID() == ((ViewJComponentEditImage) (component)).getVOIHandler().getVOI_ID()) {
+                    if (VOIs.VOIAt(i).getID() == component.getVOIHandler().getVOI_ID()) {
 
                         if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                             VOIs.VOIAt(i).importPolygon(levelSet, component.getSlice());
-                            ((VOIContour) (VOIs.VOIAt(i).getCurves()[component.getSlice()].lastElement())).trimPoints(Preferences.getTrim(),
+                            ((VOIContour) (VOIs.VOIAt(i).getCurves().lastElement())).trimPoints(Preferences.getTrim(),
                                                                                                                       Preferences.getTrimAdjacient());
                         } else {
                             MipavUtil.displayError("Can't add Level-set VOI to other VOI structure.");

@@ -180,7 +180,7 @@ public class RubberbandLine extends Rubberband {
                 }
 
                 if ((Math.abs(x[1] - x[0]) > 1) || (Math.abs(y[1] - y[0]) > 1)) {
-                    newVOI.importCurve(x, y, z, slice);
+                    newVOI.importCurve(x, y, z);
                     image.registerVOI(newVOI);
                 }
 
@@ -204,7 +204,7 @@ public class RubberbandLine extends Rubberband {
                     if (VOIs.VOIAt(i).getID() == ((ViewJComponentEditImage) (component)).getVOIHandler().getVOI_ID()) {
 
                         if (VOIs.VOIAt(i).getCurveType() == VOI.LINE) {
-                            VOIs.VOIAt(i).importCurve(x, y, z, slice);
+                            VOIs.VOIAt(i).importCurve(x, y, z);
                         } else {
                             MipavUtil.displayError("Can't add Line VOI to other VOI structure.");
                         }

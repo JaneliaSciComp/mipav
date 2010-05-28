@@ -73,6 +73,23 @@ public class ArrayUtil {
     }
 
     /**
+     * Copy a row in x, y or z direction to an array.
+     * 
+     * @param src
+     * @param srcPos
+     * @param dest
+     * @param destPos
+     * @param length
+     * @param srcDist the distance between two pixels of source data in x, y or z direction.
+     * @param destDist the distance between two pixels of destination data in x, y or z direction.
+     */
+    public static void rowCopy(final boolean[] src, final int srcPos, final boolean[] dest, final int destPos,
+            final int length, final int srcDist, final int destDist) {
+        for (int i = 0; i < length; i++) {
+            dest[destPos + i * destDist] = src[srcPos + i * srcDist];
+        }
+    }
+    /**
      * Copy a float array to a double array
      * 
      * @param src a float array

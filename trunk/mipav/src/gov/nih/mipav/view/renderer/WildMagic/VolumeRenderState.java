@@ -3,8 +3,6 @@ import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.model.structures.TransferFunction;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
-import gov.nih.mipav.view.renderer.WildMagic.Render.LocalVolumeVOI;
-import gov.nih.mipav.view.renderer.WildMagic.Render.LocalVolumeVOIVector;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget;
 
@@ -147,7 +145,5 @@ public class VolumeRenderState implements Serializable
     
     //PlaneRender Info:
     public float[] PlaneZoom = new float[3];
-    public LocalVolumeVOIVector[][] VOIList = new LocalVolumeVOIVector[3][];
-    public LocalVolumeVOI[] CurrentVOI = new LocalVolumeVOI[3];
     
 }

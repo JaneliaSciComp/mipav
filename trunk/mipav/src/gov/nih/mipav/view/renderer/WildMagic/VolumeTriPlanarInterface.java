@@ -49,7 +49,6 @@ import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelVolume4D;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceExtractorCubes;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase.CancelListener;
-import gov.nih.mipav.view.renderer.WildMagic.Render.LocalVolumeVOI;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeNode;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject;
@@ -2498,7 +2497,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         }
         if ( m_kVOIInterface != null )
         {
-            m_kVOIInterface.dispose();
+            m_kVOIInterface.disposeLocal(true);
             m_kVOIInterface = null;
         }
     }
@@ -3322,7 +3321,8 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     private void initVOI()
     {        
         setSliceFromSurface( sliceGUI.getCenter() );
-        m_kVOIInterface = new VOIManagerInterface( this, m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage(), 3, true, null );
+        m_kVOIInterface = new VOIManagerInterface( this, m_kVolumeImageA.GetImage(), m_kVolumeImageA.GetLUT(),
+                m_kVolumeImageB.GetImage(), m_kVolumeImageB.GetLUT(), 3, true, null );
         panelToolbar.add( m_kVOIInterface.getToolBar(), panelToolBarGBC );
         for ( int i = 0; i < 3; i++ )
         {
@@ -3334,7 +3334,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     
 
     
-    public Frame getFrame()
+    public JFrame getFrame()
     {
         return this;
     }

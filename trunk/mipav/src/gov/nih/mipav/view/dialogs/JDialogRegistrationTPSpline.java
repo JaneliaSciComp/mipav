@@ -246,23 +246,17 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
         Vector3f[] ptB = null; // new Vector3f[nPtsB];
         int i, s;
         int ptNum = 0;
-        Vector[] curvesB;
-        Vector[] curvesM;
+        Vector curvesB;
+        Vector curvesM;
 
         if ((baseImage.getNDims() == 3) && (matchImage.getNDims() == 3)) {
             curvesB = baseImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
-
-            for (s = 0; s < baseImage.getExtents()[2]; s++) {
-                nPtsA += curvesB[s].size();
-            }
+            nPtsA = curvesB.size();
 
             Preferences.debug("nPtsA = " + nPtsA);
 
             curvesM = matchImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
-
-            for (s = 0; s < matchImage.getExtents()[2]; s++) {
-                nPtsB += curvesM[s].size();
-            }
+            nPtsB += curvesM.size();
 
             Preferences.debug("nPtsB = " + nPtsB);
 
@@ -278,25 +272,18 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
                 return;
             }
 
-            for (s = 0; s < baseImage.getExtents()[2]; s++) {
-                tmpptA = baseImage.getVOIs().VOIAt(0).exportPoints(s);
-
+                tmpptA = baseImage.getVOIs().VOIAt(0).exportAllPoints();
                 for (i = 0; i < tmpptA.length; i++) {
-                    ptNum = (int) (Short.valueOf(((VOIPoint) curvesB[s].elementAt(i)).getLabel()).shortValue()) - 1;
-                    ptA[ptNum] = tmpptA[i];
+                    //ptNum = (int) (Short.valueOf(((VOIPoint) curvesB[s].elementAt(i)).getLabel()).shortValue()) - 1;
+                    ptA[i] = tmpptA[i];
                 }
-            }
 
-            for (s = 0; s < matchImage.getExtents()[2]; s++) {
-                tmpptB = matchImage.getVOIs().VOIAt(0).exportPoints(s);
-
+                tmpptB = matchImage.getVOIs().VOIAt(0).exportAllPoints();
                 for (i = 0; i < tmpptB.length; i++) {
-                    ptNum = (int) (Short.valueOf(((VOIPoint) curvesM[s].elementAt(i)).getLabel()).shortValue()) - 1;
-
+                    //ptNum = (int) (Short.valueOf(((VOIPoint) curvesM[s].elementAt(i)).getLabel()).shortValue()) - 1;
                     // ptNum = (int)(Short.valueOf(((VOIPoint)tmpptB[i]).getLabel()).shortValue());
-                    ptB[ptNum] = tmpptB[i];
+                    ptB[i] = tmpptB[i];
                 }
-            }
 
             coplanar = true;
 
@@ -309,11 +296,11 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
 
         } else if ((baseImage.getNDims() == 2) && (matchImage.getNDims() == 2)) {
             curvesB = baseImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
-            nPtsA = curvesB[0].size();
+            nPtsA = curvesB.size();
             Preferences.debug("nPtsA = " + nPtsA);
 
             curvesM = matchImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
-            nPtsB = curvesM[0].size();
+            nPtsB = curvesM.size();
             Preferences.debug("nPtsB = " + nPtsB);
 
             try {
@@ -328,19 +315,16 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
                 return;
             }
 
-            tmpptA = baseImage.getVOIs().VOIAt(0).exportPoints(0);
-
+            tmpptA = baseImage.getVOIs().VOIAt(0).exportAllPoints();
             for (i = 0; i < tmpptA.length; i++) {
-                ptNum = (int) (Short.valueOf(((VOIPoint) curvesB[0].elementAt(i)).getLabel()).shortValue()) - 1;
-                ptA[ptNum] = tmpptA[i];
+                //ptNum = (int) (Short.valueOf(((VOIPoint) curvesB[0].elementAt(i)).getLabel()).shortValue()) - 1;
+                ptA[i] = tmpptA[i];
             }
 
-            tmpptB = matchImage.getVOIs().VOIAt(0).exportPoints(0);
-
+            tmpptB = matchImage.getVOIs().VOIAt(0).exportAllPoints();
             for (i = 0; i < tmpptB.length; i++) {
-                ptNum = (int) (Short.valueOf(((VOIPoint) curvesM[0].elementAt(i)).getLabel()).shortValue()) - 1;
-
-                ptB[ptNum] = tmpptB[i];
+                //ptNum = (int) (Short.valueOf(((VOIPoint) curvesM[0].elementAt(i)).getLabel()).shortValue()) - 1;
+                ptB[i] = tmpptB[i];
             }
         }
 

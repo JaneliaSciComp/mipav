@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.dialogs;
 
 
+import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
@@ -41,6 +42,8 @@ public class JDialogTrim extends JDialogBase implements ActionListener, ChangeLi
 
     /** DOCUMENT ME! */
     private JSlider trimSlider;
+    
+    private ModelImage activeImage;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -49,8 +52,9 @@ public class JDialogTrim extends JDialogBase implements ActionListener, ChangeLi
      *
      * @param  theParentFrame  Parent frame
      */
-    public JDialogTrim(Frame theParentFrame) {
+    public JDialogTrim(Frame theParentFrame, ModelImage active) {
         super(theParentFrame, false);
+        activeImage = active;
         init();
     }
 
@@ -88,6 +92,11 @@ public class JDialogTrim extends JDialogBase implements ActionListener, ChangeLi
             }
 
             Preferences.setProperty(Preferences.PREF_TRIM, String.valueOf(trimSlider.getValue() / (float) 100));
+            
+            if ( activeImage != null )
+            {
+                activeImage.trimVOIs();
+            }
         } else if (source == cancelButton) {
             Preferences.setProperty(Preferences.PREF_TRIM, String.valueOf(trimSlider.getValue() / (float) 100));
             dispose();

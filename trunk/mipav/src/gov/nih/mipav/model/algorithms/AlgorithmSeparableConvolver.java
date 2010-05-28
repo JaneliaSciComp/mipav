@@ -52,6 +52,9 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
 
     /** Holds the original image data. */
     private double[] inputBuffer;
+    
+    /** Holds the original image mask data. */
+    private boolean[] inputMask;
 
     /** The dimensions of the both source and destination images. */
     private int[] imgExtents;
@@ -225,12 +228,13 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
      * @param kernelBuffer
      * @param resultBuffer
      */
-    private void convolveNoColor(final double[] imageBuffer, final float[] kernelBuffer, final double[] resultBuffer) {
+    private void convolveNoColor(final double[] imageBuffer, final float[] kernelBuffer, final double[] resultBuffer,
+            boolean[] maskBuffer) {
 
         final int kernelDim = kernelBuffer.length;
         final int halfKernelDim = kernelDim / 2;
         for (int i = 0; i < imageBuffer.length; i++) {
-            if (entireImage || mask.get(i)) {
+            if (entireImage || maskBuffer[i]) {
                 int count = 0;
                 double sum = 0;
                 double norm = 0;
@@ -373,6 +377,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         progress = minProgressValue;
         final double[] xrowBuffer = new double[xDim];
         final double[] xresultBuffer = new double[xDim];
+        final boolean[] maskBuffer = new boolean[xDim];
 
         // Convolve the image with the X dimension kernel
         colorIn = -1;
@@ -385,7 +390,11 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                         fireProgressStateChanged((int) progress++);
                     }
                     ArrayUtil.rowCopy(inputBuffer, row * xoffset + c, xrowBuffer, 0, xDim, cFactor, 1);
-                    convolveNoColor(xrowBuffer, kernelBuffer[0], xresultBuffer);
+                    if ( !entireImage )
+                    {
+                        ArrayUtil.rowCopy(inputMask, row * xoffset + c, maskBuffer, 0, xDim, cFactor, 1);
+                    }
+                    convolveNoColor(xrowBuffer, kernelBuffer[0], xresultBuffer, maskBuffer);
                     ArrayUtil.rowCopy(xresultBuffer, 0, inputBuffer, row * xoffset + c, xDim, 1, cFactor);
                 }
             }
@@ -405,7 +414,12 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                         }
                         ArrayUtil.rowCopy(inputBuffer, z * sliceSize + row * cFactor + c, yrowBuffer, 0, yDim, xoffset,
                                 1);
-                        convolveNoColor(yrowBuffer, kernelBuffer[1], yresultBuffer);
+                        if ( !entireImage )
+                        {
+                            ArrayUtil.rowCopy(inputMask, z * sliceSize + row * cFactor + c, maskBuffer, 0, yDim, xoffset,
+                                    1);
+                        }
+                        convolveNoColor(yrowBuffer, kernelBuffer[1], yresultBuffer, maskBuffer);
                         ArrayUtil.rowCopy(yresultBuffer, 0, inputBuffer, z * sliceSize + row * cFactor + c, yDim, 1,
                                 xoffset);
                     }
@@ -426,7 +440,11 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                             fireProgressStateChanged((int) progress++);
                         }
                         ArrayUtil.rowCopy(inputBuffer, row * cFactor + c, zrowBuffer, 0, zDim, sliceSize, 1);
-                        convolveNoColor(zrowBuffer, kernelBuffer[2], zresultBuffer);
+                        if ( !entireImage )
+                        {
+                            ArrayUtil.rowCopy(inputMask, row * cFactor + c, maskBuffer, 0, zDim, sliceSize, 1);
+                        }
+                        convolveNoColor(zrowBuffer, kernelBuffer[2], zresultBuffer, maskBuffer);
                         ArrayUtil.rowCopy(zresultBuffer, 0, inputBuffer, row * cFactor + c, zDim, 1, sliceSize);
                     }
                 }
@@ -691,6 +709,11 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
     public void setMask(final BitSet newMask) {
         mask = newMask;
         entireImage = false;
+        this.inputMask = new boolean[inputBuffer.length];
+        for ( int i = 0; i < inputMask.length; i++ )
+        {
+            this.inputMask[i] = newMask.get(i);
+        }
     }
 
     public float[] getOutputBuffer() {

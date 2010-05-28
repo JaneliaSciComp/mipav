@@ -1,7 +1,5 @@
 package gov.nih.mipav.view;
 
-import gov.nih.mipav.view.CustomToolBarBuilder.ButtonParams;
-
 import java.awt.event.KeyEvent;
 
 public class CustomUIBuilder {

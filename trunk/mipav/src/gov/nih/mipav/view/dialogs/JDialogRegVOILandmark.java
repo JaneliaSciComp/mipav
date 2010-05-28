@@ -286,8 +286,8 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
                     return;
                 }
 
-                Vector[] curves = VOIs.VOIAt(VOIindex).getCurves();
-                int nCurves = curves[0].size();
+                Vector curves = VOIs.VOIAt(VOIindex).getCurves();
+                int nCurves = curves.size();
 
                 if (nCurves == 0) {
                     MipavUtil.displayError("Please select VOI from the first image slice.");
@@ -297,7 +297,7 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
 
                 for (j = 0; j < nCurves; j++) {
 
-                    if (((VOIContour) (curves[0].elementAt(j))).isActive()) {
+                    if (((VOIContour) (curves.elementAt(j))).isActive()) {
                         break;
                     }
                 }
@@ -324,7 +324,7 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
                 image.exportData(0, volLength, volBuffer); // copy image into 1D array
 
                 int length = (int)
-                                 Math.round(((VOIContour) (curves[0].elementAt(j))).getLengthPtToPt(resolutions) /
+                                 Math.round(((VOIContour) (curves.elementAt(j))).getLengthPtToPt(resolutions) /
                                                 resolutions[0]);
 
                 tmpPosition = new Vector3f[2 * length];

@@ -2347,8 +2347,6 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     public class WebServiceThread extends Thread {
 
         PlugInDialogNDAR dial;
-        
-        String ndarServer,ndarDataStructName;
 
         String ndarServer,ndarDataStructName;
 

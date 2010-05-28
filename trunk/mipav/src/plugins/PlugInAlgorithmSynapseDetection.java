@@ -4289,10 +4289,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
            xArr[0] = centerBlueX;
            yArr[0] = centerBlueY;
            zArr[0] = centerBlueZ;
-           newPtVOI.importCurve(xArr, yArr, zArr, centerBlueZ);
-           ((VOIPoint) (newPtVOI.getCurves()[centerBlueZ].elementAt(0))).setFixed(true);
-          ((VOIPoint) (newPtVOI.getCurves()[centerBlueZ].elementAt(0))).setLabel(Integer.toString(numSynapses + 1));
-          ((VOIPoint) (newPtVOI.getCurves()[centerBlueZ].elementAt(0))).setName(Integer.toString(numSynapses + 1));
+           newPtVOI.importCurve(xArr, yArr, zArr);
+           ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
+          ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setLabel(Integer.toString(numSynapses + 1));
            srcImage.registerVOI(newPtVOI);  
            numSynapses++;
            if (histoInfo) {
@@ -4390,10 +4389,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
            xArr[0] = centerBlueX;
            yArr[0] = centerBlueY;
            zArr[0] = centerBlueZ;
-           newPtVOI.importCurve(xArr, yArr, zArr, centerBlueZ);
-           ((VOIPoint) (newPtVOI.getCurves()[centerBlueZ].elementAt(0))).setFixed(true);
-          ((VOIPoint) (newPtVOI.getCurves()[centerBlueZ].elementAt(0))).setLabel(Integer.toString(numSynapses + 1));
-          ((VOIPoint) (newPtVOI.getCurves()[centerBlueZ].elementAt(0))).setName(Integer.toString(numSynapses + 1));
+           newPtVOI.importCurve(xArr, yArr, zArr);
+           ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
+          ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setLabel(Integer.toString(numSynapses + 1));
            srcImage.registerVOI(newPtVOI);  
            numSynapses++;
            if (histoInfo) {

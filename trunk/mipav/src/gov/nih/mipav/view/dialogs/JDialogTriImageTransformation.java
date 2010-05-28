@@ -327,17 +327,29 @@ public class JDialogTriImageTransformation extends JDialogBase {
             }
 
             if (selectedImage == ViewJComponentBase.IMAGE_A) {
-                thetaXY = ((ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.AXIAL_A)).getTheta();
-                thetaXZ = ((ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.CORONAL_A)).getTheta();
-                thetaZY = ((ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.SAGITTAL_A)).getTheta();
+                thetaXY = frame.getTriImage(ViewJFrameTriImage.AXIAL_A).getTheta();
+                thetaXZ = frame.getTriImage(ViewJFrameTriImage.CORONAL_A).getTheta();
+                thetaZY = frame.getTriImage(ViewJFrameTriImage.SAGITTAL_A).getTheta();
+
+                frame.getTriImage(ViewJFrameTriImage.AXIAL_A).clearProtractor();
+                frame.getTriImage(ViewJFrameTriImage.CORONAL_A).clearProtractor();
+                frame.getTriImage(ViewJFrameTriImage.SAGITTAL_A).clearProtractor();
             } else if (selectedImage == ViewJComponentBase.IMAGE_B) {
-                thetaXY = ((ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.AXIAL_B)).getTheta();
-                thetaXZ = ((ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.CORONAL_B)).getTheta();
-                thetaZY = ((ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.SAGITTAL_B)).getTheta();
+                thetaXY = frame.getTriImage(ViewJFrameTriImage.AXIAL_B).getTheta();
+                thetaXZ = frame.getTriImage(ViewJFrameTriImage.CORONAL_B).getTheta();
+                thetaZY = frame.getTriImage(ViewJFrameTriImage.SAGITTAL_B).getTheta();
+
+                frame.getTriImage(ViewJFrameTriImage.AXIAL_B).clearProtractor();
+                frame.getTriImage(ViewJFrameTriImage.CORONAL_B).clearProtractor();
+                frame.getTriImage(ViewJFrameTriImage.SAGITTAL_B).clearProtractor();
             } else {
-                thetaXY = ((ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.AXIAL_AB)).getTheta();
-                thetaXZ = ((ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.CORONAL_AB)).getTheta();
-                thetaZY = ((ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.SAGITTAL_AB)).getTheta();
+                thetaXY = frame.getTriImage(ViewJFrameTriImage.AXIAL_AB).getTheta();
+                thetaXZ = frame.getTriImage(ViewJFrameTriImage.CORONAL_AB).getTheta();
+                thetaZY = frame.getTriImage(ViewJFrameTriImage.SAGITTAL_AB).getTheta();
+
+                frame.getTriImage(ViewJFrameTriImage.AXIAL_AB).clearProtractor();
+                frame.getTriImage(ViewJFrameTriImage.CORONAL_AB).clearProtractor();
+                frame.getTriImage(ViewJFrameTriImage.SAGITTAL_AB).clearProtractor();
             }
 
             TransMatrix xfrm = new TransMatrix(4);

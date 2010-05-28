@@ -23,7 +23,7 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private VOIHandler voiHandler;
+    private VOIHandlerInterface voiHandler;
 
     /** DOCUMENT ME! */
     private JMenuItem itemBuildPolyline;
@@ -50,7 +50,7 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
      *
      * @param  comp  DOCUMENT ME!
      */
-    public ViewJPopupPt(VOIHandler handler) {
+    public ViewJPopupPt(VOIHandlerInterface handler) {
 
         try {
             ptPopup = new JPopupMenu();
@@ -76,6 +76,7 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
         propSubMenu.add(ViewMenuBuilder.buildMenuItem("To All Slices", "PropVOIAll", 0, this, null, true));
 
         ptPopup.add(propSubMenu);
+        ptPopup.add(ViewMenuBuilder.buildMenuItem("Delete", "deleteVOI", 0, this, "delete.gif", true));
 
         ptPopup.addSeparator();
         ptPopup.add(itemShowGraph);
@@ -101,23 +102,9 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
             if (event.getActionCommand().equals("ShowGraph")) {
                 voiHandler.setGraphVisible();
             } else if (event.getActionCommand().equals("PropVOIUp")) {
-
-            	int oldSlice = voiHandler.getComponentImage().getSlice();
-                if (voiHandler.propVOI(1, false) == true) {
-                	if(oldSlice == voiHandler.getComponentImage().getSlice()) { 
-                    	//means some other handler has not already updated to the new slice
-                		((ViewJFrameImage) voiHandler.getComponentImage().getFrame()).incSlice();
-                	}
-                }
+                voiHandler.propVOI(1, false);
             } else if (event.getActionCommand().equals("PropVOIDown")) {
-
-            	int oldSlice = voiHandler.getComponentImage().getSlice();
-                if (voiHandler.propVOI(-1, false) == true) {
-                	if(oldSlice == voiHandler.getComponentImage().getSlice()) { 
-                    	//means some other handler has not already updated to the new slice
-                		((ViewJFrameImage) voiHandler.getComponentImage().getFrame()).decSlice();
-                	}
-                }
+                voiHandler.propVOI(-1, false);
             } else if (event.getActionCommand().equals("PropVOIAll")) {
                 voiHandler.propVOIAll();
             } else if (event.getActionCommand().equals("PAAI")) {
@@ -126,6 +113,8 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
                 voiHandler.showVOIProperties();
             } else if (event.getActionCommand().equals("BuildPoly")) {
                 voiHandler.convertPointToPoly();
+            } else if (event.getActionCommand().equals("deleteVOI")) {
+                voiHandler.deleteSelectedVOI(true);
             }
 
         } catch (OutOfMemoryError error) {

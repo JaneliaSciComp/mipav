@@ -823,7 +823,7 @@ public class ViewMenuBar {
                                 menuBuilder.buildMenuItem("Smooth VOI", "SmoothVOI", 0, null, true),
                                 menuBuilder.buildMenuItem("Trim parameter", "Trim", 0, null, true),
                                 ViewMenuBar.separator,
-                                menuBuilder.buildMenuItem("Cardiology VOI", "Cardio", 0, null, true),
+                                //menuBuilder.buildMenuItem("Cardiology VOI", "Cardio", 0, null, true),
                                 menuBuilder.makeMenu("Prostate VOI", true,
                                         new JMenuItem[] {
                                                 menuBuilder.buildMenuItem("Merge VOIs", "ProstateMergedVOIs", 0, null,

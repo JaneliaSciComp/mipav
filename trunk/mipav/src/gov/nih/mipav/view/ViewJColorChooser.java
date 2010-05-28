@@ -36,7 +36,7 @@ public class ViewJColorChooser extends JColorChooser {
      * @param  OKListener      class that will respond to the user pressing OK
      * @param  CancelListener  class that will respond to the user pressing Cancel
      */
-    public ViewJColorChooser(Frame parent, String title, ActionListener OKListener, ActionListener CancelListener) {
+    public ViewJColorChooser(Component parent, String title, ActionListener OKListener, ActionListener CancelListener) {
         super();
 
         colorDialog = JColorChooser.createDialog(parent, title, false, this, OKListener, CancelListener);

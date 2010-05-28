@@ -75,9 +75,6 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
     /** checkbox for italic style. */
     private JCheckBox italicBox;
 
-    /** slice of image where the VOI resides. */
-    private int slice;
-
     /** NameField that will contain the string to be displayed. */
     private JTextField nameField;
 
@@ -108,8 +105,6 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         if (textVOI == null) {
             return;
         }
-
-        this.slice = slice;
         this.isRegistered = isRegistered;
         init("Annotation");
         setVisible(true);
@@ -141,8 +136,8 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
                         textVOI.setActive(true);
                         textVOI.setName(nameField.getText());
                         if(!noteField.getText().equals(DEFAULT_NOTES) && noteField.getText().length() > 0)
-                        	((VOIText) (textVOI.getCurves()[slice].elementAt(0))).setNote(noteField.getText());
-                        ((VOIText) (textVOI.getCurves()[slice].elementAt(0))).setActive(true);
+                        	((VOIText) (textVOI.getCurves().elementAt(0))).setNote(noteField.getText());
+                        ((VOIText) (textVOI.getCurves().elementAt(0))).setActive(true);
                         activeImage.notifyImageDisplayListeners();
                     }
 
@@ -153,14 +148,14 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
             isBackground = false;
 
             // open up a color chooser dialog
-            colorChooser = new ViewJColorChooser(this.parentFrame, "Pick text color", new OkColorListener(),
+            colorChooser = new ViewJColorChooser(this, "Pick text color", new OkColorListener(),
                                                  new CancelListener());
 
         } else if (command.equals("ChooseBackgroundColor")) {
             isBackground = true;
 
             // open up a color chooser dialog
-            colorChooser = new ViewJColorChooser(this.parentFrame, "Pick background color", new OkColorListener(),
+            colorChooser = new ViewJColorChooser(this, "Pick background color", new OkColorListener(),
                                                  new CancelListener());
 
         } else if (command.equals("Cancel")) {
@@ -236,7 +231,7 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         fontSizeField.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke("ENTER"), "updateText");
         fontSizeField.getActionMap().put("updateText", new UpdateTextAction());
 
-        VOIText vt = (VOIText) textVOI.getCurves()[slice].elementAt(0);
+        VOIText vt = (VOIText) textVOI.getCurves().elementAt(0);
         fontSize = vt.getFontSize();
         fontSizeField.setText(Integer.toString(fontSize));
         fontDescriptors = vt.getFontDescriptors();
@@ -345,7 +340,7 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
 
         namePanel.add(nameField);
 
-        VOIText vt = (VOIText) textVOI.getCurves()[slice].elementAt(0);
+        VOIText vt = (VOIText) textVOI.getCurves().elementAt(0);
         nameField.setFont(new Font(vt.getFontName(), vt.getFontDescriptors(), vt.getFontSize()));
         nameField.setBorder(BasicBorders.getTextFieldBorder());
 
@@ -437,7 +432,7 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
     private boolean setVariables() {
 
         try {
-            VOIText vt = (VOIText) textVOI.getCurves()[slice].elementAt(0);
+            VOIText vt = (VOIText) textVOI.getCurves().elementAt(0);
             vt.setFontSize(Integer.parseInt(fontSizeField.getText()));
             vt.setText(nameField.getText());
 

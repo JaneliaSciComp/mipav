@@ -135,7 +135,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
         //is equal to blank string if image is not run-time defined
         this.fileName = fileName;
         this.imageDir = srcImg.getImageDirectory();
-
+        
         tabs = new ArrayList<JPanel>();
     }
     

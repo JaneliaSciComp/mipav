@@ -9,7 +9,6 @@ import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.ViewJFrameAnimateClip;
 import gov.nih.mipav.view.dialogs.JDialogBase;
-import gov.nih.mipav.view.renderer.WildMagic.Render.LocalVolumeVOI;
 import gov.nih.mipav.view.renderer.WildMagic.Render.Sculptor_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeBoundingBox;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeClip;
@@ -498,7 +497,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( !m_bFirstRender )
         {
 
-            updateVOIs( m_kVolumeImageA.GetImage().get3DVOIs(), arg0 );
+            updateVOIs( m_kVolumeImageA.GetImage().getVOIs(), arg0 );
             
             Render();
             UpdateFrameCount();
@@ -2973,25 +2972,36 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         for ( int i = 0; i < kVOIs.size(); i++ )
         {
             VOI kVOI = kVOIs.get(i);
-            Vector<VOIBase>[] kCurves = kVOI.getCurves();
-            for ( int j = 0; j < kCurves.length; j++ )
+            Vector<VOIBase> kCurves = kVOI.getCurves();
+            for ( int k = 0; k < kCurves.size(); k++ )
             {
-                if ( kCurves[j] != null )
-                {
-                    for ( int k = 0; k < kCurves[j].size(); k++ )
-                    {
-                        VOIBase kVOI3D = kCurves[j].get(k);
-                        if ( kVOI3D instanceof LocalVolumeVOI )
-                        {
-                           boolean bUpdate = ((LocalVolumeVOI)kVOI3D).draw( this, m_pkRenderer, kDrawable, m_spkCamera, m_kVolumeImageA, m_kTranslate );
-                        }
-                    }
-                }
+                VOIBase kVOI3D = kCurves.get(k);
+                drawVOI( kVOI3D, this, m_kVolumeImageA, m_kTranslate );
             }
         }
         UpdateSceneRotation();
         m_kParent.setModified();
     }
+    
+
+
+
+    public boolean drawVOI( VOIBase kVOI, VolumeTriPlanarRender kDisplay, VolumeImage kVolumeImage, Vector3f kTranslate)
+    {
+        VolumeVOI kVolumeVOI = kVOI.getVolumeVOI();
+        boolean bReturn = false;
+        if ( kVolumeVOI == null )
+        {
+            kVolumeVOI = kVOI.createVolumeVOI( kVolumeImage, kTranslate);
+            bReturn = true;
+        }
+
+        kVolumeVOI.showTextBox(true);
+        kVolumeVOI.setZCompare(true);
+        kDisplay.addVolumeVOI( kVolumeVOI );
+        return bReturn;
+    }
+
     
     public void addVolumeVOI( VolumeVOI kVOI )
     {

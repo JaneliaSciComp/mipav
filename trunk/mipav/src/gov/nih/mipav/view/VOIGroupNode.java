@@ -59,13 +59,10 @@ public class VOIGroupNode extends DefaultMutableTreeNode {
     public void explore() {
 
         // load all contours into the Tree as children of the VOI node.
-        Vector[] curveList = ((VOI) getUserObject()).getCurves();
+        Vector curveList = ((VOI) getUserObject()).getCurves();
 
-        for (int i = 0; i < curveList.length; i++) {
-
-            if (curveList[i].size() > 0) {
-                add(new VOIFrameNode(curveList[i], i));
-            }
+        if (curveList.size() > 0) {
+            add(new VOIFrameNode(curveList, 0));
         }
     }
 

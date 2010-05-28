@@ -98,7 +98,7 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
         ViewVOIVector VOIs = null;
         int nVOIs;
         int contourVOIs;
-        Vector[] contours = null;
+        Vector contours = null;
         int nContours = 0;
         Vector3f geometricCenter;
         // Use 1.0 for resolution regardless of actual units
@@ -208,7 +208,7 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
             if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                 selectedVOI = VOIs.VOIAt(i);
                 contours = selectedVOI.getCurves();
-                nContours = contours[0].size();
+                nContours = contours.size();
             }
         }
         
@@ -224,12 +224,14 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
             return;
         }
         
-        geometricCenter = ((VOIContour)(contours[0].elementAt(0))).getGeometricCenter();
+        geometricCenter = ((VOIContour)(contours.elementAt(0))).getGeometricCenter();
         Preferences.debug("X center = " + geometricCenter.X + "\n");
         Preferences.debug("Y center = " + geometricCenter.Y + "\n");
         
-        ((VOIContour)(contours[0].elementAt(0))).secondOrderAttributes(xDimSource, yDimSource, xRes, yRes, xUnits, yUnits,
-                                                                       pAxis, eccentricity, majorAxis, minorAxis);
+        //((VOIContour)(contours.elementAt(0))).secondOrderAttributes(xDimSource, yDimSource, xRes, yRes, xUnits, yUnits,
+        //        pAxis, eccentricity, majorAxis, minorAxis);
+        ((VOIContour)(contours.elementAt(0))).secondOrderAttributes(srcImage,
+                pAxis, eccentricity, majorAxis, minorAxis);
         Preferences.debug("Major axis angle in degrees = " + pAxis[0] + "\n");
         Preferences.debug("Eccentricity = " + eccentricity[0] + "\n");
         Preferences.debug("Major axis length = " + majorAxis[0] + "\n");
@@ -688,13 +690,12 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
             yArr[j] = (float)(yCen + b * Math.sin(theta));
             zArr[j] = 0.0f;
         }
-        newEllipseVOI.importCurve(xArr, yArr, zArr, 0);
-        ((VOIContour)(newEllipseVOI.getCurves()[0].elementAt(0))).setFixed(true);
+        newEllipseVOI.importCurve(xArr, yArr, zArr);
+        ((VOIContour)(newEllipseVOI.getCurves().elementAt(0))).setFixed(true);
         newEllipseVOI.setActive(false);
-        ((VOIContour)(newEllipseVOI.getCurves()[0].elementAt(0))).setActive(false);
-        ((VOIContour)(newEllipseVOI.getCurves()[0].elementAt(0))).setClosed(true);
-        ((VOIContour) (newEllipseVOI.getCurves()[0].elementAt(0))).setLabel(Integer.toString(1));
-        ((VOIContour) (newEllipseVOI.getCurves()[0].elementAt(0))).setName(Integer.toString(1));
+        ((VOIContour)(newEllipseVOI.getCurves().elementAt(0))).setActive(false);
+        ((VOIContour)(newEllipseVOI.getCurves().elementAt(0))).setClosed(true);
+        ((VOIContour) (newEllipseVOI.getCurves().elementAt(0))).setLabel(Integer.toString(1));
         srcImage.registerVOI(newEllipseVOI);
         if (phi != 0.0) {
             xfrm = new TransMatrix(3);

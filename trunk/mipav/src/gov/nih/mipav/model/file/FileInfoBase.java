@@ -467,11 +467,6 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * (SUN), SGI IRIX MSB first byte BIG_ENDIAN (true)
      */
     private boolean endianess = FileBase.LITTLE_ENDIAN;
-    
-    /**
-     * Used for checking for endianess changes in the ModelImage.reallocate(final int type) function.
-     */
-    private boolean originalEndianess = FileBase.LITTLE_ENDIAN;
 
     /**
      * Used for checking for endianess changes in the ModelImage.reallocate(final int type) function.
@@ -1546,10 +1541,6 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     public final boolean getEndianess() {
         return endianess;
     }
-    
-    public final boolean getOriginalEndianess() {
-    	return originalEndianess;
-    }
 
     public final boolean getOriginalEndianess() {
     	return originalEndianess;
@@ -2081,10 +2072,6 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      */
     public void setEndianess(final boolean endness) {
         endianess = endness;
-    }
-    
-    public void setOriginalEndianess(final boolean originalEndness) {
-    	originalEndianess = originalEndness;
     }
 
     public void setOriginalEndianess(final boolean originalEndness) {

@@ -859,21 +859,18 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
         Vector kPts = new Vector();
         VOIContour contour;
         Vector3f tmp3Pt = new Vector3f();
-        Vector[] curves = voi.getCurves();
+        Vector curves = voi.getCurves();
 
-        for (int iZ = 0, iIndex = 0; iZ < m_iZBound; iZ++) {
+        for (int i = 0; i < curves.size(); i++) {
+            contour = (VOIContour) (curves.elementAt(i));
 
-            for (int i = 0; i < curves[iZ].size(); i++) {
-                contour = (VOIContour) (curves[iZ].elementAt(i));
+            for (int p = 0; p < contour.size(); p++) {
+                tmp3Pt = contour.elementAt(p);
 
-                for (int p = 0; p < contour.size(); p++) {
-                    tmp3Pt = (Vector3f) (contour.elementAt(p));
-
-                    Vector3f kVoxel = new Vector3f(((2.0f * tmp3Pt.X) - (m_iXBound - 1)) * fXScale,
-                                                 ((2.0f * tmp3Pt.Y) - (m_iYBound - 1)) * fYScale,
-                                                 ((2.0f * tmp3Pt.Z) - (m_iZBound - 1)) * fZScale);
-                    kPts.add(kVoxel);
-                }
+                Vector3f kVoxel = new Vector3f(((2.0f * tmp3Pt.X) - (m_iXBound - 1)) * fXScale,
+                        ((2.0f * tmp3Pt.Y) - (m_iYBound - 1)) * fYScale,
+                        ((2.0f * tmp3Pt.Z) - (m_iZBound - 1)) * fZScale);
+                kPts.add(kVoxel);
             }
         }
 

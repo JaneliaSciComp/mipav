@@ -376,14 +376,13 @@ public class PlugInAlgorithmFociStrandMesh extends AlgorithmBase {
                     yArr[j] = (float)(redY[i] + radius * Math.sin(theta));
                     zArr[j] = 0.0f;
                 }
-                newCircleVOI.importCurve(xArr, yArr, zArr, 0);
-                ((VOIContour)(newCircleVOI.getCurves()[0].elementAt(0))).setFixed(true);
+                newCircleVOI.importCurve(xArr, yArr, zArr);
+                ((VOIContour)(newCircleVOI.getCurves().elementAt(0))).setFixed(true);
                 newCircleVOI.setActive(false);
-                ((VOIContour)(newCircleVOI.getCurves()[0].elementAt(0))).setActive(false);
-                ((VOIContour)(newCircleVOI.getCurves()[0].elementAt(0))).setDoGeometricCenterLabel(true);
-                ((VOIContour)(newCircleVOI.getCurves()[0].elementAt(0))).setClosed(true);
-                ((VOIContour) (newCircleVOI.getCurves()[0].elementAt(0))).setLabel(Integer.toString(numRedColocalize + 1));
-                ((VOIContour) (newCircleVOI.getCurves()[0].elementAt(0))).setName(Integer.toString(numRedColocalize + 1));
+                ((VOIContour)(newCircleVOI.getCurves().elementAt(0))).setActive(false);
+                ((VOIContour)(newCircleVOI.getCurves().elementAt(0))).setDoGeometricCenterLabel(true);
+                ((VOIContour)(newCircleVOI.getCurves().elementAt(0))).setClosed(true);
+                ((VOIContour) (newCircleVOI.getCurves().elementAt(0))).setLabel(Integer.toString(numRedColocalize + 1));
                 srcImage.registerVOI(newCircleVOI);
                 numRedColocalize++;
             }
@@ -700,14 +699,13 @@ public class PlugInAlgorithmFociStrandMesh extends AlgorithmBase {
                     yArr[j] = (float)(redY[i] + radius * Math.sin(theta));
                     zArr[j] = Math.round(redZ[i]);
                 }
-                newCircleVOI.importCurve(xArr, yArr, zArr, (int)zArr[0]);
-                ((VOIContour)(newCircleVOI.getCurves()[(int)zArr[0]].elementAt(0))).setFixed(true);
+                newCircleVOI.importCurve(xArr, yArr, zArr);
+                ((VOIContour)(newCircleVOI.getCurves().elementAt(0))).setFixed(true);
                 newCircleVOI.setActive(false);
-                ((VOIContour)(newCircleVOI.getCurves()[(int)zArr[0]].elementAt(0))).setActive(false);
-                ((VOIContour)(newCircleVOI.getCurves()[(int)zArr[0]].elementAt(0))).setDoGeometricCenterLabel(true);
-                ((VOIContour)(newCircleVOI.getCurves()[(int)zArr[0]].elementAt(0))).setClosed(true);
-                ((VOIContour) (newCircleVOI.getCurves()[(int)zArr[0]].elementAt(0))).setLabel(Integer.toString(numRedColocalize + 1));
-                ((VOIContour) (newCircleVOI.getCurves()[(int)zArr[0]].elementAt(0))).setName(Integer.toString(numRedColocalize + 1));
+                ((VOIContour)(newCircleVOI.getCurves().elementAt(0))).setActive(false);
+                ((VOIContour)(newCircleVOI.getCurves().elementAt(0))).setDoGeometricCenterLabel(true);
+                ((VOIContour)(newCircleVOI.getCurves().elementAt(0))).setClosed(true);
+                ((VOIContour) (newCircleVOI.getCurves().elementAt(0))).setLabel(Integer.toString(numRedColocalize + 1));
                 srcImage.registerVOI(newCircleVOI);
                 
                 numRedColocalize++;

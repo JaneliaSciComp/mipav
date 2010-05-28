@@ -159,7 +159,7 @@ public class JDialogPaintVasculature extends JDialogBase
 
             // region grow from all currently selected points in the MIP
             VOI voi = ((ViewJFramePaintVasculature) parentFrame).getSeedPoints();
-            Vector points = voi.getCurves()[0];
+            Vector points = voi.getCurves();
 
             for (int i = 0; i < points.size(); i++) {
 

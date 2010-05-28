@@ -359,10 +359,10 @@ public class PlugInAlgorithmNEISeg extends AlgorithmBase {
             VOIs.VOIAt(1).setAllActive(false);
             currentVOI = VOIs.VOIAt(y);
 
-            for (int v = 0; v < currentVOI.getCurves()[0].size(); v++) {
+            for (int v = 0; v < currentVOI.getCurves().size(); v++) {
                 currentVOI.setAllActive(false);
                 currentVOI.setActive(true);
-                ((VOIBase) currentVOI.getCurves()[0].elementAt(v)).setActive(true);
+                ((VOIBase) currentVOI.getCurves().elementAt(v)).setActive(true);
 
                 if (y == 0) {
 

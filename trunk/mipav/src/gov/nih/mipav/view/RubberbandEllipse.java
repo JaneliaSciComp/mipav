@@ -329,7 +329,7 @@ public class RubberbandEllipse extends Rubberband {
                     return;
                 }
 
-                newVOI.importCurve(xFinal, yFinal, zFinal, slice);
+                newVOI.importCurve(xFinal, yFinal, zFinal);
                 image.registerVOI(newVOI);
                 ((ViewJComponentEditImage) (component)).getVOIHandler().setVOI_IDs(newVOI.getID(), newVOI.getUID());
 
@@ -345,7 +345,7 @@ public class RubberbandEllipse extends Rubberband {
                     if (VOIs.VOIAt(i).getID() == ((ViewJComponentEditImage) (component)).getVOIHandler().getVOI_ID()) {
 
                         if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
-                            VOIs.VOIAt(i).importCurve(xFinal, yFinal, zFinal, slice);
+                            VOIs.VOIAt(i).importCurve(xFinal, yFinal, zFinal);
                         } else {
                             MipavUtil.displayError("Can't add Ellipse VOI to other VOI structure.");
                         }

@@ -919,9 +919,14 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
                     xArr[0] = (float) skelPoints[skelSegments[i][SKEL_SEG_LEFT]][0];
                     yArr[0] = (float) skelPoints[skelSegments[i][SKEL_SEG_LEFT]][1];
                     zArr[0] = (float) skelPoints[skelSegments[i][SKEL_SEG_LEFT]][2];
+                    /*
                     newPtVOI.importCurve(xArr, yArr, zArr, (int) zArr[0]);
                     ((VOIPoint) (newPtVOI.getCurves()[(int) zArr[0]].elementAt(0))).setFixed(true);
-                    ((VOIPoint) (newPtVOI.getCurves()[(int) zArr[0]].elementAt(0))).setLabel(String.valueOf(i));
+                    ((VOIPoint) (newPtVOI.getCurves()[(int) zArr[0]].elementAt(0))).setLabel(String.valueOf(i)); */
+
+                    newPtVOI.importCurve(xArr, yArr, zArr);
+                    ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
+                    ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setLabel(String.valueOf(i));
                     srcImage.registerVOI(newPtVOI);
                     used[skelSegments[i][SKEL_SEG_LEFT]] = true;
                     segNum++;
@@ -945,9 +950,15 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
                             xArr[0] = (float) skelPoints[j][0];
                             yArr[0] = (float) skelPoints[j][1];
                             zArr[0] = (float) skelPoints[j][2];
+                            /*
                             newPtVOI.importCurve(xArr, yArr, zArr, (int) zArr[0]);
                             ((VOIPoint) (newPtVOI.getCurves()[(int) zArr[0]].elementAt(0))).setFixed(true);
-                            ((VOIPoint) (newPtVOI.getCurves()[(int) zArr[0]].elementAt(0))).setLabel(String.valueOf(i));
+                            ((VOIPoint) (newPtVOI.getCurves()[(int) zArr[0]].elementAt(0))).setLabel(String.valueOf(i));*/
+                            
+
+                            newPtVOI.importCurve(xArr, yArr, zArr);
+                            ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
+                            ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setLabel(String.valueOf(i));
                             srcImage.registerVOI(newPtVOI);
                             used[j] = true;
                             segNum++;
@@ -969,9 +980,13 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
                     xArr[0] = (float) skelPoints[skelSegments[i][SKEL_SEG_RIGHT]][0];
                     yArr[0] = (float) skelPoints[skelSegments[i][SKEL_SEG_RIGHT]][1];
                     zArr[0] = (float) skelPoints[skelSegments[i][SKEL_SEG_RIGHT]][2];
+                    /*
                     newPtVOI.importCurve(xArr, yArr, zArr, (int) zArr[0]);
                     ((VOIPoint) (newPtVOI.getCurves()[(int) zArr[0]].elementAt(0))).setFixed(true);
-                    ((VOIPoint) (newPtVOI.getCurves()[(int) zArr[0]].elementAt(0))).setLabel(String.valueOf(i));
+                    ((VOIPoint) (newPtVOI.getCurves()[(int) zArr[0]].elementAt(0))).setLabel(String.valueOf(i)); */
+                    newPtVOI.importCurve(xArr, yArr, zArr);
+                    ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
+                    ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setLabel(String.valueOf(i));                 
                     srcImage.registerVOI(newPtVOI);
                     used[skelSegments[i][SKEL_SEG_RIGHT]] = true;
                     segNum++;
@@ -989,18 +1004,27 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
                 xArr[0] = (float) skelPoints[skelSegments[i][SKEL_SEG_LEFT]][0];
                 yArr[0] = (float) skelPoints[skelSegments[i][SKEL_SEG_LEFT]][1];
                 zArr[0] = (float) skelPoints[skelSegments[i][SKEL_SEG_LEFT]][2];
+                /*
                 newPtVOI.importCurve(xArr, yArr, zArr, (int) zArr[0]);
                 ((VOIPoint) (newPtVOI.getCurves()[(int) zArr[0]].elementAt(0))).setFixed(true);
-                ((VOIPoint) (newPtVOI.getCurves()[(int) zArr[0]].elementAt(0))).setLabel(String.valueOf(i));
+                ((VOIPoint) (newPtVOI.getCurves()[(int) zArr[0]].elementAt(0))).setLabel(String.valueOf(i)); */
+                newPtVOI.importCurve(xArr, yArr, zArr);
+                ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
+                ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setLabel(String.valueOf(i));
                 srcImage.registerVOI(newPtVOI);
+                
                 newPtVOI = new VOI(ptNum++, "pointR" + i + ".voi", zDim, VOI.POINT, -1);
                 newPtVOI.setColor(segColor);
                 xArr[0] = (float) skelPoints[skelSegments[i][SKEL_SEG_RIGHT]][0];
                 yArr[0] = (float) skelPoints[skelSegments[i][SKEL_SEG_RIGHT]][1];
                 zArr[0] = (float) skelPoints[skelSegments[i][SKEL_SEG_RIGHT]][2];
+                /*
                 newPtVOI.importCurve(xArr, yArr, zArr, (int) zArr[0]);
                 ((VOIPoint) (newPtVOI.getCurves()[(int) zArr[0]].elementAt(0))).setFixed(true);
-                ((VOIPoint) (newPtVOI.getCurves()[(int) zArr[0]].elementAt(0))).setLabel(String.valueOf(i));
+                ((VOIPoint) (newPtVOI.getCurves()[(int) zArr[0]].elementAt(0))).setLabel(String.valueOf(i)); */
+                newPtVOI.importCurve(xArr, yArr, zArr);
+                ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
+                ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setLabel(String.valueOf(i));
                 srcImage.registerVOI(newPtVOI);
             } // for (i = 0; i < skelNumSegments; i++)
         } // else

@@ -323,7 +323,7 @@ public class JDialogCircularSectorToRectangle extends JDialogBase
      */
     private boolean setVariables() {
         int i;
-        Vector[] curves;
+        Vector curves;
         int nPts;
         Vector3f[] pts = null;
 
@@ -350,7 +350,7 @@ public class JDialogCircularSectorToRectangle extends JDialogBase
             return false;
         }
         curves = image.getVOIs().VOIAt(0).getCurves();
-        nPts = curves[0].size();
+        nPts = curves.size();
 
         if (nPts != 4) {
             MipavUtil.displayError("Number of points = " + nPts + " instead of required 4");
@@ -358,7 +358,7 @@ public class JDialogCircularSectorToRectangle extends JDialogBase
             return false;
         }
 
-        pts = image.getVOIs().VOIAt(0).exportPoints(0);
+        pts = image.getVOIs().VOIAt(0).exportAllPoints();
 
         for (i = 0; i < 4; i++) {
             xSource[i] = pts[i].X;

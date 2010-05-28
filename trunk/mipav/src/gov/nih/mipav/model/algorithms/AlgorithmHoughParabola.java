@@ -1831,14 +1831,14 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                     } // else phiTable[i] == Math.PI
                 } // else (Math.abs(xEndPoint[i][1] - xEndPoint[i][0]) < Math.abs(yEndPoint[i][1] - yEndPoint[i][0]))
                 if (n > 0) {
-                    parabolaVOI[k].importCurve(xArr, yArr, zArr, 0);
-                    ((VOIContour)(parabolaVOI[k].getCurves()[0].elementAt(0))).setFixed(true);
+                    parabolaVOI[k].importCurve(xArr, yArr, zArr);
+                    ((VOIContour)(parabolaVOI[k].getCurves().elementAt(0))).setFixed(true);
                     destImage.registerVOI(parabolaVOI[k]);
                 }
                 k++;
                 if (n2 > 0) {
-                    parabolaVOI2[k2].importCurve(xArr2, yArr2, zArr2, 0);
-                    ((VOIContour)(parabolaVOI2[k2].getCurves()[0].elementAt(0))).setFixed(true);
+                    parabolaVOI2[k2].importCurve(xArr2, yArr2, zArr2);
+                    ((VOIContour)(parabolaVOI2[k2].getCurves().elementAt(0))).setFixed(true);
                     destImage.registerVOI(parabolaVOI2[k2]);
                 }
                 k2++;

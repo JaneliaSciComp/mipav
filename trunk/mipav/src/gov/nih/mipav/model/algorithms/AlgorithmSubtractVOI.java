@@ -921,7 +921,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
         int offset;
         int mod;
         int nVOIContour = 0;
-        Vector[] contours;
+        Vector contours;
         int nContours;
         int totalContours = 0;
         int activeContours = 0;
@@ -959,12 +959,12 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
             if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                 nVOIContour++;
                 contours = VOIs.VOIAt(i).getCurves();
-                nContours = contours[slice].size();
+                nContours = contours.size();
                 totalContours += nContours;
 
                 for (j = 0; j < nContours; j++) {
 
-                    if (((VOIContour) (contours[slice].elementAt(j))).isActive()) {
+                    if (((VOIContour) (contours.elementAt(j))).isActive()) {
                         activeContours++;
                     }
                 }
@@ -1001,10 +1001,10 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
 
                 if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                     contours = VOIs.VOIAt(i).getCurves();
-                    nContours = contours[slice].size();
+                    nContours = contours.size();
 
                     if (nContours == 1) {
-                        VOIs.VOIAt(i).createBinaryMask(mask, srcImage.getExtents()[0], srcImage.getExtents()[1]);
+                        VOIs.VOIAt(i).createBinaryMask3D(mask, srcImage.getExtents()[0], srcImage.getExtents()[1], false, false);
                     }
                 }
             }
@@ -1015,7 +1015,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
 
                 if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                     contours = VOIs.VOIAt(i).getCurves();
-                    nContours = contours[slice].size();
+                    nContours = contours.size();
 
                     if (nContours >= 1) {
                         VOIs.VOIAt(i).createActiveContourBinaryMask(mask, srcImage.getExtents()[0],

@@ -307,8 +307,8 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
         Vector3f[] tmpptB = null;
         Vector3f[] ptA = null; // new Vector3f[nPtsA];
         Vector3f[] ptB = null; // new Vector3f[nPtsB];
-        int i, s, ptNum;
-        Vector[] curves;
+        int i, s;
+        Vector curves;
 
         try {
 
@@ -316,95 +316,71 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
                 MipavUtil.displayError("Select points before clicking OK");
 
                 return;
-            } else {
+            }
+            if ((baseImage.getNDims() == 3) && (matchImage.getNDims() == 3)) {
+                curves = baseImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
+                nPtsA = curves.size();
 
-                if ((baseImage.getNDims() == 3) && (matchImage.getNDims() == 3)) {
-                    curves = baseImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
+                Preferences.debug("nPtsA = " + nPtsA + "\n");
+                ptA = new Vector3f[nPtsA];
+                tmpptA = baseImage.getVOIs().VOIAt(0).exportAllPoints();
+                for (i = 0; i < tmpptA.length; i++) {
+                    ptA[i] = tmpptA[i];
+                }
 
-                    for (s = 0; s < baseImage.getExtents()[2]; s++) {
-                        nPtsA += curves[s].size();
-                    }
+                curves = matchImage.getVOIs().VOIAt(0).getCurves();
+                nPtsB = curves.size();
 
-                    Preferences.debug("nPtsA = " + nPtsA + "\n");
-                    ptA = new Vector3f[nPtsA];
+                if (nPtsA != nPtsB) {
+                    MipavUtil.displayError("Both images must have the same number of points");
 
-                    for (s = 0; s < baseImage.getExtents()[2]; s++) {
-                        tmpptA = baseImage.getVOIs().VOIAt(0).exportPoints(s);
+                    return;
+                }
 
-                        for (i = 0; i < tmpptA.length; i++) {
-                            ptNum = (int) (Short.valueOf(((VOIPoint) curves[s].elementAt(i)).getLabel()).shortValue()) -
-                                    1;
-                            ptA[ptNum] = tmpptA[i];
-                        }
-                    }
+                Preferences.debug("nPtsB = " + nPtsB + "\n");
+                ptB = new Vector3f[nPtsB];
+                tmpptB = matchImage.getVOIs().VOIAt(0).exportAllPoints();
+                for (i = 0; i < tmpptB.length; i++) {
+                    ptB[i] = tmpptB[i];
+                }
 
-                    curves = matchImage.getVOIs().VOIAt(0).getCurves();
+                if ((nPtsA < 4) || (nPtsB < 4)) {
+                    MipavUtil.displayError("Must select at least " + (DIM + 1) + " points.");
 
-                    for (s = 0; s < matchImage.getExtents()[2]; s++) {
-                        nPtsB += curves[s].size();
-                    }
+                    return;
+                }
+            } else if ((baseImage.getNDims() == 2) && (matchImage.getNDims() == 2)) {
+                curves = baseImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
+                nPtsA = curves.size();
+                Preferences.debug("nPtsA = " + nPtsA + "\n");
+                ptA = new Vector3f[nPtsA];
+                tmpptA = baseImage.getVOIs().VOIAt(0).exportAllPoints();
+                for (i = 0; i < tmpptA.length; i++) {
+                    //ptNum = (int) (Short.valueOf(((VOIPoint) curves[0].elementAt(i)).getLabel()).shortValue()) - 1;
+                    ptA[i] = tmpptA[i];
+                }
 
-                    if (nPtsA != nPtsB) {
-                        MipavUtil.displayError("Both images must have the same number of points");
+                curves = matchImage.getVOIs().VOIAt(0).getCurves();
+                nPtsB += curves.size();
 
-                        return;
-                    }
+                if (nPtsA != nPtsB) {
+                    MipavUtil.displayError("Both images must have the same number of points");
 
-                    Preferences.debug("nPtsB = " + nPtsB + "\n");
-                    ptB = new Vector3f[nPtsB];
+                    return;
+                }
 
-                    for (s = 0; s < matchImage.getExtents()[2]; s++) {
-                        tmpptB = matchImage.getVOIs().VOIAt(0).exportPoints(s);
+                Preferences.debug("nPtsB = " + nPtsB + "\n");
+                ptB = new Vector3f[nPtsB];
+                tmpptB = matchImage.getVOIs().VOIAt(0).exportAllPoints();
+                for (i = 0; i < tmpptB.length; i++) {
+                    //ptNum = (int) (Short.valueOf(((VOIPoint) curves[0].elementAt(i)).getLabel()).shortValue()) - 1;
+                    ptB[i] = tmpptB[i];
+                }
 
-                        for (i = 0; i < tmpptB.length; i++) {
-                            ptNum = (int) (Short.valueOf(((VOIPoint) curves[s].elementAt(i)).getLabel()).shortValue()) -
-                                    1;
+                if ((nPtsA < 3) || (nPtsB < 3)) {
+                    MipavUtil.displayError("Must select at least " + (DIM + 1) + " points.");
 
-                            // ptNum = (int)(Short.valueOf(((VOIPoint)tmpptB[i]).getLabel()).shortValue());
-                            ptB[ptNum] = tmpptB[i];
-                        }
-                    }
-
-                    if ((nPtsA < 4) || (nPtsB < 4)) {
-                        MipavUtil.displayError("Must select at least " + (DIM + 1) + " points.");
-
-                        return;
-                    }
-                } else if ((baseImage.getNDims() == 2) && (matchImage.getNDims() == 2)) {
-                    curves = baseImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
-                    nPtsA = curves[0].size();
-                    Preferences.debug("nPtsA = " + nPtsA + "\n");
-                    ptA = new Vector3f[nPtsA];
-                    tmpptA = baseImage.getVOIs().VOIAt(0).exportPoints(0);
-
-                    for (i = 0; i < tmpptA.length; i++) {
-                        ptNum = (int) (Short.valueOf(((VOIPoint) curves[0].elementAt(i)).getLabel()).shortValue()) - 1;
-                        ptA[ptNum] = tmpptA[i];
-                    }
-
-                    curves = matchImage.getVOIs().VOIAt(0).getCurves();
-                    nPtsB += curves[0].size();
-
-                    if (nPtsA != nPtsB) {
-                        MipavUtil.displayError("Both images must have the same number of points");
-
-                        return;
-                    }
-
-                    Preferences.debug("nPtsB = " + nPtsB + "\n");
-                    ptB = new Vector3f[nPtsB];
-                    tmpptB = matchImage.getVOIs().VOIAt(0).exportPoints(0);
-
-                    for (i = 0; i < tmpptB.length; i++) {
-                        ptNum = (int) (Short.valueOf(((VOIPoint) curves[0].elementAt(i)).getLabel()).shortValue()) - 1;
-                        ptB[ptNum] = tmpptB[i];
-                    }
-
-                    if ((nPtsA < 3) || (nPtsB < 3)) {
-                        MipavUtil.displayError("Must select at least " + (DIM + 1) + " points.");
-
-                        return;
-                    }
+                    return;
                 }
             }
 

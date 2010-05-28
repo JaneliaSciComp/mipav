@@ -1870,9 +1870,9 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 xArr[0] = xPosGrav[i];
                 yArr[0] = yPosGrav[i];
                 zArr[0] = 0.0f;
-                newPtVOI.importCurve(xArr, yArr, zArr, 0);
-                ((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setFixed(true);
-                ((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setLabel(voiName);
+                newPtVOI.importCurve(xArr, yArr, zArr);
+                ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
+                ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setLabel(voiName);
                 srcImage.registerVOI(newPtVOI);
             }
         }
@@ -1988,9 +1988,9 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
             xArr[0] = xCenter[i];
             yArr[0] = yCenter[i];
             zArr[0] = 0.0f;
-            newPtVOI.importCurve(xArr, yArr, zArr, 0);
-            ((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setFixed(true);
-            ((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setLabel("N" + (i + 1));
+            newPtVOI.importCurve(xArr, yArr, zArr);
+            ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
+            ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setLabel("N" + (i + 1));
             srcImage.registerVOI(newPtVOI);
         } // for (i = 0; i < numObjects; i++)
 
@@ -4233,9 +4233,9 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 xArr[0] = xPosGrav[i];
                 yArr[0] = yPosGrav[i];
                 zArr[0] = zPosGrav[i];
-                newPtVOI.importCurve(xArr, yArr, zArr, (int) zPosGrav[i]);
-                ((VOIPoint) (newPtVOI.getCurves()[(int) zPosGrav[i]].elementAt(0))).setFixed(true);
-                ((VOIPoint) (newPtVOI.getCurves()[(int) zPosGrav[i]].elementAt(0))).setLabel(voiName);
+                newPtVOI.importCurve(xArr, yArr, zArr);
+                ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
+                ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setLabel(voiName);
                 srcImage.registerVOI(newPtVOI);    
             }
         }
@@ -4522,9 +4522,9 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
             xArr[0] = xCenter[i];
             yArr[0] = yCenter[i];
             zArr[0] = zCenter[i];
-            newPtVOI.importCurve(xArr, yArr, zArr, (int) zArr[0]);
-            ((VOIPoint) (newPtVOI.getCurves()[(int) zArr[0]].elementAt(0))).setFixed(true);
-            ((VOIPoint) (newPtVOI.getCurves()[(int) zArr[0]].elementAt(0))).setLabel("N" + (i + 1));
+            newPtVOI.importCurve(xArr, yArr, zArr);
+            ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
+            ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setLabel("N" + (i + 1));
             srcImage.registerVOI(newPtVOI);
         } // for (i = 0; i < numObjects; i++)
 

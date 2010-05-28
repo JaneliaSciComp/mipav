@@ -131,7 +131,7 @@ public class PlugInCheshireVOI implements PlugInGeneric {
                 if (voiListArr != null) {
 
                     for (int j = 0; j < voiListArr.length; j++) {
-                        Vector3f[] extrema = voiListArr[j].maxWidth();
+                        Vector3f[] extrema = voiListArr[j].maxWidth(false);
 
                         for (int k = 0; k < extrema.length; k++) {
 
@@ -166,13 +166,10 @@ public class PlugInCheshireVOI implements PlugInGeneric {
             for (int i = 0; i < voiListVec.size(); i++) {
                 VOI temp = new VOI((short) i, cheshireNames[i], (int) (highZ * 1.5));
                 VOI oldVOI = voiListVec.get(i);
-                Vector[] vec = oldVOI.getCurves();
+                Vector vec = oldVOI.getCurves();
 
-                for (int j = 0; j < vec.length; j++) {
-
-                    for (int k = 0; k < vec[j].size(); k++) {
-                        temp.importCurve(((VOIContour) vec[j].get(k)), j);
-                    }
+                for (int k = 0; k < vec.size(); k++) {
+                    temp.importCurve(((VOIContour) vec.get(k)));
                 }
 
                 newImage.registerVOI(temp);

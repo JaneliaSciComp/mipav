@@ -50,7 +50,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private float[] sigmas;
-    
+
     /** If true, ignore VOIs and process entire image */
     private boolean entireImage = false;
 
@@ -73,7 +73,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
         seedVector = seeds;
         mask = srcImage.generateVOIMask();
     }
-    
+
     /**
      * Constructs new watershed algorithm.
      *
@@ -85,7 +85,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
      * @param  entireImage If true, ignore VOIs and process entire image
      */
     public AlgorithmWatershed(ModelImage destImg, ModelImage srcImg, ModelImage gmImg, float[] sigmas, Vector seeds,
-                              boolean entireImage) {
+            boolean entireImage) {
 
         super(destImg, srcImg);
         energyImage = gmImg;
@@ -129,7 +129,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
             return;
         }
 
-        
+
 
         fireProgressStateChanged("Watershed ...");
 
@@ -184,7 +184,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
         int xDim, yDim;
         int length;
         ViewVOIVector VOIs;
-        Vector[] contours;
+        Vector contours;
         AlgorithmGradientMagnitudeSep gradMagAlgo;
         int x, y;
         float[] xB = null, yB = null, zB = null;
@@ -194,7 +194,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
         int endX;
         int startY;
         int endY;
-        
+
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
         length = xDim * yDim;
@@ -223,12 +223,12 @@ public class AlgorithmWatershed extends AlgorithmBase {
                     return;
                 }
                 try{
-                	energyImage.importData(0, gradMagAlgo.getResultBuffer(), true);
+                    energyImage.importData(0, gradMagAlgo.getResultBuffer(), true);
                 }catch(IOException e){
-        			errorCleanUp("Algorithm Watershed importData: Image(s) locked", false);
-        			fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+                    errorCleanUp("Algorithm Watershed importData: Image(s) locked", false);
+                    fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
 
-        			return;
+                    return;
                 }
                 length = energyImage.getSize();
 
@@ -248,7 +248,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
                         energyImage.set(i, max);
                     }
                 }
-                
+
                 for (y = endY; y < yDim; y++) {
                     j = y*xDim;
                     for (x = 0; x < xDim; x++) {
@@ -256,7 +256,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
                         energyImage.set(i, max);
                     }    
                 }
-                
+
                 for (y = 0; y < yDim; y++) {
                     j = y*xDim;
                     for (x = 0; x < startX; x++) {
@@ -268,7 +268,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
                         energyImage.set(i, max);
                     }
                 }
-                
+
                 //System.out.println(energyImage);
 
                 boolean wasRecording = ScriptRecorder.getReference().getRecorderStatus() == ScriptRecorder.RECORDING;
@@ -278,7 +278,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
                 }
                 //new ViewJFrameImage(energyImage, null, new Dimension(610, 200));
                 energyImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(), srcImage.getImageName() + "_gm",
-                                      FileUtility.XML, true);
+                        FileUtility.XML, true);
 
                 if (wasRecording) {
                     ScriptRecorder.getReference().startRecording();
@@ -303,7 +303,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
 
         System.gc(); // Free memory resources
 
-        
+
 
         float gradMagMin = (float) energyImage.getMin();
 
@@ -347,42 +347,41 @@ public class AlgorithmWatershed extends AlgorithmBase {
                 VOIs = (ViewVOIVector) srcImage.getVOIs();
                 nVOI = VOIs.size();
                 for (i = 0; i < nVOI; i++) {
-    
+
                     if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                         contours = VOIs.VOIAt(i).getCurves();
-    
-                        for (c = 0; c < contours[0].size(); c++) {
-    
-                            ((VOIContour) (contours[0].elementAt(c))).getBounds(xB, yB, zB);
-                            ((VOIContour) (contours[0].elementAt(c))).contains(0, 0, true);
-    
-// find seed inside VOI
-Found:
-                            for (y = (int) yB[0]; y < yB[1]; y++) {
-    
-                                for (x = (int) xB[0]; x < xB[1]; x++) {
-    
-                                    if (((VOIContour) (contours[0].elementAt(c))).contains(x, y, false)) {
-                                        break Found;
+
+                        for (c = 0; c < contours.size(); c++) {
+
+                            ((VOIContour) (contours.elementAt(c))).getBounds(xB, yB, zB);
+
+                            // find seed inside VOI
+                            Found:
+                                for (y = (int) yB[0]; y < yB[1]; y++) {
+
+                                    for (x = (int) xB[0]; x < xB[1]; x++) {
+
+                                        if (((VOIContour) (contours.elementAt(c))).contains(x, y)) {
+                                            break Found;
+                                        }
                                     }
                                 }
-                            }
-    
+
                             // Add point that has been found inside the VOI to the seed vector
                             try {
                                 seedVector.addElement(new Seed(new Vector3f(x, y, 0), VOIs.VOIAt(i).getWatershedID()));
                             } catch (OutOfMemoryError error) {
-    
+
                                 if (energyImage != null) {
                                     energyImage.disposeLocal();
                                 }
-    
+
                                 energyImage = null;
                                 contours = null;
                                 System.gc();
                                 displayError("Watershed: unable to allocate enough memory");
                                 setCompleted(false);
-    
+
                                 return;
                             }
                         }
@@ -454,9 +453,9 @@ Found:
 
         for (i = 0; i < seedVector.size(); i++) {
             destImage.set((int) ((Seed) seedVector.elementAt(i)).point.X,
-                          (int) ((Seed) seedVector.elementAt(i)).point.Y, ((Seed) seedVector.elementAt(i)).seedValue);
+                    (int) ((Seed) seedVector.elementAt(i)).point.Y, ((Seed) seedVector.elementAt(i)).seedValue);
             energyImage.set((int) ((Seed) seedVector.elementAt(i)).point.X,
-                            (int) ((Seed) seedVector.elementAt(i)).point.Y, energyImage.getMin());
+                    (int) ((Seed) seedVector.elementAt(i)).point.Y, energyImage.getMin());
         }
 
         // Set all initial regions to watershed value defined in VOI object
@@ -469,15 +468,14 @@ Found:
                 if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                     contours = VOIs.VOIAt(i).getCurves();
 
-                    for (int cons = 0; cons < contours[0].size(); cons++) {
-                        ((VOIContour) (contours[0].elementAt(cons))).getBounds(xB, yB, zB);
-                        ((VOIContour) (contours[0].elementAt(cons))).contains(0, 0, true);
+                    for (int cons = 0; cons < contours.size(); cons++) {
+                        ((VOIContour) (contours.elementAt(cons))).getBounds(xB, yB, zB);
 
                         for (y = (int) yB[0]; y < yB[1]; y++) {
 
                             for (x = (int) xB[0]; x < xB[1]; x++) {
 
-                                if (((VOIContour) (contours[0].elementAt(cons))).contains(x, y, false)) {
+                                if (((VOIContour) (contours.elementAt(cons))).contains(x, y)) {
                                     destImage.set(x, y, (short) VOIs.VOIAt(i).getWatershedID());
                                 }
                             }
@@ -748,21 +746,20 @@ Found:
         if (!entireImage) {
             VOIs = (ViewVOIVector) srcImage.getVOIs();
             nVOI = VOIs.size();
-    
+
             for (i = 0; i < nVOI; i++) {
-    
+
                 if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                     contours = VOIs.VOIAt(i).getCurves();
-    
-                    for (int cons = 0; cons < contours[0].size(); cons++) {
-                        ((VOIContour) (contours[0].elementAt(cons))).getBounds(xB, yB, zB);
-                        ((VOIContour) (contours[0].elementAt(cons))).contains(0, 0, true);
-    
+
+                    for (int cons = 0; cons < contours.size(); cons++) {
+                        ((VOIContour) (contours.elementAt(cons))).getBounds(xB, yB, zB);
+
                         for (y = (int) yB[0]; y < yB[1]; y++) {
-    
+
                             for (x = (int) xB[0]; x < xB[1]; x++) {
-    
-                                if (((VOIContour) (contours[0].elementAt(cons))).contains(x, y, false)) {
+
+                                if (((VOIContour) (contours.elementAt(cons))).contains(x, y)) {
                                     destImage.set(x, y, (short) VOIs.VOIAt(i).getWatershedID());
                                 }
                             }
@@ -793,12 +790,12 @@ Found:
      */
     private void calc3D() {
         int nVOI;
-        int i, j, k, slice;
+        int i, j, k;
         int length;
         AlgorithmGradientMagnitudeSep gradMagAlgo = null;
         ViewVOIVector VOIs;
         int xDim, yDim, zDim;
-        Vector[] contours;
+        Vector contours;
         int x, y, z;
         short currentBasin = 0;
         // The dimensions of the Gaussian kernel used in 3D calculations of AlgorithmGradientMagSep
@@ -813,7 +810,7 @@ Found:
         int sliceSize;
 
         float[] xB = null, yB = null, zB = null;
-        
+
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
         sliceSize = xDim * yDim;
@@ -845,12 +842,12 @@ Found:
                 }
 
                 try{
-                	energyImage.importData(0, gradMagAlgo.getResultBuffer(), true);
+                    energyImage.importData(0, gradMagAlgo.getResultBuffer(), true);
                 }catch(IOException e){
-        			errorCleanUp("Algorithm Watershed importData: Image(s) locked", false);
-        			fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+                    errorCleanUp("Algorithm Watershed importData: Image(s) locked", false);
+                    fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
 
-        			return;
+                    return;
                 }
                 length = energyImage.getSize();
 
@@ -865,7 +862,7 @@ Found:
                 endY = yDim - kExtents[1] + kExtents[1]/2 + 1;
                 startZ = kExtents[2]/2;
                 endZ = zDim - kExtents[2] + kExtents[2]/2 + 1;
-                
+
                 for (z = 0; z < startZ; z++) {
                     k = z * sliceSize;
                     for (y = 0; y < yDim; y++) {
@@ -876,7 +873,7 @@ Found:
                         }
                     }
                 }
-                
+
                 for (z = endZ; z < zDim; z++) {
                     k = z * sliceSize;
                     for (y = 0; y < yDim; y++) {
@@ -887,7 +884,7 @@ Found:
                         }
                     }    
                 }
-                
+
                 for (z = 0; z < zDim; z++) {
                     k = z * sliceSize;
                     for (y = 0; y < startY; y++) {
@@ -905,7 +902,7 @@ Found:
                         }    
                     }
                 }
-                
+
                 for (z = 0; z < zDim; z++) {
                     k = z * sliceSize;
                     for (y = 0; y < yDim; y++) {
@@ -928,7 +925,7 @@ Found:
                 }
 
                 energyImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(), srcImage.getImageName() + "_gm",
-                                      FileUtility.XML, true);
+                        FileUtility.XML, true);
 
                 if (wasRecording) {
                     ScriptRecorder.getReference().startRecording();
@@ -1007,39 +1004,37 @@ Found:
             // Find seed points
             if (!entireImage) {
                 for (i = 0; i < nVOI; i++) {
-    
+
                     if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                         contours = VOIs.VOIAt(i).getCurves();
-    
-                        for (slice = 1; slice < (contours.length - 1); slice++) {
-    
-                            for (int cons = 0; cons < contours[slice].size(); cons++) {
-                                ((VOIContour) (contours[slice].elementAt(cons))).getBounds(xB, yB, zB);
-                                ((VOIContour) (contours[slice].elementAt(cons))).contains(0, 0, true);
-    
-Found:
-                                for (y = (int) yB[0]; y < yB[1]; y++) {
-    
-                                    for (x = (int) xB[0]; x < xB[1]; x++) {
-    
-                                        if (((VOIContour) (contours[slice].elementAt(cons))).contains(x, y, false)) {
-                                            break Found;
+
+                        for (int cons = 0; cons < contours.size(); cons++) {
+                            ((VOIContour) (contours.elementAt(cons))).getBounds(xB, yB, zB);
+
+                            Found:
+                                for (z = (int) zB[0]; z < zB[1]; z++) {
+                                    for (y = (int) yB[0]; y < yB[1]; y++) {
+
+                                        for (x = (int) xB[0]; x < xB[1]; x++) {
+
+                                            if (((VOIContour) (contours.elementAt(cons))).contains(x, y, z)) {
+                                                break Found;
+                                            }
                                         }
                                     }
+
+                                    try {
+                                        seedVector.addElement(new Seed(new Vector3f(x, y, z),
+                                                VOIs.VOIAt(i).getWatershedID()));
+                                    } catch (OutOfMemoryError error) {
+                                        energyImage = null;
+                                        System.gc();
+                                        displayError("Watershed: unable to allocate enough memory");
+                                        setCompleted(false);
+
+                                        return;
+                                    }
                                 }
-    
-                                try {
-                                    seedVector.addElement(new Seed(new Vector3f(x, y, slice),
-                                                                   VOIs.VOIAt(i).getWatershedID()));
-                                } catch (OutOfMemoryError error) {
-                                    energyImage = null;
-                                    System.gc();
-                                    displayError("Watershed: unable to allocate enough memory");
-                                    setCompleted(false);
-    
-                                    return;
-                                }
-                            }
                         }
                     } // if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)
                     else if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
@@ -1060,7 +1055,7 @@ Found:
                             return;
                         }    
                     } // else if (VOIs.VOIAt(i).getCurveType() == VOI.POINT)
-    
+
                 } // for (i = 0; i < nVOI; i++)
             } // if (!entireImage)
         } // if (seedVector == null)
@@ -1098,12 +1093,12 @@ Found:
 
         for (i = 0; (i < seedVector.size()) && !threadStopped; i++) {
             destImage.set((int) ((Seed) seedVector.elementAt(i)).point.X,
-                          (int) ((Seed) seedVector.elementAt(i)).point.Y,
-                          (int) ((Seed) seedVector.elementAt(i)).point.Z, ((Seed) seedVector.elementAt(i)).seedValue);
+                    (int) ((Seed) seedVector.elementAt(i)).point.Y,
+                    (int) ((Seed) seedVector.elementAt(i)).point.Z, ((Seed) seedVector.elementAt(i)).seedValue);
 
             energyImage.set((int) ((Seed) seedVector.elementAt(i)).point.X,
-                            (int) ((Seed) seedVector.elementAt(i)).point.Y,
-                            (int) ((Seed) seedVector.elementAt(i)).point.Z, energyImage.getMin());
+                    (int) ((Seed) seedVector.elementAt(i)).point.Y,
+                    (int) ((Seed) seedVector.elementAt(i)).point.Z, energyImage.getMin());
             // ((Seed)seedVector.elementAt(i)).seedValue);
         }
 
@@ -1121,19 +1116,16 @@ Found:
 
                 if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                     contours = VOIs.VOIAt(i).getCurves();
+                    for (int cons = 0; cons < contours.size(); cons++) {
+                        ((VOIContour) (contours.elementAt(cons))).getBounds(xB, yB, zB);
 
-                    for (slice = 1; (slice < (contours.length - 1)) && !threadStopped; slice++) {
-
-                        for (int cons = 0; cons < contours[slice].size(); cons++) {
-                            ((VOIContour) (contours[slice].elementAt(cons))).getBounds(xB, yB, zB);
-                            ((VOIContour) (contours[slice].elementAt(cons))).contains(0, 0, true);
-
+                        for (z = (int) zB[0]; (z < zB[1]) && !threadStopped; z++) {
                             for (y = (int) yB[0]; (y < yB[1]) && !threadStopped; y++) {
 
                                 for (x = (int) xB[0]; (x < xB[1]) && !threadStopped; x++) {
 
-                                    if (((VOIContour) (contours[slice].elementAt(cons))).contains(x, y, false)) {
-                                        destImage.set(x, y, slice, (short) VOIs.VOIAt(i).getWatershedID());
+                                    if (((VOIContour) (contours.elementAt(cons))).contains(x, y, z)) {
+                                        destImage.set(x, y, z, (short) VOIs.VOIAt(i).getWatershedID());
                                     }
                                 }
                             }
@@ -1468,22 +1460,20 @@ Found:
         // Make sure all watershed VOIs have there watershed ID -- fixes border voxels
         if (!entireImage) {
             for (i = 0; i < nVOI; i++) {
-    
+
                 if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                     contours = VOIs.VOIAt(i).getCurves();
-    
-                    for (slice = 1; slice < (contours.length - 1); slice++) {
-    
-                        for (int cons = 0; cons < contours[slice].size(); cons++) {
-                            ((VOIContour) (contours[slice].elementAt(cons))).getBounds(xB, yB, zB);
-                            ((VOIContour) (contours[slice].elementAt(cons))).contains(0, 0, true);
-    
+
+                    for (int cons = 0; cons < contours.size(); cons++) {
+                        ((VOIContour) (contours.elementAt(cons))).getBounds(xB, yB, zB);
+
+                        for (z = (int) zB[0]; z < zB[1]; z++) {
                             for (y = (int) yB[0]; y < yB[1]; y++) {
-    
+
                                 for (x = (int) xB[0]; x < xB[1]; x++) {
-    
-                                    if (((VOIContour) (contours[slice].elementAt(cons))).contains(x, y, false)) {
-                                        destImage.set(x, y, slice, (short) VOIs.VOIAt(i).getWatershedID());
+
+                                    if (((VOIContour) (contours.elementAt(cons))).contains(x, y, z)) {
+                                        destImage.set(x, y, z, (short) VOIs.VOIAt(i).getWatershedID());
                                     }
                                 }
                             }

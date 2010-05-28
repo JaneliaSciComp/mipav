@@ -422,23 +422,9 @@ public class PlugInDialogKidneySegmentation extends JDialogScriptableBase implem
             return false;
         }
         
-        int numSlices = 1;
-        if (image.getNDims() == 3) {
-            numSlices = image.getExtents()[2];
-        }
         
-        Vector[] curves = VOIs.VOIAt(i).getCurves();
-        int nCurves = 0;
-        int slice;
-        boolean haveTwoCurves = false;
-
-        for (slice = 0; slice < numSlices; slice++) {
-            nCurves = curves[slice].size();
-
-            if (nCurves == 2) {
-                haveTwoCurves = true;
-            }
-        }
+        Vector curves = VOIs.VOIAt(i).getCurves();
+        boolean haveTwoCurves = (curves.size() == 2);
 
         if (!haveTwoCurves) {
             MipavUtil.displayError("One slice must have a contour VOI with 2 curves");

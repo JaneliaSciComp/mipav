@@ -475,8 +475,11 @@ public class ViewJFrameGraph extends JFrame
         for (int i = 0; i < xInit.length; i++) {
             x[i] = xInit[i];
             y[i] = yInit[i];
-            xyC[i][0] = xyCoords[i][0];
-            xyC[i][1] = xyCoords[i][1];
+            if ( xyCoords != null )
+            {
+                xyC[i][0] = xyCoords[i][0];
+                xyC[i][1] = xyCoords[i][1];
+            }
         }
 
         try {

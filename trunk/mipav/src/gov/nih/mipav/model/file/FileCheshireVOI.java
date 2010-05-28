@@ -789,7 +789,7 @@ public class FileCheshireVOI extends FileBase {
 
                                 // add the polygon to an existing VOI
                                 addedVOI[ii].importPolygon(contourPolygon, zz);
-                                ((VOIContour) (addedVOI[ii].getCurves()[zz].lastElement())).trimPoints(0.1, false);
+                                ((VOIContour) (addedVOI[ii].getCurves().lastElement())).trimPoints(0.1, false);
                             }
                         }
 
@@ -798,7 +798,7 @@ public class FileCheshireVOI extends FileBase {
                             addedVOI[grayScaleNumber] = new VOI(grayScaleNumber, "VOI" + grayScaleNumber, zDim,
                                                                 VOI.CONTOUR, -1.0f);
                             addedVOI[grayScaleNumber].importPolygon(contourPolygon, zz);
-                            ((VOIContour) (addedVOI[grayScaleNumber].getCurves()[zz].lastElement())).trimPoints(0.1,
+                            ((VOIContour) (addedVOI[grayScaleNumber].getCurves().lastElement())).trimPoints(0.1,
                                                                                                                 true);
                             grayScaleNumber++;
 
@@ -817,6 +817,7 @@ public class FileCheshireVOI extends FileBase {
 
         } // end of for (z = 0; z < zDim; z++)
 
+        /*
         for (ii = 0; ii < grayScaleNumber; ii++) {
             curves = addedVOI[ii].getCurves();
 
@@ -830,7 +831,7 @@ public class FileCheshireVOI extends FileBase {
             } // end of for (z = 0; z < zDim; z++)
 
         } // end of for (ii = 0; ii < grayScaleNumber; ii++)
-
+         */
         voi = new VOI[grayScaleNumber];
 
         for (ii = 0; ii < grayScaleNumber; ii++) {
