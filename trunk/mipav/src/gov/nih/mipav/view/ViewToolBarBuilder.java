@@ -1147,10 +1147,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
             VOIToolBar.add(makeSeparator());
             VOIToolBar.add( buildButton(CustomUIBuilder.PARAM_PAINT_OPACITY) );
         }
-        VOIToolBar.add(makeSeparator());
-        //VOIToolBar.add( buildTextButton( "make 3D-VOI Intersection", "", "3DVOIIntersect" ) );
-        //VOIToolBar.add( buildTextButton( "make 3D-VOI Union", "", "3DVOIUnion" ) );
-        
+        VOIToolBar.add(makeSeparator());        
         VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_3D_INTERSECTION));
         VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_3D_UNION));
         

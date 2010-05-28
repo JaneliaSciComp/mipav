@@ -183,6 +183,7 @@ public class JDialogVOIStats extends JDialogBase
 
     private ViewVOIVector processList;
 
+    protected VOIHandlerInterface voiHandler;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -194,12 +195,14 @@ public class JDialogVOIStats extends JDialogBase
      * @param  img             DOCUMENT ME!
      * @param  _voi            DOCUMENT ME!
      */
-    public JDialogVOIStats(Frame theParentFrame, ModelImage img, VOI _voi) {
-        super(theParentFrame, false);
+    public JDialogVOIStats(VOIHandlerInterface theVoiHandler, ModelImage img, VOI _voi) {
+        super(false);
         voi = _voi;
         image = img;
+        voiHandler = theVoiHandler;
 
         init();
+        updateVOI(voi,image);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -315,9 +318,7 @@ public class JDialogVOIStats extends JDialogBase
 
             voi.setColor(colorVOI);
 
-            if ((parentFrame != null) && (parentFrame instanceof ViewJFrameImage)) {
-                ((ViewJFrameImage) parentFrame).getControls().setVOIColor(colorVOI);
-            }
+                //voiHandler.setVOIColor(colorVOI);
 
             if ((j != 0) && (location != -1)) {
 
@@ -872,10 +873,8 @@ public class JDialogVOIStats extends JDialogBase
            }
             //TODO: Should report results of all VOIs
             
-            ViewUserInterface UI = ((ViewJFrameImage) (parentFrame)).getUserInterface();
+            ViewUserInterface UI = ViewUserInterface.getReference();
             UI.setDataText("\n -----------------------------------------------------------------------------\n");
-
-            // UI.setDataText("Image:     " + image.getFileInfo(0).getFileName() + "\n");
             UI.setDataText("Image:     " + image.getImageName() + "\n");
             UI.setDataText("VOI  :     " + processList.get(0).getName() + "\n");
 
@@ -1138,22 +1137,9 @@ public class JDialogVOIStats extends JDialogBase
             System.err.println("JDialogVOIStats.selectionChanged: image is null");
 
             return;
-        } else if (image.getParentFrame() == null) {
-            System.err.println("JDialogVOIStats.selectionChanged: image parentFrame() is null");
+        } 
 
-            return;
-        } else if (image.getParentFrame().getComponentImage() == null) {
-            System.err.println("JDialogVOIStats.selectionChanged: image parentframe componentImage is null");
-
-            return;
-        } else if (image.getParentFrame().getComponentImage().getActiveImage() == null) {
-            System.err.println("JDialogVOIStats.selectionChanged: image parentframe componentImage().getActiveImage() is null");
-
-            return;
-        }
-
-        updateVOI(newVOIselection.getChangedVolumeOfInterest(),
-                  image.getParentFrame().getComponentImage().getActiveImage());
+        updateVOI(newVOIselection.getChangedVolumeOfInterest(), voiHandler.getActiveImage());
         updateTree();
     }
 
@@ -1313,18 +1299,8 @@ public class JDialogVOIStats extends JDialogBase
                                    ((VOIFrameNode) ((VOINode) leadObjects[leadObjects.length - 1]).getParent())
                                        .getParent()).getVOIgroup();
 
-                // find the frame where this is located
-                Vector[] curves = leadVOI.getCurves();
-
-                for (curveIndex = 0; curveIndex < curves.length; curveIndex++) {
-
-                    if (curves[curveIndex].contains(leadBase)) {
-                        break;
-                    }
-                }
-
                 if (frameFollowsSelection && (image.getNDims() > 2)) {
-                    ((ViewJFrameImage) parentFrame).setSlice(curveIndex);
+                    voiHandler.setCenter(leadBase.getGeometricCenter(), true );
                 }
 
                 updateContourPane(leadBase);
@@ -1333,7 +1309,7 @@ public class JDialogVOIStats extends JDialogBase
                 curveIndex = ((VOIFrameNode) leadObjects[leadObjects.length - 1]).getFrameNumber();
 
                 if (frameFollowsSelection && (image.getNDims() > 2)) {
-                    ((ViewJFrameImage) parentFrame).setSlice(curveIndex);
+                    //voiHandler.setSlice(curveIndex);
                 }
             }
 
@@ -1415,8 +1391,7 @@ public class JDialogVOIStats extends JDialogBase
             }
 
             treeSelectionChange = true;
-            ((ViewJFrameImage) parentFrame).getComponentImage().getVOIHandler().fireVOISelectionChange(currentVOI,
-                                                                                                       null);
+            voiHandler.fireVOISelectionChange(currentVOI, null);
             image.notifyImageDisplayListeners();
             // System.err.println("notifying of change");
         }
@@ -1845,10 +1820,7 @@ public class JDialogVOIStats extends JDialogBase
                 currentY = (int) currentPt.Y;
                 currentZ = (int) currentPt.Z;
 
-                if (((ViewJFrameImage) parentFrame).getComponentImage().getImageA().getNDims() > 2) {
-                    ViewJComponentEditImage compImage = ((ViewJFrameImage) parentFrame).getComponentImage();
-                    positions = ViewJComponentEditImage.getScannerPositionLabels(compImage.getActiveImage(), currentPt);
-                }
+                positions = ViewJComponentEditImage.getScannerPositionLabels(image, currentPt);
 
                 if (positions != null) {
 	
@@ -1912,7 +1884,7 @@ public class JDialogVOIStats extends JDialogBase
             VOI tempVOI = null;
 
             VOIGroupNode currentNode = null;
-            Vector[] curves = null;
+            Vector curves = null;
 
             int index = 0;
 
@@ -1946,43 +1918,38 @@ public class JDialogVOIStats extends JDialogBase
 
                     // look through curves to find which of the VOI's VOIBases (contours etc)
                     // are active
-                    for (index = 0; index < curves.length; index++) {
+                    voiEnum = curves.elements();
+                    while (voiEnum.hasMoreElements()) {
+                        voiBase = (VOIBase) voiEnum.nextElement();
 
-                        // iterate through Vector for VOIBases
-                        voiEnum = curves[index].elements();
+                        // check to see if the VOIBase is active
+                        if (voiBase.isActive()) {
 
-                        while (voiEnum.hasMoreElements()) {
-                            voiBase = (VOIBase) voiEnum.nextElement();
+                            voiFrameEnum = currentNode.children();
 
-                            // check to see if the VOIBase is active
-                            if (voiBase.isActive()) {
+                            while (voiFrameEnum.hasMoreElements()) {
 
-                                voiFrameEnum = currentNode.children();
+                                tempNode = (TreeNode) voiFrameEnum.nextElement();
 
-                                while (voiFrameEnum.hasMoreElements()) {
+                                if (tempNode instanceof VOIFrameNode) {
 
-                                    tempNode = (TreeNode) voiFrameEnum.nextElement();
+                                    voiNodeEnum = tempNode.children();
 
-                                    if (tempNode instanceof VOIFrameNode) {
+                                    // find the child that matches this selected contour
+                                    while (voiNodeEnum.hasMoreElements()) {
+                                        currentVOINode = (VOINode) voiNodeEnum.nextElement();
 
-                                        voiNodeEnum = tempNode.children();
-
-                                        // find the child that matches this selected contour
-                                        while (voiNodeEnum.hasMoreElements()) {
-                                            currentVOINode = (VOINode) voiNodeEnum.nextElement();
-
-                                            if (currentVOINode.getVOI().equals(voiBase)) {
-                                                treePaths.addElement(new TreePath(new Object[] {
-                                                                                      root, currentNode, tempNode,
-                                                                                      currentVOINode
-                                                                                  }));
-                                            }
+                                        if (currentVOINode.getVOI().equals(voiBase)) {
+                                            treePaths.addElement(new TreePath(new Object[] {
+                                                    root, currentNode, tempNode,
+                                                    currentVOINode
+                                            }));
                                         }
-
                                     }
-                                }
 
+                                }
                             }
+
                         }
                     }
                 }
@@ -2095,16 +2062,16 @@ public class JDialogVOIStats extends JDialogBase
                 editSubMenu = ViewMenuBuilder.buildMenu("Edit", 0, false);
                 propSubMenu = ViewMenuBuilder.buildMenu("Propagate", 0, false);
                 itemShowGraph = ViewMenuBuilder.buildMenuItem("Show VOI Graph", "ShowGraph", 0,
-                                                              (ViewJFrameImage) parentFrame, null, false);
+                        voiHandler, null, false);
                 itemShowPAAIDialog = ViewMenuBuilder.buildMenuItem("Point area average intensities", "ShowPAIIDialog",
-                                                                   0, (ViewJFrameImage) parentFrame, null, false);
+                                                                   0, voiHandler, null, false);
                 itemShowVOIName = ViewMenuBuilder.buildCheckBoxMenuItem("Show VOI name", "ShowName",
-                                                                        (ViewJFrameImage) parentFrame,
+                        voiHandler,
                                                                         Preferences.is(Preferences.PREF_SHOW_VOI_NAME));
 
                 graphSubMenu = ViewMenuBuilder.buildMenu("Graph", 0, false);
                 itemClose = ViewMenuBuilder.buildMenuItem("Close VOI (polyline->polygon)", "closeVOI", 0,
-                                                          (ViewJFrameImage) parentFrame, null, false);
+                        voiHandler, null, false);
 
                 groupSubMenu = ViewMenuBuilder.buildMenu("Group", 0, false);
 
@@ -2117,10 +2084,9 @@ public class JDialogVOIStats extends JDialogBase
 
             // Graph Submenu
             graphSubMenu.add(ViewMenuBuilder.buildMenuItem("Boundary intensity", "boundaryIntensity", 0,
-                                                           (ViewJFrameImage) parentFrame, null, false));
+                    voiHandler, null, false));
 
-            if ((((ViewJFrameImage) parentFrame).getActiveImage().getNDims() == 3) ||
-                    (((ViewJFrameImage) parentFrame).getActiveImage().getNDims() == 4)) {
+            if ((image.getNDims() == 3) || (image.getNDims() == 4)) {
                 graphSubMenu.add(ViewMenuBuilder.buildMenuItem("2.5D Total Intensity", "totalIntensity", 0, this, null,
                                                                false));
                 graphSubMenu.add(ViewMenuBuilder.buildMenuItem("2.5D Average Intensity", "avgIntensity", 0, this, null,
@@ -2132,49 +2098,48 @@ public class JDialogVOIStats extends JDialogBase
             }
 
             // Grouping menu
-            groupSubMenu.add(ViewMenuBuilder.buildMenuItem("Group VOIs", "GroupVOIs", 0, (ViewJFrameImage)
-                                                           parentFrame, null, false));
+            groupSubMenu.add(ViewMenuBuilder.buildMenuItem("Group VOIs", "GroupVOIs", 0, voiHandler, null, false));
             groupSubMenu.add(ViewMenuBuilder.buildMenuItem("Ungroup VOIs", "UngroupVOIs", 0,
-                                                           (ViewJFrameImage) parentFrame, null, false));
+                    voiHandler, null, false));
 
 
             // Order submenu
             orderSubMenu.add(ViewMenuBuilder.buildMenuItem("Bring VOI to Front", "BringToFront", 0,
-                                                           (ViewJFrameImage) parentFrame, "front.gif", true));
+                    voiHandler, "front.gif", true));
             orderSubMenu.add(ViewMenuBuilder.buildMenuItem("Send VOI to Back", "SendToBack", 0,
-                                                           (ViewJFrameImage) parentFrame, "back.gif", true));
+                    voiHandler, "back.gif", true));
             orderSubMenu.add(ViewMenuBuilder.buildMenuItem("Bring VOI Forward", "BringForward", 0,
-                                                           (ViewJFrameImage) parentFrame, "forward.gif", true));
+                    voiHandler, "forward.gif", true));
             orderSubMenu.add(ViewMenuBuilder.buildMenuItem("Send VOI Backward", "SendBackward", 0,
-                                                           (ViewJFrameImage) parentFrame, "backward.gif", true));
+                    voiHandler, "backward.gif", true));
 
             // Contour order submenu
             contourOrderSubMenu.add(ViewMenuBuilder.buildMenuItem("Bring Contour to Front", "BringContourToFront", 0,
-                                                                  (ViewJFrameImage) parentFrame, "front.gif", true));
+                    voiHandler, "front.gif", true));
             contourOrderSubMenu.add(ViewMenuBuilder.buildMenuItem("Send Contour to Back", "SendContourToBack", 0,
-                                                                  (ViewJFrameImage) parentFrame, "back.gif", true));
+                    voiHandler, "back.gif", true));
             contourOrderSubMenu.add(ViewMenuBuilder.buildMenuItem("Bring Contour Forward", "BringContourForward", 0,
-                                                                  (ViewJFrameImage) parentFrame, "forward.gif", true));
+                    voiHandler, "forward.gif", true));
             contourOrderSubMenu.add(ViewMenuBuilder.buildMenuItem("Send Contour Backward", "SendContourBackward", 0,
-                                                                  (ViewJFrameImage) parentFrame, "backward.gif", true));
+                    voiHandler, "backward.gif", true));
 
             // Edit submenu
-            editSubMenu.add(ViewMenuBuilder.buildMenuItem("Delete", "deleteVOI", 0, (ViewJFrameImage) parentFrame,
+            editSubMenu.add(ViewMenuBuilder.buildMenuItem("Delete", "deleteVOI", 0, voiHandler,
                                                           "delete.gif", true));
-            editSubMenu.add(ViewMenuBuilder.buildMenuItem("Cut", "cutVOI", 0, (ViewJFrameImage) parentFrame,
+            editSubMenu.add(ViewMenuBuilder.buildMenuItem("Cut", "cutVOI", 0, voiHandler,
                                                           "cutpaint.gif", true));
-            editSubMenu.add(ViewMenuBuilder.buildMenuItem("Copy", "copyVOI", 0, (ViewJFrameImage) parentFrame,
+            editSubMenu.add(ViewMenuBuilder.buildMenuItem("Copy", "copyVOI", 0, voiHandler,
                                                           "copypaint.gif", true));
-            editSubMenu.add(ViewMenuBuilder.buildMenuItem("Paste", "pasteVOI", 0, (ViewJFrameImage) parentFrame,
+            editSubMenu.add(ViewMenuBuilder.buildMenuItem("Paste", "pasteVOI", 0, voiHandler,
                                                           "pastepaint.gif", true));
 
             // propagate submenu
             propSubMenu.add(ViewMenuBuilder.buildMenuItem("To Next Slice", "PropVOIUp", 0,
-                                                          (ViewJFrameImage) parentFrame, "voipropu.gif", true));
+                    voiHandler, "voipropu.gif", true));
             propSubMenu.add(ViewMenuBuilder.buildMenuItem("To Previous Slice", "PropVOIDown", 0,
-                                                          (ViewJFrameImage) parentFrame, "voipropd.gif", true));
+                    voiHandler, "voipropd.gif", true));
             propSubMenu.add(ViewMenuBuilder.buildMenuItem("To All Slices", "PropVOIAll", 0,
-                                                          (ViewJFrameImage) parentFrame, null, true));
+                    voiHandler, null, true));
         }
 
         /**

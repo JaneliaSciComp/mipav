@@ -3049,9 +3049,6 @@ public class FileImageXML extends FileXML {
         float acpcRes = 0;
 
         /** DOCUMENT ME! */
-        int annotationSlice = 0;
-
-        /** DOCUMENT ME! */
         Vector<VOI> annotationVector;
 
         /** DOCUMENT ME! */
@@ -3456,27 +3453,26 @@ public class FileImageXML extends FileXML {
                     x[0] = Float.parseFloat(stok.nextToken());
                     y[0] = Float.parseFloat(stok.nextToken());
                     z[0] = Integer.parseInt(stok.nextToken());
-                    annotationSlice = (int) z[0];
-                    annotationVOI.importCurve(x, y, z, annotationSlice);
+                    annotationVOI.importCurve(x, y, z);
                     annotationVOI.setUID(annotationVOI.hashCode());
                 }
             } else if (currentKey.equals("Text")) {
-                ((VOIText) annotationVOI.getCurves()[annotationSlice].elementAt(0)).setText(elementBuffer);
+                ((VOIText) annotationVOI.getCurves().lastElement()).setText(elementBuffer);
             } else if (currentKey.equals("Font-color")) {
                 StringTokenizer stok = new StringTokenizer(elementBuffer, ",");
                 Color tempColor = new Color(Integer.parseInt(stok.nextToken()), Integer.parseInt(stok.nextToken()),
                         Integer.parseInt(stok.nextToken()));
                 annotationVOI.setColor(tempColor);
-                ((VOIText) annotationVOI.getCurves()[annotationSlice].elementAt(0)).setColor(tempColor);
+                ((VOIText) annotationVOI.getCurves().lastElement()).setColor(tempColor);
 
             } else if (currentKey.equals("Font-descriptor")) {
-                ((VOIText) annotationVOI.getCurves()[annotationSlice].elementAt(0)).setFontDescriptors(Integer
+                ((VOIText) annotationVOI.getCurves().lastElement()).setFontDescriptors(Integer
                         .parseInt(elementBuffer));
             } else if (currentKey.equals("Font-size")) {
-                ((VOIText) annotationVOI.getCurves()[annotationSlice].elementAt(0)).setFontSize(Integer
+                ((VOIText) annotationVOI.getCurves().lastElement()).setFontSize(Integer
                         .parseInt(elementBuffer));
             } else if (currentKey.equals("Font-type")) {
-                ((VOIText) annotationVOI.getCurves()[annotationSlice].elementAt(0)).setFontName(elementBuffer);
+                ((VOIText) annotationVOI.getCurves().lastElement()).setFontName(elementBuffer);
 
                 // add this VOI to the vector
                 annotationVector.addElement(annotationVOI);

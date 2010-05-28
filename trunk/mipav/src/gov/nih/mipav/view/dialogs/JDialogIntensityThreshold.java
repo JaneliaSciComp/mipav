@@ -33,6 +33,7 @@ public class JDialogIntensityThreshold extends JDialogBase {
 
     /** DOCUMENT ME! */
     private ViewJComponentEditImage component;
+    private VOIHandlerInterface voiHandler;
 
     /** DOCUMENT ME! */
     private boolean doAverage;
@@ -52,6 +53,20 @@ public class JDialogIntensityThreshold extends JDialogBase {
     public JDialogIntensityThreshold(JFrame theParentFrame, ViewJComponentEditImage compImage, boolean average) {
         super(theParentFrame, false);
         this.component = compImage;
+        doAverage = average;
+        init();
+        setVisible(true);
+    }
+    /**
+     * Creates a new JDialogIntensityThreshold object.
+     *
+     * @param  theParentFrame  DOCUMENT ME!
+     * @param  compImage       DOCUMENT ME!
+     * @param  average         DOCUMENT ME!
+     */
+    public JDialogIntensityThreshold(JFrame theParentFrame, VOIHandlerInterface voiHandler, boolean average) {
+        super(theParentFrame, false);
+        this.voiHandler = voiHandler;
         doAverage = average;
         init();
         setVisible(true);
@@ -83,7 +98,14 @@ public class JDialogIntensityThreshold extends JDialogBase {
             }
 
             setVisible(false);
-            component.getVOIHandler().graph25VOI_CalcInten(!doAverage, true, threshold);
+            if ( voiHandler != null )
+            {
+                voiHandler.graph25VOI_CalcInten(!doAverage, true, threshold);
+            }
+            else if ( component != null )
+            {
+                component.getVOIHandler().graph25VOI_CalcInten(!doAverage, true, threshold);
+            }
             this.dispose();
         } else if (source == cancelButton) {
             setVisible(false);

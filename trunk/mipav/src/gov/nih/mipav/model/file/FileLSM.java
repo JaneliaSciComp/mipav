@@ -1643,7 +1643,7 @@ public class FileLSM extends FileBase {
 
                     for (i = 0; i < zDim; i++) {
                         z[0] = z[1] = z[2] = z[3] = i;
-                        photoBleachedVOI.importCurve(x, y, z, i);
+                        photoBleachedVOI.importCurve(x, y, z);
                     }
 
                     image.registerVOI(photoBleachedVOI);
@@ -1685,12 +1685,10 @@ public class FileLSM extends FileBase {
                             }
 
                             for (i = 0; i < zDim; i++) {
-
                                 for (int j = 0; j < nPts; j++) {
                                     z[j] = i;
                                 }
-
-                                photoBleachedVOI.importCurve(x, y, z, i);
+                                photoBleachedVOI.importCurve(x, y, z);
                             }
 
                             image.registerVOI(photoBleachedVOI);
@@ -1729,12 +1727,10 @@ public class FileLSM extends FileBase {
                         }
 
                         for (i = 0; i < zDim; i++) {
-
                             for (int j = 0; j < 40; j++) {
                                 z[j] = i;
                             }
-
-                            photoBleachedVOI.importCurve(x, y, z, i);
+                            photoBleachedVOI.importCurve(x, y, z);
                         }
 
                         image.registerVOI(photoBleachedVOI);
@@ -1828,12 +1824,10 @@ public class FileLSM extends FileBase {
                         }
 
                         for (i = 0; i < zDim; i++) {
-
                             for (int j = 0; j < 40; j++) {
                                 z[j] = i;
                             }
-
-                            photoBleachedVOI.importCurve(x, y, z, i);
+                            photoBleachedVOI.importCurve(x, y, z);
                         }
 
                         image.registerVOI(photoBleachedVOI);
@@ -1967,12 +1961,10 @@ public class FileLSM extends FileBase {
                     }
 
                     for (i = 0; i < zDim; i++) {
-
                         for (int j = 0; j < 40; j++) {
                             z[j] = i;
                         }
-
-                        photoBleachedVOI.importCurve(x, y, z, i);
+                        photoBleachedVOI.importCurve(x, y, z);
                     }
 
                     image.registerVOI(photoBleachedVOI);
@@ -2096,12 +2088,10 @@ public class FileLSM extends FileBase {
                             }
 
                             for (i = 0; i < zDim; i++) {
-
                                 for (int j = 0; j < (10 * nPts); j++) {
                                     z[j] = i;
                                 }
-
-                                photoBleachedVOI.importCurve(x, y, z, i);
+                                photoBleachedVOI.importCurve(x, y, z);
                             }
 
                             image.registerVOI(photoBleachedVOI);

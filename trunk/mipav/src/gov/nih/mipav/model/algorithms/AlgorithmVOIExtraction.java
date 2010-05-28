@@ -318,7 +318,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
 
                                     // add the polygon to an existing VOI
                                     VOIs.VOIAt(VOIIndexArray[i]).importPolygon(contourPolygon, z);
-                                    ((VOIContour) (VOIs.VOIAt(VOIIndexArray[i]).getCurves()[z].lastElement()))
+                                    ((VOIContour) (VOIs.VOIAt(VOIIndexArray[i]).getCurves().lastElement()))
                                         .trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
                                 }
                             }
@@ -336,7 +336,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                                 VOIs.add(addedVOI);
                                 VOIIndexArray[grayScaleNumber] = VOIs.size() - 1;
                                 VOIs.VOIAt(VOIIndexArray[grayScaleNumber]).importPolygon(contourPolygon, z);
-                                ((VOIContour) (VOIs.VOIAt(VOIIndexArray[grayScaleNumber]).getCurves()[z].lastElement()))
+                                ((VOIContour) (VOIs.VOIAt(VOIIndexArray[grayScaleNumber]).getCurves().lastElement()))
                                     .trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
                                 grayScaleNumber++;
 
@@ -438,17 +438,17 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
 
                             for (i = 0; ((newGrayScale) && (i < grayScaleNumber)); i++) {
                                 voiID = (short) (VOIs.VOIAt(VOIIndexArray[i]).getID() + 1);
-                                nCurves = VOIs.VOIAt(VOIIndexArray[i]).getCurves()[z].size();
+                                nCurves = VOIs.VOIAt(VOIIndexArray[i]).getCurves().size();
 
                                 for (j = 0; j < nCurves; j++) {
 
-                                    if (((VOIContour) (VOIs.VOIAt(VOIIndexArray[i]).getCurves()[z].elementAt(j)))
-                                            .contains(x / 2, y / 2, true) && (voiID == obj)) {
+                                    if (((VOIContour) (VOIs.VOIAt(VOIIndexArray[i]).getCurves().elementAt(j)))
+                                            .contains(x / 2, y / 2) && (voiID == obj)) {
                                         newGrayScale = false;
 
                                         // add the polygon to an existing VOI
                                         VOIs.VOIAt(VOIIndexArray[i]).importPolygon(contourPolygon, z);
-                                        ((VOIContour) (VOIs.VOIAt(VOIIndexArray[i]).getCurves()[z].lastElement()))
+                                        ((VOIContour) (VOIs.VOIAt(VOIIndexArray[i]).getCurves().lastElement()))
                                             .trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
                                     }
                                 }
@@ -468,9 +468,9 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
 
             return;
         }
-
+/*
         for (i = 0; i < grayScaleNumber; i++) {
-            curves = VOIs.VOIAt(VOIIndexArray[i]).getCurves();
+            curves = VOIs.VOIAt(VOIIndexArray[i]).getCurvesTemp();
 
             for (z = 0; z < zDim; z++) {
                 nCurves = curves[z].size();
@@ -481,7 +481,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                 }
             } // end of for (z = 0; z < zDim; z++)
         } // end of for (i = 0; i < grayScaleNumber; i++)
-
+*/
         if (nameTable != null) {
 
             // Reorder the vois to match the order in nameTable

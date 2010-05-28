@@ -44,8 +44,6 @@ public class FileInfoMincHDF extends FileInfoBase {
      * The valid range for image pixel values
      */
     private double[] validRange = null;
-    
-   
 
    
 

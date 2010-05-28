@@ -43,8 +43,6 @@ import java.awt.*;
  */
 
 public class PlugInNewGeneric2 implements PlugInAlgorithm {
-	
-	//public static final String[] CATEGORY = {"Test", "A", "B"};
 
 	//public static final String[] CATEGORY = {"Test", "A", "B"};
 

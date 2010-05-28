@@ -45,7 +45,7 @@ public class AlgorithmVOISimplexOpt extends AlgorithmBase {
     private ModelImage image;
 
     /** The polygon of the VOI we are fitting. */
-    private Polygon inputGon;
+    private VOIContour inputGon;
 
     /** the kernel size to use in calculating the gradient magnitude image. */
     private float[] sigmas;
@@ -95,7 +95,7 @@ public class AlgorithmVOISimplexOpt extends AlgorithmBase {
      * @param  sigmas    the kernel size to use in calculating the gradient magnitude image
      * @param  costFunc  which cost function to use (MINDIFF or MAXSUM)
      */
-    public AlgorithmVOISimplexOpt(ModelImage image, Polygon inputGon, float[] sigmas, int costFunc) {
+    public AlgorithmVOISimplexOpt(ModelImage image, VOIContour inputGon, float[] sigmas, int costFunc) {
         this.image = image;
         this.sigmas = sigmas;
         this.costFunc = costFunc;
@@ -133,7 +133,7 @@ public class AlgorithmVOISimplexOpt extends AlgorithmBase {
      *
      * @return  the optimized polygon
      */
-    public Polygon goOptimize(float[] sliceBuf, Polygon inputGon) {
+    public VOIContour goOptimize(float[] sliceBuf, VOIContour inputGon) {
         int i;
         this.inputGon = inputGon;
 
@@ -151,8 +151,8 @@ public class AlgorithmVOISimplexOpt extends AlgorithmBase {
 
         baseVOIGradMagSum = 0;
 
-        for (i = 0; i < inputGon.npoints; i++) {
-            baseVOIGradMagSum += gradMagBuf[(int) (inputGon.xpoints[i] + (inputGon.ypoints[i] * xDim))];
+        for (i = 0; i < inputGon.size(); i++) {
+            baseVOIGradMagSum += gradMagBuf[(int) (inputGon.elementAt(i).X + (inputGon.elementAt(i).Y * xDim))];
         }
 
         return Search();
@@ -197,7 +197,7 @@ public class AlgorithmVOISimplexOpt extends AlgorithmBase {
      *
      * @param  poly  the polygon
      */
-    public void setPolygon(Polygon poly) {
+    public void setPolygon(VOIContour poly) {
         inputGon = poly;
     }
 
@@ -274,7 +274,7 @@ public class AlgorithmVOISimplexOpt extends AlgorithmBase {
      *
      * @return  the optimized polygon
      */
-    private Polygon Search() {
+    private VOIContour Search() {
         TransMatrix xfrm;
         CostFunction func = null;
         double[][] p = null;
@@ -300,7 +300,7 @@ public class AlgorithmVOISimplexOpt extends AlgorithmBase {
         xfrm = getTransform(p[0]); // lowest cost row
         xfrm.Inverse();
 
-        return xfrm.transform(inputGon);
+        return new VOIContour( inputGon, xfrm );
     }
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
@@ -347,14 +347,14 @@ public class AlgorithmVOISimplexOpt extends AlgorithmBase {
             TransMatrix xfrm;
             xfrm = getTransform(x);
 
-            Polygon tmpGon = xfrm.transform(inputGon);
+            VOIContour tmpGon = new VOIContour( inputGon, xfrm );
 
-            for (i = 0; i < tmpGon.npoints; i++) {
+            for (i = 0; i < tmpGon.size(); i++) {
                 value = 0;
-                X = tmpGon.xpoints[i];
+                X = (int)tmpGon.elementAt(i).X;
 
                 if ((X >= 0) && (X < (xDim - 1))) {
-                    Y = tmpGon.ypoints[i];
+                    Y = (int)tmpGon.elementAt(i).Y;
 
                     if ((Y >= 0) && (Y < (yDim - 1))) {
                         value = gradMagBuf[X + (Y * xDim)];

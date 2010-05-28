@@ -477,7 +477,7 @@ public class ViewJFramePaintVasculature extends ViewJFrameBase {
             seedPoints.setColor(Color.blue.darker());
         } else {
             isNewVOI = false;
-            seedPoints.removeCurves(0);
+            seedPoints.removeCurves();
         }
 
         Vector points = new Vector();
@@ -510,7 +510,7 @@ public class ViewJFramePaintVasculature extends ViewJFrameBase {
                 x[0] = (int) cur.X;
                 y[0] = (int) cur.Y;
                 z[0] = (int) cur.Z;
-                seedPoints.importCurve(x, y, z, 0);
+                seedPoints.importCurve(x, y, z);
             }
 
             prev = (Vector3f) points.get(i);

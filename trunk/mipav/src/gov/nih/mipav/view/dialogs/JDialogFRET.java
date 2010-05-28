@@ -871,7 +871,7 @@ public class JDialogFRET extends JDialogBase implements AlgorithmInterface, Item
 
         if (image.getNDims() == 2) {
 
-            if (VOIs.VOIAt(donorIndex).getCurves()[0].size() == 0) {
+            if (VOIs.VOIAt(donorIndex).getCurves().size() == 0) {
                 MipavUtil.displayError("Must have donor VOI present in postbleached " + postImage.getImageName());
 
                 return false;
@@ -879,7 +879,7 @@ public class JDialogFRET extends JDialogBase implements AlgorithmInterface, Item
 
             if (backgroundIndex >= 0) {
 
-                if (VOIs.VOIAt(backgroundIndex).getCurves()[0].size() == 0) {
+                if (VOIs.VOIAt(backgroundIndex).getCurves().size() == 0) {
                     MipavUtil.displayError("Must have background VOI present in postbleached " +
                                            postImage.getImageName());
 
@@ -889,7 +889,7 @@ public class JDialogFRET extends JDialogBase implements AlgorithmInterface, Item
 
             if (signalIndex >= 0) {
 
-                if (VOIs.VOIAt(signalIndex).getCurves()[0].size() == 0) {
+                if (VOIs.VOIAt(signalIndex).getCurves().size() == 0) {
                     MipavUtil.displayError("Must have signal VOI present in postbleached " + postImage.getImageName());
 
                     return false;
@@ -904,7 +904,7 @@ public class JDialogFRET extends JDialogBase implements AlgorithmInterface, Item
         } // if (image.getNDims() == 2)
         else { // 3D image
 
-            if (VOIs.VOIAt(donorIndex).getCurves()[1].size() == 0) {
+            if (VOIs.VOIAt(donorIndex).getCurves().size() == 1) {
                 MipavUtil.displayError("Must have donor VOI present in postbleached slice of " + image.getImageName());
 
                 return false;
@@ -912,7 +912,7 @@ public class JDialogFRET extends JDialogBase implements AlgorithmInterface, Item
 
             if (backgroundIndex >= 0) {
 
-                if (VOIs.VOIAt(backgroundIndex).getCurves()[1].size() == 0) {
+                if (VOIs.VOIAt(backgroundIndex).getCurves().size() == 1) {
                     MipavUtil.displayError("Must have background VOI present in postbleached slice of " +
                                            image.getImageName());
 
@@ -922,7 +922,7 @@ public class JDialogFRET extends JDialogBase implements AlgorithmInterface, Item
 
             if (signalIndex >= 0) {
 
-                if (VOIs.VOIAt(signalIndex).getCurves()[1].size() == 0) {
+                if (VOIs.VOIAt(signalIndex).getCurves().size() == 1) {
                     MipavUtil.displayError("Must have signal VOI present in postbleached slice of " +
                                            image.getImageName());
 

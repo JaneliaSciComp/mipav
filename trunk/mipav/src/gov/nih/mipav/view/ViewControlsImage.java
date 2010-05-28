@@ -178,8 +178,8 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
      * @param  showPaint  Indicates if the paint toolbar is shown.
      * @param  voiIndex   Indicates the index of the currently (or previously) selected VOI
      */
-    public void buildToolbar(boolean showImage, boolean showVOI, boolean showPaint, int voiIndex) {
-        buildToolbar(showImage, showVOI, showPaint, false, voiIndex);
+    public void buildToolbar(boolean showImage, JToolBar voiToolbar, boolean showPaint) {
+        buildToolbar(showImage, voiToolbar, showPaint, false);
     }
 
     /**
@@ -191,8 +191,7 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
      * @param  showScripting  Indicates if the scripting toolbar is shown.
      * @param  voiIndex       Indicates the index of the currently (or previously) selected VOI
      */
-    public void buildToolbar(boolean showImage, boolean showVOI, boolean showPaint, boolean showScripting,
-                             int voiIndex) {
+    public void buildToolbar(boolean showImage, JToolBar voiToolbar, boolean showPaint, boolean showScripting) {
 
         int zDim, tDim;
         int numberOfDimensions;
@@ -214,9 +213,13 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
             numberOfDimensions = Math.max(numberOfDimensions, frame.getImageB().getNDims());
         }
 
-        if (showVOI) {
-            panelToolbars.add(toolBarObj.buildVOIToolBar(numberOfDimensions, voiIndex), "North");
+        if ( voiToolbar != null ) {
+            panelToolbars.add(voiToolbar, "North");
         }
+
+        //if (showVOI) {
+        //    panelToolbars.add(toolBarObj.buildVOIToolBar(numberOfDimensions, voiIndex), "North");
+        //}
 
         if (showPaint) {
             paintToolBar = toolBarObj.buildPaintToolBar(frame.getImageA().getType(), numberOfDimensions);

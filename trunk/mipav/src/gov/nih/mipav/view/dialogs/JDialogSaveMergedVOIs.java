@@ -190,7 +190,7 @@ public class JDialogSaveMergedVOIs extends JDialogBase {
      */
     private void init() {
         setTitle("Merge VOIs and Save");
-        // setResizable(false);
+        //setResizable(false);
         cancelFlag = false;
 
         final JPanel mainPanel = new JPanel();

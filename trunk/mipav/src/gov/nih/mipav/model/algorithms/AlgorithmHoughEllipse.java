@@ -1899,8 +1899,8 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                         }
                     }
                 }
-                ellipseVOI[k].importCurve(xArr, yArr, zArr, 0);
-                ((VOIContour)(ellipseVOI[k].getCurves()[0].elementAt(0))).setFixed(true);
+                ellipseVOI[k].importCurve(xArr, yArr, zArr);
+                ((VOIContour)(ellipseVOI[k].getCurves().elementAt(0))).setFixed(true);
                 destImage.registerVOI(ellipseVOI[k]);
                 k++;
             } // if (selectedEllipse[i])

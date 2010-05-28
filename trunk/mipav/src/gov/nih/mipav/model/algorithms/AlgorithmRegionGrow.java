@@ -611,7 +611,7 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
                     }
 
                     mask = new BitSet(imageSize);
-                    VOIs.VOIAt(iSel).createBinaryMask(mask, xDim, yDim);
+                    VOIs.VOIAt(iSel).createBinaryMask3D(mask, xDim, yDim, false, false);
 
                     for (i = 0; i < imageSize; i++) {
 
@@ -840,7 +840,7 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
                     }
 
                     mask = new BitSet(imageSize);
-                    VOIs.VOIAt(iSel).createBinaryMask(mask, xDim, yDim);
+                    VOIs.VOIAt(iSel).createBinaryMask3D(mask, xDim, yDim, false, false);
 
                     for (i = 0; i < imageSize; i++) {
 
@@ -1351,7 +1351,7 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
                     }
 
                     mask = new BitSet(imageSize);
-                    VOIs.VOIAt(iSel).createBinaryMask(mask, xDim, yDim);
+                    VOIs.VOIAt(iSel).createBinaryMask3D(mask, xDim, yDim, false, false);
 
                     for (i = 0; i < imageSize; i++) {
 
@@ -2057,7 +2057,7 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
                     }
 
                     mask = new BitSet(length);
-                    VOIs.VOIAt(iSel).createBinaryMask(mask, xDim, yDim);
+                    VOIs.VOIAt(iSel).createBinaryMask3D(mask, xDim, yDim, false, false);
 
                     for (i = 0; i < length; i++) {
 
@@ -2320,7 +2320,7 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
                     }
 
                     mask = new BitSet(length);
-                    VOIs.VOIAt(iSel).createBinaryMask(mask, xDim, yDim);
+                    VOIs.VOIAt(iSel).createBinaryMask3D(mask, xDim, yDim, false, false);
 
                     for (i = 0; i < length; i++) {
 
@@ -2928,7 +2928,7 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
                     }
 
                     mask = new BitSet(length);
-                    VOIs.VOIAt(iSel).createBinaryMask(mask, xDim, yDim);
+                    VOIs.VOIAt(iSel).createBinaryMask3D(mask, xDim, yDim, false, false);
 
                     for (i = 0; i < length; i++) {
 

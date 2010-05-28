@@ -104,12 +104,11 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
         int itersE = 1;
         int i;
         boolean pointsEntered;
-        Vector[] curves;
+        Vector curves;
         int nPts;
         int s;
         Vector3f[] pt = null;
         Vector3f[] tmpPt = null;
-        int ptNum = 0;
         int pos;
         int redPts = 0;
         int greenPts = 0;
@@ -325,20 +324,14 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
         
         curves = srcImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slices
 
-        nPts = 0;
-        for (i = 0; i < srcImage.getExtents()[2]; i++) {
-            nPts += curves[i].size();
-        }
+        nPts = curves.size();
+        
         Preferences.debug("nPts = " + nPts + "\n");
         pt = new Vector3f[nPts];
         
-        ptNum = 0;
-        for (s = 0; s < srcImage.getExtents()[2]; s++) {
-            tmpPt = srcImage.getVOIs().VOIAt(0).exportPoints(s);
-
-            for (i = 0; i < tmpPt.length; i++) {
-                pt[ptNum++] = tmpPt[i];
-            }
+        tmpPt = srcImage.getVOIs().VOIAt(0).exportAllPoints();
+        for (i = 0; i < tmpPt.length; i++) {
+            pt[i] = tmpPt[i];
         }
         
         redBuffer = new float[length];

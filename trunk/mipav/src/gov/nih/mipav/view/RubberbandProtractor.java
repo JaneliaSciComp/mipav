@@ -167,7 +167,7 @@ public class RubberbandProtractor extends Rubberband {
                 }
 
                 if ((Math.abs(x[2] - x[0]) > 1) || (Math.abs(y[2] - y[0]) > 1)) {
-                    newVOI.importCurve(x, y, z, slice);
+                    newVOI.importCurve(x, y, z);
                     newVOI.setXYDim(image.getExtents()[0], image.getExtents()[1]);
                     image.registerVOI(newVOI);
                 }
@@ -192,7 +192,7 @@ public class RubberbandProtractor extends Rubberband {
                     if (VOIs.VOIAt(i).getID() == ((ViewJComponentEditImage) (component)).getVOIHandler().getVOI_ID()) {
 
                         if (VOIs.VOIAt(i).getCurveType() == VOI.PROTRACTOR) {
-                            VOIs.VOIAt(i).importCurve(x, y, z, slice);
+                            VOIs.VOIAt(i).importCurve(x, y, z);
                         } else {
                             MipavUtil.displayError("Can't add Protractor VOI to other VOI structure.");
                         }

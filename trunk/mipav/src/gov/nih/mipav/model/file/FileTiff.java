@@ -13554,7 +13554,7 @@ public class FileTiff extends FileBase {
                                                                                 100));
                                     }
 
-                                    buffer[x + (y * xDim)] = decomp[j >> 3] & (1 << (7 - (j % 8)));
+                                    buffer[x + (y * xDim)] = decomp[j >> 3] & (1 << (7 - (j %8)));
                                     i++;
                                 }
 

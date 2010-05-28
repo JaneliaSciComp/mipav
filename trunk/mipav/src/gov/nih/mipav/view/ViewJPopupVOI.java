@@ -67,7 +67,9 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
     private JMenu selectionMenu;
 
     /** DOCUMENT ME! */
-    private VOIHandler voiHandler;
+    private VOIHandlerInterface voiHandler;
+    
+    private VOIBase selectedVOI = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -76,7 +78,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
      *
      * @param  handler  DOCUMENT ME!
      */
-    public ViewJPopupVOI(VOIHandler handler) {
+    public ViewJPopupVOI(VOIHandlerInterface handler) {
         voiHandler = handler;
 
         itemProps = ViewMenuBuilder.buildMenuItem("Properties", "Properties", 0, this, null, true);
@@ -127,8 +129,8 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
         graphSubMenu.add(ViewMenuBuilder.buildMenuItem("Boundary intensity", "boundaryIntensity", 0, this, null,
                                                        false));
 
-        if ((handler.getComponentImage().getActiveImage().getNDims() == 3) ||
-                (handler.getComponentImage().getActiveImage().getNDims() == 4)) {
+       if ((handler.getActiveImage().getNDims() == 3) ||
+                (handler.getActiveImage().getNDims() == 4)) {
             graphSubMenu.add(ViewMenuBuilder.buildMenuItem("Total intensity", "totalIntensity", 0, this, null, false));
             graphSubMenu.add(ViewMenuBuilder.buildMenuItem("Average intensity", "avgIntensity", 0, this, null, false));
             graphSubMenu.add(ViewMenuBuilder.buildMenuItem("Total intensity with threshold", "totalIntensityThreshold",
@@ -149,6 +151,17 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
         popup = new JPopupMenu();
         // popup.add(ViewMenuBuilder.buildCheckBoxMenuItem()
     }
+    
+
+    /**
+     * Creates a new ViewJPopupVOI object.
+     *
+     * @param  handler  DOCUMENT ME!
+     */
+    public ViewJPopupVOI(VOIHandlerInterface handler, VOIBase kVOI) {
+        this(handler);
+        selectedVOI = kVOI;
+    }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -168,10 +181,10 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
             } else if (event.getActionCommand().equals("avgIntensity")) {
                 voiHandler.graph25VOI_CalcInten(false, false, 0);
             } else if (event.getActionCommand().equals("totalIntensityThreshold")) {
-                new JDialogIntensityThreshold(voiHandler.getComponentImage().getFrame(), voiHandler.getComponentImage(),
+                new JDialogIntensityThreshold(voiHandler.getFrame(), voiHandler,
                                               false);
             } else if (event.getActionCommand().equals("avgIntensityThreshold")) {
-                new JDialogIntensityThreshold(voiHandler.getComponentImage().getFrame(), voiHandler.getComponentImage(),
+                new JDialogIntensityThreshold(voiHandler.getFrame(), voiHandler,
                                               true);
             } else if (event.getActionCommand().equals("Properties")) {
                 voiHandler.showVOIProperties();
@@ -182,7 +195,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
              */
 
             else if (event.getActionCommand().equals("BringToFront")) {
-                voiHandler.changeVOIOrder(false, VOIHandler.FRONT);
+                voiHandler.changeVOIOrder(false, VOI.FRONT);
             }
 
 
@@ -190,7 +203,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
              * Sends the selected VOI to the back. (Moves the selected VOI to the last element of the vector.)
              */
             else if (event.getActionCommand().equals("SendToBack")) {
-                voiHandler.changeVOIOrder(false, VOIHandler.BACK);
+                voiHandler.changeVOIOrder(false, VOI.BACK);
             }
 
             /*
@@ -198,7 +211,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
              * number decreases by one) in the list)
              */
             else if (event.getActionCommand().equals("BringForward")) {
-                voiHandler.changeVOIOrder(false, VOIHandler.FORWARD);
+                voiHandler.changeVOIOrder(false, VOI.FORWARD);
             }
 
             /*
@@ -206,7 +219,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
              * increases by one) in the list)
              */
             else if (event.getActionCommand().equals("SendBackward")) {
-                voiHandler.changeVOIOrder(false, VOIHandler.BACKWARD);
+                voiHandler.changeVOIOrder(false, VOI.BACKWARD);
             }
 
             /*
@@ -215,7 +228,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
              */
 
             else if (event.getActionCommand().equals("BringContourToFront")) {
-                voiHandler.changeVOIOrder(true, VOIHandler.FRONT);
+                voiHandler.changeVOIOrder(true, VOI.FRONT);
             }
 
 
@@ -224,7 +237,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
              * the vector.)
              */
             else if (event.getActionCommand().equals("SendContourToBack")) {
-                voiHandler.changeVOIOrder(true, VOIHandler.BACK);
+                voiHandler.changeVOIOrder(true, VOI.BACK);
             }
 
             /*
@@ -232,7 +245,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
              * higher (index number decreases by one) in the list)
              */
             else if (event.getActionCommand().equals("BringContourForward")) {
-                voiHandler.changeVOIOrder(true, VOIHandler.FORWARD);
+                voiHandler.changeVOIOrder(true, VOI.FORWARD);
             }
 
             /*
@@ -240,7 +253,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
              * lower (index number increases by one) in the list)
              */
             else if (event.getActionCommand().equals("SendContourBackward")) {
-                voiHandler.changeVOIOrder(true, VOIHandler.BACKWARD);
+                voiHandler.changeVOIOrder(true, VOI.BACKWARD);
             } else if (event.getActionCommand().equals("cutVOI")) {
 
                 if (voiHandler.copyVOItoClipBrd()) {
@@ -255,22 +268,16 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
             } else if (event.getActionCommand().equals("deleteVOI")) {
                 voiHandler.deleteSelectedVOI(true);
             } else if (event.getActionCommand().equals("PropVOIUp")) {
-
-                if (voiHandler.propVOI(1, false) == true) {
-                    voiHandler.getComponentImage().getActiveImage().getParentFrame().incSlice();
-                }
+                voiHandler.propVOI(1, false);
             } else if (event.getActionCommand().equals("PropVOIDown")) {
-
-                if (voiHandler.propVOI(-1, false) == true) {
-                    voiHandler.getComponentImage().getActiveImage().getParentFrame().decSlice();
-                }
+                voiHandler.propVOI(-1, false);
             } else if (event.getActionCommand().equals("PropVOIAll")) {
                 voiHandler.propVOIAll();
             } else if (event.getActionCommand().equals("closeVOI")) {
                 closeVOI();
             } else if (event.getActionCommand().equals("cropImage")) {
-                new JDialogCrop(voiHandler.getComponentImage().getActiveImage().getParentFrame(),
-                                voiHandler.getComponentImage().getActiveImage(), true);
+                new JDialogCrop(voiHandler.getActiveImage().getParentFrame(),
+                                voiHandler.getActiveImage(), true);
             } else if (event.getActionCommand().equals("calcDistances")) {
                 voiHandler.calcPLineSliceDistances();
             } else if (event.getActionCommand().equals("voiSelectAll")) {
@@ -280,20 +287,20 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
             } else if (event.getActionCommand().equals("contourSelectAll")) {
                 voiHandler.selectAllContours();
             } else if (event.getActionCommand().equals("VOIFlipY")) {
-                JDialogFlip flip = new JDialogFlip(voiHandler.getComponentImage().getFrame(),
-                                                   voiHandler.getComponentImage().getActiveImage(),
+                JDialogFlip flip = new JDialogFlip(voiHandler.getFrame(),
+                                                   voiHandler.getActiveImage(),
                                                    AlgorithmFlip.Y_AXIS, AlgorithmFlip.VOI_TYPE);
 
                 flip.callAlgorithm();
             } else if (event.getActionCommand().equals("VOIFlipX")) {
-                JDialogFlip flip = new JDialogFlip(voiHandler.getComponentImage().getFrame(),
-                                                   voiHandler.getComponentImage().getActiveImage(),
+                JDialogFlip flip = new JDialogFlip(voiHandler.getFrame(),
+                                                   voiHandler.getActiveImage(),
                                                    AlgorithmFlip.X_AXIS, AlgorithmFlip.VOI_TYPE);
 
                 flip.callAlgorithm();
             } else if (event.getActionCommand().equals("VOIFlipZ")) {
-                JDialogFlip flip = new JDialogFlip(voiHandler.getComponentImage().getFrame(),
-                                                   voiHandler.getComponentImage().getActiveImage(),
+                JDialogFlip flip = new JDialogFlip(voiHandler.getFrame(),
+                                                   voiHandler.getActiveImage(),
                                                    AlgorithmFlip.Z_AXIS, AlgorithmFlip.VOI_TYPE);
 
                 flip.callAlgorithm();
@@ -403,6 +410,11 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
         itemProps.setEnabled(flag);
     }
 
+    public void setSelectedVOI( VOIBase kVOI )
+    {
+        selectedVOI = kVOI;
+    }
+    
     /**
      * DOCUMENT ME!
      *
@@ -446,10 +458,10 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
     /**
      * Sets a POLYLINE VOI to closed CONTOUR(changes from polyline to polygon).
      */
-    private void closeVOI() {
-        VOIVector VOIs = voiHandler.getComponentImage().getActiveImage().getVOIs();
+    private void closeVOI() {        
+        VOIVector VOIs = voiHandler.getActiveImage().getVOIs();
 
-        Vector[] curves = null;
+        Vector curves = null;
         VOIBase tester = null;
 
         for (int i = 0; i < VOIs.size(); i++) {
@@ -457,22 +469,14 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
             if (VOIs.VOIAt(i).isActive()) {
                 VOIs.VOIAt(i).setCurveType(VOI.CONTOUR);
                 curves = VOIs.VOIAt(i).getCurves();
-
-                for (int j = 0; j < curves.length; j++) {
-
-                    for (int k = 0; k < curves[j].size(); k++) {
-                        tester = (VOIBase) curves[j].elementAt(k);
-
-                        if (tester instanceof VOIContour) {
-                            ((VOIContour) tester).setClosed(true);
-                        }
-
+                for (int k = 0; k < curves.size(); k++) {
+                    tester = (VOIBase) curves.elementAt(k);
+                    if (tester instanceof VOIContour) {
+                        ((VOIContour) tester).setClosed(true);
                     }
-
                 }
 
-                voiHandler.getComponentImage().getActiveImage().notifyImageDisplayListeners(null, true);
-
+                voiHandler.getActiveImage().notifyImageDisplayListeners(null, true);
                 return;
             }
         }
@@ -484,7 +488,12 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
      * @return  DOCUMENT ME!
      */
     private boolean isPLineSliceVOI() {
-        VOIVector VOIs = voiHandler.getComponentImage().getActiveImage().getVOIs();
+        if ( selectedVOI != null )
+        {
+            return (selectedVOI.getGroup().getCurveType() == VOI.POLYLINE_SLICE); 
+        }
+        
+        VOIVector VOIs = voiHandler.getActiveImage().getVOIs();
 
         for (int i = 0; i < VOIs.size(); i++) {
 
@@ -503,7 +512,12 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
      * @return  boolean is the active VOI a polyline (not polygon)
      */
     private boolean isVOIOpen() {
-        VOIVector VOIs = voiHandler.getComponentImage().getActiveImage().getVOIs();
+        if ( selectedVOI != null )
+        {
+            return (selectedVOI.getGroup().getCurveType() == VOI.POLYLINE); 
+        }
+        
+        VOIVector VOIs = voiHandler.getActiveImage().getVOIs();
 
         for (int i = 0; i < VOIs.size(); i++) {
 

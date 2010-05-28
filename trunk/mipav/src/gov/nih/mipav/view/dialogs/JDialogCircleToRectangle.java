@@ -315,7 +315,7 @@ public class JDialogCircleToRectangle extends JDialogBase implements AlgorithmIn
      */
     private boolean setVariables() {
         int i;
-        Vector[] curves;
+        Vector curves;
         int nPts;
         Vector3f[] pts = null;
 
@@ -350,7 +350,7 @@ public class JDialogCircleToRectangle extends JDialogBase implements AlgorithmIn
         }
 
         curves = image.getVOIs().VOIAt(0).getCurves();
-        nPts = curves[0].size();
+        nPts = curves.size();
 
         if (nPts != 2) {
             MipavUtil.displayError("Number of points = " + nPts + " instead of required 2");
@@ -358,7 +358,7 @@ public class JDialogCircleToRectangle extends JDialogBase implements AlgorithmIn
             return false;
         }
 
-        pts = image.getVOIs().VOIAt(0).exportPoints(0);
+        pts = image.getVOIs().VOIAt(0).exportAllPoints();
 
         for (i = 0; i < 2; i++) {
             xSource[i] = pts[i].X;

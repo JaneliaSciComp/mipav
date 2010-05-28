@@ -566,8 +566,10 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
                 }
 
                 for (i = nVOI - 1; i >= 0; i--) {
+                    /*  DRAWING DISABLED
                     VOIs.VOIAt(i).drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0, 0, imageActive.getFileInfo(0).getResolutions(),
                                            imageActive.getFileInfo(0).getUnitsOfMeasure(), slice, FileInfoBase.UNKNOWN_ORIENT, g);
+                */
                 }
             } // if (img != null)
         } // try

@@ -3,11 +3,8 @@ package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
-import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManager;
-
-import java.awt.Color;
-
-import javax.media.opengl.GLAutoDrawable;
+import gov.nih.mipav.model.structures.VOIBase;
+import gov.nih.mipav.model.structures.VOIText;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
@@ -15,7 +12,6 @@ import WildMagic.LibFoundation.Mathematics.Matrix4f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibFoundation.Mathematics.Vector4f;
 import WildMagic.LibGraphics.Rendering.AlphaState;
-import WildMagic.LibGraphics.Rendering.Camera;
 import WildMagic.LibGraphics.Rendering.CullState;
 import WildMagic.LibGraphics.Rendering.GlobalState;
 import WildMagic.LibGraphics.Rendering.Renderer;
@@ -29,9 +25,14 @@ import WildMagic.LibGraphics.SceneGraph.Spatial;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 import WildMagic.LibGraphics.SceneGraph.VisibleObject;
 
+/**
+ * Displays the VOIBase in the GPU-based VolumeRenderer.
+ * Creates the shaders and rendering states necessary for rendering and blending with the volume.
+ *
+ */
 public class VolumeVOI extends VolumeObject
 {
-    private LocalVolumeVOI m_kVOI;
+    private VOIBase m_kVOI;
     private Polyline m_kVOILine;
     private Polyline m_kVOITicMarks;
     private VolumeVOIEffect m_kVolumePreShader;
@@ -41,32 +42,45 @@ public class VolumeVOI extends VolumeObject
     private ColorRGB m_kColor = new ColorRGB(1,1,0);
     private float m_fOpacity = 1f;
 
-    private Camera m_kCamera;
     private VolumeVOIEffect m_kTextEffect = null;
 
     private float m_fAnnotationScale = 0.02f;
     private Vector3f m_kBillboardPos = null;
     private boolean m_bShowText = false;
     
-    public VolumeVOI ( Renderer kRenderer, GLAutoDrawable kDrawable, VolumeImage kImageA, Vector3f kTranslate, Camera kCamera, float fX, float fY, float fZ, LocalVolumeVOI kVOI )
+    /**
+     * Constructor for the VolumeVOI object.
+     * @param kImageA
+     * @param kTranslate
+     * @param fX
+     * @param fY
+     * @param fZ
+     * @param kVOI
+     */
+    public VolumeVOI ( VolumeImage kImageA, Vector3f kTranslate, float fX, float fY, float fZ, VOIBase kVOI )
     {
         super(kImageA,kTranslate,fX,fY,fZ);
-        m_kCamera = kCamera;
         m_kAlphaTransparency.BlendEnabled = false;
         m_kZBufferTransparency.Enabled = false;
         m_kVOI = kVOI;
-        scaleVOI(kRenderer, kDrawable);
+        scaleVOI();
         m_bDisplay = true;
     }
 
-    public VolumeVOI ( Renderer kRenderer, GLAutoDrawable kDrawable, VolumeImage kImageA, Vector3f kTranslate, Camera kCamera, LocalVolumeVOI kVOI, ColorRGBA kColor )
+    /**
+     * Constructor for the VolumeVOI object.
+     * @param kImageA
+     * @param kTranslate
+     * @param kVOI
+     * @param kColor
+     */
+    public VolumeVOI ( VolumeImage kImageA, Vector3f kTranslate, VOIBase kVOI, ColorRGBA kColor )
     {
         super(kImageA,kTranslate, kImageA.GetScaleX(),kImageA.GetScaleY(),kImageA.GetScaleZ());
-        m_kCamera = kCamera;
         m_kAlphaTransparency.BlendEnabled = false;
         m_kZBufferTransparency.Enabled = false;
         m_kVOI = kVOI;
-        scaleVOI(kRenderer, kDrawable);
+        scaleVOI();
         m_bDisplay = true;
         update(kColor);
     }
@@ -74,10 +88,14 @@ public class VolumeVOI extends VolumeObject
     /** Delete local memory. */
     public void dispose()
     {
-        m_kVOI.dispose();
+        m_kVOI = null;
         m_kVOILine = null;
     }  
 
+    /**
+     * Returns the current color of the VOI.
+     * @return
+     */
     public ColorRGBA getColor()
     {
         return new ColorRGBA( m_kColor.R, m_kColor.G, m_kColor.B, 1 );
@@ -94,7 +112,11 @@ public class VolumeVOI extends VolumeObject
 
 
 
-    public LocalVolumeVOI getVOI()
+    /**
+     * Returns the VOIBase object rendered by this VolumVOI object.
+     * @return
+     */
+    public VOIBase getVOI()
     {
         return m_kVOI;
     }
@@ -130,10 +152,10 @@ public class VolumeVOI extends VolumeObject
             m_kScene.AttachGlobalState(m_kAlpha);
             m_kScene.AttachGlobalState(m_kZState);
         }
-        if ( (m_kVOITicMarks != null) && ((m_kVOI.getType() == VOI.LINE_3D) || (m_kVOI.getType() == VOI.PROTRACTOR_3D)  || (m_kVOI.getType() == VOI.ANNOTATION_3D)) )
+        if ( (m_kVOITicMarks != null) && ((m_kVOI.getType() == VOI.LINE) || (m_kVOI.getType() == VOI.PROTRACTOR)  || (m_kVOI.getType() == VOI.ANNOTATION)) )
         {
             m_kScene.DetachChild(m_kVOITicMarks);
-            if ( m_kVOI.isActive() || (m_kVOI.getType() == VOI.ANNOTATION_3D))
+            if ( m_kVOI.isActive() || (m_kVOI.getType() == VOI.ANNOTATION))
             {
                 m_kVOITicMarks.DetachAllEffects();
                 if ( bSolid )
@@ -176,7 +198,7 @@ public class VolumeVOI extends VolumeObject
                 kWVP.MultLeft( new Vector4f( m_kBillboardPos.X, m_kBillboardPos.Y, m_kBillboardPos.Z, 1 ), kTextPos );
                 kTextPos.Scale( 1f/kTextPos.W );
                 
-                String kLabel = m_kVOI.getLabel();
+                String kLabel = ((VOIText)m_kVOI).getText();
                 char[] acText = kLabel.toCharArray();
                 kRenderer.Draw( kTextPos.X, kTextPos.Y, kTextPos.Z, 
                         new ColorRGBA( m_kColor.R, m_kColor.G, m_kColor.B, m_fOpacity),acText);
@@ -184,12 +206,20 @@ public class VolumeVOI extends VolumeObject
         }
     }
 
+    /**
+     * Sets the transparency.
+     * @param fBlend
+     */
     public void setBlend( float fBlend)
     {
         m_kVolumePreShader.Blend(fBlend);
         m_kVolumePreShaderTransparent.Blend(fBlend);
     }
 
+    /**
+     * Sets the Color.
+     * @param kColor
+     */
     public void setColor(ColorRGB kColor)
     {
         if ( m_kVOI.isActive() )
@@ -211,6 +241,12 @@ public class VolumeVOI extends VolumeObject
         }
     }
     
+    /**
+     * Sets the slice information for the shader.
+     * @param bUseSlice
+     * @param iWhichSlice
+     * @param fSlice
+     */
     public void setSlice( boolean bUseSlice, int iWhichSlice, float fSlice )
     {
         //System.err.println( (fSlice == m_kVOILine.VBuffer.GetPosition3fZ(0)) + " " + fSlice + " " + m_kVOILine.VBuffer.GetPosition3fZ(0) );
@@ -218,14 +254,18 @@ public class VolumeVOI extends VolumeObject
         m_kVolumePreShaderTransparent.SetSlice(bUseSlice, iWhichSlice, fSlice);
     }
 
-    public void setVOI( LocalVolumeVOI kVOI )
+    /**
+     * Sets and updates the VOIBase displayed by this VolumeVOI.
+     * @param kVOI
+     */
+    public void setVOI( VOIBase kVOI )
     {
         m_kVOI = kVOI;
         if ( m_kVOILine == null )
         {
-            scaleVOI(null, null);
+            scaleVOI();
         }
-        else if ( kVOI.getType() == VOI.POINT_3D )
+        else if ( kVOI.getType() == VOI.POINT )
         {
             Vector3f kDiff = new Vector3f(m_kVOI.get(0));
             kDiff.Mult(m_kVolumeScale);
@@ -253,25 +293,29 @@ public class VolumeVOI extends VolumeObject
             m_kScene.DetachChild(m_kVOILine);
             m_kVOILine.dispose();
             m_kVOILine = null;
-            scaleVOI(null, null);
+            scaleVOI();
         }
 
-        if ( (m_kVOI.getType() == VOI.LINE_3D) && (m_kVOI.getSType() != VOIManager.SPLITLINE) )
+        if ( (m_kVOI.getType() == VOI.LINE) && !m_kVOI.isSplit() )
         {
             lineAnnotations( m_kVOI.get(0), m_kVOI.get(1) );
         }
 
-        if ( m_kVOI.getType() == VOI.PROTRACTOR_3D )
+        if ( m_kVOI.getType() == VOI.PROTRACTOR )
         {
             protractorAnnotations( m_kVOI.get(0), m_kVOI.get(1), m_kVOI.get(2) );
         }
-        if ( m_kVOI.getType() == VOI.ANNOTATION_3D )
+        if ( m_kVOI.getType() == VOI.ANNOTATION )
         {
             textAnnotations( m_kVOI.get(1), m_kVOI.get(0) );
             m_kBillboardPos = new Vector3f(m_kVOILine.VBuffer.GetPosition3(1));
         }
     }
     
+    /**
+     * Turns the ZBufferState compare mode on or off.
+     * @param bOn
+     */
     public void setZCompare( boolean bOn )
     {
         if ( bOn )
@@ -284,11 +328,19 @@ public class VolumeVOI extends VolumeObject
         }
     }
     
+    /**
+     * Turns displaying the text on or off.
+     * @param bShow
+     */
     public void showTextBox(boolean bShow)
     {
         m_bShowText = bShow;
     }
 
+    /**
+     * Set the color of the VolumeVOI object.
+     * @param kColor
+     */
     public void update( ColorRGBA kColor )
     {
         m_kColor.Set( kColor.R, kColor.G, kColor.B );
@@ -307,13 +359,22 @@ public class VolumeVOI extends VolumeObject
             }
             m_kVOITicMarks.VBuffer.Release();
         }
-        if ( (m_kVOI.getType() == VOI.ANNOTATION_3D) && (m_kTextEffect != null) )
+        if ( (m_kVOI.getType() == VOI.ANNOTATION) && (m_kTextEffect != null) )
         {
             m_kTextEffect.Blend(m_fOpacity*2);
             m_kTextEffect.SetColor(m_kColor);
         }
     }
 
+    /**
+     * Sets up the line annotations.
+     * @param kStart
+     * @param kEnd
+     * @param fraction
+     * @param kVBuffer
+     * @param iPos
+     * @return
+     */
     private int getCoords(Vector3f kStart, Vector3f kEnd, float fraction, VertexBuffer kVBuffer, int iPos) {
         Vector3f kStartTemp = new Vector3f(kStart);
         Vector3f kEndTemp = new Vector3f(kEnd);
@@ -363,7 +424,11 @@ public class VolumeVOI extends VolumeObject
         return iPos;
     }
 
-
+    /**
+     * Sets up the line annotations for the end-points of the line (arrows).
+     * @param kStart
+     * @param kEnd
+     */
     private int getEndLines(Vector3f kStart, Vector3f kEnd, VertexBuffer kVBuffer, int iPos) {
 
         Vector3f kStartTemp = new Vector3f(kStart);
@@ -460,7 +525,11 @@ public class VolumeVOI extends VolumeObject
 
         return iPos;
     }
-
+    /**
+     * Sets up the protractor annotations for the end-points of the protractor (arrows).
+     * @param kStart
+     * @param kEnd
+     */
     private int getEndLines2(Vector3f kStart, Vector3f kEnd, VertexBuffer kVBuffer, int iPos) {
         Vector3f kStartTemp = new Vector3f(kStart);
         Vector3f kEndTemp = new Vector3f(kEnd);
@@ -561,6 +630,12 @@ public class VolumeVOI extends VolumeObject
         return iPos;
     }
 
+
+    /**
+     * Creates the line annotations.
+     * @param kStart
+     * @param kEnd
+     */
     private void lineAnnotations( Vector3f kStart, Vector3f kEnd )
     {
         Attributes kAttributes = new Attributes();
@@ -592,6 +667,12 @@ public class VolumeVOI extends VolumeObject
     }
 
 
+    /**
+     * Creates the protractor annotations.
+     * @param kStart
+     * @param kMiddle
+     * @param kEnd
+     */
     private void protractorAnnotations( Vector3f kStart, Vector3f kMiddle, Vector3f kEnd )
     {
         Attributes kAttributes = new Attributes();
@@ -620,7 +701,10 @@ public class VolumeVOI extends VolumeObject
 
     }
 
-    private void scaleVOI(Renderer kRenderer, GLAutoDrawable kDrawable)
+    /**
+     * Creates the scene graph for displaying the VOIBase object.
+     */
+    private void scaleVOI()
     {
         m_kVolumePreShader = new VolumeVOIEffect(false);
         m_kVolumePreShaderTransparent = new VolumeVOIEffect(true);
@@ -645,7 +729,7 @@ public class VolumeVOI extends VolumeObject
         kAttributes.SetPChannels(3);
 
         VertexBuffer kVBuffer = null;
-        if ( m_kVOI.getType() == VOI.POINT_3D )
+        if ( m_kVOI.getType() == VOI.POINT )
         {
             kVBuffer = new VertexBuffer(kAttributes, 12 );
             Vector3f kPos = new Vector3f( m_kVOI.get(0) );
@@ -682,7 +766,7 @@ public class VolumeVOI extends VolumeObject
             }
         }
 
-        boolean bClosed = m_kVOI.getClosed();
+        boolean bClosed = m_kVOI.isClosed();
         m_kVOILine = new Polyline( kVBuffer, bClosed, true );
         m_kVOILine.AttachGlobalState(m_kZState);
         m_kVOILine.AttachEffect( m_kVolumePreShader );
@@ -691,8 +775,8 @@ public class VolumeVOI extends VolumeObject
         m_kScene.UpdateGS();
         m_kScene.UpdateRS();
         
-        
-        if ( (m_kVOI.getType() == VOI.ANNOTATION_3D) && (kRenderer != null) && (kDrawable != null) )
+
+        if ( (m_kVOI.getType() == VOI.ANNOTATION) )
         {
             textAnnotations( m_kVOI.get(1), m_kVOI.get(0) );
             m_kBillboardPos = new Vector3f(m_kVOILine.VBuffer.GetPosition3(1));
@@ -700,6 +784,11 @@ public class VolumeVOI extends VolumeObject
         
     }
 
+    /**
+     * Creates the text annotations (arrow)
+     * @param kStart
+     * @param kEnd
+     */
     private void textAnnotations( Vector3f kStart, Vector3f kEnd )
     {
         Attributes kAttributes = new Attributes();

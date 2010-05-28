@@ -43,7 +43,7 @@ public class PlugInAlgorithmVOIIntensities
         int length;
         int nContours;
 
-        Vector[] contours;
+        Vector contours;
     
         try {
         
@@ -62,57 +62,37 @@ public class PlugInAlgorithmVOIIntensities
         	raFile.writeBytes("x\t\ty\t\tz\t\tintensity\n");
         }
         contours = voi.getCurves();
-        length = voi.getCurves().length;
 
         int numPts;
         
         Vector3f currentPt;
-        
+
         DecimalFormat df = new DecimalFormat("###.##");
-        
-        int colorFactor = 1;
-        if (srcImage.isColorImage()) {
-        	colorFactor = 4;
-        }
-        
-        float [] imageBuffer = new float[srcImage.getSliceSize() * colorFactor];
-        int bufLen = imageBuffer.length;
-        int xDim = srcImage.getExtents()[0];
-        int x, y;
-        int colorLoc;
-        for (i = 0; i < length; i++) {
-            nContours = contours[i].size();
 
-            if (nContours > 0) {
-            	if (srcImage.isColorImage()) {
-            		srcImage.exportData(bufLen * i, bufLen, imageBuffer);
-            	} else {
-            		srcImage.exportSliceXY(i, imageBuffer);
-            	}
-            	for (j = 0; j < nContours; j++) {
+        nContours = contours.size();
 
-                	numPts = ((VOIBase) contours[i].elementAt(j)).size();
-                	for (k = 0; k < numPts; k++) {
-                		currentPt = (Vector3f)((VOIBase) contours[i].elementAt(j)).elementAt(k);
-                		x = (int)currentPt.X;
-                		y = (int)currentPt.Y;
-                		raFile.writeBytes((int)currentPt.X + "\t\t" + (int)currentPt.Y + "\t\t" + (i+1));
-                		if (srcImage.isColorImage()) {
-                			colorLoc = 4 * ((y * xDim) + x);
-                			raFile.writeBytes("\t\t" +  df.format(imageBuffer[colorLoc + 1]) + "\t\t" +
-                					df.format(imageBuffer[colorLoc + 2]) + "\t\t" +
-                					df.format(imageBuffer[colorLoc + 3]) + "\n");
-                		} else {
-                			raFile.writeBytes("\t\t" +  df.format(imageBuffer[(y * xDim) + x]) +  "\n");
-                		}
-                	}
+        if (nContours > 0) {        
+            for (j = 0; j < nContours; j++) {
+                numPts = ((VOIBase) contours.elementAt(j)).size();
+                for (k = 0; k < numPts; k++) {
+                    currentPt = ((VOIBase) contours.elementAt(j)).elementAt(k);
+                    int x = (int)currentPt.X;
+                    int y = (int)currentPt.Y;
+                    int z = (int)currentPt.Z;
+                    raFile.writeBytes(x + "\t\t" + y + "\t\t" + z);
+                    if (srcImage.isColorImage()) {
+                        raFile.writeBytes("\t\t" +  df.format(srcImage.getFloatC(x,y,z,1)) + "\t\t" +
+                                df.format(srcImage.getFloatC(x,y,z,2)) + "\t\t" +
+                                df.format(srcImage.getFloatC(x,y,z,3)) + "\n");
+                    } else {
+                        raFile.writeBytes("\t\t" +  df.format(srcImage.getFloat(x,y,z)) +  "\n");
+                    }
                 }
-            }           
+            }
         }
     
         raFile.close();
         }
-        
         catch (IOException e) {
         	
         }

@@ -716,7 +716,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
 
                     // create an image with voi tags
                     imgMask.clear();
-                    obj.createBinaryMask(imgMask, nix, niy);
+                    obj.createBinaryMask3D(imgMask, nix, niy, false, false);
                     voiMask.clear();
 
                     // transform it

@@ -2621,8 +2621,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     public final Number getC(final int position, final int color) {
 
-        if ( (position >= 0) && ( ( (4 * position) + color) < dataSize)) {
-            return (data.get( (4 * position) + color));
+        if ((position >= 0) && (((4 * position) + color) < dataSize)) {
+            return data.get((4 * position) + color);
         }
 
         return (new Byte((byte) 0));
@@ -2968,8 +2968,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * 
      * @return value at that position in the data array
      */
-    public final float getFloatC(final int x, final int y, final int c) {
-        return (data.getFloat( (4 * ( (y * dimExtents[0]) + x)) + c));
+    public final float getFloatC(int x, int y, int c) {
+        return data.getFloat((4 * ((y * dimExtents[0]) + x)) + c);
     }
 
     /**
@@ -2982,8 +2982,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * 
      * @return value at that position in the data array
      */
-    public final float getFloatC(final int x, final int y, final int z, final int c) {
-        return (data.getFloat(4 * ( (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x)) + c);
+    public final float getFloatC(int x, int y, int z, int c) {
+        return data.getFloat(4 * ((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x) + c);
     }
 
     /**
@@ -2997,9 +2997,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * 
      * @return The value at that position in the data array.
      */
-    public final float getFloatC(final int x, final int y, final int z, final int t, final int c) {
-        return (data.getFloat(4 * ( (t * (dimExtents[0] * dimExtents[1] * dimExtents[2]))
-                + (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x)) + c);
+    public final float getFloatC(int x, int y, int z, int t, int c) {
+        return data.getFloat(4 *
+                                  ((t * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
+                                       (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x) + c);
     }
 
     /**
@@ -3226,9 +3227,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
         if (fileInfo != null) {
             return fileInfo[0].getImageOrientation();
-        } else {
-            return FileInfoBase.UNKNOWN_ORIENT;
         }
+        return FileInfoBase.UNKNOWN_ORIENT;
     }
 
     /**

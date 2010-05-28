@@ -368,7 +368,7 @@ public class RubberbandPolyline extends Rubberband {
                 }
 
                 contour.setClosed(!open);
-                newVOI.importCurve(contour, ((ViewJComponentEditImage) (component)).getSlice());
+                newVOI.importCurve(contour);
                 image.registerVOI(newVOI);
                 image.notifyImageDisplayListeners();
 
@@ -404,7 +404,7 @@ public class RubberbandPolyline extends Rubberband {
                             // System.err.println("adding element");
                             // VOIs.VOIAt(i).getCurves()[((ViewJComponentEditImage)(component)).getSlice()].addElement(contour);
 
-                            VOIs.VOIAt(i).importCurve(contour, ((ViewJComponentEditImage) (component)).getSlice());
+                            VOIs.VOIAt(i).importCurve(contour);
                         } else {
                             MipavUtil.displayError("Can't add this VOI to other VOI structure.");
                         }

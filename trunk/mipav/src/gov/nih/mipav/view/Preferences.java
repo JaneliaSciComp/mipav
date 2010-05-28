@@ -458,12 +458,6 @@ public class Preferences {
     public static final String PREF_MIN = "MinValue";
 
     public static final String PREF_MAX = "MaxValue";
-    
-    public static final String PREF_NDAR_PLUGIN_SERVER = "NDARPluginServer";
-    
-    public static final String PREF_NDAR_PLUGIN_DATASTRUCT_NAME = "image01";
-    
-    
 
     public static final String PREF_NDAR_PLUGIN_SERVER = "NDARPluginServer";
     

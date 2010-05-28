@@ -108,23 +108,19 @@ public class AlgorithmDistanceFilter extends AlgorithmBase {
 				} 
 				
 				if ( VOIs.size() > 0 ) {
-					
-				    Vector<VOIBase>[] vArray = VOIs.VOIAt(0).getCurves();
-				    
-				    if ( vArray != null ) {
-				    	if ( vArray[0] != null && vArray[0].size() > 0 ) {
-							VOIBase v  = vArray[0].get(0);
-							if ( v instanceof VOIContour ) {
-								if ( ((VOIContour)v).contains(x, y, false) ) {
-										originalBuffer[pos] = originalBuffer[pos] * 1.0f;
-								} else {
-									    // System.err.println("1. originalBuffer[pos] = " + originalBuffer[pos]);
-										originalBuffer[pos] = originalBuffer[pos] * -1.0f;
-										// System.err.println("2. originalBuffer[pos] = " + originalBuffer[pos]);
-								}
-							}
-				    	}
-				      
+
+				    Vector<VOIBase> vArray = VOIs.VOIAt(0).getCurves();				    
+				    if ( vArray != null && vArray.size() > 0 ) {
+				        VOIBase v  = vArray.get(0);
+				        if ( v instanceof VOIContour ) {
+				            if ( ((VOIContour)v).contains(x, y) ) {
+				                originalBuffer[pos] = originalBuffer[pos] * 1.0f;
+				            } else {
+				                // System.err.println("1. originalBuffer[pos] = " + originalBuffer[pos]);
+				                originalBuffer[pos] = originalBuffer[pos] * -1.0f;
+				                // System.err.println("2. originalBuffer[pos] = " + originalBuffer[pos]);
+				            }
+				        }
 				    }
 				}
 				

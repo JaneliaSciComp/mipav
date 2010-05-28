@@ -331,240 +331,82 @@ public class AlgorithmFlip extends AlgorithmBase {
                 VOIVector vec = srcImage.getVOIs();
                 Iterator vecIter = vec.iterator();
 
-                if (flipAxis == X_AXIS) {
-
-                    while (vecIter.hasNext()) {
-                        VOI nextVoi = (VOI) vecIter.next();
-
-                        for (int i = 0; i < zDim; i++) {
-                            Polygon[] polyList = nextVoi.exportPolygons(i);
-                            nextVoi.removeCurves(i);
-
-                            for (int j = 0; j < polyList.length; j++) {
-                                Polygon poly = polyList[j];
-                                int[] points = poly.ypoints;
-
-                                for (int k = 0; k < points.length; k++) {
-                                    points[k] = -points[k] + yDim;
+                while (vecIter.hasNext()) {
+                    VOI nextVoi = (VOI) vecIter.next();
+                    for ( int i = 0; i < nextVoi.getCurves().size(); i++ )
+                    {
+                        VOIBase kVOI = nextVoi.getCurves().get(i);
+                        for ( int j = 0; j < kVOI.size(); j++ )
+                        {
+                            if (flipAxis == X_AXIS) {
+                                kVOI.elementAt(i).Y = yDim - kVOI.elementAt(i).Y;
+                            }
+                            if ( flipAxis == Y_AXIS ) {
+                                kVOI.elementAt(i).X = xDim - kVOI.elementAt(i).X;                                
+                            }
+                            if ( flipAxis == Z_AXIS && (srcImage.getNDims() > 2) ) {
+                                //kVOI.elementAt(i).Z = zDim - kVOI.elementAt(i).Z;                
+                                int z = (int)kVOI.elementAt(i).Z, direction = (z >= (zDim / 2)) ? -1 : 1;
+                                int distance, scope;
+                                if (!evenNumberZSlices) {
+                                    distance = Math.abs(z - (zDim / 2));
+                                    scope = 2 * distance;
                                 }
-
-                                nextVoi.importPolygon(poly, i);
+                                else if (evenNumberZSlices && z < zDim/2) {
+                                    distance = (zDim/2 - 1 - z);
+                                    scope = 2 * distance + 1;
+                                }
+                                else {
+                                    distance = z - zDim/2;
+                                    scope = 2 * distance + 1;
+                                }                                                              
+                                kVOI.elementAt(i).Z = kVOI.elementAt(i).Z +  + (direction * scope);                
                             }
                         }
                     }
-                }
-
-                if (flipAxis == Y_AXIS) {
-
-                    while (vecIter.hasNext()) {
-                        VOI nextVoi = (VOI) vecIter.next();
-
-                        for (int i = 0; i < zDim; i++) {
-                            Polygon[] polyList = nextVoi.exportPolygons(i);
-                            nextVoi.removeCurves(i);
-
-                            for (int j = 0; j < polyList.length; j++) {
-                                Polygon poly = polyList[j];
-                                int[] points = poly.xpoints;
-
-                                for (int k = 0; k < points.length; k++) {
-                                    points[k] = -points[k] + xDim;
-                                }
-
-                                nextVoi.importPolygon(poly, i);
-                            }
-                        }
-                    }
-                }
-
-                if ((flipAxis == Z_AXIS) && (srcImage.getNDims() > 2)) {
-                    Object[] shapes = null;
-                    ViewJComponentEditImage compImage = srcImage.getParentFrame().getComponentImage();
-                    zDim *= 2;
-                    if (!evenNumberZSlices) {
-                        zDim += 1;
-                    }
-
-                    while (vecIter.hasNext()) {
-                        ShapeHolder shapeHolder = new ShapeHolder();
-                        VOI nextVoi = (VOI) vecIter.next();
-
-                        for (int voiSlice = 0; voiSlice < zDim; voiSlice++) {
-                            shapes = null;
-
-                            if ((nextVoi.getCurveType() == VOI.CONTOUR) || (nextVoi.getCurveType() == VOI.POLYLINE)) {
-                                shapes = nextVoi.exportPolygons(voiSlice);
-                            } else {
-                                shapes = nextVoi.exportPoints(voiSlice);
-                            }
-
-                            if (shapes.length > 0) {
-
-                                if (shapeHolder.addShape(shapes, voiSlice)) {
-                                    ;
-                                }
-
-                                nextVoi.removeCurves(voiSlice);
-                            }
-                        }
-                        for (int voiSlice = 0; voiSlice < zDim; voiSlice++) {
-                            int z = voiSlice, direction = (z >= (zDim / 2)) ? -1 : 1;
-                            int distance, scope;
-                            if (!evenNumberZSlices) {
-                                distance = Math.abs(z - (zDim / 2));
-                                scope = 2 * distance;
-                            }
-                            else if (evenNumberZSlices && z < zDim/2) {
-                                distance = (zDim/2 - 1 - z);
-                                scope = 2 * distance + 1;
-                            }
-                            else {
-                                distance = z - zDim/2;
-                                scope = 2 * distance + 1;
-                            }
-                            Object[] shapesAtSlice = shapeHolder.getShapesAtSlice(voiSlice);
-                            for (int k = 0; k < shapesAtSlice.length; k++) {
-
-                                if (shapesAtSlice[k] instanceof Polygon[]) {
-                                    Polygon[] polyTemp = ((Polygon[]) shapesAtSlice[k]);
-
-                                    for (int m = 0; m < polyTemp.length; m++) {
-                                        nextVoi.importPolygon(polyTemp[m], voiSlice + (scope * direction));
-                                    }
-                                } else if (shapesAtSlice[k] instanceof Vector3f[]) {
-                                    nextVoi.importPoints((Vector3f[]) shapesAtSlice[k], voiSlice + (scope * direction));
-                                }
-
-                            }
-                        }
-
-                        compImage.getVOIHandler().fireVOISelectionChange(nextVoi, null);
-                    }
-
-                    int z = compImage.getSlice(), direction = (z >= (zDim / 2)) ? -1 : 1;
-                    int distance, scope;
-                    if (!evenNumberZSlices) {
-                        distance = Math.abs(z - (zDim / 2));
-                        scope = 2 * distance;
-                    }
-                    else if (evenNumberZSlices && z < zDim/2) {
-                        distance = (zDim/2 - 1 - z);
-                        scope = 2 * distance + 1;
-                    }
-                    else {
-                        distance = z - zDim/2;
-                        scope = 2 * distance + 1;
-                    }
-                    compImage.show(compImage.getTimeSlice(), compImage.getSlice() + (scope * direction), null, null,
-                                   true, compImage.getInterpMode());
-                    compImage.getActiveImage().getParentFrame().setSlice(compImage.getSlice());
-                    compImage.getActiveImage().getParentFrame().updateImages(true);
                 }
             }
             
         } else if (flipObject == AlgorithmFlip.VOI_TYPE) {
-            boolean activeVoi = false;
             ViewVOIVector vec = srcImage.getVOIs();
             Iterator vecIter = vec.iterator();
+            
+            while (vecIter.hasNext()) {
+                VOI nextVoi = (VOI) vecIter.next();
+                if (nextVoi.isActive()) {
+                    for (int i = 0; i < nextVoi.getCurves().size(); i++) {
+                        VOIBase base = nextVoi.getCurves().get(i);
+                        Iterator itr = base.iterator();
 
-            if (flipAxis == X_AXIS) {
+                        while (itr.hasNext()) {
+                            Vector3f point = (Vector3f) itr.next();
 
-                while (vecIter.hasNext()) {
-                    VOI nextVoi = (VOI) vecIter.next();
-
-                    if (nextVoi.isActive()) {
-                        activeVoi = true;
-
-                        for (int i = 0; i < zDim; i++) {
-                            VOIBase base = nextVoi.getActiveContour(i);
-
-                            if (base != null) {
-                                Iterator itr = base.iterator();
-
-                                while (itr.hasNext()) {
-                                    Vector3f point = (Vector3f) itr.next();
-                                    point.Y = -point.Y + yDim;
+                            if (flipAxis == X_AXIS) {
+                                point.Y = -point.Y + yDim;
+                            }
+                            if (flipAxis == Y_AXIS) {
+                                point.X = -point.X + xDim;
+                            }
+                            if (flipAxis ==  Z_AXIS) {
+                                int z = (int)point.Z, direction = (z >= (zDim / 2)) ? -1 : 1;
+                                int distance, scope;
+                                if (!evenNumberZSlices) {
+                                    distance = Math.abs(z - (zDim / 2));
+                                    scope = 2 * distance;
                                 }
+                                else if (evenNumberZSlices && z < zDim/2) {
+                                    distance = (zDim/2 - 1 - z);
+                                    scope = 2 * distance + 1;
+                                }
+                                else {
+                                    distance = z - zDim/2;
+                                    scope = 2 * distance + 1;
+                                }                                                              
+                                point.Z = point.Z +  + (direction * scope);
                             }
                         }
                     }
                 }
-            }
-
-            if (flipAxis == Y_AXIS) {
-
-                while (vecIter.hasNext()) {
-                    VOI nextVoi = (VOI) vecIter.next();
-
-                    if (nextVoi.isActive()) {
-                        activeVoi = true;
-
-                        for (int i = 0; i < zDim; i++) {
-                            VOIBase base = nextVoi.getActiveContour(i);
-
-                            if (base != null) {
-                                Iterator itr = base.iterator();
-
-                                while (itr.hasNext()) {
-                                    Vector3f point = (Vector3f) itr.next();
-                                    point.X = -point.X + xDim;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            if ((flipAxis == Z_AXIS) && (srcImage.getNDims() > 2)) {
-                int voiSlice = -1;
-                ViewJComponentEditImage compImage = srcImage.getParentFrame().getComponentImage();
-                int z = compImage.getSlice(), direction = (z >= (zDim / 2)) ? -1 : 1;
-                int distance, scope;
-                if (!evenNumberZSlices) {
-                    distance = Math.abs(z - (zDim / 2));
-                    scope = 2 * distance;
-                }
-                else if (evenNumberZSlices && z < zDim/2) {
-                    distance = (zDim/2 - 1 - z);
-                    scope = 2 * distance + 1;
-                }
-                else {
-                    distance = z - zDim/2;
-                    scope = 2 * distance + 1;
-                }
-
-                while (vecIter.hasNext()) {
-                    VOI nextVoi = (VOI) vecIter.next();
-
-                    if (nextVoi.isActive()) {
-
-                        if (voiSlice == -1) {
-                            voiSlice = compImage.getSlice();
-                        }
-
-                        VOIBase base = nextVoi.getActiveContour(voiSlice);
-                        int[] xpoints = new int[base.size()];
-                        int[] ypoints = new int[base.size()];
-
-                        for (int i = 0; i < xpoints.length; i++) {
-                            Vector3f tempPoint = (Vector3f) base.get(i);
-                            xpoints[i] = (int) tempPoint.X;
-                            ypoints[i] = (int) tempPoint.Y;
-                        }
-
-                        Polygon gon = new Polygon(xpoints, ypoints, xpoints.length);
-                        nextVoi.removeCurve(nextVoi.getActiveContourIndex(voiSlice), voiSlice);
-                        nextVoi.importPolygon(gon, voiSlice + (direction * scope));
-                        compImage.show(compImage.getTimeSlice(), voiSlice + (scope * direction), null, null, true,
-                                compImage.getInterpMode());
-                        compImage.getVOIHandler().fireVOISelectionChange(nextVoi, null);
-                        compImage.getActiveImage().getParentFrame().setSlice(compImage.getSlice());
-                        compImage.getActiveImage().getParentFrame().updateImages(true);
-                    }
-
-                }
-
-
             }
         }
 

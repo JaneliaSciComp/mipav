@@ -117,7 +117,7 @@ public class AlgorithmNearlyCircleToCircle extends AlgorithmBase {
         ViewVOIVector VOIs = null;
         int nVOIs;
         int contourVOIs;
-        Vector[] contours = null;
+        Vector contours = null;
         int nContours = 0;
         Vector3f geometricCenter;
         VOI selectedVOI = null;
@@ -205,7 +205,7 @@ public class AlgorithmNearlyCircleToCircle extends AlgorithmBase {
             if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                 selectedVOI = VOIs.VOIAt(i);
                 contours = selectedVOI.getCurves();
-                nContours = contours[0].size();
+                nContours = contours.size();
             }
         }
         
@@ -221,12 +221,12 @@ public class AlgorithmNearlyCircleToCircle extends AlgorithmBase {
             return;
         }
         
-        geometricCenter = ((VOIContour)(contours[0].elementAt(0))).getGeometricCenter();
+        geometricCenter = ((VOIContour)(contours.elementAt(0))).getGeometricCenter();
         xcen = geometricCenter.X;
         ycen = geometricCenter.Y;
         Preferences.debug("X center = " + xcen + "\n");
         Preferences.debug("Y center = " + ycen + "\n");
-        gon = ((VOIContour)(contours[0].elementAt(0))).exportPolygon();
+        gon = ((VOIContour)(contours.elementAt(0))).exportPolygon();
         minDist = Double.MAX_VALUE;
         maxDist = -Double.MAX_VALUE;
         for (i = 0; i < gon.npoints; i++) {
@@ -542,13 +542,12 @@ public class AlgorithmNearlyCircleToCircle extends AlgorithmBase {
             yArr[j] = (float)(yCen + 180.0 * Math.sin(theta) * multFactor);
             zArr[j] = 0.0f;
         }
-        newVOI.importCurve(xArr, yArr, zArr, 0);
-        ((VOIContour)(newVOI.getCurves()[0].elementAt(0))).setFixed(true);
+        newVOI.importCurve(xArr, yArr, zArr);
+        ((VOIContour)(newVOI.getCurves().elementAt(0))).setFixed(true);
         newVOI.setActive(false);
-        ((VOIContour)(newVOI.getCurves()[0].elementAt(0))).setActive(false);
-        ((VOIContour)(newVOI.getCurves()[0].elementAt(0))).setClosed(true);
-        ((VOIContour) (newVOI.getCurves()[0].elementAt(0))).setLabel(Integer.toString(1));
-        ((VOIContour) (newVOI.getCurves()[0].elementAt(0))).setName(Integer.toString(1));
+        ((VOIContour)(newVOI.getCurves().elementAt(0))).setActive(false);
+        ((VOIContour)(newVOI.getCurves().elementAt(0))).setClosed(true);
+        ((VOIContour) (newVOI.getCurves().elementAt(0))).setLabel(Integer.toString(1));
         srcImage.registerVOI(newVOI);
         
         new ViewJFrameImage(srcImage);

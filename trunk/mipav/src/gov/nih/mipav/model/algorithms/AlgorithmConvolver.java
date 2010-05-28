@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 import WildMagic.LibFoundation.Mathematics.Vector2f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.util.ThreadUtil;
@@ -2014,6 +2015,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
 
                     if ((k >= 0) && (k < volSize) && ((j - k) >= 0) && ((j - k) < sliceSize) && ((i - j) >= 0) &&
                             ((i - j) < xDim)) {
+                        
                         sum += kernel[count] * getTrilinear(i, dx, dy, dz, iExtents, image);
 
                         if (kernel[count] >= 0) {
@@ -2522,6 +2524,62 @@ public class AlgorithmConvolver extends AlgorithmBase {
             return 0;
         }
     }
+    
+    /**
+     * A static function that convolves a kernel with an image at a position.
+     *
+     * @param   kExtents  kernel dimensions
+     * @param   kernel    kernel data
+     *
+     * @return  the value of the pixel after convolution with the kernel
+     */
+    public static final float convolve3DPt(Vector3f kPt, ModelImage kImage, int[] kExtents, float[] kernel) {
+        int xKDim = kExtents.length > 0 ? kExtents[0] : 1;
+        int yKDim = kExtents.length > 1 ? kExtents[1] : 1;
+        int zKDim = kExtents.length > 2 ? kExtents[2] : 1;
+        
+        int offsetX = (xKDim / 2);
+        int offsetY = (yKDim / 2);
+        int offsetZ = (zKDim / 2);
+
+        int startX = (int)(kPt.X - offsetX);
+        int endX = (int)(kPt.X + offsetX);
+        int startY = (int)(kPt.Y - offsetY);
+        int endY = (int)(kPt.Y + offsetY);
+        int startZ = (int)(kPt.Z - offsetZ);
+        int endZ = (int)(kPt.Z + offsetZ);
+
+        int xDim = kImage.getExtents().length > 0 ? kImage.getExtents()[0] : 1;
+        int yDim = kImage.getExtents().length > 1 ? kImage.getExtents()[1] : 1;
+        int zDim = kImage.getExtents().length > 2 ? kImage.getExtents()[2] : 1;
+
+        double sum = 0;
+        double norm = 0;
+        int index;
+        for (int z = startZ; z <= endZ; z++ ) {
+            for ( int y = startY; y <= endY; y++ ) {
+                for ( int x = startX; x <= endX; x++) {
+                    if ( (x >= 0) && (x < xDim) && (y >= 0) && (y < yDim) && (z >= 0) && (z < zDim) )
+                    {
+                        index = (z - startZ) * (xKDim * yKDim) +
+                        (y - startY) * xKDim +
+                        (x - startX);
+                        sum += kernel[index] * kImage.getFloat(x,y,z);
+
+                        norm += Math.abs( kernel[index] );
+                    }
+                }
+            }
+        }
+
+        if (norm > 0) {
+            return (float)(sum / norm);
+        }
+        return 0;
+    }
+
+
+    
 
     private final void convolve2D(int startSlice, int endSlice){
     	boolean color = srcImage.isColorImage();

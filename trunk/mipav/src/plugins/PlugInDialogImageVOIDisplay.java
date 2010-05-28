@@ -168,47 +168,47 @@ public class PlugInDialogImageVOIDisplay extends ViewJFrameImage implements Mous
         } else if (command.equals("deleteVOI")) {
             componentImage.getVOIHandler().deleteSelectedVOI(true);
         } else if (command.equals("BringToFront")) {
-            componentImage.getVOIHandler().changeVOIOrder(false, VOIHandler.FRONT);
+            componentImage.getVOIHandler().changeVOIOrder(false, VOI.FRONT);
         } else if (command.equals("SendToBack")) {
-            componentImage.getVOIHandler().changeVOIOrder(false, VOIHandler.BACK);
+            componentImage.getVOIHandler().changeVOIOrder(false, VOI.BACK);
         } else if (command.equals("BringContourToFront")) {
-            componentImage.getVOIHandler().changeVOIOrder(true, VOIHandler.FRONT);
+            componentImage.getVOIHandler().changeVOIOrder(true, VOI.FRONT);
         } else if (command.equals("SendContourToBack")) {
-            componentImage.getVOIHandler().changeVOIOrder(false, VOIHandler.BACK);
+            componentImage.getVOIHandler().changeVOIOrder(false, VOI.BACK);
         } else if (command.equals("PropVOIUp")) {
 
             // It appears JButtons don't pass key modifiers
             // if((event.getModifiers() & ActionEvent.SHIFT_MASK) != 0) {}
             if (componentImage.getVOIHandler().propVOI(1, false) == true) {
-                incSlice();
+                //incSlice();
             }
         } else if (command.equals("PropVOIDown")) {
 
             if (componentImage.getVOIHandler().propVOI(-1, false) == true) {
-                decSlice();
+                //decSlice();
             }
         } else if (command.equals("PropVOIActiveUp")) {
 
             // It appears JButtons don't pass key modifiers
             // if((event.getModifiers() & ActionEvent.SHIFT_MASK) != 0) {}
             if (componentImage.getVOIHandler().propVOI(1, true) == true) {
-                incSlice();
+                //incSlice();
             }
         } else if (command.equals("PropVOIActiveDown")) {
 
             if (componentImage.getVOIHandler().propVOI(-1, true) == true) {
-                decSlice();
+                //decSlice();
             }
         } else if (command.equals("PropVOIAll")) {
             componentImage.getVOIHandler().propVOIAll();
         } else if (command.equals("BringForward")) {
-            componentImage.getVOIHandler().changeVOIOrder(false, VOIHandler.FORWARD);
+            componentImage.getVOIHandler().changeVOIOrder(false, VOI.FORWARD);
         } else if (command.equals("SendBackward")) {
-            componentImage.getVOIHandler().changeVOIOrder(false, VOIHandler.BACKWARD);
+            componentImage.getVOIHandler().changeVOIOrder(false, VOI.BACKWARD);
         } else if (command.equals("SendContourForward")) {
-            componentImage.getVOIHandler().changeVOIOrder(true, VOIHandler.FORWARD);
+            componentImage.getVOIHandler().changeVOIOrder(true, VOI.FORWARD);
         } else if (command.equals("SendContourBackward")) {
-            componentImage.getVOIHandler().changeVOIOrder(true, VOIHandler.BACKWARD);
+            componentImage.getVOIHandler().changeVOIOrder(true, VOI.BACKWARD);
         } else if (command.equals("VOIProperties")) {
 
             componentImage.getVOIHandler().showVOIProperties();

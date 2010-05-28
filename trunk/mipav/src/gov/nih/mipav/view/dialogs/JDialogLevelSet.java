@@ -202,7 +202,7 @@ public class JDialogLevelSet extends JDialogBase implements AlgorithmInterface {
         }
 /*
         if (image.getNDims() == 3) {
-            Vector[] curves = VOIs.VOIAt(i).getCurves();
+            Vector[] curves = VOIs.VOIAt(i).getCurvesTemp();
             int nCurves = 0;
             int previousCurves = 0;
             int slice;
