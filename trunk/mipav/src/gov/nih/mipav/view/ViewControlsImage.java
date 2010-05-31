@@ -178,8 +178,8 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
      * @param  showPaint  Indicates if the paint toolbar is shown.
      * @param  voiIndex   Indicates the index of the currently (or previously) selected VOI
      */
-    public void buildToolbar(boolean showImage, JToolBar voiToolbar, boolean showPaint) {
-        buildToolbar(showImage, voiToolbar, showPaint, false);
+    public void buildToolbar(boolean showImage, JToolBar voiToolbar, ButtonGroup VOIGroup, JToggleButton VOIPointer, boolean showPaint) {
+        buildToolbar(showImage, voiToolbar, VOIGroup, VOIPointer, showPaint, false);
     }
 
     /**
@@ -191,7 +191,7 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
      * @param  showScripting  Indicates if the scripting toolbar is shown.
      * @param  voiIndex       Indicates the index of the currently (or previously) selected VOI
      */
-    public void buildToolbar(boolean showImage, JToolBar voiToolbar, boolean showPaint, boolean showScripting) {
+    public void buildToolbar(boolean showImage, JToolBar voiToolbar, ButtonGroup VOIGroup, JToggleButton VOIPointer, boolean showPaint, boolean showScripting) {
 
         int zDim, tDim;
         int numberOfDimensions;
@@ -202,6 +202,8 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
         panelOptionToolbars = new JPanel();
         generalPanel = new JPanel();
         toolBarObj = new ViewToolBarBuilder(frame);
+        toolBarObj.setPointerButton( VOIPointer );
+        toolBarObj.setVOIGroup( VOIGroup );
 
         panelToolbars.setLayout(new BorderLayout());
         panelOptionToolbars.setLayout(new BorderLayout());

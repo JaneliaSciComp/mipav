@@ -929,108 +929,8 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
     	}
     	tBar.add(makeSeparator());
     	return tBar;
-    }
-    
-    /**
-     * Builds the VOI toolbar, with buttons for creating various types of VOIs (elliptical, square, etc.), and for cut
-     * and paste operations.
-     *
-     * @param   numberOfDimensions  the number of image dimensions
-     * @param   voiIndex            index of the currently (or last) selected VOI
-     *
-     * @return  the VOI toolbar
-     */
-    public JToolBar buildVOIToolBar(int numberOfDimensions, int voiIndex) {
-        JToolBar VOIToolBar = new JToolBar();
-        return buildVOIToolBar( VOIToolBar, numberOfDimensions, voiIndex );
-    }
-    
+    }    
 
-    private JToolBar buildVOIToolBar(JToolBar VOIToolBar, int numberOfDimensions, int voiIndex) {
-        VOIToolBar.setBorder(etchedBorder);
-        VOIToolBar.setBorderPainted(true);
-        VOIToolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
-        VOIToolBar.setFloatable(false);
-
-        pointerVOIButton = buildToggleButton(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER, VOIGroup);
-        VOIToolBar.add(pointerVOIButton);
-
-        VOIToolBar.add(makeSeparator());
-        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_TEXT, VOIGroup));
-        
-        VOIToolBar.add(makeSeparator());
-        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_POINT, VOIGroup));
-
-        JToggleButton polysliceButton = buildToggleButton(CustomUIBuilder.PARAM_VOI_POLY_SLICE, VOIGroup);
-
-        // polysliceButton.setEnabled(false);
-        polysliceButton.setEnabled(numberOfDimensions > 2);
-        VOIToolBar.add(polysliceButton);
-
-
-        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_LINE, VOIGroup));
-        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_PROTRACTOR, VOIGroup));
-        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_RECTANGLE, VOIGroup));
-        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_ELLIPSE, VOIGroup));
-        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_POLYGON, VOIGroup));
-
-
-        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_LEVELSET, VOIGroup));
-        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_LIVEWIRE, VOIGroup));
-
-        JToggleButton cubeVOIButton = buildToggleButton(CustomUIBuilder.PARAM_VOI_3D_RECTANGLE, VOIGroup);
-        VOIToolBar.add(cubeVOIButton);
-
-        if (numberOfDimensions == 2) {
-            cubeVOIButton.setEnabled(false);
-        }
-
-        
-
-        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_SPLITTER, null));
-        
-        voiColorButton = new VOIColorButton(voiIndex);
-        VOIToolBar.add(makeSeparator());
-       
-       
-        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_NEW, VOIGroup));
-        VOIToolBar.add(makeSeparator());
-        
-        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_PROPERTIES, VOIGroup));
-        VOIToolBar.add(voiColorButton);
-
-        VOIToolBar.add(makeSeparator());
-
-        VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_UNDO));
-
-        // VOIToolBar.add( buildButton( "deleteVOI", "Delete selected contour", "delete" ) );
-        VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_CUT));
-        VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_COPY));
-        VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_PASTE));
-
-        VOIToolBar.add(makeSeparator());
-
-        JButton propDownVOIButton = buildButton(CustomUIBuilder.PARAM_VOI_PROPAGATE_DOWN);
-        JButton propAllVOIButton = buildButton(CustomUIBuilder.PARAM_VOI_PROPAGATE_ALL);
-        JButton propUpVOIButton = buildButton(CustomUIBuilder.PARAM_VOI_PROPAGATE_UP);
-
-        if (numberOfDimensions == 2) {
-            propUpVOIButton.setEnabled(false);
-            propAllVOIButton.setEnabled(false);
-            propDownVOIButton.setEnabled(false);
-        }
-
-        VOIToolBar.add(propDownVOIButton);
-        VOIToolBar.add(propAllVOIButton);
-        VOIToolBar.add(propUpVOIButton);
-
-        VOIToolBar.add(makeSeparator());
-        VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_QUICK_AND_OP));
-        VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_QUICK_NOT_OP));
-
-        return VOIToolBar;
-    }
-    
     private JToolBar build3DVOIToolBar(JToolBar VOIToolBar, int numberOfDimensions, int voiIndex) {
         VOIToolBar.setBorder(etchedBorder);
         VOIToolBar.setBorderPainted(true);
@@ -1216,6 +1116,11 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
     public Color getPaintColor() {
         return paintColor;
     }
+    
+    public JToggleButton getPointerButton( )
+    {
+        return pointerVOIButton;
+    }
 
     /**
      * Returns the full path and file name of the currently selected script file in the scripting toolbar.
@@ -1383,6 +1288,14 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
             colorPaintButton.setBackground(color);
         }
     }
+    
+    public void setPointerButton( JToggleButton pointerButton )
+    {
+        if ( pointerButton != null )
+        {
+            pointerVOIButton = pointerButton;
+        }
+    }
 
     /**
      * Accessor that sets the pointer button to selected.
@@ -1508,6 +1421,14 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
     	
     }
 
+    public void setVOIGroup( ButtonGroup newVOIGroup )
+    {
+        if ( newVOIGroup != null )
+        {
+            VOIGroup = newVOIGroup;
+        }
+    }
+    
     /**
      * Method to update the list of scripts in the scripting toolbar based on the directory name provided. It is assumed
      * that all scripts end with an .sct extension.

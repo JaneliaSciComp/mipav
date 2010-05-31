@@ -52,6 +52,7 @@ import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.event.EventListenerList;
 
@@ -168,6 +169,9 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
     
     private Vector<VOIBase> m_kActiveList = new Vector<VOIBase>();
 
+    private JToggleButton m_kPointerButton = null;
+    
+    
     public VOIManagerInterface ( VOIManagerInterfaceListener kParent,
             ModelImage kImageA, ModelStorageBase kLUTa, ModelImage kImageB, ModelStorageBase kLUTb, int iNViews, boolean bGPU, ButtonGroup kVOIGroup )
     {
@@ -183,6 +187,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
             toolbarBuilder.buildVolumeTriPlanarVOIToolBar( m_kImageA.getNDims(),
                     -1, bGPU, bGPU, kVOIGroup);
         m_kVOIToolbar.setVisible(false);
+        m_kPointerButton = toolbarBuilder.getPointerButton();
         m_kVOIManagers = new VOIManager[iNViews];
         Color kColor = toolbarBuilder.getVOIColorButton().getBackground();
         new ColorRGB( kColor.getRed()/255.0f,
@@ -768,6 +773,12 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
 
     public float[] getImageGraphBuffer() { 
         return null;
+    }
+
+    
+    public JToggleButton getPointerButton( )
+    {
+        return m_kPointerButton;
     }
 
 
@@ -1650,7 +1661,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         m_kParent.setCursor(kCursor);    
     }
 
-    public void setDefaultCursor() {
+    public void setDefaultCursor() {               
         toolbarBuilder.setPointerSelected();
         actionPerformed( new ActionEvent ( this, 0, CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER.getActionCommand()) );
         //m_kParent.setDefaultCursor();     
