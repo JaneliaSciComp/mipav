@@ -63,7 +63,9 @@ import gov.nih.mipav.view.*;
  *  For 40 parameters scaling = true Numerical gave chi-squared = 1.67E104 with a first zero followed by the rest 50's.
  *  For 40 parameters scaling = true Analytical fave chi-squared = 1 with zeroes excpet for a final 41.
  *  In short, for BROWN_ALMOST_LINEAR the Java outperformed the FORTRAN.
- *   
+ *  LINEAR_FULL_RANK OK.
+ *  LINEAR_RANK1 OK.
+ *  LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS OK.
  */
 
 // BELOW IS AN EXAMPLE OF A DRIVER USED IN FITTING A 4 PARAMETER
@@ -597,6 +599,12 @@ public abstract class NLConstrainedEngine {
     private final int HOCK25 = 25;
     
     private final int BROWN_ALMOST_LINEAR = 27;
+    
+    private final int LINEAR_FULL_RANK = 32;
+    
+    private final int LINEAR_RANK1 = 33;
+    
+    private final int LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS = 34;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -1710,6 +1718,142 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
+        // Below is an example to fit the Linear full rank with 5 parameters and 10 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Linear full rank function with 5 parameters and 10 points\n");
+        Preferences.debug("Chi-squared = nPts - param at all parameters = -1\n");
+        testMode = true;
+        testCase = LINEAR_FULL_RANK;
+        nPts = 10;
+        param = 5;
+        // Guess all parameters are 1
+        gues = new double[param];
+        for (i = 0; i < param; i++) {
+        	gues[i] = 1.0;
+        }
+        fitTestModel();
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is an example to fit the Linear full rank with 5 parameters and 50 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Linear full rank function with 5 parameters and 50 points\n");
+        Preferences.debug("Chi-squared = nPts - param at all parameters = -1\n");
+        testMode = true;
+        testCase = LINEAR_FULL_RANK;
+        nPts = 50;
+        param = 5;
+        // Guess all parameters are 1
+        gues = new double[param];
+        for (i = 0; i < param; i++) {
+        	gues[i] = 1.0;
+        }
+        fitTestModel();
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is the to fit the Linear rank 1 function with 5 parameters and 10 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Linear rank 1 function with 5 parameters and 10 points\n");
+        Preferences.debug("Chi-squared = nPts*(nPts-1)/(2*(2*nPts + 1))\n");
+        Preferences.debug("At any point where sum from j = 1 to nPts of j*x[j] = 3/(2*nPts + 1)\n");
+        testMode = true;
+        testCase = LINEAR_RANK1;
+        nPts = 10;
+        param = 5;
+        // Guess all parameters are 1
+        gues = new double[param];
+        for (i = 0; i < param; i++) {
+        	gues[i] = 1.0;
+        }
+        fitTestModel();
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is the to fit the Linear rank 1 function with 5 parameters and 50 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Linear rank 1 function with 5 parameters and 50 points\n");
+        Preferences.debug("Chi-squared = nPts*(nPts-1)/(2*(2*nPts + 1))\n");
+        Preferences.debug("At any point where sum from j = 1 to nPts of j*x[j] = 3/(2*nPts + 1)\n");
+        testMode = true;
+        testCase = LINEAR_RANK1;
+        nPts = 50;
+        param = 5;
+        // Guess all parameters are 1
+        gues = new double[param];
+        for (i = 0; i < param; i++) {
+        	gues[i] = 1.0;
+        }
+        fitTestModel();
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is the to fit the Linear rank 1 function with zero columns and rows with 5 parameters and 10 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Linear rank 1 with zero columns and rows function with 5 parameters and 10 points\n");
+        Preferences.debug("Chi-squared = (nPts**2 + 3*nPts -6)/(2*(2*nPts - 3))\n");
+        Preferences.debug("At any point where sum from j = 2 to nPts-1 of j*x[j] = 3/(2*nPts - 3)\n");
+        testMode = true;
+        testCase = LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS;
+        nPts = 10;
+        param = 5;
+        // Guess all parameters are 1
+        gues = new double[param];
+        for (i = 0; i < param; i++) {
+        	gues[i] = 1.0;
+        }
+        fitTestModel();
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is the to fit the Linear rank 1 function with zero columns and rows with 5 parameters and 50 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Linear rank 1 with zero columns and rows function with 5 parameters and 50 points\n");
+        Preferences.debug("Chi-squared = (nPts**2 + 3*nPts -6)/(2*(2*nPts - 3))\n");
+        Preferences.debug("At any point where sum from j = 2 to nPts-1 of j*x[j] = 3/(2*nPts - 3)\n");
+        testMode = true;
+        testCase = LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS;
+        nPts = 50;
+        param = 5;
+        // Guess all parameters are 1
+        gues = new double[param];
+        for (i = 0; i < param; i++) {
+        	gues[i] = 1.0;
+        }
+        fitTestModel();
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
     }
     
     /**
@@ -2391,6 +2535,99 @@ public abstract class NLConstrainedEngine {
                 				}
                 			    covarMat[nPts-1][i] = prodParam;	
                 			}
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case LINEAR_FULL_RANK:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                	    double sumParam = 0.0;
+                	    for (i = 0 ; i < param; i++) {
+                	    	sumParam += a[i];
+                	    }
+                	    for (i = 0; i < param; i++) {
+                	    	residuals[i] = a[i] - 2.0 * sumParam / nPts - 1.0;
+                	    }
+                	    for (i = param; i < nPts; i++) {
+                	    	residuals[i] = -2.0 * sumParam / nPts - 1.0;
+                	    }
+                	} // if ((ctrl == -1) || (ctrl == 1)
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+	                		for (i = 0; i < param; i++) {
+	                		    for (int j = 0; j < param; j++) {
+	                		        if (i == j) {
+	                		        	covarMat[i][j] = 1.0 - 2.0/nPts;
+	                		        }
+	                		        else {
+	                		        	covarMat[i][j] = -2.0/nPts;
+	                		        }
+	                		    }
+	                		} // for (i = 0; i < param; i++)
+	                		for (i = param; i < nPts; i++) {
+	                			for (int j = 0; j < param; j++) {
+	                			    covarMat[i][j] = -2.0/nPts;
+	                			}
+	                		} // for (i = param; i < nPts; i++)
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case LINEAR_RANK1:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                	    double sumTerm = 0.0;
+                	    for (i = 0; i < param; i++) {
+                	    	sumTerm += (i+1.0)*a[i];
+                	    }
+                	    for (i = 0; i < nPts; i++) {
+                	    	residuals[i] = (i+1.0)*sumTerm - 1.0;
+                	    }
+                	} // if ((ctrl == -1) || (ctrl == 1)
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                		    for (i = 0; i < nPts; i++) {
+                		    	for (int j = 0; j < param; j++) {
+                		    		covarMat[i][j] = (i+1.0)*(j+1.0);
+                		    	}
+                		    }
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                	    double sumTerm = 0.0;
+                	    residuals[0] = -1.0;
+                	    residuals[nPts-1] = -1.0;
+                	    for (i = 1; i < param-1; i++) {
+                	    	sumTerm += (i+1.0)*a[i];
+                	    }
+                	    for (i = 1; i < nPts-1; i++) {
+                	    	residuals[i] = i*sumTerm - 1.0;
+                	    }
+                	} // if ((ctrl == -1) || (ctrl == 1)
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                			for (int j = 0; j < param; j++) {
+                				covarMat[0][j] = 0.0;
+                				covarMat[nPts-1][j] = 0.0;
+                			}
+                		    for (i = 1; i < nPts-1; i++) {
+                		    	covarMat[i][0] = 0.0;
+                		    	covarMat[i][param-1] = 0.0;
+                		    	for (int j = 1; j < param-1; j++) {
+                		    		covarMat[i][j] = i*(j+1.0);
+                		    	}
+                		    }
                 		} // if (analyticalJacobian)
                 		else {
                 			// If the user wishes to calculate the Jacobian numerically
