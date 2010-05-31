@@ -41,8 +41,28 @@ import gov.nih.mipav.view.*;
  *  JENNRICH_AND SAMPSON NUMERICAL JACOBIAN WORKS WITH BOTH INTERNAL SCALING FALSE AND INTERNAL SCALING TRUE.
  *  JENNRICH_AND_SAMPSON ANALYTICAL JACOBIAN AND INTERNAL SCALING FALSE WORKS.
  *  JENNRICH_AND_SAMPSON ANALYTICAL JACOBIAN AND INTERNAL SCALING TRUE GENERATES A -INFINITY IN fnew[9] 
- *  inside fsumsq after iteration 22.  THE ORIGINAL FORTRAN CODE WORKS.
+ *  inside fsumsq after iteration 22.  THE ORIGINAL FORTRAN CODE WORKS.  The extended precision Java is
+ *  much too slow for these large exponential numbers - after 2/12 days the extended precision version
+ *  had still not finished running the first of the four cases.
  *  WATSON6, WATSON9, and WATSON12 OK.
+ *  BROWN_ALMOST_LINEAR for 10 parameters at standard starting point and 10 * standard starting point
+ *  gives chi-squared = 0 for parameters all 1's.  At 100 * standard starting point:
+ *  internal scaling = false and Numerical Jacobian gives chi-squared = 0 for parameters all 1's.
+ *  internal scaling = false and Analytical Jacobian gives chi-squared = 0 for parameters all 1's.
+ *  internal scaling = true and Numerical Jacobian gives chi-squared = 1 for all zeroes except for a final 11.
+ *  internal scaling = true and Analytical Jacobian gives chi-squared = 1 for all zeroes except for a final 11.
+ *  BROWN_ALMOST_LINEAR for 30 and 40 parameters at standard starting point gives chi-squared = 0
+ *  for parameters all 1's.
+ *  FORTRAN gave chi-squared = 0 for parameters all 1's for 10 parameters at standard starting point, 
+ *  10 * standard starting point, and 100 * standard starting point for internal scaling = false.
+ *  At 100 * standard starting point for internal scaling = true gave all zeroes except for a final 11.
+ *  For 30 parameters for internal scaling = false gave chi-squared = 0 with all 1's.
+ *  For 30 parameters for internal scaling = true gave chi-squared = 1 with all zeroes except for a final 31.
+ *  For 40 parameters scaling = false Numerical gave chi-squared = 1 with -.225's except for a final 50.
+ *  For 40 parameters scaling = false Analytical gave chi-squared = 1 with zeroes except for a final 41.
+ *  For 40 parameters scaling = true Numerical gave chi-squared = 1.67E104 with a first zero followed by the rest 50's.
+ *  For 40 parameters scaling = true Analytical fave chi-squared = 1 with zeroes excpet for a final 41.
+ *  In short, for BROWN_ALMOST_LINEAR the Java outperformed the FORTRAN.
  *   
  */
 
@@ -575,6 +595,8 @@ public abstract class NLConstrainedEngine {
     private final int WATSON = 20;
     
     private final int HOCK25 = 25;
+    
+    private final int BROWN_ALMOST_LINEAR = 27;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -1563,6 +1585,131 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
+        // Below is an example to fit the Brown almost linear function with 10 parameters
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Brown almost linear with 10 parameters at standard staring point unconstrained\n");
+        Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n");
+        Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n");
+        Preferences.debug("in particular , alpha = 1\n");
+        Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n");
+        testMode = true;
+        testCase = BROWN_ALMOST_LINEAR;
+        nPts = 10;
+        param = 10;
+        // Guess all parameters are 0.5
+        gues = new double[param];
+        for (i = 0; i < param; i++) {
+        	gues[i] = 0.5;
+        }
+        fitTestModel();
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is an example to fit the Brown almost linear function with 10 parameters
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Brown almost linear with 10 parameters at 10 * standard staring point unconstrained\n");
+        Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n");
+        Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n");
+        Preferences.debug("in particular , alpha = 1\n");
+        Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n");
+        testMode = true;
+        testCase = BROWN_ALMOST_LINEAR;
+        nPts = 10;
+        param = 10;
+        // Guess all parameters are 5.0
+        gues = new double[param];
+        for (i = 0; i < param; i++) {
+        	gues[i] = 5.0;
+        }
+        fitTestModel();
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is an example to fit the Brown almost linear function with 10 parameters
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Brown almost linear with 10 parameters at 100 * standard staring point unconstrained\n");
+        Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n");
+        Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n");
+        Preferences.debug("in particular , alpha = 1\n");
+        Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n");
+        testMode = true;
+        testCase = BROWN_ALMOST_LINEAR;
+        nPts = 10;
+        param = 10;
+        // Guess all parameters are 50.0
+        gues = new double[param];
+        for (i = 0; i < param; i++) {
+        	gues[i] = 50.0;
+        }
+        fitTestModel();
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is an example to fit the Brown almost linear function with 30 parameters
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Brown almost linear with 30 parameters at standard staring point unconstrained\n");
+        Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n");
+        Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n");
+        Preferences.debug("in particular , alpha = 1\n");
+        Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n");
+        testMode = true;
+        testCase = BROWN_ALMOST_LINEAR;
+        nPts = 30;
+        param = 30;
+        // Guess all parameters are 0.5
+        gues = new double[param];
+        for (i = 0; i < param; i++) {
+        	gues[i] = 0.5;
+        }
+        fitTestModel();
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        // Below is an example to fit the Brown almost linear function with 40 parameters
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Brown almost linear with 40 parameters at standard staring point unconstrained\n");
+        Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n");
+        Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n");
+        Preferences.debug("in particular , alpha = 1\n");
+        Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n");
+        testMode = true;
+        testCase = BROWN_ALMOST_LINEAR;
+        nPts = 40;
+        param = 40;
+        // Guess all parameters are 0.5
+        gues = new double[param];
+        for (i = 0; i < param; i++) {
+        	gues[i] = 0.5;
+        }
+        fitTestModel();
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
     }
     
     /**
@@ -2209,6 +2356,48 @@ public abstract class NLConstrainedEngine {
                 		}
                 	} // else if (ctrl == 2)
                     break;
+                case BROWN_ALMOST_LINEAR:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		double sumParam = 0.0;
+            			double prodParam = 1.0;
+            			for (i = 0; i < nPts; i++) {
+            				sumParam += a[i];
+            				prodParam *= a[i];
+            			}
+            		    for (i = 0; i < nPts -1; i++) {
+            		    	residuals[i] = a[i] + sumParam - (nPts + 1.0);
+            		    } // for (i = 0; i < nPts - 1; i++)
+            		    residuals[nPts-1] = prodParam - 1.0;	
+                	} // if ((ctrl == -1) || (ctrl == 1))
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                			double prodParam;
+                			for (i = 0; i < nPts - 1; i++) {
+                				for (int j = 0; j < nPts; j++) {
+                				    if (i == j) {
+                				    	covarMat[i][j] = 2.0;
+                				    }
+                				    else {
+                				    	covarMat[i][j] = 1.0;
+                				    }
+                				}
+                			}
+                			for (i = 0; i < nPts; i++) {
+                				prodParam = 1.0;
+                				for (int j = 0; j < nPts; j++) {
+                					if (i != j) {
+                						prodParam = prodParam*a[j];
+                					}
+                				}
+                			    covarMat[nPts-1][i] = prodParam;	
+                			}
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
                 } // switch (testCase)
             } catch (Exception e) {
                 Preferences.debug("function error: " + e.getMessage() + "\n");
