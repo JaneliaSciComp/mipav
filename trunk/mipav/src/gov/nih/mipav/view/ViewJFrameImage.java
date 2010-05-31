@@ -448,7 +448,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     nImage = imageB.getExtents()[2];
                     menuBar = menuBarMaker.getMenuBar(this, 4, imageB.getType(), imageB.isDicomImage());
                     controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"), 
-                            voiManager.getToolBar(), menuBuilder.isMenuItemSelected("Paint toolbar"),
+                            voiManager.getToolBar(), VOIGroup, voiManager.getPointerButton(), menuBuilder.isMenuItemSelected("Paint toolbar"),
                             menuBuilder.isMenuItemSelected("Scripting toolbar"));
                 }
 
@@ -626,7 +626,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     nImage = imageA.getExtents()[2];
                     menuBar = menuBarMaker.getMenuBar(this, 3, imageA.getType(), imageA.isDicomImage());
                     controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"), 
-                            voiManager.getToolBar(), menuBuilder.isMenuItemSelected("Paint toolbar"),
+                            voiManager.getToolBar(), VOIGroup, voiManager.getPointerButton(), menuBuilder.isMenuItemSelected("Paint toolbar"),
                             menuBuilder.isMenuItemSelected("Scripting toolbar"));
                 }
 
@@ -727,7 +727,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             Preferences.setProperty(Preferences.PREF_IMAGE_TOOLBAR_ON, String.valueOf(showImage));
             Preferences.setProperty(Preferences.PREF_PAINT_TOOLBAR_ON, String.valueOf(showPaint));
 
-            controls.buildToolbar(showImage, voiManager.getToolBar(), showPaint, showScript);
+            controls.buildToolbar(showImage, voiManager.getToolBar(), VOIGroup, voiManager.getPointerButton(), showPaint, showScript);
             setControls();
         } else if (command.equals("PaintBrush")) {
             componentImage.setCursorMode(ViewJComponentBase.PAINT_VOI);
@@ -4279,7 +4279,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 menuBar = menuBarMaker.getMenuBar(this, 4, imageB.getType(), imageB.isDicomImage());
                 controls
                         .buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"), 
-                                voiManager.getToolBar(), menuBuilder.isMenuItemSelected("Paint toolbar"),
+                                voiManager.getToolBar(), VOIGroup, voiManager.getPointerButton(), menuBuilder.isMenuItemSelected("Paint toolbar"),
                                 menuBuilder.isMenuItemSelected("Scripting toolbar"));
             }
 
@@ -4825,7 +4825,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         controls = new ViewControlsImage(this);
 
         controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"), 
-                voiManager.getToolBar(), menuBuilder.isMenuItemSelected("Paint toolbar"), menuBuilder
+                voiManager.getToolBar(), VOIGroup, voiManager.getPointerButton(), menuBuilder.isMenuItemSelected("Paint toolbar"), menuBuilder
                 .isMenuItemSelected("Scripting toolbar"));
 
         // controls.setZSlider(zSlice);
@@ -5400,7 +5400,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         // imageA.
         controls = new ViewControlsImage(this); // Build controls used in this frame
         controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"), 
-                voiManager.getToolBar(), menuBuilder.isMenuItemSelected("Paint toolbar"), menuBuilder
+                voiManager.getToolBar(), VOIGroup, voiManager.getPointerButton(), menuBuilder.isMenuItemSelected("Paint toolbar"), menuBuilder
                 .isMenuItemSelected("Scripting toolbar"));
         
         if (getActiveImage().getFileInfo(0).getFileFormat() == FileUtility.DICOM) {

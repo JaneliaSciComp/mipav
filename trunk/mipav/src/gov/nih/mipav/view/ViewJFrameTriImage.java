@@ -3118,6 +3118,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      */
     protected void buildToolbars() {
         toolbarBuilder = new ViewToolBarBuilder(this);
+        toolbarBuilder.setVOIGroup(VOIGroup);
         buildActiveImagePanel();
         panelToolbar.setLayout(new GridBagLayout());
 
@@ -3756,6 +3757,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         
         initVOI();
+        toolbarBuilder.setPointerButton( voiManager.getPointerButton() );
     }
 
     /**
