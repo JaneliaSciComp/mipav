@@ -1064,7 +1064,9 @@ public abstract class NLConstrainedEngineEP {
         driverCalls();
         // Below is an example to fit y(i-1) = 2 + 2*i -(exp(i*a0) + exp(i*a1))
         // for i = 1 to 10
-        Preferences.debug("Jennrich and Sampson function at standard starting point unconstrained\n");
+        // Don't test Jennrich and Sampson - after 2/12 days of computer time not even the first of
+        // the 4 Jennrich and Sampson runs had completed.
+        /*Preferences.debug("Jennrich and Sampson function at standard starting point unconstrained\n");
         Preferences.debug("y(i-1) = 2 + 2*i - (exp(i*a0) + exp(i*a1)\n");
         Preferences.debug("for i = 1 to 10\n");
         Preferences.debug("Correct answer has chi-squared = 124.362 at a0 = 0.257825, a1 = 0.257825\n");
@@ -1083,7 +1085,7 @@ public abstract class NLConstrainedEngineEP {
         // for all parameters
         bl = new DoubleDouble[param];
         bu = new DoubleDouble[param];
-        driverCalls();
+        driverCalls();*/
         // Below is an example to fit y = a0 + a1*exp(-a3*x) + a2*exp(-a4*x)
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Osborne 1 function unconstrained\n");
