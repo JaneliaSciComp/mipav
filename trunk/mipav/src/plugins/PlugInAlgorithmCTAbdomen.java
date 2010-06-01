@@ -19,6 +19,9 @@ import gov.nih.mipav.model.structures.VOIVector;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewJFrameMessage;
+import gov.nih.mipav.view.ViewUserInterface;
+
 import java.awt.Color;
 import java.awt.Point;
 import java.io.File;
@@ -160,7 +163,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             
         }
 
-        System.out.println("directory: " +imageDir);
+        ViewUserInterface.getReference().getMessageFrame().append("directory: " +imageDir+"\n", ViewJFrameMessage.DEBUG);
         
     	ViewJFrameImage frame = new ViewJFrameImage(srcImage);
     	srcImage.unregisterAllVOIs();
@@ -278,13 +281,13 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         subcutaneousVOI = new VOI((short)0, "Subcutaneous area", 1);
         
         for (int sliceIdx = 0; sliceIdx < zDim; sliceIdx++) {
-            System.out.println("Making intensity profiles for slice: " +sliceIdx);
+            ViewUserInterface.getReference().getMessageFrame().append("Making intensity profiles for slice: " +sliceIdx+"\n", ViewJFrameMessage.DEBUG);
             makeIntensityProfiles(sliceIdx);
             makeSubcutaneousFatVOIfromIntensityProfiles(sliceIdx);
         } // end for (sliceIdx = 0; ...)
 
         
-        System.out.println("Fixing the subcutaneous fat VOIs");
+        ViewUserInterface.getReference().getMessageFrame().append("Fixing the subcutaneous fat VOIs\n", ViewJFrameMessage.DEBUG);
         fixSubcutaneousFatVOIs();
         
         System.err.println("Total time for subcutaneous fat segmentation: "+(System.currentTimeMillis() - totalTime));
@@ -445,7 +448,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             return;
         }
 
-//        System.out.println("Seed Location: " +seedX +"  " +seedY +"  intensity: " +seedVal);
+//        ViewUserInterface.getReference().getMessageFrame().append("Seed Location: " +seedX +"  " +seedY +"  intensity: " +seedVal);
         
         AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(srcImage, 1.0f, 1.0f);
         regionGrowAlgo.setRunningInSeparateThread(false);
@@ -506,7 +509,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
      */
      private void labelAbdomen3D() {
         
-        System.out.println("labelAbdomen3D(): Start");
+        ViewUserInterface.getReference().getMessageFrame().append("labelAbdomen3D(): Start\n", ViewJFrameMessage.DEBUG);
         
         // find a seed point inside the subcutaneous fat for a region grow
         boolean found = false;
@@ -543,15 +546,15 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             return;
         }
 
-//        System.out.println("seed point: " +seedX +"  " +seedY +"  " +seedZ);
-//        System.out.println("seed value: " +seedVal);
+//        ViewUserInterface.getReference().getMessageFrame().append("seed point: " +seedX +"  " +seedY +"  " +seedZ);
+//        ViewUserInterface.getReference().getMessageFrame().append("seed value: " +seedVal);
 
         AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(srcImage, 1.0f, 1.0f);
         regionGrowAlgo.setRunningInSeparateThread(false);
         
         CubeBounds regionGrowBounds = new CubeBounds(xDim, 0, yDim, 0, zDim, 0);
 
-        System.out.print("  regionGrow3D: ");
+        ViewUserInterface.getReference().getMessageFrame().append("  regionGrow3D: ", ViewJFrameMessage.DEBUG);
         long time = System.currentTimeMillis();
 
         // under segment so that we do not get the blanket
@@ -559,7 +562,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
                                     false, false, null, seedVal - 50,
                                     seedVal + 1500, -1, -1, false, 0, regionGrowBounds);
         
-        System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
+        ViewUserInterface.getReference().getMessageFrame().append(+((System.currentTimeMillis() - time)) / 1000.0f +" sec\n", ViewJFrameMessage.DEBUG);
 
         // make the abdominal label image from the volume BitSet determined in the region grow
         for (int volIdx = 0, z = 0; z < zDim; z++) {
@@ -582,10 +585,10 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 
         // do a mathematical morphology closing operation to fill the small gaps
         // do it in 2D so as to not change the 3D shape
-        System.out.print("  closeImage25D: ");
+        ViewUserInterface.getReference().getMessageFrame().append("  closeImage25D: ", ViewJFrameMessage.DEBUG);
         time = System.currentTimeMillis();
         closeImage25D(abdomenImage);
-        System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
+        ViewUserInterface.getReference().getMessageFrame().append(+((System.currentTimeMillis() - time)) / 1000.0f +" sec\n", ViewJFrameMessage.DEBUG);
         
 //        ShowImage(abdomenImage, "closed image");
         
@@ -594,7 +597,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         // This needs to happen if we are going to find the VOI's with a region grow technique
         // that uses the volumeBitSet
 
-        System.out.print("  updating the volume BitSet: ");
+        ViewUserInterface.getReference().getMessageFrame().append("  updating the volume BitSet: ", ViewJFrameMessage.DEBUG);
         time = System.currentTimeMillis();
         volumeBitSet.clear();
          for (int volIdx = 0, z = 0; z < zDim; z++) {
@@ -612,9 +615,9 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
                 }
             } // end for (int sliceIdx = 0; ...)
         } // end for (volIdx = 0, ...)
-         System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
+         ViewUserInterface.getReference().getMessageFrame().append(+((System.currentTimeMillis() - time)) / 1000.0f +" sec\n", ViewJFrameMessage.DEBUG);
 
-        System.out.println("labelAbdomen3D(): End");
+        ViewUserInterface.getReference().getMessageFrame().append("labelAbdomen3D(): End\n", ViewJFrameMessage.DEBUG);
 
     } // end labelAbdomen3D()
      
@@ -629,7 +632,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
       */
       private void labelAbdomen3D01() {
          
-         System.out.println("labelAbdomen3D(): Start");
+         ViewUserInterface.getReference().getMessageFrame().append("labelAbdomen3D(): Start\n", ViewJFrameMessage.DEBUG);
          
          // find a seed point inside the subcutaneous fat for a region grow
          boolean found = false;
@@ -666,15 +669,15 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
              return;
          }
 
-//         System.out.println("seed point: " +seedX +"  " +seedY +"  " +seedZ);
-//         System.out.println("seed value: " +seedVal);
+//         ViewUserInterface.getReference().getMessageFrame().append("seed point: " +seedX +"  " +seedY +"  " +seedZ);
+//         ViewUserInterface.getReference().getMessageFrame().append("seed value: " +seedVal);
 
          AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(srcImage, 1.0f, 1.0f);
          regionGrowAlgo.setRunningInSeparateThread(false);
          
          CubeBounds regionGrowBounds = new CubeBounds(xDim, 0, yDim, 0, zDim, 0);
 
-         System.out.print("  regionGrow3D: ");
+         ViewUserInterface.getReference().getMessageFrame().append("  regionGrow3D: ", ViewJFrameMessage.DEBUG);
          long time = System.currentTimeMillis();
 
          // under segment so that we do not get the blanket
@@ -682,7 +685,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
                                      false, false, null, seedVal - 50,
                                      seedVal + 1500, -1, -1, false, 0, regionGrowBounds);
          
-         System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
+         ViewUserInterface.getReference().getMessageFrame().append(+((System.currentTimeMillis() - time)) / 1000.0f +" sec\n", ViewJFrameMessage.DEBUG);
 
          // make the abdominal label image from the volume BitSet determined in the region grow
          for (int volIdx = 0, z = 0; z < zDim; z++) {
@@ -704,10 +707,10 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 //         ShowImage(abdomenImage, "abdominal label image");
 
          // do a mathematical morphology closing operation to fill the small gaps
-         System.out.print("  closeImage3D: ");
+         ViewUserInterface.getReference().getMessageFrame().append("  closeImage3D: ", ViewJFrameMessage.DEBUG);
          time = System.currentTimeMillis();
          closeImage3D(abdomenImage);
-         System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
+         ViewUserInterface.getReference().getMessageFrame().append(+((System.currentTimeMillis() - time)) / 1000.0f +" sec\n", ViewJFrameMessage.DEBUG);
 
          //ShowImage(abdomenImage, "closed image");
 
@@ -716,7 +719,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
          // This needs to happen if we are going to find the VOI's with a region grow technique
          // that uses the volumeBitSet
 
-         System.out.print("  updating the volume BitSet: ");
+         ViewUserInterface.getReference().getMessageFrame().append("  updating the volume BitSet: ", ViewJFrameMessage.DEBUG);
          time = System.currentTimeMillis();
          volumeBitSet.clear();
           for (int volIdx = 0, z = 0; z < zDim; z++) {
@@ -734,9 +737,9 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
                  }
              } // end for (int sliceIdx = 0; ...)
          } // end for (volIdx = 0, ...)
-          System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
+          ViewUserInterface.getReference().getMessageFrame().append(+((System.currentTimeMillis() - time)) / 1000.0f +" sec\n", ViewJFrameMessage.DEBUG);
 
-          System.out.println("labelAbdomen3D(): End");
+          ViewUserInterface.getReference().getMessageFrame().append("labelAbdomen3D(): End\n", ViewJFrameMessage.DEBUG);
 
      } // end labelAbdomen3D()
     
@@ -804,9 +807,9 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
      */
     private boolean makeAbdomen3DVOI() {
         
-        System.out.println("\nmakeAbdomen3DVOI(): Start");
+        ViewUserInterface.getReference().getMessageFrame().append("\nmakeAbdomen3DVOI(): Start\n", ViewJFrameMessage.DEBUG);
         
-        System.out.print("  Extracting VOI from mask: ");
+        ViewUserInterface.getReference().getMessageFrame().append("  Extracting VOI from mask: ", ViewJFrameMessage.DEBUG);
         long time = System.currentTimeMillis();
 
         abdomenImage.setMask(volumeBitSet);
@@ -820,7 +823,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         algoPaintToVOI.run();
         setCompleted(true);
         
-        System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
+        ViewUserInterface.getReference().getMessageFrame().append(+((System.currentTimeMillis() - time)) / 1000.0f +" sec\n", ViewJFrameMessage.DEBUG);
         
         // make sure we got one VOI with xDim number of curves
         VOIVector vois = abdomenImage.getVOIs();
@@ -840,14 +843,14 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         int numCurves, maxIdx = 0, maxCurveLength;
         Vector<VOIBase>[] curves = theVOI.getSortedCurves(zDim);
         for (int sliceIdx = 0; sliceIdx < zDim; sliceIdx++) {
-//            System.out.println("  Slice: " +sliceIdx);
+//            ViewUserInterface.getReference().getMessageFrame().append("  Slice: " +sliceIdx);
             numCurves = curves[sliceIdx].size();
             maxIdx = 0;
             maxCurveLength = ((VOIContour)curves[sliceIdx].get(maxIdx)).size();
             
             // find the index of the larges curve on each slice
             for (int curveIdx = 1; curveIdx < numCurves; curveIdx++) {
-//                System.out.println("    curve: " +curveIdx +"  size: " +((VOIContour)theVOI.getCurves()[sliceIdx].get(curveIdx)).size());
+//                ViewUserInterface.getReference().getMessageFrame().append("    curve: " +curveIdx +"  size: " +((VOIContour)theVOI.getCurves()[sliceIdx].get(curveIdx)).size());
                 if (((VOIContour)curves[sliceIdx].get(curveIdx)).size() > maxCurveLength) {
                     maxIdx = curveIdx;
                     maxCurveLength = ((VOIContour)curves[sliceIdx].get(curveIdx)).size();
@@ -864,7 +867,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             resampleAbdomenVOI( sliceIdx, (VOIContour)curves[sliceIdx].elementAt(0) );
         } // end for (sliceIdx = 0; ...)
 
-        System.out.println("makeAbdomen3DVOI(): End");
+        ViewUserInterface.getReference().getMessageFrame().append("makeAbdomen3DVOI(): End\n", ViewJFrameMessage.DEBUG);
         return true;
     } // end makeAbdomen3DVOI()
 
@@ -882,7 +885,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         findAbdomenCM(sliceIdx);
         int xcm = centerOfMass[0];
         int ycm = centerOfMass[1];
-//        System.out.println("Xcm: " +xcm +"  Ycm: " +ycm);
+//        ViewUserInterface.getReference().getMessageFrame().append("Xcm: " +xcm +"  Ycm: " +ycm);
         
 
         ArrayList<Integer> xValsAbdomenVOI = new ArrayList<Integer>();
@@ -945,7 +948,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
              }
          } // end for (angle = 0; ...
         
-//        System.out.println("resample VOI number of points: " +xValsAbdomenVOI.size());
+//        ViewUserInterface.getReference().getMessageFrame().append("resample VOI number of points: " +xValsAbdomenVOI.size());
 
         curve.clear();
         for(int idx = 0; idx < xValsAbdomenVOI.size(); idx++) {
@@ -971,7 +974,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         findAbdomenCM();
         int xcm = centerOfMass[0];
         int ycm = centerOfMass[1];
-//        System.out.println("Xcm: " +xcm +"  Ycm: " +ycm);
+//        ViewUserInterface.getReference().getMessageFrame().append("Xcm: " +xcm +"  Ycm: " +ycm);
         
 
         ArrayList<Integer> xValsAbdomenVOI = new ArrayList<Integer>();
@@ -1034,7 +1037,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
              }
          } // end for (angle = 0; ...
         
-//        System.out.println("resample VOI number of points: " +xValsAbdomenVOI.size());
+//        ViewUserInterface.getReference().getMessageFrame().append("resample VOI number of points: " +xValsAbdomenVOI.size());
         curve.clear();
         for(int idx = 0; idx < xValsAbdomenVOI.size(); idx++) {
             curve.add( new Vector3f( xValsAbdomenVOI.get(idx), yValsAbdomenVOI.get(idx), 0 ) );
@@ -1505,7 +1508,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         int numCurves;
         VOIContour curve;
         for (int sliceIdx = 0; sliceIdx < zDim; sliceIdx++) {
-            System.out.print("  Extracting VOI for slice: " +sliceIdx +"  ");
+            ViewUserInterface.getReference().getMessageFrame().append("  Extracting VOI for slice: " +sliceIdx +"  ", ViewJFrameMessage.DEBUG);
             long time = System.currentTimeMillis();
 
             // make a new VOI
@@ -1516,28 +1519,28 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             sliceVOI.importCurve(curve);
             sliceImage.registerVOI(sliceVOI);
             
-            System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
+            ViewUserInterface.getReference().getMessageFrame().append(+((System.currentTimeMillis() - time)) / 1000.0f +" sec\n", ViewJFrameMessage.DEBUG);
 
             
             // make a binary image out of the subcutaneousVOI on the 2D VOI
-            System.out.print("    Making a binary image from the VOI: ");
+            ViewUserInterface.getReference().getMessageFrame().append("    Making a binary image from the VOI: ", ViewJFrameMessage.DEBUG);
             time = System.currentTimeMillis();
             ModelImage binImage = sliceImage.generateBinaryImage();   
-            System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
+            ViewUserInterface.getReference().getMessageFrame().append(+((System.currentTimeMillis() - time)) / 1000.0f +" sec\n", ViewJFrameMessage.DEBUG);
 
-            System.out.print("    Smoothing Image with "+sliceVOI.getNumPoints()+"points: ");
+            ViewUserInterface.getReference().getMessageFrame().append("    Smoothing Image with "+sliceVOI.getNumPoints()+"points: ", ViewJFrameMessage.DEBUG);
             time = System.currentTimeMillis();
             AlgorithmBSmooth smoothAlgo = new AlgorithmBSmooth(binImage, sliceVOI, sliceVOI.getNumPoints()/3, true);
-            System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
+            ViewUserInterface.getReference().getMessageFrame().append(+((System.currentTimeMillis() - time)) / 1000.0f +" sec\n", ViewJFrameMessage.DEBUG);
             
             // close the binaryImage with a huge structuring element to fill in all the major gaps
-            System.out.print("    Morphology to the image: ");
+            ViewUserInterface.getReference().getMessageFrame().append("    Morphology to the image: ", ViewJFrameMessage.DEBUG);
             time = System.currentTimeMillis();
             closeImage(binImage, 61.0f);
-            System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
+            ViewUserInterface.getReference().getMessageFrame().append(+((System.currentTimeMillis() - time)) / 1000.0f +" sec\n", ViewJFrameMessage.DEBUG);
             
             // convert the binary image into a VOI
-            System.out.print("    Extracting the new VOI: ");
+            ViewUserInterface.getReference().getMessageFrame().append("    Extracting the new VOI: ", ViewJFrameMessage.DEBUG);
             time = System.currentTimeMillis();
             AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(binImage);
             VOIExtractionAlgo.setRunningInSeparateThread(false);
@@ -1570,9 +1573,9 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
                     theFixedVOI.getCurves().remove(idx);
                 }
             } // end for (int idx = 0; ...)
-            System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
+            ViewUserInterface.getReference().getMessageFrame().append(+((System.currentTimeMillis() - time)) / 1000.0f +" sec\n", ViewJFrameMessage.DEBUG);
 
-            System.out.print("    Copying the new VOI: ");
+            ViewUserInterface.getReference().getMessageFrame().append("    Copying the new VOI: ", ViewJFrameMessage.DEBUG);
             time = System.currentTimeMillis();
             // copy a curve from the 2D image into the 3D image
             // new arrays need to be made for each slice because the array size
@@ -1603,7 +1606,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 */
             curve.exportArrays(xVals, yVals, zVals);
             theVOI.importCurve(xVals, yVals, zVals);
-            System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
+            ViewUserInterface.getReference().getMessageFrame().append(+((System.currentTimeMillis() - time)) / 1000.0f +" sec\n", ViewJFrameMessage.DEBUG);
             
             // need to remove the curve because registering a VOI makes a copy of it
             sliceVOI.removeCurves();
@@ -1626,7 +1629,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         findAbdomenCM(sliceIdx);
         int xcm = centerOfMass[0];
         int ycm = centerOfMass[1];
-//        System.out.println("Xcm: " +xcm +"  Ycm: " +ycm);
+//        ViewUserInterface.getReference().getMessageFrame().append("Xcm: " +xcm +"  Ycm: " +ycm);
         
 
         ArrayList<Integer> xValsVOI = new ArrayList<Integer>();
@@ -1689,7 +1692,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
              }
          } // end for (angle = 0; ...
         
-//        System.out.println("resample VOI number of points: " +xValsAbdomenVOI.size());
+//        ViewUserInterface.getReference().getMessageFrame().append("resample VOI number of points: " +xValsAbdomenVOI.size());
         curve.clear();
         for(int idx = 0; idx < xValsVOI.size(); idx++) {
             // sliceIdx puts the curve on the correct slice... for z-ordered VOIs
@@ -1708,10 +1711,10 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         Vector<VOIBase>[] curves = theVOI.getSortedCurves(zDim);
         for (int sliceIdx = 0; sliceIdx < zDim; sliceIdx++) {
             numCurves = curves[sliceIdx].size();
-            System.out.println("Slice number: " +sliceIdx +"  number of curves: " +numCurves);
+            ViewUserInterface.getReference().getMessageFrame().append("Slice number: " +sliceIdx +"  number of curves: " +numCurves+"\n", ViewJFrameMessage.DEBUG);
             for (int curveIdx = 0; curveIdx < numCurves; curveIdx++) {
                 curve = ((VOIContour)curves[sliceIdx].get(curveIdx));
-                System.out.println("  Curve: " +curveIdx +"  number of points: " +curve.size());
+                ViewUserInterface.getReference().getMessageFrame().append("  Curve: " +curveIdx +"  number of points: " +curve.size()+"\n", ViewJFrameMessage.DEBUG);
             } // end for (int curveIdx = 0; ...)
         } // end for (int sliceIdx = 0; ...)
     } // end printVOI(...)
@@ -1981,7 +1984,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         subcutaneousVOI.importCurve(x1, y1, z1);
         
 /*
-        System.out.println("Xcm: " +xcm +"  Ycm: " +ycm);
+        ViewUserInterface.getReference().getMessageFrame().append("Xcm: " +xcm +"  Ycm: " +ycm);
         sliceBuffer[ycm * xDim + xcm] = 20;
         for (int idx = 0; idx < xArr.size(); idx++) {
             sliceBuffer[yArr.get(idx) * xDim + xArr.get(idx)] = 20;
@@ -1997,9 +2000,9 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 //        ShowImage(srcImage, "Segmented Abdomen");
 
 
-//        System.out.println("Abdomen VOI points:");
+//        ViewUserInterface.getReference().getMessageFrame().append("Abdomen VOI points:");
 //        for (int idx = 0; idx < xArr.size(); idx++) {
-//            System.out.println(xArr.get(idx) +"  " + yArr.get(idx));
+//            ViewUserInterface.getReference().getMessageFrame().append(xArr.get(idx) +"  " + yArr.get(idx));
 //        }
 
     } // end JCATsegmentSubcutaneousFat2D()
@@ -2393,7 +2396,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         ycm /= maxContour.size();
         zcm /= maxContour.size();
         
-        System.out.println("Xcm: " +xcm +"  Ycm: " +ycm +"  Zcm: " +zcm);
+        ViewUserInterface.getReference().getMessageFrame().append("Xcm: " +xcm +"  Ycm: " +ycm +"  Zcm: " +zcm+"\n", ViewJFrameMessage.DEBUG);
         
         // This point should be inside the abdomen
         // walk right until you find the external border of the abdomen
@@ -2485,7 +2488,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
                                                    false, false, null, -100,
                                                    500, -1, -1, false,
                                                    0, regionGrowBounds);
-//               System.out.println("Muscle Count: " +count);
+//               ViewUserInterface.getReference().getMessageFrame().append("Muscle Count: " +count);
            }
        } catch (OutOfMemoryError error) {
            System.gc();
@@ -2587,7 +2590,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
        AlgorithmMorphology2D MorphIDObj = null;
        //TODO: Try various diameters, construct (2D) image dimension-based method
        double idealRes = ((img.getExtents()[0]+img.getExtents()[1])/2.0+zDim)/(img.getExtents()[0]+img.getExtents()[1]+zDim)/3.0*30;
-       System.out.println("Try resolutions: "+idealRes);
+       ViewUserInterface.getReference().getMessageFrame().append("Try resolutions: "+idealRes+"\n", ViewJFrameMessage.DEBUG);
        MorphIDObj = new AlgorithmMorphology2D(img, 0, (int)dia, AlgorithmMorphology2D.CLOSE, 1, 1, 0, 0, true);
        //nia/subset uses 30
        MorphIDObj.run();

@@ -15,6 +15,8 @@ import gov.nih.mipav.model.structures.VOIVector;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewJFrameMessage;
+import gov.nih.mipav.view.ViewUserInterface;
 
 import java.awt.Color;
 import java.awt.Point;
@@ -179,12 +181,12 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
         boolean doVOI = false, completeVOI = false;
         // compute the bone label image
         doVOI = segmentBone();
-        System.out.println("Bone segmentation: "+(System.currentTimeMillis() - time));
+        ViewUserInterface.getReference().getMessageFrame().append("Bone segmentation: "+(System.currentTimeMillis() - time)+"\n", ViewJFrameMessage.DEBUG);
 
         time = System.currentTimeMillis();
         if(doVOI)
         	doVOI = segmentThighTissue();
-        System.out.println("Thigh tissue segmentation: "+(System.currentTimeMillis() - time));
+        ViewUserInterface.getReference().getMessageFrame().append("Thigh tissue segmentation: "+(System.currentTimeMillis() - time)+"\n", ViewJFrameMessage.DEBUG);
 
         time = System.currentTimeMillis();
         if(doVOI)
@@ -196,7 +198,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
 	        
 	     // save the VOI to a file(s)
 	        String directory = System.getProperty("user.dir");
-	        System.out.println("directory: " +imageDir);
+	        ViewUserInterface.getReference().getMessageFrame().append("directory: " +imageDir+"\n", ViewJFrameMessage.DEBUG);
 	        
 	        ViewJFrameImage frame = new ViewJFrameImage(srcImage);
 	    	srcImage.unregisterAllVOIs();
@@ -303,13 +305,13 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
         // print out the curves and their sizes
         for (int idx = 0; idx < zDim; idx++) {
             numCurves = theVOI.getCurves()[idx].size();
-            System.out.println("slice: " +idx +"  number of curves: " +numCurves);
+            ViewUserInterface.getReference().getMessageFrame().append("slice: " +idx +"  number of curves: " +numCurves);
             
             // print out the size of each curve
             for (int idx2 = 0; idx2 < numCurves; idx2++) {
                 curve = ((VOIContour)theVOI.getCurves()[idx].get(idx2));
                 numPoints = curve.size();
-                System.out.println("  curve: " +idx2 +"  num points: " +numPoints);
+                ViewUserInterface.getReference().getMessageFrame().append("  curve: " +idx2 +"  num points: " +numPoints);
             } // end for (int idx2 = 0; ...)
         } // end for (int idx = 0; ...)
 */        
@@ -337,7 +339,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                     }
                 }
                 
-//                System.out.println("Slice num: " +sliceIdx +"   thigh curve idx: " +maxIdx);
+//                ViewUserInterface.getReference().getMessageFrame().append("Slice num: " +sliceIdx +"   thigh curve idx: " +maxIdx);
 
                 /*
                  The next part of the code may be error prone.  startIdx1 should be between 
@@ -372,7 +374,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                 }
                 // subtract 1 since we indexed one element too far
                 endIdx1--;
-//                System.out.println("\nStart index 1: " +startIdx1 +"   end index 1: " +endIdx1);
+//                ViewUserInterface.getReference().getMessageFrame().append("\nStart index 1: " +startIdx1 +"   end index 1: " +endIdx1);
 
                 // find the index of the second contour section whose x-component is "close" to the middle
                 int startIdx2 = endIdx1 + 1;
@@ -386,7 +388,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                 }
                 // subtract 1 since we indexed one element too far
                 endIdx2--;
-//                System.out.println("Start index 2: " +startIdx2 +"   end index 1: " +endIdx2);
+//                ViewUserInterface.getReference().getMessageFrame().append("Start index 2: " +startIdx2 +"   end index 1: " +endIdx2);
 
      
                 // find the index of the two closest points between these two sections, this is where we will split the contour
@@ -413,8 +415,8 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                     } // end for (int idx2 = startIdx2; ...
                 } // end for (int idx1 = startIdx1; ...
                 
-//                System.out.println("Slice: " + sliceIdx +"   Minimum distance: " +minDistance);
-//                System.out.println(xVals[upperCurveMinIdx] +"  " +yVals[upperCurveMinIdx] +"   and  " +xVals[lowerCurveMaxIdx] +"  " +yVals[lowerCurveMaxIdx]);
+//                ViewUserInterface.getReference().getMessageFrame().append("Slice: " + sliceIdx +"   Minimum distance: " +minDistance);
+//                ViewUserInterface.getReference().getMessageFrame().append(xVals[upperCurveMinIdx] +"  " +yVals[upperCurveMinIdx] +"   and  " +xVals[lowerCurveMaxIdx] +"  " +yVals[lowerCurveMaxIdx]);
                 
                 // make the two contours resulting from the split
                 ArrayList<Integer> x1Arr = new ArrayList<Integer>(maxContour.size());
@@ -620,7 +622,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                                                    false, false, null, seedVal - 300,
                                                    seedVal + 1000, -1, -1, false,
                                                    0, regionGrowBounds);
-//               System.out.println("Muscle Count: " +count);
+//               ViewUserInterface.getReference().getMessageFrame().append("Muscle Count: " +count);
            }
        } catch (OutOfMemoryError error) {
            System.gc();
@@ -800,21 +802,21 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
             int[] yVals = new int [maxContour.size()];
             int[] zVals = new int [maxContour.size()];
             maxContour.exportArrays(xVals, yVals, zVals);
-            System.out.println("VOI name: " +maxContour.getName());
+            ViewUserInterface.getReference().getMessageFrame().append("VOI name: " +maxContour.getName());
             
             // find the bounding box of the contour
             int[] xBounds = new int[2];
             int[] yBounds = new int[2];
             int[] zBounds = new int[2];
             maxContour.getBounds(xBounds, yBounds, zBounds);
-            System.out.println("X  min: " +xBounds[0] +"  max: " +xBounds[1]);
-            System.out.println("Y  min: " +yBounds[0] +"  max: " +yBounds[1]);
-            System.out.println("Z  min: " +zBounds[0] +"  max: " +zBounds[1]);
+            ViewUserInterface.getReference().getMessageFrame().append("X  min: " +xBounds[0] +"  max: " +xBounds[1]);
+            ViewUserInterface.getReference().getMessageFrame().append("Y  min: " +yBounds[0] +"  max: " +yBounds[1]);
+            ViewUserInterface.getReference().getMessageFrame().append("Z  min: " +zBounds[0] +"  max: " +zBounds[1]);
             
             // print out two sections of the contour whose x-components are near the center of the image
 //            for (int idx = 0; idx < maxContour.size(); idx++) {
 //                if (xVals[idx] > ((xDim / 2) - 20) && xVals[idx] < ((xDim / 2) + 20)) {
-//                    System.out.println("point: " +idx +"  (" +xVals[idx] +", " +yVals[idx] +", " +zVals[idx] +")");
+//                    ViewUserInterface.getReference().getMessageFrame().append("point: " +idx +"  (" +xVals[idx] +", " +yVals[idx] +", " +zVals[idx] +")");
 //                }
 //            }
             
@@ -831,7 +833,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
             }
             // subtract 1 since we indexed one element too far
             endIdx1--;
-            System.out.println("Start index 1: " +startIdx1 +"   end index 1: " +endIdx1);
+            ViewUserInterface.getReference().getMessageFrame().append("Start index 1: " +startIdx1 +"   end index 1: " +endIdx1);
 
             // find the index of the second contour section whose x-component is "close" to the middle
             int startIdx2 = endIdx1 + 1;
@@ -845,7 +847,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
             }
             // subtract 1 since we indexed one element too far
             endIdx2--;
-            System.out.println("Start index 2: " +startIdx2 +"   end index 1: " +endIdx2);
+            ViewUserInterface.getReference().getMessageFrame().append("Start index 2: " +startIdx2 +"   end index 1: " +endIdx2);
 
  
             // find the index of the two closest points between these two sections, this is where we will split the contour
@@ -872,8 +874,8 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                 } // end for (int idx2 = startIdx2; ...
             } // end for (int idx1 = startIdx1; ...
             
-            System.out.println("Minimum distance: " +minDistance);
-            System.out.println(xVals[minIdx1] +"  " +yVals[minIdx1] +"   and  " +xVals[minIdx2] +"  " +yVals[minIdx2]);
+            ViewUserInterface.getReference().getMessageFrame().append("Minimum distance: " +minDistance+"\n", ViewJFrameMessage.DEBUG);
+            ViewUserInterface.getReference().getMessageFrame().append(xVals[minIdx1] +"  " +yVals[minIdx1] +"   and  " +xVals[minIdx2] +"  " +yVals[minIdx2])+"\n", ViewJFrameMessage.DEBUG);
             
             // make the two contours
             ArrayList<Integer> x1Arr = new ArrayList<Integer>(maxContour.size());
@@ -932,7 +934,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
             }
             leftThighVOI.importCurve(x2, y2, z2, 0);
             
-            System.out.println("VOI name: " +maxContour.getName());
+            ViewUserInterface.getReference().getMessageFrame().append("VOI name: " +maxContour.getName()+"\n", ViewJFrameMessage.DEBUG);
 <<<<<<< .mine
             */
 	}

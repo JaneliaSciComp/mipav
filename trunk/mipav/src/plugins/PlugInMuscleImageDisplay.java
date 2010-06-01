@@ -277,7 +277,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         	f.mkdir();
         }
 
-        System.out.println("Exists? "+f.exists());
+        ViewUserInterface.getReference().getMessageFrame().append("Exists? "+f.exists()+"\n", ViewJFrameMessage.DEBUG);
         createVOIBuffer();
         
         commonInitializer(voiList);
@@ -415,7 +415,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	}
 
     public void actionPerformed(ActionEvent e) {
-    	System.out.println("An action: "+e);
+    	ViewUserInterface.getReference().getMessageFrame().append("An action: "+e+"\n", ViewJFrameMessage.DEBUG);
     	String command = e.getActionCommand();
         //run through toggle buttons to see if a menu selected one (updates the button status)
         getControls().getTools().setToggleButtonSelected(command);
@@ -500,7 +500,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		if(algorithm instanceof PlugInAlgorithmCTThigh) {
 			if(((PlugInAlgorithmCTThigh)algorithm).getLeftThighVOI() != null && 
 					((PlugInAlgorithmCTThigh)algorithm).getRightThighVOI() != null) {
-				System.out.println("Thigh VOIs completed correctly");
+				ViewUserInterface.getReference().getMessageFrame().append("Thigh VOIs completed correctly\n", ViewJFrameMessage.DEBUG);
 				firstVOI = ((PlugInAlgorithmCTThigh)algorithm).getLeftThighVOI().getCurves();
 				secondVOI = ((PlugInAlgorithmCTThigh)algorithm).getRightThighVOI().getCurves();
 				firstBufferVOI = voiBuffer.get("Left Thigh");
@@ -519,7 +519,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		} else if(algorithm instanceof PlugInAlgorithmCTMarrow) {
 			if(((PlugInAlgorithmCTMarrow)algorithm).getLeftMarrowVOI() != null && 
 					((PlugInAlgorithmCTMarrow)algorithm).getRightMarrowVOI() != null) {
-				System.out.println("Marrow VOIs completed correctly");
+				ViewUserInterface.getReference().getMessageFrame().append("Marrow VOIs completed correctly\n", ViewJFrameMessage.DEBUG);
 				firstVOI = ((PlugInAlgorithmCTMarrow)algorithm).getLeftMarrowVOI().getCurves();
 				secondVOI = ((PlugInAlgorithmCTMarrow)algorithm).getRightMarrowVOI().getCurves();
 				firstBufferVOI = voiBuffer.get("Left Marrow");
@@ -538,7 +538,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		} else if(algorithm instanceof PlugInAlgorithmCTBone) {
 			if(((PlugInAlgorithmCTBone)algorithm).getLeftBoneVOI() != null && 
 					((PlugInAlgorithmCTBone)algorithm).getRightBoneVOI() != null) {
-				System.out.println("Bone VOIs completed correctly");
+				ViewUserInterface.getReference().getMessageFrame().append("Bone VOIs completed correctly\n", ViewJFrameMessage.DEBUG);
 				firstVOI = ((PlugInAlgorithmCTBone)algorithm).getLeftBoneVOI().getCurves();
 				secondVOI = ((PlugInAlgorithmCTBone)algorithm).getRightBoneVOI().getCurves();
 				firstBufferVOI = voiBuffer.get("Left Bone");
@@ -556,7 +556,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			}
 		} else if(algorithm instanceof PlugInAlgorithmCTAbdomen) {
 			if(((PlugInAlgorithmCTAbdomen)algorithm).getAbdomenVOI() != null) {
-				System.out.println("Abdomen alg completed");
+				ViewUserInterface.getReference().getMessageFrame().append("Abdomen alg completed\n", ViewJFrameMessage.DEBUG);
 				firstVOI = ((PlugInAlgorithmCTAbdomen)algorithm).getAbdomenVOI().getCurves();
 				firstBufferVOI = voiBuffer.get("Abdomen");
 				for(int j=0; j<firstVOI.size(); j++) {
@@ -937,7 +937,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    File allVOIs = new File(fileDir);
 	    if(allVOIs.isDirectory()) {
 	        for(int i=0; i<voiName.length; i++) {
-	            //System.out.println(voiName[i]);
+	            //ViewUserInterface.getReference().getMessageFrame().append(voiName[i]);
 	            if(new File(fileDir+voiName[i]).exists()) {
 	                String fileName = voiName[i];
 	                FileVOI v;
@@ -1443,7 +1443,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 
 			return;
 		} catch (Exception e) {
-		    System.out.println("Error occured in addCell's calling method");
+		    ViewUserInterface.getReference().getMessageFrame().append("Error occured in addCell's calling method\n", ViewJFrameMessage.DEBUG);
 		    e.printStackTrace();
 		}
 	}
@@ -1468,9 +1468,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			}
 			if(name == null) {
 			    name = new String("Removed");
-			    System.out.println("Unexpected null encountered");
+			    ViewUserInterface.getReference().getMessageFrame().append("Unexpected null encountered\n", ViewJFrameMessage.DEBUG);
 			}
-			System.out.println("To test: "+name);
+			ViewUserInterface.getReference().getMessageFrame().append("To test: "+name+"\n", ViewJFrameMessage.DEBUG);
 			DecimalFormat dec = new DecimalFormat("0.00");
 			
 			//name of area
@@ -1499,11 +1499,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			imageTable.addCell("VOI Image");
 					
 		} catch (Exception e) {
-		    System.out.println("Error adding PDF element.");
+		    ViewUserInterface.getReference().getMessageFrame().append("Error adding PDF element.\n", ViewJFrameMessage.DEBUG);
 		    if(wholeTable == null) 
-			System.out.println("aTable");
+			ViewUserInterface.getReference().getMessageFrame().append("aTable\n", ViewJFrameMessage.DEBUG);
 		    if(name == null) 
-			System.out.println("name");
+			ViewUserInterface.getReference().getMessageFrame().append("name\n", ViewJFrameMessage.DEBUG);
 		    e.printStackTrace();
 		}
 	}
@@ -1616,7 +1616,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			
 			String name = voiItr.next();
 			PlugInSelectableVOI v = loadVOI(name);
-			System.out.println("Just loaded: "+v.getName()+"\t has area: "+v.isEmpty());
+			ViewUserInterface.getReference().getMessageFrame().append("Just loaded: "+v.getName()+"\t has area: "+v.isEmpty()+"\n", ViewJFrameMessage.DEBUG);
 			Color c = PlugInSelectableVOI.INVALID_COLOR;
 			v.isEmpty();
 			if((c = v.getColor()).equals(PlugInSelectableVOI.INVALID_COLOR)) {
@@ -1629,7 +1629,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				v.setColor(c);
 			}
 			voiBuffer.put(name, v);
-			System.out.println(voiBuffer.get(v.getName()) +"\twith area: "+ voiBuffer.get(v.getName()).isEmpty());
+			ViewUserInterface.getReference().getMessageFrame().append(voiBuffer.get(v.getName()) +"\twith area: "+ voiBuffer.get(v.getName()).isEmpty()+"\n", ViewJFrameMessage.DEBUG);
 		}
 	}
 
@@ -1840,7 +1840,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
     	componentImage.setCursorMode(ViewJComponentBase.NEW_VOI);
     	getVOIs(pane);
         
-        System.out.println("Active tab: :"+activeTab);
+        ViewUserInterface.getReference().getMessageFrame().append("Active tab: :"+activeTab+"\n", ViewJFrameMessage.DEBUG);
     	initMuscleButtons(pane);
         
     	this.repaint();
@@ -1890,7 +1890,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    	this.setMinimumSize(new Dimension(380, 640));
 	    }
 	    this.setResizable(true);
-	    System.out.println("Done2: "+(System.currentTimeMillis()-time));
+	    ViewUserInterface.getReference().getMessageFrame().append("Done2: "+(System.currentTimeMillis()-time)+"\n", ViewJFrameMessage.DEBUG);
 	}
 
 	/**
@@ -2005,7 +2005,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	        	}
 	        	progressBar.updateValue(60);
 	        	progressBar.setMessage("Marrow segmentation complete...");
-	        	System.out.println("Marrow seg alg finished");
+	        	ViewUserInterface.getReference().getMessageFrame().append("Marrow seg alg finished\n", ViewJFrameMessage.DEBUG);
 	        }
 	    	if(boneSeg != null) {
 	    		extend = (int)(System.currentTimeMillis() - time) / 2000 - 1;
@@ -2016,7 +2016,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	        	}
 	        	progressBar.updateValue(70);
 	        	progressBar.setMessage("Bone segmentation complete...");
-	        	System.out.println("Bone seg alg finished");
+	        	ViewUserInterface.getReference().getMessageFrame().append("Bone seg alg finished\n", ViewJFrameMessage.DEBUG);
 	        }
 	        if(thighSeg != null) {
 	        	extend = (int)(System.currentTimeMillis() - time) / 2000 - 1;
@@ -2026,7 +2026,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	        		}
 	        	}
 	        	progressBar.setMessage("Thigh segmentation complete...");
-	        	System.out.println("Thigh seg alg finished");
+	        	ViewUserInterface.getReference().getMessageFrame().append("Thigh seg alg finished\n", ViewJFrameMessage.DEBUG);
 	        }
 		} else if(imageType.equals(ImageType.Abdomen)) {
 			if(abdomenSeg != null) {
@@ -2037,7 +2037,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	        	}
 	        	progressBar.updateValue(70);
 	        	progressBar.setMessage("Abdomen segmentation complete...");
-	        	System.out.println("Abdomen seg alg finished");
+	        	ViewUserInterface.getReference().getMessageFrame().append("Abdomen seg alg finished\n", ViewJFrameMessage.DEBUG);
 	        }
 		}
 	}
@@ -2421,7 +2421,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         public void algorithmPerformed(AlgorithmBase algorithm) {
 			if(algorithm instanceof AlgorithmSnake) {
 				snakeProgress.updateValue(75);
-				System.out.println("Performed successfully");
+				ViewUserInterface.getReference().getMessageFrame().append("Performed successfully\n", ViewJFrameMessage.DEBUG);
 				getActiveImage().registerVOI(snakeAlgo.getResultVOI());
 				
 				//getActiveImage().unregisterAllVOIs();
@@ -2788,7 +2788,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         //TODO: Put PlugInMuscleImageDisplay's actions here
 		//calculate, help, exit
 		public void actionPerformed(ActionEvent e) {
-		    System.out.println("Evaluating colorButtonPanel");
+		    ViewUserInterface.getReference().getMessageFrame().append("Evaluating colorButtonPanel\n", ViewJFrameMessage.DEBUG);
 		    if(e.getSource() instanceof PlugInMuscleColorButton) {
             	PlugInMuscleColorButton obj = ((PlugInMuscleColorButton)e.getSource());
 		    	if (obj.getColorIcon().getColor() != Color.BLACK) {
@@ -2877,7 +2877,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         			mirrorCheckArr[i].setColor(temp.getColor());
 	        		mirrorCheckArr[i].getColorButton().colorChanged(temp.getColor());
         		}
-        		//System.out.println("Size of "+temp.getName()+": "+temp.getCurves()[slice].size());
+        		//ViewUserInterface.getReference().getMessageFrame().append("Size of "+temp.getName()+": "+temp.getCurves()[slice].size());
         	}
         	for(int i=0; i<noMirrorCheckArr.length; i++) {
         		if((temp = voiBuffer.get(noMirrorButtonArr[i].getText())).getSliceSize(slice) == 0) {
@@ -2887,7 +2887,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         			noMirrorCheckArr[i].setColor(temp.getColor());
 	        		noMirrorCheckArr[i].getColorButton().colorChanged(temp.getColor());
         		}	
-        		//System.out.println("Size of "+temp.getName()+": "+temp.getCurves()[slice].size());
+        		//ViewUserInterface.getReference().getMessageFrame().append("Size of "+temp.getName()+": "+temp.getCurves()[slice].size());
         	}
         }
         
@@ -3178,7 +3178,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		 * Implementing abstract method to handle calculating buttons
 		 */
 		public void actionPerformed(ActionEvent e) {
-			System.out.println("Caught 2: "+e.getActionCommand());
+			ViewUserInterface.getReference().getMessageFrame().append("Caught 2: "+e.getActionCommand()+"\n", ViewJFrameMessage.DEBUG);
 			String command = e.getActionCommand();
 			if(e.getSource() instanceof PlugInMuscleColorButton) {
             	PlugInMuscleColorButton obj = ((PlugInMuscleColorButton)e.getSource());
@@ -3539,7 +3539,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 							outputUnits.setSelectedItem(currentOutputUnits);
 						}
 					}
-					System.out.println(e.paramString());
+					ViewUserInterface.getReference().getMessageFrame().append(e.paramString()+"\n", ViewJFrameMessage.DEBUG);
 				}
 	        });
 	        optionPanel.add(outputUnits);
@@ -3713,7 +3713,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		 */
 		private void processCalculations(boolean all, boolean doSave) {
 			if(calcGroup.activeCount() > 0) {
-				//TODO: Check thread manager here
+				//TODO: Use ExecutorService now that 1.6
 				//Note that since the buttons are disabled, this could only happen by being
 				//directly called in the code
 				Thread[] activeThread = new Thread[calcGroup.activeCount()];
@@ -3788,7 +3788,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 					meanLeanH = temp.getMeanLeanH();
 					meanTotalH = temp.getMeanTotalH();
 					
-					System.out.println("Compare areas of "+temp.getName()+":\tcount: "+totalAreaCount);
+					ViewUserInterface.getReference().getMessageFrame().append("Compare areas of "+temp.getName()+":\tcount: "+totalAreaCount+"\n", ViewJFrameMessage.DEBUG);
 					
 					if (doSave) {
 						PDFadd((String)itrObj, fatArea, leanArea, totalAreaCount, meanFatH, meanLeanH, meanTotalH, wholeTable);
@@ -4224,7 +4224,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 					textFile = new File(fileDir + File.separator + fileName);
 				}
 				
-				System.out.println("Text path: "+textFile.getAbsolutePath());
+				ViewUserInterface.getReference().getMessageFrame().append("Text path: "+textFile.getAbsolutePath()+"\n", ViewJFrameMessage.DEBUG);
 				
 				String[] output = assembleOutput();
 				
@@ -4245,7 +4245,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 					success = false;
 					return;
 				}
-				System.out.println("Time for output: "+(System.currentTimeMillis() - time));
+				ViewUserInterface.getReference().getMessageFrame().append("Time for output: "+(System.currentTimeMillis() - time)+"\n", ViewJFrameMessage.DEBUG);
 				done = true;
 			}
 			
@@ -4410,7 +4410,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				zRes = (float) (getActiveImage().getResolutions(0)[2] * ModelImage.getConversionFactor(resultUnitLoc, res2Unit));
 				wholeMultiplier *= zRes;
 			}
-			System.out.println("Whole Multiplier: "+wholeMultiplier+"\tSliceMultiplier: "+sliceMultiplier);
+			ViewUserInterface.getReference().getMessageFrame().append("Whole Multiplier: "+wholeMultiplier+"\tSliceMultiplier: "+sliceMultiplier+"\n", ViewJFrameMessage.DEBUG);
 			PlugInSelectableVOI temp = voiBuffer.get(name);
 			children = temp.getChildren();
 			ArrayList<Thread> calc = new ArrayList<Thread>(children.length);
@@ -4430,10 +4430,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 					//still check for nulls in case thread has been disposed
 					boolean activeFound = false;
 					for(int j=0; j<activeGroup.length; j++) {
-						//System.out.println("About to compare "+ activeGroup[j].getName() +" to "+residuals.get(i).getName());
+						//ViewUserInterface.getReference().getMessageFrame().append("About to compare "+ activeGroup[j].getName() +" to "+residuals.get(i).getName());
 						if(activeGroup[j] != null && activeGroup[j].getName().equals(children[i].getName())) {
 							calc.add(activeGroup[j]);
-							System.out.println("Not calculating, because it's being calculated, should be yielding?: "+activeGroup[j]);
+							ViewUserInterface.getReference().getMessageFrame().append("Not calculating, because it's being calculated, should be yielding?: "+activeGroup[j]+"\n", ViewJFrameMessage.DEBUG);
 							activeFound = true;
 						}
 					}
@@ -4445,11 +4445,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 					}
 		            
 				} else {
-					System.out.println("Just avoided calculating "+children[i].getName());
+					ViewUserInterface.getReference().getMessageFrame().append("Just avoided calculating "+children[i].getName()+"\n", ViewJFrameMessage.DEBUG);
 				}
 			}
 			long time2 = System.currentTimeMillis();
-			System.out.println("Waiting for threads to complete");
+			ViewUserInterface.getReference().getMessageFrame().append("Waiting for threads to complete\n"+"\n", ViewJFrameMessage.DEBUG);
 			if(isInterrupted()) {
 				muscleCalcList.remove(this);
 				return;
@@ -4464,7 +4464,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				e.printStackTrace();
 				return;
 			}
-			System.out.println("Time spent waiting: "+(System.currentTimeMillis() - time2)+" so that "+name+" can finish.");
+			ViewUserInterface.getReference().getMessageFrame().append("Time spent waiting: "+(System.currentTimeMillis() - time2)+" so that "+name+" can finish.\n", ViewJFrameMessage.DEBUG);
 			
 			//note that even for 3D images this will still be called area, even though refers to volume
 			performCalculations(v, PlugInSelectableVOI.WHOLE_VOLUME_SLICE_NUMBER, wholeMultiplier);
@@ -4479,7 +4479,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	        int[] iY = new int[]{0,0};
 	        int[] iZ = new int[]{0,0};
 	        temp.getBounds(iX,iY,iZ);
-			System.out.println("Number of slices: "+ (iZ[1] - iZ[0] + 1));
+			ViewUserInterface.getReference().getMessageFrame().append("Number of slices: "+ (iZ[1] - iZ[0] + 1)+"\n", ViewJFrameMessage.DEBUG);
 			//in the case of a 3D image, each VOI is cloned for a particular slice, relevant statistics are caluclated
 			//for that slice only
 			for(int k = iZ[0]; k <= iZ[1]; k++) {
@@ -4502,7 +4502,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				return;
 			}
 			
-			System.out.println("Finished "+calculateVOI.getName()+" in "+time);
+			ViewUserInterface.getReference().getMessageFrame().append("Finished "+calculateVOI.getName()+" in "+time+"\n", ViewJFrameMessage.DEBUG);
 			
 			if(Preferences.getDebugLevels()[1]) {
 				writeVoiLine();
@@ -4725,7 +4725,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    public void algorithmPerformed(AlgorithmBase algorithm) {
 	        VOI resultVOI;
 	        if(algorithm instanceof AlgorithmBSmooth) {
-	            System.out.println("B Smooth completed");
+	            ViewUserInterface.getReference().getMessageFrame().append("B Smooth completed\n", ViewJFrameMessage.DEBUG);
 	            if (smoothAlgo[thighIndex].isCompleted() == true && thighCompleted[thighIndex]) {
 	
 	                // The algorithm has completed and produced a
@@ -5505,12 +5505,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    	String[] labels = new String[statisticDescription.length+calcExtra.length];
 	    	
 	    	for(int i=0; i<statisticDescription.length; i++) {
-	    		System.out.println("Orginial fill: "+i);
+	    		ViewUserInterface.getReference().getMessageFrame().append("Orginial fill: "+i+"\n", ViewJFrameMessage.DEBUG);
 	        	labels[i] = statisticDescription[i];
 	        }
 	    	
 	    	for(int i=statisticDescription.length; i<labels.length; i++) {
-	    		System.out.println("Next step: "+i);
+	    		ViewUserInterface.getReference().getMessageFrame().append("Next step: "+i+"\n", ViewJFrameMessage.DEBUG);
 	    		labels[i] = calcExtra[i-statisticDescription.length];
 	    	}
 	    	
@@ -5889,28 +5889,28 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 //
 //		public void deleteContour(VOI voi, int slice) {
 //			// TODO Auto-generated method stub
-//			System.out.println("Working2");
+//			ViewUserInterface.getReference().getMessageFrame().append("Working2\n", ViewJFrameMessage.DEBUG);
 //			super.deleteContour(voi, slice);
-//			System.out.println("Working2");
+//			ViewUserInterface.getReference().getMessageFrame().append("Working2\n", ViewJFrameMessage.DEBUG);
 //		}
 //
 //		public void deleteSelectedVOI(boolean contoursOnly) {
 //			// TODO Auto-generated method stub
-//			System.out.println("Working");
+//			ViewUserInterface.getReference().getMessageFrame().append("Working\n", ViewJFrameMessage.DEBUG);
 //			super.deleteSelectedVOI(contoursOnly);
-//			System.out.println("Working");
+//			ViewUserInterface.getReference().getMessageFrame().append("Working\n", ViewJFrameMessage.DEBUG);
 //		}
 //
 //		public void deleteVOIActivePt() {
 //			// TODO Auto-generated method stub
 //			super.deleteVOIActivePt();
-//			System.out.println("Working3");
+//			ViewUserInterface.getReference().getMessageFrame().append("Working3\n", ViewJFrameMessage.DEBUG);
 //		}
 //
 //		public void deleteVOIs() {
 //			// TODO Auto-generated method stub
 //			super.deleteVOIs();
-//			System.out.println("Working4");
+//			ViewUserInterface.getReference().getMessageFrame().append("Working4\n", ViewJFrameMessage.DEBUG);
 //		}
 //	}
 	
