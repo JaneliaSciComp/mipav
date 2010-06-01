@@ -1831,14 +1831,11 @@ public class ModelImage extends ModelStorageBase {
      * Forms a single VOI structure from all the VOIs presently loaded in the imageModel.
      */
     public void groupVOIs() {
-        int i, j, k;
+        int i, k;
         int nVOIs;
-        int nSlices;
-        int nContours, nPoints;
+        int nContours;
         int index = 1;
         Vector contours;
-        Vector3f[] points;
-        final Vector3f[] point1 = new Vector3f[1];
         VOI newVOI = null;
         VOI newPtVOI = null;
         VOI newPLineVOI = null;
@@ -2012,7 +2009,7 @@ public class ModelImage extends ModelStorageBase {
             }
         }
 
-        int sliceNum, curveNum;
+        int curveNum;
 
         index = 1;
 
@@ -2073,12 +2070,8 @@ public class ModelImage extends ModelStorageBase {
 
         int i, j, k;
         int nVOIs;
-        int nSlices;
-        int nContours, nPoints;
+        int nContours;
         Vector<VOIBase> contours;
-        Vector3f[] points;
-        final Vector3f[] point1 = new Vector3f[1];
-
         VOI newVOI = null;
         VOI newPtVOI = null;
         VOI newPLineVOI = null;
@@ -2194,7 +2187,7 @@ public class ModelImage extends ModelStorageBase {
             voiVector.elementAt(i).setID((short) i);
         }
 
-        int sliceNum, curveNum, voiNum;
+        int curveNum, voiNum;
         int index = 1;
 
         for (voiNum = 0; voiNum < voiVector.size(); voiNum++) {
@@ -3883,8 +3876,7 @@ public class ModelImage extends ModelStorageBase {
         int nLine = 0;
         int nProtractor = 0;
         int nVOIs;
-        int i, j, k;
-        int nSlices;
+        int i, k;
         VOI[] newVOI = null;
         VOI[] newPtVOI = null;
         VOI[] newPLineVOI = null;
@@ -3892,10 +3884,7 @@ public class ModelImage extends ModelStorageBase {
         VOI[] newProtractorVOI = null;
 
         Vector<VOIBase> contours;
-        final Vector3f[] point1 = new Vector3f[1];
-        int nPoints;
         int nContours;
-        Vector3f[] points;
         short id = 0;
 
         // make a copy of the VOIs stored until the final step
