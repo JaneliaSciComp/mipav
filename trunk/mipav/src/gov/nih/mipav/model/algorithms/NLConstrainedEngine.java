@@ -61,7 +61,7 @@ import gov.nih.mipav.view.*;
  *  For 40 parameters scaling = false Numerical gave chi-squared = 1 with -.225's except for a final 50.
  *  For 40 parameters scaling = false Analytical gave chi-squared = 1 with zeroes except for a final 41.
  *  For 40 parameters scaling = true Numerical gave chi-squared = 1.67E104 with a first zero followed by the rest 50's.
- *  For 40 parameters scaling = true Analytical fave chi-squared = 1 with zeroes excpet for a final 41.
+ *  For 40 parameters scaling = true Analytical gave chi-squared = 1 with zeroes excpet for a final 41.
  *  In short, for BROWN_ALMOST_LINEAR the Java outperformed the FORTRAN.
  *  LINEAR_FULL_RANK OK.
  *  LINEAR_RANK1 OK.
@@ -605,6 +605,8 @@ public abstract class NLConstrainedEngine {
     private final int LINEAR_RANK1 = 33;
     
     private final int LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS = 34;
+    
+    private final int CHEBYQUAD = 35;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -2635,6 +2637,20 @@ public abstract class NLConstrainedEngine {
                 		}
                 	} // else if (ctrl == 2)
                 	break;
+                case CHEBYQUAD:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                			
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
                 } // switch (testCase)
             } catch (Exception e) {
                 Preferences.debug("function error: " + e.getMessage() + "\n");
@@ -2642,6 +2658,176 @@ public abstract class NLConstrainedEngine {
 
             return;
         }
+        
+        // Shifted Chebyshev polynomial
+        private double shiftedChebyshev(double x, int n) {
+        	// T*n+1(x) = (4x-2)*T*n(x) - T*n-1(x), where T* represents a shifted Chebyshev polynomial
+        	double sc = 1.0;
+        	double x2, x3, x4, x5, x6, x7, x8, x9, x10;
+        	switch (n) {
+        	    case 0:
+        	    	sc = 1.0;
+        	    	break;
+        	    case 1:
+        	        sc = 2.0*x - 1.0;
+        	        break;
+        	    case 2:
+        	    	x2 = x*x;
+        	    	sc = 8.0*x2 - 8.0*x + 1.0;
+        	    	break;
+        	    case 3:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	sc = 32.0*x3 - 48.0*x2 + 18.0*x - 1.0;
+        	    	break;
+        	    case 4:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	x4 = x3*x;
+        	    	sc = 128.0*x4 - 256.0*x3 + 160.0*x2 - 32.0*x + 1.0;
+        	    	break;
+        	    case 5:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	x4 = x3*x;
+        	    	x5 = x4*x;
+        	    	sc = 512.0*x5 - 1280.0*x4 + 1120.0*x3 - 400.0*x2 + 50.0*x - 1.0;
+        	    	break;
+        	    case 6:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	x4 = x3*x;
+        	    	x5 = x4*x;
+        	    	x6 = x5*x;
+        	    	sc = 2048.0*x6 - 6144.0*x5 + 6912.0*x4 - 3584.0*x3 + 840.0*x2 - 72.0*x + 1.0;
+        	    	break;
+        	    case 7:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	x4 = x3*x;
+        	    	x5 = x4*x;
+        	    	x6 = x5*x;
+        	    	x7 = x6*x;
+        	    	sc = 8192.0*x7 - 28672.0*x6 + 39424.0*x5 - 26880.0*x4 + 9408.0*x3 - 1568.0*x2 + 98.0*x - 1.0;
+        	    	break;
+        	    case 8:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	x4 = x3*x;
+        	    	x5 = x4*x;
+        	    	x6 = x5*x;
+        	    	x7 = x6*x;
+        	    	x8 = x7*x;
+        	    	sc = 32768.0*x8 - 131072.0*x7 + 212992.0*x6 - 180224.0*x5 + 84480.0*x4 - 21504.0*x3
+        	    	     + 2688.0*x2 - 128.0*x + 1.0;
+        	    	break;
+        	    case 9:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	x4 = x3*x;
+        	    	x5 = x4*x;
+        	    	x6 = x5*x;
+        	    	x7 = x6*x;
+        	    	x8 = x7*x;
+        	    	x9 = x8*x;
+        	    	sc = 131072.0*x9 - 589824.0*x8 + 1105920.0*x7 - 1118208.0*x6 + 658944.0*x5
+        	    	     - 228096.0*x4 + 44352.0*x3 - 4320.0*x2 + 162.0*x - 1.0;
+        	    	break;
+        	    case 10:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	x4 = x3*x;
+        	    	x5 = x4*x;
+        	    	x6 = x5*x;
+        	    	x7 = x6*x;
+        	    	x8 = x7*x;
+        	    	x9 = x8*x;
+        	    	x10 = x9*x;
+        	    	sc = 524288.0*x10 - 2621440.0*x9 + 5570560.0*x8 - 6553600.0*x7 + 4659200.0*x6
+        	    	     - 2050048.0*x5 + 549120.0*x4 - 84480.0*x3 + 6600.0*x2 - 200.0*x + 1.0;
+        	} // switch (n)
+        	return sc;
+        } // private double shiftedChebyshev
+        
+     // Shifted Chebyshev polynomial derivative
+        private double shiftedChebyshevDerivative(double x, int n) {
+        	double sc = 0.0;
+        	double x2, x3, x4, x5, x6, x7, x8, x9;
+        	switch (n) {
+        	    case 0:
+        	    	sc = 0.0;
+        	    	break;
+        	    case 1:
+        	    	sc = 2.0;
+        	        break;
+        	    case 2:
+        	    	sc = 16.0*x - 8.0;
+        	    	break;
+        	    case 3:
+        	    	x2 = x*x;
+        	    	sc = 96.0*x2 - 96.0*x + 18.0;
+        	    	break;
+        	    case 4:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	sc = 512.0*x3 - 768.0*x2 + 320.0*x - 32.0;
+        	    	break;
+        	    case 5:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	x4 = x3*x;
+        	    	sc = 2560.0*x4 - 5120.0*x3 + 3360.0*x2 - 800.0*x + 50.0;
+        	    	break;
+        	    case 6:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	x4 = x3*x;
+        	    	x5 = x4*x;
+        	    	sc = 12288.0*x5 - 30720.0*x4 + 27648.0*x3 - 10752.0*x2 + 1680.0*x - 72.0;
+        	    	break;
+        	    case 7:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	x4 = x3*x;
+        	    	x5 = x4*x;
+        	    	x6 = x5*x;
+        	    	sc = 57344.0*x6 - 172032.0*x5 + 197120.0*x4 - 107520.0*x3 + 28224.0*x2 - 3136.0*x + 98.0;
+        	    	break;
+        	    case 8:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	x4 = x3*x;
+        	    	x5 = x4*x;
+        	    	x6 = x5*x;
+        	    	x7 = x6*x;
+        	    	sc = 262144.0*x7 - 917504.0*x6 + 1277952.0*x5 - 901120.0*x4 + 337920.0*x3
+        	    	     - 64512.0*x2 + 5376.0*x - 128.0;
+        	    	break;
+        	    case 9:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	x4 = x3*x;
+        	    	x5 = x4*x;
+        	    	x6 = x5*x;
+        	    	x7 = x6*x;
+        	    	x8 = x7*x;
+        	    	sc = 1179648.0*x8 - 4718592.0*x7 + 7741440.0*x6 - 6709248.0*x5 + 3294720.0*x4
+        	    	     - 912384.0*x3 + 133056.0*x2 - 8640.0*x + 162.0;
+        	    	break;
+        	    case 10:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	x4 = x3*x;
+        	    	x5 = x4*x;
+        	    	x6 = x5*x;
+        	    	x7 = x6*x;
+        	    	x8 = x7*x;
+        	    	x9 = x8*x;
+        	    	sc = 5242880.0*x9 - 23592960.0*x8 + 44564480.0*x7 - 45875200.0*x6 + 27955200.0*x5
+        	    	     - 10250240.0*x4 + 2196480.0*x3 - 253440.0*x2 + 13200.0*x - 200.0;
+        	} // switch (n)
+        	return sc;
+        } // private double shiftedChebyshevDerivative
         
         private void dumpTestResults() {
         	int i;
