@@ -12,6 +12,8 @@ import gov.nih.mipav.model.structures.VOIVector;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewJFrameMessage;
+import gov.nih.mipav.view.ViewUserInterface;
 
 import java.awt.Color;
 import java.io.File;
@@ -165,13 +167,13 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
         boolean doVOI = false;
         // compute the bone label image
         doVOI =  segmentBone();
-        System.out.println("Bone segmentation: "+(System.currentTimeMillis() - time));
+        ViewUserInterface.getReference().getMessageFrame().append("Bone segmentation: "+(System.currentTimeMillis() - time)+"\n", ViewJFrameMessage.DEBUG);
 
         time = System.currentTimeMillis();
         VOI totalVOI = null;
         if(doVOI)
         	totalVOI = makeBoneVOI();
-        System.out.println("Bone/Bone marrow VOIs: "+(System.currentTimeMillis() - time));
+        ViewUserInterface.getReference().getMessageFrame().append("Bone/Bone marrow VOIs: "+(System.currentTimeMillis() - time)+"\n", ViewJFrameMessage.DEBUG);
         if(totalVOI != null) {
         	rightBoneVOI = makeRightBoneVOI(totalVOI);
         	leftBoneVOI = makeLeftBoneVOI(totalVOI);
@@ -210,7 +212,7 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
             System.err.println("Total time for bone segmentation: "+segmentationTimeBone);
 	        
 	        // save the VOI to a file(s)
-	        System.out.println("directory: " +imageDir);
+	        ViewUserInterface.getReference().getMessageFrame().append("directory: " +imageDir+"\n", ViewJFrameMessage.DEBUG);
 	        ViewJFrameImage frame = new ViewJFrameImage(srcImage);
 	    	srcImage.unregisterAllVOIs();
 	    	srcImage.registerVOI(rightBoneVOI);

@@ -16,6 +16,8 @@ import gov.nih.mipav.model.structures.VOIVector;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewJFrameMessage;
+import gov.nih.mipav.view.ViewUserInterface;
 
 import java.awt.Color;
 import java.awt.Point;
@@ -178,7 +180,7 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
         doVOI = segmentBone();
         if(doVOI)
         	doVOI = segmentBoneMarrow();
-        System.out.println("Bone marrow segmentation: "+(System.currentTimeMillis() - time));
+        ViewUserInterface.getReference().getMessageFrame().append("Bone marrow segmentation: "+(System.currentTimeMillis() - time)+"\n", ViewJFrameMessage.DEBUG);
 
         time = System.currentTimeMillis();
         VOI totalVOI = null;
@@ -187,7 +189,7 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
         
         if(totalVOI != null) {
 	        //ShowImage(boneMarrowImage, "boneImage");
-	        System.out.println("Bone/Bone marrow VOIs: "+(System.currentTimeMillis() - time));
+	        ViewUserInterface.getReference().getMessageFrame().append("Bone/Bone marrow VOIs: "+(System.currentTimeMillis() - time)+"\n", ViewJFrameMessage.DEBUG);
 	
 	        rightMarrowVOI = makeRightMarrowVOI(totalVOI);
 	        leftMarrowVOI = makeLeftMarrowVOI(totalVOI);
@@ -224,8 +226,8 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
             System.err.println("Total time for marrow segmentation: "+segmentationTimeMarrow);
 	        
 	     // save the VOI to a file(s)
-	        System.out.println("directory: " +imageDir);
-	        System.out.println("directory: " +imageDir);
+	        ViewUserInterface.getReference().getMessageFrame().append("directory: " +imageDir+"\n", ViewJFrameMessage.DEBUG);
+	        ViewUserInterface.getReference().getMessageFrame().append("directory: " +imageDir+"\n", ViewJFrameMessage.DEBUG);
 	        ViewJFrameImage frame = new ViewJFrameImage(srcImage);
 	    	srcImage.unregisterAllVOIs();
 	    	srcImage.registerVOI(rightMarrowVOI);
@@ -401,7 +403,7 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
                                                     false, false, null, 0,
                                                     0, -1, -1, false,
                                                     0, regionGrowBounds);
-//                System.out.println("Count: " +count);
+//                ViewUserInterface.getReference().getMessageFrame().append("Count: " +count+"\n", ViewJFrameMessage.DEBUG);
             }
         } catch (OutOfMemoryError error) {
             System.gc();
