@@ -56,10 +56,8 @@ public class ModelRGB extends ModelStorageBase {
     // red, green, and blue.
 
     /** The X coordinates of the transfer functions. */
-    private float[] x = new float[256]; // I don't expect tranfer function to have > 256 points
+    private float[] x = new float[256]; // I don't expect transfer function to have > 256 points
 
-    /** The Y coordinates of the transfer functions. */
-    private float[] y = new float[256];
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -99,18 +97,13 @@ public class ModelRGB extends ModelStorageBase {
             return;
         }
 
-        int height, width;
+        int height;
 
-        width = getExtents()[0];
         height = getExtents()[1];
 
         x[0] = 0;
         y[0] = height - 1;
         z[0] = 0;
-
-        float min, max;
-        min = 0;
-        max = 255;
 
         for (int i = 1; i < (nPts - 1); i++) {
             x[i] = (float) (height - 1) * ((float) i / (float) (nPts - 1));
@@ -360,12 +353,10 @@ public class ModelRGB extends ModelStorageBase {
      */
     public void makeRGB(int _nColors) {
 
-        int nPts;
         float red, green, blue;
         int i, j;
         int height;
         float step;
-        float[] x, y;
         float[] r, g, b;
 
         if ((_nColors > 0) && (_nColors <= 256)) {
@@ -387,10 +378,6 @@ public class ModelRGB extends ModelStorageBase {
             calcRGBBand(redLine, r);
             calcRGBBand(greenLine, g);
             calcRGBBand(blueLine, b);
-
-            nPts = 3;
-            x = new float[nPts];
-            y = new float[nPts];
         } catch (OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ModelRGB: makeRGB");
