@@ -10,7 +10,7 @@ import javax.swing.JButton;
 /**
  * The ColorButton inside of a ColorButtonPanel
  */
-class PlugInMuscleColorButton extends JButton implements VOIListener {
+public class PlugInMuscleColorButton extends JButton implements VOIListener {
 
 	/**The icon displaying the current color.*/
 	private ColorIcon cIcon;
