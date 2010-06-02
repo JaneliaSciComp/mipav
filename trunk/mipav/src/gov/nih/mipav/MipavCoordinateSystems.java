@@ -163,7 +163,7 @@ public class MipavCoordinateSystems {
             final float[] afResolutions = kImage.getResolutions(0);
 
             final TransMatrix dicomMatrix = (kImage).getMatrix(); // Gets composite matrix
-
+            
             // Finally convert the point to axial millimeter DICOM space.
             dicomMatrix.transformAsPoint3Df(new Vector3f(kInput.X * afResolutions[0], kInput.Y * afResolutions[1],
                     kInput.Z * afResolutions[2]), kOutput);
@@ -843,6 +843,17 @@ public class MipavCoordinateSystems {
         kOutput.X = axisFlip[0] ? afLowerRight[axisOrder[0]] : afUpperLeft[axisOrder[0]];
         kOutput.Y = axisFlip[1] ? afLowerRight[axisOrder[1]] : afUpperLeft[axisOrder[1]];
         kOutput.Z = axisFlip[2] ? afLowerRight[axisOrder[2]] : afUpperLeft[axisOrder[2]];
+        
+
+        final TransMatrix dicomMatrix = (kImage).getMatrix(); // Gets composite matrix
+
+        if ( (kImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
+                || (kImage.getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
+
+            Vector3f kTemp = new Vector3f();
+            dicomMatrix.transformAsPoint3Df(kOutput, kTemp);
+            kOutput.Copy(kTemp);
+        }
         return kOutput;
     }
     
