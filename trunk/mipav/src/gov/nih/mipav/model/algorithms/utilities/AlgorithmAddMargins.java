@@ -1,6 +1,9 @@
 package gov.nih.mipav.model.algorithms.utilities;
 
 
+import java.util.Vector;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
@@ -223,6 +226,27 @@ public class AlgorithmAddMargins extends AlgorithmBase {
         }
         destImage.calcMinMax();
         updateFileInfo( srcImage, destImage );
+        destImage.setVOIs( srcImage.getVOIsCopy() );
+
+        if ( destImage.getVOIs() != null )
+        {
+            for ( int i = 0; i < destImage.getVOIs().size(); i++ )
+            {
+                Vector<VOIBase> curves = destImage.getVOIs().elementAt(i).getCurves();
+                for ( int j = 0; j < curves.size(); j++ )
+                {
+                    VOIBase contour = curves.elementAt(j);
+                    for ( int k = 0; k < contour.size(); k++ )
+                    {
+                        Vector3f kIn = contour.elementAt(k);
+                        kIn.X = Math.min( xDim - 1, Math.max( 0, kIn.X - xShiftSrc ) );
+                        kIn.Y = Math.min( yDim - 1, Math.max( 0, kIn.Y - yShiftSrc ) );
+                        kIn.Z = Math.min( zDim - 1, Math.max( 0, kIn.Z - zShiftSrc ) );
+                    }
+                }
+            }
+        }
+
     }
 
     /**

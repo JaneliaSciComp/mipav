@@ -878,7 +878,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         setDrawingContext(kContext);
         setOrientation(iOrientation);
         setSlice(iSlice);
-        int iPlane = MipavCoordinateSystems.getAxisOrder( kImageA, iOrientation)[2];
+        int iPlane = MipavCoordinateSystems.getAxisOrder( m_kImageActive, iOrientation)[2];
         switch ( iPlane )
         {
         case 0: m_iPlane = VOIBase.XPLANE; break;
@@ -1148,17 +1148,16 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
      * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mouseReleased(java.awt.event.MouseEvent)
      */
     public void mouseReleased(MouseEvent kEvent) {
-        if ( !isActive() )
+        if ( !isActive() || kEvent.getButton() != MouseEvent.BUTTON1 )
         {
             return;
         }
         m_kParent.setActive(this);
 
-        if (kEvent.getButton() == MouseEvent.BUTTON1) {
-            processLeftMouseDrag( kEvent );
-            m_bLeftMousePressed = false;
-            m_bFirstDrag = true;
-        }
+        processLeftMouseDrag( kEvent );
+        m_bLeftMousePressed = false;
+        m_bFirstDrag = true;
+            
         if ( m_bDrawVOI && ((m_iDrawType == POINT) || (m_iDrawType == POLYPOINT)) )
         {
             createVOI( kEvent.getX(), kEvent.getY() );
@@ -1234,7 +1233,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         if ( !kEvent.isShiftDown() && !m_bPointer )
         {
             m_kParent.setDefaultCursor( );
-            m_kParent.setSelectedVOI( m_kCurrentVOI.getGroup(), kEvent.isShiftDown() );
+            if ( m_kCurrentVOI != null )
+            {
+                m_kParent.setSelectedVOI( m_kCurrentVOI.getGroup(), kEvent.isShiftDown() );
+            }
         }
         m_iNearStatus = NearNone;
         if ( !kEvent.isShiftDown() || (m_iDrawType == TEXT) 

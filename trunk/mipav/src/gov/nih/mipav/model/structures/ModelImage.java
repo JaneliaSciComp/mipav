@@ -855,12 +855,44 @@ public class ModelImage extends ModelStorageBase {
                     }
                 }
             }
+            
+            if ( voiVector != null )
+            {
+                VOIVector kReturnVOIVector = getVOIsCopy();
+                for ( int i = 0; i < kReturnVOIVector.size(); i++ )
+                {
+                    Vector<VOIBase> curves = kReturnVOIVector.elementAt(i).getCurves();
+                    for ( int j = 0; j < curves.size(); j++ )
+                    {
+                        VOIBase contour = curves.elementAt(j);
+                        for ( int k = 0; k < contour.size(); k++ )
+                        {
+                            Vector3f kIn = contour.elementAt(k);
+                            float[] in = new float[]{kIn.X, kIn.Y, kIn.Z};
+                            kIn.X = in[axisOrderOut[0]];
+                            kIn.Y = in[axisOrderOut[1]];
+                            kIn.Z = in[axisOrderOut[2]];
+                            if (axisFlipOut[0]) {
+                                kIn.X = (iBound - 1) - kIn.X;
+                            }
+                            if (axisFlipOut[1]) {
+                                kIn.Y = (jBound - 1) - kIn.Y;
+                            }
+                            if (axisFlipOut[2]) {
+                                kIn.Z = (kBound - 1) - kIn.Z;
+                            }
+                        }
+                    }
+                }
+                kReturn.setVOIs( kReturnVOIVector );
+            }
+
         } catch (final IOException error) {
 
         } finally {
             releaseLock();
         }
-
+        
         calcStartLocations(startLocationsOut, axisOrderOut, axisFlipOut);
         final int[] axisOrientationOut = new int[3];
         calcAxisOrientation(axisOrientationOut, axisOrderOut, axisFlipOut);

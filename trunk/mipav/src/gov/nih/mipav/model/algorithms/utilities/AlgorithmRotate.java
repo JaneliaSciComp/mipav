@@ -191,22 +191,10 @@ public class AlgorithmRotate extends AlgorithmBase {
      * Calculates the rotated image and replaces the source image with the rotated image.
      */
     private void calcInPlace() {
-        boolean doVOI = false;
-        ModelImage tmpMask = null;
-        ModelImage maskImage = null;
-        if ((srcImage.getVOIs() != null) && (!srcImage.getVOIs().isEmpty()) && (srcImage.getNDims() <= 3)) {
-            doVOI = true;
-        }
-
         destImage = srcImage.export( axisOrder, axisFlip );
         destImage.setImageName( srcImage.getImageName() );
         int orientation = destImage.getImageOrientation();
         
-        if (doVOI) {
-            maskImage = srcImage.generateShortImage(1);
-            tmpMask = maskImage.export( axisOrder, axisFlip );
-        } // if (doVOI)
-
         destImage.calcMinMax();
 
         // Set the file info for the new rotated image identical to the original image,
@@ -374,33 +362,6 @@ public class AlgorithmRotate extends AlgorithmBase {
                 destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
             }
         }
-        
-        if (doVOI) {
-            // ******* Make algorithm for VOI extraction.
-            tmpMask.calcMinMax();
-
-            AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
-            VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
-            VOIExtAlgo.run();
-
-            VOIVector resultVOIs = tmpMask.getVOIs();
-            VOIVector srcVOIs = srcImage.getVOIs();
-
-            for (int ii = 0; ii < resultVOIs.size(); ii++) {
-                int id = resultVOIs.elementAt(ii).getID();
-
-                for (int jj = 0; jj < srcVOIs.size(); jj++) {
-
-                    if (srcVOIs.elementAt(jj).getID() == id) {
-                        resultVOIs.elementAt(ii).setName(srcVOIs.elementAt(jj).getName());
-                    }
-                }
-            }
-
-            destImage.setVOIs(tmpMask.getVOIs());
-            tmpMask.disposeLocal();
-            maskImage.disposeLocal();    
-        } // if (doVOI)
 
         destImage.releaseLock();
         setCompleted(true);

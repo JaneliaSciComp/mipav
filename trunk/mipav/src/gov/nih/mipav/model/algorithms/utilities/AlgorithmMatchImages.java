@@ -131,6 +131,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         // back up imageB in case it changes.
         ModelImage imageB_back = srcImageB;
         boolean bDeletePrevousB = false;
+        System.err.println( "AAAA " + srcImage.getVOIs().size() + " " + srcImageB.getVOIs().size() );
         // if the orientations are used to match the orientations, match orientations first.
         if ( doOrients )
         {
@@ -150,6 +151,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                     imageB_back = srcImageB;
                 }
                 //new ViewJFrameImage((ModelImage)srcImageB.clone(), null, null, false);
+                System.err.println( "BBBB " + srcImage.getVOIs().size() + " " + srcImageB.getVOIs().size() );
             }
         }
         // We don't want to deleted the original version of imageA
@@ -170,6 +172,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 imageA_back = srcImage;
                 bDeletePrevousA = true;
             }
+            System.err.println( "CCCC " + srcImage.getVOIs().size() + " " + srcImageB.getVOIs().size() );
             // Change the resolutions for imageB
             srcImageB = changeResolutions( srcImageB, afNewRes );
             if ( imageB_back != srcImageB )
@@ -182,6 +185,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 imageB_back = srcImageB;
                 bDeletePrevousB = true;
             }
+            System.err.println( "DDDD " + srcImage.getVOIs().size() + " " + srcImageB.getVOIs().size() );
         }
         // match the origins and extents of the two images
         int iDim = srcImage.getNDims();
@@ -198,6 +202,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 // if the image changes and the backup is not the original, deleted the backup of imageA
                 imageA_back.disposeLocal();
             }
+            System.err.println( "EEEE " + srcImage.getVOIs().size() + " " + srcImageB.getVOIs().size() );
             // pad imageB if necessary
             srcImageB = padImage(srcImageB, padBFront, padBBack );
             if ( imageB_back != srcImageB && bDeletePrevousB )
@@ -205,9 +210,11 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 // if imageB changes, delete the backup
                 imageB_back.disposeLocal();
             }
+            System.err.println( "FFFF " + srcImage.getVOIs().size() + " " + srcImageB.getVOIs().size() );
         }
         
         fireProgressStateChanged(100);
+        System.err.println( "DONE " + srcImage.getVOIs().size() + " " + srcImageB.getVOIs().size() );
         setCompleted(true);
     }
     
@@ -284,6 +291,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         boolean bChange = false;
         for ( int i = 0; i < kImage.getNDims(); i++ )
         {
+            System.err.println( afNewRes[i] + " " + kImage.getResolutions(0)[i] );
             if ( afNewRes[i] != kImage.getResolutions(0)[i] )
             {
                 bChange = true;
@@ -301,7 +309,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 AlgorithmTransform transformFunct = new AlgorithmTransform( kImage, new TransMatrix(4), AlgorithmTransform.TRILINEAR,
                         afNewRes[0], afNewRes[1], afNewRes[2], 
                         newExtents[0], newExtents[1], newExtents[2], 
-                        false, true, false);
+                        true, true, false);
 
                 transformFunct.setRunningInSeparateThread(false);
                 transformFunct.run();

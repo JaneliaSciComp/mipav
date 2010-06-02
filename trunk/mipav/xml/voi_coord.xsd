@@ -10,6 +10,7 @@
 			<xs:sequence>
 				<xs:element name="Unique-ID" type="xs:int"/>
 				<xs:element name="Curve-type" type="xs:int"/>
+				<xs:element name="LPS-origin" type="xs:string" minOccurs="0"/>
 				<xs:element name="Color" type="xs:string"/>
 				<xs:element name="Thickness" type="xs:positiveInteger" minOccurs="0"/>
 				<xs:element name="Contour" maxOccurs="unbounded">
