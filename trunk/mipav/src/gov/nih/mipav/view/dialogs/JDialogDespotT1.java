@@ -192,7 +192,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
                 titles[i] = "";
         }
         
-        if (!showTotalDialog()) return;
+        //if (!showTotalDialog()) return;
         
         if (performTreT1HIFI == true) {
             //if (!showHIFIDialog()) return;
@@ -211,52 +211,6 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         spgrImageIndex = new int[Nsa];
         
         spgrData = new double[Nsa];
-        
-        /*if (performtre1HIFI == true) {
-            irspgrTI = new double[Nti];
-            if (Nti == 1) {
-            	irspgrTI[0] = 450.00;
-            }
-            irspgrTr = new double[Nti];
-            irspgrImageIndex = new int[Nti];
-            irspgrData = new double[Nti];
-            
-            if (!showSPGRDialog()) return;
-            
-            irspgrTR = treTR;
-            
-            if (geScanner == true) {
-                if (!showIRSPGRDialogGE()) return;
-            }
-            else {
-                if (!showIRSPGRDialogSiemens()) return;
-            }
-            
-            if (!showtre1HIFISpecificsDialog()) return;
-            
-        }
-        else {
-            if (!showtre1LongDialog()) return; 
-            if (!showtre1SpecificsDialog()) return;
-        }
-        
-        //note that smart/hard thresholding are not required methods
-        if (useSmartThresholding) {
-            if (!showSmartThresholdDialog()) return;
-        }
-        else {
-            if (!showHardThresholdDialog()) return;
-        }
-          
-        try {  
-            callAlgorithm();
-        } catch (OutOfMemoryError x) {
-    
-            System.gc();
-            MipavUtil.displayError("Dialog Circle Generation: unable to allocate enough memory");
-    
-            return;
-        }*/
     }
     
     protected void callAlgorithm() {
@@ -565,7 +519,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
 		}
     }
 
-    public boolean showTotalDialog() {
+    public void showTotalDialog() {
         GridBagLayout gb = new GridBagLayout();
         setLayout(gb);
         GridBagConstraints gbc = new GridBagConstraints();
@@ -601,7 +555,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         hifiPanel = buildHIFIDialog();
         
         //construct general, show if performStraighttre1
-        straightPanel = buildConventionaltre1Dialog();
+        straightPanel = buildConventionalTreT1Dialog();
         
         //add both general and hifi at same location
         gbc.gridx = 0;
@@ -626,7 +580,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         hifiSuper.add(irspgrSiemensPanel, hifiLayout);
         
         //conventional panels for next section
-        treLong = buildtre1LongDialog();
+        treLong = buildTreT1LongDialog();
  
         gbc.gridx = 0;
         gbc.gridy = 2;
@@ -635,8 +589,8 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         
         
         //specifics section
-        convSpec = buildtre1SpecificsDialog();
-        hifiSpec = buildtre1HIFISpecificsDialog();
+        convSpec = buildTreT1SpecificsDialog();
+        hifiSpec = buildTreT1HIFISpecificsDialog();
 
         //threshold
         hardThreshold = buildHardThresholdDialog();
@@ -648,23 +602,6 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         pack();
         setModal(true);
         setVisible(true);
-        
-        /*if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
-                guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
-            return false;
-        }
-        
-        
-
-        if(processType.getSelection() == null) {
-            MipavUtil.displayInfo("Please select a processing method");
-            dialog.dispose();
-            return showOpeningDialog();
-        }   */
-        
-        
-        
-        return true;
     }
     
     public JPanel buildHIFIDialog() {
@@ -688,50 +625,16 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         panel.add(button1.getParent(), panelLayout);
         panel.add(button2.getParent(), panelLayout);
         
-        return panel;
-        
-        /*if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
-                guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
-            return false;
-        }
-        
         Nsa = (int) Double.valueOf(field1.getText()).doubleValue();
         Nti = (int) Double.valueOf(field2.getText()).doubleValue();
     
         geScanner = button1.isSelected();
         siemensScanner = button2.isSelected();
         
-        if(scannerType.getSelection() == null) {
-            MipavUtil.displayInfo("Please select a scanner type");
-            dialog.dispose();
-            return showHIFIDialog();
-        }
-        
-        if (geScanner == true) {
-            siemensScanner = false;
-        }
-        if (siemensScanner == true) {
-            geScanner = false;
-        }
-        
-        if (Nsa > wList.length) {
-            MipavUtil.displayError("Please import all nessesary images first.");
-            return false;
-        }
-        if (Nsa < 2) {
-            MipavUtil.displayError("T1 and Mo calculations require at least two SPGR images.");
-            return false;
-        }
-        
-        if (Nti < 1) {
-            MipavUtil.displayError("B1 correction requires at least one IR-SPGR image.");
-            return false;
-        }
-        
-        return true;*/
+        return panel;
     }
     
-    public JPanel buildConventionaltre1Dialog() {
+    public JPanel buildConventionalTreT1Dialog() {
         JPanel panel = new JPanel();
         panel.setBorder(MipavUtil.buildTitledBorder("tre1: General Information"));
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
@@ -741,33 +644,9 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         
         panel.add(field1.getParent(), panelLayout);
         
-        return panel;
-        
-        /*if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
-                guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
-            return false;
-        }
-        
-        
-        
         Nsa = (int) Double.valueOf(field1.getText()).doubleValue();
         
-        if (Nsa > wList.length) {
-            MipavUtil.displayError("Please import all nessesary images first.");
-            return false;
-        }
-        if (Nsa < 2) {
-            MipavUtil.displayError("T1 and Mo calculations require at least two SPGR images.");
-            return false;
-        }
-        if (performtre1withPreCalculatedB1Map) {
-            if (Nsa+1 > wList.length) {
-                MipavUtil.displayError("Please import all nessesary images first.");
-                return false;
-            }
-        }
-        
-        return true;*/
+        return panel;
     }
     
      public JPanel buildSPGRDialog() {
@@ -788,20 +667,13 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         JTextField fieldTime = guiBuilder.buildDecimalField("SPGR Repetition Time (ms):", treTR);
         panel.add(fieldTime.getParent(), panelLayout);
         
-        return panel;
-        
-        /*if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
-                guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
-            return false;
-        }
-        
         for(int i=0; i<Nsa; i++) {
             spgrImageIndex[i] = comboArr[i].getSelectedIndex();
             treFA[i] = Float.valueOf(fieldArr[i].getText()).floatValue();
         }
         treTR = Double.valueOf(fieldTime.getText()).doubleValue();
-         
-        return true;*/
+        
+        return panel;
      }
     
     public JPanel buildIRSPGRDialogGE() {
@@ -846,13 +718,6 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         panel.add(radio4.getParent(), panelLayout);
         panel.add(box1.getParent(), panelLayout);
         
-        return panel;
-        
-        /*if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
-                guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
-            return false;
-        }
-        
         for (int i=0; i<Nti; i++) {
             irspgrImageIndex[i] = comboArr[i].getSelectedIndex();
             irspgrTI[i] = Double.valueOf(fieldArr[i].getText()).doubleValue();
@@ -868,14 +733,12 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         
         if(inversion.getSelection() == null) {
             MipavUtil.displayInfo("Please choose either single or double inversion regime");
-            dialog.dispose();
-            return showIRSPGRDialogGE();
+            buildIRSPGRDialogGE();
         }
         
         if(fieldStrength.getSelection() == null) {
             MipavUtil.displayInfo("Please choose field strength");
-            dialog.dispose();
-            return showIRSPGRDialogGE();
+            buildIRSPGRDialogGE();
         }
         
         if (doubleInversion == true) {
@@ -915,7 +778,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         
         for (int i=0; i<Nti; i++) irspgrTr[i] = irspgrTI[i] + irspgrTR*irspgrKy;
         
-        return true;*/
+        return panel;
     }
     
     public JPanel buildIRSPGRDialogSiemens() {
@@ -959,21 +822,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         panel.add(radio3.getParent(), panelLayout);
         panel.add(radio4.getParent(), panelLayout);
         panel.add(box1.getParent(), panelLayout);
-        
-        return panel;
-        
-        /*dialog.add(panel, BorderLayout.CENTER);
-        dialog.add(guiHelp.buildOKCancelPanel(), BorderLayout.SOUTH);
-        dialog.setLocationRelativeTo(null);
-        dialog.pack();
-        dialog.setModal(true);
-        dialog.setVisible(true);
-        
-        if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
-                guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
-            return false;
-        }
-        
+
         for (int i=0; i<Nti; i++) {
             irspgrImageIndex[i] = comboArr[i].getSelectedIndex();
             irspgrTI[i] = Double.valueOf(fieldArr[i].getText()).doubleValue();
@@ -989,13 +838,11 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         
         if(inversion.getSelection() == null) {
             MipavUtil.displayInfo("Please choose either single or double inversion regime");
-            dialog.dispose();
-            return showIRSPGRDialogSiemens();
+            return buildIRSPGRDialogSiemens();
         }
         if(fieldStrength.getSelection() == null) {
             MipavUtil.displayInfo("Please select a field strength");
-            dialog.dispose();
-            return showIRSPGRDialogSiemens();
+            return buildIRSPGRDialogSiemens();
         }
         
         if (doubleInversion == true) {
@@ -1034,12 +881,12 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         
         for (int i=0; i<Nti; i++) irspgrTr[i] = irspgrTI[i] + irspgrTR*irspgrKy;
         
-        return true;*/
+        return panel;
     }
         
         
 
-    public JPanel buildtre1LongDialog() {
+    public JPanel buildTreT1LongDialog() {
         BorderLayout b = new BorderLayout();
         JDialog dialog = new JDialog();
         dialog.setLayout(b);
@@ -1074,14 +921,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
             panel.add(check1.getParent(), panelLayout);
         }
         
-        return panel;
-        
-        /*if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
-                guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
-            return false;
-        }
-    
-        if (performtre1withPreCalculatedB1Map) {
+        if (performTreT1withPreCalculatedB1Map) {
             b1ImageIndex = combo1.getSelectedIndex();
         }
         
@@ -1095,10 +935,10 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
             useWeights = check1.isSelected();
         }
         
-        return true;*/
+        return panel;
     }
         
-    public JPanel buildtre1SpecificsDialog() {
+    public JPanel buildTreT1SpecificsDialog() {
         JPanel panel = new JPanel();
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(panelLayout);
@@ -1120,20 +960,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         panel.add(check4.getParent(), panelLayout);
         panel.add(check5.getParent(), panelLayout);
         
-        return panel;
-        
-        /*dialog.add(panel, BorderLayout.CENTER);
-        dialog.add(guiHelp.buildOKCancelPanel(), BorderLayout.SOUTH);
-        dialog.setLocationRelativeTo(null);
-        dialog.pack();
-        dialog.setModal(true);
-        dialog.setVisible(true);
-        
-        if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
-                guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
-            return false;
-        }
-        
+
         maxT1 = Double.valueOf(field1.getText()).doubleValue();
         maxMo = Double.valueOf(field2.getText()).doubleValue();
         calculateT1 = check1.isSelected();
@@ -1144,11 +971,12 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         if (useSmartThresholding) {
             useHardThresholding = false;
         }
-        return true;*/
+        
+        return panel;
     }
     
    
-    public JPanel buildtre1HIFISpecificsDialog() {
+    public JPanel buildTreT1HIFISpecificsDialog() {
         JPanel panel = new JPanel();
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(panelLayout);
@@ -1179,13 +1007,6 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         panel.add(check6.getParent(), panelLayout);
         panel.add(check7.getParent(), panelLayout);
         
-        return panel;
-        
-        /*if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
-                guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
-            return false;
-        }
-        
         maxT1 = Double.valueOf(field1.getText()).doubleValue();
         maxMo = Double.valueOf(field2.getText()).doubleValue();
         calculateT1 = check1.isSelected();
@@ -1201,7 +1022,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
             useHardThresholding = false;
         }
         
-        return true;*/
+        return panel;
     }
     
     /**
@@ -1216,17 +1037,10 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         JTextField field1 = guiBuilder.buildDecimalField("Hard Noise Level", hardNoiseThreshold);
         
         panel.add(field1.getParent(), panelLayout);
-        
-        return panel;
-        
-        /*if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
-                guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
-            return false;
-        }
-        
+       
         hardNoiseThreshold = Float.valueOf(field1.getText()).floatValue();
         
-        return true;*/
+        return panel;
     }
     
     public JPanel buildSmartThresholdDialog() {
@@ -1246,19 +1060,58 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         panel.add(box3.getParent(), panelLayout);
         panel.add(box4.getParent(), panelLayout);
         
-        return panel;
-        
-        /*if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
-                guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
-            return false;
-        }
-        
         noiseScale = Float.valueOf(field1.getText()).floatValue();
         upperLeftCorner = box1.isSelected();
         upperRightCorner = box2.isSelected();
         lowerLeftCorner = box3.isSelected();
         lowerRightCorner = box4.isSelected();
-        return true;*/
+        
+        return panel;
+    }
+    
+    private boolean validateUI() {
+    	
+    	//opening
+
+        //generic
+        if (Nsa > wList.length) {
+            MipavUtil.displayError("Please import all nessesary images first.");
+            return false;
+        }
+        if (Nsa < 2) {
+            MipavUtil.displayError("T1 and Mo calculations require at least two SPGR images.");
+            return false;
+        }
+        if (performTreT1withPreCalculatedB1Map) {
+            if (Nsa+1 > wList.length) {
+                MipavUtil.displayError("Please import all nessesary images first.");
+                return false;
+            }
+        }
+        
+        //hifi
+        if (geScanner == true) {
+            siemensScanner = false;
+        }
+        if (siemensScanner == true) {
+            geScanner = false;
+        }
+        
+        if (Nsa > wList.length) {
+            MipavUtil.displayError("Please import all nessesary images first.");
+            return false;
+        }
+        if (Nsa < 2) {
+            MipavUtil.displayError("T1 and Mo calculations require at least two SPGR images.");
+            return false;
+        }
+        
+        if (Nti < 1) {
+            MipavUtil.displayError("B1 correction requires at least one IR-SPGR image.");
+            return false;
+        }
+        
+        return true;
     }
 
     public enum ExitStatus {

@@ -64,9 +64,9 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
     private double maxAngle = 20;
     
     private boolean smoothB1Field = true;
-    private boolean performStraighttre1 = true;
-    private boolean performtre1withPreCalculatedB1Map = false;
-    private boolean performtre1HIFI = false;
+    private boolean performStraightTreT1 = true;
+    private boolean performTreT1withPreCalculatedB1Map = false;
+    private boolean performTreT1HIFI = false;
     private boolean doubleInversion = true;
     private boolean singleInversion = false;
     private boolean geScanner = true;
@@ -103,9 +103,9 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
             double[] residuals, int[] direction, int[] spgrImageIndex,
             int[] irspgrImageIndex, int b1ImageIndex, double angleIncrement,
             int nsa, int nti, double maxAngle, boolean smoothB1Field,
-            boolean performStraighttre1,
-            boolean performtre1withPreCalculatedB1Map,
-            boolean performtre1HIFI, boolean doubleInversion,
+            boolean performStraightTreT1,
+            boolean performTreT1withPreCalculatedB1Map,
+            boolean performTreT1HIFI, boolean doubleInversion,
             boolean singleInversion, boolean geScanner, boolean siemensScanner,
             boolean threeTField, boolean onefiveTField, boolean calculateT1,
             boolean showB1Map, boolean calculateMo, boolean invertT1toR1,
@@ -141,9 +141,9 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
         Nti = nti;
         this.maxAngle = maxAngle;
         this.smoothB1Field = smoothB1Field;
-        this.performStraighttre1 = performStraighttre1;
-        this.performtre1withPreCalculatedB1Map = performtre1withPreCalculatedB1Map;
-        this.performtre1HIFI = performtre1HIFI;
+        this.performStraightTreT1 = performStraightTreT1;
+        this.performTreT1withPreCalculatedB1Map = performTreT1withPreCalculatedB1Map;
+        this.performTreT1HIFI = performTreT1HIFI;
         this.doubleInversion = doubleInversion;
         this.singleInversion = singleInversion;
         this.geScanner = geScanner;
@@ -178,9 +178,9 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
             double[] estimates, double[] residuals, int[] direction,
             int[] spgrImageIndex, int[] irspgrImageIndex, int b1ImageIndex,
             double angleIncrement, int nsa, int nti, double maxAngle,
-            boolean smoothB1Field, boolean performStraighttre1,
-            boolean performtre1withPreCalculatedB1Map,
-            boolean performtre1HIFI, boolean doubleInversion,
+            boolean smoothB1Field, boolean performStraightTreT1,
+            boolean performTreT1withPreCalculatedB1Map,
+            boolean performTreT1HIFI, boolean doubleInversion,
             boolean singleInversion, boolean geScanner, boolean siemensScanner,
             boolean threeTField, boolean onefiveTField, boolean calculateT1,
             boolean showB1Map, boolean calculateMo, boolean invertT1toR1,
@@ -216,9 +216,9 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
         Nti = nti;
         this.maxAngle = maxAngle;
         this.smoothB1Field = smoothB1Field;
-        this.performStraighttre1 = performStraighttre1;
-        this.performtre1withPreCalculatedB1Map = performtre1withPreCalculatedB1Map;
-        this.performtre1HIFI = performtre1HIFI;
+        this.performStraightTreT1 = performStraightTreT1;
+        this.performTreT1withPreCalculatedB1Map = performTreT1withPreCalculatedB1Map;
+        this.performTreT1HIFI = performTreT1HIFI;
         this.doubleInversion = doubleInversion;
         this.singleInversion = singleInversion;
         this.geScanner = geScanner;
@@ -366,7 +366,7 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
      */
     protected void displayImages() {
         String prefix = new String();
-        if(performtre1HIFI) {
+        if(performTreT1HIFI) {
             prefix = "-HIFI";
         }
         
@@ -388,7 +388,7 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
             r1ResultWindow.setVisible(true);
         } 
         
-        if (performtre1HIFI && showB1Map) {
+        if (performTreT1HIFI && showB1Map) {
             b1ResultWindow = new ViewJFrameImage(b1ResultStack);
             b1ResultWindow.setTitle("tre1"+prefix+"_B1_Map");
             b1ResultWindow.setVisible(true);
@@ -555,7 +555,7 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
     }
     
     public void runAlgorithm() {
-        if (performtre1HIFI) {
+        if (performTreT1HIFI) {
             completed = calculateT1Usingtre1HIFI();
         }
         else {
@@ -680,7 +680,7 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
             r1ResultStack = nearCloneImage(image, r1ResultStack);
         }
          
-        if(performtre1HIFI && showB1Map) {
+        if(performTreT1HIFI && showB1Map) {
             b1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "b1_results");
             b1ResultStack = nearCloneImage(image, b1ResultStack);
         }
@@ -788,7 +788,7 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
                 //r1ResultLocalVolume = nearCloneImage(image, r1ResultLocalVolume);
             }
              
-            if(performtre1HIFI && showB1Map) {
+            if(performTreT1HIFI && showB1Map) {
                 b1ResultLocalVolume = new ModelImage(ModelImage.DOUBLE, localExtents, "b1_results_volume"+t);
                 //b1ResultLocalVolume = nearCloneImage(image, b1ResultLocalVolume);
             }
@@ -1365,7 +1365,7 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
                     return;
                 }
                 
-                if (performtre1withPreCalculatedB1Map) {
+                if (performTreT1withPreCalculatedB1Map) {
                     b1FieldImage = ViewUserInterface.getReference().getRegisteredImageByName(wList[b1ImageIndex]);
                     
                     b1Values = new double[width*height]; 
@@ -1387,7 +1387,7 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
                             } else {
                                 pixelValues[angle][pixelIndex] = image.getDouble(x, y, k, t);
                             }
-                            if (performtre1withPreCalculatedB1Map) {
+                            if (performTreT1withPreCalculatedB1Map) {
                                 if(b1FieldImage.getNDims() < 4) {
                                     b1Values[pixelIndex] = b1FieldImage.getDouble(x, y, k); 
                                 } else {
@@ -1406,7 +1406,7 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
                         sumXY = 0.00;
                         sumXX = 0.00;
                         
-                        if (performtre1withPreCalculatedB1Map) {
+                        if (performTreT1withPreCalculatedB1Map) {
                             b1 = b1Values[pixelIndex];
                             if (b1 == 0) { 
                                 b1 = 1.00;
