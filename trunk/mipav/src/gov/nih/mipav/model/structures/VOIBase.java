@@ -1,6 +1,5 @@
 package gov.nih.mipav.model.structures;
 
-import gov.nih.mipav.MipavCoordinateSystems;
 import gov.nih.mipav.MipavMath;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.view.dialogs.JDialogVOIStatistics;
@@ -11,7 +10,6 @@ import java.awt.event.KeyEvent;
 import java.util.BitSet;
 import java.util.Vector;
 
-import javax.media.opengl.GLAutoDrawable;
 
 import WildMagic.LibFoundation.Approximation.ApprPlaneFit3f;
 import WildMagic.LibFoundation.Distance.DistanceVector3Segment3;
@@ -20,8 +18,7 @@ import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Plane3f;
 import WildMagic.LibFoundation.Mathematics.Segment3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-import WildMagic.LibGraphics.Rendering.Camera;
-import WildMagic.LibGraphics.Rendering.Renderer;
+
 
 
 /**
