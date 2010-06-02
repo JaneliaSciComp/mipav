@@ -7,8 +7,7 @@ import java.io.*;
 
 
 /**
- * This class clones (copies) by serializing the object (providing it can be serialized). See page 66 of Core Java 1.1
- * Vol. II by Horstmann, Cornell.
+ * This class clones (copies) by serializing the object (providing it can be serialized).
  */
 public class ModelSerialCloneable implements Cloneable, Serializable {
 
@@ -27,21 +26,21 @@ public class ModelSerialCloneable implements Cloneable, Serializable {
     public Object clone() {
 
         try {
-            ByteArrayOutputStream bout = new ByteArrayOutputStream();
-            ObjectOutputStream out = new ObjectOutputStream(bout);
-            out.writeObject(this);
+            ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+            ObjectOutputStream     objOut = new ObjectOutputStream(byteOut);
+            objOut.writeObject(this);
 
-            ByteArrayInputStream bin = new ByteArrayInputStream(bout.toByteArray());
-            ObjectInputStream in = new ObjectInputStream(bin);
+            ByteArrayInputStream byteIn = new ByteArrayInputStream(byteOut.toByteArray());
+            ObjectInputStream     objIn = new ObjectInputStream(byteIn);
 
-            Object ret = in.readObject();
-            in.close();
-            out.close();
+            Object clonedObj = objIn.readObject();
+            
+            objIn.close();
+            objOut.close();
+            byteOut.close();
+            byteIn.close();
 
-            bout.close();
-            bin.close();
-
-            return ret;
+            return clonedObj;
 
         } catch (Exception e) {
             MipavUtil.displayError("Error cloning " + this.getClass().getName() + " :\n" + e);
