@@ -212,6 +212,10 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
                 callAlgorithm();
             }
         } else if (command.equals("Cancel")) {
+            if ( disposeImage )
+            {
+                image.disposeLocal();
+            }
             dispose();
         } else if (command.equals("Help")) {
             MipavUtil.showHelp("19001");

@@ -892,9 +892,16 @@ public class FileVOI extends FileXML {
             bw.write(FileVOI.VOI_HEADER);
             bw.newLine();
 
+            boolean saveAsLPS = Preferences.is(Preferences.PREF_VOI_LPS_SAVE);
             openTag("VOI xmlns:xsi=\"" + FileVOI.W3C_XML_SCHEMA + "-instance\"", true);
             closedTag("Unique-ID", Integer.toString(voi.getUID()));
             closedTag("Curve-type", Integer.toString(voi.getCurveType()));
+            if ( saveAsLPS )
+            {
+                final Vector3f kOriginLPS = MipavCoordinateSystems.originLPS(image);
+                closedTag("LPS-origin", Float.toString(kOriginLPS.X) + "," + Float.toString(kOriginLPS.Y) + ","
+                        + Float.toString(kOriginLPS.Z));                
+            }
             closedTag("Color", Integer.toString(voi.getColor().getAlpha()) + ","
                     + Integer.toString(voi.getColor().getRed()) + "," + Integer.toString(voi.getColor().getGreen())
                     + "," + Integer.toString(voi.getColor().getBlue()));
@@ -924,7 +931,6 @@ public class FileVOI extends FileXML {
                 VOISortItem tempVOIItem = null;
                 VOIBase tempBase = null;
 
-                boolean saveAsLPS = Preferences.is(Preferences.PREF_VOI_LPS_SAVE);
                 // System.err.println("SaveAsLPS: " + saveAsLPS);
                 boolean is2D = (image.getNDims() == 2);
 
@@ -1988,6 +1994,8 @@ public class FileVOI extends FileXML {
 
         /** The VOI that we are building from the XML. */
         private final VOI voi;
+        
+        private Vector3f LPSOrigin;
 
         /**
          * Construct our custom XML data handler.
@@ -2034,6 +2042,17 @@ public class FileVOI extends FileXML {
                 voi.setUID(Integer.parseInt(elementBuffer));
             } else if (currentKey.equals("Curve-type")) {
                 voi.setCurveType(Integer.parseInt(elementBuffer));
+            }  else if (currentKey.equals("LPS-origin")) {
+                float x = 0f, y = 0f, z = 0f;
+                final StringTokenizer st = new StringTokenizer(elementBuffer, ",");
+                try {
+                    x = Float.parseFloat(st.nextToken());
+                    y = Float.parseFloat(st.nextToken());
+                    z = Float.parseFloat(st.nextToken());
+                    LPSOrigin = new Vector3f( x, y, z );
+                } catch (final NumberFormatException nfex) {
+                    Preferences.debug("Error reading pt: " + nfex.toString() + "\n", Preferences.DEBUG_FILEIO);
+                }
             } else if (currentKey.equals("Color")) {
                 int a = 0, r = 0, g = 0, b = 0;
                 final StringTokenizer st = new StringTokenizer(elementBuffer, ",");
@@ -2087,7 +2106,14 @@ public class FileVOI extends FileXML {
                     ptIn = (Vector3f) contourVector.elementAt(index);
 
                     // System.err.println("\tScanner coord: " + ptIn);
-                    MipavCoordinateSystems.scannerToFile(ptIn, ptOut, image);
+                    if ( LPSOrigin != null )
+                    {
+                        MipavCoordinateSystems.scannerToFile(ptIn, ptOut, LPSOrigin, image);
+                    }
+                    else
+                    {
+                        MipavCoordinateSystems.scannerToFile(ptIn, ptOut, image);                        
+                    }
 
                     x[index] = MipavMath.round(Math.abs(ptOut.X));
                     y[index] = MipavMath.round(Math.abs(ptOut.Y));

@@ -526,6 +526,19 @@ public class MipavCoordinateSystems {
 
         // subtract the scanner origin:
         final Vector3f kOriginLPS = MipavCoordinateSystems.originLPS(kImage);
+        scannerToFile(kInput, kOutput, kOriginLPS, kImage);
+    }
+
+    /**
+     * Translates the input point into FileCoordinates, based on the input image, kImage.
+     * 
+     * @param kInput the input point in ScannerCoordinates
+     * @param kOutput the transformed point in FileCoordinates
+     * @param kImage the image for which the point is being transformed.
+     */
+    public static final void scannerToFile(final Vector3f kInput, final Vector3f kOutput, final Vector3f kOriginLPS, final ModelImage kImage) {
+        // The input point kInput represents the current position in coronal, sagittal, axial order (L/R, A/P, I/S axis
+        // space)
 
         final Vector3f kTemp = new Vector3f();
         kTemp.Sub(kInput, kOriginLPS);
@@ -576,6 +589,8 @@ public class MipavCoordinateSystems {
         }
     }
 
+    
+    
     /**
      * 
      * @param pIn the FileCoordinates Point

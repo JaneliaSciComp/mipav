@@ -5932,7 +5932,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         voiManager.make3DVOI(bIntersection, kImage);
         kImage.calcMinMax();
-        new JDialogExtractSurfaceCubes(this, kImage, true);
+        new JDialogExtractSurfaceCubes(this, kImage, true);        
     }
 
     @Override

@@ -1895,21 +1895,61 @@ public abstract class VOIBase extends Vector<Vector3f> {
             return;
         }
         getImageBoundingBox();
-        int iXMin = (int)m_akImageMinMax[0].X;
-        int iXMax = (int)m_akImageMinMax[1].X;
+        if ( m_iPlane == ZPLANE )
+        {
+            int iXMin = (int)(m_akImageMinMax[0].X);
+            int iXMax = (int)(m_akImageMinMax[1].X);
 
-        int iYMin = (int)m_akImageMinMax[0].Y;
-        int iYMax = (int)m_akImageMinMax[1].Y;
+            int iYMin = (int)(m_akImageMinMax[0].Y);
+            int iYMax = (int)(m_akImageMinMax[1].Y);
 
-        int[][] aaiCrossingPoints = new int[iXMax - iXMin + 1][];
-        int[] aiNumCrossings = new int[iXMax - iXMin + 1];
+            int[][] aaiCrossingPoints = new int[iXMax - iXMin + 1][];
+            int[] aiNumCrossings = new int[iXMax - iXMin + 1];
 
-        for (int i = 0; i < (iXMax - iXMin + 1); i++) {
-            aaiCrossingPoints[i] = new int[size()+2];
+            for (int i = 0; i < (iXMax - iXMin + 1); i++) {
+                aaiCrossingPoints[i] = new int[size()+2];
+            }
+
+            outlineRegion(aaiCrossingPoints, aiNumCrossings, iXMin, iXMax);
+            fill(aaiCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax, (int)elementAt(0).Z, kVolume, kMask, bIntersection, iValue);              
         }
+        else if ( m_iPlane == XPLANE )
+        {
 
-        outlineRegion(aaiCrossingPoints, aiNumCrossings, iXMin, iXMax);
-        fill(aaiCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax, (int)elementAt(0).Z, kVolume, kMask, bIntersection, iValue);
+            int iYMin = (int)(m_akImageMinMax[0].Y);
+            int iYMax = (int)(m_akImageMinMax[1].Y);
+            
+            int iZMin = (int)(m_akImageMinMax[0].Z);
+            int iZMax = (int)(m_akImageMinMax[1].Z);
+
+            int[][] aaiCrossingPoints = new int[iYMax - iYMin + 1][];
+            int[] aiNumCrossings = new int[iYMax - iYMin + 1];
+
+            for (int i = 0; i < (iYMax - iYMin + 1); i++) {
+                aaiCrossingPoints[i] = new int[size()+2];
+            }
+
+            outlineRegion_X(aaiCrossingPoints, aiNumCrossings, iYMin, iYMax);
+            fill_X(aaiCrossingPoints, aiNumCrossings, iYMin, iZMin, iYMax, iZMax, (int)elementAt(0).X, kVolume, kMask, bIntersection, iValue);              
+        }
+        else
+        {
+            int iXMin = (int)(m_akImageMinMax[0].X);
+            int iXMax = (int)(m_akImageMinMax[1].X);
+            
+            int iZMin = (int)(m_akImageMinMax[0].Z);
+            int iZMax = (int)(m_akImageMinMax[1].Z);
+
+            int[][] aaiCrossingPoints = new int[iXMax - iXMin + 1][];
+            int[] aiNumCrossings = new int[iXMax - iXMin + 1];
+
+            for (int i = 0; i < (iXMax - iXMin + 1); i++) {
+                aaiCrossingPoints[i] = new int[size()+2];
+            }
+
+            outlineRegion_Y(aaiCrossingPoints, aiNumCrossings, iXMin, iXMax);
+            fill_Y(aaiCrossingPoints, aiNumCrossings, iXMin, iZMin, iXMax, iZMax, (int)elementAt(0).Y, kVolume, kMask, bIntersection, iValue);           
+        }
 
     }
 
@@ -2046,6 +2086,94 @@ public abstract class VOIBase extends Vector<Vector3f> {
             iColumn++;
         }
     }
+    /**
+     * fill: fill the sculpt outline drawn by the user. Pixels are determined to be inside or outside the sculpt region
+     * based on the parameters, aaiCrossingPoints and aiNumCrossings, using a scan-conversion algorithm that traverses
+     * each row and column of the bounding box of the sculpt region coloring inside points as it goes.
+     *
+     * @param  aaiCrossingPoints  DOCUMENT ME!
+     * @param  aiNumCrossings     DOCUMENT ME!
+     */
+    protected void fill_Y(int[][] aaiCrossingPoints, int[] aiNumCrossings,
+            int iXMin, int iZMin, int iXMax, int iZMax, int iY,
+            ModelImage kVolume, BitSet kMask, boolean bIntersection, int iValue)
+    {
+        int iColumn = 0;
+        /* Loop over the width of the sculpt region bounding-box: */
+        for (int iX = iXMin; iX < iXMax; iX++) {
+            boolean bInside = false;
+
+            /* Loop over the height of the sculpt region bounding-box: */
+            for (int iZ = iZMin; iZ < iZMax; iZ++) {
+
+                /* loop over each crossing point for this column: */
+                for (int iCross = 0; iCross < aiNumCrossings[iColumn]; iCross++) {
+
+                    if (iZ == aaiCrossingPoints[iColumn][iCross]) {
+
+                        /* Each time an edge is cross the point alternates
+                         * from outside to inside: */
+                        bInside = !bInside;
+                    }
+                }
+
+                if (bInside == true) {
+
+                    /* The current pixel is inside the sculpt region.  Get the
+                     * image color from the canvas image and alpha-blend the sculpt color ontop, storing the result in
+                     * the canvas image.
+                     */
+
+                    if ( bIntersection )
+                    {
+                        int iTemp = kVolume.getInt( iX, iY, iZ );
+
+                        if ( kMask != null )
+                        {
+                            int iIndex = (int)iZ * kVolume.getExtents()[0] * kVolume.getExtents()[1];
+                            iIndex += iY * kVolume.getExtents()[0];
+                            iIndex += iX;
+                            if ( iValue == 0 )
+                            {
+                                kMask.set( iIndex );
+                            }
+                            else if ( kMask.get( iIndex ) )
+                            {
+                                kMask.set( iIndex );
+                            }
+                        }
+                        else
+                        {
+                            if ( iValue == 0 )
+                            {
+                                kVolume.set( iX, iY, iZ, 85 );
+                            }
+                            else if ( iTemp != 0 )
+                            {
+                                kVolume.set( iX, iY, iZ, 255 );
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if ( kMask != null )
+                        {
+                            int iIndex = iZ * kVolume.getExtents()[0] * kVolume.getExtents()[1];
+                            iIndex += iY * kVolume.getExtents()[0];
+                            iIndex += iX;
+                            kMask.set( iIndex );
+                        }
+                        else
+                        {
+                            kVolume.set( iX, iY, iZ, 255 );
+                        }
+                    }
+                }
+            }
+
+            iColumn++;
+        }
+    }
 
     protected void fill_Y(int[][] aaiCrossingPoints, int[] aiNumCrossings,
             int iXMin, int iZMin, int iXMax, int iZMax, int iY, 
@@ -2090,7 +2218,95 @@ public abstract class VOIBase extends Vector<Vector3f> {
 
             iColumn++;
         }
+    }    /**
+     * fill: fill the sculpt outline drawn by the user. Pixels are determined to be inside or outside the sculpt region
+     * based on the parameters, aaiCrossingPoints and aiNumCrossings, using a scan-conversion algorithm that traverses
+     * each row and column of the bounding box of the sculpt region coloring inside points as it goes.
+     *
+     * @param  aaiCrossingPoints  DOCUMENT ME!
+     * @param  aiNumCrossings     DOCUMENT ME!
+     */
+    protected void fill_X(int[][] aaiCrossingPoints, int[] aiNumCrossings,
+            int iYMin, int iZMin, int iYMax, int iZMax, int iX,
+            ModelImage kVolume, BitSet kMask, boolean bIntersection, int iValue)
+    {
+        int iColumn = 0;
+        /* Loop over the width of the sculpt region bounding-box: */
+        for (int iY = iYMin; iY < iYMax; iY++) {
+            boolean bInside = false;
+
+            /* Loop over the height of the sculpt region bounding-box: */
+            for (int iZ = iZMin; iZ < iZMax; iZ++) {
+
+                /* loop over each crossing point for this column: */
+                for (int iCross = 0; iCross < aiNumCrossings[iColumn]; iCross++) {
+
+                    if (iZ == aaiCrossingPoints[iColumn][iCross]) {
+
+                        /* Each time an edge is cross the point alternates
+                         * from outside to inside: */
+                        bInside = !bInside;
+                    }
+                }
+
+                if (bInside == true) {
+
+                    /* The current pixel is inside the sculpt region.  Get the
+                     * image color from the canvas image and alpha-blend the sculpt color ontop, storing the result in
+                     * the canvas image.
+                     */
+
+                    if ( bIntersection )
+                    {
+                        int iTemp = kVolume.getInt( iX, iY, iZ );
+
+                        if ( kMask != null )
+                        {
+                            int iIndex = (int)iZ * kVolume.getExtents()[0] * kVolume.getExtents()[1];
+                            iIndex += iY * kVolume.getExtents()[0];
+                            iIndex += iX;
+                            if ( iValue == 0 )
+                            {
+                                kMask.set( iIndex );
+                            }
+                            else if ( kMask.get( iIndex ) )
+                            {
+                                kMask.set( iIndex );
+                            }
+                        }
+                        else
+                        {
+                            if ( iValue == 0 )
+                            {
+                                kVolume.set( iX, iY, iZ, 85 );
+                            }
+                            else if ( iTemp != 0 )
+                            {
+                                kVolume.set( iX, iY, iZ, 255 );
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if ( kMask != null )
+                        {
+                            int iIndex = iZ * kVolume.getExtents()[0] * kVolume.getExtents()[1];
+                            iIndex += iY * kVolume.getExtents()[0];
+                            iIndex += iX;
+                            kMask.set( iIndex );
+                        }
+                        else
+                        {
+                            kVolume.set( iX, iY, iZ, 255 );
+                        }
+                    }
+                }
+            }
+
+            iColumn++;
+        }
     }
+
 
     protected void fill_X(int[][] aaiCrossingPoints, int[] aiNumCrossings,
             int iYMin, int iZMin, int iYMax, int iZMax, int iX, 
