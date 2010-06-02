@@ -1187,8 +1187,10 @@ public abstract class LevmarBoxConstraint {
 	            	dogradproj = true; /* rather inelegant but effective way to handle LNSRCH() failures... */
 	            }
 	    
-	            ++nLSsteps;
-	            gprevtaken=0;
+	            if (!dogradproj) {
+	                ++nLSsteps;
+	                gprevtaken=0;
+	            }
 
 	            /* NOTE: new estimate for p is in pDp, associated error in hx and its norm in pDp_eL2.
 	             * These values are used below to update their corresponding variables 
