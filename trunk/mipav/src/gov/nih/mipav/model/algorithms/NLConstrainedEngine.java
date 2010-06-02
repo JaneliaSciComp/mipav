@@ -25,6 +25,9 @@ import gov.nih.mipav.view.*;
  *  }
  *  
  *  For the self tests:
+ *  All self tests except DRAPER24D and HOCK25 are passed by the original ELSUNC in Table 1 of 
+ *  Gauss-Newton Based Algorithms For Constrained Nonlinear Least Squares Problems
+ *  This port also passes these tests.
  *  DRAPER24D OK.
  *  HOCK25 OK.
  *  BARD OK.
@@ -66,6 +69,7 @@ import gov.nih.mipav.view.*;
  *  LINEAR_FULL_RANK OK.
  *  LINEAR_RANK1 OK.
  *  LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS OK.
+ *  CHEBYQUAD OK.
  */
 
 // BELOW IS AN EXAMPLE OF A DRIVER USED IN FITTING A 4 PARAMETER
@@ -1764,7 +1768,7 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
-        // Below is the to fit the Linear rank 1 function with 5 parameters and 10 points
+        // Below is the test to fit the Linear rank 1 function with 5 parameters and 10 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Linear rank 1 function with 5 parameters and 10 points\n");
         Preferences.debug("Chi-squared = nPts*(nPts-1)/(2*(2*nPts + 1))\n");
@@ -1787,7 +1791,7 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
-        // Below is the to fit the Linear rank 1 function with 5 parameters and 50 points
+        // Below is the test to fit the Linear rank 1 function with 5 parameters and 50 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Linear rank 1 function with 5 parameters and 50 points\n");
         Preferences.debug("Chi-squared = nPts*(nPts-1)/(2*(2*nPts + 1))\n");
@@ -1810,7 +1814,7 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
-        // Below is the to fit the Linear rank 1 function with zero columns and rows with 5 parameters and 10 points
+        // Below is the test to fit the Linear rank 1 function with zero columns and rows with 5 parameters and 10 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Linear rank 1 with zero columns and rows function with 5 parameters and 10 points\n");
         Preferences.debug("Chi-squared = (nPts**2 + 3*nPts -6)/(2*(2*nPts - 3))\n");
@@ -1833,7 +1837,7 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
-        // Below is the to fit the Linear rank 1 function with zero columns and rows with 5 parameters and 50 points
+        // Below is the test to fit the Linear rank 1 function with zero columns and rows with 5 parameters and 50 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Linear rank 1 with zero columns and rows function with 5 parameters and 50 points\n");
         Preferences.debug("Chi-squared = (nPts**2 + 3*nPts -6)/(2*(2*nPts - 3))\n");
@@ -1855,6 +1859,103 @@ public abstract class NLConstrainedEngine {
         // for all parameters
         bl = new double[param];
         bu = new double[param];
+        driverCalls();
+        // Below is an example to fit the Chebyquad function with 1 parameter and 8 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Chebyquad function with 1 parameter and 8 points\n");
+        Preferences.debug("Correct chi-squared equals about 3.55 variable a0\n");
+        // gues[0] = 0.0 -> chi-squared = 3.550 a0 = 0.01827
+        // gues[0] = 0.05 -> chi-squared = 3.491 a0 = 0.102
+        // gues[0] = 0.5 -> chi-squared = 3.558 a0 = 0.5
+        // gues[0] = 1.0 -> chi-squared = 3.550 a0 = 0.9817
+        testMode = true;
+        testCase = CHEBYQUAD;
+        nPts = 8;
+        param = 1;
+        gues = new double[param];
+        gues[0] = 1.0;
+        bounds = 1; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        bl[0] = 0.0;
+        bu[0] = 1.0;
+        driverCalls();
+        // Below is an example to fit the Chebyquad function with 8 parameters and 8 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Chebyquad function with 8 parameters and 8 points\n");
+        Preferences.debug("Correct chi-squared = 3.51687E-3\n");
+        testMode = true;
+        testCase = CHEBYQUAD;
+        nPts = 8;
+        param = 8;
+        gues = new double[param];
+        for (i = 1; i <= param; i++) {
+            gues[i-1] = i/(param + 1.0);
+        }
+        bounds = 1; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        for (i = 0; i < param; i++) {
+            bl[i] = 0.0;
+            bu[i] = 1.0;
+        }
+        driverCalls();
+        // Below is an example to fit the Chebyquad function with 9 parameters and 9 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Chebyquad function with 9 parameters and 9 points\n");
+        Preferences.debug("Correct chi-squared = 0.0\n");
+        // Actual chi-squared values were 8.213E-17, 7.413E-17, 8.016E-17, and 6.340E-17
+        testMode = true;
+        testCase = CHEBYQUAD;
+        nPts = 9;
+        param = 9;
+        gues = new double[param];
+        for (i = 1; i <= param; i++) {
+            gues[i-1] = i/(param + 1.0);
+        }
+        bounds = 1; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        for (i = 0; i < param; i++) {
+            bl[i] = 0.0;
+            bu[i] = 1.0;
+        }
+        driverCalls();
+        // Below is an example to fit the Chebyquad function with 10 parameters and 10 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Chebyquad function with 10 parameters and 10 points\n");
+        Preferences.debug("Correct chi-squared = 6.50395E-3\n");
+        testMode = true;
+        testCase = CHEBYQUAD;
+        nPts = 10;
+        param = 10;
+        gues = new double[param];
+        for (i = 1; i <= param; i++) {
+            gues[i-1] = i/(param + 1.0);
+        }
+        bounds = 1; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        for (i = 0; i < param; i++) {
+            bl[i] = 0.0;
+            bu[i] = 1.0;
+        }
         driverCalls();
     }
     
@@ -2639,11 +2740,27 @@ public abstract class NLConstrainedEngine {
                 	break;
                 case CHEBYQUAD:
                 	if ((ctrl == -1) || (ctrl == 1)) {
-                		
+                		double chebySum;
+                	    for (i = 1; i <= nPts; i++) {
+                	        chebySum = 0.0;
+                	        for (int j = 0; j < param; j++) {
+                	        	chebySum += shiftedChebyshev(a[j],i);
+                	        }
+                	        if ((i % 2) == 1) {
+                	        	residuals[i-1] = chebySum/param;
+                	        }
+                	        else {
+                	        	residuals[i-1] = chebySum/param + 1.0/(i*i - 1.0);
+                	        }
+                	    }
                 	}
                 	else if (ctrl == 2) {
                 		if (analyticalJacobian) {
-                			
+	                		for (i = 1; i <= nPts; i++) {
+	                		    for (int j = 0; j < param; j++) {
+	                		    	covarMat[i-1][j] = shiftedChebyshevDerivative(a[j],i)/param;
+	                		    }
+	                		}
                 		} // if (analyticalJacobian)
                 		else {
                 			// If the user wishes to calculate the Jacobian numerically
@@ -2660,6 +2777,7 @@ public abstract class NLConstrainedEngine {
         }
         
         // Shifted Chebyshev polynomial
+        // Used over the half interval 0 <= x <= 1 instead of the full Chebyshev interval of -1 <= x <= 1
         private double shiftedChebyshev(double x, int n) {
         	// T*n+1(x) = (4x-2)*T*n(x) - T*n-1(x), where T* represents a shifted Chebyshev polynomial
         	double sc = 1.0;
