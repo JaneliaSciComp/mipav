@@ -108,8 +108,12 @@ public abstract class LevmarBoxConstraint {
     private String pathTaken;
     private String charTaken;
     private String path10Info = null;
+    
+    private double EPSILON = 1.0E-12;
 	
-	double DOUBLE_EPSILON;
+    //DOUBLE_EPSILON = 2.220446049250313E-16
+    // smallest such that 1.0+DBL_EPSILON != 1.0
+    private double DOUBLE_EPSILON;
 	
 	private boolean outputMes = false;
 	
@@ -118,6 +122,8 @@ public abstract class LevmarBoxConstraint {
     private boolean  analyticalJacobian = true;
     
     private int testCase;
+    
+    private final int ROSENBROCK = 1;
     
     private final int DRAPER24D = 0;
     
@@ -142,7 +148,7 @@ public abstract class LevmarBoxConstraint {
     	// Incorrect with statement no further reduction is possible.  Restart with increased mu.
     	info = new double[10];
     	outputMes = true;
-    	Preferences.debug("Draper problem 24D y = a0 - a1*(a2**x) constrained\n");
+    	/*Preferences.debug("Draper problem 24D y = a0 - a1*(a2**x) constrained\n");
     	Preferences.debug("Correct answer is a0 = 72.4326, a1 = 28.2519, a2 = 0.5968\n");
     	testMode = true;
     	testCase = DRAPER24D;
@@ -479,7 +485,7 @@ public abstract class LevmarBoxConstraint {
         lb[2] = 100.0;
         ub[2] = 3000.0;                                             
         driver();
-        dumpTestResults();
+        dumpTestResults();*/
         // Below is an example to fit y = a0 + a1*exp(-a3*x) + a2*exp(-a4*x)
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Osborne 1 function unconstrained\n");
@@ -514,7 +520,7 @@ public abstract class LevmarBoxConstraint {
         // Below is an example to fit y = a0*exp(-a4*x) + a1*exp(-a5*(x-a8)**2) 
         // + a2*exp(-a6*(x-a9)**2) + a3*exp(-a7*(x-a10)**2)
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Osborne 2 function unconstrained\n");
+        /*Preferences.debug("Osborne 2 function unconstrained\n");
         Preferences.debug("y = a0*exp(-a4*x) + a1*exp(-a5*(x-a8)**2) \n");
         Preferences.debug("    + a2*exp(-a6*(x-a9)**2) + a3*exp(-a7*(x-a10)**2)\n");
         Preferences.debug("Correct answer has a0 = 1.3100, a1 = 0.43155, a2 = 0.63366, a3 = 0.59943\n");
@@ -555,6 +561,23 @@ public abstract class LevmarBoxConstraint {
         
         driver();
         dumpTestResults();
+        Preferences.debug("Rosenbrock function unconstrained\n");
+        Preferences.debug("Correct answer has param[0] = 1.0 param[1] = 1.0\n");
+        testMode = true;
+        testCase = ROSENBROCK;
+        nPts = 2;
+        paramNum = 2;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        param = new double[paramNum];
+        param[0] = -1.2;
+        param[1] = 1.0;
+        
+        lb = null;
+        ub = null;
+        
+        driver();
+        dumpTestResults();*/
     }
 	
 	public LevmarBoxConstraint(int x) {
@@ -623,6 +646,10 @@ public abstract class LevmarBoxConstraint {
                            + param[2]*Math.exp(-param[6]*(xSeries[i] - param[9])*(xSeries[i] - param[9]))
                            + param[3]*Math.exp(-param[7]*(xSeries[i] - param[10])*(xSeries[i] - param[10]));
                 }
+		    	break;
+		    case ROSENBROCK:
+		    	hx[0] = 10.0*(param[1] - param[0]*param[0]);
+        	    hx[1] = 1.0 - param[0];
 		    	break;
 		}
 	}
@@ -704,6 +731,13 @@ public abstract class LevmarBoxConstraint {
                     jac[j++] = 2.0*param[3]*param[7]*(xSeries[i] - param[10])
                                       *Math.exp(-param[7]*(xSeries[i] - param[10])*(xSeries[i] - param[10]));
                 }
+	        	break;
+	        case ROSENBROCK:
+	        	j = 0;
+        		jac[j++] = -20.0*param[0];
+    		    jac[j++] = 10.0;
+    		    jac[j++] = -1.0;
+    		    jac[j++] = 0.0;
 	        	break;
 	    }
 	}
@@ -1061,7 +1095,7 @@ public abstract class LevmarBoxConstraint {
 	              break;
 	            }
 
-	            if(Dp_L2>=(p_L2+eps2)/(DOUBLE_EPSILON*DOUBLE_EPSILON)){ /* almost singular */
+	            if(Dp_L2>=(p_L2+eps2)/(EPSILON*EPSILON)){ /* almost singular */
 	              stop=4;
 	              break;
 	            }
