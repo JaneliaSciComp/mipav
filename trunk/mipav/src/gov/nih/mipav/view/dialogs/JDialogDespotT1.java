@@ -169,6 +169,8 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
 	private JCheckBox bottomRightBox;
 	private ButtonGroup thresholdGroup;
 	private JPanel totalThreshold;
+	private JPanel generalThresholdPanel;
+	private JTabbedPane tab;
     
     /**
      * Empty constructor needed for dynamic instantiation.
@@ -243,7 +245,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
             //if (!showHIFIDialog()) return;
         }
         else {
-            //if (!showConventionaltre1Dialog()) return;
+            //if (!showConventionaltreT1Dialog()) return;
         }
     
         System.out.println("number of flip angles: "+Nsa);
@@ -387,9 +389,9 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         Nti = scriptParameters.getParams().getInt("Nti");
         maxAngle = scriptParameters.getParams().getDouble("max_Angle");
         smoothB1Field = scriptParameters.getParams().getBoolean("smooth_B1_Field");
-        performStraightTreT1 = scriptParameters.getParams().getBoolean("perform_Straight_tre1");
-        performTreT1withPreCalculatedB1Map = scriptParameters.getParams().getBoolean("perform_tre1_with_PreCalculatedB1Map");
-        performTreT1HIFI = scriptParameters.getParams().getBoolean("perform_tre1_HIFI");
+        performStraightTreT1 = scriptParameters.getParams().getBoolean("perform_Straight_treT1");
+        performTreT1withPreCalculatedB1Map = scriptParameters.getParams().getBoolean("perform_treT1_with_PreCalculatedB1Map");
+        performTreT1HIFI = scriptParameters.getParams().getBoolean("perform_treT1_HIFI");
         doubleInversion = scriptParameters.getParams().getBoolean("double_Inversion");
         singleInversion = scriptParameters.getParams().getBoolean("single_Inversion");
         geScanner = scriptParameters.getParams().getBoolean("ge_Scanner");
@@ -486,9 +488,9 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         scriptParameters.getParams().put(ParameterFactory.newParameter("Nti", Nti));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_Angle", maxAngle));
         scriptParameters.getParams().put(ParameterFactory.newParameter("smooth_B1_Field", smoothB1Field));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("perform_Straight_tre1", performStraightTreT1));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("perform_tre1_with_PreCalculatedB1Map", performTreT1withPreCalculatedB1Map));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("perform_tre1_HIFI", performTreT1HIFI));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("perform_Straight_treT1", performStraightTreT1));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("perform_treT1_with_PreCalculatedB1Map", performTreT1withPreCalculatedB1Map));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("perform_treT1_HIFI", performTreT1HIFI));
         scriptParameters.getParams().put(ParameterFactory.newParameter("double_Inversion", doubleInversion));
         scriptParameters.getParams().put(ParameterFactory.newParameter("single_Inversion", singleInversion));
         scriptParameters.getParams().put(ParameterFactory.newParameter("ge_Scanner", geScanner));  
@@ -544,17 +546,29 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
     private class ChoiceListener implements ActionListener {
 		
 		private void varSet() {
+			
 			if (doConvTre.isSelected()) {
 				//showHIFIDialog();
 				performStraightTreT1 = true;
 				performTreT1withPreCalculatedB1Map = false;
 	            performTreT1HIFI = false;
+	            setUI();
+	            
+	            tab.removeAll();
+	            buildConventionalTabs();
+	            tab.updateUI();
+	            
 	        }
 	        if (doHifiTre.isSelected()) {
 	        	//showConventionalDialog();
 	        	performTreT1HIFI = true;
 	        	performStraightTreT1 = false;
 	            performTreT1withPreCalculatedB1Map = false;
+	            setUI();
+	            
+	            tab.removeAll();
+	            buildHIFITabs();
+	            tab.updateUI();
 	        }
 		}
 
@@ -566,17 +580,20 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
     
     private class ThresholdChoiceListener implements ActionListener {
     	private void varSet() {
-			if (doConvTre.isSelected()) {
-				//showHIFIDialog();
-				performStraightTreT1 = true;
-				performTreT1withPreCalculatedB1Map = false;
-	            performTreT1HIFI = false;
-	        }
-	        if (doHifiTre.isSelected()) {
-	        	//showConventionalDialog();
-	        	performTreT1HIFI = true;
-	        	performStraightTreT1 = false;
-	            performTreT1withPreCalculatedB1Map = false;
+			if (hardCheckBox.isSelected()) {
+				setSmartThresholdUI();
+				System.out.println("Hard Threshold");
+				generalThresholdPanel.removeAll();
+				hardThreshold = buildHardThresholdDialog();
+				generalThresholdPanel.add(hardThreshold);
+				generalThresholdPanel.updateUI();
+	        } else if (smartCheckBox.isSelected()) {
+	        	setHardThresholdUI();
+	        	System.out.println("Smart Threshold");
+	        	generalThresholdPanel.removeAll();
+				smartThreshold = buildSmartThresholdDialog();
+				generalThresholdPanel.add(smartThreshold);
+				generalThresholdPanel.updateUI();
 	        }
 		}
 
@@ -622,42 +639,8 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         gbc.weighty = 0;
         add(methodPanel, gbc);
        
-        JTabbedPane tab = new JTabbedPane();
-       
-        //construct Hifi, do not show
-        hifiPanel = buildHIFIDialog();
-        
-        //construct general, show if performStraighttre1
-        straightPanel = buildConventionalTreT1Dialog();
-        
-        //hifi panels for next section
-        spgrPanel = buildSPGRDialog();
-        irspgrGEPanel = buildIRSPGRDialogGE();
-        irspgrSiemensPanel = buildIRSPGRDialogSiemens();
-        
-        //fit these HIFI elements into one panel, with either/or siemens
-        JPanel hifiSuper = new JPanel();
-        LayoutManager hifiLayout = new BoxLayout(hifiSuper, BoxLayout.Y_AXIS);
-        hifiSuper.add(spgrPanel, hifiLayout);
-        hifiSuper.add(irspgrGEPanel, hifiLayout);
-        hifiSuper.add(irspgrSiemensPanel, hifiLayout);
-        
-        //conventional panels for next section
-        treLong = buildTreT1LongDialog();
-        
-        //specifics section
-        convSpec = buildTreT1SpecificsDialog();
-        hifiSpec = buildTreT1HIFISpecificsDialog();
-
-        //threshold
-        totalThreshold = buildThresholdDialog();
-        hardThreshold = buildHardThresholdDialog();
-        smartThreshold = buildSmartThresholdDialog();
-        
-        tab.add(straightPanel, "1: General");
-        tab.add(treLong, "2: Images");
-        tab.add(convSpec, "3: Output ");
-        tab.add(totalThreshold, "4: Threshold");
+        tab = new JTabbedPane();
+        buildConventionalTabs();
         
         //add both general and hifi at same location
         gbc.gridx = 0;
@@ -677,6 +660,64 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         pack();
         setModal(true);
         setVisible(true);
+    }
+    
+    private void buildConventionalTabs() {
+        
+        //construct general, show if performStraighttreT1
+        straightPanel = buildConventionalTreT1Dialog();
+        
+        //conventional panels for next section
+        treLong = buildTreT1LongDialog();
+        
+        //specifics section
+        convSpec = buildTreT1SpecificsDialog();
+
+        //threshold
+        totalThreshold = buildThresholdDialog();
+        
+        
+        tab.add(straightPanel, "1: General");
+        tab.add(treLong, "2: Images");
+        tab.add(convSpec, "3: Output ");
+        tab.add(totalThreshold, "4: Threshold");
+    }
+    
+    private void buildHIFITabs() {
+        
+        //construct Hifi, do not show
+        hifiPanel = buildHIFIDialog();
+        
+        //hifi panels for next section
+        spgrPanel = buildSPGRDialog();
+        
+        
+        irspgrGEPanel = buildIRSPGRDialogGE();
+        irspgrSiemensPanel = buildIRSPGRDialogSiemens();
+        
+        //fit these HIFI elements into one panel, with either/or siemens
+        JPanel hifiSuper = new JPanel();
+        LayoutManager hifiLayout = new BoxLayout(hifiSuper, BoxLayout.Y_AXIS);
+        hifiSuper.add(spgrPanel, hifiLayout);
+        hifiSuper.add(irspgrGEPanel, hifiLayout);
+        hifiSuper.add(irspgrSiemensPanel, hifiLayout);
+        
+        //specifics section
+        hifiSpec = buildTreT1HIFISpecificsDialog();
+
+        //threshold
+        totalThreshold = buildThresholdDialog();
+        
+        
+        tab.add(hifiPanel, "1: General");
+        tab.add(spgrPanel, "2: Images");
+        if(geScanner) {
+        	tab.add(irspgrGEPanel, "3: GE");
+        } else {
+        	tab.add(irspgrSiemensPanel, "3: Siemens");
+        }
+        tab.add(hifiSpec, "4: Output ");
+        tab.add(totalThreshold, "5: Threshold");
     }
     
     public JPanel buildHIFIDialog() {
@@ -705,7 +746,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
     
     public JPanel buildConventionalTreT1Dialog() {
         JPanel panel = new JPanel();
-        panel.setBorder(MipavUtil.buildTitledBorder("tre1: General Information"));
+        panel.setBorder(MipavUtil.buildTitledBorder("treT1: General Information"));
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(panelLayout);
         
@@ -720,7 +761,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         JPanel panel = new JPanel();
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(panelLayout);
-        panel.setBorder(MipavUtil.buildTitledBorder("tre1-HIFI: SPGR Image Information"));
+        panel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: SPGR Image Information"));
         
         spgrImageComboBoxAr = new JComboBox[Nsa];
         flipAngleAr = new JTextField[Nsa];
@@ -741,7 +782,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         JPanel panel = new JPanel();
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(panelLayout);
-        panel.setBorder(MipavUtil.buildTitledBorder("tre1-HIFI: IR-SPGR GE Image Information"));
+        panel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR GE Image Information"));
         
         irspgrCombo = new JComboBox[Nti];
         irspgrField = new JTextField[Nti];
@@ -786,7 +827,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         JPanel panel = new JPanel();
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(panelLayout);
-        panel.setBorder(MipavUtil.buildTitledBorder("tre1-HIFI: IR-SPGR Siemens Image Information"));
+        panel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR Siemens Image Information"));
         
         irspgrCombo = new JComboBox[Nti];
         irspgrField = new JTextField[Nti];
@@ -895,25 +936,29 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         methodPanel.setLayout(methodLayout);
         methodPanel.setBorder(MipavUtil.buildTitledBorder("Thresholding method"));
         
-        ActionListener c = new ThresholdChoiceListener();
-        doConvTre.addActionListener(c);
-        doHifiTre.addActionListener(c);
-        
         smartCheckBox = guiBuilder.buildRadioButton("Use Smart Thresholding", useSmartThresholding);
         hardCheckBox = guiBuilder.buildRadioButton("Use Hard Thresholding", useHardThresholding);
-        
+       
         thresholdGroup = new ButtonGroup();
         thresholdGroup.add(smartCheckBox);
         thresholdGroup.add(hardCheckBox);
+        smartCheckBox.setSelected(true);
         
-        methodPanel.add(smartCheckBox);
+        ActionListener c = new ThresholdChoiceListener();
+        smartCheckBox.addActionListener(c);
+        hardCheckBox.addActionListener(c);
+
+        methodPanel.add(smartCheckBox, methodLayout);
         methodPanel.add(hardCheckBox, methodLayout);
         
         panel.add(methodPanel, panelLayout);
         
-        hardThreshold = buildHardThresholdDialog();
+        generalThresholdPanel = new JPanel();
         
-        panel.add(hardThreshold, panelLayout);
+        smartThreshold = buildSmartThresholdDialog();
+        generalThresholdPanel.add(smartThreshold);
+        
+        panel.add(generalThresholdPanel, panelLayout);
         
         return panel;
     }
@@ -923,7 +968,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         JPanel panel = new JPanel();
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(panelLayout);
-        panel.setBorder(MipavUtil.buildTitledBorder("tre1-HIFI: IR-SPGR Image Information"));
+        panel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR Image Information"));
         
         maxT1Field = guiBuilder.buildDecimalField("Maximum Allowable T1:", maxT1);
         maxMoField = guiBuilder.buildDecimalField("Maximum Allowable Mo:", maxMo);
@@ -987,7 +1032,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
     
     private boolean setUI() {
     	//set conventional
-        Nsa = (int) Double.valueOf(spgrNumFA.getText()).doubleValue();
+        /*Nsa = (int) Double.valueOf(spgrNumFA.getText()).doubleValue();
     	
         //set Hifi
         Nsa = (int) Double.valueOf(spgrNumFAHifi.getText()).doubleValue();
@@ -1080,24 +1125,36 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         invertT1toR1 = showR1Map.isSelected();
         if (Nsa > 2) {
             useWeights = leastSquaresCheck.isSelected();
-        }
+        }*/
+        
+        
         useSmartThresholding = smartCheckBox.isSelected();
+        if(useSmartThresholding) {
+        	setSmartThresholdUI();
+        }
         useHardThresholding = hardCheckBox.isSelected();
+        if(useHardThresholding) {
+        	setHardThresholdUI();
+        }
         if (useSmartThresholding) {
             useHardThresholding = false;
         }
         
-        //hard threshold
+        return true;
+    }
+    
+    private void setHardThresholdUI() {
+    	//hard threshold
         hardNoiseThreshold = Float.valueOf(hardNoiseField.getText()).floatValue();
-        
-        //smart noise threshold
+    }
+    
+    private void setSmartThresholdUI() {
+    	//smart noise threshold
         noiseScale = Float.valueOf(smartNoiseField.getText()).floatValue();
         upperLeftCorner = topLeftBox.isSelected();
         upperRightCorner = topRightBox.isSelected();
         lowerLeftCorner = bottomLeftBox.isSelected();
         lowerRightCorner = bottomRightBox.isSelected();
-        
-        return true;
     }
     
     private boolean validateUI() {
@@ -1399,9 +1456,9 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
             table.put(new ParameterDouble("max_Angle", maxAngle));
             
             table.put(new ParameterBoolean("smooth_B1_Field", smoothB1Field));
-            table.put(new ParameterBoolean("perform_Straight_tre1", performStraightTreT1));
-            table.put(new ParameterBoolean("perform_tre1_with_PreCalculatedB1Map", performTreT1withPreCalculatedB1Map));
-            table.put(new ParameterBoolean("perform_tre1_HIFI", performTreT1HIFI));
+            table.put(new ParameterBoolean("perform_Straight_treT1", performStraightTreT1));
+            table.put(new ParameterBoolean("perform_treT1_with_PreCalculatedB1Map", performTreT1withPreCalculatedB1Map));
+            table.put(new ParameterBoolean("perform_treT1_HIFI", performTreT1HIFI));
             table.put(new ParameterBoolean("double_Inversion", doubleInversion));
             table.put(new ParameterBoolean("single_Inversion", singleInversion));
             table.put(new ParameterBoolean("ge_Scanner", geScanner));
