@@ -4,7 +4,8 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.ScriptableActionInterface;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -30,7 +31,7 @@ import javax.swing.*;
  * @see      AlgorithmGaussianBlur
  */
 public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
-        implements AlgorithmInterface, DialogDefaultsInterface {
+        implements AlgorithmInterface, DialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -187,7 +188,7 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
             image.clearMask();
 
             if ((diffusionAlgo.isCompleted() == true) && (resultImage != null)) {
-
+            	setComplete(algorithm.isCompleted());
                 // The algorithm has completed and produced a new image to be displayed.
                 updateFileInfo(image, resultImage);
                 resultImage.clearMask();
@@ -669,4 +670,99 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
 
         return true;
     }
+
+
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms.Filters (spatial)");
+            }
+
+            public String getDescription() {
+                return new String("Performs a Anisotropic Diffusion.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Performs a Anisotropic Diffusion.");
+            }
+
+            public String getShortLabel() {
+                return new String("AnisotropicDiffusion");
+            }
+
+            public String getLabel() {
+                return new String("Anisotropic Diffusion");
+            }
+
+            public String getName() {
+                return new String("Anisotropic Diffusion");
+            }
+        };
+    }
+
+	@Override
+	public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+        
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterList(AlgorithmParameters.SIGMAS, Parameter.PARAM_FLOAT, "1.0,1.0,1.0"));
+            table.put(new ParameterInt(AlgorithmParameters.NUM_ITERATIONS, 10));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D, true));
+            table.put(new ParameterBoolean(AlgorithmParameters.SIGMA_DO_Z_RES_CORRECTION, true));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, true));
+            table.put(new ParameterFloat("diffusion_k", 15));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+
+	}
+
+	@Override
+	public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+
+	}
+
+	@Override
+	public String getOutputImageName(String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            if (getResultImage() != null) {
+                // algo produced a new result image
+                return getResultImage().getImageName();
+            } else {
+                // algo was done in place
+                return image.getImageName();
+            }
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+
+	}
+
+	@Override
+	public boolean isActionComplete() {
+        return isComplete();
+
+	}
 }

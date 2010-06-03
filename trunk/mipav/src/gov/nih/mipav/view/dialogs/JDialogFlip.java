@@ -24,7 +24,7 @@ import javax.swing.*;
  * @version  1.0 July 17, 2000
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInterface {
+public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInterface, ScriptableActionInterface, ActionDiscovery {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -170,7 +170,7 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
                 insertScriptLine();
             }
         }
-
+        setComplete(algorithm.isCompleted());
         flipAlgo.finalize();
         flipAlgo = null;
 
@@ -191,7 +191,6 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
             // notify this object when it has completed of failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             flipAlgo.addListener(this);
-
             
             createProgressBar(image.getImageName(), flipAlgo);
             
@@ -202,14 +201,16 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
             // "locked - " image name so as to indicate that the image is now read/write locked!
             // The image frames are disabled and then unregisted from the userinterface until the
             // algorithm has completed.
-            Vector imageFrames = image.getImageFrameVector();
-            titles = new String[imageFrames.size()];
-
-            for (int i = 0; i < imageFrames.size(); i++) {
-                titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-                ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+            if (image.getImageFrameVector() != null){
+	            Vector imageFrames = image.getImageFrameVector();
+	            titles = new String[imageFrames.size()];
+	
+	            for (int i = 0; i < imageFrames.size(); i++) {
+	                titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+	                ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+	                ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+	                userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+	            }
             }
 
             if (isRunInSeparateThread()) {
@@ -280,16 +281,15 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
         parentFrame = image.getParentFrame();
         
         String axisn = scriptParameters.getParams().getString("flip_axis");
-        if (axisn.equals("X")) {
+        if (axisn.toUpperCase().equals("X")) {
             flipAxis = AlgorithmFlip.X_AXIS;
-        } else if (axisn.equals("Y")) {
+        } else if (axisn.toUpperCase().equals("Y")) {
             flipAxis = AlgorithmFlip.Y_AXIS;
-        } else if (axisn.equals("Z")) {
+        } else if (axisn.toUpperCase().equals("Z")) {
         	flipAxis = AlgorithmFlip.Z_AXIS;
         } else {
             throw new ParameterException("flip_axis", "Illegal axis parameter: " + axisn);
         }
-        
         axisn = scriptParameters.getParams().getString("flip_object");
         if(axisn.equals("image")) {
             flipObject = AlgorithmFlip.IMAGE;
@@ -300,7 +300,7 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
         if(axisn.equals("image_and_voi")) {
         	flipObject = AlgorithmFlip.IMAGE_AND_VOI;
         }
-        
+
         axisn = scriptParameters.getParams().getString("orientation_origin");
         if (axisn != null) {
             if (axisn.equals("change")) {
@@ -482,4 +482,103 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
         }
         return true;
     }
+
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Utilities");
+            }
+
+            public String getDescription() {
+                return new String("Flips an image.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Flips an image. For flip_axis, choose either X, Y or Z. For " +
+                		"orientation choose either preserve or change.");
+            }
+
+            public String getShortLabel() {
+                return new String("Flip");
+            }
+
+            public String getLabel() {
+                return new String("Flip Image");
+            }
+
+            public String getName() {
+                return new String("Flip Image");
+            }
+        };
+    }
+
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterString("flip_axis", "X"));
+            table.put(new ParameterString("flip_object", "image"));
+            table.put(new ParameterString("orientation_origin", "preserve"));
+            } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+                return image.getImageName();
+        }
+
+
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
+    }
+
 }

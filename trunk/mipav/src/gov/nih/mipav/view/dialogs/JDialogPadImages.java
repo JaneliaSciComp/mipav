@@ -6,6 +6,7 @@ import gov.nih.mipav.util.MipavMath;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmAddMargins;
 import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.ScriptableActionInterface;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -25,7 +26,7 @@ import javax.swing.*;
  * 
  * @author Ruida Cheng
  */
-public class JDialogPadImages extends JDialogScriptableBase implements AlgorithmInterface {
+public class JDialogPadImages extends JDialogScriptableBase implements AlgorithmInterface, ScriptableActionInterface, ActionDiscovery {
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 4451162492289524768L;
@@ -158,6 +159,7 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
                 } else if ( (padSlicesAlgo.isCompleted() == false) && (resultImage != null)) {
 
                     // algorithm failed but result image still has garbage
+                	
                     resultImage.disposeLocal(); // clean up memory
                     resultImage = null;
                     System.gc();
@@ -203,7 +205,7 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
         if (algorithm.isCompleted()) {
             insertScriptLine();
         }
-
+        setComplete(algorithm.isCompleted());
         padSlicesAlgo.finalize();
         padSlicesAlgo = null;
         dispose();
@@ -508,5 +510,99 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
 
         return true;
     }
+
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Utilities.Slice tools");
+            }
+
+            public String getDescription() {
+                return new String("Pads an Image");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Creates the dialog to pad blank images to an active image. " +
+                		"Dialog asks the user how to pad the blank images, such as padding to " +
+                		"the front or back of the image, half to front and half to back " +
+                		"of the image. It gives options to remove or to cancel.");
+            }
+
+            public String getShortLabel() {
+                return new String("Pad_power_of_2");
+            }
+
+            public String getLabel() {
+                return new String("Pad Slices to power of 2");
+            }
+
+            public String getName() {
+                return new String("Pad Slices to power of 2");
+            }
+        };
+    }
+
+
+	@Override
+	public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+        
+
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
+            table.put(new ParameterInt("padding_mode", 0));
+            
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+
+	}
+
+	@Override
+	public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+
+	}
+
+	@Override
+	public String getOutputImageName(String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            if (getResultImage() != null) {
+                // algo produced a new result image
+                return getResultImage().getImageName();
+            } else {
+                // algo was done in place
+                return image.getImageName();
+            }
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+
+	}
+
+	@Override
+	public boolean isActionComplete() {
+        return isComplete();
+	}
 
 }
