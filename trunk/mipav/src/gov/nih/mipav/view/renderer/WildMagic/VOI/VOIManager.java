@@ -889,7 +889,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
     public boolean isActive()
     {
-        return (m_bDrawVOI || m_bPointer);
+        return (m_bDrawVOI || m_kParent.getPointerButton().isSelected() );
     }
 
 
@@ -1076,7 +1076,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             return;
         }
         m_kParent.setActive(this);
-        if ( m_bPointer )
+        if ( m_kParent.getPointerButton().isSelected() && !m_bDrawVOI )
         {
             showSelectedVOI( kEvent.getX(), kEvent.getY() );
         }
@@ -1108,7 +1108,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         m_kParent.setActive(this);
 
         if (kEvent.getButton() == MouseEvent.BUTTON1) {
-            if ( m_bPointer )
+            if ( m_kParent.getPointerButton().isSelected() && !m_bDrawVOI )
             {    
                 if ( m_iNearStatus == NearPoint )
                 {
@@ -1230,7 +1230,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
 
 
-        if ( !kEvent.isShiftDown() && !m_bPointer )
+        if ( !kEvent.isShiftDown() && /*!m_bPointer */ m_bDrawVOI )
         {
             m_kParent.setDefaultCursor( );
             if ( m_kCurrentVOI != null )
@@ -1262,8 +1262,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         Vector3f kTemp = new Vector3f( kScreenMin );
         kScreenMin.Min( kScreenMax );
         kScreenMax.Max( kTemp );
-        if ( m_fMouseX < kScreenMin.X || m_fMouseX > kScreenMax.X ||
-                m_fMouseY < kScreenMin.Y || m_fMouseY > kScreenMax.Y )
+       
+        if ( !kScreenMin.equals(kScreenMax) && 
+                (m_fMouseX < kScreenMin.X || m_fMouseX > kScreenMax.X ||
+                 m_fMouseY < kScreenMin.Y || m_fMouseY > kScreenMax.Y )  )
         {
             return false;
         }
@@ -3622,7 +3624,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         {
             createVOI( kEvent.getX(), kEvent.getY() );
         } 
-        else if ( m_bPointer )
+        else if ( m_kParent.getPointerButton().isSelected() &&  !m_bDrawVOI )
         {
             if ( m_iNearStatus == NearPoint )
             {
