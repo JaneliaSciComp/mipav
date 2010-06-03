@@ -9,7 +9,7 @@ import gov.nih.mipav.view.dialogs.JDialogDespotT2;
 
 import java.io.IOException;
 
-public class AlgorithmDespotT2 extends AlgorithmBase {
+public class AlgorithmDespotT2 extends AlgorithmTProcess {
 
     private double[] despotFA_phase0;
     private double[] despotFA_phase180;
@@ -1182,7 +1182,6 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
         
         float[][] boField, moField, t2Field, r2Field;
         double[][][] t2Values, moValues, r2Values, boValues;
-        double[][] Gaussian;
         double smoothedBo;
         
         double[] optimization, initialGuess;
@@ -1272,35 +1271,6 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
             r2ResultStack = nearCloneImage(image, r2ResultStack);
             boResultStack = nearCloneImage(image, boResultStack);
         }
-        
-        Gaussian = new double[5][5];
-        
-        // define the Gaussian kernel
-        Gaussian[0][0] = 0;
-        Gaussian[0][1] = 0;
-        Gaussian[0][2] = 1;
-        Gaussian[0][3] = 0;
-        Gaussian[0][4] = 0;
-        Gaussian[1][0] = 0;
-        Gaussian[1][1] = 2;
-        Gaussian[1][2] = 4;
-        Gaussian[1][3] = 2;
-        Gaussian[1][4] = 0;
-        Gaussian[2][0] = 1;
-        Gaussian[2][1] = 4;
-        Gaussian[2][2] = 6;
-        Gaussian[2][3] = 4;
-        Gaussian[2][4] = 1;
-        Gaussian[3][0] = 0;
-        Gaussian[3][1] = 2;
-        Gaussian[3][2] = 4;
-        Gaussian[3][3] = 2;
-        Gaussian[3][4] = 0;
-        Gaussian[4][0] = 0;
-        Gaussian[4][1] = 0;
-        Gaussian[4][2] = 1;
-        Gaussian[4][3] = 0;
-        Gaussian[4][4] = 0;
 
         String prefix = new String();
         // Perform an initial T2 Calculation to get the rough Bo field
@@ -2272,7 +2242,7 @@ public void twoPDownHillSimplex(double[] optimization, double[] initialGuess, do
     }
     
     
-    public void smoothField(double[][] field, float[][] fieldValues, int width, int height, int k, double[][] Gaussian) {
+    public void smoothField(double[][] field, float[][] fieldValues, int width, int height, int k) {
         int x, y, p1, p2;
         int pixelIndex;
         double smoothedValue;
@@ -2303,7 +2273,7 @@ public void twoPDownHillSimplex(double[] optimization, double[] initialGuess, do
         return;
     }
     
-    public void smoothFieldB(double[][] field, int width, int height, double[][] Gaussian) {
+    public void smoothFieldB(double[][] field, int width, int height) {
         int x, y, p1, p2;
         double smoothedValue;
         double[][] smoothedField;
@@ -2321,7 +2291,9 @@ public void twoPDownHillSimplex(double[] optimization, double[] initialGuess, do
                 
                 smoothedValue = 0.00;
                 for (p1=0; p1<5; p1++) {
-                    for (p2=0; p2<5; p2++) smoothedValue += field[x-2+p1][y-2+p2]; //Gaussian[p1][p2]*;
+                    for (p2=0; p2<5; p2++) {
+                    	smoothedValue += field[x-2+p1][y-2+p2]; //Gaussian[p1][p2]*;
+                    }
                 }
                 smoothedValue = smoothedValue / 34.00;
                 smoothedField[x][y] = smoothedValue;
@@ -2401,6 +2373,18 @@ public void twoPDownHillSimplex(double[] optimization, double[] initialGuess, do
 
 	public ModelImage getBoResultStack() {
 		return boResultStack;
+	}
+
+	@Override
+	protected void computeProcessors() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected void displayImages() {
+		// TODO Auto-generated method stub
+		
 	}
 }
 
