@@ -52,10 +52,14 @@ public abstract class AlgorithmTProcess extends AlgorithmBase {
     
     public AlgorithmTProcess(ModelImage destImage, ModelImage srcImage) {
         super(destImage, srcImage);
+        
+        genericInit();
     }
 
     public AlgorithmTProcess() {
         super();
+        
+        genericInit();
     }
 
     /**
@@ -93,7 +97,37 @@ public abstract class AlgorithmTProcess extends AlgorithmBase {
 
     protected abstract void displayImages();
 
-    /**
+    private void genericInit() {
+    	Gaussian = new double[5][5];
+        
+        Gaussian[0][0] = 0;
+        Gaussian[0][1] = 0;
+        Gaussian[0][2] = 1;
+        Gaussian[0][3] = 0;
+        Gaussian[0][4] = 0;
+        Gaussian[1][0] = 0;
+        Gaussian[1][1] = 2;
+        Gaussian[1][2] = 4;
+        Gaussian[1][3] = 2;
+        Gaussian[1][4] = 0;
+        Gaussian[2][0] = 1;
+        Gaussian[2][1] = 4;
+        Gaussian[2][2] = 6;
+        Gaussian[2][3] = 4;
+        Gaussian[2][4] = 1;
+        Gaussian[3][0] = 0;
+        Gaussian[3][1] = 2;
+        Gaussian[3][2] = 4;
+        Gaussian[3][3] = 2;
+        Gaussian[3][4] = 0;
+        Gaussian[4][0] = 0;
+        Gaussian[4][1] = 0;
+        Gaussian[4][2] = 1;
+        Gaussian[4][3] = 0;
+        Gaussian[4][4] = 0;
+	}
+
+	/**
      * This method saves an image volume into temporary storage for later loading
      * by <code>loadResultData()</code>
      * 

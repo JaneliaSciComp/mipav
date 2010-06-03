@@ -251,34 +251,6 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
     private void init() {
         computeProcessors();
         
-        Gaussian = new double[5][5];
-        
-        Gaussian[0][0] = 0;
-        Gaussian[0][1] = 0;
-        Gaussian[0][2] = 1;
-        Gaussian[0][3] = 0;
-        Gaussian[0][4] = 0;
-        Gaussian[1][0] = 0;
-        Gaussian[1][1] = 2;
-        Gaussian[1][2] = 4;
-        Gaussian[1][3] = 2;
-        Gaussian[1][4] = 0;
-        Gaussian[2][0] = 1;
-        Gaussian[2][1] = 4;
-        Gaussian[2][2] = 6;
-        Gaussian[2][3] = 4;
-        Gaussian[2][4] = 1;
-        Gaussian[3][0] = 0;
-        Gaussian[3][1] = 2;
-        Gaussian[3][2] = 4;
-        Gaussian[3][3] = 2;
-        Gaussian[3][4] = 0;
-        Gaussian[4][0] = 0;
-        Gaussian[4][1] = 0;
-        Gaussian[4][2] = 1;
-        Gaussian[4][3] = 0;
-        Gaussian[4][4] = 0;
-        
         String testResult = wList[spgrImageIndex[0]].length() > 20 ? wList[spgrImageIndex[0]].substring(0, 19) : wList[spgrImageIndex[0]];
         this.tempDirString = System.getProperty("java.io.tmpdir")+File.separator+testResult+File.separator;
         ViewUserInterface.getReference().getMessageFrame().append("Saving files to: "+tempDirString, ViewJFrameMessage.DEBUG);
