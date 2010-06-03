@@ -2106,11 +2106,11 @@ public class FileVOI extends FileXML {
                     ptIn = (Vector3f) contourVector.elementAt(index);
 
                     // System.err.println("\tScanner coord: " + ptIn);
-                    if ( LPSOrigin != null )
-                    {
-                        MipavCoordinateSystems.scannerToFile(ptIn, ptOut, LPSOrigin, image);
-                    }
-                    else
+                    //if ( LPSOrigin != null )
+                    //{
+                    //    MipavCoordinateSystems.scannerToFile(ptIn, ptOut, LPSOrigin, image);
+                    //}
+                    //else
                     {
                         MipavCoordinateSystems.scannerToFile(ptIn, ptOut, image);                        
                     }

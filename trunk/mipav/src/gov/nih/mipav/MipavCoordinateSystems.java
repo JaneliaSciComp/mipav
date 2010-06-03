@@ -163,10 +163,12 @@ public class MipavCoordinateSystems {
             final float[] afResolutions = kImage.getResolutions(0);
 
             final TransMatrix dicomMatrix = (kImage).getMatrix(); // Gets composite matrix
+
+            Vector3f kScaledInput = new Vector3f(kInput.X * afResolutions[0], kInput.Y * afResolutions[1],
+                    kInput.Z * afResolutions[2]);
             
             // Finally convert the point to axial millimeter DICOM space.
-            dicomMatrix.transformAsPoint3Df(new Vector3f(kInput.X * afResolutions[0], kInput.Y * afResolutions[1],
-                    kInput.Z * afResolutions[2]), kOutput);
+            dicomMatrix.transformAsPoint3Df(kScaledInput, kOutput);
         } else {
 
             final int[] axisOrder = new int[] {0, 1, 2};
@@ -200,7 +202,6 @@ public class MipavCoordinateSystems {
 
         // Returned point represents the current position in coronal, sagittal, axial order (L/R, A/P, I/S axis space)
         kOutput.Add(kOriginLPS);
-
     }
 
     /**
@@ -549,7 +550,7 @@ public class MipavCoordinateSystems {
             // Invert the dicomMatrix Transform
             final TransMatrix dicomMatrix = new TransMatrix( (kImage).getMatrix());
             dicomMatrix.Inverse();
-
+            
             // convert the point from DICOM space
             dicomMatrix.transformAsPoint3Df(new Vector3f(kTemp.X, kTemp.Y, kTemp.Z), kTemp);
 
@@ -840,19 +841,18 @@ public class MipavCoordinateSystems {
         }
 
         final Vector3f kOutput = new Vector3f();
-        kOutput.X = axisFlip[0] ? afLowerRight[axisOrder[0]] : afUpperLeft[axisOrder[0]];
-        kOutput.Y = axisFlip[1] ? afLowerRight[axisOrder[1]] : afUpperLeft[axisOrder[1]];
-        kOutput.Z = axisFlip[2] ? afLowerRight[axisOrder[2]] : afUpperLeft[axisOrder[2]];
+        kOutput.X = afUpperLeft[axisOrder[0]];
+        kOutput.Y = afUpperLeft[axisOrder[1]];
+        kOutput.Z = afUpperLeft[axisOrder[2]];
         
-
-        final TransMatrix dicomMatrix = (kImage).getMatrix(); // Gets composite matrix
-
         if ( (kImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
                 || (kImage.getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
-
-            Vector3f kTemp = new Vector3f();
-            dicomMatrix.transformAsPoint3Df(kOutput, kTemp);
-            kOutput.Copy(kTemp);
+        }
+        else
+        {
+            kOutput.X = axisFlip[0] ? afLowerRight[axisOrder[0]] : afUpperLeft[axisOrder[0]];
+            kOutput.Y = axisFlip[1] ? afLowerRight[axisOrder[1]] : afUpperLeft[axisOrder[1]];
+            kOutput.Z = axisFlip[2] ? afLowerRight[axisOrder[2]] : afUpperLeft[axisOrder[2]];
         }
         return kOutput;
     }
