@@ -21,7 +21,7 @@ import javax.swing.*;
  * Dialog which replaces all occurances of one value in an image with another value. The value replaced may be NaN,
  * -Inf, Inf, or a real number. The replacement value must be a real number.
  */
-public class JDialogReplaceValue extends JDialogScriptableBase implements AlgorithmInterface, ItemListener {
+public class JDialogReplaceValue extends JDialogScriptableBase implements AlgorithmInterface, ItemListener, ActionDiscovery, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -141,7 +141,8 @@ public class JDialogReplaceValue extends JDialogScriptableBase implements Algori
                 } else {
                     image.notifyImageDisplayListeners(null, true);
                 }
-
+             // save the completion status for later
+                setComplete(algoReplace.isCompleted());
                 insertScriptLine();
             }
 
@@ -495,5 +496,112 @@ public class JDialogReplaceValue extends JDialogScriptableBase implements Algori
             this.isRange = true;
         }
     }
+
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Utilities");
+            }
+
+            public String getDescription() {
+                return new String("Replaces pixels within a certain value range");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Replaces pixels within a certain value range");
+            }
+
+            public String getShortLabel() {
+                return new String("ReplacePix");
+            }
+
+            public String getLabel() {
+                return new String("Replace Pixel");
+            }
+
+            public String getName() {
+                return new String("Replace Pixel");
+            }
+        };
+    }
+
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
+            table.put(new ParameterDouble("replace_value", 0));
+            table.put(new ParameterDouble("replace_with_value", 0));
+            table.put(new ParameterString("replace_value_range", ""));
+            } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (displayLoc == 1) {
+                // algo produced a new result image
+                return resultImage.getImageName();
+            } else {
+                // algo was done in place
+                return image.getImageName();
+            }
+        
+    }
+
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
+    }
+
 
 }

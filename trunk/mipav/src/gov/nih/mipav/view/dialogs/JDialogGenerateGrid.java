@@ -33,7 +33,7 @@ import javax.swing.JTextField;
  *
  *
  */
-public class JDialogGenerateGrid extends JDialogScriptableBase {
+public class JDialogGenerateGrid extends JDialogScriptableBase implements ActionDiscovery,ScriptableActionInterface  {
 	
 	private String unitsStr;
 	
@@ -69,7 +69,7 @@ public class JDialogGenerateGrid extends JDialogScriptableBase {
     private ViewUserInterface userInterface;
 
 	
-	   /**
+	 /**
      * Empty constructor needed for dynamic instantiation (used during scripting).
      */
 	public JDialogGenerateGrid() {}
@@ -401,6 +401,8 @@ public class JDialogGenerateGrid extends JDialogScriptableBase {
 
 	@Override
 	protected void setGUIFromParams() {
+		System.out.println("MY NAME IS... " +scriptParameters.retrieveInputImage());
+
 		im = scriptParameters.retrieveInputImage();
 		userInterface = ViewUserInterface.getReference();
 		parentFrame = im.getParentFrame();
@@ -411,13 +413,13 @@ public class JDialogGenerateGrid extends JDialogScriptableBase {
 			
 		
 }
-
+ 
 
 
 
 	@Override
 	protected void storeParamsFromGUI() throws ParserException {
-		scriptParameters.storeInputImage(componentImage.getActiveImage());
+		scriptParameters.storeInputImage(im);
 		scriptParameters.storeOutputImageParams(im, true);
 		try {
 	        scriptParameters.getParams().put(ParameterFactory.newParameter("width", width));
@@ -443,7 +445,7 @@ public class JDialogGenerateGrid extends JDialogScriptableBase {
     public ActionMetadata getActionMetadata() {
         return new MipavActionMetadata() {
             public String getCategory() {
-                return new String("Utilities");
+                return new String("Utilities.Andrew");
             }
 
             public String getDescription() {
@@ -479,9 +481,9 @@ public class JDialogGenerateGrid extends JDialogScriptableBase {
         
         try {
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
-            table.put(new ParameterFloat("width"));
-            table.put(new ParameterFloat("height"));
-            table.put(new ParameterFloat("grid_value"));
+            table.put(new ParameterFloat("width",20));
+            table.put(new ParameterFloat("height",20));
+            table.put(new ParameterFloat("grid_value",1798 ));
             } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
@@ -518,10 +520,8 @@ public class JDialogGenerateGrid extends JDialogScriptableBase {
      */
     public String getOutputImageName(final String imageParamName) {
         if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
-            if (im  != null) {
-                // algo produced a new result image
                 return im.getImageName();
-            }
+
             }
 
         Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);

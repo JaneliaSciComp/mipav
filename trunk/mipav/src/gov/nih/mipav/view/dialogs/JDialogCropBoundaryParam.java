@@ -31,7 +31,7 @@ import javax.swing.*;
  *
  * <p>A new image or replacement of the old image may be selected.</p>
  */
-public class JDialogCropBoundaryParam extends JDialogScriptableBase implements AlgorithmInterface {
+public class JDialogCropBoundaryParam extends JDialogScriptableBase implements AlgorithmInterface, ScriptableActionInterface, ActionDiscovery {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -214,7 +214,7 @@ public class JDialogCropBoundaryParam extends JDialogScriptableBase implements A
                 }
             }
         }
-
+        setComplete(cropAlgo.isCompleted());
         cropAlgo.finalize();
         cropAlgo = null;
         dispose();
@@ -949,4 +949,116 @@ public class JDialogCropBoundaryParam extends JDialogScriptableBase implements A
         return true;
     }
 
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Utilities.Crop");
+            }
+
+            public String getDescription() {
+                return new String("Crops image based on boundary parameters.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Crops image based on boundary parameters.");            }
+
+            public String getShortLabel() {
+                return new String("CropParams");
+            }
+
+            public String getLabel() {
+                return new String("Crop by Parameters");
+            }
+
+            public String getName() {
+                return new String("Crop by Parameters");
+            }
+        };
+    }
+
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+
+        
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterInt("right_side", 0));
+            table.put(new ParameterInt("left_side", 0));
+            table.put(new ParameterInt("top_side", 0));
+            table.put(new ParameterInt("bottom_side", 0));
+            table.put(new ParameterInt("front", 0));
+            table.put(new ParameterInt("back", 0));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));            } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            if (getResultImage() != null) {
+                // algo produced a new result image
+                return getResultImage().getImageName();
+            } else {
+                // algo was done in place
+                return image.getImageName();
+            }
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
+    }
 }
