@@ -17,6 +17,9 @@ import java.io.*;
 import java.util.*;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+
+import ncsa.hdf.object.h5.H5ScalarDS;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
@@ -3228,6 +3231,113 @@ public class ModelImage extends ModelStorageBase {
                 } // if (varArray != null)
             } // for (int i = 0; i < numSlices; i++)
         } // else if (fileInfo[0] instanceof FileInfoMinc)
+        
+        else if (fileInfo[0] instanceof FileInfoMincHDF) {
+        	
+        	
+        	
+        	double defaultMin = -Double.MIN_VALUE;
+            double defaultMax = Double.MAX_VALUE;
+
+            
+            int numSlices = 1;
+
+            if (dimExtents.length >= 3) {
+            	numSlices *= dimExtents[2];
+            }
+            if (dimExtents.length >= 4) {
+            	numSlices *= dimExtents[3];
+            }
+            
+            
+            switch (type) {
+
+            case ModelStorageBase.BOOLEAN:
+                MipavUtil.displayError("BOOLEAN illegal Minc data type");
+                return;
+
+            case ModelStorageBase.BYTE:
+                defaultMin = -128.0;
+                defaultMax = 127.0;
+                break;
+
+            case ModelStorageBase.UBYTE:
+                defaultMin = 0.0;
+                defaultMax = 255.0;
+                break;
+
+            case ModelStorageBase.SHORT:
+                defaultMin = -32768.0;
+                defaultMax = 32767.0;
+                length *= 2;
+                break;
+
+            case ModelStorageBase.USHORT:
+                defaultMin = 0.0;
+                defaultMax = 65535.0;
+                length *= 2;
+                break;
+
+            case ModelStorageBase.INTEGER:
+                defaultMin = -2147483648.0;
+                defaultMax = 2147483647.0;
+        
+                break;
+
+            case ModelStorageBase.UINTEGER:
+                defaultMin = 0.0;
+                defaultMax = 4294967295.0;
+                length *= 4;
+                break;
+               
+            case ModelStorageBase.LONG:
+                MipavUtil.displayError("LONG illegal Minc data type");
+                return;
+
+            case ModelStorageBase.FLOAT:
+            	defaultMin = -Float.MAX_VALUE;
+            	defaultMax = Float.MAX_VALUE;
+            	length *= 4;
+                break;
+
+            case ModelStorageBase.DOUBLE:
+            	defaultMin = -Double.MAX_VALUE;
+            	defaultMax = Double.MAX_VALUE;
+            	length *= 8;
+                break;
+
+            case ModelStorageBase.ARGB: 
+                MipavUtil.displayError("ARGB illegal Minc data type");
+                return;
+
+            case ModelStorageBase.COMPLEX:
+                MipavUtil.displayError("COMPLEX illegal Minc data type");
+                return;
+
+            case ModelStorageBase.DCOMPLEX:
+                MipavUtil.displayError("DCOMPLEX illegal Minc data type");
+                return;
+            default:
+            	MipavUtil.displayError("Illegal Minc data type");
+            	return;
+            }
+            
+            double[] validRange = new double[2];
+            
+            
+            validRange[0] = defaultMin;
+            validRange[1] = defaultMax;
+            
+            
+            for (int i = 0; i  < numSlices; i++) {
+                //((FileInfoMincHDF)fileInfo[i]).setValidRange(validRange);
+                ((FileInfoMincHDF)fileInfo[i]).setDataType(type);
+          
+            }
+
+            
+        }
+        
         else if (fileInfo[0] instanceof FileInfoDicom) {
             // Under a rigid adherence to the DICOM standard most reallocations would be illegal
         	// because most image formats permit only 1 or 2 values in the (0028,0100) bits allocated
