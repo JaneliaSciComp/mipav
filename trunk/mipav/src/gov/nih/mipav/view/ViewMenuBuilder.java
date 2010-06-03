@@ -1060,12 +1060,22 @@ public class ViewMenuBuilder {
                     length = tempStr.length();
 
                     if (tempStr.endsWith("M")) {
-                        numDims = Integer.parseInt(tempStr.substring(length - 2, length - 1));
+                    	try {
+                            numDims = Integer.parseInt(tempStr.substring(length - 2, length - 1));
+                    	}
+                    	catch (NumberFormatException ex) {
+                    		continue;
+                    	}
                         tempStr = tempStr.substring(0, tempStr.lastIndexOf(","));
                         temp = ViewMenuBuilder.buildMenuItem( (i + 1) + " " + tempStr, "LastImage " + i, 0, listener,
                                 "multifile_" + numDims + "d.gif", true);
                     } else {
-                        numDims = Integer.parseInt(tempStr.substring(length - 1, length));
+                    	try {
+                            numDims = Integer.parseInt(tempStr.substring(length - 1, length));
+                    	}
+                    	catch (NumberFormatException ex) {
+                    		continue;
+                    	}
                         tempStr = tempStr.substring(0, tempStr.lastIndexOf(","));
                         temp = ViewMenuBuilder.buildMenuItem( (i + 1) + " " + tempStr, "LastImage " + i, 0, listener,
                                 "singlefile_" + numDims + "d.gif", true);
