@@ -119,12 +119,8 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
 	private JPanel hifiPanel;
 	private JPanel straightPanel;
 	private JPanel spgrPanel;
-	private JPanel irspgrGEPanel;
-	private JPanel irspgrSiemensPanel;
 	private JPanel convSpec;
 	private JPanel hifiSpec;
-	private JPanel hardThreshold;
-	private JPanel smartThreshold;
 	private JPanel treLong;
 	private JComboBox[] spgrImageComboBoxAr;
 	private JTextField[] flipAngleAr;
@@ -169,6 +165,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
 	private JPanel totalThreshold;
 	private JPanel generalThresholdPanel;
 	private JTabbedPane tab;
+	private JPanel irspgrGeneralPanel;
     
     /**
      * Empty constructor needed for dynamic instantiation.
@@ -214,51 +211,318 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         } 
     }
 
-    private void run() {
-        Enumeration<String> imageEnum = ViewUserInterface.getReference().getRegisteredImageNames();
-        ArrayList<String> imageList = new ArrayList<String>();
-        while(imageEnum.hasMoreElements()) {
-            imageList.add(imageEnum.nextElement());
-        }
-        wList = new String[imageList.size()];
-        wList = imageList.toArray(wList);
-        if (wList==null || wList.length<2) {
-            MipavUtil.displayWarning("Need at least 2 SPGR images to use this algorithm.");
-            return;
-        }
-        titles = new String[wList.length];
-        for (int i=0; i<wList.length; i++) {
-            ModelImage imp = ViewUserInterface.getReference().getRegisteredImageByName(wList[i]);
-            if (imp!=null)
-                titles[i] = imp.getImageName();
-            else
-                titles[i] = "";
-        }
-        
-        showTotalDialog();
-        
-        //if (!showTotalDialog()) return;
-        
-        if (performTreT1HIFI == true) {
-            //if (!showHIFIDialog()) return;
-        }
-        else {
-            //if (!showConventionaltreT1Dialog()) return;
-        }
-    
-        System.out.println("number of flip angles: "+Nsa);
-        
-        treFA = new double[Nsa];
-        if (Nsa == 2) {
-            treFA[0] = 4.00;
-            treFA[1] = 18.0;
-        }
-        spgrImageIndex = new int[Nsa];
-        
-        spgrData = new double[Nsa];
-    }
-    
-    protected void callAlgorithm() {
+    protected JPanel buildHIFIPanel() {
+	    JPanel panel = new JPanel();
+	    LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
+	    panel.setBorder(MipavUtil.buildTitledBorder("HIFI information"));
+	    panel.setLayout(panelLayout);
+	    
+	    spgrNumFAHifi = guiBuilder.buildDecimalField("Number of SPGR Flip Angles:", Nsa);
+	    irspgrNum = guiBuilder.buildDecimalField("Number of IR-SPGR TI Times:", Nti);
+	    isGEButton = guiBuilder.buildRadioButton("Scan Performed on a GE Scanner", geScanner);
+	    isSiemensButton = guiBuilder.buildRadioButton("Scan Performed on a Siemens Scanner", siemensScanner);
+	    
+	    ActionListener c = new ScannerChoiceListener();
+	    isGEButton.addActionListener(c);
+	    isSiemensButton.addActionListener(c);
+	    
+	    ButtonGroup scannerType = new ButtonGroup();
+	    scannerType.add(isGEButton);
+	    scannerType.add(isSiemensButton);
+	    
+	    //guiHelp envelopes elements in JPanels, so need to add parent
+	    panel.add(spgrNumFAHifi.getParent(), panelLayout);
+	    panel.add(irspgrNum.getParent(), panelLayout);
+	    panel.add(isGEButton.getParent(), panelLayout);
+	    panel.add(isSiemensButton.getParent(), panelLayout);
+	    
+	    return panel;
+	}
+
+	protected JPanel buildConventionalTreT1Panel() {
+	    JPanel panel = new JPanel();
+	    panel.setBorder(MipavUtil.buildTitledBorder("treT1: General Information"));
+	    LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
+	    panel.setLayout(panelLayout);
+	    
+	    spgrNumFA = guiBuilder.buildDecimalField("Number of SPGR Flip Angles:", Nsa);
+	    
+	    panel.add(spgrNumFA.getParent(), panelLayout);
+	    
+	    return panel;
+	}
+
+	protected JPanel buildSPGRPanel() {
+	    JPanel panel = new JPanel();
+	    LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
+	    panel.setLayout(panelLayout);
+	    panel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: SPGR Image Information"));
+	    
+	    spgrImageComboBoxAr = new JComboBox[Nsa];
+	    flipAngleAr = new JTextField[Nsa];
+	    for (int i=0; i<Nsa; i++) {
+	        spgrImageComboBoxAr[i] = guiBuilder.buildComboBox("SPGR Image #"+i, titles, i);
+	        panel.add(spgrImageComboBoxAr[i].getParent(), panelLayout);
+	        
+	        flipAngleAr[i] = guiBuilder.buildDecimalField("SPGR Flip Angle #"+i, 0);//treFA[i]);
+	        panel.add(flipAngleAr[i].getParent(), panelLayout);
+	    }
+	    spgrRepTime = guiBuilder.buildDecimalField("SPGR Repetition Time (ms):", treTR);
+	    panel.add(spgrRepTime.getParent(), panelLayout);
+	
+	    return panel;
+	 }
+
+	protected JPanel buildIRSPGRPanelGE() {
+	    JPanel panel = new JPanel();
+	    LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
+	    panel.setLayout(panelLayout);
+	    
+	    irspgrCombo = new JComboBox[Nti];
+	    irspgrField = new JTextField[Nti];
+	    for (int i=0; i<Nti; i++) {
+	        irspgrCombo[i] = guiBuilder.buildComboBox("IR-SPGR Image #"+i, titles, Nsa+i);
+	        panel.add(irspgrCombo[i].getParent(), panelLayout);
+	        
+	        irspgrField[i] = guiBuilder.buildDecimalField("IR-SPGR TI #"+i, 0);//irspgrTI[i]);
+	        panel.add(irspgrField[i].getParent(), panelLayout);
+	    }
+	    
+	    irspgrTRField = guiBuilder.buildDecimalField("IR-SPGR Repetition Time (ms)", irspgrTR);
+	    irspgrFAField = guiBuilder.buildDecimalField("IR-SPGR Flip Angle", irspgrFA);
+	    numSlicesField = guiBuilder.buildDecimalField("Total Number of Acquired Slices", irspgrKy);
+	    doubleInvRadio = guiBuilder.buildRadioButton("Double Inversion Regime", doubleInversion);
+	    singleInvRadio = guiBuilder.buildRadioButton("Single Inversion Regime", singleInversion);
+	    t15Radio = guiBuilder.buildRadioButton("1.5T Field Strength", onefiveTField);
+	    t30Radio = guiBuilder.buildRadioButton("3.0T Field Strength", threeTField);
+	    smoothB1Box = guiBuilder.buildCheckBox("Smooth B1 Field Prior to T1 Calculations", smoothB1Field);
+	    
+	    inversionGroup = new ButtonGroup();
+	    inversionGroup.add(doubleInvRadio);
+	    inversionGroup.add(singleInvRadio);
+	    
+	    fieldStrengthGroup = new ButtonGroup();
+	    fieldStrengthGroup.add(t15Radio);
+	    fieldStrengthGroup.add(t30Radio);
+	    
+	    panel.add(irspgrTRField.getParent(), panelLayout);
+	    panel.add(irspgrFAField.getParent(), panelLayout);
+	    panel.add(numSlicesField.getParent(), panelLayout);
+	    panel.add(doubleInvRadio.getParent(), panelLayout);
+	    panel.add(singleInvRadio.getParent(), panelLayout);
+	    panel.add(t15Radio.getParent(), panelLayout);
+	    panel.add(t30Radio.getParent(), panelLayout);
+	    panel.add(smoothB1Box.getParent(), panelLayout);
+	
+	    return panel;
+	}
+
+	protected JPanel buildIRSPGRPanelSiemens() {
+	    JPanel panel = new JPanel();
+	    LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
+	    panel.setLayout(panelLayout);
+	    
+	    irspgrCombo = new JComboBox[Nti];
+	    irspgrField = new JTextField[Nti];
+	    for (int i=0; i<Nti; i++) {
+	        irspgrCombo[i] = guiBuilder.buildComboBox("IR-SPGR Image #"+i, titles, i+2);
+	        panel.add(irspgrCombo[i].getParent(), panelLayout);
+	        
+	        irspgrField[i] = guiBuilder.buildDecimalField("IR-SPGR TI #"+i, 0);//irspgrTI[i]);
+	        panel.add(irspgrField[i].getParent(), panelLayout);
+	    }
+	    
+	    irspgrTRField = guiBuilder.buildDecimalField("IR-SPGR Repetition Time (ms)", irspgrTR);
+	    irspgrFAField = guiBuilder.buildDecimalField("IR-SPGR Flip Angle", irspgrFA);
+	    numSlicesField = guiBuilder.buildDecimalField("Total Number of Acquired Slices", irspgrKy);
+	    doubleInvRadio = guiBuilder.buildRadioButton("Double Inversion Regime", doubleInversion);
+	    singleInvRadio = guiBuilder.buildRadioButton("Single Inversion Regime", singleInversion);
+	    t15Radio = guiBuilder.buildRadioButton("1.5T Field Strength", onefiveTField);
+	    t30Radio = guiBuilder.buildRadioButton("3.0T Field Strength", threeTField);
+	    smoothB1Box = guiBuilder.buildCheckBox("Smooth B1 Field Prior to T1 Calculations", smoothB1Field);
+	    
+	    inversionGroup = new ButtonGroup();
+	    inversionGroup.add(doubleInvRadio);
+	    inversionGroup.add(singleInvRadio);
+	    
+	    fieldStrengthGroup = new ButtonGroup();
+	    fieldStrengthGroup.add(t15Radio);
+	    fieldStrengthGroup.add(t30Radio);
+	    
+	    panel.add(irspgrTRField.getParent(), panelLayout);
+	    panel.add(irspgrFAField.getParent(), panelLayout);
+	    panel.add(numSlicesField.getParent(), panelLayout);
+	    panel.add(doubleInvRadio.getParent(), panelLayout);
+	    panel.add(singleInvRadio.getParent(), panelLayout);
+	    panel.add(t15Radio.getParent(), panelLayout);
+	    panel.add(t30Radio.getParent(), panelLayout);
+	    panel.add(smoothB1Box.getParent(), panelLayout);
+	
+	    return panel;
+	}
+
+	protected JPanel buildTreT1LongPanel() {
+	    BorderLayout b = new BorderLayout();
+	    JDialog dialog = new JDialog();
+	    dialog.setLayout(b);
+	    dialog.setTitle(title);
+	    JPanel panel = new JPanel();
+	    LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
+	    panel.setLayout(panelLayout);
+	    panel.setBorder(MipavUtil.buildTitledBorder("treT1-Conv: Long"));
+	    
+	    b1Field = null;
+	    if(performTreT1withPreCalculatedB1Map) {
+	        b1Field = guiBuilder.buildComboBox("B1 Field Map:", titles, 0);
+	        panel.add(b1Field.getParent(), panelLayout);
+	    }
+	    
+	    convimageComboAr = new JComboBox[Nsa];
+	    convFAFieldAr = new JTextField[Nsa];
+	    for(int i=0; i<Nsa; i++) {
+	        convimageComboAr[i] = guiBuilder.buildComboBox("Image #"+i, titles, i);
+	        panel.add(convimageComboAr[i].getParent(), panelLayout);
+	        
+	        convFAFieldAr[i] = guiBuilder.buildDecimalField("Flip Angle #"+i, 0);//treFA[i]);
+	        panel.add(convFAFieldAr[i].getParent(), panelLayout);
+	    }
+	    convRepTime = guiBuilder.buildDecimalField("Repetition Time (ms):", treTR);
+	    panel.add(convRepTime.getParent(), panelLayout);
+	    
+	    return panel;
+	}
+
+	protected JPanel buildTreT1SpecificsPanel() {
+	    JPanel panel = new JPanel();
+	    LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
+	    panel.setLayout(panelLayout);
+	    panel.setBorder(MipavUtil.buildTitledBorder("treT1: Specifics"));
+	    
+	    maxT1Field = guiBuilder.buildDecimalField("Maximum Allowable T1:", maxT1);
+	    maxMoField = guiBuilder.buildDecimalField("Maximum Allowable Mo:", maxMo);
+	    showT1Map = guiBuilder.buildCheckBox("Show T1 Map", calculateT1);
+	    showMoMap = guiBuilder.buildCheckBox("Show Mo Map", calculateMo);
+	    showR1Map = guiBuilder.buildCheckBox("Show R1 Map", invertT1toR1);
+	    leastSquaresCheck = null;
+	    if(Nsa > 2) {
+	        leastSquaresCheck = guiBuilder.buildCheckBox("Calculate T1 Using Weigthed Least-Squares", useWeights);
+	        panel.add(leastSquaresCheck.getParent(), panelLayout);
+	    }
+	    
+	    panel.add(maxT1Field.getParent(), panelLayout);
+	    panel.add(maxMoField.getParent(), panelLayout);
+	    panel.add(showT1Map.getParent(), panelLayout);
+	    panel.add(showMoMap.getParent(), panelLayout);
+	    panel.add(showR1Map.getParent(), panelLayout);
+	    
+	    return panel;
+	}
+
+	protected JPanel buildThresholdPanel() {
+		JPanel panel = new JPanel();
+	    LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
+	    panel.setLayout(panelLayout);
+	    panel.setBorder(MipavUtil.buildTitledBorder("Thresholding"));
+	    
+	    JPanel methodPanel = new JPanel();
+	    LayoutManager methodLayout = new BoxLayout(methodPanel, BoxLayout.X_AXIS);
+	    methodPanel.setLayout(methodLayout);
+	    methodPanel.setBorder(MipavUtil.buildTitledBorder("Thresholding method"));
+	    
+	    smartCheckBox = guiBuilder.buildRadioButton("Use Smart Thresholding", useSmartThresholding);
+	    hardCheckBox = guiBuilder.buildRadioButton("Use Hard Thresholding", useHardThresholding);
+	
+	    thresholdGroup = new ButtonGroup();
+	    thresholdGroup.add(smartCheckBox);
+	    thresholdGroup.add(hardCheckBox);
+	    smartCheckBox.setSelected(true);
+	    
+	    ActionListener c = new ThresholdChoiceListener();
+	    smartCheckBox.addActionListener(c);
+	    hardCheckBox.addActionListener(c);
+	
+	    methodPanel.add(smartCheckBox, methodLayout);
+	    methodPanel.add(hardCheckBox, methodLayout);
+	    
+	    panel.add(methodPanel, panelLayout);
+	    
+	    generalThresholdPanel = new JPanel();
+	    
+	    JPanel smartThreshold = buildSmartThresholdPanel();
+	    generalThresholdPanel.add(smartThreshold);
+	    
+	    panel.add(generalThresholdPanel, panelLayout);
+	    
+	    return panel;
+	}
+
+	protected JPanel buildTreT1HIFISpecificsPanel() {
+	    JPanel panel = new JPanel();
+	    LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
+	    panel.setLayout(panelLayout);
+	    panel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR Image Information"));
+	    
+	    maxT1Field = guiBuilder.buildDecimalField("Maximum Allowable T1:", maxT1);
+	    maxMoField = guiBuilder.buildDecimalField("Maximum Allowable Mo:", maxMo);
+	    showT1Map = guiBuilder.buildCheckBox("Show T1 Map", calculateT1);
+	    showMoMap = guiBuilder.buildCheckBox("Show Mo Map", calculateMo);
+	    showB1Check = guiBuilder.buildCheckBox("Show B1 Map", true);
+	    showR1Map = guiBuilder.buildCheckBox("Show R1 Map", invertT1toR1);
+	    leastSquaresCheck = null; 
+	    if (Nsa > 2) { 
+	    	leastSquaresCheck = guiBuilder.buildCheckBox("Calculate T1 Using Weighted Least-Squares", useWeights);
+	    }
+	    
+	    panel.add(maxT1Field.getParent(), panelLayout);
+	    panel.add(maxMoField.getParent(), panelLayout);
+	    panel.add(showT1Map.getParent(), panelLayout);
+	    panel.add(showMoMap.getParent(), panelLayout);
+	    panel.add(showB1Check.getParent(), panelLayout);
+	    panel.add(showR1Map.getParent(), panelLayout);
+	    if(Nsa > 2) {
+	        panel.add(leastSquaresCheck.getParent(), panelLayout);
+	    }
+	    
+	    return panel;
+	}
+
+	/**
+	 * No border
+	 * @return
+	 */
+	protected JPanel buildHardThresholdPanel() {
+	    JPanel panel = new JPanel();
+	    LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
+	    panel.setLayout(panelLayout);
+	    
+	    hardNoiseField = guiBuilder.buildDecimalField("Hard Noise Level", hardNoiseThreshold);
+	    
+	    panel.add(hardNoiseField.getParent(), panelLayout);
+	    
+	    return panel;
+	}
+
+	protected JPanel buildSmartThresholdPanel() {
+	    JPanel panel = new JPanel();
+	    LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
+	    panel.setLayout(panelLayout);
+	    
+	    smartNoiseField = guiBuilder.buildDecimalField("Noise Level Scale", noiseScale);
+	    topLeftBox = guiBuilder.buildCheckBox("Calculate Noise from TOP LEFT Corner?", upperLeftCorner);
+	    topRightBox = guiBuilder.buildCheckBox("Calculate Noise from TOP RIGHT Corner?", upperRightCorner);
+	    bottomLeftBox = guiBuilder.buildCheckBox("Calculate Noise from BOTTOM LEFT Corner?", lowerLeftCorner);
+	    bottomRightBox = guiBuilder.buildCheckBox("Calculate Noise from BOTTOM RIGHT Corner?", lowerRightCorner);
+	    
+	    panel.add(smartNoiseField.getParent(), panelLayout);
+	    panel.add(topLeftBox.getParent(), panelLayout);
+	    panel.add(topRightBox.getParent(), panelLayout);
+	    panel.add(bottomLeftBox.getParent(), panelLayout);
+	    panel.add(bottomRightBox.getParent(), panelLayout);
+	
+	    return panel;
+	}
+
+	protected void callAlgorithm() {
         // Make algorithm
         cAlgo = new AlgorithmDespotT1(treTR, irspgrTR,
                 irspgrKy, irspgrFA, maxT1, maxMo,
@@ -304,7 +568,66 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         }
     }
     
-    /**
+    protected void displayTotalDialog() {
+	    GridBagLayout gb = new GridBagLayout();
+	    setLayout(gb);
+	    GridBagConstraints gbc = new GridBagConstraints();
+	    guiBuilder = new GuiBuilder(this);
+	    setTitle("treT1: Dialog");
+	    setMinimumSize(new Dimension(450, 600));
+	    setPreferredSize(new Dimension(450, 600));
+	    setMaximumSize(new Dimension(450, 1200));
+	    
+	    JPanel methodPanel = new JPanel();
+	    LayoutManager panelLayout = new BoxLayout(methodPanel, BoxLayout.X_AXIS);
+	    methodPanel.setLayout(panelLayout);
+	    methodPanel.setBorder(MipavUtil.buildTitledBorder("Processing method"));
+	    
+	    doConvTre = guiBuilder.buildRadioButton("Conventional TRE", performStraightTreT1);
+	    doHifiTre = guiBuilder.buildRadioButton("TRE-HIFI Processing", performTreT1HIFI);
+	    ActionListener c = new ProcessChoiceListener();
+	    doConvTre.addActionListener(c);
+	    doHifiTre.addActionListener(c);
+	    
+	    ButtonGroup processType = new ButtonGroup();
+	    processType.add(doConvTre);
+	    processType.add(doHifiTre);
+	    
+	    //guiHelp envelopes elements in JPanels, so need to add parent
+	    methodPanel.add(doConvTre.getParent(), panelLayout);
+	    methodPanel.add(doHifiTre.getParent(), panelLayout);
+	    
+	    gbc.gridx = 0;
+	    gbc.gridy = 0;
+	    gbc.fill = GridBagConstraints.HORIZONTAL;
+	    gbc.weightx = 1;
+	    gbc.weighty = 0;
+	    add(methodPanel, gbc);
+	
+	    tab = new JTabbedPane();
+	    buildConventionalTabs();
+	    
+	    //add both general and hifi at same location
+	    gbc.gridx = 0;
+	    gbc.gridy = 1;
+	    gbc.fill = GridBagConstraints.BOTH;
+	    gbc.weightx = 1;
+	    gbc.weighty = 1;
+	    add(tab, gbc);
+	
+	    gbc.gridx = 0;
+	    gbc.gridy = 2;
+	    gbc.weightx = 1;
+	    gbc.weighty = 0;
+	    
+	    add(guiBuilder.buildOKCancelPanel(), gbc);
+	    setLocationRelativeTo(null);
+	    pack();
+	    setModal(true);
+	    setVisible(true);
+	}
+
+	/**
      * Store the result image in the script runner's image table now that the action execution is finished.
      */
     protected void doPostAlgorithmActions() {
@@ -541,15 +864,318 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         }
     }
     
-    private class ChoiceListener implements ActionListener {
+    private void buildConventionalTabs() {
+	    
+	    //construct general, show if performStraighttreT1
+	    straightPanel = buildConventionalTreT1Panel();
+	    
+	    //conventional panels for next section
+	    treLong = buildTreT1LongPanel();
+	    
+	    //specifics section
+	    convSpec = buildTreT1SpecificsPanel();
+	
+	    //threshold
+	    totalThreshold = buildThresholdPanel();
+	    
+	    
+	    tab.add(straightPanel, "1: General");
+	    tab.add(treLong, "2: Images");
+	    tab.add(convSpec, "3: Output ");
+	    tab.add(totalThreshold, "4: Threshold");
+	}
+
+	private void buildHIFITabs() {
+	    
+	    //construct Hifi, do not show
+	    hifiPanel = buildHIFIPanel();
+	    
+	    //hifi panels for next section
+	    spgrPanel = buildSPGRPanel();
+	    
+	    JPanel irspgrGEPanel = buildIRSPGRPanelGE();
+	
+	    JPanel irspgrSiemensPanel = buildIRSPGRPanelSiemens();
+	    
+	    irspgrGeneralPanel = new JPanel();
+	    
+	    //fit these HIFI elements into one panel, with either/or siemens
+	    JPanel hifiSuper = new JPanel();
+	    LayoutManager hifiLayout = new BoxLayout(hifiSuper, BoxLayout.Y_AXIS);
+	    hifiSuper.add(spgrPanel, hifiLayout);
+	    hifiSuper.add(irspgrGEPanel, hifiLayout);
+	    hifiSuper.add(irspgrSiemensPanel, hifiLayout);
+	    
+	    //specifics section
+	    hifiSpec = buildTreT1HIFISpecificsPanel();
+	
+	    //threshold
+	    totalThreshold = buildThresholdPanel();
+	    
+	    
+	    tab.add(hifiPanel, "1: General");
+	    tab.add(spgrPanel, "2: Images");
+	    if(geScanner) {
+	    	irspgrGeneralPanel.add(irspgrGEPanel);
+	    	irspgrGeneralPanel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR GE Image Information"));
+	    	tab.add(irspgrGeneralPanel, "3: GE");
+	    } else {
+	    	irspgrGeneralPanel.add(irspgrSiemensPanel);
+	    	irspgrGeneralPanel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR Siemens Image Information"));
+	    	tab.add(irspgrGeneralPanel, "3: Siemens");
+	    }
+	    tab.add(hifiSpec, "4: Output ");
+	    tab.add(totalThreshold, "5: Threshold");
+	}
+
+	private void run() {
+	    Enumeration<String> imageEnum = ViewUserInterface.getReference().getRegisteredImageNames();
+	    ArrayList<String> imageList = new ArrayList<String>();
+	    while(imageEnum.hasMoreElements()) {
+	        imageList.add(imageEnum.nextElement());
+	    }
+	    wList = new String[imageList.size()];
+	    wList = imageList.toArray(wList);
+	    if (wList==null || wList.length<2) {
+	        MipavUtil.displayWarning("Need at least 2 SPGR images to use this algorithm.");
+	        return;
+	    }
+	    titles = new String[wList.length];
+	    for (int i=0; i<wList.length; i++) {
+	        ModelImage imp = ViewUserInterface.getReference().getRegisteredImageByName(wList[i]);
+	        if (imp!=null)
+	            titles[i] = imp.getImageName();
+	        else
+	            titles[i] = "";
+	    }
+	    
+	    displayTotalDialog();
+	    
+	    //if (!showTotalDialog()) return;
+	    
+	    if (performTreT1HIFI == true) {
+	        //if (!showHIFIDialog()) return;
+	    }
+	    else {
+	        //if (!showConventionaltreT1Dialog()) return;
+	    }
+	
+	    System.out.println("number of flip angles: "+Nsa);
+	    
+	    treFA = new double[Nsa];
+	    if (Nsa == 2) {
+	        treFA[0] = 4.00;
+	        treFA[1] = 18.0;
+	    }
+	    spgrImageIndex = new int[Nsa];
+	    
+	    spgrData = new double[Nsa];
+	}
+
+	private void setProcessConvUI() {
+    	performStraightTreT1 = true;
+		performTreT1withPreCalculatedB1Map = false;
+        performTreT1HIFI = false;
+    }
+    
+    private void setProcessHifiUI() {
+    	performTreT1HIFI = true;
+    	performStraightTreT1 = false;
+        performTreT1withPreCalculatedB1Map = false;
+    }
+    
+    
+    private boolean setUI() {
+		//set conventional
+	    /*Nsa = (int) Double.valueOf(spgrNumFA.getText()).doubleValue();
+		
+	    //set Hifi
+	    Nsa = (int) Double.valueOf(spgrNumFAHifi.getText()).doubleValue();
+	    Nti = (int) Double.valueOf(irspgrNum.getText()).doubleValue();
+	
+	    geScanner = isGEButton.isSelected();
+	    siemensScanner = isSiemensButton.isSelected();
+	    
+		//set spgr
+		for(int i=0; i<Nsa; i++) {
+	        spgrImageIndex[i] = spgrImageComboBoxAr[i].getSelectedIndex();
+	        treFA[i] = Float.valueOf(flipAngleAr[i].getText()).floatValue();
+	    }
+	    treTR = Double.valueOf(spgrRepTime.getText()).doubleValue();
+	    
+	    //set irspgrGE and siemens
+	    for (int i=0; i<Nti; i++) {
+	        irspgrImageIndex[i] = irspgrCombo[i].getSelectedIndex();
+	        irspgrTI[i] = Double.valueOf(irspgrField[i].getText()).doubleValue();
+	    }
+	    irspgrTR = Double.valueOf(irspgrTRField.getText()).doubleValue();
+	    irspgrFA = Double.valueOf(irspgrFAField.getText()).doubleValue();
+	    irspgrKy = Double.valueOf(numSlicesField.getText()).doubleValue();
+	    doubleInversion = doubleInvRadio.isSelected();
+	    singleInversion = singleInvRadio.isSelected();
+	    onefiveTField = t15Radio.isSelected();
+	    threeTField = t30Radio.isSelected();
+	    smoothB1Field = smoothB1Box.isSelected();
+	    
+	    if (doubleInversion == true) {
+	        singleInversion = false;
+	    }
+	    if (singleInversion == true) {
+	        doubleInversion = false;
+	    }
+	    
+	    if (onefiveTField == true) {
+	        threeTField = false;
+	    }
+	    if (threeTField == true) {
+	        onefiveTField = false;
+	    }
+	    
+	    if (threeTField == true) {
+	        if (doubleInversion == true) {
+	            for (int i=0; i<Nti; i++) irspgrTI[i] = irspgrTI[i]*0.9;
+	            irspgrKy = (irspgrKy/2.00)+2.00;
+	        }
+	        else {
+	            for (int i=0; i<Nti; i++) irspgrTI[i] = irspgrTI[i]*0.9*0.93;
+	            irspgrKy = irspgrKy + 2.00;
+	        }
+	    }
+	    else {
+	        if (doubleInversion == true) {
+	            for (int i=0; i<Nti; i++) irspgrTI[i] = irspgrTI[i];
+	            irspgrKy = (irspgrKy/2.00)+2.00;
+	        }
+	        else {
+	            for (int i=0; i<Nti; i++) irspgrTI[i] = irspgrTI[i];
+	            irspgrKy = irspgrKy;
+	        }
+	    }
+	    
+	    for (int i=0; i<Nti; i++) {
+	    	irspgrTr[i] = irspgrTI[i] + irspgrTR*irspgrKy;
+	    }
+	    
+	    //set t1Long
+	    if (performTreT1withPreCalculatedB1Map) {
+	        b1ImageIndex = b1Field.getSelectedIndex();
+	    }
+	    
+	    for (int i=0; i<Nsa; i++) {
+	        spgrImageIndex[i] = convimageComboAr[i].getSelectedIndex();
+	        treFA[i] = Float.valueOf(convFAFieldAr[i].getText()).floatValue();
+	    }
+	    
+	    treTR = Double.valueOf(convRepTime.getText()).doubleValue();
+	    if (Nsa > 2) {
+	        useWeights = leastSquaresCheck.isSelected();
+	    }
+	    
+	    //set Specifics for both conv and general
+	    maxT1 = Double.valueOf(maxT1Field.getText()).doubleValue();
+	    maxMo = Double.valueOf(maxMoField.getText()).doubleValue();
+	    calculateT1 = showT1Map.isSelected();
+	    calculateMo = showMoMap.isSelected();
+	    showB1Map = showB1Check.isSelected();
+	    invertT1toR1 = showR1Map.isSelected();
+	    if (Nsa > 2) {
+	        useWeights = leastSquaresCheck.isSelected();
+	    }*/
+	    
+	    
+	    useSmartThresholding = smartCheckBox.isSelected();
+	    if(useSmartThresholding) {
+	    	setSmartThresholdUI();
+	    }
+	    useHardThresholding = hardCheckBox.isSelected();
+	    if(useHardThresholding) {
+	    	setHardThresholdUI();
+	    }
+	    if (useSmartThresholding) {
+	        useHardThresholding = false;
+	    }
+	    
+	    return true;
+	}
+
+	private void setHardThresholdUI() {
+		//hard threshold
+	    hardNoiseThreshold = Float.valueOf(hardNoiseField.getText()).floatValue();
+	}
+
+	private void setSmartThresholdUI() {
+		//smart noise threshold
+	    noiseScale = Float.valueOf(smartNoiseField.getText()).floatValue();
+	    upperLeftCorner = topLeftBox.isSelected();
+	    upperRightCorner = topRightBox.isSelected();
+	    lowerLeftCorner = bottomLeftBox.isSelected();
+	    lowerRightCorner = bottomRightBox.isSelected();
+	}
+
+	private boolean validateUI() {
+		
+		//opening
+	
+	    //generic
+	    if (Nsa > wList.length) {
+	        MipavUtil.displayError("Please import all nessesary images first.");
+	        return false;
+	    }
+	    if (Nsa < 2) {
+	        MipavUtil.displayError("T1 and Mo calculations require at least two SPGR images.");
+	        return false;
+	    }
+	    if (performTreT1withPreCalculatedB1Map) {
+	        if (Nsa+1 > wList.length) {
+	            MipavUtil.displayError("Please import all nessesary images first.");
+	            return false;
+	        }
+	    }
+	    
+	    //hifi
+	    if (geScanner == true) {
+	        siemensScanner = false;
+	    }
+	    if (siemensScanner == true) {
+	        geScanner = false;
+	    }
+	    
+	    if (Nsa > wList.length) {
+	        MipavUtil.displayError("Please import all nessesary images first.");
+	        return false;
+	    }
+	    if (Nsa < 2) {
+	        MipavUtil.displayError("T1 and Mo calculations require at least two SPGR images.");
+	        return false;
+	    }
+	    
+	    if (Nti < 1) {
+	        MipavUtil.displayError("B1 correction requires at least one IR-SPGR image.");
+	        return false;
+	    }
+	    
+	    //validate ge and siemens irspgr
+	    if(inversionGroup.getSelection() == null) {
+	        MipavUtil.displayInfo("Please choose either single or double inversion regime");
+	        return false;
+	    }
+	    
+	    if(fieldStrengthGroup.getSelection() == null) {
+	        MipavUtil.displayInfo("Please choose field strength");
+	        return false;
+	    }
+	    
+	    return true;
+	}
+
+
+	private class ProcessChoiceListener implements ActionListener {
 		
 		private void varSet() {
 			
 			if (doConvTre.isSelected()) {
 				//showHIFIDialog();
-				performStraightTreT1 = true;
-				performTreT1withPreCalculatedB1Map = false;
-	            performTreT1HIFI = false;
+				setProcessHifiUI();
 	            setUI();
 	            
 	            tab.removeAll();
@@ -559,9 +1185,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
 	        }
 	        if (doHifiTre.isSelected()) {
 	        	//showConventionalDialog();
-	        	performTreT1HIFI = true;
-	        	performStraightTreT1 = false;
-	            performTreT1withPreCalculatedB1Map = false;
+	        	setProcessConvUI();
 	            setUI();
 	            
 	            tab.removeAll();
@@ -580,16 +1204,14 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
     	private void varSet() {
 			if (hardCheckBox.isSelected()) {
 				setSmartThresholdUI();
-				System.out.println("Hard Threshold");
 				generalThresholdPanel.removeAll();
-				hardThreshold = buildHardThresholdDialog();
+				JPanel hardThreshold = buildHardThresholdPanel();
 				generalThresholdPanel.add(hardThreshold);
 				generalThresholdPanel.updateUI();
 	        } else if (smartCheckBox.isSelected()) {
 	        	setHardThresholdUI();
-	        	System.out.println("Smart Threshold");
 	        	generalThresholdPanel.removeAll();
-				smartThreshold = buildSmartThresholdDialog();
+				JPanel smartThreshold = buildSmartThresholdPanel();
 				generalThresholdPanel.add(smartThreshold);
 				generalThresholdPanel.updateUI();
 	        }
@@ -600,615 +1222,45 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
 			System.out.println("Action: "+e.getActionCommand()+"\t "+e.getSource());
 		}
     }
-
-    public void showTotalDialog() {
-        GridBagLayout gb = new GridBagLayout();
-        setLayout(gb);
-        GridBagConstraints gbc = new GridBagConstraints();
-        guiBuilder = new GuiBuilder(this);
-        setTitle("treT1: Dialog");
-        setMinimumSize(new Dimension(400, 600));
-        setPreferredSize(new Dimension(400, 600));
-        setMaximumSize(new Dimension(400, 600));
-        
-        JPanel methodPanel = new JPanel();
-        LayoutManager panelLayout = new BoxLayout(methodPanel, BoxLayout.X_AXIS);
-        methodPanel.setLayout(panelLayout);
-        methodPanel.setBorder(MipavUtil.buildTitledBorder("Processing method"));
-        
-        doConvTre = guiBuilder.buildRadioButton("Conventional TRE", performStraightTreT1);
-        doHifiTre = guiBuilder.buildRadioButton("TRE-HIFI Processing", performTreT1HIFI);
-        ActionListener c = new ChoiceListener();
-        doConvTre.addActionListener(c);
-        doHifiTre.addActionListener(c);
-        
-        ButtonGroup processType = new ButtonGroup();
-        processType.add(doConvTre);
-        processType.add(doHifiTre);
-        
-        //guiHelp envelopes elements in JPanels, so need to add parent
-        methodPanel.add(doConvTre.getParent(), panelLayout);
-        methodPanel.add(doHifiTre.getParent(), panelLayout);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1;
-        gbc.weighty = 0;
-        add(methodPanel, gbc);
-       
-        tab = new JTabbedPane();
-        buildConventionalTabs();
-        
-        //add both general and hifi at same location
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.weightx = 1;
-        gbc.weighty = 1;
-        add(tab, gbc);
-       
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.weightx = 1;
-        gbc.weighty = 0;
-        
-        add(guiBuilder.buildOKCancelPanel(), gbc);
-        setLocationRelativeTo(null);
-        pack();
-        setModal(true);
-        setVisible(true);
-    }
     
-    private void buildConventionalTabs() {
-        
-        //construct general, show if performStraighttreT1
-        straightPanel = buildConventionalTreT1Dialog();
-        
-        //conventional panels for next section
-        treLong = buildTreT1LongDialog();
-        
-        //specifics section
-        convSpec = buildTreT1SpecificsDialog();
-
-        //threshold
-        totalThreshold = buildThresholdDialog();
-        
-        
-        tab.add(straightPanel, "1: General");
-        tab.add(treLong, "2: Images");
-        tab.add(convSpec, "3: Output ");
-        tab.add(totalThreshold, "4: Threshold");
-    }
-    
-    private void buildHIFITabs() {
-        
-        //construct Hifi, do not show
-        hifiPanel = buildHIFIDialog();
-        
-        //hifi panels for next section
-        spgrPanel = buildSPGRDialog();
-        
-        
-        irspgrGEPanel = buildIRSPGRDialogGE();
-        irspgrSiemensPanel = buildIRSPGRDialogSiemens();
-        
-        //fit these HIFI elements into one panel, with either/or siemens
-        JPanel hifiSuper = new JPanel();
-        LayoutManager hifiLayout = new BoxLayout(hifiSuper, BoxLayout.Y_AXIS);
-        hifiSuper.add(spgrPanel, hifiLayout);
-        hifiSuper.add(irspgrGEPanel, hifiLayout);
-        hifiSuper.add(irspgrSiemensPanel, hifiLayout);
-        
-        //specifics section
-        hifiSpec = buildTreT1HIFISpecificsDialog();
-
-        //threshold
-        totalThreshold = buildThresholdDialog();
-        
-        
-        tab.add(hifiPanel, "1: General");
-        tab.add(spgrPanel, "2: Images");
-        if(geScanner) {
-        	tab.add(irspgrGEPanel, "3: GE");
-        } else {
-        	tab.add(irspgrSiemensPanel, "3: Siemens");
-        }
-        tab.add(hifiSpec, "4: Output ");
-        tab.add(totalThreshold, "5: Threshold");
-    }
-    
-    public JPanel buildHIFIDialog() {
-        JPanel panel = new JPanel();
-        LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
-        panel.setBorder(MipavUtil.buildTitledBorder("HIFI information"));
-        panel.setLayout(panelLayout);
-        
-        spgrNumFAHifi = guiBuilder.buildDecimalField("Number of SPGR Flip Angles:", Nsa);
-        irspgrNum = guiBuilder.buildDecimalField("Number of IR-SPGR TI Times:", Nti);
-        isGEButton = guiBuilder.buildRadioButton("Scan Performed on a GE Scanner", geScanner);
-        isSiemensButton = guiBuilder.buildRadioButton("Scan Performed on a Siemens Scanner", siemensScanner);
-        
-        ButtonGroup scannerType = new ButtonGroup();
-        scannerType.add(isGEButton);
-        scannerType.add(isSiemensButton);
-        
-        //guiHelp envelopes elements in JPanels, so need to add parent
-        panel.add(spgrNumFAHifi.getParent(), panelLayout);
-        panel.add(irspgrNum.getParent(), panelLayout);
-        panel.add(isGEButton.getParent(), panelLayout);
-        panel.add(isSiemensButton.getParent(), panelLayout);
-        
-        return panel;
-    }
-    
-    public JPanel buildConventionalTreT1Dialog() {
-        JPanel panel = new JPanel();
-        panel.setBorder(MipavUtil.buildTitledBorder("treT1: General Information"));
-        LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
-        panel.setLayout(panelLayout);
-        
-        spgrNumFA = guiBuilder.buildDecimalField("Number of SPGR Flip Angles:", Nsa);
-        
-        panel.add(spgrNumFA.getParent(), panelLayout);
-        
-        return panel;
-    }
-    
-    public JPanel buildSPGRDialog() {
-        JPanel panel = new JPanel();
-        LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
-        panel.setLayout(panelLayout);
-        panel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: SPGR Image Information"));
-        
-        spgrImageComboBoxAr = new JComboBox[Nsa];
-        flipAngleAr = new JTextField[Nsa];
-        for (int i=0; i<Nsa; i++) {
-            spgrImageComboBoxAr[i] = guiBuilder.buildComboBox("SPGR Image #"+i, titles, i);
-            panel.add(spgrImageComboBoxAr[i].getParent(), panelLayout);
-            
-            flipAngleAr[i] = guiBuilder.buildDecimalField("SPGR Flip Angle #"+i, 0);//treFA[i]);
-            panel.add(flipAngleAr[i].getParent(), panelLayout);
-        }
-        spgrRepTime = guiBuilder.buildDecimalField("SPGR Repetition Time (ms):", treTR);
-        panel.add(spgrRepTime.getParent(), panelLayout);
-
-        return panel;
-     }
-    
-    public JPanel buildIRSPGRDialogGE() {
-        JPanel panel = new JPanel();
-        LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
-        panel.setLayout(panelLayout);
-        panel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR GE Image Information"));
-        
-        irspgrCombo = new JComboBox[Nti];
-        irspgrField = new JTextField[Nti];
-        for (int i=0; i<Nti; i++) {
-            irspgrCombo[i] = guiBuilder.buildComboBox("IR-SPGR Image #"+i, titles, Nsa+i);
-            panel.add(irspgrCombo[i].getParent(), panelLayout);
-            
-            irspgrField[i] = guiBuilder.buildDecimalField("IR-SPGR TI #"+i, 0);//irspgrTI[i]);
-            panel.add(irspgrField[i].getParent(), panelLayout);
-        }
-        
-        irspgrTRField = guiBuilder.buildDecimalField("IR-SPGR Repetition Time (ms)", irspgrTR);
-        irspgrFAField = guiBuilder.buildDecimalField("IR-SPGR Flip Angle", irspgrFA);
-        numSlicesField = guiBuilder.buildDecimalField("Total Number of Acquired Slices", irspgrKy);
-        doubleInvRadio = guiBuilder.buildRadioButton("Double Inversion Regime", doubleInversion);
-        singleInvRadio = guiBuilder.buildRadioButton("Single Inversion Regime", singleInversion);
-        t15Radio = guiBuilder.buildRadioButton("1.5T Field Strength", onefiveTField);
-        t30Radio = guiBuilder.buildRadioButton("3.0T Field Strength", threeTField);
-        smoothB1Box = guiBuilder.buildCheckBox("Smooth B1 Field Prior to T1 Calculations", smoothB1Field);
-        
-        inversionGroup = new ButtonGroup();
-        inversionGroup.add(doubleInvRadio);
-        inversionGroup.add(singleInvRadio);
-        
-        fieldStrengthGroup = new ButtonGroup();
-        fieldStrengthGroup.add(t15Radio);
-        fieldStrengthGroup.add(t30Radio);
-        
-        panel.add(irspgrTRField.getParent(), panelLayout);
-        panel.add(irspgrFAField.getParent(), panelLayout);
-        panel.add(numSlicesField.getParent(), panelLayout);
-        panel.add(doubleInvRadio.getParent(), panelLayout);
-        panel.add(singleInvRadio.getParent(), panelLayout);
-        panel.add(t15Radio.getParent(), panelLayout);
-        panel.add(t30Radio.getParent(), panelLayout);
-        panel.add(smoothB1Box.getParent(), panelLayout);
-
-        return panel;
-    }
-    
-    public JPanel buildIRSPGRDialogSiemens() {
-        JPanel panel = new JPanel();
-        LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
-        panel.setLayout(panelLayout);
-        panel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR Siemens Image Information"));
-        
-        irspgrCombo = new JComboBox[Nti];
-        irspgrField = new JTextField[Nti];
-        for (int i=0; i<Nti; i++) {
-            irspgrCombo[i] = guiBuilder.buildComboBox("IR-SPGR Image #"+i, titles, i+2);
-            panel.add(irspgrCombo[i].getParent(), panelLayout);
-            
-            irspgrField[i] = guiBuilder.buildDecimalField("IR-SPGR TI #"+i, 0);//irspgrTI[i]);
-            panel.add(irspgrField[i].getParent(), panelLayout);
-        }
-        
-        irspgrTRField = guiBuilder.buildDecimalField("IR-SPGR Repetition Time (ms)", irspgrTR);
-        irspgrFAField = guiBuilder.buildDecimalField("IR-SPGR Flip Angle", irspgrFA);
-        numSlicesField = guiBuilder.buildDecimalField("Total Number of Acquired Slices", irspgrKy);
-        doubleInvRadio = guiBuilder.buildRadioButton("Double Inversion Regime", doubleInversion);
-        singleInvRadio = guiBuilder.buildRadioButton("Single Inversion Regime", singleInversion);
-        t15Radio = guiBuilder.buildRadioButton("1.5T Field Strength", onefiveTField);
-        t30Radio = guiBuilder.buildRadioButton("3.0T Field Strength", threeTField);
-        smoothB1Box = guiBuilder.buildCheckBox("Smooth B1 Field Prior to T1 Calculations", smoothB1Field);
-        
-        inversionGroup = new ButtonGroup();
-        inversionGroup.add(doubleInvRadio);
-        inversionGroup.add(singleInvRadio);
-        
-        fieldStrengthGroup = new ButtonGroup();
-        fieldStrengthGroup.add(t15Radio);
-        fieldStrengthGroup.add(t30Radio);
-        
-        panel.add(irspgrTRField.getParent(), panelLayout);
-        panel.add(irspgrFAField.getParent(), panelLayout);
-        panel.add(numSlicesField.getParent(), panelLayout);
-        panel.add(doubleInvRadio.getParent(), panelLayout);
-        panel.add(singleInvRadio.getParent(), panelLayout);
-        panel.add(t15Radio.getParent(), panelLayout);
-        panel.add(t30Radio.getParent(), panelLayout);
-        panel.add(smoothB1Box.getParent(), panelLayout);
-
-        return panel;
-    }
-
-    public JPanel buildTreT1LongDialog() {
-        BorderLayout b = new BorderLayout();
-        JDialog dialog = new JDialog();
-        dialog.setLayout(b);
-        dialog.setTitle(title);
-        JPanel panel = new JPanel();
-        LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
-        panel.setLayout(panelLayout);
-        panel.setBorder(MipavUtil.buildTitledBorder("treT1-Conv: Long"));
-        
-        b1Field = null;
-        if(performTreT1withPreCalculatedB1Map) {
-            b1Field = guiBuilder.buildComboBox("B1 Field Map:", titles, 0);
-            panel.add(b1Field.getParent(), panelLayout);
-        }
-        
-        convimageComboAr = new JComboBox[Nsa];
-        convFAFieldAr = new JTextField[Nsa];
-        for(int i=0; i<Nsa; i++) {
-            convimageComboAr[i] = guiBuilder.buildComboBox("Image #"+i, titles, i);
-            panel.add(convimageComboAr[i].getParent(), panelLayout);
-            
-            convFAFieldAr[i] = guiBuilder.buildDecimalField("Flip Angle #"+i, 0);//treFA[i]);
-            panel.add(convFAFieldAr[i].getParent(), panelLayout);
-        }
-        convRepTime = guiBuilder.buildDecimalField("Repetition Time (ms):", treTR);
-        panel.add(convRepTime.getParent(), panelLayout);
-        
-        return panel;
-    }
-        
-    public JPanel buildTreT1SpecificsDialog() {
-        JPanel panel = new JPanel();
-        LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
-        panel.setLayout(panelLayout);
-        panel.setBorder(MipavUtil.buildTitledBorder("treT1: Specifics"));
-        
-        maxT1Field = guiBuilder.buildDecimalField("Maximum Allowable T1:", maxT1);
-        maxMoField = guiBuilder.buildDecimalField("Maximum Allowable Mo:", maxMo);
-        showT1Map = guiBuilder.buildCheckBox("Show T1 Map", calculateT1);
-        showMoMap = guiBuilder.buildCheckBox("Show Mo Map", calculateMo);
-        showR1Map = guiBuilder.buildCheckBox("Show R1 Map", invertT1toR1);
-        leastSquaresCheck = null;
-        if(Nsa > 2) {
-            leastSquaresCheck = guiBuilder.buildCheckBox("Calculate T1 Using Weigthed Least-Squares", useWeights);
-            panel.add(leastSquaresCheck.getParent(), panelLayout);
-        }
-        
-        panel.add(maxT1Field.getParent(), panelLayout);
-        panel.add(maxMoField.getParent(), panelLayout);
-        panel.add(showT1Map.getParent(), panelLayout);
-        panel.add(showMoMap.getParent(), panelLayout);
-        panel.add(showR1Map.getParent(), panelLayout);
-        
-        return panel;
-    }
-    
-    public JPanel buildThresholdDialog() {
-    	JPanel panel = new JPanel();
-        LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
-        panel.setLayout(panelLayout);
-        panel.setBorder(MipavUtil.buildTitledBorder("Thresholding"));
-        
-        JPanel methodPanel = new JPanel();
-        LayoutManager methodLayout = new BoxLayout(methodPanel, BoxLayout.X_AXIS);
-        methodPanel.setLayout(methodLayout);
-        methodPanel.setBorder(MipavUtil.buildTitledBorder("Thresholding method"));
-        
-        smartCheckBox = guiBuilder.buildRadioButton("Use Smart Thresholding", useSmartThresholding);
-        hardCheckBox = guiBuilder.buildRadioButton("Use Hard Thresholding", useHardThresholding);
-       
-        thresholdGroup = new ButtonGroup();
-        thresholdGroup.add(smartCheckBox);
-        thresholdGroup.add(hardCheckBox);
-        smartCheckBox.setSelected(true);
-        
-        ActionListener c = new ThresholdChoiceListener();
-        smartCheckBox.addActionListener(c);
-        hardCheckBox.addActionListener(c);
-
-        methodPanel.add(smartCheckBox, methodLayout);
-        methodPanel.add(hardCheckBox, methodLayout);
-        
-        panel.add(methodPanel, panelLayout);
-        
-        generalThresholdPanel = new JPanel();
-        
-        smartThreshold = buildSmartThresholdDialog();
-        generalThresholdPanel.add(smartThreshold);
-        
-        panel.add(generalThresholdPanel, panelLayout);
-        
-        return panel;
-    }
-    
-   
-    public JPanel buildTreT1HIFISpecificsDialog() {
-        JPanel panel = new JPanel();
-        LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
-        panel.setLayout(panelLayout);
-        panel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR Image Information"));
-        
-        maxT1Field = guiBuilder.buildDecimalField("Maximum Allowable T1:", maxT1);
-        maxMoField = guiBuilder.buildDecimalField("Maximum Allowable Mo:", maxMo);
-        showT1Map = guiBuilder.buildCheckBox("Show T1 Map", calculateT1);
-        showMoMap = guiBuilder.buildCheckBox("Show Mo Map", calculateMo);
-        showB1Check = guiBuilder.buildCheckBox("Show B1 Map", true);
-        showR1Map = guiBuilder.buildCheckBox("Show R1 Map", invertT1toR1);
-        leastSquaresCheck = null; 
-        if (Nsa > 2) { 
-        	leastSquaresCheck = guiBuilder.buildCheckBox("Calculate T1 Using Weighted Least-Squares", useWeights);
-        }
-        
-        panel.add(maxT1Field.getParent(), panelLayout);
-        panel.add(maxMoField.getParent(), panelLayout);
-        panel.add(showT1Map.getParent(), panelLayout);
-        panel.add(showMoMap.getParent(), panelLayout);
-        panel.add(showB1Check.getParent(), panelLayout);
-        panel.add(showR1Map.getParent(), panelLayout);
-        if(Nsa > 2) {
-            panel.add(leastSquaresCheck.getParent(), panelLayout);
-        }
-        
-        return panel;
-    }
-    
-    /**
-     * No border
-     * @return
-     */
-    public JPanel buildHardThresholdDialog() {
-        JPanel panel = new JPanel();
-        LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
-        panel.setLayout(panelLayout);
-        
-        hardNoiseField = guiBuilder.buildDecimalField("Hard Noise Level", hardNoiseThreshold);
-        
-        panel.add(hardNoiseField.getParent(), panelLayout);
-        
-        return panel;
-    }
-    
-    public JPanel buildSmartThresholdDialog() {
-        JPanel panel = new JPanel();
-        LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
-        panel.setLayout(panelLayout);
-        
-        smartNoiseField = guiBuilder.buildDecimalField("Noise Level Scale", noiseScale);
-        topLeftBox = guiBuilder.buildCheckBox("Calculate Noise from TOP LEFT Corner?", upperLeftCorner);
-        topRightBox = guiBuilder.buildCheckBox("Calculate Noise from TOP RIGHT Corner?", upperRightCorner);
-        bottomLeftBox = guiBuilder.buildCheckBox("Calculate Noise from BOTTOM LEFT Corner?", lowerLeftCorner);
-        bottomRightBox = guiBuilder.buildCheckBox("Calculate Noise from BOTTOM RIGHT Corner?", lowerRightCorner);
-        
-        panel.add(smartNoiseField.getParent(), panelLayout);
-        panel.add(topLeftBox.getParent(), panelLayout);
-        panel.add(topRightBox.getParent(), panelLayout);
-        panel.add(bottomLeftBox.getParent(), panelLayout);
-        panel.add(bottomRightBox.getParent(), panelLayout);
-
-        return panel;
-    }
-    
-    private boolean setUI() {
-    	//set conventional
-        /*Nsa = (int) Double.valueOf(spgrNumFA.getText()).doubleValue();
+    private class ScannerChoiceListener implements ActionListener {
+    	private int getChangeTab(String str) {
+    		int changeTab = -1;
+			for(int i=0; i<tab.getTabCount(); i++) {
+				if(tab.getTitleAt(i).indexOf(str) != -1) {
+					changeTab = i;
+				}
+			}
+			return changeTab;
+    	}
     	
-        //set Hifi
-        Nsa = (int) Double.valueOf(spgrNumFAHifi.getText()).doubleValue();
-        Nti = (int) Double.valueOf(irspgrNum.getText()).doubleValue();
-    
-        geScanner = isGEButton.isSelected();
-        siemensScanner = isSiemensButton.isSelected();
-        
-    	//set spgr
-    	for(int i=0; i<Nsa; i++) {
-            spgrImageIndex[i] = spgrImageComboBoxAr[i].getSelectedIndex();
-            treFA[i] = Float.valueOf(flipAngleAr[i].getText()).floatValue();
-        }
-        treTR = Double.valueOf(spgrRepTime.getText()).doubleValue();
-        
-        //set irspgrGE and siemens
-        for (int i=0; i<Nti; i++) {
-            irspgrImageIndex[i] = irspgrCombo[i].getSelectedIndex();
-            irspgrTI[i] = Double.valueOf(irspgrField[i].getText()).doubleValue();
-        }
-        irspgrTR = Double.valueOf(irspgrTRField.getText()).doubleValue();
-        irspgrFA = Double.valueOf(irspgrFAField.getText()).doubleValue();
-        irspgrKy = Double.valueOf(numSlicesField.getText()).doubleValue();
-        doubleInversion = doubleInvRadio.isSelected();
-        singleInversion = singleInvRadio.isSelected();
-        onefiveTField = t15Radio.isSelected();
-        threeTField = t30Radio.isSelected();
-        smoothB1Field = smoothB1Box.isSelected();
-        
-        if (doubleInversion == true) {
-            singleInversion = false;
-        }
-        if (singleInversion == true) {
-            doubleInversion = false;
-        }
-        
-        if (onefiveTField == true) {
-            threeTField = false;
-        }
-        if (threeTField == true) {
-            onefiveTField = false;
-        }
-        
-        if (threeTField == true) {
-            if (doubleInversion == true) {
-                for (int i=0; i<Nti; i++) irspgrTI[i] = irspgrTI[i]*0.9;
-                irspgrKy = (irspgrKy/2.00)+2.00;
-            }
-            else {
-                for (int i=0; i<Nti; i++) irspgrTI[i] = irspgrTI[i]*0.9*0.93;
-                irspgrKy = irspgrKy + 2.00;
-            }
-        }
-        else {
-            if (doubleInversion == true) {
-                for (int i=0; i<Nti; i++) irspgrTI[i] = irspgrTI[i];
-                irspgrKy = (irspgrKy/2.00)+2.00;
-            }
-            else {
-                for (int i=0; i<Nti; i++) irspgrTI[i] = irspgrTI[i];
-                irspgrKy = irspgrKy;
-            }
-        }
-        
-        for (int i=0; i<Nti; i++) {
-        	irspgrTr[i] = irspgrTI[i] + irspgrTR*irspgrKy;
-        }
-        
-        //set t1Long
-        if (performTreT1withPreCalculatedB1Map) {
-            b1ImageIndex = b1Field.getSelectedIndex();
-        }
-        
-        for (int i=0; i<Nsa; i++) {
-            spgrImageIndex[i] = convimageComboAr[i].getSelectedIndex();
-            treFA[i] = Float.valueOf(convFAFieldAr[i].getText()).floatValue();
-        }
-        
-        treTR = Double.valueOf(convRepTime.getText()).doubleValue();
-        if (Nsa > 2) {
-            useWeights = leastSquaresCheck.isSelected();
-        }
-        
-        //set Specifics for both conv and general
-        maxT1 = Double.valueOf(maxT1Field.getText()).doubleValue();
-        maxMo = Double.valueOf(maxMoField.getText()).doubleValue();
-        calculateT1 = showT1Map.isSelected();
-        calculateMo = showMoMap.isSelected();
-        showB1Map = showB1Check.isSelected();
-        invertT1toR1 = showR1Map.isSelected();
-        if (Nsa > 2) {
-            useWeights = leastSquaresCheck.isSelected();
-        }*/
-        
-        
-        useSmartThresholding = smartCheckBox.isSelected();
-        if(useSmartThresholding) {
-        	setSmartThresholdUI();
-        }
-        useHardThresholding = hardCheckBox.isSelected();
-        if(useHardThresholding) {
-        	setHardThresholdUI();
-        }
-        if (useSmartThresholding) {
-            useHardThresholding = false;
-        }
-        
-        return true;
-    }
-    
-    private void setHardThresholdUI() {
-    	//hard threshold
-        hardNoiseThreshold = Float.valueOf(hardNoiseField.getText()).floatValue();
-    }
-    
-    private void setSmartThresholdUI() {
-    	//smart noise threshold
-        noiseScale = Float.valueOf(smartNoiseField.getText()).floatValue();
-        upperLeftCorner = topLeftBox.isSelected();
-        upperRightCorner = topRightBox.isSelected();
-        lowerLeftCorner = bottomLeftBox.isSelected();
-        lowerRightCorner = bottomRightBox.isSelected();
-    }
-    
-    private boolean validateUI() {
+    	private void varSet() {
+    		int tabLoc = -1;
+    		if(isGEButton.isSelected()) {
+    			if((tabLoc = getChangeTab("Siemens")) != -1) {
+    				tab.setTitleAt(tabLoc, (tabLoc+1)+": GE");
+    				irspgrGeneralPanel.removeAll();
+    				JPanel irspgrGEPanel = buildIRSPGRPanelGE();
+    				irspgrGeneralPanel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR GE Image Information"));
+    				irspgrGeneralPanel.add(irspgrGEPanel);
+    				irspgrGeneralPanel.updateUI();
+    			}
+    		} else if(isSiemensButton.isSelected()) {
+    			if((tabLoc = getChangeTab("GE")) != -1) {
+    				tab.setTitleAt(tabLoc, (tabLoc+1)+": Siemens");
+    				irspgrGeneralPanel.removeAll();
+    				JPanel irspgrSiemensPanel = buildIRSPGRPanelSiemens();
+    				irspgrGeneralPanel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR Siemens Image Information"));
+    				irspgrGeneralPanel.add(irspgrSiemensPanel);
+    				irspgrGeneralPanel.updateUI();
+    			}
+    		}
+    	}
     	
-    	//opening
-
-        //generic
-        if (Nsa > wList.length) {
-            MipavUtil.displayError("Please import all nessesary images first.");
-            return false;
-        }
-        if (Nsa < 2) {
-            MipavUtil.displayError("T1 and Mo calculations require at least two SPGR images.");
-            return false;
-        }
-        if (performTreT1withPreCalculatedB1Map) {
-            if (Nsa+1 > wList.length) {
-                MipavUtil.displayError("Please import all nessesary images first.");
-                return false;
-            }
-        }
-        
-        //hifi
-        if (geScanner == true) {
-            siemensScanner = false;
-        }
-        if (siemensScanner == true) {
-            geScanner = false;
-        }
-        
-        if (Nsa > wList.length) {
-            MipavUtil.displayError("Please import all nessesary images first.");
-            return false;
-        }
-        if (Nsa < 2) {
-            MipavUtil.displayError("T1 and Mo calculations require at least two SPGR images.");
-            return false;
-        }
-        
-        if (Nti < 1) {
-            MipavUtil.displayError("B1 correction requires at least one IR-SPGR image.");
-            return false;
-        }
-        
-        //validate ge and siemens irspgr
-        if(inversionGroup.getSelection() == null) {
-            MipavUtil.displayInfo("Please choose either single or double inversion regime");
-            return false;
-        }
-        
-        if(fieldStrengthGroup.getSelection() == null) {
-            MipavUtil.displayInfo("Please choose field strength");
-            return false;
-        }
-        
-        return true;
+    	public void actionPerformed(ActionEvent e) {
+			varSet();
+			System.out.println("Action: "+e.getActionCommand()+"\t "+e.getSource());
+		}
     }
 
     public enum ExitStatus {
