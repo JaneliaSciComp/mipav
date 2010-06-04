@@ -1,38 +1,29 @@
 package gov.nih.mipav.model.file;
 
 import java.io.EOFException;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Random;
 
+/**
+ * This class is a random access file that has an internal delimiter for fast
+ * processing of text files.  It can be used to read in legacy text files, such
+ * as comma-separated VOIs. 
+ * 
+ * @author Justin Senseney
+ */
+
 public class DelimitedRandomAccessFile extends RandomAccessFile {
 
+	/** The delimiter that separates each str chunk. */
 	private char delim;
 	
 	/**
-	 * <blockquote><table summary="Access mode permitted values and meanings">
-	 *
-	 * <tr><th><p align="left">Value</p></th><th><p align="left">Meaning</p></th></tr>
-	 * <tr><td valign="top"><tt>"r"</tt></td>
-	 *     <td> Open for reading only.  Invoking any of the <tt>write</tt>
-	 *     methods of the resulting object will cause an <A HREF="../../java/io/IOException.html" title="class in java.io"><CODE>IOException</CODE></A> to be thrown. </td></tr>
-	 *
-	 * <tr><td valign="top"><tt>"rw"</tt></td>
-	 *     <td> Open for reading and writing.  If the file does not already
-	 *     exist then an attempt will be made to create it. </td></tr>
-	 * <tr><td valign="top"><tt>"rws"</tt></td>
-	 *    <td> Open for reading and writing, as with <tt>"rw"</tt>, and also
-	 *     require that every update to the file's content or metadata be
-	 *     written synchronously to the underlying storage device.  </td></tr>
-	 * <tr><td valign="top"><tt>"rwd"&nbsp;&nbsp;</tt></td>
-	 *
-	 *    <td> Open for reading and writing, as with <tt>"rw"</tt>, and also
-	 *    require that every update to the file's content be written
-	 *    synchronously to the underlying storage device. </td></tr>
-	 * </table></blockquote>
-	 *
+	 * This constructor first performs the same actions as RandomAccessFile(String name, String mode),
+	 * it then sets the file's delimiter to <code>delim</code>. 
 	 * 
 	 * @see RandomAccessFile(String name, String mode)
 	 */
@@ -44,27 +35,8 @@ public class DelimitedRandomAccessFile extends RandomAccessFile {
 	}
 
 	/**
-	 * <blockquote><table summary="Access mode permitted values and meanings">
-	 *
-	 * <tr><th><p align="left">Value</p></th><th><p align="left">Meaning</p></th></tr>
-	 * <tr><td valign="top"><tt>"r"</tt></td>
-	 *     <td> Open for reading only.  Invoking any of the <tt>write</tt>
-	 *     methods of the resulting object will cause an <A HREF="../../java/io/IOException.html" title="class in java.io"><CODE>IOException</CODE></A> to be thrown. </td></tr>
-	 *
-	 * <tr><td valign="top"><tt>"rw"</tt></td>
-	 *     <td> Open for reading and writing.  If the file does not already
-	 *     exist then an attempt will be made to create it. </td></tr>
-	 * <tr><td valign="top"><tt>"rws"</tt></td>
-	 *    <td> Open for reading and writing, as with <tt>"rw"</tt>, and also
-	 *     require that every update to the file's content or metadata be
-	 *     written synchronously to the underlying storage device.  </td></tr>
-	 * <tr><td valign="top"><tt>"rwd"&nbsp;&nbsp;</tt></td>
-	 *
-	 *    <td> Open for reading and writing, as with <tt>"rw"</tt>, and also
-	 *    require that every update to the file's content be written
-	 *    synchronously to the underlying storage device. </td></tr>
-	 * </table></blockquote>
-	 *
+	 * This constructor first performs the same actions as RandomAccessFile(File file, String mode),
+	 * it then sets the file's delimiter to <code>delim</code>. 
 	 * 
 	 * @see RandomAccessFile(File file, String mode)
 	 */
@@ -130,6 +102,15 @@ public class DelimitedRandomAccessFile extends RandomAccessFile {
 		return newString;
 	}
 	
+	/**
+	 * This method retrieves a String consisting of all characters from
+	 * the current pointer location in the random access file and the 
+	 * temporary delimiter.
+	 * 
+	 * @param tempDelim the temporary delimiter for this class
+	 * @return the string up to tempDelim (exclusive)
+	 * @throws IOException 
+	 */
 	public String readDelimitedBytes(char tempDelim) throws IOException {
 		char oldDelim = delim;
 		delim = tempDelim;
