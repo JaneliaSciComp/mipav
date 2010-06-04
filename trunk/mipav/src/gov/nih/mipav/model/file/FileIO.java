@@ -3839,7 +3839,7 @@ public class FileIO {
         final boolean bigEndianness = image.getFileInfo(0).getEndianess();
         type = image.getType();
 
-        if (type == ModelStorageBase.BYTE || type == ModelStorageBase.UBYTE) {
+        if (type == ModelStorageBase.BYTE || type == ModelStorageBase.UBYTE || type == ModelStorageBase.BOOLEAN) {
             byteData = new byte[length];
             try {
                 image.exportData(start, length, byteData);
