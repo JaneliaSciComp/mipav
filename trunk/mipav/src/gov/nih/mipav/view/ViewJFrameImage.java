@@ -3256,10 +3256,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             // componentImage.deactivateAllVOI();
             setTitle();
-
             // need to get all other images in sync if there are other matching images and if shift was down
-            if ( (isShiftDown || linkedScrolling) && (getRegisteredFramedImagesSize() > 0)) {
+            if (isShiftDown || linkedScrolling) {
                 Vector registeredFramedImages = getRegisteredFramedImages(getImageA());
+                if(getImageA().is4DImage()) {
+                	Vector registeredFramedImages2 = getRegisteredFramedImages4D3D(getImageA());
+                	 for (int i = 0; i < registeredFramedImages2.size(); i++) {
+                		 registeredFramedImages.add((ModelImage) registeredFramedImages2.get(i));
+                	 }
+                }
 
                 for (int i = 0; i < registeredFramedImages.size(); i++) {
                     final ModelImage img = (ModelImage) registeredFramedImages.get(i);
@@ -3578,6 +3583,69 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         return registeredFramedImages;
     }
+    
+    
+    
+    
+    
+    
+    /**
+     * If active image is 4D, this returns all 3d images that have same x,y,and z dimensionality as the 4d image
+     * 
+     * @return Vector
+     */
+    public Vector getRegisteredFramedImages4D3D(final ModelImage activeImage) {
+    	final Vector registeredFramedImages = new Vector();
+        final int activeImageNumDims = activeImage.getNDims();
+        if(activeImageNumDims != 4) {
+        	return registeredFramedImages;
+        }
+        int activeImageNumSlices = 1, activeImageNumVolumes = 1, activeImageNumChannels = 1;
+
+        activeImageNumSlices = activeImage.getExtents()[2];
+
+
+        // check if there is more than 1 regsitered framed image
+        if (ViewUserInterface.getReference().getRegisteredFramedImagesNum() > 1) {
+
+            // get all registered images
+            final Enumeration regImages = ViewUserInterface.getReference().getRegisteredImages();
+            // add only the framed ones to a new list...also..dont include the active image
+
+            while (regImages.hasMoreElements()) {
+                final ModelImage image = (ModelImage) regImages.nextElement();
+
+                // check if it is a framed image...and if its not the active image...also make sure its just imageA
+                if ( (image.getParentFrame() != null) && ( !image.getImageName().equals(activeImage.getImageName()))
+                        && ( ( (image.getParentFrame())).getImageA() == image)) {
+
+                    // now check the dimensionality to see if it matches with the active image
+                    final int regFramedNumDims = image.getNDims();
+
+                    if (regFramedNumDims == 3) {
+                        if (image.getExtents()[2] == activeImageNumSlices) {
+                        	 registeredFramedImages.add(image);
+                        }
+                    }
+                }
+            }
+        }
+
+        return registeredFramedImages;
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     /**
      * Returns the size of the RegisteredFramedImages Vector.
@@ -3797,8 +3865,14 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             setTitle();
 
             // need to get all other images in sync if there are other matching images and if shift was down
-            if ( (isShiftDown || linkedScrolling) && (getRegisteredFramedImagesSize() > 0)) {
+            if (isShiftDown || linkedScrolling) {
                 Vector registeredFramedImages = getRegisteredFramedImages(getImageA());
+                if(getImageA().is4DImage()) {
+                	Vector registeredFramedImages2 = getRegisteredFramedImages4D3D(getImageA());
+                	 for (int i = 0; i < registeredFramedImages2.size(); i++) {
+                		 registeredFramedImages.add((ModelImage) registeredFramedImages2.get(i));
+                	 }
+                }
 
                 for (int i = 0; i < registeredFramedImages.size(); i++) {
                     final ModelImage img = (ModelImage) registeredFramedImages.get(i);
