@@ -12,6 +12,7 @@ import gov.nih.mipav.view.*;
 import java.awt.*;
 import java.awt.event.*;
 
+import java.lang.management.GarbageCollectorMXBean;
 import java.util.*;
 
 import javax.swing.*;
@@ -25,7 +26,7 @@ import javax.swing.*;
  * @version  March 21, 2006
  * @see      AlgorithmFrequencyFilter
  */
-public class JDialogGaborFilter extends JDialogScriptableBase implements AlgorithmInterface, ItemListener {
+public class JDialogGaborFilter extends JDialogScriptableBase implements AlgorithmInterface, ItemListener, ActionDiscovery, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -90,6 +91,8 @@ public class JDialogGaborFilter extends JDialogScriptableBase implements Algorit
 
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
+    
+    private ModelImage gaborImage = null;
 
     /** DOCUMENT ME! */
     private float sigmaU;
@@ -185,7 +188,9 @@ public class JDialogGaborFilter extends JDialogScriptableBase implements Algorit
                 // resultImage is the same or smaller than image.
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
-
+                	if(createGabor){
+                		gaborImage = FrequencyFilterAlgo.getGabor();
+                	}
                     // resultImage.setImageName("Frequency Filtered image");
                     new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
@@ -215,6 +220,9 @@ public class JDialogGaborFilter extends JDialogScriptableBase implements Algorit
 
                 updateFileTypeInfo(image, ModelStorageBase.FLOAT);
                 image.notifyImageDisplayListeners(null, true);
+            	if(createGabor){
+            		gaborImage = FrequencyFilterAlgo.getGabor();
+            	}
             } else if (resultImage != null) {
 
                 // algorithm failed but result image still has garbage
@@ -226,6 +234,8 @@ public class JDialogGaborFilter extends JDialogScriptableBase implements Algorit
                 insertScriptLine();
             }
         }
+     // save the completion status for later
+        setComplete(FrequencyFilterAlgo.isCompleted());
 
         FrequencyFilterAlgo.finalize();
         FrequencyFilterAlgo = null;
@@ -667,4 +677,125 @@ public class JDialogGaborFilter extends JDialogScriptableBase implements Algorit
 
         return true;
     }
+
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms");
+            }
+
+            public String getDescription() {
+                return new String("Applies a gabor filter.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Applies a gabor filter.");
+            }
+
+            public String getShortLabel() {
+                return new String("GaborFilter");
+            }
+
+            public String getLabel() {
+                return new String("Gabor Filter");
+            }
+
+            public String getName() {
+                return new String("Gabor Filter");
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+        
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
+            table.put(new ParameterFloat("pre_rot_horiz_freq", 0));
+            table.put(new ParameterFloat("pre_rot_vert_freq", 0));
+            table.put(new ParameterFloat("pre_rot_horiz_sigma", (float) .1));
+            table.put(new ParameterFloat("pre_rot_vert_sigma", (float) .1));
+            table.put(new ParameterFloat("rotation_angle", 0));
+            table.put(new ParameterBoolean("do_create_gabor_image", true));
+            } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+            table.put(new ParameterImage("gabor_image"));
+            
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            if (getResultImage() != null) {
+                // algo produced a new result image
+                return getResultImage().getImageName();
+            } else {
+                // algo was done in place
+                return image.getImageName();
+            }
+        } 
+        if (imageParamName.equals("gabor_image")) {
+        		return gaborImage.getImageName();
+            }
+        
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+
+	
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
+    }
+
 }

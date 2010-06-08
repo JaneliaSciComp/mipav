@@ -508,7 +508,7 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
             }
 
             public String getShortLabel() {
-                return new String("CoM_2D");
+                return new String("CoM2D");
             }
 
             public String getLabel() {
@@ -543,10 +543,9 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
         final ParameterTable table = new ParameterTable();
 
         try {
-        	table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
-        	table.put(new ParameterDouble("X-axis Center", comAlgo.getCenterOfMass()[0]));
-        	table.put(new ParameterDouble("Y-axis Center", comAlgo.getCenterOfMass()[1]));
-        	table.put(new ParameterDouble("Z-axis Center", comAlgo.getCenterOfMass()[2]));
+        	table.put(new ParameterDouble("xCOM"));
+        	table.put(new ParameterDouble("yCOM"));
+        	table.put(new ParameterDouble("zCOM"));
         		
         } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
