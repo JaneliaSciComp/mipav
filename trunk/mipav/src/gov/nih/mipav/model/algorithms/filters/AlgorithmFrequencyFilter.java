@@ -268,6 +268,8 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private boolean zeroPad; // true if zero padding actually performed
+    
+    private ModelImage gaborImage = null ;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -579,6 +581,15 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
      */
     public byte[] getSData() {
         return sData;
+    }
+    
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  sData
+     */
+    public ModelImage getGabor() {
+        return gaborImage;
     }
 
     /**
@@ -3242,7 +3253,6 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         double xDenom, yDenom;
         float coeff;
         float[] realData2 = null;
-        ModelImage gaborImage;
         int[] gaborExtents;
 
         if (createGabor) {

@@ -34,13 +34,13 @@ public class AlgorithmCenterOfMass extends AlgorithmBase {
     private boolean allowDataWindow = true;
     
     /** x coordinate for center of mass, normalized by image resolution*/
-    private double xCOM;
+    public double xCOM;
     
     /** y coordinate for center of mass, normalized by image resolution*/
-    private double yCOM;
+    public double yCOM;
     
     /** z coordinate for center of mass, normalized by image resolution, if srcImage is 2D = 0*/
-    private double zCOM;
+    public double zCOM;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 

@@ -25,7 +25,7 @@ import javax.swing.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      AlgorithmFrequencyFilter
  */
-public class JDialogFrequencyFilter extends JDialogScriptableBase implements AlgorithmInterface, ItemListener {
+public class JDialogFrequencyFilter extends JDialogScriptableBase implements AlgorithmInterface, ItemListener, ActionDiscovery, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -340,6 +340,8 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
                 insertScriptLine();
             }
         }
+     // save the completion status for later
+        setComplete(algorithm.isCompleted());
 
         FrequencyFilterAlgo.finalize();
         FrequencyFilterAlgo = null;
@@ -1061,4 +1063,118 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
 
         return true;
     }
+
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms");
+            }
+
+            public String getDescription() {
+                return new String("Filters an image through the frequency domain");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Applies a simple gaussian blur filter.");
+            }
+
+            public String getShortLabel() {
+                return new String("FreqFilter");
+            }
+
+            public String getLabel() {
+                return new String("Frequency Filter");
+            }
+
+            public String getName() {
+                return new String("Frequency Filter");
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D, false));
+            table.put(new ParameterBoolean("do_crop_image", true));
+            table.put(new ParameterInt("filter_type", 2));
+            table.put(new ParameterFloat("freq1", (float) 0.4));
+            table.put(new ParameterFloat("freq2", (float) 0.7));
+            table.put(new ParameterInt("construction_method", 1));
+            table.put(new ParameterInt("butterworth_order", 0));
+            table.put(new ParameterInt("kernel_diameter", 15));
+            } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            if (getResultImage() != null) {
+                // algo produced a new result image
+                return getResultImage().getImageName();
+            } else {
+                // algo was done in place
+                return image.getImageName();
+            }
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
+    }
+
 }
