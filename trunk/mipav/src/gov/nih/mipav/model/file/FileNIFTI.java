@@ -2535,7 +2535,7 @@ public class FileNIFTI extends FileBase {
                            	 buffer = getFullBuffer(zin,buffer,bytesRead,256); 
                             }
 
-                        	if(type == ModelStorageBase.BYTE || type == ModelStorageBase.UBYTE) {
+                        	if(type == ModelStorageBase.BYTE || type == ModelStorageBase.UBYTE || type == ModelStorageBase.BOOLEAN) {
                         		image.importData(start, buffer, false);
                         		if(start < image.getDataSize()) {
                         			start = start + buffer.length;
@@ -2644,7 +2644,7 @@ public class FileNIFTI extends FileBase {
                             }
 
 
-                        	if(type == ModelStorageBase.BYTE || type == ModelStorageBase.UBYTE) {
+                        	if(type == ModelStorageBase.BYTE || type == ModelStorageBase.UBYTE  || type == ModelStorageBase.BOOLEAN) {
                         		if(start < image.getDataSize()) {
                         			image.importData(start, buffer, false);
                         		}
@@ -2750,7 +2750,7 @@ public class FileNIFTI extends FileBase {
                            	 buffer = getFullBuffer(bz2in,buffer,bytesRead,256); 
                             }
 
-                        	if(type == ModelStorageBase.BYTE || type == ModelStorageBase.UBYTE) {
+                        	if(type == ModelStorageBase.BYTE || type == ModelStorageBase.UBYTE  || type == ModelStorageBase.BOOLEAN) {
                         		if(start < image.getDataSize()) {
                         			image.importData(start, buffer, false);
                         		}
