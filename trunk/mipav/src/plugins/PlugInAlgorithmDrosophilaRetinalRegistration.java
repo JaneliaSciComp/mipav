@@ -179,7 +179,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
      * run algorithm
      */
     public void runAlgorithm() {
-        outputTextArea.append("Running Algorithm v2.2" + "\n");
+        outputTextArea.append("Running Algorithm v2.4" + "\n");
         final long begTime = System.currentTimeMillis();
 
         // rescale imageX intensity to imageY based on VOI
@@ -293,10 +293,11 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
         }// done rescaling
 
 
+        
         TransMatrix intermMatrix1;
         if(matrixAffine == null) {
-        	intermMatrix1 = new TransMatrix(matrixGreen);
-        intermMatrix1.Inverse();
+        	intermMatrix1 = matrixGreen;
+        	intermMatrix1.Inverse();
         }else {
         	intermMatrix1 = new TransMatrix(4);
             intermMatrix1.Mult(matrixAffine, matrixGreen); // pretty sure this is correct
@@ -473,9 +474,9 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
                         ymm = y * resultImage.getResolutions(0)[1];
                         zmm = z * resultImage.getResolutions(0)[2];
 
-                        tPt1[0] = MipavMath.round(xmm / imageX.getResolutions(0)[0]);
-                        tPt1[1] = MipavMath.round(ymm / imageX.getResolutions(0)[1]);
-                        tPt1[2] = MipavMath.round(zmm / imageX.getResolutions(0)[2]);
+                        tPt1[0] = MipavMath.round(xmm / imageY.getResolutions(0)[0]);
+                        tPt1[1] = MipavMath.round(ymm / imageY.getResolutions(0)[1]);
+                        tPt1[2] = MipavMath.round(zmm / imageY.getResolutions(0)[2]);
 
                         tPt2[0] = xmm / imageY.getResolutions(0)[0];
                         tPt2[1] = ymm / imageY.getResolutions(0)[1];
@@ -508,11 +509,32 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
                         ymm = y * resultImage.getResolutions(0)[1];
                         zmm = z * resultImage.getResolutions(0)[2];
 
+                        
+                        //6/4/2010
+                        /*intermMatrix1.transform(xmm, ymm, zmm, tPt1);
+                         
+                        tPt1[0] = tPt1[0] / imageY.getResolutions(0)[0];
+                        tPt1[1] = tPt1[1] / imageY.getResolutions(0)[1];
+                        tPt1[2] = tPt1[2] / imageY.getResolutions(0)[2];*/
+                        
+                        
+                        
+                        //6/4/2010
+                        tPt1[0] = MipavMath.round(xmm / imageY.getResolutions(0)[0]);
+                        tPt1[1] = MipavMath.round(ymm / imageY.getResolutions(0)[1]);
+                        tPt1[2] = MipavMath.round(zmm / imageY.getResolutions(0)[2]);
+                        
                         intermMatrix1.transform(xmm, ymm, zmm, tPt1);
-
+                        
                         tPt1[0] = tPt1[0] / imageX.getResolutions(0)[0];
                         tPt1[1] = tPt1[1] / imageX.getResolutions(0)[1];
                         tPt1[2] = tPt1[2] / imageX.getResolutions(0)[2];
+                        
+                        
+                        
+                        
+                        
+                        
 
                         xmm = x * resultImage.getResolutions(0)[0];
                         ymm = y * resultImage.getResolutions(0)[1];
@@ -875,17 +897,17 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
         final FileInfoImageXML[] fileInfoBases = new FileInfoImageXML[resultImage.getExtents()[2]];
         for (int i = 0; i < fileInfoBases.length; i++) {
             fileInfoBases[i] = new FileInfoImageXML(resultImage.getImageName(), null, FileUtility.XML);
-            fileInfoBases[i].setEndianess(imageX.getFileInfo()[0].getEndianess());
-            fileInfoBases[i].setUnitsOfMeasure(imageX.getFileInfo()[0].getUnitsOfMeasure());
+            fileInfoBases[i].setEndianess(imageY.getFileInfo()[0].getEndianess());
+            fileInfoBases[i].setUnitsOfMeasure(imageY.getFileInfo()[0].getUnitsOfMeasure());
             fileInfoBases[i].setResolutions(resultImageResols);
             fileInfoBases[i].setExtents(resultImage.getExtents());
-            fileInfoBases[i].setImageOrientation(imageX.getFileInfo()[0].getImageOrientation());
-            fileInfoBases[i].setAxisOrientation(imageX.getFileInfo()[0].getAxisOrientation());
-            fileInfoBases[i].setOrigin(imageX.getFileInfo()[0].getOrigin());
-            fileInfoBases[i].setPixelPadValue(imageX.getFileInfo()[0].getPixelPadValue());
-            fileInfoBases[i].setPhotometric(imageX.getFileInfo()[0].getPhotometric());
+            fileInfoBases[i].setImageOrientation(imageY.getFileInfo()[0].getImageOrientation());
+            fileInfoBases[i].setAxisOrientation(imageY.getFileInfo()[0].getAxisOrientation());
+            fileInfoBases[i].setOrigin(imageY.getFileInfo()[0].getOrigin());
+            fileInfoBases[i].setPixelPadValue(imageY.getFileInfo()[0].getPixelPadValue());
+            fileInfoBases[i].setPhotometric(imageY.getFileInfo()[0].getPhotometric());
             fileInfoBases[i].setDataType(ModelStorageBase.ARGB);
-            fileInfoBases[i].setFileDirectory(imageX.getFileInfo()[0].getFileDirectory());
+            fileInfoBases[i].setFileDirectory(imageY.getFileInfo()[0].getFileDirectory());
         }
 
         resultImage.setFileInfo(fileInfoBases);
