@@ -9,6 +9,9 @@ import gov.nih.mipav.DoubleDouble;
 import gov.nih.mipav.view.*;
 
 import java.util.BitSet;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import java.awt.*;
 
@@ -104,6 +107,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
     private int yDim;
     private int zDim;
     private int tDim;
+    private int volSize;
     private double initial[];
     private double trapezoidMidpoint[];
     private double trapezoidConstant[];
@@ -115,6 +119,8 @@ public class AlgorithmSM2 extends AlgorithmBase {
     private int[] paramInf = new int[3];
     private double[] paramMin = new double[3];
     private double[] paramMax = new double[3];
+    private int processors;
+    private float destArray[];
     
     private ModelImage tissueImage;
 
@@ -159,13 +165,11 @@ public class AlgorithmSM2 extends AlgorithmBase {
     public void runAlgorithm() {
         ViewVOIVector VOIs;
         BitSet mask;
-        int volSize;
         int t;
         double y_array[];
         int size4D;
         FitSM2ConstrainedModel dModel;
         double[] params;
-        float destArray[];
         int j;
         // If true, run a self test of NLConstrainedEngineEP.java
         boolean nlConstrainedEngineEPTest = false;
@@ -477,6 +481,9 @@ public class AlgorithmSM2 extends AlgorithmBase {
             return;
         }
         
+        processors = Runtime.getRuntime().availableProcessors();
+        Preferences.debug("Available processors = " + processors + "\n");
+        
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
         zDim = srcImage.getExtents()[2];
@@ -587,35 +594,65 @@ public class AlgorithmSM2 extends AlgorithmBase {
         	paramMax[i] = -Double.MAX_VALUE;
         }
         
-        for (i = 0; i < volSize; i++) {
-        	fireProgressStateChanged(i * 100/volSize);
-            for (t = 1; t < tDim; t++) {
-            	y_array[t-1] = r1tj[t*volSize + i];
+        if (processors > 1) {
+        	int start;
+        	int end;
+            ExecutorService application = Executors.newCachedThreadPool();
+            for (i = 0; i < processors; i++) {
+                start = (i * volSize)/processors + (i * volSize)% processors;
+                end = ((i+1) * volSize)/processors + ((i+1) * volSize) % processors;
+                application.execute(new sm2Task(start, end, tDim, r1ptj, initial,
+                		                        trapezoidConstant, trapezoidSlope, timeVals));
             }
-            // Note that the nPts, tDim-1, is the number of points in the y_array.
-            dModel = new FitSM2ConstrainedModel(tDim-1, r1ptj, y_array, initial);
-            dModel.driver();
-            //dModel.dumpResults();
-            params = dModel.getParameters();
-            for (j = 0; j < 3; j++) {
-            	destArray[j*volSize + i] = (float)params[j];
-            	if (Double.isNaN(params[j])) {
-            	    paramNaN[j]++;	
+            application.shutdown();
+            try {
+            	boolean tasksEnded = application.awaitTermination(24, TimeUnit.HOURS);
+            	if (!tasksEnded) {
+            		System.err.println("Timed out while waiting for tasks to finish");
+            		Preferences.debug("Timed out while waiting for tasks to finish\n");
+            		setCompleted(false);
+            		return;
             	}
-            	else if (Double.isInfinite(params[j])) {
-            		paramInf[j]++;
-            	}
-            	else {
-	            	if (params[j] < paramMin[j]) {
-	            		paramMin[j] = params[j];
-	            	}
-	            	if (params[j] > paramMax[j]) {
-	            		paramMax[j] = params[j];
-	            	}
-            	}
+            		
             }
-            exitStatus[(dModel.getExitStatus() + 11)]++;
-        } // for (i = 0; i < volSize; i++)
+            catch (InterruptedException ex) {
+            	System.err.println("Interrupted while waiting for tasks to finish");
+        		Preferences.debug("Interrupted while waiting for tasks to finish\n");
+        		setCompleted(false);
+        		return;	
+            }
+        } 
+        else { // processors == 1
+	        for (i = 0; i < volSize; i++) {
+	        	fireProgressStateChanged(i * 100/volSize);
+	            for (t = 1; t < tDim; t++) {
+	            	y_array[t-1] = r1tj[t*volSize + i];
+	            }
+	            // Note that the nPts, tDim-1, is the number of points in the y_array.
+	            dModel = new FitSM2ConstrainedModel(tDim-1, r1ptj, y_array, initial);
+	            dModel.driver();
+	            //dModel.dumpResults();
+	            params = dModel.getParameters();
+	            for (j = 0; j < 3; j++) {
+	            	destArray[j*volSize + i] = (float)params[j];
+	            	if (Double.isNaN(params[j])) {
+	            	    paramNaN[j]++;	
+	            	}
+	            	else if (Double.isInfinite(params[j])) {
+	            		paramInf[j]++;
+	            	}
+	            	else {
+		            	if (params[j] < paramMin[j]) {
+		            		paramMin[j] = params[j];
+		            	}
+		            	if (params[j] > paramMax[j]) {
+		            		paramMax[j] = params[j];
+		            	}
+	            	}
+	            }
+	            exitStatus[(dModel.getExitStatus() + 11)]++;
+            } // for (i = 0; i < volSize; i++)
+        } // else processors == 1
         
         if (paramNaN[0] > 0) {
         	System.out.println(paramNaN[0] + " of ktrans values are NaN");
@@ -1777,6 +1814,258 @@ public class AlgorithmSM2 extends AlgorithmBase {
     Preferences.debug("\n");
     }
     
+    public class sm2Task implements Runnable {
+    	private final int start;
+    	private final int end;
+    	private final int tDim;
+    	private final double r1ptj[];
+    	private double initial[];
+    	private final double trapezoidConstant[];
+    	private final double trapezoidSlope[];
+    	private final double timeVals[];
+    	
+    	public sm2Task(int start, int end, int tDim, double r1ptj[], double initial[],
+    			       double trapezoidConstant[], double trapezoidSlope[], double timeVals[]) {
+    		this.start = start;
+    		this.end = end;
+    		this.tDim = tDim;
+    		this.r1ptj = r1ptj.clone();
+    		this.initial = initial.clone();
+    		this.trapezoidConstant = trapezoidConstant.clone();
+    		this.trapezoidSlope = trapezoidSlope.clone();
+    		this.timeVals = timeVals.clone();
+    	}
+    	
+    	public void run() {
+    		int i;
+    		double y_array[] = new double[tDim-1];
+    		double exparray[][] = new double[tDim][tDim];
+    		double ymodel[] = new double[tDim-1];
+    		double params[];
+    		FitSM2ConstrainedModelC dModel;
+    		int exitStatusIndex;
+    		for (i = start; i < end; i++) {
+	        	//fireProgressStateChanged(i * 100/volSize);
+	            input(y_array, i);
+	            // Note that the nPts, tDim-1, is the number of points in the y_array.
+	            dModel = new FitSM2ConstrainedModelC(tDim-1, r1ptj, y_array, initial, exparray, trapezoidConstant,
+	            		                             trapezoidSlope, timeVals, r1ptj, ymodel);
+	            dModel.driver();
+	            //dModel.dumpResults();
+	            params = dModel.getParameters();
+	            exitStatusIndex = dModel.getExitStatus() + 11;
+	            output(params, i, exitStatusIndex);
+            } // for (i = start; i < end; i++)	
+    	}
+    	
+    } // class sm2Task implements Runnable
+    
+    public synchronized void input(double y_array[], int i) {
+    	int t;
+    	for (t = 1; t < tDim; t++) {
+    		y_array[t-1] = r1tj[t*volSize + i];
+    	}
+    }
+    
+    public synchronized void output(double params[], int i, int exitStatusIndex) {
+    	int j;
+    	for (j = 0; j < 3; j++) {
+        	destArray[j*volSize + i] = (float)params[j];
+        	if (Double.isNaN(params[j])) {
+        	    paramNaN[j]++;	
+        	}
+        	else if (Double.isInfinite(params[j])) {
+        		paramInf[j]++;
+        	}
+        	else {
+            	if (params[j] < paramMin[j]) {
+            		paramMin[j] = params[j];
+            	}
+            	if (params[j] > paramMax[j]) {
+            		paramMax[j] = params[j];
+            	}
+        	}
+        }
+        exitStatus[exitStatusIndex]++;	
+    }
+    
+    class FitSM2ConstrainedModelC extends NLConstrainedEngine {
+        private double exparray[][];
+        private final int tDim;
+        private final double trapezoidConstant[];
+        private final double trapezoidSlope[];
+        private final double timeVals[];
+        private final double r1ptj[];
+        private double ymodel[];
+        /**
+         * Creates a new FitDEMRI3ConstrainedModel object.
+         *
+         * @param  nPoints  DOCUMENT ME!
+         * @param  xData    DOCUMENT ME!
+         * @param  yData    DOCUMENT ME!
+         * @param  initial  DOCUMENT ME!
+         */
+        public FitSM2ConstrainedModelC(int nPoints, double[] xData, double[] yData, double[] initial,
+        		                       double[][] exparray, double trapezoidConstant[],
+        		                       double trapezoidSlope[], double timeVals[], double r1ptj[],
+        		                       double ymodel[]) {
+
+            // nPoints data points, 3 coefficients, and exponential fitting
+            super(nPoints, 3, xData, yData);
+            tDim = nPoints + 1;
+            this.exparray = exparray;
+            this.trapezoidConstant = trapezoidConstant;
+            this.trapezoidSlope = trapezoidSlope;
+            this.timeVals = timeVals;
+            this.r1ptj = r1ptj;
+            this.ymodel = ymodel;
+
+            bounds = 2; // bounds = 0 means unconstrained
+
+            // bounds = 1 means same lower and upper bounds for
+            // all parameters
+            // bounds = 2 means different lower and upper bounds
+            // for all parameters
+            // Constrain parameter 0
+            bl[0] = min_constr[0];
+            bu[0] = max_constr[0];
+
+            // Constrain parameter 1
+            bl[1] = min_constr[1];
+            bu[1] = max_constr[1];
+
+            // Constrain parameter 2
+            bl[2] = min_constr[2];
+            bu[2] = max_constr[2];
+
+            // The default is internalScaling = false
+            // To make internalScaling = true and have the columns of the
+            // Jacobian scaled to have unit length include the following line.
+            //internalScaling = true;
+            // Suppress diagnostic messages
+            outputMes = false;
+
+            gues[0] = initial[0];
+            gues[1] = initial[1];
+            gues[2] = initial[2];
+        }
+
+        /**
+         * Starts the analysis.
+         */
+        public void driver() {
+            super.driver();
+        }
+
+        /**
+         * Display results of displaying SM2 fitting parameters.
+         */
+        public void dumpResults() {
+            Preferences.debug(" ******* FitSM2ConstrainedModel ********* \n\n");
+            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n");
+            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n");
+            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n");
+            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n");
+            Preferences.debug("a2 " + String.valueOf(a[2]) + "\n");
+        }
+        
+        /**
+         * 
+         *
+         * @param  a          The best guess parameter values.
+         * @param  residuals  ymodel - yData.
+         * @param  covarMat   The derivative values of y with respect to fitting parameters.
+         */
+        public void fitToFunction(double[] a, double[] residuals, double[][] covarMat) {
+            int ctrl;
+            int j;
+            double ktrans;
+            double ve;
+            double vp;
+            int m;
+            double intSum;
+            double intSumDerivKtrans;
+            double intSumDerivVe;
+            double ktransDivVe;
+
+            try {
+                ctrl = ctrlMat[0];
+                //Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + " a[2] = " + a[2] + "\n");
+                if ((ctrl == -1) || (ctrl == 1)) {
+                	ktrans = a[0];
+                	ve = a[1];
+                	vp = a[2];
+                	ktransDivVe = ktrans/ve;
+                	for (j = 0; j <= tDim-1; j++) {
+                		for (m = 0; m <= tDim-1; m++) {
+                	        exparray[j][m] = Math.exp((timeVals[j] - timeVals[m])*ktransDivVe);
+                		}
+                	}
+                	
+                	for (m = 2; m <= tDim; m++) {
+                		intSum = 0.0;
+                		for (j = 2; j <= m; j++) {
+                			intSum += trapezoidConstant[j-2]*(exparray[j-1][m-1] - exparray[j-2][m-1])*ve;
+	                        intSum += trapezoidSlope[j-2]* ((exparray[j-1][m-1]*(timeVals[j-1] - 1.0/ktransDivVe)) -
+	                                                                (exparray[j-2][m-1]*(timeVals[j-2] - 1.0/ktransDivVe)))*ve;
+                		} // for (j = 2; j <= m; j++)
+                		ymodel[m-2] = intSum + vp * r1ptj[m-1];
+                	} // for (m = 2; m <= tDim; m++)
+                    // evaluate the residuals[j] = ymodel[j] - ySeries[j]
+                    for (j = 0; j < nPts; j++) {
+                        residuals[j] = ymodel[j] - ySeries[j];
+                        //Preferences.debug("residuals["+ j + "] = " + residuals[j] + "\n");
+                    }
+                } // if ((ctrl == -1) || (ctrl == 1))
+                else if (ctrl == 2) {
+                	// Calculate the Jacobian analytically
+                	ktrans = a[0];
+                	ve = a[1];
+                	vp = a[2];
+                	ktransDivVe = ktrans/ve;
+                	for (j = 0; j <= tDim-1; j++) {
+                		for (m = 0; m <= tDim-1; m++) {
+                	        exparray[j][m] = Math.exp((timeVals[j] - timeVals[m])*ktransDivVe);
+                		}
+                	}
+                	for (m = 2; m <= tDim; m++) {
+                		intSumDerivKtrans = 0.0;
+                		intSumDerivVe = 0.0;
+                		for (j = 2; j <= m; j++) {
+	                        intSumDerivKtrans += trapezoidConstant[j-2]*((timeVals[j-1]-timeVals[m-1])*exparray[j-1][m-1] 
+	                                                                   - (timeVals[j-2] - timeVals[m-1])*exparray[j-2][m-1]);
+	                        intSumDerivKtrans += trapezoidSlope[j-2]*((exparray[j-1][m-1]*(timeVals[j-1]-timeVals[m-1])*(timeVals[j-1] - 1.0/ktransDivVe)) -
+	                        		                                  (exparray[j-2][m-1]*(timeVals[j-2]-timeVals[m-1])*(timeVals[j-2] - 1.0/ktransDivVe)));
+	                        intSumDerivKtrans += trapezoidSlope[j-2]*(exparray[j-1][m-1] - exparray[j-2][m-1])*ve*ve/(ktrans*ktrans);
+	                        intSumDerivVe += trapezoidConstant[j-2]*((timeVals[j-1]-timeVals[m-1])*exparray[j-1][m-1] 
+	                                                              - (timeVals[j-2]-timeVals[m-1])*exparray[j-2][m-1])*(-ktrans/ve);
+	                        intSumDerivVe += trapezoidConstant[j-2]*(exparray[j-1][m-1] - exparray[j-2][m-1]);
+	                        intSumDerivVe += trapezoidSlope[j-2]*((exparray[j-1][m-1]*(timeVals[j-1]-timeVals[m-1])*(timeVals[j-1] - 1.0/ktransDivVe)) -
+	                                  (exparray[j-2][m-1]*(timeVals[j-2]-timeVals[m-1])*(timeVals[j-2] - 1.0/ktransDivVe)))*(-ktrans/ve);
+	                        intSumDerivVe += trapezoidSlope[j-2]*(exparray[j-1][m-1] - exparray[j-2][m-1])*(-2.0*ve/ktrans);
+	                        intSumDerivVe += trapezoidSlope[j-2]* ((exparray[j-1][m-1]*timeVals[j-1]) -
+                                    (exparray[j-2][m-1]*timeVals[j-2]));
+                		} // for (j = 2; j <= m; j++)
+                		covarMat[m-2][0] = intSumDerivKtrans;
+                		covarMat[m-2][1] = intSumDerivVe;
+                		covarMat[m-2][2] = r1ptj[m-1];
+                		//Preferences.debug("covarMat[" + (m-2) + "][0] = " + covarMat[m-2][0] + "\n");
+                		//Preferences.debug("covarMat[" + (m-2) + "][1] = " + covarMat[m-2][1] + "\n");
+                		//Preferences.debug("covarMat[" + (m-2) + "][2] = " + covarMat[m-2][2] + "\n");
+                	}
+                }
+                // Calculate the Jacobian numerically
+                //else if (ctrl == 2) {
+                    //ctrlMat[0] = 0;
+                //}
+            } catch (Exception exc) {
+                Preferences.debug("function error: " + exc.getMessage() + "\n");
+            }
+
+            return;
+        }
+    }
+    
     class FitSM2ConstrainedModel extends NLConstrainedEngine {
 
         /**
@@ -1792,8 +2081,6 @@ public class AlgorithmSM2 extends AlgorithmBase {
 
             // nPoints data points, 3 coefficients, and exponential fitting
             super(nPoints, 3, xData, yData);
-
-            int i;
 
             bounds = 2; // bounds = 0 means unconstrained
 
@@ -2221,7 +2508,6 @@ public class AlgorithmSM2 extends AlgorithmBase {
     class IntModel extends Integration {
         double ktrans;
         double ve;
-        double vp;
         /**
          * Creates a new IntModel object.
          *
@@ -2234,7 +2520,6 @@ public class AlgorithmSM2 extends AlgorithmBase {
             super(lower, upper, routine, eps);
             this.ktrans = ktrans;
             this.ve = ve;
-            this.vp = vp;
         }
 
 
