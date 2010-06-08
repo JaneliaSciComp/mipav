@@ -10,12 +10,14 @@ import javax.swing.JFileChooser;
 
 
 /**
- * Does stuff
- * @see  PlugInAlgorithm
+ * This plugin builds a simple user-interface and modifies the main mipav interface to provide custom VOI functionality for a plugin.
+ * Although this plugin does not have an associated algorithm, its dialog is the PlugInDialogImageVOIDisplay.java
+ * 
+ * @see  PlugInGeneric
  */
 
 // This is a Generic type of PlugIn which does not require a source image to run.
-public class PlugInCommandLineTest implements PlugInGeneric {
+public class PlugInImageVOIDisplay implements PlugInGeneric {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
     
