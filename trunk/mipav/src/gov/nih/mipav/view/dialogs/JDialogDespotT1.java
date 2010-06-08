@@ -284,7 +284,9 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
 	        irspgrCombo[i] = guiBuilder.buildComboBox("IR-SPGR Image #"+i, titles, Nsa+i);
 	        panel.add(irspgrCombo[i].getParent(), panelLayout);
 	        
-	        irspgrField[i] = guiBuilder.buildDecimalField("IR-SPGR TI #"+i, 0);//irspgrTI[i]);
+	        double tiAdd = irspgrTI != null ? irspgrTI[i] : 0.0;
+	        irspgrField[i] = guiBuilder.buildDecimalField("IR-SPGR TI #"+i, tiAdd);
+	        
 	        panel.add(irspgrField[i].getParent(), panelLayout);
 	    }
 	    
@@ -328,7 +330,9 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
 	        irspgrCombo[i] = guiBuilder.buildComboBox("IR-SPGR Image #"+i, titles, i+2);
 	        panel.add(irspgrCombo[i].getParent(), panelLayout);
 	        
-	        irspgrField[i] = guiBuilder.buildDecimalField("IR-SPGR TI #"+i, 0);//irspgrTI[i]);
+	        double tiAdd = irspgrTI != null ? irspgrTI[i] : 0.0;
+	        irspgrField[i] = guiBuilder.buildDecimalField("IR-SPGR TI #"+i, tiAdd);
+	        
 	        panel.add(irspgrField[i].getParent(), panelLayout);
 	    }
 	    
@@ -362,38 +366,34 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
 	}
 
 	protected JPanel buildTreT1LongPanel() {
-	    BorderLayout b = new BorderLayout();
-	    JDialog dialog = new JDialog();
-	    dialog.setLayout(b);
-	    dialog.setTitle(title);
 	    JPanel panel = new JPanel();
-	    LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
-	    panel.setLayout(panelLayout);
 	    panel.setBorder(MipavUtil.buildTitledBorder("treT1-Conv: Long"));
 	    
 	    b1Field = null;
 	    if(performTreT1withPreCalculatedB1Map) {
 	        b1Field = guiBuilder.buildComboBox("B1 Field Map:", titles, 0);
-	        panel.add(b1Field.getParent(), panelLayout);
+	        panel.add(b1Field.getParent());
 	    }
 	    
 	    convimageComboAr = new JComboBox[Nsa];
 	    convFAFieldAr = new JTextField[Nsa];
 	    for(int i=0; i<Nsa; i++) {
 	        convimageComboAr[i] = guiBuilder.buildComboBox("Image #"+i, titles, i);
-	        panel.add(convimageComboAr[i].getParent(), panelLayout);
+	        panel.add(convimageComboAr[i].getParent());
 	        
-	        convFAFieldAr[i] = guiBuilder.buildDecimalField("Flip Angle #"+i, 0);//treFA[i]);
-	        panel.add(convFAFieldAr[i].getParent(), panelLayout);
+	        double faAdd = treFA != null ? treFA[i] : 0.0;
+	        convFAFieldAr[i] = guiBuilder.buildDecimalField("Flip Angle #"+i, faAdd);
+	        
+	        panel.add(convFAFieldAr[i].getParent());
 	    }
 	    convRepTime = guiBuilder.buildDecimalField("Repetition Time (ms):", treTR);
-	    panel.add(convRepTime.getParent(), panelLayout);
+	    panel.add(convRepTime.getParent());
 	    
 	    return panel;
 	}
 
 	protected JPanel buildTreT1SpecificsPanel() {
-	    JPanel panel = new JPanel();
+	   	JPanel panel = new JPanel();
 	    LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
 	    panel.setLayout(panelLayout);
 	    panel.setBorder(MipavUtil.buildTitledBorder("treT1: Specifics"));
@@ -864,6 +864,10 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         }
     }
     
+    /**
+     * This method builds the conventional tabs based on possibly pre-defined values.  Each method places these tabs
+     * in containers to allow for nice display.
+     */
     private void buildConventionalTabs() {
 	    
 	    //construct general, show if performStraighttreT1
