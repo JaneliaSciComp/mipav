@@ -27,8 +27,8 @@ public class PlugInImageVOIDisplay implements PlugInGeneric {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Defines body of run method, which was declared in the interface. Run method converts cheshire overlays in the
-     * given file to VOIs.
+     * Defines body of run method, which was declared in the interface. Run method starts custom-made dialog located in
+     * PlugInDialogImageVOIDisplay.java
      *
      * @see  ViewUserInterface
      * @see  ModelImage
@@ -53,16 +53,5 @@ public class PlugInImageVOIDisplay implements PlugInGeneric {
            
              new PlugInDialogImageVOIDisplay(fileIO.readImage(imageFile.getAbsolutePath()));
         }
-    	
-    	
-       
-    }
-
-    /**
-     * Runs the plugin.
-     */
-
-    public void runPlugin() {
-
     }
 }

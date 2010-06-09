@@ -28,7 +28,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.AlgorithmDespotT1;
+import gov.nih.mipav.model.algorithms.AlgorithmTreT1;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.Parameter;
@@ -46,9 +46,9 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
 
-public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery {
+public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery {
 
-    private static String title = "tre T1 Mapper";
+    private static String title = "TRE T1 Mapper";
     private double treTR = 5.00;
     private double irspgrTR = 5.00;
     private double irspgrKy = 96.00;
@@ -112,7 +112,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
     /**The GUI list of images */
     private String[] titles;
 
-    private AlgorithmDespotT1 cAlgo;
+    private AlgorithmTreT1 cAlgo;
 	private JRadioButton doConvTre;
 	private JRadioButton doHifiTre;
 	private GuiBuilder guiBuilder;
@@ -170,7 +170,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
     /**
      * Empty constructor needed for dynamic instantiation.
      */
-    public JDialogDespotT1() { }
+    public JDialogTreT1() { }
 
     /**
      * Construct the barrel/pin cushion correction dialog.
@@ -178,13 +178,13 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
      */
-    public JDialogDespotT1(Frame theParentFrame, ModelImage im) {
+    public JDialogTreT1(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         run();
     }
     
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        if (algorithm instanceof AlgorithmDespotT1) {
+        if (algorithm instanceof AlgorithmTreT1) {
             Preferences.debug("TreT1: " + algorithm.getElapsedTime());
         } 
 
@@ -524,7 +524,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
 
 	protected void callAlgorithm() {
         // Make algorithm
-        cAlgo = new AlgorithmDespotT1(treTR, irspgrTR,
+        cAlgo = new AlgorithmTreT1(treTR, irspgrTR,
                 irspgrKy, irspgrFA, maxT1, maxMo,
                 treFA,  irspgrTr,  irspgrTI,
                 spgrData,  irspgrData, scale,
@@ -1172,7 +1172,13 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
 	    return true;
 	}
 
-
+	/**
+	 * This listener focuses on the TRE processing choice chosen.  Relevant tabs
+	 * are loaded as a result.
+	 * 
+	 * @author senseneyj
+	 *
+	 */
 	private class ProcessChoiceListener implements ActionListener {
 		
 		private void varSet() {
@@ -1204,6 +1210,13 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
 		}
     }
     
+	/**
+	 * This listener focuses on the user's choice of hard or smart thresholding.
+	 * A change will prompt a different panel to be displayed.
+	 *
+	 * @author senseneyj
+	 *
+	 */
     private class ThresholdChoiceListener implements ActionListener {
     	private void varSet() {
 			if (hardCheckBox.isSelected()) {
@@ -1227,6 +1240,13 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
 		}
     }
     
+    /**
+     * This listener focuses on the type of scanner used to acquire the images.
+     * Currently, both GE and Philips scanners are available.
+     * 
+     * @author senseneyj
+     *
+     */
     private class ScannerChoiceListener implements ActionListener {
     	private int getChangeTab(String str) {
     		int changeTab = -1;
@@ -1267,6 +1287,15 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
 		}
     }
 
+    /**
+     * These enumerations are used by the GuiBuilder to indicate the pre-processing results of user
+     * entry fields for the user interface.  When a user has entered numerical input when required,
+     * left no required fields blank, and provided a valid choice for buttons, OK_SUCCESS will generally
+     * be returned.
+     * 
+     * @author senseneyj
+     *
+     */
     public enum ExitStatus {
         
         /**Ok button pressed and listener conditions passed*/

@@ -5,14 +5,14 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
-import gov.nih.mipav.view.dialogs.JDialogDespotT2;
+import gov.nih.mipav.view.dialogs.JDialogTreT2;
 
 import java.io.IOException;
 
-public class AlgorithmDespotT2 extends AlgorithmTProcess {
+public class AlgorithmTreT2 extends AlgorithmTProcess {
 
-    private double[] despotFA_phase0;
-    private double[] despotFA_phase180;
+    private double[] treFA_phase0;
+    private double[] treFA_phase180;
     
     private int[] ssfpImageIndex_phase0;
     private int[] ssfpImageIndex_phase180;
@@ -41,10 +41,10 @@ public class AlgorithmDespotT2 extends AlgorithmTProcess {
     private ViewJFrameImage boResultWindow;
     
     /** The dialog for accessing GUI specific information, also set during scripting. **/
-    private JDialogDespotT2 dialog;
+    private JDialogTreT2 dialog;
     
-    public AlgorithmDespotT2(JDialogDespotT2 dialog, double[] despotFAPhase0,
-            double[] despotFAPhase180, int[] ssfpImageIndexPhase0,
+    public AlgorithmTreT2(JDialogTreT2 dialog, double[] treFAPhase0,
+            double[] treFAPhase180, int[] ssfpImageIndexPhase0,
             int[] ssfpImageIndexPhase180, int t1ImageIndex, int b1ImageIndex,
             double[] simplexLineValues, double[] simplexResiduals,
             double[] simplexCentre, double[] reflection, double[] expansion,
@@ -56,8 +56,8 @@ public class AlgorithmDespotT2 extends AlgorithmTProcess {
             String[] wList) {
         super();
         this.dialog = dialog;
-        despotFA_phase0 = despotFAPhase0;
-        despotFA_phase180 = despotFAPhase180;
+        treFA_phase0 = treFAPhase0;
+        treFA_phase180 = treFAPhase180;
         ssfpImageIndex_phase0 = ssfpImageIndexPhase0;
         ssfpImageIndex_phase180 = ssfpImageIndexPhase180;
         this.t1ImageIndex = t1ImageIndex;
@@ -82,8 +82,8 @@ public class AlgorithmDespotT2 extends AlgorithmTProcess {
         this.wList = wList;
     }
 
-    public AlgorithmDespotT2(ModelImage destImage, ModelImage srcImage, 
-            JDialogDespotT2 dialog, double[] despotFAPhase0, double[] despotFAPhase180,
+    public AlgorithmTreT2(ModelImage destImage, ModelImage srcImage, 
+            JDialogTreT2 dialog, double[] treFAPhase0, double[] treFAPhase180,
             int[] ssfpImageIndexPhase0, int[] ssfpImageIndexPhase180,
             int t1ImageIndex, int b1ImageIndex, double[] simplexLineValues,
             double[] simplexResiduals, double[] simplexCentre,
@@ -96,8 +96,8 @@ public class AlgorithmDespotT2 extends AlgorithmTProcess {
             String[] wList) {
         super(destImage, srcImage);
         this.dialog = dialog;
-        despotFA_phase0 = despotFAPhase0;
-        despotFA_phase180 = despotFAPhase180;
+        treFA_phase0 = treFAPhase0;
+        treFA_phase180 = treFAPhase180;
         ssfpImageIndex_phase0 = ssfpImageIndexPhase0;
         ssfpImageIndex_phase180 = ssfpImageIndexPhase180;
         this.t1ImageIndex = t1ImageIndex;
@@ -255,7 +255,7 @@ public class AlgorithmDespotT2 extends AlgorithmTProcess {
             fa_phase0 = new double[dialog.getNfa_phase0()];
             scaledFA_phase0 = new double[dialog.getNfa_phase0()];
             for (angle=0; angle<dialog.getNfa_phase0(); angle++) {
-                fa_phase0[angle] = Math.toRadians(despotFA_phase0[angle]);
+                fa_phase0[angle] = Math.toRadians(treFA_phase0[angle]);
             }
             
             phase0Data = new double[dialog.getNfa_phase0()];
@@ -321,7 +321,7 @@ public class AlgorithmDespotT2 extends AlgorithmTProcess {
                         
                         if (t1PixelValues[pixelIndex] > 0.00) {
                             
-                            e1 = Math.exp(-dialog.getDespotTR()/t1PixelValues[pixelIndex]);
+                            e1 = Math.exp(-dialog.getTreTR()/t1PixelValues[pixelIndex]);
                             
                             // scale up (or down) the flip angles based on the calculated B1 if required
                             if (dialog.isIncludeB1Map() == true) {
@@ -366,8 +366,8 @@ public class AlgorithmDespotT2 extends AlgorithmTProcess {
                                 intercept = (sumY-slope*sumX)/dialog.getNfa_phase0();
                                 
                                 if (denominator > 0.00 && denominator < 1.00) {
-                                    t2 = -dialog.getDespotTR()/Math.log(denominator);
-                                    e2 = Math.exp(-dialog.getDespotTR()/t2);
+                                    t2 = -dialog.getTreTR()/Math.log(denominator);
+                                    e2 = Math.exp(-dialog.getTreTR()/t2);
                                     mo = intercept*(1.00-e1*e2)/(1.00-e1);
                                 }
                                 else {
@@ -442,19 +442,19 @@ public class AlgorithmDespotT2 extends AlgorithmTProcess {
         
         if (dialog.isCalculateT2()) {
             t2ResultWindow = new ViewJFrameImage(t2ResultStack);
-            t2ResultWindow.setTitle("DESPOT2-T2_Map");
+            t2ResultWindow.setTitle("TreT2-T2_Map");
             t2ResultWindow.setVisible(true);
         } 
         
         if (dialog.isCalculateMo()) {
             moResultWindow = new ViewJFrameImage(moResultStack);
-            moResultWindow.setTitle("DESPOT2_MoMap");
+            moResultWindow.setTitle("TreT2_MoMap");
             moResultWindow.setVisible(true);
         } 
         
         if (dialog.isInvertT2toR2()) {
             r2ResultWindow = new ViewJFrameImage(r2ResultStack);
-            r2ResultWindow.setTitle("DESPOT2-R2Map");
+            r2ResultWindow.setTitle("TreT2-R2Map");
             r2ResultWindow.setVisible(true);
         }   
     }
@@ -558,7 +558,7 @@ public class AlgorithmDespotT2 extends AlgorithmTProcess {
             fa_phase180 = new double[dialog.getNfa_phase180()];
             scaledFA_phase180 = new double[dialog.getNfa_phase180()];
             for (angle=0; angle<dialog.getNfa_phase180(); angle++) {
-                fa_phase180[angle] = Math.toRadians(despotFA_phase180[angle]);
+                fa_phase180[angle] = Math.toRadians(treFA_phase180[angle]);
             }
             
             phase180Data = new double[dialog.getNfa_phase180()];
@@ -625,7 +625,7 @@ public class AlgorithmDespotT2 extends AlgorithmTProcess {
                         
                         if (t1PixelValues[pixelIndex] > 0.00) {
                             
-                            e1 = Math.exp(-dialog.getDespotTR()/t1PixelValues[pixelIndex]);
+                            e1 = Math.exp(-dialog.getTreTR()/t1PixelValues[pixelIndex]);
                             
                             // scale up (or down) the flip angles based on the calculated B1 if required
                             if (dialog.isIncludeB1Map() == true) {
@@ -673,8 +673,8 @@ public class AlgorithmDespotT2 extends AlgorithmTProcess {
                                 intercept = (sumY-slope*sumX)/dialog.getNfa_phase180();
                                 
                                 if (denominator > 0.00 && denominator < 1.00) {
-                                    t2 = -dialog.getDespotTR()/Math.log(denominator);
-                                    e2 = Math.exp(-dialog.getDespotTR()/t2);
+                                    t2 = -dialog.getTreTR()/Math.log(denominator);
+                                    e2 = Math.exp(-dialog.getTreTR()/t2);
                                     mo = intercept*(1.00-e1*e2)/(1.00-e1);
                                 }
                                 else {
@@ -737,19 +737,19 @@ public class AlgorithmDespotT2 extends AlgorithmTProcess {
         
         if (dialog.isCalculateT2()) {
             t2ResultWindow = new ViewJFrameImage(t2ResultStack);
-            t2ResultWindow.setTitle("DESPOT2_T2_Map");
+            t2ResultWindow.setTitle("TreT2_T2_Map");
             t2ResultWindow.setVisible(true);
         } 
         
         if (dialog.isCalculateMo()) {
             moResultWindow = new ViewJFrameImage(moResultStack);
-            moResultWindow.setTitle("DESPOT2_MoMap");
+            moResultWindow.setTitle("TreT2_MoMap");
             moResultWindow.setVisible(true);
         } 
         
         if (dialog.isInvertT2toR2()) {
             r2ResultWindow = new ViewJFrameImage(r2ResultStack);
-            r2ResultWindow.setTitle("DESPOT2_R2Map");
+            r2ResultWindow.setTitle("TreT2_R2Map");
             r2ResultWindow.setVisible(true);
         } 
     }
@@ -873,10 +873,10 @@ public class AlgorithmDespotT2 extends AlgorithmTProcess {
             scaledFA_phase0 = new double[dialog.getNfa_phase0()];
             scaledFA_phase180 = new double[dialog.getNfa_phase180()];
             for (angle=0; angle<dialog.getNfa_phase0(); angle++) {
-                fa_phase0[angle] = Math.toRadians(despotFA_phase0[angle]);
+                fa_phase0[angle] = Math.toRadians(treFA_phase0[angle]);
             }
             for (angle=0; angle<dialog.getNfa_phase180(); angle++) {
-                fa_phase180[angle] = Math.toRadians(despotFA_phase180[angle]);
+                fa_phase180[angle] = Math.toRadians(treFA_phase180[angle]);
             }
             
             phase0Data = new double[dialog.getNfa_phase0()];
@@ -964,7 +964,7 @@ public class AlgorithmDespotT2 extends AlgorithmTProcess {
                     
                         if (t1PixelValues[pixelIndex] > 0.00) {
                             
-                            e1 = Math.exp(-dialog.getDespotTR()/t1PixelValues[pixelIndex]);
+                            e1 = Math.exp(-dialog.getTreTR()/t1PixelValues[pixelIndex]);
                             
                             // scale up (or down) the flip angles based on the calculated B1 if required
                             if (dialog.isIncludeB1Map() == true) {
@@ -1010,8 +1010,8 @@ public class AlgorithmDespotT2 extends AlgorithmTProcess {
                                 intercept = (sumY-slope*sumX)/dialog.getNfa_phase0();
                                 
                                 if (denominator > 0.00 && denominator < 1.00) {
-                                    t2 = -dialog.getDespotTR()/Math.log(denominator);
-                                    e2 = Math.exp(-dialog.getDespotTR()/t2);
+                                    t2 = -dialog.getTreTR()/Math.log(denominator);
+                                    e2 = Math.exp(-dialog.getTreTR()/t2);
                                     mo = intercept*(1.00-e1*e2)/(1.00-e1);
                                 }
                                 else {
@@ -1059,8 +1059,8 @@ public class AlgorithmDespotT2 extends AlgorithmTProcess {
                                 intercept = (sumY-slope*sumX)/dialog.getNfa_phase180();
                                 
                                 if (denominator > 0.00 && denominator < 1.00) {
-                                    t2 = -dialog.getDespotTR()/Math.log(denominator);
-                                    e2 = Math.exp(-dialog.getDespotTR()/t2);
+                                    t2 = -dialog.getTreTR()/Math.log(denominator);
+                                    e2 = Math.exp(-dialog.getTreTR()/t2);
                                     mo = intercept*(1.00-e1*e2)/(1.00-e1);
                                 }
                                 else {
@@ -1298,17 +1298,17 @@ public class AlgorithmDespotT2 extends AlgorithmTProcess {
             cosa = new double[dialog.getNfa_phase0() + dialog.getNfa_phase180()];
             
             for (angle=0; angle<dialog.getNfa_phase0(); angle++) {
-                FA[angle] = Math.toRadians(despotFA_phase0[angle]);
+                FA[angle] = Math.toRadians(treFA_phase0[angle]);
                 phaseIncrements[angle] = 0.00;
             }
             for (angle=0; angle<dialog.getNfa_phase180(); angle++) {
-                FA[angle+dialog.getNfa_phase0()] = Math.toRadians(despotFA_phase180[angle]);
+                FA[angle+dialog.getNfa_phase0()] = Math.toRadians(treFA_phase180[angle]);
                 phaseIncrements[angle+dialog.getNfa_phase0()] = 3.14159265;
             }
             
             ssfpSampleData = new double[dialog.getNfa_phase0() + dialog.getNfa_phase180()];
             
-            tr = dialog.getDespotTR();
+            tr = dialog.getTreTR();
             resonancePeriod = 1000.00/tr;
             
             t2Values = new double[nSlices][height][width];

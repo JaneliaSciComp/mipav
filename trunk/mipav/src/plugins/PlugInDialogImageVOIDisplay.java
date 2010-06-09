@@ -323,6 +323,9 @@ public class PlugInDialogImageVOIDisplay extends ViewJFrameImage implements Mous
          // build the menuBar based on the number of dimensions for imageA
          menuBarMaker = new ViewMenuBar(menuBuilder);
          
+         JMenuBar mainMenu = new JMenuBar();
+         mainMenu = menuBarMaker.getMenuBar(this, imageA.getNDims(), imageA.getType(), imageA.isDicomImage());
+         
          //create a custom menu bar using Vectors of UIParams
          JMenuBar menuBar = new JMenuBar();
          
@@ -398,6 +401,11 @@ public class PlugInDialogImageVOIDisplay extends ViewJFrameImage implements Mous
          addComponentListener(this);
          
          this.setJMenuBar(menuBar);
+         if(mainMenu != null) {
+        	 System.out.println("Menu created");
+         }
+         //userInterface.getMainFrame().setJMenuBar(mainMenu);
+         
          getContentPane().add(controls, BorderLayout.NORTH);
          
          this.addWindowListener(new WindowAdapter() {
