@@ -599,8 +599,8 @@ public class AlgorithmSM2 extends AlgorithmBase {
         	int end;
             ExecutorService application = Executors.newCachedThreadPool();
             for (i = 0; i < processors; i++) {
-                start = (i * volSize)/processors + (i * volSize)% processors;
-                end = ((i+1) * volSize)/processors + ((i+1) * volSize) % processors;
+                start = (i * volSize)/processors;
+                end = ((i+1) * volSize)/processors;
                 application.execute(new sm2Task(start, end, tDim, r1ptj, initial,
                 		                        trapezoidConstant, trapezoidSlope, timeVals));
             }
