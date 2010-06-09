@@ -388,12 +388,14 @@ public class AlgorithmSwapDims extends AlgorithmBase {
         srcImage = null;
         destImage = new ModelImage(bufferType, extents, name);
         fileInfoR = destImage.getFileInfo();
-
+		
+        startLocs = fileInfo[0].getOrigin();
+		tempf = startLocs[2];
+		startLocs[2] = startLocs[3];
+		startLocs[3] = tempf;
+        
         for (int i = 0; i < (zDim * xDim); i++) {
-            startLocs = fileInfo[i].getOrigin();
-            tempf = startLocs[2];
-            startLocs[2] = startLocs[3];
-            startLocs[3] = tempf;
+        	
             fileInfoR[i].setOrigin(startLocs);
             fileInfoR[i].setImageOrientation(imageOrientation);
             fileInfoR[i].setAxisOrientation(axis);
