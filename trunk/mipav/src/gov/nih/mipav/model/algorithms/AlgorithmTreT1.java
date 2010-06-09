@@ -344,30 +344,30 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
         
         if (calculateT1) {
             t1ResultWindow = new ViewJFrameImage(t1ResultStack);
-            t1ResultWindow.setTitle("tre1"+prefix+"_T1_Map");
+            t1ResultWindow.setTitle("treT1"+prefix+"_T1_Map");
             t1ResultWindow.setVisible(true);
         } 
          
         if (calculateMo) {
             moResultWindow = new ViewJFrameImage(moResultStack);
-            moResultWindow.setTitle("tre1"+prefix+"_Mo_Map");
+            moResultWindow.setTitle("treT1"+prefix+"_Mo_Map");
             moResultWindow.setVisible(true);
         } 
         
         if (invertT1toR1) {
             r1ResultWindow = new ViewJFrameImage(r1ResultStack);
-            r1ResultWindow.setTitle("tre1"+prefix+"_R1_Map");
+            r1ResultWindow.setTitle("treT1"+prefix+"_R1_Map");
             r1ResultWindow.setVisible(true);
         } 
         
         if (performTreT1HIFI && showB1Map) {
             b1ResultWindow = new ViewJFrameImage(b1ResultStack);
-            b1ResultWindow.setTitle("tre1"+prefix+"_B1_Map");
+            b1ResultWindow.setTitle("treT1"+prefix+"_B1_Map");
             b1ResultWindow.setVisible(true);
         } 
     }
 
-    public boolean calculateT1Usingtre1HIFI() {
+    public boolean calculateT1UsingTreT1HIFI() {
         fireProgressStateChanged("Prepping data..hang on");
         fireProgressStateChanged(5);
         
@@ -434,7 +434,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
         ExecutorService exec = Executors.newFixedThreadPool(computeDataThreads); 
         // start by calculaing the B1 field
         for(int t=0; t<tSeries; t++) {     
-            exec.execute(new CalculteT1Usingtre1HIFIInner(largestImage, width, height, irspgrSlices, t));    
+            exec.execute(new CalculteT1UsingtreT1HIFIInner(largestImage, width, height, irspgrSlices, t));    
         }
         exec.shutdown();
         
@@ -453,7 +453,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
         return true;
     }
 
-    public boolean calculateT1UsingConventionaltre1() {
+    public boolean calculateT1UsingConventionalTreT1() {
         ModelImage image;
          
         int width, height, tSeries;
@@ -486,7 +486,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
         ExecutorService exec = Executors.newFixedThreadPool(computeDataThreads); 
     
         for(int t=0; t<tSeries; t++) {     
-            exec.submit(new CalculateT1UsingConventionaltre1Inner(largestImage, width, height, t));    
+            exec.submit(new CalculateT1UsingConventionaltreT1Inner(largestImage, width, height, t));    
         }
         exec.shutdown();
         
@@ -528,10 +528,10 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
     
     public void runAlgorithm() {
         if (performTreT1HIFI) {
-            completed = calculateT1Usingtre1HIFI();
+            completed = calculateT1UsingTreT1HIFI();
         }
         else {
-            completed = calculateT1UsingConventionaltre1();
+            completed = calculateT1UsingConventionalTreT1();
         }
         
         dataListener.localInterrupt();
@@ -791,12 +791,12 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
         }
     }
 
-    private class CalculteT1Usingtre1HIFIInner extends CalculateT1 implements Runnable {
+    private class CalculteT1UsingtreT1HIFIInner extends CalculateT1 implements Runnable {
     
         
         private int irspgrSlices;
     
-        public CalculteT1Usingtre1HIFIInner(ModelImage image, int width, int height, int irspgrSlices, int t) {
+        public CalculteT1UsingtreT1HIFIInner(ModelImage image, int width, int height, int irspgrSlices, int t) {
             super(image, t);
             this.width = width;
             this.height = height;
@@ -1277,9 +1277,9 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
         
     }
 
-    private class CalculateT1UsingConventionaltre1Inner extends CalculateT1 implements Runnable {
+    private class CalculateT1UsingConventionaltreT1Inner extends CalculateT1 implements Runnable {
     
-        public CalculateT1UsingConventionaltre1Inner(ModelImage image, int width, int height, int t) {
+        public CalculateT1UsingConventionaltreT1Inner(ModelImage image, int width, int height, int t) {
             super(image, t);
             this.width = width;
             this.height = height;
