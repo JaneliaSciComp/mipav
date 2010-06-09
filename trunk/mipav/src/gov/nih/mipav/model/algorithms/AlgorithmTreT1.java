@@ -30,7 +30,7 @@ import gov.nih.mipav.view.ViewUserInterface;
  * 
  **/
 
-public class AlgorithmDespotT1 extends AlgorithmTProcess {
+public class AlgorithmTreT1 extends AlgorithmTProcess {
 
     private ModelImage t1ResultStack = null;
     private ModelImage moResultStack = null;
@@ -95,7 +95,7 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
     private ViewJFrameImage r1ResultWindow = null;
     private ViewJFrameImage b1ResultWindow = null;
     
-    public AlgorithmDespotT1(double treTR, double irspgrTR,
+    public AlgorithmTreT1(double treTR, double irspgrTR,
             double irspgrKy, double irspgrFA, double maxT1, double maxMo,
             double[] treFA, double[] irspgrTr2, double[] irspgrTI,
             double[] spgrData, double[] irspgrData, double scale,
@@ -170,7 +170,7 @@ public class AlgorithmDespotT1 extends AlgorithmTProcess {
         init();
     }
 
-    public AlgorithmDespotT1(ModelImage destImage, ModelImage srcImage,
+    public AlgorithmTreT1(ModelImage destImage, ModelImage srcImage,
             double treTR, double irspgrTR, double irspgrKy, double irspgrFA,
             double maxT1, double maxMo, double[] treFA, double[] irspgrTr2,
             double[] irspgrTI, double[] spgrData, double[] irspgrData,

@@ -19,6 +19,13 @@ import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewOpenFileUI;
 import gov.nih.mipav.view.ViewUserInterface;
 
+/**
+ * This abstract class defines terms common to both T1 and T2 processing, such as thresholding and 
+ * multithreading management methods.
+ * 
+ * @author senseneyj
+ *
+ */
 public abstract class AlgorithmTProcess extends AlgorithmBase {
     
     public static final int MAX_PROCESS = 20;
@@ -43,7 +50,7 @@ public abstract class AlgorithmTProcess extends AlgorithmBase {
     /**Whether this algorithm will utilize 4D processing optimization */
     protected boolean do4D;
     
-    /**This object processes data for the DESPOT code */
+    /**This object processes data for the tre code */
     protected DataListener dataListener;
     
     protected String tempDirString;

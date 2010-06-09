@@ -763,17 +763,17 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             new JDialogDTIFiberTracking();
         } else if (command.equals("dtiVisualization")) {
             invokeDTIframe();
-        } else if (command.equals("despotT1")) {
+        } else if (command.equals("treT1")) {
             if (getActiveImageFrame() != null) {
-                new JDialogDespotT1(getActiveImageFrame(), getActiveImageFrame().getActiveImage());
+                new JDialogTreT1(getActiveImageFrame(), getActiveImageFrame().getActiveImage());
             } else {
-                MipavUtil.displayError("Images required for DESPOT were not found.");
+                MipavUtil.displayError("Images required for T1 estimation were not found.");
             }
-        } else if (command.equals("despotT2")) {
+        } else if (command.equals("treT2")) {
             if (getActiveImageFrame() != null) {
-                new JDialogDespotT2(getActiveImageFrame(), getActiveImageFrame().getActiveImage());
+                new JDialogTreT2(getActiveImageFrame(), getActiveImageFrame().getActiveImage());
             } else {
-                MipavUtil.displayError("Images required for DESPOT were not found.");
+                MipavUtil.displayError("Images required for T2 estimation were not found.");
             }
         } else if (command.equals("LogSlope")) {
             new JDialogLogSlopeMapping();

@@ -21,8 +21,8 @@ import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.AlgorithmDespotT1;
-import gov.nih.mipav.model.algorithms.AlgorithmDespotT2;
+import gov.nih.mipav.model.algorithms.AlgorithmTreT1;
+import gov.nih.mipav.model.algorithms.AlgorithmTreT2;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.Parameter;
@@ -33,14 +33,14 @@ import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewUserInterface;
 
-public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmInterface {
+public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInterface {
 
-    private static String title = "DESPOT2 T2 Mapper";
-    private double despotTR = 5.00;
+    private static String title = "TRE T2 Mapper";
+    private double treTR = 5.00;
     private double maxT2 = 1000;
     private double maxMo = 10000;
-    private double[] despotFA_phase0;
-    private double[] despotFA_phase180;
+    private double[] treFA_phase0;
+    private double[] treFA_phase180;
     
     private int[] ssfpImageIndex_phase0;
     private int[] ssfpImageIndex_phase180;
@@ -84,12 +84,12 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
     private String[] wList;
     private String[] titles;
     
-    private AlgorithmDespotT2 cAlgo;
+    private AlgorithmTreT2 cAlgo;
 
     /**
      * Empty constructor needed for dynamic instantiation.
      */
-    public JDialogDespotT2() { }
+    public JDialogTreT2() { }
 
     /**
      * Construct the barrel/pin cushion correction dialog.
@@ -97,14 +97,14 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
      */
-    public JDialogDespotT2(Frame theParentFrame, ModelImage im) {
+    public JDialogTreT2(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         run();
     }
     
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        if (algorithm instanceof AlgorithmDespotT2) {
-            Preferences.debug("DespotT2: " + algorithm.getElapsedTime());
+        if (algorithm instanceof AlgorithmTreT2) {
+            Preferences.debug("TreT2: " + algorithm.getElapsedTime());
         } 
         
         if (algorithm.isCompleted()) {
@@ -163,7 +163,7 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
     }
     
     protected void setGUIFromParams() {
-        despotTR = scriptParameters.getParams().getDouble("despot_TR");
+        treTR = scriptParameters.getParams().getDouble("tre_TR");
         maxT2 = scriptParameters.getParams().getDouble("max_T2");
         maxMo = scriptParameters.getParams().getDouble("max_Mo");
         
@@ -190,10 +190,10 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
         useHardThresholding = scriptParameters.getParams().getBoolean("use_HardThresholding");
         
         //souble[]
-        despotFA_phase0 = scriptParameters.getParams().getList("despot_FA_phase0").getAsDoubleArray();
-        despotFA_phase180 = scriptParameters.getParams().getList("despot_FA_phase180").getAsDoubleArray();
+        treFA_phase0 = scriptParameters.getParams().getList("tre_FA_phase0").getAsDoubleArray();
+        treFA_phase180 = scriptParameters.getParams().getList("tre_FA_phase180").getAsDoubleArray();
         //int[]
-        ssfpImageIndex_phase0 = scriptParameters.getParams().getList("despot_FA_phase0").getAsIntArray();
+        ssfpImageIndex_phase0 = scriptParameters.getParams().getList("tre_FA_phase0").getAsIntArray();
         ssfpImageIndex_phase180 = scriptParameters.getParams().getList("sspf_Image_Index_phase180").getAsIntArray();
         
         t1ImageIndex = scriptParameters.getParams().getInt("t1_Image_Index");
@@ -221,7 +221,7 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
         
         //double[]
         twoPSimplexLineValues = scriptParameters.getParams().getList("two_PSimplex_Line_Values").getAsDoubleArray();
-        twoPSimplexResiduals = scriptParameters.getParams().getList("despot_FA").getAsDoubleArray();
+        twoPSimplexResiduals = scriptParameters.getParams().getList("tre_FA").getAsDoubleArray();
         twoPSimplexCentre = scriptParameters.getParams().getList("two_PSimplex_Centre").getAsDoubleArray();
         twoPReflection = scriptParameters.getParams().getList("two_PReflection").getAsDoubleArray();
         twoPExpansion = scriptParameters.getParams().getList("two_PExpansion").getAsDoubleArray();
@@ -268,7 +268,7 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
     }
 
     protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.getParams().put(ParameterFactory.newParameter("despot_TR", despotTR));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("tre_TR", treTR));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_T2", maxT2));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_Mo", maxMo));
         
@@ -295,11 +295,11 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
         scriptParameters.getParams().put(ParameterFactory.newParameter("use_HardThresholding", useHardThresholding));
         
         //double[]
-        if (despotFA_phase0 != null) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("despot_FA_phase0", despotFA_phase0));
+        if (treFA_phase0 != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("tre_FA_phase0", treFA_phase0));
         }
-        if(despotFA_phase180 != null) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("despot_FA_phase180", despotFA_phase180));
+        if(treFA_phase180 != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("tre_FA_phase180", treFA_phase180));
         }
         //int[]
         if(ssfpImageIndex_phase0 != null) {
@@ -425,8 +425,8 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
             return;
         
         
-        despotFA_phase0 = new double[Nfa_phase0];
-        despotFA_phase180 = new double[Nfa_phase180];
+        treFA_phase0 = new double[Nfa_phase0];
+        treFA_phase180 = new double[Nfa_phase180];
         ssfpImageIndex_phase0 = new int[Nfa_phase0];
         ssfpImageIndex_phase180 = new int[Nfa_phase180];
         
@@ -453,8 +453,8 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
     
     protected void callAlgorithm() {
         // Make algorithm
-        cAlgo = new AlgorithmDespotT2(this, despotFA_phase0,
-                despotFA_phase180, ssfpImageIndex_phase0,
+        cAlgo = new AlgorithmTreT2(this, treFA_phase0,
+                treFA_phase180, ssfpImageIndex_phase0,
                 ssfpImageIndex_phase180, t1ImageIndex, b1ImageIndex,
                 simplexLineValues, simplexResiduals,
                 simplexCentre, reflection, expansion,
@@ -488,8 +488,8 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
         }
     }
     
-    public double getDespotTR() {
-        return despotTR;
+    public double getTreTR() {
+        return treTR;
     }
 
     public double getMaxT2() {
@@ -593,14 +593,14 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
         JDialog dialog = new JDialog();
         dialog.setLayout(b);
         GuiBuilder guiHelp = new GuiBuilder(dialog);
-        dialog.setTitle("DESPOT2: General Information");
+        dialog.setTitle("TRE-T2: General Information");
         JPanel panel = new JPanel();
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(panelLayout);
         
         JTextField field1 = guiHelp.buildDecimalField("Number of SSFP Flip Angles (0 Phase Increment):", Nfa_phase0);
         JTextField field2 = guiHelp.buildDecimalField("Number of SSFP Flip Angles (180 Phase Increment):", Nfa_phase180);
-        JRadioButton button1 = guiHelp.buildRadioButton("Perform Conventional DESPOT2 Modeling", performConventionalModelling);
+        JRadioButton button1 = guiHelp.buildRadioButton("Perform Conventional TRE-T2 Modeling", performConventionalModelling);
         JRadioButton button2 = guiHelp.buildRadioButton("Perform Approximate Modeling", performApproxModelling);
         JRadioButton button3 = guiHelp.buildRadioButton("Perform Full Modelling of the Signal (slow but accurate)", performFullModelling);
         JCheckBox box1 = guiHelp.buildCheckBox("Use Calculated B1 Map", includeB1Map);
@@ -686,7 +686,7 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
         JDialog dialog = new JDialog();
         dialog.setLayout(b);
         GuiBuilder guiHelp = new GuiBuilder(dialog);
-        dialog.setTitle("DESPOT2-AMFM: Image Information");
+        dialog.setTitle("TRE-T2-AMFM: Image Information");
         JPanel panel = new JPanel();
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(panelLayout);
@@ -698,7 +698,7 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
             comboArr1[i] = guiHelp.buildComboBox("Phase 0, SSFP Image #"+i, titles, i);
             panel.add(comboArr1[i].getParent(), panelLayout);
             
-            fieldArr1[i] = guiHelp.buildDecimalField("Phase 0, Flip Angle #"+i, despotFA_phase0[i]);
+            fieldArr1[i] = guiHelp.buildDecimalField("Phase 0, Flip Angle #"+i, treFA_phase0[i]);
             panel.add(comboArr1[i].getParent(), panelLayout);
         }
         
@@ -708,11 +708,11 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
             comboArr2[i] = guiHelp.buildComboBox("Phase 180, SSFP Image #"+i, titles, i);
             panel.add(comboArr2[i].getParent(), panelLayout);
             
-            fieldArr2[i] = guiHelp.buildDecimalField("Phase 180, Flip Angle #"+i, despotFA_phase180[i]);
+            fieldArr2[i] = guiHelp.buildDecimalField("Phase 180, Flip Angle #"+i, treFA_phase180[i]);
             panel.add(fieldArr2[i].getParent(), panelLayout);
         }
         
-        JTextField field1 = guiHelp.buildDecimalField("SSFP Repetition Time (ms):", despotTR);
+        JTextField field1 = guiHelp.buildDecimalField("SSFP Repetition Time (ms):", treTR);
         panel.add(field1.getParent(), panelLayout);
         
         JComboBox combo1 = guiHelp.buildComboBox("Pre-Calculated T1 Map", titles, 0);
@@ -748,13 +748,13 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
         
         for (int i=0; i<Nfa_phase0; i++) {
             ssfpImageIndex_phase0[i] = comboArr1[i].getSelectedIndex();
-            despotFA_phase0[i] = Float.valueOf(fieldArr1[i].getText()).floatValue();
+            treFA_phase0[i] = Float.valueOf(fieldArr1[i].getText()).floatValue();
         }
         for (int i=0; i<Nfa_phase180; i++) {
             ssfpImageIndex_phase180[i] = comboArr2[i].getSelectedIndex();
-            despotFA_phase180[i] = Float.valueOf(fieldArr2[i].getText()).floatValue();
+            treFA_phase180[i] = Float.valueOf(fieldArr2[i].getText()).floatValue();
         }
-        despotTR = Double.valueOf(field1.getText()).doubleValue();
+        treTR = Double.valueOf(field1.getText()).doubleValue();
         
         t1ImageIndex = combo1.getSelectedIndex();
         if (includeB1Map) {
@@ -785,7 +785,7 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
         JDialog dialog = new JDialog();
         dialog.setLayout(b);
         GuiBuilder guiHelp = new GuiBuilder(dialog);
-        dialog.setTitle("DESPOT2: Image Information");
+        dialog.setTitle("TRE-T2: Image Information");
         JPanel panel = new JPanel();
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(panelLayout);
@@ -798,7 +798,7 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
                 comboArr[i] = guiHelp.buildComboBox("Phase 0, SSFP Image #"+i, titles, i);
                 panel.add(comboArr[i].getParent(), panelLayout);
                 
-                fieldArr[i] = guiHelp.buildDecimalField("Phase 0, Flip Angle #"+i, despotFA_phase0[i]);
+                fieldArr[i] = guiHelp.buildDecimalField("Phase 0, Flip Angle #"+i, treFA_phase0[i]);
                 panel.add(fieldArr[i].getParent(), panelLayout);
             }
         }
@@ -807,11 +807,11 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
                 comboArr[i] = guiHelp.buildComboBox("Phase 180, SSFP Image #"+i, titles, i);
                 panel.add(comboArr[i].getParent(), panelLayout);
                 
-                fieldArr[i] = guiHelp.buildDecimalField("Phase 180, Flip Angle #"+i, despotFA_phase180[i]);
+                fieldArr[i] = guiHelp.buildDecimalField("Phase 180, Flip Angle #"+i, treFA_phase180[i]);
                 panel.add(fieldArr[i].getParent(), panelLayout);
             }
         }
-        JTextField field1 = guiHelp.buildDecimalField("SSFP Repetition Time (ms):", despotTR);
+        JTextField field1 = guiHelp.buildDecimalField("SSFP Repetition Time (ms):", treTR);
         panel.add(field1.getParent(), panelLayout);
         
         JComboBox combo1 = guiHelp.buildComboBox("Pre-Calculated T1 Map", titles, 0);
@@ -837,16 +837,16 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
         if (performConventionalWith0Phase == true) {
             for (int i=0; i<Nfa_phase0; i++) {
                 ssfpImageIndex_phase0[i] = comboArr[i].getSelectedIndex();
-                despotFA_phase0[i] = Float.valueOf(fieldArr[i].getText()).floatValue();
+                treFA_phase0[i] = Float.valueOf(fieldArr[i].getText()).floatValue();
             }
         }
         else {
             for (int i=0; i<Nfa_phase180; i++) {
                 ssfpImageIndex_phase180[i] = comboArr[i].getSelectedIndex();
-                despotFA_phase180[i] = Float.valueOf(fieldArr[i].getText()).floatValue();
+                treFA_phase180[i] = Float.valueOf(fieldArr[i].getText()).floatValue();
             }
         }
-        despotTR = Double.valueOf(field1.getText()).doubleValue();
+        treTR = Double.valueOf(field1.getText()).doubleValue();
         
         t1ImageIndex = combo1.getSelectedIndex();
         if (includeB1Map) {
@@ -861,7 +861,7 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
         JDialog dialog = new JDialog();
         dialog.setLayout(b);
         GuiBuilder guiHelp = new GuiBuilder(dialog);
-        dialog.setTitle("DESPOT2: Other Specifics");
+        dialog.setTitle("TRE-T2: Other Specifics");
         JPanel panel = new JPanel();
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(panelLayout);
