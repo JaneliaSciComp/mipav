@@ -3391,9 +3391,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         if (componentImage != null) {
             return componentImage.getActiveImage();
-        } else {
-            return null;
         }
+        return null;
     }
 
     /**
@@ -6047,5 +6046,21 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#updateData(boolean)
      */
     public void updateData(boolean bCopyToCPU) {}
+
+    @Override
+    public ModelLUT getActiveLUT() {
+        if (componentImage != null) {
+            return componentImage.getActiveLUT();
+        }
+        return null;
+    }
+
+    @Override
+    public ModelRGB getActiveRGB() {
+        if (componentImage != null) {
+            return componentImage.getActiveRGB();
+        }
+        return null;
+    }
 
 }

@@ -160,10 +160,10 @@ public abstract class VOIBase extends Vector<Vector3f> {
     public VOIBase( boolean bFixed, boolean bClosed  )
     {
         this();
-        m_iVOIType = VOI.CONTOUR; 
         lastPoint = size() - 1;
         fixed = bFixed;
         closed = bClosed;
+        setClosed(closed);
     }
 
     /**
@@ -175,7 +175,6 @@ public abstract class VOIBase extends Vector<Vector3f> {
     public VOIBase( boolean bFixed, boolean bClosed, Vector<Vector3f> kIn )
     {
         this();
-        m_iVOIType = VOI.CONTOUR;
         if ( kIn != null )
         {
             for ( int i = 0; i < kIn.size(); i++ )
@@ -187,6 +186,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         lastPoint = size() - 1;
         fixed = bFixed;
         closed = bClosed;
+        setClosed(closed);
     }
 
     /**

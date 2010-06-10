@@ -5312,4 +5312,32 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             setActiveImage( IMAGE_B );
         }
     }
+
+    @Override
+    public ModelLUT getActiveLUT() {
+        int iActive = getSelectedImage();
+        if (iActive == ViewJComponentBase.IMAGE_A)
+        {
+            return LUTa;
+        }
+        if (iActive == ViewJComponentBase.IMAGE_B)
+        {
+            return LUTb;
+        }
+        return LUTa;
+    }
+
+    @Override
+    public ModelRGB getActiveRGB() {
+        int iActive = getSelectedImage();
+        if (iActive == ViewJComponentBase.IMAGE_A)
+        {
+            return triImage[AXIAL_A].getRGBTA();
+        }
+        if (iActive == ViewJComponentBase.IMAGE_B)
+        {
+            return triImage[AXIAL_A].getRGBTB();
+        }
+        return triImage[AXIAL_A].getRGBTA();
+    }
 }

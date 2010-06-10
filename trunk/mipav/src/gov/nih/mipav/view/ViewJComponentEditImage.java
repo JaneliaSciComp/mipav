@@ -1928,6 +1928,15 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
     }
 
     /**
+     * Returns the active image.
+     * 
+     * @return active image
+     */
+    public ModelRGB getActiveRGB() {
+        return (ModelRGB) m_kPatientSlice.getActiveLookupTable();
+    }
+
+    /**
      * Returns float alphaBlend. The value used to blend two images displayed in the same frame.
      * 
      * @return alphaBlend
@@ -2562,7 +2571,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             setPixelInformationAtLocation(xS, yS);
 
             if (mouseEvent.getButton() == MouseEvent.BUTTON1) {
-                //intensityLabel = true;
+                intensityLabel = true;
                 //paintComponent(getGraphics());
             }
         }
@@ -2700,7 +2709,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             imageActive.notifyImageDisplayListeners(null, true);
         }
         else if (cursorMode == DEFAULT) {
-            //intensityLabel = false;
+            intensityLabel = false;
             //paintComponent(getGraphics());
         }
 
@@ -3016,14 +3025,14 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 paintMagComponent(offscreenGraphics2d);
             } else if (cursorMode == ViewJComponentBase.DEFAULT) {
 
-                //if ( ! (this instanceof ViewJComponentSingleRegistration) && ! (frame instanceof ViewJFrameLightBox)) {
-                //    if (intensityLabel) {
-                //        if (frame instanceof ViewJFrameImage) {
-                //            // display intensity values on screen
-                //            repaintImageIntensityLabelFast(offscreenGraphics2d);
-                //        }
-                //    }
-                //}
+                if (intensityLabel) {
+                    if ( ! (this instanceof ViewJComponentSingleRegistration) && ! (frame instanceof ViewJFrameLightBox)) {
+                        if (frame instanceof ViewJFrameImage) {
+                            // display intensity values on screen
+                            repaintImageIntensityLabelFast(offscreenGraphics2d);
+                        }
+                    }
+                }
             }
 
             if (onTop) {
@@ -5273,10 +5282,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 } // if ((mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0)
 
                 // check is left mouse button was pressed...if so...we need to show intensity values
-                //if ( (mouseEvent.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) == InputEvent.BUTTON1_DOWN_MASK) {
-                //    intensityLabel = true;
-                //    paintComponent(getGraphics());
-                //}
+                if ( (mouseEvent.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) == InputEvent.BUTTON1_DOWN_MASK) {
+                    intensityLabel = true;
+                    paintComponent(getGraphics());
+                }
 
                 setPixelInformationAtLocation(xS, yS);
             } // if (mode == DEFAULT))
@@ -5616,147 +5625,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         } // for (y = yStart[1]; y < yDim;)
     }
 
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param xS DOCUMENT ME!
-     * @param wS DOCUMENT ME!
-     * @param yS DOCUMENT ME!
-     * @param hS DOCUMENT ME!
-     * @param imageBuffer DOCUMENT ME!
-     * @param image DOCUMENT ME!
-     * @param LUT DOCUMENT ME!
-     */
-    private void quickLUT(final int xS, final int wS, final int yS, final int hS, final float[] imageBuffer,
-            final ModelImage image, final ModelLUT LUT) {
-        if (wS > 5 && hS > 5) {
-            final int xDim = image.getExtents()[0];
-            final int yDim = image.getExtents()[1];
 
-            float min = Float.MAX_VALUE;
-            float max = -100000000;
-            final float[] x = new float[4];
-            final float[] y = new float[4];
-            final float[] z = new float[4];
-            final Dimension dim = new Dimension(256, 256);
-            float minImage, maxImage;
-
-            for (int j = yS; j < (yS + hS); j++) {
-
-                for (int i = xS; i < (xS + wS); i++) {
-
-                    if (imageBuffer[ (j * xDim) + i] > max) {
-                        max = imageBuffer[ (j * xDim) + i];
-                    }
-
-                    if (imageBuffer[ (j * xDim) + i] < min) {
-                        min = imageBuffer[ (j * xDim) + i];
-                    }
-                }
-            }
-
-            if (image.getType() == ModelStorageBase.UBYTE) {
-                minImage = 0;
-                maxImage = 255;
-            } else if (image.getType() == ModelStorageBase.BYTE) {
-                minImage = -128;
-                maxImage = 127;
-            } else {
-                minImage = (float) image.getMin();
-                maxImage = (float) image.getMax();
-            }
-
-            // Set LUT min max values;
-            x[0] = minImage;
-            x[1] = min;
-            x[2] = max;
-            x[3] = maxImage;
-
-            y[0] = dim.height - 1;
-            y[1] = dim.height - 1;
-            y[2] = 0;
-            y[3] = 0;
-
-            LUT.getTransferFunction().importArrays(x, y, 4);
-
-        }
-    }
-
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param xS DOCUMENT ME!
-     * @param wS DOCUMENT ME!
-     * @param yS DOCUMENT ME!
-     * @param hS DOCUMENT ME!
-     * @param imageBuffer DOCUMENT ME!
-     * @param image DOCUMENT ME!
-     * @param RGB DOCUMENT ME!
-     */
-    private void quickRGB(final int xS, final int wS, final int yS, final int hS, final float[] imageBuffer,
-            final ModelImage image, final ModelRGB RGB) {
-        if (wS > 5 && hS > 5) {
-
-            final int xDim = image.getExtents()[0];
-            final int yDim = image.getExtents()[1];
-
-            final float[] minC = {Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE};
-            final float[] maxC = { -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
-
-            final float min = Float.MAX_VALUE;
-            float max = -100000000;
-            final float[][] x = new float[3][4];
-            final float[][] y = new float[3][4];
-            final float[][] z = new float[3][4];
-            final Dimension dim = new Dimension(256, 256);
-
-            for (int j = yS; j < (yS + hS); j++) {
-
-                for (int i = xS; i < (xS + wS); i++) {
-
-                    for (int c = 0; c < 3; c++) {
-
-                        if (imageBuffer[ (j * xDim * 4) + (i * 4) + c + 1] > maxC[c]) {
-                            maxC[c] = imageBuffer[ (j * xDim * 4) + (i * 4) + c + 1];
-                        }
-
-                        if (imageBuffer[ (j * xDim * 4) + (i * 4) + c + 1] < minC[c]) {
-                            minC[c] = imageBuffer[ (j * xDim * 4) + (i * 4) + c + 1];
-                        }
-                    }
-                }
-            }
-
-            max = Math.max(maxC[0], maxC[1]);
-            max = Math.max(maxC[2], max);
-
-            for (int i = 0; i < 3; i++) {
-
-                // Set LUT min max values;
-                // if (imageA.isColorImage() == true) {
-                if (image.getType() == ModelStorageBase.ARGB) {
-                    x[i][1] = minC[i];
-                    x[i][2] = maxC[i];
-                } else {
-                    x[i][1] = minC[i] * 255 / max;
-                    x[i][2] = maxC[i] * 255 / max;
-                }
-
-                x[i][0] = 0;
-                x[i][3] = 255;
-
-                y[i][0] = dim.height - 1;
-                y[i][1] = dim.height - 1;
-                y[i][2] = 0;
-                y[i][3] = 0;
-            }
-
-            RGB.getRedFunction().importArrays(x[0], y[0], 4);
-            RGB.getGreenFunction().importArrays(x[1], y[1], 4);
-            RGB.getBlueFunction().importArrays(x[2], y[2], 4);
-            RGB.makeRGB( -1);
-        }
-    }
 
     /**
      * Repaints the image intensity label.

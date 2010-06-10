@@ -3380,4 +3380,14 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     public void setActiveImage(ModelImage kImage) {
         // TODO Auto-generated method stub        
     }
+
+    @Override
+    public ModelLUT getActiveLUT() {
+        return m_kVolumeImageA.GetLUT();
+    }
+
+    @Override
+    public ModelRGB getActiveRGB() {
+        return m_kVolumeImageA.GetRGB();
+    }
 }

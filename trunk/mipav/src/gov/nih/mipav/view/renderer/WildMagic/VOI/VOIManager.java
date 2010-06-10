@@ -1012,10 +1012,17 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 {
                     if ( m_kCurrentVOI.getGroup().getCurveType() != m_kCurrentVOI.getType() )
                     {
-                        VOI kGroup = m_kCurrentVOI.getGroup();
-                        kGroup.getCurves().remove(m_kCurrentVOI);
-                        m_kCurrentVOI.setGroup(null);
-                        m_kParent.addVOI(m_kCurrentVOI, true);
+                        if ( m_kCurrentVOI.getGroup().getSize() > 1 )
+                        {
+                            VOI kGroup = m_kCurrentVOI.getGroup();
+                            kGroup.getCurves().remove(m_kCurrentVOI);
+                            m_kCurrentVOI.setGroup(null);
+                            m_kParent.addVOI(m_kCurrentVOI, true);
+                        }
+                        else if ( m_kCurrentVOI.getGroup().getSize() == 1 )
+                        {
+                            m_kCurrentVOI.getGroup().setCurveType( m_kCurrentVOI.getType() );
+                        }
                     }
                 }
             }
@@ -1206,10 +1213,17 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                     {
                         if ( m_kCurrentVOI.getGroup().getCurveType() != m_kCurrentVOI.getType() )
                         {
-                            VOI kGroup = m_kCurrentVOI.getGroup();
-                            kGroup.getCurves().remove(m_kCurrentVOI);
-                            m_kCurrentVOI.setGroup(null);
-                            m_kParent.addVOI(m_kCurrentVOI, true);
+                            if ( m_kCurrentVOI.getGroup().getSize() > 1 )
+                            {
+                                VOI kGroup = m_kCurrentVOI.getGroup();
+                                kGroup.getCurves().remove(m_kCurrentVOI);
+                                m_kCurrentVOI.setGroup(null);
+                                m_kParent.addVOI(m_kCurrentVOI, true);
+                            }
+                            else if ( m_kCurrentVOI.getGroup().getSize() == 1 )
+                            {
+                                m_kCurrentVOI.getGroup().setCurveType( m_kCurrentVOI.getType() );
+                            }
                         }
                     }
                     m_bDrawVOI = false;
