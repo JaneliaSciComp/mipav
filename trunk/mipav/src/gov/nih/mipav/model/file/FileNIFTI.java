@@ -2171,125 +2171,105 @@ public class FileNIFTI extends FileBase {
             // esize must be a positive integral multiple of 16
             esize = getInt(endianess);
             Preferences.debug("The size of the header extension in bytes = " + esize + "\n");
-            if(esize > 0 && esize%16 == 0) {
-            	try {
-            		readExtendedHeader(endianess, fileLength);
-            	} catch(IOException e) {
-            		Preferences.debug("The extended header could not be read.");
-            		e.printStackTrace();
-            	}
-            } else {
-            	Preferences.debug("The extended header does not have a valid size.");
+            fileInfo.setEsize(esize);
+            ecode = getInt(endianess);
+            if (ecode == 0) {
+                Preferences.debug("ecode = 0 for an unknown private format\n");
+            }
+            else if (ecode == 2) {
+                Preferences.debug("ecode = 2 for DICOM format (i.e., attribute tags and values)\n");
+            }
+            else if (ecode == 4) {
+                Preferences.debug("ecode = 4 for AFNI group (i.e., ASCII XML-ish elements)\n");
+            }
+            else if (ecode == 6) {
+                Preferences.debug("ecode = 6 for comment: arbitrary non-NUL ASCII text\n");
+            }
+            else if (ecode == 8) {
+                Preferences.debug("ecode = 8 for XCEDE metadata\n");
+            }
+            else if (ecode == 10) {
+                Preferences.debug("ecode = 10 for dimensional information for JIM software(XML format)\n");
+            }
+            else if (ecode == 12) {
+                Preferences.debug("ecode = 12 for Fiswidget XML pipeline descriptions\n");
+            }
+            else {
+                Preferences.debug("ecode = " + ecode + " an unrecognized ecode value\n");
+            }
+            fileInfo.setEcode(ecode);
+            if ((fileLength > 352 + esize) && ((!oneFile) || (vox_offset > 352 + esize))) {
+                raFile.seek(352 + esize);
+                esize2 = getInt(endianess);
+                Preferences.debug("The size of the second header extension in bytes = " + esize2 + "\n");
+                if (esize2 > 0) {
+                    fileInfo.setEsize2(esize2);
+                    ecode2 = getInt(endianess);
+                    if (ecode2 == 0) {
+                        Preferences.debug("ecode2 = 0 for an unknown private format\n");
+                    }
+                    else if (ecode2 == 2) {
+                        Preferences.debug("ecode2 = 2 for DICOM format (i.e., attribute tags and values)\n");
+                    }
+                    else if (ecode2 == 4) {
+                        Preferences.debug("ecode2 = 4 for AFNI group (i.e., ASCII XML-ish elements)\n");
+                    }
+                    else if (ecode2 == 6) {
+                        Preferences.debug("ecode2 = 6 for comment: arbitrary non-NUL ASCII text\n");
+                    }
+                    else if (ecode2 == 8) {
+                        Preferences.debug("ecode2 = 8 for XCEDE metadata\n");
+                    }
+                    else if (ecode2 == 10) {
+                        Preferences.debug("ecode2 = 10 for dimensional information for JIM software(XML format)\n");
+                    }
+                    else if (ecode2 == 12) {
+                        Preferences.debug("ecode2 = 12 for Fiswidget XML pipeline descriptions\n");
+                    }
+                    else {
+                        Preferences.debug("ecode2 = " + ecode2 + " an unrecognized ecode2 value\n");
+                    }
+                    fileInfo.setEcode2(ecode2);
+                    if ((fileLength > 352 + esize + esize2) && ((!oneFile) || (vox_offset > 352 + esize + esize2))){
+                        esize3 = getInt(endianess);
+                        Preferences.debug("The size of the third header extension in bytes = " + esize3 + "\n");
+                        if (esize3 > 0) {
+                            fileInfo.setEsize3(esize3);
+                            ecode3 = getInt(endianess);
+                            if (ecode3 == 0) {
+                                Preferences.debug("ecode3 = 0 for an unknown private format\n");
+                            }
+                            else if (ecode3 == 2) {
+                                Preferences.debug("ecode3 = 2 for DICOM format (i.e., attribute tags and values)\n");
+                            }
+                            else if (ecode3 == 4) {
+                                Preferences.debug("ecode3 = 4 for AFNI group (i.e., ASCII XML-ish elements)\n");
+                            }
+                            else if (ecode3 == 6) {
+                                Preferences.debug("ecode3 = 6 for comment: arbitrary non-NUL ASCII text\n");
+                            }
+                            else if (ecode3 == 8) {
+                                Preferences.debug("ecode3 = 8 for XCEDE metadata\n");
+                            }
+                            else if (ecode3 == 10) {
+                                Preferences.debug("ecode3 = 10 for dimensional information for JIM software(XML format)\n");
+                            }
+                            else if (ecode3 == 12) {
+                                Preferences.debug("ecode3 = 12 for Fiswidget XML pipeline descriptions\n");
+                            }
+                            else {
+                                Preferences.debug("ecode3 = " + ecode3 + " an unrecognized ecode3 value\n");
+                            }
+                            fileInfo.setEcode3(ecode3);
+                        }
+                    }
+                }
             }
         }
         if(raFile != null) {
         	raFile.close();
         }
         return true; // If it got this far, it has successfully read in the header
-    }
-    
-    /**
-     * Method for reading the extended header, for now just determines size and type.
-     * 
-     * @param endianess
-     * @param fileLength
-     * @throws IOException
-     */
-    private void readExtendedHeader(boolean endianess, long fileLength) throws IOException {
-    	fileInfo.setEsize(esize);
-        ecode = getInt(endianess);
-        if (ecode == 0) {
-            Preferences.debug("ecode = 0 for an unknown private format\n");
-        }
-        else if (ecode == 2) {
-            Preferences.debug("ecode = 2 for DICOM format (i.e., attribute tags and values)\n");
-        }
-        else if (ecode == 4) {
-            Preferences.debug("ecode = 4 for AFNI group (i.e., ASCII XML-ish elements)\n");
-        }
-        else if (ecode == 6) {
-            Preferences.debug("ecode = 6 for comment: arbitrary non-NUL ASCII text\n");
-        }
-        else if (ecode == 8) {
-            Preferences.debug("ecode = 8 for XCEDE metadata\n");
-        }
-        else if (ecode == 10) {
-            Preferences.debug("ecode = 10 for dimensional information for JIM software(XML format)\n");
-        }
-        else if (ecode == 12) {
-            Preferences.debug("ecode = 12 for Fiswidget XML pipeline descriptions\n");
-        }
-        else {
-            Preferences.debug("ecode = " + ecode + " an unrecognized ecode value\n");
-        }
-        fileInfo.setEcode(ecode);
-        if ((fileLength > 352 + esize) && ((!oneFile) || (vox_offset > 352 + esize))) {
-            raFile.seek(352 + esize);
-            esize2 = getInt(endianess);
-            Preferences.debug("The size of the second header extension in bytes = " + esize2 + "\n");
-            if (esize2 > 0) {
-                fileInfo.setEsize2(esize2);
-                ecode2 = getInt(endianess);
-                if (ecode2 == 0) {
-                    Preferences.debug("ecode2 = 0 for an unknown private format\n");
-                }
-                else if (ecode2 == 2) {
-                    Preferences.debug("ecode2 = 2 for DICOM format (i.e., attribute tags and values)\n");
-                }
-                else if (ecode2 == 4) {
-                    Preferences.debug("ecode2 = 4 for AFNI group (i.e., ASCII XML-ish elements)\n");
-                }
-                else if (ecode2 == 6) {
-                    Preferences.debug("ecode2 = 6 for comment: arbitrary non-NUL ASCII text\n");
-                }
-                else if (ecode2 == 8) {
-                    Preferences.debug("ecode2 = 8 for XCEDE metadata\n");
-                }
-                else if (ecode2 == 10) {
-                    Preferences.debug("ecode2 = 10 for dimensional information for JIM software(XML format)\n");
-                }
-                else if (ecode2 == 12) {
-                    Preferences.debug("ecode2 = 12 for Fiswidget XML pipeline descriptions\n");
-                }
-                else {
-                    Preferences.debug("ecode2 = " + ecode2 + " an unrecognized ecode2 value\n");
-                }
-                fileInfo.setEcode2(ecode2);
-                if ((fileLength > 352 + esize + esize2) && ((!oneFile) || (vox_offset > 352 + esize + esize2))){
-                    esize3 = getInt(endianess);
-                    Preferences.debug("The size of the third header extension in bytes = " + esize3 + "\n");
-                    if (esize3 > 0) {
-                        fileInfo.setEsize3(esize3);
-                        ecode3 = getInt(endianess);
-                        if (ecode3 == 0) {
-                            Preferences.debug("ecode3 = 0 for an unknown private format\n");
-                        }
-                        else if (ecode3 == 2) {
-                            Preferences.debug("ecode3 = 2 for DICOM format (i.e., attribute tags and values)\n");
-                        }
-                        else if (ecode3 == 4) {
-                            Preferences.debug("ecode3 = 4 for AFNI group (i.e., ASCII XML-ish elements)\n");
-                        }
-                        else if (ecode3 == 6) {
-                            Preferences.debug("ecode3 = 6 for comment: arbitrary non-NUL ASCII text\n");
-                        }
-                        else if (ecode3 == 8) {
-                            Preferences.debug("ecode3 = 8 for XCEDE metadata\n");
-                        }
-                        else if (ecode3 == 10) {
-                            Preferences.debug("ecode3 = 10 for dimensional information for JIM software(XML format)\n");
-                        }
-                        else if (ecode3 == 12) {
-                            Preferences.debug("ecode3 = 12 for Fiswidget XML pipeline descriptions\n");
-                        }
-                        else {
-                            Preferences.debug("ecode3 = " + ecode3 + " an unrecognized ecode3 value\n");
-                        }
-                        fileInfo.setEcode3(ecode3);
-                    }
-                }
-            }
-        }
     }
 
     /**
