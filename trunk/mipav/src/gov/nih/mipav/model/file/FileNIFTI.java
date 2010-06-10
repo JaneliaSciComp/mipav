@@ -2178,6 +2178,8 @@ public class FileNIFTI extends FileBase {
             		Preferences.debug("The extended header could not be read.");
             		e.printStackTrace();
             	}
+            } else {
+            	Preferences.debug("The extended header does not have a valid size.");
             }
         }
         if(raFile != null) {
