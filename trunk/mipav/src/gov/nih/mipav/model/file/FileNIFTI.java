@@ -2149,7 +2149,7 @@ public class FileNIFTI extends FileBase {
         intentName = (new String(bufferByte, 328, 16));
         Preferences.debug("Name or meaning of data = " + intentName + "\n");
         fileInfo.setIntentName(intentName.trim());
-        if (fileLength > 348) {
+        if ((fileLength > 348) && (vox_offset > 352)) {
             // 4 byte extension array is present with only the first byte extension[0] defined
             // If extension[0] is nonzero, it indicates that extended header information is
             // present in the bytes following the extension array.
