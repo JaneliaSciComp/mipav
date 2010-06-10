@@ -2629,6 +2629,33 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
+     * 3D get data fuction where bounds checking is performed.
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * 
+     * @return returns value if position in data array range
+     */
+    public final Number getC(final int x, final int y, final int z, final int c) {
+        int position;
+
+        if (nDims == 3) {
+            position = (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x;
+            position *= 4;
+            position += c;
+
+            if ( (position >= 0) && (position < dataSize)) {
+                return data.get(position);
+            }
+
+            return (new Byte((byte) 0));
+        }
+
+        return (new Byte((byte) 0));
+    }
+
+    /**
      * Accessor method for the m_bConvolve data memeber.
      * 
      * @return m_bConvolve, true when this images is the product of fft( imageA ) fft( imageB )

@@ -3482,9 +3482,24 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
     public ModelImage getActiveImage() {
         if (componentImage != null) {
             return componentImage.getActiveImage();
-        } else {
-            return null;
         }
+        return null;
+    }
+    
+    @Override
+    public ModelLUT getActiveLUT() {
+        if (componentImage != null) {
+            return componentImage.getActiveLUT();
+        }
+        return null;
+    }
+
+    @Override
+    public ModelRGB getActiveRGB() {
+        if (componentImage != null) {
+            return componentImage.getActiveRGB();
+        }
+        return null;
     }
 
     @Override

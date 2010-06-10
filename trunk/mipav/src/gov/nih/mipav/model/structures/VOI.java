@@ -606,7 +606,7 @@ public class VOI extends ModelSerialCloneable {
         final Object obj = super.clone();
 
         if (listenerList != null) {
-            final int listeners = listenerList.getListenerCount(VOIListener.class);
+            listenerList.getListenerCount(VOIListener.class);
             final VOIListener[] voiList = listenerList.getListeners(VOIListener.class);
 
             for (final VOIListener element : voiList) {
@@ -1230,8 +1230,6 @@ public class VOI extends ModelSerialCloneable {
      * @throws  Throwable  DOCUMENT ME!
      */
     public void finalize() throws Throwable {
-        int i;
-
         if (curves != null) {
             for (int j = curves.size() - 1; j >= 0; j--) {
                 VOIBase base = curves.remove(j);
@@ -1449,63 +1447,73 @@ public class VOI extends ModelSerialCloneable {
         return curves;
     }
     
-    public Vector<VOIBase>[] getSortedCurves( int iDim ) {
-        return getSortedCurves( VOIBase.ZPLANE, iDim );
+    /**
+     * Accessor that returns the curve type.
+     *
+     * @return  the curve type
+     */
+    public int getCurveType() {
+        return curveType;
     }
 
-    public Vector<VOIBase>[] getSortedCurves( int iPlane, int iDim ) {
-        Vector<VOIBase>[] kTemp = new Vector[iDim];
-        for ( int i = 0; i < iDim; i++ )
-        {
-            kTemp[i] = new Vector<VOIBase>();
-        }      
-                
-        for ( int i = 0; i < curves.size(); i++ )
-        {
-            if ( (curves.elementAt(i).getPlane() & iPlane) == iPlane )
-            {
-                int slice = curves.elementAt(i).slice();
-                kTemp[slice].add( curves.elementAt(i) );
-            }
+    /**
+     * Accessor that returns the display mode.
+     *
+     * @return  the display mode
+     */
+    public int getDisplayMode() {
+        return displayMode;
+    }
+    
+    /**
+     * @return
+     */
+    public String getExtension() {
+        return extension;
+    }
+    
+    /**
+     * Returns the geometric center of the VOI (only contour).
+     *
+     * @return  returns the geometric center
+     */
+    public Vector3f getGeometricCenter() {
+        int ncurves = 0;
+        Vector3f tempPt = new Vector3f(0, 0, 0);
+        float sumX = (float) 0.0;
+        float sumY = (float) 0.0;
+        float sumZ = (float) 0.0;
+
+        if ((curveType == LINE) || (curveType == POLYLINE) || (curveType == PROTRACTOR)) {
+            return null;
         }
-        
-        return kTemp;
-    }
-    
-    public int getSliceSize( int iSlice )
-    {
-        return getSliceSize( VOIBase.ZPLANE, iSlice );
-    }
-    
-    public int getSliceSize( int iPlane, int iSlice )
-    {
-        int sliceSize = 0;
-        for ( int i = 0; i < curves.size(); i++ )
-        {
-            if ( (curves.elementAt(i).getPlane() & iPlane) == iPlane && curves.elementAt(i).slice() == iSlice )
-            {
-                sliceSize++;
-            }
+
+        for (int i = 0; i < curves.size(); i++) {
+            tempPt = ((VOIContour) (curves.elementAt(i))).getGeometricCenter();
+            ncurves++;
+            sumX += tempPt.X;
+            sumY += tempPt.Y;
+            sumZ += tempPt.Z;
         }
-        return sliceSize;
+        return (new Vector3f(sumX / ncurves, sumY / ncurves, sumZ / ncurves));
     }
     
-    public Vector<VOIBase> getSliceCurves( int iSlice )
-    {
-        return getSliceCurves( VOIBase.ZPLANE, iSlice );
+    /**
+     * Accessor that returns the ID.
+     *
+     * @return  the ID
+     */
+    public short getID() {
+        return ID;
     }
     
-    public Vector<VOIBase> getSliceCurves( int iPlane, int iSlice )
-    {
-        Vector<VOIBase> sliceCurves = new Vector<VOIBase>();      
-        for ( int i = 0; i < curves.size(); i++ )
-        {
-            if ( (curves.elementAt(i).getPlane() & iPlane) == iPlane && curves.elementAt(i).slice() == iSlice )
-            {
-                sliceCurves.add( curves.elementAt(i) );
-            }
-        }
-        return sliceCurves;
+    /**
+     * Accessor that returns the maximum of the range of intensities to ignore.
+     *
+     * @return  The maximum.
+     */
+    public float getMaximumIgnore() {
+        return ignoreMax;
     }
 
     /**
@@ -1542,93 +1550,6 @@ public class VOI extends ModelSerialCloneable {
     }
      */
 
-
-    /**
-     * Accessor that returns the curve type.
-     *
-     * @return  the curve type
-     */
-    public int getCurveType() {
-        return curveType;
-    }
-
-    /**
-     * Accessor that returns the display mode.
-     *
-     * @return  the display mode
-     */
-    public int getDisplayMode() {
-        return displayMode;
-    }
-
-    /**
-     * @return
-     */
-    public String getExtension() {
-        return extension;
-    }
-
-    /**
-     * Returns the geometric center of the VOI (only contour).
-     *
-     * @return  returns the geometric center
-     */
-    public Vector3f getGeometricCenter() {
-        int ncurves = 0;
-        Vector3f tempPt = new Vector3f(0, 0, 0);
-        float sumX = (float) 0.0;
-        float sumY = (float) 0.0;
-        float sumZ = (float) 0.0;
-
-        if ((curveType == LINE) || (curveType == POLYLINE) || (curveType == PROTRACTOR)) {
-            return null;
-        }
-
-        for (int i = 0; i < curves.size(); i++) {
-            tempPt = ((VOIContour) (curves.elementAt(i))).getGeometricCenter();
-            ncurves++;
-            sumX += tempPt.X;
-            sumY += tempPt.Y;
-            sumZ += tempPt.Z;
-        }
-        return (new Vector3f(sumX / ncurves, sumY / ncurves, sumZ / ncurves));
-    }
-
-    /**
-     * Accessor that returns the ID.
-     *
-     * @return  the ID
-     */
-    public short getID() {
-        return ID;
-    }
-
-    /**
-     * Accessor that returns the maximum of the range of intensities to ignore.
-     *
-     * @return  The maximum.
-     */
-    public float getMaximumIgnore() {
-        return ignoreMax;
-    }
-
-    /**
-     * Accessor that returns the intensity array to the parameter.
-     *
-     * @return  DOCUMENT ME!
-    public float[] getIntensity() {
-        return intensity;
-    }
-     */
-
-    /**
-     * Accessor that returns the level of the levelset VOI.
-     *
-     * @return  The level
-    public float getLevel() {
-        return level;
-    }
-     */
 
     /**
      * Accessor that returns the minimum of the range of intensities to ignore.
@@ -1691,6 +1612,24 @@ public class VOI extends ModelSerialCloneable {
     }
 
     /**
+     * Accessor that returns the intensity array to the parameter.
+     *
+     * @return  DOCUMENT ME!
+    public float[] getIntensity() {
+        return intensity;
+    }
+     */
+
+    /**
+     * Accessor that returns the level of the levelset VOI.
+     *
+     * @return  The level
+    public float getLevel() {
+        return level;
+    }
+     */
+
+    /**
      * Gets the position and intensity for this VOI if it's a line.
      *
      * @param   slice        slice where the line is located
@@ -1726,6 +1665,60 @@ public class VOI extends ModelSerialCloneable {
     }
 
     /**
+     * Accessor that returns the process.
+     *
+     * @return  the process
+     */
+    public boolean getProcess() {
+        return process;
+    }
+
+    public int getSize()
+    {
+        return curves.size();
+    }
+    
+    public Vector<VOIBase> getSliceCurves( int iSlice )
+    {
+        return getSliceCurves( VOIBase.ZPLANE, iSlice );
+    }
+
+    public Vector<VOIBase> getSliceCurves( int iPlane, int iSlice )
+    {
+        Vector<VOIBase> sliceCurves = new Vector<VOIBase>();      
+        for ( int i = 0; i < curves.size(); i++ )
+        {
+            if ( (curves.elementAt(i).getPlane() & iPlane) == iPlane && curves.elementAt(i).slice() == iSlice )
+            {
+                sliceCurves.add( curves.elementAt(i) );
+            }
+        }
+        return sliceCurves;
+    }
+
+    public int getSliceSize( int iSlice )
+    {
+        return getSliceSize( VOIBase.ZPLANE, iSlice );
+    }
+
+    public int getSliceSize( int iPlane, int iSlice )
+    {
+        int sliceSize = 0;
+        for ( int i = 0; i < curves.size(); i++ )
+        {
+            if ( (curves.elementAt(i).getPlane() & iPlane) == iPlane && curves.elementAt(i).slice() == iSlice )
+            {
+                sliceSize++;
+            }
+        }
+        return sliceSize;
+    }
+
+    public Vector<VOIBase>[] getSortedCurves( int iDim ) {
+        return getSortedCurves( VOIBase.ZPLANE, iDim );
+    }
+
+    /**
      * Accessor that returns the position array to the parameter.
      *
      * @return  DOCUMENT ME!
@@ -1734,13 +1727,23 @@ public class VOI extends ModelSerialCloneable {
     }
      */
 
-    /**
-     * Accessor that returns the process.
-     *
-     * @return  the process
-     */
-    public boolean getProcess() {
-        return process;
+    public Vector<VOIBase>[] getSortedCurves( int iPlane, int iDim ) {
+        Vector<VOIBase>[] kTemp = new Vector[iDim];
+        for ( int i = 0; i < iDim; i++ )
+        {
+            kTemp[i] = new Vector<VOIBase>();
+        }      
+                
+        for ( int i = 0; i < curves.size(); i++ )
+        {
+            if ( (curves.elementAt(i).getPlane() & iPlane) == iPlane )
+            {
+                int slice = curves.elementAt(i).slice();
+                kTemp[slice].add( curves.elementAt(i) );
+            }
+        }
+        
+        return kTemp;
     }
 
     /**
@@ -2368,20 +2371,6 @@ public class VOI extends ModelSerialCloneable {
      * Clears VOI of all curves at a slice.
      *
      * @param  slice  index of slice of curves to remove
-     * @deprecated
-     */
-    public void removeCurves(int slice) {
-        Vector<VOIBase> removeCurves = getSliceCurves(slice);
-        for ( int i = 0; i < removeCurves.size(); i++ )
-        {
-            curves.removeElement(removeCurves.elementAt(i));
-        }
-    }
-    
-    /**
-     * Clears VOI of all curves at a slice.
-     *
-     * @param  slice  index of slice of curves to remove
      */
     public void removeCurve(VOIBase kCurve) {
         curves.removeElement(kCurve);
@@ -2395,6 +2384,20 @@ public class VOI extends ModelSerialCloneable {
     public void removeCurves() {
         curves.removeAllElements();
         elementLabel = 1;
+    }
+    
+    /**
+     * Clears VOI of all curves at a slice.
+     *
+     * @param  slice  index of slice of curves to remove
+     * @deprecated
+     */
+    public void removeCurves(int slice) {
+        Vector<VOIBase> removeCurves = getSliceCurves(slice);
+        for ( int i = 0; i < removeCurves.size(); i++ )
+        {
+            curves.removeElement(removeCurves.elementAt(i));
+        }
     }
 
 

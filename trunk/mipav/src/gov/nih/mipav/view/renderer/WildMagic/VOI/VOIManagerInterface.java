@@ -5,6 +5,7 @@ import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
+import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.UpdateVOIEvent;
 import gov.nih.mipav.model.structures.UpdateVOISelectionListener;
@@ -166,12 +167,12 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
 
     protected Color currentColor = null;
     protected VOI saveGroup = null;
-    
+
     private Vector<VOIBase> m_kActiveList = new Vector<VOIBase>();
 
     private JToggleButton m_kPointerButton = null;
-    
-    
+
+
     public VOIManagerInterface ( VOIManagerInterfaceListener kParent,
             ModelImage kImageA, ModelStorageBase kLUTa, ModelImage kImageB, ModelStorageBase kLUTb, int iNViews, boolean bGPU, ButtonGroup kVOIGroup )
     {
@@ -429,7 +430,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         //time = System.currentTimeMillis() - time;
         //System.err.println( "done " + time );
     }
-    
+
     public void createMask( ModelImage kActive, boolean bInside )
     {
         int iSize = kActive.getSize();
@@ -490,12 +491,17 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
 
     public void deleteVOI(VOIBase kOld) {
         m_kCurrentVOIGroup = null;
+        if ( kOld == null )
+        {
+            return;
+        }
         VOI kGroup = kOld.getGroup();
         if ( kGroup != null )
         {
             kGroup.getCurves().remove(kOld);
             if ( kGroup.isEmpty() )
             {
+                m_kParent.getActiveImage().unregisterVOI(kGroup);
                 if ( m_kImageA != null ) { m_kImageA.unregisterVOI(kGroup); }
                 if ( m_kImageB != null ) { m_kImageB.unregisterVOI(kGroup); }
             }
@@ -597,7 +603,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
     {        
         boolean bDraw = isDrawCommand(kCommand);
         m_kParent.enableBoth(!bDraw);
-        
+
         if ( kCommand.equals("quickLUT") )
         {
             saveGroup = m_kCurrentVOIGroup;
@@ -775,7 +781,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         return null;
     }
 
-    
+
     public JToggleButton getPointerButton( )
     {
         return m_kPointerButton;
@@ -897,9 +903,9 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
                                         {                                       
                                             if (useThreshold) {
                                                 intensitySum += curves[s].elementAt(j).calcRGBIntensityThreshold(
-                                                                kImage,
-                                                                c,
-                                                                threshold);
+                                                        kImage,
+                                                        c,
+                                                        threshold);
                                             } else {
                                                 intensitySum += curves[s].elementAt(j).calcRGBIntensity(kImage, c);
                                             }
@@ -1374,7 +1380,6 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         {
             doVOI(CustomUIBuilder.PARAM_VOI_NEW.getActionCommand());
         }
-        //voiUID = m_kVOIManagers[m_iActive].getVOICount() + 1;
         m_kCurrentVOIGroup = null;
         voiUID++;
         toolbarBuilder.getVOIColorButton().setVOIColor(voiUID);
@@ -1445,15 +1450,11 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         m_akBounds[1].Copy(kBounds[1]);        
         deleteVOI( kLUT );
         if (m_kParent.getActiveImage().isColorImage() == false) {
-
-            if (m_kImageA == m_kParent.getActiveImage()) {
-                quickLUT( m_akBounds, m_kImageA, (ModelLUT)m_kLUTa );
-                m_kImageA.notifyImageDisplayListeners((ModelLUT)m_kLUTa, true);
-            } else if ( (m_kImageB != null) && (m_kImageB == m_kParent.getActiveImage())) {
-                quickLUT( m_akBounds, m_kImageB, (ModelLUT)m_kLUTb );
-                m_kImageB.notifyImageDisplayListeners((ModelLUT)m_kLUTb, true);
-            }
+            quickLUT( m_akBounds, m_kParent.getActiveImage(), m_kParent.getActiveLUT() );
+            m_kParent.getActiveImage().notifyImageDisplayListeners(m_kParent.getActiveLUT(), true);            
         } else { // RGB image
+            quickRGB( m_akBounds, m_kParent.getActiveImage(), m_kParent.getActiveRGB() );
+            m_kParent.getActiveImage().notifyImageDisplayListeners(true, 1, m_kParent.getActiveRGB());
         }
 
         if ( (getActiveImage().isColorImage()) && (getActiveImage().getHistoRGBFrame() != null)) {
@@ -2119,8 +2120,28 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
             }
             if ( (m_kCurrentVOIGroup != null) && (m_kCurrentVOIGroup.getCurveType() != kNew.getType()) )
             {
+                if ( m_kCurrentVOIGroup.isEmpty() )
+                {
+                    m_kParent.getActiveImage().unregisterVOI(m_kCurrentVOIGroup);
+                }
                 m_kCurrentVOIGroup = null;
-                newVOI(false, kNew.isSplit());
+
+
+                boolean bFound = false;
+                VOIVector kVOIs = m_kParent.getActiveImage().getVOIs();
+                for ( int i = 0; i < kVOIs.size(); i++ )
+                {
+                    VOI kCurrentGroup = kVOIs.get(i);
+                    if ( kCurrentGroup.isActive() && kCurrentGroup.getCurveType() == kNew.getType() )
+                    {
+                        bFound = true;
+                        m_kCurrentVOIGroup = kCurrentGroup;
+                    }
+                }
+                if ( !bFound )
+                {
+                    newVOI(false, kNew.isSplit());
+                }
             }
             if ( m_kCurrentVOIGroup == null )
             {
@@ -2246,7 +2267,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         }
         m_kCurrentVOIGroup = null;
     }
-    
+
     private boolean isDrawCommand( String kCommand )
     {
         if ( kCommand.equals(CustomUIBuilder.PARAM_VOI_PROTRACTOR.getActionCommand()) ||
@@ -2385,6 +2406,84 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
 
         LUT.getTransferFunction().importArrays(x, y, 4);
     }
+
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param xS DOCUMENT ME!
+     * @param wS DOCUMENT ME!
+     * @param yS DOCUMENT ME!
+     * @param hS DOCUMENT ME!
+     * @param imageBuffer DOCUMENT ME!
+     * @param image DOCUMENT ME!
+     * @param RGB DOCUMENT ME!
+     */
+    private void quickRGB(final Vector3f[] akMinMax, final ModelImage image, final ModelRGB RGB) {
+        if ( !(((akMinMax[1].Z - akMinMax[0].Z) > 5) ||
+                ((akMinMax[1].Y - akMinMax[0].Y) > 5) ||
+                ((akMinMax[1].X - akMinMax[0].X) > 5) )  )
+        {
+            return;
+        }        
+        final float[] minC = {Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE};
+        final float[] maxC = { -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
+        Number val;
+
+        for ( int z = (int)akMinMax[0].Z; z <= akMinMax[1].Z; z++ )
+        {
+            for ( int y = (int)akMinMax[0].Y; y <= akMinMax[1].Y; y++ )
+            {
+                for ( int x = (int)akMinMax[0].X; x <= akMinMax[1].X; x++ )
+                {
+                    for (int c = 1; c < 4; c++) {
+
+                        val = image.getC(x,y,z,c);
+                        if ( val.floatValue() < minC[c-1] )
+                        {
+                            minC[c-1] = val.floatValue();
+                        }
+                        if ( val.floatValue() > maxC[c-1] )
+                        {
+                            maxC[c-1] = val.floatValue();
+                        }                        
+                    }
+                }
+            }
+        }
+
+        float max = Math.max( Math.max(maxC[0], maxC[1]), maxC[2] );
+
+        final float[][] x = new float[3][4];
+        final float[][] y = new float[3][4];
+        final Dimension dim = new Dimension(256, 256);
+        for (int i = 0; i < 3; i++) {
+
+            // Set LUT min max values;
+            // if (imageA.isColorImage() == true) {
+                if (image.getType() == ModelStorageBase.ARGB) {
+                    x[i][1] = minC[i];
+                    x[i][2] = maxC[i];
+                } else {
+                    x[i][1] = minC[i] * 255 / max;
+                    x[i][2] = maxC[i] * 255 / max;
+                }
+
+                x[i][0] = 0;
+                x[i][3] = 255;
+
+                y[i][0] = dim.height - 1;
+                y[i][1] = dim.height - 1;
+                y[i][2] = 0;
+                y[i][3] = 0;
+        }
+
+        RGB.getRedFunction().importArrays(x[0], y[0], 4);
+        RGB.getGreenFunction().importArrays(x[1], y[1], 4);
+        RGB.getBlueFunction().importArrays(x[2], y[2], 4);
+        RGB.makeRGB( -1);
+    }
+
+
 
     private void redoVOIs()
     {
