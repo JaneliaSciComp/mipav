@@ -1943,7 +1943,7 @@ public class FileIO {
                 case FileUtility.NIFTI:
                 	if(niftiCompressed) {
                 		image = readNIFTI(fileName, fileDir, one, true);
-                		image.setImageName(fileName.substring(0, fileName.indexOf(".")), false);
+                		image.setImageName(fileName.substring(0, fileName.lastIndexOf(".")), false);
                 	}else {
                 		image = readNIFTI(fileName, fileDir, one, false);
                 	}
