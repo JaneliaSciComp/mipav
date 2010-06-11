@@ -1042,7 +1042,14 @@ public class FileIO {
         extents[1] = refFileInfo.getExtents()[1];
         refFileInfo.setExtents(extents);
 
-        image = new ModelImage(refFileInfo.displayType, extents, studyIDMaster.trim() + "_" + seriesNoRef.trim());
+        
+        if(studyIDMaster.trim().equals("") && seriesNoRef.trim().equals("")) {
+        	image = new ModelImage(refFileInfo.displayType, extents, selectedFileName);
+        }else {
+        	image = new ModelImage(refFileInfo.displayType, extents, studyIDMaster.trim() + "_" + seriesNoRef.trim());
+        }
+        
+        
 
         if (refFileInfo.isMultiFrame() == true) {
             image.setFileInfo(refFileInfo, 0);
