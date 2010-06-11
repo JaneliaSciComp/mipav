@@ -333,6 +333,7 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
             displayError("Source Image is null");
             finalize();
 
+
             return;
         }
 

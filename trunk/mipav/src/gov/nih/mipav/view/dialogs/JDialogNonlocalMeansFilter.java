@@ -24,7 +24,7 @@ import javax.swing.*;
  * @see  AlgorithmNonlocalMeansFilter
  */
 public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
-        implements AlgorithmInterface, ScriptableActionInterface, DialogDefaultsInterface {
+        implements AlgorithmInterface, ScriptableActionInterface, DialogDefaultsInterface, ActionDiscovery {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -227,6 +227,8 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
         if (algorithm.isCompleted()) {
             insertScriptLine();
         }
+     // save the completion status for later
+        setComplete(algorithm.isCompleted());
 
         nlMeansFilterAlgo.finalize();
         nlMeansFilterAlgo = null;
@@ -770,5 +772,122 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
 
         return true;
     }
+
+
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms.Filters (spatial)");
+            }
+
+            public String getDescription() {
+                return new String("Applies a Nonlocal Mean filter.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Applies a Nonlocal Mean filter.");
+            }
+
+            public String getShortLabel() {
+                return new String("NonlocalMean");
+            }
+
+            public String getLabel() {
+                return new String("Nonlocal Mean");
+            }
+
+            public String getName() {
+                return new String("Nonlocal Mean");
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+
+
+
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, true));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D, false));
+            table.put(new ParameterInt("search_window_side", 15));
+            table.put(new ParameterInt("similarity_window_side", 7));
+            table.put(new ParameterFloat("noise_standard_deviation",10f));
+            table.put(new ParameterFloat("degree_of_filtering",1.414f));
+            table.put(new ParameterBoolean("do_rician", false));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            if (getResultImage() != null) {
+                // algo produced a new result image
+                return getResultImage().getImageName();
+            } else {
+                // algo was done in place
+                return image.getImageName();
+            }
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
+    }
+
 
 }
