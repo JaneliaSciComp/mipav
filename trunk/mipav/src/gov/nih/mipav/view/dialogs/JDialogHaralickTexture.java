@@ -25,7 +25,8 @@ import javax.swing.*;
  * @see      AlgorithmHaralickTexture
  */
 public class JDialogHaralickTexture extends JDialogScriptableBase
-        implements AlgorithmInterface, DialogDefaultsInterface {
+        implements AlgorithmInterface, DialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface
+     {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -297,10 +298,15 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
                 // Take resultImage out of array form or null pointer errors can
                 // result in one of the resultImages after another of the resultImages
                 // has been deleted.
+            	
+            	
+            	// save the completion status for later
+            	setComplete(textureAlgo.isCompleted());
+
                 for (i = 0; i < resultNumber; i++) {
                     updateFileInfo(image, resultImage[i]);
                     resultImage[i].clearMask();
-
+                    
                     try {
                         imageFrame[i] = new ViewJFrameImage(resultImage[i], null, new Dimension(610, 200));
                     } catch (OutOfMemoryError error) {
@@ -830,6 +836,9 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         if (concatenate) {
             resultImage[0].setImageNameArray(imageNameArray);
         }
+        
+        System.out.println("This is " + numOperators);
+        System.out.println("That is " + numDirections);
 
             if (image.isColorImage()) {
                 textureAlgo = new AlgorithmHaralickTexture(resultImage, image, RGBOffset, windowSize, offsetDistance,
@@ -865,6 +874,8 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
             } else {
                 textureAlgo.run();
             }
+            
+
         } catch (OutOfMemoryError x) {
 
             if (resultImage != null) {
@@ -879,6 +890,9 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
 
                 resultImage = null;
             }
+            
+         // save the completion status for later
+            setComplete(textureAlgo.isCompleted());
 
             System.gc();
             MipavUtil.displayError("Dialog Haralick Texture: unable to allocate enough memory");
@@ -1524,6 +1538,127 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         
         zscore = zscoreCheckBox.isSelected();
 
-        return true;
+        return true;
+
+
     }
+    
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms.Filters (spatial)");
+            }
+
+            public String getDescription() {
+                return new String("Applies a Haralick texture to the image.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Applies a Haralick texture to the image.");
+            }
+
+            public String getShortLabel() {
+                return new String("HaralickTexture");
+            }
+
+            public String getLabel() {
+                return new String("Haralick Texture");
+            }
+
+            public String getName() {
+                return new String("Haralick Texture");
+            }
+        };
+    }
+    
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+        	
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterInt("RGB_offset",1));
+            table.put(new ParameterInt("window_size", 7));
+            table.put(new ParameterInt("offset_distance", 1));
+            table.put(new ParameterInt("grey_levels", 32));
+            table.put(new ParameterBoolean("do_calc_north_south_dir", true));
+            table.put(new ParameterBoolean("do_calc_NE_SW_dir", false));
+            table.put(new ParameterBoolean("do_calc_east_west_dir", false));
+            table.put(new ParameterBoolean("do_calc_SE_NW_dir", false));
+            table.put(new ParameterBoolean("do_calc_invariant_dir", false));
+            table.put(new ParameterBoolean("do_calc_contrast", true));
+            table.put(new ParameterBoolean("do_calc_dissimilarity", false));
+            table.put(new ParameterBoolean("do_calc_homogeneity", false));
+            table.put(new ParameterBoolean("do_inverse_order_1", false));
+            table.put(new ParameterBoolean("do_calc_ASM", false));
+            table.put(new ParameterBoolean("do_calc_energy", false));
+            table.put(new ParameterBoolean("do_calc_max_probability", false));
+            table.put(new ParameterBoolean("do_calc_entropy", false));
+            table.put(new ParameterBoolean("do_calc_mean", false));
+            table.put(new ParameterBoolean("do_calc_variance", false));
+            table.put(new ParameterBoolean("do_calc_standard_deviation", false));
+            table.put(new ParameterBoolean("do_calc_correlation", false));
+            table.put(new ParameterBoolean("do_calc_shade", false));
+            table.put(new ParameterBoolean("do_calc_promenance", false));
+            table.put(new ParameterBoolean("do_concatenate", true));
+            table.put(new ParameterBoolean("do_zscore", false));
+            } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+    
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+    		System.out.println(resultImage.length);
+                return resultImage[0].getImageName();
+        }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
+    }
+
 }
