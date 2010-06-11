@@ -4608,6 +4608,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // loop)
             if (updateLinkedImages && linkedScrolling) {
                 final Vector registeredFramedImages = getRegisteredFramedImages(getImageA());
+                
+                if(getImageA().is4DImage()) {
+                	Vector registeredFramedImages2 = getRegisteredFramedImages4D3D(getImageA());
+                	 for (int i = 0; i < registeredFramedImages2.size(); i++) {
+                		 registeredFramedImages.add((ModelImage) registeredFramedImages2.get(i));
+                	 }
+                }
 
                 for (int i = 0; i < registeredFramedImages.size(); i++) {
                     final ModelImage img = (ModelImage) registeredFramedImages.get(i);
