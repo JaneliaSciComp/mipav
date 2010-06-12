@@ -2849,10 +2849,6 @@ public class VOI extends ModelSerialCloneable {
         this.curves = newCurves;
     }
 
-    public void setCurvesTemp(Vector<VOIContour>[] newCurves) {
-        //this.curves = newCurves[0];
-    }
-
     /**
      * Accessor that sets the curveType to the parameter.
      *

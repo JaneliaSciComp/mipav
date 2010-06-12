@@ -2459,12 +2459,13 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 || (cursorMode == ViewJComponentBase.POINT_VOI) || (cursorMode == ViewJComponentBase.POLYLINE)
                 || (cursorMode == ViewJComponentBase.LEVELSET) || (cursorMode == ViewJComponentBase.PAINT_VOI)
                 || (cursorMode == ViewJComponentBase.DROPPER_PAINT) || (cursorMode == ViewJComponentBase.ERASER_PAINT)
-                || (cursorMode == ViewJComponentBase.QUICK_LUT) || (cursorMode == ViewJComponentBase.PROTRACTOR)
+                || (cursorMode == ViewJComponentBase.PROTRACTOR)
                 || (cursorMode == ViewJComponentBase.LIVEWIRE) || (cursorMode == ViewJComponentBase.ANNOTATION)
                 || (cursorMode == ViewJComponentBase.POLYLINE_SLICE_VOI) || (cursorMode == ViewJComponentBase.MOVE)
                 || (cursorMode == ViewJComponentBase.MOVE_POINT) || (cursorMode == ViewJComponentBase.NEW_POINT)
                 || (cursorMode == ViewJComponentBase.RETRACE) || (cursorMode == ViewJComponentBase.DELETE_POINT)
-                || (cursorMode == ViewJComponentBase.TRANSLATE) || (cursorMode == ViewJComponentBase.SPLIT_VOI)) {
+                || (cursorMode == ViewJComponentBase.TRANSLATE) || (cursorMode == ViewJComponentBase.SPLIT_VOI)
+                || (cursorMode == ViewJComponentBase.VOI_3D)) {
             g.dispose();
 
             return;

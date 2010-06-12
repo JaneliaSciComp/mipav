@@ -280,12 +280,12 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
     }
 
 
-    public void addVOI( VOIBase kNew, boolean bUpdate )
+    public void addVOI( VOIBase kNew, boolean bQuickLUT, boolean bUpdate )
     {
         ModelImage kActive = m_kParent.getActiveImage();
         if ( kActive != null )
         {
-            addVOI( kActive, kNew, bUpdate );
+            addVOI( kActive, kNew, bQuickLUT, bUpdate );
             if ( kActive.isRegistered( m_kCurrentVOIGroup ) == -1 )
             {
                 kActive.registerVOI( m_kCurrentVOIGroup );
@@ -609,7 +609,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
             saveGroup = m_kCurrentVOIGroup;
             m_kCurrentVOIGroup = null;
             currentColor = toolbarBuilder.getVOIColorButton().getBackground();
-            toolbarBuilder.getVOIColorButton().setBackground( Color.yellow );
+            //toolbarBuilder.getVOIColorButton().setBackground( Color.yellow );
         }
 
         if ( kCommand.equals(CustomUIBuilder.PARAM_VOI_PROPAGATE_UP.getActionCommand()) )
@@ -1662,11 +1662,9 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         m_kParent.setCursor(kCursor);    
     }
 
-    public void setDefaultCursor() {               
+    public void setDefaultCursor() {         
         toolbarBuilder.setPointerSelected();
         actionPerformed( new ActionEvent ( this, 0, CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER.getActionCommand()) );
-        //m_kParent.setDefaultCursor();     
-        //doVOI( CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER.getActionCommand() );
     }
 
     public void setEnabled( boolean flag )
@@ -2109,7 +2107,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         //System.err.println( "updateVOIColor");    
     }
 
-    private void addVOI( ModelImage kImage, VOIBase kNew, boolean bUpdate )
+    private void addVOI( ModelImage kImage, VOIBase kNew, boolean bQuickLUT, boolean bUpdate )
     {       
         if ( kNew.getGroup() == null )
         {
@@ -2186,7 +2184,14 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         {
             m_kCurrentVOIGroup = kNew.getGroup();
         }
-        setCurrentColor();
+        if ( !bQuickLUT )
+        {
+            setCurrentColor();
+        }
+        else
+        {
+            m_kCurrentVOIGroup.setColor( Color.yellow );
+        }
         if ( bUpdate )
         {
             updateDisplay();
