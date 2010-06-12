@@ -9,7 +9,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 public interface VOIManagerListener
 {
-    public void addVOI(VOIBase kOld, boolean bUpdate );
+    public void addVOI(VOIBase kOld, boolean bQuickLUT, boolean bUpdate );
     public void deleteVOI(VOIBase kOld);
     public void pasteVOI(VOIBase kNew);
     public void doVOI(String command);

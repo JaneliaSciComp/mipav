@@ -5972,14 +5972,14 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#PointerActive(boolean)
      */
     public void PointerActive(boolean bActive) {
-        //if ( bActive )
-        //{
-        //    componentImage.setCursorMode(ViewJComponentBase.VOI_3D);
-        //}
-       //else
-        //{
+        if ( bActive )
+        {
+            componentImage.setCursorMode(ViewJComponentBase.VOI_3D);
+        }
+        else
+        {
             componentImage.setCursorMode(ViewJComponentBase.DEFAULT);
-        //}
+        }
     }
 
     /* (non-Javadoc)

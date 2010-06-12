@@ -451,7 +451,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     public void add( VOIBase kVOI, float fHue )
     {
         m_kParent.newVOI( false, false );
-        m_kParent.addVOI( kVOI, true );
+        m_kParent.addVOI( kVOI, false, true );
         m_kParent.setPresetHue(fHue);
         kVOI.setActive(true);
         m_kParent.setDefaultCursor();
@@ -502,7 +502,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             Vector<Vector3f> kPositions = new Vector<Vector3f>();
             kPositions.add( kNewPoint );
             m_kCurrentVOI = createVOI( m_iDrawType, false, false, kPositions );
-            m_kParent.addVOI( m_kCurrentVOI, true );
+            m_kParent.addVOI( m_kCurrentVOI, false, true );
         }
         else
         {
@@ -525,7 +525,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             Vector<Vector3f> kPositions = new Vector<Vector3f>();
             kPositions.add( kNewPoint );
             m_kCurrentVOI = createVOI( m_iDrawType, false, false, kPositions );
-            m_kParent.addVOI( m_kCurrentVOI, true );
+            m_kParent.addVOI( m_kCurrentVOI, false, true );
         }
         else
         {
@@ -1017,7 +1017,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                             VOI kGroup = m_kCurrentVOI.getGroup();
                             kGroup.getCurves().remove(m_kCurrentVOI);
                             m_kCurrentVOI.setGroup(null);
-                            m_kParent.addVOI(m_kCurrentVOI, true);
+                            m_kParent.addVOI(m_kCurrentVOI, false, true);
                         }
                         else if ( m_kCurrentVOI.getGroup().getSize() == 1 )
                         {
@@ -1184,6 +1184,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         {
             m_kParent.quickLUT(m_kCurrentVOI);
             m_bDrawVOI = false;
+            m_kParent.setDefaultCursor( );
             return;
         }
         else if ( m_bDrawVOI && (m_iDrawType == SPLITLINE) )
@@ -1218,7 +1219,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                                 VOI kGroup = m_kCurrentVOI.getGroup();
                                 kGroup.getCurves().remove(m_kCurrentVOI);
                                 m_kCurrentVOI.setGroup(null);
-                                m_kParent.addVOI(m_kCurrentVOI, true);
+                                m_kParent.addVOI(m_kCurrentVOI, false, true);
                             }
                             else if ( m_kCurrentVOI.getGroup().getSize() == 1 )
                             {
@@ -1569,7 +1570,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         newTextVOI.setActive(false);
         new JDialogAnnotation(m_kImageActive, newTextVOI, (int)kVolumePt.Z, false, true);
         if ( newTextVOI.isActive() ) {
-            m_kParent.addVOI( m_kCurrentVOI, true );
+            m_kParent.addVOI( m_kCurrentVOI, false, true );
         }
         else
         {
@@ -1786,7 +1787,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         m_kCurrentVOI.setActive(false);
         if ( kOld != m_kCurrentVOI )
         {
-            m_kParent.addVOI( m_kCurrentVOI, true );
+            m_kParent.addVOI( m_kCurrentVOI, (m_iDrawType == LUT), true );
             if ( kOld != null )
             {
                 kOld.setActive(false);
@@ -4141,7 +4142,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
         for ( int i = 0; i < kNewVOIs.size(); i++ )
         {
-            m_kParent.addVOI(kNewVOIs.get(i), true);
+            m_kParent.addVOI(kNewVOIs.get(i), false, true);
         }
         m_kCurrentVOI = null;
     }
@@ -4701,7 +4702,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             kScreenPt = m_kDrawingContext.patientToScreen( kPatientPt );
             kScreenPt.Y = kScreenPt.Y;
             kPositions.add( kScreenPt );
-            return createVOI( m_iDrawType, true, false, kPositions );
+            VOIBase kVOI = createVOI( m_iDrawType, true, false, kPositions );
+            kVOI.trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
+            return kVOI;
         } 
         return null;
     }
