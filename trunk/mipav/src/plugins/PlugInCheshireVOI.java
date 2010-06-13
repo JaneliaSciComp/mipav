@@ -164,7 +164,7 @@ public class PlugInCheshireVOI implements PlugInGeneric {
             imageFrame = new ViewJFrameImage(newImage);
 
             for (int i = 0; i < voiListVec.size(); i++) {
-                VOI temp = new VOI((short) i, cheshireNames[i], (int) (highZ * 1.5));
+                VOI temp = new VOI((short) i, cheshireNames[i]);
                 VOI oldVOI = voiListVec.get(i);
                 Vector vec = oldVOI.getCurves();
 

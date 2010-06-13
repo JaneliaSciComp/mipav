@@ -4791,7 +4791,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             yArray[1] = ch2f;
 
             if (!doSecondIteration) {
-                fitLineVOI = new VOI((short) 0, "fitLine", 1, VOI.LINE, -1.0f);
+                fitLineVOI = new VOI((short) 0, "fitLine", VOI.LINE, -1.0f);
                 fitLineVOI.importCurve(xArray, yArray, zArray);
                 destImage.registerVOI(fitLineVOI);
                 fitLineVOI.setFixed(true);
@@ -5481,7 +5481,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             ch2f = (2 * topPad) + bin2 - 1.0f - ch2f;
             xArray[1] = ch1f;
             yArray[1] = ch2f;
-            fitLineVOI = new VOI((short) 0, "fitLine", 1, VOI.LINE, -1.0f);
+            fitLineVOI = new VOI((short) 0, "fitLine", VOI.LINE, -1.0f);
             fitLineVOI.importCurve(xArray, yArray, zArray);
             destImage.registerVOI(fitLineVOI);
             fitLineVOI.setFixed(true);
@@ -5956,7 +5956,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         }
 
         zArray[0] = 0.0f;
-        pointVOI = new VOI((short) 1, "thresholdPoint", 1, VOI.POINT, -1.0f);
+        pointVOI = new VOI((short) 1, "thresholdPoint", VOI.POINT, -1.0f);
         pointVOI.importCurve(xArray, yArray, zArray);
         destImage.registerVOI(pointVOI);
         pointVOI.setFixed(false);
@@ -7139,7 +7139,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             yArray[1] = ch2f;
 
             if (!doSecondIteration) {
-                fitLineVOI = new VOI((short) 0, "fitLine", 1, VOI.LINE, -1.0f);
+                fitLineVOI = new VOI((short) 0, "fitLine", VOI.LINE, -1.0f);
                 fitLineVOI.importCurve(xArray, yArray, zArray);
                 destImage.registerVOI(fitLineVOI);
                 fitLineVOI.setFixed(true);
@@ -7820,7 +7820,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             ch2f = (2 * topPad) + bin2 - 1.0f - ch2f;
             xArray[1] = ch1f;
             yArray[1] = ch2f;
-            fitLineVOI = new VOI((short) 0, "fitLine", 1, VOI.LINE, -1.0f);
+            fitLineVOI = new VOI((short) 0, "fitLine", VOI.LINE, -1.0f);
             fitLineVOI.importCurve(xArray, yArray, zArray);
             destImage.registerVOI(fitLineVOI);
             fitLineVOI.setFixed(true);
@@ -8296,7 +8296,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         }
 
         zArray[0] = 0.0f;
-        pointVOI = new VOI((short) 1, "thresholdPoint", 1, VOI.POINT, -1.0f);
+        pointVOI = new VOI((short) 1, "thresholdPoint", VOI.POINT, -1.0f);
         pointVOI.importCurve(xArray, yArray, zArray);
         destImage.registerVOI(pointVOI);
         pointVOI.setFixed(false);
@@ -9510,7 +9510,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             yArray[1] = ch2f;
 
             if (!doSecondIteration) {
-                fitLineVOI = new VOI((short) 0, "fitLine", 1, VOI.LINE, -1.0f);
+                fitLineVOI = new VOI((short) 0, "fitLine", VOI.LINE, -1.0f);
                 fitLineVOI.importCurve(xArray, yArray, zArray);
                 destImage.registerVOI(fitLineVOI);
                 fitLineVOI.setFixed(true);
@@ -10244,7 +10244,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             ch2f = (2 * topPad) + bin2 - 1.0f - ch2f;
             xArray[1] = ch1f;
             yArray[1] = ch2f;
-            fitLineVOI = new VOI((short) 0, "fitLine", 1, VOI.LINE, -1.0f);
+            fitLineVOI = new VOI((short) 0, "fitLine", VOI.LINE, -1.0f);
             fitLineVOI.importCurve(xArray, yArray, zArray);
             destImage.registerVOI(fitLineVOI);
             fitLineVOI.setFixed(true);
@@ -10756,7 +10756,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         }
 
         zArray[0] = 0.0f;
-        pointVOI = new VOI((short) 1, "thresholdPoint", 1, VOI.POINT, -1.0f);
+        pointVOI = new VOI((short) 1, "thresholdPoint", VOI.POINT, -1.0f);
         pointVOI.importCurve(xArray, yArray, zArray);
         destImage.registerVOI(pointVOI);
         pointVOI.setFixed(false);
@@ -12086,7 +12086,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             yArray[1] = ch2f;
 
             if (!doSecondIteration) {
-                fitLineVOI = new VOI((short) 0, "fitLine", 1, VOI.LINE, -1.0f);
+                fitLineVOI = new VOI((short) 0, "fitLine", VOI.LINE, -1.0f);
                 fitLineVOI.importCurve(xArray, yArray, zArray);
                 destImage.registerVOI(fitLineVOI);
                 fitLineVOI.setFixed(true);
@@ -12827,7 +12827,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             ch2f = (2 * topPad) + bin2 - 1.0f - ch2f;
             xArray[1] = ch1f;
             yArray[1] = ch2f;
-            fitLineVOI = new VOI((short) 0, "fitLine", 1, VOI.LINE, -1.0f);
+            fitLineVOI = new VOI((short) 0, "fitLine", VOI.LINE, -1.0f);
             fitLineVOI.importCurve(xArray, yArray, zArray);
             destImage.registerVOI(fitLineVOI);
             fitLineVOI.setFixed(true);
@@ -13335,7 +13335,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         }
 
         zArray[0] = 0.0f;
-        pointVOI = new VOI((short) 1, "thresholdPoint", 1, VOI.POINT, -1.0f);
+        pointVOI = new VOI((short) 1, "thresholdPoint", VOI.POINT, -1.0f);
         pointVOI.importCurve(xArray, yArray, zArray);
         destImage.registerVOI(pointVOI);
         pointVOI.setFixed(false);

@@ -354,11 +354,7 @@ public class RubberbandPolyline extends Rubberband {
                      *     colorID++;         test = 1;     } } } while (test == 1);
                      */
 
-                    if (image.getNDims() > 2) {
-                        newVOI = new VOI((short) colorID, name, image.getExtents()[2], constant, presetHue);
-                    } else {
-                        newVOI = new VOI((short) colorID, name, 1, constant, presetHue);
-                    }
+                    newVOI = new VOI((short) colorID, name, constant, presetHue);
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to form new polyline");

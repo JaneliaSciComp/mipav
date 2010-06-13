@@ -795,7 +795,7 @@ public class FileCheshireVOI extends FileBase {
 
                         if (newGrayScale) {
                             grayScaleArray[grayScaleNumber] = expImgBuffer[scanPos];
-                            addedVOI[grayScaleNumber] = new VOI(grayScaleNumber, "VOI" + grayScaleNumber, zDim,
+                            addedVOI[grayScaleNumber] = new VOI(grayScaleNumber, "VOI" + grayScaleNumber,
                                                                 VOI.CONTOUR, -1.0f);
                             addedVOI[grayScaleNumber].importPolygon(contourPolygon, zz);
                             ((VOIContour) (addedVOI[grayScaleNumber].getCurves().lastElement())).trimPoints(0.1,

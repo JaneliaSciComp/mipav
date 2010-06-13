@@ -125,7 +125,7 @@ public class AlgorithmSnake extends AlgorithmBase {
 
         if (srcImage.getNDims() == 2) {
             makeKernels2D();
-            resultVOI = new VOI((short) srcImage.getVOIs().size(), "SnakeVOI", 1, VOI.CONTOUR, -1.0f);
+            resultVOI = new VOI((short) srcImage.getVOIs().size(), "SnakeVOI", VOI.CONTOUR, -1.0f);
 
         } else if (srcImage.getNDims() > 2) {
 
@@ -135,7 +135,7 @@ public class AlgorithmSnake extends AlgorithmBase {
                 makeKernels3D();
             }
 
-            resultVOI = new VOI((short) srcImage.getVOIs().size(), "snakeVOI", srcImage.getExtents()[2], VOI.CONTOUR,
+            resultVOI = new VOI((short) srcImage.getVOIs().size(), "snakeVOI", VOI.CONTOUR,
                     -1.0f);
         }
     }

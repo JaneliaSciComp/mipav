@@ -172,10 +172,10 @@ public class FileVOI extends FileXML {
             voi = new VOI[1];
 
             if (image.getNDims() > 2) {
-                voi[0] = new VOI(numVOIs, trimmedFileName, image.getExtents()[2]);
+                voi[0] = new VOI(numVOIs, trimmedFileName);
                 voi[0].setExtension(extension);
             } else {
-                voi[0] = new VOI(numVOIs, trimmedFileName, 1);
+                voi[0] = new VOI(numVOIs, trimmedFileName);
                 voi[0].setExtension(extension);
             }
 
@@ -1169,11 +1169,11 @@ public class FileVOI extends FileXML {
         }
 
         if (image.getNDims() > 2) {
-            newVOI = new VOI((short) image.getVOIs().size(), trimmedFileName, image.getExtents()[2], curveType, -1.0f);
+            newVOI = new VOI((short) image.getVOIs().size(), trimmedFileName, curveType, -1.0f);
             newVOI.setExtension(extension);
             maxSlice = image.getExtents()[2];
         } else {
-            newVOI = new VOI((short) image.getVOIs().size(), trimmedFileName, 1, curveType, -1.0f);
+            newVOI = new VOI((short) image.getVOIs().size(), trimmedFileName, curveType, -1.0f);
             newVOI.setExtension(extension);
             maxSlice = 1;
         }
@@ -1341,11 +1341,11 @@ public class FileVOI extends FileXML {
         }
 
         if (image.getNDims() > 2) {
-            newVOI = new VOI((short) image.getVOIs().size(), trimmedFileName, image.getExtents()[2], VOI.CONTOUR, -1.0f);
+            newVOI = new VOI((short) image.getVOIs().size(), trimmedFileName, VOI.CONTOUR, -1.0f);
             newVOI.setExtension(extension);
             maxSlice = image.getExtents()[2];
         } else {
-            newVOI = new VOI((short) image.getVOIs().size(), trimmedFileName, 1, VOI.CONTOUR, -1.0f);
+            newVOI = new VOI((short) image.getVOIs().size(), trimmedFileName, VOI.CONTOUR, -1.0f);
             newVOI.setExtension(extension);
             maxSlice = 1;
         }
@@ -1451,7 +1451,7 @@ public class FileVOI extends FileXML {
             throw (new IOException(" VOI file corrupted: too many slices"));
         }
 
-        newVOI = new VOI(id, "RegPoints", sliceNum, VOI.POINT, -1.0f);
+        newVOI = new VOI(id, "RegPoints", VOI.POINT, -1.0f);
         newVOI.setExtension(extension);
         for (i = 0; i < nSlices; i++) {
             sliceNo = Integer.valueOf(readLine()).intValue();
@@ -1969,7 +1969,7 @@ public class FileVOI extends FileXML {
 
             if (currentKey.equals("Label")) {
                 id++;
-                voi = new VOI(id, "Label_" + id, zDim, VOI.ANNOTATION, 0f);
+                voi = new VOI(id, "Label_" + id, VOI.ANNOTATION, 0f);
                 voi.setExtension(extension);
                 voiText = new VOIText();
 

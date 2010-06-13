@@ -682,7 +682,7 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
         }
         
         newEllipseVOI = new VOI((short) (1), Integer.toString(1),
-                1, VOI.CONTOUR, -1.0f);
+                VOI.CONTOUR, -1.0f);
         newEllipseVOI.setColor(Color.blue);
         for (j = 0; j < maxEllipsePoints; j++) {
             theta = j * 2.0 * Math.PI/maxEllipsePoints; 

@@ -996,8 +996,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
             if(distanceFlag) {
                 long time2 = System.currentTimeMillis();
-                largestDistance = calcSelectedVOI.calcLargestDistance(srcImage.getExtents()[0],
-                        srcImage.getExtents()[1],
+                largestDistance = calcSelectedVOI.calcLargestDistance(
                         srcImage.getFileInfo(0).getResolutions()[0],
                         srcImage.getFileInfo(0).getResolutions()[1],
                         srcImage.getFileInfo(0).getResolutions()[2]);

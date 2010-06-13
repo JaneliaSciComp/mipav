@@ -505,8 +505,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                 //((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setFixed(true);
                 //((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setLabel(Integer.toString(numRedColocalize + 1));
                 //srcImage.registerVOI(newPtVOI);
-                newCircleVOI = new VOI((short) (numRedColocalize + nVOIs), Integer.toString(numRedColocalize+1),
-                                        1, VOI.CONTOUR, -1.0f);
+                newCircleVOI = new VOI((short) (numRedColocalize + nVOIs), Integer.toString(numRedColocalize+1), VOI.CONTOUR, -1.0f);
                 newCircleVOI.setColor(Color.white);
                 for (j = 0; j < maxCirclePoints; j++) {
                     theta = j * 2.0 * Math.PI/maxCirclePoints;  
@@ -651,7 +650,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                         }
                     }
                 }
-                newPtVOI = new VOI((short) (greenStrandFocus1[i]), Integer.toString(greenStrandFocus1[i]), 1, VOI.POINT, -1.0f);
+                newPtVOI = new VOI((short) (greenStrandFocus1[i]), Integer.toString(greenStrandFocus1[i]), VOI.POINT, -1.0f);
                 newPtVOI.setColor(Color.white);
                 xInt[0] = redSkelX[k];
                 yInt[0] = redSkelY[k];
@@ -660,7 +659,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                 ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
                 ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setLabel(Integer.toString(greenStrandFocus1[i]));
                 skeletonizedImage.registerVOI(newPtVOI);
-                newPtVOI = new VOI((short) (greenStrandFocus2[i]), Integer.toString(greenStrandFocus2[i]), 1, VOI.POINT, -1.0f);
+                newPtVOI = new VOI((short) (greenStrandFocus2[i]), Integer.toString(greenStrandFocus2[i]), VOI.POINT, -1.0f);
                 newPtVOI.setColor(Color.white);
                 xInt[0] = redSkelX[k+1];
                 yInt[0] = redSkelY[k+1];
@@ -767,7 +766,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         
         for (i = 0, k = 0; i < numGreenObjects; i++) {
             if (numGreenStrandFoci[i]  == 2) {
-                newPtVOI = new VOI((short) (greenStrandFocus1[i]), Integer.toString(greenStrandFocus1[i]), 1, VOI.POINT, -1.0f);
+                newPtVOI = new VOI((short) (greenStrandFocus1[i]), Integer.toString(greenStrandFocus1[i]), VOI.POINT, -1.0f);
                 newPtVOI.setColor(Color.white);
                 xInt[0] = redSkelX[k];
                 yInt[0] = redSkelY[k];
@@ -776,7 +775,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                 ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
                 ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setLabel(Integer.toString(greenStrandFocus1[i]));
                 prunedImage.registerVOI(newPtVOI);
-                newPtVOI = new VOI((short) (greenStrandFocus2[i]), Integer.toString(greenStrandFocus2[i]), 1, VOI.POINT, -1.0f);
+                newPtVOI = new VOI((short) (greenStrandFocus2[i]), Integer.toString(greenStrandFocus2[i]), VOI.POINT, -1.0f);
                 newPtVOI.setColor(Color.white);
                 xInt[0] = redSkelX[k+1];
                 yInt[0] = redSkelY[k+1];
@@ -1393,8 +1392,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                 //((VOIPoint) (newPtVOI.getCurves()[(int)zArr[0]].elementAt(0))).setFixed(true);
                 //((VOIPoint) (newPtVOI.getCurves()[(int)zArr[0]].elementAt(0))).setLabel(Integer.toString(numRedColocalize + 1));
                 //srcImage.registerVOI(newPtVOI);
-                newCircleVOI = new VOI((short) (numRedColocalize + nVOIs), Integer.toString(numRedColocalize+1),
-                        zDim, VOI.CONTOUR, -1.0f);
+                newCircleVOI = new VOI((short) (numRedColocalize + nVOIs), Integer.toString(numRedColocalize+1), VOI.CONTOUR, -1.0f);
                 newCircleVOI.setColor(Color.white);
                 for (j = 0; j < maxCirclePoints; j++) {
                     theta = j * 2.0 * Math.PI/maxCirclePoints;  
@@ -1607,7 +1605,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                         }
                     }
                 }
-                newPtVOI = new VOI((short) (greenStrandFocus1[i]), Integer.toString(greenStrandFocus1[i]), zDim, VOI.POINT, -1.0f);
+                newPtVOI = new VOI((short) (greenStrandFocus1[i]), Integer.toString(greenStrandFocus1[i]), VOI.POINT, -1.0f);
                 newPtVOI.setColor(Color.white);
                 xInt[0] = redSkelX[k];
                 yInt[0] = redSkelY[k];
@@ -1616,7 +1614,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                 ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
                 ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setLabel(Integer.toString(greenStrandFocus1[i]));
                 skeletonizedImage.registerVOI(newPtVOI);
-                newPtVOI = new VOI((short) (greenStrandFocus2[i]), Integer.toString(greenStrandFocus2[i]), zDim, VOI.POINT, -1.0f);
+                newPtVOI = new VOI((short) (greenStrandFocus2[i]), Integer.toString(greenStrandFocus2[i]), VOI.POINT, -1.0f);
                 newPtVOI.setColor(Color.white);
                 xInt[0] = redSkelX[k+1];
                 yInt[0] = redSkelY[k+1];
@@ -1851,7 +1849,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         
         for (i = 0, k = 0; i < numGreenObjects; i++) {
             if (numGreenStrandFoci[i]  == 2) {
-                newPtVOI = new VOI((short) (greenStrandFocus1[i]), Integer.toString(greenStrandFocus1[i]), zDim, VOI.POINT, -1.0f);
+                newPtVOI = new VOI((short) (greenStrandFocus1[i]), Integer.toString(greenStrandFocus1[i]), VOI.POINT, -1.0f);
                 newPtVOI.setColor(Color.white);
                 xInt[0] = redSkelX[k];
                 yInt[0] = redSkelY[k];
@@ -1860,7 +1858,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                 ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
                 ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setLabel(Integer.toString(greenStrandFocus1[i]));
                 prunedImage.registerVOI(newPtVOI);
-                newPtVOI = new VOI((short) (greenStrandFocus2[i]), Integer.toString(greenStrandFocus2[i]), zDim, VOI.POINT, -1.0f);
+                newPtVOI = new VOI((short) (greenStrandFocus2[i]), Integer.toString(greenStrandFocus2[i]), VOI.POINT, -1.0f);
                 newPtVOI.setColor(Color.white);
                 xInt[0] = redSkelX[k+1];
                 yInt[0] = redSkelY[k+1];

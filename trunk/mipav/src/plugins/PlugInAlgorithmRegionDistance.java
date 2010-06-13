@@ -1865,7 +1865,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         for (i = 0; i < nVOIs; i++) {
             if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                 voiName = VOIs.VOIAt(i).getName();
-                newPtVOI = new VOI((short) (i + nVOIs), "point2D" + i + ".voi", 1, VOI.POINT, -1.0f);
+                newPtVOI = new VOI((short) (i + nVOIs), "point2D" + i + ".voi", VOI.POINT, -1.0f);
                 newPtVOI.setColor(Color.white);
                 xArr[0] = xPosGrav[i];
                 yArr[0] = yPosGrav[i];
@@ -1983,7 +1983,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
 
         for (i = 0; i < numObjects; i++) {
-            newPtVOI = new VOI((short) (i + (2 * nVOIs)), "point2D" + i + ".voi", 1, VOI.POINT, -1.0f);
+            newPtVOI = new VOI((short) (i + (2 * nVOIs)), "point2D" + i + ".voi", VOI.POINT, -1.0f);
             newPtVOI.setColor(Color.magenta);
             xArr[0] = xCenter[i];
             yArr[0] = yCenter[i];
@@ -4228,7 +4228,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         for (i = 0; i < nVOIs; i++) {
             if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                 voiName = VOIs.VOIAt(i).getName();
-                newPtVOI = new VOI((short) (i + nVOIs), "point3D" + i + ".voi", zDim, VOI.POINT, -1.0f);
+                newPtVOI = new VOI((short) (i + nVOIs), "point3D" + i + ".voi", VOI.POINT, -1.0f);
                 newPtVOI.setColor(Color.white);
                 xArr[0] = xPosGrav[i];
                 yArr[0] = yPosGrav[i];
@@ -4517,7 +4517,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
 
         for (i = 0; i < numObjects; i++) {
-            newPtVOI = new VOI((short) (i + (2 * nVOIs)), "point3D" + i + ".voi", zDim, VOI.POINT, -1.0f);
+            newPtVOI = new VOI((short) (i + (2 * nVOIs)), "point3D" + i + ".voi", VOI.POINT, -1.0f);
             newPtVOI.setColor(Color.magenta);
             xArr[0] = xCenter[i];
             yArr[0] = yCenter[i];

@@ -1460,7 +1460,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         try {
             //voiHandler.setVOI_ID(imageActive.getVOIs().size());
             newPointVOI = new VOI((short) imageActive.getVOIs().size(), "point3D_" + (imageActive.getVOIs().size() + 1),
-                    imageActive.getExtents()[2], VOI.POINT, -1.0f);
+                    VOI.POINT, -1.0f);
             newCurve = newPointVOI.importCurve(x, y, z);
         } catch (final OutOfMemoryError error) {
             System.gc();

@@ -1741,7 +1741,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             blueVOIs = grayImage.getVOIs();
             if ((blueVOIs.size() != 0) && (blueVOIs.VOIAt(0).getCurves().size() != 0)) {
                 if (blueSmooth) {
-                    newVOI = new VOI((short) 1, "blueVOI", 1, VOI.CONTOUR, -1.0f);
+                    newVOI = new VOI((short) 1, "blueVOI", VOI.CONTOUR, -1.0f);
                     contours = blueVOIs.VOIAt(0).getCurves();
                     maxPoints = 0;
                     maxElement = 0;
@@ -1893,7 +1893,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         for (i = 0; i < nVOIs; i++) {
             if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                 voiName = VOIs.VOIAt(i).getName();
-                newPtVOI = new VOI((short) (i + nVOIs), voiName, 1, VOI.POINT, -1.0f);
+                newPtVOI = new VOI((short) (i + nVOIs), voiName, VOI.POINT, -1.0f);
                 newPtVOI.setColor(Color.white);
                 xArr[0] = xPosGrav[i];
                 yArr[0] = yPosGrav[i];
@@ -2007,7 +2007,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
 
         for (i = 0; i < numObjects; i++) {
-            newPtVOI = new VOI((short) (i + (2 * nVOIs)), "Cen" + (i+1), 1, VOI.POINT, -1.0f);
+            newPtVOI = new VOI((short) (i + (2 * nVOIs)), "Cen" + (i+1), VOI.POINT, -1.0f);
             newPtVOI.setColor(Color.white);
             xArr[0] = xCenter[i];
             yArr[0] = yCenter[i];
@@ -3696,7 +3696,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             blueVOIs = grayImage.getVOIs();
             
             if (blueSmooth) {
-                newVOI = new VOI((short) 1, "blueVOI", 1, VOI.CONTOUR, -1.0f);
+                newVOI = new VOI((short) 1, "blueVOI", VOI.CONTOUR, -1.0f);
                 if ((blueVOIs.size() != 0) && (blueVOIs.VOIAt(0).getCurves().size() != 0)) {
                     contours = blueVOIs.VOIAt(0).getSortedCurves(zDim);
                     for (z = 0; z < zDim; z++) {
@@ -3866,7 +3866,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         for (i = 0; i < nVOIs; i++) {
             if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                 voiName = VOIs.VOIAt(i).getName();
-                newPtVOI = new VOI((short) (i + nVOIs), voiName, zDim, VOI.POINT, -1.0f);
+                newPtVOI = new VOI((short) (i + nVOIs), voiName, VOI.POINT, -1.0f);
                 newPtVOI.setColor(Color.white);
                 xArr[0] = xPosGrav[i];
                 yArr[0] = yPosGrav[i];
@@ -3993,7 +3993,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
 
         for (i = 0; i < numObjects; i++) {
-            newPtVOI = new VOI((short) (i + (2 * nVOIs)), "Cen" + (i+1), zDim, VOI.POINT, -1.0f);
+            newPtVOI = new VOI((short) (i + (2 * nVOIs)), "Cen" + (i+1), VOI.POINT, -1.0f);
             newPtVOI.setColor(Color.white);
             xArr[0] = xCenter[i];
             yArr[0] = yCenter[i];

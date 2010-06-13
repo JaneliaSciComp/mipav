@@ -3671,9 +3671,9 @@ public class FileImageXML extends FileXML {
                 if (nDimensions > 2) {
 
                     annotationVOI = new VOI((short) annotationVector.size(), "annotation3d.voi",
-                            fileInfo.getExtents()[2], VOI.ANNOTATION, -1.0f);
+                            VOI.ANNOTATION, -1.0f);
                 } else {
-                    annotationVOI = new VOI((short) annotationVector.size(), "annotation2d.voi", 1, VOI.ANNOTATION,
+                    annotationVOI = new VOI((short) annotationVector.size(), "annotation2d.voi", VOI.ANNOTATION,
                             -1.0f);
                 }
 

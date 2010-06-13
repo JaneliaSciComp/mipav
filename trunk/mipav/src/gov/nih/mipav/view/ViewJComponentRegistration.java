@@ -691,7 +691,7 @@ public class ViewJComponentRegistration
             float[] z = new float[1];
 
             id = (short) imageActive.getVOIs().size();
-            newVOI = new VOI(id, "point2d.voi", 1, VOI.POINT, hue);
+            newVOI = new VOI(id, "point2d.voi", VOI.POINT, hue);
             x[0] = adjPoint.X;
             y[0] = adjPoint.Y;
             z[0] = 0.0f;
@@ -732,7 +732,7 @@ public class ViewJComponentRegistration
             float[] z = new float[1];
 
             id = (short) imageActive.getVOIs().size();
-            newVOI = new VOI(id, "point2d.voi", 1, VOI.POINT, hue);
+            newVOI = new VOI(id, "point2d.voi", VOI.POINT, hue);
             x[0] = refPoint.X;
             y[0] = refPoint.Y;
             z[0] = 0.0f;
@@ -981,7 +981,7 @@ public class ViewJComponentRegistration
 
                 if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) { // curve type is Point
 
-                    if (VOIs.VOIAt(i).nearPoint(x, y, slice, getZoomX(), resolutionX, resolutionY)) {
+                    if (VOIs.VOIAt(i).nearPoint(x, y, slice)) {
 
                         VOIs.VOIAt(i).setAllActive(true);
                         if (oldFrame) {
@@ -1006,7 +1006,7 @@ public class ViewJComponentRegistration
 
                     id = (short) imageActive.getVOIs().size();
                     centerid = id;
-                    newVOI = new VOI(id, "point2d.voi", 1, VOI.POINT, hue);
+                    newVOI = new VOI(id, "point2d.voi", VOI.POINT, hue);
                     centerVOI = newVOI;
                     xR[0] = xS;
                     yR[0] = yS;
@@ -1119,7 +1119,7 @@ public class ViewJComponentRegistration
             if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
 
                 if (VOIs.VOIAt(i).isVisible() &&
-                        VOIs.VOIAt(i).nearPoint(x, y, slice, getZoomX(), resolutionX, resolutionY)) {
+                        VOIs.VOIAt(i).nearPoint(x, y, slice)) {
                     setCursorMode(MOVE);
                     g.dispose();
 
@@ -1175,7 +1175,7 @@ public class ViewJComponentRegistration
                     float[] z = new float[1];
 
                     id = (short) imageActive.getVOIs().size();
-                    newVOI = new VOI(id, "point2d.voi", 1, VOI.POINT, hue);
+                    newVOI = new VOI(id, "point2d.voi", VOI.POINT, hue);
                     x[0] = xS;
                     y[0] = yS;
                     z[0] = slice;
@@ -1216,7 +1216,7 @@ public class ViewJComponentRegistration
                     id = (short) imageActive.getVOIs().size();
 
                     // System.err.println("id is: " + id);
-                    newVOI = new VOI(id, "point2d.voi", 1, VOI.POINT, hue);
+                    newVOI = new VOI(id, "point2d.voi", VOI.POINT, hue);
                     x[0] = xS;
                     y[0] = yS;
                     z[0] = slice;
@@ -1480,7 +1480,7 @@ public class ViewJComponentRegistration
                 yS = imageB.getExtents()[1] / 2;
                 id = (short) imageActive.getVOIs().size();
                 centerid = id;
-                newVOI = new VOI(id, "point2d.voi", 1, VOI.POINT, hue);
+                newVOI = new VOI(id, "point2d.voi", VOI.POINT, hue);
                 centerVOI = newVOI;
                 xR[0] = xS;
                 yR[0] = yS;

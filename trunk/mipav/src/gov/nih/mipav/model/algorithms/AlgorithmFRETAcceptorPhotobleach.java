@@ -226,9 +226,9 @@ public class AlgorithmFRETAcceptorPhotobleach extends AlgorithmBase {
             for (i = 0; i < nVOI; i++) {
                 inVOI = (VOI) VOIs.VOIAt(i).clone();
                 voiColor = inVOI.getColor();
-                outVOI = new VOI(inVOI.getID(), inVOI.getName(), 1, inVOI.getCurveType(), -1.0f);
+                outVOI = new VOI(inVOI.getID(), inVOI.getName(), inVOI.getCurveType(), -1.0f);
                 outVOI.setColor(voiColor);
-                outVOI.importNewVOI(0, 1, inVOI, 1, true);
+                outVOI.importNewVOI(0, 1, inVOI, true);
                 VOIs2.addElement(outVOI);
             }
         }

@@ -1631,7 +1631,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                 VOI2s.removeAllElements();
 
                 for (i = 0; i < nVOIs; i++) {
-                    newVOI[i] = new VOI(id[i], name[i], 1, curveType[i], presetHue[i]);
+                    newVOI[i] = new VOI(id[i], name[i], curveType[i], presetHue[i]);
                     Vector<VOIBase> sliceCurves = VOIs.VOIAt(i).getSliceCurves(iNumber);
 
                     for (j = 0; j < sliceCurves.size(); j++) {

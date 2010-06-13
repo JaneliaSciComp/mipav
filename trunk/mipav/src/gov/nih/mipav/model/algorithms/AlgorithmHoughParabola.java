@@ -1714,14 +1714,14 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
         for (i = 0, k = 0, k2 = 0; i < numParabolasFound; i++) {
             if (selectedParabola[i]) {
                 n = 0;
-                parabolaVOI[k] = new VOI((short)k, "parabolaVOI" + Integer.toString(k), 1, VOI.POLYLINE, -1.0f);
+                parabolaVOI[k] = new VOI((short)k, "parabolaVOI" + Integer.toString(k), VOI.POLYLINE, -1.0f);
                 parabolaVOI[k].setColor(Color.red);
                 xArr = new float[parabolaPoints[k]];
                 yArr = new float[parabolaPoints[k]];
                 zArr = new float[parabolaPoints[k]];
                 n2 = 0;
                 parabolaVOI2[k2] = new VOI((short)(parabolasDrawn+k2), "parabolaVOI" + Integer.toString(parabolasDrawn + k2),
-                                          1, VOI.POLYLINE, -1.0f);
+                                          VOI.POLYLINE, -1.0f);
                 parabolaVOI2[k2].setColor(Color.red);
                 xArr2 = new float[parabolaPoints2[k2]];
                 yArr2 = new float[parabolaPoints2[k2]];

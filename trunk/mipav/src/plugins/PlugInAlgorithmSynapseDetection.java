@@ -4284,7 +4284,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                totalBlueCount += blueCount;
                totalBlueCountSquared += blueCount * blueCount;
            }
-           newPtVOI = new VOI((short) (numSynapses), Integer.toString(numSynapses+1), zDim, VOI.POINT, -1.0f);
+           newPtVOI = new VOI((short) (numSynapses), Integer.toString(numSynapses+1), VOI.POINT, -1.0f);
            newPtVOI.setColor(Color.white);
            xArr[0] = centerBlueX;
            yArr[0] = centerBlueY;
@@ -4384,7 +4384,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                totalBlueCount += blueCount;
                totalBlueCountSquared += blueCount * blueCount;
            }
-           newPtVOI = new VOI((short) (numSynapses), Integer.toString(numSynapses+1), zDim, VOI.POINT, -1.0f);
+           newPtVOI = new VOI((short) (numSynapses), Integer.toString(numSynapses+1), VOI.POINT, -1.0f);
            newPtVOI.setColor(Color.white);
            xArr[0] = centerBlueX;
            yArr[0] = centerBlueY;

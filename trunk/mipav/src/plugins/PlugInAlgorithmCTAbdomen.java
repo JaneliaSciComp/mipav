@@ -278,7 +278,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         
         totalTime = System.currentTimeMillis();
         
-        subcutaneousVOI = new VOI((short)0, "Subcutaneous area", 1);
+        subcutaneousVOI = new VOI((short)0, "Subcutaneous area");
         
         for (int sliceIdx = 0; sliceIdx < zDim; sliceIdx++) {
             ViewUserInterface.getReference().getMessageFrame().append("Making intensity profiles for slice: " +sliceIdx+"\n", ViewJFrameMessage.DEBUG);
@@ -1462,7 +1462,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
        } // end for (int idx = 0; ...)
 
         // make the VOI's and add the points to them
-        subcutaneousVOI = new VOI((short)0, "Subcutaneous area", 1);
+        subcutaneousVOI = new VOI((short)0, "Subcutaneous area");
         subcutaneousVOI.importCurve(xLocsSubcutaneousVOI, yLocsSubcutaneousVOI, zVals);
 
     } // makeSubcutaneousFatVOIfromIntensityProfiles()
@@ -1512,7 +1512,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             long time = System.currentTimeMillis();
 
             // make a new VOI
-            VOI sliceVOI = new VOI((short)0, "SliceVOI", 1);
+            VOI sliceVOI = new VOI((short)0, "SliceVOI");
             
             // copy and remove a curve from the 3D image into the 2D image
             curve = ((VOIContour)theVOI.getCurves().remove(0));
@@ -1914,7 +1914,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 
 
         // make the VOI's and add the points to them
-        subcutaneousVOI = new VOI((short)0, "Subcutaneous area", 1);
+        subcutaneousVOI = new VOI((short)0, "Subcutaneous area");
         subcutaneousVOI.importCurve(xValsSubcutaneousVOI, yValsSubcutaneousVOI, zVals);
 
     } // end makeSubcutaneousFat2DVOI()
@@ -1971,7 +1971,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         }
 
         // make the VOI's and add the points to them
-        abdomenVOI = new VOI((short)0, "Abdomen", 1);
+        abdomenVOI = new VOI((short)0, "Abdomen");
         abdomenVOI.importCurve(x1, y1, z1);
         
 
@@ -1980,7 +1980,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             y1[idx] = yArrVis.get(idx);
         }
 
-        subcutaneousVOI = new VOI((short)0, "Subcutaneous area", 1);
+        subcutaneousVOI = new VOI((short)0, "Subcutaneous area");
         subcutaneousVOI.importCurve(x1, y1, z1);
         
 /*
@@ -2099,7 +2099,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         }
 
         // make the VOI's and add the points to them
-        abdomenVOI = new VOI((short)0, "Abdomen", 1);
+        abdomenVOI = new VOI((short)0, "Abdomen");
         abdomenVOI.importCurve(x1, y1, z1);
 
 
