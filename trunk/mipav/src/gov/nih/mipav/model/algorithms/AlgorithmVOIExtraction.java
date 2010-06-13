@@ -325,7 +325,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
 
                             if (newGrayScale) {
                                 grayScaleArray[grayScaleNumber] = expImgBuffer[scanPos];
-                                addedVOI = new VOI(voiID, "VOI" + voiID, zDim, VOI.CONTOUR, -1.0f);
+                                addedVOI = new VOI(voiID, "VOI" + voiID, VOI.CONTOUR, -1.0f);
 
                                 if (colorTable != null) {
                                     addedVOI.setColor(colorTable[expImgBuffer[scanPos] - 1]);

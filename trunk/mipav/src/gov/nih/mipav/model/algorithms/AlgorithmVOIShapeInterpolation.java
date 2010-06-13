@@ -151,7 +151,7 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
 		
 		AlgorithmExtractSlices extractSlicesAlg1 = new AlgorithmExtractSlices(srcImage, imageSlice1, extractSlices1);
 		extractSlicesAlg1.run();
-		VOI newVOI1 = new VOI((short)0,"voi1",1);
+		VOI newVOI1 = new VOI((short)0,"voi1");
 		newVOI1.importCurve(VOI1);
 		imageSlice1.registerVOI(newVOI1);
 		//lets get original center for VOI1
@@ -159,7 +159,7 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
 
 		AlgorithmExtractSlices extractSlicesAlg2 = new AlgorithmExtractSlices(srcImage, imageSlice2, extractSlices2);
 		extractSlicesAlg2.run();
-		VOI newVOI2 = new VOI((short)0,"voi2",1);
+		VOI newVOI2 = new VOI((short)0,"voi2");
 		newVOI2.importCurve(VOI2);
 		imageSlice2.registerVOI(newVOI2);
 		//lets get original centerfor VOI2

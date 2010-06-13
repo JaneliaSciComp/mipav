@@ -101,7 +101,7 @@ public class PlugInSelectableVOI extends VOI {
 	
 	public PlugInSelectableVOI(String name, boolean closed, int maxCurvesPerSlice, int paneNum, 
 			boolean fillEligible, boolean calcEligible, int imageSize, int outputLoc, Color color) {
-		super((short)0, name, imageSize);
+		super((short)0, name);
 		this.closed = closed;
 		this.maxCurvesPerSlice = maxCurvesPerSlice;
 		this.paneNum = paneNum;

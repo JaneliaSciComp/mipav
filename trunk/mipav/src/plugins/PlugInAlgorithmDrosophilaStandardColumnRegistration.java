@@ -229,7 +229,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         final float[] z = new float[1];
 
         // STANDARD COLUMN IMAGE
-        newPtVOI = new VOI((short) 0, "point3D.voi", 512, VOI.POINT, -1.0f);
+        newPtVOI = new VOI((short) 0, "point3D.voi", VOI.POINT, -1.0f);
         newPtVOI.setUID(newPtVOI.hashCode());
         standardColumnImage.registerVOI(newPtVOI);
 
@@ -440,7 +440,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         standardColumnImage.calcMinMax();
 
         // NEURON IMAGE
-        newPtVOI = new VOI((short) 0, "point3D.voi", 512, VOI.POINT, -1.0f);
+        newPtVOI = new VOI((short) 0, "point3D.voi", VOI.POINT, -1.0f);
         newPtVOI.setUID(newPtVOI.hashCode());
         neuronImage_grey.registerVOI(newPtVOI);
         int key;
@@ -821,7 +821,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         ArrayList<String> labelAL_std = new ArrayList<String>();
         TreeMap<Integer, AddVals> addCurvesMap = new TreeMap<Integer, AddVals>();
         VOI voi = srcVOIs.elementAt(0);
-        newVOI = new VOI((short) 0, "point3D.voi", resultImage1.getExtents()[2], VOI.POINT, -1.0f);
+        newVOI = new VOI((short) 0, "point3D.voi", VOI.POINT, -1.0f);
         newVOI.setUID(newVOI.hashCode());
         Vector<VOIBase>[] curves = voi.getSortedCurves(neuronImage_grey.getExtents()[2]);
 

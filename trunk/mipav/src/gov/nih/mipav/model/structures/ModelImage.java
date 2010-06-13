@@ -1898,7 +1898,7 @@ public class ModelImage extends ModelStorageBase {
             if ( (tempVOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) && tempVOIs.VOIAt(i).isActive()) {
 
                 if (newVOI == null) {
-                    newVOI = new VOI((short) 0, "joinedContour", slices, VOI.CONTOUR, -1.0f);
+                    newVOI = new VOI((short) 0, "joinedContour", VOI.CONTOUR, -1.0f);
                     newVOI.setAllActive(true);
                 }
                 contours = tempVOIs.VOIAt(i).getCurves();
@@ -1926,7 +1926,7 @@ public class ModelImage extends ModelStorageBase {
             } else if ( (tempVOIs.VOIAt(i).getCurveType() == VOI.POLYLINE) && tempVOIs.VOIAt(i).isActive()) {
 
                 if (newPLineVOI == null) {
-                    newPLineVOI = new VOI((short) 0, "polyLine" + nameExt, slices, VOI.POLYLINE, -1.0f);
+                    newPLineVOI = new VOI((short) 0, "polyLine" + nameExt, VOI.POLYLINE, -1.0f);
                     newPLineVOI.setAllActive(true);
                 }
 
@@ -1957,7 +1957,7 @@ public class ModelImage extends ModelStorageBase {
             } else if ( (tempVOIs.VOIAt(i).getCurveType() == VOI.LINE) && tempVOIs.VOIAt(i).isActive()) {
 
                 if (newLineVOI == null) {
-                    newLineVOI = new VOI((short) 0, "line" + nameExt, slices, VOI.LINE, -1.0f);
+                    newLineVOI = new VOI((short) 0, "line" + nameExt, VOI.LINE, -1.0f);
                     newLineVOI.setAllActive(true);
                 }
                 contours = tempVOIs.VOIAt(i).getCurves();
@@ -1986,7 +1986,7 @@ public class ModelImage extends ModelStorageBase {
             } else if ( (tempVOIs.VOIAt(i).getCurveType() == VOI.POINT) && tempVOIs.VOIAt(i).isActive()) {
 
                 if (newPtVOI == null) {
-                    newPtVOI = new VOI((short) 0, "point" + nameExt, slices, VOI.POINT, -1.0f);
+                    newPtVOI = new VOI((short) 0, "point" + nameExt, VOI.POINT, -1.0f);
                     newPtVOI.setAllActive(true);
                 }
                 contours = tempVOIs.VOIAt(i).getCurves();
@@ -2015,7 +2015,7 @@ public class ModelImage extends ModelStorageBase {
             } else if ( (tempVOIs.VOIAt(i).getCurveType() == VOI.PROTRACTOR) && tempVOIs.VOIAt(i).isActive()) {
 
                 if (newProtractorVOI == null) {
-                    newProtractorVOI = new VOI((short) 0, "protractor" + nameExt, slices, VOI.PROTRACTOR, -1.0f);
+                    newProtractorVOI = new VOI((short) 0, "protractor" + nameExt, VOI.PROTRACTOR, -1.0f);
                     newProtractorVOI.setAllActive(true);
                 }
                 contours = tempVOIs.VOIAt(i).getCurves();
@@ -2131,7 +2131,7 @@ public class ModelImage extends ModelStorageBase {
             if (newVOIVector.VOIAt(i).getCurveType() == VOI.CONTOUR) {
 
                 if (newVOI == null) {
-                    newVOI = new VOI((short) 0, "polygon", slices, VOI.CONTOUR, -1.0f);
+                    newVOI = new VOI((short) 0, "polygon", VOI.CONTOUR, -1.0f);
                 }
                 contours = newVOIVector.VOIAt(i).getCurves();
                 nContours = contours.size();
@@ -2141,7 +2141,7 @@ public class ModelImage extends ModelStorageBase {
             } else if (newVOIVector.VOIAt(i).getCurveType() == VOI.POLYLINE) {
 
                 if (newPLineVOI == null) {
-                    newPLineVOI = new VOI((short) 0, "polyline" + nameExt, slices, VOI.POLYLINE, -1.0f);
+                    newPLineVOI = new VOI((short) 0, "polyline" + nameExt, VOI.POLYLINE, -1.0f);
                 }
                 contours = voiVector.VOIAt(i).getCurves();
                 nContours = contours.size();
@@ -2151,7 +2151,7 @@ public class ModelImage extends ModelStorageBase {
             } else if (newVOIVector.VOIAt(i).getCurveType() == VOI.LINE) {
 
                 if (newLineVOI == null) {
-                    newLineVOI = new VOI((short) 0, "line" + nameExt, slices, VOI.LINE, -1.0f);
+                    newLineVOI = new VOI((short) 0, "line" + nameExt, VOI.LINE, -1.0f);
                 }
                 contours = voiVector.VOIAt(i).getCurves();
                 nContours = contours.size();
@@ -2162,7 +2162,7 @@ public class ModelImage extends ModelStorageBase {
             } else if (newVOIVector.VOIAt(i).getCurveType() == VOI.POINT) {
 
                 if (newPtVOI == null) {
-                    newPtVOI = new VOI((short) 0, "point" + nameExt, slices, VOI.POINT, -1.0f);
+                    newPtVOI = new VOI((short) 0, "point" + nameExt, VOI.POINT, -1.0f);
                 }
                 contours = newVOIVector.VOIAt(i).getCurves();
                 nContours = contours.size();
@@ -2172,7 +2172,7 @@ public class ModelImage extends ModelStorageBase {
             } else if (voiVector.VOIAt(i).getCurveType() == VOI.PROTRACTOR) {
 
                 if (newProtractorVOI == null) {
-                    newProtractorVOI = new VOI((short) 0, "protractor" + nameExt, slices, VOI.PROTRACTOR, -1.0f);
+                    newProtractorVOI = new VOI((short) 0, "protractor" + nameExt, VOI.PROTRACTOR, -1.0f);
                 }
                 contours = voiVector.VOIAt(i).getCurves();
                 nContours = contours.size();
@@ -4091,23 +4091,23 @@ public class ModelImage extends ModelStorageBase {
         }
 
         for (i = 0; i < numContours; i++, id++) {
-            newVOI[i] = new VOI(id, "contour" + nameExt + i, slices, VOI.CONTOUR, -1.0f);
+            newVOI[i] = new VOI(id, "contour" + nameExt + i, VOI.CONTOUR, -1.0f);
         }
 
         for (i = 0; i < numPoints; i++, id++) {
-            newPtVOI[i] = new VOI(id, "point" + nameExt + i, slices, VOI.POINT, -1.0f);
+            newPtVOI[i] = new VOI(id, "point" + nameExt + i, VOI.POINT, -1.0f);
         }
 
         for (i = 0; i < numPLines; i++, id++) {
-            newPLineVOI[i] = new VOI(id, "polyline" + nameExt + i, slices, VOI.POLYLINE, -1.0f);
+            newPLineVOI[i] = new VOI(id, "polyline" + nameExt + i, VOI.POLYLINE, -1.0f);
         }
 
         for (i = 0; i < numLines; i++, id++) {
-            newLineVOI[i] = new VOI(id, "line" + nameExt + i, slices, VOI.LINE, -1.0f);
+            newLineVOI[i] = new VOI(id, "line" + nameExt + i, VOI.LINE, -1.0f);
         }
 
         for (i = 0; i < numProtractors; i++, id++) {
-            newProtractorVOI[i] = new VOI(id, "protractor" + nameExt + i, slices, VOI.PROTRACTOR, -1.0f);
+            newProtractorVOI[i] = new VOI(id, "protractor" + nameExt + i, VOI.PROTRACTOR, -1.0f);
         }
 
         VOIBase tempBase = null;

@@ -153,11 +153,7 @@ public class RubberbandProtractor extends Rubberband {
                      * ==((int)VOIs.VOIAt(i).getID())) {                 colorID++;                 test=1;
                      * }     } } while(test==1);
                      */
-                    if (image.getNDims() > 2) {
-                        newVOI = new VOI((short) colorID, name, image.getExtents()[2], VOI.PROTRACTOR, presetHue);
-                    } else {
-                        newVOI = new VOI((short) colorID, name, 1, VOI.PROTRACTOR, presetHue);
-                    }
+                    newVOI = new VOI((short) colorID, name, VOI.PROTRACTOR, presetHue);
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to form new protractor VOI.");

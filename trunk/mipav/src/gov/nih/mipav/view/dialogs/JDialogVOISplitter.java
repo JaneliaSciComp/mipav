@@ -192,9 +192,9 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
             colorID = ((VOI) (image.getVOIs().lastElement())).getID() + 1;
         }
 
-        firstVOI = new VOI((short) colorID, "firstVOI", zDim, VOI.CONTOUR, -1.0f);
+        firstVOI = new VOI((short) colorID, "firstVOI", VOI.CONTOUR, -1.0f);
         colorID++;
-        secondVOI = new VOI((short) colorID, "secondVOI", zDim, VOI.CONTOUR, -1.0f);
+        secondVOI = new VOI((short) colorID, "secondVOI", VOI.CONTOUR, -1.0f);
        
         int startSlice = 0;
         int endSlice = 0;

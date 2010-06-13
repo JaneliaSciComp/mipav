@@ -1846,7 +1846,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
                 try {
                     voiID = 0;
-                    globalPtVOI = new VOI(voiID, "pointGlobalMin.voi", errorImage.getExtents()[2], VOI.POINT, -1.0f);
+                    globalPtVOI = new VOI(voiID, "pointGlobalMin.voi", VOI.POINT, -1.0f);
                     xPt[0] = xmin;
                     yPt[0] = ymin;
                     zPt[0] = zmin;
@@ -1873,7 +1873,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     try {
                         voiID = (short) (i + 1);
                         localPtVOI[i] = new VOI(voiID, "pointLocalMin" + String.valueOf(i + 1) + ".voi",
-                                                errorImage.getExtents()[2], VOI.POINT, -1.0f);
+                                                VOI.POINT, -1.0f);
                         index = localMinIndex[i];
                         zPt[0] = index / xydim;
                         zmin = index / xydim;
@@ -2248,7 +2248,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
                 try {
                     voiID = 0;
-                    globalPtVOI = new VOI(voiID, "pointGlobalMin.voi", 1, VOI.POINT, -1.0f);
+                    globalPtVOI = new VOI(voiID, "pointGlobalMin.voi", VOI.POINT, -1.0f);
                     xPt[0] = xmin;
                     yPt[0] = ymin;
                     zPt[0] = 0.0f;
@@ -2274,7 +2274,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
                     try {
                         voiID = (short) (i + 1);
-                        localPtVOI[i] = new VOI(voiID, "pointLocalMin" + String.valueOf(i + 1) + ".voi", 1, VOI.POINT,
+                        localPtVOI[i] = new VOI(voiID, "pointLocalMin" + String.valueOf(i + 1) + ".voi", VOI.POINT,
                                                 -1.0f);
                         index = localMinIndex[i];
                         zPt[0] = 0.0f;

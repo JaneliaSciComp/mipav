@@ -1308,11 +1308,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                      * do{ test = 0; for (i = 0; i < nVOI; i++) {  if (colorID ==((int)VOIs.VOIAt(i).getID())) {
                      * colorID++;      test=1;  } } } while(test==1);
                      */
-                    if (image.getNDims() > 2) {
-                        newVOI = new VOI((short) colorID, name, image.getExtents()[2], constant, presetHue);
-                    } else {
-                        newVOI = new VOI((short) colorID, name, 1, constant, presetHue);
-                    }
+                    newVOI = new VOI((short) colorID, name, constant, presetHue);
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to form new livewire");

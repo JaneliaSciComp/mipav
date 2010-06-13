@@ -1627,7 +1627,7 @@ public class FileLSM extends FileBase {
                     short id = 0;
                     // 0.0f for red hue indicating photobleached VOI in FRAP
 
-                    photoBleachedVOI = new VOI(id, "Photobleached", zDim, VOI.CONTOUR, 0.0f);
+                    photoBleachedVOI = new VOI(id, "Photobleached", VOI.CONTOUR, 0.0f);
 
                     int[] x = new int[4];
                     int[] y = new int[4];
@@ -1673,7 +1673,7 @@ public class FileLSM extends FileBase {
                             short id = 0;
                             // 0.0f for red hue indicating photobleached VOI in FRAP
 
-                            photoBleachedVOI = new VOI(id, "Photobleached", zDim, VOI.CONTOUR, 0.0f);
+                            photoBleachedVOI = new VOI(id, "Photobleached", VOI.CONTOUR, 0.0f);
 
                             int[] x = new int[nPts];
                             int[] y = new int[nPts];
@@ -1715,7 +1715,7 @@ public class FileLSM extends FileBase {
                         short id = 0;
                         // 0.0f for red hue indicating photobleached VOI in FRAP
 
-                        photoBleachedVOI = new VOI(id, "Photobleached", zDim, VOI.CONTOUR, 0.0f);
+                        photoBleachedVOI = new VOI(id, "Photobleached", VOI.CONTOUR, 0.0f);
 
                         int[] x = new int[40];
                         int[] y = new int[40];
@@ -1812,7 +1812,7 @@ public class FileLSM extends FileBase {
                         short id = 0;
                         // 0.0f for red hue indicating photobleached VOI in FRAP
 
-                        photoBleachedVOI = new VOI(id, "Photobleached", zDim, VOI.CONTOUR, 0.0f);
+                        photoBleachedVOI = new VOI(id, "Photobleached", VOI.CONTOUR, 0.0f);
 
                         int[] x = new int[40];
                         int[] y = new int[40];
@@ -1850,7 +1850,7 @@ public class FileLSM extends FileBase {
                     short id = 0;
                     // 0.0f for red hue indicating photobleached VOI in FRAP
 
-                    photoBleachedVOI = new VOI(id, "Photobleached", zDim, VOI.CONTOUR, 0.0f);
+                    photoBleachedVOI = new VOI(id, "Photobleached", VOI.CONTOUR, 0.0f);
 
                     double x0 = bleachKnotX[0];
                     double x1 = bleachKnotX[1];
@@ -2010,7 +2010,7 @@ public class FileLSM extends FileBase {
                             short id = 0;
                             // 0.0f for red hue indicating photobleached VOI in FRAP
 
-                            photoBleachedVOI = new VOI(id, "Photobleached", zDim, VOI.CONTOUR, 0.0f);
+                            photoBleachedVOI = new VOI(id, "Photobleached", VOI.CONTOUR, 0.0f);
 
                             // Find the x values of the control points
                             JamaMatrix A = new JamaMatrix(2 * nPts, 2 * nPts);

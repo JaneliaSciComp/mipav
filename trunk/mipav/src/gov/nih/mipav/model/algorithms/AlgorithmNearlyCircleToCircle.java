@@ -532,8 +532,7 @@ public class AlgorithmNearlyCircleToCircle extends AlgorithmBase {
             MipavUtil.displayError("IOException on srcImage.importData");
         }
         
-        newVOI = new VOI((short) (1), Integer.toString(1),
-                1, VOI.CONTOUR, -1.0f);
+        newVOI = new VOI((short) (1), Integer.toString(1), VOI.CONTOUR, -1.0f);
         newVOI.setColor(Color.blue);
         for (j = 0; j < maxPoints; j++) {
             theta = j * 2.0 * Math.PI/maxPoints; 

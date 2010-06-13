@@ -103,7 +103,7 @@ public class AlgorithmBSnake extends AlgorithmBase {
 
         if (srcImg.getNDims() == 2) {
             makeKernels2D();
-            resultVOI = new VOI((short) srcImage.getVOIs().size(), "BsnakeVOI", 1, VOI.CONTOUR, -1.0f);
+            resultVOI = new VOI((short) srcImage.getVOIs().size(), "BsnakeVOI", VOI.CONTOUR, -1.0f);
         } else if (srcImg.getNDims() > 2) {
 
             if (sigmas[2] == 0.0f) {
@@ -112,7 +112,7 @@ public class AlgorithmBSnake extends AlgorithmBase {
                 makeKernels3D();
             }
 
-            resultVOI = new VOI((short) srcImage.getVOIs().size(), "BsnakeVOI", srcImage.getExtents()[2], VOI.CONTOUR,
+            resultVOI = new VOI((short) srcImage.getVOIs().size(), "BsnakeVOI", VOI.CONTOUR,
                                 -1.0f);
         }
     }

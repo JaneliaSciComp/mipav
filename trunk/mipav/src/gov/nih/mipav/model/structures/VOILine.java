@@ -77,7 +77,7 @@ public class VOILine extends VOIBase {
      * @param   imageBuffer  DOCUMENT ME!
      * @param   xD           x-Dimension of image
      *
-     * @return  the number of points in the position and intensity array that hava valid data.
+     * @return  the number of points in the position and intensity array that have a valid data.
      */
     public int getPositionAndIntensity(Vector3f[] position, float[] intensity, float[] imageBuffer, int xD) {
         double distance;

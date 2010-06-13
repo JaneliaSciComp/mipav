@@ -179,17 +179,17 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
 
         if (srcImage.getNDims() == 2) {
             makeKernels2D();
-            resultVOI = new VOI((short) srcImage.getVOIs().size(), "AGVF_VOI", 1, VOI.CONTOUR, -1.0f);
+            resultVOI = new VOI((short) srcImage.getVOIs().size(), "AGVF_VOI", VOI.CONTOUR, -1.0f);
 
         } else if (srcImage.getNDims() > 2) {
 
             if (do25D) {
                 makeKernels2D();
-                resultVOI = new VOI((short) srcImage.getVOIs().size(), "AGVF-VOI.voi", srcImage.getExtents()[2],
+                resultVOI = new VOI((short) srcImage.getVOIs().size(), "AGVF-VOI.voi",
                                     VOI.CONTOUR, -1.0f);
             } else {
                 makeKernels3D();
-                resultVOI = new VOI((short) srcImage.getVOIs().size(), "AGVF-VOI.voi", srcImage.getExtents()[2],
+                resultVOI = new VOI((short) srcImage.getVOIs().size(), "AGVF-VOI.voi",
                                     VOI.CONTOUR, -1.0f);
             }
         } // else if (srcImage.getNDims() > 2)

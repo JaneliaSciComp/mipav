@@ -1878,7 +1878,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         for (i = 0, k = 0; i < ellipsesFound; i++) {
             if (selectedEllipse[i]) {
                 n = 0;
-                ellipseVOI[k] = new VOI((short)k, "ellipseVOI" + Integer.toString(k), 1, VOI.CONTOUR, -1.0f);
+                ellipseVOI[k] = new VOI((short)k, "ellipseVOI" + Integer.toString(k), VOI.CONTOUR, -1.0f);
                 ellipseVOI[k].setColor(Color.red);
                 xArr = new float[ellipsePoints[k]];
                 yArr = new float[ellipsePoints[k]];

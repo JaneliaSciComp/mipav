@@ -426,7 +426,7 @@ public class AlgorithmVOIExtractionPaint extends AlgorithmBase {
         boolean regVOI = true;
 
         if (voiIDnum == srcImage.getVOIs().size()) {
-            addedVOI = new VOI(voiIDnum, "VOI" + voiIDnum, zDim, VOI.CONTOUR, -1.0f);
+            addedVOI = new VOI(voiIDnum, "VOI" + voiIDnum, VOI.CONTOUR, -1.0f);
         } else {
             regVOI = false;
 

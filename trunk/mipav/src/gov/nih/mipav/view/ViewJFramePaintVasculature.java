@@ -473,7 +473,7 @@ public class ViewJFramePaintVasculature extends ViewJFrameBase {
 
         if (seedPoints == null) {
             isNewVOI = true;
-            seedPoints = new VOI((short) mipImage.getVOIs().size(), "possibleseedpoints.voi", 1, VOI.POINT, -1.0f);
+            seedPoints = new VOI((short) mipImage.getVOIs().size(), "possibleseedpoints.voi", VOI.POINT, -1.0f);
             seedPoints.setColor(Color.blue.darker());
         } else {
             isNewVOI = false;

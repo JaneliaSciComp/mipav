@@ -1244,6 +1244,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             }
             return;
         }
+        else if ( m_iDrawType == LEVELSET && m_kCurrentVOI != null )
+        {
+            m_kCurrentVOI.trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
+        }
         else if ( m_iDrawType == RETRACE && m_kCurrentVOI != null )
         {
             m_kCurrentVOI.trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
@@ -1529,7 +1533,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     private void createTextVOI( int iX, int iY )
     {
         int colorID = 0;
-        VOI newTextVOI = new VOI((short) colorID, "annotation3d.voi", 1, VOI.ANNOTATION, -1.0f);
+        VOI newTextVOI = new VOI((short) colorID, "annotation3d.voi", VOI.ANNOTATION, -1.0f);
 
         m_kCurrentVOI = new VOIText( );
         Vector3f kVolumePt = new Vector3f();
@@ -4714,7 +4718,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             kScreenPt.Y = kScreenPt.Y;
             kPositions.add( kScreenPt );
             VOIBase kVOI = createVOI( m_iDrawType, true, false, kPositions );
-            kVOI.trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
             return kVOI;
         } 
         return null;

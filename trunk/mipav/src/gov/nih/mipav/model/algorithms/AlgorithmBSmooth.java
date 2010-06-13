@@ -106,7 +106,7 @@ public class AlgorithmBSmooth extends AlgorithmBase {
 
         fireProgressStateChanged(25);
 
-        resultVOI = new VOI((short) srcImage.getVOIs().size(), "Bsmooth-VOI", 1, VOI.CONTOUR, -1.0f);
+        resultVOI = new VOI((short) srcImage.getVOIs().size(), "Bsmooth-VOI", VOI.CONTOUR, -1.0f);
         Vector<VOIBase> contours = activeVOI.getCurves();
         int nContours = contours.size();
 
@@ -154,7 +154,7 @@ public class AlgorithmBSmooth extends AlgorithmBase {
      * Prepares the data and runs the algorithm for a 3D image.
      */
     private void calc3D() {
-        resultVOI = new VOI((short) srcImage.getVOIs().size(), "BsmoothVOI.voi", 1, VOI.CONTOUR,
+        resultVOI = new VOI((short) srcImage.getVOIs().size(), "BsmoothVOI.voi", VOI.CONTOUR,
                             -1.0f);
 
         fireProgressStateChanged(srcImage.getImageName(), "Bspline smooth: Evolving boundary ...");

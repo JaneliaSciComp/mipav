@@ -367,8 +367,7 @@ public class PlugInAlgorithmFociStrandMesh extends AlgorithmBase {
                 //((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setFixed(true);
                 //((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setLabel(Integer.toString(numRedColocalize + 1));
                 //srcImage.registerVOI(newPtVOI);
-                newCircleVOI = new VOI((short) (numRedColocalize + nVOIs), Integer.toString(numRedColocalize+1),
-                                        1, VOI.CONTOUR, -1.0f);
+                newCircleVOI = new VOI((short) (numRedColocalize + nVOIs), Integer.toString(numRedColocalize+1), VOI.CONTOUR, -1.0f);
                 newCircleVOI.setColor(Color.white);
                 for (j = 0; j < maxCirclePoints; j++) {
                     theta = j * 2.0 * Math.PI/maxCirclePoints;  
@@ -690,8 +689,7 @@ public class PlugInAlgorithmFociStrandMesh extends AlgorithmBase {
                 //((VOIPoint) (newPtVOI.getCurves()[(int)zArr[0]].elementAt(0))).setFixed(true);
                 //((VOIPoint) (newPtVOI.getCurves()[(int)zArr[0]].elementAt(0))).setLabel(Integer.toString(numRedColocalize + 1));
                 //srcImage.registerVOI(newPtVOI);
-                newCircleVOI = new VOI((short) (numRedColocalize + nVOIs), Integer.toString(numRedColocalize+1),
-                        zDim, VOI.CONTOUR, -1.0f);
+                newCircleVOI = new VOI((short) (numRedColocalize + nVOIs), Integer.toString(numRedColocalize+1), VOI.CONTOUR, -1.0f);
                 newCircleVOI.setColor(Color.white);
                 for (j = 0; j < maxCirclePoints; j++) {
                     theta = j * 2.0 * Math.PI/maxCirclePoints;  

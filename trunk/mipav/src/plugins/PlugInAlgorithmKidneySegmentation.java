@@ -1089,11 +1089,11 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             ptArrayR[i].Z = 0;
         }
 
-        VOIEllipseL = new VOI((short) 101, "ellipseL", 1, VOI.CONTOUR, -1.0f);
+        VOIEllipseL = new VOI((short) 101, "ellipseL", VOI.CONTOUR, -1.0f);
         VOIEllipseL.importCurve(ptArrayL);
 
         // destImage.getVOIs().addVOI(VOIEllipseL);
-        VOIEllipseR = new VOI((short) 102, "ellipseR", 1, VOI.CONTOUR, -1.0f);
+        VOIEllipseR = new VOI((short) 102, "ellipseR", VOI.CONTOUR, -1.0f);
         VOIEllipseR.importCurve(ptArrayR);
 
         // destImage.getVOIs().addVOI(VOIEllipseR);
@@ -1157,8 +1157,8 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         // Find the x center of mass of each of the 2 drawn curves
         xcen1 = ((VOIContour) (curves[zc].elementAt(0))).getGeometricCenter().X;
         xcen2 = ((VOIContour) (curves[zc].elementAt(1))).getGeometricCenter().X;
-        contourVOIL = new VOI((short) 10, "contourL", zDim, VOI.CONTOUR, -1.0f);
-        contourVOIR = new VOI((short) 11, "contourR", zDim, VOI.CONTOUR, -1.0f);
+        contourVOIL = new VOI((short) 10, "contourL", VOI.CONTOUR, -1.0f);
+        contourVOIR = new VOI((short) 11, "contourR", VOI.CONTOUR, -1.0f);
 
         if (xcen1 < xcen2) {
             poly = ((VOIContour) (curves[zc].elementAt(0))).exportPolygon();
@@ -1438,7 +1438,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             contourVOI2.setAllActive(true);
             curves2 = contourVOI2.getSortedCurves(zDim);
             sliceBuffer = new float[sliceSize];
-            contourVOI3 = new VOI((short) 3, "contourVOI3", zDim, VOI.CONTOUR, -1.0f);
+            contourVOI3 = new VOI((short) 3, "contourVOI3", VOI.CONTOUR, -1.0f);
             fireProgressStateChanged("Redoing some slices...");
             fireProgressStateChanged((rep * 50) + 43);
             lastFraction = new float[zDim];
@@ -1482,7 +1482,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
                         return;
                     }
 
-                    VOI1 = new VOI((short) 1, "one.voi", 1, VOI.CONTOUR, -1.0f);
+                    VOI1 = new VOI((short) 1, "one.voi", VOI.CONTOUR, -1.0f);
 
                     for (i = 0; i < nCurves; i++) {
                         poly = ((VOIContour) (curves2[z].elementAt(i))).exportPolygon();
@@ -1510,7 +1510,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             } // if (!areaCorrect)
 
             if (areaCorrect) {
-                contourVOI4 = new VOI((short) 4, "contourVOI4", zDim, VOI.CONTOUR, -1.0f);
+                contourVOI4 = new VOI((short) 4, "contourVOI4", VOI.CONTOUR, -1.0f);
                 mask = new BitSet(totLength);
                 area = new int[zDim];
                 nextVOI = contourVOI4;
@@ -1563,7 +1563,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
                             return;
                         }
 
-                        VOI1 = new VOI((short) 1, "one.voi", 1, VOI.CONTOUR, -1.0f);
+                        VOI1 = new VOI((short) 1, "one.voi", VOI.CONTOUR, -1.0f);
                         poly = ((VOIContour) (curves3[z].elementAt(0))).exportPolygon();
                         VOI1.importPolygon(poly, 0);
                         (sliceImage.getVOIs()).addVOI(VOI1);
@@ -2107,8 +2107,8 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         contourVOI2.setAllActive(true);
         curves2 = contourVOI2.getSortedCurves(zDim);
         sliceBuffer = new float[sliceSize];
-        contourVOI3L = new VOI((short) 3, "contourVOI3L", zDim, VOI.CONTOUR, -1.0f);
-        contourVOI3R = new VOI((short) 4, "contourVOI3R", zDim, VOI.CONTOUR, -1.0f);
+        contourVOI3L = new VOI((short) 3, "contourVOI3L", VOI.CONTOUR, -1.0f);
+        contourVOI3R = new VOI((short) 4, "contourVOI3R", VOI.CONTOUR, -1.0f);
         fireProgressStateChanged("Redoing some slices...");
         fireProgressStateChanged(85);
         lastFractionL = new float[zDim];
@@ -2199,7 +2199,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             }
 
             if (num1 > 1) {
-                VOI1 = new VOI((short) 1, "one.voi", 1, VOI.CONTOUR, -1.0f);
+                VOI1 = new VOI((short) 1, "one.voi", VOI.CONTOUR, -1.0f);
 
                 for (i = 0; i < nCurves; i++) {
 
@@ -2215,7 +2215,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             } // if (num1 > 1)
 
             if (num2 > 1) {
-                VOI2 = new VOI((short) 2, "two.voi", 1, VOI.CONTOUR, -1.0f);
+                VOI2 = new VOI((short) 2, "two.voi", VOI.CONTOUR, -1.0f);
 
                 for (i = 0; i < nCurves; i++) {
 
@@ -2238,8 +2238,8 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         } // if (!areaCorrect)
 
         if (areaCorrect) {
-            contourVOI4L = new VOI((short) 5, "contourVOI4L", zDim, VOI.CONTOUR, -1.0f);
-            contourVOI4R = new VOI((short) 6, "contourVOI4R", zDim, VOI.CONTOUR, -1.0f);
+            contourVOI4L = new VOI((short) 5, "contourVOI4L", VOI.CONTOUR, -1.0f);
+            contourVOI4R = new VOI((short) 6, "contourVOI4R", VOI.CONTOUR, -1.0f);
             mask = new BitSet(totLength);
             area = new int[zDim];
 
@@ -2299,7 +2299,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
                             return;
                         }
 
-                        VOI1 = new VOI((short) 1, "one.voi", 1, VOI.CONTOUR, -1.0f);
+                        VOI1 = new VOI((short) 1, "one.voi", VOI.CONTOUR, -1.0f);
                         VOI1.importCurve((VOIContour) (curves3[z].elementAt(0)));
                         (sliceImage.getVOIs()).addVOI(VOI1);
                         sliceCorrect(vIters, true);

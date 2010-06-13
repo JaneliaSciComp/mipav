@@ -170,16 +170,16 @@ public class AlgorithmGVF extends AlgorithmBase implements AlgorithmInterface {
 
         if (srcImg.getNDims() == 2) {
             makeKernels2D();
-            resultVOI = new VOI((short) srcImage.getVOIs().size(), "GVF_VOI", 1, VOI.CONTOUR, -1.0f);
+            resultVOI = new VOI((short) srcImage.getVOIs().size(), "GVF_VOI", VOI.CONTOUR, -1.0f);
         } else if (srcImg.getNDims() > 2) {
 
             if (do25D) {
                 makeKernels2D();
-                resultVOI = new VOI((short) srcImage.getVOIs().size(), "GVF_VOI", srcImage.getExtents()[2], VOI.CONTOUR,
+                resultVOI = new VOI((short) srcImage.getVOIs().size(), "GVF_VOI", VOI.CONTOUR,
                                     -1.0f);
             } else {
                 makeKernels3D();
-                resultVOI = new VOI((short) srcImage.getVOIs().size(), "GVF_VOI", srcImage.getExtents()[2], VOI.CONTOUR,
+                resultVOI = new VOI((short) srcImage.getVOIs().size(), "GVF_VOI", VOI.CONTOUR,
                                     -1.0f);
             }
 

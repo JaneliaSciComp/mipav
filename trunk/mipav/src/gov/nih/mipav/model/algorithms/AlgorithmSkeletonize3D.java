@@ -913,7 +913,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
                 haveSegColor = false;
 
                 if (!used[skelSegments[i][SKEL_SEG_LEFT]]) {
-                    newPtVOI = new VOI(ptNum++, "point" + i + "_" + segNum + ".voi", zDim, VOI.POINT, -1);
+                    newPtVOI = new VOI(ptNum++, "point" + i + "_" + segNum + ".voi", VOI.POINT, -1);
                     segColor = newPtVOI.getColor();
                     haveSegColor = true;
                     xArr[0] = (float) skelPoints[skelSegments[i][SKEL_SEG_LEFT]][0];
@@ -938,7 +938,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
                     if ((j != skelSegments[i][SKEL_SEG_LEFT]) && (j != skelSegments[i][SKEL_SEG_RIGHT])) {
 
                         if (!used[j]) {
-                            newPtVOI = new VOI(ptNum++, "point" + i + "_" + segNum + ".voi", zDim, VOI.POINT, -1);
+                            newPtVOI = new VOI(ptNum++, "point" + i + "_" + segNum + ".voi", VOI.POINT, -1);
 
                             if (haveSegColor) {
                                 newPtVOI.setColor(segColor);
@@ -968,7 +968,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
 
                 // Output the right end point
                 if (!used[skelSegments[i][SKEL_SEG_RIGHT]]) {
-                    newPtVOI = new VOI(ptNum++, "point" + i + "_" + segNum + ".voi", zDim, VOI.POINT, -1);
+                    newPtVOI = new VOI(ptNum++, "point" + i + "_" + segNum + ".voi", VOI.POINT, -1);
 
                     if (haveSegColor) {
                         newPtVOI.setColor(segColor);
@@ -999,7 +999,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
             ptNum = 0;
 
             for (i = 0; i < skelNumSegments; i++) {
-                newPtVOI = new VOI(ptNum++, "pointL" + i + ".voi", zDim, VOI.POINT, -1);
+                newPtVOI = new VOI(ptNum++, "pointL" + i + ".voi", VOI.POINT, -1);
                 segColor = newPtVOI.getColor();
                 xArr[0] = (float) skelPoints[skelSegments[i][SKEL_SEG_LEFT]][0];
                 yArr[0] = (float) skelPoints[skelSegments[i][SKEL_SEG_LEFT]][1];
@@ -1013,7 +1013,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
                 ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setLabel(String.valueOf(i));
                 srcImage.registerVOI(newPtVOI);
                 
-                newPtVOI = new VOI(ptNum++, "pointR" + i + ".voi", zDim, VOI.POINT, -1);
+                newPtVOI = new VOI(ptNum++, "pointR" + i + ".voi", VOI.POINT, -1);
                 newPtVOI.setColor(segColor);
                 xArr[0] = (float) skelPoints[skelSegments[i][SKEL_SEG_RIGHT]][0];
                 yArr[0] = (float) skelPoints[skelSegments[i][SKEL_SEG_RIGHT]][1];
