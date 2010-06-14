@@ -1053,7 +1053,14 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
         m_kParent.setActive(this);
         if (m_bLeftMousePressed) {
-            processLeftMouseDrag(kEvent);
+            if ( kEvent.isAltDown() && m_kCurrentVOI != null )
+            {
+                retraceContour( m_kCurrentVOI, kEvent.getX(), kEvent.getY() );
+            }
+            else
+            {
+                processLeftMouseDrag(kEvent);
+            }
         }
     }
 
@@ -1116,7 +1123,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         m_kParent.setActive(this);
 
         if (kEvent.getButton() == MouseEvent.BUTTON1) {
-            if ( m_kParent.getPointerButton().isSelected() && !m_bDrawVOI )
+            if ( kEvent.isAltDown() && m_kCurrentVOI != null )
+            {
+                retraceContour( m_kCurrentVOI, kEvent.getX(), kEvent.getY() );
+            }
+            else if ( m_kParent.getPointerButton().isSelected() && !m_bDrawVOI )
             {    
                 if ( m_iNearStatus == NearPoint )
                 {
@@ -3651,12 +3662,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         } 
         else if ( m_kParent.getPointerButton().isSelected() &&  !m_bDrawVOI )
         {
-            if ( kEvent.isAltDown() && m_kCurrentVOI != null )
-            {
-                //resetStart();
-                retraceContour( m_kCurrentVOI, kEvent.getX(), kEvent.getY() );
-            }
-            else if ( m_iNearStatus == NearPoint )
+            if ( m_iNearStatus == NearPoint )
             {
                 if ( m_bFirstDrag && ((m_fMouseX != kEvent.getX()) || (m_fMouseY != kEvent.getY())) )
                 {

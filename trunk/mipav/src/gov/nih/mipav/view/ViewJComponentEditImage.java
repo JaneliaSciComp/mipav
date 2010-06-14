@@ -4001,7 +4001,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
         switch (mode) {
 
-        case ViewJComponentEditImage.DEFAULT:
+        case ViewJComponentBase.DEFAULT:
             setCursor(MipavUtil.smallPointerCursor);
             if (isImageFrame) {
                 getFrame().getControls().getTools()
@@ -4010,7 +4010,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
             break;
 
-        case ViewJComponentEditImage.PROBE:
+        case ViewJComponentBase.PROBE:
             setCursor(MipavUtil.probeCursor);
             if (isImageFrame) {
                 getFrame().getControls().getTools()
@@ -4019,11 +4019,11 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
             break;
 
-        case ViewJComponentEditImage.WAND:
+        case ViewJComponentBase.WAND:
             setCursor(MipavUtil.wandCursor); // Hand cursor
             break;
 
-        case ViewJComponentEditImage.PAINT_VOI:
+        case ViewJComponentBase.PAINT_VOI:
             setCursor(MipavUtil.blankCursor);
             getFrame().requestFocus();
             break;

@@ -573,7 +573,6 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
             popupPt = null;
         }
 
-        deleteAllVOI();
         m_kParent = null;
         m_kImageA = null;
         m_kImageB = null;
