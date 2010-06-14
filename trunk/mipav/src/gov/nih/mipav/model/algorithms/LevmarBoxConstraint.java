@@ -5,20 +5,26 @@ import gov.nih.mipav.view.*;
 public abstract class LevmarBoxConstraint {
 	// This is a port of LEVMAR_BC_DER.  It requires a function for computing the Jacobian.
 	// If no such function is available, use LEVMAR_BC_DIF rather than LEVMAR_BC_DER.
-	// Results were worse than those of ELSUNC
-	// Unconstrained DRAPER24D INCORRECT No further reduction possible.  Restart with increased mu
+	// Results were worse than those of ELSUNC since ELSUNC handled DRAPER and 10* MEYER.
+	// Unconstrained DRAPER24D INCORRECT Singular matrix A in AX_EQ_B_LU and
+	// dgesvd (dbdsqr) failed to converge in AX_EQ_B_SVD, info[0] = 2.
 	// Constrained HOCK25 CORRECT
 	// Unconstrained BARD at standard start CORRECT
 	// Constrained BARD at 10 * standard start CORRECT
-	// Constrained BARD at 100 * standard start INCORRECT.  Stopped by small Dp.
+	// Constrained BARD at 100 * standard start CORRECT
 	// Unconstrained KOWALIK_AND_OSBORNE at standard start CORRECT.
-	// Constrained KOWALIK_AND_OSBORNE at 10 * standard start INCORRECT Stopped by small Dp.
-	// Constrained KOWALIK_AND_OSBORNE at 100 * standard start INCORRECT Stopped by small Dp.
+	// Constrained KOWALIK_AND_OSBORNE at 10 * standard start CORRECT.
+	// Constrained KOWALIK_AND_OSBORNE at 100 * standard start CORRECT.
 	// Unconstrained MEYER at standard start CORRECT.
-	// Constrained MEYER at 10 * standard start INCORRECT maxIterations.
+	// Constrained MEYER at 10 * standard start INCORRECT maxIterations even with maxIterations = 300,000.
 	// Unconstrained OSBORNE1 CORRECT
-	// Unconstrained OSBORNE2 INCORRECT. Stopped by small Dp.
-	// Replacing the default AX_EQ_B_LU with the more accurate AX_EQ_B_SVD did not improve test performance.
+	// Unconstrained OSBORNE2 CORRECT
+	// The source code with the lmdemo.c version of ROSENBROCK did not produce the correct answer
+    // on a Windows 32 system without the LAPACK library hooked in.  dlevmar_bc_der gave 
+    // 0.8936874, 0.7979607 and dlevmar_der gave 0.9432309, 0.8893884.
+	// My port gave a CORRECT 0.99887, 0.997758 with AX_EQ_B_LU and a better
+	// 0.9993, 0.9986 with AX_EQ_B_SVD.
+	// MODIFIED_ROSENBROCK CORRECT.
 	private final double INIT_MU = 1.0E-3;
 	
 	private final double STOP_THRESH = 1.0E-17;
@@ -138,6 +144,8 @@ public abstract class LevmarBoxConstraint {
     private final int OSBORNE2 = 19;
     
     private final int HOCK25 = 25;
+    
+    private final int MODIFIED_ROSENBROCK = 51;
 	
 	public LevmarBoxConstraint() {
     	int i;
@@ -148,7 +156,7 @@ public abstract class LevmarBoxConstraint {
     	// Incorrect with statement no further reduction is possible.  Restart with increased mu.
     	info = new double[10];
     	outputMes = true;
-    	/*Preferences.debug("Draper problem 24D y = a0 - a1*(a2**x) constrained\n");
+    	Preferences.debug("Draper problem 24D y = a0 - a1*(a2**x) constrained\n");
     	Preferences.debug("Correct answer is a0 = 72.4326, a1 = 28.2519, a2 = 0.5968\n");
     	testMode = true;
     	testCase = DRAPER24D;
@@ -407,7 +415,7 @@ public abstract class LevmarBoxConstraint {
         testCase = KOWALIK_AND_OSBORNE;
         nPts = 11;
         paramNum = 4;
-        maxIterations = 1000 * paramNum;
+        maxIterations = 10000 * paramNum;
         xSeries = new double[]{4.0, 2.0, 1.0, 0.5, 0.25, 0.167, 0.125, 0.1, 0.0833, 0.0714, 0.0625};
         ySeries = new double[]{0.1957, 0.1947, 0.1735, 0.1600, 0.0844, 0.0627, 0.0456, 0.0342, 
         		               0.0323, 0.0235, 0.0246};
@@ -465,7 +473,7 @@ public abstract class LevmarBoxConstraint {
         testCase = MEYER;
         nPts = 16;
         paramNum = 3;
-        maxIterations = 1000 * paramNum;
+        maxIterations = 100000 * paramNum;
         xSeries = new double[]{50.0, 55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 90.0, 95.0,
         		               100.0, 105.0, 110.0, 115.0, 120.0, 125.0};
         ySeries = new double[]{34780.0, 28610.0, 23650.0, 19630.0, 16370.0, 13720.0, 11540.0,
@@ -485,7 +493,7 @@ public abstract class LevmarBoxConstraint {
         lb[2] = 100.0;
         ub[2] = 3000.0;                                             
         driver();
-        dumpTestResults();*/
+        dumpTestResults();
         // Below is an example to fit y = a0 + a1*exp(-a3*x) + a2*exp(-a4*x)
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Osborne 1 function unconstrained\n");
@@ -520,7 +528,7 @@ public abstract class LevmarBoxConstraint {
         // Below is an example to fit y = a0*exp(-a4*x) + a1*exp(-a5*(x-a8)**2) 
         // + a2*exp(-a6*(x-a9)**2) + a3*exp(-a7*(x-a10)**2)
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        /*Preferences.debug("Osborne 2 function unconstrained\n");
+        Preferences.debug("Osborne 2 function unconstrained\n");
         Preferences.debug("y = a0*exp(-a4*x) + a1*exp(-a5*(x-a8)**2) \n");
         Preferences.debug("    + a2*exp(-a6*(x-a9)**2) + a3*exp(-a7*(x-a10)**2)\n");
         Preferences.debug("Correct answer has a0 = 1.3100, a1 = 0.43155, a2 = 0.63366, a3 = 0.59943\n");
@@ -563,9 +571,30 @@ public abstract class LevmarBoxConstraint {
         dumpTestResults();
         Preferences.debug("Rosenbrock function unconstrained\n");
         Preferences.debug("Correct answer has param[0] = 1.0 param[1] = 1.0\n");
+        // The source code with the lmdemo.c version of Rosenbrock did not produce the correct answer
+        // on a Windows 32 system without the LAPACK library hooked in.  dlevmar_bc_der gave 
+        // 0.8936874, 0.7979607 and dlevmar_der gave 0.9432309, 0.8893884.
         testMode = true;
         testCase = ROSENBROCK;
         nPts = 2;
+        paramNum = 2;
+        maxIterations = 10000 * paramNum;
+        ySeries = new double[nPts];
+        param = new double[paramNum];
+        param[0] = -1.2;
+        param[1] = 1.0;
+        
+        lb = null;
+        ub = null;
+        
+        driver();
+        dumpTestResults();
+        
+        Preferences.debug("Modified Rosenbrock function unconstrained\n");
+        Preferences.debug("Correct answer has param[0] = 1.0 param[1] = 1.0\n");
+        testMode = true;
+        testCase = MODIFIED_ROSENBROCK;
+        nPts = 3;
         paramNum = 2;
         maxIterations = 1000 * paramNum;
         ySeries = new double[nPts];
@@ -577,7 +606,7 @@ public abstract class LevmarBoxConstraint {
         ub = null;
         
         driver();
-        dumpTestResults();*/
+        dumpTestResults();
     }
 	
 	public LevmarBoxConstraint(int x) {
@@ -648,8 +677,17 @@ public abstract class LevmarBoxConstraint {
                 }
 		    	break;
 		    case ROSENBROCK:
+		    	//hx[0] = 10.0*(param[1] - param[0]*param[0]);
+        	    //hx[1] = 1.0 - param[0];
+		    	hx[0] = ((1.0 - param[0])*(1.0 - param[0]) 
+		    			+ 105.0*(param[1]- param[0]*param[0])*(param[1] - param[0]*param[0]));
+		    	hx[1] = ((1.0 - param[0])*(1.0 - param[0]) 
+		    			+ 105.0*(param[1]- param[0]*param[0])*(param[1] - param[0]*param[0]));
+		    	break;
+		    case MODIFIED_ROSENBROCK:
 		    	hx[0] = 10.0*(param[1] - param[0]*param[0]);
-        	    hx[1] = 1.0 - param[0];
+		    	hx[1] = 1.0 - param[0];
+		    	hx[2] = 100.0;
 		    	break;
 		}
 	}
@@ -733,11 +771,23 @@ public abstract class LevmarBoxConstraint {
                 }
 	        	break;
 	        case ROSENBROCK:
-	        	j = 0;
-        		jac[j++] = -20.0*param[0];
-    		    jac[j++] = 10.0;
-    		    jac[j++] = -1.0;
-    		    jac[j++] = 0.0;
+	        	//j = 0;
+        		//jac[j++] = -20.0*param[0];
+    		    //jac[j++] = 10.0;
+    		    //jac[j++] = -1.0;
+    		    //jac[j++] = 0.0;
+	        	jac[0] = (-2.0 + 2.0*param[0] - 4.0*105.0*(param[1] - param[0]*param[0])*param[0]);
+	        	jac[1] = (2*105.0*(param[1] - param[0]*param[0]));
+	        	jac[2] = (-2.0 + 2.0*param[0] - 4.0*105.0*(param[1] - param[0]*param[0])*param[0]);
+	        	jac[3] = (2*105.0*(param[1] - param[0]*param[0]));
+	        	break;
+	        case MODIFIED_ROSENBROCK:
+	        	jac[0] = -20.0*param[0];
+	        	jac[1] = 10.0;
+	        	jac[2] = -1.0;
+	        	jac[3] = 0.0;
+	        	jac[4] = 0.0;
+	        	jac[5] = 0.0;
 	        	break;
 	    }
 	}
@@ -968,6 +1018,7 @@ public abstract class LevmarBoxConstraint {
 	           */
 	          int im;
 	          int jaclmIndex;
+	          double alphaLocal;
 	          
 	          /* looping downwards saves a few computations */
 	          for(i=paramNum*paramNum; i-->0; )
@@ -979,12 +1030,12 @@ public abstract class LevmarBoxConstraint {
 	            jaclmIndex = l*paramNum;
 	            for(i=paramNum; i-->0; ){
 	              im=i*paramNum;
-	              alpha=jac[jaclmIndex + i]; //jac[l*m+i];
+	              alphaLocal=jac[jaclmIndex + i]; //jac[l*m+i];
 	              for(j=i+1; j-->0; ) /* j<=i computes lower triangular part only */
-	                jacTjac[im+j]+=jac[jaclmIndex + j]*alpha; //jac[l*m+j]
+	                jacTjac[im+j]+=jac[jaclmIndex + j]*alphaLocal; //jac[l*m+j]
 
 	              /* J^T e */
-	              jacTe[i]+=alpha*e[l];
+	              jacTe[i]+=alphaLocal*e[l];
 	            }
 	          }
 
@@ -1024,7 +1075,7 @@ public abstract class LevmarBoxConstraint {
 	        }
 	        //p_L2=sqrt(p_L2);
 	        
-	        if (outputMes && ((k % 100) == 0)) {
+	        /*if (outputMes && ((k % 100) == 0)) {
 	        	Preferences.debug("Current estimate:\n");
 	        	for (i = 0; i < paramNum; ++i) {
 	        		Preferences.debug("param[" + i + "] = " + param[i] + "\n");
@@ -1033,7 +1084,7 @@ public abstract class LevmarBoxConstraint {
 	        	Preferences.debug("p_eL2 = " + p_eL2 + "\n");
 	        	Preferences.debug("numactive = " + numactive + "\n");
 	        	Preferences.debug("j = " + j + "\n");
-	        } // if(outputMes && ((k % 100) == 0))
+	        } // if(outputMes && ((k % 100) == 0))*/
 	        /* check for convergence */
 	        if(j==numactive && (jacTe_inf <= eps1)){
 	          Dp_L2=0.0; /* no increment for p in this case */
@@ -24120,8 +24171,9 @@ public abstract class LevmarBoxConstraint {
 	    /*	check if new iterate satisfactory.  generate new lambda if necessary. */
 
 	    for(j=LSITMAX; j>=0; --j) {
-		    for (i = 0; i < m; ++i)
+		    for (i = 0; i < m; ++i) {
 		      xpls[i] = x[i] + lambda * p[i];
+		    }
 
 	      /* evaluate function at new point */
 		  if (testMode) {
@@ -24135,7 +24187,6 @@ public abstract class LevmarBoxConstraint {
 	      tmp1=LEVMAR_L2NRMXMY(fstate_hx, fstate_ySeries, fstate_hx, fstate_nPts);
 	
 	      fpls=0.5*tmp1; ffpls[0]=tmp1;
-
 		    if (fpls <= f + slp * alpha * lambda) { /* solution found */
 		      iretcd[0] = 0;
 		      if (lambda == 1. && sln > stepmx * .99) mxtake[0] = 1;
@@ -24173,10 +24224,11 @@ public abstract class LevmarBoxConstraint {
 			        b = t3 * (t2 * lambda / (plmbda * plmbda)
 				          - t1 * plmbda / (lambda * lambda));
 			        disc = b * b - a3 * slp;
+			        
 			        if (disc > b * b)
 				      /* only one positive critical point, must be minimum */
 				        tlmbda = (-b + ((a3 < 0)? -Math.sqrt(disc): Math.sqrt(disc))) /a3;
-			        else
+			        else 
 				      /* both critical points positive, first is minimum */
 				        tlmbda = (-b + ((a3 < 0)? Math.sqrt(disc): -Math.sqrt(disc))) /a3;
 
@@ -24269,6 +24321,10 @@ public abstract class LevmarBoxConstraint {
 	int i, j, k;
 	int idx[], maxi=-1, idx_sz, a_sz, work_sz;
 	double a[], work[], max, sum, tmp;
+	
+	if (A == null) {
+		return 1; /* NOP */
+	}
 	   
 	  /* calculate required memory size */
 	  idx_sz=m;
