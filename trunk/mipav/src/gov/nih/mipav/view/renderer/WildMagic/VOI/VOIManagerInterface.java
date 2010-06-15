@@ -2461,7 +2461,8 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         final float[][] y = new float[3][4];
         final Dimension dim = new Dimension(256, 256);
         for (int i = 0; i < 3; i++) {
-
+            minC[i] += 128;
+            maxC[i] += 128;
             // Set LUT min max values;
             // if (imageA.isColorImage() == true) {
                 if (image.getType() == ModelStorageBase.ARGB) {
