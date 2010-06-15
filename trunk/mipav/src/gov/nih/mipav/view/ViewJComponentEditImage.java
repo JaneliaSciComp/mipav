@@ -2457,8 +2457,8 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         } else if ( (cursorMode == ViewJComponentBase.RECTANGLE) || (cursorMode == ViewJComponentBase.ELLIPSE)
                 || (cursorMode == ViewJComponentBase.LINE) || (cursorMode == ViewJComponentBase.RECTANGLE3D)
                 || (cursorMode == ViewJComponentBase.POINT_VOI) || (cursorMode == ViewJComponentBase.POLYLINE)
-                || (cursorMode == ViewJComponentBase.LEVELSET) || (cursorMode == ViewJComponentBase.PAINT_VOI)
-                || (cursorMode == ViewJComponentBase.DROPPER_PAINT) || (cursorMode == ViewJComponentBase.ERASER_PAINT)
+                || (cursorMode == ViewJComponentBase.LEVELSET) 
+                || (cursorMode == ViewJComponentBase.DROPPER_PAINT)
                 || (cursorMode == ViewJComponentBase.PROTRACTOR)
                 || (cursorMode == ViewJComponentBase.LIVEWIRE) || (cursorMode == ViewJComponentBase.ANNOTATION)
                 || (cursorMode == ViewJComponentBase.POLYLINE_SLICE_VOI) || (cursorMode == ViewJComponentBase.MOVE)
@@ -3024,7 +3024,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             } else if ( (cursorMode == ViewJComponentBase.MAG_REGION)
                     && ( (lastMouseX != OUT_OF_BOUNDS) || (lastMouseY != OUT_OF_BOUNDS))) {
                 paintMagComponent(offscreenGraphics2d);
-            } else if (cursorMode == ViewJComponentBase.DEFAULT) {
+            } else if (cursorMode == ViewJComponentBase.DEFAULT || cursorMode == ViewJComponentBase.VOI_3D) {
 
                 if (intensityLabel) {
                     if ( ! (this instanceof ViewJComponentSingleRegistration) && ! (frame instanceof ViewJFrameLightBox)) {
@@ -5260,7 +5260,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         String str;
 
         try {
-            if (cursorMode == ViewJComponentBase.DEFAULT) {
+            if (cursorMode == ViewJComponentBase.DEFAULT || cursorMode == ViewJComponentBase.VOI_3D ) {
 
                 if ( (mouseEvent.getModifiers() & InputEvent.BUTTON3_MASK) != 0) {
 
