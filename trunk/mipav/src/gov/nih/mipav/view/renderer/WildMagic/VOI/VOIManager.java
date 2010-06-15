@@ -1092,6 +1092,17 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             return;
         }
         m_kParent.setActive(this);
+        if ( m_bDrawVOI )
+        {
+            if ( m_iDrawType == TEXT )
+            {
+                m_kParent.setCursor(MipavUtil.textCursor);                
+            }
+            else
+            {
+                m_kParent.setCursor(MipavUtil.crosshairCursor);
+            }
+        }
         if ( m_kParent.getPointerButton().isSelected() && !m_bDrawVOI )
         {
             showSelectedVOI( kEvent.getX(), kEvent.getY() );
@@ -1754,6 +1765,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
         newTextVOI.setActive(false);
         new JDialogAnnotation(m_kImageActive, newTextVOI, (int)kVolumePt.Z, false, true);
+        m_kImageActive.unregisterVOI(newTextVOI);
         if ( newTextVOI.isActive() ) {
             m_kParent.addVOI( m_kCurrentVOI, false, true );
         }
