@@ -431,13 +431,19 @@ public class FileInfoMincHDF extends FileInfoBase {
      * @param validMin
      */
     public static void calculateRescaleIntercept(final double[] rescaleIntercept, final double[] rescaleSlope,
-            final double[] imageMax, final double[] imageMin, final double[] valid_range) {
+            final double[] imageMax, final double[] imageMin, final double[] valid_range, boolean hasImageMinMaxDimOrder) {
 
         try {
 
             for (int i = 0; i < rescaleSlope.length; i++) {
-                rescaleSlope[i] = FileInfoMinc.calculateSlope(imageMax[i], imageMin[i], valid_range[1], valid_range[0]);
-                rescaleIntercept[i] = FileInfoMinc.calculateIntercept(imageMin[i], rescaleSlope[i], valid_range[0]);
+            	if(hasImageMinMaxDimOrder) {
+            		rescaleSlope[i] = FileInfoMinc.calculateSlope(imageMax[i], imageMin[i], valid_range[1], valid_range[0]);
+                    rescaleIntercept[i] = FileInfoMinc.calculateIntercept(imageMin[i], rescaleSlope[i], valid_range[0]);
+            	}else {
+            		rescaleSlope[i] = FileInfoMinc.calculateSlope(imageMax[0], imageMin[0], valid_range[1], valid_range[0]);
+                    rescaleIntercept[i] = FileInfoMinc.calculateIntercept(imageMin[0], rescaleSlope[i], valid_range[0]);
+            	}
+                
             }
         } catch (final ArrayIndexOutOfBoundsException error) {
         	error.printStackTrace();
