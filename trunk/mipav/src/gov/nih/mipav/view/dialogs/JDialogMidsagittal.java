@@ -2,13 +2,21 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubset;
 import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.ParameterExternalImage;
+import gov.nih.mipav.model.scripting.parameters.ParameterImage;
+import gov.nih.mipav.model.scripting.parameters.ParameterInt;
+import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.ActionMetadata.ImageRequirements;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.EnumSet;
+import java.util.Set;
 
 
 /**
@@ -17,7 +25,8 @@ import java.awt.event.*;
  * @version  0.1 Dec 30, 2004
  * @author   Evan McCreedy
  */
-public class JDialogMidsagittal extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface {
+public class JDialogMidsagittal extends JDialogScriptableBase 
+	implements AlgorithmInterface, ActionDiscovery, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -238,5 +247,108 @@ public class JDialogMidsagittal extends JDialogScriptableBase implements Algorit
      */
     private boolean setVariables() {
         return true;
+    }
+    
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms.Brain tools");
+            }
+
+            public String getDescription() {
+                return new String("Finds the midsagittal line of a brain MRI.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Finds the midsagittal line of a brain MRI by: " +
+                		"Flipping the image horizontally" +
+                		"Registering the flipped image against the original." +
+                		"Getting the angle that the registration rotated the image." +
+                		"Transforming the original image by half the registration rotation.");
+            }
+
+            public String getShortLabel() {
+                return new String("Midsagittal");
+            }
+
+            public String getLabel() {
+                return new String("Midsagittal Line");
+            }
+
+            public String getName() {
+                return new String("Midsagittal Line");
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            if (getResultImage() != null) {
+                return getResultImage().getImageName();
+            }
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
     }
 }

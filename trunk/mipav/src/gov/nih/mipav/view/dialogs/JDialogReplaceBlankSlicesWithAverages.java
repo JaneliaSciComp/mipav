@@ -4,6 +4,12 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.Parameter;
+import gov.nih.mipav.model.scripting.parameters.ParameterBoolean;
+import gov.nih.mipav.model.scripting.parameters.ParameterExternalImage;
+import gov.nih.mipav.model.scripting.parameters.ParameterImage;
+import gov.nih.mipav.model.scripting.parameters.ParameterList;
+import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -23,7 +29,8 @@ import java.util.*;
  * @version  1.0 June 5, 2006
  * @author   William Gandler
  */
-public class JDialogReplaceBlankSlicesWithAverages extends JDialogScriptableBase implements AlgorithmInterface {
+public class JDialogReplaceBlankSlicesWithAverages extends JDialogScriptableBase 
+	implements AlgorithmInterface, ActionDiscovery {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -187,5 +194,102 @@ public class JDialogReplaceBlankSlicesWithAverages extends JDialogScriptableBase
         image = scriptParameters.retrieveInputImage();
         userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
+    }
+    
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Utilities.Slice tools");
+            }
+
+            public String getDescription() {
+                return new String("Replaces blank slices with averages.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Replaces blank slices with averages.");
+            }
+
+            public String getShortLabel() {
+                return new String("ReplaceBlankSlicesWithAverages");
+            }
+
+            public String getLabel() {
+                return new String("Replace Blank Slices With Averages");
+            }
+
+            public String getName() {
+                return new String("Replace Blank Slices With Averages");
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+                return image.getImageName();
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
     }
 }

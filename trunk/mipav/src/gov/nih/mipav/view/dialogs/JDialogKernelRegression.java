@@ -24,7 +24,7 @@ import javax.swing.*;
  * @see  AlgorithmKernelRegression
  */
 public class JDialogKernelRegression extends JDialogScriptableBase
-        implements AlgorithmInterface, ScriptableActionInterface, DialogDefaultsInterface {
+        implements AlgorithmInterface, ActionDiscovery, ScriptableActionInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -1779,6 +1779,184 @@ public class JDialogKernelRegression extends JDialogScriptableBase
         }
 
         return true;
+    }
+    
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms.Filters (spatial)");
+            }
+
+            public String getDescription() {
+                return new String("Applies a kernel regression filter.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Applies a kernel regression filter.");
+            }
+
+            public String getShortLabel() {
+                return new String("KernelRegression");
+            }
+
+            public String getLabel() {
+                return new String("Kernel Regression");
+            }
+
+            public String getName() {
+                return new String("Kernel Regression");
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        /*method = scriptParameters.getParams().getInt("_method");*/
+        
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            
+            //Parameters
+            table.put(new ParameterInt("_method", 1));
+            
+            final Parameter method = table.getParameter("_method");
+            
+            Parameter p = new ParameterBoolean("has_NaN", false);
+            p.setParentCondition(method, Integer.toString(AlgorithmKernelRegression.ITERATIVE_STEERING_KERNEL_SECOND_ORDER_IRREGULAR));
+            table.put(p);
+            
+            p = (new ParameterBoolean("has_infinity", false));
+            p.setParentCondition(method, Integer.toString(AlgorithmKernelRegression.ITERATIVE_STEERING_KERNEL_SECOND_ORDER_IRREGULAR));
+            table.put(p);
+            
+            p = (new ParameterBoolean("has_greater_equal", false));
+            p.setParentCondition(method, Integer.toString(AlgorithmKernelRegression.ITERATIVE_STEERING_KERNEL_SECOND_ORDER_IRREGULAR));
+            table.put(p);
+            
+            p = (new ParameterDouble("greater_equal_value", 0));
+            p.setParentCondition(method, Integer.toString(AlgorithmKernelRegression.ITERATIVE_STEERING_KERNEL_SECOND_ORDER_IRREGULAR));
+            table.put(p);
+            
+            table.put(new ParameterBoolean("has_equal", false));
+            p.setParentCondition(method, Integer.toString(AlgorithmKernelRegression.ITERATIVE_STEERING_KERNEL_SECOND_ORDER_IRREGULAR));
+            table.put(p);
+            
+            p = (new ParameterDouble("equal_value", 0));
+            p.setParentCondition(method, Integer.toString(AlgorithmKernelRegression.ITERATIVE_STEERING_KERNEL_SECOND_ORDER_IRREGULAR));
+            table.put(p);
+            
+            p = (new ParameterBoolean("has_lesser_equal", false));
+            p.setParentCondition(method, Integer.toString(AlgorithmKernelRegression.ITERATIVE_STEERING_KERNEL_SECOND_ORDER_IRREGULAR));
+            table.put(p);
+            
+            p = (new ParameterDouble("lesser_equal_value", 0));
+            p.setParentCondition(method, Integer.toString(AlgorithmKernelRegression.ITERATIVE_STEERING_KERNEL_SECOND_ORDER_IRREGULAR));
+            table.put(p);
+            
+            table.put(new ParameterFloat("initial_global_smoothing", 0.5f));
+            table.put(new ParameterFloat("iterative_global_smoothing", 2.4f));
+            
+            p = (new ParameterFloat("iterative_global_smoothing2", 1.75f));
+            p.setParentCondition(method, Integer.toString(AlgorithmKernelRegression.STEERING_KERNEL_SECOND_ORDER_L1_NORM));
+            table.put(p);
+            
+            table.put(new ParameterInt("_upscale", 1));           
+            table.put(new ParameterInt("initial_kernel_size", 5));
+            table.put(new ParameterInt("iterative_kernel_size", 21));
+            table.put(new ParameterInt("_iterations", 4));
+            
+            p = (new ParameterInt("_iterations2", 300));
+            p.setParentCondition(method, Integer.toString(AlgorithmKernelRegression.STEERING_KERNEL_SECOND_ORDER_L1_NORM));
+            table.put(p);
+            
+            table.put(new ParameterInt("window_size", 11));
+            table.put(new ParameterFloat("_lambda", 1.0f));
+            table.put(new ParameterFloat("_alpha", 0.5f));
+            
+            p = (new ParameterFloat("classic_step_size", 0.1f));
+            p.setParentCondition(method, Integer.toString(AlgorithmKernelRegression.STEERING_KERNEL_SECOND_ORDER_L1_NORM));
+            table.put(p);
+            
+            p = (new ParameterFloat("steering_step_size", 0.1f));
+            p.setParentCondition(method, Integer.toString(AlgorithmKernelRegression.STEERING_KERNEL_SECOND_ORDER_L1_NORM));
+            table.put(p);
+            
+            //Output options
+            p = (new ParameterBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D, true));
+            //This is kind of hacky. Prevents the check box from ever being enabled.
+            p.setParentCondition(method, "5");
+            table.put(p);
+            
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            if (getResultImage() != null) {
+                // algo produced a new result image
+                return getResultImage().getImageName();						///DOING IT WRONG??
+            } else {
+                // algo was done in place
+                return image.getImageName();
+            }
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
     }
 
 }

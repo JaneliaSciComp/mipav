@@ -5,13 +5,24 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.registration.AlgorithmRegTSOAR;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.Parameter;
+import gov.nih.mipav.model.scripting.parameters.ParameterBoolean;
+import gov.nih.mipav.model.scripting.parameters.ParameterExternalImage;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.parameters.ParameterFloat;
+import gov.nih.mipav.model.scripting.parameters.ParameterImage;
+import gov.nih.mipav.model.scripting.parameters.ParameterInt;
+import gov.nih.mipav.model.scripting.parameters.ParameterList;
+import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 import gov.nih.mipav.model.structures.ModelImage;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.ActionMetadata.ImageRequirements;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.EnumSet;
+import java.util.Set;
 
 import javax.swing.*;
 
@@ -23,7 +34,8 @@ import javax.swing.*;
  * @author Neva Cherniavsky
  * @see gov.nih.mipav.model.algorithms.registration#AlgorithmRegistrationTSOAR
  */
-public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements AlgorithmInterface {
+public class JDialogRegistrationTSOAR extends JDialogScriptableBase 
+	implements AlgorithmInterface, ActionDiscovery {
 
     // ~ Static fields/initializers
     // -------------------------------------------------------------------------------------
@@ -889,5 +901,167 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
         finalRegistrationAtLevel2 = sampleCheckBoxLevel2.isSelected();
 
         return true;
+    }
+    
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms.Registration");
+            }
+
+            public String getDescription() {
+                return new String("Performs a time series registration on a 4D volume." +
+                		"Note: For degrees_of_freedom, O == 6 (Rigid), 1 == 7 (Global Rescale)," +
+                		"2 == 9 (Specific Rescale), and 3 == 12 (Affine)." +
+                		"For initial_interpolation_type and final_interpolation_type, 0 == TRILINEAR, 1 == BSPLINE3, " +
+                		"2 == BSPLINE4, 3 == CUBIC_LAGRANGIAN, 4 == QUINTIC_LAGRANGIAN, " +
+                		"5 == HEPTIC_LAGRANGIAN, and 6 == WSINC." +
+                		"For cost_function_type, 0 == CORRELATION_RATIO_SMOOTHED, 1 == LEAST_SQUARES_SMOOTHED" +
+                		"2 == NORMALIZED_XCORRELATION, and 3 == NORMALIZED_MUTUAL_INFORMATION_SMOOTHED, " +
+                		"1,2, and 3 being only applicable to black and white images.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Performs a time series registration on a 4D volume." +
+                		"Note: For degrees_of_freedom, O == 6 (Rigid), 1 == 7 (Global Rescale)," +
+                		"2 == 9 (Specific Rescale), and 3 == 12 (Affine)." +
+                		"For initial_interpolation_type and final_interpolation_type, 0 == TRILINEAR, 1 == BSPLINE3, " +
+                		"2 == BSPLINE4, 3 == CUBIC_LAGRANGIAN, 4 == QUINTIC_LAGRANGIAN, " +
+                		"5 == HEPTIC_LAGRANGIAN, and 6 == WSINC." +
+                		"For cost_function_type, 0 == CORRELATION_RATIO_SMOOTHED, 1 == LEAST_SQUARES_SMOOTHED" +
+                		"2 == NORMALIZED_XCORRELATION, and 3 == NORMALIZED_MUTUAL_INFORMATION_SMOOTHED, " +
+                		"1,2, and 3 being only applicable to black and white images.");
+            }
+
+            public String getShortLabel() {
+                return new String("TSOAR");
+            }
+
+            public String getLabel() {
+                return new String("Time Series Registration");
+            }
+
+            public String getName() {
+                return new String("Time Series Registration");
+            }
+
+            public Set<ImageRequirements> getInputImageRequirements() {
+                return EnumSet.of(ImageRequirements.NDIM_4);
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+
+            //Input options
+            
+            //O == 6 (Rigid)
+            //1 == 7 (Global Rescale)
+            //2 == 9 (Specific Rescale)
+            //3 == 12 (Affine)
+            table.put(new ParameterInt("degrees_of_freedom", 6));
+            
+            //0 == TRILINEAR
+            //1 == BSPLINE3
+            //2 == BSPLINE4
+            //3 == CUBIC_LAGRANGIAN
+            //4 == QUINTIC_LAGRANGIAN
+            //5 == HEPTIC_LAGRANGIAN
+            //6 == WSINC
+            table.put(new ParameterInt("initial_interpolation_type", 0));
+            
+            //0 == CORRELATION_RATIO_SMOOTHED
+            	//1, 2, 3 only for black and white images
+            //1 == LEAST_SQUARES_SMOOTHED
+            //2 == NORMALIZED_XCORRELATION
+            //3 == NORMALIZED_MUTUAL_INFORMATION_SMOOTHED
+            table.put(new ParameterInt("cost_function_type", 2));
+            
+            table.put(new ParameterBoolean("do_use_norm_cross_correlation_sinc", false));
+            table.put(new ParameterBoolean("do_subsample", true));
+            table.put(new ParameterBoolean("do_final_reg_at_level_2", false));
+            table.put(new ParameterInt("reference_volume_num", 0));        
+            //If false, register to a reference volume as set by reference_volume_num
+            table.put(new ParameterBoolean("do_use_avg_volume_as_reference", false));
+
+            table.put(new ParameterBoolean("do_display_transform", true));
+            table.put(new ParameterBoolean("do_use_max_of_min_resolutions", true));
+            table.put(new ParameterBoolean("do_subsample", true));
+            table.put(new ParameterBoolean("do_use_fast_mode", true));
+            table.put(new ParameterBoolean("do_calc_COG", true));
+            
+            //Output options
+            table.put(new ParameterBoolean("do_display_transform", true));
+            table.put(new ParameterInt("final_interpolation_type", 0));
+            table.put(new ParameterBoolean("do_graph_transform", false));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            if (getResultImage() != null) {
+                // algo produced a new result image
+                return getResultImage().getImageName();
+            }
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
     }
 }

@@ -33,7 +33,8 @@ import javax.swing.border.*;
 *
 *
 */  
-public class JDialogDemonsLite extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface  {
+public class JDialogDemonsLite extends JDialogScriptableBase 
+	implements AlgorithmInterface, ActionDiscovery, DialogDefaultsInterface  {
     
     private     AlgorithmDemonsLite 		algo = null;
     private     ModelImage              image;                // source image
@@ -616,5 +617,120 @@ public class JDialogDemonsLite extends JDialogScriptableBase implements Algorith
 		scriptParameters.getParams().put(ParameterFactory.newParameter("scale", scale));
 		scriptParameters.getParams().put(ParameterFactory.newParameter("reg_type", regType));
 		scriptParameters.getParams().put(ParameterFactory.newParameter("output_type", outputType));
+    }
+
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms.Registration");
+            }
+
+            public String getDescription() {
+                return new String("Performs non-linear registration with the DEMONS algorithm." +
+				"Note: For reg_type, type 'diffusion-like', or 'fluid-like'." +
+				"For output_type, type 'transformed_image', 'transformation_field' or 'all_images'");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Performs non-linear registration with the DEMONS algorithm." +
+				"Note: For reg_type, type 'diffusion-like', or 'fluid-like'." +
+				"For output_type, type 'transformed_image', 'transformation_field' or 'all_images'");
+            }
+
+            public String getShortLabel() {
+                return new String("DemonsLite");
+            }
+
+            public String getLabel() {
+                return new String("Demons Lite");
+            }
+
+            public String getName() {
+                return new String("Demons Lite");
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(2)));
+
+			table.put(new ParameterFloat("smoothing", 2.0f));
+			table.put(new ParameterFloat("scale", 1.0f));
+		    table.put(new ParameterInt("levels", 4));
+			table.put(new ParameterInt("iterations", 20));
+
+			//Choose "diffusion-like", or "fluid-like"
+            table.put(new ParameterString("reg_type", "diffusion-like"));
+            
+            //Choose "transformed_image", "transformation_field" or "all_images"
+            table.put(new ParameterString("output_type", "transformed_image"));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            if (resultImage != null) {
+                // algo produced a new result image
+                return resultImage[0].getImageName();
+            }
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
     }
 }

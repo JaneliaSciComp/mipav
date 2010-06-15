@@ -3,7 +3,13 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterBoolean;
+import gov.nih.mipav.model.scripting.parameters.ParameterExternalImage;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.parameters.ParameterFloat;
+import gov.nih.mipav.model.scripting.parameters.ParameterImage;
+import gov.nih.mipav.model.scripting.parameters.ParameterInt;
+import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -19,7 +25,8 @@ import javax.swing.*;
 /**
  * DOCUMENT ME!
  */
-public class JDialogEntropyMinimization extends JDialogScriptableBase implements AlgorithmInterface{
+public class JDialogEntropyMinimization extends JDialogScriptableBase 
+	implements AlgorithmInterface, ActionDiscovery{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -587,5 +594,124 @@ public class JDialogEntropyMinimization extends JDialogScriptableBase implements
         }
 
         return true;
+    }
+    
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms.Shading Correction");
+            }
+
+            public String getDescription() {
+                return new String("Performs retrospective shading correction based on entropy minimization." +
+                		"Note that in the noise_type field, " +
+                		"1 == Multiplicative and additive quadratic noise," +
+                		"2 == Multiplicative quadratic noise, and" +
+                		"3 == Multiplicative cubic noise.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Performs retrospective shading correction based on entropy minimization." +
+                		"Note that in the noise_type field, " +
+                		"1 == Multiplicative and additive quadratic noise," +
+                		"2 == Multiplicative quadratic noise, and" +
+                		"3 == Multiplicative cubic noise.");
+            }
+
+            public String getShortLabel() {
+                return new String("EntropyMinimization");
+            }
+
+            public String getLabel() {
+                return new String("Entropy Minimization");
+            }
+
+            public String getName() {
+                return new String("Entropy Minimization");
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();       
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterBoolean("do_threshold", false));
+            table.put(new ParameterFloat("threshold", 1.0f));
+            table.put(new ParameterBoolean("do_subsample", true));
+            
+            //1 == Multiplicative and additive quadratic noise
+            //2 == Multiplicative quadratic noise
+            //3 == Multiplicative cubic noise
+            table.put(new ParameterInt("noise_type", 1));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+        
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+        	if (getResultImage() != null) {
+                // algo produced a new result image
+                return getResultImage().getImageName();
+            } else {
+                // algo was done in place
+                return image.getImageName();
+            }
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
     }
 }
