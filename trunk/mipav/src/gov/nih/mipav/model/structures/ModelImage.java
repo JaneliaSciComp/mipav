@@ -3332,7 +3332,7 @@ public class ModelImage extends ModelStorageBase {
             for (int i = 0; i  < numSlices; i++) {
                 //((FileInfoMincHDF)fileInfo[i]).setValidRange(validRange);
                 ((FileInfoMincHDF)fileInfo[i]).setDataType(type);
-          
+        
             }
 
             
