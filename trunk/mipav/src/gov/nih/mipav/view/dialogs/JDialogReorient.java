@@ -6,7 +6,13 @@ import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterExternalImage;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.parameters.ParameterFloat;
+import gov.nih.mipav.model.scripting.parameters.ParameterImage;
+import gov.nih.mipav.model.scripting.parameters.ParameterInt;
+import gov.nih.mipav.model.scripting.parameters.ParameterString;
+import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.DialogDefaultsInterface;
@@ -40,7 +46,8 @@ import javax.swing.JPanel;
 *
 *
 */  
-public class JDialogReorient extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface  {
+public class JDialogReorient extends JDialogScriptableBase 
+	implements AlgorithmInterface, ActionDiscovery, DialogDefaultsInterface  {
     
     private     AlgorithmTransform 		algoTrans = null;
     private     ModelImage              image;                // source image
@@ -970,5 +977,131 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
                 comboTemplate.setEnabled(false);
             }
         }
+    }
+
+/**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Utilities.Reorientation");
+            }
+
+            public String getDescription() {
+                return new String("Transforms Volume by resampling using transformation matrix and the choice of " +
+                		"nearest-neighbor, trilinear interpolation, 3rd order Bspline, 4th order Bspline, " +
+                		"cubic Lagrangian, quintic Lagrangian, heptic Lagrangian, or windowed sinc. " +
+                		"Must indicate output volume's desired resolutions and dimensions." +
+                		"For resolution, 0 == Unchanged, 1 == Finest Cubic, 2 == Coarsest Cubic, 3 == Same as template. " +
+                		"For interpolation, chose 'Nearest Neighbor','Trilinear','Bspline 3rd order', " +
+                		"'Bspline 4th order', 'Cubic Lagrangian', 'Quintic Lagrangian', 'Heptic Lagrangian', " +
+                		"'Windowed Sinc'");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Transforms Volume by resampling using transformation matrix and the choice of " +
+                		"nearest-neighbor, trilinear interpolation, 3rd order Bspline, 4th order Bspline, " +
+                		"cubic Lagrangian, quintic Lagrangian, heptic Lagrangian, or windowed sinc. " +
+                		"Must indicate output volume's desired resolutions and dimensions." +
+                		"For resolution, 0 == Unchanged, 1 == Finest Cubic, 2 == Coarsest Cubic, 3 == Same as template. " +
+                		"For interpolation, chose 'Nearest Neighbor','Trilinear','Bspline 3rd order', " +
+                		"'Bspline 4th order', 'Cubic Lagrangian', 'Quintic Lagrangian', 'Heptic Lagrangian', " +
+                		"'Windowed Sinc'");
+            }
+
+            public String getShortLabel() {
+                return new String("Reorient");
+            }
+
+            public String getLabel() {
+                return new String("Reorient");
+            }
+
+            public String getName() {
+                return new String("Reorient");
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(2)));
+
+            //0 == Unknown, 1 == Right to left, 2 == Left to right,
+            //3 == Posterior to Anterior, 4 == Anterior to Posterior,
+            //5 == Inferior to Posterior, 6 == Posterior to Interior
+			table.put(new ParameterInt("orientationx", 1));
+		    table.put(new ParameterInt("orientationy", 4));
+			table.put(new ParameterInt("orientationz", 5));
+			
+			//0 == Unchanged, 1 == Finest Cubic, 2 == Coarsest Cubic, 3 == Same as template
+			table.put(new ParameterInt("resolution", 1));
+
+			table.put(new ParameterString("interpolation", "Trilinear"));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            if (getResultImage() != null) {
+                // algo produced a new result image
+                return getResultImage().getImageName();
+            }
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
     }
 }

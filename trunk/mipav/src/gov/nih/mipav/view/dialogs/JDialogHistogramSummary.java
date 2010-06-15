@@ -20,7 +20,8 @@ import javax.swing.*;
  * @version  0.1 June 5, 2000
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogHistogramSummary extends JDialogScriptableBase implements AlgorithmInterface {
+public class JDialogHistogramSummary extends JDialogScriptableBase 
+	implements AlgorithmInterface, ActionDiscovery {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -559,4 +560,119 @@ public class JDialogHistogramSummary extends JDialogScriptableBase implements Al
 
         return true;
     }
+    
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms.Histogram");
+            }
+
+            public String getDescription() {
+                return new String("Calculates the histogram for an image. " +
+                		"The number of bins is determined by the extents of the histogram model." +
+                		"Note that for the rgb_offset parameter, red offset == 1," +
+                		"green offset == 2 and blue offset == 3. " +
+                		"If image is grayscale, ignore this parameter.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Calculates the histogram for an image. " +
+                		"The number of bins is determined by the extents of the histogram model." +
+                		"Note that for the rgb_offset parameter, red offset == 1," +
+                		"green offset == 2 and blue offset == 3. " +
+                		"If image is grayscale, ignore this parameter.");
+            }
+
+            public String getShortLabel() {
+                return new String("HistogramSummary");
+            }
+
+            public String getLabel() {
+                return new String("Histogram Summary");
+            }
+
+            public String getName() {
+                return new String("Histogram Summary");
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+   public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            
+            //Red offset == 1
+            //Green offset == 2
+            //Blue offset == 3
+            table.put(new ParameterInt("RGB_offset", 1));
+            table.put(new ParameterInt("number_of_bins",256));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, true));
+            table.put(new ParameterBoolean("user_limits", false));
+            table.put(new ParameterFloat("user_min", 0.0f));
+            table.put(new ParameterFloat("user_max", 0.0f));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+        	return image.getImageName();
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
+    }
+
 }

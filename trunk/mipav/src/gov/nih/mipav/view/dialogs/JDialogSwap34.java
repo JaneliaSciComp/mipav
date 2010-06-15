@@ -4,6 +4,9 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.ParameterExternalImage;
+import gov.nih.mipav.model.scripting.parameters.ParameterImage;
+import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -18,7 +21,8 @@ import java.awt.event.*;
  * a dialog object because it may in the future require user input and to be consistent with the dialog/algorithm
  * paradigm. In should be noted, that the algorithms are executed in their own thread.** replaces image
  */
-public class JDialogSwap34 extends JDialogScriptableBase implements AlgorithmInterface {
+public class JDialogSwap34 extends JDialogScriptableBase 
+	implements AlgorithmInterface, ActionDiscovery {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -209,5 +213,104 @@ public class JDialogSwap34 extends JDialogScriptableBase implements AlgorithmInt
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
         scriptParameters.storeImageInRecorder(resultImage);
+    }
+    
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Utilities.4D tools");
+            }
+
+            public String getDescription() {
+                return new String("Swaps the 3rd and 4th dimensions of an image.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Swaps the 3rd and 4th dimensions of an image.");
+            }
+
+            public String getShortLabel() {
+                return new String("Swap34");
+            }
+
+            public String getLabel() {
+                return new String("Swap dims 3<->4");
+            }
+
+            public String getName() {
+                return new String("Swap dims 3<->4");
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            if (getResultImage() != null) {
+                return getResultImage().getImageName();
+            }
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
     }
 }

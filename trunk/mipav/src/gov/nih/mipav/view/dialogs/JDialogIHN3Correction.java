@@ -2,15 +2,19 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubset;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.ActionMetadata.ImageRequirements;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.EnumSet;
+import java.util.Set;
 
 import javax.swing.*;
 
@@ -18,7 +22,8 @@ import javax.swing.*;
 /**
  * Dialog to get user input, then call the algorithm.
  */
-public class JDialogIHN3Correction extends JDialogScriptableBase implements AlgorithmInterface {
+public class JDialogIHN3Correction extends JDialogScriptableBase 
+	implements AlgorithmInterface, ActionDiscovery {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -976,5 +981,115 @@ public class JDialogIHN3Correction extends JDialogScriptableBase implements Algo
         }
 
         return true;
+    }
+    
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms.Shading Correction");
+            }
+
+            public String getDescription() {
+                return new String("Corrects intensity non-uniformity in MR data.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Corrects intensity non-uniformity in MR data.");
+            }
+
+            public String getShortLabel() {
+                return new String("IHN3Correction");
+            }
+
+            public String getLabel() {
+                return new String("IHN3 Correction");
+            }
+
+            public String getName() {
+                return new String("IHN3 Correction");
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+        
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, true));
+            table.put(new ParameterFloat("signal_threshold", 1.0f));
+            table.put(new ParameterFloat("end_tolerance", 0.001f));
+            table.put(new ParameterInt("max_iterations", 50));
+            table.put(new ParameterFloat("field_distance_mm", 47.5f));			//200?
+            table.put(new ParameterFloat("subsampling_factor", 4.0f));							
+            table.put(new ParameterFloat("kernel_fwhm", 0.15f));
+            table.put(new ParameterFloat("wiener_noise_filter", 0.01f));
+            table.put(new ParameterBoolean("do_auto_histo_thresholding", false));
+            table.put(new ParameterBoolean("do_create_field_image", false));						
+            
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+        
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            if (getResultImage() != null) {
+                return getResultImage().getImageName();
+            }
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
     }
 }

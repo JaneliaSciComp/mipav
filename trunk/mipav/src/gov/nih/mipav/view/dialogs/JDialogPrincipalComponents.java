@@ -19,7 +19,8 @@ import javax.swing.*;
  * an averaged image slice by simple averaging of the reconstructed image. The source image must be a 3D black and white
  * image or a 2D or 3D color image
  */
-public class JDialogPrincipalComponents extends JDialogScriptableBase implements AlgorithmInterface {
+public class JDialogPrincipalComponents extends JDialogScriptableBase 
+	implements AlgorithmInterface, ActionDiscovery {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -386,7 +387,7 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase implements
 
         setDoFilter(scriptParameters.getParams().getBoolean("do_filter"));
         setDoAveraging(scriptParameters.getParams().getBoolean("do_averaging"));
-        setDisplayAndAsk(scriptParameters.getParams().getBoolean("do_display_and_ask"));
+        setDisplayAndAsk(scriptParameters.getParams().getBoolean("do_display_principal_components"));
         setPNumber(scriptParameters.getParams().getInt("num_components"));
     }
 
@@ -402,7 +403,7 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase implements
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_filter", doFilter));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_averaging", doAveraging));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_display_and_ask", displayAndAsk));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_display_principal_components", displayAndAsk));
         scriptParameters.getParams().put(ParameterFactory.newParameter("num_components", pNumber));
     }
 
@@ -540,6 +541,115 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase implements
         }
 
         return true;
+    }
+    
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms.Principal Components");
+            }
+
+            public String getDescription() {
+                return new String("Create a filtered image using only " +
+                		"selected principal components in the reconstruction. " +
+                		"Also creates an averaged image slice by " +
+                		"simple averaging of the reconstructed image.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Create a filtered image using only " +
+                		"selected principal components in the reconstruction. " +
+                		"Also creates an averaged image slice by " +
+                		"simple averaging of the reconstructed image.");
+            }
+
+            public String getShortLabel() {
+                return new String("PrincipalComponents");
+            }
+
+            public String getLabel() {
+                return new String("Principal Components");
+            }
+
+            public String getName() {
+                return new String("Principal Components");
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterBoolean("do_filter", true));
+            table.put(new ParameterBoolean("do_averaging", true));
+            table.put(new ParameterBoolean("do_display_principal_components", true));
+            table.put(new ParameterInt("num_components", 1));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+        	if (getResultImage() != null) {
+                // algo produces a new result image
+                return getResultImage()[0].getImageName();		//Doing it wrong?
+            } 
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
     }
 
 } // end class JDialogPrincipalComponents

@@ -8,9 +8,12 @@ import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.ActionMetadata.ImageRequirements;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.EnumSet;
+import java.util.Set;
 
 
 /**
@@ -21,7 +24,8 @@ import java.awt.event.*;
  * @version  1.0 July 26, 2000
  * @author   Harman J. Singh
  */
-public class JDialogRotate extends JDialogScriptableBase implements AlgorithmInterface {
+public class JDialogRotate extends JDialogScriptableBase 
+	implements AlgorithmInterface, ActionDiscovery {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -275,5 +279,110 @@ public class JDialogRotate extends JDialogScriptableBase implements AlgorithmInt
         }
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("rotation_axis", axis));
+    }
+    
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Utilities.Rotate");
+            }
+
+            public String getDescription() {
+                return new String("Rotates an image +90, -90, or 180 degrees with respect to the X, Y, or Z axis." +
+                		"Note: for rotation_axis, enter X180 for 180 degrees w.r.t the X axis," +
+                		"X+ for +90 degrees, and X- for -90 degrees. Replace 'X' with 'Y' or 'Z' for other axes.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Rotates an image +90, -90, or 180 degrees with respect to the X, Y, or Z axis." +
+                		"Note: for rotation_axis, enter X180 for 180 degrees w.r.t the X axis," +
+                		"X+ for +90 degrees, and X- for -90 degrees. Replace 'X' with 'Y' or 'Z' for other axes.");
+            }
+
+            public String getShortLabel() {
+                return new String("Rotate");
+            }
+
+            public String getLabel() {
+                return new String("Rotate");
+            }
+
+            public String getName() {
+                return new String("Rotate");
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterString("rotation_axis"));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            if (getResultImage() != null) {
+                // algo produced a new result image
+                return getResultImage().getImageName();
+            }
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
     }
 }

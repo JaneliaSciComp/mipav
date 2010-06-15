@@ -8,10 +8,13 @@ import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.ActionMetadata.ImageRequirements;
 
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.Set;
 
 import javax.swing.*;
 
@@ -23,7 +26,7 @@ import javax.swing.*;
  * @author   Sir Benjamin Link
  * @version  1.0
  */
-public class JDialogSubsample extends JDialogScriptableBase implements AlgorithmInterface, ItemListener {
+public class JDialogSubsample extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery, ItemListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -39,12 +42,12 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
     private JRadioButton by2Button = null; // subsample by 2
 
     /** DOCUMENT ME! */
-    private JRadioButton by4Button = null; // subsample by 4
-
-    /** DOCUMENT ME! */
     private JRadioButton by8Button = null; // subsample by 8
     
-    /** Label for displaying the original extent X */
+    /** DOCUMENT ME! */
+	private JRadioButton by4Button = null; // subsample by 4
+
+	/** Label for displaying the original extent X */
 	private JLabel label2OriginalExtentX;
 
 	/** Label for displaying the original extent Y */
@@ -983,5 +986,107 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
 		return newDimValue;
 	}
 	
+	/**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+	public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms.Transformation tools");
+            }
+
+            public String getDescription() {
+                return new String("Reduces the size and number of slices of an image." +
+                		"Note: subsample_factor must be set to either 2, 4 or 8. ");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Reduces the size and number of slices of an image." +
+                		"Note: subsample_factor must be set to either 2, 4 or 8.");
+            }
+
+            public String getShortLabel() {
+                return new String("Subsample");
+            }
+
+            public String getLabel() {
+                return new String("Subsample");
+            }
+
+            public String getName() {
+                return new String("Subsample");
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D, true));
+            table.put(new ParameterInt("subsample_factor", 2));
+            table.put(new ParameterBoolean("do_transform_vois", doVOI));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            if (getResultImage() != null) {
+                return getResultImage().getImageName();
+            }
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
+    }
     
 }

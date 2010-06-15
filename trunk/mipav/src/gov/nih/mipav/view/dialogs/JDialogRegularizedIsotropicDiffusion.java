@@ -19,7 +19,8 @@ import javax.swing.*;
  * Dialog to get user input, then call a specified diffusion algorithm. It should be noted that the algorithms are
  * executed in their own thread.
  */
-public class JDialogRegularizedIsotropicDiffusion extends JDialogScriptableBase implements AlgorithmInterface {
+public class JDialogRegularizedIsotropicDiffusion extends JDialogScriptableBase 
+	implements AlgorithmInterface, ActionDiscovery {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -383,5 +384,107 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogScriptableBase 
         return true;
     } // end setVariables()
 
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms.Filters (spatial)");
+            }
+
+            public String getDescription() {
+                return new String("Applies a regularized isotropic diffusion filter.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Applies a regularized isotropic diffusion filter.");
+            }
+
+            public String getShortLabel() {
+                return new String("RegularizedIsotropicDiffusion");
+            }
+
+            public String getLabel() {
+                return new String("Regularized Isotropic Diffusion");
+            }
+
+            public String getName() {
+                return new String("Regularized Isotropic Diffusion");
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();       
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D, false));
+            table.put(new ParameterInt(AlgorithmParameters.NUM_ITERATIONS, 10));
+            table.put(new ParameterFloat(AlgorithmParameters.SIGMAS, 1.0f));
+            table.put(new ParameterFloat("diffusion_contrast", 0.15f));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            if (getResultImage() != null) {
+                // algo produced a new result image
+                return getResultImage().getImageName();
+            } 
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
+    }
 
 } // end class JDialogRegIsoDiffusion

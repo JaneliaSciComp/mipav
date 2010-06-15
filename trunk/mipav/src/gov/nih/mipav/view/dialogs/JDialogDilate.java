@@ -9,6 +9,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.components.*;
+import gov.nih.mipav.view.dialogs.ActionMetadata.ImageRequirements;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -27,7 +28,8 @@ import javax.swing.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      AlgorithmMorphology2D
  */
-public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInterface, ItemListener {
+public class JDialogDilate extends JDialogScriptableBase 
+	implements AlgorithmInterface, ActionDiscovery, ItemListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -1504,4 +1506,122 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
         return true;
     }
 
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms.Morphological");
+            }
+
+            public String getDescription() {
+                return new String("Dilates an image.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Dilates an image using " +
+                		"the indicated kernel and the indicated number of executions.");
+            }
+
+            public String getShortLabel() {
+                return new String("Dilate");
+            }
+
+            public String getLabel() {
+                return new String("Dilate");
+            }
+
+            public String getName() {
+                return new String("Dilate");
+            }
+            
+            public Set<ImageRequirements> getInputImageRequirements() {
+                return EnumSet.of(ImageRequirements.GRAYSCALE);
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+   public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+        
+        try {
+          	
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterInt(AlgorithmParameters.NUM_ITERATIONS,1));
+            
+            //See buildComboBox method for information on kernel_type
+            table.put(new ParameterInt("kernel_type", 1));
+            table.put(new ParameterFloat("kernel_size", 1.0f));
+            table.put(new ParameterBoolean("binary_morphology", false));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, true));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D, false));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            if (getResultImage() != null) {
+                // algo produced a new result image
+                return getResultImage().getImageName();
+            } else {
+                // algo was done in place
+                return image.getImageName();
+            }
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
+    }
+    
 }

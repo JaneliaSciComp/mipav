@@ -26,7 +26,8 @@ import javax.swing.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      AlgorithmMorphology2D
  */
-public class JDialogDeleteObjects extends JDialogScriptableBase implements AlgorithmInterface {
+public class JDialogDeleteObjects extends JDialogScriptableBase 
+	implements AlgorithmInterface, ActionDiscovery {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -248,29 +249,6 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
     }
 
     /**
-     * {@inheritDoc}
-     */
-    public void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-
-        if ((image.getType() != ModelImage.BOOLEAN) && (image.getType() != ModelImage.UBYTE) &&
-                (image.getType() != ModelImage.USHORT)) {
-            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
-            dispose();
-
-            return;
-        }
-
-        outputPanel = new JPanelAlgorithmOutputOptions(image);
-        scriptParameters.setOutputOptionsGUI(outputPanel);
-
-        setMinimumSize(scriptParameters.getParams().getInt("min_object_size"));
-        setMaximumSize(scriptParameters.getParams().getInt("max_object_size"));
-    }
-
-    /**
      * Accessor that sets the maximum size for objects to delete.
      *
      * @param  s  the maximum size
@@ -291,7 +269,30 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
     /**
      * {@inheritDoc}
      */
-    public void storeParamsFromGUI() throws ParserException {
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if ((image.getType() != ModelImage.BOOLEAN) && (image.getType() != ModelImage.UBYTE) &&
+                (image.getType() != ModelImage.USHORT)) {
+            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
+            dispose();
+
+            return;
+        }
+
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        scriptParameters.setOutputOptionsGUI(outputPanel);
+
+        setMinimumSize(scriptParameters.getParams().getInt("min_object_size"));
+        setMaximumSize(scriptParameters.getParams().getInt("max_object_size"));
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
         scriptParameters.storeOutputImageParams(resultImage, outputPanel.isOutputNewImageSet());
         scriptParameters.storeProcessWholeImage(outputPanel.isProcessWholeImageSet());
@@ -656,5 +657,112 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
         }
 
         return true;
+    }
+    
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms.Morphological");
+            }
+
+            public String getDescription() {
+                return new String("Deletes objects larger than maximum size indicated and objects smaller than the indicated minimum size.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Deletes objects larger than maximum size indicated and objects smaller than the indicated minimum size.");
+            }
+
+            public String getShortLabel() {
+                return new String("DeleteObjects");
+            }
+
+            public String getLabel() {
+                return new String("Delete Objects");
+            }
+
+            public String getName() {
+                return new String("Delete Objects");
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+   public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();       
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterInt("min_object_size", 1));
+            table.put(new ParameterInt("max_object_size", 1000));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, true));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            if (getResultImage() != null) {
+                // algo produced a new result image
+                return getResultImage().getImageName();
+            } 
+            else {
+                // algo was done in place
+                return image.getImageName();
+            }
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
     }
 }

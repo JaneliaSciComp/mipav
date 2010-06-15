@@ -9,9 +9,12 @@ import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.ActionMetadata.ImageRequirements;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.EnumSet;
+import java.util.Set;
 
 import javax.swing.*;
 
@@ -22,7 +25,8 @@ import javax.swing.*;
  * require user input and to be consistent with the dialog/algorithm paradigm. In should be noted, that the algorithms
  * are executed in their own thread.** replaces image
  */
-public class JDialogConvert3Dto4D extends JDialogScriptableBase implements AlgorithmInterface {
+public class JDialogConvert3Dto4D extends JDialogScriptableBase 
+	implements AlgorithmInterface, ActionDiscovery {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -708,4 +712,119 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase implements Algor
         return true;
     }
 
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Utilities.4D tools");
+            }
+
+            public String getDescription() {
+                return new String("Converts a 3D image to a 4D image.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Converts a 3D image to a 4D image.");
+            }
+
+            public String getShortLabel() {
+                return new String("Convert3DTo4D");
+            }
+
+            public String getLabel() {
+                return new String("Convert 3D to 4D");
+            }
+
+            public String getName() {
+                return new String("Convert 3D to 4D");
+            }
+            
+            public Set<ImageRequirements> getInputImageRequirements() {
+                return EnumSet.of(ImageRequirements.NDIM_3);
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+   public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+        
+        try {
+          	
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterInt("volume_length", 2));
+            table.put(new ParameterFloat("3_dim_resolution", 1.5f));
+            table.put(new ParameterFloat("4_dim_resolution", 1.0f));
+            
+            //Go to FileInfoBase.java for information on 3_dim_unit and 4_dim_unit
+            //There is no obvious way to display the string these integers represent in the dialog
+            //8 == MILLIMETERS
+            //13 == MICROSECONDS
+            table.put(new ParameterInt("3_dim_unit", FileInfoBase.MILLIMETERS));
+            table.put(new ParameterInt("4_dim_unit", FileInfoBase.MICROSEC));    
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            if (getResultImage() != null) {
+                // algo always produces a new result image
+                return getResultImage().getImageName();
+            } 
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
+    }
+    
 }
