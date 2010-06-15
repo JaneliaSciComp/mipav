@@ -8,23 +8,46 @@ public abstract class LevmarBoxConstraint {
 	// Results were worse than those of ELSUNC since ELSUNC handled DRAPER and 10* MEYER.
 	// Unconstrained DRAPER24D INCORRECT Singular matrix A in AX_EQ_B_LU and
 	// dgesvd (dbdsqr) failed to converge in AX_EQ_B_SVD, info[0] = 2.
-	// Constrained HOCK25 CORRECT
-	// Unconstrained BARD at standard start CORRECT
-	// Constrained BARD at 10 * standard start CORRECT
-	// Constrained BARD at 100 * standard start CORRECT
-	// Unconstrained KOWALIK_AND_OSBORNE at standard start CORRECT.
-	// Constrained KOWALIK_AND_OSBORNE at 10 * standard start CORRECT.
-	// Constrained KOWALIK_AND_OSBORNE at 100 * standard start CORRECT.
+	// Constrained HOCK25 CORRECT port gave chi-squared = 1.6247E-18 at 20 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 9.704E-20 at 14 iterations.
+	// Unconstrained BARD at standard start CORRECT with chi-squared = 8.2148773E-3 at 16 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 8.2148773E-3 at 6 iterations.
+	// Constrained BARD at 10 * standard start CORRECT with chi-squared = 8.2148773E-3 at 31 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 8.2148773E-3 at 13 iterations.
+	// Constrained BARD at 100 * standard start CORRECT with chi-squared = 8.2148773E-3 at 2063 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with 
+	// chi-squared = 8.2148773E-3 at 16 iterations.
+	// Unconstrained KOWALIK_AND_OSBORNE at standard start CORRECT with chi-squared = 3.0750560E-4 at 39 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 3.0750560E-4 at 10 iterations.
+	// Constrained KOWALIK_AND_OSBORNE at 10 * standard start CORRECT with chi-squared = 3.0750560E-4 at 530 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 3.0750560E-4 at 12 iterations.
+	// Constrained KOWALIK_AND_OSBORNE at 100 * standard start CORRECT with chi-squared = 3.0750560E-4 at 24,392 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 3.0750560E-4 at 125 iterations.
 	// Unconstrained MEYER at standard start CORRECT.
 	// Constrained MEYER at 10 * standard start INCORRECT maxIterations even with maxIterations = 300,000.
 	// Unconstrained OSBORNE1 CORRECT
 	// Unconstrained OSBORNE2 CORRECT
-	// The source code with the lmdemo.c version of ROSENBROCK did not produce the correct answer
-    // on a Windows 32 system without the LAPACK library hooked in.  dlevmar_bc_der gave 
-    // 0.8936874, 0.7979607 and dlevmar_der gave 0.9432309, 0.8893884.
 	// My port gave a CORRECT 0.99887, 0.997758 with AX_EQ_B_LU and a better
-	// 0.9993, 0.9986 with AX_EQ_B_SVD.
+	// 0.9993, 0.9986 and chi-squared = 4.768E-13 with AX_EQ_B_SVD at 20,000 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with 
+	// 0.99991165,0.999822896 at chi-squared = 1.2241E-16 at 6756 iterations.
 	// MODIFIED_ROSENBROCK CORRECT.
+	// POWELL_SINGULAR CORRECT at standard start with chi-squared = 4.77E-18
+	// a0 = 3.90E-5 a1 = -3.90E-6 a2 = 1.92E-5 a3 = 1.92E-5
+	// POWELL_SINGULAR CORRECT at 10*standard start with chi-squared = 3.33E-18
+	// a0 = 3.55E-5 a1 = -3.55E-6 a2 = 1.77E-5 a3 = 1.77E-5
+	// POWELL_SINGULAR CORRECT at 100*standard start with chi-squared = 4.37E-18
+	// a0 = 3.80E-5 a1 = -3.80E-6 a2 = 1.89E-5 a3 = 1.89E-5
+	// POWELL_2_PARAMETER CORRECT with chi-squared = 9.415E-18 at 187 iterations
+	// a0 - -2.932E-9 a1 = -3.835E-4
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// a0 = 2.5145E-29, a1 = 3.4827E-7 with chi-squared = 5.88E-26 at 7 iterations.
 	private final double INIT_MU = 1.0E-3;
 	
 	private final double STOP_THRESH = 1.0E-17;
@@ -137,6 +160,8 @@ public abstract class LevmarBoxConstraint {
     
     private final int MEYER = 10;
     
+    private final int POWELL_SINGULAR = 13;
+    
     private final int KOWALIK_AND_OSBORNE = 15;
     
     private final int OSBORNE1 = 17;
@@ -146,6 +171,8 @@ public abstract class LevmarBoxConstraint {
     private final int HOCK25 = 25;
     
     private final int MODIFIED_ROSENBROCK = 51;
+    
+    private final int POWELL_2_PARAMETER = 52;
 	
 	public LevmarBoxConstraint() {
     	int i;
@@ -341,9 +368,6 @@ public abstract class LevmarBoxConstraint {
         dumpTestResults();
         // Below is an example to fit y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        // In fact unconstrained only worked at the standard 
-        // starting point and constrained would work not at 10 * standard starting point 
-        // and would not work at 100 * standard starting point.
         Preferences.debug("Kowalik and Osborne function standard starting point unconstrained\n");
         Preferences.debug("y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)\n");
         Preferences.debug("Correct answer is a0 = 0.1928, a1 = 0.1913, a2 = 0.1231, a3 = 0.1361\n");
@@ -369,9 +393,6 @@ public abstract class LevmarBoxConstraint {
         dumpTestResults();
         // Below is an example to fit y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        // In fact unconstrained only worked at the standard 
-        // starting point and constrained would not work at 10 * standard starting point 
-        // and would not work at 100 * standard starting point.
         Preferences.debug("Kowalik and Osborne function 10 * standard starting point constrained\n");
         Preferences.debug("y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)\n");
         Preferences.debug("Correct answer is a0 = 0.1928, a1 = 0.1913, a2 = 0.1231, a3 = 0.1361\n");
@@ -404,9 +425,6 @@ public abstract class LevmarBoxConstraint {
         dumpTestResults();
         // Below is an example to fit y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        // In fact unconstrained only worked at the standard 
-        // starting point and constrained would not work at 10 * standard starting point 
-        // and would not work at 100 * standard starting point.
         Preferences.debug("Kowalik and Osborne function 100 * standard starting point constrained\n");
         Preferences.debug("y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)\n");
         Preferences.debug("Correct answer is a0 = 0.1928, a1 = 0.1913, a2 = 0.1231, a3 = 0.1361\n");
@@ -571,9 +589,7 @@ public abstract class LevmarBoxConstraint {
         dumpTestResults();
         Preferences.debug("Rosenbrock function unconstrained\n");
         Preferences.debug("Correct answer has param[0] = 1.0 param[1] = 1.0\n");
-        // The source code with the lmdemo.c version of Rosenbrock did not produce the correct answer
-        // on a Windows 32 system without the LAPACK library hooked in.  dlevmar_bc_der gave 
-        // 0.8936874, 0.7979607 and dlevmar_der gave 0.9432309, 0.8893884.
+        
         testMode = true;
         testCase = ROSENBROCK;
         nPts = 2;
@@ -605,6 +621,102 @@ public abstract class LevmarBoxConstraint {
         lb = null;
         ub = null;
         
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit y(0) = a0 + 10*a1
+        //                            y(1) = sqrt(5)*(a2 - a3)
+        //                            y(2) = (a1 - 2*a2)**2
+        //                            y(3) = sqrt(10)*(a0 - a3)**2
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Powell singular function at standard starting point unconstrained\n");
+        Preferences.debug("y(0) = a0 + 10*a1\n");
+        Preferences.debug("y(1) = sqrt(5)*(a2 - a3)\n");
+        Preferences.debug("y(2) = (a1 - 2*a2)**2\n");
+        Preferences.debug("y(3) = sqrt(10)*(a0 - a3)**2\n");
+        Preferences.debug("Correct answer has chi-squared = 0 at a0 = 0, a1= 0, a2 = 0, a3 = 0\n");
+        testMode = true;
+        testCase = POWELL_SINGULAR;
+        nPts = 4;
+        paramNum = 4;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        param = new double[paramNum];
+        param[0] = 3.0;
+        param[1] = -1.0;
+        param[2] = 0.0;
+        param[3] = 1.0;
+        lb = null;
+        ub = null;
+        driver();
+        dumpTestResults();
+        // Below is an example to fit y(0) = a0 + 10*a1
+        //                            y(1) = sqrt(5)*(a2 - a3)
+        //                            y(2) = (a1 - 2*a2)**2
+        //                            y(3) = sqrt(10)*(a0 - a3)**2
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Powell singular function at 10 * standard starting point unconstrained\n");
+        Preferences.debug("y(0) = a0 + 10*a1\n");
+        Preferences.debug("y(1) = sqrt(5)*(a2 - a3)\n");
+        Preferences.debug("y(2) = (a1 - 2*a2)**2\n");
+        Preferences.debug("y(3) = sqrt(10)*(a0 - a3)**2\n");
+        Preferences.debug("Correct answer has chi-squared = 0 at a0 = 0, a1= 0, a2 = 0, a3 = 0\n");
+        testMode = true;
+        testCase = POWELL_SINGULAR;
+        nPts = 4;
+        paramNum = 4;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        param = new double[paramNum];
+        param[0] = 30.0;
+        param[1] = -10.0;
+        param[2] = 0.0;
+        param[3] = 10.0;
+        lb = null;
+        ub = null;
+        driver();
+        dumpTestResults();
+        // Below is an example to fit y(0) = a0 + 10*a1
+        //                            y(1) = sqrt(5)*(a2 - a3)
+        //                            y(2) = (a1 - 2*a2)**2
+        //                            y(3) = sqrt(10)*(a0 - a3)**2
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Powell singular function at 100 * standard starting point unconstrained\n");
+        Preferences.debug("y(0) = a0 + 10*a1\n");
+        Preferences.debug("y(1) = sqrt(5)*(a2 - a3)\n");
+        Preferences.debug("y(2) = (a1 - 2*a2)**2\n");
+        Preferences.debug("y(3) = sqrt(10)*(a0 - a3)**2\n");
+        Preferences.debug("Correct answer has chi-squared = 0 at a0 = 0, a1= 0, a2 = 0, a3 = 0\n");
+        testMode = true;
+        testCase = POWELL_SINGULAR;
+        nPts = 4;
+        paramNum = 4;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[paramNum];
+        param = new double[paramNum];
+        param[0] = 300.0;
+        param[1] = -100.0;
+        param[2] = 0.0;
+        param[3] = 100.0;
+        lb = null;
+        ub = null;
+        driver();
+        dumpTestResults();
+        Preferences.debug("Powell's 2 parameter function\n");
+        Preferences.debug("y(0) = a0\n");
+        Preferences.debug("y(0) = 10.0*a0/(a0 + 0.1) + 2*a1*a1\n");
+        Preferences.debug("Correct answer a0 = 0 a1 = 0\n");
+        testMode = true;
+        testCase = POWELL_2_PARAMETER;
+        nPts = 2;
+        paramNum = 2;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[paramNum];
+        param = new double[paramNum];
+        param[0] = 3.0;
+        param[1] = 1.0;
+        lb = null;
+        ub = null;
         driver();
         dumpTestResults();
     }
@@ -688,6 +800,16 @@ public abstract class LevmarBoxConstraint {
 		    	hx[0] = 10.0*(param[1] - param[0]*param[0]);
 		    	hx[1] = 1.0 - param[0];
 		    	hx[2] = 100.0;
+		    	break;
+		    case POWELL_SINGULAR:
+		    	hx[0] = param[0] + 10.0*param[1];
+        	    hx[1] = Math.sqrt(5.0)*(param[2] - param[3]);
+        	    hx[2] = (param[1] - 2.0*param[2])*(param[1] - 2.0*param[2]);
+        	    hx[3] = Math.sqrt(10.0)*(param[0] - param[3])*(param[0] - param[3]);
+		    	break;
+		    case POWELL_2_PARAMETER:
+		    	hx[0] = param[0];
+		    	hx[1] = 10.0*param[0]/(param[0] + 0.1) + 2.0*param[1]*param[1];
 		    	break;
 		}
 	}
@@ -788,6 +910,30 @@ public abstract class LevmarBoxConstraint {
 	        	jac[3] = 0.0;
 	        	jac[4] = 0.0;
 	        	jac[5] = 0.0;
+	        	break;
+	        case POWELL_SINGULAR:
+	        	jac[0] = 1.0;
+    		    jac[1] = 10.0;
+    		    jac[2] = 0.0;
+    		    jac[3] = 0.0;
+    		    jac[4] = 0.0;
+    		    jac[5] = 0.0;
+    		    jac[6] = Math.sqrt(5.0);
+    		    jac[7] = -Math.sqrt(5.0);
+    		    jac[8] = 0.0;
+    		    jac[9] = 2.0*param[1] - 4.0*param[2];
+    		    jac[10] = 8.0*param[2] - 4.0*param[1];
+    		    jac[11] = 0.0;
+    		    jac[12] = 2.0*Math.sqrt(10.0)*param[0] - 2.0*Math.sqrt(10.0)*param[3];
+    		    jac[13] = 0.0;
+    		    jac[14] = 0.0;
+    		    jac[15] = 2.0*Math.sqrt(10.0)*param[3] - 2.0*Math.sqrt(10.0)*param[0];
+	        	break;
+	        case POWELL_2_PARAMETER:
+	        	jac[0] = 1.0;
+	        	jac[1] = 0.0;
+	        	jac[2] = 1.0/((param[0] + 0.1)*(param[0] + 0.1));
+	        	jac[3] = 4.0*param[1];
 	        	break;
 	    }
 	}
