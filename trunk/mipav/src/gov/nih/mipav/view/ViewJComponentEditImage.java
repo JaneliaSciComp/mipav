@@ -2429,10 +2429,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             paintComponent(getGraphics());
         }
 
-        if (cursorMode == ViewJComponentBase.DEFAULT) {
+        //if (cursorMode == ViewJComponentBase.DEFAULT) {
             intensityLabel = false;
             paintComponent(getGraphics());
-        }
+        //}
     }
 
     /**
@@ -2568,12 +2568,12 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         mousePressIsShiftDown = mouseEvent.isShiftDown();
 
         // shows intsnsity label upon mouse press
-        if (cursorMode == ViewJComponentBase.DEFAULT) {
+        if (cursorMode == ViewJComponentBase.DEFAULT || cursorMode == ViewJComponentBase.VOI_3D) {
             setPixelInformationAtLocation(xS, yS);
 
             if (mouseEvent.getButton() == MouseEvent.BUTTON1) {
                 intensityLabel = true;
-                //paintComponent(getGraphics());
+                paintComponent(getGraphics());
             }
         }
 
@@ -2709,10 +2709,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                     (short) xS, (short) yS, (short) z, value);
             imageActive.notifyImageDisplayListeners(null, true);
         }
-        else if (cursorMode == DEFAULT) {
+        //else if (cursorMode == DEFAULT) {
             intensityLabel = false;
-            //paintComponent(getGraphics());
-        }
+            paintComponent(getGraphics());
+        //}
 
         // reset mousePressIsShiftDown for next mouse click
         mousePressIsShiftDown = false;

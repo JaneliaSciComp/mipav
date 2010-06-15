@@ -281,7 +281,7 @@ public class VOI extends ModelSerialCloneable {
     {
         this.active = kVOI.active;
         this.boundingBox = kVOI.boundingBox;
-        this.color = new Color( kVOI.color.getRed(), kVOI.color.getBlue(), kVOI.color.getGreen() );
+        this.color = new Color( kVOI.color.getRed(), kVOI.color.getGreen(), kVOI.color.getBlue() );
         this.thickness = kVOI.thickness;
         this.contourGraph = kVOI.contourGraph;
         this.curves = new Vector<VOIBase>();
@@ -2068,7 +2068,7 @@ public class VOI extends ModelSerialCloneable {
      * @param  color  the color
      */
     public void setColor(Color color) {
-        this.color = color;
+        this.color = new Color( color.getRed(), color.getGreen(), color.getBlue() );
 
         if (listenerList != null) {
             Object[] listeners = listenerList.getListenerList();
