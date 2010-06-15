@@ -379,6 +379,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     private static final int NearPoint = 0;
 
     private static final int NearLine = 1;
+    private static final int NearBoundPoint = 2;
 
     private int m_iNearStatus = NearNone;
 
@@ -723,7 +724,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         {
         case VOI.CONTOUR:
         case VOI.POLYLINE:
-            drawVOI( kVOI, resolutions, unitsOfMeasure, g, 1 );
+            drawVOI( kVOI, resolutions, unitsOfMeasure, g );
             return;
 
         case VOI.LINE:
@@ -1133,6 +1134,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 {
                     moveVOIPoint( kEvent.getX(), kEvent.getY() );
                 }
+                else if ( m_iNearStatus == NearBoundPoint )
+                {
+                    scaleVOI( m_kCurrentVOI, kEvent.getX(), kEvent.getY() );
+                }
                 else if ( m_iNearStatus == NearLine )
                 {
                     m_kParent.saveVOIs("addVOIPoint");
@@ -1368,6 +1373,165 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             }
         }
         return false;
+    }
+    
+    public boolean nearBoundPoint( VOIBase kVOI, int iX, int iY, int iZ )
+    {
+
+        if ( kVOI.getGroup().getBoundingBoxFlag() == true )
+        {
+            Vector3f kVOIPoint = new Vector3f(iX, iY, iZ );
+            Vector3f kUpperLeft = getBoundingBoxUpperLeft( kVOI );
+            Vector3f kUpperRight = getBoundingBoxUpperRight( kVOI );
+            Vector3f kLowerLeft = getBoundingBoxLowerLeft( kVOI );
+            Vector3f kLowerRight = getBoundingBoxLowerRight( kVOI );
+            Vector3f kLowerMid = getBoundingBoxLowerMiddle( kVOI );
+            Vector3f kRightMid = getBoundingBoxRightMiddle( kVOI );
+            Vector3f kTopMid = getBoundingBoxUpperMiddle( kVOI );
+            Vector3f kLeftMid = getBoundingBoxLeftMiddle( kVOI );
+            
+            Vector3f kDiff = new Vector3f();
+            kDiff.Sub( kUpperLeft, kVOIPoint );
+            if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
+            {
+                kVOI.setNearBoundPoint(VOIBase.UPPER_LEFT);
+                return true;
+            }
+            kDiff.Sub( kUpperRight, kVOIPoint );
+            if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
+            {
+                kVOI.setNearBoundPoint(VOIBase.UPPER_RIGHT);
+                return true;
+            }
+            kDiff.Sub( kLowerLeft, kVOIPoint );
+            if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
+            {
+                kVOI.setNearBoundPoint(VOIBase.LOWER_LEFT);
+                return true;
+            }
+            kDiff.Sub( kLowerRight, kVOIPoint );
+            if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
+            {
+                kVOI.setNearBoundPoint(VOIBase.LOWER_RIGHT);
+                return true;
+            }
+            kDiff.Sub( kLowerMid, kVOIPoint );
+            if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
+            {
+                kVOI.setNearBoundPoint(VOIBase.LOWER_MIDDLE);
+                return true;
+            }
+            kDiff.Sub( kRightMid, kVOIPoint );
+            if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
+            {
+                kVOI.setNearBoundPoint(VOIBase.RIGHT_MIDDLE);
+                return true;
+            }
+            kDiff.Sub( kTopMid, kVOIPoint );
+            if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
+            {
+                kVOI.setNearBoundPoint(VOIBase.UPPER_MIDDLE);
+                return true;
+            }
+            kDiff.Sub( kLeftMid, kVOIPoint );
+            if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
+            {
+                kVOI.setNearBoundPoint(VOIBase.LEFT_MIDDLE);
+                return true;
+            }
+            
+        }
+        return false;
+    }
+    
+
+    public Vector3f getBoundingBoxUpperLeft( VOIBase kVOI )
+    {
+        Vector3f kScreenMin = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[0] );
+        Vector3f kScreenMax = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[1] );
+        Vector3f kTemp = new Vector3f( kScreenMin );
+        kScreenMin.Min( kScreenMax );
+        kScreenMax.Max( kTemp );
+        
+        return new Vector3f( kScreenMin );
+    }
+
+    public Vector3f getBoundingBoxUpperRight( VOIBase kVOI )
+    {
+        Vector3f kScreenMin = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[0] );
+        Vector3f kScreenMax = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[1] );
+        Vector3f kTemp = new Vector3f( kScreenMin );
+        kScreenMin.Min( kScreenMax );
+        kScreenMax.Max( kTemp );
+        
+        return new Vector3f( kScreenMax.X, kScreenMin.Y, kScreenMin.Z );
+    }
+
+    public Vector3f getBoundingBoxLowerRight( VOIBase kVOI )
+    {
+        Vector3f kScreenMin = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[0] );
+        Vector3f kScreenMax = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[1] );
+        Vector3f kTemp = new Vector3f( kScreenMin );
+        kScreenMin.Min( kScreenMax );
+        kScreenMax.Max( kTemp );
+        
+        return new Vector3f( kScreenMax );
+    }
+    
+    public Vector3f getBoundingBoxLowerLeft( VOIBase kVOI )
+    {
+        Vector3f kScreenMin = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[0] );
+        Vector3f kScreenMax = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[1] );
+        Vector3f kTemp = new Vector3f( kScreenMin );
+        kScreenMin.Min( kScreenMax );
+        kScreenMax.Max( kTemp );
+        
+        return new Vector3f( kScreenMin.X, kScreenMax.Y, kScreenMin.Z );
+    }
+    
+
+    
+    public Vector3f getBoundingBoxUpperMiddle( VOIBase kVOI )
+    {
+        Vector3f kUpperLeft = getBoundingBoxUpperLeft( kVOI );
+        Vector3f kUpperRight = getBoundingBoxUpperRight( kVOI );
+        Vector3f kUpperMid = new Vector3f();
+        kUpperMid.Add( kUpperLeft, kUpperRight );
+        kUpperMid.Scale( 0.5f );
+        return kUpperMid;
+    }
+    
+
+    
+    public Vector3f getBoundingBoxLowerMiddle( VOIBase kVOI )
+    {
+        Vector3f kLowerLeft = getBoundingBoxLowerLeft( kVOI );
+        Vector3f kLowerRight = getBoundingBoxLowerRight( kVOI );
+        Vector3f kLowerMid = new Vector3f();
+        kLowerMid.Add( kLowerLeft, kLowerRight );
+        kLowerMid.Scale( 0.5f );
+        return kLowerMid;
+    }
+    
+    public Vector3f getBoundingBoxLeftMiddle( VOIBase kVOI )
+    {
+        Vector3f kUpperLeft = getBoundingBoxUpperLeft( kVOI );
+        Vector3f kLowerLeft = getBoundingBoxLowerLeft( kVOI );
+        Vector3f kLeftMid = new Vector3f();
+        kLeftMid.Add( kUpperLeft, kLowerLeft );
+        kLeftMid.Scale( 0.5f );
+        return kLeftMid;
+    }
+
+    
+    public Vector3f getBoundingBoxRightMiddle( VOIBase kVOI )
+    {
+        Vector3f kUpperRight = getBoundingBoxUpperRight( kVOI );
+        Vector3f kLowerRight = getBoundingBoxLowerRight( kVOI );
+        Vector3f kRightMid = new Vector3f();
+        kRightMid.Add( kUpperRight, kLowerRight );
+        kRightMid.Scale( 0.5f );
+        return kRightMid;
     }
 
     public void pasteAllVOI( VOIBase kVOI )
@@ -2521,7 +2685,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         return kCenterMass;
     }
 
-    private void drawVOI( VOIBase kVOI, float[] resols, int[] unitsOfMeasure, Graphics g, int thickness ) {
+    private void drawVOI( VOIBase kVOI, float[] resols, int[] unitsOfMeasure, Graphics g ) {
         Polygon gon = null;
         int j;
         new DecimalFormat(".##");
@@ -2537,7 +2701,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         } else if ( kVOI.getDoGeometricCenterLabel() && kVOI.isClosed()) {
             drawGeometricCenter(kVOI, g);
         }
-
+        
+        int thickness = kVOI.getGroup().getThickness();
         if ( thickness == 1) {
             if (kVOI.isClosed() == true) {
                 g.drawPolygon(gon);
@@ -2675,13 +2840,18 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                         (int) (gon.ypoints[kVOI.getSelectedPoint()] - 1.5 + 0.5f), 3, 3);
             }                       
 
-            /*
-            if (boundingBox == true) {
+            if (kVOI.getGroup().getBoundingBoxFlag() == true) {
                 int x0, x1, y0, y1;
-                x0 = (int) ((xBounds[0] * zoomX * resolutionX) + 0.5);
-                x1 = (int) ((xBounds[1] * zoomX * resolutionX) + 0.5);
-                y0 = (int) ((yBounds[0] * zoomY * resolutionY) + 0.5);
-                y1 = (int) ((yBounds[1] * zoomY * resolutionY) + 0.5);
+                Vector3f kScreenMin = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[0] );
+                Vector3f kScreenMax = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[1] );
+                Vector3f kTemp = new Vector3f( kScreenMin );
+                kScreenMin.Min( kScreenMax );
+                kScreenMax.Max( kTemp );
+                
+                x0 = (int) (kScreenMin.X + 0.5);
+                x1 = (int) (kScreenMax.X + 0.5);
+                y0 = (int) (kScreenMin.Y + 0.5);
+                y1 = (int) (kScreenMax.Y  + 0.5);
                 g.setColor(Color.yellow.darker());
                 g.drawRect(x0, y0, x1 - x0, y1 - y0);
 
@@ -2705,15 +2875,16 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 String measuredWidthString, measuredHeightString;
                 String upperLeftLocationString;
                 String lowerXYmmString;
-                int width = (int) ((xBounds[1] - xBounds[0]) + 0.5f);
-                int height = (int) ((yBounds[1] - yBounds[0]) + 0.5f);
+                int width = (int) ((kScreenMax.X  - kScreenMin.X ) + 0.5f);
+                int height = (int) ((kScreenMax.X  - kScreenMin.X  ) + 0.5f);
                 widthString = String.valueOf(width);
                 heightString = String.valueOf(height);
-                measuredWidth = (xBounds[1] - xBounds[0]) * resols[0];
-                measuredHeight = (yBounds[1] - yBounds[0]) * resols[1];
-                xUnitsString = FileInfoBase
+                float measuredWidth = (kScreenMax.X  - kScreenMin.X) * resols[0];
+                float measuredHeight = (kScreenMax.X  - kScreenMin.X ) * resols[1];
+                DecimalFormat nf = new DecimalFormat( "0.0#" );
+                String xUnitsString = FileInfoBase
                         .getUnitsOfMeasureAbbrevStr(unitsOfMeasure[0]);
-                yUnitsString = FileInfoBase
+                String yUnitsString = FileInfoBase
                         .getUnitsOfMeasureAbbrevStr(unitsOfMeasure[1]);
                 measuredWidthString = String.valueOf(nf.format(measuredWidth))
                         + " " + xUnitsString;
@@ -2723,15 +2894,17 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
                 // System.err.println("width: " + widthString + " height: " +
                 // heightString);
-                float lowerXmm = originX + (resols[0] * xBounds[0]);
-                float lowerYmm = originY + (resols[1] * yBounds[0]);
+                float originX = m_kImageActive.getOrigin()[0];
+                float originY = m_kImageActive.getOrigin()[1];
+                float lowerXmm = originX + (resols[0] * kScreenMin.X);
+                float lowerYmm = originY + (resols[1] * kScreenMin.Y);
                 lowerXYmmString = "(" + String.valueOf(nf.format(lowerXmm))
                         + " " + xUnitsString + ", "
                         + String.valueOf(nf.format(lowerYmm)) + " "
                         + yUnitsString + ")";
                 upperLeftLocationString = "("
-                        + String.valueOf((int) (xBounds[0] + 0.5f)) + ","
-                        + String.valueOf((int) (yBounds[0] + 0.5f)) + ")";
+                        + String.valueOf((int) (kScreenMin.X + 0.5f)) + ","
+                        + String.valueOf((int) (kScreenMin.Y + 0.5f)) + ")";
                 g.setColor(Color.black);
 
                 // System.err.println(xBounds[0] + " " + xBounds[1] + " " +
@@ -2894,58 +3067,57 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 // widthString);
                 g.setColor(Color.yellow.brighter());
 
-                switch (nearBoundPoint) {
+                switch ( kVOI.getNearBoundPoint() ) {
 
-                case 1:
+                case VOIBase.UPPER_LEFT:
                     g.fillRect(x0 - 2, y0 - 2, 5, 5);
                     g.setColor(Color.black);
                     g.drawRect(x0 - 2, y0 - 2, 4, 4);
                     break;
 
-                case 2:
+                case VOIBase.UPPER_RIGHT:
                     g.fillRect(x1 - 2, y0 - 2, 5, 5);
                     g.setColor(Color.black);
                     g.drawRect(x1 - 2, y0 - 2, 4, 4);
                     break;
 
-                case 3:
+                case VOIBase.LOWER_RIGHT:
                     g.fillRect(x1 - 2, y1 - 2, 5, 5);
                     g.setColor(Color.black);
                     g.drawRect(x1 - 2, y1 - 2, 4, 4);
                     break;
 
-                case 4:
+                case VOIBase.LOWER_LEFT:
                     g.fillRect(x0 - 2, y1 - 2, 5, 5);
                     g.setColor(Color.black);
                     g.drawRect(x0 - 2, y1 - 2, 4, 4);
                     break;
 
-                case 5:
+                case VOIBase.UPPER_MIDDLE:
                     g.fillRect(x0 + ((x1 - x0) / 2) - 2, y0 - 2, 5, 5);
                     g.setColor(Color.black);
                     g.drawRect(x0 + ((x1 - x0) / 2) - 2, y0 - 2, 4, 4);
                     break;
 
-                case 6:
+                case VOIBase.RIGHT_MIDDLE:
                     g.fillRect(x1 - 2, y0 + ((y1 - y0) / 2) - 2, 5, 5);
                     g.setColor(Color.black);
                     g.drawRect(x1 - 2, y0 + ((y1 - y0) / 2) - 2, 4, 4);
                     break;
 
-                case 7:
+                case VOIBase.LOWER_MIDDLE:
                     g.fillRect(x0 + ((x1 - x0) / 2) - 2, y1 - 2, 5, 5);
                     g.setColor(Color.black);
                     g.drawRect(x0 + ((x1 - x0) / 2) - 2, y1 - 2, 4, 4);
                     break;
 
-                case 8:
+                case VOIBase.LEFT_MIDDLE:
                     g.fillRect(x0 - 2, y0 + ((y1 - y0) / 2) - 2, 5, 5);
                     g.setColor(Color.black);
                     g.drawRect(x0 - 2, y0 + ((y1 - y0) / 2) - 2, 4, 4);
                     break;
                 }
             }
-             */
         }
     }
 
@@ -3671,6 +3843,15 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 }
                 moveVOIPoint( kEvent.getX(), kEvent.getY() );
             }
+            else if ( m_iNearStatus == NearBoundPoint )
+            {
+                if ( m_bFirstDrag && ((m_fMouseX != kEvent.getX()) || (m_fMouseY != kEvent.getY())) )
+                {
+                    m_kParent.saveVOIs( "scaleVOI" );
+                    m_bFirstDrag = false;
+                }
+                scaleVOI( m_kCurrentVOI, kEvent.getX(), kEvent.getY() );        
+            }
             else if ( m_bSelected )
             {
                 if ( m_bFirstDrag && ((m_fMouseX != kEvent.getX()) || (m_fMouseY != kEvent.getY())) )
@@ -3710,7 +3891,89 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         return scaledGon;
     }
 
+    private void scaleVOI( VOIBase kVOI, int iX, int iY )
+    {
+        if ( kVOI == null )
+        {
+            return;
+        }
+        if ( !kVOI.isActive() )
+        {
+            return;
+        }
+        
+        int nearBound = kVOI.getNearBoundPoint();
+        if ( nearBound == VOIBase.NOT_A_POINT )
+        {
+            return;
+        }
+        Vector3f kScreenBound = null;
+        switch ( nearBound )
+        {
+        case VOIBase.UPPER_LEFT: kScreenBound = getBoundingBoxUpperLeft( kVOI ); break;
+        case VOIBase.UPPER_RIGHT: kScreenBound = getBoundingBoxUpperRight( kVOI ); break;
+        case VOIBase.LOWER_LEFT: kScreenBound = getBoundingBoxLowerLeft( kVOI ); break;
+        case VOIBase.LOWER_RIGHT: kScreenBound = getBoundingBoxLowerRight( kVOI ); break;
 
+        case VOIBase.UPPER_MIDDLE: kScreenBound = getBoundingBoxUpperMiddle( kVOI ); break;
+        case VOIBase.RIGHT_MIDDLE: kScreenBound = getBoundingBoxRightMiddle( kVOI ); break;
+        case VOIBase.LEFT_MIDDLE: kScreenBound = getBoundingBoxLeftMiddle( kVOI ); break;
+        case VOIBase.LOWER_MIDDLE: kScreenBound = getBoundingBoxLowerMiddle( kVOI ); break;
+        }
+        if ( kScreenBound == null )
+        {
+            return;
+        }
+        Vector3f kScreenCenter = new Vector3f( getBoundingBoxUpperLeft(kVOI) );
+        kScreenCenter.Add( getBoundingBoxUpperRight(kVOI) );
+        kScreenCenter.Add( getBoundingBoxLowerLeft(kVOI) );
+        kScreenCenter.Add( getBoundingBoxLowerRight(kVOI) );
+        kScreenCenter.Scale( 0.25f );
+
+        Vector3f kScreenScale = new Vector3f( (iX-kScreenCenter.X) / (kScreenBound.X-kScreenCenter.X), 
+                (iY-kScreenCenter.Y) / (kScreenBound.Y-kScreenCenter.Y), 1 );
+        
+        switch( nearBound )
+        {
+        case VOIBase.LOWER_MIDDLE:
+        case VOIBase.UPPER_MIDDLE: kScreenScale.X = 1; break;
+        case VOIBase.LEFT_MIDDLE:
+        case VOIBase.RIGHT_MIDDLE: kScreenScale.Y = 1; break;
+        }
+
+        if ( kScreenScale.X == 1 && kScreenScale.Y == 1 )
+        {
+            return;
+        }
+        
+        Vector<Vector3f> newPoints = new Vector<Vector3f>();
+        for ( int i = 0; i < kVOI.size(); i++ )
+        {
+            Vector3f kScreen = m_kDrawingContext.fileToScreen( kVOI.elementAt(i) );
+            kScreen.Sub(kScreenCenter);
+            kScreen.Mult( kScreenScale );
+            kScreen.Add(kScreenCenter);
+            Vector3f kVolumePt = new Vector3f();
+            if ( m_kDrawingContext.screenToFile( kScreen, kVolumePt ) )
+            {
+                return;
+            }
+            newPoints.add( kVolumePt );
+        }
+        for ( int i = 0; i < kVOI.size(); i++ )
+        {
+            kVOI.set( i, newPoints.elementAt(i) );
+        }
+
+        kVOI.update();
+        
+        m_kParent.setCursor(MipavUtil.crosshairCursor); 
+        m_kParent.updateDisplay();
+        if ( m_kCurrentVOI.getGroup().getContourGraph() != null )
+        {
+            m_kParent.updateGraph(m_kCurrentVOI);
+        }
+    }
 
     /**
      * Sets up directed graph from the seed point. A point (x,y) is mapped to its absolute value in the image, y*xDim +
@@ -3991,7 +4254,15 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 {
                     m_kParent.setCursor(MipavUtil.crosshairCursor);
                     m_iNearStatus = NearPoint;
+                    m_kParent.updateDisplay();
                 }
+                return;
+            }
+            else if ( nearBoundPoint( m_kCurrentVOI, iX, iY, m_iSlice ) )
+            {
+                m_kParent.setCursor(MipavUtil.crosshairCursor);
+                m_iNearStatus = NearBoundPoint;
+                m_kParent.updateDisplay();
                 return;
             }
             else if ( m_kCurrentVOI.nearLine( (int)kVolumePt.X, (int)kVolumePt.Y, (int)kVolumePt.Z ) )
@@ -4001,6 +4272,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 {
                     m_kParent.setCursor(MipavUtil.addPointCursor);
                     m_iNearStatus = NearLine;
+                    m_kParent.updateDisplay();
                 }
                 else
                 {

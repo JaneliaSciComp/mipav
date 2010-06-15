@@ -50,6 +50,15 @@ public abstract class VOIBase extends Vector<Vector3f> {
     /** If the points on the contour are not on the x,y, or z-plane. */
     public static final int NOT_A_PLANE = 0;
 
+    public static final int UPPER_LEFT = 0;
+    public static final int UPPER_RIGHT = 1;
+    public static final int LOWER_LEFT = 2;
+    public static final int LOWER_RIGHT = 3;
+    public static final int UPPER_MIDDLE = 4;
+    public static final int LEFT_MIDDLE = 5;
+    public static final int RIGHT_MIDDLE = 6;
+    public static final int LOWER_MIDDLE = 7;
+    
     /**
      * Used in places which usually remember an index into a point vector. Indicates that the index should not be used.
      */
@@ -101,6 +110,9 @@ public abstract class VOIBase extends Vector<Vector3f> {
 
     /** Flag used to indicate if the cursor is near a point of the VOI member. */
     protected int nearPoint = NOT_A_POINT;
+
+    /** Flag used to indicate if the cursor is near a point on the VOI bounding box. */
+    protected int nearBoundPoint = NOT_A_POINT;
 
     /** Reference to the containing VOI object. */
     protected VOI voiGroup;
@@ -1335,7 +1347,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         return voiGroup;
     }
 
-
+    
     /**
      * Returns the contour bounding-box.
      * @return Vector3f[] with the bounding-box minimum in [0] and the maximum in [1].
@@ -1781,6 +1793,20 @@ public abstract class VOIBase extends Vector<Vector3f> {
     public void setNearPoint( int i )
     {
         nearPoint = i;
+    }
+
+    /**
+     * Sets the near boundary point.
+     * @param i
+     */
+    public void setNearBoundPoint( int i )
+    {
+        nearBoundPoint = i;
+    }
+
+    public int getNearBoundPoint( )
+    {
+        return nearBoundPoint;
     }
 
     /**
