@@ -70,6 +70,11 @@ import gov.nih.mipav.view.*;
  *  LINEAR_RANK1 OK.
  *  LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS OK.
  *  CHEBYQUAD OK.
+ *  LEVMAR_ROSENBROCK did not work for internal scaling = true; this gave a0 = -0.9958, 1.0
+ *  Internal scaling = false did work at 6756 iterations for both analytical and numerical Jacobean.
+ *  Numerical Jacobean 0.99991,0.999819 at chi-squared = 1.3133E-16 OK.
+ *  Analytical Jacobean 0.99991165,0.999822896 at chi-squared = 1.2241E-16 OK.
+ *  POWELL_2_PARAMETER OK.
  */
 
 // BELOW IS AN EXAMPLE OF A DRIVER USED IN FITTING A 4 PARAMETER
@@ -611,6 +616,10 @@ public abstract class NLConstrainedEngine {
     private final int LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS = 34;
     
     private final int CHEBYQUAD = 35;
+    
+    private final int LEVMAR_ROSENBROCK = 50;
+    
+    private final int POWELL_2_PARAMETER = 52;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -784,7 +793,7 @@ public abstract class NLConstrainedEngine {
         bu[1] = 20.0;
         bl[2] = 0.0;
         bu[2] = 20.0;
-        driverCalls();
+        driverCalls(); 
         // Below is an example to fit y = a0 + x/(a1*(16 - x) + a2*min(x,16-x))
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         // Unconstrained only worked at the standard  starting point.  This is as expected
@@ -825,14 +834,9 @@ public abstract class NLConstrainedEngine {
         bu[1] = 200.0;
         bl[2] = 0.0;
         bu[2] = 200.0;
-        driverCalls();
+        driverCalls(); 
         // Below is an example to fit y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        // According to the article if started at 10 * standard starting point or 
-        // 100 * standard point ELSUNC running unconstrained converges towards a reported
-        // unbounded local minimizer.  In fact unconstrained only worked at the standard 
-        // starting point and constrained would work at 10 * standard starting point 
-        // but not 100 * standard starting point.
         Preferences.debug("Kowalik and Osborne function standard starting point unconstrained\n");
         Preferences.debug("y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)\n");
         Preferences.debug("Correct answer is a0 = 0.1928, a1 = 0.1913, a2 = 0.1231, a3 = 0.1361\n");
@@ -862,11 +866,6 @@ public abstract class NLConstrainedEngine {
         driverCalls();
         // Below is an example to fit y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        // According to the article if started at 10 * standard starting point or 
-        // 100 * standard point ELSUNC running unconstrained converges towards a reported
-        // unbounded local minimizer.  In fact unconstrained only worked at the standard 
-        // starting point and constrained would work at 10 * standard starting point 
-        // but not 100 * standard starting point.
         Preferences.debug("Kowalik and Osborne function 10 * standard starting point constrained\n");
         Preferences.debug("y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)\n");
         Preferences.debug("Correct answer is a0 = 0.1928, a1 = 0.1913, a2 = 0.1231, a3 = 0.1361\n");
@@ -904,11 +903,6 @@ public abstract class NLConstrainedEngine {
         driverCalls();
         // Below is an example to fit y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        // According to the article if started at 10 * standard starting point or 
-        // 100 * standard point ELSUNC running unconstrained converges towards a reported
-        // unbounded local minimizer.  In fact unconstrained only worked at the standard 
-        // starting point and constrained would work at 10 * standard starting point 
-        // but not 100 * standard starting point.
         Preferences.debug("Kowalik and Osborne function 100 * standard starting point constrained\n");
         Preferences.debug("y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)\n");
         Preferences.debug("Correct answer is a0 = 0.1928, a1 = 0.1913, a2 = 0.1231, a3 = 0.1361\n");
@@ -1957,6 +1951,47 @@ public abstract class NLConstrainedEngine {
             bu[i] = 1.0;
         }
         driverCalls();
+        
+        Preferences.debug("Rosenbrock function used as LEVMAR example standard starting point unconstrained\n");
+        Preferences.debug("y(0) = ((1.0 - a0)*(1.0 - a0) + 105.0*(a1 - a0*a0)*(a1 - a0*a0));\n");
+        Preferences.debug("y(1) = y(0)\n");
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 1\n");
+        testMode = true;
+        testCase = LEVMAR_ROSENBROCK;
+        nPts = 2;
+        param = 2;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = -1.2;
+        gues[1] = 1.0;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        Preferences.debug("Powell's 2 parameter function\n");
+        Preferences.debug("y(0) = a0\n");
+        Preferences.debug("y(0) = 10.0*a0/(a0 + 0.1) + 2*a1*a1\n");
+        Preferences.debug("Correct answer a0 = 0 a1 = 0\n");
+        testMode = true;
+        testCase = POWELL_2_PARAMETER;
+        nPts = 2;
+        param = 2;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 3.0;
+        gues[1] = 1.0;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
     }
     
     /**
@@ -1979,7 +2014,7 @@ public abstract class NLConstrainedEngine {
                 ySeries[i] = (double) yData[i];
             }
 
-            maxIterations = 20 * param;
+            maxIterations = 200 * param;
             bl = new double[param];
             bu = new double[param];
             residuals = new double[nPts];
@@ -2032,7 +2067,7 @@ public abstract class NLConstrainedEngine {
                 ySeries[i] = yData[i];
             }
 
-            maxIterations = 20 * param;
+            maxIterations = 200 * param;
             bl = new double[param];
             bu = new double[param];
             residuals = new double[nPts];
@@ -2115,7 +2150,7 @@ public abstract class NLConstrainedEngine {
         	try {
                 
 
-                maxIterations = 400 * param;
+                maxIterations = 4000 * param;
                 residuals = new double[nPts];
                 pivit = new int[param];
                 aset = new int[param];
@@ -2761,6 +2796,43 @@ public abstract class NLConstrainedEngine {
 	                		    	covarMat[i-1][j] = shiftedChebyshevDerivative(a[j],i)/param;
 	                		    }
 	                		}
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case LEVMAR_ROSENBROCK:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		residuals[0] = ((1.0 - a[0])*(1.0 - a[0]) 
+        		    			+ 105.0*(a[1]- a[0]*a[0])*(a[1] - a[0]*a[0]));
+                		residuals[1] = residuals[0];
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                			covarMat[0][0] = (-2.0 + 2.0*a[0] - 4.0*105.0*(a[1] - a[0]*a[0])*a[0]);
+            	        	covarMat[0][1] = (2*105.0*(a[1] - a[0]*a[0]));
+            	        	covarMat[1][0] = (-2.0 + 2.0*a[0] - 4.0*105.0*(a[1] - a[0]*a[0])*a[0]);
+            	        	covarMat[1][1] = (2*105.0*(a[1] - a[0]*a[0]));	
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case POWELL_2_PARAMETER:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		residuals[0] = a[0];
+        		    	residuals[1] = 10.0*a[0]/(a[0] + 0.1) + 2.0*a[1]*a[1];	
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                			covarMat[0][0] = 1.0;
+            	        	covarMat[0][1] = 0.0;
+            	        	covarMat[1][0] = 1.0/((a[0] + 0.1)*(a[0] + 0.1));
+            	        	covarMat[1][1] = 4.0*a[1];	
                 		} // if (analyticalJacobian)
                 		else {
                 			// If the user wishes to calculate the Jacobian numerically
