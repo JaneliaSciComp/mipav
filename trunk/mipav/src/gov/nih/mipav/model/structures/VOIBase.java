@@ -412,7 +412,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
                     if ( contains( x, y, z ) )
                     {
                         fVal = kImage.getFloat(x,y,z);
-                        if ( inRange( ignoreMin, ignoreMax, fVal, rangeFlag ) )
+                        if ( !inRange( ignoreMin, ignoreMax, fVal, rangeFlag ) )
                         {
                             values.add( new Float(fVal) );
                         }
@@ -478,9 +478,9 @@ public abstract class VOIBase extends Vector<Vector3f> {
                         r = kImage.getFloatC(x,y,z,1);
                         g = kImage.getFloatC(x,y,z,2);
                         b = kImage.getFloatC(x,y,z,3);
-                        if ( inRange( ignoreMin, ignoreMax, r, rangeFlag ) &&
-                             inRange( ignoreMin, ignoreMax, g, rangeFlag ) &&
-                             inRange( ignoreMin, ignoreMax, b, rangeFlag ) )
+                        if ( !inRange( ignoreMin, ignoreMax, r, rangeFlag ) &&
+                             !inRange( ignoreMin, ignoreMax, g, rangeFlag ) &&
+                             !inRange( ignoreMin, ignoreMax, b, rangeFlag ) )
                         {
                             values.add( new ColorRGB(r,g,b) );
                         }
