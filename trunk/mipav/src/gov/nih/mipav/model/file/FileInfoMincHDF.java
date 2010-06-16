@@ -44,6 +44,8 @@ public class FileInfoMincHDF extends FileInfoBase {
      * The valid range for image pixel values
      */
     private double[] validRange = null;
+    
+    private boolean hasImageMinMaxDimOrder;
 
    
 
@@ -164,7 +166,15 @@ public class FileInfoMincHDF extends FileInfoBase {
         this.imageNode = imageNode;
     }
 
-    /**
+    public boolean isHasImageMinMaxDimOrder() {
+		return hasImageMinMaxDimOrder;
+	}
+
+	public void setHasImageMinMaxDimOrder(boolean hasImageMinMaxDimOrder) {
+		this.hasImageMinMaxDimOrder = hasImageMinMaxDimOrder;
+	}
+
+	/**
      * Returns the image node (image info and data)
      * 
      * @return the image node

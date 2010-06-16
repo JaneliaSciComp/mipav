@@ -186,7 +186,8 @@ public class JDialogSaveSlices extends JDialogBase {
                               (options.getFileType() == FileUtility.AFNI) ||
                               (options.getFileType() == FileUtility.XML) ||
                               (options.getFileType() == FileUtility.PARREC) || // Modified to support PAR/REC
-                              (options.getFileType() == FileUtility.NRRD)); 
+                              (options.getFileType() == FileUtility.NRRD)||
+                              (options.getFileType() == FileUtility.MINC_HDF)); 
         enablePackBitWrite = options.isPackBitEnabled();
         this.options = options;
         this.isDicom = isDicom;
