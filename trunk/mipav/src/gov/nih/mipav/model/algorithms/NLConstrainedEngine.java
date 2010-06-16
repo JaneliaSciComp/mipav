@@ -71,10 +71,17 @@ import gov.nih.mipav.view.*;
  *  LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS OK.
  *  CHEBYQUAD OK.
  *  LEVMAR_ROSENBROCK did not work for internal scaling = true; this gave a0 = -0.9958, 1.0
- *  Internal scaling = false did work at 6756 iterations for both analytical and numerical Jacobean.
- *  Numerical Jacobean 0.99991,0.999819 at chi-squared = 1.3133E-16 OK.
- *  Analytical Jacobean 0.99991165,0.999822896 at chi-squared = 1.2241E-16 OK.
+ *  Internal scaling = false did work at 6756 iterations for both analytical and numerical Jacobian.
+ *  Numerical Jacobian 0.99991,0.999819 at chi-squared = 1.3133E-16 OK.
+ *  Analytical Jacobian 0.99991165,0.999822896 at chi-squared = 1.2241E-16 OK.
  *  POWELL_2_PARAMETER OK.
+ *  MODIFIED_ROSENBROCK OK.
+ *  WOOD OK.
+ *  HOCK1 OK.
+ *  HOCK21_MODIFIED OK.
+ *  HATFLDB OK.
+ *  HATFLDC OK.
+ *  EQUILIBRIUM_COMBUSITON OK.
  */
 
 // BELOW IS AN EXAMPLE OF A DRIVER USED IN FITTING A 4 PARAMETER
@@ -619,7 +626,21 @@ public abstract class NLConstrainedEngine {
     
     private final int LEVMAR_ROSENBROCK = 50;
     
+    private final int MODIFIED_ROSENBROCK = 51;
+    
     private final int POWELL_2_PARAMETER = 52;
+    
+    private final int WOOD = 53;
+    
+    private final int HOCK1 = 61;
+    
+    private final int HOCK21_MODIFIED = 62;
+    
+    private final int HATFLDB = 63;
+    
+    private final int HATFLDC = 64;
+    
+    private final int EQUILIBRIUM_COMBUSTION = 65;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -1115,28 +1136,7 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
-        // Below is an example to fit y(i-1) = 2 + 2*i -(exp(i*a0) + exp(i*a1))
-        // for i = 1 to 10
-        Preferences.debug("Jennrich and Sampson function at standard starting point unconstrained\n");
-        Preferences.debug("y(i-1) = 2 + 2*i - (exp(i*a0) + exp(i*a1)\n");
-        Preferences.debug("for i = 1 to 10\n");
-        Preferences.debug("Correct answer has chi-squared = 124.362 at a0 = 0.257825, a1 = 0.257825\n");
-        testMode = true;
-        testCase = JENNRICH_AND_SAMPSON;
-        nPts = 10;
-        param = 2;
-        gues = new double[param];
-        fitTestModel();
-        gues[0] = 0.3;
-        gues[1] = 0.4;
-        bounds = 0; // bounds = 0 means unconstrained
-        // bounds = 1 means same lower and upper bounds for
-        // all parameters
-        // bounds = 2 means different lower and upper bounds
-        // for all parameters
-        bl = new double[param];
-        bu = new double[param];
-        driverCalls();
+        
         // Below is an example to fit y(0) = 10*[a2 - 10*theta(a0,a1)]
         //                            y(1) = 10*[sqrt(a0**2 + a1**2) - 1]
         //                            y(2) = a2
@@ -1203,6 +1203,30 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
+        
+        // Below is an example to fit y(i-1) = 2 + 2*i -(exp(i*a0) + exp(i*a1))
+        // for i = 1 to 10
+        Preferences.debug("Jennrich and Sampson function at standard starting point unconstrained\n");
+        Preferences.debug("y(i-1) = 2 + 2*i - (exp(i*a0) + exp(i*a1)\n");
+        Preferences.debug("for i = 1 to 10\n");
+        Preferences.debug("Correct answer has chi-squared = 124.362 at a0 = 0.257825, a1 = 0.257825\n");
+        testMode = true;
+        testCase = JENNRICH_AND_SAMPSON;
+        nPts = 10;
+        param = 2;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 0.3;
+        gues[1] = 0.4;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+        
         // Below is an example to fit y = a0*exp[a1/(x + a2)]
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Meyer function at standard starting point unconstrained\n");
@@ -1991,6 +2015,180 @@ public abstract class NLConstrainedEngine {
         // for all parameters
         bl = new double[param];
         bu = new double[param];
+        driverCalls();
+    	Preferences.debug("Modified Rosenbrock function unconstrained\n");
+        Preferences.debug("Correct answer has param[0] = 1.0 param[1] = 1.0\n");
+        testMode = true;
+        testCase = MODIFIED_ROSENBROCK;
+        nPts = 3;
+        param = 2;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = -1.2;
+        gues[1] = 1.0;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+    	Preferences.debug("Wood's function\n");
+    	Preferences.debug("Correct answer has a0 = a1 = a2 = a3 = 1\n");
+    	testMode = true;
+    	testCase = WOOD;
+        nPts = 6;
+        param = 4;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = -3.0;
+        gues[1] = -1.0;
+        gues[2] = -3.0;
+        gues[3] = -1.0;
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        driverCalls();
+    	
+    	Preferences.debug("Hock - Schittkowski problem #1\n");
+    	Preferences.debug("Correct answer has a0 = a1 = 1\n");
+    	testMode = true;
+    	testCase = HOCK1;
+    	nPts = 2;
+    	param = 2;
+    	gues = new double[param];
+    	fitTestModel();
+    	gues[0] = -2.0;
+    	gues[1] = 1.0;
+    	bounds = 2; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        bl[0] = -Double.MAX_VALUE;
+        bl[1] = -1.5;
+        bu[0] = Double.MAX_VALUE;
+        bu[1] = Double.MAX_VALUE;
+        driverCalls();
+        
+        Preferences.debug("Hock - Schittkowski problem #21 modified\n");
+        Preferences.debug("Correct answer has a0 = 2.0 a1 = 0.0\n");
+        testMode = true;
+        testCase = HOCK21_MODIFIED;
+        nPts = 2;
+        param = 2;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = -1.0;
+        gues[1] = -1.0;
+        bounds = 2; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        bl[0] = 2.0;
+        bl[1] = -50.0;
+        bu[0] = 50.0;
+        bu[1] = 50.0;
+        driverCalls();
+        
+        Preferences.debug("hatfldb problem\n");
+        Preferences.debug("Correct answer has a0 = 0.947214 a1 = 0.8 a2 = 0.64 a3 = 0.4096\n");
+        testMode = true;
+        testCase = HATFLDB;
+        nPts = 4;
+        param = 4;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 0.1;
+        gues[1] = 0.1;
+        gues[2] = 0.1;
+        gues[3] = 0.1;
+        bounds = 2; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        bl[0] = 0.0;
+        bl[1] = 0.0;
+        bl[2] = 0.0;
+        bl[3] = 0.0;
+        bu[0] = Double.MAX_VALUE;
+        bu[1] = 0.8;
+        bu[2] = Double.MAX_VALUE;
+        bu[3] = Double.MAX_VALUE;
+        driverCalls();
+        
+        Preferences.debug("hatfldc problem\n");
+        Preferences.debug("Correct answer has a0 = 1.0 a1 = 1.0 a2 = 1.0 a3 = 1.0\n");
+        testMode = true;
+        testCase = HATFLDC;
+        nPts = 4;
+        param = 4;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 0.9;
+        gues[1] = 0.9;
+        gues[2] = 0.9;
+        gues[3] = 0.9;
+        bounds = 1; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        bl[0] = 0.0;
+        bl[1] = 0.0;
+        bl[2] = 0.0;
+        bl[3] = 0.0;
+        bu[0] = 10.0;
+        bu[1] = 10.0;
+        bu[2] = 10.0;
+        bu[3] = 10.0;
+        driverCalls();
+        
+        Preferences.debug("Equilibrium combustion problem\n");
+        Preferences.debug("Correct answer has a0 = 0.0034 a1 = 31.3265 a2 = 0.0684 a3 = 0.8595 a4 = 0.0370\n");
+        testMode = true;
+        testCase = EQUILIBRIUM_COMBUSTION;
+        nPts = 5;
+        param = 5;
+        gues = new double[param];
+        fitTestModel();
+        gues[0] = 1.0E-4;
+        gues[1] = 1.0E-4;
+        gues[2] = 1.0E-4;
+        gues[3] = 1.0E-4;
+        gues[4] = 1.0E-4;
+        bounds = 1; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new double[param];
+        bu = new double[param];
+        bl[0] = 1.0E-4;
+        bl[1] = 1.0E-4;
+        bl[2] = 1.0E-4;
+        bl[3] = 1.0E-4;
+        bl[4] = 1.0E-4;
+        bu[0] = 100.0;
+        bu[1] = 100.0;
+        bu[2] = 100.0;
+        bu[3] = 100.0;
+        bu[4] = 100.0;
         driverCalls();
     }
     
@@ -2833,6 +3031,237 @@ public abstract class NLConstrainedEngine {
             	        	covarMat[0][1] = 0.0;
             	        	covarMat[1][0] = 1.0/((a[0] + 0.1)*(a[0] + 0.1));
             	        	covarMat[1][1] = 4.0*a[1];	
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case MODIFIED_ROSENBROCK:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		residuals[0] = 10.0*(a[1] - a[0]*a[0]);
+        		    	residuals[1] = 1.0 - a[0];
+        		    	residuals[2] = 100.0;
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                			covarMat[0][0] = -20.0*a[0];
+            	        	covarMat[0][1] = 10.0;
+            	        	covarMat[1][0] = -1.0;
+            	        	covarMat[1][1] = 0.0;
+            	        	covarMat[2][0] = 0.0;
+            	        	covarMat[2][1] = 0.0;	
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case WOOD:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                        residuals[0] = 10.0*(a[1] - a[0]*a[0]);
+                        residuals[1] = 1.0 - a[0];
+                        residuals[2] = Math.sqrt(90.0)*(a[3] - a[2]*a[2]);
+                        residuals[3] = 1.0 - a[2];
+                        residuals[4] = Math.sqrt(10.0)*(a[1] + a[3] - 2.0);
+                        residuals[5] = (a[1] - a[3])/Math.sqrt(10.0);
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                		     covarMat[0][0] = -20.0*a[0];
+                		     covarMat[0][1] = 10.0;
+                		     covarMat[0][2] = 0.0;
+                		     covarMat[0][3] = 0.0;
+                		     covarMat[1][0] = -1.0;
+                		     covarMat[1][1] = 0.0;
+                		     covarMat[1][2] = 0.0;
+                		     covarMat[1][3] = 0.0;
+                		     covarMat[2][0] = 0.0;
+                		     covarMat[2][1] = 0.0;
+                		     covarMat[2][2] = -2.0*Math.sqrt(90.0)*a[2];
+                		     covarMat[2][3] = Math.sqrt(90.0);
+                		     covarMat[3][0] = 0.0;
+                		     covarMat[3][1] = 0.0;
+                		     covarMat[3][2] = -1.0;
+                		     covarMat[3][3] = 0.0;
+                		     covarMat[4][0] = 0.0;
+                		     covarMat[4][1] = Math.sqrt(10.0);
+                		     covarMat[4][2] = 0.0;
+                		     covarMat[4][3] = Math.sqrt(10.0);
+                		     covarMat[5][0] = 0.0;
+                		     covarMat[5][1] = 1.0/Math.sqrt(10.0);
+                		     covarMat[5][2] = 0.0;
+                		     covarMat[5][3] = -1.0/Math.sqrt(10.0);
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case HOCK1:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                	    residuals[0] = 10.0*(a[1] - a[0]*a[0]);
+                	    residuals[1] = 1.0 - a[0];
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                		    covarMat[0][0] = -20.0*a[0];
+                		    covarMat[0][1] = 10.0;
+                		    covarMat[1][0] = -1.0;
+                		    covarMat[1][1] = 0.0;
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case HOCK21_MODIFIED:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                	    residuals[0] = a[0]/10.0;
+                	    residuals[1] = a[1];
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                		    covarMat[0][0] = 0.1;
+                		    covarMat[0][1] = 0.0;
+                		    covarMat[1][0] = 0.0;
+                		    covarMat[1][1] = 1.0;
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case HATFLDB:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		residuals[0] = a[0] - 1.0;
+                		for (i = 1; i < param; i++) {
+                			residuals[i] = a[i-1] - Math.sqrt(a[i]);
+                		}
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                		    covarMat[0][0] = 1.0;
+                		    covarMat[0][1] = 0.0;
+                		    covarMat[0][2] = 0.0;
+                		    covarMat[0][3] = 0.0;
+                		    covarMat[1][0] = 1.0;
+                		    covarMat[1][1] = -0.5/Math.sqrt(a[1]);
+                		    covarMat[1][2] = 0.0;
+                		    covarMat[1][3] = 0.0;
+                		    covarMat[2][0] = 0.0;
+                		    covarMat[2][1] = 1.0;
+                		    covarMat[2][2] = -0.5/Math.sqrt(a[2]);
+                		    covarMat[2][3] = 0.0;
+                		    covarMat[3][0] = 0.0;
+                		    covarMat[3][1] = 0.0;
+                		    covarMat[3][2] = 1.0;
+                		    covarMat[3][3] = -0.5/Math.sqrt(a[3]);
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case HATFLDC:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		residuals[0] = a[0] - 1.0;
+                		for (i = 1; i < param-1; i++) {
+                			residuals[i] = a[i-1] - Math.sqrt(a[i]);
+                		}
+                		residuals[param-1] = a[param-1] - 1.0;
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                		    covarMat[0][0] = 1.0;
+                		    covarMat[0][1] = 0.0;
+                		    covarMat[0][2] = 0.0;
+                		    covarMat[0][3] = 0.0;
+                		    covarMat[1][0] = 1.0;
+                		    covarMat[1][1] = -0.5/Math.sqrt(a[1]);
+                		    covarMat[1][2] = 0.0;
+                		    covarMat[1][3] = 0.0;
+                		    covarMat[2][0] = 0.0;
+                		    covarMat[2][1] = 1.0;
+                		    covarMat[2][2] = -0.5/Math.sqrt(a[2]);
+                		    covarMat[2][3] = 0.0;
+                		    covarMat[3][0] = 0.0;
+                		    covarMat[3][1] = 0.0;
+                		    covarMat[3][2] = 0.0;
+                		    covarMat[3][3] = 1.0;
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                	break;
+                case EQUILIBRIUM_COMBUSTION:
+                	if ((ctrl == -1) || (ctrl == 1)) {
+                		double R, R5, R6, R7, R8, R9, R10;
+
+                		  R=10;
+                		  R5=0.193;
+                		  R6=4.10622*1e-4;
+                		  R7=5.45177*1e-4;
+                		  R8=4.4975*1e-7;
+                		  R9=3.40735*1e-5;
+                		  R10=9.615*1e-7;
+
+                		  residuals[0]=a[0]*a[1]+a[0]-3*a[4];
+                		  residuals[1]=2*a[0]*a[1]+a[0]+3*R10*a[1]*a[1]+a[1]*a[2]*a[2]+R7*a[1]*a[2]+R9*a[1]*a[3]+R8*a[1]-R*a[4];
+                		  residuals[2]=2*a[1]*a[2]*a[2]+R7*a[1]*a[2]+2*R5*a[2]*a[2]+R6*a[2]-8*a[4];
+                		  residuals[3]=R9*a[1]*a[3]+2*a[3]*a[3]-4*R*a[4];
+                		  residuals[4]=a[0]*a[1]+a[0]+R10*a[1]*a[1]+a[1]*a[2]*a[2]+R7*a[1]*a[2]
+                		              +R9*a[1]*a[3]+R8*a[1]+R5*a[2]*a[2]+R6*a[2]+a[3]*a[3]-1.0;	
+                	}
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                			double R, R5, R6, R7, R8, R9, R10;
+                			int j;
+
+                			  R=10;
+                			  R5=0.193;
+                			  R6=4.10622*1e-4;
+                			  R7=5.45177*1e-4;
+                			  R8=4.4975*1e-7;
+                			  R9=3.40735*1e-5;
+                			  R10=9.615*1e-7;
+
+                			  for (i = 0; i < nPts; i++) {
+                				  for (j = 0; j < param; j++) {
+                					  covarMat[i][j] = 0.0;
+                				  }
+                			  }
+
+                			  covarMat[0][0]=a[1]+1;
+                			  covarMat[0][1] = a[0];
+                			  covarMat[0][4]=-3;
+
+                			  covarMat[1][0]=2*a[1]+1;
+                			  covarMat[1][1]=2*a[0]+6*R10*a[1]+a[2]*a[2]+R7*a[2]+R9*a[3]+R8;
+                			  covarMat[1][2]=2*a[1]*a[2]+R7*a[1];
+                			  covarMat[1][3]=R9*a[1];
+                			  covarMat[1][4]=-R;
+
+                			  covarMat[2][1]=2*a[2]*a[2]+R7*a[2];
+                			  covarMat[2][2]=4*a[1]*a[2]+R7*a[1]+4*R5*a[2]+R6;
+                			  covarMat[2][4]=-8;
+
+                			  covarMat[3][1]=R9*a[3];
+                			  covarMat[3][3]=R9*a[1]+4*a[3];
+                			  covarMat[3][4]=-4*R;
+
+                			  covarMat[4][0]=a[1]+1;
+                			  covarMat[4][1]=a[0]+2*R10*a[1]+a[2]*a[2]+R7*a[2]+R9*a[3]+R8;
+                			  covarMat[4][2]=2*a[1]*a[2]+R7*a[1]+2*R5*a[2]+R6;
+                			  covarMat[4][3]=R9*a[1]+2*a[3];	
                 		} // if (analyticalJacobian)
                 		else {
                 			// If the user wishes to calculate the Jacobian numerically
