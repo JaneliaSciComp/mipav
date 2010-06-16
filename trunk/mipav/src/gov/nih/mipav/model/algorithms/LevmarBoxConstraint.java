@@ -5,12 +5,18 @@ import gov.nih.mipav.view.*;
 public abstract class LevmarBoxConstraint {
 	// This is a port of LEVMAR_BC_DER.  It requires a function for computing the Jacobian.
 	// If no such function is available, use LEVMAR_BC_DIF rather than LEVMAR_BC_DER.
-	// Results were worse than those of ELSUNC since ELSUNC handled DRAPER and 10* MEYER.
+	
+	// Results were worse than those of ELSUNC since ELSUNC handled DRAPER and 10* MEYER
+	// while LEVMAR_BC_DER did not.
+	
 	// Unconstrained DRAPER24D INCORRECT Singular matrix A in AX_EQ_B_LU and
 	// dgesvd (dbdsqr) failed to converge in AX_EQ_B_SVD, info[0] = 2.
+	// ELSUNC solved the problem with chi-squared = 3.5688 a0 = 72.43 a1 = 28.25 a2 = 0.5968.
+	
 	// Constrained HOCK25 CORRECT port gave chi-squared = 1.6247E-18 at 20 iterations.
 	// ELSUNC with internal scaling = false and analytical Jacobian did better with
 	// chi-squared = 9.704E-20 at 14 iterations.
+	
 	// Unconstrained BARD at standard start CORRECT with chi-squared = 8.2148773E-3 at 16 iterations.
 	// ELSUNC with internal scaling = false and analytical Jacobian did better with
 	// chi-squared = 8.2148773E-3 at 6 iterations.
@@ -20,6 +26,7 @@ public abstract class LevmarBoxConstraint {
 	// Constrained BARD at 100 * standard start CORRECT with chi-squared = 8.2148773E-3 at 2063 iterations.
 	// ELSUNC with internal scaling = false and analytical Jacobian did better with 
 	// chi-squared = 8.2148773E-3 at 16 iterations.
+	
 	// Unconstrained KOWALIK_AND_OSBORNE at standard start CORRECT with chi-squared = 3.0750560E-4 at 39 iterations.
 	// ELSUNC with internal scaling = false and analytical Jacobian did better with
 	// chi-squared = 3.0750560E-4 at 10 iterations.
@@ -29,25 +36,77 @@ public abstract class LevmarBoxConstraint {
 	// Constrained KOWALIK_AND_OSBORNE at 100 * standard start CORRECT with chi-squared = 3.0750560E-4 at 24,392 iterations.
 	// ELSUNC with internal scaling = false and analytical Jacobian did better with
 	// chi-squared = 3.0750560E-4 at 125 iterations.
-	// Unconstrained MEYER at standard start CORRECT.
-	// Constrained MEYER at 10 * standard start INCORRECT maxIterations even with maxIterations = 300,000.
-	// Unconstrained OSBORNE1 CORRECT
-	// Unconstrained OSBORNE2 CORRECT
-	// My port gave a CORRECT 0.99887, 0.997758 with AX_EQ_B_LU and a better
+	
+	// Unconstrained MEYER at standard start CORRECT with chi-squared = 88.0851 at 165 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 87.945855 at 8 iterations
+	// Constrained MEYER at 10 * standard start INCORRECT with chi-squared = 9.51E8 with iterations = 300,000.
+	// ELSUNC with internal scaling = false and analytical Jacobian solved the problem with
+	// chi-squared = 87.945855 at 501 iterations.
+	
+	// Unconstrained OSBORNE1 CORRECT with chi-squared = 5.46489E-5 at 39 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 5.46489E-5 at 9 iterations.
+	
+	// Unconstrained OSBORNE2 CORRECT with chi-squared = 0.040137736 at 24 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 0.040137736 at 13 iterations.
+	
+	// LEVMAR version of ROSENBROCK gave  a CORRECT 0.99887, 0.997758 with AX_EQ_B_LU and a better
 	// 0.9993, 0.9986 and chi-squared = 4.768E-13 with AX_EQ_B_SVD at 20,000 iterations.
 	// ELSUNC with internal scaling = false and analytical Jacobian did better with 
 	// 0.99991165,0.999822896 at chi-squared = 1.2241E-16 at 6756 iterations.
-	// MODIFIED_ROSENBROCK CORRECT.
+	
+	// MODIFIED_ROSENBROCK CORRECT with chi-squared = 10000.0 at iterations = 60.
+	// ELSUNC with internal scaling = false and Analytical Jacobian did better with
+	// chi-squared = 10000.0 with iterations = 27.
+	
 	// POWELL_SINGULAR CORRECT at standard start with chi-squared = 4.77E-18
 	// a0 = 3.90E-5 a1 = -3.90E-6 a2 = 1.92E-5 a3 = 1.92E-5
+	// ELSUNC with internal scaling = false and Analytical Jacobian did better with
+	// chi-squared = 3.25E-26 at 7 iterations.
 	// POWELL_SINGULAR CORRECT at 10*standard start with chi-squared = 3.33E-18
 	// a0 = 3.55E-5 a1 = -3.55E-6 a2 = 1.77E-5 a3 = 1.77E-5
+	// ELSUNC with internal scaling = false and Analytical Jacobian did better with
+	// chi-squared = 3.75E-28 at 3 iterations.
 	// POWELL_SINGULAR CORRECT at 100*standard start with chi-squared = 4.37E-18
 	// a0 = 3.80E-5 a1 = -3.80E-6 a2 = 1.89E-5 a3 = 1.89E-5
+	// ELSUNC with internal scaling = false and Analytical Jacobian did better with
+	// chi-squared = 6.68E-26 at 3 iterations.
+	
 	// POWELL_2_PARAMETER CORRECT with chi-squared = 9.415E-18 at 187 iterations
 	// a0 - -2.932E-9 a1 = -3.835E-4
 	// ELSUNC with internal scaling = false and analytical Jacobian did better with
 	// a0 = 2.5145E-29, a1 = 3.4827E-7 with chi-squared = 5.88E-26 at 7 iterations.
+	
+	// WOOD correct with chi-squared = 4.44E-30 at 90 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian had chi-squared = 7.61E-23 at 45 iterations.
+	
+	// HELICAL_VALLEY at standard start correct with chi-squared = 7.0497E-19 at 8 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 6.3437E-20 at 8 iterations.
+	// HELICAL_VALLEY at 10*standard start correct with chi-squared = 2.954E-24 at 8 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobina did worse with
+	// chi-squared = 1.2275E-14 at 11 iterations.
+	// HELICAL_VALLEY at 100*standard start correct with chi-squared = 7.512E-19 at 11 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian had chi-squared = 3.028E-22 at 12 iterations.
+	
+	// HOCK1 correct with chi-squared = 2.013E-21 at 14 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 0 at 8 iterations.
+	
+	// HOCK21_MODIFIED correct with chi-squared = 0.0 a0 = 2.0 a1 = -4.688E-19 at 5 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 0.04 a0 = 2.0 a1 = 0.0 at 1 iteration.
+	
+	// HATFLDB correct with chi-squared = 5.572809E-3 a0 = 0.9472134595 a1 = 0.8 a2 = 0.64 a3 = 0.4096 at
+	// iterations = 4000 due to maxIterations
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 5.572809E-3 a0 = 0947213595 a1 = 0.8 a2 = 0.64 a3 = 0.4096 at 6 iterations.
+	
+	// HATFLDC correct with chi-squared = 3.689E-20 at 3 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 1.6655E-21 at 3 iterations.
 	private final double INIT_MU = 1.0E-3;
 	
 	private final double STOP_THRESH = 1.0E-17;
@@ -156,6 +215,8 @@ public abstract class LevmarBoxConstraint {
     
     private final int DRAPER24D = 0;
     
+    private final int HELICAL_VALLEY = 7;
+    
     private final int BARD = 8;
     
     private final int MEYER = 10;
@@ -173,6 +234,16 @@ public abstract class LevmarBoxConstraint {
     private final int MODIFIED_ROSENBROCK = 51;
     
     private final int POWELL_2_PARAMETER = 52;
+    
+    private final int WOOD = 53;
+    
+    private final int HOCK1 = 61;
+    
+    private final int HOCK21_MODIFIED = 62;
+    
+    private final int HATFLDB = 63;
+    
+    private final int HATFLDC = 64;
 	
 	public LevmarBoxConstraint() {
     	int i;
@@ -587,6 +658,7 @@ public abstract class LevmarBoxConstraint {
         
         driver();
         dumpTestResults();
+        
         Preferences.debug("Rosenbrock function unconstrained\n");
         Preferences.debug("Correct answer has param[0] = 1.0 param[1] = 1.0\n");
         
@@ -692,7 +764,7 @@ public abstract class LevmarBoxConstraint {
         nPts = 4;
         paramNum = 4;
         maxIterations = 1000 * paramNum;
-        ySeries = new double[paramNum];
+        ySeries = new double[nPts];
         param = new double[paramNum];
         param[0] = 300.0;
         param[1] = -100.0;
@@ -711,12 +783,201 @@ public abstract class LevmarBoxConstraint {
         nPts = 2;
         paramNum = 2;
         maxIterations = 1000 * paramNum;
-        ySeries = new double[paramNum];
+        ySeries = new double[nPts];
         param = new double[paramNum];
         param[0] = 3.0;
         param[1] = 1.0;
         lb = null;
         ub = null;
+        driver();
+        dumpTestResults();
+        
+        Preferences.debug("Wood's function\n");
+    	Preferences.debug("Correct answer has a0 = a1 = a2 = a3 = 1\n");
+    	testMode = true;
+    	testCase = WOOD;
+        nPts = 6;
+        paramNum = 4;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        param = new double[paramNum];
+        param[0] = -3.0;
+        param[1] = -1.0;
+        param[2] = -3.0;
+        param[3] = -1.0;
+        lb = null;
+        ub = null;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit y(0) = 10*[a2 - 10*theta(a0,a1)]
+        //                            y(1) = 10*[sqrt(a0**2 + a1**2) - 1]
+        //                            y(2) = a2
+        // where theta(a0,a1) = (1/(2*PI))*arctan(a1/a0) if a0 > 0
+        //                    = (1/(2*PI))*arctan(a1/a0) if a0 < 0
+        //                    = 0.25 if a0 = 0 and a1 >= 0
+        //                    = -0.25 if a0 = 0 and a1 < 0
+        Preferences.debug("Helical valley function at standard starting point unconstrained\n");
+        Preferences.debug("y(0) = 10*[a2 - 10*theta(a0,a1)]\n");
+        Preferences.debug("y(1) = 10*{Math.sqrt(a0*a0 + a1*a1) - 1]\n");
+        Preferences.debug("y(2) = a2\n");
+        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 > 0\n");
+        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 < 0\n");
+        Preferences.debug("theta = 0.25 if a0 = 0 and a1 >= 0\n");
+        Preferences.debug("theta = -0.25 if a0 = 0 and a1 < 0\n");
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 0, a2 = 0\n");
+        testMode = true;
+        testCase = HELICAL_VALLEY;
+        nPts = 3;
+        paramNum = 3;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        param = new double[paramNum];
+        param[0] = -1.0;
+        param[1] = 0.0;
+        param[2] = 0.0;
+        lb = null;
+        ub = null;
+        driver();
+        dumpTestResults();
+        
+        Preferences.debug("Helical valley function at 10 * standard starting point unconstrained\n");
+        Preferences.debug("y(0) = 10*[a2 - 10*theta(a0,a1)]\n");
+        Preferences.debug("y(1) = 10*{Math.sqrt(a0*a0 + a1*a1) - 1]\n");
+        Preferences.debug("y(2) = a2\n");
+        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 > 0\n");
+        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 < 0\n");
+        Preferences.debug("theta = 0.25 if a0 = 0 and a1 >= 0\n");
+        Preferences.debug("theta = -0.25 if a0 = 0 and a1 < 0\n");
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 0, a2 = 0\n");
+        testMode = true;
+        testCase = HELICAL_VALLEY;
+        nPts = 3;
+        paramNum = 3;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        param = new double[paramNum];
+        param[0] = -10.0;
+        param[1] = 0.0;
+        param[2] = 0.0;
+        lb = null;
+        ub = null;
+        driver();
+        dumpTestResults();
+        
+        Preferences.debug("Helical valley function at 100 * standard starting point unconstrained\n");
+        Preferences.debug("y(0) = 10*[a2 - 10*theta(a0,a1)]\n");
+        Preferences.debug("y(1) = 10*{Math.sqrt(a0*a0 + a1*a1) - 1]\n");
+        Preferences.debug("y(2) = a2\n");
+        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 > 0\n");
+        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 < 0\n");
+        Preferences.debug("theta = 0.25 if a0 = 0 and a1 >= 0\n");
+        Preferences.debug("theta = -0.25 if a0 = 0 and a1 < 0\n");
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 0, a2 = 0\n");
+        testMode = true;
+        testCase = HELICAL_VALLEY;
+        nPts = 3;
+        paramNum = 3;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        param = new double[paramNum];
+        param[0] = -100.0;
+        param[1] = 0.0;
+        param[2] = 0.0;
+        lb = null;
+        ub = null;
+        driver();
+        dumpTestResults();
+        
+        Preferences.debug("Hock - Schittkowski problem #1\n");
+    	Preferences.debug("Correct answer has a0 = a1 = 1\n");
+    	testMode = true;
+    	testCase = HOCK1;
+    	nPts = 2;
+    	paramNum = 2;
+    	maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        param = new double[paramNum];
+    	param[0] = -2.0;
+    	param[1] = 1.0;
+        lb = new double[paramNum];
+        ub = new double[paramNum];
+        lb[0] = -Double.MAX_VALUE;
+        lb[1] = -1.5;
+        ub[0] = Double.MAX_VALUE;
+        ub[1] = Double.MAX_VALUE;
+        driver();
+        dumpTestResults();
+        
+        Preferences.debug("Hock - Schittkowski problem #21 modified\n");
+        Preferences.debug("Correct answer has a0 = 2.0 a1 = 0.0\n");
+        testMode = true;
+        testCase = HOCK21_MODIFIED;
+        nPts = 2;
+        paramNum = 2;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        param = new double[paramNum];
+        param[0] = -1.0;
+        param[1] = -1.0;
+        lb = new double[paramNum];
+        ub = new double[paramNum];
+        lb[0] = 2.0;
+        lb[1] = -50.0;
+        ub[0] = 50.0;
+        ub[1] = 50.0;
+        driver();
+        dumpTestResults();
+        
+        Preferences.debug("hatfldb problem\n");
+        Preferences.debug("Correct answer has a0 = 0.947214 a1 = 0.8 a2 = 0.64 a3 = 0.4096\n");
+        testMode = true;
+        testCase = HATFLDB;
+        nPts = 4;
+        paramNum = 4;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        param = new double[paramNum];
+        param[0] = 0.1;
+        param[1] = 0.1;
+        param[2] = 0.1;
+        param[3] = 0.1;
+        lb = new double[paramNum];
+        ub = new double[paramNum];
+        lb[0] = 0.0;
+        lb[1] = 0.0;
+        lb[2] = 0.0;
+        lb[3] = 0.0;
+        ub[0] = Double.MAX_VALUE;
+        ub[1] = 0.8;
+        ub[2] = Double.MAX_VALUE;
+        ub[3] = Double.MAX_VALUE;
+        driver();
+        dumpTestResults();
+        
+        Preferences.debug("hatfldc problem\n");
+        Preferences.debug("Correct answer has a0 = 1.0 a1 = 1.0 a2 = 1.0 a3 = 1.0\n");
+        testMode = true;
+        testCase = HATFLDC;
+        nPts = 4;
+        paramNum = 4;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        param = new double[paramNum];
+        param[0] = 0.9;
+        param[1] = 0.9;
+        param[2] = 0.9;
+        param[3] = 0.9;
+        lb = new double[paramNum];
+        ub = new double[paramNum];
+        lb[0] = 0.0;
+        lb[1] = 0.0;
+        lb[2] = 0.0;
+        lb[3] = 0.0;
+        ub[0] = 10.0;
+        ub[1] = 10.0;
+        ub[2] = 10.0;
+        ub[3] = 10.0;
         driver();
         dumpTestResults();
     }
@@ -747,6 +1008,7 @@ public abstract class LevmarBoxConstraint {
 	
 	private void fitToTestFunction(double[] param, double[] hx, int paramNum, int nPts) {
 		int i;
+		double theta;
 		switch(testCase) {
 		    case DRAPER24D:
 		    	for (i = 0; i < nPts; i++) {
@@ -810,6 +1072,52 @@ public abstract class LevmarBoxConstraint {
 		    case POWELL_2_PARAMETER:
 		    	hx[0] = param[0];
 		    	hx[1] = 10.0*param[0]/(param[0] + 0.1) + 2.0*param[1]*param[1];
+		    	break;
+		    case WOOD:
+		    	hx[0] = 10.0*(param[1] - param[0]*param[0]);
+                hx[1] = 1.0 - param[0];
+                hx[2] = Math.sqrt(90.0)*(param[3] - param[2]*param[2]);
+                hx[3] = 1.0 - param[2];
+                hx[4] = Math.sqrt(10.0)*(param[1] + param[3] - 2.0);
+                hx[5] = (param[1] - param[3])/Math.sqrt(10.0);
+		    	break;
+		    case HELICAL_VALLEY:
+		    	if (param[0] > 0) {
+        	        theta = Math.atan(param[1]/param[0])/(2.0*Math.PI);
+        		}
+        		else if (param[0] < 0) {
+        	    	theta = Math.atan(param[1]/param[0])/(2.0*Math.PI) + 0.5;
+        	    }
+        	    else if (param[1] >= 0) {
+        	    	theta = 0.25;
+        	    }
+        	    else {
+        	    	theta = -0.25;
+        	    }
+        	    hx[0] = 10.0*(param[2] - 10.0*theta);
+        	    hx[1] = 10.0*(Math.sqrt(param[0]*param[0] + param[1]*param[1]) - 1.0);
+        	    hx[2] = param[2];
+		    	break;
+		    case HOCK1:
+		    	hx[0] = 10.0*(param[1] - param[0]*param[0]);
+        	    hx[1] = 1.0 - param[0];
+		    	break;
+		    case HOCK21_MODIFIED:
+		    	hx[0] = param[0]/10.0;
+        	    hx[1] = param[1];
+		    	break;
+		    case HATFLDB:
+		    	hx[0] = param[0] - 1.0;
+        		for (i = 1; i < paramNum; i++) {
+        			hx[i] = param[i-1] - Math.sqrt(param[i]);
+        		}
+		    	break;
+		    case HATFLDC:
+		    	hx[0] = param[0] - 1.0;
+        		for (i = 1; i < paramNum-1; i++) {
+        			hx[i] = param[i-1] - Math.sqrt(param[i]);
+        		}
+        		hx[paramNum-1] = param[paramNum-1] - 1.0;
 		    	break;
 		}
 	}
@@ -934,6 +1242,93 @@ public abstract class LevmarBoxConstraint {
 	        	jac[1] = 0.0;
 	        	jac[2] = 1.0/((param[0] + 0.1)*(param[0] + 0.1));
 	        	jac[3] = 4.0*param[1];
+	        	break;
+	        case WOOD:
+	        	jac[0] = -20.0*param[0];
+	   		    jac[1] = 10.0;
+	   		    jac[2] = 0.0;
+	   		    jac[3] = 0.0;
+	   		    jac[4] = -1.0;
+	   		    jac[5] = 0.0;
+	   		    jac[6] = 0.0;
+	   		    jac[7] = 0.0;
+	   		    jac[8] = 0.0;
+	   		    jac[9] = 0.0;
+	   		    jac[10] = -2.0*Math.sqrt(90.0)*param[2];
+	   		    jac[11] = Math.sqrt(90.0);
+	   		    jac[12] = 0.0;
+	   		    jac[13] = 0.0;
+	   		    jac[14] = -1.0;
+	   		    jac[15] = 0.0;
+	   		    jac[16] = 0.0;
+	   		    jac[17] = Math.sqrt(10.0);
+	   		    jac[18] = 0.0;
+	   		    jac[19] = Math.sqrt(10.0);
+	   		    jac[20] = 0.0;
+	   		    jac[21] = 1.0/Math.sqrt(10.0);
+	   		    jac[22] = 0.0;
+	   		    jac[23] = -1.0/Math.sqrt(10.0);
+	        	break;
+	        case HELICAL_VALLEY:
+	        	double tmp;
+    			tmp = param[0]*param[0] + param[1]*param[1];
+    		    jac[0] = (50.0*param[1])/(Math.PI * tmp);
+    			jac[1] = (-50.0*param[0])/(Math.PI * tmp);
+    			jac[2] = 10.0;
+    			jac[3]= 10.0*param[0]/Math.sqrt(tmp);
+    			jac[4] = 10.0*param[1]/Math.sqrt(tmp);
+    			jac[5] = 0.0;
+    			jac[6] = 0.0;
+    			jac[7] = 0.0;
+    			jac[8] = 1.0;
+	        	break;
+	        case HOCK1:
+	        	jac[0] = -20.0*param[0];
+    		    jac[1] = 10.0;
+    		    jac[2] = -1.0;
+    		    jac[3] = 0.0;
+	        	break;
+	        case HOCK21_MODIFIED:
+	        	jac[0] = 0.1;
+    		    jac[1] = 0.0;
+    		    jac[2] = 0.0;
+    		    jac[3] = 1.0;
+	        	break;
+	        case HATFLDB:
+	        	jac[0] = 1.0;
+    		    jac[1] = 0.0;
+    		    jac[2] = 0.0;
+    		    jac[3] = 0.0;
+    		    jac[4] = 1.0;
+    		    jac[5] = -0.5/Math.sqrt(param[1]);
+    		    jac[6] = 0.0;
+    		    jac[7] = 0.0;
+    		    jac[8] = 0.0;
+    		    jac[9] = 1.0;
+    		    jac[10] = -0.5/Math.sqrt(param[2]);
+    		    jac[11] = 0.0;
+    		    jac[12] = 0.0;
+    		    jac[13] = 0.0;
+    		    jac[14] = 1.0;
+    		    jac[15] = -0.5/Math.sqrt(param[3]);
+	        	break;
+	        case HATFLDC:
+	        	jac[0] = 1.0;
+    		    jac[1] = 0.0;
+    		    jac[2] = 0.0;
+    		    jac[3] = 0.0;
+    		    jac[4] = 1.0;
+    		    jac[5] = -0.5/Math.sqrt(param[1]);
+    		    jac[6] = 0.0;
+    		    jac[7] = 0.0;
+    		    jac[8] = 0.0;
+    		    jac[9] = 1.0;
+    		    jac[10] = -0.5/Math.sqrt(param[2]);
+    		    jac[11] = 0.0;
+    		    jac[12] = 0.0;
+    		    jac[13] = 0.0;
+    		    jac[14] = 0.0;
+    		    jac[15] = 1.0;
 	        	break;
 	    }
 	}
