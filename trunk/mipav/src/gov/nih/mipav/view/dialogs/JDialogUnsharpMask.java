@@ -30,7 +30,7 @@ import javax.swing.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      AlgorithmUnsharpMask
  */
-public class JDialogUnsharpMask extends JDialogScriptableBase implements AlgorithmInterface {
+public class JDialogUnsharpMask extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -180,6 +180,8 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
         }
 
         saveDefaults();
+     // save the completion status for later
+        setComplete(algorithm.isCompleted());
 
         unsharpMaskAlgo.finalize();
         unsharpMaskAlgo = null;
@@ -253,11 +255,11 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
         String defaultsString = sigmaPanel.getUnnormalized3DSigmas()[0] + DELIMITER;
         defaultsString += sigmaPanel.getUnnormalized3DSigmas()[1] + DELIMITER;
         defaultsString += sigmaPanel.getUnnormalized3DSigmas()[2] + DELIMITER;
-        defaultsString += textWeight.getText() + DELIMITER;
+        defaultsString += weight + DELIMITER;
         defaultsString += outputPanel.isOutputNewImageSet() + DELIMITER;
         defaultsString += outputPanel.isProcessWholeImageSet() + DELIMITER;
         defaultsString += sigmaPanel.isResolutionCorrectionEnabled() + DELIMITER;
-        defaultsString += image25DCheckbox.isSelected();
+        defaultsString += image25D;
 
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
@@ -616,5 +618,120 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
 
         return true;
     }
+
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms.Filters (spatial)");
+            }
+
+            public String getDescription() {
+                return new String("Applies a unsharp mask.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Applies a unsharp mask.");
+            }
+
+            public String getShortLabel() {
+                return new String("UnsharpMask");
+            }
+
+            public String getLabel() {
+                return new String("Unsharp Mask");
+            }
+
+            public String getName() {
+                return new String("Unsharp Mask");
+            }
+        };
+    }
+
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, true));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D, false));
+            table.put(new ParameterList(AlgorithmParameters.SIGMAS, Parameter.PARAM_FLOAT, "1.0,1.0,1.0"));
+            table.put(new ParameterBoolean(AlgorithmParameters.SIGMA_DO_Z_RES_CORRECTION, true));
+            table.put(new ParameterFloat("blurred_image_weight", .75f));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            if (getResultImage() != null) {
+                // algo produced a new result image
+                return getResultImage().getImageName();
+            } else {
+                // algo was done in place
+                return image.getImageName();
+            }
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
+    }
+
 
 }

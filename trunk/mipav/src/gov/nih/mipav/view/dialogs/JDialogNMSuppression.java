@@ -504,7 +504,7 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
         image = scriptParameters.retrieveInputImage();
         userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
-
+ 
         outputPanel = new JPanelAlgorithmOutputOptions(image);
         sigmaPanel = new JPanelSigmas(image);
 
