@@ -889,6 +889,11 @@ public abstract class VOIBase extends Vector<Vector3f> {
             return;
         }
         getImageBoundingBox();
+        if ( m_iPlane == NOT_A_PLANE )
+        {
+            m_bUpdatePlane = true;
+            getPlane();
+        }
         if ( m_iPlane == ZPLANE )
         {
             int iXMin = (int)(m_akImageMinMax[0].X);
@@ -910,7 +915,6 @@ public abstract class VOIBase extends Vector<Vector3f> {
         }
         else if ( m_iPlane == XPLANE )
         {
-
             int iYMin = (int)(m_akImageMinMax[0].Y);
             int iYMax = (int)(m_akImageMinMax[1].Y);
             
@@ -950,7 +954,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         }
 
     }
-
+    
     /**
      * Renders this contour into the input ModelImage or the input BitSet mask.
      * @param kVolume if non-null this contour is rendered into the ModelImage.
