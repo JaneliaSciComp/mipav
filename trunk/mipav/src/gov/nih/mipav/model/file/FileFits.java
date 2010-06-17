@@ -1,36 +1,51 @@
 package gov.nih.mipav.model.file;
 
 
-import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmFlip;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelLUT;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.TransMatrix;
 
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 
 
 /**
  * Some of this code is derived from FITS.java in ImageJ.
- *
- * In A User's Guide for the Flexible Image Transport System (FITS) Version
- * 4.0, Section 4.1 Indexes and Physical Coordinates, the text says,
- * "Historically, astronomers have generally assumed that the index point in a
- * FITS file represents the center of a pixel.  This interpretation is
- * endorsed by GC.  It differs from the common practice in computer graphics
- * of treating the center of a pixel as a half-integral point."  For CRPIXn in
- * FITS: The center of the first pixel is 1 and the center of the last pixel
- * is NAXISn.  In MIPAV the center of the first pixel is 0.5 and the center of
- * the last pixel is NAXISn - 0.5.  So subtract 0.5 to go from FITS to MIPAV.
- * " ...recommend that FITS writers order pixels starting in the lower left
- * hand corner of the image, with the first axis increasing to the right, as
- * in the rectangular coordinate x-axis, and the second increasing upward (the
- * y-axis)."  MIPAV uses the upper left hand corner as the origin and has the
- * y axis going downward.  Therefore, the image is flipped after reading and
- * flipped before writing.
+ * 
+ * In A User's Guide for the Flexible Image Transport System (FITS) Version 4.0, Section 4.1 Indexes and Physical
+ * Coordinates, the text says, "Historically, astronomers have generally assumed that the index point in a FITS file
+ * represents the center of a pixel. This interpretation is endorsed by GC. It differs from the common practice in
+ * computer graphics of treating the center of a pixel as a half-integral point." For CRPIXn in FITS: The center of the
+ * first pixel is 1 and the center of the last pixel is NAXISn. In MIPAV the center of the first pixel is 0.5 and the
+ * center of the last pixel is NAXISn - 0.5. So subtract 0.5 to go from FITS to MIPAV. " ...recommend that FITS writers
+ * order pixels starting in the lower left hand corner of the image, with the first axis increasing to the right, as in
+ * the rectangular coordinate x-axis, and the second increasing upward (the y-axis)." MIPAV uses the upper left hand
+ * corner as the origin and has the y axis going downward. Therefore, the image is flipped after reading and flipped
+ * before writing.
+ * 
+ * <hr>
+ * <p>
+ * ImageJ disclaimer:
+ * </p>
+ * 
+ * <p>
+ * ImageJ is being developed at the National Institutes of Health by an employee of the Federal Government in the course
+ * of his official duties. Pursuant to Title 17, Section 105 of the United States Code, this software is not subject to
+ * copyright protection and is in the public domain. ImageJ is an experimental system. NIH assumes no responsibility
+ * whatsoever for its use by other parties, and makes no guarantees, expressed or implied, about its quality,
+ * reliability, or any other characteristic.
+ * </p>
  */
 public class FileFits extends FileBase {
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     int[] imgExtents;
@@ -55,7 +70,7 @@ public class FileFits extends FileBase {
 
     /** DOCUMENT ME! */
     private FileInfoFits fileInfo;
-    
+
     private FileInfoFits fileInfoCopy;
 
     /** DOCUMENT ME! */
@@ -72,28 +87,30 @@ public class FileFits extends FileBase {
 
     /** DOCUMENT ME! */
     private int numberSlices; // 1 for 2D, zDim for 3D, and zDim * tDim for 4D
-    
+
     private boolean isColorPlanar2D = false;
-    
+
     private AlgorithmFlip flipAlgo;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * FITS reader/writer constructor.
-     *
-     * @param      fileName  file name
-     * @param      fileDir   file directory
-     *
-     * @exception  IOException  if there is an error making the file
+     * 
+     * @param fileName file name
+     * @param fileDir file directory
+     * 
+     * @exception IOException if there is an error making the file
      */
-    public FileFits(String fileName, String fileDir) throws IOException {
+    public FileFits(final String fileName, final String fileDir) throws IOException {
 
         this.fileName = fileName;
         this.fileDir = fileDir;
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
@@ -114,13 +131,13 @@ public class FileFits extends FileBase {
         }
         try {
             super.finalize();
-        } catch (Throwable er) { }
+        } catch (final Throwable er) {}
     }
-    
+
     /**
      * returns LUT if defined.
-     *
-     * @return  the LUT if defined else it is null
+     * 
+     * @return the LUT if defined else it is null
      */
     public ModelLUT getModelLUT() {
         return LUT;
@@ -128,17 +145,17 @@ public class FileFits extends FileBase {
 
     /**
      * reads the FITS file header and data.
-     *
-     * @exception  IOException  if there is an error reading the file
-     *
-     * @param      one  DOCUMENT ME!
-     *
-     * @return     DOCUMENT ME!
+     * 
+     * @exception IOException if there is an error reading the file
+     * 
+     * @param one DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    public ModelImage readImage(boolean one) throws IOException {
+    public ModelImage readImage(final boolean one) throws IOException {
 
         // Fixed format is required for the values of the required keywords and strongly
-        // recommended for the other keywords.  The required keywords are SIMPLE, BITPIX,
+        // recommended for the other keywords. The required keywords are SIMPLE, BITPIX,
         // NAXIS, NAXISn, n=1,...,NAXIS(NAXIS = 0 -> NAXIS1 not present), and END.
         int i = 0;
         int j = 0;
@@ -162,19 +179,19 @@ public class FileFits extends FileBase {
         int bufferSize;
         // Be able to handle dimensions of length 1 in read in as long
         // as no more than 4 dimensions greater than length 1 are present
-        float[] imgResols = new float[] { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
-        double[] scale = new double[] {1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+        final float[] imgResols = new float[] {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
+        final double[] scale = new double[] {1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
         // reference pixel position along axis
-        double[] crpix = new double[6];
+        final double[] crpix = new double[6];
         // coordinate of reference pixel
-        double[] crval = new double[6];
-        boolean[] haveCrpix = new boolean[6];
-        boolean[] haveCrval = new boolean[6];
+        final double[] crval = new double[6];
+        final boolean[] haveCrpix = new boolean[6];
+        final boolean[] haveCrval = new boolean[6];
         float minResol;
         float maxResol;
         int dimNumber;
-        int [] reducedExtents;
-        double [] reducedScale;
+        int[] reducedExtents;
+        double[] reducedScale;
         double[] reducedCrpix;
         double[] reducedCrval;
         boolean[] reducedHaveCrpix;
@@ -201,9 +218,9 @@ public class FileFits extends FileBase {
                 count++;
                 firstS = s.substring(0, 1);
 
-                if ((firstS.equals(" ")) || (firstS.equals("/"))) {
+                if ( (firstS.equals(" ")) || (firstS.equals("/"))) {
                     ;
-                } else if (!s.startsWith("SIMPLE")) {
+                } else if ( !s.startsWith("SIMPLE")) {
                     raFile.close();
 
                     MipavUtil.displayError("Instead of SIMPLE first keyword starts with " + s);
@@ -212,12 +229,12 @@ public class FileFits extends FileBase {
                     readAgain = false;
                     subS = s.substring(8, 10);
 
-                    if (!subS.equals("= ")) {
+                    if ( !subS.equals("= ")) {
                         Preferences.debug("SIMPLE line does not have required =<sp> in cols 9 and 10\n");
-                    } 
+                    }
                     subS = s.substring(29, 30);
 
-                    if ((!subS.equals("T")) && (!subS.equals("F"))) {
+                    if ( ( !subS.equals("T")) && ( !subS.equals("F"))) {
                         Preferences.debug("\nSIMPLE line does not have required T or F in column 30\n");
                         if (subS.trim() != null) {
                             if (subS.trim().length() != 0) {
@@ -226,21 +243,18 @@ public class FileFits extends FileBase {
                         }
                         i = s.indexOf("/");
                         if (i != -1) {
-                            subS = s.substring(10,i).trim();
-                        }
-                        else {
+                            subS = s.substring(10, i).trim();
+                        } else {
                             subS = s.substring(10).trim();
                         }
                         i = subS.length();
-                        subS = subS.substring(i-1);
+                        subS = subS.substring(i - 1);
                         if (subS.equals("T")) {
-                            Preferences.debug(
-                            "SIMPLE = T for file conformance to FITS standards in nonstandard column\n");
-                        }
-                        else if (subS.equals("F")) {
-                            Preferences.debug(
-                            "SIMPLE = F for departure from FITS standards in some significant way\n"+ 
-                            "in nonstandard column\n");
+                            Preferences
+                                    .debug("SIMPLE = T for file conformance to FITS standards in nonstandard column\n");
+                        } else if (subS.equals("F")) {
+                            Preferences.debug("SIMPLE = F for departure from FITS standards in some significant way\n"
+                                    + "in nonstandard column\n");
                         }
                     } else if (subS.equals("T")) {
                         Preferences.debug("\nSIMPLE = T for file conformance to FITS standards\n");
@@ -258,9 +272,9 @@ public class FileFits extends FileBase {
                 count++;
                 firstS = s.substring(0, 1);
 
-                if ((firstS.equals(" ")) || (firstS.equals("/"))) {
+                if ( (firstS.equals(" ")) || (firstS.equals("/"))) {
                     ;
-                } else if (!s.startsWith("BITPIX")) {
+                } else if ( !s.startsWith("BITPIX")) {
                     raFile.close();
 
                     MipavUtil.displayError("Instead of BITPIX second keyword starts with " + s);
@@ -269,7 +283,7 @@ public class FileFits extends FileBase {
                     readAgain = false;
                     subS = s.substring(8, 10);
 
-                    if (!subS.equals("= ")) {
+                    if ( !subS.equals("= ")) {
                         Preferences.debug("BITPIX line does not have required =<sp> in cols 9 and 10\n");
                         subS = s.substring(8, 30);
                     } else {
@@ -279,7 +293,7 @@ public class FileFits extends FileBase {
 
                     try {
                         bitsPerPixel = Integer.parseInt(subS);
-                    } catch (NumberFormatException e) {
+                    } catch (final NumberFormatException e) {
                         raFile.close();
 
                         MipavUtil.displayError("Instead of integer BITPIX line had " + subS);
@@ -329,9 +343,9 @@ public class FileFits extends FileBase {
                 count++;
                 firstS = s.substring(0, 1);
 
-                if ((firstS.equals(" ")) || (firstS.equals("/"))) {
+                if ( (firstS.equals(" ")) || (firstS.equals("/"))) {
                     ;
-                } else if (!s.startsWith("NAXIS")) {
+                } else if ( !s.startsWith("NAXIS")) {
                     raFile.close();
 
                     MipavUtil.displayError("Instead of NAXIS third keyword starts with " + s);
@@ -340,7 +354,7 @@ public class FileFits extends FileBase {
                     readAgain = false;
                     subS = s.substring(8, 10);
 
-                    if (!subS.equals("= ")) {
+                    if ( !subS.equals("= ")) {
                         Preferences.debug("NAXIS line does not have required =<sp> in cols 9 and 10\n");
                         subS = s.substring(8, 30);
                     } else {
@@ -350,7 +364,7 @@ public class FileFits extends FileBase {
 
                     try {
                         nDimensions = Integer.parseInt(subS);
-                    } catch (NumberFormatException e) {
+                    } catch (final NumberFormatException e) {
                         raFile.close();
 
                         MipavUtil.displayError("Instead of integer NAXIS line had " + subS);
@@ -377,7 +391,8 @@ public class FileFits extends FileBase {
                     } else if (nDimensions == 0) {
                         raFile.close();
 
-                        MipavUtil.displayError("NAXIS value of 0 indicates no binary data matrix is associated with the header");
+                        MipavUtil
+                                .displayError("NAXIS value of 0 indicates no binary data matrix is associated with the header");
                         throw new IOException();
                     }
                 }
@@ -392,9 +407,9 @@ public class FileFits extends FileBase {
                 count++;
                 firstS = s.substring(0, 1);
 
-                if ((firstS.equals(" ")) || (firstS.equals("/"))) {
+                if ( (firstS.equals(" ")) || (firstS.equals("/"))) {
                     ;
-                } else if (!s.startsWith("NAXIS1")) {
+                } else if ( !s.startsWith("NAXIS1")) {
                     raFile.close();
 
                     MipavUtil.displayError("Instead of NAXIS1 fourth keyword starts with " + s);
@@ -403,7 +418,7 @@ public class FileFits extends FileBase {
                     readAgain = false;
                     subS = s.substring(8, 10);
 
-                    if (!subS.equals("= ")) {
+                    if ( !subS.equals("= ")) {
                         Preferences.debug("NAXIS1 line does not have required =<sp> in cols 9 and 10\n");
                         subS = s.substring(8, 30);
                     } else {
@@ -413,7 +428,7 @@ public class FileFits extends FileBase {
 
                     try {
                         imgExtents[0] = Integer.parseInt(subS);
-                    } catch (NumberFormatException e) {
+                    } catch (final NumberFormatException e) {
                         raFile.close();
 
                         MipavUtil.displayError("Instead of integer NAXIS1 line had " + subS);
@@ -444,9 +459,9 @@ public class FileFits extends FileBase {
                 count++;
                 firstS = s.substring(0, 1);
 
-                if ((firstS.equals(" ")) || (firstS.equals("/"))) {
+                if ( (firstS.equals(" ")) || (firstS.equals("/"))) {
                     ;
-                } else if (!s.startsWith("NAXIS2")) {
+                } else if ( !s.startsWith("NAXIS2")) {
                     raFile.close();
 
                     MipavUtil.displayError("Instead of NAXIS2 fifth keyword starts with " + s);
@@ -455,7 +470,7 @@ public class FileFits extends FileBase {
                     readAgain = false;
                     subS = s.substring(8, 10);
 
-                    if (!subS.equals("= ")) {
+                    if ( !subS.equals("= ")) {
                         Preferences.debug("NAXIS2 line does not have required =<sp> in cols 9 and 10\n");
                         subS = s.substring(8, 30);
                     } else {
@@ -465,7 +480,7 @@ public class FileFits extends FileBase {
 
                     try {
                         imgExtents[1] = Integer.parseInt(subS);
-                    } catch (NumberFormatException e) {
+                    } catch (final NumberFormatException e) {
                         raFile.close();
 
                         MipavUtil.displayError("Instead of integer NAXIS2 line had " + subS);
@@ -497,9 +512,9 @@ public class FileFits extends FileBase {
                     count++;
                     firstS = s.substring(0, 1);
 
-                    if ((firstS.equals(" ")) || (firstS.equals("/"))) {
+                    if ( (firstS.equals(" ")) || (firstS.equals("/"))) {
                         ;
-                    } else if (!s.startsWith("NAXIS3")) {
+                    } else if ( !s.startsWith("NAXIS3")) {
                         raFile.close();
 
                         MipavUtil.displayError("Instead of NAXIS3 sixth keyword starts with " + s);
@@ -508,7 +523,7 @@ public class FileFits extends FileBase {
                         readAgain = false;
                         subS = s.substring(8, 10);
 
-                        if (!subS.equals("= ")) {
+                        if ( !subS.equals("= ")) {
                             Preferences.debug("NAXIS3 line does not have required =<sp> in cols 9 and 10\n");
                             subS = s.substring(8, 30);
                         } else {
@@ -518,7 +533,7 @@ public class FileFits extends FileBase {
 
                         try {
                             imgExtents[2] = Integer.parseInt(subS);
-                        } catch (NumberFormatException e) {
+                        } catch (final NumberFormatException e) {
                             raFile.close();
 
                             MipavUtil.displayError("Instead of integer NAXIS3 line had " + subS);
@@ -551,9 +566,9 @@ public class FileFits extends FileBase {
                     count++;
                     firstS = s.substring(0, 1);
 
-                    if ((firstS.equals(" ")) || (firstS.equals("/"))) {
+                    if ( (firstS.equals(" ")) || (firstS.equals("/"))) {
                         ;
-                    } else if (!s.startsWith("NAXIS4")) {
+                    } else if ( !s.startsWith("NAXIS4")) {
                         raFile.close();
 
                         MipavUtil.displayError("Instead of NAXIS4 seventh keyword starts with " + s);
@@ -562,7 +577,7 @@ public class FileFits extends FileBase {
                         readAgain = false;
                         subS = s.substring(8, 10);
 
-                        if (!subS.equals("= ")) {
+                        if ( !subS.equals("= ")) {
                             Preferences.debug("NAXIS4 line does not have required =<sp> in cols 9 and 10\n");
                             subS = s.substring(8, 30);
                         } else {
@@ -572,7 +587,7 @@ public class FileFits extends FileBase {
 
                         try {
                             imgExtents[3] = Integer.parseInt(subS);
-                        } catch (NumberFormatException e) {
+                        } catch (final NumberFormatException e) {
                             raFile.close();
 
                             MipavUtil.displayError("Instead of integer NAXIS4 line had " + subS);
@@ -596,7 +611,7 @@ public class FileFits extends FileBase {
                     }
                 } // while (readAgain) looping for seventh required keyword of NAXIS4
             } // if (nDimensions >= 4)
-            
+
             if (nDimensions >= 5) {
                 readAgain = true;
 
@@ -605,9 +620,9 @@ public class FileFits extends FileBase {
                     count++;
                     firstS = s.substring(0, 1);
 
-                    if ((firstS.equals(" ")) || (firstS.equals("/"))) {
+                    if ( (firstS.equals(" ")) || (firstS.equals("/"))) {
                         ;
-                    } else if (!s.startsWith("NAXIS5")) {
+                    } else if ( !s.startsWith("NAXIS5")) {
                         raFile.close();
 
                         MipavUtil.displayError("Instead of NAXIS5 eighth keyword starts with " + s);
@@ -616,7 +631,7 @@ public class FileFits extends FileBase {
                         readAgain = false;
                         subS = s.substring(8, 10);
 
-                        if (!subS.equals("= ")) {
+                        if ( !subS.equals("= ")) {
                             Preferences.debug("NAXIS5 line does not have required =<sp> in cols 9 and 10\n");
                             subS = s.substring(8, 30);
                         } else {
@@ -626,7 +641,7 @@ public class FileFits extends FileBase {
 
                         try {
                             imgExtents[4] = Integer.parseInt(subS);
-                        } catch (NumberFormatException e) {
+                        } catch (final NumberFormatException e) {
                             raFile.close();
 
                             MipavUtil.displayError("Instead of integer NAXIS5 line had " + subS);
@@ -650,7 +665,7 @@ public class FileFits extends FileBase {
                     }
                 } // while (readAgain) looping for eighth required keyword of NAXIS5
             } // if (nDimensions >= 5)
-            
+
             if (nDimensions >= 6) {
                 readAgain = true;
 
@@ -659,9 +674,9 @@ public class FileFits extends FileBase {
                     count++;
                     firstS = s.substring(0, 1);
 
-                    if ((firstS.equals(" ")) || (firstS.equals("/"))) {
+                    if ( (firstS.equals(" ")) || (firstS.equals("/"))) {
                         ;
-                    } else if (!s.startsWith("NAXIS6")) {
+                    } else if ( !s.startsWith("NAXIS6")) {
                         raFile.close();
 
                         MipavUtil.displayError("Instead of NAXIS6 ninth keyword starts with " + s);
@@ -670,7 +685,7 @@ public class FileFits extends FileBase {
                         readAgain = false;
                         subS = s.substring(8, 10);
 
-                        if (!subS.equals("= ")) {
+                        if ( !subS.equals("= ")) {
                             Preferences.debug("NAXIS6 line does not have required =<sp> in cols 9 and 10\n");
                             subS = s.substring(8, 30);
                         } else {
@@ -680,7 +695,7 @@ public class FileFits extends FileBase {
 
                         try {
                             imgExtents[5] = Integer.parseInt(subS);
-                        } catch (NumberFormatException e) {
+                        } catch (final NumberFormatException e) {
                             raFile.close();
 
                             MipavUtil.displayError("Instead of integer NAXIS6 line had " + subS);
@@ -720,7 +735,7 @@ public class FileFits extends FileBase {
 
                     try {
                         BSCALE = Double.parseDouble(subS);
-                    } catch (NumberFormatException e) {
+                    } catch (final NumberFormatException e) {
                         raFile.close();
 
                         MipavUtil.displayError("Instead of a float BSCALE line had = " + subS);
@@ -741,7 +756,7 @@ public class FileFits extends FileBase {
 
                     try {
                         BZERO = Double.parseDouble(subS);
-                    } catch (NumberFormatException e) {
+                    } catch (final NumberFormatException e) {
                         raFile.close();
 
                         MipavUtil.displayError("Instead of a float BZERO line had = " + subS);
@@ -762,7 +777,7 @@ public class FileFits extends FileBase {
 
                     try {
                         BLANK = Integer.parseInt(subS);
-                    } catch (NumberFormatException e) {
+                    } catch (final NumberFormatException e) {
                         raFile.close();
 
                         MipavUtil.displayError("Instead of an integer BLANK line had = " + subS);
@@ -774,86 +789,86 @@ public class FileFits extends FileBase {
                 } // else if (s.startsWith("BLANK"))
                 else if (s.startsWith("CDELT")) {
                     c = s.charAt(5);
-                    if ((c >= '0') && (c <= '9')) {
+                    if ( (c >= '0') && (c <= '9')) {
                         dimNumber = Integer.parseInt(s.substring(5, 6));
                         subS = s.substring(10, 80);
                         subS = subS.trim();
                         i = subS.indexOf("/");
-    
+
                         if (i != -1) {
                             subS = subS.substring(0, i);
                             subS = subS.trim();
                         }
-    
+
                         try {
-                            scale[dimNumber-1] = Double.parseDouble(subS);
-                        } catch (NumberFormatException e) {
-    
-                            Preferences.debug("Instead of a float CDELT" + s.substring(5,6)+ " line had = " + subS);
-                        } 
+                            scale[dimNumber - 1] = Double.parseDouble(subS);
+                        } catch (final NumberFormatException e) {
+
+                            Preferences.debug("Instead of a float CDELT" + s.substring(5, 6) + " line had = " + subS);
+                        }
                     } // if ((c >= '0') && (c <= '9'))
                 } // else if (s.startsWith("CDELT"))
                 else if (s.startsWith("CRPIX")) {
                     c = s.charAt(5);
-                    if ((c >= '0') && (c <= '9')) {
+                    if ( (c >= '0') && (c <= '9')) {
                         dimNumber = Integer.parseInt(s.substring(5, 6));
                         subS = s.substring(10, 80);
                         subS = subS.trim();
                         i = subS.indexOf("/");
-    
+
                         if (i != -1) {
                             subS = subS.substring(0, i);
                             subS = subS.trim();
                         }
-    
+
                         try {
-                            crpix[dimNumber-1] = Double.parseDouble(subS);
-                            haveCrpix[dimNumber-1] = true;
-                            Preferences.debug("crpix[" + (dimNumber-1) + "] = " + crpix[dimNumber-1] + "\n");
-                        } catch (NumberFormatException e) {
-    
-                            Preferences.debug("Instead of a float CRPIX" + s.substring(5,6)+ " line had = " + subS);
+                            crpix[dimNumber - 1] = Double.parseDouble(subS);
+                            haveCrpix[dimNumber - 1] = true;
+                            Preferences.debug("crpix[" + (dimNumber - 1) + "] = " + crpix[dimNumber - 1] + "\n");
+                        } catch (final NumberFormatException e) {
+
+                            Preferences.debug("Instead of a float CRPIX" + s.substring(5, 6) + " line had = " + subS);
                         }
                     } // if ((c >= '0') && (c <= '9'))
                 } // else if (s.startsWith("CRPIX"))
                 else if (s.startsWith("CRVAL")) {
                     c = s.charAt(5);
-                    if ((c >= '0') && (c <= '9')) {
+                    if ( (c >= '0') && (c <= '9')) {
                         dimNumber = Integer.parseInt(s.substring(5, 6));
                         subS = s.substring(10, 80);
                         subS = subS.trim();
                         i = subS.indexOf("/");
-    
+
                         if (i != -1) {
                             subS = subS.substring(0, i);
                             subS = subS.trim();
                         }
-    
+
                         try {
-                            crval[dimNumber-1] = Double.parseDouble(subS);
-                            Preferences.debug("crval[" + (dimNumber-1) + "] = " + crval[dimNumber-1] + "\n");
-                            haveCrval[dimNumber-1] = true;
-                        } catch (NumberFormatException e) {
-    
-                            Preferences.debug("Instead of a float CRVAL" + s.substring(5,6)+ " line had = " + subS);
+                            crval[dimNumber - 1] = Double.parseDouble(subS);
+                            Preferences.debug("crval[" + (dimNumber - 1) + "] = " + crval[dimNumber - 1] + "\n");
+                            haveCrval[dimNumber - 1] = true;
+                        } catch (final NumberFormatException e) {
+
+                            Preferences.debug("Instead of a float CRVAL" + s.substring(5, 6) + " line had = " + subS);
                         }
                     } // if ((c >= '0') && (c <= '9'))
                 } // else if (s.startsWith("CRVAL"))
                 else if (s.startsWith("CTYPE")) {
                     c = s.charAt(5);
-                    if ((c >= '0') && (c <= '9')) {
+                    if ( (c >= '0') && (c <= '9')) {
                         dimNumber = Integer.parseInt(s.substring(5, 6));
                         if (dimNumber <= 5) {
                             i = s.indexOf("'");
                             j = s.lastIndexOf("'");
-                            if ((i != -1) && (j != -1)) {
-                                subS = s.substring(i+1, j);
+                            if ( (i != -1) && (j != -1)) {
+                                subS = s.substring(i + 1, j);
                                 subS = subS.trim();
                                 Preferences.debug("CTYPE" + s.substring(5, 6) + " = " + subS + "\n");
-                                if ((subS.equals("RGB")) && (dimNumber == 3) && (imgExtents[2] == 3) && (nDimensions == 3)) {
-                                    isColorPlanar2D = true;    
-                                }
-                                else if (subS.toUpperCase().equals(FileInfoBase.INCHES_STRING.toUpperCase())) {
+                                if ( (subS.equals("RGB")) && (dimNumber == 3) && (imgExtents[2] == 3)
+                                        && (nDimensions == 3)) {
+                                    isColorPlanar2D = true;
+                                } else if (subS.toUpperCase().equals(FileInfoBase.INCHES_STRING.toUpperCase())) {
                                     fileInfo.setUnitsOfMeasure(FileInfoBase.INCHES, dimNumber - 1);
                                 } else if (subS.toUpperCase().equals(FileInfoBase.MILS_STRING.toUpperCase())) {
                                     fileInfo.setUnitsOfMeasure(FileInfoBase.MILS, dimNumber - 1);
@@ -885,22 +900,18 @@ public class FileFits extends FileBase {
                                     fileInfo.setUnitsOfMeasure(FileInfoBase.MINUTES, dimNumber - 1);
                                 } else if (subS.toUpperCase().equals(FileInfoBase.HOURS_STRING.toUpperCase())) {
                                     fileInfo.setUnitsOfMeasure(FileInfoBase.HOURS, dimNumber - 1);
-                                } else if (subS.toUpperCase().substring(0,Math.min(subS.length(),3)).equals("DEG")) {
+                                } else if (subS.toUpperCase().substring(0, Math.min(subS.length(), 3)).equals("DEG")) {
                                     fileInfo.setUnitsOfMeasure(FileInfoBase.DEGREES, dimNumber - 1);
                                 } else {
                                     if (dimNumber == 1) {
                                         fileInfo.setCTYPE1(subS);
-                                    }
-                                    else if (dimNumber == 2) {
+                                    } else if (dimNumber == 2) {
                                         fileInfo.setCTYPE2(subS);
-                                    }
-                                    else if (dimNumber == 3) {
+                                    } else if (dimNumber == 3) {
                                         fileInfo.setCTYPE3(subS);
-                                    }
-                                    else if (dimNumber == 4) {
+                                    } else if (dimNumber == 4) {
                                         fileInfo.setCTYPE4(subS);
-                                    }
-                                    else if (dimNumber == 5) {
+                                    } else if (dimNumber == 5) {
                                         fileInfo.setCTYPE5(subS);
                                     }
                                 }
@@ -910,16 +921,16 @@ public class FileFits extends FileBase {
                 } // else if (s.startsWith("CTYPE"))
                 else if (s.startsWith("CUNIT")) {
                     c = s.charAt(5);
-                    if ((c >= '0') && (c <= '9')) {
+                    if ( (c >= '0') && (c <= '9')) {
                         dimNumber = Integer.parseInt(s.substring(5, 6));
                         if (dimNumber <= 5) {
                             i = s.indexOf("'");
                             j = s.lastIndexOf("'");
-                            if ((i != -1) && (j != -1)) {
-                                subS = s.substring(i+1, j);
+                            if ( (i != -1) && (j != -1)) {
+                                subS = s.substring(i + 1, j);
                                 subS = subS.trim();
                                 Preferences.debug("CUNIT" + s.substring(5, 6) + " = " + subS + "\n");
-                                
+
                                 if (subS.toUpperCase().equals(FileInfoBase.INCHES_STRING.toUpperCase())) {
                                     fileInfo.setUnitsOfMeasure(FileInfoBase.INCHES, dimNumber - 1);
                                 } else if (subS.toUpperCase().equals(FileInfoBase.MILS_STRING.toUpperCase())) {
@@ -952,22 +963,18 @@ public class FileFits extends FileBase {
                                     fileInfo.setUnitsOfMeasure(FileInfoBase.MINUTES, dimNumber - 1);
                                 } else if (subS.toUpperCase().equals(FileInfoBase.HOURS_STRING.toUpperCase())) {
                                     fileInfo.setUnitsOfMeasure(FileInfoBase.HOURS, dimNumber - 1);
-                                } else if (subS.toUpperCase().substring(0,Math.min(subS.length(),3)).equals("DEG")) {
+                                } else if (subS.toUpperCase().substring(0, Math.min(subS.length(), 3)).equals("DEG")) {
                                     fileInfo.setUnitsOfMeasure(FileInfoBase.DEGREES, dimNumber - 1);
                                 } else {
                                     if (dimNumber == 1) {
                                         fileInfo.setCUNIT1(subS);
-                                    }
-                                    else if (dimNumber == 2) {
+                                    } else if (dimNumber == 2) {
                                         fileInfo.setCUNIT2(subS);
-                                    }
-                                    else if (dimNumber == 3) {
+                                    } else if (dimNumber == 3) {
                                         fileInfo.setCUNIT3(subS);
-                                    }
-                                    else if (dimNumber == 4) {
+                                    } else if (dimNumber == 4) {
                                         fileInfo.setCUNIT4(subS);
-                                    }
-                                    else if (dimNumber == 5) {
+                                    } else if (dimNumber == 5) {
                                         fileInfo.setCUNIT5(subS);
                                     }
                                 }
@@ -993,48 +1000,46 @@ public class FileFits extends FileBase {
                     numApos = 0;
                     aposLoc = new int[6];
                     for (i = 0; i < subS.length(); i++) {
-                        if (subS.substring(i,i+1).indexOf("'") == 0) {
-                            aposLoc[numApos++] = i;   
+                        if (subS.substring(i, i + 1).indexOf("'") == 0) {
+                            aposLoc[numApos++] = i;
                         }
                     }
                     if (numApos == 0) {
                         Preferences.debug("DATE-OBS, date data acquired = " + subS + "\n");
                         fileInfo.setDateAcquired(subS);
-                    }
-                    else if (numApos == 2) {
-                        dateString = subS.substring(aposLoc[0]+1,aposLoc[1]).trim();
+                    } else if (numApos == 2) {
+                        dateString = subS.substring(aposLoc[0] + 1, aposLoc[1]).trim();
                         haveTime = false;
                         for (i = 0; i < subS.length(); i++) {
-                            if (subS.substring(i,i+1) == "T") {
+                            if (subS.substring(i, i + 1) == "T") {
                                 haveTime = true;
                                 j = i;
                             }
                         }
                         if (haveTime) {
-                            timeString = dateString.substring(j+1);
+                            timeString = dateString.substring(j + 1);
                             Preferences.debug("TIME data acquired = " + timeString + "\n");
                             fileInfo.setTimeAcquired(timeString);
-                            dateString = dateString.substring(0,j);
+                            dateString = dateString.substring(0, j);
                         }
                         Preferences.debug("DATE-OBS, date data acquired = " + dateString + "\n");
                         fileInfo.setDateAcquired(dateString);
-                    }
-                    else if (numApos == 4) {
-                        dateString = subS.substring(aposLoc[0]+1,aposLoc[1]).trim();
+                    } else if (numApos == 4) {
+                        dateString = subS.substring(aposLoc[0] + 1, aposLoc[1]).trim();
                         Preferences.debug("DATE-OBS, date data acquired = " + dateString + "\n");
                         fileInfo.setDateAcquired(dateString);
-                        timeString = subS.substring(aposLoc[2]+1,aposLoc[3]).trim();
+                        timeString = subS.substring(aposLoc[2] + 1, aposLoc[3]).trim();
                         Preferences.debug("TIME data acquired = " + timeString + "\n");
                         fileInfo.setTimeAcquired(timeString);
                     }
                 } // else if (s.startsWith("DATE-OBS"))
                 else if (s.startsWith("TIME-OBS")) {
-                    subS = s.substring(10,80);
+                    subS = s.substring(10, 80);
                     subS = subS.trim();
                     i = subS.indexOf("'");
                     j = subS.lastIndexOf("'");
-                    if ((i != -1) && (j != -1) && (i != j)) {
-                        subS = subS.substring(i+1, j);
+                    if ( (i != -1) && (j != -1) && (i != j)) {
+                        subS = subS.substring(i + 1, j);
                         subS = subS.trim();
                     }
                     Preferences.debug("TIME data acquired = " + subS + "\n");
@@ -1048,37 +1053,35 @@ public class FileFits extends FileBase {
                     numApos = 0;
                     aposLoc = new int[6];
                     for (i = 0; i < subS.length(); i++) {
-                        if (subS.substring(i,i+1).indexOf("'") == 0) {
-                            aposLoc[numApos++] = i;   
+                        if (subS.substring(i, i + 1).indexOf("'") == 0) {
+                            aposLoc[numApos++] = i;
                         }
                     }
                     if (numApos == 0) {
                         Preferences.debug("DATE-MAP, date data last processed = " + subS + "\n");
                         fileInfo.setDateProcessed(subS);
-                    }
-                    else if (numApos == 2) {
-                        dateString = subS.substring(aposLoc[0]+1,aposLoc[1]).trim();
+                    } else if (numApos == 2) {
+                        dateString = subS.substring(aposLoc[0] + 1, aposLoc[1]).trim();
                         haveTime = false;
                         for (i = 0; i < subS.length(); i++) {
-                            if (subS.substring(i,i+1) == "T") {
+                            if (subS.substring(i, i + 1) == "T") {
                                 haveTime = true;
                                 j = i;
                             }
                         }
                         if (haveTime) {
-                            timeString = dateString.substring(j+1);
+                            timeString = dateString.substring(j + 1);
                             Preferences.debug("TIME data last processed = " + timeString + "\n");
                             fileInfo.setTimeProcessed(timeString);
-                            dateString = dateString.substring(0,j);
+                            dateString = dateString.substring(0, j);
                         }
                         Preferences.debug("DATE-MAP, date data last processed = " + dateString + "\n");
                         fileInfo.setDateProcessed(dateString);
-                    }
-                    else if (numApos == 4) {
-                        dateString = subS.substring(aposLoc[0]+1,aposLoc[1]).trim();
+                    } else if (numApos == 4) {
+                        dateString = subS.substring(aposLoc[0] + 1, aposLoc[1]).trim();
                         Preferences.debug("DATE-OBS, date data last processed = " + dateString + "\n");
                         fileInfo.setDateProcessed(dateString);
-                        timeString = subS.substring(aposLoc[2]+1,aposLoc[3]).trim();
+                        timeString = subS.substring(aposLoc[2] + 1, aposLoc[3]).trim();
                         Preferences.debug("TIME data last processed = " + timeString + "\n");
                         fileInfo.setTimeProcessed(timeString);
                     }
@@ -1093,48 +1096,45 @@ public class FileFits extends FileBase {
                     numApos = 0;
                     aposLoc = new int[6];
                     for (i = 0; i < subS.length(); i++) {
-                        if (subS.substring(i,i+1).indexOf("'") == 0) {
-                            aposLoc[numApos++] = i;   
+                        if (subS.substring(i, i + 1).indexOf("'") == 0) {
+                            aposLoc[numApos++] = i;
                         }
                     }
                     if (numApos == 0) {
                         Preferences.debug("DATE file written = " + subS + "\n");
                         fileInfo.setDateWritten(subS);
-                    }
-                    else if (numApos == 2) {
-                        dateString = subS.substring(aposLoc[0]+1,aposLoc[1]).trim();
+                    } else if (numApos == 2) {
+                        dateString = subS.substring(aposLoc[0] + 1, aposLoc[1]).trim();
                         haveTime = false;
                         for (i = 0; i < subS.length(); i++) {
-                            if (subS.substring(i,i+1) == "T") {
+                            if (subS.substring(i, i + 1) == "T") {
                                 haveTime = true;
                                 j = i;
                             }
                         }
                         if (haveTime) {
-                            timeString = dateString.substring(j+1);
+                            timeString = dateString.substring(j + 1);
                             Preferences.debug("TIME file written = " + timeString + "\n");
                             fileInfo.setTimeWritten(timeString);
-                            dateString = dateString.substring(0,j);
+                            dateString = dateString.substring(0, j);
                         }
                         Preferences.debug("DATE file written = " + dateString + "\n");
                         fileInfo.setDateWritten(dateString);
-                    }
-                    else if (numApos == 4) {
-                        dateString = subS.substring(aposLoc[0]+1,aposLoc[1]).trim();
+                    } else if (numApos == 4) {
+                        dateString = subS.substring(aposLoc[0] + 1, aposLoc[1]).trim();
                         Preferences.debug("DATE file written = " + dateString + "\n");
                         fileInfo.setDateWritten(dateString);
-                        timeString = subS.substring(aposLoc[2]+1,aposLoc[3]).trim();
+                        timeString = subS.substring(aposLoc[2] + 1, aposLoc[3]).trim();
                         Preferences.debug("TIME file written = " + timeString + "\n");
                         fileInfo.setTimeWritten(timeString);
-                    }
-                    else if (numApos == 6) {
-                        dateString = subS.substring(aposLoc[0]+1,aposLoc[1]).trim();
+                    } else if (numApos == 6) {
+                        dateString = subS.substring(aposLoc[0] + 1, aposLoc[1]).trim();
                         Preferences.debug("DATE file written = " + dateString + "\n");
                         fileInfo.setDateWritten(dateString);
-                        timeString = subS.substring(aposLoc[2]+1,aposLoc[3]).trim();
+                        timeString = subS.substring(aposLoc[2] + 1, aposLoc[3]).trim();
                         Preferences.debug("TIME file written = " + timeString + "\n");
                         fileInfo.setTimeWritten(timeString);
-                        jobNameString = subS.substring(aposLoc[4]+1,aposLoc[5]).trim();
+                        jobNameString = subS.substring(aposLoc[4] + 1, aposLoc[5]).trim();
                         Preferences.debug("JOB NAME = " + jobNameString + "\n");
                         fileInfo.setJobName(jobNameString);
                     }
@@ -1144,8 +1144,8 @@ public class FileFits extends FileBase {
                     subS = subS.trim();
                     i = subS.indexOf("'");
                     j = subS.lastIndexOf("'");
-                    if ((i != -1) && (j != -1) && (i != j)) {
-                        subS = subS.substring(i+1, j);
+                    if ( (i != -1) && (j != -1) && (i != j)) {
+                        subS = subS.substring(i + 1, j);
                         subS = subS.trim();
                     }
                     Preferences.debug("ORIGIN, installation where file is written = " + subS + "\n");
@@ -1156,8 +1156,8 @@ public class FileFits extends FileBase {
                     subS = subS.trim();
                     i = subS.indexOf("'");
                     j = subS.lastIndexOf("'");
-                    if ((i != -1) && (j != -1) && (i != j)) {
-                        subS = subS.substring(i+1, j);
+                    if ( (i != -1) && (j != -1) && (i != j)) {
+                        subS = subS.substring(i + 1, j);
                         subS = subS.trim();
                     }
                     Preferences.debug("INSTRUMENT, data acquisition instrument = " + subS + "\n");
@@ -1170,8 +1170,8 @@ public class FileFits extends FileBase {
                     subS = subS.trim();
                     i = subS.indexOf("'");
                     j = subS.lastIndexOf("'");
-                    if ((i != -1) && (j != -1) && (i != j)) {
-                        subS = subS.substring(i+1, j);
+                    if ( (i != -1) && (j != -1) && (i != j)) {
+                        subS = subS.substring(i + 1, j);
                         subS = subS.trim();
                     }
                     Preferences.debug("OBSERVER = " + subS + "\n");
@@ -1182,8 +1182,8 @@ public class FileFits extends FileBase {
                     subS = subS.trim();
                     i = subS.indexOf("'");
                     j = subS.lastIndexOf("'");
-                    if ((i != -1) && (j != -1) && (i != j)) {
-                        subS = subS.substring(i+1, j);
+                    if ( (i != -1) && (j != -1) && (i != j)) {
+                        subS = subS.substring(i + 1, j);
                         subS = subS.trim();
                     }
                     Preferences.debug("OBJECT observed = " + subS + "\n");
@@ -1194,8 +1194,8 @@ public class FileFits extends FileBase {
                     subS = subS.trim();
                     i = subS.indexOf("'");
                     j = subS.lastIndexOf("'");
-                    if ((i != -1) && (j != -1) && (i != j)) {
-                        subS = subS.substring(i+1, j);
+                    if ( (i != -1) && (j != -1) && (i != j)) {
+                        subS = subS.substring(i + 1, j);
                         subS = subS.trim();
                     }
                     Preferences.debug("AUTHOR = " + subS + "\n");
@@ -1208,7 +1208,7 @@ public class FileFits extends FileBase {
                 } // else if (s.startsWith("REFERENC"))
                 else if (s.startsWith("F_RATIO")) {
                     subS = s.substring(10, 80);
-                    subS = subS.trim();  
+                    subS = subS.trim();
                     i = subS.indexOf("/");
 
                     if (i != -1) {
@@ -1220,7 +1220,7 @@ public class FileFits extends FileBase {
                         focalRatio = Float.parseFloat(subS);
                         Preferences.debug("Focal ratio = " + focalRatio + "\n");
                         fileInfo.setFocalRatio(focalRatio);
-                    } catch (NumberFormatException e) {
+                    } catch (final NumberFormatException e) {
 
                         Preferences.debug("Instead of a float F_RATIO line had = " + subS);
                     }
@@ -1230,8 +1230,8 @@ public class FileFits extends FileBase {
                     subS = subS.trim();
                     i = subS.indexOf("'");
                     j = subS.lastIndexOf("'");
-                    if ((i != -1) && (j != -1) && (i != j)) {
-                        subS = subS.substring(i+1, j);
+                    if ( (i != -1) && (j != -1) && (i != j)) {
+                        subS = subS.substring(i + 1, j);
                         subS = subS.trim();
                     }
                     Preferences.debug("BUNIT = " + subS + "\n");
@@ -1239,37 +1239,36 @@ public class FileFits extends FileBase {
                         fileInfo.setBUNIT(subS);
                     }
                 } // else if (s.startsWith("BUNIT"))
-            } while (!s.startsWith("END"));
-            
+            } while ( !s.startsWith("END"));
+
             for (i = nDimensions - 1; i >= 0; i--) {
                 if (imgExtents[i] == 1) {
                     scale[i] = 1.0;
-                    reducedExtents = new int[nDimensions-1];
-                    reducedScale = new double[nDimensions-1];
-                    reducedCrpix = new double[nDimensions-1];
-                    reducedHaveCrpix = new boolean[nDimensions-1];
-                    reducedCrval = new double[nDimensions-1];
-                    reducedHaveCrval = new boolean[nDimensions-1];
+                    reducedExtents = new int[nDimensions - 1];
+                    reducedScale = new double[nDimensions - 1];
+                    reducedCrpix = new double[nDimensions - 1];
+                    reducedHaveCrpix = new boolean[nDimensions - 1];
+                    reducedCrval = new double[nDimensions - 1];
+                    reducedHaveCrval = new boolean[nDimensions - 1];
                     for (j = 0; j < i; j++) {
-                        reducedExtents[j] = imgExtents[j]; 
+                        reducedExtents[j] = imgExtents[j];
                         reducedScale[j] = scale[j];
                         reducedCrpix[j] = crpix[j];
                         reducedHaveCrpix[j] = haveCrpix[j];
                         reducedCrval[j] = crval[j];
                         reducedHaveCrval[j] = haveCrval[j];
                     }
-                    for (j = i+1; j < nDimensions; j++) {
-                        reducedExtents[j-1] = imgExtents[j];
-                        reducedScale[j-1] = scale[j];
-                        reducedCrpix[j-1] = crpix[j];
-                        reducedHaveCrpix[j-1] = haveCrpix[j];
-                        reducedCrval[j-1] = crval[j];
-                        reducedHaveCrval[j-1] = haveCrval[j];
+                    for (j = i + 1; j < nDimensions; j++) {
+                        reducedExtents[j - 1] = imgExtents[j];
+                        reducedScale[j - 1] = scale[j];
+                        reducedCrpix[j - 1] = crpix[j];
+                        reducedHaveCrpix[j - 1] = haveCrpix[j];
+                        reducedCrval[j - 1] = crval[j];
+                        reducedHaveCrval[j - 1] = haveCrval[j];
                         if (j <= 5) {
-                            fileInfo.setUnitsOfMeasure(j-1, fileInfo.getUnitsOfMeasure(j));
-                        }
-                        else {
-                            fileInfo.setUnitsOfMeasure(j-1,FileInfoBase.UNKNOWN_MEASURE);
+                            fileInfo.setUnitsOfMeasure(j - 1, fileInfo.getUnitsOfMeasure(j));
+                        } else {
+                            fileInfo.setUnitsOfMeasure(j - 1, FileInfoBase.UNKNOWN_MEASURE);
                         }
                     }
                     nDimensions--;
@@ -1284,7 +1283,7 @@ public class FileFits extends FileBase {
                     }
                 }
             }
-            
+
             if (isColorPlanar2D || one) {
                 reducedExtents = new int[2];
                 reducedScale = new double[2];
@@ -1311,14 +1310,13 @@ public class FileFits extends FileBase {
                     haveCrval[j] = reducedHaveCrval[j];
                 }
             }
-            
+
             if (nDimensions > 4) {
                 raFile.close();
 
                 MipavUtil.displayError("MIPAV cannot display an image with " + nDimensions + " dimensions");
-                throw new IOException();    
-            }
-            else if (nDimensions == 1) {
+                throw new IOException();
+            } else if (nDimensions == 1) {
                 raFile.close();
 
                 MipavUtil.displayError("MIPAV cannot display an image with 1 dimension");
@@ -1326,12 +1324,13 @@ public class FileFits extends FileBase {
             } else if (nDimensions == 0) {
                 raFile.close();
 
-                MipavUtil.displayError("NAXIS value of 0 indicates no binary data matrix is associated with the header");
+                MipavUtil
+                        .displayError("NAXIS value of 0 indicates no binary data matrix is associated with the header");
                 throw new IOException();
             }
-            
+
             for (i = 0; i < nDimensions; i++) {
-                imgResols[i] = (float)Math.abs(scale[i]);
+                imgResols[i] = (float) Math.abs(scale[i]);
             }
 
             fileInfo.setExtents(imgExtents);
@@ -1354,47 +1353,44 @@ public class FileFits extends FileBase {
             } // for (i = 1; i < nDimensions; i++)
 
             fileInfo.setResolutions(imgResols);
-            
+
             origin = new double[nDimensions];
             for (i = 0; i < nDimensions; i++) {
                 if (haveCrpix[i] && haveCrval[i]) {
-                    origin[i] = crval[i] - (crpix[i] - 0.5)*scale[i];
-                    fileInfo.setOrigin((float)origin[i], i);
+                    origin[i] = crval[i] - (crpix[i] - 0.5) * scale[i];
+                    fileInfo.setOrigin((float) origin[i], i);
                 }
             }
-            
-            
-            matrix = new TransMatrix(Math.min(4,nDimensions+1));
+
+            matrix = new TransMatrix(Math.min(4, nDimensions + 1));
             for (i = 0; i < Math.min(3, nDimensions); i++) {
-                matrix.set( i, i, scale[i]);
+                matrix.set(i, i, scale[i]);
                 matrix.set(i, Math.min(nDimensions, 3), origin[i]);
             }
             matrix.setTransformID(TransMatrix.TRANSFORM_UNKNOWN);
 
-            offset = 2880 + (2880 * ((count * 80) / 2880));
+            offset = 2880 + (2880 * ( (count * 80) / 2880));
             raFile.seek(offset);
 
-            if (((BSCALE != 1.0) || (BZERO != 0.0)) &&
-                    ((sourceType == ModelStorageBase.UBYTE) || (sourceType == ModelStorageBase.SHORT) ||
-                         (sourceType == ModelStorageBase.INTEGER))) {
+            if ( ( (BSCALE != 1.0) || (BZERO != 0.0))
+                    && ( (sourceType == ModelStorageBase.UBYTE) || (sourceType == ModelStorageBase.SHORT) || (sourceType == ModelStorageBase.INTEGER))) {
 
                 if (one) {
-                    image = new ModelImage(ModelStorageBase.FLOAT, new int[] { imgExtents[0], imgExtents[1] },
-                                           fileInfo.getFileName());
+                    image = new ModelImage(ModelStorageBase.FLOAT, new int[] {imgExtents[0], imgExtents[1]}, fileInfo
+                            .getFileName());
                 } else {
                     image = new ModelImage(ModelStorageBase.FLOAT, imgExtents, fileInfo.getFileName());
                 }
 
                 fileInfo.setDataType(ModelStorageBase.FLOAT);
-            } else if ((isColorPlanar2D) && (sourceType == ModelStorageBase.UBYTE)) {
+            } else if ( (isColorPlanar2D) && (sourceType == ModelStorageBase.UBYTE)) {
                 sourceType = ModelStorageBase.ARGB;
                 image = new ModelImage(ModelStorageBase.ARGB, imgExtents, fileInfo.getFileName());
                 fileInfo.setDataType(ModelStorageBase.ARGB);
             } else {
 
                 if (one) {
-                    image = new ModelImage(sourceType, new int[] { imgExtents[0], imgExtents[1] },
-                                           fileInfo.getFileName());
+                    image = new ModelImage(sourceType, new int[] {imgExtents[0], imgExtents[1]}, fileInfo.getFileName());
                 } else {
                     image = new ModelImage(sourceType, imgExtents, fileInfo.getFileName());
                 }
@@ -1403,7 +1399,7 @@ public class FileFits extends FileBase {
             }
             image.setMatrix(matrix);
 
-            if ((nDimensions == 2) || one) {
+            if ( (nDimensions == 2) || one) {
                 numberSlices = 1;
             } else if (nDimensions == 3) {
                 numberSlices = imgExtents[2];
@@ -1414,12 +1410,12 @@ public class FileFits extends FileBase {
             if (one) {
 
                 if (imgExtents.length > 2) {
-                    int skip = imgExtents[0] * imgExtents[1] * ((imgExtents[2] / 2) - 1);
+                    int skip = imgExtents[0] * imgExtents[1] * ( (imgExtents[2] / 2) - 1);
 
-                    if ((sourceType == ModelStorageBase.SHORT) || (sourceType == ModelStorageBase.USHORT)) {
+                    if ( (sourceType == ModelStorageBase.SHORT) || (sourceType == ModelStorageBase.USHORT)) {
                         skip *= 2;
-                    } else if ((sourceType == ModelStorageBase.FLOAT) || (sourceType == ModelStorageBase.INTEGER) ||
-                               (sourceType == ModelStorageBase.UINTEGER) || (sourceType == ModelStorageBase.ARGB)) {
+                    } else if ( (sourceType == ModelStorageBase.FLOAT) || (sourceType == ModelStorageBase.INTEGER)
+                            || (sourceType == ModelStorageBase.UINTEGER) || (sourceType == ModelStorageBase.ARGB)) {
                         skip *= 4;
                     } else if (sourceType == ModelStorageBase.DOUBLE) {
                         skip *= 8;
@@ -1436,28 +1432,27 @@ public class FileFits extends FileBase {
                 }
                 imgBuffer = new float[bufferSize];
 
-                image.setFileInfo(fileInfo,0);
+                image.setFileInfo(fileInfo, 0);
                 readBuffer(0, imgBuffer, (float) BSCALE, (float) BZERO);
                 image.importData(0, imgBuffer, false);
                 if (image.getNDims() == 3) {
                     for (i = 1; i < numberSlices; i++) {
-                        fileInfoCopy = (FileInfoFits)fileInfo.clone();
-                        fileInfoCopy.setOrigin((float)(origin[2] + i * imgResols[2]), 2);
-                        image.setFileInfo(fileInfoCopy, i);  
+                        fileInfoCopy = (FileInfoFits) fileInfo.clone();
+                        fileInfoCopy.setOrigin((float) (origin[2] + i * imgResols[2]), 2);
+                        image.setFileInfo(fileInfoCopy, i);
                         readBuffer(i, imgBuffer, (float) BSCALE, (float) BZERO);
                         image.importData(i * bufferSize, imgBuffer, false);
                     }
-                }
-                else if (image.getNDims() > 3) {
+                } else if (image.getNDims() > 3) {
                     for (i = 0; i < imgExtents[3]; i++) {
                         for (j = 0; j < imgExtents[2]; j++) {
-                            if ((i != 0) || (j != 0)) {
-                                fileInfoCopy = (FileInfoFits)fileInfo.clone();
-                                fileInfoCopy.setOrigin((float)(origin[2] + j * imgResols[2]), 2);
-                                fileInfoCopy.setOrigin((float)(origin[3] + i * imgResols[3]), 3);
-                                image.setFileInfo(fileInfoCopy, j + i * imgExtents[2]);  
+                            if ( (i != 0) || (j != 0)) {
+                                fileInfoCopy = (FileInfoFits) fileInfo.clone();
+                                fileInfoCopy.setOrigin((float) (origin[2] + j * imgResols[2]), 2);
+                                fileInfoCopy.setOrigin((float) (origin[3] + i * imgResols[3]), 3);
+                                image.setFileInfo(fileInfoCopy, j + i * imgExtents[2]);
                                 readBuffer(j + i * imgExtents[2], imgBuffer, (float) BSCALE, (float) BZERO);
-                                image.importData((j + i * imgExtents[2]) * bufferSize, imgBuffer, false);  
+                                image.importData( (j + i * imgExtents[2]) * bufferSize, imgBuffer, false);
                             }
                         }
                     }
@@ -1466,28 +1461,27 @@ public class FileFits extends FileBase {
             else { // sourceType == ModelStorageBase.DOUBLE
                 bufferSize = imgExtents[0] * imgExtents[1];
                 imgDBuffer = new double[bufferSize];
-                image.setFileInfo(fileInfo,0);
+                image.setFileInfo(fileInfo, 0);
                 readDBuffer(0, imgDBuffer, (float) BSCALE, (float) BZERO);
                 image.importData(0, imgDBuffer, false);
                 if (image.getNDims() == 3) {
                     for (i = 1; i < numberSlices; i++) {
-                        fileInfoCopy = (FileInfoFits)fileInfo.clone();
-                        fileInfoCopy.setOrigin((float)(origin[2] + i * imgResols[2]), 2);
-                        image.setFileInfo(fileInfoCopy, i);  
+                        fileInfoCopy = (FileInfoFits) fileInfo.clone();
+                        fileInfoCopy.setOrigin((float) (origin[2] + i * imgResols[2]), 2);
+                        image.setFileInfo(fileInfoCopy, i);
                         readDBuffer(i, imgDBuffer, (float) BSCALE, (float) BZERO);
                         image.importData(i * bufferSize, imgDBuffer, false);
                     }
-                }
-                else if (image.getNDims() > 3) {
+                } else if (image.getNDims() > 3) {
                     for (i = 0; i < imgExtents[3]; i++) {
                         for (j = 0; j < imgExtents[2]; j++) {
-                            if ((i != 0) || (j != 0)) {
-                                fileInfoCopy = (FileInfoFits)fileInfo.clone();
-                                fileInfoCopy.setOrigin((float)(origin[2] + j * imgResols[2]), 2);
-                                fileInfoCopy.setOrigin((float)(origin[3] + i * imgResols[3]), 3);
-                                image.setFileInfo(fileInfoCopy, j + i * imgExtents[2]);  
+                            if ( (i != 0) || (j != 0)) {
+                                fileInfoCopy = (FileInfoFits) fileInfo.clone();
+                                fileInfoCopy.setOrigin((float) (origin[2] + j * imgResols[2]), 2);
+                                fileInfoCopy.setOrigin((float) (origin[3] + i * imgResols[3]), 3);
+                                image.setFileInfo(fileInfoCopy, j + i * imgExtents[2]);
                                 readDBuffer(j + i * imgExtents[2], imgDBuffer, (float) BSCALE, (float) BZERO);
-                                image.importData((j + i * imgExtents[2]) * bufferSize, imgDBuffer, false);
+                                image.importData( (j + i * imgExtents[2]) * bufferSize, imgDBuffer, false);
                             }
                         }
                     }
@@ -1502,7 +1496,7 @@ public class FileFits extends FileBase {
             flipAlgo.finalize();
             flipAlgo = null;
             return image;
-        } catch (Exception e) {
+        } catch (final Exception e) {
 
             if (image != null) {
                 image.disposeLocal();
@@ -1516,14 +1510,14 @@ public class FileFits extends FileBase {
 
     /**
      * Writes a FITS format type image.
-     *
-     * @param      image    Image model of data to write.
-     * @param      options  options such as starting and ending slices and times
-     *
-     * @exception  IOException  if there is an error writing the file
+     * 
+     * @param image Image model of data to write.
+     * @param options options such as starting and ending slices and times
+     * 
+     * @exception IOException if there is an error writing the file
      */
-    public void writeImage(ModelImage image, FileWriteOptions options) throws IOException {
-        byte[] cardImage = new byte[80];
+    public void writeImage(final ModelImage image, final FileWriteOptions options) throws IOException {
+        final byte[] cardImage = new byte[80];
         int i, j;
         String axisSize;
         byte[] axisBytes;
@@ -1548,8 +1542,8 @@ public class FileFits extends FileBase {
         int zDim;
         int tDim;
         int count;
-        //double array[][];
-        
+        // double array[][];
+
         flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE, true);
         flipAlgo.run();
         flipAlgo.finalize();
@@ -1672,8 +1666,7 @@ public class FileFits extends FileBase {
             case 2:
                 if (image.getType() == ModelStorageBase.ARGB) {
                     cardImage[29] = 51; // 3
-                }
-                else {
+                } else {
                     cardImage[29] = 50; // 2
                 }
                 break;
@@ -1741,7 +1734,7 @@ public class FileFits extends FileBase {
             cardImage[i] = 32; // fill with ascii spaces
         }
 
-        if ((image.getNDims() >= 3) || ((image.getNDims() == 2) && (image.getType() == ModelStorageBase.ARGB))) {
+        if ( (image.getNDims() >= 3) || ( (image.getNDims() == 2) && (image.getType() == ModelStorageBase.ARGB))) {
             cardImage[0] = 78; // N
             cardImage[1] = 65; // A
             cardImage[2] = 88; // X
@@ -1749,11 +1742,10 @@ public class FileFits extends FileBase {
             cardImage[4] = 83; // S
             cardImage[5] = 51; // 3
             cardImage[8] = 61; // =
-            
+
             if (image.getType() == ModelStorageBase.ARGB) {
                 axisSize = "3";
-            }
-            else {
+            } else {
                 axisSize = Integer.toString(sEnd - sBegin + 1);
             }
             axisBytes = axisSize.getBytes();
@@ -1761,9 +1753,9 @@ public class FileFits extends FileBase {
             for (i = 0; i < axisSize.length(); i++) {
                 cardImage[30 + i - axisSize.length()] = axisBytes[i];
             }
-            
-        } // if ((image.getNDims() >= 3) || ((image.getNDims() == 2) && (image.getType() == ModelStorageBase.ARGB)))  
-        
+
+        } // if ((image.getNDims() >= 3) || ((image.getNDims() == 2) && (image.getType() == ModelStorageBase.ARGB)))
+
         raFile.write(cardImage);
 
         for (i = 0; i < 80; i++) {
@@ -1788,8 +1780,8 @@ public class FileFits extends FileBase {
         } // if (image.getNDims() == 4)
 
         raFile.write(cardImage);
-        
-        TransMatrix image_TM = image.getMatrix();
+
+        final TransMatrix image_TM = image.getMatrix();
 
         for (i = 0; i < 80; i++) {
             cardImage[i] = 32; // fill with ascii spaces
@@ -1811,7 +1803,7 @@ public class FileFits extends FileBase {
         }
 
         raFile.write(cardImage);
-        
+
         for (i = 0; i < 80; i++) {
             cardImage[i] = 32; // fill with ascii spaces
         }
@@ -1832,7 +1824,7 @@ public class FileFits extends FileBase {
         }
 
         raFile.write(cardImage);
-        
+
         for (i = 0; i < 80; i++) {
             cardImage[i] = 32; // fill with ascii spaces
         }
@@ -1845,7 +1837,7 @@ public class FileFits extends FileBase {
         cardImage[5] = 49; // 1
         cardImage[8] = 61; // =
 
-        resString = Double.toString(image_TM.Get(0, Math.min(image.getNDims(),3)));
+        resString = Double.toString(image_TM.Get(0, Math.min(image.getNDims(), 3)));
         resBytes = resString.getBytes();
 
         for (i = 0; i < resString.length(); i++) {
@@ -1874,7 +1866,7 @@ public class FileFits extends FileBase {
         }
 
         raFile.write(cardImage);
-        
+
         for (i = 0; i < 80; i++) {
             cardImage[i] = 32; // fill with ascii spaces
         }
@@ -1895,7 +1887,7 @@ public class FileFits extends FileBase {
         }
 
         raFile.write(cardImage);
-        
+
         for (i = 0; i < 80; i++) {
             cardImage[i] = 32; // fill with ascii spaces
         }
@@ -1908,7 +1900,7 @@ public class FileFits extends FileBase {
         cardImage[5] = 50; // 2
         cardImage[8] = 61; // =
 
-        resString = Double.toString(image_TM.Get(1, Math.min(image.getNDims(),3)));
+        resString = Double.toString(image_TM.Get(1, Math.min(image.getNDims(), 3)));
         resBytes = resString.getBytes();
 
         for (i = 0; i < resString.length(); i++) {
@@ -1917,12 +1909,11 @@ public class FileFits extends FileBase {
 
         raFile.write(cardImage);
 
-        
         for (i = 0; i < 80; i++) {
             cardImage[i] = 32; // fill with ascii spaces
         }
-        if ((image.getNDims() >= 3) || ((image.getNDims() == 2) && (image.getType() == ModelStorageBase.ARGB))) {
-            
+        if ( (image.getNDims() >= 3) || ( (image.getNDims() == 2) && (image.getType() == ModelStorageBase.ARGB))) {
+
             cardImage[0] = 67; // C
             cardImage[1] = 68; // D
             cardImage[2] = 69; // E
@@ -1930,11 +1921,10 @@ public class FileFits extends FileBase {
             cardImage[4] = 84; // T
             cardImage[5] = 51; // 3
             cardImage[8] = 61; // =
-            
+
             if (image.getType() == ModelStorageBase.ARGB) {
                 resString = "1.0";
-            }
-            else {
+            } else {
                 resString = Double.toString(image_TM.Get(2, 2));
             }
             resBytes = resString.getBytes();
@@ -1943,15 +1933,15 @@ public class FileFits extends FileBase {
                 cardImage[30 + i - resString.length()] = resBytes[i];
             }
         }
-            
+
         raFile.write(cardImage);
-        
+
         for (i = 0; i < 80; i++) {
             cardImage[i] = 32; // fill with ascii spaces
         }
-        
+
         if (image.getNDims() >= 3) {
-                
+
             cardImage[0] = 67; // C
             cardImage[1] = 82; // R
             cardImage[2] = 80; // P
@@ -1969,11 +1959,11 @@ public class FileFits extends FileBase {
         }
 
         raFile.write(cardImage);
-                
+
         for (i = 0; i < 80; i++) {
             cardImage[i] = 32; // fill with ascii spaces
         }
-        
+
         if (image.getNDims() >= 3) {
 
             cardImage[0] = 67; // C
@@ -1984,23 +1974,23 @@ public class FileFits extends FileBase {
             cardImage[5] = 51; // 3
             cardImage[8] = 61; // =
 
-            resString = Double.toString(image_TM.Get(2, Math.min(image.getNDims(),3)));
+            resString = Double.toString(image_TM.Get(2, Math.min(image.getNDims(), 3)));
             resBytes = resString.getBytes();
 
             for (i = 0; i < resString.length(); i++) {
                 cardImage[30 + i - resString.length()] = resBytes[i];
             }
-  
+
         } // if ((image.getNDims() >= 3)
-        
+
         raFile.write(cardImage);
-        
+
         for (i = 0; i < 80; i++) {
             cardImage[i] = 32; // fill with ascii spaces
         }
 
         if (image.getNDims() == 4) {
-            
+
             cardImage[0] = 67; // C
             cardImage[1] = 68; // D
             cardImage[2] = 69; // E
@@ -2015,9 +2005,9 @@ public class FileFits extends FileBase {
             for (i = 0; i < resString.length(); i++) {
                 cardImage[30 + i - resString.length()] = resBytes[i];
             }
-            
+
         } // if (image.getNDims() == 4)
-        
+
         raFile.write(cardImage);
 
         measure = image.getFileInfo()[0].getUnitsOfMeasure();
@@ -2028,108 +2018,106 @@ public class FileFits extends FileBase {
                 cardImage[j] = 32; // fill with ascii spaces
             }
 
-            if (((image.getNDims() >= (i + 1)) && (image.getFileInfo()[0].getResolutions()[i] > 0.0)) 
-                || ((i == 2) && (image.getType() == ModelStorageBase.ARGB) && (image.getNDims() == 2))) {
+            if ( ( (image.getNDims() >= (i + 1)) && (image.getFileInfo()[0].getResolutions()[i] > 0.0))
+                    || ( (i == 2) && (image.getType() == ModelStorageBase.ARGB) && (image.getNDims() == 2))) {
 
                 if (image.getType() == ModelStorageBase.ARGB && (i == 2)) {
                     mString = "RGB";
-                }
-                else {
+                } else {
                     switch (measure[i]) {
-    
+
                         case FileInfoBase.INCHES:
                             mString = FileInfoBase.INCHES_STRING;
                             break;
-                            
+
                         case FileInfoBase.MILS:
                             mString = FileInfoBase.MILS_STRING;
                             break;
-    
+
                         case FileInfoBase.MILLIMETERS:
                             mString = FileInfoBase.MILLIMETERS_STRING;
                             break;
-    
+
                         case FileInfoBase.CENTIMETERS:
                             mString = FileInfoBase.CENTIMETERS_STRING;
                             break;
-    
+
                         case FileInfoBase.METERS:
                             mString = FileInfoBase.METERS_STRING;
                             break;
-    
+
                         case FileInfoBase.KILOMETERS:
                             mString = FileInfoBase.KILOMETERS_STRING;
                             break;
-    
+
                         case FileInfoBase.MILES:
                             mString = FileInfoBase.MILES_STRING;
                             break;
-    
+
                         case FileInfoBase.ANGSTROMS:
                             mString = FileInfoBase.ANGSTROMS_STRING;
                             break;
-    
+
                         case FileInfoBase.NANOMETERS:
                             mString = FileInfoBase.MICROMETERS_STRING;
                             break;
-    
+
                         case FileInfoBase.MICROMETERS:
                             mString = FileInfoBase.NANOMETERS_STRING;
                             break;
-    
+
                         case FileInfoBase.NANOSEC:
                             mString = FileInfoBase.NANOSEC_STRING;
                             break;
-    
+
                         case FileInfoBase.MICROSEC:
                             mString = FileInfoBase.MICROSEC_STRING;
                             break;
-    
+
                         case FileInfoBase.MILLISEC:
                             mString = FileInfoBase.MILLISEC_STRING;
                             break;
-    
+
                         case FileInfoBase.SECONDS:
                             mString = FileInfoBase.SECONDS_STRING;
                             break;
-    
+
                         case FileInfoBase.MINUTES:
                             mString = FileInfoBase.MINUTES_STRING;
                             break;
-    
+
                         case FileInfoBase.HOURS:
                             mString = FileInfoBase.HOURS_STRING;
                             break;
-                            
+
                         case FileInfoBase.HZ:
                             mString = FileInfoBase.HZ_STRING;
                             break;
-                            
+
                         case FileInfoBase.PPM:
                             mString = FileInfoBase.PPM_STRING;
                             break;
-                            
+
                         case FileInfoBase.RADS:
                             mString = FileInfoBase.RADS_STRING;
                             break;
-                            
+
                         case FileInfoBase.DEGREES:
                             mString = FileInfoBase.DEGREES_STRING;
-    
+
                         default:
                             mString = "Unknown";
                             break;
                     } // end of switch(measure[i])
                 }
 
-                if ((image.getType() == ModelStorageBase.ARGB)&& (i == 2)) {
+                if ( (image.getType() == ModelStorageBase.ARGB) && (i == 2)) {
                     cardImage[0] = 67; // C
                     cardImage[1] = 84; // T
                     cardImage[2] = 89; // Y
                     cardImage[3] = 80; // P
-                    cardImage[4] = 69; // E    
-                }
-                else {
+                    cardImage[4] = 69; // E
+                } else {
                     cardImage[0] = 67; // C
                     cardImage[1] = 85; // U
                     cardImage[2] = 78; // N
@@ -2146,9 +2134,9 @@ public class FileFits extends FileBase {
                 }
 
                 cardImage[11 + mString.length()] = 39; // '
-               
+
             } // if (((image.getNDims() >= (i+1)) && (image.getFileInfo()[0].getResolutions()[i] > 0.0)) ||
-            
+
             raFile.write(cardImage);
 
         } // for (i=0; i < 4; i++)
@@ -2224,7 +2212,7 @@ public class FileFits extends FileBase {
 
                         for (j = 0; j < sliceSize; j++) {
                             byteBuffer[2 * j] = (byte) (shortBuffer[j] >>> 8);
-                            byteBuffer[(2 * j) + 1] = (byte) (shortBuffer[j]);
+                            byteBuffer[ (2 * j) + 1] = (byte) (shortBuffer[j]);
                         }
 
                         raFile.write(byteBuffer);
@@ -2249,9 +2237,9 @@ public class FileFits extends FileBase {
 
                         for (j = 0; j < sliceSize; j++) {
                             byteBuffer[4 * j] = (byte) (intBuffer[j] >>> 24);
-                            byteBuffer[(4 * j) + 1] = (byte) (intBuffer[j] >>> 16);
-                            byteBuffer[(4 * j) + 2] = (byte) (intBuffer[j] >>> 8);
-                            byteBuffer[(4 * j) + 3] = (byte) (intBuffer[j]);
+                            byteBuffer[ (4 * j) + 1] = (byte) (intBuffer[j] >>> 16);
+                            byteBuffer[ (4 * j) + 2] = (byte) (intBuffer[j] >>> 8);
+                            byteBuffer[ (4 * j) + 3] = (byte) (intBuffer[j]);
                         }
 
                         raFile.write(byteBuffer);
@@ -2275,9 +2263,9 @@ public class FileFits extends FileBase {
                         for (j = 0; j < sliceSize; j++) {
                             tmpInt = Float.floatToIntBits(floatBuffer[j]);
                             byteBuffer[4 * j] = (byte) (tmpInt >>> 24);
-                            byteBuffer[(4 * j) + 1] = (byte) (tmpInt >>> 16);
-                            byteBuffer[(4 * j) + 2] = (byte) (tmpInt >>> 8);
-                            byteBuffer[(4 * j) + 3] = (byte) (tmpInt);
+                            byteBuffer[ (4 * j) + 1] = (byte) (tmpInt >>> 16);
+                            byteBuffer[ (4 * j) + 2] = (byte) (tmpInt >>> 8);
+                            byteBuffer[ (4 * j) + 3] = (byte) (tmpInt);
                         }
 
                         raFile.write(byteBuffer);
@@ -2301,13 +2289,13 @@ public class FileFits extends FileBase {
                         for (j = 0; j < sliceSize; j++) {
                             tmpLong = Double.doubleToLongBits(doubleBuffer[j]);
                             byteBuffer[8 * j] = (byte) (tmpLong >>> 56);
-                            byteBuffer[(8 * j) + 1] = (byte) (tmpLong >>> 48);
-                            byteBuffer[(8 * j) + 2] = (byte) (tmpLong >>> 40);
-                            byteBuffer[(8 * j) + 3] = (byte) (tmpLong >>> 32);
-                            byteBuffer[(8 * j) + 4] = (byte) (tmpLong >>> 24);
-                            byteBuffer[(8 * j) + 5] = (byte) (tmpLong >>> 16);
-                            byteBuffer[(8 * j) + 6] = (byte) (tmpLong >>> 8);
-                            byteBuffer[(8 * j) + 7] = (byte) (tmpLong);
+                            byteBuffer[ (8 * j) + 1] = (byte) (tmpLong >>> 48);
+                            byteBuffer[ (8 * j) + 2] = (byte) (tmpLong >>> 40);
+                            byteBuffer[ (8 * j) + 3] = (byte) (tmpLong >>> 32);
+                            byteBuffer[ (8 * j) + 4] = (byte) (tmpLong >>> 24);
+                            byteBuffer[ (8 * j) + 5] = (byte) (tmpLong >>> 16);
+                            byteBuffer[ (8 * j) + 6] = (byte) (tmpLong >>> 8);
+                            byteBuffer[ (8 * j) + 7] = (byte) (tmpLong);
                         }
 
                         raFile.write(byteBuffer);
@@ -2315,7 +2303,7 @@ public class FileFits extends FileBase {
                 } // for (t = tBegin; t <= tEnd; t++)
 
                 break;
-                
+
             case ModelStorageBase.ARGB:
                 byteBuffer = new byte[sliceSize];
                 for (t = tBegin; t <= tEnd; t++) {
@@ -2323,8 +2311,8 @@ public class FileFits extends FileBase {
                     for (z = sBegin; z <= sEnd; z++, count++) {
                         i = (t * zDim) + z;
                         for (j = 1; j <= 3; j++) {
-                            fireProgressStateChanged((3*count+ (j-1)) * 100 / (3*numberSlices));
-                            image.exportRGBData(j, 4*i*sliceSize, sliceSize, byteBuffer);
+                            fireProgressStateChanged( (3 * count + (j - 1)) * 100 / (3 * numberSlices));
+                            image.exportRGBData(j, 4 * i * sliceSize, sliceSize, byteBuffer);
                             raFile.write(byteBuffer);
                         }
                     } // for (z = sBegin; z <= sEnd; z++,count++)
@@ -2339,15 +2327,16 @@ public class FileFits extends FileBase {
 
     /**
      * Reads a slice of data at a time and stores the results in the buffer.
-     *
-     * @param      slice        offset into the file stored in the dataOffset array
-     * @param      buffer       buffer where the info is stored
-     * @param      scaleFact    if 1 data is unscaled
-     * @param      scaleOffset  if 0 don't add offset
-     *
-     * @exception  IOException  if there is an error reading the file
+     * 
+     * @param slice offset into the file stored in the dataOffset array
+     * @param buffer buffer where the info is stored
+     * @param scaleFact if 1 data is unscaled
+     * @param scaleOffset if 0 don't add offset
+     * 
+     * @exception IOException if there is an error reading the file
      */
-    private void readBuffer(int slice, float[] buffer, float scaleFact, float scaleOffset) throws IOException {
+    private void readBuffer(final int slice, final float[] buffer, final float scaleFact, final float scaleOffset)
+            throws IOException {
         int i = 0;
         int j;
         int nBytes;
@@ -2370,7 +2359,7 @@ public class FileFits extends FileBase {
 
                 for (j = 0; j < nBytes; j++, i++) {
 
-                    if (((i + progress) % mod) == 0) {
+                    if ( ( (i + progress) % mod) == 0) {
                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
@@ -2389,15 +2378,14 @@ public class FileFits extends FileBase {
 
                 for (j = 0; j < nBytes; j += 2, i++) {
 
-                    if (((i + progress) % mod) == 0) {
+                    if ( ( (i + progress) % mod) == 0) {
                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     b1 = getUnsignedByte(byteBuffer, j);
                     b2 = getUnsignedByte(byteBuffer, j + 1);
 
-                    buffer[i] = (short) ((b1 << 8) + b2);
-
+                    buffer[i] = (short) ( (b1 << 8) + b2);
 
                 } // for (j = 0; j < nBytes; j+=2, i++ )
 
@@ -2413,7 +2401,7 @@ public class FileFits extends FileBase {
 
                 for (j = 0; j < nBytes; j += 4, i++) {
 
-                    if (((i + progress) % mod) == 0) {
+                    if ( ( (i + progress) % mod) == 0) {
                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
@@ -2422,7 +2410,7 @@ public class FileFits extends FileBase {
                     b3 = getUnsignedByte(byteBuffer, j + 2);
                     b4 = getUnsignedByte(byteBuffer, j + 3);
 
-                    buffer[i] = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4); // Big Endian
+                    buffer[i] = ( (b1 << 24) | (b2 << 16) | (b3 << 8) | b4); // Big Endian
 
                 } // for (j =0; j < nBytes; j+=4, i++ )
 
@@ -2438,7 +2426,7 @@ public class FileFits extends FileBase {
 
                 for (j = 0; j < nBytes; j += 4, i++) {
 
-                    if (((i + progress) % mod) == 0) {
+                    if ( ( (i + progress) % mod) == 0) {
                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
@@ -2447,54 +2435,56 @@ public class FileFits extends FileBase {
                     b3 = getUnsignedByte(byteBuffer, j + 2);
                     b4 = getUnsignedByte(byteBuffer, j + 3);
 
-                    tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4); // Big Endian
+                    tmpInt = ( (b1 << 24) | (b2 << 16) | (b3 << 8) | b4); // Big Endian
                     buffer[i] = Float.intBitsToFloat(tmpInt);
 
                 } // for (j =0; j < nBytes; j+=4, i++ )
 
                 break;
-                
+
             case ModelStorageBase.ARGB:
                 if (isColorPlanar2D) {
-                    byteBuffer = new byte[ 3* buffer.length/4];
-                    nBytes = 3 * buffer.length/4;
+                    byteBuffer = new byte[3 * buffer.length / 4];
+                    nBytes = 3 * buffer.length / 4;
                     raFile.read(byteBuffer, 0, nBytes);
                     progress = slice * buffer.length;
                     progressLength = buffer.length * numberSlices;
                     mod = progressLength / 100;
 
-                    for (j = 0; j < nBytes/3; j++, i+= 4) {
+                    for (j = 0; j < nBytes / 3; j++, i += 4) {
 
-                        if (((i + progress) % mod) == 0) {
-                            fireProgressStateChanged(Math.round((float) (i + progress) / (3*progressLength) * 100));
+                        if ( ( (i + progress) % mod) == 0) {
+                            fireProgressStateChanged(Math.round((float) (i + progress) / (3 * progressLength) * 100));
                         }
 
                         buffer[i] = 255;
-                        buffer[i+1] = byteBuffer[j] & 0xff;
-                    } 
-                    
-                    for (i = 0, j = nBytes/3; j < 2*nBytes/3; j++, i+= 4) {
+                        buffer[i + 1] = byteBuffer[j] & 0xff;
+                    }
 
-                        if (((i + progress) % mod) == 0) {
-                            fireProgressStateChanged(Math.round((float) (i + progress) / (3*progressLength) * 100 + 33.3f));
+                    for (i = 0, j = nBytes / 3; j < 2 * nBytes / 3; j++, i += 4) {
+
+                        if ( ( (i + progress) % mod) == 0) {
+                            fireProgressStateChanged(Math.round((float) (i + progress) / (3 * progressLength) * 100
+                                    + 33.3f));
                         }
 
-                        buffer[i+2] = byteBuffer[j] & 0xff;
-                    }  
-                    
-                    for (i = 0, j = 2*nBytes/3; j < nBytes; j++, i+= 4) {
+                        buffer[i + 2] = byteBuffer[j] & 0xff;
+                    }
 
-                        if (((i + progress) % mod) == 0) {
-                            fireProgressStateChanged(Math.round((float) (i + progress) / (3 * progressLength) * 100 + 66.7f));
+                    for (i = 0, j = 2 * nBytes / 3; j < nBytes; j++, i += 4) {
+
+                        if ( ( (i + progress) % mod) == 0) {
+                            fireProgressStateChanged(Math.round((float) (i + progress) / (3 * progressLength) * 100
+                                    + 66.7f));
                         }
 
-                        buffer[i+3] = byteBuffer[j] & 0xff;
-                    }    
+                        buffer[i + 3] = byteBuffer[j] & 0xff;
+                    }
                 } // if (isColorPlanar2D)
                 break;
         } // switch(brikDataType)
 
-        if (!haveBlank) {
+        if ( !haveBlank) {
 
             if (scaleFact != 1.0f) {
 
@@ -2511,7 +2501,7 @@ public class FileFits extends FileBase {
             } // if (scaleOffset != 0.0f)
         } // if (!haveBlank)
         else { // BLANK is used to indicate an undefined physical meaning in an integer array
-               // BSCALE and BZERO are not applied to BLANK values
+            // BSCALE and BZERO are not applied to BLANK values
 
             if (scaleFact != 1.0f) {
 
@@ -2542,15 +2532,16 @@ public class FileFits extends FileBase {
 
     /**
      * Reads a slice of data at a time and stores the results in the buffer.
-     *
-     * @param      slice        offset into the file stored in the dataOffset array
-     * @param      buffer       buffer where the info is stored
-     * @param      scaleFact    if 1 data is unscaled
-     * @param      scaleOffset  if 0 don't add offset
-     *
-     * @exception  IOException  if there is an error reading the file
+     * 
+     * @param slice offset into the file stored in the dataOffset array
+     * @param buffer buffer where the info is stored
+     * @param scaleFact if 1 data is unscaled
+     * @param scaleOffset if 0 don't add offset
+     * 
+     * @exception IOException if there is an error reading the file
      */
-    private void readDBuffer(int slice, double[] buffer, double scaleFact, double scaleOffset) throws IOException {
+    private void readDBuffer(final int slice, final double[] buffer, final double scaleFact, final double scaleOffset)
+            throws IOException {
         int i = 0;
         int j;
         int nBytes;
@@ -2566,10 +2557,9 @@ public class FileFits extends FileBase {
         progressLength = buffer.length * numberSlices;
         mod = progressLength / 10;
 
-
         for (j = 0; j < nBytes; j += 8, i++) {
 
-            if (((i + progress) % mod) == 0) {
+            if ( ( (i + progress) % mod) == 0) {
                 fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
             }
 
@@ -2582,7 +2572,8 @@ public class FileFits extends FileBase {
             b7 = getUnsignedByte(byteBuffer, j + 6);
             b8 = getUnsignedByte(byteBuffer, j + 7);
 
-            tmpLong = ((b1 << 56) | (b2 << 48) | (b3 << 40) | (b4 << 32) | (b5 << 24) | (b6 << 16) | (b7 << 8) | b8); // Big Endian
+            tmpLong = ( (b1 << 56) | (b2 << 48) | (b3 << 40) | (b4 << 32) | (b5 << 24) | (b6 << 16) | (b7 << 8) | b8); // Big
+            // Endian
             buffer[i] = Double.longBitsToDouble(tmpLong);
 
         } // for (j =0; j < nBytes; j+=8, i++ )
@@ -2602,6 +2593,5 @@ public class FileFits extends FileBase {
         }
 
     }
-
 
 }
