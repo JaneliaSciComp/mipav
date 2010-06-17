@@ -192,7 +192,7 @@ public abstract class LevmarBoxConstraint {
 	// solution with chi-squared = 3.6470588 with a0 = a1 = a2 = 1 a3 = -1.20588235 a4 = 1 at 1 iteration.
 	// ELSUNC with internal scaling = true and analytical and numerical Jacobian found yet another correct
 	// solution with chi-squared = 3.6470588 with a0 = a1 = 1 a2 = -1.94117647 a3 = a4 = 1 at 1 iteration.
-	// LINEAR_RANK1 with 5 parameters and 50 points correct with
+	// LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS with 5 parameters and 50 points correct with
 	// chi-squared = 13.62886 a0 = 1 a1 = 0.381443 a2 = 0.0721649 a3 = -0.237113 a4 = 1.0
 	// at 5,000 iterations.
 	// ELSUNC with internal scaling = false and analytical and numerical Jacobian found another correct
