@@ -107,6 +107,98 @@ public abstract class LevmarBoxConstraint {
 	// HATFLDC correct with chi-squared = 3.689E-20 at 3 iterations.
 	// ELSUNC with internal scaling = false and analytical Jacobian did better with
 	// chi-squared = 1.6655E-21 at 3 iterations.
+	
+	// EQUILIBRIUM_COMBUSTION correct with chi-squared = 6.663E-20 at 67 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did worse with
+	// chi-squared = 2.82452E-19 at 143 iterations.
+	
+	// FREUDENSTEIN_AND_ROTH at standard start correct with chi-squared = 48.9842536 at 44 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 48.9842536 at 8 iterations.
+	// FREUDENSTEIN_AND_ROTH at 10 * standard start correct with chi-squared = 48.9842536 at 55 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 48.9842536 at 14 iterations.
+	// FREUDENSTEIN_AND_ROTH at 100 * standard start correct with chi-squared = 48.9842536 at 264 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 48.9842536 at 20 iterations.
+	
+	// BOX_3D correct with chi-squared = 6.929E-20, a0 = 1, a1 = 10, a2 = 1 at 8 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 1.07899E-27, a0 = 1, a1 = 10, a2 = 1 at 5 iterations.
+	
+	// JENNRICH_AND_SAMPSON correct with chi-squared = 124.362182 at 379 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 124.362182 at 22 iterations.
+	
+	// WATSON6 correct with chi-squared = 2.28767E-3 at 17 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 2.28767E-3 at 9 iterations.
+	// WATSON9 correct with chi-squared = 1.39976E-6 at 29 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 1.39976E-6 at 5 iterations.
+	// WATSON12 correct with chi-squared = 4.72238E-10 at 28 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 4.72238E-10 at 5 iterations.
+	
+	// BROWN_ALMOST_LINEAR 10 parameters at standard starting point correct with
+	// chi-squared = 7.22E-19 all parameters = 1 at 6 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 3.89E-27 all parameters = 1 at 6 iterations.
+	// BROWN_ALMOST_LINEAR 10 parameters at 10 * standard starting point correct with
+	// chi-squared = 6.207E-19 all parameters = 1 at 42 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 3.05E-25 all parameters = 1 at 18 iterations.
+	// BROWN_ALMOST_LINEAR 10 parameters at 100 * standard starting point correct with
+	// chi-squared =  8.33E-22 all parameters = 1 at 110 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 7.64E-28 all parameters = 1 at 39 iterations.
+	// BROWN_ALMOST_LINEAR 30 parameters at standard starting point correct with
+	// chi-squared = 7.955E-18 all parameters = 1 at 8 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 2.086E-19 all parameters = 1 at 7 iterations.
+	// BROWN_ALMOST_LINEAR 40 parameters at standard starting point correct with
+	// chi-squared = 2.139E-19 all parameters = 1 at 9 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 7.101E-26 all parameters = 1 at 8 iterations.
+	
+	// LINEAR_FULL_RANK with 5 parameters and 10 points correct with 
+	// chi-squared = 5 all parameters = -1 at 7 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 5 all parameters = -1 at 1 iteration.
+	// LINEAR_FULL_RANK with 5 parameters and 50 points correct with 
+	// chi-squared = 45 all parameters = -1 at 8 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 45 all parameters = -1 at 1 iteration.
+	
+	// LINEAR_RANK1 with 5 parameters and 10 points correct with
+	// chi-squared = 2.14285714 a0 = 0.72987 a1 = 0.45974 a2 = 0.18961 a3 = -0.080519 a4 = -0.350649
+	// at 5,000 iterations.
+	// ELSUNC with internal scaling = false and analytical and numerical Jacobian found another correct
+	// solution with chi-squared = 2.14285714 with a0 thru a3 = 1 and a4 = -1.97142857 at 1 iteration.
+	// ELSUNC with internal scaling = true and analytical and numerical Jacobian found yet another correct
+	// solution with chi-squared = 2.14285712 with a0 = -13.85714 and a1 thru a4 = 1 at 1 iteration.
+	// LINEAR_RANK1 with 5 parameters and 50 points correct with
+	// chi-squared = 12.12871 a0 = 0.72781 a1 = 0.45562 a2 = 0.18343 a3 = -0.088748 a4 = -0.36093
+	// at 5,000 iterations.
+	// ELSUNC with internal scaling = false and analytical and numerical Jacobian found another correct
+	// solution with chi-squared = 12.12871 a0 thru a3 = 1 a4 = -1.994059 at 1 iteration.
+	// ELSUNC with internal scaling = true and analytical and numerical Jacobian found yet another correct
+	// solution with chi-squared = 12.12871 a0 = -13.97029 a1 thru a4 = 1 at 1 iteration.
+	
+	// LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS with 5 parameters and 10 points correct with
+	// chi-squared = 3.6470588 a0 = 1.0 a1 = 0.3914807 a2 = 0.08722109 a3 = -0.2170385 a4 = 1.0
+	// at 5,000 iterations.
+	// ELSUNC with internal scaling = false and analytical and numerical Jacobian found another correct
+	// solution with chi-squared = 3.6470588 with a0 = a1 = a2 = 1 a3 = -1.20588235 a4 = 1 at 1 iteration.
+	// ELSUNC with internal scaling = true and analytical and numerical Jacobian found yet another correct
+	// solution with chi-squared = 3.6470588 with a0 = a1 = 1 a2 = -1.94117647 a3 = a4 = 1 at 1 iteration.
+	// LINEAR_RANK1 with 5 parameters and 50 points correct with
+	// chi-squared = 13.62886 a0 = 1 a1 = 0.381443 a2 = 0.0721649 a3 = -0.237113 a4 = 1.0
+	// at 5,000 iterations.
+	// ELSUNC with internal scaling = false and analytical and numerical Jacobian found another correct
+	// solution with chi-squared = 13.62886 a0 = a1 = a2 = 1 a3 = -1.242268 a4 = 1 at 1 iteration.
+	// ELSUNC with internal scaling = true and analytical and numerical Jacobian found yet another correct
+	// solution with chi-squared = 13.62886 a0 = a1 = 1 a2 = -1.98969 a3 = a4 = 1 at 1 iteration.
 	private final double INIT_MU = 1.0E-3;
 	
 	private final double STOP_THRESH = 1.0E-17;
@@ -211,15 +303,21 @@ public abstract class LevmarBoxConstraint {
     
     private int testCase;
     
+    private final int DRAPER24D = 0;
+    
     private final int ROSENBROCK = 1;
     
-    private final int DRAPER24D = 0;
+    private final int FREUDENSTEIN_AND_ROTH = 2;
+    
+    private final int JENNRICH_AND_SAMPSON = 6;
     
     private final int HELICAL_VALLEY = 7;
     
     private final int BARD = 8;
     
     private final int MEYER = 10;
+    
+    private final int BOX_3D = 12;
     
     private final int POWELL_SINGULAR = 13;
     
@@ -229,7 +327,19 @@ public abstract class LevmarBoxConstraint {
     
     private final int OSBORNE2 = 19;
     
+    private final int WATSON = 20;
+    
     private final int HOCK25 = 25;
+    
+    private final int BROWN_ALMOST_LINEAR = 27;
+    
+    private final int LINEAR_FULL_RANK = 32;
+    
+    private final int LINEAR_RANK1 = 33;
+    
+    private final int LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS = 34;
+    
+    private final int CHEBYQUAD = 35;
     
     private final int MODIFIED_ROSENBROCK = 51;
     
@@ -244,6 +354,8 @@ public abstract class LevmarBoxConstraint {
     private final int HATFLDB = 63;
     
     private final int HATFLDC = 64;
+    
+    private final int EQUILIBRIUM_COMBUSTION = 65;
 	
 	public LevmarBoxConstraint() {
     	int i;
@@ -980,6 +1092,436 @@ public abstract class LevmarBoxConstraint {
         ub[3] = 10.0;
         driver();
         dumpTestResults();
+        
+        Preferences.debug("Equilibrium combustion problem\n");
+        Preferences.debug("Correct answer has a0 = 0.0034 a1 = 31.3265 a2 = 0.0684 a3 = 0.8595 a4 = 0.0370\n");
+        testMode = true;
+        testCase = EQUILIBRIUM_COMBUSTION;
+        nPts = 5;
+        paramNum = 5;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        param = new double[paramNum];
+        param[0] = 1.0E-4;
+        param[1] = 1.0E-4;
+        param[2] = 1.0E-4;
+        param[3] = 1.0E-4;
+        param[4] = 1.0E-4;
+        lb = new double[paramNum];
+        ub = new double[paramNum];
+        lb[0] = 1.0E-4;
+        lb[1] = 1.0E-4;
+        lb[2] = 1.0E-4;
+        lb[3] = 1.0E-4;
+        lb[4] = 1.0E-4;
+        ub[0] = 100.0;
+        ub[1] = 100.0;
+        ub[2] = 100.0;
+        ub[3] = 100.0;
+        ub[4] = 100.0;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1
+        //                            y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Freudenstein and Roth function at standard starting point unconstrained\n");
+        Preferences.debug("y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1\n");
+        Preferences.debug("y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1\n");
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 5, a1 = 4\n");
+        Preferences.debug("Also Chi-squared = 48.9842... at a0 = 11.41..., a1 = -0.8968...\n");
+        Preferences.debug("Second solution obtained by original ELSUNC and LEVMAR\n");
+        testMode = true;
+        testCase = FREUDENSTEIN_AND_ROTH;
+        nPts = 2;
+        paramNum = 2;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        param = new double[paramNum];
+        param[0] = 0.5;
+        param[1] = -2.0;
+        lb = null;
+        ub = null;
+        driver();
+        dumpTestResults();
+        // Below is an example to fit y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1
+        //                            y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Freudenstein and Roth function at 10 * standard starting point unconstrained\n");
+        Preferences.debug("y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1\n");
+        Preferences.debug("y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1\n");
+        Preferences.debug("One correct answer is chi-squared = 0 at a0 = 5, a1 = 4\n");
+        Preferences.debug("Also Chi-squared = 48.9842... at a0 = 11.41..., a1 = -0.8968...\n");
+        Preferences.debug("Second solution obtained by original ELSUNC and LEVMAR\n");
+        testMode = true;
+        testCase = FREUDENSTEIN_AND_ROTH;
+        nPts = 2;
+        paramNum = 2;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        param = new double[paramNum];
+        param[0] = 5.0;
+        param[1] = -20.0;
+        lb = null;
+        ub = null;
+        driver();
+        dumpTestResults();
+        // Below is an example to fit y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1
+        //                            y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Freudenstein and Roth function at 100 * standard starting point unconstrained\n");
+        Preferences.debug("y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1\n");
+        Preferences.debug("y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1\n");
+        Preferences.debug("One correct answer is Chi-squared = 0 at a0 = 5, a1 = 4\n");
+        Preferences.debug("Also Chi-squared = 48.9842... at a0 = 11.41..., a1 = -0.8968...\n");
+        Preferences.debug("Second solution obtained by original ELSUNC and LEVMAR\n");
+        testMode = true;
+        testCase = FREUDENSTEIN_AND_ROTH;
+        nPts = 2;
+        paramNum = 2;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        param = new double[paramNum];
+        param[0] = 50.0;
+        param[1] = -200.0;
+        lb = null;
+        ub = null;
+        driver();
+        dumpTestResults();
+        
+        // Below is an expample to fit y(i) = exp(-ti*a0) - exp(-ti*a1) - a2*(exp(-ti) - exp(-10*ti))
+        // For ti = 0.1*i for i = 1 to 10
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Box three-dimensional function unconstrained\n");
+        Preferences.debug("y(i) = exp(-ti*a0) = exp(-ti*a1) - a2*(exp(-ti) - exp(-10*ti))\n");
+        Preferences.debug("For ti = 0.1*i for i = 1 to 10\n");
+        Preferences.debug("Correct answer has chi-squared = 0 at a0 = 1, a1 = 10, a2 = 1\n");
+        Preferences.debug("Also chi-squared = 0 at a0 = 10, a1 = 1, a2 = -1\n");
+        Preferences.debug("Also chi-squared = 0 wherever a0 = a1 and a2 = 0\n");
+        testMode = true;
+        testCase = BOX_3D;
+        nPts = 10;
+        paramNum = 3;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        param = new double[paramNum];
+        param[0] = 0.0;
+        param[1] = 10.0;
+        param[2] = 20.0;
+        lb = null;
+        ub = null;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit y(i-1) = 2 + 2*i -(exp(i*a0) + exp(i*a1))
+        // for i = 1 to 10
+        Preferences.debug("Jennrich and Sampson function at standard starting point unconstrained\n");
+        Preferences.debug("y(i-1) = 2 + 2*i - (exp(i*a0) + exp(i*a1)\n");
+        Preferences.debug("for i = 1 to 10\n");
+        Preferences.debug("Correct answer has chi-squared = 124.362 at a0 = 0.257825, a1 = 0.257825\n");
+        testMode = true;
+        testCase = JENNRICH_AND_SAMPSON;
+        nPts = 10;
+        paramNum = 2;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        param = new double[paramNum];
+        param[0] = 0.3;
+        param[1] = 0.4;
+        lb = null;
+        ub = null;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit the Watson function with 6 parameters
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Watson with 6 parameters at standard starting point unconstrained\n");
+        Preferences.debug("Correct chi-squared = 2.28767E-3\n");
+        testMode = true;
+        testCase = WATSON;
+        nPts = 31;
+        paramNum = 6;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        // Guess all parameters are 0.0.
+        param = new double[paramNum];
+        lb = null;
+        ub = null;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit the Watson function with 9 parameters
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Watson with 9 parameters at standard starting point unconstrained\n");
+        Preferences.debug("Correct chi-squared = 1.39976E-6\n");
+        testMode = true;
+        testCase = WATSON;
+        nPts = 31;
+        paramNum = 9;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        // Guess all parameters are 0.0.
+        param = new double[paramNum];
+        lb = null;
+        ub = null;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit the Watson function with 12 parameters
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Watson with 12 parameters at standard starting point unconstrained\n");
+        Preferences.debug("Correct chi-squared = 4.72238E-10\n");
+        testMode = true;
+        testCase = WATSON;
+        nPts = 31;
+        paramNum = 12;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        // Guess all parameters are 0.0.
+        param = new double[paramNum];
+        lb = null;
+        ub = null;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit the Brown almost linear function with 10 parameters
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Brown almost linear with 10 parameters at standard staring point unconstrained\n");
+        Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n");
+        Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n");
+        Preferences.debug("in particular , alpha = 1\n");
+        Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n");
+        testMode = true;
+        testCase = BROWN_ALMOST_LINEAR;
+        nPts = 10;
+        paramNum = 10;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        // Guess all parameters are 0.5
+        param = new double[paramNum];
+        for (i = 0; i < paramNum; i++) {
+        	param[i] = 0.5;
+        }
+        lb = null;
+        ub = null;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit the Brown almost linear function with 10 parameters
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Brown almost linear with 10 parameters at 10 * standard staring point unconstrained\n");
+        Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n");
+        Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n");
+        Preferences.debug("in particular , alpha = 1\n");
+        Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n");
+        testMode = true;
+        testCase = BROWN_ALMOST_LINEAR;
+        nPts = 10;
+        paramNum = 10;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        // Guess all parameters are 5.0
+        param = new double[paramNum];
+        for (i = 0; i < paramNum; i++) {
+        	param[i] = 5.0;
+        }
+        lb = null;
+        ub = null;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit the Brown almost linear function with 10 parameters
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Brown almost linear with 10 parameters at 100 * standard staring point unconstrained\n");
+        Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n");
+        Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n");
+        Preferences.debug("in particular , alpha = 1\n");
+        Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n");
+        testMode = true;
+        testCase = BROWN_ALMOST_LINEAR;
+        nPts = 10;
+        paramNum = 10;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        // Guess all parameters are 50.0
+        param = new double[paramNum];
+        for (i = 0; i < paramNum; i++) {
+        	param[i] = 50.0;
+        }
+        lb = null;
+        ub = null;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit the Brown almost linear function with 30 parameters
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Brown almost linear with 30 parameters at standard staring point unconstrained\n");
+        Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n");
+        Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n");
+        Preferences.debug("in particular , alpha = 1\n");
+        Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n");
+        testMode = true;
+        testCase = BROWN_ALMOST_LINEAR;
+        nPts = 30;
+        paramNum = 30;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        // Guess all parameters are 0.5
+        param = new double[paramNum];
+        for (i = 0; i < paramNum; i++) {
+        	param[i] = 0.5;
+        }
+        lb = null;
+        ub = null;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit the Brown almost linear function with 40 parameters
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Brown almost linear with 40 parameters at standard staring point unconstrained\n");
+        Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n");
+        Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n");
+        Preferences.debug("in particular , alpha = 1\n");
+        Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n");
+        testMode = true;
+        testCase = BROWN_ALMOST_LINEAR;
+        nPts = 40;
+        paramNum = 40;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        // Guess all parameters are 0.5
+        param = new double[paramNum];
+        for (i = 0; i < paramNum; i++) {
+        	param[i] = 0.5;
+        }
+        lb = null;
+        ub = null;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit the Linear full rank with 5 parameters and 10 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Linear full rank function with 5 parameters and 10 points\n");
+        Preferences.debug("Chi-squared = nPts - param at all parameters = -1\n");
+        testMode = true;
+        testCase = LINEAR_FULL_RANK;
+        nPts = 10;
+        paramNum = 5;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        // Guess all parameters are 1
+        param = new double[paramNum];
+        for (i = 0; i < paramNum; i++) {
+        	param[i] = 1.0;
+        }
+        lb = null;
+        ub = null;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit the Linear full rank with 5 parameters and 50 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Linear full rank function with 5 parameters and 50 points\n");
+        Preferences.debug("Chi-squared = nPts - param at all parameters = -1\n");
+        testMode = true;
+        testCase = LINEAR_FULL_RANK;
+        nPts = 50;
+        paramNum = 5;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        // Guess all parameters are 1
+        param = new double[paramNum];
+        for (i = 0; i < paramNum; i++) {
+        	param[i] = 1.0;
+        }
+        lb = null;
+        ub = null;
+        driver();
+        dumpTestResults();
+        
+        // Below is the test to fit the Linear rank 1 function with 5 parameters and 10 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Linear rank 1 function with 5 parameters and 10 points\n");
+        Preferences.debug("Chi-squared = nPts*(nPts-1)/(2*(2*nPts + 1))\n");
+        Preferences.debug("At any point where sum from j = 1 to nPts of j*x[j] = 3/(2*nPts + 1)\n");
+        testMode = true;
+        testCase = LINEAR_RANK1;
+        nPts = 10;
+        paramNum = 5;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        // Guess all parameters are 1
+        param = new double[paramNum];
+        for (i = 0; i < paramNum; i++) {
+        	param[i] = 1.0;
+        }
+        lb = null;
+        ub = null;
+        driver();
+        dumpTestResults();
+        
+        // Below is the test to fit the Linear rank 1 function with 5 parameters and 50 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Linear rank 1 function with 5 parameters and 50 points\n");
+        Preferences.debug("Chi-squared = nPts*(nPts-1)/(2*(2*nPts + 1))\n");
+        Preferences.debug("At any point where sum from j = 1 to nPts of j*x[j] = 3/(2*nPts + 1)\n");
+        testMode = true;
+        testCase = LINEAR_RANK1;
+        nPts = 50;
+        paramNum = 5;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        // Guess all parameters are 1
+        param = new double[paramNum];
+        for (i = 0; i < paramNum; i++) {
+        	param[i] = 1.0;
+        }
+        lb = null;
+        ub = null;
+        driver();
+        dumpTestResults();
+        
+        // Below is the test to fit the Linear rank 1 function with zero columns and rows with 5 parameters and 10 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Linear rank 1 with zero columns and rows function with 5 parameters and 10 points\n");
+        Preferences.debug("Chi-squared = (nPts**2 + 3*nPts -6)/(2*(2*nPts - 3))\n");
+        Preferences.debug("At any point where sum from j = 2 to nPts-1 of j*x[j] = 3/(2*nPts - 3)\n");
+        testMode = true;
+        testCase = LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS;
+        nPts = 10;
+        paramNum = 5;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        // Guess all parameters are 1
+        param = new double[paramNum];
+        for (i = 0; i < paramNum; i++) {
+        	param[i] = 1.0;
+        }
+        lb = null;
+        ub = null;
+        driver();
+        dumpTestResults();
+        
+        // Below is the test to fit the Linear rank 1 function with zero columns and rows with 5 parameters and 50 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Linear rank 1 with zero columns and rows function with 5 parameters and 50 points\n");
+        Preferences.debug("Chi-squared = (nPts**2 + 3*nPts -6)/(2*(2*nPts - 3))\n");
+        Preferences.debug("At any point where sum from j = 2 to nPts-1 of j*x[j] = 3/(2*nPts - 3)\n");
+        testMode = true;
+        testCase = LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS;
+        nPts = 50;
+        paramNum = 5;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        // Guess all parameters are 1
+        param = new double[paramNum];
+        for (i = 0; i < paramNum; i++) {
+        	param[i] = 1.0;
+        }
+        lb = null;
+        ub = null;
+        driver();
+        dumpTestResults();
     }
 	
 	public LevmarBoxConstraint(int x) {
@@ -1009,6 +1551,9 @@ public abstract class LevmarBoxConstraint {
 	private void fitToTestFunction(double[] param, double[] hx, int paramNum, int nPts) {
 		int i;
 		double theta;
+		double t[];
+		double sumParam;
+		double sumTerm;
 		switch(testCase) {
 		    case DRAPER24D:
 		    	for (i = 0; i < nPts; i++) {
@@ -1119,6 +1664,113 @@ public abstract class LevmarBoxConstraint {
         		}
         		hx[paramNum-1] = param[paramNum-1] - 1.0;
 		    	break;
+		    case EQUILIBRIUM_COMBUSTION:
+		    	double R, R5, R6, R7, R8, R9, R10;
+
+		    	  R=10;
+		    	  R5=0.193;
+		    	  R6=4.10622*1e-4;
+		    	  R7=5.45177*1e-4;
+		    	  R8=4.4975*1e-7;
+		    	  R9=3.40735*1e-5;
+		    	  R10=9.615*1e-7;
+
+		    	  hx[0]=param[0]*param[1]+param[0]-3*param[4];
+		    	  hx[1]=2*param[0]*param[1]+param[0]+3*R10*param[1]*param[1]+param[1]*param[2]*param[2]
+		    	        +R7*param[1]*param[2]+R9*param[1]*param[3]+R8*param[1]-R*param[4];
+		    	  hx[2]=2*param[1]*param[2]*param[2]+R7*param[1]*param[2]+2*R5*param[2]*param[2]+R6*param[2]-8*param[4];
+		    	  hx[3]=R9*param[1]*param[3]+2*param[3]*param[3]-4*R*param[4];
+		    	  hx[4]=param[0]*param[1]+param[0]+R10*param[1]*param[1]+param[1]*param[2]*param[2]
+		    	       +R7*param[1]*param[2]+R9*param[1]*param[3]+R8*param[1]+R5*param[2]*param[2]
+		    	       +R6*param[2]+param[3]*param[3]-1.0;
+		    	break;
+		    case FREUDENSTEIN_AND_ROTH:
+		    	hx[0] = -13.0 + param[0] + ((5.0 - param[1])*param[1] - 2.0)*param[1];
+        		hx[1] = -29.0 + param[0] + ((param[1] + 1)*param[1] - 14.0)*param[1];
+		    	break;
+		    case BOX_3D:
+		    	t = new double[10];
+        		for (i = 0; i <10; i++) {
+        		    t[i] = 0.1*(i+1.0);	
+        		    hx[i] = Math.exp(-param[0]*t[i]) - Math.exp(-param[1]*t[i])
+        		                   - param[2]*(Math.exp(-t[i]) - Math.exp(-10.0*t[i]));
+        		}
+        		break;
+		    case JENNRICH_AND_SAMPSON:
+		    	for (i = 0; i < 10; i++) {
+       	    	    hx[i] = 2.0 + 2.0*(i+1.0) - (Math.exp((i+1.0)*param[0]) + Math.exp((i+1.0)*param[1]));
+       	        }
+		    	break;
+		    case WATSON:
+		    	double sum1;
+        		double sum2;
+        		t = new double[29];
+        		int j;
+        	    for (i = 0; i < 31; i++) {
+        	    	if (i < 29) {
+        	            t[i] = (i+1.0)/29.0;
+            	        sum1 = 0.0;
+            	        for (j = 2; j <= paramNum; j++) {
+            	            sum1 += (j - 1.0)*param[j-1]*Math.pow(t[i], j-2.0);	
+            	        }
+            	        sum2 = 0.0;
+            	        for (j = 1; j <= paramNum; j++) {
+            	            sum2 += param[j-1]*Math.pow(t[i], j-1.0);	
+            	        }
+        	        	hx[i] = sum1 - sum2*sum2 - 1.0;
+        	        }
+        	        else if (i == 29) {
+        	        	hx[i] = param[0];
+        	        }
+        	        else if (i == 30) {
+        	        	hx[i] = param[1] - param[0]*param[0] - 1.0; 
+        	        }
+        	    }
+		    	break;
+		    case BROWN_ALMOST_LINEAR:
+		    	sumParam = 0.0;
+    			double prodParam = 1.0;
+    			for (i = 0; i < nPts; i++) {
+    				sumParam += param[i];
+    				prodParam *= param[i];
+    			}
+    		    for (i = 0; i < nPts -1; i++) {
+    		    	hx[i] = param[i] + sumParam - (nPts + 1.0);
+    		    } // for (i = 0; i < nPts - 1; i++)
+    		    hx[nPts-1] = prodParam - 1.0;	
+		    	break;
+		    case LINEAR_FULL_RANK:
+		    	sumParam = 0.0;
+        	    for (i = 0 ; i < paramNum; i++) {
+        	    	sumParam += param[i];
+        	    }
+        	    for (i = 0; i < paramNum; i++) {
+        	    	hx[i] = param[i] - 2.0 * sumParam / nPts - 1.0;
+        	    }
+        	    for (i = paramNum; i < nPts; i++) {
+        	    	hx[i] = -2.0 * sumParam / nPts - 1.0;
+        	    }
+		    	break;
+		    case LINEAR_RANK1:
+		    	sumTerm = 0.0;
+        	    for (i = 0; i < paramNum; i++) {
+        	    	sumTerm += (i+1.0)*param[i];
+        	    }
+        	    for (i = 0; i < nPts; i++) {
+        	    	hx[i] = (i+1.0)*sumTerm - 1.0;
+        	    }
+		    	break;
+		    case LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS:
+		    	sumTerm = 0.0;
+        	    hx[0] = -1.0;
+        	    hx[nPts-1] = -1.0;
+        	    for (i = 1; i < paramNum-1; i++) {
+        	    	sumTerm += (i+1.0)*param[i];
+        	    }
+        	    for (i = 1; i < nPts-1; i++) {
+        	    	hx[i] = i*sumTerm - 1.0;
+        	    }
+		    	break;
 		}
 	}
 	
@@ -1129,6 +1781,7 @@ public abstract class LevmarBoxConstraint {
 		double exponent;
 		double denom;
 		double top;
+		double t[];
 	    switch(testCase) {
 	        case DRAPER24D:
 	        	for (i = 0, j = 0; i < nPts; i++) {
@@ -1329,6 +1982,158 @@ public abstract class LevmarBoxConstraint {
     		    jac[13] = 0.0;
     		    jac[14] = 0.0;
     		    jac[15] = 1.0;
+	        	break;
+	        case EQUILIBRIUM_COMBUSTION:
+	        	  j=0;
+	        	  double R, R5, R6, R7, R8, R9, R10;
+
+	        	  R=10;
+	        	  R5=0.193;
+	        	  R6=4.10622*1e-4;
+	        	  R7=5.45177*1e-4;
+	        	  R8=4.4975*1e-7;
+	        	  R9=3.40735*1e-5;
+	        	  R10=9.615*1e-7;
+
+	        	  for(j=0; j<paramNum*nPts; ++j) jac[j]=0.0;
+
+	        	  j=0;
+	        	  jac[j]=param[1]+1;
+	        	  jac[j+1]=param[0];
+	        	  jac[j+4]=-3;
+
+	        	  j+=paramNum;
+	        	  jac[j]=2*param[1]+1;
+	        	  jac[j+1]=2*param[0]+6*R10*param[1]+param[2]*param[2]+R7*param[2]+R9*param[3]+R8;
+	        	  jac[j+2]=2*param[1]*param[2]+R7*param[1];
+	        	  jac[j+3]=R9*param[1];
+	        	  jac[j+4]=-R;
+
+	        	  j+=paramNum;
+	        	  jac[j+1]=2*param[2]*param[2]+R7*param[2];
+	        	  jac[j+2]=4*param[1]*param[2]+R7*param[1]+4*R5*param[2]+R6;
+	        	  jac[j+4]=-8;
+
+	        	  j+=paramNum;
+	        	  jac[j+1]=R9*param[3];
+	        	  jac[j+3]=R9*param[1]+4*param[3];
+	        	  jac[j+4]=-4*R;
+
+	        	  j+=paramNum;
+	        	  jac[j]=param[1]+1;
+	        	  jac[j+1]=param[0]+2*R10*param[1]+param[2]*param[2]+R7*param[2]+R9*param[3]+R8;
+	        	  jac[j+2]=2*param[1]*param[2]+R7*param[1]+2*R5*param[2]+R6;
+	        	  jac[j+3]=R9*param[1]+2*param[3];
+	        	break;
+	        case FREUDENSTEIN_AND_ROTH:
+	        	jac[0] = 1.0;
+    		    jac[1] = 10.0*param[1] - 3.0*param[1]*param[1] - 2.0;
+    		    jac[2] = 1.0;
+    		    jac[3] = 3.0*param[1]*param[1] + 2.0*param[1] - 14.0;
+	        	break;
+	        case BOX_3D:
+	        	t = new double[10];
+    			for (i = 0; i <10; i++) {
+        		    t[i] = 0.1*(i+1.0);	
+        		    jac[3*i] = -t[i]*Math.exp(-param[0]*t[i]);
+        		    jac[3*i+1] = t[i]*Math.exp(-param[1]*t[i]);
+        		    jac[3*i+2] = Math.exp(-10.0*t[i]) - Math.exp(-t[i]);
+        		}
+    			break;
+	        case JENNRICH_AND_SAMPSON:
+	        	for (i = 0; i < 10; i++) {
+    	    	    jac[2*i] = -Math.exp((i+1.0)*param[0])*(i + 1.0);
+    	    	    jac[2*i+1] = -Math.exp((i+1.0)*param[1])*(i + 1.0);
+    	        }
+	        	break;
+	        case WATSON:
+	        	double sum2;
+        		t = new double[29];
+        	    for (i = 0; i < 31; i++) {
+        	    	if (i < 29) {
+        	            t[i] = (i+1.0)/29.0;
+        	            sum2 = 0.0;
+            	        for (j = 1; j <= paramNum; j++) {
+            	            sum2 += param[j-1]*Math.pow(t[i], j-1.0);	
+            	        }
+        	            jac[i*paramNum] = -2.0*sum2;
+        	            for (j = 2; j <= paramNum; j++) {
+        	            	jac[i*paramNum+j-1] = (j-1.0)*Math.pow(t[i],j-2.0) - 2.0*sum2*Math.pow(t[i],j-1.0);
+        	            }
+        	    	} // if (i < 29)
+        	    	else if (i == 29) {
+        	    		jac[i*paramNum] = 1.0;
+        	    		for (j = 1; j < paramNum; j++) {
+        	    			jac[i*paramNum+j] = 0.0;
+        	    		}
+        	    	}
+        	    	else if (i == 30) {
+        	    		jac[i*paramNum] = -2.0*param[0];
+        	    		jac[i*paramNum+1] = 1.0;
+        	    		for (j = 2; j < paramNum; j++) {
+        	    			jac[i*paramNum+j] = 0.0;
+        	    		}
+        	    	}
+        	    } // for (i = 0; i < 31; i++)
+        	    break;
+	        case BROWN_ALMOST_LINEAR:
+	        	double prodParam;
+    			for (i = 0; i < nPts - 1; i++) {
+    				for (j = 0; j < nPts; j++) {
+    				    if (i == j) {
+    				    	jac[i*paramNum+j] = 2.0;
+    				    }
+    				    else {
+    				    	jac[i*paramNum+j] = 1.0;
+    				    }
+    				}
+    			}
+    			for (i = 0; i < nPts; i++) {
+    				prodParam = 1.0;
+    				for (j = 0; j < nPts; j++) {
+    					if (i != j) {
+    						prodParam = prodParam*param[j];
+    					}
+    				}
+    			    jac[(nPts-1)*paramNum+i] = prodParam;	
+    			}
+	        	break;
+	        case LINEAR_FULL_RANK:
+	        	for (i = 0; i < paramNum; i++) {
+        		    for (j = 0; j < paramNum; j++) {
+        		        if (i == j) {
+        		        	jac[i*paramNum+j] = 1.0 - 2.0/nPts;
+        		        }
+        		        else {
+        		        	jac[i*paramNum+j] = -2.0/nPts;
+        		        }
+        		    }
+        		} // for (i = 0; i < paramNum; i++)
+        		for (i = paramNum; i < nPts; i++) {
+        			for (j = 0; j < paramNum; j++) {
+        			    jac[i*paramNum+j] = -2.0/nPts;
+        			}
+        		} // for (i = paramNum; i < nPts; i++)
+	        	break;
+	        case LINEAR_RANK1:
+	        	for (i = 0; i < nPts; i++) {
+    		    	for (j = 0; j < paramNum; j++) {
+    		    		jac[i*paramNum+j] = (i+1.0)*(j+1.0);
+    		    	}
+    		    }
+	        	break;
+	        case LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS:
+	        	for (j = 0; j < paramNum; j++) {
+    				jac[j] = 0.0;
+    				jac[(nPts-1)*paramNum+j] = 0.0;
+    			}
+    		    for (i = 1; i < nPts-1; i++) {
+    		    	jac[i*paramNum] = 0.0;
+    		    	jac[i*paramNum+paramNum-1] = 0.0;
+    		    	for (j = 1; j < paramNum-1; j++) {
+    		    		jac[i*paramNum+j] = i*(j+1.0);
+    		    	}
+    		    }
 	        	break;
 	    }
 	}
