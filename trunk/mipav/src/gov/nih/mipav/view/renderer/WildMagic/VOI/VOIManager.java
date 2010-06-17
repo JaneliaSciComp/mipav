@@ -429,6 +429,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
     private int m_iPlane = -1;
 
+    private Vector3f m_kMouseOffset = new Vector3f();
 
     public VOIManager (VOIManagerInterface kParent )
     {
@@ -1154,9 +1155,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                     m_kParent.saveVOIs("addVOIPoint");
                     addVOIPoint( kEvent.getX(), kEvent.getY() );
                 }
-                else
+                else if ( selectVOI( kEvent.getX(), kEvent.getY(), kEvent.isShiftDown() ) != null )
                 {
-                    selectVOI( kEvent.getX(), kEvent.getY(), kEvent.isShiftDown() );
+                    Vector3f kGC = m_kDrawingContext.fileToScreen( m_kCurrentVOI.getGeometricCenter() );
+                    m_kMouseOffset.Set ( kGC.X - kEvent.getX(), kGC.Y - kEvent.getY(), 0 );
                 }
             }
 
@@ -1361,6 +1363,14 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 }
             }
             kVOI.update(kVolumeDiff);
+            
+
+            Vector3f kScreenMin = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[0] );
+            Vector3f kScreenMax = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[1] );
+            Vector3f kTemp = new Vector3f( kScreenMin );
+            kScreenMin.Min( kScreenMax );
+            kScreenMax.Max( kTemp );
+            
             if ( kVOI.getGroup().getContourGraph() != null )
             {
                 m_kParent.updateGraph(kVOI);
@@ -1853,13 +1863,14 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         {
             float fRadiusX = Math.abs(m_fMouseX - iX);
             float fRadiusY = Math.abs(fYStart - fY);
-            if ( m_fMouseX + fRadiusX >= m_aiLocalImageExtents[0] )
+
+            if ( m_fMouseX + fRadiusX >= m_kDrawingContext.getWidth() )
             {
-                fRadiusX = m_aiLocalImageExtents[0] - m_fMouseX;
+                fRadiusX = m_kDrawingContext.getWidth() - m_fMouseX;
             }
-            if ( m_fMouseY + fRadiusY >= m_aiLocalImageExtents[1] )
+            if ( m_fMouseY + fRadiusY >= m_kDrawingContext.getHeight() )
             {
-                fRadiusY = m_aiLocalImageExtents[1] - m_fMouseY;
+                fRadiusY = m_kDrawingContext.getHeight() - m_fMouseY;
             }
             if ( m_fMouseX - fRadiusX < 0 )
             {
@@ -3870,8 +3881,14 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 {
                     m_kParent.saveVOIs( "moveVOI" );
                     m_bFirstDrag = false;
-                }    
-                m_kParent.moveVOI( this, new Vector3f( kEvent.getX() - m_fMouseX, kEvent.getY() - m_fMouseY, 0 ), m_iPlane, m_bFirstDrag );
+                } 
+
+                Vector3f kGC = m_kDrawingContext.fileToScreen( m_kCurrentVOI.getGeometricCenter() );
+                Vector3f kNewGC = new Vector3f( kEvent.getX() + m_kMouseOffset.X, kEvent.getY() + m_kMouseOffset.Y, kGC.Z );
+                Vector3f kDiff = new Vector3f();
+                kDiff.Sub( kNewGC, kGC );
+                
+                m_kParent.moveVOI( this, kDiff, m_iPlane, m_bFirstDrag );
                 m_fMouseX = kEvent.getX();
                 m_fMouseY = kEvent.getY();
             }
