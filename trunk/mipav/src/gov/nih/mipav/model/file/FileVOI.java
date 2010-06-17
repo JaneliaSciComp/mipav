@@ -865,12 +865,16 @@ public class FileVOI extends FileXML {
                 chooser.setDialogTitle("Save VOI as");
                 chooser.setCurrentDirectory(file);
 
-                chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] {".xml", ".voi"}));
+                chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] {".xml"}));
 
                 final int returnVal = chooser.showSaveDialog(null);
 
                 if (returnVal == JFileChooser.APPROVE_OPTION) {
                     fileName = chooser.getSelectedFile().getName();
+                    if(!fileName.endsWith(".xml")) {
+                    	MipavUtil.displayError("VOI files must end in .xml");
+                    	return;
+                    }
                     fileDir = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
                     file = new File(fileDir + fileName);
                 } else {
