@@ -1,9 +1,10 @@
 package gov.nih.mipav.model.file;
 
 
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 
-import java.io.*;
+import java.io.IOException;
 
 
 /**
@@ -11,36 +12,106 @@ import java.io.*;
  * uses a Huffman table to interpret values. For color images this file will have to be modified. Some code for color is
  * here but it isn't universal. There is a private class within this file that does the bit reading and packing. For
  * more information see the comments in front of that class. This code was ported from Huang and Smith's Cornell
- * software. Here is the relevant copyright:
- *
- * <p>Copyright (C) 1991, 1992, Thomas G. Lane.<br>
- * Part of the Independent JPEG Group's software.<br>
- * See the file Copyright for more details.<br>
- * </p>
- *
- * <p>Copyright (c) 1993 Brian C. Smith, The Regents of the University of California<br>
- * All rights reserved.<br>
- * </p>
- *
- * <p>Copyright (c) 1994 Kongji Huang and Brian C. Smith.<br>
- * Cornell University<br>
- * All rights reserved.<br>
- * </p>
- *
- * <p>IN NO EVENT SHALL CORNELL UNIVERSITY BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR
- * CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF CORNELL UNIVERSITY HAS
- * BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
- *
- * <p>CORNELL UNIVERSITY SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, AND
- * CORNELL UNIVERSITY HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.</p>
- *
- * @version  1.0 May 14, 2002
- * @author   Neva Cherniavsky
+ * software.
+ * 
+ * 
+ * 
+ * <hr>
+ * 
+ * <pre>
+ * Copyright (c) 1993 Cornell University, Kongji Huang
+ * All rights reserved.
+ * 
+ * Permission to use, copy, modify, and distribute this software and its
+ * documentation for research purposes, without fee, and without written
+ * agreement is hereby granted, provided that the above copyright notice
+ * and the following two paragraphs appear in all copies of this
+ * software.
+ * 
+ * IN NO EVENT SHALL THE CORNELL UNIVERSITY BE LIABLE TO ANY PARTY FOR
+ * DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING
+ * OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE
+ * UNIVERSITY OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+ * DAMAGE.
+ * 
+ * THE CORNELL UNIVERSITY SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE
+ * PROVIDED HEREUNDER IS ON AN &quot;AS IS&quot; BASIS, AND THE UNIVERSITY OF
+ * CALIFORNIA HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
+ * ENHANCEMENTS, OR MODIFICATIONS.
+ * </pre>
+ * 
+ * <hr>
+ * 
+ * <pre>
+ * Copyright (c) 1993 The Regents of the University of California, Brian
+ * C. Smith All rights reserved.
+ * 
+ * Permission to use, copy, modify, and distribute this software and its
+ * documentation for any purpose, without fee, and without written
+ * agreement is hereby granted, provided that the above copyright notice
+ * and the following two paragraphs appear in all copies of this
+ * software.
+ * 
+ * IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY
+ * FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES
+ * ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF
+ * THE UNIVERSITY OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * 
+ * THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE
+ * PROVIDED HEREUNDER IS ON AN &quot;AS IS&quot; BASIS, AND THE UNIVERSITY OF
+ * CALIFORNIA HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
+ * ENHANCEMENTS, OR MODIFICATIONS.
+ * </pre>
+ * 
+ * <hr>
+ * 
+ * <pre>
+ * IJG Copyright
+ * 
+ * The authors make NO WARRANTY or representation, either express or
+ * implied, with respect to this software, its quality, accuracy,
+ * merchantability, or fitness for a particular purpose.  This software is
+ * provided &quot;AS IS&quot;, and you, its user, assume the entire risk as to its
+ * quality and accuracy.
+ * 
+ * This software is copyright (C) 1991, 1992, Thomas G. Lane.  All Rights
+ * Reserved except as specified below.
+ * 
+ * Permission is hereby granted to use, copy, modify, and distribute this
+ * software (or portions thereof) for any purpose, without fee, subject to
+ * these conditions:  (1) If any part of the source code for this software
+ * is distributed, then this README file must be included, with this
+ * copyright and no-warranty notice unaltered; and any additions,
+ * deletions, or changes to the original files must be clearly indicated
+ * in accompanying documentation.  (2) If only executable code is
+ * distributed, then the accompanying documentation must state that &quot;this
+ * software is based in part on the work of the Independent JPEG Group&quot;.
+ * (3) Permission for use of this software is granted only if the user
+ * accepts full responsibility for any undesirable consequences; the
+ * authors accept NO LIABILITY for damages of any kind.
+ * 
+ * Permission is NOT granted for the use of any IJG author's name or
+ * company name in advertising or publicity relating to this software or
+ * products derived from it.  This software may be referred to only as
+ * &quot;the Independent JPEG Group's software&quot;.
+ * 
+ * We specifically permit and encourage the use of this software as the
+ * basis of commercial products, provided that all warranty or liability
+ * claims are assumed by the product vendor.
+ * </pre>
+ * 
+ * @version 1.0 May 14, 2002
+ * @author Neva Cherniavsky
  */
 public class FileDicomJPEG {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Marker tags in JPEG header. */
     private static final byte M_SOF0 = (byte) 0xc0;
@@ -158,42 +229,38 @@ public class FileDicomJPEG {
 
     /** DOCUMENT ME! */
     private static final byte M_ERROR = (byte) 0x100;
- 
+
     /** Entry n is 2**(n-1); used to test whether we need to make a number negative. */
-    private static int[] extendTest = {
-        0, 0x0001, 0x0002, 0x0004, 0x0008, 0x0010, 0x0020, 0x0040, 0x0080, 0x0100, 0x0200, 0x0400, 0x0800, 0x1000,
-        0x2000, 0x4000, 0x8000
-    };
+    private static int[] extendTest = {0, 0x0001, 0x0002, 0x0004, 0x0008, 0x0010, 0x0020, 0x0040, 0x0080, 0x0100,
+            0x0200, 0x0400, 0x0800, 0x1000, 0x2000, 0x4000, 0x8000};
 
     /** Entry n is (-1 << n) + 1; used to make a number negative. */
-    private static int[] extendOffset = {
-        0, ((-1) << 1) + 1, ((-1) << 2) + 1, ((-1) << 3) + 1, ((-1) << 4) + 1, ((-1) << 5) + 1, ((-1) << 6) + 1,
-        ((-1) << 7) + 1, ((-1) << 8) + 1, ((-1) << 9) + 1, ((-1) << 10) + 1, ((-1) << 11) + 1, ((-1) << 12) + 1,
-        ((-1) << 13) + 1, ((-1) << 14) + 1, ((-1) << 15) + 1, ((-1) << 16) + 1
-    };
+    private static int[] extendOffset = {0, ( ( -1) << 1) + 1, ( ( -1) << 2) + 1, ( ( -1) << 3) + 1, ( ( -1) << 4) + 1,
+            ( ( -1) << 5) + 1, ( ( -1) << 6) + 1, ( ( -1) << 7) + 1, ( ( -1) << 8) + 1, ( ( -1) << 9) + 1,
+            ( ( -1) << 10) + 1, ( ( -1) << 11) + 1, ( ( -1) << 12) + 1, ( ( -1) << 13) + 1, ( ( -1) << 14) + 1,
+            ( ( -1) << 15) + 1, ( ( -1) << 16) + 1};
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** Useful bit mask for getting appropriate bits out of number. */
-    private int[] bitMask = {
-        0xffffffff, 0x7fffffff, 0x3fffffff, 0x1fffffff, 0x0fffffff, 0x07ffffff, 0x03ffffff, 0x01ffffff, 0x00ffffff,
-        0x007fffff, 0x003fffff, 0x001fffff, 0x000fffff, 0x0007ffff, 0x0003ffff, 0x0001ffff, 0x0000ffff, 0x00007fff,
-        0x00003fff, 0x00001fff, 0x00000fff, 0x000007ff, 0x000003ff, 0x000001ff, 0x000000ff, 0x0000007f, 0x0000003f,
-        0x0000001f, 0x0000000f, 0x00000007, 0x00000003, 0x00000001
-    };
+    private final int[] bitMask = {0xffffffff, 0x7fffffff, 0x3fffffff, 0x1fffffff, 0x0fffffff, 0x07ffffff, 0x03ffffff,
+            0x01ffffff, 0x00ffffff, 0x007fffff, 0x003fffff, 0x001fffff, 0x000fffff, 0x0007ffff, 0x0003ffff, 0x0001ffff,
+            0x0000ffff, 0x00007fff, 0x00003fff, 0x00001fff, 0x00000fff, 0x000007ff, 0x000003ff, 0x000001ff, 0x000000ff,
+            0x0000007f, 0x0000003f, 0x0000001f, 0x0000000f, 0x00000007, 0x00000003, 0x00000001};
 
     /**
      * Read in DHT header. Number of codes with bitlength of index. Thus, bits[2] = 1 means one code represented by 2
      * bits. bits[3] = 4 means four codes represented by 3 bits. 2D array necessary in case of color image - component
      * #.
      */
-    private byte[][] bits;
+    private final byte[][] bits;
 
     /** Needed for color images. */
-    private int[] componentId;
+    private final int[] componentId;
 
     /** Needed for color images. */
-    private short[] componentIndex;
+    private final short[] componentIndex;
 
     /** Number of components in scan; 1 for black and white, 4 for color. */
     private int compsInScan;
@@ -202,22 +269,22 @@ public class FileDicomJPEG {
     private byte dataPrecision;
 
     /** Height read in from DICOM file; only use if imageHeight isn't defined. */
-    private int dicomH;
+    private final int dicomH;
 
     /** Width read in from DICOM file; only use if imageWidth isn't defined. */
-    private int dicomW;
+    private final int dicomW;
 
     /** Horizontal sample factor. */
-    private int[] hSampFactor;
+    private final int[] hSampFactor;
 
     /**
      * Read in DHT header. Huffman code values, used to determine Huffman table (value array). Also directly accessed
      * when numbits > 8, since fast lookup is not possible.
      */
-    private byte[][] huffval;
+    private final byte[][] huffval;
 
     /** Image data we're reading. */
-    private byte[] image;
+    private final byte[] image;
 
     /** Image height. */
     private int imageHeight;
@@ -226,16 +293,16 @@ public class FileDicomJPEG {
     private int imageWidth;
 
     /** mincode[index] = minimum legal code at that index. */
-    private int[][] maxcode;
+    private final int[][] maxcode;
 
     /** mincode[index] = minimum legal code at that index. */
-    private short[][] mincode;
+    private final short[][] mincode;
 
     /** Numbers needed for restart. Hasn't been tested! */
     private int nextRestartNum;
 
     /** number of bits needed for code at index. */
-    private int[][] numbits;
+    private final int[][] numbits;
 
     /** Number of components - 1 for black and white, 4 for color. */
     private int numComponents;
@@ -256,54 +323,54 @@ public class FileDicomJPEG {
     private byte Ss;
 
     /** Table number - always 0 for non-color images. */
-    private int[] tableNo;
+    private final int[] tableNo;
 
     /** valptr[index] = pointer to where legal code values start. */
-    private short[][] valptr;
+    private final short[][] valptr;
 
     /** huffman value for code. */
-    private int[][] value;
+    private final int[][] value;
 
     /** Vertical sample factor. */
-    private int[] vSampFactor;
+    private final int[] vSampFactor;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Assigns image buffer and creates the other arrays needed to read in image.
-     *
-     * @param  imageBuffer  Image buffer.
-     * @param  width        DOCUMENT ME!
-     * @param  height       DOCUMENT ME!
+     * 
+     * @param imageBuffer Image buffer.
+     * @param width DOCUMENT ME!
+     * @param height DOCUMENT ME!
      */
-    public FileDicomJPEG(byte[] imageBuffer, int width, int height) {
+    public FileDicomJPEG(final byte[] imageBuffer, final int width, final int height) {
         image = imageBuffer;
-        //try
-        //{
-        //    File f = new File("C:\\f.txt");
-        //    FileWriter write = new FileWriter(f);
-        //    String s = new String();
-        //    for(int i=0; i<image.length; i++)
-        //    {
-        //        s = s+(Byte.toString(image[i])+" ");
-        //        if(i%100==0)
-        //        {
-        //            s = s+"\n\r";
-        //            write.write(s);
-        //            s = new String();
-        //        }
-        //    }
-        //   write.write(s+"\n\r");
-        //    write.flush();
-        //   write.close();
+        // try
+        // {
+        // File f = new File("C:\\f.txt");
+        // FileWriter write = new FileWriter(f);
+        // String s = new String();
+        // for(int i=0; i<image.length; i++)
+        // {
+        // s = s+(Byte.toString(image[i])+" ");
+        // if(i%100==0)
+        // {
+        // s = s+"\n\r";
+        // write.write(s);
+        // s = new String();
+        // }
+        // }
+        // write.write(s+"\n\r");
+        // write.flush();
+        // write.close();
         //    
-        //}
-        //catch(Exception e)
-        //{
-        //    e.printStackTrace();
-        //}
-        
-        
+        // }
+        // catch(Exception e)
+        // {
+        // e.printStackTrace();
+        // }
+
         bits = new byte[4][17];
         huffval = new byte[4][256];
         mincode = new short[4][17];
@@ -320,18 +387,19 @@ public class FileDicomJPEG {
         dicomH = height;
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Extracts the JPEG image by processing the byte image array.
-     *
-     * @return  image buffer - the JPEG image
-     *
-     * @throws  IOException  DOCUMENT ME!
+     * 
+     * @return image buffer - the JPEG image
+     * 
+     * @throws IOException DOCUMENT ME!
      */
     public int[] extractJPEGImage() throws IOException {
 
-        if (!((image[0] == (byte) 0xFF) && (image[1] == (byte) 0xD8))) {
+        if ( ! ( (image[0] == (byte) 0xFF) && (image[1] == (byte) 0xD8))) {
             MipavUtil.displayError("No start of image tag at start of JPEG.");
 
             return null;
@@ -355,7 +423,6 @@ public class FileDicomJPEG {
                 Preferences.debug("Unsupported SOF marker type " + image[index] + "\n");
                 break;
         }
-
 
         // Process markers until SOS or EOI
         index = processTables(index);
@@ -391,36 +458,36 @@ public class FileDicomJPEG {
         restartInRows = restartInterval / imageWidth;
         restartRowsToGo = restartInRows;
         nextRestartNum = 0;
-        //index = index+2;
-        //if(image[index] == 0)
-        //{
-        //    System.out.println("Index: "+index+"\tValue: "+image[index]);
-        //    boolean zero = true;
-        //    while(zero)
-        //    {
-        //        index++;
-        //        System.out.println("Index: "+index+"\tValue: "+image[index]);
-        //        if(image[index] == 0)
-        //        {}
-        //        else
-        //        {
-        //            System.out.println("FinalIndex: "+index);
-        //            zero = false;
-        //        }
-        //    }
-        //}
-        //System.out.println("Index: "+index+"\tValue: "+image[index]);
+        // index = index+2;
+        // if(image[index] == 0)
+        // {
+        // System.out.println("Index: "+index+"\tValue: "+image[index]);
+        // boolean zero = true;
+        // while(zero)
+        // {
+        // index++;
+        // System.out.println("Index: "+index+"\tValue: "+image[index]);
+        // if(image[index] == 0)
+        // {}
+        // else
+        // {
+        // System.out.println("FinalIndex: "+index);
+        // zero = false;
+        // }
+        // }
+        // }
+        // System.out.println("Index: "+index+"\tValue: "+image[index]);
         return decodeImage(index);
     }
 
     /**
      * Decode the first raster line of samples at the start of the scan and at the beginning of each restart interval.
      * This includes modifying the component value so the real value, not the difference is returned.
-     *
-     * @param  table      Huffman table.
-     * @param  curRowBuf  Current row buffer; 2D because if image is color, there are 4 components.
+     * 
+     * @param table Huffman table.
+     * @param curRowBuf Current row buffer; 2D because if image is color, there are 4 components.
      */
-    private void decodeFirstRow(HuffTable table, short[][] curRowBuf) {
+    private void decodeFirstRow(final HuffTable table, final short[][] curRowBuf) {
         short curComp, ci;
         int col, numCOL;
         int d;
@@ -440,7 +507,7 @@ public class FileDicomJPEG {
             }
 
             // Add the predictor to the difference.
-            short s = (short) (d + (1 << (dataPrecision - Pt - 1)));
+            final short s = (short) (d + (1 << (dataPrecision - Pt - 1)));
             curRowBuf[0][curComp] = s;
         }
 
@@ -449,7 +516,7 @@ public class FileDicomJPEG {
 
             for (curComp = 0; curComp < compsInScan; curComp++) {
                 d = table.huffDecode(tableNo[curComp]);
-                //if(d!=0)
+                // if(d!=0)
                 //    
                 if (d == -1) {
 
@@ -467,10 +534,10 @@ public class FileDicomJPEG {
     /**
      * Decode the input stream. This includes modifying the component value so the real value, not the difference is
      * returned.
-     *
-     * @param   index  Index where we currently are in the image.
-     *
-     * @return  Buffer holding decompressed image.
+     * 
+     * @param index Index where we currently are in the image.
+     * 
+     * @return Buffer holding decompressed image.
      */
     private int[] decodeImage(int index) {
         int d, col, row;
@@ -478,17 +545,17 @@ public class FileDicomJPEG {
         int predictor;
         int numCOL, numROW;
         int imagewidth, psv;
-        //System.out.println("Image: "+image[index]+" "+image[index+1]+" "+image[index+2]+" "+image[index+3]+"\tIndex: "+index+" to "+(index+3));
+        // System.out.println("Image: "+image[index]+" "+image[index+1]+" "+image[index+2]+" "+image[index+3]+"\tIndex: "+index+" to "+(index+3));
         numCOL = imagewidth = imageWidth;
         numROW = imageHeight;
         psv = Ss;
-        
-        short[][] curRowBuf = new short[numCOL][4];
-        short[][] prevRowBuf = new short[numCOL][4];
+
+        final short[][] curRowBuf = new short[numCOL][4];
+        final short[][] prevRowBuf = new short[numCOL][4];
         int[] buffer;
         int j = 0;
 
-        HuffTable table = new HuffTable(image, index);
+        final HuffTable table = new HuffTable(image, index);
 
         // Decode the first row of image. Output the row and
         // turn this row into a previous row for later predictor
@@ -522,9 +589,9 @@ public class FileDicomJPEG {
             // Account for restart interval, process restart marker if needed.
             int rowsToGo = restartInterval / imageWidth;
 
-            // Note: everything within the "if" hasn't been tested yet.  Usually
+            // Note: everything within the "if" hasn't been tested yet. Usually
             // restartInterval == 0 and this doesn't get executed.
-            if ((restartInterval / imageWidth) > 0) {
+            if ( (restartInterval / imageWidth) > 0) {
 
                 if (rowsToGo == 0) {
                     index = processRestart(table.getIndex());
@@ -576,7 +643,6 @@ public class FileDicomJPEG {
                 curRowBuf[0][curComp] = (short) ((short) (d) + prevRowBuf[0][curComp]);
             }
 
-
             // For the rest of the column on this row, predictor
             // calculations are based on PSV.
 
@@ -585,59 +651,56 @@ public class FileDicomJPEG {
                 for (curComp = 0; curComp < compsInScan; curComp++) {
                     ci = curComp;
                     d = table.huffDecode(tableNo[curComp]);
-                    //if(index > 75)
+                    // if(index > 75)
                     //    
-                    
+
                     if (d == -1) {
 
                         if (table.isMarker() == true) {
                             return buffer;
                         }
                     }
-                    if(row == 1 && col == 1 || col == 1)
-                    {
-                        predictor = prevRowBuf[col][curComp] +
-                        ((curRowBuf[col - 1][curComp] - prevRowBuf[col - 1][curComp]) >> 1);
-                    }
-                    else
-                    {
+                    if (row == 1 && col == 1 || col == 1) {
+                        predictor = prevRowBuf[col][curComp]
+                                + ( (curRowBuf[col - 1][curComp] - prevRowBuf[col - 1][curComp]) >> 1);
+                    } else {
                         switch (psv) {
-    
+
                             case 0:
                                 predictor = 0;
                                 break;
-    
+
                             case 1:
                                 predictor = curRowBuf[col - 1][curComp];
                                 break;
-    
+
                             case 2:
                                 predictor = prevRowBuf[col][curComp];
                                 break;
-    
+
                             case 3:
                                 predictor = prevRowBuf[col - 1][curComp];
                                 break;
-    
+
                             case 4:
-                                predictor = curRowBuf[col - 1][curComp] + prevRowBuf[col][curComp] -
-                                            prevRowBuf[col - 1][curComp];
+                                predictor = curRowBuf[col - 1][curComp] + prevRowBuf[col][curComp]
+                                        - prevRowBuf[col - 1][curComp];
                                 break;
-    
+
                             case 5:
-                                predictor = curRowBuf[col - 1][curComp] +
-                                            ((prevRowBuf[col][curComp] - prevRowBuf[col - 1][curComp]) >> 1);
+                                predictor = curRowBuf[col - 1][curComp]
+                                        + ( (prevRowBuf[col][curComp] - prevRowBuf[col - 1][curComp]) >> 1);
                                 break;
-    
+
                             case 6:
-                                predictor = prevRowBuf[col][curComp] +
-                                            ((curRowBuf[col - 1][curComp] - prevRowBuf[col - 1][curComp]) >> 1);
+                                predictor = prevRowBuf[col][curComp]
+                                        + ( (curRowBuf[col - 1][curComp] - prevRowBuf[col - 1][curComp]) >> 1);
                                 break;
-    
+
                             case 7:
                                 predictor = (curRowBuf[col - 1][curComp] + prevRowBuf[col][curComp]) >> 1;
                                 break;
-    
+
                             default:
                                 Preferences.debug("FileDicomJPEG: Warning: Undefined PSV\n");
                                 predictor = 0;
@@ -651,7 +714,7 @@ public class FileDicomJPEG {
             if (compsInScan == 1) {
 
                 for (int i = 0; i < numCOL; i++) {
-                    buffer[(row * numCOL) + i] = curRowBuf[i][0] << Pt;
+                    buffer[ (row * numCOL) + i] = curRowBuf[i][0] << Pt;
                     prevRowBuf[i][0] = curRowBuf[i][0];
                 }
             } else {
@@ -676,13 +739,13 @@ public class FileDicomJPEG {
 
     /**
      * Sets up Huffman table based on values read in header.
-     *
-     * @param  tableNum  Usually 0, haven't tested when it isn't.
+     * 
+     * @param tableNum Usually 0, haven't tested when it isn't.
      */
-    private void fixHuffmanTable(int tableNum) {
+    private void fixHuffmanTable(final int tableNum) {
         int p, i, k, lastp, si;
-        byte[] huffsize = new byte[257];
-        int[] huffcode = new int[257];
+        final byte[] huffsize = new byte[257];
+        final int[] huffcode = new int[257];
         int code;
         int size;
         int svalue, ll, ul;
@@ -693,14 +756,13 @@ public class FileDicomJPEG {
 
         for (k = 1; k <= 16; k++) {
 
-            for (i = 1; i <= (int) bits[tableNum][k]; i++) {
+            for (i = 1; i <= bits[tableNum][k]; i++) {
                 huffsize[p++] = (byte) (k & 0xff);
             }
         }
 
         huffsize[p] = 0;
         lastp = p;
-
 
         // Figure C.2: generate the codes themselves
         // Note that this is in code-length order.
@@ -710,7 +772,7 @@ public class FileDicomJPEG {
 
         while (huffsize[p] != 0) {
 
-            while (((int) huffsize[p]) == si) {
+            while ( (huffsize[p]) == si) {
                 huffcode[p++] = code;
                 code++;
             }
@@ -771,10 +833,10 @@ public class FileDicomJPEG {
 
     /**
      * Get APPO part of header.
-     *
-     * @param   index  Index we're at in the image array.
-     *
-     * @return  Last accessed index.
+     * 
+     * @param index Index we're at in the image array.
+     * 
+     * @return Last accessed index.
      */
     private int getAPPO(int index) {
         int length = (image[index++] << 8) | (image[index++] - 2);
@@ -788,10 +850,10 @@ public class FileDicomJPEG {
 
     /**
      * Get the Huffman table.
-     *
-     * @param   index  Index we're at in the image array.
-     *
-     * @return  Last accessed index.
+     * 
+     * @param index Index we're at in the image array.
+     * 
+     * @return Last accessed index.
      */
     private int getDHT(int index) {
         int length;
@@ -804,7 +866,7 @@ public class FileDicomJPEG {
         while (length > 0) {
             num = image[index++];
 
-            if ((num < 0) || (num >= 4)) {
+            if ( (num < 0) || (num >= 4)) {
                 MipavUtil.displayError("FileDicomJPEG: Bogus DHT index " + num);
 
                 return -1;
@@ -830,7 +892,7 @@ public class FileDicomJPEG {
 
             length = length - 1 - 16 - count;
 
-            if ((num & 0x10) != 0) { // AC table definition
+            if ( (num & 0x10) != 0) { // AC table definition
                 Preferences.debug("Huffman table for lossless JPEG is not defined.\n");
             }
         }
@@ -840,13 +902,13 @@ public class FileDicomJPEG {
 
     /**
      * Get DRI part of header.
-     *
-     * @param   index  Index we're at in the image array.
-     *
-     * @return  Last accessed index.
+     * 
+     * @param index Index we're at in the image array.
+     * 
+     * @return Last accessed index.
      */
     private int getDRI(int index) {
-        int length = (image[index++] << 8) | image[index++];
+        final int length = (image[index++] << 8) | image[index++];
 
         if (length != 4) {
             Preferences.debug("FileDicomJPEG: Bogus length in Dri.\n");
@@ -861,10 +923,10 @@ public class FileDicomJPEG {
 
     /**
      * Get the SOF part of header.
-     *
-     * @param   index  Index we're at in the image array.
-     *
-     * @return  Last accessed index.
+     * 
+     * @param index Index we're at in the image array.
+     * 
+     * @return Last accessed index.
      */
     private int getSOF(int index) {
         int length;
@@ -895,14 +957,13 @@ public class FileDicomJPEG {
             return -1;
         }
 
-
-        if ((dataPrecision < 2) || (dataPrecision > 16)) {
+        if ( (dataPrecision < 2) || (dataPrecision > 16)) {
             MipavUtil.displayError("FileDicomJPEG: Unsupported JPEG data precision");
 
             return -1;
         }
 
-        if (length != ((numComponents * 3) + 8)) {
+        if (length != ( (numComponents * 3) + 8)) {
             MipavUtil.displayError("FileDicomJPEG: Bogus SOF length");
 
             return -1;
@@ -912,7 +973,7 @@ public class FileDicomJPEG {
             componentIndex[ci] = ci;
             componentId[ci] = image[index++];
 
-            int c = image[index++];
+            final int c = image[index++];
             hSampFactor[ci] = (c >> 4) & 15;
             vSampFactor[ci] = (c) & 15;
             index++;
@@ -923,10 +984,10 @@ public class FileDicomJPEG {
 
     /**
      * Get the SOS part of header.
-     *
-     * @param   index  Index we're at in the image array.
-     *
-     * @return  Last accessed index.
+     * 
+     * @param index Index we're at in the image array.
+     * 
+     * @return Last accessed index.
      */
     private int getSOS(int index) {
         int length = (image[index++] << 8) | image[index++];
@@ -935,7 +996,7 @@ public class FileDicomJPEG {
         compsInScan = image[index++];
         length -= 3;
 
-        if ((length != ((compsInScan * 2) + 3)) || (compsInScan < 1) || (compsInScan > 4)) {
+        if ( (length != ( (compsInScan * 2) + 3)) || (compsInScan < 1) || (compsInScan > 4)) {
             MipavUtil.displayError("FileDicomJPEG: Bogus SOS length");
 
             return -1;
@@ -968,7 +1029,7 @@ public class FileDicomJPEG {
         Ss = image[index++];
         index++;
 
-        int c = image[index++];
+        final int c = image[index++];
         Pt = c & 0x0F;
 
         return index;
@@ -976,10 +1037,10 @@ public class FileDicomJPEG {
 
     /**
      * Gets the next marker in the header.
-     *
-     * @param   index  Index that we're at in the image array.
-     *
-     * @return  Last accessed index.
+     * 
+     * @param index Index that we're at in the image array.
+     * 
+     * @return Last accessed index.
      */
     private int nextMarker(int index) {
         byte c;
@@ -1003,16 +1064,16 @@ public class FileDicomJPEG {
 
     /**
      * Check for a restart marker & resynchronize decoder. Haven't tested this at all.
-     *
-     * @param   index  Index we're at in the image array.
-     *
-     * @return  Last accessed index.
+     * 
+     * @param index Index we're at in the image array.
+     * 
+     * @return Last accessed index.
      */
     private int processRestart(int index) {
 
         index = nextMarker(index);
 
-        if (image[index] != (M_RST0 + nextRestartNum)) {
+        if (image[index] != (FileDicomJPEG.M_RST0 + nextRestartNum)) {
 
             // Restart markers are messed up.
             MipavUtil.displayError("FileDicomJPEG: Error while processing restart marker.");
@@ -1029,18 +1090,18 @@ public class FileDicomJPEG {
 
     /**
      * Process the header markers.
-     *
-     * @param   index  Index we're at in the image array.
-     *
-     * @return  Last accessed index.
+     * 
+     * @param index Index we're at in the image array.
+     * 
+     * @return Last accessed index.
      */
     private int processTables(int index) {
 
         while (index != -1) {
             index = nextMarker(index);
-            
+
             switch (image[index]) {
-                
+
                 case M_SOF0:
                 case M_SOF1:
                 case M_SOF2:
@@ -1059,7 +1120,7 @@ public class FileDicomJPEG {
                 case M_EOI:
                 case M_SOS:
                     return (index);
-                    
+
                 case M_DHT:
                     index = getDHT(index + 1);
                     break;
@@ -1101,10 +1162,10 @@ public class FileDicomJPEG {
 
     /**
      * Skip this variable.
-     *
-     * @param   index  Index we're at in the image array.
-     *
-     * @return  Last accessed index.
+     * 
+     * @param index Index we're at in the image array.
+     * 
+     * @return Last accessed index.
      */
     private int skipVariable(int index) {
         int length = (image[index++] << 8) | (image[index++] - 2);
@@ -1116,7 +1177,8 @@ public class FileDicomJPEG {
         return index;
     }
 
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
+    // ~ Inner Classes
+    // --------------------------------------------------------------------------------------------------
 
     /**
      * This class reads and packs the bits appropriately for interpreting the huffman codes.
@@ -1146,11 +1208,11 @@ public class FileDicomJPEG {
 
         /**
          * Creates a new table with the image and the index where we stopped reading the image so far.
-         *
-         * @param  image  Image.
-         * @param  i      Index into image.
+         * 
+         * @param image Image.
+         * @param i Index into image.
          */
-        public HuffTable(byte[] image, int i) {
+        public HuffTable(final byte[] image, final int i) {
             buffer = image;
             index = i;
             bitCount = 8;
@@ -1160,8 +1222,8 @@ public class FileDicomJPEG {
 
         /**
          * Returns index that we're at.
-         *
-         * @return  index
+         * 
+         * @return index
          */
         public int getIndex() {
             return index;
@@ -1169,16 +1231,16 @@ public class FileDicomJPEG {
 
         /**
          * Returns the appropriate value after reading 8 bits and interpreting the Huffman code.
-         *
-         * @param   tableNum  DOCUMENT ME!
-         *
-         * @return  value to add to predictor.
+         * 
+         * @param tableNum DOCUMENT ME!
+         * 
+         * @return value to add to predictor.
          */
-        public int huffDecode(int tableNum) {
+        public int huffDecode(final int tableNum) {
             int code = 0;
             int s, d;
-            //if(image[index] != 0)
-            //    System.out.println("Index: "+index+"\tImage: "+image[index]);
+            // if(image[index] != 0)
+            // System.out.println("Index: "+index+"\tImage: "+image[index]);
             // get 8 bits
             for (int i = 0; i < 8; i++) {
 
@@ -1195,9 +1257,9 @@ public class FileDicomJPEG {
                     }
                 }
 
-                int temp = (current >>> (7 - bitCount)) & 1; // ??? & 1
+                final int temp = (current >>> (7 - bitCount)) & 1; // ??? & 1
                 code = (code << 1) | temp;
-                
+
                 bitCount++;
             }
 
@@ -1230,7 +1292,7 @@ public class FileDicomJPEG {
                 int k = 8;
 
                 while (code > maxcode[tableNum][k]) {
-                
+
                     if (bitCount == 8) {
                         previous = current;
                         current = getNext();
@@ -1243,11 +1305,11 @@ public class FileDicomJPEG {
                         }
                     }
 
-                    int temp = (current >>> (7 - bitCount)) & 1; //>>> but signed
+                    final int temp = (current >>> (7 - bitCount)) & 1; // >>> but signed
                     code = (code << 1) | temp;
                     k++;
                     bitCount++;
-                    
+
                 }
 
                 // With garbage input we may reach the sentinel value k = 17.
@@ -1258,25 +1320,25 @@ public class FileDicomJPEG {
                 } else {
 
                     // look up value in huffval, the original huffman value array
-                    s = huffval[tableNum][valptr[tableNum][k] + ((int) (code - mincode[tableNum][k]))];
+                    s = huffval[tableNum][valptr[tableNum][k] + ( (code - mincode[tableNum][k]))];
                 }
             }
 
             // read in s number of bits and set d to that number
             if (s != 0) {
                 d = 0;
-                //System.out.println(image[index]+" "+image[index+1]+" "+image[index+2]+" "+image[index+3]);
-                //if(s==16)
-                    
-                //int z=0;
-                //boolean isNeverRead = true;
+                // System.out.println(image[index]+" "+image[index+1]+" "+image[index+2]+" "+image[index+3]);
+                // if(s==16)
+
+                // int z=0;
+                // boolean isNeverRead = true;
                 for (int i = 0; i < s; i++) {
 
-                    if (bitCount == 8 && i<9) {
-                        //if(z==1)
-                        //    System.out.println("Already Happened: "+s+"\tI: "+i+"\tBitCount: "+bitCount);
-                        //isNeverRead = false;
-                        //z = 1;
+                    if (bitCount == 8 && i < 9) {
+                        // if(z==1)
+                        // System.out.println("Already Happened: "+s+"\tI: "+i+"\tBitCount: "+bitCount);
+                        // isNeverRead = false;
+                        // z = 1;
                         previous = current;
                         current = getNext();
                         bitCount = 0;
@@ -1288,39 +1350,38 @@ public class FileDicomJPEG {
                         }
                     }
 
-                    int temp = (current >>> (7 - bitCount)) & 1;    
+                    final int temp = (current >>> (7 - bitCount)) & 1;
                     d = (d << 1) | temp;
                     bitCount++;
                 }
 
                 // if d is really a negative number, make it so
-                if(s < extendTest.length) {
-                    if (d < extendTest[s]) {
-                        d += extendOffset[s];
+                if (s < FileDicomJPEG.extendTest.length) {
+                    if (d < FileDicomJPEG.extendTest[s]) {
+                        d += FileDicomJPEG.extendOffset[s];
+                    }
+                } else {
+                    if (d < FileDicomJPEG.extendTest[s - 1]) {
+                        d += FileDicomJPEG.extendOffset[s - 1];
                     }
                 }
-                else {
-                    if (d < extendTest[s-1]) {
-                        d += extendOffset[s-1];
-                    }
-                }
-                
+
             }
-            // 0s are quite common.  often s = 0, which means add nothing to predictor.
+            // 0s are quite common. often s = 0, which means add nothing to predictor.
             else {
                 d = 0;
             }
 
             // return value to add to predictor
-            //if(d != 0)
-                //System.out.println("D: "+d);
+            // if(d != 0)
+            // System.out.println("D: "+d);
             return d;
         }
 
         /**
          * Returns flag indicating if we've read in a marker. In that case we're off and we need to exit.
-         *
-         * @return  <code>true</code> if marker has been read in.
+         * 
+         * @return <code>true</code> if marker has been read in.
          */
         public boolean isMarker() {
             return marker;
@@ -1328,25 +1389,25 @@ public class FileDicomJPEG {
 
         /**
          * Sets index to parameter.
-         *
-         * @param  i  Index to set to.
+         * 
+         * @param i Index to set to.
          */
-        public void setIndex(int i) {
+        public void setIndex(final int i) {
             index = i;
         }
 
         /**
          * Gets the next byte, skipping over 0s padded in after FF. Sets marker flag if we read in a marker.
-         *
-         * @return  The next byte.
+         * 
+         * @return The next byte.
          */
         private byte getNext() {
-            byte temp = image[index++];
+            final byte temp = image[index++];
 
             if (temp == (byte) 0xFF) {
                 padded = true;
 
-                byte temp2 = image[index++];
+                final byte temp2 = image[index++];
 
                 if (temp2 != 0) {
                     index -= 2;
@@ -1360,6 +1421,5 @@ public class FileDicomJPEG {
         }
 
     }
-
 
 }

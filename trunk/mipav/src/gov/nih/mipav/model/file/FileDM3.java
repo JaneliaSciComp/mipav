@@ -1,21 +1,40 @@
 package gov.nih.mipav.model.file;
 
 
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelLUT;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJProgressBar;
 
-import java.awt.*;
-
-import java.io.*;
+import java.awt.Toolkit;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 
 
 /**
  * Some of this code is derived from DM3_Reader.java in ImageJ.
+ * 
+ * <hr>
+ * <p>
+ * ImageJ disclaimer:
+ * </p>
+ * 
+ * <p>
+ * ImageJ is being developed at the National Institutes of Health by an employee of the Federal Government in the course
+ * of his official duties. Pursuant to Title 17, Section 105 of the United States Code, this software is not subject to
+ * copyright protection and is in the public domain. ImageJ is an experimental system. NIH assumes no responsibility
+ * whatsoever for its use by other parties, and makes no guarantees, expressed or implied, about its quality,
+ * reliability, or any other characteristic.
+ * </p>
  */
 public class FileDM3 extends FileBase {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Different encoded data types used in DM3 files. */
     private static final int SHORT = 2;
@@ -53,7 +72,8 @@ public class FileDM3 extends FileBase {
     /** DOCUMENT ME! */
     private static final int ARRAY = 20;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private long[] arrayLocationArray = new long[100];
@@ -96,7 +116,7 @@ public class FileDM3 extends FileBase {
 
     /** DOCUMENT ME! */
     private FileInfoDM3 fileInfo;
-    
+
     private FileInfoDM3 fileInfoCopy;
 
     /** DOCUMENT ME! */
@@ -180,23 +200,25 @@ public class FileDM3 extends FileBase {
     /** DOCUMENT ME! */
     private int unitsIndex = 0;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * DM3 reader constructor.
-     *
-     * @param      fileName  file name
-     * @param      fileDir   file directory
-     *
-     * @exception  IOException  if there is an error making the file
+     * 
+     * @param fileName file name
+     * @param fileDir file directory
+     * 
+     * @exception IOException if there is an error making the file
      */
-    public FileDM3(String fileName, String fileDir) throws IOException {
+    public FileDM3(final String fileName, final String fileDir) throws IOException {
 
         this.fileName = fileName;
         this.fileDir = fileDir;
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
@@ -247,13 +269,13 @@ public class FileDM3 extends FileBase {
         image = null;
         try {
             super.finalize();
-        } catch (Throwable er) { }
+        } catch (final Throwable er) {}
     }
-    
+
     /**
      * returns LUT if defined.
-     *
-     * @return  the LUT if defined else it is null
+     * 
+     * @return the LUT if defined else it is null
      */
     public ModelLUT getModelLUT() {
         return LUT;
@@ -261,14 +283,14 @@ public class FileDM3 extends FileBase {
 
     /**
      * reads the DM3 file header and data.
-     *
-     * @exception  IOException  if there is an error reading the file
-     *
-     * @param      one  DOCUMENT ME!
-     *
-     * @return     DOCUMENT ME!
+     * 
+     * @exception IOException if there is an error reading the file
+     * 
+     * @param one DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    public ModelImage readImage(boolean one) throws IOException {
+    public ModelImage readImage(final boolean one) throws IOException {
         int i, j;
         int bufferSize;
         float[] imgBuffer;
@@ -281,7 +303,6 @@ public class FileDM3 extends FileBase {
             progressBar = new ViewJProgressBar(fileName, "Reading DM3 file...", 0, 100, false, null, null);
 
             progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-
 
             file = new File(fileDir + fileName);
 
@@ -334,7 +355,7 @@ public class FileDM3 extends FileBase {
 
             // In 4 images that I examined a smaller 192 by 192 image is the first image present.
             // This image is in ARGB representation although it has R = G = B so a black and
-            // white image appears.  It is a smaller version of the second image.
+            // white image appears. It is a smaller version of the second image.
             // The second image was a 512 by 512 or 1024 by 1024 float or short image
             for (i = 1; i <= imageNum; i++) {
 
@@ -492,16 +513,16 @@ public class FileDM3 extends FileBase {
             }
 
             if (one) {
-                image = new ModelImage(sourceType, new int[] { imgExtents[0], imgExtents[1] }, fileInfo.getFileName());
+                image = new ModelImage(sourceType, new int[] {imgExtents[0], imgExtents[1]}, fileInfo.getFileName());
             } else {
                 image = new ModelImage(sourceType, imgExtents, fileInfo.getFileName());
             }
 
             fileInfo.setDataType(sourceType);
 
-            if ((nDimensions == 3) &&
-                    (pixelScaleArray[desiredImageNumber][0] != pixelScaleArray[desiredImageNumber][1]) &&
-                    (pixelScaleArray[desiredImageNumber][1] == pixelScaleArray[desiredImageNumber][2])) {
+            if ( (nDimensions == 3)
+                    && (pixelScaleArray[desiredImageNumber][0] != pixelScaleArray[desiredImageNumber][1])
+                    && (pixelScaleArray[desiredImageNumber][1] == pixelScaleArray[desiredImageNumber][2])) {
 
                 for (i = 0; i < nDimensions; i++) {
                     fileInfo.setResolutions(pixelScaleArray[desiredImageNumber][nDimensions - i - 1], i);
@@ -514,8 +535,8 @@ public class FileDM3 extends FileBase {
             }
 
             for (i = nDimensions - 1, j = 0; i >= 0; i--, j++) {
-                desiredPixelUnitsArray[i] = pixelUnitsArray[desiredImageNumber][pixelUnitsNumber[desiredImageNumber] -
-                                                                                1 - j].trim();
+                desiredPixelUnitsArray[i] = pixelUnitsArray[desiredImageNumber][pixelUnitsNumber[desiredImageNumber]
+                        - 1 - j].trim();
             }
 
             for (i = 0; i < nDimensions; i++) {
@@ -531,7 +552,7 @@ public class FileDM3 extends FileBase {
                 }
             }
 
-            if ((nDimensions == 2) || one) {
+            if ( (nDimensions == 2) || one) {
                 numberSlices = 1;
             } else if (nDimensions == 3) {
                 numberSlices = imgExtents[2];
@@ -558,7 +579,7 @@ public class FileDM3 extends FileBase {
                 case ModelStorageBase.ARGB:
                     imgBuffer = new float[bufferSize];
                     for (i = 0; i < numberSlices; i++) {
-                        fileInfoCopy = (FileInfoDM3)fileInfo.clone();
+                        fileInfoCopy = (FileInfoDM3) fileInfo.clone();
                         image.setFileInfo(fileInfoCopy, i);
                         readBuffer(i, imgBuffer);
                         image.importData(i * bufferSize, imgBuffer, false);
@@ -570,7 +591,7 @@ public class FileDM3 extends FileBase {
                 case ModelStorageBase.LONG:
                     imgLBuffer = new long[bufferSize];
                     for (i = 0; i < numberSlices; i++) {
-                        fileInfoCopy = (FileInfoDM3)fileInfo.clone();
+                        fileInfoCopy = (FileInfoDM3) fileInfo.clone();
                         image.setFileInfo(fileInfoCopy, i);
                         readLBuffer(i, imgLBuffer);
                         image.importData(i * bufferSize, imgLBuffer, false);
@@ -581,7 +602,7 @@ public class FileDM3 extends FileBase {
                 case ModelStorageBase.DOUBLE:
                     imgDBuffer = new double[bufferSize];
                     for (i = 0; i < numberSlices; i++) {
-                        fileInfoCopy = (FileInfoDM3)fileInfo.clone();
+                        fileInfoCopy = (FileInfoDM3) fileInfo.clone();
                         image.setFileInfo(fileInfoCopy, i);
                         readDBuffer(i, imgDBuffer);
                         image.importData(i * bufferSize, imgDBuffer, false);
@@ -593,7 +614,7 @@ public class FileDM3 extends FileBase {
                     imgBuffer = new float[bufferSize];
                     imgBufferI = new float[bufferSize];
                     for (i = 0; i < numberSlices; i++) {
-                        fileInfoCopy = (FileInfoDM3)fileInfo.clone();
+                        fileInfoCopy = (FileInfoDM3) fileInfo.clone();
                         image.setFileInfo(fileInfoCopy, i);
                         readComplexBuffer(i, imgBuffer, imgBufferI);
                         image.importComplexData(2 * i * bufferSize, imgBuffer, imgBufferI, false, true);
@@ -605,7 +626,7 @@ public class FileDM3 extends FileBase {
                     imgDBuffer = new double[bufferSize];
                     imgDBufferI = new double[bufferSize];
                     for (i = 0; i < numberSlices; i++) {
-                        fileInfoCopy = (FileInfoDM3)fileInfo.clone();
+                        fileInfoCopy = (FileInfoDM3) fileInfo.clone();
                         image.setFileInfo(fileInfoCopy, i);
                         readDComplexBuffer(i, imgDBuffer, imgDBufferI);
                         image.importDComplexData(2 * i * bufferSize, imgDBuffer, imgDBufferI, false, true);
@@ -621,7 +642,7 @@ public class FileDM3 extends FileBase {
             }
 
             return image;
-        } catch (Exception e) {
+        } catch (final Exception e) {
 
             if (image != null) {
                 image.disposeLocal();
@@ -633,11 +654,10 @@ public class FileDM3 extends FileBase {
         }
     }
 
-
     /**
      * DOCUMENT ME!
-     *
-     * @throws  IOException  DOCUMENT ME!
+     * 
+     * @throws IOException DOCUMENT ME!
      */
     private void readArray() throws IOException {
         int arrayType;
@@ -651,12 +671,12 @@ public class FileDM3 extends FileBase {
         try {
             arrayType = getInt(endianess);
 
-            if (arrayType == STRUCT) {
+            if (arrayType == FileDM3.STRUCT) {
                 encodedType = readStructTypes();
-            } else if (arrayType == ARRAY) {
+            } else if (arrayType == FileDM3.ARRAY) {
                 encodedType = readArrayTypes();
             } else {
-                encodedType = new int[] { arrayType };
+                encodedType = new int[] {arrayType};
             }
 
             arraySize = getInt(endianess);
@@ -703,10 +723,10 @@ public class FileDM3 extends FileBase {
                 isData = false;
             }
 
-            if ((isImageData) && (isCalibrations) && (isDimension) && (isUnits)) {
+            if ( (isImageData) && (isCalibrations) && (isDimension) && (isUnits)) {
                 pixelUnitsArray[imageNum][unitsIndex] = getString(elementBytes);
-                Preferences.debug("pixelUnitsArray[" + imageNum + "][ " + unitsIndex + "] = " +
-                                  pixelUnitsArray[imageNum][unitsIndex] + "\n");
+                Preferences.debug("pixelUnitsArray[" + imageNum + "][ " + unitsIndex + "] = "
+                        + pixelUnitsArray[imageNum][unitsIndex] + "\n");
                 unitsIndex++;
                 pixelUnitsNumber[imageNum] = unitsIndex;
                 isUnits = false;
@@ -716,7 +736,7 @@ public class FileDM3 extends FileBase {
             raFile.seek(arrayLocation + bufferSize);
 
             return;
-        } catch (Exception e) {
+        } catch (final Exception e) {
 
             if (image != null) {
                 image.disposeLocal();
@@ -733,10 +753,10 @@ public class FileDM3 extends FileBase {
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     *
-     * @throws  IOException  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
+     * 
+     * @throws IOException DOCUMENT ME!
      */
     private int[] readArrayTypes() throws IOException {
         int arrayType;
@@ -745,17 +765,17 @@ public class FileDM3 extends FileBase {
         try {
             arrayType = getInt(endianess);
 
-            if (arrayType == STRUCT) {
+            if (arrayType == FileDM3.STRUCT) {
                 itemTypes = readStructTypes();
-            } else if (arrayType == ARRAY) {
+            } else if (arrayType == FileDM3.ARRAY) {
                 itemTypes = readArrayTypes();
             } else {
-                itemTypes = new int[] { arrayType };
+                itemTypes = new int[] {arrayType};
             }
 
             return itemTypes;
 
-        } catch (Exception e) {
+        } catch (final Exception e) {
 
             if (image != null) {
                 image.disposeLocal();
@@ -772,13 +792,13 @@ public class FileDM3 extends FileBase {
 
     /**
      * Reads a slice of data at a time and stores the results in the buffer.
-     *
-     * @param      slice   offset into the file stored in the dataOffset array
-     * @param      buffer  buffer where the info is stored
-     *
-     * @exception  IOException  if there is an error reading the file
+     * 
+     * @param slice offset into the file stored in the dataOffset array
+     * @param buffer buffer where the info is stored
+     * 
+     * @exception IOException if there is an error reading the file
      */
-    private void readBuffer(int slice, float[] buffer) throws IOException {
+    private void readBuffer(final int slice, final float[] buffer) throws IOException {
         int i = 0;
         int j;
         int nBytes;
@@ -799,7 +819,7 @@ public class FileDM3 extends FileBase {
 
                 for (j = 0; j < nBytes; j++, i++) {
 
-                    if (((i + progress) % mod) == 0) {
+                    if ( ( (i + progress) % mod) == 0) {
                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
@@ -818,7 +838,7 @@ public class FileDM3 extends FileBase {
 
                 for (j = 0; j < nBytes; j++, i++) {
 
-                    if (((i + progress) % mod) == 0) {
+                    if ( ( (i + progress) % mod) == 0) {
                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
@@ -837,7 +857,7 @@ public class FileDM3 extends FileBase {
 
                 for (j = 0; j < nBytes; j += 2, i++) {
 
-                    if (((i + progress) % mod) == 0) {
+                    if ( ( (i + progress) % mod) == 0) {
                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
@@ -845,9 +865,9 @@ public class FileDM3 extends FileBase {
                     b2 = getUnsignedByte(byteBuffer, j + 1);
 
                     if (dataEndianess) {
-                        buffer[i] = (short) ((b1 << 8) + b2);
+                        buffer[i] = (short) ( (b1 << 8) + b2);
                     } else {
-                        buffer[i] = (short) ((b2 << 8) + b1);
+                        buffer[i] = (short) ( (b2 << 8) + b1);
                     }
 
                 } // for (j = 0; j < nBytes; j+=2, i++ )
@@ -864,7 +884,7 @@ public class FileDM3 extends FileBase {
 
                 for (j = 0; j < nBytes; j += 4, i++) {
 
-                    if (((i + progress) % mod) == 0) {
+                    if ( ( (i + progress) % mod) == 0) {
                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
@@ -874,9 +894,9 @@ public class FileDM3 extends FileBase {
                     b4 = getUnsignedByte(byteBuffer, j + 3);
 
                     if (dataEndianess) {
-                        tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4); // Big Endian
+                        tmpInt = ( (b1 << 24) | (b2 << 16) | (b3 << 8) | b4); // Big Endian
                     } else {
-                        tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1); // Little Endian
+                        tmpInt = ( (b4 << 24) | (b3 << 16) | (b2 << 8) | b1); // Little Endian
                     }
 
                     buffer[i] = Float.intBitsToFloat(tmpInt);
@@ -895,7 +915,7 @@ public class FileDM3 extends FileBase {
 
                 for (j = 0; j < nBytes; j += 2, i++) {
 
-                    if (((i + progress) % mod) == 0) {
+                    if ( ( (i + progress) % mod) == 0) {
                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
@@ -903,9 +923,9 @@ public class FileDM3 extends FileBase {
                     b2 = getUnsignedByte(byteBuffer, j + 1);
 
                     if (dataEndianess) {
-                        buffer[i] = ((b1 << 8) + b2);
+                        buffer[i] = ( (b1 << 8) + b2);
                     } else {
-                        buffer[i] = ((b2 << 8) + b1);
+                        buffer[i] = ( (b2 << 8) + b1);
                     }
 
                 } // for (j = 0; j < nBytes; j+=2, i++ )
@@ -922,7 +942,7 @@ public class FileDM3 extends FileBase {
 
                 for (j = 0; j < nBytes; j += 4, i++) {
 
-                    if (((i + progress) % mod) == 0) {
+                    if ( ( (i + progress) % mod) == 0) {
                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
@@ -932,9 +952,9 @@ public class FileDM3 extends FileBase {
                     b4 = getUnsignedByte(byteBuffer, j + 3);
 
                     if (dataEndianess) {
-                        buffer[i] = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4); // Big Endian
+                        buffer[i] = ( (b1 << 24) | (b2 << 16) | (b3 << 8) | b4); // Big Endian
                     } else {
-                        buffer[i] = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1); // Little Endian
+                        buffer[i] = ( (b4 << 24) | (b3 << 16) | (b2 << 8) | b1); // Little Endian
                     }
                 } // for (j =0; j < nBytes; j+=4, i++ )
 
@@ -950,13 +970,13 @@ public class FileDM3 extends FileBase {
 
                 for (j = 0; j < nBytes; j += 4, i++) {
 
-                    if (((i + progress) % mod) == 0) {
+                    if ( ( (i + progress) % mod) == 0) {
                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
-                    buffer[(4 * i) + 1] = byteBuffer[j] & 0xff;
-                    buffer[(4 * i) + 2] = byteBuffer[j + 1] & 0xff;
-                    buffer[(4 * i) + 3] = byteBuffer[j + 2] & 0xff;
+                    buffer[ (4 * i) + 1] = byteBuffer[j] & 0xff;
+                    buffer[ (4 * i) + 2] = byteBuffer[j + 1] & 0xff;
+                    buffer[ (4 * i) + 3] = byteBuffer[j + 2] & 0xff;
                 }
 
                 break;
@@ -964,17 +984,16 @@ public class FileDM3 extends FileBase {
 
     }
 
-
     /**
      * Reads a slice of data at a time and stores the results in the buffer.
-     *
-     * @param      slice    offset into the file stored in the dataOffset array
-     * @param      bufferR  buffer where the real info is stored
-     * @param      bufferI  buffer where the imaginary info is stored
-     *
-     * @exception  IOException  if there is an error reading the file
+     * 
+     * @param slice offset into the file stored in the dataOffset array
+     * @param bufferR buffer where the real info is stored
+     * @param bufferI buffer where the imaginary info is stored
+     * 
+     * @exception IOException if there is an error reading the file
      */
-    private void readComplexBuffer(int slice, float[] bufferR, float[] bufferI) throws IOException {
+    private void readComplexBuffer(final int slice, final float[] bufferR, final float[] bufferI) throws IOException {
         int i = 0;
         int j;
         int nBytes;
@@ -990,10 +1009,9 @@ public class FileDM3 extends FileBase {
         progressLength = bufferR.length * numberSlices;
         mod = progressLength / 10;
 
-
         for (j = 0; j < nBytes; j += 8, i++) {
 
-            if (((i + progress) % mod) == 0) {
+            if ( ( (i + progress) % mod) == 0) {
                 fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
             }
 
@@ -1003,9 +1021,9 @@ public class FileDM3 extends FileBase {
             b4 = getUnsignedByte(byteBuffer, j + 3);
 
             if (dataEndianess) {
-                tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4); // Big Endian
+                tmpInt = ( (b1 << 24) | (b2 << 16) | (b3 << 8) | b4); // Big Endian
             } else {
-                tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1); // Little Endian
+                tmpInt = ( (b4 << 24) | (b3 << 16) | (b2 << 8) | b1); // Little Endian
             }
 
             bufferR[i] = Float.intBitsToFloat(tmpInt);
@@ -1016,9 +1034,9 @@ public class FileDM3 extends FileBase {
             b4 = getUnsignedByte(byteBuffer, j + 7);
 
             if (dataEndianess) {
-                tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4); // Big Endian
+                tmpInt = ( (b1 << 24) | (b2 << 16) | (b3 << 8) | b4); // Big Endian
             } else {
-                tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1); // Little Endian
+                tmpInt = ( (b4 << 24) | (b3 << 16) | (b2 << 8) | b1); // Little Endian
             }
 
             bufferI[i] = Float.intBitsToFloat(tmpInt);
@@ -1027,13 +1045,13 @@ public class FileDM3 extends FileBase {
 
     /**
      * Reads a slice of data at a time and stores the results in the buffer.
-     *
-     * @param      slice   offset into the file stored in the dataOffset array
-     * @param      buffer  buffer where the info is stored
-     *
-     * @exception  IOException  if there is an error reading the file
+     * 
+     * @param slice offset into the file stored in the dataOffset array
+     * @param buffer buffer where the info is stored
+     * 
+     * @exception IOException if there is an error reading the file
      */
-    private void readDBuffer(int slice, double[] buffer) throws IOException {
+    private void readDBuffer(final int slice, final double[] buffer) throws IOException {
         int i = 0;
         int j;
         int nBytes;
@@ -1049,10 +1067,9 @@ public class FileDM3 extends FileBase {
         progressLength = buffer.length * numberSlices;
         mod = progressLength / 10;
 
-
         for (j = 0; j < nBytes; j += 8, i++) {
 
-            if (((i + progress) % mod) == 0) {
+            if ( ( (i + progress) % mod) == 0) {
                 fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
             }
 
@@ -1066,11 +1083,11 @@ public class FileDM3 extends FileBase {
             b8 = getUnsignedByte(byteBuffer, j + 7);
 
             if (dataEndianess) {
-                tmpLong = ((b1 << 56) | (b2 << 48) | (b3 << 40) | (b4 << 32) | (b5 << 24) | (b6 << 16) | (b7 << 8) |
-                               b8); // Big Endian
+                tmpLong = ( (b1 << 56) | (b2 << 48) | (b3 << 40) | (b4 << 32) | (b5 << 24) | (b6 << 16) | (b7 << 8) | b8); // Big
+                                                                                                                           // Endian
             } else {
-                tmpLong = ((b8 << 56) | (b7 << 48) | (b6 << 40) | (b5 << 32) | (b4 << 24) | (b3 << 16) | (b2 << 8) |
-                               b1); // Little Endian
+                tmpLong = ( (b8 << 56) | (b7 << 48) | (b6 << 40) | (b5 << 32) | (b4 << 24) | (b3 << 16) | (b2 << 8) | b1); // Little
+                                                                                                                           // Endian
             }
 
             buffer[i] = Double.longBitsToDouble(tmpLong);
@@ -1081,14 +1098,14 @@ public class FileDM3 extends FileBase {
 
     /**
      * Reads a slice of data at a time and stores the results in the buffer.
-     *
-     * @param      slice    offset into the file stored in the dataOffset array
-     * @param      bufferR  buffer where the real info is stored
-     * @param      bufferI  buffer where the imaginary info is stored
-     *
-     * @exception  IOException  if there is an error reading the file
+     * 
+     * @param slice offset into the file stored in the dataOffset array
+     * @param bufferR buffer where the real info is stored
+     * @param bufferI buffer where the imaginary info is stored
+     * 
+     * @exception IOException if there is an error reading the file
      */
-    private void readDComplexBuffer(int slice, double[] bufferR, double[] bufferI) throws IOException {
+    private void readDComplexBuffer(final int slice, final double[] bufferR, final double[] bufferI) throws IOException {
         int i = 0;
         int j;
         int nBytes;
@@ -1104,10 +1121,9 @@ public class FileDM3 extends FileBase {
         progressLength = bufferR.length * numberSlices;
         mod = progressLength / 10;
 
-
         for (j = 0; j < nBytes; j += 16, i++) {
 
-            if (((i + progress) % mod) == 0) {
+            if ( ( (i + progress) % mod) == 0) {
                 fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
             }
 
@@ -1121,11 +1137,11 @@ public class FileDM3 extends FileBase {
             b8 = getUnsignedByte(byteBuffer, j + 7);
 
             if (dataEndianess) {
-                tmpLong = ((b1 << 56) | (b2 << 48) | (b3 << 40) | (b4 << 32) | (b5 << 24) | (b6 << 16) | (b7 << 8) |
-                               b8); // Big Endian
+                tmpLong = ( (b1 << 56) | (b2 << 48) | (b3 << 40) | (b4 << 32) | (b5 << 24) | (b6 << 16) | (b7 << 8) | b8); // Big
+                                                                                                                           // Endian
             } else {
-                tmpLong = ((b8 << 56) | (b7 << 48) | (b6 << 40) | (b5 << 32) | (b4 << 24) | (b3 << 16) | (b2 << 8) |
-                               b1); // Little Endian
+                tmpLong = ( (b8 << 56) | (b7 << 48) | (b6 << 40) | (b5 << 32) | (b4 << 24) | (b3 << 16) | (b2 << 8) | b1); // Little
+                                                                                                                           // Endian
             }
 
             bufferR[i] = Double.longBitsToDouble(tmpLong);
@@ -1140,11 +1156,11 @@ public class FileDM3 extends FileBase {
             b8 = getUnsignedByte(byteBuffer, j + 15);
 
             if (dataEndianess) {
-                tmpLong = ((b1 << 56) | (b2 << 48) | (b3 << 40) | (b4 << 32) | (b5 << 24) | (b6 << 16) | (b7 << 8) |
-                               b8); // Big Endian
+                tmpLong = ( (b1 << 56) | (b2 << 48) | (b3 << 40) | (b4 << 32) | (b5 << 24) | (b6 << 16) | (b7 << 8) | b8); // Big
+                                                                                                                           // Endian
             } else {
-                tmpLong = ((b8 << 56) | (b7 << 48) | (b6 << 40) | (b5 << 32) | (b4 << 24) | (b3 << 16) | (b2 << 8) |
-                               b1); // Little Endian
+                tmpLong = ( (b8 << 56) | (b7 << 48) | (b6 << 40) | (b5 << 32) | (b4 << 24) | (b3 << 16) | (b2 << 8) | b1); // Little
+                                                                                                                           // Endian
             }
 
             bufferI[i] = Double.longBitsToDouble(tmpLong);
@@ -1153,13 +1169,13 @@ public class FileDM3 extends FileBase {
 
     /**
      * Reads a slice of data at a time and stores the results in the buffer.
-     *
-     * @param      slice   offset into the file stored in the dataOffset array
-     * @param      buffer  buffer where the info is stored
-     *
-     * @exception  IOException  if there is an error reading the file
+     * 
+     * @param slice offset into the file stored in the dataOffset array
+     * @param buffer buffer where the info is stored
+     * 
+     * @exception IOException if there is an error reading the file
      */
-    private void readLBuffer(int slice, long[] buffer) throws IOException {
+    private void readLBuffer(final int slice, final long[] buffer) throws IOException {
         int i = 0;
         int j;
         int nBytes;
@@ -1175,10 +1191,9 @@ public class FileDM3 extends FileBase {
             progressLength = buffer.length * numberSlices;
             mod = progressLength / 10;
 
-
             for (j = 0; j < nBytes; j += 4, i++) {
 
-                if (((i + progress) % mod) == 0) {
+                if ( ( (i + progress) % mod) == 0) {
                     fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                 }
 
@@ -1188,9 +1203,9 @@ public class FileDM3 extends FileBase {
                 b4 = getUnsignedByte(byteBuffer, j + 3);
 
                 if (dataEndianess) {
-                    buffer[i] = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4) & 0xffffffffL;
+                    buffer[i] = ( (b1 << 24) | (b2 << 16) | (b3 << 8) | b4) & 0xffffffffL;
                 } else {
-                    buffer[i] = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1) & 0xffffffffL;
+                    buffer[i] = ( (b4 << 24) | (b3 << 16) | (b2 << 8) | b1) & 0xffffffffL;
                 }
             } // for (j =0; j < nBytes; j+=4, i++ )
         } // if (type == ModelStorageBase.UINTEGER)
@@ -1202,10 +1217,9 @@ public class FileDM3 extends FileBase {
             progressLength = buffer.length * numberSlices;
             mod = progressLength / 10;
 
-
             for (j = 0; j < nBytes; j += 8, i++) {
 
-                if (((i + progress) % mod) == 0) {
+                if ( ( (i + progress) % mod) == 0) {
                     fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                 }
 
@@ -1219,11 +1233,11 @@ public class FileDM3 extends FileBase {
                 b8 = getUnsignedByte(byteBuffer, j + 7);
 
                 if (dataEndianess) {
-                    buffer[i] = ((b1 << 56) | (b2 << 48) | (b3 << 40) | (b4 << 32) | (b5 << 24) | (b6 << 16) |
-                                     (b7 << 8) | b8); // Big Endian
+                    buffer[i] = ( (b1 << 56) | (b2 << 48) | (b3 << 40) | (b4 << 32) | (b5 << 24) | (b6 << 16)
+                            | (b7 << 8) | b8); // Big Endian
                 } else {
-                    buffer[i] = ((b8 << 56) | (b7 << 48) | (b6 << 40) | (b5 << 32) | (b4 << 24) | (b3 << 16) |
-                                     (b2 << 8) | b1); // Little Endian
+                    buffer[i] = ( (b8 << 56) | (b7 << 48) | (b6 << 40) | (b5 << 32) | (b4 << 24) | (b3 << 16)
+                            | (b2 << 8) | b1); // Little Endian
                 }
             } // for (j =0; j < nBytes; j+=8, i++ )
         } // else reading 8 byte integers
@@ -1231,14 +1245,14 @@ public class FileDM3 extends FileBase {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   index        DOCUMENT ME!
-     * @param   encodedType  DOCUMENT ME!
-     *
-     * @throws  IOException  DOCUMENT ME!
+     * 
+     * @param index DOCUMENT ME!
+     * @param encodedType DOCUMENT ME!
+     * 
+     * @throws IOException DOCUMENT ME!
      */
-    private void readSimpleData(int index, int encodedType) throws IOException {
-        byte[] dataByte = new byte[1];
+    private void readSimpleData(final int index, final int encodedType) throws IOException {
+        final byte[] dataByte = new byte[1];
         int dataShort;
         int dataInt;
         long dataUInt;
@@ -1292,57 +1306,57 @@ public class FileDM3 extends FileBase {
                     throw new IOException();
             }
 
-            if ((encodedType == BOOLEAN) || (encodedType == CHAR) || (encodedType == OCTET)) {
+            if ( (encodedType == FileDM3.BOOLEAN) || (encodedType == FileDM3.CHAR) || (encodedType == FileDM3.OCTET)) {
                 dataByte[0] = raFile.readByte();
 
-                if (encodedType == CHAR) {
+                if (encodedType == FileDM3.CHAR) {
                     s = new String(dataByte);
                     Preferences.debug(s + "\n");
                 } else {
                     Preferences.debug(dataByte[0] + "\n");
                 }
             } // if ((encodedType == BOOLEAN) || (encodedType == CHAR) || (encodedType == OCTET))
-            else if (encodedType == SHORT) {
+            else if (encodedType == FileDM3.SHORT) {
                 dataShort = getSignedShort(dataEndianess);
                 Preferences.debug(dataShort + "\n");
-            } else if (encodedType == USHORT) {
+            } else if (encodedType == FileDM3.USHORT) {
                 dataShort = getSignedShort(dataEndianess);
                 Preferences.debug(dataShort + "\n");
-            } else if (encodedType == LONG) {
+            } else if (encodedType == FileDM3.LONG) {
                 dataInt = getInt(dataEndianess);
                 Preferences.debug(dataInt + "\n");
 
-                if ((isImageData) && (isDimensions)) {
+                if ( (isImageData) && (isDimensions)) {
                     dimArray[imageNum][index] = dataInt;
-                } else if ((isImageData) && (isDataType)) {
+                } else if ( (isImageData) && (isDataType)) {
                     dataTypeArray[imageNum] = dataInt;
                     isDataType = false;
                 }
-            } else if (encodedType == ULONG) {
+            } else if (encodedType == FileDM3.ULONG) {
                 dataUInt = getUInt(dataEndianess);
                 Preferences.debug(dataUInt + "\n");
 
-                if ((isImageData) && (isDimensions)) {
+                if ( (isImageData) && (isDimensions)) {
                     dimArray[imageNum][index] = (int) dataUInt;
-                } else if ((isImageData) && (isDataType)) {
+                } else if ( (isImageData) && (isDataType)) {
                     dataTypeArray[imageNum] = (int) dataUInt;
                     isDataType = false;
                 }
-            } else if (encodedType == FLOAT) {
+            } else if (encodedType == FileDM3.FLOAT) {
                 dataFloat = getFloat(dataEndianess);
                 Preferences.debug(dataFloat + "\n");
 
-                if ((isImageData) && (isCalibrations) && (isDimension) && (isScale)) {
+                if ( (isImageData) && (isCalibrations) && (isDimension) && (isScale)) {
                     Preferences.debug("About to set pixelScaleArray[" + imageNum + "][" + scaleIndex + "]\n");
                     pixelScaleArray[imageNum][scaleIndex++] = dataFloat;
                     isScale = false;
                 }
-            } else if (encodedType == DOUBLE) {
+            } else if (encodedType == FileDM3.DOUBLE) {
                 dataDouble = getDouble(dataEndianess);
                 Preferences.debug(dataDouble + "\n");
             }
 
-        } catch (Exception e) {
+        } catch (final Exception e) {
 
             if (image != null) {
                 image.disposeLocal();
@@ -1359,8 +1373,8 @@ public class FileDM3 extends FileBase {
 
     /**
      * DOCUMENT ME!
-     *
-     * @throws  IOException  DOCUMENT ME!
+     * 
+     * @throws IOException DOCUMENT ME!
      */
     private void readString() throws IOException {
         int stringSize;
@@ -1379,7 +1393,7 @@ public class FileDM3 extends FileBase {
             }
 
             Preferences.debug(dataString + "\n");
-        } catch (Exception e) {
+        } catch (final Exception e) {
 
             if (image != null) {
                 image.disposeLocal();
@@ -1394,11 +1408,10 @@ public class FileDM3 extends FileBase {
 
     }
 
-
     /**
      * DOCUMENT ME!
-     *
-     * @throws  IOException  DOCUMENT ME!
+     * 
+     * @throws IOException DOCUMENT ME!
      */
     private void readStruct() throws IOException {
         int fieldNum;
@@ -1420,7 +1433,7 @@ public class FileDM3 extends FileBase {
                 readSimpleData(i, fieldType[i]);
             }
 
-        } catch (Exception e) {
+        } catch (final Exception e) {
 
             if (image != null) {
                 image.disposeLocal();
@@ -1437,10 +1450,10 @@ public class FileDM3 extends FileBase {
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     *
-     * @throws  IOException  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
+     * 
+     * @throws IOException DOCUMENT ME!
      */
     private int[] readStructTypes() throws IOException {
         int fieldNum;
@@ -1458,7 +1471,7 @@ public class FileDM3 extends FileBase {
             }
 
             return fieldType;
-        } catch (Exception e) {
+        } catch (final Exception e) {
 
             if (image != null) {
                 image.disposeLocal();
@@ -1475,13 +1488,13 @@ public class FileDM3 extends FileBase {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   index  DOCUMENT ME!
-     *
-     * @throws  IOException  DOCUMENT ME!
+     * 
+     * @param index DOCUMENT ME!
+     * 
+     * @throws IOException DOCUMENT ME!
      */
-    private void readTagEntry(int index) throws IOException {
-        int i;
+    private void readTagEntry(final int index) throws IOException {
+        final int i;
         byte dataByte;
         int entryStringLength;
         String entryString;
@@ -1549,7 +1562,7 @@ public class FileDM3 extends FileBase {
             } else if (dimensionEntry == routineTagEntry) {
                 isDimension = false;
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
 
             if (image != null) {
                 image.disposeLocal();
@@ -1564,11 +1577,10 @@ public class FileDM3 extends FileBase {
 
     }
 
-
     /**
      * DOCUMENT ME!
-     *
-     * @throws  IOException  DOCUMENT ME!
+     * 
+     * @throws IOException DOCUMENT ME!
      */
     private void readTagGroup() throws IOException {
         int i;
@@ -1599,7 +1611,7 @@ public class FileDM3 extends FileBase {
             if (dimensionsEntry == routineTagGroup) {
                 isDimensions = false;
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
 
             if (image != null) {
                 image.disposeLocal();
@@ -1616,27 +1628,27 @@ public class FileDM3 extends FileBase {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   index  DOCUMENT ME!
-     *
-     * @throws  IOException  DOCUMENT ME!
+     * 
+     * @param index DOCUMENT ME!
+     * 
+     * @throws IOException DOCUMENT ME!
      */
-    private void readTagType(int index) throws IOException {
+    private void readTagType(final int index) throws IOException {
         String delimString;
         int encodedType;
-        byte[] dataByte = new byte[1];
-        int dataShort;
-        int dataInt;
-        long dataUInt;
-        float dataFloat;
-        double dataDouble;
-        String s;
+        final byte[] dataByte = new byte[1];
+        final int dataShort;
+        final int dataInt;
+        final long dataUInt;
+        final float dataFloat;
+        final double dataDouble;
+        final String s;
 
         try {
             delimString = getString(4);
 
             // The first 4 bytes should always be %%%%
-            if (!delimString.equals("%%%%")) {
+            if ( !delimString.equals("%%%%")) {
                 Preferences.debug("delimString is an illegal = " + delimString + "|n");
                 MipavUtil.displayError("Illegal delimiter string");
                 throw new IOException();
@@ -1646,7 +1658,7 @@ public class FileDM3 extends FileBase {
             getInt(endianess);
             encodedType = getInt(endianess);
 
-            if ((encodedType != STRING) && (encodedType != ARRAY) && (encodedType != STRUCT)) {
+            if ( (encodedType != FileDM3.STRING) && (encodedType != FileDM3.ARRAY) && (encodedType != FileDM3.STRUCT)) {
                 readSimpleData(index, encodedType);
 
                 return;
@@ -1675,7 +1687,7 @@ public class FileDM3 extends FileBase {
                     throw new IOException();
             }
 
-        } catch (Exception e) {
+        } catch (final Exception e) {
 
             if (image != null) {
                 image.disposeLocal();
