@@ -17,6 +17,15 @@ import ncsa.hdf.object.h5.*;
 /**
  * HDF5 based reader/writer for MINC 2.0
  * 
+ * 
+ * Currently, for the image max and image min nodes:  in the case of 3d images in which 1 image min and 1 image max is to be written
+ * out per slice, the dimorder is hardcoded to zspace.
+ * Sometimes minc2 3D images come in with just 1 image min and 1 image max per volume...in that case, we write out the same way and do
+ * not write out a dimorder
+ * 
+ * ToDo:  We need to make this type of functionality work for 4D images.  Currently the code writes out 1 image min nd 1 image max
+ * per slice and hardcode the dimorder to time,zspace.   We need to write out the same way we read in....yet to do.
+ * 
  * @author linkb
  */
 public class FileMincHDF extends FileBase {
