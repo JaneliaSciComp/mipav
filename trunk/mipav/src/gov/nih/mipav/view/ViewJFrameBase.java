@@ -2814,13 +2814,16 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
             } else {
                 chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
             }
-
-            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] {".xml", ".voi"}));
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] {".xml"}));
 
             final int returnVal = chooser.showSaveDialog(this);
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 fileName = chooser.getSelectedFile().getName();
+                if(!fileName.endsWith(".xml")) {
+                	MipavUtil.displayError("VOI files must end in .xml");
+                	return;
+                }
                 directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
                 userInterface.setDefaultDirectory(directory);
 
