@@ -177,7 +177,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
         boolean nlConstrainedEngineTest = false;
         boolean selfTest = false;
         boolean selfTest2 = false;
-        boolean levmarBoxConstraintTest = true;
+        boolean levmarBoxConstraintTest = false;
         boolean ddrvbdTest = false;
         int voiCount;
         double delT;
