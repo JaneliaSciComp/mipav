@@ -29,7 +29,7 @@ import javax.swing.*;
  * @see     AlgorithmCostFunctions
  * @see     AlgorithmRegOAR2D
  */
-public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements AlgorithmInterface {
+public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -694,6 +694,8 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
 
                 insertScriptLine();
             }
+         // save the completion status for later
+            setComplete(algorithm.isCompleted());
 
             if (reg2 != null) {
                 reg2.disposeLocal();
@@ -1242,7 +1244,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
             doColor = false;
         }
 
-        setReferenceImage(scriptParameters.retrieveImage("reference_image"));
+        setReferenceImage(scriptParameters.retrieveInputImage(2));
 
         setWeighted(scriptParameters.getParams().getBoolean("do_use_weight_images"));
 
@@ -1292,7 +1294,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(matchImage);
-        scriptParameters.storeImage(refImage, "reference_image");
+        scriptParameters.storeInputImage(refImage);
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_weight_images", weighted));
 
@@ -2800,4 +2802,133 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
             return false;
         }
     }
+
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms.Registration");
+            }
+
+            public String getDescription() {
+                return new String("Performs a optimized automatic 2d image registration.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Performs a optimized automatic 2d image registration.");
+            }
+
+            public String getShortLabel() {
+                return new String("RegistrationOAR2d");
+            }
+
+            public String getLabel() {
+                return new String("Optimized automatic 2d image registration");
+            }
+
+            public String getName() {
+                return new String("Optimized automatic 2d image registration");
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(2)));
+
+            table.put(new ParameterBoolean("do_use_weight_images", false));
+            final Parameter weight = table.getParameter("do_use_weight_images");
+            
+            Parameter tempParam = new ParameterExternalImage("input_weight_image");
+            tempParam.setParentCondition(weight, "true");
+            table.put(tempParam);
+            
+            tempParam = new ParameterExternalImage("reference_weight_image");
+            tempParam.setParentCondition(weight, "true");
+            table.put(tempParam);
+
+            table.put(new ParameterInt("degrees_of_freedom", 6));
+            table.put(new ParameterInt("initial_interpolation_type", 1));
+            table.put(new ParameterInt("cost_function_type", 1));
+
+            table.put(new ParameterFloat("rotate_begin", -30));
+            table.put(new ParameterFloat("rotate_end", 30));
+            table.put(new ParameterFloat("coarse_rate", 15));
+            table.put(new ParameterFloat("fine_rate", 6));
+
+            table.put(new ParameterBoolean("do_display_transform", true));
+            table.put(new ParameterInt("final_interpolation_type", 1));
+
+            table.put(new ParameterBoolean("do_subsample", true));
+            table.put(new ParameterInt("out_of_bounds_index", 0));
+
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+                return getResultImage().getImageName();
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
+    }
+
 }
