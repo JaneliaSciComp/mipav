@@ -233,7 +233,7 @@ public class FileMincHDF extends FileBase {
     }
 
     /**
-     * 
+     * parses the dim order
      * @param rootNode
      */
     private void parseImageDimOrder(final DefaultMutableTreeNode rootNode) throws Exception {
