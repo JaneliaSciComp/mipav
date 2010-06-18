@@ -1,7 +1,8 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 
 
 /**
@@ -130,6 +131,21 @@ import gov.nih.mipav.view.*;
  * <blockquote> All the programs and subroutines contained in this diskette are copyrighted. However, we give permission
  * to the reader who purchases this book to incorporate any of these programs into his or her programs provided that the
  * copyright is acknowledged. </blockquote>
+ * 
+ * <pre>
+ * DISCLAIMER OF WARRANTY
+ * 
+ * Although we have made a great effort to test and validate the 
+ * computer programs, we make no warranties, express or implied, that 
+ * these  programs  are  free  of  error,  or are consistent with any 
+ * particular  standard  of  merchantability,  or that they will meet 
+ * your requirements for any particular application.  They should not 
+ * be relied on for  solving problems  whose incorrect solution could 
+ * result in  injury to  a person or loss of property.  If you do use 
+ * the programs in such a manner, it is at your own risk. The authors 
+ * and publisher  disclaim all liability for  direct or consequential 
+ * damages resulting from your use of the programs.
+ * </pre>
  * 
  * </p>
  */
