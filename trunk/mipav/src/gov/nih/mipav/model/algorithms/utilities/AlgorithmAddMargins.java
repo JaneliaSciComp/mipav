@@ -314,11 +314,11 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                 kWrite.setFileInfo(fileInfoBuffer, 0);
 
                 // set image rows ("0028,0010")
-                stringForDicom = String.valueOf(kWrite.getExtents()[0]);
+                stringForDicom = String.valueOf(kWrite.getExtents()[1]);
                 fileInfoBuffer.getTagTable().setValue("0028,0010", stringForDicom);
 
                 // set image columns ("0028,0011")
-                stringForDicom = String.valueOf(kWrite.getExtents()[1]);
+                stringForDicom = String.valueOf(kWrite.getExtents()[0]);
                 fileInfoBuffer.getTagTable().setValue("0028,0011", stringForDicom);
 
             } else { // not a DICOM image,
