@@ -4863,6 +4863,8 @@ public class AlgorithmTransform extends AlgorithmBase {
                         // not possible for other rotations because the z-dimension is different
                         ((FileInfoDicom) fileInfo[i]).getTagTable().importTags(oldDicomInfo);
                     }
+                    ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0028,0010", new Short((short) resultImage.getExtents()[1]), 2);
+                    ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0028,0011", new Short((short) resultImage.getExtents()[0]), 2);
                 }
 
                 ((FileInfoDicom) fileInfo[0]).getTagTable().attachChildTagTables(childTagTables);
