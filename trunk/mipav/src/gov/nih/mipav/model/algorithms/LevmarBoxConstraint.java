@@ -6,8 +6,11 @@ public abstract class LevmarBoxConstraint {
 	// This is a port of LEVMAR_BC_DER.  It requires a function for computing the Jacobian.
 	// If no such function is available, use LEVMAR_BC_DIF rather than LEVMAR_BC_DER.
 	
-	// Results were worse than those of ELSUNC since ELSUNC handled DRAPER and 10* MEYER
-	// while LEVMAR_BC_DER did not.
+	// LEVMAR_BC_DER with AX_EQ_B_SVD results were worse than those of ELSUNC. 
+	// Except where noted comparisons were made to ELSUNC with internal scaling = false and analytical Jacobian used.
+	// ELSUNC handled DRAPER and 10* MEYER while LEVMAR_BC_DER did not.  Both LEVMAR and ELSUNC successfully
+	// handled all the other tests cases, but in the substantial majority of test cases ELSUNC had
+	// a lower chi-squared and/or lower number of iterations than LEVMAR.
 	
 	// Unconstrained DRAPER24D INCORRECT Singular matrix A in AX_EQ_B_LU and
 	// dgesvd (dbdsqr) failed to converge in AX_EQ_B_SVD, info[0] = 2.
@@ -199,6 +202,18 @@ public abstract class LevmarBoxConstraint {
 	// solution with chi-squared = 13.62886 a0 = a1 = a2 = 1 a3 = -1.242268 a4 = 1 at 1 iteration.
 	// ELSUNC with internal scaling = true and analytical and numerical Jacobian found yet another correct
 	// solution with chi-squared = 13.62886 a0 = a1 = 1 a2 = -1.98969 a3 = a4 = 1 at 1 iteration.
+	
+	// CHEBYQUAD with 1 parameter and 8 points correct with chi-squared = 3.55039129 at 28 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian did better with
+	// chi-squared = 3.55039129 at 9 iterations.
+	// CHEBYQUAD with 8 parameters and 8 points correct with chi-squared = 3.5168737E-3 at 403,592 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian was much faster with
+	// chi-squared = 3.5168737E-3 at 28 iterations.
+	// CHEBYQUAD with 9 parameters and 9 points correct with chi-squared = 6.83E-21 at 13 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian correct with chi-squared = 7.41E-17 at 10 iterations.
+	// CHEBYQUAD with 10 parameters and 10 points correct with chi-squared = 6.50395E-3 at 9,560 iterations.
+	// ELSUNC with internal scaling = false and analytical Jacobian was much faster with
+	// chi-squared = 6.50395E-3 at 27 iterations.
 	private final double INIT_MU = 1.0E-3;
 	
 	private final double STOP_THRESH = 1.0E-17;
@@ -1522,6 +1537,99 @@ public abstract class LevmarBoxConstraint {
         ub = null;
         driver();
         dumpTestResults();
+        
+        // Below is an example to fit the Chebyquad function with 1 parameter and 8 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Chebyquad function with 1 parameter and 8 points\n");
+        Preferences.debug("Correct chi-squared equals about 3.55 variable a0\n");
+        // gues[0] = 0.0 -> chi-squared = 3.550 a0 = 0.01827
+        // gues[0] = 0.05 -> chi-squared = 3.491 a0 = 0.102
+        // gues[0] = 0.5 -> chi-squared = 3.558 a0 = 0.5
+        // gues[0] = 1.0 -> chi-squared = 3.550 a0 = 0.9817
+        testMode = true;
+        testCase = CHEBYQUAD;
+        nPts = 8;
+        paramNum = 1;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        param = new double[paramNum];
+        param[0] = 1.0;
+        lb = new double[paramNum];
+        ub = new double[paramNum];
+        lb[0] = 0.0;
+        ub[0] = 1.0;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit the Chebyquad function with 8 parameters and 8 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Chebyquad function with 8 parameters and 8 points\n");
+        Preferences.debug("Correct chi-squared = 3.51687E-3\n");
+        testMode = true;
+        testCase = CHEBYQUAD;
+        nPts = 8;
+        paramNum = 8;
+        maxIterations = 100000 * paramNum;
+        ySeries = new double[nPts];
+        param = new double[paramNum];
+        for (i = 1; i <= paramNum; i++) {
+            param[i-1] = i/(paramNum + 1.0);
+        }
+        lb = new double[paramNum];
+        ub = new double[paramNum];
+        for (i = 0; i < paramNum; i++) {
+            lb[i] = 0.0;
+            ub[i] = 1.0;
+        }
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit the Chebyquad function with 9 parameters and 9 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Chebyquad function with 9 parameters and 9 points\n");
+        Preferences.debug("Correct chi-squared = 0.0\n");
+        // Actual chi-squared values were 8.213E-17, 7.413E-17, 8.016E-17, and 6.340E-17
+        testMode = true;
+        testCase = CHEBYQUAD;
+        nPts = 9;
+        paramNum = 9;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        param = new double[paramNum];
+        for (i = 1; i <= paramNum; i++) {
+            param[i-1] = i/(paramNum + 1.0);
+        }
+        lb = new double[paramNum];
+        ub = new double[paramNum];
+        for (i = 0; i < paramNum; i++) {
+            lb[i] = 0.0;
+            ub[i] = 1.0;
+        }
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit the Chebyquad function with 10 parameters and 10 points
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Chebyquad function with 10 parameters and 10 points\n");
+        Preferences.debug("Correct chi-squared = 6.50395E-3\n");
+        testMode = true;
+        testCase = CHEBYQUAD;
+        nPts = 10;
+        paramNum = 10;
+        maxIterations = 1000 * paramNum;
+        ySeries = new double[nPts];
+        param = new double[paramNum];
+        for (i = 1; i <= paramNum; i++) {
+            param[i-1] = i/(paramNum + 1.0);
+        }
+        lb = new double[paramNum];
+        ub = new double[paramNum];
+        for (i = 0; i < paramNum; i++) {
+            lb[i] = 0.0;
+            ub[i] = 1.0;
+        }
+        driver();
+        dumpTestResults();
     }
 	
 	public LevmarBoxConstraint(int x) {
@@ -1769,6 +1877,21 @@ public abstract class LevmarBoxConstraint {
         	    }
         	    for (i = 1; i < nPts-1; i++) {
         	    	hx[i] = i*sumTerm - 1.0;
+        	    }
+		    	break;
+		    case CHEBYQUAD:
+		    	double chebySum;
+        	    for (i = 1; i <= nPts; i++) {
+        	        chebySum = 0.0;
+        	        for (j = 0; j < paramNum; j++) {
+        	        	chebySum += shiftedChebyshev(param[j],i);
+        	        }
+        	        if ((i % 2) == 1) {
+        	        	hx[i-1] = chebySum/paramNum;
+        	        }
+        	        else {
+        	        	hx[i-1] = chebySum/paramNum + 1.0/(i*i - 1.0);
+        	        }
         	    }
 		    	break;
 		}
@@ -2135,8 +2258,186 @@ public abstract class LevmarBoxConstraint {
     		    	}
     		    }
 	        	break;
+	        case CHEBYQUAD:
+	        	for (i = 1; i <= nPts; i++) {
+        		    for (j = 0; j < paramNum; j++) {
+        		    	jac[(i-1)*paramNum+j] = shiftedChebyshevDerivative(param[j],i)/paramNum;
+        		    }
+        		}
+	        	break;
 	    }
 	}
+	
+	// Shifted Chebyshev polynomial
+    // Used over the half interval 0 <= x <= 1 instead of the full Chebyshev interval of -1 <= x <= 1
+    private double shiftedChebyshev(double x, int n) {
+    	// T*n+1(x) = (4x-2)*T*n(x) - T*n-1(x), where T* represents a shifted Chebyshev polynomial
+    	double sc = 1.0;
+    	double x2, x3, x4, x5, x6, x7, x8, x9, x10;
+    	switch (n) {
+    	    case 0:
+    	    	sc = 1.0;
+    	    	break;
+    	    case 1:
+    	        sc = 2.0*x - 1.0;
+    	        break;
+    	    case 2:
+    	    	x2 = x*x;
+    	    	sc = 8.0*x2 - 8.0*x + 1.0;
+    	    	break;
+    	    case 3:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	sc = 32.0*x3 - 48.0*x2 + 18.0*x - 1.0;
+    	    	break;
+    	    case 4:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	x4 = x3*x;
+    	    	sc = 128.0*x4 - 256.0*x3 + 160.0*x2 - 32.0*x + 1.0;
+    	    	break;
+    	    case 5:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	x4 = x3*x;
+    	    	x5 = x4*x;
+    	    	sc = 512.0*x5 - 1280.0*x4 + 1120.0*x3 - 400.0*x2 + 50.0*x - 1.0;
+    	    	break;
+    	    case 6:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	x4 = x3*x;
+    	    	x5 = x4*x;
+    	    	x6 = x5*x;
+    	    	sc = 2048.0*x6 - 6144.0*x5 + 6912.0*x4 - 3584.0*x3 + 840.0*x2 - 72.0*x + 1.0;
+    	    	break;
+    	    case 7:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	x4 = x3*x;
+    	    	x5 = x4*x;
+    	    	x6 = x5*x;
+    	    	x7 = x6*x;
+    	    	sc = 8192.0*x7 - 28672.0*x6 + 39424.0*x5 - 26880.0*x4 + 9408.0*x3 - 1568.0*x2 + 98.0*x - 1.0;
+    	    	break;
+    	    case 8:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	x4 = x3*x;
+    	    	x5 = x4*x;
+    	    	x6 = x5*x;
+    	    	x7 = x6*x;
+    	    	x8 = x7*x;
+    	    	sc = 32768.0*x8 - 131072.0*x7 + 212992.0*x6 - 180224.0*x5 + 84480.0*x4 - 21504.0*x3
+    	    	     + 2688.0*x2 - 128.0*x + 1.0;
+    	    	break;
+    	    case 9:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	x4 = x3*x;
+    	    	x5 = x4*x;
+    	    	x6 = x5*x;
+    	    	x7 = x6*x;
+    	    	x8 = x7*x;
+    	    	x9 = x8*x;
+    	    	sc = 131072.0*x9 - 589824.0*x8 + 1105920.0*x7 - 1118208.0*x6 + 658944.0*x5
+    	    	     - 228096.0*x4 + 44352.0*x3 - 4320.0*x2 + 162.0*x - 1.0;
+    	    	break;
+    	    case 10:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	x4 = x3*x;
+    	    	x5 = x4*x;
+    	    	x6 = x5*x;
+    	    	x7 = x6*x;
+    	    	x8 = x7*x;
+    	    	x9 = x8*x;
+    	    	x10 = x9*x;
+    	    	sc = 524288.0*x10 - 2621440.0*x9 + 5570560.0*x8 - 6553600.0*x7 + 4659200.0*x6
+    	    	     - 2050048.0*x5 + 549120.0*x4 - 84480.0*x3 + 6600.0*x2 - 200.0*x + 1.0;
+    	} // switch (n)
+    	return sc;
+    } // private double shiftedChebyshev
+    
+ // Shifted Chebyshev polynomial derivative
+    private double shiftedChebyshevDerivative(double x, int n) {
+    	double sc = 0.0;
+    	double x2, x3, x4, x5, x6, x7, x8, x9;
+    	switch (n) {
+    	    case 0:
+    	    	sc = 0.0;
+    	    	break;
+    	    case 1:
+    	    	sc = 2.0;
+    	        break;
+    	    case 2:
+    	    	sc = 16.0*x - 8.0;
+    	    	break;
+    	    case 3:
+    	    	x2 = x*x;
+    	    	sc = 96.0*x2 - 96.0*x + 18.0;
+    	    	break;
+    	    case 4:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	sc = 512.0*x3 - 768.0*x2 + 320.0*x - 32.0;
+    	    	break;
+    	    case 5:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	x4 = x3*x;
+    	    	sc = 2560.0*x4 - 5120.0*x3 + 3360.0*x2 - 800.0*x + 50.0;
+    	    	break;
+    	    case 6:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	x4 = x3*x;
+    	    	x5 = x4*x;
+    	    	sc = 12288.0*x5 - 30720.0*x4 + 27648.0*x3 - 10752.0*x2 + 1680.0*x - 72.0;
+    	    	break;
+    	    case 7:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	x4 = x3*x;
+    	    	x5 = x4*x;
+    	    	x6 = x5*x;
+    	    	sc = 57344.0*x6 - 172032.0*x5 + 197120.0*x4 - 107520.0*x3 + 28224.0*x2 - 3136.0*x + 98.0;
+    	    	break;
+    	    case 8:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	x4 = x3*x;
+    	    	x5 = x4*x;
+    	    	x6 = x5*x;
+    	    	x7 = x6*x;
+    	    	sc = 262144.0*x7 - 917504.0*x6 + 1277952.0*x5 - 901120.0*x4 + 337920.0*x3
+    	    	     - 64512.0*x2 + 5376.0*x - 128.0;
+    	    	break;
+    	    case 9:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	x4 = x3*x;
+    	    	x5 = x4*x;
+    	    	x6 = x5*x;
+    	    	x7 = x6*x;
+    	    	x8 = x7*x;
+    	    	sc = 1179648.0*x8 - 4718592.0*x7 + 7741440.0*x6 - 6709248.0*x5 + 3294720.0*x4
+    	    	     - 912384.0*x3 + 133056.0*x2 - 8640.0*x + 162.0;
+    	    	break;
+    	    case 10:
+    	    	x2 = x*x;
+    	    	x3 = x2*x;
+    	    	x4 = x3*x;
+    	    	x5 = x4*x;
+    	    	x6 = x5*x;
+    	    	x7 = x6*x;
+    	    	x8 = x7*x;
+    	    	x9 = x8*x;
+    	    	sc = 5242880.0*x9 - 23592960.0*x8 + 44564480.0*x7 - 45875200.0*x6 + 27955200.0*x5
+    	    	     - 10250240.0*x4 + 2196480.0*x3 - 253440.0*x2 + 13200.0*x - 200.0;
+    	} // switch (n)
+    	return sc;
+    } // private double shiftedChebyshevDerivative
 	
 	private void dumpTestResults() {
 		int i;
