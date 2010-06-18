@@ -470,7 +470,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         if ( !bIsFile )
         {            
             kFilePt = new Vector3f();
-            m_kDrawingContext.screenToFile( (int)kNewPoint.X, (int)kNewPoint.Y, (int)kNewPoint.Z, kFilePt);
+            if ( m_kDrawingContext.screenToFile( (int)kNewPoint.X, (int)kNewPoint.Y, (int)kNewPoint.Z, kFilePt) )
+            {
+                return false;
+            }
         }
         if ( (iPos + 1) < kVOI.size() )
         {
@@ -1728,12 +1731,16 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
     private void createTextVOI( int iX, int iY )
     {
+        Vector3f kVolumePt = new Vector3f();
+        if ( m_kDrawingContext.screenToFile( new Vector3f (iX, iY, m_iSlice), kVolumePt ) )
+        {
+            return;
+        }
+        
         int colorID = 0;
         VOI newTextVOI = new VOI((short) colorID, "annotation3d.voi", VOI.ANNOTATION, -1.0f);
 
         m_kCurrentVOI = new VOIText( );
-        Vector3f kVolumePt = new Vector3f();
-        m_kDrawingContext.screenToFile( new Vector3f (iX, iY, m_iSlice), kVolumePt );
         m_kCurrentVOI.add( kVolumePt );
 
         // decide where to put the second point (arrow tip) so that it is within bounds
@@ -1853,10 +1860,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 m_kCurrentVOI = createVOI( m_iDrawType, true, false, kPositions );
             }
             else
-            {
-                setPosition( m_kCurrentVOI, 1, iX, fYStart, m_iSlice);
-                setPosition( m_kCurrentVOI, 2, iX, fY, m_iSlice);
-                setPosition( m_kCurrentVOI, 3, m_fMouseX, fY, m_iSlice);       
+            {      
+                updateRectangle( iX, (int)m_fMouseX, (int)fY, (int)fYStart );
             }
         }
         else if ( m_iDrawType == OVAL )
@@ -4255,10 +4260,12 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         Vector3f kVolumePt = new Vector3f();
         if ( iPos < kVOI.size() )
         {
-            m_kDrawingContext.screenToFile( (int)kPos.X, (int)kPos.Y, (int)kPos.Z, kVolumePt );
-            kVOI.set( iPos, kVolumePt );
-            kVOI.setSelectedPoint( iPos );
-            kVOI.update();
+            if ( !m_kDrawingContext.screenToFile( (int)kPos.X, (int)kPos.Y, (int)kPos.Z, kVolumePt ) )
+            {
+                kVOI.set( iPos, kVolumePt );
+                kVOI.setSelectedPoint( iPos );
+                kVOI.update();
+            }
         }
     }
 
@@ -5335,5 +5342,19 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
     }
 
+    private void updateRectangle( int iX, int iMouseX, int iY, int iYStart )
+    {
+        Vector3f kVolumePt1 = new Vector3f();
+        Vector3f kVolumePt2 = new Vector3f();
+        Vector3f kVolumePt3 = new Vector3f();
+        if ( !m_kDrawingContext.screenToFile( iX, iYStart, m_iSlice, kVolumePt1 ) &&
+                !m_kDrawingContext.screenToFile( iX, iY, m_iSlice, kVolumePt2 ) &&
+                !m_kDrawingContext.screenToFile( iMouseX, iY, m_iSlice, kVolumePt3 )   )
+        {
+            m_kCurrentVOI.set(1, kVolumePt1 );
+            m_kCurrentVOI.set(2, kVolumePt2 );
+            m_kCurrentVOI.set(3, kVolumePt3 );
+        }      
+    }
     
 }
