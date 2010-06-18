@@ -10233,6 +10233,12 @@ public class FileIO {
                 } else {
                     fileDicom.getTagTable().setValue("0028,0103", new Short((short) 1), 2);
                 }
+            } else if (image.getType() == ModelStorageBase.BOOLEAN) {
+            	fileDicom.getTagTable().setValue("0028,0100", new Short((short)1), 2);
+            	fileDicom.getTagTable().setValue("0028,0101", new Short((short)1), 2);
+            	fileDicom.getTagTable().setValue("0028,0102", new Short((short) 0), 2);
+            	fileDicom.getTagTable().setValue("0028,0002", new Short((short) 1), 2); // samples per pixel
+            	fileDicom.getTagTable().setValue("0028,0004", new String("MONOCHROME2")); // photometric
             } else if ( (image.getType() == ModelStorageBase.ARGB) || (image.getType() == ModelStorageBase.ARGB_USHORT)
                     || (image.getType() == ModelStorageBase.ARGB_FLOAT)) {
                 fileDicom.getTagTable().setValue("0028,0100", new Short((short) 8), 2);
@@ -10757,6 +10763,12 @@ public class FileIO {
                 } else {
                     myFileInfo.getTagTable().setValue("0028,0103", new Short((short) 1), 2);
                 }
+            } else if (image.getType() == ModelStorageBase.BOOLEAN) {
+            	myFileInfo.getTagTable().setValue("0028,0100", new Short((short)1), 2);
+            	myFileInfo.getTagTable().setValue("0028,0101", new Short((short)1), 2);
+            	myFileInfo.getTagTable().setValue("0028,0102", new Short((short) 0), 2);
+            	myFileInfo.getTagTable().setValue("0028,0002", new Short((short) 1), 2); // samples per pixel
+            	myFileInfo.getTagTable().setValue("0028,0004", new String("MONOCHROME2")); // photometric
             } else if (image.isColorImage()) {
                 myFileInfo.getTagTable().setValue("0028,0100", new Short((short) 8), 2);
                 myFileInfo.getTagTable().setValue("0028,0101", new Short((short) 8), 2);
