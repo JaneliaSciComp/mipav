@@ -33,7 +33,6 @@ import gov.nih.mipav.view.*;
  *  BARD OK.
  *  MEYER OK.
  *  KOWALIK_AND_OSBORNE OK.
- *  MEYER OK.
  *  OSBRONE1 OK.
  *  OSBORNE2 OK.
  *  ROSENBROCK OK.
@@ -68,7 +67,27 @@ import gov.nih.mipav.view.*;
  *  In short, for BROWN_ALMOST_LINEAR the Java outperformed the FORTRAN.
  *  LINEAR_FULL_RANK OK.
  *  LINEAR_RANK1 OK.
+ *  For 5 parameters and 10 points:
+ *  ELSUNC with internal scaling = false and analytical and numerical Jacobian found a correct
+ *  solution with chi-squared = 2.14285714 with a0 thru a3 = 1 and a4 = -1.97142857 at 1 iteration.
+ *  ELSUNC with internal scaling = true and analytical and numerical Jacobian found another correct
+ *  solution with chi-squared = 2.14285712 with a0 = -13.85714 and a1 thru a4 = 1 at 1 iteration.
+ *  For 5 parameters and 50 points:
+ *  ELSUNC with internal scaling = false and analytical and numerical Jacobian found a correct
+ *  solution with chi-squared = 12.12871 a0 thru a3 = 1 a4 = -1.994059 at 1 iteration.
+ *  ELSUNC with internal scaling = true and analytical and numerical Jacobian found another correct 
+ *  solution with chi-squared = 12.12871 a0 = -13.97029 a1 thru a4 = 1 at 1 iteration.
  *  LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS OK.
+ *  For 5 parameters and 10 points:
+ *  ELSUNC with internal scaling = false and analytical and numerical Jacobian found a correct
+ *  solution with chi-squared = 3.6470588 with a0 = a1 = a2 = 1 a3 = -1.20588235 a4 = 1 at 1 iteration.
+ *  ELSUNC with internal scaling = true and analytical and numerical Jacobian found another correct
+ *  solution with chi-squared = 3.6470588 with a0 = a1 = 1 a2 = -1.94117647 a3 = a4 = 1 at 1 iteration.
+ *  For 5 parameters and 50 points: 
+ *  ELSUNC with internal scaling = false and analytical and numerical Jacobian found a correct
+ *  solution with chi-squared = 13.62886 a0 = a1 = a2 = 1 a3 = -1.242268 a4 = 1 at 1 iteration.
+ *  ELSUNC with internal scaling = true and analytical and numerical Jacobian found another correct
+ *  solution with chi-squared = 13.62886 a0 = a1 = 1 a2 = -1.98969 a3 = a4 = 1 at 1 iteration.
  *  CHEBYQUAD OK.
  *  LEVMAR_ROSENBROCK did not work for internal scaling = true; this gave a0 = -0.9958, 1.0
  *  Internal scaling = false did work at 6756 iterations for both analytical and numerical Jacobian.
@@ -1560,6 +1579,7 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
+    	
         // Below is an example to fit the Watson function with 6 parameters
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Watson with 6 parameters at standard starting point unconstrained\n");
@@ -1579,6 +1599,7 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
+        
         // Below is an example to fit the Watson function with 9 parameters
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Watson with 9 parameters at standard starting point unconstrained\n");
@@ -1598,6 +1619,7 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
+        
         // Below is an example to fit the Watson function with 12 parameters
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Watson with 12 parameters at standard starting point unconstrained\n");
@@ -1617,6 +1639,7 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
+        
         // Below is an example to fit the Brown almost linear function with 10 parameters
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Brown almost linear with 10 parameters at standard staring point unconstrained\n");
@@ -1642,6 +1665,7 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
+        
         // Below is an example to fit the Brown almost linear function with 10 parameters
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Brown almost linear with 10 parameters at 10 * standard staring point unconstrained\n");
@@ -1667,6 +1691,7 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
+        
         // Below is an example to fit the Brown almost linear function with 10 parameters
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Brown almost linear with 10 parameters at 100 * standard staring point unconstrained\n");
@@ -1692,6 +1717,7 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
+        
         // Below is an example to fit the Brown almost linear function with 30 parameters
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Brown almost linear with 30 parameters at standard staring point unconstrained\n");
@@ -1717,6 +1743,7 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
+        
         // Below is an example to fit the Brown almost linear function with 40 parameters
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Brown almost linear with 40 parameters at standard staring point unconstrained\n");
@@ -1742,6 +1769,7 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
+        
         // Below is an example to fit the Linear full rank with 5 parameters and 10 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Linear full rank function with 5 parameters and 10 points\n");
@@ -1764,6 +1792,7 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
+        
         // Below is an example to fit the Linear full rank with 5 parameters and 50 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Linear full rank function with 5 parameters and 50 points\n");
@@ -1786,6 +1815,7 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
+        
         // Below is the test to fit the Linear rank 1 function with 5 parameters and 10 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Linear rank 1 function with 5 parameters and 10 points\n");
@@ -1809,6 +1839,7 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
+        
         // Below is the test to fit the Linear rank 1 function with 5 parameters and 50 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Linear rank 1 function with 5 parameters and 50 points\n");
@@ -1832,6 +1863,7 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
+        
         // Below is the test to fit the Linear rank 1 function with zero columns and rows with 5 parameters and 10 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Linear rank 1 with zero columns and rows function with 5 parameters and 10 points\n");
@@ -1855,6 +1887,7 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
+        
         // Below is the test to fit the Linear rank 1 function with zero columns and rows with 5 parameters and 50 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Linear rank 1 with zero columns and rows function with 5 parameters and 50 points\n");
@@ -1878,6 +1911,7 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
+        
         // Below is an example to fit the Chebyquad function with 1 parameter and 8 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Chebyquad function with 1 parameter and 8 points\n");
@@ -1902,6 +1936,7 @@ public abstract class NLConstrainedEngine {
         bl[0] = 0.0;
         bu[0] = 1.0;
         driverCalls();
+        
         // Below is an example to fit the Chebyquad function with 8 parameters and 8 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Chebyquad function with 8 parameters and 8 points\n");
@@ -1926,6 +1961,7 @@ public abstract class NLConstrainedEngine {
             bu[i] = 1.0;
         }
         driverCalls();
+        
         // Below is an example to fit the Chebyquad function with 9 parameters and 9 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Chebyquad function with 9 parameters and 9 points\n");
@@ -1951,6 +1987,7 @@ public abstract class NLConstrainedEngine {
             bu[i] = 1.0;
         }
         driverCalls();
+        
         // Below is an example to fit the Chebyquad function with 10 parameters and 10 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Chebyquad function with 10 parameters and 10 points\n");
