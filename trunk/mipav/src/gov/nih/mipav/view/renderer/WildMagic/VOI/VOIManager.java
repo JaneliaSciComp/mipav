@@ -565,7 +565,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         {
             return true;
         }
-        return kVOI.nearPoint( iX, iY, iZ );
+        if ( kVOI.nearPoint( iX, iY, iZ ) )
+        {
+            return true;
+        }
+        return false;
     }
 
 
@@ -4318,7 +4322,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 return;
             }
         }
-
         VOIVector kVOIs = m_kImageActive.getVOIs();
         for ( int i = kVOIs.size()-1; i >=0; i-- )
         {
@@ -4327,7 +4330,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             {
                 VOIBase kVOI3D = kVOI.getCurves().get(j);
                 if ( (m_iPlane == (m_iPlane & kVOI3D.getPlane())) &&
-                        (m_iSlice == getSlice( kVOI3D )) &&
+                        (m_iSlice == getSlice( kVOI3D )) && 
                         contains( kVOI3D, iX, iY, m_iSlice ) )
                 {
                     m_iNearStatus = NearNone;
@@ -5354,6 +5357,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_kCurrentVOI.set(1, kVolumePt1 );
             m_kCurrentVOI.set(2, kVolumePt2 );
             m_kCurrentVOI.set(3, kVolumePt3 );
+            m_kCurrentVOI.update();
         }      
     }
     
