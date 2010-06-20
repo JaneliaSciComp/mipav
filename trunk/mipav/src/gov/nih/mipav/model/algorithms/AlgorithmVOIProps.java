@@ -955,8 +955,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 length *= 4;
             }
 
-            FileInfoBase[] fileInfo = srcImage.getFileInfo();
             int zDim = srcImage.getExtents().length > 2 ? srcImage.getExtents()[2] : 1;
+            FileInfoBase fileInfo = srcImage.getFileInfo()[zDim/2];
 
             try {
                 imgBuffer = new float[length * zDim];
@@ -1047,23 +1047,23 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     ContourStats[] stats = new ContourStats[sortedContoursZ[sortedZ].size()];
                     // since we're in a 3D image, contours.length is how many slices this VOI is on
                     for (int q = 0; q < sortedContoursZ[sortedZ].size(); q++) {
-                        stats[q] = calcStatsPerContour( fileInfo[0], imgBuffer, sortedContoursZ[sortedZ].elementAt(q), 
+                        stats[q] = calcStatsPerContour( fileInfo, imgBuffer, sortedContoursZ[sortedZ].elementAt(q), 
                                 unit2DStr, unit3DStr, ignoreMin, ignoreMax);
                         if ( processType == PROCESS_PER_SLICE_AND_CONTOUR )
                         {
-                            printStatsPerContour(  fileInfo[0], stats[q], statProperty, sortedZ, q );
+                            printStatsPerContour(  fileInfo, stats[q], statProperty, sortedZ, q );
                         }  
                         allStats.add( stats[q] );
                     }         
                     if ( showTotals )
                     {
-                        printTotals( fileInfo[0], stats, statProperty, 
+                        printTotals( fileInfo, stats, statProperty, 
                                 unit2DStr, unit3DStr, new String( sortedZ + ";" ), mask, imgBuffer, ignoreMin, ignoreMax, largestDistance );
                     }
                 }
                 if ( showTotals )
                 {
-                    printTotals( fileInfo[0], allStats, statProperty, 
+                    printTotals( fileInfo, allStats, statProperty, 
                             unit2DStr, unit3DStr, "Total", mask, imgBuffer, ignoreMin, ignoreMax, largestDistance );
                 }          
             } else {
@@ -1072,21 +1072,21 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 ContourStats[] stats = new ContourStats[contours.size()];
                 // since we're in a 3D image, contours.length is how many slices this VOI is on
                 for (int q = 0; q < contours.size(); q++) {
-                    stats[q] = calcStatsPerContour( fileInfo[0], imgBuffer, contours.elementAt(q), 
+                    stats[q] = calcStatsPerContour( fileInfo, imgBuffer, contours.elementAt(q), 
                             unit2DStr, unit3DStr, ignoreMin, ignoreMax);
                     if ( processType == PROCESS_PER_CONTOUR )
                     {
-                        printStatsPerContour( fileInfo[0], stats[q], statProperty, 0, q );
+                        printStatsPerContour( fileInfo, stats[q], statProperty, 0, q );
                     }
                 }               
                 if ( showTotals )
                 {
-                    printTotals( fileInfo[0], stats, statProperty, 
+                    printTotals( fileInfo, stats, statProperty, 
                             unit2DStr, unit3DStr, "Total", mask, imgBuffer, ignoreMin, ignoreMax, largestDistance );
                 }
                 else
                 {
-                    printTotals( fileInfo[0], stats, statProperty, 
+                    printTotals( fileInfo, stats, statProperty, 
                             unit2DStr, unit3DStr, "", mask, imgBuffer, ignoreMin, ignoreMax, largestDistance );
                 }
             }
@@ -1164,6 +1164,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         private ContourStats calcStatsPerContour( FileInfoBase fileInfo, float[] imgBuffer, VOIBase contour, 
                 String unit2DStr, String unit3DStr, float ignoreMin, float ignoreMax )
         {
+            contour.update();
+            
             ContourStats stats = new ContourStats();
             float[] tmpPAxis = new float[1];
             float[] tmpEcc = new float[1];
