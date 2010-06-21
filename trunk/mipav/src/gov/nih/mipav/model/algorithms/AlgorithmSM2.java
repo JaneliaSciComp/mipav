@@ -121,6 +121,9 @@ public class AlgorithmSM2 extends AlgorithmBase {
     private double[] paramMax = new double[3];
     private int processors;
     private float destArray[];
+    private long voxelsProcessed = 0;
+    private int barMarker = 0;
+    private int oldBarMarker = 0;
     
     private ModelImage tissueImage;
 
@@ -624,7 +627,13 @@ public class AlgorithmSM2 extends AlgorithmBase {
         } 
         else { // processors == 1
 	        for (i = 0; i < volSize; i++) {
-	        	fireProgressStateChanged(i * 100/volSize);
+	        	voxelsProcessed++;
+	        	long vt100 = voxelsProcessed * 100L;
+	        	barMarker = (int)(vt100/volSize);
+	        	if (barMarker > oldBarMarker) {
+	        		oldBarMarker = barMarker;
+	        		fireProgressStateChanged(barMarker);
+	        	}
 	            for (t = 1; t < tDim; t++) {
 	            	y_array[t-1] = r1tj[t*volSize + i];
 	            }
@@ -1869,6 +1878,13 @@ public class AlgorithmSM2 extends AlgorithmBase {
     
     public synchronized void output(double params[], int i, int exitStatusIndex) {
     	int j;
+    	voxelsProcessed++;
+    	long vt100 = voxelsProcessed * 100L;
+    	barMarker = (int)(vt100/volSize);
+    	if (barMarker > oldBarMarker) {
+    		oldBarMarker = barMarker;
+    		fireProgressStateChanged(barMarker);
+    	}
     	for (j = 0; j < 3; j++) {
         	destArray[j*volSize + i] = (float)params[j];
         	if (Double.isNaN(params[j])) {
