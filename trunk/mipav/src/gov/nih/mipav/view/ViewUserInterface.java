@@ -192,6 +192,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** This is the outputDir path that the user entered as a command line argument when running a script * */
     private String outputDir = "";
 
+
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -997,22 +998,30 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 try {
                     name = name.substring(0, name.indexOf(".class"));
                     pluginName = name.substring(name.indexOf("PlugIn") + 6, name.length());
+                    
                 } catch (final Exception e) {
                     pluginName = name;
                 }
                 try {
-                    plugin = Class.forName(name);
 
+                	Preferences.debug("-----");
+                	Preferences.debug(name);
+                	Preferences.debug(pluginName);
+                    plugin = Class.forName(name);
+                    
                     // plugin.newInstance();
                     // rather than instantiating to allow loading into SCRIPT_ACTION_LOCATIONS, see below
                     try {
                         scriptField = plugin.getField(scriptName);
+                        Preferences.debug("scriptField: " + scriptField);
+                        
                     } catch (final NoSuchFieldException e1) {
                         // The scriptname field is optional.
                     }
 
                     if (scriptField != null) {
                         final String scriptLoc = (String) scriptField.get(plugin);
+                        Preferences.debug(scriptLoc);
                         if (scriptLoc != null) {
                             // the value of SCRIPT_NAME is now the short name for this plugin
                             ScriptableActionLoader.addScriptActionLocation(scriptLoc);
