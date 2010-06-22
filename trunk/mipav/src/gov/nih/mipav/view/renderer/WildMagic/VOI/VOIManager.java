@@ -709,6 +709,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             } 
             else if ( kCommand.equals(CustomUIBuilder.PARAM_LUT_QUICK.getActionCommand()) ) {
                 m_iDrawType = LUT;
+                m_bQuickLUT = true;
             }
         }
     }
@@ -961,16 +962,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
     public void keyTyped(KeyEvent e)
     {
-        //System.err.println("VOIManager keyTyped" );
-        if ( e.getKeyChar() == 'q' || e.getKeyChar() == 'Q' )
-        {
-            if ( !m_bQuickLUT && m_kCurrentVOI != null )
-            {
-                m_kCurrentVOI.setActive(false);
-                m_kCurrentVOI = null;
-            }
-            m_bQuickLUT = true;
-        }
     }
 
     public void liveWire( int iSelection )
@@ -1220,6 +1211,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         else if ( m_bDrawVOI && (m_iDrawType == LUT) )
         {
             m_kParent.quickLUT(m_kCurrentVOI);
+            m_bQuickLUT = false;
             m_bDrawVOI = false;
             m_kParent.setDefaultCursor( );
             return;
