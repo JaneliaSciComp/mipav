@@ -3102,8 +3102,9 @@ public class FileIO {
                             final int nImagesSaved = options.getEndSlice() - options.getBeginSlice() + 1;
                             final int nTimePeriodsSaved = options.getEndTime() - options.getBeginTime() + 1;
                             try {
+                            	boolean oneFile = true;
                                 fileNIFTI.writeHeader(image, nImagesSaved, nTimePeriodsSaved, options.getFileName(),
-                                        options.getFileDirectory(), true);
+                                        options.getFileDirectory(), true, oneFile);
                             } catch (final IOException e) {
                                 MipavUtil.displayError("IOException wrting header " + inputFileName[i]);
                                 return;
@@ -3319,8 +3320,9 @@ public class FileIO {
                             final int nImagesSaved = options.getEndSlice() - options.getBeginSlice() + 1;
                             final int nTimePeriodsSaved = options.getEndTime() - options.getBeginTime() + 1;
                             try {
+                            	boolean oneFile = true;
                                 fileNIFTI.writeHeader(image, nImagesSaved, nTimePeriodsSaved, options.getFileName(),
-                                        options.getFileDirectory(), true);
+                                        options.getFileDirectory(), true, oneFile);
                             } catch (final IOException e) {
                                 MipavUtil.displayError("IOException wrting header " + inputFileName[i]);
                                 return;
@@ -3538,8 +3540,9 @@ public class FileIO {
                             final int nImagesSaved = options.getEndSlice() - options.getBeginSlice() + 1;
                             final int nTimePeriodsSaved = options.getEndTime() - options.getBeginTime() + 1;
                             try {
+                            	boolean oneFile = true;
                                 fileNIFTI.writeHeader(image, nImagesSaved, nTimePeriodsSaved, options.getFileName(),
-                                        options.getFileDirectory(), true);
+                                        options.getFileDirectory(), true, oneFile);
                             } catch (final IOException e) {
                                 MipavUtil.displayError("IOException wrting header " + inputFileName[i]);
                                 return;
