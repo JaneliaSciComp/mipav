@@ -1444,6 +1444,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
 
     public void quickLUT( VOIBase kLUT )
     {
+        kLUT.update();
         Vector3f[] kBounds = kLUT.getImageBoundingBox();
         m_akBounds[0].Copy(kBounds[0]);
         m_akBounds[1].Copy(kBounds[1]);        
@@ -2361,21 +2362,21 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         }        
         float min = Float.MAX_VALUE;
         float max = -100000000;
-        Number val;
+        float val;
         for ( int z = (int)akMinMax[0].Z; z <= akMinMax[1].Z; z++ )
         {
             for ( int y = (int)akMinMax[0].Y; y <= akMinMax[1].Y; y++ )
             {
                 for ( int x = (int)akMinMax[0].X; x <= akMinMax[1].X; x++ )
                 {
-                    val = image.get(x,y,z);
-                    if ( val.floatValue() < min )
+                    val = image.getFloat(x,y,z);
+                    if ( val < min )
                     {
-                        min = val.floatValue();
+                        min = val;
                     }
-                    if ( val.floatValue() > max )
+                    if ( val > max )
                     {
-                        max = val.floatValue();
+                        max = val;
                     }                        
                 }
             }
@@ -2431,7 +2432,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         }        
         final float[] minC = {Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE};
         final float[] maxC = { -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
-        Number val;
+        float val;
 
         for ( int z = (int)akMinMax[0].Z; z <= akMinMax[1].Z; z++ )
         {
@@ -2441,37 +2442,25 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
                 {
                     for (int c = 1; c < 4; c++) {
 
-                        val = image.getC(x,y,z,c);
-                        if ( val.floatValue() < minC[c-1] )
+                        val = image.getFloatC(x,y,z,c);     
+                        if ( val < minC[c-1] )
                         {
-                            minC[c-1] = val.floatValue();
+                            minC[c-1] = val;
                         }
-                        if ( val.floatValue() > maxC[c-1] )
+                        if ( val > maxC[c-1] )
                         {
-                            maxC[c-1] = val.floatValue();
+                            maxC[c-1] = val;
                         }                        
                     }
                 }
             }
         }
-
-        float max = Math.max( Math.max(maxC[0], maxC[1]), maxC[2] );
-
         final float[][] x = new float[3][4];
         final float[][] y = new float[3][4];
         final Dimension dim = new Dimension(256, 256);
         for (int i = 0; i < 3; i++) {
-            minC[i] += 128;
-            maxC[i] += 128;
-            // Set LUT min max values;
-            // if (imageA.isColorImage() == true) {
-                if (image.getType() == ModelStorageBase.ARGB) {
-                    x[i][1] = minC[i];
-                    x[i][2] = maxC[i];
-                } else {
-                    x[i][1] = minC[i] * 255 / max;
-                    x[i][2] = maxC[i] * 255 / max;
-                }
+            x[i][1] = minC[i];
+            x[i][2] = maxC[i];
 
                 x[i][0] = 0;
                 x[i][3] = 255;
@@ -2481,7 +2470,6 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
                 y[i][2] = 0;
                 y[i][3] = 0;
         }
-
         RGB.getRedFunction().importArrays(x[0], y[0], 4);
         RGB.getGreenFunction().importArrays(x[1], y[1], 4);
         RGB.getBlueFunction().importArrays(x[2], y[2], 4);
