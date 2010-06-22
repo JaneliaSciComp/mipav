@@ -3262,10 +3262,10 @@ public class FileNIFTI extends FileBase {
 
                 if (image.getNDims() == 3) {
                     rawFile.writeImage3DTo2D(image, options, ".nii");
-                    writeHeader3DTo2D(image, fhName, fileDir, options);
+                    writeHeader3DTo2D(image, fhName, fileDir, options, oneFile);
                 } else if (image.getNDims() == 4) {
                     rawFile.writeImage4DTo3D(image, options, ".nii");
-                    writeHeader4DTo3D(image, fhName, fileDir, options);
+                    writeHeader4DTo3D(image, fhName, fileDir, options, oneFile);
                 }
             } // if (oneFile)
             else { // 2 files
@@ -3273,10 +3273,10 @@ public class FileNIFTI extends FileBase {
 
                 if (image.getNDims() == 3) {
                     rawFile.writeImage3DTo2D(image, options, ".img");
-                    writeHeader3DTo2D(image, fhName, fileDir, options);
+                    writeHeader3DTo2D(image, fhName, fileDir, options, oneFile);
                 } else if (image.getNDims() == 4) {
                     rawFile.writeImage4DTo3D(image, options, ".img");
-                    writeHeader4DTo3D(image, fhName, fileDir, options);
+                    writeHeader4DTo3D(image, fhName, fileDir, options, oneFile);
                 }
             } // else 2 files
 
@@ -3299,7 +3299,7 @@ public class FileNIFTI extends FileBase {
                 nTimePeriodsSaved = rawFile.getNTimePeriods();
 
                 if (nImagesSaved != 0) {
-                    writeHeader(image, nImagesSaved, nTimePeriodsSaved, fhName, fileDir,false);
+                    writeHeader(image, nImagesSaved, nTimePeriodsSaved, fhName, fileDir,false, oneFile);
                 }
 
             } catch (IOException error) {
@@ -3878,7 +3878,8 @@ public class FileNIFTI extends FileBase {
      *
      * @see        FileInfoNIFTI
      */
-    public boolean writeHeader(ModelImage image, int nImagesSaved, int nTimeSaved, String fileName, String fileDir, boolean doGzip)
+    public boolean writeHeader(ModelImage image, int nImagesSaved, int nTimeSaved, String fileName, String fileDir,
+    		                   boolean doGzip, boolean oneFile)
             throws IOException {
 
         int i;
@@ -5289,7 +5290,8 @@ public class FileNIFTI extends FileBase {
      *
      * @throws  IOException  DOCUMENT ME!
      */
-    private void writeHeader3DTo2D(ModelImage image, String fileName, String fileDir, FileWriteOptions options)
+    private void writeHeader3DTo2D(ModelImage image, String fileName, String fileDir, FileWriteOptions options,
+    		                       boolean oneFile)
             throws IOException {
         int k, seq;
         int beginSlice = options.getBeginSlice();
@@ -5330,7 +5332,7 @@ public class FileNIFTI extends FileBase {
                 }
             }
 
-            writeHeader(image, 1, 1, fileName, fileDir,false);
+            writeHeader(image, 1, 1, fileName, fileDir,false, oneFile);
 
         } // end for loop
 
@@ -5347,7 +5349,8 @@ public class FileNIFTI extends FileBase {
      *
      * @throws  IOException  DOCUMENT ME!
      */
-    private void writeHeader4DTo3D(ModelImage image, String fileName, String fileDir, FileWriteOptions options)
+    private void writeHeader4DTo3D(ModelImage image, String fileName, String fileDir, FileWriteOptions options,
+    		                       boolean oneFile)
             throws IOException {
         int k, seq;
         int beginTime = options.getBeginTime();
@@ -5389,7 +5392,7 @@ public class FileNIFTI extends FileBase {
             }
             // write header with image, # of images per, and 1 time slice
 
-            writeHeader(image, image.getExtents()[2], 1, fileName, fileDir,false);
+            writeHeader(image, image.getExtents()[2], 1, fileName, fileDir,false, oneFile);
 
         } // end for loop
 
