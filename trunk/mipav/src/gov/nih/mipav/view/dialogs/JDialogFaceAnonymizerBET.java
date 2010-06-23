@@ -23,7 +23,7 @@ import javax.swing.*;
  * @author  mccreedy
  */
 public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
-        implements AlgorithmInterface, DialogDefaultsInterface {
+        implements AlgorithmInterface, DialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -183,6 +183,9 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
             insertScriptLine();
             srcImage.calcMinMax();
             srcImage.notifyImageDisplayListeners(null, true);
+         // save the completion status for later
+            setComplete(algorithm.isCompleted());
+
             defaceAlgo.finalize();
             defaceAlgo = null;
         }
@@ -535,4 +538,108 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
 
         return true;
     }
+
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms.Brain tools");
+            }
+
+            public String getDescription() {
+                return new String("Removes the face from 3d brain scans.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Removes the face from 3d brain scans.");
+            }
+
+            public String getShortLabel() {
+                return new String("AnonymizeFace");
+            }
+
+            public String getLabel() {
+                return new String("Anonymize Face");
+            }
+
+            public String getName() {
+                return new String("Anonymize Face");
+            }
+        };
+    }
+
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+        
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterInt(PARAM_FACE_ORIENTATION, 5));
+            table.put(new ParameterInt(PARAM_EXTRA_MMS_TO_PAD, 20));
+            table.put(new ParameterBoolean(PARAM_BET_DO_SPHERE_ESTIMATION, false));
+            table.put(new ParameterFloat(PARAM_BET_IMG_INFLUENCE, .1f));
+            table.put(new ParameterFloat(PARAM_BET_STIFFNESS, .15f));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+                return srcImage.getImageName();
+            }
+        
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
+    }
+
 }

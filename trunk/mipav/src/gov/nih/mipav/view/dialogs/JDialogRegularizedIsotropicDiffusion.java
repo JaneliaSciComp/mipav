@@ -424,7 +424,8 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogScriptableBase
      * @return A parameter table listing the inputs of this algorithm.
      */
     public ParameterTable createInputParameters() {
-        final ParameterTable table = new ParameterTable();       
+        final ParameterTable table = new ParameterTable();    
+        
         try {
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
             table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D, false));
@@ -472,7 +473,6 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogScriptableBase
                 return getResultImage().getImageName();
             } 
         }
-
         Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
 
         return null;

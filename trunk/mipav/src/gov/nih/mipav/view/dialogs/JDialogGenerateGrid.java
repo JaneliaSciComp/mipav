@@ -63,7 +63,9 @@ public class JDialogGenerateGrid extends JDialogScriptableBase implements Action
 	
 	private int verticalSpacing, horizontalSpacing;
 	
-	private ModelImage im;
+	private ModelImage image;
+	
+	private ModelImage newImage;
 	
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
@@ -283,9 +285,9 @@ public class JDialogGenerateGrid extends JDialogScriptableBase implements Action
 	  protected void writeGridOverlay() {
 
 
-	        im = (ModelImage)componentImage.getActiveImage().clone();
+	        image = (ModelImage)componentImage.getActiveImage().clone();
 	        String name = ((ModelImage)componentImage.getActiveImage()).getImageName();
-	        im.setImageName(name + "_grid");
+	        image.setImageName(name + "_grid");
 	        for(int z=0;z<zDim;z++) {
 	        	for(int y=0;y<yDim;y++) {
 	        		for(int x=0;x<xDim;x++) {
@@ -294,22 +296,22 @@ public class JDialogGenerateGrid extends JDialogScriptableBase implements Action
 	        
 	        			if(x!=0 && modX==0) {
 	        				if(isColor) {
-	        					im.setC(x, y, z, 1, intensityR);
-	        					im.setC(x, y, z, 2, intensityG);
-	        					im.setC(x, y, z, 3, intensityB);
+	        					image.setC(x, y, z, 1, intensityR);
+	        					image.setC(x, y, z, 2, intensityG);
+	        					image.setC(x, y, z, 3, intensityB);
 	        				}else {
-	        					im.set(x,y,z, intensity);
+	        					image.set(x,y,z, intensity);
 	        				}
 	        			}
 	        
 	        
 	        			if(y!=0 && modY==0) {
 	        				if(isColor) {
-	        					im.setC(x, y, z, 1, intensityR);
-	        					im.setC(x, y, z, 2, intensityG);
-	        					im.setC(x, y, z, 3, intensityB);
+	        					image.setC(x, y, z, 1, intensityR);
+	        					image.setC(x, y, z, 2, intensityG);
+	        					image.setC(x, y, z, 3, intensityB);
 	        				}else {
-	        					im.set(x,y,z, intensity);
+	        					image.set(x,y,z, intensity);
 	        				}
 	 
 	        			}
@@ -318,9 +320,9 @@ public class JDialogGenerateGrid extends JDialogScriptableBase implements Action
 	        		}
 	        	}
 	        }
-	        im.calcMinMax();
+	        image.calcMinMax();
 	        setComplete(true);
-	        new ViewJFrameImage(im);
+	        new ViewJFrameImage(image);
 	        insertScriptLine();
 	        dispose();
 
@@ -331,23 +333,24 @@ public class JDialogGenerateGrid extends JDialogScriptableBase implements Action
 
 	@Override
 	protected void callAlgorithm() {
+		newImage = (ModelImage) image.clone();
 		
-        type = im.getType();
-        isColor = im.isColorImage();
-        unitsStr = FileInfoBase.getUnitsOfMeasureAbbrevStr(im.getFileInfo()[0].getUnitsOfMeasure(0));
+        type = newImage.getType();
+        isColor = newImage.isColorImage();
+        unitsStr = FileInfoBase.getUnitsOfMeasureAbbrevStr(newImage.getFileInfo()[0].getUnitsOfMeasure(0));
         
-    	xDim = im.getExtents()[0];
-        yDim = im.getExtents()[1];
+    	xDim = newImage.getExtents()[0];
+        yDim = newImage.getExtents()[1];
         
-        if (im.is3DImage())
-        	zDim = im.getExtents()[2];
+        if (image.is3DImage())
+        	zDim = newImage.getExtents()[2];
         else
         	zDim = 1;
         	
         
 
-        resX = im.getResolutions(0)[0];
-        resY = im.getResolutions(0)[1];
+        resX = newImage.getResolutions(0)[0];
+        resY = newImage.getResolutions(0)[1];
 
         numVertical = (xDim * resX) / width;
         numHorizontal = (yDim * resY) / height;
@@ -355,8 +358,8 @@ public class JDialogGenerateGrid extends JDialogScriptableBase implements Action
 
         verticalSpacing = (int)(xDim / numVertical);
         horizontalSpacing = (int)(yDim / numHorizontal);
-        String name = im.getImageName();
-	        im.setImageName(name + "_grid");
+        String name = newImage.getImageName();
+        newImage.setImageName(name + "_grid");
 	        for(int z=0;z<zDim;z++) {
 	        	for(int y=0;y<yDim;y++) {
 	        		for(int x=0;x<xDim;x++) {
@@ -365,22 +368,22 @@ public class JDialogGenerateGrid extends JDialogScriptableBase implements Action
 	        			
 	        			if(x!=0 && modX==0) {
 	        				if(isColor) {
-	        					im.setC(x, y, z, 1, intensityR);
-	        					im.setC(x, y, z, 2, intensityG);
-	        					im.setC(x, y, z, 3, intensityB);
+	        					newImage.setC(x, y, z, 1, intensityR);
+	        					newImage.setC(x, y, z, 2, intensityG);
+	        					newImage.setC(x, y, z, 3, intensityB);
 	        				}else {
-	        					im.set(x,y,z, intensity);
+	        					newImage.set(x,y,z, intensity);
 	        				}
 	        			}
 	        			
 	        			
 	        			if(y!=0 && modY==0) {
 	        				if(isColor) {
-	        					im.setC(x, y, z, 1, intensityR);
-	        					im.setC(x, y, z, 2, intensityG);
-	        					im.setC(x, y, z, 3, intensityB);
+	        					newImage.setC(x, y, z, 1, intensityR);
+	        					newImage.setC(x, y, z, 2, intensityG);
+	        					newImage.setC(x, y, z, 3, intensityB);
 	        				}else {
-	        					im.set(x,y,z, intensity);
+	        					newImage.set(x,y,z, intensity);
 	        				}
 	        				
 	        			}
@@ -389,7 +392,7 @@ public class JDialogGenerateGrid extends JDialogScriptableBase implements Action
 	        		}
 	        	}
 	        }
-	        im.calcMinMax();
+	        newImage.calcMinMax();
         setComplete(true);
 	        dispose();
 	        
@@ -399,13 +402,11 @@ public class JDialogGenerateGrid extends JDialogScriptableBase implements Action
 
 
 
-	@Override
-	protected void setGUIFromParams() {
-		System.out.println("MY NAME IS... " +scriptParameters.retrieveInputImage());
 
-		im = scriptParameters.retrieveInputImage();
+	protected void setGUIFromParams() {
+		image = scriptParameters.retrieveInputImage();
 		userInterface = ViewUserInterface.getReference();
-		parentFrame = im.getParentFrame();
+		parentFrame = image.getParentFrame();
 		
 		width = scriptParameters.getParams().getFloat("width");
 		height = scriptParameters.getParams().getFloat("height");
@@ -415,12 +416,9 @@ public class JDialogGenerateGrid extends JDialogScriptableBase implements Action
 }
  
 
-
-
-	@Override
 	protected void storeParamsFromGUI() throws ParserException {
-		scriptParameters.storeInputImage(im);
-		scriptParameters.storeOutputImageParams(im, true);
+		scriptParameters.storeInputImage(image);
+		scriptParameters.storeOutputImageParams(newImage, true);
 		try {
 	        scriptParameters.getParams().put(ParameterFactory.newParameter("width", width));
 	        scriptParameters.getParams().put(ParameterFactory.newParameter("height", height));
@@ -433,8 +431,10 @@ public class JDialogGenerateGrid extends JDialogScriptableBase implements Action
 		
 	}
 	
+	
+	
 	protected void doPostAlgorithmActions(){
-		AlgorithmParameters.storeImageInRunner(im);
+		AlgorithmParameters.storeImageInRunner(image);
 	}
 	
     /**
@@ -445,7 +445,7 @@ public class JDialogGenerateGrid extends JDialogScriptableBase implements Action
     public ActionMetadata getActionMetadata() {
         return new MipavActionMetadata() {
             public String getCategory() {
-                return new String("Utilities.Andrew");
+                return new String("Utilities");
             }
 
             public String getDescription() {
@@ -520,7 +520,7 @@ public class JDialogGenerateGrid extends JDialogScriptableBase implements Action
      */
     public String getOutputImageName(final String imageParamName) {
         if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
-                return im.getImageName();
+                return newImage.getImageName();
 
             }
 

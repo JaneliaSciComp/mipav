@@ -280,6 +280,7 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
         userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         
+        
         String axisn = scriptParameters.getParams().getString("flip_axis");
         if (axisn.toUpperCase().equals("X")) {
             flipAxis = AlgorithmFlip.X_AXIS;
@@ -531,7 +532,7 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
             table.put(new ParameterString("flip_axis", "X"));
             table.put(new ParameterString("flip_object", "image"));
-            table.put(new ParameterString("orientation_origin", "preserve"));
+            table.put(new ParameterString("orientation_origin", "change"));
             } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
