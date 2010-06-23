@@ -1,7 +1,5 @@
 package gov.nih.mipav;
 
-
-import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManager;
 import WildMagic.LibFoundation.Mathematics.BitHacks;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
@@ -19,8 +17,8 @@ public class MipavMath {
 
     public static final double angle(final float[] x, final float[] y, final float[] res)
     {
-        double theta = (180.0 / Math.PI) * Math.atan2((double) ((y[1] - y[0]) * res[1]), (double) ((x[1] - x[0]) * res[0]));
-        double theta2 = (180.0 / Math.PI) * Math.atan2((double) ((y[2] - y[0]) * res[1]), (double) ((x[2] - x[0]) * res[0]));
+        double theta = (180.0 / Math.PI) * Math.atan2(((y[1] - y[0]) * res[1]), ((x[1] - x[0]) * res[0]));
+        double theta2 = (180.0 / Math.PI) * Math.atan2(((y[2] - y[0]) * res[1]), ((x[2] - x[0]) * res[0]));
         theta2 = theta2 - theta;
 
         if (theta2 < -180.0) {
@@ -56,10 +54,13 @@ public class MipavMath {
      * @return  returns the distance
      */
     public static final double distance(final Vector3f pt1, final Vector3f pt2, final float[] res) {
+        float xRes = res.length > 0 ? res[0] : 1;
+        float yRes = res.length > 1 ? res[1] : 1;
+        float zRes = res.length > 2 ? res[2] : 1;
         return Math.sqrt(
-                ((pt2.X - pt1.X) * (pt2.X - pt1.X) * (res[0] * res[0])) +
-                ((pt2.Y - pt1.Y) * (pt2.Y - pt1.Y) * (res[1] * res[1])) +
-                ((pt2.Z - pt1.Z) * (pt2.Z - pt1.Z) * (res[2] * res[2])) );
+                ((pt2.X - pt1.X) * (pt2.X - pt1.X) * (xRes * xRes)) +
+                ((pt2.Y - pt1.Y) * (pt2.Y - pt1.Y) * (yRes * yRes)) +
+                ((pt2.Z - pt1.Z) * (pt2.Z - pt1.Z) * (zRes * zRes)) );
     }
 
     /**
@@ -119,9 +120,12 @@ public class MipavMath {
      */
     public static final double distance(final float x0, final float y0, final float z0, final float x1, final float y1,
                                         final float z1, final float[] res) {
-
-        return Math.sqrt(((x1 - x0) * (x1 - x0) * (res[0] * res[0])) + ((y1 - y0) * (y1 - y0) * (res[1] * res[1])) +
-                         ((z1 - z0) * (z1 - z0) * (res[2] * res[2])));
+        float xRes = res.length > 0 ? res[0] : 1;
+        float yRes = res.length > 1 ? res[1] : 1;
+        float zRes = res.length > 2 ? res[2] : 1;
+        return Math.sqrt(((x1 - x0) * (x1 - x0) * (xRes * xRes)) + 
+                ((y1 - y0) * (y1 - y0) * (yRes * yRes)) +
+                ((z1 - z0) * (z1 - z0) * (zRes * zRes)));
     }
 
     /**
@@ -242,9 +246,8 @@ public class MipavMath {
 
         if (a < 0) {
             return ((int) (a - 0.5f));
-        } else {
-            return ((int) (a + 0.5f));
         }
+        return ((int) (a + 0.5f));
     }
 
     /**
@@ -258,9 +261,8 @@ public class MipavMath {
 
         if (a < 0) {
             return ((int) (a - 0.5d));
-        } else {
-            return ((int) (a + 0.5d));
         }
+        return ((int) (a + 0.5d));
     }
     
     /**

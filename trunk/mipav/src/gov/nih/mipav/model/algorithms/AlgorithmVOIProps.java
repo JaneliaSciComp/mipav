@@ -1066,7 +1066,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     printTotals( fileInfo, allStats, statProperty, 
                             unit2DStr, unit3DStr, "Total", mask, imgBuffer, ignoreMin, ignoreMax, largestDistance );
                 }          
-            } else {
+            } else if ( processType == PROCESS_PER_CONTOUR ) {
 
                 Vector<VOIBase> contours = calcSelectedVOI.getCurves();
                 ContourStats[] stats = new ContourStats[contours.size()];
@@ -1089,6 +1089,11 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     printTotals( fileInfo, stats, statProperty, 
                             unit2DStr, unit3DStr, "", mask, imgBuffer, ignoreMin, ignoreMax, largestDistance );
                 }
+            }
+            else
+            {
+                Vector<VOIBase> contours = calcSelectedVOI.getCurves();
+                calcStatsTotal( contours, statProperty, fileInfo, imgBuffer, unit2DStr, unit3DStr, ignoreMin, ignoreMax, largestDistance );
             }
 
             System.out.println("Time required to calculate "+calcSelectedVOI.getName()+": "+(System.currentTimeMillis() - time));
@@ -1164,8 +1169,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         private ContourStats calcStatsPerContour( FileInfoBase fileInfo, float[] imgBuffer, VOIBase contour, 
                 String unit2DStr, String unit3DStr, float ignoreMin, float ignoreMax )
         {
+            long time = System.currentTimeMillis();
             contour.update();
-            
+
             ContourStats stats = new ContourStats();
             float[] tmpPAxis = new float[1];
             float[] tmpEcc = new float[1];
@@ -1180,7 +1186,15 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             stats.MajorAxis = tmpMajorAxis[0];
             stats.MinorAxis = tmpMinorAxis[0];
 
+            System.err.println( "secondOrderAttributes: " + (System.currentTimeMillis() - time) );
+            time = System.currentTimeMillis();
+
+
             Vector3f gCenter = contour.getGeometricCenter();
+
+            System.err.println( "getGeometricCenter: " + (System.currentTimeMillis() - time) );
+            time = System.currentTimeMillis();
+
             gCenter.X *= srcImage.getFileInfo(0).getResolutions()[0];
             gCenter.Y *= srcImage.getFileInfo(0).getResolutions()[1];
             String unitStr = unit2DStr + "\tZ";
@@ -1197,10 +1211,18 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
             double perimeter = contour.getLengthPtToPt(srcImage.getFileInfo(0).getResolutions());
 
+            System.err.println( "getLengthPtToPt: " + (System.currentTimeMillis() - time) );
+            time = System.currentTimeMillis();
+
+
             double largestContourDistance = 0;
             if(sliceDistanceFlag) {
                 largestContourDistance = ((VOIContour) (contour)).calcLargestSliceDistance(
                         srcImage.getFileInfo(0).getResolutions()[0], srcImage.getFileInfo(0).getResolutions()[1]);
+
+
+                System.err.println( "calcLargestSliceDistance: " + (System.currentTimeMillis() - time) );
+                time = System.currentTimeMillis();
             }
 
             contour.getGroup().setAllActive(false);
@@ -1363,7 +1385,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 avgIntenR = sumR / nVox;
                 avgIntenG = sumG / nVox;
                 avgIntenB = sumB / nVox;
-                
+
                 stats.minIntenRed = minIntenRed;
                 stats.maxIntenRed = maxIntenRed;
                 stats.maxIntenRed = maxIntenRed;
@@ -1397,6 +1419,10 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 double maxIntensity = -Double.MAX_VALUE, totalMaxIntensity = -Double.MAX_VALUE;
 
                 Vector<Float> values = contour.calcIntensity( srcImage, ignoreMin, ignoreMax, rangeFlag );
+
+                System.err.println( "calcIntensity: " + (System.currentTimeMillis() - time) );
+                time = System.currentTimeMillis();
+
                 nVox = values.size();
                 float[] buff = new float[nVox];
                 for ( int i = 0; i < values.size(); i++ )
@@ -1461,6 +1487,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 stats.median = median;
                 stats.mode = mode;
                 stats.maxCount = maxCount;
+
+                System.err.println( "median, etc.: " + (System.currentTimeMillis() - time) );
+                time = System.currentTimeMillis();
             }
 
             double area = nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
@@ -1653,6 +1682,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         }
                     }
                 }
+                System.err.println( "std, etc.: " + (System.currentTimeMillis() - time) );
+                time = System.currentTimeMillis();
 
                 double stdDev = (float) Math.sqrt(sum2 / (cnt-1));
                 stats.stdDev = stdDev;
@@ -2140,7 +2171,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             centerPt.Y = (float)yCOMB;
             centerPt.Z = (float)zCOMB;
             comStr = addScannerLabels(comStr, centerPt);
-            
+
             statProperty.setProperty(VOIStatisticList.deviationDescription + "Red" + end, nf.format(stdDevR));
             statProperty.setProperty(VOIStatisticList.deviationDescription + "Green" + end, nf.format(stdDevG));
             statProperty.setProperty(VOIStatisticList.deviationDescription + "Blue" + end, nf.format(stdDevB));
@@ -2350,6 +2381,566 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             }
         }
 
+        private void calcStatsTotal( Vector<VOIBase> contours, VOIStatisticalProperties statProperty,
+                FileInfoBase fileInfo, float[] imgBuffer, 
+                String unit2DStr, String unit3DStr, float ignoreMin, float ignoreMax, double largestDistance )
+        {
+            VOIContour thisContour = ((VOIContour) (contours.elementAt(0)));
+            thisContour.update();
+
+            float[] tmpPAxis = new float[1];
+            float[] tmpEcc = new float[1];
+            float[] tmpMajorAxis = new float[1];
+            float[] tmpMinorAxis = new float[1];
+            thisContour.secondOrderAttributes(srcImage, tmpPAxis, tmpEcc,
+                    tmpMajorAxis, tmpMinorAxis);
+            statProperty.setProperty(VOIStatisticList.axisDescription, nf.format(tmpPAxis[0]));
+            statProperty.setProperty(VOIStatisticList.eccentricityDescription, nf.format(tmpEcc[0]));
+            statProperty.setProperty(VOIStatisticList.majorAxisDescription, nf.format(tmpMajorAxis[0]));
+            statProperty.setProperty(VOIStatisticList.minorAxisDescription, nf.format(tmpMinorAxis[0]));
+
+            Vector3f selectedCOM = calcSelectedVOI.getGeometricCenter();
+            selectedCOM.X *= srcImage.getFileInfo(0).getResolutions()[0];
+            selectedCOM.Y *= srcImage.getFileInfo(0).getResolutions()[1];
+            String unitStr = unit2DStr + "\tZ";
+
+            if (srcImage.getNDims() > 2) {
+                selectedCOM.Z *= srcImage.getFileInfo(0).getResolutions()[2];
+                unitStr = unit3DStr;
+            }
+
+
+            String comStr = unitStr + "\n\t\t" + nf.format(selectedCOM.X) + "\t" + nf.format(selectedCOM.Y) + "\t" +
+            nf.format(selectedCOM.Z);
+            comStr = addScannerLabels(comStr, selectedCOM);
+
+            statProperty.setProperty(VOIStatisticList.geometricCenterDescription, comStr);
+
+            mask = new BitSet(imgBuffer.length);
+            if (srcImage.getParentFrame() != null) {
+                calcSelectedVOI.createBinaryMask3D(mask, srcImage.getExtents()[0], srcImage.getExtents()[1],
+                        srcImage.getParentFrame().useXOR(), false);
+            }
+            else {
+                calcSelectedVOI.createBinaryMask3D(mask, srcImage.getExtents()[0], srcImage.getExtents()[1],
+                        false, false);    
+            }
+
+
+            int nVox = 0;
+            double sumR = 0;
+            double sumG = 0;
+            double sumB = 0;
+            double avgIntenR = 0;
+            double avgIntenG = 0;
+            double avgIntenB = 0;
+            double sum = 0;
+            double avgInten = 0;
+            if (srcImage.isColorImage()) {
+                double minIntenRed = Double.MAX_VALUE;
+                double maxIntenRed = -Double.MAX_VALUE;
+                double minIntenGreen = Double.MAX_VALUE;
+                double maxIntenGreen = -Double.MAX_VALUE;
+                double minIntenBlue = Double.MAX_VALUE;
+                double maxIntenBlue = -Double.MAX_VALUE;
+
+                for (int i = 0; i < imgBuffer.length; i += 4) {
+
+                    if (mask.get(i / 4) && !inRange(ignoreMin, ignoreMax, imgBuffer[i + 1]) &&
+                            !inRange(ignoreMin, ignoreMax, imgBuffer[i + 2]) &&
+                            !inRange(ignoreMin, ignoreMax, imgBuffer[i + 3])) {
+                        sumR += imgBuffer[i + 1];
+                        sumG += imgBuffer[i + 2];
+                        sumB += imgBuffer[i + 3];
+                        nVox++;
+
+                        if (imgBuffer[i + 1] < minIntenRed) {
+                            minIntenRed = imgBuffer[i + 1];
+                        }
+
+                        if (imgBuffer[i + 1] > maxIntenRed) {
+                            maxIntenRed = imgBuffer[i + 1];
+                        }
+
+                        if (imgBuffer[i + 2] < minIntenGreen) {
+                            minIntenGreen = imgBuffer[i + 2];
+                        }
+
+                        if (imgBuffer[i + 2] > maxIntenGreen) {
+                            maxIntenGreen = imgBuffer[i + 2];
+                        }
+
+                        if (imgBuffer[i + 3] < minIntenBlue) {
+                            minIntenBlue = imgBuffer[i + 3];
+                        }
+
+                        if (imgBuffer[i + 3] > maxIntenBlue) {
+                            maxIntenBlue = imgBuffer[i + 3];
+                        }
+                    }
+                }
+
+
+
+                //second pass...
+                float[] buffR = new float[nVox];
+                float[] buffG = new float[nVox];
+                float[] buffB = new float[nVox];
+                int k = 0;
+                for (int i = 0; i < imgBuffer.length; i += 4) {
+                    if (mask.get(i / 4) && !inRange(ignoreMin, ignoreMax, imgBuffer[i + 1]) &&
+                            !inRange(ignoreMin, ignoreMax, imgBuffer[i + 2]) &&
+                            !inRange(ignoreMin, ignoreMax, imgBuffer[i + 3])) {
+                        buffR[k] = imgBuffer[i + 1];
+                        buffG[k] = imgBuffer[i + 2];
+                        buffB[k] = imgBuffer[i + 3];
+                        k++; 
+                    }
+                }
+
+                //red
+                Arrays.sort(buffR);
+                float[] sortedR = buffR;
+                int cntR = sortedR.length;
+                double medianR;
+                float tempR = 0;
+                int countR = 0;
+                float modeR = 0;
+                float maxCountR = 0;
+                for(int i=0;i<sortedR.length;i++) {
+                    if(i==0) {
+                        tempR = sortedR[i];
+                        countR = 1;
+                        modeR = tempR;
+                        maxCountR = 1;
+                    }else {
+                        if(sortedR[i] == tempR) {
+                            countR++;
+                            if(countR > maxCountR) {
+                                maxCountR = countR;
+                                modeR = tempR;
+                            }
+
+                        }else {
+                            tempR = sortedR[i];
+                            countR = 1;
+                        }
+                    } 
+                }
+                if (cntR%2 == 1) {
+                    medianR = sortedR[cntR/2] ;   
+                }
+                else {
+                    medianR = (sortedR[cntR/2] + sortedR[(cntR/2) - 1])/2.0;
+                }
+
+                //green
+                Arrays.sort(buffG);
+                float[] sortedG = buffG;
+                int cntG = sortedG.length;
+                double medianG;
+                float tempG = 0;
+                int countG = 0;
+                float modeG = 0;
+                float maxCountG = 0;
+                for(int i=0;i<sortedG.length;i++) {
+                    if(i==0) {
+                        tempG = sortedG[i];
+                        countG = 1;
+                        modeG = tempG;
+                        maxCountG = 1;
+                    }else {
+                        if(sortedG[i] == tempG) {
+                            countG++;
+                            if(countG > maxCountG) {
+                                maxCountG = countG;
+                                modeG = tempG;
+                            }
+
+                        }else {
+                            tempG = sortedG[i];
+                            countG = 1;
+                        }
+                    } 
+                }
+                if (cntG%2 == 1) {
+                    medianG = sortedG[cntG/2] ;   
+                }
+                else {
+                    medianG = (sortedG[cntG/2] + sortedG[(cntG/2) - 1])/2.0;
+                }
+
+
+                //blue
+                Arrays.sort(buffB);
+                float[] sortedB = buffB;
+                int cntB = sortedB.length;
+                double medianB;
+                float tempB = 0;
+                int countB = 0;
+                float modeB = 0;
+                float maxCountB = 0;
+                for(int i=0;i<sortedB.length;i++) {
+                    if(i==0) {
+                        tempB = sortedB[i];
+                        countB = 1;
+                        modeB = tempB;
+                        maxCountB = 1;
+                    }else {
+                        if(sortedB[i] == tempB) {
+                            countB++;
+                            if(countB > maxCountB) {
+                                maxCountB = countB;
+                                modeB = tempB;
+                            }
+
+                        }else {
+                            tempB = sortedB[i];
+                            countB = 1;
+                        }
+                    } 
+                }
+                if (cntB%2 == 1) {
+                    medianB = sortedB[cntB/2] ;   
+                }
+                else {
+                    medianB = (sortedB[cntB/2] + sortedB[(cntB/2) - 1])/2.0;
+                }
+
+                avgIntenR = sumR / nVox;
+                avgIntenG = sumG / nVox;
+                avgIntenB = sumB / nVox;
+
+                statProperty.setProperty(VOIStatisticList.minIntensity + "Red", nf.format(minIntenRed));
+                statProperty.setProperty(VOIStatisticList.maxIntensity + "Red", nf.format(maxIntenRed));
+                statProperty.setProperty(VOIStatisticList.minIntensity + "Green", nf.format(minIntenGreen));
+                statProperty.setProperty(VOIStatisticList.maxIntensity + "Green", nf.format(maxIntenGreen));
+                statProperty.setProperty(VOIStatisticList.minIntensity + "Blue", nf.format(minIntenBlue));
+                statProperty.setProperty(VOIStatisticList.maxIntensity + "Blue", nf.format(maxIntenBlue));
+                statProperty.setProperty(VOIStatisticList.avgIntensity + "Red", nf.format(avgIntenR));
+                statProperty.setProperty(VOIStatisticList.avgIntensity + "Green", nf.format(avgIntenG));
+                statProperty.setProperty(VOIStatisticList.avgIntensity + "Blue", nf.format(avgIntenB));  
+                statProperty.setProperty(VOIStatisticList.quantityDescription, nf.format(nVox));
+                statProperty.setProperty(VOIStatisticList.sumIntensities + "Red", nf.format(sumR));
+                statProperty.setProperty(VOIStatisticList.sumIntensities + "Green", nf.format(sumG));
+                statProperty.setProperty(VOIStatisticList.sumIntensities + "Blue", nf.format(sumB));
+                statProperty.setProperty(VOIStatisticList.median + "Red", nf.format(medianR));
+                statProperty.setProperty(VOIStatisticList.median + "Green", nf.format(medianG));
+                statProperty.setProperty(VOIStatisticList.median + "Blue", nf.format(medianB));
+
+                statProperty.setProperty(VOIStatisticList.mode + "Red", nf.format(modeR));
+                statProperty.setProperty(VOIStatisticList.mode + "Green", nf.format(modeG));
+                statProperty.setProperty(VOIStatisticList.mode + "Blue", nf.format(modeB));
+
+                statProperty.setProperty(VOIStatisticList.modeCount + "Red", nf.format(maxCountR));
+                statProperty.setProperty(VOIStatisticList.modeCount + "Green", nf.format(maxCountG));
+                statProperty.setProperty(VOIStatisticList.modeCount + "Blue", nf.format(maxCountB));
+            } else {
+
+                double minIntensity = Double.MAX_VALUE, totalMinIntensity = Double.MAX_VALUE;
+                double maxIntensity = -Double.MAX_VALUE, totalMaxIntensity = -Double.MAX_VALUE;
+                
+                for (int i = 0; i < imgBuffer.length; i++) {
+
+                    if (mask.get(i) && !inRange(ignoreMin, ignoreMax, imgBuffer[i])) {
+                        sum += imgBuffer[i];
+                        nVox++;
+
+                        if (imgBuffer[i] < minIntensity) {
+                            minIntensity = imgBuffer[i];
+                        }
+
+                        if (imgBuffer[i] > maxIntensity) {
+                            maxIntensity = imgBuffer[i];
+                        }
+                    }
+                }
+
+
+
+
+                //second pass...
+                float[] buff = new float[nVox];
+                int k = 0;
+                for (int i = 0; i < imgBuffer.length; i++) {
+                    if (mask.get(i) && !inRange(ignoreMin, ignoreMax, imgBuffer[i])) {
+                        buff[k] = imgBuffer[i];
+                        k++; 
+                    }
+                }
+                Arrays.sort(buff);
+                float[] sorted = buff;
+                int cnt = sorted.length;
+                double median;
+                float temp = 0;
+                int count = 0;
+                float mode = 0;
+                float maxCount = 0;
+                for(int i=0;i<sorted.length;i++) {
+                    if(i==0) {
+                        temp = sorted[i];
+                        count = 1;
+                        mode = temp;
+                        maxCount = 1;
+                    }else {
+                        if(sorted[i] == temp) {
+                            count++;
+                            if(count > maxCount) {
+                                maxCount = count;
+                                mode = temp;
+                            }
+
+                        }else {
+                            temp = sorted[i];
+                            count = 1;
+                        }
+                    } 
+                }
+                if (cnt%2 == 1) {
+                    median = sorted[cnt/2] ;   
+                }
+                else {
+                    median = (sorted[cnt/2] + sorted[(cnt/2) - 1])/2.0;
+                }
+
+                avgInten = sum / nVox;
+
+                statProperty.setProperty(VOIStatisticList.minIntensity, nf.format(minIntensity));
+                statProperty.setProperty(VOIStatisticList.maxIntensity, nf.format(maxIntensity));
+                statProperty.setProperty(VOIStatisticList.avgIntensity, nf.format(avgInten));
+                statProperty.setProperty(VOIStatisticList.quantityDescription, nf.format(nVox));
+                statProperty.setProperty(VOIStatisticList.sumIntensities, nf.format(sum));
+                statProperty.setProperty(VOIStatisticList.median, nf.format(median));
+                statProperty.setProperty(VOIStatisticList.mode, nf.format(mode));
+                statProperty.setProperty(VOIStatisticList.modeCount, nf.format(maxCount));
+            }
+
+            // calc the perimeter
+            float totalPerimeter = 0f;
+            double largestAllSlicesDistance = 0;
+
+            for (int r = 0; r < contours.size(); r++) {
+                    totalPerimeter += contours.elementAt(r).getLengthPtToPt(srcImage.getFileInfo(0).getResolutions());
+                    if(sliceDistanceFlag) {
+                        largestAllSlicesDistance = Math.max(largestAllSlicesDistance, 
+                                ((VOIContour)(contours.elementAt(r))).calcLargestSliceDistance(
+                                        srcImage.getFileInfo(0).getResolutions()[0], srcImage.getFileInfo(0).getResolutions()[1]));
+                    }
+                }
+
+            statProperty.setProperty(VOIStatisticList.perimeterDescription, nf.format(totalPerimeter));
+            statProperty.setProperty(VOIStatisticList.perimeterDescription + "0;", nf.format(totalPerimeter));
+            statProperty.setProperty(VOIStatisticList.largestSliceDistanceDescription, nf.format(largestAllSlicesDistance));
+            statProperty.setProperty(VOIStatisticList.largestSliceDistanceDescription + "0;", nf.format(largestAllSlicesDistance));
+            statProperty.setProperty(VOIStatisticList.largestDistanceDescription, nf.format(largestDistance));
+            statProperty.setProperty(VOIStatisticList.largestDistanceDescription + "0;", nf.format(largestDistance));
+
+
+            float area = nVox *
+            (fileInfo.getResolutions()[0] *
+                    fileInfo.getResolutions()[1]);         
+            
+            float zRes = fileInfo.getResolutions().length > 2 ? fileInfo.getResolutions()[2] : 1;
+
+            float volume = area * zRes;
+            statProperty.setProperty(VOIStatisticList.areaDescription, nf.format(area));
+            statProperty.setProperty(VOIStatisticList.volumeDescription, nf.format(volume));
+
+            double sum2 = 0, sumR2 = 0, sumG2 = 0, sumB2 = 0;
+            double sum3 = 0, sumR3 = 0, sumG3 = 0, sumB3 = 0;
+            double sum4 = 0, sumR4 = 0, sumG4 = 0, sumB4 = 0;
+            sum2 = sumR2 = sumG2 = sumB2 = sum3 = sumR3 = sumG3 = sumB3 = sum4 = sumR4 = sumG4 = sumB4 = 0;
+            // Calculate centers of mass
+            double xMass, yMass, zMass, xMassR, yMassR, zMassR, xMassG, yMassG, zMassG, xMassB, yMassB, zMassB;
+            xMass = yMass = zMass = 0;
+            xMassR = yMassR = zMassR = xMassG = yMassG = zMassG = xMassB = yMassB = zMassB = 0;
+
+            int cnt = 0;
+
+            if (srcImage.isColorImage()) {
+                int x, y, z;
+                double diffR, diffG, diffB;
+                double R2, R3, R4;
+                double G2, G3, G4;
+                double B2, B3, B4;
+
+                for (int i = 0; i < imgBuffer.length; i += 4) {
+
+                    if (mask.get(i / 4) && !inRange(ignoreMin, ignoreMax, imgBuffer[i + 1]) &&
+                            !inRange(ignoreMin, ignoreMax, imgBuffer[i + 2]) &&
+                            !inRange(ignoreMin, ignoreMax, imgBuffer[i + 3])) {
+                        x = (i/4) % srcImage.getExtents()[0];
+                        y = ((i/4) % srcImage.getSliceSize())/ srcImage.getExtents()[0];
+                        z = (i/4)/srcImage.getSliceSize();
+                        xMassR += x * imgBuffer[i + 1];
+                        yMassR += y * imgBuffer[i + 1];
+                        zMassR += z * imgBuffer[i + 1];
+                        diffR = imgBuffer[i + 1] - avgIntenR;
+                        R2 = diffR * diffR;
+                        sumR2 += R2;
+                        R3 = R2 * diffR;
+                        sumR3 += R3;
+                        R4 = R3 * diffR;
+                        sumR4 += R4;
+                        xMassG += x * imgBuffer[i + 2];
+                        yMassG += y * imgBuffer[i + 2];
+                        zMassG += z * imgBuffer[i + 2];
+                        diffG = imgBuffer[i + 2] - avgIntenG;
+                        G2 = diffG * diffG;
+                        sumG2 += G2;
+                        G3 = G2 * diffG;
+                        sumG3 += G3;
+                        G4 = G3 * diffG;
+                        sumG4 += G4;
+                        xMassB += x * imgBuffer[i + 3];
+                        yMassB += y * imgBuffer[i + 3];
+                        zMassB += z * imgBuffer[i + 3];
+                        diffB = imgBuffer[i + 3] - avgIntenB;
+                        B2 = diffB * diffB;
+                        sumB2 += B2;
+                        B3 = B2 * diffB;
+                        sumB3 += B3;
+                        B4 = B3 * diffB;
+                        sumB4 += B4;
+                        cnt++;
+                    }
+                }
+
+                float stdDevR = (float) Math.sqrt(sumR2 / (cnt-1));
+                float stdDevG = (float) Math.sqrt(sumG2 / (cnt-1));
+                float stdDevB = (float) Math.sqrt(sumB2 / (cnt-1));
+                statProperty.setProperty(VOIStatisticList.deviationDescription + "Red", nf.format(stdDevR));
+                statProperty.setProperty(VOIStatisticList.deviationDescription + "Green", nf.format(stdDevG));
+                statProperty.setProperty(VOIStatisticList.deviationDescription + "Blue", nf.format(stdDevB));
+                // moments around the mean
+                double moment2R = sumR2/cnt;
+                double moment2G = sumG2/cnt;
+                double moment2B = sumB2/cnt;
+                double moment3R = sumR3/cnt;
+                double moment3G = sumG3/cnt;
+                double moment3B = sumB3/cnt;
+                double moment4R = sumR4/cnt;
+                double moment4G = sumG4/cnt;
+                double moment4B = sumB4/cnt;
+                float skewnessR = (float)(moment3R/Math.pow(moment2R, 1.5));
+                float skewnessG = (float)(moment3G/Math.pow(moment2G, 1.5));
+                float skewnessB = (float)(moment3B/Math.pow(moment2B, 1.5));
+                statProperty.setProperty(VOIStatisticList.skewnessDescription + "Red", nf.format(skewnessR));
+                statProperty.setProperty(VOIStatisticList.skewnessDescription + "Green", nf.format(skewnessG));
+                statProperty.setProperty(VOIStatisticList.skewnessDescription + "Blue", nf.format(skewnessB));
+                double kurtosisR = moment4R/(moment2R * moment2R);
+                double kurtosisG = moment4G/(moment2G * moment2G);
+                double kurtosisB = moment4B/(moment2B * moment2B);
+                statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Red", nf.format(kurtosisR));
+                statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Green", nf.format(kurtosisG));
+                statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Blue", nf.format(kurtosisB));
+                // Centers of mass
+                double xCOMR = xMassR * srcImage.getFileInfo(0).getResolutions()[0]/sumR;
+                double yCOMR = yMassR * srcImage.getFileInfo(0).getResolutions()[1]/sumR;
+                double zCOMR = zMassR/sumR;
+                unitStr = unit2DStr + "\tZ";
+                if (srcImage.getNDims() > 2) {
+                    zCOMR *= srcImage.getFileInfo(0).getResolutions()[2];
+                    unitStr = unit3DStr;
+                }
+
+                comStr = unitStr + "\n  Red\t\t" + nf.format(xCOMR) + "\t" + nf.format(yCOMR) + "\t" +
+                nf.format(zCOMR);
+                Vector3f centerPt = new Vector3f();
+                centerPt.X = (float)xCOMR;
+                centerPt.Y = (float)yCOMR;
+                centerPt.Z = (float)zCOMR;
+                comStr = addScannerLabels(comStr, centerPt);
+                statProperty.setProperty(VOIStatisticList.massCenterDescription + "Red", comStr);
+
+                double xCOMG = xMassG * srcImage.getFileInfo(0).getResolutions()[0]/sumG;
+                double yCOMG = yMassG * srcImage.getFileInfo(0).getResolutions()[1]/sumG;
+                double zCOMG= zMassG/sumG;
+                if (srcImage.getNDims() > 2) {
+                    zCOMG *= srcImage.getFileInfo(0).getResolutions()[2];
+                }
+
+                comStr = "\n  Green\t\t" + nf.format(xCOMG) + "\t" + nf.format(yCOMG) + "\t" +
+                nf.format(zCOMG);
+                centerPt = new Vector3f();
+                centerPt.X = (float)xCOMG;
+                centerPt.Y = (float)yCOMG;
+                centerPt.Z = (float)zCOMG;
+                comStr = addScannerLabels(comStr, centerPt);
+                statProperty.setProperty(VOIStatisticList.massCenterDescription + "Green", comStr);
+
+                double xCOMB = xMassB * srcImage.getFileInfo(0).getResolutions()[0]/sumB;
+                double yCOMB = yMassB * srcImage.getFileInfo(0).getResolutions()[1]/sumB;
+                double zCOMB = zMassB/sumB;
+                if (srcImage.getNDims() > 2) {
+                    zCOMB *= srcImage.getFileInfo(0).getResolutions()[2];
+                }
+
+                comStr = "\n  Blue\t\t" + nf.format(xCOMB) + "\t" + nf.format(yCOMB) + "\t" +
+                nf.format(zCOMB);
+                centerPt = new Vector3f();
+                centerPt.X = (float)xCOMB;
+                centerPt.Y = (float)yCOMB;
+                centerPt.Z = (float)zCOMB;
+                comStr = addScannerLabels(comStr, centerPt);
+                statProperty.setProperty(VOIStatisticList.massCenterDescription + "Blue", comStr);
+
+            } else {
+
+                double diff;
+                double s2, s3, s4;
+                int x, y, z;
+                for (int i = 0; i < imgBuffer.length; i++) {
+
+                    if (mask.get(i) && !inRange(ignoreMin, ignoreMax, imgBuffer[i])) {
+                        x = i % srcImage.getExtents()[0];
+                        y = (i % srcImage.getSliceSize())/ srcImage.getExtents()[0];
+                        z = i / srcImage.getSliceSize();
+                        xMass += x * imgBuffer[i];
+                        yMass += y * imgBuffer[i];
+                        zMass += z * imgBuffer[i];
+                        diff = imgBuffer[i] - avgInten;
+                        s2 = diff * diff;
+                        sum2 += s2;
+                        s3 = s2 * diff;
+                        sum3 += s3;
+                        s4 = s3 * diff;
+                        sum4 += s4;
+                        cnt++;
+                    }
+                }
+
+                float stdDev = (float) Math.sqrt(sum2 / (cnt-1));
+                statProperty.setProperty(VOIStatisticList.deviationDescription, nf.format(stdDev));
+                double moment2 = sum2/cnt;
+                double moment3 = sum3/cnt;
+                double moment4 = sum4/cnt;
+                double skewness = (float)(moment3/Math.pow(moment2, 1.5));
+                statProperty.setProperty(VOIStatisticList.skewnessDescription, nf.format(skewness));
+                double kurtosis = moment4/(moment2 * moment2);
+                statProperty.setProperty(VOIStatisticList.kurtosisDescription, nf.format(kurtosis));
+                // Center of mass
+                double xCOM = xMass * srcImage.getFileInfo(0).getResolutions()[0]/sum;
+                double yCOM = yMass * srcImage.getFileInfo(0).getResolutions()[1]/sum;
+                double zCOM = zMass/sum;
+                unitStr = unit2DStr + "\tZ";
+                if (srcImage.getNDims() > 2) {
+                    zCOM *= srcImage.getFileInfo(0).getResolutions()[2];
+                    unitStr = unit3DStr;
+                }
+
+                comStr = unitStr + "\n\t\t" + nf.format(xCOM) + "\t" + nf.format(yCOM) + "\t" +
+                nf.format(zCOM);
+                Vector3f centerPt = new Vector3f();
+                centerPt.X = (float)xCOM;
+                centerPt.Y = (float)yCOM;
+                centerPt.Z = (float)zCOM;
+                comStr = addScannerLabels(comStr, centerPt);
+                statProperty.setProperty(VOIStatisticList.massCenterDescription, comStr);
+            }
+
+        }
+
     }
 
 
@@ -2420,9 +3011,14 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 (srcImage.getFileInfo(0).getOrigin()[2] != 0)) {
 
             scaledPt = new Vector3f();
-            scaledPt.X = (currentPt.X/srcImage.getFileInfo(0).getResolutions()[0]);
-            scaledPt.Y = (currentPt.Y/srcImage.getFileInfo(0).getResolutions()[1]);
-            scaledPt.Z = (currentPt.Z/srcImage.getFileInfo(0).getResolutions()[2]);
+
+            float xRes = srcImage.getFileInfo(0).getResolutions().length > 0 ? srcImage.getFileInfo(0).getResolutions()[0] : 1;
+            float yRes = srcImage.getFileInfo(0).getResolutions().length > 1 ? srcImage.getFileInfo(0).getResolutions()[1] : 1;
+            float zRes = srcImage.getFileInfo(0).getResolutions().length > 2 ? srcImage.getFileInfo(0).getResolutions()[2] : 1;
+            
+            scaledPt.X = (currentPt.X/xRes);
+            scaledPt.Y = (currentPt.Y/yRes);
+            scaledPt.Z = (currentPt.Z/zRes);
 
 
             if (srcImage.getNDims() > 2) {

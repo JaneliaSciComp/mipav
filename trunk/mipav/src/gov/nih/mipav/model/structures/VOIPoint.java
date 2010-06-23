@@ -114,7 +114,7 @@ public class VOIPoint extends VOIBase {
     }
     
     /**
-     * Returns the distancestring.
+     * Returns the distance string.
      * @return
      */
     public String distanceString()
