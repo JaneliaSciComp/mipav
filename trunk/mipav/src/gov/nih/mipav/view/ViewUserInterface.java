@@ -1004,16 +1004,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 }
                 try {
 
-                	Preferences.debug("-----");
-                	Preferences.debug(name);
-                	Preferences.debug(pluginName);
                     plugin = Class.forName(name);
                     
                     // plugin.newInstance();
                     // rather than instantiating to allow loading into SCRIPT_ACTION_LOCATIONS, see below
                     try {
                         scriptField = plugin.getField(scriptName);
-                        Preferences.debug("scriptField: " + scriptField);
                         
                     } catch (final NoSuchFieldException e1) {
                         // The scriptname field is optional.
@@ -1021,7 +1017,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
                     if (scriptField != null) {
                         final String scriptLoc = (String) scriptField.get(plugin);
-                        Preferences.debug(scriptLoc);
                         if (scriptLoc != null) {
                             // the value of SCRIPT_NAME is now the short name for this plugin
                             ScriptableActionLoader.addScriptActionLocation(scriptLoc);
