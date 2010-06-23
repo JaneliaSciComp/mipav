@@ -146,11 +146,6 @@ public class ViewMenuBar {
                 menuBuilder.buildMenuItem("Filters (Gabor)", "gFilter", 0, null, false),
                 menuBuilder.buildMenuItem("Filters (homomorphic)", "hFilter", 0, null, false),
                 menuBuilder.makeMenu("Filters (spatial)", false, new JMenuItem[] {
-                        menuBuilder.buildMenuItem("Adaptive noise reduction", "ANR", 0, null, false),
-                        menuBuilder.buildMenuItem("Adaptive path smooth", "adaptivePathSmooth", 0, null, false),
-
-                        // menuBuilder.buildMenuItem("Adaptive smooth",
-                        // "adaptiveSmooth", 0, null, false),
                         menuBuilder.buildMenuItem("Anisotropic diffusion", null, 0, null, false),
                         menuBuilder.buildMenuItem("Bilateral filter", null, 0, null, false),
                         menuBuilder.buildMenuItem("Boundary attenuation", "BoundaryAttenuation", 0, null, false),
