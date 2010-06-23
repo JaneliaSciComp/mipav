@@ -24,7 +24,7 @@ import javax.swing.*;
  * @version  1.0 July 17, 2000
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogExtractBrain extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface {
+public class JDialogExtractBrain extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -1266,4 +1266,119 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
 
         return true;
     }
+
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms.Brain tools");
+            }
+
+            public String getDescription() {
+                return new String("Segmentation of the brain from a 3D MRI.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Segmentation of the brain from a 3D MRI.");
+            }
+
+            public String getShortLabel() {
+                return new String("BET");
+            }
+
+            public String getLabel() {
+                return new String("Extract Brain Surface (BET)");
+            }
+
+            public String getName() {
+                return new String("Extract Brain Surface (BET)");
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+   public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+
+        
+        try {        	
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterInt("orientation_type", 1));
+            table.put(new ParameterBoolean("do_use_sphere_estimation", false));
+            table.put(new ParameterBoolean("do_show_just_init_ellipse", false));
+            table.put(new ParameterInt(AlgorithmParameters.NUM_ITERATIONS, 500));
+            table.put(new ParameterInt("depth", 5));
+            table.put(new ParameterFloat("image_ratio", .1f));
+            table.put(new ParameterFloat("stiffness", .15f));
+            table.put(new ParameterBoolean("do_second_stage_erosion", false));
+            table.put(new ParameterFloat("factor_above_median_to_erode", 0f));
+            table.put(new ParameterBoolean("do_extract_paint", false));
+            table.put(new ParameterBoolean("do_init_with_center_of_mass", true));
+            table.put(new ParameterList("init_center_point", Parameter.PARAM_FLOAT,"130.88019,108.925064,20.55177" ));
+
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+   /**
+    * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+    * names later).
+    * 
+    * @return A parameter table listing the outputs of this algorithm.
+    */
+   public ParameterTable createOutputParameters() {
+       final ParameterTable table = new ParameterTable();
+
+       try {
+           table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+       } catch (final ParserException e) {
+           // this shouldn't really happen since there isn't any real parsing going on...
+           e.printStackTrace();
+       }
+
+       return table;
+   }
+
+   /**
+    * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+    * (which can be used to retrieve the image object from the image registry).
+    * 
+    * @param imageParamName The output image parameter label for which to get the image name.
+    * @return The image name of the requested output image parameter label.
+    */
+   public String getOutputImageName(final String imageParamName) {
+       if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+               return image.getImageName();
+           }
+       
+
+       Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+       return null;
+   }
+
+   /**
+    * Returns whether the action has successfully completed its execution.
+    * 
+    * @return True, if the action is complete. False, if the action failed or is still running.
+    */
+   public boolean isActionComplete() {
+       return isComplete();
+   }
+
+    
 }

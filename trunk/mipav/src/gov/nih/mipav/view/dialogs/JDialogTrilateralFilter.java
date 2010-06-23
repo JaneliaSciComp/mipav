@@ -7,7 +7,8 @@ import gov.nih.mipav.model.algorithms.filters.AlgorithmTrilateralFilter;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.ScriptableActionInterface;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.DialogDefaultsInterface;
@@ -35,13 +36,13 @@ import javax.swing.JTextField;
 
 
 /**
- * Dialog to get user input, then call the algorithm. The user sets the stsandard deviation of the domain filter.
+ * Dialog to get user input, then call the algorithm. The user sets the standard deviation of the domain filter.
  *
  * @version  0.1 February 23, 2009
  * @author   William Gandler
  * @see      AlgorithmTrilateralFilter
  */
-public class JDialogTrilateralFilter extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface {
+public class JDialogTrilateralFilter extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -533,4 +534,114 @@ public class JDialogTrilateralFilter extends JDialogScriptableBase implements Al
 
         return true;
     }
+
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms.Filters (spatial)");
+            }
+
+            public String getDescription() {
+                return new String("Applies a trilateral filter.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Applies a trilateral filter.");
+            }
+
+            public String getShortLabel() {
+                return new String("TrilateralFilter");
+            }
+
+            public String getLabel() {
+                return new String("Trilateral Filter");
+            }
+
+            public String getName() {
+                return new String("Trilateral Filter");
+            }
+        };
+    }
+
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+        
+
+
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
+            table.put(new ParameterFloat("sigma_c", 1));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            if (getResultImage() != null) {
+                // algo produced a new result image
+                return getResultImage().getImageName();
+            } else {
+                // algo was done in place
+                return image.getImageName();
+            }
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
+    }
+
 }

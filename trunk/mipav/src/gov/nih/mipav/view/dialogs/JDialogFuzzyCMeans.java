@@ -19,7 +19,7 @@ import javax.swing.*;
  *
  * @see  AlgorithmFuzzyCMeans
  */
-public class JDialogFuzzyCMeans extends JDialogScriptableBase implements AlgorithmInterface {
+public class JDialogFuzzyCMeans extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -292,6 +292,8 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
         if (algorithm.isCompleted()) {
             insertScriptLine();
         }
+     // save the completion status for later
+        setComplete(algorithm.isCompleted());
 
         fcmAlgo.finalize();
         fcmAlgo = null;
@@ -423,7 +425,9 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
         }
 
         try {
-            resultImage = new ModelImage[resultNumber];
+        	if (resultImage == null){
+        		resultImage = new ModelImage[resultNumber];
+        	}
             presentNumber = 0;
 
             if ((segmentation == FUZZY_ONLY) || (segmentation == BOTH_FUZZY_HARD)) {
@@ -533,6 +537,8 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
         setMaxIter(scriptParameters.getParams().getInt("max_iterations"));
         setSegmentationType(scriptParameters.getParams().getInt("segmentation_type"));
         setCentroids(scriptParameters.getParams().getList("centroids").getAsFloatArray());
+        
+        resultImage = new ModelImage[resultNumber];
     }
 
     /**
@@ -1060,5 +1066,130 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
 
         return true;
     }
+
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms.Segmentation");
+            }
+
+            public String getDescription() {
+                return new String("Applies a fuzzy C-means filter.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Applies a fuzzy C-means filter.");
+            }
+
+            public String getShortLabel() {
+                return new String("FuzzyCMeans");
+            }
+
+            public String getLabel() {
+                return new String("Fuzzy C-means");
+            }
+
+            public String getName() {
+                return new String("Fuzzy C-means");
+            }
+        };
+    }
+
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, true));
+            table.put(new ParameterInt("number_of_result_images", 4));
+            table.put(new ParameterInt("number_of_classes",3));
+            table.put(new ParameterFloat("exponent_q", 2f));
+            table.put(new ParameterBoolean("do_crop_background", false));
+            table.put(new ParameterFloat("threshold",0f));
+            table.put(new ParameterFloat("end_tolerance", .01f));
+            table.put(new ParameterInt("max_iterations", 200));
+            table.put(new ParameterInt("segmentation_type", 0));
+            table.put(new ParameterList("centroids", Parameter.PARAM_FLOAT, "-318.5,387.0,1092.5"));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE+"1"));
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE+"2"));
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE+"3"));
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE+"4"));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE+"1")) {
+        	return resultImage[0].getImageName();
+        }
+        else if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE+"2")) {
+        	return resultImage[1].getImageName();
+        }
+        else if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE+"3")) {
+        	return resultImage[2].getImageName();
+        }
+        else if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE+"4")) {
+        	return resultImage[3].getImageName();
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
+    }
+
 
 }
