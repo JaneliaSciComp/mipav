@@ -24,7 +24,9 @@ import java.text.*;
  * Based on the document provided by Daniel Reich:
  * Notes on DCE with SM2 (standard model, aka Tofts model, 2-compartment)
  * 3 model parameters are fit for each voxel in 3D:
- * 1) K_trans in [1.0E-5, 0.99]
+ * 1) K_trans in [1.0E-5, 0.99] in /min
+ * On input ktrans is converted from /min to /sec and on output ktrans is converted
+ * from /sec to /min.
  * 2) ve in [1.0E-5, 0.99]
  * 3) f_vp in [0, 0.99]
  
@@ -37,10 +39,11 @@ import java.text.*;
  * ktrans is the volume transfer constant between vp and ve.
  * Ct is the tracer concentration in the tissue as a whole.
  * Our equation is:
- * R1(t) - R10 = vp * [R1,p(t) - R10,p] + ktrans*integral from 0 to t of
- * [R1,p(tau) - R10,p]*exp[-ktrans*(t - tau)/ve]d(tau)
+ * R1(t) - R10 = (vp * [R1,p(t) - R10,p] + ktrans*integral from 0 to t of
+ * [R1,p(tau) - R10,p]*exp[-ktrans*(t - tau)/ve]d(tau))/(1 - h)
  * where R10 is the tissue R1 map in the absence of contrast material, a 3D volume
  * R1(tj) is the tissue R1 map during contrast infusion, a 4D data set.
+ * h = hematocrit with a default value of 0.4.
  * With the sagittal sinus VOI:
  * Average over this VOI to extract the constant R10,p from the R10 map.
  * Average over this VOI to extract the time series R1,p(tj) from the
@@ -88,7 +91,9 @@ public class AlgorithmSM2 extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
     
-    /** A vector of center times for each volume */
+    private ModelImage destImage[] = null;
+	
+	/** A vector of center times for each volume */
     private double timeVals[] = null;
     
     private double r1t0[];
@@ -101,6 +106,8 @@ public class AlgorithmSM2 extends AlgorithmBase {
     
     private double min_constr[];
     private double max_constr[];
+    // hematocrit
+    private double h;
     private double ymodel[];
     private int i;
     private int xDim;
@@ -120,7 +127,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
     private double[] paramMin = new double[3];
     private double[] paramMax = new double[3];
     private int processors;
-    private float destArray[];
+    private float destArray[][];
     private long voxelsProcessed = 0;
     private int barMarker = 0;
     private int oldBarMarker = 0;
@@ -133,15 +140,17 @@ public class AlgorithmSM2 extends AlgorithmBase {
      * Creates a new AlgorithmDEMRI3 object.
      
      */
-    public AlgorithmSM2(ModelImage destImage, ModelImage srcImage, double min_constr[], double max_constr[],
-    		               double initial[], ModelImage tissueImage, double timeVals[]) {
+    public AlgorithmSM2(ModelImage destImage[], ModelImage srcImage, double min_constr[], double max_constr[],
+    		               double initial[], ModelImage tissueImage, double timeVals[], double h) {
 
-        super(destImage, srcImage);
+        super(null, srcImage);
+        this.destImage = destImage;
         this.min_constr = min_constr;
         this.max_constr = max_constr;
         this.initial = initial;
         this.tissueImage = tissueImage;
         this.timeVals = timeVals;
+        this.h = h;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -150,7 +159,11 @@ public class AlgorithmSM2 extends AlgorithmBase {
      * Prepares this class for destruction.
      */
     public void finalize() {
+    	int i;
         srcImage = null;
+        for (i = 0; i < 4; i++) {
+            destImage[i] = null;
+        }
         destImage = null;
         min_constr = null;
         max_constr = null;
@@ -173,6 +186,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
         int size4D;
         FitSM2ConstrainedModel dModel;
         double[] params;
+        float chi_squared;
         int j;
         // If true, run a self test of NLConstrainedEngineEP.java
         boolean nlConstrainedEngineEPTest = false;
@@ -329,7 +343,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
         	// If your initial guesses are 0.495, 0.495, 0.495, then the 90 out of 108 
         	// runs where ktrans does not equal zero are correct.  The model cannot 
         	// presently converge to ktrans equals zero in 18 out of the 108 cases.
-        	double ktransArray[] = new double[]{0.0, 0.01, 0.02, 0.05, 0.1, 0.2};
+        	double ktransArray[] = new double[]{0.0, 0.01/60.0, 0.02/60.0, 0.05/60.0, 0.1/60.0, 0.2/60.0};
             double veArray[] = new double[]{0.1, 0.2, 0.5};
             double vpArray[] = new double[]{0.001, 0.005, 0.01, 0.02, 0.05, 0.1};
             int ktransIndex;
@@ -405,7 +419,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
                         imod.driver();
                         steps = imod.getStepsUsed();
                         numInt = imod.getIntegral();
-                        y_array[t-1] = ktransActual * numInt + vpActual * r1ptj[t];
+                        y_array[t-1] = (ktransActual * numInt + vpActual * r1ptj[t])/(1.0 - h);
                         
                     	
                     		/*intSum = 0.0;
@@ -430,7 +444,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
                     Preferences.debug("Chi-squared: " + String.valueOf(dModel.getChiSquared()) + "\n");
                     status = dModel.getExitStatus();
                     statusMessage(status);
-                    if ((Math.abs(ktransActual - params[0]) <= 1.0E-5) && (Math.abs(veActual - params[1]) <= 1.0E-5) &&
+                    if ((Math.abs(ktransActual - params[0]) <= 1.0E-7) && (Math.abs(veActual - params[1]) <= 1.0E-5) &&
                             (Math.abs(vpActual - params[2]) <= 1.0E-5)) {
                         success++;
                     }
@@ -487,13 +501,19 @@ public class AlgorithmSM2 extends AlgorithmBase {
         processors = Runtime.getRuntime().availableProcessors();
         Preferences.debug("Available processors = " + processors + "\n");
         
+        // Convert dialog ktrans units from /min to /sec
+        // Multiply /min by 1 min/60 seconds
+        initial[0] = initial[0]/60.0;
+        min_constr[0] = min_constr[0]/60.0;
+        max_constr[0] = max_constr[0]/60.0;
+        
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
         zDim = srcImage.getExtents()[2];
         tDim = srcImage.getExtents()[3];
         volSize = xDim * yDim * zDim;
         size4D = volSize * tDim;
-        destArray = new float[3 * volSize];
+        destArray = new float[4][volSize];
        
         r1t0 = new double[volSize];
         r1tj = new double[size4D];
@@ -642,8 +662,12 @@ public class AlgorithmSM2 extends AlgorithmBase {
 	            dModel.driver();
 	            //dModel.dumpResults();
 	            params = dModel.getParameters();
+	            chi_squared = (float)dModel.getChiSquared();
+	            // Convert ktrans from /sec to /min
+	            // Mutliply /sec by 60 seconds/minute
+	            params[0] = 60.0 * params[0];
 	            for (j = 0; j < 3; j++) {
-	            	destArray[j*volSize + i] = (float)params[j];
+	            	destArray[j][i] = (float)params[j];
 	            	if (Double.isNaN(params[j])) {
 	            	    paramNaN[j]++;	
 	            	}
@@ -659,6 +683,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
 		            	}
 	            	}
 	            }
+	            destArray[3][i] = chi_squared;
 	            exitStatus[(dModel.getExitStatus() + 11)]++;
             } // for (i = 0; i < volSize; i++)
         } // else processors == 1
@@ -1333,6 +1358,11 @@ public class AlgorithmSM2 extends AlgorithmBase {
             Preferences.debug("Number = " + exitStatus[55] + "\n");
         }
         
+        if (exitStatus[11] > 0) {
+        	abnormalTerminations += exitStatus[11];
+        	Preferences.debug("Abnormal terminations with no termination bits set = " + exitStatus[11] + "\n");
+        }
+        
         if (exitStatus[10] > 0) {
         	abnormalTerminations += exitStatus[10];
             Preferences.debug("Abnormal terminations because m < n or n <= 0 or m <= 0 or mdc < m or mdw < n*n + 5*n + 3*m + 6 or\n");
@@ -1374,19 +1404,26 @@ public class AlgorithmSM2 extends AlgorithmBase {
         	Preferences.debug("namely X(I) = BL(I) = BU(I), I = 1,2,...,N = " + exitStatus[4] + "\n");
         }
         
+        if (exitStatus[3] > 0) {
+        	abnormalTerminations += exitStatus[3];
+        	Preferences.debug("Abnormal terminations because of NLConstrainedEngine driver error = " + exitStatus[3] + "\n");
+        }
+        
         System.out.println("\nTotal normal terminations = " + normalTerminations);
         Preferences.debug("\nTotal normal terminations = " + normalTerminations + "\n");
         System.out.println("Total abnormal terminations = " + abnormalTerminations);
         Preferences.debug("Total abnormal terminations = " + abnormalTerminations + "\n");
        
         
-        try {
-        	destImage.importData(0, destArray, true);
-        }
-        catch (IOException e) {
-        	MipavUtil.displayError("IOException on destImage.importData(0, destArray, true)");
-        	setCompleted(false);
-        	return;
+        for (i = 0; i < 4; i++) {
+	        try {
+	        	destImage[i].importData(0, destArray[i], true);
+	        }
+	        catch (IOException e) {
+	        	MipavUtil.displayError("IOException on destImage["+ i + "].importData(0, destArray["+i+"], true)");
+	        	setCompleted(false);
+	        	return;
+	        }
         }
         
         setCompleted(true);
@@ -1851,6 +1888,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
     		double exparray[][] = new double[tDim][tDim];
     		double ymodel[] = new double[tDim-1];
     		double params[];
+    		float chi_squared;
     		FitSM2ConstrainedModelC dModel;
     		int exitStatusIndex;
     		for (i = start; i < end; i++) {
@@ -1862,8 +1900,12 @@ public class AlgorithmSM2 extends AlgorithmBase {
 	            dModel.driver();
 	            //dModel.dumpResults();
 	            params = dModel.getParameters();
+	            chi_squared = (float)dModel.getChiSquared();
+	            // Convert ktrans from /sec to /min
+	            // Mutliply /sec by 60 seconds/minute
+	            params[0] = 60.0 * params[0];
 	            exitStatusIndex = dModel.getExitStatus() + 11;
-	            output(params, i, exitStatusIndex);
+	            output(params, i, exitStatusIndex, chi_squared);
             } // for (i = start; i < end; i++)	
     	}
     	
@@ -1876,7 +1918,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
     	}
     }
     
-    public synchronized void output(double params[], int i, int exitStatusIndex) {
+    public synchronized void output(double params[], int i, int exitStatusIndex, float chi_squared) {
     	int j;
     	voxelsProcessed++;
     	long vt100 = voxelsProcessed * 100L;
@@ -1886,7 +1928,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
     		fireProgressStateChanged(barMarker);
     	}
     	for (j = 0; j < 3; j++) {
-        	destArray[j*volSize + i] = (float)params[j];
+    		destArray[j][i] = (float)params[j];
         	if (Double.isNaN(params[j])) {
         	    paramNaN[j]++;	
         	}
@@ -1902,6 +1944,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
             	}
         	}
         }
+    	destArray[3][i] = chi_squared;
         exitStatus[exitStatusIndex]++;	
     }
     
@@ -2025,7 +2068,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
 	                        intSum += trapezoidSlope[j-2]* ((exparray[j-1][m-1]*(timeVals[j-1] - 1.0/ktransDivVe)) -
 	                                                                (exparray[j-2][m-1]*(timeVals[j-2] - 1.0/ktransDivVe)))*ve;
                 		} // for (j = 2; j <= m; j++)
-                		ymodel[m-2] = intSum + vp * r1ptj[m-1];
+                		ymodel[m-2] = (intSum + vp * r1ptj[m-1])/(1.0 - h);
                 	} // for (m = 2; m <= tDim; m++)
                     // evaluate the residuals[j] = ymodel[j] - ySeries[j]
                     for (j = 0; j < nPts; j++) {
@@ -2062,9 +2105,9 @@ public class AlgorithmSM2 extends AlgorithmBase {
 	                        intSumDerivVe += trapezoidSlope[j-2]* ((exparray[j-1][m-1]*timeVals[j-1]) -
                                     (exparray[j-2][m-1]*timeVals[j-2]));
                 		} // for (j = 2; j <= m; j++)
-                		covarMat[m-2][0] = intSumDerivKtrans;
-                		covarMat[m-2][1] = intSumDerivVe;
-                		covarMat[m-2][2] = r1ptj[m-1];
+                		covarMat[m-2][0] = intSumDerivKtrans/(1.0 - h);
+                		covarMat[m-2][1] = intSumDerivVe/(1.0 - h);
+                		covarMat[m-2][2] = r1ptj[m-1]/(1.0 - h);
                 		//Preferences.debug("covarMat[" + (m-2) + "][0] = " + covarMat[m-2][0] + "\n");
                 		//Preferences.debug("covarMat[" + (m-2) + "][1] = " + covarMat[m-2][1] + "\n");
                 		//Preferences.debug("covarMat[" + (m-2) + "][2] = " + covarMat[m-2][2] + "\n");
@@ -2186,7 +2229,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
 	                        intSum += trapezoidSlope[j-2]* ((exparray[j-1][m-1]*(timeVals[j-1] - 1.0/ktransDivVe)) -
 	                                                                (exparray[j-2][m-1]*(timeVals[j-2] - 1.0/ktransDivVe)))*ve;
                 		} // for (j = 2; j <= m; j++)
-                		ymodel[m-2] = intSum + vp * r1ptj[m-1];
+                		ymodel[m-2] = (intSum + vp * r1ptj[m-1])/(1.0 - h);
                 	} // for (m = 2; m <= tDim; m++)
                     // evaluate the residuals[j] = ymodel[j] - ySeries[j]
                     for (j = 0; j < nPts; j++) {
@@ -2223,9 +2266,9 @@ public class AlgorithmSM2 extends AlgorithmBase {
 	                        intSumDerivVe += trapezoidSlope[j-2]* ((exparray[j-1][m-1]*timeVals[j-1]) -
                                     (exparray[j-2][m-1]*timeVals[j-2]));
                 		} // for (j = 2; j <= m; j++)
-                		covarMat[m-2][0] = intSumDerivKtrans;
-                		covarMat[m-2][1] = intSumDerivVe;
-                		covarMat[m-2][2] = r1ptj[m-1];
+                		covarMat[m-2][0] = intSumDerivKtrans/(1.0-h);
+                		covarMat[m-2][1] = intSumDerivVe/(1.0-h);
+                		covarMat[m-2][2] = r1ptj[m-1]/(1.0-h);
                 		//Preferences.debug("covarMat[" + (m-2) + "][0] = " + covarMat[m-2][0] + "\n");
                 		//Preferences.debug("covarMat[" + (m-2) + "][1] = " + covarMat[m-2][1] + "\n");
                 		//Preferences.debug("covarMat[" + (m-2) + "][2] = " + covarMat[m-2][2] + "\n");
