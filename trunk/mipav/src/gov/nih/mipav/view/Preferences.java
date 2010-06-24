@@ -602,11 +602,7 @@ public class Preferences {
         Preferences.defaultProps.setProperty(Preferences.PREF_NUMBER_OF_THREADS, String.valueOf(ThreadUtil
                 .getAvailableCores()));
         Preferences.defaultProps.setProperty(Preferences.PREF_GPU_COMP_ENABLED, "false");
-        
-        
-        //NDAR 
-        Preferences.defaultProps.setProperty(Preferences.PREF_NDAR_PLUGIN_SERVER, "DEMO");
-        Preferences.defaultProps.setProperty(Preferences.PREF_NDAR_PLUGIN_DATASTRUCT_NAME, "image01");
+
     }
 
     // ~ Methods
