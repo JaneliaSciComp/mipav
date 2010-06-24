@@ -367,7 +367,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 
 	protected JPanel buildTreT1LongPanel() {
 	    JPanel panel = new JPanel();
-	    panel.setBorder(MipavUtil.buildTitledBorder("treT1-Conv: Long"));
+	    //panel.setBorder(MipavUtil.buildTitledBorder("treT1-Conv: Long"));
 	    
 	    b1Field = null;
 	    if(performTreT1withPreCalculatedB1Map) {
@@ -546,7 +546,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
                 titles);
 
         // This is very important. Adding this object as a listener allows the algorithm to
-        // notify this object when it has completed of failed. See algorithm performed event.
+        // notify this object when it has completed or failed. See algorithm performed event.
         // This is made possible by implementing AlgorithmedPerformed interface
         cAlgo.addListener(this);
         
