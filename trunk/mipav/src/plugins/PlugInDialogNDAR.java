@@ -2359,8 +2359,15 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             try {
 
             	ndarServer = Preferences.getProperty(Preferences.PREF_NDAR_PLUGIN_SERVER);
+            	if(ndarServer == null) {
+            		ndarServer = "DEMO";
+            		Preferences.setProperty(Preferences.PREF_NDAR_PLUGIN_SERVER, "DEMO");
+            	}
             	ndarDataStructName = Preferences.getProperty(Preferences.PREF_NDAR_PLUGIN_DATASTRUCT_NAME);
-            	
+            	if(ndarDataStructName == null) {
+            		ndarDataStructName = "image01";
+            		Preferences.setProperty(Preferences.PREF_NDAR_PLUGIN_DATASTRUCT_NAME, "image01");
+            	}
             	
             	
                 // get OMElement from web service
@@ -2370,9 +2377,10 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 progressBar.updateValue(20);
                 final VToolSimpleAccessionClient client = Startup.getClient(ndarServer);
                 try {
-                    final String DataStructureNames = ndarDataStructName;
+                    //final String DataStructureNames = ndarDataStructName;
                     progressBar.updateValue(60);
-                    documentElement = client.getDataDictionary(DataStructureNames);
+                    documentElement = client.getDataDictionary(ndarDataStructName);
+                    
                 } catch (final AxisFault e) {
                     e.printStackTrace();
                 }
@@ -2386,6 +2394,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 progressBar.dispose();
                 printlnToLog("Successful connection to NDAR data dictionary web service");
             } catch (final Exception e) {
+            	e.printStackTrace();
                 if (progressBar != null) {
                     progressBar.setVisible(false);
                     progressBar.dispose();
