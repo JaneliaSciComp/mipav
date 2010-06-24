@@ -1,4 +1,5 @@
 import WildMagic.LibFoundation.Mathematics.Vector2f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.AlgorithmArcLength;
 import gov.nih.mipav.model.algorithms.AlgorithmBSmooth;
@@ -1094,6 +1095,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    }
 	    
 	    componentImage.getVOIHandler().resetLivewire();
+	    componentImage.getVOIHandler().setCenter( new Vector3f( 0, 0, componentImage.getSlice() ) );
 	    setTitle();
 	}
 
