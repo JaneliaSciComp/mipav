@@ -80,7 +80,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
     /** DOCUMENT ME! */
     private ModelImage image;
     
-    private ModelImage resultImage;
+    private ModelImage resultImage[] = null;
     
     private JLabel labelMinConstr0;
     
@@ -121,6 +121,10 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
     private double min_constr[] = new double[3];
     private double max_constr[] = new double[3];
     private double initial[] = new double[3];
+    
+    private JLabel labelHematocrit;
+    private JTextField textHematocrit;
+    private double hematocrit = 0.4;
 
     
     /** DOCUMENT ME! */
@@ -451,6 +455,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+    	int i;
     	if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
             saveDefaults();
         }
@@ -460,21 +465,28 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
             image.clearMask();
 
             if ((sm2Algo.isCompleted() == true) && (resultImage != null)) {
+            	
+            	for (i = 0; i < 4; i++) {
 
-                resultImage.clearMask();
-
-                try {
-                	openNewFrame(resultImage);
-                 //   openNewFrame(resultImage);
-                } catch (OutOfMemoryError error) {
-                    System.gc();
-                    MipavUtil.displayError("Out of memory: unable to open new frame");
-                }
+	                resultImage[i].clearMask();
+	
+	                try {
+	                	openNewFrame(resultImage[i]);
+	                 //   openNewFrame(resultImage);
+	                } catch (OutOfMemoryError error) {
+	                    System.gc();
+	                    MipavUtil.displayError("Out of memory: unable to open new frame");
+	                }
+            	}
             } else if (resultImage != null) {
+            	
+            	for (i = 0; i < 4; i++) {
 
-                // algorithm failed but result image still has garbage
-                resultImage.disposeLocal(); // clean up memory
-                resultImage = null;
+	                // algorithm failed but result image still has garbage
+	                resultImage[i].disposeLocal(); // clean up memory
+	                resultImage[i] = null;
+            	}
+            	resultImage = null;
                 System.gc();
 
             }
@@ -499,6 +511,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         defaultsString += min_constr[2] + delim;
         defaultsString += max_constr[2] + delim;
         defaultsString += initial[2] + delim;
+        defaultsString += hematocrit + delim;
         defaultsString += tissueImage.getImageFileName();
 
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
@@ -531,6 +544,8 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         textMaxConstr2.setText(String.valueOf(max_constr[2]));
         initial[2] = scriptParameters.getParams().getDouble("initial2");
         textInitial2.setText(String.valueOf(initial[2]));
+        hematocrit = scriptParameters.getParams().getDouble("hematocrit_");
+        textHematocrit.setText(String.valueOf(hematocrit));
         tissueImage = scriptParameters.retrieveImage("tissue_image");
         textTissueFile.setText(tissueImage.getImageFileName());
     }
@@ -552,6 +567,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         scriptParameters.getParams().put(ParameterFactory.newParameter("min_constr2", min_constr[2]));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_constr2", max_constr[2]));
         scriptParameters.getParams().put(ParameterFactory.newParameter("initial2", initial[2]));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("hematocrit_",hematocrit));
     	try {
     	    scriptParameters.storeImage(tissueImage, "tissue_image");
     	}
@@ -594,13 +610,18 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         try {
 
             // Make algorithm
-            int resultExtents[] = new int[4];
+        	resultImage = new ModelImage[4];
+            int resultExtents[] = new int[3];
             for (i = 0; i < 3; i++) {
             	resultExtents[i] = image.getExtents()[i];
             }
-            resultExtents[3] = 3;
-            resultImage = new ModelImage(ModelStorageBase.FLOAT, resultExtents, image.getImageName() + "_params");
-            sm2Algo = new AlgorithmSM2(resultImage, image, min_constr, max_constr, initial, tissueImage, timeVals);
+            resultImage[0] = new ModelImage(ModelStorageBase.FLOAT, resultExtents, image.getImageName() + "_ktrans");
+            resultImage[1] = new ModelImage(ModelStorageBase.FLOAT, resultExtents, image.getImageName() + "_ve");
+            resultImage[2] = new ModelImage(ModelStorageBase.FLOAT, resultExtents, image.getImageName() + "_vp");
+            resultImage[3] = new ModelImage(ModelStorageBase.FLOAT, resultExtents, image.getImageName() + "_chi_squared");
+            
+            sm2Algo = new AlgorithmSM2(resultImage, image, min_constr, max_constr, initial, tissueImage, timeVals,
+            		                   hematocrit);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -659,7 +680,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         labelParamsToFit.setFont(serif12);
         mainPanel.add(labelParamsToFit, gbc);
         
-        labelMinConstr0 = new JLabel("K_trans minimum allowed value (1.0E-5 - 0.99)");
+        labelMinConstr0 = new JLabel("K_trans minimum allowed value (1.0E-5 - 0.99)in /min");
         labelMinConstr0.setForeground(Color.black);
         labelMinConstr0.setFont(serif12);
         gbc.gridy = 1;
@@ -672,7 +693,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         gbc.gridx = 1;
         mainPanel.add(textMinConstr0, gbc);
         
-        labelMaxConstr0 = new JLabel("K_trans maximum allowed value (1.0E-5 - 0.99)");
+        labelMaxConstr0 = new JLabel("K_trans maximum allowed value (1.0E-5 - 0.99)in /min");
         labelMaxConstr0.setForeground(Color.black);
         labelMaxConstr0.setFont(serif12);
         gbc.gridx = 0;
@@ -686,7 +707,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         gbc.gridx = 1;
         mainPanel.add(textMaxConstr0, gbc);
         
-        labelInitial0 = new JLabel("K_trans initial guess value (1.0E-5 - 0.99)");
+        labelInitial0 = new JLabel("K_trans initial guess value (1.0E-5 - 0.99)in /min");
         labelInitial0.setForeground(Color.black);
         labelInitial0.setFont(serif12);
         gbc.gridx = 0;
@@ -784,6 +805,20 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         gbc.gridx = 1;
         mainPanel.add(textInitial2, gbc);
         
+        labelHematocrit = new JLabel("Hematocrit (0.0 - 1.0)");
+        labelHematocrit.setForeground(Color.black);
+        labelHematocrit.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = 10;
+        mainPanel.add(labelHematocrit, gbc);
+        
+        textHematocrit = new JTextField(10);
+        textHematocrit.setText("0.4");
+        textHematocrit.setForeground(Color.black);
+        textHematocrit.setFont(serif12);
+        gbc.gridx = 1;
+        mainPanel.add(textHematocrit, gbc);
+        
         buttonTissueFile = new JButton("Choose 3D tissue R1 map");
         buttonTissueFile.setForeground(Color.black);
         buttonTissueFile.setFont(serif12B);
@@ -792,7 +827,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         buttonTissueFile.setPreferredSize(new Dimension(235, 30));
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 10;
+        gbc.gridy = 11;
         mainPanel.add(buttonTissueFile, gbc);
 
         textTissueFile = new JTextField();
@@ -805,7 +840,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         labelVOI.setForeground(Color.black);
         labelVOI.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 11;
+        gbc.gridy = 12;
         mainPanel.add(labelVOI, gbc);
         
         buttonVOIFile = new JButton("Open a sagittal sinus VOI file");
@@ -815,7 +850,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         buttonVOIFile.setActionCommand("VOIFile");
         buttonVOIFile.setPreferredSize(new Dimension(205, 30));
         gbc.fill = GridBagConstraints.NONE;
-        gbc.gridy = 12;
+        gbc.gridy = 13;
         mainPanel.add(buttonVOIFile, gbc);
         
         textVOIFile = new JTextField();
@@ -824,7 +859,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         gbc.gridx = 1;
         mainPanel.add(textVOIFile, gbc);
         
-        buttonTimesFile = new JButton("Open a file of volume center times");
+        buttonTimesFile = new JButton("Open a file of volume center times in seconds");
         buttonTimesFile.setForeground(Color.black);
         buttonTimesFile.setFont(serif12B);
         buttonTimesFile.addActionListener(this);
@@ -832,7 +867,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         buttonTimesFile.setPreferredSize(new Dimension(225, 30));
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 13;
+        gbc.gridy = 14;
         mainPanel.add(buttonTimesFile, gbc);
         
         textTimesFile = new JTextField();
@@ -980,6 +1015,22 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         	MipavUtil.displayError("Initial vp must not exceed " + max_constr[2]);
         	textInitial2.requestFocus();
         	textInitial2.selectAll();
+        	return false;	
+        }
+        
+        tmpStr = textHematocrit.getText();
+        hematocrit = Double.parseDouble(tmpStr);
+        
+        if (hematocrit < 0.0) {
+        	MipavUtil.displayError("Hematocrit must be at least 0.0");
+        	textHematocrit.requestFocus();
+        	textHematocrit.selectAll();
+        	return false;
+        }
+        else if (hematocrit > 1.0) {
+        	MipavUtil.displayError("Hematocrit must not exceed 1.0");
+        	textHematocrit.requestFocus();
+        	textHematocrit.selectAll();
         	return false;	
         }
         
