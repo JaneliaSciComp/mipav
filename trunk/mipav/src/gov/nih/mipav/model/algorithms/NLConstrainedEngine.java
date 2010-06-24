@@ -3922,6 +3922,9 @@ public abstract class NLConstrainedEngine {
             	Preferences.debug("Abnormal termination because there is only one feasible point,\n");
             	Preferences.debug("namely X(I) = BL(I) = BU(I), I = 1,2,...,N\n");
             }
+            else if (exitStatus == -8) {
+            	Preferences.debug("Abnormal termination due to driver error\n");
+            }
             else {
             	Preferences.debug("Exit status = " + exitStatus + "\n");
             }
@@ -4050,6 +4053,7 @@ public abstract class NLConstrainedEngine {
             return;
         } catch (Exception e) {
             Preferences.debug("driver error: " + e.getMessage() + "\n");
+            exitStatus = -8;
         }
     }
 
