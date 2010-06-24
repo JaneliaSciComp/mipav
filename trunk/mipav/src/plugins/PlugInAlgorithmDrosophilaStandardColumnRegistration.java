@@ -200,7 +200,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
      * run algorithm
      */
     public void runAlgorithm() {
-        outputTextArea.append("Running Algorithm v2.1" + "\n");
+        outputTextArea.append("Running Algorithm v2.3" + "\n");
 
         final long begTime = System.currentTimeMillis();
 
@@ -1366,6 +1366,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     private class AddVals {
         private float[] xPt;
 
+        
         private float[] yPt;
 
         private float[] zPt;
