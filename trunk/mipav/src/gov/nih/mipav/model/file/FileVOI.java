@@ -902,9 +902,9 @@ public class FileVOI extends FileXML {
             closedTag("Curve-type", Integer.toString(voi.getCurveType()));
             if ( saveAsLPS )
             {
-                final Vector3f kOriginLPS = MipavCoordinateSystems.originLPS(image);
-                closedTag("LPS-origin", Float.toString(kOriginLPS.X) + "," + Float.toString(kOriginLPS.Y) + ","
-                        + Float.toString(kOriginLPS.Z));                
+                //final Vector3f kOriginLPS = MipavCoordinateSystems.originLPS(image);
+                //closedTag("LPS-origin", Float.toString(kOriginLPS.X) + "," + Float.toString(kOriginLPS.Y) + ","
+                //        + Float.toString(kOriginLPS.Z));                
             }
             closedTag("Color", Integer.toString(voi.getColor().getAlpha()) + ","
                     + Integer.toString(voi.getColor().getRed()) + "," + Integer.toString(voi.getColor().getGreen())
@@ -1548,7 +1548,7 @@ public class FileVOI extends FileXML {
             // Tell the XMLReader to parse the XML document
             xmlReader.parse(MipavUtil.convertToFileURL(fileDir + fileName));
         } catch (final Exception error) {
-            // MipavUtil.displayError("Error: " + error.getMessage());
+            //MipavUtil.displayError("Error: " + error.getMessage());
 
             return false;
         }

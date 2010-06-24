@@ -2726,7 +2726,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             drawGeometricCenter(kVOI, g);
         }
         
-        int thickness = kVOI.getGroup().getThickness();
+        int thickness = kVOI.getGroup() != null ? kVOI.getGroup().getThickness() : 1;
         if ( thickness == 1) {
             if (kVOI.isClosed() == true) {
                 g.drawPolygon(gon);
