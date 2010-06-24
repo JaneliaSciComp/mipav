@@ -37,6 +37,12 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.edit.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
+
 /**
  * 
  * 
@@ -149,21 +155,25 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
     /** Whether the algorithm is being run in standAlone mode.*/
     private boolean standAlone;
     
-    /**All MuscleCalculations currently in progress */
+    /**All MuscleCalculations currently in progress. */
     private ArrayList<MuscleCalculation> muscleCalcList;
+
+    /** The PDF file used for stastics display. **/
+	private PDDocument doc;
     
+	/** The type of image run through the plugin. */
     public enum ImageType{
         
-        /** denotes that the srcImg is an abdomen */
+        /** Denotes that the srcImg is an abdomen. */
         Abdomen,
         
-        /** denotes that the srcImg is two thighs */
+        /** Denotes that the srcImg is two thighs. */
         Thigh,
         
-        /** custom means a user defined body type has been created or loaded*/
+        /** Custom means a user defined body type has been created or loaded. */
         Custom, 
         
-        /** unknown image type, generally represents an error state */
+        /** Unknown image type, generally represents an error state. */
         Unknown,
         
         /** 
@@ -173,6 +183,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         RunTimeDefined
     }
     
+    /** The symmetry that a particular VOI might exhibit. */
     public enum Symmetry {
         
         /** Indicates the image has no symmetry. */
@@ -1095,7 +1106,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    }
 	    
 	    componentImage.getVOIHandler().resetLivewire();
-	    componentImage.getVOIHandler().setCenter( new Vector3f( 0, 0, componentImage.getSlice() ) );
+	    componentImage.getVOIHandler().setCenter( new Vector3f( 0, 0, componentImage.getSlice() ), false );
 	    setTitle();
 	}
 
@@ -1238,60 +1249,61 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	 * Adds the table of voi information to the pdf, adds the images (edge and QA), and closes the document
 	 * @param edgeImage
 	 * @param qaImage
+	 * @param contentStreamAr 
 	 */
-	protected void PDFclose(java.awt.Image edgeImage, java.awt.Image qaImage) {
+	protected void PDFclose(java.awt.Image edgeImage, java.awt.Image qaImage, 
+			PDPageContentStream contentStream, PDPageContentStream[] contentStreamAr) {
 			try {
-			Paragraph aPar = new Paragraph();
-			aPar.setAlignment(Element.ALIGN_CENTER);
-			aPar.add(new Paragraph());
-			if(multipleSlices) {
-				aPar.add(new Chunk("Volume calculations", new Font(Font.TIMES_ROMAN, 14, Font.BOLD)));
-			} else {
-				aPar.add(new Chunk("Area calculations", new Font(Font.TIMES_ROMAN, 14, Font.BOLD)));
-			}
-			aPar.add(wholeTable);
-			pdfDocument.add(new Paragraph());
-			pdfDocument.add(aPar);
-			if(multipleSlices) {
-				for(int i=0; i<getActiveImage().getExtents()[2]; i++) {
-					Paragraph slicePar = new Paragraph();
-					slicePar.setAlignment(Element.ALIGN_CENTER);
-					slicePar.add(new Paragraph());
-					slicePar.add(new Chunk("Slice "+i, new Font(Font.TIMES_ROMAN, 14, Font.BOLD)));			
-					slicePar.add(sliceTable[i]);
-					pdfDocument.add(new Paragraph());
-					pdfDocument.add(slicePar);
+				Paragraph aPar = new Paragraph();
+				aPar.setAlignment(Element.ALIGN_CENTER);
+				aPar.add(new Paragraph());
+				
+				
+				PdfPTable imageTable = new PdfPTable(2);
+				imageTable.addCell("Edge Image");
+				imageTable.addCell("QA Image");
+				imageTable.addCell(Image.getInstance(edgeImage, null));
+				
+				imageTable.addCell(Image.getInstance(qaImage, null));
+				
+				Paragraph pImage = new Paragraph();
+				pImage.add(new Paragraph());
+				pImage.add(imageTable);
+				//pdfDocument.add(pImage);
+				//pdfDocument.close();
+				//pdfWriter.close();
+				
+				if(((AnalysisDialogPrompt)tabs[resultTabLoc]).calcOutputSuccess()) {
+					MipavUtil.displayInfo("PDF saved to: " + pdfFile+"\nText saved to: "+textFile);
+					ViewUserInterface.getReference().getMessageFrame().append("PDF saved to: " + pdfFile + 
+												"\nText saved to: "+textFile+"\n", ViewJFrameMessage.DATA);
+				} else {
+					MipavUtil.displayError("<html>There was an error writing the output files.  "+
+							"<br>Please make sure the image location is still available:<br>"+textFile.getParent());
 				}
-			}
-			
-			PdfPTable imageTable = new PdfPTable(2);
-			imageTable.addCell("Edge Image");
-			imageTable.addCell("QA Image");
-			imageTable.addCell(Image.getInstance(edgeImage, null));
-			
-			imageTable.addCell(Image.getInstance(qaImage, null));
-			
-			Paragraph pImage = new Paragraph();
-			pImage.add(new Paragraph());
-			pImage.add(imageTable);
-			pdfDocument.add(pImage);
-			pdfDocument.close();
-			pdfWriter.close();
-			
-			if(((AnalysisDialogPrompt)tabs[resultTabLoc]).calcOutputSuccess()) {
-				MipavUtil.displayInfo("PDF saved to: " + pdfFile+"\nText saved to: "+textFile);
-				ViewUserInterface.getReference().getMessageFrame().append("PDF saved to: " + pdfFile + 
-											"\nText saved to: "+textFile+"\n", ViewJFrameMessage.DATA);
-			} else {
-				MipavUtil.displayError("<html>There was an error writing the output files.  "+
-						"<br>Please make sure the image location is still available:<br>"+textFile.getParent());
-			}
 			
 			} catch (Exception e) {
 				e.printStackTrace();
 				MipavUtil.displayError("<html>There was an error writing the output files.  "+
 						"<br>Please make sure the image location is still available:<br>"+textFile.getParent());
 				
+			}
+			try {
+				contentStream.endText();
+				contentStream.close();
+				if(contentStreamAr != null) {
+					for(int i=0; i<contentStreamAr.length; i++) {
+						contentStreamAr[i].endText();
+						contentStreamAr[i].close();
+					}
+				}
+				
+				doc.save(pdfFile.toString());
+	            doc.close();
+			} catch(Exception e) {
+				e.printStackTrace();
+				MipavUtil.displayError("<html>There was an error writing the output files.  "+
+						"<br>Please make sure the image location is still available:<br>"+textFile.getParent());
 			}
 			
 		}
@@ -1300,8 +1312,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	 * Creates the PDF file and creates several tables for scanner information as well
 	 * as the VOI statistic information
 	 *
+	 * @return the content stream for adding statistics to the first page
 	 */
-	protected void PDFcreate(String fileDir, String fileName) {		
+	protected PDPageContentStream PDFcreate(String fileDir, String fileName) {		
 		if(!(new File(fileDir).exists())) {
 			fileDir = getActiveImage().getFileInfo(getViewableSlice()).getFileDirectory()+VOI_DIR;
 		}
@@ -1321,137 +1334,166 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		} else {
 			pdfFile = new File(fileDir + File.separator + fileName);
 		}
-		try {
-			pdfDocument = new Document();
-			pdfWriter = PdfWriter.getInstance(pdfDocument, new FileOutputStream(pdfFile));
-			pdfDocument.addTitle(imageType+" Tissue Analysis Report");
-			pdfDocument.addCreator("MIPAV: Muscle Segmentation");
-			pdfDocument.open();
-			
-			
-			Paragraph p = new Paragraph();
-			//add the Title and subtitle
-			p.setAlignment(Element.ALIGN_CENTER);
-			p.add(new Chunk("MIPAV: Segmentation", new Font(Font.TIMES_ROMAN, 18)));
-			p.add(new Paragraph());
-			p.add(new Chunk(imageType+" Tissue Analysis Report", new Font(Font.TIMES_ROMAN, 12)));
-			pdfDocument.add(new Paragraph(p));
-			pdfDocument.add(new Paragraph(new Chunk("")));
-			pdfDocument.add(new Paragraph());
-			
-			Font fontNormal = FontFactory.getFont("Helvetica", 10, Font.NORMAL, Color.DARK_GRAY);
-			Font fontBold = FontFactory.getFont("Helvetica", 10, Font.BOLD, Color.BLACK);
-	
-			FileInfoDicom fileInfo = (FileInfoDicom)getActiveImage().getFileInfo()[0];
-			
+		
+		// the document
+        doc = null;
+        PDPageContentStream contentStream = null;
+        try
+        {
+            doc = new PDDocument();
+            
+            PDPage page = new PDPage();
+            doc.addPage( page );
+            PDFont font = PDType1Font.HELVETICA_BOLD;
+
+            contentStream = new PDPageContentStream(doc, page);
+            contentStream.beginText();
+            
+            contentStream.setFont(font, 18);
+            String message  ="MIPAV: Muscle Segmentation";
+            
+            
+            contentStream.moveTextPositionByAmount((float) (PDPage.PAGE_SIZE_LETTER.getWidth()/2.0)-120, 750 );
+            contentStream.drawString( message );
+            
+            contentStream.moveTextPositionByAmount(35, -20);
+            font = PDType1Font.HELVETICA_BOLD;
+            contentStream.setFont(font, 12);
+            contentStream.drawString(imageType+" Tissue Analysis Report");
+            
+            String center = null, id = null, scanDate = null, kvp = null, mA = null, height = null;
+            contentStream.endText();
+            
+            
+            if(getActiveImage().getFileInfo()[0] instanceof FileInfoDicom) {
+	            FileInfoDicom fileInfo = (FileInfoDicom)getActiveImage().getFileInfo()[0];
+				
+	            //location of scan
+	            center = (String)fileInfo.getTagTable().getValue("0008,0080");
+				//identification of patient
+	            id = (String)fileInfo.getTagTable().getValue("0010,0020");
+				//date scan taken
+	            scanDate = (String)fileInfo.getTagTable().getValue("0008,0020");
+				//number of pulses
+	            kvp = (String)fileInfo.getTagTable().getValue("0018,0060");
+				//field strength
+				mA = (String)fileInfo.getTagTable().getValue("0018,1151");
+				//table height (in centimeters)
+				height = (String)fileInfo.getTagTable().getValue("0018,1130");
+            }
+            
 			DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
 			Date date = new Date();
 			String dateStr = dateFormat.format(date);
 			String userName = System.getProperty("user.name");
+			String imageName = getActiveImage().getFileInfo()[getViewableSlice()].getFileName();
 			
-			// Comment here to return paragraph /**
-			MultiColumnText mct = new MultiColumnText(20);
-			mct.setAlignment(Element.ALIGN_LEFT);
-			mct.addRegularColumns(pdfDocument.left(), pdfDocument.right(), 10f, 4);
-			mct.addElement(new Paragraph("Analyst:", fontBold));
-			mct.addElement(new Paragraph(userName, fontNormal));
-			mct.addElement(new Paragraph("Analysis Date:", fontBold));
-			mct.addElement(new Paragraph(dateStr, fontNormal));
-			pdfDocument.add(mct);
+			font = PDType1Font.HELVETICA;
+			contentStream.setFont(font, 12);
 			
-			MultiColumnText mct2 = new MultiColumnText(20);
-			mct2.setAlignment(Element.ALIGN_LEFT);
-			mct2.addRegularColumns(pdfDocument.left(), pdfDocument.right(), 10f, 4);
-			mct2.addElement(new Paragraph("Name:", fontBold));
-			mct2.addElement(new Paragraph(getActiveImage().getFileInfo()[getViewableSlice()].getFileName(), fontNormal));
-			mct2.addElement(new Paragraph("Center:", fontBold));
-			String center = (String)fileInfo.getTagTable().getValue("0008,0080");
-			mct2.addElement(new Paragraph((center != null ? center.trim() : "Unknown"), fontNormal));
-			pdfDocument.add(mct2);
+			contentStream.beginText();
 			
-			MultiColumnText mct3 = new MultiColumnText(20);
-			mct3.setAlignment(Element.ALIGN_LEFT);
-			mct3.addRegularColumns(pdfDocument.left(), pdfDocument.right(), 10f, 4);
-			mct3.addElement(new Paragraph("Patient ID:", fontBold));
-			String id = (String)fileInfo.getTagTable().getValue("0010,0020");
-			mct3.addElement(new Paragraph(((id != null && id.length() > 0) ? id.trim() : "Removed"), fontNormal));
-			mct3.addElement(new Paragraph("Scan Date:", fontBold));
-			String scanDate = (String)fileInfo.getTagTable().getValue("0008,0020");
-			mct3.addElement(new Paragraph((scanDate != null ? scanDate.trim() : "Unknown"), fontNormal));
-			pdfDocument.add(mct3);
+			//study information table
+			contentStream.moveTextPositionByAmount(100, 715);
+			//column 1 (standard)
+			contentStream.moveTextPositionByAmount(0, -15);
+			contentStream.drawString("Analyst:");
+			contentStream.moveTextPositionByAmount(0, -15);
+			contentStream.drawString("Name:");
+			contentStream.moveTextPositionByAmount(0, -15);
+			contentStream.drawString("Patient ID:");
 			
-			//add the scanning parameters table
-			PdfPTable spTable = new PdfPTable(2);
-			PdfPCell cell = new PdfPCell(new Paragraph("Scanning Parameters"));
-			cell.setHorizontalAlignment(Element.ALIGN_CENTER);
-			cell.setColspan(2);
-			spTable.addCell(cell);
-			spTable.addCell("kVp:");
-			String kvp = (String)fileInfo.getTagTable().getValue("0018,0060");
-			spTable.addCell((kvp != null ? kvp.trim() : "Unknown"));
-			spTable.addCell("mA:");
-			String mA = (String)fileInfo.getTagTable().getValue("0018,1151");
-			spTable.addCell((mA != null ? mA.trim() : "Unknown"));
-			spTable.addCell("Pixel Size: ("+FileInfoBase.getUnitsOfMeasureAbbrevStr(getActiveImage().getUnitsOfMeasure(0))+")");
-			spTable.addCell(Double.toString(getActiveImage().getResolutions(0)[0]));
-			spTable.addCell("Slice Thickness: ("+FileInfoBase.getUnitsOfMeasureAbbrevStr(getActiveImage().getUnitsOfMeasure(2))+")");
-			spTable.addCell(Float.toString(getActiveImage().getResolutions(0)[2]));
-			spTable.addCell("Table Height: (cm)");
-			String height = (String)fileInfo.getTagTable().getValue("0018,1130");
-			spTable.addCell((height != null ? height.trim() : "Unknown"));
+			//column 2 (image specific)
+			contentStream.moveTextPositionByAmount(100, 30);
+			contentStream.drawString(userName);
+			contentStream.moveTextPositionByAmount(0, -15);
+			contentStream.drawString(imageName);
+			contentStream.moveTextPositionByAmount(0, -15);
+			contentStream.drawString((id != null && id.length() > 0) ? id.trim() : "Removed");
 			
-			Paragraph pTable = new Paragraph();
-			pTable.add(new Paragraph());
-			pTable.setAlignment(Element.ALIGN_CENTER);
-			pTable.add(spTable);
-			pdfDocument.add(new Paragraph(new Chunk("")));
-			pdfDocument.add(pTable);
+			//column 3 (standard)
+			contentStream.moveTextPositionByAmount(150, 30);
+			contentStream.drawString("Analysis Date:");
+			contentStream.moveTextPositionByAmount(0, -15);
+			contentStream.drawString("Center:");
+			contentStream.moveTextPositionByAmount(0, -15);
+			contentStream.drawString("Scan Date:");
 			
-			//create the Table where we will insert the data:
-			wholeTable = new PdfPTable(new float[] {1.8f, 1f, 1f, 1f, 1f, 1f, 1f});
-			// add Column Titles (in bold)
-			String type = new String();
-			String unit = FileInfoBase.getUnitsOfMeasureAbbrevStr(
-										FileInfoBase.getUnitsOfMeasureFromStr(
-												((AnalysisDialogPrompt)tabs[resultTabLoc]).getSelectedOutput()));
-			if(multipleSlices) {
-				wholeTable.addCell(new PdfPCell(new Paragraph("Volume ("+unit+"^3)", fontBold)));
-				type = "Vol";	
-			} else {
-				wholeTable.addCell(new PdfPCell(new Paragraph("Area ("+unit+"^2)", fontBold)));
-				type = "Area";
-			}
-			wholeTable.addCell(new PdfPCell(new Paragraph("Total "+type, fontBold)));
-			wholeTable.addCell(new PdfPCell(new Paragraph("Fat "+type, fontBold)));
-			wholeTable.addCell(new PdfPCell(new Paragraph("Lean "+type, fontBold)));
-			wholeTable.addCell(new PdfPCell(new Paragraph("Fat HU", fontBold)));
-			wholeTable.addCell(new PdfPCell(new Paragraph("Lean HU", fontBold)));
-			wholeTable.addCell(new PdfPCell(new Paragraph("Total HU", fontBold)));
-			
-			if(multipleSlices) {
-				sliceTable = new PdfPTable[getActiveImage().getExtents()[2]];
-				for(int i=0; i<getActiveImage().getExtents()[2]; i++) {
-					sliceTable[i] = new PdfPTable(new float[] {1.8f, 1f, 1f, 1f, 1f, 1f, 1f});
-					sliceTable[i].addCell(new PdfPCell(new Paragraph("Area ("+unit+"^2)", fontBold)));
-					type = "Area";
-					sliceTable[i].addCell(new PdfPCell(new Paragraph("Total "+type, fontBold)));
-					sliceTable[i].addCell(new PdfPCell(new Paragraph("Fat "+type, fontBold)));
-					sliceTable[i].addCell(new PdfPCell(new Paragraph("Lean "+type, fontBold)));
-					sliceTable[i].addCell(new PdfPCell(new Paragraph("Fat HU", fontBold)));
-					sliceTable[i].addCell(new PdfPCell(new Paragraph("Lean HU", fontBold)));
-					sliceTable[i].addCell(new PdfPCell(new Paragraph("Total HU", fontBold)));
-				}
-			}
+			//column 4 (image specific)
+			contentStream.moveTextPositionByAmount(100, 30);
+			contentStream.drawString(dateStr);
+			contentStream.moveTextPositionByAmount(0, -15);
+			contentStream.drawString(center != null ? center.trim() : "Unknown");
+			contentStream.moveTextPositionByAmount(0, -15);
+			contentStream.drawString(scanDate != null ? scanDate.trim() : "Unknown");
+            contentStream.endText();
+            
+            //various scan parameters section
+            contentStream.beginText();
+            contentStream.moveTextPositionByAmount((float) (PDPage.PAGE_SIZE_LETTER.getWidth()/2.0)-65, 635);
+            font = PDType1Font.HELVETICA_BOLD;
+            contentStream.setFont(font, 12); 
+            contentStream.drawString("Scanning Parameters");
+            font = PDType1Font.HELVETICA;
+            contentStream.setFont(font, 12);
+            
+            //column 1 (standard)
+            contentStream.moveTextPositionByAmount(-60, -18);
+            contentStream.drawString("kVp:");
+            contentStream.moveTextPositionByAmount(0, -15);
+            contentStream.drawString("mA:");
+            contentStream.moveTextPositionByAmount(0, -15);
+            contentStream.drawString("Pixel Size ("+FileInfoBase.getUnitsOfMeasureAbbrevStr(getActiveImage().getUnitsOfMeasure(0))+"):");
+            contentStream.moveTextPositionByAmount(0, -15);
+            contentStream.drawString("Slice Thickness ("+FileInfoBase.getUnitsOfMeasureAbbrevStr(getActiveImage().getUnitsOfMeasure(2))+"):");
+            contentStream.moveTextPositionByAmount(0, -15);
+            contentStream.drawString("Table Height (cm):");
+            
+            //column 2 (image specific)
+            contentStream.moveTextPositionByAmount(150, 60);
+            contentStream.drawString(kvp != null ? kvp.trim() : "Unknown");
+            contentStream.moveTextPositionByAmount(0, -15);
+            contentStream.drawString(mA != null ? mA.trim() : "Unknown");
+            contentStream.moveTextPositionByAmount(0, -15);
+            contentStream.drawString(Double.toString(getActiveImage().getResolutions(0)[0]));
+            contentStream.moveTextPositionByAmount(0, -15);
+            contentStream.drawString(Float.toString(getActiveImage().getResolutions(0)[2]));
+            contentStream.moveTextPositionByAmount(0, -15);
+            contentStream.drawString(height != null ? height.trim() : "Unknown");
 
-			return;
+            contentStream.endText();
+            System.err.println("New PDF file writing to: "+pdfFile.toString());
+
+			return contentStream;
 		} catch (Exception e) {
 		    ViewUserInterface.getReference().getMessageFrame().append("Error occured in addCell's calling method\n", ViewJFrameMessage.DEBUG);
 		    e.printStackTrace();
-		}
+		    
+		    if(contentStream != null) {
+            	try {
+					contentStream.close();
+				} catch (IOException e1) {
+					e.printStackTrace();
+					MipavUtil.displayError("Content stream could not be closed, please restart MIPAV.");
+				}
+            }
+			if( doc != null )
+            {
+                try {
+					doc.close();
+				} catch (IOException e1) {
+					e.printStackTrace();
+					MipavUtil.displayError("PDF document could not be closed, please restart MIPAV.");
+				}
+            }
+            return null;
+		} 
+			
 	}
 
 	/**
-	 * Adds a row to the PDF VOI Table
+	 * Adds a row to the PDF VOI Table, draw all applicable table lines, and place cursor at next row for printing
+	 * 
 	 * @param name the name of the area
 	 * @param fatArea the amount of fat area
 	 * @param leanArea amount of lean area
@@ -1461,44 +1503,32 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	 * @param meanTotalH mean total area HU
 	 */
 	protected void PDFadd(String name, double fatArea, double leanArea, double totalAreaCount, 
-			double meanFatH, double meanLeanH, double meanTotalH, PdfPTable aTable) {
+			double meanFatH, double meanLeanH, double meanTotalH, PDPageContentStream contentStream) {
 		
-	    try {
-			Font fontNormal = FontFactory.getFont("Helvetica", 10, Font.NORMAL, Color.DARK_GRAY);
-			if (name.endsWith(".xml")) {
-				name = name.substring(0, name.length() - 4);
-			}
-			if(name == null) {
-			    name = new String("Removed");
-			    ViewUserInterface.getReference().getMessageFrame().append("Unexpected null encountered\n", ViewJFrameMessage.DEBUG);
-			}
-			ViewUserInterface.getReference().getMessageFrame().append("To test: "+name+"\n", ViewJFrameMessage.DEBUG);
-			DecimalFormat dec = new DecimalFormat("0.00");
-			
-			//name of area
-			aTable.addCell(new Paragraph( name, fontNormal) );
-				
-			//total area
-			aTable.addCell(new Paragraph( dec.format(totalAreaCount), fontNormal) );
-				
-			//fat area
-			aTable.addCell(new Paragraph( dec.format(fatArea), fontNormal) );
-			
-			//lean area
-			aTable.addCell(new Paragraph( dec.format(leanArea), fontNormal) );
-				
-			//fat HU
-			aTable.addCell(new Paragraph( dec.format(meanFatH), fontNormal) );
-				
-			//lean HU
-			aTable.addCell(new Paragraph( dec.format(meanLeanH), fontNormal) );
-				
-			//total HU
-			aTable.addCell(new Paragraph( dec.format(meanTotalH), fontNormal) );
-			
-			imageTable = new PdfPTable(2);
-			imageTable.addCell("LUT Image");
-			imageTable.addCell("VOI Image");
+		ViewUserInterface.getReference().getMessageFrame().append("To test: "+name+"\n", ViewJFrameMessage.DEBUG);
+		DecimalFormat dec = new DecimalFormat("0.00");
+		try {
+			contentStream.setFont(PDType1Font.HELVETICA, 12);
+	    	contentStream.drawString(name);
+	    	contentStream.moveTextPositionByAmount(125, 0);
+	    	
+	    	contentStream.drawString(dec.format(totalAreaCount));
+	    	contentStream.moveTextPositionByAmount(50, 0);
+	    	
+	    	contentStream.drawString(dec.format(fatArea));
+	    	contentStream.moveTextPositionByAmount(50, 0);
+	    	
+	    	contentStream.drawString(dec.format(leanArea));
+	    	contentStream.moveTextPositionByAmount(50, 0);
+	    	
+	    	contentStream.drawString(dec.format(meanFatH));
+	    	contentStream.moveTextPositionByAmount(50, 0);
+	    	
+	    	contentStream.drawString(dec.format(meanLeanH));
+	    	contentStream.moveTextPositionByAmount(50, 0);
+	    	
+	    	contentStream.drawString(dec.format(meanTotalH));
+	    	contentStream.moveTextPositionByAmount(-375, -13);
 					
 		} catch (Exception e) {
 		    ViewUserInterface.getReference().getMessageFrame().append("Error adding PDF element.\n", ViewJFrameMessage.DEBUG);
@@ -3746,8 +3776,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			}
 			
 			//if PDF hasnt been created and we're saving, create it now
+			PDPageContentStream contentStream = null;
 			if (doSave && !pdfCreated) {
-				PDFcreate(pdfFileDir, pdfFileName);
+				contentStream = PDFcreate(pdfFileDir, pdfFileName);
 				pdfCreated = true;
 			}
 			Iterator<String> itr;
@@ -3773,8 +3804,86 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		    	}
 				itr = totalList.iterator();
 			}
-				
 			
+			PDPageContentStream[] contentStreamAr = null;
+			String unit = FileInfoBase.getUnitsOfMeasureAbbrevStr(
+					FileInfoBase.getUnitsOfMeasureFromStr(
+							((AnalysisDialogPrompt)tabs[resultTabLoc]).getSelectedOutput()));
+			String type = new String();
+			try {
+				//create page headers
+				contentStream.beginText();
+				contentStream.moveTextPositionByAmount(100, 450);
+				contentStream.setFont(PDType1Font.HELVETICA_BOLD, 16);
+				if(multipleSlices) {
+					contentStream.drawString("Volume calculations");
+					type = "Vol";	
+				} else {
+					contentStream.drawString("Area calculations");
+					type = "Area";
+				}
+				
+				//setting up first row
+				contentStream.moveTextPositionByAmount(0, -16);
+				contentStream.setFont(PDType1Font.HELVETICA_BOLD, 12);
+				
+				if(multipleSlices) {
+					contentStream.drawString("Volume ("+unit+"^3)");
+				} else {
+					contentStream.drawString("Area ("+unit+"^2)");
+				}
+				contentStream.setFont(PDType1Font.HELVETICA, 12);
+				contentStream.moveTextPositionByAmount(50, 0);
+				contentStream.drawString("Total "+type);
+				contentStream.moveTextPositionByAmount(20, 0);
+				contentStream.drawString("Fat ");
+				contentStream.moveTextPositionByAmount(20, 0);
+				contentStream.drawString("Lean "+type);
+				contentStream.moveTextPositionByAmount(20, 0);
+				contentStream.drawString("Fat HU "+type);
+				contentStream.moveTextPositionByAmount(20, 0);
+				contentStream.drawString("Lean HU "+type);
+				contentStream.moveTextPositionByAmount(20, 0);
+				contentStream.drawString("Total HU "+type);
+				contentStream.moveTextPositionByAmount(-150, -13);
+				
+				if(doSave && multipleSlices) {
+					contentStreamAr = new PDPageContentStream[getActiveImage().getExtents()[2]];
+					for(int i=0; i<getActiveImage().getExtents()[2]; i++) {
+						PDPage page = new PDPage();
+						doc.addPage(page);
+						contentStreamAr[i] = new PDPageContentStream(doc, page);
+						contentStreamAr[i].setFont(PDType1Font.HELVETICA_BOLD, 16);
+						contentStreamAr[i].beginText();
+						contentStreamAr[i].moveTextPositionByAmount(100, 650);
+						contentStreamAr[i].drawString("Slice "+i);
+						
+						//setting up first row
+						contentStreamAr[i].moveTextPositionByAmount(0, -16);
+						contentStreamAr[i].setFont(PDType1Font.HELVETICA_BOLD, 12);
+						contentStreamAr[i].drawString("Area ("+unit+"^2)");
+						contentStreamAr[i].setFont(PDType1Font.HELVETICA, 12);
+						contentStreamAr[i].moveTextPositionByAmount(125, 0);
+						contentStreamAr[i].drawString("Total "+type);
+						contentStreamAr[i].moveTextPositionByAmount(50, 0);
+						contentStreamAr[i].drawString("Fat ");
+						contentStreamAr[i].moveTextPositionByAmount(50, 0);
+						contentStreamAr[i].drawString("Lean "+type);
+						contentStreamAr[i].moveTextPositionByAmount(50, 0);
+						contentStreamAr[i].drawString("Fat HU "+type);
+						contentStreamAr[i].moveTextPositionByAmount(50, 0);
+						contentStreamAr[i].drawString("Lean HU "+type);
+						contentStreamAr[i].moveTextPositionByAmount(50, 0);
+						contentStreamAr[i].drawString("Total HU "+type);
+						contentStreamAr[i].moveTextPositionByAmount(-375, -13);
+						
+					}
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+			//run through the calculations
 			while(itr.hasNext()) {
 				Object itrObj = itr.next();
 				double totalAreaCount = 0, fatArea = 0, leanArea = 0;//, partialArea = 0;
@@ -3792,8 +3901,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 					
 					ViewUserInterface.getReference().getMessageFrame().append("Compare areas of "+temp.getName()+":\tcount: "+totalAreaCount+"\n", ViewJFrameMessage.DEBUG);
 					
-					if (doSave) {
-						PDFadd((String)itrObj, fatArea, leanArea, totalAreaCount, meanFatH, meanLeanH, meanTotalH, wholeTable);
+					if (doSave) { //prints to pdf and text file
+
+						PDFadd((String)itrObj, fatArea, leanArea, totalAreaCount, meanFatH, meanLeanH, meanTotalH, contentStream);
 						if(multipleSlices) {
 							for(int i=0; i<getActiveImage().getExtents()[2]; i++) {
 								totalAreaCount = temp.getTotalArea(i);
@@ -3803,13 +3913,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 								meanLeanH = temp.getMeanLeanH(i);
 								meanTotalH = temp.getMeanTotalH(i);
 								
-								PDFadd((String)itrObj, fatArea, leanArea, totalAreaCount, meanFatH, meanLeanH, meanTotalH, sliceTable[i]);
+								PDFadd((String)itrObj, fatArea, leanArea, totalAreaCount, meanFatH, meanLeanH, meanTotalH, contentStreamAr[i]);
 							}
 						}
-					} else {
+					} else { //prints to MIPAV output
 						DecimalFormat dec = new DecimalFormat("0.##");
 						StringBuffer build = new StringBuffer();
-						String type = multipleSlices ? "Volume" : "Area";
 						
 						build.append(itrObj).append(" calculations:\n"+"Fat ").append(type).append(": ").append(dec.format(fatArea)).append(
 						"\t\t\t\tMean H: ").append(dec.format(meanFatH)+"\nLean ").append(type).append(": ").append(dec.format(leanArea)).append(
@@ -3870,7 +3979,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				loadLUT();
 				java.awt.Image qaImage = captureImage();
 				removeLUT();
-				PDFclose(edgeImage, qaImage);
+
+				PDFclose(edgeImage, qaImage, contentStream, contentStreamAr);
 				
 				Set<String> keys = checkBoxLocationTree.keySet();
 				Iterator<String> iter = keys.iterator();
