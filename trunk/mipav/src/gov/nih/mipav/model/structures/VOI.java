@@ -1608,6 +1608,7 @@ public class VOI extends ModelSerialCloneable {
 
         curve.importArrays(x, y, z, x.length);
         curve.setGroup(this);
+        curve.getGeometricCenter();
         curves.addElement(curve);
 
         if ((curveType == POINT) || (curveType == POLYLINE_SLICE)) {
@@ -1639,6 +1640,7 @@ public class VOI extends ModelSerialCloneable {
 
         curve.importArrays(x, y, z, x.length);
         curve.setGroup(this);
+        curve.getGeometricCenter();
         curves.addElement(curve);
 
         if (curveType == POINT) {
@@ -1671,6 +1673,7 @@ public class VOI extends ModelSerialCloneable {
 
         curve.importPoints(pt);
         curve.setGroup(this);
+        curve.getGeometricCenter();
         curves.addElement(curve);
 
         if (curveType == POINT) {
@@ -1686,6 +1689,7 @@ public class VOI extends ModelSerialCloneable {
      */
     public void importCurve(VOIBase curve) {
         curve.setGroup(this);
+        curve.getGeometricCenter();
         curves.addElement(curve.clone());
 
         if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
@@ -1762,6 +1766,7 @@ public class VOI extends ModelSerialCloneable {
 
         contour.importPolygon(gon, slice);
         contour.setGroup(this);
+        contour.getGeometricCenter();
         curves.addElement(contour);
         ((VOIContour) (curves.lastElement())).setLabel(String.valueOf(elementLabel++));
     }

@@ -828,6 +828,10 @@ public class MipavCoordinateSystems {
         MipavCoordinateSystems.toLPS(kImage, axisOrder, axisFlip);
 
         final float[] afUpperLeft = kImage.getOrigin();
+        if ( kImage.getExtents().length < 3 )
+        {
+            return new Vector3f( afUpperLeft[0], afUpperLeft[1], afUpperLeft[2] );
+        }
         final float[] afLowerRight = new float[3];
 
         final int[] extents = kImage.getExtents();

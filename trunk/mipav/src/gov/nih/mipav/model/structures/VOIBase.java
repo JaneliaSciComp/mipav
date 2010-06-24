@@ -882,11 +882,11 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @param XOR indicates that nested VOI contours will be exclusive ORed with other contours of the VOI 
      * @param polarity indicates if the VOI should mask ones or mask as zeros.
      */
-    public void fillVolume( BitSet kMask, int xDim, int yDim, boolean XOR, int polarity )
+    public Vector3f fillVolume( BitSet kMask, int xDim, int yDim, boolean XOR, int polarity )
     {
         if ( size() == 0 )
         {
-            return;
+            return new Vector3f(0,0,0);
         }
         getImageBoundingBox();
         if ( m_iPlane == NOT_A_PLANE )
@@ -910,7 +910,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             }
 
             outlineRegion(aaiCrossingPoints, aiNumCrossings, iXMin, iXMax);
-            fill(aaiCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax, (int)elementAt(0).Z, 
+            return fill(aaiCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax, (int)elementAt(0).Z, 
                     kMask, xDim, yDim, XOR, polarity );
         }
         else if ( m_iPlane == XPLANE )
@@ -929,7 +929,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             }
 
             outlineRegion_X(aaiCrossingPoints, aiNumCrossings, iYMin, iYMax);
-            fill_X(aaiCrossingPoints, aiNumCrossings, iYMin, iZMin, iYMax, iZMax, (int)elementAt(0).X, 
+            return fill_X(aaiCrossingPoints, aiNumCrossings, iYMin, iZMin, iYMax, iZMax, (int)elementAt(0).X, 
                     kMask, xDim, yDim, XOR, polarity );            
         }
         else
@@ -948,7 +948,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             }
 
             outlineRegion_Y(aaiCrossingPoints, aiNumCrossings, iXMin, iXMax);
-            fill_Y(aaiCrossingPoints, aiNumCrossings, iXMin, iZMin, iXMax, iZMax, (int)elementAt(0).Y, 
+            return fill_Y(aaiCrossingPoints, aiNumCrossings, iXMin, iZMin, iXMax, iZMax, (int)elementAt(0).Y, 
                     kMask, xDim, yDim, XOR, polarity );      
             
         }
@@ -1316,29 +1316,16 @@ public abstract class VOIBase extends Vector<Vector3f> {
             return gcPt;
         }  
         Vector3f[] kBounds = getImageBoundingBox();
-        int nPts = 0;
-        Vector3f kSum = new Vector3f();
-        for ( int z = (int)kBounds[0].Z; z <= (int)kBounds[1].Z; z++ )
-        {
-            for ( int y = (int)kBounds[0].Y; y <= (int)kBounds[1].Y; y++ )
-            {
-                for ( int x = (int)kBounds[0].X; x <= (int)kBounds[1].X; x++ )
-                {
-                    if ( contains( x, y, z ) )
-                    {
-                        nPts++;
-                        //kSum.X += x;
-                        //kSum.Y += y;
-                        //kSum.Z += z;
-                        kSum.Add( x, y, z );
-                    }
-                }
-            }
-        }
+
+        int xDim = (int)kBounds[1].X;
+        int yDim = (int)kBounds[1].Y;
+        int zDim = (int)kBounds[1].Z;
+        BitSet mask = new BitSet(xDim*yDim*zDim);                                                     
+        Vector3f kSum = fillVolume( mask, xDim, yDim, false, VOI.ADDITIVE );
+        int nPts = mask.cardinality();
         gcPt.X = MipavMath.round( kSum.X / nPts);
         gcPt.Y = MipavMath.round( kSum.Y / nPts);
         gcPt.Z = MipavMath.round( kSum.Z / nPts);        
-        m_bUpdateGeometricCenter = false;
         return gcPt;
     }
 
@@ -2018,10 +2005,11 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @param XOR indicates that nested VOI contours will be exclusive ORed with other contours of the VOI 
      * @param polarity indicates if the VOI should mask ones or mask as zeros.
      */
-    private void fill(int[][] aaiCrossingPoints, int[] aiNumCrossings,
+    private Vector3f fill(int[][] aaiCrossingPoints, int[] aiNumCrossings,
             int iXMin, int iYMin, int iXMax, int iYMax, int iZ, 
             BitSet kMask, int xDim, int yDim, boolean XOR, int polarity )
     {
+        Vector3f kSum = new Vector3f(0,0,0);
         int iColumn = 0;
         /* Loop over the bounding-box: */
         for (int iX = iXMin; iX < iXMax; iX++) {
@@ -2040,6 +2028,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
                 }
 
                 if (bInside == true) {
+                    kSum.Add(iX, iY, iZ);
                     if ( kMask != null )
                     {
                         int iIndex = iZ * xDim * yDim;
@@ -2061,6 +2050,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
 
             iColumn++;
         }
+        return kSum;
     }
 
 
@@ -2176,10 +2166,11 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @param XOR indicates that nested VOI contours will be exclusive ORed with other contours of the VOI 
      * @param polarity indicates if the VOI should mask ones or mask as zeros.
      */
-    private void fill_X(int[][] aaiCrossingPoints, int[] aiNumCrossings,
+    private Vector3f fill_X(int[][] aaiCrossingPoints, int[] aiNumCrossings,
             int iYMin, int iZMin, int iYMax, int iZMax, int iX, 
             BitSet kMask, int xDim, int yDim, boolean XOR, int polarity )
     {
+        Vector3f kSum = new Vector3f(0,0,0);
         int iColumn = 0;
         /* Loop over the bounding-box: */
         for (int iY = iYMin; iY < iYMax; iY++) {
@@ -2198,6 +2189,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
                 }
 
                 if (bInside == true) {
+                    kSum.Add(iX,iY,iZ);
                     if ( kMask != null )
                     {
                         int iIndex = iZ * xDim * yDim;
@@ -2219,6 +2211,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
 
             iColumn++;
         }
+        return kSum;
     }
 
     /**
@@ -2335,10 +2328,12 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @param XOR indicates that nested VOI contours will be exclusive ORed with other contours of the VOI 
      * @param polarity indicates if the VOI should mask ones or mask as zeros.
      */
-    private void fill_Y(int[][] aaiCrossingPoints, int[] aiNumCrossings,
+    private Vector3f fill_Y(int[][] aaiCrossingPoints, int[] aiNumCrossings,
             int iXMin, int iZMin, int iXMax, int iZMax, int iY, 
             BitSet kMask, int xDim, int yDim, boolean XOR, int polarity )
     {
+
+        Vector3f kSum = new Vector3f(0,0,0);
         int iColumn = 0;
         /* Loop over the bounding-box: */
         for (int iX = iXMin; iX < iXMax; iX++) {
@@ -2357,6 +2352,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
                 }
 
                 if (bInside == true) {
+                    kSum.Add(iX,iY,iZ);
                     if ( kMask != null )
                     {
                         int iIndex = iZ * xDim * yDim;
@@ -2378,6 +2374,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
 
             iColumn++;
         }
+        return kSum;
     }
 
     /**
