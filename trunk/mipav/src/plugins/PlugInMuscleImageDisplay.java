@@ -20,11 +20,6 @@ import gov.nih.mipav.view.dialogs.JDialogVOIStatistics;
 import gov.nih.mipav.view.dialogs.JDialogVOIStats;
 import gov.nih.mipav.view.dialogs.JDialogWinLevel;
 
-import com.lowagie.text.*;
-import com.lowagie.text.Font;
-import com.lowagie.text.Image;
-import com.lowagie.text.pdf.*;
-
 import java.awt.*;
 import java.awt.Rectangle;
 import java.awt.event.*;
@@ -70,14 +65,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
     //~ Instance fields ------------------------------------------------------------------------------------------------    
     
 
-    /**For writing PDF docs below. */
-    private Document pdfDocument = null;
-	private PdfWriter pdfWriter = null;
+    /**For writing statistic PDF and text files. */
 	private File pdfFile = null;
 	private File textFile = null;
-	private PdfPTable wholeTable = null;
-	private PdfPTable[] sliceTable = null;
-	private PdfPTable imageTable = null;
     
     /** Location of the VOI tab. */
     private int voiTabLoc;
@@ -1254,7 +1244,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	protected void PDFclose(java.awt.Image edgeImage, java.awt.Image qaImage, 
 			PDPageContentStream contentStream, PDPageContentStream[] contentStreamAr) {
 			try {
-				Paragraph aPar = new Paragraph();
+				/*Paragraph aPar = new Paragraph();
 				aPar.setAlignment(Element.ALIGN_CENTER);
 				aPar.add(new Paragraph());
 				
@@ -1273,14 +1263,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				//pdfDocument.close();
 				//pdfWriter.close();
 				
-				if(((AnalysisDialogPrompt)tabs[resultTabLoc]).calcOutputSuccess()) {
-					MipavUtil.displayInfo("PDF saved to: " + pdfFile+"\nText saved to: "+textFile);
-					ViewUserInterface.getReference().getMessageFrame().append("PDF saved to: " + pdfFile + 
-												"\nText saved to: "+textFile+"\n", ViewJFrameMessage.DATA);
-				} else {
-					MipavUtil.displayError("<html>There was an error writing the output files.  "+
-							"<br>Please make sure the image location is still available:<br>"+textFile.getParent());
-				}
+				*/
 			
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -1300,6 +1283,15 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				
 				doc.save(pdfFile.toString());
 	            doc.close();
+	            
+	            if(((AnalysisDialogPrompt)tabs[resultTabLoc]).calcOutputSuccess()) {
+					MipavUtil.displayInfo("PDF saved to: " + pdfFile+"\nText saved to: "+textFile);
+					ViewUserInterface.getReference().getMessageFrame().append("PDF saved to: " + pdfFile + 
+												"\nText saved to: "+textFile+"\n", ViewJFrameMessage.DATA);
+				} else {
+					MipavUtil.displayError("<html>There was an error writing the output files.  "+
+							"<br>Please make sure the image location is still available:<br>"+textFile.getParent());
+				}
 			} catch(Exception e) {
 				e.printStackTrace();
 				MipavUtil.displayError("<html>There was an error writing the output files.  "+
@@ -1532,10 +1524,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 					
 		} catch (Exception e) {
 		    ViewUserInterface.getReference().getMessageFrame().append("Error adding PDF element.\n", ViewJFrameMessage.DEBUG);
-		    if(wholeTable == null) 
-			ViewUserInterface.getReference().getMessageFrame().append("aTable\n", ViewJFrameMessage.DEBUG);
-		    if(name == null) 
-			ViewUserInterface.getReference().getMessageFrame().append("name\n", ViewJFrameMessage.DEBUG);
 		    e.printStackTrace();
 		}
 	}
