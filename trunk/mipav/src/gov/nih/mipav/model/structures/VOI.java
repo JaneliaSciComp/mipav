@@ -1872,6 +1872,7 @@ public class VOI extends ModelSerialCloneable {
      * @param  zM     amount in pixels to move the line in the z direction
      */
     public void moveVOI(int slice, int xDim, int yDim, int zDim, int xM, int yM, int zM) {
+    	System.out.println("Yo");
         if (fixed || curveType != POINT) {
             return;
         }
