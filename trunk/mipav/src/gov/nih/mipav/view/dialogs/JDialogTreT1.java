@@ -1001,10 +1001,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
     		Nsa = (int) Double.valueOf(spgrNumFA.getText()).doubleValue();
     		
     		treFA = new double[Nsa];
-    	    if (Nsa == 2) {
-    	        treFA[0] = 4.00;
-    	        treFA[1] = 18.0;
-    	    }
+
     	    spgrImageIndex = new int[Nsa];
     	    
     	    spgrData = new double[Nsa];
@@ -1016,6 +1013,14 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 		
 	    //set Hifi
     	try {
+    		irspgrTI = new double[Nti];
+
+	        irspgrTr = new double[Nti];
+	        irspgrImageIndex = new int[Nti];
+	        irspgrData = new double[Nti];
+	        
+	        irspgrTR = treTR;
+    		
     		Nti = (int) Double.valueOf(irspgrNum.getText()).doubleValue();
     	} catch(Exception e) { 
     		if(process && performTreT1HIFI) {
