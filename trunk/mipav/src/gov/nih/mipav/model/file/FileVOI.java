@@ -305,7 +305,7 @@ public class FileVOI extends FileXML {
                 currentVOI = VOIs.VOIAt(i);
 
                 if ( (currentVOI.getCurveType() == VOI.ANNOTATION) && (writeAll || currentVOI.isActive())) {
-System.out.println("aaa");
+
                     curves = currentVOI.getCurves();
 
                     //for (int j = 0; j < curves.length; j++) {
@@ -394,7 +394,7 @@ System.out.println("aaa");
      * 
      * @throws IOException exception thrown if there is an error writing the file
      */
-    public void writeAnnotationInVoiAsXML(boolean saveAllContours, final boolean writeAllFromImage)
+    public void writeAnnotationInVoiAsXML(boolean writeAllInSameFile, final boolean writeAllFromImage)
             throws IOException {
         FileWriter fw;
         while (file.exists() == true) {
@@ -455,11 +455,12 @@ System.out.println("aaa");
 
             arrowPtScanner = new Vector3f();
             textPtScanner = new Vector3f();
-            boolean writeInfo = true;
+
             for (int i = 0; i < numVOIs; i++) {
                 currentVOI = VOIs.VOIAt(i);
 
                 if (currentVOI.getCurveType() == VOI.ANNOTATION && (writeAllFromImage || currentVOI.isActive())) {
+
                     curves = currentVOI.getCurves();
 
                     //for (int j = 0; j < curves.length; j++) {
@@ -467,78 +468,75 @@ System.out.println("aaa");
                         for (int k = 0; k < curves.size(); k++) {
 
                             vText = (VOIText) curves.elementAt(k);
-                            if(!saveAllContours) {
-                            	if(vText.isActive()) {
-                                	writeInfo = true;
-                                }else {
-                                	writeInfo = false;
+                            voiString = vText.getText();
+                            noteString = vText.getNote();
+                            doNote = !noteString.equals(JDialogAnnotation.DEFAULT_NOTES) && noteString.length() > 0;
+
+                            // System.out.println("VOI Name: "+voiString+"\tfile: "+file.getName());
+                            if (writeAllInSameFile
+                                    || ( !writeAllInSameFile && voiString.equals(file.getName().substring(0,
+                                            file.getName().lastIndexOf('.'))))) {
+
+                                openTag("Label", true);
+
+                                // there's only one per VOI, but
+                                voiColor = vText.getColor();
+                                voiBackgroundColor = vText.getBackgroundColor();
+                                textPt = vText.elementAt(0);
+                                arrowPt = vText.elementAt(1);
+                                useMarker = vText.useMarker();
+                                fontSize = vText.getFontSize();
+                                fontName = vText.getFontName();
+                                fontDescriptors = vText.getFontDescriptors();
+
+                                closedTag("Text", voiString);
+                                if (doNote) {
+                                    closedTag("Note", noteString);
                                 }
+
+                                if (image.getNDims() > 2) {
+                                    MipavCoordinateSystems.fileToScanner(textPt, textPtScanner, image);
+                                    MipavCoordinateSystems.fileToScanner(arrowPt, arrowPtScanner, image);
+                                    closedTag("TextLocation", Float.toString(textPtScanner.X) + ","
+                                            + Float.toString(textPtScanner.Y) + "," + Float.toString(textPtScanner.Z));
+                                    closedTag("ArrowLocation", Float.toString(arrowPtScanner.X) + ","
+                                            + Float.toString(arrowPtScanner.Y) + "," + Float.toString(arrowPtScanner.Z));
+                                    // System.err.println("Text location: " + textPtScanner + ", arrow location: " +
+                                    // arrowPtScanner);
+                                } else {
+                                    //textPt.Z = j;
+                                    //arrowPt.Z = j;
+                                    closedTag("TextLocation", Float.toString(textPt.X) + "," + Float.toString(textPt.Y)
+                                            + "," + Float.toString(textPt.Z));
+                                    closedTag("ArrowLocation", Float.toString(arrowPt.X) + ","
+                                            + Float.toString(arrowPt.Y) + "," + Float.toString(arrowPt.Z));
+                                }
+
+                                closedTag("UseMarker", Boolean.toString(useMarker));
+
+                                closedTag("Color", Integer.toString(voiColor.getAlpha()) + ","
+                                        + Integer.toString(voiColor.getRed()) + ","
+                                        + Integer.toString(voiColor.getGreen()) + ","
+                                        + Integer.toString(voiColor.getBlue()));
+                                closedTag("BackgroundColor", Integer.toString(voiBackgroundColor.getAlpha()) + ","
+                                        + Integer.toString(voiBackgroundColor.getRed()) + ","
+                                        + Integer.toString(voiBackgroundColor.getGreen()) + ","
+                                        + Integer.toString(voiBackgroundColor.getBlue()));
+                                closedTag("FontName", fontName);
+                                closedTag("FontSize", Integer.toString(fontSize));
+
+                                if (fontDescriptors == Font.BOLD) {
+                                    closedTag("FontStyle", "BOLD");
+                                } else if (fontDescriptors == Font.ITALIC) {
+                                    closedTag("FontStyle", "ITALIC");
+                                } else if (fontDescriptors == (Font.BOLD + Font.ITALIC)) {
+                                    closedTag("FontStyle", "BOLDITALIC");
+                                } else {
+                                    closedTag("FontStyle", "");
+                                }
+
+                                openTag("Label", false);
                             }
-                           if(writeInfo) {
-	                            voiString = vText.getText();
-	                            noteString = vText.getNote();
-	                            doNote = !noteString.equals(JDialogAnnotation.DEFAULT_NOTES) && noteString.length() > 0;
-	
-	                                openTag("Label", true);
-	
-	                                // there's only one per VOI, but
-	                                voiColor = vText.getColor();
-	                                voiBackgroundColor = vText.getBackgroundColor();
-	                                textPt = vText.elementAt(0);
-	                                arrowPt = vText.elementAt(1);
-	                                useMarker = vText.useMarker();
-	                                fontSize = vText.getFontSize();
-	                                fontName = vText.getFontName();
-	                                fontDescriptors = vText.getFontDescriptors();
-	
-	                                closedTag("Text", voiString);
-	                                if (doNote) {
-	                                    closedTag("Note", noteString);
-	                                }
-	
-	                                if (image.getNDims() > 2) {
-	                                    MipavCoordinateSystems.fileToScanner(textPt, textPtScanner, image);
-	                                    MipavCoordinateSystems.fileToScanner(arrowPt, arrowPtScanner, image);
-	                                    closedTag("TextLocation", Float.toString(textPtScanner.X) + ","
-	                                            + Float.toString(textPtScanner.Y) + "," + Float.toString(textPtScanner.Z));
-	                                    closedTag("ArrowLocation", Float.toString(arrowPtScanner.X) + ","
-	                                            + Float.toString(arrowPtScanner.Y) + "," + Float.toString(arrowPtScanner.Z));
-	                                    // System.err.println("Text location: " + textPtScanner + ", arrow location: " +
-	                                    // arrowPtScanner);
-	                                } else {
-	                                    //textPt.Z = j;
-	                                    //arrowPt.Z = j;
-	                                    closedTag("TextLocation", Float.toString(textPt.X) + "," + Float.toString(textPt.Y)
-	                                            + "," + Float.toString(textPt.Z));
-	                                    closedTag("ArrowLocation", Float.toString(arrowPt.X) + ","
-	                                            + Float.toString(arrowPt.Y) + "," + Float.toString(arrowPt.Z));
-	                                }
-	
-	                                closedTag("UseMarker", Boolean.toString(useMarker));
-	
-	                                closedTag("Color", Integer.toString(voiColor.getAlpha()) + ","
-	                                        + Integer.toString(voiColor.getRed()) + ","
-	                                        + Integer.toString(voiColor.getGreen()) + ","
-	                                        + Integer.toString(voiColor.getBlue()));
-	                                closedTag("BackgroundColor", Integer.toString(voiBackgroundColor.getAlpha()) + ","
-	                                        + Integer.toString(voiBackgroundColor.getRed()) + ","
-	                                        + Integer.toString(voiBackgroundColor.getGreen()) + ","
-	                                        + Integer.toString(voiBackgroundColor.getBlue()));
-	                                closedTag("FontName", fontName);
-	                                closedTag("FontSize", Integer.toString(fontSize));
-	
-	                                if (fontDescriptors == Font.BOLD) {
-	                                    closedTag("FontStyle", "BOLD");
-	                                } else if (fontDescriptors == Font.ITALIC) {
-	                                    closedTag("FontStyle", "ITALIC");
-	                                } else if (fontDescriptors == (Font.BOLD + Font.ITALIC)) {
-	                                    closedTag("FontStyle", "BOLDITALIC");
-	                                } else {
-	                                    closedTag("FontStyle", "");
-	                                }
-	
-	                                openTag("Label", false);
-                           }
                         }
                     }
 

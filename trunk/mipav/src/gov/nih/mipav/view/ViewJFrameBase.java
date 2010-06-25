@@ -2296,7 +2296,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                     fileVOI.writeVOI(VOIs.VOIAt(i), true);
                 } else {
                     fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".lbl", voiDir, currentImage);
-                    fileVOI.writeAnnotationInVoiAsXML(true, true);
+                    fileVOI.writeAnnotationInVoiAsXML(false, true);
                 }
             }
 
@@ -2720,7 +2720,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                     fileVOI.writeVOI(VOIs.VOIAt(i), saveAllContours);
                 } else {
                     fileVOI = new FileVOI(VOIs.VOIAt(i) + ".lbl", imageA.getFileInfo(0).getFileDirectory(), imageA);
-                    fileVOI.writeAnnotationInVoiAsXML(saveAllContours, false);
+                    fileVOI.writeAnnotationInVoiAsXML(false, false);
                 }
             } else if (displayMode == ViewJFrameBase.IMAGE_B) {
                 VOIs = imageB.getVOIs();
@@ -2746,7 +2746,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                 } else {
                     fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".lbl", imageA.getFileInfo(0).getFileDirectory(),
                             imageB);
-                    fileVOI.writeAnnotationInVoiAsXML(saveAllContours, false);
+                    fileVOI.writeAnnotationInVoiAsXML(false, false);
                 }
             } else {
                 MipavUtil.displayError(" Cannot open VOI when viewing both images");
@@ -2857,7 +2857,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                 } else if (doPoint) {
                     fileVOI.writePointVOI(VOIs.VOIAt(i));
                 } else if (doAnnotation) {
-                    fileVOI.writeAnnotationInVoiAsXML(saveAllContours, false);
+                    fileVOI.writeAnnotationInVoiAsXML(true, false);
                 }
             } catch (final IOException error) {
                 MipavUtil.displayError("Error writing VOI");
@@ -2932,7 +2932,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                 } else if (doPoint) {
                     fileVOI.writePointVOI(VOIs.VOIAt(i));
                 } else if (doAnnotation) {
-                    fileVOI.writeAnnotationInVoiAsXML(saveAllContours, false);
+                    fileVOI.writeAnnotationInVoiAsXML(false, false);
                 }
             } catch (final IOException error) {
                 MipavUtil.displayError("Error writing VOI");
