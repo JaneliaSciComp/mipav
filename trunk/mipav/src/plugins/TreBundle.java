@@ -7,28 +7,28 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 
 /**
- * This is the bundle that represents the DESPOT package.  The accompanying files are stored in subfolders (or in
- * a jar, or as fully qualified names, MIPAV has no preference).  DESPOT1, DESPOT2, and any other DESPOT plugins
+ * This is the bundle that represents the TRE package.  The accompanying files are stored in subfolders (or in
+ * a jar, or as fully qualified names, MIPAV has no preference).  TRET1, TRET2, and any other TRE plugins
  * should be enumerated here and placed in the  
  * 
  * @author senseneyj
  *
  */
-public class DespotBundle extends PlugInBundle {
+public class TreBundle extends PlugInBundle {
 
     //a way for storing PlugInBundles that works well for large libraries
-    private static Vector<BundledPlugInInfo> despotPlugIns; 
+    private static Vector<BundledPlugInInfo> trePlugIns; 
     
     //a way for storing PlugInBundles that will be accessed frequently
-    private static Class<BundledPlugInInfo> despot1;
-    private static Class<BundledPlugInInfo> despot2;
+    private static Class<BundledPlugInInfo> treT1;
+    private static Class<BundledPlugInInfo> treT2;
     
     static {
         
-        despotPlugIns = new Vector<BundledPlugInInfo>();
+        trePlugIns = new Vector<BundledPlugInInfo>();
         
         final String[] category = new String[1];
-        category[0] = "Despot";
+        category[0] = "Tre";
         Vector<BundledPlugInInfo> v = new Vector<BundledPlugInInfo>();
         
         v.add(new BundledPlugInInfo() {
@@ -38,7 +38,7 @@ public class DespotBundle extends PlugInBundle {
             }
 
             public String getName() {
-                return "DESPOT1_MIPAV";
+                return "TRET1_MIPAV";
             }
         });
         
@@ -49,18 +49,18 @@ public class DespotBundle extends PlugInBundle {
             }
 
             public String getName() {
-                return "DESPOT2_MIPAV";
+                return "TRET2_MIPAV";
             }
         });
     }
     
     /**
-     * Provides a list of plugins that the DESPOT package includes.
+     * Provides a list of plugins that the TRE package includes.
      * 
      * @return A list of plugins that are bundled by this class.
      */
     public Vector<BundledPlugInInfo> getBundledPlugIns() {
-        return despotPlugIns;
+        return trePlugIns;
     }
     
     /**
@@ -73,7 +73,7 @@ public class DespotBundle extends PlugInBundle {
         
         String plugInName = new String();
         try{
-            Object thePlugIn = Class.forName("despot.PlugIn"+despotPlugIns.get(pluginIndex)).newInstance();
+            Object thePlugIn = Class.forName("tre.PlugIn"+trePlugIns.get(pluginIndex)).newInstance();
             if (thePlugIn instanceof PlugInGeneric) {
                 ((PlugInGeneric) thePlugIn).run();
             } else {
