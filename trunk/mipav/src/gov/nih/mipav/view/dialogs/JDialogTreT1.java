@@ -126,7 +126,6 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	private JTextField[] flipAngleAr;
 	private JTextField spgrRepTime;
 	private JTextField spgrNumFA;
-	private JTextField spgrNumFAHifi;
 	private JTextField irspgrNum;
 	private JRadioButton isGEButton;
 	private JRadioButton isSiemensButton;
@@ -166,6 +165,9 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	private JPanel generalThresholdPanel;
 	private JTabbedPane tab;
 	private JPanel irspgrGeneralPanel;
+	private JButton ok;
+	private JButton cancel;
+	private static final String SUCCESS = "Successful";
     
     /**
      * Empty constructor needed for dynamic instantiation.
@@ -206,6 +208,21 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
         String command = event.getActionCommand();
         Object source = event.getSource();
 
+        System.out.println("Pressed: "+command);
+        
+        if(command.equals("OK")) {
+        	
+        		String userError;
+        		if((userError = setUI(true)).equals(SUCCESS)) {
+        			if(validateUI()) {
+        				callAlgorithm();
+        			} else {
+        				MipavUtil.displayError("Validation check failed, please check console output.");
+        			}
+        		} else {
+        			MipavUtil.displayError(userError);
+        		}
+        }
         if (command.equals("Cancel")) {
             cAlgo.interrupt();
         } 
@@ -217,7 +234,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    panel.setBorder(MipavUtil.buildTitledBorder("HIFI information"));
 	    panel.setLayout(panelLayout);
 	    
-	    spgrNumFAHifi = guiBuilder.buildDecimalField("Number of SPGR Flip Angles:", Nsa);
+	    spgrNumFA = guiBuilder.buildDecimalField("Number of SPGR Flip Angles:", Nsa);
 	    irspgrNum = guiBuilder.buildDecimalField("Number of IR-SPGR TI Times:", Nti);
 	    isGEButton = guiBuilder.buildRadioButton("Scan Performed on a GE Scanner", geScanner);
 	    isSiemensButton = guiBuilder.buildRadioButton("Scan Performed on a Siemens Scanner", siemensScanner);
@@ -231,7 +248,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    scannerType.add(isSiemensButton);
 	    
 	    //guiHelp envelopes elements in JPanels, so need to add parent
-	    panel.add(spgrNumFAHifi.getParent(), panelLayout);
+	    panel.add(spgrNumFA.getParent(), panelLayout);
 	    panel.add(irspgrNum.getParent(), panelLayout);
 	    panel.add(isGEButton.getParent(), panelLayout);
 	    panel.add(isSiemensButton.getParent(), panelLayout);
@@ -261,10 +278,10 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    spgrImageComboBoxAr = new JComboBox[Nsa];
 	    flipAngleAr = new JTextField[Nsa];
 	    for (int i=0; i<Nsa; i++) {
-	        spgrImageComboBoxAr[i] = guiBuilder.buildComboBox("SPGR Image #"+i, titles, i);
+	        spgrImageComboBoxAr[i] = guiBuilder.buildComboBox("SPGR Image #"+(i+1), titles, i);
 	        panel.add(spgrImageComboBoxAr[i].getParent(), panelLayout);
 	        
-	        flipAngleAr[i] = guiBuilder.buildDecimalField("SPGR Flip Angle #"+i, 0);//treFA[i]);
+	        flipAngleAr[i] = guiBuilder.buildDecimalField("SPGR Flip Angle #"+(i+1), 0);//treFA[i]);
 	        panel.add(flipAngleAr[i].getParent(), panelLayout);
 	    }
 	    spgrRepTime = guiBuilder.buildDecimalField("SPGR Repetition Time (ms):", treTR);
@@ -281,11 +298,11 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    irspgrCombo = new JComboBox[Nti];
 	    irspgrField = new JTextField[Nti];
 	    for (int i=0; i<Nti; i++) {
-	        irspgrCombo[i] = guiBuilder.buildComboBox("IR-SPGR Image #"+i, titles, Nsa+i);
+	        irspgrCombo[i] = guiBuilder.buildComboBox("IR-SPGR Image #"+(i+1), titles, Nsa+i);
 	        panel.add(irspgrCombo[i].getParent(), panelLayout);
 	        
 	        double tiAdd = irspgrTI != null ? irspgrTI[i] : 0.0;
-	        irspgrField[i] = guiBuilder.buildDecimalField("IR-SPGR TI #"+i, tiAdd);
+	        irspgrField[i] = guiBuilder.buildDecimalField("IR-SPGR TI #"+(i+1), tiAdd);
 	        
 	        panel.add(irspgrField[i].getParent(), panelLayout);
 	    }
@@ -327,11 +344,11 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    irspgrCombo = new JComboBox[Nti];
 	    irspgrField = new JTextField[Nti];
 	    for (int i=0; i<Nti; i++) {
-	        irspgrCombo[i] = guiBuilder.buildComboBox("IR-SPGR Image #"+i, titles, i+2);
+	        irspgrCombo[i] = guiBuilder.buildComboBox("IR-SPGR Image #"+(i+1), titles, i+2);
 	        panel.add(irspgrCombo[i].getParent(), panelLayout);
 	        
 	        double tiAdd = irspgrTI != null ? irspgrTI[i] : 0.0;
-	        irspgrField[i] = guiBuilder.buildDecimalField("IR-SPGR TI #"+i, tiAdd);
+	        irspgrField[i] = guiBuilder.buildDecimalField("IR-SPGR TI #"+(i+1), tiAdd);
 	        
 	        panel.add(irspgrField[i].getParent(), panelLayout);
 	    }
@@ -621,6 +638,8 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    gbc.weighty = 0;
 	    
 	    add(guiBuilder.buildOKCancelPanel(), gbc);
+	    ok.addActionListener(this);
+	    cancel.addActionListener(this);
 	    setLocationRelativeTo(null);
 	    pack();
 	    setModal(true);
@@ -954,26 +973,6 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    }
 	    
 	    displayTotalDialog();
-	    
-	    //if (!showTotalDialog()) return;
-	    
-	    if (performTreT1HIFI == true) {
-	        //if (!showHIFIDialog()) return;
-	    }
-	    else {
-	        //if (!showConventionaltreT1Dialog()) return;
-	    }
-	
-	    System.out.println("number of flip angles: "+Nsa);
-	    
-	    treFA = new double[Nsa];
-	    if (Nsa == 2) {
-	        treFA[0] = 4.00;
-	        treFA[1] = 18.0;
-	    }
-	    spgrImageIndex = new int[Nsa];
-	    
-	    spgrData = new double[Nsa];
 	}
 
 	private void setProcessConvUI() {
@@ -988,38 +987,141 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
         performTreT1withPreCalculatedB1Map = false;
     }
     
-    
-    private boolean setUI() {
+    /**
+     * Sets UI variables for either saving between processing steps or later reuse.  When process is true, 
+     * null values cause an issue to be returned, when process is false (indicating UI variables are just
+     * being transferred between processing steps), no action is taken for null values
+     * 
+     * @param process
+     * @return
+     */
+    private String setUI(boolean process) {
 		//set conventional
-	    /*Nsa = (int) Double.valueOf(spgrNumFA.getText()).doubleValue();
+    	try {
+    		Nsa = (int) Double.valueOf(spgrNumFA.getText()).doubleValue();
+    		
+    		treFA = new double[Nsa];
+    	    if (Nsa == 2) {
+    	        treFA[0] = 4.00;
+    	        treFA[1] = 18.0;
+    	    }
+    	    spgrImageIndex = new int[Nsa];
+    	    
+    	    spgrData = new double[Nsa];
+    	} catch(Exception e) {
+    		if(process) {
+    			return "Number of spgr flip angles has not been set.";
+    		}
+    	}
 		
 	    //set Hifi
-	    Nsa = (int) Double.valueOf(spgrNumFAHifi.getText()).doubleValue();
-	    Nti = (int) Double.valueOf(irspgrNum.getText()).doubleValue();
-	
-	    geScanner = isGEButton.isSelected();
-	    siemensScanner = isSiemensButton.isSelected();
+    	try {
+    		Nti = (int) Double.valueOf(irspgrNum.getText()).doubleValue();
+    	} catch(Exception e) { 
+    		if(process && performTreT1HIFI) {
+    			return "Number of irspgr images has not been set.";
+    		}
+    	}
+    	
+    	try {
+		    geScanner = isGEButton.isSelected();
+		    siemensScanner = isSiemensButton.isSelected();
+		    doubleInversion = doubleInvRadio.isSelected();
+		    singleInversion = singleInvRadio.isSelected();
+		    onefiveTField = t15Radio.isSelected();
+		    threeTField = t30Radio.isSelected();
+		    smoothB1Field = smoothB1Box.isSelected();
+    	} catch(Exception e) { 
+    		if(process && performTreT1HIFI) {
+    			return "Invalid scanner information entered";
+    		}
+    	}
 	    
-		//set spgr
-		for(int i=0; i<Nsa; i++) {
-	        spgrImageIndex[i] = spgrImageComboBoxAr[i].getSelectedIndex();
-	        treFA[i] = Float.valueOf(flipAngleAr[i].getText()).floatValue();
-	    }
-	    treTR = Double.valueOf(spgrRepTime.getText()).doubleValue();
+    	//set t1Long
+    	try {
+		    if(performStraightTreT1 || performTreT1withPreCalculatedB1Map) {
+	    		if (performTreT1withPreCalculatedB1Map) {
+			        b1ImageIndex = b1Field.getSelectedIndex();
+			    }
+			    
+			    for (int i=0; i<Nsa; i++) {
+			        spgrImageIndex[i] = convimageComboAr[i].getSelectedIndex();
+			        treFA[i] = Float.valueOf(convFAFieldAr[i].getText()).floatValue();
+			    }
+			    
+			    treTR = Double.valueOf(convRepTime.getText()).doubleValue();
+		    }
+		    
+    	} catch(Exception e) {
+    		if(process && (performStraightTreT1 || performTreT1withPreCalculatedB1Map)) {
+    			System.out.println("In conventional");
+    			return "Conventional TRE variables not correctly entered.";
+    		}
+    	}
 	    
-	    //set irspgrGE and siemens
-	    for (int i=0; i<Nti; i++) {
-	        irspgrImageIndex[i] = irspgrCombo[i].getSelectedIndex();
-	        irspgrTI[i] = Double.valueOf(irspgrField[i].getText()).doubleValue();
+	    //set Specifics for both conv and general
+	    try {
+		    maxT1 = Double.valueOf(maxT1Field.getText()).doubleValue();
+		    maxMo = Double.valueOf(maxMoField.getText()).doubleValue();
+		    calculateT1 = showT1Map.isSelected();
+		    calculateMo = showMoMap.isSelected();
+		    showB1Map = showB1Check.isSelected();
+		    invertT1toR1 = showR1Map.isSelected();
+		    if (Nsa > 2) {
+		        useWeights = leastSquaresCheck.isSelected();
+		    }
+	    } catch(Exception e) {
+	    	return "Processing options have not been correctly set.";
 	    }
-	    irspgrTR = Double.valueOf(irspgrTRField.getText()).doubleValue();
-	    irspgrFA = Double.valueOf(irspgrFAField.getText()).doubleValue();
-	    irspgrKy = Double.valueOf(numSlicesField.getText()).doubleValue();
-	    doubleInversion = doubleInvRadio.isSelected();
-	    singleInversion = singleInvRadio.isSelected();
-	    onefiveTField = t15Radio.isSelected();
-	    threeTField = t30Radio.isSelected();
-	    smoothB1Field = smoothB1Box.isSelected();
+	    
+	    useSmartThresholding = smartCheckBox.isSelected();
+	    useHardThresholding = hardCheckBox.isSelected();
+	    
+	    String threshOutput;
+	    if(useSmartThresholding) {
+	    	if((!(threshOutput = setSmartThresholdUI(process)).equals(SUCCESS)) && process) {
+	    		return threshOutput;
+	    	}
+	    }
+	    if(useHardThresholding) {
+	    	if((!(threshOutput = setHardThresholdUI(process)).equals(SUCCESS)) && process) {
+	    		return threshOutput;
+	    	}
+	    }
+
+    	
+	    try {
+			//set spgr
+			for(int i=0; i<Nsa; i++) {
+		        spgrImageIndex[i] = spgrImageComboBoxAr[i].getSelectedIndex();
+		        treFA[i] = Float.valueOf(flipAngleAr[i].getText()).floatValue();
+		    }
+		    treTR = Double.valueOf(spgrRepTime.getText()).doubleValue();
+	    } catch(Exception e) {
+	    	if(process) {
+	    		return "Invalid spgr information entered";
+	    	}
+	    }
+	    
+	    try {
+		    //set irspgrGE and siemens
+		    for (int i=0; i<Nti; i++) {
+		        irspgrImageIndex[i] = irspgrCombo[i].getSelectedIndex();
+		        irspgrTI[i] = Double.valueOf(irspgrField[i].getText()).doubleValue();
+		    }
+		    irspgrTR = Double.valueOf(irspgrTRField.getText()).doubleValue();
+		    irspgrFA = Double.valueOf(irspgrFAField.getText()).doubleValue();
+		    irspgrKy = Double.valueOf(numSlicesField.getText()).doubleValue();
+	    } catch(Exception e) {
+	    	if(process) {
+	    		return "Invalid irspgr information entered.";
+	    	}
+	    }
+	    
+	    //setting defaults
+	    if (useSmartThresholding) {
+	        useHardThresholding = false;
+	    }
 	    
 	    if (doubleInversion == true) {
 	        singleInversion = false;
@@ -1035,90 +1137,71 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	        onefiveTField = false;
 	    }
 	    
-	    if (threeTField == true) {
-	        if (doubleInversion == true) {
-	            for (int i=0; i<Nti; i++) irspgrTI[i] = irspgrTI[i]*0.9;
-	            irspgrKy = (irspgrKy/2.00)+2.00;
-	        }
-	        else {
-	            for (int i=0; i<Nti; i++) irspgrTI[i] = irspgrTI[i]*0.9*0.93;
-	            irspgrKy = irspgrKy + 2.00;
-	        }
-	    }
-	    else {
-	        if (doubleInversion == true) {
-	            for (int i=0; i<Nti; i++) irspgrTI[i] = irspgrTI[i];
-	            irspgrKy = (irspgrKy/2.00)+2.00;
-	        }
-	        else {
-	            for (int i=0; i<Nti; i++) irspgrTI[i] = irspgrTI[i];
-	            irspgrKy = irspgrKy;
-	        }
-	    }
-	    
-	    for (int i=0; i<Nti; i++) {
-	    	irspgrTr[i] = irspgrTI[i] + irspgrTR*irspgrKy;
-	    }
-	    
-	    //set t1Long
-	    if (performTreT1withPreCalculatedB1Map) {
-	        b1ImageIndex = b1Field.getSelectedIndex();
-	    }
-	    
-	    for (int i=0; i<Nsa; i++) {
-	        spgrImageIndex[i] = convimageComboAr[i].getSelectedIndex();
-	        treFA[i] = Float.valueOf(convFAFieldAr[i].getText()).floatValue();
+	    //pre-processing
+	    if(process && performTreT1HIFI) {
+	    	System.out.println("In hifi");
+	    	try {
+			    if (threeTField == true) {
+			        if (doubleInversion == true) {
+			            for (int i=0; i<Nti; i++) irspgrTI[i] = irspgrTI[i]*0.9;
+			            irspgrKy = (irspgrKy/2.00)+2.00;
+			        }
+			        else {
+			            for (int i=0; i<Nti; i++) irspgrTI[i] = irspgrTI[i]*0.9*0.93;
+			            irspgrKy = irspgrKy + 2.00;
+			        }
+			    }
+			    else {
+			        if (doubleInversion == true) {
+			            for (int i=0; i<Nti; i++) irspgrTI[i] = irspgrTI[i];
+			            irspgrKy = (irspgrKy/2.00)+2.00;
+			        }
+			        else {
+			            for (int i=0; i<Nti; i++) irspgrTI[i] = irspgrTI[i];
+			            irspgrKy = irspgrKy;
+			        }
+			    }
+			    
+			    for (int i=0; i<Nti; i++) {
+			    	irspgrTr[i] = irspgrTI[i] + irspgrTR*irspgrKy;
+			    }
+	    	} catch(Exception e) {
+	    		return "IRSPGR information has not been fully entered.";
+	    	}
 	    }
 	    
-	    treTR = Double.valueOf(convRepTime.getText()).doubleValue();
-	    if (Nsa > 2) {
-	        useWeights = leastSquaresCheck.isSelected();
-	    }
-	    
-	    //set Specifics for both conv and general
-	    maxT1 = Double.valueOf(maxT1Field.getText()).doubleValue();
-	    maxMo = Double.valueOf(maxMoField.getText()).doubleValue();
-	    calculateT1 = showT1Map.isSelected();
-	    calculateMo = showMoMap.isSelected();
-	    showB1Map = showB1Check.isSelected();
-	    invertT1toR1 = showR1Map.isSelected();
-	    if (Nsa > 2) {
-	        useWeights = leastSquaresCheck.isSelected();
-	    }*/
-	    
-	    
-	    useSmartThresholding = smartCheckBox.isSelected();
-	    if(useSmartThresholding) {
-	    	setSmartThresholdUI();
-	    }
-	    useHardThresholding = hardCheckBox.isSelected();
-	    if(useHardThresholding) {
-	    	setHardThresholdUI();
-	    }
-	    if (useSmartThresholding) {
-	        useHardThresholding = false;
-	    }
-	    
-	    return true;
+	    return SUCCESS;
 	}
 
-	private void setHardThresholdUI() {
-		//hard threshold
-	    hardNoiseThreshold = Float.valueOf(hardNoiseField.getText()).floatValue();
+	private String setHardThresholdUI(boolean process) {
+		try {
+			//hard threshold
+		    hardNoiseThreshold = Float.valueOf(hardNoiseField.getText()).floatValue();
+		} catch(Exception e) {
+			if(process) {
+				return "Invalid hard threshold noise entered";
+			}
+		}
+		return SUCCESS;
 	}
 
-	private void setSmartThresholdUI() {
-		//smart noise threshold
-	    noiseScale = Float.valueOf(smartNoiseField.getText()).floatValue();
-	    upperLeftCorner = topLeftBox.isSelected();
-	    upperRightCorner = topRightBox.isSelected();
-	    lowerLeftCorner = bottomLeftBox.isSelected();
-	    lowerRightCorner = bottomRightBox.isSelected();
+	private String setSmartThresholdUI(boolean process) {
+		try {
+			//smart noise threshold
+		    noiseScale = Float.valueOf(smartNoiseField.getText()).floatValue();
+		    upperLeftCorner = topLeftBox.isSelected();
+		    upperRightCorner = topRightBox.isSelected();
+		    lowerLeftCorner = bottomLeftBox.isSelected();
+		    lowerRightCorner = bottomRightBox.isSelected();
+		} catch(Exception e) {
+			if(process) {
+				return "Invalid smart thresholding noise entered";
+			}
+		}
+		return SUCCESS;
 	}
 
 	private boolean validateUI() {
-		
-		//opening
 	
 	    //generic
 	    if (Nsa > wList.length) {
@@ -1186,8 +1269,9 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 			if (doConvTre.isSelected()) {
 				//showHIFIDialog();
 				setProcessHifiUI();
-	            setUI();
+	            setUI(false);
 	            
+	            setProcessConvUI();
 	            tab.removeAll();
 	            buildConventionalTabs();
 	            tab.updateUI();
@@ -1196,8 +1280,9 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	        if (doHifiTre.isSelected()) {
 	        	//showConventionalDialog();
 	        	setProcessConvUI();
-	            setUI();
+	            setUI(false);
 	            
+	            setProcessHifiUI();
 	            tab.removeAll();
 	            buildHIFITabs();
 	            tab.updateUI();
@@ -1220,13 +1305,13 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
     private class ThresholdChoiceListener implements ActionListener {
     	private void varSet() {
 			if (hardCheckBox.isSelected()) {
-				setSmartThresholdUI();
+				setSmartThresholdUI(false);
 				generalThresholdPanel.removeAll();
 				JPanel hardThreshold = buildHardThresholdPanel();
 				generalThresholdPanel.add(hardThreshold);
 				generalThresholdPanel.updateUI();
 	        } else if (smartCheckBox.isSelected()) {
-	        	setHardThresholdUI();
+	        	setHardThresholdUI(false);
 	        	generalThresholdPanel.removeAll();
 				JPanel smartThreshold = buildSmartThresholdPanel();
 				generalThresholdPanel.add(smartThreshold);
@@ -1337,7 +1422,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 
         private ExitStatus exit;
         
-        private JButton ok, cancel, yes, no;
+        private JButton yes, no;
         
         private JDialog parent;
         
