@@ -2351,7 +2351,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      * @param mouseEvent event that triggered function
      */
     public void mouseDragged(final MouseEvent mouseEvent) {
-
         final int mouseMods = mouseEvent.getModifiers();
 
         int xS, yS;
