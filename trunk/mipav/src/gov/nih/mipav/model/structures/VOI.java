@@ -884,7 +884,7 @@ public class VOI extends ModelSerialCloneable {
 
                 if (!onlyActive || ((VOIContour) (curves.elementAt(i))).isActive()) {
 
-                    curves.elementAt(i).fillVolume( mask, xDim, yDim, XOR, polarity );     
+                    curves.elementAt(i).setMask( mask, xDim, yDim, XOR, polarity );     
                 }
             }
         } else if ((process == true) && (curveType == POINT)) {
@@ -2135,7 +2135,7 @@ public class VOI extends ModelSerialCloneable {
     public void setCurveType(int curveType) {
         this.curveType = curveType;
     }
-
+    
     /**
      * Accessor that sets the display mode to the parameter.
      *

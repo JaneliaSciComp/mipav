@@ -60,6 +60,7 @@ public interface VOIHandlerInterface extends ActionListener, MouseInputListener
     public void resetLivewire();
     public void selectAllContours();
     public void selectAllVOIs(boolean doSelect);
+    public void setCenter( Vector3f center );
     public void setCenter( Vector3f center, boolean bParent );
     public void setGraphVisible();
     public void setImageGraphBuffer(float[] buf);
