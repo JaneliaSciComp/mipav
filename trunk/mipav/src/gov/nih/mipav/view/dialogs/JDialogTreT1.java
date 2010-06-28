@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 import java.awt.BorderLayout;
 
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Frame;
@@ -18,16 +19,19 @@ import java.util.Enumeration;
 
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
+import javax.swing.ListCellRenderer;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmTreT1;
@@ -277,6 +281,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    gbc.gridx = 0;
 	    gbc.gridy = 0;
 	    gbc.weighty = 0;
+	    gbc.weightx = 1;
 	    gbc.anchor = GridBagConstraints.WEST;
 	    panel.add(spgrNumFA.getParent(), gbc);
 	    gbc.gridy++;
@@ -306,7 +311,9 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    
 	    gbc.gridx = 0;
 	    gbc.gridy = 0;
+	    gbc.weightx = 1;
 	    gbc.anchor = GridBagConstraints.WEST;
+	    gbc.insets = new Insets(10, 0, 0, 0);
 	    spgrNumFA = guiBuilder.buildDecimalField("Number of SPGR Flip Angles:", Nsa);
 	    
 	    panel.add(spgrNumFA.getParent(), gbc);
@@ -331,6 +338,8 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    gbc.anchor = GridBagConstraints.WEST;
 	    gbc.gridy = 0;
 	    gbc.weighty = 0;
+	    gbc.weightx = 1;
+	    
 	    spgrImageComboBoxAr = new JComboBox[Nsa];
 	    flipAngleAr = new JTextField[Nsa];
 	    for (int i=0; i<Nsa; i++) {
@@ -339,12 +348,14 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	        gbc.gridx = 0;
 	        gbc.weightx = .9;
 	        panel.add(spgrImageComboBoxAr[i].getParent(), gbc);
-	        
-	        flipAngleAr[i] = guiBuilder.buildDecimalField("SPGR Flip Angle #"+(i+1), 0);//treFA[i]);
+	       
+	        double tiAdd = treFA != null && treFA.length > i ? treFA[i] : 0.0;
+	        flipAngleAr[i] = guiBuilder.buildDecimalField("SPGR Flip Angle #"+(i+1), tiAdd);
 	        gbc.gridx = 1;
 	        gbc.weightx = .1;
 	        panel.add(flipAngleAr[i].getParent(), gbc);
 	    }
+	    
 	    spgrRepTime = guiBuilder.buildDecimalField("SPGR Repetition Time (ms):", treTR);
 	    
 	    gbc.weightx = 1;
@@ -378,21 +389,23 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    gbc.anchor = GridBagConstraints.WEST;
 	    gbc.gridy = 0;
 	    gbc.weighty = 0;
+	    gbc.weightx = 1;
+	    
 	    irspgrCombo = new JComboBox[Nti];
-	    irspgrField = new JTextField[Nti];
+	    irspgrField  = new JTextField[Nti];
 	    for (int i=0; i<Nti; i++) {
 	        
 	    	irspgrCombo[i] = guiBuilder.buildComboBox("IR-SPGR Image #"+(i+1), titles, Nsa+i);
 	    	gbc.gridy = i;
 	        gbc.gridx = 0;
-	        gbc.weightx = .9;
+	        gbc.weightx = 1;
 	    	panel.add(irspgrCombo[i].getParent(), gbc);
 	        
-	        double tiAdd = irspgrTI != null ? irspgrTI[i] : 0.0;
+	        double tiAdd = irspgrTI != null && irspgrTI.length > i ? irspgrTI[i] : 0.0;
 	        irspgrField[i] = guiBuilder.buildDecimalField("IR-SPGR TI #"+(i+1), tiAdd);
 	        
 	        gbc.gridx = 1;
-	        gbc.weightx = .1;
+	        gbc.weightx = 0;
 	        panel.add(irspgrField[i].getParent(), gbc);
 	    }
 	    
@@ -431,7 +444,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    gbc.insets = new Insets(0, 0, 0, 0);
 	    panel.add(singleInvRadio.getParent(), gbc);
 	    gbc.gridy++;
-	    gbc.insets = new Insets(20, 0, 0, 0);
+	    gbc.insets = new Insets(10, 0, 0, 0);
 	    panel.add(t15Radio.getParent(), gbc);
 	    gbc.gridy++;
 	    gbc.insets = new Insets(0, 0, 0, 0);
@@ -463,6 +476,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    gbc.anchor = GridBagConstraints.WEST;
 	    gbc.gridy = 0;
 	    gbc.weighty = 0;
+	    gbc.weightx = 1;
 	    
 	    irspgrCombo = new JComboBox[Nti];
 	    irspgrField = new JTextField[Nti];
@@ -473,7 +487,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	        gbc.weightx = .9;
 	        panel.add(irspgrCombo[i].getParent(), gbc);
 	        
-	        double tiAdd = irspgrTI != null ? irspgrTI[i] : 0.0;
+	        double tiAdd = irspgrTI != null && irspgrTI.length > i ? irspgrTI[i] : 0.0;
 	        irspgrField[i] = guiBuilder.buildDecimalField("IR-SPGR TI #"+(i+1), tiAdd);
 	        
 	        gbc.gridx = 1;
@@ -516,7 +530,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    gbc.insets = new Insets(0, 0, 0, 0);
 	    panel.add(singleInvRadio.getParent(), gbc);
 	    gbc.gridy++;
-	    gbc.insets = new Insets(20, 0, 0, 0);
+	    gbc.insets = new Insets(10, 0, 0, 0);
 	    panel.add(t15Radio.getParent(), gbc);
 	    gbc.gridy++;
 	    gbc.insets = new Insets(0, 0, 0, 0);
@@ -549,6 +563,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    gbc.anchor = GridBagConstraints.WEST;
 	    gbc.gridy = 0;
 	    gbc.weighty = 0;
+	    gbc.weightx = 1;
 	    b1Field = null;
 	    if(performTreT1withPreCalculatedB1Map) {
 	    	gbc.gridy++;
@@ -565,7 +580,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	        gbc.weightx = .9;
 	        panel.add(convimageComboAr[i].getParent(), gbc);
 	        
-	        double faAdd = treFA != null ? treFA[i] : 0.0;
+	        double faAdd = treFA != null && treFA.length > i ? treFA[i] : 0.0;
 	        convFAFieldAr[i] = guiBuilder.buildDecimalField("Flip Angle #"+i, faAdd);
 	        
 	        gbc.gridx = 1;
@@ -577,6 +592,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    gbc.gridwidth = 2;
 	    gbc.gridy++;
 	    gbc.gridx = 0;
+	    gbc.insets = new Insets(10, 0, 0, 0);
 	    convRepTime = guiBuilder.buildDecimalField("Repetition Time (ms):", treTR);
 	    panel.add(convRepTime.getParent(), gbc);
 	    
@@ -609,6 +625,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    gbc.anchor = GridBagConstraints.NORTHWEST;
 	    gbc.gridy = 0;
 	    gbc.weighty = 0;
+	    gbc.weightx = 1;
 	    if(Nsa > 2) {
 	        leastSquaresCheck = guiBuilder.buildCheckBox("Calculate T1 Using Weigthed Least-Squares", useWeights);
 	        panel.add(leastSquaresCheck.getParent(), gbc);
@@ -620,8 +637,10 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    gbc.gridy++;
 	    panel.add(maxMoField.getParent(), gbc);
 	    gbc.gridy++;
+	    gbc.insets = new Insets(10, 0, 0, 0);
 	    panel.add(showT1Map.getParent(), gbc);
 	    gbc.gridy++;
+	    gbc.insets = new Insets(0, 0, 0, 0);
 	    panel.add(showMoMap.getParent(), gbc);
 	    gbc.gridy++;
 	    panel.add(showR1Map.getParent(), gbc);
@@ -675,9 +694,9 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    
 	    gbc.gridx = 0;
 	    gbc.gridy = 0;
+	    gbc.weightx = 1;
 	    gbc.fill = GridBagConstraints.NONE;
 	    gbc.anchor = GridBagConstraints.WEST;
-	    gbc.weighty = 0;
 	    panel.add(methodPanel, gbc);
 	    
 	    generalThresholdPanel = new JPanel();
@@ -696,11 +715,13 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    
 	    gbc.gridy = 1;
 	    gbc.weighty = 0;
+	    gbc.insets = new Insets(20, 0, 0, 0);
 	    panel.add(generalThresholdPanel, gbc);
 	    
 	    //TODO: Remove dummy label for display
 	    gbc.gridy++;
 	    gbc.weighty = 1;
+	    gbc.insets = new Insets(0, 0, 0, 0);
 	    panel.add(new JLabel(""), gbc);
 	    
 	    return panel;
@@ -728,6 +749,8 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    gbc.anchor = GridBagConstraints.WEST;
 	    gbc.gridy = 0;
 	    gbc.weighty = 0;
+	    gbc.weightx = 1;
+	    
 	    panel.add(maxT1Field.getParent(), gbc);
 	    gbc.gridy++;
 	    panel.add(maxMoField.getParent(), gbc);
@@ -1815,10 +1838,12 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
             JLabel label = new JLabel(labelText);
             JComboBox comboBox = null;
             if(options != null) {
+            	
             	comboBox = new JComboBox(options);
             } else {
             	comboBox = new JComboBox(new String[]{"a", "B"});
             }
+         
             panel.add(label);
             panel.add(comboBox);
             return comboBox;
@@ -1830,7 +1855,24 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
             if(numDefault > comboBox.getItemCount()-1) {
             	numDefault = 0;
             }
-            comboBox.setSelectedIndex(numDefault);
+            //TODO: get renderer to truncate long names
+            /*comboBox.setRenderer(new ListCellRenderer() {
+            	DefaultListCellRenderer defaultRenderer = new DefaultListCellRenderer();
+            	
+				public Component getListCellRendererComponent(JList list,
+						Object value, int index, boolean isSelected,
+						boolean cellHasFocus) {
+					JLabel renderer = (JLabel) defaultRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+					if(index == -1 && value.toString().length() > 23) {
+						renderer.setText(value.toString().substring(0, 23)+"...");
+					} else {
+						//renderer.setBounds(0, 0, 300, 20);
+					}
+					System.out.println(value+" "+index);
+					return renderer;
+				
+				}	
+            });*/
             return comboBox;
         }
         
