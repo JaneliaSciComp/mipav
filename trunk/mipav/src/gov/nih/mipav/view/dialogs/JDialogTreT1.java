@@ -7,6 +7,7 @@ import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -244,13 +245,18 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
     		}
         }
         if (command.equals("Cancel")) {
-            cAlgo.interrupt();
+           if(cAlgo != null) {
+        	   cAlgo.interrupt();
+           } else {
+        	   this.dispose();
+           }
         } 
     }
 
     protected JPanel buildHIFIPanel() {
 	    JPanel panel = new JPanel();
-	    LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
+	    LayoutManager panelLayout = new GridBagLayout();
+	    GridBagConstraints gbc = new GridBagConstraints();
 	    panel.setBorder(MipavUtil.buildTitledBorder("HIFI information"));
 	    panel.setLayout(panelLayout);
 	    
@@ -268,10 +274,25 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    scannerType.add(isSiemensButton);
 	    
 	    //guiHelp envelopes elements in JPanels, so need to add parent
-	    panel.add(spgrNumFA.getParent(), panelLayout);
-	    panel.add(irspgrNum.getParent(), panelLayout);
-	    panel.add(isGEButton.getParent(), panelLayout);
-	    panel.add(isSiemensButton.getParent(), panelLayout);
+	    gbc.gridx = 0;
+	    gbc.gridy = 0;
+	    gbc.weighty = 0;
+	    gbc.anchor = GridBagConstraints.WEST;
+	    panel.add(spgrNumFA.getParent(), gbc);
+	    gbc.gridy++;
+	    panel.add(irspgrNum.getParent(), gbc);
+	    gbc.gridy++;
+	    gbc.insets = new Insets(10, 0, 0, 0);
+	    panel.add(isGEButton.getParent(), gbc);
+	    gbc.gridy++;
+	    gbc.insets = new Insets(0, 0, 0, 0);
+	    panel.add(isSiemensButton.getParent(), gbc);
+	    
+	 	//TODO: Remove dummy label for display
+	    gbc.gridy++;
+	    gbc.weighty = 1;
+	    gbc.insets = new Insets(0, 0, 0, 0);
+	    panel.add(new JLabel(""), gbc);
 	    
 	    return panel;
 	}
@@ -279,33 +300,65 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	protected JPanel buildConventionalTreT1Panel() {
 	    JPanel panel = new JPanel();
 	    panel.setBorder(MipavUtil.buildTitledBorder("treT1: General Information"));
-	    LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
+	    LayoutManager panelLayout = new GridBagLayout();
+	    GridBagConstraints gbc = new GridBagConstraints();
 	    panel.setLayout(panelLayout);
 	    
+	    gbc.gridx = 0;
+	    gbc.gridy = 0;
+	    gbc.anchor = GridBagConstraints.WEST;
 	    spgrNumFA = guiBuilder.buildDecimalField("Number of SPGR Flip Angles:", Nsa);
 	    
-	    panel.add(spgrNumFA.getParent(), panelLayout);
+	    panel.add(spgrNumFA.getParent(), gbc);
+	 
+	    //TODO: Remove dummy label for display
+	    gbc.gridy++;
+	    gbc.weighty = 1;
+	    gbc.insets = new Insets(0, 0, 0, 0);
+	    panel.add(new JLabel(""), gbc);
 	    
 	    return panel;
 	}
 
 	protected JScrollPane buildSPGRPanel() {
 	    JPanel panel = new JPanel();
-	    LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
+	    LayoutManager panelLayout = new GridBagLayout();
+	    GridBagConstraints gbc = new GridBagConstraints();
 	    panel.setLayout(panelLayout);
 	    panel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: SPGR Image Information"));
 	    
+	    gbc.fill = GridBagConstraints.NONE;
+	    gbc.anchor = GridBagConstraints.WEST;
+	    gbc.gridy = 0;
+	    gbc.weighty = 0;
 	    spgrImageComboBoxAr = new JComboBox[Nsa];
 	    flipAngleAr = new JTextField[Nsa];
 	    for (int i=0; i<Nsa; i++) {
 	        spgrImageComboBoxAr[i] = guiBuilder.buildComboBox("SPGR Image #"+(i+1), titles, i);
-	        panel.add(spgrImageComboBoxAr[i].getParent(), panelLayout);
+	        gbc.gridy = i;
+	        gbc.gridx = 0;
+	        gbc.weightx = .9;
+	        panel.add(spgrImageComboBoxAr[i].getParent(), gbc);
 	        
 	        flipAngleAr[i] = guiBuilder.buildDecimalField("SPGR Flip Angle #"+(i+1), 0);//treFA[i]);
-	        panel.add(flipAngleAr[i].getParent(), panelLayout);
+	        gbc.gridx = 1;
+	        gbc.weightx = .1;
+	        panel.add(flipAngleAr[i].getParent(), gbc);
 	    }
 	    spgrRepTime = guiBuilder.buildDecimalField("SPGR Repetition Time (ms):", treTR);
-	    panel.add(spgrRepTime.getParent(), panelLayout);
+	    
+	    gbc.weightx = 1;
+	    gbc.gridy++;
+	    gbc.gridwidth = 2;
+	    gbc.gridx = 0;
+	    gbc.insets = new Insets(10, 0, 0, 0);
+	    panel.add(spgrRepTime.getParent(), gbc);
+	    
+	    //TODO: Remove dummy label for display
+	    gbc.gridy++;
+	    gbc.weighty = 1;
+	    gbc.insets = new Insets(0, 0, 0, 0);
+	    panel.add(new JLabel(""), gbc);
 	    
 	    JScrollPane scrollPane = new JScrollPane(panel);
 	    scrollPane.setPreferredSize(new Dimension(420,405));
@@ -317,19 +370,30 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	protected JScrollPane buildIRSPGRPanelGE() {
 	    
 		JPanel panel = new JPanel();
-	    LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
+	    LayoutManager panelLayout = new GridBagLayout();
 	    panel.setLayout(panelLayout);
+	    GridBagConstraints gbc = new GridBagConstraints();
 	    
+	    gbc.fill = GridBagConstraints.NONE;
+	    gbc.anchor = GridBagConstraints.WEST;
+	    gbc.gridy = 0;
+	    gbc.weighty = 0;
 	    irspgrCombo = new JComboBox[Nti];
 	    irspgrField = new JTextField[Nti];
 	    for (int i=0; i<Nti; i++) {
-	        irspgrCombo[i] = guiBuilder.buildComboBox("IR-SPGR Image #"+(i+1), titles, Nsa+i);
-	        panel.add(irspgrCombo[i].getParent(), panelLayout);
+	        
+	    	irspgrCombo[i] = guiBuilder.buildComboBox("IR-SPGR Image #"+(i+1), titles, Nsa+i);
+	    	gbc.gridy = i;
+	        gbc.gridx = 0;
+	        gbc.weightx = .9;
+	    	panel.add(irspgrCombo[i].getParent(), gbc);
 	        
 	        double tiAdd = irspgrTI != null ? irspgrTI[i] : 0.0;
 	        irspgrField[i] = guiBuilder.buildDecimalField("IR-SPGR TI #"+(i+1), tiAdd);
 	        
-	        panel.add(irspgrField[i].getParent(), panelLayout);
+	        gbc.gridx = 1;
+	        gbc.weightx = .1;
+	        panel.add(irspgrField[i].getParent(), gbc);
 	    }
 	    
 	    irspgrTRField = guiBuilder.buildDecimalField("IR-SPGR Repetition Time (ms)", irspgrTR);
@@ -349,15 +413,39 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    fieldStrengthGroup.add(t15Radio);
 	    fieldStrengthGroup.add(t30Radio);
 	    
-	    panel.add(irspgrTRField.getParent(), panelLayout);
-	    panel.add(irspgrFAField.getParent(), panelLayout);
-	    panel.add(numSlicesField.getParent(), panelLayout);
-	    panel.add(doubleInvRadio.getParent(), panelLayout);
-	    panel.add(singleInvRadio.getParent(), panelLayout);
-	    panel.add(t15Radio.getParent(), panelLayout);
-	    panel.add(t30Radio.getParent(), panelLayout);
-	    panel.add(smoothB1Box.getParent(), panelLayout);
+	    gbc.weightx = 1;
+	    gbc.gridy++;
+	    gbc.gridwidth = 2;
+	    gbc.gridx = 0;
+	    gbc.insets = new Insets(10, 0, 0, 0);
+	    panel.add(irspgrTRField.getParent(), gbc);
+	    gbc.gridy++;
+	    gbc.insets = new Insets(0, 0, 0, 0);
+	    panel.add(irspgrFAField.getParent(), gbc);
+	    gbc.gridy++;
+	    panel.add(numSlicesField.getParent(), gbc);
+	    gbc.insets = new Insets(10, 0, 0, 0);
+	    gbc.gridy++;
+	    panel.add(doubleInvRadio.getParent(), gbc);
+	    gbc.gridy++;
+	    gbc.insets = new Insets(0, 0, 0, 0);
+	    panel.add(singleInvRadio.getParent(), gbc);
+	    gbc.gridy++;
+	    gbc.insets = new Insets(20, 0, 0, 0);
+	    panel.add(t15Radio.getParent(), gbc);
+	    gbc.gridy++;
+	    gbc.insets = new Insets(0, 0, 0, 0);
+	    panel.add(t30Radio.getParent(), gbc);
+	    gbc.gridy++;
+	    gbc.insets = new Insets(10, 0, 0, 0);
+	    panel.add(smoothB1Box.getParent(), gbc);
 	
+	    //TODO: Remove dummy label for display
+	    gbc.gridy++;
+	    gbc.weighty = 1;
+	    gbc.insets = new Insets(0, 0, 0, 0);
+	    panel.add(new JLabel(""), gbc);
+	    
 	    JScrollPane scrollPane = new JScrollPane(panel);
 	    scrollPane.setPreferredSize(new Dimension(420,405));
 	    scrollPane.setBorder(null);
@@ -367,19 +455,30 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 
 	protected JScrollPane buildIRSPGRPanelSiemens() {
 	    JPanel panel = new JPanel();
-	    LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
+	    LayoutManager panelLayout = new GridBagLayout();
 	    panel.setLayout(panelLayout);
+	    GridBagConstraints gbc = new GridBagConstraints();
+	    
+	    gbc.fill = GridBagConstraints.NONE;
+	    gbc.anchor = GridBagConstraints.WEST;
+	    gbc.gridy = 0;
+	    gbc.weighty = 0;
 	    
 	    irspgrCombo = new JComboBox[Nti];
 	    irspgrField = new JTextField[Nti];
 	    for (int i=0; i<Nti; i++) {
 	        irspgrCombo[i] = guiBuilder.buildComboBox("IR-SPGR Image #"+(i+1), titles, i+2);
-	        panel.add(irspgrCombo[i].getParent(), panelLayout);
+	        gbc.gridy = i;
+	        gbc.gridx = 0;
+	        gbc.weightx = .9;
+	        panel.add(irspgrCombo[i].getParent(), gbc);
 	        
 	        double tiAdd = irspgrTI != null ? irspgrTI[i] : 0.0;
 	        irspgrField[i] = guiBuilder.buildDecimalField("IR-SPGR TI #"+(i+1), tiAdd);
 	        
-	        panel.add(irspgrField[i].getParent(), panelLayout);
+	        gbc.gridx = 1;
+	        gbc.weightx = .1;
+	        panel.add(irspgrField[i].getParent(), gbc);
 	    }
 	    
 	    irspgrTRField = guiBuilder.buildDecimalField("IR-SPGR Repetition Time (ms)", irspgrTR);
@@ -399,15 +498,39 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    fieldStrengthGroup.add(t15Radio);
 	    fieldStrengthGroup.add(t30Radio);
 	    
-	    panel.add(irspgrTRField.getParent(), panelLayout);
-	    panel.add(irspgrFAField.getParent(), panelLayout);
-	    panel.add(numSlicesField.getParent(), panelLayout);
-	    panel.add(doubleInvRadio.getParent(), panelLayout);
-	    panel.add(singleInvRadio.getParent(), panelLayout);
-	    panel.add(t15Radio.getParent(), panelLayout);
-	    panel.add(t30Radio.getParent(), panelLayout);
-	    panel.add(smoothB1Box.getParent(), panelLayout);
+	    gbc.weightx = 1;
+	    gbc.gridwidth = 2;
+	    gbc.gridy++;
+	    gbc.gridx = 0;
+	    gbc.insets = new Insets(10, 0, 0, 0);
+	    panel.add(irspgrTRField.getParent(), gbc);
+	    gbc.gridy++;
+	    gbc.insets = new Insets(0, 0, 0, 0);
+	    panel.add(irspgrFAField.getParent(), gbc);
+	    gbc.gridy++;
+	    panel.add(numSlicesField.getParent(), gbc);
+	    gbc.gridy++;
+	    gbc.insets = new Insets(10, 0, 0, 0);
+	    panel.add(doubleInvRadio.getParent(), gbc);
+	    gbc.gridy++;
+	    gbc.insets = new Insets(0, 0, 0, 0);
+	    panel.add(singleInvRadio.getParent(), gbc);
+	    gbc.gridy++;
+	    gbc.insets = new Insets(20, 0, 0, 0);
+	    panel.add(t15Radio.getParent(), gbc);
+	    gbc.gridy++;
+	    gbc.insets = new Insets(0, 0, 0, 0);
+	    panel.add(t30Radio.getParent(), gbc);
+	    gbc.gridy++;
+	    gbc.insets = new Insets(10, 0, 0, 0);
+	    panel.add(smoothB1Box.getParent(), gbc);
 	
+	    //TODO: Remove dummy label for display
+	    gbc.gridy++;
+	    gbc.weighty = 1;
+	    gbc.insets = new Insets(0, 0, 0, 0);
+	    panel.add(new JLabel(""), gbc);
+	    
 	    JScrollPane scrollPane = new JScrollPane(panel);
 	    scrollPane.setPreferredSize(new Dimension(420,405));
 	    scrollPane.setBorder(null);
@@ -417,27 +540,50 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 
 	protected JScrollPane buildTreT1LongPanel() {
 	    JPanel panel = new JPanel();
+	    LayoutManager panelLayout = new GridBagLayout();
+	    panel.setLayout(panelLayout);
+	    GridBagConstraints gbc = new GridBagConstraints();
 	    panel.setBorder(MipavUtil.buildTitledBorder("treT1-Conv: Long"));
 	    
+	    gbc.fill = GridBagConstraints.NONE;
+	    gbc.anchor = GridBagConstraints.WEST;
+	    gbc.gridy = 0;
+	    gbc.weighty = 0;
 	    b1Field = null;
 	    if(performTreT1withPreCalculatedB1Map) {
-	        b1Field = guiBuilder.buildComboBox("B1 Field Map:", titles, 0);
-	        panel.add(b1Field.getParent());
+	    	gbc.gridy++;
+	    	b1Field = guiBuilder.buildComboBox("B1 Field Map:", titles, 0);
+	        panel.add(b1Field.getParent(), gbc);
 	    }
 	    
 	    convimageComboAr = new JComboBox[Nsa];
 	    convFAFieldAr = new JTextField[Nsa];
 	    for(int i=0; i<Nsa; i++) {
 	        convimageComboAr[i] = guiBuilder.buildComboBox("Image #"+i, titles, i);
-	        panel.add(convimageComboAr[i].getParent());
+	        gbc.gridy = performTreT1withPreCalculatedB1Map ? i+1 : i;
+	        gbc.gridx = 0;
+	        gbc.weightx = .9;
+	        panel.add(convimageComboAr[i].getParent(), gbc);
 	        
 	        double faAdd = treFA != null ? treFA[i] : 0.0;
 	        convFAFieldAr[i] = guiBuilder.buildDecimalField("Flip Angle #"+i, faAdd);
 	        
-	        panel.add(convFAFieldAr[i].getParent());
+	        gbc.gridx = 1;
+	        gbc.weightx = .1;
+	        panel.add(convFAFieldAr[i].getParent(), gbc);
 	    }
+	    
+	    gbc.weightx = 1;
+	    gbc.gridwidth = 2;
+	    gbc.gridy++;
+	    gbc.gridx = 0;
 	    convRepTime = guiBuilder.buildDecimalField("Repetition Time (ms):", treTR);
-	    panel.add(convRepTime.getParent());
+	    panel.add(convRepTime.getParent(), gbc);
+	    
+	    //TODO: Remove dummy label for display
+	    gbc.gridy++;
+	    gbc.weighty = 1;
+	    panel.add(new JLabel(""), gbc);
 	    
 	    JScrollPane scrollPane = new JScrollPane(panel);
 	    scrollPane.setPreferredSize(new Dimension(420,405));
@@ -447,9 +593,10 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	}
 
 	protected JPanel buildTreT1SpecificsPanel() {
-	   	JPanel panel = new JPanel();
-	    LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
+		JPanel panel = new JPanel();
+	    LayoutManager panelLayout = new GridBagLayout();
 	    panel.setLayout(panelLayout);
+	    GridBagConstraints gbc =  new GridBagConstraints();
 	    panel.setBorder(MipavUtil.buildTitledBorder("treT1: Specifics"));
 	    
 	    maxT1Field = guiBuilder.buildDecimalField("Maximum Allowable T1:", maxT1);
@@ -458,16 +605,31 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    showMoMap = guiBuilder.buildCheckBox("Show Mo Map", calculateMo);
 	    showR1Map = guiBuilder.buildCheckBox("Show R1 Map", invertT1toR1);
 	    leastSquaresCheck = null;
+	    gbc.fill = GridBagConstraints.NONE;
+	    gbc.anchor = GridBagConstraints.NORTHWEST;
+	    gbc.gridy = 0;
+	    gbc.weighty = 0;
 	    if(Nsa > 2) {
 	        leastSquaresCheck = guiBuilder.buildCheckBox("Calculate T1 Using Weigthed Least-Squares", useWeights);
-	        panel.add(leastSquaresCheck.getParent(), panelLayout);
+	        panel.add(leastSquaresCheck.getParent(), gbc);
+	        gbc.gridy++;
 	    }
 	    
-	    panel.add(maxT1Field.getParent(), panelLayout);
-	    panel.add(maxMoField.getParent(), panelLayout);
-	    panel.add(showT1Map.getParent(), panelLayout);
-	    panel.add(showMoMap.getParent(), panelLayout);
-	    panel.add(showR1Map.getParent(), panelLayout);
+	    
+	    panel.add(maxT1Field.getParent(), gbc);
+	    gbc.gridy++;
+	    panel.add(maxMoField.getParent(), gbc);
+	    gbc.gridy++;
+	    panel.add(showT1Map.getParent(), gbc);
+	    gbc.gridy++;
+	    panel.add(showMoMap.getParent(), gbc);
+	    gbc.gridy++;
+	    panel.add(showR1Map.getParent(), gbc);
+	    
+	    //TODO: Remove dummy label for display
+	    gbc.gridy++;
+	    gbc.weighty = 1;
+	    panel.add(new JLabel(""), gbc);
 	    
 	    return panel;
 	}
@@ -476,8 +638,9 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 		System.out.println("The selected state: "+t);
 		
 		JPanel panel = new JPanel();
-	    LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
+	    LayoutManager panelLayout = new GridBagLayout();
 	    panel.setLayout(panelLayout);
+	    GridBagConstraints gbc = new GridBagConstraints();
 	    panel.setBorder(MipavUtil.buildTitledBorder("Thresholding"));
 	    
 	    JPanel methodPanel = new JPanel();
@@ -510,7 +673,12 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    methodPanel.add(hardCheckBox, methodLayout);
 	    methodPanel.add(noCheckBox, methodLayout);
 	    
-	    panel.add(methodPanel, panelLayout);
+	    gbc.gridx = 0;
+	    gbc.gridy = 0;
+	    gbc.fill = GridBagConstraints.NONE;
+	    gbc.anchor = GridBagConstraints.WEST;
+	    gbc.weighty = 0;
+	    panel.add(methodPanel, gbc);
 	    
 	    generalThresholdPanel = new JPanel();
 	    
@@ -526,15 +694,23 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    }
 	    generalThresholdPanel.add(innerPanel);
 	    
-	    panel.add(generalThresholdPanel, panelLayout);
+	    gbc.gridy = 1;
+	    gbc.weighty = 0;
+	    panel.add(generalThresholdPanel, gbc);
+	    
+	    //TODO: Remove dummy label for display
+	    gbc.gridy++;
+	    gbc.weighty = 1;
+	    panel.add(new JLabel(""), gbc);
 	    
 	    return panel;
 	}
 
 	protected JPanel buildTreT1HIFISpecificsPanel() {
 	    JPanel panel = new JPanel();
-	    LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
+	    LayoutManager panelLayout = new GridBagLayout();
 	    panel.setLayout(panelLayout);
+	    GridBagConstraints gbc =  new GridBagConstraints();
 	    panel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR Image Information"));
 	    
 	    maxT1Field = guiBuilder.buildDecimalField("Maximum Allowable T1:", maxT1);
@@ -548,15 +724,31 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    	leastSquaresCheck = guiBuilder.buildCheckBox("Calculate T1 Using Weighted Least-Squares", useWeights);
 	    }
 	    
-	    panel.add(maxT1Field.getParent(), panelLayout);
-	    panel.add(maxMoField.getParent(), panelLayout);
-	    panel.add(showT1Map.getParent(), panelLayout);
-	    panel.add(showMoMap.getParent(), panelLayout);
-	    panel.add(showB1Check.getParent(), panelLayout);
-	    panel.add(showR1Map.getParent(), panelLayout);
+	    gbc.fill = GridBagConstraints.NONE;
+	    gbc.anchor = GridBagConstraints.WEST;
+	    gbc.gridy = 0;
+	    gbc.weighty = 0;
+	    panel.add(maxT1Field.getParent(), gbc);
+	    gbc.gridy++;
+	    panel.add(maxMoField.getParent(), gbc);
+	    gbc.gridy++;
+	    gbc.insets = new Insets(20, 0, 0, 0);
+	    panel.add(showT1Map.getParent(), gbc);
+	    gbc.gridy++;
+	    gbc.insets = new Insets(0, 0, 0, 0);
+	    panel.add(showMoMap.getParent(), gbc);
+	    gbc.gridy++;
+	    panel.add(showB1Check.getParent(), gbc);
+	    gbc.gridy++;
+	    panel.add(showR1Map.getParent(), gbc);
 	    if(Nsa > 2) {
-	        panel.add(leastSquaresCheck.getParent(), panelLayout);
+	    	gbc.gridy++;
+	    	gbc.insets = new Insets(20, 0, 0, 0);
+	    	panel.add(leastSquaresCheck.getParent(), gbc);
 	    }
+	    //TODO: Don't use dummy label for pushing all elements north
+	    gbc.weighty = 1;
+	    panel.add(new JLabel(""), gbc);
 	    
 	    return panel;
 	}
@@ -1017,13 +1209,6 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    JScrollPane irspgrSiemensPanel = buildIRSPGRPanelSiemens();
 	    
 	    irspgrGeneralPanel = new JPanel();
-	    
-	    //fit these HIFI elements into one panel, with either/or siemens
-	    JPanel hifiSuper = new JPanel();
-	    LayoutManager hifiLayout = new BoxLayout(hifiSuper, BoxLayout.Y_AXIS);
-	    hifiSuper.add(spgrPanel, hifiLayout);
-	    hifiSuper.add(irspgrGEPanel, hifiLayout);
-	    hifiSuper.add(irspgrSiemensPanel, hifiLayout);
 	    
 	    //specifics section
 	    hifiSpec = buildTreT1HIFISpecificsPanel();
