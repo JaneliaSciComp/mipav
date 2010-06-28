@@ -24,6 +24,7 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 
@@ -101,8 +102,6 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
     private boolean lowerLeftCorner = false;
     private boolean lowerRightCorner = false;
     
-    private boolean useSmartThresholding = true;
-    private boolean useHardThresholding = false;
     private float noiseScale = (float) 4.00;
     private float hardNoiseThreshold = (float) 0.00;
     
@@ -118,10 +117,10 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	private GuiBuilder guiBuilder;
 	private JPanel hifiPanel;
 	private JPanel straightPanel;
-	private JPanel spgrPanel;
+	private JScrollPane spgrPanel;
 	private JPanel convSpec;
 	private JPanel hifiSpec;
-	private JPanel treLong;
+	private JScrollPane treLong;
 	private JComboBox[] spgrImageComboBoxAr;
 	private JTextField[] flipAngleAr;
 	private JTextField spgrRepTime;
@@ -167,12 +166,30 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	private JPanel irspgrGeneralPanel;
 	private JButton ok;
 	private JButton cancel;
+	private JRadioButton noCheckBox;
+	private Threshold t;
 	private static final String SUCCESS = "Successful";
     
+	/**
+	 * A three way boolean operator.
+	 * 
+	 * @author senseneyj
+	 *
+	 */
+	private enum Threshold {
+		HARD,
+		SMART,
+		NONE;
+		
+		Threshold() {}
+	}
+	
     /**
-     * Empty constructor needed for dynamic instantiation.
+     * Blank constructor needed for dynamic instantiation.
      */
-    public JDialogTreT1() { }
+    public JDialogTreT1() { 
+    	t = Threshold.NONE;
+    }
 
     /**
      * Construct the barrel/pin cushion correction dialog.
@@ -182,6 +199,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
      */
     public JDialogTreT1(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
+        t = Threshold.NONE;
         run();
     }
     
@@ -212,16 +230,18 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
         
         if(command.equals("OK")) {
         	
-        		String userError;
-        		if((userError = setUI(true)).equals(SUCCESS)) {
-        			if(validateUI()) {
-        				callAlgorithm();
-        			} else {
-        				MipavUtil.displayError("Validation check failed, please check console output.");
-        			}
-        		} else {
-        			MipavUtil.displayError(userError);
-        		}
+    		String userError;
+    		if((userError = setUI(true)).equals(SUCCESS)) {
+    			if(validateUI()) {
+    				callAlgorithm();
+    			} else {
+    				MipavUtil.displayError("Validation check failed, please check console output.");
+    				this.setVisible(true);
+    			}
+    		} else {
+    			MipavUtil.displayError(userError);
+    			this.setVisible(true);
+    		}
         }
         if (command.equals("Cancel")) {
             cAlgo.interrupt();
@@ -269,7 +289,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    return panel;
 	}
 
-	protected JPanel buildSPGRPanel() {
+	protected JScrollPane buildSPGRPanel() {
 	    JPanel panel = new JPanel();
 	    LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
 	    panel.setLayout(panelLayout);
@@ -286,12 +306,17 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    }
 	    spgrRepTime = guiBuilder.buildDecimalField("SPGR Repetition Time (ms):", treTR);
 	    panel.add(spgrRepTime.getParent(), panelLayout);
+	    
+	    JScrollPane scrollPane = new JScrollPane(panel);
+	    scrollPane.setPreferredSize(new Dimension(420,405));
+	    scrollPane.setBorder(null);
 	
-	    return panel;
+	    return scrollPane;
 	 }
 
-	protected JPanel buildIRSPGRPanelGE() {
-	    JPanel panel = new JPanel();
+	protected JScrollPane buildIRSPGRPanelGE() {
+	    
+		JPanel panel = new JPanel();
 	    LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
 	    panel.setLayout(panelLayout);
 	    
@@ -333,10 +358,14 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    panel.add(t30Radio.getParent(), panelLayout);
 	    panel.add(smoothB1Box.getParent(), panelLayout);
 	
-	    return panel;
+	    JScrollPane scrollPane = new JScrollPane(panel);
+	    scrollPane.setPreferredSize(new Dimension(420,405));
+	    scrollPane.setBorder(null);
+	    
+	    return scrollPane;
 	}
 
-	protected JPanel buildIRSPGRPanelSiemens() {
+	protected JScrollPane buildIRSPGRPanelSiemens() {
 	    JPanel panel = new JPanel();
 	    LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
 	    panel.setLayout(panelLayout);
@@ -379,12 +408,16 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    panel.add(t30Radio.getParent(), panelLayout);
 	    panel.add(smoothB1Box.getParent(), panelLayout);
 	
-	    return panel;
+	    JScrollPane scrollPane = new JScrollPane(panel);
+	    scrollPane.setPreferredSize(new Dimension(420,405));
+	    scrollPane.setBorder(null);
+	    
+	    return scrollPane;
 	}
 
-	protected JPanel buildTreT1LongPanel() {
+	protected JScrollPane buildTreT1LongPanel() {
 	    JPanel panel = new JPanel();
-	    //panel.setBorder(MipavUtil.buildTitledBorder("treT1-Conv: Long"));
+	    panel.setBorder(MipavUtil.buildTitledBorder("treT1-Conv: Long"));
 	    
 	    b1Field = null;
 	    if(performTreT1withPreCalculatedB1Map) {
@@ -406,7 +439,11 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    convRepTime = guiBuilder.buildDecimalField("Repetition Time (ms):", treTR);
 	    panel.add(convRepTime.getParent());
 	    
-	    return panel;
+	    JScrollPane scrollPane = new JScrollPane(panel);
+	    scrollPane.setPreferredSize(new Dimension(420,405));
+	    scrollPane.setBorder(null);
+	    
+	    return scrollPane;
 	}
 
 	protected JPanel buildTreT1SpecificsPanel() {
@@ -436,37 +473,58 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	}
 
 	protected JPanel buildThresholdPanel() {
+		System.out.println("The selected state: "+t);
+		
 		JPanel panel = new JPanel();
 	    LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
 	    panel.setLayout(panelLayout);
 	    panel.setBorder(MipavUtil.buildTitledBorder("Thresholding"));
 	    
 	    JPanel methodPanel = new JPanel();
-	    LayoutManager methodLayout = new BoxLayout(methodPanel, BoxLayout.X_AXIS);
+	    LayoutManager methodLayout = new BoxLayout(methodPanel, BoxLayout.Y_AXIS);
 	    methodPanel.setLayout(methodLayout);
 	    methodPanel.setBorder(MipavUtil.buildTitledBorder("Thresholding method"));
 	    
-	    smartCheckBox = guiBuilder.buildRadioButton("Use Smart Thresholding", useSmartThresholding);
-	    hardCheckBox = guiBuilder.buildRadioButton("Use Hard Thresholding", useHardThresholding);
-	
+	    smartCheckBox = guiBuilder.buildRadioButton("Use Smart Thresholding", t.equals(Threshold.SMART));
+	    hardCheckBox = guiBuilder.buildRadioButton("Use Hard Thresholding", t.equals(Threshold.HARD));
+	    noCheckBox = guiBuilder.buildRadioButton("No Thresholding", t.equals(Threshold.NONE));
+	    
 	    thresholdGroup = new ButtonGroup();
 	    thresholdGroup.add(smartCheckBox);
 	    thresholdGroup.add(hardCheckBox);
-	    smartCheckBox.setSelected(true);
+	    thresholdGroup.add(noCheckBox);
+	    
+	    if(t == null) {
+	    	smartCheckBox.setSelected(true);
+	    	t = Threshold.SMART;
+	    }
+	    
+	    System.out.println("The selected state: "+t);
 	    
 	    ActionListener c = new ThresholdChoiceListener();
 	    smartCheckBox.addActionListener(c);
 	    hardCheckBox.addActionListener(c);
+	    noCheckBox.addActionListener(c);
 	
 	    methodPanel.add(smartCheckBox, methodLayout);
 	    methodPanel.add(hardCheckBox, methodLayout);
+	    methodPanel.add(noCheckBox, methodLayout);
 	    
 	    panel.add(methodPanel, panelLayout);
 	    
 	    generalThresholdPanel = new JPanel();
 	    
-	    JPanel smartThreshold = buildSmartThresholdPanel();
-	    generalThresholdPanel.add(smartThreshold);
+	    JPanel innerPanel = null;
+	    
+	    if(t.equals(Threshold.SMART)) {
+	    	innerPanel = buildSmartThresholdPanel();
+	    } else if(t.equals(Threshold.HARD)) {
+	    	innerPanel = buildHardThresholdPanel();
+	    } else {
+	    	innerPanel = buildNoThresholdPanel();
+	    	t = Threshold.NONE;
+	    }
+	    generalThresholdPanel.add(innerPanel);
 	    
 	    panel.add(generalThresholdPanel, panelLayout);
 	    
@@ -538,10 +596,28 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	
 	    return panel;
 	}
+	
+	protected JPanel buildNoThresholdPanel() {
+		JPanel panel = new JPanel();
+		return panel;
+	}
 
 	protected void callAlgorithm() {
         // Make algorithm
-        cAlgo = new AlgorithmTreT1(treTR, irspgrTR,
+        boolean useSmartThresholding = false;
+        boolean useHardThresholding = false;
+		//TODO: get algorithm to accept no thresholding
+		if(t.equals(Threshold.SMART)) {
+			useSmartThresholding = true;
+		} else if(t.equals(Threshold.HARD)) {
+			useHardThresholding = true;
+		} else {
+			t = Threshold.NONE;
+			useHardThresholding = true;
+			hardNoiseThreshold = 0.0f;
+		}
+		
+		cAlgo = new AlgorithmTreT1(treTR, irspgrTR,
                 irspgrKy, irspgrFA, maxT1, maxMo,
                 treFA,  irspgrTr,  irspgrTI,
                 spgrData,  irspgrData, scale,
@@ -748,8 +824,8 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
         upperRightCorner = scriptParameters.getParams().getBoolean("upper_Right_Corner");
         lowerLeftCorner = scriptParameters.getParams().getBoolean("lower_Left_Corner");
         lowerRightCorner = scriptParameters.getParams().getBoolean("lower_Right_Corner");
-        useSmartThresholding = scriptParameters.getParams().getBoolean("use_Smart_Thresholding");
-        useHardThresholding = scriptParameters.getParams().getBoolean("use_Hard_Thresholding");
+        boolean useSmartThresholding = scriptParameters.getParams().getBoolean("use_Smart_Thresholding");
+        boolean useHardThresholding = scriptParameters.getParams().getBoolean("use_Hard_Thresholding");
         noiseScale = scriptParameters.getParams().getFloat("noise_Scale");
         hardNoiseThreshold = scriptParameters.getParams().getFloat("hard_Noise_Threshold");
         
@@ -774,11 +850,31 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
         }
 
         wList = wListArr.toArray(new String[0]);
-        titles = wListArr.toArray(new String[0]);      
+        titles = wListArr.toArray(new String[0]);
+        
+        if(useSmartThresholding) {
+        	t = Threshold.SMART;
+        } else if(useHardThresholding) {
+        	t = Threshold.HARD;
+        } else {
+        	t = Threshold.NONE;
+        	hardNoiseThreshold = 0.0f;
+        }
     }
 
     protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.getParams().put(ParameterFactory.newParameter("tre_TR", treTR));
+        boolean useHardThresholding = false, useSmartThresholding = false;
+        
+    	if(t.equals(Threshold.SMART)) {
+    		useSmartThresholding = true;
+    	} else if(t.equals(Threshold.HARD)) {
+    		useHardThresholding = true;
+    	} else {
+    		useHardThresholding = true;
+    		hardNoiseThreshold = 0.0f;
+    	}
+    	
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("tre_TR", treTR));
         scriptParameters.getParams().put(ParameterFactory.newParameter("irspgr_TR", irspgrTR));
         scriptParameters.getParams().put(ParameterFactory.newParameter("irspgr_Ky", irspgrKy)); 
         scriptParameters.getParams().put(ParameterFactory.newParameter("irspgr_FA", irspgrFA));
@@ -916,9 +1012,9 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    //hifi panels for next section
 	    spgrPanel = buildSPGRPanel();
 	    
-	    JPanel irspgrGEPanel = buildIRSPGRPanelGE();
+	    JScrollPane irspgrGEPanel = buildIRSPGRPanelGE();
 	
-	    JPanel irspgrSiemensPanel = buildIRSPGRPanelSiemens();
+	    JScrollPane irspgrSiemensPanel = buildIRSPGRPanelSiemens();
 	    
 	    irspgrGeneralPanel = new JPanel();
 	    
@@ -1035,6 +1131,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 		    singleInversion = singleInvRadio.isSelected();
 		    onefiveTField = t15Radio.isSelected();
 		    threeTField = t30Radio.isSelected();
+		    showB1Map = showB1Check.isSelected();
 		    smoothB1Field = smoothB1Box.isSelected();
     	} catch(Exception e) { 
     		if(process && performTreT1HIFI) {
@@ -1070,28 +1167,36 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 		    maxMo = Double.valueOf(maxMoField.getText()).doubleValue();
 		    calculateT1 = showT1Map.isSelected();
 		    calculateMo = showMoMap.isSelected();
-		    showB1Map = showB1Check.isSelected();
+		    
 		    invertT1toR1 = showR1Map.isSelected();
 		    if (Nsa > 2) {
 		        useWeights = leastSquaresCheck.isSelected();
 		    }
 	    } catch(Exception e) {
-	    	return "Processing options have not been correctly set.";
+	    	if(process) {
+	    		return "Processing options have not been correctly set.";
+	    	}
 	    }
 	    
-	    useSmartThresholding = smartCheckBox.isSelected();
-	    useHardThresholding = hardCheckBox.isSelected();
+	    if(smartCheckBox.isSelected()) {
+	    	t = Threshold.SMART;
+	    } else if(hardCheckBox.isSelected()) {
+	    	t = Threshold.HARD;
+	    } else {
+	    	t = Threshold.NONE;
+	    }
 	    
 	    String threshOutput;
-	    if(useSmartThresholding) {
+	    if(t.equals(Threshold.SMART)) {
 	    	if((!(threshOutput = setSmartThresholdUI(process)).equals(SUCCESS)) && process) {
 	    		return threshOutput;
 	    	}
-	    }
-	    if(useHardThresholding) {
+	    } else if(t.equals(Threshold.HARD)) {
 	    	if((!(threshOutput = setHardThresholdUI(process)).equals(SUCCESS)) && process) {
 	    		return threshOutput;
 	    	}
+	    } else if(t.equals(Threshold.NONE)) {
+	    	hardNoiseThreshold = 0.0f;
 	    }
 
     	
@@ -1103,7 +1208,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 		    }
 		    treTR = Double.valueOf(spgrRepTime.getText()).doubleValue();
 	    } catch(Exception e) {
-	    	if(process) {
+	    	if(process && performTreT1HIFI) {
 	    		return "Invalid spgr information entered";
 	    	}
 	    }
@@ -1118,16 +1223,12 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 		    irspgrFA = Double.valueOf(irspgrFAField.getText()).doubleValue();
 		    irspgrKy = Double.valueOf(numSlicesField.getText()).doubleValue();
 	    } catch(Exception e) {
-	    	if(process) {
+	    	if(process && performTreT1HIFI) {
 	    		return "Invalid irspgr information entered.";
 	    	}
 	    }
 	    
 	    //setting defaults
-	    if (useSmartThresholding) {
-	        useHardThresholding = false;
-	    }
-	    
 	    if (doubleInversion == true) {
 	        singleInversion = false;
 	    }
@@ -1224,37 +1325,30 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	        }
 	    }
 	    
-	    //hifi
-	    if (geScanner == true) {
-	        siemensScanner = false;
-	    }
-	    if (siemensScanner == true) {
-	        geScanner = false;
-	    }
-	    
-	    if (Nsa > wList.length) {
-	        MipavUtil.displayError("Please import all nessesary images first.");
-	        return false;
-	    }
-	    if (Nsa < 2) {
-	        MipavUtil.displayError("T1 and Mo calculations require at least two SPGR images.");
-	        return false;
-	    }
-	    
-	    if (Nti < 1) {
-	        MipavUtil.displayError("B1 correction requires at least one IR-SPGR image.");
-	        return false;
-	    }
-	    
-	    //validate ge and siemens irspgr
-	    if(inversionGroup.getSelection() == null) {
-	        MipavUtil.displayInfo("Please choose either single or double inversion regime");
-	        return false;
-	    }
-	    
-	    if(fieldStrengthGroup.getSelection() == null) {
-	        MipavUtil.displayInfo("Please choose field strength");
-	        return false;
+	    if(performTreT1HIFI) {
+		    //hifi
+		    if (geScanner == true) {
+		        siemensScanner = false;
+		    }
+		    if (siemensScanner == true) {
+		        geScanner = false;
+		    }
+		    
+		    if (Nti < 1) {
+		        MipavUtil.displayError("B1 correction requires at least one IR-SPGR image.");
+		        return false;
+		    }
+		    
+		    //validate ge and siemens irspgr
+		    if(inversionGroup.getSelection() == null) {
+		        MipavUtil.displayInfo("Please choose either single or double inversion regime");
+		        return false;
+		    }
+		    
+		    if(fieldStrengthGroup.getSelection() == null) {
+		        MipavUtil.displayInfo("Please choose field strength");
+		        return false;
+		    }
 	    }
 	    
 	    return true;
@@ -1309,19 +1403,29 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	 */
     private class ThresholdChoiceListener implements ActionListener {
     	private void varSet() {
+    		if(t.equals(Threshold.HARD)) {
+    			setHardThresholdUI(false);
+    		} else if(t.equals(Threshold.SMART)) {
+    			setSmartThresholdUI(false);
+    		} else {
+    			hardNoiseThreshold = 0.0f;
+    		}
+    		
+    		generalThresholdPanel.removeAll();
+    		JPanel genericPanel = null;
+    		
 			if (hardCheckBox.isSelected()) {
-				setSmartThresholdUI(false);
-				generalThresholdPanel.removeAll();
-				JPanel hardThreshold = buildHardThresholdPanel();
-				generalThresholdPanel.add(hardThreshold);
-				generalThresholdPanel.updateUI();
+				t = Threshold.HARD;
+				genericPanel = buildHardThresholdPanel();
 	        } else if (smartCheckBox.isSelected()) {
-	        	setHardThresholdUI(false);
-	        	generalThresholdPanel.removeAll();
-				JPanel smartThreshold = buildSmartThresholdPanel();
-				generalThresholdPanel.add(smartThreshold);
-				generalThresholdPanel.updateUI();
+	        	t = Threshold.SMART;
+				genericPanel = buildSmartThresholdPanel();
+	        } else if(noCheckBox.isSelected()) {
+	        	t = Threshold.NONE;
+	        	genericPanel = buildNoThresholdPanel();
 	        }
+			generalThresholdPanel.add(genericPanel);
+        	generalThresholdPanel.updateUI();
 		}
 
 		public void actionPerformed(ActionEvent e) {
@@ -1354,7 +1458,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
     			if((tabLoc = getChangeTab("Siemens")) != -1) {
     				tab.setTitleAt(tabLoc, (tabLoc+1)+": GE");
     				irspgrGeneralPanel.removeAll();
-    				JPanel irspgrGEPanel = buildIRSPGRPanelGE();
+    				JScrollPane irspgrGEPanel = buildIRSPGRPanelGE();
     				irspgrGeneralPanel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR GE Image Information"));
     				irspgrGeneralPanel.add(irspgrGEPanel);
     				irspgrGeneralPanel.updateUI();
@@ -1363,7 +1467,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
     			if((tabLoc = getChangeTab("GE")) != -1) {
     				tab.setTitleAt(tabLoc, (tabLoc+1)+": Siemens");
     				irspgrGeneralPanel.removeAll();
-    				JPanel irspgrSiemensPanel = buildIRSPGRPanelSiemens();
+    				JScrollPane irspgrSiemensPanel = buildIRSPGRPanelSiemens();
     				irspgrGeneralPanel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR Siemens Image Information"));
     				irspgrGeneralPanel.add(irspgrSiemensPanel);
     				irspgrGeneralPanel.updateUI();
@@ -1648,8 +1752,8 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
             table.put(new ParameterBoolean("upper_Right_Corner", upperRightCorner));
             table.put(new ParameterBoolean("lower_Left_Corner", lowerLeftCorner));
             table.put(new ParameterBoolean("lower_Right_Corner", lowerRightCorner));
-            table.put(new ParameterBoolean("use_Smart_Thresholding", useSmartThresholding));
-            table.put(new ParameterBoolean("use_Hard_Thresholding", useHardThresholding));
+            table.put(new ParameterBoolean("use_Smart_Thresholding", t.equals(Threshold.SMART)));
+            table.put(new ParameterBoolean("use_Hard_Thresholding", t.equals(Threshold.NONE) || t.equals(Threshold.HARD)));
             
             table.put(new ParameterFloat("noise_Scale", noiseScale));
             table.put(new ParameterFloat("hard_Noise_Threshold", hardNoiseThreshold));
