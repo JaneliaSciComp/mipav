@@ -722,7 +722,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
             //System.err.println("Height is less than compImage.height, width is greater than compImage.width");
                         
         } else if ((imageWidth < componentImage.getSize(null).width) || (imageHeight < componentImage.getSize(null).height)) { // width += fudgeFactor;
-           
+        	scrollPane.setSize(scrollPane.getSize().width, height);
+            scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+         
         	//System.err.println("either width is less than component width or height is less than component height... returning\n\n");
         	addComponentListener(this);
 
@@ -2105,7 +2108,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		/**
 		 * The containing frame
 		 */
-		protected PlugInMuscleImageDisplay muscleFrame;
+		protected final PlugInMuscleImageDisplay muscleFrame;
 		/**
 		 * The title of this DialogPrompt
 		 */
@@ -2923,7 +2926,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
             gbc.fill = GridBagConstraints.HORIZONTAL;
             gbc.anchor = GridBagConstraints.NORTHWEST;
             
-            gbc.weightx = 1;
+            gbc.weightx = 0;
             gbc.weighty = 0;
             gbc.gridx = 0;
             gbc.gridy = 0;
@@ -2931,7 +2934,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
             add(initInstructionPanel(), gbc);
             
             gbc.fill = GridBagConstraints.BOTH;
-            gbc.weighty = 1;
+            gbc.weighty = 0;
             
             mirrorCheckArr = new PlugInMuscleColorButtonPanel[mirrorArr.length * 2];
             mirrorButtonArr = new JButton[mirrorArr.length * 2];
@@ -2954,7 +2957,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
             gbc.fill = GridBagConstraints.NONE;
             gbc.anchor = GridBagConstraints.SOUTH;
             gbc.gridy++;
-            add(buildButtons(), gbc);                
+            add(buildButtons(), gbc); 
+            
+            //TODO: Remove dummy label
+            gbc.gridy++;
+            gbc.weightx = 1;
+            gbc.weighty = 1;
+            add(new JLabel(""), gbc);
         }
 
 		/**
