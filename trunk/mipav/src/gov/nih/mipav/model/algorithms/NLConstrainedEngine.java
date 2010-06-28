@@ -2441,7 +2441,12 @@ public abstract class NLConstrainedEngine {
 		                    for (i = 0; i < nPts; i++) {
 		                        covarMat[i][0] = 1.0;
 		                        covarMat[i][1] = -Math.pow(a[2], xSeries[i]);
-		                        covarMat[i][2] = -xSeries[i] * a[1] * Math.pow(a[2], xSeries[i] - 1.0);
+		                        if (i == 0) {
+		                        	covarMat[i][2] = 0.0;
+		                        }
+		                        else {
+		                            covarMat[i][2] = -xSeries[i] * a[1] * Math.pow(a[2], xSeries[i] - 1.0);
+		                        }
 		                    }
 	                    }
 	                    else {
