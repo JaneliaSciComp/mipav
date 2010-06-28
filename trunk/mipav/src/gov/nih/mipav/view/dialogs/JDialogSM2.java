@@ -466,7 +466,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
 
             if ((sm2Algo.isCompleted() == true) && (resultImage != null)) {
             	
-            	for (i = 0; i < 4; i++) {
+            	for (i = 0; i < 5; i++) {
 
 	                resultImage[i].clearMask();
 	
@@ -480,7 +480,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
             	}
             } else if (resultImage != null) {
             	
-            	for (i = 0; i < 4; i++) {
+            	for (i = 0; i < 5; i++) {
 
 	                // algorithm failed but result image still has garbage
 	                resultImage[i].disposeLocal(); // clean up memory
@@ -610,7 +610,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         try {
 
             // Make algorithm
-        	resultImage = new ModelImage[4];
+        	resultImage = new ModelImage[5];
             int resultExtents[] = new int[3];
             for (i = 0; i < 3; i++) {
             	resultExtents[i] = image.getExtents()[i];
@@ -619,6 +619,8 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
             resultImage[1] = new ModelImage(ModelStorageBase.FLOAT, resultExtents, image.getImageName() + "_ve");
             resultImage[2] = new ModelImage(ModelStorageBase.FLOAT, resultExtents, image.getImageName() + "_vp");
             resultImage[3] = new ModelImage(ModelStorageBase.FLOAT, resultExtents, image.getImageName() + "_chi_squared");
+            resultImage[4] = new ModelImage(ModelStorageBase.INTEGER, resultExtents, image.getImageName() + 
+            		                        "_exit_status");
             
             sm2Algo = new AlgorithmSM2(resultImage, image, min_constr, max_constr, initial, tissueImage, timeVals,
             		                   hematocrit);
@@ -680,7 +682,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         labelParamsToFit.setFont(serif12);
         mainPanel.add(labelParamsToFit, gbc);
         
-        labelMinConstr0 = new JLabel("K_trans minimum allowed value (1.0E-5 - 0.99)in /min");
+        labelMinConstr0 = new JLabel("K_trans minimum allowed value (1.0E-5 - 5.0)in /min");
         labelMinConstr0.setForeground(Color.black);
         labelMinConstr0.setFont(serif12);
         gbc.gridy = 1;
@@ -693,7 +695,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         gbc.gridx = 1;
         mainPanel.add(textMinConstr0, gbc);
         
-        labelMaxConstr0 = new JLabel("K_trans maximum allowed value (1.0E-5 - 0.99)in /min");
+        labelMaxConstr0 = new JLabel("K_trans maximum allowed value (1.0E-5 - 5.0)in /min");
         labelMaxConstr0.setForeground(Color.black);
         labelMaxConstr0.setFont(serif12);
         gbc.gridx = 0;
@@ -701,13 +703,13 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         mainPanel.add(labelMaxConstr0, gbc);
         
         textMaxConstr0 = new JTextField(10);
-        textMaxConstr0.setText("0.99");
+        textMaxConstr0.setText("5.0");
         textMaxConstr0.setForeground(Color.black);
         textMaxConstr0.setFont(serif12);
         gbc.gridx = 1;
         mainPanel.add(textMaxConstr0, gbc);
         
-        labelInitial0 = new JLabel("K_trans initial guess value (1.0E-5 - 0.99)in /min");
+        labelInitial0 = new JLabel("K_trans initial guess value (1.0E-5 - 5.0)in /min");
         labelInitial0.setForeground(Color.black);
         labelInitial0.setFont(serif12);
         gbc.gridx = 0;
@@ -911,8 +913,8 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         	textMaxConstr0.selectAll();
         	return false;
         }
-        else if (max_constr[0] > 0.99) {
-        	MipavUtil.displayError("Maximum K_trans must not exceed 0.99");
+        else if (max_constr[0] > 5.0) {
+        	MipavUtil.displayError("Maximum K_trans must not exceed 5.0");
         	textMaxConstr0.requestFocus();
         	textMaxConstr0.selectAll();
         	return false;	
