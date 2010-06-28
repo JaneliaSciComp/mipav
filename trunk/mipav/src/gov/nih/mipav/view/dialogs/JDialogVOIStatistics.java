@@ -337,6 +337,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         
         calculator = new AlgorithmVOIProps(image, processType, rangeFlag, processList);
         calculator.setPrecisionDisplay(precision, doForce);
+        calculator.setSelectedStatistics( checkList );
         calculator.addListener(this);
 
         // only calculate these if appropriate box is checked for speed.

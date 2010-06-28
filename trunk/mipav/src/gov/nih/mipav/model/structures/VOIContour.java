@@ -3,6 +3,7 @@ package gov.nih.mipav.model.structures;
 import gov.nih.mipav.MipavMath;
 import gov.nih.mipav.view.Preferences;
 
+import java.awt.Color;
 import java.awt.Polygon;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -11,9 +12,16 @@ import java.util.Vector;
 
 import Jama.EigenvalueDecomposition;
 import Jama.Matrix;
+import WildMagic.LibFoundation.Approximation.ApprEllipsoidFit3f;
 import WildMagic.LibFoundation.Distance.DistanceVector3Segment3;
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Segment3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Rendering.CullState;
+import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.StandardMesh;
+import WildMagic.LibGraphics.SceneGraph.Transformation;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
 
 /**
  * This class is fundamental to the VOI class in which points are stored that
@@ -147,11 +155,19 @@ public class VOIContour extends VOIBase {
 									0.4) - 4)));
 			gatherBoundedPoints(orig, term, lowerBound - 1, upperBound, xRes,
 					yRes, xPts, yPts);
-			time = System.currentTimeMillis();
-			Preferences.debug("Completed points in "
-					+ (System.currentTimeMillis() - time) + "\tsize: "
-					+ orig.size() + "\n");
+            
+            Preferences.debug("Completed points in "
+                    + (System.currentTimeMillis() - time) + "\tsize: "
+                    + orig.size() + "\n");
+            time = System.currentTimeMillis();
+            
 			a = getLargest(orig, term, xRes, yRes, xPts, yPts);
+			
+			
+            Preferences.debug("Completed points in "
+                    + (System.currentTimeMillis() - time) + "\tsize: "
+                    + orig.size() + "\n");
+            time = System.currentTimeMillis();
 			if (lowerBound == 0.0) {
 				terminal = true;
 			}
@@ -370,7 +386,7 @@ public class VOIContour extends VOIBase {
 	 *            x-Dimension of image
 	 * 
 	 * @return the number of points in the position and intensity array that
-	 *         hava valid data.
+	 *         have valid data.
 	 */
 	public int getPositionAndIntensity(Vector3f[] position, float[] intensity,
 			float[] imageBuffer, int xDim) {
@@ -666,6 +682,7 @@ public class VOIContour extends VOIBase {
 	/**
 	 * Checks to see if Contour is counter-clockwise. If not it makes the
 	 * contour counter-clockwise.
+	 * @param start, the index of the first point.
 	 */
 	public void makeCounterClockwise(int start) {
 		int i;
@@ -689,107 +706,9 @@ public class VOIContour extends VOIBase {
 	}
 
 	/**
-	 * Tests if a point is near a vertex of the bounding box.
-	 * 
-	 * @param x
-	 *            x coordinate of point with zoom factor applied
-	 * @param y
-	 *            y coordinate of point with zoom factor applied
-	 * @param zoom
-	 *            magnification of image
-	 * @param resolutionX
-	 *            X resolution (aspect ratio)
-	 * @param resolutionY
-	 *            Y resolution (aspect ratio)
-	 * 
-	 * @return returns boolean result of test
-	 * 
-	 * <p>
-	 * 1----5----2 | | 8 6 | | 4----7----3
-	 * </p>
-	public int nearBoundPoint(int x, int y, float zoom, float resolutionX,
-			float resolutionY) {
-		int x0, x1, y0, y1;
-		float dist, minDistance = 100000;
-		x0 = MipavMath.round(xBounds[0] * zoom * resolutionX);
-		x1 = MipavMath.round(xBounds[1] * zoom * resolutionX);
-		y0 = MipavMath.round(yBounds[0] * zoom * resolutionY);
-		y1 = MipavMath.round(yBounds[1] * zoom * resolutionY);
-		nearBoundPoint = NOT_A_POINT;
-		dist = (float) MipavMath.distance(x, x0, y, y0);
-
-		if ((dist < 3) && (dist < minDistance)) {
-			minDistance = dist;
-			nearBoundPoint = 1;
-		}
-
-		dist = (float) MipavMath.distance(x, x1, y, y0);
-
-		if ((dist < 3) && (dist < minDistance)) {
-			minDistance = dist;
-			nearBoundPoint = 2;
-		}
-
-		dist = (float) MipavMath.distance(x, x1, y, y1);
-
-		if ((dist < 3) && (dist < minDistance)) {
-			minDistance = dist;
-			nearBoundPoint = 3;
-		}
-
-		dist = (float) MipavMath.distance(x, x0, y, y1);
-
-		if ((dist < 3) && (dist < minDistance)) {
-			minDistance = dist;
-			nearBoundPoint = 4;
-		}
-
-		dist = (float) MipavMath.distance(x, x0 + ((x1 - x0) / 2), y, y0);
-
-		if ((dist < 3) && (dist < minDistance)) {
-			minDistance = dist;
-			nearBoundPoint = 5;
-		}
-
-		dist = (float) MipavMath.distance(x, x1, y, y0 + ((y1 - y0) / 2));
-
-		if ((dist < 3) && (dist < minDistance)) {
-			minDistance = dist;
-			nearBoundPoint = 6;
-		}
-
-		dist = (float) MipavMath.distance(x, x0 + ((x1 - x0) / 2), y, y1);
-
-		if ((dist < 3) && (dist < minDistance)) {
-			minDistance = dist;
-			nearBoundPoint = 7;
-		}
-
-		dist = (float) MipavMath.distance(x, x0, y, y0 + ((y1 - y0) / 2));
-
-		if ((dist < 3) && (dist < minDistance)) {
-			minDistance = dist;
-			nearBoundPoint = 8;
-		}
-
-		return nearBoundPoint;
-	}
-     */
-	
-	/**
-	 * Moves a point on the contour.
-	 * 
-	 * @param x
-	 *            x coordinate
-	 * @param y
-	 *            y coordinate
-	public void movePt(int x, int y) {
-		replaceElement(x, y, ((elementAt(nearPoint))).Z);
-	}
-     */
-
-	/**
 	 * Reloads points in this array for speed purposes.
+     * @param xPts loads the x-values into the xPts array.
+     * @param yPts loads the y-values into the yPts array.
 	 */
 	public void reloadPoints( float[] xPts, float[] yPts ) {
 		int nPts = size();
@@ -854,125 +773,101 @@ public class VOIContour extends VOIBase {
 	 *            Object Quantification by Simon Xin Wang
 	 */
 	public void secondOrderAttributes( ModelImage kImage, float[] pAxis,
-			float[] eccentricity, float[] majorAxis, float[] minorAxis) {
+			float[] eccentricity, float[] majorAxis, float[] minorAxis) {  	    
+	    
+        getMask();
+        int nPts = m_kMask.cardinality();
+        
+        Vector3f kUp = new Vector3f();
+        Matrix3f kMat = new Matrix3f();
+        float[] afScale = new float[3];
+        
+        
+        ApprEllipsoidFit3f kFit = new ApprEllipsoidFit3f( this.size(), this, kUp, kMat, afScale );
 
-		int x, y;
-		int offset; // from corner
-		getImageBoundingBox();
-		int iPlane = getPlane();
-		if ( iPlane == NOT_A_PLANE )
-		{
-		    return;
-		}
-		
-		double m10 = 0.0;
-		double m01 = 0.0;
-
-        int nPts = 0;
-        BitSet mask;
-
-        switch (iPlane)
+        double fMin = Float.MAX_VALUE;
+        double fMax = -Float.MAX_VALUE;
+        int iMax = 0;
+        int iMin = 0;
+        for ( int i = 0; i < 3; i++ )
         {
-        case ZPLANE:
-            int xDim = kImage.getExtents()[0];
-            int yDim = kImage.getExtents()[1];
-            try {
-                mask = new BitSet(xDim * yDim); // bitset with a rectangular size
-            } catch (OutOfMemoryError oome) {
-                return;
+            if ( afScale[i] > fMax ) 
+            {
+                fMax = afScale[i];
+                iMax = i;
             }
-
-            int xUnits = kImage.getUnitsOfMeasure()[0];
-            int yUnits = kImage.getUnitsOfMeasure()[1];
-            float xRes = kImage.getResolutions(0)[0];
-            float yRes = kImage.getResolutions(0)[1];
-            int ybs = MipavMath.round(m_akImageMinMax[0].Y);
-            int ybe = MipavMath.round(m_akImageMinMax[1].Y);
-            int xbs = MipavMath.round(m_akImageMinMax[0].X);
-            int xbe = MipavMath.round(m_akImageMinMax[1].X);
-
-            for (y = ybs; y <= ybe; y++) {
-                offset = y * xDim; // a horizontal offset
-
-                for (x = xbs; x <= xbe; x++) {
-
-                    if (contains(x, y)) {
-                        mask.set(offset + x);
-                        nPts++;
-
-                        if (xUnits == yUnits) {
-                            m10 += x * xRes;
-                            m01 += y * yRes;
-                        } else {
-                            m10 += x;
-                            m01 += y;
-                        }
-                    }
-                }
+            if ( afScale[i] < fMin ) 
+            {
+                fMin = afScale[i];
+                iMin = i;
             }
-
-            m10 = m10 / nPts;
-            m01 = m01 / nPts;
-
-            double m20 = 0.0;
-            double m11 = 0.0;
-            double m02 = 0.0;
-            double xdiff;
-            double ydiff;
-
-            for (y = ybs; y <= ybe; y++) {
-                offset = y * xDim;
-
-                for (x = xbs; x <= xbe; x++) {
-
-                    if (mask.get(offset + x)) {
-
-                        if (xUnits == yUnits) {
-                            xdiff = (x * xRes) - m10;
-                            ydiff = (y * yRes) - m01;
-                        } else {
-                            xdiff = x - m10;
-                            ydiff = y - m01;
-                        }
-
-                        m20 += xdiff * xdiff;
-                        m11 += xdiff * ydiff;
-                        m02 += ydiff * ydiff;
-                    }
-                }
-            }
-
-            m20 = (m20 / nPts);
-            m11 = (m11 / nPts);
-            m02 = (m02 / nPts);
-
-            // The eigenvalues of m20 m11
-            // m11 m02
-            // are proportional to the square of the semiaxes
-            // (m20 - e)*(m02 - e) - m11*m11 = 0;
-            double root = Math.sqrt(((m20 - m02) * (m20 - m02)) + (4 * m11 * m11));
-            majorAxis[0] = (float) Math.sqrt(2.0 * (m20 + m02 + root));
-            minorAxis[0] = (float) Math.sqrt(2.0 * (m20 + m02 - root));
-
-            double areaEllipse = (Math.PI / 4.0) * majorAxis[0] * minorAxis[0];
-            double normFactor;
-
-            if (xUnits == yUnits) {
-                normFactor = Math.sqrt(xRes * yRes * nPts / areaEllipse);
-            } else {
-                normFactor = Math.sqrt(nPts / areaEllipse);
-            }
-
-            majorAxis[0] = (float) (normFactor * majorAxis[0]);
-            minorAxis[0] = (float) (normFactor * minorAxis[0]);
-            eccentricity[0] = (float) Math
-            .sqrt(1.0 - ((minorAxis[0] * minorAxis[0]) / (majorAxis[0] * majorAxis[0])));
-
-            // Jahne p. 507
-            pAxis[0] = (float) ((180.0 / Math.PI) * 0.5 * Math.atan2((2.0 * m11),
-                    (m20 - m02)));
-            break;
         }
+        int iMid = 0;
+        for ( int i = 0; i < 3; i++ )
+        {
+            if ( i != iMax && i != iMin )
+            {
+                iMid = i;
+                break;
+            }
+        }
+        
+        double volumeEllipse = (4.0 * Math.PI / 3.0) * afScale[2] * afScale[1] * afScale[0];
+        double areaEllipse = (Math.PI / 4.0) * afScale[iMax] * afScale[iMid];
+        double normFactor = Math.sqrt(nPts / areaEllipse);
+
+        float majorA = (float) (normFactor * afScale[iMax]);
+        float minorA = (float) (normFactor * afScale[iMid]);
+        float e = (float) Math
+        .sqrt(1.0 - ((afScale[iMid] * afScale[iMid]) / (afScale[iMax] * afScale[iMax])));
+
+
+
+        Vector3f kX = new Vector3f( kMat.M00, kMat.M01, kMat.M02 );  kX.Normalize();
+        Vector3f kY = new Vector3f( kMat.M10, kMat.M11, kMat.M12 );  kY.Normalize();
+        Vector3f kZ = new Vector3f( kMat.M20, kMat.M21, kMat.M22 );  kZ.Normalize();
+        Vector3f[] kBasis = new Vector3f[]{ kX, kY, kZ };
+        kMat = new Matrix3f( kX, kY, kZ, false );
+        Vector3f kRot = new Vector3f();
+        kMat.Mult( Vector3f.UNIT_Z_NEG, kRot );              
+        float p = (float)(Math.acos(kRot.Dot(kBasis[iMax])) * 180f/Math.PI);
+        
+        /*
+        Transformation kTransform = new Transformation();
+        Vector3f kScale = new Vector3f(afScale[0]/2, afScale[1]/2, afScale[2]/2);
+        kTransform.SetScale( kScale );
+        kTransform.SetTranslate( kUp );
+        kTransform.SetRotate( kMat );
+
+        Attributes kAttr = new Attributes();
+        kAttr.SetPChannels(3);
+        StandardMesh kSM = new StandardMesh(kAttr);
+        TriMesh kSphere = kSM.Sphere(64,64,1f);
+        
+        Vector3f center = getGeometricCenter();
+        Vector<Vector3f> kPositions = new Vector<Vector3f>();
+        for ( int i = 0; i < kSphere.VBuffer.GetVertexQuantity(); i++ )
+        {
+            Vector3f kPos = new Vector3f();
+            kSphere.VBuffer.GetPosition3(i, kPos);
+            kPositions.add(kTransform.ApplyForward(kPos));
+            kPositions.elementAt(i).Z = center.Z;
+        }
+        VOIContour kVOI = new VOIContour( false, true, kPositions ); 
+        short sID = (short)(kImage.getVOIs().size() + 1);
+        String kName = getClass().getName();
+        int index = kName.lastIndexOf('.') + 1;
+        kName = kName.substring(index);
+        VOI kGroup = new VOI( sID,  kName + "_" + sID, getType(), -1f );
+        kGroup.importCurve(kVOI);
+        kGroup.setColor( Color.blue );
+        kImage.registerVOI(kGroup);
+        */
+        
+        pAxis[0] = p;
+        eccentricity[0] = e;
+        majorAxis[0] = majorA;
+        minorAxis[0] = minorA;
 	}
 
 	/**
