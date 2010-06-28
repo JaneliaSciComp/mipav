@@ -456,7 +456,15 @@ public class FileVOI extends FileXML {
 
             arrowPtScanner = new Vector3f();
             textPtScanner = new Vector3f();
-
+            boolean saveAsLPS = Preferences.is(Preferences.PREF_VOI_LPS_SAVE);
+            boolean is2D = (image.getNDims() == 2);
+            
+            if(saveAsLPS) {
+            	closedTag("CoordinateSystem", "LPS-scanner");
+            }else {
+            	closedTag("CoordinateSystem", "Voxel");
+            }
+            
             for (int i = 0; i < numVOIs; i++) {
                 currentVOI = VOIs.VOIAt(i);
 
@@ -499,7 +507,7 @@ public class FileVOI extends FileXML {
                                     closedTag("Note", noteString);
                                 }
 
-                                if (image.getNDims() > 2) {
+                                if (!is2D && saveAsLPS) {
                                     MipavCoordinateSystems.fileToScanner(textPt, textPtScanner, image);
                                     MipavCoordinateSystems.fileToScanner(arrowPt, arrowPtScanner, image);
                                     closedTag("TextLocation", Float.toString(textPtScanner.X) + ","
@@ -508,7 +516,12 @@ public class FileVOI extends FileXML {
                                             + Float.toString(arrowPtScanner.Y) + "," + Float.toString(arrowPtScanner.Z));
                                     // System.err.println("Text location: " + textPtScanner + ", arrow location: " +
                                     // arrowPtScanner);
-                                } else {
+                                }else if(!is2D && saveAsLPS) {
+                                	closedTag("TextLocation", Float.toString(textPt.X) + "," + Float.toString(textPt.Y)
+                                            + "," + Float.toString(textPt.Z));
+                                    closedTag("ArrowLocation", Float.toString(arrowPt.X) + ","
+                                            + Float.toString(arrowPt.Y) + "," + Float.toString(arrowPt.Z));
+                                }else {
                                     //textPt.Z = j;
                                     //arrowPt.Z = j;
                                     closedTag("TextLocation", Float.toString(textPt.X) + "," + Float.toString(textPt.Y)
@@ -1813,6 +1826,8 @@ public class FileVOI extends FileXML {
 
         /** the Z dimension of the image */
         private int zDim = 1;
+        
+        private boolean lps = Preferences.is(Preferences.PREF_VOI_LPS_SAVE);
 
         /**
          * Construct our custom XML data handler.
@@ -1857,6 +1872,17 @@ public class FileVOI extends FileXML {
         public void endElement(final String namespaceURI, final String localName, final String qName)
                 throws SAXException {
             currentKey = localName;
+            
+            
+            
+            if(currentKey.equals("CoordinateSystem")) {
+            	if(elementBuffer.equals("LPS-scanner")) {
+            		lps = true;
+            	}
+            	if(elementBuffer.equals("Voxel")) {
+            		lps = false;
+            	}
+            }
 
             if (currentKey.equals("Label")) {
                 voiText.setFontName(fontName);
@@ -1890,32 +1916,38 @@ public class FileVOI extends FileXML {
                 final Vector3f ptOut = new Vector3f();
 
                 if (image.getNDims() > 2) {
-                    final int xDim = image.getExtents()[0];
-                    final int yDim = image.getExtents()[1];
-                    final int zDim = image.getExtents()[2];
+                	
+                	if(lps) {
+	                    final int xDim = image.getExtents()[0];
+	                    final int yDim = image.getExtents()[1];
+	                    final int zDim = image.getExtents()[2];
+	
+	                    Preferences.debug("New contour: " + "\n", Preferences.DEBUG_FILEIO);
+	
+	                    MipavCoordinateSystems.scannerToFile(ptIn, ptOut, image);
+	
+	                    if ( (ptOut.X > xDim) || (ptOut.Y > yDim) || (ptOut.Z >= zDim)) {
+	                        MipavUtil.displayWarning("VOI in file out of image bounds:  Open VOI aborted");
+	                        
+	                        return;
+	                    }
+	
+	                    // A mistake has occured in reading FileInfoBase.ORI_L2R_TYPE, all must now be flipped
+	                    if ( (ptOut.X < 0) && (ptOut.Y < 0) && (ptOut.Z < 0)) {
+	
+	                        ptOut.X = -ptOut.X;
+	                        ptOut.Y = -ptOut.Y;
+	                        ptOut.Z = -ptOut.Z;
+	                    }
+	
+	                    ptOut.X = Math.round(ptOut.X);
+	                    ptOut.Y = Math.round(ptOut.Y);
+	                    ptOut.Z = Math.round(ptOut.Z);
 
-                    Preferences.debug("New contour: " + "\n", Preferences.DEBUG_FILEIO);
-
-                    MipavCoordinateSystems.scannerToFile(ptIn, ptOut, image);
-
-                    if ( (ptOut.X > xDim) || (ptOut.Y > yDim) || (ptOut.Z >= zDim)) {
-                        MipavUtil.displayWarning("VOI in file out of image bounds:  Open VOI aborted");
-
-                        return;
-                    }
-
-                    // A mistake has occured in reading FileInfoBase.ORI_L2R_TYPE, all must now be flipped
-                    if ( (ptOut.X < 0) && (ptOut.Y < 0) && (ptOut.Z < 0)) {
-
-                        ptOut.X = -ptOut.X;
-                        ptOut.Y = -ptOut.Y;
-                        ptOut.Z = -ptOut.Z;
-                    }
-
-                    slice = (int) ptOut.Z;
-                    System.out.println("Point: " + slice);
-
-                    voiText.addElement(ptOut);
+	                    voiText.addElement(ptOut);
+                	}else {
+                		voiText.addElement(ptIn);
+                	}
                 } else {
                     voiText.addElement(ptIn);
                 }

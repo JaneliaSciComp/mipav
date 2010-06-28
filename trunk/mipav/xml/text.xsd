@@ -6,32 +6,38 @@
 		<xs:annotation>
 			<xs:documentation>Comment describing your root element</xs:documentation>
 		</xs:annotation>
+		
+
+			
+
+		
 		<xs:complexType>
 			<xs:sequence>
-				<xs:element name="Label" maxOccurs="unbounded">
-					<xs:complexType>
-						<xs:sequence>
-							<xs:element name="Text" type="xs:string"/>
-							<xs:element name="Note" type="xs:string" minOccurs="0"/>
-							<xs:element name="TextLocation" type="xs:string"/>
-							<xs:element name="ArrowLocation" type="xs:string"/>
-							<xs:element name="UseMarker" type="xs:boolean"/>
-							<xs:element name="Color" type="xs:string"/>
-							<xs:element name="BackgroundColor" type="xs:string"/>
-							<xs:element name="FontName" type="xs:string"/>
-							<xs:element name="FontSize" type="xs:int"/>
-							<xs:element name="FontStyle" type="xs:string"/>
-						</xs:sequence>
-					</xs:complexType>
-				</xs:element>
-				<xs:element name="CoordinateSystem">
-					<xs:simpleType>
-						<xs:restriction base="xs:string">
-							<xs:enumeration value="LPS-scanner"/>
-							<xs:enumeration value="Voxel"/>
-						</xs:restriction>
-					</xs:simpleType>
-				</xs:element>
+			<xs:element name="CoordinateSystem" minOccurs="0" maxOccurs="1">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="LPS-scanner"/>
+						<xs:enumeration value="Voxel"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="Label" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="Text" type="xs:string"/>
+						<xs:element name="Note" type="xs:string" minOccurs="0"/>
+						<xs:element name="TextLocation" type="xs:string"/>
+						<xs:element name="ArrowLocation" type="xs:string"/>
+						<xs:element name="UseMarker" type="xs:boolean"/>
+						<xs:element name="Color" type="xs:string"/>
+						<xs:element name="BackgroundColor" type="xs:string"/>
+						<xs:element name="FontName" type="xs:string"/>
+						<xs:element name="FontSize" type="xs:int"/>
+						<xs:element name="FontStyle" type="xs:string"/>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+				
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
