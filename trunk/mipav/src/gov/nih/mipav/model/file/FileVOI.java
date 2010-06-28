@@ -390,11 +390,12 @@ public class FileVOI extends FileXML {
     /**
      * Writes VOIText(s) to a .lbl file (XML based)
      * 
-     * @param writeAllInSameFile whether or not to write all VOITexts into the same file, or only the selected VOIText
+     * @param String voiName   Name of VOIText to write out
+     * @param boolean writeAllContours Whether to write all contours or only selected contours
      * 
      * @throws IOException exception thrown if there is an error writing the file
      */
-    public void writeAnnotationInVoiAsXML(boolean writeAllInSameFile, final boolean writeAllFromImage)
+    public void writeAnnotationInVoiAsXML(String voiName, boolean writeAllContours)
             throws IOException {
         FileWriter fw;
         while (file.exists() == true) {
@@ -459,23 +460,27 @@ public class FileVOI extends FileXML {
             for (int i = 0; i < numVOIs; i++) {
                 currentVOI = VOIs.VOIAt(i);
 
-                if (currentVOI.getCurveType() == VOI.ANNOTATION && (writeAllFromImage || currentVOI.isActive())) {
+                if (currentVOI.getCurveType() == VOI.ANNOTATION) {
 
                     curves = currentVOI.getCurves();
 
                     //for (int j = 0; j < curves.length; j++) {
 
                         for (int k = 0; k < curves.size(); k++) {
-
+                    		if(!((VOIText) curves.elementAt(k)).getName().equals(voiName)){
+                    			continue;
+                    		}
+                    		if(!writeAllContours) {
+                    			if(!((VOIText)curves.elementAt(k)).isActive()) {
+                    				continue;
+                    			}
+                    		}
                             vText = (VOIText) curves.elementAt(k);
                             voiString = vText.getText();
                             noteString = vText.getNote();
                             doNote = !noteString.equals(JDialogAnnotation.DEFAULT_NOTES) && noteString.length() > 0;
 
-                            // System.out.println("VOI Name: "+voiString+"\tfile: "+file.getName());
-                            if (writeAllInSameFile
-                                    || ( !writeAllInSameFile && voiString.equals(file.getName().substring(0,
-                                            file.getName().lastIndexOf('.'))))) {
+
 
                                 openTag("Label", true);
 
@@ -536,7 +541,7 @@ public class FileVOI extends FileXML {
                                 }
 
                                 openTag("Label", false);
-                            }
+                            
                         }
                     }
 
