@@ -1,5 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
+import WildMagic.LibFoundation.NumericalAnalysis.MinimizeN;
+import WildMagic.LibFoundation.NumericalAnalysis.PowellCostFunction;
 
 import gov.nih.mipav.model.structures.*;
 
@@ -11,7 +13,7 @@ import java.io.*;
 /**
  * DOCUMENT ME!
  */
-public class AlgorithmEntropyMinimization extends AlgorithmBase {
+public class AlgorithmEntropyMinimization extends AlgorithmBase implements PowellCostFunction {
     // This software performs retrospective shading correction based on entropy minimization. If the image is color, the
     // colors are independently processed one at a time and then recombined. The user can select either both
     // multiplicative and additive quadratic noise, multiplicative quadratic noise only, or cubic multiplicative noise
@@ -491,6 +493,8 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
         return fx;
     } // brent
 
+    
+    private int entropyCount = 0;
     /**
      * DOCUMENT ME!
      *
@@ -499,6 +503,14 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
      * @return  DOCUMENT ME!
      */
     private double entropyFunction(double[] p) {
+
+        entropyCount++;
+        
+        for ( int i = 0; i < p.length; i++ )
+        {
+            System.err.print( p[i] + " " );
+        }
+        
         double a1, a2, a3, a4, a5, a6, a7, a8, a9;
         double m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15, m16, m17, m18, m19;
         int x;
@@ -951,6 +963,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
             entropy -= probability[i] * Math.log(probability[i]);
         }
 
+        System.err.println( "    " + entropy + "       " + entropyCount );
         return entropy;
     }
 
@@ -986,7 +999,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
     } // linmin
 
     /**
-     * Given entropyFunction, and given distinct intial points ax and bx, this routine searches in the downhill
+     * Given entropyFunction, and given distinct initial points ax and bx, this routine searches in the downhill
      * direction (defined by entropyFunction as evaluated at the initial points) and returns new points ax, bx, cx that
      * bracket a minimum of entropyFunction. Also returned are the entropyFunction values at the three points, fa, fb,
      * and fc.
@@ -1161,6 +1174,29 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
      * @param  ftol  DOCUMENT ME!
      */
     private void powell(double[] p, double[][] xi, double ftol) {
+
+        double[] initialBracketA = new double[p.length];
+        double[] initialBracketB = new double[p.length];
+        for ( int i = 0; i < p.length; i++ )
+        {
+            initialBracketA[i] = -100;
+            initialBracketB[i] = 100;
+        }
+
+        int ITMAX = 2000000000;
+        int ITMAX_BRENT = 100000000;
+        MinimizeN kPowell = new MinimizeN( p.length, this, ITMAX_BRENT, ITMAX_BRENT, ITMAX, null );
+        
+        double[] result = new double[p.length];
+        double[] error = new double[1];
+        kPowell.GetMinimum( initialBracketA, initialBracketB, p, result, error );
+
+        for ( int i = 0; i < p.length; i++ )
+        {
+            p[i] = result[i];
+        }
+        
+        /*
         double TINY = 1.0e-25;
         int ITMAX = 200;
         double[] pt;
@@ -1259,6 +1295,8 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
                 } // if (t < 0.0)
             } // if (fptt < fp)
         } // for (iter = 1; ; iter++)
+        */
+        
     } // powell
 
     /**
@@ -4515,6 +4553,19 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
         setCompleted(true);
 
         return;
+    }
+
+
+    @Override
+    public double cost(double fT, double[] afData) {
+        System.err.println( "wrong cost fn" );
+        return 0;
+    }
+
+
+    @Override
+    public double cost(double[] fT, double[] afData) {
+        return entropyFunction( fT );
     }
 
 }

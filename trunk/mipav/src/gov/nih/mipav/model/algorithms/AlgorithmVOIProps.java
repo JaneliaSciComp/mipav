@@ -1023,12 +1023,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             float ignoreMax = calcSelectedVOI.getMaximumIgnore();
 
             if(distanceFlag) {
-                long time2 = System.currentTimeMillis();
+                //long time2 = System.currentTimeMillis();
                 largestDistance = calcSelectedVOI.calcLargestDistance(
                         srcImage.getFileInfo(0).getResolutions()[0],
                         srcImage.getFileInfo(0).getResolutions()[1],
                         srcImage.getFileInfo(0).getResolutions()[2]);
-                System.out.println("Total time: "+(System.currentTimeMillis() - time2));
+                //System.out.println("Total time: "+(System.currentTimeMillis() - time2));
             }
 
             int xUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[0];
@@ -1197,7 +1197,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         private ContourStats calcStatsPerContour( FileInfoBase fileInfo, float[] imgBuffer, VOIBase contour, 
                 String unit2DStr, String unit3DStr, float ignoreMin, float ignoreMax )
         {
-            long time = System.currentTimeMillis();
+            //long time = System.currentTimeMillis();
             contour.update();
             ContourStats stats = new ContourStats();
             
@@ -1213,14 +1213,14 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
                 stats.volume = stats.area * fileInfo.getResolutions()[2]; 
                 
-                System.out.println("Time required to calculate "+quantityDescription+": "+(System.currentTimeMillis() - time));
-                time = System.currentTimeMillis();
+                //System.out.println("Time required to calculate "+quantityDescription+": "+(System.currentTimeMillis() - time));
+                //time = System.currentTimeMillis();
             }
             if ( statsList[ indexOf( perimeterDescription ) ] )
             {               
                 stats.perimeter = contour.getLengthPtToPt(srcImage.getFileInfo(0).getResolutions());                
-                System.out.println("Time required to calculate "+perimeterDescription+": "+(System.currentTimeMillis() - time));
-                time = System.currentTimeMillis();
+                //System.out.println("Time required to calculate "+perimeterDescription+": "+(System.currentTimeMillis() - time));
+                //time = System.currentTimeMillis();
             }
             if ( statsList[ indexOf( minIntensity ) ] ||
                     statsList[ indexOf( maxIntensity ) ] ||
@@ -1271,8 +1271,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     stats.avgInten = stats.sum/stats.nVox;
                 }
 
-                System.out.println("Time required to calculate "+minIntensity+": "+(System.currentTimeMillis() - time));
-                time = System.currentTimeMillis();
+                //System.out.println("Time required to calculate "+minIntensity+": "+(System.currentTimeMillis() - time));
+                //time = System.currentTimeMillis();
 
                 if ( statsList[ indexOf( median ) ] || statsList[ indexOf( mode ) ] || statsList[ indexOf( modeCount ) ] )
                 {               
@@ -1283,8 +1283,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     {
                         getMedianStatistics( stats );
                     }
-                    System.out.println("Time required to calculate "+median+": "+(System.currentTimeMillis() - time));
-                    time = System.currentTimeMillis();
+                    //System.out.println("Time required to calculate "+median+": "+(System.currentTimeMillis() - time));
+                    //time = System.currentTimeMillis();
                 }
 
                 if ( statsList[ indexOf( deviationDescription ) ] ||
@@ -1302,8 +1302,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         getStdSkewStatistics(stats, contour.getMaskPositions(), 
                                 unit2DStr, unit3DStr, ignoreMin, ignoreMax);
                     }
-                    System.out.println("Time required to calculate "+deviationDescription+": "+(System.currentTimeMillis() - time));
-                    time = System.currentTimeMillis();
+                    //System.out.println("Time required to calculate "+deviationDescription+": "+(System.currentTimeMillis() - time));
+                    //time = System.currentTimeMillis();
                 }
                 
             }
@@ -1322,8 +1322,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 String comStr = unitStr + "\n\t\t" + nf.format(gCenter.X) + "\t" + nf.format(gCenter.Y) + "\t" +  nf.format(gCenter.Z);
                 comStr = addScannerLabels(comStr, gCenter);
                 stats.gCenterString = new String(comStr);
-                System.out.println("Time required to calculate "+geometricCenterDescription+": "+(System.currentTimeMillis() - time));
-                time = System.currentTimeMillis();
+                //System.out.println("Time required to calculate "+geometricCenterDescription+": "+(System.currentTimeMillis() - time));
+                //time = System.currentTimeMillis();
             }
             if ( statsList[ indexOf( axisDescription ) ] ||
                     statsList[ indexOf( eccentricityDescription ) ] ||
@@ -1341,16 +1341,16 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 stats.Ecc = tmpEcc[0];
                 stats.MajorAxis = tmpMajorAxis[0];
                 stats.MinorAxis = tmpMinorAxis[0];
-                System.out.println("Time required to calculate "+axisDescription+": "+(System.currentTimeMillis() - time));
-                time = System.currentTimeMillis();
+                //System.out.println("Time required to calculate "+axisDescription+": "+(System.currentTimeMillis() - time));
+                //time = System.currentTimeMillis();
             }
             if ( statsList[ indexOf( largestSliceDistanceDescription ) ] )
             {               
                 stats.largestContourDistance = ((VOIContour) (contour)).calcLargestSliceDistance(
                         srcImage.getFileInfo(0).getResolutions()[0], srcImage.getFileInfo(0).getResolutions()[1]);
 
-                System.out.println("Time required to calculate "+largestSliceDistanceDescription+": "+(System.currentTimeMillis() - time));
-                time = System.currentTimeMillis();
+                //System.out.println("Time required to calculate "+largestSliceDistanceDescription+": "+(System.currentTimeMillis() - time));
+                //time = System.currentTimeMillis();
             }
             return stats;
         }
@@ -2024,7 +2024,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 String unit2DStr, String unit3DStr, float ignoreMin, float ignoreMax, double largestDistance )
         {
             ContourStats stats = new ContourStats();
-            long time = System.currentTimeMillis();
+            //long time = System.currentTimeMillis();
 
             if ( statsList[ indexOf( quantityDescription ) ] || 
                     statsList[ indexOf( volumeDescription ) ] ||
@@ -2043,8 +2043,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.areaDescription, nf.format(stats.area));
                 statProperty.setProperty(VOIStatisticList.volumeDescription, nf.format(stats.volume));
                 statProperty.setProperty(VOIStatisticList.quantityDescription, nf.format(stats.nVox));            
-                System.out.println("Time required to calculate "+quantityDescription+": "+(System.currentTimeMillis() - time));
-                time = System.currentTimeMillis();
+                //System.out.println("Time required to calculate "+quantityDescription+": "+(System.currentTimeMillis() - time));
+                //time = System.currentTimeMillis();
             }
             if ( statsList[ indexOf( perimeterDescription ) ] )
             {           
@@ -2054,8 +2054,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     stats.perimeter += contours.elementAt(i).getLengthPtToPt(srcImage.getFileInfo(0).getResolutions());
                 }
                 statProperty.setProperty(VOIStatisticList.perimeterDescription, nf.format(stats.perimeter));      
-                System.out.println("Time required to calculate "+perimeterDescription+": "+(System.currentTimeMillis() - time));
-                time = System.currentTimeMillis();
+                //System.out.println("Time required to calculate "+perimeterDescription+": "+(System.currentTimeMillis() - time));
+                //time = System.currentTimeMillis();
             }
             if ( statsList[ indexOf( minIntensity ) ] ||
                     statsList[ indexOf( maxIntensity ) ] ||
@@ -2155,8 +2155,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     statProperty.setProperty(VOIStatisticList.sumIntensities, nf.format(stats.sum));
                 }
                 
-                System.out.println("Time required to calculate "+minIntensity+": "+(System.currentTimeMillis() - time));
-                time = System.currentTimeMillis();
+                //System.out.println("Time required to calculate "+minIntensity+": "+(System.currentTimeMillis() - time));
+                //time = System.currentTimeMillis();
                 
                 if ( statsList[ indexOf( median ) ] || statsList[ indexOf( mode ) ] || statsList[ indexOf( modeCount ) ] )
                 {               
@@ -2182,8 +2182,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         statProperty.setProperty(VOIStatisticList.modeCount, nf.format(stats.maxCount));
                         statProperty.setProperty(VOIStatisticList.median, nf.format(stats.median));
                     }
-                    System.out.println("Time required to calculate "+median+": "+(System.currentTimeMillis() - time));
-                    time = System.currentTimeMillis();
+                    //System.out.println("Time required to calculate "+median+": "+(System.currentTimeMillis() - time));
+                    //time = System.currentTimeMillis();
                     
                 }
 
@@ -2225,8 +2225,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         statProperty.setProperty(VOIStatisticList.kurtosisDescription , nf.format(stats.kurtosis));
                         statProperty.setProperty(VOIStatisticList.massCenterDescription, stats.massCenterDescription);
                     }
-                    System.out.println("Time required to calculate "+deviationDescription+": "+(System.currentTimeMillis() - time));
-                    time = System.currentTimeMillis();
+                    //System.out.println("Time required to calculate "+deviationDescription+": "+(System.currentTimeMillis() - time));
+                    //time = System.currentTimeMillis();
                 }
 
             }
@@ -2248,8 +2248,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 comStr = addScannerLabels(comStr, selectedCOM);
                 stats.gCenterString = new String(comStr);
                 statProperty.setProperty(VOIStatisticList.geometricCenterDescription, stats.gCenterString);
-                System.out.println("Time required to calculate "+geometricCenterDescription+": "+(System.currentTimeMillis() - time));
-                time = System.currentTimeMillis();
+                //System.out.println("Time required to calculate "+geometricCenterDescription+": "+(System.currentTimeMillis() - time));
+                //time = System.currentTimeMillis();
             }
             if ( statsList[ indexOf( largestSliceDistanceDescription ) ] )
             {               
@@ -2270,14 +2270,38 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.largestSliceDistanceDescription, nf.format(stats.largestContourDistance));
                 
 
-                System.out.println("Time required to calculate "+largestSliceDistanceDescription+": "+(System.currentTimeMillis() - time));
-                time = System.currentTimeMillis();
+                //System.out.println("Time required to calculate "+largestSliceDistanceDescription+": "+(System.currentTimeMillis() - time));
+                //time = System.currentTimeMillis();
             }
             if ( statsList[ indexOf( largestDistanceDescription ) ] )
             {               
                 stats.largestContourDistance = largestDistance;
                 statProperty.setProperty(VOIStatisticList.largestDistanceDescription, nf.format(stats.largestContourDistance));
                 
+            }
+            if ( statsList[ indexOf( axisDescription ) ] ||
+                    statsList[ indexOf( eccentricityDescription ) ] ||
+                    statsList[ indexOf( majorAxisDescription ) ] ||
+                    statsList[ indexOf( minorAxisDescription ) ] )
+            {               
+                float[] tmpPAxis = new float[1];
+                float[] tmpEcc = new float[1];
+                float[] tmpMajorAxis = new float[1];
+                float[] tmpMinorAxis = new float[1];
+                ((VOIContour)contours.firstElement()).secondOrderAttributes(srcImage,
+                        tmpPAxis, tmpEcc, tmpMajorAxis,
+                        tmpMinorAxis);
+                stats.PAxis = tmpPAxis[0];
+                stats.Ecc = tmpEcc[0];
+                stats.MajorAxis = tmpMajorAxis[0];
+                stats.MinorAxis = tmpMinorAxis[0];
+                //System.out.println("Time required to calculate "+axisDescription+": "+(System.currentTimeMillis() - time));
+                //time = System.currentTimeMillis();
+
+                statProperty.setProperty(VOIStatisticList.axisDescription, nf.format(stats.PAxis));
+                statProperty.setProperty(VOIStatisticList.eccentricityDescription, nf.format(stats.Ecc));
+                statProperty.setProperty(VOIStatisticList.majorAxisDescription, nf.format(stats.MajorAxis));
+                statProperty.setProperty(VOIStatisticList.minorAxisDescription, nf.format(stats.MinorAxis));
             }
 
 
