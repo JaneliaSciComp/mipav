@@ -24,7 +24,7 @@ import java.text.*;
  * Based on the document provided by Daniel Reich:
  * Notes on DCE with SM2 (standard model, aka Tofts model, 2-compartment)
  * 3 model parameters are fit for each voxel in 3D:
- * 1) K_trans in [1.0E-5, 0.99] in /min
+ * 1) K_trans in [1.0E-5, 5.0] in /min
  * On input ktrans is converted from /min to /sec and on output ktrans is converted
  * from /sec to /min.
  * 2) ve in [1.0E-5, 0.99]
@@ -49,7 +49,7 @@ import java.text.*;
  * Average over this VOI to extract the time series R1,p(tj) from the
  * R1(tj) 4D data set.
  * tj is a vector of the center times for each volume, where j = 1,...,n and 
- * a is the number of post-contrast volumes.
+ * n is the number of post-contrast volumes.
  * 
  * Solve the equation numerically assuming piecewise linearity and using the
  * trapezoid rule.
@@ -128,6 +128,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
     private double[] paramMax = new double[3];
     private int processors;
     private float destArray[][];
+    private int destExitStatusArray[];
     private long voxelsProcessed = 0;
     private int barMarker = 0;
     private int oldBarMarker = 0;
@@ -514,6 +515,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
         volSize = xDim * yDim * zDim;
         size4D = volSize * tDim;
         destArray = new float[4][volSize];
+        destExitStatusArray = new int[volSize];
        
         r1t0 = new double[volSize];
         r1tj = new double[size4D];
@@ -684,6 +686,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
 	            	}
 	            }
 	            destArray[3][i] = chi_squared;
+	            destExitStatusArray[i] = dModel.getExitStatus();
 	            exitStatus[(dModel.getExitStatus() + 11)]++;
             } // for (i = 0; i < volSize; i++)
         } // else processors == 1
@@ -1426,6 +1429,15 @@ public class AlgorithmSM2 extends AlgorithmBase {
 	        }
         }
         
+        try {
+        	destImage[4].importData(0, destExitStatusArray, true);
+        }
+        catch (IOException e) {
+        	MipavUtil.displayError("IOException on destImage[4].importData(0, destExitStatusArray, true)");
+        	setCompleted(false);
+        	return;
+        }
+        
         setCompleted(true);
     }
     
@@ -1890,7 +1902,6 @@ public class AlgorithmSM2 extends AlgorithmBase {
     		double params[];
     		float chi_squared;
     		FitSM2ConstrainedModelC dModel;
-    		int exitStatusIndex;
     		for (i = start; i < end; i++) {
 	        	//fireProgressStateChanged(i * 100/volSize);
 	            input(y_array, i);
@@ -1904,8 +1915,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
 	            // Convert ktrans from /sec to /min
 	            // Mutliply /sec by 60 seconds/minute
 	            params[0] = 60.0 * params[0];
-	            exitStatusIndex = dModel.getExitStatus() + 11;
-	            output(params, i, exitStatusIndex, chi_squared);
+	            output(params, i, dModel.getExitStatus(), chi_squared);
             } // for (i = start; i < end; i++)	
     	}
     	
@@ -1918,7 +1928,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
     	}
     }
     
-    public synchronized void output(double params[], int i, int exitStatusIndex, float chi_squared) {
+    public synchronized void output(double params[], int i, int exitBits, float chi_squared) {
     	int j;
     	voxelsProcessed++;
     	long vt100 = voxelsProcessed * 100L;
@@ -1945,7 +1955,8 @@ public class AlgorithmSM2 extends AlgorithmBase {
         	}
         }
     	destArray[3][i] = chi_squared;
-        exitStatus[exitStatusIndex]++;	
+    	destExitStatusArray[i] = exitBits;
+        exitStatus[exitBits + 11]++;	
     }
     
     class FitSM2ConstrainedModelC extends NLConstrainedEngine {
