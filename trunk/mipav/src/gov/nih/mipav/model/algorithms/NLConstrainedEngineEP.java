@@ -1415,11 +1415,16 @@ public abstract class NLConstrainedEngineEP {
 		                        covarMat[i][0] = DoubleDouble.valueOf(1.0);
 		                        covarMat[i][1] = (a[2].pow(xSeries[i])).negate();
 		                        //covarMat[i][1] = -Math.pow(a[2], xSeries[i]);
-		                        covarMat[i][2] = xSeries[i].subtract(DoubleDouble.valueOf(1.0));
-		                        covarMat[i][2] = a[2].pow(covarMat[i][2]);
-		                        covarMat[i][2] = a[1].multiply(covarMat[i][2]);
-		                        covarMat[i][2] = (xSeries[i].multiply(covarMat[i][2])).negate();
-		                        //covarMat[i][2] = -xSeries[i] * a[1] * Math.pow(a[2], xSeries[i] - 1.0);
+		                        if (i == 0) {
+		                        	covarMat[i][2] = DoubleDouble.valueOf(0.0);
+		                        }
+		                        else {
+			                        covarMat[i][2] = xSeries[i].subtract(DoubleDouble.valueOf(1.0));
+			                        covarMat[i][2] = a[2].pow(covarMat[i][2]);
+			                        covarMat[i][2] = a[1].multiply(covarMat[i][2]);
+			                        covarMat[i][2] = (xSeries[i].multiply(covarMat[i][2])).negate();
+			                        //covarMat[i][2] = -xSeries[i] * a[1] * Math.pow(a[2], xSeries[i] - 1.0);
+		                        }
 		                    }
 	                    }
 	                    else {
