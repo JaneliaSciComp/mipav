@@ -53,6 +53,7 @@ import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJFrameMessage;
 import gov.nih.mipav.view.ViewUserInterface;
 
 public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery {
@@ -176,6 +177,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	private JButton cancel;
 	private JRadioButton noCheckBox;
 	private Threshold t;
+	private JScrollPane irspgrPanel;
 	private static final String SUCCESS = "Successful";
     
 	/**
@@ -412,13 +414,24 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    return panel;
 	}
 
-	protected JScrollPane buildIRSPGRPanelGE() {
+	protected JScrollPane buildIRSPGRPanel() {
 	    
-		JPanel panel = buildIRSPGRPanelGEInner();
+		JPanel panel = null;
+		if(geScanner) {
+			panel = buildIRSPGRPanelGEInner();
+		} else {
+			panel = buildIRSPGRPanelSiemensInner();
+		}
+		JScrollPane pane = new JScrollPane(panel);
+		
+		if(geScanner) {
+			pane.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR GE Image Information"));
+		} else {
+			pane.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR Siemens Image Information"));
+		}
 	    
 	    JScrollPane scrollPane = new JScrollPane(panel);
 	    scrollPane.setPreferredSize(new Dimension(420,405));
-	    scrollPane.setBorder(null);
 	    scrollPane.addComponentListener(new ComponentListener() {
 
 			public void componentHidden(ComponentEvent e) {}
@@ -434,7 +447,13 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 						if(obj instanceof JScrollPane) {
 							Nti = Double.valueOf(irspgrNum.getText()).intValue();
 							((JScrollPane) obj).getViewport().removeAll();
-							((JScrollPane) obj).setViewportView(buildTreT1LongPanelInner());
+							if(geScanner) {
+								((JScrollPane) obj).setViewportView(buildIRSPGRPanelGEInner());
+								((JScrollPane) obj).setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR GE Image Information"));
+							} else {
+								((JScrollPane) obj).setViewportView(buildIRSPGRPanelSiemensInner());
+								((JScrollPane) obj).setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR Siemens Image Information"));
+							}
 							((JScrollPane) obj).validate();
 							((JScrollPane) obj).updateUI();
 						}
@@ -531,44 +550,6 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    panel.add(new JLabel(""), gbc);
 	    
 	    return panel;
-	}
-
-	protected JScrollPane buildIRSPGRPanelSiemens() {
-	    JPanel panel  = buildIRSPGRPanelSiemensInner();
-	    
-	    JScrollPane scrollPane = new JScrollPane(panel);
-	    scrollPane.setPreferredSize(new Dimension(420,405));
-	    scrollPane.setBorder(null);
-	    scrollPane.addComponentListener(new ComponentListener() {
-
-			public void componentHidden(ComponentEvent e) {}
-
-			public void componentMoved(ComponentEvent e) {}
-
-			public void componentResized(ComponentEvent e) {}
-
-			public void componentShown(ComponentEvent e) {
-				try {
-					System.out.println("Nti: "+Nti+" irs "+irspgrNum.getText());
-					if(Nti != Double.valueOf(irspgrNum.getText()).intValue()) {
-						Object obj = e.getSource();
-						if(obj instanceof JScrollPane) {
-							Nti = Double.valueOf(irspgrNum.getText()).intValue();
-							((JScrollPane) obj).getViewport().removeAll();
-							((JScrollPane) obj).setViewportView(buildTreT1LongPanelInner());
-							((JScrollPane) obj).validate();
-							((JScrollPane) obj).updateUI();
-						}
-					}
-				} catch (NumberFormatException e1) {
-					System.out.println(irspgrNum.getText());
-					MipavUtil.displayError("The number of irspgr images in panel 1 is not a valid value.");
-				}
-			}
-	    	
-	    });
-	    
-	    return scrollPane;
 	}
 	
 	private JPanel buildIRSPGRPanelSiemensInner() {
@@ -1361,11 +1342,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    //hifi panels for next section
 	    spgrPanel = buildSPGRPanel();
 	    
-	    JScrollPane irspgrGEPanel = buildIRSPGRPanelGE();
-	
-	    JScrollPane irspgrSiemensPanel = buildIRSPGRPanelSiemens();
-	    
-	    irspgrGeneralPanel = new JPanel();
+	    irspgrPanel = buildIRSPGRPanel();
 	    
 	    //specifics section
 	    hifiSpec = buildTreT1HIFISpecificsPanel();
@@ -1377,12 +1354,8 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    tab.add(hifiPanel, "1: General");
 	    tab.add(spgrPanel, "2: Images");
 	    if(geScanner) {
-	    	irspgrGeneralPanel.add(irspgrGEPanel);
-	    	irspgrGeneralPanel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR GE Image Information"));
-	    	tab.add(irspgrGeneralPanel, "3: GE");
+	    	tab.add(irspgrPanel, "3: GE");
 	    } else {
-	    	irspgrGeneralPanel.add(irspgrSiemensPanel);
-	    	irspgrGeneralPanel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR Siemens Image Information"));
 	    	tab.add(irspgrGeneralPanel, "3: Siemens");
 	    }
 	    tab.add(hifiSpec, "4: Output ");
@@ -1435,6 +1408,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
      */
     private String setUI(boolean process) {
 		//set conventional
+    	ViewUserInterface.getReference().getMessageFrame().append("SETTING ALGORITHM: \n", ViewJFrameMessage.DEBUG);
     	try {
     		Nsa = Double.valueOf(spgrNumFA.getText()).intValue();
     		
@@ -1443,47 +1417,96 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
     	    spgrImageIndex = new int[Nsa];
     	    
     	    spgrData = new double[Nsa];
+    	    
+    	    ViewUserInterface.getReference().getMessageFrame().append("Nsa: "+Nsa+"\n", ViewJFrameMessage.DEBUG);
     	} catch(Exception e) {
     		if(process) {
     			return "Number of spgr flip angles has not been set.";
     		}
     	}
-		
-	    //set Hifi
-    	try {
-    		irspgrTI = new double[Nti];
-
-	        irspgrTr = new double[Nti];
-	        irspgrImageIndex = new int[Nti];
-	        irspgrData = new double[Nti];
-	        
-	        irspgrTR = treTR;
-    		
-    		Nti = Double.valueOf(irspgrNum.getText()).intValue();
-    	} catch(Exception e) { 
-    		if(process && performTreT1HIFI) {
-    			return "Number of irspgr images has not been set.";
-    		}
-    	}
     	
-    	try {
-		    geScanner = isGEButton.isSelected();
-		    siemensScanner = isSiemensButton.isSelected();
-		    doubleInversion = doubleInvRadio.isSelected();
-		    singleInversion = singleInvRadio.isSelected();
-		    onefiveTField = t15Radio.isSelected();
-		    threeTField = t30Radio.isSelected();
-		    showB1Map = showB1Check.isSelected();
-		    smoothB1Field = smoothB1Box.isSelected();
-    	} catch(Exception e) { 
-    		if(process && performTreT1HIFI) {
-    			return "Invalid scanner information entered";
-    		}
+    	if(!process || (process && performTreT1HIFI)) {
+	    	try {
+				//set spgr
+				for(int i=0; i<Nsa; i++) {
+			        spgrImageIndex[i] = spgrImageComboBoxAr[i].getSelectedIndex();
+			        treFA[i] = Float.valueOf(flipAngleAr[i].getText()).floatValue();
+			        
+			        ViewUserInterface.getReference().getMessageFrame().append("spgrImageIndex: "+spgrImageIndex[i]+"\tFlip Angle: "+treFA[i]+"\n", ViewJFrameMessage.DEBUG);
+			    }
+			    treTR = Double.valueOf(spgrRepTime.getText()).doubleValue();
+			    ViewUserInterface.getReference().getMessageFrame().append("TreTR: "+treTR+"\n", ViewJFrameMessage.DEBUG);
+		    } catch(Exception e) {
+		    	if(process && performTreT1HIFI) {
+		    		return "Invalid spgr information entered";
+		    	}
+		    }
+			
+		    //set Hifi
+	    	try {
+	    		irspgrTI = new double[Nti];
+	
+		        irspgrTr = new double[Nti];
+		        irspgrImageIndex = new int[Nti];
+		        irspgrData = new double[Nti];
+		        
+		        //initial value in gui as well, but must be set explicitly by irspgrTRField
+		        irspgrTR = treTR;
+	    		
+	    		Nti = Double.valueOf(irspgrNum.getText()).intValue();
+	    		ViewUserInterface.getReference().getMessageFrame().append("Nti: "+Nti+"\n", ViewJFrameMessage.DEBUG);
+	    	} catch(Exception e) { 
+	    		if(process && performTreT1HIFI) {
+	    			return "Number of irspgr images has not been set.";
+	    		}
+	    	}
+	    	
+	    	try {
+			    //set irspgrGE and siemens
+			    for (int i=0; i<Nti; i++) {
+			        irspgrImageIndex[i] = irspgrCombo[i].getSelectedIndex();
+			        irspgrTI[i] = Double.valueOf(irspgrField[i].getText()).doubleValue();
+			        
+			        ViewUserInterface.getReference().getMessageFrame().append("irspgrImageIndex: "+irspgrImageIndex[i]+"\tirspgrTI: "+irspgrTI[i]+"\n", ViewJFrameMessage.DEBUG);
+			    }
+			    irspgrTR = Double.valueOf(irspgrTRField.getText()).doubleValue();
+			    irspgrFA = Double.valueOf(irspgrFAField.getText()).doubleValue();
+			    irspgrKy = Double.valueOf(numSlicesField.getText()).doubleValue();
+			    
+			    ViewUserInterface.getReference().getMessageFrame().append("irspgrTR: "+irspgrTR+"\n", ViewJFrameMessage.DEBUG);
+			    ViewUserInterface.getReference().getMessageFrame().append("irspgrFA: "+irspgrFA+"\n", ViewJFrameMessage.DEBUG);
+			    ViewUserInterface.getReference().getMessageFrame().append("irspgrKy: "+irspgrKy+"\n", ViewJFrameMessage.DEBUG);
+		    } catch(Exception e) {
+		    	if(process && performTreT1HIFI) {
+		    		return "Invalid irspgr information entered.";
+		    	}
+		    }
+	    	
+	    	try {
+			    geScanner = isGEButton.isSelected();
+			    siemensScanner = isSiemensButton.isSelected();
+			    doubleInversion = doubleInvRadio.isSelected();
+			    singleInversion = singleInvRadio.isSelected();
+			    onefiveTField = t15Radio.isSelected();
+			    threeTField = t30Radio.isSelected();
+			    showB1Map = showB1Check.isSelected(); //this value is only used for HIFI, so should be left here
+			    smoothB1Field = smoothB1Box.isSelected();
+			    
+			    ViewUserInterface.getReference().getMessageFrame().append("geScanner vs siemensScanner: "+geScanner+" "+siemensScanner+"\n", ViewJFrameMessage.DEBUG);
+			    ViewUserInterface.getReference().getMessageFrame().append("doubleInversion vs singleInversion: "+doubleInversion+" "+singleInversion+"\n", ViewJFrameMessage.DEBUG);
+			    ViewUserInterface.getReference().getMessageFrame().append("onefiveTField vs threeTField: "+onefiveTField+" "+threeTField+"\n", ViewJFrameMessage.DEBUG);
+			    ViewUserInterface.getReference().getMessageFrame().append("showB1Map: "+showB1Map+"\n", ViewJFrameMessage.DEBUG);
+			    ViewUserInterface.getReference().getMessageFrame().append("smoothB1Field: "+smoothB1Field+"\n", ViewJFrameMessage.DEBUG);
+	    	} catch(Exception e) { 
+	    		if(process && performTreT1HIFI) {
+	    			return "Invalid scanner information entered";
+	    		}
+	    	}
     	}
 	    
-    	//set t1Long
-    	try {
-		    if(performStraightTreT1 || performTreT1withPreCalculatedB1Map) {
+    	if(!process || (process && (performStraightTreT1 || performTreT1withPreCalculatedB1Map))) {
+	    	//set t1Long
+	    	try {
 	    		if (performTreT1withPreCalculatedB1Map) {
 			        b1ImageIndex = b1Field.getSelectedIndex();
 			    }
@@ -1491,28 +1514,37 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 			    for (int i=0; i<Nsa; i++) {
 			        spgrImageIndex[i] = convimageComboAr[i].getSelectedIndex();
 			        treFA[i] = Float.valueOf(convFAFieldAr[i].getText()).floatValue();
+			        
+			        ViewUserInterface.getReference().getMessageFrame().append("spgrImageIndex: "+spgrImageIndex[i]+"\tFlip Angle: "+treFA[i]+"\n", ViewJFrameMessage.DEBUG);
 			    }
 			    
 			    treTR = Double.valueOf(convRepTime.getText()).doubleValue();
-		    }
-		    
-    	} catch(Exception e) {
-    		if(process && (performStraightTreT1 || performTreT1withPreCalculatedB1Map)) {
-    			System.out.println("In conventional");
-    			return "Conventional TRE variables not correctly entered.";
-    		}
+			    ViewUserInterface.getReference().getMessageFrame().append("TreTR: "+treTR+"\n", ViewJFrameMessage.DEBUG);
+	    	} catch(Exception e) {
+	    		if(process && (performStraightTreT1 || performTreT1withPreCalculatedB1Map)) {
+	    			System.out.println("In conventional");
+	    			return "Conventional TRE variables not correctly entered.";
+	    		}
+	    	}
     	}
 	    
-	    //set Specifics for both conv and general
+	    //used for both generic and hiifi
 	    try {
 		    maxT1 = Double.valueOf(maxT1Field.getText()).doubleValue();
 		    maxMo = Double.valueOf(maxMoField.getText()).doubleValue();
 		    calculateT1 = showT1Map.isSelected();
 		    calculateMo = showMoMap.isSelected();
-		    
 		    invertT1toR1 = showR1Map.isSelected();
+		    
+		    ViewUserInterface.getReference().getMessageFrame().append("maxT1: "+maxT1+"\n", ViewJFrameMessage.DEBUG);
+		    ViewUserInterface.getReference().getMessageFrame().append("maxMo: "+maxMo+"\n", ViewJFrameMessage.DEBUG);
+		    ViewUserInterface.getReference().getMessageFrame().append("calculateT1: "+calculateT1+"\n", ViewJFrameMessage.DEBUG);
+		    ViewUserInterface.getReference().getMessageFrame().append("calculateMo: "+calculateMo+"\n", ViewJFrameMessage.DEBUG);
+		    ViewUserInterface.getReference().getMessageFrame().append("invertT1toR1: "+invertT1toR1+"\n", ViewJFrameMessage.DEBUG);
+		    
 		    if (Nsa > 2) {
 		        useWeights = leastSquaresCheck.isSelected();
+		        ViewUserInterface.getReference().getMessageFrame().append("useWeights: "+useWeights+"\n", ViewJFrameMessage.DEBUG);
 		    }
 	    } catch(Exception e) {
 	    	if(process) {
@@ -1528,6 +1560,8 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    	t = Threshold.NONE;
 	    }
 	    
+	    ViewUserInterface.getReference().getMessageFrame().append("Threshold: "+t.toString()+"\n", ViewJFrameMessage.DEBUG);
+	    
 	    String threshOutput;
 	    if(t.equals(Threshold.SMART)) {
 	    	if((!(threshOutput = setSmartThresholdUI(process)).equals(SUCCESS)) && process) {
@@ -1539,35 +1573,6 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    	}
 	    } else if(t.equals(Threshold.NONE)) {
 	    	hardNoiseThreshold = 0.0f;
-	    }
-
-    	
-	    try {
-			//set spgr
-			for(int i=0; i<Nsa; i++) {
-		        spgrImageIndex[i] = spgrImageComboBoxAr[i].getSelectedIndex();
-		        treFA[i] = Float.valueOf(flipAngleAr[i].getText()).floatValue();
-		    }
-		    treTR = Double.valueOf(spgrRepTime.getText()).doubleValue();
-	    } catch(Exception e) {
-	    	if(process && performTreT1HIFI) {
-	    		return "Invalid spgr information entered";
-	    	}
-	    }
-	    
-	    try {
-		    //set irspgrGE and siemens
-		    for (int i=0; i<Nti; i++) {
-		        irspgrImageIndex[i] = irspgrCombo[i].getSelectedIndex();
-		        irspgrTI[i] = Double.valueOf(irspgrField[i].getText()).doubleValue();
-		    }
-		    irspgrTR = Double.valueOf(irspgrTRField.getText()).doubleValue();
-		    irspgrFA = Double.valueOf(irspgrFAField.getText()).doubleValue();
-		    irspgrKy = Double.valueOf(numSlicesField.getText()).doubleValue();
-	    } catch(Exception e) {
-	    	if(process && performTreT1HIFI) {
-	    		return "Invalid irspgr information entered.";
-	    	}
 	    }
 	    
 	    //setting defaults
@@ -1591,27 +1596,41 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    	try {
 			    if (threeTField == true) {
 			        if (doubleInversion == true) {
-			            for (int i=0; i<Nti; i++) irspgrTI[i] = irspgrTI[i]*0.9;
+			            for (int i=0; i<Nti; i++) {
+			            	irspgrTI[i] = irspgrTI[i]*0.9;
+			            }
 			            irspgrKy = (irspgrKy/2.00)+2.00;
 			        }
 			        else {
-			            for (int i=0; i<Nti; i++) irspgrTI[i] = irspgrTI[i]*0.9*0.93;
+			            for (int i=0; i<Nti; i++) {
+			            	irspgrTI[i] = irspgrTI[i]*0.9*0.93;
+			            }
 			            irspgrKy = irspgrKy + 2.00;
 			        }
 			    }
 			    else {
 			        if (doubleInversion == true) {
-			            for (int i=0; i<Nti; i++) irspgrTI[i] = irspgrTI[i];
+			            for (int i=0; i<Nti; i++) {
+			            	irspgrTI[i] = irspgrTI[i];
+			            }
 			            irspgrKy = (irspgrKy/2.00)+2.00;
 			        }
 			        else {
-			            for (int i=0; i<Nti; i++) irspgrTI[i] = irspgrTI[i];
+			            for (int i=0; i<Nti; i++) {
+			            	irspgrTI[i] = irspgrTI[i];
+			            }
 			            irspgrKy = irspgrKy;
 			        }
 			    }
 			    
 			    for (int i=0; i<Nti; i++) {
 			    	irspgrTr[i] = irspgrTI[i] + irspgrTR*irspgrKy;
+			    }
+			    
+			    for(int i=0; i<Nti; i++) {
+			    	ViewUserInterface.getReference().getMessageFrame().append("irspgrTr["+i+"]: "+irspgrTr[i]+"\n", ViewJFrameMessage.DEBUG);
+			    	ViewUserInterface.getReference().getMessageFrame().append("irspgrTI["+i+"]: "+irspgrTI[i]+"\n", ViewJFrameMessage.DEBUG);
+			    	ViewUserInterface.getReference().getMessageFrame().append("irspgrKy: "+irspgrKy+"\n", ViewJFrameMessage.DEBUG);
 			    }
 	    	} catch(Exception e) {
 	    		return "IRSPGR information has not been fully entered.";
@@ -1625,6 +1644,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 		try {
 			//hard threshold
 		    hardNoiseThreshold = Float.valueOf(hardNoiseField.getText()).floatValue();
+		    ViewUserInterface.getReference().getMessageFrame().append("hardNoiseThreshold: "+hardNoiseThreshold+"\n", ViewJFrameMessage.DEBUG);
 		} catch(Exception e) {
 			if(process) {
 				return "Invalid hard threshold noise entered";
@@ -1641,6 +1661,12 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 		    upperRightCorner = topRightBox.isSelected();
 		    lowerLeftCorner = bottomLeftBox.isSelected();
 		    lowerRightCorner = bottomRightBox.isSelected();
+		    
+		    ViewUserInterface.getReference().getMessageFrame().append("noiseScale: "+noiseScale+"\n", ViewJFrameMessage.DEBUG);
+		    ViewUserInterface.getReference().getMessageFrame().append("upperLeftCorner: "+upperLeftCorner+"\n", ViewJFrameMessage.DEBUG);
+		    ViewUserInterface.getReference().getMessageFrame().append("upperRightCorner: "+upperRightCorner+"\n", ViewJFrameMessage.DEBUG);
+		    ViewUserInterface.getReference().getMessageFrame().append("lowerLeftCorner: "+lowerLeftCorner+"\n", ViewJFrameMessage.DEBUG);
+		    ViewUserInterface.getReference().getMessageFrame().append("lowerRightCorner: "+lowerRightCorner+"\n", ViewJFrameMessage.DEBUG);
 		} catch(Exception e) {
 			if(process) {
 				return "Invalid smart thresholding noise entered";
@@ -1799,20 +1825,20 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
     		if(isGEButton.isSelected()) {
     			if((tabLoc = getChangeTab("Siemens")) != -1) {
     				tab.setTitleAt(tabLoc, (tabLoc+1)+": GE");
-    				irspgrGeneralPanel.removeAll();
-    				JScrollPane irspgrGEPanel = buildIRSPGRPanelGE();
-    				irspgrGeneralPanel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR GE Image Information"));
-    				irspgrGeneralPanel.add(irspgrGEPanel);
-    				irspgrGeneralPanel.updateUI();
+    				irspgrPanel.getViewport().removeAll();
+					irspgrPanel.setViewportView(buildIRSPGRPanelSiemensInner());
+					irspgrPanel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR GE Image Information"));
+					irspgrPanel.validate();
+					irspgrPanel.updateUI();
     			}
     		} else if(isSiemensButton.isSelected()) {
     			if((tabLoc = getChangeTab("GE")) != -1) {
     				tab.setTitleAt(tabLoc, (tabLoc+1)+": Siemens");
-    				irspgrGeneralPanel.removeAll();
-    				JScrollPane irspgrSiemensPanel = buildIRSPGRPanelSiemens();
-    				irspgrGeneralPanel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR Siemens Image Information"));
-    				irspgrGeneralPanel.add(irspgrSiemensPanel);
-    				irspgrGeneralPanel.updateUI();
+    				irspgrPanel.getViewport().removeAll();
+					irspgrPanel.setViewportView(buildIRSPGRPanelSiemensInner());
+					irspgrPanel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR Siemens Image Information"));
+					irspgrPanel.validate();
+					irspgrPanel.updateUI();
     			}
     		}
     	}
