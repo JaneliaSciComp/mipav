@@ -229,6 +229,7 @@ public abstract class NL2sol {
 		boolean goodx;
 		double gts;
 		int i;
+		int j;
 		final int irc = 3;
 		final int lmax0 = 35;
 		int nfc;
@@ -438,15 +439,324 @@ public abstract class NL2sol {
 	    			do90 = true;
 	    		}
 	    		// The new step is a loser.  Restore old model.
-	    		else if (iv[model] != iv[mlstgd]){
-	    			iv[model] = iv[mlstgd];
-	    			iv[switchConstant] = 1;
-	    			do80 = true;
-	    		}
 	    		else {
 	    			do80 = true;
+	    			if (iv[model] != iv[mlstgd]) {
+	    				iv[model] = iv[mlstgd];
+	    				iv[switchConstant] = 1;
+	    			}
 	    		}
 	    	} // if (do70)
+	    	
+	    	if (do80) {
+	    		do80 = false;
+	    		do90 = true;
+	    		// Restore step, etc. only if a previous step decreased V(F).
+	    		if (v[flstgd] < v[f0]) {
+	                iv[restor] = 1;
+	                v[f] = v[flstgd];
+	                v[preduc] = v[plstgd];
+	                v[gtstep] = v[gtslst];
+	                if (iv[switchConstant] == 0) {
+	                	rfac1 = v[dstnrm]/v[dstsav];
+	                }
+	                v[dstnrm] = v[dstsav];
+	                nfc = iv[nfgcal];
+	                goodx = false;
+	    		} // if (v[flstgd] < v[f0])
+	    	} // if (do80)
+	    	
+	    	if (do90) {
+	    		do90 = false;
+	    		// Compute relative change in X by current step.
+	    		reldx1 = reldst(p, d, x, x0);
+	    		
+	    		// Restore X and STEP if necessary.
+	    		if (!goodx) {
+	    		    for (j = 1; j <= p; j++) {
+	    		    	step[j] = stlstg[j];
+	    		    	x[j] = x0[j] + stlstg[j];
+	    		    }
+	    		} // if (!goodx)
+	    		
+	    		v[fdif] = v[f0] - v[f];
+	    		
+	    		// No (or only a trivial) function decrease,
+	    		// so try new model or smaller radius.
+	    		if (v[fdif] <= v[tuner2] * v[preduc]) {
+	    			v[reldx] = reldx1;
+	    			
+	    			if (v[f0] <= v[f]) {
+	    				iv[mlstgd] = iv[model];
+	    				v[flstgd] = v[f];
+	    				v[f] = v[f0];
+	    				for (j = 1; j <= p; j++) {
+	    					x[j] = x0[j];
+	    				}
+	    				iv[restor] = 1;
+	    			} // if (v[f0] <= v[f])
+	    			else {
+	    				iv[nfgcal] = nfc;
+	    			}
+	    			
+	    			iv[irc] = 1;
+	    			if (iv[stglim] <= iv[stage]) {
+	    				iv[irc] = 5;
+	    				iv[radinc] = iv[radinc] - 1;
+	    			} // if (iv[stglim] <= iv[stage] 
+	    		} // if (v[fdif] <= v[tuner2] * v[preduc])
+	    		else {
+	    			// Nontrivial function decrease achieved.
+	    			iv[nfgcal] = nfc;
+	    			rfac1 = 1.0;
+	    			if (goodx) {
+	    				v[reldx] = reldx1;
+	    			}
+	    			v[dstsav] = v[dstnrm];
+	    			
+	    			if (v[preduc] * v[tuner1] < v[fdif]) {
+	    				do200 = true;
+	    			}
+	    			// Decrease was much less than predicted: either change models
+	    			// or accept step with decreased radius.
+	    			else if (iv[stage] < iv[stglim]) {
+	    				iv[irc] = 2;
+	    			}
+	    			else {
+	    				iv[irc] = 4;
+	    			}
+	    		} // else
+	    		if (!do200) {
+	    			do140 = true;
+	    			// Set V[radfac] to Fletcher's decrease factor.
+	    			iv[xirc] = iv[irc];
+	    			emax = v[gtstep] + v[fdif];
+	    			v[radfac] = 0.5 * rfac1;
+	    			
+	    			if (emax < v[gtstep]) {
+	    				v[radfac] = rfac1 * Math.max(v[rdfcmn], 0.5 * v[gtstep] / emax);
+	    			}
+	    		} // if (!do200)
+	    	} // if (do90)
+	    	
+	    	if (do140) {
+	    		do140 = false;
+	    		// Do a false convergence test
+	    		if (v[reldx] < v[xftol]) {
+	    			do160 = true;
+	    		}
+	    		else {
+	    			iv[irc] = iv[xirc];
+	    			if (v[f] < v[f0]) {
+	    				do230 = true;
+	    			}
+	    			else {
+	    				do300 = true;
+	    			}
+	    		} // else
+	    	} // if (do140)
+	    	
+	    	if (do160) {
+	    		do160 = false;
+	    		iv[irc] = 12;
+	    		do310 = true;
+	    	} // if (do160)
+	    	
+	    	if (do200) {
+	    		do200 = false;
+	    		// Handle good function decrease,
+	    		if (v[fdif] < (-v[tuner3] * v[gtstep])) {
+	    			do260 = true;
+	    		}
+	    		// Increasing radius looks worthwhile.  See if we just
+	    		// recomputed step with a decreased radius or restored step
+	    		// after recomputing it with a larger radius.
+	    		else if (iv[radinc] < 0) {
+	    			do260 = true;
+	    		}
+	    		else if (iv[restor] == 1) {
+	    			do260 = true;
+	    		}
+	    		else {
+	    			// We did not.  Try a longer step unless this was a Newton step.
+	    			v[radfac] = v[rdfcmx];
+	    			gts = v[gtstep];
+	    			if (v[fdif] < (0.5/v[radfac] - 1.0) * gts) {
+	    				v[radfac] = Math.max(v[incfac], 0.5 * gts/(gts + v[fdif]));
+	    			}
+	    			iv[irc] = 4;
+	    			
+	    			if (v[stppar] == 0.0) {
+	    				do300 = true;
+	    			}
+	    			else {
+	    				do230 = true;
+	    				// Step was not a Newton step.  Recompute it with a larger radius.
+	    				iv[irc] = 5;
+	    				iv[radinc] = iv[radinc] + 1;
+	    			}
+	    		} // else
+	    	} // if (do200)
+	    	
+	    	if (do230) {
+	    		do230 = false;
+	    	    // Save values corresponding to good step.
+	    		v[flstgd] = v[f];
+	    		iv[mlstgd] = iv[model];
+	    		for (j = 1; j <= p; j++) {
+	    			stlstg[j] = step[j];
+	    		}
+	    		v[dstsav] = v[dstnrm];
+	    		iv[nfgcal] = nfc;
+	    		v[plstgd] = v[preduc];
+	    		v[gtslst] = v[gtstep];
+	    		do300 = true;
+	    	} // if (do230)
+	    	
+	    	if (do260) {
+	    		do260 = false;
+	    		// Accept step with radius unchanged.
+	    		v[radfac] = 1.0;
+	    		iv[irc] = 3;
+	    		do300 = true;
+	    	} // if (do260)
+	    	
+	    	if (do290) {
+	    		do290 = false;
+	    		// Come here for a restart after convergence.
+	    		iv[irc] = iv[xirc];
+	    		if (v[dstsav] < 0.0) {
+	    			iv[irc] = 12;
+	    		}
+	    		do310 = true;
+	    	} // if (do290)
+	    	
+	    	// Perform convergence tests.
+	    	
+	    	if (do300) {
+	    		do300 = false;
+	    		iv[xirc] = iv[irc];
+	    		do310 = true;
+	    	} // if (do300)
+	    	
+	    	if (do310) {
+	    		do310 = false;
+	    		if (Math.abs(v[f]) < v[afctol]) {
+	    			iv[irc] = 10;
+	    		}
+	    		
+	    		if (0.5 * v[fdif] > v[preduc]) {
+	    			return;
+	    		}
+	    		
+	    		emax = v[rfctol] * Math.abs(v[f0]);
+	    		
+	    		if (v[dstnrm] > v[lmax0] && v[preduc] <= emax) {
+	    			iv[irc] = 11;
+	    		}
+	    		
+	    		if (0.0 <= v[dst0]) {
+	    			if ((v[nreduc] > 0.0 && v[nreduc] <= emax) ||
+	    			    (v[nreduc] == 0.0 && v[preduc] == 0.0)) {
+	    			    i = 2;
+	    			}
+	    			else {
+	    				i = 0;
+	    			}
+	    			
+	    			if (v[stppar] == 0.0 && v[reldx] < v[xctol] && goodx) {
+	    				i = i + 1;
+	    			}
+	    			
+	    			if (i < 0) {
+	    				iv[irc] = i + 6;
+	    			}
+	    		} // if (0.0 <= v[dst0])
+	    		
+	    		// Consider recomputing step of length V{LMAX0) for singular convergence tests.
+	    		if (Math.abs(iv[irc]-3) > 2 && iv[irc] != 12) {
+	    			return;
+	    		}
+	    		
+	    		if (v[lmax0] < v[dstnrm]) {
+	    		    if (0.5 * v[dstnrm] <= v[lmax0]) {
+	    		    	return;
+	    		    }
+	    		    
+	    		    xmax = v[lmax0]/v[dstnrm];
+	    		    
+	    		    if (emax <= xmax * (2.0 - xmax) * v[preduc]) {
+	    		    	return;
+	    		    }
+	    		} // if (v[max0] < v[dstnrm])
+	    		else {
+	    			if (emax <= v[preduc]) {
+	    				return;
+	    			}
+	    			
+	    			if (0.0 < v[dst0]) {
+	    				
+	    				if (0.5 * v[dst0] <= v[lmax0]) {
+	    					return;
+	    				}
+	    			} // if (0.0 < v[dst0])
+	    		} // else
+	    		
+	    		if (v[nreduc] < 0.0) {
+	    			if (-v[nreduc] <= v[rfctol] * Math.abs(v[f0])) {
+	    				iv[irc] = 11;
+	    			}
+	    			return;
+	    		} // if (v[nreduc] < 0.0)
+	    	} // if (do310)
 	    } // while (true)		
 	} // assess
+	
+	double reldst ( int p, double d[], double x[], double x0[] ) {
+
+	/***********************************************************************
+	!
+	!! RELDST computes the relative difference between two real values.
+	!
+	!  Modified:
+	!
+	!    03 April 2006
+	!
+	!  Author:
+	!
+	!    David Gay
+	!
+	!  Parameters:
+	!
+	!    Input, integer P, the length of the vectors.
+	!
+	!    Input, real D(P), a scaling vector.
+	!
+	!    Input, real X(P), X0(P), two vectors whose relative difference
+	!    is desired.
+	!
+	!    Output, real reldstVal, the relative difference between X and X0.
+	*/
+	  
+	  double emax;
+	  int i;
+	  double reldstVal;
+	  double xmax;
+
+	  emax = 0.0E+00;
+	  xmax = 0.0E+00;
+	  for ( i = 1; i <= p; i++) {
+	    emax = Math.max ( emax, Math.abs ( d[i] * ( x[i] - x0[i] ) ) );
+	    xmax = Math.max ( xmax, d[i] * ( Math.abs ( x[i] ) + Math.abs ( x0[i] ) ) );
+	  }
+
+	  if ( 0.0E+00 < xmax ) {
+	    reldstVal = emax / xmax;
+	  }
+	  else {
+	    reldstVal = 0.0E+00;
+	  }
+
+	  return reldstVal;
+	} // double reldst ( int p, double d[], double x[], double x0[] )
 }
