@@ -2067,7 +2067,7 @@ public class FileIO {
                     break;
 
                 case FileUtility.XML:
-                    image = readXML(fileName, fileDir, one, true);
+                    image = readXML(fileName, fileDir, one, !quiet);
                     break;
 
                 case FileUtility.XML_MULTIFILE:
