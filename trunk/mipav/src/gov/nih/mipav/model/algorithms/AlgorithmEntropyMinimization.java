@@ -1,8 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
-import WildMagic.LibFoundation.NumericalAnalysis.MinimizeN;
-import WildMagic.LibFoundation.NumericalAnalysis.PowellCostFunction;
-
+import WildMagic.LibFoundation.NumericalAnalysis.function.RealFunctionOfSeveralVariables;
+import WildMagic.LibFoundation.NumericalAnalysis.minimizing.Powell;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -13,7 +12,7 @@ import java.io.*;
 /**
  * DOCUMENT ME!
  */
-public class AlgorithmEntropyMinimization extends AlgorithmBase implements PowellCostFunction {
+public class AlgorithmEntropyMinimization extends AlgorithmBase implements RealFunctionOfSeveralVariables {
     // This software performs retrospective shading correction based on entropy minimization. If the image is color, the
     // colors are independently processed one at a time and then recombined. The user can select either both
     // multiplicative and additive quadratic noise, multiplicative quadratic noise only, or cubic multiplicative noise
@@ -296,205 +295,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase implements Powel
         } // else if (srcImage.getNDims() == 3)
     }
 
-    /**
-     * Given entropyFunction, and given a bracketing triplet of abscissas ax, bx, cx (such that bx is between ax and cx,
-     * and entropyFunction(bx) is less than both the entropyFunction(ax) and entropyFunction(cx)), this routine isolates
-     * the minimum to a fractional precision of about tol using Brent's method. The abscissa of the minimum is returned
-     * as xmin, and the minimum function value is returned as brent, the returned function value.
-     *
-     * @param   tol  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    private double brent(double tol) {
-        double ITMAX_BRENT = 100;
-        double CGOLD = 0.3819660;
-        double ZEPS = 1.0E-10;
 
-        // This will be the distance moved on the step before last
-        double e = 0.0;
-        double a;
-        double b;
-        double x;
-        double w;
-        double v;
-        double fw;
-        double fv;
-        double fx;
-        int j;
-        int iterations;
-        double xm;
-        double tol1;
-        double tol2;
-        double r;
-        double q;
-        double p;
-        double etemp;
-        double d = 0.0;
-        double u;
-        double fu;
-
-        // a and b must be in ascending order, but input abscissas need not be.
-        if (ax < cx) {
-            a = ax;
-        } // if (ax < cx)
-        else {
-            a = cx;
-        } // else
-
-        if (ax > cx) {
-            b = ax;
-        } // if (ax > cx)
-        else {
-            b = cx;
-        } // else
-
-        x = w = v = bx;
-
-        for (j = 0; j < nParams; j++) {
-            xt[j] = pcom[j] + (x * xicom[j]);
-        } // for (j = 0; j < nParams; j++)
-
-        fx = entropyFunction(xt);
-        fw = fv = fx;
-
-        for (iterations = 1; iterations <= ITMAX_BRENT; iterations++) {
-
-            // Main program loop
-            xm = 0.5 * (a + b);
-            tol1 = (tol * Math.abs(x)) + ZEPS;
-            tol2 = 2.0 * tol1;
-
-            // Test for done here
-            if (Math.abs(x - xm) <= (tol2 - (0.5 * (b - a)))) {
-                xmin = x;
-
-                return fx;
-            } // if (Math.abs(x - xm) <= (tol2 - 0.5*(b-a)))
-
-            if (Math.abs(e) > tol1) {
-
-                // Construct a trial parabolic fit
-                r = (x - w) * (fx - fv);
-                q = (x - v) * (fx - fw);
-                p = ((x - v) * q) - ((x - w) * r);
-                q = 2.0 * (q - r);
-
-                if (q > 0.0) {
-                    p = -p;
-                } // if (q > 0.0)
-
-                q = Math.abs(q);
-                etemp = e;
-                e = d;
-
-                if ((Math.abs(p) >= Math.abs(0.5 * q * etemp)) || (p <= (q * (a - x))) || (p >= (q * (b - x)))) {
-
-                    if (x >= xm) {
-                        e = a - x;
-                    } // if (x >= xm)
-                    else {
-                        e = b - x;
-                    } // else
-
-                    d = CGOLD * e;
-                } // if ((Math.abs(p) >= Math.abs(0.5*q*etemp)) || (p <= q*(a - x)) ||
-
-                // The above conditions determine the acceptability of the parabolic
-                // fit.  Here we take the golden section step into the larger of the
-                // two segments.
-                else {
-
-                    // Take the parabolic step
-                    d = p / q;
-                    u = x + d;
-
-                    if (((u - a) < tol2) || ((b - u) < tol2)) {
-
-                        if ((xm - x) >= 0.0) {
-                            d = Math.abs(tol1);
-                        } // if ((xm - x) >= 0.0)
-                        else {
-                            d = -Math.abs(tol1);
-                        } // else
-                    } // if ((u - a) < tol2 || (b - u) < tol2)
-                } // else
-            } // if (Math.abs(e) > tol1)
-            else {
-
-                if (x >= xm) {
-                    e = a - x;
-                } // if (x >= xm)
-                else {
-                    e = b - x;
-                } // else
-
-                d = CGOLD * e;
-            } // else
-
-            if (Math.abs(d) >= tol1) {
-                u = x + d;
-            } // if (Math.abs(d) >= tol1)
-            else if (d >= 0.0) {
-                u = x + Math.abs(tol1);
-            } // else if (d >= 0.0)
-            else {
-                u = x - Math.abs(tol1);
-            } // else
-
-            // This is the one function evaluation per iteration
-            for (j = 0; j < nParams; j++) {
-                xt[j] = pcom[j] + (u * xicom[j]);
-            } // for (j = 0; j < nParams; j++)
-
-            fu = entropyFunction(xt);
-
-            if (fu <= fx) {
-
-                if (u >= x) {
-                    a = x;
-                } // if (u >= x)
-                else {
-                    b = x;
-                } // else
-
-                v = w;
-                w = x;
-                x = u;
-                fv = fw;
-                fw = fx;
-                fx = fu;
-            } // if (fu <= fx)
-            else {
-
-                if (u < x) {
-                    a = u;
-                } // if (u < x)
-                else {
-                    b = u;
-                } // else
-
-                if ((fu <= fw) || (w == x)) {
-                    v = w;
-                    w = u;
-                    fv = fw;
-                    fw = fu;
-                } // if (fu <= fw || w == x)
-                else if ((fu <= fv) || (v == x) || (v == w)) {
-                    v = u;
-                    fv = fu;
-                } // else if (fu <= fv || v == x || v == w)
-            } // else
-        } // for (iterations = 1; iterations <= ITMAX_BRENT; iterations++)
-
-        MipavUtil.displayError("Too many iterations in brent");
-        xmin = x;
-
-        return fx;
-    } // brent
-
-    
-    private int entropyCount = 0;
     /**
      * DOCUMENT ME!
      *
@@ -502,15 +303,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase implements Powel
      *
      * @return  DOCUMENT ME!
      */
-    private double entropyFunction(double[] p) {
-
-        entropyCount++;
-        
-        for ( int i = 0; i < p.length; i++ )
-        {
-            System.err.print( p[i] + " " );
-        }
-        
+    private double entropyFunction(double[] p) {       
         double a1, a2, a3, a4, a5, a6, a7, a8, a9;
         double m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15, m16, m17, m18, m19;
         int x;
@@ -962,204 +755,8 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase implements Powel
         for (i = 0; i < probabilityLength; i++) {
             entropy -= probability[i] * Math.log(probability[i]);
         }
-
-        System.err.println( "    " + entropy + "       " + entropyCount );
         return entropy;
     }
-
-    /**
-     * Given an nParams-dimensional point p[0...nParams-1] and an nParams- dimensional direction xi[0...nParams-1],
-     * moves and resets p to where entropyFunction(p) takes on a minimum along the direction xi from p, and replaces xi
-     * by the actual vector displacement that p was moved. Also returns as fret the value of entropyFunction at the
-     * returned located p. This is actually all accomplished by calling the routines mnbrak and brent.
-     *
-     * @param  p   DOCUMENT ME!
-     * @param  xi  DOCUMENT ME!
-     */
-    private void linmin(double[] p, double[] xi) {
-        double TOL = 2.0E-4;
-        int j;
-
-        for (j = 0; j < nParams; j++) {
-            pcom[j] = p[j];
-            xicom[j] = xi[j];
-        } // for (j = 0; j < nParams; j++)
-
-        // Initial guess for brackets
-        ax = 0.0;
-        bx = 1.0;
-        mnbrak();
-        fret = brent(TOL);
-
-        // Construct the vector results to return
-        for (j = 0; j < nParams; j++) {
-            xi[j] *= xmin;
-            p[j] += xi[j];
-        } // for (j = 0; j < nParams; j++)
-    } // linmin
-
-    /**
-     * Given entropyFunction, and given distinct initial points ax and bx, this routine searches in the downhill
-     * direction (defined by entropyFunction as evaluated at the initial points) and returns new points ax, bx, cx that
-     * bracket a minimum of entropyFunction. Also returned are the entropyFunction values at the three points, fa, fb,
-     * and fc.
-     */
-    private void mnbrak() {
-        double GOLD = 1.618034;
-        double TINY = 1.0e-20;
-        double GLIMIT = 100.0;
-        int j;
-        double dum;
-        double r;
-        double q;
-        double u;
-        double ulim;
-        double fu;
-        double denom;
-
-        for (j = 0; j < nParams; j++) {
-            xt[j] = pcom[j] + (ax * xicom[j]);
-        } // for (j = 0; j < nParams; j++)
-
-        fa = entropyFunction(xt);
-
-        for (j = 0; j < nParams; j++) {
-            xt[j] = pcom[j] + (bx * xicom[j]);
-        } // for (j = 0; j < nParams; j++)
-
-        fb = entropyFunction(xt);
-
-        if (fb > fa) {
-
-            // Switch roles of a and b so that we can go downhill in the direction
-            // from a to b
-            dum = ax;
-            ax = bx;
-            bx = dum;
-            dum = fb;
-            fb = fa;
-            fa = dum;
-        } // if (fb > fa)
-
-        // First guess for c
-        cx = bx + (GOLD * (bx - ax));
-
-        for (j = 0; j < nParams; j++) {
-            xt[j] = pcom[j] + (cx * xicom[j]);
-        } // for (j = 0; j < nParams; j++)
-
-        fc = entropyFunction(xt);
-
-        // Keep returning here until we bracket
-        while (fb > fc) {
-
-            // Compute u by parabolic extraction from a,b,c.  TINY is used to
-            // prevent any possible division by zero.
-            r = (bx - ax) * (fb - fc);
-            q = (bx - cx) * (fb - fa);
-
-            if ((q - r) >= 0.0) {
-                denom = 2.0 * Math.max((q - r), TINY);
-            } else {
-                denom = -2.0 * Math.max((r - q), TINY);
-            }
-
-            u = bx - ((((bx - cx) * q) - ((bx - ax) * r)) / denom);
-            ulim = bx + (GLIMIT * (cx - bx));
-
-            // We won't go farther than this.  Test various possibilities
-            if (((bx - u) * (u - cx)) > 0.0) {
-
-                // Parabolic u is between b and c: try it.
-                for (j = 0; j < nParams; j++) {
-                    xt[j] = pcom[j] + (u * xicom[j]);
-                } // for (j = 0; j < nParams; j++)
-
-                fu = entropyFunction(xt);
-
-                if (fu < fc) {
-
-                    // Got a minimum between b and c.
-                    ax = bx;
-                    bx = u;
-                    fa = fb;
-                    fb = fu;
-
-                    return;
-                } // if (fu < fc)
-                else if (fu > fb) {
-
-                    // Got a minimum between a and u.
-                    cx = u;
-                    fc = fu;
-
-                    return;
-                } // else if (fu > fb)
-
-                // Parabolic fit was no use.  Use default magnificiation
-                u = cx + (GOLD * (cx - bx));
-
-                for (j = 0; j < nParams; j++) {
-                    xt[j] = pcom[j] + (u * xicom[j]);
-                } // for (j = 0; j < nParams; j++)
-
-                fu = entropyFunction(xt);
-            } // if ((bx - u)*(u - cx) > 0.0)
-            else if (((cx - u) * (u - ulim)) > 0.0) {
-
-                // Parabolic fit between c and its allowed limit
-                for (j = 0; j < nParams; j++) {
-                    xt[j] = pcom[j] + (u * xicom[j]);
-                } // for (j = 0; j < nParams; j++)
-
-                fu = entropyFunction(xt);
-
-                if (fu < fc) {
-                    bx = cx;
-                    cx = u;
-                    u = cx + (GOLD * (cx - bx));
-                    fb = fc;
-                    fc = fu;
-
-                    for (j = 0; j < nParams; j++) {
-                        xt[j] = pcom[j] + (u * xicom[j]);
-                    } // for (j = 0; j < nParams; j++)
-
-                    fu = entropyFunction(xt);
-                } // if (fu < fc)
-            } // else if ((cx - u)*(u - ulim) > 0.0)
-            else if (((u - ulim) * (ulim - cx)) >= 0.0) {
-
-                // Limit parabolic u to maximum allowed value
-                u = ulim;
-
-                for (j = 0; j < nParams; j++) {
-                    xt[j] = pcom[j] + (u * xicom[j]);
-                } // for (j = 0; j < nParams; j++)
-
-                fu = entropyFunction(xt);
-            } // else if ((u - ulim)*(ulim - cx) >= 0.0)
-            else {
-
-                // Reject parabolic u, use default magnification
-                u = cx + (GOLD * (cx - bx));
-
-                for (j = 0; j < nParams; j++) {
-                    xt[j] = pcom[j] + (u * xicom[j]);
-                } // for (j = 0; j < nParams; j++)
-
-                fu = entropyFunction(xt);
-            } // else
-
-            // Eliminate oldest point and continue
-            ax = bx;
-            bx = cx;
-            cx = u;
-            fa = fb;
-            fb = fc;
-            fc = fu;
-        } // while (fb > fc)
-    } // mnbrak
 
     /**
      * Minimization of entropy function of nParams variables. Input consists of an initial starting point
@@ -1174,129 +771,9 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase implements Powel
      * @param  ftol  DOCUMENT ME!
      */
     private void powell(double[] p, double[][] xi, double ftol) {
-
-        double[] initialBracketA = new double[p.length];
-        double[] initialBracketB = new double[p.length];
-        for ( int i = 0; i < p.length; i++ )
-        {
-            initialBracketA[i] = -100;
-            initialBracketB[i] = 100;
-        }
-
         int ITMAX = 2000000000;
-        int ITMAX_BRENT = 100000000;
-        MinimizeN kPowell = new MinimizeN( p.length, this, ITMAX_BRENT, ITMAX_BRENT, ITMAX, null );
-        
-        double[] result = new double[p.length];
-        double[] error = new double[1];
-        kPowell.GetMinimum( initialBracketA, initialBracketB, p, result, error );
-
-        for ( int i = 0; i < p.length; i++ )
-        {
-            p[i] = result[i];
-        }
-        
-        /*
-        double TINY = 1.0e-25;
-        int ITMAX = 200;
-        double[] pt;
-        double[] ptt;
-        double[] xit;
-        int i, j;
-        double fp;
-        int ibig;
-        double del;
-        double fptt;
-        double t;
-        double r;
-        double s;
-
-        pt = new double[nParams];
-        ptt = new double[nParams];
-        xit = new double[nParams];
-        fret = entropyFunction(p);
-
-        // Save the initial point
-        for (j = 0; j < nParams; j++) {
-            pt[j] = p[j];
-        }
-
-        System.err.println("ITMax is: " + ITMAX);
-        
-        for (iter = 1;; iter++) {
-            fireProgressStateChanged(100 * iter / ITMAX);
-            fp = fret;
-            ibig = -1;
-
-            // Will be the biggest function decrease
-            del = 0.0;
-
-            // In each iteration, loop over all the directions in the set
-            for (i = 0; i < nParams; i++) {
-
-                // Copy the direction
-                for (j = 0; j < nParams; j++) {
-                    xit[j] = xi[j][i];
-                } // for (j = 0; j < nParams; j++)
-
-                fptt = fret;
-
-                // Minimize along the direction
-                linmin(p, xit);
-
-                // Record it if it is the biggest decrease so far.
-                if ((fptt - fret) > del) {
-                    del = fptt - fret;
-                    ibig = i;
-                } // if ((fptt - fret) > del)
-            } // for (i = 0; i < nParams; i++)
-
-            // Termination criterion
-            if ((2.0 * (fp - fret)) <= ((ftol * (Math.abs(fp) + Math.abs(fret))) + TINY)) {
-                return;
-            }
-
-            if (iter == ITMAX) {
-                MipavUtil.displayError("powell exceeding maximum iterations");
-
-                return;
-            } // if (iter == ITMAX)
-
-            for (j = 0; j < nParams; j++) {
-
-                // Construct the extrapolated point
-                ptt[j] = (2.0 * p[j]) - pt[j];
-
-                // Construct the average direction moved
-                xit[j] = p[j] - pt[j];
-
-                // Save the old starting point
-                pt[j] = p[j];
-            } // for (j = 0; j < nParams; j++)
-
-            // Function value at extrapolated point
-            fptt = entropyFunction(ptt);
-
-            if (fptt < fp) {
-                r = fp - fret - del;
-                s = fp - fptt;
-                t = (2.0 * (fp - (2.0 * fret) + fptt) * r * r) - (del * s * s);
-
-                if (t < 0.0) {
-
-                    // Move to the minimum of the new direction and save the new
-                    // direction
-                    linmin(p, xit);
-
-                    for (j = 0; j < nParams; j++) {
-                        xi[j][ibig] = xi[j][nParams - 1];
-                        xi[j][nParams - 1] = xit[j];
-                    }
-                } // if (t < 0.0)
-            } // if (fptt < fp)
-        } // for (iter = 1; ; iter++)
-        */
-        
+        //double TOL = 2.0E-4;
+        Powell.search( p, xi, ftol, this, ITMAX, null );
     } // powell
 
     /**
@@ -4555,17 +4032,16 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase implements Powel
         return;
     }
 
-
     @Override
-    public double cost(double fT, double[] afData) {
-        System.err.println( "wrong cost fn" );
-        return 0;
+    public double eval(double[] x) {
+        return entropyFunction( x );
     }
 
 
     @Override
-    public double cost(double[] fT, double[] afData) {
-        return entropyFunction( fT );
+    public int getNumberOfVariables() {
+        // TODO Auto-generated method stub
+        return 0;
     }
 
 }

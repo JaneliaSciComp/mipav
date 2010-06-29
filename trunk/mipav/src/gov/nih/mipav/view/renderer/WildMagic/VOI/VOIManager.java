@@ -430,6 +430,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     private int m_iPlane = -1;
 
     private Vector3f m_kMouseOffset = new Vector3f();
+    private boolean m_bMouseDrag = false;
 
     public VOIManager (VOIManagerInterface kParent )
     {
@@ -454,7 +455,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     public void add( VOIBase kVOI, float fHue )
     {
         m_kParent.newVOI( false, false );
-        m_kParent.addVOI( kVOI, false, true );
+        m_kParent.addVOI( kVOI, false, true, true );
         m_kParent.setPresetHue(fHue);
         kVOI.setActive(true);
         m_kParent.setDefaultCursor();
@@ -508,7 +509,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             Vector<Vector3f> kPositions = new Vector<Vector3f>();
             kPositions.add( kNewPoint );
             m_kCurrentVOI = createVOI( m_iDrawType, false, false, kPositions );
-            m_kParent.addVOI( m_kCurrentVOI, false, true );
+            m_kParent.addVOI( m_kCurrentVOI, false, true, false );
         }
         else
         {
@@ -531,7 +532,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             Vector<Vector3f> kPositions = new Vector<Vector3f>();
             kPositions.add( kNewPoint );
             m_kCurrentVOI = createVOI( m_iDrawType, false, false, kPositions );
-            m_kParent.addVOI( m_kCurrentVOI, false, true );
+            m_kParent.addVOI( m_kCurrentVOI, false, true, false );
         }
         else
         {
@@ -993,6 +994,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         m_fMouseY = kEvent.getY();
         if ( !isActive() )
         {
+            m_bMouseDrag = false;
             return;
         }
         m_kParent.setActive(this);
@@ -1018,7 +1020,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                             VOI kGroup = m_kCurrentVOI.getGroup();
                             kGroup.getCurves().remove(m_kCurrentVOI);
                             m_kCurrentVOI.setGroup(null);
-                            m_kParent.addVOI(m_kCurrentVOI, false, true);
+                            m_kParent.addVOI(m_kCurrentVOI, false, true, true);
                         }
                         else if ( m_kCurrentVOI.getGroup().getSize() == 1 )
                         {
@@ -1041,12 +1043,14 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_iNearStatus = NearNone;
             m_kParent.setDefaultCursor();
         } 
+        m_bMouseDrag = false;
     }
 
     /* (non-Javadoc)
      * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mouseDragged(java.awt.event.MouseEvent)
      */
     public void mouseDragged(MouseEvent kEvent) {
+        m_bMouseDrag = true;
         if ( !isActive() )
         {
             return;
@@ -1153,7 +1157,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                     m_kParent.saveVOIs("addVOIPoint");
                     addVOIPoint( kEvent.getX(), kEvent.getY() );
                 }
-                else if ( selectVOI( kEvent.getX(), kEvent.getY(), kEvent.isShiftDown() ) != null )
+                else if ( selectVOI( kEvent.getX(), kEvent.getY(), kEvent.isShiftDown(), kEvent.isControlDown() ) != null )
                 {
                     Vector3f kGC = m_kDrawingContext.fileToScreen( m_kCurrentVOI.getGeometricCenter() );
                     m_kMouseOffset.Set ( kGC.X - kEvent.getX(), kGC.Y - kEvent.getY(), 0 );
@@ -1165,7 +1169,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
         else if ( kEvent.getButton() == MouseEvent.BUTTON3 )
         {
-            if ( selectVOI( kEvent.getX(), kEvent.getY(), kEvent.isShiftDown() ) != null )
+            if ( selectVOI( kEvent.getX(), kEvent.getY(), kEvent.isShiftDown(), kEvent.isControlDown() ) != null )
             {
                 if ( m_kCurrentVOI.getType() == VOI.LINE )
                 {
@@ -1185,6 +1189,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     public void mouseReleased(MouseEvent kEvent) {
         if ( !isActive() || kEvent.getButton() != MouseEvent.BUTTON1 )
         {
+            m_bMouseDrag = false;
             return;
         }
         m_kParent.setActive(this);
@@ -1206,6 +1211,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_kCurrentVOI.setActive(true);
             m_kParent.doVOI(CustomUIBuilder.PARAM_VOI_PROPAGATE_ALL.getActionCommand());
             m_bDrawVOI = false;
+            m_bMouseDrag = false;
             return;
         }
         else if ( m_bDrawVOI && (m_iDrawType == LUT) )
@@ -1214,6 +1220,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_bQuickLUT = false;
             m_bDrawVOI = false;
             m_kParent.setDefaultCursor( );
+            m_bMouseDrag = false;
             return;
         }
         else if ( m_bDrawVOI && (m_iDrawType == SPLITLINE) )
@@ -1233,7 +1240,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             {
                 showSelectedVOI( kEvent.getX(), kEvent.getY() );
                 if ( (m_iNearStatus == NearPoint) &&
-                        ((m_kCurrentVOI.getNearPoint() == 0) || (m_kCurrentVOI.getNearPoint() == m_kCurrentVOI.size()-2)) )
+                        ((m_kCurrentVOI.getNearPoint() == 0) || 
+                                (!m_bMouseDrag && m_kCurrentVOI.getNearPoint() == m_kCurrentVOI.size()-2)) )
                 {
                     m_kCurrentVOI.setClosed((m_kCurrentVOI.getNearPoint() == 0));
                     m_kCurrentVOI.removeElementAt( m_kCurrentVOI.size() -1 );
@@ -1248,7 +1256,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                                 VOI kGroup = m_kCurrentVOI.getGroup();
                                 kGroup.getCurves().remove(m_kCurrentVOI);
                                 m_kCurrentVOI.setGroup(null);
-                                m_kParent.addVOI(m_kCurrentVOI, false, true);
+                                m_kParent.addVOI(m_kCurrentVOI, false, true, true);
                             }
                             else if ( m_kCurrentVOI.getGroup().getSize() == 1 )
                             {
@@ -1259,6 +1267,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                     m_bDrawVOI = false;
                     m_iNearStatus = NearNone;
                     m_kParent.setDefaultCursor();
+                    m_bMouseDrag = false;
                     return;
                 }
             }
@@ -1270,6 +1279,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             {
                 anchorPolyline( kEvent.getX(), kEvent.getY(), false );
             }
+            m_bMouseDrag = false;
             return;
         }
         else if ( m_iDrawType == LEVELSET && m_kCurrentVOI != null )
@@ -1288,7 +1298,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_kParent.setDefaultCursor( );
             if ( m_kCurrentVOI != null )
             {
-                m_kParent.setSelectedVOI( m_kCurrentVOI.getGroup(), kEvent.isShiftDown() );
+                m_kParent.setSelectedVOI( m_kCurrentVOI.getGroup(), kEvent.isShiftDown(), !kEvent.isControlDown() );
             }
         }
         m_iNearStatus = NearNone;
@@ -1303,6 +1313,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         {
             m_kCurrentVOI = null;
         }
+        m_bMouseDrag = false;
     }
 
     public boolean testMove( Vector3f kDiff, Vector3f[] akMinMax )
@@ -1780,7 +1791,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         new JDialogAnnotation(m_kImageActive, newTextVOI, (int)kVolumePt.Z, false, true);
         m_kImageActive.unregisterVOI(newTextVOI);
         if ( newTextVOI.isActive() ) {
-            m_kParent.addVOI( m_kCurrentVOI, false, true );
+            m_kParent.addVOI( m_kCurrentVOI, false, true, true );
         }
         else
         {
@@ -1996,7 +2007,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         m_kCurrentVOI.setActive(false);
         if ( kOld != m_kCurrentVOI )
         {
-            m_kParent.addVOI( m_kCurrentVOI, (m_iDrawType == LUT), true );
+            m_kParent.addVOI( m_kCurrentVOI, (m_iDrawType == LUT), true,
+                    !(m_iDrawType == POLYLINE || m_iDrawType == LIVEWIRE) );
             if ( kOld != null )
             {
                 kOld.setActive(false);
@@ -4211,9 +4223,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
     }
 
-    private VOIBase selectVOI( int iX, int iY, boolean bShiftDown )
+    private VOIBase selectVOI( int iX, int iY, boolean bShiftDown, boolean bControlDown  )
     {
-        m_kParent.selectAllVOIs(false);
         m_bSelected = false;
         m_kCurrentVOI = null;
         VOIVector kVOIs = m_kImageActive.getVOIs();
@@ -4228,12 +4239,28 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                         contains( kVOI3D, iX, iY, m_iSlice ) )
                 {
                     m_kCurrentVOI = kVOI3D;
-                    m_kParent.setSelectedVOI( m_kCurrentVOI.getGroup(), bShiftDown );
-                    m_kCurrentVOI.setActive(true);
-                    m_bSelected = true;
+                    boolean isActive = m_kCurrentVOI.isActive();
+                    m_kParent.setSelectedVOI( m_kCurrentVOI.getGroup(), bShiftDown, !bControlDown );
+                    if ( bControlDown )
+                    {
+                        m_kCurrentVOI.setActive(!isActive);
+                    }
+                    else
+                    {
+                        m_kCurrentVOI.setActive(true);                        
+                    }
+                    m_bSelected = m_kCurrentVOI.isActive();
+                    if ( !m_bSelected )
+                    {
+                        m_kCurrentVOI = null;
+                    }
                     return m_kCurrentVOI;
                 }
             }
+        }
+        if ( !bControlDown )
+        {
+            m_kParent.selectAllVOIs(false);
         }
         return m_kCurrentVOI;
     }
@@ -4466,7 +4493,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
         for ( int i = 0; i < kNewVOIs.size(); i++ )
         {
-            m_kParent.addVOI(kNewVOIs.get(i), false, true);
+            m_kParent.addVOI(kNewVOIs.get(i), false, true, true);
         }
         m_kCurrentVOI = null;
     }
