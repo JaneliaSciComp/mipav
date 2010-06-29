@@ -280,12 +280,12 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
     }
 
 
-    public void addVOI( VOIBase kNew, boolean bQuickLUT, boolean bUpdate )
+    public void addVOI( VOIBase kNew, boolean bQuickLUT, boolean bUpdate, boolean isFinished )
     {
         ModelImage kActive = m_kParent.getActiveImage();
         if ( kActive != null )
         {
-            addVOI( kActive, kNew, bQuickLUT, bUpdate );
+            addVOI( kActive, kNew, bQuickLUT, bUpdate, isFinished );
             if ( kActive.isRegistered( m_kCurrentVOIGroup ) == -1 )
             {
                 kActive.registerVOI( m_kCurrentVOIGroup );
@@ -1384,6 +1384,14 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         toolbarBuilder.getVOIColorButton().setVOIColor(voiUID);
         setButtonColor(toolbarBuilder.getVOIColorButton(), 
                 toolbarBuilder.getVOIColorButton().getBackground() );
+        
+
+        short sID = (short)(m_kParent.getActiveImage().getVOIs().size() + 1);
+        String kName = new String();
+        int index = kName.lastIndexOf('.') + 1;
+        kName = kName.substring(index);
+        m_kCurrentVOIGroup = new VOI( sID,  kName + "_" + sID );
+        m_kCurrentVOIGroup.setOpacity(1f);
     }
 
     public void pasteVOI() {
@@ -1844,18 +1852,21 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         setButtonColor(toolbarBuilder.getVOIColorButton(), color );
     }
 
-    public void setSelectedVOI( VOI kSelected, boolean bSelectAll )
+    public void setSelectedVOI( VOI kSelected, boolean bSelectAll, boolean bUnSelectVOI )
     {
         if ( kSelected == null )
         {
             return;
         }
-        if ( (m_kCurrentVOIGroup != null) && (m_kCurrentVOIGroup != kSelected) )
+        if ( bUnSelectVOI && (m_kCurrentVOIGroup != null) && (m_kCurrentVOIGroup != kSelected) )
         {
             m_kCurrentVOIGroup.setAllActive(false);
         }
         m_kCurrentVOIGroup = kSelected;
-        m_kCurrentVOIGroup.setAllActive(bSelectAll);
+        if ( bUnSelectVOI || bSelectAll )
+        {
+            m_kCurrentVOIGroup.setAllActive(bSelectAll);
+        }
         m_kCurrentVOIGroup.setActive(true);
         setButtonColor(toolbarBuilder.getVOIColorButton(), 
                 m_kCurrentVOIGroup.getColor());
@@ -1883,7 +1894,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         if ( kVOIState.currentVOI != -1 )
         {
             m_kCurrentVOIGroup = m_kImageA.getVOIs().get(kVOIState.currentVOI);
-            setSelectedVOI( m_kCurrentVOIGroup, m_kCurrentVOIGroup.isAllActive() );
+            setSelectedVOI( m_kCurrentVOIGroup, m_kCurrentVOIGroup.isAllActive(), true );
         }
         else
         {
@@ -2107,40 +2118,12 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         //System.err.println( "updateVOIColor");    
     }
 
-    private void addVOI( ModelImage kImage, VOIBase kNew, boolean bQuickLUT, boolean bUpdate )
+    private void addVOI( ModelImage kImage, VOIBase kNew, boolean bQuickLUT, boolean bUpdate, boolean isFinished )
     {       
         if ( kNew.getGroup() == null )
         {
             saveVOIs("addVOI");
-            if ( (m_kCurrentVOIGroup != null) && (kImage.isRegistered( m_kCurrentVOIGroup ) == -1))
-            {
-                findCompatibleType(kImage, kNew);
-            }
-            if ( (m_kCurrentVOIGroup != null) && (m_kCurrentVOIGroup.getCurveType() != kNew.getType()) )
-            {
-                if ( m_kCurrentVOIGroup.isEmpty() )
-                {
-                    m_kParent.getActiveImage().unregisterVOI(m_kCurrentVOIGroup);
-                }
-                m_kCurrentVOIGroup = null;
-
-
-                boolean bFound = false;
-                VOIVector kVOIs = m_kParent.getActiveImage().getVOIs();
-                for ( int i = 0; i < kVOIs.size(); i++ )
-                {
-                    VOI kCurrentGroup = kVOIs.get(i);
-                    if ( kCurrentGroup.isActive() && kCurrentGroup.getCurveType() == kNew.getType() )
-                    {
-                        bFound = true;
-                        m_kCurrentVOIGroup = kCurrentGroup;
-                    }
-                }
-                if ( !bFound )
-                {
-                    newVOI(false, kNew.isSplit());
-                }
-            }
+            findCompatibleType(kImage, kNew, isFinished);
             if ( m_kCurrentVOIGroup == null )
             {
                 short sID = (short)(kImage.getVOIs().size() + 1);
@@ -2251,24 +2234,45 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         if ( m_kImageB != null ) { m_kImageB.unregisterAllVOIs(); }
     }
 
-    private void findCompatibleType( ModelImage kImage, VOIBase kNew)
+    private void findCompatibleType( ModelImage kImage, VOIBase kNew, boolean isFinished)
     {
+        if ( m_kCurrentVOIGroup != null && m_kCurrentVOIGroup.getCurveType() == kNew.getType() )
+        {
+            return;
+        }
+        if ( m_kCurrentVOIGroup != null && m_kCurrentVOIGroup.isEmpty() )
+        {
+            short sID = (short)(kImage.getVOIs().size() + 1);
+            m_kParent.getActiveImage().unregisterVOI(m_kCurrentVOIGroup);
+            String kName = kNew.getClass().getName();
+            int index = kName.lastIndexOf('.') + 1;
+            kName = kName.substring(index);
+            m_kCurrentVOIGroup.setName( kName + "_" + sID );
+            m_kCurrentVOIGroup.setCurveType(kNew.getType());
+            return;
+        }
         VOIVector kVOIs = kImage.getVOIs();
         for ( int i = 0; i < kVOIs.size(); i++ )
         {
-            if ( kVOIs.get(i).isActive() && kVOIs.get(i).getCurveType() == kNew.getType() )
+            if ( kVOIs.get(i).isActive() && matches(kVOIs.get(i).getCurveType(), kNew.getType(), isFinished) )
             {
                 m_kCurrentVOIGroup = kVOIs.get(i);
+                setSelectedVOI(m_kCurrentVOIGroup, false, true);
                 return;
             }
         }
         for ( int i = 0; i < kVOIs.size(); i++ )
         {
-            if ( kVOIs.get(i).getCurveType() == kNew.getType() )
+            if ( matches(kVOIs.get(i).getCurveType(), kNew.getType(), isFinished) )
             {
                 m_kCurrentVOIGroup = kVOIs.get(i);
+                setSelectedVOI(m_kCurrentVOIGroup, false, true);
                 return;
             }
+        }
+        if ( m_kCurrentVOIGroup != null )
+        {
+            newVOI(false, kNew.isSplit());
         }
         m_kCurrentVOIGroup = null;
     }
@@ -2316,6 +2320,24 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         return bCreated;
     }
 
+    private boolean matches( int iType1, int iType2, boolean isFinished )
+    {
+        if ( iType1 == iType2 )
+        {
+            return true;
+        }
+        if ( isFinished )
+        {
+            return false;
+        }
+        if ( (iType1 == VOI.CONTOUR || iType1 == VOI.POLYLINE) &&
+                (iType2 == VOI.CONTOUR || iType2 == VOI.POLYLINE) )
+        {
+            return true;
+        }
+         return false;   
+    }
+    
     private void paste()
     {
         for ( int i = 0; i < m_kCopyList.size(); i++ )

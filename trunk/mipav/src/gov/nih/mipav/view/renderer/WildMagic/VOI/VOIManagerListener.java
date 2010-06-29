@@ -9,7 +9,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 public interface VOIManagerListener
 {
-    public void addVOI(VOIBase kOld, boolean bQuickLUT, boolean bUpdate );
+    public void addVOI(VOIBase kOld, boolean bQuickLUT, boolean bUpdate, boolean isFinished );
     public void deleteVOI(VOIBase kOld);
     public void pasteVOI(VOIBase kNew);
     public void doVOI(String command);
@@ -22,7 +22,7 @@ public interface VOIManagerListener
     public void setCursor( Cursor kCursor );
     public void setDefaultCursor();
     public void setPresetHue(float presetHue);
-    public void setSelectedVOI( VOI kSelected, boolean bSelectAll );
+    public void setSelectedVOI( VOI kSelected, boolean bSelectAll, boolean bUnSelectVOI );
     public void showIntensityGraph( VOIBase kVOI ); 
     public void updateGraph( VOIBase kVOI ); 
     public void updateDisplay();

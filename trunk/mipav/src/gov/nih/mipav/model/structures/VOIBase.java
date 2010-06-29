@@ -2063,8 +2063,9 @@ public abstract class VOIBase extends Vector<Vector3f> {
             iColumn++;
         }
         float scale = 1f/m_kMaskPositions.size();
-        gcPt.Copy( m_kPositionSum );
-        gcPt.Scale( scale );
+        gcPt.X = MipavMath.round( m_kPositionSum.X * scale );
+        gcPt.Y = MipavMath.round( m_kPositionSum.Y * scale );
+        gcPt.Z = MipavMath.round( m_kPositionSum.Z * scale );
     }
 
 
@@ -2216,8 +2217,9 @@ public abstract class VOIBase extends Vector<Vector3f> {
             iColumn++;
         }
         float scale = 1f/m_kMaskPositions.size();
-        gcPt.Copy( m_kPositionSum );
-        gcPt.Scale( scale );
+        gcPt.X = MipavMath.round( m_kPositionSum.X * scale );
+        gcPt.Y = MipavMath.round( m_kPositionSum.Y * scale );
+        gcPt.Z = MipavMath.round( m_kPositionSum.Z * scale );
     }
 
     /**
@@ -2370,8 +2372,9 @@ public abstract class VOIBase extends Vector<Vector3f> {
             iColumn++;
         }
         float scale = 1f/m_kMaskPositions.size();
-        gcPt.Copy( m_kPositionSum );
-        gcPt.Scale( scale );
+        gcPt.X = MipavMath.round( m_kPositionSum.X * scale );
+        gcPt.Y = MipavMath.round( m_kPositionSum.Y * scale );
+        gcPt.Z = MipavMath.round( m_kPositionSum.Z * scale );
     }
 
     /**
