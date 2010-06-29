@@ -480,7 +480,7 @@ public class ViewMenuBar {
                         menuBuilder.makeMenu("T2", false, new JMenuItem[] {menuBuilder.buildMenuItem("TreT2",
                                 "treT2", 0, null, false)}),
                         menuBuilder.makeMenu("DCE", false, new JMenuItem[] {
-                                menuBuilder.buildMenuItem("T2M2", "t2m2", 0, null, false),
+                                menuBuilder.buildMenuItem("S2M2", "s2m2", 0, null, false),
                                 menuBuilder.buildMenuItem("SM2", "sm2", 0, null, false)})})});
     }
 
