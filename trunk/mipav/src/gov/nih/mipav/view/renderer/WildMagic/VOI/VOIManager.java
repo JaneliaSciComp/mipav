@@ -1175,6 +1175,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 {
                     handleIntensityLineBtn3(kEvent);
                 }
+                else if ( m_kCurrentVOI.getType() == VOI.ANNOTATION )
+                {
+                    new JDialogAnnotation(m_kImageActive, m_kCurrentVOI.getGroup(), 
+                            (int)m_kCurrentVOI.elementAt(0).Z, true, true);
+                }
                 else
                 {
                     addPopup( m_kCurrentVOI );
@@ -3509,12 +3514,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         int yS2 = Math.round(kScreen.Y);
 
         int width = (g.getFontMetrics(kVOI.getTextFont()).stringWidth( kVOI.getText()));
-        if ( kVOI.getTextWidth() == null )
-        {
-            Vector3f kVolumePt = new Vector3f();
-            m_kDrawingContext.screenToFile( new Vector3f (xS + width, yS, m_iSlice), kVolumePt );
-            kVOI.setTextWidth( kVolumePt );
-        }
+        Vector3f kVolumePt = new Vector3f();
+        m_kDrawingContext.screenToFile( new Vector3f (xS + width, yS, m_iSlice), kVolumePt );
+        kVOI.setTextWidth( kVolumePt );
         
         // draw the arrow if useMarker is true
         if ( kVOI.useMarker() ) {
@@ -3542,12 +3544,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
             this.drawArrow( kVOI, (Graphics2D)g, markerX, markerY, xS2, yS2, .1f);
         } //arrow not off
-        if ((kVOI.getTextFont() != null) && (kVOI.getTextFont().getName() == kVOI.getFontName()) && (kVOI.getTextFont().getStyle() == kVOI.getFontDescriptors())) {
-            kVOI.setTextFont( kVOI.getTextFont().deriveFont(kVOI.getFontSize()) );
-
-        } else {
-            kVOI.setTextFont( new Font(kVOI.getFontName(), kVOI.getFontDescriptors(), kVOI.getFontSize()) );
-        }
+        kVOI.setTextFont( new Font(kVOI.getFontName(), kVOI.getFontDescriptors(), kVOI.getFontSize()) );
 
         Font previousFont = g.getFont();
 
@@ -3569,7 +3566,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         g.setColor( kVOI.getColor() );
         g.drawString(kVOI.getText(), xS, yS);
         g.setFont(previousFont);
-
     }
 
 
