@@ -66,6 +66,8 @@ public class VOIText extends VOIBase {
     /** If this is set to true, a draggable arrow will be displayed */
     private boolean useMarker = true;
     
+    private int m_iTextWidth = 0;
+    
     /**
      * default constructor.
      */
@@ -222,6 +224,14 @@ public class VOIText extends VOIBase {
         return textFont;
     }
     
+    public Vector3f getTextWidth()
+    {
+        if ( size() < 3 )
+        {
+            return null;
+        }
+        return elementAt(2);
+    }
 
     /**
      * Moves the point to the new location. NO bounds checking is performed
@@ -240,7 +250,6 @@ public class VOIText extends VOIBase {
         pt.Y = pt.Y + yM;
         pt.Z = pt.Z + zM;        
     }
-
     
     /**
      * Sets background color
@@ -312,6 +321,16 @@ public class VOIText extends VOIBase {
     public void setTextFont( Font font )
     {
         textFont = font;
+    }
+    
+    public void setTextWidth( Vector3f kVolume )
+    {
+        if ( size() < 3 )
+        {
+            add(kVolume);
+            return;
+        }
+        set(2,kVolume);
     }
 
     /**
