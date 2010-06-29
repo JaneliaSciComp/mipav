@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 import java.awt.BorderLayout;
 
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Frame;
@@ -12,6 +13,8 @@ import java.awt.Insets;
 import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
@@ -328,11 +331,46 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	}
 
 	protected JScrollPane buildSPGRPanel() {
-	    JPanel panel = new JPanel();
+	    JPanel panel = buildSPGRPanelInner();
+	    
+	    JScrollPane scrollPane = new JScrollPane(panel);
+	    scrollPane.setPreferredSize(new Dimension(420,405));
+	    scrollPane.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: SPGR Image Information"));
+	    scrollPane.addComponentListener(new ComponentListener() {
+	    	
+		    public void componentHidden(ComponentEvent arg0) {}
+	
+			public void componentMoved(ComponentEvent arg0) {}
+	
+			public void componentResized(ComponentEvent arg0) {}
+
+			public void componentShown(ComponentEvent arg0) {
+				try {
+					if(Nsa != Double.valueOf(spgrNumFA.getText()).intValue()) {
+						Object obj = arg0.getSource();
+						if(obj instanceof JScrollPane) {
+							Nsa = Double.valueOf(spgrNumFA.getText()).intValue();
+							((JScrollPane) obj).getViewport().removeAll();
+							((JScrollPane) obj).setViewportView(buildTreT1LongPanelInner());
+							((JScrollPane) obj).validate();
+							((JScrollPane) obj).updateUI();
+						}
+					}
+				} catch (NumberFormatException e) {
+					System.out.println(spgrNumFA.getText());
+					MipavUtil.displayError("The number of flip angles in panel 1 is not a valid value.");
+				}
+			}
+		});
+	
+	    return scrollPane;
+	 }
+	
+	private JPanel buildSPGRPanelInner() {
+		JPanel panel = new JPanel();
 	    LayoutManager panelLayout = new GridBagLayout();
 	    GridBagConstraints gbc = new GridBagConstraints();
 	    panel.setLayout(panelLayout);
-	    panel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: SPGR Image Information"));
 	    
 	    gbc.fill = GridBagConstraints.NONE;
 	    gbc.anchor = GridBagConstraints.WEST;
@@ -371,15 +409,48 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    gbc.insets = new Insets(0, 0, 0, 0);
 	    panel.add(new JLabel(""), gbc);
 	    
-	    JScrollPane scrollPane = new JScrollPane(panel);
-	    scrollPane.setPreferredSize(new Dimension(420,405));
-	    scrollPane.setBorder(null);
-	
-	    return scrollPane;
-	 }
+	    return panel;
+	}
 
 	protected JScrollPane buildIRSPGRPanelGE() {
 	    
+		JPanel panel = buildIRSPGRPanelGEInner();
+	    
+	    JScrollPane scrollPane = new JScrollPane(panel);
+	    scrollPane.setPreferredSize(new Dimension(420,405));
+	    scrollPane.setBorder(null);
+	    scrollPane.addComponentListener(new ComponentListener() {
+
+			public void componentHidden(ComponentEvent e) {}
+
+			public void componentMoved(ComponentEvent e) {}
+
+			public void componentResized(ComponentEvent e) {}
+
+			public void componentShown(ComponentEvent e) {
+				try {
+					if(Nti != Double.valueOf(irspgrNum.getText()).intValue()) {
+						Object obj = e.getSource();
+						if(obj instanceof JScrollPane) {
+							Nti = Double.valueOf(irspgrNum.getText()).intValue();
+							((JScrollPane) obj).getViewport().removeAll();
+							((JScrollPane) obj).setViewportView(buildTreT1LongPanelInner());
+							((JScrollPane) obj).validate();
+							((JScrollPane) obj).updateUI();
+						}
+					}
+				} catch (NumberFormatException e1) {
+					System.out.println(irspgrNum.getText());
+					MipavUtil.displayError("The number of irspgr images in panel 1 is not a valid value.");
+				}
+			}
+	    	
+	    });
+	    
+	    return scrollPane;
+	}
+	
+	private JPanel buildIRSPGRPanelGEInner() {
 		JPanel panel = new JPanel();
 	    LayoutManager panelLayout = new GridBagLayout();
 	    panel.setLayout(panelLayout);
@@ -459,15 +530,49 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    gbc.insets = new Insets(0, 0, 0, 0);
 	    panel.add(new JLabel(""), gbc);
 	    
-	    JScrollPane scrollPane = new JScrollPane(panel);
-	    scrollPane.setPreferredSize(new Dimension(420,405));
-	    scrollPane.setBorder(null);
-	    
-	    return scrollPane;
+	    return panel;
 	}
 
 	protected JScrollPane buildIRSPGRPanelSiemens() {
-	    JPanel panel = new JPanel();
+	    JPanel panel  = buildIRSPGRPanelSiemensInner();
+	    
+	    JScrollPane scrollPane = new JScrollPane(panel);
+	    scrollPane.setPreferredSize(new Dimension(420,405));
+	    scrollPane.setBorder(null);
+	    scrollPane.addComponentListener(new ComponentListener() {
+
+			public void componentHidden(ComponentEvent e) {}
+
+			public void componentMoved(ComponentEvent e) {}
+
+			public void componentResized(ComponentEvent e) {}
+
+			public void componentShown(ComponentEvent e) {
+				try {
+					System.out.println("Nti: "+Nti+" irs "+irspgrNum.getText());
+					if(Nti != Double.valueOf(irspgrNum.getText()).intValue()) {
+						Object obj = e.getSource();
+						if(obj instanceof JScrollPane) {
+							Nti = Double.valueOf(irspgrNum.getText()).intValue();
+							((JScrollPane) obj).getViewport().removeAll();
+							((JScrollPane) obj).setViewportView(buildTreT1LongPanelInner());
+							((JScrollPane) obj).validate();
+							((JScrollPane) obj).updateUI();
+						}
+					}
+				} catch (NumberFormatException e1) {
+					System.out.println(irspgrNum.getText());
+					MipavUtil.displayError("The number of irspgr images in panel 1 is not a valid value.");
+				}
+			}
+	    	
+	    });
+	    
+	    return scrollPane;
+	}
+	
+	private JPanel buildIRSPGRPanelSiemensInner() {
+		JPanel panel = new JPanel();
 	    LayoutManager panelLayout = new GridBagLayout();
 	    panel.setLayout(panelLayout);
 	    GridBagConstraints gbc = new GridBagConstraints();
@@ -545,15 +650,48 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    gbc.insets = new Insets(0, 0, 0, 0);
 	    panel.add(new JLabel(""), gbc);
 	    
+	    return panel;
+	}
+
+	protected JScrollPane buildTreT1LongPanel() {
+	    JPanel panel = buildTreT1LongPanelInner();
+	    
 	    JScrollPane scrollPane = new JScrollPane(panel);
 	    scrollPane.setPreferredSize(new Dimension(420,405));
 	    scrollPane.setBorder(null);
 	    
+	    scrollPane.addComponentListener(new ComponentListener() {
+	    	
+		    public void componentHidden(ComponentEvent arg0) {}
+	
+			public void componentMoved(ComponentEvent arg0) {}
+	
+			public void componentResized(ComponentEvent arg0) {}
+
+			public void componentShown(ComponentEvent arg0) {
+				try {
+					if(Nsa != Double.valueOf(spgrNumFA.getText()).intValue()) {
+						Object obj = arg0.getSource();
+						if(obj instanceof JScrollPane) {
+							Nsa = Double.valueOf(spgrNumFA.getText()).intValue();
+							((JScrollPane) obj).getViewport().removeAll();
+							((JScrollPane) obj).setViewportView(buildTreT1LongPanelInner());
+							((JScrollPane) obj).validate();
+							((JScrollPane) obj).updateUI();
+						}
+					}
+				} catch (NumberFormatException e) {
+					System.out.println(spgrNumFA.getText());
+					MipavUtil.displayError("The number of flip angles in panel 1 is not a valid value.");
+				}
+			}
+		});
+	    
 	    return scrollPane;
 	}
-
-	protected JScrollPane buildTreT1LongPanel() {
-	    JPanel panel = new JPanel();
+	
+	private JPanel buildTreT1LongPanelInner() {
+		JPanel panel = new JPanel();
 	    LayoutManager panelLayout = new GridBagLayout();
 	    panel.setLayout(panelLayout);
 	    GridBagConstraints gbc = new GridBagConstraints();
@@ -574,14 +712,14 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    convimageComboAr = new JComboBox[Nsa];
 	    convFAFieldAr = new JTextField[Nsa];
 	    for(int i=0; i<Nsa; i++) {
-	        convimageComboAr[i] = guiBuilder.buildComboBox("Image #"+i, titles, i);
+	        convimageComboAr[i] = guiBuilder.buildComboBox("Image #"+(i+1), titles, i);
 	        gbc.gridy = performTreT1withPreCalculatedB1Map ? i+1 : i;
 	        gbc.gridx = 0;
 	        gbc.weightx = .9;
 	        panel.add(convimageComboAr[i].getParent(), gbc);
 	        
 	        double faAdd = treFA != null && treFA.length > i ? treFA[i] : 0.0;
-	        convFAFieldAr[i] = guiBuilder.buildDecimalField("Flip Angle #"+i, faAdd);
+	        convFAFieldAr[i] = guiBuilder.buildDecimalField("Flip Angle #"+(i+1), faAdd);
 	        
 	        gbc.gridx = 1;
 	        gbc.weightx = .1;
@@ -601,11 +739,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    gbc.weighty = 1;
 	    panel.add(new JLabel(""), gbc);
 	    
-	    JScrollPane scrollPane = new JScrollPane(panel);
-	    scrollPane.setPreferredSize(new Dimension(420,405));
-	    scrollPane.setBorder(null);
-	    
-	    return scrollPane;
+	    return panel;
 	}
 
 	protected JPanel buildTreT1SpecificsPanel() {
@@ -1302,7 +1436,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
     private String setUI(boolean process) {
 		//set conventional
     	try {
-    		Nsa = (int) Double.valueOf(spgrNumFA.getText()).doubleValue();
+    		Nsa = Double.valueOf(spgrNumFA.getText()).intValue();
     		
     		treFA = new double[Nsa];
 
@@ -1325,7 +1459,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	        
 	        irspgrTR = treTR;
     		
-    		Nti = (int) Double.valueOf(irspgrNum.getText()).doubleValue();
+    		Nti = Double.valueOf(irspgrNum.getText()).intValue();
     	} catch(Exception e) { 
     		if(process && performTreT1HIFI) {
     			return "Number of irspgr images has not been set.";
