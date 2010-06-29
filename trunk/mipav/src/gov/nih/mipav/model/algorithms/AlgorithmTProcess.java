@@ -10,10 +10,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileUtility;
+import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameMessage;
 import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewOpenFileUI;
@@ -144,7 +147,22 @@ public abstract class AlgorithmTProcess extends AlgorithmBase {
      */
     private boolean saveImageData(ModelImage tempVolume, int volumeNumber) {
         ViewUserInterface.getReference().getMessageFrame().append("Saving to: "+tempDirString+tempVolume.getImageName(), ViewJFrameMessage.DEBUG);
-        return tempVolume.saveImage(tempDirString, tempVolume.getImageName(), FileUtility.RAW, true);
+        FileWriteOptions options = new FileWriteOptions(false);
+
+        options.setBeginSlice(0);
+        options.setEndSlice(tempVolume.getExtents()[2] - 1);
+        System.out.println("Running in sep thread: "+runningInSeparateThread);
+        options.setRunningInSeparateThread(runningInSeparateThread);
+        options.setFileType(FileUtility.RAW);
+        options.setFileName(tempVolume.getImageName());
+        options.setFileDirectory(tempDirString);
+        options.setIsScript(!runningInSeparateThread);
+        options.setOptionsSet(true); // Options have been set - therefore don't bring up any dialogs
+        
+        FileIO fileIO = new FileIO();
+        fileIO.writeImage(tempVolume, options, false);
+        
+        return true;
     }
     
     /**
@@ -309,7 +327,7 @@ public abstract class AlgorithmTProcess extends AlgorithmBase {
             
             for(int i=0; i<dataBar.length; i++) {
                 dataBar[i].setVisible(false);
-                dataBar[i].dispose();
+                //dataBar[i].dispose();
                 dataBar[i] = null;
             }
             
@@ -457,9 +475,11 @@ public abstract class AlgorithmTProcess extends AlgorithmBase {
         }
 
         public void run() {
-            String mipavImageName = openFile.open(tempDirString+imageName+i+".xml", false, null);
-            ViewUserInterface.getReference().getMessageFrame().append("Getting image: "+mipavImageName+"\n", ViewJFrameMessage.DEBUG);
-            ModelImage tempVolume = ViewUserInterface.getReference().getRegisteredImageByName(mipavImageName);
+            
+            FileIO fileIO = new FileIO();
+            fileIO.setQuiet(true);
+            ModelImage tempVolume = fileIO.readImage(imageName+i+".xml", tempDirString, false, null);
+            
             if(tempVolume != null) {
                 storeImageData(resultStack, tempVolume, i);
                 tempVolume.disposeLocal();
