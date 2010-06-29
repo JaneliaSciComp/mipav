@@ -3508,10 +3508,17 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         int xS2 = Math.round(kScreen.X);
         int yS2 = Math.round(kScreen.Y);
 
+        int width = (g.getFontMetrics(kVOI.getTextFont()).stringWidth( kVOI.getText()));
+        if ( kVOI.getTextWidth() == null )
+        {
+            Vector3f kVolumePt = new Vector3f();
+            m_kDrawingContext.screenToFile( new Vector3f (xS + width, yS, m_iSlice), kVolumePt );
+            kVOI.setTextWidth( kVolumePt );
+        }
+        
         // draw the arrow if useMarker is true
         if ( kVOI.useMarker() ) {
             // determine the width/height of the TEXT (for marker line location)
-            int width = (g.getFontMetrics(kVOI.getTextFont()).stringWidth( kVOI.getText()));
             int ascentValue = (int) (g.getFontMetrics(kVOI.getTextFont()).getStringBounds(kVOI.getText(), g).getHeight() / 2);
 
             int markerX = xS;
@@ -4278,18 +4285,39 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         if ( kVOI.isFixed() )
         {
             return;
-        }
-
+        }       
+        
         Vector3f kVolumePt = new Vector3f();
         if ( iPos < kVOI.size() )
         {
             if ( !m_kDrawingContext.screenToFile( (int)kPos.X, (int)kPos.Y, (int)kPos.Z, kVolumePt ) )
             {
+                if ( kVOI.getType() == VOI.ANNOTATION )
+                {
+                    if ( iPos == 0 && kVOI.size() > 2 )
+                    {
+                        float width = kVOI.elementAt(2).X - kVOI.elementAt(0).X;
+                        kVOI.elementAt(2).X = kVolumePt.X + width;
+                        kVOI.elementAt(2).Y = kVolumePt.Y;
+                        kVOI.elementAt(2).Z = kVolumePt.Z;
+                    }
+                    if ( iPos == 2 && kVOI.size() > 2 )
+                    {
+                        float width = kVOI.elementAt(2).X - kVOI.elementAt(0).X;
+                        kVOI.elementAt(0).X = kVolumePt.X - width;
+                        kVOI.elementAt(0).Y = kVolumePt.Y;
+                        kVOI.elementAt(0).Z = kVolumePt.Z;
+                    }
+                }                
                 kVOI.set( iPos, kVolumePt );
+                
                 kVOI.setSelectedPoint( iPos );
                 kVOI.update();
             }
         }
+        
+        
+        
     }
 
 
