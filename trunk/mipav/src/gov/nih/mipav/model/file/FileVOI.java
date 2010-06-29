@@ -1828,6 +1828,8 @@ public class FileVOI extends FileXML {
         private int zDim = 1;
         
         private boolean lps = Preferences.is(Preferences.PREF_VOI_LPS_SAVE);
+        
+        private String name;
 
         /**
          * Construct our custom XML data handler.
@@ -1890,11 +1892,15 @@ public class FileVOI extends FileXML {
                 voiText.setFontDescriptors(fontStyle);
 
                 voi.importCurve(voiText);
-                voiVector.addVOI(voi);
+                if(id == 0) {
+                	voiVector.addVOI(voi);
+                }
             }
 
             if (currentKey.equals("Unique-ID")) {
-                voi.setUID(Integer.parseInt(elementBuffer));
+            	if(id == 0) {
+            		voi.setUID(Integer.parseInt(elementBuffer));
+            	}
             } else if (currentKey.equals("Text")) {
                 voiText.setText(elementBuffer);
             } else if (currentKey.equals("Note")) {
@@ -2007,11 +2013,13 @@ public class FileVOI extends FileXML {
                 final Attributes atts) throws SAXException {
             currentKey = localName;
             elementBuffer = "";
-
             if (currentKey.equals("Label")) {
                 id++;
-                voi = new VOI(id, "Label_" + id, VOI.ANNOTATION, 0f);
-                voi.setExtension(extension);
+                name = file.getName().substring(0, file.getName().lastIndexOf("."));
+                if(id == 0) {
+                	voi = new VOI(id, name, VOI.ANNOTATION, 0f);
+                	voi.setExtension(extension);
+                }
                 voiText = new VOIText();
 
             }
