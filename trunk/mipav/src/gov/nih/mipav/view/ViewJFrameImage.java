@@ -1114,35 +1114,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("CollapseAllToSinglePaint")) {
             collapseAlltoSinglePaint(false);
         } else if (command.equals("PaintToVOI")) {
-
-            // new JDialogVOIExtraction(this, getActiveImage()).callAlgorithm();
-            int xDim = 0, yDim = 0, zDim = 0;
-            short voiID;
-
-            if (getActiveImage().getNDims() == 2) {
-                xDim = getActiveImage().getExtents()[0];
-                yDim = getActiveImage().getExtents()[1];
-                zDim = 1;
-            } else if (getActiveImage().getNDims() == 3) {
-                xDim = getActiveImage().getExtents()[0];
-                yDim = getActiveImage().getExtents()[1];
-                zDim = getActiveImage().getExtents()[2];
-            } else {
-                return;
-            }
-
-            voiID = (short) getActiveImage().getVOIs().size();
-
-            final AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint(getActiveImage(),
-                    componentImage.getPaintBitmap(), xDim, yDim, zDim, voiID);
-
-            algoPaintToVOI.setRunningInSeparateThread(false);
-            algoPaintToVOI.run();
-
-            ScriptRecorder.getReference().addLine(new ActionPaintToVOI(getActiveImage()));
-            ProvenanceRecorder.getReference().addLine(new ActionMaskToPaint(getActiveImage()));
-
-            updateImages();
+            paintToVOI();
         } else if (command.equals("PaintToUbyteMask")) {
             final ModelImage maskImage = ViewUserInterface.getReference().getRegisteredImageByName(
                     componentImage.commitPaintToUbyteMask());
@@ -6074,6 +6046,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     public void setPaintMask(BitSet mask) {
         if (componentImage != null) {
             componentImage.setPaintMask(mask);
+        }
+    }
+    
+    @Override
+    public void paintToVOI()
+    {
+        if (componentImage != null) {
+            componentImage.paintToVOI();
+            updateImages();
         }
     }
 

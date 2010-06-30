@@ -5,8 +5,13 @@ import gov.nih.mipav.MipavCoordinateSystems;
 import gov.nih.mipav.util.MipavMath;
 
 import gov.nih.mipav.model.algorithms.AlgorithmRegionGrow;
+import gov.nih.mipav.model.algorithms.AlgorithmVOIExtractionPaint;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmMask;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.provenance.ProvenanceRecorder;
+import gov.nih.mipav.model.scripting.ScriptRecorder;
+import gov.nih.mipav.model.scripting.actions.ActionMaskToPaint;
+import gov.nih.mipav.model.scripting.actions.ActionPaintToVOI;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
@@ -3308,6 +3313,36 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 }
             }
         }
+    }
+    
+    public void paintToVOI()
+    {
+        // new JDialogVOIExtraction(this, getActiveImage()).callAlgorithm();
+        int xDim = 0, yDim = 0, zDim = 0;
+        short voiID;
+
+        if (getActiveImage().getNDims() == 2) {
+            xDim = getActiveImage().getExtents()[0];
+            yDim = getActiveImage().getExtents()[1];
+            zDim = 1;
+        } else if (getActiveImage().getNDims() == 3) {
+            xDim = getActiveImage().getExtents()[0];
+            yDim = getActiveImage().getExtents()[1];
+            zDim = getActiveImage().getExtents()[2];
+        } else {
+            return;
+        }
+
+        voiID = (short) getActiveImage().getVOIs().size();
+
+        final AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint(getActiveImage(),
+                getPaintBitmap(), xDim, yDim, zDim, voiID);
+
+        algoPaintToVOI.setRunningInSeparateThread(false);
+        algoPaintToVOI.run();
+
+        ScriptRecorder.getReference().addLine(new ActionPaintToVOI(getActiveImage()));
+        ProvenanceRecorder.getReference().addLine(new ActionMaskToPaint(getActiveImage()));
     }
 
     /**
