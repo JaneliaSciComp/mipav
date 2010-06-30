@@ -20,6 +20,7 @@ public interface VOIManagerInterfaceListener
     public ModelRGB getActiveRGB();
     public Vector3f getCenterPt();
     public JFrame getFrame();    
+    public void paintToVOI();
     public void PointerActive(boolean bActive);
     public Vector3f PropDown(int iActive);
     public Vector3f PropUp(int iActive);

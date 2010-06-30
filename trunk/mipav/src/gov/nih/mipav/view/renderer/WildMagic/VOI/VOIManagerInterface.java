@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.renderer.WildMagic.VOI;
 
 import gov.nih.mipav.model.algorithms.AlgorithmVOIExtraction;
+import gov.nih.mipav.model.algorithms.AlgorithmVOIExtractionPaint;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmFlip;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoDicom;
@@ -12,6 +13,8 @@ import gov.nih.mipav.model.scripting.actions.ActionMaskToPaint;
 import gov.nih.mipav.model.scripting.actions.ActionMaskToVOI;
 import gov.nih.mipav.model.scripting.actions.ActionOpenAllVOIs;
 import gov.nih.mipav.model.scripting.actions.ActionOpenVOI;
+import gov.nih.mipav.model.scripting.actions.ActionPaintToMask;
+import gov.nih.mipav.model.scripting.actions.ActionPaintToVOI;
 import gov.nih.mipav.model.scripting.actions.ActionSaveAllVOIs;
 import gov.nih.mipav.model.scripting.actions.ActionVOIToMask;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -675,6 +678,30 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
             }
             */
         }
+        else if (command.equals("PaintToVOI")) {
+            m_kParent.paintToVOI();
+        } 
+        /*
+        else if (command.equals("PaintToUbyteMask")) {
+
+            final ModelImage maskImage = ViewUserInterface.getReference().getRegisteredImageByName(
+                    componentImage.commitPaintToUbyteMask());
+
+            ScriptRecorder.getReference().addLine(
+                    new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_UBYTE));
+            ProvenanceRecorder.getReference().addLine(
+                    new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_UBYTE));
+        } else if (command.equals("PaintToShortMask")) {
+            final ModelImage maskImage = ViewUserInterface.getReference().getRegisteredImageByName(
+                    componentImage.commitPaintToMask());
+
+            ScriptRecorder.getReference().addLine(
+                    new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_SHORT));
+            ProvenanceRecorder.getReference().addLine(
+                    new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_SHORT));
+        } 
+        */
+        
         else if (command.equals("Snake")) {
             if ( !checkForActiveVOIs()) {
                 MipavUtil.displayWarning("Please select a VOI!");

@@ -3547,6 +3547,15 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             componentImage.setPaintMask(mask);
         }
     }
+
+    @Override
+    public void paintToVOI()
+    {
+        if (componentImage != null) {
+            componentImage.paintToVOI();
+            updateImages();
+        }
+    }
     
     private void initVOI()
     {

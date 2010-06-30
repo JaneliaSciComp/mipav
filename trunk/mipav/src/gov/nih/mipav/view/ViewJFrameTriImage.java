@@ -5375,4 +5375,20 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             }
         }
     }
+    
+
+    @Override
+    public void paintToVOI()
+    {       
+        int iActive = getSelectedImage();
+        if (iActive == ViewJComponentBase.IMAGE_A)
+        {
+            triImage[AXIAL_A].paintToVOI();
+        }
+        if (iActive == ViewJComponentBase.IMAGE_B)
+        {
+            triImage[AXIAL_B].paintToVOI();
+        }
+        updateImages();
+    }
 }

@@ -1795,7 +1795,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         new JDialogAnnotation(m_kImageActive, newTextVOI, 0, false, true);
         m_kImageActive.unregisterVOI(newTextVOI);
         newTextVOI.removeCurves();
-        if ( newTextVOI.isActive() ) {
+        if ( m_kCurrentVOI.isActive() ) {
             m_kParent.addVOI( m_kCurrentVOI, false, true, true );
         }
         else

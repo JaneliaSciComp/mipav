@@ -3582,6 +3582,15 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         }
     }
     
+    @Override
+    public void paintToVOI()
+    {
+        if (componentImage != null) {
+            componentImage.paintToVOI();
+            updateImages();
+        }
+    }
+    
     private void initVOI()
     {
         voiManager = new VOIManagerInterface( this, imageA, LUTa, imageB, LUTb, 1, false, null );
