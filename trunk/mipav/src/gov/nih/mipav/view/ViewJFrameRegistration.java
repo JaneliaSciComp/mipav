@@ -3574,6 +3574,13 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         // TODO Auto-generated method stub
         
     }
+
+    @Override
+    public void setPaintMask(BitSet mask) {
+        if (componentImage != null) {
+            componentImage.setPaintMask(mask);
+        }
+    }
     
     private void initVOI()
     {

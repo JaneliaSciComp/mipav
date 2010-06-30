@@ -1177,8 +1177,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 }
                 else if ( m_kCurrentVOI.getType() == VOI.ANNOTATION )
                 {
-                    new JDialogAnnotation(m_kImageActive, m_kCurrentVOI.getGroup(), 
-                            (int)m_kCurrentVOI.elementAt(0).Z, true, true);
+                    new JDialogAnnotation(m_kImageActive, m_kCurrentVOI.getGroup(), m_kCurrentVOI.getContourID(), true, true);
                 }
                 else
                 {
@@ -1793,8 +1792,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             newTextVOI.setColor(Color.white);
         }
         newTextVOI.setActive(false);
-        new JDialogAnnotation(m_kImageActive, newTextVOI, (int)kVolumePt.Z, false, true);
+        new JDialogAnnotation(m_kImageActive, newTextVOI, 0, false, true);
         m_kImageActive.unregisterVOI(newTextVOI);
+        newTextVOI.removeCurves();
         if ( newTextVOI.isActive() ) {
             m_kParent.addVOI( m_kCurrentVOI, false, true, true );
         }
@@ -3702,6 +3702,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     {
         if ( kVOI.getType() == VOI.PROTRACTOR && ((VOIProtractor)kVOI).getAllSlices() )
         {
+            return m_iSlice;
+        }
+        if ( kVOI.size() == 0 )
+        {
+            System.err.println( kVOI.getName() + " " + kVOI.size() );
             return m_iSlice;
         }
         return (int)fileCoordinatesToPatient( kVOI.get(0) ).Z;

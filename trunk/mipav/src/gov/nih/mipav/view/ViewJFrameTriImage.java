@@ -422,6 +422,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** Volume Boundary may be changed for cropping the volume. */
     private CubeBounds volumeBounds;
     
+    private JMenu voiMenu;
     private VOIManagerInterface voiManager;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -472,10 +473,14 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
         Object source = event.getSource();
-
+        
         Preferences.debug(command, Preferences.DEBUG_MINOR);
 
-        if (command.equals("ScrollLink")) {
+        if ( isVOICommand( voiMenu.getMenuComponents(), command ) )
+        {
+            voiManager.actionPerformed(event);
+        }
+        else if (command.equals("ScrollLink")) {
             linkedScrolling = !linkedScrolling;    
                 
             Enumeration names = userInterface.getRegisteredImageNames();
@@ -1519,6 +1524,23 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      */
     public boolean isFocusable() {
         return true;
+    }
+    
+    public boolean isVOICommand( Component[] menuComponents, String command )
+    {
+        boolean bReturn = false;
+        for ( int i = 0; i < menuComponents.length; i++ )
+        {
+            if ( menuComponents[i] instanceof JMenuItem )
+            {
+                bReturn |= command.equals( ((JMenuItem)menuComponents[i]).getActionCommand() );
+            }
+            if ( menuComponents[i] instanceof JMenu )
+            {
+                bReturn |= isVOICommand( ((JMenu)menuComponents[i]).getMenuComponents(), command );
+            }
+        }
+        return bReturn;
     }
 
     /**
@@ -2947,12 +2969,15 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                                           (imageA.getTalairachTransformInfo() != null));
 
         menuObj = new ViewMenuBuilder(this);
+        ViewMenuBar menuBarMaker = new ViewMenuBar(menuObj);
 
         JMenuBar menuBar = new JMenuBar();
         menuBar.add(menuObj.makeMenu("File", false,
                                      new JComponent[] {
                                          separator, menuObj.buildMenuItem("Close frame", "CloseFrame", 0, null, false)
                                      }));
+        voiMenu = menuBarMaker.makeVOIMenu();
+        menuBar.add(voiMenu);
         menuBar.add(menuObj.makeMenu("Options", false,
                                      new JComponent[] {
                                          menuObj.buildCheckBoxMenuItem("Show axes", "ShowAxes", true),
@@ -5339,5 +5364,15 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             return triImage[AXIAL_A].getRGBTB();
         }
         return triImage[AXIAL_A].getRGBTA();
+    }
+
+    @Override
+    public void setPaintMask(BitSet mask) {
+        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+
+            if (triImage[i] != null) {
+                triImage[i].setPaintMask(mask);
+            }
+        }
     }
 }

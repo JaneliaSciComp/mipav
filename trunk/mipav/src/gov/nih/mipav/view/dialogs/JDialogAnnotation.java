@@ -83,6 +83,9 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
     
     /** the VOI that contains the VOIText. */
     private VOI textVOI;
+    
+    /** the VOIText element in the VOI to modify */
+    private int element = 0;
 
     /** DOCUMENT ME! */
     private JCheckBox useMarkerBox;
@@ -97,10 +100,11 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
      * @param  slice         DOCUMENT ME!
      * @param  isRegistered  DOCUMENT ME!
      */
-    public JDialogAnnotation(ModelImage image, VOI textVOI, int slice, boolean isRegistered, boolean modal) {
+    public JDialogAnnotation(ModelImage image, VOI textVOI, int element, boolean isRegistered, boolean modal) {
         super(image.getParentFrame(), modal);
         this.activeImage = image;
         this.textVOI = textVOI;
+        this.element = element;
 
         if (textVOI == null) {
             return;
@@ -134,10 +138,10 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
                         }
 
                         textVOI.setActive(true);
-                        textVOI.setName(nameField.getText());
+                        //textVOI.setName(nameField.getText());
                         if(!noteField.getText().equals(DEFAULT_NOTES) && noteField.getText().length() > 0)
-                        	((VOIText) (textVOI.getCurves().elementAt(0))).setNote(noteField.getText());
-                        ((VOIText) (textVOI.getCurves().elementAt(0))).setActive(true);
+                        	((VOIText) (textVOI.getCurves().elementAt(element))).setNote(noteField.getText());
+                        ((VOIText) (textVOI.getCurves().elementAt(element))).setActive(true);
                         activeImage.notifyImageDisplayListeners();
                     }
 
@@ -231,7 +235,7 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         fontSizeField.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke("ENTER"), "updateText");
         fontSizeField.getActionMap().put("updateText", new UpdateTextAction());
 
-        VOIText vt = (VOIText) textVOI.getCurves().elementAt(0);
+        VOIText vt = (VOIText) textVOI.getCurves().elementAt(element);
         fontSize = vt.getFontSize();
         fontSizeField.setText(Integer.toString(fontSize));
         fontDescriptors = vt.getFontDescriptors();
@@ -258,8 +262,8 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
 
         colorButton = new JButton(MipavUtil.getIcon("transparent.gif"));
 
-        colorButton.setBackground(textVOI.getColor());
-        colorButton.setForeground(textVOI.getColor());
+        colorButton.setBackground(vt.getColor());
+        colorButton.setForeground(vt.getColor());
         colorButton.setToolTipText("Click to change text color");
 
         colorButton.addActionListener(this);
@@ -340,7 +344,7 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
 
         namePanel.add(nameField);
 
-        VOIText vt = (VOIText) textVOI.getCurves().elementAt(0);
+        VOIText vt = (VOIText) textVOI.getCurves().elementAt(element);
         nameField.setFont(new Font(vt.getFontName(), vt.getFontDescriptors(), vt.getFontSize()));
         nameField.setBorder(BasicBorders.getTextFieldBorder());
 
@@ -432,14 +436,14 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
     private boolean setVariables() {
 
         try {
-            VOIText vt = (VOIText) textVOI.getCurves().elementAt(0);
+            VOIText vt = (VOIText) textVOI.getCurves().elementAt(element);
             vt.setFontSize(Integer.parseInt(fontSizeField.getText()));
             vt.setText(nameField.getText());
 
             vt.setFontDescriptors(fontDescriptors);
             vt.setFontName((String) fontTypeBox.getSelectedItem());
             vt.setColor(colorButton.getForeground());
-            textVOI.setColor(colorButton.getForeground());
+            //textVOI.setColor(colorButton.getForeground());
             vt.setBackgroundColor(backgroundColorButton.getForeground());
 
             Preferences.setProperty(Preferences.PREF_VOI_TEXT_COLOR, MipavUtil.makeColorString(colorButton.getForeground()));
