@@ -87,6 +87,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.BitSet;
 import java.util.Vector;
 
 import javax.media.opengl.GLAutoDrawable;
@@ -3389,5 +3390,11 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     @Override
     public ModelRGB getActiveRGB() {
         return m_kVolumeImageA.GetRGB();
+    }
+
+    @Override
+    public void setPaintMask(BitSet mask) {
+        // TODO Auto-generated method stub
+        
     }
 }

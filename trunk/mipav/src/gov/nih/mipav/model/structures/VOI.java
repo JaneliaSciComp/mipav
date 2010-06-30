@@ -90,9 +90,6 @@ public class VOI extends ModelSerialCloneable {
     /** int indicating that no point was found. */
     public final int NOT_A_POINT = -99;
 
-    /** If true indicates tha the VOI is selected (active). */
-    private boolean active;
-
     /** If true the bounding box of the VOI should be displayed. */
     private boolean boundingBox = false;
 
@@ -181,7 +178,6 @@ public class VOI extends ModelSerialCloneable {
         this.name = name;
         this.ID = id;
         this.watershedID = id;
-        this.active = false;
         this.process = true;
         curves = new Vector<VOIBase>();
 
@@ -232,7 +228,6 @@ public class VOI extends ModelSerialCloneable {
         this.name = name;
         this.ID = id;
         this.watershedID = id;
-        this.active = false;
         this.process = true;
         this.curveType = curveType;
         curves = new Vector<VOIBase>();
@@ -279,7 +274,6 @@ public class VOI extends ModelSerialCloneable {
      */
     public VOI( VOI kVOI )
     {
-        this.active = kVOI.active;
         this.boundingBox = kVOI.boundingBox;
         this.color = new Color( kVOI.color.getRed(), kVOI.color.getGreen(), kVOI.color.getBlue() );
         this.thickness = kVOI.thickness;
@@ -1778,7 +1772,11 @@ public class VOI extends ModelSerialCloneable {
      * @return  boolean active
      */
     public boolean isActive() {
-        return active;
+        boolean anyActive = false;
+        for (int i = 0; i < curves.size(); i++) {
+            anyActive |= (curves.elementAt(i)).isActive();
+        }
+        return anyActive;
     }
 
     /**
@@ -1786,9 +1784,6 @@ public class VOI extends ModelSerialCloneable {
      * @return true iff all contours in this VOI are active.
      */
     public boolean isAllActive() {
-        if ( !active )
-            return false;
-
         boolean allActive = true;
         for (int i = 0; i < curves.size(); i++) {
             allActive &= (curves.elementAt(i)).isActive();
@@ -2040,7 +2035,7 @@ public class VOI extends ModelSerialCloneable {
      * @param  act  boolean to set active to
      */
     public void setActive(boolean act) {
-        this.active = act;
+        //this.active = act;
         fireVOIselection();
     }
 
@@ -2050,10 +2045,7 @@ public class VOI extends ModelSerialCloneable {
      * @param  flag  boolean to set VOI active or inactive
      */
     public void setAllActive(boolean flag) {
-        int i;
-        this.active = flag;
-
-        for (i = 0; i < curves.size(); i++) {
+        for (int i = 0; i < curves.size(); i++) {
             (curves.elementAt(i)).setActive(flag);
         }
     }

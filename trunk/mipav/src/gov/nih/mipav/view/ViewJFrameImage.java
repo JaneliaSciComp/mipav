@@ -6070,4 +6070,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         return null;
     }
 
+    @Override
+    public void setPaintMask(BitSet mask) {
+        if (componentImage != null) {
+            componentImage.setPaintMask(mask);
+        }
+    }
+
 }

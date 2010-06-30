@@ -405,6 +405,7 @@ public class AlgorithmFlip extends AlgorithmBase {
                                 point.Z = point.Z +  + (direction * scope);
                             }
                         }
+                        base.update();
                     }
                 }
             }

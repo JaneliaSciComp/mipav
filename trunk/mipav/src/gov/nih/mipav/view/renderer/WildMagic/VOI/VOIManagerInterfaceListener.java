@@ -5,6 +5,7 @@ import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
 
 import java.awt.Cursor;
+import java.util.BitSet;
 
 import javax.swing.JFrame;
 
@@ -27,5 +28,6 @@ public interface VOIManagerInterfaceListener
     public void setCenter( Vector3f kCenter );
     public void setCursor( Cursor kCursor );
     public void setModified();
+    public void setPaintMask(final BitSet mask);
     public void updateData(boolean bCopyToCPU);
 }

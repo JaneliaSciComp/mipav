@@ -1912,7 +1912,7 @@ public class ModelImage extends ModelStorageBase {
                 }
 
                 // re-label all of the elements in the old contour
-                index = 1;
+                index = 0;
                 nContours = contours.size();
                 for (k = 0; k < nContours; k++) {
                     ((VOIBase) contours.elementAt(k)).setLabel(String.valueOf((index++)));
@@ -1943,7 +1943,7 @@ public class ModelImage extends ModelStorageBase {
                 }
 
                 // re-label all elements
-                index = 1;
+                index = 0;
                 nContours = contours.size();
                 for (k = 0; k < nContours; k++) {
                     ((VOIBase) contours.elementAt(k)).setLabel(String.valueOf((index++)));
@@ -1973,7 +1973,7 @@ public class ModelImage extends ModelStorageBase {
                 }
 
                 // re-label all elements
-                index = 1;                
+                index = 0;                
                 for (k = 0; k < nContours; k++) {
                     ((VOIBase) contours.elementAt(k)).setLabel(String.valueOf((index++)));
                 }
@@ -2000,7 +2000,7 @@ public class ModelImage extends ModelStorageBase {
                     }
                 }
                 // re-label all elements
-                index = 1;
+                index = 0;
                 contours = tempVOIs.VOIAt(i).getCurves();
                 nContours = contours.size();
 
@@ -2030,7 +2030,7 @@ public class ModelImage extends ModelStorageBase {
                     }
                 }
                 // re-label all elements
-                index = 1;
+                index = 0;
                 nContours = contours.size();
 
                 for (k = 0; k < nContours; k++) {
@@ -2046,8 +2046,7 @@ public class ModelImage extends ModelStorageBase {
 
         int curveNum;
 
-        index = 1;
-
+        index = 0;
         if (newVOI != null) {
             for (curveNum = 0; curveNum < newVOI.getCurves().size(); curveNum++) {
                 newVOI.getCurves().elementAt(curveNum).setLabel(String.valueOf(index++));
