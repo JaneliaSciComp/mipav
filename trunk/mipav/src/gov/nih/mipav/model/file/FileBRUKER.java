@@ -204,7 +204,8 @@ public class FileBRUKER extends FileBase {
                         fileInfo.setDataType(ModelImage.BYTE);
                     } else if (parseString[1].equals("ip_short")) { // From actual data.
                         fileInfo.setDataType(ModelImage.SHORT);
-                    } else if (parseString[1].equals("ip_integer")) { // Educated guess
+                    } else if ((parseString[1].equals("ip_integer")) ||
+                    		   (parseString[1].equals("ip_int"))) { // Educated guess
                         fileInfo.setDataType(ModelImage.INTEGER);
                     } else {
                         dataType = Integer.valueOf(parseString[1]).intValue();
