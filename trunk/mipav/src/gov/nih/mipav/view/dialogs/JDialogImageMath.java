@@ -280,6 +280,8 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
             name = new String("_average");
         } else if (op == AlgorithmImageMath.SUM) {
             name = new String("_sum");
+        } else if (op == AlgorithmImageMath.INVERSE) {
+            name = new String("_inverse");
         } else {
             name = new String("_math");
         }
@@ -351,20 +353,21 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
         }
         
 
-        int index = 0;
+        String selectedText;
 
         if (source == comboBoxOperator) {
-            index = comboBoxOperator.getSelectedIndex();
 
-            if (index == AlgorithmImageMath.ADD) {
+            selectedText = (String)comboBoxOperator.getSelectedItem();
+
+            if (selectedText.equals("Add")) {
                 opType = AlgorithmImageMath.ADD;
-            } else if (index == AlgorithmImageMath.SUBTRACT) {
+            } else if (selectedText.equals("Subtract")) {
                 opType = AlgorithmImageMath.SUBTRACT;
-            } else if (index == AlgorithmImageMath.MULTIPLY) {
+            } else if (selectedText.equals("Multiply")) {
                 opType = AlgorithmImageMath.MULTIPLY;
-            } else if (index == AlgorithmImageMath.DIVIDE) {
+            } else if (selectedText.equals("Divide")) {
                 opType = AlgorithmImageMath.DIVIDE;
-            } else if (index == AlgorithmImageMath.SQUARE) {
+            } else if (selectedText.equals("Square")) {
                 textValue.setEnabled(false);
                 if (useComplex || image.isColorImage()) {
                     textValueI.setEnabled(false);
@@ -373,7 +376,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                     textValueB.setEnabled(false);
                 }
                 opType = AlgorithmImageMath.SQUARE;
-            } else if (index == AlgorithmImageMath.SQUARE_ROOT) {
+            } else if (selectedText.equals("Square Root")) {
                 textValue.setEnabled(false);
                 if (useComplex || image.isColorImage()) {
                     textValueI.setEnabled(false);
@@ -386,7 +389,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                 radioPromote.setEnabled(false);
                 radioFloat.setEnabled(false);
                 radioFloat.setSelected(true);
-            } else if (index == AlgorithmImageMath.LOG) {
+            } else if (selectedText.equals("Log")) {
                 textValue.setEnabled(false);
                 if (useComplex || image.isColorImage()) {
                     textValueI.setEnabled(false);
@@ -399,9 +402,9 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                 radioPromote.setEnabled(false);
                 radioFloat.setEnabled(false);
                 radioFloat.setSelected(true);
-            } else if (index == AlgorithmImageMath.CONSTANT) {
+            } else if (selectedText.equals("Constant")) {
                 opType = AlgorithmImageMath.CONSTANT;
-            } else if (index == AlgorithmImageMath.ABSOLUTE_VALUE) {
+            } else if (selectedText.equals("Absolute Value")) {
                 textValue.setEnabled(false);
                 if (useComplex || image.isColorImage()) {
                     textValueI.setEnabled(false);
@@ -410,7 +413,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                     textValueB.setEnabled(false);
                 }
                 opType = AlgorithmImageMath.ABSOLUTE_VALUE;
-            } else if (index == AlgorithmImageMath.AVERAGE) {
+            } else if (selectedText.equals("Average")) {
                 textValue.setEnabled(false);
                 if (useComplex || image.isColorImage()) {
                     textValueI.setEnabled(false);
@@ -421,7 +424,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                 outputPanel.setOutputNewImage(true);
                 outputPanel.setOutputImageOptionsEnabled(false);
                 opType = AlgorithmImageMath.AVERAGE;
-            } else if (index == AlgorithmImageMath.SUM) {
+            } else if (selectedText.equals("Sum")) {
                 textValue.setEnabled(false);
                 if (useComplex || image.isColorImage()) {
                     textValueI.setEnabled(false);
@@ -432,7 +435,13 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                 outputPanel.setOutputNewImage(true);
                 outputPanel.setOutputImageOptionsEnabled(false);
                 opType = AlgorithmImageMath.SUM;
-            }
+            }else if (selectedText.equals("Inverse (1 / intensity)")) {
+                opType = AlgorithmImageMath.INVERSE;
+                radioClip.setEnabled(false);
+                radioPromote.setEnabled(false);
+                radioFloat.setEnabled(false);
+                radioFloat.setSelected(true);
+            } 
         }
     }
 
@@ -769,6 +778,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
         comboBoxOperator.addItem("Average");
         comboBoxOperator.addItem("Constant");
         comboBoxOperator.addItem("Divide");
+        comboBoxOperator.addItem("Inverse (1 / intensity)");
         comboBoxOperator.addItem("Log");
         comboBoxOperator.addItem("Multiply");
         comboBoxOperator.addItem("Square");

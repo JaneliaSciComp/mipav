@@ -54,6 +54,9 @@ public class AlgorithmImageMath extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     public static final int SUM = 10;
+    
+    /** DOCUMENT ME! */
+    public static final int INVERSE = 11; 
 
     /** DOCUMENT ME! */
     public static final int CLIP = 0; // clamp result data to the bounds of the input image type
@@ -1013,6 +1016,15 @@ public class AlgorithmImageMath extends AlgorithmBase {
                                 case ABSOLUTE_VALUE:
                                     buffer[i] = Math.abs(buffer[i]);
                                     break;
+                                    
+                                case INVERSE:
+                                	if(buffer[i] == 0) {
+                                		buffer[i] = Float.NaN;
+                                	}else {
+                                		buffer[i] = 1 / buffer[i];
+                                	}
+                                	break;
+                                	 
 
                                 default:
                                     break;
@@ -2064,6 +2076,14 @@ public class AlgorithmImageMath extends AlgorithmBase {
                                 case ABSOLUTE_VALUE:
                                     buffer[i] = Math.abs(buffer[i]);
                                     break;
+                                    
+                                case INVERSE:
+                                	if(buffer[i] == 0) {
+                                		buffer[i] = Float.NaN;
+                                	}else {
+                                		buffer[i] = 1 / buffer[i];
+                                	}
+                                	break;
 
                                 case AVERAGE:
                                 case SUM:
