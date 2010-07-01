@@ -1297,7 +1297,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
 
 
-        if ( !kEvent.isShiftDown() && /*!m_bPointer */ m_bDrawVOI )
+        if ( !(kEvent.isShiftDown() || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR) ) && m_bDrawVOI )
         {
             m_kParent.setDefaultCursor( );
             if ( m_kCurrentVOI != null )
@@ -1306,10 +1306,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             }
         }
         m_iNearStatus = NearNone;
-        if ( !kEvent.isShiftDown() || (m_iDrawType == TEXT) 
-                || (m_iDrawType == LINE) || (m_iDrawType == PROTRACTOR)
-                || (m_iDrawType == POLYLINE) || (m_iDrawType == LIVEWIRE)  
-                || (m_iDrawType == RECTANGLE3D) || (m_iDrawType == SPLITLINE) )
+        if ( !(kEvent.isShiftDown() || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR) ) 
+                || (m_iDrawType == SPLITLINE) )
         {
             m_bDrawVOI = false;
         }

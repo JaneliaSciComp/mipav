@@ -681,26 +681,11 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         else if (command.equals("PaintToVOI")) {
             m_kParent.paintToVOI();
         } 
-        /*
         else if (command.equals("PaintToUbyteMask")) {
-
-            final ModelImage maskImage = ViewUserInterface.getReference().getRegisteredImageByName(
-                    componentImage.commitPaintToUbyteMask());
-
-            ScriptRecorder.getReference().addLine(
-                    new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_UBYTE));
-            ProvenanceRecorder.getReference().addLine(
-                    new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_UBYTE));
+            m_kParent.paintToUbyteMask();
         } else if (command.equals("PaintToShortMask")) {
-            final ModelImage maskImage = ViewUserInterface.getReference().getRegisteredImageByName(
-                    componentImage.commitPaintToMask());
-
-            ScriptRecorder.getReference().addLine(
-                    new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_SHORT));
-            ProvenanceRecorder.getReference().addLine(
-                    new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_SHORT));
+            m_kParent.paintToShortMask();
         } 
-        */
         
         else if (command.equals("Snake")) {
             if ( !checkForActiveVOIs()) {

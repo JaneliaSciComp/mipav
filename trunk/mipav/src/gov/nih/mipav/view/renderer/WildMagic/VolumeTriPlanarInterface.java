@@ -4,6 +4,9 @@ package gov.nih.mipav.view.renderer.WildMagic;
 import gov.nih.mipav.*;
 
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.provenance.ProvenanceRecorder;
+import gov.nih.mipav.model.scripting.ScriptRecorder;
+import gov.nih.mipav.model.scripting.actions.ActionPaintToMask;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
@@ -3399,6 +3402,19 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     }
     @Override
     public void paintToVOI()
+    {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public void paintToShortMask()
+    {
+        // TODO Auto-generated method stub
+    }
+    
+
+    @Override
+    public void paintToUbyteMask()
     {
         // TODO Auto-generated method stub
     }

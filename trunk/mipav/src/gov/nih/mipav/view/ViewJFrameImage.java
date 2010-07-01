@@ -1116,21 +1116,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("PaintToVOI")) {
             paintToVOI();
         } else if (command.equals("PaintToUbyteMask")) {
-            final ModelImage maskImage = ViewUserInterface.getReference().getRegisteredImageByName(
-                    componentImage.commitPaintToUbyteMask());
-
-            ScriptRecorder.getReference().addLine(
-                    new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_UBYTE));
-            ProvenanceRecorder.getReference().addLine(
-                    new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_UBYTE));
+            paintToUbyteMask();
         } else if (command.equals("PaintToShortMask")) {
-            final ModelImage maskImage = ViewUserInterface.getReference().getRegisteredImageByName(
-                    componentImage.commitPaintToMask());
-
-            ScriptRecorder.getReference().addLine(
-                    new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_SHORT));
-            ProvenanceRecorder.getReference().addLine(
-                    new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_SHORT));
+            paintToShortMask();
         } else if (command.equals("Open labels")) {
             openVOI(false, true);
         } else if (command.equals("Open VOI")) {
@@ -6058,4 +6046,28 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
     }
 
+    @Override
+    public void paintToShortMask()
+    {
+        final ModelImage maskImage = ViewUserInterface.getReference().getRegisteredImageByName(
+                componentImage.commitPaintToMask());
+
+        ScriptRecorder.getReference().addLine(
+                new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_SHORT));
+        ProvenanceRecorder.getReference().addLine(
+                new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_SHORT));
+    }
+    
+
+    @Override
+    public void paintToUbyteMask()
+    {
+        final ModelImage maskImage = ViewUserInterface.getReference().getRegisteredImageByName(
+                componentImage.commitPaintToUbyteMask());
+
+        ScriptRecorder.getReference().addLine(
+                new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_UBYTE));
+        ProvenanceRecorder.getReference().addLine(
+                new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_UBYTE));
+    }
 }
