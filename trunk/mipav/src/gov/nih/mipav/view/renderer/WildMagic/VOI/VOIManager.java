@@ -3230,12 +3230,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 
     private void drawVOIPoint( VOIBase kVOI, float[] resols, int[] unitsOfMeasure, Graphics g  ) {
-        int iContourID = kVOI.getContourID();
-        if ( iContourID != -1 )
-        {
-            iContourID++;
-            kVOI.setLabel( String.valueOf(iContourID) );
-        }
         drawVOIPoint( kVOI, g, kVOI.getLabel() );
     }
 
