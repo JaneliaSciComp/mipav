@@ -479,7 +479,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         
         Preferences.debug(command, Preferences.DEBUG_MINOR);
 
-        if ( isVOICommand( voiMenu.getMenuComponents(), command ) )
+        if ( ViewMenuBar.isVOICommand( voiMenu.getMenuComponents(), command ) )
         {
             voiManager.actionPerformed(event);
         }
@@ -1527,23 +1527,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      */
     public boolean isFocusable() {
         return true;
-    }
-    
-    public boolean isVOICommand( Component[] menuComponents, String command )
-    {
-        boolean bReturn = false;
-        for ( int i = 0; i < menuComponents.length; i++ )
-        {
-            if ( menuComponents[i] instanceof JMenuItem )
-            {
-                bReturn |= command.equals( ((JMenuItem)menuComponents[i]).getActionCommand() );
-            }
-            if ( menuComponents[i] instanceof JMenu )
-            {
-                bReturn |= isVOICommand( ((JMenu)menuComponents[i]).getMenuComponents(), command );
-            }
-        }
-        return bReturn;
     }
 
     /**
