@@ -60,7 +60,7 @@ public class PlugInDialogImageVOIDisplay extends ViewJFrameImage implements Mous
         //run through toggle buttons to see if a menu selected one (updates the button status)
         getControls().getTools().setToggleButtonSelected(command);
 
-        if ( ViewMenuBar.isVOICommand( voiMenu.getMenuComponents(), command ) )
+        if ( ViewMenuBar.isMenuCommand( voiMenu, command ) )
         {
             voiManager.actionPerformed(event);
         }

@@ -857,8 +857,12 @@ public class ViewMenuBar {
     }
 
 
+    public static boolean isMenuCommand( JMenu menu, String command )
+    {
+        return isMenuCommand( menu.getMenuComponents(), command );
+    }
     
-    public static boolean isVOICommand( Component[] menuComponents, String command )
+    private static boolean isMenuCommand( Component[] menuComponents, String command )
     {
         boolean bReturn = false;
         for ( int i = 0; i < menuComponents.length; i++ )
@@ -869,7 +873,7 @@ public class ViewMenuBar {
             }
             if ( menuComponents[i] instanceof JMenu )
             {
-                bReturn |= isVOICommand( ((JMenu)menuComponents[i]).getMenuComponents(), command );
+                bReturn |= isMenuCommand( ((JMenu)menuComponents[i]).getMenuComponents(), command );
             }
         }
         return bReturn;

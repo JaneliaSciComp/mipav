@@ -479,7 +479,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         
         Preferences.debug(command, Preferences.DEBUG_MINOR);
 
-        if ( ViewMenuBar.isVOICommand( voiMenu.getMenuComponents(), command ) )
+        if ( ViewMenuBar.isMenuCommand( voiMenu, command ) )
         {
             voiManager.actionPerformed(event);
         }
