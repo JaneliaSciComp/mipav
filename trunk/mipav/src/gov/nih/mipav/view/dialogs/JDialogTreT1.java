@@ -59,6 +59,9 @@ import gov.nih.mipav.view.ViewUserInterface;
 public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery {
 
     private static String title = "TRE T1 Mapper";
+    
+    private static int dialogWidthAdd = 0;
+    
     private double treTR = 5.00;
     private double irspgrTR = 5.00;
     private double irspgrKy = 96.00;
@@ -336,7 +339,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    JPanel panel = buildSPGRPanelInner();
 	    
 	    JScrollPane scrollPane = new JScrollPane(panel);
-	    scrollPane.setPreferredSize(new Dimension(420,405));
+	    scrollPane.setPreferredSize(new Dimension(420+dialogWidthAdd,405));
 	    scrollPane.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: SPGR Image Information"));
 	    scrollPane.addComponentListener(new ComponentListener() {
 	    	
@@ -422,16 +425,9 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 		} else {
 			panel = buildIRSPGRPanelSiemensInner();
 		}
-		JScrollPane pane = new JScrollPane(panel);
 		
-		if(geScanner) {
-			pane.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR GE Image Information"));
-		} else {
-			pane.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR Siemens Image Information"));
-		}
-	    
 	    JScrollPane scrollPane = new JScrollPane(panel);
-	    scrollPane.setPreferredSize(new Dimension(420,405));
+	    scrollPane.setPreferredSize(new Dimension(420+dialogWidthAdd,405));
 	    scrollPane.addComponentListener(new ComponentListener() {
 
 			public void componentHidden(ComponentEvent e) {}
@@ -638,7 +634,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    JPanel panel = buildTreT1LongPanelInner();
 	    
 	    JScrollPane scrollPane = new JScrollPane(panel);
-	    scrollPane.setPreferredSize(new Dimension(420,405));
+	    scrollPane.setPreferredSize(new Dimension(420+dialogWidthAdd,405));
 	    scrollPane.setBorder(null);
 	    
 	    scrollPane.addComponentListener(new ComponentListener() {
@@ -997,9 +993,10 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    GridBagConstraints gbc = new GridBagConstraints();
 	    guiBuilder = new GuiBuilder(this);
 	    setTitle("treT1: Dialog");
-	    setMinimumSize(new Dimension(450, 600));
-	    setPreferredSize(new Dimension(450, 600));
-	    setMaximumSize(new Dimension(450, 1200));
+	    setDialogWidthAdd();
+	    setMinimumSize(new Dimension(450+dialogWidthAdd, 600));
+	    setPreferredSize(new Dimension(450+dialogWidthAdd, 600));
+	    setMaximumSize(new Dimension(800+dialogWidthAdd, 1200));
 	    
 	    JPanel methodPanel = new JPanel();
 	    LayoutManager panelLayout = new BoxLayout(methodPanel, BoxLayout.X_AXIS);
@@ -1008,6 +1005,22 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    
 	    doConvTre = guiBuilder.buildRadioButton("Conventional TRE", performStraightTreT1);
 	    doHifiTre = guiBuilder.buildRadioButton("TRE-HIFI Processing", performTreT1HIFI);
+	    if(ViewUserInterface.getReference().getRegisteredImagesNum() < 3) {
+	    	doHifiTre.setEnabled(false); //hifi is not possible without available irspgr images
+	    
+		    doHifiTre.addMouseListener(new MouseListener() {
+				public void mouseClicked(MouseEvent e) {
+					if(!doHifiTre.isEnabled()) {
+						MipavUtil.displayInfo("Hifi processing requires irspgr images, load at least three images into MIPAV and restart TRE to enable this feature.");
+					}
+				}
+				public void mousePressed(MouseEvent e) {}
+				public void mouseReleased(MouseEvent e) {}
+				public void mouseEntered(MouseEvent e) {}
+				public void mouseExited(MouseEvent e) {}
+		    });
+	    }
+	    
 	    ActionListener c = new ProcessChoiceListener();
 	    doConvTre.addActionListener(c);
 	    doHifiTre.addActionListener(c);
@@ -1050,6 +1063,30 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    pack();
 	    setModal(true);
 	    setVisible(true);
+	}
+
+	/**
+	 * Specifies an addendum to the preferred size of the dialog equal to the length of the longest image.
+	 * 
+	 */
+	private void setDialogWidthAdd() {
+		dialogWidthAdd = 0;
+		if(doHifiTre != null && doHifiTre.isSelected()) {
+			dialogWidthAdd = 80;
+		}
+		int longestLength = 0;
+		Enumeration<String> list = ViewUserInterface.getReference().getRegisteredImageNames();
+		String str = "";
+		while(list.hasMoreElements()) {
+			str = list.nextElement();
+			if(str.length() > longestLength) {
+				longestLength = str.length();
+			}
+		}
+		if(longestLength > 15) {
+			dialogWidthAdd += ((longestLength-15)*4.5);
+		}
+		System.out.println(dialogWidthAdd);
 	}
 
 	/**
@@ -1343,6 +1380,12 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    spgrPanel = buildSPGRPanel();
 	    
 	    irspgrPanel = buildIRSPGRPanel();
+	    
+	    if(geScanner) {
+	    	irspgrPanel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR GE Image Information"));
+		} else {
+			irspgrPanel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR Siemens Image Information"));
+		}
 	    
 	    //specifics section
 	    hifiSpec = buildTreT1HIFISpecificsPanel();
@@ -1732,7 +1775,11 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	private class ProcessChoiceListener implements ActionListener {
 		
 		private void varSet() {
-			
+			setDialogWidthAdd();
+		    setMinimumSize(new Dimension(450+dialogWidthAdd, 600));
+		    setPreferredSize(new Dimension(450+dialogWidthAdd, 600));
+		    setMaximumSize(new Dimension(800+dialogWidthAdd, 1200));
+		    
 			if (doConvTre.isSelected()) {
 				//showHIFIDialog();
 				setProcessHifiUI();
@@ -1754,6 +1801,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	            buildHIFITabs();
 	            tab.updateUI();
 	        }
+		    validate();
 		}
 
 		public void actionPerformed(ActionEvent e) {
@@ -2011,7 +2059,6 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
         
         public JComboBox buildComboBox(String labelText, Object[] options, int numDefault) {
             JComboBox comboBox = buildComboBox(labelText, options); //call default
-            System.out.println(comboBox.getItemCount());
             if(numDefault > comboBox.getItemCount()-1) {
             	numDefault = 0;
             }
