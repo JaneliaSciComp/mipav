@@ -9,6 +9,9 @@ import gov.nih.mipav.util.MipavMath;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.registration.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.provenance.ProvenanceRecorder;
+import gov.nih.mipav.model.scripting.ScriptRecorder;
+import gov.nih.mipav.model.scripting.actions.ActionPaintToMask;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
@@ -5390,5 +5393,44 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             triImage[AXIAL_B].paintToVOI();
         }
         updateImages();
+    }
+    
+
+
+    @Override
+    public void paintToShortMask()
+    {
+        int iActive = getSelectedImage();
+        ViewJComponentEditImage componentImage = triImage[AXIAL_A];
+        if (iActive == ViewJComponentBase.IMAGE_B)
+        {
+            componentImage = triImage[AXIAL_B];
+        }
+        final ModelImage maskImage = ViewUserInterface.getReference().getRegisteredImageByName(
+                componentImage.commitPaintToMask());
+
+        ScriptRecorder.getReference().addLine(
+                new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_SHORT));
+        ProvenanceRecorder.getReference().addLine(
+                new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_SHORT));
+    }
+    
+
+    @Override
+    public void paintToUbyteMask()
+    {
+        int iActive = getSelectedImage();
+        ViewJComponentEditImage componentImage = triImage[AXIAL_A];
+        if (iActive == ViewJComponentBase.IMAGE_B)
+        {
+            componentImage = triImage[AXIAL_B];
+        }
+        final ModelImage maskImage = ViewUserInterface.getReference().getRegisteredImageByName(
+                componentImage.commitPaintToUbyteMask());
+
+        ScriptRecorder.getReference().addLine(
+                new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_UBYTE));
+        ProvenanceRecorder.getReference().addLine(
+                new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_UBYTE));
     }
 }

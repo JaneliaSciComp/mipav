@@ -3,6 +3,9 @@ package gov.nih.mipav.view;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.provenance.ProvenanceRecorder;
+import gov.nih.mipav.model.scripting.ScriptRecorder;
+import gov.nih.mipav.model.scripting.actions.ActionPaintToMask;
 import gov.nih.mipav.model.structures.*;
 import Jama.*;
 
@@ -3555,6 +3558,32 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             componentImage.paintToVOI();
             updateImages();
         }
+    }
+
+
+    @Override
+    public void paintToShortMask()
+    {
+        final ModelImage maskImage = ViewUserInterface.getReference().getRegisteredImageByName(
+                componentImage.commitPaintToMask());
+
+        ScriptRecorder.getReference().addLine(
+                new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_SHORT));
+        ProvenanceRecorder.getReference().addLine(
+                new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_SHORT));
+    }
+    
+
+    @Override
+    public void paintToUbyteMask()
+    {
+        final ModelImage maskImage = ViewUserInterface.getReference().getRegisteredImageByName(
+                componentImage.commitPaintToUbyteMask());
+
+        ScriptRecorder.getReference().addLine(
+                new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_UBYTE));
+        ProvenanceRecorder.getReference().addLine(
+                new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_UBYTE));
     }
     
     private void initVOI()
