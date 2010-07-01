@@ -3,6 +3,7 @@ package gov.nih.mipav.view;
 
 import gov.nih.mipav.model.structures.ModelImage;
 
+import java.awt.Component;
 import java.awt.event.ActionListener;
 import java.util.Vector;
 
@@ -855,6 +856,25 @@ public class ViewMenuBar {
                                 menuBuilder.buildMenuItem("Statistics generator...", "VOIStatistics", 'G', null, true),});
     }
 
+
+    
+    public static boolean isVOICommand( Component[] menuComponents, String command )
+    {
+        boolean bReturn = false;
+        for ( int i = 0; i < menuComponents.length; i++ )
+        {
+            if ( menuComponents[i] instanceof JMenuItem )
+            {
+                bReturn |= command.equals( ((JMenuItem)menuComponents[i]).getActionCommand() );
+            }
+            if ( menuComponents[i] instanceof JMenu )
+            {
+                bReturn |= isVOICommand( ((JMenu)menuComponents[i]).getMenuComponents(), command );
+            }
+        }
+        return bReturn;
+    }
+    
     /**
      * Enable or disable items in a menubar based on the image dimensionality and storage type.
      * 

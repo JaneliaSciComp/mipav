@@ -174,7 +174,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
 
     ButtonGroup VOIGroup = new ButtonGroup();
-    private VOIManagerInterface voiManager;
+    protected JMenu voiMenu;
+    protected VOIManagerInterface voiManager;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -5892,7 +5893,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     /**
      * Initialize the 3D VOI interface.
      */
-    private void initVOI()
+    protected void initVOI()
     {
         voiManager = new VOIManagerInterface( this, imageA, LUTa, imageB, LUTb, 1, false, VOIGroup );
         voiManager.getVOIManager(0).init( imageA, imageB,

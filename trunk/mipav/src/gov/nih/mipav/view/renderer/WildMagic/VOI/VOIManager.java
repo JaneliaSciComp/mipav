@@ -5269,6 +5269,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                     }
                 }
             }
+            kVOI.update();
             kVOI.setActive(true);
             m_kParent.updateDisplay();
         } catch (OutOfMemoryError error) {
