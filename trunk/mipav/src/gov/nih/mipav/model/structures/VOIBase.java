@@ -2030,8 +2030,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
             {
                 for ( int i = 0; i < aiNumCrossings[iIndex]; i+= 2 )
                 {
-                    int yStart = (int)Math.ceil(aaiCrossingPoints[iIndex][i]);
-                    int yEnd = (int)Math.floor(aaiCrossingPoints[iIndex][i+1]);
+                    int yStart = (int)Math.round(aaiCrossingPoints[iIndex][i]);
+                    int yEnd = (int)Math.round(aaiCrossingPoints[iIndex][i+1]);
                     for ( int iY = yStart; iY < yEnd; iY++ )
                     {
                         Vector3f kPos = new Vector3f(iX, iY, iZ);
