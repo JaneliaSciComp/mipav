@@ -2459,23 +2459,8 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             // if we are in zoom mode, we don't care about any of the other things
             // that are happening here, in fact, zoom breaks if we don't return
             return;
-        } else if ( (cursorMode == ViewJComponentBase.RECTANGLE) || (cursorMode == ViewJComponentBase.ELLIPSE)
-                || (cursorMode == ViewJComponentBase.LINE) || (cursorMode == ViewJComponentBase.RECTANGLE3D)
-                || (cursorMode == ViewJComponentBase.POINT_VOI) || (cursorMode == ViewJComponentBase.POLYLINE)
-                || (cursorMode == ViewJComponentBase.LEVELSET) 
-                || (cursorMode == ViewJComponentBase.DROPPER_PAINT)
-                || (cursorMode == ViewJComponentBase.PROTRACTOR)
-                || (cursorMode == ViewJComponentBase.LIVEWIRE) || (cursorMode == ViewJComponentBase.ANNOTATION)
-                || (cursorMode == ViewJComponentBase.POLYLINE_SLICE_VOI) || (cursorMode == ViewJComponentBase.MOVE)
-                || (cursorMode == ViewJComponentBase.MOVE_POINT) || (cursorMode == ViewJComponentBase.NEW_POINT)
-                || (cursorMode == ViewJComponentBase.RETRACE) || (cursorMode == ViewJComponentBase.DELETE_POINT)
-                || (cursorMode == ViewJComponentBase.TRANSLATE) || (cursorMode == ViewJComponentBase.SPLIT_VOI)
-                || (cursorMode == ViewJComponentBase.VOI_3D)) {
-            g.dispose();
-
-            return;
-        }
-
+        } 
+                
         xS = getScaledX(mouseEvent.getX()); // zoomed x. Used as cursor
         yS = getScaledY(mouseEvent.getY()); // zoomed y. Used as cursor
 
@@ -2549,7 +2534,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
             return;
         }
-        setCursorMode(ViewJComponentBase.DEFAULT);
+        if ( cursorMode != ViewJComponentBase.VOI_3D )
+        {
+            setCursorMode(ViewJComponentBase.DEFAULT);
+        }
     } // end mouseMoved
 
     /**
@@ -2673,18 +2661,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             }
         }
 
-        if (cursorMode == ViewJComponentBase.POINT_VOI) {}
-        else if (cursorMode == ViewJComponentBase.POLYLINE_SLICE_VOI) {}
-        else if (cursorMode == ViewJComponentBase.ANNOTATION) {}
-        else if (cursorMode == ViewJComponentBase.LEVELSET) {}
-        else if (cursorMode == ViewJComponentBase.RECTANGLE) {}
-        else if (cursorMode == ViewJComponentBase.RECTANGLE3D) {}
-        else if (cursorMode == ViewJComponentBase.ELLIPSE) {}
-        else if (cursorMode == ViewJComponentBase.LINE) {}
-        else if (cursorMode == ViewJComponentBase.PROTRACTOR) {}
-        else if (cursorMode == ViewJComponentBase.NEW_POINT) {}
-        else if (cursorMode == ViewJComponentBase.DELETE_POINT) {} 
-        else if (cursorMode == ViewJComponentBase.PAINT_CAN) {
+        if (cursorMode == ViewJComponentBase.PAINT_CAN) {
             xPG = (short) xS;
             yPG = (short) yS;
             zPG = (short) slice;

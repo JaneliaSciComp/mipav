@@ -87,14 +87,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     /** DOCUMENT ME! */
     protected boolean dragCenterPt = false;
 
-    /**
-     * <code>anchorPt</code> is used to determine movements. <code>mousePressed()</code> establishes the coordinates
-     * of <code>anchorPt</code>. <code>mouseDragged()</code> calculates distance from the <code>anchorPt</code>
-     * to the present location and uses this distance to move an object. Then it sets <code>anchorPt</code> to the new
-     * location to repeat the process.
-     */
-    private Point anchorPt = new Point(0, 0);
-
     /** Labels for the axes:. */
     private final String[][] axisLabels = new String[3][2];
 
@@ -440,7 +432,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      */
     public void disposeLocal(final boolean flag) {
         voiProtractor = null;
-        anchorPt = null;
 
         if (flag == true) {
             super.disposeLocal(true);
@@ -961,9 +952,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
             return;
         }
-        else if ((cursorMode == LINE) || (cursorMode == MOVE_POINT)) {
-            return;
-        } else if (cursorMode == ViewJComponentBase.ZOOMING_IN) {
+        else if (cursorMode == ViewJComponentBase.ZOOMING_IN) {
             return;
         } else if (cursorMode == ViewJComponentBase.ZOOMING_OUT) {
             return;
@@ -1016,11 +1005,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         if (cursorMode == ViewJComponentBase.DEFAULT) {
             return;
         } 
-        else if (cursorMode == ViewJComponentBase.MOVE) {
-            anchorPt.setLocation(xS, yS); // For use in dragging VOIs
-            return;
-            // do not do a notifyImageDisplayListeners in mode MOVE or VOISpecial labels will disappear
-        } // end of if (mode == MOVE)
         else if (cursorMode == ViewJComponentBase.PAINT_VOI) {
             final boolean isLeftMouseButtonDown = mouseEvent.getModifiers() == InputEvent.BUTTON1_MASK;
             updatePaintBitmap(isLeftMouseButtonDown, xS, yS);

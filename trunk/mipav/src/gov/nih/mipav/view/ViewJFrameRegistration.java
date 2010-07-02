@@ -6,6 +6,7 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.ScriptRecorder;
+import gov.nih.mipav.model.scripting.actions.ActionMaskToPaint;
 import gov.nih.mipav.model.scripting.actions.ActionPaintToMask;
 import gov.nih.mipav.model.structures.*;
 import Jama.*;
@@ -3618,6 +3619,12 @@ public class ViewJFrameRegistration extends ViewJFrameBase
                 new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_UBYTE));
         ProvenanceRecorder.getReference().addLine(
                 new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_UBYTE));
+    }
+
+    @Override
+    public void maskToPaint()
+    {
+        imageA.getParentFrame().maskToPaint();
     }
     
     private void initVOI()

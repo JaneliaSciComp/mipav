@@ -39,6 +39,8 @@ public class CustomUIBuilder {
 			"Split VOI Contour", "split", true);
 	public static final UIParams PARAM_VOI_POINT_DELETE = new UIParams("Delete point VOI", "deleteVOI", UIParams.INVALID_MNEMONIC, 
 			"Delete point VOI", "delete", false);
+	public static final UIParams PARAM_IMAGE_ALIGN_VOI_PROTRACTOR = new UIParams("Draw Protractor VOI","ImageAlignProtractor", UIParams.INVALID_MNEMONIC, "Protractor tool", "protractor", true);
+	    
 	
 	/** VOI Actions/Properties */
 	public static final UIParams PARAM_VOI_PROPERTIES = new UIParams("VOIProperties", "View VOI Properties", "voiquestion");

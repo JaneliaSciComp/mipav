@@ -299,7 +299,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @param  aiList        list of positions
      * @param  iNumElements  number of positions.
      */
-    private static void sortCrossingPoints(int[] aiList, int iNumElements) {
+    private static void sortCrossingPoints(float[] aiList, int iNumElements) {
         boolean bDidSwap = true;
 
         while (bDidSwap) {
@@ -308,7 +308,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             for (int iPoint = 0; iPoint < (iNumElements - 1); iPoint++) {
 
                 if (aiList[iPoint] > aiList[iPoint + 1]) {
-                    int iTmp = aiList[iPoint];
+                    float iTmp = aiList[iPoint];
                     aiList[iPoint] = aiList[iPoint + 1];
                     aiList[iPoint + 1] = iTmp;
                     bDidSwap = true;
@@ -874,15 +874,13 @@ public abstract class VOIBase extends Vector<Vector3f> {
             int iYMin = (int)(m_akImageMinMax[0].Y);
             int iYMax = (int)(m_akImageMinMax[1].Y);
 
-            int[][] aaiCrossingPoints = new int[iXMax - iXMin + 1][];
             int[] aiNumCrossings = new int[iXMax - iXMin + 1];
-
+            float[][] aafCrossingPoints = new float[iXMax - iXMin + 1][];
             for (int i = 0; i < (iXMax - iXMin + 1); i++) {
-                aaiCrossingPoints[i] = new int[size()+2];
+                aafCrossingPoints[i] = new float[size()+2];
             }
-
-            outlineRegion(aaiCrossingPoints, aiNumCrossings, iXMin, iXMax);
-            fill(aaiCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax, (int)elementAt(0).Z, 
+            outlineRegion(aafCrossingPoints, aiNumCrossings, iXMin, iXMax);
+            fill(aafCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax, (int)elementAt(0).Z, 
                     kMask, xDim, yDim, XOR, polarity );
         }
         else if ( m_iPlane == XPLANE )
@@ -893,15 +891,13 @@ public abstract class VOIBase extends Vector<Vector3f> {
             int iZMin = (int)(m_akImageMinMax[0].Z);
             int iZMax = (int)(m_akImageMinMax[1].Z);
 
-            int[][] aaiCrossingPoints = new int[iYMax - iYMin + 1][];
             int[] aiNumCrossings = new int[iYMax - iYMin + 1];
-
+            float[][] aafCrossingPoints = new float[iYMax - iYMin + 1][];
             for (int i = 0; i < (iYMax - iYMin + 1); i++) {
-                aaiCrossingPoints[i] = new int[size()+2];
+                aafCrossingPoints[i] = new float[size()+2];
             }
-
-            outlineRegion_X(aaiCrossingPoints, aiNumCrossings, iYMin, iYMax);
-            fill_X(aaiCrossingPoints, aiNumCrossings, iYMin, iZMin, iYMax, iZMax, (int)elementAt(0).X, 
+            outlineRegion_X(aafCrossingPoints, aiNumCrossings, iYMin, iYMax);
+            fill_X(aafCrossingPoints, aiNumCrossings, iYMin, iZMin, iYMax, iZMax, (int)elementAt(0).X, 
                     kMask, xDim, yDim, XOR, polarity );            
         }
         else
@@ -912,15 +908,13 @@ public abstract class VOIBase extends Vector<Vector3f> {
             int iZMin = (int)(m_akImageMinMax[0].Z);
             int iZMax = (int)(m_akImageMinMax[1].Z);
 
-            int[][] aaiCrossingPoints = new int[iXMax - iXMin + 1][];
             int[] aiNumCrossings = new int[iXMax - iXMin + 1];
-
+            float[][] aafCrossingPoints = new float[iXMax - iXMin + 1][];
             for (int i = 0; i < (iXMax - iXMin + 1); i++) {
-                aaiCrossingPoints[i] = new int[size()+2];
+                aafCrossingPoints[i] = new float[size()+2];
             }
-
-            outlineRegion_Y(aaiCrossingPoints, aiNumCrossings, iXMin, iXMax);
-            fill_Y(aaiCrossingPoints, aiNumCrossings, iXMin, iZMin, iXMax, iZMax, (int)elementAt(0).Y, 
+            outlineRegion_Y(aafCrossingPoints, aiNumCrossings, iXMin, iXMax);
+            fill_Y(aafCrossingPoints, aiNumCrossings, iXMin, iZMin, iXMax, iZMax, (int)elementAt(0).Y, 
                     kMask, xDim, yDim, XOR, polarity );      
             
         }
@@ -950,15 +944,13 @@ public abstract class VOIBase extends Vector<Vector3f> {
             int iYMin = (int)(m_akImageMinMax[0].Y);
             int iYMax = (int)(m_akImageMinMax[1].Y);
 
-            int[][] aaiCrossingPoints = new int[iXMax - iXMin + 1][];
             int[] aiNumCrossings = new int[iXMax - iXMin + 1];
-
+            float[][] aafCrossingPoints = new float[iXMax - iXMin + 1][];
             for (int i = 0; i < (iXMax - iXMin + 1); i++) {
-                aaiCrossingPoints[i] = new int[size()+2];
+                aafCrossingPoints[i] = new float[size()+2];
             }
-
-            outlineRegion(aaiCrossingPoints, aiNumCrossings, iXMin, iXMax);
-            fill(aaiCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax, (int)elementAt(0).Z, kVolume, kMask, bIntersection, iValue);              
+            outlineRegion(aafCrossingPoints, aiNumCrossings, iXMin, iXMax);
+            fill(aafCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax, (int)elementAt(0).Z, kVolume, kMask, bIntersection, iValue);              
         }
         else if ( m_iPlane == XPLANE )
         {
@@ -969,15 +961,14 @@ public abstract class VOIBase extends Vector<Vector3f> {
             int iZMin = (int)(m_akImageMinMax[0].Z);
             int iZMax = (int)(m_akImageMinMax[1].Z);
 
-            int[][] aaiCrossingPoints = new int[iYMax - iYMin + 1][];
+
             int[] aiNumCrossings = new int[iYMax - iYMin + 1];
-
+            float[][] aafCrossingPoints = new float[iYMax - iYMin + 1][];
             for (int i = 0; i < (iYMax - iYMin + 1); i++) {
-                aaiCrossingPoints[i] = new int[size()+2];
+                aafCrossingPoints[i] = new float[size()+2];
             }
-
-            outlineRegion_X(aaiCrossingPoints, aiNumCrossings, iYMin, iYMax);
-            fill_X(aaiCrossingPoints, aiNumCrossings, iYMin, iZMin, iYMax, iZMax, (int)elementAt(0).X, kVolume, kMask, bIntersection, iValue);              
+            outlineRegion_X(aafCrossingPoints, aiNumCrossings, iYMin, iYMax);
+            fill_X(aafCrossingPoints, aiNumCrossings, iYMin, iZMin, iYMax, iZMax, (int)elementAt(0).X, kVolume, kMask, bIntersection, iValue);              
         }
         else
         {
@@ -987,15 +978,13 @@ public abstract class VOIBase extends Vector<Vector3f> {
             int iZMin = (int)(m_akImageMinMax[0].Z);
             int iZMax = (int)(m_akImageMinMax[1].Z);
 
-            int[][] aaiCrossingPoints = new int[iXMax - iXMin + 1][];
             int[] aiNumCrossings = new int[iXMax - iXMin + 1];
-
+            float[][] aafCrossingPoints = new float[iXMax - iXMin + 1][];
             for (int i = 0; i < (iXMax - iXMin + 1); i++) {
-                aaiCrossingPoints[i] = new int[size()+2];
+                aafCrossingPoints[i] = new float[size()+2];
             }
-
-            outlineRegion_Y(aaiCrossingPoints, aiNumCrossings, iXMin, iXMax);
-            fill_Y(aaiCrossingPoints, aiNumCrossings, iXMin, iZMin, iXMax, iZMax, (int)elementAt(0).Y, kVolume, kMask, bIntersection, iValue);           
+            outlineRegion_Y(aafCrossingPoints, aiNumCrossings, iXMin, iXMax);
+            fill_Y(aafCrossingPoints, aiNumCrossings, iXMin, iZMin, iXMax, iZMax, (int)elementAt(0).Y, kVolume, kMask, bIntersection, iValue);           
         }
 
     }
@@ -2028,39 +2017,30 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @param XOR indicates that nested VOI contours will be exclusive ORed with other contours of the VOI 
      * @param polarity indicates if the VOI should mask ones or mask as zeros.
      */
-    private void fill(int[][] aaiCrossingPoints, int[] aiNumCrossings,
+    private void fill(float[][] aaiCrossingPoints, int[] aiNumCrossings,
             int iXMin, int iYMin, int iXMax, int iYMax, int iZ, 
             BitSet kMask, int xDim, int yDim, boolean XOR, int polarity )
     {
         m_kMaskPositions.clear();
         m_kPositionSum.Set(0,0,0);
         gcPt.Set(0,0,0);
-        int iColumn = 0;
-        /* Loop over the bounding-box: */
         for (int iX = iXMin; iX < iXMax; iX++) {
-            boolean bInside = false;
-
-            for (int iY = iYMin; iY < iYMax; iY++) {
-
-                /* loop over each crossing point for this column: */
-                for (int iCross = 0; iCross < aiNumCrossings[iColumn]; iCross++) {
-                    if (iY == aaiCrossingPoints[iColumn][iCross]) {
-
-                        /* Each time an edge is cross the point alternates
-                         * from outside to inside: */
-                        bInside = !bInside;
+            int iIndex = iX - iXMin;
+            if ( aiNumCrossings[iIndex] >= 2 )
+            {
+                for ( int i = 0; i < aiNumCrossings[iIndex]; i+= 2 )
+                {
+                    int yStart = (int)Math.ceil(aaiCrossingPoints[iIndex][i]);
+                    int yEnd = (int)Math.floor(aaiCrossingPoints[iIndex][i+1]);
+                    for ( int iY = yStart; iY < yEnd; iY++ )
+                    {
+                        Vector3f kPos = new Vector3f(iX, iY, iZ);
+                        m_kMaskPositions.add(kPos);
+                        m_kPositionSum.Add(kPos);
+                        setMask( kMask, xDim, yDim, iX, iY, iZ, polarity, XOR );
                     }
                 }
-
-                if (bInside == true) {
-                    Vector3f kPos = new Vector3f(iX, iY, iZ);
-                    m_kMaskPositions.add(kPos);
-                    m_kPositionSum.Add(kPos);
-                    setMask( kMask, xDim, yDim, iX, iY, iZ, polarity, XOR );
-                }
             }
-
-            iColumn++;
         }
         float scale = 1f/m_kMaskPositions.size();
         gcPt.X = MipavMath.round( m_kPositionSum.X * scale );
@@ -2085,85 +2065,70 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @param bIntersection when true the contour rendered as an intersection with other contours.
      * @param iValue value to write into the input image.
      */
-    private void fill(int[][] aaiCrossingPoints, int[] aiNumCrossings,
+    private void fill(float[][] aaiCrossingPoints, int[] aiNumCrossings,
             int iXMin, int iYMin, int iXMax, int iYMax, int iZ,
             ModelImage kVolume, BitSet kMask, boolean bIntersection, int iValue)
     {
-        int iColumn = 0;
-        /* Loop over the width of the sculpt region bounding-box: */
+
         for (int iX = iXMin; iX < iXMax; iX++) {
-            boolean bInside = false;
-
-            /* Loop over the height of the sculpt region bounding-box: */
-            for (int iY = iYMin; iY < iYMax; iY++) {
-
-                /* loop over each crossing point for this column: */
-                for (int iCross = 0; iCross < aiNumCrossings[iColumn]; iCross++) {
-
-                    if (iY == aaiCrossingPoints[iColumn][iCross]) {
-
-                        /* Each time an edge is cross the point alternates
-                         * from outside to inside: */
-                        bInside = !bInside;
-                    }
-                }
-
-                if (bInside == true) {
-
-                    /* The current pixel is inside the sculpt region.  Get the
-                     * image color from the canvas image and alpha-blend the sculpt color ontop, storing the result in
-                     * the canvas image.
-                     */
-
-                    if ( bIntersection )
+            int iIndex = iX - iXMin;
+            if ( aiNumCrossings[iIndex] >= 2 )
+            {
+                for ( int i = 0; i < aiNumCrossings[iIndex]; i+= 2 )
+                {
+                    int yStart = (int)Math.ceil(aaiCrossingPoints[iIndex][i]);
+                    int yEnd = (int)Math.floor(aaiCrossingPoints[iIndex][i+1]);
+                    for ( int iY = yStart; iY < yEnd; iY++ )
                     {
-                        int iTemp = kVolume.getInt( iX, iY, iZ );
-
-                        if ( kMask != null )
+                        if ( bIntersection )
                         {
-                            int iIndex = iZ * kVolume.getExtents()[0] * kVolume.getExtents()[1];
-                            iIndex += iY * kVolume.getExtents()[0];
-                            iIndex += iX;
-                            if ( iValue == 0 )
+                            int iTemp = kVolume.getInt( iX, iY, iZ );
+
+                            if ( kMask != null )
                             {
-                                kMask.set( iIndex );
+                                int imageIndex = iZ * kVolume.getExtents()[0] * kVolume.getExtents()[1];
+                                imageIndex += iY * kVolume.getExtents()[0];
+                                imageIndex += iX;
+                                if ( iValue == 0 )
+                                {
+                                    kMask.set( imageIndex );
+                                }
+                                else if ( kMask.get( imageIndex ) )
+                                {
+                                    kMask.set( imageIndex );
+                                }
                             }
-                            else if ( kMask.get( iIndex ) )
+                            else
                             {
-                                kMask.set( iIndex );
+                                if ( iValue == 0 )
+                                {
+                                    kVolume.set( iX, iY, iZ, 85 );
+                                }
+                                else if ( iTemp != 0 )
+                                {
+                                    kVolume.set( iX, iY, iZ, 255 );
+                                }
                             }
                         }
                         else
                         {
-                            if ( iValue == 0 )
+                            if ( kMask != null )
                             {
-                                kVolume.set( iX, iY, iZ, 85 );
+                                int imageIndex = iZ * kVolume.getExtents()[0] * kVolume.getExtents()[1];
+                                imageIndex += iY * kVolume.getExtents()[0];
+                                imageIndex += iX;
+                                kMask.set( imageIndex );
                             }
-                            else if ( iTemp != 0 )
+                            else
                             {
                                 kVolume.set( iX, iY, iZ, 255 );
                             }
                         }
-                    }
-                    else
-                    {
-                        if ( kMask != null )
-                        {
-                            int iIndex = iZ * kVolume.getExtents()[0] * kVolume.getExtents()[1];
-                            iIndex += iY * kVolume.getExtents()[0];
-                            iIndex += iX;
-                            kMask.set( iIndex );
-                        }
-                        else
-                        {
-                            kVolume.set( iX, iY, iZ, 255 );
-                        }
+
                     }
                 }
             }
-
-            iColumn++;
-        }
+        }   
     }
     
     /**
@@ -2181,40 +2146,31 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @param XOR indicates that nested VOI contours will be exclusive ORed with other contours of the VOI 
      * @param polarity indicates if the VOI should mask ones or mask as zeros.
      */
-    private void fill_X(int[][] aaiCrossingPoints, int[] aiNumCrossings,
+    private void fill_X(float[][] aaiCrossingPoints, int[] aiNumCrossings,
             int iYMin, int iZMin, int iYMax, int iZMax, int iX, 
             BitSet kMask, int xDim, int yDim, boolean XOR, int polarity )
     {
         m_kMaskPositions.clear();
         m_kPositionSum.Set(0,0,0);
         gcPt.Set(0,0,0);
-        
-        int iColumn = 0;
-        /* Loop over the bounding-box: */
+
         for (int iY = iYMin; iY < iYMax; iY++) {
-            boolean bInside = false;
-
-            for (int iZ = iZMin; iZ < iZMax; iZ++) {
-
-                /* loop over each crossing point for this column: */
-                for (int iCross = 0; iCross < aiNumCrossings[iColumn]; iCross++) {
-                    if (iZ == aaiCrossingPoints[iColumn][iCross]) {
-
-                        /* Each time an edge is cross the point alternates
-                         * from outside to inside: */
-                        bInside = !bInside;
+            int iIndex = iY - iYMin;
+            if ( aiNumCrossings[iIndex] >= 2 )
+            {
+                for ( int i = 0; i < aiNumCrossings[iIndex]; i+= 2 )
+                {
+                    int zStart = (int)Math.ceil(aaiCrossingPoints[iIndex][i]);
+                    int zEnd = (int)Math.floor(aaiCrossingPoints[iIndex][i+1]);
+                    for ( int iZ = zStart; iZ < zEnd; iZ++ )
+                    {
+                        Vector3f kPos = new Vector3f(iX, iY, iZ);
+                        m_kMaskPositions.add(kPos);
+                        m_kPositionSum.Add(kPos);
+                        setMask( kMask, xDim, yDim, iX, iY, iZ, polarity, XOR );
                     }
                 }
-
-                if (bInside == true) {
-                    Vector3f kPos = new Vector3f(iX, iY, iZ);
-                    m_kMaskPositions.add(kPos);
-                    m_kPositionSum.Add(kPos);
-                    setMask( kMask, xDim, yDim, iX, iY, iZ, polarity, XOR );
-                }
             }
-
-            iColumn++;
         }
         float scale = 1f/m_kMaskPositions.size();
         gcPt.X = MipavMath.round( m_kPositionSum.X * scale );
@@ -2238,84 +2194,67 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @param bIntersection when true the contour rendered as an intersection with other contours.
      * @param iValue value to write into the input image.
      */
-    private void fill_X(int[][] aaiCrossingPoints, int[] aiNumCrossings,
+    private void fill_X(float[][] aaiCrossingPoints, int[] aiNumCrossings,
             int iYMin, int iZMin, int iYMax, int iZMax, int iX,
             ModelImage kVolume, BitSet kMask, boolean bIntersection, int iValue)
     {
-        int iColumn = 0;
-        /* Loop over the width of the sculpt region bounding-box: */
         for (int iY = iYMin; iY < iYMax; iY++) {
-            boolean bInside = false;
-
-            /* Loop over the height of the sculpt region bounding-box: */
-            for (int iZ = iZMin; iZ < iZMax; iZ++) {
-
-                /* loop over each crossing point for this column: */
-                for (int iCross = 0; iCross < aiNumCrossings[iColumn]; iCross++) {
-
-                    if (iZ == aaiCrossingPoints[iColumn][iCross]) {
-
-                        /* Each time an edge is cross the point alternates
-                         * from outside to inside: */
-                        bInside = !bInside;
-                    }
-                }
-
-                if (bInside == true) {
-
-                    /* The current pixel is inside the sculpt region.  Get the
-                     * image color from the canvas image and alpha-blend the sculpt color ontop, storing the result in
-                     * the canvas image.
-                     */
-
-                    if ( bIntersection )
+            int iIndex = iY - iYMin;
+            if ( aiNumCrossings[iIndex] >= 2 )
+            {
+                for ( int i = 0; i < aiNumCrossings[iIndex]; i+= 2 )
+                {
+                    int zStart = (int)Math.ceil(aaiCrossingPoints[iIndex][i]);
+                    int zEnd = (int)Math.floor(aaiCrossingPoints[iIndex][i+1]);
+                    for ( int iZ = zStart; iZ < zEnd; iZ++ )
                     {
-                        int iTemp = kVolume.getInt( iX, iY, iZ );
-
-                        if ( kMask != null )
+                        if ( bIntersection )
                         {
-                            int iIndex = iZ * kVolume.getExtents()[0] * kVolume.getExtents()[1];
-                            iIndex += iY * kVolume.getExtents()[0];
-                            iIndex += iX;
-                            if ( iValue == 0 )
+                            int iTemp = kVolume.getInt( iX, iY, iZ );
+
+                            if ( kMask != null )
                             {
-                                kMask.set( iIndex );
+                                int imageIndex = iZ * kVolume.getExtents()[0] * kVolume.getExtents()[1];
+                                imageIndex += iY * kVolume.getExtents()[0];
+                                imageIndex += iX;
+                                if ( iValue == 0 )
+                                {
+                                    kMask.set( imageIndex );
+                                }
+                                else if ( kMask.get( imageIndex ) )
+                                {
+                                    kMask.set( imageIndex );
+                                }
                             }
-                            else if ( kMask.get( iIndex ) )
+                            else
                             {
-                                kMask.set( iIndex );
+                                if ( iValue == 0 )
+                                {
+                                    kVolume.set( iX, iY, iZ, 85 );
+                                }
+                                else if ( iTemp != 0 )
+                                {
+                                    kVolume.set( iX, iY, iZ, 255 );
+                                }
                             }
                         }
                         else
                         {
-                            if ( iValue == 0 )
+                            if ( kMask != null )
                             {
-                                kVolume.set( iX, iY, iZ, 85 );
+                                int imageIndex = iZ * kVolume.getExtents()[0] * kVolume.getExtents()[1];
+                                imageIndex += iY * kVolume.getExtents()[0];
+                                imageIndex += iX;
+                                kMask.set( imageIndex );
                             }
-                            else if ( iTemp != 0 )
+                            else
                             {
                                 kVolume.set( iX, iY, iZ, 255 );
                             }
                         }
                     }
-                    else
-                    {
-                        if ( kMask != null )
-                        {
-                            int iIndex = iZ * kVolume.getExtents()[0] * kVolume.getExtents()[1];
-                            iIndex += iY * kVolume.getExtents()[0];
-                            iIndex += iX;
-                            kMask.set( iIndex );
-                        }
-                        else
-                        {
-                            kVolume.set( iX, iY, iZ, 255 );
-                        }
-                    }
                 }
             }
-
-            iColumn++;
         }
     }
     
@@ -2336,41 +2275,32 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @param XOR indicates that nested VOI contours will be exclusive ORed with other contours of the VOI 
      * @param polarity indicates if the VOI should mask ones or mask as zeros.
      */
-    private void fill_Y(int[][] aaiCrossingPoints, int[] aiNumCrossings,
+    private void fill_Y(float[][] aaiCrossingPoints, int[] aiNumCrossings,
             int iXMin, int iZMin, int iXMax, int iZMax, int iY, 
             BitSet kMask, int xDim, int yDim, boolean XOR, int polarity )
     {
         m_kMaskPositions.clear();
         m_kPositionSum.Set(0,0,0);
         gcPt.Set(0,0,0);
-        
-        int iColumn = 0;
-        /* Loop over the bounding-box: */
         for (int iX = iXMin; iX < iXMax; iX++) {
-            boolean bInside = false;
-
-            for (int iZ = iZMin; iZ < iZMax; iZ++) {
-
-                /* loop over each crossing point for this column: */
-                for (int iCross = 0; iCross < aiNumCrossings[iColumn]; iCross++) {
-                    if (iZ == aaiCrossingPoints[iColumn][iCross]) {
-
-                        /* Each time an edge is cross the point alternates
-                         * from outside to inside: */
-                        bInside = !bInside;
+            int iIndex = iX - iXMin;
+            if ( aiNumCrossings[iIndex] >= 2 )
+            {
+                for ( int i = 0; i < aiNumCrossings[iIndex]; i+= 2 )
+                {
+                    int zStart = (int)Math.ceil(aaiCrossingPoints[iIndex][i]);
+                    int zEnd = (int)Math.floor(aaiCrossingPoints[iIndex][i+1]);
+                    for ( int iZ = zStart; iZ < zEnd; iZ++ )
+                    {
+                        Vector3f kPos = new Vector3f(iX, iY, iZ);
+                        m_kMaskPositions.add(kPos);
+                        m_kPositionSum.Add(kPos);
+                        setMask( kMask, xDim, yDim, iX, iY, iZ, polarity, XOR );
                     }
                 }
-
-                if (bInside == true) {
-                    Vector3f kPos = new Vector3f(iX, iY, iZ);
-                    m_kMaskPositions.add(kPos);
-                    m_kPositionSum.Add(kPos);
-                    setMask( kMask, xDim, yDim, iX, iY, iZ, polarity, XOR );
-                }
             }
-
-            iColumn++;
         }
+        
         float scale = 1f/m_kMaskPositions.size();
         gcPt.X = MipavMath.round( m_kPositionSum.X * scale );
         gcPt.Y = MipavMath.round( m_kPositionSum.Y * scale );
@@ -2393,84 +2323,67 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @param bIntersection when true the contour rendered as an intersection with other contours.
      * @param iValue value to write into the input image.
      */
-    private void fill_Y(int[][] aaiCrossingPoints, int[] aiNumCrossings,
+    private void fill_Y(float[][] aaiCrossingPoints, int[] aiNumCrossings,
             int iXMin, int iZMin, int iXMax, int iZMax, int iY,
             ModelImage kVolume, BitSet kMask, boolean bIntersection, int iValue)
     {
-        int iColumn = 0;
-        /* Loop over the width of the sculpt region bounding-box: */
         for (int iX = iXMin; iX < iXMax; iX++) {
-            boolean bInside = false;
-
-            /* Loop over the height of the sculpt region bounding-box: */
-            for (int iZ = iZMin; iZ < iZMax; iZ++) {
-
-                /* loop over each crossing point for this column: */
-                for (int iCross = 0; iCross < aiNumCrossings[iColumn]; iCross++) {
-
-                    if (iZ == aaiCrossingPoints[iColumn][iCross]) {
-
-                        /* Each time an edge is cross the point alternates
-                         * from outside to inside: */
-                        bInside = !bInside;
-                    }
-                }
-
-                if (bInside == true) {
-
-                    /* The current pixel is inside the sculpt region.  Get the
-                     * image color from the canvas image and alpha-blend the sculpt color ontop, storing the result in
-                     * the canvas image.
-                     */
-
-                    if ( bIntersection )
+            int iIndex = iX - iXMin;
+            if ( aiNumCrossings[iIndex] >= 2 )
+            {
+                for ( int i = 0; i < aiNumCrossings[iIndex]; i+= 2 )
+                {
+                    int zStart = (int)Math.ceil(aaiCrossingPoints[iIndex][i]);
+                    int zEnd = (int)Math.floor(aaiCrossingPoints[iIndex][i+1]);
+                    for ( int iZ = zStart; iZ < zEnd; iZ++ )
                     {
-                        int iTemp = kVolume.getInt( iX, iY, iZ );
-
-                        if ( kMask != null )
+                        if ( bIntersection )
                         {
-                            int iIndex = iZ * kVolume.getExtents()[0] * kVolume.getExtents()[1];
-                            iIndex += iY * kVolume.getExtents()[0];
-                            iIndex += iX;
-                            if ( iValue == 0 )
+                            int iTemp = kVolume.getInt( iX, iY, iZ );
+
+                            if ( kMask != null )
                             {
-                                kMask.set( iIndex );
+                                int imageIndex = iZ * kVolume.getExtents()[0] * kVolume.getExtents()[1];
+                                imageIndex += iY * kVolume.getExtents()[0];
+                                imageIndex += iX;
+                                if ( iValue == 0 )
+                                {
+                                    kMask.set( imageIndex );
+                                }
+                                else if ( kMask.get( imageIndex ) )
+                                {
+                                    kMask.set( imageIndex );
+                                }
                             }
-                            else if ( kMask.get( iIndex ) )
+                            else
                             {
-                                kMask.set( iIndex );
+                                if ( iValue == 0 )
+                                {
+                                    kVolume.set( iX, iY, iZ, 85 );
+                                }
+                                else if ( iTemp != 0 )
+                                {
+                                    kVolume.set( iX, iY, iZ, 255 );
+                                }
                             }
                         }
                         else
                         {
-                            if ( iValue == 0 )
+                            if ( kMask != null )
                             {
-                                kVolume.set( iX, iY, iZ, 85 );
+                                int imageIndex = iZ * kVolume.getExtents()[0] * kVolume.getExtents()[1];
+                                imageIndex += iY * kVolume.getExtents()[0];
+                                imageIndex += iX;
+                                kMask.set( imageIndex );
                             }
-                            else if ( iTemp != 0 )
+                            else
                             {
                                 kVolume.set( iX, iY, iZ, 255 );
                             }
                         }
                     }
-                    else
-                    {
-                        if ( kMask != null )
-                        {
-                            int iIndex = iZ * kVolume.getExtents()[0] * kVolume.getExtents()[1];
-                            iIndex += iY * kVolume.getExtents()[0];
-                            iIndex += iX;
-                            kMask.set( iIndex );
-                        }
-                        else
-                        {
-                            kVolume.set( iX, iY, iZ, 255 );
-                        }
-                    }
                 }
             }
-
-            iColumn++;
         }
     }
 
@@ -2499,10 +2412,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             }
             return false;
         } else {
-
             if ((num >= ignoreMin) && (num <= ignoreMax)) {
-                System.out.println(" min  = " + ignoreMax + " max = " + ignoreMax);
-
                 return true;
             }
             return false;
@@ -2539,7 +2449,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @param iXMin the minimum x-value of this contour.
      * @param iXMax the maximum x-value of this contour.
      */
-    private void outlineRegion(int[][] aaiCrossingPoints, int[] aiNumCrossings, int iXMin, int iXMax)
+    private void outlineRegion(float[][] aaiCrossingPoints, int[] aiNumCrossings, int iXMin, int iXMax)
     {        
         int iNumPts = size();
         double dNudge = 0.1;       
@@ -2547,14 +2457,14 @@ public abstract class VOIBase extends Vector<Vector3f> {
 
         for (int i = 0; i < (iNumPts - 1); i++) {
             aaadEdgeList[i][0][0] = elementAt(i).X - dNudge;
-            aaadEdgeList[i][0][1] = elementAt(i).Y - dNudge;
+            aaadEdgeList[i][0][1] = elementAt(i).Y + dNudge;
             aaadEdgeList[i][1][0] = elementAt(i+1).X - dNudge;
-            aaadEdgeList[i][1][1] = elementAt(i+1).Y - dNudge;
+            aaadEdgeList[i][1][1] = elementAt(i+1).Y + dNudge;
         }
         aaadEdgeList[iNumPts-1][0][0] = lastElement().X - dNudge;
-        aaadEdgeList[iNumPts-1][0][1] = lastElement().Y - dNudge;
+        aaadEdgeList[iNumPts-1][0][1] = lastElement().Y + dNudge;
         aaadEdgeList[iNumPts-1][1][0] = firstElement().X - dNudge;
-        aaadEdgeList[iNumPts-1][1][1] = firstElement().Y - dNudge;
+        aaadEdgeList[iNumPts-1][1][1] = firstElement().Y + dNudge;
         iNumPts++;
 
         /*
@@ -2586,9 +2496,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
                     double dB = (dDX == 0) ? 0 : (((dX1 * dY0) - (dY1 * dX0)) / dDX);
 
                     double dYCross = (dM * iColumn) + dB;
-                    double dRound = 0.5;
-                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (dYCross < 0) ? (int) (dYCross - dRound) :
-                        (int) (dYCross + dRound);
+                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (float) dYCross;
                     aiNumCrossings[iIndex]++;
                 }
             }
@@ -2608,7 +2516,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @param iXMin the minimum y-value of this contour.
      * @param iXMax the maximum y-value of this contour.
      */
-    private void outlineRegion_X(int[][] aaiCrossingPoints, int[] aiNumCrossings, int iYMin, int iYMax)
+    private void outlineRegion_X(float[][] aaiCrossingPoints, int[] aiNumCrossings, int iYMin, int iYMax)
     {        
         int iNumPts = size();
         double dNudge = 0.1;       
@@ -2616,14 +2524,14 @@ public abstract class VOIBase extends Vector<Vector3f> {
 
         for (int i = 0; i < (iNumPts - 1); i++) {
             aaadEdgeList[i][0][0] = elementAt(i).Y - dNudge;
-            aaadEdgeList[i][0][1] = elementAt(i).Z - dNudge;
+            aaadEdgeList[i][0][1] = elementAt(i).Z + dNudge;
             aaadEdgeList[i][1][0] = elementAt(i+1).Y - dNudge;
-            aaadEdgeList[i][1][1] = elementAt(i+1).Z - dNudge;
+            aaadEdgeList[i][1][1] = elementAt(i+1).Z + dNudge;
         }
         aaadEdgeList[iNumPts-1][0][0] = lastElement().Y - dNudge;
-        aaadEdgeList[iNumPts-1][0][1] = lastElement().Z - dNudge;
+        aaadEdgeList[iNumPts-1][0][1] = lastElement().Z + dNudge;
         aaadEdgeList[iNumPts-1][1][0] = firstElement().Y - dNudge;
-        aaadEdgeList[iNumPts-1][1][1] = firstElement().Z - dNudge;
+        aaadEdgeList[iNumPts-1][1][1] = firstElement().Z + dNudge;
         iNumPts++;
 
         /*
@@ -2655,9 +2563,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
                     double dB = (dDY == 0) ? 0 : (((dY1 * dZ0) - (dZ1 * dY0)) / dDY);
 
                     double dZCross = (dM * iColumn) + dB;
-                    double dRound = 0.5;
-                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (dZCross < 0) ? (int) (dZCross - dRound) :
-                        (int) (dZCross + dRound);
+                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (float)dZCross;
                     aiNumCrossings[iIndex]++;
                 }
             }
@@ -2678,7 +2584,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @param iXMin the minimum x-value of this contour.
      * @param iXMax the maximum x-value of this contour.
      */
-    private void outlineRegion_Y(int[][] aaiCrossingPoints, int[] aiNumCrossings, int iXMin, int iXMax)
+    private void outlineRegion_Y(float[][] aaiCrossingPoints, int[] aiNumCrossings, int iXMin, int iXMax)
     {        
         int iNumPts = size();
         double dNudge = 0.1;       
@@ -2686,14 +2592,14 @@ public abstract class VOIBase extends Vector<Vector3f> {
 
         for (int i = 0; i < (iNumPts - 1); i++) {
             aaadEdgeList[i][0][0] = elementAt(i).X - dNudge;
-            aaadEdgeList[i][0][1] = elementAt(i).Z - dNudge;
+            aaadEdgeList[i][0][1] = elementAt(i).Z + dNudge;
             aaadEdgeList[i][1][0] = elementAt(i+1).X - dNudge;
-            aaadEdgeList[i][1][1] = elementAt(i+1).Z - dNudge;
+            aaadEdgeList[i][1][1] = elementAt(i+1).Z + dNudge;
         }
         aaadEdgeList[iNumPts-1][0][0] = lastElement().X - dNudge;
-        aaadEdgeList[iNumPts-1][0][1] = lastElement().Z - dNudge;
+        aaadEdgeList[iNumPts-1][0][1] = lastElement().Z + dNudge;
         aaadEdgeList[iNumPts-1][1][0] = firstElement().X - dNudge;
-        aaadEdgeList[iNumPts-1][1][1] = firstElement().Z - dNudge;
+        aaadEdgeList[iNumPts-1][1][1] = firstElement().Z + dNudge;
         iNumPts++;
 
         /*
@@ -2725,9 +2631,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
                     double dB = (dDX == 0) ? 0 : (((dX1 * dY0) - (dY1 * dX0)) / dDX);
 
                     double dYCross = (dM * iColumn) + dB;
-                    double dRound = 0.5;
-                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (dYCross < 0) ? (int) (dYCross - dRound) :
-                        (int) (dYCross + dRound);
+                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (float)dYCross;
                     aiNumCrossings[iIndex]++;
                 }
             }
