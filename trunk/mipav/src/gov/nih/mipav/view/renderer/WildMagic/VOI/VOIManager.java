@@ -428,7 +428,12 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     protected ViewJPopupPt m_kPopupPt = null;
 
     private int m_iPlane = -1;
-
+    
+    /**
+     * <code>m_kMouseOffset</code> is used to determine movements. <code>mousePressed()</code> establishes the coordinates
+     * of <code>m_kMouseOffset</code>. <code>mouseDragged()</code> calculates distance from the <code>m_kMouseOffset</code>
+     * to the present location and uses this distance to move an object. 
+     */
     private Vector3f m_kMouseOffset = new Vector3f();
     private boolean m_bMouseDrag = false;
 

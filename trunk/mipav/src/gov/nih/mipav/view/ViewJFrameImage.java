@@ -1104,14 +1104,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             ProvenanceRecorder.getReference().addLine(new ActionMaskToVOI(getActiveImage()));
             updateImages();
         } else if (command.equals("MaskToPaint")) {
-
-            // TODO: only runs with an imageB mask, not if imageA is a mask itself.
-            final boolean success = handleMaskToPaint(true);
-
-            if (success) {
-                ScriptRecorder.getReference().addLine(new ActionMaskToPaint(getActiveImage()));
-                ProvenanceRecorder.getReference().addLine(new ActionMaskToPaint(getActiveImage()));
-            }
+            maskToPaint();
         } else if (command.equals("CollapseAllToSinglePaint")) {
             collapseAlltoSinglePaint(false);
         } else if (command.equals("PaintToVOI")) {
@@ -6070,5 +6063,17 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_UBYTE));
         ProvenanceRecorder.getReference().addLine(
                 new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_UBYTE));
+    }
+
+    @Override
+    public void maskToPaint()
+    {
+        // TODO: only runs with an imageB mask, not if imageA is a mask itself.
+        final boolean success = handleMaskToPaint(true);
+
+        if (success) {
+            ScriptRecorder.getReference().addLine(new ActionMaskToPaint(getActiveImage()));
+            ProvenanceRecorder.getReference().addLine(new ActionMaskToPaint(getActiveImage()));
+        }
     }
 }

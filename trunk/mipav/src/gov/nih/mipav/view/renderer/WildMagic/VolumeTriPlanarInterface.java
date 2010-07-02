@@ -3418,4 +3418,10 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     {
         // TODO Auto-generated method stub
     }
+
+    @Override
+    public void maskToPaint()
+    {
+        // TODO Auto-generated method stub
+    }
 }

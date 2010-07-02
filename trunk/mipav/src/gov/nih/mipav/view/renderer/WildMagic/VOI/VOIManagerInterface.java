@@ -667,16 +667,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
             ProvenanceRecorder.getReference().addLine(new ActionMaskToVOI(getActiveImage()));
             updateDisplay();
         } else if (command.equals("MaskToPaint")) {
-            MipavUtil.displayWarning("MaskToPaint not current implemented for the TriPlanar View.");
-/*
-            // TODO: only runs with an imageB mask, not if imageA is a mask itself.
-            final boolean success = handleMaskToPaint(true);
-
-            if (success) {
-                ScriptRecorder.getReference().addLine(new ActionMaskToPaint(getActiveImage()));
-                ProvenanceRecorder.getReference().addLine(new ActionMaskToPaint(getActiveImage()));
-            }
-            */
+            m_kParent.maskToPaint();
         }
         else if (command.equals("PaintToVOI")) {
             m_kParent.paintToVOI();
@@ -1323,6 +1314,11 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
     public JToggleButton getPointerButton( )
     {
         return m_kPointerButton;
+    }
+
+    public void setPointerButton( JToggleButton button )
+    {
+        m_kPointerButton = button;
     }
 
 
@@ -3787,119 +3783,6 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
             imageStatList.setVisible(true);
         }
     }
-    /**
-     * This method is provided for the user to convert a masked area back to a painted area. It only affects those areas
-     * that were masked with the intensity value that is currently active.
-     * 
-     * @param showProgressBar DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
-    public boolean handleMaskToPaint(final boolean showProgressBar) {
-
-        boolean success = false;
-
-        if (m_kImageB != null) {
-            float[] intensityMapB;
-
-            if (m_kImageB.isColorImage()) {
-                intensityMapB = new float[ (m_kImageA.getExtents()[0] * m_kImageA.getExtents()[1]) * 4]; // make
-                // intensity map
-            } else {
-                intensityMapB = new float[m_kImageA.getExtents()[0] * m_kImageA.getExtents()[1]]; // make intensity map
-            }
-
-            // same size as image
-            // dimensions
-            final BitSet bitSet = componentImage.getPaintMask(); // bitSet is for entire image volume
-            ViewJProgressBar progressBar = null;
-
-            if (showProgressBar) {
-                progressBar = new ViewJProgressBar("Converting", "Converting mask to paint...", 0, 100, true, this,
-                        this);
-                MipavUtil.centerOnScreen(progressBar);
-                progressBar.setVisible(showProgressBar);
-            }
-
-            try {
-                final int numSlices = ( (m_kImageA.getNDims() > 2) ? m_kImageA.getExtents()[2] : 1);
-
-                // iterate through slices
-                for (int currentSlice = 0; currentSlice < numSlices; currentSlice++) {
-
-                    // here is where we get the slice
-                    m_kImageB.exportData(currentSlice * intensityMapB.length, intensityMapB.length, intensityMapB);
-
-                    // examine every pixel and convert to paint if masked intensity is equal to the toolbar's
-                    // selected intensity
-
-                    final Color activeColor = getControls().getTools().getPaintColor();
-                    final int activeRed = activeColor.getRed();
-                    final int activeGreen = activeColor.getGreen();
-                    final int activeBlue = activeColor.getBlue();
-
-                    if (m_kImageB.isColorImage()) {
-
-                        for (int k = 0; k <= (intensityMapB.length - 4); k = k + 4) {
-                            int r, g, b;
-                            r = (new Float(intensityMapB[k + 1])).intValue();
-                            g = (new Float(intensityMapB[k + 2])).intValue();
-                            b = (new Float(intensityMapB[k + 3])).intValue();
-
-                            if ( (r == activeRed) && (g == activeGreen) && (b == activeBlue)) {
-                                bitSet.set( (currentSlice * (intensityMapB.length / 4)) + (k / 4)); // turn the
-                                // paint bit
-
-                                // set index to ON
-                                intensityMapB[k + 1] = 0; // erase the painted mask from this index
-                                intensityMapB[k + 2] = 0; // erase the painted mask from this index
-                                intensityMapB[k + 3] = 0; // erase the painted mask from this index
-                            }
-                        }
-                    } else {
-
-                        for (int i = 0; i < intensityMapB.length; i++) {
-
-                            if (intensityMapB[i] == componentImage.intensityDropper) {
-                                bitSet.set( (currentSlice * intensityMapB.length) + i); // turn the paint bit set
-                                // index to ON
-                                intensityMapB[i] = 0; // erase the painted mask from this index
-                            }
-                        }
-                    }
-
-                    // put the modified slice back into image
-                    m_kImageB.importData(currentSlice * intensityMapB.length, intensityMapB, false);
-
-                    if (progressBar != null) {
-                        progressBar.updateValueImmed((int) ((float) (currentSlice + 1) / (float) numSlices * 100));
-                    }
-                }
-
-                updateDisplay();
-                success = true;
-            } catch (final Exception ex) {
-
-                // do nothing. the error will be displayed when this if block exits
-                ex.printStackTrace();
-                MipavUtil.displayError("Cannot complete the operation due to an internal error.");
-            } finally {
-
-                if (progressBar != null) {
-                    progressBar.dispose();
-                }
-            }
-        } else {
-
-            // if we get here, there is no mask on the image.
-            MipavUtil
-            .displayError("This function is only useful when the image has a mask. To use this feature, please add a mask.");
-        }
-
-        return success;
-    }
-
-     */
-
 
     /*
      * 

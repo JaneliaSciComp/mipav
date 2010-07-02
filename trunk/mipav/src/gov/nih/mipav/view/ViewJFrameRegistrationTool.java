@@ -5,6 +5,7 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.ScriptRecorder;
+import gov.nih.mipav.model.scripting.actions.ActionMaskToPaint;
 import gov.nih.mipav.model.scripting.actions.ActionPaintToMask;
 import gov.nih.mipav.model.structures.*;
 import Jama.*;
@@ -3533,6 +3534,13 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
         
     }
 
+    /* (non-Javadoc)
+     * @see java.awt.Window#setCursor(java.awt.Cursor)
+     */
+    public void setCursor(Cursor kCursor) {
+        componentImage.setCursor(kCursor);
+    }
+
     @Override
     public void setModified() {
         updateImages();
@@ -3585,10 +3593,17 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
         ProvenanceRecorder.getReference().addLine(
                 new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_UBYTE));
     }
+
+    @Override
+    public void maskToPaint()
+    {
+        imageA.getParentFrame().maskToPaint();
+    }
     
     private void initVOI()
     {
         voiManager = new VOIManagerInterface( this, imageA, LUTa, imageB, LUTb, 2, false, null );
+        voiManager.setPointerButton(defaultModeButton);
         voiManager.getVOIManager(0).init( imageA, null,
                 componentImageA, componentImageA,
                 componentImageA.getOrientation(), componentImageA.getSlice() );

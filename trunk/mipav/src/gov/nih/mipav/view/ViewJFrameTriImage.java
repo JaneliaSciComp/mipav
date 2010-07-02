@@ -730,7 +730,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             }
 
             updateImages(true);
-        } else if (command.equals(CustomUIBuilder.PARAM_VOI_PROTRACTOR.getActionCommand())) {
+        } else if (command.equals(CustomUIBuilder.PARAM_IMAGE_ALIGN_VOI_PROTRACTOR.getActionCommand())) {
 
             snapProtractor90 = menuObj.isMenuItemSelected("Snap protractor to 90 degrees multiple");
 
@@ -747,10 +747,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 for (int i = 0; i < MAX_TRI_IMAGES; i++) {
 
                     if (triImage[i] != null) {
-                        triImage[i].setCursorMode(ViewJComponentBase.PROTRACTOR);
                         triImage[i].setSnapProtractor90(snapProtractor90);
                         triImage[i].makeProtractor();
-                        //triImage[i].setProtractorVisible(true);
                         triImage[i].repaint();
                     }
                 }
@@ -760,7 +758,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
                     if (triImage[i] != null) {
                         triImage[i].setCursorMode(ViewJComponentBase.DEFAULT);
-                        //triImage[i].setProtractorVisible(false);
                         triImage[i].clearProtractor();
                         triImage[i].repaint();
                     }
@@ -3437,7 +3434,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         centerGroup.add(btnInvisible[3]);
 
-        imageAlignToolBar.add(toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_VOI_PROTRACTOR, VOIGroup));
+        imageAlignToolBar.add(toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_IMAGE_ALIGN_VOI_PROTRACTOR, VOIGroup));
 
         intensityLineGroup.add(btnInvisible[2]);
 
@@ -5415,5 +5412,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_UBYTE));
         ProvenanceRecorder.getReference().addLine(
                 new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_UBYTE));
+    }
+
+
+    @Override
+    public void maskToPaint()
+    {
+        imageA.getParentFrame().maskToPaint();
     }
 }

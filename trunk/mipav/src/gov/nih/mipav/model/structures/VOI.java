@@ -165,6 +165,8 @@ public class VOI extends ModelSerialCloneable {
     /** extension of voi file name of voi was read in through file **/
     private String extension = "";
     
+    private boolean active = false;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
 
@@ -1772,7 +1774,7 @@ public class VOI extends ModelSerialCloneable {
      * @return  boolean active
      */
     public boolean isActive() {
-        boolean anyActive = false;
+        boolean anyActive = active;
         for (int i = 0; i < curves.size(); i++) {
             anyActive |= (curves.elementAt(i)).isActive();
         }
@@ -2035,7 +2037,7 @@ public class VOI extends ModelSerialCloneable {
      * @param  act  boolean to set active to
      */
     public void setActive(boolean act) {
-        //this.active = act;
+        this.active = act;
         fireVOIselection();
     }
 
