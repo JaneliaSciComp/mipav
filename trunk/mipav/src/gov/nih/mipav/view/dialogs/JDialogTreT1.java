@@ -208,8 +208,8 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
     private void initParams() {
     	thresholdMethod = Threshold.NONE;
     	scannerType = ScannerType.GE;
-    	mriStrength = FieldStrength.mri15T;
-    	inversionType = InversionType.SINGLE;
+    	mriStrength = FieldStrength.mri3T;
+    	inversionType = InversionType.DOUBLE;
     	performStraightTreT1 = true;
     }
     
