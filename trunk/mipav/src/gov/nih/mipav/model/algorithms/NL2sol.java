@@ -29,6 +29,8 @@ public abstract class NL2sol {
 	
 	double dgxfac_gqtstp = 0.0;
 	
+	double ix_lsvmin = 2;
+	
 	double rktol_qrfact = 0.0;
 	double ufeta_qrfact = 0.0;
 	
@@ -1849,13 +1851,13 @@ public abstract class NL2sol {
 
 	  double aki;
 	  double akk;
-	  double alphak;
-	  double delta;
+	  double alphak = 0.0;
+	  double delta = 0.0;
 	  int dggdmx;
 	  final int dgnorm = 1;
 	  int diag;
 	  int diag0;
-	  double dst;
+	  double dst = 0.0;
 	  final int dst0 = 3;
 	  final int dstnrm = 2;
 	  int dstsav;
@@ -1873,12 +1875,12 @@ public abstract class NL2sol {
 	  int k1;
 	  int kalim;
 	  final double kappa = 2.0;
-	  double lk;
+	  double lk = 0.0;
 	  int lk0;
 	  double lsvmin;
 	  final int nreduc = 6;
 	  double oldphi;
-	  double phi;
+	  double phi = 0.0;
 	  double phimax;
 	  double phimin;
 	  int phipin;
@@ -1899,20 +1901,23 @@ public abstract class NL2sol {
 	  double sw;
 	  double t;
 	  double t1;
-	  double twopsi;
-	  double uk;
+	  double twopsi = 0.0;
+	  double uk = 0.0;
 	  int uk0;
 	  double wi;
 	  int x;
 	  int x0;
 	  int ii;
 	  double arr[];
+	  double arr2[];
 	  boolean do20 = true;
 	  boolean do40 = false;
 	  boolean do60 = false;
 	  boolean do70 = false;
 	  boolean do210 = false;
 	  boolean do260 = false;
+	  boolean do270 = false;
+	  boolean do290 = false;
 	//
 	//  Store largest absolute entry in inverse(D)*H*inverse(D) at W(DGGDMX).
 	//
@@ -2103,7 +2108,7 @@ public abstract class NL2sol {
 	      }
 	  } // else
 	} // if (do40)
-	/*if (d060) {
+	if (do60) {
 	//
 	//  Positive definite H.  Compute unmodified Newton step.
 	//
@@ -2118,395 +2123,876 @@ public abstract class NL2sol {
 		  arr[ii] = w[q+ii-1];
 	  }
 	  v[nreduc] = 0.5 * dotprd(p, arr, arr);
-	  call litvmu(p, w(q), l, w(q))
-	  dst = v2norm(p, w(q))
-	  v(dst0) = dst
-	  phi = dst - rad
+	  arr2 = new double[p+1];
+	  litvmu(p, arr2, l, arr);
+	  for (ii = 1; ii <= p; ii++) {
+		  w[q + ii - 1] = arr2[ii];
+	  }
+	  dst = v2norm(p, arr2);
+	  v[dst0] = dst;
+	  phi = dst - rad;
 
-	  if ( phi <= phimax ) then
-	    alphak = 0.0E+00
-	    go to 290
-	  end if
-
-	  if (restrt) go to 210
+	  if ( phi <= phimax ) {
+	    alphak = 0.0;
+	    do290 = true;
+	  }
+	  else if (restrt) {
+		  do210 = true;
+	  }
+	  else {
+		  do70 = true;
+	  }
 	} // if (do60)
-	!
-	!  Prepare to compute Gerschgorin estimates of largest and
-	!  smallest eigenvalues.
-	!
-	70 continue
+	if (do70) {
+	//
+	//  Prepare to compute Gerschgorin estimates of largest and
+	//  smallest eigenvalues.
+	//
 
-	  v(dgnorm) = v2norm ( p, dig )
+	  v[dgnorm] = v2norm ( p, dig );
 
-	  if ( v(dgnorm) == 0.0E+00 ) then
-	    v(stppar) = 0.0E+00
-	    v(preduc) = 0.0E+00
-	    v(dstnrm) = 0.0E+00
-	    v(gtstep) = 0.0E+00
-	    step(1:p) = 0.0E+00
-	    return
-	  end if
+	  if ( v[dgnorm] == 0.0 ) {
+	    v[stppar] = 0.0;
+	    v[preduc] = 0.0;
+	    v[dstnrm] = 0.0;
+	    v[gtstep] = 0.0;
+	    for (ii = 1; ii <= p; ii++) {
+	        step[ii] = 0.0;
+	    }
+	    return;
+	  } // if (v[dgnorm] == 0.0)
 
-	  k = 0
-	  do i = 1, p
-	    wi = 0.0E+00
-	    do j = 1, i - 1
-	      k = k + 1
-	      t = abs ( dihdi(k) )
-	      wi = wi + t
-	      w(j) = w(j) + t
-	    end do
-	    w(i) = wi
-	    k = k + 1
-	  end do
-	!
-	!  Underestimate smallest eigenvalue of inverse(D)*H*inverse(D).
-	!
-	  k = 1
-	  t1 = w(diag) - w(1)
+	  k = 0;
+	  for (i = 1; i <= p; i++) {
+	    wi = 0.0;
+	    for (j = 1; j <= i - 1; j++) {
+	      k = k + 1;
+	      t = Math.abs ( dihdi[k] );
+	      wi = wi + t;
+	      w[j] = w[j] + t;
+	    } // for (j = 1; j <= i - 1; j++)
+	    w[i] = wi;
+	    k = k + 1;
+	  } // for (i = 1; i <= p; i++)
+	//
+	//  Underestimate smallest eigenvalue of inverse(D)*H*inverse(D).
+	//
+	  k = 1;
+	  t1 = w[diag] - w[1];
 
-	  do i = 2, p
-	    j = diag0 + i
-	    t = w(j) - w(i)
-	    if ( t < t1 ) then
-	      t1 = t
-	      k = i
-	    end if
-	  end do
+	  for ( i = 2; i <= p; i++) {
+	    j = diag0 + i;
+	    t = w[j] - w[i];
+	    if ( t < t1 ) {
+	      t1 = t;
+	      k = i;
+	    }
+	  } // for (i = 1; i <= p; i++)
 	  
-	  sk = w(k)
-	  j = diag0 + k
-	  akk = w(j)
-	  k1 = ( k * ( k - 1 ) ) / 2 + 1
-	  inc = 1
-	  t = 0.0E+00
+	  sk = w[k];
+	  j = diag0 + k;
+	  akk = w[j];
+	  k1 = ( k * ( k - 1 ) ) / 2 + 1;
+	  inc = 1;
+	  t = 0.0;
 
-	  do i = 1, p
+	  for (i = 1; i <= p; i++) {
 
-	    if ( i == k ) then
-	      inc = i
-	      k1 = k1 + inc
-	    else
-	      aki = abs(dihdi(k1))
-	      si = w(i)
-	      j = diag0 + i
-	      t1 = 0.5E+00 * (akk - w(j) + si - aki)
-	      t1 = t1 + sqrt(t1*t1 + sk*aki)
-	      if (t < t1) t = t1
-	      if ( k <= i ) then
-	        inc = i
-	      end if
-	      k1 = k1 + inc
-	    end if
+	    if ( i == k ) {
+	      inc = i;
+	      k1 = k1 + inc;
+	    }
+	    else {
+	      aki = Math.abs(dihdi[k1]);
+	      si = w[i];
+	      j = diag0 + i;
+	      t1 = 0.5 * (akk - w[j] + si - aki);
+	      t1 = t1 + Math.sqrt(t1*t1 + sk*aki);
+	      if (t < t1) {
+	    	  t = t1;
+	      }
+	      if ( k <= i ) {
+	        inc = i;
+	      }
+	      k1 = k1 + inc;
+	    } // else
 
-	  end do
+	  } // for (i = 1; i <= p; i++)
 
-	  w(emin) = akk - t
-	  uk = v(dgnorm) / rad - w(emin)
-	!
-	!  Compute Gerschgorin overestimate of largest eigenvalue.
-	!
-	  k = 1
-	  t1 = w(diag) + w(1)
+	  w[emin] = akk - t;
+	  uk = v[dgnorm] / rad - w[emin];
+	//
+	//  Compute Gerschgorin overestimate of largest eigenvalue.
+	//
+	  k = 1;
+	  t1 = w[diag] + w[1];
 
-	  do i = 2, p
-	    j = diag0 + i
-	    t = w(j) + w(i)
-	    if ( t1 < t ) then
-	      t1 = t
-	      k = i
-	    end if
-	  end do
+	  for (i = 2; i <= p; i++) {
+	    j = diag0 + i;
+	    t = w[j] + w[i];
+	    if ( t1 < t ) {
+	      t1 = t;
+	      k = i;
+	    }
+	  } // for (i = 2; i <= p; i++)
 
-	  sk = w(k)
-	  j = diag0 + k
-	  akk = w(j)
-	  k1 = ( k * ( k - 1 ) ) / 2 + 1
-	  inc = 1
-	  t = 0.0E+00
+	  sk = w[k];
+	  j = diag0 + k;
+	  akk = w[j];
+	  k1 = ( k * ( k - 1 ) ) / 2 + 1;
+	  inc = 1;
+	  t = 0.0;
 
-	  do i = 1, p
-	    if (i == k) then
-	      inc = i
-	      k1 = k1 + inc
-	    else
-	      aki = abs ( dihdi(k1) )
-	      si = w(i)
-	      j = diag0 + i
-	      t1 = 0.5E+00 * ( w(j) + si - aki - akk )
-	      t1 = t1 + sqrt ( t1 * t1 + sk * aki )
-	      if (t < t1) t = t1
-	      if ( k <= i ) then
-	        inc = i
-	      end if
-	      k1 = k1 + inc
-	    end if
-	  end do
+	  for ( i = 1; i <= p; i++) {
+	    if (i == k) {
+	      inc = i;
+	      k1 = k1 + inc;
+	    }
+	    else {
+	      aki = Math.abs ( dihdi[k1] );
+	      si = w[i];
+	      j = diag0 + i;
+	      t1 = 0.5 * ( w[j] + si - aki - akk );
+	      t1 = t1 + Math.sqrt ( t1 * t1 + sk * aki );
+	      if (t < t1) {
+	    	  t = t1;
+	      }
+	      if ( k <= i ) {
+	        inc = i;
+	      }
+	      k1 = k1 + inc;
+	    } // else
+	  } // for (i = 1; i <= p; i++)
 
-	  w(emax) = akk + t
-	  lk = max ( lk, v(dgnorm) / rad - w(emax) )
-	!
-	!  ALPHAK = current value of ALPHA.  We
-	!  use More's scheme for initializing it.
-	!
-	  alphak = abs ( v(stppar) ) * v(rad0) / rad
-	!
-	!  Compute L0 for positive definite H.
-	!
-	  if ( irc == 0 ) then
+	  w[emax] = akk + t;
+	  lk = Math.max ( lk, v[dgnorm] / rad - w[emax] );
+	//
+	//  ALPHAK = current value of ALPHA.  We
+	//  use More's scheme for initializing it.
+	//
+	  alphak = Math.abs ( v[stppar] ) * v[rad0] / rad;
+	//
+	//  Compute L0 for positive definite H.
+	//
+	  if ( irc[0] == 0 ) {
+        arr = new double[p+1];
+        for (ii = 1; ii <= p; ii++) {
+        	arr[ii] = w[q + ii - 1];
+        }
+	    livmul(p, w, l, arr);
+	    t = v2norm(p, w);
+	    w[phipin] = dst / t / t;
+	    lk = Math.max ( lk, phi * w[phipin] );
 
-	    call livmul(p, w, l, w(q))
-	    t = v2norm(p, w)
-	    w(phipin) = dst / t / t
-	    lk = max ( lk, phi * w(phipin) )
+	  }
+	  do210 = true;
+	} // if (do70)
+	
+	loop2: while (true) {
+    if (do210) {
+    	do210 = false;
+	//
+	//  Safeguard ALPHAK and add ALPHAK*IDENTITY to inverse(D)*H*inverse(D).
+	//
 
-	  end if
-	!
-	!  Safeguard ALPHAK and add ALPHAK*IDENTITY to inverse(D)*H*inverse(D).
-	!
-	210 continue
+	  ka[0] = ka[0] + 1;
 
-	  ka = ka + 1
+	  if ( -v[dst0] >= alphak || alphak < lk || alphak >= uk ) {
+	    alphak = uk * Math.max ( 0.001, Math.sqrt ( lk / uk ) );
+	  }
 
-	  if ( -v(dst0) >= alphak .or. alphak < lk .or. alphak >= uk ) then
-	    alphak = uk * max ( 0.001E+00, sqrt ( lk / uk ) )
-	  end if
+	  k = 0;
+	  for ( i = 1; i <= p; i++) {
+	    k = k + i;
+	    j = diag0 + i;
+	    dihdi[k] = w[j] + alphak;
+      } // for (i = 1; i <= p; i++) 
+	//
+	//  Try computing Cholesky decomposition.
+	//
+	  lsqrt(1, p, l, dihdi, irc);
+	//
+	//  inverse(D)*H*inverse(D) + ALPHAK*IDENTITY  is indefinite.  Overestimate
+	//  smallest eigenvalue for use in updating LK.
+	//
+	  if ( irc[0] != 0 ) {
 
-	  k = 0
-	  do i = 1, p
-	    k = k + i
-	    j = diag0 + i
-	    dihdi(k) = w(j) + alphak
-	  end do
-	!
-	!  Try computing Cholesky decomposition.
-	!
-	  call lsqrt(1, p, l, dihdi, irc)
-	!
-	!  inverse(D)*H*inverse(D) + ALPHAK*IDENTITY  is indefinite.  Overestimate
-	!  smallest eigenvalue for use in updating LK.
-	!
-	  if ( irc /= 0 ) then
+	    j = ( irc[0] * ( irc[0] + 1 ) ) / 2;
+	    t = l[j];
+	    l[j] = 1.0;
+	    for (ii = 1; ii < irc[0]; ii++) {
+	        w[ii] = 0.0;
+	    }
+	    w[irc[0]] = 1.0;
+	    litvmu ( irc[0], w, l, w );
+	    t1 = v2norm ( irc[0], w );
+	    lk = alphak - t / t1 / t1;
+	    v[dst0] = -lk;
+	    do210 = true;
+        continue loop2;
+	  }
+	//
+	//  ALPHAK makes inverse(D)*H*inverse(D) positive definite.
+	//  Compute Q = -D * STEP, check for convergence.
+	//
+	  arr = new double[p+1];
+	  livmul(p, arr, l, dig);
+	  for (ii = 1; ii <= p; ii++) {
+		  w[q + ii - 1] = arr[ii];
+	  }
+	  arr2 = new double[p+1];
+	  litvmu(p, arr2, l, arr);
+	  for (ii = 1; ii <= p; ii++) {
+		  w[q + ii - 1] = arr2[ii];
+	  }
+	  dst = v2norm(p, arr2);
+	  phi = dst - rad;
 
-	    j = ( irc * ( irc + 1 ) ) / 2
-	    t = l(j)
-	    l(j) = 1.0E+00
-	    w(1:irc) = 0.0E+00
-	    w(irc) = 1.0E+00
-	    call litvmu ( irc, w, l, w )
-	    t1 = v2norm ( irc, w )
-	    lk = alphak - t / t1 / t1
-	    v(dst0) = -lk
-	    go to 210
+	  if (phi <= phimax && phi >= phimin) {
+		  do290 = true;
+	  }
+	  else if (phi == oldphi) {
+		  do290 = true;
+	  }
+	  else {
+	      oldphi = phi;
 
-	  end if
-	!
-	!  ALPHAK makes inverse(D)*H*inverse(D) positive definite.
-	!  Compute Q = -D * STEP, check for convergence.
-	!
-	  call livmul(p, w(q), l, dig)
-	  call litvmu(p, w(q), l, w(q))
-	  dst = v2norm(p, w(q))
-	  phi = dst - rad
+	      if ( phi > 0.0) {
+	    	  do260 = true;
+	      }
+	      //
+          //  Check for the special case of H + ALPHA*D**2  (nearly)
+          //  singular.  delta is >= the smallest eigenvalue of
+          //  inverse(D)*H*inverse(D) + ALPHAK*IDENTITY.
+          //
+	      else if ( v[dst0] > 0.0 ) {
+	    	  do260 = true;
+	      }
+	      else {
+	          delta = alphak + v[dst0];
+	          arr = new double[p+1];
+	          for (ii = 1; ii <= p; ii++) {
+	        	  arr[ii] = w[q + ii - 1];
+	          }
+	          twopsi = alphak * dst * dst + dotprd ( p, dig, arr );
 
-	  if (phi <= phimax .and. phi >= phimin) go to 290
+	          if ( delta < psifac*twopsi ) {
+	              do270 = true;
+	          }
+	          else {
+	        	  do260 = true;
+	          }
+	      } // else
+	  } // else
+    } // if (do210)
+	if (do260) {
+		do260 = false;
+	//
+	//  Unacceptable ALPHAK.  Update LK, UK, ALPHAK.
+	//
 
-	  if (phi == oldphi) go to 290
+	if (ka[0] >= kalim) {
+		do290 = true;
+	}
+	else {
+	  arr = new double[p+1];
+	  for (ii = 1; ii <= p; ii++) {
+		  arr[ii] = w[q + ii - 1];
+	  }
+	  livmul(p, w, l, arr);
+	  t1 = v2norm(p, w);
+	  //
+	  //  The following min is necessary because of restarts.
+	  //
+	  if ( phi < 0.0 ) {
+	    uk = Math.min ( uk, alphak );
+	  }
 
-	  oldphi = phi
+	  alphak = alphak + ( phi / t1 ) * ( dst / t1 ) * ( dst / rad );
+	  lk = Math.max ( lk, alphak );
+	  do210 = true;
+	  continue;
+	  } // else
+	} // if (do260)
+	if (do270) {
+		do270 = false;
+	//
+	//  Decide how to handle nearly singular H + ALPHA*D**2.
+	//
+	//  If not yet available, obtain machine dependent value dgxfac.
+	//
 
-	  if ( phi > 0.0E+00 ) go to 260
-	!
-	!  Check for the special case of H + ALPHA*D**2  (nearly)
-	!  singular.  delta is >= the smallest eigenvalue of
-	!  inverse(D)*H*inverse(D) + ALPHAK*IDENTITY.
-	!
-	  if ( v(dst0) > 0.0E+00 ) go to 260
+	  if ( dgxfac_gqtstp == 0.0 ) {
+	    dgxfac_gqtstp = epsfac * epsilon;
+	  }
+	//
+	//  Is DELTA so small we cannot handle the special case in
+	//  the available arithmetic?  If so, accept STEP as it is.
+	//
+	  if ( dgxfac_gqtstp * w[dggdmx] < delta ) {
+		loop4: while (true) {
+	    //
+	    //  Handle nearly singular H + ALPHA*D**2.
+	    // Negate ALPHAK to indicate special case.
+	    //
+	    alphak = -alphak;
+	    //
+	    //  Allocate storage for scratch vector X.
+	    //
+	    x0 = q0 + p;
+	    x = x0 + 1;
+	    //
+	    //  Use inverse power method with start from LSVMIN to obtain
+	    //  approximate eigenvector corresponding to smallest eigenvalue
+	    //  of inverse ( D ) * H * inverse ( D ).
+	    //
+	    delta = kappa * delta;
+	    arr = new double[p+1];
+	    t = lsvmin(p, l, arr, w);
+	    for (ii = 1; ii <= p; ii++) {
+	    	w[x + ii - 1] = arr[ii];
+	    }
+	    k = 0;
+	loop3: while (true) {
+	//
+	//  Normalize W.
+	//
+        for (ii = 1; ii <= p; ii++) {
+	      w[ii] = t * w[ii];
+        }
+	//
+	//  Complete current inverse power iteration.  
+	//  Replace W by inverse ( L' ) * W.
+	//
+	      litvmu ( p, w, l, w );
+	      t1 = 1.0 / v2norm(p, w);
+	      t = t1 * t;
 
-	  delta = alphak + v(dst0)
-	  twopsi = alphak * dst * dst + dotprd ( p, dig, w(q) )
+	      if ( t <= delta ) {
+	        break loop3;
+	      }
 
-	  if ( delta < psifac*twopsi ) then
-	    go to 270
-	  end if
-	!
-	!  Unacceptable ALPHAK.  Update LK, UK, ALPHAK.
-	!
-	260 continue
+	      if ( 30 < k ) {
+	        do290 = true;
+	        break loop4;
+	      }
 
-	  if (ka >= kalim) go to 290
+	      k = k + 1;
+	//
+	//  Start next inverse power iteration by storing normalized W in X.
+	//
+	      for (i = 1; i <= p; i++) {
+	        j = x0 + i;
+	        w[j] = t1 * w[i];
+	      }
+	//
+	//  Compute W = inverse ( L ) * X.
+	//
+	      arr = new double[p+1];
+	      for (ii = 1; ii <= p; ii++) {
+	    	  arr[ii] = w[x + ii - 1];
+	      }
+	      livmul(p, w, l, arr);
+	      t = 1.0 / v2norm(p, w);
+	} // loop3: while(true);
 
-	  call livmul(p, w, l, w(q))
-	  t1 = v2norm(p, w)
-	!
-	!  The following min is necessary because of restarts.
-	!
-	  if ( phi < 0.0E+00 ) then
-	    uk = min ( uk, alphak )
-	  end if
+	    for (ii = 1; ii <= p; ii++) {
+	        w[ii] = t1 * w[ii];
+	    }
+	//
+	//  Now W is the desired approximate unit eigenvector and
+	//  T * X = ( inverse(D) * H * inverse(D) + ALPHAK * I ) * W.
+	//
+	    arr = new double[p+1];
+	    for (ii = 1; ii <= p; ii++) {
+	    	arr[ii] = w[q + ii - 1];
+	    }
+	    sw = dotprd ( p, arr, w );
+	    t1 = ( rad + dst ) * ( rad - dst );
+	    root = Math.sqrt ( sw * sw + t1 );
+	    if ( sw < 0.0 ) {
+	      root = -root;
+	    }
+	    si = t1 / (sw + root);
+	//
+	//  Accept current step if adding SI * W would lead to a
+	//  further relative reduction in PSI of less than V(EPSLON) / 3.
+	//
+	    v[preduc] = 0.5 * twopsi;
+	    t1 = 0.0; 
+	    for (ii = 1; ii <= p; ii++) {
+	    	arr[ii] = w[x + ii - 1];
+	    }
+	    t = si * ( alphak * sw
+	      - 0.5 * si * ( alphak + t * dotprd ( p, arr, w ) ) );
 
-	  alphak = alphak + ( phi / t1 ) * ( dst / t1 ) * ( dst / rad )
-	  lk = max ( lk, alphak )
-	  go to 210
-	!
-	!  Decide how to handle nearly singular H + ALPHA*D**2.
-	!
-	!  If not yet available, obtain machine dependent value dgxfac.
-	!
-	270 continue
+	    if ( epso6 * twopsi <= t ) {
+	      v[preduc] = v[preduc] + t;
+	      dst = rad;
+	      t1 = -si;
+	    }
 
-	  if ( dgxfac == 0.0E+00 ) then
-	    dgxfac = epsfac * epsilon ( dgxfac )
-	  end if
-	!
-	!  Is DELTA so small we cannot handle the special case in
-	!  the available arithmetic?  If so, accept STEP as it is.
-	!
-	  if ( dgxfac * w(dggdmx) < delta ) then
-	!
-	!  Handle nearly singular H + ALPHA*D**2.
-	!  Negate ALPHAK to indicate special case.
-	!
-	    alphak = -alphak
-	!
-	!  Allocate storage for scratch vector X.
-	!
-	    x0 = q0 + p
-	    x = x0 + 1
-	!
-	!  Use inverse power method with start from LSVMIN to obtain
-	!  approximate eigenvector corresponding to smallest eigenvalue
-	!  of inverse ( D ) * H * inverse ( D ).
-	!
-	    delta = kappa * delta
-	    t = lsvmin(p, l, w(x), w)
-	    k = 0
-	!
-	!  Normalize W.
-	!
-	    do
+	    for (i = 1; i <= p; i++) {
+	      j = q0 + i;
+	      w[j] = t1 * w[i] - w[j];
+	      step[i] = w[j] / d[i];
+	    }
 
-	      w(1:p) = t * w(1:p)
-	!
-	!  Complete current inverse power iteration.  
-	!  Replace W by inverse ( L' ) * W.
-	!
-	      call litvmu ( p, w, l, w )
-	      t1 = 1.0E+00 / v2norm(p, w)
-	      t = t1 * t
+	    for (ii = 1; ii <= p; ii++) {
+	    	arr[ii] = w[q + ii - 1];
+	    }
+	    v[gtstep] = dotprd ( p, dig, arr );
+	//
+	//  Save values for use in a possible restart.
+	//
+	    v[dstnrm] = dst;
+	    v[stppar] = alphak;
+	    w[lk0] = lk;
+	    w[uk0] = uk;
+	    v[rad0] = rad;
+	    w[dstsav] = dst;
+	//
+	//  Restore diagonal of DIHDI.
+	//
+	    j = 0;
+	    for ( i = 1; i <= p; i++) {
+	      j = j + i;
+	      k = diag0 + i;
+	      dihdi[j] = w[k];
+	    }
 
-	      if ( t <= delta ) then
-	        exit
-	      end if
+	    return;
+		} // loop4: while (true)
 
-	      if ( 30 < k ) then
-	        go to 290
-	      end if
+	  } // if ( dgxfac_gqtstp * w[dggdmx] < delta )
+	  do290 = true;
+	} // if (do270)
+	if (do290) {
+	//
+	//  Successful step.  Compute STEP = - inverse ( D ) * Q.
+	//
 
-	      k = k + 1
-	!
-	!  Start next inverse power iteration by storing normalized W in X.
-	!
-	      do i = 1, p
-	        j = x0 + i
-	        w(j) = t1 * w(i)
-	      end do
-	!
-	!  Compute W = inverse ( L ) * X.
-	!
-	      call livmul(p, w, l, w(x))
-	      t = 1.0E+00 / v2norm(p, w)
-
-	    end do
-
-	    w(1:p) = t1 * w(1:p)
-	!
-	!  Now W is the desired approximate unit eigenvector and
-	!  T * X = ( inverse(D) * H * inverse(D) + ALPHAK * I ) * W.
-	!
-	    sw = dotprd ( p, w(q), w )
-	    t1 = ( rad + dst ) * ( rad - dst )
-	    root = sqrt ( sw * sw + t1 )
-	    if ( sw < 0.0E+00 ) then
-	      root = -root
-	    end if
-	    si = t1 / (sw + root)
-	!
-	!  Accept current step if adding SI * W would lead to a
-	!  further relative reduction in PSI of less than V(EPSLON) / 3.
-	!
-	    v(preduc) = 0.5E+00 * twopsi
-	    t1 = 0.0E+00 
-	    t = si * ( alphak * sw &
-	      - 0.5E+00 * si * ( alphak + t * dotprd ( p, w(x), w ) ) )
-
-	    if ( epso6 * twopsi <= t ) then
-	      v(preduc) = v(preduc) + t
-	      dst = rad
-	      t1 = -si
-	    end if
-
-	    do i = 1, p
-	      j = q0 + i
-	      w(j) = t1 * w(i) - w(j)
-	      step(i) = w(j) / d(i)
-	    end do
-
-	    v(gtstep) = dotprd ( p, dig, w(q) )
-	!
-	!  Save values for use in a possible restart.
-	!
-	    v(dstnrm) = dst
-	    v(stppar) = alphak
-	    w(lk0) = lk
-	    w(uk0) = uk
-	    v(rad0) = rad
-	    w(dstsav) = dst
-	!
-	!  Restore diagonal of DIHDI.
-	!
-	    j = 0
-	    do i = 1, p
-	      j = j + i
-	      k = diag0 + i
-	      dihdi(j) = w(k)
-	    end do
-
-	    return
-
-	  end if
-	!
-	!  Successful step.  Compute STEP = - inverse ( D ) * Q.
-	!
-	290 continue
-
-	  do i = 1, p
-	    j = q0 + i
-	    step(i) = -w(j) / d(i)
-	  end do
-	  v(gtstep) = -dotprd(p, dig, w(q))
-	  v(preduc) = 0.5E+00 * ( abs ( alphak ) *dst*dst - v(gtstep))
-	!
-	!  Save values for use in a possible restart.
-	!
-	  v(dstnrm) = dst
-	  v(stppar) = alphak
-	  w(lk0) = lk
-	  w(uk0) = uk
-	  v(rad0) = rad
-	  w(dstsav) = dst
-	!
-	!  Restore diagonal of DIHDI.
-	!
-	  j = 0
-	  do i = 1, p
-	    j = j + i
-	    k = diag0 + i
-	    dihdi(j) = w(k)
-	  end do*/
+	  for (i = 1; i <= p; i++) {
+	    j = q0 + i;
+	    step[i] = -w[j] / d[i];
+	  }
+	  arr = new double[p+1];
+	  for (ii = 1; ii <= p; ii++) {
+		  arr[ii] = w[q + ii - 1];
+	  }
+	  v[gtstep] = -dotprd(p, dig, arr);
+	  v[preduc] = 0.5 * ( Math.abs ( alphak ) *dst*dst - v[gtstep]);
+	//
+	//  Save values for use in a possible restart.
+	//
+	  v[dstnrm] = dst;
+	  v[stppar] = alphak;
+	  w[lk0] = lk;
+	  w[uk0] = uk;
+	  v[rad0] = rad;
+	  w[dstsav] = dst;
+	//
+	//  Restore diagonal of DIHDI.
+	//
+	  j = 0;
+	  for ( i = 1; i <= p; i++) {
+	    j = j + i;
+	    k = diag0 + i;
+	    dihdi[j] = w[k];
+	  }
 
 	  return;
+	} // if (do290)
+	} // loop2: while(true)
 	} // private void gqtstp
+	
+	private void itsmry ( double d[], int iv[], int p, double v[], double x[] ) {
+
+	/***********************************************************************
+	!
+	!! ITSMRY prints an iteration summary.
+	!
+	!  Modified:
+	!
+	!    06 April 2006
+	!
+	!  Author:
+	!
+	!    David Gay
+	!
+	!  Parameters:
+	!
+	!    Input, real D(P), the scale vector.
+	!
+	!    Input/output, integer IV(*), the NL2SOL integer parameter array.
+	!
+	!    Input, integer P, the number of variables.
+	!
+	!    Input, real V(*), the NL2SOL real array.
+	!
+	!    Input, real X(P), the current estimate of the minimizer.
+	*/
+	  
+
+	  int cov1;
+	  int covmat = 26;
+	  int covprt = 14;
+	  int covreq = 15;
+	  int dstnrm = 2;
+	  int f = 10;
+	  int f0 = 13;
+	  int fdif = 11;
+	  int g = 28;
+	  int g1;
+	  int i;
+	  int i1;
+	  int ii;
+	  int iv1;
+	  int j;
+	  int m;
+	  String model[] = new String[7];
+	  int needhd = 39;
+	  int nf;
+	  int nfcall = 6;
+	  int nfcov = 40;
+	  int ng;
+	  int ngcall = 30;
+	  int ngcov = 41;
+	  int niter = 31;
+	  int nreduc = 6;
+	  double nreldf;
+	  int ol;
+	  double oldf;
+	  int outlev = 19;
+	  int preduc = 7;
+	  double preldf;
+	  int prntit = 48;
+	  int prunit = 21;
+	  int pu;
+	  double reldf;
+	  int reldx = 17;
+	  int size = 47;
+	  int solprt = 22;
+	  int statpr = 23;
+	  int stppar = 5;
+	  int sused = 57;
+	  int x0prt = 24;
+
+	  model[1] = new String("      G");
+	  model[2] = new String("      S");
+	  model[3] = new String("    G-S");
+	  model[4] = new String("    S-G");
+	  model[5] = new String("  G-S-G");
+	  model[6] = new String("  S-G-S");
+	   
+
+	  pu = iv[prunit];
+
+	  if ( pu == 0 ) {
+	    return;
+	  }
+
+	  iv1 = iv[1];
+	  ol = iv[outlev];
+
+	  if ( iv1 < 2 || 15 < iv1 ) {
+	    Preferences.debug( "IV(1) = " +  iv1 + "\n");
+	    return;
+	  }
+
+	  
+	 /* if ((ol != 0) && (iv1 < 12)  && ((iv1 < 10) || (iv[prntit] != 0))) {
+
+	  if ( iv1 <= 2 ) then
+	    iv(prntit) = iv(prntit) + 1
+	    if (iv(prntit) < abs ( ol ) ) then
+	      return
+	    end if
+	  end if
+
+	 10   continue
+
+	      nf = iv(nfcall) - abs ( iv(nfcov) )
+	      iv(prntit) = 0
+	      reldf = 0.0E+00
+	      preldf = 0.0E+00
+	      oldf = v(f0)
+
+	      if ( 0.0E+00 < oldf ) then
+	         reldf = v(fdif) / oldf
+	         preldf = v(preduc) / oldf
+	      end if
+	!
+	!  Print short summary line.
+	!
+	      if ( ol <= 0 ) then
+
+	         if ( iv(needhd) == 1 ) then
+	           write ( pu, * ) ' '
+	           write ( pu, '(a)' ) &
+	           '    it    nf      f        reldf      preldf     reldx'
+	         end if
+
+	         iv(needhd) = 0
+	         write(pu,1017) iv(niter), nf, v(f), reldf, preldf, v(reldx)
+	!
+	!  Print long summary line.
+	!
+	      else
+
+	        if (iv(needhd) == 1) then
+	          write ( pu, * ) ' '
+	          write ( pu, * ) &
+	            '    it    nf      f        reldf      preldf     reldx' // &
+	            '    model    STPPAR      size      d*step     npreldf'
+	        end if
+
+	      iv(needhd) = 0
+	      m = iv(sused)
+	      if ( 0.0E+00 < oldf ) then
+	        nreldf = v(nreduc) / oldf
+	      else
+	        nreldf = 0.0E+00
+	      end if
+
+	      write(pu,1017) iv(niter), nf, v(f), reldf, preldf, v(reldx), &
+	                     model(m), v(stppar), v(size), &
+	                     v(dstnrm), nreldf
+	 1017 format(1x,i5,i6,4e11.3,a7,4e11.3)
+
+	  end if
+	  } // if ((ol != 0) && (iv1 < 12)  && ((iv1 < 10) || (iv[prntit] != 0)))
+
+	 20   continue
+
+	  if ( iv1 == 1 ) then
+
+	    return
+
+	  else if ( iv1 == 2 ) then
+
+	    return
+
+	  else if ( iv1 == 3 ) then
+
+	    write ( pu, * ) ' '
+	    write ( pu, '(a)' ) 'X-convergence.'
+
+	  else if ( iv1 == 4 ) then
+
+	    write ( pu, * ) ' '
+	    write ( pu, '(a)' ) 'Relative function convergence.'
+
+	  else if ( iv1 == 5 ) then
+
+	    write ( pu, * ) ' '
+	    write ( pu, '(a)' ) 'X- and relative function convergence.'
+
+	  else if ( iv1 == 6 ) then
+
+	    write ( pu, * ) ' '
+	    write ( pu, '(a)' ) 'Absolute function convergence.'
+
+	  else if ( iv1 == 7 ) then
+
+	    write ( pu, * ) ' '
+	    write ( pu, '(a)' ) 'Singular convergence.'
+
+	  else if ( iv1 == 8 ) then
+
+	    write ( pu, * ) ' '
+	    write ( pu, '(a)' ) 'False convergence.'
+
+	  else if ( iv1 == 9 ) then
+
+	    write ( pu, * ) ' '
+	    write ( pu, '(a)' ) 'Function evaluation limit.'
+
+	  else if ( iv1 == 10 ) then
+
+	    write ( pu, * ) ' '
+	    write ( pu, '(a)' ) 'Iteration limit.'
+
+	  else if ( iv1 == 11 ) then
+
+	    write ( pu, * ) ' '
+	    write ( pu, '(a)' ) 'Stopx.'
+
+	  else if ( iv1 == 14 ) then
+
+	    write ( pu, * ) ' '
+	    write ( pu, '(a)' ) 'Bad parameters to ASSESS.'
+	    return
+	!
+	!  Initial call on ITSMRY.
+	!
+	  else if ( iv1 == 12 .or. iv1 == 13 .or. iv1 == 15 ) then
+
+	    if ( iv1 == 15 ) then
+	      write ( pu, * ) ' '
+	      write ( pu, '(a)' ) 'J could not be computed.'
+	      if ( 0 < iv(niter) ) then
+	        go to 190
+	      end if
+	    end if
+
+	    if ( iv1 == 13 ) then
+	      write ( pu, * ) ' '
+	      write ( pu, '(a)' ) 'Initial sum of squares overflows.'
+	    end if
+
+	    if ( iv(x0prt) /= 0 ) then
+	      write ( pu, * ) ' '
+	      write ( pu, * ) '     I     Initial X(i)      D(i)'
+	      write ( pu, * ) ' '
+	      write(pu,1150) (i, x(i), d(i), i = 1, p)
+	    end if
+
+	 1150 format((1x,i5,e17.6,e14.3))
+
+	    if ( iv1 == 13 ) then
+	      return
+	    end if
+
+	    iv(needhd) = 0
+	    iv(prntit) = 0
+
+	    if ( ol == 0 ) then
+	      return
+	    else if ( ol < 0 ) then
+	      write ( pu, '(a)' ) ' '
+	      write ( pu, '(a)' ) &
+	        '    it    nf      f        reldf      preldf     reldx'
+	    else if ( 0 < ol ) then
+	      write ( pu, '(a)' ) ' '
+	      write ( pu, '(a)' ) &
+	        '    it    nf      f        reldf      preldf     reldx' // &
+	        '    model    STPPAR      size      d*step     npreldf'
+	    end if
+
+	    write ( pu, * ) ' '
+	    write(pu,1160) v(f)
+	 1160 format('     0     1',e11.3,11x,e11.3)
+	    return
+
+	  else
+
+	    return
+
+	  end if
+	!
+	!  Print various information requested on solution.
+	!
+	180 continue
+
+	      iv(needhd) = 1
+
+	      if ( iv(statpr) /= 0 ) then
+
+	         oldf = v(f0)
+
+	         if ( 0.0E+00 < oldf ) then
+	           preldf = v(preduc) / oldf
+	           nreldf = v(nreduc) / oldf
+	         else
+	           preldf = 0.0E+00
+	           nreldf = 0.0E+00
+	         end if
+
+	         nf = iv(nfcall) - iv(nfcov)
+	         ng = iv(ngcall) - iv(ngcov)
+	         write ( pu, * ) ' '
+	         write(pu,1180) v(f), v(reldx), nf, ng, preldf, nreldf
+	 1180 format(' function',e17.6,'   reldx',e20.6/' func. evals', &
+	         i8,9x,'grad. evals',i8/' preldf',e19.6,3x,'npreldf',e18.6)
+
+	         if ( 0 < iv(nfcov) ) then
+	           write ( pu, * ) ' '
+	           write ( pu, '(i5,a)' ) iv(nfcov), &
+	             ' extra function evaluations for covariance.'
+	         end if
+
+	         if ( 0 < iv(ngcov) ) then
+	           write ( pu, '(i5,a)' ) iv(ngcov), &
+	             ' extra gradient evaluations for covariance.'
+	         end if
+	      end if
+
+	 190  continue
+
+	      if ( iv(solprt) /= 0 ) then
+
+	         iv(needhd) = 1
+	         g1 = iv(g)
+
+	         write ( pu, '(a)' ) ' '
+	         write ( pu, '(a)' ) &
+	           '     I      Final X(I)        D(I)          G(I)'
+	         write ( pu, '(a)' ) ' '
+
+	         do i = 1, p
+	           write ( pu, '(i5,e17.6,2e14.3)' ) i, x(i), d(i), v(g1)
+	           g1 = g1 + 1
+	         end do
+
+	      end if
+
+	      if ( iv(covprt) == 0 ) then
+	        return
+	      end if
+
+	      cov1 = iv(covmat)
+	      iv(needhd) = 1
+
+	      if ( cov1 < 0 ) then
+
+	        if ( -1 == cov1 ) then
+	          write ( pu, '(a)' ) 'Indefinite covariance matrix'
+	        else if (-2 == cov1) then
+	          write ( pu, '(a)' ) 'Oversize steps in computing covariance'
+	        end if
+
+	      else if ( cov1 == 0 ) then
+
+	        write ( pu, '(a)' ) 'Covariance matrix not computed'
+
+	      else if ( 0 < cov1 ) then
+
+	        write ( pu, * ) ' '
+	        i = abs ( iv(covreq) )
+	        if ( i <= 1 ) then
+	          write ( pu, '(a)' ) 'Covariance = scale * H**-1 * (J'' * J) * H**-1'
+	        else if ( i == 2 ) then
+	          write ( pu, '(a)' ) 'Covariance = scale * inverse ( H )' 
+	        else if ( 3 <= i ) then
+	          write ( pu, '(a)' ) 'Covariance = scale * inverse ( J'' * J )'
+	        end if
+	        write ( pu, * ) ' '
+
+	        ii = cov1 - 1
+	        if ( ol <= 0 ) then
+	          do i = 1, p
+	            i1 = ii + 1
+	            ii = ii + i
+	            write(pu,1270) i, v(i1:ii)
+	          end do
+	 1270 format(' row',i3,2x,5e12.4/(9x,5e12.4))
+	        else
+
+	          do i = 1, p
+	            i1 = ii + 1
+	            ii = ii + i
+	            write(pu,1250) i, v(i1:ii)
+	          end do
+
+	 1250 format(' row',i3,2x,9e12.4/(9x,9e12.4))
+
+	    end if
+
+	  end if
+
+	  return*/
+	} // private void itsmry
 	
 	private void linvrt ( int n, double lin[], double l[] ) {
 
@@ -2802,6 +3288,191 @@ public abstract class NL2sol {
 
 	  return;
 	} // private void lsqrt
+	
+	private double lsvmin ( int p, double l[], double x[], double y[] ) {
+
+/***********************************************************************
+!
+!! LSVMIN estimates the smallest singular value of a lower triangular matrix.
+!
+!  Discussion:
+!
+!    This function returns a good over-estimate of the smallest
+!    singular value of the packed lower triangular matrix L.
+!
+!    The matrix L is a lower triangular matrix, stored compactly by rows.
+!
+!    The algorithm is based on Cline, Moler, Stewart and Wilkinson, 
+!    with the additional provision that LSVMIN = 0 is returned if the 
+!    smallest diagonal element of L in magnitude is not more than the unit 
+!    roundoff times the largest.  
+!
+!    The algorithm uses a random number generator proposed by Smith, 
+!    which passes the spectral test with flying colors; see Hoaglin and
+!    Knuth.
+!
+!  Modified:
+!
+!    04 April 2006
+!
+!  Author:
+!
+!    David Gay
+!
+!  Reference:
+!
+!    A Cline, Cleve Moler, Pete Stewart, James Wilkinson,
+!    An Estimate of the Condition Number of a Matrix,
+!    Report TM-310,
+!    Applied Math Division,
+!    Argonne National Laboratory, 1977.
+!
+!    D C Hoaglin,
+!    Theoretical Properties of Congruential Random-Number Generators,
+!    An Empirical View,
+!    Memorandum NS-340,
+!    Department of Statistics,
+!    Harvard University, 1976.
+!
+!    D E Knuth,
+!    The Art of Computer Programming,
+!    Volume 2, Seminumerical Algorithms,
+!    Addison Wesley, 1969.
+!
+!    C S Smith,
+!    Multiplicative Pseudo-Random Number Generators with Prime Modulus, 
+!    Journal of the Association for Computing Machinery,
+!    Volume 19, pages 586-593, 1971.
+!
+!  Parameters:
+!
+!    Input, integer P, the order of L.
+!
+!    Input, real L((P*(P+1))/2), the elements of the lower triangular
+!    matrix in row order, that is, L(1,1), L(2,1), L(2,2), L(3,1), L(3,2),
+!    L(3,3), and so on.
+!
+!    Output, real X(P).  If LSVMIN returns a positive value, then X 
+!    is a normalized approximate left singular vector corresponding to 
+!    the smallest singular value.  This approximation may be very
+!    crude.  If LSVMIN returns zero, then some components of X are zero 
+!    and the rest retain their input values.
+!
+!    Output, real Y(P).  If LSVMIN returns a positive value, then 
+!    Y = inverse ( L ) * X is an unnormalized approximate right singular 
+!    vector corresponding to the smallest singular value.  This 
+!    approximation may be crude.  If LSVMIN returns zero, then Y 
+!    retains its input value.  The caller may pass the same vector for X
+!    and Y, in which case Y overwrites X, for nonzero LSVMIN returns.
+*/
+
+  double b;
+  int i;
+  int ii;
+  int j;
+  int j0;
+  int ji;
+  int jj;
+  int jjj;
+  double result;
+  int pplus1;
+  double psj;
+  double sminus;
+  double splus;
+  double t;
+  double xminus;
+  double xplus;
+  int k;
+//
+//  First check whether to return LSVMIN = 0 and initialize X.
+//
+  ii = 0;
+
+  for (i = 1; i <= p; i++) {
+
+    x[i] = 0.0;
+    ii = ii + i;
+
+    if ( l[ii] == 0.0 ) {
+      result = 0.0;
+      return result;
+    }
+
+  } // for (i = 1; i <= p; i++)
+
+  if (( ix_lsvmin % 9973 ) == 0 ) {
+    ix_lsvmin = 2;
+  }
+//
+//  Solve L' * X = B, where the components of B have randomly
+//  chosen magnitudes in ( 0.5, 1 ) with signs chosen to make X large.
+//
+  for ( j = p; j >= 1; j--) {
+//
+//  Determine X(J) in this iteration.  Note for I = 1, 2,..., J
+//  that X(I) holds the current partial sum for row I.
+//
+    ix_lsvmin = ( 3432 * ix_lsvmin % 9973 );
+    b = 0.5 * ( 1.0 + ((double) ( ix_lsvmin )) / 9973.0 );
+    xplus = ( b - x[j] );
+    xminus = ( -b - x[j] );
+    splus = Math.abs ( xplus );
+    sminus = Math.abs ( xminus );
+    j0 = ( j * ( j - 1 ) ) / 2;
+    jj = j0 + j;
+    xplus = xplus / l[jj];
+    xminus = xminus / l[jj];
+
+    for ( i = 1; i <= j - 1; i++) {
+      ji = j0 + i;
+      splus = splus + Math.abs ( x[i] + l[ji] * xplus );
+      sminus = sminus + Math.abs ( x[i] + l[ji] * xminus );
+    }
+
+    if ( splus < sminus ) {
+      xplus = xminus;
+    }
+
+    x[j] = xplus;
+//
+//  Update partial sums.
+//
+    for ( i = 1; i <= j - 1; i++) {
+      ji = j0 + i;
+      x[i] = x[i] + l[ji] * xplus;
+    }
+
+  } // for (j = p; j >= 1; j--)
+//
+//  Normalize X.
+//
+  t = 1.0 / v2norm ( p, x );
+  for (k = 1; k <= p; k++) {
+      x[k] = t * x[k];
+  }
+//
+//  Solve L * Y = X.
+//  return SVMIN = 1 / twonorm ( Y ).
+//
+  for (j = 1; j <= p; j++) {
+
+    psj = 0.0;
+    j0 = ( j * ( j - 1 ) ) / 2;
+
+    for ( i = 1; i <= j - 1; i++) {
+      ji = j0 + i;
+      psj = psj + l[ji] * y[i];
+    }
+
+    jj = j0 + j;
+    y[j] = ( x[j] - psj ) / l[jj];
+
+  }
+
+  result = 1.0 / v2norm ( p, y );
+
+  return result;
+	} // private double lsvmin
 	
 	private void ltsqar ( int n, double a[], double l[] ) {
 	
