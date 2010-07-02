@@ -56,7 +56,7 @@ import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameMessage;
 import gov.nih.mipav.view.ViewUserInterface;
 
-public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery {
+public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery, AlgorithmTreParams {
 
     private static String title = "TRE T1 Mapper";
     
@@ -87,16 +87,11 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
     private double maxAngle = 20;
     
     private boolean smoothB1Field = true;
-    /**The following GUI choices change algorithm operation in binary ways*/
-    private boolean performStraightTreT1 = true;
-    private boolean performTreT1withPreCalculatedB1Map = false;
-    private boolean performTreT1HIFI = false;
-    private boolean doubleInversion = true;
-    private boolean singleInversion = false;
-    private boolean geScanner = true;
-    private boolean siemensScanner = false;
-    private boolean threeTField = true;
-    private boolean onefiveTField = false;
+    /**The following GUI choices change algorithm operation in bi/trinary ways*/
+    private FieldStrength mriStrength;
+	private ScannerType scannerType;
+	private Threshold thresholdMethod;
+	private InversionType inversionType;
     
     /**The list of possible maps that can be calculated*/
     private boolean calculateT1 = true;
@@ -179,29 +174,23 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	private JButton ok;
 	private JButton cancel;
 	private JRadioButton noCheckBox;
-	private Threshold t;
+	
 	private JScrollPane irspgrPanel;
+
+	private boolean performTreT1withPreCalculatedB1Map;
+
+	private boolean performStraightTreT1;
+
+	private boolean performTreT1HIFI;
+
+	private JCheckBox useB1Map;
 	private static final String SUCCESS = "Successful";
-    
-	/**
-	 * A three way boolean operator.
-	 * 
-	 * @author senseneyj
-	 *
-	 */
-	private enum Threshold {
-		HARD,
-		SMART,
-		NONE;
-		
-		Threshold() {}
-	}
 	
     /**
      * Blank constructor needed for dynamic instantiation.
      */
     public JDialogTreT1() { 
-    	t = Threshold.NONE;
+    	initParams();
     }
 
     /**
@@ -212,8 +201,16 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
      */
     public JDialogTreT1(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
-        t = Threshold.NONE;
+        initParams();
         run();
+    }
+    
+    private void initParams() {
+    	thresholdMethod = Threshold.NONE;
+    	scannerType = ScannerType.GE;
+    	mriStrength = FieldStrength.mri15T;
+    	inversionType = InversionType.SINGLE;
+    	performStraightTreT1 = true;
     }
     
     public void algorithmPerformed(AlgorithmBase algorithm) {
@@ -274,8 +271,8 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    
 	    spgrNumFA = guiBuilder.buildDecimalField("Number of SPGR Flip Angles:", Nsa);
 	    irspgrNum = guiBuilder.buildDecimalField("Number of IR-SPGR TI Times:", Nti);
-	    isGEButton = guiBuilder.buildRadioButton("Scan Performed on a GE Scanner", geScanner);
-	    isSiemensButton = guiBuilder.buildRadioButton("Scan Performed on a Siemens Scanner", siemensScanner);
+	    isGEButton = guiBuilder.buildRadioButton("Scan Performed on a GE Scanner", scannerType.equals(ScannerType.GE));
+	    isSiemensButton = guiBuilder.buildRadioButton("Scan Performed on a Siemens Scanner", scannerType.equals(ScannerType.SIEMENS));
 	    
 	    ActionListener c = new ScannerChoiceListener();
 	    isGEButton.addActionListener(c);
@@ -317,14 +314,19 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    GridBagConstraints gbc = new GridBagConstraints();
 	    panel.setLayout(panelLayout);
 	    
+	    spgrNumFA = guiBuilder.buildDecimalField("Number of SPGR Flip Angles:", Nsa);
+	    useB1Map = guiBuilder.buildCheckBox("Use B1 Map", performTreT1withPreCalculatedB1Map);
+	    useB1Map.addActionListener(new ProcessChoiceListener());
+	    
 	    gbc.gridx = 0;
 	    gbc.gridy = 0;
 	    gbc.weightx = 1;
 	    gbc.anchor = GridBagConstraints.WEST;
 	    gbc.insets = new Insets(10, 0, 0, 0);
-	    spgrNumFA = guiBuilder.buildDecimalField("Number of SPGR Flip Angles:", Nsa);
-	    
 	    panel.add(spgrNumFA.getParent(), gbc);
+	    
+	    gbc.gridy++;
+	    panel.add(useB1Map.getParent(), gbc);
 	 
 	    //TODO: Remove dummy label for display
 	    gbc.gridy++;
@@ -420,7 +422,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	protected JScrollPane buildIRSPGRPanel() {
 	    
 		JPanel panel = null;
-		if(geScanner) {
+		if(scannerType.equals(ScannerType.GE)) {
 			panel = buildIRSPGRPanelGEInner();
 		} else {
 			panel = buildIRSPGRPanelSiemensInner();
@@ -443,7 +445,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 						if(obj instanceof JScrollPane) {
 							Nti = Double.valueOf(irspgrNum.getText()).intValue();
 							((JScrollPane) obj).getViewport().removeAll();
-							if(geScanner) {
+							if(scannerType.equals(ScannerType.GE)) {
 								((JScrollPane) obj).setViewportView(buildIRSPGRPanelGEInner());
 								((JScrollPane) obj).setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR GE Image Information"));
 							} else {
@@ -498,10 +500,10 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    irspgrTRField = guiBuilder.buildDecimalField("IR-SPGR Repetition Time (ms)", irspgrTR);
 	    irspgrFAField = guiBuilder.buildDecimalField("IR-SPGR Flip Angle", irspgrFA);
 	    numSlicesField = guiBuilder.buildDecimalField("Total Number of Acquired Slices", irspgrKy);
-	    doubleInvRadio = guiBuilder.buildRadioButton("Double Inversion Regime", doubleInversion);
-	    singleInvRadio = guiBuilder.buildRadioButton("Single Inversion Regime", singleInversion);
-	    t15Radio = guiBuilder.buildRadioButton("1.5T Field Strength", onefiveTField);
-	    t30Radio = guiBuilder.buildRadioButton("3.0T Field Strength", threeTField);
+	    doubleInvRadio = guiBuilder.buildRadioButton("Double Inversion Regime", inversionType.equals(InversionType.DOUBLE));
+	    singleInvRadio = guiBuilder.buildRadioButton("Single Inversion Regime", inversionType.equals(InversionType.SINGLE));
+	    t15Radio = guiBuilder.buildRadioButton("1.5T Field Strength", mriStrength.equals(FieldStrength.mri15T));
+	    t30Radio = guiBuilder.buildRadioButton("3.0T Field Strength", mriStrength.equals(FieldStrength.mri3T));
 	    smoothB1Box = guiBuilder.buildCheckBox("Smooth B1 Field Prior to T1 Calculations", smoothB1Field);
 	    
 	    inversionGroup = new ButtonGroup();
@@ -580,10 +582,10 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    irspgrTRField = guiBuilder.buildDecimalField("IR-SPGR Repetition Time (ms)", irspgrTR);
 	    irspgrFAField = guiBuilder.buildDecimalField("IR-SPGR Flip Angle", irspgrFA);
 	    numSlicesField = guiBuilder.buildDecimalField("Total Number of Acquired Slices", irspgrKy);
-	    doubleInvRadio = guiBuilder.buildRadioButton("Double Inversion Regime", doubleInversion);
-	    singleInvRadio = guiBuilder.buildRadioButton("Single Inversion Regime", singleInversion);
-	    t15Radio = guiBuilder.buildRadioButton("1.5T Field Strength", onefiveTField);
-	    t30Radio = guiBuilder.buildRadioButton("3.0T Field Strength", threeTField);
+	    doubleInvRadio = guiBuilder.buildRadioButton("Double Inversion Regime", inversionType.equals(InversionType.DOUBLE));
+	    singleInvRadio = guiBuilder.buildRadioButton("Single Inversion Regime", inversionType.equals(InversionType.SINGLE));
+	    t15Radio = guiBuilder.buildRadioButton("1.5T Field Strength", mriStrength.equals(FieldStrength.mri15T));
+	    t30Radio = guiBuilder.buildRadioButton("3.0T Field Strength", mriStrength.equals(FieldStrength.mri3T));
 	    smoothB1Box = guiBuilder.buildCheckBox("Smooth B1 Field Prior to T1 Calculations", smoothB1Field);
 	    
 	    inversionGroup = new ButtonGroup();
@@ -679,18 +681,12 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    gbc.gridy = 0;
 	    gbc.weighty = 0;
 	    gbc.weightx = 1;
-	    b1Field = null;
-	    if(performTreT1withPreCalculatedB1Map) {
-	    	gbc.gridy++;
-	    	b1Field = guiBuilder.buildComboBox("B1 Field Map:", titles, 0);
-	        panel.add(b1Field.getParent(), gbc);
-	    }
 	    
 	    convimageComboAr = new JComboBox[Nsa];
 	    convFAFieldAr = new JTextField[Nsa];
 	    for(int i=0; i<Nsa; i++) {
 	        convimageComboAr[i] = guiBuilder.buildComboBox("Image #"+(i+1), titles, i);
-	        gbc.gridy = performTreT1withPreCalculatedB1Map ? i+1 : i;
+	        gbc.gridy = i;
 	        gbc.gridx = 0;
 	        gbc.weightx = .9;
 	        panel.add(convimageComboAr[i].getParent(), gbc);
@@ -710,6 +706,13 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    gbc.insets = new Insets(10, 0, 0, 0);
 	    convRepTime = guiBuilder.buildDecimalField("Repetition Time (ms):", treTR);
 	    panel.add(convRepTime.getParent(), gbc);
+	    
+	    b1Field = null;
+	    if(performTreT1withPreCalculatedB1Map) {
+	    	gbc.gridy++;
+	    	b1Field = guiBuilder.buildComboBox("B1 Field Map:", titles, 0);
+	        panel.add(b1Field.getParent(), gbc);
+	    }
 	    
 	    //TODO: Remove dummy label for display
 	    gbc.gridy++;
@@ -765,7 +768,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	}
 
 	protected JPanel buildThresholdPanel() {
-		System.out.println("The selected state: "+t);
+		System.out.println("The selected state: "+thresholdMethod);
 		
 		JPanel panel = new JPanel();
 	    LayoutManager panelLayout = new GridBagLayout();
@@ -778,21 +781,21 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    methodPanel.setLayout(methodLayout);
 	    methodPanel.setBorder(MipavUtil.buildTitledBorder("Thresholding method"));
 	    
-	    smartCheckBox = guiBuilder.buildRadioButton("Use Smart Thresholding", t.equals(Threshold.SMART));
-	    hardCheckBox = guiBuilder.buildRadioButton("Use Hard Thresholding", t.equals(Threshold.HARD));
-	    noCheckBox = guiBuilder.buildRadioButton("No Thresholding", t.equals(Threshold.NONE));
+	    smartCheckBox = guiBuilder.buildRadioButton("Use Smart Thresholding", thresholdMethod.equals(Threshold.SMART));
+	    hardCheckBox = guiBuilder.buildRadioButton("Use Hard Thresholding", thresholdMethod.equals(Threshold.HARD));
+	    noCheckBox = guiBuilder.buildRadioButton("No Thresholding", thresholdMethod.equals(Threshold.NONE));
 	    
 	    thresholdGroup = new ButtonGroup();
 	    thresholdGroup.add(smartCheckBox);
 	    thresholdGroup.add(hardCheckBox);
 	    thresholdGroup.add(noCheckBox);
 	    
-	    if(t == null) {
+	    if(thresholdMethod == null) {
 	    	smartCheckBox.setSelected(true);
-	    	t = Threshold.SMART;
+	    	thresholdMethod = Threshold.SMART;
 	    }
 	    
-	    System.out.println("The selected state: "+t);
+	    System.out.println("The selected state: "+thresholdMethod);
 	    
 	    ActionListener c = new ThresholdChoiceListener();
 	    smartCheckBox.addActionListener(c);
@@ -814,13 +817,13 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    
 	    JPanel innerPanel = null;
 	    
-	    if(t.equals(Threshold.SMART)) {
+	    if(thresholdMethod.equals(Threshold.SMART)) {
 	    	innerPanel = buildSmartThresholdPanel();
-	    } else if(t.equals(Threshold.HARD)) {
+	    } else if(thresholdMethod.equals(Threshold.HARD)) {
 	    	innerPanel = buildHardThresholdPanel();
 	    } else {
 	    	innerPanel = buildNoThresholdPanel();
-	    	t = Threshold.NONE;
+	    	thresholdMethod = Threshold.NONE;
 	    }
 	    generalThresholdPanel.add(innerPanel);
 	    
@@ -930,18 +933,38 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 
 	protected void callAlgorithm() {
         // Make algorithm
-        boolean useSmartThresholding = false;
-        boolean useHardThresholding = false;
-		//TODO: get algorithm to accept no thresholding
-		if(t.equals(Threshold.SMART)) {
-			useSmartThresholding = true;
-		} else if(t.equals(Threshold.HARD)) {
-			useHardThresholding = true;
-		} else {
-			t = Threshold.NONE;
-			useHardThresholding = true;
-			hardNoiseThreshold = 0.0f;
-		}
+		boolean useHardThresholding = false, useSmartThresholding = false;
+    	boolean doubleInversion = false, singleInversion = false;
+    	boolean geScanner = false, siemensScanner = false;
+    	boolean threeTField = false, onefiveTField = false;
+        
+        //convert enums to simple booleans
+    	if(thresholdMethod.equals(Threshold.SMART)) {
+    		useSmartThresholding = true;
+    	} else if(thresholdMethod.equals(Threshold.HARD)) {
+    		useHardThresholding = true;
+    	} else {
+    		useHardThresholding = true;
+    		hardNoiseThreshold = 0.0f;
+    	}
+    	
+    	if(inversionType.equals(InversionType.DOUBLE)) {
+    		doubleInversion = true;
+    	} else if(inversionType.equals(InversionType.SINGLE)){
+    		singleInversion = true;
+    	}
+    	
+    	if(scannerType.equals(ScannerType.GE)) {
+    		geScanner = true;
+    	} else {
+    		siemensScanner = true;
+    	}
+    	
+    	if(mriStrength.equals(FieldStrength.mri15T)) {
+    		onefiveTField = true;
+    	} else {
+    		threeTField = true;
+    	}
 		
 		cAlgo = new AlgorithmTreT1(treTR, irspgrTR,
                 irspgrKy, irspgrFA, maxT1, maxMo,
@@ -1175,12 +1198,12 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
         performStraightTreT1 = scriptParameters.getParams().getBoolean("perform_Straight_treT1");
         performTreT1withPreCalculatedB1Map = scriptParameters.getParams().getBoolean("perform_treT1_with_PreCalculatedB1Map");
         performTreT1HIFI = scriptParameters.getParams().getBoolean("perform_treT1_HIFI");
-        doubleInversion = scriptParameters.getParams().getBoolean("double_Inversion");
-        singleInversion = scriptParameters.getParams().getBoolean("single_Inversion");
-        geScanner = scriptParameters.getParams().getBoolean("ge_Scanner");
-        siemensScanner = scriptParameters.getParams().getBoolean("siemens_Scanner");
-        threeTField = scriptParameters.getParams().getBoolean("three_T_Field");
-        onefiveTField = scriptParameters.getParams().getBoolean("one_five_TField");
+        boolean doubleInversion = scriptParameters.getParams().getBoolean("double_Inversion");
+        boolean singleInversion = scriptParameters.getParams().getBoolean("single_Inversion");
+        boolean geScanner = scriptParameters.getParams().getBoolean("ge_Scanner");
+        boolean siemensScanner = scriptParameters.getParams().getBoolean("siemens_Scanner");
+        boolean threeTField = scriptParameters.getParams().getBoolean("three_T_Field");
+        boolean onefiveTField = scriptParameters.getParams().getBoolean("one_five_TField");
         calculateT1 = scriptParameters.getParams().getBoolean("calculate_T1");
         showB1Map = scriptParameters.getParams().getBoolean("show_B1_Map");
         calculateMo = scriptParameters.getParams().getBoolean("calculate_Mo");
@@ -1219,26 +1242,69 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
         wList = wListArr.toArray(new String[0]);
         titles = wListArr.toArray(new String[0]);
         
+        //TODO: Implement enumerations in JIST
+        //set enumerations
         if(useSmartThresholding) {
-        	t = Threshold.SMART;
+        	thresholdMethod = Threshold.SMART;
         } else if(useHardThresholding) {
-        	t = Threshold.HARD;
+        	thresholdMethod = Threshold.HARD;
         } else {
-        	t = Threshold.NONE;
+        	thresholdMethod = Threshold.NONE;
         	hardNoiseThreshold = 0.0f;
+        }
+        
+        if(doubleInversion) {
+        	inversionType = InversionType.DOUBLE;
+        } else {
+        	inversionType = InversionType.SINGLE;
+        }
+        
+        if(geScanner) {
+        	scannerType = ScannerType.GE;
+        } else {
+        	scannerType = ScannerType.PHILIPS;
+        }
+        
+        if(threeTField) {
+        	mriStrength = FieldStrength.mri3T;
+        } else {
+        	mriStrength = FieldStrength.mri15T;
         }
     }
 
     protected void storeParamsFromGUI() throws ParserException {
-        boolean useHardThresholding = false, useSmartThresholding = false;
+        //TODO: Get JIST to understand enumerations
+    	boolean useHardThresholding = false, useSmartThresholding = false;
+    	boolean doubleInversion = false, singleInversion = false;
+    	boolean geScanner = false, siemensScanner = false;
+    	boolean threeTField = false, onefiveTField = false;
         
-    	if(t.equals(Threshold.SMART)) {
+        //convert enums to simple booleans
+    	if(thresholdMethod.equals(Threshold.SMART)) {
     		useSmartThresholding = true;
-    	} else if(t.equals(Threshold.HARD)) {
+    	} else if(thresholdMethod.equals(Threshold.HARD)) {
     		useHardThresholding = true;
     	} else {
     		useHardThresholding = true;
     		hardNoiseThreshold = 0.0f;
+    	}
+    	
+    	if(inversionType.equals(InversionType.DOUBLE)) {
+    		doubleInversion = true;
+    	} else if(inversionType.equals(InversionType.SINGLE)){
+    		singleInversion = true;
+    	}
+    	
+    	if(scannerType.equals(ScannerType.GE)) {
+    		geScanner = true;
+    	} else {
+    		siemensScanner = true;
+    	}
+    	
+    	if(mriStrength.equals(FieldStrength.mri15T)) {
+    		onefiveTField = true;
+    	} else {
+    		threeTField = true;
     	}
     	
     	scriptParameters.getParams().put(ParameterFactory.newParameter("tre_TR", treTR));
@@ -1294,7 +1360,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
         scriptParameters.getParams().put(ParameterFactory.newParameter("perform_Straight_treT1", performStraightTreT1));
         scriptParameters.getParams().put(ParameterFactory.newParameter("perform_treT1_with_PreCalculatedB1Map", performTreT1withPreCalculatedB1Map));
         scriptParameters.getParams().put(ParameterFactory.newParameter("perform_treT1_HIFI", performTreT1HIFI));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("double_Inversion", doubleInversion));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("double_Inversion", doubleInversion));
         scriptParameters.getParams().put(ParameterFactory.newParameter("single_Inversion", singleInversion));
         scriptParameters.getParams().put(ParameterFactory.newParameter("ge_Scanner", geScanner));  
         scriptParameters.getParams().put(ParameterFactory.newParameter("siemens_Scanner", siemensScanner));
@@ -1381,7 +1447,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    
 	    irspgrPanel = buildIRSPGRPanel();
 	    
-	    if(geScanner) {
+	    if(scannerType.equals(ScannerType.GE)) {
 	    	irspgrPanel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR GE Image Information"));
 		} else {
 			irspgrPanel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR Siemens Image Information"));
@@ -1396,7 +1462,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    
 	    tab.add(hifiPanel, "1: General");
 	    tab.add(spgrPanel, "2: Images");
-	    if(geScanner) {
+	    if(scannerType.equals(ScannerType.GE)) {
 	    	tab.add(irspgrPanel, "3: GE");
 	    } else {
 	    	tab.add(irspgrGeneralPanel, "3: Siemens");
@@ -1430,8 +1496,13 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	}
 
 	private void setProcessConvUI() {
-    	performStraightTreT1 = true;
-		performTreT1withPreCalculatedB1Map = false;
+    	if(useB1Map != null && useB1Map.isSelected()) {
+			performStraightTreT1 = false;
+	    	performTreT1withPreCalculatedB1Map = true;
+    	} else {
+    		performStraightTreT1 = true;
+	    	performTreT1withPreCalculatedB1Map = false;
+    	}
         performTreT1HIFI = false;
     }
     
@@ -1526,18 +1597,30 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 		    }
 	    	
 	    	try {
-			    geScanner = isGEButton.isSelected();
-			    siemensScanner = isSiemensButton.isSelected();
-			    doubleInversion = doubleInvRadio.isSelected();
-			    singleInversion = singleInvRadio.isSelected();
-			    onefiveTField = t15Radio.isSelected();
-			    threeTField = t30Radio.isSelected();
+			    if(isGEButton.isSelected()) {
+			    	scannerType = ScannerType.GE;
+			    } else if(isGEButton.isSelected()) {
+			    	scannerType = ScannerType.SIEMENS;
+			    }
+	    		
+			    if(doubleInvRadio.isSelected()) {
+			    	inversionType = InversionType.DOUBLE;
+			    } else if(singleInvRadio.isSelected()) {
+			    	inversionType = InversionType.SINGLE;
+			    }
+			    
+			    if(t15Radio.isSelected()) {
+			    	mriStrength = FieldStrength.mri15T;
+			    } else if(t30Radio.isSelected()) {
+			    	mriStrength = FieldStrength.mri3T;
+			    }
+			   
 			    showB1Map = showB1Check.isSelected(); //this value is only used for HIFI, so should be left here
 			    smoothB1Field = smoothB1Box.isSelected();
 			    
-			    ViewUserInterface.getReference().getMessageFrame().append("geScanner vs siemensScanner: "+geScanner+" "+siemensScanner+"\n", ViewJFrameMessage.DEBUG);
-			    ViewUserInterface.getReference().getMessageFrame().append("doubleInversion vs singleInversion: "+doubleInversion+" "+singleInversion+"\n", ViewJFrameMessage.DEBUG);
-			    ViewUserInterface.getReference().getMessageFrame().append("onefiveTField vs threeTField: "+onefiveTField+" "+threeTField+"\n", ViewJFrameMessage.DEBUG);
+			    ViewUserInterface.getReference().getMessageFrame().append("scanner typer: "+scannerType.toString()+"\n", ViewJFrameMessage.DEBUG);
+			    ViewUserInterface.getReference().getMessageFrame().append("inversionType: "+inversionType.toString()+"\n", ViewJFrameMessage.DEBUG);
+			    ViewUserInterface.getReference().getMessageFrame().append("fieldStrength: "+mriStrength.toString()+"\n", ViewJFrameMessage.DEBUG);
 			    ViewUserInterface.getReference().getMessageFrame().append("showB1Map: "+showB1Map+"\n", ViewJFrameMessage.DEBUG);
 			    ViewUserInterface.getReference().getMessageFrame().append("smoothB1Field: "+smoothB1Field+"\n", ViewJFrameMessage.DEBUG);
 	    	} catch(Exception e) { 
@@ -1596,49 +1679,34 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    }
 	    
 	    if(smartCheckBox.isSelected()) {
-	    	t = Threshold.SMART;
+	    	thresholdMethod = Threshold.SMART;
 	    } else if(hardCheckBox.isSelected()) {
-	    	t = Threshold.HARD;
+	    	thresholdMethod = Threshold.HARD;
 	    } else {
-	    	t = Threshold.NONE;
+	    	thresholdMethod = Threshold.NONE;
 	    }
 	    
-	    ViewUserInterface.getReference().getMessageFrame().append("Threshold: "+t.toString()+"\n", ViewJFrameMessage.DEBUG);
+	    ViewUserInterface.getReference().getMessageFrame().append("Threshold: "+thresholdMethod.toString()+"\n", ViewJFrameMessage.DEBUG);
 	    
 	    String threshOutput;
-	    if(t.equals(Threshold.SMART)) {
+	    if(thresholdMethod.equals(Threshold.SMART)) {
 	    	if((!(threshOutput = setSmartThresholdUI(process)).equals(SUCCESS)) && process) {
 	    		return threshOutput;
 	    	}
-	    } else if(t.equals(Threshold.HARD)) {
+	    } else if(thresholdMethod.equals(Threshold.HARD)) {
 	    	if((!(threshOutput = setHardThresholdUI(process)).equals(SUCCESS)) && process) {
 	    		return threshOutput;
 	    	}
-	    } else if(t.equals(Threshold.NONE)) {
+	    } else if(thresholdMethod.equals(Threshold.NONE)) {
 	    	hardNoiseThreshold = 0.0f;
-	    }
-	    
-	    //setting defaults
-	    if (doubleInversion == true) {
-	        singleInversion = false;
-	    }
-	    if (singleInversion == true) {
-	        doubleInversion = false;
-	    }
-	    
-	    if (onefiveTField == true) {
-	        threeTField = false;
-	    }
-	    if (threeTField == true) {
-	        onefiveTField = false;
 	    }
 	    
 	    //pre-processing
 	    if(process && performTreT1HIFI) {
 	    	System.out.println("In hifi");
 	    	try {
-			    if (threeTField == true) {
-			        if (doubleInversion == true) {
+			    if (mriStrength.equals(FieldStrength.mri3T)) {
+			        if (inversionType.equals(InversionType.DOUBLE)) {
 			            for (int i=0; i<Nti; i++) {
 			            	irspgrTI[i] = irspgrTI[i]*0.9;
 			            }
@@ -1652,7 +1720,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 			        }
 			    }
 			    else {
-			        if (doubleInversion == true) {
+			        if (inversionType.equals(InversionType.DOUBLE)) {
 			            for (int i=0; i<Nti; i++) {
 			            	irspgrTI[i] = irspgrTI[i];
 			            }
@@ -1737,12 +1805,9 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    }
 	    
 	    if(performTreT1HIFI) {
-		    //hifi
-		    if (geScanner == true) {
-		        siemensScanner = false;
-		    }
-		    if (siemensScanner == true) {
-		        geScanner = false;
+		    if(performTreT1HIFI && (inversionType == null || mriStrength == null || scannerType == null)) {
+		    	MipavUtil.displayError("Values for the inversion regime, field strength, and scanner type are required for hifi processing");
+		    	return false;
 		    }
 		    
 		    if (Nti < 1) {
@@ -1781,7 +1846,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 		    setMaximumSize(new Dimension(800+dialogWidthAdd, 1200));
 		    
 			if (doConvTre.isSelected()) {
-				//showHIFIDialog();
+				//this section may e
 				setProcessHifiUI();
 	            setUI(false);
 	            
@@ -1819,9 +1884,9 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	 */
     private class ThresholdChoiceListener implements ActionListener {
     	private void varSet() {
-    		if(t.equals(Threshold.HARD)) {
+    		if(thresholdMethod.equals(Threshold.HARD)) {
     			setHardThresholdUI(false);
-    		} else if(t.equals(Threshold.SMART)) {
+    		} else if(thresholdMethod.equals(Threshold.SMART)) {
     			setSmartThresholdUI(false);
     		} else {
     			hardNoiseThreshold = 0.0f;
@@ -1831,13 +1896,13 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
     		JPanel genericPanel = null;
     		
 			if (hardCheckBox.isSelected()) {
-				t = Threshold.HARD;
+				thresholdMethod = Threshold.HARD;
 				genericPanel = buildHardThresholdPanel();
 	        } else if (smartCheckBox.isSelected()) {
-	        	t = Threshold.SMART;
+	        	thresholdMethod = Threshold.SMART;
 				genericPanel = buildSmartThresholdPanel();
 	        } else if(noCheckBox.isSelected()) {
-	        	t = Threshold.NONE;
+	        	thresholdMethod = Threshold.NONE;
 	        	genericPanel = buildNoThresholdPanel();
 	        }
 			generalThresholdPanel.add(genericPanel);
@@ -2170,12 +2235,14 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
             table.put(new ParameterBoolean("perform_Straight_treT1", performStraightTreT1));
             table.put(new ParameterBoolean("perform_treT1_with_PreCalculatedB1Map", performTreT1withPreCalculatedB1Map));
             table.put(new ParameterBoolean("perform_treT1_HIFI", performTreT1HIFI));
-            table.put(new ParameterBoolean("double_Inversion", doubleInversion));
-            table.put(new ParameterBoolean("single_Inversion", singleInversion));
-            table.put(new ParameterBoolean("ge_Scanner", geScanner));
-            table.put(new ParameterBoolean("siemens_Scanner", siemensScanner));
-            table.put(new ParameterBoolean("three_T_Field", threeTField));
-            table.put(new ParameterBoolean("one_five_TField", onefiveTField));
+
+            table.put(new ParameterBoolean("double_Inversion", performTreT1HIFI && inversionType.equals(InversionType.DOUBLE)));
+            table.put(new ParameterBoolean("single_Inversion", performTreT1HIFI && inversionType.equals(InversionType.SINGLE)));
+            table.put(new ParameterBoolean("ge_Scanner", performTreT1HIFI && scannerType.equals(ScannerType.GE)));
+            table.put(new ParameterBoolean("siemens_Scanner", performTreT1HIFI && scannerType.equals(ScannerType.SIEMENS)));
+            table.put(new ParameterBoolean("three_T_Field", performTreT1HIFI && mriStrength.equals(FieldStrength.mri3T)));
+            table.put(new ParameterBoolean("one_five_TField", performTreT1HIFI && mriStrength.equals(FieldStrength.mri15T)));
+
             table.put(new ParameterBoolean("calculate_T1", calculateT1));
             table.put(new ParameterBoolean("show_B1_Map", showB1Map));
             table.put(new ParameterBoolean("calculate_Mo", calculateMo));
@@ -2186,8 +2253,8 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
             table.put(new ParameterBoolean("upper_Right_Corner", upperRightCorner));
             table.put(new ParameterBoolean("lower_Left_Corner", lowerLeftCorner));
             table.put(new ParameterBoolean("lower_Right_Corner", lowerRightCorner));
-            table.put(new ParameterBoolean("use_Smart_Thresholding", t.equals(Threshold.SMART)));
-            table.put(new ParameterBoolean("use_Hard_Thresholding", t.equals(Threshold.NONE) || t.equals(Threshold.HARD)));
+            table.put(new ParameterBoolean("use_Smart_Thresholding", thresholdMethod.equals(Threshold.SMART)));
+            table.put(new ParameterBoolean("use_Hard_Thresholding", thresholdMethod.equals(Threshold.NONE) || thresholdMethod.equals(Threshold.HARD)));
             
             table.put(new ParameterFloat("noise_Scale", noiseScale));
             table.put(new ParameterFloat("hard_Noise_Threshold", hardNoiseThreshold));
