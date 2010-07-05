@@ -717,7 +717,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         mainPanel.add(labelInitial0, gbc);
         
         textInitial0 = new JTextField(10);
-        textInitial0.setText("0.495");
+        textInitial0.setText("0.02");
         textInitial0.setForeground(Color.black);
         textInitial0.setFont(serif12);
         gbc.gridx = 1;
@@ -759,7 +759,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         mainPanel.add(labelInitial1, gbc);
         
         textInitial1 = new JTextField(10);
-        textInitial1.setText("0.495");
+        textInitial1.setText("0.4");
         textInitial1.setForeground(Color.black);
         textInitial1.setFont(serif12);
         gbc.gridx = 1;
@@ -801,7 +801,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         mainPanel.add(labelInitial2, gbc);
         
         textInitial2 = new JTextField(10);
-        textInitial2.setText("0.495");
+        textInitial2.setText("0.02");
         textInitial2.setForeground(Color.black);
         textInitial2.setFont(serif12);
         gbc.gridx = 1;
