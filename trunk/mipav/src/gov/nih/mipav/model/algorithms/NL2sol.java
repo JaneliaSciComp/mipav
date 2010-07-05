@@ -2677,6 +2677,7 @@ public abstract class NL2sol {
 	  int stppar = 5;
 	  int sused = 57;
 	  int x0prt = 24;
+	  boolean do180 = true;
 
 	  model[1] = new String("      G");
 	  model[2] = new String("      S");
@@ -2701,297 +2702,257 @@ public abstract class NL2sol {
 	  }
 
 	  
-	 /* if ((ol != 0) && (iv1 < 12)  && ((iv1 < 10) || (iv[prntit] != 0))) {
+	 if ((ol != 0) && (iv1 < 12)  && ((iv1 < 10) || (iv[prntit] != 0))) {
 
-	  if ( iv1 <= 2 ) then
-	    iv(prntit) = iv(prntit) + 1
-	    if (iv(prntit) < abs ( ol ) ) then
-	      return
-	    end if
-	  end if
+	  if ( iv1 <= 2 ) {
+	    iv[prntit] = iv[prntit] + 1;
+	    if (iv[prntit] < Math.abs ( ol ) ) {
+	      return;
+	    }
+	  } // if (iv1 <= 2)
 
-	 10   continue
+	      nf = iv[nfcall] - Math.abs ( iv[nfcov] );
+	      iv[prntit] = 0;
+	      reldf = 0.0;
+	      preldf = 0.0;
+	      oldf = v[f0];
 
-	      nf = iv(nfcall) - abs ( iv(nfcov) )
-	      iv(prntit) = 0
-	      reldf = 0.0E+00
-	      preldf = 0.0E+00
-	      oldf = v(f0)
-
-	      if ( 0.0E+00 < oldf ) then
-	         reldf = v(fdif) / oldf
-	         preldf = v(preduc) / oldf
-	      end if
-	!
-	!  Print short summary line.
-	!
-	      if ( ol <= 0 ) then
-
-	         if ( iv(needhd) == 1 ) then
-	           write ( pu, * ) ' '
-	           write ( pu, '(a)' ) &
-	           '    it    nf      f        reldf      preldf     reldx'
-	         end if
-
-	         iv(needhd) = 0
-	         write(pu,1017) iv(niter), nf, v(f), reldf, preldf, v(reldx)
-	!
-	!  Print long summary line.
-	!
-	      else
-
-	        if (iv(needhd) == 1) then
-	          write ( pu, * ) ' '
-	          write ( pu, * ) &
-	            '    it    nf      f        reldf      preldf     reldx' // &
-	            '    model    STPPAR      size      d*step     npreldf'
-	        end if
-
-	      iv(needhd) = 0
-	      m = iv(sused)
-	      if ( 0.0E+00 < oldf ) then
-	        nreldf = v(nreduc) / oldf
-	      else
-	        nreldf = 0.0E+00
-	      end if
-
-	      write(pu,1017) iv(niter), nf, v(f), reldf, preldf, v(reldx), &
-	                     model(m), v(stppar), v(size), &
-	                     v(dstnrm), nreldf
-	 1017 format(1x,i5,i6,4e11.3,a7,4e11.3)
-
-	  end if
+	      if ( 0.0 < oldf ) {
+	         reldf = v[fdif] / oldf;
+	         preldf = v[preduc] / oldf;
+	      }
+	//
+	//  Print short summary line.
+	//
+	      if ( ol <= 0 ) {
+	         iv[needhd] = 0;
+	         Preferences.debug("iv[niter] = iv["+niter+"] = " + iv[niter] + "\n");
+	         Preferences.debug("nf = " + nf + "\n");
+	         Preferences.debug("v[f] = v["+f+"] = " + v[f] + "\n");
+	         Preferences.debug("reldf = " + reldf + "\n");
+	         Preferences.debug("preldf = " + preldf + "\n");
+	         Preferences.debug("v[reldx] = v["+ reldx + "] = " + v[reldx] + "\n");
+	      } // if (ol <= 0)
+	//
+    //  Print long summary line.
+	//
+	      else {
+		      iv[needhd] = 0;
+		      m = iv[sused];
+		      if ( 0.0 < oldf ) {
+		        nreldf = v[nreduc] / oldf;
+		      }
+		      else {
+		        nreldf = 0.0;
+		      }
+	
+		      Preferences.debug("iv[niter] = iv["+niter+"] = " + iv[niter] + "\n");
+		      Preferences.debug("nf = " + nf + "\n");
+		      Preferences.debug("v[f] = v["+f+"] = " + v[f] + "\n");
+		      Preferences.debug("reldf = " + reldf + "\n");
+	          Preferences.debug("preldf = " + preldf + "\n");
+	          Preferences.debug("v[reldx] = v["+ reldx + "] = " + v[reldx] + "\n");
+	          Preferences.debug("model[m] = model["+m+"] = " + model[m] + "\n");
+	          Preferences.debug("v[stppar] = v["+stppar+"] = " + v[stppar] + "\n");
+	          Preferences.debug("v[size] = v["+size+"] = " + v[size] + "\n");
+	          Preferences.debug("v[dstnrm] = v["+dstnrm+"] = " + v[dstnrm] + "\n");
+	          Preferences.debug("nreldf = " + nreldf + "\n");
+	      } // else print the long summary line
 	  } // if ((ol != 0) && (iv1 < 12)  && ((iv1 < 10) || (iv[prntit] != 0)))
 
-	 20   continue
+	  if ( iv1 == 1 ) {
 
-	  if ( iv1 == 1 ) then
+	    return;
+	  }
+	  else if ( iv1 == 2 ) {
 
-	    return
+	    return;
+	  }
+	  else if ( iv1 == 3) {
+	    Preferences.debug("X-convergence.\n");
+	  }
+	  else if ( iv1 == 4 ) {
+	    Preferences.debug("Relative function convergence.\n");
+	  }
+	  else if ( iv1 == 5 ) {
+	    Preferences.debug("X- and relative function convergence.\n");
+	  }
+	  else if ( iv1 == 6 ) {
+	    Preferences.debug("Absolute function convergence.\n");
+	  }
+	  else if ( iv1 == 7 ) {
+	    Preferences.debug("Singular convergence.\n");
+	  }
+	  else if ( iv1 == 8 ) {
+	    Preferences.debug("False convergence.\n");
+	  }
+	  else if ( iv1 == 9 ) {
+	    Preferences.debug("Function evaluation limit.\n");
+	  }
+	  else if ( iv1 == 10 ) {
+	    Preferences.debug("Iteration limit.\n");
+	  }
+	  else if ( iv1 == 11 ) {
+	    Preferences.debug("Stopx.\n");
+	  }
+	  else if ( iv1 == 14 ) {
+	    Preferences.debug("Bad parameters to ASSESS.\n");
+	    return;
+	  }
+	//
+	//  Initial call on ITSMRY.
+	//
+	  else if ( iv1 == 12 || iv1 == 13 || iv1 == 15 ) {
+        loop1: while(true) {
+	    if ( iv1 == 15 ) {
+	      Preferences.debug("J could not be computed.\n");
+	      if ( 0 < iv[niter] ) {
+	        do180 = false;
+	        break loop1;
+	      }
+	    }
 
-	  else if ( iv1 == 2 ) then
+	    if ( iv1 == 13 ) {
+	      Preferences.debug("Initial sum of squares overflows.\n");
+	    }
 
-	    return
+	    if ( iv[x0prt] != 0 ) {
+	      for (i = 1; i <= p; i++) {
+	    	  Preferences.debug("i = " + i + " initial x[" + i + "] = " + x[i] + " d[" + i + "] = " + d[i] + "\n");
+	      }
+	    }
 
-	  else if ( iv1 == 3 ) then
 
-	    write ( pu, * ) ' '
-	    write ( pu, '(a)' ) 'X-convergence.'
+	    if ( iv1 == 13 ) {
+	      return;
+	    }
 
-	  else if ( iv1 == 4 ) then
+	    iv[needhd] = 0;
+	    iv[prntit] = 0;
 
-	    write ( pu, * ) ' '
-	    write ( pu, '(a)' ) 'Relative function convergence.'
+	    if ( ol == 0 ) {
+	      return;
+	    }
+        Preferences.debug("it = 0\n");
+	    Preferences.debug("nf = 1\n");
+	    Preferences.debug("v[" + f + "] = " + v[f] + "\n");
+	    return;
+        } //loop1: while(true)
+	  } // else if ( iv1 == 12 || iv1 == 13 || iv1 == 15 )
+	  else {
+	    return;
 
-	  else if ( iv1 == 5 ) then
+	  }
+	if (do180) {
+	//
+	//  Print various information requested on solution.
+	//
 
-	    write ( pu, * ) ' '
-	    write ( pu, '(a)' ) 'X- and relative function convergence.'
+	      iv[needhd] = 1;
 
-	  else if ( iv1 == 6 ) then
+	      if ( iv[statpr] != 0 ) {
 
-	    write ( pu, * ) ' '
-	    write ( pu, '(a)' ) 'Absolute function convergence.'
+	         oldf = v[f0];
 
-	  else if ( iv1 == 7 ) then
+	         if ( 0.0 < oldf ) {
+	           preldf = v[preduc] / oldf;
+	           nreldf = v[nreduc] / oldf;
+	         }
+	         else {
+	           preldf = 0.0;
+	           nreldf = 0.0;
+	         }
 
-	    write ( pu, * ) ' '
-	    write ( pu, '(a)' ) 'Singular convergence.'
+	         nf = iv[nfcall] - iv[nfcov];
+	         ng = iv[ngcall] - iv[ngcov];
+	         Preferences.debug("function v[f] = v["+f+"] = " + v[f] + "\n");
+	         Preferences.debug("v[reldx] = v[" + reldx + "] = " + v[reldx] + "\n");
+	         Preferences.debug("func evals nf = " + nf + "\n");
+	         Preferences.debug("grad evals ng = " + ng + "\n");
+	         Preferences.debug("preldf = " + preldf + "\n");
+	         Preferences.debug("nreldf = " + nreldf + "\n");
 
-	  else if ( iv1 == 8 ) then
+	         if ( 0 < iv[nfcov] ) {
+	           Preferences.debug("Extra function evaluations for covariance iv[nfcov] = iv[" + nfcov + "] = " + iv[nfcov] + "\n");
+	         }
 
-	    write ( pu, * ) ' '
-	    write ( pu, '(a)' ) 'False convergence.'
+	         if ( 0 < iv[ngcov] ) {
+	           Preferences.debug("Extra gradient evaluations for covariance = iv[ngcov] = iv[" + ngcov + "] = " + iv[ngcov] + "\n");
+	         }
+	      } // if (iv[statpr] != 0)
+	} // if (do180)
 
-	  else if ( iv1 == 9 ) then
+	      if ( iv[solprt] != 0 ) {
 
-	    write ( pu, * ) ' '
-	    write ( pu, '(a)' ) 'Function evaluation limit.'
+	         iv[needhd] = 1;
+	         g1 = iv[g];
 
-	  else if ( iv1 == 10 ) then
+	         for (i = 1; i <= p; i++) {
+	           Preferences.debug("i = " + i + " final x[" + i + "] = " + x[i] + " d[" + i + "] = " + d[i] + " v[" + g1 + "] = " + v[g1] + "\n");
+	           g1 = g1 + 1;
+	         } // for (i = 1; i <= p; i++)
 
-	    write ( pu, * ) ' '
-	    write ( pu, '(a)' ) 'Iteration limit.'
+	      } // if (iv[solprt] != 0)
 
-	  else if ( iv1 == 11 ) then
+	      if ( iv[covprt] == 0 ) {
+	        return;
+	      }
 
-	    write ( pu, * ) ' '
-	    write ( pu, '(a)' ) 'Stopx.'
+	      cov1 = iv[covmat];
+	      iv[needhd] = 1;
 
-	  else if ( iv1 == 14 ) then
+	      if ( cov1 < 0 ) {
 
-	    write ( pu, * ) ' '
-	    write ( pu, '(a)' ) 'Bad parameters to ASSESS.'
-	    return
-	!
-	!  Initial call on ITSMRY.
-	!
-	  else if ( iv1 == 12 .or. iv1 == 13 .or. iv1 == 15 ) then
+	        if ( -1 == cov1 ) {
+	          Preferences.debug("Indefinite covariance matrix\n");
+	        }
+	        else if (-2 == cov1) {
+	          Preferences.debug("Oversize steps in computing covariance\n");
+	        }
+	      } // if (cov1 < 0)
+	      else if ( cov1 == 0 ) {
+	        Preferences.debug("Covariance matrix not computed\n");
+	      }
+	      else if ( 0 < cov1 ) {
 
-	    if ( iv1 == 15 ) then
-	      write ( pu, * ) ' '
-	      write ( pu, '(a)' ) 'J could not be computed.'
-	      if ( 0 < iv(niter) ) then
-	        go to 190
-	      end if
-	    end if
+	        i = Math.abs ( iv[covreq] );
+	        if ( i <= 1 ) {
+	          Preferences.debug("Covariance = scale * H**-1 * (J'' * J) * H**-1\n");
+	        }
+	        else if ( i == 2 ) {
+	          Preferences.debug("Covariance = scale * inverse ( H )\n");
+	        }
+	        else if ( 3 <= i ) {
+	          Preferences.debug("Covariance = scale * inverse ( J'' * J )\n");
+	        }
 
-	    if ( iv1 == 13 ) then
-	      write ( pu, * ) ' '
-	      write ( pu, '(a)' ) 'Initial sum of squares overflows.'
-	    end if
+	        ii = cov1 - 1;
+	        if ( ol <= 0 ) {
+	          for (i = 1; i <= p; i++) {
+	            i1 = ii + 1;
+	            ii = ii + i;
+	            Preferences.debug("row i = " + i + "\n");
+	            for (j = i1; j <= ii; j++) {
+	            	Preferences.debug("v[" + j + "] = " + v[j] + "\n");
+	            }
+	          }
+	        } // if (o1 <= 0)
+	        else {
 
-	    if ( iv(x0prt) /= 0 ) then
-	      write ( pu, * ) ' '
-	      write ( pu, * ) '     I     Initial X(i)      D(i)'
-	      write ( pu, * ) ' '
-	      write(pu,1150) (i, x(i), d(i), i = 1, p)
-	    end if
+	          for ( i = 1;i <= p; i++) {
+	            i1 = ii + 1;
+	            ii = ii + i;
+	            Preferences.debug("row i = " + i + "\n");
+	            for (j = i1; j <= ii; j++) {
+	            	Preferences.debug("v[" + j + "] = " + v[j] + "\n");
+	            }
+	          }
 
-	 1150 format((1x,i5,e17.6,e14.3))
+	        } // else
 
-	    if ( iv1 == 13 ) then
-	      return
-	    end if
+	      } // else if (0 < cov1)
 
-	    iv(needhd) = 0
-	    iv(prntit) = 0
-
-	    if ( ol == 0 ) then
-	      return
-	    else if ( ol < 0 ) then
-	      write ( pu, '(a)' ) ' '
-	      write ( pu, '(a)' ) &
-	        '    it    nf      f        reldf      preldf     reldx'
-	    else if ( 0 < ol ) then
-	      write ( pu, '(a)' ) ' '
-	      write ( pu, '(a)' ) &
-	        '    it    nf      f        reldf      preldf     reldx' // &
-	        '    model    STPPAR      size      d*step     npreldf'
-	    end if
-
-	    write ( pu, * ) ' '
-	    write(pu,1160) v(f)
-	 1160 format('     0     1',e11.3,11x,e11.3)
-	    return
-
-	  else
-
-	    return
-
-	  end if
-	!
-	!  Print various information requested on solution.
-	!
-	180 continue
-
-	      iv(needhd) = 1
-
-	      if ( iv(statpr) /= 0 ) then
-
-	         oldf = v(f0)
-
-	         if ( 0.0E+00 < oldf ) then
-	           preldf = v(preduc) / oldf
-	           nreldf = v(nreduc) / oldf
-	         else
-	           preldf = 0.0E+00
-	           nreldf = 0.0E+00
-	         end if
-
-	         nf = iv(nfcall) - iv(nfcov)
-	         ng = iv(ngcall) - iv(ngcov)
-	         write ( pu, * ) ' '
-	         write(pu,1180) v(f), v(reldx), nf, ng, preldf, nreldf
-	 1180 format(' function',e17.6,'   reldx',e20.6/' func. evals', &
-	         i8,9x,'grad. evals',i8/' preldf',e19.6,3x,'npreldf',e18.6)
-
-	         if ( 0 < iv(nfcov) ) then
-	           write ( pu, * ) ' '
-	           write ( pu, '(i5,a)' ) iv(nfcov), &
-	             ' extra function evaluations for covariance.'
-	         end if
-
-	         if ( 0 < iv(ngcov) ) then
-	           write ( pu, '(i5,a)' ) iv(ngcov), &
-	             ' extra gradient evaluations for covariance.'
-	         end if
-	      end if
-
-	 190  continue
-
-	      if ( iv(solprt) /= 0 ) then
-
-	         iv(needhd) = 1
-	         g1 = iv(g)
-
-	         write ( pu, '(a)' ) ' '
-	         write ( pu, '(a)' ) &
-	           '     I      Final X(I)        D(I)          G(I)'
-	         write ( pu, '(a)' ) ' '
-
-	         do i = 1, p
-	           write ( pu, '(i5,e17.6,2e14.3)' ) i, x(i), d(i), v(g1)
-	           g1 = g1 + 1
-	         end do
-
-	      end if
-
-	      if ( iv(covprt) == 0 ) then
-	        return
-	      end if
-
-	      cov1 = iv(covmat)
-	      iv(needhd) = 1
-
-	      if ( cov1 < 0 ) then
-
-	        if ( -1 == cov1 ) then
-	          write ( pu, '(a)' ) 'Indefinite covariance matrix'
-	        else if (-2 == cov1) then
-	          write ( pu, '(a)' ) 'Oversize steps in computing covariance'
-	        end if
-
-	      else if ( cov1 == 0 ) then
-
-	        write ( pu, '(a)' ) 'Covariance matrix not computed'
-
-	      else if ( 0 < cov1 ) then
-
-	        write ( pu, * ) ' '
-	        i = abs ( iv(covreq) )
-	        if ( i <= 1 ) then
-	          write ( pu, '(a)' ) 'Covariance = scale * H**-1 * (J'' * J) * H**-1'
-	        else if ( i == 2 ) then
-	          write ( pu, '(a)' ) 'Covariance = scale * inverse ( H )' 
-	        else if ( 3 <= i ) then
-	          write ( pu, '(a)' ) 'Covariance = scale * inverse ( J'' * J )'
-	        end if
-	        write ( pu, * ) ' '
-
-	        ii = cov1 - 1
-	        if ( ol <= 0 ) then
-	          do i = 1, p
-	            i1 = ii + 1
-	            ii = ii + i
-	            write(pu,1270) i, v(i1:ii)
-	          end do
-	 1270 format(' row',i3,2x,5e12.4/(9x,5e12.4))
-	        else
-
-	          do i = 1, p
-	            i1 = ii + 1
-	            ii = ii + i
-	            write(pu,1250) i, v(i1:ii)
-	          end do
-
-	 1250 format(' row',i3,2x,9e12.4/(9x,9e12.4))
-
-	    end if
-
-	  end if
-
-	  return*/
+	  return;
 	} // private void itsmry
 	
 	private void linvrt ( int n, double lin[], double l[] ) {
@@ -3194,6 +3155,682 @@ public abstract class NL2sol {
 
 	  return;
 	} // private void livmul
+	
+	private void lmstep ( double d[], double g[], int ierr[], int ipivot[],
+			              int ka[], int p, double qtr[], double r[], double step[],
+			              double v[], double w[] ) {
+
+	/***********************************************************************
+	!
+	!! LMSTEP computes a Levenberg-Marquardt step by More-Hebden techniques.
+	!
+	!  Discussion:
+	!
+	!    Given the R matrix from the QR decomposition of a jacobian
+	!    matrix, J, as well as Q' times the corresponding
+	!    residual vector, RESID, this subroutine computes a Levenberg-
+	!    Marquardt step of approximate length V(RADIUS) by the More
+	!    technique.
+	!
+	!    If it is desired to recompute step using a different value of
+	!    V(RADIUS), then this routine may be restarted by calling it
+	!    with all parameters unchanged except V(RADIUS).  This explains
+	!    why many parameters are listed as I/O.  On an initial call
+	!    with KA = -1, the caller need only have initialized D, G, KA, P,
+	!    QTR, R, V(EPSLON), V(PHMNFC), V(PHMXFC), V(RADIUS), and V(RAD0).
+	!
+	!    This code implements the step computation scheme described in
+	!    refs. 2 and 4.  Fast Givens transformations (see reference 3, 
+	!    pages 60-62) are used to compute step with a nonzero Marquardt 
+	!    parameter.
+	!
+	!    A special case occurs if J is nearly singular and V(RADIUS)
+	!    is sufficiently large.  In this case the step returned is such
+	!    that  twonorm(R)**2 - twonorm(R - J * STEP)**2  differs from its
+	!    optimal value by less than V(EPSLON) times this optimal value,
+	!    where J and R denote the original jacobian and residual.  See
+	!    reference 2 for more details.
+	!
+	!  Modified:
+	!
+	!    04 April 2006
+	!
+	!  Author:
+	!
+	!    David Gay
+	!
+	!  Reference:
+	!
+	!    John Dennis, David Gay, Roy Welsch,
+	!    An Adaptive Nonlinear Least Squares Algorithm,
+	!    ACM Transactions on Mathematical Software,
+	!    Volume 7, Number 3, 1981.
+	!
+	!    David Gay,
+	!    Computing Optimal Locally Constrained Steps,
+	!    SIAM Journal on Scientific and Statistical Computing, 
+	!    Volume 2, Number 2, pages 186-197, 1981.
+	!
+	!    Charles Lawson and Richard Hanson,
+	!    Solving Least Squares Problems,
+	!    Prentice Hall, 1974.
+	!
+	!    Jorge More,
+	!    The Levenberg-Marquardt Algorithm, Implementation and Theory, 
+	!    in Springer Lecture Notes in Mathematics, Number 630, 
+	!    edited by G A Watson,
+	!    Springer Verlag, Berlin and New York, pages 105-116, 1978.
+	!
+	!  Parameters:
+	!
+	!    Input, real D(P), the scale vector.
+	!
+	!    Input, real G(P), the gradient vector J'*R.
+	!
+	!   ierr (i/o) = return code from QRFACT or QRFGS -- 0 means r has
+	!             full rank.
+	!
+	! ipivot (i/o) = permutation array from QRFACT or QRFGS, which compute
+	!             qr decompositions with column pivoting.
+	!
+	!     ka (i/o).  ka < 0 on input means this is the first call on
+	!             lmstep for the current r and qtr.  on output ka con-
+	!             tains the number of Hebden iterations needed to determine
+	!             step.  ka = 0 means a Gauss-Newton step.
+	!
+	!      p (in)  = number of parameters.
+	!
+	!    qtr (in)  = Q' * residual.
+	!
+	!      r (in)  = the R matrix, stored compactly by columns.
+	!
+	!   step (out) = the Levenberg-Marquardt step computed.
+	!
+	!      v (i/o) contains various constants and variables described below.
+	!
+	!      w (i/o) = workspace of length p*(p+5)/2 + 4.
+	!
+	!  entries in v
+	!
+	! v(dgnorm) (i/o) = 2-norm of (d**-1)*g.
+	! v(dstnrm) (i/o) = 2-norm of d * step.
+	! v(dst0)   (i/o) = 2-norm of Gauss-Newton step (for nonsing. j).
+	! v(epslon) (in) = max. relative error allowed in twonorm(r)**2 minus
+	!             twonorm(r - j * step)**2.  (see algorithm notes below.)
+	! v(gtstep) (out) = inner product between G and STEP.
+	! v(nreduc) (out) = half the reduction in the sum of squares predicted
+	!             for a Gauss-Newton step.
+	! v(phmnfc) (in)  = tol. (together with v(phmxfc)) for accepting step
+	!             (More's sigma).  the error v(dstnrm) - v(radius) must lie
+	!             between v(phmnfc)*v(radius) and v(phmxfc)*v(radius).
+	! v(phmxfc) (in)  (see v(phmnfc).)
+	! v(preduc) (out) = half the reduction in the sum of squares predicted
+	!             by the step returned.
+	! v(radius) (in)  = radius of current (scaled) trust region.
+	! v(rad0)   (i/o) = value of v(radius) from previous call.
+	! v(STPPAR) (i/o) = Marquardt parameter (or its negative if the special
+	!             case mentioned below in the algorithm notes occurs).
+	*/
+
+	  double a;
+	  double adi;
+	  double alphak;
+	  double b;
+	  double d1;
+	  double d2;
+	  final double dfac = 256.0;
+	  double dfacsq;
+	  final int dgnorm = 1;
+	  double dst;
+	  final int dst0 = 3;
+	  final int dstnrm = 2;
+	  int dstsav;
+	  double dtol;
+	  final int epslon = 19;
+	  int i;
+	  int i1;
+	  int ip1;
+	  int j1;
+	  int k;
+	  int kalim;
+	  int l;
+	  double lk;
+	  int lk0;
+	  double oldphi;  
+	  double phi;
+	  double phimax;
+	  double phimin;
+	  int phipin;
+	  int pp1o2;
+	  double psifac;
+	  double rad;
+	  final int rad0 = 9;
+	  int res;
+	  int res0;
+	  int rmat;
+	  int rmat0;
+	  double si;
+	  double sj;
+	  double sqrtak;
+	  final int stppar = 5;
+	  double t;
+	  double twopsi;
+	  double uk;
+	  int uk0;
+	  double v2norm;
+	  double wl;
+	  int m;
+	  boolean do5 = false;
+	  boolean do10 = false;
+	  boolean do20 = false;
+	  boolean do30 = false;
+	  boolean do110 = false;
+	  boolean do120 = false;
+	  boolean do130 = false;
+	  boolean do150 = false;
+	  boolean do170 = false;
+	  boolean do370 = false;
+	//
+	//  subscripts for v
+	//
+	      final int gtstep = 4;
+	      final int nreduc = 6;
+	      final int phmnfc = 20;
+	      final int phmxfc = 21;
+	      final int preduc = 7;
+	      final int radius = 8;
+	      
+	//
+	//  For use in recomputing STEP, the final values of LK and UK,
+	//  the inverse derivative of More's PHI at 0 (for nonsingular J)
+	//  and the value returned as V(DSTNRM) are stored at W(LK0),
+	//  W(UK0), W(PHIPIN), and W(DSTSAV) respectively.
+	//
+	  lk0 = p + 1;
+	  phipin = lk0 + 1;
+	  uk0 = phipin + 1;
+	  dstsav = uk0 + 1;
+	  rmat0 = dstsav;
+	//
+	//  A copy of the R matrix from the QR decomposition of J is
+	//  stored in W starting at W(RMAT), and a copy of the residual
+	//  vector is stored in W starting at W(RES).  The loops below
+	//  that update the QR decomposition for a nonzero Marquardt parameter
+	//  work on these copies.
+	//
+	  rmat = rmat0 + 1;
+	  pp1o2 = ( p * ( p + 1 ) ) / 2;
+	  res0 = pp1o2 + rmat0;
+	  res = res0 + 1;
+	  rad = v[radius];
+	  if ( 0.0 < rad ) {
+	    psifac = v[epslon] / ( ( 8.0 * ( v[phmnfc] + 1.0 ) + 3.0 ) * rad*rad);
+	  }
+	  phimax = v[phmxfc] * rad;
+	  phimin = v[phmnfc] * rad;
+	//
+	//  DTOL, DFAC, and DFACSQ are used in rescaling the fast Givens
+	//  representation of the updated QR decomposition.
+	//
+	  dtol = 1.0 / dfac;
+	  dfacsq = dfac * dfac;
+	//
+	//  OLDPHI is used to detect limits of numerical accuracy.  If
+	//  we recompute STEP and it does not change, then we accept it.
+	//
+	  oldphi = 0.0;
+	  lk = 0.0;
+	  uk = 0.0;
+	  kalim = ka[0] + 12;
+	//
+	//  Start or restart, depending on KA.
+	//
+	  do5 = true;
+	  /*loop1: while (true) {
+      if (do5) {
+    	  do5 = false;
+		  if ( 0 < ka[0] ) {
+		    do370 = true;
+		  }
+		  else {
+			  do10 = true;
+		  }
+      } // if (do5)
+	  if (do10) {
+		  do10 = false;
+	//
+	//  Fresh start.  Compute V(NREDUC).
+	//
+	  if ( ka[0] < 0 ) {
+	    ka[0] = 0;
+	    kalim = 12;
+	    k = p;
+	    if ( ierr[0] != 0 ) {
+	      k = Math.abs ( ierr[0] ) - 1;
+	    }
+	    v[nreduc] = 0.5 * dotprd ( k, qtr, qtr );
+	  } // if (ka[0] < 0) 
+	  do20 =true;
+	  } // if (do10)
+	//
+	//  Set up to try initial Gauss-Newton step.
+	//
+	if (do20) {
+	 do20 = false;
+
+	  v[dst0] = -1.0;
+	//
+	//  Compute Gauss-Newton step.
+	//
+	//  Note that the R matrix is stored compactly by columns in
+	//  R(1), R(2), R(3), ...  It is the transpose of a
+	//  lower triangular matrix stored compactly by rows, and we
+	//  treat it as such when using LITVMU and LIVMUL.
+	//
+	  if ( ierr[0] == 0 ) {
+
+	    litvmu ( p, w, r, qtr );
+	//
+	//  Temporarily store permuted -D * STEP in STEP.
+	//
+	    for ( i = 1; i <= p; i++) {
+	      j1 = ipivot[i];
+	      step[i] = d[j1] * w[i];
+	    } // for (i = 1; i <= p; i++)
+
+	    dst = v2norm(p, step);
+	    v[dst0] = dst;
+	    phi = dst - rad;
+
+	    if ( phi <= phimax ) {
+	      break loop1;
+	    }
+	//
+	//  If this is a restart, go to 110.
+	//
+	    if ( 0 < ka[0] ) {
+	      do110 = true;
+	    }
+	    else {
+	    	do30 = true;
+			//
+			//  Gauss-Newton step was unacceptable.  Compute L0.
+			//
+		    for (i = 1; i <= p; i++) {
+		      j1 = ipivot[i];
+		      step[i] = d[j1] * ( step[i] / dst );
+		    } // for (i = 1; i <= p; i++)
+	
+		    livmul ( p, step, r, step );
+		    t = 1.0 / v2norm(p, step);
+		    w[phipin] = ( t / dst ) * t;
+		    lk = phi * w[phipin];
+	    }
+	  } // if (ierr[0] == 0)
+	  else {
+		  do30 = true;
+	  }
+	} // if (do20)
+	if (do30) {
+		do30 =false;
+	//
+	//  Compute U0.
+	//
+      for (m = 1; m <= p; m++) {
+	      w[m] = g[m] / d[m];
+      }
+	  v[dgnorm] = v2norm(p, w);
+	  uk = v[dgnorm] / rad;
+	//
+	//  Special case.  RAD <= 0 or (G = 0 and J is singular).
+	//
+	  if ( uk <= 0.0 ) {
+	    v[stppar] = 0.0;
+	    dst = 0.0;
+	    lk = 0.0;
+	    uk = 0.0;
+	    v[gtstep] = 0.0;
+	    v[preduc] = 0.0;
+	    for (m = 1; m <= p; m++) {
+	        step[m] = 0.0;
+	    }
+	    v[dstnrm] = dst;
+	    w[dstsav] = dst;
+	    w[lk0] = lk;
+	    w[uk0] = uk;
+	    v[rad0] = rad;
+	    return;
+	  } // if (uk <= 0.0)
+	//
+	// ALPHAK will be used as the current Marquardt parameter.  We
+    //  use More's scheme for initializing it.
+	//
+	  alphak = Math.abs ( v[stppar] ) * v[rad0] / rad;
+	  do110 = true;
+	} // if (do30)
+	//
+	//  Top of loop.  Increment KA, copy R to RMAT, QTR to RES.
+	//
+	if (do110) {
+		do110 = false;
+
+	  ka[0] = ka[0] + 1;
+	  for (m = 1; m <= pp1o2; m++) {
+	      w[rmat+m-1] = r[m];
+	  }
+	  for (m = 1; m <= p; m++) {
+	      w[res+m-1] = qtr[m];
+	  }
+	//
+	//  Safeguard ALPHAK and initialize fast Givens scale vector.
+	//
+	      if (alphak <= 0.0 || alphak < lk || alphak >= uk ) {
+	        alphak = uk * Math.max ( 0.001, Math.sqrt ( lk / uk ) );
+	      }
+
+	      sqrtak = Math.sqrt(alphak);
+	      for (m = 1; m <= p; m++) {
+	          w[m] = 1.0;
+	      }
+	      do120 = true;
+	} // if (do110)
+	//
+	//  Add ALPHAK * D and update QR decomposition using fast Givens transform.
+	//
+	      for (i = 1; i <= p; i++) {
+	      loop2: while (true) {
+	      if (do120) {
+	    	  do120 = false;
+	//
+	//  Generate, apply first Givens transformation for row I of ALPHAK * D.
+	//  Use STEP to store temporary row.
+	//
+	         l = ( i * ( i + 1 ) ) / 2 + rmat0;
+	         wl = w[l];
+	         d2 = 1.0;
+	         d1 = w[i];
+	         j1 = ipivot[i];
+	         adi = sqrtak*d[j1];
+
+	         if ( Math.abs(wl) <= adi ) {
+	        	 do150 = true;
+	         }
+	         else {
+	        	 do130 = true;
+	         }
+	} // if (do120)
+     if (do130) {
+	     do130 = false;
+
+	         a = adi / wl;
+	         b = d2 * a / d1;
+	         t = a * b + 1.0;
+
+	         if ( t <= 2.5 ) {
+
+	           w[i] = d1 / t;
+	           d2 = d2 / t;
+	           w[l] = t * wl;
+	           a = -a;
+	           for (j1 = i; j1 <= p; j1++) {
+	              l = l + j1;
+	              step[j1] = a * w[l];
+	           }
+	           do170 = true;
+
+	         } // if (t <= 2.5)
+	         else {
+	        	 do150 = true;
+	         }
+     } // if (do130)
+     if (do150) {
+	     do150 = false;
+
+	         b = wl / adi;
+	         a = d1 * b / d2;
+	         t = a * b + 1.0;
+
+	         if (t > 2.5) {
+	        	 do130 = true;
+	        	 continue loop2;
+	         }
+	         else {
+		         do170 = true;
+		         w[i] = d2 / t;
+		         d2 = d1 / t;
+		         w(l) = t * adi;
+		         for (j1 = i;j1 <= p; j1++) {
+		              l = l + j1;
+		              wl = w[l];
+		              step[j1] = -wl;
+		              w[l] = a * wl;
+		         } // (j1 = i; j1 <= p; j1++)
+	         } // else
+
+     } // if (do150)
+	   170     continue
+
+	         if ( i == p ) then
+	           exit
+	         end if
+	!
+	!  Now use Givens transformations to zero elements of temporary row.
+	!
+	         ip1 = i + 1
+	         do i1 = i + 1, p
+	              l = ( i1 * ( i1 + 1 ) ) / 2 + rmat0
+	              wl = w(l)
+	              si = step(i1-1)
+	              d1 = w(i1)
+	!
+	!  Rescale row I1 if necessary.
+	!
+	              if ( d1 < dtol ) then
+	                d1 = d1 * dfacsq
+	                wl = wl / dfac
+	                k = l
+	                do j1 = i1, p
+	                  k = k + j1
+	                  w(k) = w(k) / dfac
+	                end do
+	              end if
+	!
+	!  Use Givens transformations to zero next element of temporary row.
+	!
+	              if (abs(si) > abs(wl)) go to 220
+
+	              if (si == 0.0E+00) go to 260
+
+	 200          continue
+
+	              a = si / wl
+	              b = d2 * a / d1
+	              t = a * b + 1.0E+00
+
+	              if ( t <= 2.5E+00 ) then
+
+	                w(l) = t * wl
+	                w(i1) = d1 / t
+	                d2 = d2 / t
+	                do j1 = i1, p
+	                   l = l + j1
+	                   wl = w(l)
+	                   sj = step(j1)
+	                   w(l) = wl + b * sj
+	                   step(j1) = sj - a*wl
+	                end do
+
+	                go to 240
+
+	              end if
+
+	 220          b = wl / si
+	              a = d1 * b / d2
+	              t = a * b + 1.0E+00
+
+	              if (t > 2.5E+00 ) go to 200
+
+	              w(i1) = d2 / t
+	              d2 = d1 / t
+	              w(l) = t * si
+	              do j1 = i1, p
+	                   l = l + j1
+	                   wl = w(l)
+	                   sj = step(j1)
+	                   w(l) = a * wl + sj
+	                   step(j1) = b * sj - wl
+	              end do
+	!
+	!  Rescale temporary row if necessary.
+	!
+	 240          continue
+
+	              if ( d2 < dtol ) then
+	                   d2 = d2*dfacsq
+	                   step(i1:p) = step(i1:p) / dfac
+	              end if
+
+	 260          continue
+
+	        end do
+	      } // loop2: while (true)
+	      } // for (i = 1; i <= p; i++)
+	!
+	!  Compute step.
+	!
+	 280  continue
+
+	      call litvmu ( p, w(res), w(rmat), w(res) )
+	!
+	!  Recover STEP and store permuted -D * STEP at W(RES).
+	!
+	      do i = 1, p
+	         j1 = ipivot(i)
+	         k = res0 + i
+	         t = w(k)
+	         step(j1) = -t
+	         w(k) = t * d(j1)
+	      end do
+
+	      dst = v2norm(p, w(res))
+	      phi = dst - rad
+	      if (phi <= phimax .and. phi >= phimin) go to 430
+	      if (oldphi == phi) go to 430
+	      oldphi = phi
+	!
+	!  Check for and handle special case.
+	!
+	      if ( phi <= 0.0E+00 ) then
+
+	        if ( kalim <= ka ) then
+	          go to 430
+	        end if
+
+	        twopsi = alphak * dst * dst - dotprd ( p, step, g )
+
+	        if ( alphak < twopsi * psifac ) then
+	          v(stppar) = -alphak
+	          go to 440
+	        end if
+
+	      end if
+
+	      if ( phi < 0.0E+00 ) then
+	        uk = alphak
+	      end if
+
+	 320  continue
+
+	      do i = 1, p
+	         j1 = ipivot(i)
+	         k = res0 + i
+	         step(i) = d(j1) * ( w(k) / dst )
+	      end do
+
+	      call livmul(p, step, w(rmat), step)
+	      step(1:p) = step(1:p) / sqrt ( w(1:p) )
+	      t = 1.0E+00 / v2norm(p, step)
+	      alphak = alphak + t * phi * t / rad
+	      lk = max ( lk, alphak )
+	      go to 110
+	!
+	!  Restart.
+	!
+	 370  continue
+
+	      lk = w(lk0)
+	      uk = w(uk0)
+
+	      if (v(dst0) > 0.0E+00 .and. v(dst0) - rad <= phimax) then
+	        go to 20
+	      end if
+
+	      alphak = abs ( v(stppar) )
+	      dst = w(dstsav)
+	      phi = dst - rad
+	      t = v(dgnorm) / rad
+	!
+	!  Smaller radius.
+	!
+	      if ( rad <= v(rad0) ) then
+	         uk = t
+	         if ( alphak <= 0.0E+00 ) then
+	           lk = 0.0E+00
+	         end if
+	         if (v(dst0) > 0.0E+00) lk = max ( lk, (v(dst0)-rad)*w(phipin) )
+	         if ( phi < 0.0E+00 ) then
+	           uk = min ( uk, alphak )
+	         end if
+	         go to 320
+	      end if
+	!
+	!  Bigger radius.
+	!
+	      if (alphak <= 0.0E+00 .or. uk > t) then
+	        uk = t
+	      end if
+
+	      if (v(dst0) > 0.0E+00) then
+	        lk = max ( lk, (v(dst0)-rad)*w(phipin) )
+	      else
+	        lk = 0.0E+00
+	      end if
+
+	      if ( phi < 0.0E+00 ) then
+	        uk = min ( uk, alphak )
+	      end if
+
+	      go to 320
+	  } // loop1: while (true)
+	!
+	!  Acceptable Gauss-Newton step.  Recover step from W.
+	!
+	 410  continue
+
+	      alphak = 0.0E+00
+	      do i = 1, p
+	         j1 = ipivot(i)
+	         step(j1) = -w(i)
+	      end do
+	!
+	!  Save values for use in a possible restart.
+	!
+	 430  continue
+
+	  v(stppar) = alphak
+
+	 440  continue
+
+	  v(gtstep) = dotprd ( p, step, g )
+	  v(preduc) = 0.5E+00 * (alphak*dst*dst - v(gtstep))
+	  v(dstnrm) = dst
+	  w(dstsav) = dst
+	  w(lk0) = lk
+	  w(uk0) = uk
+	  v(rad0) = rad*/
+
+	  return;
+	} // private void lmstep
 	
 	private void lsqrt ( int n1, int n, double l[], double a[], int irc[] ) {
 
