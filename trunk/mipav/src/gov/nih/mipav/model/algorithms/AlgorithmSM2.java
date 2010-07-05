@@ -201,6 +201,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
         double delT;
         long normalTerminations = 0;
         long abnormalTerminations = 0;
+        double paramSecs0;
         
         if (selfTest) {
         	int i;
@@ -667,6 +668,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
 	            chi_squared = (float)dModel.getChiSquared();
 	            // Convert ktrans from /sec to /min
 	            // Mutliply /sec by 60 seconds/minute
+	            paramSecs0 = params[0];
 	            params[0] = 60.0 * params[0];
 	            for (j = 0; j < 3; j++) {
 	            	destArray[j][i] = (float)params[j];
@@ -688,7 +690,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
 	            // Set values that come out at the extreme values of the allowed intervals to NaN rather
 	        	// than to the extreme values.  Those values are invariabley wrong, and the images
 	        	// become very difficult to analyze.
-	            if ((params[0] <= 60.0 * min_constr[0]) || (params[0] >= 60.0 * max_constr[0]) ||
+	            if ((paramSecs0 <= min_constr[0]) || (paramSecs0 >= max_constr[0]) ||
 	                (params[1] <= min_constr[1]) || (params[1] >= max_constr[1]) ||
 	                (params[2] <= min_constr[2]) || (params[2] >= max_constr[2])) {
 	                destArray[0][i] = Float.NaN;
@@ -1912,6 +1914,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
     		double params[];
     		float chi_squared;
     		FitSM2ConstrainedModelC dModel;
+    		double paramSecs0;
     		for (i = start; i < end; i++) {
 	        	//fireProgressStateChanged(i * 100/volSize);
 	            input(y_array, i);
@@ -1924,8 +1927,9 @@ public class AlgorithmSM2 extends AlgorithmBase {
 	            chi_squared = (float)dModel.getChiSquared();
 	            // Convert ktrans from /sec to /min
 	            // Mutliply /sec by 60 seconds/minute
+	            paramSecs0 = params[0];
 	            params[0] = 60.0 * params[0];
-	            output(params, i, dModel.getExitStatus(), chi_squared);
+	            output(params, paramSecs0, i, dModel.getExitStatus(), chi_squared);
             } // for (i = start; i < end; i++)	
     	}
     	
@@ -1938,7 +1942,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
     	}
     }
     
-    public synchronized void output(double params[], int i, int exitBits, float chi_squared) {
+    public synchronized void output(double params[], double paramSecs0, int i, int exitBits, float chi_squared) {
     	int j;
     	voxelsProcessed++;
     	long vt100 = voxelsProcessed * 100L;
@@ -1967,7 +1971,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
     	// Set values that come out at the extreme values of the allowed intervals to NaN rather
     	// than to the extreme values.  Those values are invariabley wrong, and the images
     	// become very difficult to analyze.
-    	if ((params[0] <= 60.0 * min_constr[0]) || (params[0] >= 60.0 * max_constr[0]) ||
+    	if ((paramSecs0 <= min_constr[0]) || (paramSecs0 >= max_constr[0]) ||
             (params[1] <= min_constr[1]) || (params[1] >= max_constr[1]) ||
             (params[2] <= min_constr[2]) || (params[2] >= max_constr[2])) {
             destArray[0][i] = Float.NaN;
