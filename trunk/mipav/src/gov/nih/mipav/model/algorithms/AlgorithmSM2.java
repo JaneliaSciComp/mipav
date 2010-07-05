@@ -685,6 +685,16 @@ public class AlgorithmSM2 extends AlgorithmBase {
 		            	}
 	            	}
 	            }
+	            // Set values that come out at the extreme values of the allowed intervals to NaN rather
+	        	// than to the extreme values.  Those values are invariabley wrong, and the images
+	        	// become very difficult to analyze.
+	            if ((params[0] <= 60.0 * min_constr[0]) || (params[0] >= 60.0 * max_constr[0]) ||
+	                (params[1] <= min_constr[1]) || (params[1] >= max_constr[1]) ||
+	                (params[2] <= min_constr[2]) || (params[2] >= max_constr[2])) {
+	                destArray[0][i] = Float.NaN;
+	                destArray[1][i] = Float.NaN;
+	                destArray[2][i] = Float.NaN;
+	            }
 	            destArray[3][i] = chi_squared;
 	            destExitStatusArray[i] = dModel.getExitStatus();
 	            exitStatus[(dModel.getExitStatus() + 11)]++;
@@ -1953,6 +1963,16 @@ public class AlgorithmSM2 extends AlgorithmBase {
             		paramMax[j] = params[j];
             	}
         	}
+        }
+    	// Set values that come out at the extreme values of the allowed intervals to NaN rather
+    	// than to the extreme values.  Those values are invariabley wrong, and the images
+    	// become very difficult to analyze.
+    	if ((params[0] <= 60.0 * min_constr[0]) || (params[0] >= 60.0 * max_constr[0]) ||
+            (params[1] <= min_constr[1]) || (params[1] >= max_constr[1]) ||
+            (params[2] <= min_constr[2]) || (params[2] >= max_constr[2])) {
+            destArray[0][i] = Float.NaN;
+            destArray[1][i] = Float.NaN;
+            destArray[2][i] = Float.NaN;
         }
     	destArray[3][i] = chi_squared;
     	destExitStatusArray[i] = exitBits;
