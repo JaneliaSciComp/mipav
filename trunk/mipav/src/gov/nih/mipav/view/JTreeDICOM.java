@@ -30,7 +30,7 @@ public class JTreeDICOM extends JTree {
 		if(value != null) {
 			currentNode = (DefaultMutableTreeNode)value;
 			
-			if(currentNode.toString() != "DICOMDIR")
+			if(!currentNode.toString().equalsIgnoreCase("DICOMDIR"))
 			{
 				current = (FileDicomItem) currentNode.getUserObject();
 	    	    String currentItemType = current.getTag("0004,1430").getValue(true).toString(); 

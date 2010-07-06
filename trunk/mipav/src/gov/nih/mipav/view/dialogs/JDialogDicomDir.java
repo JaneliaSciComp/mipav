@@ -294,7 +294,9 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
 			if(currentItemType.startsWith("IMAGE"))
 			{
     	    	String fileLoc = currentImages[i].getTag("0004,1500").getValue(true).toString();
-    	    	int loc = fileLoc.lastIndexOf("\\");
+    	    	fileLoc.replace('/', File.separatorChar);
+    	    	fileLoc.replace('\\', File.separatorChar);
+    	    	int loc = fileLoc.lastIndexOf(File.separator);
     	    	String filename = fileLoc.substring(loc+1);
     	    	String filepreloc = fileLoc.substring(0, loc);
     	    	fileFinalLoc = file.getParent()+File.separator+filepreloc+File.separator;
@@ -696,7 +698,7 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
             imagePanel.repaint();
         }
 		
-		if(currentNode.toString() != "DICOMDIR")
+		if(!currentNode.toString().equals("DICOMDIR"))
 		{
 			FileDicomItem currentObject = (FileDicomItem) currentNode.getUserObject();
     	    String currentItemType = currentObject.getTag("0004,1430").getValue(true).toString(); 
@@ -716,7 +718,9 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
     	    {
     	    	JDialogFileInfoDICOM.showTags(tagViewer, currentObject, true);
     	    	String fileLoc = currentObject.getTag("0004,1500").getValue(true).toString();
-    	    	int loc = fileLoc.lastIndexOf("\\");
+    	    	fileLoc.replace('/', File.separatorChar);
+    	    	fileLoc.replace('\\', File.separatorChar);
+    	    	int loc = fileLoc.lastIndexOf(File.separator);
     	    	String filename = fileLoc.substring(loc+1);
     	    	String filepreloc = fileLoc.substring(0, loc);
     	    	buildImage(filename,file.getParent()+file.separator+filepreloc+file.separator);
