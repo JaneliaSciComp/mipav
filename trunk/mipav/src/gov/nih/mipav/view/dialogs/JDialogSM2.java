@@ -1309,10 +1309,10 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
             table.put(new ParameterDouble("max_constr2", 0.99));
             table.put(new ParameterDouble("initial2", 0.02));
             table.put(new ParameterDouble("hematocrit_", 0.4));
-            table.put(new ParameterString("file_name_times", " "));
-            table.put(new ParameterString("directory_times", " "));
-            table.put(new ParameterString("file_name_voi", " "));
-            table.put(new ParameterString("directory_voi", " "));
+            table.put(new ParameterString("file_name_times"));
+            table.put(new ParameterString("directory_times"));
+            table.put(new ParameterString("file_name_voi"));
+            table.put(new ParameterString("directory_voi"));
         } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
