@@ -5,7 +5,15 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.Parameter;
+import gov.nih.mipav.model.scripting.parameters.ParameterBoolean;
+import gov.nih.mipav.model.scripting.parameters.ParameterDouble;
+import gov.nih.mipav.model.scripting.parameters.ParameterString;
+import gov.nih.mipav.model.scripting.parameters.ParameterExternalImage;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.parameters.ParameterImage;
+import gov.nih.mipav.model.scripting.parameters.ParameterList;
+import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -125,7 +133,10 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
     private JLabel labelHematocrit;
     private JTextField textHematocrit;
     private double hematocrit = 0.4;
-
+    
+    private FileVOI fileVOI;
+    private VOI[] voi;
+    private BufferedReader br;
     
     /** DOCUMENT ME! */
     private ViewUserInterface UI;
@@ -165,9 +176,6 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
      * @param  event  Event that triggers function.
      */
     public void actionPerformed(ActionEvent event) {
-        FileVOI fileVOI;
-        VOI[] voi;
-        BufferedReader br;
         String command = event.getActionCommand();
 
         if (command.equals("OK")) {
@@ -502,7 +510,8 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
      */
     public void saveDefaults() {
         String delim = ",";
-        String defaultsString = min_constr[0] + delim;
+        String defaultsString = tissueImage.getImageFileName() + delim;
+        defaultsString = min_constr[0] + delim;
         defaultsString += max_constr[0] + delim;
         defaultsString += initial[0] + delim;
         defaultsString += min_constr[1] + delim;
@@ -511,8 +520,8 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         defaultsString += min_constr[2] + delim;
         defaultsString += max_constr[2] + delim;
         defaultsString += initial[2] + delim;
-        defaultsString += hematocrit + delim;
-        defaultsString += tissueImage.getImageFileName();
+        defaultsString += hematocrit;
+        
 
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
@@ -522,6 +531,23 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
+        tissueImage = scriptParameters.retrieveImage("tissue_image");
+        if (tissueImage == null) {
+            MipavUtil.displayError("Tissue image is null.");
+            return;
+        } else if (tissueImage.getNDims() != 3) {
+            MipavUtil.displayError("Tissue image must be 3D");
+            return;
+        }
+
+        for (int i = 0; i < 3; i++) {
+
+            if (image.getExtents()[i] != tissueImage.getExtents()[i]) {
+                MipavUtil.displayError("First 3 dimensions of source image must match the tissue image.");
+                return;
+            }
+        }
+        textTissueFile.setText(tissueImage.getImageFileName());
         UI = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
@@ -546,8 +572,142 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         textInitial2.setText(String.valueOf(initial[2]));
         hematocrit = scriptParameters.getParams().getDouble("hematocrit_");
         textHematocrit.setText(String.valueOf(hematocrit));
-        tissueImage = scriptParameters.retrieveImage("tissue_image");
-        textTissueFile.setText(tissueImage.getImageFileName());
+        fileNameTimes = scriptParameters.getParams().getString("file_name_times");
+        directoryTimes = scriptParameters.getParams().getString("directory_times");
+        if (fileNameTimes != null) {
+        	try {
+	        	fileTimes = new File(directoryTimes + fileNameTimes);
+	            
+	            try {
+	                br = new BufferedReader(new InputStreamReader(new FileInputStream(fileTimes)));
+	            }
+	            catch (FileNotFoundException e) {
+	                MipavUtil.displayError((directoryTimes + fileNameTimes) + " was not found");
+	                return;
+	            }
+	            
+	            // Read lines until first character is not blank and not #
+	            int ii = 0;
+	            String line = null;
+	            do {
+	                try {
+	                    // Contains the contents of the line not including line termination characters
+	                    line = br.readLine();  
+	                }
+	                catch(IOException e) {
+	                    MipavUtil.displayError("IOException on br.readLine");
+	                    br.close();
+	                    return;
+	                }
+	                // have reached end of stream
+	                if (line == null) {
+	                    MipavUtil.displayError("Have reached end of stream on br.readLine");
+	                    br.close();
+	                    return;
+	                }
+	                for (ii = 0; ((ii < line.length()) && (Character.isSpaceChar(line.charAt(ii)))); ii++);
+	            } while ((ii == line.length()) || (line.charAt(ii) == '#'));
+	            
+	            int start = 0;
+	            int end = 0;
+	            for (; ((start < line.length()) && (Character.isSpaceChar(line.charAt(start)))); start++);
+	            end = start;
+	            for (; ((end < line.length()) && (Character.isDigit(line.charAt(end)))); end++);
+	            if (start == end) {
+	                MipavUtil.displayError("No digit starts line which should contain number of times");
+	                br.close();
+	                return;
+	            }
+	            numTimes = Integer.valueOf(line.substring(start, end)).intValue();
+	            if (numTimes != image.getExtents()[3]) {
+	            	MipavUtil.displayError("Number of times in file = " + numTimes + " != tDim of source image = " + image.getExtents()[3]);
+	            	br.close();
+	            	return;
+	            }
+	            timeVals = new double[numTimes];
+	            int nval = 0;
+	            while (true) {
+	            	try {
+	                    // Contains the contents of the line not including line termination characters
+	                    line = br.readLine();  
+	                }
+	                catch(IOException e) {
+	                    MipavUtil.displayError("IOException on br.readLine");
+	                    br.close();
+	                    return;
+	                }
+	                // have reached end of stream
+	                if (line == null) {
+	                    MipavUtil.displayError("Have reached end of stream on br.readLine");
+	                    break;
+	                }
+	            	start = 0;
+	            	end = 0;
+	            	for (; ((start < line.length()) && (Character.isSpaceChar(line.charAt(start)))); start++);
+	                end = start;
+	                for (; ((end < line.length()) && ((Character.isDigit(line.charAt(end))) || (line.charAt(end) == '.') || 
+	                               (line.charAt(end) == 'e') || (line.charAt(end) == 'E') ||
+	                               (line.charAt(end) == '+') || (line.charAt(end) == '-'))); end++);
+	                if (start == end) {
+	                    continue;
+	                }
+	                timeVals[nval++] = Double.valueOf(line.substring(start, end)).doubleValue();
+	                if (nval ==  numTimes) {
+	                    break;
+	                }
+	            } // while (true)
+	            br.close();
+	            if (nval < 1) {
+	                MipavUtil.displayError("No double values found in " + fileNameTimes);
+	                return;
+	            }
+	            if (nval < numTimes) {
+	            	MipavUtil.displayError("Only " + nval + " of " + numTimes + " required times found");
+	            	return;
+	            }
+	
+	        	textTimesFile.setText(fileNameTimes);
+        	} // try
+        	catch (IOException e) {
+            	MipavUtil.displayError("IOException on BufferedReader");
+            	return;
+            }
+        	
+        } // if (fileNameTimes != null)
+        else {
+        	MipavUtil.displayError("fileNameTimes is null");
+        	return;
+        }
+        fileNameVOI = scriptParameters.getParams().getString("file_name_voi");
+        directoryVOI = scriptParameters.getParams().getString("directory_voi");
+        try {
+            fileVOI = new FileVOI(fileNameVOI, directoryVOI, image);
+        }
+        catch (IOException e) {
+            MipavUtil.displayError("IOException on new FileVOI(fileNameVOI, directoryVOI, image)");
+            return;
+        }
+
+        try {
+            voi = fileVOI.readVOI(false);
+        }
+        catch (IOException e) {
+            MipavUtil.displayError("IOException on fileVOI.readVOI(false)");
+            return;
+        }
+        
+        if (voi.length > 1) {
+            MipavUtil.displayError("Found " + voi.length + " vois in file instead of 1");
+            return;
+        }
+        
+        textVOIFile.setText(fileNameVOI);
+        
+        image.getParentFrame().getComponentImage().getVOIHandler().deleteVOIs();
+        image.registerVOI(voi[0]);
+
+        //  when everything's done, notify the image listeners
+        image.notifyImageDisplayListeners();   
     }
 
     /**
@@ -557,6 +717,17 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
+        try {
+    	    scriptParameters.storeImage(tissueImage, "tissue_image");
+    	}
+    	catch (ParserException e) {
+    		MipavUtil.displayError("Parser exception on scriptParameters.storeImage(tissueImage");
+    		return;
+    	}
+        
+        for (int i = 0; i < 5; i++) {
+            scriptParameters.storeImageInRecorder(getResultImage()[i]);
+        }
         
         scriptParameters.getParams().put(ParameterFactory.newParameter("min_constr0", min_constr[0]));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_constr0", max_constr[0]));
@@ -568,13 +739,10 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_constr2", max_constr[2]));
         scriptParameters.getParams().put(ParameterFactory.newParameter("initial2", initial[2]));
         scriptParameters.getParams().put(ParameterFactory.newParameter("hematocrit_",hematocrit));
-    	try {
-    	    scriptParameters.storeImage(tissueImage, "tissue_image");
-    	}
-    	catch (ParserException e) {
-    		MipavUtil.displayError("Parser exception on scriptParameters.storeImage(tissueImage");
-    		return;
-    	}
+        scriptParameters.getParams().put(ParameterFactory.newParameter("file_name_times", fileNameTimes));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("directory_times", directoryTimes));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("file_name_voi", fileNameVOI));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("directory_voi", directoryVOI));
     }
 
     // ************************* Item Events ****************************
@@ -1098,6 +1266,154 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         }
         
         return true;
+    }
+    
+    /**
+     * Accessor that returns the image.
+     *
+     * @return  The result image.
+     */
+    public ModelImage[] getResultImage() {
+        return resultImage;
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        for (int i = 0; i < 5; i++) {
+            AlgorithmParameters.storeImageInRunner(getResultImage()[i]);
+        }
+    }
+    
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(2)));
+            table.put(new ParameterDouble("min_constr0", 1.0E-5));
+            table.put(new ParameterDouble("max_constr0", 5.0));
+            table.put(new ParameterDouble("initial0", 0.02));
+            table.put(new ParameterDouble("min_constr1", 1.0E-5));
+            table.put(new ParameterDouble("max_constr1", 0.99));
+            table.put(new ParameterDouble("initial1", 0.4));
+            table.put(new ParameterDouble("min_constr2", 0.0));
+            table.put(new ParameterDouble("max_constr2", 0.99));
+            table.put(new ParameterDouble("initial2", 0.02));
+            table.put(new ParameterDouble("hematocrit_", 0.4));
+            table.put(new ParameterString("file_name_times", " "));
+            table.put(new ParameterString("directory_times", " "));
+            table.put(new ParameterString("file_name_voi", " "));
+            table.put(new ParameterString("directory_voi", " "));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+    
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE+"1"));
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE+"2"));
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE+"3"));
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE+"4"));
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE+"5"));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE+"1")) {
+        	return resultImage[0].getImageName();
+        }
+        else if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE+"2")) {
+        	return resultImage[1].getImageName();
+        }
+        else if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE+"3")) {
+        	return resultImage[2].getImageName();
+        }
+        else if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE+"4")) {
+        	return resultImage[3].getImageName();
+        }
+        else if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE+"5")) {
+        	return resultImage[4].getImageName();
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+    
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
+    }
+    
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms");
+            }
+
+            public String getDescription() {
+                return new String("Calculates SM2 Model Parameters.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Calculates ktrans, ve, and vp Parameters for SM2 model.");
+            }
+
+            public String getShortLabel() {
+                return new String("SM2");
+            }
+
+            public String getLabel() {
+                return new String("SM2 Parameters");
+            }
+
+            public String getName() {
+                return new String("SM2 Parameters");
+            }
+        };
     }
 
 }
