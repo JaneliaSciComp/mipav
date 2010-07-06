@@ -2647,10 +2647,8 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             return;
         }
 
-        if (cursorMode != ViewJComponentBase.MOVE) {
-            setPixelInformationAtLocation(xS, yS);
-        }
-
+        setPixelInformationAtLocation(xS, yS);
+        
         // clicking with the right mouse button in a regular image frame updates the image's
         // tri-image frame (if one is open) to show that point in all of the components
         if ( (mouseEvent.getModifiers() & InputEvent.BUTTON2_MASK) != 0) {
@@ -6058,7 +6056,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      */
 
     public Color getGridColor() {
-        System.err.println( "voiHandler: getGridColor" );
         return this.gridColor;
     }
 
@@ -6068,7 +6065,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      * @return boolean
      */
     public boolean getGridLabeling() {
-        System.err.println( "voiHandler: getGridLabeling" );
         return gridLabelingOn;
     }
 
@@ -6078,7 +6074,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      * @return DOCUMENT ME!
      */
     public boolean getGridLabelOrientation() {
-        System.err.println( "voiHandler: getGridLabelOrientation" );
         return gridLabelOrientation;
     }
 
@@ -6088,7 +6083,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      * @return boolean is grid overlay on?
      */
     public boolean getGridOverlay() {
-        System.err.println( "voiHandler: getGridOverlay" );
         return gridOverlayOn;
     }
 
@@ -6098,7 +6092,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      * @return float grid spacing
      */
     public float getGridSpacingX() {
-        System.err.println( "voiHandler: getGridSpacingX" );
         return gridSpacingX;
     }
 
@@ -6108,7 +6101,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      * @return float grid spacing
      */
     public float getGridSpacingY() {
-        System.err.println( "voiHandler: getGridSpacingY" );
         return gridSpacingY;
     }
 
@@ -6119,7 +6111,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      *            Color
      */
     public void setGridColor(Color color) {
-        System.err.println( "voiHandler: setGridColor" );
         this.gridColor = color;
     }
 
@@ -6130,7 +6121,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      *            boolean
      */
     public void setGridLabelingOn(boolean doLabel) {
-        System.err.println( "voiHandler: setGridLabelingOn" );
         this.gridLabelingOn = doLabel;
     }
 
@@ -6141,7 +6131,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      *            boolean true = x-axis numbered, false = x-axis lettered
      */
     public void setGridLabelOrientation(boolean or) {
-        System.err.println( "voiHandler: setGridLabelOrientation" );
         this.gridLabelOrientation = or;
     }
 
@@ -6152,7 +6141,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      *            boolean show grid overlay (or not!)
      */
     public void setGridOverlay(boolean flag) {
-        System.err.println( "voiHandler: setGridOverlay" );
         gridOverlayOn = flag;
     }
 
@@ -6163,7 +6151,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      *            float new grid spacing
      */
     public void setGridSpacingX(float spacing) {
-        System.err.println( "voiHandler: setGridSpacingX" );
         this.gridSpacingX = spacing;
     }
 
@@ -6174,7 +6161,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      *            float new grid spacing
      */
     public void setGridSpacingY(float spacing) {
-        System.err.println( "voiHandler: setGridSpacingY" );
         this.gridSpacingY = spacing;
     }
 
@@ -6190,7 +6176,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      * @return boolean is the overlay shown
      */
     public boolean getOverlayOn() {
-        System.err.println( "voiHandler: getOverlayOn" );
         return this.overlayOn;
     }    
 
@@ -6202,7 +6187,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      *            boolean that tells whether or not to show the overlay
      */
     public void setOverlay(boolean flag) {
-        System.err.println( "voiHandler: setOverlay" );
         overlayOn = flag;
     }
     /**
@@ -6213,7 +6197,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      *            Graphics the graphics used to draw
      */
     protected void showGridOverlay(Graphics g) {
-        System.err.println( "voiHandler: showGridOverlay" );
         g.setColor(gridColor);
 
         Insets insets = getFrame().getInsets();
@@ -6293,7 +6276,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      *            Graphics object used to paint and display the strings.
      */
     public void showOverlay(Graphics g) {
-        System.err.println( "voiHandler: showOverlay" );
         String[] overlays = new String[16];
         String[] overlayNames = new String[16];
 
@@ -6464,8 +6446,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      */
     private String buildOverlayStrings(FileInfoBase inf, String name,
             String attribString) {
-
-        System.err.println( "voiHandler: buildOverlayStrings" );
 
         if (inf instanceof FileInfoDicom) {
 

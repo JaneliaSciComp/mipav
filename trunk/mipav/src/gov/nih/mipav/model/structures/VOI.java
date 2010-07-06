@@ -111,9 +111,6 @@ public class VOI extends ModelSerialCloneable {
     /** Indicates if the VOI should be shown as a boundary or a solid. */
     private int displayMode;
 
-    /** The label (numbering) of the curve, displayed when curve is highlighted. */
-    private short elementLabel = 1;
-
     /** If true the VOI cannot be moved, if false this VOI can be moved. */
     private boolean fixed = false;
 
@@ -290,7 +287,6 @@ public class VOI extends ModelSerialCloneable {
 
         this.curveType = kVOI.curveType;
         this.displayMode = kVOI.displayMode;
-        this.elementLabel = kVOI.elementLabel;
         this.fixed = kVOI.fixed;
         this.ID = kVOI.ID;
         this.ignoreMax = kVOI.ignoreMax;
@@ -1606,13 +1602,6 @@ public class VOI extends ModelSerialCloneable {
         curve.setGroup(this);
         curve.getGeometricCenter();
         curves.addElement(curve);
-
-        if ((curveType == POINT) || (curveType == POLYLINE_SLICE)) {
-            ((VOIPoint) (curves.lastElement())).setLabel(String.valueOf(elementLabel++));
-
-        } else if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
-            ((VOIContour) (curves.lastElement())).setLabel(String.valueOf(elementLabel++));
-        }
         return curve;
     }
 
@@ -1638,12 +1627,6 @@ public class VOI extends ModelSerialCloneable {
         curve.setGroup(this);
         curve.getGeometricCenter();
         curves.addElement(curve);
-
-        if (curveType == POINT) {
-            ((VOIPoint) (curves.lastElement())).setLabel(String.valueOf(elementLabel++));
-        } else if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
-            ((VOIContour) (curves.lastElement())).setLabel(String.valueOf(elementLabel++));
-        }
     }
 
     /**
@@ -1671,12 +1654,6 @@ public class VOI extends ModelSerialCloneable {
         curve.setGroup(this);
         curve.getGeometricCenter();
         curves.addElement(curve);
-
-        if (curveType == POINT) {
-            ((VOIPoint) (curves.lastElement())).setLabel(String.valueOf(elementLabel++));
-        } else if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
-            ((VOIContour) (curves.lastElement())).setLabel(String.valueOf(elementLabel++));
-        }
     }
 
     /**
@@ -1687,10 +1664,6 @@ public class VOI extends ModelSerialCloneable {
         curve.setGroup(this);
         curve.getGeometricCenter();
         curves.addElement(curve.clone());
-
-        if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
-            ((VOIContour) (curves.lastElement())).setLabel(String.valueOf(elementLabel++));
-        }
     }
 
     /**
@@ -1739,7 +1712,6 @@ public class VOI extends ModelSerialCloneable {
         voiPt.set(0, point);
         voiPt.setGroup(this);
         curves.addElement(voiPt);
-        ((VOIPoint) (curves.lastElement())).setLabel(String.valueOf(elementLabel++));
     }
 
 
@@ -1764,7 +1736,6 @@ public class VOI extends ModelSerialCloneable {
         contour.setGroup(this);
         contour.getGeometricCenter();
         curves.addElement(contour);
-        ((VOIContour) (curves.lastElement())).setLabel(String.valueOf(elementLabel++));
     }
 
 
@@ -1998,7 +1969,6 @@ public class VOI extends ModelSerialCloneable {
      */
     public void removeCurves() {
         curves.removeAllElements();
-        elementLabel = 1;
     }
     
     /**

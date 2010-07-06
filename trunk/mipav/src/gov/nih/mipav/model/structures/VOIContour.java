@@ -120,64 +120,6 @@ public class VOIContour extends VOIBase {
     }
 
 	/**
-	 * Calculate the distance of the largest line segment contained entirely
-	 * within the slice of the VOI
-	 * 
-	 * @param xRes
-	 * @param yRes
-	 * @return largestDistance
-	 */
-	public double calcLargestSliceDistance(float xRes, float yRes) {
-
-        float[] xPts = new float[size()];
-        float[] yPts = new float[size()];
-        reloadPoints( xPts, yPts );
-        
-		long time = System.currentTimeMillis();
-		double avg = 0, max = 0;
-		double[] maxAvg = determineMaxAvg(xRes, yRes, xPts, yPts);
-		max = maxAvg[0];
-		avg = maxAvg[1];
-
-		Preferences.debug("Traverse points\n");
-		time = System.currentTimeMillis();
-		double a = 0, lowerBound = max, upperBound = Double.MAX_VALUE;
-		int iter = 0;
-		boolean terminal = false;
-		while (a == 0 && !terminal) {
-			ArrayList<Integer> orig = new ArrayList<Integer>();
-			ArrayList<Integer> term = new ArrayList<Integer>();
-			upperBound = lowerBound;
-			lowerBound = Math
-					.max(0, max
-							- iter
-							* (avg / Math.max(1, (int) Math.pow(xPts.length,
-									0.4) - 4)));
-			gatherBoundedPoints(orig, term, lowerBound - 1, upperBound, xRes,
-					yRes, xPts, yPts);
-            
-            Preferences.debug("Completed points in "
-                    + (System.currentTimeMillis() - time) + "\tsize: "
-                    + orig.size() + "\n");
-            time = System.currentTimeMillis();
-            
-			a = getLargest(orig, term, xRes, yRes, xPts, yPts);
-			
-			
-            Preferences.debug("Completed points in "
-                    + (System.currentTimeMillis() - time) + "\tsize: "
-                    + orig.size() + "\n");
-            time = System.currentTimeMillis();
-			if (lowerBound == 0.0) {
-				terminal = true;
-			}
-			iter++;
-		}
-		return a;
-	}
-
-
-	/**
 	 * Forms the convexHull based on the set of points that defines this
 	 * contour. The contour can be either be clockwise or counter-clockwise.
 	 */
@@ -714,17 +656,8 @@ public class VOIContour extends VOIBase {
 		int nPts = size();
 
 		// reloads points in this array for speed purposes
-		try {
-
-			if ((yPts == null) || (xPts == null) || (size() != xPts.length)) {
-				xPts = new float[size()];
-				yPts = new float[size()];
-			}
-			// System.err.println("contains : xPts.len = " + xPts.length + "
-			// yPts.len = " + yPts.length);
-		} catch (OutOfMemoryError error) {
-			System.out.println("VOIContour.contains: memory allocation error");
-			System.gc();
+		if ((yPts == null) || (xPts == null) || (size() != xPts.length)) {
+		    System.err.println("contains : xPts.len = " + xPts.length + " yPts.len = " + yPts.length);
 		}
 
 		for (int i = 0; i < nPts; i++) {
@@ -746,31 +679,16 @@ public class VOIContour extends VOIBase {
 	}
 
 
+
 	/**
-	 * Finds the second order attributes or moments.
-	 * 
-	 * @param xDim
-	 *            width of input image slice
-	 * @param yDim
-	 *            height of input image slice
-	 * @param xRes
-	 *            DOCUMENT ME!
-	 * @param yRes
-	 *            DOCUMENT ME!
-	 * @param xUnits
-	 *            DOCUMENT ME!
-	 * @param yUnits
-	 *            DOCUMENT ME!
-	 * @param pAxis
-	 *            angle in degrees with major axis
-	 * @param eccentricity
-	 *            shape (circle = 0; line = 1)
-	 * @param majorAxis
-	 *            diameter of major axis
-	 * @param minorAxis
-	 *            diameter of minor axis Reference:
-	 *            http://www.caip.rutgers.edu/~xswang/object-segment/objhtml/node4.html
-	 *            Object Quantification by Simon Xin Wang
+     * Find the least squares fit of the points in the contour to an ellipsoid.
+     * Uses a variant of Powell's algorithm to find the minimum of the 9D function:
+     * center x,y,z, rotation x,y,z, and axis x,y,z.
+	 * @param kImage input image
+	 * @param pAxis output principal axis
+	 * @param eccentricity output eccentricity
+	 * @param majorAxis output major axis length
+	 * @param minorAxis output minor axis length
 	 */
 	public void secondOrderAttributes( ModelImage kImage, float[] pAxis,
 			float[] eccentricity, float[] majorAxis, float[] minorAxis) {  	    
@@ -1284,173 +1202,230 @@ public class VOIContour extends VOIBase {
             ((elementAt(i))).Z += zT;
 		}
 	}
+	
+	/**
+     * Calculate the distance of the largest line segment contained entirely
+     * within the slice of the VOI
+     * 
+     * @param xRes
+     * @param yRes
+     * @return largestDistance
+     */
+    public double calcLargestSliceDistance(float xRes, float yRes, Vector3f kPos1, Vector3f kPos2) {
 
+        float[] xPts = new float[size()];
+        float[] yPts = new float[size()];
+        reloadPoints(xPts, yPts);
+        
+        long time = System.currentTimeMillis();
+        double avg = 0, max = 0;
+        double[] maxAvg = determineMaxAvg(xRes, yRes, xPts, yPts);
+        max = maxAvg[0];
+        avg = maxAvg[1];
 
-    /**
-	 * Gathers max and average statistics to build guessing intervals
-	 */
-	private double[] determineMaxAvg(float xRes, float yRes, float[] xPts,
-			float[] yPts) {
-		double max = 0, avg = 0;
-		int n = xPts.length;
-		Random r = new Random();
-		// note that a stop that yields a non-representative average is fine,
-		// since worst case is more computations
-		int stop = n < 100 ? (int) (n * 0.50) : (int) (n * 0.10);
-		int[] search = new int[stop];
-		int[] end = new int[stop];
-		double startX, startY;
-		double endX, endY;
-		double delX, delY;
-		double distX, distY;
-		double distanceSq;
-		int i, j;
-		for (i = 0; i < stop; i++) {
-			search[i] = r.nextInt(n);
-			end[i] = r.nextInt(n);
-		}
-
-		int numBegin = 0, numEnd = 0;
-		;
-		for (i = 0; i < search.length; i++) {
-
-			numBegin = search[i];
-			startX = xPts[numBegin];
-			startY = yPts[numBegin];
-			for (j = 0; j < end.length; j++) {
-				numEnd = end[j];
-				endX = xPts[numEnd];
-				endY = yPts[numEnd];
-				delX = endX - startX;
-				delY = endY - startY;
-				distX = xRes * delX;
-				distY = yRes * delY;
-				distanceSq = distX * distX + distY * distY;
-				avg = avg + distanceSq;
-				if (distanceSq > max) {
-					max = distanceSq;
-				} // if (distanceSq > largsestDistanceSq)
-			} // for (j = i+1; j < xPts.length; j++)
-		} // for (i = 0; i < xPts.length; i++)
-		avg = avg / (end.length * search.length);
-		return new double[] { max, avg };
-	}
+        Preferences.debug("Traverse points\n");
+        time = System.currentTimeMillis();
+        double a = 0, lowerBound = max, upperBound = Double.MAX_VALUE;
+        int iter = 0;
+        boolean terminal = false;
+        while (a == 0 && !terminal) {
+            ArrayList<Integer> orig = new ArrayList<Integer>();
+            ArrayList<Integer> term = new ArrayList<Integer>();
+            upperBound = lowerBound;
+            lowerBound = Math
+                    .max(0, max
+                            - iter
+                            * (avg / Math.max(1, (int) Math.pow(xPts.length,
+                                    0.4) - 4)));
+            gatherBoundedPoints(orig, term, lowerBound - 1, upperBound, xRes,
+                    yRes, xPts, yPts);
+            time = System.currentTimeMillis();
+            Preferences.debug("Completed points in "
+                    + (System.currentTimeMillis() - time) + "\tsize: "
+                    + orig.size() + "\n");
+            a = getLargest(orig, term, xRes, yRes, xPts, yPts, kPos1, kPos2);
+            if (lowerBound == 0.0) {
+                terminal = true;
+            }
+            iter++;
+        }
+        return a;
+    }
 
     /**
-	 * Gathers the points that fall within the required bounds
-	 */
-	private void gatherBoundedPoints(ArrayList<Integer> orig,
-			ArrayList<Integer> term, double lowerBound, double upperBound,
-			float xRes, float yRes, float[] xPts, float[] yPts) {
-		int i, j;
-		double startX, startY;
-		double endX, endY;
-		double delX, delY;
-		double distX, distY;
-		double distanceSq;
-		for (i = 0; i < xPts.length; i++) {
-			startX = xPts[i];
-			startY = yPts[i];
-			for (j = i + 1; j < xPts.length; j++) {
-				endX = xPts[j];
-				endY = yPts[j];
-				delX = endX - startX;
-				delY = endY - startY;
-				distX = xRes * delX;
-				distY = yRes * delY;
-				distanceSq = distX * distX + distY * distY;
-				if (distanceSq > lowerBound && distanceSq < upperBound) {
-					orig.add(Integer.valueOf(i));
-					term.add(Integer.valueOf(j));
-				} // if (distanceSq > largsestDistanceSq)
-			} // for (j = i+1; j < xPts.length; j++)
-		} // for (i = 0; i < xPts.length; i++)
-	}
-    
+     * Gathers max and average statistics to build guessing intervals
+     */
+    private double[] determineMaxAvg(float xRes, float yRes, float[] xPts,
+            float[] yPts) {
+        double max = 0, avg = 0;
+        int n = xPts.length;
+        Random r = new Random();
+        // note that a stop that yields a non-representative average is fine,
+        // since worst case is more computations
+        int stop = n < 100 ? (int) (n * 0.50) : (int) (n * 0.10);
+        int[] search = new int[stop];
+        int[] end = new int[stop];
+        double startX, startY;
+        double endX, endY;
+        double delX, delY;
+        double distX, distY;
+        double distanceSq;
+        int i, j;
+        for (i = 0; i < stop; i++) {
+            search[i] = r.nextInt(n);
+            end[i] = r.nextInt(n);
+        }
+
+        int numBegin = 0, numEnd = 0;
+        ;
+        for (i = 0; i < search.length; i++) {
+
+            numBegin = search[i];
+            startX = xPts[numBegin];
+            startY = yPts[numBegin];
+            for (j = 0; j < end.length; j++) {
+                numEnd = end[j];
+                endX = xPts[numEnd];
+                endY = yPts[numEnd];
+                delX = endX - startX;
+                delY = endY - startY;
+                distX = xRes * delX;
+                distY = yRes * delY;
+                distanceSq = distX * distX + distY * distY;
+                avg = avg + distanceSq;
+                if (distanceSq > max) {
+                    max = distanceSq;
+                } // if (distanceSq > largsestDistanceSq)
+            } // for (j = i+1; j < xPts.length; j++)
+        } // for (i = 0; i < xPts.length; i++)
+        avg = avg / (end.length * search.length);
+        return new double[] { max, avg };
+    }
+
     /**
-	 * 
-	 * 2d version to find the largest distance of the collected values
-	 * 
-	 * @return the largest distance for this contour
-	 */
-	private double getLargest(ArrayList<Integer> orig, ArrayList<Integer> term,
-			float xRes, float yRes, float[] xPoints, float[] yPoints) {
-		Integer origPoint, termPoint;
-		double startX, startY;
-		double endX, endY;
-		double delX, delY;
-		double distX, distY;
-		double x, y;
-		double slope;
-		double largestDistanceSq = 0, distanceSq;
-		int xRound, yRound;
-		int num = 0;
-		int j;
-		contains(0, 0);
-		forj: for (j = 0; j < orig.size(); j++) {
-			num++;
-			origPoint = orig.get(j).intValue();
-			startX = xPoints[origPoint];
-			startY = yPoints[origPoint];
-			termPoint = term.get(j).intValue();
-			endX = xPoints[termPoint];
-			endY = yPoints[termPoint];
-			delX = endX - startX;
-			delY = endY - startY;
-			distX = xRes * delX;
-			distY = yRes * delY;
-			distanceSq = distX * distX + distY * distY;
-			if (distanceSq > largestDistanceSq) {
-				if (Math.abs(delX) >= Math.abs(delY)) {
-					slope = delY / delX;
-					if (endX >= startX) {
-						for (x = startX + 0.5, y = startY + 0.5 * slope; x < endX; x += 0.5, y += 0.5 * slope) {
-							xRound = (int) Math.round(x);
-							yRound = (int) Math.round(y);
-							if (!contains(xRound, yRound)) {
-								continue forj;
-							}
-						} // for (x = startX + 0.5, y = startY + 0.5 * slope;
-							// x < endX; x += 0.5, y += 0.5 * slope)
-					} // if (endX >= startX)
-					else { // endX < startX
-						for (x = startX - 0.5, y = startY - 0.5 * slope; x > endX; x -= 0.5, y -= 0.5 * slope) {
-							xRound = (int) Math.round(x);
-							yRound = (int) Math.round(y);
-							if (!contains(xRound, yRound)) {
-								continue forj;
-							}
-						} // for (x = startX - 0.5, y = startY - 0.5 * slope;
-							// x > endX; x -= 0.5, y -= 0.5 * slope)
-					} // else endX < startX
-				} // if (Math.abs(delX) >= Math.abs(delY))
-				else { // Math.abs(delX) < Math.abs(delY)
-					slope = delX / delY;
-					if (endY >= startY) {
-						for (y = startY + 0.5, x = startX + 0.5 * slope; y < endY; y += 0.5, x += 0.5 * slope) {
-							xRound = (int) Math.round(x);
-							yRound = (int) Math.round(y);
-							if (!contains(xRound, yRound)) {
-								continue forj;
-							}
-						} // for (y = startY + 0.5, x = startX + 0.5 * slope;
-							// y < endY; y += 0.5, x += 0.5 * slope)
-					} // if (endX >= startX)
-					else { // endX < startX
-						for (y = startY - 0.5, x = startX - 0.5 * slope; y > endY; y -= 0.5, x -= 0.5 * slope) {
-							xRound = (int) Math.round(x);
-							yRound = (int) Math.round(y);
-							if (!contains(xRound, yRound)) {
-								continue forj;
-							}
-						} // for (y = startY - 0.5, x = startX - 0.5 * slope;
-							// y > endY; y -= 0.5, x -= 0.5 * slope)
-					} // else endX < startX
-				} // else Math.abs(delX) < Math.abs(delY)
-				largestDistanceSq = distanceSq;
-			}
-		}
-		return Math.sqrt(largestDistanceSq);
-	}
-    
+     * Gathers the points that fall within the required bounds
+     */
+    private void gatherBoundedPoints(ArrayList<Integer> orig,
+            ArrayList<Integer> term, double lowerBound, double upperBound,
+            float xRes, float yRes, float[] xPts, float[] yPts) {
+        int i, j;
+        double startX, startY;
+        double endX, endY;
+        double delX, delY;
+        double distX, distY;
+        double distanceSq;
+        for (i = 0; i < xPts.length; i++) {
+            startX = xPts[i];
+            startY = yPts[i];
+            for (j = i + 1; j < xPts.length; j++) {
+                endX = xPts[j];
+                endY = yPts[j];
+                delX = endX - startX;
+                delY = endY - startY;
+                distX = xRes * delX;
+                distY = yRes * delY;
+                distanceSq = distX * distX + distY * distY;
+                if (distanceSq > lowerBound && distanceSq < upperBound) {
+                    orig.add(Integer.valueOf(i));
+                    term.add(Integer.valueOf(j));
+                } // if (distanceSq > largsestDistanceSq)
+            } // for (j = i+1; j < xPts.length; j++)
+        } // for (i = 0; i < xPts.length; i++)
+    }
+
+    /**
+     * 
+     * 2d version to find the largest distance of the collected values
+     * 
+     * @return the largest distance for this contour
+     */
+    private double getLargest(ArrayList<Integer> orig, ArrayList<Integer> term,
+            float xRes, float yRes, float[] xPoints, float[] yPoints, Vector3f kPos1, Vector3f kPos2) {
+        Integer origPoint, termPoint;
+        double startX, startY;
+        double endX, endY;
+        double delX, delY;
+        double distX, distY;
+        double x, y;
+        double slope;
+        double largestDistanceSq = 0, distanceSq;
+        int xRound, yRound;
+        int num = 0;
+        int j;
+        forj: for (j = 0; j < orig.size(); j++) {
+            num++;
+            origPoint = orig.get(j).intValue();
+            startX = xPoints[origPoint];
+            startY = yPoints[origPoint];
+            termPoint = term.get(j).intValue();
+            endX = xPoints[termPoint];
+            endY = yPoints[termPoint];
+            delX = endX - startX;
+            delY = endY - startY;
+            distX = xRes * delX;
+            distY = yRes * delY;
+            distanceSq = distX * distX + distY * distY;
+            
+
+            kPos1.X = (float)startX;
+            kPos1.Y = (float)startY;
+            kPos1.Z = elementAt(0).Z;
+            kPos2.X = (float)endX;
+            kPos2.Y = (float)endY;
+            kPos2.Z = elementAt(0).Z;
+            if (distanceSq > largestDistanceSq) {
+                if (Math.abs(delX) >= Math.abs(delY)) {
+                    slope = delY / delX;
+                    if (endX >= startX) {
+                        for (x = startX + 0.5, y = startY + 0.5 * slope; x < endX; x += 0.5, y += 0.5 * slope) {
+                            xRound = (int) Math.round(x);
+                            yRound = (int) Math.round(y);
+                            if (!contains(xRound, yRound)) {
+                                continue forj;
+                            }
+                        } // for (x = startX + 0.5, y = startY + 0.5 * slope;
+                            // x < endX; x += 0.5, y += 0.5 * slope)
+                    } // if (endX >= startX)
+                    else { // endX < startX
+                        for (x = startX - 0.5, y = startY - 0.5 * slope; x > endX; x -= 0.5, y -= 0.5 * slope) {
+                            xRound = (int) Math.round(x);
+                            yRound = (int) Math.round(y);
+                            if (!contains(xRound, yRound)) {
+                                continue forj;
+                            }
+                        } // for (x = startX - 0.5, y = startY - 0.5 * slope;
+                            // x > endX; x -= 0.5, y -= 0.5 * slope)
+                    } // else endX < startX
+                } // if (Math.abs(delX) >= Math.abs(delY))
+                else { // Math.abs(delX) < Math.abs(delY)
+                    slope = delX / delY;
+                    if (endY >= startY) {
+                        for (y = startY + 0.5, x = startX + 0.5 * slope; y < endY; y += 0.5, x += 0.5 * slope) {
+                            xRound = (int) Math.round(x);
+                            yRound = (int) Math.round(y);
+                            if (!contains(xRound, yRound)) {
+                                continue forj;
+                            }
+                        } // for (y = startY + 0.5, x = startX + 0.5 * slope;
+                            // y < endY; y += 0.5, x += 0.5 * slope)
+                    } // if (endX >= startX)
+                    else { // endX < startX
+                        for (y = startY - 0.5, x = startX - 0.5 * slope; y > endY; y -= 0.5, x -= 0.5 * slope) {
+                            xRound = (int) Math.round(x);
+                            yRound = (int) Math.round(y);
+                            if (!contains(xRound, yRound)) {
+                                continue forj;
+                            }
+                        } // for (y = startY - 0.5, x = startX - 0.5 * slope;
+                            // y > endY; y -= 0.5, x -= 0.5 * slope)
+                    } // else endX < startX
+                } // else Math.abs(delX) < Math.abs(delY)
+                largestDistanceSq = distanceSq;
+            }
+        }
+        return Math.sqrt(largestDistanceSq);
+    }
+
+
+	
 }

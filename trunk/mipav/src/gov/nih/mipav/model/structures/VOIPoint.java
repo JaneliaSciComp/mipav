@@ -43,6 +43,9 @@ public class VOIPoint extends VOIBase {
     /** ID if this VOIPoint is contained in a PolyLineSlice object. */
     private int m_iID = -1;
 
+    private TransMatrix m_kRotation = null;
+    private TransMatrix m_kRotationInverse = null;
+
     /**
      *  Default constructor
      */
@@ -151,7 +154,7 @@ public class VOIPoint extends VOIBase {
      * @return returns the geometric center
      */
     public Vector3f getGeometricCenter() {     
-        gcPt.Copy( get(0) );
+        gcPt.Copy( getPosition() );
         return gcPt;
     }
 
@@ -171,6 +174,21 @@ public class VOIPoint extends VOIBase {
     public boolean isActivePoint()
     {
         return isActivePoint;
+    }
+    
+    public Vector3f getPosition()
+    {
+        if ( m_kRotation == null )
+        {
+            return elementAt(0);
+        }
+        Vector3f kPos = new Vector3f(elementAt(0));
+
+        int x = Math.round((kPos.X * m_kRotation.Get(0, 0)) + (kPos.Y * m_kRotation.Get(0, 1)) + m_kRotation.Get(0, 2));
+        int y = Math.round((kPos.X * m_kRotation.Get(1, 0)) + (kPos.Y * m_kRotation.Get(1, 1)) + m_kRotation.Get(1, 2));
+        kPos.X = x;
+        kPos.Y = y;
+        return kPos;
     }
 
 
@@ -234,7 +252,89 @@ public class VOIPoint extends VOIBase {
         pt.Y = pt.Y + yM;
         pt.Z = pt.Z + zM;
     }
+    
 
+    /**
+     * Returns true if the input iX, iY is contained within this contour.  
+     * The z-value of the contour is ignored.
+     * @param iX
+     * @param iY
+     * @return
+     */
+    public boolean contains(float iX, float iY)
+    {
+        if ( m_kRotationInverse != null )
+        {
+            Vector3f kPos = new Vector3f( iX, iY, 0 );
+            iX = Math.round((kPos.X * m_kRotationInverse.Get(0, 0)) + (kPos.Y * m_kRotationInverse.Get(0, 1)) + m_kRotationInverse.Get(0, 2));
+            iY = Math.round((kPos.X * m_kRotationInverse.Get(1, 0)) + (kPos.Y * m_kRotationInverse.Get(1, 1)) + m_kRotationInverse.Get(1, 2));
+        }
+        Vector3f[] kBounds = getImageBoundingBox();
+        if ( iX < kBounds[0].X || iX > kBounds[1].X ||
+                iY < kBounds[0].Y || iY > kBounds[1].Y  )
+        {
+            return false;
+        }        
+        return true;
+    }
+
+
+
+    /**
+     * Returns true if the input iX,iY,iZ is contained within this contour.
+     * @param iX
+     * @param iY
+     * @param iZ
+     * @return
+     */
+    public boolean contains(float iX, float iY, float iZ )
+    {
+        if ( m_kRotationInverse != null )
+        {
+            Vector3f kPos = new Vector3f( iX, iY, 0 );
+            iX = Math.round((kPos.X * m_kRotationInverse.Get(0, 0)) + (kPos.Y * m_kRotationInverse.Get(0, 1)) + m_kRotationInverse.Get(0, 2));
+            iY = Math.round((kPos.X * m_kRotationInverse.Get(1, 0)) + (kPos.Y * m_kRotationInverse.Get(1, 1)) + m_kRotationInverse.Get(1, 2));
+        }
+        Vector3f[] kBounds = getImageBoundingBox();
+        if ( iX < kBounds[0].X || iX > kBounds[1].X ||
+                iY < kBounds[0].Y || iY > kBounds[1].Y ||
+                iZ < kBounds[0].Z || iZ > kBounds[1].Z   )
+        {
+            return false;
+        }
+        return true;
+    }
+
+    
+
+    /**
+     * Returns true if the input position is near one of the points on this contour.
+     * @param iX input x-position.
+     * @param iY input y-position.
+     * @param iZ input z-position
+     * @return true if the input position is near one of the contour points.
+     */
+    public boolean nearPoint( int iX, int iY, int iZ) {
+        if ( m_kRotationInverse != null )
+        {
+            Vector3f kPos = new Vector3f( iX, iY, 0 );
+            iX = Math.round((kPos.X * m_kRotationInverse.Get(0, 0)) + (kPos.Y * m_kRotationInverse.Get(0, 1)) + m_kRotationInverse.Get(0, 2));
+            iY = Math.round((kPos.X * m_kRotationInverse.Get(1, 0)) + (kPos.Y * m_kRotationInverse.Get(1, 1)) + m_kRotationInverse.Get(1, 2));
+        }
+        Vector3f kVOIPoint = new Vector3f(iX, iY, iZ );
+        for ( int i = 0; i < size(); i++ )
+        {
+            Vector3f kPos = get(i);
+            Vector3f kDiff = new Vector3f();
+            kDiff.Sub( kPos, kVOIPoint );
+            if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
+            {
+                setNearPoint(i);
+                return true;
+            }
+        }
+        return false;
+    }
 
     /**
      * Parameters for drawing each point in the PolyLineSlice object.
@@ -266,6 +366,13 @@ public class VOIPoint extends VOIBase {
         this.distanceString = dist;
 
         m_iID = iID;
+    }
+    
+    public void setMatrix( TransMatrix kMat )
+    {
+        m_kRotation = kMat;
+        m_kRotationInverse = new TransMatrix(kMat);
+        m_kRotationInverse.Inverse();
     }
 
 

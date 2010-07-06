@@ -2628,6 +2628,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         {
             VOI kCurrentGroup = kVOIs.get(i);
             kCurrentGroup.setAllActive(bActive);
+            m_kCurrentVOIGroup = kCurrentGroup;
         }
         updateDisplay();
     }
