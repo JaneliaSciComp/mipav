@@ -194,7 +194,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
     }
 
     /**
-     * Construct the barrel/pin cushion correction dialog.
+     * Construct the TRE dialog.
      *
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
@@ -343,32 +343,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    JScrollPane scrollPane = new JScrollPane(panel);
 	    scrollPane.setPreferredSize(new Dimension(420+dialogWidthAdd,405));
 	    scrollPane.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: SPGR Image Information"));
-	    scrollPane.addComponentListener(new ComponentListener() {
-	    	
-		    public void componentHidden(ComponentEvent arg0) {}
-	
-			public void componentMoved(ComponentEvent arg0) {}
-	
-			public void componentResized(ComponentEvent arg0) {}
-
-			public void componentShown(ComponentEvent arg0) {
-				try {
-					if(Nsa != Double.valueOf(spgrNumFA.getText()).intValue()) {
-						Object obj = arg0.getSource();
-						if(obj instanceof JScrollPane) {
-							Nsa = Double.valueOf(spgrNumFA.getText()).intValue();
-							((JScrollPane) obj).getViewport().removeAll();
-							((JScrollPane) obj).setViewportView(buildTreT1LongPanelInner());
-							((JScrollPane) obj).validate();
-							((JScrollPane) obj).updateUI();
-						}
-					}
-				} catch (NumberFormatException e) {
-					System.out.println(spgrNumFA.getText());
-					MipavUtil.displayError("The number of flip angles in panel 1 is not a valid value.");
-				}
-			}
-		});
+	    scrollPane.addComponentListener(new FlipAngleChangeListener());
 	
 	    return scrollPane;
 	 }
@@ -429,40 +404,13 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 		}
 		
 	    JScrollPane scrollPane = new JScrollPane(panel);
+	    if(scannerType.equals(ScannerType.GE)) {
+	    	scrollPane.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR GE Image Information"));
+	    } else {
+	    	scrollPane.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR Siemens Image Information"));
+	    }
 	    scrollPane.setPreferredSize(new Dimension(420+dialogWidthAdd,405));
-	    scrollPane.addComponentListener(new ComponentListener() {
-
-			public void componentHidden(ComponentEvent e) {}
-
-			public void componentMoved(ComponentEvent e) {}
-
-			public void componentResized(ComponentEvent e) {}
-
-			public void componentShown(ComponentEvent e) {
-				try {
-					if(Nti != Double.valueOf(irspgrNum.getText()).intValue()) {
-						Object obj = e.getSource();
-						if(obj instanceof JScrollPane) {
-							Nti = Double.valueOf(irspgrNum.getText()).intValue();
-							((JScrollPane) obj).getViewport().removeAll();
-							if(scannerType.equals(ScannerType.GE)) {
-								((JScrollPane) obj).setViewportView(buildIRSPGRPanelGEInner());
-								((JScrollPane) obj).setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR GE Image Information"));
-							} else {
-								((JScrollPane) obj).setViewportView(buildIRSPGRPanelSiemensInner());
-								((JScrollPane) obj).setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR Siemens Image Information"));
-							}
-							((JScrollPane) obj).validate();
-							((JScrollPane) obj).updateUI();
-						}
-					}
-				} catch (NumberFormatException e1) {
-					System.out.println(irspgrNum.getText());
-					MipavUtil.displayError("The number of irspgr images in panel 1 is not a valid value.");
-				}
-			}
-	    	
-	    });
+	    scrollPane.addComponentListener(new FlipAngleChangeListener());
 	    
 	    return scrollPane;
 	}
@@ -637,36 +585,107 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    
 	    JScrollPane scrollPane = new JScrollPane(panel);
 	    scrollPane.setPreferredSize(new Dimension(420+dialogWidthAdd,405));
-	    scrollPane.setBorder(null);
+	    scrollPane.setBorder(MipavUtil.buildTitledBorder("treT1-Conv: Long"));
 	    
-	    scrollPane.addComponentListener(new ComponentListener() {
-	    	
-		    public void componentHidden(ComponentEvent arg0) {}
-	
-			public void componentMoved(ComponentEvent arg0) {}
-	
-			public void componentResized(ComponentEvent arg0) {}
-
-			public void componentShown(ComponentEvent arg0) {
-				try {
-					if(Nsa != Double.valueOf(spgrNumFA.getText()).intValue()) {
-						Object obj = arg0.getSource();
-						if(obj instanceof JScrollPane) {
-							Nsa = Double.valueOf(spgrNumFA.getText()).intValue();
-							((JScrollPane) obj).getViewport().removeAll();
-							((JScrollPane) obj).setViewportView(buildTreT1LongPanelInner());
-							((JScrollPane) obj).validate();
-							((JScrollPane) obj).updateUI();
-						}
-					}
-				} catch (NumberFormatException e) {
-					System.out.println(spgrNumFA.getText());
-					MipavUtil.displayError("The number of flip angles in panel 1 is not a valid value.");
-				}
-			}
-		});
+	    scrollPane.addComponentListener(new FlipAngleChangeListener());
 	    
 	    return scrollPane;
+	}
+	
+	private class FlipAngleChangeListener implements ComponentListener {
+
+		public void componentResized(ComponentEvent e) {}
+
+		public void componentMoved(ComponentEvent e) {}
+
+		public void componentShown(ComponentEvent e) {
+			setFAValues();
+			System.out.println("Entered");
+			if(e.getSource().equals(convSpec) && doSpec()) {
+				convSpec.removeAll();
+				convSpec.add(buildTreT1SpecificsPanelInner());
+				
+				convSpec.validate();
+				convSpec.updateUI();
+			} else if(e.getSource().equals(hifiSpec) && doSpec()) {
+				hifiSpec.removeAll();
+				hifiSpec.add(buildTreT1HIFISpecificsPanelInner());
+				
+				hifiSpec.validate();
+				hifiSpec.updateUI();
+			} else if(e.getSource().equals(spgrPanel) && doSpgr()) {
+				spgrPanel.getViewport().removeAll();
+				spgrPanel.setViewportView(buildSPGRPanelInner());
+
+				spgrPanel.validate();
+				spgrPanel.updateUI();
+			} else if(e.getSource().equals(treLong) && doConv()) {
+				treLong.getViewport().removeAll();
+				treLong.setViewportView(buildTreT1LongPanelInner());
+
+				treLong.validate();
+				treLong.updateUI();
+			} else if(e.getSource().equals(irspgrPanel) && doIRSPGR()) {
+				irspgrPanel.getViewport().removeAll();
+				
+				if(scannerType.equals(ScannerType.GE)) {
+					irspgrPanel.setViewportView(buildIRSPGRPanelGEInner());
+					irspgrPanel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR GE Image Information"));
+				} else {
+					irspgrPanel.setViewportView(buildIRSPGRPanelSiemensInner());
+					irspgrPanel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR Siemens Image Information"));
+				}
+
+				irspgrPanel.validate();
+				irspgrPanel.updateUI();
+			}
+			tab.validate();
+		    tab.updateUI();	
+		}
+
+		public void componentHidden(ComponentEvent e) {}
+		
+		private void setFAValues() {
+			try {
+				if(spgrNumFA != null && Nsa != Double.valueOf(spgrNumFA.getText()).intValue()) {
+					Nsa = Double.valueOf(spgrNumFA.getText()).intValue();
+				}
+			} catch (NumberFormatException ex1) {
+				System.out.println(spgrNumFA.getText());
+				MipavUtil.displayError("The number of flip angles in panel 1 is not a valid value.");
+			}
+			
+			try {
+				if(irspgrNum != null && Nti != Double.valueOf(irspgrNum.getText()).intValue()) {
+					Nti = Double.valueOf(irspgrNum.getText()).intValue();
+				}
+			} catch (NumberFormatException ex1) {
+				System.out.println(irspgrNum.getText());
+				MipavUtil.displayError("The number of irspgr images in panel 1 is not a valid value.");
+			}
+		}
+		
+		private boolean doSpec() {
+			//when Nsa > 2, the leastSquares checkbox should not be null and should be visible
+			//when Nsa <=2, the leastSquares check could be null, but if not, it shouldn't be visible
+			return ((leastSquaresCheck == null || (leastSquaresCheck != null && !leastSquaresCheck.isVisible())) && Nsa > 2) 
+						|| (Nsa <=2 && leastSquaresCheck != null && leastSquaresCheck.isVisible());
+		}
+		
+		private boolean doSpgr() {
+			//this array shouldn't be null and its length should equal Nsa
+			return (spgrImageComboBoxAr == null || spgrImageComboBoxAr.length != Nsa);
+		}
+		
+		private boolean doConv() {	
+			//like spgr this array shouldn't be null and its length should equal Nsa
+			return (convimageComboAr == null || convimageComboAr.length != Nsa);
+		}
+		
+		private boolean doIRSPGR() {
+			//for both he and siemens, this array shouldn't be null and its length should equal Nti
+			return (irspgrCombo == null || irspgrCombo.length != Nti);
+		}
 	}
 	
 	private JPanel buildTreT1LongPanelInner() {
@@ -674,7 +693,6 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    LayoutManager panelLayout = new GridBagLayout();
 	    panel.setLayout(panelLayout);
 	    GridBagConstraints gbc = new GridBagConstraints();
-	    panel.setBorder(MipavUtil.buildTitledBorder("treT1-Conv: Long"));
 	    
 	    gbc.fill = GridBagConstraints.NONE;
 	    gbc.anchor = GridBagConstraints.WEST;
@@ -724,12 +742,24 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 
 	protected JPanel buildTreT1SpecificsPanel() {
 		JPanel panel = new JPanel();
+	    LayoutManager panelLayout = new BorderLayout();
+	    panel.setLayout(panelLayout);
+	    panel.addComponentListener(new FlipAngleChangeListener());
+	    panel.setBorder(MipavUtil.buildTitledBorder("treT1: Specifics"));
+	    
+	    panel.add(buildTreT1SpecificsPanelInner());
+	    
+	    return panel;
+	    
+	}
+	
+	private JPanel buildTreT1SpecificsPanelInner() {
+		JPanel panel = new JPanel();
+		panel.addComponentListener(new FlipAngleChangeListener());
 	    LayoutManager panelLayout = new GridBagLayout();
 	    panel.setLayout(panelLayout);
 	    GridBagConstraints gbc =  new GridBagConstraints();
-	    panel.setBorder(MipavUtil.buildTitledBorder("treT1: Specifics"));
-	    
-	    maxT1Field = guiBuilder.buildDecimalField("Maximum Allowable T1:", maxT1);
+		maxT1Field = guiBuilder.buildDecimalField("Maximum Allowable T1:", maxT1);
 	    maxMoField = guiBuilder.buildDecimalField("Maximum Allowable Mo:", maxMo);
 	    showT1Map = guiBuilder.buildCheckBox("Show T1 Map", calculateT1);
 	    showMoMap = guiBuilder.buildCheckBox("Show Mo Map", calculateMo);
@@ -740,13 +770,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    gbc.gridy = 0;
 	    gbc.weighty = 0;
 	    gbc.weightx = 1;
-	    if(Nsa > 2) {
-	        leastSquaresCheck = guiBuilder.buildCheckBox("Calculate T1 Using Weigthed Least-Squares", useWeights);
-	        panel.add(leastSquaresCheck.getParent(), gbc);
-	        gbc.gridy++;
-	    }
-	    
-	    
+
 	    panel.add(maxT1Field.getParent(), gbc);
 	    gbc.gridy++;
 	    panel.add(maxMoField.getParent(), gbc);
@@ -759,9 +783,16 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    gbc.gridy++;
 	    panel.add(showR1Map.getParent(), gbc);
 	    
+	    if(Nsa > 2) {
+	        leastSquaresCheck = guiBuilder.buildCheckBox("Calculate T1 Using Weigthed Least-Squares", useWeights);
+	        gbc.gridy++;
+	        gbc.insets = new Insets(10, 0, 0, 0);
+	        panel.add(leastSquaresCheck.getParent(), gbc);
+	    }
 	    //TODO: Remove dummy label for display
 	    gbc.gridy++;
 	    gbc.weighty = 1;
+	    gbc.insets = new Insets(0, 0, 0, 0);
 	    panel.add(new JLabel(""), gbc);
 	    
 	    return panel;
@@ -771,6 +802,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 		System.out.println("The selected state: "+thresholdMethod);
 		
 		JPanel panel = new JPanel();
+		panel.setName("Threshold total");
 	    LayoutManager panelLayout = new GridBagLayout();
 	    panel.setLayout(panelLayout);
 	    GridBagConstraints gbc = new GridBagConstraints();
@@ -843,10 +875,22 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 
 	protected JPanel buildTreT1HIFISpecificsPanel() {
 	    JPanel panel = new JPanel();
-	    LayoutManager panelLayout = new GridBagLayout();
+	    LayoutManager panelLayout = new BorderLayout();
+	    panel.addComponentListener(new FlipAngleChangeListener());
 	    panel.setLayout(panelLayout);
 	    GridBagConstraints gbc =  new GridBagConstraints();
 	    panel.setBorder(MipavUtil.buildTitledBorder("treT1-HIFI: IR-SPGR Image Information"));
+	    
+	    panel.add(buildTreT1HIFISpecificsPanelInner());
+	    
+	    return panel;
+	}
+	
+	private JPanel buildTreT1HIFISpecificsPanelInner() {
+		JPanel panel = new JPanel();
+	    LayoutManager panelLayout = new GridBagLayout();
+	    panel.setLayout(panelLayout);
+	    GridBagConstraints gbc =  new GridBagConstraints();
 	    
 	    maxT1Field = guiBuilder.buildDecimalField("Maximum Allowable T1:", maxT1);
 	    maxMoField = guiBuilder.buildDecimalField("Maximum Allowable Mo:", maxMo);
@@ -880,11 +924,12 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    panel.add(showR1Map.getParent(), gbc);
 	    if(Nsa > 2) {
 	    	gbc.gridy++;
-	    	gbc.insets = new Insets(20, 0, 0, 0);
+	    	gbc.insets = new Insets(10, 0, 0, 0);
 	    	panel.add(leastSquaresCheck.getParent(), gbc);
 	    }
 	    //TODO: Don't use dummy label for pushing all elements north
 	    gbc.weighty = 1;
+	    gbc.insets = new Insets(0, 0, 0, 0);
 	    panel.add(new JLabel(""), gbc);
 	    
 	    return panel;
@@ -1420,16 +1465,18 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    
 	    //construct general, show if performStraighttreT1
 	    straightPanel = buildConventionalTreT1Panel();
+	    straightPanel.setName("Conventional initPanel");
 	    
 	    //conventional panels for next section
 	    treLong = buildTreT1LongPanel();
+	    treLong.setName("Conventional long panel");
 	    
 	    //specifics section
 	    convSpec = buildTreT1SpecificsPanel();
+	    convSpec.setName("Conventional Specifics");
 	
 	    //threshold
 	    totalThreshold = buildThresholdPanel();
-	    
 	    
 	    tab.add(straightPanel, "1: General");
 	    tab.add(treLong, "2: Images");
