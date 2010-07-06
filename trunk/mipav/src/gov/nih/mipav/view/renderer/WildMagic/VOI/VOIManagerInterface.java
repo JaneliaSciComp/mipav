@@ -1,7 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.VOI;
 
 import gov.nih.mipav.model.algorithms.AlgorithmVOIExtraction;
-import gov.nih.mipav.model.algorithms.AlgorithmVOIExtractionPaint;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmFlip;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoDicom;
@@ -9,12 +8,9 @@ import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.ScriptRecorder;
-import gov.nih.mipav.model.scripting.actions.ActionMaskToPaint;
 import gov.nih.mipav.model.scripting.actions.ActionMaskToVOI;
 import gov.nih.mipav.model.scripting.actions.ActionOpenAllVOIs;
 import gov.nih.mipav.model.scripting.actions.ActionOpenVOI;
-import gov.nih.mipav.model.scripting.actions.ActionPaintToMask;
-import gov.nih.mipav.model.scripting.actions.ActionPaintToVOI;
 import gov.nih.mipav.model.scripting.actions.ActionSaveAllVOIs;
 import gov.nih.mipav.model.scripting.actions.ActionVOIToMask;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -25,7 +21,6 @@ import gov.nih.mipav.model.structures.UpdateVOIEvent;
 import gov.nih.mipav.model.structures.UpdateVOISelectionListener;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
-import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIPoint;
 import gov.nih.mipav.model.structures.VOIPolyLineSlice;
 import gov.nih.mipav.model.structures.VOIVector;
@@ -69,8 +64,6 @@ import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
@@ -99,6 +92,14 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 // -Dprofile.properties=E:\MagicConsulting\mipav\src\lib\profile.properties
 
 
+/**
+ * @author Alexandra
+ *
+ */
+/**
+ * @author Alexandra
+ *
+ */
 public class VOIManagerInterface implements ActionListener, VOIManagerListener, VOIHandlerInterface
 {
     /**
@@ -111,8 +112,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
 
         /**
          * Creates a new OkColorListener object.
-         *
-         * @param  _button  DOCUMENT ME!
+         * @param  color button
          */
         OkColorListener(JButton _button) {
             super();
@@ -121,7 +121,6 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
 
         /**
          * Get color from chooser and set button and color.
-         *
          * @param  e  Event that triggered function.
          */
         public void actionPerformed(ActionEvent e) {
@@ -133,51 +132,58 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
             setButtonColor(button, color);
         }
     }
+    
+    /** Reference to the parent frame. */
     private VOIManagerInterfaceListener m_kParent = null;
+    /** Reference to imageA */
     private ModelImage m_kImageA;
+    /** Reference to imageB */
     private ModelImage m_kImageB;
-
-    private ModelStorageBase m_kLUTa;
-    private ModelStorageBase m_kLUTb;
-
-
+    /** The toolbar builder that constructs the VOI toolbar -- it stores the VOI color button. */
     private ViewToolBarBuilder toolbarBuilder;
-
+    /** Reference to the VOI toolbar. */
     private JToolBar m_kVOIToolbar;
     /** Reference to the color chooser. */
     protected ViewJColorChooser colorChooser;
-    private VOIManager[] m_kVOIManagers;
+    /** List of VOIManagers, one per canvas displayed. */
+    private Vector<VOIManager> m_kVOIManagers;
+    /** The index of the current active VOIManager. */
     private int m_iActive = 0;
-
+    /** VOI ID used to set the VOI color button on a call to newVOI() */
     private int voiUID = 0;
-
+    /** The current active VOI */
     private VOI m_kCurrentVOIGroup = null;
+    /** List of undo commands */
     private Vector<String> m_kUndoCommands = new Vector<String>();
+    /** List of re-do commands */
     private Vector<String> m_kRedoCommands = new Vector<String>();
+    /** Opacity for setting the JDialogOpacityControls, used for VOI opacity. */
     private float m_fOpacity = 1f;
-
+    /** Set to true if this VOIManagerInterface is used for the GPU-based Volume Renderer */
     private boolean m_bGPURenderer = false;
-
+    /** VOI Properties dialog -- from the popup menu or drop-down menu. */
     private JDialogVOIStats m_kVOIDialog;
-
-
+    /** List of copies of VOIBase to paste or propagate. */
     private Vector<VOIBase> m_kCopyList = new Vector<VOIBase>();
-
+    /** Saved VOI states for undo. */
     private Vector<VOISaveState> m_kUndoList = new Vector<VOISaveState>();
+    /** Saved VOI states for re-do. */
     private Vector<VOISaveState> m_kRedoList = new Vector<VOISaveState>();
 
+    /** Single-level undo/redo for image masks, undo-imageA: */
     private Object m_kImageAUndo = null;
+    /** Single-level undo/redo for image masks, re-do-imageA: */
     private Object m_kImageARedo = null;
+    /** Single-level undo/redo for image masks, undo-imageB: */
     private Object m_kImageBUndo = null;
+    /** Single-level undo/redo for image masks, re-do-imageB: */
     private Object m_kImageBRedo = null;
 
+    /** Bounding box for a group of selected VOIs for group-move. */
     private Vector3f[] m_akBounds = new Vector3f[]{ new Vector3f(), new Vector3f() };
 
+    /** Set to false to disable VOI interaction (not currently used). */
     private boolean m_bEnabled = true;
-
-    /** Flag to indicate if DICOM overlay should be displayed. */
-    protected boolean overlayOn = false;
-
 
     /**
      * created to handle VOI updates. Must fireVOIUpdate(...) to get listeners
@@ -187,35 +193,37 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
      */
     protected EventListenerList listenerList = new EventListenerList();
 
-
-
-
     /** Popup Menu for VOIs (non-point). */
     protected ViewJPopupVOI popup = null;
 
     /** Popup Menu for VOIPoints. */
     protected ViewJPopupPt popupPt = null;
 
+    /** Restores the VOI color button after QuickLUT. */
     protected Color currentColor = null;
+    /** Restores the current VOI acter QuickLUT. */
     protected VOI saveGroup = null;
 
+    /** List of active VOIBase for a moving several selected VOIs. */
     private Vector<VOIBase> m_kActiveList = new Vector<VOIBase>();
 
+    /** The Default pointer button is set from outside this class if the 
+     * default pointer button is not part of the VOI toolbar, or if the VOI toolbar is not displayed.
+     * The VOIManagers query the default pointer button to determine if VOI interaction is enabled. */
     private JToggleButton m_kPointerButton = null;
 
+    /** Used in the save VOI functions */
     private String voiSavedFileName = null;
     
+    /** Statistics dialog VOI->Statistics generator... */
     private JDialogVOIStatistics imageStatList; 
 
     public VOIManagerInterface ( VOIManagerInterfaceListener kParent,
-            ModelImage kImageA, ModelStorageBase kLUTa, ModelImage kImageB, ModelStorageBase kLUTb, int iNViews, boolean bGPU, ButtonGroup kVOIGroup )
+            ModelImage kImageA, ModelImage kImageB, int iNViews, boolean bGPU, ButtonGroup kVOIGroup )
     {
         m_kParent = kParent;
         m_kImageA = kImageA;
         m_kImageB = kImageB;        
-
-        m_kLUTa = kLUTa;
-        m_kLUTb = kLUTb;
 
         toolbarBuilder = new ViewToolBarBuilder(this);
         m_kVOIToolbar =
@@ -223,14 +231,14 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
                     -1, bGPU, bGPU, kVOIGroup);
         m_kVOIToolbar.setVisible(false);
         m_kPointerButton = toolbarBuilder.getPointerButton();
-        m_kVOIManagers = new VOIManager[iNViews];
+        m_kVOIManagers = new Vector<VOIManager>();
         Color kColor = toolbarBuilder.getVOIColorButton().getBackground();
         new ColorRGB( kColor.getRed()/255.0f,
                 kColor.getGreen()/255.0f,
                 kColor.getBlue()/255.0f );
         for ( int i = 0; i < iNViews; i++ )
         {
-            m_kVOIManagers[i] = new VOIManager(this);
+            m_kVOIManagers.add(new VOIManager(this));
         }
         m_bGPURenderer = bGPU;
 
@@ -253,8 +261,8 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
 
         for ( int i = 0; i < iNViews; i++ )
         {
-            m_kVOIManagers[i].setPopupVOI(popup);
-            m_kVOIManagers[i].setPopupPt(popupPt);
+            m_kVOIManagers.elementAt(i).setPopupVOI(popup);
+            m_kVOIManagers.elementAt(i).setPopupPt(popupPt);
         }
     }
 
@@ -275,9 +283,9 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
             final JDialogLivewire dialog = new JDialogLivewire(null);
             if ( !dialog.isCancelled()) {
                 boolean iActive = false;
-                for (int i = 0; i < m_kVOIManagers.length; i++) {
-                    m_kVOIManagers[i].liveWire( dialog.getSelection() );
-                    iActive |= m_kVOIManagers[i].isActive();
+                for (int i = 0; i < m_kVOIManagers.size(); i++) {
+                    m_kVOIManagers.elementAt(i).liveWire( dialog.getSelection() );
+                    iActive |= m_kVOIManagers.elementAt(i).isActive();
                 }
                 m_kParent.PointerActive(iActive);
             }
@@ -740,7 +748,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
             flip.callAlgorithm();
         } else if (command.equals("interpolateVOIs")) {
             // dialog that is not visible...calls the algorithm immediately
-            final JDialogVOIShapeInterpolation dialogVOIShapeInterp = new JDialogVOIShapeInterpolation(getActiveImage());
+            new JDialogVOIShapeInterpolation(getActiveImage());
         } 
         else if (command.equals("Trim")) {
             final JDialogTrim trimSettings = new JDialogTrim(m_kParent.getFrame(), getActiveImage());
@@ -907,6 +915,30 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         return (m_kCopyList.size() > 0);
     }
 
+    public void createMask( ModelImage kActive, boolean bInside )
+    {
+        int iSize = kActive.getSize();
+        if ( kActive.isColorImage() )
+        {
+            iSize /= 4;
+        }
+        kActive.createMask(iSize);
+        boolean bMask = true;
+        for (int i = 0; i < m_kVOIManagers.size(); i++) {
+            bMask &= make3DVOI( false, kActive, kActive, kActive.getMask(), i);
+        }
+        if ( !bMask )
+        {
+            return;
+        }
+        if ( !bInside )
+        {
+            kActive.getMask().flip(0, iSize );
+        }
+        kActive.useMask(true);
+        m_kParent.updateData(false);
+    }
+
     public void createMask( String command )
     {
         if (getActiveImage().getVOIs().size() < 1) {
@@ -921,30 +953,6 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         {
             new JDialogMask(getActiveImage(), false, command.equals(CustomUIBuilder.PARAM_VOI_QUICK_NOT_OP.getActionCommand()));
         }
-    }
-
-    public void createMask( ModelImage kActive, boolean bInside )
-    {
-        int iSize = kActive.getSize();
-        if ( kActive.isColorImage() )
-        {
-            iSize /= 4;
-        }
-        kActive.createMask(iSize);
-        boolean bMask = true;
-        for (int i = 0; i < m_kVOIManagers.length; i++) {
-            bMask &= make3DVOI( false, kActive, kActive, kActive.getMask(), i);
-        }
-        if ( !bMask )
-        {
-            return;
-        }
-        if ( !bInside )
-        {
-            kActive.getMask().flip(0, iSize );
-        }
-        kActive.useMask(true);
-        m_kParent.updateData(false);
     }
 
 
@@ -1024,12 +1032,12 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         for ( int i = 0; i < activeList.size(); i++ )
         {
             VOIBase kCurrentVOI = activeList.get(i);
-            VOIManager kManager = m_kVOIManagers[0];
-            for ( int j = 0; j < m_kVOIManagers.length; j++ )
+            VOIManager kManager = m_kVOIManagers.elementAt(0);
+            for ( int j = 0; j < m_kVOIManagers.size(); j++ )
             {
-                if ( kCurrentVOI.getPlane() == m_kVOIManagers[j].getPlane() )
+                if ( kCurrentVOI.getPlane() == m_kVOIManagers.elementAt(j).getPlane() )
                 {
-                    kManager = m_kVOIManagers[j];
+                    kManager = m_kVOIManagers.elementAt(j);
                     break;
                 }
             }
@@ -1075,10 +1083,10 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         m_kUndoCommands = null;
         m_kRedoCommands = null;
 
-        for ( int i = 0; i < m_kVOIManagers.length; i++ )
+        for ( int i = m_kVOIManagers.size() - 1; i >= 0; i-- )
         {
-            m_kVOIManagers[i].dispose();
-            m_kVOIManagers[i] = null;
+            VOIManager kManager = m_kVOIManagers.remove(i);
+            kManager.dispose();
         }
         m_kVOIManagers = null;   
 
@@ -1100,7 +1108,6 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
             saveGroup = m_kCurrentVOIGroup;
             m_kCurrentVOIGroup = null;
             currentColor = toolbarBuilder.getVOIColorButton().getBackground();
-            //toolbarBuilder.getVOIColorButton().setBackground( Color.yellow );
         }
 
         if ( kCommand.equals(CustomUIBuilder.PARAM_VOI_PROPAGATE_UP.getActionCommand()) )
@@ -1172,22 +1179,22 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         else if ( kCommand.equals("MoveUP") )
         {
             saveVOIs(kCommand);
-            moveVOI( m_kVOIManagers[m_iActive], new Vector3f( 0, 1, 0 ), -1, true );
+            moveVOI( m_kVOIManagers.elementAt(m_iActive), new Vector3f( 0, 1, 0 ), -1, true );
         }
         else if ( kCommand.equals("MoveDown") )
         {
             saveVOIs(kCommand);
-            moveVOI( m_kVOIManagers[m_iActive], new Vector3f( 0,-1, 0 ), -1, true  );
+            moveVOI( m_kVOIManagers.elementAt(m_iActive), new Vector3f( 0,-1, 0 ), -1, true  );
         }
         else if ( kCommand.equals("MoveLeft") )
         {
             saveVOIs(kCommand);
-            moveVOI( m_kVOIManagers[m_iActive], new Vector3f(-1, 0, 0 ), -1, true  );
+            moveVOI( m_kVOIManagers.elementAt(m_iActive), new Vector3f(-1, 0, 0 ), -1, true  );
         }
         else if ( kCommand.equals("MoveRight") )
         {
             saveVOIs(kCommand);
-            moveVOI( m_kVOIManagers[m_iActive], new Vector3f( 1, 0, 0 ), -1, true  );
+            moveVOI( m_kVOIManagers.elementAt(m_iActive), new Vector3f( 1, 0, 0 ), -1, true  );
         }        
         else if (kCommand.equals("BringToFront")) {
             changeVOIOrder(false, VOI.FRONT);
@@ -1216,9 +1223,9 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         else
         {
             boolean iActive = false;
-            for (int i = 0; i < m_kVOIManagers.length; i++) {
-                m_kVOIManagers[i].doVOI( kCommand, bDraw );
-                iActive |= m_kVOIManagers[i].isActive();
+            for (int i = 0; i < m_kVOIManagers.size(); i++) {
+                m_kVOIManagers.elementAt(i).doVOI( kCommand, bDraw );
+                iActive |= m_kVOIManagers.elementAt(i).isActive();
             }
             m_kParent.PointerActive(iActive);
         }
@@ -1299,7 +1306,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
     }
 
     public Component getComponentImage() {
-        return m_kVOIManagers[m_iActive].getComponent();
+        return m_kVOIManagers.elementAt(m_iActive).getComponent();
     }
 
     public JFrame getFrame() {
@@ -1316,45 +1323,40 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         return m_kPointerButton;
     }
 
-    public void setPointerButton( JToggleButton button )
-    {
-        m_kPointerButton = button;
-    }
-
-
     public ViewJPopupPt getPopupPt() {
         return this.popupPt;
     }
+
 
     public ViewJPopupVOI getPopupVOI() {
         return this.popup;
     }
 
-
     public int getSlice() {
         return (int)m_kParent.getCenterPt().Z;
     }
+
 
     public JToolBar getToolBar()
     {
         return m_kVOIToolbar;
     }
 
-
     public int getVOI_ID() {
         return 0;
     }
 
 
-
     public VOIManager getVOIManager(int i)
     {
-        if ( i < m_kVOIManagers.length )
+        if ( i < m_kVOIManagers.size() )
         {
-            return m_kVOIManagers[i];
+            return m_kVOIManagers.elementAt(i);
         }
         return null;
     }
+
+
 
     public VOISaveState getVOIState( )
     {
@@ -1779,9 +1781,6 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
 
     }
 
-
-
-
     public void graphVOI()
     {
         VOIVector kVOIs = m_kParent.getActiveImage().getVOIs();
@@ -1799,6 +1798,9 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         }
     }
 
+
+
+
     public boolean isLivewireNull() {   
         return false;
     }
@@ -1807,14 +1809,142 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         return false;
     }
 
+    /**
+     * This method loads all VOIs to the active image from the default VOI directory for that image.
+     * 
+     * @param quietMode if true indicates that warnings should not be displayed.
+     */
+    public void loadAllVOIs(boolean quietMode) {
+        ModelImage img = m_kParent.getActiveImage();
+
+        String fileDir = img.getFileInfo(0).getFileDirectory();
+        String imageName;
+
+        // if the image is a dicom image, then base the new directory name
+        // on the actual filename, not the image name
+        if (img.isDicomImage()) {
+            imageName = img.getFileInfo(0).getFileName();
+
+            final int index = imageName.lastIndexOf(".");
+
+            if (index > 0) {
+                imageName = imageName.substring(0, index);
+            }
+
+            // now, get rid of any numbers at the end of the name (these
+            // are part of the dicom file name, but we only want the 'base'
+            // part of the name
+            int newIndex = imageName.length();
+
+            for (int i = imageName.length() - 1; i >= 0; i--) {
+                final char myChar = imageName.charAt(i);
+
+                if (Character.isDigit(myChar)) {
+                    newIndex = i;
+                } else {
+                    break;
+                } // as soon as something is NOT a digit, leave loop
+            }
+
+            if (newIndex == 0) {
+
+                // give the base name a generic name
+                imageName = new String("DICOM");
+            } else {
+                imageName = imageName.substring(0, newIndex);
+            }
+        } else {
+            imageName = img.getImageName();
+        }
+
+        // get rid of any '^' and ',' which may exist in dicom images
+        imageName = imageName.replace('^', '_');
+        imageName = imageName.replace(',', '_');
+
+        String voiDir = new String(fileDir + File.separator + "defaultVOIs_" + imageName + File.separator);
+
+        loadAllVOIsFrom(voiDir, quietMode);
+
+    } // end loadAllVOIs()
+
+    /**
+     * This method loads all VOIs to the active image from a given directory.
+     * 
+     * @param voiDir the directory to load voi's from
+     * @param quietMode if true indicates that warnings should not be displayed.
+     */
+    public void loadAllVOIsFrom(final String voiDir, boolean quietMode) {
+
+        int i, j;
+        VOI[] VOIs;
+        FileVOI fileVOI;
+        ModelImage currentImage = m_kParent.getActiveImage();
+
+        try {
+
+            // if voiDir does not exist, then return
+            // if voiDir exists, then get list of voi's from directory (*.voi)
+            final File voiFileDir = new File(voiDir);
+            final Vector<String> filenames = new Vector<String>();
+            final Vector<Boolean> isLabel = new Vector<Boolean>();
+
+            if (voiFileDir.exists() && voiFileDir.isDirectory()) {
+
+                // get list of files
+                final File[] files = voiFileDir.listFiles();
+
+                for (final File element : files) {
+
+                    if (element.getName().endsWith(".voi") || element.getName().endsWith(".xml")) {
+                        filenames.add(element.getName());
+                        isLabel.add(false);
+                    } else if (element.getName().endsWith(".lbl")) {
+                        filenames.add(element.getName());
+                        isLabel.add(true);
+                    }
+                }
+            } else { // voiFileDir either doesn't exist, or isn't a directory
+
+                if ( !quietMode) {
+                    MipavUtil.displayError("No VOIs are found in directory: " + voiDir);
+                }
+
+                return;
+            }
+
+            // open each voi array, then register voi array to this image
+            for (i = 0; i < filenames.size(); i++) {
+
+                fileVOI = new FileVOI( (filenames.elementAt(i)), voiDir, currentImage);
+
+                VOIs = fileVOI.readVOI(isLabel.get(i));
+
+                for (j = 0; j < VOIs.length; j++) {
+                    currentImage.registerVOI(VOIs[j]);
+                }
+            }
+
+            // when everything's done, notify the image listeners
+            currentImage.notifyImageDisplayListeners();
+
+        } catch (final Exception error) {
+
+            if ( !quietMode) {
+                MipavUtil.displayError("Error loading all VOIs from " + voiDir + ": " + error);
+            }
+        }
+
+    } // end loadAllVOIsFrom()
+
     public boolean make3DVOI( boolean bIntersection, ModelImage kVolume  )
     {
         boolean bCreated = true;
-        for (int i = 0; i < m_kVOIManagers.length; i++) {
+        for (int i = 0; i < m_kVOIManagers.size(); i++) {
             bCreated &= make3DVOI(bIntersection, m_kParent.getActiveImage(), kVolume, null, i);
         }
         return bCreated;
     }
+
 
     public void mouseClicked(MouseEvent event) {
 
@@ -1829,7 +1959,6 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
             }
         }
     }
-
 
     public void mouseDragged(MouseEvent arg0) {      
     }
@@ -1852,12 +1981,12 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
 
     }
 
+
+
     public void mouseReleased(MouseEvent e) {
         // TODO Auto-generated method stub
 
     }
-
-
 
     public void moveVOI( VOIManager kActive, Vector3f kDiff, int iPlane, boolean bFirstMove )
     {
@@ -1927,6 +2056,62 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         kName = kName.substring(index);
         m_kCurrentVOIGroup = new VOI( sID,  kName + "_" + sID );
         m_kCurrentVOIGroup.setOpacity(1f);
+    }
+
+    /**
+     * This method opens an existing VOI.
+     * 
+     * @param quietMode if true indicates that warnings should not be displayed.
+     * @param doLabels DOCUMENT ME!
+     * 
+     * @return whether a VOI was successfully opened (ie - the dialog wasn't cancelled)
+     */
+    public boolean openVOI(boolean quietMode, final boolean doLabels) {
+        ViewOpenVOIUI openVOI = null;
+
+        try {
+            openVOI = new ViewOpenVOIUI();
+
+            if (openVOI.open(m_kParent.getActiveImage(), doLabels) == null) {
+                return false;
+            }
+        } catch (final OutOfMemoryError error) {
+
+            if ( !quietMode) {
+                MipavUtil.displayError("Out of memory: ViewJFrameBase.openVOI");
+            }
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * This method opens an existing VOI.
+     * 
+     * @param image image where VOI(s) are to registered
+     * @param quietMode if true indicates that warnings should not be displayed.
+     * 
+     * @return the VOI(s)
+     */
+    public VOI[] openVOI(final ModelImage image, boolean quietMode) {
+        ViewOpenVOIUI openVOI = null;
+        VOI[] voi = null;
+
+        try {
+            openVOI = new ViewOpenVOIUI();
+            voi = openVOI.open(image, false);
+        } catch (final OutOfMemoryError error) {
+
+            if ( !quietMode) {
+                MipavUtil.displayError("Out of memory: ViewJFrameBase.openVOI");
+            }
+
+            return voi;
+        }
+
+        return voi;
     }
 
     public void pasteVOI() {
@@ -2056,6 +2241,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         }
     }
 
+
     /**
      * removes the update listener.
      * 
@@ -2064,14 +2250,109 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
      */
     public void removeVOIUpdateListener(UpdateVOISelectionListener listener) {
         listenerList.remove(UpdateVOISelectionListener.class, listener);
-    }
-
-    public void resetLivewire() 
+    }    public void resetLivewire() 
     {
-        for (int i = 0; i < m_kVOIManagers.length; i++) {
-            m_kVOIManagers[i].doVOI( "ResetVOI", false );
+        for (int i = 0; i < m_kVOIManagers.size(); i++) {
+            m_kVOIManagers.elementAt(i).doVOI( "ResetVOI", false );
         }
     }
+
+    /**
+     * This method saves all VOIs for the active image to the default VOI directory for that image.
+     */
+    public void saveAllVOIs() {
+
+        String fileDir;
+        String tmpImageName;
+        String imageName;
+        String voiDir;
+        ModelImage img = m_kParent.getActiveImage();
+        fileDir = img.getFileInfo(0).getFileDirectory();
+
+        // if the image is a dicom image, then base the new directory name
+        // on the actual filename, not the image name
+        if (img.isDicomImage()) {
+            tmpImageName = img.getFileInfo(0).getFileName();
+
+            final int index = tmpImageName.lastIndexOf(".");
+
+            if (index > 0) {
+                tmpImageName = tmpImageName.substring(0, index);
+            }
+
+            // now, get rid of any numbers at the end of the name (these
+            // are part of the dicom file name, but we only want the 'base'
+            // part of the name
+            int newIndex = tmpImageName.length();
+
+            for (int i = tmpImageName.length() - 1; i >= 0; i--) {
+                final char myChar = tmpImageName.charAt(i);
+
+                if (Character.isDigit(myChar)) {
+                    newIndex = i;
+                } else {
+                    break;
+                } // as soon as something is NOT a digit, leave loop
+            }
+
+            if (newIndex == 0) {
+
+                // give the base name a generic name
+                tmpImageName = new String("DICOM");
+            } else {
+                tmpImageName = tmpImageName.substring(0, newIndex);
+            }
+        } else {
+            tmpImageName = img.getImageName();
+        }
+
+        // get rid of any '^' and ',' which may exist in dicom images
+        imageName = tmpImageName.replace('^', '_');
+        imageName = imageName.replace(',', '_');
+
+        voiDir = new String(fileDir + File.separator + "defaultVOIs_" + imageName + File.separator);
+
+        saveAllVOIsTo(voiDir);
+
+    } // end saveAllVOIs()
+
+
+    /**
+     * This method saves all VOIs for the active image to a given directory.
+     * 
+     * @param voiDir directory that contains VOIs for this image.
+     */
+    public void saveAllVOIsTo(final String voiDir) {
+        try {
+
+            ModelImage currentImage = m_kParent.getActiveImage();
+            ViewVOIVector VOIs = currentImage.getVOIs();
+
+            final File voiFileDir = new File(voiDir);
+
+            if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
+            } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+            } else { // voiFileDir does not exist
+                voiFileDir.mkdir();
+            }
+
+            int nVOI = VOIs.size();
+
+            for (int i = 0; i < nVOI; i++) {
+                if (VOIs.VOIAt(i).getCurveType() != VOI.ANNOTATION) {
+                    FileVOI fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".xml", voiDir, currentImage);
+                    fileVOI.writeVOI(VOIs.VOIAt(i), true);
+                } else {
+                    FileVOI fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".lbl", voiDir, currentImage);
+                    fileVOI.writeAnnotationInVoiAsXML(VOIs.VOIAt(i).getName(),true);
+                }
+            }
+
+        } catch (final IOException error) {
+            MipavUtil.displayError("Error writing all VOIs to " + voiDir + ": " + error);
+        }
+
+    } // end saveAllVOIsTo()
 
     public void saveImage( String kCommand )
     {
@@ -2096,7 +2377,6 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         m_kRedoCommands.clear();
         m_kRedoList.clear();
     }
-
 
     public void saveLabels(final boolean saveAll) {
         String fileName;
@@ -2129,13 +2409,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         chooser.setDialogTitle("Save label(s) as");
 
         if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
-            final File file = new File(ViewUserInterface.getReference().getDefaultDirectory());
-
-            if (file != null) {
-                chooser.setCurrentDirectory(file);
-            } else {
-                chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-            }
+            chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
         } else {
             chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
         }
@@ -2168,7 +2442,8 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
             MipavUtil.displayError("Error writing labels");
         }
 
-    }    /**
+    }
+    /**
      * This method saves a selected VOI - should this be in VOI structure ??!!!
      * 
      * @param saveAllContours if true all contours are saved
@@ -2215,6 +2490,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
             MipavUtil.displayError("Error writing VOI" + error);
         }
     }
+
 
     /**
      * DOCUMENT ME!
@@ -2263,15 +2539,8 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
 
         chooser = new JFileChooser();
         chooser.setDialogTitle("Save VOI as");
-
         if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
-            final File file = new File(ViewUserInterface.getReference().getDefaultDirectory());
-
-            if (file != null) {
-                chooser.setCurrentDirectory(file);
-            } else {
-                chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-            }
+            chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
         } else {
             chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
         }
@@ -2325,6 +2594,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         }
 
     }
+
 
     /**
      * Save intensities in VOI to a text file of format x,y,z,intensity on each line if not color or complex. If color
@@ -2404,13 +2674,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         chooser.setDialogTitle("Save intensities in VOI as");
 
         if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
-            final File file = new File(ViewUserInterface.getReference().getDefaultDirectory());
-
-            if (file != null) {
-                chooser.setCurrentDirectory(file);
-            } else {
-                chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-            }
+            chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
         } else {
             chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
         }
@@ -2509,102 +2773,6 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         m_kRedoCommands.clear();
         m_kRedoList.clear();
     }
-    /**
-     * This method saves all VOIs for the active image to the default VOI directory for that image.
-     */
-    public void saveAllVOIs() {
-
-        String fileDir;
-        String tmpImageName;
-        String imageName;
-        String voiDir;
-        ModelImage img = m_kParent.getActiveImage();
-        fileDir = img.getFileInfo(0).getFileDirectory();
-
-        // if the image is a dicom image, then base the new directory name
-        // on the actual filename, not the image name
-        if (img.isDicomImage()) {
-            tmpImageName = img.getFileInfo(0).getFileName();
-
-            final int index = tmpImageName.lastIndexOf(".");
-
-            if (index > 0) {
-                tmpImageName = tmpImageName.substring(0, index);
-            }
-
-            // now, get rid of any numbers at the end of the name (these
-            // are part of the dicom file name, but we only want the 'base'
-            // part of the name
-            int newIndex = tmpImageName.length();
-
-            for (int i = tmpImageName.length() - 1; i >= 0; i--) {
-                final char myChar = tmpImageName.charAt(i);
-
-                if (Character.isDigit(myChar)) {
-                    newIndex = i;
-                } else {
-                    break;
-                } // as soon as something is NOT a digit, leave loop
-            }
-
-            if (newIndex == 0) {
-
-                // give the base name a generic name
-                tmpImageName = new String("DICOM");
-            } else {
-                tmpImageName = tmpImageName.substring(0, newIndex);
-            }
-        } else {
-            tmpImageName = img.getImageName();
-        }
-
-        // get rid of any '^' and ',' which may exist in dicom images
-        imageName = tmpImageName.replace('^', '_');
-        imageName = imageName.replace(',', '_');
-
-        voiDir = new String(fileDir + File.separator + "defaultVOIs_" + imageName + File.separator);
-
-        saveAllVOIsTo(voiDir);
-
-    } // end saveAllVOIs()
-
-
-    /**
-     * This method saves all VOIs for the active image to a given directory.
-     * 
-     * @param voiDir directory that contains VOIs for this image.
-     */
-    public void saveAllVOIsTo(final String voiDir) {
-        try {
-
-            ModelImage currentImage = m_kParent.getActiveImage();
-            ViewVOIVector VOIs = currentImage.getVOIs();
-
-            final File voiFileDir = new File(voiDir);
-
-            if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
-            } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
-            } else { // voiFileDir does not exist
-                voiFileDir.mkdir();
-            }
-
-            int nVOI = VOIs.size();
-
-            for (int i = 0; i < nVOI; i++) {
-                if (VOIs.VOIAt(i).getCurveType() != VOI.ANNOTATION) {
-                    FileVOI fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".xml", voiDir, currentImage);
-                    fileVOI.writeVOI(VOIs.VOIAt(i), true);
-                } else {
-                    FileVOI fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".lbl", voiDir, currentImage);
-                    fileVOI.writeAnnotationInVoiAsXML(VOIs.VOIAt(i).getName(),true);
-                }
-            }
-
-        } catch (final IOException error) {
-            MipavUtil.displayError("Error writing all VOIs to " + voiDir + ": " + error);
-        }
-
-    } // end saveAllVOIsTo()
 
 
     public void selectAllContours() {
@@ -2620,7 +2788,6 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         updateDisplay();            
     }
 
-
     public void selectAllVOIs(boolean bActive)
     {
         VOIVector kVOIs = m_kParent.getActiveImage().getVOIs();
@@ -2635,20 +2802,19 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
 
     public void setActive( VOIManager kManager )
     {
-        for ( int i = 0; i < m_kVOIManagers.length; i++ )
+        for ( int i = 0; i < m_kVOIManagers.size(); i++ )
         {
-            if ( kManager == m_kVOIManagers[i] )
+            if ( kManager == m_kVOIManagers.elementAt(i) )
             {
                 m_iActive = i;
-                if ( m_kVOIManagers[i].getActiveImage() != m_kParent.getActiveImage() )
+                if ( m_kVOIManagers.elementAt(i).getActiveImage() != m_kParent.getActiveImage() )
                 {
-                    m_kParent.setActiveImage( m_kVOIManagers[i].getActiveImage() );
+                    m_kParent.setActiveImage( m_kVOIManagers.elementAt(i).getActiveImage() );
                 }
                 break;
             }
         }
     }
-
 
     /**
      * Set the color of the button. Derived classes may also perform other functions.
@@ -2677,11 +2843,12 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         updateDisplay();
     }
 
+
     public void setCenter( Vector3f center )
     {
-        for (int i = 0; i < m_kVOIManagers.length; i++)
+        for (int i = 0; i < m_kVOIManagers.size(); i++)
         {
-            m_kVOIManagers[i].setCenter(center);
+            m_kVOIManagers.elementAt(i).setCenter(center);
         }
     }
 
@@ -2700,7 +2867,6 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         setButtonColor(toolbarBuilder.getVOIColorButton(), 
                 toolbarBuilder.getVOIColorButton().getBackground() );
     }
-
 
     public void setCursor(Cursor kCursor) {
         m_kParent.setCursor(kCursor);    
@@ -2831,16 +2997,6 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         }
     }
 
-    /**
-     * Sets whether or not to show the overlay.
-     * 
-     * @param flag
-     *            boolean that tells whether or not to show the overlay
-     */
-    public void setOverlay(boolean flag) {
-        overlayOn = flag;
-    }
-
     public void setPAAIGraphVisible() {   
         int nVOI;
         ViewVOIVector VOIs;
@@ -2867,6 +3023,11 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
             }
         }
 
+    }
+
+    public void setPointerButton( JToggleButton button )
+    {
+        m_kPointerButton = button;
     }
 
     /**
@@ -3072,6 +3233,27 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         }
     }
 
+
+    /**
+     * Opens a JDialogStatistics to allow computation ofROI statistics.
+     */
+    public void showStatisticsCalculator() {
+
+        if (imageStatList == null) {
+
+            if ( (getActiveImage().getVOIs() != null) && (getActiveImage().getVOIs().size() != 0)) {
+                imageStatList = new JDialogVOIStatistics(getActiveImage().getVOIs());
+                imageStatList.setVisible(true);
+                // addVOIUpdateListener(imageStatList); // i'd rather not do it this way...
+            } else {
+                MipavUtil.displayError("A VOI must be present to use the statistics calculator");
+            }
+        } else {
+            imageStatList.refreshVOIList(getActiveImage().getVOIs());
+            imageStatList.setVisible(true);
+        }
+    }
+
     public void showVOIProperties() {
 
         if (m_kVOIDialog == null) {
@@ -3216,6 +3398,26 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         }
     }
 
+    private boolean checkForActiveVOIs() {
+        boolean foundActive = false;
+        ViewVOIVector VOIs;
+        int nVOI;
+
+        VOIs = m_kParent.getActiveImage().getVOIs();
+        nVOI = VOIs.size();
+
+        for (int i = 0; i < nVOI; i++) {
+
+            if (VOIs.VOIAt(i).isActive() && VOIs.VOIAt(i).isVisible()) {
+
+                foundActive = true;
+                break;
+            }
+        }
+
+        return foundActive;
+    }
+
     private void copy()
     {
         m_kCopyList.clear();
@@ -3238,27 +3440,6 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
     {
         copy();
         deleteActiveVOI();
-    }
-
-
-    private boolean checkForActiveVOIs() {
-        boolean foundActive = false;
-        ViewVOIVector VOIs;
-        int nVOI;
-
-        VOIs = m_kParent.getActiveImage().getVOIs();
-        nVOI = VOIs.size();
-
-        for (int i = 0; i < nVOI; i++) {
-
-            if (VOIs.VOIAt(i).isActive() && VOIs.VOIAt(i).isVisible()) {
-
-                foundActive = true;
-                break;
-            }
-        }
-
-        return foundActive;
     }
 
     private void deleteActiveVOI()
@@ -3284,6 +3465,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         }
     }
 
+
     private void deleteAllVOI()
     {
         if ( m_kImageA != null ) { m_kImageA.unregisterAllVOIs(); }
@@ -3292,6 +3474,10 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
 
     private void findCompatibleType( ModelImage kImage, VOIBase kNew, boolean isFinished)
     {
+        if ( kNew.isQuickLUT() )
+        {
+            return;
+        }
         if ( m_kCurrentVOIGroup != null && m_kCurrentVOIGroup.getCurveType() == kNew.getType() )
         {
             return;
@@ -3332,6 +3518,9 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         }
         m_kCurrentVOIGroup = null;
     }
+
+
+
 
     private boolean isDrawCommand( String kCommand )
     {
@@ -3376,6 +3565,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         return bCreated;
     }
 
+
     private boolean matches( int iType1, int iType2, boolean isFinished )
     {
         if ( iType1 == iType2 )
@@ -3394,205 +3584,17 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         return false;   
     }
 
-
-    /**
-     * This method loads all VOIs to the active image from the default VOI directory for that image.
-     * 
-     * @param quietMode if true indicates that warnings should not be displayed.
-     */
-    public void loadAllVOIs(boolean quietMode) {
-        ModelImage img = m_kParent.getActiveImage();
-
-        String fileDir = img.getFileInfo(0).getFileDirectory();
-        String imageName;
-
-        // if the image is a dicom image, then base the new directory name
-        // on the actual filename, not the image name
-        if (img.isDicomImage()) {
-            imageName = img.getFileInfo(0).getFileName();
-
-            final int index = imageName.lastIndexOf(".");
-
-            if (index > 0) {
-                imageName = imageName.substring(0, index);
-            }
-
-            // now, get rid of any numbers at the end of the name (these
-            // are part of the dicom file name, but we only want the 'base'
-            // part of the name
-            int newIndex = imageName.length();
-
-            for (int i = imageName.length() - 1; i >= 0; i--) {
-                final char myChar = imageName.charAt(i);
-
-                if (Character.isDigit(myChar)) {
-                    newIndex = i;
-                } else {
-                    break;
-                } // as soon as something is NOT a digit, leave loop
-            }
-
-            if (newIndex == 0) {
-
-                // give the base name a generic name
-                imageName = new String("DICOM");
-            } else {
-                imageName = imageName.substring(0, newIndex);
-            }
-        } else {
-            imageName = img.getImageName();
-        }
-
-        // get rid of any '^' and ',' which may exist in dicom images
-        imageName = imageName.replace('^', '_');
-        imageName = imageName.replace(',', '_');
-
-        String voiDir = new String(fileDir + File.separator + "defaultVOIs_" + imageName + File.separator);
-
-        loadAllVOIsFrom(voiDir, quietMode);
-
-    } // end loadAllVOIs()
-
-    /**
-     * This method loads all VOIs to the active image from a given directory.
-     * 
-     * @param voiDir the directory to load voi's from
-     * @param quietMode if true indicates that warnings should not be displayed.
-     */
-    public void loadAllVOIsFrom(final String voiDir, boolean quietMode) {
-
-        int i, j;
-        VOI[] VOIs;
-        FileVOI fileVOI;
-        ModelImage currentImage = m_kParent.getActiveImage();
-
-        try {
-
-            // if voiDir does not exist, then return
-            // if voiDir exists, then get list of voi's from directory (*.voi)
-            final File voiFileDir = new File(voiDir);
-            final Vector<String> filenames = new Vector<String>();
-            final Vector<Boolean> isLabel = new Vector<Boolean>();
-
-            if (voiFileDir.exists() && voiFileDir.isDirectory()) {
-
-                // get list of files
-                final File[] files = voiFileDir.listFiles();
-
-                for (final File element : files) {
-
-                    if (element.getName().endsWith(".voi") || element.getName().endsWith(".xml")) {
-                        filenames.add(element.getName());
-                        isLabel.add(false);
-                    } else if (element.getName().endsWith(".lbl")) {
-                        filenames.add(element.getName());
-                        isLabel.add(true);
-                    }
-                }
-            } else { // voiFileDir either doesn't exist, or isn't a directory
-
-                if ( !quietMode) {
-                    MipavUtil.displayError("No VOIs are found in directory: " + voiDir);
-                }
-
-                return;
-            }
-
-            // open each voi array, then register voi array to this image
-            for (i = 0; i < filenames.size(); i++) {
-
-                fileVOI = new FileVOI( (filenames.elementAt(i)), voiDir, currentImage);
-
-                VOIs = fileVOI.readVOI(isLabel.get(i));
-
-                for (j = 0; j < VOIs.length; j++) {
-                    currentImage.registerVOI(VOIs[j]);
-                }
-            }
-
-            // when everything's done, notify the image listeners
-            currentImage.notifyImageDisplayListeners();
-
-        } catch (final Exception error) {
-
-            if ( !quietMode) {
-                MipavUtil.displayError("Error loading all VOIs from " + voiDir + ": " + error);
-            }
-        }
-
-    } // end loadAllVOIsFrom()
-
-
-
-
-    /**
-     * This method opens an existing VOI.
-     * 
-     * @param quietMode if true indicates that warnings should not be displayed.
-     * @param doLabels DOCUMENT ME!
-     * 
-     * @return whether a VOI was successfully opened (ie - the dialog wasn't cancelled)
-     */
-    public boolean openVOI(boolean quietMode, final boolean doLabels) {
-        ViewOpenVOIUI openVOI = null;
-
-        try {
-            openVOI = new ViewOpenVOIUI();
-
-            if (openVOI.open(m_kParent.getActiveImage(), doLabels) == null) {
-                return false;
-            }
-        } catch (final OutOfMemoryError error) {
-
-            if ( !quietMode) {
-                MipavUtil.displayError("Out of memory: ViewJFrameBase.openVOI");
-            }
-
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * This method opens an existing VOI.
-     * 
-     * @param image image where VOI(s) are to registered
-     * @param quietMode if true indicates that warnings should not be displayed.
-     * 
-     * @return the VOI(s)
-     */
-    public VOI[] openVOI(final ModelImage image, boolean quietMode) {
-        ViewOpenVOIUI openVOI = null;
-        VOI[] voi = null;
-
-        try {
-            openVOI = new ViewOpenVOIUI();
-            voi = openVOI.open(image, false);
-        } catch (final OutOfMemoryError error) {
-
-            if ( !quietMode) {
-                MipavUtil.displayError("Out of memory: ViewJFrameBase.openVOI");
-            }
-
-            return voi;
-        }
-
-        return voi;
-    }
-
-
     private void paste()
     {
         for ( int i = 0; i < m_kCopyList.size(); i++ )
         {
             VOIBase kCurrentVOI = m_kCopyList.get(i); 
-            VOIManager kManager = m_kVOIManagers[0];
-            for ( int j = 0; j < m_kVOIManagers.length; j++ )
+            VOIManager kManager = m_kVOIManagers.elementAt(0);
+            for ( int j = 0; j < m_kVOIManagers.size(); j++ )
             {
-                if ( kCurrentVOI.getPlane() == m_kVOIManagers[j].getPlane() )
+                if ( kCurrentVOI.getPlane() == m_kVOIManagers.elementAt(j).getPlane() )
                 {
-                    kManager = m_kVOIManagers[j];
+                    kManager = m_kVOIManagers.elementAt(j);
                     break;
                 }
             }
@@ -3606,12 +3608,12 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         for ( int i = 0; i < m_kCopyList.size(); i++ )
         {
             VOIBase kCurrentVOI = m_kCopyList.get(i); 
-            VOIManager kManager = m_kVOIManagers[0];
-            for ( int j = 0; j < m_kVOIManagers.length; j++ )
+            VOIManager kManager = m_kVOIManagers.elementAt(0);
+            for ( int j = 0; j < m_kVOIManagers.size(); j++ )
             {
-                if ( kCurrentVOI.getPlane() == m_kVOIManagers[j].getPlane() )
+                if ( kCurrentVOI.getPlane() == m_kVOIManagers.elementAt(j).getPlane() )
                 {
-                    kManager = m_kVOIManagers[j];
+                    kManager = m_kVOIManagers.elementAt(j);
                     break;
                 }
             }
@@ -3678,6 +3680,8 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         LUT.getTransferFunction().importArrays(x, y, 4);
     }
 
+
+
     /**
      * DOCUMENT ME!
      * 
@@ -3742,8 +3746,6 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         RGB.makeRGB( -1);
     }
 
-
-
     private void redoVOIs()
     {
         if ( m_kRedoList.isEmpty() )
@@ -3754,7 +3756,6 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         setVOIState( m_kRedoList.remove( m_kRedoList.size() - 1) );
         updateDisplay();
     }
-
     private void undoVOIs()
     {
         if ( m_kUndoList.isEmpty() )
@@ -3764,25 +3765,6 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         m_kRedoList.add( getVOIState() );
         setVOIState( m_kUndoList.remove( m_kUndoList.size() - 1) );
         updateDisplay();
-    }
-    /**
-     * Opens a JDialogStatistics to allow computation ofROI statistics.
-     */
-    public void showStatisticsCalculator() {
-
-        if (imageStatList == null) {
-
-            if ( (getActiveImage().getVOIs() != null) && (getActiveImage().getVOIs().size() != 0)) {
-                imageStatList = new JDialogVOIStatistics(getActiveImage().getVOIs());
-                imageStatList.setVisible(true);
-                // addVOIUpdateListener(imageStatList); // i'd rather not do it this way...
-            } else {
-                MipavUtil.displayError("A VOI must be present to use the statistics calculator");
-            }
-        } else {
-            imageStatList.refreshVOIList(getActiveImage().getVOIs());
-            imageStatList.setVisible(true);
-        }
     }
 
     /*

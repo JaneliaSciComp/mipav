@@ -5137,7 +5137,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 iActiveCount++;
             }
         }
-        voiManager = new VOIManagerInterface( this, imageA, LUTa, imageB, LUTb, iActiveCount, false, VOIGroup );
+        voiManager = new VOIManagerInterface( this, imageA, imageB, iActiveCount, false, VOIGroup );
         panelToolBarGBC.gridy++;
         panelToolbar.add( voiManager.getToolBar(), panelToolBarGBC );
         
@@ -5191,14 +5191,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 triImage[SAGITTAL_A].getOrientation(), triImage[SAGITTAL_A].getSlice() );
         triImage[SAGITTAL_A].setVOIManager(voiManager.getVOIManager(SAGITTAL_A));
         
-        voiManager.getToolBar().setVisible(true);
-
-        
-        if (imageA.isDicomImage()) {
-            voiManager.setOverlay(Preferences.is(Preferences.PREF_SHOW_DICOM_OVERLAYS));
-        } else {
-            voiManager.setOverlay(Preferences.is(Preferences.PREF_SHOW_IMAGE_OVERLAYS));
-        }
+        voiManager.getToolBar().setVisible(true);       
     }
     
     /* (non-Javadoc)

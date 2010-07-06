@@ -3629,7 +3629,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
     
     private void initVOI()
     {
-        voiManager = new VOIManagerInterface( this, imageA, LUTa, imageB, LUTb, 1, false, null );
+        voiManager = new VOIManagerInterface( this, imageA, imageB, 1, false, null );
         voiManager.getVOIManager(0).init( imageA, imageB,
                 componentImage, componentImage,
                 componentImage.getOrientation(), componentImage.getSlice() );

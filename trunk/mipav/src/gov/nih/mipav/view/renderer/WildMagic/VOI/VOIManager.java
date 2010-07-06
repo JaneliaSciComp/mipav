@@ -1873,6 +1873,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 kPositions.add( new Vector3f (iX, fY, m_iSlice));
                 kPositions.add( new Vector3f (m_fMouseX, fY, m_iSlice));
                 m_kCurrentVOI = createVOI( m_iDrawType, true, false, kPositions );
+                if ( m_iDrawType == LUT )
+                {
+                    m_kCurrentVOI.setQuickLUT( true);
+                }
             }
             else
             {      

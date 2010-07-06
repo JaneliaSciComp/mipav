@@ -144,6 +144,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
     protected boolean closed = true;
     /** True is this is a split-line contour. */
     protected boolean m_bSplit = false;
+    /** True is this is a QuickLUT contour. */
+    protected boolean m_bQuickLUT = false;
 
     /** Current plane of this contour. */
     protected int m_iPlane = NOT_A_PLANE;
@@ -1586,6 +1588,15 @@ public abstract class VOIBase extends Vector<Vector3f> {
     }
 
     /**
+     * Returns true if this is a QuickLUT contour.
+     * @return
+     */
+    public boolean isQuickLUT()
+    {
+        return m_bQuickLUT;
+    }
+
+    /**
      * Returns true if the input position is near the outline of this contour.
      * @param iX input x-position.
      * @param iY input y-position.
@@ -1798,7 +1809,16 @@ public abstract class VOIBase extends Vector<Vector3f> {
      */
     public void setSplit(boolean bSplit)
     {
-        m_bSplit = bSplit;;
+        m_bSplit = bSplit;
+    }
+
+    /**
+     * Sets the QuickLUT flag.
+     * @param bQuickLUT
+     */
+    public void setQuickLUT(boolean bQuickLUT)
+    {
+        m_bQuickLUT = bQuickLUT;
     }
 
 

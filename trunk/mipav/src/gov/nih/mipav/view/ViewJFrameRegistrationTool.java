@@ -3619,7 +3619,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
     
     private void initVOI()
     {
-        voiManager = new VOIManagerInterface( this, imageA, LUTa, imageB, LUTb, 2, false, null );
+        voiManager = new VOIManagerInterface( this, imageA, imageB, 2, false, null );
         voiManager.setPointerButton(defaultModeButton);
         voiManager.getVOIManager(0).init( imageA, null,
                 componentImageA, componentImageA,

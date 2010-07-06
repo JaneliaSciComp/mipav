@@ -3325,8 +3325,8 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     private void initVOI()
     {        
         setSliceFromSurface( sliceGUI.getCenter() );
-        m_kVOIInterface = new VOIManagerInterface( this, m_kVolumeImageA.GetImage(), m_kVolumeImageA.GetLUT(),
-                m_kVolumeImageB.GetImage(), m_kVolumeImageB.GetLUT(), 3, true, null );
+        m_kVOIInterface = new VOIManagerInterface( this, m_kVolumeImageA.GetImage(),
+                m_kVolumeImageB.GetImage(), 3, true, null );
         panelToolbar.add( m_kVOIInterface.getToolBar(), panelToolBarGBC );
         for ( int i = 0; i < 3; i++ )
         {
