@@ -3601,6 +3601,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      */
     public void regionGrow(final short x, final short y, final short z, final float valueR, final float valueG,
             final float valueB, final ModelImage image, final String leadString, boolean click) {
+    	
         final Cursor cursor = getCursor();
 
         setCursor(MipavUtil.waitCursor);
