@@ -675,17 +675,10 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      * @param mouseEvent event that triggered function
      */
     public void mouseDragged(final MouseEvent mouseEvent) {
-        int i, j;
-        String pointString;
-        int distX, distY;
-        int nVOI;
-
         if ( (mouseEvent.getX() < 0) || (mouseEvent.getY() < 0) || (mouseEvent.getX() > getWidth())
                 || (mouseEvent.getY() > getHeight())) {
             return;
         }
-
-        //ViewVOIVector VOIs = imageActive.getVOIs();
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
 
@@ -695,7 +688,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         yS = Math.min(yS, imageDim.height - 1);
         if (dragCenterPt) // if user is moving the center point
         {
-
             if (doCenter) {
                 setCursor(MipavUtil.blankCursor);
 
@@ -711,9 +703,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                 return;
             }
         }
-
-        if ((cursorMode == DEFAULT) || (cursorMode == MOVE_VOIPOINT) ) {
-
+        if (cursorMode == DEFAULT) {
             if ( (mouseEvent.getModifiers() & InputEvent.BUTTON3_MASK) != 0) {
 
                 // adjust window and level when in DEFAULT mode and dragging with right-button
@@ -732,103 +722,20 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             MipavCoordinateSystems.patientToFile(patientMousePoint, m_kVolumePoint, imageActive, orientation);
             triImageFrame.setCenter((int) m_kVolumePoint.X, (int) m_kVolumePoint.Y, (int) m_kVolumePoint.Z);
 
-            if (cursorMode == ViewJComponentBase.DEFAULT) {
-                return;
-            }
-        } // if (mode == DEFAULT || mode == MOVE_VOIPOINT || mode == CUBE_BOUNDS || mode == PROTRACTOR)/
-/*
-        if (cursorMode == ViewJComponentBase.MOVE_VOIPOINT) {
-            nVOI = VOIs.size();
-
-            boolean found = false;
-
-            for (i = 0; ( (i < nVOI) && ( !found)); i++) {
-
-                if (VOIs.VOIAt(i).isActive() && VOIs.VOIAt(i).isVisible()) {
-
-                    if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
-                        final Vector3f patientMousePoint = new Vector3f();
-                        super.ScreenToLocal(new Vector3f(mouseEvent.getX(), mouseEvent.getY(), slice),
-                                patientMousePoint);
-
-                        final Vector3f volumeMousePoint = new Vector3f();
-                        MipavCoordinateSystems.patientToFile(patientMousePoint, volumeMousePoint, imageActive,
-                                orientation);
-                        found = true;
-
-                        // the reason for this k = lastZOrg-1 loop is because the VOI point lies right on
-                        // the slice edge. if this loop was not present, the user could only grab the
-                        // point from one side, which is confusing since the point is drawn on the
-                        // edge of the slice. the loop tests both sides of the VOI point (both
-                        // surrounding slices) and thus makes it more easier to grab the point
-                        for (int k = lastZOrg - 1; k <= lastZOrg; k++) {
-
-                            if ( (k < 0) || (volumeMousePoint.Z < 0)) {
-                                continue;
-                            }
-
-                            final Vector3f[] voiPoints = VOIs.VOIAt(i).exportPoints(k);
-
-                            for (j = 0; j < voiPoints.length; j++) {
-
-                                if ( ((VOIPoint) (VOIs.VOIAt(i).getCurves()[k].elementAt(j))).isActive()) {
-
-                                    if ( ! ((VOIPoint) (VOIs.VOIAt(i).getCurves()[k].elementAt(j))).isFixed()) {
-                                        pointString = ((VOIPoint) (VOIs.VOIAt(i).getCurves()[k].elementAt(j)))
-                                                .getLabel();
-                                        VOIs.VOIAt(i).getCurves()[k].removeElementAt(j);
-
-                                        final int[] x = new int[1];
-                                        final int[] y = new int[1];
-                                        final int[] z = new int[1];
-
-                                        x[0] = (int) volumeMousePoint.X;
-                                        y[0] = (int) volumeMousePoint.Y;
-                                        z[0] = (int) volumeMousePoint.Z;
-
-                                        final VOIBase pt = new VOIPoint();
-
-                                        pt.importArrays(x, y, z, x.length);
-                                        VOIs.VOIAt(i).getCurves()[(int) volumeMousePoint.Z].addElement(pt);
-                                        ((VOIPoint) (VOIs.VOIAt(i).getCurves()[(int) volumeMousePoint.Z].lastElement()))
-                                                .setLabel(pointString);
-                                        ((VOIPoint) (VOIs.VOIAt(i).getCurves()[(int) volumeMousePoint.Z].lastElement()))
-                                                .setActive(true);
-                                        lastZOrg = (int) volumeMousePoint.Z;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            anchorPt.x = xS;
-            anchorPt.y = yS;
-            frame.updateImages();
-
             return;
-        } // end of else if (mode == MOVE_VOIPOINT)
-        */
+        } 
         else if (cursorMode == CUBE_BOUNDS) {
-
             final Vector2f mousePoint = new Vector2f(mouseEvent.getX(), mouseEvent.getY());
-
             // if we are not already dragging a point, see if the mouse event is near one of the corners
             if (dragBBpt == -1) {
-
-                for (i = 0; i < cropPoints.length; i++) {
-
+                for (int i = 0; i < cropPoints.length; i++) {
                     if ((float) MipavMath.distance(cropPoints[i].X, mousePoint.X, cropPoints[i].Y, mousePoint.Y) < 5) {
-
                         // if we are dragging near a box corner, set 'dragBBpt' to indicate that point
                         dragBBpt = i;
-
                         break;
                     }
                 }
             }
-
             if (dragBBpt != -1) {
                 updateCrop(dragBBpt, mousePoint);
             }
@@ -839,7 +746,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
             if (Preferences.is(Preferences.PREF_FAST_TRIPLANAR_REPAINT)) {
                 repaint();
-
                 return;
             }
         } // end of else if (mode == PAINT_VOI)
@@ -848,7 +754,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
             if (Preferences.is(Preferences.PREF_FAST_TRIPLANAR_REPAINT)) {
                 repaint();
-
                 return;
             }
         } // end of else if (mode == ERASER_PAINT)
@@ -862,7 +767,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
             triImageFrame.setIntensityDropper(intensityDropper);
             triImageFrame.setIntensityPaintName(intensityDropper);
-
             return;
         }
 
@@ -920,7 +824,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                 (yS < 0) || (yS >= imageDim.height)) {
             return;
         }
-        if ( (cursorMode == ViewJComponentBase.POINT_VOI) || (cursorMode == ViewJComponentBase.DROPPER_PAINT)
+        if ((cursorMode == ViewJComponentBase.DROPPER_PAINT)
                 || (cursorMode == ViewJComponentBase.CUBE_BOUNDS)) {
             return;
         }
@@ -979,10 +883,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         final int yS = getScaledY(mouseEvent.getY()); // zoomed y. Used as cursor
 
         if ( (xS < 0) || (xS >= imageDim.width) || (yS < 0) || (yS >= imageDim.height)) {
-            return;
-        }
-
-        if (cursorMode == ViewJComponentBase.POINT_VOI) {
             return;
         }
 
@@ -1068,10 +968,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         if ( (cursorMode == ViewJComponentBase.PAINT_VOI) || (cursorMode == ViewJComponentBase.ERASER_PAINT)) {
             imageActive.notifyImageDisplayListeners();
         }
-        else if (cursorMode == ViewJComponentBase.MOVE_VOIPOINT) {
-            setCursorMode(ViewJComponentBase.DEFAULT);
-            imageActive.notifyImageDisplayListeners(null, true);
-        } else if (cursorMode == ViewJComponentBase.PAINT_CAN) {
+        else if (cursorMode == ViewJComponentBase.PAINT_CAN) {
             final Vector3f patientMousePoint = new Vector3f();
             super.ScreenToLocal(new Vector3f(mouseEvent.getX(), mouseEvent.getY(), slice), patientMousePoint);
 
@@ -1392,16 +1289,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      * @param newMode DOCUMENT ME!
      */
     public void setCursorMode(final int newMode) {
-
-        if (newMode == ViewJComponentBase.MOVE_POINT) {
-            this.cursorMode = newMode;
-            //voiHandler.getRubberband().setActive(false);
-            setCursor(crosshairCursor);
-        } 
-         else {
-            super.setCursorMode(newMode);
-        }
-
+        super.setCursorMode(newMode);
         if (newMode == ViewJComponentBase.PAINT_VOI) {
             setCursor(MipavUtil.blankCursor);
         } else {

@@ -75,13 +75,13 @@ public abstract class ViewJComponentBase extends JComponent {
     //public static final int LEVELSET = 6;
 
     /** DOCUMENT ME! */
-    public static final int MOVE_POINT = 7;
+    //public static final int MOVE_POINT = 7;
 
     /** DOCUMENT ME! */
-    public static final int NEW_POINT = 8;
+    //public static final int NEW_POINT = 8;
 
     /** DOCUMENT ME! */
-    public static final int DELETE_POINT = 9;
+    //public static final int DELETE_POINT = 9;
 
     /** DOCUMENT ME! */
     public static final int WAND = 10;
@@ -128,7 +128,7 @@ public abstract class ViewJComponentBase extends JComponent {
     public static final int QUICK_LUT = 23;
 
     /** This mode is an active VOI mode used by the VOI Handler  */
-    public static final int PROTRACTOR = 24;
+    //public static final int PROTRACTOR = 24;
 
     /** Indicates the VOI cursor is in translate mode */
     public static final int ROTATE = 25;
@@ -137,10 +137,10 @@ public abstract class ViewJComponentBase extends JComponent {
     public static final int TRANSLATE = 26;
 
     /** DOCUMENT ME! */
-    public static final int MOVE_VOIPOINT = 27;
+    //public static final int MOVE_VOIPOINT = 27;
 
     /** DOCUMENT ME! */
-    public static final int CENTER_VOI = 28;
+    //public static final int CENTER_VOI = 28;
 
     /** DOCUMENT ME! */
     public static final int CUBE_BOUNDS = 29;
@@ -398,10 +398,10 @@ public abstract class ViewJComponentBase extends JComponent {
      */
     public void LocalToScreen( Vector3f localPoint, Vector3f screenPoint )
     {
-        screenPoint.X = localPoint.X * ( zoomX * resolutionX );
-        screenPoint.Y = localPoint.Y * ( zoomY * resolutionY );
+        screenPoint.X = Math.round(localPoint.X * ( zoomX * resolutionX ));
+        screenPoint.Y = Math.round(localPoint.Y * ( zoomY * resolutionY ));
         /* store but do not transform the z value (z = slice displayed) */
-        screenPoint.Z = localPoint.Z;
+        screenPoint.Z = Math.round(localPoint.Z);
     }
 
     /**
@@ -414,10 +414,10 @@ public abstract class ViewJComponentBase extends JComponent {
      */
     public void ScreenToLocal( Vector3f screenPoint, Vector3f localPoint )
     {
-        localPoint.X = screenPoint.X / ( zoomX * resolutionX );
-        localPoint.Y = screenPoint.Y / ( zoomY * resolutionY );
+        localPoint.X = Math.round(screenPoint.X / ( zoomX * resolutionX ));
+        localPoint.Y = Math.round(screenPoint.Y / ( zoomY * resolutionY ));
         /* store but do not transform the z value (z = slice displayed) */
-        localPoint.Z = screenPoint.Z;
+        localPoint.Z = Math.round(screenPoint.Z);
     }
 
 

@@ -549,7 +549,6 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
 
         String command;
         command = event.getActionCommand();
-
         if (command.equals("toggleVOIs")) {
 
             if (showVOIs.isSelected()) {
@@ -560,13 +559,13 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
                 updateImages(true);
             }
         } else if (command.equals("copyRefAdj")) {
-            VOIVector VOIs = componentImageA.getActiveImage().getVOIsCopy();
-            componentImageB.getActiveImage().setVOIs(VOIs);
-            componentImageA.getActiveImage().notifyImageDisplayListeners();
-        } else if (command.equals("copyAdjRef")) {
-            VOIVector VOIs = componentImageB.getActiveImage().getVOIsCopy();
-            componentImageA.getActiveImage().setVOIs(VOIs);
+            VOI pointRef = new VOI( componentImageA.getPointVOI() );
+            componentImageB.setPointVOI(pointRef);
             componentImageB.getActiveImage().notifyImageDisplayListeners();
+        } else if (command.equals("copyAdjRef")) {
+            VOI pointRef = new VOI( componentImageB.getPointVOI() );
+            componentImageA.setPointVOI(pointRef);
+            componentImageA.getActiveImage().notifyImageDisplayListeners();
         } else if (command.equals("DisplayLUT")) {
 
             if (componentImage.getActiveImage().getType() == ModelStorageBase.BOOLEAN) {
@@ -750,11 +749,12 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             leftButton.setEnabled(true);
             mode = ViewJComponentBase.POINT_VOI;
             setActiveImage(IMAGE_A);
-            componentImageA.setCursorMode(ViewJComponentBase.POINT_VOI);
+            //componentImageA.setCursorMode(ViewJComponentBase.POINT_VOI);
             componentImage.setCenter(false);
-            componentImage.setCursorMode(ViewJComponentRegistration.DEFAULT);
-            componentImageB.setCursorMode(ViewJComponentRegistration.DEFAULT);
+            //componentImage.setCursorMode(ViewJComponentRegistration.DEFAULT);
+            //componentImageB.setCursorMode(ViewJComponentRegistration.DEFAULT);
             voiManager.selectAllVOIs(false);
+            voiManager.setSelectedVOI( componentImageA.getPointVOI(), false, false );
             voiManager.actionPerformed(new ActionEvent(this,0,CustomUIBuilder.PARAM_VOI_POINT.getActionCommand()));
         } else if (command.equals("adjMark")) {
             cwButton.setEnabled(false);
@@ -765,17 +765,20 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             leftButton.setEnabled(true);
             mode = ViewJComponentBase.POINT_VOI;
             setActiveImage(IMAGE_B);
-            componentImageB.setCursorMode(ViewJComponentBase.POINT_VOI);
+            //componentImageB.setCursorMode(ViewJComponentBase.POINT_VOI);
             componentImage.setCenter(false);
-            componentImage.setCursorMode(ViewJComponentRegistration.DEFAULT);
-            componentImageA.setCursorMode(ViewJComponentRegistration.DEFAULT);
+            //componentImage.setCursorMode(ViewJComponentRegistration.DEFAULT);
+            //componentImageA.setCursorMode(ViewJComponentRegistration.DEFAULT);
             voiManager.selectAllVOIs(false);
+            voiManager.setSelectedVOI( componentImageB.getPointVOI(), false, false );
             voiManager.actionPerformed(new ActionEvent(this,0,CustomUIBuilder.PARAM_VOI_POINT.getActionCommand()));
         } else if (command.equals("refMarkMinus")) {
             setActiveImage(IMAGE_A);
+            voiManager.setSelectedVOI( componentImageA.getPointVOI(), false, false );
             voiManager.deleteSelectedVOI(true);
         } else if (command.equals("adjMarkMinus")) {
             setActiveImage(IMAGE_B);
+            voiManager.setSelectedVOI( componentImageB.getPointVOI(), false, false );
             voiManager.deleteSelectedVOI(true);
         } else if (command.equals("defaultMode")) {
             adjMarkButton.setSelected(false);
@@ -788,9 +791,9 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             cwButton.setEnabled(false);
             ccwButton.setEnabled(false);
             componentImage.setCenter(false);
-            componentImage.setCursorMode(ViewJComponentRegistration.DEFAULT);
-            componentImageA.setCursorMode(ViewJComponentBase.DEFAULT);
-            componentImageB.setCursorMode(ViewJComponentBase.DEFAULT);
+            //componentImage.setCursorMode(ViewJComponentRegistration.DEFAULT);
+            //componentImageA.setCursorMode(ViewJComponentBase.DEFAULT);
+            //componentImageB.setCursorMode(ViewJComponentBase.DEFAULT);
             voiManager.actionPerformed(new ActionEvent(this,0,CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER.getActionCommand()));
             setDefaultMode();
         } else if (command.equals("degreeIncrement")) {
@@ -817,7 +820,6 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             mode = ViewJComponentBase.ROTATE;
             componentImage.setCursorMode(ViewJComponentBase.ROTATE);
             componentImage.setCenter(true);
-
             // componentImageB.setRegCenterPtCreated(true);
         } else if (command.equals("cw")) {
             upButton.setEnabled(false);
@@ -1321,6 +1323,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
         double theta1, theta2;
         float deltaTheta;
 
+        System.err.println( "setMove" );
         if (mode == ViewJComponentBase.TRANSLATE) {
             deltaX = xFinish - xStart;
             deltaY = yFinish - yStart;
@@ -3242,31 +3245,26 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
         // matrix to get the old point coordinates from the new point coordinates.
         // In moving the VOIs we wish to use the transformation matrix to get the new
         // point coordinates from the old point coordinates
-        nVOI = componentImage.getnVOI();
+        
 
-        int[] markerType = null;
+        if (doneLeastSquares) {
+            xfrmD.Copy(xfrmBA);
+        } else {
+            xfrmD.Copy(xfrm);
+        }
+        
+        //nVOI = componentImageB.getNumPoints();        
+        //if (nVOI > 0) {
+            //xOrg = componentImageB.getxOrg();
+            //yOrg = componentImageB.getyOrg();
+       // for (n = 0; n < nVOI; n++) {
+            //i = Math.round((xOrg[n] * xfrmD.Get(0, 0)) + (yOrg[n] * xfrmD.Get(0, 1)) + xfrmD.Get(0, 2));
+            //j = Math.round((xOrg[n] * xfrmD.Get(1, 0)) + (yOrg[n] * xfrmD.Get(1, 1)) + xfrmD.Get(1, 2));
+            //componentImageB.moveVOITo(n, i, j);
+        //} // end of for (n = 0; n < nVOI; n++)
+        //} // end of if (nVOI > 0)
 
-        if (nVOI > 0) {
-            xOrg = componentImage.getxOrg();
-            yOrg = componentImage.getyOrg();
-            markerType = componentImage.getMarkerType();
-
-            if (doneLeastSquares) {
-                xfrmD.Copy(xfrmBA);
-            } else {
-                xfrmD.Copy(xfrm);
-            }
-        } // end of if (nVOI > 0)
-
-        for (n = 0; n < nVOI; n++) {
-
-            if ((markerType[n] != REFMARK) && (markerType[n] != ROTATIONCENTER)) {
-                i = Math.round((xOrg[n] * xfrmD.Get(0, 0)) + (yOrg[n] * xfrmD.Get(0, 1)) + xfrmD.Get(0, 2));
-                j = Math.round((xOrg[n] * xfrmD.Get(1, 0)) + (yOrg[n] * xfrmD.Get(1, 1)) + xfrmD.Get(1, 2));
-                componentImage.moveVOITo(n, i, j);
-            } // end of if (markerType[n] != REFMARK)
-        } // end of for (n = 0; n < nVOI; n++)
-
+        componentImageB.setRotate(xfrmD);
         doneLeastSquares = false;
         updateImages(true);
     } // end of private void transformC()
@@ -3454,8 +3452,19 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
 
     @Override
     public void PointerActive(boolean bActive) {
-        // TODO Auto-generated method stub
-        
+        if ( bActive )
+        {
+            componentImage.setCursorMode(ViewJComponentBase.VOI_3D);
+            componentImageA.setCursorMode(ViewJComponentBase.VOI_3D);
+            componentImageA.setCursorMode(ViewJComponentBase.VOI_3D);
+        }
+        else
+        {
+            componentImage.setCursorMode(ViewJComponentBase.DEFAULT);
+            componentImageA.setCursorMode(ViewJComponentBase.DEFAULT);
+            componentImageA.setCursorMode(ViewJComponentBase.DEFAULT);
+            setDefaultMode();
+        }
     }
 
     @Override
@@ -3539,6 +3548,14 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
      */
     public void setCursor(Cursor kCursor) {
         componentImage.setCursor(kCursor);
+        if ( getActiveImage() == imageA )
+        {
+            componentImageA.setCursor(kCursor);
+        }
+        else if ( getActiveImage() == imageB )
+        {
+            componentImageB.setCursor(kCursor);
+        }
     }
 
     @Override

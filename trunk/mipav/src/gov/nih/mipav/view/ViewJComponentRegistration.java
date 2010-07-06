@@ -1480,7 +1480,7 @@ public class ViewJComponentRegistration
                 yS = imageB.getExtents()[1] / 2;
                 id = (short) imageActive.getVOIs().size();
                 centerid = id;
-                newVOI = new VOI(id, "point2d.voi", VOI.POINT, hue);
+                newVOI = new VOI(id, "center.voi", VOI.POINT, hue);
                 centerVOI = newVOI;
                 xR[0] = xS;
                 yR[0] = yS;

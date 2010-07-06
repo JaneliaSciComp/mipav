@@ -7,6 +7,8 @@ import gov.nih.mipav.model.structures.*;
 
 import java.util.*;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+
 
 /**
  * Extended version of ViewJComponentEditImage, used ONLY within the ViewJFrameRegistrationTool This class is tailored
@@ -35,7 +37,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage {
 
     /** Buffers used to save the Y coordinates for the points that make up a VOI. */
     private int[] yCoords;
-    
+
     /** Buffers used to save the Z coordinates for the points that make up a VOI. */
     private int[] zCoords;
 
@@ -56,8 +58,8 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage {
      * @param  isReference        DOCUMENT ME!
      */
     public ViewJComponentSingleRegistration(ViewJFrameBase _frame, ModelImage _imageA, ModelLUT _LUTa,
-                                            float[] imgBufferA, int[] pixelBuffer, float zoom, int[] extents,
-                                            boolean logMagDisplay, int _orientation, boolean isReference) {
+            float[] imgBufferA, int[] pixelBuffer, float zoom, int[] extents,
+            boolean logMagDisplay, int _orientation, boolean isReference) {
         super(_frame, _imageA, _LUTa, imgBufferA, null, null, null, pixelBuffer, zoom, extents, logMagDisplay, _orientation );
 
 
@@ -66,11 +68,11 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage {
         xCoords = new int[100];
         yCoords = new int[100];
         ptCoord = new float[3];
-        
+
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-    
+
     /**
      * Gets the center point of rotation.
      *
@@ -90,22 +92,76 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage {
 
         if (VOIs.size() == 0) {
             return 0;
-        } else if (VOIs.size() == 1) {
-
+        } 
+        else if (VOIs.size() == 1) {
             if (centerPtLocation != -1) {
                 return 0;
-            } else {
-                return ((VOI) VOIs.elementAt(0)).getCurves().size();
             }
-        } else {
-
+            return VOIs.elementAt(0).getCurves().size();
+        } 
+        else {
             if (centerPtLocation == 0) {
-                return ((VOI) VOIs.elementAt(1)).getCurves().size();
-            } else {
-                return ((VOI) VOIs.elementAt(0)).getCurves().size();
+                return VOIs.elementAt(1).getCurves().size();
             }
+            return VOIs.elementAt(0).getCurves().size();
         }
     }
+
+
+    /**
+     * All VOIPoints are stored in one VOI contained in this class. This function returns that VOI.
+     * @return VOI for the VOIPoints in this class.
+     */
+    public VOI getPointVOI() {
+        ViewVOIVector VOIs = imageActive.getVOIs();
+        int nVOI = VOIs.size();
+        if ( nVOI == 0 )
+        {
+            float presetHue = isReference? 0 : 1f/3f;
+            VOI newVOI = new VOI( (short)0, imageActive.getImageName()+"VOI", VOI.POINT, presetHue );
+            imageActive.registerVOI(newVOI);
+            return newVOI;
+        }
+        int index = 0;
+
+        if ((centerPtLocation == 0) && (nVOI == 1)) {
+            float presetHue = isReference? 0 : 1f/3f;
+            VOI newVOI = new VOI( (short)0, imageActive.getImageName()+"VOI", VOI.POINT, presetHue );
+            imageActive.registerVOI(newVOI);
+            return newVOI;
+        } else if ((centerPtLocation == 0) && (nVOI == 2)) {
+            index = 1;
+        }
+
+        return VOIs.elementAt(index);
+    }
+
+    /**
+     * All VOIPoints are stored in one VOI contained in this class. This function sets that VOI
+     * used when the user copies VOIPoints from the reference to the adjustable image or vice versa.
+     * @param newVOI new set of VOIPoints.
+     */
+    public void setPointVOI(VOI newVOI) {
+        float presetHue = isReference? 0 : 1f/3f;
+        newVOI.setColor(presetHue);
+        int nVOI;
+        ViewVOIVector VOIs = imageActive.getVOIs();
+
+        nVOI = VOIs.size();
+        if ( nVOI == 0 )
+        {
+            VOIs.add(newVOI);
+            return;
+        }
+        int index = 0;
+        if ((centerPtLocation == 0) && (nVOI == 1)) {
+            imageActive.registerVOI(newVOI);
+        } else if ((centerPtLocation == 0) && (nVOI == 2)) {
+            index = 1;
+        }
+        VOIs.set(index, newVOI);
+    }
+
 
     /**
      * Returns an array containing the list of X coordinates for the VOIPoints.
@@ -128,7 +184,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage {
             index = 1;
         }
 
-        Vector ptVector = ((VOI) VOIs.elementAt(index)).getCurves();
+        Vector ptVector = VOIs.elementAt(index).getCurves();
         VOIPoint pt = null;
 
         // System.err.println("Point vector size: " + ptVector.size());
@@ -170,7 +226,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage {
             index = 1;
         }
 
-        Vector ptVector = ((VOI) VOIs.elementAt(index)).getCurves();
+        Vector ptVector = VOIs.elementAt(index).getCurves();
         VOIPoint pt = null;
 
         try {
@@ -191,17 +247,45 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage {
 
     }
 
-    
+    /**
+     * Sets the TransMatrix for the set of VOIPoints contained in this class.
+     * @param kMat new TransMatrix
+     */
+    public void setRotate( TransMatrix kMat )
+    {
+        int i;
+        int nVOI;
+        ViewVOIVector VOIs = imageActive.getVOIs();
 
-    public boolean isReference() {
-    	return isReference;
+        nVOI = VOIs.size();
+
+        int index = 0;
+
+        if ((centerPtLocation == 0) && (nVOI == 1)) {
+            return;
+        } else if ((centerPtLocation == 0) && (nVOI == 2)) {
+            index = 1;
+        }
+
+        Vector<VOIBase> ptVector = VOIs.elementAt(index).getCurves();
+        for (i = 0; i < ptVector.size(); i++) {
+            ((VOIPoint)ptVector.elementAt(i)).setMatrix(kMat);
+        }
     }
-    
+
+    /**
+     * Returns true if this is the reference image.
+     * @return true if this is the reference image.
+     */
+    public boolean isReference() {
+        return isReference;
+    }
+
     // ************************************************************************
     // ************************** Mouse Motion Events *************************
     // ************************************************************************
 
-   
+
 
     /**
      * Resets all of the VOIPoint's by moving them from pointSet A to point set B.
@@ -224,7 +308,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage {
         for (i = 0; i < pointSetA[0].length; i++) {
             deltaX = (int) (pointSetA[0][i] - pointSetB[0][i]);
             deltaY = (int) (pointSetA[1][i] - pointSetB[1][i]);
-            ((VOIPoint) (((VOI) VOIs.elementAt(index)).getCurves()).elementAt(i)).moveVOIPoint(deltaX, deltaY, 0,
+            ((VOIPoint) (VOIs.elementAt(index).getCurves()).elementAt(i)).moveVOIPoint(deltaX, deltaY, 0,
                     imageActive.getExtents()[0],
                     imageActive.getExtents()[1],
                     1);
