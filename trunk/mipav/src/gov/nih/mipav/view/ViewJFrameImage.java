@@ -5888,18 +5888,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      */
     protected void initVOI()
     {
-        voiManager = new VOIManagerInterface( this, imageA, LUTa, imageB, LUTb, 1, false, VOIGroup );
+        voiManager = new VOIManagerInterface( this, imageA, imageB, 1, false, VOIGroup );
         voiManager.getVOIManager(0).init( imageA, imageB,
                 componentImage, componentImage,
                 componentImage.getOrientation(), componentImage.getSlice() );
         voiManager.getToolBar().setVisible(true);
         componentImage.setVOIManager(voiManager.getVOIManager(0));
-        
-        if (imageA.isDicomImage()) {
-            voiManager.setOverlay(Preferences.is(Preferences.PREF_SHOW_DICOM_OVERLAYS));
-        } else {
-            voiManager.setOverlay(Preferences.is(Preferences.PREF_SHOW_IMAGE_OVERLAYS));
-        }
     }
     
 
