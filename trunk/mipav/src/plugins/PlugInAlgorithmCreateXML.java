@@ -79,7 +79,7 @@ public class PlugInAlgorithmCreateXML extends AlgorithmBase {
 	 */
 	private boolean writeXML(File[] f) {
 		FileIO io = new FileIO();
-		ModelImage m = io.readImage(f[0].getName(), f[0].getParentFile().getAbsolutePath()+"\\", f.length > 1, null);
+		ModelImage m = io.readImage(f[0].getName(), f[0].getParentFile().getAbsolutePath()+File.separator, f.length > 1, null);
 		FileImageXML im = new FileImageXML(m, f.length > 1, f[0]);
 		
 		try {
