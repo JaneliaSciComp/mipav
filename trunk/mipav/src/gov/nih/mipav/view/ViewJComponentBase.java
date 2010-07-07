@@ -60,47 +60,47 @@ public abstract class ViewJComponentBase extends JComponent {
     public static final int DEFAULT = 0;
 
     /** DOCUMENT ME! */
-    //public static final int SELECT = 1;
+    public static final int SELECT = 1;
 
     /** DOCUMENT ME! */
     public static final int MOVE = 2;
 
     /** Indicates the MIPAV cursor is in slice rectangle VOI mode */
-    //public static final int RECTANGLE = 3;
+    public static final int RECTANGLE = 3;
 
     /** Indicates the MIPAV cursor is in volume rectangle VOI mode */
     public static final int RECTANGLE3D = 4;
 
     /** Indicates the MIPAV cursor is in levelset VOI mode */
-    //public static final int LEVELSET = 6;
+    public static final int LEVELSET = 6;
 
     /** DOCUMENT ME! */
-    //public static final int MOVE_POINT = 7;
+    public static final int MOVE_POINT = 7;
 
     /** DOCUMENT ME! */
-    //public static final int NEW_POINT = 8;
+    public static final int NEW_POINT = 8;
 
     /** DOCUMENT ME! */
-    //public static final int DELETE_POINT = 9;
+    public static final int DELETE_POINT = 9;
 
     /** DOCUMENT ME! */
     public static final int WAND = 10;
 
     /** Indicates the MIPAV cursor is in ellipse VOI mode */
-    //public static final int ELLIPSE = 11;
+    public static final int ELLIPSE = 11;
 
     /** Indicates the MIPAV cursor is in 2D line VOI mode */
-    //public static final int LINE = 12;
+    public static final int LINE = 12;
 
     /** Indicates the MIPAV cursor is in polyline VOI mode */
-    //public static final int POLYLINE = 13;
+    public static final int POLYLINE = 13;
 
     /** Indicates that a VOI has just been created, is not related to the various
      * possible VOI modes that the handler deals with*/
     public static final int NEW_VOI = 14;
 
     /** DOCUMENT ME! */
-    //public static final int RETRACE = 15;
+    public static final int RETRACE = 15;
 
     /** Indicates the MIPAV cursor is in point VOI mode */
     public static final int POINT_VOI = 16;
@@ -128,7 +128,7 @@ public abstract class ViewJComponentBase extends JComponent {
     public static final int QUICK_LUT = 23;
 
     /** This mode is an active VOI mode used by the VOI Handler  */
-    //public static final int PROTRACTOR = 24;
+    public static final int PROTRACTOR = 24;
 
     /** Indicates the VOI cursor is in translate mode */
     public static final int ROTATE = 25;
@@ -137,22 +137,22 @@ public abstract class ViewJComponentBase extends JComponent {
     public static final int TRANSLATE = 26;
 
     /** DOCUMENT ME! */
-    //public static final int MOVE_VOIPOINT = 27;
+    public static final int MOVE_VOIPOINT = 27;
 
     /** DOCUMENT ME! */
-    //public static final int CENTER_VOI = 28;
+    public static final int CENTER_VOI = 28;
 
     /** DOCUMENT ME! */
     public static final int CUBE_BOUNDS = 29;
 
     /** Indicates the MIPAV cursor is in livewire VOI mode */
-    //public static final int LIVEWIRE = 30;
+    public static final int LIVEWIRE = 30;
 
     /** DOCUMENT ME! */
     public static final int PAINT_VASC = 31;
 
     /** Indicates the MIPAV cursor is in annotation VOI mode */
-    //public static final int ANNOTATION = 32;
+    public static final int ANNOTATION = 32;
 
     /** DOCUMENT ME! */
     public static final int PROBE = 33;
@@ -167,10 +167,10 @@ public abstract class ViewJComponentBase extends JComponent {
     public static final int ZOOMING_OUT = 36;
 
     /** Indicates the MIPAV cursor is in polyline slice VOI mode */
-    //public static final int POLYLINE_SLICE_VOI = 37;
+    public static final int POLYLINE_SLICE_VOI = 37;
 
     /** Indicates the MIPAV cursor is in split VOI mode */
-    //public static final int SPLIT_VOI = 38;
+    public static final int SPLIT_VOI = 38;
     
     /** Indicates the cursor is in 3D voi drawing mode while in tri-planar view */
     public static final int VOI_3D = 39;

@@ -3536,6 +3536,11 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             setActiveImage( IMAGE_B );
         }
     }
+    
+    public VOIManagerInterface getVOIManager()
+    {
+        return voiManager;
+    }
 
     @Override
     public void setCenter(Vector3f kCenter) {

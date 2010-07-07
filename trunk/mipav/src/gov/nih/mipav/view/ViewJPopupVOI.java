@@ -81,71 +81,56 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
     public ViewJPopupVOI(VOIHandlerInterface handler) {
         voiHandler = handler;
 
-        itemProps = ViewMenuBuilder.buildMenuItem("Properties", "Properties", 0, this, null, true);
+        itemProps = ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPERTIES, this, true);
 
         selectionMenu = ViewMenuBuilder.buildMenu("Select", 0, true);
-        selectionMenu.add(ViewMenuBuilder.buildMenuItem("Select all VOIs", "voiSelectAll", 0, this, null, false));
-        selectionMenu.add(ViewMenuBuilder.buildMenuItem("Select all contours of VOI", "contourSelectAll", 0, this, null,
-                                                        false));
-        selectionMenu.add(ViewMenuBuilder.buildMenuItem("Select none", "voiSelectNone", 0, this, null, false));
+        selectionMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_SELECT_ALL, this, false));
+        //selectionMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_CONTOUR_SELECT_ALL, this, false));
+        selectionMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_SELECT_NONE, this, false));
 
         editSubMenu = ViewMenuBuilder.buildMenu("Edit", 0, true);
-        editSubMenu.add(ViewMenuBuilder.buildMenuItem("Delete", "deleteVOI", 0, this, "delete.gif", true));
-        editSubMenu.add(ViewMenuBuilder.buildMenuItem("Cut", "cutVOI", 0, this, "cutpaint.gif", true));
-        editSubMenu.add(ViewMenuBuilder.buildMenuItem("Copy", "copyVOI", 0, this, "copypaint.gif", true));
-        editSubMenu.add(ViewMenuBuilder.buildMenuItem("Paste", "pasteVOI", 0, this, "pastepaint.gif", true));
+        editSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_DELETE, this, true));
+        editSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_CUT, this, true));
+        editSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_COPY, this, true));
+        editSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PASTE, this, true));
 
         orderSubMenu = ViewMenuBuilder.buildMenu("VOI Order", 0, true);
-        orderSubMenu.add(ViewMenuBuilder.buildMenuItem("Bring VOI to Front", "BringToFront", 0, this, "front.gif",
-                                                       true));
-        orderSubMenu.add(ViewMenuBuilder.buildMenuItem("Send VOI to Back", "SendToBack", 0, this, "back.gif", true));
-        orderSubMenu.add(ViewMenuBuilder.buildMenuItem("Bring VOI Forward", "BringForward", 0, this, "forward.gif",
-                                                       true));
-        orderSubMenu.add(ViewMenuBuilder.buildMenuItem("Send VOI Backward", "SendBackward", 0, this, "backward.gif",
-                                                       true));
+        orderSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_FRONT, this, true));
+        orderSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_BACK, this, true));
+        orderSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_FORWARD, this, true));
+        orderSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_BACKWARD, this, true));
 
         contourOrderSubMenu = ViewMenuBuilder.buildMenu("Contour Order", 0, true);
-        contourOrderSubMenu.add(ViewMenuBuilder.buildMenuItem("Bring Contour to Front", "BringContourToFront", 0, this,
-                                                              "front.gif", true));
-        contourOrderSubMenu.add(ViewMenuBuilder.buildMenuItem("Send Contour to Back", "SendContourToBack", 0, this,
-                                                              "back.gif", true));
-        contourOrderSubMenu.add(ViewMenuBuilder.buildMenuItem("Bring Contour Forward", "BringContourForward", 0, this,
-                                                              "forward.gif", true));
-        contourOrderSubMenu.add(ViewMenuBuilder.buildMenuItem("Send Contour Backward", "SendContourBackward", 0, this,
-                                                              "backward.gif", true));
+        contourOrderSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_CONTOUR_FRONT, this, true));
+        contourOrderSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_CONTOUR_BACK, this, true));
+        contourOrderSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_CONTOUR_FORWARD, this, true));
+        contourOrderSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_CONTOUR_BACKWARD, this, true));
 
         propSubMenu = ViewMenuBuilder.buildMenu("Propagate", 0, true);
-        propSubMenu.add(ViewMenuBuilder.buildMenuItem("To Next Slice", "PropVOIUp", 0, this, "voipropu.gif", true));
-        propSubMenu.add(ViewMenuBuilder.buildMenuItem("To Previous Slice", "PropVOIDown", 0, this, "voipropd.gif",
-                                                      true));
-        propSubMenu.add(ViewMenuBuilder.buildMenuItem("To All Slices", "PropVOIAll", 0, this, "voipropall.gif", true));
+        propSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPAGATE_UP, this, true));
+        propSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPAGATE_DOWN, this, true));
+        propSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPAGATE_ALL, this, true));
 
         flipSubMenu = ViewMenuBuilder.buildMenu("Flip VOI", 0, true);
-        flipSubMenu.add(ViewMenuBuilder.buildMenuItem("Horizontal", "VOIFlipY", 0, this, "fliphoriz.gif", true));
-        flipSubMenu.add(ViewMenuBuilder.buildMenuItem("Vertical", "VOIFlipX", 0, this, "flipvert.gif", true));
-        flipSubMenu.add(ViewMenuBuilder.buildMenuItem("Depth", "VOIFlipZ", 0, this, "flipvert.gif", true));
+        flipSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_FLIPX, this, true));
+        flipSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_FLIPY, this, true));
+        flipSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_FLIPZ, this, true));
 
         graphSubMenu = ViewMenuBuilder.buildMenu("Graph", 0, true);
-        graphSubMenu.add(ViewMenuBuilder.buildMenuItem("Boundary intensity", "boundaryIntensity", 0, this, null,
-                                                       false));
+        graphSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_BOUNDARY_INTENSITY, this, false));
 
        if ((handler.getActiveImage().getNDims() == 3) ||
                 (handler.getActiveImage().getNDims() == 4)) {
-            graphSubMenu.add(ViewMenuBuilder.buildMenuItem("Total intensity", "totalIntensity", 0, this, null, false));
-            graphSubMenu.add(ViewMenuBuilder.buildMenuItem("Average intensity", "avgIntensity", 0, this, null, false));
-            graphSubMenu.add(ViewMenuBuilder.buildMenuItem("Total intensity with threshold", "totalIntensityThreshold",
-                                                           0, this, null, false));
-            graphSubMenu.add(ViewMenuBuilder.buildMenuItem("Average intensity with threshold", "avgIntensityThreshold",
-                                                           0, this, null, false));
+            graphSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_TOTAL_INTENSITY, this, false));
+            graphSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_AVERAGE_INTENSITY, this, false));
+            graphSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_TOTAL_INTENSITY_THRESHOLD, this, false));
+            graphSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_AVERAGE_INTENSITY_THRESHOLD, this, false));
         }
 
-        itemClose = ViewMenuBuilder.buildMenuItem("Close VOI (polyline->polygon)", "closeVOI", 0, this, null, true);
-
-        itemCrop = ViewMenuBuilder.buildMenuItem("Crop image", "cropImage", 0, this, null, true);
-
-        itemOutputDistance = ViewMenuBuilder.buildMenuItem("Calculate distances -> Output Window", "calcDistances", 0,
-                                                           this, null, true);
-
+        itemClose = ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_CLOSE, this, false);
+        itemCrop = ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_CROP, this, false);
+        itemOutputDistance = ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PSLICE_DISTANCE, this, false);
+        
         // popup will be filled by the checkPopup() method in response to specific mouse events with different types of
         // vois selected
         popup = new JPopupMenu();
@@ -172,146 +157,14 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
      */
     public void actionPerformed(ActionEvent event) {
 
-        try {
-
-            if (event.getActionCommand().equals("boundaryIntensity")) {
-                voiHandler.graphVOI();
-            } else if (event.getActionCommand().equals("totalIntensity")) {
-                voiHandler.graph25VOI_CalcInten(true, false, 0);
-            } else if (event.getActionCommand().equals("avgIntensity")) {
-                voiHandler.graph25VOI_CalcInten(false, false, 0);
-            } else if (event.getActionCommand().equals("totalIntensityThreshold")) {
-                new JDialogIntensityThreshold(voiHandler.getFrame(), voiHandler,
-                                              false);
-            } else if (event.getActionCommand().equals("avgIntensityThreshold")) {
-                new JDialogIntensityThreshold(voiHandler.getFrame(), voiHandler,
-                                              true);
-            } else if (event.getActionCommand().equals("Properties")) {
-                voiHandler.showVOIProperties();
-            }
-
-            /*
-             * Brings the selected VOI to the front. (Moves the selected VOI to the first element of the vector.)
-             */
-
-            else if (event.getActionCommand().equals("BringToFront")) {
-                voiHandler.changeVOIOrder(false, VOI.FRONT);
-            }
-
-
-            /*
-             * Sends the selected VOI to the back. (Moves the selected VOI to the last element of the vector.)
-             */
-            else if (event.getActionCommand().equals("SendToBack")) {
-                voiHandler.changeVOIOrder(false, VOI.BACK);
-            }
-
-            /*
-             * Brings the selected VOI forward one level. (moves the selected VOI to the one element higher (index
-             * number decreases by one) in the list)
-             */
-            else if (event.getActionCommand().equals("BringForward")) {
-                voiHandler.changeVOIOrder(false, VOI.FORWARD);
-            }
-
-            /*
-             * Send the selected VOI back one level. (moves the selected VOI to the one element lower (index number
-             * increases by one) in the list)
-             */
-            else if (event.getActionCommand().equals("SendBackward")) {
-                voiHandler.changeVOIOrder(false, VOI.BACKWARD);
-            }
-
-            /*
-             * Brings the selected VOI's contour to the front. (Moves the selected VOI's contour to the first element of
-             * the vector.)
-             */
-
-            else if (event.getActionCommand().equals("BringContourToFront")) {
-                voiHandler.changeVOIOrder(true, VOI.FRONT);
-            }
-
-
-            /*
-             * Sends the selected VOI's contour to the back. (Moves the selected VOI's contour to the last element of
-             * the vector.)
-             */
-            else if (event.getActionCommand().equals("SendContourToBack")) {
-                voiHandler.changeVOIOrder(true, VOI.BACK);
-            }
-
-            /*
-             * Brings the selected VOI's contour forward one level. (moves the selected VOI's contour to the one element
-             * higher (index number decreases by one) in the list)
-             */
-            else if (event.getActionCommand().equals("BringContourForward")) {
-                voiHandler.changeVOIOrder(true, VOI.FORWARD);
-            }
-
-            /*
-             * Send the selected VOI's contour back one level. (moves the selected VOI's contour to the one element
-             * lower (index number increases by one) in the list)
-             */
-            else if (event.getActionCommand().equals("SendContourBackward")) {
-                voiHandler.changeVOIOrder(true, VOI.BACKWARD);
-            } else if (event.getActionCommand().equals("cutVOI")) {
-
-                if (voiHandler.copyVOItoClipBrd()) {
-                    voiHandler.deleteSelectedVOI(true);
-                }
-
-            } else if (event.getActionCommand().equals("copyVOI")) {
-                voiHandler.copyVOItoClipBrd();
-
-            } else if (event.getActionCommand().equals("pasteVOI")) {
-                voiHandler.pasteVOI();
-            } else if (event.getActionCommand().equals("deleteVOI")) {
-                voiHandler.deleteSelectedVOI(true);
-            } else if (event.getActionCommand().equals("PropVOIUp")) {
-                voiHandler.propVOI(1, false);
-            } else if (event.getActionCommand().equals("PropVOIDown")) {
-                voiHandler.propVOI(-1, false);
-            } else if (event.getActionCommand().equals("PropVOIAll")) {
-                voiHandler.propVOIAll();
-            } else if (event.getActionCommand().equals("closeVOI")) {
-                closeVOI();
-            } else if (event.getActionCommand().equals("cropImage")) {
-                new JDialogCrop(voiHandler.getActiveImage().getParentFrame(),
-                                voiHandler.getActiveImage(), true);
-            } else if (event.getActionCommand().equals("calcDistances")) {
-                voiHandler.calcPLineSliceDistances();
-            } else if (event.getActionCommand().equals("voiSelectAll")) {
-                voiHandler.selectAllVOIs(true);
-            } else if (event.getActionCommand().equals("voiSelectNone")) {
-                voiHandler.selectAllVOIs(false);
-            } else if (event.getActionCommand().equals("contourSelectAll")) {
-                voiHandler.selectAllContours();
-            } else if (event.getActionCommand().equals("VOIFlipY")) {
-                JDialogFlip flip = new JDialogFlip(voiHandler.getFrame(),
-                                                   voiHandler.getActiveImage(),
-                                                   AlgorithmFlip.Y_AXIS, AlgorithmFlip.VOI_TYPE);
-
-                flip.callAlgorithm();
-            } else if (event.getActionCommand().equals("VOIFlipX")) {
-                JDialogFlip flip = new JDialogFlip(voiHandler.getFrame(),
-                                                   voiHandler.getActiveImage(),
-                                                   AlgorithmFlip.X_AXIS, AlgorithmFlip.VOI_TYPE);
-
-                flip.callAlgorithm();
-            } else if (event.getActionCommand().equals("VOIFlipZ")) {
-                JDialogFlip flip = new JDialogFlip(voiHandler.getFrame(),
-                                                   voiHandler.getActiveImage(),
-                                                   AlgorithmFlip.Z_AXIS, AlgorithmFlip.VOI_TYPE);
-
-                flip.callAlgorithm();
-            }
-
-        } catch (OutOfMemoryError error) {
-            System.gc();
-            MipavUtil.displayError("Out of memory: ViewJPopupVOI.action.");
-
-            return;
-        }
+        if ( ViewMenuBar.isMenuCommand( popup.getComponents(), event.getActionCommand() ) )
+        {
+            voiHandler.actionPerformed(event);
+        } 
+        else if (event.getActionCommand().equals("cropImage")) {
+            new JDialogCrop(voiHandler.getActiveImage().getParentFrame(),
+                    voiHandler.getActiveImage(), true);
+        } 
     }
 
     /**
@@ -442,14 +295,12 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
                 popup.add(propSubMenu);
                 popup.add(flipSubMenu);
                 popup.add(graphSubMenu);
-
                 if (isVOIOpen()) {
                     popup.add(itemClose);
                 } else {
                     popup.add(itemCrop);
                 }
-            }
-
+            }            
             popup.show(voiHandler.getComponentImage(), event.getX(), event.getY());
         }
     }

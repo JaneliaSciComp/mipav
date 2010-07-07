@@ -346,6 +346,11 @@ public class ViewMenuBuilder {
      * @return the jmenuitem
      */
     public static JMenuItem buildMenuItem(UIParams params, ActionListener listener, boolean iconPadding) {
+        if ( iconPadding )
+        {
+            return buildMenuItem(params.getText(), params.getActionCommand(), params.getMnemonic(), listener, params
+                    .getIconBase() + ".gif", iconPadding);
+        }
         return buildMenuItem(params.getText(), params.getActionCommand(), params.getMnemonic(), listener, params
                 .getIconBase(), iconPadding);
     }
@@ -558,8 +563,12 @@ public class ViewMenuBuilder {
      * @return
      */
     public JMenuItem buildMenuItem(UIParams params, boolean useIconPadding) {
-        return buildMenuItem(params.getText(), params.getActionCommand(), params.getMnemonic(), params.getIconBase()
-                + ".gif", useIconPadding);
+        if ( useIconPadding )
+        {
+            return buildMenuItem(params.getText(), params.getActionCommand(), params.getMnemonic(), params.getIconBase()
+                    + ".gif", useIconPadding);
+        }
+        return buildMenuItem(params.getText(), params.getActionCommand(), params.getMnemonic(), params.getIconBase(), useIconPadding);
     }
 
     /**

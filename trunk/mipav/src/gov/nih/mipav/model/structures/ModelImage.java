@@ -1974,6 +1974,7 @@ public class ModelImage extends ModelStorageBase {
 
                 // re-label all elements
                 index = 0;                
+                nContours = contours.size();
                 for (k = 0; k < nContours; k++) {
                     ((VOIBase) contours.elementAt(k)).setLabel(String.valueOf((index++)));
                 }
