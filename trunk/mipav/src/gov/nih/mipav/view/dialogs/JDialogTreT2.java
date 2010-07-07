@@ -38,7 +38,7 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
     private static String title = "TRE T2 Mapper";
     private double treTR = 5.00;
     private double maxT2 = 1000;
-    private double maxMo = 10000;
+    private double maxM0 = 10000;
     private double[] treFA_phase0;
     private double[] treFA_phase180;
     
@@ -61,9 +61,9 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
     private boolean performConventionalModelling = true;
     private boolean performApproxModelling = false;
     private boolean performFullModelling = false;
-    private boolean calculateMo = true;
+    private boolean calculateM0 = true;
     private boolean invertT2toR2 = false;
-    private boolean calculateBo = false;
+    private boolean calculateB0 = false;
     
     private boolean performConventionalWith180Phase = true;
     private boolean performConventionalWith0Phase = false;
@@ -136,12 +136,12 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
     protected void doPostAlgorithmActions() {
         
         if(cAlgo != null) {
-            if(includeB1Map && cAlgo.getBoResultStack() != null) {
-                AlgorithmParameters.storeImageInRunner(cAlgo.getBoResultStack());
+            if(includeB1Map && cAlgo.getB0ResultStack() != null) {
+                AlgorithmParameters.storeImageInRunner(cAlgo.getB0ResultStack());
             }
             
-            if(calculateMo && cAlgo.getMoResultStack() != null) {
-                AlgorithmParameters.storeImageInRunner(cAlgo.getMoResultStack());
+            if(calculateM0 && cAlgo.getM0ResultStack() != null) {
+                AlgorithmParameters.storeImageInRunner(cAlgo.getM0ResultStack());
             }
             
             if(invertT2toR2 && cAlgo.getR2ResultStack() != null) {
@@ -165,7 +165,7 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
     protected void setGUIFromParams() {
         treTR = scriptParameters.getParams().getDouble("tre_TR");
         maxT2 = scriptParameters.getParams().getDouble("max_T2");
-        maxMo = scriptParameters.getParams().getDouble("max_Mo");
+        maxM0 = scriptParameters.getParams().getDouble("max_M0");
         
         Nfa_phase0 = scriptParameters.getParams().getInt("Nfa_phase_0");
         Nfa_phase180 = scriptParameters.getParams().getInt("Nfa_phase_180");
@@ -175,9 +175,9 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         performConventionalModelling = scriptParameters.getParams().getBoolean("perform_Conventional_Modelling");
         performApproxModelling = scriptParameters.getParams().getBoolean("perform_Approx_Modelling");
         performFullModelling = scriptParameters.getParams().getBoolean("perform_Full_Modelling");
-        calculateMo = scriptParameters.getParams().getBoolean("calculate_Mo");
+        calculateM0 = scriptParameters.getParams().getBoolean("calculate_M0");
         invertT2toR2 = scriptParameters.getParams().getBoolean("invert_T2toR2");
-        calculateBo = scriptParameters.getParams().getBoolean("calculate_Bo");
+        calculateB0 = scriptParameters.getParams().getBoolean("calculate_B0");
         performConventionalWith180Phase = scriptParameters.getParams().getBoolean("perform_ConventionalWith180Phase");
         performConventionalWith0Phase = scriptParameters.getParams().getBoolean("perform_ConventionalWith0Phase");
         geScanner = scriptParameters.getParams().getBoolean("ge_Scanner");
@@ -270,7 +270,7 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.getParams().put(ParameterFactory.newParameter("tre_TR", treTR));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_T2", maxT2));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("max_Mo", maxMo));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_M0", maxM0));
         
         scriptParameters.getParams().put(ParameterFactory.newParameter("Nfa_phase_0", Nfa_phase0));
         scriptParameters.getParams().put(ParameterFactory.newParameter("Nfa_phase_180", Nfa_phase180));
@@ -280,9 +280,9 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         scriptParameters.getParams().put(ParameterFactory.newParameter("perform_Conventional_Modelling", performConventionalModelling));
         scriptParameters.getParams().put(ParameterFactory.newParameter("perform_Approx_Modelling", performApproxModelling));
         scriptParameters.getParams().put(ParameterFactory.newParameter("perform_Full_Modelling", performFullModelling));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("calculate_Mo", calculateMo));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("calculate_M0", calculateM0));
         scriptParameters.getParams().put(ParameterFactory.newParameter("invert_T2toR2", invertT2toR2));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("calculate_Bo", calculateBo));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("calculate_B0", calculateB0));
         scriptParameters.getParams().put(ParameterFactory.newParameter("perform_ConventionalWith180Phase", performConventionalWith180Phase));
         scriptParameters.getParams().put(ParameterFactory.newParameter("perform_ConventionalWith0Phase", performConventionalWith0Phase));
         scriptParameters.getParams().put(ParameterFactory.newParameter("ge_Scanner", geScanner));
@@ -381,12 +381,12 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         }
         
         if(cAlgo != null) {
-        	if(includeB1Map && cAlgo.getBoResultStack() != null) {
-        		scriptParameters.storeOutputImageParams(cAlgo.getBoResultStack(), true);
+        	if(includeB1Map && cAlgo.getB0ResultStack() != null) {
+        		scriptParameters.storeOutputImageParams(cAlgo.getB0ResultStack(), true);
         	}
         	
-        	if(calculateMo && cAlgo.getMoResultStack() != null) {
-        		scriptParameters.storeOutputImageParams(cAlgo.getMoResultStack(), true);
+        	if(calculateM0 && cAlgo.getM0ResultStack() != null) {
+        		scriptParameters.storeOutputImageParams(cAlgo.getM0ResultStack(), true);
         	}
         	
         	if(invertT2toR2 && cAlgo.getR2ResultStack() != null) {
@@ -496,8 +496,8 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         return maxT2;
     }
 
-    public double getMaxMo() {
-        return maxMo;
+    public double getMaxM0() {
+        return maxM0;
     }
 
     public int getNfa_phase0() {
@@ -528,16 +528,16 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         return performFullModelling;
     }
 
-    public boolean isCalculateMo() {
-        return calculateMo;
+    public boolean isCalculateM0() {
+        return calculateM0;
     }
 
     public boolean isInvertT2toR2() {
         return invertT2toR2;
     }
 
-    public boolean isCalculateBo() {
-        return calculateBo;
+    public boolean isCalculateB0() {
+        return calculateB0;
     }
 
     public boolean isPerformConventionalWith180Phase() {
@@ -603,7 +603,7 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         JRadioButton button1 = guiHelp.buildRadioButton("Perform Conventional TRE-T2 Modeling", performConventionalModelling);
         JRadioButton button2 = guiHelp.buildRadioButton("Perform Approximate Modeling", performApproxModelling);
         JRadioButton button3 = guiHelp.buildRadioButton("Perform Full Modelling of the Signal (slow but accurate)", performFullModelling);
-        JCheckBox box1 = guiHelp.buildCheckBox("Use Calculated B1 Map", includeB1Map);
+        JCheckBox box1 = guiHelp.buildCheckBox("<html>Use Calculated B<sub>1</sub> Map</html>", includeB1Map);
         
         ButtonGroup processType = new ButtonGroup();
         processType.add(button1);
@@ -715,12 +715,12 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         JTextField field1 = guiHelp.buildDecimalField("SSFP Repetition Time (ms):", treTR);
         panel.add(field1.getParent(), panelLayout);
         
-        JComboBox combo1 = guiHelp.buildComboBox("Pre-Calculated T1 Map", titles, 0);
+        JComboBox combo1 = guiHelp.buildComboBox("<html>Pre-Calculated T<sub>1</sub> Map</html>", titles, 0);
         panel.add(combo1.getParent(), panelLayout);
         
         JComboBox comboOpt = null;
         if (includeB1Map) {
-            comboOpt = guiHelp.buildComboBox("Pre-Calculated B1 Map", titles, 0);
+            comboOpt = guiHelp.buildComboBox("<html>Pre-Calculated B<sub>1</sub> Map</html>", titles, 0);
             panel.add(comboOpt.getParent(), panelLayout);
         }
         
@@ -814,12 +814,12 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         JTextField field1 = guiHelp.buildDecimalField("SSFP Repetition Time (ms):", treTR);
         panel.add(field1.getParent(), panelLayout);
         
-        JComboBox combo1 = guiHelp.buildComboBox("Pre-Calculated T1 Map", titles, 0);
+        JComboBox combo1 = guiHelp.buildComboBox("<html>Pre-Calculated T<sub>1</sub> Map</html>", titles, 0);
         panel.add(combo1.getParent(), panelLayout);
         
         JComboBox comboOpt = null;
         if (includeB1Map) {
-            comboOpt = guiHelp.buildComboBox("Pre-Calculated B1 Map", titles, 0);
+            comboOpt = guiHelp.buildComboBox("<html>Pre-Calculated B<sub>1</sub> Map</html>", titles, 0);
         }
         
         dialog.add(panel, BorderLayout.CENTER);
@@ -867,9 +867,9 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         panel.setLayout(panelLayout);
         
         JTextField field1 = guiHelp.buildDecimalField("Maximum Allowable T2:", maxT2);
-        JTextField field2 = guiHelp.buildDecimalField("Maximum Allowable Mo:", maxMo);
+        JTextField field2 = guiHelp.buildDecimalField("Maximum Allowable M0:", maxM0);
         JCheckBox box1 = guiHelp.buildCheckBox("Show T2 Map", calculateT2);
-        JCheckBox box2 = guiHelp.buildCheckBox("Show Mo Map", calculateMo);
+        JCheckBox box2 = guiHelp.buildCheckBox("Show M0 Map", calculateM0);
         panel.add(field1.getParent(), panelLayout);
         panel.add(field2.getParent(), panelLayout);
         panel.add(box1.getParent(), panelLayout);
@@ -877,10 +877,10 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         
         JCheckBox boxOpt = null;
         if (performFullModelling == true) {
-            boxOpt = guiHelp.buildCheckBox("Show Bo Map", calculateBo);
+            boxOpt = guiHelp.buildCheckBox("<html>Show B<sub>0</sub> Map</html>", calculateB0);
             panel.add(boxOpt.getParent(), panelLayout);
         }
-        JCheckBox box4 = guiHelp.buildCheckBox("Show R2 Map", invertT2toR2);
+        JCheckBox box4 = guiHelp.buildCheckBox("<html>Show R<sub>2</sub> Map</html>", invertT2toR2);
         panel.add(box4.getParent(), panelLayout);
         
         dialog.add(panel, BorderLayout.CENTER);
@@ -896,11 +896,11 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         }
         
         maxT2 = Double.valueOf(field1.getText()).doubleValue();
-        maxMo = Double.valueOf(field2.getText()).doubleValue();
+        maxM0 = Double.valueOf(field2.getText()).doubleValue();
         calculateT2 = box1.isSelected();
-        calculateMo = box2.isSelected();
+        calculateM0 = box2.isSelected();
         if (performFullModelling == true) {
-            calculateBo = boxOpt.isSelected();
+            calculateB0 = boxOpt.isSelected();
         }
         invertT2toR2 = box4.isSelected();
         

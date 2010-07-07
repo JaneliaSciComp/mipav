@@ -33,7 +33,7 @@ import gov.nih.mipav.view.ViewUserInterface;
 public class AlgorithmTreT1 extends AlgorithmTProcess {
 
     private ModelImage t1ResultStack = null;
-    private ModelImage moResultStack = null;
+    private ModelImage m0ResultStack = null;
     private ModelImage r1ResultStack = null;
     private ModelImage b1ResultStack = null;
     
@@ -44,7 +44,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
     private double irspgrKy = 96.00;
     private double irspgrFA = 5.00;
     private double maxT1 = 5000;
-    private double maxMo = 10000;
+    private double maxM0 = 10000;
     private double[] treFA;
     private double[] irspgrTr;
     private double[] irspgrTI;
@@ -76,7 +76,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
     
     private boolean calculateT1 = true;
     private boolean showB1Map = false;
-    private boolean calculateMo = false;
+    private boolean calculateM0 = false;
     private boolean invertT1toR1 = false;
     
     private boolean useWeights = true;
@@ -91,12 +91,12 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
     
     /** The frames for result images (if null at end of algorithm src ModelImage is destroyed) */
     private ViewJFrameImage t1ResultWindow = null;
-    private ViewJFrameImage moResultWindow = null;
+    private ViewJFrameImage m0ResultWindow = null;
     private ViewJFrameImage r1ResultWindow = null;
     private ViewJFrameImage b1ResultWindow = null;
     
     public AlgorithmTreT1(double treTR, double irspgrTR,
-            double irspgrKy, double irspgrFA, double maxT1, double maxMo,
+            double irspgrKy, double irspgrFA, double maxT1, double maxM0,
             double[] treFA, double[] irspgrTr2, double[] irspgrTI,
             double[] spgrData, double[] irspgrData, double scale,
             double pointScale, double scaleIncrement, double[] estimates,
@@ -108,7 +108,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
             boolean performTreT1HIFI, boolean doubleInversion,
             boolean singleInversion, boolean geScanner, boolean siemensScanner,
             boolean threeTField, boolean onefiveTField, boolean calculateT1,
-            boolean showB1Map, boolean calculateMo, boolean invertT1toR1,
+            boolean showB1Map, boolean calculateM0, boolean invertT1toR1,
             boolean useWeights, boolean uniformAngleSpacing,
             boolean upperLeftCorner, boolean upperRightCorner,
             boolean lowerLeftCorner, boolean lowerRightCorner,
@@ -121,7 +121,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
         this.irspgrKy = irspgrKy;
         this.irspgrFA = irspgrFA;
         this.maxT1 = maxT1;
-        this.maxMo = maxMo;
+        this.maxM0 = maxM0;
         this.treFA = treFA;
         irspgrTr = irspgrTr2;
         this.irspgrTI = irspgrTI;
@@ -152,7 +152,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
         this.onefiveTField = onefiveTField;
         this.calculateT1 = calculateT1;
         this.showB1Map = showB1Map;
-        this.calculateMo = calculateMo;
+        this.calculateM0 = calculateM0;
         this.invertT1toR1 = invertT1toR1;
         this.useWeights = useWeights;
         this.uniformAngleSpacing = uniformAngleSpacing;
@@ -172,7 +172,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
 
     public AlgorithmTreT1(ModelImage destImage, ModelImage srcImage,
             double treTR, double irspgrTR, double irspgrKy, double irspgrFA,
-            double maxT1, double maxMo, double[] treFA, double[] irspgrTr2,
+            double maxT1, double maxM0, double[] treFA, double[] irspgrTr2,
             double[] irspgrTI, double[] spgrData, double[] irspgrData,
             double scale, double pointScale, double scaleIncrement,
             double[] estimates, double[] residuals, int[] direction,
@@ -183,7 +183,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
             boolean performTreT1HIFI, boolean doubleInversion,
             boolean singleInversion, boolean geScanner, boolean siemensScanner,
             boolean threeTField, boolean onefiveTField, boolean calculateT1,
-            boolean showB1Map, boolean calculateMo, boolean invertT1toR1,
+            boolean showB1Map, boolean calculateM0, boolean invertT1toR1,
             boolean useWeights, boolean uniformAngleSpacing,
             boolean upperLeftCorner, boolean upperRightCorner,
             boolean lowerLeftCorner, boolean lowerRightCorner,
@@ -196,7 +196,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
         this.irspgrKy = irspgrKy;
         this.irspgrFA = irspgrFA;
         this.maxT1 = maxT1;
-        this.maxMo = maxMo;
+        this.maxM0 = maxM0;
         this.treFA = treFA;
         irspgrTr = irspgrTr2;
         this.irspgrTI = irspgrTI;
@@ -227,7 +227,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
         this.onefiveTField = onefiveTField;
         this.calculateT1 = calculateT1;
         this.showB1Map = showB1Map;
-        this.calculateMo = calculateMo;
+        this.calculateM0 = calculateM0;
         this.invertT1toR1 = invertT1toR1;
         this.useWeights = useWeights;
         this.uniformAngleSpacing = uniformAngleSpacing;
@@ -278,7 +278,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
             if(showB1Map && processors-2 > processDataThreads + computeDataThreads) {
                 processDataThreads++;
             }
-            if(calculateMo && processors-2 > processDataThreads + computeDataThreads) {
+            if(calculateM0 && processors-2 > processDataThreads + computeDataThreads) {
                 processDataThreads++;
             }
             if(invertT1toR1 && processors-2 > processDataThreads + computeDataThreads) {
@@ -300,7 +300,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
             } 
             
             loadDataThreads = processors-2;
-            int divisor = ((calculateT1 ? 1 : 0) + (showB1Map ? 1 : 0) + (calculateMo ? 1 : 0) + (invertT1toR1 ? 1 : 0));
+            int divisor = ((calculateT1 ? 1 : 0) + (showB1Map ? 1 : 0) + (calculateM0 ? 1 : 0) + (invertT1toR1 ? 1 : 0));
             if(divisor < 1) {
                 divisor = 1;
             }
@@ -348,10 +348,10 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
             t1ResultWindow.setVisible(true);
         } 
          
-        if (calculateMo) {
-            moResultWindow = new ViewJFrameImage(moResultStack);
-            moResultWindow.setTitle("treT1"+prefix+"_Mo_Map");
-            moResultWindow.setVisible(true);
+        if (calculateM0) {
+            m0ResultWindow = new ViewJFrameImage(m0ResultStack);
+            m0ResultWindow.setTitle("treT1"+prefix+"_M0_Map");
+            m0ResultWindow.setVisible(true);
         } 
         
         if (invertT1toR1) {
@@ -513,8 +513,8 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
             t1ResultStack.disposeLocal();
         }
         
-        if(moResultWindow == null && moResultStack != null) {
-            moResultStack.disposeLocal();
+        if(m0ResultWindow == null && m0ResultStack != null) {
+            m0ResultStack.disposeLocal();
         }
 
         if(r1ResultWindow == null && r1ResultStack != null) {
@@ -551,10 +551,10 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
     public double signalResiduals(double x, double[] spgrData, double[] irspgrData, double Inversion, int Nfa, int Nti, double[] treFA, double treTR, double[] irspgrTr, double[] irspgrTI, double irspgrFA) {
         
         double sumX, sumY, sumXY, sumXX, slope, intercept, residuals;
-        double t1Guess, moGuess;
+        double t1Guess, m0Guess;
         double[] treGuess, irspgrGuess, guess;
         
-        double MoScale;
+        double m0Scale;
         
         int p, pulse, i,j;
         
@@ -576,16 +576,16 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
         
         if (slope > 0.00 && slope < 1.00) {
             t1Guess = -treTR/Math.log(slope);
-            moGuess = intercept/(1.00-slope);
+            m0Guess = intercept/(1.00-slope);
         }
         else {
             t1Guess = 0.00;
-            moGuess = 0.00;
+            m0Guess = 0.00;
         }
         
         if (t1Guess > 0) {
             for (p=0; p<Nfa; p++) {
-                treGuess[p] = moGuess*(1.00-Math.exp(-treTR/t1Guess))*Math.sin(x*treFA[p]*3.14159265/180.00)/(1.00-Math.exp(-treTR/t1Guess)*Math.cos(x*treFA[p]*3.14159265/180.00));
+                treGuess[p] = m0Guess*(1.00-Math.exp(-treTR/t1Guess))*Math.sin(x*treFA[p]*3.14159265/180.00)/(1.00-Math.exp(-treTR/t1Guess)*Math.cos(x*treFA[p]*3.14159265/180.00));
             }
         }
         else {
@@ -596,10 +596,10 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
         
         if (t1Guess > 0) {
             
-            MoScale = 0.975;
+            m0Scale = 0.975;
             
             for (p=0; p<Nti; p++) {
-                irspgrGuess[p] = Math.abs( MoScale*moGuess*Math.sin(x*irspgrFA*3.14159265/180.00) * (1.00-Inversion*Math.exp(-irspgrTI[p]/t1Guess) + Math.exp(-irspgrTr[p]/t1Guess)) );
+                irspgrGuess[p] = Math.abs( m0Scale*m0Guess*Math.sin(x*irspgrFA*3.14159265/180.00) * (1.00-Inversion*Math.exp(-irspgrTI[p]/t1Guess) + Math.exp(-irspgrTr[p]/t1Guess)) );
             }
         }
         else {
@@ -619,8 +619,8 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
 		return t1ResultStack;
 	}
 
-	public ModelImage getMoResultStack() {
-		return moResultStack;
+	public ModelImage getM0ResultStack() {
+		return m0ResultStack;
 	}
 
 	public ModelImage getR1ResultStack() {
@@ -642,9 +642,9 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
             t1ResultStack = nearCloneImage(image, t1ResultStack);
         }
         
-        if(calculateMo) {
-            moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
-            moResultStack = nearCloneImage(image, moResultStack);
+        if(calculateM0) {
+            m0ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "m0_results");
+            m0ResultStack = nearCloneImage(image, m0ResultStack);
         }
          
         if(invertT1toR1) {
@@ -675,13 +675,13 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
             }
         }
         
-        if(t1ResultStack == null || moResultStack == null || r1ResultStack == null || b1ResultStack == null) {
+        if(t1ResultStack == null || m0ResultStack == null || r1ResultStack == null || b1ResultStack == null) {
             initializeDisplayImages(largestImage);
         }
         
         int numThreads = 1;
         if(Preferences.isMultiThreadingEnabled()) {
-            numThreads += (calculateMo ? 1 : 0) + (invertT1toR1 ? 1 : 0) + (showB1Map ? 1 : 0);
+            numThreads += (calculateM0 ? 1 : 0) + (invertT1toR1 ? 1 : 0) + (showB1Map ? 1 : 0);
             if(numThreads > Runtime.getRuntime().availableProcessors()-2) {
                 numThreads = Runtime.getRuntime().availableProcessors()-2;
             }
@@ -691,15 +691,15 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
         }
         
         ExecutorService exec = Executors.newFixedThreadPool(numThreads);
-        LoadResultDataOuter t1 = null, mo = null, r1 = null, b1 = null;
+        LoadResultDataOuter t1 = null, m0 = null, r1 = null, b1 = null;
         
         if(calculateT1) {
             t1 = new LoadResultDataOuter(t1ResultStack, "t1_results_volume", tSeries);
             exec.submit(t1);
         }
-        if(calculateMo) {
-            mo = new LoadResultDataOuter(moResultStack, "mo_results_volume", tSeries);
-            exec.submit(mo);
+        if(calculateM0) {
+            m0 = new LoadResultDataOuter(m0ResultStack, "m0_results_volume", tSeries);
+            exec.submit(m0);
         }
         if(invertT1toR1) {
             r1 = new LoadResultDataOuter(r1ResultStack, "r1_results_volume", tSeries);
@@ -723,7 +723,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
 
     private abstract class CalculateT1 extends CalculateT {
         protected ModelImage t1ResultLocalVolume = null;
-        protected ModelImage moResultLocalVolume = null;
+        protected ModelImage m0ResultLocalVolume = null;
         protected ModelImage r1ResultLocalVolume = null;
         protected ModelImage b1ResultLocalVolume = null;
         
@@ -750,9 +750,9 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
                 //t1ResultLocalVolume = nearCloneImage(image, t1ResultLocalVolume);
             }
             
-            if(calculateMo) {
-                moResultLocalVolume = new ModelImage(ModelImage.DOUBLE, localExtents, "mo_results_volume"+t);
-                //moResultLocalVolume = nearCloneImage(image, moResultLocalVolume);
+            if(calculateM0) {
+                m0ResultLocalVolume = new ModelImage(ModelImage.DOUBLE, localExtents, "m0_results_volume"+t);
+                //m0ResultLocalVolume = nearCloneImage(image, m0ResultLocalVolume);
             }
              
             if(invertT1toR1) {
@@ -776,9 +776,9 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
                 t1ResultLocalVolume.disposeLocal();
                 t1ResultLocalVolume = null;
             }
-            if(moResultLocalVolume != null) {
-                moResultLocalVolume.disposeLocal();
-                moResultLocalVolume = null;
+            if(m0ResultLocalVolume != null) {
+                m0ResultLocalVolume.disposeLocal();
+                m0ResultLocalVolume = null;
             }
             if(r1ResultLocalVolume != null) {
                 r1ResultLocalVolume.disposeLocal();
@@ -817,7 +817,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
             precision = 0.003;
             
             double ernstAngle, ernstSignal, collectedSignal, weight, sumWeights;
-            double sumX, sumY, sumXY, sumXX, slope, intercept, lnslope, t1, e1, mo, r1, d, a, b, b1;
+            double sumX, sumY, sumXY, sumXX, slope, intercept, lnslope, t1, e1, m0, r1, d, a, b, b1;
             float noiseSum, threshold;
             int noiseIndex;
             int x,y,i,j,k,p, ti, angle, p1, p2, pixelIndex;
@@ -826,7 +826,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
             double[] scaledFA;
             double[][] spgrPixelValues;
             double[][] irspgrPixelValues;
-            float[][] t1Values, moValues, r1Values, b1field;
+            float[][] t1Values, m0Values, r1Values, b1field;
             double[][][] b1Values;
             
             if(do4D) {
@@ -843,11 +843,11 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
             else { 
                 t1Values = new float[1][1];
             }
-            if (calculateMo) { 
-                moValues = new float[irspgrSlices][width*height];
+            if (calculateM0) { 
+                m0Values = new float[irspgrSlices][width*height];
             }
             else { 
-                moValues = new float[1][1];
+                m0Values = new float[1][1];
             }
             if (invertT1toR1) { 
                 r1Values = new float[irspgrSlices][width*height];
@@ -1145,15 +1145,15 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
                                 lnslope = -1.00*Math.log(slope);
                                 if (lnslope > 0.00 && lnslope < 1.00) {
                                     t1 = treTR/lnslope;
-                                    mo = intercept/(1.00-Math.exp(-treTR/t1));
+                                    m0 = intercept/(1.00-Math.exp(-treTR/t1));
                                 }
                                 else {
-                                    mo = maxMo;
+                                    m0 = maxM0;
                                     t1 = maxT1;
                                 }
                             }
                             else {
-                                mo = maxMo;
+                                m0 = maxM0;
                                 t1 = maxT1;
                             }
                         
@@ -1161,8 +1161,8 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
                             if (t1 < 0.00 || t1 > maxT1) {
                                 t1 = maxT1;
                             }
-                            if (mo < 0.00 || mo > maxMo) {
-                                mo = maxMo;
+                            if (m0 < 0.00 || m0 > maxM0) {
+                                m0 = maxM0;
                             }
                             
                         
@@ -1182,7 +1182,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
                                 sumWeights = 0.00;
                                 if (t1 == 0) {
                                     t1 = 0;
-                                    mo = 0;
+                                    m0 = 0;
                                     r1 = 0;
                                 }
                                 else {
@@ -1207,15 +1207,15 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
                                         lnslope = -1.00*Math.log(slope);
                                         if (lnslope > 0.00 && lnslope < 1.00) {
                                             t1 = treTR/lnslope;
-                                            mo = intercept/(1.00-Math.exp(-treTR/t1));
+                                            m0 = intercept/(1.00-Math.exp(-treTR/t1));
                                         }
                                         else {
-                                            mo = maxMo;
+                                            m0 = maxM0;
                                             t1 = maxT1;
                                         }
                                     }
                                     else {
-                                        mo = maxMo;
+                                        m0 = maxM0;
                                         t1 = maxT1;
                                     }
                                     
@@ -1223,8 +1223,8 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
                                     if (t1 < 0.00 || t1 > maxT1) {
                                         t1 = maxT1;
                                     } 
-                                    if (mo < 0.00 || mo > maxMo) {
-                                        mo = maxMo;
+                                    if (m0 < 0.00 || m0 > maxM0) {
+                                        m0 = maxM0;
                                     }
                                     if (t1 != 0.00) {
                                         r1 = 1.00/t1;
@@ -1237,8 +1237,8 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
                             if (calculateT1) {
                                 t1Values[k][pixelIndex] = (float) t1;
                             }
-                            if (calculateMo) {
-                                moValues[k][pixelIndex] = (float) mo;
+                            if (calculateM0) {
+                                m0Values[k][pixelIndex] = (float) m0;
                             }
                             if (invertT1toR1) {
                                 r1Values[k][pixelIndex] = (float) r1;
@@ -1248,8 +1248,8 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
                             if (calculateT1) {
                                 t1Values[k][pixelIndex] = 0;
                             }
-                            if (calculateMo) {
-                                moValues[k][pixelIndex] = 0;
+                            if (calculateM0) {
+                                m0Values[k][pixelIndex] = 0;
                             }
                             if (invertT1toR1) {
                                 r1Values[k][pixelIndex] = 0;
@@ -1263,8 +1263,8 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
             if(calculateT1) {
                 dataListener.insertData(t1ResultLocalVolume, t1Values, t);
             }
-            if(calculateMo) {
-                dataListener.insertData(moResultLocalVolume, moValues, t);
+            if(calculateM0) {
+                dataListener.insertData(m0ResultLocalVolume, m0Values, t);
             }
             if(invertT1toR1) {
                 dataListener.insertData(r1ResultLocalVolume, r1Values, t);
@@ -1293,9 +1293,9 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
             double b1;
             double[] fa, b1Values;
             double[][] pixelValues;
-            float[][] t1Values, moValues, r1Values;
+            float[][] t1Values, m0Values, r1Values;
             
-            double sumX, sumY, sumXY, sumXX, slope, intercept, lnslope, t1, e1, mo, r1, d, a, b;
+            double sumX, sumY, sumXY, sumXX, slope, intercept, lnslope, t1, e1, m0, r1, d, a, b;
             double ernstAngle, ernstSignal, collectedSignal, weight, sumWeights;
             
             float noiseSum, threshold;
@@ -1312,7 +1312,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
         
             pixelValues = new double[Nsa][width*height];
             t1Values = new float[nSlices][width*height];
-            moValues = new float[nSlices][width*height];
+            m0Values = new float[nSlices][width*height];
             r1Values = new float[nSlices][width*height];
             
             fa = new double[Nsa];
@@ -1402,23 +1402,23 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
                             lnslope = -1.00*Math.log(slope);
                             if (lnslope > 0.00 && lnslope < 1.00) {
                                 t1 = treTR/lnslope;
-                                mo = intercept/(1.00-Math.exp(-treTR/t1));
+                                m0 = intercept/(1.00-Math.exp(-treTR/t1));
                             } 
                             else {
-                                mo = maxMo;
+                                m0 = maxM0;
                                 t1 = maxT1;
                             }
                         }
                         else {
-                            mo = maxMo;
+                            m0 = maxM0;
                             t1 = maxT1;
                         }
                         
                         if (t1 < 0 || t1 > maxT1) {
                             t1 = maxT1;
                         }
-                        if (mo < 0 || mo > maxMo) {
-                            mo = maxMo;
+                        if (m0 < 0 || m0 > maxM0) {
+                            m0 = maxM0;
                         }
                         if (t1 != 0) {
                             r1 = 1/t1;
@@ -1435,7 +1435,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
                             sumWeights = 0.00;
                             if (t1 == 0) {
                                 t1 = 0;
-                                mo = 0;
+                                m0 = 0;
                                 r1 = 0;
                             }
                             else {
@@ -1460,23 +1460,23 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
                                     lnslope = -1.00*Math.log(slope);
                                     if (lnslope > 0.00 && lnslope < 1.00) {
                                         t1 = treTR/lnslope;
-                                        mo = intercept/(1.00-Math.exp(-treTR/t1));
+                                        m0 = intercept/(1.00-Math.exp(-treTR/t1));
                                     }
                                     else {
-                                        mo = maxMo;
+                                        m0 = maxM0;
                                         t1 = maxT1;
                                     }
                                 }
                                 else {
-                                    mo = maxMo;
+                                    m0 = maxM0;
                                     t1 = maxT1;
                                 }
                             
                                 if (t1 < 0 || t1 > maxT1) {
                                     t1 = maxT1;
                                 } 
-                                if (mo < 0 || mo > maxMo) {
-                                    mo = maxMo;
+                                if (m0 < 0 || m0 > maxM0) {
+                                    m0 = maxM0;
                                 }
                                 if (t1 != 0) {
                                     r1 = 1/t1;
@@ -1490,8 +1490,8 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
                         if(calculateT1) {
                             t1Values[k][pixelIndex] = (float) t1;
                         }
-                        if(calculateMo) {
-                            moValues[k][pixelIndex] = (float) mo;
+                        if(calculateM0) {
+                            m0Values[k][pixelIndex] = (float) m0;
                         }
                         if(invertT1toR1) {
                             r1Values[k][pixelIndex] = (float) r1;
@@ -1501,8 +1501,8 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
                         if(calculateT1) {
                             t1Values[k][pixelIndex] = 0;
                         }
-                        if(calculateMo) {
-                            moValues[k][pixelIndex] = 0;
+                        if(calculateM0) {
+                            m0Values[k][pixelIndex] = 0;
                         }
                         if(invertT1toR1) {
                             r1Values[k][pixelIndex] = 0;
@@ -1516,8 +1516,8 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
             if(calculateT1) {
                 dataListener.insertData(t1ResultLocalVolume, t1Values, t);
             }
-            if(calculateMo) {
-                dataListener.insertData(moResultLocalVolume, moValues, t);
+            if(calculateM0) {
+                dataListener.insertData(m0ResultLocalVolume, m0Values, t);
             }
             if(invertT1toR1) {
                 dataListener.insertData(r1ResultLocalVolume, r1Values, t);

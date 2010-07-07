@@ -168,7 +168,7 @@ public abstract class AlgorithmTProcess extends AlgorithmBase {
     /**
      * When system permissions do not allow image data to be saved to a computer, this method
      * performs the older, slower process of storing image data locally in memory.  This method
-     * is also the last step of creating the t1, mo, r1, and b1 result stacks.
+     * is also the last step of creating the t1, m0, r1, and b1 result stacks.
      * 
      * @param tempVolume
      * @param volumeNumber
