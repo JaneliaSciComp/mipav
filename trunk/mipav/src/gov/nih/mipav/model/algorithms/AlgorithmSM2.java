@@ -1456,6 +1456,10 @@ public class AlgorithmSM2 extends AlgorithmBase {
         	return;
         }
         
+        // Restore original ktrans values in /min for scripting in JDialogSM2
+        initial[0] = initial0_original;
+        min_constr[0] = min0_original;
+        max_constr[0] = max0_original;
         setCompleted(true);
     }
     
