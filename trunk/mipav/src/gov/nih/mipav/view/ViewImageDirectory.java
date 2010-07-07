@@ -60,8 +60,6 @@ public class ViewImageDirectory extends JFrame implements ActionListener, Compon
     protected ViewFileTreeNode node;
 
     /** DOCUMENT ME! */
-    // protected JPanelProgressBar progressPanel;
-    /** DOCUMENT ME! */
     protected Font serif12, serif12B;
 
     /** DOCUMENT ME! */
@@ -113,9 +111,6 @@ public class ViewImageDirectory extends JFrame implements ActionListener, Compon
     private JLabel otherLabel;
 
     /** DOCUMENT ME! */
-    private JPanel placeHolder = null;
-
-    /** DOCUMENT ME! */
     private ViewTableModel primaryModel;
 
     /** DOCUMENT ME! */
@@ -126,9 +121,6 @@ public class ViewImageDirectory extends JFrame implements ActionListener, Compon
 
     /** DOCUMENT ME! */
     private JTable secondaryTable;
-
-    /** DOCUMENT ME! */
-    private boolean shift;
 
     /** DOCUMENT ME! */
     private boolean showXMLThumbnail = true;
@@ -277,7 +269,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener, Compon
             TreePath[] selected = directoryTree.getSelectionPaths();
             FileIO io = new FileIO();
             // Dimension subsampleDimension = null;
-            boolean forceUBYTE = false;
+
 
             // progressPanel.getProgressBar().setBackground(Color.DARK_GRAY);
             /*
