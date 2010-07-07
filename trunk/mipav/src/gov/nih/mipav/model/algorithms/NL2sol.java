@@ -25,16 +25,19 @@ public abstract class NL2sol {
     // epsilon is called the largest relative spacing
     private double epsilon = Math.pow(2, -52);
     private double huge = Double.MAX_VALUE;
-	double sqteta_dotprd = 0.0;
+	private double sqteta_dotprd = 0.0;
 	
-	double dgxfac_gqtstp = 0.0;
+	private double dgxfac_gqtstp = 0.0;
 	
-	double ix_lsvmin = 2;
+	private double ix_lsvmin = 2;
 	
-	double rktol_qrfact = 0.0;
-	double ufeta_qrfact = 0.0;
+	private double big_parchk = 0.0;
+	private double teensy_parchk = 1.0;
 	
-	double sqteta_v2norm = 0.0;
+	private double rktol_qrfact = 0.0;
+	private double ufeta_qrfact = 0.0;
+	
+	private double sqteta_v2norm = 0.0;
 	
 	private void assess(double d[], int iv[], int p, double step[], double stlstg[], 
 			            double v[], double x[], double x0[]) {
@@ -3273,15 +3276,15 @@ public abstract class NL2sol {
 	*/
 
 	  double a;
-	  double adi;
-	  double alphak;
+	  double adi = 0.0;
+	  double alphak = 0.0;
 	  double b;
-	  double d1;
-	  double d2;
+	  double d1 = 0.0;
+	  double d2 = 0.0;
 	  final double dfac = 256.0;
 	  double dfacsq;
 	  final int dgnorm = 1;
-	  double dst;
+	  double dst = 0.0;
 	  final int dst0 = 3;
 	  final int dstnrm = 2;
 	  int dstsav;
@@ -3293,33 +3296,36 @@ public abstract class NL2sol {
 	  int j1;
 	  int k;
 	  int kalim;
-	  int l;
+	  int l = 1;
 	  double lk;
 	  int lk0;
 	  double oldphi;  
-	  double phi;
+	  double phi = 0.0;
 	  double phimax;
 	  double phimin;
 	  int phipin;
 	  int pp1o2;
-	  double psifac;
+	  double psifac = 0.0;
 	  double rad;
 	  final int rad0 = 9;
 	  int res;
 	  int res0;
 	  int rmat;
 	  int rmat0;
-	  double si;
+	  double si = 0.0;
 	  double sj;
-	  double sqrtak;
+	  double sqrtak = 0.0;
 	  final int stppar = 5;
 	  double t;
 	  double twopsi;
 	  double uk;
 	  int uk0;
 	  double v2norm;
-	  double wl;
+	  double wl = 0.0;
 	  int m;
+	  double arr[];
+	  double arr2[];
+	  double arr3[];
 	  boolean do5 = false;
 	  boolean do10 = false;
 	  boolean do20 = false;
@@ -3329,7 +3335,17 @@ public abstract class NL2sol {
 	  boolean do130 = false;
 	  boolean do150 = false;
 	  boolean do170 = false;
+	  boolean do180 = false;
+	  boolean do200 = false;
+	  boolean do220 = false;
+	  boolean do240 = false;
+	  boolean do260 = false;
+	  boolean do280 = false;
+	  boolean do320 = false;
 	  boolean do370 = false;
+	  boolean do410 = false;
+	  boolean do430 = false;
+	  boolean do440 = false;
 	//
 	//  subscripts for v
 	//
@@ -3386,7 +3402,7 @@ public abstract class NL2sol {
 	//  Start or restart, depending on KA.
 	//
 	  do5 = true;
-	  /*loop1: while (true) {
+	  loop1: while (true) {
       if (do5) {
     	  do5 = false;
 		  if ( 0 < ka[0] ) {
@@ -3443,6 +3459,7 @@ public abstract class NL2sol {
 	    phi = dst - rad;
 
 	    if ( phi <= phimax ) {
+	      do410 = true;
 	      break loop1;
 	    }
 	//
@@ -3537,7 +3554,7 @@ public abstract class NL2sol {
 	//
 	//  Add ALPHAK * D and update QR decomposition using fast Givens transform.
 	//
-	      for (i = 1; i <= p; i++) {
+	      for (i = 1; (i <= p) && (!do370); i++) {
 	      loop2: while (true) {
 	      if (do120) {
 	    	  do120 = false;
@@ -3598,7 +3615,7 @@ public abstract class NL2sol {
 		         do170 = true;
 		         w[i] = d2 / t;
 		         d2 = d1 / t;
-		         w(l) = t * adi;
+		         w[l] = t * adi;
 		         for (j1 = i;j1 <= p; j1++) {
 		              l = l + j1;
 		              wl = w[l];
@@ -3608,228 +3625,313 @@ public abstract class NL2sol {
 	         } // else
 
      } // if (do150)
-	   170     continue
+     if (do170) {
+	   do170 = false;
 
-	         if ( i == p ) then
-	           exit
-	         end if
-	!
-	!  Now use Givens transformations to zero elements of temporary row.
-	!
-	         ip1 = i + 1
-	         do i1 = i + 1, p
-	              l = ( i1 * ( i1 + 1 ) ) / 2 + rmat0
-	              wl = w(l)
-	              si = step(i1-1)
-	              d1 = w(i1)
-	!
-	!  Rescale row I1 if necessary.
-	!
-	              if ( d1 < dtol ) then
-	                d1 = d1 * dfacsq
-	                wl = wl / dfac
-	                k = l
-	                do j1 = i1, p
-	                  k = k + j1
-	                  w(k) = w(k) / dfac
-	                end do
-	              end if
-	!
-	!  Use Givens transformations to zero next element of temporary row.
-	!
-	              if (abs(si) > abs(wl)) go to 220
+	         if ( i == p ) {
+	           break loop2;
+	         }
+	//
+	//  Now use Givens transformations to zero elements of temporary row.
+	//
+	         ip1 = i + 1;
+	         do180 = true;
+     } // if (do170)
+	         for (i1 = i + 1; i1 <= p; i1++) {
+	         loop3: while (true) {
+	         if (do180) {
+	              l = ( i1 * ( i1 + 1 ) ) / 2 + rmat0;
+	              wl = w[l];
+	              si = step[i1-1];
+	              d1 = w[i1];
+	//
+	//  Rescale row I1 if necessary.
+	//
+	              if ( d1 < dtol ) {
+	                d1 = d1 * dfacsq;
+	                wl = wl / dfac;
+	                k = l;
+	                for (j1 = i1; j1 <= p; j1++) {
+	                  k = k + j1;
+	                  w[k] = w[k] / dfac;
+	                }
+	              } // if (d1 < tol)
+	//
+	//  Use Givens transformations to zero next element of temporary row.
+	//
+	              if (Math.abs(si) > Math.abs(wl)) {
+	            	  do220 = true;
+	              }
+	              else if (si == 0.0) {
+	            	  do260 = true;
+	              }
+	              else {
+	            	  do200 = true;
+	              }
+     } // if (do180)
+     if (do200) {
+	     do200 = false;
 
-	              if (si == 0.0E+00) go to 260
+	              a = si / wl;
+	              b = d2 * a / d1;
+	              t = a * b + 1.0;
 
-	 200          continue
+	              if ( t <= 2.5 ) {
 
-	              a = si / wl
-	              b = d2 * a / d1
-	              t = a * b + 1.0E+00
+	                w[l] = t * wl;
+	                w[i1] = d1 / t;
+	                d2 = d2 / t;
+	                for (j1 = i1; j1 <= p; j1++) {
+	                   l = l + j1;
+	                   wl = w[l];
+	                   sj = step[j1];
+	                   w[l] = wl + b * sj;
+	                   step[j1] = sj - a*wl;
+	                } // for (j1 = i1; j1 <= p; j1++)
 
-	              if ( t <= 2.5E+00 ) then
+	                do240 = true;
 
-	                w(l) = t * wl
-	                w(i1) = d1 / t
-	                d2 = d2 / t
-	                do j1 = i1, p
-	                   l = l + j1
-	                   wl = w(l)
-	                   sj = step(j1)
-	                   w(l) = wl + b * sj
-	                   step(j1) = sj - a*wl
-	                end do
+	              } // if (t <= 2.5)
+	              else {
+	            	  do220 = true;
+	              }
+     } // if (do200)
+     if (do220) {
+    	 do220 = false;
+	              b = wl / si;
+	              a = d1 * b / d2;
+	              t = a * b + 1.0;
 
-	                go to 240
+	              if (t > 2.5 ) {
+	            	  do200 = true;
+	            	  continue loop3;
+	              }
 
-	              end if
+	              w[i1] = d2 / t;
+	              d2 = d1 / t;
+	              w[l] = t * si;
+	              for (j1 = i1; j1 <= p; j1++) {
+	                   l = l + j1;
+	                   wl = w[l];
+	                   sj = step[j1];
+	                   w[l] = a * wl + sj;
+	                   step[j1] = b * sj - wl;
+	              } // for (j1 = i1; j1 <= p; j1++)
+	              do240 = true;
+     } // if (do220)
+     if (do240) {
+	//
+	//  Rescale temporary row if necessary.
+	//
+	     do240  = false;
 
-	 220          b = wl / si
-	              a = d1 * b / d2
-	              t = a * b + 1.0E+00
-
-	              if (t > 2.5E+00 ) go to 200
-
-	              w(i1) = d2 / t
-	              d2 = d1 / t
-	              w(l) = t * si
-	              do j1 = i1, p
-	                   l = l + j1
-	                   wl = w(l)
-	                   sj = step(j1)
-	                   w(l) = a * wl + sj
-	                   step(j1) = b * sj - wl
-	              end do
-	!
-	!  Rescale temporary row if necessary.
-	!
-	 240          continue
-
-	              if ( d2 < dtol ) then
-	                   d2 = d2*dfacsq
-	                   step(i1:p) = step(i1:p) / dfac
-	              end if
-
-	 260          continue
-
-	        end do
+	              if ( d2 < dtol ) {
+	                   d2 = d2*dfacsq;
+	                   for (m = i1; m <= p; m++) {
+	                       step[m] = step[m] / dfac;
+	                   }
+	              }
+	              do260 = true;
+     } // if (do240)
+     if (do260) {
+    	 do260 = false;
+    	 break loop3;
+     } // if (do260)
+	         } // loop3: while (true)
+	         if (i1 < p){
+	        	 do180 = true;
+	         }
+            } // for (i1 = i + 1; i1 <= p; i1++)
+	        if (!do130) {
+                break loop2;
+	        }
 	      } // loop2: while (true)
+	      if (i < p) {
+	    	  do120 = true;
+	      }
+	      else {
+	    	  do280 = true;
+	      }
+	      } // for (i = 1; (i <= p) && (!do370); i++)
+	//
+	//  Compute step.
+	//
+	 if (do280) {
+	     do280 = false;
+          arr = new double[p+1];
+          arr2 = new double[p*(p+1)/2 + 1];
+          arr3 = new double[p+1];
+          for (m = 1; m <= p*(p+1)/2; p++) {
+        	  arr2[p] = w[rmat + p - 1];
+          }
+          for (m = 1; m <= p; m++) {
+        	  arr3[p] = w[res + p - 1];
+          }
+	      litvmu ( p, arr, arr2, arr3 );
+	      for (m = 1; m <= p; m++) {
+	    	  w[res + p - 1] = arr[p];
+	      }
+	//
+    //  Recover STEP and store permuted -D * STEP at W(RES).
+	//
+	      for ( i = 1; i <= p; i++) {
+	         j1 = ipivot[i];
+	         k = res0 + i;
+	         t = w[k];
+	         step[j1] = -t;
+	         w[k] = t * d[j1];
 	      } // for (i = 1; i <= p; i++)
-	!
-	!  Compute step.
-	!
-	 280  continue
+          for (m = 1; m <= p; m++) {
+        	  arr[m] = w[res + m - 1];
+          }
+	      dst = v2norm(p, arr);
+	      phi = dst - rad;
+	      if (phi <= phimax && phi >= phimin) {
+	    	  do430 = true;
+	    	  break loop1;
+	      }
+	      if (oldphi == phi) {
+	    	  do430 = true;
+	    	  break loop1;
+	      }
+	      oldphi = phi;
+	//
+	//  Check for and handle special case.
+	//
+	      if ( phi <= 0.0 ) {
 
-	      call litvmu ( p, w(res), w(rmat), w(res) )
-	!
-	!  Recover STEP and store permuted -D * STEP at W(RES).
-	!
-	      do i = 1, p
-	         j1 = ipivot(i)
-	         k = res0 + i
-	         t = w(k)
-	         step(j1) = -t
-	         w(k) = t * d(j1)
-	      end do
+	        if ( kalim <= ka[0] ) {
+	          do430 = true;
+	          break loop1;
+	        }
 
-	      dst = v2norm(p, w(res))
-	      phi = dst - rad
-	      if (phi <= phimax .and. phi >= phimin) go to 430
-	      if (oldphi == phi) go to 430
-	      oldphi = phi
-	!
-	!  Check for and handle special case.
-	!
-	      if ( phi <= 0.0E+00 ) then
+	        twopsi = alphak * dst * dst - dotprd ( p, step, g );
 
-	        if ( kalim <= ka ) then
-	          go to 430
-	        end if
+	        if ( alphak < twopsi * psifac ) {
+	          v[stppar] = -alphak;
+	          do440 = true;
+	          break loop1;
+	        }
 
-	        twopsi = alphak * dst * dst - dotprd ( p, step, g )
+	      } // if (phi <= 0.0)
 
-	        if ( alphak < twopsi * psifac ) then
-	          v(stppar) = -alphak
-	          go to 440
-	        end if
+	      if ( phi < 0.0 ) {
+	        uk = alphak;
+	      }
+	      do320 = true;
+	 } // if (do280)
 
-	      end if
+	 if (do320) {
+	     do320 = false;
 
-	      if ( phi < 0.0E+00 ) then
-	        uk = alphak
-	      end if
+	      for ( i = 1; i <= p; i++) {
+	         j1 = ipivot[i];
+	         k = res0 + i;
+	         step[i] = d[j1] * ( w[k] / dst );
+	      } // for (i = 1; i <= p; i++)
+          arr = new double[p*(p+1)/2 + 1];
+          for (m = 1; m <= p*(p+1)/2; m++) {
+        	  arr[m] = w[rmat + m - 1];
+          }
+	      livmul(p, step, arr, step);
+	      for (m = 1; m <= p; m++) {
+	          step[m] = step[m] / Math.sqrt ( w[m] );
+	      }
+	      t = 1.0 / v2norm(p, step);
+	      alphak = alphak + t * phi * t / rad;
+	      lk = Math.max ( lk, alphak );
+	      do110 = true;
+	      continue loop1;
+	 } // if (do320)
+	//
+	//  Restart.
+	//
+	 if (do370) {
+	     do370 = false;
 
-	 320  continue
+	      lk = w[lk0];
+	      uk = w[uk0];
 
-	      do i = 1, p
-	         j1 = ipivot(i)
-	         k = res0 + i
-	         step(i) = d(j1) * ( w(k) / dst )
-	      end do
+	      if (v[dst0] > 0.0 && v[dst0] - rad <= phimax) {
+	        do20 = true;
+	        continue loop1;
+	      }
 
-	      call livmul(p, step, w(rmat), step)
-	      step(1:p) = step(1:p) / sqrt ( w(1:p) )
-	      t = 1.0E+00 / v2norm(p, step)
-	      alphak = alphak + t * phi * t / rad
-	      lk = max ( lk, alphak )
-	      go to 110
-	!
-	!  Restart.
-	!
-	 370  continue
+	      alphak = Math.abs ( v[stppar] );
+	      dst = w[dstsav];
+	      phi = dst - rad;
+	      t = v[dgnorm] / rad;
+	//
+	//  Smaller radius.
+	//
+	      if ( rad <= v[rad0] ) {
+	         uk = t;
+	         if ( alphak <= 0.0 ) {
+	           lk = 0.0;
+	         }
+	         if (v[dst0] > 0.0) lk = Math.max ( lk, (v[dst0]-rad)*w[phipin] );
+	         if ( phi < 0.0 ) {
+	           uk = Math.min ( uk, alphak );
+	         }
+	         do320 = true;
+	         continue loop1;
+	      }
+	//
+	//  Bigger radius.
+	//
+	      if (alphak <= 0.0 || uk > t) {
+	        uk = t;
+	      }
 
-	      lk = w(lk0)
-	      uk = w(uk0)
+	      if (v[dst0] > 0.0) {
+	        lk = Math.max ( lk, (v[dst0]-rad)*w[phipin] );
+	      }
+	      else {
+	        lk = 0.0;
+	      }
 
-	      if (v(dst0) > 0.0E+00 .and. v(dst0) - rad <= phimax) then
-	        go to 20
-	      end if
+	      if ( phi < 0.0 ) {
+	        uk = Math.min ( uk, alphak );
+	      }
 
-	      alphak = abs ( v(stppar) )
-	      dst = w(dstsav)
-	      phi = dst - rad
-	      t = v(dgnorm) / rad
-	!
-	!  Smaller radius.
-	!
-	      if ( rad <= v(rad0) ) then
-	         uk = t
-	         if ( alphak <= 0.0E+00 ) then
-	           lk = 0.0E+00
-	         end if
-	         if (v(dst0) > 0.0E+00) lk = max ( lk, (v(dst0)-rad)*w(phipin) )
-	         if ( phi < 0.0E+00 ) then
-	           uk = min ( uk, alphak )
-	         end if
-	         go to 320
-	      end if
-	!
-	!  Bigger radius.
-	!
-	      if (alphak <= 0.0E+00 .or. uk > t) then
-	        uk = t
-	      end if
-
-	      if (v(dst0) > 0.0E+00) then
-	        lk = max ( lk, (v(dst0)-rad)*w(phipin) )
-	      else
-	        lk = 0.0E+00
-	      end if
-
-	      if ( phi < 0.0E+00 ) then
-	        uk = min ( uk, alphak )
-	      end if
-
-	      go to 320
+	      do320 = true;
+	      continue loop1;
+	 } // if (do370)
 	  } // loop1: while (true)
-	!
-	!  Acceptable Gauss-Newton step.  Recover step from W.
-	!
-	 410  continue
+	//
+	//  Acceptable Gauss-Newton step.  Recover step from W.
+	//
+	 if (do410) {
+	
 
-	      alphak = 0.0E+00
-	      do i = 1, p
-	         j1 = ipivot(i)
-	         step(j1) = -w(i)
-	      end do
-	!
-	!  Save values for use in a possible restart.
-	!
-	 430  continue
+	      alphak = 0.0;
+	      for ( i = 1; i <= p; i++) {
+	         j1 = ipivot[i];
+	         step[j1] = -w[i];
+	      }
+	      do430 = true;
+	 } // if (do410)
+	// 
+	//  Save values for use in a possible restart.
+	//
+	 if (do430) {
 
-	  v(stppar) = alphak
+	  v[stppar] = alphak;
+	  do440 = true;
+	 } // if (do430)
 
-	 440  continue
+	 if (do440) {
 
-	  v(gtstep) = dotprd ( p, step, g )
-	  v(preduc) = 0.5E+00 * (alphak*dst*dst - v(gtstep))
-	  v(dstnrm) = dst
-	  w(dstsav) = dst
-	  w(lk0) = lk
-	  w(uk0) = uk
-	  v(rad0) = rad*/
+	  v[gtstep] = dotprd ( p, step, g );
+	  v[preduc] = 0.5 * (alphak*dst*dst - v[gtstep]);
+	  v[dstnrm] = dst;
+	  w[dstsav] = dst;
+	  w[lk0] = lk;
+	  w[uk0] = uk;
+	  v[rad0] = rad;
 
 	  return;
+	 } // if (do440)
 	} // private void lmstep
 	
 	private void lsqrt ( int n1, int n, double l[], double a[], int irc[] ) {
@@ -4172,6 +4274,1226 @@ public abstract class NL2sol {
 
 	  return;
 	} // private void ltsqar
+	
+	private void nl2itr (double d[], int iv[], double j[][], int n, int nn,
+			             int p, double r[], double v[], double x[] ) {
+
+	/***********************************************************************
+	!
+	!! NL2ITR carries out iterations for NL2SOL.
+	!
+	!  Discussion:
+	!
+	!    Parameters IV, N, P, V, and X are the same as the corresponding 
+	!    ones to NL2SOL, except that V can be shorter, since the part of V 
+	!    that NL2SOL uses for storing D, J, and R is not needed.  
+	!
+	!    Moreover, compared with NL2SOL, IV(1) may have the
+	!    two additional output values 1 and 2, which are explained below,
+	!    as is the use of IV(TOOBIG) and IV(NFGCAL).  The values IV(D),
+	!    IV(J), and IV(R), which are output values from NL2SOL (and
+	!    NL2SNO), are not referenced by NL2ITR or the subroutines it calls.
+	!
+	!    On a fresh start, that is, a call on NL2ITR with IV(1) = 0 or 12,
+	!    NL2ITR assumes that R = R(X), the residual at X, and J = J(X),
+	!    the corresponding jacobian matrix of R at X.
+	!
+	!  Modified:
+	!
+	!    04 April 2006
+	!
+	!  Author:
+	!
+	!    David Gay
+	!
+	! iv(1) = 1 means the caller should set r to r(x), the residual at x,
+	!             and call nl2itr again, having changed none of the other
+	!             parameters.  an exception occurs if r cannot be evaluated
+	!             at x (e.g. if r would overflow), which may happen because
+	!             of an oversized step.  in this case the caller should set
+	!             iv(toobig) = iv(2) to 1, which will cause nl2itr to ig-
+	!             nore r and try a smaller step.  the parameter nf that
+	!             nl2sol passes to CALCR (for possible use by calcj) is a
+	!             copy of iv(nfcall) = iv(6).
+	! iv(1) = 2 means the caller should set j to j(x), the jacobian matrix
+	!             of r at x, and call nl2itr again.  the caller may change
+	!             d at this time, but should not change any of the other
+	!             parameters.  the parameter nf that nl2sol passes to
+	!             calcj is iv(nfgcal) = iv(7).  if j cannot be evaluated
+	!             at x, then the caller may set iv(nfgcal) to 0, in which
+	!             case nl2itr will return with iv(1) = 15.
+	!
+	!  Parameters:
+	!
+	!    Input, real D(N), the scale vector.
+	!
+	!    Input/output, integer IV(*), the NL2SOL integer parameter array.
+	!
+	!    j   n by p jacobian matrix (lead dimension nn).
+	!
+	!    n   number of observations (components in r).
+	!
+	!    nn  lead dimension of j.
+	!
+	!    p   number of parameters (components in x).
+	!
+	!    r   residual vector.
+	!
+	!    v   floating-point value array.
+	!
+	!    x   parameter vector.
+	*/
+	  
+	  int dummy;
+	  int dig1;
+	  double e;
+	  int g01;
+	  int g1;
+	  int h0;
+	  int h1;
+	  int i;
+	  int ipiv1;
+	  int ipivi;
+	  int ipivk;
+	  int ipk;
+	  int k;
+	  int km1;
+	  int l;
+	  int lky1;
+	  int lmat1;
+	  int lstgst;
+	  int m;
+	  int pp1o2;
+	  int qtr1;
+	  int rd0;
+	  int rd1;
+	  int rdk;
+	  double rdof1;
+	  int rsave1;
+	  int s1;
+	  int smh;
+	  int sstep;
+	  int step1;
+	  boolean stopx;
+	  int stpmod;
+	  final int stppar = 5;
+	  double sttsst;
+	  double t;
+	  double t1;
+	  int temp1;
+	  int temp2;
+	  int w1;
+	  int x01;
+	
+	//
+	// iv subscript values
+	//
+	final int cnvcod=34;
+	final int covmat=26;
+	final int covprt=14;
+	final int covreq=15;
+	final int dig=43;
+	final int dtype=16;
+	final int g=28;
+	final int h=44;
+	final int ierr=32;
+	final int inits=25;
+	final int ipivot=61;
+	final int ipiv0=60;
+	final int irc=3;
+	final int kagqt=35;
+	final int kalm=36;
+	final int lky=37;
+	final int lmat=58;
+	final int mode=38;
+	final int model=5;
+	final int mxfcal=17;
+	final int mxiter=18;
+	final int nfcall=6;
+	final int nfgcal=7;
+	final int nfcov=40;
+	final int ngcov=41;
+	final int ngcall=30;
+	final int niter=31;
+	final int qtr=49;
+	final int radinc=8;
+	final int rd=51;
+	final int restor=9;
+	final int rsave=52;
+	final int s=53;
+	final int step=55;
+	final int stglim=11;
+	final int stlstg=56;
+	final int sused=57;
+	final int switchConstant=12;
+	final int toobig=2;
+	final int w=59;
+	final int xirc=13;
+	final int x0=60;
+	//
+	// v subscript values.
+	//
+	final int cosmin=43;
+	final int dgnorm=1;
+	final int dinit=38;
+	final int dstnrm=2;
+	final int d0init=37;
+	final int f=10;
+	final int fdif=11;
+	final int fuzz=45;
+	final int f0=13;
+	final int gtstep=4;
+	final int incfac=23;
+	final int jtinit=39;
+	final int jtol1=87;
+	final int lmax0=35;
+	final int nvsave=9;
+	final int phmxfc=21;
+	final int preduc=7;
+	final int radfac=16;
+	final int radius=8;
+	final int rad0=9;
+	final int rlimit=42;
+	final int size=47;
+	final int tuner4=29;
+	final int tuner5=30;
+	final int vsave1=78;
+	final int wscale=48;
+	boolean do10 = false;
+	boolean do20 = false;
+	boolean do50 = false;
+	boolean do160 = false;
+	boolean do195 = false;
+	boolean do350 = false;
+
+	      i = iv[1];
+	      if (i == 1) {
+	    	  do20 = true;
+	      }
+	      if (i == 2) {
+	    	  do50 = true;
+	      }
+	//
+	//  Check validity of iv and v input values.
+	//
+	//  If iv(1) = 0, then PARCHK calls dfault(iv, v).
+	//
+	      /*parchk ( iv, n, nn, p, v );
+	      i = iv[1] - 2;
+
+	      if ( 10 < i ) {
+	        return;
+	      }
+	      
+	      switch(i) {
+	          case 1:
+	          case 2:
+	          case 3:
+	          case 4:
+	          case 5:
+	          case 6:
+	        	  do350 = true;
+	        	  break;
+	          case 7:
+	          case 9:
+	        	  do195 = true;
+	        	  break;
+	          case 8:
+	        	  do160 = true;
+	        	  break;
+	          case 10:
+	        	  do10 = true;
+	      }
+
+	      
+	//
+	//  Initialization and storage allocation.
+	//
+	 if (do10) {
+
+	      iv[niter] = 0;
+	      iv[nfcall] = 1;
+	      iv[ngcall] = 1;
+	      iv[nfgcal] = 1;
+	      iv[mode] = -1;
+	      iv[stglim] = 2;
+	      iv[toobig] = 0;
+	      iv[cnvcod] = 0;
+	      iv[covmat] = 0;
+	      iv[nfcov] = 0;
+	      iv[ngcov] = 0;
+	      iv[kalm] = -1;
+	      iv[radinc] = 0;
+	      iv[s] = jtol1 + 2*p;
+	      pp1o2 = p * (p + 1) / 2;
+	      iv[x0] = iv[s] + pp1o2;
+	      iv[step] = iv[x0] + p;
+	      iv[stlstg] = iv[step] + p;
+	      iv[dig] = iv[stlstg] + p;
+	      iv[g] = iv[dig] + p;
+	      iv[lky] = iv[g] + p;
+	      iv[rd] = iv[lky] + p;
+	      iv[rsave] = iv[rd] + p;
+	      iv[qtr] = iv[rsave] + n;
+	      iv[h] = iv[qtr] + n;
+	      iv[w] = iv[h] + pp1o2;
+	      iv[lmat] = iv[w] + 4*p + 7;
+	//
+	//  Length of w = p*(p+9)/2 + 7.  lmat is contained in w.
+	//
+	      if (v[dinit] >= 0.0 ) {
+	        d(1:p) = v(dinit)
+	      }
+
+	      if (v(jtinit) > 0.0E+00 ) then
+	        v(jtol1:jtol1+p-1) = v(jtinit)
+	      end if
+
+	      i = jtol1 + p
+
+	      if (v(d0init) > 0.0E+00 ) then
+	        v(i:i+p-1) = v(d0init)
+	      end if
+
+	      v(rad0) = 0.0E+00
+	      v(stppar) = 0.0E+00
+	      v(radius) = v(lmax0) / ( 1.0E+00 + v(phmxfc) )
+	!
+	!  Set initial model and S matrix.
+	!
+	      iv(model) = 1
+	      if (iv(inits) == 2) iv(model) = 2
+	      s1 = iv(s)
+	      if (iv(inits) == 0) then
+	        v(s1:s1+pp1o2-1) = 0.0E+00
+	      end if
+	 } // if (do10)
+	!
+	!  Compute function value (half the sum of squares).
+	!
+	 20   continue
+
+	      t = v2norm(n, r)
+
+	      if ( v(rlimit) < t ) then
+	        iv(toobig) = 1
+	      end if
+
+	      if ( iv(toobig) == 0 ) then
+	        v(f) = 0.5E+00 * t**2
+	      end if
+
+	 30   continue
+
+	      if ( iv(mode) == 0 ) then
+	        go to 350
+	      end if
+
+	      if ( 0 < iv(mode) ) then
+	        go to 730
+	      end if
+
+	 40   continue
+
+	      if ( iv(toobig) /= 0 ) then
+	         iv(1) = 13
+	         call itsmry ( d, iv, p, v, x )
+	         return
+	      end if
+
+	      go to 60
+	!
+	!  Make sure jacobian could be computed.
+	!
+	 50   continue
+
+	      if ( iv(nfgcal) == 0 ) then
+	         iv(1) = 15
+	         call itsmry ( d, iv, p, v, x )
+	         return
+	      end if
+	!
+	!  Compute gradient.
+	!
+	 60   continue
+
+	      iv(kalm) = -1
+	      g1 = iv(g)
+	      do i = 1, p
+	         v(g1) = dot_product ( r(1:n), j(1:n,i) )
+	         g1 = g1 + 1
+	      end do
+
+	      if ( 0 < iv(mode) ) then
+	        go to 710
+	      end if
+	!
+	!  Update D and make copies of R for possible use later.
+	!
+	      if ( 0 < iv(dtype) ) then
+	        call dupdat(d, iv, j, n, nn, p, v)
+	      end if
+
+	      rsave1 = iv(rsave)
+	      v(rsave1:rsave1+n-1) = r(1:n)
+	      qtr1 = iv(qtr)
+	      v(qtr1:qtr1+n-1) = r(1:n)
+	!
+	!  Compute inverse ( D ) * gradient.
+	!
+	      g1 = iv(g)
+	      dig1 = iv(dig)
+	      k = dig1
+
+	      do i = 1, p
+	         v(k) = v(g1) / d(i)
+	         k = k + 1
+	         g1 = g1 + 1
+	      end do
+
+	      v(dgnorm) = v2norm(p, v(dig1))
+
+	      if (iv(cnvcod) /= 0) go to 700
+	      if (iv(mode) == 0) go to 570
+	      iv(mode) = 0
+	!
+	!  Main loop.
+	!
+	!  Print iteration summary, check iteration limit.
+	!
+	loop1: while (true) {
+	 150  continue
+
+	      call itsmry(d, iv, p, v, x)
+
+	 160  k = iv(niter)
+
+	      if ( iv(mxiter) <= k ) then
+	         iv(1) = 10
+	         call itsmry ( d, iv, p, v, x )
+	         return
+	      end if
+
+	170   continue
+
+	      iv(niter) = k + 1
+	!
+	!  Update radius.
+	!
+	      if ( k /= 0 ) then
+
+	        step1 = iv(step)
+	        do i = 1, p
+	          v(step1) = d(i) * v(step1)
+	          step1 = step1 + 1
+	        end do
+	        step1 = iv(step)
+	        v(radius) = v(radfac) * v2norm(p, v(step1))
+
+	      end if
+	!
+	!  Initialize for start of next iteration.
+	!
+	      x01 = iv(x0)
+	      v(f0) = v(f)
+	      iv(kagqt) = -1
+	      iv(irc) = 4
+	      iv(h) = -abs ( iv(h) )
+	      iv(sused) = iv(model)
+	!
+	!  Copy X to X0.
+	!
+	      v(x01:x01+p-1) = x(1:p)
+	!
+	!  Check STOPX and function evaluation limit.
+	!
+	 190  if ( .not. stopx ( dummy ) ) go to 200
+	         iv(1) = 11
+	         go to 205
+	!
+	!  Come here when restarting after function evaluation limit or STOPX.
+	!
+	 195  continue
+
+	      if ( v(f) < v(f0) ) then
+	         v(radfac) = 1.0E+00
+	         k = iv(niter)
+	         go to 170
+	      end if
+
+	 200  continue
+
+	      if (iv(nfcall) < iv(mxfcal) + iv(nfcov)) go to 210
+	         iv(1) = 9
+	 205     continue
+
+	         if (v(f) >= v(f0)) then
+	           call itsmry ( d, iv, p, v, x )
+	           return
+	         end if
+	!
+	!  In case of STOPX or function evaluation limit with
+	!  improved V(F), evaluate the gradient at X.
+	!
+	         iv(cnvcod) = iv(1)
+	         go to 560
+	!
+	!  Compute candidate step.
+	!
+	 210  continue
+
+	      step1 = iv(step)
+	      w1 = iv(w)
+	!
+	!  Compute Levenberg-Marquardt step.
+	!
+	      if (iv(model) /= 2) then
+
+	         qtr1 = iv(qtr)
+
+	         if ( iv(kalm) < 0 ) then
+
+	           rd1 = iv(rd)
+
+	           if (-1 == iv(kalm)) then
+	             call qrfact ( nn, n, p, j, v(rd1), &
+	             iv(ipivot), iv(ierr), 0, v(w1) )
+	           end if
+
+	           call qapply ( nn, n, p, j, v(qtr1), iv(ierr) )
+
+	         end if
+
+	         h1 = iv(h)
+	!
+	!  Copy R matrix to H.
+	!
+	         if ( h1 <= 0 ) then
+
+	              h1 = -h1
+	              iv(h) = h1
+	              k = h1
+	              rd1 = iv(rd)
+	              v(k) = v(rd1)
+
+	              do i = 2, p
+	                   call vcopy(i-1, v(k+1), j(1,i))
+	                   k = k + i
+	                   rd1 = rd1 + 1
+	                   v(k) = v(rd1)
+	              end do
+	         end if
+
+	         g1 = iv(g)
+	         call lmstep(d, v(g1), iv(ierr), iv(ipivot), iv(kalm), p, &
+	                     v(qtr1), v(h1), v(step1), v, v(w1))
+	!
+	!  Compute Goldfeld-Quandt-Trotter step (augmented model).
+	!
+	      else
+
+	      if ( iv(h) <= 0 ) then
+	!
+	!  Set H to inverse ( D ) * ( J' * J + s) ) * inverse ( D ).
+	!
+	        h1 = -iv(h)
+	        iv(h) = h1
+	        s1 = iv(s)
+	!
+	!  J is in its original form.
+	!
+	        if ( iv(kalm) == -1 ) then
+
+	          do i = 1, p
+	            t = 1.0E+00 / d(i)
+	            do k = 1, i
+	              v(h1) = t * (dotprd(n,j(1,i),j(1,k))+v(s1)) / d(k)
+	              h1 = h1 + 1
+	              s1 = s1 + 1
+	            end do
+	          end do
+	!
+	!  LMSTEP has applied QRFACT to J.
+	!
+	        else
+
+	          smh = s1 - h1
+	          h0 = h1 - 1
+	          ipiv1 = iv(ipivot)
+	          t1 = 1.0E+00 / d(ipiv1)
+	          rd0 = iv(rd) - 1
+	          rdof1 = v(rd0 + 1)
+
+	          do i = 1, p
+
+	            l = ipiv0 + i
+	            ipivi = iv(l)
+	            h1 = h0 + ( ipivi*(ipivi-1) ) / 2
+	            l = h1 + ipivi
+	            m = l + smh
+	!
+	!  v(l) = h(ipivot(i), ipivot(i))
+	!  v(m) = s(ipivot(i), ipivot(i))
+	!
+	            t = 1.0E+00 / d(ipivi)
+	            rdk = rd0 + i
+	            e = v(rdk)**2
+	            if ( 1 < i ) then
+	              e = e + dotprd(i-1, j(1,i), j(1,i))
+	            end if
+	            v(l) = (e + v(m)) * t**2
+
+	            if ( i /= 1 ) then
+
+	              l = h1 + ipiv1
+	              if (ipivi < ipiv1) then
+	                l = l + ((ipiv1-ipivi)*(ipiv1+ipivi-3)) / 2
+	              end if
+	              m = l + smh
+	!
+	!  v(l) = h(ipivot(i), ipivot(1))
+	!  v(m) = s(ipivot(i), ipivot(1))
+	!
+	              v(l) = t * (rdof1 * j(1,i)  +  v(m)) * t1
+
+	              do k = 2, i - 1
+	                ipk = ipiv0 + k
+	                ipivk = iv(ipk)
+	                l = h1 + ipivk
+	                if (ipivi < ipivk) then
+	                  l = l + ((ipivk-ipivi)*(ipivk+ipivi-3)) / 2
+	                end if
+	                m = l + smh
+	!
+	!  v(l) = h(ipivot(i), ipivot(k))
+	!  v(m) = s(ipivot(i), ipivot(k))
+	!
+	                km1 = k - 1
+	                rdk = rd0 + k
+	                v(l) = t * (dotprd(km1, j(1,i), j(1,k)) + &
+	                  v(rdk)*j(k,i) + v(m)) / d(ipivk)
+	              end do
+
+	            end if
+
+	          end do
+
+	        end if
+
+	      end if
+	!
+	!  Compute actual Goldfeld-Quandt-Trotter step.
+	!
+	      h1 = iv(h)
+	      dig1 = iv(dig)
+	      lmat1 = iv(lmat)
+	      call gqtstp(d, v(dig1), v(h1), iv(kagqt), v(lmat1), p, v(step1), &
+	                  v, v(w1))
+	    end if
+	!
+	!  Compute R(X0 + STEP).
+	!
+	 310  continue
+
+	      if ( iv(irc) /= 6 ) then
+	        x01 = iv(x0)
+	        step1 = iv(step)
+	        x(1:p) = v(step1:step1+p-1) + v(x01:x01+p-1)
+	        iv(nfcall) = iv(nfcall) + 1
+	        iv(1) = 1
+	        iv(toobig) = 0
+	        return
+	      end if
+	!
+	!  Assess candidate step.
+	!
+	350   continue
+
+	      step1 = iv(step)
+	      lstgst = iv(stlstg)
+	      x01 = iv(x0)
+	      call assess(d, iv, p, v(step1), v(lstgst), v, x, v(x01))
+	!
+	!  If necessary, switch models and/or restore R.
+	!
+	      if ( iv(switch) /= 0 ) then
+	        iv(h) = -abs ( iv(h) )
+	        iv(sused) = iv(sused) + 2
+	        v(1:nvsave) = v(vsave1:vsave1+nvsave-1)
+	      end if
+
+	 360  continue
+
+	      if ( iv(restor) /= 0 ) then
+	         rsave1 = iv(rsave)
+	         r(1:n) = v(rsave1:rsave1+n-1)
+	      end if
+
+	 390  continue
+
+	      l = iv(irc) - 4
+	      stpmod = iv(model)
+
+	      if (l > 0) go to (410,440,450,450,450,450,450,450,640,570), l
+	!
+	!  Decide whether to change models.
+	!
+	      e = v(preduc) - v(fdif)
+	      sstep = iv(lky)
+	      s1 = iv(s)
+	      call slvmul ( p, v(sstep), v(s1), v(step1) )
+	      sttsst = 0.5E+00 * dotprd(p, v(step1), v(sstep))
+
+	      if ( iv(model) == 1 ) then
+	        sttsst = -sttsst
+	      end if
+	!
+	!  Switch models.
+	!
+	      if (abs(e + sttsst) * v(fuzz) >= abs(e)) go to 400
+
+	         iv(model) = 3 - iv(model)
+	         if (iv(model) == 1) iv(kagqt) = -1
+	         if (iv(model) == 2 .and. iv(kalm) > 0) iv(kalm) = 0
+	         if (-2 < l) go to 480
+	              iv(h) = -abs ( iv(h) )
+	              iv(sused) = iv(sused) + 2
+	              v(vsave1:vsave1+nvsave-1) = v(1:nvsave)
+	              go to 420
+
+	 400  if (-3 < l) go to 480
+	!
+	!  Recompute STEP with decreased radius.
+	!
+	         v(radius) = v(radfac) * v(dstnrm)
+	         go to 190
+	!
+	!  Recompute STEP, saving V values and R if necessary.
+	!
+	 410  continue
+
+	      v(radius) = v(radfac) * v(dstnrm)
+
+	 420  continue
+
+	      if ( v(f) < v(f0) ) then
+	        rsave1 = iv(rsave)
+	        v(rsave1:rsave1+n-1) = r(1:n)
+	      end if
+
+	      go to 190
+	!
+	!  Compute step of length V(LMAX0) for singular convergence test.
+	!
+	 440  continue
+
+	      v(radius) = v(lmax0)
+	      go to 210
+	!
+	!  Convergence or false convergence.
+	!
+	 450  continue
+
+	      iv(cnvcod) = l
+	      if (v(f) >= v(f0)) go to 700
+	         if (iv(xirc) == 14) go to 700
+	              iv(xirc) = 14
+	!
+	!  Process acceptable step.
+	!
+	 480  iv(covmat) = 0
+	!
+	!  Set LKY = J(X0)' * R(X).
+	!
+	      lky1 = iv(lky)
+	!
+	!  Jacobian has not been modified.
+	!
+	      if ( iv(kalm) < 0 ) then
+
+	         do i = 1, p
+	           v(lky1) = dotprd(n, j(1,i), r)
+	           lky1 = lky1 + 1
+	         end do
+	!
+	!  QRFACT has been applied to J.  Store copy of R in QTR and
+	!  apply Q to it.
+	!
+	      else
+
+	        qtr1 = iv(qtr)
+	        v(qtr1:qtr1+n-1) = r(1:n)
+	        call qapply(nn, n, p, j, v(qtr1), iv(ierr))
+	!
+	!  Multiply top P-vector in QTR by permuted upper triangle
+	!  stored by QRFACT in J and RD.
+	!
+	        rd1 = iv(rd)
+	        temp1 = iv(stlstg)
+	        call rptmul(3, iv(ipivot), j, nn, p, v(rd1), v(qtr1), v(lky1), &
+	                  v(temp1))
+
+	      end if
+	!
+	!  See whether to set V(RADFAC) by gradient tests.
+	!
+	 510  continue
+
+	      if (iv(irc) == 3 ) then
+
+	        step1 = iv(step)
+	        temp1 = iv(stlstg)
+	        temp2 = iv(x0)
+	!
+	!  Set TEMP1 = hessian * STEP for use in gradient tests
+	!
+	!  STEP computed using Gauss-Newton model.
+	!  QRFACT has been applied to J.
+	!
+	        if ( stpmod /= 2 ) then
+
+	          rd1 = iv(rd)
+	          call rptmul(2, iv(ipivot), j, nn, p, v(rd1), &
+	            v(step1), v(temp1), v(temp2))
+	!
+	!  STEP computed using augmented model.
+	!
+	        else
+
+	          h1 = iv(h)
+	          k = temp2
+
+	          do i = 1, p
+	            v(k) = d(i) * v(step1)
+	            k = k + 1
+	            step1 = step1 + 1
+	          end do
+
+	          call slvmul(p, v(temp1), v(h1), v(temp2))
+
+	          do i = 1, p
+	            v(temp1) = d(i) * v(temp1)
+	            temp1 = temp1 + 1
+	          end do
+
+	        end if
+
+	      end if
+	!
+	!  Save old gradient and compute new one.
+	!
+	 560  continue
+
+	      iv(ngcall) = iv(ngcall) + 1
+	      g1 = iv(g)
+	      g01 = iv(w)
+	      v(g01:g01+p-1) = v(g1:g1+p-1)
+	      iv(1) = 2
+	      return
+	!
+	!  Initializations -- g0 = g - g0, etc.
+	!
+	 570  continue
+
+	      g01 = iv(w)
+	      g1 = iv(g)
+	      v(g01:g01+p-1) = - v(g01:g01+p-1) + v(g1:g1+p-1)
+	      step1 = iv(step)
+	      temp1 = iv(stlstg)
+	      temp2 = iv(x0)
+	!
+	!  Set V(RADFAC) by gradient tests.
+	!
+	!  Set TEMP1 = d**-1 * (hessian * STEP  +  ( G(x0) - G(x) ) ).
+	!
+	      if ( iv(irc) == 3 ) then
+
+	         k = temp1
+	         l = g01
+	         do i = 1, p
+	           v(k) = (v(k) - v(l)) / d(i)
+	           k = k + 1
+	           l = l + 1
+	         end do
+	!
+	!  Do gradient tests.
+	!
+	         if ( v2norm(p, v(temp1)) <= v(dgnorm) * v(tuner4) .or. &
+	           dotprd(p, v(g1), v(step1)) < v(gtstep) * v(tuner5) ) then
+	           v(radfac) = v(incfac)
+	         end if
+
+	      end if
+	!
+	!  Finish computing LKY = ( J(X) - J(X0) )' * R.
+	!
+	!  Currently LKY = J(X0)' * R.
+	!
+	      lky1 = iv(lky)
+	      v(lky1:lky1+p-1) = - v(lky1:lky1+p-1) + v(g1:g1+p-1)
+	!
+	!  Determine sizing factor V(SIZE).
+	!
+	!  Set TEMP1 = S * STEP.
+	!
+	      s1 = iv(s)
+	      call slvmul(p, v(temp1), v(s1), v(step1))
+
+	      t1 = abs(dotprd(p, v(step1), v(temp1)))
+	      t = abs(dotprd(p, v(step1), v(lky1)))
+	      v(size) = 1.0E+00
+
+	      if ( t < t1 ) then
+	        v(size) = t / t1
+	      end if
+	!
+	!  Update S.
+	!
+	      call slupdt(v(s1), v(cosmin), p, v(size), v(step1), v(temp1), &
+	                  v(temp2), v(g01), v(wscale), v(lky1))
+	      iv(1) = 2
+	      go to 150
+	} // loop1: while (true)
+	!
+	!  Bad parameters to ASSESS.
+	!
+	 640  iv(1) = 14
+	      call itsmry ( d, iv, p, v, x )
+	      return
+	!
+	!  Convergence obtained.  Compute covariance matrix if desired.
+	!
+	 700  continue
+
+	      if ( ( iv(covreq) == 0 .and. iv(covprt) == 0 ) .or. &
+	        iv(covmat) /= 0 .or. &
+	        iv(cnvcod) >= 7 ) then
+	        iv(1) = iv(cnvcod)
+	        iv(cnvcod) = 0
+	        call itsmry(d, iv, p, v, x)
+	        return
+	      end if
+
+	      iv(mode) = 0
+     loop2: while (true) {
+	 710  continue
+
+	      call covclc(i, d, iv, j, n, nn, p, r, v, x)
+
+	      if ( i == 3 ) then
+
+	        iv(ngcov) = iv(ngcov) + 1
+	        iv(ngcall) = iv(ngcall) + 1
+	        iv(1) = 2
+
+	      else if ( i == 4 ) then
+
+	        if ( iv(niter) == 0 ) then
+	          iv(mode) = -1
+	        else
+	          iv(mode) = 0
+	        end if
+
+	        iv(1) = iv(cnvcod)
+	        iv(cnvcod) = 0
+
+	        call itsmry(d, iv, p, v, x)
+
+	      else 
+
+	        iv(nfcov) = iv(nfcov) + 1
+	        iv(nfcall) = iv(nfcall) + 1
+	        iv(restor) = i
+	        iv(1) = 1
+
+	      end if
+
+	      return
+
+	 730  continue
+
+	  if ( iv(restor) == 1 .or. iv(toobig) /= 0 ) then
+	    go to 710
+	  end if
+     } // loop2: while (true)
+
+	  iv(nfgcal) = iv(nfcall)
+	  iv(ngcov) = iv(ngcov) + 1
+	  iv(ngcall) = iv(ngcall) + 1
+	  iv(1) = 2
+
+	  return*/
+	} // private void nl2itr
+	
+	private void parchk (int iv[], int n, int nn, int p, double v[] ) {
+
+	/***********************************************************************
+	!
+	!! PARCHK checks the NL2SOL parameters.
+	!
+	!  Modified:
+	!
+	!    04 April 2006
+	!
+	!  Author:
+	!
+	!    David Gay
+	*/
+
+	  int i;
+	  int iv1;
+	  int jtolp;
+	  int k;
+	  int l;
+	  int m;
+	  double machep;
+	  final int nvdflt = 27;
+	  final int parsv1 = 51;
+	  final int prunit = 21;
+	  int pu;
+	  double vk;
+	  double vm[] = new double[]{
+			   0.0, 1.0e-3,-0.99, 1.0e-3, 1.0e-2,
+	           1.2, 1.0e-2, 1.2, 0.0,
+	           0.0, 1.0e-3, -1.0, 0.0,
+	           0.0, 0.0, -10.0, 0.0,
+	           0.0, 1.0e+10, 1.01};
+	  String vn[] = new String[]{
+			     "        ","epslon..", "phmnfc..", "phmxfc..", "decfac..", "incfac..",
+			    "rdfcmn..", "rdfcmx..", "tuner1..", "tuner2..", "tuner3..", 
+			    "tuner4..", "tuner5..", "afctol..", "rfctol..", "xctol...",
+			    "xftol...", "lmax0...", "dltfdj..", "d0init..", "dinit...",
+			    "jtinit..", "dltfdc..", "dfac....", "rlimit..", "cosmin..",
+			    "delta0..", "fuzz...."};
+	  double vx[] = new double[]{
+			   0.0, 0.9, -1.0e-3, 1.0e+1, 0.8, 
+	           1.0e+2, 0.8, 1.0e+2, 0.5, 
+	           0.5, 1.0, 1.0, 0.1,
+	           1.0, 1.0, 1.0, 1.0, 
+	           1.0, 1.0, 1.0, 1.0e+2};
+
+	  String cngd[] = new String[]{"    ","---c","hang","ed v"};
+	  String dflt[] = new String[]{"    ","nond","efau","lt v"};
+	  String which[] = new String[4];
+	//
+	// iv and v subscripts
+	//
+	      
+
+	     final int dtype=16;
+	     final int dtype0=29;
+	     final int d0init=37;
+	     final int epslon=19;
+	     final int inits=25;
+	     final int jtinit=39;
+	     final int jtol0=86;
+	     final int jtol1=87;
+	     final int oldn=45;
+	     final int oldnn=46;
+	     final int oldp=47;
+	     final int parprt=20;
+	     double arr[];
+	     int iarr[];
+         int j;
+	     
+
+	  if ( iv[1] == 0 ) {
+	    dfault ( iv, v );
+	  }
+
+	  pu = iv[prunit];
+	  iv1 = iv[1];
+
+	  /*if ( iv1 == 12) {
+
+	    if ( nn < n || n < p || p < 1) {
+	      iv[1] = 16;
+	      if ( pu != 0 ) {
+	        Preferences.debug("Bad nn, n or p: nn = " +  nn + " n = " + n + " p = " + p + "\n");
+	      }
+	      return;
+	    }
+
+	    k = iv[21];
+	    iarr = new int[26];
+	    arr = new double[46];
+	    dfault(iarr, arr);
+	    for (j = 1; j <= 25; j++) {
+	    	iv[21 + j] = iarr[j];
+	    }
+	    for (j = 1; j <= 45; j++) {
+	    	v[33 + j] = arr[j];
+	    }
+	    iv[21] = k;
+	    iv(dtype0) = iv(dtype+20)
+	    iv(oldn) = n
+	    iv(oldnn) = nn
+	    iv(oldp) = p
+	    which(1) = dflt(1)
+	    which(2) = dflt(2)
+	    which(3) = dflt(3)
+
+	  } // if (iv1 == 12)
+	    else
+
+	    if ( n  /= iv(oldn)  .or. &
+	         nn /= iv(oldnn) .or. &
+	         p  /= iv(oldp) ) then
+
+	      iv(1) = 17
+
+	      if ( pu /= 0 ) then
+	        write ( pu, '(a)' ) ' '
+	        write ( pu, '(a)' ) '(NN,N,P) changed from:'
+	        write ( pu, '(a,i8)' ) '  NN = ', iv(oldnn)
+	        write ( pu, '(a,i8)' ) '  N =  ', iv(oldn)
+	        write ( pu, '(a,i8)' ) '  P =  ', iv(oldp)
+	        write ( pu, '(a)' ) ' to:'
+	        write ( pu, '(a,i8)' ) '  NN = ', nn
+	        write ( pu, '(a,i8)' ) '  N =  ', n
+	        write ( pu, '(a,i8)' ) '  P =  ', p
+	      end if
+
+	      return
+
+	    end if
+
+	    if ( iv1 < 1 .or. 11 < iv1 ) then
+	      iv(1) = 50
+	      if (pu /= 0) then
+	        write(pu,60) iv1
+	      end if
+	 60   format('  iv(1) =', i5, ' should be between 0 and 12.')
+	      return
+	    end if
+
+	    which(1) = cngd(1)
+	    which(2) = cngd(2)
+	    which(3) = cngd(3)
+
+	  end if
+
+	  if ( big <= teensy ) then
+	    teensy = tiny ( teensy )
+	    machep = epsilon ( machep )
+	    big = huge ( big )
+	    vm(12) = machep
+	    vx(12) = big
+	    vm(13) = teensy
+	    vx(13) = big
+	    vm(14) = machep
+	    vm(17) = teensy
+	    vx(17) = big
+	    vm(18) = machep
+	    vx(19) = big
+	    vx(20) = big
+	    vx(21) = big
+	    vm(22) = machep
+	    vx(24) = sqrt ( 0.999E+00 * huge ( vx(24) ) )
+	    vm(25) = machep
+	    vm(26) = machep
+	  end if
+
+	  m = 0
+
+	  if (iv(inits) >= 0 .and. iv(inits) <= 2) go to 110
+	         m = 18
+	         if (pu /= 0) write(pu,100) iv(inits)
+	 100     format('inits... iv(25) =',i4,' should be between 0 and 2.')
+	 110 continue
+	  
+	  k = epslon
+
+	  do i = 1, nvdflt
+	    vk = v(k)
+	    if (vk >= vm(i) .and. vk <= vx(i)) go to 130
+	      m = k
+	      if (pu /= 0) write(pu,120) vn(i), k, vk, vm(i), vx(i)
+	120   format( a8, '.. v(',i2, ') =', e11.3, &
+	      ' should be between ',e11.3, ' and', d11.3 )
+	130 continue
+	    k = k + 1
+
+	  end do
+	!
+	!  Check JTOL values.
+	!
+	  if ( iv1 /= 12 .or. v(jtinit) <= 0.0E+00) then
+
+	    jtolp = jtol0 + p
+	    do i = jtol1, jtolp
+	      if ( v(i) <= 0.0E+00 ) then
+	        k = i - jtol0
+	        if (pu /= 0) write(pu,150) k, i, v(i)
+	 150    format( 'jtol(', i3, ') = v(', i3, ') =', e11.3, &
+	                ' should be positive.' )
+	        m = i
+	      end if
+	    end do
+
+	  end if
+
+	  if ( m /= 0 ) then
+	    iv(1) = m
+	    return
+	  end if
+
+	 180  continue
+
+	  if ( pu == 0 .or. iv(parprt) == 0 ) then
+	    return
+	  end if
+
+	  if ( iv1 == 12 .and. iv(inits) /= 0) then
+	    m = 1
+	    write(pu,190) iv(inits)
+	190 format( 'nondefault values....inits..... iv(25) =', i3)
+	  end if
+
+	  if ( iv(dtype) /= iv(dtype0) ) then
+	    if (m == 0) write(pu,215) which
+	    m = 1
+	    write ( pu, '(a,i3)' ) 'DTYPE..... IV(16) = ', iv(dtype)
+	  end if
+
+	  k = epslon
+	  l = parsv1
+
+	  do i = 1, nvdflt
+
+	    if ( v(k) /= v(l) ) then
+	      if (m == 0) write(pu,215) which
+	 215  format(3a4,'alues....')
+	      m = 1
+	      write(pu,220) vn(i), k, v(k)
+	 220  format(1x,a8,'.. v(',i2,') =',e15.7)
+	    end if
+
+	    k = k + 1
+	    l = l + 1
+
+	  end do
+
+	  iv(dtype0) = iv(dtype)
+	  v(parsv1:parsv1+nvdflt-1) = v(epslon:epslon+nvdflt-1)
+
+	  if ( iv1 /= 12 ) then
+	    return
+	  end if
+
+	  if ( v(jtinit) <= 0.0E+00 ) then
+	    write ( pu, '(a)' ) '(Initial) JTOL array'
+	    write ( pu, '(6e12.3)' ) v(jtol1:jtol0+p)
+	  end if
+
+	  if ( v(d0init) <= 0.0E+00 ) then
+	    k = jtol1 + p
+	    write ( pu, '(a)' ) '(Initial) D0 array'
+	    write ( pu, '(6e12.3)' ) v(k:k+p-1)
+	  end if*/
+
+	  return;
+	} // private void parchk
 	
 	private void qrfact ( int nm, int m, int n, double qr[][], double alpha[], int ipivot[],
 			              int ierr[], int nopivk, double sum[] ) {
