@@ -5342,6 +5342,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         return triImage[AXIAL_A].getRGBTA();
     }
 
+    public VOIManagerInterface getVOIManager()
+    {
+        return voiManager;
+    }
+    
     @Override
     public void setPaintMask(BitSet mask) {
         for (int i = 0; i < MAX_TRI_IMAGES; i++) {

@@ -74,6 +74,7 @@ import java.util.Vector;
 import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -201,7 +202,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
 
     /** Restores the VOI color button after QuickLUT. */
     protected Color currentColor = null;
-    /** Restores the current VOI acter QuickLUT. */
+    /** Restores the current VOI after QuickLUT. */
     protected VOI saveGroup = null;
 
     /** List of active VOIBase for a moving several selected VOIs. */
@@ -218,6 +219,15 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
     /** Statistics dialog VOI->Statistics generator... */
     private JDialogVOIStatistics imageStatList; 
 
+    /**
+     * Creates a VOIManagerInterface object.
+     * @param kParent the parent frame, must be a VOIManagerInterfaceListener
+     * @param kImageA imageA
+     * @param kImageB imageB
+     * @param iNViews number of views displayed in the parent.
+     * @param bGPU set to true if this VOIManagerInterface is part of the GPU-based Volume Renderer.
+     * @param kVOIGroup for ViewJFrameImage and ViewJFrameTriImage, so the VOI Toolbar can be part of a larger button group.
+     */
     public VOIManagerInterface ( VOIManagerInterfaceListener kParent,
             ModelImage kImageA, ModelImage kImageB, int iNViews, boolean bGPU, ButtonGroup kVOIGroup )
     {
@@ -266,6 +276,10 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         }
     }
 
+    /* 
+     * Handles all VOI Action commands from the VOI toolbar and VOI Menu.
+     * @param event ActionEvent
+     */
     public void actionPerformed(ActionEvent event) {
 
         String command = event.getActionCommand();
@@ -327,7 +341,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
             showVOIProperties();
             setDefaultCursor();
         } 
-        else if (command.equals("Open VOI")) {
+        else if (command.equals(CustomUIBuilder.PARAM_OPEN_VOI.getActionCommand())) {
             final boolean success = openVOI(false, false);
 
             if (success) {
@@ -335,13 +349,13 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
                 ProvenanceRecorder.getReference().addLine(new ActionOpenVOI(getActiveImage()));
             }
         } 
-        else if (command.equals("Open all VOIs")) {
+        else if (command.equals(CustomUIBuilder.PARAM_OPEN_VOI_ALL.getActionCommand())) {
             loadAllVOIs(false);
 
             ScriptRecorder.getReference().addLine(new ActionOpenAllVOIs(getActiveImage()));
             ProvenanceRecorder.getReference().addLine(new ActionOpenAllVOIs(getActiveImage()));
         } 
-        else if (command.equals("Open all VOIs from...")) {
+        else if (command.equals(CustomUIBuilder.PARAM_OPEN_VOI_ALL_FROM.getActionCommand())) {
 
             // get the voi directory
             String fileName = null;
@@ -370,28 +384,28 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
                 loadAllVOIsFrom(voiDir, false);
             }
         } 
-        else if (command.equals("Open labels")) {
+        else if (command.equals(CustomUIBuilder.PARAM_OPEN_VOI_LABEL.getActionCommand())) {
             openVOI(false, true);
         } 
-        else if (command.equals("SaveSelectedContours")) {
+        else if (command.equals(CustomUIBuilder.PARAM_SAVE_SELECTED_CONTOURS.getActionCommand())) {
             saveVOI(false);
         } 
-        else if (command.equals("SaveSelectedContoursAs")) {
+        else if (command.equals(CustomUIBuilder.PARAM_SAVE_SELECTED_CONTOURS_AS.getActionCommand())) {
             saveVOIAs(false);
         } 
-        else if (command.equals("Save VOI")) {
+        else if (command.equals(CustomUIBuilder.PARAM_SAVE_VOI.getActionCommand())) {
             saveVOI(true);
         } 
-        else if (command.equals("Save VOI as")) {
+        else if (command.equals(CustomUIBuilder.PARAM_SAVE_VOI_AS.getActionCommand())) {
             saveVOIAs(true);
         } 
-        else if (command.equals("Save all VOIs")) {
+        else if (command.equals(CustomUIBuilder.PARAM_SAVE_ALL_VOI.getActionCommand())) {
             saveAllVOIs();
 
             ScriptRecorder.getReference().addLine(new ActionSaveAllVOIs(getActiveImage()));
             ProvenanceRecorder.getReference().addLine(new ActionSaveAllVOIs(getActiveImage()));
         } 
-        else if (command.equals("Save all VOIs to...")) {
+        else if (command.equals(CustomUIBuilder.PARAM_SAVE_ALL_VOI_TO.getActionCommand())) {
 
             // get the voi directory
             String fileName = null;
@@ -423,18 +437,20 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
                 ProvenanceRecorder.getReference().addLine(new ActionSaveAllVOIs(getActiveImage(), voiDir));
             }
         } 
-        else if (command.equals("SaveVOIIntensities")) {
+        else if (command.equals(CustomUIBuilder.PARAM_SAVE_VOI_INTENSITIES.getActionCommand())) {
             saveVOIIntensities();
         } 
-        else if (command.equals("SaveSelectedAnnotation")) {
+        else if (command.equals(CustomUIBuilder.PARAM_SAVE_SELECTED_LABEL.getActionCommand())) {
             saveLabels(false);
         } 
-        else if (command.equals("SaveAllAnnotations")) {
+        else if (command.equals(CustomUIBuilder.PARAM_SAVE_ALL_LABEL.getActionCommand())) {
             saveLabels(true);
         } 
         else if (command.equals("XOR")) {
-            System.err.println( event.getSource() );
-            //ViewUserInterface.getReference().setUseVOIXOR(menuBuilder.isMenuItemSelected("Allow VOI holes (XOR)"));
+            if( event.getSource() instanceof JCheckBoxMenuItem )
+            {
+                ViewUserInterface.getReference().setUseVOIXOR(((JCheckBoxMenuItem)event.getSource()).isSelected());
+            }
         } 
         else if (command.equals("PaintMask")) {
             if ( !checkForActiveVOIs()) {
@@ -718,7 +734,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
             }
             new JDialogBSmooth(m_kParent.getFrame(), getActiveImage(), getSlice());
         } // Paint
-        else if (command.equals("VOIFlipY")) {
+        else if (command.equals(CustomUIBuilder.PARAM_VOI_FLIPY.getActionCommand())) {
             if ( !checkForActiveVOIs()) {
                 MipavUtil.displayWarning("Please select a VOI!");
                 return;
@@ -728,7 +744,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
                     AlgorithmFlip.VOI_TYPE);
 
             flip.callAlgorithm();
-        } else if (command.equals("VOIFlipX")) {
+        } else if (command.equals(CustomUIBuilder.PARAM_VOI_FLIPX.getActionCommand())) {
             if ( !checkForActiveVOIs()) {
                 MipavUtil.displayWarning("Please select a VOI!");
                 return;
@@ -737,7 +753,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
                     AlgorithmFlip.VOI_TYPE);
 
             flip.callAlgorithm();
-        } else if (command.equals("VOIFlipZ")) {
+        } else if (command.equals(CustomUIBuilder.PARAM_VOI_FLIPZ.getActionCommand())) {
             if ( !checkForActiveVOIs()) {
                 MipavUtil.displayWarning("Please select a VOI!");
                 return;
@@ -755,26 +771,32 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
 
             trimSettings.setVisible(true);
         }
-        else if (command.equals("OpenNewGraph")) {
+        else if (command.equals(CustomUIBuilder.PARAM_VOI_GRAPH_OPEN.getActionCommand())) {
             new ViewJFrameGraph("Graph", true);
         } 
-        else if (command.equals("boundaryIntensity")) {
+        else if (command.equals(CustomUIBuilder.PARAM_VOI_GRAPH_BOUNDARY_INTENSITY.getActionCommand())) {
             graphVOI();
         } 
-        else if (command.equals("totalIntensity")) {
+        else if (command.equals(CustomUIBuilder.PARAM_VOI_GRAPH_TOTAL_INTENSITY.getActionCommand())) {
             graph25VOI_CalcInten(true, false, 0);
         } 
-        else if (command.equals("avgIntensity")) {
+        else if (command.equals(CustomUIBuilder.PARAM_VOI_GRAPH_AVERAGE_INTENSITY.getActionCommand())) {
             graph25VOI_CalcInten(false, false, 0);
         } 
-        else if (event.getActionCommand().equals("totalIntensityThreshold")) {
+        else if (command.equals(CustomUIBuilder.PARAM_VOI_GRAPH_TOTAL_INTENSITY_THRESHOLD.getActionCommand())) {
             new JDialogIntensityThreshold(getFrame(), this,
                                           false);
-        } else if (event.getActionCommand().equals("avgIntensityThreshold")) {
+        } else if (command.equals(CustomUIBuilder.PARAM_VOI_GRAPH_AVERAGE_INTENSITY_THRESHOLD.getActionCommand())) {
             new JDialogIntensityThreshold(getFrame(), this,
                                           true);
         }
-        else if (command.equals("VOIStatistics")) {
+        else if (command.equals(CustomUIBuilder.PARAM_VOI_GRAPH_SHOW.getActionCommand())) {
+            setGraphVisible();
+        } 
+        else if (command.equals(CustomUIBuilder.PARAM_VOI_GRAPH_PAAI.getActionCommand())) {
+            setPAAIGraphVisible();        
+        }
+        else if (command.equals(CustomUIBuilder.PARAM_VOI_STATISTICS.getActionCommand())) {
             showStatisticsCalculator();
         } 
         else {
@@ -798,10 +820,8 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
     }
 
     /**
-     * adds the update listener.
-     * 
-     * @param listener
-     *            DOCUMENT ME!
+     * Adds a UpdateVOISelectionListener.
+     * @param listener will receive VOI selection events.
      */
     public void addVOIUpdateListener(UpdateVOISelectionListener listener) {
         listenerList.add(UpdateVOISelectionListener.class, listener);
@@ -1103,7 +1123,7 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
         boolean bDraw = isDrawCommand(kCommand);
         m_kParent.enableBoth(!bDraw);
 
-        if ( kCommand.equals("quickLUT") )
+        if ( kCommand.equals(CustomUIBuilder.PARAM_LUT_QUICK.getActionCommand()) )
         {
             saveGroup = m_kCurrentVOIGroup;
             m_kCurrentVOIGroup = null;
@@ -1144,23 +1164,28 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
             saveVOIs(kCommand);
             deleteVOIActivePt();
         }
-        else if (kCommand.equals("selectAllVOIs") )
+        else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_SELECT_ALL.getActionCommand()) )
         {
             selectAllVOIs(true);
         }
-        else if (kCommand.equals("voiSelectNone")) {
+        else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_SELECT_NONE.getActionCommand())) {
             selectAllVOIs(false);
         } 
-        else if (kCommand.equals("GroupVOIs")) {
+        else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_GROUP.getActionCommand())) {
             if ( !checkForActiveVOIs()) {
                 MipavUtil.displayWarning("Please select VOIs!");
                 return;
             }
             m_kParent.getActiveImage().groupVOIs();
             fireVOISelectionChange(null);
-        } else if (kCommand.equals("UngroupVOIs")) {
+        } else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_UNGROUP.getActionCommand())) {
             m_kParent.getActiveImage().ungroupVOIs();
             fireVOISelectionChange(null);
+        } 
+        else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_DELETE.getActionCommand()) ) {
+            saveVOIs(kCommand);
+            deleteSelectedVOI(false);
+            setDefaultCursor();
         } 
         else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_CUT.getActionCommand()) ) {
             saveVOIs(kCommand);
@@ -1196,28 +1221,28 @@ public class VOIManagerInterface implements ActionListener, VOIManagerListener, 
             saveVOIs(kCommand);
             moveVOI( m_kVOIManagers.elementAt(m_iActive), new Vector3f( 1, 0, 0 ), -1, true  );
         }        
-        else if (kCommand.equals("BringToFront")) {
+        else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_FRONT.getActionCommand())) {
             changeVOIOrder(false, VOI.FRONT);
         } 
-        else if (kCommand.equals("SendToBack")) {
+        else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_BACK.getActionCommand())) {
             changeVOIOrder(false, VOI.BACK);
         } 
-        else if (kCommand.equals("BringForward")) {
+        else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_FORWARD.getActionCommand())) {
             changeVOIOrder(false, VOI.FORWARD);
         } 
-        else if (kCommand.equals("SendBackward")) {
+        else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_BACKWARD.getActionCommand())) {
             changeVOIOrder(false, VOI.BACKWARD);
         } 
-        else if (kCommand.equals("BringContourToFront")) {
+        else if (kCommand.equals(CustomUIBuilder.PARAM_CONTOUR_FRONT.getActionCommand())) {
             changeVOIOrder(true, VOI.FRONT);
         } 
-        else if (kCommand.equals("SendContourToBack")) {
+        else if (kCommand.equals(CustomUIBuilder.PARAM_CONTOUR_BACK.getActionCommand())) {
             changeVOIOrder(true, VOI.BACK);
         } 
-        else if (kCommand.equals("BringContourForward")) {
+        else if (kCommand.equals(CustomUIBuilder.PARAM_CONTOUR_FORWARD.getActionCommand())) {
             changeVOIOrder(true, VOI.FORWARD);
         } 
-        else if (kCommand.equals("SendContourBackward")) {
+        else if (kCommand.equals(CustomUIBuilder.PARAM_CONTOUR_BACKWARD.getActionCommand())) {
             changeVOIOrder(true, VOI.BACKWARD);
         } 
         else

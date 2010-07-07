@@ -3548,6 +3548,11 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         // TODO Auto-generated method stub
         return null;
     }
+    
+    public VOIManagerInterface getVOIManager()
+    {
+        return voiManager;
+    }
 
     @Override
     public void setActiveImage(ModelImage kImage) {

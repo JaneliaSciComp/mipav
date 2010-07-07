@@ -583,6 +583,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     {
         m_kParent.deleteVOI( kVOI );
     }
+    
     public int deleteVOIActivePt( VOIBase kVOI )
     {
         int iPos = kVOI.getSelectedPoint();
@@ -1627,7 +1628,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         m_kDrawingContext = kContext;
     }
 
-
+    public void setImageB( ModelImage imageB )
+    {
+        m_akImages[1] = imageB;
+    }
 
     public void setOrientation( int iOrientation )
     {

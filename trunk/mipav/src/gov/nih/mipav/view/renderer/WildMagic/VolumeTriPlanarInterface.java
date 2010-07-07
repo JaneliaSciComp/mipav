@@ -3424,4 +3424,9 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     {
         // TODO Auto-generated method stub
     }
+
+    public VOIManagerInterface getVOIManager()
+    {
+        return m_kVOIInterface;
+    }
 }

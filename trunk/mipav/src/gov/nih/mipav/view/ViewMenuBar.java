@@ -35,6 +35,9 @@ public class ViewMenuBar {
     /** The menu listing installed plugins in the user's home directory. */
     protected JMenu plugInMenu;
 
+    /** The menu listing voi commands. */
+    protected JMenu voiMenu;
+
     /** The user interface for MIPAV. */
     protected ViewUserInterface userInterface;
 
@@ -81,7 +84,8 @@ public class ViewMenuBar {
             menuBar = new JMenuBar();
             plugInMenu = userInterface.buildPlugInsMenu(listener);
             menuBar.add(makeFileMenu(true));
-            menuBar.add(makeVOIMenu());
+            voiMenu = makeVOIMenu();
+            menuBar.add(voiMenu);
             menuBar.add(makeLUTMenu());
             menuBar.add(makeAlgorithmsMenu());
             menuBar.add(makeUtilitiesMenu());
@@ -110,6 +114,15 @@ public class ViewMenuBar {
      */
     public JMenu getPlugInMenu() {
         return this.plugInMenu;
+    }
+
+
+    /**
+     * Return the menu containing the list VOI commands.
+     * @return the VOI menu
+     */
+    public JMenu getVOIMenu() {
+        return this.voiMenu;
     }
 
     /**
@@ -709,68 +722,48 @@ public class ViewMenuBar {
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_3D_RECTANGLE, true)}),
                                 ViewMenuBar.separator,
                                 menuBuilder.makeMenu("Open VOI", true, new JMenuItem[] {
-                                        menuBuilder.buildMenuItem("Open VOI", "Open VOI", 0, "open.gif", true),
-                                        menuBuilder
-                                                .buildMenuItem("Open all VOIs", "Open all VOIs", 0, "open.gif", true),
-                                        menuBuilder.buildMenuItem("Open all VOIs from...", "Open all VOIs from...", 0,
-                                                "open.gif", true),
-                                        menuBuilder.buildMenuItem("Open label(s)...", "Open labels", 0, "open.gif",
-                                                true)}),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_OPEN_VOI, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_OPEN_VOI_ALL, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_OPEN_VOI_ALL_FROM, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_OPEN_VOI_LABEL, true)}),
                                 ViewMenuBar.separator,
                                 menuBuilder.makeMenu("Save VOI", true, new JMenuItem[] {
-                                        menuBuilder.buildMenuItem("Save selected contours", "SaveSelectedContours", 0,
-                                                "save.gif", true),
-                                        menuBuilder.buildMenuItem("Save selected contours as",
-                                                "SaveSelectedContoursAs", 0, "save.gif", true),
-                                        menuBuilder.buildMenuItem("Save VOI", "Save VOI", 0, "save.gif", true),
-                                        menuBuilder.buildMenuItem("Save VOI as", "Save VOI as", 0, "save.gif", true),
-                                        menuBuilder
-                                                .buildMenuItem("Save all VOIs", "Save all VOIs", 0, "save.gif", true),
-                                        menuBuilder.buildMenuItem("Save all VOIs to...", "Save all VOIs to...", 0,
-                                                "save.gif", true),
-                                        menuBuilder.buildMenuItem("Save intensities in VOI to...",
-                                                "SaveVOIIntensities", 0, "save.gif", true),
-                                        menuBuilder.buildMenuItem("Save selected label to...",
-                                                "SaveSelectedAnnotation", 0, "save.gif", true),
-                                        menuBuilder.buildMenuItem("Save all labels to...", "SaveAllAnnotations", 0,
-                                                "save.gif", true)}),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_SELECTED_CONTOURS, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_SELECTED_CONTOURS_AS, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_VOI, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_VOI_AS, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_ALL_VOI, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_ALL_VOI_TO, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_VOI_INTENSITIES, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_SELECTED_LABEL, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_ALL_LABEL, true)}),
                                 ViewMenuBar.separator,
                                 menuBuilder
                                         .makeMenu("Edit VOI", true,
                                                 new JMenuItem[] {
-                                                        menuBuilder.buildMenuItem("Undo VOI", "undoVOI", 0,
-                                                                "undopaint.gif", true),
-                                                        menuBuilder.buildMenuItem("Cut VOI", "cutVOI", 0,
-                                                                "cutpaint.gif", true),
-                                                        menuBuilder.buildMenuItem("Copy VOI", "copyVOI", 0,
-                                                                "copypaint.gif", true),
-                                                        menuBuilder.buildMenuItem("Paste VOI", "pasteVOI", 0,
-                                                                "pastepaint.gif", true),}),
+                                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_UNDO, true),
+                                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_REDO, true),
+                                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_DELETE, true),
+                                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_CUT, true),
+                                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_COPY, true),
+                                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PASTE, true),}),
                                 menuBuilder.makeMenu("Select VOI", true, new JMenuItem[] {
-                                        menuBuilder.buildMenuItem("Select all VOIs", "selectAllVOIs", 0, null, false),
-                                        menuBuilder.buildMenuItem("Select none", "voiSelectNone", 0, null, false),}),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_SELECT_ALL, false),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_SELECT_NONE, false),}),
                                 ViewMenuBar.separator,
                                 menuBuilder.makeMenu("VOI grouping", true, new JMenuItem[] {
-                                        menuBuilder.buildMenuItem("Group VOIs", "GroupVOIs", 0, null, false),
-                                        menuBuilder.buildMenuItem("Ungroup VOIs", "UngroupVOIs", 0, null, false),}),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GROUP, false),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_UNGROUP, false),}),
                                 menuBuilder.makeMenu("VOI order", true, new JMenuItem[] {
-                                        menuBuilder.buildMenuItem("Bring VOI to front", "BringToFront", 0, "front.gif",
-                                                true),
-                                        menuBuilder
-                                                .buildMenuItem("Send VOI to back", "SendToBack", 0, "back.gif", true),
-                                        menuBuilder.buildMenuItem("Bring VOI forward", "BringForward", 0,
-                                                "forward.gif", true),
-                                        menuBuilder.buildMenuItem("Send VOI backward", "SendBackward", 0,
-                                                "backward.gif", true)}),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_FRONT, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_BACK, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_FORWARD, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_BACKWARD, true)}),
                                 menuBuilder.makeMenu("Contour order", true, new JMenuItem[] {
-                                        menuBuilder.buildMenuItem("Bring contour to front", "BringContourToFront", 0,
-                                                "front.gif", true),
-                                        menuBuilder.buildMenuItem("Send contour to back", "SendContourToBack", 0,
-                                                "back.gif", true),
-                                        menuBuilder.buildMenuItem("Bring contour forward", "BringContourForward", 0,
-                                                "forward.gif", true),
-                                        menuBuilder.buildMenuItem("Send contour backward", "SendContourBackward", 0,
-                                                "backward.gif", true)}),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_CONTOUR_FRONT, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_CONTOUR_BACK, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_CONTOUR_FORWARD, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_CONTOUR_BACKWARD, true)}),
                                 ViewMenuBar.separator,
                                 menuBuilder.makeMenu("VOI conversion", true, new JMenuItem[] {
                                         menuBuilder.buildMenuItem("VOI -> Paint", "PaintMask", 0, null, false),
@@ -800,26 +793,23 @@ public class ViewMenuBar {
                                 ViewMenuBar.separator,
                                 menuBuilder.makeMenu("Propagate", true, new JMenuItem[] {
                                         menuBuilder
-                                                .buildMenuItem("To next slice", "PropVOIUp", 0, "voipropu.gif", true),
-                                        menuBuilder.buildMenuItem("To previous slice", "PropVOIDown", 0,
-                                                "voipropd.gif", true),
-                                        menuBuilder.buildMenuItem("To all slices", "PropVOIAll", 0, "voipropall.gif",
-                                                true)}),
+                                                .buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPAGATE_UP, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPAGATE_DOWN, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPAGATE_ALL, true)}),
                                 menuBuilder.makeMenu("Evolve boundary 2D", true, new JMenuItem[] {
                                         menuBuilder.buildMenuItem("Active contour", "Snake", 0, null, false),
                                         menuBuilder.buildMenuItem("Active GVF", "AGVF", 0, null, false),
                                         menuBuilder.buildMenuItem("Spline active contour", "BSnake", 0, null, false),
                                         menuBuilder.buildMenuItem("Spline GVF", "GVF", 0, null, false)}),
                                 menuBuilder.makeMenu("Flip VOI", true, new JMenuItem[] {
-                                        menuBuilder.buildMenuItem("Horizontal", "VOIFlipY", 0, "fliphoriz.gif", true),
-                                        menuBuilder.buildMenuItem("Vertical", "VOIFlipX", 0, "flipvert.gif", true),
-                                        menuBuilder.buildMenuItem("Depth", "VOIFlipZ", 0, "flipvert.gif", true)}),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_FLIPY, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_FLIPX, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_FLIPZ, true)}),
                                 menuBuilder.buildMenuItem("Interpolate VOIs", "interpolateVOIs", 0, null, true),
                                 ViewMenuBar.separator,
                                 menuBuilder.buildMenuItem("Smooth VOI", "SmoothVOI", 0, null, true),
                                 menuBuilder.buildMenuItem("Trim parameter", "Trim", 0, null, true),
                                 ViewMenuBar.separator,
-                                //menuBuilder.buildMenuItem("Cardiology VOI", "Cardio", 0, null, true),
                                 menuBuilder.makeMenu("Prostate VOI", true,
                                         new JMenuItem[] {
                                                 menuBuilder.buildMenuItem("Merge VOIs", "ProstateMergedVOIs", 0, null,
@@ -842,28 +832,33 @@ public class ViewMenuBar {
                                                         null, false)}),
                                 ViewMenuBar.separator,
                                 menuBuilder.makeMenu("Graph", true, new JMenuItem[] {
-                                        menuBuilder.buildMenuItem("Open VOI intensity graph", "OpenNewGraph", 0,
-                                                "open.gif", true),
-                                        menuBuilder.buildMenuItem("Boundary intensity", "boundaryIntensity", 0, null,
-                                                true),
-                                        menuBuilder.buildMenuItem("Total intensity", "totalIntensity", 0, null, true),
-                                        menuBuilder.buildMenuItem("Average intensity", "avgIntensity", 0, null, true),
-                                        menuBuilder.buildMenuItem("Total intensity with threshold",
-                                                "totalIntensityThreshold", 0, null, true),
-                                        menuBuilder.buildMenuItem("Average intensity with threshold",
-                                                "avgIntensityThreshold", 0, null, true)}), ViewMenuBar.separator,
-                                menuBuilder.buildMenuItem("Properties...", "VOIProperties", 'P', null, true),
-                                menuBuilder.buildMenuItem("Statistics generator...", "VOIStatistics", 'G', null, true),});
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_OPEN, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_BOUNDARY_INTENSITY, false),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_TOTAL_INTENSITY, false),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_AVERAGE_INTENSITY, false),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_TOTAL_INTENSITY_THRESHOLD , false),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_AVERAGE_INTENSITY_THRESHOLD, false)}),
+                                ViewMenuBar.separator,
+                                menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPERTIES, true),
+                                menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_STATISTICS, false),});
     }
 
 
     public static boolean isMenuCommand( JMenu menu, String command )
     {
+        if ( menu == null || command == null )
+        {
+            return false;
+        }
         return isMenuCommand( menu.getMenuComponents(), command );
     }
     
-    private static boolean isMenuCommand( Component[] menuComponents, String command )
+    public static boolean isMenuCommand( Component[] menuComponents, String command )
     {
+        if ( menuComponents == null || command == null )
+        {
+            return false;
+        }
         boolean bReturn = false;
         for ( int i = 0; i < menuComponents.length; i++ )
         {
