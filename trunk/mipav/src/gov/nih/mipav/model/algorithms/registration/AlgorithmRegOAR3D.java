@@ -1977,7 +1977,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
      * translations and global scale to come up with a good guess as to what the optimized translation would be at that
      * point. Takes the top 20% of the points and optimizes them. Now have a large multi-array of costs. 20% of those
      * have been optimized and placed back into their original position in the multi-array. Removes those items that are
-     * outisde the rotation begin and end limits. Looks at the 8 neighbors of a point: +, =, or - one fine sample in
+     * outside the rotation begin and end limits. Looks at the 8 neighbors of a point: +, =, or - one fine sample in
      * each of the three directions. If the point has a cost greater than any of these, it is not a minima. Otherwise it
      * is. Saves it in a vector of minima. Optimizes the minima over rotations as well as translations and global scale.
      * (Previously had not optimized over rotations.) Returns two vectors, one containing the minima before
