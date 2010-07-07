@@ -11,6 +11,11 @@ import javax.swing.JFrame;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
+/**
+ * VOIManagerInterfaceListener interface. All classes that contain a VOIManagerInterface object
+ * must implement VOIManagerInterfaceListeners. This interface defines functions the VOIManagerInterface
+ * requires when communicating to and from it's parent class for proper VOI interaction.
+ */
 public interface VOIManagerInterfaceListener
 {
     public void create3DVOI( boolean bIntersection );

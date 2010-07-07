@@ -981,7 +981,9 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_NEW, VOIGroup));
         VOIToolBar.add(makeSeparator());
         
-        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_PROPERTIES, VOIGroup));
+        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_PROPERTIES.getActionCommand(), 
+                CustomUIBuilder.PARAM_VOI_PROPERTIES.getMnemonic(), CustomUIBuilder.PARAM_VOI_PROPERTIES.getToolTip(), 
+                "voiquestion", VOIGroup));
         VOIToolBar.add(voiColorButton);
 
         VOIToolBar.add(makeSeparator());

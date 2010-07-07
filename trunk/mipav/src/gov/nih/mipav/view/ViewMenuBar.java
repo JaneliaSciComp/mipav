@@ -839,7 +839,7 @@ public class ViewMenuBar {
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_TOTAL_INTENSITY_THRESHOLD , false),
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_AVERAGE_INTENSITY_THRESHOLD, false)}),
                                 ViewMenuBar.separator,
-                                menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPERTIES, true),
+                                menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPERTIES, false),
                                 menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_STATISTICS, false),});
     }
 
