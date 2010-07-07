@@ -1692,6 +1692,9 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 			    }
 			    
 			    treTR = Double.valueOf(convRepTime.getText()).doubleValue();
+			    if(process && (performStraightTreT1 || performTreT1withPreCalculatedB1Map)) {
+			    	showB1Map = false; //the B1 map is not computed in the conventional case, this keeps TRE from trying to open this image
+			    }
 			    ViewUserInterface.getReference().getMessageFrame().append("TreTR: "+treTR+"\n", ViewJFrameMessage.DEBUG);
 	    	} catch(Exception e) {
 	    		if(process && (performStraightTreT1 || performTreT1withPreCalculatedB1Map)) {

@@ -33,6 +33,12 @@ import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewUserInterface;
 
+/**
+ * The dialog for the calculation of Tre methods.  This dialog is scriptable, but not yet Jistable.
+ * 
+ * @author senseneyj
+ *
+ */
 public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInterface {
 
     private static String title = "TRE T2 Mapper";
