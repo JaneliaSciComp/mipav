@@ -301,6 +301,10 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
     	    	String filepreloc = fileLoc.substring(0, loc);
     	    	fileFinalLoc = file.getParent()+File.separator+filepreloc+File.separator;
     	    	fileNames[i] = filename;
+    	    	Preferences.debug("***************************** FileDir is " + fileFinalLoc + "\n");
+    	    	System.out.println("***************************** FileDir is " + fileFinalLoc);
+    	    	Preferences.debug("***************************** FileName is " + filename + "\n");
+    	    	System.out.println("***************************** FileName is " + filename);
 			
 			} 
 			else{
