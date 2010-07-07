@@ -1668,6 +1668,10 @@ public abstract class VOIBase extends Vector<Vector3f> {
      */
     public void setActive(boolean active) {
         this.active = active;
+        if ( (voiGroup != null) && (voiGroup.getCurves().size() == 1) && !active )
+        {
+            voiGroup.setActive(false);
+        }
     }
     
     /**

@@ -81,7 +81,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
     public ViewJPopupVOI(VOIHandlerInterface handler) {
         voiHandler = handler;
 
-        itemProps = ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPERTIES, this, true);
+        itemProps = ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPERTIES, this, false);
 
         selectionMenu = ViewMenuBuilder.buildMenu("Select", 0, true);
         selectionMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_SELECT_ALL, this, false));
@@ -150,10 +150,9 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+
+    /* (non-Javadoc)
+     * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
      */
     public void actionPerformed(ActionEvent event) {
 
@@ -161,76 +160,62 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
         {
             voiHandler.actionPerformed(event);
         } 
-        else if (event.getActionCommand().equals("cropImage")) {
+        if (event.getActionCommand().equals(CustomUIBuilder.PARAM_VOI_CROP.getActionCommand())) {
             new JDialogCrop(voiHandler.getActiveImage().getParentFrame(),
                     voiHandler.getActiveImage(), true);
-        } 
+        }
+        if (event.getActionCommand().equals(CustomUIBuilder.PARAM_VOI_CLOSE.getActionCommand())) {
+            closeVOI();
+        }
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+    /* (non-Javadoc)
+     * @see java.awt.event.MouseListener#mouseClicked(java.awt.event.MouseEvent)
      */
     public void mouseClicked(MouseEvent event) {
         checkPopup(event);
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+    /* (non-Javadoc)
+     * @see java.awt.event.MouseListener#mouseEntered(java.awt.event.MouseEvent)
      */
     public void mouseEntered(MouseEvent event) { }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+    /* (non-Javadoc)
+     * @see java.awt.event.MouseListener#mouseExited(java.awt.event.MouseEvent)
      */
     public void mouseExited(MouseEvent event) { }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+    /* (non-Javadoc)
+     * @see java.awt.event.MouseListener#mousePressed(java.awt.event.MouseEvent)
      */
     public void mousePressed(MouseEvent event) {
         checkPopup(event);
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+    /* (non-Javadoc)
+     * @see java.awt.event.MouseListener#mouseReleased(java.awt.event.MouseEvent)
      */
     public void mouseReleased(MouseEvent event) {
         checkPopup(event);
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+    /* (non-Javadoc)
+     * @see javax.swing.event.PopupMenuListener#popupMenuCanceled(javax.swing.event.PopupMenuEvent)
      */
     public void popupMenuCanceled(PopupMenuEvent event) {
         Preferences.debug("Popup menu will be visible!");
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+    /* (non-Javadoc)
+     * @see javax.swing.event.PopupMenuListener#popupMenuWillBecomeInvisible(javax.swing.event.PopupMenuEvent)
      */
     public void popupMenuWillBecomeInvisible(PopupMenuEvent event) {
         Preferences.debug("Popup menu will be invisible!");
     }
 
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+    /* (non-Javadoc)
+     * @see javax.swing.event.PopupMenuListener#popupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent)
      */
     public void popupMenuWillBecomeVisible(PopupMenuEvent event) {
         Preferences.debug("Popup menu will be visible!");
@@ -263,6 +248,11 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
         itemProps.setEnabled(flag);
     }
 
+    /**
+     * Called from the VOIManager class. When a popup is trigged, this sets the VOIBase
+     * that triggered the popup.
+     * @param kVOI the VOIBase selected by right-mouse click.
+     */
     public void setSelectedVOI( VOIBase kVOI )
     {
         selectedVOI = kVOI;

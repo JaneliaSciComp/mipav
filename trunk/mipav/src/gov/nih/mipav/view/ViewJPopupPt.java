@@ -59,7 +59,7 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
             itemShowGraph = ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_SHOW, this, false);
             itemShowPAAIDialog = ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_PAAI, this, false);
            
-            itemProps = ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPERTIES, this, true);
+            itemProps = ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPERTIES, this, false);
             voiHandler = handler;
         } catch (OutOfMemoryError error) {
             System.gc();

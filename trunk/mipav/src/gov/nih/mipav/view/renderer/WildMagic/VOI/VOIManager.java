@@ -48,9 +48,41 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 
-import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
+/**
+ * VOIManager class performs all direct user-manipulation of VOIs. The VOIManager is a MouseListener and
+ * MouseMotionListener. It takes MouseEvent input and creates VOIs based on the MouseEvent input. This class
+ * handles creating all the VOIBase types: VOILine, VOIPoint, VOIPolyLineSlice, VOIContour,
+ * VOIText, etc. It further defines the specific types: rectangle, oval, levelset, livewire, splitline, etc.
+ * 
+ * The VOIManager class handles VOI selection, moving single points in a VOI, adding new points to a VOI, and
+ * moving a VOI as a unit. This class handles the retrace function, for adjusting an existing VOI contour with
+ * the mouse. It handles the livewire and level set calculations for creating levelset and livewire VOIs.
+ * 
+ * The VOIManager is responsible for drawing VOIs for the ViewJComponentEditImage class.
+ * 
+ * The VOIManager interacts with the ViewJPopupPt and ViewJPopupVOI popup menus.
+ * 
+ * All interaction between the VOIManager and the VOI is in local screen space. The ViewJFrameTriImage
+ * class displays a single ModelImage in three different orientations: Axial, Coronal, and Sagittal. There is
+ * a different VOIManager for each of the displayed orientations. The VOIManager operates in the local
+ * coordinate space and is linked directly to a ScreenCoordinateListener and a display Component to translate
+ * between the local screen space and the original ModelImage file coordinate space. 
+ * For example the VOIManagers created for the ViewJFrameTriImage are linked to the three 
+ * ViewJComponentTriImage(s) which are ScreenCoordinateListeners.  The VOIManager uses the 
+ * ScreenCoordinateListener to translate local MouseEvent 
+ * X,Y positions into image file coordinates for drawing and storing VOI contours.
+ * 
+ * Although all interaction between the VOIManager and the VOI is in local screen space, the VOI stores
+ * the contour data in ModelImage file coordinates. The VOIManager converts the local coordinates into ModelImage
+ * file coordinates when a new VOI is created.  The contour data is converted as needed by the VOIManager
+ * to local space for interaction and display.
+ * 
+ * This class should only be created by the VOIManagerInterface class and is contained within that class.
+ * @see VOIManagerInterface
+ *
+ */
 public class VOIManager implements ActionListener, KeyListener, MouseListener, MouseMotionListener
 {
     /**
@@ -133,7 +165,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
         /**
          * Returns a flag indicating if this tree is empty.
-         *
          * @return  <code>true</code> if tree is empty.
          */
         public final boolean isEmpty() {
@@ -142,7 +173,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
         /**
          * Pops off minimum cost in tree. Returns position of minimum cost and also removes that node from the tree.
-         *
          * @return  Position of minimum cost.
          */
         public final int pop() {
@@ -302,7 +332,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
         /**
          * Creates a new tree node with the given data.
-         *
          * @param  position  Position in array seededCosts.
          * @param  cost      Cost of node.
          */
@@ -315,7 +344,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
         /**
          * Returns readable representation of this node.
-         *
          * @return  Readable representation of node.
          */
         public String toString() {
@@ -437,11 +465,30 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     private Vector3f m_kMouseOffset = new Vector3f();
     private boolean m_bMouseDrag = false;
 
+    private int indexRetrace = -99;
+
+    private VOIContour oldContour = null;
+
+
+    private int lastX = -1;
+
+    private int lastY = -1;
+
+    private int lastZ = -1;
+
+    private boolean knowDirection = false;
+
+    private boolean isFirst = true;
+
+
+    private boolean resetStart = true;
+
+
     public VOIManager (VOIManagerInterface kParent )
     {
         m_kParent = kParent;
     }
-
+    
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
 
@@ -455,7 +502,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_kParent.showIntensityGraph( m_kCurrentVOI );
         }
     }
-
 
     public void add( VOIBase kVOI, float fHue )
     {
@@ -558,7 +604,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
     }
 
-
     public boolean contains( VOIBase kVOI, int iX, int iY, int iZ ) {
 
         Vector3f kVolumePt = new Vector3f();
@@ -579,11 +624,12 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     }
 
 
+
     public void deleteVOI( VOIBase kVOI )
     {
         m_kParent.deleteVOI( kVOI );
     }
-    
+
     public int deleteVOIActivePt( VOIBase kVOI )
     {
         int iPos = kVOI.getSelectedPoint();
@@ -598,6 +644,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
         return kVOI.size();
     }
+
 
     public void dispose() 
     {
@@ -761,6 +808,92 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
     }
 
+    public Vector3f drawBlendContour( VOIBase kVOI, int[] pixBuffer, float opacity, Color color, int slice )
+    {
+        if ( (m_iPlane != (m_iPlane & kVOI.getPlane())) || (getSlice(kVOI)!= slice) )
+        {
+            return null;
+        }
+        int iNumPoints = kVOI.size();
+        if ( iNumPoints == 0 )
+        {
+            return null;
+        }
+        Vector3f[] kVolumePts = new Vector3f[iNumPoints + 1];
+        int iXMin = Integer.MAX_VALUE;
+        int iYMin = Integer.MAX_VALUE;
+        int iXMax = Integer.MIN_VALUE;
+        int iYMax = Integer.MIN_VALUE;
+        for ( int i = 0; i < iNumPoints; i++ )
+        {
+            Vector3f kVolumePt = kVOI.get(i);
+            Vector3f kPt = fileCoordinatesToPatient( kVolumePt );
+
+            //kPt.Z = iSlice;/
+            kVolumePts[i] = kPt;
+            iXMin = (int)Math.min( iXMin, kVolumePts[i].X );
+            iYMin = (int)Math.min( iYMin, kVolumePts[i].Y );
+            iXMax = (int)Math.max( iXMax, kVolumePts[i].X );
+            iYMax = (int)Math.max( iYMax, kVolumePts[i].Y );
+        }               
+        Vector3f kVolumePt = kVOI.get(0);
+        Vector3f kPt = fileCoordinatesToPatient( kVolumePt );
+        int iSlice = (int)kPt.Z;
+
+        //Vector3f kPt = kPoly.VBuffer.GetPosition3(0);
+        //kPt.Mult( m_kVolumeScaleInv );
+        //kPt.Z = iSlice;
+        kVolumePts[iNumPoints] = kPt;
+        iXMin = (int)Math.min( iXMin, kVolumePts[iNumPoints].X );
+        iYMin = (int)Math.min( iYMin, kVolumePts[iNumPoints].Y );
+        iXMax = (int)Math.max( iXMax, kVolumePts[iNumPoints].X );
+        iYMax = (int)Math.max( iYMax, kVolumePts[iNumPoints].Y );
+        iNumPoints++;
+
+        int[][] aaiCrossingPoints = new int[iXMax - iXMin + 1][];
+        int[] aiNumCrossings = new int[iXMax - iXMin + 1];
+
+        for (int i = 0; i < (iXMax - iXMin + 1); i++) {
+            aaiCrossingPoints[i] = new int[iNumPoints];
+        }
+
+        outlineRegion(aaiCrossingPoints, aiNumCrossings, iXMin, iXMax, kVolumePts);
+        int numPts = 0;
+        Vector3f kCenterMass = new Vector3f();
+        for (int iX = iXMin; iX <= iXMax; iX++) {
+            int iIndex = iX - iXMin;
+            if ( aiNumCrossings[iIndex] >= 2 )
+            {
+                for ( int i = 0; i < aiNumCrossings[iIndex]; i+= 2 )
+                {
+                    int yStart = Math.round(aaiCrossingPoints[iIndex][i]);
+                    int yEnd = Math.round(aaiCrossingPoints[iIndex][i+1]);
+                    for ( int iY = yStart; iY <= yEnd; iY++ )
+                    {
+                        if ( pixBuffer != null )
+                        {
+                            int bufferIndex = iY * m_aiLocalImageExtents[0] + iX;
+                            int opacityInt = (int) (opacity * 255);
+                            opacityInt = opacityInt << 24;
+
+                            int colorInt = color.getRGB() & 0x00ffffff;
+                            pixBuffer[bufferIndex] = colorInt | opacityInt;
+                        }
+                        else
+                        {
+                            kCenterMass.Add( patientCoordinatesToFile( new Vector3f( iX, iY, iSlice ) ) );
+                            numPts++;
+                        }
+                    }
+                }
+            }
+        }       
+        kCenterMass.X = MipavMath.round( kCenterMass.X / numPts );
+        kCenterMass.Y = MipavMath.round( kCenterMass.Y / numPts );
+        kCenterMass.Z = MipavMath.round( kCenterMass.Z / numPts );
+        return kCenterMass;
+    }
+
     public void drawNext(int iX, int iY) {
         if ( m_kCurrentVOI == null )
         {
@@ -839,6 +972,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
     }
 
+
     public Vector3f fileCoordinatesToPatient( Vector3f volumePt )
     {       
         Vector3f kPatient = new Vector3f();
@@ -848,16 +982,103 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 
 
+
     public ModelImage getActiveImage()
     {
         return m_kImageActive;
+    }
+
+    public Vector3f getBoundingBoxLeftMiddle( VOIBase kVOI )
+    {
+        Vector3f kUpperLeft = getBoundingBoxUpperLeft( kVOI );
+        Vector3f kLowerLeft = getBoundingBoxLowerLeft( kVOI );
+        Vector3f kLeftMid = new Vector3f();
+        kLeftMid.Add( kUpperLeft, kLowerLeft );
+        kLeftMid.Scale( 0.5f );
+        return kLeftMid;
+    }
+
+    public Vector3f getBoundingBoxLowerLeft( VOIBase kVOI )
+    {
+        Vector3f kScreenMin = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[0] );
+        Vector3f kScreenMax = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[1] );
+        Vector3f kTemp = new Vector3f( kScreenMin );
+        kScreenMin.Min( kScreenMax );
+        kScreenMax.Max( kTemp );
+
+        return new Vector3f( kScreenMin.X, kScreenMax.Y, kScreenMin.Z );
+    }
+
+    public Vector3f getBoundingBoxLowerMiddle( VOIBase kVOI )
+    {
+        Vector3f kLowerLeft = getBoundingBoxLowerLeft( kVOI );
+        Vector3f kLowerRight = getBoundingBoxLowerRight( kVOI );
+        Vector3f kLowerMid = new Vector3f();
+        kLowerMid.Add( kLowerLeft, kLowerRight );
+        kLowerMid.Scale( 0.5f );
+        return kLowerMid;
+    }
+
+    public Vector3f getBoundingBoxLowerRight( VOIBase kVOI )
+    {
+        Vector3f kScreenMin = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[0] );
+        Vector3f kScreenMax = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[1] );
+        Vector3f kTemp = new Vector3f( kScreenMin );
+        kScreenMin.Min( kScreenMax );
+        kScreenMax.Max( kTemp );
+
+        return new Vector3f( kScreenMax );
+    }
+
+    public Vector3f getBoundingBoxRightMiddle( VOIBase kVOI )
+    {
+        Vector3f kUpperRight = getBoundingBoxUpperRight( kVOI );
+        Vector3f kLowerRight = getBoundingBoxLowerRight( kVOI );
+        Vector3f kRightMid = new Vector3f();
+        kRightMid.Add( kUpperRight, kLowerRight );
+        kRightMid.Scale( 0.5f );
+        return kRightMid;
+    }
+
+
+
+    public Vector3f getBoundingBoxUpperLeft( VOIBase kVOI )
+    {
+        Vector3f kScreenMin = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[0] );
+        Vector3f kScreenMax = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[1] );
+        Vector3f kTemp = new Vector3f( kScreenMin );
+        kScreenMin.Min( kScreenMax );
+        kScreenMax.Max( kTemp );
+
+        return new Vector3f( kScreenMin );
+    }
+
+    public Vector3f getBoundingBoxUpperMiddle( VOIBase kVOI )
+    {
+        Vector3f kUpperLeft = getBoundingBoxUpperLeft( kVOI );
+        Vector3f kUpperRight = getBoundingBoxUpperRight( kVOI );
+        Vector3f kUpperMid = new Vector3f();
+        kUpperMid.Add( kUpperLeft, kUpperRight );
+        kUpperMid.Scale( 0.5f );
+        return kUpperMid;
+    }
+
+
+    public Vector3f getBoundingBoxUpperRight( VOIBase kVOI )
+    {
+        Vector3f kScreenMin = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[0] );
+        Vector3f kScreenMax = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[1] );
+        Vector3f kTemp = new Vector3f( kScreenMin );
+        kScreenMin.Min( kScreenMax );
+        kScreenMax.Max( kTemp );
+
+        return new Vector3f( kScreenMax.X, kScreenMin.Y, kScreenMin.Z );
     }
 
     public Component getComponent()
     {
         return m_kComponent;
     }
-
 
     public VOIBase getCurrentVOI()
     {
@@ -878,6 +1099,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     {
         return m_iPlane;
     }
+
 
     public void init( ModelImage kImageA, ModelImage kImageB, Component kComponent, 
             ScreenCoordinateListener kContext, int iOrientation, int iSlice )
@@ -910,7 +1132,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         return (m_bDrawVOI || m_kParent.getPointerButton().isSelected() );
     }
 
-
     public void keyPressed(KeyEvent e) {
         //System.err.println("VOIManager keyPressed" );
         if ( e.getKeyChar() == 'q' || e.getKeyChar() == 'Q' )
@@ -935,9 +1156,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_kParent.doVOI( command );
         }
     }
-
-
-
 
     public void keyReleased(KeyEvent e) {
         //System.err.println("VOIManager keyReleased" );
@@ -967,9 +1185,13 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
     }
 
+
+
     public void keyTyped(KeyEvent e)
     {
     }
+
+
 
     public void liveWire( int iSelection )
     {
@@ -1052,6 +1274,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         m_bMouseDrag = false;
     }
 
+
     /* (non-Javadoc)
      * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mouseDragged(java.awt.event.MouseEvent)
      */
@@ -1081,8 +1304,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }        
     }
 
-
-
     public void mouseExited(MouseEvent arg0) 
     {
         if ( m_bDrawVOI && (m_iDrawType == LEVELSET) )
@@ -1093,7 +1314,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             }
         } 
     }
-
     public void mouseMoved(MouseEvent kEvent) 
     {      
         if ( !isActive() )
@@ -1129,7 +1349,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             drawNextPolyline( kEvent.getX(), kEvent.getY() );
         } 
     }
-
 
     /* (non-Javadoc)
      * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mousePressed(java.awt.event.MouseEvent)
@@ -1324,35 +1543,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         m_bMouseDrag = false;
     }
 
-    public boolean testMove( Vector3f kDiff, Vector3f[] akMinMax )
-    {            
-        Vector3f kScreenMin = m_kDrawingContext.fileToScreen( akMinMax[0] );
-        kScreenMin.Add(kDiff);
-
-        Vector3f kScreenMax = m_kDrawingContext.fileToScreen( akMinMax[1] );
-        kScreenMax.Add(kDiff);
-        Vector3f kTemp = new Vector3f( kScreenMin );
-        kScreenMin.Min( kScreenMax );
-        kScreenMax.Max( kTemp );
-
-        if ( !kScreenMin.equals(kScreenMax) && 
-                (m_fMouseX < kScreenMin.X || m_fMouseX > kScreenMax.X ||
-                        m_fMouseY < kScreenMin.Y || m_fMouseY > kScreenMax.Y )  )
-        {
-            return false;
-        }
-        Vector3f kTestMin = new Vector3f();       
-        Vector3f kTestMax = new Vector3f();       
-        if ( m_kDrawingContext.screenToFile( kScreenMin, kTestMin ) || 
-                m_kDrawingContext.screenToFile( kScreenMax, kTestMax )  )
-        {
-            return false;
-        }         
-        akMinMax[0].Copy( kTestMin );
-        akMinMax[1].Copy( kTestMax );
-        return true;
-    }
-
     public void move( VOIBase kVOI, Vector3f kDiff )
     {
         if ( kVOI.isFixed() || kDiff.equals( Vector3f.ZERO ) )
@@ -1394,24 +1584,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 m_kParent.updateGraph(kVOI);
             }
         }
-    }
-
-    public boolean nearPoint( VOIBase kVOI, int iX, int iY, int iZ) {
-
-        Vector3f kVOIPoint = new Vector3f(iX, iY, iZ );
-        for ( int i = 0; i < kVOI.size(); i++ )
-        {
-            Vector3f kFilePos = kVOI.get(i);
-            Vector3f kPos = m_kDrawingContext.fileToScreen(kFilePos);
-            Vector3f kDiff = new Vector3f();
-            kDiff.Sub( kPos, kVOIPoint );
-            if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
-            {
-                kVOI.setNearPoint(i);
-                return true;
-            }
-        }
-        return false;
     }
 
     public boolean nearBoundPoint( VOIBase kVOI, int iX, int iY, int iZ )
@@ -1484,93 +1656,22 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     }
 
 
-    public Vector3f getBoundingBoxUpperLeft( VOIBase kVOI )
-    {
-        Vector3f kScreenMin = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[0] );
-        Vector3f kScreenMax = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[1] );
-        Vector3f kTemp = new Vector3f( kScreenMin );
-        kScreenMin.Min( kScreenMax );
-        kScreenMax.Max( kTemp );
+    public boolean nearPoint( VOIBase kVOI, int iX, int iY, int iZ) {
 
-        return new Vector3f( kScreenMin );
-    }
-
-    public Vector3f getBoundingBoxUpperRight( VOIBase kVOI )
-    {
-        Vector3f kScreenMin = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[0] );
-        Vector3f kScreenMax = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[1] );
-        Vector3f kTemp = new Vector3f( kScreenMin );
-        kScreenMin.Min( kScreenMax );
-        kScreenMax.Max( kTemp );
-
-        return new Vector3f( kScreenMax.X, kScreenMin.Y, kScreenMin.Z );
-    }
-
-    public Vector3f getBoundingBoxLowerRight( VOIBase kVOI )
-    {
-        Vector3f kScreenMin = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[0] );
-        Vector3f kScreenMax = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[1] );
-        Vector3f kTemp = new Vector3f( kScreenMin );
-        kScreenMin.Min( kScreenMax );
-        kScreenMax.Max( kTemp );
-
-        return new Vector3f( kScreenMax );
-    }
-
-    public Vector3f getBoundingBoxLowerLeft( VOIBase kVOI )
-    {
-        Vector3f kScreenMin = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[0] );
-        Vector3f kScreenMax = m_kDrawingContext.fileToScreen( kVOI.getImageBoundingBox()[1] );
-        Vector3f kTemp = new Vector3f( kScreenMin );
-        kScreenMin.Min( kScreenMax );
-        kScreenMax.Max( kTemp );
-
-        return new Vector3f( kScreenMin.X, kScreenMax.Y, kScreenMin.Z );
-    }
-
-
-
-    public Vector3f getBoundingBoxUpperMiddle( VOIBase kVOI )
-    {
-        Vector3f kUpperLeft = getBoundingBoxUpperLeft( kVOI );
-        Vector3f kUpperRight = getBoundingBoxUpperRight( kVOI );
-        Vector3f kUpperMid = new Vector3f();
-        kUpperMid.Add( kUpperLeft, kUpperRight );
-        kUpperMid.Scale( 0.5f );
-        return kUpperMid;
-    }
-
-
-
-    public Vector3f getBoundingBoxLowerMiddle( VOIBase kVOI )
-    {
-        Vector3f kLowerLeft = getBoundingBoxLowerLeft( kVOI );
-        Vector3f kLowerRight = getBoundingBoxLowerRight( kVOI );
-        Vector3f kLowerMid = new Vector3f();
-        kLowerMid.Add( kLowerLeft, kLowerRight );
-        kLowerMid.Scale( 0.5f );
-        return kLowerMid;
-    }
-
-    public Vector3f getBoundingBoxLeftMiddle( VOIBase kVOI )
-    {
-        Vector3f kUpperLeft = getBoundingBoxUpperLeft( kVOI );
-        Vector3f kLowerLeft = getBoundingBoxLowerLeft( kVOI );
-        Vector3f kLeftMid = new Vector3f();
-        kLeftMid.Add( kUpperLeft, kLowerLeft );
-        kLeftMid.Scale( 0.5f );
-        return kLeftMid;
-    }
-
-
-    public Vector3f getBoundingBoxRightMiddle( VOIBase kVOI )
-    {
-        Vector3f kUpperRight = getBoundingBoxUpperRight( kVOI );
-        Vector3f kLowerRight = getBoundingBoxLowerRight( kVOI );
-        Vector3f kRightMid = new Vector3f();
-        kRightMid.Add( kUpperRight, kLowerRight );
-        kRightMid.Scale( 0.5f );
-        return kRightMid;
+        Vector3f kVOIPoint = new Vector3f(iX, iY, iZ );
+        for ( int i = 0; i < kVOI.size(); i++ )
+        {
+            Vector3f kFilePos = kVOI.get(i);
+            Vector3f kPos = m_kDrawingContext.fileToScreen(kFilePos);
+            Vector3f kDiff = new Vector3f();
+            kDiff.Sub( kPos, kVOIPoint );
+            if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
+            {
+                kVOI.setNearPoint(i);
+                return true;
+            }
+        }
+        return false;
     }
 
     public void pasteAllVOI( VOIBase kVOI )
@@ -1588,6 +1689,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         m_kCopyVOI = kVOI;
         pasteVOI(m_iSlice);
     }
+
     public Vector3f patientCoordinatesToFile( Vector3f patientPt )
     {       
         Vector3f volumePt = new Vector3f();
@@ -1595,20 +1697,228 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         return volumePt;
     }
 
+    /* Resets the index and flag used in the retraceContour mode. It should be
+     * called after retracing a Contour.
+     */
+    public void resetIndex() {
+        indexRetrace = -99;
+        oldContour = null;
+        lastX = -1;
+        knowDirection = false;
+        isFirst = true;
+    }
+
+    /**
+     * Resets all retrace variables and allows it to start anewA
+     */
+    public void resetStart() {
+        resetStart = true;
+        resetIndex();
+
+    }
+
+
+    /**
+     * Redraws contour. Must move cursor in clockwise motion to work best
+     * 
+     * @param zoomX
+     *            zoom for the x coordinate
+     * @param zoomY
+     *            zoom for the y coordinate
+     * @param resolutionX
+     *            resolution of the pixel in the X direction (aspect ratio)
+     * @param resolutionY
+     *            resolution of the pixel in the Y direction (aspect ratio)
+     * @param resols
+     *            array of pixel resolutions
+     * @param x1
+     *            x coordinate of new point to add
+     * @param y1
+     *            y coordinateof new point to add
+     * @param g
+     *            graphics to paint in
+     */
+    public void retraceContour(VOIBase kVOIIn, int x1, int y1 ) {
+        if ( !(kVOIIn instanceof VOIContour) )
+        {
+            return;
+        }
+        m_iDrawType = RETRACE;
+        VOIContour kVOI = (VOIContour)kVOIIn;
+        Vector3f ptRetrace = null;
+        double minDistance, dist;
+
+        try {
+            kVOI.makeCounterClockwise();
+            if (indexRetrace == -99) {
+                oldContour = new VOIContour( kVOI );
+            }
+
+            // Return if trying to add the same point.
+            Vector3f kScreen = new Vector3f( x1, y1, m_iSlice );
+            Vector3f kCurrent = m_kDrawingContext.screenToFile( kScreen );
+
+            if (kVOI.contains(kCurrent)) {
+                return;
+            }
+
+            kVOI.setActive(false);
+
+            // Find nearest point in old contour
+            minDistance = 9999999;
+            int end = oldContour.size();
+
+            for (int i = 0; i < end; i++) {
+                dist = MipavMath.distance(kCurrent, oldContour.elementAt(i));
+
+                if (dist < minDistance) {
+                    ptRetrace = oldContour.elementAt(i);
+                    minDistance = dist;
+                }
+            }
+
+            if (resetStart) {
+                kVOI.makeCounterClockwise( kVOI.indexOf(ptRetrace) );
+                resetIndex();
+                resetStart = false;
+            } else {
+
+                int index, indexold;
+                Vector3f newer = new Vector3f( kCurrent );
+
+                if (lastX == -1) { // if first time
+
+                    lastX = (int) ptRetrace.X;
+                    lastY = (int) ptRetrace.Y;
+                    lastZ = (int) ptRetrace.Z;
+                    indexRetrace = oldContour.indexOf(ptRetrace);
+                    kVOI.insertElementAt(newer,
+                            kVOI.indexOf(oldContour.get(indexRetrace)));
+                } else if (!(lastX == (int) ptRetrace.X && lastY == (int) ptRetrace.Y)) {
+
+                    index = oldContour.indexOf(ptRetrace);
+                    Vector3f old = new Vector3f(lastX, lastY, lastZ);
+                    indexold = indexRetrace;
+                    if (index == 0 || index - indexold == 1) { // if
+                        // countclockwise
+                        // and no jumps
+                        knowDirection = true;
+                        lastX = (int) ptRetrace.X;
+                        lastY = (int) ptRetrace.Y;
+                        lastZ = (int) ptRetrace.Z;
+                        kVOI.insertElementAt(newer, kVOI.indexOf(old));
+                        kVOI.removeElement(old);
+                        indexRetrace = index;
+                    } else if (isFirst && indexold >= kVOI.size() - 3
+                            && indexold - index != 1) {
+                        if (((indexold - index) < (oldContour.size() / 2))) {
+                            for (; index != indexold; indexold--) {
+                                indexRetrace = kVOI.indexOf(old) - 1;
+                                oldContour.removeElementAt(indexRetrace);
+                                kVOI.removeElementAt(indexRetrace);
+                                old = kVOI.get(indexRetrace);
+                            }
+                            lastX = (int) old.X;
+                            lastY = (int) old.Y;
+                            lastZ = (int) old.Z;
+                            kVOI.insertElementAt(newer, kVOI.indexOf(old) + 1);
+                        } else {
+                            indexRetrace = kVOI.indexOf(old) - 1;
+                            oldContour.removeElementAt(indexRetrace);
+                            kVOI.removeElementAt(indexRetrace);
+                            for (int size = kVOI.size() - 1, i = 0; i != size
+                            - indexold; i++) {
+                                oldContour.remove(0);
+                                kVOI.remove(0);
+                            }
+                            lastX = (int) old.X;
+                            lastY = (int) old.Y;
+                            lastZ = (int) old.Z;
+                            kVOI.insertElementAt(newer, 0);
+                            indexRetrace = 0;
+                        }
+
+                    } else if ((indexold - index) >= 1) { // if clockwise in
+                        // general
+                        knowDirection = true;
+                        if (!isFirst) {
+                            if (!(index - indexold > oldContour.size() / 2 || index == 0)) {
+                                for (; index != indexold; index++) {
+                                    indexRetrace = kVOI.indexOf(old);
+                                    oldContour.removeElementAt(oldContour
+                                            .indexOf(old));
+                                    kVOI.removeElementAt(indexRetrace);
+                                    old = kVOI.get(indexRetrace - 1);
+                                }
+                                lastX = (int) old.X;
+                                lastY = (int) old.Y;
+                                lastZ = (int) old.Z;
+                                kVOI.insertElementAt(newer, kVOI.indexOf(old) + 1);
+                            }
+
+                        } else {
+                            isFirst = false;
+                            if (indexold - index == 1) {
+                                knowDirection = true;
+                                lastX = (int) ptRetrace.X;
+                                lastY = (int) ptRetrace.Y;
+                                lastZ = (int) ptRetrace.Z;
+
+                                if (isFirst) {
+                                    kVOI.insertElementAt(newer, kVOI.indexOf(old) - 1);
+                                }
+                                kVOI.removeElement(old);
+                                indexRetrace = index;
+                            }
+                        }
+                    } else { // if counterclockwise and with jumps
+                        Vector3f right = new Vector3f(oldContour.get(index + 1));
+                        for (; index != indexold - 1; indexold++) {
+                            if (oldContour.indexOf(indexold) != -1) {
+                                oldContour.removeElementAt(indexold);
+                            }
+                            kVOI.removeElement(oldContour.elementAt(indexold));
+                        }
+
+                        kVOI.insertElementAt(newer, kVOI.indexOf(right));
+                        ptRetrace = right;
+                        lastX = (int) ptRetrace.X;
+                        lastY = (int) ptRetrace.Y;
+                        lastZ = (int) ptRetrace.Z;
+
+                        indexRetrace = oldContour.indexOf(right) - 1;
+                    }
+                } else if (minDistance > 5 && knowDirection) {
+                    if (isFirst)
+                        kVOI.insertElementAt(newer, kVOI.indexOf(ptRetrace));
+                    else {
+                        kVOI.insertElementAt(newer, kVOI.indexOf(ptRetrace) + 1);
+                    }
+                }
+            }
+            kVOI.update();
+            kVOI.setActive(true);
+            m_kParent.updateDisplay();
+        } catch (OutOfMemoryError error) {
+            System.gc();
+        } catch (ArrayIndexOutOfBoundsException error) {
+            resetStart();
+        } catch (NullPointerException error) {
+            resetStart();
+        }
+    }
+
+
+
+
+
+
     public void setActiveImage( int iActive )
     {
         if ( m_akImages[iActive] != null )
         {
             m_kImageActive = m_akImages[iActive];
         }
-    }
-
-    private void setCanvas (Component kComponent)
-    {
-        m_kComponent = kComponent;
-        m_kComponent.addKeyListener( this );
-        m_kComponent.addMouseListener( this );
-        m_kComponent.addMouseMotionListener( this );
     }
 
     public void setCenter( Vector3f center )
@@ -1622,11 +1932,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         m_kCurrentVOI = kCurrentVOI;
     }
 
-
     public void setDrawingContext( ScreenCoordinateListener kContext )
     {
         m_kDrawingContext = kContext;
     }
+
 
     public void setImageB( ModelImage imageB )
     {
@@ -1639,6 +1949,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         m_aiLocalImageExtents = m_kImageActive.getExtents( m_iPlaneOrientation );
         map = new BitSet(m_aiLocalImageExtents[0] * m_aiLocalImageExtents[1]);
     }
+
+
 
     public void setPopupPt( ViewJPopupPt kPopupPt )
     {
@@ -1674,6 +1986,37 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     }
 
 
+
+    public boolean testMove( Vector3f kDiff, Vector3f[] akMinMax )
+    {            
+        Vector3f kScreenMin = m_kDrawingContext.fileToScreen( akMinMax[0] );
+        kScreenMin.Add(kDiff);
+
+        Vector3f kScreenMax = m_kDrawingContext.fileToScreen( akMinMax[1] );
+        kScreenMax.Add(kDiff);
+        Vector3f kTemp = new Vector3f( kScreenMin );
+        kScreenMin.Min( kScreenMax );
+        kScreenMax.Max( kTemp );
+
+        if ( !kScreenMin.equals(kScreenMax) && 
+                (m_fMouseX < kScreenMin.X || m_fMouseX > kScreenMax.X ||
+                        m_fMouseY < kScreenMin.Y || m_fMouseY > kScreenMax.Y )  )
+        {
+            return false;
+        }
+        Vector3f kTestMin = new Vector3f();       
+        Vector3f kTestMax = new Vector3f();       
+        if ( m_kDrawingContext.screenToFile( kScreenMin, kTestMin ) || 
+                m_kDrawingContext.screenToFile( kScreenMax, kTestMax )  )
+        {
+            return false;
+        }         
+        akMinMax[0].Copy( kTestMin );
+        akMinMax[1].Copy( kTestMax );
+        return true;
+    }
+
+
     private void addPopup( VOIBase kVOI )
     {
         if ( kVOI.getType() == VOI.POINT )
@@ -1687,11 +2030,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_kComponent.addMouseListener(m_kPopupVOI);
         }
     }
-
-
-
-
-
 
     private void addVOIPoint( int iX, int iY )
     {
@@ -1707,6 +2045,33 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_kParent.updateDisplay();
         }
     }
+
+    /**
+     * This method calculates the average pixel value based on the four neighbors (N, S, E, W).
+     *
+     * @param   index  the center pixel where the average pixel value is to be calculated.
+     *
+     * @return  the average pixel value as a float.
+     */
+    private float avgPix(int index) {
+        int xDim = m_aiLocalImageExtents[0];
+
+        if ((index > xDim) && (index < (imageBufferActive.length - xDim))) {
+
+            float sum = imageBufferActive[index];
+
+            sum += imageBufferActive[index - xDim];
+            sum += imageBufferActive[index - 1];
+            sum += imageBufferActive[index + 1];
+            sum += imageBufferActive[index + xDim];
+
+            return sum / 5.0f;
+        }
+        return (imageBufferActive[index]);
+    }
+
+
+
 
     /**
      * Takes a byte and gets appropriate addition from current position.
@@ -1746,6 +2111,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
         return 0;
     }
+
 
     private void createTextVOI( int iX, int iY )
     {
@@ -1851,6 +2217,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
         return kVOI;
     }
+
+
+
+
 
 
     private void createVOI( int iX, int iY )
@@ -2152,6 +2522,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
     }
 
+
+
+
     /**
      * Draws the length of open contour (Polyline).
      * 
@@ -2312,6 +2685,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             g.drawLine((int) coords[0], (int) coords[1], (int) coords[2], (int) coords[3]);
         }
     }
+
+
+
+
 
 
 
@@ -2497,7 +2874,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
     }
 
-
     /**
      * Draws the vertices of the contour.
      */
@@ -2618,91 +2994,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
          */
     }
 
-    public Vector3f drawBlendContour( VOIBase kVOI, int[] pixBuffer, float opacity, Color color, int slice )
-    {
-        if ( (m_iPlane != (m_iPlane & kVOI.getPlane())) || (getSlice(kVOI)!= slice) )
-        {
-            return null;
-        }
-        int iNumPoints = kVOI.size();
-        if ( iNumPoints == 0 )
-        {
-            return null;
-        }
-        Vector3f[] kVolumePts = new Vector3f[iNumPoints + 1];
-        int iXMin = Integer.MAX_VALUE;
-        int iYMin = Integer.MAX_VALUE;
-        int iXMax = Integer.MIN_VALUE;
-        int iYMax = Integer.MIN_VALUE;
-        for ( int i = 0; i < iNumPoints; i++ )
-        {
-            Vector3f kVolumePt = kVOI.get(i);
-            Vector3f kPt = fileCoordinatesToPatient( kVolumePt );
 
-            //kPt.Z = iSlice;/
-            kVolumePts[i] = kPt;
-            iXMin = (int)Math.min( iXMin, kVolumePts[i].X );
-            iYMin = (int)Math.min( iYMin, kVolumePts[i].Y );
-            iXMax = (int)Math.max( iXMax, kVolumePts[i].X );
-            iYMax = (int)Math.max( iYMax, kVolumePts[i].Y );
-        }               
-        Vector3f kVolumePt = kVOI.get(0);
-        Vector3f kPt = fileCoordinatesToPatient( kVolumePt );
-        int iSlice = (int)kPt.Z;
 
-        //Vector3f kPt = kPoly.VBuffer.GetPosition3(0);
-        //kPt.Mult( m_kVolumeScaleInv );
-        //kPt.Z = iSlice;
-        kVolumePts[iNumPoints] = kPt;
-        iXMin = (int)Math.min( iXMin, kVolumePts[iNumPoints].X );
-        iYMin = (int)Math.min( iYMin, kVolumePts[iNumPoints].Y );
-        iXMax = (int)Math.max( iXMax, kVolumePts[iNumPoints].X );
-        iYMax = (int)Math.max( iYMax, kVolumePts[iNumPoints].Y );
-        iNumPoints++;
-
-        int[][] aaiCrossingPoints = new int[iXMax - iXMin + 1][];
-        int[] aiNumCrossings = new int[iXMax - iXMin + 1];
-
-        for (int i = 0; i < (iXMax - iXMin + 1); i++) {
-            aaiCrossingPoints[i] = new int[iNumPoints];
-        }
-
-        outlineRegion(aaiCrossingPoints, aiNumCrossings, iXMin, iXMax, kVolumePts);
-        int numPts = 0;
-        Vector3f kCenterMass = new Vector3f();
-        for (int iX = iXMin; iX <= iXMax; iX++) {
-            int iIndex = iX - iXMin;
-            if ( aiNumCrossings[iIndex] >= 2 )
-            {
-                for ( int i = 0; i < aiNumCrossings[iIndex]; i+= 2 )
-                {
-                    int yStart = Math.round(aaiCrossingPoints[iIndex][i]);
-                    int yEnd = Math.round(aaiCrossingPoints[iIndex][i+1]);
-                    for ( int iY = yStart; iY <= yEnd; iY++ )
-                    {
-                        if ( pixBuffer != null )
-                        {
-                            int bufferIndex = iY * m_aiLocalImageExtents[0] + iX;
-                            int opacityInt = (int) (opacity * 255);
-                            opacityInt = opacityInt << 24;
-
-                            int colorInt = color.getRGB() & 0x00ffffff;
-                            pixBuffer[bufferIndex] = colorInt | opacityInt;
-                        }
-                        else
-                        {
-                            kCenterMass.Add( patientCoordinatesToFile( new Vector3f( iX, iY, iSlice ) ) );
-                            numPts++;
-                        }
-                    }
-                }
-            }
-        }       
-        kCenterMass.X = MipavMath.round( kCenterMass.X / numPts );
-        kCenterMass.Y = MipavMath.round( kCenterMass.Y / numPts );
-        kCenterMass.Z = MipavMath.round( kCenterMass.Z / numPts );
-        return kCenterMass;
-    }
 
     private void drawVOI( VOIBase kVOI, float[] resols, int[] unitsOfMeasure, Graphics g ) {
         Polygon gon = null;
@@ -3144,7 +3437,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 
 
-
     private void drawVOILine( VOIBase kVOI, float[] resols, int[] unitsOfMeasure, Graphics g, int thickness  ) {
 
         Vector3f kStart = m_kDrawingContext.fileToScreen( kVOI.get(0) );
@@ -3203,6 +3495,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             }
         }
     }
+
+
+
 
 
     private void drawVOIPoint( VOIPoint kVOI, float[] resols, int[] unitsOfMeasure, Graphics g  ) {
@@ -3308,7 +3603,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
         else
         {
-            VOIPoint kPolyPoint = (VOIPoint)kVOI;
+            VOIPoint kPolyPoint = kVOI;
             if (kPolyPoint.isActivePoint()) {
                 str = new String(label + ": (" + x + "," + y + ")");
             } else {
@@ -3403,9 +3698,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 
 
-
-
-
     private void drawVOIPolyLineSlice( VOIPolyLineSlice kVOI, float[] resols, int[] unitsOfMeasure, Graphics g, int slice, int orientation ) {
         Color color = g.getColor();
 
@@ -3434,6 +3726,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             }
         }
     }
+
+
+
 
     private void drawVOIProtractor( VOIBase kVOI, float[] resols, int[] unitsOfMeasure, Graphics g ) {
 
@@ -3468,8 +3763,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             this.drawTickMarks( kVOI, g, unitsOfMeasure, m_kDrawingContext.getWidth(), m_kDrawingContext.getHeight(), resols);
         } 
     }
-
-
 
     private void drawVOIText( VOIText kVOI, Graphics g) {
 
@@ -3536,9 +3829,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         g.setFont(previousFont);
     }
 
-
-
-
     private void getCoordsLine(float[] linePtsX, float[] linePtsY, double fraction, float[] coords) {
         float x1, y1;
         double vector1, vector2, tmp;
@@ -3597,12 +3887,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         coords[3] = (int) (y1 - vector2 + 0.5);
     }
 
-
-
-
-
-
-
     private void getEndLinesLine(float[] linePtsX, float[] linePtsY, int line, float[] coords) {
         double vector1, vector2, tmp;
         double length;
@@ -3638,6 +3922,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
     }
 
+
     private void getEndLinesProtractor(float[] x, float[] y, int line, float[] coords) {
         double vector1, vector2, tmp;
         double length;
@@ -3665,7 +3950,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 
 
-
     private int getSlice( VOIBase kVOI )
     {
         if ( kVOI.getType() == VOI.PROTRACTOR && ((VOIProtractor)kVOI).getAllSlices() )
@@ -3679,7 +3963,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
         return (int)fileCoordinatesToPatient( kVOI.get(0) ).Z;
     }
-
 
 
     /**
@@ -3701,9 +3984,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         menuItem.setActionCommand(DELETE_INTENSITY_LINE);
         popupMenu.show(m_kComponent, mouseEvent.getX(), mouseEvent.getY());
     }
-
-
-
 
 
     private void initLiveWire( int iSlice, boolean bLiveWire )
@@ -3794,6 +4074,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
     }
 
+
+
     private void moveVOIPoint( int iX, int iY )
     {
         if ( m_kCurrentVOI == null )
@@ -3810,6 +4092,89 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private void outlineRegion(int[][] aaiCrossingPoints, int[] aiNumCrossings,
+            int iXMin, int iXMax, Vector3f[] akPoints )
+    {        
+        int iNumPts = akPoints.length;
+        double dNudge = 0.1;       
+        double[][][] aaadEdgeList = new double[iNumPts][2][2];
+
+        for (int i = 0; i < (iNumPts - 1); i++) {
+            aaadEdgeList[i][0][0] = akPoints[i].X - dNudge;
+            aaadEdgeList[i][0][1] = akPoints[i].Y - dNudge;
+            aaadEdgeList[i][1][0] = akPoints[i+1].X - dNudge;
+            aaadEdgeList[i][1][1] = akPoints[i+1].Y - dNudge;
+        }
+
+        /*
+         * Compute the crossing points for this column and produce spans.
+         */
+        for (int iColumn = iXMin; iColumn < iXMax; iColumn++) {
+            int iIndex = iColumn - iXMin;
+
+            /* for each edge, figure out if it crosses this column and add its
+             * crossing point to the list if so. */
+            aiNumCrossings[iIndex] = 0;
+
+            for (int iPoint = 0; iPoint < (iNumPts - 1); iPoint++) {
+                double dX0 = aaadEdgeList[iPoint][0][0];
+                double dX1 = aaadEdgeList[iPoint][1][0];
+                double dY0 = aaadEdgeList[iPoint][0][1];
+                double dY1 = aaadEdgeList[iPoint][1][1];
+                double dMinX = (dX0 <= dX1) ? dX0 : dX1;
+                double dMaxX = (dX0 > dX1) ? dX0 : dX1;
+
+                if ((dMinX < iColumn) && (dMaxX > iColumn)) {
+
+                    /* The edge crosses this column, so compute the
+                     * intersection.
+                     */
+                    double dDX = dX1 - dX0;
+                    double dDY = dY1 - dY0;
+                    double dM = (dDX == 0) ? 0 : (dDY / dDX);
+                    double dB = (dDX == 0) ? 0 : (((dX1 * dY0) - (dY1 * dX0)) / dDX);
+
+                    double dYCross = (dM * iColumn) + dB;
+                    //double dRound = 0.5;
+                    //aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (dYCross < 0) ? (int) (dYCross - dRound) :
+                    //    (int) (dYCross + dRound);
+                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (int)Math.round(dYCross);
+                    aiNumCrossings[iIndex]++;
+                }
+            }
+
+            /* sort the set of crossings for this column: */
+            sortCrossingPoints(aaiCrossingPoints[iIndex], aiNumCrossings[iIndex]);
+        }
+        aaadEdgeList = null;
+    }
 
     private void pasteVOI( int iSlice )
     {
@@ -3829,763 +4194,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
         m_kParent.pasteVOI(m_kCurrentVOI);
         m_kCurrentVOI.setActive(false);
-    }
-
-
-
-
-    /**
-     * @param  kEvent  the mouse event generated by a mouse drag
-     */
-    private void processLeftMouseDrag(MouseEvent kEvent) {
-
-        if ( m_bDrawVOI && !(((m_iDrawType == POINT) || (m_iDrawType == POLYPOINT) ||
-                (m_iDrawType == LIVEWIRE) || (m_iDrawType == LEVELSET) || (m_iDrawType == TEXT))) )
-        {
-            createVOI( kEvent.getX(), kEvent.getY() );
-        } 
-        else if ( m_kParent.getPointerButton().isSelected() &&  !m_bDrawVOI )
-        {
-            if ( m_iNearStatus == NearPoint )
-            {
-                if ( m_bFirstDrag && ((m_fMouseX != kEvent.getX()) || (m_fMouseY != kEvent.getY())) )
-                {
-                    m_kParent.saveVOIs( "movePoint" );
-                    m_bFirstDrag = false;
-                }
-                moveVOIPoint( kEvent.getX(), kEvent.getY() );
-            }
-            else if ( m_iNearStatus == NearBoundPoint )
-            {
-                if ( m_bFirstDrag && ((m_fMouseX != kEvent.getX()) || (m_fMouseY != kEvent.getY())) )
-                {
-                    m_kParent.saveVOIs( "scaleVOI" );
-                    m_bFirstDrag = false;
-                }
-                scaleVOI( m_kCurrentVOI, kEvent.getX(), kEvent.getY() );        
-            }
-            else if ( m_bSelected )
-            {
-                if ( m_bFirstDrag && ((m_fMouseX != kEvent.getX()) || (m_fMouseY != kEvent.getY())) )
-                {
-                    m_kParent.saveVOIs( "moveVOI" );
-                    m_bFirstDrag = false;
-                } 
-
-                Vector3f kGC = m_kDrawingContext.fileToScreen( m_kCurrentVOI.getGeometricCenter() );
-                Vector3f kNewGC = new Vector3f( kEvent.getX() + m_kMouseOffset.X, kEvent.getY() + m_kMouseOffset.Y, kGC.Z );
-                Vector3f kDiff = new Vector3f();
-                kDiff.Sub( kNewGC, kGC );
-
-                m_kParent.moveVOI( this, kDiff, m_iPlane, m_bFirstDrag );
-                m_fMouseX = kEvent.getX();
-                m_fMouseY = kEvent.getY();
-            }
-        }
-    }
-
-    private Polygon scalePolygon( VOIBase kVOI ) {
-        int i;
-        int x;
-        int y;
-        Polygon scaledGon = null;
-        try {
-            scaledGon = new Polygon();
-        } catch (OutOfMemoryError error) {
-            System.gc();
-            throw error;
-        }
-
-        for (i = 0; i < kVOI.size(); i++) {
-            Vector3f kVolumePt = kVOI.elementAt(i);
-            Vector3f kScreen = m_kDrawingContext.fileToScreen( kVolumePt );
-
-            x = (int) kScreen.X;
-            y = (int) kScreen.Y;            
-            scaledGon.addPoint(x, y);
-        }
-        return scaledGon;
-    }
-
-    private void scaleVOI( VOIBase kVOI, int iX, int iY )
-    {
-        if ( kVOI == null )
-        {
-            return;
-        }
-        if ( !kVOI.isActive() )
-        {
-            return;
-        }
-
-        int nearBound = kVOI.getNearBoundPoint();
-        if ( nearBound == VOIBase.NOT_A_POINT )
-        {
-            return;
-        }
-        Vector3f kScreenBound = null;
-        switch ( nearBound )
-        {
-        case VOIBase.UPPER_LEFT: kScreenBound = getBoundingBoxUpperLeft( kVOI ); break;
-        case VOIBase.UPPER_RIGHT: kScreenBound = getBoundingBoxUpperRight( kVOI ); break;
-        case VOIBase.LOWER_LEFT: kScreenBound = getBoundingBoxLowerLeft( kVOI ); break;
-        case VOIBase.LOWER_RIGHT: kScreenBound = getBoundingBoxLowerRight( kVOI ); break;
-
-        case VOIBase.UPPER_MIDDLE: kScreenBound = getBoundingBoxUpperMiddle( kVOI ); break;
-        case VOIBase.RIGHT_MIDDLE: kScreenBound = getBoundingBoxRightMiddle( kVOI ); break;
-        case VOIBase.LEFT_MIDDLE: kScreenBound = getBoundingBoxLeftMiddle( kVOI ); break;
-        case VOIBase.LOWER_MIDDLE: kScreenBound = getBoundingBoxLowerMiddle( kVOI ); break;
-        }
-        if ( kScreenBound == null )
-        {
-            return;
-        }
-        Vector3f kScreenCenter = new Vector3f( getBoundingBoxUpperLeft(kVOI) );
-        kScreenCenter.Add( getBoundingBoxUpperRight(kVOI) );
-        kScreenCenter.Add( getBoundingBoxLowerLeft(kVOI) );
-        kScreenCenter.Add( getBoundingBoxLowerRight(kVOI) );
-        kScreenCenter.Scale( 0.25f );
-
-        Vector3f kScreenScale = new Vector3f( (iX-kScreenCenter.X) / (kScreenBound.X-kScreenCenter.X), 
-                (iY-kScreenCenter.Y) / (kScreenBound.Y-kScreenCenter.Y), 1 );
-
-        switch( nearBound )
-        {
-        case VOIBase.LOWER_MIDDLE:
-        case VOIBase.UPPER_MIDDLE: kScreenScale.X = 1; break;
-        case VOIBase.LEFT_MIDDLE:
-        case VOIBase.RIGHT_MIDDLE: kScreenScale.Y = 1; break;
-        }
-
-        if ( kScreenScale.X == 1 && kScreenScale.Y == 1 )
-        {
-            return;
-        }
-
-        Vector<Vector3f> newPoints = new Vector<Vector3f>();
-        for ( int i = 0; i < kVOI.size(); i++ )
-        {
-            Vector3f kScreen = m_kDrawingContext.fileToScreen( kVOI.elementAt(i) );
-            kScreen.Sub(kScreenCenter);
-            kScreen.Mult( kScreenScale );
-            kScreen.Add(kScreenCenter);
-            Vector3f kVolumePt = new Vector3f();
-            if ( m_kDrawingContext.screenToFile( kScreen, kVolumePt ) )
-            {
-                return;
-            }
-            newPoints.add( kVolumePt );
-        }
-        for ( int i = 0; i < kVOI.size(); i++ )
-        {
-            kVOI.set( i, newPoints.elementAt(i) );
-        }
-
-        kVOI.update();
-
-        m_kParent.setCursor(MipavUtil.crosshairCursor); 
-        m_kParent.updateDisplay();
-        if ( m_kCurrentVOI.getGroup().getContourGraph() != null )
-        {
-            m_kParent.updateGraph(m_kCurrentVOI);
-        }
-    }
-
-    /**
-     * Sets up directed graph from the seed point. A point (x,y) is mapped to its absolute value in the image, y*xDim +
-     * x. This along with its cost is stored in Node. The structure costGraph holds the "edges" of the graph. Each
-     * location has an integer associated with it which represents where that node is pointing to. Thus costGraph[7] = 8
-     * would mean the node at 7 (really (0,7)) is pointing to position 8 (really (0,8)). The only possibilities for a
-     * location in costGraph are the 8 neighbors surrounding that node. For this reason we might use a byte array
-     * instead of an integer array. The seed point points nowhere, to indicate that it's the seed;
-     * costGraph[seed.location] = -1. We also need to know if a point has been processed, that is, expanded with the
-     * cost set. For this we use a BitSet whose size is the same as the number of pixels in the image. Once a point is
-     * processed, its location in the BitSet is set to <code>true</code>.
-     *
-     * <p>The array seededCosts holds the costs so far for a location. If a cost has not been assigned yet, the cost is
-     * -2. ActiveList is simply a linked list of Integers; the Integer refers to the location in the seededCosts array.
-     * ActiveList is sorted by cost, so that the minimum cost in the ActiveList is the first element of the linked list.
-     * Thus finding the minimum is O(1). Finding out if an element is in the ActiveList is also O(1), because for an
-     * element to be in the list, it must have already been assigned a cost. Therefore, if seededCosts[location] != -2,
-     * it is in the ActiveList. And finding the cost of an item in the ActiveList is O(1), because it's just
-     * seededCosts[location], where location is the Integer in the ActiveList. Obviously we're winning speed at the
-     * expense of memory, but it's not too much memory in the overall scheme of things.</p>
-     *
-     * <p>The gradient direction component of the cost is added in on the fly. This is because to precalculate would
-     * mean an array of 8n, where n is the size of the image. The link from p to q is not the same as the link from q to
-     * p. Furthermore, it may never be necessary to calculate some of the links, because the graph would never look at
-     * that pair. For more information on how the gradient direction cost is calculated, look at the comments directly
-     * above the code.</p>
-     *
-     * @param  pt  Point to seed with.
-     */
-    private void seed(int iX, int iY) {
-        Vector3f kVolumePt = new Vector3f();
-        m_kDrawingContext.screenToFile( iX, iY, m_iSlice, kVolumePt );
-        Vector3f kLocalPt = fileCoordinatesToPatient( kVolumePt );
-
-        int xDim = m_aiLocalImageExtents[0];
-        int yDim = m_aiLocalImageExtents[1];
-        int x = (int)kLocalPt.X;
-        int y = (int)kLocalPt.Y;
-
-        int location = (y * xDim) + x; // Location in array that represents image.
-
-        costGraph[location] = -1; // No parent of seed point
-        seedPoint = location;
-
-        // processedIndicies.clear(); only in JVM 1.4.
-        for (int c = 0; c < processedIndicies.size(); c++) {
-            processedIndicies.clear(c);
-        }
-
-
-        for (int i = 0; i < seededCosts.length; i++) {
-            seededCosts[i] = -2;
-        }
-
-        activeTree.reset();
-
-        seededCosts[location] = 0;
-        activeTree.insert(location, 0f);
-
-        float temp, cost, gradDir;
-        System.currentTimeMillis();
-        int count = 0;
-
-        float gdConst = (float) (2f / (3 * Math.PI));
-        float pi = (float) Math.PI;
-
-        while (activeTree.isEmpty() == false) { // while active list has more elements to process
-
-            location = activeTree.pop();
-            cost = seededCosts[location];
-            processedIndicies.set(location); // set this point as processed
-            x = location % xDim;
-            y = location / xDim;
-
-            count++;
-
-            for (int iy = -1; iy <= 1; iy++) {
-                int yOffset = (y + iy) * xDim;
-
-                if (((y + iy) >= 0) && ((y + iy) < yDim)) { // in bounds in the y dimension
-
-                    for (int ix = -1; ix <= 1; ix++) {
-                        int position = yOffset + (x + ix);
-
-                        if (((x + ix) >= 0) && ((x + ix) < xDim) && // in bounds in the x dimension
-                                !processedIndicies.get(position)) { // not yet processed - this will rule out current
-                            // node
-
-                            if (m_iLiveWireSelection == RubberbandLivewire.GRADIENT_MAG) {
-                                // Gradient Direction Cost Let D(p) be a unit vector of the gradient direction at point
-                                // p. Define D'(p) as the unit vector perpendicular to D(p). In our implementation, D(p)
-                                // = (xDirections[location], yDirections[location]) where location is the absolute
-                                // position of point p; that is, location = p.y*xDim + p.x So       D(p) =
-                                // (xDirections[location], yDirections[location])       D'(p) = (yDirections[location],
-                                // -xDirections[location])
-                                //
-                                // The formulation of the gradient direction feature cost is      f(p,q) = 2/(3pi) *
-                                // (acos(dp(p,q) + acos(dq(p,q)))) where      dp(p,q) = D'(p) dot L(p,q)      dq(p,q) =
-                                // L(p,q) dot D'(q) and
-                                //
-                                //     L(p,q) =    1     {q - p if D'(p) dot (q - p) >= 0               ------- *{
-                                //       ||p-q||  {p - q if D'(p) dot (q - p) < 0
-
-                                float Lx, Ly;
-                                float divide;
-
-                                // divide is || p - q || = || ( (x - (x+ix)), (y - (y+iy)) ) ||
-                                // = || ( -ix, -iy ) ||
-                                // = sqrt(ix^2 + iy^2)
-                                // = sqrt(2) or sqrt(1)
-                                // because ix and iy will never both be 0 (current node is already processed)
-                                // so if they are both non-zero, it's sqrt(2), otherwise it's sqrt(1)
-                                if ((ix != 0) && (iy != 0)) {
-                                    divide = 0.7071068f;
-                                } else {
-                                    divide = 1f;
-                                }
-
-                                // if D'(p) dot (q - p) >= 0
-                                // becomes
-                                // if ( yDirections[location]*(x+ix-x) + (-xDirections[location]*(y+iy-y) )
-                                // becomes
-                                if (((yDirections[location] * ix) - (xDirections[location] * iy)) >= 0) {
-                                    Lx = ix * divide;
-                                    Ly = iy * divide;
-                                }
-                                // D'(p) dot (q - p) < 0
-                                else {
-                                    Lx = -ix * divide;
-                                    Ly = -iy * divide;
-                                }
-                                // if (yDirections[location]*ix - xDirections[location]*iy >= 0)
-                                // dp = divide * (yDirections[location]*ix - xDirections[location]*iy)
-                                // so dp >= 0
-                                // if (yDirections[location]*ix - xDirections[location]*iy < 0)
-                                // dp = -divide * (yDirections[location]*ix - xDirectios[locations]*iy)
-                                // so dp > 0
-                                // Hence always have 1 >= dp >= 0
-                                // dq = sign(yDirections[location]*ix - xDirections[location]*iy) *
-                                // divide * (yDirections[position]*ix - xDirections[position]*iy)
-                                // Thus, if (yDirections[location]*ix - xDirections[location]*iy) and
-                                // (yDirections[position]*ix - xDirections[position]*iy) have the same
-                                // sign, then dq is positive.  Otherwise, dq is negative.
-                                // 1 > = dq > = -1
-                                // acos_dp can vary from 0 to pi/2 and acos_dq can vary from 0 to
-                                // pi so the gradient direction feature cost can vary from 0 to 1.
-                                // The Taylor series for acos(x) =
-                                // pi/2 - x - (x**3)/(2*3) - 1*3*(x**5)/(2*4*5) - 1*3*5*(x**7)/(2*4*6*7)
-
-                                float dp = (yDirections[location] * Lx) - (xDirections[location] * Ly);
-                                float dq = (yDirections[position] * Lx) - (xDirections[position] * Ly);
-
-                                if (dp > 1) {
-                                    dp = 1f;
-                                }
-
-                                if (dq > 1) {
-                                    dq = 1f;
-                                } else if (dq < -1) {
-                                    dq = -1f;
-                                }
-
-                                // float acos_dp = (float)(Math.acos(dp));
-                                // float acos_dq = (float)(Math.acos(dq));
-                                // float gradDir = (gdConst)*(acos_dp + acos_dq);
-
-                                // The above is the original formula as described.
-                                // The below is what we're using because it's much faster since
-                                // it only uses up to the third power term in the Taylor series.
-                                gradDir = gdConst * (pi - dp - (dp * dp * dp / 6) - dq - (dq * dq * dq / 6));
-                            } else { // ((selection == MEDIALNESS) || (selection == INTENSITY))
-                                gradDir = 0f;
-                            }
-
-                            if ((ix != 0) && (iy != 0)) { // diagonal costs more
-                                temp = cost + ((localCosts[position] + (grad_weight * gradDir)) * 1.4142f); // * square root of 2, Euclidean distance
-                            } else {
-                                temp = cost + (localCosts[position] + (grad_weight * gradDir)); // temp cost
-                            }
-
-                            if (temp < seededCosts[position]) { // not set seededCosts == -2 which will always be less
-                                // than temp, temp must be positive
-                                activeTree.remove(position, seededCosts[position]);
-                                seededCosts[position] = -2;
-                            }
-
-                            // if not in active or was just removed from active list
-                            if (seededCosts[position] == -2) {
-
-                                // put into active list or back into active list with new cost
-                                // set pointer back to parent
-                                int temploc = ((-iy + 1) * 3) - ix + 1;
-
-                                costGraph[position] = (byte) temploc;
-                                activeTree.insert(position, temp);
-                                seededCosts[position] = temp;
-
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-
-    }
-
-    private VOIBase selectVOI( int iX, int iY, boolean bShiftDown, boolean bControlDown  )
-    {
-        m_bSelected = false;
-        m_kCurrentVOI = null;
-        VOIVector kVOIs = m_kImageActive.getVOIs();
-        for ( int i = kVOIs.size()-1; i >=0; i-- )
-        {
-            VOI kVOI = kVOIs.get(i);
-            for ( int j = kVOI.getCurves().size()-1; j >= 0; j-- )
-            {
-                VOIBase kVOI3D = kVOI.getCurves().get(j);
-                if ( (m_iPlane == (m_iPlane & kVOI3D.getPlane())) &&
-                        (m_iSlice == getSlice( kVOI3D )) && 
-                        contains( kVOI3D, iX, iY, m_iSlice ) )
-                {
-                    m_kCurrentVOI = kVOI3D;
-                    boolean isActive = m_kCurrentVOI.isActive();
-                    m_kParent.setSelectedVOI( m_kCurrentVOI.getGroup(), bShiftDown, !bControlDown );
-                    if ( bControlDown )
-                    {
-                        m_kCurrentVOI.setActive(!isActive);
-                    }
-                    else
-                    {
-                        m_kCurrentVOI.setActive(true);                        
-                    }
-                    m_bSelected = m_kCurrentVOI.isActive();
-                    if ( !m_bSelected )
-                    {
-                        m_kCurrentVOI = null;
-                    }
-                    return m_kCurrentVOI;
-                }
-            }
-        }
-        if ( !bControlDown )
-        {
-            m_kParent.selectAllVOIs(false);
-        }
-        return m_kCurrentVOI;
-    }
-
-
-    private void setPosition( VOIBase kVOI, int iPos, float fX, float fY, float fZ )
-    {
-        setPosition( kVOI, iPos, new Vector3f( fX, fY, fZ ) );
-    }
-
-
-
-    private void setPosition( VOIBase kVOI, int iPos, Vector3f kPos )
-    {
-        if ( kVOI.isFixed() )
-        {
-            return;
-        }       
-
-        Vector3f kVolumePt = new Vector3f();
-        if ( iPos < kVOI.size() )
-        {
-            if ( !m_kDrawingContext.screenToFile( (int)kPos.X, (int)kPos.Y, (int)kPos.Z, kVolumePt ) )
-            {
-                if ( kVOI.getType() == VOI.ANNOTATION )
-                {
-                    if ( iPos == 0 && kVOI.size() > 2 )
-                    {
-                        float width = kVOI.elementAt(2).X - kVOI.elementAt(0).X;
-                        kVOI.elementAt(2).X = kVolumePt.X + width;
-                        kVOI.elementAt(2).Y = kVolumePt.Y;
-                        kVOI.elementAt(2).Z = kVolumePt.Z;
-                    }
-                    if ( iPos == 2 && kVOI.size() > 2 )
-                    {
-                        float width = kVOI.elementAt(2).X - kVOI.elementAt(0).X;
-                        kVOI.elementAt(0).X = kVolumePt.X - width;
-                        kVOI.elementAt(0).Y = kVolumePt.Y;
-                        kVOI.elementAt(0).Z = kVolumePt.Z;
-                    }
-                }                
-                kVOI.set( iPos, kVolumePt );
-
-                kVOI.setSelectedPoint( iPos );
-                kVOI.update();
-            }
-        }
-
-
-
-    }
-
-
-    private void showSelectedVOI( int iX, int iY )
-    {
-        m_kComponent.removeMouseListener(m_kPopupPt);
-        m_kComponent.removeMouseListener(m_kPopupVOI);
-        Vector3f kVolumePt = new Vector3f();
-        m_kDrawingContext.screenToFile( iX, iY, m_iSlice, kVolumePt );
-
-        if ( m_kCurrentVOI != null && (m_iSlice == getSlice( m_kCurrentVOI )) )
-        {
-            if ( nearPoint( m_kCurrentVOI, iX, iY, m_iSlice ) )
-            {
-                if ( m_kCurrentVOI.getType() == VOI.POINT )
-                {
-                    m_kParent.setCursor(MipavUtil.moveCursor);
-                    m_iNearStatus = NearNone;
-                }
-                else
-                {
-                    m_kParent.setCursor(MipavUtil.crosshairCursor);
-                    m_iNearStatus = NearPoint;
-                    m_kParent.updateDisplay();
-                }
-                return;
-            }
-            else if ( nearBoundPoint( m_kCurrentVOI, iX, iY, m_iSlice ) )
-            {
-                m_kParent.setCursor(MipavUtil.crosshairCursor);
-                m_iNearStatus = NearBoundPoint;
-                m_kParent.updateDisplay();
-                return;
-            }
-            else if ( m_kCurrentVOI.nearLine( (int)kVolumePt.X, (int)kVolumePt.Y, (int)kVolumePt.Z ) )
-            {
-                if ( (m_kCurrentVOI.getType() == VOI.CONTOUR) ||
-                        (m_kCurrentVOI.getType() == VOI.POLYLINE) )
-                {
-                    m_kParent.setCursor(MipavUtil.addPointCursor);
-                    m_iNearStatus = NearLine;
-                    m_kParent.updateDisplay();
-                }
-                else
-                {
-                    m_kParent.setCursor(MipavUtil.moveCursor);
-                    m_iNearStatus = NearNone;
-                }
-                return;
-            }
-        }
-        VOIVector kVOIs = m_kImageActive.getVOIs();
-        for ( int i = kVOIs.size()-1; i >=0; i-- )
-        {
-            VOI kVOI = kVOIs.get(i);
-            for ( int j = kVOI.getCurves().size()-1; j >= 0; j-- )
-            {
-                VOIBase kVOI3D = kVOI.getCurves().get(j);
-                if ( (m_iPlane == (m_iPlane & kVOI3D.getPlane())) &&
-                        (m_iSlice == getSlice( kVOI3D )) && 
-                        contains( kVOI3D, iX, iY, m_iSlice ) )
-                {
-                    m_iNearStatus = NearNone;
-                    m_kParent.setCursor(MipavUtil.moveCursor);
-                    return;
-                }
-            }
-        }
-        m_iNearStatus = NearNone;
-        m_kParent.setCursor(MipavUtil.defaultCursor);
-        // not: m_kParent.setDefaultCursor() which changes the cursorMode...
-    }
-
-
-    private VOIBase split( VOIBase kVOI, Vector3f kStartPt, Vector3f kEndPt )
-    {
-        if ( kVOI.getType() != VOI.CONTOUR )
-        {
-            return null;
-        }
-        int iVOISlice = (int)fileCoordinatesToPatient(kVOI.get(0)).Z;
-        int iPoints = kVOI.size();
-        Vector3f kFirstIntersectionPt = null;
-        Vector3f kSecondIntersectionPt = null;
-        int iFirstIndex = -1;
-        int iSecondIndex = -1;
-        for ( int iP = 0; iP < (iPoints - 1) && (kSecondIntersectionPt == null); iP++ )
-        {
-            Vector3f kLocal1 = fileCoordinatesToPatient(kVOI.get(iP));
-            Vector3f kLocal2 = fileCoordinatesToPatient(kVOI.get(iP+1));
-            Vector3f kIntersection = new Vector3f();
-
-            if (JDialogVOISplitter.intersects( kLocal1, kLocal2, kStartPt, kEndPt, kIntersection )) {
-                if (kFirstIntersectionPt == null)
-                {
-                    kFirstIntersectionPt = kIntersection;
-                    iFirstIndex = iP;
-                } 
-                else 
-                {
-                    kSecondIntersectionPt = kIntersection;
-                    iSecondIndex = iP;
-                }
-            }
-        }
-        if ( kSecondIntersectionPt == null )
-        {
-            Vector3f kLocal1 = fileCoordinatesToPatient(kVOI.lastElement());
-            Vector3f kLocal2 = fileCoordinatesToPatient(kVOI.firstElement());
-            Vector3f kIntersection = new Vector3f();
-
-            if (JDialogVOISplitter.intersects( kLocal1, kLocal2, kStartPt, kEndPt, kIntersection )) {
-
-                kSecondIntersectionPt = kIntersection;
-                iSecondIndex = iPoints - 1;
-            }
-        }
-
-        if (kFirstIntersectionPt != null && kSecondIntersectionPt != null) 
-        {        
-            kFirstIntersectionPt.Z = iVOISlice;
-            kFirstIntersectionPt = patientCoordinatesToFile(kFirstIntersectionPt);
-            kSecondIntersectionPt.Z = iVOISlice;
-            kSecondIntersectionPt = patientCoordinatesToFile(kSecondIntersectionPt);
-
-
-            Vector<Vector3f> kPositions = new Vector<Vector3f>();
-            kPositions.add( kSecondIntersectionPt );  
-            //check if there are points from second index to 0-index, add those first
-            for (int iP = iSecondIndex + 1; iP < iPoints; iP++) {
-                kPositions.add(kVOI.get(iP));
-            }
-            for (int iP = 0; iP < iFirstIndex + 1; iP++) {
-                kPositions.add(kVOI.get(iP));
-            }
-            kPositions.add( kFirstIntersectionPt );  
-
-            for (int iP = 00; iP < kPositions.size(); iP++) {
-                kVOI.remove(kPositions.get(iP));
-            }
-            kVOI.add(0, new Vector3f(kFirstIntersectionPt) );
-            kVOI.add(0, new Vector3f(kSecondIntersectionPt) );      
-
-            kVOI.setSelectedPoint(0);
-            kVOI.update();
-
-            return new VOIContour( kVOI.isFixed(), kVOI.isClosed(), kPositions );
-        }
-        return null;       
-    }
-
-
-
-    private void splitVOIs( boolean bAllSlices, boolean bOnlyActive, VOIBase kSplitVOI )
-    {
-        VOIVector kVOIs = m_kImageActive.getVOIs();
-        if ( !kSplitVOI.isSplit() || (kVOIs.size() == 0) )
-        {
-            return;
-        }
-        Vector<VOIBase> kNewVOIs = new Vector<VOIBase>();
-
-        Vector3f kStartPt = fileCoordinatesToPatient(kSplitVOI.get(0)); 
-        Vector3f kEndPt = fileCoordinatesToPatient(kSplitVOI.get(1)); 
-
-        int iStartSlice = bAllSlices? 0 : m_iSlice;
-        int nSlices = m_aiLocalImageExtents.length > 2 ? m_aiLocalImageExtents[2] : 1;
-        int iEndSlice = bAllSlices? nSlices : m_iSlice + 1;
-
-
-        for ( int i = 0; i < kVOIs.size(); i++ )
-        {
-            VOI kVOI = kVOIs.get(i);
-            for ( int j = 0; j < kVOI.getCurves().size(); j++ )
-            {
-                VOIBase kVOI3D = kVOI.getCurves().get(j);
-                if ( m_iPlane != (m_iPlane & kVOI3D.getPlane() ))
-                {
-                    continue;
-                }
-                int iVOISlice = kVOI3D.slice();
-                if ( !((iVOISlice >= iStartSlice) && (iVOISlice < iEndSlice)) )
-                {
-                    continue;
-                }
-                if ( !(!bOnlyActive || kVOI3D.isActive()) )
-                {
-                    continue;
-                }
-                VOIBase kNew = split( kVOI3D, kStartPt, kEndPt );
-                if ( kNew != null )
-                {  
-                    //m_kParent.updateCurrentVOI( kVOI, kVOI );
-                    kNewVOIs.add(kNew);
-                }
-            }
-        }
-        m_kParent.deleteVOI( kSplitVOI );  
-        kSplitVOI.dispose();
-        kSplitVOI = null;
-
-        for ( int i = 0; i < kNewVOIs.size(); i++ )
-        {
-            m_kParent.addVOI(kNewVOIs.get(i), false, true, true);
-        }
-        m_kCurrentVOI = null;
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    /**
-     * This method calculates the average pixel value based on the four neighbors (N, S, E, W).
-     *
-     * @param   index  the center pixel where the average pixel value is to be calculated.
-     *
-     * @return  the average pixel value as a float.
-     */
-    private float avgPix(int index) {
-        int xDim = m_aiLocalImageExtents[0];
-
-        if ((index > xDim) && (index < (imageBufferActive.length - xDim))) {
-
-            float sum = imageBufferActive[index];
-
-            sum += imageBufferActive[index - xDim];
-            sum += imageBufferActive[index - 1];
-            sum += imageBufferActive[index + 1];
-            sum += imageBufferActive[index + xDim];
-
-            return sum / 5.0f;
-        } else {
-            return (imageBufferActive[index]);
-        }
-    }
-
-    /**
-     * Generates the possible paths of the level set and pushes them onto a stack. Looks in the 8 neighborhood
-     * directions for the possible paths.
-     *
-     * @param  index  image location
-     * @param  i      DOCUMENT ME!
-     */
-    private void paths(int index, int i, float level) {
-
-        int[] intPtr = null;
-
-        try {
-            intPtr = new int[1];
-        } catch (OutOfMemoryError error) {
-            System.gc();
-            MipavUtil.displayError("Out of memory: ComponentEditImage.mouseDragged");
-
-            return;
-        }
-
-        int xDim = m_aiLocalImageExtents[0];
-        intPtr[0] = levelSetStack.size() - 1;
-
-        if ((i != 0) && (imageBufferActive[index - xDim - 1] <= level) && (map.get(index - xDim - 1) == false)) {
-            stack.push(intPtr);
-        } else if ((i != 1) && (imageBufferActive[index - xDim] <= level) && (map.get(index - xDim) == false)) {
-            stack.push(intPtr);
-        } else if ((i != 2) && (imageBufferActive[index - xDim + 1] <= level) && (map.get(index - xDim + 1) == false)) {
-            stack.push(intPtr);
-        } else if ((i != 3) && (imageBufferActive[index + 1] <= level) && (map.get(index + 1) == false)) {
-            stack.push(intPtr);
-        } else if ((i != 4) && (imageBufferActive[index + xDim + 1] <= level) && (map.get(index + xDim + 1) == false)) {
-            stack.push(intPtr);
-        } else if ((i != 5) && (imageBufferActive[index + xDim] <= level) && (map.get(index + xDim) == false)) {
-            stack.push(intPtr);
-        } else if ((i != 6) && (imageBufferActive[index + xDim - 1] <= level) && (map.get(index + xDim - 1) == false)) {
-            stack.push(intPtr);
-        } else if ((i != 7) && (imageBufferActive[index - 1] <= level) && (map.get(index - 1) == false)) {
-            stack.push(intPtr);
-        }
     }
 
     /**
@@ -4806,6 +4414,571 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
      */
 
+
+    /**
+     * Generates the possible paths of the level set and pushes them onto a stack. Looks in the 8 neighborhood
+     * directions for the possible paths.
+     *
+     * @param  index  image location
+     * @param  i      DOCUMENT ME!
+     */
+    private void paths(int index, int i, float level) {
+
+        int[] intPtr = null;
+
+        try {
+            intPtr = new int[1];
+        } catch (OutOfMemoryError error) {
+            System.gc();
+            MipavUtil.displayError("Out of memory: ComponentEditImage.mouseDragged");
+
+            return;
+        }
+
+        int xDim = m_aiLocalImageExtents[0];
+        intPtr[0] = levelSetStack.size() - 1;
+
+        if ((i != 0) && (imageBufferActive[index - xDim - 1] <= level) && (map.get(index - xDim - 1) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 1) && (imageBufferActive[index - xDim] <= level) && (map.get(index - xDim) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 2) && (imageBufferActive[index - xDim + 1] <= level) && (map.get(index - xDim + 1) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 3) && (imageBufferActive[index + 1] <= level) && (map.get(index + 1) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 4) && (imageBufferActive[index + xDim + 1] <= level) && (map.get(index + xDim + 1) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 5) && (imageBufferActive[index + xDim] <= level) && (map.get(index + xDim) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 6) && (imageBufferActive[index + xDim - 1] <= level) && (map.get(index + xDim - 1) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 7) && (imageBufferActive[index - 1] <= level) && (map.get(index - 1) == false)) {
+            stack.push(intPtr);
+        }
+    }
+
+
+    /**
+     * @param  kEvent  the mouse event generated by a mouse drag
+     */
+    private void processLeftMouseDrag(MouseEvent kEvent) {
+
+        if ( m_bDrawVOI && !(((m_iDrawType == POINT) || (m_iDrawType == POLYPOINT) ||
+                (m_iDrawType == LIVEWIRE) || (m_iDrawType == LEVELSET) || (m_iDrawType == TEXT))) )
+        {
+            createVOI( kEvent.getX(), kEvent.getY() );
+        } 
+        else if ( m_kParent.getPointerButton().isSelected() &&  !m_bDrawVOI )
+        {
+            if ( m_iNearStatus == NearPoint )
+            {
+                if ( m_bFirstDrag && ((m_fMouseX != kEvent.getX()) || (m_fMouseY != kEvent.getY())) )
+                {
+                    m_kParent.saveVOIs( "movePoint" );
+                    m_bFirstDrag = false;
+                }
+                moveVOIPoint( kEvent.getX(), kEvent.getY() );
+            }
+            else if ( m_iNearStatus == NearBoundPoint )
+            {
+                if ( m_bFirstDrag && ((m_fMouseX != kEvent.getX()) || (m_fMouseY != kEvent.getY())) )
+                {
+                    m_kParent.saveVOIs( "scaleVOI" );
+                    m_bFirstDrag = false;
+                }
+                scaleVOI( m_kCurrentVOI, kEvent.getX(), kEvent.getY() );        
+            }
+            else if ( m_bSelected )
+            {
+                if ( m_bFirstDrag && ((m_fMouseX != kEvent.getX()) || (m_fMouseY != kEvent.getY())) )
+                {
+                    m_kParent.saveVOIs( "moveVOI" );
+                    m_bFirstDrag = false;
+                } 
+
+                Vector3f kGC = m_kDrawingContext.fileToScreen( m_kCurrentVOI.getGeometricCenter() );
+                Vector3f kNewGC = new Vector3f( kEvent.getX() + m_kMouseOffset.X, kEvent.getY() + m_kMouseOffset.Y, kGC.Z );
+                Vector3f kDiff = new Vector3f();
+                kDiff.Sub( kNewGC, kGC );
+
+                m_kParent.moveVOI( this, kDiff, m_iPlane, m_bFirstDrag );
+                m_fMouseX = kEvent.getX();
+                m_fMouseY = kEvent.getY();
+            }
+        }
+    }
+    private Polygon scalePolygon( VOIBase kVOI ) {
+        int i;
+        int x;
+        int y;
+        Polygon scaledGon = null;
+        try {
+            scaledGon = new Polygon();
+        } catch (OutOfMemoryError error) {
+            System.gc();
+            throw error;
+        }
+
+        for (i = 0; i < kVOI.size(); i++) {
+            Vector3f kVolumePt = kVOI.elementAt(i);
+            Vector3f kScreen = m_kDrawingContext.fileToScreen( kVolumePt );
+
+            x = (int) kScreen.X;
+            y = (int) kScreen.Y;            
+            scaledGon.addPoint(x, y);
+        }
+        return scaledGon;
+    }
+    private void scaleVOI( VOIBase kVOI, int iX, int iY )
+    {
+        if ( kVOI == null )
+        {
+            return;
+        }
+        if ( !kVOI.isActive() )
+        {
+            return;
+        }
+
+        int nearBound = kVOI.getNearBoundPoint();
+        if ( nearBound == VOIBase.NOT_A_POINT )
+        {
+            return;
+        }
+        Vector3f kScreenBound = null;
+        switch ( nearBound )
+        {
+        case VOIBase.UPPER_LEFT: kScreenBound = getBoundingBoxUpperLeft( kVOI ); break;
+        case VOIBase.UPPER_RIGHT: kScreenBound = getBoundingBoxUpperRight( kVOI ); break;
+        case VOIBase.LOWER_LEFT: kScreenBound = getBoundingBoxLowerLeft( kVOI ); break;
+        case VOIBase.LOWER_RIGHT: kScreenBound = getBoundingBoxLowerRight( kVOI ); break;
+
+        case VOIBase.UPPER_MIDDLE: kScreenBound = getBoundingBoxUpperMiddle( kVOI ); break;
+        case VOIBase.RIGHT_MIDDLE: kScreenBound = getBoundingBoxRightMiddle( kVOI ); break;
+        case VOIBase.LEFT_MIDDLE: kScreenBound = getBoundingBoxLeftMiddle( kVOI ); break;
+        case VOIBase.LOWER_MIDDLE: kScreenBound = getBoundingBoxLowerMiddle( kVOI ); break;
+        }
+        if ( kScreenBound == null )
+        {
+            return;
+        }
+        Vector3f kScreenCenter = new Vector3f( getBoundingBoxUpperLeft(kVOI) );
+        kScreenCenter.Add( getBoundingBoxUpperRight(kVOI) );
+        kScreenCenter.Add( getBoundingBoxLowerLeft(kVOI) );
+        kScreenCenter.Add( getBoundingBoxLowerRight(kVOI) );
+        kScreenCenter.Scale( 0.25f );
+
+        Vector3f kScreenScale = new Vector3f( (iX-kScreenCenter.X) / (kScreenBound.X-kScreenCenter.X), 
+                (iY-kScreenCenter.Y) / (kScreenBound.Y-kScreenCenter.Y), 1 );
+
+        switch( nearBound )
+        {
+        case VOIBase.LOWER_MIDDLE:
+        case VOIBase.UPPER_MIDDLE: kScreenScale.X = 1; break;
+        case VOIBase.LEFT_MIDDLE:
+        case VOIBase.RIGHT_MIDDLE: kScreenScale.Y = 1; break;
+        }
+
+        if ( kScreenScale.X == 1 && kScreenScale.Y == 1 )
+        {
+            return;
+        }
+
+        Vector<Vector3f> newPoints = new Vector<Vector3f>();
+        for ( int i = 0; i < kVOI.size(); i++ )
+        {
+            Vector3f kScreen = m_kDrawingContext.fileToScreen( kVOI.elementAt(i) );
+            kScreen.Sub(kScreenCenter);
+            kScreen.Mult( kScreenScale );
+            kScreen.Add(kScreenCenter);
+            Vector3f kVolumePt = new Vector3f();
+            if ( m_kDrawingContext.screenToFile( kScreen, kVolumePt ) )
+            {
+                return;
+            }
+            newPoints.add( kVolumePt );
+        }
+        for ( int i = 0; i < kVOI.size(); i++ )
+        {
+            kVOI.set( i, newPoints.elementAt(i) );
+        }
+
+        kVOI.update();
+
+        m_kParent.setCursor(MipavUtil.crosshairCursor); 
+        m_kParent.updateDisplay();
+        if ( m_kCurrentVOI.getGroup().getContourGraph() != null )
+        {
+            m_kParent.updateGraph(m_kCurrentVOI);
+        }
+    }
+    /**
+     * Sets up directed graph from the seed point. A point (x,y) is mapped to its absolute value in the image, y*xDim +
+     * x. This along with its cost is stored in Node. The structure costGraph holds the "edges" of the graph. Each
+     * location has an integer associated with it which represents where that node is pointing to. Thus costGraph[7] = 8
+     * would mean the node at 7 (really (0,7)) is pointing to position 8 (really (0,8)). The only possibilities for a
+     * location in costGraph are the 8 neighbors surrounding that node. For this reason we might use a byte array
+     * instead of an integer array. The seed point points nowhere, to indicate that it's the seed;
+     * costGraph[seed.location] = -1. We also need to know if a point has been processed, that is, expanded with the
+     * cost set. For this we use a BitSet whose size is the same as the number of pixels in the image. Once a point is
+     * processed, its location in the BitSet is set to <code>true</code>.
+     *
+     * <p>The array seededCosts holds the costs so far for a location. If a cost has not been assigned yet, the cost is
+     * -2. ActiveList is simply a linked list of Integers; the Integer refers to the location in the seededCosts array.
+     * ActiveList is sorted by cost, so that the minimum cost in the ActiveList is the first element of the linked list.
+     * Thus finding the minimum is O(1). Finding out if an element is in the ActiveList is also O(1), because for an
+     * element to be in the list, it must have already been assigned a cost. Therefore, if seededCosts[location] != -2,
+     * it is in the ActiveList. And finding the cost of an item in the ActiveList is O(1), because it's just
+     * seededCosts[location], where location is the Integer in the ActiveList. Obviously we're winning speed at the
+     * expense of memory, but it's not too much memory in the overall scheme of things.</p>
+     *
+     * <p>The gradient direction component of the cost is added in on the fly. This is because to precalculate would
+     * mean an array of 8n, where n is the size of the image. The link from p to q is not the same as the link from q to
+     * p. Furthermore, it may never be necessary to calculate some of the links, because the graph would never look at
+     * that pair. For more information on how the gradient direction cost is calculated, look at the comments directly
+     * above the code.</p>
+     *
+     * @param  pt  Point to seed with.
+     */
+    private void seed(int iX, int iY) {
+        Vector3f kVolumePt = new Vector3f();
+        m_kDrawingContext.screenToFile( iX, iY, m_iSlice, kVolumePt );
+        Vector3f kLocalPt = fileCoordinatesToPatient( kVolumePt );
+
+        int xDim = m_aiLocalImageExtents[0];
+        int yDim = m_aiLocalImageExtents[1];
+        int x = (int)kLocalPt.X;
+        int y = (int)kLocalPt.Y;
+
+        int location = (y * xDim) + x; // Location in array that represents image.
+
+        costGraph[location] = -1; // No parent of seed point
+        seedPoint = location;
+
+        // processedIndicies.clear(); only in JVM 1.4.
+        for (int c = 0; c < processedIndicies.size(); c++) {
+            processedIndicies.clear(c);
+        }
+
+
+        for (int i = 0; i < seededCosts.length; i++) {
+            seededCosts[i] = -2;
+        }
+
+        activeTree.reset();
+
+        seededCosts[location] = 0;
+        activeTree.insert(location, 0f);
+
+        float temp, cost, gradDir;
+        System.currentTimeMillis();
+        int count = 0;
+
+        float gdConst = (float) (2f / (3 * Math.PI));
+        float pi = (float) Math.PI;
+
+        while (activeTree.isEmpty() == false) { // while active list has more elements to process
+
+            location = activeTree.pop();
+            cost = seededCosts[location];
+            processedIndicies.set(location); // set this point as processed
+            x = location % xDim;
+            y = location / xDim;
+
+            count++;
+
+            for (int iy = -1; iy <= 1; iy++) {
+                int yOffset = (y + iy) * xDim;
+
+                if (((y + iy) >= 0) && ((y + iy) < yDim)) { // in bounds in the y dimension
+
+                    for (int ix = -1; ix <= 1; ix++) {
+                        int position = yOffset + (x + ix);
+
+                        if (((x + ix) >= 0) && ((x + ix) < xDim) && // in bounds in the x dimension
+                                !processedIndicies.get(position)) { // not yet processed - this will rule out current
+                            // node
+
+                            if (m_iLiveWireSelection == RubberbandLivewire.GRADIENT_MAG) {
+                                // Gradient Direction Cost Let D(p) be a unit vector of the gradient direction at point
+                                // p. Define D'(p) as the unit vector perpendicular to D(p). In our implementation, D(p)
+                                // = (xDirections[location], yDirections[location]) where location is the absolute
+                                // position of point p; that is, location = p.y*xDim + p.x So       D(p) =
+                                // (xDirections[location], yDirections[location])       D'(p) = (yDirections[location],
+                                // -xDirections[location])
+                                //
+                                // The formulation of the gradient direction feature cost is      f(p,q) = 2/(3pi) *
+                                // (acos(dp(p,q) + acos(dq(p,q)))) where      dp(p,q) = D'(p) dot L(p,q)      dq(p,q) =
+                                // L(p,q) dot D'(q) and
+                                //
+                                //     L(p,q) =    1     {q - p if D'(p) dot (q - p) >= 0               ------- *{
+                                //       ||p-q||  {p - q if D'(p) dot (q - p) < 0
+
+                                float Lx, Ly;
+                                float divide;
+
+                                // divide is || p - q || = || ( (x - (x+ix)), (y - (y+iy)) ) ||
+                                // = || ( -ix, -iy ) ||
+                                // = sqrt(ix^2 + iy^2)
+                                // = sqrt(2) or sqrt(1)
+                                // because ix and iy will never both be 0 (current node is already processed)
+                                // so if they are both non-zero, it's sqrt(2), otherwise it's sqrt(1)
+                                if ((ix != 0) && (iy != 0)) {
+                                    divide = 0.7071068f;
+                                } else {
+                                    divide = 1f;
+                                }
+
+                                // if D'(p) dot (q - p) >= 0
+                                // becomes
+                                // if ( yDirections[location]*(x+ix-x) + (-xDirections[location]*(y+iy-y) )
+                                // becomes
+                                if (((yDirections[location] * ix) - (xDirections[location] * iy)) >= 0) {
+                                    Lx = ix * divide;
+                                    Ly = iy * divide;
+                                }
+                                // D'(p) dot (q - p) < 0
+                                else {
+                                    Lx = -ix * divide;
+                                    Ly = -iy * divide;
+                                }
+                                // if (yDirections[location]*ix - xDirections[location]*iy >= 0)
+                                // dp = divide * (yDirections[location]*ix - xDirections[location]*iy)
+                                // so dp >= 0
+                                // if (yDirections[location]*ix - xDirections[location]*iy < 0)
+                                // dp = -divide * (yDirections[location]*ix - xDirectios[locations]*iy)
+                                // so dp > 0
+                                // Hence always have 1 >= dp >= 0
+                                // dq = sign(yDirections[location]*ix - xDirections[location]*iy) *
+                                // divide * (yDirections[position]*ix - xDirections[position]*iy)
+                                // Thus, if (yDirections[location]*ix - xDirections[location]*iy) and
+                                // (yDirections[position]*ix - xDirections[position]*iy) have the same
+                                // sign, then dq is positive.  Otherwise, dq is negative.
+                                // 1 > = dq > = -1
+                                // acos_dp can vary from 0 to pi/2 and acos_dq can vary from 0 to
+                                // pi so the gradient direction feature cost can vary from 0 to 1.
+                                // The Taylor series for acos(x) =
+                                // pi/2 - x - (x**3)/(2*3) - 1*3*(x**5)/(2*4*5) - 1*3*5*(x**7)/(2*4*6*7)
+
+                                float dp = (yDirections[location] * Lx) - (xDirections[location] * Ly);
+                                float dq = (yDirections[position] * Lx) - (xDirections[position] * Ly);
+
+                                if (dp > 1) {
+                                    dp = 1f;
+                                }
+
+                                if (dq > 1) {
+                                    dq = 1f;
+                                } else if (dq < -1) {
+                                    dq = -1f;
+                                }
+
+                                // float acos_dp = (float)(Math.acos(dp));
+                                // float acos_dq = (float)(Math.acos(dq));
+                                // float gradDir = (gdConst)*(acos_dp + acos_dq);
+
+                                // The above is the original formula as described.
+                                // The below is what we're using because it's much faster since
+                                // it only uses up to the third power term in the Taylor series.
+                                gradDir = gdConst * (pi - dp - (dp * dp * dp / 6) - dq - (dq * dq * dq / 6));
+                            } else { // ((selection == MEDIALNESS) || (selection == INTENSITY))
+                                gradDir = 0f;
+                            }
+
+                            if ((ix != 0) && (iy != 0)) { // diagonal costs more
+                                temp = cost + ((localCosts[position] + (grad_weight * gradDir)) * 1.4142f); // * square root of 2, Euclidean distance
+                            } else {
+                                temp = cost + (localCosts[position] + (grad_weight * gradDir)); // temp cost
+                            }
+
+                            if (temp < seededCosts[position]) { // not set seededCosts == -2 which will always be less
+                                // than temp, temp must be positive
+                                activeTree.remove(position, seededCosts[position]);
+                                seededCosts[position] = -2;
+                            }
+
+                            // if not in active or was just removed from active list
+                            if (seededCosts[position] == -2) {
+
+                                // put into active list or back into active list with new cost
+                                // set pointer back to parent
+                                int temploc = ((-iy + 1) * 3) - ix + 1;
+
+                                costGraph[position] = (byte) temploc;
+                                activeTree.insert(position, temp);
+                                seededCosts[position] = temp;
+
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+    }
+    private VOIBase selectVOI( int iX, int iY, boolean bShiftDown, boolean bControlDown  )
+    {
+        m_bSelected = false;
+        m_kCurrentVOI = null;
+        VOIVector kVOIs = m_kImageActive.getVOIs();
+        for ( int i = kVOIs.size()-1; i >=0; i-- )
+        {
+            VOI kVOI = kVOIs.get(i);
+            for ( int j = kVOI.getCurves().size()-1; j >= 0; j-- )
+            {
+                VOIBase kVOI3D = kVOI.getCurves().get(j);
+                if ( (m_iPlane == (m_iPlane & kVOI3D.getPlane())) &&
+                        (m_iSlice == getSlice( kVOI3D )) && 
+                        contains( kVOI3D, iX, iY, m_iSlice ) )
+                {
+                    m_kCurrentVOI = kVOI3D;
+                    boolean isActive = m_kCurrentVOI.isActive();
+                    m_kParent.setSelectedVOI( m_kCurrentVOI.getGroup(), bShiftDown, !bControlDown );
+                    if ( bControlDown )
+                    {
+                        m_kCurrentVOI.setActive(!isActive);
+                    }
+                    else
+                    {
+                        m_kCurrentVOI.setActive(true);                        
+                    }
+                    m_bSelected = m_kCurrentVOI.isActive();
+                    if ( !m_bSelected )
+                    {
+                        m_kCurrentVOI = null;
+                    }
+                    return m_kCurrentVOI;
+                }
+            }
+        }
+        if ( !bControlDown )
+        {
+            m_kParent.selectAllVOIs(false);
+        }
+        return m_kCurrentVOI;
+    }
+    private void setCanvas (Component kComponent)
+    {
+        m_kComponent = kComponent;
+        m_kComponent.addKeyListener( this );
+        m_kComponent.addMouseListener( this );
+        m_kComponent.addMouseMotionListener( this );
+    }
+    private void setPosition( VOIBase kVOI, int iPos, float fX, float fY, float fZ )
+    {
+        setPosition( kVOI, iPos, new Vector3f( fX, fY, fZ ) );
+    }
+    private void setPosition( VOIBase kVOI, int iPos, Vector3f kPos )
+    {
+        if ( kVOI.isFixed() )
+        {
+            return;
+        }       
+
+        Vector3f kVolumePt = new Vector3f();
+        if ( iPos < kVOI.size() )
+        {
+            if ( !m_kDrawingContext.screenToFile( (int)kPos.X, (int)kPos.Y, (int)kPos.Z, kVolumePt ) )
+            {
+                if ( kVOI.getType() == VOI.ANNOTATION )
+                {
+                    if ( iPos == 0 && kVOI.size() > 2 )
+                    {
+                        float width = kVOI.elementAt(2).X - kVOI.elementAt(0).X;
+                        kVOI.elementAt(2).X = kVolumePt.X + width;
+                        kVOI.elementAt(2).Y = kVolumePt.Y;
+                        kVOI.elementAt(2).Z = kVolumePt.Z;
+                    }
+                    if ( iPos == 2 && kVOI.size() > 2 )
+                    {
+                        float width = kVOI.elementAt(2).X - kVOI.elementAt(0).X;
+                        kVOI.elementAt(0).X = kVolumePt.X - width;
+                        kVOI.elementAt(0).Y = kVolumePt.Y;
+                        kVOI.elementAt(0).Z = kVolumePt.Z;
+                    }
+                }                
+                kVOI.set( iPos, kVolumePt );
+
+                kVOI.setSelectedPoint( iPos );
+                kVOI.update();
+            }
+        }
+
+
+
+    }
+
+
+    private void showSelectedVOI( int iX, int iY )
+    {
+        m_kComponent.removeMouseListener(m_kPopupPt);
+        m_kComponent.removeMouseListener(m_kPopupVOI);
+        Vector3f kVolumePt = new Vector3f();
+        m_kDrawingContext.screenToFile( iX, iY, m_iSlice, kVolumePt );
+
+        if ( m_kCurrentVOI != null && (m_iSlice == getSlice( m_kCurrentVOI )) )
+        {
+            if ( nearPoint( m_kCurrentVOI, iX, iY, m_iSlice ) )
+            {
+                if ( m_kCurrentVOI.getType() == VOI.POINT )
+                {
+                    m_kParent.setCursor(MipavUtil.moveCursor);
+                    m_iNearStatus = NearNone;
+                }
+                else
+                {
+                    m_kParent.setCursor(MipavUtil.crosshairCursor);
+                    m_iNearStatus = NearPoint;
+                    m_kParent.updateDisplay();
+                }
+                return;
+            }
+            else if ( nearBoundPoint( m_kCurrentVOI, iX, iY, m_iSlice ) )
+            {
+                m_kParent.setCursor(MipavUtil.crosshairCursor);
+                m_iNearStatus = NearBoundPoint;
+                m_kParent.updateDisplay();
+                return;
+            }
+            else if ( m_kCurrentVOI.nearLine( (int)kVolumePt.X, (int)kVolumePt.Y, (int)kVolumePt.Z ) )
+            {
+                if ( (m_kCurrentVOI.getType() == VOI.CONTOUR) ||
+                        (m_kCurrentVOI.getType() == VOI.POLYLINE) )
+                {
+                    m_kParent.setCursor(MipavUtil.addPointCursor);
+                    m_iNearStatus = NearLine;
+                    m_kParent.updateDisplay();
+                }
+                else
+                {
+                    m_kParent.setCursor(MipavUtil.moveCursor);
+                    m_iNearStatus = NearNone;
+                }
+                return;
+            }
+        }
+        VOIVector kVOIs = m_kImageActive.getVOIs();
+        for ( int i = kVOIs.size()-1; i >=0; i-- )
+        {
+            VOI kVOI = kVOIs.get(i);
+            for ( int j = kVOI.getCurves().size()-1; j >= 0; j-- )
+            {
+                VOIBase kVOI3D = kVOI.getCurves().get(j);
+                if ( (m_iPlane == (m_iPlane & kVOI3D.getPlane())) &&
+                        (m_iSlice == getSlice( kVOI3D )) && 
+                        contains( kVOI3D, iX, iY, m_iSlice ) )
+                {
+                    m_iNearStatus = NearNone;
+                    m_kParent.setCursor(MipavUtil.moveCursor);
+                    return;
+                }
+            }
+        }
+        m_iNearStatus = NearNone;
+        m_kParent.setCursor(MipavUtil.defaultCursor);
+        // not: m_kParent.setDefaultCursor() which changes the cursorMode...
+    }
 
     /**
      * Creates a single level set. Takes a starting point and finds a closed path along the levelset back to the
@@ -5055,287 +5228,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     }
 
 
-    private int indexRetrace = -99;
-    private VOIContour oldContour = null;
-    private int lastX = -1;
-    private int lastY = -1;
-    private int lastZ = -1;
-    private boolean knowDirection = false;
-    private boolean isFirst = true;
-    private boolean resetStart = true;
-
-
-    /**
-     * Redraws contour. Must move cursor in clockwise motion to work best
-     * 
-     * @param zoomX
-     *            zoom for the x coordinate
-     * @param zoomY
-     *            zoom for the y coordinate
-     * @param resolutionX
-     *            resolution of the pixel in the X direction (aspect ratio)
-     * @param resolutionY
-     *            resolution of the pixel in the Y direction (aspect ratio)
-     * @param resols
-     *            array of pixel resolutions
-     * @param x1
-     *            x coordinate of new point to add
-     * @param y1
-     *            y coordinateof new point to add
-     * @param g
-     *            graphics to paint in
-     */
-    public void retraceContour(VOIBase kVOIIn, int x1, int y1 ) {
-        if ( !(kVOIIn instanceof VOIContour) )
-        {
-            return;
-        }
-        m_iDrawType = RETRACE;
-        VOIContour kVOI = (VOIContour)kVOIIn;
-        Vector3f ptRetrace = null;
-        double minDistance, dist;
-
-        try {
-            kVOI.makeCounterClockwise();
-            if (indexRetrace == -99) {
-                oldContour = new VOIContour( kVOI );
-            }
-
-            // Return if trying to add the same point.
-            Vector3f kScreen = new Vector3f( x1, y1, m_iSlice );
-            Vector3f kCurrent = m_kDrawingContext.screenToFile( kScreen );
-
-            if (kVOI.contains(kCurrent)) {
-                return;
-            }
-
-            kVOI.setActive(false);
-
-            // Find nearest point in old contour
-            minDistance = 9999999;
-            int end = oldContour.size();
-
-            for (int i = 0; i < end; i++) {
-                dist = MipavMath.distance(kCurrent, oldContour.elementAt(i));
-
-                if (dist < minDistance) {
-                    ptRetrace = oldContour.elementAt(i);
-                    minDistance = dist;
-                }
-            }
-
-            if (resetStart) {
-                kVOI.makeCounterClockwise( kVOI.indexOf(ptRetrace) );
-                resetIndex();
-                resetStart = false;
-            } else {
-
-                int index, indexold;
-                Vector3f newer = new Vector3f( kCurrent );
-
-                if (lastX == -1) { // if first time
-
-                    lastX = (int) ptRetrace.X;
-                    lastY = (int) ptRetrace.Y;
-                    lastZ = (int) ptRetrace.Z;
-                    indexRetrace = oldContour.indexOf(ptRetrace);
-                    kVOI.insertElementAt(newer,
-                            kVOI.indexOf(oldContour.get(indexRetrace)));
-                } else if (!(lastX == (int) ptRetrace.X && lastY == (int) ptRetrace.Y)) {
-
-                    index = oldContour.indexOf(ptRetrace);
-                    Vector3f old = new Vector3f(lastX, lastY, lastZ);
-                    indexold = indexRetrace;
-                    if (index == 0 || index - indexold == 1) { // if
-                        // countclockwise
-                        // and no jumps
-                        knowDirection = true;
-                        lastX = (int) ptRetrace.X;
-                        lastY = (int) ptRetrace.Y;
-                        lastZ = (int) ptRetrace.Z;
-                        kVOI.insertElementAt(newer, kVOI.indexOf(old));
-                        kVOI.removeElement(old);
-                        indexRetrace = index;
-                    } else if (isFirst && indexold >= kVOI.size() - 3
-                            && indexold - index != 1) {
-                        if (((indexold - index) < (oldContour.size() / 2))) {
-                            for (; index != indexold; indexold--) {
-                                indexRetrace = kVOI.indexOf(old) - 1;
-                                oldContour.removeElementAt(indexRetrace);
-                                kVOI.removeElementAt(indexRetrace);
-                                old = kVOI.get(indexRetrace);
-                            }
-                            lastX = (int) old.X;
-                            lastY = (int) old.Y;
-                            lastZ = (int) old.Z;
-                            kVOI.insertElementAt(newer, kVOI.indexOf(old) + 1);
-                        } else {
-                            indexRetrace = kVOI.indexOf(old) - 1;
-                            oldContour.removeElementAt(indexRetrace);
-                            kVOI.removeElementAt(indexRetrace);
-                            for (int size = kVOI.size() - 1, i = 0; i != size
-                            - indexold; i++) {
-                                oldContour.remove(0);
-                                kVOI.remove(0);
-                            }
-                            lastX = (int) old.X;
-                            lastY = (int) old.Y;
-                            lastZ = (int) old.Z;
-                            kVOI.insertElementAt(newer, 0);
-                            indexRetrace = 0;
-                        }
-
-                    } else if ((indexold - index) >= 1) { // if clockwise in
-                        // general
-                        knowDirection = true;
-                        if (!isFirst) {
-                            if (!(index - indexold > oldContour.size() / 2 || index == 0)) {
-                                for (; index != indexold; index++) {
-                                    indexRetrace = kVOI.indexOf(old);
-                                    oldContour.removeElementAt(oldContour
-                                            .indexOf(old));
-                                    kVOI.removeElementAt(indexRetrace);
-                                    old = kVOI.get(indexRetrace - 1);
-                                }
-                                lastX = (int) old.X;
-                                lastY = (int) old.Y;
-                                lastZ = (int) old.Z;
-                                kVOI.insertElementAt(newer, kVOI.indexOf(old) + 1);
-                            }
-
-                        } else {
-                            isFirst = false;
-                            if (indexold - index == 1) {
-                                knowDirection = true;
-                                lastX = (int) ptRetrace.X;
-                                lastY = (int) ptRetrace.Y;
-                                lastZ = (int) ptRetrace.Z;
-
-                                if (isFirst) {
-                                    kVOI.insertElementAt(newer, kVOI.indexOf(old) - 1);
-                                }
-                                kVOI.removeElement(old);
-                                indexRetrace = index;
-                            }
-                        }
-                    } else { // if counterclockwise and with jumps
-                        Vector3f right = new Vector3f(oldContour.get(index + 1));
-                        for (; index != indexold - 1; indexold++) {
-                            if (oldContour.indexOf(indexold) != -1) {
-                                oldContour.removeElementAt(indexold);
-                            }
-                            kVOI.removeElement(oldContour.elementAt(indexold));
-                        }
-
-                        kVOI.insertElementAt(newer, kVOI.indexOf(right));
-                        ptRetrace = right;
-                        lastX = (int) ptRetrace.X;
-                        lastY = (int) ptRetrace.Y;
-                        lastZ = (int) ptRetrace.Z;
-
-                        indexRetrace = oldContour.indexOf(right) - 1;
-                    }
-                } else if (minDistance > 5 && knowDirection) {
-                    if (isFirst)
-                        kVOI.insertElementAt(newer, kVOI.indexOf(ptRetrace));
-                    else {
-                        kVOI.insertElementAt(newer, kVOI.indexOf(ptRetrace) + 1);
-                    }
-                }
-            }
-            kVOI.update();
-            kVOI.setActive(true);
-            m_kParent.updateDisplay();
-        } catch (OutOfMemoryError error) {
-            System.gc();
-        } catch (ArrayIndexOutOfBoundsException error) {
-            resetStart();
-        } catch (NullPointerException error) {
-            resetStart();
-        }
-    }
-
-    /* Resets the index and flag used in the retraceContour mode. It should be
-     * called after retracing a Contour.
-     */
-    public void resetIndex() {
-        indexRetrace = -99;
-        oldContour = null;
-        lastX = -1;
-        knowDirection = false;
-        isFirst = true;
-    }
-
-
-
-    /**
-     * Resets all retrace variables and allows it to start anewA
-     */
-    public void resetStart() {
-        resetStart = true;
-        resetIndex();
-
-    }
-
-
-
-    private void outlineRegion(int[][] aaiCrossingPoints, int[] aiNumCrossings,
-            int iXMin, int iXMax, Vector3f[] akPoints )
-    {        
-        int iNumPts = akPoints.length;
-        double dNudge = 0.1;       
-        double[][][] aaadEdgeList = new double[iNumPts][2][2];
-
-        for (int i = 0; i < (iNumPts - 1); i++) {
-            aaadEdgeList[i][0][0] = akPoints[i].X - dNudge;
-            aaadEdgeList[i][0][1] = akPoints[i].Y - dNudge;
-            aaadEdgeList[i][1][0] = akPoints[i+1].X - dNudge;
-            aaadEdgeList[i][1][1] = akPoints[i+1].Y - dNudge;
-        }
-
-        /*
-         * Compute the crossing points for this column and produce spans.
-         */
-        for (int iColumn = iXMin; iColumn < iXMax; iColumn++) {
-            int iIndex = iColumn - iXMin;
-
-            /* for each edge, figure out if it crosses this column and add its
-             * crossing point to the list if so. */
-            aiNumCrossings[iIndex] = 0;
-
-            for (int iPoint = 0; iPoint < (iNumPts - 1); iPoint++) {
-                double dX0 = aaadEdgeList[iPoint][0][0];
-                double dX1 = aaadEdgeList[iPoint][1][0];
-                double dY0 = aaadEdgeList[iPoint][0][1];
-                double dY1 = aaadEdgeList[iPoint][1][1];
-                double dMinX = (dX0 <= dX1) ? dX0 : dX1;
-                double dMaxX = (dX0 > dX1) ? dX0 : dX1;
-
-                if ((dMinX < iColumn) && (dMaxX > iColumn)) {
-
-                    /* The edge crosses this column, so compute the
-                     * intersection.
-                     */
-                    double dDX = dX1 - dX0;
-                    double dDY = dY1 - dY0;
-                    double dM = (dDX == 0) ? 0 : (dDY / dDX);
-                    double dB = (dDX == 0) ? 0 : (((dX1 * dY0) - (dY1 * dX0)) / dDX);
-
-                    double dYCross = (dM * iColumn) + dB;
-                    //double dRound = 0.5;
-                    //aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (dYCross < 0) ? (int) (dYCross - dRound) :
-                    //    (int) (dYCross + dRound);
-                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (int)Math.round(dYCross);
-                    aiNumCrossings[iIndex]++;
-                }
-            }
-
-            /* sort the set of crossings for this column: */
-            sortCrossingPoints(aaiCrossingPoints[iIndex], aiNumCrossings[iIndex]);
-        }
-        aaadEdgeList = null;
-    }
-
 
     /**
      * Sorts the edge crossing points in place.
@@ -5359,6 +5251,141 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 }
             }
         }
+    }
+
+
+
+    private VOIBase split( VOIBase kVOI, Vector3f kStartPt, Vector3f kEndPt )
+    {
+        if ( kVOI.getType() != VOI.CONTOUR )
+        {
+            return null;
+        }
+        int iVOISlice = (int)fileCoordinatesToPatient(kVOI.get(0)).Z;
+        int iPoints = kVOI.size();
+        Vector3f kFirstIntersectionPt = null;
+        Vector3f kSecondIntersectionPt = null;
+        int iFirstIndex = -1;
+        int iSecondIndex = -1;
+        for ( int iP = 0; iP < (iPoints - 1) && (kSecondIntersectionPt == null); iP++ )
+        {
+            Vector3f kLocal1 = fileCoordinatesToPatient(kVOI.get(iP));
+            Vector3f kLocal2 = fileCoordinatesToPatient(kVOI.get(iP+1));
+            Vector3f kIntersection = new Vector3f();
+
+            if (JDialogVOISplitter.intersects( kLocal1, kLocal2, kStartPt, kEndPt, kIntersection )) {
+                if (kFirstIntersectionPt == null)
+                {
+                    kFirstIntersectionPt = kIntersection;
+                    iFirstIndex = iP;
+                } 
+                else 
+                {
+                    kSecondIntersectionPt = kIntersection;
+                    iSecondIndex = iP;
+                }
+            }
+        }
+        if ( kSecondIntersectionPt == null )
+        {
+            Vector3f kLocal1 = fileCoordinatesToPatient(kVOI.lastElement());
+            Vector3f kLocal2 = fileCoordinatesToPatient(kVOI.firstElement());
+            Vector3f kIntersection = new Vector3f();
+
+            if (JDialogVOISplitter.intersects( kLocal1, kLocal2, kStartPt, kEndPt, kIntersection )) {
+
+                kSecondIntersectionPt = kIntersection;
+                iSecondIndex = iPoints - 1;
+            }
+        }
+
+        if (kFirstIntersectionPt != null && kSecondIntersectionPt != null) 
+        {        
+            kFirstIntersectionPt.Z = iVOISlice;
+            kFirstIntersectionPt = patientCoordinatesToFile(kFirstIntersectionPt);
+            kSecondIntersectionPt.Z = iVOISlice;
+            kSecondIntersectionPt = patientCoordinatesToFile(kSecondIntersectionPt);
+
+
+            Vector<Vector3f> kPositions = new Vector<Vector3f>();
+            kPositions.add( kSecondIntersectionPt );  
+            //check if there are points from second index to 0-index, add those first
+            for (int iP = iSecondIndex + 1; iP < iPoints; iP++) {
+                kPositions.add(kVOI.get(iP));
+            }
+            for (int iP = 0; iP < iFirstIndex + 1; iP++) {
+                kPositions.add(kVOI.get(iP));
+            }
+            kPositions.add( kFirstIntersectionPt );  
+
+            for (int iP = 00; iP < kPositions.size(); iP++) {
+                kVOI.remove(kPositions.get(iP));
+            }
+            kVOI.add(0, new Vector3f(kFirstIntersectionPt) );
+            kVOI.add(0, new Vector3f(kSecondIntersectionPt) );      
+
+            kVOI.setSelectedPoint(0);
+            kVOI.update();
+
+            return new VOIContour( kVOI.isFixed(), kVOI.isClosed(), kPositions );
+        }
+        return null;       
+    }
+
+
+    private void splitVOIs( boolean bAllSlices, boolean bOnlyActive, VOIBase kSplitVOI )
+    {
+        VOIVector kVOIs = m_kImageActive.getVOIs();
+        if ( !kSplitVOI.isSplit() || (kVOIs.size() == 0) )
+        {
+            return;
+        }
+        Vector<VOIBase> kNewVOIs = new Vector<VOIBase>();
+
+        Vector3f kStartPt = fileCoordinatesToPatient(kSplitVOI.get(0)); 
+        Vector3f kEndPt = fileCoordinatesToPatient(kSplitVOI.get(1)); 
+
+        int iStartSlice = bAllSlices? 0 : m_iSlice;
+        int nSlices = m_aiLocalImageExtents.length > 2 ? m_aiLocalImageExtents[2] : 1;
+        int iEndSlice = bAllSlices? nSlices : m_iSlice + 1;
+
+
+        for ( int i = 0; i < kVOIs.size(); i++ )
+        {
+            VOI kVOI = kVOIs.get(i);
+            for ( int j = 0; j < kVOI.getCurves().size(); j++ )
+            {
+                VOIBase kVOI3D = kVOI.getCurves().get(j);
+                if ( m_iPlane != (m_iPlane & kVOI3D.getPlane() ))
+                {
+                    continue;
+                }
+                int iVOISlice = kVOI3D.slice();
+                if ( !((iVOISlice >= iStartSlice) && (iVOISlice < iEndSlice)) )
+                {
+                    continue;
+                }
+                if ( !(!bOnlyActive || kVOI3D.isActive()) )
+                {
+                    continue;
+                }
+                VOIBase kNew = split( kVOI3D, kStartPt, kEndPt );
+                if ( kNew != null )
+                {  
+                    //m_kParent.updateCurrentVOI( kVOI, kVOI );
+                    kNewVOIs.add(kNew);
+                }
+            }
+        }
+        m_kParent.deleteVOI( kSplitVOI );  
+        kSplitVOI.dispose();
+        kSplitVOI = null;
+
+        for ( int i = 0; i < kNewVOIs.size(); i++ )
+        {
+            m_kParent.addVOI(kNewVOIs.get(i), false, true, true);
+        }
+        m_kCurrentVOI = null;
     }
 
     private void updateRectangle( int iX, int iMouseX, int iY, int iYStart )
