@@ -202,6 +202,9 @@ public class AlgorithmSM2 extends AlgorithmBase {
         long normalTerminations = 0;
         long abnormalTerminations = 0;
         double paramSecs0;
+        double initial0_original;
+        double min0_original;
+        double max0_original;
         
         if (selfTest) {
         	int i;
@@ -505,6 +508,9 @@ public class AlgorithmSM2 extends AlgorithmBase {
         
         // Convert dialog ktrans units from /min to /sec
         // Multiply /min by 1 min/60 seconds
+        initial0_original = initial[0];
+        min0_original = min_constr[0];
+        max0_original = max_constr[0];
         initial[0] = initial[0]/60.0;
         min_constr[0] = min_constr[0]/60.0;
         max_constr[0] = max_constr[0]/60.0;
