@@ -28,17 +28,17 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
     private boolean hardInterrupt = false;
     
     private ModelImage t2ResultStack;
-    private ModelImage moResultStack;
+    private ModelImage m0ResultStack;
     private ModelImage r2ResultStack;
-    private ModelImage boResultStack;
+    private ModelImage b0ResultStack;
     
     private String[] wList;
     
     /** The frames for result images (if null at end of algorithm src ModelImage is destroyed) */
     private ViewJFrameImage t2ResultWindow;
-    private ViewJFrameImage moResultWindow;
+    private ViewJFrameImage m0ResultWindow;
     private ViewJFrameImage r2ResultWindow;
-    private ViewJFrameImage boResultWindow;
+    private ViewJFrameImage b0ResultWindow;
     
     /** The dialog for accessing GUI specific information, also set during scripting. **/
     private JDialogTreT2 dialog;
@@ -132,16 +132,16 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
             t2ResultStack.disposeLocal();
         }
         
-        if(moResultWindow == null && moResultStack != null) {
-            moResultStack.disposeLocal();
+        if(m0ResultWindow == null && m0ResultStack != null) {
+            m0ResultStack.disposeLocal();
         }
 
         if(r2ResultWindow == null && r2ResultStack != null) {
             r2ResultStack.disposeLocal();
         }
 
-        if(boResultWindow == null && boResultStack != null) {
-            boResultStack.disposeLocal();
+        if(b0ResultWindow == null && b0ResultStack != null) {
+            b0ResultStack.disposeLocal();
         }
     }
     
@@ -167,10 +167,10 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
         double[] t1PixelValues, b1PixelValues;
         double[] phase0Data;
         
-        float[][] t2Values, moValues, r2Values;
+        float[][] t2Values, m0Values, r2Values;
         
         double a, d, e2;
-        double sumX, sumY, sumXY, sumXX, slope, denominator, intercept, lnslope, t1, t2, e1, mo, r2;
+        double sumX, sumY, sumXY, sumXX, slope, denominator, intercept, lnslope, t1, t2, e1, m0, r2;
         double x1, x2, y1, y2;
         double[] possibleT2s, possibleMos;
         float noiseSum, threshold;
@@ -195,22 +195,22 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                 do4D = true;
                 tSeries = image.getExtents()[3];
                 t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
-                moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+                m0ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "m0_results");
                 r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
                 
                 t2ResultStack = nearCloneImage(image, t2ResultStack);
-                moResultStack = nearCloneImage(image, moResultStack);
+                m0ResultStack = nearCloneImage(image, m0ResultStack);
                 r2ResultStack = nearCloneImage(image, r2ResultStack);
             }
         }
         
         if(!do4D) {
             t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
-            moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+            m0ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "m0_results");
             r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
             
             t2ResultStack = nearCloneImage(image, t2ResultStack);
-            moResultStack = nearCloneImage(image, moResultStack);
+            m0ResultStack = nearCloneImage(image, m0ResultStack);
             r2ResultStack = nearCloneImage(image, r2ResultStack);
         }
         
@@ -238,11 +238,11 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
             else { 
                 t2Values = new float[1][1];
             }
-            if (dialog.isCalculateMo()) { 
-                moValues = new float[nSlices][width*height];
+            if (dialog.isCalculateM0()) { 
+                m0Values = new float[nSlices][width*height];
             }
             else { 
-                moValues = new float[1][1];
+                m0Values = new float[1][1];
             }
             if (dialog.isInvertT2toR2()) { 
                 r2Values = new float[nSlices][width*height];
@@ -368,15 +368,15 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                                 if (denominator > 0.00 && denominator < 1.00) {
                                     t2 = -dialog.getTreTR()/Math.log(denominator);
                                     e2 = Math.exp(-dialog.getTreTR()/t2);
-                                    mo = intercept*(1.00-e1*e2)/(1.00-e1);
+                                    m0 = intercept*(1.00-e1*e2)/(1.00-e1);
                                 }
                                 else {
-                                    mo = dialog.getMaxMo();
+                                    m0 = dialog.getMaxM0();
                                     t2 = dialog.getMaxT2();
                                 }
                             }
                             else {
-                                mo = dialog.getMaxMo();
+                                m0 = dialog.getMaxM0();
                                 t2 = dialog.getMaxT2();
                             }
                             
@@ -384,8 +384,8 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                             if (t2 < 0.00 || t2 > dialog.getMaxT2()) {
                                 t2 = dialog.getMaxT2();
                             }
-                            if (mo < 0.00 || mo > dialog.getMaxMo()) {
-                                mo = dialog.getMaxMo();
+                            if (m0 < 0.00 || m0 > dialog.getMaxM0()) {
+                                m0 = dialog.getMaxM0();
                             }
                             
                             // invert to r2
@@ -400,8 +400,8 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                             if (dialog.isCalculateT2()) { 
                                 t2Values[k][pixelIndex] = (float) t2;
                             }
-                            if (dialog.isCalculateMo()) { 
-                                moValues[k][pixelIndex] = (float) mo;
+                            if (dialog.isCalculateM0()) { 
+                                m0Values[k][pixelIndex] = (float) m0;
                             }
                             if (dialog.isInvertT2toR2()) { 
                                 r2Values[k][pixelIndex] = (float) r2;
@@ -411,8 +411,8 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                             if (dialog.isCalculateT2()) { 
                                 t2Values[k][pixelIndex] = (float) 0.00;
                             }
-                            if (dialog.isCalculateMo()) { 
-                                moValues[k][pixelIndex] = (float) 0.00;
+                            if (dialog.isCalculateM0()) { 
+                                m0Values[k][pixelIndex] = (float) 0.00;
                             }
                             if (dialog.isInvertT2toR2()) {
                                 r2Values[k][pixelIndex] = (float) 0.00;
@@ -427,8 +427,8 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                     if (dialog.isCalculateT2()) {
                         t2ResultStack.importData(startVal, t2Values[k], true);
                     }
-                    if (dialog.isCalculateMo()) {
-                        moResultStack.importData(startVal, moValues[k], true);
+                    if (dialog.isCalculateM0()) {
+                        m0ResultStack.importData(startVal, m0Values[k], true);
                     }
                     if (dialog.isInvertT2toR2()) {
                         r2ResultStack.importData(startVal, r2Values[k], true);
@@ -446,10 +446,10 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
             t2ResultWindow.setVisible(true);
         } 
         
-        if (dialog.isCalculateMo()) {
-            moResultWindow = new ViewJFrameImage(moResultStack);
-            moResultWindow.setTitle("TreT2_MoMap");
-            moResultWindow.setVisible(true);
+        if (dialog.isCalculateM0()) {
+            m0ResultWindow = new ViewJFrameImage(m0ResultStack);
+            m0ResultWindow.setTitle("TreT2_M0Map");
+            m0ResultWindow.setVisible(true);
         } 
         
         if (dialog.isInvertT2toR2()) {
@@ -471,12 +471,12 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
         double[] t1PixelValues, b1PixelValues;
         double[] phase180Data;
         
-        float[][] t2Values, moValues, r2Values;
+        float[][] t2Values, m0Values, r2Values;
         
         double a, d, e2;
-        double sumX, sumY, sumXY, sumXX, slope, denominator, intercept, lnslope, t1, t2, e1, mo, r2;
+        double sumX, sumY, sumXY, sumXX, slope, denominator, intercept, lnslope, t1, t2, e1, m0, r2;
         double x1, x2, y1, y2;
-        double[] possibleT2s, possibleMos;
+        double[] possibleT2s, possibleM0s;
         float noiseSum, threshold;
         
         int width, height, nSlices, tSeries;
@@ -499,22 +499,22 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                 do4D = true;
                 tSeries = image.getExtents()[3];
                 t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
-                moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+                m0ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "m0_results");
                 r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
                 
                 t2ResultStack = nearCloneImage(image, t2ResultStack);
-                moResultStack = nearCloneImage(image, moResultStack);
+                m0ResultStack = nearCloneImage(image, m0ResultStack);
                 r2ResultStack = nearCloneImage(image, r2ResultStack);
             }
         }
         
         if(!do4D) {
             t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
-            moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+            m0ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "m0_results");
             r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
             
             t2ResultStack = nearCloneImage(image, t2ResultStack);
-            moResultStack = nearCloneImage(image, moResultStack);
+            m0ResultStack = nearCloneImage(image, m0ResultStack);
             r2ResultStack = nearCloneImage(image, r2ResultStack);
         }
         
@@ -542,11 +542,11 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
             else { 
                 t2Values = new float[1][1];
             }
-            if (dialog.isCalculateMo()) { 
-                moValues = new float[nSlices][width*height];
+            if (dialog.isCalculateM0()) { 
+                m0Values = new float[nSlices][width*height];
             }
             else { 
-                moValues = new float[1][1];
+                m0Values = new float[1][1];
             }
             if (dialog.isInvertT2toR2()) { 
                 r2Values = new float[nSlices][width*height];
@@ -675,15 +675,15 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                                 if (denominator > 0.00 && denominator < 1.00) {
                                     t2 = -dialog.getTreTR()/Math.log(denominator);
                                     e2 = Math.exp(-dialog.getTreTR()/t2);
-                                    mo = intercept*(1.00-e1*e2)/(1.00-e1);
+                                    m0 = intercept*(1.00-e1*e2)/(1.00-e1);
                                 }
                                 else {
-                                    mo = dialog.getMaxMo();
+                                    m0 = dialog.getMaxM0();
                                     t2 = dialog.getMaxT2();
                                 }
                             }
                             else {
-                                mo = dialog.getMaxMo();
+                                m0 = dialog.getMaxM0();
                                 t2 = dialog.getMaxT2();
                             }
                         
@@ -691,8 +691,8 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                             if (t2 < 0.00 || t2 > dialog.getMaxT2()) {
                                 t2 = dialog.getMaxT2();
                             }
-                            if (mo < 0.00 || mo > dialog.getMaxMo()) {
-                                mo = dialog.getMaxMo();
+                            if (m0 < 0.00 || m0 > dialog.getMaxM0()) {
+                                m0 = dialog.getMaxM0();
                             }
                                                     
                             // invert to r2
@@ -705,12 +705,12 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                             
                             
                             if (dialog.isCalculateT2()) t2Values[k][pixelIndex] = (float) t2;
-                            if (dialog.isCalculateMo()) moValues[k][pixelIndex] = (float) mo;
+                            if (dialog.isCalculateM0()) m0Values[k][pixelIndex] = (float) m0;
                             if (dialog.isInvertT2toR2()) r2Values[k][pixelIndex] = (float) r2;
                         }
                         else {
                             if (dialog.isCalculateT2()) t2Values[k][pixelIndex] = (float) 0.00;
-                            if (dialog.isCalculateMo()) moValues[k][pixelIndex] = (float) 0.00;
+                            if (dialog.isCalculateM0()) m0Values[k][pixelIndex] = (float) 0.00;
                             if (dialog.isInvertT2toR2()) r2Values[k][pixelIndex] = (float) 0.00;
                         }
                         pixelIndex++;
@@ -722,8 +722,8 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                     if (dialog.isCalculateT2()) { 
                         t2ResultStack.importData(startVal, t2Values[k], true);
                     }
-                    if (dialog.isCalculateMo()) { 
-                        moResultStack.importData(startVal, moValues[k], true);
+                    if (dialog.isCalculateM0()) { 
+                        m0ResultStack.importData(startVal, m0Values[k], true);
                     }
                     if (dialog.isInvertT2toR2()) { 
                         r2ResultStack.importData(startVal, r2Values[k], true);
@@ -741,10 +741,10 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
             t2ResultWindow.setVisible(true);
         } 
         
-        if (dialog.isCalculateMo()) {
-            moResultWindow = new ViewJFrameImage(moResultStack);
-            moResultWindow.setTitle("TreT2_MoMap");
-            moResultWindow.setVisible(true);
+        if (dialog.isCalculateM0()) {
+            m0ResultWindow = new ViewJFrameImage(m0ResultStack);
+            m0ResultWindow.setTitle("TreT2_M0Map");
+            m0ResultWindow.setVisible(true);
         } 
         
         if (dialog.isInvertT2toR2()) {
@@ -768,12 +768,12 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
         double[] t1PixelValues, b1PixelValues;
         double[] phase0Data, phase180Data;
         
-        float[][] t2Values, moValues, r2Values;
+        float[][] t2Values, m0Values, r2Values;
         
         double a, d, e2;
-        double sumX, sumY, sumXY, sumXX, slope, denominator, intercept, lnslope, t1, t2, e1, mo, r2;
+        double sumX, sumY, sumXY, sumXX, slope, denominator, intercept, lnslope, t1, t2, e1, m0, r2;
         double x1, x2, y1, y2;
-        double[] possibleT2s, possibleMos;
+        double[] possibleT2s, possibleM0s;
         float noiseSum, threshold;
         float Residuals, guessDiffence;
         float [] lastGuess, recentGuess;
@@ -798,11 +798,11 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                 do4D = true;
                 tSeries = image.getExtents()[3];
                 t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
-                moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+                m0ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "m0_results");
                 r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
                 
                 t2ResultStack = nearCloneImage(image, t2ResultStack);
-                moResultStack = nearCloneImage(image, moResultStack);
+                m0ResultStack = nearCloneImage(image, m0ResultStack);
                 r2ResultStack = nearCloneImage(image, r2ResultStack);
             }
         }
@@ -814,11 +814,11 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                     do4D = true;
                     tSeries = image.getExtents()[3];
                     t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
-                    moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+                    m0ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "m0_results");
                     r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
                     
                     t2ResultStack = nearCloneImage(image, t2ResultStack);
-                    moResultStack = nearCloneImage(image, moResultStack);
+                    m0ResultStack = nearCloneImage(image, m0ResultStack);
                     r2ResultStack = nearCloneImage(image, r2ResultStack);
                 }
             }
@@ -826,11 +826,11 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
         
         if(!do4D) {
             t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
-            moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+            m0ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "m0_results");
             r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
             
             t2ResultStack = nearCloneImage(image, t2ResultStack);
-            moResultStack = nearCloneImage(image, moResultStack);
+            m0ResultStack = nearCloneImage(image, m0ResultStack);
             r2ResultStack = nearCloneImage(image, r2ResultStack);
         }
         
@@ -857,10 +857,10 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                 t2Values = new float[nSlices][width*height];
             }
             else t2Values = new float[1][1];
-            if (dialog.isCalculateMo()) { 
-                moValues = new float[nSlices][width*height];
+            if (dialog.isCalculateM0()) { 
+                m0Values = new float[nSlices][width*height];
             }
-            else moValues = new float[1][1];
+            else m0Values = new float[1][1];
             if (dialog.isInvertT2toR2()) { 
                 r2Values = new float[nSlices][width*height];
             }
@@ -883,7 +883,7 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
             phase180Data = new double[dialog.getNfa_phase180()];
             
             possibleT2s = new double[2];
-            possibleMos = new double[2];
+            possibleM0s = new double[2];
             
             for (k=0; k<nSlices; k++) {
                 fireProgressStateChanged(prefix+"calculating T2 values on slice: "+k+" of "+(nSlices-1));
@@ -1012,15 +1012,15 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                                 if (denominator > 0.00 && denominator < 1.00) {
                                     t2 = -dialog.getTreTR()/Math.log(denominator);
                                     e2 = Math.exp(-dialog.getTreTR()/t2);
-                                    mo = intercept*(1.00-e1*e2)/(1.00-e1);
+                                    m0 = intercept*(1.00-e1*e2)/(1.00-e1);
                                 }
                                 else {
-                                    mo = 0.00;
+                                    m0 = 0.00;
                                     t2 = 0.00;
                                 }
                             }
                             else {
-                                mo = 0.00;
+                                m0 = 0.00;
                                 t2 = 0.00;
                             }
                             
@@ -1028,13 +1028,13 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                             if (t2 < 0.00 || t2 > dialog.getMaxT2()) {
                                 t2 = dialog.getMaxT2();
                             }
-                            if (mo < 0.00 || mo > dialog.getMaxMo()) {
-                                mo = 0.00;
+                            if (m0 < 0.00 || m0 > dialog.getMaxM0()) {
+                                m0 = 0.00;
                             }
                         
                 
                             possibleT2s[0] = t2;
-                            possibleMos[0] = mo;
+                            possibleM0s[0] = m0;
                             
                             
                             // calculate T2 first from the phase = 180 data
@@ -1061,15 +1061,15 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                                 if (denominator > 0.00 && denominator < 1.00) {
                                     t2 = -dialog.getTreTR()/Math.log(denominator);
                                     e2 = Math.exp(-dialog.getTreTR()/t2);
-                                    mo = intercept*(1.00-e1*e2)/(1.00-e1);
+                                    m0 = intercept*(1.00-e1*e2)/(1.00-e1);
                                 }
                                 else {
-                                    mo = 0.00;
+                                    m0 = 0.00;
                                     t2 = 0.00;
                                 }
                             }
                             else {
-                                mo = 0.00;
+                                m0 = 0.00;
                                 t2 = 0.00;
                             }
                             
@@ -1077,26 +1077,26 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                             if (t2 < 0.00 || t2 > dialog.getMaxT2()) {
                                 t2 = dialog.getMaxT2();
                             }
-                            if (mo < 0.00 || mo > dialog.getMaxMo()) {
-                                mo = 0.00;
+                            if (m0 < 0.00 || m0 > dialog.getMaxM0()) {
+                                m0 = 0.00;
                             }
                             
                             possibleT2s[1] = t2;
-                            possibleMos[1] = mo;
+                            possibleM0s[1] = m0;
                         
-                            // now, choose the maximum T2 and the corresponding mo value
+                            // now, choose the maximum T2 and the corresponding m0 value
                             if (possibleT2s[0] >= possibleT2s[1]) {
                                 t2 = possibleT2s[0];
-                                mo = possibleMos[0];
+                                m0 = possibleM0s[0];
                             }
                             else {
                                 t2 = possibleT2s[1];
-                                mo = possibleMos[1];
+                                m0 = possibleM0s[1];
                             }
                              
                             
                             //t2 = (possibleT2s[0]+possibleT2s[1])/2.00;
-                            //mo = (possibleMos[0]+possibleMos[1])/2.00;
+                            //m0 = (possibleM0s[0]+possibleM0s[1])/2.00;
                         
                         
                             // invert to r2
@@ -1110,8 +1110,8 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                             if (dialog.isCalculateT2()) { 
                                 t2Values[k][pixelIndex] = (float) t2;
                             }
-                            if (dialog.isCalculateMo()) { 
-                                moValues[k][pixelIndex] = (float) mo;
+                            if (dialog.isCalculateM0()) { 
+                                m0Values[k][pixelIndex] = (float) m0;
                             }
                             if (dialog.isInvertT2toR2()) { 
                                 r2Values[k][pixelIndex] = (float) r2;
@@ -1121,8 +1121,8 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                             if (dialog.isCalculateT2()) { 
                                 t2Values[k][pixelIndex] = (float) 0.00;
                             }
-                            if (dialog.isCalculateMo()) { 
-                                moValues[k][pixelIndex] = (float) 0.00;
+                            if (dialog.isCalculateM0()) { 
+                                m0Values[k][pixelIndex] = (float) 0.00;
                             }
                             if (dialog.isInvertT2toR2()) { 
                                 r2Values[k][pixelIndex] = (float) 0.00;
@@ -1137,8 +1137,8 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                     if (dialog.isCalculateT2()) { 
                         t2ResultStack.importData(startVal, t2Values[k], true);
                     }
-                    if (dialog.isCalculateMo()) { 
-                        moResultStack.importData(startVal, moValues[k], true);
+                    if (dialog.isCalculateM0()) { 
+                        m0ResultStack.importData(startVal, m0Values[k], true);
                     }
                     if (dialog.isInvertT2toR2()) { 
                         r2ResultStack.importData(startVal, r2Values[k], true);
@@ -1156,10 +1156,10 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
             t2ResultWindow.setVisible(true);
         } 
         
-        if (dialog.isCalculateMo()) {
-            moResultWindow = new ViewJFrameImage(moResultStack);
-            moResultWindow.setTitle("CalculatedMoMap_AM");
-            moResultWindow.setVisible(true);
+        if (dialog.isCalculateM0()) {
+            m0ResultWindow = new ViewJFrameImage(m0ResultStack);
+            m0ResultWindow.setTitle("CalculatedM0Map_AM");
+            m0ResultWindow.setVisible(true);
         } 
         
         if (dialog.isInvertT2toR2()) {
@@ -1180,9 +1180,9 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
         double[] t1PixelValues, b1PixelValues;
         double[] ssfpSampleData;
         
-        float[][] boField, moField, t2Field, r2Field;
-        double[][][] t2Values, moValues, r2Values, boValues;
-        double smoothedBo;
+        float[][] b0Field, m0Field, t2Field, r2Field;
+        double[][][] t2Values, m0Values, r2Values, b0Values;
+        double smoothedB0;
         
         double[] optimization, initialGuess;
         double[] twoPOptimization, twoPInitialGuess;
@@ -1205,7 +1205,7 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
         
         int iterations;
         
-        double t2, mo, bo, r2;
+        double t2, m0, b0, r2;
         double rtol; 
         
         double t1, tr;
@@ -1230,14 +1230,14 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                 do4D = true;
                 tSeries = image.getExtents()[3];
                 t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
-                moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+                m0ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "m0_results");
                 r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
-                boResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "bo_results");
+                b0ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "b0_results");
                 
                 t2ResultStack = nearCloneImage(image, t2ResultStack);
-                moResultStack = nearCloneImage(image, moResultStack);
+                m0ResultStack = nearCloneImage(image, m0ResultStack);
                 r2ResultStack = nearCloneImage(image, r2ResultStack);
-                boResultStack = nearCloneImage(image, boResultStack);
+                b0ResultStack = nearCloneImage(image, b0ResultStack);
             }
         }
         
@@ -1248,32 +1248,32 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                     do4D = true;
                     tSeries = image.getExtents()[3];
                     t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
-                    moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+                    m0ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "m0_results");
                     r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
-                    boResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "bo_results");
+                    b0ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "b0_results");
                     
                     t2ResultStack = nearCloneImage(image, t2ResultStack);
-                    moResultStack = nearCloneImage(image, moResultStack);
+                    m0ResultStack = nearCloneImage(image, m0ResultStack);
                     r2ResultStack = nearCloneImage(image, r2ResultStack);
-                    boResultStack = nearCloneImage(image, boResultStack);
+                    b0ResultStack = nearCloneImage(image, b0ResultStack);
                 }
             }
         }
 
         if(!do4D) {
             t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
-            moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+            m0ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "m0_results");
             r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
-            boResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "bo_results");
+            b0ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "b0_results");
             
             t2ResultStack = nearCloneImage(image, t2ResultStack);
-            moResultStack = nearCloneImage(image, moResultStack);
+            m0ResultStack = nearCloneImage(image, m0ResultStack);
             r2ResultStack = nearCloneImage(image, r2ResultStack);
-            boResultStack = nearCloneImage(image, boResultStack);
+            b0ResultStack = nearCloneImage(image, b0ResultStack);
         }
 
         String prefix = new String();
-        // Perform an initial T2 Calculation to get the rough Bo field
+        // Perform an initial T2 Calculation to get the rough b0 field
         for(t=0; t<tSeries; t++) {
             if(do4D) {
                 prefix = "Series "+t+": ";
@@ -1312,12 +1312,12 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
             resonancePeriod = 1000.00/tr;
             
             t2Values = new double[nSlices][height][width];
-            moValues = new double[nSlices][height][width];
-            boValues = new double[nSlices][height][width];
+            m0Values = new double[nSlices][height][width];
+            b0Values = new double[nSlices][height][width];
             r2Values = new double[nSlices][height][width];
             
-            boField = new float[nSlices][width*height];
-            moField = new float[nSlices][width*height];
+            b0Field = new float[nSlices][width*height];
+            m0Field = new float[nSlices][width*height];
             t2Field = new float[nSlices][width*height];
             r2Field = new float[nSlices][width*height];
             
@@ -1421,7 +1421,7 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                     }
                 }
             
-                // now that we have all the information, perform the calculate the initial estimates of B1, T2 and Mo pixel-wise
+                // now that we have all the information, perform the calculate the initial estimates of B1, T2 and M0 pixel-wise
                 pixelIndex = 0;
                 
                 for (y=0; y<height; y++) {
@@ -1432,8 +1432,8 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                         if (t1 > 10.00) {
                             /*
                             if (t1 > 2500) {
-                                boValues[k-1][y][x] = 0.00;
-                                moValues[k-1][y][x] = maxMo;
+                                b0Values[k-1][y][x] = 0.00;
+                                m0Values[k-1][y][x] = maxM0;
                                 t2Values[k-1][y][x] = maxT2;
                                 r2Values[k-1][y][x] = 1.00/maxT2;
                                 
@@ -1470,9 +1470,9 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                             
                             // begin with the downhill simplex
                         
-                            // calculate an initial guess for Mo, T2 and Bo
+                            // calculate an initial guess for M0, T2 and B0
                             if (dialog.isGeScanner()) {
-                                initialGuess[0] = 10000.00; // initial guess for mo
+                                initialGuess[0] = 10000.00; // initial guess for m0
                                 initialGuess[1] = 100.00;   // initial guess for t2
                                 initialGuess[2] = 500.0;    // initial guess for off-resonance (Hz)
                             }
@@ -1486,14 +1486,14 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                                     tr, ssfpSampleData, sina, cosa, phaseIncrements, dialog.getNfa_phase0()+dialog.getNfa_phase180());
                             
                             
-                            mo = optimization[0];
+                            m0 = optimization[0];
                             t2 = optimization[1];
-                            bo = optimization[2];
+                            b0 = optimization[2];
                             r2 = 0.00;
                             
-                            if (mo < 0.00) mo = -1.00*mo;
+                            if (m0 < 0.00) m0 = -1.00*m0;
                             if (t2 < 0.00) t2 = -1.00*t2;
-                            if (bo < 0.00) bo = -1.00*bo;
+                            if (b0 < 0.00) b0 = -1.00*b0;
                             
                             if (t2 > dialog.getMaxT2()) {
                                 t2 = dialog.getMaxT2();
@@ -1507,16 +1507,16 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                                 r2 = 0.00;
                             }
                         
-                            boValues[k][y][x] = bo;
-                            moValues[k][y][x] = mo;
+                            b0Values[k][y][x] = b0;
+                            m0Values[k][y][x] = m0;
                             t2Values[k][y][x] = t2;
                             if (t1 > 0) r2Values[k][y][x] = 1.00/t2;
                             else r2Values[k][y][x] = 0.00;
                             //}
                         }
                         else {
-                            boValues[k][y][x] = 0.00;
-                            moValues[k][y][x] = 0.00;
+                            b0Values[k][y][x] = 0.00;
+                            m0Values[k][y][x] = 0.00;
                             t2Values[k][y][x] = 0.00;
                             r2Values[k][y][x] = 0.00;
                         }
@@ -1528,7 +1528,7 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
             } // close the k (slice) loop
 
 
-            // now, go back through and smooth the Bo field 
+            // now, go back through and smooth the B0 field 
             for (k=0; k<nSlices; k++) {
                 fireProgressStateChanged(prefix+"smoothing B0 field on slice: "+k+" of "+nSlices);
                 fireProgressStateChanged(40+(int)(((float)k+1.0)/(float)nSlices*20.0));
@@ -1542,15 +1542,15 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                         
                         if (y>2 && y<height-2 && x>2 && x<width-2) {
                             
-                            smoothedBo = 0.00;
+                            smoothedB0 = 0.00;
                             for (p1=0; p1<5; p1++) {
-                                for (p2=0; p2<5; p2++) smoothedBo += boValues[k][y-2+p2][x-2+p1]*Gaussian[p1][p2];
+                                for (p2=0; p2<5; p2++) smoothedB0 += b0Values[k][y-2+p2][x-2+p1]*Gaussian[p1][p2];
                             }
-                            smoothedBo = smoothedBo / 34.00;
+                            smoothedB0 = smoothedB0 / 34.00;
                             
-                            boField[k][pixelIndex] = (float) smoothedBo;
+                            b0Field[k][pixelIndex] = (float) smoothedB0;
                         }
-                        else boField[k][pixelIndex] = (float) boValues[k][y][x];
+                        else b0Field[k][pixelIndex] = (float) b0Values[k][y][x];
                         
                         pixelIndex ++;
                     }
@@ -1558,7 +1558,7 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                 
             }
         
-            // now, go back through and calculate T2 and Mo again using the smoothed Bo value
+            // now, go back through and calculate T2 and M0 again using the smoothed B0 value
             for (k=0; k<nSlices; k++) {
                 fireProgressStateChanged(prefix+"recalculating values on slice: "+k+" of "+(nSlices-1));
                 fireProgressStateChanged(60+(int)(((float)k+1.0)/(float)nSlices*15.0));
@@ -1635,10 +1635,10 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                 for (y=0; y<height; y++) {
                     for (x=0; x<width; x++) {
                         
-                        if (boField[k][pixelIndex] > 0.00) {
+                        if (b0Field[k][pixelIndex] > 0.00) {
                 
                         
-                            bo = boField[k][pixelIndex];
+                            b0 = b0Field[k][pixelIndex];
                             t1 = t1PixelValues[pixelIndex];
                             
                                     
@@ -1661,15 +1661,15 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                             for (p=0; p<dialog.getNfa_phase180(); p++) ssfpSampleData[p+dialog.getNfa_phase0()] = ssfpPixelValues_phase180[p][pixelIndex];
                             
                             
-                            twoPInitialGuess[0] = moValues[k][y][x];
+                            twoPInitialGuess[0] = m0Values[k][y][x];
                             twoPInitialGuess[1] = t2Values[k][y][x];
                             
-                            twoPDownHillSimplex(twoPOptimization, twoPInitialGuess, bo, t1, tr, ssfpSampleData, sina, cosa, phaseIncrements, dialog.getNfa_phase0()+dialog.getNfa_phase180());
+                            twoPDownHillSimplex(twoPOptimization, twoPInitialGuess, b0, t1, tr, ssfpSampleData, sina, cosa, phaseIncrements, dialog.getNfa_phase0()+dialog.getNfa_phase180());
                             
-                            mo = twoPOptimization[0];
+                            m0 = twoPOptimization[0];
                             t2 = twoPOptimization[1];
                             
-                            if (mo < 0.00) mo = -1.00*mo;
+                            if (m0 < 0.00) m0 = -1.00*m0;
                             if (t2 < 0.00) t2 = -1.00*t2;
                             
                             if (t2 > dialog.getMaxT2()) t2 = dialog.getMaxT2();
@@ -1678,12 +1678,12 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                             else r2 = 0.00;
                             
                             t2Field[k][pixelIndex] = (float) t2;
-                            moField[k][pixelIndex] = (float) mo;
+                            m0Field[k][pixelIndex] = (float) m0;
                             r2Field[k][pixelIndex] = (float) r2;
                         }
                         else {
                             t2Field[k][pixelIndex] = (float) 0.00;
-                            moField[k][pixelIndex] = (float) 0.00;
+                            m0Field[k][pixelIndex] = (float) 0.00;
                             r2Field[k][pixelIndex] = (float) 0.00;
                         }
                         
@@ -1698,14 +1698,14 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                     if (dialog.isCalculateT2()) { 
                         t2ResultStack.importData(startVal, t2Field[k], true);
                     }
-                    if (dialog.isCalculateMo()) { 
-                        moResultStack.importData(startVal, moField[k], true);
+                    if (dialog.isCalculateM0()) { 
+                        m0ResultStack.importData(startVal, m0Field[k], true);
                     }
                     if (dialog.isInvertT2toR2()) { 
                         r2ResultStack.importData(startVal, r2Field[k], true);
                     }
-                    if (dialog.isCalculateBo()) { 
-                        boResultStack.importData(startVal, boField[k], true);
+                    if (dialog.isCalculateB0()) { 
+                        b0ResultStack.importData(startVal, b0Field[k], true);
                     }
                 } catch(IOException e) {
                     e.printStackTrace();
@@ -1720,10 +1720,10 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
             t2ResultWindow.setVisible(true);
         } 
         
-        if (dialog.isCalculateMo()) {
-            moResultWindow = new ViewJFrameImage(moResultStack);
-            moResultWindow.setTitle("CalculatedMoMap_FM");
-            moResultWindow.setVisible(true);
+        if (dialog.isCalculateM0()) {
+            m0ResultWindow = new ViewJFrameImage(m0ResultStack);
+            m0ResultWindow.setTitle("CalculatedM0Map_FM");
+            m0ResultWindow.setVisible(true);
         } 
         
         if (dialog.isInvertT2toR2()) {
@@ -1732,14 +1732,14 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
             r2ResultWindow.setVisible(true);
         } 
         
-        if (dialog.isCalculateBo()) {
-            boResultWindow = new ViewJFrameImage(boResultStack);
-            boResultWindow.setTitle("CalculatedOffResonanceMap_FM");
-            boResultWindow.setVisible(true);
+        if (dialog.isCalculateB0()) {
+            b0ResultWindow = new ViewJFrameImage(b0ResultStack);
+            b0ResultWindow.setTitle("CalculatedOffResonanceMap_FM");
+            b0ResultWindow.setVisible(true);
         } 
     }
     
-public void twoPDownHillSimplex(double[] optimization, double[] initialGuess, double Bo, double t1, double tr, double[] ssfpSampleData, double[] sina, double[] cosa, double[] phaseIncrements, int N) {
+public void twoPDownHillSimplex(double[] optimization, double[] initialGuess, double b0, double t1, double tr, double[] ssfpSampleData, double[] sina, double[] cosa, double[] phaseIncrements, int N) {
         
         double RHO, CHI, PSI, SIGMA, maxError, usual_delta, zero_term_delta, residual;
         int best, worst, secondWorst;
@@ -1747,7 +1747,7 @@ public void twoPDownHillSimplex(double[] optimization, double[] initialGuess, do
         
         int NMAX, numParams, numVertices, iterations;
         
-        double t2, mo;
+        double t2, m0;
         double rtol; 
         
         int i, j;
@@ -1769,7 +1769,7 @@ public void twoPDownHillSimplex(double[] optimization, double[] initialGuess, do
         // initialize the twoPSimplex
         twoPSimplexLineValues[0] = initialGuess[0]; 
         twoPSimplexLineValues[1] = initialGuess[1];
-        residual = calculateTwoPResiduals(twoPSimplexLineValues, Bo, t1, tr, ssfpSampleData, sina, cosa, phaseIncrements, N);
+        residual = calculateTwoPResiduals(twoPSimplexLineValues, b0, t1, tr, ssfpSampleData, sina, cosa, phaseIncrements, N);
         
         for (i=0; i<numParams; i++) twoPSimplex[0][i] = twoPSimplexLineValues[i];
         twoPSimplex[0][numParams] = residual;
@@ -1780,7 +1780,7 @@ public void twoPDownHillSimplex(double[] optimization, double[] initialGuess, do
             
             if (twoPSimplexLineValues[i] != 0.00) twoPSimplexLineValues[i] = (1.00+usual_delta)*twoPSimplexLineValues[i];
             else twoPSimplexLineValues[i] = zero_term_delta;
-            residual = calculateTwoPResiduals(twoPSimplexLineValues, Bo, t1, tr, ssfpSampleData, sina, cosa, phaseIncrements, N);
+            residual = calculateTwoPResiduals(twoPSimplexLineValues, b0, t1, tr, ssfpSampleData, sina, cosa, phaseIncrements, N);
             
             twoPSimplex[i+1][0] = twoPSimplexLineValues[0];
             twoPSimplex[i+1][1] = twoPSimplexLineValues[1];
@@ -1815,7 +1815,7 @@ public void twoPDownHillSimplex(double[] optimization, double[] initialGuess, do
             // reflect the twoPSimplex through the face of the high point
             //for (i=0; i<numVertices; i++) twoPReflection[i] = 0.00;
             for (i=0; i<numParams; i++) twoPReflection[i] = (1.00+RHO)*twoPSimplexCentre[i] - RHO*twoPSimplex[worst][i];
-            twoPReflection[numParams] = calculateTwoPResiduals(twoPReflection, Bo, t1, tr, ssfpSampleData, sina, cosa, phaseIncrements, N);
+            twoPReflection[numParams] = calculateTwoPResiduals(twoPReflection, b0, t1, tr, ssfpSampleData, sina, cosa, phaseIncrements, N);
             
             
             // compare the twoPReflection vertex with the best vertex in the exisiting twoPSimplex
@@ -1823,7 +1823,7 @@ public void twoPDownHillSimplex(double[] optimization, double[] initialGuess, do
                 // if the twoPReflection was better, try an twoPExpansion in this direction and see how that is
                 //for (i=0; i<numVertices; i++) twoPExpansion[i] = 0.00;
                 for (i=0; i<numParams; i++) twoPExpansion[i] = (1.00+RHO*CHI)*twoPSimplexCentre[i] - RHO*CHI*twoPSimplex[worst][i];
-                twoPExpansion[numParams] = calculateTwoPResiduals(twoPExpansion, Bo, t1, tr, ssfpSampleData, sina, cosa, phaseIncrements, N);
+                twoPExpansion[numParams] = calculateTwoPResiduals(twoPExpansion, b0, t1, tr, ssfpSampleData, sina, cosa, phaseIncrements, N);
                 
                 if (twoPExpansion[numParams] < twoPReflection[numParams]) {
                     for (i=0; i<numVertices; i++) twoPSimplex[worst][i] = twoPExpansion[i];
@@ -1841,7 +1841,7 @@ public void twoPDownHillSimplex(double[] optimization, double[] initialGuess, do
                         // perform an outside twoPContraction
                         //for (i=0; i<numVertices; i++) twoPContraction[i] = 0.00;
                         for (i=0; i<numParams; i++) twoPContraction[i] = (1.00+PSI*RHO)*twoPSimplexCentre[i] - RHO*PSI*twoPSimplex[worst][i];
-                        twoPContraction[numParams] = calculateTwoPResiduals(twoPContraction, Bo, t1, tr, ssfpSampleData, sina, cosa, phaseIncrements, N);
+                        twoPContraction[numParams] = calculateTwoPResiduals(twoPContraction, b0, t1, tr, ssfpSampleData, sina, cosa, phaseIncrements, N);
                         
                         if (twoPContraction[numParams] <= twoPReflection[numParams]) {
                             for (i=0; i<numVertices; i++) twoPSimplex[worst][i] = twoPContraction[i];
@@ -1852,7 +1852,7 @@ public void twoPDownHillSimplex(double[] optimization, double[] initialGuess, do
                                 if (j != best) {
                                     //for (i=0; i<numVertices; i++) twoPShrink[i] = 0.00;
                                     for (i=0; i<numParams; i++) twoPShrink[i] = twoPSimplex[best][i] + SIGMA*(twoPSimplex[j][i]-twoPSimplex[best][i]);
-                                    twoPShrink[numParams] = calculateTwoPResiduals(twoPShrink, Bo, t1, tr, ssfpSampleData, sina, cosa, phaseIncrements, N);
+                                    twoPShrink[numParams] = calculateTwoPResiduals(twoPShrink, b0, t1, tr, ssfpSampleData, sina, cosa, phaseIncrements, N);
                                     for (i=0; i<numVertices; i++) twoPSimplex[j][i] = twoPShrink[i];
                                 }
                             }
@@ -1862,7 +1862,7 @@ public void twoPDownHillSimplex(double[] optimization, double[] initialGuess, do
                         // perform an inside twoPContraction
                         //for (i=0; i<numVertices; i++) twoPContraction[i] = 0.00;
                         for (i=0; i<numParams; i++) twoPContraction[i] = (1.00-PSI)*twoPSimplexCentre[i] + PSI*twoPSimplex[worst][i];
-                        twoPContraction[numParams] = calculateTwoPResiduals(twoPContraction, Bo, t1, tr, ssfpSampleData, sina, cosa, phaseIncrements, N);
+                        twoPContraction[numParams] = calculateTwoPResiduals(twoPContraction, b0, t1, tr, ssfpSampleData, sina, cosa, phaseIncrements, N);
                         
                         if (twoPContraction[numParams] < twoPSimplex[worst][numParams]) {
                             for (i=0; i<numVertices; i++) twoPSimplex[worst][i] = twoPContraction[i];
@@ -1873,7 +1873,7 @@ public void twoPDownHillSimplex(double[] optimization, double[] initialGuess, do
                                 if (j != best) {
                                     //for (i=0; i<numVertices; i++) twoPShrink[i] = 0.00;
                                     for (i=0; i<numParams; i++) twoPShrink[i] = twoPSimplex[best][i] + SIGMA*(twoPSimplex[j][i]-twoPSimplex[best][i]);
-                                    twoPShrink[numParams] = calculateTwoPResiduals(twoPShrink, Bo, t1, tr, ssfpSampleData, sina, cosa, phaseIncrements, N);
+                                    twoPShrink[numParams] = calculateTwoPResiduals(twoPShrink, b0, t1, tr, ssfpSampleData, sina, cosa, phaseIncrements, N);
                                     for (i=0; i<numVertices; i++) twoPSimplex[j][i] = twoPShrink[i];
                                 }
                             }
@@ -1895,13 +1895,13 @@ public void twoPDownHillSimplex(double[] optimization, double[] initialGuess, do
             
         } // end of main algorithm loop
         
-        mo = twoPSimplex[best][0];
+        m0 = twoPSimplex[best][0];
         t2 = twoPSimplex[best][1];
         
-        if (mo < 0.00) mo = -1.00*mo;
+        if (m0 < 0.00) m0 = -1.00*m0;
         if (t2 < 0.00) t2 = -1.00*t2;
         
-        optimization[0] = mo;
+        optimization[0] = m0;
         optimization[1] = t2;
         
         return;
@@ -1915,7 +1915,7 @@ public void twoPDownHillSimplex(double[] optimization, double[] initialGuess, do
         
         int NMAX, numParams, numVertices, iterations;
         
-        double t2, mo, bo;
+        double t2, m0, b0;
         double rtol; 
         
         int i, j;
@@ -2066,38 +2066,38 @@ public void twoPDownHillSimplex(double[] optimization, double[] initialGuess, do
             
         } // end of main algorithm loop
         
-        mo = simplex[best][0];
+        m0 = simplex[best][0];
         t2 = simplex[best][1];
-        bo = simplex[best][2];
+        b0 = simplex[best][2];
         
-        if (mo < 0.00) mo = -1.00*mo;
+        if (m0 < 0.00) m0 = -1.00*m0;
         if (t2 < 0.00) t2 = -1.00*t2;
-        if (bo < 0.00) bo = -1.00*bo;
+        if (b0 < 0.00) b0 = -1.00*b0;
         
-        optimization[0] = mo;
+        optimization[0] = m0;
         optimization[1] = t2;
-        optimization[2] = bo;
+        optimization[2] = b0;
         
         return;
     }
     
     
-    public double calculateTwoPResiduals(double[] simplexLineValues, double bo, double t1, double tr, double[] Signal, double[] sina, double[] cosa, double[] phaseIncrements, int N) {
+    public double calculateTwoPResiduals(double[] simplexLineValues, double b0, double t1, double tr, double[] Signal, double[] sina, double[] cosa, double[] phaseIncrements, int N) {
         
-        double mo, e1, e2, phasePrecession, pi, mx, my, guessSignal, residualValue;
+        double m0, e1, e2, phasePrecession, pi, mx, my, guessSignal, residualValue;
         int i;
         
         pi = 3.14159265;
-        mo = simplexLineValues[0];
+        m0 = simplexLineValues[0];
         e1 = Math.exp(-tr/t1);
         e2 = Math.exp(-tr/simplexLineValues[1]);
         
         residualValue = 0.00;
         for (i=0; i<N; i++) {
-            phasePrecession = phaseIncrements[i] + 2*pi*((tr/1000.00)*bo);
+            phasePrecession = phaseIncrements[i] + 2*pi*((tr/1000.00)*b0);
             
-            mx = mo*(1.00-e1)*e2*sina[i]*(Math.cos(phasePrecession)-e2)/( (1.00-e1*cosa[i])*(1.00-e2*Math.cos(phasePrecession))-e2*(e1-cosa[i])*(e2-Math.cos(phasePrecession)) );
-            my = mo*(1.00-e1)*e2*sina[i]*Math.sin(phasePrecession)/( (1.00-e1*cosa[i])*(1.00-e2*Math.cos(phasePrecession))-e2*(e1-cosa[i])*(e2-Math.cos(phasePrecession)) );
+            mx = m0*(1.00-e1)*e2*sina[i]*(Math.cos(phasePrecession)-e2)/( (1.00-e1*cosa[i])*(1.00-e2*Math.cos(phasePrecession))-e2*(e1-cosa[i])*(e2-Math.cos(phasePrecession)) );
+            my = m0*(1.00-e1)*e2*sina[i]*Math.sin(phasePrecession)/( (1.00-e1*cosa[i])*(1.00-e2*Math.cos(phasePrecession))-e2*(e1-cosa[i])*(e2-Math.cos(phasePrecession)) );
             
             guessSignal = Math.sqrt( Math.pow(mx,2.00) + Math.pow(my,2.00) );
             
@@ -2109,11 +2109,11 @@ public void twoPDownHillSimplex(double[] optimization, double[] initialGuess, do
     
     public double calculateResiduals(double[] simplexLineValues, double t1, double tr, double[] Signal, double[] sina, double[] cosa, double[] phaseIncrements, int N) {
         
-        double mo, e1, e2, phasePrecession, pi, mx, my, guessSignal, residualValue;
+        double m0, e1, e2, phasePrecession, pi, mx, my, guessSignal, residualValue;
         int i;
         
         pi = 3.14159265;
-        mo = simplexLineValues[0];
+        m0 = simplexLineValues[0];
         e1 = Math.exp(-tr/t1);
         e2 = Math.exp(-tr/simplexLineValues[1]);
         
@@ -2121,8 +2121,8 @@ public void twoPDownHillSimplex(double[] optimization, double[] initialGuess, do
         for (i=0; i<N; i++) {
             phasePrecession = phaseIncrements[i] + 2*pi*((tr/1000.00)*simplexLineValues[2]);
             
-            mx = mo*(1.00-e1)*e2*sina[i]*(Math.cos(phasePrecession)-e2)/( (1.00-e1*cosa[i])*(1.00-e2*Math.cos(phasePrecession))-e2*(e1-cosa[i])*(e2-Math.cos(phasePrecession)) );
-            my = mo*(1.00-e1)*e2*sina[i]*Math.sin(phasePrecession)/( (1.00-e1*cosa[i])*(1.00-e2*Math.cos(phasePrecession))-e2*(e1-cosa[i])*(e2-Math.cos(phasePrecession)) );
+            mx = m0*(1.00-e1)*e2*sina[i]*(Math.cos(phasePrecession)-e2)/( (1.00-e1*cosa[i])*(1.00-e2*Math.cos(phasePrecession))-e2*(e1-cosa[i])*(e2-Math.cos(phasePrecession)) );
+            my = m0*(1.00-e1)*e2*sina[i]*Math.sin(phasePrecession)/( (1.00-e1*cosa[i])*(1.00-e2*Math.cos(phasePrecession))-e2*(e1-cosa[i])*(e2-Math.cos(phasePrecession)) );
             
             guessSignal = Math.sqrt( Math.pow(mx,2.00) + Math.pow(my,2.00) );
             
@@ -2132,22 +2132,22 @@ public void twoPDownHillSimplex(double[] optimization, double[] initialGuess, do
         return residualValue;
     }
     
-    public double calculate2PResiduals(double[] simplexLineValues, double bo, double t1, double tr, double[] Signal, double[] sina, double[] cosa, double[] phaseIncrements, int N) {
+    public double calculate2PResiduals(double[] simplexLineValues, double b0, double t1, double tr, double[] Signal, double[] sina, double[] cosa, double[] phaseIncrements, int N) {
         
-        double mo, e1, e2, phasePrecession, pi, mx, my, guessSignal, residualValue;
+        double m0, e1, e2, phasePrecession, pi, mx, my, guessSignal, residualValue;
         int i;
         
         pi = 3.14159265;
-        mo = simplexLineValues[0];
+        m0 = simplexLineValues[0];
         e1 = Math.exp(-tr/t1);
         e2 = Math.exp(-tr/simplexLineValues[1]);
         
         residualValue = 0.00;
         for (i=0; i<N; i++) {
-            phasePrecession = phaseIncrements[i] + 2*pi*((tr/1000.00)*bo);
+            phasePrecession = phaseIncrements[i] + 2*pi*((tr/1000.00)*b0);
             
-            mx = mo*(1.00-e1)*e2*sina[i]*(Math.cos(phasePrecession)-e2)/( (1.00-e1*cosa[i])*(1.00-e2*Math.cos(phasePrecession))-e2*(e1-cosa[i])*(e2-Math.cos(phasePrecession)) );
-            my = mo*(1.00-e1)*e2*sina[i]*Math.sin(phasePrecession)/( (1.00-e1*cosa[i])*(1.00-e2*Math.cos(phasePrecession))-e2*(e1-cosa[i])*(e2-Math.cos(phasePrecession)) );
+            mx = m0*(1.00-e1)*e2*sina[i]*(Math.cos(phasePrecession)-e2)/( (1.00-e1*cosa[i])*(1.00-e2*Math.cos(phasePrecession))-e2*(e1-cosa[i])*(e2-Math.cos(phasePrecession)) );
+            my = m0*(1.00-e1)*e2*sina[i]*Math.sin(phasePrecession)/( (1.00-e1*cosa[i])*(1.00-e2*Math.cos(phasePrecession))-e2*(e1-cosa[i])*(e2-Math.cos(phasePrecession)) );
             
             guessSignal = Math.sqrt( Math.pow(mx,2.00) + Math.pow(my,2.00) );
             
@@ -2214,7 +2214,7 @@ public void twoPDownHillSimplex(double[] optimization, double[] initialGuess, do
         return clo;
     }
     
-    public void reduceBoField(double[][] boField, double resonancePeriod, int width, int height) {
+    public void reduceB0Field(double[][] b0Field, double resonancePeriod, int width, int height) {
         int i,j;
         double fraction, offResonanceMod;
         int repetitionCycle;
@@ -2224,15 +2224,15 @@ public void twoPDownHillSimplex(double[] optimization, double[] initialGuess, do
                 
                 repetitionCycle = 0;
                 
-                fraction = boField[i][j]/resonancePeriod;
+                fraction = b0Field[i][j]/resonancePeriod;
                 if (fraction >= 1) repetitionCycle = (int) (Math.floor(fraction));
                 if (fraction < 1 && fraction >= 0.5) repetitionCycle = 1;
                 if (fraction < 0.5) repetitionCycle = 0;
                 
-                offResonanceMod = boField[i][j] - (repetitionCycle*resonancePeriod);
+                offResonanceMod = b0Field[i][j] - (repetitionCycle*resonancePeriod);
                 if (offResonanceMod < 0.00) offResonanceMod = -1.00*offResonanceMod;
                 
-                boField[i][j] = offResonanceMod;
+                b0Field[i][j] = offResonanceMod;
                 
                 
             }
@@ -2363,16 +2363,16 @@ public void twoPDownHillSimplex(double[] optimization, double[] initialGuess, do
 		return t2ResultStack;
 	}
 
-	public ModelImage getMoResultStack() {
-		return moResultStack;
+	public ModelImage getM0ResultStack() {
+		return m0ResultStack;
 	}
 
 	public ModelImage getR2ResultStack() {
 		return r2ResultStack;
 	}
 
-	public ModelImage getBoResultStack() {
-		return boResultStack;
+	public ModelImage getB0ResultStack() {
+		return b0ResultStack;
 	}
 
 	@Override

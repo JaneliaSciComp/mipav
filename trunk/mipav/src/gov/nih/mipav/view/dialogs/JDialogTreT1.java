@@ -67,7 +67,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
     private double irspgrKy = 96.00;
     private double irspgrFA = 5.00;
     private double maxT1 = 5000;
-    private double maxMo = 10000;
+    private double maxM0 = 10000;
     private double[] treFA;
     private double[] irspgrTr;
     private double[] irspgrTI;
@@ -96,7 +96,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
     /**The list of possible maps that can be calculated*/
     private boolean calculateT1 = true;
     private boolean showB1Map = false;
-    private boolean calculateMo = false;
+    private boolean calculateM0 = false;
     private boolean invertT1toR1 = false;
     
     private boolean useWeights = true;
@@ -153,9 +153,9 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	private JComboBox[] convimageComboAr;
 	private JComboBox b1Field;
 	private JTextField maxT1Field;
-	private JTextField maxMoField;
+	private JTextField maxM0Field;
 	private JCheckBox showT1Map;
-	private JCheckBox showMoMap;
+	private JCheckBox showM0Map;
 	private JCheckBox showR1Map;
 	private JRadioButton smartCheckBox;
 	private JRadioButton hardCheckBox;
@@ -315,7 +315,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    panel.setLayout(panelLayout);
 	    
 	    spgrNumFA = guiBuilder.buildDecimalField("Number of SPGR Flip Angles:", Nsa);
-	    useB1Map = guiBuilder.buildCheckBox("Use B1 Map", performTreT1withPreCalculatedB1Map);
+	    useB1Map = guiBuilder.buildCheckBox("<html>Use B<sub>1</sub> Map</html>", performTreT1withPreCalculatedB1Map);
 	    useB1Map.addActionListener(new ProcessChoiceListener());
 	    
 	    gbc.gridx = 0;
@@ -452,7 +452,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    singleInvRadio = guiBuilder.buildRadioButton("Single Inversion Regime", inversionType.equals(InversionType.SINGLE));
 	    t15Radio = guiBuilder.buildRadioButton("1.5T Field Strength", mriStrength.equals(FieldStrength.mri15T));
 	    t30Radio = guiBuilder.buildRadioButton("3.0T Field Strength", mriStrength.equals(FieldStrength.mri3T));
-	    smoothB1Box = guiBuilder.buildCheckBox("Smooth B1 Field Prior to T1 Calculations", smoothB1Field);
+	    smoothB1Box = guiBuilder.buildCheckBox("<html>Smooth B<sub>1</sub> Field Prior to T<sub>1</sub> Calculations</html>", smoothB1Field);
 	    
 	    inversionGroup = new ButtonGroup();
 	    inversionGroup.add(doubleInvRadio);
@@ -534,7 +534,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    singleInvRadio = guiBuilder.buildRadioButton("Single Inversion Regime", inversionType.equals(InversionType.SINGLE));
 	    t15Radio = guiBuilder.buildRadioButton("1.5T Field Strength", mriStrength.equals(FieldStrength.mri15T));
 	    t30Radio = guiBuilder.buildRadioButton("3.0T Field Strength", mriStrength.equals(FieldStrength.mri3T));
-	    smoothB1Box = guiBuilder.buildCheckBox("Smooth B1 Field Prior to T1 Calculations", smoothB1Field);
+	    smoothB1Box = guiBuilder.buildCheckBox("<html>Smooth B<sub>1</sub> Field Prior to T<sub>1</sub> Calculations</html>", smoothB1Field);
 	    
 	    inversionGroup = new ButtonGroup();
 	    inversionGroup.add(doubleInvRadio);
@@ -728,7 +728,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    b1Field = null;
 	    if(performTreT1withPreCalculatedB1Map) {
 	    	gbc.gridy++;
-	    	b1Field = guiBuilder.buildComboBox("B1 Field Map:", titles, 0);
+	    	b1Field = guiBuilder.buildComboBox("<html>B<sub>1</sub> Field Map:</html>", titles, 0);
 	        panel.add(b1Field.getParent(), gbc);
 	    }
 	    
@@ -759,11 +759,11 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    LayoutManager panelLayout = new GridBagLayout();
 	    panel.setLayout(panelLayout);
 	    GridBagConstraints gbc =  new GridBagConstraints();
-		maxT1Field = guiBuilder.buildDecimalField("Maximum Allowable T1:", maxT1);
-	    maxMoField = guiBuilder.buildDecimalField("Maximum Allowable Mo:", maxMo);
-	    showT1Map = guiBuilder.buildCheckBox("Show T1 Map", calculateT1);
-	    showMoMap = guiBuilder.buildCheckBox("Show Mo Map", calculateMo);
-	    showR1Map = guiBuilder.buildCheckBox("Show R1 Map", invertT1toR1);
+		maxT1Field = guiBuilder.buildDecimalField("<html>Maximum Allowable T<sub>1</sub>:</html>", maxT1);
+	    maxM0Field = guiBuilder.buildDecimalField("<html>Maximum Allowable M<sub>0</sub>:</html>", maxM0);
+	    showT1Map = guiBuilder.buildCheckBox("<html>Show T<sub>1</sub> Map</html>", calculateT1);
+	    showM0Map = guiBuilder.buildCheckBox("<html>Show M<sub>0</sub> Map</html>", calculateM0);
+	    showR1Map = guiBuilder.buildCheckBox("<html>Show R<sub>1</sub> Map</html>", invertT1toR1);
 	    leastSquaresCheck = null;
 	    gbc.fill = GridBagConstraints.NONE;
 	    gbc.anchor = GridBagConstraints.NORTHWEST;
@@ -773,13 +773,13 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 
 	    panel.add(maxT1Field.getParent(), gbc);
 	    gbc.gridy++;
-	    panel.add(maxMoField.getParent(), gbc);
+	    panel.add(maxM0Field.getParent(), gbc);
 	    gbc.gridy++;
 	    gbc.insets = new Insets(10, 0, 0, 0);
 	    panel.add(showT1Map.getParent(), gbc);
 	    gbc.gridy++;
 	    gbc.insets = new Insets(0, 0, 0, 0);
-	    panel.add(showMoMap.getParent(), gbc);
+	    panel.add(showM0Map.getParent(), gbc);
 	    gbc.gridy++;
 	    panel.add(showR1Map.getParent(), gbc);
 	    
@@ -892,12 +892,12 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    panel.setLayout(panelLayout);
 	    GridBagConstraints gbc =  new GridBagConstraints();
 	    
-	    maxT1Field = guiBuilder.buildDecimalField("Maximum Allowable T1:", maxT1);
-	    maxMoField = guiBuilder.buildDecimalField("Maximum Allowable Mo:", maxMo);
-	    showT1Map = guiBuilder.buildCheckBox("Show T1 Map", calculateT1);
-	    showMoMap = guiBuilder.buildCheckBox("Show Mo Map", calculateMo);
-	    showB1Check = guiBuilder.buildCheckBox("Show B1 Map", true);
-	    showR1Map = guiBuilder.buildCheckBox("Show R1 Map", invertT1toR1);
+	    maxT1Field = guiBuilder.buildDecimalField("<html>Maximum Allowable T<sub>1</sub>:</html>", maxT1);
+	    maxM0Field = guiBuilder.buildDecimalField("<html>Maximum Allowable M<sub>0</sub>:</html>", maxM0);
+	    showT1Map = guiBuilder.buildCheckBox("<html>Show T<sub>1</sub> Map</html>", calculateT1);
+	    showM0Map = guiBuilder.buildCheckBox("<html>Show M<sub>0</sub> Map</html>", calculateM0);
+	    showB1Check = guiBuilder.buildCheckBox("<html>Show B<sub>1</sub> Map</html>", true);
+	    showR1Map = guiBuilder.buildCheckBox("<html>Show R<sub>1</sub> Map</html>", invertT1toR1);
 	    leastSquaresCheck = null; 
 	    if (Nsa > 2) { 
 	    	leastSquaresCheck = guiBuilder.buildCheckBox("Calculate T1 Using Weighted Least-Squares", useWeights);
@@ -911,13 +911,13 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    
 	    panel.add(maxT1Field.getParent(), gbc);
 	    gbc.gridy++;
-	    panel.add(maxMoField.getParent(), gbc);
+	    panel.add(maxM0Field.getParent(), gbc);
 	    gbc.gridy++;
 	    gbc.insets = new Insets(20, 0, 0, 0);
 	    panel.add(showT1Map.getParent(), gbc);
 	    gbc.gridy++;
 	    gbc.insets = new Insets(0, 0, 0, 0);
-	    panel.add(showMoMap.getParent(), gbc);
+	    panel.add(showM0Map.getParent(), gbc);
 	    gbc.gridy++;
 	    panel.add(showB1Check.getParent(), gbc);
 	    gbc.gridy++;
@@ -1012,7 +1012,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
     	}
 		
 		cAlgo = new AlgorithmTreT1(treTR, irspgrTR,
-                irspgrKy, irspgrFA, maxT1, maxMo,
+                irspgrKy, irspgrFA, maxT1, maxM0,
                 treFA,  irspgrTr,  irspgrTI,
                 spgrData,  irspgrData, scale,
                 pointScale, scaleIncrement,  estimates,
@@ -1024,7 +1024,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
                 performTreT1HIFI,  doubleInversion,
                 singleInversion,  geScanner,  siemensScanner,
                 threeTField,  onefiveTField,  calculateT1,
-                showB1Map,  calculateMo,  invertT1toR1,
+                showB1Map,  calculateM0,  invertT1toR1,
                 useWeights,  uniformAngleSpacing,
                 upperLeftCorner,  upperRightCorner,
                 lowerLeftCorner,  lowerRightCorner,
@@ -1167,8 +1167,8 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
                 AlgorithmParameters.storeImageInRunner(cAlgo.getB1ResultStack());
             }
             
-            if(calculateMo && cAlgo.getMoResultStack() != null) {
-                AlgorithmParameters.storeImageInRunner(cAlgo.getMoResultStack());
+            if(calculateM0 && cAlgo.getM0ResultStack() != null) {
+                AlgorithmParameters.storeImageInRunner(cAlgo.getM0ResultStack());
             }
             
             if(invertT1toR1 && cAlgo.getR1ResultStack() != null) {
@@ -1195,7 +1195,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
         irspgrKy = scriptParameters.getParams().getDouble("irspgr_Ky");
         irspgrFA = scriptParameters.getParams().getDouble("irspgr_FA");
         maxT1 = scriptParameters.getParams().getDouble("max_T1");
-        maxMo = scriptParameters.getParams().getDouble("max_Mo");
+        maxM0 = scriptParameters.getParams().getDouble("max_M0");
         //double[], note all non-string arrays are stored as parameter lists
         if(scriptParameters.getParams().containsParameter("tre_FA")) {
             treFA = scriptParameters.getParams().getList("tre_FA").getAsDoubleArray();
@@ -1251,7 +1251,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
         boolean onefiveTField = scriptParameters.getParams().getBoolean("one_five_TField");
         calculateT1 = scriptParameters.getParams().getBoolean("calculate_T1");
         showB1Map = scriptParameters.getParams().getBoolean("show_B1_Map");
-        calculateMo = scriptParameters.getParams().getBoolean("calculate_Mo");
+        calculateM0 = scriptParameters.getParams().getBoolean("calculate_M0");
         invertT1toR1 = scriptParameters.getParams().getBoolean("invert_T1_to_R1");
         useWeights = scriptParameters.getParams().getBoolean("use_Weights");
         uniformAngleSpacing = scriptParameters.getParams().getBoolean("uniform_Angle_Spacing");
@@ -1357,7 +1357,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
         scriptParameters.getParams().put(ParameterFactory.newParameter("irspgr_Ky", irspgrKy)); 
         scriptParameters.getParams().put(ParameterFactory.newParameter("irspgr_FA", irspgrFA));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_T1", maxT1));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("max_Mo", maxMo));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_M0", maxM0));
         //double[], note all non-string arrays are stored as parameter lists
         if(treFA != null) {
             scriptParameters.getParams().put(ParameterFactory.newParameter("tre_FA", treFA));
@@ -1413,7 +1413,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
         scriptParameters.getParams().put(ParameterFactory.newParameter("one_five_TField", onefiveTField));
         scriptParameters.getParams().put(ParameterFactory.newParameter("calculate_T1", calculateT1));
         scriptParameters.getParams().put(ParameterFactory.newParameter("show_B1_Map", showB1Map));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("calculate_Mo", calculateMo));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("calculate_M0", calculateM0));
         scriptParameters.getParams().put(ParameterFactory.newParameter("invert_T1_to_R1", invertT1toR1));
         scriptParameters.getParams().put(ParameterFactory.newParameter("use_Weights", useWeights));
         scriptParameters.getParams().put(ParameterFactory.newParameter("uniform_Angle_Spacing", uniformAngleSpacing));
@@ -1440,9 +1440,9 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
         		scriptParameters.storeOutputImageParams(cAlgo.getB1ResultStack(), true);
         	}
         	
-        	if(calculateMo && cAlgo.getMoResultStack() != null) {
-        		//scriptParameters.storeImageInRecorder(cAlgo.getMoResultStack());
-        		scriptParameters.storeOutputImageParams(cAlgo.getMoResultStack(), true);
+        	if(calculateM0 && cAlgo.getM0ResultStack() != null) {
+        		//scriptParameters.storeImageInRecorder(cAlgo.getM0ResultStack());
+        		scriptParameters.storeOutputImageParams(cAlgo.getM0ResultStack(), true);
         	}
         	
         	if(invertT1toR1 && cAlgo.getR1ResultStack() != null) {
@@ -1704,15 +1704,15 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    //used for both generic and hiifi
 	    try {
 		    maxT1 = Double.valueOf(maxT1Field.getText()).doubleValue();
-		    maxMo = Double.valueOf(maxMoField.getText()).doubleValue();
+		    maxM0 = Double.valueOf(maxM0Field.getText()).doubleValue();
 		    calculateT1 = showT1Map.isSelected();
-		    calculateMo = showMoMap.isSelected();
+		    calculateM0 = showM0Map.isSelected();
 		    invertT1toR1 = showR1Map.isSelected();
 		    
 		    ViewUserInterface.getReference().getMessageFrame().append("maxT1: "+maxT1+"\n", ViewJFrameMessage.DEBUG);
-		    ViewUserInterface.getReference().getMessageFrame().append("maxMo: "+maxMo+"\n", ViewJFrameMessage.DEBUG);
+		    ViewUserInterface.getReference().getMessageFrame().append("maxM0: "+maxM0+"\n", ViewJFrameMessage.DEBUG);
 		    ViewUserInterface.getReference().getMessageFrame().append("calculateT1: "+calculateT1+"\n", ViewJFrameMessage.DEBUG);
-		    ViewUserInterface.getReference().getMessageFrame().append("calculateMo: "+calculateMo+"\n", ViewJFrameMessage.DEBUG);
+		    ViewUserInterface.getReference().getMessageFrame().append("calculateM0: "+calculateM0+"\n", ViewJFrameMessage.DEBUG);
 		    ViewUserInterface.getReference().getMessageFrame().append("invertT1toR1: "+invertT1toR1+"\n", ViewJFrameMessage.DEBUG);
 		    
 		    if (Nsa > 2) {
@@ -1841,7 +1841,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	        return false;
 	    }
 	    if (Nsa < 2) {
-	        MipavUtil.displayError("T1 and Mo calculations require at least two SPGR images.");
+	        MipavUtil.displayError("T1 and M0 calculations require at least two SPGR images.");
 	        return false;
 	    }
 	    if (performTreT1withPreCalculatedB1Map) {
@@ -2247,7 +2247,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
             table.put(new ParameterDouble("irspgr_Ky", irspgrKy));
             table.put(new ParameterDouble("irspgr_FA", irspgrFA));
             table.put(new ParameterDouble("max_T1", maxT1));
-            table.put(new ParameterDouble("max_Mo", maxMo));
+            table.put(new ParameterDouble("max_M0", maxM0));
             
             //double[], note all non-string arrays are stored as parameter lists
             table.put(new ParameterList("tre_FA", Parameter.PARAM_DOUBLE, "0,0,0"));
@@ -2292,7 +2292,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 
             table.put(new ParameterBoolean("calculate_T1", calculateT1));
             table.put(new ParameterBoolean("show_B1_Map", showB1Map));
-            table.put(new ParameterBoolean("calculate_Mo", calculateMo));
+            table.put(new ParameterBoolean("calculate_M0", calculateM0));
             table.put(new ParameterBoolean("invert_T1_to_R1", invertT1toR1));
             table.put(new ParameterBoolean("use_Weights", useWeights));
             table.put(new ParameterBoolean("uniform_Angle_Spacing", uniformAngleSpacing));
@@ -2367,9 +2367,9 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
                     scriptParameters.storeOutputImageParams(cAlgo.getB1ResultStack(), true);
                 }
                 
-                if(calculateMo && cAlgo.getMoResultStack() != null) {
-                    //scriptParameters.storeImageInRecorder(cAlgo.getMoResultStack());
-                    scriptParameters.storeOutputImageParams(cAlgo.getMoResultStack(), true);
+                if(calculateM0 && cAlgo.getM0ResultStack() != null) {
+                    //scriptParameters.storeImageInRecorder(cAlgo.getM0ResultStack());
+                    scriptParameters.storeOutputImageParams(cAlgo.getM0ResultStack(), true);
                 }
                 
                 if(invertT1toR1 && cAlgo.getR1ResultStack() != null) {
@@ -2414,7 +2414,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
             table.put(new ParameterImage("t1_results"));
             table.put(new ParameterImage("r1_results"));
             table.put(new ParameterImage("b1_results"));
-            table.put(new ParameterImage("mo_results"));
+            table.put(new ParameterImage("m0_results"));
         } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
