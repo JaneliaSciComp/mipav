@@ -434,7 +434,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
         ExecutorService exec = Executors.newFixedThreadPool(computeDataThreads); 
         // start by calculaing the B1 field
         for(int t=0; t<tSeries; t++) {     
-            exec.execute(new CalculteT1UsingtreT1HIFIInner(largestImage, width, height, irspgrSlices, t));    
+            exec.execute(new CalculteT1UsingTreT1HIFIInner(largestImage, width, height, irspgrSlices, t));    
         }
         exec.shutdown();
         
@@ -486,7 +486,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
         ExecutorService exec = Executors.newFixedThreadPool(computeDataThreads); 
     
         for(int t=0; t<tSeries; t++) {     
-            exec.submit(new CalculateT1UsingConventionaltreT1Inner(largestImage, width, height, t));    
+            exec.submit(new CalculateT1UsingConventionalTreT1Inner(largestImage, width, height, t));    
         }
         exec.shutdown();
         
@@ -791,12 +791,12 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
         }
     }
 
-    private class CalculteT1UsingtreT1HIFIInner extends CalculateT1 implements Runnable {
+    private class CalculteT1UsingTreT1HIFIInner extends CalculateT1 implements Runnable {
     
         
         private int irspgrSlices;
     
-        public CalculteT1UsingtreT1HIFIInner(ModelImage image, int width, int height, int irspgrSlices, int t) {
+        public CalculteT1UsingTreT1HIFIInner(ModelImage image, int width, int height, int irspgrSlices, int t) {
             super(image, t);
             this.width = width;
             this.height = height;
@@ -1277,9 +1277,9 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
         
     }
 
-    private class CalculateT1UsingConventionaltreT1Inner extends CalculateT1 implements Runnable {
+    private class CalculateT1UsingConventionalTreT1Inner extends CalculateT1 implements Runnable {
     
-        public CalculateT1UsingConventionaltreT1Inner(ModelImage image, int width, int height, int t) {
+        public CalculateT1UsingConventionalTreT1Inner(ModelImage image, int width, int height, int t) {
             super(image, t);
             this.width = width;
             this.height = height;
