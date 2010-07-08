@@ -65,6 +65,14 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
     
     private String fileNameVOI;
     
+    private JButton buttonVOIFile2;
+    
+    private JTextField textVOIFile2;
+    
+    private String directoryVOI2 = null;
+    
+    private String fileNameVOI2 = null;
+    
     private JButton buttonTimesFile;
     
     private JTextField textTimesFile;
@@ -136,7 +144,17 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
     
     private FileVOI fileVOI;
     private VOI[] voi;
+    private FileVOI fileVOI2;
+    private VOI[] voi2;
     private BufferedReader br;
+    
+    private ButtonGroup VOIGroup;
+    private JRadioButton sagittalSinusButton;
+    private JRadioButton processRegionButton;
+    private int sagittalSinusIndex;
+    private int processRegionIndex;
+    
+    private ViewJComponentEditImage componentImage;
     
     /** DOCUMENT ME! */
     private ViewUserInterface UI;
@@ -153,6 +171,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         this.UI = ViewUserInterface.getReference();
         this.image = image;
         parentFrame = image.getParentFrame();
+        componentImage = ((ViewJFrameImage) parentFrame).getComponentImage();
     }
 
     /**
@@ -164,6 +183,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
     public JDialogSM2(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
+        componentImage = ((ViewJFrameImage) theParentFrame).getComponentImage();
         UI = ViewUserInterface.getReference();
         init();
     }
@@ -177,6 +197,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
+        Object source = event.getSource();
 
         if (command.equals("OK")) {
 
@@ -187,6 +208,14 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
             callAlgorithm();
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("");
+        } else if ((source == sagittalSinusButton) || (source == processRegionButton)) {
+            if (sagittalSinusButton.isSelected()) {
+                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+                componentImage.getVOIHandler().setPresetHue(0.0f); // red
+            } else if (processRegionButton.isSelected()) {
+                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+                componentImage.getVOIHandler().setPresetHue(1.0f / 3.0f); // green
+            } 
         } else if (command.equals("TissueFile")) {
 
                 try {
@@ -293,9 +322,83 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
                     }
                     
                     textVOIFile.setText(fileNameVOI);
-                    
-                    image.getParentFrame().getComponentImage().getVOIHandler().deleteVOIs();
+                    voi[0].setColor(0.0f);
                     image.registerVOI(voi[0]);
+
+                    //  when everything's done, notify the image listeners
+                    image.notifyImageDisplayListeners();   
+                }
+
+                
+            } catch (OutOfMemoryError e) {
+                MipavUtil.displayError("Out of memory in JDialogSM2.");
+
+                return;
+            }
+        } else if (command.equals("VOIFile2")) {
+
+            try {
+                JFileChooser chooser = new JFileChooser();
+
+                if (UI.getDefaultDirectory() != null) {
+                    File file = new File(UI.getDefaultDirectory());
+
+                    if (file != null) {
+                        chooser.setCurrentDirectory(file);
+                    } else {
+                        chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+                    }
+                } else {
+                    chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+                }
+
+                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.GEN));
+                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
+                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MICROSCOPY));
+                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MISC));
+
+                chooser.setDialogTitle("Open process region VOI file");
+                directoryVOI2 = String.valueOf(chooser.getCurrentDirectory()) + File.separator;
+
+                int returnValue = chooser.showOpenDialog(UI.getMainFrame());
+
+                if (returnValue == JFileChooser.APPROVE_OPTION) {
+                    fileNameVOI2 = chooser.getSelectedFile().getName();
+                    directoryVOI2 = String.valueOf(chooser.getCurrentDirectory()) + File.separator;
+                    UI.setDefaultDirectory(directoryVOI2);
+                } else {
+                    fileNameVOI2 = null;
+
+                    return;
+                }
+
+                if (fileNameVOI2 != null) {
+
+                    try {
+                        fileVOI2 = new FileVOI(fileNameVOI2, directoryVOI2, image);
+                    }
+                    catch (IOException e) {
+                        MipavUtil.displayError("IOException on new FileVOI(fileNameVOI2, directoryVOI2, image)");
+                        return;
+                    }
+
+                    try {
+                        voi2 = fileVOI2.readVOI(false);
+                    }
+                    catch (IOException e) {
+                        MipavUtil.displayError("IOException on fileVOI2.readVOI(false)");
+                        return;
+                    }
+                    
+                    if (voi2.length > 1) {
+                        MipavUtil.displayError("Found " + voi2.length + " vois in file instead of 1");
+                        return;
+                    }
+                    
+                    textVOIFile2.setText(fileNameVOI2);
+                    
+                    voi2[0].setColor((float)(1.0/3.0));
+                    image.registerVOI(voi2[0]);
 
                     //  when everything's done, notify the image listeners
                     image.notifyImageDisplayListeners();   
@@ -447,6 +550,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
             }
 
     }   else if (command.equals("Cancel")) {
+    	    componentImage.getVOIHandler().setPresetHue(-1.0f);
             dispose();
         } 
     }
@@ -703,11 +807,44 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         
         textVOIFile.setText(fileNameVOI);
         
-        image.getParentFrame().getComponentImage().getVOIHandler().deleteVOIs();
+        voi[0].setColor(0.0f);
         image.registerVOI(voi[0]);
 
         //  when everything's done, notify the image listeners
-        image.notifyImageDisplayListeners();   
+        image.notifyImageDisplayListeners();
+        
+        fileNameVOI2 = scriptParameters.getParams().getString("file_name_voi2");
+        if (fileNameVOI2 != null) {
+	        directoryVOI2 = scriptParameters.getParams().getString("directory_voi2");
+	        try {
+	            fileVOI2 = new FileVOI(fileNameVOI2, directoryVOI2, image);
+	        }
+	        catch (IOException e) {
+	            MipavUtil.displayError("IOException on new FileVOI(fileNameVOI2, directoryVOI2, image)");
+	            return;
+	        }
+	
+	        try {
+	            voi2 = fileVOI2.readVOI(false);
+	        }
+	        catch (IOException e) {
+	            MipavUtil.displayError("IOException on fileVOI2.readVOI(false)");
+	            return;
+	        }
+	        
+	        if (voi2.length > 1) {
+	            MipavUtil.displayError("Found " + voi2.length + " vois in file instead of 1");
+	            return;
+	        }
+	        
+	        textVOIFile2.setText(fileNameVOI2);
+	        
+	        voi2[0].setColor((float)(1.0/3.0));
+	        image.registerVOI(voi2[0]);
+	
+	        //  when everything's done, notify the image listeners
+	        image.notifyImageDisplayListeners(); 
+        } // if (fileNameVOI2 != null)
     }
 
     /**
@@ -743,6 +880,8 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         scriptParameters.getParams().put(ParameterFactory.newParameter("directory_times", directoryTimes));
         scriptParameters.getParams().put(ParameterFactory.newParameter("file_name_voi", fileNameVOI));
         scriptParameters.getParams().put(ParameterFactory.newParameter("directory_voi", directoryVOI));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("file_name_voi2", fileNameVOI2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("directory_voi2", directoryVOI2));
     }
 
     // ************************* Item Events ****************************
@@ -765,7 +904,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
      * @param  event  DOCUMENT ME!
      */
     public void windowClosing(WindowEvent event) {
-
+    	componentImage.getVOIHandler().setPresetHue(-1.0f);
         cancelFlag = true;
         dispose();
     }
@@ -790,8 +929,10 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
             resultImage[4] = new ModelImage(ModelStorageBase.INTEGER, resultExtents, image.getImageName() + 
             		                        "_exit_status");
             
+            componentImage.getVOIHandler().setPresetHue(-1.0f);
+            
             sm2Algo = new AlgorithmSM2(resultImage, image, min_constr, max_constr, initial, tissueImage, timeVals,
-            		                   hematocrit);
+            		                   hematocrit, sagittalSinusIndex, processRegionIndex);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -1006,7 +1147,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         gbc.gridx = 1;
         mainPanel.add(textTissueFile, gbc);
         
-        labelVOI = new JLabel("Draw a sagittal sinus VOI or open a VOI file");
+        labelVOI = new JLabel("Open a VOI file or draw a VOI");
         labelVOI.setForeground(Color.black);
         labelVOI.setFont(serif12);
         gbc.gridx = 0;
@@ -1029,6 +1170,44 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         gbc.gridx = 1;
         mainPanel.add(textVOIFile, gbc);
         
+        buttonVOIFile2 = new JButton("Open a process region VOI file");
+        buttonVOIFile2.setForeground(Color.black);
+        buttonVOIFile2.setFont(serif12B);
+        buttonVOIFile2.addActionListener(this);
+        buttonVOIFile2.setActionCommand("VOIFile2");
+        buttonVOIFile2.setPreferredSize(new Dimension(205, 30));
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy = 14;
+        mainPanel.add(buttonVOIFile2, gbc);
+        
+        textVOIFile2 = new JTextField();
+        textVOIFile2.setFont(serif12);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 1;
+        mainPanel.add(textVOIFile2, gbc);
+        
+        VOIGroup = new ButtonGroup();
+
+        sagittalSinusButton = new JRadioButton("Draw required sagittal sinus VOI", true);
+        sagittalSinusButton.setForeground(Color.red);
+        sagittalSinusButton.setFont(serif12);
+        sagittalSinusButton.addActionListener(this);
+        VOIGroup.add(sagittalSinusButton);
+        gbc.gridy = 15;
+        gbc.gridx = 0;
+        mainPanel.add(sagittalSinusButton, gbc);
+        componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+        componentImage.getVOIHandler().setPresetHue(0.0f); // red
+
+        processRegionButton = new JRadioButton("Draw optional region VOI", false);
+        processRegionButton.setForeground(Color.green.darker());
+        processRegionButton.setFont(serif12);
+        processRegionButton.addActionListener(this);
+        VOIGroup.add(processRegionButton);
+        gbc.gridy = 16;
+        mainPanel.add(processRegionButton, gbc);
+        
         buttonTimesFile = new JButton("Open a file of volume center times in seconds");
         buttonTimesFile.setForeground(Color.black);
         buttonTimesFile.setFont(serif12B);
@@ -1037,7 +1216,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         buttonTimesFile.setPreferredSize(new Dimension(225, 30));
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 14;
+        gbc.gridy = 17;
         mainPanel.add(buttonTimesFile, gbc);
         
         textTimesFile = new JTextField();
@@ -1061,6 +1240,10 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
      */
     private boolean setVariables() {
         String tmpStr;
+        float[] hsb;
+        float hue;
+        sagittalSinusIndex = -1;
+        processRegionIndex = -1;
         
         tmpStr = textMinConstr0.getText();
         min_constr[0] = Double.parseDouble(tmpStr);
@@ -1237,23 +1420,50 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         VOIs = image.getVOIs();
         int nVOIs = VOIs.size();
         int nBoundingVOIs = 0;
-
+        
         for (int i = 0; i < nVOIs; i++) {
 
             if ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) || (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
                 nBoundingVOIs++;
+                hsb = Color.RGBtoHSB(VOIs.VOIAt(i).getColor().getRed(), VOIs.VOIAt(i).getColor().getGreen(),
+                                     VOIs.VOIAt(i).getColor().getBlue(), null);
+                hue = hsb[0];
+
+                if ((Math.abs(hue - 0.0f)) < 0.0001f) {
+
+                    if (sagittalSinusIndex == -1) {
+                        sagittalSinusIndex = i;
+                        VOIs.VOIAt(i).setName("SagittalSinus");
+                    } else {
+                        MipavUtil.displayError("Cannot have more than 1 sagittal sinus VOI");
+
+                        return false;
+                    }
+                } else if ((Math.abs(hue - (1.0f / 3.0f))) < 0.0001f) {
+
+                    if (processRegionIndex == -1) {
+                        processRegionIndex = i;
+                        VOIs.VOIAt(i).setName("ProcessRegion");
+                    } else {
+                        MipavUtil.displayError("Cannot have more than 1 process region VOI");
+
+                        return false;
+                    }
+                }  else {
+                    MipavUtil.displayError("VOI hue = " + hue + " Must be 0 for red or " +
+                                           "1/3 for green");
+
+                    return false;
+                }
             }
-        }
-        
-        if (nBoundingVOIs == 0) {
-            MipavUtil.displayError("No bounding vois around sagittal sinus");
+        } // for (i = 0; i < nVOIs; i++)
+
+        if (sagittalSinusIndex == -1) {
+            MipavUtil.displayError("Must specify a sagittal sinus VOI");
+
             return false;
         }
         
-        if (nBoundingVOIs > 1) {
-            MipavUtil.displayError(nBoundingVOIs + " bounding vois around sagittal sinus instead of the expected 1");
-            return false;
-        }
         
         if (timeVals == null) {
         	MipavUtil.displayError("Array of time values was not created");
@@ -1314,6 +1524,8 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
             table.put(new ParameterString("directory_times"));
             table.put(new ParameterString("file_name_voi"));
             table.put(new ParameterString("directory_voi"));
+            table.put(new ParameterString("file_name_voi2"));
+            table.put(new ParameterString("directory_voi2"));
             System.out.println("ending input params");
         } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
@@ -1417,5 +1629,5 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
             }
         };
     }
-
+    
 }
