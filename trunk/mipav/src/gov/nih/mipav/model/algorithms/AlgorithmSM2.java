@@ -108,6 +108,8 @@ public class AlgorithmSM2 extends AlgorithmBase {
     private double max_constr[];
     // hematocrit
     private double h;
+    private int sagittalSinusIndex;
+    private int processRegionIndex;
     private double ymodel[];
     private int i;
     private int xDim;
@@ -134,6 +136,11 @@ public class AlgorithmSM2 extends AlgorithmBase {
     private int oldBarMarker = 0;
     
     private ModelImage tissueImage;
+    private BitSet bitMask = null;
+    private int validVoxels = 0;
+    private double ktransTotal = 0.0;
+    private double veTotal = 0.0;
+    private double vpTotal = 0.0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -142,7 +149,8 @@ public class AlgorithmSM2 extends AlgorithmBase {
      
      */
     public AlgorithmSM2(ModelImage destImage[], ModelImage srcImage, double min_constr[], double max_constr[],
-    		               double initial[], ModelImage tissueImage, double timeVals[], double h) {
+    		               double initial[], ModelImage tissueImage, double timeVals[], double h,
+    		               int sagittalSinusIndex, int processRegionIndex) {
 
         super(null, srcImage);
         this.destImage = destImage;
@@ -152,6 +160,8 @@ public class AlgorithmSM2 extends AlgorithmBase {
         this.tissueImage = tissueImage;
         this.timeVals = timeVals;
         this.h = h;
+        this.sagittalSinusIndex = sagittalSinusIndex;
+        this.processRegionIndex = processRegionIndex;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -181,7 +191,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
      */
     public void runAlgorithm() {
         ViewVOIVector VOIs;
-        BitSet mask;
+        short mask[];
         int t;
         double y_array[];
         int size4D;
@@ -205,6 +215,9 @@ public class AlgorithmSM2 extends AlgorithmBase {
         double initial0_original;
         double min0_original;
         double max0_original;
+        double ktransAverage;
+        double veAverage;
+        double vpAverage;
         
         if (selfTest) {
         	int i;
@@ -523,6 +536,11 @@ public class AlgorithmSM2 extends AlgorithmBase {
         size4D = volSize * tDim;
         destArray = new float[4][volSize];
         destExitStatusArray = new int[volSize];
+        for (i = 0; i < 4; i++) {
+        	for (j = 0; j < volSize; j++) {
+        		destArray[i][j] = Float.NaN;
+        	}
+        }
        
         r1t0 = new double[volSize];
         r1tj = new double[size4D];
@@ -542,29 +560,24 @@ public class AlgorithmSM2 extends AlgorithmBase {
         
        
         VOIs = srcImage.getVOIs();
-        int nVOIs = VOIs.size();
-        int nBoundingVOIs = 0;
-
-        for (i = 0; i < nVOIs; i++) {
-
-            if ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) || (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
-                nBoundingVOIs++;
-            }
-        }
         
-        if (nBoundingVOIs == 0) {
-            MipavUtil.displayError("No bounding vois around sagittal sinus");
+        if (sagittalSinusIndex < 0) {
+        	MipavUtil.displayError("No bounding vois around sagittal sinus");
             setCompleted(false);
-            return;
+            return;	
         }
         
-        if (nBoundingVOIs > 1) {
-            MipavUtil.displayError(nBoundingVOIs + " bounding vois around sagittal sinus instead of the expected 1");
+        if ((VOIs.VOIAt(sagittalSinusIndex).getCurveType() != VOI.CONTOUR) && (VOIs.VOIAt(sagittalSinusIndex).getCurveType() != VOI.POLYLINE)) {
+        	MipavUtil.displayError("No bounding vois around sagittal sinus");
             setCompleted(false);
-            return;
+            return;	    
         }
         
-        mask = srcImage.generateVOIMask();
+        mask = new short[volSize];
+        for (i = 0; i < volSize; i++) {
+        	mask[i] = -1;
+        }
+        mask = srcImage.generateVOIMask(mask, sagittalSinusIndex);
         
         try {
             srcImage.exportData(0, size4D, r1tj);
@@ -580,7 +593,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
         // Actually looking from t = t1 to t = tlast
         for (t = 0; t < tDim; t++) {
             for (i = 0; i < volSize; i++) {
-                if (mask.get(i)) {
+                if (mask[i] != -1) {
                     r1ptj[t] += r1tj[i + t*volSize];
                     if (t == 0) {
                     	r1pt0 += r1t0[i];
@@ -603,6 +616,32 @@ public class AlgorithmSM2 extends AlgorithmBase {
         	}
         } // for (t = 0; t < tDim; t++)
         r1t0 = null;
+        
+        if (processRegionIndex >= 0) {
+        	if ((VOIs.VOIAt(processRegionIndex).getCurveType() != VOI.CONTOUR) && (VOIs.VOIAt(processRegionIndex).getCurveType() != VOI.POLYLINE)) {
+        		processRegionIndex = -1;
+        	}
+        }
+        
+        bitMask = new BitSet(volSize);
+        if (processRegionIndex < 0) {
+        	mask = null;
+        	for (i = 0; i < volSize; i++) {
+        		bitMask.set(i);
+        	}
+        }
+        else {
+        	for (i = 0; i < volSize; i++) {
+        		mask[i] = -1;
+        	}
+        	mask = srcImage.generateVOIMask(mask, processRegionIndex);
+        	for (i = 0; i < volSize; i++) {
+        		if (mask[i] != -1) {
+        			bitMask.set(i);
+        		}
+        	}
+        	mask = null;
+        }
         
         trapezoidMidpoint = new double[tDim-1];
         for (t = 0; t < tDim - 1; t++) {
@@ -663,49 +702,57 @@ public class AlgorithmSM2 extends AlgorithmBase {
 	        		oldBarMarker = barMarker;
 	        		fireProgressStateChanged(barMarker);
 	        	}
-	            for (t = 1; t < tDim; t++) {
-	            	y_array[t-1] = r1tj[t*volSize + i];
-	            }
-	            // Note that the nPts, tDim-1, is the number of points in the y_array.
-	            dModel = new FitSM2ConstrainedModel(tDim-1, r1ptj, y_array, initial);
-	            dModel.driver();
-	            //dModel.dumpResults();
-	            params = dModel.getParameters();
-	            chi_squared = (float)dModel.getChiSquared();
-	            // Convert ktrans from /sec to /min
-	            // Mutliply /sec by 60 seconds/minute
-	            paramSecs0 = params[0];
-	            params[0] = 60.0 * params[0];
-	            for (j = 0; j < 3; j++) {
-	            	destArray[j][i] = (float)params[j];
-	            	if (Double.isNaN(params[j])) {
-	            	    paramNaN[j]++;	
-	            	}
-	            	else if (Double.isInfinite(params[j])) {
-	            		paramInf[j]++;
-	            	}
-	            	else {
-		            	if (params[j] < paramMin[j]) {
-		            		paramMin[j] = params[j];
+	        	if (bitMask.get(i)) {
+		            for (t = 1; t < tDim; t++) {
+		            	y_array[t-1] = r1tj[t*volSize + i];
+		            }
+		            // Note that the nPts, tDim-1, is the number of points in the y_array.
+		            dModel = new FitSM2ConstrainedModel(tDim-1, r1ptj, y_array, initial);
+		            dModel.driver();
+		            //dModel.dumpResults();
+		            params = dModel.getParameters();
+		            chi_squared = (float)dModel.getChiSquared();
+		            // Convert ktrans from /sec to /min
+		            // Mutliply /sec by 60 seconds/minute
+		            paramSecs0 = params[0];
+		            params[0] = 60.0 * params[0];
+		            for (j = 0; j < 3; j++) {
+		            	destArray[j][i] = (float)params[j];
+		            	if (Double.isNaN(params[j])) {
+		            	    paramNaN[j]++;	
 		            	}
-		            	if (params[j] > paramMax[j]) {
-		            		paramMax[j] = params[j];
+		            	else if (Double.isInfinite(params[j])) {
+		            		paramInf[j]++;
 		            	}
-	            	}
-	            }
-	            // Set values that come out at the extreme values of the allowed intervals to NaN rather
-	        	// than to the extreme values.  Those values are invariabley wrong, and the images
-	        	// become very difficult to analyze.
-	            if ((paramSecs0 <= min_constr[0]) || (paramSecs0 >= max_constr[0]) ||
-	                (params[1] <= min_constr[1]) || (params[1] >= max_constr[1]) ||
-	                (params[2] <= min_constr[2]) || (params[2] >= max_constr[2])) {
-	                destArray[0][i] = Float.NaN;
-	                destArray[1][i] = Float.NaN;
-	                destArray[2][i] = Float.NaN;
-	            }
-	            destArray[3][i] = chi_squared;
-	            destExitStatusArray[i] = dModel.getExitStatus();
-	            exitStatus[(dModel.getExitStatus() + 11)]++;
+		            	else {
+			            	if (params[j] < paramMin[j]) {
+			            		paramMin[j] = params[j];
+			            	}
+			            	if (params[j] > paramMax[j]) {
+			            		paramMax[j] = params[j];
+			            	}
+		            	}
+		            }
+		            // Set values that come out at the extreme values of the allowed intervals to NaN rather
+		        	// than to the extreme values.  Those values are invariabley wrong, and the images
+		        	// become very difficult to analyze.
+		            if ((paramSecs0 <= min_constr[0]) || (paramSecs0 >= max_constr[0]) ||
+		                (params[1] <= min_constr[1]) || (params[1] >= max_constr[1]) ||
+		                (params[2] <= min_constr[2]) || (params[2] >= max_constr[2])) {
+		                destArray[0][i] = Float.NaN;
+		                destArray[1][i] = Float.NaN;
+		                destArray[2][i] = Float.NaN;
+		            }
+		            else if (dModel.getExitStatus() > 0){
+		            	validVoxels++;
+		            	ktransTotal += destArray[0][i];
+		            	veTotal += destArray[1][i];
+		            	vpTotal += destArray[2][i];
+		            }
+		            destArray[3][i] = chi_squared;
+		            destExitStatusArray[i] = dModel.getExitStatus();
+		            exitStatus[(dModel.getExitStatus() + 11)]++;
+	        	} // if (bitMask.get(i)
             } // for (i = 0; i < volSize; i++)
         } // else processors == 1
         
@@ -739,18 +786,30 @@ public class AlgorithmSM2 extends AlgorithmBase {
         	Preferences.debug(paramInf[2] + " of vp values are infinite\n");
         }
         
+        System.out.println("Valid voxels = " + validVoxels);
+        Preferences.debug("Valid voxels = " + validVoxels + "\n");
+        ktransAverage = ktransTotal/validVoxels;
+        veAverage = veTotal/validVoxels;
+        vpAverage = vpTotal/validVoxels;
+        
         System.out.println("ktrans minimum value = " + paramMin[0]);
         Preferences.debug("ktrans minimum value = " + paramMin[0] + "\n");
+        System.out.println("ktrans average value = " + ktransAverage);
+        Preferences.debug("ktrans average value = " + ktransAverage + "\n");
         System.out.println("ktrans maximum value = " + paramMax[0]);
         Preferences.debug("ktrans maximum value = " + paramMax[0] + "\n");
         
         System.out.println("ve minimum value = " + paramMin[1]);
         Preferences.debug("ve minimum value = " + paramMin[1] + "\n");
+        System.out.println("ve average value = " + veAverage);
+        Preferences.debug("ve average value = " + veAverage + "\n");
         System.out.println("ve maximum value = " + paramMax[1]);
         Preferences.debug("ve maximum value = " + paramMax[1] + "\n");
         
         System.out.println("vp minimum value = " + paramMin[2]);
         Preferences.debug("vp minimum value = " + paramMin[2] + "\n");
+        System.out.println("vp average value = " + vpAverage);
+        Preferences.debug("vp average value = " + vpAverage + "\n");
         System.out.println("vp maximum value = " + paramMax[2]);
         Preferences.debug("vp maximum value = " + paramMax[2] + "\n");
         
@@ -1927,19 +1986,24 @@ public class AlgorithmSM2 extends AlgorithmBase {
     		double paramSecs0;
     		for (i = start; i < end; i++) {
 	        	//fireProgressStateChanged(i * 100/volSize);
-	            input(y_array, i);
-	            // Note that the nPts, tDim-1, is the number of points in the y_array.
-	            dModel = new FitSM2ConstrainedModelC(tDim-1, r1ptj, y_array, initial, exparray, trapezoidConstant,
-	            		                             trapezoidSlope, timeVals, r1ptj, ymodel);
-	            dModel.driver();
-	            //dModel.dumpResults();
-	            params = dModel.getParameters();
-	            chi_squared = (float)dModel.getChiSquared();
-	            // Convert ktrans from /sec to /min
-	            // Mutliply /sec by 60 seconds/minute
-	            paramSecs0 = params[0];
-	            params[0] = 60.0 * params[0];
-	            output(params, paramSecs0, i, dModel.getExitStatus(), chi_squared);
+    			if (bitMask.get(i)) {
+		            input(y_array, i);
+		            // Note that the nPts, tDim-1, is the number of points in the y_array.
+		            dModel = new FitSM2ConstrainedModelC(tDim-1, r1ptj, y_array, initial, exparray, trapezoidConstant,
+		            		                             trapezoidSlope, timeVals, r1ptj, ymodel);
+		            dModel.driver();
+		            //dModel.dumpResults();
+		            params = dModel.getParameters();
+		            chi_squared = (float)dModel.getChiSquared();
+		            // Convert ktrans from /sec to /min
+		            // Mutliply /sec by 60 seconds/minute
+		            paramSecs0 = params[0];
+		            params[0] = 60.0 * params[0];
+		            output(params, paramSecs0, i, dModel.getExitStatus(), chi_squared);
+    			} // if (bitMask.get(i)
+    			else {
+    				output(null, 0.0, -1, 0, 0.0f);
+    			}
             } // for (i = start; i < end; i++)	
     	}
     	
@@ -1961,36 +2025,44 @@ public class AlgorithmSM2 extends AlgorithmBase {
     		oldBarMarker = barMarker;
     		fireProgressStateChanged(barMarker);
     	}
-    	for (j = 0; j < 3; j++) {
-    		destArray[j][i] = (float)params[j];
-        	if (Double.isNaN(params[j])) {
-        	    paramNaN[j]++;	
-        	}
-        	else if (Double.isInfinite(params[j])) {
-        		paramInf[j]++;
-        	}
-        	else {
-            	if (params[j] < paramMin[j]) {
-            		paramMin[j] = params[j];
-            	}
-            	if (params[j] > paramMax[j]) {
-            		paramMax[j] = params[j];
-            	}
-        	}
-        }
-    	// Set values that come out at the extreme values of the allowed intervals to NaN rather
-    	// than to the extreme values.  Those values are invariabley wrong, and the images
-    	// become very difficult to analyze.
-    	if ((paramSecs0 <= min_constr[0]) || (paramSecs0 >= max_constr[0]) ||
-            (params[1] <= min_constr[1]) || (params[1] >= max_constr[1]) ||
-            (params[2] <= min_constr[2]) || (params[2] >= max_constr[2])) {
-            destArray[0][i] = Float.NaN;
-            destArray[1][i] = Float.NaN;
-            destArray[2][i] = Float.NaN;
-        }
-    	destArray[3][i] = chi_squared;
-    	destExitStatusArray[i] = exitBits;
-        exitStatus[exitBits + 11]++;	
+    	if (i >= 0) {
+	    	for (j = 0; j < 3; j++) {
+	    		destArray[j][i] = (float)params[j];
+	        	if (Double.isNaN(params[j])) {
+	        	    paramNaN[j]++;	
+	        	}
+	        	else if (Double.isInfinite(params[j])) {
+	        		paramInf[j]++;
+	        	}
+	        	else {
+	            	if (params[j] < paramMin[j]) {
+	            		paramMin[j] = params[j];
+	            	}
+	            	if (params[j] > paramMax[j]) {
+	            		paramMax[j] = params[j];
+	            	}
+	        	}
+	        }
+	    	// Set values that come out at the extreme values of the allowed intervals to NaN rather
+	    	// than to the extreme values.  Those values are invariabley wrong, and the images
+	    	// become very difficult to analyze.
+	    	if ((paramSecs0 <= min_constr[0]) || (paramSecs0 >= max_constr[0]) ||
+	            (params[1] <= min_constr[1]) || (params[1] >= max_constr[1]) ||
+	            (params[2] <= min_constr[2]) || (params[2] >= max_constr[2])) {
+	            destArray[0][i] = Float.NaN;
+	            destArray[1][i] = Float.NaN;
+	            destArray[2][i] = Float.NaN;
+	        }
+	    	else if (exitBits > 0){
+	    		validVoxels++;
+	    		ktransTotal += destArray[0][i];
+	    		veTotal += destArray[1][i];
+	    		vpTotal += destArray[2][i];
+	    	}
+	    	destArray[3][i] = chi_squared;
+	    	destExitStatusArray[i] = exitBits;
+	        exitStatus[exitBits + 11]++;
+    	} // if (i >= 0)
     }
     
     class FitSM2ConstrainedModelC extends NLConstrainedEngine {
