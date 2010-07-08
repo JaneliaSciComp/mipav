@@ -294,17 +294,20 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
 			if(currentItemType.startsWith("IMAGE"))
 			{
     	    	String fileLoc = currentImages[i].getTag("0004,1500").getValue(true).toString();
-    	    	fileLoc.replace('/', File.separatorChar);
-    	    	fileLoc.replace('\\', File.separatorChar);
-    	    	int loc = fileLoc.lastIndexOf(File.separator);
-    	    	String filename = fileLoc.substring(loc+1);
-    	    	String filepreloc = fileLoc.substring(0, loc);
-    	    	fileFinalLoc = file.getParent()+File.separator+filepreloc+File.separator;
-    	    	fileNames[i] = filename;
-    	    	Preferences.debug("***************************** FileDir is " + fileFinalLoc + "\n");
-    	    	System.out.println("***************************** FileDir is " + fileFinalLoc);
-    	    	Preferences.debug("***************************** FileName is " + filename + "\n");
-    	    	System.out.println("***************************** FileName is " + filename);
+    	    	fileLoc = fileLoc.replace('/', File.separatorChar);
+    	    	fileLoc = fileLoc.replace('\\', File.separatorChar);
+    	    	int loc = fileLoc.lastIndexOf(File.separatorChar);
+    	    	if(loc != -1) {
+    	    		String filename = fileLoc.substring(loc+1);
+        	    	String filepreloc = fileLoc.substring(0, loc);
+        	    	fileFinalLoc = file.getParent()+File.separator+filepreloc+File.separator;
+        	    	fileNames[i] = filename;
+    	    	}else {
+    	    		String filename = fileLoc;
+        	    	fileFinalLoc = file.getParent()+File.separator;
+        	    	fileNames[i] = filename;
+    	    	}
+
 			
 			} 
 			else{
@@ -722,12 +725,17 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
     	    {
     	    	JDialogFileInfoDICOM.showTags(tagViewer, currentObject, true);
     	    	String fileLoc = currentObject.getTag("0004,1500").getValue(true).toString();
-    	    	fileLoc.replace('/', File.separatorChar);
-    	    	fileLoc.replace('\\', File.separatorChar);
-    	    	int loc = fileLoc.lastIndexOf(File.separator);
-    	    	String filename = fileLoc.substring(loc+1);
-    	    	String filepreloc = fileLoc.substring(0, loc);
-    	    	buildImage(filename,file.getParent()+file.separator+filepreloc+file.separator);
+    	    	fileLoc = fileLoc.replace('/', File.separatorChar);
+    	    	fileLoc = fileLoc.replace('\\', File.separatorChar);
+    	    	int loc = fileLoc.lastIndexOf(File.separatorChar);
+    	    	if(loc != -1) {
+	    	    	String filename = fileLoc.substring(loc+1);
+	    	    	String filepreloc = fileLoc.substring(0, loc);
+	    	    	buildImage(filename,file.getParent()+file.separator+filepreloc+file.separator);
+    	    	}else {
+    	    		String filename = fileLoc;
+    	    		buildImage(filename,file.getParent()+file.separator);
+    	    	}
     	    	
     	    }
 		} 
