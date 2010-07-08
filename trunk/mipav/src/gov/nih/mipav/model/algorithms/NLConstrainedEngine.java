@@ -63,7 +63,7 @@ import gov.nih.mipav.view.*;
  *  For 40 parameters scaling = false Numerical gave chi-squared = 1 with -.225's except for a final 50.
  *  For 40 parameters scaling = false Analytical gave chi-squared = 1 with zeroes except for a final 41.
  *  For 40 parameters scaling = true Numerical gave chi-squared = 1.67E104 with a first zero followed by the rest 50's.
- *  For 40 parameters scaling = true Analytical gave chi-squared = 1 with zeroes excpet for a final 41.
+ *  For 40 parameters scaling = true Analytical gave chi-squared = 1 with zeroes except for a final 41.
  *  In short, for BROWN_ALMOST_LINEAR the Java outperformed the FORTRAN.
  *  LINEAR_FULL_RANK OK.
  *  LINEAR_RANK1 OK.
@@ -100,7 +100,7 @@ import gov.nih.mipav.view.*;
  *  HOCK21_MODIFIED OK.
  *  HATFLDB OK.
  *  HATFLDC OK.
- *  EQUILIBRIUM_COMBUSITON OK.
+ *  EQUILIBRIUM_COMBUSTION OK.
  */
 
 // BELOW IS AN EXAMPLE OF A DRIVER USED IN FITTING A 4 PARAMETER
