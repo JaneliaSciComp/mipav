@@ -724,7 +724,7 @@ public class FileUtility {
      * 
      * @see FileBase
      */
-    public static final int getFileType(final String fileName, final String fileDir, boolean doWrite, boolean quiet) {
+    public static final int getFileType(String fileName, final String fileDir, boolean doWrite, boolean quiet) {
         int fileType;
         int i;
 
@@ -737,7 +737,7 @@ public class FileUtility {
             return fileType;
         }
 
-        fileName.trim();
+        fileName = fileName.trim();
 
         final String suffix = FileUtility.getExtension(fileName);
 
