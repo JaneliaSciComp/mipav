@@ -1621,7 +1621,7 @@ public class FileIO {
         boolean bz2unzip;
 
         this.fileDir = fileDir;
-        fileName.trim();
+        fileName = fileName.trim();
 
         index = fileName.lastIndexOf(".");
 
