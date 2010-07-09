@@ -1524,7 +1524,14 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
         }
         m_kCurrentVOIGroup = null;
         voiUID++;
-        toolbarBuilder.getVOIColorButton().setVOIColor(voiUID);
+        if (presetHue >= 0.0) {
+        	Color color = Color.getHSBColor(presetHue, 1.0f, 1.0f);
+        	toolbarBuilder.getVOIColorButton().setVOIColor(color);
+        	toolbarBuilder.getVOIColorButton().setBackground(color);
+        }
+        else {
+            toolbarBuilder.getVOIColorButton().setVOIColor(voiUID);
+        }
         setButtonColor(toolbarBuilder.getVOIColorButton(), 
                 toolbarBuilder.getVOIColorButton().getBackground() );
 
@@ -1534,6 +1541,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
         int index = kName.lastIndexOf('.') + 1;
         kName = kName.substring(index);
         m_kCurrentVOIGroup = new VOI( sID,  kName + "_" + sID );
+        if (presetHue >= 0.0) {
+        	m_kCurrentVOIGroup.setColor(presetHue);
+        }
         m_kCurrentVOIGroup.setOpacity(1f);
     }
 
@@ -2349,6 +2359,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
             if ( kVOIs.get(i).isActive() && matches(kVOIs.get(i).getCurveType(), kNew.getType(), isFinished) )
             {
                 m_kCurrentVOIGroup = kVOIs.get(i);
+                if (presetHue >= 0.0f) {
+                	m_kCurrentVOIGroup.setColor(presetHue);
+                }
                 setSelectedVOI(m_kCurrentVOIGroup, false, true);
                 return;
             }
@@ -2358,6 +2371,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
             if ( matches(kVOIs.get(i).getCurveType(), kNew.getType(), isFinished) )
             {
                 m_kCurrentVOIGroup = kVOIs.get(i);
+                if (presetHue >= 0.0f) {
+                	m_kCurrentVOIGroup.setColor(presetHue);
+                }
                 setSelectedVOI(m_kCurrentVOIGroup, false, true);
                 return;
             }
@@ -3708,6 +3724,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
         if ( kVOIState.currentVOI != -1 )
         {
             m_kCurrentVOIGroup = m_kImageA.getVOIs().get(kVOIState.currentVOI);
+            if (presetHue >= 0.0) {
+            	m_kCurrentVOIGroup.setColor(presetHue);
+            }
             setSelectedVOI( m_kCurrentVOIGroup, m_kCurrentVOIGroup.isAllActive(), true );
         }
         else
