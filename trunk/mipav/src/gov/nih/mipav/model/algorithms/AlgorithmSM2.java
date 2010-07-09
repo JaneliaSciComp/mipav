@@ -141,6 +141,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
     private double ktransTotal = 0.0;
     private double veTotal = 0.0;
     private double vpTotal = 0.0;
+    private boolean wholeImage = true;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -629,6 +630,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
         	for (i = 0; i < volSize; i++) {
         		bitMask.set(i);
         	}
+        	wholeImage = true;
         }
         else {
         	for (i = 0; i < volSize; i++) {
@@ -641,6 +643,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
         		}
         	}
         	mask = null;
+        	wholeImage = false;
         }
         
         trapezoidMidpoint = new double[tDim-1];
@@ -742,12 +745,16 @@ public class AlgorithmSM2 extends AlgorithmBase {
 		                destArray[0][i] = Float.NaN;
 		                destArray[1][i] = Float.NaN;
 		                destArray[2][i] = Float.NaN;
+		                bitMask.clear(i);
 		            }
 		            else if (dModel.getExitStatus() > 0){
 		            	validVoxels++;
 		            	ktransTotal += destArray[0][i];
 		            	veTotal += destArray[1][i];
 		            	vpTotal += destArray[2][i];
+		            }
+		            else if (dModel.getExitStatus() <= 0) {
+		            	bitMask.clear(i);
 		            }
 		            destArray[3][i] = chi_squared;
 		            destExitStatusArray[i] = dModel.getExitStatus();
@@ -1515,6 +1522,81 @@ public class AlgorithmSM2 extends AlgorithmBase {
         	return;
         }
         
+        if (!wholeImage) {
+        	for (t = 1; t < tDim; t++) {
+        		y_array[t-1] = 0.0;
+        		for (i = 0; i < volSize; i++) {
+        			if (bitMask.get(i)) { 
+            	        y_array[t-1] += r1tj[t*volSize + i];
+        			}
+        		} // for (i = 0; i < volSize; i++)
+        		y_array[t-1] = y_array[t-1]/validVoxels;
+            } // for (t = 1; t < tDim; t++)
+            // Note that the nPts, tDim-1, is the number of points in the y_array.
+            dModel = new FitSM2ConstrainedModel(tDim-1, r1ptj, y_array, initial);
+            dModel.driver();
+            //dModel.dumpResults();
+            params = dModel.getParameters();
+            chi_squared = (float)dModel.getChiSquared();
+            // Convert ktrans from /sec to /min
+            // Mutliply /sec by 60 seconds/minute
+            params[0] = 60.0 * params[0];
+            System.out.println("ktrans spatial average = " + params[0]);
+            Preferences.debug("ktrans spatial average = " + params[0] + "\n");
+            System.out.println("ve spatial average = " + params[1]);
+            Preferences.debug("ve spatial average = " + params[1] + "\n");
+            System.out.println("vp spatial average = " + params[2]);
+            Preferences.debug("vp spatial average = " + params[2] + "\n");
+            System.out.println("chi-squared spatial average = " + chi_squared);
+            Preferences.debug("chi-squared spatial average = " + chi_squared + "\n");
+            if (dModel.getExitStatus() > 0) {
+                System.out.println("Normal termination on spatial average");
+                Preferences.debug("Normal termination on spatial average\n");
+            }
+            else {
+            	System.out.println("Abnormal termination on spatial average");
+            	Preferences.debug("Abnormal termination on spatial average\n");
+            	if (dModel.getExitStatus() == -1) {
+            		System.out.println("Abnormal termination because m < n or n <= 0 or m <= 0 or mdc < m or mdw < n*n + 5*n + 3*m + 6 or");
+                    System.out.println("maxit <= 0 or epsrel < 0 or epsabs < 0 or epsx < 0 or invalid starting point on entry");
+                    Preferences.debug("Abnormal termination because m < n or n <= 0 or m <= 0 or mdc < m or mdw < n*n + 5*n + 3*m + 6 or\n");
+                    Preferences.debug("maxit <= 0 or epsrel < 0 or epsabs < 0 or epsx < 0 or invalid starting point on entry\n");
+                } 
+                else if (dModel.getExitStatus() == -2) {
+                	System.out.println("Abnormal termination because the number of iterations has exceeded the maximum allowed iterations");
+                	Preferences.debug("Abnormal termination because the number of iterations has exceeded the maximum allowed iterations\n");
+                }
+                else if (dModel.getExitStatus() == -3) {
+                	System.out.println("Abnormal termination because the Hessian emanating from the 2nd order method is not positive definite");
+                	Preferences.debug("Abnormal termination because the Hessian emanating from the 2nd order method is not positive definite\n");
+                }
+                else if (dModel.getExitStatus() == -4) {
+                	System.out.println("Abnormal termination because the algorithm would like to use 2nd derivatives but is not allowed to do that");
+                	Preferences.debug("Abnormal termination because the algorithm would like to use 2nd derivatives but is not allowed to do that\n");
+                }
+                else if (dModel.getExitStatus() == -5) {
+                	System.out.println("Abnormal termination because an undamped step with Newtons method is a failure");
+                	Preferences.debug("Abnormal termination because an undamped step with Newtons method is a failure\n");
+                }
+                else if (dModel.getExitStatus() == -6) {
+                	System.out.println("Abnormal termination because the latest search direction computed using subspace minimization");
+                	System.out.println("was not a descent direction (probably caused by a wrongly computed Jacobian)");
+                	Preferences.debug("Abnormal termination because the latest search direction computed using subspace minimization\n");
+                	Preferences.debug("was not a descent direction (probably caused by a wrongly computed Jacobian)\n");
+                }
+                else if (dModel.getExitStatus() == -7) {
+                	System.out.println("Abnormal termination because there is only one feasible point,");
+                	System.out.println("namely X(I) = BL(I) = BU(I), I = 1,2,...,N");
+                	Preferences.debug("Abnormal termination because there is only one feasible point,\n");
+                	Preferences.debug("namely X(I) = BL(I) = BU(I), I = 1,2,...,N\n");
+                }
+                else if (dModel.getExitStatus() == -8) {
+                	System.out.println("Abnormal termination due to NLConstrainedEngine driver error");
+                	Preferences.debug("Abnormal termination due to NLConstrainedEngine driver error\n");
+                }
+            }
+        } // if (!wholeImage)
+        
         // Restore original ktrans values in /min for scripting in JDialogSM2
         initial[0] = initial0_original;
         min_constr[0] = min0_original;
@@ -1947,6 +2029,9 @@ public class AlgorithmSM2 extends AlgorithmBase {
     	Preferences.debug("Abnormal termination because there is only one feasible point,\n");
     	Preferences.debug("namely X(I) = BL(I) = BU(I), I = 1,2,...,N\n");
     }
+    else if (status == -8) {
+    	Preferences.debug("Abnormal termination due to NLConstrainedEngine driver error\n");
+    }
     else {
     	Preferences.debug("Exit status = " + status + "\n");
     }
@@ -2052,12 +2137,16 @@ public class AlgorithmSM2 extends AlgorithmBase {
 	            destArray[0][i] = Float.NaN;
 	            destArray[1][i] = Float.NaN;
 	            destArray[2][i] = Float.NaN;
+	            bitMask.clear(i);
 	        }
 	    	else if (exitBits > 0){
 	    		validVoxels++;
 	    		ktransTotal += destArray[0][i];
 	    		veTotal += destArray[1][i];
 	    		vpTotal += destArray[2][i];
+	    	}
+	    	else if (exitBits <= 0) {
+	    		bitMask.clear(i);
 	    	}
 	    	destArray[3][i] = chi_squared;
 	    	destExitStatusArray[i] = exitBits;
