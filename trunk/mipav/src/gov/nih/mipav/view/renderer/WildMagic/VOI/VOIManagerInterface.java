@@ -222,7 +222,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
     private String voiSavedFileName = null;
     
     /** Statistics dialog VOI->Statistics generator... */
-    private JDialogVOIStatistics imageStatList; 
+    private JDialogVOIStatistics imageStatList;
+    
+    private float presetHue = -1.0f;
 
     /**
      * Creates a VOIManagerInterface object.
@@ -824,6 +826,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
         if ( kActive != null )
         {
             addVOI( kActive, kNew, bQuickLUT, bUpdate, isFinished );
+            if (presetHue >= 0.0f) {
+            	kNew.getGroup().setColor(presetHue);
+            }
             if ( kActive.isRegistered( m_kCurrentVOIGroup ) == -1 )
             {
                 kActive.registerVOI( m_kCurrentVOIGroup );
@@ -1793,6 +1798,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
      * @see gov.nih.mipav.view.VOIHandlerInterface#setPresetHue(float)
      */
     public void setPresetHue(float presetHue) {
+    	this.presetHue = presetHue;
         int colorIncrement = Preferences.getVOIColorIncrement();
         float hue;
         if (presetHue >= 0.0f) {
@@ -2019,7 +2025,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
                 String kName = kNew.getClass().getName();
                 int index = kName.lastIndexOf('.') + 1;
                 kName = kName.substring(index);
-                m_kCurrentVOIGroup = new VOI( sID,  kName + "_" + sID, kNew.getType(), -1f );
+                m_kCurrentVOIGroup = new VOI( sID,  kName + "_" + sID, kNew.getType(), presetHue );
                 m_kCurrentVOIGroup.setOpacity(1f);
                 kImage.registerVOI( m_kCurrentVOIGroup );
             }    
