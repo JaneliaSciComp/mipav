@@ -205,7 +205,7 @@ public class FileVOI extends FileXML {
                 return null;
             }
 
-            VOIStr.trim();
+            VOIStr = VOIStr.trim();
 
             if (VOIStr.length() < 14) {
 

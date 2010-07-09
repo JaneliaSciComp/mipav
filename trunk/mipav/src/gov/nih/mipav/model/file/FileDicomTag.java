@@ -913,8 +913,8 @@ public class FileDicomTag extends ModelSerialCloneable {
      * @return DOCUMENT ME!
      */
     private String fromPatientOrientationToVisibleString() {
-        final String tmpValue = (String) value;
-        tmpValue.trim(); // "A\V"
+        String tmpValue = (String) value;
+        tmpValue = tmpValue.trim(); // "A\V"
 
         String first, second;
         String s = "";
@@ -1278,8 +1278,8 @@ public class FileDicomTag extends ModelSerialCloneable {
      * 
      * @return DOCUMENT ME!
      */
-    private String fromVisibleStringToPatientOrientation(final String tmpValue) {
-        tmpValue.trim(); // "A\V"
+    private String fromVisibleStringToPatientOrientation(String tmpValue) {
+        tmpValue = tmpValue.trim(); // "A\V"
 
         String first, second;
         String s = "";
