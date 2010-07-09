@@ -290,7 +290,7 @@ public class DICOM_Store implements Runnable {
 
                 if (classUID == null) {
                     modality = (String) (fInfoDicom.getTagTable().getValue("0008,0060"));
-                    modality.trim();
+                    modality = modality.trim();
 
                     if (modality != null) {
 

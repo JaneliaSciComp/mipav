@@ -520,14 +520,14 @@ public class FileIO {
 
             if (refFileInfo.getTagTable().getValue("0020,0010") != null) {
                 studyIDMaster = (String) (refFileInfo.getTagTable().getValue("0020,0010"));
-                studyIDMaster.trim();
+                studyIDMaster = studyIDMaster.trim();
             } else {
                 studyIDMaster = "";
             }
 
             if (refFileInfo.getTagTable().getValue("0020,0012") != null) {
                 acqNoMaster = (String) (refFileInfo.getTagTable().getValue("0020,0012"));
-                acqNoMaster.trim();
+                acqNoMaster = acqNoMaster.trim();
             } else {
                 acqNoMaster = "";
             }
@@ -535,7 +535,7 @@ public class FileIO {
             if (refFileInfo.getTagTable().getValue("0020,0011") != null) {
                 seriesNoMaster = (String) (refFileInfo.getTagTable().getValue("0020,0011"));
                 seriesNoRef = (String) (refFileInfo.getTagTable().getValue("0020,0011"));
-                seriesNoMaster.trim();
+                seriesNoMaster = seriesNoMaster.trim();
 
                 if (seriesNoRef.length() > 5) {
                     seriesNoRef = seriesNoMaster.substring(0, 5);
@@ -636,17 +636,17 @@ public class FileIO {
                     // If study and series number match - Continue;
                     if (fileInfoTemp.getTagTable().getValue("0020,0010") != null) {
                         studyID = (String) (fileInfoTemp.getTagTable().getValue("0020,0010"));
-                        studyID.trim();
+                        studyID = studyID.trim();
                     }
 
                     if (fileInfoTemp.getTagTable().getValue("0020,0011") != null) {
                         seriesNo = (String) (fileInfoTemp.getTagTable().getValue("0020,0011"));
-                        seriesNo.trim();
+                        seriesNo = seriesNo.trim();
                     }
 
                     if (fileInfoTemp.getTagTable().getValue("0020,0012") != null) {
                         acqNo = (String) (fileInfoTemp.getTagTable().getValue("0020,0012"));
-                        acqNo.trim();
+                        acqNo = acqNo.trim();
                     }
 
                     if (performSort) {

@@ -482,7 +482,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
 
                     // read patient name, remove all delimiters and trim all spaces
                     String patientName = (String) (fileInfo.getTagTable().getValue("0010,0010"));
-                    patientName.trim();
+                    patientName = patientName.trim();
 
                     // Matt and Dave patientID = might be better or UID
                     if ( (patientName == null) || patientName.equals("")) {
@@ -500,12 +500,12 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
 
                     if ( (studyNo == null) || (studyNo.length() == 0)) {
                         studyNo = (String) (fileInfo.getTagTable().getValue("0008,1030"));
-                        studyNo.trim();
+                        studyNo = studyNo.trim();
                     }
 
                     if ( (seriesNo == null) || (seriesNo.length() == 0)) {
                         seriesNo = (String) (fileInfo.getTagTable().getValue("0008,103E"));
-                        studyNo.trim();
+                        studyNo = studyNo.trim();
                     }
 
                     defaultStorageDir = DICOM_PDUService.parseServerInfo(Preferences.getProperty(Preferences
