@@ -771,8 +771,7 @@ public class MipavUtil extends JComponent {
                 if (line.startsWith("Version:")) {
 
                     // remove "Version:" and the two tabs
-                    line = line.substring(10);
-                    line.trim();
+                    line = line.substring(10).trim();
                     MipavUtil.version = line.substring(0, line.indexOf(" "));
                     verString = MipavUtil.version;
 
