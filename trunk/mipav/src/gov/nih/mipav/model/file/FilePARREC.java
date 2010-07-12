@@ -788,8 +788,8 @@ public class FilePARREC extends FileBase {
             case 2: //SAG
                 fileInfo.setImageOrientation(FileInfoBase.SAGITTAL);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_A2P_TYPE, 0);
-                fileInfo.setAxisOrientation(FileInfoBase.ORI_I2S_TYPE, 1);
-                fileInfo.setAxisOrientation(FileInfoBase.ORI_R2L_TYPE, 2);
+                fileInfo.setAxisOrientation(FileInfoBase.ORI_S2I_TYPE, 1);
+                fileInfo.setAxisOrientation(FileInfoBase.ORI_L2R_TYPE, 2);
                 if(fov2!=fov1) {
                     fov2 = Math.max(fov2,fov1); fov1=fov2;
                 }
@@ -803,7 +803,7 @@ public class FilePARREC extends FileBase {
             case 3: //COR
                 fileInfo.setImageOrientation(FileInfoBase.CORONAL);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_R2L_TYPE, 0);
-                fileInfo.setAxisOrientation(FileInfoBase.ORI_I2S_TYPE, 1);
+                fileInfo.setAxisOrientation(FileInfoBase.ORI_S2I_TYPE, 1);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_A2P_TYPE, 2);
 
                 if(fov2!=fov3) {
