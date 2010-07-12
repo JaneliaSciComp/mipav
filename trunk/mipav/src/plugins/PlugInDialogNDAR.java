@@ -132,6 +132,17 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             + "system administrator at ndarhelp@nih.gov. Significant system update information may be posted\n"
             + "on the NDAR site as required.";
 
+    private enum NDARServer {
+        PROD("PROD"),
+        DEMO("DEMO");
+
+        public String name;
+
+        NDARServer(final String s) {
+            name = s;
+        }
+    }
+
     public PlugInDialogNDAR() {
         super(false);
         Icon icon = null;
@@ -1714,7 +1725,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
                         l.setName(n);
                         // if valuerange is enumeration, create a combo box...otherwise create a textfield
-                        if (v.contains(";")) {
+                        if (v.contains(";") && !t.equalsIgnoreCase("DATE")) {
                             final JComboBox cb = new JComboBox();
                             cb.setName(n);
                             final String[] items = v.split(";");
@@ -1729,6 +1740,16 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                         } else {
                             final JTextField tf = new JTextField(30);
                             tf.setName(n);
+
+                            String tooltip = "Type: " + t;
+                            if (t.equalsIgnoreCase("String")) {
+                                tooltip += " (" + s + ")";
+                            }
+                            if ( !v.trim().equals("")) {
+                                tooltip += ".  Value range: " + v;
+                            }
+                            tf.setToolTipText(tooltip);
+
                             if (n.equals("image_num_dimensions")) {
                                 tf.setEnabled(false);
                             } else if (n.equals("image_extent1")) {
@@ -2348,7 +2369,10 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         PlugInDialogNDAR dial;
 
-        String ndarServer,ndarDataStructName;
+        /** Should be either NDAR_SERVER_PROD or NDAR_SERVER_DEMO. Removed storage/retrieval from preferences. */
+        String ndarServer = NDARServer.PROD.name;
+
+        String ndarDataStructName;
 
         WebServiceThread(final PlugInDialogNDAR dial) {
             super();
@@ -2357,19 +2381,13 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         public void run() {
             try {
+                // TODO
+                ndarDataStructName = Preferences.getProperty(Preferences.PREF_NDAR_PLUGIN_DATASTRUCT_NAME);
+                if (ndarDataStructName == null) {
+                    ndarDataStructName = "image01";
+                    Preferences.setProperty(Preferences.PREF_NDAR_PLUGIN_DATASTRUCT_NAME, "image01");
+                }
 
-            	ndarServer = Preferences.getProperty(Preferences.PREF_NDAR_PLUGIN_SERVER);
-            	if(ndarServer == null) {
-            		ndarServer = "DEMO";
-            		Preferences.setProperty(Preferences.PREF_NDAR_PLUGIN_SERVER, "DEMO");
-            	}
-            	ndarDataStructName = Preferences.getProperty(Preferences.PREF_NDAR_PLUGIN_DATASTRUCT_NAME);
-            	if(ndarDataStructName == null) {
-            		ndarDataStructName = "image01";
-            		Preferences.setProperty(Preferences.PREF_NDAR_PLUGIN_DATASTRUCT_NAME, "image01");
-            	}
-            	
-            	
                 // get OMElement from web service
                 progressBar = new ViewJProgressBar("NDAR", "Connecting to NDAR data dictionary web service...", 0, 100,
                         true);
@@ -2377,10 +2395,10 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 progressBar.updateValue(20);
                 final VToolSimpleAccessionClient client = Startup.getClient(ndarServer);
                 try {
-                    //final String DataStructureNames = ndarDataStructName;
+                    // final String DataStructureNames = ndarDataStructName;
                     progressBar.updateValue(60);
                     documentElement = client.getDataDictionary(ndarDataStructName);
-                    
+
                 } catch (final AxisFault e) {
                     e.printStackTrace();
                 }
@@ -2394,7 +2412,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 progressBar.dispose();
                 printlnToLog("Successful connection to NDAR data dictionary web service");
             } catch (final Exception e) {
-            	e.printStackTrace();
+                e.printStackTrace();
                 if (progressBar != null) {
                     progressBar.setVisible(false);
                     progressBar.dispose();
