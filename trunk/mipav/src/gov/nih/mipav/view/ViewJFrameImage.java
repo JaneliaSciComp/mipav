@@ -2684,7 +2684,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // componentImage.deactivateAllVOI();
             setTitle();
             // need to get all other images in sync if there are other matching images and if shift was down
-            if (isShiftDown || linkedScrolling) {
+            if (linkedScrolling) {
                 Vector registeredFramedImages = getRegisteredFramedImages(getImageA());
                 if(getImageA().is4DImage()) {
                 	Vector registeredFramedImages2 = getRegisteredFramedImages4D3D(getImageA());
@@ -2700,7 +2700,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 }
 
                 registeredFramedImages = null;
-                setShiftDown(false);
             }
 
             if (linkFrame != null) {
@@ -3280,6 +3279,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             componentImage.setSlice(componentImage.getSlice() + 1);
             controls.setZSlider(componentImage.getSlice());
 
+            //////
             if (imageA.getLightBoxFrame() != null) { // move highlight on images in lightbox
                 imageA.getLightBoxFrame().setSlice(componentImage.getSlice()); // turn highlight on in old image
             }
@@ -3291,7 +3291,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             setTitle();
 
             // need to get all other images in sync if there are other matching images and if shift was down
-            if (isShiftDown || linkedScrolling) {
+            if (linkedScrolling) {
                 Vector registeredFramedImages = getRegisteredFramedImages(getImageA());
                 if(getImageA().is4DImage()) {
                 	Vector registeredFramedImages2 = getRegisteredFramedImages4D3D(getImageA());
@@ -3308,8 +3308,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 }
 
                 registeredFramedImages = null;
-                setShiftDown(false);
+                //setShiftDown(false);
             }
+            //////
 
             if (linkFrame != null) {
                 linkFrame.incSlice();
