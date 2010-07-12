@@ -8,13 +8,13 @@ public abstract class LevmarBoxConstraint {
 	
 	// LEVMAR_BC_DER with AX_EQ_B_SVD results were worse than those of ELSUNC. 
 	// Except where noted comparisons were made to ELSUNC with internal scaling = false and analytical Jacobian used.
-	// ELSUNC handled DRAPER and 10* MEYER while LEVMAR_BC_DER did not.  Both LEVMAR and ELSUNC successfully
+	// ELSUNC handled 10* MEYER while LEVMAR_BC_DER did not.  Both LEVMAR and ELSUNC successfully
 	// handled all the other tests cases, but in the substantial majority of test cases ELSUNC had
 	// a lower chi-squared and/or lower number of iterations than LEVMAR.
 	
-	// Unconstrained DRAPER24D INCORRECT Singular matrix A in AX_EQ_B_LU and
-	// dgesvd (dbdsqr) failed to converge in AX_EQ_B_SVD, info[0] = 2.
-	// ELSUNC solved the problem with chi-squared = 3.5688 a0 = 72.43 a1 = 28.25 a2 = 0.5968.
+	// Constrained DRAPER24D solved the problem with ch-squared = 3.5688 a0 = 72.432627 a1 = 28.2518745 a2 = 0.5967899 in 18 iterations.
+	// ELSUNC with internal scaling = false and analytcial Jacobian solved the problem with chi-squared = 3.5688 
+	// a0 = 72.43 a1 = 28.25 a2 = 0.5968 in 10 iterations.
 	
 	// Constrained HOCK25 CORRECT port gave chi-squared = 1.6247E-18 at 20 iterations.
 	// ELSUNC with internal scaling = false and analytical Jacobian did better with
@@ -1910,7 +1910,12 @@ public abstract class LevmarBoxConstraint {
 	        	for (i = 0, j = 0; i < nPts; i++) {
                     jac[j++] = 1.0;
                     jac[j++] = -Math.pow(param[2], xSeries[i]);
-                    jac[j++] = -xSeries[i] * param[1] * Math.pow(param[2], xSeries[i] - 1.0);
+                    if (i == 0) {
+                    	jac[j++] = 0.0;
+                    }
+                    else {
+                        jac[j++] = -xSeries[i] * param[1] * Math.pow(param[2], xSeries[i] - 1.0);
+                    }
                 }
 	    	    break;
 	        case HOCK25:
