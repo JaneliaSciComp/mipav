@@ -703,6 +703,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         	m_bLiveWire = true;
         	if(m_iDrawType == LIVEWIRE)
         	{ 
+        		m_kParent.setDefaultCursor();
         		m_bDrawVOI = false;
     	        m_bPointer = false;
         	}
