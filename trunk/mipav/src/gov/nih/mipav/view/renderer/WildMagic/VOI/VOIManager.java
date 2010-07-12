@@ -483,6 +483,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
     private boolean resetStart = true;
 
+    /** Whether the livewire properties (e.g. gradient magnitude) should be recalculated */
+	private boolean m_bLiveWire = true;
+
 
     public VOIManager (VOIManagerInterface kParent )
     {
@@ -695,8 +698,20 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 m_adSin[i] = Math.sin( Math.PI * 2.0 * i/m_iCirclePts);
             }
         }
-        m_bDrawVOI = false;
-        m_bPointer = false;
+        if(kCommand.equals("ResetLiveWire"))
+        {
+        	m_bLiveWire = true;
+        	if(m_iDrawType == LIVEWIRE)
+        	{ 
+        		m_bDrawVOI = false;
+    	        m_bPointer = false;
+        	}
+        } 
+        else //since resetLiveWire is not a drawing command, it should not affect these, unless current operation is livewire
+        {
+	        m_bDrawVOI = false;
+	        m_bPointer = false;
+        }
 
 
         if (kCommand.equals(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER.getActionCommand()) ) {
@@ -1214,7 +1229,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         m_bPointer = false;
         m_bSelected = false;
         m_iDrawType = LIVEWIRE;
-        initLiveWire( m_iSlice, true );
+        initLiveWire( m_iSlice, m_bLiveWire );
+        m_bLiveWire = false;
     }
 
     public void mouseClicked(MouseEvent kEvent) {

@@ -1653,7 +1653,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
     public void resetLivewire() 
     {
         for (int i = 0; i < m_kVOIManagers.size(); i++) {
-            m_kVOIManagers.elementAt(i).doVOI( "ResetVOI", false );
+            m_kVOIManagers.elementAt(i).doVOI( "ResetLiveWire", false );
         }
     }
 
