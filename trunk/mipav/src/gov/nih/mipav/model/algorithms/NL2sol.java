@@ -5304,7 +5304,7 @@ public abstract class NL2sol {
 	  pu = iv[prunit];
 	  iv1 = iv[1];
 
-	  /*if ( iv1 == 12) {
+	  if ( iv1 == 12) {
 
 	    if ( nn < n || n < p || p < 1) {
 	      iv[1] = 16;
@@ -5325,175 +5325,259 @@ public abstract class NL2sol {
 	    	v[33 + j] = arr[j];
 	    }
 	    iv[21] = k;
-	    iv(dtype0) = iv(dtype+20)
-	    iv(oldn) = n
-	    iv(oldnn) = nn
-	    iv(oldp) = p
-	    which(1) = dflt(1)
-	    which(2) = dflt(2)
-	    which(3) = dflt(3)
+	    iv[dtype0] = iv[dtype+20];
+	    iv[oldn] = n;
+	    iv[oldnn] = nn;
+	    iv[oldp] = p;
+	    which[1] = dflt[1];
+	    which[2] = dflt[2];
+	    which[3] = dflt[3];
 
 	  } // if (iv1 == 12)
-	    else
+	    else { // iv1 != 12
 
-	    if ( n  /= iv(oldn)  .or. &
-	         nn /= iv(oldnn) .or. &
-	         p  /= iv(oldp) ) then
+	    if ( n  != iv[oldn]  || nn != iv[oldnn] || p  != iv[oldp] ) {
 
-	      iv(1) = 17
+	      iv[1] = 17;
 
-	      if ( pu /= 0 ) then
-	        write ( pu, '(a)' ) ' '
-	        write ( pu, '(a)' ) '(NN,N,P) changed from:'
-	        write ( pu, '(a,i8)' ) '  NN = ', iv(oldnn)
-	        write ( pu, '(a,i8)' ) '  N =  ', iv(oldn)
-	        write ( pu, '(a,i8)' ) '  P =  ', iv(oldp)
-	        write ( pu, '(a)' ) ' to:'
-	        write ( pu, '(a,i8)' ) '  NN = ', nn
-	        write ( pu, '(a,i8)' ) '  N =  ', n
-	        write ( pu, '(a,i8)' ) '  P =  ', p
-	      end if
+	      if ( pu != 0 ) {
+	        Preferences.debug("(NN,N,P) changed from:\n");
+	        Preferences.debug("NN = " +  iv[oldnn] + " N = " +  iv[oldn] + " P = " + iv[oldp] + "\n");
+	        Preferences.debug("to:\n");
+	        Preferences.debug("NN = " +  nn + " N = " +  n + " P = " +  p + "\n");
+	      } // if (pu != 0)
+	      return;
 
-	      return
+	    } // if ( n  != iv[oldn]  || nn != iv(oldnn) || p  != iv[oldp] )
 
-	    end if
+	    if ( iv1 < 1 || 11 < iv1 ) {
+	      iv[1] = 50;
+	      if (pu != 0) {
+	        Preferences.debug("iv1 = " + iv1 + " should be >=1 and <= 11\n");
+	      } // if (pu != 0)
+	      return;
+	    } // if ( iv1 < 1 || 11 < iv1 )
 
-	    if ( iv1 < 1 .or. 11 < iv1 ) then
-	      iv(1) = 50
-	      if (pu /= 0) then
-	        write(pu,60) iv1
-	      end if
-	 60   format('  iv(1) =', i5, ' should be between 0 and 12.')
-	      return
-	    end if
+	    which[1] = cngd[1];
+	    which[2] = cngd[2];
+	    which[3] = cngd[3];
 
-	    which(1) = cngd(1)
-	    which(2) = cngd(2)
-	    which(3) = cngd(3)
+	    } // else iv1 != 12
 
-	  end if
+	  if ( big_parchk <= teensy_parchk ) {
+	    teensy_parchk = tiny;
+	    machep = epsilon;
+	    big_parchk = huge;
+	    vm[12] = machep;
+	    vx[12] = big_parchk;
+	    vm[13] = teensy_parchk;
+	    vx[13] = big_parchk;
+	    vm[14] = machep;
+	    vm[17] = teensy_parchk;
+	    vx[17] = big_parchk;
+	    vm[18] = machep;
+	    vx[19] = big_parchk;
+	    vx[20] = big_parchk;
+	    vx[21] = big_parchk;
+	    vm[22] = machep;
+	    vx[24] = Math.sqrt ( 0.999E+00 * huge );
+	    vm[25] = machep;
+	    vm[26] = machep;
+	  } // if ( big_parchk <= teensy_parchk)
 
-	  if ( big <= teensy ) then
-	    teensy = tiny ( teensy )
-	    machep = epsilon ( machep )
-	    big = huge ( big )
-	    vm(12) = machep
-	    vx(12) = big
-	    vm(13) = teensy
-	    vx(13) = big
-	    vm(14) = machep
-	    vm(17) = teensy
-	    vx(17) = big
-	    vm(18) = machep
-	    vx(19) = big
-	    vx(20) = big
-	    vx(21) = big
-	    vm(22) = machep
-	    vx(24) = sqrt ( 0.999E+00 * huge ( vx(24) ) )
-	    vm(25) = machep
-	    vm(26) = machep
-	  end if
+	  m = 0;
 
-	  m = 0
-
-	  if (iv(inits) >= 0 .and. iv(inits) <= 2) go to 110
-	         m = 18
-	         if (pu /= 0) write(pu,100) iv(inits)
-	 100     format('inits... iv(25) =',i4,' should be between 0 and 2.')
-	 110 continue
+	  if (iv[inits] < 0 || iv[inits] > 2) {
+	         m = 18;
+	         if (pu != 0) {
+	         Preferences.debug("iv[inits] = " + iv[inits] + " should be >= 0 and <= 2\n");
+	         }
+	  } // if (iv[inits] < 0 || iv[inits] > 2)
 	  
-	  k = epslon
+	  k = epslon;
 
-	  do i = 1, nvdflt
-	    vk = v(k)
-	    if (vk >= vm(i) .and. vk <= vx(i)) go to 130
-	      m = k
-	      if (pu /= 0) write(pu,120) vn(i), k, vk, vm(i), vx(i)
-	120   format( a8, '.. v(',i2, ') =', e11.3, &
-	      ' should be between ',e11.3, ' and', d11.3 )
-	130 continue
-	    k = k + 1
+	  for ( i = 1; i <= nvdflt; i++) {
+	    vk = v[k];
+	    if (vk < vm[i] || vk > vx[i]) {
+	      m = k;
+	      if (pu != 0) {
+	    	  Preferences.debug(vn[i] + ".. v[" + k + "] = " + vk + " should be between " + vm[i] + " and " + vx[i] + "\n");
+	      }
+	    } // if (vk < vm[i] || vk > vx[i])
+	    k = k + 1;
 
-	  end do
-	!
-	!  Check JTOL values.
-	!
-	  if ( iv1 /= 12 .or. v(jtinit) <= 0.0E+00) then
+	  } // for ( i = 1; i <= nvdflt; i++)
+	//
+	//  Check JTOL values.
+	//
+	  if ( iv1 != 12 ||  v[jtinit] <= 0.0) {
 
-	    jtolp = jtol0 + p
-	    do i = jtol1, jtolp
-	      if ( v(i) <= 0.0E+00 ) then
-	        k = i - jtol0
-	        if (pu /= 0) write(pu,150) k, i, v(i)
-	 150    format( 'jtol(', i3, ') = v(', i3, ') =', e11.3, &
-	                ' should be positive.' )
-	        m = i
-	      end if
-	    end do
+	    jtolp = jtol0 + p;
+	    for (i = jtol1; i <= jtolp; i++) {
+	      if ( v[i] <= 0.0 ) {
+	        k = i - jtol0;
+	        if (pu != 0)  {
+	        	Preferences.debug("jtol[" + k + "] = v[" + i + "] = " + v[i] + " should be positive\n");
+	        }
+	        m = i;
+	      } // if ( v[i] <= 0.0 )
+	    } // for (i = jtol1; i <= jtolp; i++)
 
-	  end if
+	  } // if ( iv1 != 12 ||  v[jtinit] <= 0.0)
 
-	  if ( m /= 0 ) then
-	    iv(1) = m
-	    return
-	  end if
+	  if ( m != 0 ) {
+	    iv[1] = m;
+	    return;
+	  } // if (m != 0)
 
-	 180  continue
+	  if ( pu == 0 || iv[parprt] == 0 ) {
+	    return;
+	  }
 
-	  if ( pu == 0 .or. iv(parprt) == 0 ) then
-	    return
-	  end if
+	  if ( iv1 == 12 && iv[inits] != 0) {
+	    m = 1;
+	    Preferences.debug("nondefault values....inits..... iv(25) = " + iv[inits] + "\n");
+	  }
 
-	  if ( iv1 == 12 .and. iv(inits) /= 0) then
-	    m = 1
-	    write(pu,190) iv(inits)
-	190 format( 'nondefault values....inits..... iv(25) =', i3)
-	  end if
+	  if ( iv[dtype] != iv[dtype0] ) {
+	    if (m == 0) {
+	    	Preferences.debug(which[1]+which[2]+which[3]+"alues....\n");
+	    }
+	    m = 1;
+	    Preferences.debug("DTYPE..... IV(16) = " +  iv[dtype] + "\n");
+	  }
 
-	  if ( iv(dtype) /= iv(dtype0) ) then
-	    if (m == 0) write(pu,215) which
-	    m = 1
-	    write ( pu, '(a,i3)' ) 'DTYPE..... IV(16) = ', iv(dtype)
-	  end if
+	  k = epslon;
+	  l = parsv1;
 
-	  k = epslon
-	  l = parsv1
+	  for ( i = 1; i <= nvdflt; i++) {
 
-	  do i = 1, nvdflt
+	    if ( v[k] != v[l] ) {
+	      if (m == 0){
+	    	  Preferences.debug(which[1]+which[2]+which[3]+"alues....\n");	 
+	      }
+	      m = 1;
+	      Preferences.debug(vn[i] + "..v[" + k + "] = " + v[k] + "\n");
+	    } // if ( v[k] != v[l] )
 
-	    if ( v(k) /= v(l) ) then
-	      if (m == 0) write(pu,215) which
-	 215  format(3a4,'alues....')
-	      m = 1
-	      write(pu,220) vn(i), k, v(k)
-	 220  format(1x,a8,'.. v(',i2,') =',e15.7)
-	    end if
+	    k = k + 1;
+	    l = l + 1;
 
-	    k = k + 1
-	    l = l + 1
+	  } // for ( i = 1; i <= nvdflt; i++)
 
-	  end do
+	  iv[dtype0] = iv[dtype];
+	  for (j = 0; j < nvdflt; j++) {
+	      v[parsv1+j] = v[epslon+j];
+	  }
 
-	  iv(dtype0) = iv(dtype)
-	  v(parsv1:parsv1+nvdflt-1) = v(epslon:epslon+nvdflt-1)
+	  if ( iv1 != 12 ) {
+	    return;
+	  }
 
-	  if ( iv1 /= 12 ) then
-	    return
-	  end if
+	  if ( v[jtinit] <= 0.0 ) {
+	    Preferences.debug("(Initial) JTOL array\n");
+	    for (j = jtol1; j <= jtol0+p; j++) {
+	        Preferences.debug(v[j] + "\n");
+	    }
+	  }
 
-	  if ( v(jtinit) <= 0.0E+00 ) then
-	    write ( pu, '(a)' ) '(Initial) JTOL array'
-	    write ( pu, '(6e12.3)' ) v(jtol1:jtol0+p)
-	  end if
-
-	  if ( v(d0init) <= 0.0E+00 ) then
-	    k = jtol1 + p
-	    write ( pu, '(a)' ) '(Initial) D0 array'
-	    write ( pu, '(6e12.3)' ) v(k:k+p-1)
-	  end if*/
+	  if ( v[d0init] <= 0.0 ) {
+	    k = jtol1 + p;
+	    Preferences.debug("(Initial) D0 array\n");
+	    for (j = 0; j <= p-1; j++) {
+	        Preferences.debug(v[k+j] + "\n");
+	    }
+	  }
 
 	  return;
 	} // private void parchk
+	
+	private void qapply ( int nn, int n, int p, double j[][], double r[], int ierr ) {
+
+	/***********************************************************************
+	!
+	!! QAPPLY applies orthogonal transformation to the residual R.
+	!
+	!  Discussion:
+	!
+	!    This subroutine applies to R the orthogonal transformations
+	!    stored in J by QRFACT.
+	!
+	!    The vectors U which determine the Householder transformations
+	!    are normalized so that their 2-norm squared is 2.  The use of
+	!    these transformations here is in the spirit of Businger and Golub.
+	!
+	!  Modified:
+	!
+	!    06 April 2006
+	!
+	!  Author:
+	!
+	!    David Gay
+	!
+	!  Reference:
+	!
+	!    P A Businger and Gene Golub,
+	!    Linear Least Squares Solutions by Householder Transformations, 
+	!    Numerische Mathematik, 
+	!    Volume 7, pages 269-276, 1965.
+	!
+	!  Parameters:
+	!
+	!    Input, integer NN, the row dimension of the matrix J as declared in
+	!    the calling program dimension statement
+	!
+	!    Input, integer N, the number of rows of J and the size of the R.
+	!
+	!    Input, integer P, the number of columns of J and the size of SIGMA.
+	!
+	!    Input, real J(NN,P), an N by P matrix.  It contains on its diagonal
+	!    and below its diagonal the column vectors U which determine the 
+	!    Householder transformations (identity - U*U').
+	!
+	!    Input/output, real R(N).  On input, the right hand side vector to 
+	!    which the orthogonal transformations will be applied.  On output,
+	!    R has been transformed.
+	!
+	!    Input, integer IERR, if non-zero, indicates that not all the 
+	!    transformations were successfully determined and only the first
+	!    abs(IERR) - 1 transformations will be used.
+	*/
+	  
+	  int i;
+	  int k;
+	  int l;
+	  int nl1;
+	  double t;
+	  double arr[];
+	  double arr2[];
+	  int m;
+
+	  if ( ierr != 0 ) {
+	    k = Math.abs(ierr) - 1;
+	  }
+	  else {
+	    k = p;
+	  }
+
+	  for (l = 1; l <= k; l++) {
+
+	    nl1 = n - l + 1;
+	    arr = new double[nl1+1];
+	    arr2 = new double[nl1+1];
+	    for (m = 1; m <= nl1; m++) {
+	    	arr[m] = j[l+m-1][l];
+	    	arr2[m] = r[l+m-1];
+	    }
+	    t = -dotprd ( nl1, arr, arr2 );
+	    for (m = l; m <= n; m++) {
+	        r[m] = r[m] + t * j[m][l];
+	    }
+
+	  } // for (l = 1; l <= k; l++)
+
+	  return;
+	} // private void qapply
 	
 	private void qrfact ( int nm, int m, int n, double qr[][], double alpha[], int ipivot[],
 			              int ierr[], int nopivk, double sum[] ) {
@@ -5803,6 +5887,295 @@ public abstract class NL2sol {
 
 	  return reldstVal;
 	} // double reldst ( int p, double d[], double x[], double x0[] )
+	
+	private void rptmul ( int func, int ipivot[], double j[][], int nn, int p, 
+			              double rd[], double x[], double y[], double z[] ) {
+
+	/***********************************************************************
+	!
+	!! RPTMUL multiplies the R factor times a vector X.
+	!
+	!  Discussion:
+	!
+	!    This routine computes one of:
+	!
+	!      Y = R * P' * X 
+	!      Y = P * R' * R * P' * X 
+	!      Y = P * R' * X.
+	!
+	!    where P is a permutation matrix represented by a permutation 
+	!    vector, and R is an upper triangular matrix, the R factor of 
+	!    a QR factorization.
+	!
+	!    The strict upper triangle of R is stored in the strict upper triangle 
+	!    of the array J, and the diagonal of R is stored in the vector RD.
+	!
+	!    X and Y may share storage.
+	!
+	!  Modified:
+	!
+	!    10 April 2006
+	!
+	!  Author:
+	!
+	!    David Gay
+	!
+	!  Parameters:
+	!
+	!    Input, integer FUNC, determines which product to compute:
+	!    1, Y =                RMAT * PERM' * X.
+	!    2, Y = PERM * PERM' * RMAT * PERM' * X.
+	!    3, Y = PERM *                PERM' * X.
+	!
+	!    Input, integer IPIVOT(P), the permutation vector.
+	!
+	!    Input, real J(NN,P), contains the strict upper triangle of the
+	!    matrix RMAT.
+	!
+	!    Input, integer NN, the leading dimension of J.
+	!
+	!    Input, integer P, the length of X and Y, and the order of RMAT.
+	!
+	!    Input, real RD(P), the diagonal elements of the matrix RMAT.
+	!
+	!    Input, real X(P), the input vector.
+	!
+	!    Output, real Y(P), the output vector.
+	!
+	!    Workspace, real Z(P).
+	*/
+	  
+	  int i;
+	  int k;
+	  int km1;
+	  double zk;
+	  int m;
+	  double arr[];
+
+	  if ( func <= 2 ) {
+	//
+	//  Set Z = PERM' * X.
+	//
+	    for ( i = 1; i <= p; i++) {
+	      k = ipivot[i];
+	      z[i] = x[k];
+	    } // for (i = 1; i <= p; i++)
+	//
+	//  Set Y = RMAT * Z.
+	//
+	    y[1] = z[1] * rd[1];
+
+	    for (k = 2; k <= p; k++) {
+	      zk = z[k];
+	      for( i = 1; i <= k-1; i++) {
+	        y[i] = y[i] + j[i][k] * zk;
+	      }
+	      y[k] = zk * rd[k];
+	    } // for (k = 2; k <= p; k++)
+
+	    if ( func <= 1 ) {
+	      return;
+	    }
+	  } // if (func <= 2)
+	  else { // func > 2
+        for (m = 1; m <= p; m++) {
+	        y[m] = x[m];
+        }
+
+	  } // else func > 2
+	//
+	//  Set Z = RMAT' * Y.
+	//
+	  z[1] = y[1] * rd[1];
+
+	  for (i = 2; i <= p; i++) {
+		  arr = new double[i];
+		  for (m = 1; m <= i-1; m++) {
+			  arr[m] = j[m][i];
+		  }
+	    z[i] = y[i] * rd[i] + dotprd ( i-1, arr, y );
+	  }
+	//
+	//  Set Y = PERM * Z.
+	//
+	  for ( i = 1; i <= p; i++) {
+	    k = ipivot[i];
+	    y[k] = z[i];
+	  }
+
+	  return;
+	} // private void rptmul
+	
+	private void slupdt ( double a[], double cosmin, int p, double size, double step[],
+			              double u[], double w[], double wchmtd[], double wscale[], double y[] ) {
+
+	/***********************************************************************
+	!
+	!! SLUPDT updates a symmetric matrix A so that A * STEP = Y.
+	!
+	!  Discussion:
+	!
+	!    Update the symmetric matrix A so that A * STEP = Y.  Only the lower
+	!    triangle of A is stored, by rows.
+	!
+	!  Modified:
+	!
+	!    04 April 2006
+	!
+	!  Author:
+	!
+	!    David Gay
+	!
+	!  Parameters:
+	*/
+	  
+	  double denmin;
+	  int i;
+	  int j;
+	  int k;
+	  double sdotwm;
+	  double t;
+	  int m;
+
+	  sdotwm = dotprd ( p, step, wchmtd );
+
+	  denmin = cosmin * v2norm ( p, step ) * v2norm ( p, wchmtd );
+
+	  if ( denmin != 0.0 ) {
+	    wscale[0] = Math.min ( 1.0, Math.abs ( sdotwm / denmin ) );
+	  }
+	  else {
+	    wscale[0] = 1.0;
+	  }
+
+	  if ( sdotwm != 0.0 ) {
+	    t = wscale[0] / sdotwm;
+	  }
+	  else {
+	    t = 0.0;
+	  }
+
+	  for (m = 1; m <= p; m++) {
+	      w[m] = t * wchmtd[m];
+	  }
+
+	  slvmul ( p, u, a, step );
+
+	  t = 0.5 * ( size * dotprd ( p, step, u ) - dotprd ( p, step, y ) );
+
+	  for (m = 1; m <= p; m++) {
+	      u[m] = t * w[m] + y[m] - size * u[m];
+	  }
+	//
+	//  Set A = A + U * W' + W * U'.
+	//
+	  k = 1;
+	  for ( i = 1; i <= p; i++) {
+	    for ( j = 1; j <= i; j++) {
+	      a[k] = size * a[k] + u[i] * w[j] + w[i] * u[j];
+	      k = k + 1;
+	    } // for (j = 1; j <= i; j++)
+	  } // for (i = 1; i <= p; i++)
+
+	  return;
+	} // private void slupdt
+	
+	private void slvmul ( int p, double y[], double s[], double x[] ) {
+
+	/***********************************************************************
+	!
+	!! SLVMUL sets Y = S * X, where S is a P by P symmetric matrix.
+	!
+	!  Discussion:
+	!
+	!    This routine sets Y = S * X,  where X is a given vector and
+	!    S is a P by P symmetric matrix.  The lower triangle of S is
+	!    stored by rows.
+	!
+	!  Modified:
+	!
+	!    04 April 2006
+	!
+	!  Author:
+	!
+	!    David Gay
+	!
+	!  Parameters:
+	!
+	!    Input, integer P, the order of S, X and Y.
+	!
+	!    Output, real Y(P), the product S * X.
+	!
+	!    Input, real S((P*(P+1))/2), the P by P symmetric matrix.  Only the
+	!    lower triangle is stored, by rows.
+	!
+	!    Input, real X(P), the vector to be multiplied by S.
+	*/
+
+	  int i;
+	  int j;
+	  int k;
+	  double xi;
+	  double arr[];
+	  int m;
+	//
+	//  Compute the lower triangle of S times X.
+	//
+	  j = 1;
+	  for ( i = 1; i <= p; i++) {
+		  arr = new double[i+1];
+		  for (m = 1; m <= i; m++) {
+			  arr[m] = s[j+m-1];
+		  }
+	    y[i] = dotprd ( i, arr, x );
+	    j = j + i;
+	  } // for (i = 1; i <= p; i++)
+	//
+	//  Compute the strict upper triangle of S times X.
+	//
+	  j = 1;
+	  for ( i = 2; i <= p; i++) {
+	    j = j + 1;
+	    for (k = 1; k <= i - 1; k++) {
+	      y[k] = y[k] + s[j] * x[i];
+	      j = j + 1;
+	    }
+	  } // for (i = 1; i <= p; i++)
+
+	  return;
+	} // private void slvmul
+	
+	private boolean stopx ( int idummy[] ) {
+ 
+	/***********************************************************************
+	!
+	!! STOPX is called to stop execution.
+	!
+	!  Discussion:
+	!
+	!    This function may serve as the STOPX (asynchronous interruption)
+	!    function for the NL2SOL package at those installations which do not 
+	!    wish to implement a dynamic STOPX.
+	!
+	!    At installations where the NL2SOL system is used
+	!    interactively, this dummy STOPX should be replaced by a
+	!    function that returns TRUE if and only if the interrupt
+	!    (break) key has been pressed since the last call on STOPX.
+	!
+	!  Modified:
+	!
+	!    04 April 2006
+	!
+	!  Author:
+	!
+	!    David Gay
+	*/
+	  boolean result;
+
+	  result = false;
+
+	  return result;
+	} // private boolean stopx
 	
 	private double v2norm ( int p, double x[] ) {
 
