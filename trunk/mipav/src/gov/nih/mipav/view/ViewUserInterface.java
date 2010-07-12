@@ -192,7 +192,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** This is the outputDir path that the user entered as a command line argument when running a script * */
     private String outputDir = "";
 
-
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -998,19 +997,19 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 try {
                     name = name.substring(0, name.indexOf(".class"));
                     pluginName = name.substring(name.indexOf("PlugIn") + 6, name.length());
-                    
+
                 } catch (final Exception e) {
                     pluginName = name;
                 }
                 try {
 
                     plugin = Class.forName(name);
-                    
+
                     // plugin.newInstance();
                     // rather than instantiating to allow loading into SCRIPT_ACTION_LOCATIONS, see below
                     try {
                         scriptField = plugin.getField(scriptName);
-                        
+
                     } catch (final NoSuchFieldException e1) {
                         // The scriptname field is optional.
                     }
@@ -3799,7 +3798,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             }
         } catch (final FileNotFoundException fnf) { // LAX not found
             Preferences.debug(fnf.getLocalizedMessage() + "\n");
-            MipavUtil.displayWarning(fnf.getLocalizedMessage());
+            // MipavUtil.displayWarning(fnf.getLocalizedMessage());
+            System.err.println(fnf.getLocalizedMessage());
         } catch (final IOException io) {
             MipavUtil.displayError("Error while checking starting options " + "file.");
         }

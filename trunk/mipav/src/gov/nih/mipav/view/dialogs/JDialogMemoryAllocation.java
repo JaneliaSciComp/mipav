@@ -115,7 +115,8 @@ public class JDialogMemoryAllocation extends JDialogBase {
         try {
             startupFile = JDialogMemoryAllocation.getStartupFile(ViewUserInterface.getReference());
         } catch (final FileNotFoundException fnf) {
-            MipavUtil.displayError(fnf.getLocalizedMessage());
+            // MipavUtil.displayError(fnf.getLocalizedMessage());
+            System.err.println(fnf.getLocalizedMessage());
 
             return;
         }
@@ -181,7 +182,8 @@ public class JDialogMemoryAllocation extends JDialogBase {
         try {
             startupFile = JDialogMemoryAllocation.getStartupFile(ui);
         } catch (final FileNotFoundException fnf) {
-            MipavUtil.displayError(fnf.getLocalizedMessage());
+            // MipavUtil.displayError(fnf.getLocalizedMessage());
+            System.err.println(fnf.getLocalizedMessage());
 
             return;
         }
@@ -745,9 +747,9 @@ public class JDialogMemoryAllocation extends JDialogBase {
                     case 'k':
                         memorySpec = JDialogMemoryAllocation.convertBytesToMBytes(javaOption.substring(2, javaOption
                                 .length() - 1)); // length-1
-                                                                                                                                        // is
-                                                                                                                                        // size
-                                                                                                                                        // descriptor
+                        // is
+                        // size
+                        // descriptor
                         break;
 
                     case 'm':
