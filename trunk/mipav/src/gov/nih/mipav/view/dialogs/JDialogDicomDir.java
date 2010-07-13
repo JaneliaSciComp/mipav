@@ -299,11 +299,14 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
     	    	int loc = fileLoc.lastIndexOf(File.separatorChar);
     	    	if(loc != -1) {
     	    		String filename = fileLoc.substring(loc+1);
+    	    		filename = filename.trim();
         	    	String filepreloc = fileLoc.substring(0, loc);
+        	    	filepreloc = filepreloc.trim();
         	    	fileFinalLoc = file.getParent()+File.separator+filepreloc+File.separator;
         	    	fileNames[i] = filename;
     	    	}else {
     	    		String filename = fileLoc;
+    	    		filename = filename.trim();
         	    	fileFinalLoc = file.getParent()+File.separator;
         	    	fileNames[i] = filename;
     	    	}
@@ -730,10 +733,13 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
     	    	int loc = fileLoc.lastIndexOf(File.separatorChar);
     	    	if(loc != -1) {
 	    	    	String filename = fileLoc.substring(loc+1);
+	    	    	filename = filename.trim();
 	    	    	String filepreloc = fileLoc.substring(0, loc);
+	    	    	filepreloc = filepreloc.trim();
 	    	    	buildImage(filename,file.getParent()+file.separator+filepreloc+file.separator);
     	    	}else {
     	    		String filename = fileLoc;
+    	    		filename = filename.trim();
     	    		buildImage(filename,file.getParent()+file.separator);
     	    	}
     	    	
