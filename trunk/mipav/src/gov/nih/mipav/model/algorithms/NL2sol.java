@@ -1,6 +1,8 @@
 package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.view.*;
+import java.util.Calendar;
+import java.util.Formatter;
 
 public abstract class NL2sol {
 	
@@ -4344,7 +4346,7 @@ public abstract class NL2sol {
 	!    x   parameter vector.
 	*/
 	  
-	  int dummy;
+	  int dummy[] = new int[1];
 	  int dig1;
 	  double e;
 	  int g01;
@@ -4459,12 +4461,46 @@ public abstract class NL2sol {
 	final int tuner5=30;
 	final int vsave1=78;
 	final int wscale=48;
+	int ii;
 	boolean do10 = false;
 	boolean do20 = false;
+	boolean do30 = false;
+	boolean do40 = false;
 	boolean do50 = false;
+	boolean do60 = false;
+	boolean do150 = false;
 	boolean do160 = false;
+	boolean do170 = false;
+	boolean do190 = false;
 	boolean do195 = false;
+	boolean do200 = false;
+	boolean do205 = false;
+	boolean do210 = false;
+	boolean do310 = false;
 	boolean do350 = false;
+	boolean do360 = false;
+	boolean do390 = false;
+	boolean do400 = false;
+	boolean do410 = false;
+	boolean do420 = false;
+	boolean do440 = false;
+	boolean do450 = false;
+	boolean do480 = false;
+	boolean do510 = false;
+	boolean do560 = false;
+	boolean do570 = false;
+	boolean do640 = false;
+	boolean do700 = false;
+	boolean do710 = false;
+	boolean do730 = false;
+	double arr[];
+	double arr2[];
+	double arr3[];
+	double arr4[];
+	double arr5[];
+	int iarr[];
+	int iarr2[];
+	int iarr3[];
 
 	      i = iv[1];
 	      if (i == 1) {
@@ -4478,7 +4514,7 @@ public abstract class NL2sol {
 	//
 	//  If iv(1) = 0, then PARCHK calls dfault(iv, v).
 	//
-	      /*parchk ( iv, n, nn, p, v );
+	      parchk ( iv, n, nn, p, v );
 	      i = iv[1] - 2;
 
 	      if ( 10 < i ) {
@@ -4542,519 +4578,821 @@ public abstract class NL2sol {
 	//  Length of w = p*(p+9)/2 + 7.  lmat is contained in w.
 	//
 	      if (v[dinit] >= 0.0 ) {
-	        d(1:p) = v(dinit)
+	    	for (ii = 1; ii <= p; ii++) {
+	            d[ii] = v[dinit];
+	    	}
 	      }
 
-	      if (v(jtinit) > 0.0E+00 ) then
-	        v(jtol1:jtol1+p-1) = v(jtinit)
-	      end if
+	      if (v[jtinit] > 0.0 ) {
+	    	for (ii = 0; ii < p; ii++) {
+	            v[jtol1+ii] = v[jtinit];
+	    	}
+	      }
 
-	      i = jtol1 + p
+	      i = jtol1 + p;
 
-	      if (v(d0init) > 0.0E+00 ) then
-	        v(i:i+p-1) = v(d0init)
-	      end if
+	      if (v[d0init] > 0.0 ) {
+	    	for (ii = 0; ii < p; ii++) {
+	            v[i+ii] = v[d0init];
+	    	}
+	      }
 
-	      v(rad0) = 0.0E+00
-	      v(stppar) = 0.0E+00
-	      v(radius) = v(lmax0) / ( 1.0E+00 + v(phmxfc) )
-	!
-	!  Set initial model and S matrix.
-	!
-	      iv(model) = 1
-	      if (iv(inits) == 2) iv(model) = 2
-	      s1 = iv(s)
-	      if (iv(inits) == 0) then
-	        v(s1:s1+pp1o2-1) = 0.0E+00
-	      end if
+	      v[rad0] = 0.0;
+	      v[stppar] = 0.0;
+	      v[radius] = v[lmax0] / ( 1.0 + v[phmxfc] );
+	//
+	//  Set initial model and S matrix.
+	//
+	      iv[model] = 1;
+	      if (iv[inits] == 2) {
+	    	  iv[model] = 2;
+	      }
+	      s1 = iv[s];
+	      if (iv[inits] == 0) {
+	    	for (ii = 0; ii < pp1o2; ii++) {
+	            v[s1+ii] = 0.0;
+	    	}
+	      }
+	      do20 = true;
 	 } // if (do10)
-	!
-	!  Compute function value (half the sum of squares).
-	!
-	 20   continue
-
-	      t = v2norm(n, r)
-
-	      if ( v(rlimit) < t ) then
-	        iv(toobig) = 1
-	      end if
-
-	      if ( iv(toobig) == 0 ) then
-	        v(f) = 0.5E+00 * t**2
-	      end if
-
-	 30   continue
-
-	      if ( iv(mode) == 0 ) then
-	        go to 350
-	      end if
-
-	      if ( 0 < iv(mode) ) then
-	        go to 730
-	      end if
-
-	 40   continue
-
-	      if ( iv(toobig) /= 0 ) then
-	         iv(1) = 13
-	         call itsmry ( d, iv, p, v, x )
-	         return
-	      end if
-
-	      go to 60
-	!
-	!  Make sure jacobian could be computed.
-	!
-	 50   continue
-
-	      if ( iv(nfgcal) == 0 ) then
-	         iv(1) = 15
-	         call itsmry ( d, iv, p, v, x )
-	         return
-	      end if
-	!
-	!  Compute gradient.
-	!
-	 60   continue
-
-	      iv(kalm) = -1
-	      g1 = iv(g)
-	      do i = 1, p
-	         v(g1) = dot_product ( r(1:n), j(1:n,i) )
-	         g1 = g1 + 1
-	      end do
-
-	      if ( 0 < iv(mode) ) then
-	        go to 710
-	      end if
-	!
-	!  Update D and make copies of R for possible use later.
-	!
-	      if ( 0 < iv(dtype) ) then
-	        call dupdat(d, iv, j, n, nn, p, v)
-	      end if
-
-	      rsave1 = iv(rsave)
-	      v(rsave1:rsave1+n-1) = r(1:n)
-	      qtr1 = iv(qtr)
-	      v(qtr1:qtr1+n-1) = r(1:n)
-	!
-	!  Compute inverse ( D ) * gradient.
-	!
-	      g1 = iv(g)
-	      dig1 = iv(dig)
-	      k = dig1
-
-	      do i = 1, p
-	         v(k) = v(g1) / d(i)
-	         k = k + 1
-	         g1 = g1 + 1
-	      end do
-
-	      v(dgnorm) = v2norm(p, v(dig1))
-
-	      if (iv(cnvcod) /= 0) go to 700
-	      if (iv(mode) == 0) go to 570
-	      iv(mode) = 0
-	!
-	!  Main loop.
-	!
-	!  Print iteration summary, check iteration limit.
-	!
-	loop1: while (true) {
-	 150  continue
-
-	      call itsmry(d, iv, p, v, x)
-
-	 160  k = iv(niter)
-
-	      if ( iv(mxiter) <= k ) then
-	         iv(1) = 10
-	         call itsmry ( d, iv, p, v, x )
-	         return
-	      end if
-
-	170   continue
-
-	      iv(niter) = k + 1
-	!
-	!  Update radius.
-	!
-	      if ( k /= 0 ) then
-
-	        step1 = iv(step)
-	        do i = 1, p
-	          v(step1) = d(i) * v(step1)
-	          step1 = step1 + 1
-	        end do
-	        step1 = iv(step)
-	        v(radius) = v(radfac) * v2norm(p, v(step1))
-
-	      end if
-	!
-	!  Initialize for start of next iteration.
-	!
-	      x01 = iv(x0)
-	      v(f0) = v(f)
-	      iv(kagqt) = -1
-	      iv(irc) = 4
-	      iv(h) = -abs ( iv(h) )
-	      iv(sused) = iv(model)
-	!
-	!  Copy X to X0.
-	!
-	      v(x01:x01+p-1) = x(1:p)
-	!
-	!  Check STOPX and function evaluation limit.
-	!
-	 190  if ( .not. stopx ( dummy ) ) go to 200
-	         iv(1) = 11
-	         go to 205
-	!
-	!  Come here when restarting after function evaluation limit or STOPX.
-	!
-	 195  continue
-
-	      if ( v(f) < v(f0) ) then
-	         v(radfac) = 1.0E+00
-	         k = iv(niter)
-	         go to 170
-	      end if
-
-	 200  continue
-
-	      if (iv(nfcall) < iv(mxfcal) + iv(nfcov)) go to 210
-	         iv(1) = 9
-	 205     continue
-
-	         if (v(f) >= v(f0)) then
-	           call itsmry ( d, iv, p, v, x )
-	           return
-	         end if
-	!
-	!  In case of STOPX or function evaluation limit with
-	!  improved V(F), evaluate the gradient at X.
-	!
-	         iv(cnvcod) = iv(1)
-	         go to 560
-	!
-	!  Compute candidate step.
-	!
-	 210  continue
-
-	      step1 = iv(step)
-	      w1 = iv(w)
-	!
-	!  Compute Levenberg-Marquardt step.
-	!
-	      if (iv(model) /= 2) then
-
-	         qtr1 = iv(qtr)
-
-	         if ( iv(kalm) < 0 ) then
-
-	           rd1 = iv(rd)
-
-	           if (-1 == iv(kalm)) then
-	             call qrfact ( nn, n, p, j, v(rd1), &
-	             iv(ipivot), iv(ierr), 0, v(w1) )
-	           end if
-
-	           call qapply ( nn, n, p, j, v(qtr1), iv(ierr) )
-
-	         end if
-
-	         h1 = iv(h)
-	!
-	!  Copy R matrix to H.
-	!
-	         if ( h1 <= 0 ) then
-
-	              h1 = -h1
-	              iv(h) = h1
-	              k = h1
-	              rd1 = iv(rd)
-	              v(k) = v(rd1)
-
-	              do i = 2, p
-	                   call vcopy(i-1, v(k+1), j(1,i))
-	                   k = k + i
-	                   rd1 = rd1 + 1
-	                   v(k) = v(rd1)
-	              end do
-	         end if
-
-	         g1 = iv(g)
-	         call lmstep(d, v(g1), iv(ierr), iv(ipivot), iv(kalm), p, &
-	                     v(qtr1), v(h1), v(step1), v, v(w1))
-	!
-	!  Compute Goldfeld-Quandt-Trotter step (augmented model).
-	!
-	      else
-
-	      if ( iv(h) <= 0 ) then
-	!
-	!  Set H to inverse ( D ) * ( J' * J + s) ) * inverse ( D ).
-	!
-	        h1 = -iv(h)
-	        iv(h) = h1
-	        s1 = iv(s)
-	!
-	!  J is in its original form.
-	!
-	        if ( iv(kalm) == -1 ) then
-
-	          do i = 1, p
-	            t = 1.0E+00 / d(i)
-	            do k = 1, i
-	              v(h1) = t * (dotprd(n,j(1,i),j(1,k))+v(s1)) / d(k)
-	              h1 = h1 + 1
-	              s1 = s1 + 1
-	            end do
-	          end do
-	!
-	!  LMSTEP has applied QRFACT to J.
-	!
-	        else
-
-	          smh = s1 - h1
-	          h0 = h1 - 1
-	          ipiv1 = iv(ipivot)
-	          t1 = 1.0E+00 / d(ipiv1)
-	          rd0 = iv(rd) - 1
-	          rdof1 = v(rd0 + 1)
-
-	          do i = 1, p
-
-	            l = ipiv0 + i
-	            ipivi = iv(l)
-	            h1 = h0 + ( ipivi*(ipivi-1) ) / 2
-	            l = h1 + ipivi
-	            m = l + smh
-	!
-	!  v(l) = h(ipivot(i), ipivot(i))
-	!  v(m) = s(ipivot(i), ipivot(i))
-	!
-	            t = 1.0E+00 / d(ipivi)
-	            rdk = rd0 + i
-	            e = v(rdk)**2
-	            if ( 1 < i ) then
-	              e = e + dotprd(i-1, j(1,i), j(1,i))
-	            end if
-	            v(l) = (e + v(m)) * t**2
-
-	            if ( i /= 1 ) then
-
-	              l = h1 + ipiv1
-	              if (ipivi < ipiv1) then
-	                l = l + ((ipiv1-ipivi)*(ipiv1+ipivi-3)) / 2
-	              end if
-	              m = l + smh
-	!
-	!  v(l) = h(ipivot(i), ipivot(1))
-	!  v(m) = s(ipivot(i), ipivot(1))
-	!
-	              v(l) = t * (rdof1 * j(1,i)  +  v(m)) * t1
-
-	              do k = 2, i - 1
-	                ipk = ipiv0 + k
-	                ipivk = iv(ipk)
-	                l = h1 + ipivk
-	                if (ipivi < ipivk) then
-	                  l = l + ((ipivk-ipivi)*(ipivk+ipivi-3)) / 2
-	                end if
-	                m = l + smh
-	!
-	!  v(l) = h(ipivot(i), ipivot(k))
-	!  v(m) = s(ipivot(i), ipivot(k))
-	!
-	                km1 = k - 1
-	                rdk = rd0 + k
-	                v(l) = t * (dotprd(km1, j(1,i), j(1,k)) + &
-	                  v(rdk)*j(k,i) + v(m)) / d(ipivk)
-	              end do
-
-	            end if
-
-	          end do
-
-	        end if
-
-	      end if
-	!
-	!  Compute actual Goldfeld-Quandt-Trotter step.
-	!
-	      h1 = iv(h)
-	      dig1 = iv(dig)
-	      lmat1 = iv(lmat)
-	      call gqtstp(d, v(dig1), v(h1), iv(kagqt), v(lmat1), p, v(step1), &
-	                  v, v(w1))
-	    end if
-	!
-	!  Compute R(X0 + STEP).
-	!
-	 310  continue
-
-	      if ( iv(irc) /= 6 ) then
-	        x01 = iv(x0)
-	        step1 = iv(step)
-	        x(1:p) = v(step1:step1+p-1) + v(x01:x01+p-1)
-	        iv(nfcall) = iv(nfcall) + 1
-	        iv(1) = 1
-	        iv(toobig) = 0
-	        return
-	      end if
-	!
-	!  Assess candidate step.
-	!
-	350   continue
-
-	      step1 = iv(step)
-	      lstgst = iv(stlstg)
-	      x01 = iv(x0)
-	      call assess(d, iv, p, v(step1), v(lstgst), v, x, v(x01))
-	!
-	!  If necessary, switch models and/or restore R.
-	!
-	      if ( iv(switch) /= 0 ) then
-	        iv(h) = -abs ( iv(h) )
-	        iv(sused) = iv(sused) + 2
-	        v(1:nvsave) = v(vsave1:vsave1+nvsave-1)
-	      end if
-
-	 360  continue
-
-	      if ( iv(restor) /= 0 ) then
-	         rsave1 = iv(rsave)
-	         r(1:n) = v(rsave1:rsave1+n-1)
-	      end if
-
-	 390  continue
-
-	      l = iv(irc) - 4
-	      stpmod = iv(model)
-
-	      if (l > 0) go to (410,440,450,450,450,450,450,450,640,570), l
-	!
-	!  Decide whether to change models.
-	!
-	      e = v(preduc) - v(fdif)
-	      sstep = iv(lky)
-	      s1 = iv(s)
-	      call slvmul ( p, v(sstep), v(s1), v(step1) )
-	      sttsst = 0.5E+00 * dotprd(p, v(step1), v(sstep))
-
-	      if ( iv(model) == 1 ) then
-	        sttsst = -sttsst
-	      end if
-	!
-	!  Switch models.
-	!
-	      if (abs(e + sttsst) * v(fuzz) >= abs(e)) go to 400
-
-	         iv(model) = 3 - iv(model)
-	         if (iv(model) == 1) iv(kagqt) = -1
-	         if (iv(model) == 2 .and. iv(kalm) > 0) iv(kalm) = 0
-	         if (-2 < l) go to 480
-	              iv(h) = -abs ( iv(h) )
-	              iv(sused) = iv(sused) + 2
-	              v(vsave1:vsave1+nvsave-1) = v(1:nvsave)
-	              go to 420
-
-	 400  if (-3 < l) go to 480
-	!
-	!  Recompute STEP with decreased radius.
-	!
-	         v(radius) = v(radfac) * v(dstnrm)
-	         go to 190
-	!
-	!  Recompute STEP, saving V values and R if necessary.
-	!
-	 410  continue
-
-	      v(radius) = v(radfac) * v(dstnrm)
-
-	 420  continue
-
-	      if ( v(f) < v(f0) ) then
-	        rsave1 = iv(rsave)
-	        v(rsave1:rsave1+n-1) = r(1:n)
-	      end if
-
-	      go to 190
-	!
-	!  Compute step of length V(LMAX0) for singular convergence test.
-	!
-	 440  continue
-
-	      v(radius) = v(lmax0)
-	      go to 210
-	!
-	!  Convergence or false convergence.
-	!
-	 450  continue
-
-	      iv(cnvcod) = l
-	      if (v(f) >= v(f0)) go to 700
-	         if (iv(xirc) == 14) go to 700
-	              iv(xirc) = 14
-	!
-	!  Process acceptable step.
-	!
-	 480  iv(covmat) = 0
-	!
-	!  Set LKY = J(X0)' * R(X).
-	!
-	      lky1 = iv(lky)
-	!
-	!  Jacobian has not been modified.
-	!
-	      if ( iv(kalm) < 0 ) then
-
-	         do i = 1, p
-	           v(lky1) = dotprd(n, j(1,i), r)
-	           lky1 = lky1 + 1
-	         end do
-	!
-	!  QRFACT has been applied to J.  Store copy of R in QTR and
-	!  apply Q to it.
-	!
-	      else
-
-	        qtr1 = iv(qtr)
-	        v(qtr1:qtr1+n-1) = r(1:n)
-	        call qapply(nn, n, p, j, v(qtr1), iv(ierr))
-	!
-	!  Multiply top P-vector in QTR by permuted upper triangle
-	!  stored by QRFACT in J and RD.
-	!
-	        rd1 = iv(rd)
-	        temp1 = iv(stlstg)
-	        call rptmul(3, iv(ipivot), j, nn, p, v(rd1), v(qtr1), v(lky1), &
-	                  v(temp1))
-
-	      end if
-	!
-	!  See whether to set V(RADFAC) by gradient tests.
-	!
-	 510  continue
-
-	      if (iv(irc) == 3 ) then
-
-	        step1 = iv(step)
-	        temp1 = iv(stlstg)
-	        temp2 = iv(x0)
-	!
-	!  Set TEMP1 = hessian * STEP for use in gradient tests
-	!
-	!  STEP computed using Gauss-Newton model.
-	!  QRFACT has been applied to J.
-	!
-	        if ( stpmod /= 2 ) then
-
-	          rd1 = iv(rd)
-	          call rptmul(2, iv(ipivot), j, nn, p, v(rd1), &
+	//
+	//  Compute function value (half the sum of squares).
+	//
+	 if (do20) {
+
+	      t = v2norm(n, r);
+
+	      if ( v[rlimit] < t ) {
+	        iv[toobig] = 1;
+	      }
+
+	      if ( iv[toobig] == 0 ) {
+	        v[f] = 0.5 * t*t;
+	      }
+	      do30 = true;
+	 } // if (do20)
+
+	 if (do30) {
+
+	      if ( iv[mode] == 0 ) {
+	        do350 = true;
+	      }
+	      else if ( 0 < iv[mode] ) {
+	        do730 = true;
+	      }
+	      else {
+	    	  do40 = true;
+	      }
+	 } // if (do30)
+
+	 if (do40) {
+
+	      if ( iv[toobig] != 0 ) {
+	         iv[1] = 13;
+	         itsmry ( d, iv, p, v, x );
+	         return;
+	      }
+
+	      do60 = true;
+	 } // if (do40)
+	 if (do50) {
+	//
+	//  Make sure jacobian could be computed.
+	//
+
+	      if ( iv[nfgcal] == 0 ) {
+	         iv[1] = 15;
+	         itsmry ( d, iv, p, v, x );
+	         return;
+	      }
+	      do60 = true;
+	 } // if (do50)
+	if (do60) {
+	//
+	//  Compute gradient.
+	//
+
+	      iv[kalm] = -1;
+	      g1 = iv[g];
+	      arr = new double[n+1];
+	      for (i = 1; i <= p; i++) {
+	    	 for (ii = 1; ii <= n; ii++) {
+	    		 arr[ii] = j[ii][i];
+	    	 }
+	         v[g1] = dotprd (n, r, arr );
+	         g1 = g1 + 1;
+	      } // for (i = 1; i <= p; i++)
+
+	      if ( 0 < iv[mode] ) {
+	        do710 = true;
+	      }
+	      else { // iv[mode] <= 0
+	//
+	//  Update D and make copies of R for possible use later.
+	//
+	      if ( 0 < iv[dtype] ) {
+	        dupdat(d, iv, j, n, nn, p, v);
+	      }
+
+	      rsave1 = iv[rsave];
+	      for (ii = 1; ii <= n; ii++) {
+	          v[rsave1+ii-1] = r[ii];
+	      }
+	      qtr1 = iv[qtr];
+	      for (ii = 1; ii <= n; ii++) {
+	          v[qtr1+ii-1] = r[ii];
+	      }
+	//
+	//  Compute inverse ( D ) * gradient.
+	//
+	      g1 = iv[g];
+	      dig1 = iv[dig];
+	      k = dig1;
+
+	      for (i = 1; i <= p; i++) {
+	         v[k] = v[g1] / d[i];
+	         k = k + 1;
+	         g1 = g1 + 1;
+	      } // for (i = 1; i <= p; i++)
+
+	      arr = new double[p+1];
+	      for (ii = 1; ii <= p; ii++) {
+	    	  arr[ii] = v[dig1+ii-1];
+	      }
+	      v[dgnorm] = v2norm(p, arr);
+
+	      if (iv[cnvcod] != 0) {
+	    	  do700 = true;
+	      }
+	      else if (iv[mode] == 0) {
+	    	  do570 = true;
+	      }
+	      else {
+	          iv[mode] = 0;
+	          do150 = true;
+	      }
+	      } // else iv[mode] <= 0
+	} // if (do60)
+	//
+	//  Main loop.
+	//
+	//  Print iteration summary, check iteration limit.
+    //
+	/*loop1: while (true) {
+     if (do150) {
+	     do150 = false;
+
+	      itsmry(d, iv, p, v, x);
+	      do160 = true;
+     } // if (do150);
+     if (do160) {
+    	 do160 = false;
+	     k = iv[niter];
+
+	      if ( iv[mxiter] <= k ) {
+	         iv[1] = 10;
+	         itsmry ( d, iv, p, v, x );
+	         return;
+	      }
+	      do170 = true;
+     } // if (do160)
+
+	if (do170) {
+          do170 = false;
+	      iv[niter] = k + 1;
+	//
+	//  Update radius.
+	//
+	      if ( k != 0 ) {
+
+	        step1 = iv[step];
+	        for (i = 1; i <= p; i++) {
+	          v[step1] = d[i] * v[step1];
+	          step1 = step1 + 1;
+	        } // for (i = 1; i <= p; i++)
+	        step1 = iv[step];
+	        arr = new double[p+1];
+	        for (ii = 1; ii <= p; ii++) {
+	        	arr[ii] = v[step+ii-1];
+	        }
+	        v[radius] = v[radfac] * v2norm(p, arr);
+
+	      } // if (k != 0)
+	//
+	//  Initialize for start of next iteration.
+	//
+	      x01 = iv[x0];
+	      v[f0] = v[f];
+	      iv[kagqt] = -1;
+	      iv[irc] = 4;
+	      iv[h] = -Math.abs ( iv[h] );
+	      iv[sused] = iv[model];
+	//
+	//  Copy X to X0.
+	//
+	      for (ii = 1; ii <= p; ii++) {
+	          v[x01+ii-1] = x[ii];
+	      }
+	      do190 = true;
+	} // if (do170)
+	if (do190) {
+		do190 = false;
+	//
+	//  Check STOPX and function evaluation limit.
+	//
+	      if ( ! stopx ( dummy ) ) {
+	    	  do200 = true;
+	      }
+	      else {
+	         iv[1] = 11;
+	         do205 = true;
+	      }
+	} // if (do190)
+	if (do195) {
+		do195 = false;
+	//
+	//  Come here when restarting after function evaluation limit or STOPX.
+	//
+
+	      if ( v[f] < v[f0] ) {
+	         v[radfac] = 1.0;
+	         k = iv[niter];
+	         do170 = true;
+	         continue loop1;
+	      }
+	      else {
+	    	  do200 = true;
+	      }
+	} // if (do195)
+
+	 if (do200) {
+         do200 = false;
+	      if (iv[nfcall] < iv[mxfcal] + iv[nfcov]) {
+	    	  do210 = true;
+	      }
+	      else {
+	    	  do205 = true;
+	    	  iv[1] = 9;
+	      }
+	 } // if (do200)
+	 if (do205) {
+         do205 = false;
+	         if (v[f] >= v[f0]) {
+	           itsmry ( d, iv, p, v, x );
+	           return;
+	         }
+	//
+	//  In case of STOPX or function evaluation limit with
+	//  improved V(F), evaluate the gradient at X.
+	//
+	         iv[cnvcod] = iv[1];
+	         do560 = true;
+	 } // if (do205)
+	 if (do210) {
+		 do210 = false;
+	//
+	//  Compute candidate step.
+	//
+
+	      step1 = iv[step];
+	      w1 = iv[w];
+	//
+	//  Compute Levenberg-Marquardt step.
+	//
+	      if (iv[model] != 2) {
+
+	         qtr1 = iv[qtr];
+
+	         if ( iv[kalm] < 0 ) {
+
+	           rd1 = iv[rd];
+
+	           if (-1 == iv[kalm]) {
+	        	 arr = new double[p+1];
+	        	 iarr = new int[p+1];
+	        	 iarr2 = new int[1];
+	        	 arr2 = new double[p+1];
+	             qrfact ( nn, n, p, j, arr, iarr, iarr2, 0, arr2 );
+	             for (ii = 1; ii <= p; ii++) {
+	            	 v[rd1+ii-1] = arr[ii];
+	            	 iv[ipivot+ii-1] = iarr[ii];
+	             }
+	             iv[ierr] = iarr2[0];
+	           }
+
+	           arr = new double[n+1];
+	           for (ii = 1; ii <= n; ii++) {
+	        	   arr[ii] = v[qtr1+ii-1];
+	           }
+	           qapply ( nn, n, p, j, arr, iv[ierr] );
+               for (ii = 1; ii <= n; ii++) {
+            	   v[qtr1+ii-1] = arr[ii];
+               }
+	         } // if (iv[kalm] < 0)
+
+	         h1 = iv[h];
+	//
+	//  Copy R matrix to H.
+	//
+	         if ( h1 <= 0 ) {
+
+	              h1 = -h1;
+	              iv[h] = h1;
+	              k = h1;
+	              rd1 = iv[rd];
+	              v[k] = v[rd1];
+
+	              for (i = 2; i <= p; i++) {
+	            	   for (ii = 0; ii < i-1; ii++) {
+	            		   v[k+1+ii] = j[1+ii][i];
+	            	   }
+	                   k = k + i;
+	                   rd1 = rd1 + 1;
+	                   v[k] = v[rd1];
+	              } // for (i = 2; i <= p; i++)
+	         } // if (h1 <= 0)
+
+	         g1 = iv[g];
+	         arr = new double[p+1];
+	         iarr = new int[1];
+	         iarr2 = new int[p+1];
+	         iarr3 = new int[1];
+	         arr2 = new double[p+1];
+	         arr3 = new double[p*(p+1)/2 + 1];
+	         arr4 = new double[p+1];
+	         arr5 = new double[p*(p+5)/2 + 5];
+	         for (ii = 1; ii <= p; ii++) {
+	        	 arr[ii] = v[g+ii-1];
+	        	 iarr2[ii] = iv[ipivot+ii-1];
+	        	 arr2[ii] = v[qtr1+ii-1];
+	         }
+	         for (ii = 1; ii <= p*(p+1)/2; ii++) {
+	        	 arr3[ii] = v[h1+ii-1];
+	         }
+	         for (ii = 1; ii <= p*(p+5)/2 + 4; ii++) {
+	        	 arr5[ii] = v[w1+ii-1];
+	         }
+	         iarr[0] = iv[ierr];
+	         iarr3[0] = iv[kalm];
+	         lmstep(d, arr, iarr, iarr2, iarr3, p,
+	                     arr2, arr3, arr4, v, arr5);
+	         iv[ierr] = iarr[0];
+	         for (ii = 1; ii <= p; ii++) {
+	        	 iv[ipivot+ii-1] = iarr2[ii];
+	        	 v[step1+ii-1] = arr4[ii];
+	         }
+	         iv[kalm] = iarr3[0];
+	         for (ii = 1; ii <= p*(p+5)/2 + 4; ii++) {
+	        	 v[w1+ii-1] = arr5[ii];
+	         }
+	      } // if (iv[model] != 2)
+	//
+	//  Compute Goldfeld-Quandt-Trotter step (augmented model).
+	//
+	      else { // iv[model] == 2
+
+	      if ( iv[h] <= 0 ) {
+	//
+	//  Set H to inverse ( D ) * ( J' * J + s) ) * inverse ( D ).
+	//
+	        h1 = -iv[h];
+	        iv[h] = h1;
+	        s1 = iv[s];
+	//
+	//  J is in its original form.
+    //
+	        if ( iv[kalm] == -1 ) {
+
+	            arr = new double[n+1];
+	            arr2 = new double[n+1];
+	        	for ( i = 1; i <= p; i++) {
+	            t = 1.0 / d[i];
+	            for (k = 1; k <= i; k++) {
+	              for (ii = 1; ii <= n; ii++) {
+	            	  arr[ii] = j[ii][i];
+	            	  arr2[ii] = j[ii][k];
+	              }
+	              v[h1] = t * (dotprd(n,arr,arr2)+v[s1]) / d[k];
+	              h1 = h1 + 1;
+	              s1 = s1 + 1;
+	            } // for (k = 1; k <= i; k++)
+	        	} // for (i = 1; i <= p; i++)
+	        } // if (iv[kalm] == -1)
+	//
+	//  LMSTEP has applied QRFACT to J.
+	//
+	        else { // iv[kalm] != -1
+
+	          smh = s1 - h1;
+	          h0 = h1 - 1;
+	          ipiv1 = iv[ipivot];
+	          t1 = 1.0 / d[ipiv1];
+	          rd0 = iv[rd] - 1;
+	          rdof1 = v[rd0 + 1];
+
+	          for ( i = 1; i <= p; i++) {
+
+	            l = ipiv0 + i;
+	            ipivi = iv[l];
+	            h1 = h0 + ( ipivi*(ipivi-1) ) / 2;
+	            l = h1 + ipivi;
+	            m = l + smh;
+	//
+	//  v(l) = h(ipivot(i), ipivot(i))
+	//  v(m) = s(ipivot(i), ipivot(i))
+	//
+	            t = 1.0 / d[ipivi];
+	            rdk = rd0 + i;
+	            e = v[rdk]*v[rdk];
+	            if ( 1 < i ) {
+	              arr = new double[i];
+	              for (ii = 1; ii < i; ii++) {
+	            	  arr[ii] = j[ii][i];
+	              }
+	              e = e + dotprd(i-1, arr, arr);
+	            }
+	            v[l] = (e + v[m]) * t*t;
+
+	            if ( i != 1 ) {
+
+	              l = h1 + ipiv1;
+	              if (ipivi < ipiv1) {
+	                l = l + ((ipiv1-ipivi)*(ipiv1+ipivi-3)) / 2;
+	              }
+	              m = l + smh;
+	//
+	//  v(l) = h(ipivot(i), ipivot(1))
+	//  v(m) = s(ipivot(i), ipivot(1))
+	//
+	              v[l] = t * (rdof1 * j[1][i]  +  v[m]) * t1;
+
+	              for (k = 2; k <= i - 1; k++) {
+	                ipk = ipiv0 + k;
+	                ipivk = iv[ipk];
+	                l = h1 + ipivk;
+	                if (ipivi < ipivk) {
+	                  l = l + ((ipivk-ipivi)*(ipivk+ipivi-3)) / 2;
+	                }
+	                m = l + smh;
+	//
+	//  v(l) = h(ipivot(i), ipivot(k))
+	//  v(m) = s(ipivot(i), ipivot(k))
+	//
+	                km1 = k - 1;
+	                rdk = rd0 + k;
+	                arr = new double[k];
+	                arr2 = new double[k];
+	                for (ii = 1; ii <= km1; ii++) {
+	                	arr[ii] = j[ii][i];
+	                	arr2[ii] = j[ii][k];
+	                }
+	                v[l] = t * (dotprd(km1, arr, arr2) + v[rdk]*j[k][i] + v[m]) / d[ipivk];
+	              } // for (i = 2; k <= i-1; k++)
+
+	            } // if (i != 1)
+
+	          } // for (i = 1; i <= p; i++)
+
+	        } // else iv[kalm] != -1
+
+	      } // if (iv[h] <= 0)
+	//
+	//  Compute actual Goldfeld-Quandt-Trotter step.
+	//
+	      h1 = iv[h];
+	      dig1 = iv[dig];
+	      lmat1 = iv[lmat];
+	      arr = new double[p+1];
+	      arr2 = new double[p*(p+1)/2 + 1];
+	      iarr = new int[1];
+	      arr3 = new double[p*(p+1)/2 + 1];
+	      arr4 = new double[p+1];
+	      arr5 = new double[4*p+8];
+	      for (ii = 1; ii <= p; ii++) {
+	    	  arr[ii] = v[dig1+ii-1];
+	    	  arr4[ii] = v[step1+ii-1];
+	      }
+	      for (ii = 1; ii <= p*(p+1)/2; ii++) {
+	    	  arr2[ii] = v[h1+ii-1];
+	    	  arr3[ii] = v[lmat1+ii-1];
+	      }
+	      iarr[0] = iv[kagqt];
+	      for (ii = 1; ii <= 4*p+7; ii++) {
+	    	  arr5[ii] = v[w1+ii-1];
+	      }
+	      gqtstp(d, arr, arr2, iarr, arr3, p, arr4, v, arr5);
+	      iv[kagqt] = iarr[0];
+	      for (ii = 1; ii <= p*(p+1)/2; ii++) {
+	    	 v[lmat1+ii-1] = arr3[ii]; 
+	      }
+	      for (ii = 1; ii <= p; ii++) {
+	    	  v[step1+ii-1] = arr4[ii];
+	      }
+	      for (ii = 1; ii <= 4*p+7; ii++) {
+	    	  v[w1+ii-1] = arr5[ii];
+	      }
+	      } // else if[model] == 2
+	      do310 = true;
+	 } // if (do210)
+	if (do310) {
+		do310 = false;
+	//
+	//  Compute R(X0 + STEP).
+	//
+
+	      if ( iv[irc] != 6 ) {
+	        x01 = iv[x0];
+	        step1 = iv[step];
+	        for (ii = 1; ii <= p; ii++) {
+	            x[ii] = v[step1+ii-1] + v[x01+ii-1];
+	        }
+	        iv[nfcall] = iv[nfcall] + 1;
+	        iv[1] = 1;
+	        iv[toobig] = 0;
+	        return;
+	      }
+	      do350 = true;
+	} // if (do310)
+	if (do350) {
+		do350 = false;
+	//
+	//  Assess candidate step.
+	//
+
+	      step1 = iv[step];
+	      lstgst = iv[stlstg];
+	      x01 = iv[x0];
+	      arr = new double[p+1];
+	      arr2 = new double[p+1];
+	      arr3 = new double[p+1];
+	      for (ii = 1; ii <= p; ii++) {
+	    	  arr[ii] = v[step1+ii-1];
+	    	  arr2[ii] = v[lstgst+ii-1];
+	    	  arr3[ii] = v[x01+ii-1];
+	      }
+ 	      assess(d, iv, p, arr, arr2, v, x, arr3);
+ 	      for (ii = 1; ii <= p; ii++) {
+ 	    	  v[step1+ii-1] = arr[ii];
+ 	    	  v[lstgst+ii-1] = arr2[ii];
+ 	      }
+	//
+	//  If necessary, switch models and/or restore R.
+	//
+	      if ( iv[switchConstant] != 0 ) {
+	        iv[h] = -Math.abs ( iv[h] );
+	        iv[sused] = iv[sused] + 2;
+	        for (ii = 1; ii <= nvsave; ii++) {
+	            v[ii] = v[vsave1+ii-1];
+	        }
+	      } // if (iv[switchConstant] != 0)
+	      do360 = true;
+	} // if (do350)
+
+	 if (do360) {
+          do360 = false;
+	      if ( iv[restor] != 0 ) {
+	         rsave1 = iv[rsave];
+	         for (ii = 1; ii <= n; ii++) {
+	             r[ii] = v[rsave1+ii-1];
+	         }
+	      } // if (iv[restor] != 0)
+	      do390 = true;
+	 } // if (do360)
+
+	 if (do390) {
+         do390 = false;
+	      l = iv[irc] - 4;
+	      stpmod = iv[model];
+
+	      if (l > 0) {
+	    	  switch(l) {
+	    	  case 1:
+	    		  do410 = true;
+	    		  break;
+	    	  case 2:
+	    		  do440 = true;
+	    		  break;
+	    	  case 3:
+	    	  case 4:
+	    	  case 5:
+	    	  case 6:
+	    	  case 7:
+	    	  case 8:
+	    		  do450 = true;
+	    		  break;
+	    	  case 9:
+	    		  do640 = true;
+	    		  break loop1;
+	    	  case 10:
+	    		  do570 = true;
+	    	  }
+	      } // if (l > 0)
+	      else { // else l <= 0
+	//
+	//  Decide whether to change models.
+	//
+	      e = v[preduc] - v[fdif];
+	      sstep = iv[lky];
+	      s1 = iv[s];
+	      arr = new double[p+1];
+	      arr2 = new double[p*(p+1)/2 + 1];
+	      arr3 = new double[p+1];
+	      for (ii = 1; ii <= p*(p+1)/2; ii++) {
+	    	  arr2[ii] = v[s1+ii-1];
+	      }
+	      slvmul ( p, arr, arr2, arr3 );
+	      for (ii = 1; ii <= p; ii++) {
+	    	  v[sstep+ii-1] = arr[ii];
+	    	  v[step1+ii-1] = arr3[ii];
+	      }
+	      sttsst = 0.5 * dotprd(p, arr3, arr);
+
+	      if ( iv[model] == 1 ) {
+	        sttsst = -sttsst;
+	      }
+	//
+	//  Switch models.
+	//
+	      if (Math.abs(e + sttsst) * v[fuzz] >= Math.abs(e)) {
+	    	  do400 = true;
+	      }
+	      else {
+	         iv[model] = 3 - iv[model];
+	         if (iv[model] == 1) {
+	        	 iv[kagqt] = -1;
+	         }
+	         if (iv[model] == 2 && iv[kalm] > 0) {
+	        	 iv[kalm] = 0;
+	         }
+	         if (-2 < l) {
+	        	 do480 = true;
+	         }
+	         else {
+	              iv[h] = -Math.abs ( iv[h] );
+	              iv[sused] = iv[sused] + 2;
+	              for (ii = 1; ii <= nvsave; ii++) {
+	                  v[vsave1+ii-1] = v[ii];
+	              }
+	              do420 = true;
+	         } // else
+	      } // else
+	      } // else if l <= 0
+	 } // if (do390)
+     if (do400) {
+    	 do400 = false;
+	     if (-3 < l) {
+	    	 do480 = true;
+	     }
+	     else {
+	//
+	//  Recompute STEP with decreased radius.
+	//
+	         v[radius] = v[radfac] * v[dstnrm];
+	         do190 = true;
+	         continue loop1;
+	     } // else
+     } // if (do400)
+     if (do410) {
+    	 do410 = false;
+	//
+	//  Recompute STEP, saving V values and R if necessary.
+	//
+
+	      v[radius] = v[radfac] * v[dstnrm];
+	      do420 = true;
+     } // if (do410)
+
+	 if (do420) {
+         do420 = false;
+	      if ( v[f] < v[f0] ) {
+	        rsave1 = iv[rsave];
+	        for (ii = 1; ii <= n; ii++) {
+	            v[rsave1+ii-1] = r[ii];
+	        }
+	      }
+
+	      do190 = true;
+	      continue loop1;
+	 } // if (do420
+	 if (do440) {
+		 do440 = false;
+	//
+	//  Compute step of length V(LMAX0) for singular convergence test.
+	//
+
+	      v[radius] = v[lmax0];
+	      do210 = true;
+	      continue loop1;
+	 } // if (do440)
+	 if (do450) {
+		 do450 = false;
+	//
+	//  Convergence or false convergence.
+	//
+
+	      iv[cnvcod] = l;
+	      if (v[f] >= v[f0]) {
+	    	  do700 = true;
+	    	  break loop1;
+	      }
+	      else if (iv[xirc] == 14) {
+	    	  do700 = true;
+	    	  break loop1;
+	      }
+	      else {
+	          iv[xirc] = 14;
+	          do480 = true;
+	      }
+	 } // if (do450)
+	 if (do480) {
+		 do480 = false;
+	//
+	//  Process acceptable step.
+	//
+	     iv[covmat] = 0;
+	//
+	//  Set LKY = J(X0)' * R(X).
+	//
+	      lky1 = iv[lky];
+	//
+	//  Jacobian has not been modified.
+	//
+	      if ( iv[kalm] < 0 ) {
+
+	         for (i = 1; i <= p; i++) {
+	           arr = new double[n+1];
+	           for (ii = 1; ii <= n; ii++) {
+	        	   arr[ii] = j[ii][i];
+	           }
+	           v[lky1] = dotprd(n, arr, r);
+	           lky1 = lky1 + 1;
+	         } // for (i = 1; i <= p; i++)
+	      } // if (iv[kalm] < 0)
+	//
+	//  QRFACT has been applied to J.  Store copy of R in QTR and
+	//  apply Q to it.
+	//
+	      else {
+
+	        qtr1 = iv[qtr];
+	        for (ii = 1; ii <= n; ii++) {
+	            v[qtr1+ii-1] = r[ii];
+	        }
+	        arr = new double[n+1];
+	        for (ii = 1; ii <= n; ii++) {
+	        	arr[ii] = v[qtr1+ii-1];
+	        }
+	        qapply(nn, n, p, j, arr, iv[ierr]);
+	        for (ii = 1; ii <= n; ii++) {
+	        	v[qtr1+ii-1] = arr[ii];
+	        }
+	//
+	//  Multiply top P-vector in QTR by permuted upper triangle
+	//  stored by QRFACT in J and RD.
+	//
+	        rd1 = iv[rd];
+	        temp1 = iv[stlstg];
+	        iarr = new int[p+1];
+	        arr = new double[p+1];
+	        arr2 = new double[p+1];
+	        arr3 = new double[p+1];
+	        arr4 = new double[p+1];
+	        for (ii = 1; ii <= p; ii++) {
+	        	iarr[ii] = iv[ipivot+ii-1];
+	        	arr[ii] = v[rd1+ii-1];
+	        	arr2[ii] = v[qtr1+ii-1];
+	        }
+	        rptmul(3, iarr, j, nn, p, arr, arr2, arr3, arr4);
+	        for (ii = 1; ii <= p; ii++) {
+	        	v[lky1+ii-1] = arr3[ii];
+	        }
+
+	      } // else
+	      do510 = true;
+	 } // if (do480)
+	 if (do510) {
+		 do510 = false;
+	//
+	//  See whether to set V(RADFAC) by gradient tests.
+	//
+
+	      if (iv[irc] == 3 ) {
+
+	        step1 = iv[step];
+	        temp1 = iv[stlstg];
+	        temp2 = iv[x0];
+	//
+	//  Set TEMP1 = hessian * STEP for use in gradient tests
+	//
+	//  STEP computed using Gauss-Newton model.
+	//  QRFACT has been applied to J.
+	//
+	        if ( stpmod != 2 ) {
+
+	          rd1 = iv[rd];
+	          rptmul(2, iv(ipivot), j, nn, p, v(rd1), &
 	            v(step1), v(temp1), v(temp2))
+	        } // if (stpmod != 2)
 	!
 	!  STEP computed using augmented model.
 	!
@@ -5078,7 +5416,8 @@ public abstract class NL2sol {
 
 	        end if
 
-	      end if
+	      } // if (iv[irc] == 3)
+	 } // if (do510)
 	!
 	!  Save old gradient and compute new one.
 	!
@@ -5220,9 +5559,9 @@ public abstract class NL2sol {
 	  iv(nfgcal) = iv(nfcall)
 	  iv(ngcov) = iv(ngcov) + 1
 	  iv(ngcall) = iv(ngcall) + 1
-	  iv(1) = 2
+	  iv(1) = 2*/
 
-	  return*/
+	  return;
 	} // private void nl2itr
 	
 	private void parchk (int iv[], int n, int nn, int p, double v[] ) {
@@ -6176,6 +6515,24 @@ public abstract class NL2sol {
 
 	  return result;
 	} // private boolean stopx
+	
+	private void timestamp() {
+	    Calendar dateTime = Calendar.getInstance();
+	    Formatter formatter = new Formatter();
+	    // The conversion character t is used to print dates and times in various formats
+	    // 1$ indicates that all format specifiers in the formt string used the first argument
+	    //    after the format string in the argument list
+	    // B full name of the month
+	    // d Display the day of the month with 2 digits, padding with leading zeros as necessary
+	    // Y Display the year with 4 digits
+	    // Z Display the abbreviation for the time zone
+	    // I Display hour in a 12-hour clock with a leading zero as necessary
+	    // M Display minute with a leading zero as necessary
+	    // S Display second with a leading zero as necessary
+	    // P Display morning or afternoon marker in uppercase
+	    formatter.format("%1$tB %1$td, %1$tY    %1$tZ %1$tI:%1$tM:%1$tS %tP\n", dateTime);
+	    Preferences.debug(formatter.toString());
+	}
 	
 	private double v2norm ( int p, double x[] ) {
 
