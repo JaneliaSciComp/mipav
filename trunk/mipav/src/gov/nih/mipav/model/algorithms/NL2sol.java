@@ -6,9 +6,7 @@ import java.util.Formatter;
 
 public abstract class NL2sol {
 	
-	public NL2sol() {
-	
-	}
+private boolean testMode = false;
 	
 	// emin, the smallest exponent E for double precision, is I1MACH(15)
     // tiny = D1MACH(1) = 2**(emin - 1) = 2**(-1022) = 2.225073858507201E-308
@@ -33,6 +31,8 @@ public abstract class NL2sol {
 	
 	private double ix_lsvmin = 2;
 	
+	private double hlim_nl2sno = 0.0;
+	
 	private double big_parchk = 0.0;
 	private double teensy_parchk = 1.0;
 	
@@ -40,6 +40,878 @@ public abstract class NL2sol {
 	private double ufeta_qrfact = 0.0;
 	
 	private double sqteta_v2norm = 0.0;
+	
+	private int n;
+	private int p;
+	private double x[];
+	private int iv[];
+	private double v[];
+	private boolean useAnalyticJacobian;
+	private int uiparm[];
+	private double urparm[];
+	
+	public NL2sol() {
+	    testMode = true;
+	}
+	
+	// n, input, the number of observations, that is the number of components in r(x).
+	//    p <= n
+	// p, input, the number of parameters of component in x.  p must be positive
+	// x, input/output of dimension p+1.  On input x is an initial guess at the desired
+	//    parameter estimate.  On output, x contains the best parameter estimate found.
+	// iv, input/output of dimension 61 + p, helps control the NL2sol algorithm and
+	//    is used to store various intermediate quantities.  Of particular interest are
+	//    the initialization/return code iv[1] and the entries that are used to control
+	//    printing and limit the number of iterations and function evaluations.
+	// v, input/output of dimension at least 94 + n*p + 3*n + p*(3*p+33)/2 that helps
+	//    control the nl2sol solution algorithm and that is used to store various 
+	//    intermediate quantities.  Of particular interest are entries in v that limit
+	//    the length of the first step attempted(lmax0), specify convergence tolerances
+	//    (afctol, rfctol, xctol, xftol), and help choose the step size used in computing
+	//    the covariance matrix (delta0).
+	// useAnalyticJacobian, input, if true call nl2sol which use an analytic jacobian.
+	//    If false, call nl2sno which uses a finite difference jacobian
+	// uiparm, input, user integer parameter array
+	// urparm, input, user double parameter array
+	public NL2sol(int n, int p, double x[], int iv[], double v[], boolean useAnalyticJacobian,
+			      int uiparm[], double urparm[]) {
+	    this.n = n;
+	    this.p = p;
+	    this.x = x;
+	    this.iv = iv;
+	    this.v = v;
+	    this.useAnalyticJacobian = useAnalyticJacobian;
+	    this.uiparm = uiparm;
+	    this.urparm = urparm;
+	}
+	
+	private void driverCalls() {
+		useAnalyticJacobian = false;
+		driver();
+		useAnalyticJacobian = true;
+		driver();
+	}
+	
+	public void driver () {
+		if (useAnalyticJacobian) {
+		    nl2sol();	
+		}
+		else {
+			nl2sno();
+		}
+	}
+	
+	private void nl2sol() {
+		/***********************************************************************
+		!
+		!! NL2SOL minimizes a nonlinear sum of squares using an analytic jacobian.
+		!
+		!  Purpose:
+		!
+		!    Given a P-vector X of parameters, CALCR computes an N-vector
+		!    R = R(X) of residuals corresponding to X.  R(X) probably arises
+		!    from a nonlinear model involving P parameters and N observations.
+		!
+		!    This routine interacts with NL2ITR to seek a parameter vector X
+		!    that minimizes the sum of the squares of the components of R(X),
+		!    i.e., that minimizes the sum-of-squares function
+		!    F(X) = R(X)' * R(X) / 2.  R(X) is assumed to be a twice
+		!    continuously differentiable function of X.
+		!
+		!    See reference 1 for a description of the algorithm used.
+		!    On problems which are naturally well scaled, better performance 
+		!    may be obtained by setting V(D0INIT) = 1.0 and IV(DTYPE) = 0,
+		!    which will cause the scale vector D to be set to all ones.
+		!
+		!    After a return with IV(1) <= 11, it is possible to restart,
+		!    that is, to change some of the IV and V input values and continue 
+		!    the algorithm from the point where it was interrupted.  IV(1) 
+		!    should not be changed, nor should any entries of IV
+		!    and V other than the input values (those supplied by DFAULT).
+		!
+		!    Those who do not wish to write a CALCJ which computes the jacobian 
+		!    matrix analytically should call NL2SNO rather than NL2SOL.
+		!    NL2SNO uses finite differences to compute an approximate jacobian.
+		!
+		!    Those who would prefer to provide R and J (the residual and
+		!    jacobian) by reverse communication rather than by writing subroutines
+		!    CALCR and CALCJ may call on NL2ITR directly.  See the comments at the 
+		!    beginning of NL2ITR.
+		!
+		!    Those who use NL2SOL interactively may wish to supply their
+		!    own STOPX function, which should return TRUE if the break key
+		!    has been pressed since stopx was last invoked.  This makes it possible
+		!    to externally interrupt NL2SOL (which will return with
+		!    IV(1) = 11 if STOPX returns TRUE).
+		!
+		!    Storage for J is allocated at the end of V.  Thus the caller
+		!    may make V longer than specified above and may allow CALCJ to use
+		!    elements of J beyond the first N*P as scratch storage.
+		!
+		!  Modified:
+		!
+		!    04 April 2006
+		!
+		!  Author:
+		!
+		!    David Gay
+		!
+		!  Reference:
+		!
+		!    John Dennis, David Gay, Roy Welsch,
+		!    An Adaptive Nonlinear Least Squares Algorithm,
+		!    ACM Transactions on Mathematical Software,
+		!    Volume 7, Number 3, 1981.
+		!
+		!  Parameters:
+		!
+		!    Input, integer N, the number of observations, that is, the number of
+		!    components in R(X).  P <= N.
+		!
+		!    Input, integer P, the number of parameters, or components in X.  P must
+		!    be positive.
+		!
+		!    Input/output, real X(P).  On input, X is an initial guess at the
+		!    desired parameter estimate.  On output, X contains the best parameter 
+		!    estimate found.
+		!
+		!    Input, external CALCR, a subroutine which, given X, computes R(X).
+		!    CALCR must be declared external in the calling program.
+		!    It is invoked by
+		!      call calcr ( n, p, x, nf, r, uiparm, urparm, ufparm )
+		!    When CALCR is called, NF is the invocation count for CALCR.  It is 
+		!    included for possible use with CALCJ.  If X is out of bounds, for
+		!    instance, if it would cause overflow in computing R(X), then CALCR 
+		!    should set NF to 0.  This will cause a shorter step to be attempted.  
+		!    The other parameters are as described above and below.  CALCR 
+		!    should not change N, P, or X.
+		!
+		!    Input, external CALCJ, a subroutine which, given X, computes the 
+		!    jacobian matrix J of R at X, that is, the N by P matrix whose
+		!    (I,K) entry is the partial derivative of the I-th component of R 
+		!    with respect to X(K).  CALCJ must be declared external in the 
+		!    calling program.  It is invoked by
+		!      call calcj(n,p,x,nf,j,uiparm,urparm,ufparm)
+		!    NF is the invocation count for CALCR at the time R(X) was evaluated.  
+		!    The X passed to CALCJ is usually the one passed to CALC on either its 
+		!    most recent invocation or the one prior to it.  If CALCR saves 
+		!    intermediate results for use by CALCJ, then it is possible to tell 
+		!    from NF whether they are valid for the current X (or which copy is 
+		!    valid if two copies are kept).  If J cannot be computed at X,
+		!    then CALCJ should set NF to 0.  In this case, NL2SOL will return 
+		!    with IV(1) = 15.  The other parameters to CALCJ are as described 
+		!    above and below.  CALCJ should not change N, P, or X.
+		!
+		!    Input/output, integer IV(60+P), helps control the NL2SOL algorithm 
+		!    and is used to store various intermediate quantities.  Of particular 
+		!    interest are the initialization/return code IV(1) and the entries 
+		!    in that control printing and limit the number of iterations and 
+		!    function evaluations.  See the section on IV input values.
+		!
+		! v........ (input/output) a floating-point value array of length at
+		!                  least 93 + n*p + 3*n + p*(3*p+33)/2 that helps con-
+		!                  trol the nl2sol algorithm and that is used to store
+		!                  various intermediate quantities.  of particular in-
+		!                  terest are the entries in v that limit the length of
+		!                  the first step attempted (lmax0), specify conver-
+		!                  gence tolerances (afctol, rfctol, xctol, xftol),
+		!                  and help choose the step size used in computing the
+		!                  covariance matrix (delta0).  see the section on
+		!                  (selected) v input values below.
+		!
+		! uiparm... (input) user integer parameter array passed without change
+		!                  to calcr and calcj.
+		!
+		! urparm... (input) user floating-point parameter array passed without
+		!                  change to calcr and calcj.
+		!
+		! ufparm... (input) user external subroutine or function passed without
+		!                  change to calcr and calcj.
+		!
+		!  iv input values (from subroutine dfault)
+		!
+		! iv(1)...  on input, iv(1) should have a value between 0 and 12......
+		!             0 and 12 mean this is a fresh start.  0 means that
+		!             dfault(iv, v) is to be called to provide all default
+		!             values to iv and v.  12 (the value that dfault assigns to
+		!             iv(1)) means the caller has already called dfault(iv, v)
+		!             and has possibly changed some iv and/or v entries to non-
+		!             default values.  default = 12.
+		! iv(covprt)... iv(14) = 1 means print a covariance matrix at the solu-
+		!             tion.  (this matrix is computed just before a return with
+		!             iv(1) = 3, 4, 5, 6.)
+		!             iv(covprt) = 0 means skip this printing.  default = 1.
+		! iv(covreq)... iv(15) = nonzero means compute a covariance matrix
+		!             just before a return with iv(1) = 3, 4, 5, 6.  in
+		!             this case, an approximate covariance matrix is obtained
+		!             in one of several ways.  let k = abs(iv(covreq)) and let
+		!             scale = 2*f(x)/max(1,n-p),  where 2*f(x) is the residual
+		!             sum of squares.  if k = 1 or 2, then a finite-difference
+		!             hessian approximation h is obtained.  if h is positive
+		!             definite (or, for k = 3, if the jacobian matrix j at x
+		!             is nonsingular), then one of the following is computed...
+		!                  k = 1....  scale * h**-1 * (j**t * j) * h**-1.
+		!                  k = 2....  scale * h**-1.
+		!                  k = 3....  scale * (j**t * j)**-1.
+		!             (j**t is the transpose of j, while **-1 means inverse.)
+		!             if iv(covreq) is positive, then both function and grad-
+		!             ient values (calls on calcr and calcj) are used in com-
+		!             puting h (with step sizes determined using v(delta0) --
+		!             see below), while if iv(covreq) is negative, then only
+		!             function values (calls on calcr) are used (with step
+		!             sizes determined using v(dltfdc) -- see below).  if
+		!             iv(covreq) = 0, then no attempt is made to compute a co-
+		!             variance matrix (unless iv(covprt) = 1, in which case
+		!             iv(covreq) = 1 is assumed).  see iv(covmat) below.
+		!             default = 1.
+		! iv(dtype).... iv(16) tells how the scale vector D (see ref. 1) should
+		!             be chosen.  iv(dtype) >= 1 means choose d as described
+		!             below with v(dfac).  iv(dtype) <= 0 means the caller
+		!             has chosen d and has stored it in v starting at
+		!             v(94 + 2*n + p*(3*p + 31)/2).  default = 1.
+		! iv(inits).... iv(25) tells how the S matrix (see ref. 1) should be
+		!             initialized.  0 means initialize S to 0 (and start with
+		!             the Gauss-Newton model).  1 and 2 mean that the caller
+		!             has stored the lower triangle of the initial S rowwise in
+		!             v starting at v(87+2*p).  iv(inits) = 1 means start with
+		!             the Gauss-Newton model, while iv(inits) = 2 means start
+		!             with the augmented model (see ref. 1).  default = 0.
+		! iv(mxfcal)... iv(17) gives the maximum number of function evaluations
+		!             (calls on calcr, excluding those used to compute the co-
+		!             variance matrix) allowed.  if this number does not suf-
+		!             fice, then nl2sol returns with iv(1) = 9.  default = 200.
+		! iv(mxiter)... iv(18) gives the maximum number of iterations allowed.
+		!             it also indirectly limits the number of gradient evalua-
+		!             tions (calls on calcj, excluding those used to compute
+		!             the covariance matrix) to iv(mxiter) + 1.  if iv(mxiter)
+		!             iterations do not suffice, then nl2sol returns with
+		!             iv(1) = 10.  default = 150.
+		! iv(outlev)... iv(19) controls the number and length of iteration sum-
+		!             mary lines printed (by itsmry).  iv(outlev) = 0 means do
+		!             not print any summary lines.  otherwise, print a summary
+		!             line after each abs(iv(outlev)) iterations.  if iv(outlev)
+		!             is positive, then summary lines of length 117 (plus carri-
+		!             age control) are printed, including the following...  the
+		!             iteration and function evaluation counts, current func-
+		!             tion value (v(f) = half the sum of squares), relative
+		!             difference in function values achieved by the latest step
+		!             (i.e., reldf = (f0-v(f))/f0, where f0 is the function
+		!             value from the previous iteration), the relative function
+		!             reduction predicted for the step just taken (i.e.,
+		!             preldf = v(preduc) / f0, where v(preduc) is described
+		!             below), the scaled relative change in x (see v(reldx)
+		!             below), the models used in the current iteration (g =
+		!             Gauss-Newton, s=augmented), the Marquardt parameter
+		!             STPPAR used in computing the last step, the sizing factor
+		!             used in updating s, the 2-norm of the scale vector d
+		!             times the step just taken (see ref. 1), and npreldf, i.e.,
+		!             v(nreduc)/f0, where v(nreduc) is described below -- if
+		!             npreldf is positive, then it is the relative function
+		!             reduction predicted for a Newton step (one with
+		!             STPPAR = 0).  if npreldf is zero, either the gradient
+		!             vanishes (as does preldf) or else the augmented model
+		!             is being used and its hessian is indefinite (with preldf
+		!             positive).  if npreldf is negative, then it is the nega-
+		!             of the relative function reduction predicted for a step
+		!             computed with step bound v(lmax0) for use in testing for
+		!             singular convergence.
+		!                  if iv(outlev) is negative, then lines of maximum
+		!             length 79 (or 55 is iv(covprt) = 0) are printed, includ-
+		!             ing only the first 6 items listed above (through reldx).
+		!             default = 1.
+		! iv(parprt)... iv(20) = 1 means print any nondefault v values on a
+		!             fresh start or any changed v values on a restart.
+		!             iv(parprt) = 0 means skip this printing.  default = 1.
+		! iv(prunit)... iv(21) is the output unit number on which all printing
+		!             is done.  iv(prunit) = 0 means suppress all printing.
+		!             (setting iv(prunit) to 0 is the only way to suppress the
+		!             one-line termination reason message printed by itsmry.)
+		!             default = standard output unit (unit 6 on most systems).
+		! iv(solprt)... iv(22) = 1 means print out the value of x returned (as
+		!             well as the corresponding gradient and scale vector d).
+		!             iv(solprt) = 0 means skip this printing.  default = 1.
+		! iv(statpr)... iv(23) = 1 means print summary statistics upon return-
+		!             ing.  these consist of the function value (half the sum
+		!             of squares) at x, v(reldx) (see below), the number of
+		!             function and gradient evaluations (calls on calcr and
+		!             calcj respectively, excluding any calls used to compute
+		!             the covariance), the relative function reductions predict-
+		!             ed for the last step taken and for a Newton step (or per-
+		!             haps a step bounded by v(lmax0) -- see the descriptions
+		!             of preldf and npreldf under iv(outlev) above), and (if an
+		!             attempt was made to compute the covariance) the number of
+		!             calls on calcr and calcj used in trying to compute the
+		!             covariance.  iv(statpr) = 0 means skip this printing.
+		!             default = 1.
+		! iv(x0prt).... iv(24) = 1 means print the initial x and scale vector d
+		!             (on a fresh start only).  iv(x0prt) = 0 means skip this
+		!             printing.  default = 1.
+		!
+		!  (selected) iv output values
+		!
+		! iv(1)........ on output, iv(1) is a return code....
+		!             3 = x-convergence.  the scaled relative difference be-
+		!                  tween the current parameter vector x and a locally
+		!                  optimal parameter vector is very likely at most
+		!                  v(xctol).
+		!             4 = relative function convergence.  the relative differ-
+		!                  ence between the current function value and its lo-
+		!                  cally optimal value is very likely at most v(rfctol).
+		!             5 = both x- and relative function convergence (i.e., the
+		!                  conditions for iv(1) = 3 and iv(1) = 4 both hold).
+		!             6 = absolute function convergence.  the current function
+		!                  value is at most v(afctol) in absolute value.
+		!             7 = singular convergence.  the hessian near the current
+		!                  iterate appears to be singular or nearly so, and a
+		!                  step of length at most v(lmax0) is unlikely to yield
+		!                  a relative function decrease of more than v(rfctol).
+		!             8 = false convergence.  the iterates appear to be converg-
+		!                  ing to a noncritical point.  this may mean that the
+		!                  convergence tolerances (v(afctol), v(rfctol),
+		!                  v(xctol)) are too small for the accuracy to which
+		!                  the function and gradient are being computed, that
+		!                  there is an error in computing the gradient, or that
+		!                  the function or gradient is discontinuous near x.
+		!             9 = function evaluation limit reached without other con-
+		!                  vergence (see iv(mxfcal)).
+		!            10 = iteration limit reached without other convergence
+		!                  (see iv(mxiter)).
+		!            11 = stopx returned .true. (external interrupt).  see the
+		!                  usage notes below.
+		!            13 = f(x) cannot be computed at the initial x.
+		!            14 = bad parameters passed to assess (which should not
+		!                  occur).
+		!            15 = the jacobian could not be computed at x (see calcj
+		!                  above).
+		!            16 = n or p (or parameter nn to nl2itr) out of range --
+		!                  p <= 0 or n < p or nn < n.
+		!            17 = restart attempted with n or p (or par. nn to nl2itr)
+		!                  changed.
+		!            18 = iv(inits) is out of range.
+		!            19...45 = v(iv(1)) is out of range.
+		!            50 = iv(1) was out of range.
+		!            87...(86+p) = jtol(iv(1)-86) (i.e., v(iv(1)) is not
+		!                  positive (see v(dfac) below).
+		! iv(covmat)... iv(26) tells whether a covariance matrix was computed.
+		!             if (iv(covmat) is positive, then the lower triangle of
+		!             the covariance matrix is stored rowwise in v starting at
+		!             v(iv(covmat)).  if iv(covmat) = 0, then no attempt was
+		!             made to compute the covariance.  if iv(covmat) = -1,
+		!             then the finite-difference hessian was indefinite.  and
+		!             and if iv(covmat) = -2, then a successful finite-differ-
+		!             encing step could not be found for some component of x
+		!             (i.e., calcr set nf to 0 for each of two trial steps).
+		!             note that iv(covmat) is reset to 0 after each successful
+		!             step, so if such a step is taken after a restart, then
+		!             the covariance matrix will be recomputed.
+		! iv(d)........ iv(27) is the starting subscript in v of the current
+		!             scale vector d.
+		! iv(g)........ iv(28) is the starting subscript in v of the current
+		!             least-squares gradient vector (j**t)*r.
+		! iv(nfcall)... iv(6) is the number of calls so far made on calcr (i.e.,
+		!             function evaluations, including those used in computing
+		!             the covariance).
+		! iv(nfcov).... iv(40) is the number of calls made on calcr when
+		!             trying to compute covariance matrices.
+		! iv(ngcall)... iv(30) is the number of gradient evaluations (calls on
+		!             calcj) so far done (including those used for computing
+		!             the covariance).
+		! iv(ngcov).... iv(41) is the number of calls made on calcj when
+		!             trying to compute covariance matrices.
+		! iv(niter).... iv(31) is the number of iterations performed.
+		! iv(r)........ iv(50) is the starting subscript in v of the residual
+		!             vector r corresponding to x.
+		!
+		! (selected) v input values (from subroutine dfault)
+		!
+		! v(afctol)... v(31) is the absolute function convergence tolerance.
+		!             if nl2sol finds a point where the function value (half
+		!             the sum of squares) is less than v(afctol), and if nl2sol
+		!             does not return with iv(1) = 3, 4, or 5, then it returns
+		!             with iv(1) = 6.  default = max(10**-20, machep**2), where
+		!             machep is the unit roundoff.
+		! v(delta0)... v(44) is a factor used in choosing the finite-difference
+		!             step size used in computing the covariance matrix when
+		!             iv(covreq) = 1 or 2.  for component i, step size
+		!                  v(delta0) * max(abs(x(i)), 1/d(i)) * sign(x(i))
+		!             is used, where d is the current scale vector (see ref. 1).
+		!             (if this step results in calcr setting nf to 0, then -0.5
+		!             times this step is also tried.)  default = machep**0.5,
+		!             where machep is the unit roundoff.
+		! v(dfac)..... v(41) and the d0 and jtol arrays (see v(d0init) and
+		!             v(jtinit)) are used in updating the scale vector d when
+		!             iv(dtype) > 0.  (d is initialized according to
+		!             v(dinit).)  let d1(i) =
+		!               max(sqrt(jcnorm(i)**2 + max(s(i,i),0)), v(dfac)*d(i)),
+		!             where jcnorm(i) is the 2-norm of the i-th column of the
+		!             current jacobian matrix and s is the s matrix of ref. 1.
+		!             if iv(dtype) = 1, then d(i) is set to d1(i) unless
+		!             d1(i) < jtol(i), in which case d(i) is set to
+		!                                max(d0(i), jtol(i)).
+		!             if iv(dtype) >= 2, then d is updated during the first
+		!             iteration as for iv(dtype) = 1 (after any initialization
+		!             due to v(dinit)) and is left unchanged thereafter.
+		!             default = 0.6.
+		! v(dinit).... v(38), if nonnegative, is the value to which the scale
+		!             vector d is initialized.  default = 0.
+		! v(dltfdc)... v(40) helps choose the step size used when computing the
+		!             covariance matrix when iv(covreq) = -1 or -2.  for
+		!             differences involving x(i), the step size first tried is
+		!                       v(dltfdc) * max(abs(x(i)), 1/d(i)),
+		!             where d is the current scale vector (see ref. 1).  (if
+		!             this step is too big the first time it is tried, i.e., if
+		!             calcr sets nf to 0, then -0.5 times this step is also
+		!             tried.)  default = machep**(1/3), where machep is the
+		!             unit roundoff.
+		! v(d0init)... v(37), if positive, is the value to which all components
+		!             of the d0 vector (see v(dfac)) are initialized.  if
+		!             v(dfac) = 0, then it is assumed that the caller has
+		!             stored d0 in v starting at v(p+87).  default = 1.0.
+		! v(jtinit)... v(39), if positive, is the value to which all components
+		!             of the jtol array (see v(dfac)) are initialized.  if
+		!             v(jtinit) = 0, then it is assumed that the caller has
+		!             stored jtol in v starting at v(87).  default = 10**-6.
+		! v(lmax0).... v(35) gives the maximum 2-norm allowed for d times the
+		!             very first step that nl2sol attempts.  it is also used
+		!             in testing for singular convergence -- if the function
+		!             reduction predicted for a step of length bounded by
+		!             v(lmax0) is at most v(rfctol) * abs(f0), where  f0  is
+		!             the function value at the start of the current iteration,
+		!             and if nl2sol does not return with iv(1) = 3, 4, 5, or 6,
+		!             then it returns with iv(1) = 7.    default = 100.
+		! v(rfctol)... v(32) is the relative function convergence tolerance.
+		!             if the current model predicts a maximum possible function
+		!             reduction (see v(nreduc)) of at most v(rfctol)*abs(f0) at
+		!             the start of the current iteration, where  f0  is the
+		!             then current function value, and if the last step attempt-
+		!             ed achieved no more than twice the predicted function
+		!             decrease, then nl2sol returns with iv(1) = 4 (or 5).
+		!             default = max(10**-10, machep**(2/3)), where machep is
+		!             the unit roundoff.
+		! v(tuner1)... v(26) helps decide when to check for false convergence
+		!             and to consider switching models.  this is done if the
+		!             actual function decrease from the current step is no more
+		!             than v(tuner1) times its predicted value.  default = 0.1.
+		! v(xctol).... v(33) is the x-convergence tolerance.  if a Newton step
+		!             (see v(nreduc)) is tried that has v(reldx) <= v(xctol)
+		!             and if this step yields at most twice the predicted func-
+		!             tion decrease, then nl2sol returns with iv(1) = 3 (or 5).
+		!             (see the description of v(reldx) below.)
+		!             default = machep**0.5, where machep is the unit roundoff.
+		! v(xftol).... v(34) is the false convergence tolerance.  if a step is
+		!             tried that gives no more than v(tuner1) times the predict-
+		!             ed function decrease and that has v(reldx) <= v(xftol),
+		!             and if nl2sol does not return with iv(1) = 3, 4, 5, 6, or
+		!             7, then it returns with iv(1) = 8.  (see the description
+		!             of v(reldx) below.)  default = 100*machep, where
+		!             machep is the unit roundoff.
+		! v(*)........ dfault supplies to v a number of tuning constants, with
+		!             which it should ordinarily be unnecessary to tinker.  see
+		!             version 2.2 of the nl2sol usage summary (which is an
+		!             appendix to ref. 1).
+		!
+		!  (selected) v output values
+		!
+		! v(dgnorm)... v(1) is the 2-norm of (d**-1)*g, where g is the most re-
+		!             cently computed gradient and d is the corresponding scale
+		!             vector.
+		! v(dstnrm)... v(2) is the 2-norm of d * step, where step is the most re-
+		!             cently computed step and d is the current scale vector.
+		! v(f)........ v(10) is the current function value (half the sum of
+		!             squares).
+		! v(f0)....... v(13) is the function value at the start of the current
+		!             iteration.
+		! v(nreduc)... v(6), if positive, is the maximum function reduction
+		!             possible according to the current model, i.e., the func-
+		!             tion reduction predicted for a Newton step (i.e.,
+		!             step = -h**-1 * g,  where  g = (j**t) * r  is the current
+		!             gradient and h is the current hessian approximation --
+		!             h = (j**t)*j  for the Gauss-Newton model and
+		!             h = (j**t)*j + s  for the augmented model).
+		!                  v(nreduc) = zero means h is not positive definite.
+		!                  if v(nreduc) is negative, then it is the negative of
+		!             the function reduction predicted for a step computed with
+		!             a step bound of v(lmax0) for use in testing for singular
+		!             convergence.
+		! v(preduc)... v(7) is the function reduction predicted (by the current
+		!             quadratic model) for the current step.  this (divided by
+		!             v(f0)) is used in testing for relative function
+		!             convergence.
+		! v(reldx).... v(17) is the scaled relative change in x caused by the
+		!             current step, computed as
+		!                  max(abs(d(i)*(x(i)-x0(i)), 1 <= i <= p) /
+		!                     max(d(i)*(abs(x(i))+abs(x0(i))), 1 <= i <= p),
+		!             where x = x0 + step.
+		*/
+		  
+		  final int d = 27;
+		  int d1;
+		  final int j = 33;
+		  int j1;
+		  int nf;
+		  final int nfcall = 6;
+		  final int nfgcal = 7;
+		  final int r = 50;
+		  int r1;
+		  boolean strted;
+		  final int toobig = 2;
+		  boolean do10 = false;
+		  boolean do30 = false;
+		  boolean do40 = false;
+		  double arr[];
+		  double arr2[];
+		  double arr2D[][];
+		  int i;
+		  int k;
+		  int m;
+
+		  d1 = 94 + 2*n + ( p * ( 3 * p + 31 ) ) / 2;
+		  iv[d] = d1;
+		  r1 = d1 + p;
+		  iv[r] = r1;
+		  j1 = r1 + n;
+		  iv[j] = j1;
+		  strted = true;
+		  
+	      if ( iv[1] != 0 && iv[1] != 12 ) {
+	    	  do40 = true;
+	      }
+	      else {
+	    	 do10 = true;
+	         strted = false;
+	         iv[nfcall] = 1;
+	         iv[nfgcal] = 1;
+	      }
+
+		  while (true) {
+	      
+		  if (do10) {
+              do10 = false;
+		      nf = iv[nfcall];
+              arr = new double[n+1];
+              if (testMode) {
+		          calcrTest(n, p, x, nf, arr, uiparm, urparm);
+              }
+              else {
+            	  calcr(n, p, x, nf, arr, uiparm, urparm);  
+              }
+              for (k = 1; k <= n; k++) {
+            	  v[r1+k-1] = arr[k];
+              }
+		      if ( strted ) {
+
+		        if ( nf <= 0 ) {
+		          iv[toobig] = 1;
+		        }
+
+		        do40 = true;
+
+		      } // if (strted)
+		      else if ( nf <= 0 ) {
+		        iv[1] = 13;
+		        arr = new double[p+1];
+		        for (k = 1; k <= p; k++) {
+		        	arr[k] = v[d1+k-1];
+		        }
+		        itsmry ( arr, iv, p, v, x );
+		        return;
+		      } // else if (nf <= 0)
+		      else {
+		    	  do30 = true;
+		      }
+		  } // if (do10)
+          if (do30) {
+              do30 = false;
+              arr2D = new double[n+1][p+1];
+              if (testMode) {
+		          calcjTest(n, p, x, iv[nfgcal], arr2D, uiparm, urparm);
+              }
+              else {
+            	  calcj(n, p, x, iv[nfgcal], arr2D, uiparm, urparm);  
+              }
+		      i = 0;
+		      for (k = 1; k <= p; k++) {
+            	  for (m = 1; m <= n; m++) {
+            	      v[j1+i] = arr2D[m][k];
+            	      i++;
+            	  }
+              }
+
+		      if ( iv[nfgcal] == 0 ) {
+		        iv[1] = 15;
+		        arr = new double[p+1];
+		        for (k = 1; k <= p; k++) {
+		        	arr[k] = v[d1+k-1];
+		        }
+		        itsmry ( arr, iv, p, v, x );
+		        return;
+		      }
+
+		      strted = true;
+		      do40 = true;
+          } // if (do30)
+
+		 if (do40) {
+             do40 = false;
+             arr = new double[p+1];
+             arr2 = new double[n+1];
+             arr2D = new double[n+1][p+1];
+             for (k = 1; k <= p; k++) {
+            	 arr[k] = v[d1+k-1];
+             }
+             i = 0;
+		      for (k = 1; k <= p; k++) {
+           	      for (m = 1; m <= n; m++) {
+           	          arr2D[m][k] = v[j1+i];
+           	          i++;
+           	      }
+             }
+		      for (k = 1; k <= n; k++) {
+		    	  arr2[k] = v[r1+k-1];
+		      }
+		     nl2itr ( arr, iv, arr2D, n, n, p, arr2, v, x );
+		     i = 0;
+		      for (k = 1; k <= p; k++) {
+           	      for (m = 1; m <= n; m++) {
+           	          v[j1+i] = arr2D[m][k];
+           	          i++;
+           	      }
+             } 
+		     for (k = 1; k <= n; k++) {
+		    	 v[r1+k-1] = arr2[k];
+		     }
+		  if ( iv[1] == 2 ) {
+		    do30 = true;
+		  }
+		  else if ( iv[1] < 2 ) {
+		    do10 = true;
+		  }
+		  else {
+		      return;
+		  }
+		  } // if (do40) 
+	    } // while (true)
+	} // nl2sol
+	
+	private void nl2sno() {
+		/***********************************************************************
+		!
+		!! NL2SNO is like NL2SOL, but uses a finite difference jacobian.
+		!
+		!  Discussion:
+		!
+		!    NL2SNO is like NL2SOL, but without calcj -- minimize nonlinear sum of
+		!    squares using finite-difference jacobian approximations
+		!
+		!    The parameters for NL2SNO are the same as those for NL2SOL
+		!    except that CALCJ is omitted.  Instead of calling
+		!    CALCJ to obtain the jacobian matrix of R at X, NL2SNO computes
+		!    an approximation to it by forward finite differences.  See
+		!    V(DLTFDJ) below.  NL2SNO uses function values only when comput-
+		!    the covariance matrix, rather than the functions and gradients
+		!    that NL2SOL may use.  To do so, NL2SNO sets IV(COVREQ) to -1 if
+		!    IV(COVPRT) = 1 with IV(COVREQ) = 0 and to minus its absolute
+		!    value otherwise.  Thus V(DELTA0) is never referenced and only
+		!    V(DLTFDC) matters.  See NL2SOL for a description of V(DLTFDC).
+		!
+		!    The number of extra calls on CALCR used in computing the jacobian
+		!    approximation are not included in the function evaluation
+		!    count IV(NFCALL) and are not otherwise reported.
+		!
+		!  Modified:
+		!
+		!    04 April 2006
+		!
+		!  Author:
+		!
+		!    David Gay
+		!
+		!  Reference:
+		!
+		!    John Dennis, David Gay, Roy Welsch,
+		!    An Adaptive Nonlinear Least Squares Algorithm,
+		!    ACM Transactions on Mathematical Software,
+		!    Volume 7, Number 3, 1981.
+		!
+		!  Parameters:
+		!
+		!    V(DLTFDJ) helps choose the step size used when computing the
+		!    finite-difference jacobian matrix.  For differences involving X(I),
+		!    the step size first tried is
+		!      V(DLTFDJ) * max ( abs ( X(I) ), 1/D(I)),
+		!    where D is the current scale vector; see reference 1.  If this step is 
+		!    too big, so that CALCR sets NF to 0, then smaller steps are tried 
+		!    until the step size is shrunk below 1000 * MACHEP, where MACHEP 
+		!    is the unit roundoff.  Default = sqrt ( MACHEP ).
+		*/
+		  
+		  final int covprt = 14;
+		  final int covreq = 15;
+		  final int d = 27;
+		  int d1;
+		  final int dinit = 38;
+		  int dk;
+		  final int dltfdj = 36;
+		  final int dtype = 16;
+		  double h;
+		  final double hfac = 1000.0;
+		  int i;
+		  final int j = 33;
+		  int j1;
+		  int j1k;
+		  int k;
+		  int nf;
+		  final int nfcall = 6;
+		  final int nfgcal = 7;
+		  final int r = 50;
+		  int r1;
+		  int rn;
+		  boolean strted;
+		  final int toobig = 2;
+		  double xk;
+		  boolean do10 = false;
+		  boolean do30 = false;
+		  boolean do80 = false;
+		  int m;
+		  double arr[];
+
+		  d1 = 94 + 2 * n + ( p * ( 3 * p + 31 ) ) / 2;
+		  iv[d] = d1;
+		  r1 = d1 + p;
+		  iv[r] = r1;
+		  j1 = r1 + n;
+		  iv[j] = j1;
+		  rn = j1 - 1;
+
+		  if ( iv[1] == 0 ) {
+		    dfault ( iv, v );
+		  }
+
+		  iv[covreq] = -Math.abs ( iv[covreq] );
+		  if ( iv[covprt] != 0 && iv[covreq] == 0 ) {
+		    iv[covreq] = -1;
+		  }
+
+		  strted = true;
+
+		  if (iv[1] != 12) {
+			  do80 = true;
+		  }
+		  else {
+              do10 = true;
+			  strted = false;
+			  iv[nfcall] = 1;
+			  iv[nfgcal] = 1;
+			//
+			//  Initialize scale vector D to ones for computing initial jacobian.
+			//
+			  if ( 0 < iv[dtype] ) {
+				for (m = 0; m < p; m++) {
+			        v[d1+m] = 1.0;
+				}
+			  } // if (0 < iv[dtype]
+		  } // else
+
+		  /*loop1: while (true) {
+		  if (do10) {
+          do10 = false;
+		  nf = iv[nfcall];
+          arr = new double[n+1];
+          if (testMode) {
+		      calcrTest ( n, p, x, nf, arr, uiparm, urparm);
+          }
+          else {
+        	  calcr ( n, p, x, nf, arr, uiparm, urparm);  
+          }
+		  for (m = 1; m <= n; m++) {
+			  v[r1+m-1] = arr[m];
+		  }
+
+		  if ( strted ) {
+
+		    if ( nf <= 0 ) {
+		      iv[toobig] = 1;
+		    }
+
+		    do80 = true;
+
+		  } // if (strted)
+		  else if ( nf <= 0 ) {
+		    iv[1] = 13;
+		    arr = new double[p+1];
+		    for (m = 1; m <= p; m++) {
+		    	arr[m] = v[d1+m-1];
+		    }
+		    itsmry ( arr, iv, p, v, x );
+		    return;
+		  }
+		  else {
+			  do30 = true;
+		  }
+		  } // if (do10)
+		  if (do30) {
+			  do30 = false;
+		//
+		//  Compute finite-difference jacobian.
+		//
+
+		  j1k = j1;
+		  dk = d1;
+
+		  for (k = 1; k <= p; k++) {
+
+		    xk = x[k];
+		    h = v[dltfdj] * Math.max ( Math.abs ( xk ), 1.0 / v[dk] );
+		    dk = dk + 1;
+
+		      x[k] = xk + h;
+		      nf = iv[nfgcal];
+		      arr = new double[n+1];
+		      calcr ( n, p, x, nf, arr, uiparm, urparm);
+		      for (m = 1; m <= n; m++) {
+		    	  v[j1k+m-1] = arr[m];
+		      }
+
+		      if (nf <= 0) {
+
+		      if ( hlim_nl2sno == 0.0 ) {
+		        hlim_nl2sno = hfac * epsilon;
+		      }
+
+		      h = -0.5E+00 * h
+
+		      if ( abs ( h ) < hlim ) then
+		        iv(1) = 15
+		        call itsmry ( v(d1), iv, p, v, x )
+		        return
+		      end if
+		      } // if (nf <= 0)
+
+		    x(k) = xk
+
+		    do i = r1, rn
+		      v(j1k) = ( v(j1k) - v(i) ) / h
+		      j1k = j1k + 1
+		    end do
+
+		  } // for (k = 1; k <= p; k++)
+
+		  strted = .true.
+		  } // if (do30)
+
+		80 continue
+
+		  call nl2itr ( v(d1), iv, v(j1), n, n, p, v(r1), v, x )
+
+		  if ( iv(1) < 2 ) then
+		    go to 10
+		  else if ( iv(1) == 2 ) then
+		    go to 30
+		  end if
+
+		  return
+	   } // loop1: while (true)*/
+	} // nl2sno
 	
 	private void assess(double d[], int iv[], int p, double step[], double stlstg[], 
 			            double v[], double x[], double x0[]) {
@@ -782,6 +1654,38 @@ public abstract class NL2sol {
 	    	} // if (do360)
 	    } // while (true)		
 	} // assess
+	
+	// meqn, input, the number of functions
+	// nvar, input, the number of variables
+	// x, input of dimension nvar, the current value of the variables
+	// nf, input, the number of times the residual routine has been called so far.
+	// jac, output of dimension [meqn][nvar], the jacobian matrix. jac[i][j] is
+	//      the derivative of function i with repsect to variable j.
+	// uiparm, input, an integer user array
+	// urparm, input, a double user array
+	public abstract void calcj(int meqn, int nvar, double x[], int nf, double jac[][], 
+			                   int uiparm[], double urparm[]);
+	
+	public void calcjTest(int meqn, int nvar, double x[], int nf, double jac[][],
+			              int uiparm[], double urparm[]) {
+		
+	}
+	
+	// meqn, input, the number of functions
+	// nvar, input, the number of variables
+	// x, input of dimension nvar, the current value of the variables
+	// nf, input, the number of times the residual routine has been called so far.
+	// r, output of dimension meqn, the residual vector, that is, the value of the
+	//    functions for the given input value of the variables.
+	// uiparm, input, an integer user array
+	// urparm, input, a double user array
+	public abstract void calcr(int meqn, int nvar, double x[], int nf, double r[], 
+			                   int uiparm[], double urparm[]);
+	
+	public void calcrTest(int meqn, int nvar, double x[], int nf, double r[],
+			              int uiparm[], double urparm[]) {
+		
+	}
 	
 	private void covclc ( int covirc[], double d[], int iv[], double j[][], int n, int nn, int p, 
 			              double r[], double v[], double x[] ) {
@@ -4327,7 +5231,7 @@ public abstract class NL2sol {
 	!
 	!  Parameters:
 	!
-	!    Input, real D(N), the scale vector.
+	!    Input, real D(p), the scale vector.
 	!
 	!    Input/output, integer IV(*), the NL2SOL integer parameter array.
 	!
@@ -4358,9 +5262,9 @@ public abstract class NL2sol {
 	  int ipivi;
 	  int ipivk;
 	  int ipk;
-	  int k;
+	  int k = 0;
 	  int km1;
-	  int l;
+	  int l = 0;
 	  int lky1;
 	  int lmat1;
 	  int lstgst;
@@ -4375,9 +5279,9 @@ public abstract class NL2sol {
 	  int s1;
 	  int smh;
 	  int sstep;
-	  int step1;
+	  int step1 = 0;
 	  boolean stopx;
-	  int stpmod;
+	  int stpmod = 0;
 	  final int stppar = 5;
 	  double sttsst;
 	  double t;
@@ -4498,6 +5402,8 @@ public abstract class NL2sol {
 	double arr3[];
 	double arr4[];
 	double arr5[];
+	double arr6[];
+	double arr7[];
 	int iarr[];
 	int iarr2[];
 	int iarr3[];
@@ -4738,7 +5644,7 @@ public abstract class NL2sol {
 	//
 	//  Print iteration summary, check iteration limit.
     //
-	/*loop1: while (true) {
+	loop1: while (true) {
      if (do150) {
 	     do150 = false;
 
@@ -5390,176 +6296,270 @@ public abstract class NL2sol {
 	        if ( stpmod != 2 ) {
 
 	          rd1 = iv[rd];
-	          rptmul(2, iv(ipivot), j, nn, p, v(rd1), &
-	            v(step1), v(temp1), v(temp2))
+	          iarr = new int[p+1];
+	          arr = new double[p+1];
+	          arr2 = new double[p+1];
+	          arr3 = new double[p+1];
+	          arr4 = new double[p+1];
+	          for (ii = 1; ii <= p; ii++) {
+	        	  iarr[ii] = iv[ipivot+ii-1];
+	        	  arr[ii] = v[rd1+ii-1];
+	        	  arr2[ii] = v[step1+ii-1];
+	          }
+	          rptmul(2, iarr, j, nn, p, arr, arr2, arr3, arr4);
+	          for (ii = 1; ii <= p; ii++) {
+	        	  v[temp1+ii-1] = arr3[ii];
+	          }
 	        } // if (stpmod != 2)
-	!
-	!  STEP computed using augmented model.
-	!
-	        else
+	//
+	//  STEP computed using augmented model.
+	//
+	        else { // stpmod == 2
 
-	          h1 = iv(h)
-	          k = temp2
+	          h1 = iv[h];
+	          k = temp2;
 
-	          do i = 1, p
-	            v(k) = d(i) * v(step1)
-	            k = k + 1
-	            step1 = step1 + 1
-	          end do
+	          for  (i = 1; i <= p; i++) {
+	            v[k] = d[i] * v[step1];
+	            k = k + 1;
+	            step1 = step1 + 1;
+	          } // for (i = 1; i <= p; i++)
 
-	          call slvmul(p, v(temp1), v(h1), v(temp2))
+	          arr = new double[p+1];
+	          arr2 = new double[p*(p+1)/2 + 1];
+	          arr3 = new double[p+1];
+	          for (ii = 1; ii <= p*(p+1)/2; ii++) {
+	        	  arr2[ii] = v[h1+ii-1];
+	          }
+	          slvmul(p, arr, arr2, arr3);
+	          for (ii = 1; ii <= p; ii++) {
+	        	  v[temp1+ii-1] = arr[ii];
+	        	  v[temp2+ii-1] = arr3[ii];
+	          }
 
-	          do i = 1, p
-	            v(temp1) = d(i) * v(temp1)
-	            temp1 = temp1 + 1
-	          end do
+	          for (i = 1; i <= p; i++) {
+	            v[temp1] = d[i] * v[temp1];
+	            temp1 = temp1 + 1;
+	          } // for (i = 1; i <= p; i++)
 
-	        end if
+	        } // else stpmod == 2
 
 	      } // if (iv[irc] == 3)
+	      do560 = true;
 	 } // if (do510)
-	!
-	!  Save old gradient and compute new one.
-	!
-	 560  continue
+	 if (do560) {
+		 do560 = false;
+	//
+	//  Save old gradient and compute new one.
+	//
 
-	      iv(ngcall) = iv(ngcall) + 1
-	      g1 = iv(g)
-	      g01 = iv(w)
-	      v(g01:g01+p-1) = v(g1:g1+p-1)
-	      iv(1) = 2
-	      return
-	!
-	!  Initializations -- g0 = g - g0, etc.
-	!
-	 570  continue
+	      iv[ngcall] = iv[ngcall] + 1;
+	      g1 = iv[g];
+	      g01 = iv[w];
+	      for (ii = 0; ii < p; ii++) {
+	          v[g01+ii] = v[g1+ii];
+	      }
+	      iv[1] = 2;
+	      return;
+	 } // if (do560)
+	 if (do570) {
+		 do570 = false;
+	//
+	//  Initializations -- g0 = g - g0, etc.
+	//
 
-	      g01 = iv(w)
-	      g1 = iv(g)
-	      v(g01:g01+p-1) = - v(g01:g01+p-1) + v(g1:g1+p-1)
-	      step1 = iv(step)
-	      temp1 = iv(stlstg)
-	      temp2 = iv(x0)
-	!
-	!  Set V(RADFAC) by gradient tests.
-	!
-	!  Set TEMP1 = d**-1 * (hessian * STEP  +  ( G(x0) - G(x) ) ).
-	!
-	      if ( iv(irc) == 3 ) then
+	      g01 = iv[w];
+	      g1 = iv[g];
+	      for (ii = 0; ii < p; ii++) {
+	          v[g01+ii] = - v[g01+ii] + v[g1+ii];
+	      }
+	      step1 = iv[step];
+	      temp1 = iv[stlstg];
+	      temp2 = iv[x0];
+	//
+	//  Set V(RADFAC) by gradient tests.
+	//
+	//  Set TEMP1 = d**-1 * (hessian * STEP  +  ( G(x0) - G(x) ) ).
+	//
+	      if ( iv[irc] == 3 ) {
 
-	         k = temp1
-	         l = g01
-	         do i = 1, p
-	           v(k) = (v(k) - v(l)) / d(i)
-	           k = k + 1
-	           l = l + 1
-	         end do
-	!
-	!  Do gradient tests.
-	!
-	         if ( v2norm(p, v(temp1)) <= v(dgnorm) * v(tuner4) .or. &
-	           dotprd(p, v(g1), v(step1)) < v(gtstep) * v(tuner5) ) then
-	           v(radfac) = v(incfac)
-	         end if
+	         k = temp1;
+	         l = g01;
+	         for (i = 1; i <= p; i++) {
+	           v[k] = (v[k] - v[l]) / d[i];
+	           k = k + 1;
+	           l = l + 1;
+	         } // for (i = 1; i <= p; i++)
+	//
+	//  Do gradient tests.
+	//
+	         arr = new double[p+1];
+	         arr2 = new double[p+1];
+	         arr3 = new double[p+1];
+	         for (ii = 1; ii <= p; ii++) {
+	        	 arr[ii] = v[temp1+ii-1];
+	        	 arr2[ii] = v[g1+ii-1];
+	        	 arr3[ii] = v[step1+ii-1];
+	         }
+	         if ( v2norm(p, arr) <= v[dgnorm] * v[tuner4] ||
+	           dotprd(p, arr2, arr3) < v[gtstep] * v[tuner5] ) {
+	           v[radfac] = v[incfac];
+	         }
 
-	      end if
-	!
-	!  Finish computing LKY = ( J(X) - J(X0) )' * R.
-	!
-	!  Currently LKY = J(X0)' * R.
-	!
-	      lky1 = iv(lky)
-	      v(lky1:lky1+p-1) = - v(lky1:lky1+p-1) + v(g1:g1+p-1)
-	!
-	!  Determine sizing factor V(SIZE).
-	!
-	!  Set TEMP1 = S * STEP.
-	!
-	      s1 = iv(s)
-	      call slvmul(p, v(temp1), v(s1), v(step1))
+	      } // if (iv[irc] == 3)
+	//
+	//  Finish computing LKY = ( J(X) - J(X0) )' * R.
+	//
+	//  Currently LKY = J(X0)' * R.
+	//
+	      lky1 = iv[lky];
+	      for (ii = 0; ii < p; ii++) {
+	          v[lky1+ii] = - v[lky1+ii] + v[g1+ii];
+	      }
+	//
+	//  Determine sizing factor V(SIZE).
+	//
+	//  Set TEMP1 = S * STEP.
+	//
+	      s1 = iv[s];
+	      arr = new double[p+1];
+	      arr2 = new double[p*(p+1)/2 + 1];
+	      arr3 = new double[p+1];
+	      for (ii = 1; ii <= p*(p+1)/2; ii++) {
+	    	  arr2[ii] = v[s1+ii-1];
+	      }
+	      slvmul(p, arr, arr2, arr3);
+	      for (ii = 1; ii <= p; ii++) {
+	    	  v[temp1+ii-1] = arr[ii];
+	    	  v[step1+ii-1] = arr3[ii];
+	      }
 
-	      t1 = abs(dotprd(p, v(step1), v(temp1)))
-	      t = abs(dotprd(p, v(step1), v(lky1)))
-	      v(size) = 1.0E+00
+	      t1 = Math.abs(dotprd(p, arr3, arr));
+	      for (ii = 1; ii <= p; ii++) {
+	    	  arr[ii] = v[lky1+ii-1];
+	      }
+	      t = Math.abs(dotprd(p, arr3, arr));
+	      v[size] = 1.0;
 
-	      if ( t < t1 ) then
-	        v(size) = t / t1
-	      end if
-	!
-	!  Update S.
-	!
-	      call slupdt(v(s1), v(cosmin), p, v(size), v(step1), v(temp1), &
-	                  v(temp2), v(g01), v(wscale), v(lky1))
-	      iv(1) = 2
-	      go to 150
+	      if ( t < t1 ) {
+	        v[size] = t / t1;
+	      }
+	//
+	//  Update S.
+	//
+	      arr = new double[p*(p+1)/2 + 1];
+	      for (ii = 1;  ii <= p*(p+1)/2; ii++) {
+	    	  arr[ii] = v[s1+ii-1];
+	      }
+	      arr2 = new double[p+1];
+	      arr3 = new double[p+1];
+	      arr4 = new double[p+1];
+	      arr5 = new double[p+1];
+	      arr6 = new double[1];
+	      arr7 = new double[p+1];
+	      for (ii = 1; ii <= p; ii++) {
+	    	  arr2[ii] = v[step1 + ii - 1];
+	    	  arr3[ii] = v[temp1 + ii - 1];
+	    	  arr4[ii] = v[temp2 + ii - 1];
+	    	  arr5[ii] = v[g01 +ii - 1];
+	    	  arr7[ii] = v[lky1+ii-1];
+	      }
+	      arr6[0] = v[wscale];
+	      slupdt(arr, v[cosmin], p, v[size], arr2, arr3,
+	             arr4, arr5, arr6, arr7);
+	      for (ii = 1; ii <= p*(p+1)/2; ii++) {
+	    	  v[s1+ii-1] = arr[ii];
+	      }
+	      for (ii = 1; ii <= p; ii++) {
+	    	  v[step1+ii-1] = arr2[ii];
+	    	  v[temp1+ii-1] = arr3[ii];
+	    	  v[temp2+ii-1] = arr4[ii];
+	      }
+	      v[wscale] = arr6[0];
+	      iv[1] = 2;
+	      do150 = true;
+	 } // if (do570)
 	} // loop1: while (true)
-	!
-	!  Bad parameters to ASSESS.
-	!
-	 640  iv(1) = 14
-	      call itsmry ( d, iv, p, v, x )
-	      return
-	!
-	!  Convergence obtained.  Compute covariance matrix if desired.
-	!
-	 700  continue
+	//
+	//  Bad parameters to ASSESS.
+	//
+	if (do640) {
+	      iv[1] = 14;
+	      itsmry ( d, iv, p, v, x );
+	      return;
+	} // if (do640)
+	if (do700) {
+	//
+	//  Convergence obtained.  Compute covariance matrix if desired.
+	//
 
-	      if ( ( iv(covreq) == 0 .and. iv(covprt) == 0 ) .or. &
-	        iv(covmat) /= 0 .or. &
-	        iv(cnvcod) >= 7 ) then
-	        iv(1) = iv(cnvcod)
-	        iv(cnvcod) = 0
-	        call itsmry(d, iv, p, v, x)
-	        return
-	      end if
+	      if ( ( iv[covreq] == 0 && iv[covprt] == 0 ) || 
+	        iv[covmat] != 0 || iv[cnvcod] >= 7 ) {
+	            iv[1] = iv[cnvcod];
+	            iv[cnvcod] = 0;
+	            itsmry(d, iv, p, v, x);
+	            return;
+	      } // if
 
-	      iv(mode) = 0
+	      iv[mode] = 0;
+	      do710 = true;
+	} // if (do700)
      loop2: while (true) {
-	 710  continue
+    	 if (do710) {
+    		 do710 = false;
+          iarr = new int[1];
+          iarr[0] = i;
+	      covclc(iarr, d, iv, j, n, nn, p, r, v, x);
+	      i = iarr[0];
 
-	      call covclc(i, d, iv, j, n, nn, p, r, v, x)
+	      if ( i == 3 ) {
 
-	      if ( i == 3 ) then
+	        iv[ngcov] = iv[ngcov] + 1;
+	        iv[ngcall] = iv[ngcall] + 1;
+	        iv[1] = 2;
 
-	        iv(ngcov) = iv(ngcov) + 1
-	        iv(ngcall) = iv(ngcall) + 1
-	        iv(1) = 2
+	      } // if (i == 3);
+	      else if ( i == 4 ) {
 
-	      else if ( i == 4 ) then
+	        if ( iv[niter] == 0 ) {
+	          iv[mode] = -1;
+	        }
+	        else {
+	          iv[mode] = 0;
+	        }
 
-	        if ( iv(niter) == 0 ) then
-	          iv(mode) = -1
-	        else
-	          iv(mode) = 0
-	        end if
+	        iv[1] = iv[cnvcod];
+	        iv[cnvcod] = 0;
 
-	        iv(1) = iv(cnvcod)
-	        iv(cnvcod) = 0
+	        itsmry(d, iv, p, v, x);
+	      } // else if (i == 4) {
+	      else { 
 
-	        call itsmry(d, iv, p, v, x)
+	        iv[nfcov] = iv[nfcov] + 1;
+	        iv[nfcall] = iv[nfcall] + 1;
+	        iv[restor] = i;
+	        iv[1] = 1;
 
-	      else 
+	      } // else
 
-	        iv(nfcov) = iv(nfcov) + 1
-	        iv(nfcall) = iv(nfcall) + 1
-	        iv(restor) = i
-	        iv(1) = 1
+	      return;
+    	 } // if (do710)
+         if (do730) {
+	        do730 = false;
 
-	      end if
-
-	      return
-
-	 730  continue
-
-	  if ( iv(restor) == 1 .or. iv(toobig) /= 0 ) then
-	    go to 710
-	  end if
+	         if ( iv[restor] == 1 || iv[toobig] != 0 ) {
+	          do710 = true;
+	         }
+	         else {
+	        	 break loop2;
+	         }
+         } // if (do730)
      } // loop2: while (true)
 
-	  iv(nfgcal) = iv(nfcall)
-	  iv(ngcov) = iv(ngcov) + 1
-	  iv(ngcall) = iv(ngcall) + 1
-	  iv(1) = 2*/
+	  iv[nfgcal] = iv[nfcall];
+	  iv[ngcov] = iv[ngcov] + 1;
+	  iv[ngcall] = iv[ngcall] + 1;
+	  iv[1] = 2;
 
 	  return;
 	} // private void nl2itr
