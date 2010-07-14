@@ -390,7 +390,7 @@ public class ViewJFrameRegisteredImages extends JFrame
                 image.disposeLocal();
                 
                 if(deleteFrame && frame != null) {
-                	frame.dispose();
+                	frame.close();
                 }
             }
             

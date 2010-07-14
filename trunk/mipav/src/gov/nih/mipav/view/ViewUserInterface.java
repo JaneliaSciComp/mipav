@@ -387,8 +387,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @param event Event that triggered this function.
      */
     public void actionPerformed(final ActionEvent event) {
+    	System.out.println("aa");
         final Object source = event.getSource();
         final String command = event.getActionCommand();
+        
+        System.out.println(command);
 
         // System.err.println("COMMAND: " + command);
         if ( (command != null) && isShorcutRecording()) {
@@ -451,6 +454,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             windowClosing(null);
         } else if (command.equals("OpenNewImage")) {
             openImageFrame();
+        } else if(command.equals("closeAllImages")) {
+        	System.out.println("here");
+        	closeAllImages();
         } else if (command.equals("BrowseImages")) {
             buildTreeDialog();
         } else if (command.equals("BrowseDICOM")) {
@@ -1865,6 +1871,64 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         memoryFrame = new ViewJFrameMemory();
     }
+    
+    
+    /**
+     * this method closes all registered images
+     */
+    public void closeAllImages() {
+
+    	Enumeration e = ViewUserInterface.getReference().getRegisteredImageNames();
+
+         while (e.hasMoreElements()) {
+             deleteItem((String)e.nextElement(),true);
+         }
+         
+         
+    	
+    }
+    
+    
+    
+    /**
+     * Deletes the item specified by name.  If false, only the model image is deleted
+     * @param name the object to delete
+     * @param deleteFrame whether the frame should be deleted along with the image
+     */
+    private void deleteItem(String name, boolean deleteFrame) {
+    	// System.out.println("selected name = " + selectedName);
+        if (name == null) {
+            return; // log nothing.
+        }
+
+        try {
+            ModelImage image = ViewUserInterface.getReference().getRegisteredImageByName(name);
+            ViewJFrameImage frame = ViewUserInterface.getReference().getFrameContainingImage(image);
+
+            // An image that has a frame is only deleted when deleteFrame == true
+            if (image != null && 
+            		((deleteFrame && frame != null) || (!deleteFrame && frame == null))) {
+                image.disposeLocal();
+                
+                if(deleteFrame && frame != null) {
+                	frame.close();
+                }
+            }
+            
+            Runtime.getRuntime().gc();
+            Runtime.getRuntime().runFinalization();
+        } catch (IllegalArgumentException iae) {
+
+            // MipavUtil.displayError("There was a problem with the " +
+            // "supplied name.\n" );
+            Preferences.debug("Illegal Argument Exception in " +
+                              "ViewJFrameRegisteredImages when clicking on Delete. " +
+                              "Somehow the Image list sent an incorrect name to " +
+                              "the image image hashtable.  \n" + iae.getMessage() + "\n", 1);
+            // System.out.println("Bad argument.");
+        }
+    }
+    
 
     /**
      * This method opens an image and puts it into a frame.
