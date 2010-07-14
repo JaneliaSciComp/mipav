@@ -5286,9 +5286,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
                     m_kWinLevel.updateWinLevel(fX, fY, !winLevelSet, m_kPatientSlice.getActiveLookupTable(),
                             imageActive);
-
+                    setCursor(MipavUtil.winLevelCursor);
                     if ( !winLevelSet) {
-                        setCursor(MipavUtil.winLevelCursor);
+                        //setCursor(MipavUtil.winLevelCursor);
                         winLevelSet = true;
                     }
                 } // if ((mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0)
