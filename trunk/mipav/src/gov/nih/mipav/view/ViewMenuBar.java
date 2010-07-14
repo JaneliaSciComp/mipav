@@ -455,6 +455,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Image sequence", "openImgSeq", 0, "open.gif", true),
                         menuBuilder.buildMenuItem("Create blank image", "CreateBlankImage", 0, "open.gif", true),
                         menuBuilder.buildMenuItem("Image browser", "BrowseImages", 0, null, true),}),
+                menuBuilder.buildMenuItem("Close all images", "closeAllImages", 0, null, true),       
                 ViewMenuBar.separator, loadMenu, extractImageBItem, closeImageBItem, ViewMenuBar.separator,
                 saveImageItem, saveImageAsItem, captureMenu, ViewMenuBar.separator, dicomMenu, ViewMenuBar.separator,
                 menuBuilder.buildQuickList(), ViewMenuBar.separator,

@@ -372,6 +372,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.openLastImage(number);
         } else if (command.equals("OpenNewImage")) {
             userInterface.openImageFrame();
+        } else if(command.equals("closeAllImages")) {
+        	userInterface.closeAllImages();
         } else if (command.equals("CreateBlankImage")) {
             userInterface.createBlankImage(null);
         } else if (command.equals("BrowseImages")) {
@@ -2352,7 +2354,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * Closes window and disposes of frame and component.
      */
     public void close() {
-
         if (Preferences.is(Preferences.PREF_CLOSE_FRAME_CHECK)) {
             final int reply = JOptionPane.showConfirmDialog(this, "Do you really want to close this frame?",
                     "Close Frame", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
