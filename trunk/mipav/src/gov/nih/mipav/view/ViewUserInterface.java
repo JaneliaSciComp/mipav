@@ -387,11 +387,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @param event Event that triggered this function.
      */
     public void actionPerformed(final ActionEvent event) {
-    	System.out.println("aa");
         final Object source = event.getSource();
         final String command = event.getActionCommand();
-        
-        System.out.println(command);
 
         // System.err.println("COMMAND: " + command);
         if ( (command != null) && isShorcutRecording()) {
@@ -455,7 +452,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         } else if (command.equals("OpenNewImage")) {
             openImageFrame();
         } else if(command.equals("closeAllImages")) {
-        	System.out.println("here");
         	closeAllImages();
         } else if (command.equals("BrowseImages")) {
             buildTreeDialog();
