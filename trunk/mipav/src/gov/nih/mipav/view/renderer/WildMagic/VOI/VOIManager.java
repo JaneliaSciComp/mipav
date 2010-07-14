@@ -1425,6 +1425,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 {
                     addPopup( m_kCurrentVOI );
                 }
+          
             }
         }
     }
@@ -3991,15 +3992,20 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
         // build VOI intensity popup menu
         JPopupMenu popupMenu = new JPopupMenu();
-        JMenuItem menuItem = new JMenuItem("Show intensity graph");
-        popupMenu.add(menuItem);
-        menuItem.addActionListener(this);
-        menuItem.setActionCommand(SHOW_INTENSITY_GRAPH);
-        menuItem = new JMenuItem("Delete this intensity line");
+      
+        JMenuItem menuItem = new JMenuItem("Delete this intensity line");
         popupMenu.add(menuItem);
         menuItem.addActionListener(this);
         menuItem.setActionCommand(DELETE_INTENSITY_LINE);
-        popupMenu.show(m_kComponent, mouseEvent.getX(), mouseEvent.getY());
+        menuItem = new JMenuItem("Show intensity graph");
+        popupMenu.add(menuItem);
+        menuItem.addActionListener(this);
+        menuItem.setActionCommand(SHOW_INTENSITY_GRAPH);
+        int x = mouseEvent.getX();
+        int y = mouseEvent.getY();
+        popupMenu.show(m_kImageActive.getParentFrame(), x, y);
+
+
     }
 
 
