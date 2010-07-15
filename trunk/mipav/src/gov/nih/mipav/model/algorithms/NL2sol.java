@@ -44,15 +44,590 @@ private boolean testMode = false;
 	private int n;
 	private int p;
 	private double x[];
+	private double xInit[];
 	private int iv[];
 	private double v[];
 	private boolean useAnalyticJacobian;
 	private int uiparm[];
 	private double urparm[];
+	private boolean detailedSummaryPrinting = false;
+	private final int prob_max = 60;
+	private String irc[];
+	private int is[][];
+	private String name[];
+	private int nout;
+	private int nprob;
+	private double rs[][];
+	private int nex; // the index of the test problem
 	
 	public NL2sol() {
+		/* MAIN is the main program for NL2SOL_PRB2.
+		!
+		!  Discussion:
+		!
+		!    NL2SOL_PRB2 runs NL2SOL on various test problems.
+		!
+		!    This main program calls NLTEST to run NL2SOL, the nonlinear
+		!    least-squares solver, on various test problems.
+		!
+		!    The test problems used are from the references.  Some additional 
+		!    test problems were suggested by Jorge More.  Calls passing 
+		!    these problems to NLTEST have been commented out (since 
+		!    there are enough other problems), but not removed, since 
+		!    they may be of interest to other researchers.
+		!
+		!  Modified:
+		!
+		!    02 April 2006
+		!
+		!  Reference:
+		!
+		!    K M Brown,
+		!    A Quadratically Convergent Newton-like Method Based upon 
+		!    Gaussian Elimination,
+		!    SIAM Journal on Numerical Analysis,
+		!    Volume 6, pages 560-569, 1969.
+		!
+		!    John Dennis, David Gay and Roy Welsch,
+		!    Algorithm 573: An Adaptive Nonlinear Least-squares Algorithm,
+		!    ACM Transactions on Mathematical Software,
+		!    Volume 7, Number 3, pages 348-368, 1981.
+		!
+		!    Philip Gill and Walter Murray,
+		!    Algorithms for the Solution of the Non-linear Least-squares Problem, 
+		!    SIAM Journal on Numerical Analysis,
+		!    Volume 15, Number 5, pages 977-991, 1978.
+		!
+		!    R R Meyer, 
+		!    Theoretical and Computational Aspects of Nonlinear Regression, 
+		!    in Nonlinear Programming,
+		!    edited by J B Rosen, O L Mangasarian, and K Ritter,
+		!    pages 465-486,
+		!    Academic Press, New York, 1970.
+		*/
+		int i;
+		irc = new String[prob_max+1];
+		is = new int[7][prob_max+1];
+		iv = new int[101];
+		int j;
+		String jtyp[] = new String[3];
+		int k;
+		int mxfcsv;
+		int mxitsv;
+		name = new String[prob_max+1];
+		int pu;
+		rs = new double[6][prob_max+1];
+		boolean rstart;
+		v = new double[5001];
+		String version;
+		int xscal1;
+		int xscal2;
+	    Preferences.debug("Test the NL2sol package\n");
+	    timestamp();
 	    testMode = true;
-	}
+	    rstart = false;
+	    jtyp[1] = " ";
+	    jtyp[2] = "*";
+	    version = "NL2SOL version 2.2";
+	    // Assign default values to iv and v
+	    dfault(iv, v);
+	    nout = 6;
+	    if (detailedSummaryPrinting) {
+	    	iv[21] = 1;
+	    }
+	    else {
+	    	iv[21] = 0;
+	    }
+	    pu = iv[21];
+	    nprob = 0;
+	    
+	    // Rosenbrock
+	    n = 2;
+	    p = 2;
+	    nex = 1;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 3;
+	    nltest("Rosenbrock",rstart,xscal1,xscal2);
+	} // NL2sol
+	
+	private void nltest ( String title, boolean rstart, int xscal1, int xscal2 ) {
+
+	/*****************************************************************************80
+	!
+	!! NLTEST calls NL2SOL for a given problem.
+	!
+	!  Modified:
+	!
+	!    28 March 2006
+	!
+	!  Parameters:
+	!
+	!    Input, integer N, the number of equations or functions.
+	!
+	!    Input, integer P, the number of variables.
+	!
+	!    Input, integer NEX, the index of the problem.
+	!
+	!    Input, String TITLE, the title of the problem.
+	!
+	!    Input, logical RSTART, ?
+	!
+	!    Input, integer XSCAL1, XSCAL2, control the number of runs,
+	!    and the scaling used.  The problem will be solved for 
+	!    IRUN = XSCAL1 to XSCAL2, and the scaling used will be 10**(IRUN-1).
+	*/
+
+	  final int p_max = 40;
+	  final int prob_max = 60;
+
+	  int i;
+	  int irun;
+	  int jac;
+	  final int prunit = 21;
+	  int pu;
+	  String rc[] = new String[11];
+	  final int reldx = 17;
+	  boolean rstrt;
+	  double t;
+	  uiparm = new int[2];
+	  urparm = new double[2];
+	  String version;
+	  x = new double[p_max+1];
+	  double x0scal = 1.0;
+
+	  String alg[] = new String[3];
+	  String jtyp[] = new String[3];
+
+	  final int f = 10;
+	  final int f0 = 13;
+	  final int nfcall = 6;
+	  final int nfcov = 40;
+	  final int ngcall = 30;
+	  final int ngcov = 41;
+	  final int niter = 31;
+	  final int nreduc = 6;
+	  final int preduc = 7;
+
+	  alg[1] = "ol";
+	  alg[2] = "no";
+	  if (useAnalyticJacobian) {
+		  jac = 1;
+	  }
+	  else {
+		  jac = 2;
+	  }
+	  jtyp[1] = " ";
+	  jtyp[2] = "*";
+	  rc[1] = ".";
+	  rc[2] = "+";
+	  rc[3] = "x";
+	  rc[4] = "r";
+	  rc[5] = "b";
+	  rc[6] = "a";
+	  rc[7] = "s";
+	  rc[8] = "f";
+	  rc[9] = "e";
+	  rc[10] = "i";
+
+	  uiparm[1] = nex;
+	  rstrt = rstart;
+	  version = "NL2SOL version 2.2";
+
+	  if ( ! rstrt ) {
+	    pu = iv[prunit];
+	    if ( pu != 0 ) {
+	      Preferences.debug("nl2s" + alg[jac] + " on problem " + title + "      " + version + "\n" );
+	      
+	    }
+	  } // if (!rstrt)
+
+	  for (irun = xscal1; irun <= xscal2; irun++) {
+	//
+	//  Initialize the solution vector X.
+	//
+	    if ( ! rstrt ) {
+
+	      iv[1] = 12;
+	      x0scal = Math.pow(10.0, (irun - 1.0));
+
+	      xinit ( p, x, nex );
+
+	      for ( i = 1; i <= p; i++) {
+	        x[i] = x0scal * x[i];
+	      }
+
+	    } // if (!rstrt)
+
+	    if ( jac == 1 ) {
+	      nl2sol ( );
+	    }
+	    else if ( jac == 2 ) {
+	      nl2sno ( );
+	    }
+
+	    if ( ! rstrt && nprob < 50 ) {
+	      nprob = nprob + 1;
+	    }
+
+	    name[nprob] = title;
+
+	    is[1][nprob] = n;
+	    is[2][nprob] = p;
+	    is[3][nprob] = iv[niter];
+	    is[4][nprob] = iv[nfcall] - iv[nfcov];
+	    is[5][nprob] = iv[ngcall] - iv[ngcov];
+
+	    i = iv[1];
+	    irc[nprob] = rc[i];
+	    is[6][nprob] = jac;
+	    rs[1][nprob] = x0scal;
+	    rs[2][nprob] = v[f];
+	    if ( v[f0] <= 0.0 ) {
+	      rs[3][nprob] = 1.0;
+	    }
+	    else {
+	      rs[3][nprob] = v[preduc] / v[f0];
+	    }
+	    if ( v[f0] <= 0.0 ) {
+	      rs[4][nprob] = 1.0;
+	    }
+	    else {
+	      rs[4][nprob] = v[nreduc] / v[f0];
+	    }      
+	    rs[5][nprob] = v[reldx];
+
+	    rstrt = false;
+
+	    if ( nout != 0 ) {
+
+	      if (nprob == 1) {
+	          Preferences.debug(version + "\n");
+	      }
+	      Preferences.debug("Problem = " + title + "  test summary\n");
+	      if (useAnalyticJacobian) {
+              Preferences.debug("Analytic jacobian\n");
+	      }
+	      else {
+	    	  Preferences.debug("Finite difference jacobian\n");
+	      }
+	      Preferences.debug("n = " + is[1][nprob] + "\n");
+	      Preferences.debug("p = " + is[2][nprob] + "\n");
+	      Preferences.debug("niter = " + is[3][nprob] + "\n");
+	      Preferences.debug("nf = " + is[4][nprob] + "\n");
+	      Preferences.debug("ng = " + is[5][nprob] + "\n");
+	      Preferences.debug("iv1 = " + irc[nprob] + "\n");
+	      Preferences.debug("x0scal = " + rs[1][nprob] + "\n");
+	      Preferences.debug("final f = " + rs[2][nprob] + "\n");
+	      Preferences.debug("preldf = " + rs[3][nprob] + "\n");
+	      Preferences.debug("nreldf = " + rs[4][nprob] + "\n");
+	      Preferences.debug("reldx = " + rs[5][nprob] + "\n");
+	    } // if (nout != 0)
+
+	  } // for (irun = xscal1; irun <= xscal2; irun++)
+
+	  return;
+	} // private void nltest
+	
+	private void xinit ( int p, double x[], int nex ) {
+
+	/*****************************************************************************80
+	!
+	!! XINIT initializes the solution vector X.
+	!
+	!  Discussion:
+	!
+	!    This routine initializes the solution vector X.
+	!
+	!  Modified:
+	!
+	!    27 March 2006
+	!
+	!  Parameters:
+	!
+	!    Input, integer P, the  number of parameters.
+	!
+	!    Output, real X(P), the initial value for the solution vector.
+	!
+	!    Input, integer NEX, the test problem number, between 1 and 36.
+	*/
+
+	  int i;
+	  double pp1inv;
+	//
+	//  Rosenbrock.
+	//
+	  if ( nex == 1 ) {
+
+	    x[1] = -1.2;
+	    x[2] = 1.0;
+	  }
+	//
+	//  Helix.
+	//
+	  else if ( nex == 2 ) {
+
+	    x[1] = -1.0;
+	    x[2] = 0.0;
+	    x[3] = 0.0;
+	  }
+	//
+	//  Singular.
+	//
+	  else if ( nex == 3 ) {
+
+	    x[1] = 3.0;
+	    x[2] = -1.0;
+	    x[3] = 0.0;
+	    x[4] = 1.0;
+	  }
+	//
+	//  Woods.
+	//
+	  else if ( nex == 4 ) {
+
+	    x[1] = -3.0;
+	    x[2] = -1.0;
+	    x[3] = -3.0;
+	    x[4] = -1.0;
+	  }
+	//
+	//  Zangwill.
+	//
+	  else if ( nex == 5 ) {
+
+	    x[1] = 100.0;
+	    x[2] = -1.0;
+	    x[3] = 2.5;
+	  }
+	//
+	//  Engvall.
+	//
+	  else if ( nex == 6 ) {
+
+	    x[1] = 1.0;
+	    x[2] = 2.0;
+	    x[3] = 0.0;
+	  }
+	//
+    //  Branin.
+	//
+	  else if ( nex == 7 ) {
+
+	    x[1] = 2.0;
+	    x[2] = 0.0;
+	  }
+	//
+	// Beale.
+	//
+	  else if ( nex == 8 ) {
+
+	    x[1] = 0.1;
+	    x[2] = 0.1;
+	  }
+	//
+	//  Cragg and Levy.
+	//
+	  else if ( nex == 9 ) {
+
+	    x[1] = 1.0;
+	    x[2] = 2.0;
+	    x[3] = 2.0;
+	    x[4] = 2.0;
+	  }
+	//
+	//  Box.
+	//
+	  else if ( nex == 10 ) {
+
+	    x[1] = 0.0;
+	    x[2] = 10.0;
+	    x[3] = 20.0;
+	  }
+	//
+	//  Davidon 1.
+	//
+	  else if ( nex == 11 ) {
+
+	    for (i = 1; i <= p; i++) {
+	      x[i] = 0.0;
+	    }
+	  }
+	//
+	//  Freudenstein and Roth.
+	//
+	  else if ( nex == 12 ) {
+
+	    x[1] = 15.0;
+	    x[2] = -2.0;
+	  }
+	//
+	//  Watson6.
+	//  Watson9.
+	//  Watson12.
+	//  Watson20.
+	//
+	  else if ( nex >= 13  && nex <= 16 ) {
+
+	    for  (i = 1; i <= p; i++) {
+	      x[i] = 0.0;
+	    }
+	  }
+	//
+	//  Chebyquad.
+	//
+	  else if ( nex == 17 ) {
+
+	    for  (i = 1; i <= p; i++) {
+	      x[i] = ((double) i) / ((double) ( p + 1));
+	    }
+	  }
+	//
+	//  Brown and Dennis.
+	//
+	  else if ( nex == 18 ) {
+
+	    x[1] = 25.0;
+	    x[2] = 5.0;
+	    x[3] = -5.0;
+	    x[4] = -1.0;
+	  }
+	//
+	//  Bard.
+	//
+	  else if ( nex == 19 ) {
+
+	    x[1] = 1.0;
+	    x[2] = 1.0;
+	    x[3] = 1.0;
+	  }
+	//
+	//  Jennrich and Sampson.
+	//
+	  else if ( nex == 20 ) {
+
+	    x[1] = 0.3;
+	    x[2] = 0.4;
+	  }
+	//
+	//  Kowalik and Osborne.
+	//
+	  else if ( nex == 21 ) {
+
+	    x[1] = 0.25;
+	    x[2] = 0.39;
+	    x[3] = 0.415;
+	    x[4] = 0.39;
+	  }
+	//
+	//  Osborne 1.
+	//
+	  else if ( nex == 22 ) {
+
+	    x[1] = 0.5;
+	    x[2] = 1.5;
+	    x[3] = -1.0;
+	    x[4] = 0.01;
+	    x[5] = 0.02;
+	  }
+	//
+	//  Osborne 2.
+	//
+	  else if ( nex == 23 ) {
+
+	    x[1] = 1.3;
+	    x[2] = 0.65;
+	    x[3] = 0.65;
+	    x[4] = 0.7;
+	    x[5] = 0.60;
+	    x[6] = 3.0;
+	    x[7] = 5.0;
+	    x[8] = 7.0;
+	    x[9] = 2.0;
+	    x[10] = 4.5;
+	    x[11] = 5.5;
+	  }
+	//
+	//  Madsen.
+	//
+	  else if ( nex == 24 ) {
+
+	    x[1] = 3.0;
+	    x[2] = 1.0;
+	  }
+	//
+	//  Meyer.
+	//
+	  else if ( nex == 25 ) {
+
+	    x[1] = 0.02;
+	    x[2] = 4000.0;
+	    x[3] = 250.0;
+	  }
+	//
+	//  Brown5.
+	//  Brown10.
+	//  Brown30.
+	//  Brown40.
+	//
+	  else if ( nex >= 26 && nex <= 29) {
+        for (i = 1; i <= p; i++) {
+	        x[i] = 0.5;
+        }
+	  }
+	//
+	//  Bard + 10.
+	//
+	  else if ( nex == 30 ) {
+
+	    x[1] = 1.0;
+	    x[2] = 1.0;
+	    x[3] = 1.0;
+	  }
+	//
+	//  Kowalik and Osborne + 10.
+	//
+	  else if ( nex == 31 ) {
+
+	    x[1] = 0.25;
+	    x[2] = 0.39;
+	    x[3] = 0.415;
+	    x[4] = 0.39;
+	  }
+	//
+	//  Meyer + 10.
+	//
+	  else if ( nex == 32 ) {
+
+	    x[1] = 0.02;
+	    x[2] = 4000.0;
+	    x[3] = 250.0;
+	  }
+	//
+	//  Watson6 + 10.
+	//  Watson9 + 10.
+	//  Watson12 + 10.
+	//  Watson20 + 10.
+	//
+	  else if ( nex >= 33 && nex <= 36) {
+
+	    for  (i = 1; i <= p; i++) {
+	      x[i] = 0.0;
+	    }
+	  }
+	//
+	//  Illegal value.
+	//
+	  else {
+        System.out.println("XINIT - fatal error");
+        Preferences.debug("XINIT - fatal error\n");
+        System.out.println("Illegal index nex = " + nex);
+        Preferences.debug("Illegal index nex = " + nex + "\n");
+        System.exit(-1);
+	  }
+
+	  return;
+	} // private void xinit
 	
 	// n, input, the number of observations, that is the number of components in r(x).
 	//    p <= n
@@ -83,13 +658,6 @@ private boolean testMode = false;
 	    this.useAnalyticJacobian = useAnalyticJacobian;
 	    this.uiparm = uiparm;
 	    this.urparm = urparm;
-	}
-	
-	private void driverCalls() {
-		useAnalyticJacobian = false;
-		driver();
-		useAnalyticJacobian = true;
-		driver();
 	}
 	
 	public void driver () {
@@ -773,7 +1341,11 @@ private boolean testMode = false;
 		  boolean do30 = false;
 		  boolean do80 = false;
 		  int m;
+		  int q;
+		  int index;
 		  double arr[];
+		  double arr2[];
+		  double arr2D[][];
 
 		  d1 = 94 + 2 * n + ( p * ( 3 * p + 31 ) ) / 2;
 		  iv[d] = d1;
@@ -812,7 +1384,7 @@ private boolean testMode = false;
 			  } // if (0 < iv[dtype]
 		  } // else
 
-		  /*loop1: while (true) {
+		  loop1: while (true) {
 		  if (do10) {
           do10 = false;
 		  nf = iv[nfcall];
@@ -867,7 +1439,12 @@ private boolean testMode = false;
 		      x[k] = xk + h;
 		      nf = iv[nfgcal];
 		      arr = new double[n+1];
-		      calcr ( n, p, x, nf, arr, uiparm, urparm);
+		      if (testMode) {
+		          calcrTest ( n, p, x, nf, arr, uiparm, urparm);
+		      }
+		      else {
+		    	  calcr ( n, p, x, nf, arr, uiparm, urparm);	  
+		      }
 		      for (m = 1; m <= n; m++) {
 		    	  v[j1k+m-1] = arr[m];
 		      }
@@ -878,39 +1455,73 @@ private boolean testMode = false;
 		        hlim_nl2sno = hfac * epsilon;
 		      }
 
-		      h = -0.5E+00 * h
+		      h = -0.5 * h;
 
-		      if ( abs ( h ) < hlim ) then
-		        iv(1) = 15
-		        call itsmry ( v(d1), iv, p, v, x )
-		        return
-		      end if
+		      if ( Math.abs ( h ) < hlim_nl2sno ) {
+		        iv[1] = 15;
+		        arr = new double[p+1];
+		        for (m = 1; m <= p; m++) {
+		        	arr[m] = v[d1+m-1];
+		        }
+		        itsmry ( arr, iv, p, v, x );
+		        return;
+		      } // if (Math.abs(h) < hlim_nl2sno)
 		      } // if (nf <= 0)
 
-		    x(k) = xk
+		    x[k] = xk;
 
-		    do i = r1, rn
-		      v(j1k) = ( v(j1k) - v(i) ) / h
-		      j1k = j1k + 1
-		    end do
+		    for (i = r1; i <= rn; i++) {
+		      v[j1k] = ( v[j1k] - v[i] ) / h;
+		      j1k = j1k + 1;
+		    } // for (i = r1; i <= rn; i++)
 
 		  } // for (k = 1; k <= p; k++)
 
-		  strted = .true.
+		  strted = true;
+		  do80 = true;
 		  } // if (do30)
 
-		80 continue
+		if (do80) {
+          do80 = false;
+          arr = new double[p+1];
+          for (m = 1; m <= p; m++) {
+        	  arr[m] = v[d1+m-1];
+          }
+          arr2D = new double[n+1][p+1];
+          index = 0;
+          for (m = 1; m <= p; m++) {
+        	  for (q = 1; q <= n; q++) {
+        		  arr2D[q][m] = v[j1+index];
+        		  index++;
+        	  }
+          }
+          arr2 = new double[n+1];
+          for (m = 1; m <= n; m++) {
+        	  arr2[m] = v[r1+m-1];
+          }
+		  nl2itr ( arr, iv, arr2D, n, n, p, arr2, v, x );
+		  index = 0;
+          for (m = 1; m <= p; m++) {
+        	  for (q = 1; q <= n; q++) {
+        		  v[j1+index] = arr2D[q][m];
+        		  index++;
+        	  }
+          }
+          for (m = 1; m <= n; m++) {
+        	  v[r1+m-1] = arr2[m];
+          }
 
-		  call nl2itr ( v(d1), iv, v(j1), n, n, p, v(r1), v, x )
-
-		  if ( iv(1) < 2 ) then
-		    go to 10
-		  else if ( iv(1) == 2 ) then
-		    go to 30
-		  end if
-
-		  return
-	   } // loop1: while (true)*/
+		  if ( iv[1] < 2 ) {
+		    do10 = true;
+		  }
+		  else if ( iv[1] == 2 ) {
+		    do30 = true;
+		  }
+		  else {
+		    return;
+		  }
+		} // if (do80)
+	   } // loop1: while (true)
 	} // nl2sno
 	
 	private void assess(double d[], int iv[], int p, double step[], double stlstg[], 
