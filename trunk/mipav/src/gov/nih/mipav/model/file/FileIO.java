@@ -3968,6 +3968,15 @@ public class FileIO {
                 // setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
                 return null;
             }
+            byte[] byteData2 = new byte[byteData.length - byteData.length/4];
+            int counter = 0;
+            for(int i=0;i<byteData.length;i=i+4) {
+            	byteData2[counter] = byteData[i+1];
+            	byteData2[counter+1] = byteData[i+2];
+            	byteData2[counter+2] = byteData[i+3];
+            	counter = counter+3;
+            }
+            return byteData2;
         } else if (type == ModelStorageBase.ARGB_USHORT) {
             final short[] shortData = new short[length];
             try {
@@ -3985,6 +3994,17 @@ public class FileIO {
                 byteData[k] = byteVal[0];
                 byteData[k + 1] = byteVal[1];
             }
+            
+            byte[] byteData2 = new byte[byteData.length - byteData.length/4];
+            int counter = 0;
+            for(int i=0;i<byteData.length;i=i+4) {
+            	byteData2[counter] = byteData[i+1];
+            	byteData2[counter+1] = byteData[i+2];
+            	byteData2[counter+2] = byteData[i+3];
+            	counter = counter+3;
+            }
+            return byteData2;
+            
         } else if (type == ModelStorageBase.ARGB_FLOAT) {
             final float[] floatData = new float[length];
             try {
@@ -4004,6 +4024,16 @@ public class FileIO {
                 byteData[k + 2] = byteVal[2];
                 byteData[k + 3] = byteVal[3];
             }
+            
+            byte[] byteData2 = new byte[byteData.length - byteData.length/4];
+            int counter = 0;
+            for(int i=0;i<byteData.length;i=i+4) {
+            	byteData2[counter] = byteData[i+1];
+            	byteData2[counter+1] = byteData[i+2];
+            	byteData2[counter+2] = byteData[i+3];
+            	counter = counter+3;
+            }
+            return byteData2;
         }
 
         return byteData;

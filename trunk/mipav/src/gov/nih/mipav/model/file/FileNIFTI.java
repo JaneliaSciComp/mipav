@@ -2505,16 +2505,28 @@ public class FileNIFTI extends FileBase {
             
             
             if(niftiCompressed) {
-            	byte[] buffer = new byte[256];
+            	byte[]buffer;
+            	if(image.getType() == ModelStorageBase.ARGB) {
+            		buffer = new byte[255];
+            	}else if(image.getType() == ModelStorageBase.ARGB_USHORT) {
+            		buffer = new byte[4];
+            	}else if(image.getType() == ModelStorageBase.ARGB_FLOAT) {
+            		buffer = new byte[8];
+            	}else {
+            		buffer = new byte[256];
+            		
+            	}	
+            	
+            	
             	int bytesRead;
             	byte[] offsetBuff = new byte[4];
             	String ext = fileName.substring(fileName.lastIndexOf(".")+1, fileName.length());
             	if (ext.equalsIgnoreCase("zip")) {
             		//we have already readin the header...now skip over the 4 extension bytes
 	                     try {
-                        bytesRead = gzin.read(offsetBuff);
+                        bytesRead = zin.read(offsetBuff);
                         if(bytesRead != 4) {
-                      	 buffer = getFullBuffer(gzin,offsetBuff,bytesRead,4); 
+                      	 buffer = getFullBuffer(zin,offsetBuff,bytesRead,4); 
                       	 
                             }
 	                     } catch (IOException e) {
@@ -2525,15 +2537,35 @@ public class FileNIFTI extends FileBase {
                     int start = 0;
                     boolean endianness = fileInfo.getEndianess();
                     int type = image.getType();
+                    
                     while (true) {
                         try {
                             bytesRead = zin.read(buffer);
                             if(bytesRead == -1) {
                            	 break;
                             }
-                            if(bytesRead != 256) {
-                           	 buffer = getFullBuffer(zin,buffer,bytesRead,256); 
-                            }
+                            
+                            
+                            
+                            
+                            if(image.getType() == ModelStorageBase.ARGB) {
+                            	if(bytesRead != 255) {
+                                 	 buffer = getFullBuffer(zin,buffer,bytesRead,255); 
+                                  }
+                        	}else if(image.getType() == ModelStorageBase.ARGB_USHORT) {
+                        		if(bytesRead != 4) {
+                                 	 buffer = getFullBuffer(zin,buffer,bytesRead,4); 
+                                  }
+                        	}else if(image.getType() == ModelStorageBase.ARGB_FLOAT) {
+                        		if(bytesRead != 8) {
+                                 	 buffer = getFullBuffer(zin,buffer,bytesRead,8); 
+                                 }
+                        	}else {
+                        		if(bytesRead != 256) {
+                                 	 buffer = getFullBuffer(zin,buffer,bytesRead,256); 
+                                 }
+                        	}
+
 
                         	if(type == ModelStorageBase.BYTE || type == ModelStorageBase.UBYTE || type == ModelStorageBase.BOOLEAN) {
                         		image.importData(start, buffer, false);
@@ -2583,30 +2615,45 @@ public class FileNIFTI extends FileBase {
                         		start = start + doubleBuff.length;                             
                         		                              
                         	}else if(type == ModelStorageBase.ARGB) {
+                        		byte[] buff2 = new byte[buffer.length + buffer.length/3];
                         		if(start < image.getDataSize()) {
-                        			image.importData(start, buffer, false);
+                        			int counter = 0;
+                        			for(int m=0;m<buffer.length;m=m+3) {
+                            			buff2[counter] = 1;
+                            			buff2[counter+1] = buffer[m];
+                            			buff2[counter+2] = buffer[m+1];
+                            			buff2[counter+3] = buffer[m+2];
+                            			counter = counter+4;
+                        			}
+                        			image.importData(start, buff2, false);
                         		}
-                        		start = start + buffer.length;
+                        		start = start + buff2.length;
                         	}else if(type == ModelStorageBase.ARGB_USHORT) {
-                        		short[] shortBuff = new short[buffer.length/2];
-                        		for(int m=0,k=0;m<buffer.length;m=m+2,k++) {
-                        			byte[] b = {buffer[m],buffer[m+1]};
-                        			shortBuff[k] = FileBase.bytesToShort(endianness, 0, b);
-                        		}
+                        		//short[] shortBuff = new short[buffer.length/2];
+                        		short[] shortBuff2 = new short[3];
+                        		shortBuff2[0] = 1;
+                        		
                         		if(start < image.getDataSize()) {
-                        			image.importData(start, shortBuff, false);
+                        			for(int m=0,k=1;m<buffer.length;m=m+2,k++) {
+                            			byte[] b = {buffer[m],buffer[m+1]};
+                            			shortBuff2[k] = FileBase.bytesToShort(endianness, 0, b);
+                            		}
+                        			image.importData(start, shortBuff2, false);
                         		}
-                        		start = start + shortBuff.length;
+                        		start = start + shortBuff2.length;
                         	}else if(type == ModelStorageBase.ARGB_FLOAT) {
-                        		float[] floatBuff = new float[buffer.length/4];
-                        		for(int m=0,k=0;m<buffer.length;m=m+4,k++) {
-                        			byte[] b = {buffer[m],buffer[m+1],buffer[m+2],buffer[m+3]};
-                        			floatBuff[k] = FileBase.bytesToFloat(endianness, 0, b);
-                        		}
+                        		//float[] floatBuff = new float[buffer.length/4];
+                        		float[] floatBuff2 = new float[3];
+                        		floatBuff2[0] = 1;
+                        		
                         		if(start < image.getDataSize()) {
-                        			image.importData(start, floatBuff, false);
+                        			for(int m=0,k=1;m<buffer.length;m=m+4,k++) {
+                            			byte[] b = {buffer[m],buffer[m+1],buffer[m+2],buffer[m+3]};
+                            			floatBuff2[k] = FileBase.bytesToFloat(endianness, 0, b);
+                            		}
+                        			image.importData(start, floatBuff2, false);
                         		}
-                        		start = start + floatBuff.length;
+                        		start = start + floatBuff2.length;
                         	}
                         } catch (IOException e) {
                         	e.printStackTrace();
@@ -2631,17 +2678,31 @@ public class FileNIFTI extends FileBase {
                     int start = 0;
                     boolean endianness = fileInfo.getEndianess();
                     int type = image.getType();
-                    //System.out.println(image.getDataSize());
                     while (true) {
                         try {
                             bytesRead = gzin.read(buffer);
                             if(bytesRead == -1) {
                            	 break;
                             }
-                         
-                            if(bytesRead != 256) {
-                           	 buffer = getFullBuffer(gzin,buffer,bytesRead,256); 
-                            }
+                            if(image.getType() == ModelStorageBase.ARGB) {
+                            	if(bytesRead != 255) {
+                                 	 buffer = getFullBuffer(gzin,buffer,bytesRead,255); 
+                                  }
+                        	}else if(image.getType() == ModelStorageBase.ARGB_USHORT) {
+                        		if(bytesRead != 4) {
+                                 	 buffer = getFullBuffer(gzin,buffer,bytesRead,4); 
+                                  }
+                        	}else if(image.getType() == ModelStorageBase.ARGB_FLOAT) {
+                        		if(bytesRead != 8) {
+                                 	 buffer = getFullBuffer(gzin,buffer,bytesRead,8); 
+                                 }
+                        	}else {
+                        		if(bytesRead != 256) {
+                                 	 buffer = getFullBuffer(gzin,buffer,bytesRead,256); 
+                                 }
+                        	}
+
+                            
 
 
                         	if(type == ModelStorageBase.BYTE || type == ModelStorageBase.UBYTE  || type == ModelStorageBase.BOOLEAN) {
@@ -2693,30 +2754,45 @@ public class FileNIFTI extends FileBase {
                         		start = start + doubleBuff.length;                             
                         		                              
                         	}else if(type == ModelStorageBase.ARGB) {
+                        		byte[] buff2 = new byte[buffer.length + buffer.length/3];
                         		if(start < image.getDataSize()) {
-                        			image.importData(start, buffer, false);
+                        			int counter = 0;
+                        			for(int m=0;m<buffer.length;m=m+3) {
+                            			buff2[counter] = 1;
+                            			buff2[counter+1] = buffer[m];
+                            			buff2[counter+2] = buffer[m+1];
+                            			buff2[counter+3] = buffer[m+2];
+                            			counter = counter+4;
+                        			}
+                        			image.importData(start, buff2, false);
                         		}
-                        		start = start + buffer.length;
+                        		start = start + buff2.length;
                         	}else if(type == ModelStorageBase.ARGB_USHORT) {
-                        		short[] shortBuff = new short[buffer.length/2];
-                        		for(int m=0,k=0;m<buffer.length;m=m+2,k++) {
-                        			byte[] b = {buffer[m],buffer[m+1]};
-                        			shortBuff[k] = FileBase.bytesToShort(endianness, 0, b);
-                        		}
+                        		//short[] shortBuff = new short[buffer.length/2];
+                        		short[] shortBuff2 = new short[3];
+                        		shortBuff2[0] = 1;
+                        		
                         		if(start < image.getDataSize()) {
-                        			image.importData(start, shortBuff, false);
+                        			for(int m=0,k=1;m<buffer.length;m=m+2,k++) {
+                            			byte[] b = {buffer[m],buffer[m+1]};
+                            			shortBuff2[k] = FileBase.bytesToShort(endianness, 0, b);
+                            		}
+                        			image.importData(start, shortBuff2, false);
                         		}
-                        		start = start + shortBuff.length;
+                        		start = start + shortBuff2.length;
                         	}else if(type == ModelStorageBase.ARGB_FLOAT) {
-                        		float[] floatBuff = new float[buffer.length/4];
-                        		for(int m=0,k=0;m<buffer.length;m=m+4,k++) {
-                        			byte[] b = {buffer[m],buffer[m+1],buffer[m+2],buffer[m+3]};
-                        			floatBuff[k] = FileBase.bytesToFloat(endianness, 0, b);
-                        		}
+                        		//float[] floatBuff = new float[buffer.length/4];
+                        		float[] floatBuff2 = new float[3];
+                        		floatBuff2[0] = 1;
+                        		
                         		if(start < image.getDataSize()) {
-                        			image.importData(start, floatBuff, false);
+                        			for(int m=0,k=1;m<buffer.length;m=m+4,k++) {
+                            			byte[] b = {buffer[m],buffer[m+1],buffer[m+2],buffer[m+3]};
+                            			floatBuff2[k] = FileBase.bytesToFloat(endianness, 0, b);
+                            		}
+                        			image.importData(start, floatBuff2, false);
                         		}
-                        		start = start + floatBuff.length;
+                        		start = start + floatBuff2.length;
                         	}
                         } catch (IOException e) {
                         	e.printStackTrace();
@@ -2746,9 +2822,25 @@ public class FileNIFTI extends FileBase {
                             if(bytesRead == -1) {
                            	 break;
                             }
-                            if(bytesRead != 256) {
-                           	 buffer = getFullBuffer(bz2in,buffer,bytesRead,256); 
-                            }
+
+                            if(image.getType() == ModelStorageBase.ARGB) {
+                            	if(bytesRead != 255) {
+                                 	 buffer = getFullBuffer(bz2in,buffer,bytesRead,255); 
+                                  }
+                        	}else if(image.getType() == ModelStorageBase.ARGB_USHORT) {
+                        		if(bytesRead != 4) {
+                                 	 buffer = getFullBuffer(bz2in,buffer,bytesRead,4); 
+                                  }
+                        	}else if(image.getType() == ModelStorageBase.ARGB_FLOAT) {
+                        		if(bytesRead != 8) {
+                                 	 buffer = getFullBuffer(bz2in,buffer,bytesRead,8); 
+                                 }
+                        	}else {
+                        		if(bytesRead != 256) {
+                                 	 buffer = getFullBuffer(bz2in,buffer,bytesRead,256); 
+                                 }
+                        	}
+
 
                         	if(type == ModelStorageBase.BYTE || type == ModelStorageBase.UBYTE  || type == ModelStorageBase.BOOLEAN) {
                         		if(start < image.getDataSize()) {
@@ -2798,30 +2890,45 @@ public class FileNIFTI extends FileBase {
                         		start = start + doubleBuff.length;                             
                         		                              
                         	}else if(type == ModelStorageBase.ARGB) {
+                        		byte[] buff2 = new byte[buffer.length + buffer.length/3];
                         		if(start < image.getDataSize()) {
-                        			image.importData(start, buffer, false);
+                        			int counter = 0;
+                        			for(int m=0;m<buffer.length;m=m+3) {
+                            			buff2[counter] = 1;
+                            			buff2[counter+1] = buffer[m];
+                            			buff2[counter+2] = buffer[m+1];
+                            			buff2[counter+3] = buffer[m+2];
+                            			counter = counter+4;
+                        			}
+                        			image.importData(start, buff2, false);
                         		}
-                        		start = start + buffer.length;
+                        		start = start + buff2.length;
                         	}else if(type == ModelStorageBase.ARGB_USHORT) {
-                        		short[] shortBuff = new short[buffer.length/2];
-                        		for(int m=0,k=0;m<buffer.length;m=m+2,k++) {
-                        			byte[] b = {buffer[m],buffer[m+1]};
-                        			shortBuff[k] = FileBase.bytesToShort(endianness, 0, b);
-                        		}
+                        		//short[] shortBuff = new short[buffer.length/2];
+                        		short[] shortBuff2 = new short[3];
+                        		shortBuff2[0] = 1;
+                        		
                         		if(start < image.getDataSize()) {
-                        			image.importData(start, shortBuff, false);
+                        			for(int m=0,k=1;m<buffer.length;m=m+2,k++) {
+                            			byte[] b = {buffer[m],buffer[m+1]};
+                            			shortBuff2[k] = FileBase.bytesToShort(endianness, 0, b);
+                            		}
+                        			image.importData(start, shortBuff2, false);
                         		}
-                        		start = start + shortBuff.length;
+                        		start = start + shortBuff2.length;
                         	}else if(type == ModelStorageBase.ARGB_FLOAT) {
-                        		float[] floatBuff = new float[buffer.length/4];
-                        		for(int m=0,k=0;m<buffer.length;m=m+4,k++) {
-                        			byte[] b = {buffer[m],buffer[m+1],buffer[m+2],buffer[m+3]};
-                        			floatBuff[k] = FileBase.bytesToFloat(endianness, 0, b);
-                        		}
+                        		//float[] floatBuff = new float[buffer.length/4];
+                        		float[] floatBuff2 = new float[3];
+                        		floatBuff2[0] = 1;
+                        		
                         		if(start < image.getDataSize()) {
-                        			image.importData(start, floatBuff, false);
+                        			for(int m=0,k=1;m<buffer.length;m=m+4,k++) {
+                            			byte[] b = {buffer[m],buffer[m+1],buffer[m+2],buffer[m+3]};
+                            			floatBuff2[k] = FileBase.bytesToFloat(endianness, 0, b);
+                            		}
+                        			image.importData(start, floatBuff2, false);
                         		}
-                        		start = start + floatBuff.length;
+                        		start = start + floatBuff2.length;
                         	}
                         } catch (IOException e) {
                         	e.printStackTrace();
