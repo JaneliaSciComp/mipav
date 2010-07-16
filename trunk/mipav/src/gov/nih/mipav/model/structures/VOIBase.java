@@ -1030,7 +1030,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
 
         int xD = kImage.getExtents()[0];
         int yD = kImage.getExtents()[1];
-        int zD = kImage.getExtents().length > 3 ? kImage.getExtents()[2] : 1;
+        int zD = kImage.getExtents().length > 2 ? kImage.getExtents()[2] : 1;
 
         Vector3f kStep = new Vector3f(kStart);
 
@@ -1047,6 +1047,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             int indexZ = Math.min(Math.round(kStep.Z), zD - 1);
             int indexY = Math.min(Math.round(kStep.Y), yD - 1);
             int indexX = Math.min(Math.round(kStep.X), xD - 1);
+            
             int index = (indexZ * yD * xD) + (indexY * xD) + indexX;
 
             positions.add( new Vector3f( indexX, indexY, (float)(totalDistance + subDistance))) ;
