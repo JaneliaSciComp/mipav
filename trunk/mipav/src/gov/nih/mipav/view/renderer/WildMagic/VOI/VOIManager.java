@@ -360,6 +360,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     public static final String DELETE_INTENSITY_LINE = "delete_inensity_line";
     public static final String SHOW_INTENSITY_GRAPH = "show_intensity_graph";
 
+    private static final int NONE = -1;
     private static final int TEXT = 0;
     private static final int POINT = 1;
     public static final int POLYPOINT = 2;
@@ -1314,12 +1315,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
     }
 
-    public void mouseEntered(MouseEvent arg0) {
-        if ( isActive() )
-        {
-            //m_kParent.setActive(this);
-        }        
-    }
+    public void mouseEntered(MouseEvent arg0) {}
 
     public void mouseExited(MouseEvent arg0) 
     {
@@ -1380,9 +1376,12 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         m_kParent.setActive(this);
 
         if (kEvent.getButton() == MouseEvent.BUTTON1) {
+            m_bLeftMousePressed = true;
+            
             if ( kEvent.isAltDown() && m_kCurrentVOI != null )
             {
                 retraceContour( m_kCurrentVOI, kEvent.getX(), kEvent.getY() );
+                m_iDrawType = RETRACE;
             }
             else if ( m_kParent.getPointerButton().isSelected() && !m_bDrawVOI )
             {    
@@ -1406,7 +1405,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 }
             }
 
-            m_bLeftMousePressed = true;
             processLeftMouseDrag( kEvent );
         }
         else if ( kEvent.getButton() == MouseEvent.BUTTON3 )
@@ -1536,6 +1534,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         else if ( m_iDrawType == RETRACE && m_kCurrentVOI != null )
         {
             m_kCurrentVOI.trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
+            m_iDrawType = NONE;
+            m_bDrawVOI = false;
             resetStart();
         }
 
@@ -1735,6 +1735,192 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
     }
 
+    public void retraceContour(VOIBase kVOIIn, int x1, int y1) {
+
+        Vector3f ptRetrace = null;
+        double minDistance, dist;
+        float x2, y2, z;
+        int[] units = new int[3];
+
+        if ( kVOIIn.getType() != VOI.CONTOUR )
+        {
+            return;
+        }
+        VOIContour kVOI = (VOIContour)kVOIIn;
+        try {
+            kVOI.makeCounterClockwise();
+
+            if (indexRetrace == -99) {
+                    oldContour = new VOIContour(kVOI);
+                    oldContour.clear();
+
+                // oldContour = new VOIContour();
+                for (int i = 0; i < kVOI.size(); i++) { // Make copy and save into
+                                                    // oldContour
+                    oldContour.addElement(kVOI.elementAt(i));
+                }
+            }
+
+            // Return if trying to add the same point.
+            Vector3f kScreen = new Vector3f( x1, y1, m_iSlice );
+            Vector3f kCurrent = m_kDrawingContext.screenToFile( kScreen );
+
+            if (kVOI.contains(kCurrent)) {
+                return;
+            }
+
+            kVOI.setActive(false);
+            units[0] = 0;
+            units[1] = 0;
+            units[2] = 0;
+
+            // Find nearest point in old contour
+            minDistance = 9999999;
+            int end = oldContour.size();
+
+            for (int i = 0; i < end; i++) {
+
+                x2 = ((Vector3f) (oldContour.elementAt(i))).X;
+                y2 = ((Vector3f) (oldContour.elementAt(i))).Y;
+                dist = MipavMath.distance(x1, x2, y1, y2);
+
+                if (dist < minDistance) {
+                    ptRetrace = (Vector3f) oldContour.elementAt(i);
+                    minDistance = dist;
+                }
+            }
+
+            if (resetStart) {
+                kVOI.makeCounterClockwise(kVOI.indexOf(ptRetrace));
+                resetIndex();
+                resetStart = false;
+            } else {
+
+                int index, indexold;
+                Vector3f newer = new Vector3f(x1, y1, m_iSlice);
+
+                if (lastX == -1) { // if first time
+
+                    lastX = (int) ptRetrace.X;
+                    lastY = (int) ptRetrace.Y;
+                    lastZ = (int) ptRetrace.Z;
+                    indexRetrace = oldContour.indexOf(ptRetrace);
+                    kVOI.insertElementAt(newer,
+                            kVOI.indexOf(oldContour.get(indexRetrace)));
+                } else if (!(lastX == (int) ptRetrace.X && lastY == (int) ptRetrace.Y)) {
+
+                    index = oldContour.indexOf(ptRetrace);
+                    Vector3f old = new Vector3f(lastX, lastY, lastZ);
+                    indexold = indexRetrace;
+                    if (index == 0 || index - indexold == 1) { // if
+                                                                // countclockwise
+                                                                // and no jumps
+                        knowDirection = true;
+                        lastX = (int) ptRetrace.X;
+                        lastY = (int) ptRetrace.Y;
+                        lastZ = (int) ptRetrace.Z;
+                        kVOI.insertElementAt(newer, kVOI.indexOf(old));
+                        kVOI.removeElement(old);
+                        indexRetrace = index;
+                    } else if (isFirst && indexold >= kVOI.size() - 3
+                            && indexold - index != 1) {
+                        if (((indexold - index) < (oldContour.size() / 2))) {
+                            for (; index != indexold; indexold--) {
+                                indexRetrace = kVOI.indexOf(old) - 1;
+                                oldContour.removeElementAt(indexRetrace);
+                                kVOI.removeElementAt(indexRetrace);
+                                old = kVOI.get(indexRetrace);
+                            }
+                            lastX = (int) old.X;
+                            lastY = (int) old.Y;
+                            lastZ = (int) old.Z;
+                            kVOI.insertElementAt(newer, kVOI.indexOf(old) + 1);
+                        } else {
+                            indexRetrace = kVOI.indexOf(old) - 1;
+                            oldContour.removeElementAt(indexRetrace);
+                            kVOI.removeElementAt(indexRetrace);
+                            for (int size = kVOI.size() - 1, i = 0; i != size
+                                    - indexold; i++) {
+                                oldContour.remove(0);
+                                kVOI.remove(0);
+                            }
+                            lastX = (int) old.X;
+                            lastY = (int) old.Y;
+                            lastZ = (int) old.Z;
+                            kVOI.insertElementAt(newer, 0);
+                            indexRetrace = 0;
+                        }
+
+                    } else if ((indexold - index) >= 1) { // if clockwise in
+                                                            // general
+                        knowDirection = true;
+                        if (!isFirst) {
+                            if (!(index - indexold > oldContour.size() / 2 || index == 0)) {
+                                for (; index != indexold; index++) {
+                                    indexRetrace = kVOI.indexOf(old);
+                                    oldContour.removeElementAt(oldContour
+                                            .indexOf(old));
+                                    kVOI.removeElementAt(indexRetrace);
+                                    old = kVOI.get(indexRetrace - 1);
+                                }
+                                lastX = (int) old.X;
+                                lastY = (int) old.Y;
+                                lastZ = (int) old.Z;
+                                kVOI.insertElementAt(newer, kVOI.indexOf(old) + 1);
+                            }
+
+                        } else {
+                            isFirst = false;
+                            if (indexold - index == 1) {
+                                knowDirection = true;
+                                lastX = (int) ptRetrace.X;
+                                lastY = (int) ptRetrace.Y;
+                                lastZ = (int) ptRetrace.Z;
+
+                                if (isFirst) {
+                                    kVOI.insertElementAt(newer, kVOI.indexOf(old) - 1);
+                                }
+                                kVOI.removeElement(old);
+                                indexRetrace = index;
+                            }
+                        }
+                    } else { // if counterclockwise and with jumps
+                        Vector3f right = new Vector3f(oldContour.get(index + 1));
+                        for (; index != indexold - 1; indexold++) {
+                            if (oldContour.indexOf(indexold) != -1) {
+                                oldContour.removeElementAt(indexold);
+                            }
+                            kVOI.removeElement(oldContour.elementAt(indexold));
+                        }
+
+                        kVOI.insertElementAt(newer, kVOI.indexOf(right));
+                        ptRetrace = right;
+                        lastX = (int) ptRetrace.X;
+                        lastY = (int) ptRetrace.Y;
+                        lastZ = (int) ptRetrace.Z;
+
+                        indexRetrace = oldContour.indexOf(right) - 1;
+                    }
+                } else if (minDistance > 5 && knowDirection) {
+                    if (isFirst)
+                        kVOI.insertElementAt(newer, kVOI.indexOf(ptRetrace));
+                    else {
+                        kVOI.insertElementAt(newer, kVOI.indexOf(ptRetrace) + 1);
+                    }
+                }
+            }
+
+            kVOI.setActive(true);
+
+        } catch (OutOfMemoryError error) {
+            System.gc();
+        } catch (ArrayIndexOutOfBoundsException error) {
+            resetStart();
+        } catch (NullPointerException error) {
+            resetStart();
+        }
+    }
+
 
     /**
      * Redraws contour. Must move cursor in clockwise motion to work best
@@ -1755,7 +1941,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
      *            y coordinateof new point to add
      * @param g
      *            graphics to paint in
-     */
     public void retraceContour(VOIBase kVOIIn, int x1, int y1 ) {
         if ( !(kVOIIn instanceof VOIContour) )
         {
@@ -1919,13 +2104,14 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_kParent.updateDisplay();
         } catch (OutOfMemoryError error) {
             System.gc();
-        } catch (ArrayIndexOutOfBoundsException error) {
-            resetStart();
-        } catch (NullPointerException error) {
-            resetStart();
-        }
+        } //catch (ArrayIndexOutOfBoundsException error) {
+            //resetStart();
+        //} catch (NullPointerException error) {
+        //    resetStart();
+        //}
     }
 
+     */
 
 
 
@@ -4487,11 +4673,12 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     private void processLeftMouseDrag(MouseEvent kEvent) {
 
         if ( m_bDrawVOI && !(((m_iDrawType == POINT) || (m_iDrawType == POLYPOINT) ||
-                (m_iDrawType == LIVEWIRE) || (m_iDrawType == LEVELSET) || (m_iDrawType == TEXT))) )
+                (m_iDrawType == LIVEWIRE) || (m_iDrawType == LEVELSET) || (m_iDrawType == TEXT) ||
+                (m_iDrawType == RETRACE))) )
         {
             createVOI( kEvent.getX(), kEvent.getY() );
         } 
-        else if ( m_kParent.getPointerButton().isSelected() &&  !m_bDrawVOI )
+        else if ( m_kParent.getPointerButton().isSelected() && !m_bDrawVOI && (m_iDrawType != RETRACE))
         {
             if ( m_iNearStatus == NearPoint )
             {
