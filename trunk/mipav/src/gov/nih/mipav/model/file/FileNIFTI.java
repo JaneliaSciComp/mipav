@@ -3068,7 +3068,7 @@ public class FileNIFTI extends FileBase {
     	
     	int bytesRead = 0;
     	int offset = off;
-    	while(offset != fullBufferSize || bytesRead != -1)
+    	while(offset != fullBufferSize || bytesRead != -1) {
     	
     		
     	 try {
@@ -3092,8 +3092,10 @@ public class FileNIFTI extends FileBase {
              MipavUtil.displayError("IOException on gzin.read(buffer)");
              
          }
+         
+    	}
     	
-         if(offset != 256) {
+         if(offset != fullBufferSize) {
         	 
         	 //this means that we reached the end of file...so lets return the appropriate sized buffer
         	 byte[] buffShortened = new byte[offset];
