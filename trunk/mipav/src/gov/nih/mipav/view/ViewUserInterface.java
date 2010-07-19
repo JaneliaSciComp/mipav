@@ -191,6 +191,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /** This is the outputDir path that the user entered as a command line argument when running a script * */
     private String outputDir = "";
+    
+    
+    private File secondaryPluginsDir;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -967,7 +970,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @return the new plugin menu
      */
     public JMenu buildPlugInsMenu(final ActionListener al) {
-
         final String userPlugins = System.getProperty("user.home") + File.separator + "mipav" + File.separator
                 + "plugins" + File.separator;
 
@@ -976,7 +978,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         final File pluginsDir = new File(userPlugins);
         if (pluginsDir.isDirectory()) {
 
-            final File[] allFiles = pluginsDir.listFiles(new FileFilter() {
+            File[] allFiles = pluginsDir.listFiles(new FileFilter() {
                 public boolean accept(final File f) {
 
                     if (f.getPath().endsWith(".class")) {
@@ -985,6 +987,28 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     return false;
                 }
             });
+            
+            if(secondaryPluginsDir != null) {
+            	File[] secondaryFiles = secondaryPluginsDir.listFiles(new FileFilter() {
+                    public boolean accept(final File f) {
+
+                        if (f.getPath().endsWith(".class")) {
+                            return true;
+                        }
+                        return false;
+                    }
+                });
+            	
+            	File[] allFilesInterm = new File[allFiles.length + secondaryFiles.length];
+            	int counter = 0;
+            	for(int i=0;i<allFiles.length;i++,counter++) {
+            		allFilesInterm[counter] = allFiles[i];
+            	}
+            	for(int i=0;i<secondaryFiles.length;i++,counter++) {
+            		allFilesInterm[counter] = secondaryFiles[i];
+            	}
+            	allFiles = allFilesInterm;
+            }
 
             String name, pluginName;
             Field catField = null, scriptField = null;
@@ -2167,6 +2191,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         String userDefaultDir = "";
 
         String scriptFile = null;
+        String secPluginsDir;
         final Vector<OpenFileInfo> imageList = new Vector<OpenFileInfo>();
         final Vector<Vector<String>> voiList = new Vector<Vector<String>>();
 
@@ -2483,7 +2508,25 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     ++i;
                 } else if (arg.equalsIgnoreCase("-outputDir")) {
                     ++i;
-                } else {
+                } else if(arg.equalsIgnoreCase("-plugindir")) {
+                	secPluginsDir = args[ ++i];
+                	File f = new File(secPluginsDir);
+                	if(f.exists() && f.isDirectory() && f.canRead()) {
+                		secondaryPluginsDir = f;
+                		int ind = openingMenuBar.getComponentIndex(pluginsMenu);
+                        openingMenuBar.remove(pluginsMenu);
+                		if (getRegisteredFramedImagesNum() > 0) {
+                            this.pluginsMenu = buildPlugInsMenu(getActiveImageFrame());
+                        } else {
+                            this.pluginsMenu = buildPlugInsMenu(this);
+                        }
+                        openingMenuBar.add(pluginsMenu, ind);
+                	}else {
+                		Preferences.debug("plugindir is not a valid readable directory", Preferences.DEBUG_MINOR);
+                        System.out.println("plugindir is not a valid readable directory");
+                		printUsageAndExit();
+                	}
+                }else {
                     printUsageAndExit();
                 }
             } else {
@@ -3933,6 +3976,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 + "[-inputDir][-INPUTDIR]      Default image directory path"
                 + "\n"
                 + "[-outputDir][-OUTPUTDIR]      Output image directory path"
+                + "\n"
+                + "[-pluginDir][-PLUGINDIR]      Secondary plugins directory"
                 + "\n"
                 + "Examples:"
                 + "\n"
