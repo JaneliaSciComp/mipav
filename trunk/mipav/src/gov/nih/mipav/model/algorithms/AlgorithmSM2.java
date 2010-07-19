@@ -208,6 +208,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
         boolean selfTest2 = false;
         boolean levmarBoxConstraintTest = false;
         boolean ddrvbdTest = false;
+        boolean nl2solTest = false;
         int voiCount;
         double delT;
         long normalTerminations = 0;
@@ -509,6 +510,12 @@ public class AlgorithmSM2 extends AlgorithmBase {
         	new FitAllBC2();
         	setCompleted(false);
         	return;	
+        }
+        
+        if (nl2solTest) {
+        	new FitAllNL2();
+        	setCompleted(false);
+        	return;
         }
         
         if (srcImage.getNDims() != 4) {
@@ -2577,6 +2584,22 @@ public class AlgorithmSM2 extends AlgorithmBase {
             return;
         }
     }*/
+    
+    class FitAllNL2 extends NL2sol {
+    	public FitAllNL2() {
+    		super();
+    	}
+    	
+    	public void calcj(int meqn, int nvar, double x[], int nf, double jac[][], 
+                int uiparm[], double urparm[]) {
+    		
+    	}
+    	
+    	public void calcr (int meqn, int nvar, double x[], int nf, double r[], 
+                int uiparm[], double urparm[]) {
+    		
+    	}
+    }
     
     class FitAllEP extends NLConstrainedEngineEP {
 
