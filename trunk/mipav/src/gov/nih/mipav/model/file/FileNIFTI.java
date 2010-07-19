@@ -895,6 +895,7 @@ public class FileNIFTI extends FileBase {
                 }
                 bufferByte = buffer;
         	}
+
         }else {
         	// index         = fileName.toLowerCase().indexOf(".img");
             index = fileName.lastIndexOf(".");
@@ -1508,6 +1509,7 @@ public class FileNIFTI extends FileBase {
 
         vox_offset = getBufferFloat(bufferByte, 108, endianess);
         fileInfo.setVoxOffset(vox_offset);
+
         Preferences.debug("vox_offset = " + vox_offset + "\n");
 
         scl_slope = getBufferFloat(bufferByte, 112, endianess);
@@ -2522,18 +2524,10 @@ public class FileNIFTI extends FileBase {
             	byte[] offsetBuff = new byte[4];
             	String ext = fileName.substring(fileName.lastIndexOf(".")+1, fileName.length());
             	if (ext.equalsIgnoreCase("zip")) {
-            		//we have already readin the header...now skip over the 4 extension bytes
-	                     try {
-                        bytesRead = zin.read(offsetBuff);
-                        if(bytesRead != 4) {
-                      	 buffer = getFullBuffer(zin,offsetBuff,bytesRead,4); 
-                      	 
-                            }
-	                     } catch (IOException e) {
-	                    	 e.printStackTrace();
-	                         MipavUtil.displayError("IOException on gzin.read(buffer) for " + fileName);
-	                         return null;
-	                     }
+            		
+            		//skip over extension
+            		zin.skip((long)(vox_offset-348));
+            		
                     int start = 0;
                     boolean endianness = fileInfo.getEndianess();
                     int type = image.getType();
@@ -2662,19 +2656,10 @@ public class FileNIFTI extends FileBase {
                         } 
                     }
             	}else if(ext.equalsIgnoreCase("gz")) {
-            		//we have already readin the header...now skip over the 4 extension bytes
-	                     try {
-	                         bytesRead = gzin.read(offsetBuff);
-                         if(bytesRead != 4) {
-                       	 buffer = getFullBuffer(gzin,offsetBuff,bytesRead,4); 
-                       	 
-                            }
-	                     } catch (IOException e) {
-	                    	 e.printStackTrace();
-	                         MipavUtil.displayError("IOException on gzin.read(buffer) for " + fileName);
-	                         return null;
-	                     }
-                   
+            		
+            		//skip over extension
+            		gzin.skip((long)(vox_offset-348));
+
                     int start = 0;
                     boolean endianness = fileInfo.getEndianess();
                     int type = image.getType();
@@ -2801,18 +2786,10 @@ public class FileNIFTI extends FileBase {
                         } 
                     }
             	}else if(ext.equalsIgnoreCase("bz2")) {
-            		//we have already readin the header...now skip over the 4 extension bytes
-	                     try {
-                        bytesRead = gzin.read(offsetBuff);
-                        if(bytesRead != 4) {
-                      	 buffer = getFullBuffer(gzin,offsetBuff,bytesRead,4); 
-                      	 
-                            }
-	                     } catch (IOException e) {
-	                    	 e.printStackTrace();
-	                         MipavUtil.displayError("IOException on gzin.read(buffer) for " + fileName);
-	                         return null;
-	                     }
+            		
+            		//skip over extension
+            		bz2in.skip((long)(vox_offset-348));
+            		
                     int start = 0;
                     boolean endianness = fileInfo.getEndianess();
                     int type = image.getType();
