@@ -1547,7 +1547,21 @@ public class FileInfoNIFTI extends FileInfoBase {
         this.esize = esize;
     }
     
-    /**
+    
+    
+    public int getEsize() {
+		return esize;
+	}
+
+	public int getEsize2() {
+		return esize2;
+	}
+
+	public int getEsize3() {
+		return esize3;
+	}
+
+	/**
      * Sets ecode, the data format of the header extension
      * @param ecode
      */
