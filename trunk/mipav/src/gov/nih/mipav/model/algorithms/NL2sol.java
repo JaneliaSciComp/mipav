@@ -24,7 +24,49 @@ private boolean testMode = false;
     // epsilon = 2.224460e-16
     // epsilon is called the largest relative spacing
     private double epsilon = Math.pow(2, -52);
-    private double huge = Double.MAX_VALUE;
+    private double huge = Double.MAX_VALUE; 
+    
+    private double expmin_calcjTest = 0.0;
+    private double uftolg_calcjTest = 0.0;
+    private double ukow_calcjTest[] = new double[] {0.0, 4.0, 2.0, 1.0, 0.5, 
+            0.25, 0.167, .0125, 0.1, 0.0833, 0.0714, 0.0625};
+    
+    private double expmax_calcrTest = 0.0;
+	private double expmin_calcrTest = 0.0;
+	private double uftolg_calcrTest = 0.0;
+	private double ukow_calcrTest[] = new double[]{0.0, 4.0,   2.0,   1.0, 0.5,    0.25, 
+		    0.167, 0.125, 0.1, 0.0833, 0.0714, 0.0625};
+	private double ybard_calcrTest[] = new double[]{ 0.0, 0.14, 0.18, 0.22, 0.25, 0.29,
+                   0.32, 0.35, 0.39, 0.37, 0.58, 0.73, 0.96, 1.34, 2.10, 4.39};
+    private double ykow_calcrTest[] = new double[]{ 0.0, 1.957E-01, 1.947E-01, 1.735E-01, 1.600E-01, 8.44E-02,
+             6.27E-02,  4.56E-02,  3.42E-02,  3.23E-02,  2.35E-02, 2.46E-02};
+    private double ymeyer_calcrTest[] = new double[]{ 0.0, 3.478E+04, 2.861E+04, 2.365E+04, 1.963E+04, 1.637E+04,
+      1.372E+04, 1.154E+04, 9.744E+03, 8.261E+03, 7.030E+03, 6.005E+03, 5.147E+03, 4.427E+03, 3.820E+03, 3.307E+03,
+       2.872E+03};
+    private double yosb1_calcrTest[] = new double[] {0.0,
+        8.44E-01, 9.08E-01, 9.32E-01, 9.36E-01, 9.25E-01,
+        9.08E-01, 8.81E-01, 8.50E-01, 8.18E-01, 7.84E-01,
+        7.51E-01, 7.18E-01, 6.85E-01, 6.58E-01, 6.28E-01,
+        6.03E-01, 5.80E-01, 5.58E-01, 5.38E-01, 5.22E-01,
+        5.06E-01, 4.90E-01, 4.78E-01, 4.67E-01, 4.57E-01,
+        4.48E-01, 4.38E-01, 4.31E-01, 4.24E-01, 4.20E-01,
+        4.14E-01, 4.11E-01, 4.06E-01};
+    private double yosb2_calcrTest[] = new double[] {0.0,
+        1.366, 1.191, 1.112, 1.013, 9.91E-01,
+        8.85E-01,  8.31E-01,  8.47E-01,  7.86E-01,  7.25E-01,
+        7.46E-01,  6.79E-01,  6.08E-01,  6.55E-01,  6.16E-01,
+        6.06E-01,  6.02E-01,  6.26E-01,  6.51E-01,  7.24E-01,
+        6.49E-01,  6.49E-01,  6.94E-01,  6.44E-01,  6.24E-01,
+        6.61E-01,  6.12E-01,  5.58E-01,  5.33E-01,  4.95E-01,
+        5.00E-01,  4.23E-01,  3.95E-01,  3.75E-01,  3.72E-01,
+        3.91E-01,  3.96E-01,  4.05E-01,  4.28E-01,  4.29E-01,
+        5.23E-01,  5.62E-01,  6.07E-01,  6.53E-01,  6.72E-01,
+        7.08E-01,  6.33E-01,  6.68E-01,  6.45E-01,  6.32E-01,
+        5.91E-01,  5.59E-01,  5.97E-01,  6.25E-01,  7.39E-01,
+        7.10E-01,  7.29E-01,  7.20E-01,  6.36E-01,  5.81E-01,
+        4.28E-01,  2.92E-01,  1.62E-01,  9.8E-02,   5.4E-02}; 
+	
+    
 	private double sqteta_dotprd = 0.0;
 	
 	private double dgxfac_gqtstp = 0.0;
@@ -44,7 +86,6 @@ private boolean testMode = false;
 	private int n;
 	private int p;
 	private double x[];
-	private double xInit[];
 	private int iv[];
 	private double v[];
 	private boolean useAnalyticJacobian;
@@ -61,6 +102,12 @@ private boolean testMode = false;
 	private int nex; // the index of the test problem
 	
 	public NL2sol() {
+		testMode = true;
+		main();
+	}
+	
+	private void main() {
+		
 		/* MAIN is the main program for NL2SOL_PRB2.
 		!
 		!  Discussion:
@@ -124,7 +171,6 @@ private boolean testMode = false;
 		int xscal2;
 	    Preferences.debug("Test the NL2sol package\n");
 	    timestamp();
-	    testMode = true;
 	    rstart = false;
 	    jtyp[1] = " ";
 	    jtyp[2] = "*";
@@ -148,8 +194,390 @@ private boolean testMode = false;
 	    useAnalyticJacobian = true;
 	    xscal1 = 1;
 	    xscal2 = 3;
-	    nltest("Rosenbrock",rstart,xscal1,xscal2);
-	} // NL2sol
+	    nltest("Rosenbrock", rstart, xscal1, xscal2);
+	    
+	    // Helix
+	    n = 3;
+	    p = 3;
+	    nex = 2;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 3;
+	    nltest("Helix", rstart, xscal1, xscal2);
+	    
+	    // Singular
+	    n = 4;
+	    p = 4;
+	    nex = 3;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 3;
+	    nltest("Singular", rstart, xscal1, xscal2);
+	    
+	    // Woods
+	    n = 7;
+	    p = 4;
+	    nex = 4;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 3;
+	    nltest("Woods", rstart, xscal1, xscal2);
+	    
+	    // Zangwill
+	    n = 3;
+	    p = 3;
+	    nex = 5;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 1;
+	    nltest("Zangwill", rstart, xscal1, xscal2);
+	    
+	    // Engvall
+	    n = 5;
+	    p = 3;
+	    nex = 6;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 3;
+	    nltest("Engvall", rstart, xscal1, xscal2);
+	    
+	    // Branin
+	    n = 2;
+	    p = 2;
+	    nex = 7;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 3;
+	    nltest("Branin", rstart, xscal1, xscal2);
+	    
+	    // Beale
+	    n = 3;
+	    p = 2;
+	    nex = 8;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 2;
+	    nltest("Beale", rstart, xscal1, xscal2);
+	    
+	    // Cragg and Levy
+	    n = 5;
+	    p = 4;
+	    nex = 9;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 2;
+	    nltest("Cragg", rstart, xscal1, xscal2);
+	    
+	    // Box
+	    n = 10;
+	    p = 3;
+	    nex = 10;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 2;
+	    nltest("Box", rstart, xscal1, xscal2);
+	    
+	    // Davidon 1
+	    n = 15;
+	    p = 15;
+	    nex = 11;
+	    useAnalyticJacobian = true;
+	    mxfcsv = iv[17];
+	    mxitsv = iv[18];
+	    iv[17] = 20;
+	    iv[18] = 15;
+	    xscal1 = 1;
+	    xscal2 = 1;
+	    nltest("Davidon1", rstart, xscal1, xscal2);
+	    
+	    // Freudenstein and Roth
+	    n = 2;
+	    p = 2;
+	    nex = 12;
+	    useAnalyticJacobian = true;
+	    iv[17] = mxfcsv;
+	    iv[18] = mxitsv;
+	    xscal1 = 1;
+	    xscal2 = 3;
+	    nltest("Freudenstein", rstart, xscal1, xscal2);
+	    
+	    // Watson6
+	    n = 31;
+	    p = 6;
+	    nex = 13;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 1;
+	    nltest("Watson6", rstart, xscal1, xscal2);
+	    
+	    // Watson9
+	    n = 31;
+	    p = 9;
+	    nex = 14;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 1;
+	    nltest("Watson9", rstart, xscal1, xscal2);
+	    
+	    // Watson12
+	    n = 31;
+	    p = 12;
+	    nex = 15;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 1;
+	    nltest("Watson12", rstart, xscal1, xscal2);
+	    
+	    // Watson20
+	    n = 31;
+	    p = 20;
+	    nex = 16;
+	    useAnalyticJacobian = true;
+	    mxfcsv = iv[17];
+	    iv[17] = 20;
+	    mxitsv = iv[18];
+	    iv[18] = 15;
+	    xscal1 = 1;
+	    xscal2 = 3;
+	    nltest("Watson20", rstart, xscal1, xscal2 );
+	    
+	    // Chebyquad
+	    n = 8;
+	    p = 8;
+	    nex = 17;
+	    useAnalyticJacobian = true;
+	    iv[17] = mxfcsv;
+	    iv[18] = mxitsv;
+	    xscal1 = 1;
+	    xscal2 = 2;
+	    nltest("Chebyquad", rstart, xscal1, xscal2);
+	    
+	    // Brown and Dennis
+	    n = 20;
+	    p = 4;
+	    nex = 18;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 3;
+	    nltest("Brown", rstart, xscal1, xscal2);
+	    
+	    // Bard
+	    n = 15;
+	    p = 3;
+	    nex = 19;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 3;
+	    nltest("Bard", rstart, xscal1, xscal2);
+	    
+	    // Jennrich and Sampson
+	    n = 10;
+	    p = 2;
+	    nex = 20;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 1;
+	    nltest("Jennrich", rstart, xscal1, xscal2);
+	    
+	    // Kowalik and Osborne
+	    n = 11;
+	    p = 4;
+	    nex = 21;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 3;
+	    nltest("Kowalik", rstart, xscal1, xscal2);
+	    
+	    // Osborne 1
+	    n = 33;
+	    p = 5;
+	    nex = 22;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 1;
+	    nltest("Osborne1", rstart, xscal1, xscal2);
+	    
+	    // Osborne 2
+	    n = 65;
+	    p = 11;
+	    nex = 23;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 2;
+	    nltest("Osborne2", rstart, xscal1, xscal2);
+	    
+	    // Madsen
+	    n = 3;
+	    p = 2;
+	    nex = 24;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 3;
+	    nltest("Madsen", rstart, xscal1, xscal2);
+	    
+	    // Meyer
+	    n = 16;
+	    p = 3;
+	    nex = 25;
+	    useAnalyticJacobian = true;
+	    iv[17] = 400;
+	    iv[18] = 300;
+	    xscal1 = 1;
+	    xscal2 = 3;
+	    nltest("Meyer", rstart, xscal1, xscal2);
+	    
+	    // Brown5
+	    n = 5;
+	    p = 5;
+	    nex = 26;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 3;
+	    nltest("Brown5", rstart, xscal1, xscal2);
+	    
+	    // Brown10
+	    n = 10;
+	    p = 10;
+	    nex = 27;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 3;
+	    nltest("Brown10", rstart, xscal1, xscal2);
+	    
+	    // Brown30
+	    // Need to increase v and iv dimensions for this problem?
+	    // Even so, initial sum of squares overflows!
+	    n = 30;
+	    p = 30;
+	    nex = 28;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 3;
+	    nltest("Brown30", rstart, xscal1, xscal2);
+	    
+	    // Brown40
+	    n = 40;
+	    p = 40;
+	    nex = 29;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 3;
+	    nltest("Brown40", rstart, xscal1, xscal2);
+	    
+	    // Bard + 10
+	    n = 15;
+	    p = 3;
+	    nex = 30;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 3;
+	    nltest("Bard+30", rstart, xscal1, xscal2);
+	    
+	    // Kowalik and Ossborne + 10.
+	    n = 11;
+	    p = 4;
+	    nex = 31;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 3;
+	    nltest("Kowalik+10", rstart, xscal1, xscal2);
+	    
+	    // Meyer + 10
+	    n = 16;
+	    p = 3;
+	    nex = 32;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 3;
+	    nltest("Meyer+10", rstart, xscal1, xscal2);
+	    
+	    // Watson6 + 10
+	    n = 31;
+	    p = 6;
+	    nex = 33;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 3;
+	    nltest("Watson6+10", rstart, xscal1, xscal2);
+	    
+	    // Watson9 + 10
+	    n = 31;
+	    p = 9;
+	    nex = 34;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 3;
+	    nltest("Watson9+10", rstart, xscal1, xscal2);
+	    
+	    // Watson12 + 10
+	    n = 31;
+	    p = 12;
+	    nex = 35;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 3;
+	    nltest("Watson12+10", rstart, xscal1, xscal2);
+	    
+	    // Watson20 + 10
+	    n = 31;
+	    p = 20;
+	    nex = 36;
+	    useAnalyticJacobian = true;
+	    xscal1 = 1;
+	    xscal2 = 3;
+	    nltest("Watson20+10", rstart, xscal1, xscal2);
+	    
+	    // Repeat Rosenbrock with finite-difference jacobian.
+	    n = 2;
+	    p = 2;
+	    nex = 1;
+	    useAnalyticJacobian = false;
+	    xscal1 = 1;
+	    xscal2 = 1;
+	    iv[17] = 50;
+	    iv[18] = 40;
+	    nltest("Rosenbrock", rstart, xscal1, xscal2);
+	    
+	    // Repeat Brown with finite-difference Jacobian.
+	    n = 20;
+	    p = 4;
+	    nex = 18;
+	    useAnalyticJacobian = false;
+	    xscal1 = 1;
+	    xscal2 = 3;
+	    v[29] = Math.max(1.0E-7, v[29]);
+	    iv[17] = 30;
+	    iv[18] = 20;
+	    nltest("Brown", rstart, xscal1, xscal2);
+	    
+	    // Print summary
+	    Preferences.debug(version + "\n");
+	    Preferences.debug("Summary of test runs\n");
+	    for (k = 1; k <= nprob; k++) {
+	    	j = is[6][k];
+	    	if (j == 1) {
+	    		Preferences.debug("Problem = " + name[k] + "     analytic jacobian\n");
+	    	}
+	    	else {
+	    		Preferences.debug("Problem = " + name[k] + "     finite difference jacobian\n");
+	    	}
+	    	Preferences.debug("n = " + is[1][k] + "\n");
+	    	Preferences.debug("p = " + is[2][k] + "\n");
+	    	Preferences.debug("niter = " + is[3][k] + "\n");
+	    	Preferences.debug("nf = " + is[4][k] + "\n");
+	    	Preferences.debug("ng = " + is[5][k] + "\n");
+	    	Preferences.debug("iv1 = " + irc[k] + "\n");
+	    	Preferences.debug("x0scal = " + rs[1][k] + "\n");
+	    	Preferences.debug("final f = " + rs[2][k] + "\n");
+	    	Preferences.debug("preldf = " + rs[3][k] + "\n");
+	    	Preferences.debug("nreldf = " + rs[4][k] + "\n");
+	    	Preferences.debug("reldx = " + rs[5][k] + "\n\n\n");
+	    } // for (k = 1; k <= nprob; k++)
+	    
+	    Preferences.debug("Normal end of execution\n");
+	    timestamp();
+	    
+	} // main
 	
 	private void nltest ( String title, boolean rstart, int xscal1, int xscal2 ) {
 
@@ -2277,10 +2705,584 @@ private boolean testMode = false;
 	public abstract void calcj(int meqn, int nvar, double x[], int nf, double jac[][], 
 			                   int uiparm[], double urparm[]);
 	
-	public void calcjTest(int meqn, int nvar, double x[], int nf, double jac[][],
+	private void calcjTest(int n, int p, double x[], int nfcall, double jac[][],
 			              int uiparm[], double urparm[]) {
+		/*****************************************************************************80
+		!
+		!! TESTJ evaluates the jacobian matrix.
+		!
+		!  Discussion:
+		!
+		!    This routine evaluates the jacobian matrix J for the various
+		!    test problems listed in the references.
+		!
+		!  Reference:
+		!
+		!    Philip Gill and Walter Murray,
+		!    Algorithms for the Solution of the Non-linear Least-squares Problem, 
+		!    SIAM Journal on Numerical Analysis,
+		!    Volume 15, Number 5, pages 977-991, 1978.
+		!
+		!    R R Meyer, 
+		!    Theoretical and Computational Aspects of Nonlinear Regression, 
+		!    in Nonlinear Programming,
+		!    edited by J B Rosen, O L Mangasarian, and K Ritter,
+		!    pages 465-486,
+		!    Academic Press, New York, 1970.
+		!
+		!    K M Brown,
+		!    A Quadratically Convergent Newton-like Method Based upon 
+		!    Gaussian Elimination,
+		!    SIAM Journal on Numerical Analysis,
+		!    Volume 6, pages 560-569, 1969.
+		!
+		!  Parameters:
+		!
+		!    Input, integer N, is the number of functions, the length of R,
+		!    and the number of rows used in J.
+		!
+		!    Input, integer P, the number of variables.
+		!
+		!    Input, real X(P), the point at which the jacobian is to be evaluated.
+		!
+		!    Input, integer NFCALL, is the invocation count of TESTR.  It is
+		!    not needed by this routine.
+		!
+		!    Output, real JAC(N,P), the jacobian matrix at X.
+		!
+		!    Input, integer UIPARM(1), contains the value of NEX, the index
+		!    of the problem being solved.
+		!
+		!    Input, real URPARM(*), is a user parameter vector, which is
+		!    not needed by this routine.
+		!
+		!    Input, external UFPARM, is the name of a user-chosen function,
+		!    which is not needed here.
+		*/
+		  
+		  double e;
+		  int i;
+		  int j;
+		  int k;
+		  int nex;
+		  double r2;
+		  double t;
+		  double temp;
+		  double theta;
+		  double ti;
+		  double tim1;
+		  double tip1;
+		  double tpi;
+		  double tpim1;
+		  double tpip1;
+		  final double twopi = 2.0E+00 * 3.141592653589793;
+		  double u;
+		  double v;
+		  double w;
+		  double z;
+
+		  nex = uiparm[1];
+
+		  for (j = 1; j <= p; j++) {
+		    for ( i = 1; i <= n; i++) {
+		      jac[i][j] = 0.0;
+		    }
+		  } // for (j = 1; j <= p; j++)
+		//
+		//  Rosenbrock.
+		//
+		  if ( nex == 1 ) {
+
+		    jac[1][1] = -20.0 * x[1];
+		    jac[1][2] = 10.0;
+		    jac[2][1] = -1.0;
+		    jac[2][2] = 0.0;
+		  }
+		//
+		// Helix.
+		//
+		  else if ( nex == 2 ) {
+
+		    t = x[1]*x[1] + x[2]*x[2];
+		    ti = 100.0 / ( twopi * t );
+		    jac[1][1] = ti * x[2];
+		    t = 10.0 / Math.sqrt ( t );
+		    jac[2][1] = x[1] * t;
+		    jac[3][1] = 0.0;
+		    jac[1][2] = -ti * x[1];
+		    jac[2][2] = x[2] * t;
+		    jac[3][2] = 0.0;
+		    jac[1][3] = 10.0;
+		    jac[2][3] = 0.0;
+		    jac[3][3] = 1.0;
+		  }
+		//
+		//  Singular.
+		//
+		  else if ( nex == 3 ) {
+
+		    jac[1][1] = 1.0;
+		    jac[1][2] = 10.0;
+		    jac[2][3] = Math.sqrt ( 5.0 );
+		    jac[2][4] = -jac[2][3];
+		    jac[3][2] = 2.0 * ( x[2] - 2.0 * x[3] );
+		    jac[3][3] = -2.0 * jac[3][2];
+		    jac[4][1] = Math.sqrt( 40.0 ) * ( x[1] - x[4] );
+		    jac[4][4] = -jac[4][1];
+		  }
+		//
+		//  Woods.
+		//
+		  else if ( nex == 4 ) {
+
+		    jac[1][1] = -20.0 * x[1];
+		    jac[1][2] = 10.0;
+		    jac[2][1] = -1.0;
+		    jac[3][4] = Math.sqrt ( 90.0 );
+		    jac[3][3] = -2.0 * x[3] * jac[3][4];
+		    jac[4][3] = -1.0;
+		    jac[5][2] = Math.sqrt ( 9.9 );
+		    jac[5][4] = jac[5][2];
+		    jac[6][2] = Math.sqrt ( 0.2 );
+		    jac[7][4] = jac[6][2];
+		  }
+		//
+		//  Zangwill.
+		//
+		  else if ( nex == 5 ) {
+
+		    for (k = 1; k <= 3; k++) {
+		      for (i = 1; i <= 3; i++) {
+		        jac[i][k] = 1.0;
+		      }
+		    }
+		    jac[1][2] = -1.0;
+		    jac[2][1] = -1.0;
+		    jac[3][3] = -1.0;
+		  }
+		//
+		//  Engvall.
+		//
+		  else if ( nex == 6 ) {
+
+		    jac[1][1] = 2.0 * x[1];
+		    jac[1][2] = 2.0 * x[2];
+		    jac[1][3] = 2.0 * x[3];
+		    jac[2][1] = jac[1][1];
+		    jac[2][2] = jac[1][2];
+		    jac[2][3] = 2.0 * ( x[3] - 2.0 );
+		    jac[3][1] = 1.0;
+		    jac[3][2] = 1.0;
+		    jac[3][3] = 1.0;
+		    jac[4][1] = 1.0;
+		    jac[4][2] = 1.0;
+		    jac[4][3] = -1.0;
+		    t = 2.0 * ( 5.0 * x[3] - x[1] + 1.0 );
+		    jac[5][1] = 3.0 * x[1]*x[1] - t;
+		    jac[5][2] = 6.0 * x[2];
+		    jac[5][3] = 5.0 * t;
+		  }
+		//
+		//  Branin.
+		//
+		  else if ( nex == 7 ) {
+
+		    jac[1][1] = 4.0;
+		    jac[1][2] = 4.0;
+		    jac[2][1] = 3.0 + (x[1] - 2.0 ) * ( 3.0 * x[1] - 2.0 * x[2] - 2.0 ) + x[2] * x[2];
+		    jac[2][2] = 1.0 + 2.0 * ( 2.0 * x[1] - x[2] * x[2] ) - ( x[1] - x[2] )*(x[1] - x[2]);
+		  }
+		//
+		//  Beale.
+		//
+		  else if ( nex == 8 ) {
+
+		    jac[1][1] = x[2] - 1.0;
+		    jac[1][2] = x[1];
+		    jac[2][1] = x[2]*x[2] - 1.0;
+		    jac[2][2] = 2.0 * x[1] * x[2];
+		    jac[3][1] = x[2]*x[2]*x[2] - 1.0;
+		    jac[3][2] = 3.0 * x[1] * x[2]*x[2];
+		  }
+		//
+		//  Cragg and Levy.
+		//
+		  else if ( nex == 9 ) {
+		 
+		    t = Math.exp ( x[1] );
+		    jac[1][2] = -2.0 * ( t - x[2] );
+		    jac[1][1] = -t * jac[1][2];
+		    jac[2][2] = 30.0 * ( x[2] - x[3] )*(x[2] - x[3]);
+		    jac[2][3] = -jac[2][2];
+		    temp = Math.cos(x[3] - x[4]);
+		    jac[3][3] = 2.0 * Math.sin ( x[3] - x[4] ) /(temp*temp*temp);
+		    jac[3][4] = -jac[3][3];
+		    jac[4][1] = 4.0 * x[1]*x[1]*x[1];
+		    jac[5][4] = 1.0;
+		  }
+		//
+		//  Box.
+		//
+		  else if ( nex == 10 ) {
+
+		    if ( expmin_calcjTest == 0.0 ) {
+		      expmin_calcjTest = 1.999 * Math.log ( tiny );
+		    }
+
+		    for (i = 1; i <= 10; i++) {
+
+		      ti = - 0.1 * i;
+
+		      t = x[1] * ti;
+
+		      if ( t < expmin_calcjTest ) {
+		        e = 0.0;
+		      }
+		      else {
+		        e = Math.exp ( t );
+		      }
+
+		      jac[i][1] = ti * e;
+
+		      t = x[2] * ti;
+		      if ( t < expmin_calcjTest ) {
+		        e = 0.0;
+		      }
+		      else {
+		        e = Math.exp ( t );
+		      }
+
+		      jac[i][2] = -ti * e;
+		      jac[i][3] = Math.exp ( 10.0 * ti ) - Math.exp ( ti );
+
+		    } // for (i = 1; i <= 10; i++)
+		  }
+		//
+		//  Davidon 1.
+		//
+		  else if ( nex == 11 ) {
+
+		    for (i = 1; i <= n-1; i++) {
+		      ti = (double) i;
+		      t = 1.0;
+		      for (k = 1; k <= p; k++) {
+		        jac[i][k] = t;
+		        t = t * ti;
+		      }
+		    }
+
+		    jac[n][1] = 1.0;
+		    for  (k = 2; k <= p; k++) {
+		      jac[n][k] = 0.0;
+		    }
+		  }
+		//
+		//  Freudenstein and Roth.
+		//
+		  else if ( nex == 12 ) {
+
+		    jac[1][1] = 1.0;
+		    jac[1][2] = -2.0 + x[2] * ( 10.0 - 3.0 * x[2] );
+		    jac[2][1] = 1.0;
+		    jac[2][2] = -14.0 + x[2] * ( 2.0 + 3.0 * x[2] );
+		  }
+		//
+		//  Watson6.
+		//  Watson9.
+		//  Watson12.
+		//  Watson20.
+		//
+		  else if ( nex >= 13 && nex <= 16 ) {
+
+		    for (i = 1; i <= 29; i++) {
+		      ti = ((double) ( i)) / 29.0;
+		      r2 = x[1];
+		      t = 1.0;
+		      for (k = 2; k <= p; k++) {
+		        t = t * ti;
+		        r2 = r2 + t * x[k];
+		      }
+		      r2 = -2.0 * r2;
+		      jac[i][1] = r2;
+		      t = 1.0;
+		      r2 = ti * r2;
+		      for (k = 2; k <= p; k++) {
+		        jac[i][k] = t * (( k - 1.0) + r2 );
+		        t = t * ti;
+		      }
+		    } // for (i = 1; i <= 29; i++)
+
+		    jac[30][1] = 1.0;
+		    jac[31][1] = -2.0 * x[1];
+		    jac[31][2] = 1.0;
+		  }
+		//
+		//  Chebyquad.
+		//
+		  else if ( nex == 17 ) {
+
+		    for (k = 1; k <= n; k++) {
+		      tim1 = -1.0 / ((double)n);
+		      z = 2.0 * x[k] - 1.0;
+		      ti = z * tim1;
+		      tpim1 = 0.0;
+		      tpi = 2.0 * tim1;
+		      z = z + z;
+		      for (i = 1; i <= n; i++) {
+		        jac[i][k] = tpi;
+		        tpip1 = 4.0 * ti + z * tpi - tpim1;
+		        tpim1 = tpi; 
+		        tpi = tpip1;
+		        tip1 = z * ti - tim1;
+		        tim1 = ti;
+		        ti = tip1;
+		      } // for (i = 1; i <= n; i++)
+		    } // for (k = 1; k <= n; k++)
+		  }
+		//
+		//  Brown and Dennis.
+		//
+		  else if ( nex == 18 ) {
+
+		    for (i = 1; i <= n; i++) {
+		      ti = 0.2 * i;
+		      jac[i][1] = 2.0 * ( x[1] + x[2] * ti - Math.exp ( ti ) );
+		      jac[i][2] = ti * jac[i][1];
+		      t = Math.sin ( ti );
+		      jac[i][3] = 2.0 * ( x[3] + x[4] * t - Math.cos ( ti ) );
+		      jac[i][4] = t * jac[i][3];
+		    } // for (i = 1; i <= n; i++)
+		  }
+		//
+		//  Bard.
+		//
+		  else if ( nex == 19 ) {
+
+		    for (i = 1; i <= 15; i++) {
+		      jac[i][1] = -1.0;
+		      u = (double)i;
+		      v = 16.0 - u;
+		      w = Math.min ( u, v );
+		      temp = x[2] * v + x[3] * w;
+		      t = u / (temp*temp);
+		      jac[i][2] = v * t;
+		      jac[i][3] = w * t;
+		    } // for (i = 1; i <= 15; i++)
+		  }
+		//
+		//  Jennrich and Sampson.
+		//
+		  else if ( nex == 20 ) {
+
+		    for (i = 1; i <= 10; i++) {
+		      ti = (double)i;
+		      jac[i][1] = -ti * Math.exp ( ti * x[1] );
+		      jac[i][2] = -ti * Math.exp ( ti * x[2] );
+		    }
+		  }
+		//
+		//  Kowalik and Osborne.
+		//
+		  else if ( nex == 21 ) {
+
+		    for (i = 1; i <= 11; i++) {
+		      t = -1.0 / ( ukow_calcjTest[i]*ukow_calcjTest[i] + x[3] * ukow_calcjTest[i] + x[4] );
+		      jac[i][1] = t * ( ukow_calcjTest[i]*ukow_calcjTest[i] + x[2] * ukow_calcjTest[i] );
+		      jac[i][2] = x[1] * ukow_calcjTest[i] * t;
+		      t = t * jac[i][1] * x[1];
+		      jac[i][3] = ukow_calcjTest[i] * t;
+		      jac[i][4] = t;
+		    } // for (i = 1; i <= 11; i++)
+		  }
+		//
+		//  Osborne 1.
+		//
+		  else if ( nex == 22 ) {
+
+		    for (i = 1; i <= 33; i++) {
+		      ti = 10.0 * ( 1.0 - i);
+		      jac[i][1] = -1.0;
+		      jac[i][2] = -Math.exp ( x[4] * ti );
+		      jac[i][3] = -Math.exp ( x[5] * ti );
+		      jac[i][4] = ti * x[2] * jac[i][2];
+		      jac[i][5] = ti * x[3] * jac[i][3];
+		    } // for (i = 1; i <= 33; i++)
+		  }
+		//
+		//  Osborne 2.
+		//
+		//  UFTOLG is a machine-dependent constant.  It is just slightly
+		//  larger than the log of the smallest positive machine number.
+		//
+		  else if ( nex == 23 ) {
+
+		    if ( uftolg_calcjTest == 0.0 ) {
+		      uftolg_calcjTest = 1.999 * Math.log ( tiny  );
+		    }
+
+		    for (i = 1; i <= 65; i++) {
+		      ti = ( 1.0 - i) * 0.1;
+		      jac[i][1] = -Math.exp ( x[5] * ti );
+		      jac[i][5] = x[1] * ti * jac[i][1];
+		      for (k = 2; k <= 4; k++) {
+		        t = x[k + 7] + ti;
+		        theta = -x[k+4] * t * t;
+		        if ( theta <= uftolg_calcjTest ) {
+		          r2 = 0.0;
+		        }
+		        else {
+		          r2 = -Math.exp ( theta );
+		        }
+		        jac[i][k] = r2;
+		        r2 = -t * r2 * x[k];
+		        jac[i][k+4] = r2 * t;
+		        jac[i][k+7] = 2.0 * x[k+4] * r2;
+		      } // for (k = 2; k <= 4; k++)
+		    } // for (i = 1; i <= 65; i++)
+		  }
+		//
+		//  Madsen.
+		//
+		  else if ( nex == 24 ) {
+
+		    jac[1][1] = 2.0 * x[1] + x[2];
+		    jac[1][2] = 2.0 * x[2] + x[1];
+		    jac[2][1] = Math.cos ( x[1] );
+		    jac[2][2] = 0.0;
+		    jac[3][1] = 0.0;
+		    jac[3][2] = -Math.sin ( x[2] );
+		  }
+		//
+		//  Meyer.
+		//
+		  else if ( nex == 25 ) {
+
+		    for (i = 1; i <= 16; i++) {
+		      ti = 5.0 * i + 45.0;
+		      u = ti + x[3];
+		      t = Math.exp ( x[2] / u );
+		      jac[i][1] = t;
+		      jac[i][2] = x[1] * t / u;
+		      jac[i][3] = -x[1] * x[2] * t / ( u * u );
+		    } // for (i = 1; i <= 16; i++)
+		  }
+		//
+		//  Brown5.
+		//  Brown10.
+		//  Brown30.
+		//  Brown40.
+		//
+		  else if ( nex >= 26 && nex <= 29) {
+
+		    for (k = 1; k <= n; k++) {
+		      for (i = 1; i <= n-1; i++) {
+		        if ( i == k ) {
+		          jac[i][k] = 2.0;
+		        }
+		        else {
+		          jac[i][k] = 1.0;
+		        }
+		      }
+		    } // for (k = 1; k <= n; k++)
+
+		    for (k = 1; k <= n; k++) {
+		      t = 1.0;
+		      for (i = 1; i <= n; i++) {
+		        if ( i != k ) {
+		          t = t * x[i];
+		        }
+		      }
+		      jac[n][k] = t;
+		    } // for (k = 1; k <= n; k++)
+		  }
+		//
+		//  Bard + 10.
+		//
+		  else if ( nex == 30 ) {
+
+		    for (i = 1; i <= 15; i++) {
+		      jac[i][1] = -1.0;
+		      u = (double)i;
+		      v = 16.0 - u;
+		      w = Math.min ( u, v );
+		      temp = x[2] * v + x[3] * w;
+		      t = u / ( temp * temp);
+		      jac[i][2] = v * t;
+		      jac[i][3] = w * t;
+		    } // for (i = 1; i <= 15; i++)
+		  }
+		//
+		//  Kowalik and Osborne + 10.
+		//
+		  else if ( nex == 31 ) {
+
+		    for (i = 1; i <= 11; i++) {
+		      t = -1.0 / ( ukow_calcjTest[i]*ukow_calcjTest[i] + x[3] * ukow_calcjTest[i] + x[4] );
+		      jac[i][1] = t * ( ukow_calcjTest[i]*ukow_calcjTest[i] + x[2] * ukow_calcjTest[i] );
+		      jac[i][2] = x[1] * ukow_calcjTest[i] * t;
+		      t = t * jac[i][1] * x[1];
+		      jac[i][3] = ukow_calcjTest[i] * t;
+		      jac[i][4] = t;
+		    } // for (i = 1; i <= 11; i++)
+		  }
+		//
+		//  Meyer + 10.
+		//
+		  else if ( nex == 32 ) {
+
+		    for (i = 1; i <= 16; i++) {
+		      ti = 5.0 * i + 45.0;
+		      u = ti + x[3];
+		      t = Math.exp ( x[2] / u );
+		      jac[i][1] = t;
+		      jac[i][2] = x[1] * t / u;
+		      jac[i][3] = -x[1] * x[2] * t / ( u * u );
+		    } // for (i = 1; i <= 16; i++)
+		  }
+		//
+		//  Watson6 + 10.
+		//  Watson9 + 10.
+		//  Watson12 + 10.
+		//  Watson20 + 10.
+		//
+		  else if ( nex >= 33 && nex <= 36) {
+
+		    for  (i = 1; i <= 29; i++) {
+		      ti = ((double)i)/ 29.0;
+		      r2 = x[1];
+		      t = 1.0;
+		      for  (k = 2; k <= p; k++) {
+		        t = t * ti;
+		        r2 = r2 + t * x[k];
+		      }
+		      r2 = -2.0 * r2;
+		      jac[i][1] = r2;
+		      t = 1.0;
+		      r2 = ti * r2;
+		      for  (k = 2; k <= p; k++) {
+		        jac[i][k] = t * (( k - 1.0) + r2 );
+		        t = t * ti;
+		      }
+		    } // for (i = 1; i <= 29; i++)
+
+		    jac[30][1] = 1.0;
+		    jac[31][1] = -2.0 * x[1];
+		    jac[31][2] = 1.0;
+		  }
+
+		  else {
+
+		    System.out.println("calcjTest - fatal error");
+		    Preferences.debug("calcjTest - fatal error\n");
+		    System.out.println("Illegal index nex = " + nex);
+		    Preferences.debug("Illegal index nex = " + nex + "\n");
+		    System.exit(-1);
+
+		  }
+
+		  return;
 		
-	}
+	} // private void calcjTest
 	
 	// meqn, input, the number of functions
 	// nvar, input, the number of variables
@@ -2293,10 +3295,507 @@ private boolean testMode = false;
 	public abstract void calcr(int meqn, int nvar, double x[], int nf, double r[], 
 			                   int uiparm[], double urparm[]);
 	
-	public void calcrTest(int meqn, int nvar, double x[], int nf, double r[],
+	private void calcrTest(int n, int p, double x[], int nfcall, double r[],
 			              int uiparm[], double urparm[]) {
-		
-	}
+		/*****************************************************************************80
+		!
+		!! TESTR evaluates the residual function.
+		!
+		!  Discussion:
+		!
+		!    This routine evaluates the residual vector R for the various 
+		!    test functions in the references, as well as for some variations 
+		!    suggested by Jorge More in a private communication
+		!    on some of these test problems, for 30 <= NEX.
+		!
+		!  Modified:
+		!
+		!    28 March 2006
+		!
+		!  Reference:
+		!
+		!    Philip Gill and Walter Murray,
+		!    Algorithms for the Solution of the Non-linear Least-squares Problem, 
+		!    SIAM Journal on Numerical Analysis,
+		!    Volume 15, Number 5, pages 977-991, 1978.
+		!
+		!    R R Meyer, 
+		!    Theoretical and Computational Aspects of Nonlinear Regression, 
+		!    in Nonlinear Programming,
+		!    edited by J B Rosen, O L Mangasarian, and K Ritter,
+		!    pages 465-486,
+		!    Academic Press, New York, 1970.
+		!
+		!    K M Brown,
+		!    A Quadratically Convergent Newton-like Method Based upon 
+		!    Gaussian Elimination,
+		!    SIAM Journal on Numerical Analysis,
+		!    Volume 6, pages 560-569, 1969.
+		!
+		!  Parameters:
+		!
+		!    Input, integer N, the number of equations or functions.
+		!
+		!    Input, integer P, the number of variables.
+		!
+		!    Input, real X(P), the point at which the residual vector
+		!    is to be evaluated.
+		!
+		!    Input/output, integer NFCALL; on input, the invocation count 
+		!    of this routine.  In exceptional cases, NFCALL may be reset to
+		!    -1 on output to indicate an error occurred which prevented the
+		!    evaluation of R.
+		!
+		!    Input, integer UIPARM(1), contains the value of NEX, the index
+		!    of the problem being solved.
+		!
+		!    Input, real URPARM(*), is a user parameter vector, which is
+		!    not needed by this routine.
+		!
+		!    Input, external UFPARM, is the name of a user-chosen function,
+		!    which is not needed here.
+		!
+		!    Output, real R(N), the residual vector at X.
+		*/
+
+		  double e1;
+		  double e2;
+		  int i;
+		  int j;
+		  int nex;
+		  double r1;
+		  double r2;
+		  double ri;
+		  double t;
+		  double t1;
+		  double t2;
+		  double theta;
+		  double ti;
+		  double tim1;
+		  double tip1;
+		  final double twopi = 2.0 * 3.141592653589793;
+		  double u;
+		  double v;
+		  double w;
+		  double z;
+		  double temp;
+		  double temp2;
+		  double sum;
+		  double prod;
+
+		  nex = uiparm[1];
+		//
+		//  Rosenbrock.
+		//
+		  if ( nex == 1 ) {
+
+		    r[1] = 10.0 * ( x[2] - x[1]*x[1] );
+		    r[2] = 1.0 - x[1];
+		  }
+		//
+		//  Helix.
+		//
+		  else if ( nex == 2 ) {
+
+		    theta = Math.atan2 ( x[2], x[1] ) / twopi;
+
+		    if ( x[1] <= 0.0 && x[2] <= 0.0 ) {
+		      theta = theta + 1.0;
+		    }
+
+		    r[1] = 10.0 * ( x[3] - 10.0 * theta );
+		    r[2] = 10.0 * ( Math.sqrt ( x[1]*x[1] + x[2]*x[2] ) - 1.0 );
+		    r[3] = x[3];
+		  }
+		//
+		//  Singular.
+		//
+		  else if ( nex == 3 ) {
+
+		    r[1] = x[1] + 10.0 * x[2];
+		    r[2] = Math.sqrt ( 5.0 ) * ( x[3] - x[4] );
+		    temp = ( x[2] - 2.0 * x[3] );
+		    r[3] = temp * temp;
+		    temp = x[1] - x[4];
+		    r[4] = Math.sqrt ( 10.0 ) * temp * temp;
+		  }
+		//
+		//  Woods.
+		//
+		  else if ( nex == 4 ) {
+
+		    r[1] = 10.0 * ( x[2] - x[1]*x[1] );
+		    r[2] = 1.0 - x[1];
+		    r[3] = Math.sqrt ( 90.0 ) * ( x[4] - x[3]*x[3] );
+		    r[4] = 1.0 - x[3];
+		    r[5] = Math.sqrt ( 9.9 ) * ( x[2] + x[4] - 2.0 );
+		    t = Math.sqrt ( 0.2 );
+		    r[6] = t * ( x[2] - 1.0 );
+		    r[7] = t * ( x[4] - 1.0 );
+		  }
+		//
+		//  Zangwill.
+		//
+		  else if ( nex == 5 ) {
+
+		    r[1] =  x[1] - x[2] + x[3];
+		    r[2] = -x[1] + x[2] + x[3];
+		    r[3] =  x[1] + x[2] - x[3];
+		  }
+		//
+		//  Engvall.
+		//
+		  else if ( nex == 6 ) {
+
+		    r[1] = x[1]*x[1] + x[2]*x[2] + x[3]*x[3] - 1.0;
+		    r[2] = x[1]*x[1] + x[2]*x[2] + ( x[3] - 2.0 )*(x[3] - 2.0) - 1.0;
+		    r[3] = x[1] + x[2] + x[3] - 1.0;
+		    r[4] = x[1] + x[2] - x[3] + 1.0;
+		    r[5] = x[1]*x[1]*x[1] + 3.0 * x[2]*x[2]
+		      + ( 5.0 * x[3] - x[1] + 1.0 )*(5.0 + x[3] - x[1] + 1.0) - 36.0;
+		  }
+		//
+		//  Branin.
+		//
+		  else if ( nex == 7 ) {
+
+		    r[1] = 4.0 * ( x[1] + x[2] );
+		    r[2] = r[1] + ( x[1] - x[2] ) * ( ( x[1] - 2.0 )*(x[1] - 2.0) + 
+		           x[2]*x[2] - 1.0 );
+		  }
+		//
+		//  Beale.
+		//
+		  else if ( nex == 8 ) {
+
+		    r[1] = 1.5   - x[1] * ( 1.0 - x[2]    );
+		    r[2] = 2.25  - x[1] * ( 1.0 - x[2]*x[2] );
+		    r[3] = 2.625 - x[1] * ( 1.0 - x[2]*x[2]*x[2] );
+		  }
+		//
+		//  Cragg and Levy.
+		//
+		  else if ( nex == 9 ) {
+
+		    temp = ( Math.exp ( x[1] ) - x[2] );
+		    r[1] = temp * temp;
+		    temp = x[2] - x[3];
+		    r[2] = 10.0 * temp * temp * temp;
+		    temp = Math.sin(x[3] = x[4])/Math.cos(x[3] - x[4]);
+		    r[3] = temp * temp;
+		    r[4] = x[1]*x[1]*x[1]*x[1];
+		    r[5] = x[4] - 1.0;
+		  }
+		//
+		//  Box.
+		//
+		  else if ( nex == 10 ) {
+
+		    if ( expmax_calcrTest == 0.0 ) {
+		      expmax_calcrTest = 1.999 * Math.log ( huge );
+		    }
+
+		    if ( expmin_calcrTest == 0.0 ) {
+		      expmin_calcrTest = 1.999 * Math.log ( tiny );
+		    }
+
+		    if ( Math.min ( x[1], Math.min(x[2], x[3]) ) <= -expmax_calcrTest ) {
+		      nfcall = -1;
+		      return;
+		    }
+
+		    for (i = 1; i <= 10; i++) {
+
+		      ti = -0.1 * i; 
+
+		      t1 = ti * x[1];
+
+		      if ( t1 <= expmin_calcrTest ) {
+		        e1 = 0.0;
+		      }
+		      else {
+		        e1 = Math.exp ( t1 );
+		      }
+
+		      t2 = ti * x[2];
+
+		      if ( t2 <= expmin_calcrTest ) {
+		        e2 = 0.0;
+		      }
+		      else {
+		        e2 = Math.exp ( t2 );
+		      }
+
+		      r[i] = ( e1 - e2 ) - x[3] * ( Math.exp ( ti ) - Math.exp ( 10.0 * ti ) );
+
+		    }
+		  }
+		//
+		//  Davidon 1.
+		//
+		  else if ( nex == 11 ) {
+
+		    for (i = 1; i <= n-1; i++) {
+		      r1 = 0.0;
+		      ti = (double)i;
+		      t = 1.0;
+		      for (j = 1; j <= p; j++) {
+		        r1 = r1 + t * x[j];
+		        t = t * ti;
+		      }
+		      r[i] = r1;
+		    } // for (i = 1; i <= n-1; i++)
+		    r[n] = x[1] - 1.0;
+		  }
+		//
+		//  Freudenstein and Roth.
+		//
+		  else if ( nex == 12 ) {
+
+		    r[1] = -13.0 + x[1] -  2.0 * x[2] + 5.0 * x[2]*x[2] - x[2]*x[2]*x[2];
+		    r[2] = -29.0 + x[1] - 14.0 * x[2] + x[2]*x[2] + x[2]*x[2]*x[2];
+		  }
+		//
+		//  Watson6.
+		//  Watson9.
+		//  Watson12.
+		//  Watson20.
+		//
+		  else if ( nex >= 13 && nex <= 16) {
+
+		    for (i = 1; i <= 29; i++) {
+		      ti = ((double)i) / 29.0;
+		      r1 = 0.0;
+		      r2 = x[1];
+		      t = 1.0;
+		      for (j = 2; j <= p; j++) {
+		        r1 = r1 + ( j - 1.0) * t * x[j];
+		        t = t * ti;
+		        r2 = r2 + t * x[j];
+		      } // for (j = 2; j <= p; j++)
+		      r[i] = r1 - r2 * r2 - 1.0;
+		    } // for (i = 1; i <= 29; i++)
+		    r[30] = x[1];
+		    r[31] = x[2] - x[1]*x[1] - 1.0;
+		  }
+		//
+		//  Chebyquad.
+		//
+		  else if ( nex == 17 ) {
+            for (i = 1; i <= n; i++) {
+		        r[i] = 0.0;
+            }
+
+		    for (j = 1; j <= n; j++) {
+		      tim1 = 1.0;
+		      ti = 2.0 * x[j] - 1.0;
+		      z = ti + ti;
+		      for (i = 1; i <= n; i++) {
+		        r[i] = r[i] + ti;
+		        tip1 = z * ti - tim1;
+		        tim1 = ti;
+		        ti = tip1;
+		      } // for (i = 1; i <= n; i++)
+		    } // for (j = 1; j <= n; j++)
+
+		    for (i = 1; i <= n; i++) {
+		      ti = 0.0;
+		      if ( ( i % 2 ) == 0 ) {
+		        ti = -1.0 /  ( i * i - 1.0 );
+		      }
+		      r[i] = ti - r[i] / ((double)n);
+		    } // for (i = 1; i <= n; i++)
+		  }
+		//
+		//  Brown and Dennis.
+		//
+		  else if ( nex == 18 ) {
+
+		    for (i = 1; i <= n; i++) {
+		      ti = 0.2 * i;
+		      temp = (x[1] + x[2] * ti - Math.exp(ti));
+		      temp2 = (x[3] + x[4] * Math.sin(ti) - Math.cos(ti));
+		      r[i] = temp * temp + temp2 * temp2;
+		    }
+		  }
+		//
+		//  Bard.
+		//
+		  else if ( nex == 19 ) {
+
+		    for (i = 1; i <= 15; i++) {
+		      u = (double)i;
+		      v = 16.0 - u;
+		      w = Math.min ( u, v );
+		      r[i] = ybard_calcrTest[i] - ( x[1] + u / ( x[2] * v + x[3] * w ) );
+		    } // for (i = 1; i <= 15; i++)
+		  }
+		//
+		//  Jennrich and Sampson.
+		//
+		  else if ( nex == 20 ) {
+
+		    for (i = 1; i <= 10; i++) {
+		      ti = (double)i;
+		      r[i] = 2.0 + 2.0 * ti - ( Math.exp ( ti * x[1] ) + Math.exp ( ti * x[2] ) );
+		    }
+		  }
+		//
+		//  Kowalik and Osborne.
+		//
+		  else if ( nex == 21 ) {
+
+		     for (i = 1; i <= 11; i++) {
+		       r[i] = ykow_calcrTest[i] 
+		       - x[1] * ( ukow_calcrTest[i]*ukow_calcrTest[i] + x[2] * ukow_calcrTest[i] )
+		         / ( ukow_calcrTest[i]*ukow_calcrTest[i] + x[3] * ukow_calcrTest[i] + x[4] );
+		     } // for (i = 1; i <= 11; i++)
+		  }
+		//
+		//  Osborne 1.
+		//
+		  else if ( nex == 22 ) {
+
+		    for (i = 1; i <= 33; i++) {
+		      ti = 10.0 * ( 1.0 - i);
+		      r[i] = yosb1_calcrTest[i] - ( x[1] + x[2] * Math.exp ( x[4] * ti ) +
+		        x[3] * Math.exp ( x[5] * ti ) );
+		    }
+		  }
+		//
+		//  Osborne 2.
+		//
+		//  UFTOLG is a machine-dependent constant.  It is just slightly
+		//  larger than the log of the smallest positive machine number.
+		//
+		  else if ( nex == 23 ) {
+
+		    if ( uftolg_calcrTest == 0.0 ) {
+		      uftolg_calcrTest = 1.999 * Math.log ( tiny );
+		    }
+
+		    for (i = 1; i <= 65; i++) {
+		      ti = 0.1 * ( 1.0 - i);
+		      ri = x[1] * Math.exp ( x[5] * ti );
+		      for (j = 2; j <= 4; j++) {
+		        theta = -x[j+4] * ( ti + x[j+7] )*(ti + x[j+7]);
+		        if ( theta <= uftolg_calcrTest ) {
+		          t = 0.0;
+		        }
+		        else {
+		          t = Math.exp ( theta );
+		        }
+		        ri = ri + x[j] * t;
+		      } // for (j = 2; j <= 4; j++)
+		      r[i] = yosb2_calcrTest[i] - ri;
+		    } // for (i = 1; i <= 65; i++)
+		  }
+		//
+		//  Madsen.
+		//
+		  else if ( nex == 24 ) {
+
+		    r[1] = x[1]*x[1] + x[2]*x[2] + x[1] * x[2];
+		    r[2] = Math.sin ( x[1] );
+		    r[3] = Math.cos ( x[2] );
+		  }
+		//
+		//  Meyer.
+		//
+		  else if ( nex == 25 ) {
+
+		    for (i = 1; i <= 16; i++) {
+		      ti =  5.0 * i + 45.0;
+		      r[i] = x[1] * Math.exp ( x[2] / ( ti + x[3] ) ) - ymeyer_calcrTest[i];
+		    } // for (i = 1; i <= 16; i++)
+		  }
+		//
+		//  Brown5.
+		//  Brown10.
+		//  Brown30.
+		//  Brown40.
+		//
+		  else if ( nex >= 26 && nex <= 29) {
+            sum = x[1];
+            prod = x[1];
+            for (i = 2; i <= n; i++) {
+            	sum = sum + x[n];
+            	prod = prod * x[n];
+            }
+            for (i = 1; i <= n-1; i++) {
+		        r[i] = x[i] + sum - ( n + 1.0);
+            }
+		    r[n] = prod - 1.0;
+		  }
+		//
+		//  Bard + 10.
+		//
+		  else if ( nex == 30 ) {
+
+		    for (i = 1; i <= 15; i++) {
+		      u = (double)i;
+		      v = 16.0 - u;
+		      w = Math.min ( u, v );
+		      r[i] = ybard_calcrTest[i] - ( x[1] + u / ( x[2] * v + x[3] * w ) ) + 10.0;
+		    } // for (i = 1; i <= 15; i++)
+		  }
+		//
+		//  Kowalik and Osborne + 10.
+		//
+		  else if ( nex == 31 ) {
+
+		    for (i = 1; i <= 11; i++) {
+		      r[i] = ykow_calcrTest[i] 
+		      - x[1] * ( ukow_calcrTest[i]*ukow_calcrTest[i] + x[2] * ukow_calcrTest[i] )
+		        / ( ukow_calcrTest[i]*ukow_calcrTest[i] + x[3] * ukow_calcrTest[i] + x[4] ) + 10.0;
+		    } // for (i = 1; i <= 11; i++)
+		  }
+		//
+		//  Meyer + 10.
+		//
+		  else if ( nex == 32 ) {
+
+		    for (i = 1; i <= 16; i++) {
+		      ti = 5.0 * i + 45.0;
+		      r[i] = x[1] * Math.exp ( x[2] / ( ti + x[3] ) ) - ymeyer_calcrTest[i] + 10.0;
+		    } // for (i = 1; i <= 16; i++)
+		  }
+		//
+		//  Watson6 + 10.
+		//  Watson9 + 10.
+		//  Watson12 + 10.
+		//  Watson20 + 10.
+		//
+		  else if ( nex >= 33 && nex <= 36) {
+
+		    for (i = 1; i <= 29; i++) {
+		      ti = ((double)i) / 29.0;
+		      r1 = 0.0;
+		      r2 = x[1];
+		      t = 1.0;
+		      for (j = 2; j <= p; j++) {
+		        r1 = r1 + ( j - 1.0) * t * x[j];
+		        t = t * ti;
+		        r2 = r2 + t*x[j];
+		      } // for (j = 2; j <= p; j++)
+		      r[i] = r1 - r2 * r2 - 1.0 + 10.0;
+		    } // for (i = 1; i <= 29; i++)
+		    r[30] = x[1] + 10.0;
+		    r[31] = x[2] - x[1]*x[1] - 1.0 + 10.0;
+		  }
+
+		  else {
+
+		    System.out.println("calcrTest - Fatal error");
+		    Preferences.debug("calcrTest - Fatal error\n");
+		    System.out.println("Illegal problem index nex = " + nex);
+		    Preferences.debug("Illegal problem index nex = " + nex + "\n");
+		    System.exit(-1);
+
+		  }
+
+		  return;	
+	} // private void calcrTest
 	
 	private void covclc ( int covirc[], double d[], int iv[], double j[][], int n, int nn, int p, 
 			              double r[], double v[], double x[] ) {
@@ -7205,9 +8704,9 @@ private boolean testMode = false;
 	  double vm[] = new double[]{
 			   0.0, 1.0e-3,-0.99, 1.0e-3, 1.0e-2,
 	           1.2, 1.0e-2, 1.2, 0.0,
-	           0.0, 1.0e-3, -1.0, 0.0,
-	           0.0, 0.0, -10.0, 0.0,
-	           0.0, 1.0e+10, 1.01};
+	           0.0, 1.0e-3, -1.0, 0.0, 0.0, 0.0, 0.0,
+	           0.0, 0.0, 0.0, 0.0, -10.0, 0.0,
+	           0.0, 0.0, 1.0e+10, 0.0, 0.0, 1.01};
 	  String vn[] = new String[]{
 			     "        ","epslon..", "phmnfc..", "phmxfc..", "decfac..", "incfac..",
 			    "rdfcmn..", "rdfcmx..", "tuner1..", "tuner2..", "tuner3..", 
@@ -7218,9 +8717,9 @@ private boolean testMode = false;
 	  double vx[] = new double[]{
 			   0.0, 0.9, -1.0e-3, 1.0e+1, 0.8, 
 	           1.0e+2, 0.8, 1.0e+2, 0.5, 
-	           0.5, 1.0, 1.0, 0.1,
-	           1.0, 1.0, 1.0, 1.0, 
-	           1.0, 1.0, 1.0, 1.0e+2};
+	           0.5, 1.0, 1.0, 0.0, 0.0, 0.1,
+	           1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 
+	           1.0, 0.0, 1.0, 1.0, 1.0e+2};
 
 	  String cngd[] = new String[]{"    ","---c","hang","ed v"};
 	  String dflt[] = new String[]{"    ","nond","efau","lt v"};
@@ -8137,11 +9636,10 @@ private boolean testMode = false;
 	    // d Display the day of the month with 2 digits, padding with leading zeros as necessary
 	    // Y Display the year with 4 digits
 	    // Z Display the abbreviation for the time zone
-	    // I Display hour in a 12-hour clock with a leading zero as necessary
+	    // H Display hour in a 12-hour clock with a leading zero as necessary
 	    // M Display minute with a leading zero as necessary
 	    // S Display second with a leading zero as necessary
-	    // P Display morning or afternoon marker in uppercase
-	    formatter.format("%1$tB %1$td, %1$tY    %1$tZ %1$tI:%1$tM:%1$tS %tP\n", dateTime);
+	    formatter.format("%1$tB %1$td, %1$tY    %1$tZ %1$tH:%1$tM:%1$tS\n", dateTime);
 	    Preferences.debug(formatter.toString());
 	}
 	
