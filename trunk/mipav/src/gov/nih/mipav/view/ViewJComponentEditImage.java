@@ -2491,6 +2491,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             return;
         }
 
+        if ( imageActive == null )
+        {
+            setActiveImage(ViewJComponentBase.IMAGE_A);
+        }
         if ( (xS < 0) || (xS >= imageActive.getExtents()[0]) || // Check to ensure point is within
                 (yS < 0) || (yS >= imageActive.getExtents()[1])) { // the image bounds
             g.dispose();
