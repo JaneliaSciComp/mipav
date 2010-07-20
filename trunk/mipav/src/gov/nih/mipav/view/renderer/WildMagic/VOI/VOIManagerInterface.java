@@ -1688,16 +1688,16 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
      * Called from the VOIManager. Sets the current active VOIManager.
      * @param kManager calling VOIManager.
      */
-    public void setActive( VOIManager kManager )
+    public void setActive( VOIManager kManager, ModelImage kActiveImage )
     {
         for ( int i = 0; i < m_kVOIManagers.size(); i++ )
         {
             if ( kManager == m_kVOIManagers.elementAt(i) )
             {
                 m_iActive = i;
-                if ( m_kVOIManagers.elementAt(i).getActiveImage() != m_kParent.getActiveImage() )
+                if ( kActiveImage != m_kParent.getActiveImage() )
                 {
-                    m_kParent.setActiveImage( m_kVOIManagers.elementAt(i).getActiveImage() );
+                    m_kParent.setActiveImage( kActiveImage );
                 }
                 break;
             }
@@ -2198,6 +2198,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
     {
         m_kCopyList.clear();
         VOIVector kVOIs = m_kParent.getActiveImage().getVOIs();
+        ViewVOIVector voiCopyList = new ViewVOIVector();
         for ( int i = 0; i < kVOIs.size(); i++ )
         {
             VOI kCurrentGroup = kVOIs.get(i);
@@ -2209,7 +2210,21 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
                     m_kCopyList.add(kCurrentVOI);
                 }
             }
+            if ( kCurrentGroup.isActive() && !voiCopyList.contains(kCurrentGroup) )
+            {
+                VOI newGroup = new VOI(kCurrentGroup);
+                for ( int j = newGroup.getCurves().size()-1; j >= 0; j-- )
+                {
+                    VOIBase kCurrentVOI = newGroup.getCurves().get(j);
+                    if ( !kCurrentVOI.isActive() )
+                    {
+                        newGroup.getCurves().remove(kCurrentVOI);
+                    }
+                }
+                voiCopyList.add(newGroup);
+            }
         }
+        ViewUserInterface.getReference().copyClippedVOIs(voiCopyList);
     }
 
     private void createMask( ModelImage kActive, boolean bInside )
@@ -2868,6 +2883,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
 
     private void paste()
     {
+        if ( m_kCopyList.size() == 0 )
+        {
+            pasteFromViewUserInterface();
+        }
         for ( int i = 0; i < m_kCopyList.size(); i++ )
         {
             VOIBase kCurrentVOI = m_kCopyList.get(i); 
@@ -2902,6 +2921,66 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
             }
             kManager.pasteAllVOI( kCurrentVOI );  
         }
+    }
+    
+    private void pasteFromViewUserInterface()
+    {
+        ModelImage kActive = getActiveImage();
+        int xDim = kActive.getExtents().length > 0 ? kActive.getExtents()[0] : 1;
+        int yDim = kActive.getExtents().length > 1 ? kActive.getExtents()[1] : 1;
+        int zDim = kActive.getExtents().length > 2 ? kActive.getExtents()[2] : 1;
+        ViewVOIVector copyList = ViewUserInterface.getReference().getClippedVOIs();
+        int[] xBounds = new int[2];
+        int[] yBounds = new int[2];
+        int[] zBounds = new int[2];
+        for ( int i = 0; i < copyList.size(); i++ )
+        {
+            VOI currentVOI = copyList.get(i);
+            currentVOI.getBounds( xBounds, yBounds, zBounds );
+            if ( (xBounds[1] < xDim) && (yBounds[1] < yDim) && (zBounds[1] < zDim) )
+            {
+                kActive.registerVOI(new VOI(currentVOI));
+            }
+            else
+            {
+                currentVOI = new VOI(currentVOI);
+                for ( int j = currentVOI.getCurves().size()-1; j >= 0; j-- )
+                {
+                    VOIBase kCurrentVOI = currentVOI.getCurves().get(j);
+                    Vector3f[] kBounds = kCurrentVOI.getImageBoundingBox();
+                    if ( (kBounds[1].X - kBounds[0].X < xDim) && 
+                         (kBounds[1].Y - kBounds[0].Y < yDim) && 
+                         (kBounds[1].Z - kBounds[0].Z < zDim) )
+                    {
+                        for ( int k = 0; k < kCurrentVOI.size(); k++ )
+                        {
+                            if ( kBounds[1].X >= xDim )
+                            {
+                                kCurrentVOI.elementAt(k).X -= (kBounds[1].X - (xDim-1));
+                            }
+                            if ( kBounds[1].Y >= yDim )
+                            {
+                                kCurrentVOI.elementAt(k).Y -= (kBounds[1].Y - (yDim-1));
+                            }
+                            if ( kBounds[1].Z >= zDim )
+                            {
+                                kCurrentVOI.elementAt(k).Z -= (kBounds[1].Z - (zDim-1));
+                            }
+                        }
+                        kCurrentVOI.update();
+                    }
+                    else
+                    {
+                        currentVOI.getCurves().remove(kCurrentVOI);
+                    }
+                }              
+                if ( currentVOI.getCurves().size() > 0 )
+                {               
+                    kActive.registerVOI(currentVOI);
+                }
+            }  
+        }
+        updateDisplay();
     }
 
     private void quickLUT(Vector3f[] akMinMax, ModelImage image, ModelLUT LUT) {
