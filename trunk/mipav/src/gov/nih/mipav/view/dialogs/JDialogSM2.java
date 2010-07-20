@@ -1154,13 +1154,13 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         gbc.gridy = 12;
         mainPanel.add(labelVOI, gbc);
         
-        buttonVOIFile = new JButton("Open a sagittal sinus VOI file");
+        buttonVOIFile = new JButton("Open a mandatory sagittal sinus VOI file");
         buttonVOIFile.setForeground(Color.black);
         buttonVOIFile.setFont(serif12B);
         buttonVOIFile.addActionListener(this);
         buttonVOIFile.setActionCommand("VOIFile");
         buttonVOIFile.setPreferredSize(new Dimension(205, 30));
-        gbc.fill = GridBagConstraints.NONE;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridy = 13;
         mainPanel.add(buttonVOIFile, gbc);
         
@@ -1170,13 +1170,13 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         gbc.gridx = 1;
         mainPanel.add(textVOIFile, gbc);
         
-        buttonVOIFile2 = new JButton("Open a process region VOI file");
+        buttonVOIFile2 = new JButton("Open an optional process region VOI file");
         buttonVOIFile2.setForeground(Color.black);
         buttonVOIFile2.setFont(serif12B);
         buttonVOIFile2.addActionListener(this);
         buttonVOIFile2.setActionCommand("VOIFile2");
         buttonVOIFile2.setPreferredSize(new Dimension(205, 30));
-        gbc.fill = GridBagConstraints.NONE;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
         gbc.gridy = 14;
         mainPanel.add(buttonVOIFile2, gbc);
