@@ -122,9 +122,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** Whether a plugin standalone frame is visible */
     private boolean isPlugInFrameVisible = false;
 
-    /** DOCUMENT ME! */
-    private boolean isClippedVOI2D = true;
-
     /**
      * Indicates the user's last choice of whether to open images as multi-file (stack) or single file in the file open
      * dialog.
@@ -848,19 +845,16 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     /**
-     * Adds a clipped 2D VOI to the clipboard.
+     * Copies into the VOI clipboard.
      * 
      * @param voi VOI
-     * @param slice int
      */
-    public void addClipped2DVOI(final VOI voi, final int slice) {
-
-        if (isClippedVOI2D == false) {
-            clearClippedVOIs();
-            isClippedVOI2D = true;
+    public void copyClippedVOIs( ViewVOIVector copyList) {
+        clearClippedVOIs();
+        for ( int i = 0; i < copyList.size(); i++ )
+        {
+            clippedVOIs.add( copyList.get(i) );
         }
-
-        this.clippedVOIs.add(voi);
     }
 
     /**
@@ -869,7 +863,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @param voi the voi
      * @param slice slice number
      * @param scannerPts a vector of all the VOI's points pre-converted to scanner coordinates
-     */
     public void addClippedScannerVOI(final VOI voi, final int slice, final Vector<Vector3f> scannerPts) {
 
         if (isClippedVOI2D == true) {
@@ -880,6 +873,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         this.clippedVOIs.add(voi);
         this.clippedScannerVectors.add(scannerPts);
     }
+     */
 
     /**
      * Builds the anonymize directory dialog and displays it.
@@ -1357,9 +1351,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     /**
-     * DOCUMENT ME!
-     * 
-     * @return ViewVOIVector
+     * Returns the VOIs copied into the clip board. For copying and pasting VOIs between images.
+     * @return Vector<VOIBase>
      */
     public ViewVOIVector getClippedVOIs() {
         return this.clippedVOIs;
@@ -1783,10 +1776,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * Whether or not the VOI is a 2D (true = 2d, false = 3d+).
      * 
      * @return DOCUMENT ME!
-     */
     public boolean isClippedVOI2D() {
         return this.isClippedVOI2D;
     }
+     */
 
     /**
      * Indicates if the image hashtable is empty.
