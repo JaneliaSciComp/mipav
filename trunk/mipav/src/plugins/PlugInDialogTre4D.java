@@ -65,7 +65,7 @@ public class PlugInDialogTre4D extends JDialogScriptableBase implements Algorith
     private ModelImage image; // 
     
     /** This is your algorithm */
-    private PlugInAlgorithmNewGeneric2 genericAlgo = null;
+    private PlugInAlgorithmTre4D genericAlgo = null;
 
     /** The check box for whether a blur should be performed. */
 	private JCheckBox check;
@@ -176,7 +176,7 @@ public class PlugInDialogTre4D extends JDialogScriptableBase implements Algorith
             resultImage = (ModelImage) image.clone();
             resultImage.setImageName(name);
             
-            genericAlgo = new PlugInAlgorithmNewGeneric2(resultImage, image);
+            genericAlgo = new PlugInAlgorithmTre4D(resultImage, image);
             genericAlgo.doErnst(doErnst);
 
             // This is very important. Adding this object as a listener allows the algorithm to
