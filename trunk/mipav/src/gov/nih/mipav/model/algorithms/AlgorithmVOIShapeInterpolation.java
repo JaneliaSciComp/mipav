@@ -135,8 +135,8 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
 	public void runAlgorithm() {
         fireProgressStateChanged(10);
 		
-        VOI1.translate( 0, 0, -sliceIndex1 );
-        VOI2.translate( 0, 0, -sliceIndex2 );
+        VOI1.translate( 0, 0, -sliceIndex1 ); VOI1.update();
+        VOI2.translate( 0, 0, -sliceIndex2 ); VOI2.update();
         
 		//extract 2D slices...and place voi contours in them
 		int[] destExtents = new int[2];
@@ -152,7 +152,7 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
 		AlgorithmExtractSlices extractSlicesAlg1 = new AlgorithmExtractSlices(srcImage, imageSlice1, extractSlices1);
 		extractSlicesAlg1.run();
 		VOI newVOI1 = new VOI((short)0,"voi1");
-		newVOI1.importCurve(VOI1);
+		newVOI1.getCurves().add(VOI1);
 		imageSlice1.registerVOI(newVOI1);
 		//lets get original center for VOI1
 		geomCenter1 = VOI1.getGeometricCenter();
@@ -160,9 +160,9 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
 		AlgorithmExtractSlices extractSlicesAlg2 = new AlgorithmExtractSlices(srcImage, imageSlice2, extractSlices2);
 		extractSlicesAlg2.run();
 		VOI newVOI2 = new VOI((short)0,"voi2");
-		newVOI2.importCurve(VOI2);
+		newVOI2.getCurves().add(VOI2);
 		imageSlice2.registerVOI(newVOI2);
-		//lets get original centerfor VOI2
+		//lets get original center for VOI2
 		geomCenter2 = VOI2.getGeometricCenter();
 
 		//get center of image...since imageSlice1 and imageSlice2 are slices from same image, get it from either
@@ -173,8 +173,8 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
 		float transY1 = imageCenter.Y - geomCenter1.Y;
 		float transX2 = imageCenter.X - geomCenter2.X;
 		float transY2 = imageCenter.Y - geomCenter2.Y;
-		VOI1.translate(transX1, transY1, 0);
-		VOI2.translate(transX2, transY2, 0);
+		VOI1.translate(transX1, transY1, 0); VOI1.update();
+		VOI2.translate(transX2, transY2, 0); VOI2.update();
 
 		fireProgressStateChanged(20);
 		
@@ -184,6 +184,9 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
 		maskImage2 = imageSlice2.generateBinaryImage(false, true);
 		maskImage2.setImageName(imageSlice2.getImageName() + "_mask2");
 
+        //new ViewJFrameImage((ModelImage)maskImage1.clone());
+        //new ViewJFrameImage((ModelImage)maskImage2.clone());
+		
 		
         //generate distance map image for shape interpolation
         distanceMap1 = (ModelImage) maskImage1.clone();
@@ -343,6 +346,9 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
             		finalize();
             		return;
             	}
+
+                //new ViewJFrameImage( (ModelImage)averageDistanceMaps[index].clone() );
+                //new ViewJFrameImage( (ModelImage)inBetweenBooleanShapes[index].clone() );
 
             	AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(inBetweenBooleanShapes[index]);
                 VOIExtractionAlgo.run();
