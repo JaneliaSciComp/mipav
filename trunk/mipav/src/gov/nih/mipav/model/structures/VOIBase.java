@@ -1243,11 +1243,11 @@ public abstract class VOIBase extends Vector<Vector3f> {
 
         if ( !m_bUpdateGeometricCenter )
         {
-            return gcPt;
+            return new Vector3f(gcPt);
         }  
         getMask();
         m_bUpdateGeometricCenter = false;
-        return gcPt;
+        return new Vector3f(gcPt);
     }
 
     /**

@@ -395,6 +395,7 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
                 float transX = newX - imageCenter.X;
         		float transY = newY - imageCenter.Y;
         		finalContours[index].translate(transX, transY, sliceIndex1 + i);
+        		finalContours[index].update();
                 VOIHandle.importCurve(finalContours[index]);
                 if(tempA != null) {
                 	tempA.disposeLocal();
