@@ -26,10 +26,12 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.Random;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 
 /**
@@ -121,13 +123,15 @@ public class PlugInAlgorithmTre4D extends AlgorithmBase {
 	        
 		    	ModelImage dceHigh = ViewUserInterface.getReference().getRegisteredImageByName("DCEhighSlab");
 		    	ModelImage r1 = ViewUserInterface.getReference().getRegisteredImageByName("r1_results");
-		    	ModelImage m0 = ViewUserInterface.getReference().getRegisteredImageByName("mo_results");
+		    	ModelImage newM0 = ViewUserInterface.getReference().getRegisteredImageByName("mo_results");
 		    	ModelImage b1 = ViewUserInterface.getReference().getRegisteredImageByName("b1_results");
+		    	ModelImage reichM0 = ViewUserInterface.getReference().getRegisteredImageByName("M0");
 		    	
-		    	System.out.println(dceHigh != null ? "Found" : "Null");
+		    	System.out.println(dceHigh != null ? "DCEhighSlab Found" : "Null");
 		    	System.out.println(r1 != null ? "r1 Found" : "Null");
-		    	System.out.println(m0 != null ? "m0 Found" : "Null");
+		    	System.out.println(newM0 != null ? "m0 Found" : "Null");
 		    	System.out.println(b1 != null ? "b1 Found" : "Null");
+		    	System.out.println(reichM0 != null ? "m0Mod Found" : "Null");
 		    	
 		    	long time = System.currentTimeMillis();
 		    	
@@ -136,6 +140,21 @@ public class PlugInAlgorithmTre4D extends AlgorithmBase {
 		    	for(int i=0; i<extents.length; i++) {
 		    		extents[i] = r1.getExtents()[i];
 		    	}
+		    	
+		    	ModelImage preGad = (ModelImage)r1.clone();
+		    	//average pre-gad volumes
+		    	double avg = 0.0;
+		    	for(int i=0; i<extents[0]; i++) {
+		    		for(int j=0; j<extents[1]; j++) {
+		    			for(int k=0; k<extents[2]; k++) {
+				    		avg = (dceHigh.getDouble(i, j, k, 0) + dceHigh.getDouble(i, j, k, 1) + dceHigh.getDouble(i, j, k, 2)) / 3.0;
+		    				
+		    				preGad.set(i, j, k, avg);
+				    	}
+			    	}
+		    	}
+		    	System.out.println("Avg computed");
+		    	
 		    	double fa = 15;
 		    	int timeSeries = dceHigh.getExtents()[3];
 		    	double[][][] r1Copy = new double[extents[0]][extents[1]][extents[2]];
@@ -149,7 +168,7 @@ public class PlugInAlgorithmTre4D extends AlgorithmBase {
 		    		for(int j=0; j<extents[1]; j++) {
 		    			for(int k=0; k<extents[2]; k++) {
 				    		r1Copy[i][j][k] = r1.getDouble(i, j, k);
-				    		m0Copy[i][j][k] = m0.getDouble(i, j, k);
+				    		m0Copy[i][j][k] = newM0.getDouble(i, j, k);
 				    		b1Copy[i][j][k] = b1.getDouble(i, j, k);
 				    	}
 			    	}
@@ -163,6 +182,8 @@ public class PlugInAlgorithmTre4D extends AlgorithmBase {
 				    	}
 			    	}
 		    	}
+		    	
+		    	fireProgressStateChanged(25);
 		    	
 		    	System.err.println("Fully copied in "+(System.currentTimeMillis() - time));
 		    	double trTime = 5.6;
@@ -191,29 +212,63 @@ public class PlugInAlgorithmTre4D extends AlgorithmBase {
 			    for(int i=0; i<dceCenterInt.length; i++) {
 			    	dceCenter[i] = dceCenterInt[i].doubleValue();
 			    }
+			    fireProgressStateChanged(50);
 			    
 			    for(int i=0; i<dceCenter.length; i++) {
 			    	System.out.println("Center time "+i+": "+dceCenter[i]);
 			    }
 			    
+			    double orig = 0.0, mod = 0.0;
 			    double num = 0.0, den = 0.0;
 			    for(int i=0; i<extents[0]; i++) {
 		    		for(int j=0; j<extents[1]; j++) {
 		    			for(int k=0; k<extents[2]; k++) {
-				    		num = 1 - Math.cos(b1Copy[i][j][k]*fa)*Math.exp(-trTime*r1Copy[i][j][k]);
-				    		den = Math.sin(b1Copy[i][j][k]*fa)*(1-Math.exp(-trTime*r1Copy[i][j][k]));
+		    				orig = newM0.getDouble(i, j, k);
+		    				mod = reichM0.getDouble(i, j, k);
+		    				if(orig != 0.0) {
+		    					int z = 0; //here
+		    				}
+		    				num = 1 - Math.cos(b1Copy[i][j][k]*Math.toRadians(fa))*Math.exp(-trTime*r1Copy[i][j][k]);
+				    		den = Math.sin(b1Copy[i][j][k]*Math.toRadians(fa))*(1-Math.exp(-trTime*r1Copy[i][j][k]));
 
 				    		if(den != 0) {
-				    			m0Copy[i][j][k] = num/den;
+				    			m0Copy[i][j][k] = preGad.getDouble(i,j,k)*(num/den);
 				    		} else {
 				    			m0Copy[i][j][k] = 0.0;
 				    		}
+				    		
+				    		
+				    		int z = 0;
 				    	}
 			    	}
 		    	}
 			    
-	
+			    fireProgressStateChanged(75);
+			    Random r = new Random();
+			    int rR = 0;
+			    boolean print = false;
+			    ModelImage m0FullCopy = (ModelImage)newM0.clone();
+			    for(int k=0; k<extents[2]; k++) {
+			    	for(int i=0; i<extents[0]; i++) {
+			    		for(int j=0; j<extents[1]; j++) {
+			    		
+		    				if(newM0.get(i, j, k).intValue() != 0 && (rR = r.nextInt(20)) == 10) {
+		    					print = true;
+		    					System.out.print("Value at ("+i+", "+j+", "+k+") is :"+newM0.getDouble(i, j, k));
+		    				}
+		    				newM0.set(i, j, k, m0Copy[i][j][k]);
+		    				if(print) {
+		    					System.out.println(" and is now "+newM0.getDouble(i, j, k)+" but should be "+reichM0.getDouble(i,j,k));
+		    					print = false;
+		    				}
+		    			}
+		    		}
+			    }
+			    ViewJFrameImage display = new ViewJFrameImage(m0FullCopy);
+			    display.setVisible(true);
 	    	}
+	    	
+	    	
 	        
 	    	for(int i=1; i<100; i++) {
 	    		fireProgressStateChanged(i);
