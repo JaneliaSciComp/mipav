@@ -31,6 +31,7 @@ import java.util.Random;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 
@@ -120,25 +121,32 @@ public class PlugInAlgorithmTre4D extends AlgorithmBase {
 	    	if(doErnst) {
 		    	System.out.println("4d processing here");
 		    	fireProgressStateChanged("Message 3D: "+srcImage.getImageName());
-	        
-		    	ModelImage dceHigh = ViewUserInterface.getReference().getRegisteredImageByName("DCEhighSlab");
-		    	ModelImage r1 = ViewUserInterface.getReference().getRegisteredImageByName("r1_results");
-		    	ModelImage newM0 = ViewUserInterface.getReference().getRegisteredImageByName("mo_results");
-		    	ModelImage b1 = ViewUserInterface.getReference().getRegisteredImageByName("b1_results");
-		    	ModelImage reichM0 = ViewUserInterface.getReference().getRegisteredImageByName("M0");
+		    	
+		    	ModelImage dceHigh = null, r1 = null, newM0 = null, b1 = null, reichM0 = null, reichR1 = null;
+		    	try {
+			    	dceHigh = ViewUserInterface.getReference().getRegisteredImageByName("DCEhighSlab");
+			    	r1 = ViewUserInterface.getReference().getRegisteredImageByName("r1_results");
+			    	newM0 = ViewUserInterface.getReference().getRegisteredImageByName("mo_results");
+			    	b1 = ViewUserInterface.getReference().getRegisteredImageByName("b1_results");
+			    	reichM0 = ViewUserInterface.getReference().getRegisteredImageByName("M0");
+			    	reichR1 = ViewUserInterface.getReference().getRegisteredImageByName("R1tfull");
+		    	} catch(Exception e) {
+		    		MipavUtil.displayError("Please load the following image: "+e.getMessage());
+		    	}
 		    	
 		    	System.out.println(dceHigh != null ? "DCEhighSlab Found" : "Null");
 		    	System.out.println(r1 != null ? "r1 Found" : "Null");
 		    	System.out.println(newM0 != null ? "m0 Found" : "Null");
 		    	System.out.println(b1 != null ? "b1 Found" : "Null");
 		    	System.out.println(reichM0 != null ? "m0Mod Found" : "Null");
+		    	System.out.println(reichR1 != null ? "r10Mod Found" : "Null");
 		    	
 		    	long time = System.currentTimeMillis();
 		    	
 		    	//get new estimate of r1
-		    	int[] extents = new int[r1.getNDims()];
+		    	int[] extents = new int[dceHigh.getNDims()];
 		    	for(int i=0; i<extents.length; i++) {
-		    		extents[i] = r1.getExtents()[i];
+		    		extents[i] = dceHigh.getExtents()[i];
 		    	}
 		    	
 		    	ModelImage preGad = (ModelImage)r1.clone();
@@ -159,9 +167,9 @@ public class PlugInAlgorithmTre4D extends AlgorithmBase {
 		    	int timeSeries = dceHigh.getExtents()[3];
 		    	double[][][] r1Copy = new double[extents[0]][extents[1]][extents[2]];
 		    	double[][][] m0Copy = new double[extents[0]][extents[1]][extents[2]];
-		    	double[][][] m0Corrected =  new double[extents[0]][extents[1]][extents[2]];
+		    	//double[][][] m0Corrected =  new double[extents[0]][extents[1]][extents[2]];
 		    	double[][][] b1Copy = new double[extents[0]][extents[1]][extents[2]];
-		    	double[][][] b1Corrected = new double[extents[0]][extents[1]][extents[2]];
+		    	//double[][][] b1Corrected = new double[extents[0]][extents[1]][extents[2]];
 		    	double[][][][] dceFullCopy = new double[extents[0]][extents[1]][extents[2]][timeSeries];
 		    	
 		    	for(int i=0; i<extents[0]; i++) {
@@ -191,17 +199,17 @@ public class PlugInAlgorithmTre4D extends AlgorithmBase {
 		    	File f = new File("E:\\my\\projects\\DESPOT\\tre4d\\DCECenterTimes.txt");
 		    	
 		    	ArrayList<Double> centerTimesArr = new ArrayList<Double>();
-		    	String t = new String();
+		    	String tString = new String();
 		    	try {
 		    		BufferedReader r = new BufferedReader(new FileReader(f));
 			    
-		    		while((t = r.readLine()) != null) {
-			    		centerTimesArr.add(Double.valueOf(t));
+		    		while((tString = r.readLine()) != null) {
+			    		centerTimesArr.add(Double.valueOf(tString));
 			    	}
 			    	
 			    	r.close();
 			    } catch(NumberFormatException e) {
-			    	System.out.println("Check t for number: "+t);
+			    	System.out.println("Check t for number: "+tString);
 			    	e.printStackTrace();
 			    } catch(Exception e1) {
 			    	e1.printStackTrace();
@@ -217,7 +225,7 @@ public class PlugInAlgorithmTre4D extends AlgorithmBase {
 			    for(int i=0; i<dceCenter.length; i++) {
 			    	System.out.println("Center time "+i+": "+dceCenter[i]);
 			    }
-			    
+			    double faRad = Math.toRadians(fa);
 			    double orig = 0.0, mod = 0.0;
 			    double num = 0.0, den = 0.0;
 			    for(int i=0; i<extents[0]; i++) {
@@ -228,31 +236,26 @@ public class PlugInAlgorithmTre4D extends AlgorithmBase {
 		    				if(orig != 0.0) {
 		    					int z = 0; //here
 		    				}
-		    				num = 1 - Math.cos(b1Copy[i][j][k]*Math.toRadians(fa))*Math.exp(-trTime*r1Copy[i][j][k]);
-				    		den = Math.sin(b1Copy[i][j][k]*Math.toRadians(fa))*(1-Math.exp(-trTime*r1Copy[i][j][k]));
+		    				num = 1 - Math.cos(b1Copy[i][j][k]*faRad)*Math.exp(-trTime*r1Copy[i][j][k]);
+				    		den = Math.sin(b1Copy[i][j][k]*faRad)*(1-Math.exp(-trTime*r1Copy[i][j][k]));
 
 				    		if(den != 0) {
 				    			m0Copy[i][j][k] = preGad.getDouble(i,j,k)*(num/den);
 				    		} else {
 				    			m0Copy[i][j][k] = 0.0;
 				    		}
-				    		
-				    		
-				    		int z = 0;
 				    	}
 			    	}
 		    	}
 			    
 			    fireProgressStateChanged(75);
 			    Random r = new Random();
-			    int rR = 0;
 			    boolean print = false;
-			    ModelImage m0FullCopy = (ModelImage)newM0.clone();
 			    for(int k=0; k<extents[2]; k++) {
 			    	for(int i=0; i<extents[0]; i++) {
 			    		for(int j=0; j<extents[1]; j++) {
 			    		
-		    				if(newM0.get(i, j, k).intValue() != 0 && (rR = r.nextInt(20)) == 10) {
+		    				if(newM0.get(i, j, k).intValue() != 0 && r.nextInt(20) == 10) {
 		    					print = true;
 		    					System.out.print("Value at ("+i+", "+j+", "+k+") is :"+newM0.getDouble(i, j, k));
 		    				}
@@ -264,8 +267,65 @@ public class PlugInAlgorithmTre4D extends AlgorithmBase {
 		    			}
 		    		}
 			    }
-			    ViewJFrameImage display = new ViewJFrameImage(m0FullCopy);
+			    
+			    newM0.setImageName("New M0");
+			    ViewJFrameImage display = new ViewJFrameImage(newM0);
 			    display.setVisible(true);
+			    
+			    reichM0.getParentFrame().dispose();
+			    System.gc();
+			    System.out.println("Working on dceHigh");
+			    
+			    orig = 0.0;
+			    mod = 0.0;
+			    num = 0.0;
+			    den = 0.0;
+			    
+			    for(int t=0; t<extents[3]; t++) {
+				    System.out.println("Time slice "+t);
+			    	for(int i=0; i<extents[0]; i++) {
+			    		for(int j=0; j<extents[1]; j++) {
+			    			for(int k=0; k<extents[2]; k++) {
+			    				//orig = reichR1.getDouble(i, j, k, t);
+			    				//mod = reichR1.getDouble(i, j, k, t);
+			    				
+			    				num = dceHigh.getDouble(i, j, k, t) - newM0.getDouble(i, j, k)*Math.sin(b1.getDouble(i, j, k)*faRad);
+			    				den = dceHigh.getDouble(i, j, k, t)*Math.cos(b1.getDouble(i, j, k)*faRad) - newM0.getDouble(i, j, k)*Math.sin(b1.getDouble(i, j, k)*faRad);
+			    			
+			    				if(den != 0) {
+					    			dceFullCopy[i][j][k][t] = (-1.0/trTime)*Math.log(num/den);
+					    		} else {
+					    			dceFullCopy[i][j][k][t] = 0.0;
+					    		}
+			    			}
+			    		}		
+				    }
+			    }
+			    
+			    ModelImage r1New = (ModelImage)dceHigh.clone();
+			    print = false;
+			    for(int t=0; t<extents[3]; t++) {
+			    	System.out.println("Time slice2 "+t);
+				    for(int i=0; i<extents[0]; i++) {
+			    		for(int j=0; j<extents[1]; j++) {
+			    			for(int k=0; k<extents[2]; k++) {
+			    				if(dceFullCopy[i][j][k][t] != 0 && r.nextInt(500) == 10) {
+			    					print = true;
+			    					System.out.print("Value at ("+i+", "+j+", "+k+", 0) was :"+r1.getDouble(i, j, k));
+			    				}
+			    				r1New.set(i, j, k, t, dceFullCopy[i][j][k][t]*1000.0);
+			    				if(print) {
+			    					System.out.println(" and is now at t: "+t+" with value "+r1New.getDouble(i, j, k, t)+" but should be "+reichR1.getDouble(i,j, k, t));
+			    					print = false;
+			    				}
+			    			}
+			    		}
+				    }
+			    }
+			    
+			    r1New.setImageName("r1New");
+			    ViewJFrameImage display2 = new ViewJFrameImage(r1New);
+			    display2.setVisible(true);
 	    	}
 	    	
 	    	

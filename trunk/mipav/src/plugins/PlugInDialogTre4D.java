@@ -258,7 +258,7 @@ public class PlugInDialogTre4D extends JDialogScriptableBase implements Algorith
 
         gbc.gridy++;
         
-        check = new JCheckBox("Perform 4D processing using inverse Ernst equation.");
+        check = new JCheckBox("Refine 4D TRE processing using inverse Ernst equation.");
         check.setFont(serif12);
         check.setSelected(false);
         mainPanel.add(check, gbc);
