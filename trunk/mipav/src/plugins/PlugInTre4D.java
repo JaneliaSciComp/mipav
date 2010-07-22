@@ -60,7 +60,7 @@ public class PlugInTre4D implements PlugInAlgorithm {
     public void run(Frame parentFrame, ModelImage image) {
 
         if (parentFrame instanceof ViewJFrameImage) {
-            new PlugInDialogNewGeneric2(parentFrame, image);
+            new PlugInDialogTre4D(parentFrame, image);
         } else {
             MipavUtil.displayError("PlugInTre4D only runs on an image frame.");
         }
