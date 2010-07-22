@@ -100,6 +100,7 @@ private boolean testMode = false;
 	private int nprob;
 	private double rs[][];
 	private int nex; // the index of the test problem
+	private int lmstepEntry = 0;
 	
 	public NL2sol() {
 		testMode = true;
@@ -195,6 +196,9 @@ private boolean testMode = false;
 	    xscal1 = 1;
 	    xscal2 = 3;
 	    nltest("Rosenbrock", rstart, xscal1, xscal2);
+	    if (lmstepEntry == 4) {
+	    	return;
+	    }
 	    
 	    // Helix
 	    n = 3;
@@ -689,6 +693,9 @@ private boolean testMode = false;
 
 	    if ( jac == 1 ) {
 	      nl2sol ( );
+	      if (lmstepEntry == 4) {
+	    	  return;
+	      }
 	    }
 	    else if ( jac == 2 ) {
 	      nl2sno ( );
@@ -1665,9 +1672,13 @@ private boolean testMode = false;
 		      for (k = 1; k <= n; k++) {
 		    	  arr2[k] = v[r1+k-1];
 		      }
-		     Preferences.debug("iv[1] before nl2itr = " + iv[1] + "\n");
 		     nl2itr ( arr, iv, arr2D, n, n, p, arr2, v, x );
-		     Preferences.debug("iv[1] after nl2itr = " + iv[1] + "\n");
+		     if (lmstepEntry == 4) {
+		    	 return;
+		     }
+		     for (k = 1; k <= p; k++) {
+            	 v[d1+k-1] = arr[k];
+             }
 		     i = 0;
 		      for (k = 1; k <= p; k++) {
            	      for (m = 1; m <= n; m++) {
@@ -2238,7 +2249,6 @@ private boolean testMode = false;
 		boolean do310 = false;
 		boolean do360 = false;
 		
-		
 		nfc = iv[nfcall];
 		iv[switchConstant] = 0;
 		iv[restor] = 0;
@@ -2282,7 +2292,6 @@ private boolean testMode = false;
 	    while (true) {
 	    	
 	    	if (do10) {
-	    		Preferences.debug("do10 in assess\n");
 	    		// Initialize for new iteration
 	    		do10 = false;
 	    	    iv[stage] = 1;
@@ -2301,7 +2310,6 @@ private boolean testMode = false;
 	    	} // if (do10)
 	    	
 	    	if (do20) {
-	    		Preferences.debug("do20 in assess\n");
 	    		do20 = false;
 	    		// Step was recomputed with new model or smaller radius.
 	    		// First decide which
@@ -2318,7 +2326,6 @@ private boolean testMode = false;
 	    	} // if (do20)
 	    	
 	    	if (do30) {
-	    		Preferences.debug("do30 in assess\n");
 	    		do30 = false;
 	    		// A new model is being tried.  Decide whether to keep it.
 	    		iv[stage] = iv[stage] + 1;
@@ -2326,7 +2333,6 @@ private boolean testMode = false;
 	    	} // if (do30)
 	    	
 	    	if (do40) {
-	    		Preferences.debug("do40 in assess\n");
 	    		do40 = false;
 	    		// Now we add the possibility that step was recomputed with
 	    		// the same model, perhaps because of an oversized step.
@@ -2364,7 +2370,6 @@ private boolean testMode = false;
 	    	} // if (do40)
 	    	
 	    	if (do50) {
-	    		Preferences.debug("do50 in assess\n");
 	    		do50 = false;
 	    		if (iv[toobig] == 0) {
 	    			do70 = true;
@@ -2384,7 +2389,6 @@ private boolean testMode = false;
 	    	} // if (do50)
 	    	
 	    	if (do70) {
-	    		Preferences.debug("do70 in assess\n");
 	    		do70 = false;
 	    		if (v[f] < v[flstgd]) {
 	    			do90 = true;
@@ -2400,7 +2404,6 @@ private boolean testMode = false;
 	    	} // if (do70)
 	    	
 	    	if (do80) {
-	    		Preferences.debug("do80 in assess\n");
 	    		do80 = false;
 	    		do90 = true;
 	    		// Restore step, etc. only if a previous step decreased V(F).
@@ -2419,7 +2422,6 @@ private boolean testMode = false;
 	    	} // if (do80)
 	    	
 	    	if (do90) {
-	    		Preferences.debug("do90 in assess\n");
 	    		do90 = false;
 	    		// Compute relative change in X by current step.
 	    		reldx1 = reldst(p, d, x, x0);
@@ -2433,7 +2435,6 @@ private boolean testMode = false;
 	    		} // if (!goodx)
 	    		
 	    		v[fdif] = v[f0] - v[f];
-	    		
 	    		// No (or only a trivial) function decrease,
 	    		// so try new model or smaller radius.
 	    		if (v[fdif] <= v[tuner2] * v[preduc]) {
@@ -2493,11 +2494,8 @@ private boolean testMode = false;
 	    	} // if (do90)
 	    	
 	    	if (do140) {
-	    		Preferences.debug("do140 in assess\n");
 	    		do140 = false;
 	    		// Do a false convergence test
-	    	    Preferences.debug("reldx = " + reldx + " v[reldx] = " + v[reldx] + "\n");
-	    	    Preferences.debug("xftol = " + xftol + " v[xftol] = " + v[xftol] + "\n");
 	    		if (v[reldx] < v[xftol]) {
 	    			do160 = true;
 	    		}
@@ -2513,14 +2511,12 @@ private boolean testMode = false;
 	    	} // if (do140)
 	    	
 	    	if (do160) {
-	    		Preferences.debug("do160 in assess\n");
 	    		do160 = false;
 	    		iv[irc] = 12;
 	    		do310 = true;
 	    	} // if (do160)
 	    	
 	    	if (do200) {
-	    		Preferences.debug("do200 in assess\n");
 	    		do200 = false;
 	    		// Handle good function decrease,
 	    		if (v[fdif] < (-v[tuner3] * v[gtstep])) {
@@ -2557,7 +2553,6 @@ private boolean testMode = false;
 	    	} // if (do200)
 	    	
 	    	if (do230) {
-	    		Preferences.debug("do230 in assess\n");
 	    		do230 = false;
 	    	    // Save values corresponding to good step.
 	    		v[flstgd] = v[f];
@@ -2573,7 +2568,6 @@ private boolean testMode = false;
 	    	} // if (do230)
 	    	
 	    	if (do260) {
-	    		Preferences.debug("do260 in assess\n");
 	    		do260 = false;
 	    		// Accept step with radius unchanged.
 	    		v[radfac] = 1.0;
@@ -2582,7 +2576,6 @@ private boolean testMode = false;
 	    	} // if (do260)
 	    	
 	    	if (do290) {
-	    		Preferences.debug("do290 in assess\n");
 	    		do290 = false;
 	    		// Come here for a restart after convergence.
 	    		iv[irc] = iv[xirc];
@@ -2595,14 +2588,12 @@ private boolean testMode = false;
 	    	// Perform convergence tests.
 	    	
 	    	if (do300) {
-	    		Preferences.debug("do300 in assess\n");
 	    		do300 = false;
 	    		iv[xirc] = iv[irc];
 	    		do310 = true;
 	    	} // if (do300)
 	    	
 	    	if (do310) {
-	    		Preferences.debug("do310 in assess\n");
 	    		do310 = false;
 	    		if (Math.abs(v[f]) < v[afctol]) {
 	    			iv[irc] = 10;
@@ -2688,7 +2679,6 @@ private boolean testMode = false;
 	    	
 	    	// Perform singular convergence test with recomputed V(PREDUC).
 	    	if (do360) {
-	    		Preferences.debug("do360 in assess\n");
 	    		do360 = false;
 	    		v[gtstep] = v[gtslst];
 	    		v[dstnrm] = Math.abs(v[dstsav]);
@@ -6357,7 +6347,6 @@ private boolean testMode = false;
 	  double twopsi;
 	  double uk;
 	  int uk0;
-	  double v2norm;
 	  double wl = 0.0;
 	  int m;
 	  double arr[];
@@ -6392,6 +6381,7 @@ private boolean testMode = false;
 	      final int phmxfc = 21;
 	      final int preduc = 7;
 	      final int radius = 8;
+	      int loop1Count = 0;
 	      
 	//
 	//  For use in recomputing STEP, the final values of LK and UK,
@@ -6440,9 +6430,15 @@ private boolean testMode = false;
 	//
 	  do5 = true;
 	  loop1: while (true) {
+		  loop1Count++;
+		  if (loop1Count == 100) {
+			  break loop1;
+		  }
       if (do5) {
+    	  Preferences.debug("do5\n");
     	  do5 = false;
 		  if ( 0 < ka[0] ) {
+		    Preferences.debug("0 < ka[0] go to 370\n");
 		    do370 = true;
 		  }
 		  else {
@@ -6450,6 +6446,7 @@ private boolean testMode = false;
 		  }
       } // if (do5)
 	  if (do10) {
+		  Preferences.debug("do10\n");
 		  do10 = false;
 	//
 	//  Fresh start.  Compute V(NREDUC).
@@ -6469,6 +6466,7 @@ private boolean testMode = false;
 	//  Set up to try initial Gauss-Newton step.
 	//
 	if (do20) {
+		Preferences.debug("do20\n");
 	 do20 = false;
 
 	  v[dst0] = -1.0;
@@ -6496,6 +6494,7 @@ private boolean testMode = false;
 	    phi = dst - rad;
 
 	    if ( phi <= phimax ) {
+	      Preferences.debug("phi <= phimax go to 410\n");
 	      do410 = true;
 	      break loop1;
 	    }
@@ -6503,6 +6502,7 @@ private boolean testMode = false;
 	//  If this is a restart, go to 110.
 	//
 	    if ( 0 < ka[0] ) {
+	      Preferences.debug("0 < ka[0] go to 110\n");
 	      do110 = true;
 	    }
 	    else {
@@ -6526,6 +6526,7 @@ private boolean testMode = false;
 	  }
 	} // if (do20)
 	if (do30) {
+		Preferences.debug("do30\n");
 		do30 =false;
 	//
 	//  Compute U0.
@@ -6566,6 +6567,7 @@ private boolean testMode = false;
 	//  Top of loop.  Increment KA, copy R to RMAT, QTR to RES.
 	//
 	if (do110) {
+		Preferences.debug("do110\n");
 		do110 = false;
 
 	  ka[0] = ka[0] + 1;
@@ -6591,9 +6593,10 @@ private boolean testMode = false;
 	//
 	//  Add ALPHAK * D and update QR decomposition using fast Givens transform.
 	//
-	      for (i = 1; (i <= p) && (!do370); i++) {
+	      for (i = 1; (i <= p) && (!do320) && (!do370); i++) {
 	      loop2: while (true) {
 	      if (do120) {
+	    	  Preferences.debug("do120\n");
 	    	  do120 = false;
 	//
 	//  Generate, apply first Givens transformation for row I of ALPHAK * D.
@@ -6614,6 +6617,7 @@ private boolean testMode = false;
 	         }
 	} // if (do120)
      if (do130) {
+    	 Preferences.debug("do130\n");
 	     do130 = false;
 
 	         a = adi / wl;
@@ -6638,6 +6642,7 @@ private boolean testMode = false;
 	         }
      } // if (do130)
      if (do150) {
+    	 Preferences.debug("do150\n");
 	     do150 = false;
 
 	         b = wl / adi;
@@ -6663,6 +6668,7 @@ private boolean testMode = false;
 
      } // if (do150)
      if (do170) {
+       Preferences.debug("do170\n");
 	   do170 = false;
 
 	         if ( i == p ) {
@@ -6677,6 +6683,7 @@ private boolean testMode = false;
 	         for (i1 = i + 1; i1 <= p; i1++) {
 	         loop3: while (true) {
 	         if (do180) {
+	        	 Preferences.debug("do180\n");
 	              l = ( i1 * ( i1 + 1 ) ) / 2 + rmat0;
 	              wl = w[l];
 	              si = step[i1-1];
@@ -6697,9 +6704,11 @@ private boolean testMode = false;
 	//  Use Givens transformations to zero next element of temporary row.
 	//
 	              if (Math.abs(si) > Math.abs(wl)) {
+	            	  Preferences.debug("Math.abs(si) > Math.abs(wl) go to 220\n");
 	            	  do220 = true;
 	              }
 	              else if (si == 0.0) {
+	            	  Preferences.debug("si == 0.0 go to 260\n");
 	            	  do260 = true;
 	              }
 	              else {
@@ -6707,6 +6716,7 @@ private boolean testMode = false;
 	              }
      } // if (do180)
      if (do200) {
+    	 Preferences.debug("d0200\n");
 	     do200 = false;
 
 	              a = si / wl;
@@ -6725,7 +6735,7 @@ private boolean testMode = false;
 	                   w[l] = wl + b * sj;
 	                   step[j1] = sj - a*wl;
 	                } // for (j1 = i1; j1 <= p; j1++)
-
+                    Preferences.debug(" t <= 2.5 go to 240\n");
 	                do240 = true;
 
 	              } // if (t <= 2.5)
@@ -6734,12 +6744,14 @@ private boolean testMode = false;
 	              }
      } // if (do200)
      if (do220) {
+    	 Preferences.debug("do220\n");
     	 do220 = false;
 	              b = wl / si;
 	              a = d1 * b / d2;
 	              t = a * b + 1.0;
 
 	              if (t > 2.5 ) {
+	            	  Preferences.debug("t > 2.5 go to 200\n");
 	            	  do200 = true;
 	            	  continue loop3;
 	              }
@@ -6757,6 +6769,7 @@ private boolean testMode = false;
 	              do240 = true;
      } // if (do220)
      if (do240) {
+    	 Preferences.debug("do240\n");
 	//
 	//  Rescale temporary row if necessary.
 	//
@@ -6771,6 +6784,7 @@ private boolean testMode = false;
 	              do260 = true;
      } // if (do240)
      if (do260) {
+    	 Preferences.debug("do260\n");
     	 do260 = false;
     	 break loop3;
      } // if (do260)
@@ -6789,24 +6803,25 @@ private boolean testMode = false;
 	      else {
 	    	  do280 = true;
 	      }
-	      } // for (i = 1; (i <= p) && (!do370); i++)
+	      } // for (i = 1; (i <= p) && (!do320) && (!do370); i++)
 	//
 	//  Compute step.
 	//
 	 if (do280) {
+		 Preferences.debug("do280\n");
 	     do280 = false;
           arr = new double[p+1];
           arr2 = new double[p*(p+1)/2 + 1];
           arr3 = new double[p+1];
-          for (m = 1; m <= p*(p+1)/2; p++) {
-        	  arr2[p] = w[rmat + p - 1];
+          for (m = 1; m <= p*(p+1)/2; m++) {
+        	  arr2[m] = w[rmat + m - 1];
           }
           for (m = 1; m <= p; m++) {
-        	  arr3[p] = w[res + p - 1];
+        	  arr3[m] = w[res + m - 1];
           }
 	      litvmu ( p, arr, arr2, arr3 );
 	      for (m = 1; m <= p; m++) {
-	    	  w[res + p - 1] = arr[p];
+	    	  w[res + m - 1] = arr[m];
 	      }
 	//
     //  Recover STEP and store permuted -D * STEP at W(RES).
@@ -6824,10 +6839,12 @@ private boolean testMode = false;
 	      dst = v2norm(p, arr);
 	      phi = dst - rad;
 	      if (phi <= phimax && phi >= phimin) {
+	    	  Preferences.debug("phi <= phimax && phi >= phimin go to 430\n");
 	    	  do430 = true;
 	    	  break loop1;
 	      }
 	      if (oldphi == phi) {
+	    	  Preferences.debug("oldphi == phi go to 430\n");
 	    	  do430 = true;
 	    	  break loop1;
 	      }
@@ -6838,6 +6855,7 @@ private boolean testMode = false;
 	      if ( phi <= 0.0 ) {
 
 	        if ( kalim <= ka[0] ) {
+	          Preferences.debug("kalim <= ka[0] go to 430\n");
 	          do430 = true;
 	          break loop1;
 	        }
@@ -6845,6 +6863,7 @@ private boolean testMode = false;
 	        twopsi = alphak * dst * dst - dotprd ( p, step, g );
 
 	        if ( alphak < twopsi * psifac ) {
+	          Preferences.debug("alphak < twopsi * psifac go to 440\n");
 	          v[stppar] = -alphak;
 	          do440 = true;
 	          break loop1;
@@ -6859,6 +6878,7 @@ private boolean testMode = false;
 	 } // if (do280)
 
 	 if (do320) {
+		 Preferences.debug("do320\n");
 	     do320 = false;
 
 	      for ( i = 1; i <= p; i++) {
@@ -6877,6 +6897,7 @@ private boolean testMode = false;
 	      t = 1.0 / v2norm(p, step);
 	      alphak = alphak + t * phi * t / rad;
 	      lk = Math.max ( lk, alphak );
+	      Preferences.debug("go to 110\n");
 	      do110 = true;
 	      continue loop1;
 	 } // if (do320)
@@ -6884,12 +6905,14 @@ private boolean testMode = false;
 	//  Restart.
 	//
 	 if (do370) {
+		 Preferences.debug("do370\n");
 	     do370 = false;
 
 	      lk = w[lk0];
 	      uk = w[uk0];
 
 	      if (v[dst0] > 0.0 && v[dst0] - rad <= phimax) {
+	    	Preferences.debug("v[dst0] > 0.0 && v[dst0] - rad <= phimax go to 20\n");
 	        do20 = true;
 	        continue loop1;
 	      }
@@ -6910,6 +6933,7 @@ private boolean testMode = false;
 	         if ( phi < 0.0 ) {
 	           uk = Math.min ( uk, alphak );
 	         }
+	         Preferences.debug("rad <= v[rad0] go to 320\n");
 	         do320 = true;
 	         continue loop1;
 	      }
@@ -6930,7 +6954,7 @@ private boolean testMode = false;
 	      if ( phi < 0.0 ) {
 	        uk = Math.min ( uk, alphak );
 	      }
-
+          Preferences.debug("go to 320\n");
 	      do320 = true;
 	      continue loop1;
 	 } // if (do370)
@@ -6939,7 +6963,7 @@ private boolean testMode = false;
 	//  Acceptable Gauss-Newton step.  Recover step from W.
 	//
 	 if (do410) {
-	
+	      Preferences.debug("do410\n");
 
 	      alphak = 0.0;
 	      for ( i = 1; i <= p; i++) {
@@ -6952,12 +6976,14 @@ private boolean testMode = false;
 	//  Save values for use in a possible restart.
 	//
 	 if (do430) {
+		 Preferences.debug("do430\n");
 
 	  v[stppar] = alphak;
 	  do440 = true;
 	 } // if (do430)
 
 	 if (do440) {
+		 Preferences.debug("do440\n");
 
 	  v[gtstep] = dotprd ( p, step, g );
 	  v[preduc] = 0.5 * (alphak*dst*dst - v[gtstep]);
@@ -7539,7 +7565,6 @@ private boolean testMode = false;
 	int iarr[];
 	int iarr2[];
 	int iarr3[];
-	Preferences.debug("iv[3] on entry to nl2itr = " + iv[3] + "\n");
 
 	      i = iv[1];
 	      if (i == 1) {
@@ -7663,7 +7688,6 @@ private boolean testMode = false;
 	//  Compute function value (half the sum of squares).
 	//
 	 if (do20) {
-          Preferences.debug("do20\n");
 	      t = v2norm(n, r);
 
 	      if ( v[rlimit] < t ) {
@@ -7677,7 +7701,6 @@ private boolean testMode = false;
 	 } // if (do20)
 
 	 if (do30) {
-          Preferences.debug("do30\n");
 	      if ( iv[mode] == 0 ) {
 	        do350 = true;
 	      }
@@ -7690,7 +7713,6 @@ private boolean testMode = false;
 	 } // if (do30)
 
 	 if (do40) {
-          Preferences.debug("do40\n");
 	      if ( iv[toobig] != 0 ) {
 	         iv[1] = 13;
 	         itsmry ( d, iv, p, v, x );
@@ -7700,7 +7722,6 @@ private boolean testMode = false;
 	      do60 = true;
 	 } // if (do40)
 	 if (do50) {
-		 Preferences.debug("do50\n");
 	//
 	//  Make sure jacobian could be computed.
 	//
@@ -7713,7 +7734,6 @@ private boolean testMode = false;
 	      do60 = true;
 	 } // if (do50)
 	if (do60) {
-		Preferences.debug("do60\n");
 	//
 	//  Compute gradient.
 	//
@@ -7786,14 +7806,12 @@ private boolean testMode = false;
     //
 	loop1: while (true) {
      if (do150) {
-    	 Preferences.debug("do150\n");
 	     do150 = false;
 
 	      itsmry(d, iv, p, v, x);
 	      do160 = true;
      } // if (do150);
      if (do160) {
-    	 Preferences.debug("do160\n");
     	 do160 = false;
 	     k = iv[niter];
 
@@ -7806,7 +7824,6 @@ private boolean testMode = false;
      } // if (do160)
 
 	if (do170) {
-		Preferences.debug("do170\n");
           do170 = false;
 	      iv[niter] = k + 1;
 	//
@@ -7845,7 +7862,6 @@ private boolean testMode = false;
 	      do190 = true;
 	} // if (do170)
 	if (do190) {
-		Preferences.debug("do190\n");
 		do190 = false;
 	//
 	//  Check STOPX and function evaluation limit.
@@ -7859,7 +7875,6 @@ private boolean testMode = false;
 	      }
 	} // if (do190)
 	if (do195) {
-		Preferences.debug("do195\n");
 		do195 = false;
 	//
 	//  Come here when restarting after function evaluation limit or STOPX.
@@ -7877,7 +7892,6 @@ private boolean testMode = false;
 	} // if (do195)
 
 	 if (do200) {
-		 Preferences.debug("do200\n");
          do200 = false;
 	      if (iv[nfcall] < iv[mxfcal] + iv[nfcov]) {
 	    	  do210 = true;
@@ -7888,7 +7902,6 @@ private boolean testMode = false;
 	      }
 	 } // if (do200)
 	 if (do205) {
-		 Preferences.debug("do205\n");
          do205 = false;
 	         if (v[f] >= v[f0]) {
 	           itsmry ( d, iv, p, v, x );
@@ -7902,7 +7915,6 @@ private boolean testMode = false;
 	         do560 = true;
 	 } // if (do205)
 	 if (do210) {
-		 Preferences.debug("do210\n");
 		 do210 = false;
 	//
 	//  Compute candidate step.
@@ -7988,8 +8000,14 @@ private boolean testMode = false;
 	         }
 	         iarr[0] = iv[ierr];
 	         iarr3[0] = iv[kalm];
+	         lmstepEntry++;
+	         Preferences.debug("Entering lmstep for entry = " + lmstepEntry + "\n");
 	         lmstep(d, arr, iarr, iarr2, iarr3, p,
 	                     arr2, arr3, arr4, v, arr5);
+	         Preferences.debug("Exiting lmstep for entry = " + lmstepEntry + "\n");
+	         if (lmstepEntry == 4) {
+	             return;	 
+	         }
 	         iv[ierr] = iarr[0];
 	         for (ii = 1; ii <= p; ii++) {
 	        	 iv[ipivot+ii-1] = iarr2[ii];
@@ -8149,7 +8167,6 @@ private boolean testMode = false;
 	      do310 = true;
 	 } // if (do210)
 	if (do310) {
-		Preferences.debug("do310\n");
 		do310 = false;
 	//
 	//  Compute R(X0 + STEP).
@@ -8169,7 +8186,6 @@ private boolean testMode = false;
 	      do350 = true;
 	} // if (do310)
 	if (do350) {
-		Preferences.debug("do350\n");
 		do350 = false;
 	//
 	//  Assess candidate step.
@@ -8186,9 +8202,7 @@ private boolean testMode = false;
 	    	  arr2[ii] = v[lstgst+ii-1];
 	    	  arr3[ii] = v[x01+ii-1];
 	      }
-	      Preferences.debug("iv[3] in 350 before assess = " + iv[3] + "\n");
  	      assess(d, iv, p, arr, arr2, v, x, arr3);
- 	      Preferences.debug("iv[3] in 350 after assess = " + iv[3] + "\n");
  	      for (ii = 1; ii <= p; ii++) {
  	    	  v[step1+ii-1] = arr[ii];
  	    	  v[lstgst+ii-1] = arr2[ii];
@@ -8207,7 +8221,6 @@ private boolean testMode = false;
 	} // if (do350)
 
 	 if (do360) {
-		 Preferences.debug("do360\n");
           do360 = false;
 	      if ( iv[restor] != 0 ) {
 	         rsave1 = iv[rsave];
@@ -8219,10 +8232,8 @@ private boolean testMode = false;
 	 } // if (do360)
 
 	 if (do390) {
-		 Preferences.debug("do390\n");
          do390 = false;
 	      l = iv[irc] - 4;
-	      Preferences.debug("irc = " + irc + "iv[irc] = " + iv[irc] + " l = " + l + "\n");
 	      stpmod = iv[model];
 
 	      if (l > 0) {
@@ -8300,7 +8311,6 @@ private boolean testMode = false;
 	      } // else if l <= 0
 	 } // if (do390)
      if (do400) {
-    	 Preferences.debug("do400\n");
     	 do400 = false;
 	     if (-3 < l) {
 	    	 do480 = true;
@@ -8315,7 +8325,6 @@ private boolean testMode = false;
 	     } // else
      } // if (do400)
      if (do410) {
-    	 Preferences.debug("do410\n");
     	 do410 = false;
 	//
 	//  Recompute STEP, saving V values and R if necessary.
@@ -8326,7 +8335,6 @@ private boolean testMode = false;
      } // if (do410)
 
 	 if (do420) {
-		 Preferences.debug("do420\n");
          do420 = false;
 	      if ( v[f] < v[f0] ) {
 	        rsave1 = iv[rsave];
@@ -8339,7 +8347,6 @@ private boolean testMode = false;
 	      continue loop1;
 	 } // if (do420
 	 if (do440) {
-		 Preferences.debug("do440\n");
 		 do440 = false;
 	//
 	//  Compute step of length V(LMAX0) for singular convergence test.
@@ -8350,7 +8357,6 @@ private boolean testMode = false;
 	      continue loop1;
 	 } // if (do440)
 	 if (do450) {
-		 Preferences.debug("do450\n");
 		 do450 = false;
 	//
 	//  Convergence or false convergence.
@@ -8371,7 +8377,6 @@ private boolean testMode = false;
 	      }
 	 } // if (do450)
 	 if (do480) {
-		 Preferences.debug("do480\n");
 		 do480 = false;
 	//
 	//  Process acceptable step.
@@ -8438,7 +8443,6 @@ private boolean testMode = false;
 	      do510 = true;
 	 } // if (do480)
 	 if (do510) {
-		 Preferences.debug("do510\n");
 		 do510 = false;
 	//
 	//  See whether to set V(RADFAC) by gradient tests.
@@ -8510,7 +8514,6 @@ private boolean testMode = false;
 	      do560 = true;
 	 } // if (do510)
 	 if (do560) {
-		 Preferences.debug("do560\n");
 		 do560 = false;
 	//
 	//  Save old gradient and compute new one.
@@ -8526,7 +8529,6 @@ private boolean testMode = false;
 	      return;
 	 } // if (do560)
 	 if (do570) {
-		 Preferences.debug("do570\n");
 		 do570 = false;
 	//
 	//  Initializations -- g0 = g - g0, etc.
@@ -8648,13 +8650,11 @@ private boolean testMode = false;
 	//  Bad parameters to ASSESS.
 	//
 	if (do640) {
-		Preferences.debug("do640\n");
 	      iv[1] = 14;
 	      itsmry ( d, iv, p, v, x );
 	      return;
 	} // if (do640)
 	if (do700) {
-		Preferences.debug("do700\n");
 	//
 	//  Convergence obtained.  Compute covariance matrix if desired.
 	//
@@ -8672,7 +8672,6 @@ private boolean testMode = false;
 	} // if (do700)
      loop2: while (true) {
     	 if (do710) {
-    		 Preferences.debug("do710\n");
     		 do710 = false;
           iarr = new int[1];
           iarr[0] = i;
@@ -8712,7 +8711,6 @@ private boolean testMode = false;
 	      return;
     	 } // if (do710)
          if (do730) {
-        	Preferences.debug("do730\n");
 	        do730 = false;
 
 	         if ( iv[restor] == 1 || iv[toobig] != 0 ) {
