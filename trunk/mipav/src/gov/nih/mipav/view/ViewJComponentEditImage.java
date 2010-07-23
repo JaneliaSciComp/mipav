@@ -470,6 +470,12 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
         showSliceNumber = (imageA.getNDims() > 2) && ! (this instanceof ViewJComponentTriImage);
 
+        if (imageA.isDicomImage()) {
+            setOverlay(Preferences.is(Preferences.PREF_SHOW_DICOM_OVERLAYS));
+        } else {
+            setOverlay(Preferences.is(Preferences.PREF_SHOW_IMAGE_OVERLAYS));
+        }
+        
         // active image color: get preset
         if (Preferences.getProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR) == null) {
             Preferences.setProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR, MipavUtil
