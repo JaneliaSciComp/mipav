@@ -2975,10 +2975,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
 
                 if (overlayOn) {
-                    showOverlay(graphics);
+                    showOverlay(offscreenGraphics2d);
                 }
                 if (gridOverlayOn) {
-                    showGridOverlay(graphics);
+                    showGridOverlay(offscreenGraphics2d);
                 }
             }
 
