@@ -121,7 +121,8 @@ public class JDialogRotate extends JDialogScriptableBase
                                                imageFrame.getComponentImage().getLUTb(),
                                                imageFrame.getComponentImage().getResolutionX(),
                                                imageFrame.getComponentImage().getResolutionY(),
-                                               new Dimension(pt.x, pt.y), imageFrame.getControls());
+                                               new Dimension(pt.x, pt.y), imageFrame.getControls(), 
+                                               imageFrame.getVOIManager());
                     } catch (OutOfMemoryError error) {
                         MipavUtil.displayError("Out of memory: unable to open new frame");
                     }

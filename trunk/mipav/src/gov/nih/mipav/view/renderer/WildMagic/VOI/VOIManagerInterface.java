@@ -835,6 +835,28 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
             }            
         }
     }
+    
+    public VOIManager addVOIManager(ModelImage kImageA, ModelImage kImageB, Component kComponent, 
+            ScreenCoordinateListener kContext, int iOrientation, int iSlice)
+    {
+        VOIManager kVOIManager = new VOIManager(this);
+        kVOIManager.init(kImageA, kImageB,
+                    kComponent, kContext,
+                    iOrientation, iSlice);
+        kVOIManager.setPopupVOI(popup);
+        kVOIManager.setPopupPt(popupPt);
+        m_kVOIManagers.add(kVOIManager);
+        return kVOIManager;
+    }
+    
+    public void removeVOIManager( VOIManager kVOIManager )
+    {
+        if ( kVOIManager != null )
+        {
+            m_kVOIManagers.remove(kVOIManager);
+            kVOIManager.dispose();
+        }
+    }
 
     /**
      * Adds a UpdateVOISelectionListener.

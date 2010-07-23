@@ -27,6 +27,9 @@ public interface ScreenCoordinateListener
      * @return height of the display canvas.
      */
     public int getHeight();
+    
+    public int getSlice();
+    
     /**
      * Returns the width of the display canvas.
      * @return width of the display canvas.

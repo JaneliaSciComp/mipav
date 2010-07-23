@@ -3,9 +3,15 @@ package gov.nih.mipav.view;
 
 import gov.nih.mipav.model.algorithms.AlgorithmVOIShapeInterpolation;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.provenance.ProvenanceRecorder;
+import gov.nih.mipav.model.scripting.ScriptRecorder;
+import gov.nih.mipav.model.scripting.actions.ActionMaskToPaint;
+import gov.nih.mipav.model.scripting.actions.ActionPaintToMask;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -14,6 +20,8 @@ import java.util.*;
 
 import javax.swing.*;
 import javax.swing.border.*;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
@@ -330,6 +338,9 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
     /** DOCUMENT ME! */
     private int xScreen, yScreen;
+    
+
+    protected VOIManagerInterface voiManager;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -349,7 +360,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
      */
     public ViewJFrameLightBox(ViewJFrameImage imgFrame, String _frameTitle, ModelImage _imageA, ModelLUT _LUTa,
                               ModelImage _imageB, ModelLUT _LUTb, float resX, float resY, Dimension loc,
-                              ViewControlsImage _controls) {
+                              ViewControlsImage _controls, VOIManagerInterface voiManager) {
     	
         super(_imageA, _imageB);
         try {
@@ -368,6 +379,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
         // initialize variables from parameters
         imageFrame = imgFrame;
         controls = _controls;
+        this.voiManager = voiManager;
         resolutionX = resX;
         resolutionY = resY;
 
@@ -657,6 +669,12 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
             for (int j = 0; j < imagePanel.length; j++) {
 
                 if (componentImage[j] != null) {
+
+                    if ( voiManager != null )
+                    {
+                        voiManager.removeVOIManager( componentImage[j].getVOIManager() );
+                    }
+                    
                     componentImage[j].dispose(false);
                 }
 
@@ -715,6 +733,15 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
             componentImage[i].setResolutions(resolutionX, resolutionY);
 
             imagePanel[i].add(componentImage[i]);
+            
+            
+
+            if ( voiManager != null )
+            {
+                componentImage[i].setVOIManager(voiManager.addVOIManager( imageA, imageB,
+                        componentImage[i], componentImage[i],
+                        componentImage[i].getOrientation(), componentImage[i].getSlice() ));
+            }
 
         } // end loop on visible slices
 
@@ -3631,7 +3658,6 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
         }
 
         this.setLocation(horiz, vert);
-    }
-
-
+    }    
+       
 } // end class ViewJFrameLightBox

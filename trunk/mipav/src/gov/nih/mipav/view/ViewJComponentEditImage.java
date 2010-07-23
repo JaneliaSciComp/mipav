@@ -4537,6 +4537,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
     public void setSlice(final int _slice) {
         slice = _slice;
         m_kPatientSlice.updateSlice(slice);
+        //if ( voiManager != null )
+        //{
+        //    voiManager.setSlice(slice);
+        //}
     }
 
     /**
@@ -4954,13 +4958,11 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
     protected void draw3DVOIs(Graphics offscreenGraphics2d, boolean bBlend)
     {
-
         if ( imageA.getVOIs() != null )
         {
             ViewVOIVector VOIs = (ViewVOIVector) imageA.getVOIs();
             if (VOIs != null && voiManager != null) {
                 int nVOI = VOIs.size();
-
                 for (int i = nVOI - 1; i >= 0; i--) {    
                     VOI kVOI = VOIs.get(i);
                     Vector<VOIBase> kCurves = kVOI.getCurves();
@@ -6169,6 +6171,11 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         this.gridSpacingY = spacing;
     }
 
+
+    public VOIManager getVOIManager( )
+    {
+        return voiManager;
+    }
 
     public void setVOIManager( VOIManager kManager )
     {
