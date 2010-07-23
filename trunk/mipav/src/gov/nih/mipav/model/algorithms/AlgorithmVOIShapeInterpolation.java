@@ -354,11 +354,11 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
                 VOIExtractionAlgo.run();
             	
                 //we are only working with one contour on a 2d slice here
-                ViewVOIVector VOIs = (ViewVOIVector) inBetweenBooleanShapes[index].getVOIs();
-                VOI tempVOI = (VOI)(VOIs.VOIAt(0).clone());
+                ViewVOIVector VOIs = inBetweenBooleanShapes[index].getVOIs();
+                VOI tempVOI = new VOI(VOIs.VOIAt(0));
             	tempVOI.setUID(tempVOI.hashCode());
                 Vector contours = tempVOI.getCurves();
-                finalContours[index] = (VOIContour)(VOIContour)contours.elementAt(0);
+                finalContours[index] = (VOIContour)contours.elementAt(0);
                 
                 boolean isLineVertical = false;
                 float diffX = Math.abs(geomCenter1.X - geomCenter2.X);
@@ -396,7 +396,10 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
         		float transY = newY - imageCenter.Y;
         		finalContours[index].translate(transX, transY, sliceIndex1 + i);
         		finalContours[index].update();
-                VOIHandle.importCurve(finalContours[index]);
+        		if ( finalContours[index].size() > 0 )
+        		{
+        		    VOIHandle.importCurve(finalContours[index]);
+        		}
                 if(tempA != null) {
                 	tempA.disposeLocal();
                 	tempA = null;

@@ -383,7 +383,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     private PointStack levelSetStack = new PointStack(500);
     private BitSet map = null;
     private Stack<int[]> stack = new Stack<int[]>();
-    private int m_iSlice;
+    //private int m_iSlice;
     private boolean m_bLeftMousePressed;
 
     /** Change the mouse cursor with the first mouseDrag event */
@@ -995,7 +995,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         m_bPointer = false;
         m_bSelected = false;
         m_iDrawType = LIVEWIRE;
-        initLiveWire( m_iSlice, m_bLiveWire );
+        initLiveWire( m_kDrawingContext.getSlice(), m_bLiveWire );
         m_bLiveWire = false;
     }
 
@@ -1409,7 +1409,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     public void pasteVOI( VOIBase kVOI )
     {
         m_kCopyVOI = kVOI;
-        pasteVOI(m_iSlice);
+        pasteVOI(m_kDrawingContext.getSlice());
     }
 
 
@@ -1567,7 +1567,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             return;
         }     
         int iPos = m_kCurrentVOI.getNearPoint();
-        if ( add( m_kCurrentVOI, iPos, new Vector3f(iX, iY, m_iSlice), false ) )
+        if ( add( m_kCurrentVOI, iPos, new Vector3f(iX, iY, m_kDrawingContext.getSlice()), false ) )
         {
             m_kParent.setCursor(MipavUtil.crosshairCursor);        
             m_iNearStatus = NearPoint;
@@ -1575,7 +1575,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
     }
     private void anchor(int iX, int iY, boolean bSeed) {
-        Vector3f kNewPoint = new Vector3f( iX, iY, m_iSlice ) ;
+        Vector3f kNewPoint = new Vector3f( iX, iY, m_kDrawingContext.getSlice() ) ;
         if ( m_kCurrentVOI == null )
         {
             Vector<Vector3f> kPositions = new Vector<Vector3f>();
@@ -1598,7 +1598,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     }
 
     private void anchorPolyline(int iX, int iY, boolean bFinished) {
-        Vector3f kNewPoint = new Vector3f( iX, iY, m_iSlice ) ;
+        Vector3f kNewPoint = new Vector3f( iX, iY, m_kDrawingContext.getSlice() ) ;
         if ( m_kCurrentVOI == null )
         {
             Vector<Vector3f> kPositions = new Vector<Vector3f>();
@@ -1652,7 +1652,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     private boolean contains( VOIBase kVOI, int iX, int iY, int iZ ) {
 
         Vector3f kVolumePt = new Vector3f();
-        m_kDrawingContext.screenToFile( iX, iY, m_iSlice, kVolumePt );
+        m_kDrawingContext.screenToFile( iX, iY, m_kDrawingContext.getSlice(), kVolumePt );
         if ( kVOI.contains( kVolumePt.X, kVolumePt.Y, kVolumePt.Z ) )
         {
             return true;
@@ -1711,7 +1711,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     private void createTextVOI( int iX, int iY )
     {
         Vector3f kVolumePt = new Vector3f();
-        if ( m_kDrawingContext.screenToFile( new Vector3f (iX, iY, m_iSlice), kVolumePt ) )
+        if ( m_kDrawingContext.screenToFile( new Vector3f (iX, iY, m_kDrawingContext.getSlice()), kVolumePt ) )
         {
             return;
         }
@@ -1743,7 +1743,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
 
         kVolumePt = new Vector3f();
-        m_kDrawingContext.screenToFile( new Vector3f (iX2, iY2, m_iSlice), kVolumePt );
+        m_kDrawingContext.screenToFile( new Vector3f (iX2, iY2, m_kDrawingContext.getSlice()), kVolumePt );
         m_kCurrentVOI.add( kVolumePt );
 
         newTextVOI.getCurves().add( m_kCurrentVOI );
@@ -1822,7 +1822,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         if ( (m_iDrawType == POINT) || (m_iDrawType == POLYPOINT) )
         { 
             Vector<Vector3f> kPositions = new Vector<Vector3f>();
-            kPositions.add( new Vector3f (iX, fY, m_iSlice ) );
+            kPositions.add( new Vector3f (iX, fY, m_kDrawingContext.getSlice() ) );
 
             m_kCurrentVOI = createVOI( m_iDrawType, false, false, kPositions );
 
@@ -1832,10 +1832,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             if ( m_kCurrentVOI == null )
             {            
                 Vector<Vector3f> kPositions = new Vector<Vector3f>();
-                kPositions.add( new Vector3f (m_fMouseX, fYStart, m_iSlice));
-                kPositions.add( new Vector3f (iX, fYStart, m_iSlice));
-                kPositions.add( new Vector3f (iX, fY, m_iSlice));
-                kPositions.add( new Vector3f (m_fMouseX, fY, m_iSlice));
+                kPositions.add( new Vector3f (m_fMouseX, fYStart, m_kDrawingContext.getSlice()));
+                kPositions.add( new Vector3f (iX, fYStart, m_kDrawingContext.getSlice()));
+                kPositions.add( new Vector3f (iX, fY, m_kDrawingContext.getSlice()));
+                kPositions.add( new Vector3f (m_fMouseX, fY, m_kDrawingContext.getSlice()));
                 m_kCurrentVOI = createVOI( m_iDrawType, true, false, kPositions );
                 if ( m_iDrawType == LUT )
                 {
@@ -1874,7 +1874,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 for ( int i = 0; i < m_iCirclePts; i++ )
                 {
                     kPositions.add( new Vector3f ((float)(m_fMouseX + fRadiusX * m_adCos[i]),
-                            (float)(fYStart + fRadiusY * m_adSin[i]), m_iSlice));
+                            (float)(fYStart + fRadiusY * m_adSin[i]), m_kDrawingContext.getSlice()));
                 }
                 m_kCurrentVOI = createVOI( m_iDrawType, true, false, kPositions );
             }
@@ -1883,13 +1883,13 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 for ( int i = 0; i < m_iCirclePts; i++ )
                 {
                     setPosition( m_kCurrentVOI, i, (float)(m_fMouseX + fRadiusX * m_adCos[i]),
-                            (float)(fYStart + fRadiusY * m_adSin[i]), m_iSlice);
+                            (float)(fYStart + fRadiusY * m_adSin[i]), m_kDrawingContext.getSlice());
                 }
             }
         }
         else if ( m_iDrawType == LEVELSET )
         {
-            initLiveWire( m_iSlice, false );
+            initLiveWire( m_kDrawingContext.getSlice(), false );
             VOIBase kTemp = singleLevelSet2(iX, fY);
             //VOIBase kTemp = singleLevelSet(iX, fY);
             if ( kTemp == null )
@@ -1903,14 +1903,14 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             if ( m_kCurrentVOI == null )
             {
                 Vector<Vector3f> kPositions = new Vector<Vector3f>();
-                kPositions.add( new Vector3f( m_fMouseX, fYStart, m_iSlice) ) ;
-                kPositions.add( new Vector3f( iX, fY, m_iSlice) ) ;
+                kPositions.add( new Vector3f( m_fMouseX, fYStart, m_kDrawingContext.getSlice()) ) ;
+                kPositions.add( new Vector3f( iX, fY, m_kDrawingContext.getSlice()) ) ;
 
                 m_kCurrentVOI = createVOI( m_iDrawType, false, false, kPositions );
             }
             else
             {
-                Vector3f kNewPoint = new Vector3f( iX, fY, m_iSlice ) ;
+                Vector3f kNewPoint = new Vector3f( iX, fY, m_kDrawingContext.getSlice() ) ;
                 if ( add( m_kCurrentVOI, kNewPoint, false ) )
                 {
                     m_kCurrentVOI.setAnchor();
@@ -1926,8 +1926,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             if ( m_kCurrentVOI == null )
             {
                 Vector<Vector3f> kPositions = new Vector<Vector3f>();
-                kPositions.add( new Vector3f( m_fMouseX, fYStart, m_iSlice) ) ;
-                kPositions.add( new Vector3f( iX, fY, m_iSlice) ) ;
+                kPositions.add( new Vector3f( m_fMouseX, fYStart, m_kDrawingContext.getSlice()) ) ;
+                kPositions.add( new Vector3f( iX, fY, m_kDrawingContext.getSlice()) ) ;
 
                 m_kCurrentVOI = createVOI( m_iDrawType, false, false, kPositions );
                 if ( m_iDrawType == SPLITLINE )
@@ -1937,7 +1937,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             }
             else
             {
-                Vector3f kNewPoint = new Vector3f( iX, fY, m_iSlice ) ;
+                Vector3f kNewPoint = new Vector3f( iX, fY, m_kDrawingContext.getSlice() ) ;
                 setPosition( m_kCurrentVOI, 1, kNewPoint );
             }
 
@@ -1949,8 +1949,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             if ( m_kCurrentVOI == null )
             {
 
-                Vector3f kStart = new Vector3f( m_fMouseX, fYStart, m_iSlice);
-                Vector3f kEnd = new Vector3f( iX, fY, m_iSlice);
+                Vector3f kStart = new Vector3f( m_fMouseX, fYStart, m_kDrawingContext.getSlice());
+                Vector3f kEnd = new Vector3f( iX, fY, m_kDrawingContext.getSlice());
                 Vector3f kMiddle = new Vector3f();
                 kMiddle.Sub( kEnd, kStart );
                 kMiddle.Scale( .4f );
@@ -1967,7 +1967,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             else
             {
                 Vector3f kStart = m_kDrawingContext.fileToScreen(m_kCurrentVOI.get(1));
-                Vector3f kEnd = new Vector3f( iX, fY, m_iSlice ) ;
+                Vector3f kEnd = new Vector3f( iX, fY, m_kDrawingContext.getSlice() ) ;
                 Vector3f kMiddle = new Vector3f();
                 kMiddle.Sub( kEnd, kStart );
                 kMiddle.Scale( .4f );
@@ -2150,11 +2150,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
 
         float fY = iY;
-        Vector3f kNewPoint = new Vector3f( iX, fY, m_iSlice ) ;
+        Vector3f kNewPoint = new Vector3f( iX, fY, m_kDrawingContext.getSlice() ) ;
         add( m_kCurrentVOI, kNewPoint, false );
 
         Vector3f kFile = new Vector3f();
-        m_kDrawingContext.screenToFile(iX, (int)fY, m_iSlice, kFile);
+        m_kDrawingContext.screenToFile(iX, (int)fY, m_kDrawingContext.getSlice(), kFile);
         Vector3f kLocalPt = fileCoordinatesToPatient(kFile);
         int xDim = m_aiLocalImageExtents[0];
         int x = (int)kLocalPt.X;
@@ -2173,7 +2173,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             // add mouseIndex point:
             x = mouseIndex % xDim;
             y = (mouseIndex - x)/xDim;
-            kNewPoint = new Vector3f( x, y, m_iSlice ) ;
+            kNewPoint = new Vector3f( x, y, m_kDrawingContext.getSlice() ) ;
             Vector3f kVolumePt = patientCoordinatesToFile(kNewPoint);
             if ( add( m_kCurrentVOI, iAnchor, kVolumePt, true ) )
             {
@@ -2189,7 +2189,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         // add mouseIndex point:
         x = mouseIndex % xDim;
         y = (mouseIndex - x)/xDim;
-        kNewPoint = new Vector3f( x, y, m_iSlice ) ;
+        kNewPoint = new Vector3f( x, y, m_kDrawingContext.getSlice() ) ;
         Vector3f kVolumePt = patientCoordinatesToFile(kNewPoint);
         if ( add( m_kCurrentVOI, iAnchor, kVolumePt, true ) )
         {
@@ -2210,7 +2210,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         m_kCurrentVOI.setSize( m_kCurrentVOI.getAnchor()+1 );
 
         float fY = iY;
-        Vector3f kNewPoint = new Vector3f( iX, fY, m_iSlice ) ;
+        Vector3f kNewPoint = new Vector3f( iX, fY, m_kDrawingContext.getSlice() ) ;
         if ( add( m_kCurrentVOI, kNewPoint, false ) )
         {
             m_kParent.updateDisplay();
@@ -3358,7 +3358,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             dist = kVOI.getLengthString( i, i+1, resols, unitsOfMeasure );
             kVOI.getPoints().get(i).setFirstPoint( i==0, i==kVOI.getSelectedPoint(), totalDistance, dist, i+1);
             int sliceI = getSlice( kVOI.getPoints().get(i) );
-            if ( sliceI == m_iSlice )
+            if ( sliceI == m_kDrawingContext.getSlice() )
             {
                 drawVOIPoint( kVOI.getPoints().get(i), g, new Integer(i+1).toString() );
             }
@@ -3367,7 +3367,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         {
             int sliceI = getSlice( kVOI.getPoints().get(i) );
             int sliceIP1 = getSlice( kVOI.getPoints().get(i+1) );
-            if ( sliceI == sliceIP1 && sliceI == m_iSlice )
+            if ( sliceI == sliceIP1 && sliceI == m_kDrawingContext.getSlice() )
             {
                 Vector3f kStart = m_kDrawingContext.fileToScreen( kVOI.get(i) );
                 Vector3f kEnd = m_kDrawingContext.fileToScreen( kVOI.get(i+1) );
@@ -3424,7 +3424,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
         int width = (g.getFontMetrics(kVOI.getTextFont()).stringWidth( kVOI.getText()));
         Vector3f kVolumePt = new Vector3f();
-        m_kDrawingContext.screenToFile( new Vector3f (xS + width, yS, m_iSlice), kVolumePt );
+        m_kDrawingContext.screenToFile( new Vector3f (xS + width, yS, m_kDrawingContext.getSlice()), kVolumePt );
         kVOI.setTextWidth( kVolumePt );
 
         // draw the arrow if useMarker is true
@@ -3719,12 +3719,12 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     {
         if ( kVOI.getType() == VOI.PROTRACTOR && ((VOIProtractor)kVOI).getAllSlices() )
         {
-            return m_iSlice;
+            return m_kDrawingContext.getSlice();
         }
         if ( kVOI.size() == 0 )
         {
             System.err.println( kVOI.getName() + " " + kVOI.size() );
-            return m_iSlice;
+            return m_kDrawingContext.getSlice();
         }
         return (int)fileCoordinatesToPatient( kVOI.get(0) ).Z;
     }
@@ -3853,7 +3853,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         {            
             return;
         }
-        setPosition( m_kCurrentVOI, m_kCurrentVOI.getNearPoint(), iX, iY, m_iSlice ); 
+        setPosition( m_kCurrentVOI, m_kCurrentVOI.getNearPoint(), iX, iY, m_kDrawingContext.getSlice() ); 
         m_kParent.setCursor(MipavUtil.crosshairCursor); 
         m_kParent.updateDisplay();
         if ( m_kCurrentVOI.getGroup().getContourGraph() != null )
@@ -4084,6 +4084,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
      */
     private void processLeftMouseDrag(MouseEvent kEvent) {
 
+        
         if ( m_bDrawVOI && !(((m_iDrawType == POINT) || (m_iDrawType == POLYPOINT) ||
                 (m_iDrawType == LIVEWIRE) || (m_iDrawType == LEVELSET) || (m_iDrawType == TEXT) ||
                 (m_iDrawType == RETRACE))) )
@@ -4207,7 +4208,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             }
 
             // Return if trying to add the same point.
-            Vector3f kScreen = new Vector3f( x1, y1, m_iSlice );
+            Vector3f kScreen = new Vector3f( x1, y1, m_kDrawingContext.getSlice() );
             Vector3f kCurrent = m_kDrawingContext.screenToFile( kScreen );
 
             if (kVOI.contains(kCurrent)) {
@@ -4725,7 +4726,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
      */
     private void seed(int iX, int iY) {
         Vector3f kVolumePt = new Vector3f();
-        m_kDrawingContext.screenToFile( iX, iY, m_iSlice, kVolumePt );
+        m_kDrawingContext.screenToFile( iX, iY, m_kDrawingContext.getSlice(), kVolumePt );
         Vector3f kLocalPt = fileCoordinatesToPatient( kVolumePt );
 
         int xDim = m_aiLocalImageExtents[0];
@@ -4912,8 +4913,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             {
                 VOIBase kVOI3D = kVOI.getCurves().get(j);
                 if ( (m_iPlane == (m_iPlane & kVOI3D.getPlane())) &&
-                        (m_iSlice == getSlice( kVOI3D )) && 
-                        contains( kVOI3D, iX, iY, m_iSlice ) )
+                        (m_kDrawingContext.getSlice() == getSlice( kVOI3D )) && 
+                        contains( kVOI3D, iX, iY, m_kDrawingContext.getSlice() ) )
                 {
                     m_kCurrentVOI = kVOI3D;
                     boolean isActive = m_kCurrentVOI.isActive();
@@ -5005,24 +5006,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
      * Sets the local slice value.
      * @param fSlice
      */
-    private void setSlice(float fSlice) {
-        int iSlice = (int)fSlice;
-
-        /* Check bounds: */
-        if ( m_aiLocalImageExtents.length > 3 )
-        {
-            if (iSlice > (m_aiLocalImageExtents[2] - 1)) {
-                iSlice = m_aiLocalImageExtents[2] - 1;
-            }
-        }
-        if (iSlice < 0) {
-            iSlice = 0;
-        }
-
-        if (iSlice != m_iSlice) {
-            m_iSlice = iSlice;
-        }
-    }
+    public void setSlice(float fSlice) {}
 
 
     private void showSelectedVOI( int iX, int iY )
@@ -5030,11 +5014,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         m_kComponent.removeMouseListener(m_kPopupPt);
         m_kComponent.removeMouseListener(m_kPopupVOI);
         Vector3f kVolumePt = new Vector3f();
-        m_kDrawingContext.screenToFile( iX, iY, m_iSlice, kVolumePt );
+        m_kDrawingContext.screenToFile( iX, iY, m_kDrawingContext.getSlice(), kVolumePt );
 
-        if ( m_kCurrentVOI != null && (m_iSlice == getSlice( m_kCurrentVOI )) )
+        if ( m_kCurrentVOI != null && (m_kDrawingContext.getSlice() == getSlice( m_kCurrentVOI )) )
         {
-            if ( nearPoint( m_kCurrentVOI, iX, iY, m_iSlice ) )
+            if ( nearPoint( m_kCurrentVOI, iX, iY, m_kDrawingContext.getSlice() ) )
             {
                 if ( m_kCurrentVOI.getType() == VOI.POINT )
                 {
@@ -5049,7 +5033,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 }
                 return;
             }
-            else if ( nearBoundPoint( m_kCurrentVOI, iX, iY, m_iSlice ) )
+            else if ( nearBoundPoint( m_kCurrentVOI, iX, iY, m_kDrawingContext.getSlice() ) )
             {
                 m_kParent.setCursor(MipavUtil.crosshairCursor);
                 m_iNearStatus = NearBoundPoint;
@@ -5081,8 +5065,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             {
                 VOIBase kVOI3D = kVOI.getCurves().get(j);
                 if ( (m_iPlane == (m_iPlane & kVOI3D.getPlane())) &&
-                        (m_iSlice == getSlice( kVOI3D )) && 
-                        contains( kVOI3D, iX, iY, m_iSlice ) )
+                        (m_kDrawingContext.getSlice() == getSlice( kVOI3D )) && 
+                        contains( kVOI3D, iX, iY, m_kDrawingContext.getSlice() ) )
                 {
                     m_iNearStatus = NearNone;
                     m_kParent.setCursor(MipavUtil.moveCursor);
@@ -5122,9 +5106,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
 
 
-        new Vector3f( startPtX, startPtY, m_iSlice );
+        new Vector3f( startPtX, startPtY, m_kDrawingContext.getSlice() );
         Vector3f kVolumePt = new Vector3f();
-        m_kDrawingContext.screenToFile( (int)startPtX, (int)startPtY, m_iSlice, kVolumePt );
+        m_kDrawingContext.screenToFile( (int)startPtX, (int)startPtY, m_kDrawingContext.getSlice(), kVolumePt );
         Vector3f kPatientPt = new Vector3f();
         MipavCoordinateSystems.fileToPatient( kVolumePt, kPatientPt, m_kImageActive, m_iPlaneOrientation );
 
@@ -5327,12 +5311,12 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             Vector<Vector3f> kPositions = new Vector<Vector3f>();
             for ( int i = 0; i < levelSetStack.size(); i++ )
             {
-                kPatientPt.Set( levelSetStack.getPointX(i), levelSetStack.getPointY(i), m_iSlice );
+                kPatientPt.Set( levelSetStack.getPointX(i), levelSetStack.getPointY(i), m_kDrawingContext.getSlice() );
                 kScreenPt = m_kDrawingContext.patientToScreen( kPatientPt );
                 kScreenPt.Y = kScreenPt.Y;
                 kPositions.add( kScreenPt );
             }
-            kPatientPt.Set( levelSetStack.getPointX(0), levelSetStack.getPointY(0), m_iSlice );   
+            kPatientPt.Set( levelSetStack.getPointX(0), levelSetStack.getPointY(0), m_kDrawingContext.getSlice() );   
             kScreenPt = m_kDrawingContext.patientToScreen( kPatientPt );
             kScreenPt.Y = kScreenPt.Y;
             kPositions.add( kScreenPt );
@@ -5460,9 +5444,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         Vector3f kStartPt = fileCoordinatesToPatient(kSplitVOI.get(0)); 
         Vector3f kEndPt = fileCoordinatesToPatient(kSplitVOI.get(1)); 
 
-        int iStartSlice = bAllSlices? 0 : m_iSlice;
+        int iStartSlice = bAllSlices? 0 : m_kDrawingContext.getSlice();
         int nSlices = m_aiLocalImageExtents.length > 2 ? m_aiLocalImageExtents[2] : 1;
-        int iEndSlice = bAllSlices? nSlices : m_iSlice + 1;
+        int iEndSlice = bAllSlices? nSlices : m_kDrawingContext.getSlice() + 1;
 
 
         for ( int i = 0; i < kVOIs.size(); i++ )
@@ -5508,9 +5492,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         Vector3f kVolumePt1 = new Vector3f();
         Vector3f kVolumePt2 = new Vector3f();
         Vector3f kVolumePt3 = new Vector3f();
-        if ( !m_kDrawingContext.screenToFile( iX, iYStart, m_iSlice, kVolumePt1 ) &&
-                !m_kDrawingContext.screenToFile( iX, iY, m_iSlice, kVolumePt2 ) &&
-                !m_kDrawingContext.screenToFile( iMouseX, iY, m_iSlice, kVolumePt3 )   )
+        if ( !m_kDrawingContext.screenToFile( iX, iYStart, m_kDrawingContext.getSlice(), kVolumePt1 ) &&
+                !m_kDrawingContext.screenToFile( iX, iY, m_kDrawingContext.getSlice(), kVolumePt2 ) &&
+                !m_kDrawingContext.screenToFile( iMouseX, iY, m_kDrawingContext.getSlice(), kVolumePt3 )   )
         {
             m_kCurrentVOI.set(1, kVolumePt1 );
             m_kCurrentVOI.set(2, kVolumePt2 );

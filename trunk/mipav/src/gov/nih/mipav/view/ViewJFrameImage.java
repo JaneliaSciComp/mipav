@@ -2103,7 +2103,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 try {
                     new ViewJFrameLightBox(this, "LightBox", imageA, componentImage.getLUTa(), imageB, componentImage
                             .getLUTb(), componentImage.getResolutionX(), componentImage.getResolutionY(),
-                            new Dimension(50, 200), controls);
+                            new Dimension(50, 200), controls, voiManager);
                 } catch (final OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open Lightbox.");
                 }
