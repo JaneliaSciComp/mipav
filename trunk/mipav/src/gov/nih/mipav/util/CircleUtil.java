@@ -3,7 +3,10 @@ package gov.nih.mipav.util;
 import java.util.ArrayList;
 
 /**
- * Private utility class for generating approximations to circles and spheres.
+ * Public utility class for generating approximations to circles and spheres.
+ * 
+ * @see McIlroy, M. D.  Best approximate circles on integer grids. ACM Transactions on Graphics (TOG),  Volume 2 Issue 4. 
+ * @see http://portal.acm.org/citation.cfm?id=246, DOI: http://doi.acm.org/10.1145/245.246
  * 
  * @author senseneyj
  *
