@@ -1,10 +1,6 @@
 package gov.nih.mipav.util;
 
-import gov.nih.mipav.model.structures.Point3D;
-
 import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Vector;
 
 /**
  * Private utility class for generating approximations to circles and spheres.
@@ -86,7 +82,7 @@ public class CircleUtil {
     public static int[][] get2DPointsInCircle(int xCenter, int yCenter, int r)
     {
         if(r>1) {
-            ArrayList points = new ArrayList();
+            ArrayList<int[]> points = new ArrayList<int[]>();
             int[] corner = new int[2];
             int[][] quadrant1 = getQuadrantBoundaryPoints(r, 1);
             int[][] quadrant3 = getQuadrantBoundaryPoints(r, 3);
@@ -195,7 +191,7 @@ public class CircleUtil {
     
     public static int[][] getQuadrantBoundaryPoints(int radius, int quadrant)
     {
-        ArrayList quadrantPoints = new ArrayList();
+        ArrayList<int[]> quadrantPoints = new ArrayList<int[]>();
         int x = 0, y = 0, dx = 0, dy = 0;
         if(quadrant == 1 || quadrant == 2) {
             x = radius;
