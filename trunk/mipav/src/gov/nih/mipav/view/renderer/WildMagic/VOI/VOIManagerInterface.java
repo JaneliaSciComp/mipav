@@ -1,7 +1,9 @@
 package gov.nih.mipav.view.renderer.WildMagic.VOI;
 
+import gov.nih.mipav.MipavCoordinateSystems;
 import gov.nih.mipav.model.algorithms.AlgorithmVOIExtraction;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmFlip;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileUtility;
@@ -770,10 +772,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
 
             flip.callAlgorithm();
         } else if (command.equals("interpolateVOIs")) {
-            // dialog that is not visible...calls the algorithm immediately
-            new JDialogVOIShapeInterpolation(getActiveImage());
+            interpolateVOIs();
         } 
         else if (command.equals("Trim")) {
+            saveVOIs("Trim");
             final JDialogTrim trimSettings = new JDialogTrim(m_kParent.getFrame(), getActiveImage());
 
             trimSettings.setVisible(true);
@@ -2684,6 +2686,33 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
                 {
                     showIntensityGraph( kCurrentVOI );
                 }
+            }
+        }
+    }
+    
+    private void interpolateVOIs()
+    {
+        ModelImage kImage = (ModelImage)m_kVOIManagers.get(m_iActive).getLocalImage().clone();
+        if ( kImage == getActiveImage() )
+        {
+            new JDialogVOIShapeInterpolation(getActiveImage());
+        }
+        else
+        {
+            kImage.calcMinMax();            
+            new JDialogVOIShapeInterpolation(kImage, false);                  
+            int[] axisA = getActiveImage().getAxisOrientation();
+            int[] axisB = kImage.getAxisOrientation();
+            int[] axisOrder = { 0, 1, 2, 3 };
+            boolean[] axisFlip = { false, false, false, false };
+            if ( MipavCoordinateSystems.matchOrientation( axisA, axisB, axisOrder, axisFlip ) )
+            {
+                AlgorithmRotate rotateAlgo = new AlgorithmRotate( kImage, axisOrder, axisFlip );
+                rotateAlgo.setRunningInSeparateThread(false);
+                rotateAlgo.run();
+                kImage = rotateAlgo.returnImage();
+                getActiveImage().unregisterAllVOIs();            
+                getActiveImage().setVOIs( kImage.getVOIs() );
             }
         }
     }

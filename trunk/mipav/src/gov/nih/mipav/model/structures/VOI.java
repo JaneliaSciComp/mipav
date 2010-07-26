@@ -327,6 +327,8 @@ public class VOI extends ModelSerialCloneable {
         this.zBounds[0] = kVOI.zBounds[0];
         this.zBounds[1] = kVOI.zBounds[1];
         this.extension = new String( kVOI.extension );
+        
+        this.update();
     }
 
 
@@ -2755,5 +2757,13 @@ public class VOI extends ModelSerialCloneable {
                 }
             }
         return Math.sqrt(largestDistanceSq);
+    }
+    
+    private void update()
+    {
+        for ( int i = 0; i < curves.size(); i++ )
+        {
+            curves.elementAt(i).update();
+        }
     }
 }

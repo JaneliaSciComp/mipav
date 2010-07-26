@@ -14,6 +14,7 @@ import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 
 import java.io.*;
+import java.text.DecimalFormat;
 import java.util.*;
 
 import javax.swing.*;
@@ -3919,9 +3920,8 @@ public class ModelImage extends ModelStorageBase {
         voiVector = new VOIVector();
 
         final int nVOI = VOIs.size();
-
         for (int i = 0; i < nVOI; i++) {
-            voiVector.add((VOI) VOIs.VOIAt(i).clone());
+            voiVector.add(new VOI(VOIs.VOIAt(i)));
         }
 
         System.gc();
@@ -4242,6 +4242,220 @@ public class ModelImage extends ModelStorageBase {
         for (int i = 0; i < voiVector.size(); i++) { // ((VOI)(voiVector.elementAt(i))).setID((short)i);
         }
     }
+    
+    public static boolean updateFileInfo( ModelImage destImage, ModelImage srcImage, final int[] axisOrder, final boolean[] axisFlip )
+    {
+
+        int orientation = destImage.getImageOrientation();
+
+        // Set the file info for the new rotated image identical to the original image,
+        // and then adjusts the appropriate info.
+        // For all image formats other than DICOM
+        if (srcImage.getFileInfo(0).getFileFormat() != FileUtility.DICOM) {
+            if (srcImage.getNDims() >= 3) {
+                destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
+            }
+        } else { // If file is DICOM...
+
+            
+            int[] newDimExtents;
+            int[] newAxisOrients;
+            float[] newResolutions;
+            float[] newStartLocations;
+            int[] newUnitsOfMeasure;
+
+            try {
+                newDimExtents = new int[destImage.getNDims()];
+                newAxisOrients = new int[destImage.getNDims()];
+                newResolutions = new float[destImage.getNDims()];
+                newUnitsOfMeasure = new int[destImage.getNDims()];
+                newStartLocations = new float[destImage.getNDims()];
+            } catch (OutOfMemoryError e) {
+                return false;
+            }
+
+            for (int i = 0; i < destImage.getNDims(); i++) {
+                newDimExtents[i] = destImage.getExtents()[i];
+                newResolutions[i] = destImage.getResolutions(0)[i];
+                newUnitsOfMeasure[i] = destImage.getUnitsOfMeasure()[i];
+                newStartLocations[i] = destImage.getOrigin()[i];
+
+                if (i < 3) {
+                    newAxisOrients[i] = destImage.getAxisOrientation()[i];
+                }
+            }
+            FileInfoDicom[] newDicomInfo = new FileInfoDicom[newDimExtents[2]];
+            StringBuffer newTagPixelSpc = null;
+            StringBuffer newTagSliceSpc = null;
+            String imageOrient = null;
+            TransMatrix matrix = null;
+            float fSliceLocation = 0.f;
+
+            FileInfoDicom oldDicomInfo = (FileInfoDicom) srcImage.getFileInfo(0);
+            String[] tmp = oldDicomInfo.parseTagValue("0028,0030");
+
+            // pixel spacing, slice thickness, and spacing between slices changes for
+            // X- or Y-axis rotation, but not for Z-axis rotation.  Also should not be set if
+            // it wasn't there in the first place.
+            //if ((rotateAxis != Z_AXIS_180) && (rotateAxis != Z_AXIS_PLUS) && (rotateAxis != Z_AXIS_PLUS) &&
+            //        (tmp != null)) {
+                newTagPixelSpc = new StringBuffer(Float.toString(newResolutions[0]) + "\\" +
+                                                  Float.toString(newResolutions[1]));
+                newTagSliceSpc = new StringBuffer(Float.toString(newResolutions[2]));
+            //}
+
+            matrix = oldDicomInfo.getPatientOrientation();
+            if (matrix != null) {
+                imageOrient = matrixToDICOMString(matrix);
+            }
+
+            FileDicomTagTable[] childTagTables = new FileDicomTagTable[newDimExtents[2] - 1];
+
+            // first create all of the new file infos (reference and children) and fill them with tags from the old
+            // file info.  some of these tag values will be overridden in the next loop
+            for (int i = 0; i < newDimExtents[2]; i++) {
+
+                if (i == 0) {
+
+                    // create a new reference file info
+                    newDicomInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+                                                        oldDicomInfo.getFileFormat());
+                    newDicomInfo[0].vr_type = oldDicomInfo.vr_type;
+                    newDicomInfo[0].setDataType(oldDicomInfo.getDataType());
+                } else {
+
+                    // all other slices are children of the first file info..
+                    newDicomInfo[i] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+                                                        oldDicomInfo.getFileFormat(), newDicomInfo[0]);
+                    
+                    newDicomInfo[i].vr_type = oldDicomInfo.vr_type;
+                    newDicomInfo[i].setDataType(oldDicomInfo.getDataType());
+
+                    childTagTables[i - 1] = newDicomInfo[i].getTagTable();
+                }
+
+                if (axisOrder[2] == 2) { // z-axis doesn't change
+
+                    // more correct information for a Z-axis rotation, so copy the file info on a slice basis
+                    newDicomInfo[i].getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(i));
+                } else {
+
+                    // not possible for other rotations because the z-dimension is different
+                    newDicomInfo[i].getTagTable().importTags(oldDicomInfo);
+                }
+            }
+
+            newDicomInfo[0].getTagTable().attachChildTagTables(childTagTables);
+
+            
+            for (int i = 0; i < newDimExtents[2]; i++) {
+
+                newDicomInfo[i] = (FileInfoDicom) srcImage.getFileInfo(0).clone();
+                newDicomInfo[i].setExtents(newDimExtents);
+                newDicomInfo[i].setImageOrientation(orientation);
+                newDicomInfo[i].setAxisOrientation(newAxisOrients);
+                newDicomInfo[i].setResolutions(newResolutions);
+                newDicomInfo[i].setOrigin(newStartLocations);
+                newDicomInfo[i].setOrigin(newStartLocations[2] + (newResolutions[2] * i), 2);
+                newDicomInfo[i].getTagTable().setValue("0028,0011", new Short((short) newDimExtents[0]), 2); // columns
+                newDicomInfo[i].getTagTable().setValue("0028,0010", new Short((short) newDimExtents[1]), 2); // rows
+                newDicomInfo[i].getTagTable().setValue("0020,0013", Short.toString((short) (i + 1)),
+                                                       Short.toString((short) (i + 1)).length()); // instance number
+
+                // if wasn't previously set, don't set it; if Z-axis rotation, don't set it
+                if (newTagPixelSpc != null) {
+                    newDicomInfo[i].getTagTable().setValue("0028,0030", newTagPixelSpc.toString(),
+                                                           newTagPixelSpc.length()); // pixel spacing
+                }
+
+                if (newTagSliceSpc != null) {
+                    newDicomInfo[i].getTagTable().setValue("0018,0050", newTagSliceSpc.toString(),
+                                                           newTagSliceSpc.length()); // slice thickness
+                    newDicomInfo[i].getTagTable().setValue("0018,0088", newTagSliceSpc.toString(),
+                                                           newTagSliceSpc.length()); // spacing between slices
+                }
+
+                if ((imageOrient != null) && (newDicomInfo[i].getTagTable().getValue("0020,0037") != null)) {
+                    newDicomInfo[i].getTagTable().setValue("0020,0037", imageOrient, imageOrient.length());
+                }
+
+                String position = null;
+                DecimalFormat nf = new DecimalFormat("##0.000000");
+                String sliceLocation = null;
+
+                if (orientation == FileInfoBase.SAGITTAL) {
+                    fSliceLocation = newStartLocations[0] + (i * newResolutions[0]);
+                    position = positionToDICOMString(fSliceLocation, newStartLocations[1], newStartLocations[2]);
+                    sliceLocation = nf.format(fSliceLocation);
+                } else if (orientation == FileInfoBase.CORONAL) {
+                    fSliceLocation = newStartLocations[1] + (i * newResolutions[1]);
+                    position = positionToDICOMString(newStartLocations[0], fSliceLocation, newStartLocations[2]);
+                    sliceLocation = nf.format(fSliceLocation);
+                } else if (orientation == FileInfoBase.AXIAL) {
+                    fSliceLocation = newStartLocations[2] + (i * newResolutions[2]);
+                    position = positionToDICOMString(newStartLocations[0], newStartLocations[1], fSliceLocation);
+                    sliceLocation = nf.format(fSliceLocation);
+                }
+
+                if (newDicomInfo[i].getTagTable().getValue("0020,1041") != null) {
+                    newDicomInfo[i].getTagTable().setValue("0020,1041", sliceLocation, sliceLocation.length()); // image location
+                }
+
+                if (newDicomInfo[i].getTagTable().getValue("0020,0032") != null) {
+                    newDicomInfo[i].getTagTable().setValue("0020,0032", position, position.length());
+                }
+            }
+            
+            destImage.setFileInfo(newDicomInfo);
+            if (srcImage.getNDims() >= 3) {
+                destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
+            }
+        }
+        return true;
+    }
+    
+
+    /**
+     * Convert the matrix to the String format (decimal string) to be stored in the DICOM tag (0020,0037) image
+     * (patient) orientation.
+     *
+     * @param   matrix  Transformation matrix to be converted.
+     *
+     * @return  The string version of the transformation matrix (i.e. the directional cosines for the first two rows of
+     *          the matrix delimited by "\")
+     */
+    private static String matrixToDICOMString(TransMatrix matrix) {
+        String strMatrix = new String();
+
+        DecimalFormat nf = new DecimalFormat("##0.0000000");
+
+        strMatrix = nf.format(matrix.Get(0, 0)) + "\\" + nf.format(matrix.Get(0, 1)) + "\\" + nf.format(matrix.Get(0, 2)) +
+                    "\\" + nf.format(matrix.Get(1, 0)) + "\\" + nf.format(matrix.Get(1, 1)) + "\\" + nf.format(matrix.Get(1, 2));
+
+        return strMatrix;
+    }
+
+    /**
+     * Convert the image position to the String format (decimal string) to be stored in the DICOM tag (0020,0032) image
+     * (patient) orientation.
+     *
+     * @param   pt0  X position of patient.
+     * @param   pt1  Y position of patient.
+     * @param   pt2  Z position of patient.
+     *
+     * @return  The string version of the patient position delimited by "\".
+     */
+    private static String positionToDICOMString(double pt0, double pt1, double pt2) {
+        String strPosition = new String();
+
+        DecimalFormat nf = new DecimalFormat("##0.0#####");
+
+        strPosition = nf.format(pt0) + "\\" + nf.format(pt1) + "\\" + nf.format(pt2);
+
+        return strPosition;
+    }
+    
+    
     
     /**
      * Give the image a new image name, updates frame (if not null), and file infos.
