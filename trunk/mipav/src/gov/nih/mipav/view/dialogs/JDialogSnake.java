@@ -160,6 +160,18 @@ public class JDialogSnake extends JDialogBase implements AlgorithmInterface {
         image = im;
         init();
     }
+    
+
+    /**
+     * Creates new dialog for entering parameters for algorithm.
+     *
+     * @param  theParentFrame  Parent frame
+     * @param  im              Source image.
+     */
+    public JDialogSnake(Frame theParentFrame, ModelImage im, boolean separateThread) {
+    	this(theParentFrame, im);
+        setSeparateThread(separateThread);   	
+    }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -263,7 +275,7 @@ public class JDialogSnake extends JDialogBase implements AlgorithmInterface {
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     snakeAlgo.addListener(this);
-
+                   
                     createProgressBar(image.getImageName(), snakeAlgo);
                     
                     // Hide the dialog since the algorithm is about to run.
@@ -283,10 +295,17 @@ public class JDialogSnake extends JDialogBase implements AlgorithmInterface {
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    // Start the thread as a low priority because we wish to still have user interface.
-                    if (snakeAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
+                    if (isRunInSeparateThread()) {
+                        // Start the thread as a low priority because we wish to still have user interface work fast.
+                        if (snakeAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                            MipavUtil.displayError("A thread is already running on this object");
+                        }
+                    } else {
+                    	snakeAlgo.run();
                     }
+                    
+                    
+                    
                 } catch (OutOfMemoryError x) {
                     MipavUtil.displayError("Dialog Snake: unable to allocate enough memory");
 
@@ -328,9 +347,13 @@ public class JDialogSnake extends JDialogBase implements AlgorithmInterface {
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    // Start the thread as a low priority because we wish to still have user interface work fast
-                    if (snakeAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
+                    if (isRunInSeparateThread()) {
+                        // Start the thread as a low priority because we wish to still have user interface work fast.
+                        if (snakeAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                            MipavUtil.displayError("A thread is already running on this object");
+                        }
+                    } else {
+                    	snakeAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
                     MipavUtil.displayError("Dialog snake: unable to allocate enough memory");
@@ -395,6 +418,10 @@ public class JDialogSnake extends JDialogBase implements AlgorithmInterface {
 
         // Update frame
         ((ViewJFrameBase) parentFrame).updateImages(true);
+        if ( voiManager != null )
+        {
+        	voiManager.algorithmPerformed();
+        }
         dispose();
     }
 

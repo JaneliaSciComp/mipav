@@ -5,6 +5,7 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -86,6 +87,8 @@ public abstract class JDialogBase extends JDialog
 
     /** Progress bar that will listen to a dialog's algorithm (and reflect current progress)*/
     protected ViewJProgressBar progressBar;
+    
+    protected VOIManagerInterface voiManager;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -1214,6 +1217,15 @@ public abstract class JDialogBase extends JDialog
         runningScriptFlag = flag;
     }
 
+    /**
+     * Sets the VOIManagerInterface
+     * @param voiManager
+     */
+    public void setVOIManager( VOIManagerInterface voiManager )
+    {
+    	this.voiManager = voiManager;
+    }
+    
     /**
      * Tests that the entered parameter is in range.
      *

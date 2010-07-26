@@ -493,6 +493,10 @@ public class JDialogGVF extends JDialogBase implements AlgorithmInterface, ItemL
 
         // Update frame
         ((ViewJFrameBase) parentFrame).updateImages(true);
+        if ( voiManager != null )
+        {
+        	voiManager.algorithmPerformed();
+        }
         dispose();
     }
 
