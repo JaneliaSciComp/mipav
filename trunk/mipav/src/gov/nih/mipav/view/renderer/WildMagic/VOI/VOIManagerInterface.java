@@ -230,6 +230,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
     private JDialogVOIStatistics imageStatList;
     
     private float presetHue = -1.0f;
+    
+    private boolean m_bDefaultImage;
+    private ModelImage m_kTempImage = null;
 
     /**
      * Creates a VOIManagerInterface object.
@@ -714,31 +717,14 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
             m_kParent.paintToShortMask();
         } 
         
-        else if (command.equals("Snake")) {
+        else if (command.equals("Snake") || 
+        		command.equals("AGVF") || 
+        		command.equals("GVF") || command.equals("BSnake")) {
             if ( !checkForActiveVOIs()) {
                 MipavUtil.displayWarning("Please select a VOI!");
                 return;
             }
-            new JDialogSnake(m_kParent.getFrame(), getActiveImage());
-        } else if (command.equals("AGVF")) {
-            if ( !checkForActiveVOIs()) {
-                MipavUtil.displayWarning("Please select a VOI!");
-                return;
-            }
-            new JDialogAGVF(m_kParent.getFrame(), getActiveImage());
-        } else if (command.equals("GVF")) {
-            if ( !checkForActiveVOIs()) {
-                MipavUtil.displayWarning("Please select a VOI!");
-                return;
-            }
-            new JDialogGVF(m_kParent.getFrame(), getActiveImage());
-
-        } else if (command.equals("BSnake")) {
-            if ( !checkForActiveVOIs()) {
-                MipavUtil.displayWarning("Please select a VOI!");
-                return;
-            }
-            new JDialogBSnake(m_kParent.getFrame(), getActiveImage());
+            evolveBoundary2D(command);
         } else if (command.equals("SmoothVOI")) {
             if ( !checkForActiveVOIs()) {
                 MipavUtil.displayWarning("Please select a VOI!");
@@ -852,6 +838,29 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
         kVOIManager.setPopupPt(popupPt);
         m_kVOIManagers.add(kVOIManager);
         return kVOIManager;
+    }
+    
+    public void algorithmPerformed()
+    {
+    	if ( !m_bDefaultImage && (m_kTempImage != null))
+    	{
+            int[] axisA = getActiveImage().getAxisOrientation();
+            int[] axisB = m_kTempImage.getAxisOrientation();
+            int[] axisOrder = { 0, 1, 2, 3 };
+            boolean[] axisFlip = { false, false, false, false };
+            if ( MipavCoordinateSystems.matchOrientation( axisA, axisB, axisOrder, axisFlip ) )
+            {
+                AlgorithmRotate rotateAlgo = new AlgorithmRotate( m_kTempImage, axisOrder, axisFlip );
+                rotateAlgo.setRunningInSeparateThread(false);
+                rotateAlgo.run();
+                m_kTempImage = rotateAlgo.returnImage();
+                getActiveImage().unregisterAllVOIs();            
+                getActiveImage().setVOIs( m_kTempImage.getVOIs() );
+            }
+            m_bDefaultImage = true;
+            m_kTempImage = null;
+    	}
+    	updateDisplay();
     }
     
     public void removeVOIManager( VOIManager kVOIManager )
@@ -2372,6 +2381,34 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
             deleteVOI( deleteList.remove(0) );
         }
         updateDisplay();
+    }
+    
+    private void evolveBoundary2D(String command)
+    {
+    	m_bDefaultImage = true;
+    	m_kTempImage = m_kVOIManagers.get(m_iActive).getLocalImage();
+        if ( m_kTempImage != getActiveImage() )
+        {
+        	m_bDefaultImage = false;
+        	m_kTempImage = (ModelImage)m_kTempImage.clone();
+        }
+
+    	if (command.equals("Snake") ) {
+    		JDialogSnake kEvolve = new JDialogSnake(m_kParent.getFrame(), m_kTempImage);
+    		kEvolve.setVOIManager(this);
+    	} 
+    	else if (command.equals("AGVF")) {
+    		JDialogAGVF kEvolve = new JDialogAGVF(m_kParent.getFrame(), m_kTempImage);
+    		kEvolve.setVOIManager(this);
+    	} 
+    	else if (command.equals("GVF")) {
+    		JDialogGVF kEvolve = new JDialogGVF(m_kParent.getFrame(), m_kTempImage);
+    		kEvolve.setVOIManager(this);
+    	}
+    	else if (command.equals("BSnake")) {
+    		JDialogBSnake kEvolve = new JDialogBSnake(m_kParent.getFrame(), m_kTempImage);
+    		kEvolve.setVOIManager(this);
+    	}
     }
 
     private void findCompatibleType( ModelImage kImage, VOIBase kNew, boolean isFinished)

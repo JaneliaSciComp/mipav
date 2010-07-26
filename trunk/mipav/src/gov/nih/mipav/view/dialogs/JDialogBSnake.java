@@ -365,6 +365,10 @@ public class JDialogBSnake extends JDialogBase implements AlgorithmInterface {
 
         // Update frame
         ((ViewJFrameBase) parentFrame).updateImages(true);
+        if ( voiManager != null )
+        {
+        	voiManager.algorithmPerformed();
+        }
         dispose();
     }
 
