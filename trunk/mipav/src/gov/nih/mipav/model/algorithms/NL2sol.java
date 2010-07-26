@@ -7754,7 +7754,7 @@ private boolean testMode = false;
 	//
 	//  Print iteration summary, check iteration limit.
     //
-	loop1: while (true) {
+	loop1: while (!do700) {
      if (do150) {
 	     do150 = false;
 
@@ -8589,7 +8589,7 @@ private boolean testMode = false;
 	      iv[1] = 2;
 	      do150 = true;
 	 } // if (do570)
-	} // loop1: while (true)
+	} // loop1: while (!do700)
 	//
 	//  Bad parameters to ASSESS.
 	//
