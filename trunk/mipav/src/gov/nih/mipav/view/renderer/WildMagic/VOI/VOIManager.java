@@ -556,12 +556,17 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         m_akImages[0] = null;
         m_akImages[1] = null;
         m_akImages = null;
-        m_kImageActive = null;
-        if ( m_kLocalImage != null )
+        
+        if ( m_iPlaneOrientation != m_kImageActive.getImageOrientation() && 
+        		m_iPlaneOrientation != FileInfoBase.UNKNOWN_ORIENT )
         {
-            m_kLocalImage.disposeLocal();
-            m_kLocalImage = null;
+        	if ( m_kLocalImage != null )
+        	{
+        		m_kLocalImage.disposeLocal();
+        		m_kLocalImage = null;
+        	}
         }
+        m_kImageActive = null;
 
         m_aiLocalImageExtents = null;
         m_kParent = null;
@@ -1026,12 +1031,12 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     public void mouseClicked(MouseEvent kEvent) {
         m_fMouseX = kEvent.getX();
         m_fMouseY = kEvent.getY();
+        m_kParent.setActive(this, m_kImageActive);
         if ( !isActive() )
         {
             m_bMouseDrag = false;
             return;
         }
-        m_kParent.setActive(this, m_kImageActive);
         if ( m_bDrawVOI && (m_iDrawType == LIVEWIRE || m_iDrawType == POLYLINE) && (kEvent.getClickCount() > 1) )
         {
             showSelectedVOI( kEvent.getX(), kEvent.getY() );
@@ -1085,11 +1090,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
      */
     public void mouseDragged(MouseEvent kEvent) {
         m_bMouseDrag = true;
+        m_kParent.setActive(this, m_kImageActive);
         if ( !isActive() )
         {
             return;
         }
-        m_kParent.setActive(this, m_kImageActive);
         if (m_bLeftMousePressed) {
             if ( kEvent.isAltDown() && m_kCurrentVOI != null )
             {
@@ -1132,7 +1137,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         {
             return;
         }
-        m_kParent.setActive(this, m_kImageActive);
+        //m_kParent.setActive(this, m_kImageActive);
         if ( m_bDrawVOI )
         {
             if ( m_iDrawType == TEXT )
@@ -1168,11 +1173,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     public void mousePressed(MouseEvent kEvent) {
         m_fMouseX = kEvent.getX();
         m_fMouseY = kEvent.getY();
+        m_kParent.setActive(this, m_kImageActive);
         if ( !isActive() )
         {
             return;
         }
-        m_kParent.setActive(this, m_kImageActive);
 
         if (kEvent.getButton() == MouseEvent.BUTTON1) {
             m_bLeftMousePressed = true;
@@ -1232,12 +1237,12 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
      * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mouseReleased(java.awt.event.MouseEvent)
      */
     public void mouseReleased(MouseEvent kEvent) {
+        m_kParent.setActive(this, m_kImageActive);
         if ( !isActive() || kEvent.getButton() != MouseEvent.BUTTON1 )
         {
             m_bMouseDrag = false;
             return;
         }
-        m_kParent.setActive(this, m_kImageActive);
 
         processLeftMouseDrag( kEvent );
         m_bLeftMousePressed = false;

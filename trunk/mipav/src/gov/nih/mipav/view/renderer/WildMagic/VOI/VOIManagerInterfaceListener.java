@@ -29,7 +29,6 @@ public interface VOIManagerInterfaceListener
     public void maskToPaint();
     public void paintToShortMask();
     public void paintToUbyteMask();
-    public void paintToVOI();
     public void PointerActive(boolean bActive);
     public Vector3f PropDown(int iActive);
     public Vector3f PropUp(int iActive);
