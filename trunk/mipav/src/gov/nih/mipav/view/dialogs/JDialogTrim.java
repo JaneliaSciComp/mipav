@@ -97,6 +97,7 @@ public class JDialogTrim extends JDialogBase implements ActionListener, ChangeLi
             {
                 activeImage.trimVOIs();
             }
+            dispose();
         } else if (source == cancelButton) {
             Preferences.setProperty(Preferences.PREF_TRIM, String.valueOf(trimSlider.getValue() / (float) 100));
             dispose();

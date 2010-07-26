@@ -839,6 +839,27 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     {
         return m_kComponent;
     }
+    
+    public ModelImage getLocalImage()
+    {
+        if ( m_iPlaneOrientation != m_kImageActive.getImageOrientation() && 
+                m_iPlaneOrientation != FileInfoBase.UNKNOWN_ORIENT )
+        {
+            if ( m_kLocalImage != null )
+            {
+                m_kLocalImage.disposeLocal();
+            }
+            int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(m_kImageActive, m_iPlaneOrientation);
+            boolean[] abAxisFlip = MipavCoordinateSystems.getAxisFlip(m_kImageActive, m_iPlaneOrientation);
+            m_kLocalImage = m_kImageActive.export( aiAxisOrder, abAxisFlip );
+            ModelImage.updateFileInfo( m_kLocalImage, m_kImageActive, aiAxisOrder, abAxisFlip );
+        }
+        else
+        {
+            m_kLocalImage = m_kImageActive;
+        }
+        return m_kLocalImage;
+    }
 
 
     /**
@@ -3760,18 +3781,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     {
         if ( !m_bLiveWireInit )
         {
-            if ( m_iPlaneOrientation != m_kImageActive.getImageOrientation() && 
-                    m_iPlaneOrientation != FileInfoBase.UNKNOWN_ORIENT )
+            if ( m_kLocalImage == null )
             {
-                int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(m_kImageActive, m_iPlaneOrientation);
-                boolean[] abAxisFlip = MipavCoordinateSystems.getAxisFlip(m_kImageActive, m_iPlaneOrientation);
-                m_kLocalImage = m_kImageActive.export( aiAxisOrder, abAxisFlip );
+                getLocalImage();
             }
-            else
-            {
-                m_kLocalImage = m_kImageActive;
-            }
-
             m_bLiveWireInit = true;
             int nSlices = m_aiLocalImageExtents.length > 2 ? m_aiLocalImageExtents[2] : 1;
             m_abInitLiveWire = new boolean[ nSlices ];

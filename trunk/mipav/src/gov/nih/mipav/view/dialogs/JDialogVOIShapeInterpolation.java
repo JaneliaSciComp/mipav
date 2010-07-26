@@ -32,13 +32,21 @@ public class JDialogVOIShapeInterpolation extends JDialogBase implements Algorit
 	public JDialogVOIShapeInterpolation() {
 		
 	}
-	
-	/** constructor **/
-	public JDialogVOIShapeInterpolation(ModelImage imageA) {
-		setVisible(false);
-		this.imageA = imageA;
-		callAlgorithm();
-	}
+    
+    /** constructor **/
+    public JDialogVOIShapeInterpolation(ModelImage imageA) {
+        setVisible(false);
+        this.imageA = imageA;
+        callAlgorithm();
+    }
+    
+    /** constructor **/
+    public JDialogVOIShapeInterpolation(ModelImage imageA, boolean separateThread ) {
+        setVisible(false);
+        this.imageA = imageA;
+        setSeparateThread(separateThread);
+        callAlgorithm();
+    }
 
 	/** alg performed **/
 	public void algorithmPerformed(AlgorithmBase algorithm) {
