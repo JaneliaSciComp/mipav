@@ -3582,16 +3582,6 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
     }
 
     @Override
-    public void paintToVOI()
-    {
-        if (componentImage != null) {
-            componentImage.paintToVOI();
-            updateImages();
-        }
-    }
-
-
-    @Override
     public void paintToShortMask()
     {
         final ModelImage maskImage = ViewUserInterface.getReference().getRegisteredImageByName(

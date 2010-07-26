@@ -2,6 +2,7 @@ package gov.nih.mipav.view.renderer.WildMagic.VOI;
 
 import gov.nih.mipav.MipavCoordinateSystems;
 import gov.nih.mipav.model.algorithms.AlgorithmVOIExtraction;
+import gov.nih.mipav.model.algorithms.AlgorithmVOIExtractionPaint;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmFlip;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
 import gov.nih.mipav.model.file.FileInfoBase;
@@ -10,9 +11,11 @@ import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.ScriptRecorder;
+import gov.nih.mipav.model.scripting.actions.ActionMaskToPaint;
 import gov.nih.mipav.model.scripting.actions.ActionMaskToVOI;
 import gov.nih.mipav.model.scripting.actions.ActionOpenAllVOIs;
 import gov.nih.mipav.model.scripting.actions.ActionOpenVOI;
+import gov.nih.mipav.model.scripting.actions.ActionPaintToVOI;
 import gov.nih.mipav.model.scripting.actions.ActionSaveAllVOIs;
 import gov.nih.mipav.model.scripting.actions.ActionVOIToMask;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -703,7 +706,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
             m_kParent.maskToPaint();
         }
         else if (command.equals("PaintToVOI")) {
-            m_kParent.paintToVOI();
+            paintToVOI();
         } 
         else if (command.equals("PaintToUbyteMask")) {
             m_kParent.paintToUbyteMask();
@@ -2692,13 +2695,14 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
     
     private void interpolateVOIs()
     {
-        ModelImage kImage = (ModelImage)m_kVOIManagers.get(m_iActive).getLocalImage().clone();
+        ModelImage kImage = m_kVOIManagers.get(m_iActive).getLocalImage();
         if ( kImage == getActiveImage() )
         {
             new JDialogVOIShapeInterpolation(getActiveImage());
         }
         else
         {
+        	kImage = (ModelImage)kImage.clone();
             kImage.calcMinMax();            
             new JDialogVOIShapeInterpolation(kImage, false);                  
             int[] axisA = getActiveImage().getAxisOrientation();
@@ -2932,6 +2936,64 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
         return true;
     }
 
+
+    private void paintToVOI()
+    {
+        ModelImage kImage = m_kVOIManagers.get(m_iActive).getLocalImage();
+        if ( kImage == getActiveImage() )
+        {
+            int xDim = kImage.getExtents().length > 0 ? kImage.getExtents()[0] : 1;
+            int yDim = kImage.getExtents().length > 1 ? kImage.getExtents()[1] : 1;
+            int zDim = kImage.getExtents().length > 2 ? kImage.getExtents()[2] : 1;
+
+            short voiID = (short) kImage.getVOIs().size();
+
+            final AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint(kImage,
+            		kImage.getMask(), xDim, yDim, zDim, voiID);
+
+            algoPaintToVOI.setRunningInSeparateThread(false);
+            algoPaintToVOI.run();
+
+            ScriptRecorder.getReference().addLine(new ActionPaintToVOI(kImage));
+            ProvenanceRecorder.getReference().addLine(new ActionMaskToPaint(kImage));
+        }
+        else
+        {    
+        	kImage = (ModelImage)kImage.clone();
+            int xDim = kImage.getExtents().length > 0 ? kImage.getExtents()[0] : 1;
+            int yDim = kImage.getExtents().length > 1 ? kImage.getExtents()[1] : 1;
+            int zDim = kImage.getExtents().length > 2 ? kImage.getExtents()[2] : 1;
+
+            short voiID = (short) kImage.getVOIs().size();
+
+            final AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint(kImage,
+            		kImage.getMask(), xDim, yDim, zDim, voiID);
+
+            algoPaintToVOI.setRunningInSeparateThread(false);
+            algoPaintToVOI.run();
+
+            ScriptRecorder.getReference().addLine(new ActionPaintToVOI(kImage));
+            ProvenanceRecorder.getReference().addLine(new ActionMaskToPaint(kImage));
+            
+            int[] axisA = getActiveImage().getAxisOrientation();
+            int[] axisB = kImage.getAxisOrientation();
+            int[] axisOrder = { 0, 1, 2, 3 };
+            boolean[] axisFlip = { false, false, false, false };
+            if ( MipavCoordinateSystems.matchOrientation( axisA, axisB, axisOrder, axisFlip ) )
+            {
+                AlgorithmRotate rotateAlgo = new AlgorithmRotate( kImage, axisOrder, axisFlip );
+                rotateAlgo.setRunningInSeparateThread(false);
+                rotateAlgo.run();
+                kImage = rotateAlgo.returnImage();
+                getActiveImage().unregisterAllVOIs();            
+                getActiveImage().setVOIs( kImage.getVOIs() );
+            }
+        }
+    	
+        updateDisplay();
+    }
+    
+    
     private void paste()
     {
         if ( m_kCopyList.size() == 0 )

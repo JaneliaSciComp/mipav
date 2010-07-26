@@ -855,6 +855,11 @@ public class ModelImage extends ModelStorageBase {
                             else {
                                 kReturn.set(dstIndex, getFloat(srcIndex));
                             }
+                            //update mask:
+                            if ( t == 0 )
+                            {
+                            	kReturn.mask.set( dstIndex, mask.get(srcIndex ) );
+                            }
                         }
                     }
                 }

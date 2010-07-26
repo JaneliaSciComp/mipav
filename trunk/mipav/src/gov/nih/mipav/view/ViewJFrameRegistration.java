@@ -3590,16 +3590,6 @@ public class ViewJFrameRegistration extends ViewJFrameBase
             componentImage.setPaintMask(mask);
         }
     }
-    
-    @Override
-    public void paintToVOI()
-    {
-        if (componentImage != null) {
-            componentImage.paintToVOI();
-            updateImages();
-        }
-    }
-
 
     @Override
     public void paintToShortMask()
