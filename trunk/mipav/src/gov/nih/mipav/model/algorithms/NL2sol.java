@@ -7789,7 +7789,7 @@ private boolean testMode = false;
 	        step1 = iv[step];
 	        arr = new double[p+1];
 	        for (ii = 1; ii <= p; ii++) {
-	        	arr[ii] = v[step+ii-1];
+	        	arr[ii] = v[step1+ii-1];
 	        }
 	        v[radius] = v[radfac] * v2norm(p, arr);
 
