@@ -78,31 +78,10 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase implements RealF
     private int area;
 
     /** DOCUMENT ME! */
-    private double ax;
-
-    /** DOCUMENT ME! */
     private boolean backgroundPresent = false;
 
     /** DOCUMENT ME! */
     private float[] buffer;
-
-    /** DOCUMENT ME! */
-    private double bx;
-
-    /** DOCUMENT ME! */
-    private double cx;
-
-    /** DOCUMENT ME! */
-    private double fa;
-
-    /** DOCUMENT ME! */
-    private double fb;
-
-    /** DOCUMENT ME! */
-    private double fc;
-
-    /** The returned entropy function value. */
-    private double fret;
 
     /** DOCUMENT ME! */
     private double grayCount;
@@ -146,9 +125,6 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase implements RealF
     /** DOCUMENT ME! */
     private boolean[] objectBuffer;
 
-    /** DOCUMENT ME! */
-    private double[] pcom;
-
     /** pixelIncrement is increased above 1 if subsampling. */
     private int pixelIncrement = 1;
     
@@ -184,15 +160,6 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase implements RealF
 
     /** DOCUMENT ME! */
     private int xDim;
-
-    /** DOCUMENT ME! */
-    private double[] xicom;
-
-    /** DOCUMENT ME! */
-    private double xmin;
-
-    /** DOCUMENT ME! */
-    private double[] xt;
 
     /** DOCUMENT ME! */
     private int yDim;
@@ -252,9 +219,6 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase implements RealF
     public void finalize() {
         srcImage = null;
         destImage = null;
-        pcom = null;
-        xicom = null;
-        xt = null;
         buffer = null;
         validBuffer = null;
         idealBuffer = null;
@@ -799,11 +763,6 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase implements RealF
         boolean doGreen = false;
         boolean doBlue = false;
         int maxColor = 1;
-        pcom = new double[nParams];
-        xicom = new double[nParams];
-        xt = new double[nParams];
-
-        
 
         fireProgressStateChanged(srcImage.getImageName(), "Performing entropy minimization...");
         
@@ -1299,12 +1258,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase implements RealF
         boolean doGreen = false;
         boolean doBlue = false;
         int maxColor = 1;
-        pcom = new double[nParams];
-        xicom = new double[nParams];
-        xt = new double[nParams];
-
         
-
         fireProgressStateChanged(srcImage.getImageName(), "Performing entropy minimization...");
         
 
@@ -1740,12 +1694,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase implements RealF
         boolean doGreen = false;
         boolean doBlue = false;
         int maxColor = 1;
-        pcom = new double[nParams];
-        xicom = new double[nParams];
-        xt = new double[nParams];
-
         
-
         fireProgressStateChanged(srcImage.getImageName(), "Performing entropy minimization...");
         
 
@@ -2231,11 +2180,6 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase implements RealF
         boolean doGreen = false;
         boolean doBlue = false;
         int maxColor = 1;
-        pcom = new double[nParams];
-        xicom = new double[nParams];
-        xt = new double[nParams];
-
-        
 
         fireProgressStateChanged(srcImage.getImageName(), "Performing entropy minimization...");
         
@@ -2872,11 +2816,6 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase implements RealF
         boolean doGreen = false;
         boolean doBlue = false;
         int maxColor = 1;
-        pcom = new double[nParams];
-        xicom = new double[nParams];
-        xt = new double[nParams];
-
-        
 
         fireProgressStateChanged(srcImage.getImageName(), "Performing entropy minimization ...");
         
@@ -3413,11 +3352,6 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase implements RealF
         boolean doGreen = false;
         boolean doBlue = false;
         int maxColor = 1;
-        pcom = new double[nParams];
-        xicom = new double[nParams];
-        xt = new double[nParams];
-
-        
 
         fireProgressStateChanged(srcImage.getImageName(), "Performing entropy minimization...");
         
