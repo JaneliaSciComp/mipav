@@ -37,6 +37,9 @@ public class ViewMenuBar {
 
     /** The menu listing voi commands. */
     protected JMenu voiMenu;
+    
+    /** The menu listing image and overlay commands */
+    protected JMenu imageMenu;
 
     /** The user interface for MIPAV. */
     protected ViewUserInterface userInterface;
@@ -82,7 +85,6 @@ public class ViewMenuBar {
 
         try {
             menuBar = new JMenuBar();
-            plugInMenu = userInterface.buildPlugInsMenu(listener);
             menuBar.add(makeFileMenu(true));
             voiMenu = makeVOIMenu();
             menuBar.add(voiMenu);
@@ -90,9 +92,11 @@ public class ViewMenuBar {
             menuBar.add(makeAlgorithmsMenu());
             menuBar.add(makeUtilitiesMenu());
             menuBar.add(makeSystemsAnalysisMenu());
+            plugInMenu = userInterface.buildPlugInsMenu(listener);
             menuBar.add(plugInMenu);
             menuBar.add(makeScriptingMenu());
-            menuBar.add(makeImageMenu(isDicomImage));
+            imageMenu = makeImageMenu(isDicomImage);
+            menuBar.add(imageMenu);
             menuBar.add(makeToolbarsMenu());
             menuBar.add(makeHelpMenu());
         } catch (final OutOfMemoryError error) {
@@ -116,7 +120,13 @@ public class ViewMenuBar {
         return this.plugInMenu;
     }
 
-
+    /**
+     * Returns the menu that contains all image and overlay commands
+     */
+    public JMenu getImageMenu() {
+    	return this.imageMenu;
+    }
+    
     /**
      * Return the menu containing the list VOI commands.
      * @return the VOI menu
