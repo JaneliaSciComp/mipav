@@ -8216,10 +8216,12 @@ private boolean testMode = false;
 	      for (ii = 1; ii <= p*(p+1)/2; ii++) {
 	    	  arr2[ii] = v[s1+ii-1];
 	      }
+	      for (ii = 1; ii <= p; ii++) {
+	    	  arr3[ii] = v[step1 + ii - 1];
+	      }
 	      slvmul ( p, arr, arr2, arr3 );
 	      for (ii = 1; ii <= p; ii++) {
 	    	  v[sstep+ii-1] = arr[ii];
-	    	  v[step1+ii-1] = arr3[ii];
 	      }
 	      sttsst = 0.5 * dotprd(p, arr3, arr);
 
@@ -8441,10 +8443,12 @@ private boolean testMode = false;
 	          for (ii = 1; ii <= p*(p+1)/2; ii++) {
 	        	  arr2[ii] = v[h1+ii-1];
 	          }
+	          for (ii = 1; ii <= p; ii++) {
+	        	  arr3[ii] = v[temp2+ii-1];
+	          }
 	          slvmul(p, arr, arr2, arr3);
 	          for (ii = 1; ii <= p; ii++) {
 	        	  v[temp1+ii-1] = arr[ii];
-	        	  v[temp2+ii-1] = arr3[ii];
 	          }
 
 	          for (i = 1; i <= p; i++) {
@@ -8538,10 +8542,12 @@ private boolean testMode = false;
 	      for (ii = 1; ii <= p*(p+1)/2; ii++) {
 	    	  arr2[ii] = v[s1+ii-1];
 	      }
+	      for (ii = 1; ii <= p; ii++) {
+	    	  arr3[ii] = v[step1+ii-1];
+	      }
 	      slvmul(p, arr, arr2, arr3);
 	      for (ii = 1; ii <= p; ii++) {
 	    	  v[temp1+ii-1] = arr[ii];
-	    	  v[step1+ii-1] = arr3[ii];
 	      }
 
 	      t1 = Math.abs(dotprd(p, arr3, arr));
