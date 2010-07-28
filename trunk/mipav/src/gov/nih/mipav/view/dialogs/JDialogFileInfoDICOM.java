@@ -1405,18 +1405,41 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
             setTitle(imageA.getImageName());
 
         } else if (e.getActionCommand().equals("OverlayTag")) {
-            String tagKey;
+            String tagKey = null;
+            
+            try {
+	            //get the selected dicom tag
+	            tagKey = new String((String) tagsTable.getValueAt(selectedRowDicom, 1)); // find the key to the selected
+	
+	            // remove the parens that are part of the display
+	            if(tagKey.charAt(0) == '(') {
+	            	tagKey = tagKey.substring(1);
+	            }
+	            if(tagKey.charAt(tagKey.length()-1) == ')') {
+	            	tagKey = tagKey.substring(0, tagKey.length() - 1);
+	            }
+            } catch(Exception e1) {
+            	//no valid dicom tag was selected or an error occurred during parsing, will just initialize overlay dialog normally
+            }
 
-            tagKey = new String((String) tagsTable.getValueAt(selectedRowDicom, 1)); // find the key to the selected
-            // DICOM tag
-
-            if (tagKey.equals("")) { // workaround prevent the portion of the image information from
-                return; // causing an exception if user tries to click edit tag
-            } // caused 'cos i don't understand listSelectionModel well enough
-
-            tagKey = tagKey.substring(1, tagKey.length() - 1); // remove the parens that are part of the display (the
-            // hashtable does not use parens)
-            new JDialogOverlay(parentFrame, true, tagKey);
+            JDialogOverlay overlayDialog = new JDialogOverlay(parentFrame, true, tagKey);
+            //will display overlay assuming OK button is pressed
+            overlayDialog.OKButton.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					//if an actual image frame is connected to this action, the overlay will now display
+					if(parentFrame instanceof ViewJFrameImage) {
+						Component[] ar = ((ViewJFrameImage) parentFrame).getViewMenuBar().getImageMenu().getMenuComponents();
+						for(int i=0; i<ar.length; i++) {
+							if(ar[i] instanceof JCheckBoxMenuItem && ((JCheckBoxMenuItem)ar[i]).getActionCommand().equals("ShowOverlay")) {
+								if(!((JCheckBoxMenuItem)ar[i]).isSelected()) {
+									((JCheckBoxMenuItem)ar[i]).doClick(); //get the user interface to display the overlay
+								}
+								return;
+							}
+						}
+					}
+				}
+            });
 
         } else if (e.getActionCommand().equals("EditTag")) { // edit the high-lighted tag
 
@@ -1687,7 +1710,6 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 
                 if (lsm.isSelectionEmpty()) {
                     editTagButton.setEnabled(false); // ...//no rows are selected
-                    overlayButton.setEnabled(false);
                 } else {
                     final int oldSelectedRow = selectedRowDicom;
 
@@ -1698,10 +1720,8 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                         final String tagKey = new String((String) tagsTable.getValueAt(selectedRowDicom, 1));
                         if ( !tagKey.equals("")) {
                             editTagButton.setEnabled(true);
-                            overlayButton.setEnabled(true);
                         } else {
                             editTagButton.setEnabled(false);
-                            overlayButton.setEnabled(false);
                         }
                     } // ...//selectedRow is selected
                     // else {
@@ -1879,7 +1899,6 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         editTagButton = toolbarBuilder.buildButton("EditTag", "Edit Tag", "edittag");
         editTagButton.setEnabled(false);
         overlayButton = toolbarBuilder.buildButton("OverlayTag", "Overlay", "overlay");
-        overlayButton.setEnabled(false);
         anonymizeButton = toolbarBuilder.buildButton("AnonymizeImage", "Anonymize", "anon");
 
         toolBar = ViewToolBarBuilder.initToolBar();
