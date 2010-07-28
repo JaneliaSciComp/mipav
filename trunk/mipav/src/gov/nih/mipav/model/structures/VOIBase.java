@@ -381,7 +381,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @param kImage
      * @return total intensity.
      */
-    public float calcIntensity(ModelImage kImage) {
+    public float calcIntensity(ModelImage kImage, int t) {
         numPixels = 0;
         getMask();
         float sum = 0;
@@ -391,7 +391,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             int x = (int)kPos.X;
             int y = (int)kPos.Y;
             int z = (int)kPos.Z;
-            sum += kImage.getFloat(x,y,z);
+            sum += kImage.getFloat(x,y,z,t);
             numPixels++;
         }
         return sum;
@@ -439,7 +439,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @param threshold 
      * @return total intensity of image contained within this contour, greater than threshold.
      */
-    public float calcIntensityThreshold(ModelImage kImage, float threshold) {
+    public float calcIntensityThreshold(ModelImage kImage, float threshold, int t) {
         numPixels = 0;
         getMask();
         float sum = 0;
@@ -449,7 +449,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             int x = (int)kPos.X;
             int y = (int)kPos.Y;
             int z = (int)kPos.Z;
-            float val = kImage.getFloat(x,y,z);
+            float val = kImage.getFloat(x,y,z, t);
             if ( val >= threshold )
             {
                 sum += val;
