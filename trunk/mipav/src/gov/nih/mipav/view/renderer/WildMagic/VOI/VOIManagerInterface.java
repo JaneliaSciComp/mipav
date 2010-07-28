@@ -1357,10 +1357,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
                                     for (j = 0; j < curves[s].size(); j++)
                                     {
                                         if (useThreshold) {
-                                            intensitySum += curves[s].elementAt(j).calcIntensityThreshold( kImage, threshold );
+                                            intensitySum += curves[s].elementAt(j).calcIntensityThreshold( kImage, threshold, 0 );
 
                                         } else {
-                                            intensitySum += curves[s].elementAt(j).calcIntensity( kImage );
+                                            intensitySum += curves[s].elementAt(j).calcIntensity( kImage, 0 );
                                         }
 
                                         numPixels += curves[s].elementAt(j).getLastNumPixels();                                        
@@ -1410,6 +1410,146 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
 
                     return;
                 }
+            }
+        }
+        
+        else if (kImage.getNDims() == 4) {
+            int xDim = kImage.getExtents()[0];
+            int yDim = kImage.getExtents()[1];
+            int zDim = kImage.getExtents()[2];
+            int tDim = kImage.getExtents()[3];
+            boolean useFrameRefTime = false;
+            FileInfoDicom fileInfo = null;
+            String frameRefTimeString = null;
+            int frameReferenceTime = 0;
+       
+            if (kImage.getFileInfo()[0].getFileFormat() == FileUtility.DICOM) {
+                boolean frameRefTimeFound = false;
+                fileInfo = (FileInfoDicom) (kImage.getFileInfo(0)); 
+                frameRefTimeString = ((String) fileInfo.getTagTable().getValue("0054,1300")).trim();
+                if (frameRefTimeString != null) {
+                    try {
+                        frameReferenceTime = new Integer(frameRefTimeString).intValue();
+                        frameRefTimeFound = true;
+                        Preferences.debug("Frame reference time = " + frameReferenceTime + "\n");
+                    } catch (NumberFormatException e) {
+                        Preferences.debug("Number format excepton from frame Reference Time String = " +
+                                          frameRefTimeString + "\n");
+                    }
+                    
+                    if (frameRefTimeFound) {
+                        int response = JOptionPane.showConfirmDialog(ViewUserInterface.getReference().getMainFrame(),
+                                                                     new String("Do you wish to use the frame reference time for the graph x axis?"),
+                                                                     "Frame Reference Time?",
+                                                                     JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE); 
+                        if (response == JOptionPane.YES_OPTION) {
+                            useFrameRefTime = true;    
+                        }
+                    } // if (frameRefTimeFound)
+                } // if (frameRefTimeString != null)
+            } // if (compImage.getActiveImage().getFileInfo()[0].getFileFormat() == FileUtility.DICOM)
+
+            try {
+
+                VOIs = kImage.getVOIs();
+                nVOI = VOIs.size();
+
+                for (i = 0; i < nVOI; i++) {
+
+                    if (VOIs.VOIAt(i).isActive() && VOIs.VOIAt(i).isVisible() &&
+                            (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) ) {
+
+                        v = VOIs.VOIAt(i);
+
+
+                        position = new float[tDim];
+                        intensity = new float[tDim];
+
+                        for (int t = 0; t < tDim; t++) {
+                        	numPixels = 0;
+                        	intensitySum = 0;
+
+                            Vector<VOIBase>[] curves = v.getSortedCurves( VOIBase.ZPLANE, kImage.getExtents()[2]);
+                            for ( s = 0; s < kImage.getExtents()[2]; s++ )
+                            {
+                            	if ( curves[s] != null )
+                            	{
+                            		for (j = 0; j < curves[s].size(); j++)
+                            		{
+                            			if (useThreshold) {
+                            				intensitySum += curves[s].elementAt(j).calcIntensityThreshold( kImage, threshold, t );
+
+                            			} else {
+                            				intensitySum += curves[s].elementAt(j).calcIntensity( kImage, t );
+                            			}
+
+                            			numPixels += curves[s].elementAt(j).getLastNumPixels();                                        
+                            		}
+                            	}
+                            }
+
+                            if (useFrameRefTime) {
+                                fileInfo = (FileInfoDicom) (kImage.getFileInfo(t * zDim)); 
+                                frameRefTimeString = ((String) fileInfo.getTagTable().getValue("0054,1300")).trim();
+                                if (frameRefTimeString != null) {
+                                    try {
+                                        frameReferenceTime = new Integer(frameRefTimeString).intValue();
+                                    } catch (NumberFormatException e) {
+                                        MipavUtil.displayError("Number format excepton from frame Reference Time String = " +
+                                                          frameRefTimeString);
+                                        return;
+                                    }
+                                    
+                                    position[t] = frameReferenceTime;
+                                } // if (frameRefTimeString != null) 
+                                else {
+                                    MipavUtil.displayError("Frame reference time string is null");
+                                    return;
+                                }
+                            } // if (useFrameRefTime)
+                            else {
+                                position[t] = t;
+                            }
+
+                            if (totalIntensity || (numPixels == 0)) {
+                                intensity[t] = intensitySum;
+                            } else {
+                                intensity[t] = intensitySum / numPixels;
+                            }
+                        }
+
+                        ViewJFrameGraph contourGraph = new ViewJFrameGraph(
+                                position,
+                                intensity,
+                                "Intensity Graph",
+                                v,
+                                FileInfoBase
+                                .getUnitsOfMeasureAbbrevStr(kImage
+                                        .getFileInfo(0)
+                                        .getUnitsOfMeasure(0)),null);
+
+                        contourGraph
+                        .setDefaultDirectory(ViewUserInterface
+                                .getReference()
+                                .getDefaultDirectory());
+                        v.setContourGraph(contourGraph);
+                        contourGraph.setVisible(true);
+                        //v.setTotalIntensity(totalIntensity);
+                        //v.setPosition(position);
+                        //v.setIntensity(intensity);
+
+                        return;
+                    }
+                }
+
+                if (i == nVOI) {
+                    MipavUtil.displayError("Please select a contour VOI!");
+                }
+            } catch (OutOfMemoryError error) {
+                System.gc();
+                MipavUtil.displayError("Out of memory: ComponentEditImage.graphVOI");
+
+                return;
             }
         }
     }
