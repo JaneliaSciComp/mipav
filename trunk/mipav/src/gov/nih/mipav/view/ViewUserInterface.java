@@ -970,17 +970,19 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         final JMenu menu = menuBuilder.makeMenu("Plugins", 'P', false, new JComponent[] {});
 
         final File pluginsDir = new File(userPlugins);
-        if (pluginsDir.isDirectory()) {
-
-            File[] allFiles = pluginsDir.listFiles(new FileFilter() {
-                public boolean accept(final File f) {
-
-                    if (f.getPath().endsWith(".class")) {
-                        return true;
-                    }
-                    return false;
-                }
-            });
+        File[] allFiles  = new File[0];
+        if (pluginsDir.isDirectory()||(secondaryPluginsDir != null && secondaryPluginsDir.isDirectory())) {
+        		if(pluginsDir.isDirectory()) {
+		        		allFiles = pluginsDir.listFiles(new FileFilter() {
+		                public boolean accept(final File f) {
+		
+		                    if (f.getPath().endsWith(".class")) {
+		                        return true;
+		                    }
+		                    return false;
+		                }
+		            });
+        		}
             
             if(secondaryPluginsDir != null) {
             	File[] secondaryFiles = secondaryPluginsDir.listFiles(new FileFilter() {
