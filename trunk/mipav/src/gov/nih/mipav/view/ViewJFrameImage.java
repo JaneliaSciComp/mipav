@@ -1652,6 +1652,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("PreviousImage")) {
             // decSlice();
         } else if (command.equals("MagImage")) {
+        	componentImage.getVOIManager().setActive(false);
             componentImage.setCursorMode(ViewJComponentBase.ZOOMING_IN);
         } else if (command.equals("MagCustom")) {
             componentImage.setCursorMode(ViewJComponentBase.DEFAULT);
@@ -1666,6 +1667,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 zoomDialog.setVisible(true);
             }
         } else if (command.equals("UnMagImage")) {
+        	componentImage.getVOIManager().setActive(false);
             componentImage.setCursorMode(ViewJComponentBase.ZOOMING_OUT);
         } else if (command.equals("LinkFrame")) {
 
@@ -1684,12 +1686,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 return;
             }
         } else if (command.equals("MagRegion")) {
+        	componentImage.getVOIManager().setActive(false);
             componentImage.setCursorMode(ViewJComponentBase.MAG_REGION);
         } else if (command.equals("WinRegion")) {
+        	componentImage.getVOIManager().setActive(false);
             componentImage.setCursorMode(ViewJComponentBase.WIN_REGION);
         } else if (command.equals("CheckerBoard")) {
 
             if ( (componentImage.checkerDialog != null) && componentImage.checkerDialog.isDisplayable()) {
+            	componentImage.getVOIManager().setActive(false);
                 componentImage.checkerDialog.setVisible(true);
 
                 return;
