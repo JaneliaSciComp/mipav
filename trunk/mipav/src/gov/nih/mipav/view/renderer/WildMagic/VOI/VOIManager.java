@@ -929,6 +929,26 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     {
         return (m_bDrawVOI || m_kParent.getPointerButton().isSelected() );
     }
+    
+    /**
+     * Programmatically sets whether the GUI should be in a state to draw VOIs.  Components that are managed
+     * by this manager can use this method to indicate that VOI drawing should be stopped.
+     * 
+     * @param active Whether VOI drawing should be successful.
+     * @return Whether this action is successful.  
+     */
+    public boolean setActive(boolean active) {
+    	if(active) {
+    		MipavUtil.displayInfo("The VOI drawing interface is in an inconsistent state, please restart MIPAV.");
+    		return false;
+    	} else {
+    		m_bQuickLUT = false;
+    		m_bLeftMousePressed = false;
+            m_bFirstDrag = true;
+            m_bDrawVOI = false;
+            return true;
+    	}
+    }
 
     /* (non-Javadoc)
      * @see java.awt.event.KeyListener#keyPressed(java.awt.event.KeyEvent)
