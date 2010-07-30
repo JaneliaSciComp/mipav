@@ -8825,7 +8825,6 @@ private boolean testMode = false;
 
 	    } // else iv1 != 12
 
-	  if ( big_parchk <= teensy_parchk ) {
 	    teensy_parchk = tiny;
 	    machep = epsilon;
 	    big_parchk = huge;
@@ -8844,7 +8843,6 @@ private boolean testMode = false;
 	    vx[24] = Math.sqrt ( 0.999E+00 * huge );
 	    vm[25] = machep;
 	    vm[26] = machep;
-	  } // if ( big_parchk <= teensy_parchk)
 
 	  m = 0;
 
