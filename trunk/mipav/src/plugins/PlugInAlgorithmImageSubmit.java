@@ -54,7 +54,8 @@ public class PlugInAlgorithmImageSubmit extends AlgorithmBase implements Algorit
 		this.textFieldsMap = map;
 		this.selectedFiles = selectedFiles;
 		this.tagArray = tagArray;
-		this.submitImageLocation = submitImageLocation+File.separator;
+		this.submitImageLocation = submitImageLocation.charAt(submitImageLocation.length()-1) == File.separatorChar ? 
+										submitImageLocation : submitImageLocation+File.separator;
 		this.submitFiles = submitFiles;
 		this.submitPatientLocation = selectedFiles[0].getParent()+File.separator+PATIENT_BASE_LOC;
 		
