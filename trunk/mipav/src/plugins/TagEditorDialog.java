@@ -194,7 +194,7 @@ public class TagEditorDialog extends JDialogBase implements ListSelectionListene
 	        elementList = new JList(vElement);
 	        elementList.setSelectedIndex(0);
 	        elementList.setVisibleRowCount(4);
-	        elementList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+	        elementList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 	        elementList.setMinimumSize(new Dimension(150, 94));
 	        elementList.setMaximumSize(new Dimension(150, 500));
 	        elementList.getSelectionModel().addListSelectionListener(this);
