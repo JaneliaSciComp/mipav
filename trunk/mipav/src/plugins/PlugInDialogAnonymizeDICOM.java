@@ -1,4 +1,5 @@
 import java.awt.BorderLayout;
+
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -14,6 +15,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.file.FileDicom;
 import gov.nih.mipav.model.file.FileDicomKey;
+import gov.nih.mipav.model.file.FileDicomTag;
 import gov.nih.mipav.model.file.FileDicomTagTable;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoDicom;
@@ -31,10 +33,12 @@ import java.util.Vector;
  * @author joshim2
  *
  */
-public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugin implements AlgorithmInterface {
+public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugin implements AlgorithmInterface, DicomTagImpl {
 
 	// ~ Instance fields ------------------------------------------------------------------------
 	
+	private static final String BROWSE_AVAILABLE_TAGS = "Browse Tags";
+
 	/** GridBagLayout * */
     private GridBagLayout mainPanelGridBagLayout;
     
@@ -73,7 +77,15 @@ public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugi
 	
 	/** Algorithm instance */
     private PlugInAlgorithmAnonymizeDicom algoAnonymizeDicom;
+
+    /** Button for calling the TagEditorDialog */
+	private JButton tagEditorBrowseButton;
 	
+	/** The Dicom tag editor for selecting additional tags to anonymize */
+	private TagEditorDialog currentTagEditor;
+
+	/**InfoGathering threads to find Dicom data*/
+	private ArrayList<PlugInDialogAnonymizeDICOM.InformationUpdate> infoGather;
 	
 	//	~ Constructors --------------------------------------------------------------------------
 
@@ -91,7 +103,8 @@ public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugi
     public PlugInDialogAnonymizeDICOM(boolean modal) {
         super(modal); 
         fileList = new Vector<String>();
-       
+        infoGather = new ArrayList<InformationUpdate>();
+        
     	init();
     }
     
@@ -173,6 +186,17 @@ public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugi
         tagListTextField = new JTextField(45);
         mainPanel.add(tagListTextField, mainPanelConstraints);
         
+        mainPanelConstraints.gridx = 2;
+        mainPanelConstraints.gridy = 3;
+        mainPanelConstraints.fill = GridBagConstraints.HORIZONTAL;
+        mainPanelConstraints.anchor = GridBagConstraints.CENTER;
+        mainPanelConstraints.insets = new Insets(15, 5, 5, 5);
+        tagEditorBrowseButton = new JButton("Browse");
+        tagEditorBrowseButton.setEnabled(false);
+        tagEditorBrowseButton.addActionListener(this);
+        tagEditorBrowseButton.setActionCommand(BROWSE_AVAILABLE_TAGS);
+        mainPanel.add(tagEditorBrowseButton, mainPanelConstraints);
+        
         mainPanelConstraints.gridx = 1;
         mainPanelConstraints.gridy = 4;
         mainPanelConstraints.insets = new Insets(1, 5, 15, 5);
@@ -228,8 +252,11 @@ public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugi
     			selectedFiles[i] = new File(fileList.get(i));
     		}
     		
+    		//set output location
+    		String outputLoc = selectedFiles[0].getParent()+File.separator+"Anon"+File.separator;
+    		
     		//Make algorithm.
-    		algoAnonymizeDicom = new PlugInAlgorithmAnonymizeDicom(selectedFiles, tagArray, selectedFiles[0].getParent(), selectedFiles[0].getParent()+File.separator+"Anon"+File.separator);
+    		algoAnonymizeDicom = new PlugInAlgorithmAnonymizeDicom(selectedFiles, tagArray, outputLoc, outputLoc);
     		
     		// This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -301,7 +328,13 @@ public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugi
             		}
             	}
             	inputFileList.updateUI();
-            	
+            	InformationUpdate update = new InformationUpdate(fileList, this);
+            	if(update.isActionable()) {
+            		infoGather.add(update);
+            		Thread t = new Thread(update);
+            		t.start();
+            	}
+            	tagEditorBrowseButton.setEnabled(true);
             }
         } else if (command.equalsIgnoreCase("Cancel")) {
         	dispose();
@@ -320,7 +353,9 @@ public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugi
         		fileList.remove(obj);
         	}
         	inputFileList.updateUI();
-        }
+        } else if(command.equals(BROWSE_AVAILABLE_TAGS)) {
+        	currentTagEditor.setVisible();	
+        } 
     }
 
 	/**
@@ -330,11 +365,27 @@ public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugi
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+    	if(algorithm instanceof PlugInAlgorithmAnonymizeDicom) {
+	    	Preferences.debug("Anonymization algorithm complete");
+	    	String str = ((PlugInAlgorithmAnonymizeDicom)algorithm).getAnonResultsLoc();
+	    	if(str.lastIndexOf(File.separatorChar) != -1) {
+	    		str = str.substring(0, str.lastIndexOf(File.separatorChar));
+	    	}
+	    	MipavUtil.displayInfo("Anonymized images are located here: "+str);
+		} 
+    	
     	progressBar.dispose();
     	algoAnonymizeDicom.finalize();
     	algoAnonymizeDicom = null;
     	
     }
+    
+    /**
+	 * This method is required in order to implement the DicomTagImpl interface for constructing the TagEditorDialog
+	 */
+	public JTextField getTagListTextField() {
+		return tagListTextField;
+	}
     
     protected void setGUIFromParams() {
     	
@@ -343,6 +394,59 @@ public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugi
     	
     }
     
-    
+    private class InformationUpdate implements Runnable {
+
+    	private Vector<File> fileListUpdate;
+    	private boolean likelyActionable;
+    	private FileDicom imageFile;
+    	private PlugInDialogAnonymizeDICOM parent;
+    	
+		public InformationUpdate(Vector<String> fileListString, PlugInDialogAnonymizeDICOM parent) {
+			this.parent = parent;
+			this.fileListUpdate = new Vector<File>();
+			for(int i=0; i<fileListString.size(); i++) {
+				fileListUpdate.add(new File(fileListString.get(i)));
+			}
+			this.likelyActionable = examineFileList(fileListUpdate);
+		}
+    	
+		public void run() {
+			if(!likelyActionable) {
+				return;
+			}
+			FileInfoBase info = null;
+			try {
+	    		imageFile = new FileDicom(fileListUpdate.get(0).getName(), fileListUpdate.get(0).getParent()+File.separator);
+	            imageFile.setQuiet(true); // if we want quiet, we tell the reader, too.
+	            imageFile.readHeader(true); // can we read the header?	
+	            info = imageFile.getFileInfo();
+			} catch(Exception e) {
+				e.printStackTrace();
+			}
+            if(info instanceof FileInfoDicom) {
+            	FileDicomTagTable tagTable = ((FileInfoDicom) info).getTagTable();
+            	
+            	currentTagEditor = new TagEditorDialog(tagTable, parent);
+            }
+		}
+    	
+    	private boolean examineFileList(Vector<File> f) {
+    		if(f.size() == 0) {
+    			return false;
+    		} else if(f.size() == 1) {
+    			return true;
+    		} else {
+    			return true;
+    		}	
+    	}	
+    	
+    	public FileDicom getImageFile() {
+    		return imageFile;
+    	}
+    	
+    	public boolean isActionable() {
+    		return likelyActionable;
+    	}
+    }
     
 }
