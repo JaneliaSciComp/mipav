@@ -5193,7 +5193,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		/**
 	     * Method for updating the table and GUI after the algorithm has completed (Not for script-running).
 	     */
-	    protected void updateDialog() {
+	    protected void updateStatLog() {
 
 	        // notification will turn buttons back on
 	        cancelButton.setEnabled(true);
