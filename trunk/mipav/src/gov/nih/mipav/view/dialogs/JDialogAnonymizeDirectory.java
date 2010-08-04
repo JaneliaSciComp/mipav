@@ -1089,7 +1089,7 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
             if (keyFile.exists()) {
                 String[] possibilities = { "Overwrite", "Append", "Cancel" };
                 int result = JOptionPane.showOptionDialog(this,
-                                                          "\"patient.key.doc\" already exists.  What do you want to do with it?",
+                                                          "\"patient.key.doc\" already exists.  Do you want to overwrite this file?",
                                                           "File exists...", JOptionPane.YES_NO_CANCEL_OPTION,
                                                           JOptionPane.QUESTION_MESSAGE, null, possibilities,
                                                           new Integer(0));
