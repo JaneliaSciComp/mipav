@@ -187,11 +187,6 @@ private boolean testMode = false;
 	    pu = iv[21];
 	    nprob = 0;
 	    
-	    // The original FORTRAN with real changed to double precision outperforms the Java port for:
-	    // 1.) BROWN5
-	    // 2.) BROWN10 AT STANDARD AND 10 * STANDARD
-	    // 3.) BROWN30 AT STANDARD STARTING POINT
-	    
 	    // Rosenbrock OK
 	    // Rosenbrock correct answer is f = 0 at (x1 = 1, x2 = 1)
 	    // For standard starting point Java port gave:
@@ -689,18 +684,22 @@ private boolean testMode = false;
 	    xscal2 = 3;
 	    nltest("Meyer", rstart, xscal1, xscal2);
 	    
-	    // Brown5 works for original FORTRAN but not for Java port.
-	    // Brown5
+	    // Brown5 OK.
+	    // Brown5, an example of BROWN_ALMOST_LINEAR
+	    // Correct solution f = 0 at (alpha, ..., alpha, alpha**(1-n))
+	    // where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0
+	    // in particular, alpha = 1
+	    // f = 1 at (0,...,0,n+1)
 	    // At the standard starting point Java port gave:
-	    // niter = 75 nf = 114 ng = 76 False convergence final f = 0.010953227
+	    // niter = 5 nf = 8 ng = 6 Absolute convergence final f = 4.39173E-21
 	    // Original FORTRAN gave:
 	    // niter = 5 nf = 8 ng = 6 Absolute convergence final f = 4.39173E-21
 	    // At 10 times the standard starting point Java port gave:
-	    // niter = 9 nf = 38 ng = 9 Singular convergence final f = 43.1657
+	    // niter = 14 nf = 26 ng = 15 Absolute convergence final f = 4.93038E-31
 	    // Original FORTRAN gave:
 	    // niter = 14 nf = 26 ng = 15 X-convergence final f = 4.93038E-31
 	    // At 100 times the standard starting point Java port gave:
-	    // niter = 25 nf = 94 ng = 25 False convergence final f = 16.33246
+	    // niter = 29 nf = 72 ng = 30 Absolute convergence final f = 0.0
 	    // Original FORTRN gave:
 	    // niter = 29 nf = 72 ng = 30 X-convergence final f = 0.0
 	    n = 5;
@@ -711,20 +710,20 @@ private boolean testMode = false;
 	    xscal2 = 3;
 	    nltest("Brown5", rstart, xscal1, xscal2);
 	    
-	    // Brown10 OK for FORTRAN at std and 10 * std but not for Java port
-	    // Brown10
+	    // Brown10 OK for both only at standard starting point and 10 * std.
+	    // Brown10, an example of BROWN_ALMOST_LINEAR
 	    // At standard starting point Java port gave:
-	    // niter = 10 nf = 50 ng = 10 False convergence final f = 2.047427E-3
+	    // niter = 5 nf = 7 ng = 6 Absolute convergence final f = 9.927118E-21
 	    // Original FORTRAN gave:
-	    // niter = 32 nf = 61 ng = 33 Absolute convergence final f = 7.46036E-27
+	    // niter = 5 nf = 7 ng = 6 Absolute convergence final f = 9.92712E-21
 	    // At 10 times standard starting point Java port gave:
-	    // niter = 205 nf = 400 ng = 205 Function evaluaion limit final f = 3.8774181E-2
+	    // niter = 32 nf = 61 ng = 33 Absolute convergence final f = 7.46036E-27
 	    // Original FORTRAN gave:
 	    // niter = 32 nf = 61 ng = 33 Absolute convergence final f = 7.46036E-27
 	    // At 100 times standard starting point Java port gave:
 	    // niter = 1 nf = 2 ng = 2 Singular convergence final f = 4.768371E33
 	    // Original FORTRAN gave:
-	    // niter = 1 nf = 2 ng = 2 Singualr convergence final f = 4.76837E33
+	    // niter = 1 nf = 2 ng = 2 Singular convergence final f = 4.76837E33
 	    n = 10;
 	    p = 10;
 	    nex = 27;
@@ -733,14 +732,14 @@ private boolean testMode = false;
 	    xscal2 = 3;
 	    nltest("Brown10", rstart, xscal1, xscal2);
 	    
-	    // Brown30 at standard starting point works for FORTRAN but not for Java port
-	    // Brown30
+	    // Brown30 okay for both only at standard starting point
+	    // Brown30, an example of BROWN_ALMOST_LINEAR
 	    // At standard starting point Java port gave:
-	    // niter = 8 nf = 38 ng = 8 False convergence final f = 3.9945296E-4
+	    // niter = 8 nf = 12 ng = 9 Absolute convergence final f = 7.09975E-29
 	    // Original FORTRAN gave:
 	    // niter = 8 nf = 12 ng = 9 X-convergence final f = 7.09975E-29
 	    // At 10 times standard starting point Java port gave:
-	    // niter = 1 nf = 2 ng = 1 Singular convergence final f = 4.3368E41
+	    // niter = 1 nf = 2 ng = 1 Singular convergence final f = 4.33681E41
 	    // Original FORTRAN gave:
 	    // niter = 1 nf = 2 ng =1 Singular convergence final f = 4.33681E41
 	    // At 100 times standard starting point Java port gave:
@@ -758,6 +757,18 @@ private boolean testMode = false;
 	    nltest("Brown30", rstart, xscal1, xscal2);
 	    
 	    // Brown40
+	    // At the standard starting point Java port gave:
+	    // niter = 9 nf = 15 ng = 10 Absolute convergence final f = 3.93830E-27
+	    // Original FORTRAN gave:
+	    // niter = 9 nf = 15 ng = 10 Absolute convergence final f = 3.93830E-27
+	    // At 10 times the standard starting point Java port gave:
+	    // niter = 1 nf = 2 ng = 1 Singular convergence final f = 4.13590E55
+	    // Original FORTRAN gave:
+	    // niter = 1 nf = 2 ng = 1 Singular convergence final f = 4.13590E55
+	    // At 100 times standard starting point Java port gave:
+	    // niter = 1 nf = 2 ng = 1 Singular convergence final f = 4.13590E135
+	    // Original FORTRAN gave:
+	    // niter = 1 nf = 2 ng = 1 Singular convergence final f = 4.13590E135
 	    n = 40;
 	    p = 40;
 	    nex = 29;
@@ -766,16 +777,42 @@ private boolean testMode = false;
 	    xscal2 = 3;
 	    nltest("Brown40", rstart, xscal1, xscal2);
 	    
+	    // Bard + 10 Ok
 	    // Bard + 10
+	    // At standard starting point Java port gave:
+	    // niter = 7 nf = 12 ng = 7 Flase convergence final f = 4.10744E-3
+	    // Original FORTRAN gave:
+	    // niter = 6 nf = 7 ng = 7 X- and relative function convergence f = 4.10744E-3
+	    // At 10 times standard starting point Java port gave:
+	    // niter = 15 nf = 27 ng = 15 False convergence final f = 4.10744E-3
+	    // Original FORTRAN gave:
+	    // niter = 10 nf = 16 ng = 11 X- and relative function convergence final f = 4.10744E-3
+	    // At 100 times standard starting point Java port gave:
+	    // niter = 43 nf = 100 ng = 43 False convergence final f = 4.10744E-3
+	    // Original FORTRAN gave:
+	    // niter = 30 nf = 72 ng = 31 Relative convergence final f = 4.10744E-3
 	    n = 15;
 	    p = 3;
 	    nex = 30;
 	    useAnalyticJacobian = true;
 	    xscal1 = 1;
 	    xscal2 = 3;
-	    nltest("Bard+30", rstart, xscal1, xscal2);
+	    nltest("Bard+10", rstart, xscal1, xscal2);
 	    
-	    // Kowalik and Ossborne + 10.
+	    // Kowalik and Osborne + 10 FORTRAN outperforms Java
+	    // Kowalik and Osborne + 10.
+	    // At standard starting port Java port gave:
+	    // niter = 92 nf = 171 ng = 92 Singular convergence final f = 9.92027E-3
+	    // Original FORTRAN gave:
+	    // niter = 300 nf = 321 ng = 301 Iteration limit final f = 2.44316E-3
+	    // At 10 times standard starting point Java port gave:
+	    // niter = 300 nf = 335 ng = 301 Iteration limit final f = 7.16041E-4
+	    // Original FORTRAN gave:
+	    // niter = 30 nf = 49 ng = 31 Relative convergence final f = 2.66312E-4
+	    // At 100 times standard starting point Java port gave:
+	    // niter = 60 nf = 132 ng = 60 False convergence final f = 1.05263E-2
+	    // Original FORTRAN gave:
+	    // niter = 69 nf = 101 ng = 70 Relative convergence final f = 2.66312E-4
 	    n = 11;
 	    p = 4;
 	    nex = 31;
@@ -784,7 +821,21 @@ private boolean testMode = false;
 	    xscal2 = 3;
 	    nltest("Kowalik+10", rstart, xscal1, xscal2);
 	    
+	    // Meyer + 10 Both Java and FORTRAN only worked at standard starting point
 	    // Meyer + 10
+	    // At standard starting point Java port gave:
+	    // niter = 223 nf = 361 ng = 223 False convergence final f = 40.2836
+	    // Original FORTRAN gave:
+	    // niter = 220 nf = 352 ng = 220 X- and relative convergence final f = 40.2836
+	    // At 10 times standard starting point Java port gave:
+	    // niter = 300 nf = 345 ng = 301 Iteration limit final f = 2.81535E5
+	    // Original FORTRAN gave:
+	    // niter = 300 nf = 343 ng = 301 Iteration limit final f = 2.87019E5
+	    // At 100 times standard starting point Java port gave:
+	    // niter = 300 nf = 381 ng = 301 Iteration limit final f = 1.39776E8
+	    // Original FORTRAN gave:
+	    // niter = 300 nf = 382 ng = 301 Iteration limit final f = 1.39919E8
+	    // 
 	    n = 16;
 	    p = 3;
 	    nex = 32;
@@ -794,6 +845,10 @@ private boolean testMode = false;
 	    nltest("Meyer+10", rstart, xscal1, xscal2);
 	    
 	    // Watson6 + 10
+	    // At standard starting point Java port gave:
+	    // niter = 12 nf = 22 ng = 13 False convergence final f = 14.3398
+	    // Original FORTRAN gave:
+	    // niter = 11 nf = 16 ng = 12 Relative convergence final f = 14.3398
 	    n = 31;
 	    p = 6;
 	    nex = 33;
@@ -4022,8 +4077,8 @@ private boolean testMode = false;
             sum = x[1];
             prod = x[1];
             for (i = 2; i <= n; i++) {
-            	sum = sum + x[n];
-            	prod = prod * x[n];
+            	sum = sum + x[i];
+            	prod = prod * x[i];
             }
             for (i = 1; i <= n-1; i++) {
 		        r[i] = x[i] + sum - ( n + 1.0);
