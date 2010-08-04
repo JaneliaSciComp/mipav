@@ -188,11 +188,9 @@ private boolean testMode = false;
 	    nprob = 0;
 	    
 	    // The original FORTRAN with real changed to double precision outperforms the Java port for:
-	    // 1.) ENGVALL
-	    // 2.) CRAGG AND LEVY AT STANDARD STARTING POINT
-	    // 3.) BROWN5
-	    // 4.) BROWN10 AT STANDARD AND 10 * STANDARD
-	    // 5.) BROWN30 AT STANDARD STARTING POINT
+	    // 1.) BROWN5
+	    // 2.) BROWN10 AT STANDARD AND 10 * STANDARD
+	    // 3.) BROWN30 AT STANDARD STARTING POINT
 	    
 	    // Rosenbrock OK
 	    // Rosenbrock correct answer is f = 0 at (x1 = 1, x2 = 1)
@@ -299,19 +297,19 @@ private boolean testMode = false;
 	    xscal2 = 1;
 	    nltest("Zangwill", rstart, xscal1, xscal2);
 	    
-	    // Engvall incorrect in port
+	    // Engvall OK
 	    // Engvall
 	    // For original starting point the Java port gave:
-	    // niter = 46 nf = 91 ng = 46 False convergence final f = 0.04374987
+	    // niter = 12 nf = 19 ng = 13 Absolute convergence final f = 6.88422E-21
 	    // Original FORTRAN gave:
 	    // niter = 12 nf = 19 ng = 13 Absolute function convergence final f = 6.88422E-21
 	    // x1 = 1.29206E-7, x2 = -1.19195E-7, x3 = 1.0
 	    // For 10 times the original starting point the Java port gave:
-	    // niter = 34 nf = 61 ng = 34 False convergence final f = 0.04356926
+	    // niter = 16 nf = 23 ng = 17 Absolute convergence final f = 8.78728E-26
 	    // Original FORTRAN gave:
 	    // niter = 16 nf = 23 ng = 17 Absolute function convergence final f = 8.78728E-26
 	    // For 100 times the original starting point the Java port gave:
-	    // niter = 28 nf = 74 nf = 28 False convergence final f = 177.7422
+	    // niter = 30 nf = 44 nf = 31 Absolute function convergence final f = 1.00980E-28
 	    // Original FORTRAN gave:
 	    // niter = 30 nf = 44 ng = 31 X-convergence final f = 6.16298E-33
 	    n = 5;
@@ -361,14 +359,14 @@ private boolean testMode = false;
 	    xscal2 = 2;
 	    nltest("Beale", rstart, xscal1, xscal2);
 	    
-	    // Problem with Cragg and Levy at standard starting point
+	    // Cragg and Levy OK
 	    // Cragg and Levy
 	    // For standard starting point Java port gave:
-	    // niter = 2 nf = 16 ng = 2 False convergence final f = 0.373168
+	    // niter = 22 nf = 24 ng = 3 Absolute function convergence final f = 2.16879E-21
 	    // Original FORTRAN gave:
 	    // niter = 22 nf = 24 ng = 23 Absolute function convergence final f = 2.16879E-21
 	    // For 10 times standard starting point Java port gave:
-	    // niter = 6 nf = 37 nf = 6 False convergence final f = 9.27448E15
+	    // niter = 89 nf = 184 ng = 89 False convergence final f = 2.54185E4
 	    // Original FORTRAN gave:
 	    // niter = 78 nf = 181 ng = 79 Relative function convergence final f = 1.60583E5
 	    
@@ -3757,7 +3755,7 @@ private boolean testMode = false;
 		    r[3] = x[1] + x[2] + x[3] - 1.0;
 		    r[4] = x[1] + x[2] - x[3] + 1.0;
 		    r[5] = x[1]*x[1]*x[1] + 3.0 * x[2]*x[2]
-		      + ( 5.0 * x[3] - x[1] + 1.0 )*(5.0 + x[3] - x[1] + 1.0) - 36.0;
+		      + ( 5.0 * x[3] - x[1] + 1.0 )*(5.0 * x[3] - x[1] + 1.0) - 36.0;
 		  }
 		//
 		//  Branin.
@@ -3786,7 +3784,7 @@ private boolean testMode = false;
 		    r[1] = temp * temp;
 		    temp = x[2] - x[3];
 		    r[2] = 10.0 * temp * temp * temp;
-		    temp = Math.sin(x[3] = x[4])/Math.cos(x[3] - x[4]);
+		    temp = Math.sin(x[3] - x[4])/Math.cos(x[3] - x[4]);
 		    r[3] = temp * temp;
 		    r[4] = x[1]*x[1]*x[1]*x[1];
 		    r[5] = x[4] - 1.0;
