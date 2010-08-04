@@ -3616,12 +3616,12 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
     {
         voiManager = new VOIManagerInterface( this, imageA, imageB, 2, false, null );
         voiManager.setPointerButton(defaultModeButton);
-        voiManager.getVOIManager(0).init( imageA, null,
+        voiManager.getVOIManager(0).init( this, imageA, null,
                 componentImageA, componentImageA,
                 componentImageA.getOrientation(), componentImageA.getSlice() );
         componentImageA.setVOIManager(voiManager.getVOIManager(0));
         
-        voiManager.getVOIManager(1).init( imageB, null,
+        voiManager.getVOIManager(1).init( this, imageB, null,
                 componentImageB, componentImageB,
                 componentImageB.getOrientation(), componentImageB.getSlice() );
         componentImageB.setVOIManager(voiManager.getVOIManager(1));

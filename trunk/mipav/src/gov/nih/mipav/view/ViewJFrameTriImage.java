@@ -5143,50 +5143,50 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         
 
         if (imageB != null) {
-            voiManager.getVOIManager(AXIAL_AB).init( imageA, imageB,
+            voiManager.getVOIManager(AXIAL_AB).init( this, imageA, imageB,
                     triImage[AXIAL_AB], triImage[AXIAL_AB],
                     triImage[AXIAL_AB].getOrientation(), triImage[AXIAL_AB].getSlice() );
             triImage[AXIAL_AB].setVOIManager(voiManager.getVOIManager(AXIAL_AB));
             
-            voiManager.getVOIManager(CORONAL_AB).init( imageA, imageB,
+            voiManager.getVOIManager(CORONAL_AB).init( this, imageA, imageB,
                     triImage[CORONAL_AB], triImage[CORONAL_AB],
                     triImage[CORONAL_AB].getOrientation(), triImage[CORONAL_AB].getSlice() );
             triImage[CORONAL_AB].setVOIManager(voiManager.getVOIManager(CORONAL_AB));
             
-            voiManager.getVOIManager(SAGITTAL_AB).init( imageA, imageB,
+            voiManager.getVOIManager(SAGITTAL_AB).init( this, imageA, imageB,
                     triImage[SAGITTAL_AB], triImage[SAGITTAL_AB],
                     triImage[SAGITTAL_AB].getOrientation(), triImage[SAGITTAL_AB].getSlice() );
             triImage[SAGITTAL_AB].setVOIManager(voiManager.getVOIManager(SAGITTAL_AB));
             
 
-            voiManager.getVOIManager(AXIAL_B).init( null, imageB,
+            voiManager.getVOIManager(AXIAL_B).init( this, null, imageB,
                     triImage[AXIAL_B], triImage[AXIAL_B],
                     triImage[AXIAL_B].getOrientation(), triImage[AXIAL_B].getSlice() );
             triImage[AXIAL_B].setVOIManager(voiManager.getVOIManager(AXIAL_B));
             
-            voiManager.getVOIManager(CORONAL_B).init( null, imageB,
+            voiManager.getVOIManager(CORONAL_B).init( this, null, imageB,
                     triImage[CORONAL_B], triImage[CORONAL_B],
                     triImage[CORONAL_B].getOrientation(), triImage[CORONAL_B].getSlice() );
             triImage[CORONAL_B].setVOIManager(voiManager.getVOIManager(CORONAL_B));
             
-            voiManager.getVOIManager(SAGITTAL_B).init( null, imageB,
+            voiManager.getVOIManager(SAGITTAL_B).init( this, null, imageB,
                     triImage[SAGITTAL_B], triImage[SAGITTAL_B],
                     triImage[SAGITTAL_B].getOrientation(), triImage[SAGITTAL_B].getSlice() );
             triImage[SAGITTAL_B].setVOIManager(voiManager.getVOIManager(SAGITTAL_B));
         }
 
 
-        voiManager.getVOIManager(AXIAL_A).init( imageA, null,
+        voiManager.getVOIManager(AXIAL_A).init( this, imageA, null,
                 triImage[AXIAL_A], triImage[AXIAL_A],
                 triImage[AXIAL_A].getOrientation(), triImage[AXIAL_A].getSlice() );
         triImage[AXIAL_A].setVOIManager(voiManager.getVOIManager(AXIAL_A));
         
-        voiManager.getVOIManager(CORONAL_A).init( imageA, null,
+        voiManager.getVOIManager(CORONAL_A).init( this, imageA, null,
                 triImage[CORONAL_A], triImage[CORONAL_A],
                 triImage[CORONAL_A].getOrientation(), triImage[CORONAL_A].getSlice() );
         triImage[CORONAL_A].setVOIManager(voiManager.getVOIManager(CORONAL_A));
         
-        voiManager.getVOIManager(SAGITTAL_A).init( imageA, null,
+        voiManager.getVOIManager(SAGITTAL_A).init( this, imageA, null,
                 triImage[SAGITTAL_A], triImage[SAGITTAL_A],
                 triImage[SAGITTAL_A].getOrientation(), triImage[SAGITTAL_A].getSlice() );
         triImage[SAGITTAL_A].setVOIManager(voiManager.getVOIManager(SAGITTAL_A));

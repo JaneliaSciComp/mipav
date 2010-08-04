@@ -3383,11 +3383,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 incSlice();
 
                 return;
-
-            case KeyEvent.VK_UP:     voiManager.doVOI("MoveUP"); return;
-            case KeyEvent.VK_DOWN:   voiManager.doVOI("MoveDown"); return;
-            case KeyEvent.VK_LEFT:   voiManager.doVOI("MoveLeft"); return;
-            case KeyEvent.VK_RIGHT:  voiManager.doVOI("MoveRight"); return;
         }
 
         if ( !e.isControlDown()) {
@@ -3458,18 +3453,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 }
 
                 return;
-
-            case KeyEvent.VK_DELETE:
-                if (e.isShiftDown()) {
-                    voiManager.doVOI("deleteVOIActivePt");
-                } 
-                else 
-                {
-                    voiManager.doVOI(CustomUIBuilder.PARAM_VOI_POINT_DELETE.getActionCommand());
-                }
-
-                return;
-
             case KeyEvent.VK_B:
 
                 // swap the border painting
@@ -5372,7 +5355,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     protected void initVOI()
     {
         voiManager = new VOIManagerInterface( this, imageA, imageB, 1, false, VOIGroup );
-        voiManager.getVOIManager(0).init( imageA, imageB,
+        voiManager.getVOIManager(0).init( this, imageA, imageB,
                 componentImage, componentImage,
                 componentImage.getOrientation(), componentImage.getSlice() );
         voiManager.getToolBar().setVisible(true);

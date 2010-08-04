@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import WildMagic.LibFoundation.NumericalAnalysis.function.RealFunctionOfSeveralVariables;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -36,7 +37,7 @@ import gov.nih.mipav.view.*;
  * @author   Neva Cherniavsky
  */
 
-public abstract class AlgorithmConstPowellOptBase extends AlgorithmBase {
+public abstract class AlgorithmConstPowellOptBase extends AlgorithmBase implements RealFunctionOfSeveralVariables {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -554,6 +555,13 @@ public abstract class AlgorithmConstPowellOptBase extends AlgorithmBase {
 
         f = costFunction.cost(convertToMatrix(xt));
 
+        //for ( int i = 0; i < xt.length; i++ )
+        //{
+        //	System.err.print( xt[i] + " " );
+        //}
+        
+        //System.err.println(f);
+
         return f;
     }
 
@@ -583,4 +591,25 @@ public abstract class AlgorithmConstPowellOptBase extends AlgorithmBase {
         }
     }
 
+
+    @Override
+    public double eval(double[] x) {
+        double r = costFunction.cost(convertToMatrix(x));
+        
+        //for ( int i = 0; i < x.length; i++ )
+        //{
+        //	System.err.print( x[i] + " " );
+        //}
+        
+        //System.err.println(r);
+        return r;
+    }
+
+
+    @Override
+    public int getNumberOfVariables() {
+        return nDims;
+    }
+    
+    
 }

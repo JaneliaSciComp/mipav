@@ -44,6 +44,7 @@ import java.util.BitSet;
 import java.util.Stack;
 import java.util.Vector;
 
+import javax.swing.JFrame;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
@@ -894,9 +895,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
      * @param iOrientation orientation of the ViewJComponentEditImage.
      * @param iSlice current slice.
      */
-    public void init( ModelImage kImageA, ModelImage kImageB, Component kComponent, 
+    public void init( JFrame kFrame, ModelImage kImageA, ModelImage kImageB, Component kComponent, 
             ScreenCoordinateListener kContext, int iOrientation, int iSlice )
     {
+    	kFrame.addKeyListener(this);
         m_akImages[0] = kImageA;
         m_akImages[1] = kImageB;
         if ( kImageA != null )
@@ -954,7 +956,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
      * @see java.awt.event.KeyListener#keyPressed(java.awt.event.KeyEvent)
      */
     public void keyPressed(KeyEvent e) {
-        //System.err.println("VOIManager keyPressed" );
         if ( e.getKeyChar() == 'q' || e.getKeyChar() == 'Q' )
         {
             if ( !m_bQuickLUT && m_kCurrentVOI != null )
@@ -982,7 +983,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
      * @see java.awt.event.KeyListener#keyReleased(java.awt.event.KeyEvent)
      */
     public void keyReleased(KeyEvent e) {
-        //System.err.println("VOIManager keyReleased" );
         if ( e.getKeyChar() == 'q' || e.getKeyChar() == 'Q' )
         {
             m_bQuickLUT = false;
@@ -1264,7 +1264,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             return;
         }
 
-        processLeftMouseDrag( kEvent );
+        //processLeftMouseDrag( kEvent );
         m_bLeftMousePressed = false;
         m_bFirstDrag = true;
 
