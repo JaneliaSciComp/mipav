@@ -155,7 +155,7 @@ public class VOIPoint extends VOIBase {
      */
     public Vector3f getGeometricCenter() {     
         gcPt.Copy( getPosition() );
-        return gcPt;
+        return new Vector3f(gcPt);
     }
 
     /**

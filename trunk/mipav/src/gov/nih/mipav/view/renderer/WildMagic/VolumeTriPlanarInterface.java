@@ -3330,7 +3330,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         panelToolbar.add( m_kVOIInterface.getToolBar(), panelToolBarGBC );
         for ( int i = 0; i < 3; i++ )
         {
-            m_kVOIInterface.getVOIManager(i).init( m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage(),                     
+            m_kVOIInterface.getVOIManager(i).init( this, m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage(),                     
                     m_akPlaneRender[i].GetCanvas(), m_akPlaneRender[i], 
                     m_akPlaneRender[i].getOrientation(), m_akPlaneRender[i].getSlice() );
         }

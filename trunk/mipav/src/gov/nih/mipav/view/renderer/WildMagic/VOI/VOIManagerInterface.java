@@ -831,7 +831,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
             ScreenCoordinateListener kContext, int iOrientation, int iSlice)
     {
         VOIManager kVOIManager = new VOIManager(this);
-        kVOIManager.init(kImageA, kImageB,
+        kVOIManager.init(getFrame(), kImageA, kImageB,
                     kComponent, kContext,
                     iOrientation, iSlice);
         kVOIManager.setPopupVOI(popup);

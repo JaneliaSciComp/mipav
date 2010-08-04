@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.NumericalAnalysis.minimizing.Powell;
 
 import gov.nih.mipav.model.structures.*;
 
@@ -558,6 +559,33 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
             pt[i] = point[i];
         }
 
+        double[][] xi = new double[nDims][nDims];
+        for (int i = 0; i < nDims; i++) {
+            xi[i][i] = 1.0;
+        }
+        
+/*
+        System.err.print("START  ");
+        for ( int i = 0; i < pt.length; i++ )
+        {
+        	System.err.print( pt[i] + " " );
+        }
+        System.err.println("");
+
+        //System.err.println( "calling jtem powell" );
+        Powell.search( pt, xi, bracketBound, 1.0e-6, tolerance, trLimits, this, maxIterations, null );
+
+        System.err.print("JTEM   ");
+        for ( int i = 0; i < pt.length; i++ )
+        {
+        	System.err.print( pt[i] + " " );
+        }
+        System.err.println("");
+ */       
+        
+        for (int i = 0; i < nDims; i++) {
+            pt[i] = point[i];
+        }
         while ((count < maxIterations) && keepGoing) {
             keepGoing = false;
 
@@ -616,8 +644,14 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
                                   nDims + " dimensions.\n");
             }
         }
-
-        return;
+/*
+        System.err.print("       ");
+        for ( int i = 0; i < point.length; i++ )
+        {
+        	System.err.print( point[i] + " " );
+        }
+        System.err.println("");
+        */
     }
 
     /**
