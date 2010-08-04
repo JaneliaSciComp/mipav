@@ -112,7 +112,7 @@ public class ModelImage extends ModelStorageBase {
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
-
+    
     /**
      * Creates a new ModelImage object.
      * 
@@ -203,6 +203,123 @@ public class ModelImage extends ModelStorageBase {
 
                 // save the entire filename with the suffix -- helps later when saving file
                 fileInfo[i] = new FileInfoImageXML(ModelImage.makeImageName(name, ".xml"), null, FileUtility.XML);
+                fileInfo[i].setExtents(dimExtents);
+                fileInfo[i].setResolutions(resolutions);
+                fileInfo[i].setUnitsOfMeasure(units);
+                fileInfo[i].setDataType(type);
+            }
+        }
+
+        frameList = new Vector<ViewImageUpdateInterface>();
+        voiVector = new VOIVector();
+    }
+
+    /**
+     * Creates a new ModelImage object.
+     * 
+     * @param type indicates type of buffer(ie. boolean, byte ...)
+     * @param dimExtents array indicating image extent in each dimension.
+     * @param name name of the image.
+     * @param fileFormat
+     */
+    public ModelImage(final int type, final int[] dimExtents, final String name, int fileFormat) {
+        super(type, dimExtents);
+
+        int i;
+
+        // The user interface has a vector of all image models loaded into
+        // MIPAV. I keep a reference to the userinterface here so that when an image
+        // is created it can added to the hashtable in the user interface.
+        UI = ViewUserInterface.getReference();
+
+        imageName = ModelImage.makeImageName(name, ""); // removes suffix if one is there.
+
+        if (UI == null) {
+            Preferences.debug("New ModelImage = " + imageName + ", but UI is null.");
+        }
+
+        if (UI != null) {
+            UI.registerImage(this);
+        }
+
+        final float[] resolutions = new float[5];
+
+        for (i = 0; i < 5; i++) {
+            resolutions[i] = (float) 1.0;
+        }
+
+        final int[] units = new int[5];
+
+        for (i = 0; i < 5; i++) {
+            units[i] = FileInfoBase.MILLIMETERS;
+        }
+
+        int length = 1;
+
+        if (dimExtents.length <= 3) {
+
+            for (i = 0; i < dimExtents.length; i++) {
+                length *= dimExtents[i];
+            }
+        } else {
+
+            for (i = 0; i < 3; i++) {
+                length *= dimExtents[i];
+            }
+        }
+
+        mask = new BitSet(length);
+        maskBU = new BitSet(length);
+
+        // create Matrix Holder to store matrices
+        this.matrixHolder = new MatrixHolder(dimExtents.length);
+
+        // create the data provenance holder to store the image history
+        this.provenanceHolder = new ProvenanceHolder();
+
+        if (dimExtents.length == 2) {
+            fileInfo = new FileInfoBase[1];
+
+            // save the entire filename with the suffix -- helps later when saving file
+            if (fileFormat == FileUtility.XML) {
+                fileInfo[0] = new FileInfoImageXML(ModelImage.makeImageName(name, ".xml"), null, FileUtility.XML);
+            }
+            else if (fileFormat == FileUtility.NIFTI) {
+            	fileInfo[0] = new FileInfoNIFTI(ModelImage.makeImageName(name, ".nii"), null, FileUtility.NIFTI);
+            }
+            fileInfo[0].setExtents(dimExtents);
+            fileInfo[0].setResolutions(resolutions);
+            fileInfo[0].setUnitsOfMeasure(units);
+            fileInfo[0].setDataType(type);
+        } else if (dimExtents.length == 3) {
+            fileInfo = new FileInfoBase[dimExtents[2]];
+
+            for (i = 0; i < dimExtents[2]; i++) {
+
+                // save the entire filename with the suffix -- helps later when saving file
+            	if (fileFormat == FileUtility.XML) {
+                    fileInfo[i] = new FileInfoImageXML(ModelImage.makeImageName(name, ".xml"), null, FileUtility.XML);
+            	}
+            	else if (fileFormat == FileUtility.NIFTI) {
+            		fileInfo[i] = new FileInfoNIFTI(ModelImage.makeImageName(name, ".nii"), null, FileUtility.NIFTI);	
+            	}
+                fileInfo[i].setExtents(dimExtents);
+                fileInfo[i].setResolutions(resolutions);
+                fileInfo[i].setUnitsOfMeasure(units);
+                fileInfo[i].setDataType(type);
+            }
+        } else if (dimExtents.length == 4) {
+            fileInfo = new FileInfoBase[dimExtents[2] * dimExtents[3]];
+
+            for (i = 0; i < (dimExtents[2] * dimExtents[3]); i++) {
+
+                // save the entire filename with the suffix -- helps later when saving file
+            	if (fileFormat == FileUtility.XML) {
+                    fileInfo[i] = new FileInfoImageXML(ModelImage.makeImageName(name, ".xml"), null, FileUtility.XML);
+            	}
+            	else if (fileFormat == FileUtility.NIFTI) {
+            		fileInfo[i] = new FileInfoNIFTI(ModelImage.makeImageName(name, ".nii"), null, FileUtility.NIFTI);		
+            	}
                 fileInfo[i].setExtents(dimExtents);
                 fileInfo[i].setResolutions(resolutions);
                 fileInfo[i].setUnitsOfMeasure(units);
