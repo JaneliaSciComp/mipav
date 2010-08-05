@@ -277,55 +277,8 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
                                                       JOptionPane.ERROR_MESSAGE);
                     }
                     
-                    if (image.getFileInfo()[0] instanceof FileInfoNIFTI) {
-                    	// Copy original source NIFTI matrices to result images
-                        MatrixHolder matHolder = null;
-                        int j;
-                        matHolder = image.getMatrixHolder();
-
-                        if (matHolder != null) {
-                            final LinkedHashMap<String, TransMatrix> matrixMap = matHolder.getMatrixMap();
-                            final Iterator<String> iter = matrixMap.keySet().iterator();
-                            String nextKey = null;
-
-                            TransMatrix tempMatrix = null;
-
-                            while (iter.hasNext()) {
-                                nextKey = iter.next();
-                                tempMatrix = matrixMap.get(nextKey);
-                                if (tempMatrix.isNIFTI()) {   
-                                    if (tempMatrix.isQform()) {
-                                    	if (image.getNDims() == 2) {
-                                    		((FileInfoNIFTI) resultImage[i].getFileInfo()[0]).setMatrixQ(tempMatrix);	
-                                    	}
-                                    	else if (image.getNDims() == 3) {
-                                            for (j = 0; j < image.getExtents()[2]; j++) {
-                                                ((FileInfoNIFTI) resultImage[i].getFileInfo()[j]).setMatrixQ(tempMatrix);
-                                            }
-                                        } else if (image.getNDims() == 4) {
-                                            for (j = 0; j < image.getExtents()[2] * image.getExtents()[3]; j++) {
-                                                ((FileInfoNIFTI) resultImage[i].getFileInfo()[j]).setMatrixQ(tempMatrix);
-                                            }
-                                        }
-                                    } // if (tempMatrix.isQform())
-                                    else if ( !tempMatrix.isQform()) {
-                                        if (image.getNDims() == 2) {
-                                        	((FileInfoNIFTI) resultImage[i].getFileInfo()[0]).setMatrixS(tempMatrix);	
-                                        }
-                                        else if (image.getNDims() == 3) {
-                                            for (j = 0; j < image.getExtents()[2]; j++) {
-                                                ((FileInfoNIFTI) resultImage[i].getFileInfo()[j]).setMatrixS(tempMatrix);
-                                            }
-                                        } else if (image.getNDims() == 4) {
-                                            for (j = 0; j < image.getExtents()[2] * image.getExtents()[3]; j++) {
-                                                ((FileInfoNIFTI) resultImage[i].getFileInfo()[j]).setMatrixS(tempMatrix);
-                                            }
-                                        }
-                                    } // else if ((!tempMatrix.isQform()) && changeS)
-                                }
-                            }
-                        } // if (matHolder != null)
-                    } // if (fileInfo[0] instanceof FileInfoNIFTI)
+                	// Copy original source NIFTI matrices to result images
+                    resultImage[i].getMatrixHolder().replaceMatrices(image.getMatrixHolder().getMatrices());
                 }
             } else if (resultImage != null) {
 
@@ -486,17 +439,10 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
 
             if ((segmentation == FUZZY_ONLY) || (segmentation == BOTH_FUZZY_HARD)) {
 
-                for (i = 0; i < nClasses; i++) {
-                	if (image.getFileInfo()[0] instanceof FileInfoNIFTI) {
-                		resultImage[presentNumber++] = new ModelImage(ModelStorageBase.FLOAT, destExtents,
-                                makeImageName(image.getImageName(),
-                                              "_class" + (i + 1)), FileUtility.NIFTI);	
-                	}
-                	else {
-                        resultImage[presentNumber++] = new ModelImage(ModelStorageBase.FLOAT, destExtents,
-                                                                  makeImageName(image.getImageName(),
-                                                                                "_class" + (i + 1)));
-                	}
+                for (i = 0; i < nClasses; i++) {	
+                    resultImage[presentNumber++] = new ModelImage(ModelStorageBase.FLOAT, destExtents,
+                                                    makeImageName(image.getImageName(),
+                                                    "_class" + (i + 1)));
                 }
                 /* if (outputGainField) {
                  *  resultImage[presentNumber++] = new ModelImage(ModelStorageBase.FLOAT, destExtents,
@@ -504,14 +450,8 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
             }
 
             if ((segmentation == HARD_ONLY) || (segmentation == BOTH_FUZZY_HARD)) {
-            	if (image.getFileInfo()[0] instanceof FileInfoNIFTI) {
-            		resultImage[presentNumber++] = new ModelImage(ModelStorageBase.UBYTE, destExtents,
-                            makeImageName(image.getImageName(), "_seg"), FileUtility.NIFTI);	
-            	}
-            	else {
-                    resultImage[presentNumber++] = new ModelImage(ModelStorageBase.UBYTE, destExtents,
-                                                              makeImageName(image.getImageName(), "_seg"));
-            	}
+                resultImage[presentNumber++] = new ModelImage(ModelStorageBase.UBYTE, destExtents,
+                                                          makeImageName(image.getImageName(), "_seg"));
             }
 
             // Make algorithm
