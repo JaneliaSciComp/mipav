@@ -2077,12 +2077,11 @@ public class FileNIFTI extends FileBase {
             matrix2.set(2, 2, (double) srow_z[2]);
             LPSOrigin2 = new float[3];
 
-            axisOrientation2 = getAxisOrientation(matrix);
+            axisOrientation2 = getAxisOrientation(matrix2);
             Preferences.debug("axisOrientation2 = " + axisOrientation2[0] + "  " + axisOrientation2[1] + "  " +
                               axisOrientation2[2] + "\n");
 
             for (j = 0; j < 3; j++) {
-
                 if (axisOrientation2[j] == FileInfoBase.ORI_R2L_TYPE) {
                     LPSOrigin2[j] = -Math.abs(srow_x[3]);
                 } else if (axisOrientation2[j] == FileInfoBase.ORI_L2R_TYPE) {
@@ -4604,11 +4603,10 @@ public class FileNIFTI extends FileBase {
                 }
 
                 for (j = 0; j < Math.min(3,image.getNDims()); j++) {
-
                     if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE) {
                         niftiOrigin[0] = -Math.abs(matrixQ.get(j,3));
                     } else if (axisOrientation[j] == FileInfoBase.ORI_R2L_TYPE) {
-                        niftiOrigin[0] = Math.abs(matrix.get(j,3));
+                        niftiOrigin[0] = Math.abs(matrixQ.get(j,3));
                     } else if (axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE) {
                         niftiOrigin[1] = -Math.abs(matrixQ.get(j,3));
                     } else if (axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE) {
@@ -4929,9 +4927,8 @@ public class FileNIFTI extends FileBase {
 
             niftiOriginS = new float[3];
             axisOrientation = getAxisOrientation(matrixS);
-
+            
             for (j = 0; j < 3; j++) {
-
                 if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE) {
                     niftiOriginS[0] = -Math.abs(matrixS.get(j,3));
                 } else if (axisOrientation[j] == FileInfoBase.ORI_R2L_TYPE) {
@@ -5100,7 +5097,7 @@ public class FileNIFTI extends FileBase {
 
             if (matrixS != null) {
 
-                // System.out.println("matrix = " + matrix.toString());
+                // System.out.println("matrixS = " + matrixS.toString());
                 // srow_x
                 setBufferFloat(bufferByte, (float) (-matrixS.get(0, 0)), 280, endianess);
                 setBufferFloat(bufferByte, (float) (-matrixS.get(0, 1)), 284, endianess);
