@@ -5320,7 +5320,7 @@ public class FileNIFTI extends FileBase {
             setBufferShort(bufferByte, (short) qform_code, 252, endianess);
 
             // sform_code
-            setBufferShort(bufferByte, (short) 0, 254, endianess);
+            setBufferShort(bufferByte, (short) sform_code, 254, endianess);
 
             Preferences.debug("Writing quatern_b = " + quatern_b + "\n");
             setBufferFloat(bufferByte, quatern_b, 256, endianess);
@@ -5338,7 +5338,28 @@ public class FileNIFTI extends FileBase {
             // qoffset_z
             setBufferFloat(bufferByte, niftiOrigin[2], 276, endianess);
 
-            // Don't write sform information matrix if not a NIFTI file
+            if (matrixS != null) {
+
+                // System.out.println("matrix = " + matrix.toString());
+                // srow_x
+                setBufferFloat(bufferByte, (float) (-matrixS.get(0, 0)), 280, endianess);
+                setBufferFloat(bufferByte, (float) (-matrixS.get(0, 1)), 284, endianess);
+                setBufferFloat(bufferByte, (float) (-matrixS.get(0, 2)), 288, endianess);
+                setBufferFloat(bufferByte, niftiOriginS[0], 292, endianess);
+
+                // srow_y
+                setBufferFloat(bufferByte, (float) (-matrixS.get(1, 0)), 296, endianess);
+                setBufferFloat(bufferByte, (float) (-matrixS.get(1, 1)), 300, endianess);
+                setBufferFloat(bufferByte, (float) (-matrixS.get(1, 2)), 304, endianess);
+                setBufferFloat(bufferByte, niftiOriginS[1], 308, endianess);
+
+                // srow_z
+                setBufferFloat(bufferByte, (float) (matrixS.get(2, 0)), 312, endianess);
+                setBufferFloat(bufferByte, (float) (matrixS.get(2, 1)), 316, endianess);
+                setBufferFloat(bufferByte, (float) (matrixS.get(2, 2)), 320, endianess);
+                setBufferFloat(bufferByte, niftiOriginS[2], 324, endianess);
+            }
+
 
             // intent_name
             setBufferString(bufferByte, " ", 328);
