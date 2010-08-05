@@ -103,6 +103,10 @@ public class MatrixHolder extends ModelSerialCloneable {
          	if (tempMatrix.isNIFTI() && idx < 2) {
          		composites[idx] = new TransMatrix(getCompositeMatrix(true));
          		composites[idx].Mult(tempMatrix);
+         		composites[idx].setIsNIFTI(true);
+         		if (tempMatrix.isQform()) {
+         			composites[idx].setIsQform(true);
+         		}
          		idx++;
          	}
          }
