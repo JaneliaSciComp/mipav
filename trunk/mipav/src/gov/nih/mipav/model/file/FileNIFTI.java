@@ -2402,26 +2402,7 @@ public class FileNIFTI extends FileBase {
         axisOrientation = fileInfo.getAxisOrientation();
         if ((Preferences.is(Preferences.PREF_FLIP_NIFTI_READ)) &&
            ((axisOrientation[1] == FileInfoBase.ORI_P2A_TYPE) || (axisOrientation[1] == FileInfoBase.ORI_I2S_TYPE))) {
-            /**
-             * xp = a00*x + a01*yold + a02*z + xoldorigin
-             * xp = a00*x - a01*ynew + a02*z + xneworigin
-             * ynew = ydim - 1 - yold
-             * xneworigin - a01*ynew = xoldorigin + a01*yold
-             * xneworigin = a01*(yold + ynew) + xoldorigin
-             * xneworigin = a01*(ydim - 1) + xoldorigin
-             * 
-             * yp = a10*x + a11*yold + a12*z + yoldorigin
-             * yp = a10*x - a11*ynew + a12*z + yneworigin
-             * yneworigin - a11*ynew = yoldorigin + a11*yold
-             * yneworigin = a11*(yold + ynew) + yoldorigin
-             * yneworigin = a11*(ydim - 1) + yoldorigin
-             * 
-             * zp = a20*x + a21*yold + a22*z + zoldorigin
-             * zp = a20*x - a21*ynew + a22*z + zneworigin
-             * zneworigin - a21*ynew = zoldorigin + a21*yold
-             * zneworigin = a21*(yold + ynew) + zoldorigin
-             * zneworigin = a21*(ydim - 1) + zoldorigin
-             */
+        	int orient = axisOrientation[1];
             flip = true;
             if (axisOrientation[1] == FileInfoBase.ORI_P2A_TYPE) {
                 axisOrientation[1] = FileInfoBase.ORI_A2P_TYPE;
@@ -2431,9 +2412,14 @@ public class FileNIFTI extends FileBase {
             }
             fileInfo.setAxisOrientation(axisOrientation);
             LPSOrigin = fileInfo.getOrigin();
-            for (i = 0; i <= 2; i++) {
-                LPSOrigin[i] = matrix.get(i, 1)*(fileInfo.getExtents()[1] - 1) + LPSOrigin[i];
-            }
+
+                if ((orient == FileInfoBase.ORI_R2L_TYPE) || 
+                        (orient == FileInfoBase.ORI_A2P_TYPE) || 
+                        (orient == FileInfoBase.ORI_I2S_TYPE)) {
+                    LPSOrigin[1] = LPSOrigin[1] + ((fileInfo.getExtents()[1] - 1) * fileInfo.getResolutions()[1]);
+                } else {
+                    LPSOrigin[1] = LPSOrigin[1] - ((fileInfo.getExtents()[1] - 1) * fileInfo.getResolutions()[1]);
+                }
             fileInfo.setOrigin(LPSOrigin);
             
             matrix.Set(0, 1, -matrix.Get(0, 1));
