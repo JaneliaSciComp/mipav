@@ -18,9 +18,6 @@ import java.text.DecimalFormat;
 import java.util.*;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-
-import ncsa.hdf.object.h5.H5ScalarDS;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
