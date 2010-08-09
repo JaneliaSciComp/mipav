@@ -10346,6 +10346,57 @@ public class FileIO {
 	            	}
 	            	matrix = null;
 	            	matrix = transposeMatrix;
+	            	if (isNIFTI) { 
+	            		// If matrixQ and/or matrixS is present, use to set (0,2), (1,2),
+	            		// and (2,2) since last column from fileDicom.getPatientOrientation
+	            		// is a cross product with a sign ambiguity.
+                		MatrixHolder matHolder = null;
+                        TransMatrix[] matrixArray = null;
+                        TransMatrix matrixQ = null;
+                        TransMatrix matrixS = null;
+                		matHolder = image.getMatrixHolder();
+
+                        if (matHolder != null) {
+                            matrixArray = matHolder.getNIFTICompositeMatrices();
+
+                            if (matrixArray != null) {
+
+                                if (matrixArray.length >= 1) {
+
+                                    if (matrixArray[0] != null) {
+
+                                        if (matrixArray[0].isQform()) {
+                                            matrixQ = matrixArray[0];
+                                        } else {
+                                            matrixS = matrixArray[0];
+                                        }
+                                    } // if (matrixArray[0] != null)
+                                } // if (matrixArray.length >= 1)
+
+                                if (matrixArray.length >= 2) {
+
+                                    if (matrixArray[1] != null) {
+
+                                        if (matrixArray[1].isQform()) {
+                                            matrixQ = matrixArray[1];
+                                        } else {
+                                            matrixS = matrixArray[1];
+                                        }
+                                    } // if (matrixArray[1] != null)
+                                } // if (matrixArray.length >= 2)
+                            } // if (matrixArray != null)
+                        } // if (matHolder != null)
+                        if (matrixQ != null) {
+                        	matrix.set(0, 2, matrixQ.get(0, 2)/image.getFileInfo(0).getResolutions()[2]);
+                        	matrix.set(1, 2, matrixQ.get(1, 2)/image.getFileInfo(0).getResolutions()[2]);
+                        	matrix.set(2, 2, matrixQ.get(2, 2)/image.getFileInfo(0).getResolutions()[2]);
+                        }
+                        else if (matrixS != null) {
+                        	matrix.set(0, 2, matrixS.get(0, 2)/image.getFileInfo(0).getResolutions()[2]);
+                        	matrix.set(1, 2, matrixS.get(1, 2)/image.getFileInfo(0).getResolutions()[2]);
+                        	matrix.set(2, 2, matrixS.get(2, 2)/image.getFileInfo(0).getResolutions()[2]);
+                        }
+                	} // if (isNIFTI)
                 } else {
                     matrix = originalImageMatrix;
                 }
@@ -10868,6 +10919,57 @@ public class FileIO {
 	            	}
 	            	matrix = null;
 	            	matrix = transposeMatrix;
+                	if (isNIFTI) { 
+                		// If matrixQ and/or matrixS is present, use to set (0,2), (1,2),
+	            		// and (2,2) since last column from fileDicom.getPatientOrientation
+	            		// is a cross product with a sign ambiguity.
+                		MatrixHolder matHolder = null;
+                        TransMatrix[] matrixArray = null;
+                        TransMatrix matrixQ = null;
+                        TransMatrix matrixS = null;
+                		matHolder = image.getMatrixHolder();
+
+                        if (matHolder != null) {
+                            matrixArray = matHolder.getNIFTICompositeMatrices();
+
+                            if (matrixArray != null) {
+
+                                if (matrixArray.length >= 1) {
+
+                                    if (matrixArray[0] != null) {
+
+                                        if (matrixArray[0].isQform()) {
+                                            matrixQ = matrixArray[0];
+                                        } else {
+                                            matrixS = matrixArray[0];
+                                        }
+                                    } // if (matrixArray[0] != null)
+                                } // if (matrixArray.length >= 1)
+
+                                if (matrixArray.length >= 2) {
+
+                                    if (matrixArray[1] != null) {
+
+                                        if (matrixArray[1].isQform()) {
+                                            matrixQ = matrixArray[1];
+                                        } else {
+                                            matrixS = matrixArray[1];
+                                        }
+                                    } // if (matrixArray[1] != null)
+                                } // if (matrixArray.length >= 2)
+                            } // if (matrixArray != null)
+                        } // if (matHolder != null)
+                        if (matrixQ != null) {
+                        	matrix.set(0, 2, matrixQ.get(0, 2)/image.getFileInfo(0).getResolutions()[2]);
+                        	matrix.set(1, 2, matrixQ.get(1, 2)/image.getFileInfo(0).getResolutions()[2]);
+                        	matrix.set(2, 2, matrixQ.get(2, 2)/image.getFileInfo(0).getResolutions()[2]);
+                        }
+                        else if (matrixS != null) {
+                        	matrix.set(0, 2, matrixS.get(0, 2)/image.getFileInfo(0).getResolutions()[2]);
+                        	matrix.set(1, 2, matrixS.get(1, 2)/image.getFileInfo(0).getResolutions()[2]);
+                        	matrix.set(2, 2, matrixS.get(2, 2)/image.getFileInfo(0).getResolutions()[2]);
+                        }
+                	} // if (isNIFTI)
                 } else {
                     matrix = image.getMatrix();
                 }
