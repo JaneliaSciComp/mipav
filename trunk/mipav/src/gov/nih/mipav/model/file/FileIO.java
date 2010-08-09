@@ -10365,8 +10365,8 @@ public class FileIO {
                 increaseRes = true;
                 for (int i = 0; i <= 2; i++) {
                 	if (originalFileInfo.getAxisOrientation()[i] == FileInfoBase.ORI_R2L_TYPE) {
-                		originFlip[0] = i;
-                		RLIndex = 0;
+                		originFlip[0] = 1;
+                		RLIndex = i;
                     } else if (originalFileInfo.getAxisOrientation()[i] == FileInfoBase.ORI_L2R_TYPE) {
                 		originFlip[0] = -1;
                 		RLIndex = i;
@@ -10887,8 +10887,8 @@ public class FileIO {
                 increaseRes = true;
                 for (i = 0; i <= 2; i++) {
                 	if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_R2L_TYPE) {
-                		originFlip[0] = i;
-                		RLIndex = 0;
+                		originFlip[0] = 1;
+                		RLIndex = i;
                     } else if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_L2R_TYPE) {
                 		originFlip[0] = -1;
                 		RLIndex = i;
@@ -10988,7 +10988,6 @@ public class FileIO {
                 }
 
                 final float[] sliceData = new float[sliceSize];
-
                 for (int k = 0; k < image.getExtents()[2]; k++) {
 
                     // System.err.println("FileIO k = " + k);
