@@ -1998,6 +1998,19 @@ public class FileNIFTI extends FileBase {
             matrix.set(2, 0, (double) srow_z[0]);
             matrix.set(2, 1, (double) srow_z[1]);
             matrix.set(2, 2, (double) srow_z[2]);
+            r00 = -matrix.get(0,0)/resolutions[0];
+            r10 = -matrix.get(1,0)/resolutions[0];
+            r20 = matrix.get(2,0)/resolutions[0];
+            r01 = -matrix.get(0, 1)/resolutions[1];
+            r11 = -matrix.get(1, 1)/resolutions[1];
+            r21 = matrix.get(2,1)/resolutions[1];
+            patientOrientationString = new String();
+            nf = new DecimalFormat("##0.0000000");
+
+            patientOrientationString = nf.format(-r00) + "\\" + nf.format(-r10) + "\\" + nf.format(r20) +
+                        "\\" + nf.format(-r01) + "\\" + nf.format(-r11) + "\\" + nf.format(r21);
+            fileInfo.setPatientOrientationString(patientOrientationString);
+            
             LPSOrigin = new float[3];
 
             axisOrientation = getAxisOrientation(matrix);
