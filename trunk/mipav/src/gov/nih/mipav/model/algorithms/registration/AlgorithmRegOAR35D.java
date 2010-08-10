@@ -38,7 +38,9 @@ import java.util.*;
  * 3.) We subsample the images by 2, 4, and 8 or 16, depending on the resolution.<br>
  * Subsampling can be in x, y, and z or in only x and y. We loop thru a number of iterations equal to the number of
  * volumes - 1 for adjacent mode or equal to the number of volumes in average or reference mode with one volume as the
- * input volume and one volume as the reference volume. For each iteration: 4.) With the volumes that were subsampled by
+ * input volume and one volume as the reference volume. <br>
+ * For each iteration: <br>
+ * 4.) With the volumes that were subsampled by
  * 8 or 16, we call levelEight. This function will use the coarse sampling rate and optimize translations and global
  * scale at the given rotation. So for example, if the coarse sampling range were -30 to 30 at every 15 degrees, we
  * would optimize at rotations of -30, -15, 0, 15, 30.<br>
