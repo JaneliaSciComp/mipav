@@ -395,6 +395,9 @@ public class FileIO {
         String studyIDMaster;
         String seriesNoMaster;
         String acqNoMaster;
+        double xDel = 0.0;
+        double yDel = 0.0;
+        double zDel = 0.0;
 
         FileDicomTagTable[] childrenTagTables;
 
@@ -654,13 +657,30 @@ public class FileIO {
                             // acqNo.equals(acqNoMaster))
                             // {
                             savedFileInfos[nImages] = fileInfoTemp;
+                            if (nImages == 1) {
+                            	xDel = savedFileInfos[1].xLocation - savedFileInfos[0].xLocation;
+                            	yDel = savedFileInfos[1].yLocation - savedFileInfos[0].yLocation;
+                            	zDel = savedFileInfos[1].zLocation - savedFileInfos[0].zLocation;
+                            }
 
                             // this matrix is the matrix that converts this image into
                             // a standard DICOM axial image
                             matrix = savedFileInfos[nImages].getPatientOrientation();
 
                             if (matrix != null) {
-
+                            	if (((matrix.get(2,0) <= 0) && (xDel > 0)) ||
+                                	    ((matrix.get(2,0) >= 0) && (xDel < 0))) {
+                                	        matrix.set(2, 0, -matrix.get(2, 0));	
+                                	}
+                                	if (((matrix.get(2,1) <= 0) && (yDel > 0)) ||
+                                    	    ((matrix.get(2,1) >= 0) && (yDel < 0))) {
+                                    	        matrix.set(2, 1, -matrix.get(2, 1));	
+                                    }
+                                	if (((matrix.get(2,2) <= 0) && (zDel > 0)) ||
+                                    	    ((matrix.get(2,2) >= 0) && (zDel < 0))) {
+                                    	        matrix.set(2, 2, -matrix.get(2, 2));	
+                                    }
+                                
                                 /*
                                  * transform the x location, y location, and z location, found from the Image Position
                                  * tag, by the matrix. The tPt array now has the three numbers arranged as if this image
@@ -668,12 +688,22 @@ public class FileIO {
                                  * being sliced along. xlocation, ylocation, zlocation are from the DICOM tag 0020,0032
                                  * patient location;
                                  */
-                                matrix.transform(savedFileInfos[nImages].xLocation, savedFileInfos[nImages].yLocation,
-                                        savedFileInfos[nImages].zLocation, tPt);
-
-                                // tPt[2] is MIPAV's z-axis. It is the position of the patient
-                                // along the axis that the image was sliced on.
-                                zOrients[nImages] = tPt[2];
+                            	if (nImages == 1) {
+	                                matrix.transform(savedFileInfos[nImages-1].xLocation, savedFileInfos[nImages-1].yLocation,
+	                                        savedFileInfos[nImages-1].zLocation, tPt);
+	
+	                                // tPt[2] is MIPAV's z-axis. It is the position of the patient
+	                                // along the axis that the image was sliced on.
+	                                zOrients[nImages-1] = tPt[2];
+                                }
+                                if (nImages >= 1) {
+	                                matrix.transform(savedFileInfos[nImages].xLocation, savedFileInfos[nImages].yLocation,
+	                                        savedFileInfos[nImages].zLocation, tPt);
+	
+	                                // tPt[2] is MIPAV's z-axis. It is the position of the patient
+	                                // along the axis that the image was sliced on.
+	                                zOrients[nImages] = tPt[2];
+                                }
                             } else {
                                 zOrients[nImages] = 1;
                             }
@@ -10402,9 +10432,9 @@ public class FileIO {
                 }
 
                 final float[] imageOrg = originalFileInfo.getOrigin();
-                final double dicomOrigin[] = new double[imageOrg.length];
+                final double dicomOrigin[] = new double[Math.min(3,imageOrg.length)];
 
-                for (int k = 0; k < imageOrg.length; k++) {
+                for (int k = 0; k < Math.min(3,imageOrg.length); k++) {
                     dicomOrigin[k] = imageOrg[k];
                 }
 
@@ -10416,29 +10446,29 @@ public class FileIO {
                 increaseRes = true;
                 for (int i = 0; i <= 2; i++) {
                 	if (originalFileInfo.getAxisOrientation()[i] == FileInfoBase.ORI_R2L_TYPE) {
-                		originFlip[0] = 1;
+                		originFlip[i] = 1;
                 		RLIndex = i;
                     } else if (originalFileInfo.getAxisOrientation()[i] == FileInfoBase.ORI_L2R_TYPE) {
-                		originFlip[0] = -1;
+                		originFlip[i] = -1;
                 		RLIndex = i;
                 		if (i == 2) {
                 		    increaseRes = false;
                 		}
                     } else if (originalFileInfo.getAxisOrientation()[i] == FileInfoBase.ORI_A2P_TYPE) {
                 		APIndex = i;
-                		originFlip[1] = 1;
+                		originFlip[i] = 1;
                     } else if (originalFileInfo.getAxisOrientation()[i] == FileInfoBase.ORI_P2A_TYPE) {
                 		APIndex = i;
-                		originFlip[1] = -1;
+                		originFlip[i] = -1;
                 		if (i == 2) {
                 			increaseRes = false;
                 		}
                     } else if (originalFileInfo.getAxisOrientation()[i] == FileInfoBase.ORI_I2S_TYPE) {
                 		ISIndex = i;
-                		originFlip[2] = 1;
+                		originFlip[i] = 1;
                     } else if (originalFileInfo.getAxisOrientation()[i] == FileInfoBase.ORI_S2I_TYPE) {
                 		ISIndex = i;
-                	    originFlip[2] = -1;
+                	    originFlip[i] = -1;
                 		if (i == 2) {
                 			increaseRes = false;
                 		}
@@ -10975,9 +11005,9 @@ public class FileIO {
                 }
 
                 final float[] imageOrg = image.getFileInfo(0).getOrigin();
-                final double dicomOrigin[] = new double[imageOrg.length];
+                final double dicomOrigin[] = new double[Math.min(3,imageOrg.length)];
 
-                for (int k = 0; k < imageOrg.length; k++) {
+                for (int k = 0; k < Math.min(3,imageOrg.length); k++) {
                     dicomOrigin[k] = imageOrg[k];
                 }
 
@@ -10989,29 +11019,29 @@ public class FileIO {
                 increaseRes = true;
                 for (i = 0; i <= 2; i++) {
                 	if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_R2L_TYPE) {
-                		originFlip[0] = 1;
+                		originFlip[i] = 1;
                 		RLIndex = i;
                     } else if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_L2R_TYPE) {
-                		originFlip[0] = -1;
+                		originFlip[i] = -1;
                 		RLIndex = i;
                 		if (i == 2) {
                 		    increaseRes = false;
                 		}
                     } else if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_A2P_TYPE) {
                 		APIndex = i;
-                		originFlip[1] = 1;
+                		originFlip[i] = 1;
                     } else if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_P2A_TYPE) {
                 		APIndex = i;
-                		originFlip[1] = -1;
+                		originFlip[i] = -1;
                 		if (i == 2) {
                 			increaseRes = false;
                 		}
                     } else if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_I2S_TYPE) {
                 		ISIndex = i;
-                		originFlip[2] = 1;
+                		originFlip[i] = 1;
                     } else if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_S2I_TYPE) {
                 		ISIndex = i;
-                	    originFlip[2] = -1;
+                	    originFlip[i] = -1;
                 		if (i == 2) {
                 			increaseRes = false;
                 		}
