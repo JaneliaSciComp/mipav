@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.NumericalAnalysis.minimizing.BrentOnLine;
 import WildMagic.LibFoundation.NumericalAnalysis.minimizing.Powell;
 
 import gov.nih.mipav.model.structures.*;
@@ -563,8 +564,11 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
         for (int i = 0; i < nDims; i++) {
             xi[i][i] = 1.0;
         }
-        
-/*
+        //Powell.search( point, xi, 1.0e-6, this, maxIterations, null );
+
+        //Powell.search( point, xi, bracketBound, 1.0e-6, tolerance, trLimits, this, maxIterations, null );
+
+        /*
         System.err.print("START  ");
         for ( int i = 0; i < pt.length; i++ )
         {
@@ -581,11 +585,18 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
         	System.err.print( pt[i] + " " );
         }
         System.err.println("");
- */       
         
         for (int i = 0; i < nDims; i++) {
             pt[i] = point[i];
         }
+        
+*/
+        
+        //final double[] xit = new double[nDims];
+
+        //BrentOnLine brentOnLine = new BrentOnLine(point, xit, this);
+        
+        
         while ((count < maxIterations) && keepGoing) {
             keepGoing = false;
 
@@ -606,6 +617,13 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
                 boundGuess = bracketBound;
                 currentDirection = i;
                 functionAtBest = lineMinimization(boundGuess, currentDirection);
+                
+
+                //for (int j = 0; j < nDims; j++)
+                //  xit[j] = xi[j][i];
+
+                //functionAtBest = brentOnLine.search(i, boundGuess, tolerance[i], trLimits[0][i],trLimits[1][i]); //(ftol);
+                
 
                 // If lineMinimization couldn't bracket the minimum, it will return Double.MAX_VALUE
                 // and the point value won't be changed.  Allow it to go on to other dimensions.
@@ -644,6 +662,8 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
                                   nDims + " dimensions.\n");
             }
         }
+        
+
 /*
         System.err.print("       ");
         for ( int i = 0; i < point.length; i++ )
@@ -651,7 +671,7 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
         	System.err.print( point[i] + " " );
         }
         System.err.println("");
-        */
+*/
     }
 
     /**

@@ -88,6 +88,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
 
     /** DOCUMENT ME! */
     private boolean doSubsample;
+    private boolean doJTEM;
 
     /** DOCUMENT ME! */
     private String fileNameWRef, directoryWRef, fileNameWInput, directoryWInput;
@@ -166,6 +167,8 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
 
     /** DOCUMENT ME! */
     private JCheckBox sampleCheckBox;
+    /** DOCUMENT ME! */
+    private JCheckBox jtemCheckBox;
 
     /** DOCUMENT ME! */
     private int scaleStepsBF;
@@ -1196,6 +1199,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         } else {
             reg2 = new AlgorithmRegOAR2D(refImage, matchImage, cost, DOF, interp, rotateBegin, rotateEnd, coarseRate,
                                          fineRate, doSubsample, bracketBound, maxIterations, numMinima);
+            reg2.setJTEM(doJTEM);
         }
 
         // Hide dialog
@@ -1733,6 +1737,12 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         sampleCheckBox.setSelected(true);
         sampleCheckBox.setEnabled(true);
 
+        jtemCheckBox = new JCheckBox("Use JTEM");
+        jtemCheckBox.setFont(serif12);
+        jtemCheckBox.setForeground(Color.black);
+        jtemCheckBox.setSelected(false);
+        jtemCheckBox.setEnabled(true);
+
         Insets insets = new Insets(0, 2, 0, 2);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
@@ -1801,6 +1811,12 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         optPanel.add(sampleCheckBox, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 9;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        optPanel.add(jtemCheckBox, gbc);
 
         ButtonGroup weightGroup = new ButtonGroup();
 
@@ -2678,6 +2694,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         }
 
         doSubsample = sampleCheckBox.isSelected();
+        doJTEM = jtemCheckBox.isSelected();
         
         fillValue = Float.valueOf(valueText.getText()).floatValue();
         outOfBoundsIndex = outOfBoundsComboBox.getSelectedIndex();

@@ -1,6 +1,10 @@
 package gov.nih.mipav.model.algorithms;
 
 import WildMagic.LibFoundation.Mathematics.*;
+
+import WildMagic.LibFoundation.NumericalAnalysis.minimizing.Powell;
+import WildMagic.LibFoundation.NumericalAnalysis.function.RealFunctionOfSeveralVariables;
+import WildMagic.LibFoundation.NumericalAnalysis.minimizing.BrentOnLine;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.util.ThreadUtil;
 
@@ -42,7 +46,7 @@ import java.util.concurrent.CountDownLatch;
  * @author   Hailong Wang, Ph.D
  */
 
-public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
+public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements RealFunctionOfSeveralVariables{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -108,6 +112,8 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
      * The flag for parallel powell's method
      */
     protected boolean parallelPowell = false;
+    
+    protected boolean useJTEM = false;
 
     /**
      * Store the paths for every thread.
@@ -118,6 +124,8 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
      * The flag to indicate whether the searching path need to be recorded.
      */
     protected boolean pathRecorded = false;
+    
+    double[] savedStartPoint;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -407,7 +415,16 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
         }
 
         double unit_tolerance = Math.abs(1 / tol);
-
+        //System.err.println( "AlgorithmPowellOptBase " + unit_tolerance );
+        savedStartPoint = new double[startPoint.length];
+        for ( int i = 0; i < startPoint.length; i++ )
+        {
+        	savedStartPoint[i] = startPoint[i];
+        }
+        BrentOnLine brentOnLine = new BrentOnLine(pt, directions, this);
+        bestCost[0] = brentOnLine.search(unit_tolerance);
+        
+/*
         // Create new Bracket.  Set a and b and find functionAtA and functionAtB.
         Bracket bracket = new Bracket();
 
@@ -432,118 +449,6 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
         //Profile.clear();
         //Profile.start();
         boolean bLineMinDone = false; 
-        /*
-        Bracket backUp = new Bracket();
-        backUp.a = bracket.a;
-        backUp.b = bracket.b;
-        backUp.c = bracket.c;
-        backUp.functionAtA = bracket.functionAtA;
-        backUp.functionAtB = bracket.functionAtB;
-        backUp.functionAtC = bracket.functionAtC;
-        
-        if ( !bLineMinDone )
-        {
-            float case1 = -1;
-            float case2 = -1;
-            float case3 = -1;
-            System.err.println("");
-            System.err.println("START");
-            while (((++count) < 100) && (Math.abs(bracket.c - bracket.a) > unit_tolerance) && ((parent == null)?true:!parent.isThreadStopped())) {
-
-                if (count > 0) {
-                    xNew = nextPoint(bracket);
-                } else {
-                    xNew = extrapolatePoint(bracket);
-                }
-
-                double directionN = 1.0;
-                
-                case1 = -1;
-                case2 = -1;
-                case3 = -1;
-
-                if (bracket.c < bracket.a) {
-                    directionN = -1.0;
-                    case1 = 1.0f;
-                }
-
-                if (Math.abs(xNew - bracket.a) < minDist) {
-                    xNew = bracket.a + (directionN * minDist);
-                    case1 = 2.0f;
-                }
-
-                if (Math.abs(xNew - bracket.c) < minDist) {
-                    xNew = bracket.c - (directionN * minDist);
-                    case1 = 3.0f;
-                }
-
-                if (Math.abs(xNew - bracket.b) < minDist) {
-                    xNew = extrapolatePoint(bracket);
-                    case1 = 4.0f;
-                }
-
-                if (Math.abs(bracket.b - bracket.a) < (4 * minDist)) {
-                    xNew = bracket.b + (directionN * 5 * minDist);
-                    case1 = 5.0f;
-                }
-
-                if (Math.abs(bracket.b - bracket.c) < (4 * minDist)) {
-                    xNew = bracket.b - (directionN * 5 * minDist);
-                    case1 = 6.0f;
-                }
-
-                yNew = oneDimension(startPoint, pt, xNew, unit_directions);
-                //System.err.println( yNew );
-                if (((xNew - bracket.b) * (bracket.c - bracket.b)) > 0) { // is xnew between bracket.c and bracket.b ?
-
-                    // swap bracket.a and bracket.c so that xnew is between bracket.a and bracket.b
-                    double xtemp = bracket.a;
-
-                    bracket.a = bracket.c;
-                    bracket.c = xtemp;
-
-                    double ytemp = bracket.functionAtA;
-
-                    bracket.functionAtA = bracket.functionAtC;
-                    bracket.functionAtC = ytemp;
-                    case2 = 1.0f;
-                }
-
-                if (yNew < bracket.functionAtB) {
-
-                    // new interval is [bracket.b,bracket.a] with xNew as best point in the middle
-                    bracket.c = bracket.b;
-                    bracket.functionAtC = bracket.functionAtB;
-                    bracket.b = xNew;
-                    bracket.functionAtB = yNew;
-                    case3 = 1.0f;
-                } else {
-
-                    // new interval is  [bracket.c,xnew] with bracket.b as best point still
-                    bracket.a = xNew;
-                    bracket.functionAtA = yNew;
-                    case3 = 2.0f;
-                }
-                System.err.println( "   CPU BracketA = " + bracket.a + " " + bracket.functionAtA );
-                System.err.println( "   CPU BracketB = " + bracket.b + " " + bracket.functionAtB );
-                System.err.println( "   CPU BracketC = " + bracket.c + " " + bracket.functionAtC );       
-                System.err.println( "   " + count + " xNew = " + xNew + " yNew = " + 
-                        yNew  + " case: " + case1 + " " + 
-                        case2 + " " + 
-            }
-            //System.err.println("");
-            //System.err.println("");
-            //System.err.println( "CPU BracketA = " + bracket.a + " " + bracket.functionAtA );
-            System.err.println( "CPU BracketB = " + bracket.b + " " + bracket.functionAtB );
-            //System.err.println( "CPU BracketC = " + bracket.c + " " + bracket.functionAtC );
-        }
-        bracket.a = backUp.a;
-        bracket.b = backUp.b;
-        bracket.c = backUp.c;
-        bracket.functionAtA = backUp.functionAtA;
-        bracket.functionAtB = backUp.functionAtB;
-        bracket.functionAtC = backUp.functionAtC;
-        */
         if ( (costFunction instanceof AlgorithmCostFunctions2D) && (costFunction.getCostFunction() == AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU_LM) )
         {
             if ( ((AlgorithmCostFunctions2D)costFunction).isGPULineMin() )
@@ -651,6 +556,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
         }
 
         bestCost[0] = bracket.functionAtB;
+        */
     }
 
     /**
@@ -943,6 +849,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
         }
 
         if (parallelPowell) {
+        	//System.err.println( "using Parallel Powell" );
             final double[][] pts = new double[dof][dof];
             final double[][] costs = new double[dof][1];
             boolean keepGoing = true;
@@ -1035,7 +942,18 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
                 niters++;
             }
 
-        } else {
+        } else if ( useJTEM ) {
+        	//System.err.println( "using JTEM" );
+            double[][] xi = new double[dof][dof];
+            for (int i = 0; i < dof; i++) {
+                xi[i][i] = 1.0;
+            }
+            
+            savedStartPoint = v.getPoint();
+            Powell.search( point, xi, 1.0e-6, this, maxIterations, null );
+        }
+        else {
+        	//System.err.println( "using MIPAV Powell" );
             int boundGuess;
             double initialGuess;
             double[] originalPoint = new double[dof];
@@ -1048,11 +966,11 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
                 // Initialize data for testing tolerance.
                 System.arraycopy(point, 0, originalPoint, 0, dof);
 
-                /**
-                 * Only terminate loop when point changes for ALL directions are
-                 * less than their respective tolerances. Will only stay false
-                 * if ALL are false.
-                 */
+                //
+                // Only terminate loop when point changes for ALL directions are
+                // less than their respective tolerances. Will only stay false
+                // if ALL are false.
+                //
                 keepGoing = false;
 
                 progress++;
@@ -1165,6 +1083,10 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
         this.parallelPowell = parallelPowell;
     }
 
+    public void setUseJTEM(boolean bOn) {
+        this.useJTEM = bOn;
+    }
+
     /**
      * Store the optimal point and cost to v 
      * @param point		the optimal point.
@@ -1262,6 +1184,32 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
 
     public int getMaxIterations() {
         return maxIterations;
+    }
+    
+
+    @Override
+    public double eval(double[] x) {
+/*
+        System.err.println("");
+        System.err.println("");
+        for ( int i = 0; i < x.length; i++ )
+        {
+        	System.err.print( x[i] + " " );
+        }
+        System.err.println("");
+*/
+        double[]fullPoint = constructPoint(savedStartPoint, x);
+        double r = costFunction.cost(convertToMatrix(fullPoint));
+        /*
+        System.err.println("cost = " + r);
+        */
+        return r;
+    }
+
+
+    @Override
+    public int getNumberOfVariables() {
+        return dof;
     }
 
 
