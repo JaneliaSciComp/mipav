@@ -849,7 +849,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
         }
 
         if (parallelPowell) {
-        	//System.err.println( "using Parallel Powell" );
+        	System.err.println( "using Parallel Powell" );
             final double[][] pts = new double[dof][dof];
             final double[][] costs = new double[dof][1];
             boolean keepGoing = true;
@@ -943,17 +943,19 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
             }
 
         } else if ( useJTEM ) {
-        	//System.err.println( "using JTEM" );
+        	System.err.println( "using JTEM" );
             double[][] xi = new double[dof][dof];
             for (int i = 0; i < dof; i++) {
                 xi[i][i] = 1.0;
+                //System.err.print(" " + tolerance[i]);
             }
+            //System.err.println(" ");
             
             savedStartPoint = v.getPoint();
-            Powell.search( point, xi, 1.0e-6, this, maxIterations, null );
+            Powell.search( point, xi, tolerance, this, maxIterations, null );
         }
         else {
-        	//System.err.println( "using MIPAV Powell" );
+        	System.err.println( "using MIPAV Powell" );
             int boundGuess;
             double initialGuess;
             double[] originalPoint = new double[dof];
