@@ -2006,7 +2006,7 @@ public class FileNIFTI extends FileBase {
             r21 = matrix.get(2,1)/resolutions[1];
             patientOrientationString = new String();
             nf = new DecimalFormat("##0.0000000");
-
+          
             patientOrientationString = nf.format(-r00) + "\\" + nf.format(-r10) + "\\" + nf.format(r20) +
                         "\\" + nf.format(-r01) + "\\" + nf.format(-r11) + "\\" + nf.format(r21);
             fileInfo.setPatientOrientationString(patientOrientationString);
@@ -3991,6 +3991,9 @@ public class FileNIFTI extends FileBase {
         int sform_code = 0;
         int j;
         FileInfoDicom fileInfoDicom;
+        double xDel = 0.0;
+        double yDel = 0.0;
+        double zDel = 0.0;
         TransMatrix dicomMatrix = null;
         TransMatrix transposeMatrix;
 
@@ -4008,6 +4011,56 @@ public class FileNIFTI extends FileBase {
             try { // see if it is DICOM
             	fileInfoDicom = (FileInfoDicom)image.getFileInfo(0);
             	dicomMatrix = fileInfoDicom.getPatientOrientation();
+            	String orientation = (String) fileInfoDicom.getTagTable().getValue("0020,0032");
+
+                if (orientation != null) {
+                	
+	                int index1 = -1, index2 = -1;
+	
+	                for (i = 0; i < orientation.length(); i++) {
+	
+	                    if (orientation.charAt(i) == '\\') {
+	
+	                        if (index1 == -1) {
+	                            index1 = i;
+	                        } else {
+	                            index2 = i;
+	                        }
+	                    }
+	                }
+	                double coord[] = new double[3];
+	                coord[0] = Double.valueOf(orientation.substring(0, index1)).doubleValue();
+	                coord[1] = Double.valueOf(orientation.substring(index1 + 1, index2)).doubleValue();
+	                coord[2] = Double.valueOf(orientation.substring(index2 + 1)).doubleValue();
+	                
+	                FileInfoDicom fileInfoDicom1 = (FileInfoDicom)image.getFileInfo(1);
+	                String orientation1 = (String) fileInfoDicom1.getTagTable().getValue("0020,0032");
+
+	                if (orientation1 != null) {
+	                	
+		                index1 = -1;
+		                index2 = -1;
+		
+		                for (i = 0; i < orientation1.length(); i++) {
+		
+		                    if (orientation1.charAt(i) == '\\') {
+		
+		                        if (index1 == -1) {
+		                            index1 = i;
+		                        } else {
+		                            index2 = i;
+		                        }
+		                    }
+		                }
+		                double coord1[] = new double[3];
+		                coord1[0] = Double.valueOf(orientation1.substring(0, index1)).doubleValue();
+		                coord1[1] = Double.valueOf(orientation1.substring(index1 + 1, index2)).doubleValue();
+		                coord1[2] = Double.valueOf(orientation1.substring(index2 + 1)).doubleValue();
+		                xDel = coord1[0] - coord[0];
+		                yDel = coord1[1] - coord[1];
+		                zDel = coord1[2] - coord[2];
+	                } // if (orientation1 != null)
+                } // if (orientation != null)
             }
             catch (ClassCastException ed) {
             	
@@ -4610,6 +4663,18 @@ public class FileNIFTI extends FileBase {
             			transposeMatrix.set(i, j, dicomMatrix.get(j, i));
             		}
             	}
+            	if (((transposeMatrix.get(0,2) <= 0) && (xDel > 0)) ||
+            	    ((transposeMatrix.get(0,2) >= 0) && (xDel < 0))) {
+            	        transposeMatrix.set(0, 2, -transposeMatrix.get(0, 2));	
+            	}
+            	if (((transposeMatrix.get(1,2) <= 0) && (yDel > 0)) ||
+                	    ((transposeMatrix.get(1,2) >= 0) && (yDel < 0))) {
+                	        transposeMatrix.set(1, 2, -transposeMatrix.get(1, 2));	
+                }
+            	if (((transposeMatrix.get(2,2) <= 0) && (zDel > 0)) ||
+                	    ((transposeMatrix.get(2,2) >= 0) && (zDel < 0))) {
+                	        transposeMatrix.set(2, 2, -transposeMatrix.get(2, 2));	
+                }
             	axisOrientation = getAxisOrientation(transposeMatrix);
             	qform_code = FileInfoNIFTI.NIFTI_XFORM_SCANNER_ANAT;
                 r00 = -transposeMatrix.get(0, 0);
