@@ -600,7 +600,6 @@ public abstract class AlgorithmConstPowellOptBase extends AlgorithmBase implemen
         //{
         //	System.err.print( x[i] + " " );
         //}
-        
         //System.err.println(r);
         return r;
     }

@@ -118,6 +118,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 
     /** If true subsample. */
     private final boolean doSubsample;
+    private boolean doJTEM;
 
     /** Isotropic input image. */
     private ModelImage imageInputIso;
@@ -1843,6 +1844,11 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         m_iTranslationRange = iTranslationRange;
         m_iScaleSteps = iScaleSteps;
     }
+    
+    public void setJTEM(boolean bOn)
+    {
+    	doJTEM = bOn;
+    }
 
     /**
      * Takes a simple image and subsamples it by 2, interpolating so that the new values are averages.
@@ -2354,6 +2360,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         }
         powell = new AlgorithmPowellOpt2D(this, cog, dofs, cost, getTolerance(dofs), maxIter, false, bracketBound);
         powell.setMultiThreadingEnabled(multiThreadingEnabled);
+        powell.setUseJTEM(doJTEM);
 
         // Should we even try to coarse since 2D images at level 8 are pretty small and not computionally taxing ?
         fireProgressStateChanged("Optimizing at coarse samples");
@@ -2482,6 +2489,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag,
                 bracketBound);
         powell.setMultiThreadingEnabled(multiThreadingEnabled);
+        powell.setUseJTEM(doJTEM);
 
         paths[1] = new Vector<Vector<Vector3f>>(10);
         powell.setPathRecorded(true);
@@ -2568,6 +2576,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         final AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree),
                 maxIter, rigidFlag, bracketBound);
         powell.setMultiThreadingEnabled(multiThreadingEnabled);
+        powell.setUseJTEM(doJTEM);
 
         // long startTime = System.nanoTime();
         // powell.createTerrain(-50f, 50f, 1f, -50f, 50f, 1f, -30f, 30f, 1f, "LevelFour_Terrain");
@@ -2765,6 +2774,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         maxIter = baseNumIter * 2;
         powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(DOF), maxIter, rigidFlag, bracketBound);
         powell.setMultiThreadingEnabled(false);
+        powell.setUseJTEM(doJTEM);
 
         powell.setPathRecorded(true);
         paths[5] = new Vector<Vector<Vector3f>>(1);
@@ -2849,6 +2859,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         maxIter = baseNumIter * 2;
         powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(DOF), maxIter, rigidFlag, bracketBound);
         powell.setMultiThreadingEnabled(false);
+        powell.setUseJTEM(doJTEM);
 
         linkProgressToAlgorithm(powell);
         powell.setProgressValues(generateProgressValues(60, 100));
@@ -2914,6 +2925,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree),
                 maxIter, rigidFlag, bracketBound);
         powell.setMultiThreadingEnabled(false);
+        powell.setUseJTEM(doJTEM);
 
         fireProgressStateChanged("Measuring costs of minima");
 
@@ -2929,6 +2941,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag,
                 bracketBound);
         powell.setMultiThreadingEnabled(false);
+        powell.setUseJTEM(doJTEM);
 
         powell.setPathRecorded(true);
         paths[4] = new Vector<Vector<Vector3f>>(1);
@@ -2963,6 +2976,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag,
                     bracketBound);
             powell.setMultiThreadingEnabled(false);
+            powell.setUseJTEM(doJTEM);
 
             linkProgressToAlgorithm(powell);
             powell.setProgressValues(generateProgressValues(43, 51));
@@ -2982,6 +2996,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
                 powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag,
                         bracketBound);
                 powell.setMultiThreadingEnabled(false);
+                powell.setUseJTEM(doJTEM);
 
                 fireProgressStateChanged("Optimizing with 7 DOF");
 
