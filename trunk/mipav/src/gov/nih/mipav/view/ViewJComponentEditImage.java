@@ -2575,7 +2575,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             setPixelInformationAtLocation(xS, yS);
 
             if (mouseEvent.getButton() == MouseEvent.BUTTON1) {
-                intensityLabel = true;
+                intensityLabel = Preferences.is(Preferences.PREF_SHOW_INTENSITY_ON_LEFT_CLICK);
                 paintComponent(getGraphics());
             }
         }
@@ -5255,8 +5255,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
         try {
             if (cursorMode == ViewJComponentBase.DEFAULT || cursorMode == ViewJComponentBase.VOI_3D ) {
-
-                if ( (mouseEvent.getModifiers() & InputEvent.BUTTON3_MASK) != 0) {
+            	
+            	//updates winlevel if right mouse button was pressed and user's preferences indicate this should occur
+                if ( ((mouseEvent.getModifiers() & InputEvent.BUTTON3_MASK) != 0) && 
+                		Preferences.is(Preferences.PREF_SHOW_WINLEV_ON_RIGHT_CLICK)) {
 
                     // Dragging the mouse with the right mouse button pressed
                     // increases the window when going from left to right.
@@ -5276,9 +5278,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                     }
                 } // if ((mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0)
 
-                // check is left mouse button was pressed...if so...we need to show intensity values
+                //if left mouse button was pressed, the intensity values should be displayed based on the user's preferences
                 if ( (mouseEvent.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) == InputEvent.BUTTON1_DOWN_MASK) {
-                    intensityLabel = true;
+                    intensityLabel = Preferences.is(Preferences.PREF_SHOW_INTENSITY_ON_LEFT_CLICK);
                     paintComponent(getGraphics());
                 }
 

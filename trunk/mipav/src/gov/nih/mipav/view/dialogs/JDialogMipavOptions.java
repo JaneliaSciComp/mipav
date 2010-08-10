@@ -220,6 +220,9 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
     /** DOCUMENT ME! */
     private Color voiDrawColor, intensityLabelColor, intensityLabelBackgroundColor;
+    
+    /** Check boxes for whether right and left mouse clicks produce default actions. */
+	private JCheckBox doIntensityOnLeftBox, doWinLevOnRightBox;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -263,6 +266,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         displayUserInterfacePanel.setLayout(gbl);
         displayUserInterfacePanel.setBorder(buildTitledBorder("User interface"));
         makeSplashOptions(gbc, gbl);
+        makeMouseClickOptions(gbc, gbl);
+        makeFontOptions(gbc, gbl);
 
         displayColorPanel.setLayout(gbl);
         displayColorPanel.setBorder(buildTitledBorder("Color\\VOI"));
@@ -318,7 +323,6 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         makeLoggingOptions(gbc, gbl);
         makeOutputWindowOptions(gbc, gbl);
         makeDebugOptions(gbc, gbl);
-        makeFontOptions(gbc, gbl);
         tabbedPane = new JTabbedPane();
         tabbedPane.setFont(MipavUtil.font12B);
         tabbedPane.addTab("Display", displayPanel);
@@ -440,6 +444,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             Preferences.setProperty(Preferences.PREF_SHOW_OUTPUT, String.valueOf(showOutputWindow.isSelected()));
             Preferences.setProperty(Preferences.PREF_MULTI_THREADING_ENABLED, String
                     .valueOf(multiThreadingEnabledCheckBox.isSelected()));
+            Preferences.setProperty(Preferences.PREF_SHOW_INTENSITY_ON_LEFT_CLICK, String.valueOf(doIntensityOnLeftBox.isSelected()));
+            Preferences.setProperty(Preferences.PREF_SHOW_WINLEV_ON_RIGHT_CLICK, String.valueOf(doWinLevOnRightBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_GPU_COMP_ENABLED, String.valueOf(gpuCompEnabledCheckBox
                     .isSelected()));
             Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, String.valueOf(dicomReceiverOnStart
@@ -1202,7 +1208,50 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
         // gbc.gridy++;
         // gbc.fill = GridBagConstraints;
-        otherPanel.add(fontPanel, gbc);
+        displayUserInterfacePanel.add(fontPanel, gbc);
+    }
+    
+    /**
+     * Makes options for how user interface will react when the left or right mouse buttons are clicked.
+     * 
+     * @param gbc DOCUMENT ME!
+     * @param gbl DOCUMENT ME!
+     */
+    protected void makeMouseClickOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
+
+        final GridBagConstraints gbc2 = new GridBagConstraints();
+
+        boolean doLeft = true, doRight = true;
+
+        if (Preferences.getProperty(Preferences.PREF_SHOW_INTENSITY_ON_LEFT_CLICK) != null) {
+            doLeft = Preferences.is(Preferences.PREF_SHOW_INTENSITY_ON_LEFT_CLICK);
+        }
+        
+        if (Preferences.getProperty(Preferences.PREF_SHOW_WINLEV_ON_RIGHT_CLICK) != null) {
+            doRight = Preferences.is(Preferences.PREF_SHOW_WINLEV_ON_RIGHT_CLICK);
+        }
+        
+        doIntensityOnLeftBox = new JCheckBox("Display position and intensity on left mouse click");
+        doIntensityOnLeftBox.setFont(MipavUtil.font12);
+        doIntensityOnLeftBox.setForeground(Color.black);
+        doIntensityOnLeftBox.addActionListener(this);
+        doIntensityOnLeftBox.setSelected(doLeft);
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbl.setConstraints(doIntensityOnLeftBox, gbc);
+        displayUserInterfacePanel.add(doIntensityOnLeftBox);
+        
+        doWinLevOnRightBox = new JCheckBox("Adjust window/level on right mouse click");
+        doWinLevOnRightBox.setFont(MipavUtil.font12);
+        doWinLevOnRightBox.setForeground(Color.black);
+        doWinLevOnRightBox.addActionListener(this);
+        doWinLevOnRightBox.setSelected(doRight);
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbl.setConstraints(doWinLevOnRightBox, gbc);
+        displayUserInterfacePanel.add(doWinLevOnRightBox);
     }
 
     /**

@@ -236,8 +236,15 @@ public class Preferences {
     /** Constant that indicates if computing on the GPU is enabled */
     public static final String PREF_GPU_COMP_ENABLED = "gpuCompEnabled";
 
+    /** Constant that specifies how many system threads user would like MIPAV to use */
     public static final String PREF_NUMBER_OF_THREADS = "numberOfThreads";
 
+    /** Constant that indicates if left mouse click inside image should cause intensity value to display */
+    public static final String PREF_SHOW_INTENSITY_ON_LEFT_CLICK = "intensityOnLeftClick";
+    
+    /** Constant that indicates if right mouse click inside image should cause window/level changes*/
+    public static final String PREF_SHOW_WINLEV_ON_RIGHT_CLICK = "winLevOnRightClick";
+    
     /**
      * Constant that indicates the last used paint brush so that it will be set as the default when new images are
      * opened or mipav is restarted.
@@ -595,6 +602,9 @@ public class Preferences {
 
         Preferences.defaultProps.setProperty(Preferences.PREF_MENU_FONT_COLOR, "BLACK");
         Preferences.defaultProps.setProperty(Preferences.PREF_SHOW_OUTPUT, "true");
+        
+        Preferences.defaultProps.setProperty(Preferences.PREF_SHOW_INTENSITY_ON_LEFT_CLICK, "true");
+        Preferences.defaultProps.setProperty(Preferences.PREF_SHOW_WINLEV_ON_RIGHT_CLICK, "true");
 
         // performance information properties
         Preferences.defaultProps.setProperty(Preferences.PREF_MULTI_THREADING_ENABLED,
