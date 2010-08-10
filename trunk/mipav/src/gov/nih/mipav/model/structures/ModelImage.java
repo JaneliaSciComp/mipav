@@ -1868,7 +1868,7 @@ public class ModelImage extends ModelStorageBase {
     }
 
     /**
-     * Forms a single VOI structure from all the VOIs presently loaded in the imageModel.
+     * Forms a single VOI structure from all the active VOIs presently loaded in the imageModel.
      */
     public void groupVOIs() {
         int i, k;
@@ -2099,7 +2099,7 @@ public class ModelImage extends ModelStorageBase {
     }
 
     /**
-     * Forms a single VOI structure from all the VOIs presently loaded in the imageModel.
+     * Forms a single VOI structure from all of the VOIs presently loaded in the imageModel.
      * 
      * @param newVOIVector a new ViewVOIVector to hold the grouped VOIs
      * @param where int array telling where to sort
