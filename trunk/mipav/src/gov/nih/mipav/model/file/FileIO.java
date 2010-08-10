@@ -10427,9 +10427,9 @@ public class FileIO {
                 }
 
                 final float[] imageOrg = originalFileInfo.getOrigin();
-                final double dicomOrigin[] = new double[Math.min(3,imageOrg.length)];
+                final double dicomOrigin[] = new double[imageOrg.length];
 
-                for (int k = 0; k < Math.min(3,imageOrg.length); k++) {
+                for (int k = 0; k < imageOrg.length; k++) {
                     dicomOrigin[k] = imageOrg[k];
                 }
                 
@@ -10987,9 +10987,9 @@ public class FileIO {
                 }
 
                 final float[] imageOrg = image.getFileInfo(0).getOrigin();
-                final double dicomOrigin[] = new double[Math.min(3,imageOrg.length)];
+                final double dicomOrigin[] = new double[imageOrg.length];
 
-                for (int k = 0; k < Math.min(3,imageOrg.length); k++) {
+                for (int k = 0; k < imageOrg.length; k++) {
                     dicomOrigin[k] = imageOrg[k];
                 }
                 
