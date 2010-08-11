@@ -213,15 +213,15 @@ private boolean testMode = false;
 	    // Helix OK
 	    // Helix correct answer is f = 0 at (x1 = 1, x2 = 0 x3 = 0)
 	    // For standard starting point Java port gave:
-	    // niter = 10 nf = 13 ng = 11 Absolute function convergence final f = 2.760E-21
+	    // niter = 10 nf = 13 ng = 11 Absolute function convergence final f = 2.76021E-21
 	    // Original FORTRAN gave:
 	    // niter = 10 nf = 13 ng = 11 Absolute function convergence final f = 2.76017E-21
 	    // For 10 times the standard starting point Java port gave:
-	    // niter = 15 nf = 19 ng = 16 Absolute function convergence final f = 1.196E-21
+	    // niter = 15 nf = 19 ng = 16 Absolute function convergence final f = 1.19609E-21
 	    // Original FORTRAN gave:
 	    // niter = 15 nf = 19 ng = 16 Absolute convergence final f = 1.19609E-21
 	    // For 100 times the standard starting point Java port gave:
-	    // niter = 21 nf = 33 ng = 22 Absolute function convergence final f = 1.037E-29
+	    // niter = 21 nf = 33 ng = 22 Absolute function convergence final f = 1.03680E-29
 	    // Original FORTRAN gave:
 	    // niter = 21 nf = 33 ng = 22 Absolute function convergence final f = 1.03668E-29
 	    n = 3;
@@ -235,15 +235,15 @@ private boolean testMode = false;
 	    // Singular OK
 	    // Singular function
 	    // For standard starting point Java port gave:
-	    // niter = 19 nf = 20 ng = 20 Absolute function convergence final f = 1.065E-21
+	    // niter = 19 nf = 20 ng = 20 Absolute function convergence final f = 1.06541E-21
 	    // Original FORTRAN gave:
 	    // niter = 19 nf = 20 ng = 20 Absolute function convergence final f = 1.06541E-21
 	    // For 10 times the standard starting point Java port gave:
-	    // niter = 25 nf = 34 ng = 26 Absolute function convergence final f = 3.198E-21
+	    // niter = 25 nf = 34 ng = 26 Absolute function convergence final f = 3.19823E-21
 	    // Original FORTRAN gave:
 	    // niter = 25 nf = 35 ng = 26 Absolute function convergence final f = 3.19823E-21
 	    // For 100 times the standard starting point Java port gave:
-	    // niter = 30 nf = 53 ng = 31 Absolute function convergence final f = 1.588E-21
+	    // niter = 30 nf = 53 ng = 31 Absolute function convergence final f = 1.58785E-21
 	    // Original FORTRAN gave:
 	    // niter = 30 nf = 53 ng = 31 Absolute function convergence final f = 1.58785E-21
 	    
@@ -267,7 +267,7 @@ private boolean testMode = false;
 	    // niter = 50 nf = 98 ng = 51 X-convergence final f = 0.0
 	    // x1 = -0.97188, x2 = 0.954692, x3 = -0.965661, x4 = 0.943790
 	    // For 100 times the original starting point Java port gave:
-	    // niter = 30 nf = 45 ng = 31 Absolute function convergence final f = 6.318E-21
+	    // niter = 30 nf = 45 ng = 31 Absolute function convergence final f = 6.31807E-21
 	    // Original FORTRAN gave:
 	    // niter = 30 nf = 45 nf = 31 Absolute function convergence final f = 6.31798E-21
 	    n = 7;
@@ -281,7 +281,7 @@ private boolean testMode = false;
 	    // Zangwill OK
 	    // Zangwill f = 0 at origin
 	    // For original starting point the Java port gave:
-	    // niter = 2 nf = 3 ng = 3 Absolute function convergence final f = 9.387E-28
+	    // niter = 2 nf = 3 ng = 3 Absolute function convergence final f = 9.38744E-28
 	    // Original FORTRAN gave:
 	    // niter = 2 nf = 3 ng = 3 Absolute function convergence final f = 9.38744E-28
 	    n = 3;
@@ -318,15 +318,15 @@ private boolean testMode = false;
 	    // Branin OK
 	    // Branin correct f = 0 at x1 = 0, x2 = 0
 	    // For the standard starting point Java port gave:
-	    // niter = 1 nf = 2 ng = 2 Absolute function convergence final f = 8.537E-30
+	    // niter = 1 nf = 2 ng = 2 Absolute function convergence final f = 8.53732E-30
 	    // Original FORTRAN gave:
 	    // niter = 1 nf = 2 ng = 2 Absolute function convergence final f = 8.53732E-30
 	    // For 10 times the standard starting point Java port gave:
-	    // niter = 26 nf = 43 ng = 27 Absolute function convergence final f = 1.313E-27
+	    // niter = 26 nf = 43 ng = 27 Absolute function convergence final f = 1.31337E-27
 	    // Original FORTRAN gave:
 	    // niter = 26 nf = 43 ng = 27 Absolute function convergence final f = 1.31337E-27
 	    // For 100 times the standard starting point Java port gave:
-	    // niter = 36 nf = 58 ng = 37 Absolute function convergence final f = 2.681E-31
+	    // niter = 36 nf = 58 ng = 37 Absolute function convergence final f = 2.68109E-31
 	    // Original FORTRAN gave:
 	    // niter = 36 nf = 58 ng = 37 Absolute function convergence final f = 2.68109E-31
 	    n = 2;
@@ -339,11 +339,11 @@ private boolean testMode = false;
 	    
 	    // Beale correct for f = 0 for x1 = 3, x2 = 0.5
 	    // For standard starting point Java port gave:
-	    // niter = 8 nf = 10 ng = 9 Absolute function convergence final f = 8.906E-27
+	    // niter = 8 nf = 10 ng = 9 Absolute function convergence final f = 8.90567E-27
 	    // Original FORTRAN gave:
 	    // niter = 8 nf = 10 ng = 9 Absolute convergence final f = 8.94590E-27
 	    // For 10 times standard starting point Java port gave:
-	    // niter = 5 nf = 6 ng = 6 Absolute function convergence final f = 1.478E-22
+	    // niter = 5 nf = 6 ng = 6 Absolute function convergence final f = 1.47766E-22
 	    // Original FORTRAN gave:
 	    // niter = 5 nf = 6 ng = 6 Absolute convergence final f = 1.47825E-22
 	    n = 3;
@@ -357,7 +357,7 @@ private boolean testMode = false;
 	    // Cragg and Levy OK
 	    // Cragg and Levy
 	    // For standard starting point Java port gave:
-	    // niter = 22 nf = 24 ng = 3 Absolute function convergence final f = 2.16879E-21
+	    // niter = 22 nf = 24 ng = 23 Absolute function convergence final f = 2.16879E-21
 	    // Original FORTRAN gave:
 	    // niter = 22 nf = 24 ng = 23 Absolute function convergence final f = 2.16879E-21
 	    // For 10 times standard starting point Java port gave:
@@ -377,7 +377,7 @@ private boolean testMode = false;
 	    // Box correct solutions f = 0 at (1,10,1), (10,1,-1),
 	    // and wherever x1 = x2 and x3 = 0
 	    // For standard starting point with Java port:
-	    // niter = 6 nf = 7 ng = 7 Absolute function convergence final f = 3.081E-32
+	    // niter = 6 nf = 7 ng = 7 Absolute function convergence final f = 3.08149E-32
 	    // Original FORTRAN gave:
 	    // niter = 6 nf = 7 ng = 7 X-convergence final f = 1.84889E-32
 	    // For 10 times standard starting point with Java port:
@@ -395,7 +395,7 @@ private boolean testMode = false;
 	    // Davidon 1 OK
 	    // Davidon 1
 	    // For standard starting point with Java port:
-	    // niter = 15 nf = 20 ng = 15 Function evaluation limit final f = 8.141E-7
+	    // niter = 15 nf = 20 ng = 15 Function evaluation limit final f = 8.14061E-7
 	    // Original FORTRAN gave:
 	    // niter = 15 nf = 20 ng = 15 Function evaluation limit final f = 8.14061E-7
 	    n = 15;
@@ -2971,7 +2971,7 @@ private boolean testMode = false;
 	    				i = i + 1;
 	    			}
 	    			
-	    			if (i < 0) {
+	    			if (i > 0) {
 	    				iv[irc] = i + 6;
 	    			}
 	    		} // if (0.0 <= v[dst0])
