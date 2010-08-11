@@ -2669,7 +2669,9 @@ private boolean testMode = false;
 	    			iv[radinc] = -1;
 	    			do90 = true;
 	    		} // if (iv[model] == iv[mlstgd])
-	    		do30 = true;
+	    		else {
+	    		    do30 = true;
+	    		}
 	    	} // if (do20)
 	    	
 	    	if (do30) {
