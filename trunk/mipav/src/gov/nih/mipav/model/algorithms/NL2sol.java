@@ -851,7 +851,11 @@ private boolean testMode = false;
 	    // niter = 11 nf = 16 ng = 12 Relative function convergence final f = 14.3398
 	    // At 10 times standard starting point Java port gave:
 	    // niter = 11 nf = 16 ng = 12 Relative function convergence final f = 14.3398
+	    // Original FORTRAN gave:
+	    // niter = 11 nf = 16 ng = 12 Relative function convergence final f = 14.3398
 	    // At 100 times standard starting point Java port gave:
+	    // niter = 11 nf = 16 ng = 12 Relative function convergence final f = 14.3398
+	    // Original FORTRAN gave:
 	    // niter = 11 nf = 16 ng = 12 Relative function convergence final f = 14.3398
 	    n = 31;
 	    p = 6;
@@ -864,9 +868,15 @@ private boolean testMode = false;
 	    // Watson9 + 10
 	    // At standard starting point Java port gave:
 	    // niter = 15 nf = 24 ng = 16 Relative function convergence final f = 4.21317
+	    // Original FORTRAN gave:
+	    // niter = 12 nf = 24 ng = 16 Relative function convergence final f = 4.21317
 	    // At 10 times standard starting point Java port gave:
 	    // niter = 15 nf = 24 ng = 16 Relative function convergence final f = 4.21317
+	    // Original FORTRAN gave:
+	    // niter = 15 nf = 24 ng = 16 Relative function convergence final f = 4.21317
 	    // At 100 times standard starting point Java port gave:
+	    // niter = 15 nf = 24 ng = 16 Relative function convergence final f = 4.21317
+	    // Original FORTRAN gave:
 	    // niter = 15 nf = 24 ng = 16 Relative function convergence final f = 4.21317
 	    n = 31;
 	    p = 9;
@@ -879,10 +889,16 @@ private boolean testMode = false;
 	    // Watson12 + 10
 	    // At standard starting point Java port gave:
 	    // niter = 23 nf = 36 ng = 23 X- and relative function convergence final f = 0.323211
+	    // Original FORTRAN gave:
+	    // niter = 20 nf = 33 ng = 20 Relative function convergence f = 0.323211
 	    // At 10 times standard starting point Java port gave:
 	    // niter = 23 nf = 36 ng = 23 X- and relative function convergence final f = 0.323211
+	    // Original FORTRAN gave:
+	    // niter = 20 nf = 33 ng = 20 Relative function convergence final f = 0.323211
 	    // At 100 times standard starting point Java port gave:
 	    // niter = 23 nf = 36 ng = 23 X- and relative function convergence final f = 0.323211
+	    // Original FORTRAN gave:
+	    // niter = 20 nf = 33 ng = 20 Relative function convergence final f = 0.323211
 	    n = 31;
 	    p = 12;
 	    nex = 35;
@@ -894,10 +910,16 @@ private boolean testMode = false;
 	    // Watson20 + 10
 	    // At standard starting point Java port gave:
 	    // niter = 194 nf = 400 nf = 194 Function evaluation limit final f = 0.00780931
+	    // Original FORTRAN gave:
+	    // niter = 93 nf = 200 ng = 93  Function evaluation limit final f = 1.50354E-2
 	    // At 10 times standard starting point Java port gave:
 	    // niter = 194 nf = 400 nf = 194 Function evaluation limit final f = 0.00780931
+	    // Original FORTRAN gave:
+	    // niter = 93 nf = 200 nf = 93 Function evaluation limit final f = 1.50354E-2
 	    // At 100 times standard starting point Java port gave:
-	    // niter = 194 nf = 400 nf = 194 Function evaluation limit final f = 0.00780931
+	    // niter = 194 nf = 400 ng = 194 Function evaluation limit final f = 0.00780931
+	    // Original FORTRAN gave:
+	    // niter = 93 nf = 200 ng = 93 Function evaluation limit final f = 1.50354E-2
 	    n = 31;
 	    p = 20;
 	    nex = 36;
@@ -909,6 +931,8 @@ private boolean testMode = false;
 	    // Repeat Rosenbrock with finite-difference jacobian.
 	    // At standard starting point Java port gave:
 	    // niter = 26 nf = 44 ng = 27 Absolute convergence final f = 7.35208E-9
+	    // Original FORTRAN gave:
+	    // niter = 18 nf = 29 ng = 19 Absolute convergence final f = 7.91461E-22
 	    n = 2;
 	    p = 2;
 	    nex = 1;
@@ -922,10 +946,16 @@ private boolean testMode = false;
 	    // Repeat Brown with finite-difference Jacobian.
 	    // At standard starting point Java port gave:
 	    // niter = 17 nf = 20 ng = 18 Relative function convergence final f = 42911.1
+	    // Original FORTRAN gave:
+	    // niter = 16 nf = 26 ng = 17 Relative function convergence final f = 42911.1
 	    // At 10 times standard starting point Java port gave:
 	    // niter = 14 nf = 17 ng = 15 Relative function convergence final f = 42911.1
+	    // Original FORTRAN gave:
+	    // niter = 16 nf = 30 ng = 17 Relative function convergence final f = 42911.1
 	    // At 100 times standard starting point Java port gave:
 	    // niter = 11 nf = 30 ng = 11 Function evaluation limit final f = 48744.4
+	    // Original FORTRAN gave:
+	    // niter = 14 nf = 30 ng = 14 Function evaluation limit final f = 53322.4
 	    n = 20;
 	    p = 4;
 	    nex = 18;
