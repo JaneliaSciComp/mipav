@@ -4261,7 +4261,6 @@ public class ModelImage extends ModelStorageBase {
             }
         } else { // If file is DICOM...
 
-            
             int[] newDimExtents;
             int[] newAxisOrients;
             float[] newResolutions;
@@ -4415,6 +4414,77 @@ public class ModelImage extends ModelStorageBase {
                 destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
             }
         }
+        if (destImage.getNDims() >= 3) {
+        	// Update any destImage NIFTI matrices
+            MatrixHolder matHolder = null;
+            int i;
+            int j;
+            matHolder = destImage.getMatrixHolder();
+            float loc;
+
+            if (matHolder != null) {
+                LinkedHashMap<String, TransMatrix> matrixMap = matHolder.getMatrixMap();
+                Iterator<String> iter = matrixMap.keySet().iterator();
+                String nextKey = null;
+                
+                TransMatrix tempMatrix = null;
+                
+                while (iter.hasNext()) {
+                    nextKey = iter.next();
+                    tempMatrix = matrixMap.get(nextKey);
+                    if (tempMatrix.isNIFTI()) {
+                    	TransMatrix newMatrix = new TransMatrix(4);
+                    	for (i = 0; i < 3; i++) {
+                            for (j = 0; j < 3; j++) {
+                            	if (axisFlip[i]) {
+                            		newMatrix.set(j, i, -tempMatrix.get(j, axisOrder[i]));
+                            	}
+                            	else {
+                                    newMatrix.set(j, i, tempMatrix.get(j, axisOrder[i]));
+                            	}
+                            }
+                            loc = tempMatrix.get(axisOrder[i], 3);
+                            if (axisFlip[i]) {
+                                if (loc < 0) {
+                                	loc = loc + ((srcImage.getFileInfo(0).getExtents()[axisOrder[i]] - 1) * srcImage.getFileInfo(0).getResolutions()[axisOrder[i]]);
+                                }
+                                else {
+                                	loc = loc - ((srcImage.getFileInfo(0).getExtents()[axisOrder[i]] - 1) * srcImage.getFileInfo(0).getResolutions()[axisOrder[i]]);	
+                                }
+                            }
+                            newMatrix.set(i, 3, loc);
+                    	} // for (i = 0; i < 3; i++)
+                    	tempMatrix.Copy(newMatrix);
+                    	if (destImage.getFileInfo(0) instanceof FileInfoNIFTI) {
+	                        if (tempMatrix.isQform()) {
+	                            if (destImage.getNDims() == 3) {
+	                                for (i = 0; i < destImage.getExtents()[2]; i++) {
+	                                    ((FileInfoNIFTI)destImage.getFileInfo(i)).setMatrixQ(newMatrix);
+	                                }
+	                            }
+	                            else if (destImage.getNDims() == 4) {
+	                                for (i = 0; i < destImage.getExtents()[2]*destImage.getExtents()[3]; i++) {
+	                                    ((FileInfoNIFTI)destImage.getFileInfo(i)).setMatrixQ(newMatrix);    
+	                                }
+	                            }
+	                        } // if (tempMatrix.isQform())
+	                        else { // tempMatrix is sform
+	                            if (destImage.getNDims() == 3) {
+	                                for (i = 0; i < destImage.getExtents()[2]; i++) {
+	                                    ((FileInfoNIFTI)destImage.getFileInfo(i)).setMatrixS(newMatrix);
+	                                }
+	                            }
+	                            else if (destImage.getNDims() == 4) {
+	                                for (i = 0; i < destImage.getExtents()[2]*destImage.getExtents()[3]; i++) {
+	                                    ((FileInfoNIFTI)destImage.getFileInfo(i)).setMatrixS(newMatrix);    
+	                                }
+	                            }    
+	                        } // else tempMatrix is sform
+                    	} // if (destImage.getFileInfo(0) instanceof FileInfoNIFTI)
+                    }
+                }
+            } // if (matHolder != null)    
+        } // if (destImage.getNDims() >= 3)
         return true;
     }
     
