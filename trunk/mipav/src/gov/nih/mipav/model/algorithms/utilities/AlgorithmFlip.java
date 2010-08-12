@@ -294,9 +294,10 @@ public class AlgorithmFlip extends AlgorithmBase {
                             nextKey = iter.next();
                             tempMatrix = matrixMap.get(nextKey);
                             if (tempMatrix.isNIFTI()) { 
-                                for (j = 0; j < 4; j++) {
-                                    tempMatrix.set(index, j, -tempMatrix.get(index, j));
-                                } 
+                                for (j = 0; j < 3; j++) {
+                                    tempMatrix.set(j, index, -tempMatrix.get(j, index));
+                                }
+                                tempMatrix.set(index, 3, loc);
                                 if (tempMatrix.isQform()) {
                                     if (srcImage.getNDims() == 3) {
                                         for (i = 0; i < srcImage.getExtents()[2]; i++) {
