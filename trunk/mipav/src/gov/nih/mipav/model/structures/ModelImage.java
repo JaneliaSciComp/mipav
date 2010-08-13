@@ -4421,6 +4421,7 @@ public class ModelImage extends ModelStorageBase {
             int j;
             matHolder = destImage.getMatrixHolder();
             float loc;
+            int orient;
 
             if (matHolder != null) {
                 LinkedHashMap<String, TransMatrix> matrixMap = matHolder.getMatrixMap();
@@ -4445,7 +4446,10 @@ public class ModelImage extends ModelStorageBase {
                             }
                             loc = tempMatrix.get(axisOrder[i], 3);
                             if (axisFlip[i]) {
-                                if (loc < 0) {
+                            	orient = srcImage.getFileInfo(0).getAxisOrientation(axisOrder[i]);
+                            	if ((orient == FileInfoBase.ORI_R2L_TYPE) || 
+                                        (orient == FileInfoBase.ORI_A2P_TYPE) || 
+                                        (orient == FileInfoBase.ORI_I2S_TYPE)) {
                                 	loc = loc + ((srcImage.getFileInfo(0).getExtents()[axisOrder[i]] - 1) * srcImage.getFileInfo(0).getResolutions()[axisOrder[i]]);
                                 }
                                 else {
