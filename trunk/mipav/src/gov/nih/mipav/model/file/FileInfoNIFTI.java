@@ -201,7 +201,42 @@ public class FileInfoNIFTI extends FileInfoBase {
      * intent_name.
      */
     public static final short NIFTI_INTENT_DIMLESS = 1011;
-
+    
+    /**
+     * To signify that each value at each location is from a time series. 
+     */
+    public static final short NIFTI_INTENT_TIME_SERIES = 2001;
+    
+    /**
+     * To signify that the value at each location is a node index, from a complete surface dataset.
+     */
+    public static final short NIFTI_INTENT_NODE_INDEX = 2002;
+    
+    /**
+     * To signify that the vector value at each location is an RGB triplet, of whatever type.
+     * - dataset must have a 5th dimension 
+     * - dim[0] = 5
+     * - dim[1] = number of nodes
+     * - dim[2] = dim[3] = dim[4] = 1
+     * - dim[5] = 3
+     */
+    public static final short NIFTI_INTENT_RGB_VECTOR = 2003;
+    
+    /**
+     * To signify that the vector value at each location is a 4 valued RGBA vector, of whatever type.
+     * - dataset must have a 5th dimension
+     * - dim[0] = 5
+     * - dim[1] = number of nodes
+     * - dim[2] = dim[3] = dim[4] = 1
+     * - dim[5] = 4
+     */
+    public static final short NIFTI_INTENT_RGBA_VECTOR = 2004;
+    
+    /**
+     * To signify that the value at each location is a shape value, such as the curvature.
+     */
+    public static final short NIFTI_INTENT_SHAPE = 2005;
+    
     /** Unspecified original unscaled source data type */
     public static final short DT_NONE = 0;
 
