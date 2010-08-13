@@ -5,6 +5,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoNIFTI;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.ParameterExternalImage;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
@@ -13,6 +14,7 @@ import gov.nih.mipav.model.scripting.parameters.ParameterImage;
 import gov.nih.mipav.model.scripting.parameters.ParameterInt;
 import gov.nih.mipav.model.scripting.parameters.ParameterString;
 import gov.nih.mipav.model.scripting.parameters.ParameterTable;
+import gov.nih.mipav.model.structures.MatrixHolder;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.DialogDefaultsInterface;
@@ -30,6 +32,8 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.StringTokenizer;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -106,6 +110,8 @@ public class JDialogReorient extends JDialogScriptableBase
     private     JComboBox   newOrientBoxY;
     private     JComboBox   newOrientBoxZ;
     private     int[]       newOr = new int[3];
+    private     int[]       axisOrder = new int[3];
+    private     boolean[]   axisFlip = new boolean[3];
 	
     /**
     *  Creates dialog for plugin.
@@ -537,6 +543,81 @@ public class JDialogReorient extends JDialogScriptableBase
 			if (algorithm.isCompleted() == true && resultImage != null) {
                 // The algorithm has completed and produced a new image to be displayed.
 				JDialogBase.updateFileInfoStatic(fileInfo, resultImage);
+				if (resultImage.getNDims() >= 3) {
+		        	// Update any destImage NIFTI matrices
+		            MatrixHolder matHolder = null;
+		            int i;
+		            int j;
+		            matHolder = resultImage.getMatrixHolder();
+		            float loc;
+		            int orient;
+
+		            if (matHolder != null) {
+		                LinkedHashMap<String, TransMatrix> matrixMap = matHolder.getMatrixMap();
+		                Iterator<String> iter = matrixMap.keySet().iterator();
+		                String nextKey = null;
+		                
+		                TransMatrix tempMatrix = null;
+		                
+		                while (iter.hasNext()) {
+		                    nextKey = iter.next();
+		                    tempMatrix = matrixMap.get(nextKey);
+		                    if (tempMatrix.isNIFTI()) {
+		                    	TransMatrix newMatrix = new TransMatrix(4);
+		                    	for (i = 0; i < 3; i++) {
+		                            for (j = 0; j < 3; j++) {
+		                            	if (axisFlip[i]) {
+		                            		newMatrix.set(j, i, -tempMatrix.get(j, axisOrder[i]));
+		                            	}
+		                            	else {
+		                                    newMatrix.set(j, i, tempMatrix.get(j, axisOrder[i]));
+		                            	}
+		                            }
+		                            loc = tempMatrix.get(axisOrder[i], 3);
+		                            if (axisFlip[i]) {
+		                            	orient = image.getFileInfo(0).getAxisOrientation(axisOrder[i]);
+		                            	if ((orient == FileInfoBase.ORI_R2L_TYPE) || 
+		                                        (orient == FileInfoBase.ORI_A2P_TYPE) || 
+		                                        (orient == FileInfoBase.ORI_I2S_TYPE)) {
+		                                	loc = loc + ((image.getFileInfo(0).getExtents()[axisOrder[i]] - 1) * image.getFileInfo(0).getResolutions()[axisOrder[i]]);
+		                                }
+		                                else {
+		                                	loc = loc - ((image.getFileInfo(0).getExtents()[axisOrder[i]] - 1) * image.getFileInfo(0).getResolutions()[axisOrder[i]]);	
+		                                }
+		                            }
+		                            newMatrix.set(i, 3, loc);
+		                    	} // for (i = 0; i < 3; i++)
+		                    	tempMatrix.Copy(newMatrix);
+		                    	if (image.getFileInfo(0) instanceof FileInfoNIFTI) {
+			                        if (tempMatrix.isQform()) {
+			                            if (resultImage.getNDims() == 3) {
+			                                for (i = 0; i < resultImage.getExtents()[2]; i++) {
+			                                    ((FileInfoNIFTI)resultImage.getFileInfo(i)).setMatrixQ(newMatrix);
+			                                }
+			                            }
+			                            else if (resultImage.getNDims() == 4) {
+			                                for (i = 0; i < resultImage.getExtents()[2]*resultImage.getExtents()[3]; i++) {
+			                                    ((FileInfoNIFTI)resultImage.getFileInfo(i)).setMatrixQ(newMatrix);    
+			                                }
+			                            }
+			                        } // if (tempMatrix.isQform())
+			                        else { // tempMatrix is sform
+			                            if (resultImage.getNDims() == 3) {
+			                                for (i = 0; i < resultImage.getExtents()[2]; i++) {
+			                                    ((FileInfoNIFTI)resultImage.getFileInfo(i)).setMatrixS(newMatrix);
+			                                }
+			                            }
+			                            else if (resultImage.getNDims() == 4) {
+			                                for (i = 0; i < resultImage.getExtents()[2]*resultImage.getExtents()[3]; i++) {
+			                                    ((FileInfoNIFTI)resultImage.getFileInfo(i)).setMatrixS(newMatrix);    
+			                                }
+			                            }    
+			                        } // else tempMatrix is sform
+		                    	} // if (destImage.getFileInfo(0) instanceof FileInfoNIFTI)
+		                    }
+		                }
+		            } // if (matHolder != null)    
+		        } // if (destImage.getNDims() >= 3)
                 resultImage.clearMask();
 				resultImage.calcMinMax();
 
@@ -695,12 +776,16 @@ public class JDialogReorient extends JDialogScriptableBase
                     found = false;
                     for (i = 0; (i <= 2) && (!found); i++) {
                         if (newOr[i] == FileInfoBase.ORI_R2L_TYPE) {
+                        	axisOrder[i] = j;
+                        	axisFlip[i] = false;
                             found = true;
                             X[i][j] = 1.0;
                             r0[i] = r[j];
                             n0[i] = n[j];
                         }
                         else if (newOr[i] == FileInfoBase.ORI_L2R_TYPE) {
+                        	axisOrder[i] = j;
+                        	axisFlip[i] = true;
                             found = true;
                             X[i][j] = -1.0;
                             X[i][3] = ri[j]*(ni[j] - 1);
@@ -713,12 +798,16 @@ public class JDialogReorient extends JDialogScriptableBase
                     found = false;
                     for (i = 0; (i <= 2) && (!found); i++) {
                         if (newOr[i] == FileInfoBase.ORI_L2R_TYPE) {
+                        	axisOrder[i] = j;
+                        	axisFlip[i] = false;
                             found = true;
                             X[i][j] = 1.0;
                             r0[i] = r[j];
                             n0[i] = n[j];
                         }
                         else if (newOr[i] == FileInfoBase.ORI_R2L_TYPE) {
+                        	axisOrder[i] = j;
+                        	axisFlip[i] = true;
                             found = true;
                             X[i][j] = -1.0;
                             X[i][3] = ri[j]*(ni[j] - 1);
@@ -731,12 +820,16 @@ public class JDialogReorient extends JDialogScriptableBase
                     found = false;
                     for (i = 0; (i <= 2) && (!found); i++) {
                         if (newOr[i] == FileInfoBase.ORI_A2P_TYPE) {
+                        	axisOrder[i] = j;
+                        	axisFlip[i] = false;
                             found = true;
                             X[i][j] = 1.0;
                             r0[i] = r[j];
                             n0[i] = n[j];
                         }
                         else if (newOr[i] == FileInfoBase.ORI_P2A_TYPE) {
+                        	axisOrder[i] = j;
+                        	axisFlip[i] = true;
                             found = true;
                             X[i][j] = -1.0;
                             X[i][3] = ri[j]*(ni[j] - 1);
@@ -749,12 +842,16 @@ public class JDialogReorient extends JDialogScriptableBase
                     found = false;
                     for (i = 0; (i <= 2) && (!found); i++) {
                         if (newOr[i] == FileInfoBase.ORI_P2A_TYPE) {
+                        	axisOrder[i] = j;
+                        	axisFlip[i] = false;
                             found = true;
                             X[i][j] = 1.0;
                             r0[i] = r[j];
                             n0[i] = n[j];
                         }
                         else if (newOr[i] == FileInfoBase.ORI_A2P_TYPE) {
+                        	axisOrder[i] = j;
+                        	axisFlip[i] = true;
                             found = true;
                             X[i][j] = -1.0;
                             X[i][3] = ri[j]*(ni[j] - 1);
@@ -767,12 +864,16 @@ public class JDialogReorient extends JDialogScriptableBase
                     found = false;
                     for (i = 0; (i <= 2) && (!found); i++) {
                         if (newOr[i] == FileInfoBase.ORI_I2S_TYPE) {
+                        	axisOrder[i] = j;
+                        	axisFlip[i] = false;
                             found = true;
                             X[i][j] = 1.0;
                             r0[i] = r[j];
                             n0[i] = n[j];
                         }
                         else if (newOr[i] == FileInfoBase.ORI_S2I_TYPE) {
+                        	axisOrder[i] = j;
+                        	axisFlip[i] = true;
                             found = true;
                             X[i][j] = -1.0;
                             X[i][3] = ri[j]*(ni[j] - 1);
@@ -785,12 +886,16 @@ public class JDialogReorient extends JDialogScriptableBase
                     found = false;
                     for (i = 0; (i <= 2) && (!found); i++) {
                         if (newOr[i] == FileInfoBase.ORI_S2I_TYPE) {
+                        	axisOrder[i] = j;
+                        	axisFlip[i] = false;
                             found = true;
                             X[i][j] = 1.0;
                             r0[i] = r[j];
                             n0[i] = n[j];
                         }
                         else if (newOr[i] == FileInfoBase.ORI_I2S_TYPE) {
+                        	axisOrder[i] = j;
+                        	axisFlip[i] = true;
                             found = true;
                             X[i][j] = -1.0;
                             X[i][3] = ri[j]*(ni[j] - 1);
