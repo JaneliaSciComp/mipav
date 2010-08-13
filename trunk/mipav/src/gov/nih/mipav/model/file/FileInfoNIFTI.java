@@ -202,6 +202,8 @@ public class FileInfoNIFTI extends FileInfoBase {
      */
     public static final short NIFTI_INTENT_DIMLESS = 1011;
     
+    /** The values at 2001 to 2005 apply to GIFTI datasets */
+    
     /**
      * To signify that each value at each location is from a time series. 
      */
