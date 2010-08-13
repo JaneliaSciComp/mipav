@@ -722,6 +722,9 @@ public class JDialogReorient extends JDialogScriptableBase
         float r0[] = new float[3];
         int   n0[] = new int[3];
 		setVisible(false);
+		float origin[];
+		float newOrigin[];
+		int orient;
         
 		fileInfo = (FileInfoBase)(image.getFileInfo()[0].clone());
 		
@@ -733,6 +736,9 @@ public class JDialogReorient extends JDialogScriptableBase
 		ni[0] = image.getExtents()[0];
 		ni[1] = image.getExtents()[1];
 		ni[2] = image.getExtents()[2];
+		
+		origin = image.getFileInfo()[0].getOrigin();
+		newOrigin = origin.clone();
         
         float r[] = new float[3];
         int   n[] = new int[3];
@@ -912,6 +918,25 @@ public class JDialogReorient extends JDialogScriptableBase
             fileInfo.setExtents(n0[i], i);
             fileInfo.setAxisOrientation(newOr[i], i);
         }
+        
+        for (i = 0; i < 3; i++) {
+            
+            if (axisFlip[i]) {
+            	orient = image.getFileInfo(0).getAxisOrientation(axisOrder[i]);
+            	if ((orient == FileInfoBase.ORI_R2L_TYPE) || 
+                        (orient == FileInfoBase.ORI_A2P_TYPE) || 
+                        (orient == FileInfoBase.ORI_I2S_TYPE)) {
+                	newOrigin[i] = origin[axisOrder[i]] + ((image.getFileInfo(0).getExtents()[axisOrder[i]] - 1) * image.getFileInfo(0).getResolutions()[axisOrder[i]]);
+                }
+                else {
+                	newOrigin[i] = origin[axisOrder[i]] - ((image.getFileInfo(0).getExtents()[axisOrder[i]] - 1) * image.getFileInfo(0).getResolutions()[axisOrder[i]]);	
+                }
+            }
+            else {
+            	newOrigin[i] = origin[axisOrder[i]];
+            }
+    	} // for (i = 0; i < 3; i++)
+        fileInfo.setOrigin(newOrigin);
         
         if ((newOr[2] == FileInfoBase.ORI_I2S_TYPE) || (newOr[2] == FileInfoBase.ORI_S2I_TYPE)) {
             newOrient = FileInfoBase.AXIAL;
