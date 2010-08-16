@@ -426,13 +426,9 @@ public class FileNIFTI extends FileBase {
     // = 4 = AFNI group(i.e., ASCII XML-ish elements)
     private int ecode;
     
-    private int esize2 = 0;
+    private int esizeArray[] = null;
     
-    private int ecode2;
-    
-    private int esize3 = 0;
-    
-    private int ecode3;
+    private int ecodeArray[] = null;
     
     /**
      * File object and input streams 
@@ -866,6 +862,9 @@ public class FileNIFTI extends FileBase {
         boolean isQform = true;
         byte extension0 = 0;
         DecimalFormat nf;
+        int extendedHeaderStart;
+        int currentAddress;
+        int ecodeNumber = 0;
 
         bufferByte = new byte[headerSize];
 
@@ -873,29 +872,98 @@ public class FileNIFTI extends FileBase {
         
         if(niftiCompressed) {
         	oneFile = true;
-        	byte[] buffer = new byte[348];
+        	byte[] buffer = new byte[headerSize];
         	int bytesRead;
+        	int dataStart;
+        	byte[] buffer2 = null;
+        	int bytesRead2 = 0;
         	if (fileName.endsWith("zip")) {
         		zin.getNextEntry();
         		 bytesRead = zin.read(buffer);
-                 if(bytesRead != 348) {
-                	 buffer = getFullBuffer(zin,buffer,bytesRead,348); 
+                 if(bytesRead != headerSize) {
+                	 buffer = getFullBuffer(zin,buffer,bytesRead,headerSize); 
                  }
-                 bufferByte = buffer;
+                 endianess = BIG_ENDIAN;
+                 if (headerSize != (getBufferInt(buffer, 0, BIG_ENDIAN))) {
+                	 endianess = LITTLE_ENDIAN;
+                 }
+                 vox_offset = getBufferFloat(buffer, 108, endianess);
+                 dataStart = Math.round(vox_offset);
+                 if (dataStart > headerSize) {
+                	 buffer2 = new byte[dataStart-headerSize];
+                	 bytesRead2 = zin.read(buffer2);
+                	 if (bytesRead2 != dataStart - headerSize) {
+                		 buffer2 = getFullBuffer(zin, buffer2, bytesRead2, dataStart - headerSize);
+                	 }
+                 }
+                 else {
+                	 dataStart = headerSize;
+                 }
+                 bufferByte = new byte[dataStart];
+                 for (i = 0; i < headerSize; i++) {
+                     bufferByte[i] = buffer[i];
+                 }
+                 for (i = 0; i < dataStart-headerSize; i++) {
+                	 bufferByte[i+headerSize] = buffer2[i];
+                 }
         	}else if(fileName.endsWith("gz")) {
         		bytesRead = gzin.read(buffer);
-                if(bytesRead != 348) {
-               	 buffer = getFullBuffer(gzin,buffer,bytesRead,348); 
+                if(bytesRead != headerSize) {
+               	 buffer = getFullBuffer(gzin,buffer,bytesRead,headerSize); 
                 }
-                bufferByte = buffer;
+                endianess = BIG_ENDIAN;
+                if (headerSize != (getBufferInt(buffer, 0, BIG_ENDIAN))) {
+               	 endianess = LITTLE_ENDIAN;
+                }
+                vox_offset = getBufferFloat(buffer, 108, endianess);
+                dataStart = Math.round(vox_offset);
+                if (dataStart > headerSize) {
+               	 buffer2 = new byte[dataStart-headerSize];
+               	 bytesRead2 = zin.read(buffer2);
+               	 if (bytesRead2 != dataStart - headerSize) {
+               		 buffer2 = getFullBuffer(gzin, buffer2, bytesRead2, dataStart - headerSize);
+               	 }
+                }
+                else {
+               	 dataStart = headerSize;
+                }
+                bufferByte = new byte[dataStart];
+                for (i = 0; i < headerSize; i++) {
+                    bufferByte[i] = buffer[i];
+                }
+                for (i = 0; i < dataStart-headerSize; i++) {
+               	 bufferByte[i+headerSize] = buffer2[i];
+                }
         	}else if(fileName.endsWith("bz2")) {
         		bytesRead = bz2in.read(buffer);
-                if(bytesRead != 348) {
-               	 buffer = getFullBuffer(bz2in,buffer,bytesRead,348); 
+                if(bytesRead != headerSize) {
+               	 buffer = getFullBuffer(bz2in,buffer,bytesRead,headerSize); 
                 }
-                bufferByte = buffer;
+                endianess = BIG_ENDIAN;
+                if (headerSize != (getBufferInt(buffer, 0, BIG_ENDIAN))) {
+               	 endianess = LITTLE_ENDIAN;
+                }
+                vox_offset = getBufferFloat(buffer, 108, endianess);
+                dataStart = Math.round(vox_offset);
+                if (dataStart > headerSize) {
+               	 buffer2 = new byte[dataStart-headerSize];
+               	 bytesRead2 = zin.read(buffer2);
+               	 if (bytesRead2 != dataStart - headerSize) {
+               		 buffer2 = getFullBuffer(bz2in, buffer2, bytesRead2, dataStart - headerSize);
+               	 }
+                }
+                else {
+               	 dataStart = headerSize;
+                }
+                bufferByte = new byte[dataStart];
+                for (i = 0; i < headerSize; i++) {
+                    bufferByte[i] = buffer[i];
+                }
+                for (i = 0; i < dataStart-headerSize; i++) {
+               	 bufferByte[i+headerSize] = buffer2[i];
+                }
         	}
-
+           
         }else {
         	// index         = fileName.toLowerCase().indexOf(".img");
             index = fileName.lastIndexOf(".");
@@ -941,15 +1009,28 @@ public class FileNIFTI extends FileBase {
             if (fileInfo == null) { // if the file info does not yet exist: make it
             	fileInfo = new FileInfoNIFTI(imageFileName, fileDir, FileUtility.NIFTI);
             }
+        
 
 
-            raFile = new RandomAccessFile(fileHeader, "r");
+	        raFile = new RandomAccessFile(fileHeader, "r");
+	        byte buffer[] = new byte[348];
+	        raFile.read(buffer);
+	        endianess = BIG_ENDIAN;
+            if (headerSize != (getBufferInt(buffer, 0, BIG_ENDIAN))) {
+           	 endianess = LITTLE_ENDIAN;
+            }
+            vox_offset = getBufferFloat(buffer, 108, endianess);
+            int dataStart = Math.round(vox_offset);
+            if (dataStart < 348) {
+            	dataStart = 348;
+            }
+            bufferByte = new byte[dataStart];
+            raFile.seek(0L);
             raFile.read(bufferByte);
-            fileLength = raFile.length();
-            Preferences.debug("\nThe size of the file with the header information = " + fileLength + "\n");
-        }
+	        fileLength = raFile.length();
+	        Preferences.debug("\nThe size of the file with the header information = " + fileLength + "\n");
         
-        
+        }  
 
         fileInfo.setEndianess(BIG_ENDIAN);
         fileInfo.setSizeOfHeader(getBufferInt(bufferByte, 0, BIG_ENDIAN));
@@ -2163,123 +2244,89 @@ public class FileNIFTI extends FileBase {
         intentName = (new String(bufferByte, 328, 16));
         Preferences.debug("Name or meaning of data = " + intentName + "\n");
         fileInfo.setIntentName(intentName.trim());
-        if ((fileLength > 348) && (vox_offset > 352)) {
+        if ((bufferByte.length > 348) && (vox_offset > 352)) {
             // 4 byte extension array is present with only the first byte extension[0] defined
             // If extension[0] is nonzero, it indicates that extended header information is
             // present in the bytes following the extension array.
-            extension0 = raFile.readByte();
+            extension0 = bufferByte[348];
             Preferences.debug("First byte in extension array = " + extension0 + "\n");
         }
         if (extension0 == 0) {
             Preferences.debug("No extended header information is present\n");
-            fileInfo.setExtendedHeaderPresence("No header extension is present");
         }
         else {
             Preferences.debug("This indicates a header extension follows the extension array\n");
-            fileInfo.setExtendedHeaderPresence("A header extension is present");
             // Read past the 3 unused bytes in the extension array
-            raFile.readByte();
-            raFile.readByte();
-            raFile.readByte();
             // The size of the extended header in bytes including the 8 bytes for esize and ecode
             // esize must be a positive integral multiple of 16
-            esize = getInt(endianess);
-            Preferences.debug("The size of the header extension in bytes = " + esize + "\n");
-            fileInfo.setEsize(esize);
-            ecode = getInt(endianess);
-            if (ecode == 0) {
-                Preferences.debug("ecode = 0 for an unknown private format\n");
-            }
-            else if (ecode == 2) {
-                Preferences.debug("ecode = 2 for DICOM format (i.e., attribute tags and values)\n");
-            }
-            else if (ecode == 4) {
-                Preferences.debug("ecode = 4 for AFNI group (i.e., ASCII XML-ish elements)\n");
-            }
-            else if (ecode == 6) {
-                Preferences.debug("ecode = 6 for comment: arbitrary non-NUL ASCII text\n");
-            }
-            else if (ecode == 8) {
-                Preferences.debug("ecode = 8 for XCEDE metadata\n");
-            }
-            else if (ecode == 10) {
-                Preferences.debug("ecode = 10 for dimensional information for JIM software(XML format)\n");
-            }
-            else if (ecode == 12) {
-                Preferences.debug("ecode = 12 for Fiswidget XML pipeline descriptions\n");
-            }
-            else {
-                Preferences.debug("ecode = " + ecode + " an unrecognized ecode value\n");
-            }
-            fileInfo.setEcode(ecode);
-            if ((fileLength > 352 + esize) && ((!oneFile) || (vox_offset > 352 + esize))) {
-                raFile.seek(352 + esize);
-                esize2 = getInt(endianess);
-                Preferences.debug("The size of the second header extension in bytes = " + esize2 + "\n");
-                if (esize2 > 0) {
-                    fileInfo.setEsize2(esize2);
-                    ecode2 = getInt(endianess);
-                    if (ecode2 == 0) {
-                        Preferences.debug("ecode2 = 0 for an unknown private format\n");
-                    }
-                    else if (ecode2 == 2) {
-                        Preferences.debug("ecode2 = 2 for DICOM format (i.e., attribute tags and values)\n");
-                    }
-                    else if (ecode2 == 4) {
-                        Preferences.debug("ecode2 = 4 for AFNI group (i.e., ASCII XML-ish elements)\n");
-                    }
-                    else if (ecode2 == 6) {
-                        Preferences.debug("ecode2 = 6 for comment: arbitrary non-NUL ASCII text\n");
-                    }
-                    else if (ecode2 == 8) {
-                        Preferences.debug("ecode2 = 8 for XCEDE metadata\n");
-                    }
-                    else if (ecode2 == 10) {
-                        Preferences.debug("ecode2 = 10 for dimensional information for JIM software(XML format)\n");
-                    }
-                    else if (ecode2 == 12) {
-                        Preferences.debug("ecode2 = 12 for Fiswidget XML pipeline descriptions\n");
-                    }
-                    else {
-                        Preferences.debug("ecode2 = " + ecode2 + " an unrecognized ecode2 value\n");
-                    }
-                    fileInfo.setEcode2(ecode2);
-                    if ((fileLength > 352 + esize + esize2) && ((!oneFile) || (vox_offset > 352 + esize + esize2))){
-                        esize3 = getInt(endianess);
-                        Preferences.debug("The size of the third header extension in bytes = " + esize3 + "\n");
-                        if (esize3 > 0) {
-                            fileInfo.setEsize3(esize3);
-                            ecode3 = getInt(endianess);
-                            if (ecode3 == 0) {
-                                Preferences.debug("ecode3 = 0 for an unknown private format\n");
-                            }
-                            else if (ecode3 == 2) {
-                                Preferences.debug("ecode3 = 2 for DICOM format (i.e., attribute tags and values)\n");
-                            }
-                            else if (ecode3 == 4) {
-                                Preferences.debug("ecode3 = 4 for AFNI group (i.e., ASCII XML-ish elements)\n");
-                            }
-                            else if (ecode3 == 6) {
-                                Preferences.debug("ecode3 = 6 for comment: arbitrary non-NUL ASCII text\n");
-                            }
-                            else if (ecode3 == 8) {
-                                Preferences.debug("ecode3 = 8 for XCEDE metadata\n");
-                            }
-                            else if (ecode3 == 10) {
-                                Preferences.debug("ecode3 = 10 for dimensional information for JIM software(XML format)\n");
-                            }
-                            else if (ecode3 == 12) {
-                                Preferences.debug("ecode3 = 12 for Fiswidget XML pipeline descriptions\n");
-                            }
-                            else {
-                                Preferences.debug("ecode3 = " + ecode3 + " an unrecognized ecode3 value\n");
-                            }
-                            fileInfo.setEcode3(ecode3);
-                        }
-                    }
-                }
-            }
-        }
+            extendedHeaderStart = 352;
+            currentAddress = extendedHeaderStart;
+            esize = 8;
+            while ((bufferByte.length >= currentAddress + esize) && ((!oneFile) || (vox_offset >= currentAddress + esize))) {
+                esize = getBufferInt(bufferByte, currentAddress, endianess);
+                ecode = getBufferInt(bufferByte, currentAddress+4, endianess);
+                ecodeNumber++;
+                currentAddress = currentAddress + esize;
+            } // while ((fileLength >= currentAddress + 8) && ((!oneFile) || (vox_offset >= currentAddress + 8)))
+            Preferences.debug("The number of header fields = " + ecodeNumber + "\n");
+            if (ecodeNumber >= 1) {
+                esizeArray = new int[ecodeNumber];
+                esizeArray[0] = 8;
+                ecodeArray = new int[ecodeNumber];
+                currentAddress = extendedHeaderStart;
+                ecodeNumber = 0;
+                while ((bufferByte.length >= currentAddress + esizeArray[Math.max(0, ecodeNumber-1)]) && ((!oneFile) || (vox_offset >= currentAddress + esizeArray[Math.max(0, ecodeNumber-1)]))) {
+                    esizeArray[ecodeNumber] = getBufferInt(bufferByte, currentAddress, endianess);
+                    Preferences.debug("Header field number " + (ecodeNumber+1) + " size in bytes = " + esizeArray[ecodeNumber] + "\n");
+                    ecodeArray[ecodeNumber] = getBufferInt(bufferByte, currentAddress+4, endianess);
+                    Preferences.debug("Header field number " + (ecodeNumber+1) + " has ");
+                    switch(ecodeArray[ecodeNumber]) {
+                    case 0:
+                    	Preferences.debug("ecode = 0 for an unknown private format\n");
+                    	break;
+                    case 2:
+                    	Preferences.debug("ecode = 2 for DICOM format (i.e., attribute tags and values)\n");
+                    	break;
+                    case 4:
+                    	Preferences.debug("ecode = 4 for AFNI group (i.e., ASCII XML-ish elements)\n");
+                    	break;
+                    case 6:
+                    	Preferences.debug("ecode = 6 for comment: arbitrary non-NUL ASCII text\n");
+                    	break;
+                    case 8:
+                    	Preferences.debug("ecode = 8 for XCEDE metadata\n");
+                    	break;
+                    case 10:
+                        Preferences.debug("ecode = 10 for dimensional information for JIM software(XML format)\n");
+                        break;
+                    case 12:
+                    	Preferences.debug("ecode = 12 for Fiswidget XML pipeline descriptions\n");
+                    	break;
+                    case 18:
+                    	Preferences.debug("ecode = 18 for MIND_IDENT field with character data\n");
+                    	break;
+                    case 20:
+                        Preferences.debug("ecode = 20 for B_VALUE for b-value in units of s/mm-squared\n");
+                        break;
+                    case 22:
+                    	Preferences.debug("ecode = 22 for SPHERICAL_DIRECTION with spherical coordinates\n");
+                    	break;
+                    case 24:
+                    	Preferences.debug("ecode = 24 for DT_COMPONENT specifying the indicies of a single diffusion tensor component\n");
+                    	break;
+                    case 26:
+                    	Preferences.debug("ecode = 26 for SHC_DEGREEORDER specifying degree and order of a spherical harmonic basis function\n");
+                    	break;
+                    default:
+                        Preferences.debug("ecode = " + ecodeArray[ecodeNumber] + "an unspecified ecode value\n");
+                    } // switch(ecodeArray[ecodeNumber])
+                    currentAddress = currentAddress + esizeArray[ecodeNumber];
+                    ecodeNumber++;
+                } // while ((fileLength >= currentAddress + 8) && ((!oneFile) || (vox_offset >= currentAddress + 8)))
+                fileInfo.setEsize(esizeArray);
+                fileInfo.setEcode(ecodeArray);
+            } // if (ecodeNumber >= 1)
+        } // else   
         if(raFile != null) {
         	raFile.close();
         }
@@ -2523,9 +2570,6 @@ public class FileNIFTI extends FileBase {
             	String ext = fileName.substring(fileName.lastIndexOf(".")+1, fileName.length());
             	if (ext.equalsIgnoreCase("zip")) {
             		
-            		//skip over extension
-            		zin.skip((long)(vox_offset-348));
-            		
                     int start = 0;
                     boolean endianness = fileInfo.getEndianess();
                     int type = image.getType();
@@ -2655,8 +2699,6 @@ public class FileNIFTI extends FileBase {
                     }
             	}else if(ext.equalsIgnoreCase("gz")) {
             		
-            		//skip over extension
-            		gzin.skip((long)(vox_offset-348));
 
                     int start = 0;
                     boolean endianness = fileInfo.getEndianess();
@@ -2785,8 +2827,6 @@ public class FileNIFTI extends FileBase {
                     }
             	}else if(ext.equalsIgnoreCase("bz2")) {
             		
-            		//skip over extension
-            		bz2in.skip((long)(vox_offset-348));
             		
                     int start = 0;
                     boolean endianness = fileInfo.getEndianess();
