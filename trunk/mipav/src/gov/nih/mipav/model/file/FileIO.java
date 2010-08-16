@@ -481,12 +481,21 @@ public class FileIO {
             } else {
                 length = refFileInfo.getExtents()[0] * refFileInfo.getExtents()[1];
             }
+            
+            //if length is 0...this means that extents were not set...and this is becasue..in the case
+            //of dicom spectroscopy images, the image data is not under FileDicom.IMAGE_TAG
+            if(length == 0) {
+            	MipavUtil.displayError("Unable to open DICOM Spectroscopy image");
+            	return null;	
+            }
+            
 
             // TODO: should both of these always be allocated?
             bufferFloat = new float[length];
             if (refFileInfo.getDataType() == ModelStorageBase.UINTEGER) {
             	bufferInt = new int[length];
             } else {
+
             bufferShort = new short[length];
             }
         } catch (final OutOfMemoryError error) {
