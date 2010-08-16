@@ -360,7 +360,53 @@ public class FileInfoNIFTI extends FileInfoBase {
 
     /** MNI 152 normalized coordiantes. */
     public static final short NIFTI_XFORM_MNI_152 = 4;
-
+    
+    /** MIND is an acronym for NIFTI for DWI (diffusion-weighted images)
+     * The 5 MIND extensions to the NIFTI-1.1 header provide a standard
+     * specification for data sharing and interchange for diffusion-weighted
+     * MRI datasets at various stages of processing.
+     */
+    
+    /** The contents of a MIND_IDENT field are character data which serve to
+     * identify the type of DWI data structure represented by the MIND extended
+     * header fields whcih follow.
+     */
+    private static final int NIFTI_ECODE_MIND_IDENT = 18;
+    
+    /** A B_Value field contains a single 32-bit floating point value representing a
+     * diffusion-weighing b-value in units of s/mm-squared.  In the q-space formalism,
+     * the b-value is the square of the magnitude of the diffusion wavevector q.
+     */
+    private static final int NIFTI_ECODE_B_VALUE = 20;
+    
+    /**
+     * A SPHERICAL_DIRECTION field contains two 32-bit floating point values which
+     * represent a direction in spherical coordinates.  The azimuthal angle(longitude) is 
+     * represented first, in radians, followed by the zenith angle(polar angle, elevation angle, or 
+     * colatitude), in radians.  In the mathematics convention, the ordering is denoted
+     * (theta, phi); in the physics convention, the notation is reversed,
+     * (phi, theta).  A radial coordinate is omitted as this field specifies 
+     * direction only, not position.
+     */
+    private static final int NIFTI_ECODE_SPHERICAL_DIRECTION = 22;
+    
+    /**
+     * The contents of a DT_COMPONENT field are a set of 32-bit integers which specify the
+     * indices of a single diffusion tensor component.  The number of integers corresponds
+     * to the order of the tensor: e.g. a 2nd order tensor component Dij has 2 integer 
+     * indices, while a 4th order tensor component Dijkl has 4 indices.  The integers are
+     * given in the indexing order: i.e. i before j before k before l, etc.  Furthermore,
+     * the indices are 1-based, so that D11 represents the upper-left element of a 2nd
+     * order diffusion tensor.
+     */
+    private static final int NIFTI_ECODE_DT_COMPONENT = 24;
+    
+    /**
+     * The SHC_DEGREEORDER field specifies the degree (l) and order (m) of a spherical
+     * harmonic basis function as a pair of 32-bit integers, with the degree preceding
+     * the order.  m can take values between -l and +l, inclusive. 
+     */
+    private static final int NIFTI_ECODE_SHC_DEGREEORDER = 26;
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** auxiliary file */
@@ -513,11 +559,9 @@ public class FileInfoNIFTI extends FileInfoBase {
         may not work properly (e.g., SPM). This is to allow memory-mapped input to be properly byte-aligned. */
     private float vox_offset = -1;
     
-    private String extendedHeaderPresence = null;
-    
     // The number of bytes in the header extension including esize and ecode themselves
     // esize must be a positive integral multiple of 16
-    private int esize = 0;
+    private int esize[] = null;
     
     // ecode is a non-negative integer integer value that indicates the format of the extended header data that
     // follows.  Different ecode values are assigned to different developer groups.  At present, the
@@ -525,17 +569,7 @@ public class FileInfoNIFTI extends FileInfoBase {
     // 0 = unknown private format (not recommended)
     // 2 = DICOM format (i.e., attribute tags and values)
     // 4 = AFNI group (i.e., ASCII XML-ish elements)
-    private int ecode = -1;
-    
-    // The size of the second header extension
-    private int esize2 = 0;
-    
-    private int ecode2 = -1;
-    
-    //  The size of the third header extension
-    private int esize3 = 0;
-    
-    private int ecode3 = -1;
+    private int ecode[] = null;
     
     private TransMatrix matrixQ = null;
     
@@ -565,7 +599,7 @@ public class FileInfoNIFTI extends FileInfoBase {
      * @param  matrix  transformation matrix
      */
     public void displayAboutInfo(JDialogBase dlog, TransMatrix matrix) {
-
+        int i;
         JDialogText dialog = (JDialogText) dlog;
         displayPrimaryInfo(dialog, matrix);
         dialog.append("\n\n                Other information\n\n");
@@ -1018,33 +1052,17 @@ public class FileInfoNIFTI extends FileInfoBase {
             dialog.append("Name or meaning of data = " + intentName + "\n");
         }
         
-        if (extendedHeaderPresence != null) {
-            dialog.append("Header extension = " + extendedHeaderPresence + "\n");
+        if ((esize != null) && (ecode != null)) {
+            dialog.append("Extended header has " + esize.length + " header fields\n");
+            for (i = 0; i < esize.length; i++) {
+            	dialog.append("Header field number " + (i+1) + " size in bytes = " + esize[i] + "\n");
+            	dialog.append("Header field number " + (i+1) + " has " + ecodeIntToString(ecode[i]) + "\n");
+            } // for (i = 0; i < esize.length; i++)
+        } // if ((esize != null) && (ecode != null))
+        else {
+        	dialog.append("No extended header is present\n");
         }
         
-        if (esize > 0) {
-            dialog.append("Header extension size in bytes = " + Integer.toString(esize) + "\n");
-        }
-        if (ecode >= 0) {
-            String ecodeStr = ecodeIntToString(ecode);
-            dialog.append("Header extension data format = " +  ecodeStr + "\n");
-        }
-        
-        if (esize2 > 0) {
-            dialog.append("Second header extension size in bytes = " +  Integer.toString(esize2) + "\n");
-        }
-        if (ecode2 >= 0) {
-            String ecodeStr = ecodeIntToString(ecode2);
-            dialog.append("Second header extension data format = " + ecodeStr + "\n");
-        }
-        
-        if (esize3 > 0) {
-            dialog.append("Third header extension size in bytes = " + Integer.toString(esize3) + "\n");
-        }
-        if (ecode3 >= 0) {
-            String ecodeStr = ecodeIntToString(ecode3);
-            dialog.append("Third header extension data format = " +  ecodeStr + "\n");
-        }
         
         if (matrixQ != null) {
             dialog.append("Qform Matrix = \n" + matrixQ.matrixToString(10, 4));
@@ -1057,7 +1075,7 @@ public class FileInfoNIFTI extends FileInfoBase {
     }
     
     private String ecodeIntToString(int ecode) {
-        String ecodeStr;
+        String ecodeStr = null;
         switch(ecode) {
             case 0:
                 ecodeStr = "Unknown private format";
@@ -1080,6 +1098,21 @@ public class FileInfoNIFTI extends FileInfoBase {
             case 12:
                 ecodeStr = "Fiswidget XML pipeline descriptions";
                 break;
+            case 18:
+            	ecodeStr = "MIND_IDENT field with character data";
+            	break;
+            case 20:
+                ecodeStr = "B_VALUE for b-value in units of s/mm-squared";
+                break;
+            case 22:
+            	ecodeStr = "SPHERICAL_DIRECTION with spherical coordinates";
+            	break;
+            case 24:
+            	ecodeStr = "DT_COMPONENT specifying the indicies of a single diffusion tensor component";
+            	break;
+            case 26:
+            	ecodeStr = "SHC_DEGREEORDER specifying degree and order of a spherical harmonic basis function";
+            	break;
             default:
                 ecodeStr = "Unrecognized ecode value";
         }
@@ -1569,65 +1602,25 @@ public class FileInfoNIFTI extends FileInfoBase {
     }
     
     /**
-     * Sets the string telling whether or not an extended header is present
-     * @param extendedHeaderPresence
-     */
-    public void setExtendedHeaderPresence(String extendedHeaderPresence) {
-        this.extendedHeaderPresence = extendedHeaderPresence;
-    }
-    
-    /**
-     * Sets esize, the number of bytes in the header extension
+     * Sets esize array, the number of bytes in each header field in the header extension
      * @param esize
      */
-    public void setEsize(int esize) {
+    public void setEsize(int esize[]) {
         this.esize = esize;
     }
     
     
     
-    public int getEsize() {
+    public int[] getEsize() {
 		return esize;
 	}
 
-	public int getEsize2() {
-		return esize2;
-	}
-
-	public int getEsize3() {
-		return esize3;
-	}
-
 	/**
-     * Sets ecode, the data format of the header extension
+     * Sets ecode array, the data format of the header field in the header extension
      * @param ecode
      */
-    public void setEcode(int ecode) {
+    public void setEcode(int ecode[]) {
         this.ecode = ecode;
-    }
-    
-    /**
-     * Sets esize2, the number of bytes in the second header extension
-     * @param esize2
-     */
-    public void setEsize2(int esize2) {
-        this.esize2 = esize2;
-    }
-    
-    /**
-     * Sets ecode2, the data format of the second header extension
-     * @param ecode2
-     */
-    public void setEcode2(int ecode2) {
-        this.ecode2 = ecode2;
-    }
-    
-    /**
-     * Sets esize3, the number of bytes in the third header extension
-     * @param esize3
-     */
-    public void setEsize3(int esize3) {
-        this.esize3 = esize3;
     }
     
     public void setMatrixQ(TransMatrix matrixQ) {
@@ -1636,14 +1629,6 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     public void setMatrixS(TransMatrix matrixS) {
         this.matrixS = matrixS;
-    }
-    
-    /**
-     * Sets ecode3, the data format of the third header extension
-     * @param ecode3
-     */
-    public void setEcode3(int ecode3) {
-        this.ecode3 = ecode3;
     }
     
     /**
