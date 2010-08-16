@@ -25,6 +25,8 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  * 
  * It also allows for inverting the output surface file
  * 
+ * The plugin also creates the SWC file
+ * 
  * @author pandyan
  */
 public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends AlgorithmBase {
@@ -145,6 +147,44 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
     /** whether to flip or not * */
     private final boolean flipX, flipY, flipZ;
+    
+    private String standardizedFilamentFileName;
+    
+    private String filamentFileParentDir;
+    
+    //SWC...following vars are needed for creation of swc file format
+    
+    private float subsamplingDistance;
+	
+	private float greenThresold;
+	
+	private String outputFilename, outputFilename_auto;
+	
+	/** coords of filament **/
+    private ArrayList <ArrayList<float[]>> allFilamentCoords_swc = new ArrayList <ArrayList<float[]>>();
+    
+    private ArrayList <ArrayList<float[]>> newFilamentCoords_swc = new ArrayList<ArrayList<float[]>>();
+    
+	/** Storage location of the second derivative of the Gaussian in the X direction. */
+    private float[] GxxData;
+
+    /** Storage location of the second derivative of the Gaussian in the Y direction. */
+    private float[] GyyData;
+
+    /** Storage location of the second derivative of the Gaussian in the Z direction. */
+    private float[] GzzData;
+
+    /** Dimensionality of the kernel. */
+    private int[] kExtents;
+    
+    /** An amplification factor greater than 1.0 causes this filter to act like a highpass filter. */
+    private float amplificationFactor = 1.0f;
+    
+    /** images showing the swc spheres/radii **/
+    private ModelImage maskImage, maskImageAuto;
+	
+	
+	
 
     /**
      * constuctor
@@ -156,7 +196,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
             final TreeMap<Integer, float[]> pointsMap, final ArrayList<ArrayList<float[]>> allFilamentCoords,
             final File oldSurfaceFile, final float samplingRate, final ModelImage cityBlockImage,
             final File pointsFile, final JTextArea outputTextArea, final boolean flipX, final boolean flipY,
-            final boolean flipZ) {
+            final boolean flipZ,float greenThreshold, float subsamplingDistance, String outputFilename, String outputFilename_auto) {
         this.neuronImage = neuronImage;
         this.neuronImageExtents = neuronImage.getExtents();
         dir = neuronImage.getImageDirectory();
@@ -193,6 +233,10 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         this.flipX = flipX;
         this.flipY = flipY;
         this.flipZ = flipZ;
+        this.greenThresold = greenThreshold;
+		this.subsamplingDistance = subsamplingDistance;
+		this.outputFilename = outputFilename;
+		this.outputFilename_auto = outputFilename_auto;
 
     }
 
@@ -200,7 +244,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
      * run algorithm
      */
     public void runAlgorithm() {
-        outputTextArea.append("Running Algorithm v2.3" + "\n");
+        outputTextArea.append("Running Algorithm v2.4" + "\n");
 
         final long begTime = System.currentTimeMillis();
 
@@ -520,6 +564,13 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         thinPlateSplineAlgorithmPerformed();
 
         createFinalImage();
+        
+        
+        //create SWC file
+        createSWCFile();
+        
+        
+        
 
         if (standardColumnImage != null) {
             standardColumnImage.disposeLocal();
@@ -554,6 +605,998 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
         setCompleted(true);
     }
+    
+    
+    /**
+     * creates the swc file
+     * 
+     * www.neuronland.org/NLMorphologyConverter/MorphologyFormats/SWC/Spec.html
+     * 
+     */
+    private void createSWCFile() {
+    	
+    	outputTextArea.append("Creating SWC file..." + "\n");
+        outputTextArea.append("\n");
+
+    	File filamentFile = new File(filamentFileParentDir + File.separator + standardizedFilamentFileName);
+    	readFilamentFile_swc(filamentFile);
+
+    	determineConnectivity1_swc();
+
+    	determineAxon_swc() ;
+
+		determineDistances_swc();
+
+		outputTextArea.append("SWC - subsampling..." + "\n");
+        outputTextArea.append("\n");
+		subsample_swc();
+
+		outputTextArea.append("SWC - determining connectivity..." + "\n");
+        outputTextArea.append("\n");
+		determineConnectivity2_swc();
+
+		outputTextArea.append("SWC - determining radii autolatically..." + "\n");
+        outputTextArea.append("\n");
+		determineRadiiAutomatically_swc();
+		
+		output_swc(outputFilename_auto);
+		outputTextArea.append("Saving automatic SWC file to " + filamentFileParentDir + File.separator + outputFilename_auto + "\n");
+        outputTextArea.append("\n");
+
+		outputTextArea.append("SWC - determining radd via threshold..." + "\n");
+        outputTextArea.append("\n");
+		determineRadiiThreshold_swc();
+		
+		output_swc(outputFilename);
+		outputTextArea.append("Saving threshold SWC file to " + filamentFileParentDir + File.separator + outputFilename + "\n");
+        outputTextArea.append("\n");
+		
+		new ViewJFrameImage(maskImageAuto);
+		new ViewJFrameImage(maskImage);
+    }
+    
+    
+    /**
+     * Determines initial conenctivity...how one block is connected to the previous blocks
+	 * while we are at it...lets set the type value to axon (2) for the 0th block
+	 * @return
+	 */
+	private void determineConnectivity1_swc() {
+		//first block of code stays at -1
+		try {
+			int allFilamentsSize = allFilamentCoords_swc.size();
+			int alMatchSize;
+			ArrayList<float[]> al;
+			ArrayList<float[]> al2;
+			ArrayList<float[]> alMatch;
+			float[] coords = new float[6];
+			float[] coords2;
+			float[] coordsMatch = new float[6];
+			al = allFilamentCoords_swc.get(0);
+			int alSize = al.size();
+			for(int m=0;m<al.size();m++) {
+				coords = al.get(m);
+				if(m==0) {
+					coords[4] = -1;
+				}
+			    coords[5] = 2;
+			    al.set(m, coords);
+				
+			}
+			
+			//HACK
+			//I am using the allFilamnetCoords to determine connectivity b/c for some reason some
+			// of the transformed filament points are not exact
+			//
+			for(int i=1;i<allFilamentsSize;i++) {
+				 al = allFilamentCoords_swc.get(i);
+				 coords = al.get(0);
+				 al2 = allFilamentCoords.get(i);
+				 coords2 = al2.get(0);
+				 boolean succ = false;
+				 int k;
+				 
+				 for(k=0;k<i;k++) {
+					 alMatch = allFilamentCoords.get(k);
+					 alMatchSize = alMatch.size();
+					 coordsMatch[0] = alMatch.get(alMatchSize-1)[0];
+					 coordsMatch[1] = alMatch.get(alMatchSize-1)[1];
+					 coordsMatch[2] = alMatch.get(alMatchSize-1)[2];
+					 if(coords2[0]==coordsMatch[0] && coords2[1]==coordsMatch[1] && coords2[2]==coordsMatch[2]) {
+						 //set the connectivity of coords[4] to k+1
+						 coords[4] = k+1;
+						 al.set(0, coords);
+						 succ = true;
+						 break;
+					 }
+					 
+				 }
+				 
+		   }
+
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+	
+	
+	/**
+	 * Determines connectivity for all points
+	 */
+	private void determineConnectivity2_swc() {
+		
+		int newFilamentsSize = newFilamentCoords_swc.size();
+		int alSize;
+		ArrayList<float[]> al,al2;
+		float[] coords,coords2;
+		float x,y,z,r,c,c2;
+		int count = 0;
+	
+		for(int i=0;i<newFilamentsSize;i++) {
+			 al = newFilamentCoords_swc.get(i);
+			 alSize = al.size();
+			 float counter=0;
+			 
+			 for(int k=0;k<alSize;k++) {
+				 
+				 coords = al.get(k);
+				 if(k==0) {
+					 c = coords[4];
+					 if(i==0) {
+						//connectivity stays at -1
+						//counter++; 
+					 }else{
+						 //get the last emements connectivity of c-1
+						 al2 = newFilamentCoords_swc.get((int)c-1);
+						 //System.out.println("********" + al2.size());
+						 coords[4] = al2.size();
+						 al.set(k, coords);
+						 counter = al2.size() + 1;
+						 //counter = al2.size() +1;
+						 
+					 }
+				 }else{
+					 
+					 coords[4] = count;
+					 al.set(k, coords);
+					 
+					 
+				 }
+				 count = count + 1;
+				
+			 }
+			 
+		}
+		
+		
+	}
+    
+    
+    
+    /**
+     * Dtermeines radius based upon a user-input threshold
+     * Sphere keeps growing till threshold is hit
+     */
+    private void determineRadiiThreshold_swc() {
+		
+		///////////////////////////  
+		int[] extents = {512, 512, 512};
+        maskImage = new ModelImage(ModelStorageBase.UBYTE, extents, "maskImage_swc_threshold");
+        for (int i = 0; i < maskImage.getExtents()[2]; i++) {
+        	maskImage.setResolutions(i, resols);
+        }
+        final FileInfoImageXML[] fileInfoBases = new FileInfoImageXML[maskImage.getExtents()[2]];
+        for (int i = 0; i < fileInfoBases.length; i++) {
+            fileInfoBases[i] = new FileInfoImageXML(maskImage.getImageName(), null, FileUtility.XML);
+            fileInfoBases[i].setEndianess(finalImage.getFileInfo()[0].getEndianess());
+            fileInfoBases[i].setUnitsOfMeasure(finalImage.getFileInfo()[0].getUnitsOfMeasure());
+            fileInfoBases[i].setResolutions(finalImage.getFileInfo()[0].getResolutions());
+            fileInfoBases[i].setExtents(finalImage.getExtents());
+            fileInfoBases[i].setOrigin(finalImage.getFileInfo()[0].getOrigin());
+
+        }
+        maskImage.setFileInfo(fileInfoBases);
+        /////////////////////////////////////
+		
+
+		float resX = resols[0];
+		float resY = resols[1];
+		float resZ = resols[2];
+		
+		float increaseRadiusBy = resZ;
+		
+		int newFilamentsSize = newFilamentCoords_swc.size();
+		int alSize;
+		ArrayList<float[]> al;
+		float[] coords;
+		int xCenterPixel,yCenterPixel,zCenterPixel;
+		float radius;
+		float radiusSquared;
+		float xDist,yDist,zDist;
+		float distance;
+		int xStart,yStart,zStart;
+		int xEnd,yEnd,zEnd;
+		float greenValue;
+		
+		
+		//intitilaize all raii to 0 first
+		for(int i=0;i<newFilamentsSize;i++) {
+			 al = newFilamentCoords_swc.get(i);
+			 alSize = al.size();
+			 for(int k=0;k<alSize;k++) {
+				 coords = al.get(k);
+				 coords[3] = 0;
+				 al.set(k, coords);
+				 
+			 }
+		}
+		
+		
+		
+		
+		
+		for(int i=0;i<newFilamentsSize;i++) {
+			 al = newFilamentCoords_swc.get(i);
+			 alSize = al.size();
+			 for(int k=0;k<alSize;k++) {
+				 coords = al.get(k);
+				 if(r7CenterPointFound) {
+					 xCenterPixel = (int)Math.floor((coords[0]+r7_27Coord_transformed[0])/resols[0]);
+					 yCenterPixel = (int)Math.floor((coords[1]+r7_27Coord_transformed[1])/resols[1]);
+					 zCenterPixel = (int)Math.floor((coords[2]+r7_27Coord_transformed[2])/resols[2]);
+				 }else {
+					 xCenterPixel = (int)Math.floor(coords[0]/resols[0]);
+					 yCenterPixel = (int)Math.floor(coords[1]/resols[1]);
+					 zCenterPixel = (int)Math.floor(coords[2]/resols[2]);
+				 }
+				 
+				 //expand radius..start with increaseRadiusBy and increse
+				 loop:		for(radius=increaseRadiusBy;;radius=radius+increaseRadiusBy) {
+								
+								 radiusSquared = radius * radius;  //we will work with radius squared...that way we dont have to do SqrRt down in the for loops
+								 
+								 xStart = xCenterPixel - Math.round(radius/resX);
+								 xStart = xStart - 1;
+								 yStart = yCenterPixel - Math.round(radius/resY);
+								 yStart = yStart - 1;
+								 zStart = zCenterPixel - Math.round(radius/resZ);
+								 zStart = zStart - 1;
+								 
+								 xEnd = xCenterPixel + Math.round(radius/resX);
+								 xEnd = xEnd + 1;
+								 yEnd = yCenterPixel + Math.round(radius/resY);
+								 yEnd = yEnd + 1;
+								 zEnd = zCenterPixel + Math.round(radius/resZ);
+								 zEnd = zEnd + 1;
+								 
+								 for(int z=zStart;z<=zEnd;z++) {
+									 zDist = ((z-zCenterPixel)*(resZ)) * ((z-zCenterPixel)*(resZ));
+									 for(int y=yStart;y<=yEnd;y++) {
+										 yDist = ((y-yCenterPixel)*(resY)) * ((y-yCenterPixel)*(resY));
+										 for(int x=xStart;x<=xEnd;x++) {
+											 xDist = ((x-xCenterPixel)*(resX)) * ((x-xCenterPixel)*(resX));
+											 distance = xDist + yDist + zDist;
+											 if(distance <= radiusSquared) {
+												 //this means we have a valid pixel in the sphere
+												 //first check to see of x,y,z are in bounds
+												 if(x<0 || x>=finalImage.getExtents()[0] || y<0 || y>=finalImage.getExtents()[1] || z<0 || z>=finalImage.getExtents()[2]) {
+													 continue;
+												 }
+												 greenValue = finalImage.getFloatC(x, y, z, 2);
+												 if(greenValue <= greenThresold) {
+													 //this means we have exceeded the radius
+													 //break the loop:  and move on to next point
+													 //store the radius....but make sure you store radius-increaseRadiusBy since this one has exceeded
+													 coords[3] = radius-increaseRadiusBy;
+													 al.set(k, coords);
+													 break loop;
+												 }else {
+													 ///////////////////////////////////////////////////////////
+													maskImage.set(x, y, z, 100);
+												 }
+											 }
+											 
+										 }
+										 
+									 }
+								 }
+							 } //end loop:
+			 }
+		}
+		
+		
+	}
+    
+    
+    /**
+	 * outputs the swc file
+	 */
+	private void output_swc(String filename) {
+		try {
+			
+	        final File newSurfaceFile = new File(filamentFileParentDir + File.separator  + filename);
+	        final FileWriter fw = new FileWriter(newSurfaceFile);
+	        final BufferedWriter bw = new BufferedWriter(fw);
+	
+	            String line;
+			int newFilamentsSize = newFilamentCoords_swc.size();
+			int alSize;
+			ArrayList<float[]> al;
+			float[] coords;
+			float x,y,z,r,c,a;
+			int cInt,aInt;
+			int counter = 1;
+			for(int i=0;i<newFilamentsSize;i++) {
+				 al = newFilamentCoords_swc.get(i);
+				 alSize = al.size();
+				 for(int k=0;k<alSize;k++) {
+					 //if(k==0) {
+						 //System.out.println();
+					// }
+					 coords = al.get(k);
+	
+					 x = coords[0];
+					 y = coords[1];
+					 z = coords[2];
+					 r = coords[3];
+					 c = coords[4];
+					 a = coords[5];
+					 cInt = (int)c;
+					 aInt = (int)a;
+					 //System.out.println(counter + " " + aInt + " " + x + " " + y + " " + z + " " + r + " " + cInt) ;
+					 bw.write(counter + " " + aInt + " " + x + " " + y + " " + z + " " + r + " " + cInt);
+					 bw.newLine();
+					 counter++;
+					 //System.out.println("   " + Math.abs(Math.round(x/resols[0])) + " " + Math.abs(Math.round(y/resols[1])) + " " + Math.abs(Math.round(z/resols[2])));
+				 }
+				 
+			}
+			
+		
+			bw.close();
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+    
+    
+    
+    /**
+     * Dteremines radius automtaicalluy
+     * 
+     * This is done by convolving an increasing sized laplacian kernel to the center point.
+     * The max value returned reflects the radius size
+     */
+    private void determineRadiiAutomatically_swc() {
+		int newFilamentsSize = newFilamentCoords_swc.size();
+		int alSize;
+		ArrayList<float[]> al;
+		float[] coords;
+		int xCenterPixel,yCenterPixel,zCenterPixel;
+		float lap;
+		float[] sigs = new float[3];
+		int extents[] = finalImage.getExtents();
+		int index;
+		
+		//System.out.println("i size is " + newFilamentCoords_swc.size());
+		//System.out.println();
+		
+		int length = finalImage.getExtents()[0] * finalImage.getExtents()[1] * finalImage.getExtents()[2];
+		float[] greenBuffer = new float[length];
+		try {
+			finalImage.exportRGBData(2, 0, length, greenBuffer);
+		}catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		//intitilaize all radii to -1 first
+		for(int i=0;i<newFilamentsSize;i++) {
+			 al = newFilamentCoords_swc.get(i);
+			 alSize = al.size();
+			 for(int k=0;k<alSize;k++) {
+				 coords = al.get(k);
+				 coords[3] = -1;
+				 al.set(k, coords);
+				 
+			 }
+		}
+		
+		
+	   int sigmaMax = 7;
+
+		for(int i=0;i<newFilamentsSize;i++) {
+			 al = newFilamentCoords_swc.get(i);
+			 alSize = al.size();
+			 //System.out.println("k size is " + alSize);
+			 for(int k=0;k<alSize;k++) {
+				 coords = al.get(k);
+
+				 
+				 if(r7CenterPointFound) {
+					 xCenterPixel = (int)Math.floor((coords[0]+r7_27Coord_transformed[0])/resols[0]);
+					 yCenterPixel = (int)Math.floor((coords[1]+r7_27Coord_transformed[1])/resols[1]);
+					 zCenterPixel = (int)Math.floor((coords[2]+r7_27Coord_transformed[2])/resols[2]);
+				 }else {
+					 xCenterPixel = (int)Math.floor(coords[0]/resols[0]);
+					 yCenterPixel = (int)Math.floor(coords[1]/resols[1]);
+					 zCenterPixel = (int)Math.floor(coords[2]/resols[2]);
+				 }
+				 
+				 index = (zCenterPixel * (extents[0] * extents[1])) + (yCenterPixel * extents[0]) + xCenterPixel;
+				 
+				 //System.out.println(i + "," + k + ": "+ xCenterPixel + "," + yCenterPixel + "," + zCenterPixel);
+				 outputTextArea.append(i + "," + k + ": "+ xCenterPixel + "," + yCenterPixel + "," + zCenterPixel + "\n");
+				 
+				 System.gc();
+				 float lapMax = -100;
+				 float radiusPixelSpace = -1;
+				 float radius = -1;
+				 
+				 for (float s = 1; (s <= sigmaMax); s=s+.5f) {
+			            sigs[0] = s;
+			            sigs[1] = s;
+			            sigs[2] = s;
+			            makeKernels3D(sigs);
+
+			            lap = AlgorithmConvolver.convolve3DPtMed(index, extents, greenBuffer, kExtents, GxxData);
+			            //System.out.println("   " + s + "   " + lap);	
+			            outputTextArea.append("   " + s + "   " + lap + "\n");
+			            if(lap > lapMax) {
+			            	lapMax = lap;
+			            	radiusPixelSpace = s;
+			            }else {
+			            	break;
+			            } 
+			     }	
+				 if(radiusPixelSpace != sigmaMax) {  //if its sigmaMax, then it kep getting bigger and bigger
+					 //convert to micron space!!!!!!!!!!!!!!!!!!!!!!
+					 radiusPixelSpace = radiusPixelSpace - .5f;
+					 radius = radiusPixelSpace * resols[0];
+					 //add to coords
+					 coords[3] = radius;
+					 al.set(k, coords);
+
+				 } 
+			 } 
+		}
+
+		//for all radii that havent been set..(-1), becasue the convoultion process kept increqaasing, then set
+		//the radius to the one of the previous one
+		float r;
+		float[] coords2;
+		for(int i=0;i<newFilamentsSize;i++) {
+			 al = newFilamentCoords_swc.get(i);
+			 alSize = al.size();
+			 for(int k=0;k<alSize;k++) {
+				 coords = al.get(k);
+				 r = coords[3];
+				 if(r == -1) {
+					 //System.out.println("here" + k);
+					 if(k!=0) {
+						 coords2 = al.get(k-1);
+						 coords[3] = coords2[3];
+						 al.set(k, coords);
+					 }else {
+						 coords2 = al.get(k+1);
+						 coords[3] = coords2[3];
+						 al.set(k, coords);
+					 }
+				 }
+			 }
+		}
+		
+		
+		
+		
+		int[] exts = {512, 512, 512};
+        maskImageAuto = new ModelImage(ModelStorageBase.UBYTE, exts, "maskImage_swc_auto");
+        for (int i = 0; i < maskImageAuto.getExtents()[2]; i++) {
+        	maskImageAuto.setResolutions(i, resols);
+        }
+        final FileInfoImageXML[] fileInfoBases = new FileInfoImageXML[maskImageAuto.getExtents()[2]];
+        for (int i = 0; i < fileInfoBases.length; i++) {
+            fileInfoBases[i] = new FileInfoImageXML(maskImageAuto.getImageName(), null, FileUtility.XML);
+            fileInfoBases[i].setEndianess(finalImage.getFileInfo()[0].getEndianess());
+            fileInfoBases[i].setUnitsOfMeasure(finalImage.getFileInfo()[0].getUnitsOfMeasure());
+            fileInfoBases[i].setResolutions(finalImage.getFileInfo()[0].getResolutions());
+            fileInfoBases[i].setExtents(finalImage.getExtents());
+            fileInfoBases[i].setOrigin(finalImage.getFileInfo()[0].getOrigin());
+
+        }
+        maskImageAuto.setFileInfo(fileInfoBases);
+        
+
+        float radius;
+        float resX = resols[0];
+		float resY = resols[1];
+		float resZ = resols[2];
+		float radiusSquared;
+		float increaseRadiusBy = resZ;
+		float xDist,yDist,zDist;
+		float distance;
+		int xStart,yStart,zStart;
+		int xEnd,yEnd,zEnd;
+		
+        
+        for(int i=0;i<newFilamentsSize;i++) {
+			 al = newFilamentCoords_swc.get(i);
+			 alSize = al.size();
+			 for(int k=0;k<alSize;k++) {
+				 coords = al.get(k);
+				 
+				 if(r7CenterPointFound) {
+					 xCenterPixel = (int)Math.floor((coords[0]+r7_27Coord_transformed[0])/resols[0]);
+					 yCenterPixel = (int)Math.floor((coords[1]+r7_27Coord_transformed[1])/resols[1]);
+					 zCenterPixel = (int)Math.floor((coords[2]+r7_27Coord_transformed[2])/resols[2]);
+				 }else {
+					 xCenterPixel = (int)Math.floor(coords[0]/resols[0]);
+					 yCenterPixel = (int)Math.floor(coords[1]/resols[1]);
+					 zCenterPixel = (int)Math.floor(coords[2]/resols[2]);
+				 }
+				 
+				 //expand radius..start with increaseRadiusBy and increse
+				 loop:		for(radius=increaseRadiusBy;radius<=coords[3];radius=radius+increaseRadiusBy) {
+								
+								 radiusSquared = radius * radius;  //we will work with radius squared...that way we dont have to do SqrRt down in the for loops
+								 
+								 xStart = xCenterPixel - Math.round(radius/resX);
+								 xStart = xStart - 1;
+								 yStart = yCenterPixel - Math.round(radius/resY);
+								 yStart = yStart - 1;
+								 zStart = zCenterPixel - Math.round(radius/resZ);
+								 zStart = zStart - 1;
+								 
+								 xEnd = xCenterPixel + Math.round(radius/resX);
+								 xEnd = xEnd + 1;
+								 yEnd = yCenterPixel + Math.round(radius/resY);
+								 yEnd = yEnd + 1;
+								 zEnd = zCenterPixel + Math.round(radius/resZ);
+								 zEnd = zEnd + 1;
+								 
+								 for(int z=zStart;z<=zEnd;z++) {
+									 zDist = ((z-zCenterPixel)*(resZ)) * ((z-zCenterPixel)*(resZ));
+									 for(int y=yStart;y<=yEnd;y++) {
+										 yDist = ((y-yCenterPixel)*(resY)) * ((y-yCenterPixel)*(resY));
+										 for(int x=xStart;x<=xEnd;x++) {
+											 xDist = ((x-xCenterPixel)*(resX)) * ((x-xCenterPixel)*(resX));
+											 distance = xDist + yDist + zDist;
+											 if(distance <= radiusSquared) {
+												 //this means we have a valid pixel in the sphere
+												 //first check to see of x,y,z are in bounds
+												 if(x<0 || x>=finalImage.getExtents()[0] || y<0 || y>=finalImage.getExtents()[1] || z<0 || z>=finalImage.getExtents()[2]) {
+													 continue;
+												 }
+												 
+													maskImageAuto.set(x, y, z, 100);
+												 
+											 }
+											 
+										 }
+										 
+									 }
+								 }
+							 } //end loop:
+			 }
+		}
+
+	}
+    
+    
+    
+    
+    
+    /**
+     * Creates Gaussian derivative kernels.
+     *
+     * @param  sigmas  DOCUMENT ME!
+     */
+    private void makeKernels3D(float[] sigmas) {
+        int xkDim, ykDim, zkDim;
+        int[] derivOrder = new int[3];
+
+        kExtents = new int[3];
+        derivOrder[0] = 2;
+        derivOrder[1] = 0;
+        derivOrder[2] = 0;
+
+        xkDim = Math.round(8 * sigmas[0]);
+
+        if ((xkDim % 2) == 0) {
+            xkDim++;
+        }
+
+        if (xkDim < 3) {
+            xkDim = 3;
+        }
+
+        kExtents[0] = xkDim;
+
+        ykDim = Math.round(8 * sigmas[1]);
+
+        if ((ykDim % 2) == 0) {
+            ykDim++;
+        }
+
+        if (ykDim < 3) {
+            ykDim = 3;
+        }
+
+        kExtents[1] = ykDim;
+
+        float scaleFactor = sigmas[2];
+
+        sigmas[2] = sigmas[1];
+        zkDim = Math.round(8 * sigmas[2]);
+
+        if ((zkDim % 2) == 0) {
+            zkDim++;
+        }
+
+        if (zkDim < 3) {
+            zkDim = 3;
+        }
+
+        kExtents[2] = zkDim;
+
+        GxxData = new float[xkDim * ykDim * zkDim];
+
+        GenerateGaussian Gxx = new GenerateGaussian(GxxData, kExtents, sigmas, derivOrder);
+
+        Gxx.calc(false);
+
+        derivOrder[0] = 0;
+        derivOrder[1] = 2;
+        derivOrder[2] = 0;
+        GyyData = new float[xkDim * ykDim * zkDim];
+
+        GenerateGaussian Gyy = new GenerateGaussian(GyyData, kExtents, sigmas, derivOrder);
+
+        Gyy.calc(false);
+
+        derivOrder[0] = 0;
+        derivOrder[1] = 0;
+        derivOrder[2] = 2;
+        GzzData = new float[xkDim * ykDim * zkDim];
+
+        GenerateGaussian Gzz = new GenerateGaussian(GzzData, kExtents, sigmas, derivOrder);
+
+        Gzz.calc(false);
+
+        float tmp;
+
+        for (int i = 0; i < GyyData.length; i++) {
+            tmp = -(GxxData[i] + GyyData[i] + (GzzData[i] * scaleFactor));
+
+            if (tmp > 0) {
+                tmp *= amplificationFactor;
+            }
+
+            GxxData[i] = tmp;
+        }
+    }
+    
+    
+
+    
+    
+    /**
+     * Dtermines is block of points is axon or dendritic brach
+     */
+    private void determineAxon_swc() {
+		//first find block of points that has highest z-value
+		int allFilamentsSize = allFilamentCoords_swc.size();
+		ArrayList<float[]> al;
+		int alSize;
+		float[] coords = new float[6];
+		float zVal = 0;
+		float z;
+		int highestZBlockIndex = 0;
+		float connectedTo = 0;  //This is 1-based!
+		
+		for(int i=0,m=1;i<allFilamentsSize;i++,m++) {
+			 al = allFilamentCoords_swc.get(i);
+			 alSize = al.size();
+			 float c = 0;
+			 for(int k=0;k<alSize;k++) {
+				 coords = al.get(k);
+				 if(k==0) {
+					 c = coords[4];
+				 }
+				 z = coords[2];
+				 if(z>zVal) {
+					 zVal=z;
+					 highestZBlockIndex=i;
+					 connectedTo = c;
+				 }
+			 } 
+		}
+		
+		
+		//next...set the highestZBlockIndex block to axon
+		al = allFilamentCoords_swc.get(highestZBlockIndex);
+		alSize = al.size();
+		for(int k=0;k<alSize;k++) {
+			 coords = al.get(k);
+			 coords[5] = 2;
+			 al.set(k, coords);
+		}
+		
+		//now traverse back until we get to soma (connectedTo=-1) and set to axon (2)
+		while(connectedTo != -1) {
+			int ind = (int)connectedTo - 1;
+			al = allFilamentCoords_swc.get(ind);
+			alSize = al.size();
+			for(int k=0;k<alSize;k++) {
+				 coords = al.get(k);
+				 if(k==0) {
+					 connectedTo = coords[4];
+				 }
+				 coords[5] = 2;
+				 al.set(k, coords);
+			}
+		}
+
+	}
+    
+
+    
+    
+    
+    /**
+	 * subsample
+	 */
+	private void subsample_swc() {
+		 int allFilamentsSize = allFilamentCoords_swc.size();
+		 float x,y,z,d,c,a;
+		 float xb,yb,zb,db;
+		 float xn,yn,zn;
+		 float dDiff1,dDiff2;
+		 float ratio;
+		 int alSize;
+		 ArrayList<float[]> al;
+		 ArrayList<float[]> newAl;
+		 float[] newCoords;
+		 float totalDistance;
+
+		 //go through each segment
+		 for(int i=0;i<allFilamentsSize;i++) {
+			 al = allFilamentCoords_swc.get(i);
+			 alSize = al.size();
+			 newAl = new ArrayList<float[]>();
+			 //the 0th one stays as is
+			 x = al.get(0)[0];
+			 y = al.get(0)[1];
+			 z = al.get(0)[2];
+			 c = al.get(0)[4];
+			 a = al.get(0)[5];
+			 newCoords = new float[6];
+			 newCoords[0] = x;
+			 newCoords[1] = y;
+			 newCoords[2] = z;
+			 //in newCoords, this is now radius
+			 newCoords[3] = -1;
+			 newCoords[4] = c;
+			 newCoords[5] = a;
+			 newAl.add(newCoords);
+			 
+			 
+			 
+			 
+			 
+			 //first get total distance of the segment
+			 totalDistance = al.get(alSize-1)[3];
+			 loop:	for(float k=subsamplingDistance;k<=totalDistance;k=k+subsamplingDistance) {
+						 for(int m=1;m<alSize-1;m++) {
+							 x = al.get(m)[0];
+							 y = al.get(m)[1];
+							 z = al.get(m)[2];
+							 d = al.get(m)[3];
+							 c = al.get(m)[4];
+							 a = al.get(m)[5];
+							 if(k==d) {
+								 //highly unlikely...but just in case
+								 newCoords = new float[6];
+								 newCoords[0] = x;
+								 newCoords[1] = y;
+								 newCoords[2] = z;
+								 newCoords[3] = 0;
+								 newCoords[4] = c;
+								 newCoords[5] = a;
+								 newAl.add(newCoords);
+								 continue loop;
+							 }else if(k<d) {
+								 xb = al.get(m-1)[0];
+								 yb = al.get(m-1)[1];
+								 zb = al.get(m-1)[2];
+								 db = al.get(m-1)[3];
+								 dDiff1 = k-db;
+								 dDiff2 = d-db;
+								 ratio = dDiff1/dDiff2;
+								 xn = xb + (ratio*(x-xb));
+								 yn = yb + (ratio*(y-yb));
+								 zn = zb + (ratio*(z-zb));
+								 newCoords = new float[6];
+								 newCoords[0] = xn;
+								 newCoords[1] = yn;
+								 newCoords[2] = zn;
+								 newCoords[3] = -1;
+								 newCoords[4] = c;
+								 newCoords[5] = a;
+								 newAl.add(newCoords);
+								 continue loop;
+							 }
+						 } 
+					 } //end loop:
+			 
+			//the last one stays as is
+			 x = al.get(alSize-1)[0];
+			 y = al.get(alSize-1)[1];
+			 z = al.get(alSize-1)[2];
+			 c = al.get(alSize-1)[4];
+			 a = al.get(alSize-1)[5];
+			 newCoords = new float[6];
+			 newCoords[0] = x;
+			 newCoords[1] = y;
+			 newCoords[2] = z;
+			 newCoords[3] = -1;
+			 newCoords[4] = c;
+			 newCoords[5] = a;
+			 newAl.add(newCoords);
+			 
+			 
+			 newFilamentCoords_swc.add(newAl);
+		 }
+		 
+	}
+    
+    /**
+	 * reads filament file
+	 * @param filamaneFile
+	 * @return
+	 */
+	private boolean readFilamentFile_swc(File surfaceFile) {
+		boolean success = true;
+		RandomAccessFile raFile = null;
+		try {
+
+			raFile = new RandomAccessFile(surfaceFile, "r");
+			
+			String line;
+			
+			
+			while((line=raFile.readLine())!= null) {
+				line = line.trim();
+				if(line.startsWith("Translate1Dragger")) {
+					break;
+				}
+				if(line.contains("Coordinate3")) {
+					ArrayList<float[]> filamentCoords = new ArrayList<float[]>();
+					while(!((line=raFile.readLine()).endsWith("}"))) {
+						line = line.trim();
+						if(!line.equals("")) {
+							if(line.startsWith("point [")) {
+								line = line.substring(line.indexOf("point [") + 7, line.length()).trim();
+								if(line.equals("")) {
+									continue;
+								}
+							}
+							if(line.endsWith("]")) {
+								line = line.substring(0, line.indexOf("]")).trim();
+								if(line.equals("")) {
+									continue;
+								}
+							}
+							if(line.endsWith(",")) {
+								line = line.substring(0, line.indexOf(",")).trim();
+								if(line.equals("")) {
+									continue;
+								}
+							}
+							String[] splits = line.split("\\s+");
+							splits[0] = splits[0].trim();
+							splits[1] = splits[1].trim();
+							splits[2] = splits[2].trim();
+							float coord_x = new Float(splits[0]).floatValue();
+							float coord_y = new Float(splits[1]).floatValue();
+							float coord_z = new Float(splits[2]).floatValue();
+							float x = coord_x;
+							float y = coord_y;
+							float z = coord_z;
+							//x,y,z are the coordinates
+							//next one is distance from beginning of segment to the point///for now initialize at 0
+							//next one is connectivity...initialize at 0
+							//next one is axon...2=axon   3=dendrite    initialize at 3
+							float[] coords = {x,y,z,0,0,3};
+							
+							filamentCoords.add(coords);
+						}
+					}
+					allFilamentCoords_swc.add(filamentCoords);
+				}
+				
+				
+				
+				
+				
+			}
+			raFile.close();
+			
+		}catch(Exception e) {
+			try {
+				if(raFile != null) {
+					raFile.close();
+				}
+			}catch(Exception ex) {
+				
+			}
+			e.printStackTrace();
+			return false;
+		}
+		
+		return success;
+	}
+    
+    
+    
+    
+    
+    /**
+	 * calculate distances of each point fron beginning of line segment
+	 */
+	private void determineDistances_swc() {
+		 int allFilamentsSize = allFilamentCoords_swc.size();
+		 float x1,y1,z1;
+		 float x2,y2,z2;
+		 int x1Pix=0,y1Pix=0,z1Pix=0;
+		 int x2Pix,y2Pix,z2Pix;
+		 float d;
+		 int alSize;
+		 ArrayList<float[]> al;
+		 float[] coords;
+		 for(int i=0;i<allFilamentsSize;i++) {
+			 al = allFilamentCoords_swc.get(i);
+			 alSize = al.size();
+			 for(int k=0;k<alSize;k++) {
+				 coords = al.get(k);
+				 if (r7CenterPointFound) {
+					 x2Pix = (int)Math.floor((coords[0]+r7_27Coord_transformed[0])/resols[0]);
+					 y2Pix = (int)Math.floor((coords[1]+r7_27Coord_transformed[1])/resols[1]);
+					 z2Pix = (int)Math.floor((coords[2]+r7_27Coord_transformed[2])/resols[2]);
+				 }else {
+					 x2Pix = (int)Math.floor(coords[0]/resols[0]);
+					 y2Pix = (int)Math.floor(coords[1]/resols[1]);
+					 z2Pix = (int)Math.floor(coords[2]/resols[2]);
+				 }
+
+				 if(k==0) {
+					 x1Pix = x2Pix;
+					 y1Pix = y2Pix;
+					 z1Pix = z2Pix;
+					 coords[3] = 0;
+					 al.set(k, coords);
+				 }else {
+					d  = (float)MipavMath.distance(x1Pix, y1Pix, z1Pix, x2Pix, y2Pix, z2Pix, resols);
+					coords[3] = d;
+					al.set(k, coords);
+				 }
+			 }
+		 }
+	}
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     /**
      * calls the non-linear thin plate spline alg
@@ -1082,6 +2125,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
                                         if (diffTotal < toleranceSq) {
                                             final float[] nCoords = {x, y, z, diffTotal};
+ 
                                             al_new = allFilamentCoords_newCoords.get(i);
                                             final float[] ft = al_new.get(k);
                                             if (ft == null || (ft != null && ft[3] > diffTotal)) {
@@ -1259,25 +2303,25 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         final boolean success = true;
         int index = 0;
 
-        final String parentDir = oldSurfaceFile.getParent();
-        String newName = oldSurfaceFile.getName().substring(0, oldSurfaceFile.getName().indexOf(".")) + "_standardized";
+        filamentFileParentDir = oldSurfaceFile.getParent();
+        standardizedFilamentFileName = oldSurfaceFile.getName().substring(0, oldSurfaceFile.getName().indexOf(".")) + "_standardized";
         if (flipX) {
-            newName = newName + "_flipX";
+        	standardizedFilamentFileName = standardizedFilamentFileName + "_flipX";
         }
         if (flipY) {
-            newName = newName + "_flipY";
+        	standardizedFilamentFileName = standardizedFilamentFileName + "_flipY";
         }
         if (flipZ) {
-            newName = newName + "_flipZ";
+        	standardizedFilamentFileName = standardizedFilamentFileName + "_flipZ";
         }
-        newName = newName + ".iv";
+        standardizedFilamentFileName = standardizedFilamentFileName + ".iv";
         outputTextArea.append("Saving new filament file as: \n");
-        outputTextArea.append(parentDir + File.separator + newName + "\n");
+        outputTextArea.append(filamentFileParentDir + File.separator + standardizedFilamentFileName + "\n");
         outputTextArea.append("\n");
 
         try {
             final RandomAccessFile raFile = new RandomAccessFile(oldSurfaceFile, "r");
-            final File newSurfaceFile = new File(parentDir + File.separator + newName);
+            final File newSurfaceFile = new File(filamentFileParentDir + File.separator + standardizedFilamentFileName);
             final FileWriter fw = new FileWriter(newSurfaceFile);
             final BufferedWriter bw = new BufferedWriter(fw);
 
@@ -1306,6 +2350,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
                                             - r7_27Coord_transformed[1];
                                     tPt3[2] = (filCoord[2] * finalImage.getResolutions(0)[2])
                                             - r7_27Coord_transformed[2];
+
                                 } else {
                                     tPt3[0] = filCoord[0] * finalImage.getResolutions(0)[0];
                                     tPt3[1] = filCoord[1] * finalImage.getResolutions(0)[1];
@@ -1348,7 +2393,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
                 }
 
             }
-
+            //System.out.println("R7: " + r7_27Coord_transformed[0] + " " + r7_27Coord_transformed[1] + " " + r7_27Coord_transformed[2]);
             raFile.close();
             bw.close();
             fw.close();

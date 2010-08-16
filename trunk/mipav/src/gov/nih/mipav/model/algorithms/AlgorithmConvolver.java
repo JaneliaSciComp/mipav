@@ -901,6 +901,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
 
         offsetX = (pix % xDim) - (xKDim / 2);
         offsetY = (pix / xDim) - (yKDim / 2);
+        
 
         sum = 0;
         count = 0;

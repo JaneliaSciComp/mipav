@@ -99,6 +99,24 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
     
     /** scroll pane **/
     private JScrollPane scrollPane;
+    
+    
+    //SWC params
+
+	 /** textfields **/
+   private JTextField  greenValueRadiusThresholdTextField, subsamplingDistanceTextField, outputFilenameTextField, outputFilenameTextField_auto;
+   
+   /** labels **/
+   private JLabel  greenValueRadiusThresholdLabel, subsamplingDistanceLabel, outputFilenameLabel, outputFilenameLabel_auto;
+   
+   /** green value radius threshold **/
+   private float greenThreshold;
+   
+	/** subsampling distance **/
+   private float subsamplingDistance;
+   
+   /** output filename **/
+   private String outputFilename, outputFilename_auto;
 
 	/**
 	 * constructor
@@ -121,7 +139,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Standard Column Registration v2.3");
+        setTitle("Drosophila Standard Column Registration v2.4");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
         
@@ -168,6 +186,24 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         flipPanel.add(flipYCB);
         flipPanel.add(flipZCB);
         
+        greenValueRadiusThresholdLabel = new JLabel("SWC-Green vaue radius threshold ");
+        greenValueRadiusThresholdTextField = new JTextField(35);
+        greenValueRadiusThresholdTextField.setText("0.0");
+        
+        subsamplingDistanceLabel = new JLabel("SWC-Subsampling distance (um) ");
+        subsamplingDistanceTextField = new JTextField(35);
+        subsamplingDistanceTextField.setEditable(false);
+        subsamplingDistanceTextField.setBackground(Color.white);
+        
+        outputFilenameLabel = new JLabel("SWC-threshold output filename ");
+        outputFilenameTextField = new JTextField(35);
+        outputFilenameTextField.setText("test.swc");
+        
+        outputFilenameLabel_auto = new JLabel("SWC-automatic output filename ");
+        outputFilenameTextField_auto = new JTextField(35);
+        outputFilenameTextField_auto.setText("test_auto.swc");
+        
+        
         
         
         outputTextArea = new JTextArea();
@@ -211,12 +247,51 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         gbc.anchor = GridBagConstraints.WEST;
         mainPanel.add(surfaceFileSamplingCB,gbc);
         
+        gbc.anchor = GridBagConstraints.EAST;
         gbc.gridx = 0;
         gbc.gridy = 4;
         mainPanel.add(invertIVFileCBLabel,gbc);
         gbc.gridx = 1;
         gbc.anchor = GridBagConstraints.WEST;
         mainPanel.add(flipPanel,gbc);
+        
+        
+        gbc.gridy = 5;
+        gbc.gridx = 0;
+        mainPanel.add(greenValueRadiusThresholdLabel,gbc);
+        gbc.gridx = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        mainPanel.add(greenValueRadiusThresholdTextField,gbc);
+        gbc.anchor = GridBagConstraints.EAST;
+        
+        
+        
+        gbc.gridy = 6;
+        gbc.gridx = 0;
+        mainPanel.add(subsamplingDistanceLabel,gbc);
+        gbc.gridx = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        mainPanel.add(subsamplingDistanceTextField,gbc);
+        gbc.anchor = GridBagConstraints.EAST;
+        
+        
+        gbc.gridy = 7;
+        gbc.gridx = 0;
+        mainPanel.add(outputFilenameLabel,gbc);
+        gbc.gridx = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        mainPanel.add(outputFilenameTextField,gbc);
+        gbc.anchor = GridBagConstraints.EAST;
+        
+        gbc.gridy = 8;
+        gbc.gridx = 0;
+        mainPanel.add(outputFilenameLabel_auto,gbc);
+        gbc.gridx = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        mainPanel.add(outputFilenameTextField_auto,gbc);
+        gbc.anchor = GridBagConstraints.EAST;
+        
+        
         
         
         gbc.anchor = GridBagConstraints.CENTER;
@@ -227,7 +302,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         
         
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 9;
         gbc.gridwidth = 3;
         mainPanel.add(scrollPane,gbc);
 
@@ -268,6 +343,8 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 		        	FileIO fileIO = new FileIO();
 		        	neuronImage = fileIO.readImage(chooser.getSelectedFile().getName(), chooser.getCurrentDirectory() + File.separator, true, null);
 		        	resols = neuronImage.getResolutions(0);
+		        	subsamplingDistanceTextField.setEditable(true);
+		        	subsamplingDistanceTextField.setText(String.valueOf(resols[0]));
 		        	imageFilePathTextField.setText(currDir);
 		        	surfaceBrowseButton.setEnabled(true);
 		        	pointsBrowseButton.setEnabled(true);
@@ -353,14 +430,26 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 						if(!line.equals("")) {
 							if(line.startsWith("point [")) {
 								line = line.substring(line.indexOf("point [") + 7, line.length()).trim();
+								if(line.equals("")) {
+									continue;
+								}
 							}
 							if(line.endsWith("]")) {
 								line = line.substring(0, line.indexOf("]")).trim();
+								if(line.equals("")) {
+									continue;
+								}
 							}
 							if(line.endsWith(",")) {
 								line = line.substring(0, line.indexOf(",")).trim();
+								if(line.equals("")) {
+									continue;
+								}
 							}
 							String[] splits = line.split("\\s+");
+							splits[0] = splits[0].trim();
+							splits[1] = splits[1].trim();
+							splits[2] = splits[2].trim();
 							float coord_x = new Float(splits[0]).floatValue();
 							float coord_y = new Float(splits[1]).floatValue();
 							float coord_z = new Float(splits[2]).floatValue();
@@ -405,13 +494,65 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	 */
 	private boolean setVariables() {
 		if(pointsFilePathTextField.getText().trim().equals("")) {
+			MipavUtil.displayError("Points file is required");
 			return false;
 			
 		}
 		if(imageFilePathTextField.getText().trim().equals("")) {
+			MipavUtil.displayError("Image is required");
 			return false;
 			
 		}
+		if(surfaceFilePathTextField.getText().trim().equals("")) {
+			MipavUtil.displayError("Filament file is required");
+			return false;
+			
+		}
+		
+		
+		if(!subsamplingDistanceTextField.getText().trim().equals("")) {
+			try {
+				subsamplingDistance = Float.parseFloat(subsamplingDistanceTextField.getText().trim());
+			}catch(Exception e) {
+				MipavUtil.displayError("Subsampling distance is not a valid number");
+				return false;
+			}
+		}else {
+			MipavUtil.displayError("Subsampling distance is required");
+			return false;
+		}
+		
+		
+		if(!greenValueRadiusThresholdTextField.getText().trim().equals("")) {
+			try {
+				greenThreshold = Float.parseFloat(greenValueRadiusThresholdTextField.getText().trim());
+			}catch(Exception e) {
+				MipavUtil.displayError("Green value radiu threshold is not a valid number");
+				return false;
+			}
+		}else {
+			MipavUtil.displayError("Green value radiu threshold is required");
+			return false;
+		}
+		
+		if(!outputFilenameTextField.getText().trim().equals("")) {
+			if(outputFilenameTextField.getText().trim().endsWith(".swc")){
+				outputFilename = outputFilenameTextField.getText().trim();
+			}else {
+				MipavUtil.displayError("Invalid SWC filename");
+				return false;
+			}
+			if(outputFilenameTextField_auto.getText().trim().endsWith(".swc")){
+				outputFilename_auto = outputFilenameTextField_auto.getText().trim();
+			}else {
+				MipavUtil.displayError("Invalid SWC filename");
+				return false;
+			}
+		}else {
+			MipavUtil.displayError("SWC output filename is required");
+			return false;
+		}
+		
 		
 		return true;
 	}
@@ -422,7 +563,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	protected void callAlgorithm() {
 		float samplingRate = Float.valueOf((String)surfaceFileSamplingCB.getSelectedItem()).floatValue();
 
-		alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,allFilamentCoords,surfaceFile,samplingRate,cityBlockImage,pointsFile,outputTextArea,flipXCB.isSelected(), flipYCB.isSelected(), flipZCB.isSelected());
+		alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,allFilamentCoords,surfaceFile,samplingRate,cityBlockImage,pointsFile,outputTextArea,flipXCB.isSelected(), flipYCB.isSelected(), flipZCB.isSelected(),greenThreshold,subsamplingDistance,outputFilename,outputFilename_auto);
 		alg.addListener(this);
 		setCursor(new Cursor(Cursor.WAIT_CURSOR));
 		
