@@ -849,7 +849,7 @@ public class FileNIFTI extends FileBase {
         int index;
         String fileHeaderName;
         long fileLength = 348;
-        boolean endianess;
+        boolean endianess = BIG_ENDIAN;
         int[] niftiExtents = new int[5];
         int numDims = 0;
         float intentP1;
@@ -883,11 +883,23 @@ public class FileNIFTI extends FileBase {
                  if(bytesRead != headerSize) {
                 	 buffer = getFullBuffer(zin,buffer,bytesRead,headerSize); 
                  }
-                 endianess = BIG_ENDIAN;
+                 // Set the endianess based on header size = 348 Big Endian or 1,543,569,408 Little endian
+     	        endianess = BIG_ENDIAN;
                  if (headerSize != (getBufferInt(buffer, 0, BIG_ENDIAN))) {
-                	 endianess = LITTLE_ENDIAN;
+                	    endianess = LITTLE_ENDIAN;
+                	    if (headerSize != getBufferInt(buffer, 0, LITTLE_ENDIAN)) {
+                	    	Preferences.debug("FileNIFTI:readHeader NIFTI header length != 348.\n", 2);
+                         return false; 
+                	    }
                  }
+                 else {
+                 	Preferences.debug("FileNIFTI:readHeader Endianess = Big endian.\n", 2);	
+                 }
+                 fileInfo.setEndianess(endianess);
+                 fileInfo.setSizeOfHeader(headerSize);
                  vox_offset = getBufferFloat(buffer, 108, endianess);
+                 fileInfo.setVoxOffset(vox_offset);
+                 Preferences.debug("vox_offset = " + vox_offset + "\n");
                  dataStart = Math.round(vox_offset);
                  if (dataStart > headerSize) {
                 	 buffer2 = new byte[dataStart-headerSize];
@@ -911,15 +923,27 @@ public class FileNIFTI extends FileBase {
                 if(bytesRead != headerSize) {
                	 buffer = getFullBuffer(gzin,buffer,bytesRead,headerSize); 
                 }
-                endianess = BIG_ENDIAN;
+                // Set the endianess based on header size = 348 Big Endian or 1,543,569,408 Little endian
+    	        endianess = BIG_ENDIAN;
                 if (headerSize != (getBufferInt(buffer, 0, BIG_ENDIAN))) {
-               	 endianess = LITTLE_ENDIAN;
+               	    endianess = LITTLE_ENDIAN;
+               	    if (headerSize != getBufferInt(buffer, 0, LITTLE_ENDIAN)) {
+               	    	Preferences.debug("FileNIFTI:readHeader NIFTI header length != 348.\n", 2);
+                        return false; 
+               	    }
                 }
+                else {
+                	Preferences.debug("FileNIFTI:readHeader Endianess = Big endian.\n", 2);	
+                }
+                fileInfo.setEndianess(endianess);
+                fileInfo.setSizeOfHeader(headerSize);
                 vox_offset = getBufferFloat(buffer, 108, endianess);
+                fileInfo.setVoxOffset(vox_offset);
+                Preferences.debug("vox_offset = " + vox_offset + "\n");
                 dataStart = Math.round(vox_offset);
                 if (dataStart > headerSize) {
                	 buffer2 = new byte[dataStart-headerSize];
-               	 bytesRead2 = zin.read(buffer2);
+               	 bytesRead2 = gzin.read(buffer2);
                	 if (bytesRead2 != dataStart - headerSize) {
                		 buffer2 = getFullBuffer(gzin, buffer2, bytesRead2, dataStart - headerSize);
                	 }
@@ -939,15 +963,27 @@ public class FileNIFTI extends FileBase {
                 if(bytesRead != headerSize) {
                	 buffer = getFullBuffer(bz2in,buffer,bytesRead,headerSize); 
                 }
-                endianess = BIG_ENDIAN;
+                // Set the endianess based on header size = 348 Big Endian or 1,543,569,408 Little endian
+    	        endianess = BIG_ENDIAN;
                 if (headerSize != (getBufferInt(buffer, 0, BIG_ENDIAN))) {
-               	 endianess = LITTLE_ENDIAN;
+               	    endianess = LITTLE_ENDIAN;
+               	    if (headerSize != getBufferInt(buffer, 0, LITTLE_ENDIAN)) {
+               	    	Preferences.debug("FileNIFTI:readHeader NIFTI header length != 348.\n", 2);
+                        return false; 
+               	    }
                 }
+                else {
+                	Preferences.debug("FileNIFTI:readHeader Endianess = Big endian.\n", 2);	
+                }
+                fileInfo.setEndianess(endianess);
+                fileInfo.setSizeOfHeader(headerSize);
                 vox_offset = getBufferFloat(buffer, 108, endianess);
+                fileInfo.setVoxOffset(vox_offset);
+                Preferences.debug("vox_offset = " + vox_offset + "\n");
                 dataStart = Math.round(vox_offset);
                 if (dataStart > headerSize) {
                	 buffer2 = new byte[dataStart-headerSize];
-               	 bytesRead2 = zin.read(buffer2);
+               	 bytesRead2 = bz2in.read(buffer2);
                	 if (bytesRead2 != dataStart - headerSize) {
                		 buffer2 = getFullBuffer(bz2in, buffer2, bytesRead2, dataStart - headerSize);
                	 }
@@ -1013,16 +1049,28 @@ public class FileNIFTI extends FileBase {
 
 
 	        raFile = new RandomAccessFile(fileHeader, "r");
-	        byte buffer[] = new byte[348];
+	        byte buffer[] = new byte[headerSize];
 	        raFile.read(buffer);
+	        // Set the endianess based on header size = 348 Big Endian or 1,543,569,408 Little endian
 	        endianess = BIG_ENDIAN;
             if (headerSize != (getBufferInt(buffer, 0, BIG_ENDIAN))) {
-           	 endianess = LITTLE_ENDIAN;
+           	    endianess = LITTLE_ENDIAN;
+           	    if (headerSize != getBufferInt(buffer, 0, LITTLE_ENDIAN)) {
+           	    	Preferences.debug("FileNIFTI:readHeader NIFTI header length != 348.\n", 2);
+                    return false; 
+           	    }
             }
+            else {
+            	Preferences.debug("FileNIFTI:readHeader Endianess = Big endian.\n", 2);	
+            }
+            fileInfo.setEndianess(endianess);
+            fileInfo.setSizeOfHeader(headerSize);
             vox_offset = getBufferFloat(buffer, 108, endianess);
+            fileInfo.setVoxOffset(vox_offset);
+            Preferences.debug("vox_offset = " + vox_offset + "\n");
             int dataStart = Math.round(vox_offset);
-            if (dataStart < 348) {
-            	dataStart = 348;
+            if (dataStart < headerSize) {
+            	dataStart = headerSize;
             }
             bufferByte = new byte[dataStart];
             raFile.seek(0L);
@@ -1031,25 +1079,6 @@ public class FileNIFTI extends FileBase {
 	        Preferences.debug("\nThe size of the file with the header information = " + fileLength + "\n");
         
         }  
-
-        fileInfo.setEndianess(BIG_ENDIAN);
-        fileInfo.setSizeOfHeader(getBufferInt(bufferByte, 0, BIG_ENDIAN));
-
-        if (fileInfo.getSizeOfHeader() != headerSize) { // Set the endianess based on header size = 348 Big Endian
-            fileInfo.setEndianess(LITTLE_ENDIAN); // or 1,543,569,408 Little endian
-            fileInfo.setSizeOfHeader(getBufferInt(bufferByte, 0, LITTLE_ENDIAN));
-            Preferences.debug("FileNIFTI:readHeader Endianess = Little endian.\n", 2);
-        } else {
-            Preferences.debug("FileNIFTI:readHeader Endianess = Big endian.\n", 2);
-        }
-
-        if (fileInfo.getSizeOfHeader() != headerSize) {
-            Preferences.debug("FileNIFTI:readHeader NIFTI header length != 348.\n", 2);
-
-            return false;
-        }
-
-        endianess = fileInfo.getEndianess();
 
         // bufferByte[39] is the dim_info byte
         freq_dim = (int) (bufferByte[39] & 0x03);
@@ -1587,11 +1616,6 @@ public class FileNIFTI extends FileBase {
         }
 
         fileInfo.setResolutions(resolutions);
-
-        vox_offset = getBufferFloat(bufferByte, 108, endianess);
-        fileInfo.setVoxOffset(vox_offset);
-
-        Preferences.debug("vox_offset = " + vox_offset + "\n");
 
         scl_slope = getBufferFloat(bufferByte, 112, endianess);
         fileInfo.setSclSlope(scl_slope);
