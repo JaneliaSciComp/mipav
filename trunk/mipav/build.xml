@@ -58,8 +58,8 @@
     <property name="verbose" value="no" />
     <property name="nowarn" value="no" />
     <property name="listfiles" value="no" />
-    <property name="version.target" value="1.5" />
-    <property name="version.source" value="1.5" />
+    <property name="version.target" value="1.6" />
+    <property name="version.source" value="1.6" />
     <property name="sysAssert" value="yes" />
 
     <!--
@@ -68,7 +68,7 @@
         =========
     -->
     <property name="doc.access" value="protected"/>
-    <property name="doc.link" value="http://java.sun.com/j2se/1.5.0/docs/api/"/>
+    <property name="doc.link" value="http://java.sun.com/javase/6/docs/api/"/>
     <property name="doc.linksource" value="no"/>
     <property name="doc.breakiterator" value="yes"/>
     <property name="doc.failonerror" value="yes"/>
@@ -175,14 +175,14 @@
         <echo message="End of compilation."/>
     </target>
 
-    <!-- Compile the sources without debugging. -->
+    <!-- Compile the sources cleanly. -->
     <target name="final"
             description="Fresh compilation so it may be packaged."
             depends="clean, init" >
         <echo message="Compilation started."/>
 
         <antcall target="compile">
-            <param name="debug" value="false"/>
+            <param name="debug" value="true"/>
             <param name="deprecation" value="true"/>
             <param name="verbose" value="no"/>
             <param name="listfiles" value="no"/>
