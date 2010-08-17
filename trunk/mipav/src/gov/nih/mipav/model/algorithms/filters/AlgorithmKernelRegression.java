@@ -2,17 +2,13 @@ package gov.nih.mipav.model.algorithms.filters;
 
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewJProgressBar;
+import gov.nih.mipav.view.*;
 
 import java.io.IOException;
 
-import Jama.Matrix;
-import Jama.SingularValueDecomposition;
+import Jama.*;
 
 
 /**
@@ -93,7 +89,7 @@ import Jama.SingularValueDecomposition;
  * <pre>
  * This is experimental software. It is provided for noncommercial research purposes only.
  *    Use at your own risk. No warranty is implied by this distribution.
- *    Copyright © 2007 by University of California.
+ *    Copyright 2007 by University of California.
  * </pre>
  */
 public class AlgorithmKernelRegression extends AlgorithmBase {
