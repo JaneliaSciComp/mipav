@@ -430,6 +430,20 @@ public class FileNIFTI extends FileBase {
     
     private int ecodeArray[] = null;
     
+    private String mindIdentArray[] = null;
+    
+    private float bValueArray[] = null;
+    
+    private float azimuthArray[] = null;
+    
+    private float zenithArray[] = null;
+    
+    private int dtComponentArray[][] = null;
+    
+    private int degreeArray[] = null;
+    
+    private int orderArray[] = null;
+    
     /**
      * File object and input streams 
      * needed for NIFTI compressed files
@@ -865,6 +879,17 @@ public class FileNIFTI extends FileBase {
         int extendedHeaderStart;
         int currentAddress;
         int ecodeNumber = 0;
+        int mindIdentNumber = 0;
+        int mindIdentIndex = 0;
+        int bValueNumber = 0;
+        int bValueIndex = 0;
+        int sphericalDirectionNumber = 0;
+        int sphericalDirectionIndex = 0;
+        int dtComponentNumber = 0;
+        int dtComponentIndex = 0;
+        int dtComponents;
+        int sphericalHarmonicNumber = 0;
+        int sphericalHarmonicIndex = 0;
 
         bufferByte = new byte[headerSize];
 
@@ -2289,6 +2314,21 @@ public class FileNIFTI extends FileBase {
             while ((bufferByte.length >= currentAddress + esize) && ((!oneFile) || (vox_offset >= currentAddress + esize))) {
                 esize = getBufferInt(bufferByte, currentAddress, endianess);
                 ecode = getBufferInt(bufferByte, currentAddress+4, endianess);
+                if (ecode == 18) {
+                	mindIdentNumber++;
+                }
+                else if (ecode == 20) {
+                	bValueNumber++;
+                }
+                else if (ecode == 22) {
+                	sphericalDirectionNumber++;
+                }
+                else if (ecode == 24) {
+                	dtComponentNumber++;
+                }
+                else if (ecode == 26) {
+                	sphericalHarmonicNumber++;
+                }
                 ecodeNumber++;
                 currentAddress = currentAddress + esize;
             } // while ((fileLength >= currentAddress + 8) && ((!oneFile) || (vox_offset >= currentAddress + 8)))
@@ -2297,6 +2337,13 @@ public class FileNIFTI extends FileBase {
                 esizeArray = new int[ecodeNumber];
                 esizeArray[0] = 8;
                 ecodeArray = new int[ecodeNumber];
+                mindIdentArray = new String[mindIdentNumber];
+                bValueArray = new float[bValueNumber];
+                azimuthArray = new float[sphericalDirectionNumber];
+                zenithArray = new float[sphericalDirectionNumber];
+                dtComponentArray = new int[dtComponentNumber][];
+                degreeArray = new int[sphericalHarmonicNumber];
+                orderArray = new int[sphericalHarmonicNumber];
                 currentAddress = extendedHeaderStart;
                 ecodeNumber = 0;
                 while ((bufferByte.length >= currentAddress + esizeArray[Math.max(0, ecodeNumber-1)]) && ((!oneFile) || (vox_offset >= currentAddress + esizeArray[Math.max(0, ecodeNumber-1)]))) {
@@ -2328,18 +2375,41 @@ public class FileNIFTI extends FileBase {
                     	break;
                     case 18:
                     	Preferences.debug("ecode = 18 for MIND_IDENT field with character data\n");
+                    	mindIdentArray[mindIdentIndex] = new String(bufferByte, currentAddress+8, esizeArray[ecodeNumber]-8);
+                    	Preferences.debug("Mind Ident field = " + mindIdentArray[mindIdentIndex] + "\n");
+                    	mindIdentIndex++;
                     	break;
                     case 20:
                         Preferences.debug("ecode = 20 for B_VALUE for b-value in units of s/mm-squared\n");
+                        bValueArray[bValueIndex] = getBufferFloat(bufferByte, currentAddress+8, endianess);
+                        Preferences.debug("b-value = " + bValueArray[bValueIndex] + " s/(mm*mm)\n");
+                        bValueIndex++;
                         break;
                     case 22:
                     	Preferences.debug("ecode = 22 for SPHERICAL_DIRECTION with spherical coordinates\n");
+                    	azimuthArray[sphericalDirectionIndex] = getBufferFloat(bufferByte, currentAddress+8, endianess);
+                    	Preferences.debug("Azimuthal angle = " + azimuthArray[sphericalDirectionIndex] + " radians\n");
+                    	zenithArray[sphericalDirectionIndex] = getBufferFloat(bufferByte, currentAddress+12, endianess);
+                    	Preferences.debug("Zenith angle = " + zenithArray[sphericalDirectionIndex] + " radians\n");
+                    	sphericalDirectionIndex++;
                     	break;
                     case 24:
                     	Preferences.debug("ecode = 24 for DT_COMPONENT specifying the indicies of a single diffusion tensor component\n");
+                    	dtComponents = (esizeArray[ecodeNumber] - 8)/4;
+                    	dtComponentArray[dtComponentIndex] = new int[dtComponents];
+                    	for (i = 0; i < dtComponents; i++) {
+                    		dtComponentArray[dtComponentIndex][i] = getBufferInt(bufferByte, currentAddress + 8 + 4*i, endianess);
+                    		Preferences.debug("DT component index " + (i+1) + " = " + dtComponentArray[dtComponentIndex][i] + "\n");
+                    	}
+                    	dtComponentIndex++;
                     	break;
                     case 26:
                     	Preferences.debug("ecode = 26 for SHC_DEGREEORDER specifying degree and order of a spherical harmonic basis function\n");
+                    	degreeArray[sphericalHarmonicIndex] = getBufferInt(bufferByte, currentAddress+8, endianess);
+                    	Preferences.debug("Degree = " + degreeArray[sphericalHarmonicIndex] + "\n");
+                    	orderArray[sphericalHarmonicIndex] = getBufferInt(bufferByte, currentAddress+12, endianess);
+                    	Preferences.debug("Order = " + orderArray[sphericalHarmonicIndex] + "\n");
+                    	sphericalHarmonicIndex++;
                     	break;
                     default:
                         Preferences.debug("ecode = " + ecodeArray[ecodeNumber] + "an unspecified ecode value\n");
@@ -2349,6 +2419,13 @@ public class FileNIFTI extends FileBase {
                 } // while ((fileLength >= currentAddress + 8) && ((!oneFile) || (vox_offset >= currentAddress + 8)))
                 fileInfo.setEsize(esizeArray);
                 fileInfo.setEcode(ecodeArray);
+                fileInfo.setMindIdent(mindIdentArray);
+                fileInfo.setBValue(bValueArray);
+                fileInfo.setAzimuth(azimuthArray);
+                fileInfo.setZenith(zenithArray);
+                fileInfo.setDTComponent(dtComponentArray);
+                fileInfo.setDegree(degreeArray);
+                fileInfo.setOrder(orderArray);
             } // if (ecodeNumber >= 1)
         } // else   
         if(raFile != null) {
