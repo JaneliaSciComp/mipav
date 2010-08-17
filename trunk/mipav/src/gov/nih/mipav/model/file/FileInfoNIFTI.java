@@ -1084,7 +1084,12 @@ public class FileInfoNIFTI extends FileInfoBase {
         	sphericalDirectionIndex = 0;
         	dtComponentIndex = 0;
         	afniGroupIndex = 0;
-            dialog.append("Extended header has " + esize.length + " header fields\n");
+        	if (esize.length == 1) {
+        		dialog.append("Extended header has " + esize.length + " header field\n");
+        	}
+        	else {
+               dialog.append("Extended header has " + esize.length + " header fields\n");
+        	}
             for (i = 0; i < esize.length; i++) {
             	//dialog.append("Header field number " + (i+1) + " size in bytes = " + esize[i] + "\n");
             	dialog.append("Header field number " + (i+1) + " has " + ecodeIntToString(ecode[i]) + "\n");
