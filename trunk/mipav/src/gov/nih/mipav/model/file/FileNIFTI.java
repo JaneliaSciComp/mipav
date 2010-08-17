@@ -444,6 +444,8 @@ public class FileNIFTI extends FileBase {
     
     private int orderArray[] = null;
     
+    private String afniGroupArray[] = null;
+    
     /**
      * File object and input streams 
      * needed for NIFTI compressed files
@@ -890,6 +892,8 @@ public class FileNIFTI extends FileBase {
         int dtComponents;
         int sphericalHarmonicNumber = 0;
         int sphericalHarmonicIndex = 0;
+        int afniGroupNumber = 0;
+        int afniGroupIndex = 0;
 
         bufferByte = new byte[headerSize];
 
@@ -2314,7 +2318,10 @@ public class FileNIFTI extends FileBase {
             while ((bufferByte.length >= currentAddress + esize) && ((!oneFile) || (vox_offset >= currentAddress + esize))) {
                 esize = getBufferInt(bufferByte, currentAddress, endianess);
                 ecode = getBufferInt(bufferByte, currentAddress+4, endianess);
-                if (ecode == 18) {
+                if (ecode == 4) {
+                	afniGroupNumber++;
+                }
+                else if (ecode == 18) {
                 	mindIdentNumber++;
                 }
                 else if (ecode == 20) {
@@ -2344,6 +2351,7 @@ public class FileNIFTI extends FileBase {
                 dtComponentArray = new int[dtComponentNumber][];
                 degreeArray = new int[sphericalHarmonicNumber];
                 orderArray = new int[sphericalHarmonicNumber];
+                afniGroupArray = new String[afniGroupNumber];
                 currentAddress = extendedHeaderStart;
                 ecodeNumber = 0;
                 while ((bufferByte.length >= currentAddress + esizeArray[Math.max(0, ecodeNumber-1)]) && ((!oneFile) || (vox_offset >= currentAddress + esizeArray[Math.max(0, ecodeNumber-1)]))) {
@@ -2360,6 +2368,8 @@ public class FileNIFTI extends FileBase {
                     	break;
                     case 4:
                     	Preferences.debug("ecode = 4 for AFNI group (i.e., ASCII XML-ish elements)\n");
+                    	afniGroupArray[afniGroupIndex] = new String(bufferByte, currentAddress+8, esizeArray[ecodeNumber]-8);
+                    	afniGroupIndex++;
                     	break;
                     case 6:
                     	Preferences.debug("ecode = 6 for comment: arbitrary non-NUL ASCII text\n");
@@ -2426,6 +2436,7 @@ public class FileNIFTI extends FileBase {
                 fileInfo.setDTComponent(dtComponentArray);
                 fileInfo.setDegree(degreeArray);
                 fileInfo.setOrder(orderArray);
+                fileInfo.setAfniGroup(afniGroupArray);
             } // if (ecodeNumber >= 1)
         } // else   
         if(raFile != null) {
