@@ -373,6 +373,8 @@ public class FileInfoNIFTI extends FileInfoBase {
      */
     private static final int NIFTI_ECODE_MIND_IDENT = 18;
     
+    private static final int NIFTI_ECODE_AFNI = 4;
+    
     /** A B_Value field contains a single 32-bit floating point value representing a
      * diffusion-weighing b-value in units of s/mm-squared.  In the q-space formalism,
      * the b-value is the square of the magnitude of the diffusion wavevector q.
@@ -585,6 +587,8 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     private int order[] = null;
     
+    private String afniGroup[] = null;
+    
     private TransMatrix matrixQ = null;
     
     private TransMatrix matrixS = null;
@@ -621,6 +625,7 @@ public class FileInfoNIFTI extends FileInfoBase {
         int dtComponentIndex = 0;
         int dtComponents;
         int sphericalHarmonicIndex = 0;
+        int afniGroupIndex = 0;
         JDialogText dialog = (JDialogText) dlog;
         displayPrimaryInfo(dialog, matrix);
         dialog.append("\n\n                Other information\n\n");
@@ -1078,11 +1083,16 @@ public class FileInfoNIFTI extends FileInfoBase {
         	bValueIndex = 0;
         	sphericalDirectionIndex = 0;
         	dtComponentIndex = 0;
+        	afniGroupIndex = 0;
             dialog.append("Extended header has " + esize.length + " header fields\n");
             for (i = 0; i < esize.length; i++) {
             	//dialog.append("Header field number " + (i+1) + " size in bytes = " + esize[i] + "\n");
             	dialog.append("Header field number " + (i+1) + " has " + ecodeIntToString(ecode[i]) + "\n");
             	switch(ecode[i]) {
+            	case NIFTI_ECODE_AFNI:
+            		dialog.append("AFNI GROUP field number " + (afniGroupIndex+1) + " has:\n");
+            		dialog.append(afniGroup[afniGroupIndex++].trim() + "\n");
+            		break;
             	case NIFTI_ECODE_MIND_IDENT:
             		dialog.append("MIND_IDENT field number " + (mindIdentIndex+1) + " = " + mindIdent[mindIdentIndex].trim() + "\n");
             		mindIdentIndex++;
@@ -1725,6 +1735,14 @@ public class FileInfoNIFTI extends FileInfoBase {
      */
     public void setOrder(int order[]) {
     	this.order = order;
+    }
+    
+    /**
+     * Sets array of afni group xml inclusions
+     * @param afniGroup
+     */
+    public void setAfniGroup(String afniGroup[]) {
+    	this.afniGroup = afniGroup;
     }
     
     /**
