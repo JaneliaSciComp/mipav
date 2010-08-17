@@ -571,6 +571,20 @@ public class FileInfoNIFTI extends FileInfoBase {
     // 4 = AFNI group (i.e., ASCII XML-ish elements)
     private int ecode[] = null;
     
+    private String mindIdent[] = null;
+    
+    private float bValue[] = null;
+    
+    private float azimuth[] = null;
+    
+    private float zenith[] = null;
+    
+    private int dtComponent[][] = null;
+    
+    private int degree[] = null;
+    
+    private int order[] = null;
+    
     private TransMatrix matrixQ = null;
     
     private TransMatrix matrixS = null;
@@ -600,6 +614,13 @@ public class FileInfoNIFTI extends FileInfoBase {
      */
     public void displayAboutInfo(JDialogBase dlog, TransMatrix matrix) {
         int i;
+        int j;
+        int mindIdentIndex = 0;
+        int bValueIndex = 0;
+        int sphericalDirectionIndex = 0;
+        int dtComponentIndex = 0;
+        int dtComponents;
+        int sphericalHarmonicIndex = 0;
         JDialogText dialog = (JDialogText) dlog;
         displayPrimaryInfo(dialog, matrix);
         dialog.append("\n\n                Other information\n\n");
@@ -1053,10 +1074,44 @@ public class FileInfoNIFTI extends FileInfoBase {
         }
         
         if ((esize != null) && (ecode != null)) {
+        	mindIdentIndex = 0;
+        	bValueIndex = 0;
+        	sphericalDirectionIndex = 0;
+        	dtComponentIndex = 0;
             dialog.append("Extended header has " + esize.length + " header fields\n");
             for (i = 0; i < esize.length; i++) {
-            	dialog.append("Header field number " + (i+1) + " size in bytes = " + esize[i] + "\n");
+            	//dialog.append("Header field number " + (i+1) + " size in bytes = " + esize[i] + "\n");
             	dialog.append("Header field number " + (i+1) + " has " + ecodeIntToString(ecode[i]) + "\n");
+            	switch(ecode[i]) {
+            	case NIFTI_ECODE_MIND_IDENT:
+            		dialog.append("MIND_IDENT field number " + (mindIdentIndex+1) + " = " + mindIdent[mindIdentIndex].trim() + "\n");
+            		mindIdentIndex++;
+            		break;
+            	case NIFTI_ECODE_B_VALUE:
+            		dialog.append("B_VALUE field number " + (bValueIndex+1) + " = " + bValue[bValueIndex] + " s/(mm*mm)\n");
+            		bValueIndex++;
+            		break;
+            	case NIFTI_ECODE_SPHERICAL_DIRECTION:
+            		dialog.append("SPHERICAL DIRECTION field number " + (sphericalDirectionIndex + 1) + " has:\n");
+            		dialog.append("Azimuthal angle = " + azimuth[sphericalDirectionIndex] + " radians\n");
+            		dialog.append("Zenith angle = " + zenith[sphericalDirectionIndex] + " radians\n");
+            		sphericalDirectionIndex++;
+            		break;
+            	case NIFTI_ECODE_DT_COMPONENT:
+            		dialog.append("Diffusion Tensor field number " + (dtComponentIndex + 1) + " has:\n");
+            		dtComponents = dtComponent[dtComponentIndex].length;
+        	        for (j = 0; j < dtComponents; j++) {
+        	        	dialog.append("Component index " + (j+1) + " = " + dtComponent[dtComponentIndex][j] + "\n");
+        	        }
+            	    dtComponentIndex++;
+            	    break;
+            	case NIFTI_ECODE_SHC_DEGREEORDER:
+            		dialog.append("Spherical harmonic basis function number " + (sphericalHarmonicIndex + 1) + " has:\n");
+            		dialog.append("Degree = " + degree[sphericalHarmonicIndex] + "\n");
+            		dialog.append("Order = " + order[sphericalHarmonicIndex] + "\n");
+            		sphericalHarmonicIndex++;
+            		break;
+            	}
             } // for (i = 0; i < esize.length; i++)
         } // if ((esize != null) && (ecode != null))
         else {
@@ -1621,6 +1676,63 @@ public class FileInfoNIFTI extends FileInfoBase {
      */
     public void setEcode(int ecode[]) {
         this.ecode = ecode;
+    }
+    
+    /**
+     * Sets mindIdent array, character data which serve to identify the type of
+     * DWI data structure represented by the MIND extended header fields which follow
+     * @param mindIdent
+     */
+    public void setMindIdent(String mindIdent[]) {
+    	this.mindIdent = mindIdent;
+    }
+    
+    /**
+     * Sets floating point array with diffusion-weighting b-values in units of s/mm-squared.
+     * @param bValue
+     */
+    public void setBValue(float bValue[]) {
+    	this.bValue = bValue;
+    }
+    
+    /** 
+     * Sets azimuthal angle array for spherical direction
+     * @param azimuth
+     */
+    public void setAzimuth(float azimuth[]) {
+    	this.azimuth = azimuth;
+    }
+    
+    /**
+     * Sets zenith angle array for spherical direction
+     * @param zenith
+     */
+    public void setZenith(float zenith[]) {
+    	this.zenith = zenith;
+    }
+    
+    /**
+     * Sets degree array for set of spherical harmonic basis functions
+     * @param degree
+     */
+    public void setDegree(int degree[]) {
+    	this.degree = degree;
+    }
+    
+    /**
+     * Sets order array for set of spherical harmonic basis functions
+     * @param order
+     */
+    public void setOrder(int order[]) {
+    	this.order = order;
+    }
+    
+    /**
+     * Sets dt component array
+     * @param dtComponent
+     */
+    public void setDTComponent(int dtComponent[][]) {
+    	this.dtComponent = dtComponent;
     }
     
     public void setMatrixQ(TransMatrix matrixQ) {
