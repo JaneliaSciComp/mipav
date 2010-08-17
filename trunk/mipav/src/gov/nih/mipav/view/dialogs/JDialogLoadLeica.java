@@ -8,9 +8,7 @@ import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
-
 import java.io.*;
-
 import java.util.*;
 
 import javax.swing.*;
@@ -25,15 +23,17 @@ import javax.swing.*;
  */
 public class JDialogLoadLeica extends JDialogBase {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 5662541302525039992L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private File headerFile;
+    private final File headerFile;
 
     /** DOCUMENT ME! */
     private JScrollPane scrollPane;
@@ -42,16 +42,17 @@ public class JDialogLoadLeica extends JDialogBase {
     private JList seriesList;
 
     /** DOCUMENT ME! */
-    private boolean successful = false; // indicates status of algorithm
+    private final boolean successful = false; // indicates status of algorithm
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates a new JDialogLoadLeica object.
-     *
-     * @param  headerFile  DOCUMENT ME!
+     * 
+     * @param headerFile DOCUMENT ME!
      */
-    public JDialogLoadLeica(File headerFile) {
+    public JDialogLoadLeica(final File headerFile) {
         super(false);
         this.headerFile = headerFile;
         init();
@@ -59,31 +60,32 @@ public class JDialogLoadLeica extends JDialogBase {
 
     /**
      * Creates a new JDialogLoadLeica object.
-     *
-     * @param  theParentFrame  DOCUMENT ME!
-     * @param  headerFile      DOCUMENT ME!
+     * 
+     * @param theParentFrame DOCUMENT ME!
+     * @param headerFile DOCUMENT ME!
      */
-    public JDialogLoadLeica(Frame theParentFrame, File headerFile) {
+    public JDialogLoadLeica(final Frame theParentFrame, final File headerFile) {
         super(theParentFrame, false);
         this.headerFile = headerFile;
         init();
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
-     *
-     * @param  event  Event that triggers function
+     * 
+     * @param event Event that triggers function
      */
-    public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
-        int i;
+    public void actionPerformed(final ActionEvent event) {
+        final String command = event.getActionCommand();
+        final int i;
 
         if (command.equals("Open")) {
 
             if (seriesList.getSelectedValue() != null) {
-                LeicaSeries ser = (LeicaSeries) seriesList.getSelectedValue();
+                final LeicaSeries ser = (LeicaSeries) seriesList.getSelectedValue();
                 loadLeica(ser);
             }
         } else if (command.equals("Cancel")) {
@@ -95,8 +97,8 @@ public class JDialogLoadLeica extends JDialogBase {
 
     /**
      * Accessor that returns the whether or not the algorithm completed successfully.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public boolean isSuccessful() {
         return successful;
@@ -104,18 +106,17 @@ public class JDialogLoadLeica extends JDialogBase {
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     private boolean buildList() {
-        Vector vec = new Vector();
+        final Vector vec = new Vector();
         BufferedReader br = null;
-
 
         try {
             br = new BufferedReader(new FileReader(headerFile));
 
-            boolean keepGoing = true;
+            final boolean keepGoing = true;
             boolean lutFinished = false;
             String currentLine;
 
@@ -132,7 +133,7 @@ public class JDialogLoadLeica extends JDialogBase {
                 // System.err.println(currentLine);
                 if (currentLine == null) {
 
-                    if ((series != null) && !vec.contains(series) && seriesExists(series)) {
+                    if ( (series != null) && !vec.contains(series) && seriesExists(series)) {
                         vec.add(series);
                     }
 
@@ -188,9 +189,9 @@ public class JDialogLoadLeica extends JDialogBase {
                 } else if (currentLine.startsWith("Voxel-Width")) {
                     currentLine = currentLine.substring(11).trim();
 
-                    String unitsStr = currentLine.substring(currentLine.indexOf("[") + 1, currentLine.indexOf("]"));
+                    final String unitsStr = currentLine.substring(currentLine.indexOf("[") + 1, currentLine
+                            .indexOf("]"));
 
-                    //if (unitsStr.equalsIgnoreCase("µm")) {
                     if (unitsStr.equalsIgnoreCase("\u00B5" + "m")) {
                         units[0] = FileInfoBase.MICROMETERS;
                     }
@@ -200,9 +201,9 @@ public class JDialogLoadLeica extends JDialogBase {
                 } else if (currentLine.startsWith("Voxel-Height")) {
                     currentLine = currentLine.substring(12).trim();
 
-                    String unitsStr = currentLine.substring(currentLine.indexOf("[") + 1, currentLine.indexOf("]"));
+                    final String unitsStr = currentLine.substring(currentLine.indexOf("[") + 1, currentLine
+                            .indexOf("]"));
 
-                    //if (unitsStr.equalsIgnoreCase("µm")) {
                     if (unitsStr.equalsIgnoreCase("\u00B5" + "m")) {
                         units[1] = FileInfoBase.MICROMETERS;
                     }
@@ -219,10 +220,10 @@ public class JDialogLoadLeica extends JDialogBase {
                     currentLine = currentLine.substring(11).trim();
 
                     if (currentLine.indexOf("[") != -1) {
-                        String unitsStr = currentLine.substring(currentLine.indexOf("[") + 1, currentLine.indexOf("]"));
+                        final String unitsStr = currentLine.substring(currentLine.indexOf("[") + 1, currentLine
+                                .indexOf("]"));
                         currentLine = currentLine.substring(currentLine.indexOf("]") + 1, currentLine.length()).trim();
 
-                        //if (unitsStr.equalsIgnoreCase("µm")) {
                         if (unitsStr.equalsIgnoreCase("\u00B5" + "m")) {
                             units[2] = FileInfoBase.MICROMETERS;
                         }
@@ -234,7 +235,7 @@ public class JDialogLoadLeica extends JDialogBase {
                 } else if (currentLine.startsWith("LUT_") && !lutFinished) {
                     currentLine = currentLine.substring(4).trim();
 
-                    int lutNum = Integer.parseInt(currentLine);
+                    final int lutNum = Integer.parseInt(currentLine);
 
                     // ignore LUT info listed past the # of channels listed in dim[]
                     if (lutNum < dim[2]) {
@@ -266,18 +267,19 @@ public class JDialogLoadLeica extends JDialogBase {
                         series.setNumImages(Integer.parseInt(currentLine));
                     }
 
-                } else if (currentLine.startsWith("*************************************** NEXT IMAGE *********************************")) {
+                } else if (currentLine
+                        .startsWith("*************************************** NEXT IMAGE *********************************")) {
 
                     if (seriesExists(series) && sortLeicaFiles(series)) {
                         vec.add(series);
                     }
                 }
             }
-        } catch (IOException ex) {
+        } catch (final IOException ex) {
             MipavUtil.displayError("Leica header parsing failed.");
 
             return false;
-        } catch (Exception ex) {
+        } catch (final Exception ex) {
             MipavUtil.displayError("Leica header parsing failed.");
 
             return false;
@@ -285,47 +287,46 @@ public class JDialogLoadLeica extends JDialogBase {
 
         seriesList = new JList(vec) {
 
-                // This method is called as the cursor moves within the list.
-                public String getToolTipText(MouseEvent evt) {
+            // This method is called as the cursor moves within the list.
+            public String getToolTipText(final MouseEvent evt) {
 
-                    // Get item index
-                    int index = locationToIndex(evt.getPoint());
+                // Get item index
+                final int index = locationToIndex(evt.getPoint());
 
-                    // Get item
-                    LeicaSeries series = (LeicaSeries) getModel().getElementAt(index);
+                // Get item
+                final LeicaSeries series = (LeicaSeries) getModel().getElementAt(index);
 
-                    // Build tool tip string
-                    String tipString = new String();
-                    tipString += "X Dim: " + series.getExtents()[0] + ", Y Dim: " + series.getExtents()[1];
+                // Build tool tip string
+                String tipString = new String();
+                tipString += "X Dim: " + series.getExtents()[0] + ", Y Dim: " + series.getExtents()[1];
 
-                    if (series.getResolutions().length > 2) {
-                        tipString += ", Z Dim: " + series.getExtents()[3];
-                    }
-
-                    tipString += ", Image Type: ";
-
-                    if (series.getResolutions().length > 2) {
-                        tipString += "RGB";
-                    } else {
-                        tipString += "UShort";
-                    }
-
-                    tipString += ", X Res: " + series.getResolutions()[0] + ", Y Res: " + series.getResolutions()[1];
-
-                    if (series.getResolutions().length > 2) {
-                        tipString += ", Z Res: " + series.getResolutions()[2];
-                    }
-
-                    return tipString;
+                if (series.getResolutions().length > 2) {
+                    tipString += ", Z Dim: " + series.getExtents()[3];
                 }
-            };
 
-        MouseListener seriesListener = new MouseAdapter() {
+                tipString += ", Image Type: ";
+
+                if (series.getResolutions().length > 2) {
+                    tipString += "RGB";
+                } else {
+                    tipString += "UShort";
+                }
+
+                tipString += ", X Res: " + series.getResolutions()[0] + ", Y Res: " + series.getResolutions()[1];
+
+                if (series.getResolutions().length > 2) {
+                    tipString += ", Z Res: " + series.getResolutions()[2];
+                }
+
+                return tipString;
+            }
+        };
+
+        final MouseListener seriesListener = new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
 
                 if (e.getClickCount() == 2) {
                     // int index = seriesList.locationToIndex(e.getPoint());
-
 
                     actionPerformed(new ActionEvent(OKButton, 0, "Open"));
                 }
@@ -345,7 +346,7 @@ public class JDialogLoadLeica extends JDialogBase {
      */
     private void init() {
 
-        JPanel mainPanel = new JPanel(new BorderLayout()); // everything gets placed on this panel
+        final JPanel mainPanel = new JPanel(new BorderLayout()); // everything gets placed on this panel
 
         setTitle("Select Leica series");
         setForeground(Color.black);
@@ -353,20 +354,20 @@ public class JDialogLoadLeica extends JDialogBase {
         if (buildList()) {
 
             // make the list scroll if there are enough checkboxes
-            scrollPane = new JScrollPane(seriesList, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                         JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            scrollPane = new JScrollPane(seriesList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             mainPanel.add(scrollPane);
             mainPanel.setBorder(buildTitledBorder("Available Leica series listed in header"));
             mainPanel.setPreferredSize(new Dimension(210, 390));
 
-            JPanel buttonPanel = new JPanel(new FlowLayout());
+            final JPanel buttonPanel = new JPanel(new FlowLayout());
             buttonPanel.add(buildButtons());
             OKButton.setText("Open");
             cancelButton.setText("Cancel");
             helpButton.setVisible(false);
             // helpButton.setText("Cancel");
 
-            JPanel panel = new JPanel(new BorderLayout());
+            final JPanel panel = new JPanel(new BorderLayout());
             panel.add(mainPanel); // put the main panel into the center of the dialog
             panel.add(buttonPanel, BorderLayout.SOUTH);
             panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -384,10 +385,10 @@ public class JDialogLoadLeica extends JDialogBase {
      * Loads the selected Leica series into a new ViewJFrameImage uses the FileTiff to read each Tiff image and
      * construct the appropriate model image based on the LeicaSeries attributes which were read in from the text
      * header.
-     *
-     * @param  series  LeicaSeries
+     * 
+     * @param series LeicaSeries
      */
-    private void loadLeica(LeicaSeries series) {
+    private void loadLeica(final LeicaSeries series) {
 
         ModelImage image = null;
         ModelLUT lut = null;
@@ -406,9 +407,8 @@ public class JDialogLoadLeica extends JDialogBase {
 
                 image = tempTiff.readImage(false, false);
                 lut = tempTiff.getModelLUT();
-                image.getFileInfo()[0].setResolutions(new float[] {
-                                                          series.getResolutions()[0], series.getResolutions()[1]
-                                                      });
+                image.getFileInfo()[0].setResolutions(new float[] {series.getResolutions()[0],
+                        series.getResolutions()[1]});
                 image.getFileInfo()[0].setUnitsOfMeasure(FileInfoBase.MICROMETERS, 0);
                 image.setImageName(series.getName());
             } else {
@@ -420,47 +420,47 @@ public class JDialogLoadLeica extends JDialogBase {
                 image.calcMinMax();
                 new ViewJFrameImage(image, lut, null, false);
             }
-        } catch (IOException ioex) {
+        } catch (final IOException ioex) {
             ioex.printStackTrace();
         }
     }
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   leica  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param leica DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    private boolean seriesExists(LeicaSeries leica) {
+    private boolean seriesExists(final LeicaSeries leica) {
         int fileCounter = 0;
-        String seriesName = leica.getName();
+        final String seriesName = leica.getName();
 
-        File directoryFile = headerFile.getParentFile();
+        final File directoryFile = headerFile.getParentFile();
 
         if (directoryFile.isDirectory()) {
 
-            File[] allFiles = directoryFile.listFiles(new FileFilter() {
-                    public boolean accept(File f) {
+            final File[] allFiles = directoryFile.listFiles(new FileFilter() {
+                public boolean accept(File f) {
 
-                        if (f.getPath().endsWith("tif") || f.getParent().endsWith("TIF")) {
-                            return true;
-                        } else {
-                            return false;
-                        }
+                    if (f.getPath().endsWith("tif") || f.getParent().endsWith("TIF")) {
+                        return true;
+                    } else {
+                        return false;
                     }
-                });
+                }
+            });
 
             // create a Vector to store each file name in the series
             // which will be passed into the series object for actual
             // Tiff file reading
-            Vector fileNames = new Vector(leica.getNumImages(), 0);
+            final Vector fileNames = new Vector(leica.getNumImages(), 0);
 
             // see if they contain the name + "_"
-            for (int i = 0; i < allFiles.length; i++) {
+            for (final File element : allFiles) {
 
-                if (allFiles[i].getPath().indexOf(leica.getName() + "_") != -1) {
-                    fileNames.add(fileCounter, allFiles[i].getPath());
+                if (element.getPath().indexOf(leica.getName() + "_") != -1) {
+                    fileNames.add(fileCounter, element.getPath());
                     fileCounter++;
                 }
             }
@@ -478,21 +478,21 @@ public class JDialogLoadLeica extends JDialogBase {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   series  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param series DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    private boolean sortLeicaFiles(LeicaSeries series) {
+    private boolean sortLeicaFiles(final LeicaSeries series) {
 
-        Vector fileNames = series.getFileNames();
+        final Vector fileNames = series.getFileNames();
 
         if (fileNames != null) {
-            LeicaFileComparator lComp = new LeicaFileComparator(series.getChannels(), series.getName());
+            final LeicaFileComparator lComp = new LeicaFileComparator(series.getChannels(), series.getName());
             Collections.sort(fileNames, lComp);
 
             if (lComp.getGrayIndices() != null) {
-                int size = fileNames.size();
+                final int size = fileNames.size();
 
                 int numToRemove = lComp.getGrayIndices().length;
 
@@ -511,7 +511,8 @@ public class JDialogLoadLeica extends JDialogBase {
         return true;
     }
 
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
+    // ~ Inner Classes
+    // --------------------------------------------------------------------------------------------------
 
     /**
      * DOCUMENT ME!
@@ -519,30 +520,29 @@ public class JDialogLoadLeica extends JDialogBase {
     public class LeicaFileComparator implements Comparator {
 
         /** DOCUMENT ME! */
-        private int[] channelOrder;
+        private final int[] channelOrder;
 
         /** DOCUMENT ME! */
-        private int grayIndex = -1;
+        private final int grayIndex = -1;
 
         /** DOCUMENT ME! */
         private int[] grayIndices = null;
 
         /** DOCUMENT ME! */
-        private String seriesName;
-
+        private final String seriesName;
 
         /**
          * Creates a new LeicaFileComparator object.
-         *
-         * @param  channelOrder  DOCUMENT ME!
-         * @param  seriesName    DOCUMENT ME!
+         * 
+         * @param channelOrder DOCUMENT ME!
+         * @param seriesName DOCUMENT ME!
          */
-        public LeicaFileComparator(int[] channelOrder, String seriesName) {
+        public LeicaFileComparator(final int[] channelOrder, final String seriesName) {
             this.channelOrder = channelOrder;
             this.seriesName = seriesName;
 
             // set the gray index if there is a gray (unused) channel
-            Vector grayVector = new Vector();
+            final Vector grayVector = new Vector();
 
             for (int i = 0; i < channelOrder.length; i++) {
 
@@ -563,13 +563,13 @@ public class JDialogLoadLeica extends JDialogBase {
 
         /**
          * DOCUMENT ME!
-         *
-         * @param   a  DOCUMENT ME!
-         * @param   b  DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
+         * 
+         * @param a DOCUMENT ME!
+         * @param b DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
          */
-        public int compare(Object a, Object b) {
+        public int compare(final Object a, final Object b) {
 
             // Strip everything but the z and channel information from the file names;
             String aEnd = (String) a;
@@ -593,27 +593,27 @@ public class JDialogLoadLeica extends JDialogBase {
                     boolean aGray = false;
                     boolean bGray = false;
 
-                    for (int i = 0; i < grayIndices.length; i++) {
+                    for (final int element : grayIndices) {
 
-                        if (channelA == grayIndices[i]) {
+                        if (channelA == element) {
                             aGray = true;
                         }
 
-                        if (channelB == grayIndices[i]) {
+                        if (channelB == element) {
                             bGray = true;
                         }
                     }
 
                     if (aGray) {
 
-                        if (!bGray) {
+                        if ( !bGray) {
                             return 1;
                         } else {
                             return 0;
                         }
                     } else if (bGray) {
 
-                        if (!aGray) {
+                        if ( !aGray) {
                             return -1;
                         } else {
                             return 0;
@@ -651,8 +651,8 @@ public class JDialogLoadLeica extends JDialogBase {
 
         /**
          * DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
          */
         public int[] getGrayIndices() {
             return this.grayIndices;
@@ -691,12 +691,12 @@ public class JDialogLoadLeica extends JDialogBase {
         /**
          * Creates a new LeicaSeries object.
          */
-        public LeicaSeries() { }
+        public LeicaSeries() {}
 
         /**
          * DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
          */
         public int[] getChannels() {
             return this.channels;
@@ -704,8 +704,8 @@ public class JDialogLoadLeica extends JDialogBase {
 
         /**
          * DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
          */
         public String getDescription() {
             return this.description;
@@ -713,8 +713,8 @@ public class JDialogLoadLeica extends JDialogBase {
 
         /**
          * DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
          */
         public int[] getExtents() {
             return this.extents;
@@ -722,8 +722,8 @@ public class JDialogLoadLeica extends JDialogBase {
 
         /**
          * DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
          */
         public Vector getFileNames() {
             return this.fileNames;
@@ -731,8 +731,8 @@ public class JDialogLoadLeica extends JDialogBase {
 
         /**
          * DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
          */
         public String getName() {
             return this.seriesName;
@@ -740,8 +740,8 @@ public class JDialogLoadLeica extends JDialogBase {
 
         /**
          * DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
          */
         public int getNumImages() {
             return this.numImages;
@@ -749,8 +749,8 @@ public class JDialogLoadLeica extends JDialogBase {
 
         /**
          * DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
          */
         public float[] getResolutions() {
             return this.resolutions;
@@ -758,8 +758,8 @@ public class JDialogLoadLeica extends JDialogBase {
 
         /**
          * DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
          */
         public int[] getUnits() {
             return this.units;
@@ -767,80 +767,80 @@ public class JDialogLoadLeica extends JDialogBase {
 
         /**
          * DOCUMENT ME!
-         *
-         * @param  channels  DOCUMENT ME!
+         * 
+         * @param channels DOCUMENT ME!
          */
-        public void setChannels(int[] channels) {
+        public void setChannels(final int[] channels) {
             this.channels = channels;
         }
 
         /**
          * DOCUMENT ME!
-         *
-         * @param  description  DOCUMENT ME!
+         * 
+         * @param description DOCUMENT ME!
          */
-        public void setDescription(String description) {
+        public void setDescription(final String description) {
             this.description = description;
         }
 
         /**
          * DOCUMENT ME!
-         *
-         * @param  extents  DOCUMENT ME!
+         * 
+         * @param extents DOCUMENT ME!
          */
-        public void setExtents(int[] extents) {
+        public void setExtents(final int[] extents) {
             this.extents = extents;
         }
 
         /**
          * DOCUMENT ME!
-         *
-         * @param  names  DOCUMENT ME!
+         * 
+         * @param names DOCUMENT ME!
          */
-        public void setFileNames(Vector names) {
+        public void setFileNames(final Vector names) {
             this.fileNames = names;
         }
 
         /**
          * DOCUMENT ME!
-         *
-         * @param  name  DOCUMENT ME!
+         * 
+         * @param name DOCUMENT ME!
          */
-        public void setName(String name) {
+        public void setName(final String name) {
             this.seriesName = name;
         }
 
         /**
          * DOCUMENT ME!
-         *
-         * @param  num  DOCUMENT ME!
+         * 
+         * @param num DOCUMENT ME!
          */
-        public void setNumImages(int num) {
+        public void setNumImages(final int num) {
             this.numImages = num;
         }
 
         /**
          * DOCUMENT ME!
-         *
-         * @param  resolutions  DOCUMENT ME!
+         * 
+         * @param resolutions DOCUMENT ME!
          */
-        public void setResolutions(float[] resolutions) {
+        public void setResolutions(final float[] resolutions) {
             this.resolutions = resolutions;
         }
 
         /**
          * DOCUMENT ME!
-         *
-         * @param  units  DOCUMENT ME!
+         * 
+         * @param units DOCUMENT ME!
          */
-        public void setUnits(int[] units) {
+        public void setUnits(final int[] units) {
             this.units = units;
         }
 
         /**
          * DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
          */
         public String toString() {
             return new String(seriesName);
