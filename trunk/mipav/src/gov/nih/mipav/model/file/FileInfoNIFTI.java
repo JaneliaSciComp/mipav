@@ -1091,7 +1091,7 @@ public class FileInfoNIFTI extends FileInfoBase {
             	switch(ecode[i]) {
             	case NIFTI_ECODE_AFNI:
             		dialog.append("AFNI GROUP field number " + (afniGroupIndex+1) + " has:\n");
-            		dialog.append(afniGroup[afniGroupIndex++].trim() + "\n");
+            		dialog.append(afniGroup[afniGroupIndex++].trim() + "\n\n");
             		break;
             	case NIFTI_ECODE_MIND_IDENT:
             		dialog.append("MIND_IDENT field number " + (mindIdentIndex+1) + " = " + mindIdent[mindIdentIndex].trim() + "\n");
