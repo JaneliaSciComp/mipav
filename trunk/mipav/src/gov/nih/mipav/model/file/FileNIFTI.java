@@ -446,6 +446,8 @@ public class FileNIFTI extends FileBase {
     
     private String afniGroupArray[] = null;
     
+    private String asciiTextArray[] = null;
+    
     /**
      * File object and input streams 
      * needed for NIFTI compressed files
@@ -894,6 +896,8 @@ public class FileNIFTI extends FileBase {
         int sphericalHarmonicIndex = 0;
         int afniGroupNumber = 0;
         int afniGroupIndex = 0;
+        int asciiTextNumber = 0;
+        int asciiTextIndex = 0;
 
         bufferByte = new byte[headerSize];
 
@@ -2321,6 +2325,9 @@ public class FileNIFTI extends FileBase {
                 if (ecode == 4) {
                 	afniGroupNumber++;
                 }
+                else if (ecode == 6) {
+                	asciiTextNumber++;
+                }
                 else if (ecode == 18) {
                 	mindIdentNumber++;
                 }
@@ -2352,6 +2359,7 @@ public class FileNIFTI extends FileBase {
                 degreeArray = new int[sphericalHarmonicNumber];
                 orderArray = new int[sphericalHarmonicNumber];
                 afniGroupArray = new String[afniGroupNumber];
+                asciiTextArray = new String[asciiTextNumber];
                 currentAddress = extendedHeaderStart;
                 ecodeNumber = 0;
                 while ((bufferByte.length >= currentAddress + esizeArray[Math.max(0, ecodeNumber-1)]) && ((!oneFile) || (vox_offset >= currentAddress + esizeArray[Math.max(0, ecodeNumber-1)]))) {
@@ -2373,6 +2381,8 @@ public class FileNIFTI extends FileBase {
                     	break;
                     case 6:
                     	Preferences.debug("ecode = 6 for comment: arbitrary non-NUL ASCII text\n");
+                    	asciiTextArray[asciiTextIndex] = new String(bufferByte, currentAddress+8, esizeArray[ecodeNumber]-8);
+                    	asciiTextIndex++;
                     	break;
                     case 8:
                     	Preferences.debug("ecode = 8 for XCEDE metadata\n");
@@ -2437,6 +2447,7 @@ public class FileNIFTI extends FileBase {
                 fileInfo.setDegree(degreeArray);
                 fileInfo.setOrder(orderArray);
                 fileInfo.setAfniGroup(afniGroupArray);
+                fileInfo.setAsciiText(asciiTextArray);
             } // if (ecodeNumber >= 1)
         } // else   
         if(raFile != null) {
