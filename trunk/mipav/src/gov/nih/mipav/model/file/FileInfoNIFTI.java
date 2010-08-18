@@ -414,6 +414,8 @@ public class FileInfoNIFTI extends FileInfoBase {
      * the order.  m can take values between -l and +l, inclusive. 
      */
     private static final int NIFTI_ECODE_SHC_DEGREEORDER = 26;
+    
+    private static final int NIFTI_ECODE_CARET = 30;
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** auxiliary file */
@@ -596,6 +598,8 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     private String asciiText[] = null;
     
+    private String caret[] = null;
+    
     private TransMatrix matrixQ = null;
     
     private TransMatrix matrixS = null;
@@ -634,6 +638,7 @@ public class FileInfoNIFTI extends FileInfoBase {
         int sphericalHarmonicIndex = 0;
         int afniGroupIndex = 0;
         int asciiTextIndex = 0;
+        int caretIndex = 0;
         JDialogText dialog = (JDialogText) dlog;
         displayPrimaryInfo(dialog, matrix);
         dialog.append("\n\n                Other information\n\n");
@@ -1093,6 +1098,7 @@ public class FileInfoNIFTI extends FileInfoBase {
         	dtComponentIndex = 0;
         	afniGroupIndex = 0;
         	asciiTextIndex = 0;
+        	caretIndex = 0;
         	if (esize.length == 1) {
         		dialog.append("Extended header has " + esize.length + " header field\n");
         	}
@@ -1138,6 +1144,10 @@ public class FileInfoNIFTI extends FileInfoBase {
             		dialog.append("Degree = " + degree[sphericalHarmonicIndex] + "\n");
             		dialog.append("Order = " + order[sphericalHarmonicIndex] + "\n");
             		sphericalHarmonicIndex++;
+            		break;
+            	case NIFTI_ECODE_CARET:
+            		dialog.append("Caret field number " + (caretIndex + 1) + " has:\n");
+            		dialog.append(caret[caretIndex++].trim() + "\n\n");
             		break;
             	}
             } // for (i = 0; i < esize.length; i++)
@@ -1777,6 +1787,15 @@ public class FileInfoNIFTI extends FileInfoBase {
      */
     public void setDTComponent(int dtComponent[][]) {
     	this.dtComponent = dtComponent;
+    }
+    
+    
+    /**
+     * Sets caret array for extension header
+     * @param caret
+     */
+    public void setCaret(String caret[]) {
+    	this.caret = caret;
     }
     
     public void setMatrixQ(TransMatrix matrixQ) {
