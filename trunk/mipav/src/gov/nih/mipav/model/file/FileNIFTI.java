@@ -448,6 +448,8 @@ public class FileNIFTI extends FileBase {
     
     private String asciiTextArray[] = null;
     
+    private String caretArray[] = null;
+    
     /**
      * File object and input streams 
      * needed for NIFTI compressed files
@@ -898,6 +900,8 @@ public class FileNIFTI extends FileBase {
         int afniGroupIndex = 0;
         int asciiTextNumber = 0;
         int asciiTextIndex = 0;
+        int caretNumber = 0;
+        int caretIndex = 0;
 
         bufferByte = new byte[headerSize];
 
@@ -2343,6 +2347,9 @@ public class FileNIFTI extends FileBase {
                 else if (ecode == 26) {
                 	sphericalHarmonicNumber++;
                 }
+                else if (ecode == 30) {
+                	caretNumber++;
+                }
                 ecodeNumber++;
                 currentAddress = currentAddress + esize;
             } // while ((fileLength >= currentAddress + 8) && ((!oneFile) || (vox_offset >= currentAddress + 8)))
@@ -2360,6 +2367,7 @@ public class FileNIFTI extends FileBase {
                 orderArray = new int[sphericalHarmonicNumber];
                 afniGroupArray = new String[afniGroupNumber];
                 asciiTextArray = new String[asciiTextNumber];
+                caretArray = new String[caretNumber];
                 currentAddress = extendedHeaderStart;
                 ecodeNumber = 0;
                 while ((bufferByte.length >= currentAddress + esizeArray[Math.max(0, ecodeNumber-1)]) && ((!oneFile) || (vox_offset >= currentAddress + esizeArray[Math.max(0, ecodeNumber-1)]))) {
@@ -2431,8 +2439,14 @@ public class FileNIFTI extends FileBase {
                     	Preferences.debug("Order = " + orderArray[sphericalHarmonicIndex] + "\n");
                     	sphericalHarmonicIndex++;
                     	break;
+                    case 30:
+                    	Preferences.debug("eocde = 30 for CARET an XML extension\n");
+                    	caretArray[caretIndex] = new String(bufferByte, currentAddress+8, esizeArray[ecodeNumber]-8);
+                    	Preferences.debug("Caret field = " + caretArray[caretIndex] + "\n");
+                    	caretIndex++;
+                    	break;
                     default:
-                        Preferences.debug("ecode = " + ecodeArray[ecodeNumber] + "an unspecified ecode value\n");
+                        Preferences.debug("ecode = " + ecodeArray[ecodeNumber] + " an unspecified ecode value\n");
                     } // switch(ecodeArray[ecodeNumber])
                     currentAddress = currentAddress + esizeArray[ecodeNumber];
                     ecodeNumber++;
@@ -2448,6 +2462,7 @@ public class FileNIFTI extends FileBase {
                 fileInfo.setOrder(orderArray);
                 fileInfo.setAfniGroup(afniGroupArray);
                 fileInfo.setAsciiText(asciiTextArray);
+                fileInfo.setCaret(caretArray);
             } // if (ecodeNumber >= 1)
         } // else   
         if(raFile != null) {
