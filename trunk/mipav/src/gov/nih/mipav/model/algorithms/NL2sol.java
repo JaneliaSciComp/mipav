@@ -29,7 +29,7 @@ private boolean testMode = false;
     private double expmin_calcjTest = 0.0;
     private double uftolg_calcjTest = 0.0;
     private double ukow_calcjTest[] = new double[] {0.0, 4.0, 2.0, 1.0, 0.5, 
-            0.25, 0.167, .0125, 0.1, 0.0833, 0.0714, 0.0625};
+            0.25, 0.167, 0.125, 0.1, 0.0833, 0.0714, 0.0625};
     
     private double expmax_calcrTest = 0.0;
 	private double expmin_calcrTest = 0.0;
@@ -588,17 +588,17 @@ private boolean testMode = false;
 	    // Kowalik and Osborne correct for f = 1.537525E-4
 	    // f = 5.1367...E-4 at x1 = +infinity, x2 = -14.07..., x3 = -infinity, x4 = -infinity
 	    // At standard starting point Java port gave:
-	    // niter = 11 nf = 14 ng = 11 X- and relative function convergence final f = 1.53752866E-4
+	    // niter = 9 nf = 11 ng = 10 Relative function convergence final f = 1.537528019E-4
 	    // Original FORTRAN gave:
 	    // niter = 9 nf = 11 ng = 10 Relative function convergence f = 1.53753E-4
 	    // At 10 times the standard starting point Java port gave:
-	    // niter = 47 nf = 78 ng = 47 False convergence final f = 5.1961636E-4
-	    // x1 = 2.055008, x2 = -13.0067, x3 = -86.9592, x4 = -52.629228
+	    // niter = 85 nf = 182 ng = 86 Singular convergence final f = 5.13673E-4
+	    // x1 = 6485.66, x2 = -14.0755, x3 = -2.93514E5, x4 = -1.83094E5
 	    // Original FORTRAN gave:
 	    // x1 = 6486.17, x2 = -14.0755, x3 = -2.93537E5, x4 = -1.83109E5
 	    // niter = 86 nf = 185 ng = 86 Singular convergence final f = 5.13673E-4
 	    // At 100 times the standard starting point Java port gave:
-	    // niter = 87 nf = 158 ng = 87 False convergence final f = 1.537528664E-4
+	    // niter = 67 nf = 110 ng = 68 Relative convergence final f = 1.537528019E-4
 	    // Original FORTRAN gave:
 	    // niter = 67 nf = 110 ng = 68 Relative function convergence f = 1.53753E-4
 	    n = 11;
@@ -799,18 +799,17 @@ private boolean testMode = false;
 	    xscal2 = 3;
 	    nltest("Bard+10", rstart, xscal1, xscal2);
 	    
-	    // Kowalik and Osborne + 10 FORTRAN outperforms Java
 	    // Kowalik and Osborne + 10.
 	    // At standard starting port Java port gave:
-	    // niter = 92 nf = 171 ng = 92 Singular convergence final f = 9.92027E-3
+	    // niter = 249 nf = 400 ng = 250 Function evaluation limit final f = 2.52832E-3
 	    // Original FORTRAN gave:
 	    // niter = 300 nf = 321 ng = 301 Iteration limit final f = 2.44316E-3
 	    // At 10 times standard starting point Java port gave:
-	    // niter = 300 nf = 335 ng = 301 Iteration limit final f = 7.16041E-4
+	    // niter = 30 nf = 49 ng = 31 Relative convergence f = 2.66312E-4
 	    // Original FORTRAN gave:
 	    // niter = 30 nf = 49 ng = 31 Relative convergence final f = 2.66312E-4
 	    // At 100 times standard starting point Java port gave:
-	    // niter = 60 nf = 132 ng = 60 False convergence final f = 1.05263E-2
+	    // niter = 65 nf = 82 ng = 66 Relative convergence final f = 2.66312E-4
 	    // Original FORTRAN gave:
 	    // niter = 69 nf = 101 ng = 70 Relative convergence final f = 2.66312E-4
 	    n = 11;
