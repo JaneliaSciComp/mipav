@@ -361,6 +361,12 @@ public class FileInfoNIFTI extends FileInfoBase {
     /** MNI 152 normalized coordiantes. */
     public static final short NIFTI_XFORM_MNI_152 = 4;
     
+    /** ASCII XML-ish elements */
+    private static final int NIFTI_ECODE_AFNI = 4;
+    
+    /** Plain ASCII text only */
+    private static final int NIFTI_ECODE_COMMENT = 6;
+    
     /** MIND is an acronym for NIFTI for DWI (diffusion-weighted images)
      * The 5 MIND extensions to the NIFTI-1.1 header provide a standard
      * specification for data sharing and interchange for diffusion-weighted
@@ -373,7 +379,6 @@ public class FileInfoNIFTI extends FileInfoBase {
      */
     private static final int NIFTI_ECODE_MIND_IDENT = 18;
     
-    private static final int NIFTI_ECODE_AFNI = 4;
     
     /** A B_Value field contains a single 32-bit floating point value representing a
      * diffusion-weighing b-value in units of s/mm-squared.  In the q-space formalism,
@@ -589,6 +594,8 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     private String afniGroup[] = null;
     
+    private String asciiText[] = null;
+    
     private TransMatrix matrixQ = null;
     
     private TransMatrix matrixS = null;
@@ -626,6 +633,7 @@ public class FileInfoNIFTI extends FileInfoBase {
         int dtComponents;
         int sphericalHarmonicIndex = 0;
         int afniGroupIndex = 0;
+        int asciiTextIndex = 0;
         JDialogText dialog = (JDialogText) dlog;
         displayPrimaryInfo(dialog, matrix);
         dialog.append("\n\n                Other information\n\n");
@@ -1084,6 +1092,7 @@ public class FileInfoNIFTI extends FileInfoBase {
         	sphericalDirectionIndex = 0;
         	dtComponentIndex = 0;
         	afniGroupIndex = 0;
+        	asciiTextIndex = 0;
         	if (esize.length == 1) {
         		dialog.append("Extended header has " + esize.length + " header field\n");
         	}
@@ -1097,6 +1106,10 @@ public class FileInfoNIFTI extends FileInfoBase {
             	case NIFTI_ECODE_AFNI:
             		dialog.append("AFNI GROUP field number " + (afniGroupIndex+1) + " has:\n");
             		dialog.append(afniGroup[afniGroupIndex++].trim() + "\n\n");
+            		break;
+            	case NIFTI_ECODE_COMMENT:
+            		dialog.append("ASCII TEXT field number " + (asciiTextIndex+1) + " has:\n");
+            		dialog.append(asciiText[asciiTextIndex++].trim() + "\n\n");
             		break;
             	case NIFTI_ECODE_MIND_IDENT:
             		dialog.append("MIND_IDENT field number " + (mindIdentIndex+1) + " = " + mindIdent[mindIdentIndex].trim() + "\n");
@@ -1748,6 +1761,14 @@ public class FileInfoNIFTI extends FileInfoBase {
      */
     public void setAfniGroup(String afniGroup[]) {
     	this.afniGroup = afniGroup;
+    }
+    
+    /**
+     * Sets ascii text fields of header extension
+     * @param asciiText
+     */
+    public void setAsciiText(String asciiText[]) {
+    	this.asciiText = asciiText;
     }
     
     /**
