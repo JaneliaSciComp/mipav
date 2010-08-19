@@ -2203,54 +2203,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
     } // end saveAllVOIs()
 
-    /**
-     * This method merges the 3 axial, sagittal, coronal VOIs and save them into one cloudy points file. This function
-     * is used by the prostate surface reconstruction analysis.
-     */
-    public void saveMergedVOIs() {
-        final JDialogBase mergeVOIsDialog = new JDialogSaveMergedVOIs(this);
-        mergeVOIsDialog.validate();
-    }
-
-    public void saveProstateFeatures() {
-        final JDialogBase saveFeaturesDialog = new JDialogProstateSaveFeatures(this, imageA, false);
-        saveFeaturesDialog.validate();
-    }
-
-    public void testProstateFeatures() {
-        final JDialogBase saveFeaturesDialog = new JDialogProstateSaveFeatures(this, imageA, true);
-        saveFeaturesDialog.validate();
-    }
-
     
-    public void testProstateFeaturesTrain() {
-    	JDialogBase trainFeaturesDialog = new JDialogProstateFeaturesTrain(this);
-    	trainFeaturesDialog.validate();
-    }
-    
-    public void testProstateFeaturesClassification() {
-    	JDialogBase classificationFeaturesDialog = new JDialogProstateFeaturesClassification(this);
-    	classificationFeaturesDialog.validate();
-    }
-    
-    public void loadProstateMask() {
-        final JDialogBase loadProstateMaskDialog = new JDialogLoadProstateMask(this, imageA);
-        loadProstateMaskDialog.validate();
-    }
-
-    /**
-     * Reconstruct the prostate surface from the coarse VOIs cloudy points.
-     */
-    public void reconstructSurfaceFromVOIs() {
-        final JDialogBase reconstructSurfaceDialog = new JDialogSurfaceReconstruction(this);
-        reconstructSurfaceDialog.validate();
-    }
-
-    /*
-     * public void extractSurfaceFromVOIs() { JDialogBase extractSurfaceDialog = new JDialogExtractSurfaceVOIs(this);
-     * extractSurfaceDialog.validate(); }
-     */
-
     /**
      * This method saves all VOIs for the active image to a given directory.
      * 
