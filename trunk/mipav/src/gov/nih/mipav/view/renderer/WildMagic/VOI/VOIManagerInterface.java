@@ -22,6 +22,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.UpdateVOIEvent;
 import gov.nih.mipav.model.structures.UpdateVOISelectionListener;
 import gov.nih.mipav.model.structures.VOI;
@@ -48,6 +49,7 @@ import gov.nih.mipav.view.ViewVOIVector;
 import gov.nih.mipav.view.dialogs.JDialogAGVF;
 import gov.nih.mipav.view.dialogs.JDialogBSmooth;
 import gov.nih.mipav.view.dialogs.JDialogBSnake;
+import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogFlip;
 import gov.nih.mipav.view.dialogs.JDialogGVF;
 import gov.nih.mipav.view.dialogs.JDialogIntensityThreshold;
@@ -55,11 +57,19 @@ import gov.nih.mipav.view.dialogs.JDialogLivewire;
 import gov.nih.mipav.view.dialogs.JDialogMask;
 import gov.nih.mipav.view.dialogs.JDialogOpacityControls;
 import gov.nih.mipav.view.dialogs.JDialogPointArea;
+import gov.nih.mipav.view.dialogs.JDialogSaveMergedVOIs;
 import gov.nih.mipav.view.dialogs.JDialogSnake;
+import gov.nih.mipav.view.dialogs.JDialogSurfaceReconstruction;
 import gov.nih.mipav.view.dialogs.JDialogTrim;
 import gov.nih.mipav.view.dialogs.JDialogVOIShapeInterpolation;
 import gov.nih.mipav.view.dialogs.JDialogVOIStatistics;
 import gov.nih.mipav.view.dialogs.JDialogVOIStats;
+import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.JDialogLoadProstateMask;
+import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.JDialogProstateFeaturesClassification;
+import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.JDialogProstateFeaturesTrain;
+import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.JDialogProstateSaveFeatures;
+import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.JDialogProstateSaveFeaturesAuto;
+import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.JDialogProstateSegmentationAuto;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -68,7 +78,9 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.BitSet;
@@ -796,6 +808,26 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
         }
         else if (command.equals(CustomUIBuilder.PARAM_VOI_STATISTICS.getActionCommand())) {
             showStatisticsCalculator();
+        } else if (command.equals("ProstateMergedVOIs")) {
+            saveMergedVOIs();
+        } else if (command.equals("ProstateReconstruct")) {
+            reconstructSurfaceFromVOIs();
+        } else if (command.equals("ProstateExtract")) {
+            // extractSurfaceFromVOIs();
+        } else if (command.equals("ProstateFeaturesSave")) {
+            saveProstateFeatures();
+        } else if (command.equals("ProstateFeaturesTest")) {
+            testProstateFeatures();
+        } else if (command.equals("ProstateFeaturesTrain")) {
+            testProstateFeaturesTrain();
+        } else if (command.equals("ProstateFeaturesClassification")) {
+            testProstateFeaturesClassification();
+        } else if (command.equals("LoadProstateMask")) {
+            loadProstateMask();
+        } else if (command.equals("ProstateSegAuto")) {
+        	prostateSegAuto();
+        } else if (command.equals("SaveDicomMatrix")) {
+            saveDicomMatrixInfo();
         } 
         else {
             doVOI(command);
@@ -4234,4 +4266,154 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
         doVOI("");
     }
      */
+    
+    /**
+     * This method merges the 3 axial, sagittal, coronal VOIs and save them into one cloudy points file. This function
+     * is used by the prostate surface reconstruction analysis.
+     */
+    private void saveMergedVOIs() {
+        final JDialogBase mergeVOIsDialog = new JDialogSaveMergedVOIs(m_kParent.getFrame());
+        mergeVOIsDialog.validate();
+    }
+
+    public void saveProstateFeatures() {
+        final JDialogBase saveFeaturesDialog = new JDialogProstateSaveFeatures(m_kParent.getFrame(), getActiveImage(), false);
+        saveFeaturesDialog.validate();
+    }
+
+    public void testProstateFeatures() {
+        final JDialogBase saveFeaturesDialog = new JDialogProstateSaveFeatures(m_kParent.getFrame(), getActiveImage(), true);
+        saveFeaturesDialog.validate();
+    }
+
+    
+    private void testProstateFeaturesTrain() {
+    	JDialogBase trainFeaturesDialog = new JDialogProstateFeaturesTrain(m_kParent.getFrame());
+    	trainFeaturesDialog.validate();
+    }
+    
+    private void testProstateFeaturesClassification() {
+    	JDialogBase classificationFeaturesDialog = new JDialogProstateFeaturesClassification(m_kParent.getFrame());
+    	classificationFeaturesDialog.validate();
+    }
+    
+    private void loadProstateMask() {
+        final JDialogBase loadProstateMaskDialog = new JDialogLoadProstateMask(m_kParent.getFrame(), getActiveImage());
+        loadProstateMaskDialog.validate();
+    }
+
+    private void prostateSegAuto() {
+    	// final JDialogProstateSegmentationAuto prostateSegAutoDialog = new JDialogProstateSegmentationAuto(m_kParent.getFrame(), getActiveImage());
+    	// prostateSegAutoDialog.validate();
+    }
+    
+    /**
+     * Reconstruct the prostate surface from the coarse VOIs cloudy points.
+     */
+    private void reconstructSurfaceFromVOIs() {
+        final JDialogBase reconstructSurfaceDialog = new JDialogSurfaceReconstruction(m_kParent.getFrame());
+        reconstructSurfaceDialog.validate();
+    }
+
+    /*
+     * public void extractSurfaceFromVOIs() { JDialogBase extractSurfaceDialog = new JDialogExtractSurfaceVOIs(this);
+     * extractSurfaceDialog.validate(); }
+     */
+
+    /**
+     * Save the dicom matrix header info. The .ply file format can't save the dicom info. We decide to save the dicom
+     * info when save the VOI file. So, the dicom info will be read when load the .ply surface into the volume render.
+     * This ensures the correct scale of surface. The dicom matrix info is saved in the current image directory with the
+     * .dicomMatrix suffix.
+     */
+    private void saveDicomMatrixInfo() {
+        int iXDim, iYDim, iZDim;
+        final boolean flip = true;
+
+        iXDim = getActiveImage().getExtents()[0];
+        iYDim = getActiveImage().getExtents()[1];
+        iZDim = getActiveImage().getExtents()[2];
+
+        float fXRes, fYRes, fZRes;
+
+        fXRes = getActiveImage().getFileInfo()[0].getResolutions()[0];
+        fYRes = getActiveImage().getFileInfo()[0].getResolutions()[1];
+        fZRes = getActiveImage().getFileInfo()[0].getResolutions()[2];
+
+        final float[] box = new float[3];
+
+        box[0] = (iXDim - 1) * fXRes;
+        box[1] = (iYDim - 1) * fYRes;
+        box[2] = (iZDim - 1) * fZRes;
+
+        final int[] direction = MipavCoordinateSystems.getModelDirections(getActiveImage());
+        final float[] startLocation = getActiveImage().getFileInfo(0).getOrigin();
+
+        TransMatrix dicomMatrix = null;
+        TransMatrix inverseDicomMatrix = null;
+        if (getActiveImage().getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
+
+            // Get the DICOM transform that describes the transformation
+            // from
+            // axial to this image orientation
+            dicomMatrix = getActiveImage().getMatrix();
+            inverseDicomMatrix = new TransMatrix(getActiveImage().getMatrix());
+            inverseDicomMatrix.Inverse();
+        }
+
+        final String fileDir = getActiveImage().getImageDirectory();
+        final String fName = getActiveImage().getImageFileName();
+        final int index = fName.indexOf('.');
+        final String fileName = fName.substring(0, index);
+
+        System.err.println("Dicom Matrix File Dir = " + fileDir);
+        System.err.println("Dicom Matrix File Name = " + (fileName + ".dicomMatrix"));
+
+        try {
+            final FileOutputStream fOut = new FileOutputStream(fileDir + fileName + ".dicomMatrix");
+            final DataOutputStream kOut = new DataOutputStream(fOut);
+
+            if (inverseDicomMatrix == null) {
+
+                if (flip) {
+                    kOut.writeInt(1);
+                } else {
+                    kOut.writeInt(0);
+                }
+            } else {
+
+                if (flip) {
+                    kOut.writeInt(3);
+                } else {
+                    kOut.writeInt(2);
+                }
+            }
+
+            kOut.writeInt(direction[0]);
+            kOut.writeInt(direction[1]);
+            kOut.writeInt(direction[2]);
+
+            kOut.writeFloat(startLocation[0]);
+            kOut.writeFloat(startLocation[1]);
+            kOut.writeFloat(startLocation[2]);
+            kOut.writeFloat(box[0]);
+            kOut.writeFloat(box[1]);
+            kOut.writeFloat(box[2]);
+
+            if (inverseDicomMatrix != null) {
+                for (int i = 0; i <= 3; i++) {
+                    for (int j = 0; j <= 3; j++) {
+                        kOut.writeDouble(inverseDicomMatrix.Get(i, j));
+                    }
+                }
+            }
+            kOut.close();
+
+        } catch (final Exception e) {
+            System.err.println("CAUGHT EXCEPTION WITHIN saveDicomMatrixInfo() of FileVOI");
+            e.printStackTrace();
+        }
+
+    }
+
 }
