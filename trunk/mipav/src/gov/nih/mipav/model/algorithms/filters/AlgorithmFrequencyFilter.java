@@ -2,6 +2,7 @@ package gov.nih.mipav.model.algorithms.filters;
 
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.Bessel;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
@@ -612,49 +613,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         }
     }
 
-    /**
-     * Returns the Bessel function J1(x) for any real x. From Numerical Recipes in C Second Edition Section 6.5 p. 233
-     *
-     * @param   x  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    private float bessj1(float x) {
-        // Returns the Bessel function J1(x) for any real x.
-        // From Numerical Recipes in C Second Edition Section 6.5 p. 233
-
-        float ax, z;
-        double xx, y, ans, ans1, ans2;
-
-        if ((ax = Math.abs(x)) < 8.0) {
-            y = x * x;
-            ans1 = x *
-                       (72362614232.0 +
-                            (y *
-                                 (-7895059235.0 +
-                                      (y *
-                                           (242396853.1 +
-                                                (y * (-2972611.439 + (y * (15704.48260 + (y * (-30.16036606)))))))))));
-            ans2 = 144725228442.0 +
-                   (y * (2300535178.0 + (y * (18583304.74 + (y * (99447.43394 + (y * (376.9991397 + (y * 1.0)))))))));
-            ans = ans1 / ans2;
-        } else {
-            z = 8.0f / ax;
-            y = z * z;
-            xx = ax - 2.356194491;
-            ans1 = 1.0 +
-                   (y * (0.183105e-2 + (y * (-0.3516396496e-4 + (y * (0.2457520174e-5 + (y * (-0.240337019e-6))))))));
-            ans2 = 0.04687499995 +
-                   (y * (-0.2002690873e-3 + (y * (0.8449199096e-5 + (y * (-0.88228987e-6 + (y * 0.105787412e-6)))))));
-            ans = Math.sqrt(0.636619772 / ax) * ((Math.cos(xx) * ans1) - (z * Math.sin(xx) * ans2));
-
-            if (x < 0.0) {
-                ans = -ans;
-            }
-        }
-
-        return (float) ans;
-    }
+    
 
     /**
      * This function replaces the original image with a new image that is either the FFT, the filtered FFT, or the
@@ -2055,8 +2014,36 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 if ((x == halfKDim) && (y == halfKDim)) {
                     iKernel[pos] = ((FHigh * FHigh) - (FLow * FLow)) / ((float) (4.0 * Math.PI));
                 } else if (distance < tau) {
-                    iKernel[pos] = (FHigh / ((float) (2.0 * Math.PI * distance)) * bessj1(FHigh * distance)) -
-                                   (FLow / ((float) (2.0 * Math.PI * distance)) * bessj1(FLow * distance));
+                	double realArg = FHigh * distance;
+                	double imaginaryArg = 0.0;
+                	double initialOrder = 1.0;
+                	int sequenceNumber = 1; // Number of sequential Bessel function orders calculated
+                	double highRealResult[] = new double[1];
+                	double imagResult[] = new double[1];
+                	int[] nz = new int[1]; // number of components set to zero due to underflow
+                    int[] errorFlag = new int[1]; // zero if no error
+                    
+                	Bessel bes = new Bessel(Bessel.BESSEL_J, realArg, imaginaryArg, initialOrder, Bessel.UNSCALED_FUNCTION,
+                            sequenceNumber, highRealResult, imagResult, nz, errorFlag);
+                	bes.run();
+                	if (errorFlag[0] != 0) {
+                	    displayError("Bessel_J error for realArg = " + realArg);
+                	    setCompleted(false);
+                	    return;
+                	}
+                	
+                	realArg = FLow * distance;
+                	double lowRealResult[] = new double[1];
+                	bes = new Bessel(Bessel.BESSEL_J, realArg, imaginaryArg, initialOrder, Bessel.UNSCALED_FUNCTION,
+                            sequenceNumber, lowRealResult, imagResult, nz, errorFlag);
+                	bes.run();
+                	if (errorFlag[0] != 0) {
+                	    displayError("Bessel_J error for realArg = " + realArg);
+                	    setCompleted(false);
+                	    return;
+                	}                	
+                    iKernel[pos] = (float)((FHigh / (2.0 * Math.PI * distance) * highRealResult[0]) -
+                                   (FLow / (2.0 * Math.PI * distance) * lowRealResult[0]));
                 } else {
                     iKernel[pos] = 0.0f;
                 }
@@ -2103,8 +2090,36 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                     if ((x == halfKDim) && (y == halfKDim) && (z == halfKDim)) {
                         iKernel[pos] = ((FHigh * FHigh) - (FLow * FLow)) / ((float) (4.0 * Math.PI));
                     } else if (distance < tau) {
-                        iKernel[pos] = (FHigh / ((float) (2.0 * Math.PI * distance)) * bessj1(FHigh * distance)) -
-                                       (FLow / ((float) (2.0 * Math.PI * distance)) * bessj1(FLow * distance));
+                    	double realArg = FHigh * distance;
+                    	double imaginaryArg = 0.0;
+                    	double initialOrder = 1.0;
+                    	int sequenceNumber = 1; // Number of sequential Bessel function orders calculated
+                    	double highRealResult[] = new double[1];
+                    	double imagResult[] = new double[1];
+                    	int[] nz = new int[1]; // number of components set to zero due to underflow
+                        int[] errorFlag = new int[1]; // zero if no error
+                        
+                    	Bessel bes = new Bessel(Bessel.BESSEL_J, realArg, imaginaryArg, initialOrder, Bessel.UNSCALED_FUNCTION,
+                                sequenceNumber, highRealResult, imagResult, nz, errorFlag);
+                    	bes.run();
+                    	if (errorFlag[0] != 0) {
+                    	    displayError("Bessel_J error for realArg = " + realArg);
+                    	    setCompleted(false);
+                    	    return;
+                    	}
+                    	
+                    	realArg = FLow * distance;
+                    	double lowRealResult[] = new double[1];
+                    	bes = new Bessel(Bessel.BESSEL_J, realArg, imaginaryArg, initialOrder, Bessel.UNSCALED_FUNCTION,
+                                sequenceNumber, lowRealResult, imagResult, nz, errorFlag);
+                    	bes.run();
+                    	if (errorFlag[0] != 0) {
+                    	    displayError("Bessel_J error for realArg = " + realArg);
+                    	    setCompleted(false);
+                    	    return;
+                    	}                	
+                        iKernel[pos] = (float)((FHigh / (2.0 * Math.PI * distance) * highRealResult[0]) -
+                                       (FLow / (2.0 * Math.PI * distance) * lowRealResult[0]));
                     } else {
                         iKernel[pos] = 0.0f;
                     }
@@ -2147,8 +2162,36 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 if ((x == halfKDim) && (y == halfKDim)) {
                     iKernel[pos] = 1.0f - (((FHigh * FHigh) - (FLow * FLow)) / ((float) (4.0 * Math.PI)));
                 } else if (distance < tau) {
-                    iKernel[pos] = (-FHigh / ((float) (2.0 * Math.PI * distance)) * bessj1(FHigh * distance)) +
-                                   (FLow / ((float) (2.0 * Math.PI * distance)) * bessj1(FLow * distance));
+                	double realArg = FHigh * distance;
+                	double imaginaryArg = 0.0;
+                	double initialOrder = 1.0;
+                	int sequenceNumber = 1; // Number of sequential Bessel function orders calculated
+                	double highRealResult[] = new double[1];
+                	double imagResult[] = new double[1];
+                	int[] nz = new int[1]; // number of components set to zero due to underflow
+                    int[] errorFlag = new int[1]; // zero if no error
+                    
+                	Bessel bes = new Bessel(Bessel.BESSEL_J, realArg, imaginaryArg, initialOrder, Bessel.UNSCALED_FUNCTION,
+                            sequenceNumber, highRealResult, imagResult, nz, errorFlag);
+                	bes.run();
+                	if (errorFlag[0] != 0) {
+                	    displayError("Bessel_J error for realArg = " + realArg);
+                	    setCompleted(false);
+                	    return;
+                	}
+                	
+                	realArg = FLow * distance;
+                	double lowRealResult[] = new double[1];
+                	bes = new Bessel(Bessel.BESSEL_J, realArg, imaginaryArg, initialOrder, Bessel.UNSCALED_FUNCTION,
+                            sequenceNumber, lowRealResult, imagResult, nz, errorFlag);
+                	bes.run();
+                	if (errorFlag[0] != 0) {
+                	    displayError("Bessel_J error for realArg = " + realArg);
+                	    setCompleted(false);
+                	    return;
+                	}                	
+                    iKernel[pos] = (float)((-FHigh / (2.0 * Math.PI * distance) * highRealResult[0]) +
+                                   (FLow / (2.0 * Math.PI * distance) * lowRealResult[0]));
                 } else {
                     iKernel[pos] = 0.0f;
                 }
@@ -2195,8 +2238,36 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                     if ((x == halfKDim) && (y == halfKDim) && (z == halfKDim)) {
                         iKernel[pos] = 1.0f - (((FHigh * FHigh) - (FLow * FLow)) / ((float) (4.0 * Math.PI)));
                     } else if (distance < tau) {
-                        iKernel[pos] = (-FHigh / ((float) (2.0 * Math.PI * distance)) * bessj1(FHigh * distance)) +
-                                       (FLow / ((float) (2.0 * Math.PI * distance)) * bessj1(FLow * distance));
+                    	double realArg = FHigh * distance;
+                    	double imaginaryArg = 0.0;
+                    	double initialOrder = 1.0;
+                    	int sequenceNumber = 1; // Number of sequential Bessel function orders calculated
+                    	double highRealResult[] = new double[1];
+                    	double imagResult[] = new double[1];
+                    	int[] nz = new int[1]; // number of components set to zero due to underflow
+                        int[] errorFlag = new int[1]; // zero if no error
+                        
+                    	Bessel bes = new Bessel(Bessel.BESSEL_J, realArg, imaginaryArg, initialOrder, Bessel.UNSCALED_FUNCTION,
+                                sequenceNumber, highRealResult, imagResult, nz, errorFlag);
+                    	bes.run();
+                    	if (errorFlag[0] != 0) {
+                    	    displayError("Bessel_J error for realArg = " + realArg);
+                    	    setCompleted(false);
+                    	    return;
+                    	}
+                    	
+                    	realArg = FLow * distance;
+                    	double lowRealResult[] = new double[1];
+                    	bes = new Bessel(Bessel.BESSEL_J, realArg, imaginaryArg, initialOrder, Bessel.UNSCALED_FUNCTION,
+                                sequenceNumber, lowRealResult, imagResult, nz, errorFlag);
+                    	bes.run();
+                    	if (errorFlag[0] != 0) {
+                    	    displayError("Bessel_J error for realArg = " + realArg);
+                    	    setCompleted(false);
+                    	    return;
+                    	}                	
+                        iKernel[pos] = (float)((-FHigh / (2.0 * Math.PI * distance) * highRealResult[0]) +
+                                       (FLow / (2.0 * Math.PI * distance) * lowRealResult[0]));
                     } else {
                         iKernel[pos] = 0.0f;
                     }
@@ -2238,7 +2309,25 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 if ((x == halfKDim) && (y == halfKDim)) {
                     iKernel[pos] = 1.0f - ((cutoffFreq * cutoffFreq) / ((float) (4.0 * Math.PI)));
                 } else if (distance < tau) {
-                    iKernel[pos] = -cutoffFreq / ((float) (2.0 * Math.PI * distance)) * bessj1(cutoffFreq * distance);
+                	double realArg = cutoffFreq * distance;
+                	double imaginaryArg = 0.0;
+                	double initialOrder = 1.0;
+                	int sequenceNumber = 1; // Number of sequential Bessel function orders calculated
+                	double realResult[] = new double[1];
+                	double imagResult[] = new double[1];
+                	int[] nz = new int[1]; // number of components set to zero due to underflow
+                    int[] errorFlag = new int[1]; // zero if no error
+                    
+                	Bessel bes = new Bessel(Bessel.BESSEL_J, realArg, imaginaryArg, initialOrder, Bessel.UNSCALED_FUNCTION,
+                            sequenceNumber, realResult, imagResult, nz, errorFlag);
+                	bes.run();
+                	if (errorFlag[0] != 0) {
+                	    displayError("Bessel_J error for realArg = " + realArg);
+                	    setCompleted(false);
+                	    return;
+                	}
+                	        	
+                    iKernel[pos] = (float)(-cutoffFreq / (2.0 * Math.PI * distance) * realResult[0]) ;
                 } else {
                     iKernel[pos] = 0.0f;
                 }
@@ -2284,8 +2373,25 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                     if ((x == halfKDim) && (y == halfKDim) && (z == halfKDim)) {
                         iKernel[pos] = 1.0f - ((cutoffFreq * cutoffFreq) / ((float) (4.0 * Math.PI)));
                     } else if (distance < tau) {
-                        iKernel[pos] = -cutoffFreq / ((float) (2.0 * Math.PI * distance)) *
-                                           bessj1(cutoffFreq * distance);
+                    	double realArg = cutoffFreq * distance;
+                    	double imaginaryArg = 0.0;
+                    	double initialOrder = 1.0;
+                    	int sequenceNumber = 1; // Number of sequential Bessel function orders calculated
+                    	double realResult[] = new double[1];
+                    	double imagResult[] = new double[1];
+                    	int[] nz = new int[1]; // number of components set to zero due to underflow
+                        int[] errorFlag = new int[1]; // zero if no error
+                        
+                    	Bessel bes = new Bessel(Bessel.BESSEL_J, realArg, imaginaryArg, initialOrder, Bessel.UNSCALED_FUNCTION,
+                                sequenceNumber, realResult, imagResult, nz, errorFlag);
+                    	bes.run();
+                    	if (errorFlag[0] != 0) {
+                    	    displayError("Bessel_J error for realArg = " + realArg);
+                    	    setCompleted(false);
+                    	    return;
+                    	}
+                        iKernel[pos] = (float)(-cutoffFreq / (2.0 * Math.PI * distance) *
+                                           realResult[0]);
                     } else {
                         iKernel[pos] = 0.0f;
                     }
@@ -2326,7 +2432,24 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 if ((x == halfKDim) && (y == halfKDim)) {
                     iKernel[pos] = (cutoffFreq * cutoffFreq) / ((float) (4.0 * Math.PI));
                 } else if (distance < tau) {
-                    iKernel[pos] = cutoffFreq / ((float) (2.0 * Math.PI * distance)) * bessj1(cutoffFreq * distance);
+                	double realArg = cutoffFreq * distance;
+                	double imaginaryArg = 0.0;
+                	double initialOrder = 1.0;
+                	int sequenceNumber = 1; // Number of sequential Bessel function orders calculated
+                	double realResult[] = new double[1];
+                	double imagResult[] = new double[1];
+                	int[] nz = new int[1]; // number of components set to zero due to underflow
+                    int[] errorFlag = new int[1]; // zero if no error
+                    
+                	Bessel bes = new Bessel(Bessel.BESSEL_J, realArg, imaginaryArg, initialOrder, Bessel.UNSCALED_FUNCTION,
+                            sequenceNumber, realResult, imagResult, nz, errorFlag);
+                	bes.run();
+                	if (errorFlag[0] != 0) {
+                	    displayError("Bessel_J error for realArg = " + realArg);
+                	    setCompleted(false);
+                	    return;
+                	}
+                    iKernel[pos] = (float)(cutoffFreq / (2.0 * Math.PI * distance) * realResult[0]);
                 } else {
                     iKernel[pos] = 0.0f;
                 }
@@ -2372,8 +2495,25 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                     if ((x == halfKDim) && (y == halfKDim) && (z == halfKDim)) {
                         iKernel[pos] = (cutoffFreq * cutoffFreq) / ((float) (4.0 * Math.PI));
                     } else if (distance < tau) {
-                        iKernel[pos] = cutoffFreq / ((float) (2.0 * Math.PI * distance)) *
-                                           bessj1(cutoffFreq * distance);
+                    	double realArg = cutoffFreq * distance;
+                    	double imaginaryArg = 0.0;
+                    	double initialOrder = 1.0;
+                    	int sequenceNumber = 1; // Number of sequential Bessel function orders calculated
+                    	double realResult[] = new double[1];
+                    	double imagResult[] = new double[1];
+                    	int[] nz = new int[1]; // number of components set to zero due to underflow
+                        int[] errorFlag = new int[1]; // zero if no error
+                        
+                    	Bessel bes = new Bessel(Bessel.BESSEL_J, realArg, imaginaryArg, initialOrder, Bessel.UNSCALED_FUNCTION,
+                                sequenceNumber, realResult, imagResult, nz, errorFlag);
+                    	bes.run();
+                    	if (errorFlag[0] != 0) {
+                    	    displayError("Bessel_J error for realArg = " + realArg);
+                    	    setCompleted(false);
+                    	    return;
+                    	}
+                        iKernel[pos] = (float)(cutoffFreq / (2.0 * Math.PI * distance) *
+                                           realResult[0]);
                     } else {
                         iKernel[pos] = 0.0f;
                     }
