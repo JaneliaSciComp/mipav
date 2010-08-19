@@ -2594,7 +2594,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         if ( (cursorMode == ViewJComponentBase.ZOOMING_IN) || (cursorMode == ViewJComponentBase.ZOOMING_OUT)) {
             // int xS = getScaledX(mouseEvent.getX()); // zoomed x. Used as cursor int yS =
             // getScaledY(mouseEvent.getY()); // zoomed y. Used as cursor
-
+        	getActiveImage().updateVOIs();
             ((ViewJFrameImage) frame).updateFrame(getZoomMagnitudeX(mouseEvent.getButton() == MouseEvent.BUTTON3),
                     getZoomMagnitudeY(mouseEvent.getButton() == MouseEvent.BUTTON3), xS, yS);
 

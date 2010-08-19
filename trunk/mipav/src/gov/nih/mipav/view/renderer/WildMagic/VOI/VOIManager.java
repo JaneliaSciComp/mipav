@@ -1937,7 +1937,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         {
             initLiveWire( m_kDrawingContext.getSlice(), false );
             VOIBase kTemp = singleLevelSet2(iX, fY);
-            //VOIBase kTemp = singleLevelSet(iX, fY);
             if ( kTemp == null )
             {
                 return;
@@ -2029,6 +2028,15 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         m_kCurrentVOI.setActive(false);
         if ( kOld != m_kCurrentVOI )
         {
+
+            if ( kOld != null )
+            {
+            	if ( m_iDrawType == LEVELSET )
+            	{
+            		kOld.getGroup().getCurves().add(m_kCurrentVOI);
+            		m_kCurrentVOI.setGroup( kOld.getGroup() );
+            	}
+            }
             m_kParent.addVOI( m_kCurrentVOI, (m_iDrawType == LUT), true,
                     !(m_iDrawType == POLYLINE || m_iDrawType == LIVEWIRE) );
             if ( kOld != null )

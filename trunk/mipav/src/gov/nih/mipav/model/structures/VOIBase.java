@@ -2032,7 +2032,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         m_kMaskPositions.clear();
         m_kPositionSum.Set(0,0,0);
         gcPt.Set(0,0,0);               
-        for (int iX = iXMin+1; iX < iXMax; iX++) {
+        for (int iX = iXMin; iX < iXMax; iX++) {
             int iIndex = iX - iXMin;
             if ( aiNumCrossings[iIndex] >= 2 )
             {
@@ -2040,7 +2040,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
                 {
                     int yStart = Math.round(aaiCrossingPoints[iIndex][i]);
                     int yEnd = Math.round(aaiCrossingPoints[iIndex][i+1]);
-                    for ( int iY = yStart+1; iY < yEnd; iY++ )
+                    for ( int iY = yStart; iY < yEnd; iY++ )
                     {
                         Vector3f kPos = new Vector3f(iX, iY, iZ);                        
                         m_kMaskPositions.add(kPos);

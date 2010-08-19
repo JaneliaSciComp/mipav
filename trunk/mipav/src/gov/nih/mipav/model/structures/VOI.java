@@ -2759,7 +2759,7 @@ public class VOI extends ModelSerialCloneable {
         return Math.sqrt(largestDistanceSq);
     }
     
-    private void update()
+    public void update()
     {
         for ( int i = 0; i < curves.size(); i++ )
         {
