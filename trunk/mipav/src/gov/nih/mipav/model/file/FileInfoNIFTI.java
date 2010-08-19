@@ -1206,6 +1206,9 @@ public class FileInfoNIFTI extends FileInfoBase {
             case 26:
             	ecodeStr = "SHC_DEGREEORDER specifying degree and order of a spherical harmonic basis function";
             	break;
+            case 30:
+            	ecodeStr = "CARET with XML extension\n";
+            	break;
             default:
                 ecodeStr = "Unrecognized ecode value";
         }
