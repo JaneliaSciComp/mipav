@@ -68,8 +68,6 @@ import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.JDialogLoadProsta
 import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.JDialogProstateFeaturesClassification;
 import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.JDialogProstateFeaturesTrain;
 import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.JDialogProstateSaveFeatures;
-import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.JDialogProstateSaveFeaturesAuto;
-import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.JDialogProstateSegmentationAuto;
 
 import java.awt.Color;
 import java.awt.Component;

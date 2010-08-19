@@ -4005,6 +4005,14 @@ public class ModelImage extends ModelStorageBase {
         }
         notifyImageDisplayListeners();
     }
+
+    public void updateVOIs()
+    {
+        for ( int i = 0; i < voiVector.size(); i++ )
+        {
+            voiVector.get(i).update();
+        }
+    }
     
     /**
      * Forms separate VOIs from all the VOI structures presently loaded in the imageModel.

@@ -700,7 +700,8 @@ public class VOIContour extends VOIBase {
         Matrix3f kMat = new Matrix3f();
         float[] afScale = new float[3];
         
-        
+        // First translate into LPS Coordinates then calculate fit
+        // Try different Powell for fitting the points.
         ApprEllipsoidFit3f kFit = new ApprEllipsoidFit3f( this.size(), this, kUp, kMat, afScale );
 
         double fMin = Float.MAX_VALUE;
@@ -749,7 +750,6 @@ public class VOIContour extends VOIBase {
         Vector3f kRot = new Vector3f();
         kMat.Mult( Vector3f.UNIT_Z_NEG, kRot );              
         float p = (float)(Math.acos(kRot.Dot(kBasis[iMax])) * 180f/Math.PI);
-        
         /*
         Transformation kTransform = new Transformation();
         Vector3f kScale = new Vector3f(afScale[0]/2, afScale[1]/2, afScale[2]/2);
