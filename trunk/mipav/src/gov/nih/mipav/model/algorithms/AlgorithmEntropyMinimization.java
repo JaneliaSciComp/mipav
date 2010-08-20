@@ -53,10 +53,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase implements RealF
      * by Information Minimization by Bostjan Likar, Max Viergever, and Franjo Pernus, IEEE Transactions on Medical
      * Imaging, Vol. 20, No. 12, December, 2001, pp. 1398-1410. 3.) Real-time automated visual inspection of color
      * tablets in pharmaceutical blisters by Joze Derganc, Bostjan Likar, Rok Bernard, Dejan Tomazevic, and Franjo
-     * Pernus, Real-Time Imaging, Vol. 9, 2003, pp. 113-124. Powell's algorithm and supporting routines are derived
-     * from: 4.) Numerical Recipes in C The Art of Scientific Computing Second Edition by William H. Press, Saul A.
-     * Teukolsky, William T. Vetterling, and Brian P. Flannery, Cambridge University Press, Chapters 10.1, 10.2, and
-     * 10.5. Quadratic multiplicative and quadratic additive noise
+     * Pernus, Real-Time Imaging, Vol. 9, 2003, pp. 113-124. 
      */
     public static final int NOISE_MA2 = 1;
 
