@@ -291,10 +291,16 @@ public class FileRawChunk extends FileBase {
         boolean endianess = fileInfo.getEndianess();
 
         if (type == ModelStorageBase.BOOLEAN) {
-
-            if ((compressionType == FileInfoBase.COMPRESSION_NONE) &&
-                    ((start + (8 * ((length + minimumBitsMinus1) >> shiftToDivide))) > raFile.length())) {
-                throw new IOException("End bound exceeds EOF");
+            if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+                if ((minimumBitsMinus1 == 7) && (shiftToDivide == 3)) {
+                		if ((start + ((length + minimumBitsMinus1) >> shiftToDivide)) > raFile.length()) {
+                	
+                	        throw new IOException("End bound exceeds EOF");
+                		}
+                }
+                else if   ((start + (8 * ((length + minimumBitsMinus1) >> shiftToDivide))) > raFile.length()) {
+                    throw new IOException("End bound exceeds EOF");
+                }
             }
         } else {
 
@@ -315,7 +321,12 @@ public class FileRawChunk extends FileBase {
 
                         // new BitSet(size) = new long[(size+63)>>6]
                         bufferBitSet = new BitSet(bufferSize);
-                        bufferByte = new byte[8 * ((bufferSize + minimumBitsMinus1) >> shiftToDivide)];
+                        if ((minimumBitsMinus1 == 7) && (shiftToDivide == 3)) {
+                        	bufferByte = new byte[(bufferSize + minimumBitsMinus1) >> shiftToDivide];
+                        }
+                        else {
+                            bufferByte = new byte[8 * ((bufferSize + minimumBitsMinus1) >> shiftToDivide)];
+                        }
                         break;
 
                     case ModelStorageBase.BYTE:
@@ -1681,7 +1692,12 @@ public class FileRawChunk extends FileBase {
 
                         // new BitSet(size) = new long[(size+63)>>6]
                         bufferBitSet = new BitSet(bufferSize);
-                        bufferByte = new byte[8 * ((bufferSize + minimumBitsMinus1) >> shiftToDivide)];
+                        if ((minimumBitsMinus1 == 7) && (shiftToDivide == 3)) {
+                        	bufferByte = new  byte[(bufferSize + minimumBitsMinus1) >> shiftToDivide];
+                        }
+                        else {
+                            bufferByte = new byte[8 * ((bufferSize + minimumBitsMinus1) >> shiftToDivide)];
+                        }
                         break;
 
                     case ModelStorageBase.BYTE:
