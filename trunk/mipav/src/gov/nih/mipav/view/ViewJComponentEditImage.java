@@ -1258,9 +1258,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
         try {
 
-            if (imageBCopy == null) {
-
-                if (imageACopy != null) {
+        	if (imageActive == imageA) {
+        	
+        		if (imageACopy != null) {
                     imageACopy.setImageName("Mask image");
                     imageACopy.clearMask();
                     new ViewJFrameImage(imageACopy, null, new Dimension(610, 200), false);
@@ -1289,10 +1289,12 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             return null;
         }
 
-        if (imageACopy != null) {
+        if (imageActive == imageA && imageACopy != null) {
             return imageACopy.getImageName();
-        } else {
+        } else if (imageBCopy != null) {
             return imageBCopy.getImageName();
+        } else {
+        	return "";
         }
     }
 
@@ -1559,7 +1561,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
         try {
 
-            if (imageBCopy == null) {
+            if (imageActive == imageA) {
 
                 if (imageACopy != null) {
                     imageACopy.setImageName("Mask image");
@@ -1590,10 +1592,12 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             return null;
         }
 
-        if (imageACopy != null) {
+        if (imageActive == imageA && imageACopy != null) {
             return imageACopy.getImageName();
-        } else {
+        } else if (imageBCopy != null) {
             return imageBCopy.getImageName();
+        } else {
+        	return "";
         }
     }
 
