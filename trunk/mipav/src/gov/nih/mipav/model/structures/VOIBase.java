@@ -836,11 +836,11 @@ public abstract class VOIBase extends Vector<Vector3f> {
         }
         if ( m_iPlane == ZPLANE )
         {
-            //long time = System.currentTimeMillis();
-            fillZ((int)elementAt(0).Z, 
-                    kMask, xDim, yDim, XOR, polarity );
-            /*
-            System.out.println("fillZ " +(System.currentTimeMillis() - time));
+            long time = System.currentTimeMillis();
+            //fillZ((int)elementAt(0).Z, 
+            //        kMask, xDim, yDim, XOR, polarity );
+            
+            //System.out.println("fillZ " +(System.currentTimeMillis() - time));
             
             
             time = System.currentTimeMillis();                        
@@ -856,7 +856,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             fill(aafCrossingPoints, aiNumCrossings, iXMin, iXMax, (int)elementAt(0).Z, 
                     kMask, xDim, yDim, XOR, polarity );
             System.out.println("outlineRegion/fill " +(System.currentTimeMillis() - time));
-            */
+            
         }
         else if ( m_iPlane == XPLANE )
         {
@@ -2000,6 +2000,29 @@ public abstract class VOIBase extends Vector<Vector3f> {
         return (((ptAx - ptCx) * (ptBy - ptCy)) - ((ptAy - ptCy) * (ptBx - ptCx)));
     }
     
+    private boolean contains(int x, int y)
+    {
+        float fx = x + 0.49f; // Matt add doc !!!
+        float fy = y + 0.49f;
+
+        boolean isInside = false;
+        int j = size()-1;
+        for (int i = 0; i < size(); i++) {
+            Vector3f kVeci = elementAt(i);
+            Vector3f kVecj = elementAt(j);
+
+            if (((kVecj.Y <= fy) && (fy < kVeci.Y) && (areaTwice(kVeci.X,
+                    kVeci.Y, kVecj.X, kVecj.Y, fx, fy) >= 0))
+                    || ((kVeci.Y <= fy) && (fy < kVecj.Y) && (areaTwice(kVecj.X,
+                            kVecj.Y, kVeci.X, kVeci.Y, fx, fy) >= 0))) {
+                isInside = !isInside;
+            }
+
+            j = i;
+        }
+        return isInside;
+    }
+    
     private void fillZ(int iZ, 
             BitSet kMask, int xDim, int yDim, boolean XOR, int polarity ) {
 
@@ -2017,26 +2040,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         {
             for ( int x = iXMin; x <= iXMax; x++ )
             {
-
-                float fx = x + 0.49f; // Matt add doc !!!
-                float fy = y + 0.49f;
-
-                boolean isInside = false;
-                int j = size()-1;
-                for (int i = 0; i < size(); i++) {
-                    Vector3f kVeci = elementAt(i);
-                    Vector3f kVecj = elementAt(j);
-
-                    if (((kVecj.Y <= fy) && (fy < kVeci.Y) && (areaTwice(kVeci.X,
-                            kVeci.Y, kVecj.X, kVecj.Y, fx, fy) >= 0))
-                            || ((kVeci.Y <= fy) && (fy < kVecj.Y) && (areaTwice(kVecj.X,
-                                    kVecj.Y, kVeci.X, kVeci.Y, fx, fy) >= 0))) {
-                        isInside = !isInside;
-                    }
-
-                    j = i;
-                }
-                if ( isInside )
+                if ( contains(x,y) )
                 {
                     Vector3f kPos = new Vector3f(x, y, iZ);                        
                     m_kMaskPositions.add(kPos);
@@ -2117,20 +2121,29 @@ public abstract class VOIBase extends Vector<Vector3f> {
         m_kMaskPositions.clear();
         m_kPositionSum.Set(0,0,0);
         gcPt.Set(0,0,0);               
-        for (int iX = iXMin; iX < iXMax; iX++) {
+        for (int iX = iXMin; iX <= iXMax; iX++) {
             int iIndex = iX - iXMin;
             if ( aiNumCrossings[iIndex] >= 2 )
             {
                 for ( int i = 0; i < aiNumCrossings[iIndex]; i+= 2 )
                 {
-                    int yStart = Math.round(aaiCrossingPoints[iIndex][i]);
-                    int yEnd = Math.round(aaiCrossingPoints[iIndex][i+1]);
-                    for ( int iY = yStart; iY < yEnd; iY++ )
-                    {
-                        Vector3f kPos = new Vector3f(iX, iY, iZ);                        
-                        m_kMaskPositions.add(kPos);
-                        m_kPositionSum.Add(kPos);
-                        setMask( kMask, xDim, yDim, iX, iY, iZ, polarity, XOR );
+                    int yStart = (int)Math.floor(aaiCrossingPoints[iIndex][i]);
+                    int yEnd = (int)Math.ceil(aaiCrossingPoints[iIndex][i+1]);
+                    for ( int iY = yStart-1; iY <= yEnd+1; iY++ )
+                    { 
+                        if ( contains(iX,iY) )
+                        {                      
+                            int iMaskIndex = iZ * xDim * yDim;
+                            iMaskIndex += iY * xDim;
+                            iMaskIndex += iX;
+                            if ( !kMask.get(iMaskIndex) )
+                            {
+                                kMask.set(iMaskIndex);            
+                                Vector3f kPos = new Vector3f(iX, iY, iZ); 
+                                m_kMaskPositions.add(kPos);
+                                m_kPositionSum.Add(kPos);
+                            }              
+                        }
                     }
                 }
             }
@@ -2564,7 +2577,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         /*
          * Compute the crossing points for this column and produce spans.
          */
-        for (int iColumn = iXMin; iColumn < iXMax; iColumn++) {
+        for (int iColumn = iXMin; iColumn <= iXMax; iColumn++) {
             int iIndex = iColumn - iXMin;
 
             /* for each edge, figure out if it crosses this column and add its
