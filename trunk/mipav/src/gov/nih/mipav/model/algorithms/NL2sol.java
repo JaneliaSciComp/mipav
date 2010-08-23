@@ -962,7 +962,7 @@ private boolean testMode = false;
 	    
 	    // Repeat Rosenbrock with finite-difference jacobian.
 	    // At standard starting point Java port gave:
-	    // niter = 26 nf = 44 ng = 27 Absolute convergence final f = 7.35208E-9
+	    // niter = 18 nf = 29 ng = 19 Absolute convergence final f = 7.35208E-9
 	    // Original FORTRAN gave:
 	    // niter = 18 nf = 29 ng = 19 Absolute convergence final f = 7.91461E-22
 	    n = 2;
@@ -977,15 +977,15 @@ private boolean testMode = false;
 	    
 	    // Repeat Brown with finite-difference Jacobian.
 	    // At standard starting point Java port gave:
-	    // niter = 17 nf = 20 ng = 18 Relative function convergence final f = 42911.1
+	    // niter = 16 nf = 27 ng = 17 Relative function convergence final f = 42911.1
 	    // Original FORTRAN gave:
 	    // niter = 16 nf = 26 ng = 17 Relative function convergence final f = 42911.1
 	    // At 10 times standard starting point Java port gave:
-	    // niter = 14 nf = 17 ng = 15 Relative function convergence final f = 42911.1
+	    // niter = 16 nf = 30 ng = 17 Relative function convergence final f = 42911.1
 	    // Original FORTRAN gave:
 	    // niter = 16 nf = 30 ng = 17 Relative function convergence final f = 42911.1
 	    // At 100 times standard starting point Java port gave:
-	    // niter = 11 nf = 30 ng = 11 Function evaluation limit final f = 48744.4
+	    // niter = 15 nf = 30 ng = 15 Function evaluation limit final f = 43372.9
 	    // Original FORTRAN gave:
 	    // niter = 14 nf = 30 ng = 14 Function evaluation limit final f = 53322.4
 	    n = 20;
@@ -2380,6 +2380,9 @@ private boolean testMode = false;
         	  arr2[m] = v[r1+m-1];
           }
 		  nl2itr ( arr, iv, arr2D, n, n, p, arr2, v, x );
+		  for (m = 1; m <= p; m++) {
+        	  v[d1+m-1] = arr[m];
+          }
 		  index = 0;
           for (m = 1; m <= p; m++) {
         	  for (q = 1; q <= n; q++) {
