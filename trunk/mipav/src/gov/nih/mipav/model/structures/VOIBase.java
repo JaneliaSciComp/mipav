@@ -566,26 +566,6 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @param iX
      * @param iY
      * @return
-    public boolean contains(float iX, float iY)
-    {
-        getMask();
-        for ( int i = 0; i < m_kMaskPositions.size(); i++ )
-        {
-            if ( iX == m_kMaskPositions.elementAt(i).X && iY == m_kMaskPositions.elementAt(i).Y  )
-            {
-                return true;
-            }
-        }
-        return false;
-    } 
-     */
-    
-    /**
-     * Returns true if the input iX, iY is contained within this contour.  
-     * The z-value of the contour is ignored.
-     * @param iX
-     * @param iY
-     * @return
      */
     public boolean contains(float iX, float iY)
     {
@@ -856,6 +836,14 @@ public abstract class VOIBase extends Vector<Vector3f> {
         }
         if ( m_iPlane == ZPLANE )
         {
+            //long time = System.currentTimeMillis();
+            fillZ((int)elementAt(0).Z, 
+                    kMask, xDim, yDim, XOR, polarity );
+            /*
+            System.out.println("fillZ " +(System.currentTimeMillis() - time));
+            
+            
+            time = System.currentTimeMillis();                        
             int iXMin = (int)(m_akImageMinMax[0].X);
             int iXMax = (int)(m_akImageMinMax[1].X);
 
@@ -867,6 +855,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
             outlineRegion(aafCrossingPoints, aiNumCrossings, iXMin, iXMax);
             fill(aafCrossingPoints, aiNumCrossings, iXMin, iXMax, (int)elementAt(0).Z, 
                     kMask, xDim, yDim, XOR, polarity );
+            System.out.println("outlineRegion/fill " +(System.currentTimeMillis() - time));
+            */
         }
         else if ( m_iPlane == XPLANE )
         {
@@ -2009,6 +1999,101 @@ public abstract class VOIBase extends Vector<Vector3f> {
     protected float areaTwice(float ptAx, float ptAy, float ptBx, float ptBy, float ptCx, float ptCy) {
         return (((ptAx - ptCx) * (ptBy - ptCy)) - ((ptAy - ptCy) * (ptBx - ptCx)));
     }
+    
+    private void fillZ(int iZ, 
+            BitSet kMask, int xDim, int yDim, boolean XOR, int polarity ) {
+
+        m_kMaskPositions.clear();
+        m_kPositionSum.Set(0,0,0);
+        gcPt.Set(0,0,0); 
+
+        int iXMin = (int)(m_akImageMinMax[0].X);
+        int iXMax = (int)(m_akImageMinMax[1].X);
+
+        int iYMin = (int)(m_akImageMinMax[0].Y);
+        int iYMax = (int)(m_akImageMinMax[1].Y);
+        
+        for ( int y = iYMin; y <= iYMax; y++ )
+        {
+            for ( int x = iXMin; x <= iXMax; x++ )
+            {
+
+                float fx = x + 0.49f; // Matt add doc !!!
+                float fy = y + 0.49f;
+
+                boolean isInside = false;
+                int j = size()-1;
+                for (int i = 0; i < size(); i++) {
+                    Vector3f kVeci = elementAt(i);
+                    Vector3f kVecj = elementAt(j);
+
+                    if (((kVecj.Y <= fy) && (fy < kVeci.Y) && (areaTwice(kVeci.X,
+                            kVeci.Y, kVecj.X, kVecj.Y, fx, fy) >= 0))
+                            || ((kVeci.Y <= fy) && (fy < kVecj.Y) && (areaTwice(kVecj.X,
+                                    kVecj.Y, kVeci.X, kVeci.Y, fx, fy) >= 0))) {
+                        isInside = !isInside;
+                    }
+
+                    j = i;
+                }
+                if ( isInside )
+                {
+                    Vector3f kPos = new Vector3f(x, y, iZ);                        
+                    m_kMaskPositions.add(kPos);
+                    m_kPositionSum.Add(kPos);
+                    setMask( kMask, xDim, yDim, x, y, iZ, polarity, XOR );
+                }
+            }
+        }
+        float scale = 1f/m_kMaskPositions.size();
+        gcPt.X = MipavMath.round( m_kPositionSum.X * scale );
+        gcPt.Y = MipavMath.round( m_kPositionSum.Y * scale );
+        gcPt.Z = MipavMath.round( m_kPositionSum.Z * scale );
+        
+    }
+    
+    /*
+    public boolean contains(int _x, int _y, boolean forceReload) {
+        int i;
+        int nPts = size();
+        int j = nPts - 1;
+        boolean isInside = false;
+        float x = _x + 0.49f; // Matt add doc !!!
+        float y = _y + 0.49f;
+
+        // reloads points in this array for speed purposes
+        // System.err.println("contains :!!!!!!!!!!!?");
+        if ((forceReload == true) || (xPts == null) || (yPts == null)
+                || (size() > xPts.length)) {
+            reloadPoints();
+        }
+
+        // System.out.println("contains : npts = " + nPts);
+        for (i = 0; i < nPts; i++) {
+
+            if (((yPts[j] <= y) && (y < yPts[i]) && (areaTwice(xPts[i],
+                    yPts[i], xPts[j], yPts[j], x, y) >= 0))
+                    || ((yPts[i] <= y) && (y < yPts[j]) && (areaTwice(xPts[j],
+                            yPts[j], xPts[i], yPts[i], x, y) >= 0))) {
+                isInside = !isInside;
+            }
+
+            j = i;
+        }
+
+        // if not inside maybe it is a striaght polyline
+        if ((isInside == false) && !closed) {
+            // System.err.println("doing near line from contour");
+            // isInside = nearLine(_x, _y, 10);
+        }
+
+        return isInside;
+    }
+    */
+
+
+    
+    
     
     /**
      * Helper function for rendering this contour into the input BitSet mask into the z-plane.
