@@ -2129,7 +2129,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
                 {
                     int yStart = (int)Math.floor(aaiCrossingPoints[iIndex][i]);
                     int yEnd = (int)Math.ceil(aaiCrossingPoints[iIndex][i+1]);
-                    for ( int iY = yStart-1; iY <= yEnd+1; iY++ )
+                    for ( int iY = yStart-3; iY <= yEnd+3; iY++ )
                     { 
                         if ( contains(iX,iY) )
                         {                      
