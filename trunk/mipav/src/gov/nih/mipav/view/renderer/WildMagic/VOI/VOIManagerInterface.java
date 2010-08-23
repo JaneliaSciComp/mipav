@@ -1743,10 +1743,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
 
 
         short sID = (short)(m_kParent.getActiveImage().getVOIs().size() + 1);
-        String kName = new String();
-        int index = kName.lastIndexOf('.') + 1;
-        kName = kName.substring(index);
-        m_kCurrentVOIGroup = new VOI( sID,  kName + "_" + sID );
+        m_kCurrentVOIGroup = new VOI( sID,  new String( "_" + sID ) );
         if (presetHue >= 0.0) {
         	m_kCurrentVOIGroup.setColor(presetHue);
         }
@@ -2245,6 +2242,13 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
                 m_kCurrentVOIGroup.setOpacity(1f);
                 kImage.registerVOI( m_kCurrentVOIGroup );
             }    
+            else if ( m_kCurrentVOIGroup.getName().indexOf( "_" ) == 0 )
+            {
+                String kName = kNew.getClass().getName();
+                int index = kName.lastIndexOf('.') + 1;
+                kName = kName.substring(index);
+                m_kCurrentVOIGroup.setName( kName + m_kCurrentVOIGroup.getName() );
+            }
             kNew.setGroup( m_kCurrentVOIGroup );
             if ( kNew instanceof VOIPoint &&  kNew.getType() == VOI.POLYLINE_SLICE )
             {
