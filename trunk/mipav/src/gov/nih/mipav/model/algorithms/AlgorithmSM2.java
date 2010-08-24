@@ -149,6 +149,12 @@ public class AlgorithmSM2 extends AlgorithmBase {
     private double vpTotal = 0.0;
 
     private boolean wholeImage = true;
+    
+    private final int elsuncEngine = 1;
+    
+    private final int nl2solEngine = 2;
+    
+    private int fittingEngine = nl2solEngine;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -206,6 +212,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
         double y_array[];
         int size4D;
         FitSM2ConstrainedModel dModel;
+        FitSM2nl2solModel nl2Model;
         double[] params;
         float chi_squared;
         int j;
@@ -369,6 +376,9 @@ public class AlgorithmSM2 extends AlgorithmBase {
             // If your initial guesses are 0.495, 0.495, 0.495, then the 90 out of 108
             // runs where ktrans does not equal zero are correct. The model cannot
             // presently converge to ktrans equals zero in 18 out of the 108 cases.
+        	// Constrained ELSUNC works in all 90 cases where ktrans is nonzero.
+        	// Unconstrained ELSUNC works in 0 cases where ktrans is nonzero.
+        	// Unconstrained NL2sol works in 81 of 90 cases where ktrans is nonzero.
             final double ktransArray[] = new double[] {0.0, 0.01 / 60.0, 0.02 / 60.0, 0.05 / 60.0, 0.1 / 60.0,
                     0.2 / 60.0};
             final double veArray[] = new double[] {0.1, 0.2, 0.5};
@@ -388,6 +398,22 @@ public class AlgorithmSM2 extends AlgorithmBase {
             int ktransequalszero = 0;
             tDim = 100;
             timeVals = new double[tDim];
+            double x[] = null;
+            int iv[] = null; 
+            int vLength;
+            double v[] = null;
+            boolean useAnalyticJacobian = true;
+            int singularConvergence = 0;
+            int falseConvergence = 0;
+            int functionEvaluationLimit = 0;
+            int iterationLimit = 0;
+            if (fittingEngine == nl2solEngine) {
+            	x = new double[4]; 
+            	// 61 + number of coefficients
+            	iv = new int[64];
+            	vLength = 94 + (tDim-1)*3 + 3*(tDim-1) + 3*(3*3 + 33)/2;
+            	v = new double[vLength];
+            }
             for (i = 0; i < 100; i++) {
                 timeVals[i] = i;
             }
@@ -411,7 +437,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
             ymodel = new double[tDim - 1];
             exparray = new double[tDim][tDim];
 
-            // ktrans takes 6 values along the x axis (0, 0.01, 0.02, 0.05, 0.1, 0.2)
+            // ktrans takes 6 values along the x axis (0, 0.01/60.0, 0.02/60.0, 0.05/60.0, 0.1/60.0, 0.2/60.0)
             // Along the y axis ve varies first. Then vp varies.
             // ve takes 3 values (0.1, 0.2, 0.5)
             // vp takes 6 values (0.01, 0.05, 0.01, 0.02, 0.05, 0.1)
@@ -420,11 +446,15 @@ public class AlgorithmSM2 extends AlgorithmBase {
                 veIndex = yIndex % 3;
                 veActual = veArray[veIndex];
                 // initial[1] = veActual;
-                initial[1] = 0.495;
+                if (fittingEngine == elsuncEngine) {
+                    initial[1] = 0.495;
+                }
                 vpIndex = yIndex / 3;
                 vpActual = vpArray[vpIndex];
                 // initial[2] = vpActual;
-                initial[2] = 0.495;
+                if (fittingEngine == elsuncEngine) {
+                    initial[2] = 0.495;
+                }
                 for (ktransIndex = 0; ktransIndex < 6; ktransIndex++) {
                     ktransActual = ktransArray[ktransIndex];
                     Preferences.debug("ktrans = " + ktransActual + " ve = " + veActual + " vp = " + vpActual + "\n");
@@ -435,7 +465,14 @@ public class AlgorithmSM2 extends AlgorithmBase {
                         }
                     }
                     // initial[0] = ktransActual;
-                    initial[0] = 0.495;
+                    if (fittingEngine == elsuncEngine) {
+                        initial[0] = 0.495;
+                    }
+                    else if (fittingEngine == nl2solEngine) {
+                        x[1] = 0.495;
+                        x[2] = 0.495;
+                        x[3] = 0.495;
+                    }
                     for (t = 1; t < tDim; t++) {
                         IntModel imod;
                         int steps;
@@ -458,36 +495,79 @@ public class AlgorithmSM2 extends AlgorithmBase {
                          */
                     } // for (t = 1; t < tDim; t++)
                     // Note that the nPts, tDim-1, is the number of points in the y_array.
-                    dModel = new FitSM2ConstrainedModel(tDim - 1, r1ptj, y_array, initial);
-                    dModel.driver();
-                    // dModel.dumpResults();
-                    params = dModel.getParameters();
-                    Preferences.debug("Actual ktrans = " + ktransActual + " Calculated ktrans = " + params[0] + "\n");
-                    Preferences.debug("Actual ve = " + veActual + " Calculated ve = " + params[1] + "\n");
-                    Preferences.debug("Actual vp = " + vpActual + " Calculated vp = " + params[2] + "\n");
-                    Preferences.debug("Number of iterations: " + String.valueOf(dModel.iters) + "\n");
-                    Preferences.debug("Chi-squared: " + String.valueOf(dModel.getChiSquared()) + "\n");
-                    status = dModel.getExitStatus();
-                    statusMessage(status);
-                    if ( (Math.abs(ktransActual - params[0]) <= 1.0E-7) && (Math.abs(veActual - params[1]) <= 1.0E-5)
-                            && (Math.abs(vpActual - params[2]) <= 1.0E-5)) {
-                        success++;
-                    } else {
-                        failure++;
-                        if (status == -6) {
-                            notADescentDirection++;
-                        } else if (ktransActual == 0.0) {
-                            ktransequalszero++;
-                        }
-                    }
+                    if (fittingEngine == elsuncEngine) {
+	                    dModel = new FitSM2ConstrainedModel(tDim - 1, r1ptj, y_array, initial);
+	                    dModel.driver();
+	                    // dModel.dumpResults();
+	                    params = dModel.getParameters();
+	                    Preferences.debug("Actual ktrans = " + ktransActual + " Calculated ktrans = " + params[0] + "\n");
+	                    Preferences.debug("Actual ve = " + veActual + " Calculated ve = " + params[1] + "\n");
+	                    Preferences.debug("Actual vp = " + vpActual + " Calculated vp = " + params[2] + "\n");
+	                    Preferences.debug("Number of iterations: " + String.valueOf(dModel.iters) + "\n");
+	                    Preferences.debug("Chi-squared: " + String.valueOf(dModel.getChiSquared()) + "\n");
+	                    status = dModel.getExitStatus();
+	                    statusMessage(status);
+	                    if ( (Math.abs(ktransActual - params[0]) <= 1.0E-7) && (Math.abs(veActual - params[1]) <= 1.0E-5)
+	                            && (Math.abs(vpActual - params[2]) <= 1.0E-5)) {
+	                        success++;
+	                    } else {
+	                        failure++;
+	                        if (status == -6) {
+	                            notADescentDirection++;
+	                        } else if (ktransActual == 0.0) {
+	                            ktransequalszero++;
+	                        }
+	                    }
+                    } // if (fittingEngine == elsuncEngine)
+                    else if (fittingEngine == nl2solEngine) {
+                        nl2Model = new FitSM2nl2solModel(tDim-1, y_array, x, iv, v, useAnalyticJacobian); 
+                        nl2Model.driver();
+                        Preferences.debug("Actual ktrans = " + ktransActual + " Calculated ktrans = " + x[1] + "\n");
+	                    Preferences.debug("Actual ve = " + veActual + " Calculated ve = " + x[2] + "\n");
+	                    Preferences.debug("Actual vp = " + vpActual + " Calculated vp = " + x[3] + "\n");
+	                    Preferences.debug("Number of iterations: " + String.valueOf(iv[31]) + "\n");
+	                    Preferences.debug("Chi-squared: " + String.valueOf(2.0 * v[10]) + "\n");
+	                    status = iv[1];
+	                    statusMessageNL2sol(status, 3);
+	                    if ( (Math.abs(ktransActual - x[1]) <= 1.0E-7) && (Math.abs(veActual - x[2]) <= 1.0E-5)
+	                            && (Math.abs(vpActual - x[3]) <= 1.0E-5)) {
+	                        success++;
+	                    } else {
+	                        failure++;
+	                        if (ktransActual == 0.0) {
+	                        	ktransequalszero++;
+	                        }
+	                        if (status == 7) {
+	                        	singularConvergence++;
+	                        }
+	                        else if (status == 8) {
+	                        	falseConvergence++;
+	                        }
+	                        else if (status == 9) {
+	                        	functionEvaluationLimit++;
+	                        }
+	                        else if (status == 10) {
+	                        	iterationLimit++;
+	                        }
+	                    }
+                    } // else if (fittingEngine == nl2solEngine)
                 } // for (ktransIndex = 0; ktransIndex < 6; ktransIndex++)
             } // for (yIndex = 0; yIndex < 18; yIndex++)
             Preferences.debug("Number of successes = " + success + "\n");
             Preferences.debug("Number of failures = " + failure + "\n");
-            Preferences
-                    .debug("Number failing with abnormal termination because the latest search direction computed using subspace minimization\n");
-            Preferences.debug("was not a descent direction (probably caused by a wrongly computed Jacobian) = "
-                    + notADescentDirection + "\n");
+            if (fittingEngine == elsuncEngine) {
+	            Preferences
+	                    .debug("Number failing with abnormal termination because the latest search direction computed using subspace minimization\n");
+	            Preferences.debug("was not a descent direction (probably caused by a wrongly computed Jacobian) = "
+	                    + notADescentDirection + "\n");
+	            
+            }
+            else if (fittingEngine == nl2solEngine) {
+                Preferences.debug("Number failing with singular convergence = " + singularConvergence + "\n");
+                Preferences.debug("Number failing with false convergence = " + falseConvergence + "\n");
+                Preferences.debug("Number failing with function evaluation limit = " + functionEvaluationLimit + "\n");
+                Preferences.debug("Number failing with iteration limit = " + iterationLimit + "\n");
+            }
             Preferences.debug("Number failing because cannot handle ktrans equals zero = " + ktransequalszero + "\n");
             setCompleted(false);
             return;
@@ -2044,6 +2124,75 @@ public class AlgorithmSM2 extends AlgorithmBase {
         }
         Preferences.debug("\n");
     }
+    
+    private void statusMessageNL2sol(int status, int numParam) {
+    	if (status == 3) {
+    		Preferences.debug("X-convergence.  The scaled relative difference between the current parameter\n");
+    		Preferences.debug("vector x and a locally optimal parameter vector is very likely at most v[xctol].\n");
+    	}
+    	else if (status == 4) {
+    		Preferences.debug("Relative function convergence.  The relative difference between the current\n");
+    		Preferences.debug("function value and its locally optimal value is very likely at most v(rfctol).\n");
+    	}
+    	else if (status == 5) {
+    		Preferences.debug("Both x- and relative function convergence (i.e., the conditions for iv(1) = 3 and\n"); 
+    		Preferences.debug("iv(1) = 4 both hold).\n");
+    	}
+    	else if (status == 6) {
+    		Preferences.debug("Absolute function convergence.  the current function value is at most v(afctol)\n"); 
+    		Preferences.debug("in absolute value.\n");
+    	}
+    	else if (status == 7) {
+    	    Preferences.debug("Singular convergence.  The hessian near the current iterate appears to be singular\n");
+    	    Preferences.debug("or nearly so, and a step of length at most v(lmax0) is unlikely to yield a relative\n");
+    	    Preferences.debug("function decrease of more than v(rfctol).\n");
+    	}
+    	else if (status == 8) {
+    		Preferences.debug("False convergence.  The iterates appear to be converging to a noncritical point.\n");  
+    		Preferences.debug("This may mean that the convergence tolerances (v(afctol), v(rfctol), v(xctol)) are\n");
+    		Preferences.debug("too small for the accuracy to which the function and gradient are being computed,\n");
+    		Preferences.debug("that there is an error in computing the gradient, or that the function or gradient\n");
+    		Preferences.debug("is discontinuous near x.\n");
+    	}
+    	else if (status == 9) {
+    		Preferences.debug("Function evaluation limit reached without other convergence (see iv(mxfcal)).\n");
+    	}
+    	else if (status == 10) {
+    		Preferences.debug("Iteration limit reached without other convergence (see iv(mxiter)).\n");
+    	}
+    	else if (status == 11) {
+    		Preferences.debug("stopx returned .true. (external interrupt).\n");
+    	}
+    	else if (status == 13) {
+    		Preferences.debug("f(x) cannot be computed at the initial x.\n");
+    	}
+    	else if (status == 14) {
+    		Preferences.debug("Bad parameters passed to assess (which should not occur).\n");
+    	}
+    	else if (status == 15) {
+    		Preferences.debug("The jacobian could not be computed at x\n");
+    	}
+    	else if (status == 16) {
+    		Preferences.debug("n or p (or parameter nn to nl2itr) out of range --\n");
+		    Preferences.debug("p <= 0 or n < p or nn < n.\n");
+    	}
+    	else if (status == 17) {
+    		Preferences.debug("Restart attempted with n or p (or par. nn to nl2itr) changed.\n");
+    	}
+    	else if (status == 18) {
+    		Preferences.debug("iv(inits) is out of range.\n");
+    	}
+    	else if ((status >= 19) && (status <= 45)) {
+    		Preferences.debug("v(iv(1)) is out of range.\n");
+    	}
+    	else if (status == 50) {
+    		Preferences.debug("iv(1) was out of range.\n");
+    	}
+    	else if ((status >= 87) && (status <= 86 + numParam)) {
+    		Preferences.debug("jtol(iv(1)-86) (i.e., v(iv(1)) is not positive\n");
+    	}
+    	Preferences.debug("\n");
+    }
 
     public class sm2Task implements Runnable {
         private final int start;
@@ -2526,6 +2675,156 @@ public class AlgorithmSM2 extends AlgorithmBase {
 
             return;
         }
+    }
+    
+    class FitSM2nl2solModel extends NL2sol {
+    	int iv[];
+    	double v[];
+    	double x[];
+    	double yData[];
+
+        /**
+         * Creates a new FitSM2nl2solModel object.
+         * 
+         * @param nPoints DOCUMENT ME!
+         * @param yData DOCUMENT ME!
+         * @param x DOCUMENT ME!
+         * @param iv
+         * @param v
+         * @param useAnalyticJacobian
+         */
+        public FitSM2nl2solModel(final int nPoints, final double[] yData,
+                double[] x, int iv[], double v[], boolean useAnalyticJacobian) {
+            
+            // nPoints data points
+        	// 3 coefficients
+        	// x[] is a length 4 initial guess at input and best estimate at output
+        	// data starts at x[1]
+        	// iv[] has length 61 + number of coefficients = 64
+        	// v[] has length at least 94 + n*p + 3*n + p*(3*p+33)/2
+        	// uiparm, integer parameter array = null
+        	// urparm, double parameter array = null
+            super(nPoints, 3, x, iv, v, useAnalyticJacobian, null, null);
+            this.x = x;
+            this.iv = iv;
+            this.v = v;
+            this.yData = yData;
+        }
+
+        /**
+         * Starts the analysis.
+         */
+        public void driver() {
+            super.driver();
+        }
+
+        /**
+         * Display results of displaying SM2 fitting parameters.
+         */
+        public void dumpResults() {
+            Preferences.debug(" ******* FitSM2nl2solModel ********* \n\n");
+            Preferences.debug("Number of iterations: " + String.valueOf(iv[31]) + "\n");
+            Preferences.debug("Chi-squared: " + String.valueOf(2.0 * v[10]) + "\n");
+            Preferences.debug("a0 " + String.valueOf(x[1]) + "\n");
+            Preferences.debug("a1 " + String.valueOf(x[2]) + "\n");
+            Preferences.debug("a2 " + String.valueOf(x[3]) + "\n");
+        }
+        
+        public void calcj(final int meqn, final int nvar, final double x[], final int nf, final double jac[][],
+                final int uiparm[], final double urparm[]) {
+        	
+        	int j;
+            double ktrans;
+            double ve;
+            double vp;
+            int m;
+            double intSumDerivKtrans;
+            double intSumDerivVe;
+            double ktransDivVe;
+        	// Calculate the Jacobian analytically
+            ktrans = x[1];
+            ve = x[2];
+            vp = x[3];
+            ktransDivVe = ktrans / ve;
+            for (j = 0; j <= tDim - 1; j++) {
+                for (m = 0; m <= tDim - 1; m++) {
+                    exparray[j][m] = Math.exp( (timeVals[j] - timeVals[m]) * ktransDivVe);
+                }
+            }
+            for (m = 2; m <= tDim; m++) {
+                intSumDerivKtrans = 0.0;
+                intSumDerivVe = 0.0;
+                for (j = 2; j <= m; j++) {
+                    intSumDerivKtrans += trapezoidConstant[j - 2]
+                            * ( (timeVals[j - 1] - timeVals[m - 1]) * exparray[j - 1][m - 1] - (timeVals[j - 2] - timeVals[m - 1])
+                                    * exparray[j - 2][m - 1]);
+                    intSumDerivKtrans += trapezoidSlope[j - 2]
+                            * ( (exparray[j - 1][m - 1] * (timeVals[j - 1] - timeVals[m - 1]) * (timeVals[j - 1] - 1.0 / ktransDivVe)) - (exparray[j - 2][m - 1]
+                                    * (timeVals[j - 2] - timeVals[m - 1]) * (timeVals[j - 2] - 1.0 / ktransDivVe)));
+                    intSumDerivKtrans += trapezoidSlope[j - 2]
+                            * (exparray[j - 1][m - 1] - exparray[j - 2][m - 1]) * ve * ve / (ktrans * ktrans);
+                    intSumDerivVe += trapezoidConstant[j - 2]
+                            * ( (timeVals[j - 1] - timeVals[m - 1]) * exparray[j - 1][m - 1] - (timeVals[j - 2] - timeVals[m - 1])
+                                    * exparray[j - 2][m - 1]) * ( -ktrans / ve);
+                    intSumDerivVe += trapezoidConstant[j - 2]
+                            * (exparray[j - 1][m - 1] - exparray[j - 2][m - 1]);
+                    intSumDerivVe += trapezoidSlope[j - 2]
+                            * ( (exparray[j - 1][m - 1] * (timeVals[j - 1] - timeVals[m - 1]) * (timeVals[j - 1] - 1.0 / ktransDivVe)) - (exparray[j - 2][m - 1]
+                                    * (timeVals[j - 2] - timeVals[m - 1]) * (timeVals[j - 2] - 1.0 / ktransDivVe)))
+                            * ( -ktrans / ve);
+                    intSumDerivVe += trapezoidSlope[j - 2] * (exparray[j - 1][m - 1] - exparray[j - 2][m - 1])
+                            * ( -2.0 * ve / ktrans);
+                    intSumDerivVe += trapezoidSlope[j - 2]
+                            * ( (exparray[j - 1][m - 1] * timeVals[j - 1]) - (exparray[j - 2][m - 1] * timeVals[j - 2]));
+                } // for (j = 2; j <= m; j++)
+                jac[m - 1][1] = intSumDerivKtrans / (1.0 - h);
+                jac[m - 1][2] = intSumDerivVe / (1.0 - h);
+                jac[m - 1][3] = r1ptj[m - 1] / (1.0 - h);
+                // Preferences.debug("jac[" + (m-1) + "][1] = " + jac[m-1][1] + "\n");
+                // Preferences.debug("jac[" + (m-1) + "][2] = " + jac[m-1][2] + "\n");
+                // Preferences.debug("jac[" + (m-1) + "][3] = " + jac[m-1][3] + "\n");
+            }
+
+        }
+
+        public void calcr(final int meqn, final int nvar, final double x[], final int nf, final double r[],
+                final int uiparm[], final double urparm[]) {
+        	double ktrans;
+            double ve;
+            double vp;
+            int j;
+            int m;
+            double intSum;
+            
+        	ktrans = x[1];
+            ve = x[2];
+            vp = x[3];
+            ktransDivVe = ktrans / ve;
+            for (j = 0; j <= tDim - 1; j++) {
+                for (m = 0; m <= tDim - 1; m++) {
+                    exparray[j][m] = Math.exp( (timeVals[j] - timeVals[m]) * ktransDivVe);
+                }
+            }
+
+            for (m = 2; m <= tDim; m++) {
+                intSum = 0.0;
+                for (j = 2; j <= m; j++) {
+                    intSum += trapezoidConstant[j - 2] * (exparray[j - 1][m - 1] - exparray[j - 2][m - 1]) * ve;
+                    intSum += trapezoidSlope[j - 2]
+                            * ( (exparray[j - 1][m - 1] * (timeVals[j - 1] - 1.0 / ktransDivVe)) - (exparray[j - 2][m - 1] * (timeVals[j - 2] - 1.0 / ktransDivVe)))
+                            * ve;
+                } // for (j = 2; j <= m; j++)
+                ymodel[m - 2] = (intSum + vp * r1ptj[m - 1]) / (1.0 - h);
+            } // for (m = 2; m <= tDim; m++)
+            // evaluate the residuals[j] = ymodel[j] - ySeries[j]
+            for (j = 0; j < meqn; j++) {
+                r[j+1] = ymodel[j] - yData[j];
+                // Preferences.debug("residuals["+ (j+1) + "] = " + r[j+1] + "\n");
+            }
+
+        }
+
+        
     }
 
     /**
