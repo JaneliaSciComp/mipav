@@ -68,7 +68,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
     private JButton imageBrowseButton, pointsBrowseButton, surfaceBrowseButton;
     
     /** labels **/
-    private JLabel pointsLabel, imageLabel, surfaceLabel, surfaceSamplingLabel, invertIVFileCBLabel;
+    private JLabel pointsLabel, imageLabel, surfaceLabel, surfaceSamplingLabel, invertIVFileCBLabel, rigidOnlyLabel;
 
     /** current directory  **/
     private String currDir = null;
@@ -90,6 +90,9 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
     
     /** flip checkboxes **/
     private JCheckBox flipXCB, flipYCB, flipZCB;
+    
+    /** rigidOnly registration **/
+    private JCheckBox rigidOnlyCB;
     
     /** flip panel **/
     private JPanel flipPanel;
@@ -139,7 +142,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Standard Column Registration v2.4");
+        setTitle("Drosophila Standard Column Registration v2.5");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
         
@@ -185,6 +188,8 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         flipPanel.add(flipXCB);
         flipPanel.add(flipYCB);
         flipPanel.add(flipZCB);
+        
+        rigidOnlyCB = new JCheckBox("Rigid Body Registration Only");
         
         greenValueRadiusThresholdLabel = new JLabel("SWC-Green vaue radius threshold ");
         greenValueRadiusThresholdTextField = new JTextField(35);
@@ -255,8 +260,13 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         gbc.anchor = GridBagConstraints.WEST;
         mainPanel.add(flipPanel,gbc);
         
-        
         gbc.gridy = 5;
+        gbc.gridx = 1;
+        mainPanel.add(rigidOnlyCB,gbc);
+        
+        
+        
+        gbc.gridy = 6;
         gbc.gridx = 0;
         mainPanel.add(greenValueRadiusThresholdLabel,gbc);
         gbc.gridx = 1;
@@ -266,7 +276,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         
         
         
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         gbc.gridx = 0;
         mainPanel.add(subsamplingDistanceLabel,gbc);
         gbc.gridx = 1;
@@ -275,7 +285,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         gbc.anchor = GridBagConstraints.EAST;
         
         
-        gbc.gridy = 7;
+        gbc.gridy = 8;
         gbc.gridx = 0;
         mainPanel.add(outputFilenameLabel,gbc);
         gbc.gridx = 1;
@@ -283,7 +293,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         mainPanel.add(outputFilenameTextField,gbc);
         gbc.anchor = GridBagConstraints.EAST;
         
-        gbc.gridy = 8;
+        gbc.gridy = 9;
         gbc.gridx = 0;
         mainPanel.add(outputFilenameLabel_auto,gbc);
         gbc.gridx = 1;
@@ -302,7 +312,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         
         
         gbc.gridx = 0;
-        gbc.gridy = 9;
+        gbc.gridy = 10;
         gbc.gridwidth = 3;
         mainPanel.add(scrollPane,gbc);
 
@@ -563,7 +573,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	protected void callAlgorithm() {
 		float samplingRate = Float.valueOf((String)surfaceFileSamplingCB.getSelectedItem()).floatValue();
 
-		alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,allFilamentCoords,surfaceFile,samplingRate,cityBlockImage,pointsFile,outputTextArea,flipXCB.isSelected(), flipYCB.isSelected(), flipZCB.isSelected(),greenThreshold,subsamplingDistance,outputFilename,outputFilename_auto);
+		alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,allFilamentCoords,surfaceFile,samplingRate,cityBlockImage,pointsFile,outputTextArea,flipXCB.isSelected(), flipYCB.isSelected(), flipZCB.isSelected(),greenThreshold,subsamplingDistance,outputFilename,outputFilename_auto,rigidOnlyCB.isSelected());
 		alg.addListener(this);
 		setCursor(new Cursor(Cursor.WAIT_CURSOR));
 		

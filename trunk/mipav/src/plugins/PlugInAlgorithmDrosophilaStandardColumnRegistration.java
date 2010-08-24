@@ -111,6 +111,9 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
     /** new coords of filment * */
     private final ArrayList<ArrayList<float[]>> allFilamentCoords_newCoords;
+    
+    
+    
 
     /** tolerances used * */
     private final double tolerance, toleranceSq;
@@ -160,10 +163,14 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	
 	private String outputFilename, outputFilename_auto;
 	
+	private String outputFilename_rigidOnly, outputFilename_auto_rigidOnly;
+	
 	/** coords of filament **/
     private ArrayList <ArrayList<float[]>> allFilamentCoords_swc = new ArrayList <ArrayList<float[]>>();
+
     
     private ArrayList <ArrayList<float[]>> newFilamentCoords_swc = new ArrayList<ArrayList<float[]>>();
+
     
 	/** Storage location of the second derivative of the Gaussian in the X direction. */
     private float[] GxxData;
@@ -181,7 +188,9 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     private float amplificationFactor = 1.0f;
     
     /** images showing the swc spheres/radii **/
-    private ModelImage maskImage, maskImageAuto;
+    //private ModelImage maskImage, maskImageAuto;
+    
+    private boolean doRigidOnly = false;
 	
 	
 	
@@ -196,7 +205,8 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
             final TreeMap<Integer, float[]> pointsMap, final ArrayList<ArrayList<float[]>> allFilamentCoords,
             final File oldSurfaceFile, final float samplingRate, final ModelImage cityBlockImage,
             final File pointsFile, final JTextArea outputTextArea, final boolean flipX, final boolean flipY,
-            final boolean flipZ,float greenThreshold, float subsamplingDistance, String outputFilename, String outputFilename_auto) {
+            final boolean flipZ,float greenThreshold, float subsamplingDistance, String outputFilename, String outputFilename_auto,
+            boolean rigidOnly) {
         this.neuronImage = neuronImage;
         this.neuronImageExtents = neuronImage.getExtents();
         dir = neuronImage.getImageDirectory();
@@ -210,9 +220,13 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
             final ArrayList<float[]> al = allFilamentCoords.get(i);
             final int size = al.size();
             final ArrayList<float[]> al_new = new ArrayList<float[]>();
+            final ArrayList<float[]> al_new2 = new ArrayList<float[]>();
 
             for (int k = 0; k < size; k++) {
                 al_new.add(k, null);
+            }
+            for (int k = 0; k < size; k++) {
+                al_new2.add(k, null);
             }
 
             allFilamentCoords_newCoords.add(al_new);
@@ -237,14 +251,18 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		this.subsamplingDistance = subsamplingDistance;
 		this.outputFilename = outputFilename;
 		this.outputFilename_auto = outputFilename_auto;
-
+		this.outputFilename_rigidOnly = outputFilename.substring(0,outputFilename.lastIndexOf(".")) + ".swc";
+		this.outputFilename_auto_rigidOnly = outputFilename_auto.substring(0,outputFilename_auto.lastIndexOf(".")) + ".swc";
+		this.doRigidOnly = rigidOnly;
+		
+System.out.println("doRigidOnly is " + doRigidOnly);
     }
 
     /**
      * run algorithm
      */
     public void runAlgorithm() {
-        outputTextArea.append("Running Algorithm v2.4" + "\n");
+        outputTextArea.append("Running Algorithm v2.5" + "\n");
 
         final long begTime = System.currentTimeMillis();
 
@@ -621,38 +639,79 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     	File filamentFile = new File(filamentFileParentDir + File.separator + standardizedFilamentFileName);
     	readFilamentFile_swc(filamentFile);
 
-    	determineConnectivity1_swc();
+    	determineConnectivity1_swc(allFilamentCoords_swc);
 
-    	determineAxon_swc() ;
+    	determineAxon_swc(allFilamentCoords_swc);
 
-		determineDistances_swc();
+		determineDistances_swc(allFilamentCoords_swc);
 
 		outputTextArea.append("SWC - subsampling..." + "\n");
         outputTextArea.append("\n");
-		subsample_swc();
+		subsample_swc(allFilamentCoords_swc,newFilamentCoords_swc);
 
 		outputTextArea.append("SWC - determining connectivity..." + "\n");
         outputTextArea.append("\n");
-		determineConnectivity2_swc();
+		determineConnectivity2_swc(newFilamentCoords_swc);
 
 		outputTextArea.append("SWC - determining radii autolatically..." + "\n");
         outputTextArea.append("\n");
-		determineRadiiAutomatically_swc();
+		determineRadiiAutomatically_swc(newFilamentCoords_swc);
 		
-		output_swc(outputFilename_auto);
+		output_swc(outputFilename_auto,newFilamentCoords_swc);
 		outputTextArea.append("Saving automatic SWC file to " + filamentFileParentDir + File.separator + outputFilename_auto + "\n");
         outputTextArea.append("\n");
 
 		outputTextArea.append("SWC - determining radd via threshold..." + "\n");
         outputTextArea.append("\n");
-		determineRadiiThreshold_swc();
+		determineRadiiThreshold_swc(newFilamentCoords_swc);
 		
-		output_swc(outputFilename);
+		output_swc(outputFilename,newFilamentCoords_swc);
 		outputTextArea.append("Saving threshold SWC file to " + filamentFileParentDir + File.separator + outputFilename + "\n");
         outputTextArea.append("\n");
+        
+        
+        
+        /*outputTextArea.append("Creating Rigid Only SWC file..." + "\n");
+        outputTextArea.append("\n");
+        
+        File filamentFile = new File(filamentFileParentDir + File.separator + standardizedFilamentFileName);
+    	readFilamentFile_swc(filamentFile);
+        
+        determineConnectivity1_swc(allFilamentCoords_swc);
+        
+        determineAxon_swc(allFilamentCoords_swc);
+        
+        determineDistances_swc(allFilamentCoords_swc);
+        
+        outputTextArea.append("SWC - subsampling..." + "\n");
+        outputTextArea.append("\n");
+        subsample_swc(allFilamentCoords_swc,newFilamentCoords_swc);
+        
+        outputTextArea.append("SWC - determining connectivity..." + "\n");
+        outputTextArea.append("\n");
+		determineConnectivity2_swc(newFilamentCoords_swc);
 		
-		new ViewJFrameImage(maskImageAuto);
-		new ViewJFrameImage(maskImage);
+		outputTextArea.append("SWC - determining radii autolatically..." + "\n");
+        outputTextArea.append("\n");
+		determineRadiiAutomatically_swc(newFilamentCoords_swc);
+		
+		output_swc(outputFilename_auto_rigidOnly,newFilamentCoords_swc);
+		outputTextArea.append("Saving automatic SWC file to " + filamentFileParentDir + File.separator + outputFilename_auto_rigidOnly + "\n");
+        outputTextArea.append("\n");
+        
+        outputTextArea.append("SWC - determining radd via threshold..." + "\n");
+        outputTextArea.append("\n");
+		determineRadiiThreshold_swc(newFilamentCoords_swc);
+		
+		output_swc(outputFilename_rigidOnly,newFilamentCoords_swc);
+		outputTextArea.append("Saving threshold SWC file to " + filamentFileParentDir + File.separator + outputFilename_rigidOnly + "\n");
+        outputTextArea.append("\n");*/
+        
+        
+        
+		
+		//new ViewJFrameImage(maskImageAuto);
+		//new ViewJFrameImage(maskImage);
     }
     
     
@@ -661,10 +720,10 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	 * while we are at it...lets set the type value to axon (2) for the 0th block
 	 * @return
 	 */
-	private void determineConnectivity1_swc() {
+	private void determineConnectivity1_swc(ArrayList <ArrayList<float[]>> filamentCoords) {
 		//first block of code stays at -1
 		try {
-			int allFilamentsSize = allFilamentCoords_swc.size();
+			int allFilamentsSize = filamentCoords.size();
 			int alMatchSize;
 			ArrayList<float[]> al;
 			ArrayList<float[]> al2;
@@ -672,7 +731,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 			float[] coords = new float[6];
 			float[] coords2;
 			float[] coordsMatch = new float[6];
-			al = allFilamentCoords_swc.get(0);
+			al = filamentCoords.get(0);
 			int alSize = al.size();
 			for(int m=0;m<al.size();m++) {
 				coords = al.get(m);
@@ -689,7 +748,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 			// of the transformed filament points are not exact
 			//
 			for(int i=1;i<allFilamentsSize;i++) {
-				 al = allFilamentCoords_swc.get(i);
+				 al = filamentCoords.get(i);
 				 coords = al.get(0);
 				 al2 = allFilamentCoords.get(i);
 				 coords2 = al2.get(0);
@@ -724,35 +783,38 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	/**
 	 * Determines connectivity for all points
 	 */
-	private void determineConnectivity2_swc() {
+	private void determineConnectivity2_swc(ArrayList <ArrayList<float[]>> newFilamentCoords) {
 		
-		int newFilamentsSize = newFilamentCoords_swc.size();
+		int newFilamentsSize = newFilamentCoords.size();
 		int alSize;
 		ArrayList<float[]> al,al2;
 		float[] coords,coords2;
 		float x,y,z,r,c,c2;
-		int count = 0;
-	
+		int count = 1;
+		c=0;
 		for(int i=0;i<newFilamentsSize;i++) {
-			 al = newFilamentCoords_swc.get(i);
+			 al = newFilamentCoords.get(i);
 			 alSize = al.size();
-			 float counter=0;
+			
 			 
 			 for(int k=0;k<alSize;k++) {
 				 
 				 coords = al.get(k);
 				 if(k==0) {
 					 c = coords[4];
+					 continue;
+				 }else if(k==1) {
+					 
 					 if(i==0) {
-						//connectivity stays at -1
-						//counter++; 
+						 coords[4] = count;
+						 al.set(k, coords);
 					 }else{
 						 //get the last emements connectivity of c-1
-						 al2 = newFilamentCoords_swc.get((int)c-1);
+						 al2 = newFilamentCoords.get((int)c-1);
 						 //System.out.println("********" + al2.size());
-						 coords[4] = al2.size();
+						 coords[4] = al2.get(al2.size()-1)[4] + 1;
 						 al.set(k, coords);
-						 counter = al2.size() + 1;
+						 //counter = al2.size() + 1;
 						 //counter = al2.size() +1;
 						 
 					 }
@@ -763,6 +825,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 					 
 					 
 				 }
+
 				 count = count + 1;
 				
 			 }
@@ -778,10 +841,10 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
      * Dtermeines radius based upon a user-input threshold
      * Sphere keeps growing till threshold is hit
      */
-    private void determineRadiiThreshold_swc() {
+    private void determineRadiiThreshold_swc(ArrayList <ArrayList<float[]>> newFilamentCoords) {
 		
 		///////////////////////////  
-		int[] extents = {512, 512, 512};
+		/*int[] extents = {512, 512, 512};
         maskImage = new ModelImage(ModelStorageBase.UBYTE, extents, "maskImage_swc_threshold");
         for (int i = 0; i < maskImage.getExtents()[2]; i++) {
         	maskImage.setResolutions(i, resols);
@@ -796,7 +859,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
             fileInfoBases[i].setOrigin(finalImage.getFileInfo()[0].getOrigin());
 
         }
-        maskImage.setFileInfo(fileInfoBases);
+        maskImage.setFileInfo(fileInfoBases);*/
         /////////////////////////////////////
 		
 
@@ -806,7 +869,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		
 		float increaseRadiusBy = resZ;
 		
-		int newFilamentsSize = newFilamentCoords_swc.size();
+		int newFilamentsSize = newFilamentCoords.size();
 		int alSize;
 		ArrayList<float[]> al;
 		float[] coords;
@@ -822,7 +885,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		
 		//intitilaize all raii to 0 first
 		for(int i=0;i<newFilamentsSize;i++) {
-			 al = newFilamentCoords_swc.get(i);
+			 al = newFilamentCoords.get(i);
 			 alSize = al.size();
 			 for(int k=0;k<alSize;k++) {
 				 coords = al.get(k);
@@ -837,7 +900,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		
 		
 		for(int i=0;i<newFilamentsSize;i++) {
-			 al = newFilamentCoords_swc.get(i);
+			 al = newFilamentCoords.get(i);
 			 alSize = al.size();
 			 for(int k=0;k<alSize;k++) {
 				 coords = al.get(k);
@@ -893,7 +956,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 													 break loop;
 												 }else {
 													 ///////////////////////////////////////////////////////////
-													maskImage.set(x, y, z, 100);
+													//maskImage.set(x, y, z, 100);
 												 }
 											 }
 											 
@@ -906,13 +969,32 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		}
 		
 		
+		//some radii might still be at 0 because the threshold was already met...in this case set the
+		//radius to the "increaseRadiusBy" step size
+		float r;
+		for(int i=0;i<newFilamentsSize;i++) {
+			 al = newFilamentCoords.get(i);
+			 alSize = al.size();
+			 for(int k=0;k<alSize;k++) {
+				 coords = al.get(k);
+				 r = coords[3];
+				 if(r == 0) {
+					 coords[3] = increaseRadiusBy;
+					 al.set(k, coords);
+				 }
+			 }
+		}
+		
+		
+		
+		
 	}
     
     
     /**
 	 * outputs the swc file
 	 */
-	private void output_swc(String filename) {
+	private void output_swc(String filename,ArrayList <ArrayList<float[]>> newFilamentCoords) {
 		try {
 			
 	        final File newSurfaceFile = new File(filamentFileParentDir + File.separator  + filename);
@@ -920,7 +1002,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	        final BufferedWriter bw = new BufferedWriter(fw);
 	
 	            String line;
-			int newFilamentsSize = newFilamentCoords_swc.size();
+			int newFilamentsSize = newFilamentCoords.size();
 			int alSize;
 			ArrayList<float[]> al;
 			float[] coords;
@@ -928,12 +1010,12 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 			int cInt,aInt;
 			int counter = 1;
 			for(int i=0;i<newFilamentsSize;i++) {
-				 al = newFilamentCoords_swc.get(i);
+				 al = newFilamentCoords.get(i);
 				 alSize = al.size();
 				 for(int k=0;k<alSize;k++) {
-					 //if(k==0) {
-						 //System.out.println();
-					// }
+					 if(k==0 && i!=0) {
+						 continue;
+					 }
 					 coords = al.get(k);
 	
 					 x = coords[0];
@@ -968,8 +1050,8 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
      * This is done by convolving an increasing sized laplacian kernel to the center point.
      * The max value returned reflects the radius size
      */
-    private void determineRadiiAutomatically_swc() {
-		int newFilamentsSize = newFilamentCoords_swc.size();
+    private void determineRadiiAutomatically_swc(ArrayList <ArrayList<float[]>> newFilamentCoords) {
+		int newFilamentsSize = newFilamentCoords.size();
 		int alSize;
 		ArrayList<float[]> al;
 		float[] coords;
@@ -992,7 +1074,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		
 		//intitilaize all radii to -1 first
 		for(int i=0;i<newFilamentsSize;i++) {
-			 al = newFilamentCoords_swc.get(i);
+			 al = newFilamentCoords.get(i);
 			 alSize = al.size();
 			 for(int k=0;k<alSize;k++) {
 				 coords = al.get(k);
@@ -1006,7 +1088,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	   int sigmaMax = 7;
 
 		for(int i=0;i<newFilamentsSize;i++) {
-			 al = newFilamentCoords_swc.get(i);
+			 al = newFilamentCoords.get(i);
 			 alSize = al.size();
 			 //System.out.println("k size is " + alSize);
 			 for(int k=0;k<alSize;k++) {
@@ -1032,8 +1114,9 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 				 float lapMax = -100;
 				 float radiusPixelSpace = -1;
 				 float radius = -1;
+				 float increment = .5f;
 				 
-				 for (float s = 1; (s <= sigmaMax); s=s+.5f) {
+				 for (float s = 1; (s <= sigmaMax); s=s+increment) {
 			            sigs[0] = s;
 			            sigs[1] = s;
 			            sigs[2] = s;
@@ -1051,7 +1134,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 			     }	
 				 if(radiusPixelSpace != sigmaMax) {  //if its sigmaMax, then it kep getting bigger and bigger
 					 //convert to micron space!!!!!!!!!!!!!!!!!!!!!!
-					 radiusPixelSpace = radiusPixelSpace - .5f;
+					 radiusPixelSpace = radiusPixelSpace - increment;
 					 radius = radiusPixelSpace * resols[0];
 					 //add to coords
 					 coords[3] = radius;
@@ -1063,10 +1146,10 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
 		//for all radii that havent been set..(-1), becasue the convoultion process kept increqaasing, then set
 		//the radius to the one of the previous one
-		float r;
+		/*float r;
 		float[] coords2;
 		for(int i=0;i<newFilamentsSize;i++) {
-			 al = newFilamentCoords_swc.get(i);
+			 al = newFilamentCoords.get(i);
 			 alSize = al.size();
 			 for(int k=0;k<alSize;k++) {
 				 coords = al.get(k);
@@ -1084,12 +1167,12 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 					 }
 				 }
 			 }
-		}
+		}*/
 		
 		
 		
 		
-		int[] exts = {512, 512, 512};
+		/*int[] exts = {512, 512, 512};
         maskImageAuto = new ModelImage(ModelStorageBase.UBYTE, exts, "maskImage_swc_auto");
         for (int i = 0; i < maskImageAuto.getExtents()[2]; i++) {
         	maskImageAuto.setResolutions(i, resols);
@@ -1104,7 +1187,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
             fileInfoBases[i].setOrigin(finalImage.getFileInfo()[0].getOrigin());
 
         }
-        maskImageAuto.setFileInfo(fileInfoBases);
+        maskImageAuto.setFileInfo(fileInfoBases);*/
         
 
         float radius;
@@ -1118,9 +1201,9 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		int xStart,yStart,zStart;
 		int xEnd,yEnd,zEnd;
 		
-        
+        //may not need the following
         for(int i=0;i<newFilamentsSize;i++) {
-			 al = newFilamentCoords_swc.get(i);
+			 al = newFilamentCoords.get(i);
 			 alSize = al.size();
 			 for(int k=0;k<alSize;k++) {
 				 coords = al.get(k);
@@ -1168,7 +1251,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 													 continue;
 												 }
 												 
-													maskImageAuto.set(x, y, z, 100);
+													//maskImageAuto.set(x, y, z, 100);
 												 
 											 }
 											 
@@ -1179,6 +1262,35 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 							 } //end loop:
 			 }
 		}
+        
+        
+        
+      //some radii might still be at 0 because the threshold was already met...in this case set the
+	  //radius to the radius after it
+		float rad,rad2;
+		float[] coords2;
+		for(int i=0;i<newFilamentsSize;i++) {
+			 al = newFilamentCoords.get(i);
+			 alSize = al.size();
+			 for(int k=0;k<alSize;k++) {
+				 coords = al.get(k);
+				 rad = coords[3];
+				 if(rad == 0) {
+					 //find next non-zero radius and set
+					 for(int m=k;m<alSize;m++) {
+						coords2 = al.get(m);
+						rad2 = coords2[3];
+						if(rad2 != 0) {
+							coords[3] = rad2;
+							al.set(k, coords);
+							break;
+						}
+					 } 
+				 }
+			 }
+		}
+        
+        
 
 	}
     
@@ -1283,9 +1395,9 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     /**
      * Dtermines is block of points is axon or dendritic brach
      */
-    private void determineAxon_swc() {
+    private void determineAxon_swc(ArrayList <ArrayList<float[]>> filamentCoords) {
 		//first find block of points that has highest z-value
-		int allFilamentsSize = allFilamentCoords_swc.size();
+		int allFilamentsSize = filamentCoords.size();
 		ArrayList<float[]> al;
 		int alSize;
 		float[] coords = new float[6];
@@ -1295,7 +1407,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		float connectedTo = 0;  //This is 1-based!
 		
 		for(int i=0,m=1;i<allFilamentsSize;i++,m++) {
-			 al = allFilamentCoords_swc.get(i);
+			 al = filamentCoords.get(i);
 			 alSize = al.size();
 			 float c = 0;
 			 for(int k=0;k<alSize;k++) {
@@ -1314,7 +1426,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		
 		
 		//next...set the highestZBlockIndex block to axon
-		al = allFilamentCoords_swc.get(highestZBlockIndex);
+		al = filamentCoords.get(highestZBlockIndex);
 		alSize = al.size();
 		for(int k=0;k<alSize;k++) {
 			 coords = al.get(k);
@@ -1325,7 +1437,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		//now traverse back until we get to soma (connectedTo=-1) and set to axon (2)
 		while(connectedTo != -1) {
 			int ind = (int)connectedTo - 1;
-			al = allFilamentCoords_swc.get(ind);
+			al = filamentCoords.get(ind);
 			alSize = al.size();
 			for(int k=0;k<alSize;k++) {
 				 coords = al.get(k);
@@ -1346,8 +1458,8 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     /**
 	 * subsample
 	 */
-	private void subsample_swc() {
-		 int allFilamentsSize = allFilamentCoords_swc.size();
+	private void subsample_swc(ArrayList <ArrayList<float[]>> filamentCoords, ArrayList <ArrayList<float[]>> newFilamentCoords) {
+		 int allFilamentsSize = filamentCoords.size();
 		 float x,y,z,d,c,a;
 		 float xb,yb,zb,db;
 		 float xn,yn,zn;
@@ -1361,7 +1473,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
 		 //go through each segment
 		 for(int i=0;i<allFilamentsSize;i++) {
-			 al = allFilamentCoords_swc.get(i);
+			 al = filamentCoords.get(i);
 			 alSize = al.size();
 			 newAl = new ArrayList<float[]>();
 			 //the 0th one stays as is
@@ -1445,11 +1557,12 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 			 newAl.add(newCoords);
 			 
 			 
-			 newFilamentCoords_swc.add(newAl);
+			 newFilamentCoords.add(newAl);
 		 }
 		 
 	}
-    
+	
+	
     /**
 	 * reads filament file
 	 * @param filamaneFile
@@ -1544,8 +1657,8 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     /**
 	 * calculate distances of each point fron beginning of line segment
 	 */
-	private void determineDistances_swc() {
-		 int allFilamentsSize = allFilamentCoords_swc.size();
+	private void determineDistances_swc(ArrayList <ArrayList<float[]>> filamentCoords) {
+		 int allFilamentsSize = filamentCoords.size();
 		 float x1,y1,z1;
 		 float x2,y2,z2;
 		 int x1Pix=0,y1Pix=0,z1Pix=0;
@@ -1555,7 +1668,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		 ArrayList<float[]> al;
 		 float[] coords;
 		 for(int i=0;i<allFilamentsSize;i++) {
-			 al = allFilamentCoords_swc.get(i);
+			 al = filamentCoords.get(i);
 			 alSize = al.size();
 			 for(int k=0;k<alSize;k++) {
 				 coords = al.get(k);
@@ -1977,7 +2090,8 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         int index = 0; // index into finalBuffer
 
         float[] tPt1 = new float[3];
-        final float[] tPt2 = new float[3];
+        float[] tPt2 = new float[3];
+        float[] tPtR = new float[3];  //transformedm points only after rigd body
 
         float xmm, ymm, zmm;
 
@@ -2021,17 +2135,32 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
                     final float yFloor = (float) Math.floor(y);
                     final float zFloor = (float) Math.floor(z);
 
-                    tPt1 = spline.getCorrespondingPoint(x, y, z);
+                    if(doRigidOnly) {
+                    	xmm = xFloor * finalImageRes[0];
+                        ymm = yFloor * finalImageRes[1];
+                        zmm = zFloor * finalImageRes[2];
 
-                    xmm = tPt1[0] * finalImageRes[0];
-                    ymm = tPt1[1] * finalImageRes[1];
-                    zmm = tPt1[2] * finalImageRes[2];
+                        lsMatrix.transform(xmm, ymm, zmm, tPt2);
+                    }else {
+                    	tPt1 = spline.getCorrespondingPoint(x, y, z);
 
-                    lsMatrix.transform(xmm, ymm, zmm, tPt2);
+                        xmm = tPt1[0] * finalImageRes[0];
+                        ymm = tPt1[1] * finalImageRes[1];
+                        zmm = tPt1[2] * finalImageRes[2];
+                    	
+                    	lsMatrix.transform(xmm, ymm, zmm, tPt2);
+                    }
+                    
+                    
+
 
                     tPt2[0] = tPt2[0] / finalImageRes[0];
                     tPt2[1] = tPt2[1] / finalImageRes[1];
                     tPt2[2] = tPt2[2] / finalImageRes[2];
+                    
+                    tPtR[0] = tPtR[0] / finalImageRes[0];
+                    tPtR[1] = tPtR[1] / finalImageRes[1];
+                    tPtR[2] = tPtR[2] / finalImageRes[2];
 
                     if (tPt2[0] < 0 || tPt2[1] < 0 || tPt2[2] < 0 || tPt2[0] > finalImageExts[0] - 1
                             || tPt2[1] > finalImageExts[1] - 1 || tPt2[2] > finalImageExts[2] - 1) {
@@ -2146,6 +2275,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
                         }
                     }
 
+
                     if (xFloor == x && yFloor == y && zFloor == z) {
                         r = (byte) rgb_short[0];
                         g = (byte) rgb_short[1];
@@ -2168,6 +2298,8 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
             }
 
         }
+
+        
 
         outputTextArea.append("\n");
 
@@ -2234,6 +2366,10 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
         writeSurfaceFile();
         writeNewPointsFile();
+        
+        
+        //TEST
+        
     }
 
     /**
