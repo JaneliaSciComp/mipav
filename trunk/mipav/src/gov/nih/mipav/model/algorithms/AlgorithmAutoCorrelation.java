@@ -2227,12 +2227,20 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             this.xData = xData;
             this.yData = yData;
             
-            bounds = 0; // bounds = 0 means unconstrained
+            bounds = 2; // bounds = 0 means unconstrained
 
             // bounds = 1 means same lower and upper bounds for
             // all parameters
             // bounds = 2 means different lower and upper bounds
             // for all parameters
+            
+            // Constrain parameter 0
+            bl[0] = Double.MIN_VALUE;
+            bu[0] = 1.0;
+
+            // Constrain parameter 1
+            bl[1] = -Double.MAX_VALUE;
+            bu[1] = -Double.MIN_VALUE;
             
             // The default is internalScaling = false
             // To make internalScaling = true and have the columns of the
