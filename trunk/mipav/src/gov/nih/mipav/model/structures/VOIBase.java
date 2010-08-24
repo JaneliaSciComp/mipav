@@ -1365,7 +1365,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
         if ( m_kMask == null )
         {
             m_kMask = new BitSet(xDim * yDim * zDim); 
-        }                                                         
+        }                                                 
+        m_kMask.clear();
         fillVolume( m_kMask, xDim, yDim, false, VOI.ADDITIVE );
         
         return m_kMask;
