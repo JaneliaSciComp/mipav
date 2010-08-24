@@ -980,6 +980,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 stats.Ecc = tmpEcc[0];
                 stats.MajorAxis = tmpMajorAxis[0];
                 stats.MinorAxis = tmpMinorAxis[0];
+System.out.println("HERE");
 
                 statProperty.setProperty(VOIStatisticList.axisDescription + end, nf.format(stats.PAxis));
                 statProperty.setProperty(VOIStatisticList.eccentricityDescription + end, nf.format(stats.Ecc));
@@ -1301,6 +1302,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 stats.Ecc = tmpEcc[0];
                 stats.MajorAxis = tmpMajorAxis[0];
                 stats.MinorAxis = tmpMinorAxis[0];
+                System.out.println("HERE2");
+                
                 statProperty.setProperty(VOIStatisticList.axisDescription, nf.format(stats.PAxis));
                 statProperty.setProperty(VOIStatisticList.eccentricityDescription, nf.format(stats.Ecc));
                 statProperty.setProperty(VOIStatisticList.majorAxisDescription, nf.format(stats.MajorAxis));

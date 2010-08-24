@@ -2241,7 +2241,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
                 m_kCurrentVOIGroup = new VOI( sID,  kName + "_" + sID, kNew.getType(), presetHue );
                 m_kCurrentVOIGroup.setOpacity(1f);
                 kImage.registerVOI( m_kCurrentVOIGroup );
-            }    
+            }   
+
             else if ( m_kCurrentVOIGroup.getName().indexOf( "_" ) == 0 )
             {
                 String kName = kNew.getClass().getName();
