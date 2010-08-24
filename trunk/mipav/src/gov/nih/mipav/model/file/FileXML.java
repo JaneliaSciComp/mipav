@@ -194,8 +194,8 @@ public abstract class FileXML extends FileBase {
                 xmlReader.parse(MipavUtil.convertToFileURL(headerDir + File.separator + headerFileName));
             } catch (SAXException kSAXError) {
             	kSAXError.printStackTrace();
-                MipavUtil.displayError(kFileXSD + ": \n" +
-                                       kSAXError.getMessage().substring(kSAXError.getMessage().lastIndexOf(":") + 1));
+            	 MipavUtil.displayError("Error: This is not a valid image header file");
+
 
                 return null;
             }

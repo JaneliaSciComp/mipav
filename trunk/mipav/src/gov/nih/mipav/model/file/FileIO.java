@@ -9496,7 +9496,7 @@ public class FileIO {
             }
 
             error.printStackTrace();
-
+            progressBar.dispose();
             return null;
         } catch (final OutOfMemoryError error) {
 
@@ -9512,7 +9512,7 @@ public class FileIO {
             }
 
             error.printStackTrace();
-
+            progressBar.dispose();
             return null;
         }
 

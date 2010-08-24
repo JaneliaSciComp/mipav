@@ -1291,7 +1291,12 @@ public class FileVOI extends FileXML {
 
             // Tell the XMLReader to parse the XML document
             xmlReader.parse(MipavUtil.convertToFileURL(fileDir + fileName));
-        } catch (final Exception error) {
+        }catch (SAXException e) {
+        	 e.printStackTrace();
+             MipavUtil.displayError("Error: This is not a valid VOI file");
+
+             return false;
+        }catch (final Exception error) {
             error.printStackTrace();
             MipavUtil.displayError("Error: " + error.getMessage());
 
