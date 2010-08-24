@@ -2010,7 +2010,10 @@ public class VOI extends ModelSerialCloneable {
      */
     public void setActive(boolean act) {
         this.active = act;
-        //fireVOIselection();
+        if ( active )
+        {
+            fireVOIselection();
+        }
     }
 
     /**
