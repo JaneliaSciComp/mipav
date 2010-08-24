@@ -154,7 +154,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
     
     private final int nl2solEngine = 2;
     
-    private int fittingEngine = nl2solEngine;
+    private int fittingEngine = elsuncEngine;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -354,7 +354,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
                         y_array[t - 1] = dceData[t * sliceSize + y * xDim + x] - dceData[y * xDim + x];
                     }
                     // Note that the nPts, tDim-1, is the number of points in the y_array.
-                    dModel = new FitSM2ConstrainedModel(tDim - 1, r1ptj, y_array, initial);
+                    dModel = new FitSM2ConstrainedModel(tDim - 1, y_array, initial);
                     dModel.driver();
                     // dModel.dumpResults();
                     params = dModel.getParameters();
@@ -496,7 +496,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
                     } // for (t = 1; t < tDim; t++)
                     // Note that the nPts, tDim-1, is the number of points in the y_array.
                     if (fittingEngine == elsuncEngine) {
-	                    dModel = new FitSM2ConstrainedModel(tDim - 1, r1ptj, y_array, initial);
+	                    dModel = new FitSM2ConstrainedModel(tDim - 1, y_array, initial);
 	                    dModel.driver();
 	                    // dModel.dumpResults();
 	                    params = dModel.getParameters();
@@ -785,7 +785,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
                         y_array[t - 1] = r1tj[t * volSize + i];
                     }
                     // Note that the nPts, tDim-1, is the number of points in the y_array.
-                    dModel = new FitSM2ConstrainedModel(tDim - 1, r1ptj, y_array, initial);
+                    dModel = new FitSM2ConstrainedModel(tDim - 1, y_array, initial);
                     dModel.driver();
                     // dModel.dumpResults();
                     params = dModel.getParameters();
@@ -1651,7 +1651,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
                 y_array[t - 1] = y_array[t - 1] / validVoxels;
             } // for (t = 1; t < tDim; t++)
             // Note that the nPts, tDim-1, is the number of points in the y_array.
-            dModel = new FitSM2ConstrainedModel(tDim - 1, r1ptj, y_array, initial);
+            dModel = new FitSM2ConstrainedModel(tDim - 1, y_array, initial);
             dModel.driver();
             // dModel.dumpResults();
             params = dModel.getParameters();
@@ -2237,7 +2237,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
                 if (bitMask.get(i)) {
                     input(y_array, i);
                     // Note that the nPts, tDim-1, is the number of points in the y_array.
-                    dModel = new FitSM2ConstrainedModelC(tDim - 1, r1ptj, y_array, initial, exparray,
+                    dModel = new FitSM2ConstrainedModelC(tDim - 1, y_array, initial, exparray,
                             trapezoidConstant, trapezoidSlope, timeVals, r1ptj, ymodel);
                     dModel.driver();
                     // dModel.dumpResults();
@@ -2314,6 +2314,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
     }
 
     class FitSM2ConstrainedModelC extends NLConstrainedEngine {
+    	private final double yData[];
         private final double exparray[][];
 
         private final int tDim;
@@ -2332,17 +2333,17 @@ public class AlgorithmSM2 extends AlgorithmBase {
          * Creates a new FitDEMRI3ConstrainedModel object.
          * 
          * @param nPoints DOCUMENT ME!
-         * @param xData DOCUMENT ME!
          * @param yData DOCUMENT ME!
          * @param initial DOCUMENT ME!
          */
-        public FitSM2ConstrainedModelC(final int nPoints, final double[] xData, final double[] yData,
+        public FitSM2ConstrainedModelC(final int nPoints, final double[] yData,
                 final double[] initial, final double[][] exparray, final double trapezoidConstant[],
                 final double trapezoidSlope[], final double timeVals[], final double r1ptj[], final double ymodel[]) {
 
             // nPoints data points, 3 coefficients, and exponential fitting
-            super(nPoints, 3, xData, yData);
+            super(nPoints, 3);
             tDim = nPoints + 1;
+            this.yData = yData;
             this.exparray = exparray;
             this.trapezoidConstant = trapezoidConstant;
             this.trapezoidSlope = trapezoidSlope;
@@ -2445,7 +2446,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
                     } // for (m = 2; m <= tDim; m++)
                     // evaluate the residuals[j] = ymodel[j] - ySeries[j]
                     for (j = 0; j < nPts; j++) {
-                        residuals[j] = ymodel[j] - ySeries[j];
+                        residuals[j] = ymodel[j] - yData[j];
                         // Preferences.debug("residuals["+ j + "] = " + residuals[j] + "\n");
                     }
                 } // if ((ctrl == -1) || (ctrl == 1))
@@ -2507,20 +2508,20 @@ public class AlgorithmSM2 extends AlgorithmBase {
     }
 
     class FitSM2ConstrainedModel extends NLConstrainedEngine {
-
+        private final double yData[];
         /**
          * Creates a new FitDEMRI3ConstrainedModel object.
          * 
          * @param nPoints DOCUMENT ME!
-         * @param xData DOCUMENT ME!
          * @param yData DOCUMENT ME!
          * @param initial DOCUMENT ME!
          */
-        public FitSM2ConstrainedModel(final int nPoints, final double[] xData, final double[] yData,
+        public FitSM2ConstrainedModel(final int nPoints, final double[] yData,
                 final double[] initial) {
 
             // nPoints data points, 3 coefficients, and exponential fitting
-            super(nPoints, 3, xData, yData);
+            super(nPoints, 3);
+            this.yData = yData;
 
             bounds = 2; // bounds = 0 means unconstrained
 
@@ -2614,9 +2615,9 @@ public class AlgorithmSM2 extends AlgorithmBase {
                         } // for (j = 2; j <= m; j++)
                         ymodel[m - 2] = (intSum + vp * r1ptj[m - 1]) / (1.0 - h);
                     } // for (m = 2; m <= tDim; m++)
-                    // evaluate the residuals[j] = ymodel[j] - ySeries[j]
+                    // evaluate the residuals[j] = ymodel[j] - yData[j]
                     for (j = 0; j < nPts; j++) {
-                        residuals[j] = ymodel[j] - ySeries[j];
+                        residuals[j] = ymodel[j] - yData[j];
                         // Preferences.debug("residuals["+ j + "] = " + residuals[j] + "\n");
                     }
                 } // if ((ctrl == -1) || (ctrl == 1))
