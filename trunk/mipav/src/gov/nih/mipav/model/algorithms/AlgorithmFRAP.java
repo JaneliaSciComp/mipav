@@ -4139,6 +4139,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
      * DOCUMENT ME!
      */
     class Fit24DModel extends NLConstrainedEngine {
+    	private double xData[];
+    	private float yData[];
 
         /**
          * Creates a new Fit24DModel object.
@@ -4149,9 +4151,12 @@ public class AlgorithmFRAP extends AlgorithmBase {
          * @param  initial  DOCUMENT ME!
          */
         public Fit24DModel(int nPoints, double[] xData, float[] yData, double[] initial) {
+        	
 
             // nPoints data points, 3 coefficients, and exponential fitting
-            super(nPoints, 3, xData, yData);
+            super(nPoints, 3);
+            this.xData = xData;
+            this.yData = yData;
 
             int i;
 
@@ -4220,21 +4225,21 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
                 if ((ctrl == -1) || (ctrl == 1)) {
 
-                    // evaluate the residuals[i] = ymodel[i] - ySeries[i]
+                    // evaluate the residuals[i] = ymodel[i] - yData[i]
                     for (i = 0; i < nPts; i++) {
-                        ymodel = a[0] - (a[1] * Math.pow(a[2], xSeries[i]));
-                        residuals[i] = ymodel - ySeries[i];
+                        ymodel = a[0] - (a[1] * Math.pow(a[2], xData[i]));
+                        residuals[i] = ymodel - yData[i];
                     }
                 } // if ((ctrl == -1) || (ctrl == 1))
                 else if (ctrl == 2) {
 
                     // Calculate the Jacobian analytically
                     for (i = 0; i < nPts; i++) {
-                        e1 = Math.exp(a[1] * xSeries[i]);
-                        e2 = Math.exp(a[2] * xSeries[i]);
+                        e1 = Math.exp(a[1] * xData[i]);
+                        e2 = Math.exp(a[2] * xData[i]);
                         covarMat[i][0] = 1.0;
-                        covarMat[i][1] = -Math.pow(a[2], xSeries[i]);
-                        covarMat[i][2] = -xSeries[i] * a[1] * Math.pow(a[2], xSeries[i] - 1.0);
+                        covarMat[i][1] = -Math.pow(a[2], xData[i]);
+                        covarMat[i][2] = -xData[i] * a[1] * Math.pow(a[2], xData[i] - 1.0);
                     }
                 } // else if (ctrl == 2)
                 // If the user wishes to calculate the Jacobian numerically
@@ -4535,7 +4540,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
      * DOCUMENT ME!
      */
     class FitDoubleExponentialNoWholeConstrainedModel extends NLConstrainedEngine {
-
+        private double xData[];
+        private float yData[];
         /**
          * Creates a new FitDoubleExponentialNoWholeConstrainedModel object.
          *
@@ -4548,7 +4554,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
                                                            double[] initial) {
 
             // nPoints data points, 4 coefficients, and exponential fitting
-            super(nPoints, 4, xData, yData);
+            super(nPoints, 4);
+            this.xData = xData;
+            this.yData = yData;
 
             int i;
 
@@ -4627,20 +4635,20 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     for (i = 0; i < nPts; i++) {
                         ymodel = a[3] +
                                  ((1.0 - a[3]) *
-                                      (1 - (a[0] * Math.exp(a[1] * xSeries[i])) -
-                                           ((1.0 - a[0]) * Math.exp(a[2] * xSeries[i]))));
-                        residuals[i] = ymodel - ySeries[i];
+                                      (1 - (a[0] * Math.exp(a[1] * xData[i])) -
+                                           ((1.0 - a[0]) * Math.exp(a[2] * xData[i]))));
+                        residuals[i] = ymodel - yData[i];
                     }
                 } // if ((ctrl == -1) || (ctrl == 1))
                 else if (ctrl == 2) {
 
                     // Calculate the Jacobian analytically
                     for (i = 0; i < nPts; i++) {
-                        e1 = Math.exp(a[1] * xSeries[i]);
-                        e2 = Math.exp(a[2] * xSeries[i]);
+                        e1 = Math.exp(a[1] * xData[i]);
+                        e2 = Math.exp(a[2] * xData[i]);
                         covarMat[i][0] = (1.0 - a[3]) * (-e1 + e2);
-                        covarMat[i][1] = -(1.0 - a[3]) * a[0] * xSeries[i] * e1;
-                        covarMat[i][2] = -(1.0 - a[3]) * (1.0 - a[0]) * xSeries[i] * e2;
+                        covarMat[i][1] = -(1.0 - a[3]) * a[0] * xData[i] * e1;
+                        covarMat[i][2] = -(1.0 - a[3]) * (1.0 - a[0]) * xData[i] * e2;
                         covarMat[i][3] = (a[0] * e1) + ((1.0 - a[0]) * e2);
                     }
                 } // else if (ctrl == 2)
@@ -7633,7 +7641,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
      * DOCUMENT ME!
      */
     class FitWholeNLConInt2 extends NLConstrainedEngine {
-
+        double xData[];
+        float yData[];
         /** DOCUMENT ME! */
         double bound;
 
@@ -7668,8 +7677,10 @@ public class AlgorithmFRAP extends AlgorithmBase {
          * @param  result   DOCUMENT ME!
          */
         public FitWholeNLConInt2(int nPoints, double[] xData, float[] yData, double[] initial, double[] result) {
-
-            super(nPoints, 2, xData, yData);
+       
+            super(nPoints, 2);
+            this.xData = xData;
+            this.yData = yData;
             this.result = result;
 
             bounds = 2; // bounds = 0 means unconstrained
@@ -7731,16 +7742,16 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 if ((ctrl == -1) || (ctrl == 1)) {
 
                     for (i = 0; i < result.length; i++) {
-                        imods = new FitFullIntModel2s(xSeries[i], a[0], a[1], lower, a[1], Integration2.DQAGSE, epsabs,
+                        imods = new FitFullIntModel2s(xData[i], a[0], a[1], lower, a[1], Integration2.DQAGSE, epsabs,
                                                       epsrel, limit);
                         imods.driver();
                         Preferences.debug("imods error = " + imods.getErrorStatus() + "\n");
-                        imodi = new FitFullIntModel2i(xSeries[i], a[0], a[1], a[0] + a[1], Integration2.DQAGIE, inf,
+                        imodi = new FitFullIntModel2i(xData[i], a[0], a[1], a[0] + a[1], Integration2.DQAGIE, inf,
                                                       epsabs, epsrel, limit);
                         imodi.driver();
                         Preferences.debug("imodi error = " + imodi.getErrorStatus() + "\n");
                         result[i] = 1.0 - imods.getIntegral() - imodi.getIntegral();
-                        residuals[i] = result[i] - ySeries[i];
+                        residuals[i] = result[i] - yData[i];
                     }
                 } // if ((ctrl == -1) || (ctrl == 1))
 
@@ -7763,7 +7774,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
      * DOCUMENT ME!
      */
     class FitWholeNLConModel extends NLConstrainedEngine {
-
+        private double xData[];
+        private float yData[];
         /** DOCUMENT ME! */
         double largestPole;
 
@@ -7783,7 +7795,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
         public FitWholeNLConModel(int nPoints, double[] xData, float[] yData, double[] initial, double largestPole,
                                   double tol) {
 
-            super(nPoints, 2, xData, yData);
+            super(nPoints, 2);
+            this.xData = xData;
+            this.yData = yData;
             this.largestPole = largestPole;
             this.tol = tol;
 
@@ -7843,12 +7857,12 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 ctrl = ctrlMat[0];
 
                 if ((ctrl == -1) || (ctrl == 1)) {
-                    lmod = new FitFullModel(xSeries, largestPole, tol, a[0], a[1]);
+                    lmod = new FitFullModel(xData, largestPole, tol, a[0], a[1]);
                     lmod.driver();
                     timeFunction = lmod.getTimeFunction();
 
                     for (i = 0; i < timeFunction.length; i++) {
-                        residuals[i] = timeFunction[i] - ySeries[i];
+                        residuals[i] = timeFunction[i] - yData[i];
                     }
                 } // if ((ctrl == -1) || (ctrl == 1))
 
@@ -7870,7 +7884,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
      * DOCUMENT ME!
      */
     class FitWholeNLConModel2 extends NLConstrainedEngine {
-
+        private double xData[];
+        private float yData[];
         /** DOCUMENT ME! */
         double abscissa;
 
@@ -7911,7 +7926,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
                                    double relEps, double absEps, double[] result, double[] estErr, int[] evaluations,
                                    int[] errStatus) {
 
-            super(nPoints, 2, xData, yData);
+            super(nPoints, 2);
+            this.xData = xData;
+            this.yData = yData;
             this.abscissa = abscissa;
             this.relEps = relEps;
             this.absEps = absEps;
@@ -7976,12 +7993,12 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 ctrl = ctrlMat[0];
 
                 if ((ctrl == -1) || (ctrl == 1)) {
-                    lmod = new FitFullModel2(xSeries, abscissa, relEps, absEps, result, estErr, evaluations, errStatus,
+                    lmod = new FitFullModel2(xData, abscissa, relEps, absEps, result, estErr, evaluations, errStatus,
                                              a[0], a[1]);
                     lmod.driver();
 
                     for (i = 0; i < result.length; i++) {
-                        residuals[i] = result[i] - ySeries[i];
+                        residuals[i] = result[i] - yData[i];
                     }
                 } // if ((ctrl == -1) || (ctrl == 1))
 
@@ -8003,7 +8020,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
      * DOCUMENT ME!
      */
     class FitWholeNLConModel3 extends NLConstrainedEngine {
-
+        private double xData[];
+        private float yData[];
         /** DOCUMENT ME! */
         double eps;
 
@@ -8031,7 +8049,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
         public FitWholeNLConModel3(int nPoints, double[] xData, float[] yData, double[] initial, double upper,
                                    int routine, double eps, double[] result) {
 
-            super(nPoints, 2, xData, yData);
+            super(nPoints, 2);
+            this.xData = xData;
+            this.yData = yData;
             this.upper = upper;
             this.routine = routine;
             this.eps = eps;
@@ -8095,10 +8115,10 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 if ((ctrl == -1) || (ctrl == 1)) {
 
                     for (i = 0; i < result.length; i++) {
-                        imod = new FitFullIntModel(xSeries[i], a[0], a[1], a[0], upper, routine, eps);
+                        imod = new FitFullIntModel(xData[i], a[0], a[1], a[0], upper, routine, eps);
                         imod.driver();
                         result[i] = 1.0 - imod.getIntegral();
-                        residuals[i] = result[i] - ySeries[i];
+                        residuals[i] = result[i] - yData[i];
                     }
                 } // if ((ctrl == -1) || (ctrl == 1))
 
@@ -8121,7 +8141,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
      * DOCUMENT ME!
      */
     class FitWholeNLConModelqd extends NLConstrainedEngine {
-
+        private double xData[];
+        private float yData[];
         /**
          * Creates a new FitWholeNLConModelqd object.
          *
@@ -8132,7 +8153,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
          */
         public FitWholeNLConModelqd(int nPoints, double[] xData, float[] yData, double[] initial) {
 
-            super(nPoints, 2, xData, yData);
+            super(nPoints, 2);
+            this.xData = xData;
+            this.yData = yData;
 
             bounds = 2; // bounds = 0 means unconstrained
 
@@ -8191,11 +8214,11 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 ctrl = ctrlMat[0];
 
                 if ((ctrl == -1) || (ctrl == 1)) {
-                    xSeriesWithZero = new double[xSeries.length + 1];
+                    xSeriesWithZero = new double[xData.length + 1];
                     xSeriesWithZero[0] = 0.0;
 
-                    for (i = 0; i < xSeries.length; i++) {
-                        xSeriesWithZero[i + 1] = xSeries[i];
+                    for (i = 0; i < xData.length; i++) {
+                        xSeriesWithZero[i + 1] = xData[i];
                     }
 
                     lmod = new FitFullModelqd(xSeriesWithZero, a[0], a[1]);
@@ -8203,7 +8226,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     timeFunctionWithZero = lmod.getTimeFunction();
 
                     for (i = 0; i < (timeFunctionWithZero.length - 1); i++) {
-                        residuals[i] = timeFunctionWithZero[i + 1] - ySeries[i];
+                        residuals[i] = timeFunctionWithZero[i + 1] - yData[i];
                     }
                 } // if ((ctrl == -1) || (ctrl == 1))
 
@@ -8225,7 +8248,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
      * DOCUMENT ME!
      */
     class FitWholeNLConModelWeeks extends NLConstrainedEngine {
-
+        private double xData[];
+        private float yData[];
         /** DOCUMENT ME! */
         double b;
 
@@ -8270,7 +8294,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
         public FitWholeNLConModelWeeks(int nPoints, double[] xData, float[] yData, double[] initial, int nLaguerre,
                                        double sig0, double sigmax, double bmax, double tols, double tolb) {
 
-            super(nPoints, 2, xData, yData);
+            super(nPoints, 2);
+            this.xData = xData;
+            this.yData = yData;
             this.nLaguerre = nLaguerre;
             this.sig0 = sig0;
             this.sigmax = sigmax;
@@ -8334,17 +8360,17 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 ctrl = ctrlMat[0];
 
                 if ((ctrl == -1) || (ctrl == 1)) {
-                    xOne[0] = xSeries[xSeries.length / 2];
+                    xOne[0] = xData[xData.length / 2];
                     lmod = new FitFullModelWeeks(xOne, nLaguerre, sig0, sigmax, bmax, tols, tolb, a[0], a[1]);
                     lmod.wpar2();
                     b = lmod.getBOpt();
                     sig = lmod.getSigOpt();
-                    lmod = new FitFullModelWeeks(xSeries, nLaguerre, sig, b, a[0], a[1]);
+                    lmod = new FitFullModelWeeks(xData, nLaguerre, sig, b, a[0], a[1]);
                     lmod.driver();
                     timeFunction = lmod.getTimeFunction();
 
                     for (i = 0; i < timeFunction.length; i++) {
-                        residuals[i] = timeFunction[i] - ySeries[i];
+                        residuals[i] = timeFunction[i] - yData[i];
                     }
                 } // if ((ctrl == -1) || (ctrl == 1))
 
