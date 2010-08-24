@@ -193,10 +193,12 @@ public abstract class FileXML extends FileBase {
             try {
                 xmlReader.parse(MipavUtil.convertToFileURL(headerDir + File.separator + headerFileName));
             } catch (SAXException kSAXError) {
-            	kSAXError.printStackTrace();
-            	 MipavUtil.displayError("Error: This is not a valid image header file");
-
-
+            	String msg = kSAXError.getMessage();
+            	if(msg.contains("VOI")) {
+            		 MipavUtil.displayError("Error: This is not a valid image header file and appears to be a VOI file");
+            	}else {
+            		 MipavUtil.displayError("Error: This is not a valid image header file");
+            	}
                 return null;
             }
         } catch (Exception error) {
