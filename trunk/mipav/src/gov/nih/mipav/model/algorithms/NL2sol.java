@@ -5,6 +5,7 @@ import java.util.Calendar;
 import java.util.Formatter;
 
 /**
+ * This is a port of the source code nl2sol.f90 and the nl2sol_prb2.f90 extensive set of tests from FORTRAN into Java.
  * Unconstrained non-linear least squares solver algorithm.
  * 
  * <hr>
@@ -124,7 +125,7 @@ private boolean testMode = false;
 	private boolean useAnalyticJacobian;
 	private int uiparm[];
 	private double urparm[];
-	private boolean detailedSummaryPrinting = true;
+	private boolean detailedSummaryPrinting = false;
 	private final int prob_max = 60;
 	private String irc[];
 	private int is[][];
@@ -138,6 +139,7 @@ private boolean testMode = false;
 		testMode = true;
 		main();
 	}
+	
 	
 	private void main() {
 		
@@ -1538,6 +1540,9 @@ private boolean testMode = false;
 	}
 	
 	public void driver () {
+		dfault(iv, v);
+		iv[17] = 4000;
+		iv[18] = 3000;
 		if (useAnalyticJacobian) {
 		    nl2sol();	
 		}
@@ -1545,6 +1550,17 @@ private boolean testMode = false;
 			nl2sno();
 		}
 	}
+	
+	/**
+     * getChiSquared - accessor to chi-squared value (goodness-of-fit measure).
+     *
+     * @return  the value of chi squared
+     */
+    public double getChiSquared() {
+        return 2.0 * v[10];
+    }
+
+    
 	
 	private void nl2sol() {
 		/***********************************************************************
