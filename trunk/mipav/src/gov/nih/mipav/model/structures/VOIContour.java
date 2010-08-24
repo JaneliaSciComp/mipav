@@ -737,10 +737,10 @@ public class VOIContour extends VOIBase {
 
         float majorA = (float) (normFactor * afScale[iMax]);
         float minorA = (float) (normFactor * afScale[iMid]);
+        
         float e = (float) Math
         .sqrt(1.0 - ((afScale[iMid] * afScale[iMid]) / (afScale[iMax] * afScale[iMax])));
-
-
+        
 
         Vector3f kX = new Vector3f( kMat.M00, kMat.M01, kMat.M02 );  kX.Normalize();
         Vector3f kY = new Vector3f( kMat.M10, kMat.M11, kMat.M12 );  kY.Normalize();
