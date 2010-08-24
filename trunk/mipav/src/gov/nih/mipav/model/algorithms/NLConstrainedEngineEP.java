@@ -321,10 +321,10 @@ public abstract class NLConstrainedEngineEP {
     protected DoubleDouble tolerance;
 
     /** DOCUMENT ME! */
-    protected DoubleDouble[] xSeries;
+    private DoubleDouble[] xSeries;
 
     /** DOCUMENT ME! */
-    protected DoubleDouble[] ySeries;
+    private DoubleDouble[] ySeries;
 
     /** DOCUMENT ME! */
     private DoubleDouble aDiff;
@@ -1212,21 +1212,13 @@ public abstract class NLConstrainedEngineEP {
      *
      * @param  nPts     number of points to fit to the function to
      * @param  param    number of parameters of function
-     * @param  xSeries  DOCUMENT ME!
-     * @param  yData    DOCUMENT ME!
      */
-    public NLConstrainedEngineEP(int nPts, int param, DoubleDouble[] xSeries, DoubleDouble[] yData) {
+    public NLConstrainedEngineEP(int nPts, int param) {
     	int i,j;
 
         try {
             this.nPts = nPts;
             this.param = param;
-            this.xSeries = xSeries;
-            ySeries = new DoubleDouble[nPts];
-
-            for (i = 0; i < nPts; i++) {
-                ySeries[i] = yData[i];
-            }
 
             maxIterations = 2000 * param;
             bl = new DoubleDouble[param];
