@@ -507,6 +507,8 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
     }
     
     class FitDEMRI3ConstrainedModel extends NLConstrainedEngine {
+    	private double xData[];
+    	private double yData[];
 
         /**
          * Creates a new FitDEMRI3ConstrainedModel object.
@@ -520,7 +522,9 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
                                                            double[] initial) {
 
             // nPoints data points, 3 coefficients, and exponential fitting
-            super(nPoints, 3, xData, yData);
+            super(nPoints, 3);
+            this.xData = xData;
+            this.yData = yData;
 
             bounds = 2; // bounds = 0 means unconstrained
 
@@ -739,9 +743,9 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
 
                 if ((ctrl == -1) || (ctrl == 1)) {
 
-                    // evaluate the residuals[j] = ymodel[j] - ySeries[j]
+                    // evaluate the residuals[j] = ymodel[j] - yData[j]
                     for (j = 0; j < nPts; j++) {
-                        residuals[j] = ymodel[j] - ySeries[j];
+                        residuals[j] = ymodel[j] - yData[j];
                     }
                 } // if ((ctrl == -1) || (ctrl == 1))
                 // Calculate the Jacobian numerically
@@ -760,6 +764,8 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
      * DOCUMENT ME!
      */
     class Fit24DModel extends NLConstrainedEngine {
+    	private double xData[];
+    	private float yData[];
 
         /**
          * Creates a new Fit24DModel object.
@@ -772,7 +778,9 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         public Fit24DModel(int nPoints, double[] xData, float[] yData, double[] initial) {
 
             // nPoints data points, 3 coefficients, and exponential fitting
-            super(nPoints, 3, xData, yData);
+            super(nPoints, 3);
+            this.xData = xData;
+            this.yData = yData;
 
             bounds = 2; // bounds = 0 means unconstrained
 
@@ -838,10 +846,10 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
 
                 if ((ctrl == -1) || (ctrl == 1)) {
 
-                    // evaluate the residuals[i] = ymodel[i] - ySeries[i]
+                    // evaluate the residuals[i] = ymodel[i] - yData[i]
                     for (i = 0; i < nPts; i++) {
-                        ymodel = a[0] - (a[1] * Math.pow(a[2], xSeries[i]));
-                        residuals[i] = ymodel - ySeries[i];
+                        ymodel = a[0] - (a[1] * Math.pow(a[2], xData[i]));
+                        residuals[i] = ymodel - yData[i];
                     }
                 } // if ((ctrl == -1) || (ctrl == 1))
                 else if (ctrl == 2) {
@@ -849,8 +857,8 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
                     // Calculate the Jacobian analytically
                     for (i = 0; i < nPts; i++) {
                         covarMat[i][0] = 1.0;
-                        covarMat[i][1] = -Math.pow(a[2], xSeries[i]);
-                        covarMat[i][2] = -xSeries[i] * a[1] * Math.pow(a[2], xSeries[i] - 1.0);
+                        covarMat[i][1] = -Math.pow(a[2], xData[i]);
+                        covarMat[i][2] = -xData[i] * a[1] * Math.pow(a[2], xData[i] - 1.0);
                     }
                 } // else if (ctrl == 2)
                 // If the user wishes to calculate the Jacobian numerically
@@ -868,6 +876,8 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
      * DOCUMENT ME!
      */
     class Fit25HModel extends NLConstrainedEngine {
+    	private double xData[];
+    	private double yData[];
 
         /**
          * Creates a new Fit25HModel object.
@@ -880,7 +890,9 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         public Fit25HModel(int nPoints, double[] xData, double[] yData, double[] initial) {
 
             // nPoints data points, 3 coefficients, and exponential fitting
-            super(nPoints, 3, xData, yData);
+            super(nPoints, 3);
+            this.xData = xData;
+            this.yData = yData;
 
             bounds = 2; // bounds = 0 means unconstrained
 
@@ -946,18 +958,18 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
 
                 if ((ctrl == -1) || (ctrl == 1)) {
 
-                    // evaluate the residuals[i] = ymodel[i] - ySeries[i]
+                    // evaluate the residuals[i] = ymodel[i] - yData[i]
                     for (i = 0; i < nPts; i++) {
-                        ymodel = Math.pow((a[0] * Math.log(xSeries[i])),a[1]) + a[2];
-                        residuals[i] = ymodel - ySeries[i];
+                        ymodel = Math.pow((a[0] * Math.log(xData[i])),a[1]) + a[2];
+                        residuals[i] = ymodel - yData[i];
                     }
                 } // if ((ctrl == -1) || (ctrl == 1))
                 else if (ctrl == 2) {
 
                     // Calculate the Jacobian analytically
                     for (i = 0; i < nPts; i++) {
-                        covarMat[i][0] = a[1]*Math.pow((a[0] * Math.log(xSeries[i])),a[1]-1.0) * Math.log(xSeries[i]);
-                        covarMat[i][1] = Math.log(a[0] * Math.log(xSeries[i])) * Math.pow((a[0] * Math.log(xSeries[i])),a[1]);
+                        covarMat[i][0] = a[1]*Math.pow((a[0] * Math.log(xData[i])),a[1]-1.0) * Math.log(xData[i]);
+                        covarMat[i][1] = Math.log(a[0] * Math.log(xData[i])) * Math.pow((a[0] * Math.log(xData[i])),a[1]);
                         covarMat[i][2] = 1.0;
                     }
                 	// Calculate the Jacobian numerically
