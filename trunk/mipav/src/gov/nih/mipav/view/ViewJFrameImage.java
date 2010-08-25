@@ -5293,6 +5293,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     public Vector3f PropDown(int iActive) {
         Vector3f kReturn = componentImage.downSlice();
         controls.setZSlider(componentImage.getSlice());
+        setTitle();
         updateImages(true);
         return kReturn;
     }
@@ -5304,6 +5305,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     public Vector3f PropUp(int iActive) {
         Vector3f kReturn = componentImage.upSlice();
         controls.setZSlider(componentImage.getSlice());
+        setTitle();
         updateImages(true);
         return kReturn;
     }
