@@ -388,6 +388,7 @@ public class FileIO {
         int nListImages;
         final float[] tPt = new float[3];
         TransMatrix matrix = null;
+        TransMatrix tMatrix = null;
         String studyID = new String();
         String seriesNo = new String();
         String acqNo = new String();
@@ -395,9 +396,6 @@ public class FileIO {
         String studyIDMaster;
         String seriesNoMaster;
         String acqNoMaster;
-        double xDel = 0.0;
-        double yDel = 0.0;
-        double zDel = 0.0;
 
         FileDicomTagTable[] childrenTagTables;
 
@@ -666,29 +664,12 @@ public class FileIO {
                             // acqNo.equals(acqNoMaster))
                             // {
                             savedFileInfos[nImages] = fileInfoTemp;
-                            if (nImages == 1) {
-                            	xDel = savedFileInfos[1].xLocation - savedFileInfos[0].xLocation;
-                            	yDel = savedFileInfos[1].yLocation - savedFileInfos[0].yLocation;
-                            	zDel = savedFileInfos[1].zLocation - savedFileInfos[0].zLocation;
-                            }
 
                             // this matrix is the matrix that converts this image into
                             // a standard DICOM axial image
                             matrix = savedFileInfos[nImages].getPatientOrientation();
 
                             if (matrix != null) {
-                            	if (((matrix.get(2,0) <= 0) && (xDel > 0)) ||
-                                	    ((matrix.get(2,0) >= 0) && (xDel < 0))) {
-                                	        matrix.set(2, 0, -matrix.get(2, 0));	
-                                	}
-                                	if (((matrix.get(2,1) <= 0) && (yDel > 0)) ||
-                                    	    ((matrix.get(2,1) >= 0) && (yDel < 0))) {
-                                    	        matrix.set(2, 1, -matrix.get(2, 1));	
-                                    }
-                                	if (((matrix.get(2,2) <= 0) && (zDel > 0)) ||
-                                    	    ((matrix.get(2,2) >= 0) && (zDel < 0))) {
-                                    	        matrix.set(2, 2, -matrix.get(2, 2));	
-                                    }
                                 
                                 /*
                                  * transform the x location, y location, and z location, found from the Image Position
@@ -697,22 +678,12 @@ public class FileIO {
                                  * being sliced along. xlocation, ylocation, zlocation are from the DICOM tag 0020,0032
                                  * patient location;
                                  */
-                            	if (nImages == 1) {
-	                                matrix.transform(savedFileInfos[nImages-1].xLocation, savedFileInfos[nImages-1].yLocation,
-	                                        savedFileInfos[nImages-1].zLocation, tPt);
-	
-	                                // tPt[2] is MIPAV's z-axis. It is the position of the patient
-	                                // along the axis that the image was sliced on.
-	                                zOrients[nImages-1] = tPt[2];
-                                }
-                                if (nImages >= 1) {
-	                                matrix.transform(savedFileInfos[nImages].xLocation, savedFileInfos[nImages].yLocation,
-	                                        savedFileInfos[nImages].zLocation, tPt);
-	
-	                                // tPt[2] is MIPAV's z-axis. It is the position of the patient
-	                                // along the axis that the image was sliced on.
-	                                zOrients[nImages] = tPt[2];
-                                }
+                                matrix.transform(savedFileInfos[nImages].xLocation, savedFileInfos[nImages].yLocation,
+                                        savedFileInfos[nImages].zLocation, tPt);
+
+                                // tPt[2] is MIPAV's z-axis. It is the position of the patient
+                                // along the axis that the image was sliced on.
+                                zOrients[nImages] = tPt[2];
                             } else {
                                 zOrients[nImages] = 1;
                             }
