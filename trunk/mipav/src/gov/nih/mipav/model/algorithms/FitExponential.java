@@ -17,6 +17,7 @@ public class FitExponential extends NLFittedFunction {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 	private double xSeries[];
 	private double ySeries[];
+	private double chisq;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -242,13 +243,18 @@ public class FitExponential extends NLFittedFunction {
 
 	@Override
 	protected Matrix generateResiduals() {
-		// TODO Auto-generated method stub
-		return null;
+		Matrix residuals = new Matrix(nPts, 1);
+    	for(int i=0; i<nPts; i++) {
+    		double r = ySeries[i] - (a[0] + (a[1] * Math.exp(a[2] * xSeries[i])));
+    		residuals.set(i, 0, r);
+    	}
+    	
+    	return residuals;
 	}
 
 	@Override
 	protected void calculateChiSq() {
-		// TODO Auto-generated method stub
-		
+		chisq = getChiSquared();
+		System.out.println("Chi-squared = " + chisq);	
 	}
 }
