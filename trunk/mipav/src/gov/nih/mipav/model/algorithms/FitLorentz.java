@@ -11,7 +11,7 @@ import gov.nih.mipav.view.*;
  * no need to implement here
  *
  * @author   senseneyj
- * @see      NLEngine
+ * @see      NLConstrainedEngine
  * @version  0.1
  */
 public class FitLorentz extends NLFittedFunction {	
