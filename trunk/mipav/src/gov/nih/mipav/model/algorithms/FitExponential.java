@@ -15,7 +15,8 @@ import gov.nih.mipav.view.*;
 public class FitExponential extends NLFittedFunction {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
+	private double xSeries[];
+	private double ySeries[];
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -25,6 +26,19 @@ public class FitExponential extends NLFittedFunction {
 
         // nPoints data points, 3 coefficients, and exponential fitting
         super(5, 3);
+        
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        
+        // The default is internalScaling = false
+        // To make internalScaling = true and have the columns of the
+        // Jacobian scaled to have unit length include the following line.
+        // internalScaling = true;
+        // Suppress diagnostic messages
+        outputMes = false;
         testData();
     }
 
@@ -36,34 +50,23 @@ public class FitExponential extends NLFittedFunction {
      * @param  yData    DOCUMENT ME!
      */
     public FitExponential(int nPoints, double[] xData, double[] yData) {
-
         // nPoints data points, 3 coefficients, and exponential fitting
         super(nPoints, 3);
-
-        int i;
-
-        // ia[0] equals 0 for fixed c1; ia[0] is nonzero for fitting c1
-        ia[0] = 1;
-
-        // ia[1] equals 0 for fixed c2; ia[1] is nonzero for fitting c2
-        ia[1] = 1;
-
-        // ia[2] equals 0 for fixed c3; ia[2] is nonzero for fitting c3
-        ia[2] = 1;
-
-        for (i = 0; i < nPoints; i++) {
-            xseries[i] = xData[i];
-            yseries[i] = yData[i];
-        }
-
-        this.xDataOrg = xData;
-        this.yDataOrg = yData;
-
-        stdv = 1;
-
-        for (i = 0; i < nPoints; i++) {
-            sig[i] = stdv;
-        }
+        this.xSeries = xData;
+        this.ySeries = yData;
+        
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        
+        // The default is internalScaling = false
+        // To make internalScaling = true and have the columns of the
+        // Jacobian scaled to have unit length include the following line.
+        // internalScaling = true;
+        // Suppress diagnostic messages
+        outputMes = false;    
     }
 
     /**
@@ -77,29 +80,28 @@ public class FitExponential extends NLFittedFunction {
 
         // nPoints data points, 3 coefficients, and exponential fitting
         super(nPoints, 3);
-
-        // super(5, 3, NLEngine.EXPONENTIAL);
+        xSeries = new double[xData.length];
+        ySeries = new double[yData.length];
         int i;
-
-        // ia[0] equals 0 for fixed c1; ia[0] is nonzero for fitting c1
-        ia[0] = 1;
-
-        // ia[1] equals 0 for fixed c2; ia[1] is nonzero for fitting c2
-        ia[1] = 1;
-
-        // ia[2] equals 0 for fixed c3; ia[2] is nonzero for fitting c3
-        ia[2] = 1;
-
-        xDataOrg = new double[nPoints];
-        yDataOrg = new double[nPoints];
-
-        for (i = 0; i < nPoints; i++) {
-            xseries[i] = xData[i];
-            yseries[i] = yData[i];
-            xDataOrg[i] = xData[i];
-            yDataOrg[i] = yData[i];
+        for (i = 0; i < xData.length; i++) {
+        	xSeries[i] = xData[i];
         }
+        for (i = 0; i < yData.length; i++) {
+        	ySeries[i] = yData[i];
+        }
+        
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
 
+        // The default is internalScaling = false
+        // To make internalScaling = true and have the columns of the
+        // Jacobian scaled to have unit length include the following line.
+        // internalScaling = true;
+        // Suppress diagnostic messages
+        outputMes = false;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -111,17 +113,12 @@ public class FitExponential extends NLFittedFunction {
     public void driver() {
         int i;
         double oldChiSq;
+        double chisq;
         double[] oldA = new double[a.length];
-        int nPoints = xDataOrg.length;
 
         gues[0] = 5;
         gues[1] = 50;
         gues[2] = 0.75;
-        stdv = 1;
-
-        for (i = 0; i < nPoints; i++) {
-            sig[i] = stdv;
-        }
 
         super.driver();
 
@@ -129,23 +126,14 @@ public class FitExponential extends NLFittedFunction {
             oldA[i] = a[i];
         }
 
-        oldChiSq = chisq;
+        oldChiSq = getChiSquared();
 
         gues[0] = 5;
         gues[1] = 50;
         gues[2] = -0.75;
-        stdv = 1;
-
-        for (i = 0; i < nPoints; i++) {
-            sig[i] = stdv;
-        }
-
-        for (i = 0; i < nPoints; i++) {
-            xseries[i] = xDataOrg[i];
-            yseries[i] = yDataOrg[i];
-        }
 
         super.driver();
+        chisq = getChiSquared();
 
         if (chisq < oldChiSq) 
             return;
@@ -161,8 +149,8 @@ public class FitExponential extends NLFittedFunction {
      */
     public void displayResults() {
         Preferences.debug(" ******* FitExponential ********* \n\n");
-        Preferences.debug("Number of iterations: " + String.valueOf(kk) + "\n");
-        Preferences.debug("Chi-squared: " + String.valueOf(chisq) + "\n");
+        Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n");
+        Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n");
 
         // Preferences.debug("Final lamda: " + String.valueOf(flamda));
         Preferences.debug("a0 " + String.valueOf(a[0]) + "\n"); // + " +/- " + String.valueOf(Math.sqrt(covar[0][0])));
@@ -171,33 +159,47 @@ public class FitExponential extends NLFittedFunction {
                                                                   // String.valueOf(Math.sqrt(covar[2][2])));
         
     }
-
-    /**
+    
+    /** 
      * Fit to function - a0 + a1*exp(a2*x).
-     *
-     * @param   x1    The x value of the data point.
-     * @param   atry  The best guess parameter values.
-     * @param   dyda  The derivative values of y with respect to fitting parameters.
-     *
-     * @return  The calculated y value.
+     * @param a The best guess parameter values.
+     * @param residuals ymodel - yData.
+     * @param covarMat The derivative values of y with respect to fitting parameters.
      */
-    public double fitToFunction(double x1, double[] atry, double[] dyda) {
-
-        // mrqcof calls function
-        // mrqcof supplies x1 and best guess parameters atry[]
-        // function returns the partial derivatives dyda and the calculated ymod
+    public void fitToFunction(final double[] a, final double[] residuals, final double[][] covarMat) {
+        int ctrl;
+        int j;
         double ymod = 0;
 
         try {
-            ymod = atry[0] + (atry[1] * Math.exp(atry[2] * x1));
-            dyda[0] = 1; // a0 partial derivative
-            dyda[1] = Math.exp(atry[2] * x1); // a1 partial derivative
-            dyda[2] = atry[1] * x1 * Math.exp(atry[2] * x1); // a2 partial derivative
-        } catch (Exception e) {
-            Preferences.debug("function error: " + e.getMessage());
+            ctrl = ctrlMat[0];
+            // Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + " a[2] = " + a[2] + "\n");
+            if ( (ctrl == -1) || (ctrl == 1)) {
+                
+                // evaluate the residuals[j] = ymod - yData[j]
+                for (j = 0; j < nPts; j++) {
+                	ymod = a[0] + (a[1] * Math.exp(a[2] * xSeries[j]));
+                    residuals[j] = ymod - ySeries[j];
+                    // Preferences.debug("residuals["+ j + "] = " + residuals[j] + "\n");
+                }
+            } // if ((ctrl == -1) || (ctrl == 1))
+            else if (ctrl == 2) {
+                // Calculate the Jacobian analytically
+                for (j = 0; j < nPts; j++) {
+                	covarMat[j][0] = 1; // a0 partial derivative
+                	covarMat[j][1] = Math.exp(a[2] * xSeries[j]); // a1 partial derivative
+                	covarMat[j][2] = a[1] * xSeries[j] * Math.exp(a[2] * xSeries[j]); // a2 partial derivative
+                }
+            }
+            // Calculate the Jacobian numerically
+            // else if (ctrl == 2) {
+            // ctrlMat[0] = 0;
+            // }
+        } catch (final Exception exc) {
+            Preferences.debug("function error: " + exc.getMessage() + "\n");
         }
 
-        return ymod;
+        return;
     }
 
     /**
@@ -206,48 +208,35 @@ public class FitExponential extends NLFittedFunction {
     private void testData() {
 
         // Setup for a function of the type y = c1 + c2*exp(c3*x)
-        int i;
 
-        stdv = 100;
+        xSeries[0] = 0;
+        ySeries[0] = 1 + 2;
 
-        // ia[0] equals 0 for fixed c1; ia[0] is nonzero for fitting c1
-        ia[0] = 1;
+        xSeries[1] = 1;
+        ySeries[1] = 1 + (2 * Math.exp(-3));
 
-        // ia[1] equals 0 for fixed c2; ia[1] is nonzero for fitting c2
-        ia[1] = 1;
+        xSeries[2] = 2;
+        ySeries[2] = 1 + (2 * Math.exp(-6));
 
-        // ia[2] equals 0 for fixed c3; ia[2] is nonzero for fitting c3
-        ia[2] = 1;
+        xSeries[3] = 3;
+        ySeries[3] = 1 + (2 * Math.exp(-9));
 
-        xseries[0] = 0;
-        yseries[0] = 1 + 2;
-
-        xseries[1] = 1;
-        yseries[1] = 1 + (2 * Math.exp(-3));
-
-        xseries[2] = 2;
-        yseries[2] = 1 + (2 * Math.exp(-6));
-
-        xseries[3] = 3;
-        yseries[3] = 1 + (2 * Math.exp(-9));
-
-        xseries[4] = 4;
-        yseries[4] = 1 + (2 * Math.exp(-12));
+        xSeries[4] = 4;
+        ySeries[4] = 1 + (2 * Math.exp(-12));
 
         // guess();
         gues[0] = -1;
         gues[1] = 2;
         gues[2] = -5;
-
-        // Assign the same standard deviations to all data points.
-        for (i = 0; i < 5; i++) {
-            sig[i] = stdv;
-        }
     }
 
 	@Override
 	protected void calculateFittedY() {
-		// TODO Auto-generated method stub
+		int j;
+		yDataFitted = new double[nPts];
+		for (j = 0; j < nPts; j++) {
+			yDataFitted[j] = a[0] + (a[1] * Math.exp(a[2] * xSeries[j]));	
+		}
 		
 	}
 
