@@ -299,7 +299,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
         float[] tgValues;
         double refStamp;
         double[] params;
-        FitWholeOrganModel fwo = null;
         FitDoubleExponentialModel fdem = null;
         FitDoubleExponentialNoWholeModel fdemnw = null;
         FitPure1DModel fp1D = null;
@@ -1250,12 +1249,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
          * Preferences.debug("Whole organ initial[0] = " + initial[0] + "\n"); Preferences.debug("Whole organ initial[1]
          * = " + initial[1] + "\n");
          *
-         *
-         * fwo = new FitWholeOrganModel(zDim - firstSliceNum, trValues, woIntensity, initial); fwo.driver();
-         * fwo.dumpResults(); params = fwo.getParameters();
-         *
-         * UI.setDataText("Whole organ model described by " + params[0] + " * exp(" + params[1] + "t)\n");
-         * Preferences.debug("Whole organ model described by " + params[0] + " * exp(" + params[1] + "t)\n");
          *
          * // Multiply the photobleached data by exp(-params[1]*t) to compensate for // the photobleaching loss over the
          * recovery curve
@@ -2398,7 +2391,14 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
                 Preferences.debug("D/w**2 guess initial[0] = " + initial[0] + "\n");
                 Preferences.debug("bottom guess initial[1] = " + initial[1] + "\n");
-                fp1DNW = new FitPure1DNoWholeModel(zDim - firstSliceNum, tValues, pIntensity, initial);
+                double x[] = new double[3];
+                x[1] = initial[0];
+                x[2] = initial[1];
+                int iv[] = new int[63]; // 61 + number of coefficients
+                int vLength = 94 + (zDim - firstSliceNum)*2 + 3*(zDim - firstSliceNum) + 2*(3*2+33)/2;
+                double v[] = new double[vLength];
+                boolean useAnalyticalJacobian = true;
+                fp1DNW = new FitPure1DNoWholeModel(zDim - firstSliceNum, tValues, pIntensity, x, iv, v, useAnalyticalJacobian);
                 fp1DNW.driver();
                 fp1DNW.dumpResults();
 
@@ -2407,7 +2407,10 @@ public class AlgorithmFRAP extends AlgorithmBase {
                  * Chi-squared was not a valid number\n"); if  {  } setCompleted(false);
                  *
                  * return; }*/
-                params = fp1DNW.getParameters();
+                params = new double[2];
+                params[0] = x[1];
+                params[1] = x[2];
+                
                 bottom = params[1];
                 span = 1.0 - params[1];
             } // else no whole organ normalization
@@ -2724,6 +2727,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
             photoBleachGraph2.setVisible(true);
 
         }
+        
+        setCompleted(true);
+        return;
 
     }
 
@@ -2891,13 +2897,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
         FitFullModelWeeks lmodWeeks;
         FitWholeNL2solModel nonlinmod;
         FitWholeNLConModel nlinmod2;
-        FitWholeNL3Model2 nlinmod3;
         FitWholeNLConModel2 nlinmod4;
-        FitWholeNL3Model3 nlinmod5;
         FitWholeNLConModel3 nlinmod6;
-        FitWholeNL3Modelqd nlinmod7;
         FitWholeNLConModelqd nlinmod8;
-        FitWholeNL3ModelWeeks nlinmod9;
         FitWholeNLConModelWeeks nlinmod10;
         FitWholeNL2solInt2 nlinmod11;
         FitWholeNLConInt2 nlinmod12;
@@ -2933,13 +2935,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
         int[] evaluations = new int[200];
         int[] errStatus = new int[200];
         double eps = 3.0E-6;
-        int routine = Integration.MIDPNT;
-        double lower;
-        double upper;
-        double eps2 = 1.0E-11;
-        int routine2 = Integration.MIDINF;
-        double lower2;
-        double upper2 = 1.0e30;
         double part1;
         double part2;
         double[] tValuesWithZero;
@@ -3127,28 +3122,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
             // (errStatus[j] == 1) { Preferences.debug("time[" + j + "] did not converge after maximum  allowed
             // iterations\n"); } } // for (j = 0; j < result.length; j++)
 
-
-            // nonlinmod = new FitWholeNL3Model(tValues.length, tValues, pIntensity,
-            // initial, largestPole, tol);
-            // nonlinmod.driver();
-            // nonlinmod.dumpResults();
-            // params = nonlinmod.getParameters();
-            // nlinmod3 = new FitWholeNL3Model2(tValues.length, tValues, pIntensity,
-            // initial, abscissa, relEps, absEps,
-            // result, estErr, evaluations,
-            // errStatus);
-            // nlinmod3.driver();
-            // nlinmod3.dumpResults();
-            // params = nlinmod3.getParameters();
-
-            // initial[0] = 0.012;
-            // initial[1] = 0.008;
-            // result = new double[tValues.length];
-            // nlinmod5 = new FitWholeNL3Model3(tValues.length, tValues, pIntensity,
-            // initial, upper, routine, eps, result);
-            // nlinmod5.driver();
-            // nlinmod5.dumpResults();
-            // params = nlinmod5.getParameters();
+            
             time = System.currentTimeMillis();
             double x[] = new double[3];
             x[1] = initial[0];
@@ -3160,12 +3134,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
             nlinmod11 = new FitWholeNL2solInt2(tValues.length, tValues, pIntensity, x, iv, v, useAnalyticJacobian);
             nlinmod11.driver();
             nlinmod11.dumpResults();
-            // nlinmod7 = new FitWholeNL3Modelqd(tValues.length, tValues, pIntensity, initial); nlinmod7.driver();
-            // nlinmod7.dumpResults(); params = nlinmod7.getParameters();
-            /*time = System.currentTimeMillis();
-             * nlinmod9 = new FitWholeNL3ModelWeeks(tValues.length, tValues, pIntensity, initial, nLaguerre,
-             * sig0, sigmax, bmax, tols, tolb);
-             * nlinmod9.driver(); nlinmod9.dumpResults();params = nlinmod9.getParameters();*/
 
             ViewUserInterface.getReference().setDataText("NL2sol nonlinear fit\n");
             ViewUserInterface.getReference().setDataText("kon = " + x[1] + "\n");
@@ -3328,46 +3296,14 @@ public class AlgorithmFRAP extends AlgorithmBase {
     }
 
     /**
-     * private void runIntegrationTest() { // Run test integrating x*x*(x*x - 2.0)*Math.sin(x) from 0.0 to Math.PI/2.0
-     * IntModel imod; int steps; double numInt; double actualInt; imod = new
-     * IntModel(0.0,Math.PI/2.0,Integration.TRAPZD); imod.driver(); steps = imod.getStepsUsed(); numInt =
-     * imod.getIntegral(); Preferences.debug("Numerical Integral = " + numInt + " after " + steps + " steps used\n");
-     * actualInt = actInt(Math.PI/2.0) - actInt(0.0); Preferences.debug("Actual Integral = " + actualInt); } private
-     * double actInt(double x) { return (4.0*x*(x*x - 7.0)*Math.sin(x) - (x*x*x*x - 14.0*x*x + 28.0)*Math.cos(x)); }.
-     */
-    private void runIntegrationTest() {
-
-        // Run test integrating sin(x)/x**2 from PI/2 to infinity
-        IntModel imod;
-        int steps;
-        double numInt;
-        double eps = 1.0e-8;
-        imod = new IntModel(0.0, Math.PI, Integration.MIDPNT, eps);
-        imod.driver();
-        steps = imod.getStepsUsed();
-        numInt = imod.getIntegral();
-        Preferences.debug("Numerical Integral = " + numInt + " after " + steps + " steps used\n");
-
-        imod = new IntModel(0.0, Math.PI, Integration.MIDSQU, eps);
-        imod.driver();
-        steps = imod.getStepsUsed();
-        numInt = imod.getIntegral();
-        Preferences.debug("Numerical Integral = " + numInt + " after " + steps + " steps used\n");
-        // actualInt = actInt(1.0) - actInt(0.0); Preferences.debug("Actual Integral = " + actualInt);
-    }
-
-    /**
-     * private void runIntegrationTest2() { IntModel2 imod; IntModel iCheck; double lower = 0.0; double upper = 1.0; int
+     * private void runIntegrationTest2() { IntModel2 imod; double lower = 0.0; double upper = 1.0; int
      * routine = Integration2.DQAGPE; double breakPoints[] = new double[4]; breakPoints[0] = 1.0/7.0; breakPoints[1] =
      * 2.0/3.0; double epsabs = 0.0; double epsrel = 1.0E-4; int limit = 100; double numInt; int errorStatus; double
-     * absError; int neval; int routineCheck = Integration.TRAPZD; double eps = 5.0e-7; int steps; imod = new
+     * absError; int neval; double eps = 5.0e-7; int steps; imod = new
      * IntModel2(lower, upper, routine, breakPoints, epsabs, epsrel, limit); imod.driver(); numInt = imod.getIntegral();
      * errorStatus = imod.getErrorStatus(); absError = imod.getAbserr(); neval = imod.getNeval();
      * Preferences.debug("Numerical Integral = " + numInt + " after " + neval +" integrand evaluations used\n");
-     * Preferences.debug("Error status = " + errorStatus +" with absolute error = " + absError + "\n"); iCheck = new
-     * IntModel(lower, upper, routineCheck, eps); iCheck.driver(); steps = iCheck.getStepsUsed(); numInt =
-     * iCheck.getIntegral(); Preferences.debug("Numerical recipes integral = " + numInt + " after " + steps + " steps
-     * used\n"); }.
+     * Preferences.debug("Error status = " + errorStatus +" with absolute error = " + absError + "\n"); 
      */
     private void runIntegrationTest2() {
         IntModel2 imod;
@@ -3385,9 +3321,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
         int neval;
         double lower = 0.0;
         double upper = 1.0;
-        int routineCheck = Integration.TRAPZD;
-        double eps = 1.0E-6;
-        int steps;
         imod = new IntModel2(lower, upper, routine, key, epsabs, epsrel, limit);
         imod.driver();
         numInt = imod.getIntegral();
@@ -3396,13 +3329,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
         neval = imod.getNeval();
         Preferences.debug("Numerical Integral = " + numInt + " after " + neval + " integrand evaluations used\n");
         Preferences.debug("Error status = " + errorStatus + " with absolute error = " + absError + "\n");
-
-        iCheck = new IntModel(lower, upper, routineCheck, eps);
-        iCheck.driver();
-        steps = iCheck.getStepsUsed();
-        numInt = iCheck.getIntegral();
-        Preferences.debug("Numerical recipes integral = " + numInt + " after " + steps + " steps used\n");
-
     }
 
     /**
@@ -3771,9 +3697,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     pIntensity[j] = pIntensity[j] / pMax;
                 }
 
-                ViewUserInterface.getReference().setDataText("Numerical recipes fitting engine pure 1D diffusion\n");
-                Preferences.debug("Numercial recipes fitting engine pure 1D diffusion\n");
-                dataString += "Numerical recipes fitting engine pure 1D diffusion\n";
+                ViewUserInterface.getReference().setDataText("NL2sol fitting engine pure 1D diffusion\n");
+                Preferences.debug("NL2sol fitting engine pure 1D diffusion\n");
+                dataString += "NL2sol fitting engine pure 1D diffusion\n";
                 pMin = Float.MAX_VALUE;
                 pMax = -Float.MAX_VALUE;
 
@@ -3804,7 +3730,14 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
                 Preferences.debug("D/w**2 guess initialPure[0] = " + initialPure[0] + "\n");
                 Preferences.debug("bottom guess initial[1] = " + initialPure[1] + "\n");
-                fp1DNW = new FitPure1DNoWholeModel(200, tValues, pIntensity, initialPure);
+                double x[] = new double[3];
+                x[1] = initialPure[0];
+                x[2] = initialPure[1];
+                int iv[] = new int[63]; // 61 + number of coefficients
+                int vLength = 94 + 200*2 + 3*200 + 2*(3*2+33)/2;
+                double v[] = new double[vLength];
+                boolean useAnalyticalJacobian = true;
+                fp1DNW = new FitPure1DNoWholeModel(200, tValues, pIntensity, x, iv, v, useAnalyticalJacobian);
                 fp1DNW.driver();
                 fp1DNW.dumpResults();
 
@@ -3813,7 +3746,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
                  * Chi-squared was not a valid number\n"); if  {  } setCompleted(false);
                  *
                  * return; }*/
-                params = fp1DNW.getParameters();
+                params = new double[2];
+                params[0] = x[1];
+                params[1] = x[2];
                 bottom = params[1];
                 span = 1.0 - params[1];
                 ViewUserInterface.getReference().setDataText("In the recovery curve bottom + span*[1 - (1/sqrt(1 + 4*PI*D*t/w**2))]\n");
@@ -3863,14 +3798,14 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 initialSingle[1] = pMin;
                 Preferences.debug("thalf = initialSingle[0] = " + initialSingle[0] + "\n");
                 Preferences.debug("bottom = initialSingle[1] = " + initialSingle[1] + "\n");
-                double x[] = new double[3];
+                x = new double[3];
                 x[1] = initialSingle[0];
                 x[2] = initialSingle[1];
-                int iv[] = new int[63]; // 61 + number of parameters
-                int vLength = 94 + 200*2 + 3*200 + 2*(3*2+33)/2;
-                double v[] = new double[vLength];
-                boolean useAnalyticJacobian = true;
-                fsemnw = new FitSingleExponentialNoWholeModel(200, tValues, pIntensity, x, iv, v, useAnalyticJacobian);
+                iv = new int[63]; // 61 + number of parameters
+                vLength = 94 + 200*2 + 3*200 + 2*(3*2+33)/2;
+                v = new double[vLength];
+                useAnalyticalJacobian = true;
+                fsemnw = new FitSingleExponentialNoWholeModel(200, tValues, pIntensity, x, iv, v, useAnalyticalJacobian);
                 fsemnw.driver();
                 fsemnw.dumpResults();
                 bottom = x[2];
@@ -3939,9 +3874,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 iv = new int[65]; // 61 + number of coefficients
                 vLength = 94 + 200*4 + 3*200 + 4*(3*4+33)/2;
                 v = new double[vLength];
-                useAnalyticJacobian = true;
+                useAnalyticalJacobian = true;
                 fdemNL2solnw = new FitDoubleExponentialNoWholeNL2solModel(200, tValues, pIntensity, x,
-                		           iv, v, useAnalyticJacobian);
+                		           iv, v, useAnalyticalJacobian);
                 fdemNL2solnw.driver();
                 fdemNL2solnw.dumpResults();
 
@@ -3992,79 +3927,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 // 2*D = 2*s1 - params[0]*4*s2 + 2*s2;
                 // D = s1 - 2*params[0]*s2 + s2
                 Dt = s1 - (2.0 * x[1] * s2) + s2;
-                kd = kdD / Dt;
-                ka = (2.0 * s1) - kd - Dt;
-                ViewUserInterface.getReference().setDataText("Association rate = " + nf.format(ka) + "\n");
-                dataString += "Association rate = " + nf.format(ka) + "\n";
-                ViewUserInterface.getReference().setDataText("Dissociation rate = " + nf.format(kd) + "\n");
-                dataString += "Dissociation rate = " + nf.format(kd) + "\n";
-                ViewUserInterface.getReference().setDataText("Diffusion transfer coefficient = " + nf.format(Dt) +
-                                                             "\n\n");
-                dataString += "Diffusion transfer coefficient = " + nf.format(Dt) + "\n\n";
-                Preferences.debug("Association rate = " + ka + "\n");
-                Preferences.debug("Dissociation rate = " + kd + "\n");
-                Preferences.debug("Diffusion transfer coefficient = " + Dt + "\n\n");
-
-                ViewUserInterface.getReference().setDataText("Numerical recipes fitting engine double exponential\n");
-                Preferences.debug("Numercial recipes fitting engine double exponential\n");
-                dataString += "Numerical recipes fitting engine double exponential\n";
-                fdemnw = new FitDoubleExponentialNoWholeModel(200, tValues, pIntensity, initial);
-                fdemnw.driver();
-                fdemnw.dumpResults();
-
-                /*chiSquared = fdemnw.getChiSquared();
-                 * if (Double.isNaN(chiSquared)) { MipavUtil.displayError( "Fit double exponential failed - Chi-squared
-                 * was not a valid number\n"); if  {  } setCompleted(false);
-                 *
-                 * return; }*/
-                params = fdemnw.getParameters();
-                bottom = params[3];
-                span = 1.0 - params[3];
-
-                // The nonlinear fitting routine might interchange alpha and beta
-                // If so, change back
-                if (params[2] > params[1]) {
-                    dTemp = params[1];
-                    params[1] = params[2];
-                    params[2] = dTemp;
-                    params[0] = 1.0 - params[0];
-                }
-
-                ViewUserInterface.getReference().setDataText("In the recovery curve\n" +
-                                                             "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n");
-                dataString += "In the recovery curve\n" +
-                              "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n";
-                ViewUserInterface.getReference().setDataText("bottom = " + nf.format(bottom) + " span = " +
-                                                             nf.format(span) + "\n" + "alpha = " +
-                                                             nf.format(params[1]) + " beta = " + nf.format(params[2]) +
-                                                             " gamma = " + nf.format(params[0]) + "\n");
-                dataString += "bottom = " + nf.format(bottom) + " span = " + nf.format(span) + "\n" + "alpha = " +
-                              nf.format(params[1]) + " beta = " + nf.format(params[2]) + " gamma = " +
-                              nf.format(params[0]) + "\n";
-                Preferences.debug("In the recovery curve\n" +
-                                  "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n");
-                Preferences.debug("bottom = " + bottom + " span = " + span + "\n" + "alpha = " + params[1] +
-                                  " beta = " + params[2] + " gamma = " + params[0] + "\n");
-                ViewUserInterface.getReference().setDataText("Mobile fraction = 1.0\n");
-                dataString += "Mobile fraction = 1.0\n";
-                Preferences.debug("Mobile fraction = 1.0\n");
-
-                // From equation (20) s1 = -(alpha + beta)/2, s2 = (alpha - beta)/2
-                s1 = -(params[1] + params[2]) / 2.0;
-                s2 = (params[1] - params[2]) / 2.0;
-
-                // s1 = (D + ka + kd)/2
-                // s2 = sqrt((D + ka + D)**2 - 4*D*kd)/2
-                // gamma = (-D + ka + kd + 2*s2)/(4*s2)
-                // s2 = sqrt(s1**2 - kdD)
-                // kdD = s1**2 - s2**2
-                kdD = (s1 * s1) - (s2 * s2);
-
-                // D + ka + kd = 2s1
-                // -D + ka + kd = params[0]*4*s2 - 2*s2;
-                // 2*D = 2*s1 - params[0]*4*s2 + 2*s2;
-                // D = s1 - 2*params[0]*s2 + s2
-                Dt = s1 - (2.0 * params[0] * s2) + s2;
                 kd = kdD / Dt;
                 ka = (2.0 * s1) - kd - Dt;
                 ViewUserInterface.getReference().setDataText("Association rate = " + nf.format(ka) + "\n");
@@ -4812,11 +4674,11 @@ public class AlgorithmFRAP extends AlgorithmBase {
         public void calcj(final int meqn, final int nvar, final double x[], final int nf, final double jac[][],
                 final int uiparm[], final double urparm[]) {
 	        int j;
-	        for (j = 1; j <= meqn; j++) {
-	        	jac[j][1] = (1.0 - x[4])*(-Math.exp(x[2]*xData[j]) + Math.exp(x[3]*xData[j]));
-	        	jac[j][2] = -(1.0 - x[4])*x[1]*xData[j]*Math.exp(x[2] * xData[j]);
-	        	jac[j][3] = -(1.0 - x[4])*(1 - x[1])*xData[j]*Math.exp(x[3] * xData[j]);
-	        	jac[j][4] = x[1]*Math.exp(x[2]*xData[j]) + (1 - x[1])*Math.exp(x[3]*xData[j]);
+	        for (j = 0; j < meqn; j++) {
+	        	jac[j+1][1] = (1.0 - x[4])*(-Math.exp(x[2]*xData[j]) + Math.exp(x[3]*xData[j]));
+	        	jac[j+1][2] = -(1.0 - x[4])*x[1]*xData[j]*Math.exp(x[2] * xData[j]);
+	        	jac[j+1][3] = -(1.0 - x[4])*(1 - x[1])*xData[j]*Math.exp(x[3] * xData[j]);
+	        	jac[j+1][4] = x[1]*Math.exp(x[2]*xData[j]) + (1 - x[1])*Math.exp(x[3]*xData[j]);
 	        }
         }
 
@@ -6778,42 +6640,40 @@ public class AlgorithmFRAP extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      */
-    class FitPure1DNoWholeModel extends NLConstrainedEngine {
+    class FitPure1DNoWholeModel extends NL2sol {
+    	int iv[];
+    	double v[];
+    	double x[];
         private double xData[];
         private float yData[];
         
         /**
-         * Creates a new FitPure1DNoWholeModel object.
-         *
-         * @param  nPoints  DOCUMENT ME!
-         * @param  xData    DOCUMENT ME!
-         * @param  yData    DOCUMENT ME!
-         * @param  initial  DOCUMENT ME!
+         * Creates a new FitSM2nl2solModel object.
+         * 
+         * @param nPoints DOCUMENT ME!
+         * @param yData DOCUMENT ME!
+         * @param x DOCUMENT ME!
+         * @param iv
+         * @param v
+         * @param useAnalyticJacobian
          */
-        public FitPure1DNoWholeModel(int nPoints, double[] xData, float[] yData, double[] initial) {
-
-            // nPoints data points, 2 coefficients, and nonlinear fitting
-            super(nPoints, 2);
+        public FitPure1DNoWholeModel(final int nPoints, double[] xData, float[] yData,
+                double[] x, int iv[], double v[], boolean useAnalyticJacobian) {
             
+            // nPoints data points
+        	// 2 coefficients
+        	// x[] is a length 3 initial guess at input and best estimate at output
+        	// data starts at x[1]
+        	// iv[] has length 61 + number of coefficients = 63
+        	// v[] has length at least 94 + n*p + 3*n + p*(3*p+33)/2
+        	// uiparm, integer parameter array = null
+        	// urparm, double parameter array = null
+            super(nPoints, 2, x, iv, v, useAnalyticJacobian, null, null);
+            this.x = x;
+            this.iv = iv;
+            this.v = v;
             this.xData = xData;
             this.yData = yData;
-            
-            bounds = 0; // bounds = 0 means unconstrained
-
-            // bounds = 1 means same lower and upper bounds for
-            // all parameters
-            // bounds = 2 means different lower and upper bounds
-            // for all parameters
-            
-            // The default is internalScaling = false
-            // To make internalScaling = true and have the columns of the
-            // Jacobian scaled to have unit length include the following line.
-            // internalScaling = true;
-            // Suppress diagnostic messages
-            outputMes = false;
-
-            gues[0] = initial[0];
-            gues[1] = initial[1];
         }
 
         /**
@@ -6828,57 +6688,38 @@ public class AlgorithmFRAP extends AlgorithmBase {
          */
         public void dumpResults() {
             Preferences.debug(" ******* FitPure1DNoWhole ********* \n\n");
-            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n");
-            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n");
-            Preferences.debug("D/w**2 = " + String.valueOf(a[0]) + "\n");
-            Preferences.debug("bottom = " + String.valueOf(a[1]) + "\n");
+            Preferences.debug("Number of iterations: " + String.valueOf(iv[31]) + "\n");
+            Preferences.debug("Chi-squared: " + String.valueOf(2.0 * v[10]) + "\n");
+            Preferences.debug("D/w**2 = " + String.valueOf(x[1]) + "\n");
+            Preferences.debug("bottom = " + String.valueOf(x[2]) + "\n");
+        }
+        
+        public void calcj(final int meqn, final int nvar, final double x[], final int nf, final double jac[][],
+                final int uiparm[], final double urparm[]) {
+        	int j;
+        	double term;
+        	for (j = 0; j < meqn; j++) {
+            	term = (1.0 + (4.0 * Math.PI * x[1] * xData[j]));
+            	jac[j+1][1] = 2.0 * (1 - x[2]) * Math.PI * xData[j] / (term * Math.sqrt(term));
+            	jac[j+1][2] = 1 / Math.sqrt(term);
+            }    
         }
         
         /**
          * Fit to function - a1 + (1 - a1)*[1 - 1/sqrt(1 + 4*PI*a0*x)].
-         * 
-         * @param a The best guess parameter values.
-         * @param residuals ymodel - yData.
-         * @param covarMat The derivative values of y with respect to fitting parameters.
          */
-        public void fitToFunction(final double[] a, final double[] residuals, final double[][] covarMat) {
-            int ctrl;
+        public void calcr(final int meqn, final int nvar, final double x[], final int nf, final double r[],
+                final int uiparm[], final double urparm[]) {
             int j;
-            double ymod = 0;
+            double ymod;
             double term;
-
-            try {
-                ctrl = ctrlMat[0];
-                // Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + "\n");
-                if ( (ctrl == -1) || (ctrl == 1)) {
-                    
-                    // evaluate the residuals[j] = ymod - yData[j]
-                    for (j = 0; j < nPts; j++) {
-                    	term = (1.0 + (4.0 * Math.PI * a[0] * xData[j]));
-                    	ymod = a[1] + ((1 - a[1]) * (1 - (1 / Math.sqrt(term))));
-                        residuals[j] = ymod - yData[j];
-                        // Preferences.debug("residuals["+ j + "] = " + residuals[j] + "\n");
-                    }
-                } // if ((ctrl == -1) || (ctrl == 1))
-                else if (ctrl == 2) {
-                    // Calculate the Jacobian analytically
-                    for (j = 0; j < nPts; j++) {
-                    	term = (1.0 + (4.0 * Math.PI * a[0] * xData[j]));
-                    	covarMat[j][0] = 2.0 * (1 - a[1]) * Math.PI * xData[j] / (term * Math.sqrt(term));
-                    	covarMat[j][1] = 1 / Math.sqrt(term);
-                    }
-                }
-                // Calculate the Jacobian numerically
-                // else if (ctrl == 2) {
-                // ctrlMat[0] = 0;
-                // }
-            } catch (final Exception exc) {
-                Preferences.debug("function error: " + exc.getMessage() + "\n");
+            for (j = 0; j < meqn; j++) {
+            	term = (1.0 + (4.0 * Math.PI * x[1] * xData[j]));
+            	ymod = x[2] + ((1 - x[2]) * (1 - (1 / Math.sqrt(term))));
+                r[j+1] = ymod - yData[j];
             }
-
-            return;
         }
-
+        
     }
 
     /**
@@ -7093,9 +6934,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
         public void calcj(final int meqn, final int nvar, final double x[], final int nf, final double jac[][],
                 final int uiparm[], final double urparm[]) {
         	int j;
-        	for (j  = 1; j <= meqn; j++) {
-        		jac[j][1] = -xData[j]*(1.0 - x[2])*Math.log(2.0)*Math.exp(-Math.log(2.0)*xData[j]/x[1])/(x[1]*x[1]);
-        		jac[j][2] = 1.0 - Math.exp(-Math.log(2.0)*xData[j]/x[1]);
+        	for (j  = 0; j < meqn; j++) {
+        		jac[j+1][1] = -xData[j]*(1.0 - x[2])*Math.log(2.0)*Math.exp(-Math.log(2.0)*xData[j]/x[1])/(x[1]*x[1]);
+        		jac[j+1][2] = 1.0 - Math.exp(-Math.log(2.0)*xData[j]/x[1]);
         	}
         }
         
@@ -7311,410 +7152,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
     }
 
-    /**
-     * DOCUMENT ME!
-     */
-    class FitWholeNL3Model2 extends NLEngine3 {
-
-        /** DOCUMENT ME! */
-        double abscissa;
-
-        /** DOCUMENT ME! */
-        double absEps;
-
-        /** DOCUMENT ME! */
-        int[] errStatus;
-
-        /** DOCUMENT ME! */
-        double[] estErr;
-
-        /** DOCUMENT ME! */
-        int[] evaluations;
-
-        /** DOCUMENT ME! */
-        double relEps;
-
-        /** DOCUMENT ME! */
-        double[] result;
-
-        /**
-         * Creates a new FitWholeNL3Model2 object.
-         *
-         * @param  nPoints      DOCUMENT ME!
-         * @param  xData        DOCUMENT ME!
-         * @param  yData        DOCUMENT ME!
-         * @param  initial      DOCUMENT ME!
-         * @param  abscissa     DOCUMENT ME!
-         * @param  relEps       DOCUMENT ME!
-         * @param  absEps       DOCUMENT ME!
-         * @param  result       DOCUMENT ME!
-         * @param  estErr       DOCUMENT ME!
-         * @param  evaluations  DOCUMENT ME!
-         * @param  errStatus    DOCUMENT ME!
-         */
-        public FitWholeNL3Model2(int nPoints, double[] xData, float[] yData, double[] initial, double abscissa,
-                                 double relEps, double absEps, double[] result, double[] estErr, int[] evaluations,
-                                 int[] errStatus) {
-
-            super(nPoints, 2);
-
-            int i;
-            this.abscissa = abscissa;
-            this.relEps = relEps;
-            this.absEps = absEps;
-            this.result = result;
-            this.estErr = estErr;
-            this.evaluations = evaluations;
-            this.errStatus = errStatus;
-
-            for (i = 0; i < nPoints; i++) {
-                xseries[i] = xData[i];
-                yseries[i] = (double) yData[i];
-            }
-
-            gues[0] = initial[0];
-            gues[1] = initial[1];
-        }
-
-        /**
-         * Starts the analysis.
-         */
-        public void driver() {
-            super.driver();
-        }
-
-        /**
-         * Display results of displaying exponential fitting parameters.
-         */
-        public void dumpResults() {
-            Preferences.debug(" ******* Fit MATLAB Whole Diffusion-Reaction Model ********* \n\n");
-            Preferences.debug("Number of iterations: " + String.valueOf(kk) + "\n");
-
-            // Preferences.debug("Chi-squared: " + String.valueOf(chisq) + "\n");
-            // Preferences.debug("Final lamda: " + String.valueOf(flamda));
-            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n");
-            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n");
-        }
-
-        /**
-         * DOCUMENT ME!
-         *
-         * @param   x1    DOCUMENT ME!
-         * @param   atry  DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
-         */
-        public double[] fitToFunction(double[] x1, double[] atry) {
-            int i;
-            FitFullModel2 lmod;
-            lmod = new FitFullModel2(x1, abscissa, relEps, absEps, result, estErr, evaluations, errStatus, atry[0],
-                                     atry[1]);
-            lmod.driver();
-
-            return result;
-        }
-
-
-    }
-
-    /**
-     * DOCUMENT ME!
-     */
-    class FitWholeNL3Model3 extends NLEngine3 {
-
-        /** DOCUMENT ME! */
-        double eps;
-
-        /** DOCUMENT ME! */
-        double[] result;
-
-        /** DOCUMENT ME! */
-        int routine;
-
-        /** DOCUMENT ME! */
-        double upper;
-
-        /**
-         * Creates a new FitWholeNL3Model3 object.
-         *
-         * @param  nPoints  DOCUMENT ME!
-         * @param  xData    DOCUMENT ME!
-         * @param  yData    DOCUMENT ME!
-         * @param  initial  DOCUMENT ME!
-         * @param  upper    DOCUMENT ME!
-         * @param  routine  DOCUMENT ME!
-         * @param  eps      DOCUMENT ME!
-         * @param  result   DOCUMENT ME!
-         */
-        public FitWholeNL3Model3(int nPoints, double[] xData, float[] yData, double[] initial, double upper,
-                                 int routine, double eps, double[] result) {
-
-            super(nPoints, 2);
-
-            int i;
-            this.upper = upper;
-            this.result = result;
-            this.routine = routine;
-            this.eps = eps;
-
-            for (i = 0; i < nPoints; i++) {
-                xseries[i] = xData[i];
-                yseries[i] = (double) yData[i];
-            }
-
-            gues[0] = initial[0];
-            gues[1] = initial[1];
-        }
-
-        /**
-         * Starts the analysis.
-         */
-        public void driver() {
-            super.driver();
-        }
-
-        /**
-         * Display results of displaying exponential fitting parameters.
-         */
-        public void dumpResults() {
-            Preferences.debug(" ******* Fit MATLAB Whole Diffusion-Reaction Model ********* \n\n");
-            Preferences.debug("Number of iterations: " + String.valueOf(kk) + "\n");
-
-            // Preferences.debug("Chi-squared: " + String.valueOf(chisq) + "\n");
-            // Preferences.debug("Final lamda: " + String.valueOf(flamda));
-            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n");
-            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n");
-        }
-
-        /**
-         * DOCUMENT ME!
-         *
-         * @param   x1    DOCUMENT ME!
-         * @param   atry  DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
-         */
-        public double[] fitToFunction(double[] x1, double[] atry) {
-            int i;
-            FitFullIntModel imod;
-
-            for (i = 0; i < x1.length; i++) {
-                imod = new FitFullIntModel(x1[i], atry[0], atry[1], atry[0], upper, routine, eps);
-                imod.driver();
-                result[i] = 1.0 - imod.getIntegral();
-            }
-
-            return result;
-        }
-
-
-    }
-
-
-    /**
-     * DOCUMENT ME!
-     */
-    class FitWholeNL3Modelqd extends NLEngine3 {
-
-        /** DOCUMENT ME! */
-        double largestPole;
-
-        /** DOCUMENT ME! */
-        double tol;
-
-        /**
-         * Creates a new FitWholeNL3Modelqd object.
-         *
-         * @param  nPoints  DOCUMENT ME!
-         * @param  xData    DOCUMENT ME!
-         * @param  yData    DOCUMENT ME!
-         * @param  initial  DOCUMENT ME!
-         */
-        public FitWholeNL3Modelqd(int nPoints, double[] xData, float[] yData, double[] initial) {
-
-            super(nPoints, 2);
-
-            int i;
-
-            for (i = 0; i < nPoints; i++) {
-                xseries[i] = xData[i];
-                yseries[i] = (double) yData[i];
-            }
-
-            gues[0] = initial[0];
-            gues[1] = initial[1];
-        }
-
-        /**
-         * Starts the analysis.
-         */
-        public void driver() {
-            super.driver();
-        }
-
-        /**
-         * Display results of displaying exponential fitting parameters.
-         */
-        public void dumpResults() {
-            Preferences.debug(" ******* Fit MATLAB Whole Diffusion-Reaction Model ********* \n\n");
-            Preferences.debug("Number of iterations: " + String.valueOf(kk) + "\n");
-
-            // Preferences.debug("Chi-squared: " + String.valueOf(chisq) + "\n");
-            // Preferences.debug("Final lamda: " + String.valueOf(flamda));
-            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n");
-            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n");
-        }
-
-        /**
-         * DOCUMENT ME!
-         *
-         * @param   x1    DOCUMENT ME!
-         * @param   atry  DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
-         */
-        public double[] fitToFunction(double[] x1, double[] atry) {
-            double[] timeFunctionWithZero;
-            double[] timeFunction;
-            int i;
-            FitFullModelqd lmod;
-            double[] x1WithZero = new double[x1.length + 1];
-            x1WithZero[0] = 0.0;
-
-            for (i = 0; i < x1.length; i++) {
-                x1WithZero[i + 1] = x1[i];
-            }
-
-            lmod = new FitFullModelqd(x1WithZero, atry[0], atry[1]);
-            lmod.driver();
-            timeFunctionWithZero = lmod.getTimeFunction();
-            timeFunction = new double[timeFunctionWithZero.length - 1];
-
-            for (i = 0; i < timeFunction.length; i++) {
-                timeFunction[i] = timeFunctionWithZero[i + 1];
-            }
-
-            return timeFunction;
-        }
-
-
-    }
-
-    /**
-     * DOCUMENT ME!
-     */
-    class FitWholeNL3ModelWeeks extends NLEngine3 {
-
-        /** DOCUMENT ME! */
-        double b;
-
-        /** DOCUMENT ME! */
-        double bmax;
-
-        /** DOCUMENT ME! */
-        int nLaguerre;
-
-        /** DOCUMENT ME! */
-        double sig;
-
-        /** DOCUMENT ME! */
-        double sig0;
-
-        /** DOCUMENT ME! */
-        double sigmax;
-
-        /** DOCUMENT ME! */
-        double tolb;
-
-        /** DOCUMENT ME! */
-        double tols;
-
-        /** DOCUMENT ME! */
-        double[] xOne = new double[1];
-
-        /**
-         * Creates a new FitWholeNL3ModelWeeks object.
-         *
-         * @param  nPoints    DOCUMENT ME!
-         * @param  xData      DOCUMENT ME!
-         * @param  yData      DOCUMENT ME!
-         * @param  initial    DOCUMENT ME!
-         * @param  nLaguerre  DOCUMENT ME!
-         * @param  sig0       DOCUMENT ME!
-         * @param  sigmax     DOCUMENT ME!
-         * @param  bmax       DOCUMENT ME!
-         * @param  tols       DOCUMENT ME!
-         * @param  tolb       DOCUMENT ME!
-         */
-        public FitWholeNL3ModelWeeks(int nPoints, double[] xData, float[] yData, double[] initial, int nLaguerre,
-                                     double sig0, double sigmax, double bmax, double tols, double tolb) {
-
-            super(nPoints, 2);
-            this.nLaguerre = nLaguerre;
-            this.sig0 = sig0;
-            this.sigmax = sigmax;
-            this.bmax = bmax;
-            this.tols = tols;
-            this.tolb = tolb;
-
-            int i;
-
-            for (i = 0; i < nPoints; i++) {
-                xseries[i] = xData[i];
-                yseries[i] = (double) yData[i];
-            }
-
-            gues[0] = initial[0];
-            gues[1] = initial[1];
-        }
-
-        /**
-         * Starts the analysis.
-         */
-        public void driver() {
-            super.driver();
-        }
-
-        /**
-         * Display results of displaying exponential fitting parameters.
-         */
-        public void dumpResults() {
-            Preferences.debug(" ******* Fit MATLAB Whole Diffusion-Reaction Model ********* \n\n");
-            Preferences.debug("Number of iterations: " + String.valueOf(kk) + "\n");
-
-            // Preferences.debug("Chi-squared: " + String.valueOf(chisq) + "\n");
-            // Preferences.debug("Final lamda: " + String.valueOf(flamda));
-            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n");
-            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n");
-        }
-
-        /**
-         * DOCUMENT ME!
-         *
-         * @param   x1    DOCUMENT ME!
-         * @param   atry  DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
-         */
-        public double[] fitToFunction(double[] x1, double[] atry) {
-            double[] timeFunction;
-            int i;
-            FitFullModelWeeks lmod;
-            xOne[0] = x1[x1.length / 2];
-            lmod = new FitFullModelWeeks(xOne, nLaguerre, sig0, sigmax, bmax, tols, tolb, atry[0], atry[1]);
-            lmod.wpar2();
-            b = lmod.getBOpt();
-            sig = lmod.getSigOpt();
-            lmod = new FitFullModelWeeks(x1, nLaguerre, sig, b, atry[0], atry[1]);
-            lmod.driver();
-            timeFunction = lmod.getTimeFunction();
-
-
-            return timeFunction;
-        }
-
-
-    }
+    
 
     /**
      * DOCUMENT ME!
@@ -8468,101 +7906,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
     }
 
 
-    /**
-     * DOCUMENT ME!
-     */
-    class FitWholeOrganModel extends NLEngine3 {
-
-        /**
-         * Creates a new FitWholeOrganModel object.
-         *
-         * @param  nPoints  DOCUMENT ME!
-         * @param  xData    DOCUMENT ME!
-         * @param  yData    DOCUMENT ME!
-         * @param  initial  DOCUMENT ME!
-         */
-        public FitWholeOrganModel(int nPoints, double[] xData, float[] yData, double[] initial) {
-
-            // nPoints data points, 2 coefficients, and exponential fitting
-            super(nPoints, 2);
-
-            int i;
-
-            // ia[0] equals 0 for fixed c1; ia[0] is nonzero for fitting c1
-            // ia[0] = 1;
-            // ia[1] equals 0 for fixed c2; ia[1] is nonzero for fitting c2
-            // ia[1] = 1;
-
-            for (i = 0; i < nPoints; i++) {
-                xseries[i] = xData[i];
-                yseries[i] = (double) yData[i];
-            }
-
-            // Assign the same standard deviation to all data points
-            // stdv = 1;
-            // for (i = 0; i < nPoints; i++) {
-            // sig[i] = stdv;
-            // }
-
-            gues[0] = initial[0];
-            gues[1] = initial[1];
-
-        }
-
-        /**
-         * Starts the analysis.
-         */
-        public void driver() {
-            super.driver();
-        }
-
-        /**
-         * Display results of displaying exponential fitting parameters.
-         */
-        public void dumpResults() {
-            Preferences.debug(" ******* FitWholeOrganExponential ********* \n\n");
-            Preferences.debug("Number of iterations: " + String.valueOf(kk) + "\n");
-
-            // Preferences.debug("Chi-squared: " + String.valueOf(chisq) + "\n");
-            // Preferences.debug("Final lamda: " + String.valueOf(flamda));
-            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n"); // + " +/- " +
-                                                                    // String.valueOf(Math.sqrt(covar[0][0])));
-            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n"); // + " +/- " +
-                                                                    // String.valueOf(Math.sqrt(covar[1][1])));
-        }
-
-        /**
-         * Fit to function - a0*exp(a1*x).
-         *
-         * @param   x1    The x value of the data point.
-         * @param   atry  The best guess parameter values.
-         *
-         * @return  The calculated y value.
-         */
-        public double[] fitToFunction(double[] x1, double[] atry /*, double dyda[]*/) {
-
-            // mrqcof calls function
-            // mrqcof supplies x1 and best guess parameters atry[]
-            // function returns the partial derivatives dyda and the calculated ymod
-            double[] ymod = new double[x1.length];
-            int i;
-
-            try {
-
-                for (i = 0; i < x1.length; i++) {
-                    ymod[i] = atry[0] * Math.exp(atry[1] * x1[i]);
-                    // dyda[0] = Math.exp(atry[1] * x1);
-                    // a1 partial derivative
-                    // dyda[1] = x1*atry[0]*Math.exp(atry[1] * x1);
-                }
-            } catch (Exception e) {
-                Preferences.debug("function error: " + e.getMessage() + "\n");
-            }
-
-            return ymod;
-        }
-    }
-
+    
     /**
      * class IntModel extends Integration { public IntModel(double lower, double upper, int routine, double eps) {
      * super(lower, upper, routine, eps); } public double intFunc(double x) { double function = 0.0; if ((x != 1.0/7.0)
