@@ -15,11 +15,13 @@ import gov.nih.mipav.view.*;
 public class FitLaplace extends NLFittedFunction {
 	
 	//~ Instance fields ------------------------------------------------------------------------------------------------
+	private double xSeries[];
+	private double ySeries[];
     
-    /**Location in xDataOrg where Gaussian data starts */
+    /**Location in xSeries where Gaussian data starts */
     private int dataStart;
     
-    /**Location in xDataOrg where Gaussian data ends */
+    /**Location in xSeries where Gaussian data ends */
     private int dataEnd;
     
     /**Amplitude parameter*/
@@ -30,6 +32,10 @@ public class FitLaplace extends NLFittedFunction {
     
     /**Beta parameter*/
     private double beta;
+    
+    private int iters;
+    
+    private double chisq;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -40,6 +46,20 @@ public class FitLaplace extends NLFittedFunction {
 
         // nPoints data points, 3 coefficients, and exponential fitting
         super(5, 3);
+        
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        
+        // The default is internalScaling = false
+        // To make internalScaling = true and have the columns of the
+        // Jacobian scaled to have unit length include the following line.
+        // internalScaling = true;
+        // Suppress diagnostic messages
+        outputMes = false;
+        
         testData();
     }
 
@@ -55,8 +75,21 @@ public class FitLaplace extends NLFittedFunction {
         // nPoints data points, 3 coefficients, and exponential fitting
         super(nPoints, 3);
 
-        this.xDataOrg = xData;
-        this.yDataOrg = yData;
+        this.xSeries = xData;
+        this.ySeries = yData;
+        
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        
+        // The default is internalScaling = false
+        // To make internalScaling = true and have the columns of the
+        // Jacobian scaled to have unit length include the following line.
+        // internalScaling = true;
+        // Suppress diagnostic messages
+        outputMes = false;    
         
         estimateInitial();
         
@@ -73,13 +106,29 @@ public class FitLaplace extends NLFittedFunction {
     	
         // nPoints data points, 3 coefficients, and exponential fitting
         super(nPoints, 3);
-
-        this.xDataOrg = new double[nPoints];
-        this.yDataOrg = new double[nPoints];
-        for (int i = 0; i < nPoints; i++) {
-            xDataOrg[i] = xData[i];
-            yDataOrg[i] = yData[i];
+        
+        xSeries = new double[xData.length];
+        ySeries = new double[yData.length];
+        int i;
+        for (i = 0; i < xData.length; i++) {
+        	xSeries[i] = xData[i];
         }
+        for (i = 0; i < yData.length; i++) {
+        	ySeries[i] = yData[i];
+        }
+        
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+
+        // The default is internalScaling = false
+        // To make internalScaling = true and have the columns of the
+        // Jacobian scaled to have unit length include the following line.
+        // internalScaling = true;
+        // Suppress diagnostic messages
+        outputMes = false;
         
         estimateInitial();
 
@@ -93,8 +142,8 @@ public class FitLaplace extends NLFittedFunction {
     	//determine location of start data, note 
     	//basic thresholding will already have been performed
     	dataStart = 0;
-    	for(int i=0; i<yDataOrg.length; i++) {
-    		if(yDataOrg[i] != 0 && i > 0) {
+    	for(int i=0; i<ySeries.length; i++) {
+    		if(ySeries[i] != 0 && i > 0) {
     			dataStart = i > offset ? i-offset : 0;
     			break;
     		}		
@@ -104,44 +153,44 @@ public class FitLaplace extends NLFittedFunction {
     	int maxIndex = 0;
     	double totalDataCount = 0;
     	int numIndexWithData = 0;
-    	for(int i=dataStart; i<yDataOrg.length; i++) {
-    		if(yDataOrg[i] > yDataOrg[maxIndex]) {
+    	for(int i=dataStart; i<ySeries.length; i++) {
+    		if(ySeries[i] > ySeries[maxIndex]) {
     			maxIndex = i;
     		}
-    		if(yDataOrg[i] > 0) {
+    		if(ySeries[i] > 0) {
     			numIndexWithData++;
-    			totalDataCount += yDataOrg[i];
+    			totalDataCount += ySeries[i];
     		}
     	}	
-    	mu = xDataOrg[maxIndex];
+    	mu = xSeries[maxIndex];
     	
     	//determine location of end data
     	dataEnd = 0;
-    	for(int i=maxIndex; i<yDataOrg.length; i++) {
-    		if(yDataOrg[i] == 0) {
-    			dataEnd = i+offset < yDataOrg.length-1 ? i+offset : yDataOrg.length-1;
+    	for(int i=maxIndex; i<ySeries.length; i++) {
+    		if(ySeries[i] == 0) {
+    			dataEnd = i+offset < ySeries.length-1 ? i+offset : ySeries.length-1;
     			break;
     		}
     	}
 
     	//find location of one sigma data collection point
-    	double dataCollectedOneSigma = yDataOrg[maxIndex], dataCollectedTwoSigma = yDataOrg[maxIndex];
+    	double dataCollectedOneSigma = ySeries[maxIndex], dataCollectedTwoSigma = ySeries[maxIndex];
     	int xStopLeftIndex = maxIndex, xStopRightIndex = maxIndex;
     	boolean left = true;
     	while(dataCollectedOneSigma / totalDataCount < .68 && 
     			xStopLeftIndex > dataStart+1 && xStopRightIndex < dataEnd-1) {
     		if(left) 
-    			dataCollectedOneSigma += yDataOrg[--xStopLeftIndex];
+    			dataCollectedOneSigma += ySeries[--xStopLeftIndex];
     		if(!left)
-    			dataCollectedOneSigma += yDataOrg[++xStopRightIndex];
+    			dataCollectedOneSigma += ySeries[++xStopRightIndex];
     		left = !left;
     	}
     	
     	//estimate one sigma from stopping locations
     	double oneSigmaEstimate = 0;
     	if(dataCollectedOneSigma / totalDataCount >= .68) {
-    		double sigmaLeft = Math.abs(xDataOrg[maxIndex] - xDataOrg[xStopLeftIndex]);
-    		double sigmaRight = Math.abs(xDataOrg[maxIndex] - xDataOrg[xStopLeftIndex]);
+    		double sigmaLeft = Math.abs(xSeries[maxIndex] - xSeries[xStopLeftIndex]);
+    		double sigmaRight = Math.abs(xSeries[maxIndex] - xSeries[xStopLeftIndex]);
     		oneSigmaEstimate = sigmaLeft + sigmaRight / 2.0;
     	}
     	
@@ -150,17 +199,17 @@ public class FitLaplace extends NLFittedFunction {
     	while(dataCollectedTwoSigma / totalDataCount < .95 && 
     			xStopLeftIndex > dataStart+1 && xStopRightIndex < dataEnd-1) {
     		if(left) 
-    			dataCollectedTwoSigma += yDataOrg[--xStopLeftIndex];
+    			dataCollectedTwoSigma += ySeries[--xStopLeftIndex];
     		if(!left)
-    			dataCollectedTwoSigma += yDataOrg[++xStopRightIndex];
+    			dataCollectedTwoSigma += ySeries[++xStopRightIndex];
     		left = !left;
     	}
     	
     	//estimate two sigma from stopping location
     	double twoSigmaEstimate = 0;
     	if(dataCollectedOneSigma / totalDataCount >= .68) {
-    		double sigmaLeft = Math.abs(xDataOrg[maxIndex] - xDataOrg[xStopLeftIndex]);
-    		double sigmaRight = Math.abs(xDataOrg[maxIndex] - xDataOrg[xStopLeftIndex]);
+    		double sigmaLeft = Math.abs(xSeries[maxIndex] - xSeries[xStopLeftIndex]);
+    		double sigmaRight = Math.abs(xSeries[maxIndex] - xSeries[xStopLeftIndex]);
     		twoSigmaEstimate = sigmaLeft + sigmaRight / 2.0;
     	}
     	
@@ -171,7 +220,7 @@ public class FitLaplace extends NLFittedFunction {
     		beta = oneSigmaEstimate;
     	
     	//estimate for amplitude
-    	amp = yDataOrg[maxIndex];
+    	amp = ySeries[maxIndex];
     	
     	a[0] = amp;
     	a[1] = mu;
@@ -185,11 +234,11 @@ public class FitLaplace extends NLFittedFunction {
     public void driver() {
         
     	boolean converged = false;
-    	kk = 0;
+    	iters = 0;
     	
     	System.out.println("Initial guess\tAmp: "+amp+"\tmu: "+mu+"\tBeta: "+beta);
     	
-    	while(!converged && kk < MAX_ITR) {
+    	while(!converged && iters < MAX_ITR) {
     		double oldAmp = amp;
         	double oldMu = mu;
         	double oldBeta = beta;
@@ -206,19 +255,19 @@ public class FitLaplace extends NLFittedFunction {
 	    	mu = mu + dLambda.get(1, 0);
 	    	beta = beta + dLambda.get(2, 0);
 	    	
-	    	System.out.println("Iteration "+kk+"\tAmp: "+amp+"\tmu: "+mu+"\tBeta: "+beta);
+	    	System.out.println("Iteration "+iters+"\tAmp: "+amp+"\tmu: "+mu+"\tBeta: "+beta);
 	    	
 	    	if(Math.abs(Math.abs(oldAmp - amp) / ((oldAmp + amp) / 2)) < EPSILON && 
 	    			Math.abs(Math.abs(oldMu - mu) / ((oldMu + mu) / 2)) < EPSILON && 
-	    			Math.abs(Math.abs(oldBeta - beta) / ((oldBeta + beta) / 2)) < EPSILON && kk > MIN_ITR) {
+	    			Math.abs(Math.abs(oldBeta - beta) / ((oldBeta + beta) / 2)) < EPSILON && iters > MIN_ITR) {
 	    		converged = true;    		
-	    		Preferences.debug("Converged after "+kk+" iterations.");
-	    		System.out.println("Converged after "+kk+" iterations.");
+	    		Preferences.debug("Converged after "+iters+" iterations.");
+	    		System.out.println("Converged after "+iters+" iterations.");
 	    	} else {
 	    		oldAmp = amp;
 	    		oldMu = mu;
 	    		oldBeta = beta;
-	    		kk++;
+	    		iters++;
 	    	}
 	    	
 	    	//always calculate fitted y first, to be used in chisq
@@ -227,8 +276,8 @@ public class FitLaplace extends NLFittedFunction {
     	}
     	
     	if(!converged) {
-    		Preferences.debug("Did not converge after "+kk+" iterations.");
-    		System.out.println("Did not converge after "+kk+" iterations.");
+    		Preferences.debug("Did not converge after "+iters+" iterations.");
+    		System.out.println("Did not converge after "+iters+" iterations.");
     	} else {
     		calculateFittedY();
     		calculateChiSq();
@@ -246,18 +295,18 @@ public class FitLaplace extends NLFittedFunction {
     	double sum = 0;
     	for(int i=dataStart; i<dataEnd; i++) {
     		double resTemp = residuals.get(i-dataStart, 0);
-    		residuals.set(i-dataStart, 0, Math.pow(resTemp, 2)/laplace(xDataOrg[i]));
-    		System.out.println("xValue: "+xDataOrg[i]+"\tActual: "+yDataOrg[i]+"\tExpected: "+laplace(xDataOrg[i])+"\tResidual: "+resTemp+"\tChi squared value: "+residuals.get(i-dataStart, 0));
-    		sum += Math.pow(resTemp, 2)/laplace(xDataOrg[i]);
+    		residuals.set(i-dataStart, 0, Math.pow(resTemp, 2)/laplace(xSeries[i]));
+    		System.out.println("xValue: "+xSeries[i]+"\tActual: "+ySeries[i]+"\tExpected: "+laplace(xSeries[i])+"\tResidual: "+resTemp+"\tChi squared value: "+residuals.get(i-dataStart, 0));
+    		sum += Math.pow(resTemp, 2)/laplace(xSeries[i]);
     	}
     	chisq = residuals.norm1();
     }
 
     @Override
 	protected void calculateFittedY() {
-		yDataFitted = new double[xDataOrg.length];
-		for(int i=0; i<xDataOrg.length; i++) {
-			yDataFitted[i] = laplace(xDataOrg[i]);
+		yDataFitted = new double[xSeries.length];
+		for(int i=0; i<xSeries.length; i++) {
+			yDataFitted[i] = laplace(xSeries[i]);
 		}
 	}
 
@@ -268,10 +317,10 @@ public class FitLaplace extends NLFittedFunction {
     	ViewJFrameMessageGraph messageGraph = new ViewJFrameMessageGraph("Fitting Data");
     	
     	messageGraph.append(" ******* FitLaplace Distribution ********* \n\n");
-    	messageGraph.append("Number of iterations: " + kk + "\n");
+    	messageGraph.append("Number of iterations: " + iters + "\n");
         messageGraph.append("Chi-squared: " + chisq + "\n\n");
 
-        messageGraph.append("Valid for data from "+xDataOrg[dataStart]+" to "+xDataOrg[dataEnd]+" in "+(dataEnd-dataStart)+" parts\n\n");
+        messageGraph.append("Valid for data from "+xSeries[dataStart]+" to "+xSeries[dataEnd]+" in "+(dataEnd-dataStart)+" parts\n\n");
         
         messageGraph.append("Fitting of gaussian function\n");
         messageGraph.append(" y = " + amp + " * exp(-Math.abs(x- (" + mu +
@@ -289,11 +338,10 @@ public class FitLaplace extends NLFittedFunction {
         }
     }
     
-    @Override
-	public double fitToFunction(double x1, double[] atry, double[] dyda) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
+    public void fitToFunction(final double[] a, final double[] residuals, final double[][] covarMat) {
+    	// not used
+    }
+
 
     /**
      * Test data to test fitting of gaussian.
@@ -357,9 +405,9 @@ public class FitLaplace extends NLFittedFunction {
     protected Matrix generateJacobian() {
     	Matrix jacobian = new Matrix(dataEnd - dataStart, 3);
     	for(int i=dataStart; i<dataEnd; i++) {
-    		jacobian.set(i-dataStart, 0, dLdA(xDataOrg[i]));
-    		jacobian.set(i-dataStart, 1, dLdmu(xDataOrg[i]));
-    		jacobian.set(i-dataStart, 2, dLdbeta(xDataOrg[i]));
+    		jacobian.set(i-dataStart, 0, dLdA(xSeries[i]));
+    		jacobian.set(i-dataStart, 1, dLdmu(xSeries[i]));
+    		jacobian.set(i-dataStart, 2, dLdbeta(xSeries[i]));
     	}
     	
     	return jacobian;
@@ -368,7 +416,7 @@ public class FitLaplace extends NLFittedFunction {
     protected Matrix generateResiduals() {
     	Matrix residuals = new Matrix(dataEnd - dataStart, 1);
     	for(int i=dataStart; i<dataEnd; i++) {
-    		double r = yDataOrg[i] - laplace(xDataOrg[i]);
+    		double r = ySeries[i] - laplace(xSeries[i]);
     		residuals.set(i-dataStart, 0, r);
     	}
     	
