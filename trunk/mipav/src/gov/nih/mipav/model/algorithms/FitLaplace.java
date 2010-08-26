@@ -9,7 +9,7 @@ import gov.nih.mipav.view.*;
  * Will also perform thresholding techniques to determine useful data points for fitting
  *
  * @author   senseneyj
- * @see      NLEngine
+ * @see      NLConstrainedEngine
  * @version  0.1
  */
 public class FitLaplace extends NLFittedFunction {
