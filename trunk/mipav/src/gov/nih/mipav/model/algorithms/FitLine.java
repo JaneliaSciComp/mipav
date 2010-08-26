@@ -11,6 +11,7 @@ import gov.nih.mipav.view.*;
 public class FitLine extends NLFittedFunction {
 	private double xSeries[];
 	private double ySeries[];
+	private double chisq;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
 	/**
@@ -186,13 +187,18 @@ public class FitLine extends NLFittedFunction {
 
 	@Override
 	protected Matrix generateResiduals() {
-		// TODO Auto-generated method stub
-		return null;
+		Matrix residuals = new Matrix(nPts, 1);
+    	for(int i=0; i<nPts; i++) {
+    		double r = ySeries[i] - (a[1] * xSeries[i] + a[0]);
+    		residuals.set(i, 0, r);
+    	}
+    	
+    	return residuals;
 	}
 
 	@Override
 	protected void calculateChiSq() {
-		// TODO Auto-generated method stub
-		
+		chisq = getChiSquared();
+		System.out.println("Chi-squared = " + chisq);
 	}
 }
