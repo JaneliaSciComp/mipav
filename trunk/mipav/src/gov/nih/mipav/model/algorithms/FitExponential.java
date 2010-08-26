@@ -9,7 +9,7 @@ import gov.nih.mipav.view.*;
  * FitExponential -fits an array of points to an exponential of the type y = a0 + a1*exp(a2*x).
  *
  * @author   William Gandler
- * @see      NLEngine
+ * @see      NLConstrainedEngine
  * @version  0.9
  */
 public class FitExponential extends NLFittedFunction {
