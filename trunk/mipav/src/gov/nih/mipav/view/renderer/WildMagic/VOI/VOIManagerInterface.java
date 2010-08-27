@@ -32,6 +32,8 @@ import gov.nih.mipav.model.structures.VOIPolyLineSlice;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.model.structures.event.VOIEvent;
 import gov.nih.mipav.model.structures.event.VOIListener;
+import gov.nih.mipav.model.structures.event.VOIVectorEvent;
+import gov.nih.mipav.model.structures.event.VOIVectorListener;
 import gov.nih.mipav.view.CustomUIBuilder;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -124,7 +126,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  * @see CustomUIBuilder. 
  *
  */
-public class VOIManagerInterface implements ActionListener, VOIHandlerInterface, VOIListener
+public class VOIManagerInterface implements ActionListener, VOIHandlerInterface, VOIListener, VOIVectorListener
 {
     /**
      * Pick up the selected color and call method to change the color.
@@ -1086,9 +1088,11 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 MipavUtil.displayWarning("Please select VOIs!");
                 return;
             }
+            saveVOIs(kCommand);
             m_kParent.getActiveImage().groupVOIs();
             fireVOISelectionChange(null);
         } else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_UNGROUP.getActionCommand())) {
+            saveVOIs(kCommand);
             m_kParent.getActiveImage().ungroupVOIs();
             fireVOISelectionChange(null);
         } 
@@ -4477,6 +4481,34 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             m_kVOIDialog.updateVOI( selection.getVOI(), getActiveImage() );
             m_kVOIDialog.updateTree();
         }
+    }
+
+    @Override
+    public void addedVOI(VOIVectorEvent newVOIselection) {
+        if ( m_kVOIDialog != null )
+        {
+            m_kVOIDialog.updateVOI( newVOIselection.getVOI(), getActiveImage() );
+            m_kVOIDialog.updateTree();
+        }
+        
+    }
+
+    @Override
+    public void removedVOI(VOIVectorEvent removed) {
+        if ( m_kVOIDialog != null && m_kCurrentVOIGroup != null )
+        {
+            m_kVOIDialog.updateVOI( m_kCurrentVOIGroup, getActiveImage() );
+            m_kVOIDialog.updateTree();
+        }
+    }
+
+    @Override
+    public void vectorSelected(VOIVectorEvent selection) {
+        if ( m_kVOIDialog != null )
+        {
+            m_kVOIDialog.updateVOI( selection.getVOI(), getActiveImage() );
+            m_kVOIDialog.updateTree();
+        }        
     }
 
 }

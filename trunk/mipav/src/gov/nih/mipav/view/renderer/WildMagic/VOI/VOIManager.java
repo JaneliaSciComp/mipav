@@ -2152,12 +2152,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         g.drawLine(xS, yS - 3, xS, yS + 3);
         g.drawLine(xS - 3, yS, xS + 3, yS);
 
-        int iContourID = kVOI.getContourID();
-        if ( iContourID != -1 )
-        {
-            kVOI.setLabel( String.valueOf(iContourID) );
-        }
-
         if (Preferences.is(Preferences.PREF_SHOW_VOI_NAME) && (kVOI.getName() != null)) {
             g.drawString(kVOI.getName(), xS - 10, yS - 5);
         } else if (kVOI.getLabel() != null) {

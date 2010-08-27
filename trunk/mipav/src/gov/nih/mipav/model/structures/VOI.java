@@ -1173,6 +1173,11 @@ public class VOI extends ModelSerialCloneable {
      * @param  curve curve removed from this VOI.
      */
     protected void fireVOIBaseRemoved(VOIBase curve) {
+        
+        for ( int i = 0; i < curves.size(); i++ )
+        {
+            curves.elementAt(i).getLabel();
+        }
 
         try {
 
