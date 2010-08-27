@@ -22,6 +22,7 @@ import javax.swing.event.*;
 import javax.swing.tree.*;
 
 import java.util.Date;
+import java.io.FileNotFoundException;
 import java.text.SimpleDateFormat;
 
 
@@ -199,6 +200,14 @@ public class JDialogVOIStats extends JDialogBase
      */
     public JDialogVOIStats(VOIHandlerInterface theVoiHandler, ModelImage img, VOI _voi) {
         super(false);
+        try {
+            setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+        } catch (final FileNotFoundException error) {
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage()
+                    + ">.  Check that this file is available.\n");
+            System.err.println("Exception ocurred while getting <" + error.getMessage()
+                    + ">.  Check that this file is available.\n");
+        }
         voi = _voi;
         image = img;
         voiHandler = theVoiHandler;
