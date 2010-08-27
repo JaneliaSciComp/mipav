@@ -1300,6 +1300,8 @@ public class JDialogVOIStats extends JDialogBase
      * @param  e  TreeSelectionEvent
      */
     public void valueChanged(TreeSelectionEvent e) {
+        //System.err.println( "JDialogVOIStats.valueChanged" );
+        
         TreePath leadPath = e.getNewLeadSelectionPath();
 
         if (leadPath != null) {

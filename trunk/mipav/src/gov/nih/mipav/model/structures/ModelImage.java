@@ -1869,7 +1869,6 @@ public class ModelImage extends ModelStorageBase {
         int i, k;
         int nVOIs;
         int nContours;
-        int index = 1;
         Vector contours;
         VOI newVOI = null;
         VOI newPtVOI = null;
@@ -1911,13 +1910,6 @@ public class ModelImage extends ModelStorageBase {
                     }
                 }
 
-                // re-label all of the elements in the old contour
-                index = 0;
-                nContours = contours.size();
-                for (k = 0; k < nContours; k++) {
-                    ((VOIBase) contours.elementAt(k)).setLabel(String.valueOf((index++)));
-                }
-
                 // if the old contour is now empty, remove it
                 if (tempVOIs.VOIAt(i).isEmpty()) {
                     tempVOIs.removeElementAt(i);
@@ -1941,14 +1933,6 @@ public class ModelImage extends ModelStorageBase {
                         newPLineVOI.getCurves().addElement(tempBase);
                     }
                 }
-
-                // re-label all elements
-                index = 0;
-                nContours = contours.size();
-                for (k = 0; k < nContours; k++) {
-                    ((VOIBase) contours.elementAt(k)).setLabel(String.valueOf((index++)));
-                }
-
                 // if the old contour is now empty, remove it
                 if (tempVOIs.VOIAt(i).isEmpty()) {
                     tempVOIs.removeElementAt(i);
@@ -1972,13 +1956,6 @@ public class ModelImage extends ModelStorageBase {
                     }
                 }
 
-                // re-label all elements
-                index = 0;                
-                nContours = contours.size();
-                for (k = 0; k < nContours; k++) {
-                    ((VOIBase) contours.elementAt(k)).setLabel(String.valueOf((index++)));
-                }
-
                 // if the old contour is now empty, remove it
                 if (tempVOIs.VOIAt(i).isEmpty()) {
                     tempVOIs.removeElementAt(i);
@@ -2000,15 +1977,6 @@ public class ModelImage extends ModelStorageBase {
                         newProtractorVOI.getCurves().addElement(tempBase);
                     }
                 }
-                // re-label all elements
-                index = 0;
-                contours = tempVOIs.VOIAt(i).getCurves();
-                nContours = contours.size();
-
-                for (k = 0; k < nContours; k++) {
-                    ((VOIBase) contours.elementAt(k)).setLabel(String.valueOf(index++));
-                }
-
                 // if the old contour is now empty, remove it
                 if (tempVOIs.VOIAt(i).isEmpty()) {
                     tempVOIs.removeElementAt(i);
@@ -2024,36 +1992,18 @@ public class ModelImage extends ModelStorageBase {
 
                 for (k = nContours - 1; k >= 0; k--) {
 
-                    if (((VOIBase) tempVOIs.VOIAt(i).getCurves().elementAt(k)).isActive()) {
+                    if (tempVOIs.VOIAt(i).getCurves().elementAt(k).isActive()) {
                         tempBase = (VOIProtractor) contours.elementAt(k);
                         contours.removeElementAt(k);
                         newProtractorVOI.getCurves().addElement(tempBase);
                     }
                 }
-                // re-label all elements
-                index = 0;
-                nContours = contours.size();
-
-                for (k = 0; k < nContours; k++) {
-                    ((VOIBase) contours.elementAt(k)).setLabel(String.valueOf(index++));
-                }
-
                 // if the old contour is now empty, remove it
                 if (tempVOIs.VOIAt(i).isEmpty()) {
                     tempVOIs.removeElementAt(i);
                 }
             }
         }
-
-        int curveNum;
-
-        index = 0;
-        if (newVOI != null) {
-            for (curveNum = 0; curveNum < newVOI.getCurves().size(); curveNum++) {
-                newVOI.getCurves().elementAt(curveNum).setLabel(String.valueOf(index++));
-            }
-        }
-
         if (newVOI != null) {
             tempVOIs.addElement(newVOI);
         }
@@ -2221,21 +2171,6 @@ public class ModelImage extends ModelStorageBase {
         for (i = 0; i < voiVector.size(); i++) {
             voiVector.elementAt(i).setID((short) i);
         }
-
-        int curveNum, voiNum;
-        int index = 1;
-
-        for (voiNum = 0; voiNum < voiVector.size(); voiNum++) {
-            if (voiVector.elementAt(voiNum).getName().equals(name)) {
-                for (curveNum = 0; 
-                curveNum < voiVector.elementAt(voiNum).getCurves().size();
-                curveNum++) {
-                    voiVector.elementAt(voiNum).getCurves().elementAt(curveNum)
-                    .setLabel(String.valueOf(index++));
-                }
-            }
-        }
-
         notifyImageDisplayListeners();
     }
 
