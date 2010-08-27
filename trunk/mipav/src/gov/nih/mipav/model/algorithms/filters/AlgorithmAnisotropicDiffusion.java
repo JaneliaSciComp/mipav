@@ -240,8 +240,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase implements Algo
         fireProgressStateChanged(0, srcImage.getImageName(), "Diffusing image ...");
         for (n = 0; (n < iterations) && !threadStopped; n++) {
             convolver = new AlgorithmConvolver(srcImage, GxData, GyData, kExtents,entireImage, sqrtXY);
-            convolver.setMinProgressValue((100 * n)/iterations);
-            convolver.setMaxProgressValue(Math.min((int)Math.round((100 * (n+0.5))/iterations),99));
+            setLinkedProgressValues(n, convolver);
             linkProgressToAlgorithm(convolver);
             convolver.addListener(this);
             if (!entireImage) {
@@ -276,8 +275,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase implements Algo
             } // for (s = 0; s < nImages; s++)
             
             convolver = new AlgorithmConvolver(srcImage, lapData, klapExtents,entireImage, image25D);
-            convolver.setMinProgressValue(Math.min((int)Math.round((100 * (n + 0.5))/iterations),99));
-            convolver.setMaxProgressValue(Math.min((100 * (n+1))/iterations,99));
+            setLinkedProgressValues(n, convolver);
             linkProgressToAlgorithm(convolver);
             convolver.addListener(this);
             if (!entireImage) {
@@ -459,8 +457,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase implements Algo
         
         for (n = 0; (n < iterations) && !threadStopped; n++) {
             convolver = new AlgorithmConvolver(srcImage, GxData, GyData, GzData, kExtents,entireImage);
-            convolver.setMinProgressValue((100 * n)/iterations);
-            convolver.setMaxProgressValue(Math.min((int)Math.round((100 * (n+0.5))/iterations),99));
+            setLinkedProgressValues(n, convolver);
             linkProgressToAlgorithm(convolver);
             convolver.addListener(this);
             if (!entireImage) {
@@ -487,8 +484,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase implements Algo
             float normMag = 100 / (gmMax - gmMin);
             
             convolver = new AlgorithmConvolver(srcImage, lapData, klapExtents,entireImage, image25D);
-            convolver.setMinProgressValue(Math.min((int)Math.round((100 * (n + 0.5))/iterations),99));
-            convolver.setMaxProgressValue(Math.min((100 * (n+1))/iterations,99));
+            setLinkedProgressValues(n, convolver);
             linkProgressToAlgorithm(convolver);
             convolver.addListener(this);
             if (!entireImage) {
@@ -684,14 +680,13 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase implements Algo
        
         for (n = 0; (n < iterations) && !threadStopped; n++) {
             convolver = new AlgorithmConvolver(destImage, GxData, GyData, kExtents,entireImage, sqrtXY);
-            convolver.setMinProgressValue((100 * n)/iterations);
-            convolver.setMaxProgressValue(Math.min((int)Math.round((100 * (n+0.5))/iterations),99));
+            setLinkedProgressValues(n, convolver);
             linkProgressToAlgorithm(convolver);
             convolver.addListener(this);
             if (!entireImage) {
                 convolver.setMask(mask);
             }
-    
+            
             convolver.run();
             convolver.finalize();
             
@@ -720,8 +715,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase implements Algo
             } // for (s = 0; s < nImages; s++)
             
             convolver = new AlgorithmConvolver(destImage, lapData, klapExtents,entireImage, image25D);
-            convolver.setMinProgressValue(Math.min((int)Math.round((100 * (n + 0.5))/iterations),99));
-            convolver.setMaxProgressValue(Math.min((100 * (n+1))/iterations,99));
+            setLinkedProgressValues(n, convolver);
             linkProgressToAlgorithm(convolver);
             convolver.addListener(this);
             if (!entireImage) {
@@ -924,8 +918,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase implements Algo
         
         for (n = 0; (n < iterations) && !threadStopped; n++) {
             convolver = new AlgorithmConvolver(destImage, GxData, GyData, GzData, kExtents,entireImage);
-            convolver.setMinProgressValue((100 * n)/iterations);
-            convolver.setMaxProgressValue(Math.min((int)Math.round((100 * (n+0.5))/iterations),99));
+            setLinkedProgressValues(n, convolver);
             linkProgressToAlgorithm(convolver);
             convolver.addListener(this);
             if (!entireImage) {
@@ -952,8 +945,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase implements Algo
             float normMag = 100 / (gmMax - gmMin);
             
             convolver = new AlgorithmConvolver(destImage, lapData, klapExtents,entireImage, image25D);
-            convolver.setMinProgressValue(Math.min((int)Math.round((100 * (n + 0.5))/iterations),99));
-            convolver.setMaxProgressValue(Math.min((100 * (n+1))/iterations,99));
+            setLinkedProgressValues(n, convolver);
             linkProgressToAlgorithm(convolver);
             convolver.addListener(this);
             if (!entireImage) {
@@ -1258,6 +1250,15 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase implements Algo
         lapData[24] = 0.58f;
         lapData[25] = 0.71f;
         lapData[26] = 0.58f;
+    }
+    
+    /**
+     * Sets convolver progress values so that linked algorithm will show at least a 1% change.
+     */
+    public void setLinkedProgressValues(int n, AlgorithmBase convolver) {
+    	System.out.println("One: "+Math.min((100 * n)/iterations, 98)+"\tTwo: "+Math.min((100 * n)/iterations+1,99));
+    	convolver.setMinProgressValue(Math.min((100 * n)/iterations, 98));
+        convolver.setMaxProgressValue(Math.min((100 * n)/iterations+1,99));
     }
     
     public void algorithmPerformed(AlgorithmBase algorithm){
