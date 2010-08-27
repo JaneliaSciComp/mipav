@@ -91,13 +91,22 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
     protected ViewJProgressBar progressBar;
 
     /** Labels for the current scanner position:. */
-    protected JLabel scannerLabel = null;
+    protected JLabel scannerLPSLabel = null;
+    
+    /** Labels for the current scanner position:. */
+    protected JLabel scannerRASLabel = null;
 
     /** Labels for the current scanner position values:. */
-    protected JLabel[] scannerLabelVals = null;
+    protected JLabel[] scannerLPSLabelVals = null;
+    
+    /** Labels for the current scanner position values:. */
+    protected JLabel[] scannerRASLabelVals = null;
 
     /** JPanel containing the scanner position labels:. */
-    protected JPanel scannerPanel = new JPanel(new GridBagLayout());
+    protected JPanel scannerLPSPanel = new JPanel(new GridBagLayout());
+    
+    /** JPanel containing the scanner position labels:. */
+    protected JPanel scannerRASPanel = new JPanel(new GridBagLayout());
 
     /** The main tabbed pane in the volume view frame. */
     protected JTabbedPane tabbedPane;
@@ -131,6 +140,31 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
     /** Variable indicating if images of like dimensions should be scrolled simult. */
     protected boolean linkedScrolling = false;
+    
+    /** voxel absolute goto components**/
+    protected JLabel absoluteXLabel,absoluteYLabel,absoluteZLabel;
+    protected JTextField absoluteXTextField,absoluteYTextField,absoluteZTextField;
+    protected JButton absoluteGoToButton;
+    protected JPanel absoluteGoToPanel;
+    
+    /** scanner lps goto components**/
+    protected JLabel scannerLPS_RLLabel,scannerLPS_APLabel,scannerLPS_ISLabel;
+    protected JTextField scannerLPS_RLTextField,scannerLPS_APTextField,scannerLPS_ISTextField;
+    protected JButton scannerLPS_GoToButton;
+    protected JPanel scannerLPS_GoToPanel;
+    
+    /** scanner ras goto components**/
+    protected JLabel scannerRAS_RLLabel,scannerRAS_APLabel,scannerRAS_ISLabel;
+    protected JTextField scannerRAS_RLTextField,scannerRAS_APTextField,scannerRAS_ISTextField;
+    protected JButton scannerRAS_GoToButton;
+    protected JPanel scannerRAS_GoToPanel;
+    
+    /** talairach goto components**/
+    protected JLabel talXLabel,talYLabel,talZLabel;
+    protected JTextField talXTextField,talYTextField,talZTextField;
+    protected JButton talGoToButton;
+    protected JPanel talGoToPanel;
+    
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -494,62 +528,170 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
      */
     public void buildLabelPanel() {
 
-        if (scannerLabel != null) {
+        if (scannerLPSLabel != null) {
+            return;
+        }
+        
+        if (scannerRASLabel != null) {
             return;
         }
 
-        scannerLabel = new JLabel("Scanner Position");
-        scannerLabel.setForeground(Color.black);
-        scannerLabel.setFont(MipavUtil.font14B);
-        scannerLabelVals = new JLabel[3];
-        scannerLabelVals[0] = new JLabel("A-P: ");
-        scannerLabelVals[1] = new JLabel("L-R: ");
-        scannerLabelVals[2] = new JLabel("S-I: ");
+        scannerLPSLabel = new JLabel("Scanner LPS Coordinates");
+        scannerLPSLabel.setForeground(Color.black);
+        scannerLPSLabel.setFont(MipavUtil.font14B);
+        scannerLPSLabelVals = new JLabel[4];
+        scannerLPSLabelVals[0] = new JLabel("R-L: ");
+        scannerLPSLabelVals[1] = new JLabel("A-P: ");
+        scannerLPSLabelVals[2] = new JLabel("I-S: ");
+        scannerLPSLabelVals[3] = new JLabel("Intensity: ");
+        
+        scannerLPS_RLLabel = new JLabel("R-L:");
+        scannerLPS_RLLabel.setForeground(Color.black);
+        scannerLPS_RLLabel.setFont(MipavUtil.font14B);
+        scannerLPS_RLTextField = new JTextField(4);
+        scannerLPS_APLabel = new JLabel("A-P:");
+        scannerLPS_APLabel.setForeground(Color.black);
+        scannerLPS_APLabel.setFont(MipavUtil.font14B);
+        scannerLPS_APTextField = new JTextField(4);
+        scannerLPS_ISLabel = new JLabel("I-S:");
+        scannerLPS_ISLabel.setForeground(Color.black);
+        scannerLPS_ISLabel.setFont(MipavUtil.font14B);
+        scannerLPS_ISTextField = new JTextField(4);
+        scannerLPS_GoToButton = new JButton("Go to");
+        scannerLPS_GoToButton.setForeground(Color.black);
+        scannerLPS_GoToButton.setFont(MipavUtil.font14B);
+        scannerLPS_GoToPanel = new JPanel();
+        scannerLPS_GoToPanel.add(scannerLPS_RLLabel);
+        scannerLPS_GoToPanel.add(scannerLPS_RLTextField);
+        scannerLPS_GoToPanel.add(scannerLPS_APLabel);
+        scannerLPS_GoToPanel.add(scannerLPS_APTextField);
+        scannerLPS_GoToPanel.add(scannerLPS_ISLabel);
+        scannerLPS_GoToPanel.add(scannerLPS_ISTextField);
+        scannerLPS_GoToPanel.add(scannerLPS_GoToButton);
+        
+        
+        
+        scannerRASLabel = new JLabel("Scanner RAS Coordinates");
+        scannerRASLabel.setForeground(Color.black);
+        scannerRASLabel.setFont(MipavUtil.font14B);
+        scannerRASLabelVals = new JLabel[4];
+        scannerRASLabelVals[0] = new JLabel("L-R: ");
+        scannerRASLabelVals[1] = new JLabel("P-A: ");
+        scannerRASLabelVals[2] = new JLabel("I-S: ");
+        scannerRASLabelVals[3] = new JLabel("Intensity: ");
+        
+        scannerRAS_RLLabel = new JLabel("L-R:");
+        scannerRAS_RLLabel.setForeground(Color.black);
+        scannerRAS_RLLabel.setFont(MipavUtil.font14B);
+        scannerRAS_RLTextField = new JTextField(4);
+        scannerRAS_APLabel = new JLabel("P-A:");
+        scannerRAS_APLabel.setForeground(Color.black);
+        scannerRAS_APLabel.setFont(MipavUtil.font14B);
+        scannerRAS_APTextField = new JTextField(4);
+        scannerRAS_ISLabel = new JLabel("I-S:");
+        scannerRAS_ISLabel.setForeground(Color.black);
+        scannerRAS_ISLabel.setFont(MipavUtil.font14B);
+        scannerRAS_ISTextField = new JTextField(4);
+        scannerRAS_GoToButton = new JButton("Go to");
+        scannerRAS_GoToButton.setForeground(Color.black);
+        scannerRAS_GoToButton.setFont(MipavUtil.font14B);
+        scannerRAS_GoToPanel = new JPanel();
+        scannerRAS_GoToPanel.add(scannerRAS_RLLabel);
+        scannerRAS_GoToPanel.add(scannerRAS_RLTextField);
+        scannerRAS_GoToPanel.add(scannerRAS_APLabel);
+        scannerRAS_GoToPanel.add(scannerRAS_APTextField);
+        scannerRAS_GoToPanel.add(scannerRAS_ISLabel);
+        scannerRAS_GoToPanel.add(scannerRAS_ISTextField);
+        scannerRAS_GoToPanel.add(scannerRAS_GoToButton);
+        
+        
+        
 
-        absoluteLabel = new JLabel("Absolute Volume coordinates");
+        absoluteLabel = new JLabel("Absolute Volume Coordinates");
         absoluteLabel.setToolTipText("Coordinates in 3D image space");
         absoluteLabel.setForeground(Color.black);
         absoluteLabel.setFont(MipavUtil.font14B);
-        absoluteLabelVals = new JLabel[4];
+        absoluteLabelVals = new JLabel[5];
         absoluteLabelVals[0] = new JLabel("X: ");
         absoluteLabelVals[1] = new JLabel("Y: ");
         absoluteLabelVals[2] = new JLabel("Z: ");
-        absoluteLabelVals[3] = new JLabel("1D index: ");
+        absoluteLabelVals[3] = new JLabel("Intensity: ");
+        absoluteLabelVals[4] = new JLabel("1D index: ");
+        
+        absoluteXLabel = new JLabel("X:");
+        absoluteXLabel.setForeground(Color.black);
+        absoluteXLabel.setFont(MipavUtil.font14B);
+        absoluteXTextField = new JTextField(4);
+        absoluteYLabel = new JLabel("Y:");
+        absoluteYLabel.setForeground(Color.black);
+        absoluteYLabel.setFont(MipavUtil.font14B);
+        absoluteYTextField = new JTextField(4);
+        absoluteZLabel = new JLabel("Z:");
+        absoluteZLabel.setForeground(Color.black);
+        absoluteZLabel.setFont(MipavUtil.font14B);
+        absoluteZTextField = new JTextField(4);
+        absoluteGoToButton = new JButton("Go to");
+        absoluteGoToButton.setForeground(Color.black);
+        absoluteGoToButton.setFont(MipavUtil.font14B);
+        absoluteGoToPanel = new JPanel();
+        absoluteGoToPanel.add(absoluteXLabel);
+        absoluteGoToPanel.add(absoluteXTextField);
+        absoluteGoToPanel.add(absoluteYLabel);
+        absoluteGoToPanel.add(absoluteYTextField);
+        absoluteGoToPanel.add(absoluteZLabel);
+        absoluteGoToPanel.add(absoluteZTextField);
+        absoluteGoToPanel.add(absoluteGoToButton);
+        
 
-        for (int i = 0; i < 3; i++) {
-            scannerLabelVals[i].setForeground(Color.black);
-            scannerLabelVals[i].setFont(MipavUtil.font12B);
+        for (int i = 0; i < 4; i++) {
+            scannerLPSLabelVals[i].setForeground(Color.black);
+            scannerLPSLabelVals[i].setFont(MipavUtil.font14B);
+            
+            scannerRASLabelVals[i].setForeground(Color.black);
+            scannerRASLabelVals[i].setFont(MipavUtil.font14B);
 
             absoluteLabelVals[i].setForeground(Color.black);
-            absoluteLabelVals[i].setFont(MipavUtil.font12B);
+            absoluteLabelVals[i].setFont(MipavUtil.font14B);
         }
 
-        absoluteLabelVals[3].setForeground(Color.black);
-        absoluteLabelVals[3].setFont(MipavUtil.font12B);
+        absoluteLabelVals[4].setForeground(Color.black);
+        absoluteLabelVals[4].setFont(MipavUtil.font14B);
 
         final GridBagConstraints gbc2 = new GridBagConstraints();
-        gbc2.anchor = GridBagConstraints.WEST;
+       
+        gbc2.anchor = GridBagConstraints.NORTHWEST;
+        gbc2.fill = GridBagConstraints.BOTH;
+        //gbc2.weightx = 1;
+        //gbc2.weighty = 1;
 
         gbc2.gridx = 0;
         gbc2.gridy = 0;
         gbc2.gridwidth = 1;
         gbc2.gridheight = 1;
 
-        scannerPanel.add(scannerLabel, gbc2);
+        scannerLPSPanel.add(scannerLPSLabel, gbc2);
+        scannerRASPanel.add(scannerRASLabel, gbc2);
         absolutePanel.add(absoluteLabel, gbc2);
 
         gbc2.gridy++;
-        scannerPanel.add(new JLabel(), gbc2);
+        scannerLPSPanel.add(new JLabel(), gbc2);
+        scannerRASPanel.add(new JLabel(), gbc2);
         absolutePanel.add(new JLabel(), gbc2);
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 4; i++) {
             gbc2.gridy++;
-            scannerPanel.add(scannerLabelVals[i], gbc2);
+            scannerLPSPanel.add(scannerLPSLabelVals[i], gbc2);
+            scannerRASPanel.add(scannerRASLabelVals[i], gbc2);
             absolutePanel.add(absoluteLabelVals[i], gbc2);
         }
 
         gbc2.gridy++;
-        absolutePanel.add(absoluteLabelVals[3], gbc2);
+        absolutePanel.add(absoluteLabelVals[4], gbc2);
+        
+        gbc2.gridy++;
+        absolutePanel.add(absoluteGoToPanel, gbc2);
+        scannerLPSPanel.add(scannerLPS_GoToPanel, gbc2);
+        scannerRASPanel.add(scannerRAS_GoToPanel, gbc2);
     }
 
     /**
@@ -3334,6 +3476,10 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         absoluteLabelVals[0].setText("X: " + (int) position.X);
         absoluteLabelVals[1].setText("Y: " + (int) position.Y);
         absoluteLabelVals[2].setText("Z: " + (int) position.Z);
+        
+        absoluteXTextField.setText(String.valueOf((int) position.X));
+    	absoluteYTextField.setText(String.valueOf((int) position.Y));
+    	absoluteZTextField.setText(String.valueOf((int) position.Z));
 
         final int[] dimExtents = imageA.getExtents();
         final int index = (int) ( (position.Z * dimExtents[0] * dimExtents[1]) + (position.Y * dimExtents[0]) + position.X);
@@ -3342,7 +3488,8 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         if ( (index * iBuffFactor > imageA.getSize()) || (index < 0)) {
             return;
         }
-        absoluteLabelVals[3].setText("1D index: " + index + " = " + imageA.getFloat(index * iBuffFactor));
+        absoluteLabelVals[3].setText("Intensity: " + imageA.getFloat(index * iBuffFactor));
+        absoluteLabelVals[4].setText("1D index: " + index);
     }
 
     /**
@@ -3352,15 +3499,40 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
      */
     protected void setScannerPosition(final Vector3f position) {
 
-        if (scannerLabelVals == null) {
+        if (scannerLPSLabelVals == null) {
+            return;
+        }
+        if (scannerRASLabelVals == null) {
             return;
         }
 
-        final String[] labelContents = ViewJComponentEditImage.getScannerPositionLabels(imageA, position);
+        final String[] LPS_labelContents = ViewJComponentEditImage.getScannerPositionLabels(imageA, position);
+        final String[] RAS_labelContents = ViewJComponentEditImage.getRASScannerPositionLabels(imageA, position);
+        final int[] dimExtents = imageA.getExtents();
+        final int index = (int) ( (position.Z * dimExtents[0] * dimExtents[1]) + (position.Y * dimExtents[0]) + position.X);
 
-        for (int i = 0; i < labelContents.length; i++) {
-            scannerLabelVals[i].setText(labelContents[i]);
+        final int iBuffFactor = imageA.isColorImage() ? 4 : 1;
+        if ( (index * iBuffFactor > imageA.getSize()) || (index < 0)) {
+            return;
         }
+        for (int i = 0; i < LPS_labelContents.length; i++) {
+            scannerLPSLabelVals[i].setText(LPS_labelContents[i]);
+        }
+        for (int i = 0; i < RAS_labelContents.length; i++) {
+            scannerRASLabelVals[i].setText(RAS_labelContents[i]);
+        }
+        scannerLPSLabelVals[3].setText("Intensity: " + imageA.getFloat(index * iBuffFactor));
+        scannerRASLabelVals[3].setText("Intensity: " + imageA.getFloat(index * iBuffFactor));
+        
+        scannerLPS_RLTextField.setText(LPS_labelContents[0].substring(LPS_labelContents[0].lastIndexOf(":")+1, LPS_labelContents[0].length()));
+    	scannerLPS_APTextField.setText(LPS_labelContents[1].substring(LPS_labelContents[1].lastIndexOf(":")+1, LPS_labelContents[1].length()));
+    	scannerLPS_ISTextField.setText(LPS_labelContents[2].substring(LPS_labelContents[2].lastIndexOf(":")+1, LPS_labelContents[2].length()));
+    	
+    	scannerRAS_RLTextField.setText(RAS_labelContents[0].substring(RAS_labelContents[0].lastIndexOf(":")+1, RAS_labelContents[0].length()));
+    	scannerRAS_APTextField.setText(RAS_labelContents[1].substring(RAS_labelContents[1].lastIndexOf(":")+1, RAS_labelContents[1].length()));
+    	scannerRAS_ISTextField.setText(RAS_labelContents[2].substring(RAS_labelContents[2].lastIndexOf(":")+1, RAS_labelContents[2].length()));
+    
+    
     }
 
     /**

@@ -3,6 +3,7 @@ package gov.nih.mipav.view;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
+import gov.nih.mipav.MipavCoordinateSystems;
 import gov.nih.mipav.util.MipavMath;
 
 import gov.nih.mipav.model.algorithms.*;
@@ -291,6 +292,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /** Label the Talairach position z value in the image volume. */
     protected JTextField labelZTal;
+    
+    protected JLabel xTalLabel,yTalLabel,zTalLabel;
 
     /** Menu items storage. */
     protected ViewMenuBuilder menuObj;
@@ -412,9 +415,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** Used to setup the paint spinner. */
     private double spinnerDefaultValue = 1, spinnerMin = 0, spinnerMax = 255, spinnerStep = 1;
 
-    /** DOCUMENT ME! */
-    private JLabel talairachVoxelLabel;
-
     /** Toolbar builder reference. */
     private ViewToolBarBuilder toolbarBuilder;
 
@@ -427,6 +427,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     private JMenu voiMenu;
     private VOIManagerInterface voiManager;
 
+    /** talaraich intensity label**/
+    protected JLabel iTalLabel;
+    /** talairach voxel label **/
+    public JLabel tTalVoxLabel;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -583,6 +587,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             showTalairachGrid = sourceCheckbox.isSelected();
             chkShowTalairachGrid.setSelected(showTalairachGrid);
             chkShowTalairachGridMarkers.setEnabled(showTalairachGrid);
+            
+            if(!showTalairachGrid) {
+            	tTalVoxLabel.setText("Talairach Voxel:      ");
+            }
 
             menuObj.setMenuItemSelected("ShowXHairs", !showTalairachGrid);
             menuObj.setMenuItemSelected("ShowAxes", !showTalairachGrid);
@@ -1206,6 +1214,14 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         else if (command.equals("ImageAlignToolbar") ) {
             imageAlignToolBar.setVisible(menuObj.isMenuItemSelected("Image Align toolbar"));
             updateLayout();
+        }else if(command.equals("absoluteGoTo")) {
+        	absoluteGoTo();
+        }else if(command.equals("scannerLPSGoTo")) {
+        	scannerLPSGoTo();
+        }else if(command.equals("scannerRASGoTo")) {
+        	scannerRASGoTo();
+        }else if(command.equals("talGoTo")) {
+        	talairachGoTo();
         }
         else {
 			getParentFrame().actionPerformed(event);	
@@ -1214,6 +1230,199 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         this.requestFocusInWindow();
     }
 
+    /**
+     * Method that goes to the ras coordinate that is entered
+     */
+    private void scannerRASGoTo() {
+    	String rlString = scannerRAS_RLTextField.getText().trim();
+    	String apString = scannerRAS_APTextField.getText().trim();
+    	String isString = scannerRAS_ISTextField.getText().trim();
+    	if(rlString.equals("") || apString.equals("") || isString.equals("")) {
+    		MipavUtil.displayError("All textfields must have values");
+    		return;
+    	}
+    	float rl,ap,is;
+    	try{
+    		rl = Float.parseFloat(rlString);
+    		ap = Float.parseFloat(apString);
+    		is = Float.parseFloat(isString);
+    	}catch(NumberFormatException e) {
+    		MipavUtil.displayError("Invalid value(s)");
+    		return;
+    	}
+    	rl = -rl;
+    	ap = -ap;
+    	
+    	Vector3f ptIn = new Vector3f(rl, ap, is);
+    	Vector3f ptOut = new Vector3f();
+    	MipavCoordinateSystems.scannerToFile(ptIn, ptOut, imageA);
+    	int x,y,z;
+    	x = Math.round(ptOut.X);
+    	y = Math.round(ptOut.Y);
+    	z = Math.round(ptOut.Z);
+    	int[] exts = imageA.getExtents();
+    	if(x < 0 || x >= exts[0]) {
+    		MipavUtil.displayError("Value is out of range");
+    		return;
+    	}
+    	if(y < 0 || y >= exts[1]) {
+    		MipavUtil.displayError("Value is out of range");
+    		return;
+    	}
+    	if(z < 0 || z >= exts[2]) {
+    		MipavUtil.displayError("Value is out of range");
+    		return;
+    	}
+    	
+    	setCenter(x,y,z);
+    }
+    
+    /**
+     * Method that goes to the lps coordinate that is entered
+     */
+    private void scannerLPSGoTo() {
+    	String rlString = scannerLPS_RLTextField.getText().trim();
+    	String apString = scannerLPS_APTextField.getText().trim();
+    	String isString = scannerLPS_ISTextField.getText().trim();
+    	if(rlString.equals("") || apString.equals("") || isString.equals("")) {
+    		MipavUtil.displayError("All textfields must have values");
+    		return;
+    	}
+    	float rl,ap,is;
+    	try{
+    		rl = Float.parseFloat(rlString);
+    		ap = Float.parseFloat(apString);
+    		is = Float.parseFloat(isString);
+    	}catch(NumberFormatException e) {
+    		MipavUtil.displayError("Invalid value(s)");
+    		return;
+    	}
+    	
+    	
+    	Vector3f ptIn = new Vector3f(rl, ap, is);
+    	Vector3f ptOut = new Vector3f();
+    	MipavCoordinateSystems.scannerToFile(ptIn, ptOut, imageA);
+    	int x,y,z;
+    	x = Math.round(ptOut.X);
+    	y = Math.round(ptOut.Y);
+    	z = Math.round(ptOut.Z);
+    	int[] exts = imageA.getExtents();
+    	if(x < 0 || x >= exts[0]) {
+    		MipavUtil.displayError("Value is out of range");
+    		return;
+    	}
+    	if(y < 0 || y >= exts[1]) {
+    		MipavUtil.displayError("Value is out of range");
+    		return;
+    	}
+    	if(z < 0 || z >= exts[2]) {
+    		MipavUtil.displayError("Value is out of range");
+    		return;
+    	}
+    	
+    	setCenter(x,y,z);
+    }
+    
+    
+    /**
+     * Method that goes to the absolute voxel coordinate that is entered
+     */
+    private void absoluteGoTo() {
+    	String xString = super.absoluteXTextField.getText().trim();
+    	String yString = super.absoluteYTextField.getText().trim();
+    	String zString = super.absoluteZTextField.getText().trim();
+    	if(xString.equals("") || yString.equals("") || zString.equals("")) {
+    		MipavUtil.displayError("All textfields must have values");
+    		return;
+    	}
+    	int x,y,z;
+    	try{
+    		x = Integer.parseInt(xString);
+    		y = Integer.parseInt(yString);
+    		z = Integer.parseInt(zString);
+    	}catch(NumberFormatException e) {
+    		MipavUtil.displayError("Invalid value(s)");
+    		return;
+    	}
+    	int[] exts = imageA.getExtents();
+    	if(x < 0 || x >= exts[0]) {
+    		MipavUtil.displayError("X value is out of range");
+    		return;
+    	}
+    	if(y < 0 || y >= exts[1]) {
+    		MipavUtil.displayError("Y value is out of range");
+    		return;
+    	}
+
+    	if(z < 0 || z >= exts[2]) {
+    		MipavUtil.displayError("Z value is out of range");
+    		return;
+    	}
+    	
+    	setCenter(x,y,z);
+    }
+    
+    
+    
+    /**
+     * Method that goes to the talairach coordinate that is entered
+     */
+    private void talairachGoTo() {
+    	String xTalString = talXTextField.getText().trim();
+    	String yTalString = talYTextField.getText().trim();
+    	String zTalString = talZTextField.getText().trim();
+    	if(xTalString.equals("") || yTalString.equals("") || zTalString.equals("")) {
+    		MipavUtil.displayError("All textfields must have values");
+    		return;
+    	}
+    	float xTal,yTal,zTal;
+    	try{
+    		xTal = Float.parseFloat(xTalString);
+    		yTal = Float.parseFloat(yTalString);
+    		zTal = Float.parseFloat(zTalString);
+    	}catch(NumberFormatException e) {
+    		e.printStackTrace();
+    		MipavUtil.displayError("Invalid value(s)");
+    		return;
+    	}
+    	
+    	Vector3f pt;
+    	int x,y,z;
+    	
+    	
+        TalairachTransformInfo tInfo = imageA.getTalairachTransformInfo();
+
+           
+        pt = tInfo.getTlrcAC();
+           
+        x = Math.round(xTal + pt.X);
+        y = Math.round(yTal + pt.Y);
+        z = Math.round(zTal + pt.Z);
+        
+        int[] exts = imageA.getExtents();
+    	if(x < 0 || x >= exts[0]) {
+    		MipavUtil.displayError("X value is out of range");
+    		return;
+    	}
+    	if(y < 0 || y >= exts[1]) {
+    		MipavUtil.displayError("Y value is out of range");
+    		return;
+    	}
+
+    	if(z < 0 || z >= exts[2]) {
+    		MipavUtil.displayError("Z value is out of range");
+    		return;
+    	}
+    	
+    	setCenter(x,y,z);
+    }
+    
+    
+    
+    
+    
+    
+    
     /**
      * Add someone who wants to be notified about crosshair coordinate changes.
      *
@@ -1458,9 +1667,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      *
      * @return  DOCUMENT ME!
      */
-    public String getTalairachVoxelLabelText() {
-        return talairachVoxelLabel.getText();
-    }
+    //public String getTalairachVoxelLabelText() {
+        //return talairachVoxelLabel.getText();
+    //}
 
     /**
      * Returns a reference to one of the component tri-image components.
@@ -2492,9 +2701,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      *
      * @param  newLabelText  the text to display in the Talairach voxel label
      */
-    public void setTalairachVoxelLabelText(String newLabelText) {
-        talairachVoxelLabel.setText(newLabelText);
-    }
+   // public void setTalairachVoxelLabelText(String newLabelText) {
+        //talairachVoxelLabel.setText(newLabelText);
+    //}
 
     /**
      * Sets the slice to be displayed and updates title frame.
@@ -2947,8 +3156,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         JSeparator separator = new JSeparator();
 
-        this.showTalairachPosition = ((imageA.getMatrixHolder().containsType(TransMatrix.TRANSFORM_TALAIRACH_TOURNOUX)) &&
-                                          (imageA.getTalairachTransformInfo() != null));
+        //this.showTalairachPosition = ((imageA.getMatrixHolder().containsType(TransMatrix.TRANSFORM_TALAIRACH_TOURNOUX)) &&
+                                          //(imageA.getTalairachTransformInfo() != null));
+        
+        this.showTalairachPosition = (imageA.getTalairachTransformInfo() != null);
 
         menuObj = new ViewMenuBuilder(this);
         ViewMenuBar menuBarMaker = new ViewMenuBar(menuObj);
@@ -3573,25 +3784,32 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         chkShowTalairachGrid = new JCheckBox("Show Talairach grid");
         chkShowTalairachGrid.setActionCommand("ShowTalairachGrid");
         chkShowTalairachGrid.addActionListener(this);
-        chkShowTalairachGrid.setFont(MipavUtil.font12B);
+        chkShowTalairachGrid.setForeground(Color.black);
+        chkShowTalairachGrid.setFont(MipavUtil.font14B);
+
         chkShowTalairachGridMarkers = new JCheckBox("Show Talairach grid markers");
         chkShowTalairachGridMarkers.setActionCommand("ShowTalairachGridmarkers");
         chkShowTalairachGridMarkers.setEnabled(chkShowTalairachGrid.isSelected());
         chkShowTalairachGridMarkers.addActionListener(this);
-        chkShowTalairachGridMarkers.setFont(MipavUtil.font12B);
+        chkShowTalairachGridMarkers.setForeground(Color.black);
+        chkShowTalairachGridMarkers.setFont(MipavUtil.font14B);
 
+        gbConstraints.gridx = 0;
         gbConstraints.anchor = GridBagConstraints.WEST;
         gbConstraints.weightx = 1;
         talairachPanel.add(chkShowTalairachGrid, gbConstraints);
 
         gbConstraints.gridy = 1;
+        
         talairachPanel.add(chkShowTalairachGridMarkers, gbConstraints);
 
         GridBagLayout gbSubLayout = new GridBagLayout();
         GridBagConstraints gbSubConstraints = new GridBagConstraints();
 
         JPanel talairachSubPanel = new JPanel(gbSubLayout);
-        talairachSubPanel.setBorder(BorderFactory.createTitledBorder("Talairach grid coordinates"));
+        //talairachSubPanel.setForeground(Color.black);
+        //talairachSubPanel.setFont(MipavUtil.font14B);
+        //talairachSubPanel.setBorder(BorderFactory.createTitledBorder("Talairach grid coordinates"));
 
         gbConstraints.gridy++;
         gbConstraints.gridwidth = 3;
@@ -3599,33 +3817,100 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         gbConstraints.weighty = 1;
         talairachPanel.add(talairachSubPanel, gbConstraints);
 
+        
+        gbSubConstraints.weightx = 0;
         gbSubConstraints.gridwidth = GridBagConstraints.RELATIVE;
-        gbSubConstraints.gridy = 1;
-        gbSubConstraints.weightx = 1;
         gbSubConstraints.anchor = GridBagConstraints.WEST;
         gbSubConstraints.insets = new Insets(0, 20, 0, 0);
-        talairachSubPanel.add(new JLabel("X: "), gbSubConstraints);
-        gbSubConstraints.gridx = 1;
-        talairachSubPanel.add(labelXTal, gbSubConstraints);
-
+        
+        
+        
+        
+        
+        
         gbSubConstraints.gridx = GridBagConstraints.RELATIVE;
+        gbSubConstraints.gridy = 1;
+        JLabel talLabel = new JLabel("Talairach Coordinates");
+        talLabel.setForeground(Color.black);
+        talLabel.setFont(MipavUtil.font14B);
+        talairachSubPanel.add(talLabel, gbSubConstraints);
+        
         gbSubConstraints.gridy = 2;
-        talairachSubPanel.add(new JLabel("Y: "), gbSubConstraints);
-        gbSubConstraints.gridx = 1;
-        talairachSubPanel.add(labelYTal, gbSubConstraints);
+        xTalLabel = new JLabel("X:");
+        xTalLabel.setForeground(Color.black);
+        xTalLabel.setFont(MipavUtil.font14B);
+        //talairachSubPanel.add(xTalLabel, gbSubConstraints);
+        //talairachSubPanel.add(labelXTal, gbSubConstraints);
+  
 
         gbSubConstraints.gridx = GridBagConstraints.RELATIVE;
         gbSubConstraints.gridy = 3;
-        talairachSubPanel.add(new JLabel("Z: "), gbSubConstraints);
-        gbSubConstraints.gridx = 1;
-        talairachSubPanel.add(labelZTal, gbSubConstraints);
+        yTalLabel = new JLabel("Y:");
+        yTalLabel.setForeground(Color.black);
+        yTalLabel.setFont(MipavUtil.font14B);
+        talairachSubPanel.add(yTalLabel, gbSubConstraints);
+        //gbSubConstraints.gridx = 1;
+        //talairachSubPanel.add(labelYTal, gbSubConstraints);
 
         gbSubConstraints.gridx = GridBagConstraints.RELATIVE;
         gbSubConstraints.gridy = 4;
-        talairachSubPanel.add(new JLabel("Talairach voxel: "), gbSubConstraints);
-        gbSubConstraints.gridx = 1;
-        talairachSubPanel.add(talairachVoxelLabel, gbSubConstraints);
+        zTalLabel = new JLabel("Z:");
+        zTalLabel.setForeground(Color.black);
+        zTalLabel.setFont(MipavUtil.font14B);
+        talairachSubPanel.add(zTalLabel, gbSubConstraints);
+        //gbSubConstraints.gridx = 1;
+        //talairachSubPanel.add(labelZTal, gbSubConstraints);
 
+        gbSubConstraints.gridx = GridBagConstraints.RELATIVE;
+        gbSubConstraints.gridy = 5;
+        tTalVoxLabel = new JLabel("Talairach Voxel:      ");
+        tTalVoxLabel.setForeground(Color.black);
+        tTalVoxLabel.setFont(MipavUtil.font14B);
+        talairachSubPanel.add(tTalVoxLabel, gbSubConstraints);
+        //gbSubConstraints.gridx = 1;
+        //talairachSubPanel.add(talairachVoxelLabel, gbSubConstraints);
+        
+        gbSubConstraints.gridx = GridBagConstraints.RELATIVE;
+        gbSubConstraints.gridy = 6;
+        iTalLabel = new JLabel("Intensity: ");
+        iTalLabel.setForeground(Color.black);
+        iTalLabel.setFont(MipavUtil.font14B);
+        talairachSubPanel.add(iTalLabel, gbSubConstraints);
+        
+        
+        
+        talXLabel = new JLabel("X:");
+        talXLabel.setForeground(Color.black);
+        talXLabel.setFont(MipavUtil.font14B);
+        talXTextField = new JTextField(4);
+        talXTextField.setEnabled(showTalairachPosition);
+        talYLabel = new JLabel("Y:");
+        talYLabel.setForeground(Color.black);
+        talYLabel.setFont(MipavUtil.font14B);
+        talYTextField = new JTextField(4);
+        talYTextField.setEnabled(showTalairachPosition);
+        talZLabel = new JLabel("Z:");
+        talZLabel.setForeground(Color.black);
+        talZLabel.setFont(MipavUtil.font14B);
+        talZTextField = new JTextField(4);
+        talZTextField.setEnabled(showTalairachPosition);
+        talGoToButton = new JButton("Go to");
+        talGoToButton.addActionListener(this);
+        talGoToButton.setActionCommand("talGoTo");
+        talGoToButton.setEnabled(showTalairachPosition);
+        talGoToButton.setForeground(Color.black);
+        talGoToButton.setFont(MipavUtil.font14B);
+        talGoToPanel = new JPanel();
+        talGoToPanel.add( talXLabel);
+        talGoToPanel.add( talXTextField);
+        talGoToPanel.add( talYLabel);
+        talGoToPanel.add( talYTextField);
+        talGoToPanel.add( talZLabel);
+        talGoToPanel.add( talZTextField);
+        talGoToPanel.add( talGoToButton);
+        gbSubConstraints.gridx = GridBagConstraints.RELATIVE;
+        gbSubConstraints.gridy = 7;
+        talairachSubPanel.add(talGoToPanel, gbSubConstraints);
 
         gbLayout = new GridBagLayout();
         gbConstraints = new GridBagConstraints();
@@ -3633,7 +3918,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         /* Panel for switiching between radiological and neurological viewing
          * conventions: */
         JPanel viewPanel = new JPanel(gbLayout);
-        viewPanel.setBorder(BorderFactory.createTitledBorder("Viewing Convention"));
+        
 
         ButtonGroup displayGroup = new ButtonGroup();
 
@@ -3646,7 +3931,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         gbConstraints.gridy = 0;
         viewPanel.add(radiologicalView, gbConstraints);
         gbConstraints.gridx++;
-        viewPanel.add(new JLabel("Radiological View"), gbConstraints);
+        JLabel rViewLabel = new JLabel("Radiological View");
+        rViewLabel.setForeground(Color.black);
+        rViewLabel.setFont(MipavUtil.font14B);
+        viewPanel.add(rViewLabel, gbConstraints);
         displayGroup.add(radiologicalView);
 
         /* neurological radio button: */
@@ -3658,22 +3946,43 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         gbConstraints.gridy++;
         viewPanel.add(neurologicalView, gbConstraints);
         gbConstraints.gridx++;
-        viewPanel.add(new JLabel("Neurological View"), gbConstraints);
+        JLabel nViewLabel = new JLabel("Neurological View");
+        nViewLabel.setForeground(Color.black);
+        nViewLabel.setFont(MipavUtil.font14B);
+        viewPanel.add(nViewLabel, gbConstraints);
         displayGroup.add(neurologicalView);
 
         tabbedPane = new JTabbedPane();
-        super.buildLabelPanel();
-
-        tabbedPane.add("Volume", absolutePanel);
-        tabbedPane.add("Scanner", scannerPanel);
+        buildLabelPanel();
+        absoluteGoToButton.addActionListener(this);
+        absoluteGoToButton.setActionCommand("absoluteGoTo");
+        scannerLPS_GoToButton.addActionListener(this);
+        scannerLPS_GoToButton.setActionCommand("scannerLPSGoTo");
+        scannerRAS_GoToButton.addActionListener(this);
+        scannerRAS_GoToButton.setActionCommand("scannerRASGoTo");
+        tabbedPane.add("Voxel", absolutePanel);
+        tabbedPane.add("Scanner LPS", scannerLPSPanel);
+        tabbedPane.add("Scanner RAS", scannerRASPanel);
         tabbedPane.add("Talairach", talairachPanel);
-        tabbedPane.add("View", viewPanel);
+        tabbedPane.add("View Convention", viewPanel);
 
         volumePositionPanel.setLayout(new GridLayout(1, 1));
         volumePositionPanel.add(tabbedPane);
     }
 
-    /**
+    
+    
+    
+    
+    public JLabel gettTalVoxLabel() {
+		return tTalVoxLabel;
+	}
+
+	public void settTalVoxLabelText(String text) {
+		this.tTalVoxLabel.setText(text);
+	}
+
+	/**
      * Constructs main frame structures for 3 images (image A only) or 9 images (image A and image B). Assumes imageA is
      * not null. Builds the labels for the position frame. Adds the tri-images to this frame's layout.
      */
@@ -4408,17 +4717,38 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         strZ = String.valueOf(nf.format(zTal));
 
         int[] triExtents = triImage[AXIAL_A].getExtents();
+        
+        
+        final int[] dimExtents = imageA.getExtents();
+        final int index = (int) ( (z * dimExtents[0] * dimExtents[1]) + (y * dimExtents[0]) + x);
+
+        final int iBuffFactor = imageA.isColorImage() ? 4 : 1;
+        if ( (index * iBuffFactor > imageA.getSize()) || (index < 0)) {
+            return;
+        }
+
+        iTalLabel.setText("Intensity: " + imageA.getFloat(index * iBuffFactor));
+        
+        
+        
+        
 
         if ((x >= 0) && (x < triExtents[0])) {
-            labelXTal.setText(strX);
+            //labelXTal.setText(strX);
+            xTalLabel.setText("X: " + strX);
+            talXTextField.setText(strX);
         }
 
         if ((y >= 0) && (y < triExtents[1])) {
-            labelYTal.setText(strY);
+            //labelYTal.setText(strY);
+            yTalLabel.setText("Y: " + strY);
+            talYTextField.setText(strY);
         }
 
         if ((z >= 0) && (z < triExtents[2])) {
-            labelZTal.setText(strZ);
+            //labelZTal.setText(strZ);
+            zTalLabel.setText("Z: " + strZ);
+            talZTextField.setText(strZ);
         }
     }
 
@@ -4710,7 +5040,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         labelZTal.setBorder(BorderFactory.createEmptyBorder());
         labelZTal.setEditable(false);
 
-        talairachVoxelLabel = new JLabel("     "); // must be initialized to 5 empty spaces
+        //talairachVoxelLabel = new JLabel("     "); // must be initialized to 5 empty spaces
     }
 
     /**

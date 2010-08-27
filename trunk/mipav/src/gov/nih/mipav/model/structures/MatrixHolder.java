@@ -146,12 +146,10 @@ public class MatrixHolder extends ModelSerialCloneable {
         String nextKey = null;
         while (iter.hasNext()) {
         	nextKey = iter.next();
-        	
             if (nextKey.startsWith(TransMatrix.getTransformIDStr(type))) {
                 return true;
             }
         }
-
         return false;
     }
 
@@ -257,7 +255,6 @@ public class MatrixHolder extends ModelSerialCloneable {
      * @param  matrixVector  Vector of matrices to replace the current matrices in the map
      */
     public void replaceMatrices(Vector matrixVector) {
-
         // remove all first
         clearMatrices();
 
