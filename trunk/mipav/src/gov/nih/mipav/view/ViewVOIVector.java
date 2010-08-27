@@ -123,5 +123,47 @@ public class ViewVOIVector extends Vector <VOI> {
 
         return newName;
     }
+    
+    public int getUniqueID()
+    {
+        int[] aiIDs = new int[size()];
+        for ( int i = 0; i < size(); i++ )
+        {
+            String name = elementAt(i).getName();
+            // get base name -- substring without a number at end
+            int numIndex = name.length();
+
+            for (int j = name.length() - 1; j >= 0; j--) {
+
+                if (!Character.isDigit(name.charAt(j))) {
+                    numIndex = j + 1;
+
+                    break;
+                }
+            }
+            int num = 0;
+            if (numIndex < name.length()) {
+                num = Integer.parseInt(name.substring(numIndex));
+            }
+            aiIDs[i] = num;
+        }
+        for ( int i = 0; i < size(); i++ )
+        {
+            boolean bFound = false;
+            for ( int j = 0; j < size(); j++ )
+            {
+                if ( aiIDs[j] == i )
+                {
+                    bFound = true;
+                    break;
+                }
+            }
+            if ( !bFound )
+            {
+                return i;
+            }
+        }
+        return size();
+    }
 
 }

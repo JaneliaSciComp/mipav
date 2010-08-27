@@ -103,7 +103,7 @@ public class VOI extends ModelSerialCloneable {
     private transient ViewJFrameGraph contourGraph = null;
 
     /** A vector array of curves per slice. */
-    private Vector<VOIBase> curves;
+    private VOIBaseVector curves;
 
     /** Indicates the type of VOI (i.e. CONTOUR, POLYLINE, LINE, POINT, PROTRACTOR, etc. ... ) */
     private int curveType;
@@ -123,8 +123,6 @@ public class VOI extends ModelSerialCloneable {
     /** Sets the minimum intensity value for operations on images segmented by this VOI */
     private float ignoreMin = Float.MAX_VALUE;
 
-    /** VOIListeners that are updated when this VOI changes */
-    private transient EventListenerList listenerList;
 
     /** Name of the VOI stored as a string. */
     private String name;
@@ -163,6 +161,9 @@ public class VOI extends ModelSerialCloneable {
     private String extension = "";
     
     private boolean active = false;
+
+    /** VOIListeners that are updated when this VOI changes */
+    public transient EventListenerList listenerList;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -178,7 +179,7 @@ public class VOI extends ModelSerialCloneable {
         this.ID = id;
         this.watershedID = id;
         this.process = true;
-        curves = new Vector<VOIBase>();
+        curves = new VOIBaseVector(this);
 
 
         displayMode = BOUNDARY;
@@ -229,7 +230,7 @@ public class VOI extends ModelSerialCloneable {
         this.watershedID = id;
         this.process = true;
         this.curveType = curveType;
-        curves = new Vector<VOIBase>();
+        curves = new VOIBaseVector(this);
 
         displayMode = BOUNDARY;
         polarity = ADDITIVE;
@@ -277,7 +278,7 @@ public class VOI extends ModelSerialCloneable {
         this.color = new Color( kVOI.color.getRed(), kVOI.color.getGreen(), kVOI.color.getBlue() );
         this.thickness = kVOI.thickness;
         this.contourGraph = kVOI.contourGraph;
-        this.curves = new Vector<VOIBase>();
+        this.curves = new VOIBaseVector(this);
         for ( int j = 0; j < kVOI.curves.size(); j++ )
         {
             VOIBase kContour = kVOI.curves.get(j).clone();
@@ -331,6 +332,8 @@ public class VOI extends ModelSerialCloneable {
         this.update();
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
 
     /**
      * adds the update listener.
@@ -346,8 +349,20 @@ public class VOI extends ModelSerialCloneable {
         listenerList.add(VOIListener.class, listener);
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    /**
+     * removes the update listener.
+     *
+     * @param  listener  VOIListener to remove.
+     */
+    public void removeVOIListener(VOIListener listener) {
 
+        if (listenerList == null) {
+            listenerList = new EventListenerList();
+        }
+
+        listenerList.remove(VOIListener.class, listener);
+    }
+    
     /**
      * Finds the area of the entire VOI of the VOIContour type only.
      *
@@ -1110,7 +1125,130 @@ public class VOI extends ModelSerialCloneable {
 
         super.finalize();
     }
+
     
+
+    // Notify all listeners that have registered interest for
+    // notification on this event type. The event instance
+    // is lazily created using the parameters passed into
+    // the fire method.
+    /**
+     * Fires a VOI event based on the VOI. calls the listener's <code>addedVOI()</code> method.
+     *
+     * @param  curve new curve added to this VOI.
+     */
+    protected void fireVOIBaseAdded(VOIBase curve) {
+
+        try {
+
+            // only if there are listeners to send events to should we
+            // bother with creating an event and bothering the event queue.
+            if (listenerList.getListenerCount(VOIListener.class) == 0) {
+                return;
+            }
+        } catch (NullPointerException npe) {
+            listenerList = new EventListenerList();
+        }
+
+        // always create a new Event, since we need to carry
+        // the changed VOI around.
+        VOIEvent voiUpdate = new VOIEvent(this, curve);
+
+        // Guaranteed to return a non-null array
+        Object[] listeners = listenerList.getListenerList();
+
+        // Process the listeners last to first, notifying
+        // those that are interested in this event
+        for (int i = listeners.length - 2; i >= 0; i -= 2) {
+
+            if (listeners[i] == VOIListener.class) {
+                ((VOIListener) listeners[i + 1]).addedCurve(voiUpdate);
+            }
+        }
+    }
+
+    /**
+     * Fires a VOI event based on the VOI. calls the listener's <code>removedVOI()</code> method.
+     *
+     * @param  curve curve removed from this VOI.
+     */
+    protected void fireVOIBaseRemoved(VOIBase curve) {
+
+        try {
+
+            // only if there are listeners to send events to should we
+            // bother with creating an event and bothering the event queue.
+            if (listenerList.getListenerCount(VOIListener.class) == 0) {
+                return;
+            }
+        } catch (NullPointerException npe) {
+            listenerList = new EventListenerList();
+        }
+
+        // always create a new Event, since we need to carry
+        // the changed VOI around.
+        VOIEvent voiUpdate = new VOIEvent(this, curve);
+
+        // Guaranteed to return a non-null array
+        Object[] listeners = listenerList.getListenerList();
+
+        // Process the listeners last to first, notifying
+        // those that are interested in this event
+        for (int i = listeners.length - 2; i >= 0; i -= 2) {
+
+            if (listeners[i] == VOIListener.class) {
+                ((VOIListener) listeners[i + 1]).removedCurve(voiUpdate);
+            }
+        }
+    }
+
+    /**
+     * Fires a VOI event based on the VOI. calls the listener's <code>removedVOI()</code> method.
+     */
+    protected void fireVOIselection() {
+        //System.err.println( "VOI.fireVOIselection" );
+        try {
+
+            // only if there are listeners to send events to should we
+            // bother with creating an event and bothering the event queue.
+            if (listenerList.getListenerCount(VOIListener.class) == 0) {
+                return;
+            }
+        } catch (NullPointerException npe) {
+            listenerList = new EventListenerList();
+        }
+
+        // always create a new Event, since we need to carry
+        // the changed VOI around.
+        VOIEvent voiUpdate = new VOIEvent(this);
+
+        // Guaranteed to return a non-null array
+        Object[] listeners = listenerList.getListenerList();
+        // Process the listeners last to first, notifying
+        // those that are interested in this event
+        for (int i = listeners.length - 2; i >= 0; i -= 2) {
+
+            if (listeners[i] == VOIListener.class) {
+                ((VOIListener) listeners[i + 1]).selectedVOI(voiUpdate);
+            }
+        }
+    }
+
+    protected void fireVOIColorChange(Color color)
+    {
+        if (listenerList != null) {
+            Object[] listeners = listenerList.getListenerList();
+            // Process the listeners last to first, notifying
+            // those that are interested in this event
+            for (int i = listeners.length - 2; i >= 0; i -= 2) {
+
+                if (listeners[i] == VOIListener.class) {
+                    ((VOIListener) listeners[i + 1]).colorChanged(color);
+                }
+            }
+        }
+
+    }
     /**
      * Finds the active Contour and returns it.
      *
@@ -1246,7 +1384,7 @@ public class VOI extends ModelSerialCloneable {
      *
      * @return  the curves
      */
-    public Vector<VOIBase> getCurves() {
+    public VOIBaseVector getCurves() {
         return curves;
     }
     
@@ -1753,6 +1891,15 @@ public class VOI extends ModelSerialCloneable {
         }
         return anyActive;
     }
+    
+    public void updateActive()
+    {
+        boolean anyActive = false;
+        for (int i = 0; i < curves.size(); i++) {
+            anyActive |= (curves.elementAt(i)).isActive();
+        }
+        setActive( anyActive );        
+    }
 
     /**
      * Returns true iff all contours in this VOI are active.
@@ -1988,31 +2135,20 @@ public class VOI extends ModelSerialCloneable {
     }
 
 
-
-    /**
-     * removes the update listener.
-     *
-     * @param  listener  VOIListener to remove.
-     */
-    public void removeVOIListener(VOIListener listener) {
-
-        if (listenerList == null) {
-            listenerList = new EventListenerList();
-        }
-
-        listenerList.remove(VOIListener.class, listener);
-    }
-    
     /**
      * Sets whether or not the VOI is active.
      *
      * @param  act  boolean to set active to
      */
     public void setActive(boolean act) {
-        this.active = act;
-        if ( active )
+        //System.err.println( getName() + " " + active + " -> " + act );
+        if ( active != act )
         {
-            fireVOIselection();
+            this.active = act;
+            if ( active )
+            {
+                fireVOIselection();
+            }
         }
     }
 
@@ -2043,18 +2179,7 @@ public class VOI extends ModelSerialCloneable {
      */
     public void setColor(Color color) {
         this.color = new Color( color.getRed(), color.getGreen(), color.getBlue() );
-
-        if (listenerList != null) {
-            Object[] listeners = listenerList.getListenerList();
-            // Process the listeners last to first, notifying
-            // those that are interested in this event
-            for (int i = listeners.length - 2; i >= 0; i -= 2) {
-
-                if (listeners[i] == VOIListener.class) {
-                    ((VOIListener) listeners[i + 1]).colorChanged(color);
-                }
-            }
-        }
+        fireVOIColorChange(color);
     }
 
     /**
@@ -2064,19 +2189,6 @@ public class VOI extends ModelSerialCloneable {
      */
     public void setColor(float hue) {
         this.setColor(Color.getHSBColor(hue, (float) 1.0, (float) 1.0));
-
-        if (listenerList != null) {
-            Object[] listeners = listenerList.getListenerList();
-            // Process the listeners last to first, notifying
-            // those that are interested in this event
-            for (int i = listeners.length - 2; i >= 0; i -= 2) {
-
-                if (listeners[i] == VOIListener.class) {
-                    ((VOIListener) listeners[i + 1]).colorChanged(color);
-                }
-            }
-        }
-
     }
 
     /**
@@ -2092,7 +2204,7 @@ public class VOI extends ModelSerialCloneable {
      * Sets the list of contours in this VOI to a new list.
      * @param newCurves new list of VOIBase contours.
      */
-    public void setCurves(Vector<VOIBase> newCurves) {
+    public void setCurves(VOIBaseVector newCurves) {
         this.curves = newCurves;
     }
 
@@ -2262,112 +2374,6 @@ public class VOI extends ModelSerialCloneable {
      */
     public String toString() {
         return name;
-    }
-
-    // Notify all listeners that have registered interest for
-    // notification on this event type. The event instance
-    // is lazily created using the parameters passed into
-    // the fire method.
-    /**
-     * Fires a VOI event based on the VOI. calls the listener's <code>addedVOI()</code> method.
-     *
-     * @param  curve new curve added to this VOI.
-     */
-    protected void fireVOIBaseAdded(VOIBase curve) {
-
-        try {
-
-            // only if there are listeners to send events to should we
-            // bother with creating an event and bothering the event queue.
-            if (listenerList.getListenerCount(VOIListener.class) == 0) {
-                return;
-            }
-        } catch (NullPointerException npe) {
-            listenerList = new EventListenerList();
-        }
-
-        // always create a new Event, since we need to carry
-        // the changed VOI around.
-        VOIEvent voiUpdate = new VOIEvent(this, curve);
-
-        // Guaranteed to return a non-null array
-        Object[] listeners = listenerList.getListenerList();
-
-        // Process the listeners last to first, notifying
-        // those that are interested in this event
-        for (int i = listeners.length - 2; i >= 0; i -= 2) {
-
-            if (listeners[i] == VOIListener.class) {
-                ((VOIListener) listeners[i + 1]).addedCurve(voiUpdate);
-            }
-        }
-    }
-
-    /**
-     * Fires a VOI event based on the VOI. calls the listener's <code>removedVOI()</code> method.
-     *
-     * @param  curve curve removed from this VOI.
-     */
-    protected void fireVOIBaseRemoved(VOIBase curve) {
-
-        try {
-
-            // only if there are listeners to send events to should we
-            // bother with creating an event and bothering the event queue.
-            if (listenerList.getListenerCount(VOIListener.class) == 0) {
-                return;
-            }
-        } catch (NullPointerException npe) {
-            listenerList = new EventListenerList();
-        }
-
-        // always create a new Event, since we need to carry
-        // the changed VOI around.
-        VOIEvent voiUpdate = new VOIEvent(this, curve);
-
-        // Guaranteed to return a non-null array
-        Object[] listeners = listenerList.getListenerList();
-
-        // Process the listeners last to first, notifying
-        // those that are interested in this event
-        for (int i = listeners.length - 2; i >= 0; i -= 2) {
-
-            if (listeners[i] == VOIListener.class) {
-                ((VOIListener) listeners[i + 1]).removedCurve(voiUpdate);
-            }
-        }
-    }
-
-    /**
-     * Fires a VOI event based on the VOI. calls the listener's <code>removedVOI()</code> method.
-     */
-    protected void fireVOIselection() {
-
-        try {
-
-            // only if there are listeners to send events to should we
-            // bother with creating an event and bothering the event queue.
-            if (listenerList.getListenerCount(VOIListener.class) == 0) {
-                return;
-            }
-        } catch (NullPointerException npe) {
-            listenerList = new EventListenerList();
-        }
-
-        // always create a new Event, since we need to carry
-        // the changed VOI around.
-        VOIEvent voiUpdate = new VOIEvent(this);
-
-        // Guaranteed to return a non-null array
-        Object[] listeners = listenerList.getListenerList();
-        // Process the listeners last to first, notifying
-        // those that are interested in this event
-        for (int i = listeners.length - 2; i >= 0; i -= 2) {
-
-            if (listeners[i] == VOIListener.class) {
-                ((VOIListener) listeners[i + 1]).selectedVOI(voiUpdate);
-            }
-        }
     }
 
     /**

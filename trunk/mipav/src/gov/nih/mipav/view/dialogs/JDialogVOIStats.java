@@ -5,6 +5,8 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.event.VOIEvent;
+import gov.nih.mipav.model.structures.event.VOIListener;
 
 import gov.nih.mipav.view.*;
 
@@ -34,7 +36,7 @@ import java.text.SimpleDateFormat;
  */
 public class JDialogVOIStats extends JDialogBase
         implements ItemListener, ChangeListener, FocusListener, 
-                    UpdateVOISelectionListener, TreeSelectionListener, AlgorithmInterface {
+        UpdateVOISelectionListener, TreeSelectionListener, AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -1138,8 +1140,10 @@ public class JDialogVOIStats extends JDialogBase
 
             return;
         } 
-
-        updateVOI(newVOIselection.getChangedVolumeOfInterest(), voiHandler.getActiveImage());
+        if ( voi != newVOIselection.getChangedVolumeOfInterest() )
+        {
+            updateVOI(newVOIselection.getChangedVolumeOfInterest(), voiHandler.getActiveImage());
+        }
         updateTree();
     }
 
@@ -1866,16 +1870,16 @@ public class JDialogVOIStats extends JDialogBase
     /**
      * DOCUMENT ME!
      */
-    private void updateTree() {
+    public void updateTree() {
+        //System.err.println("updateTree");
+        //if (treeSelectionChange) {
+        //    treeSelectionChange = false;
 
-        if (treeSelectionChange) {
-            treeSelectionChange = false;
-
-            return;
-        }
+        //    System.err.println("treeSelectionChange " + treeSelectionChange);
+        //    return;
+        //}
 
         if (this.isVisible()) {
-
             root.removeAllChildren();
 
             ViewVOIVector VOIs = image.getVOIs();
@@ -1896,7 +1900,7 @@ public class JDialogVOIStats extends JDialogBase
             VOIFrameNode currentVOIFrameNode = null;
             Enumeration voiFrameEnum = null;
 
-            Vector treePaths = new Vector();
+            Vector<TreePath> treePaths = new Vector<TreePath>();
 
             TreeNode tempNode = null;
 
@@ -1909,7 +1913,8 @@ public class JDialogVOIStats extends JDialogBase
 
                 // check to see if the current VOI is the VOI shown in this dialog
                 // or if the VOI isActive (can have multiple selections on tree)
-                if (tempVOI.isActive()) {
+                if (tempVOI.isActive())
+                {
 
                     // add a new tree path so the VOI node is selected
                     treePaths.addElement(new TreePath(new Object[] { root, currentNode }));
@@ -1923,7 +1928,8 @@ public class JDialogVOIStats extends JDialogBase
                         voiBase = (VOIBase) voiEnum.nextElement();
 
                         // check to see if the VOIBase is active
-                        if (voiBase.isActive()) {
+                        if (voiBase.isActive())
+                        {
 
                             voiFrameEnum = currentNode.children();
 
@@ -2563,6 +2569,5 @@ public class JDialogVOIStats extends JDialogBase
             return this;
         }
     }
-
 
 }

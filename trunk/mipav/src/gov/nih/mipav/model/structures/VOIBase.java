@@ -855,7 +855,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             outlineRegion(aafCrossingPoints, aiNumCrossings, iXMin, iXMax);
             fill(aafCrossingPoints, aiNumCrossings, iXMin, iXMax, (int)elementAt(0).Z, 
                     kMask, xDim, yDim, XOR, polarity );
-            System.out.println("outlineRegion/fill " +(System.currentTimeMillis() - time));
+            //System.out.println("outlineRegion/fill " +(System.currentTimeMillis() - time));
             
         }
         else if ( m_iPlane == XPLANE )
@@ -1660,9 +1660,10 @@ public abstract class VOIBase extends Vector<Vector3f> {
      */
     public void setActive(boolean active) {
         this.active = active;
-        if ( (voiGroup != null) && (voiGroup.getCurves().size() == 1) && !active )
+        if ( voiGroup != null )
         {
-            voiGroup.setActive(false);
+            // set the active flag to true if any are active, if all are inactive group 'global' active will be false.
+            voiGroup.updateActive();
         }
     }
     

@@ -30,6 +30,8 @@ import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIPoint;
 import gov.nih.mipav.model.structures.VOIPolyLineSlice;
 import gov.nih.mipav.model.structures.VOIVector;
+import gov.nih.mipav.model.structures.event.VOIEvent;
+import gov.nih.mipav.model.structures.event.VOIListener;
 import gov.nih.mipav.view.CustomUIBuilder;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -122,7 +124,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  * @see CustomUIBuilder. 
  *
  */
-public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
+public class VOIManagerInterface implements ActionListener, VOIHandlerInterface, VOIListener
 {
     /**
      * Pick up the selected color and call method to change the color.
@@ -854,7 +856,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
             if ( kActive.isRegistered( m_kCurrentVOIGroup ) == -1 )
             {
                 kActive.registerVOI( m_kCurrentVOIGroup );
-            }            
+            }
         }
     }
     
@@ -1163,7 +1165,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
      * @see gov.nih.mipav.view.VOIHandlerInterface#fireVOISelectionChange(gov.nih.mipav.model.structures.VOI)
      */
     public void fireVOISelectionChange(VOI voi) {
-        fireVOISelectionChange(voi, null);
+        //fireVOISelectionChange(voi, null);
+        //System.err.println( "fireVOISelectionChange 1" );
     }
 
 
@@ -1172,6 +1175,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
      * @see gov.nih.mipav.view.VOIHandlerInterface#fireVOISelectionChange(gov.nih.mipav.model.structures.VOI, gov.nih.mipav.model.structures.VOIBase)
      */
     public void fireVOISelectionChange(VOI voi, VOIBase curve) {
+        //System.err.println( "fireVOISelectionChange 2" );
+        /*
         try {
 
             // only if there are listeners to send events to should we
@@ -1200,6 +1205,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
             }
         }
         updateDisplay();
+        */
     }
 
 
@@ -1743,8 +1749,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
                 toolbarBuilder.getVOIColorButton().getBackground() );
 
 
-        short sID = (short)(m_kParent.getActiveImage().getVOIs().size() + 1);
+        short sID = (short)(m_kParent.getActiveImage().getVOIs().getUniqueID());
         m_kCurrentVOIGroup = new VOI( sID,  new String( "_" + sID ) );
+        m_kCurrentVOIGroup.addVOIListener(this);
         if (presetHue >= 0.0) {
         	m_kCurrentVOIGroup.setColor(presetHue);
         }
@@ -1867,6 +1874,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
      */
     public void saveVOIs( String kCommand )
     {
+        //System.err.println( "saveVOIs " + kCommand );
         m_kUndoCommands.add( kCommand );
         m_kUndoList.add( getVOIState() );
         m_kRedoCommands.clear();
@@ -2235,11 +2243,12 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
             findCompatibleType(kImage, kNew, isFinished);
             if ( m_kCurrentVOIGroup == null )
             {
-                short sID = (short)(kImage.getVOIs().size() + 1);
+                short sID = (short)(kImage.getVOIs().getUniqueID());
                 String kName = kNew.getClass().getName();
                 int index = kName.lastIndexOf('.') + 1;
                 kName = kName.substring(index);
                 m_kCurrentVOIGroup = new VOI( sID,  kName + "_" + sID, kNew.getType(), presetHue );
+                m_kCurrentVOIGroup.addVOIListener(this);
                 m_kCurrentVOIGroup.setOpacity(1f);
                 kImage.registerVOI( m_kCurrentVOIGroup );
             }   
@@ -2599,7 +2608,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
         }
         if ( m_kCurrentVOIGroup != null && m_kCurrentVOIGroup.isEmpty() )
         {
-            short sID = (short)(kImage.getVOIs().size() + 1);
+            short sID = (short)(kImage.getVOIs().getUniqueID());
             m_kParent.getActiveImage().unregisterVOI(m_kCurrentVOIGroup);
             String kName = kNew.getClass().getName();
             int index = kName.lastIndexOf('.') + 1;
@@ -3487,6 +3496,13 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
         }
         m_kUndoList.add( getVOIState() );
         setVOIState( m_kRedoList.remove( m_kRedoList.size() - 1) );
+        if ( imageStatList != null )
+        {
+            imageStatList.refreshVOIList(getActiveImage().getVOIs());
+        }
+        if (m_kVOIDialog != null) {
+            m_kVOIDialog.updateVOI(m_kCurrentVOIGroup, m_kParent.getActiveImage() );
+        }
         updateDisplay();
     }
 
@@ -4229,6 +4245,13 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
         }
         m_kRedoList.add( getVOIState() );
         setVOIState( m_kUndoList.remove( m_kUndoList.size() - 1) );
+        if ( imageStatList != null )
+        {
+            imageStatList.refreshVOIList(getActiveImage().getVOIs());
+        }
+        if (m_kVOIDialog != null) {
+            m_kVOIDialog.updateVOI(m_kCurrentVOIGroup, m_kParent.getActiveImage() );
+        }
         updateDisplay();
     }
 
@@ -4418,6 +4441,36 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface
             e.printStackTrace();
         }
 
+    }
+
+    @Override
+    public void addedCurve(VOIEvent added) {
+        if ( m_kVOIDialog != null )
+        {
+            m_kVOIDialog.updateVOI( added.getVOI(), getActiveImage() );
+            m_kVOIDialog.updateTree();
+        }
+    }
+
+    @Override
+    public void colorChanged(Color c) { }
+
+    @Override
+    public void removedCurve(VOIEvent removed) { 
+        if ( m_kVOIDialog != null )
+        {
+            m_kVOIDialog.updateVOI( removed.getVOI(), getActiveImage() );
+            m_kVOIDialog.updateTree();
+        }
+     }
+
+    @Override
+    public void selectedVOI(VOIEvent selection) {
+        if ( m_kVOIDialog != null )
+        {
+            m_kVOIDialog.updateVOI( selection.getVOI(), getActiveImage() );
+            m_kVOIDialog.updateTree();
+        }
     }
 
 }

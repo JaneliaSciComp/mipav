@@ -1877,11 +1877,12 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         {
             if ( m_kCurrentVOI == null )
             {            
+                int iSlice = m_kDrawingContext.getSlice();
                 Vector<Vector3f> kPositions = new Vector<Vector3f>();
-                kPositions.add( new Vector3f (m_fMouseX, fYStart, m_kDrawingContext.getSlice()));
-                kPositions.add( new Vector3f (iX, fYStart, m_kDrawingContext.getSlice()));
-                kPositions.add( new Vector3f (iX, fY, m_kDrawingContext.getSlice()));
-                kPositions.add( new Vector3f (m_fMouseX, fY, m_kDrawingContext.getSlice()));
+                kPositions.add( new Vector3f (m_fMouseX, fYStart, iSlice));
+                kPositions.add( new Vector3f (iX, fYStart, iSlice));
+                kPositions.add( new Vector3f (iX, fY, iSlice));
+                kPositions.add( new Vector3f (m_fMouseX, fY, iSlice));
                 m_kCurrentVOI = createVOI( m_iDrawType, true, false, kPositions );
                 if ( m_iDrawType == LUT )
                 {

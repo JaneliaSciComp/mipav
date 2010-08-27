@@ -2336,6 +2336,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
          * @param selection DOCUMENT ME!
          */
         public void selectedVOI(final VOIEvent selection) {
+            //System.err.println( "VOIHighlighter.selectedVOI " + selection.getSource() + " " + selection.getState());
             volumesList.setSelectedValue(selection.getSource(), selection.getState());
         }
 

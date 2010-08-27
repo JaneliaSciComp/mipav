@@ -85,4 +85,9 @@ public class VOIEvent extends EventObject {
     public boolean getState() {
         return ((VOI) getSource()).isActive();
     }
+    
+    public VOI getVOI()
+    {
+        return ((VOI) getSource());
+    }
 }
