@@ -1085,7 +1085,8 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         JPanel panelLabelsScanner = new JPanel();
         panelLabelsScanner.setLayout(new GridLayout(1, 2));
         panelLabelsScanner.setBorder(JPanelRendererBase.buildTitledBorder("Scanner Coordinates"));
-        panelLabelsScanner.add(scannerPanel);
+        panelLabelsScanner.add(scannerLPSPanel);
+        panelLabelsScanner.add(scannerRASPanel);
         panelLabelsScanner.add(absolutePanel);
 
         panelLabels.setLayout(new GridLayout(3, 1));
@@ -2583,7 +2584,10 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      */
     public void setPositionLabels(WildMagic.LibFoundation.Mathematics.Vector3f position) {
 
-        if (scannerLabel == null) {
+        if (scannerLPSLabel == null) {
+            return;
+        }
+        if (scannerRASLabel == null) {
             return;
         }
 

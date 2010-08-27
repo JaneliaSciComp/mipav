@@ -293,7 +293,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             return;
         }
 
-        StringBuffer talVoxelLabelText = new StringBuffer(triImageFrame.getTalairachVoxelLabelText());
+        String txt = triImageFrame.gettTalVoxLabel().getText();
+        StringBuffer talVoxelLabelText = new StringBuffer(txt.subSequence(txt.indexOf(":")+2, txt.length()));
 
         if (talVoxelLabelText == null) {
             talVoxelLabelText = new StringBuffer(5);
@@ -379,7 +380,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             }
         }
 
-        triImageFrame.setTalairachVoxelLabelText(new String(talVoxelLabelText));
+        triImageFrame.settTalVoxLabelText("Talairach Voxel: " + new String(talVoxelLabelText));
     }
 
     /**

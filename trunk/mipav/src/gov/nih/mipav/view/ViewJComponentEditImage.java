@@ -637,6 +637,67 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
         return strs;
     }
+    
+    
+    
+    
+    /**
+     * Gets position data to display in message bar - for DICOM and MINC images, gives patient position as well. The
+     * image's associated transformation must be FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL, or the orientations must be
+     * set up correctly, or else the function returns null.
+     * 
+     * @param image The image the point lies within.
+     * @param position (x,y,z(slice)) position in FileCoordinates
+     * 
+     * @return An array of strings that represent patient position.
+     */
+    public static final String[] getRASScannerPositionLabels(final ModelImage image, final Vector3f position) {
+        final DecimalFormat nf = new DecimalFormat("#####0.0##");
+        final Vector3f kOut = new Vector3f(position);
+        if (image.getNDims() >= 3) {
+            MipavCoordinateSystems.fileToScanner(position, kOut, image);
+        }
+
+        final float[] tCoord = new float[3];
+        tCoord[0] = -kOut.X;
+        tCoord[1] = -kOut.Y;
+        tCoord[2] = kOut.Z;
+
+        final String[] labels = {"L-R: ", "P-A: ", "I-S: "};
+
+        if ( !image.getRadiologicalView()) {
+            labels[0] = new String("R-L: ");
+        }
+
+        final String[] strs = new String[3];
+
+        if (image.getRadiologicalView()) {
+
+            if ( (tCoord[0] < 0)) {
+                strs[0] = new String(labels[0] + labels[0].charAt(0) + ": " + String.valueOf(nf.format(tCoord[0])));
+            } else {
+                strs[0] = new String(labels[0] + labels[0].charAt(2) + ": " + String.valueOf(nf.format(tCoord[0])));
+            }
+        } else {
+
+            if ( (tCoord[0] < 0)) {
+                strs[0] = new String(labels[0] + labels[0].charAt(2) + ": " + String.valueOf(nf.format(tCoord[0])));
+            } else {
+                strs[0] = new String(labels[0] + labels[0].charAt(0) + ": " + String.valueOf(nf.format(tCoord[0])));
+            }
+        }
+
+        for (int i = 1; i < 3; i++) {
+
+            if ( (tCoord[i] < 0)) {
+                strs[i] = new String(labels[i] + labels[i].charAt(0) + ": " + String.valueOf(nf.format(tCoord[i])));
+            } else {
+                strs[i] = new String(labels[i] + labels[i].charAt(2) + ": " + String.valueOf(nf.format(tCoord[i])));
+            }
+        }
+
+        return strs;
+    }
 
     /**
      * Calculates the volume of the painted voxels.
