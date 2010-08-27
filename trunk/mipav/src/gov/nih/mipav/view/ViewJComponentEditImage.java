@@ -6028,7 +6028,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      */
     public Vector3f downSlice()
     {
-        if ( slice - 1 > 0 )
+        if ( slice - 1 >= 0 )
         {
             setSlice(slice-1);
             return m_kPatientSlice.getCenter();
