@@ -415,6 +415,8 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
         }
 
         double unit_tolerance = Math.abs(1 / tol);
+        
+        /*
         //System.err.println( "AlgorithmPowellOptBase " + unit_tolerance );
         savedStartPoint = new double[startPoint.length];
         for ( int i = 0; i < startPoint.length; i++ )
@@ -423,8 +425,9 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
         }
         BrentOnLine brentOnLine = new BrentOnLine(pt, directions, this);
         bestCost[0] = brentOnLine.search(unit_tolerance);
+        */
         
-/*
+
         // Create new Bracket.  Set a and b and find functionAtA and functionAtB.
         Bracket bracket = new Bracket();
 
@@ -556,7 +559,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
         }
 
         bestCost[0] = bracket.functionAtB;
-        */
+        
     }
 
     /**

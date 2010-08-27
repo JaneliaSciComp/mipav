@@ -1859,12 +1859,7 @@ public class ModelImage extends ModelStorageBase {
     
     public VOIVector getVOIsCopy()
     {
-        VOIVector kCopy = new VOIVector();
-        for ( int i = 0; i < voiVector.size(); i++ )
-        {
-            kCopy.add ( new VOI( voiVector.get(i) ) );
-        }
-        return kCopy;
+        return new VOIVector(voiVector);
     }
 
     /**
@@ -1893,7 +1888,7 @@ public class ModelImage extends ModelStorageBase {
             slices = 1;
         }
 
-        VOIVector tempVOIs = (VOIVector) voiVector.clone();
+        VOIVector tempVOIs = new VOIVector(voiVector);
 
         VOIBase tempBase = null;
         nVOIs = tempVOIs.size();
@@ -3921,14 +3916,7 @@ public class ModelImage extends ModelStorageBase {
      * @param VOIs VOIs to image VOIs
      */
     public void setVOIs(final VOIVector VOIs) {
-        voiVector = new VOIVector();
-
-        final int nVOI = VOIs.size();
-        for (int i = 0; i < nVOI; i++) {
-            voiVector.add(new VOI(VOIs.VOIAt(i)));
-        }
-
-        System.gc();
+        voiVector = new VOIVector(VOIs);
     }
 
     /**
@@ -4042,7 +4030,7 @@ public class ModelImage extends ModelStorageBase {
         short id = 0;
 
         // make a copy of the VOIs stored until the final step
-        VOIVector tempVOIs = (VOIVector) voiVector.clone();
+        VOIVector tempVOIs = new VOIVector(voiVector);
 
         nVOIs = tempVOIs.size();
 
@@ -4250,9 +4238,6 @@ public class ModelImage extends ModelStorageBase {
      */
     public void unregisterVOI(final VOI voi) {
         voiVector.removeElement(voi);
-
-        for (int i = 0; i < voiVector.size(); i++) { // ((VOI)(voiVector.elementAt(i))).setID((short)i);
-        }
     }
     
     public static boolean updateFileInfo( ModelImage destImage, ModelImage srcImage, final int[] axisOrder, final boolean[] axisFlip )

@@ -960,7 +960,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         for (i = 0; i < sigmasRef.length; i++) {
             sigmasRef[i] = ( (resInput[i] - resRef[i]) / resRef[i]) * 0.6f; // 2.36 * sigma = x --> FWHM 0.424 =
             // 1/2.36
-            System.out.println(" sigmasRef[" + i + " ] = " + sigmasRef[i]);
+            //System.out.println(" sigmasRef[" + i + " ] = " + sigmasRef[i]);
 
             if (sigmasRef[i] < 0.5f) {
                 sigmasRef[i] = 0.0f;
@@ -2125,9 +2125,9 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         final double[] costs = new double[fineNumX * fineNumY * fineNumZ];
         double factorX, factorY, factorZ;
 
-        System.out.println("coarseNumX and fineNumX " + coarseNumX + " " + fineNumX);
-        System.out.println("coarseNumY and fineNumY " + coarseNumY + " " + fineNumY);
-        System.out.println("coarseNumZ and fineNumZ " + coarseNumZ + " " + fineNumZ);
+        //System.out.println("coarseNumX and fineNumX " + coarseNumX + " " + fineNumX);
+        //System.out.println("coarseNumY and fineNumY " + coarseNumY + " " + fineNumY);
+        //System.out.println("coarseNumZ and fineNumZ " + coarseNumZ + " " + fineNumZ);
 
         index = 0;
         for (int i = 0; (i < fineNumX) && !threadStopped; i++) {

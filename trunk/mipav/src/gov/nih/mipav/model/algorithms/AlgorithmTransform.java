@@ -5036,14 +5036,14 @@ public class AlgorithmTransform extends AlgorithmBase {
             if (trans.getDim() == 3) {
                 trans.transform(imgOrigin[0], imgOrigin[1], imgOrigin);
             } else {
-                System.err.println("Before: AlgorithmTransform.imgOrigin[0] = " + AlgorithmTransform.imgOrigin[0] +
-                		"AlgorithmTransform.imgOrigin[1] = " + AlgorithmTransform.imgOrigin[1] +
-                		"AlgorithmTransform.imgOrigin[2] = " + AlgorithmTransform.imgOrigin[2]);
+                //System.err.println("Before: AlgorithmTransform.imgOrigin[0] = " + AlgorithmTransform.imgOrigin[0] +
+                //		"AlgorithmTransform.imgOrigin[1] = " + AlgorithmTransform.imgOrigin[1] +
+                //		"AlgorithmTransform.imgOrigin[2] = " + AlgorithmTransform.imgOrigin[2]);
                 trans.transform(imgOrigin[0], imgOrigin[1], imgOrigin[2], imgOrigin);
                 
-                System.err.println("After: AlgorithmTransform.imgOrigin[0] = " + AlgorithmTransform.imgOrigin[0] +
-                		"AlgorithmTransform.imgOrigin[1] = " + AlgorithmTransform.imgOrigin[1] +
-                		"AlgorithmTransform.imgOrigin[2] = " + AlgorithmTransform.imgOrigin[2]);
+                //System.err.println("After: AlgorithmTransform.imgOrigin[0] = " + AlgorithmTransform.imgOrigin[0] +
+                //		"AlgorithmTransform.imgOrigin[1] = " + AlgorithmTransform.imgOrigin[1] +
+                //		"AlgorithmTransform.imgOrigin[2] = " + AlgorithmTransform.imgOrigin[2]);
             }
         } catch (final OutOfMemoryError e) {
             disposeLocal();
