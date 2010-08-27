@@ -1039,8 +1039,11 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             saveVOIs(kCommand);
             copy();
             Vector3f kCenter = m_kParent.PropUp(m_iActive);
-            setCenter( kCenter );
-            paste();
+            if ( kCenter != null )
+            {
+                setCenter( kCenter );
+                paste();
+            }
             setDefaultCursor();
         }
         else if ( kCommand.equals(CustomUIBuilder.PARAM_VOI_PROPAGATE_DOWN.getActionCommand()) )
@@ -1048,8 +1051,11 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             saveVOIs(kCommand);
             copy();
             Vector3f kCenter = m_kParent.PropDown(m_iActive);
-            setCenter( kCenter );
-            paste();
+            if ( kCenter != null )
+            {
+                setCenter( kCenter );
+                paste();
+            }
             setDefaultCursor();
         }
         else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_PROPAGATE_ALL.getActionCommand()) ) {
