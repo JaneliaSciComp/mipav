@@ -9,6 +9,34 @@ import gov.nih.mipav.view.*;
 
 public abstract class DQED {
 	
+	private int idope[] = new int[6];
+	
+	private int igo_dbocls;
+	
+	private final double one = 1.0;
+	
+	private boolean outputMes = true;
+	
+	// epsilon = D1MACH(4)
+    // Machine epsilon is the smallest positive epsilon such that
+    // (1.0 + epsilon) != 1.0.
+    // epsilon = 2**(1 - doubleDigits) = 2**(1 - 53) = 2**(-52)
+    // epsilon = 2.224460e-16
+    // epsilon is called the largest relative spacing
+    /*epsilon = 1.0;
+    neweps = 1.0;
+
+    while (true) {
+
+        if (1.0 == (1.0 + neweps)) {
+            break;
+        } else {
+            epsilon = neweps;
+            neweps = neweps / 2.0;
+        }
+    } // while(true)*/
+	private double epsilon = Math.pow(2.0, -52.0);
+	
 	
 	public DQED() {
 		
@@ -228,10 +256,11 @@ public abstract class DQED {
 		  return;	
 	} // daxpy
 	
-	/*private void dbocls ( w, mdw, mcon, mrows, ncols, bl, bu, ind, iopt, x, &
-			  rnormc, rnorm, mode, rw, iw )
+	private void dbocls ( double w[][], int mdw, int mcon, int mrows, int ncols, double bl[], double bu[],
+			              int ind[], int iopt[], double x[], double rnormc[], double rnorm[], int mode[],
+			              double rw[], int iw[] ) {
 
-			!*****************************************************************************80
+			/*****************************************************************************80
 			!
 			!! DBOCLS solves a bounded and constrained least squares problem.
 			!
@@ -635,640 +664,1152 @@ public abstract class DQED {
 			!     permitted. Other values are errors. Options -99,-1,...,-9 mean
 			!     that the respective options 99,1,...,9 are left at their default
 			!     values. An example is the option to suppress the preprocessing of
-			!     contraints:
+			!     constraints:
 			!
 			!       IOPT(1)=-8 Option is recognized but not changed
 			!       IOPT(2)=99
 			!       CALL DBOCLS( )
-			!
-			  implicit none
+			*/
 
-			  integer mdw
+			  boolean accum = false;
+			  double anorm;
+			  boolean checkl;
+			  double cnorm;
+			  double drelpr = epsilon;
+			  boolean filter = false;
+			  int i;
+			  int icase;
+			  int idum;
+			  int iiw;
+			  int inrows;
+			  int ip;
+			  int irw;
+			  int iscale = 0;
+			  int j;
+			  int jopt[] = new int[6];
+			  int jp;
+			  int lds;
+			  int lenx;
+			  int level;
+			  int liopt = 0;
+			  int liw;
+			  int llb = 0;
+			  int lliw = 0;
+			  int llrw = 0;
+			  int llx = 0;
+			  int lmdw = 0;
+			  int lndw = 0;
+			  int locacc = 0;
+			  int locdim;
+			  int lopt;
+			  int lp;
+			  int lrw;
+			  int mdwl;
+			  int mnew = 0;
+			  int modec;
+			  int mout = 0;
+			  int nerr;
+			  boolean pretri = false;
+			  double rdum;
+			  double t = 0.0;
+			  double t1;
+			  double t2;
+			  double wt;
+			  double arr[];
 
-			  logical :: accum
-			  real ( kind = 8 ) anorm
-			  real ( kind = 8 ) bl(*)
-			  real ( kind = 8 ) bu(*)
-			  logical checkl
-			  real ( kind = 8 ) cnorm
-			  real ( kind = 8 ) dasum
-			  real ( kind = 8 ) ddot
-			  real ( kind = 8 ) dnrm2
-			  real ( kind = 8 ) drelpr
-			  logical filter
-			  integer i
-			  integer icase
-			  integer idope
-			  integer idum
-			  integer :: igo = 0
-			  integer iiw
-			  integer ind(*)
-			  integer inrows
-			  integer iopt(*)
-			  integer ip
-			  integer irw
-			  integer iscale
-			  integer iw(*)
-			  integer j
-			  integer jopt(5)
-			  integer jp
-			  integer lds
-			  integer lenx
-			  integer level
-			  integer liopt
-			  integer liw
-			  integer llb
-			  integer lliw
-			  integer llrw
-			  integer llx
-			  integer lmdw
-			  integer lndw
-			  integer locacc
-			  integer locdim
-			  integer lopt
-			  integer lp
-			  integer lrw
-			  integer mcon
-			  integer mdwl
-			  integer mnew
-			  integer mode
-			  integer modec
-			  integer mout
-			  integer mrows
-			  integer ncols
-			  integer nerr
-			  real ( kind = 8 ), parameter :: one = 1.0D+00
-			  logical pretri
-			  real ( kind = 8 ) rdum
-			  real ( kind = 8 ) rnorm
-			  real ( kind = 8 ) rnormc
-			  real ( kind = 8 ) rw(*)
-			  real ( kind = 8 ) t
-			  real ( kind = 8 ) t1
-			  real ( kind = 8 ) t2
-			  real ( kind = 8 ) w(mdw,*)
-			  real ( kind = 8 ) wt
-			  real ( kind = 8 ) x(*)
+			  idum = 0;
+			  rdum = 0.0;
+			  nerr = 0;
+			  mode[0] = 0;
+			  level = 1;
 
-			  save
+			  if ( igo_dbocls == 0) {
+			//
+			//  Check validity of input data.
+			//
+			//  See that mdw is .gt.0. gross check only.
+			//
+			      if ( mdw<=0) {
+			          nerr = 53;
+			          xerrwv("dbocls(). mdw=(i1) must be positive.",
+			                      nerr,level,1,mdw,idum,0,rdum,rdum);
+				      if ( 0 <= mode[0] ) {
+					    mode[0] = -nerr;
+				      }
+	
+					  igo_dbocls = 0;
 
-			  common /dbocom/ idope(5)
+				      return;
+			      } // if (mdw <= 0)
+			//
+			//  See that number of constraints is nonnegative.
+			//
+			      if ( mcon < 0) {
+			          nerr = 54;
+			          xerrwv("dbocls(). mcon=(i1) must be nonnegative.",
+			                      nerr,level,1,mcon,idum,0,rdum,rdum);
+				      if ( 0 <= mode[0] ) {
+				          mode[0] = -nerr;
+					  }
+			
+				      igo_dbocls = 0;
+			
+					  return;
+			      } // if (mcon < 0)
+			//
+			//  See that number of unknowns is positive.
+			//
+			      if ( ncols<=0) {
+			          nerr = 55;
+			          xerrwv("dbocls(). ncols=(i1) the no. of variables must be positive.",
+			                      nerr,level,1,ncols,idum,0,rdum,rdum);
+			          if ( 0 <= mode[0] ) {
+			              mode[0] = -nerr;
+		              }
 
-			  idum = 0
-			  rdum = 0.0D+00
-			  nerr = 0
-			  mode = 0
-			  level = 1
+			          igo_dbocls = 0;
 
-			  if ( igo == 0) then
-			!
-			!  Check validity of input data.
-			!
-			!  See that mdw is .gt.0. gross check only.
-			!
-			      if ( mdw<=0) then
-			          nerr = 53
-			          call xerrwv('dbocls(). mdw=(i1) must be positive.', &
-			                      nerr,level,1,mdw,idum,0,rdum,rdum)
-			          go to 260
-			      end if
-			!
-			!  See that number of constraints is nonnegative.
-			!
-			      if ( mcon < 0) then
-			          nerr = 54
-			          call xerrwv('dbocls(). mcon=(i1) must be nonnegative.', &
-			                      nerr,level,1,mcon,idum,0,rdum,rdum)
-			          go to 260
-			      end if
-			!
-			!  See that number of unknowns is positive.
-			!
-			      if ( ncols<=0) then
-			          nerr = 55
-			          call xerrwv( &
-			       'dbocls(). ncols=(i1) the no. of variables must be positive.' &
-			                      ,nerr,level,1,ncols,idum,0,rdum,rdum)
-			          go to 260
-			      end if
-			!
-			!  See that constraint indicators are all well-defined.
-			!
-			      do j = 1,ncols + mcon
-			          if ( ind(j) < 1 .or. ind(j) > 4) then
-			              nerr = 56
-			              call xerrwv( &
-			                    'dbocls(). for j=(i1), ind(j)=(i2) must be 1-4.' &
-			                          ,nerr,level,2,j,ind(j),0,rdum,rdum)
-			              go to 260
-			          end if
-			      end do
-			!
-			!  See that bounds are consistent.
-			!
-			      do j = 1,ncols + mcon
-			          if ( ind(j) == 3) then
-			              if ( bl(j) > bu(j)) then
-			                  nerr = 57
-			                  call xerrwv( &
-			        'dbocls(). for j=(i1), bound bl(j)=(r1) is  >  bu(j)=(r2).' &
-			         ,nerr,level,1,j,idum,2,bl(j),bu(j))
-			                  go to 260
-			              end if
-			          end if
-			      end do
-			!
-			!  Process option array.
-			!
-			      drelpr = epsilon ( drelpr )
-			      checkl = .false.
-			      filter = .true.
-			      lenx = 2* (ncols+mcon) + 2
-			      iscale = 1
-			      igo = 1
-			      accum = .false.
-			      pretri = .true.
-			      lopt = 0
-			      lp = 0
-			      lds = 0
+		              return; 
+			     } // if (ncols <= 0)
+			//
+			//  See that constraint indicators are all well-defined.
+			//
+			      for (j = 1; j <= ncols + mcon; j++) {
+			          if ( ind[j] < 1 || ind[j] > 4) {
+			              nerr = 56;
+			              xerrwv("dbocls(). for j=(i1), ind(j)=(i2) must be 1-4.",
+			                          nerr,level,2,j,ind[j],0,rdum,rdum);
+			              if ( 0 <= mode[0] ) {
+					          mode[0] = -nerr;
+				          }
+	
+					      igo_dbocls = 0;
 
-			   30     continue
-			      lp = lp + lds
-			      ip = iopt(lp+1)
-			      jp = abs(ip)
-			!
-			!  Test for no more options to change.
-			!
-			      if ( ip == 99) then
-			          if ( lopt == 0) lopt = lp+1
-			!
-			!  Send column scaling to DBOLS().
-			!
-			          idope(4)=1
-			!
-			!  Note that DBOLS() was called by DBOCLS()
-			!
-			          idope(5)=1
-			!
-			!  Change pretriangularization factor in DBOLSM().
-			!
-			          idope(1) = ncols + mcon + 1
-			!
-			!  Pass weight to DBOLSM() for rank test.
-			!
-			          idope(2) = ncols + mcon + 2
-			          idope(3) = mcon
-			          go to 50
-			      else if ( jp == 99) then
-			          lds = 1
-			          go to 50
-			      else if ( jp == 1) then
-			          if ( ip > 0) then
-			!
-			!  Set up direction flag location, row stacking pointer
-			!  location, and location for number of new rows.
-			!
-			              locacc = lp + 2
-			!
-			!                  IOPT(LOCACC-1)=option number for seq. accumulation.
-			!     Contents..   IOPT(LOCACC  )=user direction flag, 1 or 2.
-			!                  IOPT(LOCACC+1)=row stacking pointer.
-			!                  IOPT(LOCACC+2)=number of new rows to process.
-			!
-			!     User action with this option..
-			!
-			!      (Set up option data for SEQ. Accumulation in IOPT(*).)
-			!      (Move block of equations into W(*,*)  starting at first
-			!       row of W(*,*) below the rows for the constraint matrix C.
-			!       Set IOPT(LOCACC+2)=no. of least squares equations in block.
-			!
-			!              LOOP
-			!              CALL DBOCLS()
-			!
-			!                  IF(IOPT(LOCACC) .EQ. 1) THEN
-			!                      STACK EQUAS. INTO W(*,*), STARTING AT
-			!                      ROW IOPT(LOCACC+1).
-			!                       INTO W(*,*).
-			!                       SET IOPT(LOCACC+2)=NO. OF EQUAS.
-			!                      IF LAST BLOCK OF EQUAS., SET IOPT(LOCACC)=2.
-			!                  ELSE IF IOPT(LOCACC) .EQ. 2) THEN
-			!                      (PROCESS IS OVER. EXIT LOOP.)
-			!                  ELSE
-			!                      (ERROR CONDITION. SHOULD NOT HAPPEN.)
-			!                  END IF
-			!              END LOOP
-			!
-			              iopt(locacc+1) = mcon + 1
-			              accum = .true.
-			              iopt(locacc) = igo
-			          end if
-			          lds = 4
-			          go to 30
-			      else if ( jp == 2) then
-			          if ( ip > 0) then
-			!
-			!  GET ACTUAL LENGTHS OF ARRAYS FOR CHECKING AGAINST NEEDS.
-			!
-			              locdim = lp + 2
-			!
-			!  LMDW.GE.MCON+MAX(MOUT,NCOLS), IF MCON.GT.0 .AND FILTER
-			!  LMDW.GE.MCON+MOUT, OTHERWISE
-			!
-			!  LNDW.GE.NCOLS+MCON+1
-			!  LLB .GE.NCOLS+MCON
-			!  LLX .GE.2*(NCOLS+MCON)+2+EXTRA REQD. IN OPTIONS.
-			!  LLRW.GE.6*NCOLS+5*MCON
-			!  LLIW.GE.2*(NCOLS+MCON)
-			!  LIOP.GE. AMOUNT REQD. FOR OPTION ARRAY.
-			!
-			              lmdw = iopt(locdim)
-			              lndw = iopt(locdim+1)
-			              llb = iopt(locdim+2)
-			              llx = iopt(locdim+3)
-			              llrw = iopt(locdim+4)
-			              lliw = iopt(locdim+5)
-			              liopt = iopt(locdim+6)
-			              checkl = .true.
-			          end if
-			          lds = 8
-			          go to 30
-			!
-			!  OPTION TO MODIFY THE COLUMN SCALING.
-			!
-			      else if ( jp == 3) then
-			          if ( ip > 0) then
-			              iscale = iopt(lp+2)
-			!
-			!     SEE THAT ISCALE IS 1 THRU 3.
-			!
-			              if ( iscale < 1 .or. iscale > 3) then
-			                  nerr = 48
-			                  call xerrwv('dbocls(). iscale option=(i1) must be 1-3.' &
-			                    ,nerr,level,1,iscale,idum,0,rdum,rdum)
-			                  go to 260
-			              end if
-			          end if
-			          lds = 2
-			          go to 30
-			!
-			!  IN THIS OPTION THE USER HAS PROVIDED SCALING.  THE
-			!  SCALE FACTORS FOR THE COLUMNS BEGIN IN X(NCOLS+IOPT(LP+2)).
-			!
-			      else if ( jp == 4) then
-			          if ( ip > 0) then
-			              iscale = 4
-			              if ( iopt(lp+2)<=0) then
-			                  nerr = 49
-			                  call xerrwv('dbocls(). offset past x(ncols) (i1) for' // &
-			                    'user-provided column scaling must be positive.', &
-			                    nerr,level,1,iopt(lp+2),idum,0,rdum,rdum)
-			                  go to 260
-			              end if
-			              call dcopy(ncols,x(ncols+iopt(lp+2)),1,rw,1)
-			              lenx = lenx + ncols
-			              do j = 1,ncols
-			                  if ( rw(j)<=0.0D+00 ) then
-			                      nerr = 50
-			                      call xerrwv('dbocls(). each provided col. scale ' // &
-			                        'factor must be positive. comp. (i1)   now = (r1).', &
-			                        nerr,level,1,j,idum,1,rw(j),rdum)
-			                      go to 260
-			                  end if
-			              end do
-			          end if
-			          lds = 2
-			          go to 30
-			!
-			!  IN THIS OPTION AN OPTION ARRAY IS PROVIDED TO DBOLS().
-			!
-			      else if ( jp == 5) then
-			          if ( ip > 0) then
-			              lopt = iopt(lp+2)
-			          end if
-			          lds = 2
-			          go to 30
-			!
-			!  IN THIS OPTION AN OPTION ARRAY IS PROVIDED TO DBOLSM().
-			!  (NO LONGER USED.) OPTION NOW MUST BE PASSED IMBEDDED IN
-			!  OPTION ARRAY FOR DBOLS().
-			!
-			      else if ( jp == 6) then
-			          lds = 2
-			          go to 30
-			!
-			!  THIS OPTION USES THE NEXT LOC OF IOPT(*) AS A
-			!  POINTER VALUE TO SKIP TO NEXT.
-			!
-			      else if ( jp == 7) then
-			          if ( ip > 0) then
-			              lp = iopt(lp+2)-1
-			              lds = 0
-			          else
-			              lds = 2
-			          end if
-			          go to 30
-			!
-			!  THIS OPTION AVOIDS THE CONSTRAINT RESOLVING PHASE FOR
-			!  THE LINEAR CONSTRAINTS C*X=Y.
-			!
-			      else if ( jp == 8) then
-			          filter = .not. (ip > 0)
-			          lds = 1
-			          go to 30
-			!
-			!  THIS OPTION SUPPRESSES PRETRIANGULARIZATION OF THE LEAST
-			!  SQUARES EQATIONS.
-			!
-			      else if ( jp == 9) then
-			          pretri = .not. (ip > 0)
-			          lds = 1
-			          go to 30
-			!
-			!  NO VALID OPTION NUMBER WAS NOTED. THIS IS AN ERROR CONDITION.
-			!
-			      else
-			          nerr = 51
-			          call xerrwv('dbocls(). the option number=(i1) is not defined.' &
-			            ,nerr,level,1,jp,idum,0,rdum,rdum)
-			          go to 260
-			      end if
+				          return;
+			          } // if ( ind[j] < 1 || ind[j] > 4)
+			      } // for (j = 1; j <= ncols + mcon; j++)
+			//
+			//  See that bounds are consistent.
+			//
+			      for (j = 1; j <= ncols + mcon; j++) {
+			          if ( ind[j] == 3) {
+			              if ( bl[j] > bu[j]) {
+			                  nerr = 57;
+			                  xerrwv("dbocls(). for j=(i1), bound bl(j)=(r1) is  >  bu(j)=(r2).",
+			                         nerr,level,1,j,idum,2,bl[j],bu[j]);
+			                  if ( 0 <= mode[0] ) {
+					              mode[0] = -nerr;
+				              }
+	
+					          igo_dbocls = 0;
 
-			   50     continue
+				              return;
+			              } // if (bl[j] > bu[j])
+	                  } // if (ind[j] == 3)
+	              } // for (j = 1; j <= ncols + mcon; j++)
+			//
+			//  Process option array.
+			//
+			      
+			        
+			      drelpr = epsilon;
+			      checkl = false;
+			      filter = true;
+			      lenx = 2* (ncols+mcon) + 2;
+			      iscale = 1;
+			      igo_dbocls = 1;
+			      accum = false;
+			      pretri = true;
+			      lopt = 0;
+			      lp = 0;
+			      lds = 0;
 
-			      if ( checkl) then
-			!
-			!  CHECK LENGTHS OF ARRAYS
-			!
-			!  THIS FEATURE ALLOWS THE USER TO MAKE SURE THAT THE
-			!  ARRAYS ARE LONG ENOUGH FOR THE INTENDED PROBLEM SIZE AND USE.
-			!
-			       if ( filter .and. .not.accum) then
-			         mdwl=mcon+max(mrows,ncols)
-			       else if ( accum) then
-			         mdwl=mcon+ncols+1
-			       else
-			         mdwl=mcon+ncols
-			       end if
+		loop:     while (true) {
+			      lp = lp + lds;
+			      ip = iopt[lp+1];
+			      jp = Math.abs(ip);
+			//
+			//  Test for no more options to change.
+			//
+			      if ( ip == 99) {
+			          if ( lopt == 0) {
+			        	  lopt = lp+1;
+			          }
+			//
+			// Send column scaling to DBOLS().
+			//
+			          idope[4]=1;
+			//
+			//  Note that DBOLS() was called by DBOCLS()
+			//
+			          idope[5]=1;
+			//
+			//  Change pretriangularization factor in DBOLSM().
+			//
+			          idope[1] = ncols + mcon + 1;
+			//
+			//  Pass weight to DBOLSM() for rank test.
+			//
+			          idope[2] = ncols + mcon + 2;
+			          idope[3] = mcon;
+			          break loop;
+			      } // if (ip == 99)
+			      else if ( jp == 99) {
+			          lds = 1;
+			          break loop;
+			      } // else if (jp == 99)
+			      else if ( jp == 1) {
+			          if ( ip > 0) {
+			//
+			//  Set up direction flag location, row stacking pointer
+			//  location, and location for number of new rows.
+			//
+			              locacc = lp + 2;
+			//
+			//                  IOPT(LOCACC-1)=option number for seq. accumulation.
+			//     Contents..   IOPT(LOCACC  )=user direction flag, 1 or 2.
+			//                  IOPT(LOCACC+1)=row stacking pointer.
+			//                  IOPT(LOCACC+2)=number of new rows to process.
+			//
+			//     User action with this option..
+			//
+			//      (Set up option data for SEQ. Accumulation in IOPT(*).)
+			//      (Move block of equations into W(*,*)  starting at first
+			//       row of W(*,*) below the rows for the constraint matrix C.
+			//       Set IOPT(LOCACC+2)=no. of least squares equations in block.
+			//
+			//              LOOP
+			//              CALL DBOCLS()
+			//
+			//                  IF(IOPT(LOCACC) .EQ. 1) THEN
+			//                      STACK EQUAS. INTO W(*,*), STARTING AT
+			//                      ROW IOPT(LOCACC+1).
+			//                       INTO W(*,*).
+			//                       SET IOPT(LOCACC+2)=NO. OF EQUAS.
+			//                      IF LAST BLOCK OF EQUAS., SET IOPT(LOCACC)=2.
+			//                  ELSE IF IOPT(LOCACC) .EQ. 2) THEN
+			//                      (PROCESS IS OVER. EXIT LOOP.)
+			//                  ELSE
+			//                      (ERROR CONDITION. SHOULD NOT HAPPEN.)
+			//                  END IF
+			//              END LOOP
+			//
+			              iopt[locacc+1] = mcon + 1;
+			              accum = true;
+			              iopt[locacc] = igo_dbocls;
+			          } // if (ip > 0)
+			          lds = 4;
+			          continue loop;
+			      } // else if (jp == 1)
+			      else if ( jp == 2) {
+			          if ( ip > 0) {
+			//
+			//  GET ACTUAL LENGTHS OF ARRAYS FOR CHECKING AGAINST NEEDS.
+			//
+			              locdim = lp + 2;
+			//
+			//  LMDW.GE.MCON+MAX(MOUT,NCOLS), IF MCON.GT.0 .AND FILTER
+			//  LMDW.GE.MCON+MOUT, OTHERWISE
+			
+			//  LNDW.GE.NCOLS+MCON+1
+			//  LLB .GE.NCOLS+MCON
+			//  LLX .GE.2*(NCOLS+MCON)+2+EXTRA REQD. IN OPTIONS.
+			//  LLRW.GE.6*NCOLS+5*MCON
+			//  LLIW.GE.2*(NCOLS+MCON)
+			//  LIOP.GE. AMOUNT REQD. FOR OPTION ARRAY.
+			//
+			              lmdw = iopt[locdim];
+			              lndw = iopt[locdim+1];
+			              llb = iopt[locdim+2];
+			              llx = iopt[locdim+3];
+			              llrw = iopt[locdim+4];
+			              lliw = iopt[locdim+5];
+			              liopt = iopt[locdim+6];
+			              checkl = true;
+			          } // if (ip > 0)
+			          lds = 8;
+			          continue loop;
+			      } // else if (jp == 2)
+			//
+			//  OPTION TO MODIFY THE COLUMN SCALING.
+			//
+			     
+			      else if ( jp == 3) {
+			          if ( ip > 0) {
+			              iscale = iopt[lp+2];
+			//
+			//     SEE THAT ISCALE IS 1 THRU 3.
+			//
+			              if ( iscale < 1 || iscale > 3) {
+			                  nerr = 48;
+			                  xerrwv("dbocls(). iscale option=(i1) must be 1-3.",
+			                    nerr,level,1,iscale,idum,0,rdum,rdum);
+			                  if ( 0 <= mode[0] ) {
+					              mode[0] = -nerr;
+				              }
+	
+					          igo_dbocls = 0;
 
-			          if ( lmdw < mdwl) then
-			              nerr = 41
-			              call xerrwv('dbocls(). the row dimension of w(,)=(i1) ' // &
-			                'must be >= the number of effective rows=(i2).', &
-			                nerr,level,2,lmdw,mdwl,0,rdum,rdum)
-			              go to 260
-			          end if
-			          if ( lndw < ncols+mcon+1) then
-			              nerr = 42
-			              call xerrwv('dbocls(). the column dimension of w(,)=(i1) ' // &
-			                'must be >= ncols+mcon+1=(i2).',nerr,level,2,lndw, &
-			                ncols+mcon+1,0,rdum,rdum)
-			              go to 260
-			          end if
-			          if ( llb < ncols+mcon) then
-			              nerr = 43
-			              call xerrwv('dbocls(). the dimensions of the arrays bl(),' // &
-			                'bu(), and ind()=(i1) must be >= ncols+mcon=(i2).', &
-			                nerr,level,2,llb,ncols+mcon,0,rdum,rdum)
-			              go to 260
-			          end if
+				              return;
+			              } // if ( iscale < 1 || iscale > 3)
+			          } // if (ip > 0)
+			          lds = 2;
+			          continue loop;
+			      } // else if (jp == 3)
+			//
+			//  IN THIS OPTION THE USER HAS PROVIDED SCALING.  THE
+			//  SCALE FACTORS FOR THE COLUMNS BEGIN IN X(NCOLS+IOPT(LP+2)).
+			//
+			      else if ( jp == 4) {
+			          if ( ip > 0) {
+			              iscale = 4;
+			              if ( iopt[lp+2]<=0) {
+			                  nerr = 49;
+			                  xerrwv("dbocls(). offset past x(ncols) (i1) for\nuser-provided column scaling must be positive.",
+			                    nerr,level,1,iopt[lp+2],idum,0,rdum,rdum);
+			                  if ( 0 <= mode[0] ) {
+					              mode[0] = -nerr;
+				              }
+	
+					          igo_dbocls = 0;
 
-			          if ( llx < lenx) then
-			              nerr = 44
-			              call xerrwv( 'dbocls(). the dimension of x()=(i1) must be ' // &
-			                '>= the reqd. length=(i2).',nerr,level,2,llx,lenx, &
-			                0,rdum,rdum)
-			              go to 260
-			          end if
+				              return;
+			              } // if ( iopt[lp+2]<=0)
+			              for (i = 1; i <= ncols; i++) {
+			            	  rw[i] = x[ncols + iopt[lp+2] + i - 1];
+			              }
+			              lenx = lenx + ncols;
+			              for (j = 1; j <= ncols; j++) {
+			                  if ( rw[j] <= 0.0 ) {
+			                      nerr = 50;
+			                      xerrwv("dbocls(). each provided col. scale\nfactor must be positive. comp. (i1)   now = (r1).",
+			                        nerr,level,1,j,idum,1,rw[j],rdum);
+			                      if ( 0 <= mode[0] ) {
+							          mode[0] = -nerr;
+						          }
+			
+							      igo_dbocls = 0;
 
-			          if ( llrw < 6*ncols+5*mcon) then
-			              nerr = 45
-			              call xerrwv('dbocls(). the dimension of rw()=(i1) must be ' // &
-			                '>= 6*ncols+5*mcon=(i2).',nerr,level,2, &
-			                llrw,6*ncols+5*mcon,0,rdum,rdum)
-			              go to 260
-			          end if
+						          return;
+			                  } // if (rw[j] <= 0.0)
+			              } // for (j = 1; j <= ncols; j++)
+			          } // if (ip > 0)
+			          lds = 2;
+			          continue loop;
+			      } // else if (jp == 4)
+			//
+			//  IN THIS OPTION AN OPTION ARRAY IS PROVIDED TO DBOLS().
+			//
+			      else if ( jp == 5) {
+			          if ( ip > 0) {
+			              lopt = iopt[lp+2];
+			          } // if (ip > 0)
+			          lds = 2;
+			          continue loop;
+			      } // else if (jp == 5)
+			//
+			//  IN THIS OPTION AN OPTION ARRAY IS PROVIDED TO DBOLSM().
+			//  (NO LONGER USED.) OPTION NOW MUST BE PASSED IMBEDDED IN
+			//  OPTION ARRAY FOR DBOLS().
+			//
+			      else if ( jp == 6) {
+			          lds = 2;
+			          continue loop;
+			      }
+			//
+			//  THIS OPTION USES THE NEXT LOC OF IOPT(*) AS A
+			//  POINTER VALUE TO SKIP TO NEXT.
+			//
+			      else if ( jp == 7) {
+			          if ( ip > 0) {
+			              lp = iopt[lp+2]-1;
+			              lds = 0;
+			          }
+			          else {
+			              lds = 2;
+			          }
+			          continue loop;
+			      } // else if (jp == 7)
+			//
+			//  THIS OPTION AVOIDS THE CONSTRAINT RESOLVING PHASE FOR
+			//  THE LINEAR CONSTRAINTS C*X=Y.
+			//
+			      else if ( jp == 8) {
+			          filter = ! (ip > 0);
+			          lds = 1;
+			          continue loop;
+			      } // else if (jp = 8)
+			//
+			//  THIS OPTION SUPPRESSES PRETRIANGULARIZATION OF THE LEAST
+			//  SQUARES EQUATIONS.
+			//
+			      else if ( jp == 9) {
+			          pretri = ! (ip > 0);
+			          lds = 1;
+			          continue loop;
+			      } // else if (jp == 9)
+			//
+			//  NO VALID OPTION NUMBER WAS NOTED. THIS IS AN ERROR CONDITION.
+			//
+			      else {
+			          nerr = 51;
+			          xerrwv("dbocls(). the option number=(i1) is not defined.",
+			            nerr,level,1,jp,idum,0,rdum,rdum);
+			          if ( 0 <= mode[0] ) {
+				          mode[0] = -nerr;
+				      }
+			
+					  igo_dbocls = 0;
 
-			          if ( lliw < 2*ncols+2*mcon) then
-			              nerr = 46
-			              call xerrwv('dbocls() the dimension of iw()=(i1) must be ' // &
-			                '>= 2*ncols+2*mcon=(i2).',nerr,level,2,lliw, &
-			                2*ncols+2*mcon,0,rdum,rdum)
-			              go to 260
-			          end if
+					  return;
+			      } // else 
+		} // loop: while (do)
 
-			          if ( liopt < lp+17) then
-			              nerr = 47
-			              call xerrwv('dbocls(). the dimension of iopt()=(i1) must be ' // &
-			                '>= the reqd. len.=(i2).',nerr,level,2,liopt,lp+17, 0,rdum,rdum)
-			              go to 260
-			          end if
-			      end if
-			  end if
-			!
-			!  Optionally go back to the user for accumulation of least squares
-			!  equations and directions for processing these equations.
-			!
-			!  Accumulate least squares equations.
-			!
-			  if ( accum) then
-			      mrows = iopt(locacc+1) - 1 - mcon
-			      inrows = iopt(locacc+2)
-			      mnew = mrows + inrows
-			      if ( mnew < 0 .or. mnew+mcon > mdw) then
-			          nerr = 52
-			          call xerrwv('dbocls(). no. of rows=(i1) must be >= 0 ' // &
-			            '.and. <=mdw-mcon=(i2)',nerr,level,2,mnew,mdw-mcon,0,rdum,rdum)
-			          go to 260
-			      end if
-			  end if
-			!
-			!  USE THE SOFTWARE OF DBOLS( ) FOR THE TRIANGULARIZATION OF THE
-			!  LEAST SQUARES MATRIX.  THIS MAY INVOLVE A SYSTALTIC INTERCHANGE
-			!  OF PROCESSING POINTERS BETWEEN THE CALLING AND CALLED (DBOLS())
-			!  PROGRAM UNITS.
-			!
-			  jopt(01) = 1
-			  jopt(02) = 2
-			  jopt(04) = mrows
-			  jopt(05) = 99
-			  irw = ncols + 1
-			  iiw = 1
-			  if ( accum .or. pretri) then
-			!
-			!  NOTE THAT DBOLS() WAS CALLED BY DBOCLS()
-			!
-			          idope(5)=0
-			      call dbols(w(mcon+1,1),mdw,mout,ncols,bl,bu,ind,jopt,x,rnorm, &
-			             mode,rw(irw),iw(iiw))
-			  else
-			      mout = mrows
-			  end if
+			      if ( checkl) {
+			//
+			//  CHECK LENGTHS OF ARRAYS
+			//
+			//  THIS FEATURE ALLOWS THE USER TO MAKE SURE THAT THE
+			//  ARRAYS ARE LONG ENOUGH FOR THE INTENDED PROBLEM SIZE AND USE.
+			//
+			       if ( filter && (!accum)) {
+			         mdwl=mcon+Math.max(mrows,ncols);
+			       }
+			       else if ( accum) {
+			         mdwl=mcon+ncols+1;
+			       }
+			       else {
+			         mdwl=mcon+ncols;
+			       }
 
-			  if ( accum) then
-			    accum = iopt(locacc)  ==  1
-			    iopt(locacc+1) = jopt(03) + mcon
-			    mrows = min(ncols+1,mnew)
-			  end if
+			          if ( lmdw < mdwl) {
+			              nerr = 41;
+			              xerrwv("dbocls(). the row dimension of w(,)=(i1)\nmust be >= the number of effective rows=(i2).",
+			                nerr,level,2,lmdw,mdwl,0,rdum,rdum);
+			              if ( 0 <= mode[0] ) {
+					           mode[0] = -nerr;
+				          }
+	
+					      igo_dbocls = 0;
 
-			  if ( accum) return
-			!
-			!  SOLVE CONSTRAINED AND BOUNDED LEAST SQUARES PROBLEM
-			!
-			!  MOVE RIGHT HAND SIDE OF LEAST SQUARES EQUATIONS.
-			!
-			  call dcopy(mout,w(mcon+1,ncols+1),1,w(mcon+1,ncols+mcon+1),1)
-			  if ( mcon > 0 .and. filter) then
-			!
-			!  PROJECT THE LINEAR CONSTRAINTS INTO A REACHABLE SET.
-			!
-			      do i = 1,mcon
-			        call dcopy(ncols,w(i,1),mdw,w(mcon+1,ncols+i),1)
-			      end do
-			!
-			!  PLACE (-)IDENTITY MATRIX AFTER CONSTRAINT DATA.
-			!
-			      do j = ncols + 1, ncols + mcon + 1
-			        w(1:mcon,j) = 0.0D+00
-			      end do
+				          return;
+			          } // if (lmdw < mdwl)
+			          if ( lndw < ncols+mcon+1) {
+			              nerr = 42;
+			              xerrwv("dbocls(). the column dimension of w(,)=(i1)\nmust be >= ncols+mcon+1=(i2).",
+			              nerr,level,2,lndw,ncols+mcon+1,0,rdum,rdum);
+			              if ( 0 <= mode[0] ) {
+						      mode[0] = -nerr;
+					      }
+		
+						  igo_dbocls = 0;
 
-			      w(1:mcon,ncols+1) = -1.0D+00
-			!
-			!  OBTAIN A 'FEASIBLE POINT' FOR THE LINEAR CONSTRAINTS.
-			!
-			      jopt(01) = 99
-			      irw = ncols + 1
-			      iiw = 1
-			!
-			!  NOTE THAT DBOLS() WAS CALLED BY DBOCLS()
-			!
-			          idope(5)=0
-			      call dbols(w,mdw,mcon,ncols+mcon,bl,bu,ind,jopt,x,rnormc, &
-			        modec,rw(irw),iw(iiw))
-			!
-			!  ENLARGE THE BOUNDS SET, IF REQUIRED, TO INCLUDE POINTS THAT
-			!  CAN BE REACHED.
-			!
-			      do j = ncols + 1,ncols + mcon
-			          icase = ind(j)
-			          if ( icase < 4) then
-			              t = ddot ( ncols, w(mcon+1,j), 1, x, 1 )
-			          end if
-			          go to (80,90,100,110),icase
-			          go to 120
-			   80         bl(j) = min(t,bl(j))
-			          go to 120
-			   90         bu(j) = max(t,bu(j))
-			          go to 120
-			  100         bl(j) = min(t,bl(j))
-			          bu(j) = max(t,bu(j))
-			          go to 120
-			  110         continue
-			  120         continue
-			      end do
-			!
-			!  MOVE CONSTRAINT DATA BACK TO THE ORIGINAL AREA.
-			!
-			      do j = ncols + 1,ncols + mcon
-			          call dcopy(ncols,w(mcon+1,j),1,w(j-ncols,1),mdw)
-			      end do
+					      return;
+			          } // if ( lndw < ncols+mcon+1)
+			          if ( llb < ncols+mcon) {
+			              nerr = 43;
+			              xerrwv("dbocls(). the dimensions of the arrays bl()\nbu(), and ind()=(i1) must be >= ncols+mcon=(i2).",
+			                nerr,level,2,llb,ncols+mcon,0,rdum,rdum);
+			              if ( 0 <= mode[0] ) {
+						      mode[0] = -nerr;
+					      }
+		
+						  igo_dbocls = 0;
 
-			  end if
+					      return;
+			          } // if ( llb < ncols+mcon)
 
-			  if ( mcon > 0) then
-			      do j = ncols + 1,ncols + mcon
-			        w(mcon+1:mcon+mout,j) = 0.0D+00
-			      end do
-			!
-			!  PUT IN (-)IDENTITY MATRIX (POSSIBLY) ONCE AGAIN.
-			!
-			      do j = ncols + 1,ncols + mcon + 1
-			        w(1:mcon,j) = 0.0D+00
-			      end do
+			          if ( llx < lenx) {
+			              nerr = 44;
+			              xerrwv("dbocls(). the dimension of x()=(i1) must be\n>= the reqd. length=(i2).",
+			            		  nerr,level,2,llx,lenx,0,rdum,rdum);
+			              if ( 0 <= mode[0] ) {
+						      mode[0] = -nerr;
+					      }
+		
+						  igo_dbocls = 0;
 
-			      w(1:mcon,ncols+1) = -1.0D+00
+					      return;
+			          } // if (llx < lenx)
 
-			  end if
-			!
-			!  COMPUTE NOMINAL COLUMN SCALING FOR THE UNWEIGHTED MATRIX.
-			!
-			  cnorm = 0.0D+00
-			  anorm = 0.0D+00
-			  do j = 1,ncols
-			      t1 = dasum(mcon,w(1,j),1)
-			      t2 = dasum(mout,w(mcon+1,1),1)
-			      t = t1 + t2
-			      if ( t == 0.0D+00 ) t = one
-			      cnorm = max(cnorm,t1)
-			      anorm = max(anorm,t2)
-			      x(ncols+mcon+j) = one/t
-			  end do
+			          if ( llrw < 6*ncols+5*mcon) {
+			              nerr = 45;
+			              xerrwv("dbocls(). the dimension of rw()=(i1) must be\n>= 6*ncols+5*mcon=(i2).",
+			            		  nerr,level,2,llrw,6*ncols+5*mcon,0,rdum,rdum);
+			              if ( 0 <= mode[0] ) {
+						      mode[0] = -nerr;
+					      }
+		
+						  igo_dbocls = 0;
 
-			  go to (180,190,210,220),iscale
-			  go to 230
-			  180 continue
-			  go to 230
-			!
-			!  SCALE COLS. (BEFORE WEIGHTING) TO HAVE LENGTH ONE.
-			!
-			  190 continue
+					      return;
+			          } // if ( llrw < 6*ncols+5*mcon)
 
-			  do j = 1,ncols
-			    t = dnrm2(mcon+mout,w(1,j),1)
-			    if ( t == 0.0D+00 ) t = one
-			    x(ncols+mcon+j) = one/t
-			  end do
+			          if ( lliw < 2*ncols+2*mcon) {
+			              nerr = 46;
+			              xerrwv("dbocls() the dimension of iw()=(i1) must be\n>= 2*ncols+2*mcon=(i2).",
+			            		  nerr,level,2,lliw, 2*ncols+2*mcon,0,rdum,rdum);
+			              if ( 0 <= mode[0] ) {
+						      mode[0] = -nerr;
+					      }
+		
+						  igo_dbocls = 0;
 
-			  go to 230
-			!
-			!  SUPPRESS SCALING (USE UNIT MATRIX).
-			!
-			  210 continue
+					      return;
+			          } // if ( lliw < 2*ncols+2*mcon)
 
-			  x(ncols+mcon+1:ncols+mcon+ncols) = one
+			          if ( liopt < lp+17) {
+			              nerr = 47;
+			              xerrwv("dbocls(). the dimension of iopt()=(i1) must be\n>= the reqd. len.=(i2).",
+			            		  nerr,level,2,liopt,lp+17, 0,rdum,rdum);
+			              if ( 0 <= mode[0] ) {
+						    mode[0] = -nerr;
+					      }
+		
+						  igo_dbocls = 0;
 
-			  go to 230
-			!
-			!  THE USER HAS PROVIDED SCALING.
-			!
-			  220 call dcopy(ncols,rw,1,x(ncols+mcon+1),1)
-			  230 continue
+					      return;
+			          } // if ( liopt < lp+17)
+			      } // if (checkl)
+			  } // if (igo_dbocls == 0)
+			//
+			//  Optionally go back to the user for accumulation of least squares
+			//  equations and directions for processing these equations.
+			//
+			//  Accumulate least squares equations.
+			//
+			  if ( accum) {
+			      mrows = iopt[locacc+1] - 1 - mcon;
+			      inrows = iopt[locacc+2];
+			      mnew = mrows + inrows;
+			      if ( mnew < 0 || mnew+mcon > mdw) {
+			          nerr = 52;
+			          xerrwv("dbocls(). no. of rows=(i1) must be >= 0\n.and. <=mdw-mcon=(i2)",
+			        		  nerr,level,2,mnew,mdw-mcon,0,rdum,rdum);
+			          if ( 0 <= mode[0] ) {
+			              mode[0] = -nerr;
+		              }
 
-			  do j = ncols + 1,ncols + mcon
-			    x(ncols+mcon+j) = one
-			  end do
-			!
-			!  WEIGHT THE LEAST SQUARES EQUATIONS.
-			!
-			  wt = sqrt(drelpr)
-			  if ( anorm > 0.0D+00 ) wt = wt/anorm
-			  if ( cnorm > 0.0D+00 ) wt = wt*cnorm
+			          igo_dbocls = 0;
 
-			  do i = 1,mout
-			      call dscal(ncols,wt,w(i+mcon,1),mdw)
-			  end do
-			  call dscal(mout,wt,w(mcon+1,mcon+ncols+1),1)
-			  lrw = 1
-			  liw = 1
-			!
-			!  SET THE NEW TRIANGULARIZATION FACTOR.
-			!
-			  x(ncols+mcon+idope(1))= 0.0D+00
-			!
-			!  SET THE WEIGHT TO USE IN COMPONENTS .GT. MCON,
-			!  WHEN MAKING LINEAR INDEPENDENCE TEST.
-			!
-			  x(ncols+mcon+idope(2))= one/wt
-			  idope(5)=1
-			  call dbols(w,mdw,mout+mcon,ncols+mcon,bl,bu,ind,iopt(lopt),x, &
-			    rnorm,mode,rw(lrw),iw(liw))
+		              return;
+			      } // if ( mnew < 0 || mnew+mcon > mdw)
+			  } // if (accum)
+			//
+			// USE THE SOFTWARE OF DBOLS( ) FOR THE TRIANGULARIZATION OF THE
+			//  LEAST SQUARES MATRIX.  THIS MAY INVOLVE A SYSTALTIC INTERCHANGE
+			// OF PROCESSING POINTERS BETWEEN THE CALLING AND CALLED (DBOLS())
+			// PROGRAM UNITS.
+			//
+			  jopt[1] = 1;
+			  jopt[2] = 2;
+			  jopt[4] = mrows;
+			  jopt[5] = 99;
+			  irw = ncols + 1;
+			  iiw = 1;
+			  if ( accum || pretri) {
+			//
+			//  NOTE THAT DBOLS() WAS CALLED BY DBOCLS()
+			//
+			          idope[5]=0;
+			      //call dbols(w(mcon+1,1),mdw,mout,ncols,bl,bu,ind,jopt,x,rnorm, &
+			             //mode,rw(irw),iw(iiw))
+			  }
+			  else {
+			      mout = mrows;
+			  }
 
-			  260 continue
+			  if ( accum) {
+			    accum = (iopt[locacc]  ==  1);
+			    iopt[locacc+1] = jopt[3] + mcon;
+			    mrows = Math.min(ncols+1,mnew);
+			  }
 
-			  if ( 0 <= mode ) then
-			    mode = -nerr
-			  end if
+			  if ( accum) {
+				  return;
+			  }
+			//
+			//  SOLVE CONSTRAINED AND BOUNDED LEAST SQUARES PROBLEM
+			//
+			// MOVE RIGHT HAND SIDE OF LEAST SQUARES EQUATIONS.
+			//
+			  for (i = 1; i <= mout; i++) {
+				  w[mcon+i][ncols+mcon+1] = w[mcon+i][ncols+1];
+			  }
+			  if ( mcon > 0 && filter) {
+			//
+			//  PROJECT THE LINEAR CONSTRAINTS INTO A REACHABLE SET.
+			//
+			      for (i = 1; i <= mcon; i++) {
+			    	for (j = 1; j <= ncols; j++) {
+			    	    w[mcon+j][ncols+i] = w[i][j];
+			    	}
+			      } // for (i = 1; i <= mcon; i++)
+			//
+			//  PLACE (-)IDENTITY MATRIX AFTER CONSTRAINT DATA.
+			//
+			      for (j = ncols + 1; j <= ncols + mcon + 1; j++) {
+			    	for (i = 1; i <= mcon; i++) {
+			            w[i][j] = 0.0;
+			    	}
+			      }
+                  for (i = 1; i <= mcon; i++) {
+			          w[i][ncols+1] = -1.0;
+                  }
+			//
+			//  OBTAIN A 'FEASIBLE POINT' FOR THE LINEAR CONSTRAINTS.
+			//
+			      jopt[1] = 99;
+			      irw = ncols + 1;
+			      iiw = 1;
+			//
+			//  NOTE THAT DBOLS() WAS CALLED BY DBOCLS()
+			//
+			          idope[5]=0;
+			      //call dbols(w,mdw,mcon,ncols+mcon,bl,bu,ind,jopt,x,rnormc, &
+			        //modec,rw(irw),iw(iiw))
+			//
+			//  ENLARGE THE BOUNDS SET, IF REQUIRED, TO INCLUDE POINTS THAT
+			//  CAN BE REACHED.
+			//
+			     for (j = ncols + 1; j <= ncols + mcon; j++) {
+			          icase = ind[j];
+			          if ( icase < 4) {
+			        	  t = 0.0;
+			        	  for (i = 1; i <= ncols; i++) {
+			        		  t += w[mcon+i][j]*x[i];
+			        	  }
+			          } // if (icase < 4)
+			          switch(icase) {
+			              case 1:
+			                  bl[j] = Math.min(t,bl[j]);
+			                  break;
+			              case 2:
+			                  bu[j] = Math.max(t,bu[j]);
+			                  break;
+			              case 3:
+			                  bl[j] = Math.min(t,bl[j]);
+			                  bu[j] = Math.max(t,bu[j]);
+			          } // switch(icase)
+			     } // for (j = ncols + 1; j <= ncols + mcon; j++)
+			//
+			//  MOVE CONSTRAINT DATA BACK TO THE ORIGINAL AREA.
+			//
+			      for (j = ncols + 1; j <= ncols + mcon; j++) {
+			    	  for (i = 1; i <= ncols; i++) {
+			    		  w[j-ncols][i] = w[mcon+i][j];
+			    	  }
+			      } // for (j = ncols + 1; j <= ncols + mcon; j++)
 
-			  igo = 0
+			  } // if ( mcon > 0 && filter)
 
-			  return*/
+			  if ( mcon > 0) {
+			      for (j = ncols + 1; j <= ncols + mcon; j++) {
+			    	for (i = 1; i <= mout; i++) {
+			          w[mcon+i][j] = 0.0;
+			    	}
+			      } // for (j = ncols + 1; j <= ncols + mcon; j++)
+			//
+			//  PUT IN (-)IDENTITY MATRIX (POSSIBLY) ONCE AGAIN.
+		    //
+			      for (j = ncols + 1; j <= ncols + mcon + 1; j++) {
+			    	for (i = 1; i <= mcon; i++) {
+			            w[i][j] = 0.0;
+			    	}
+			      } // for (j = ncols + 1; j <= ncols + mcon + 1; j++)
+                  for (i = 1; i <= mcon; i++) {
+			          w[i][ncols+1] = -1.0;
+                  }
+
+			  } // if (mcon > 0)
+			//
+			//  COMPUTE NOMINAL COLUMN SCALING FOR THE UNWEIGHTED MATRIX.
+			//
+			  cnorm = 0.0;
+			  anorm = 0.0;
+			  for (j = 1; j <= ncols; j++) {
+				  t1 = 0.0;
+				  for (i = 1; i <= mcon; i++) {
+					  t1 += Math.abs(w[i][j]);
+				  }
+			      t2 = 0.0;
+			      for (i = 1; i <= mout; i++) {
+			    	  t2 += Math.abs(w[mcon+i][1]);
+			      }
+			      t = t1 + t2;
+			      if ( t == 0.0 ) {
+			    	  t = 1.0;
+			      }
+			      cnorm = Math.max(cnorm,t1);
+			      anorm = Math.max(anorm,t2);
+			      x[ncols+mcon+j] = 1.0/t;
+			  } // for (j = 1; j <= ncols; j++)
+
+			  switch (iscale) {
+			  case 2:
+			//
+			//  SCALE COLS. (BEFORE WEIGHTING) TO HAVE LENGTH ONE.
+			//
+
+			    arr = new double[mcon+mout+1];
+				for (j = 1; j <= ncols; j++) {
+				    for (i = 1; i <= mcon+mout; i++) {
+				    	arr[i] = w[i][j];
+				    }
+				    t = dnrm2(mcon+mout,arr,1);
+				    if ( t == 0.0 ) {
+				    	t = 1.0;
+				    }
+				    x[ncols+mcon+j] = 1.0/t;
+			  } // for (j = 1; j <= ncols; j++)
+			  break;
+			//
+			//  SUPPRESS SCALING (USE UNIT MATRIX).
+			//
+			  case 3:
+                  for (i = 1; i <= ncols; i++) {
+			          x[ncols+mcon+i] = 1.0;
+                  }
+                  break;
+			//
+			//  THE USER HAS PROVIDED SCALING.
+			//
+			  case 4:
+				  for (i = 1; i <= ncols; i++) {
+					  x[ncols+mcon+i] = rw[i];
+				  }
+			  } // switch (iscale)
+
+			  for (j = ncols + 1; j <= ncols + mcon; j++) {
+			    x[ncols+mcon+j] = 1.0;
+			  }
+			//
+			//  WEIGHT THE LEAST SQUARES EQUATIONS.
+			//
+			  wt = Math.sqrt(drelpr);
+			  if ( anorm > 0.0 ) {
+				  wt = wt/anorm;
+			  }
+			  if ( cnorm > 0.0) {
+				  wt = wt*cnorm;
+			  }
+
+			  for (i = 1; i <= mout; i++) {
+				  for (j = 1; j <= ncols; j++) {
+					  w[i+mcon][j] = wt * w[i+mcon][j];
+				  }
+			  } // for (i = 1; i <= mout; i++)
+			  for (i = 1; i <= mout; i++) {
+				  w[mcon+i][mcon+ncols+1] = wt*w[mcon+i][mcon+ncols+1];
+			  }
+			  lrw = 1;
+			  liw = 1;
+			//
+			//  SET THE NEW TRIANGULARIZATION FACTOR.
+			//
+			  x[ncols+mcon+idope[1]]= 0.0;
+			//
+			//  SET THE WEIGHT TO USE IN COMPONENTS .GT. MCON,
+			//  WHEN MAKING LINEAR INDEPENDENCE TEST.
+			//
+			  x[ncols+mcon+idope[2]] = 1.0/wt;
+			  idope[5] = 1;
+			  //call dbols(w,mdw,mout+mcon,ncols+mcon,bl,bu,ind,iopt(lopt),x, &
+			    //rnorm,mode,rw(lrw),iw(liw))
+
+
+			  if ( 0 <= mode[0] ) {
+			    mode[0] = -nerr;
+			  }
+
+			  igo_dbocls = 0;
+
+			  return;
+    } // dbocls
+	
+	private void dcopy ( int n, double x[], int incx, double y[], int incy ) {
+
+	/*****************************************************************************80
+	!
+	!! DCOPY copies one double precision vector into another.
+	!
+	!  Modified:
+	!
+	!    08 April 1999
+	!
+	!  Author:
+	!
+	!    Charles Lawson, Richard Hanson, David Kincaid, Fred Krogh
+	!
+	!  Reference:
+	!
+	!    Charles Lawson, Richard Hanson, David Kincaid, Fred Krogh,
+	!    Basic Linear Algebra Subprograms for Fortran Usage,
+	!    Algorithm 539,
+	!    ACM Transactions on Mathematical Software,
+	!    Volume 5, Number 3, September 1979, pages 308-323.
+	!
+	!  Parameters:
+	!
+	!    Input, integer N, the number of entries in the vector.
+	!
+	!    Input, double X(*), the vector to be copied into Y.
+	!
+	!    Input, integer INCX, the increment between successive entries of X.
+	!
+	!    Output, real double Y(*), the copy of X.
+	!
+	!    Input, integer INCY, the increment between successive elements of Y.
+	*/
+
+	  int i;
+	  int ix;
+	  int iy;
+
+	  if ( n <= 0 ) {
+		  
+	  }
+
+	  else if ( incx == 1 && incy == 1 ) {
+        for (i = 1; i <= n; i++) {
+	        y[i] = x[i];
+        }
+	  }
+	    else {
+
+	    if ( incx >= 0 ) {
+	      ix = 1;
+	    }
+	    else {
+	      ix = ( - n + 1 ) * incx + 1;
+	    }
+
+	    if ( incy >= 0 ) {
+	      iy = 1;
+	    }
+	    else {
+	      iy = ( - n + 1 ) * incy + 1;
+	    }
+
+	    for (i = 1; i <= n; i++) {
+	      y[iy] = x[ix];
+	      ix = ix + incx;
+	      iy = iy + incy;
+	    } // for (i = 1; i <= n; i++)
+
+	    } // else 
+
+	  return;
+	} // dcopy
+	
+	private double ddot ( int n, double x[], int incx, double y[], int incy ) {
+
+	/*****************************************************************************80
+	!
+	!! DDOT forms the dot product of two vectors.
+	!
+	!  Modified:
+	!
+	!    02 June 2000
+	!
+	!  Author:
+	!
+	!    Charles Lawson, Richard Hanson, David Kincaid, Fred Krogh
+	!
+	!  Reference:
+	!
+	!    Charles Lawson, Richard Hanson, David Kincaid, Fred Krogh,
+	!    Basic Linear Algebra Subprograms for Fortran Usage,
+	!    Algorithm 539,
+	!    ACM Transactions on Mathematical Software,
+	!    Volume 5, Number 3, September 1979, pages 308-323.
+	!
+	!  Parameters:
+	!
+	!    Input, integer N, the number of entries in the vectors.
+	!
+	!    Input, double X(*), one of the vectors to be multiplied.
+	!
+	!    Input, integer INCX, the increment between successive entries of X.
+	!
+	!    Input, double Y(*), one of the vectors to be multiplied.
+	!
+	!    Input, integer INCY, the increment between successive elements of Y.
+	!
+	!    Output, double DDOT, the dot product of X and Y.
+	*/
+
+	  int i;
+	  int ix;
+	  int iy;
+	  double result = 0.0;
+
+	  if ( n <= 0 ) {
+
+	    result = 0.0;
+	  }
+	  else if ( incx == 1 && incy == 1 ) {
+        for (i = 1; i <= n; i++) {
+	        result += x[i]*y[i];
+        }
+	  }
+
+	  else {
+
+	    if ( incx >= 0 ) {
+	      ix = 1;
+	    }
+	    else {
+	      ix = ( - n + 1 ) * incx + 1;
+	    }
+
+	    if ( incy >= 0 ) {
+	      iy = 1;
+	    }
+	    else {
+	      iy = ( - n + 1 ) * incy + 1;
+	    }
+
+	    for (i = 1; i <= n; i++) {
+	      result = result + x[ix] * y[iy];
+	      ix = ix + incx;
+	      iy = iy + incy;
+	    }
+
+	  } // else 
+
+	  return result;
+	} // ddot
+	
+	private double dnrm2 ( int n, double x[], int incx ) {
+
+	/*****************************************************************************80
+	!
+	!! DNRM2 returns the euclidean norm of a double precision vector.
+	!
+	!  Discussion:
+	!
+	!     DNRM2 ( X ) = sqrt ( X' * X )
+	!
+	!  Modified:
+	!
+	!    16 May 2005
+	!
+	!  Author:
+	!
+	!    Sven Hammarling
+	!
+	!    Fortran90 translation by John Burkardt.
+	!
+	!  Reference:
+	!
+	!    Jack Dongarra, Cleve Moler, Jim Bunch, Pete Stewart,
+	!    LINPACK User's Guide,
+	!    SIAM, 1979.
+	!
+	!    Charles Lawson, Richard Hanson, David Kincaid, Fred Krogh,
+	!    Basic Linear Algebra Subprograms for Fortran Usage,
+	!    Algorithm 539,
+	!    ACM Transactions on Mathematical Software,
+	!    Volume 5, Number 3, September 1979, pages 308-323.
+	!
+	!  Parameters:
+	!
+	!    Input, integer N, the number of entries in the vector.
+	!
+	!    Input, double X(*), the vector whose norm is to be computed.
+	!
+	!    Input, integer INCX, the increment between successive entries of X.
+	!
+	!    Output, double DNRM2, the Euclidean norm of X.
+	*/
+
+	  double absxi;
+	  int ix;
+	  double norm = 0.0;
+	  double scale;
+	  double ssq;
+	  double temp;
+
+	  if ( n < 1 || incx < 1 ) {
+
+	    norm  = 0.0;
+	  }
+	  else if ( n == 1 ) {
+	    norm  = Math.abs ( x[1] );
+	  }
+	  else {
+
+	    scale = 0.0;
+	    ssq = 1.0;
+
+	    for (ix = 1; ix <= 1 + ( n - 1 )*incx; ix += incx) {
+	      if ( x[ix] != 0.0D+00 ) {
+	        absxi = Math.abs ( x[ix] );
+	        if ( scale < absxi ) {
+	          temp = scale/absxi;
+	          ssq = 1.0 + ssq * temp * temp;
+	          scale = absxi;
+	        }
+	        else {
+	          temp = absxi/scale;
+	          ssq = ssq + temp * temp;
+	        }
+	      } // if ( x[ix] != 0.0D+00 )
+	    } // for (ix = 1; ix <= 1 + ( n - 1 )*incx; ix += incx)
+	    norm  = scale * Math.sqrt ( ssq );
+	  }
+
+	  return norm;
+	} // dnrm2
+	
+	private void dscal ( int n, double sa, double x[], int incx ) {
+
+	/*****************************************************************************80
+	!
+	!! DSCAL scales a vector by a constant.
+	!
+	!  Modified:
+	!
+	!    08 April 1999
+	!
+	!  Author:
+	!
+	!    Charles Lawson, Richard Hanson, David Kincaid, Fred Krogh
+	!
+	!  Reference:
+	!
+	!    Charles Lawson, Richard Hanson, David Kincaid, Fred Krogh,
+	!    Basic Linear Algebra Subprograms for Fortran Usage,
+	!    Algorithm 539,
+	!    ACM Transactions on Mathematical Software,
+	!    Volume 5, Number 3, September 1979, pages 308-323.
+	!
+	!  Parameters:
+	!
+	!    Input, integer N, the number of entries in the vector.
+	!
+	!    Input, double SA, the multiplier.
+	!
+	!    Input/output, double X(*), the vector to be scaled.
+	!
+	!    Input, integer INCX, the increment between successive entries of X.
+	*/
+
+	  int i;
+	  int ix;
+	  int m;
+
+	  if ( n <= 0 ) {
+		  
+	  }
+	  else if ( incx == 1 ) {
+
+	    m = ( n % 5 );
+        for (i = 1; i <= m; i++) {
+	        x[i] = sa * x[i];
+        }
+
+	    for (i = m+1; i <= n; i +=5) {
+	      x[i]   = sa * x[i];
+	      x[i+1] = sa * x[i+1];
+	      x[i+2] = sa * x[i+2];
+	      x[i+3] = sa * x[i+3];
+	      x[i+4] = sa * x[i+4];
+	    }
+	  }
+
+	  else {
+
+	    if ( incx >= 0 ) {
+	      ix = 1;
+	    }
+	    else {
+	      ix = ( - n + 1 ) * incx + 1;
+	    }
+
+	    for (i = 1; i <= n; i++) {
+	      x[ix] = sa * x[ix];
+	      ix = ix + incx;
+	    }
+
+	  }
+
+	  return;
+	} // dscal
+    
+    private void xerrwv (String xmess, int nerr, int level, int ni, int i1, int i2,
+    		             int nr, double r1, double r2 ) {
+
+    /*****************************************************************************80
+    !
+    !! XERRWV is an error output message routine.
+    !
+    !  Modified:
+    !
+    !    28 July 2006
+    !
+    !  Author:
+    !
+    !    Ron Jones
+    !
+    !  Reference:
+    !
+    !    David Kahaner, Cleve Moler, Steven Nash,
+    !    Numerical Methods and Software,
+    !    Prentice Hall, 1988.
+    !
+    !    Ron Jones, David Kahaner, 
+    !    XERROR, The SLATEC Error Handling Package, 
+    !    SAND82-0800, Sandia Laboratories, 1982.
+    !
+    !  Parameters:
+    !
+    !    Input, String XMESS, the message to be processed.
+    !
+    !    Input, integer NERR, the error number associated with this message.
+    !    NERR must not be zero.
+    !
+    !    Input, integer LEVEL, the error category.
+    !    2 means this is an unconditionally fatal error.
+    !    1 means this is a recoverable error.  (i.e., it is
+    !      non-fatal if xsetf has been appropriately called.)
+    !    0 means this is a warning message only.
+    !    -1 means this is a warning message which is to be printed at most 
+    !      once, regardless of how many times this call is executed.
+    !
+    !    Input, integer NI, the number of integer values to be printed. (0 to 2)
+    !
+    !    Input, integer I1, I2, the first and second integer values.
+    !
+    !    Input, integer NR, the number of real values to be printed. (0 to 2)
+    !
+    !    Input, real ( kind = 8 ) R1, R2, the first and second real values.
+    */
+      
+      if (!outputMes) {
+    	  return;
+      }
+
+      Preferences.debug(xmess.trim() + "\n");
+      Preferences.debug("error number = " + nerr + " message level = " + level + "\n");
+
+      if ( ni == 1 || ni == 2 ){
+        Preferences.debug("i1 = " + i1 + "\n");
+      }
+
+      if ( ni == 2) {
+        Preferences.debug("i2 = " + i2 + "\n");
+      }
+
+      if ( nr == 1 || nr == 2) {
+        Preferences.debug("r1 = " + r1 + "\n");
+      }
+
+      if ( nr == 2){
+        Preferences.debug("r2 = " +  r2 + "\n");
+      }
+
+      return;
+    } // xerrwv
 }
