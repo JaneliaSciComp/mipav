@@ -1466,10 +1466,15 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
      * Called from VOIManagerInterface. Pastes the input VOI onto the current slice.
      * @param kVOI input VOI.
      */
-    public void pasteVOI( VOIBase kVOI )
+    public void pasteVOI( VOIBase kVOI, int dir )
     {
         m_kCopyVOI = kVOI;
-        pasteVOI(m_kDrawingContext.getSlice());
+        int iNewSlice = getSlice(kVOI) + dir;
+        int iDimZ = m_aiLocalImageExtents.length > 2 ? m_aiLocalImageExtents[2] : 1;
+        if ( (iNewSlice >= 0) && (iNewSlice < iDimZ) )
+        {
+            pasteVOI(iNewSlice);
+        }
     }
 
 
@@ -4076,9 +4081,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_kCurrentVOI.add( patientCoordinatesToFile( kPos ) );
         }
 
-
+        m_kCopyVOI.setActive(false);
+        m_kCurrentVOI.setActive(true);
         m_kParent.pasteVOI(m_kCurrentVOI);
-        m_kCurrentVOI.setActive(false);
     }
 
 

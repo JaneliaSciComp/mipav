@@ -2280,6 +2280,23 @@ public abstract class VOIBase extends Vector<Vector3f> {
                 }
             }
         }
+        if ( m_kMaskPositions.size() == 0 )
+        {
+            for ( int i = 0; i < size(); i++ )
+            {
+                int iMaskIndex = (int)elementAt(i).Z * xDim * yDim;
+                iMaskIndex += (int)elementAt(i).Y * xDim;
+                iMaskIndex += (int)elementAt(i).X;
+                if ( !kMask.get(iMaskIndex) )
+                {
+                    kMask.set(iMaskIndex);            
+                    Vector3f kPos = new Vector3f(elementAt(i));                       
+                    m_kMaskPositions.add(kPos);
+                    m_kPositionSum.Add(kPos);
+                }
+                
+            }
+        }
         float scale = 1f/m_kMaskPositions.size();
         gcPt.X = MipavMath.round( m_kPositionSum.X * scale );
         gcPt.Y = MipavMath.round( m_kPositionSum.Y * scale );
@@ -2420,6 +2437,23 @@ public abstract class VOIBase extends Vector<Vector3f> {
                 }
             }
         }
+        if ( m_kMaskPositions.size() == 0 )
+        {
+            for ( int i = 0; i < size(); i++ )
+            {
+                int iMaskIndex = (int)elementAt(i).Z * xDim * yDim;
+                iMaskIndex += (int)elementAt(i).Y * xDim;
+                iMaskIndex += (int)elementAt(i).X;
+                if ( !kMask.get(iMaskIndex) )
+                {
+                    kMask.set(iMaskIndex);            
+                    Vector3f kPos = new Vector3f(elementAt(i));                       
+                    m_kMaskPositions.add(kPos);
+                    m_kPositionSum.Add(kPos);
+                }
+                
+            }
+        }
         float scale = 1f/m_kMaskPositions.size();
         gcPt.X = MipavMath.round( m_kPositionSum.X * scale );
         gcPt.Y = MipavMath.round( m_kPositionSum.Y * scale );
@@ -2531,7 +2565,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         m_kPositionSum.Set(0,0,0);
         gcPt.Set(0,0,0);
                 
-        for (int iX = iXMin+1; iX < iXMax; iX++) {
+        for (int iX = iXMin; iX <= iXMax; iX++) {
             int iIndex = iX - iXMin;
             if ( aiNumCrossings[iIndex] >= 2 )
             {
@@ -2539,17 +2573,42 @@ public abstract class VOIBase extends Vector<Vector3f> {
                 {
                     int zStart = Math.round(aaiCrossingPoints[iIndex][i]);
                     int zEnd = Math.round(aaiCrossingPoints[iIndex][i+1]);
-                    for ( int iZ = zStart+1; iZ < zEnd; iZ++ )
+                    for ( int iZ = zStart-3; iZ < zEnd+3; iZ++ )
                     {
-                        Vector3f kPos = new Vector3f(iX, iY, iZ);                       
-                        m_kMaskPositions.add(kPos);
-                        m_kPositionSum.Add(kPos);
-                        setMask( kMask, xDim, yDim, iX, iY, iZ, polarity, XOR );
+                        int iMaskIndex = iZ * xDim * yDim;
+                        iMaskIndex += iY * xDim;
+                        iMaskIndex += iX;
+                        if ( !kMask.get(iMaskIndex) )
+                        {
+                            if ( containsX(iY,iZ) )
+                            {         
+                                kMask.set(iMaskIndex);            
+                                Vector3f kPos = new Vector3f(iX, iY, iZ);                       
+                                m_kMaskPositions.add(kPos);
+                                m_kPositionSum.Add(kPos);
+                            }
+                        }
                     }
                 }
             }
         }
-        
+        if ( m_kMaskPositions.size() == 0 )
+        {
+            for ( int i = 0; i < size(); i++ )
+            {
+                int iMaskIndex = (int)elementAt(i).Z * xDim * yDim;
+                iMaskIndex += (int)elementAt(i).Y * xDim;
+                iMaskIndex += (int)elementAt(i).X;
+                if ( !kMask.get(iMaskIndex) )
+                {
+                    kMask.set(iMaskIndex);            
+                    Vector3f kPos = new Vector3f(elementAt(i));                       
+                    m_kMaskPositions.add(kPos);
+                    m_kPositionSum.Add(kPos);
+                }
+                
+            }
+        }
         float scale = 1f/m_kMaskPositions.size();
         gcPt.X = MipavMath.round( m_kPositionSum.X * scale );
         gcPt.Y = MipavMath.round( m_kPositionSum.Y * scale );
@@ -2854,7 +2913,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         /*
          * Compute the crossing points for this column and produce spans.
          */
-        for (int iColumn = iXMin; iColumn < iXMax; iColumn++) {
+        for (int iColumn = iXMin; iColumn <= iXMax; iColumn++) {
             int iIndex = iColumn - iXMin;
 
             /* for each edge, figure out if it crosses this column and add its
