@@ -1040,12 +1040,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         {
             saveVOIs(kCommand);
             copy();
-            Vector3f kCenter = m_kParent.PropUp(m_iActive);
-            if ( kCenter != null )
-            {
-                setCenter( kCenter );
-                paste();
-            }
+            paste(1);
             setDefaultCursor();
         }
         else if ( kCommand.equals(CustomUIBuilder.PARAM_VOI_PROPAGATE_DOWN.getActionCommand()) )
@@ -1056,7 +1051,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             if ( kCenter != null )
             {
                 setCenter( kCenter );
-                paste();
+                paste(-1);
             }
             setDefaultCursor();
         }
@@ -1112,7 +1107,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         } 
         else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_PASTE.getActionCommand()) ) {
             saveVOIs(kCommand);
-            paste();
+            paste(0);
             setDefaultCursor();
         }
         else if ( kCommand.equals("MoveUP") )
@@ -1787,30 +1782,20 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      */
     public boolean propVOI(int direction, boolean active)
     {
+        copy();
+        if ( m_kCopyList.size() == 0 )
+        {
+            return false;
+        }
         if ( direction > 0 )
         {
-            copy();
-            if ( m_kCopyList.size() == 0 )
-            {
-                return false;
-            }
             saveVOIs(CustomUIBuilder.PARAM_VOI_PROPAGATE_UP.getActionCommand());
-            Vector3f kCenter = m_kParent.PropUp(m_iActive);
-            setCenter( kCenter );
-            paste();
         }
         else
         {
-            copy();
-            if ( m_kCopyList.size() == 0 )
-            {
-                return false;
-            }
             saveVOIs(CustomUIBuilder.PARAM_VOI_PROPAGATE_DOWN.getActionCommand());
-            Vector3f kCenter = m_kParent.PropDown(m_iActive);
-            setCenter( kCenter );
-            paste();
         }
+        paste(direction);
         updateDisplay();
         return true;
     }
@@ -2425,8 +2410,13 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     }
 
 
-    private void copy()
+    private boolean[] copy()
     {
+        boolean[] abSelected = new boolean[m_kVOIManagers.size()];
+        for ( int i = 0; i < m_kVOIManagers.size(); i++ )
+        {
+            abSelected[i] = false;
+        }
         m_kCopyList.clear();
         VOIVector kVOIs = m_kParent.getActiveImage().getVOIs();
         ViewVOIVector voiCopyList = new ViewVOIVector();
@@ -2438,6 +2428,13 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 VOIBase kCurrentVOI = kCurrentGroup.getCurves().get(j);
                 if ( kCurrentVOI.isActive() && !m_kCopyList.contains(kCurrentVOI) )
                 {
+                    for ( int k = 0; k < m_kVOIManagers.size(); k++ )
+                    {
+                        if ( kCurrentVOI.getPlane() == m_kVOIManagers.elementAt(k).getPlane() )
+                        {
+                            abSelected[k] = true;
+                        }
+                    }
                     m_kCopyList.add(kCurrentVOI);
                 }
             }
@@ -2456,6 +2453,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             }
         }
         ViewUserInterface.getReference().copyClippedVOIs(voiCopyList);
+        return abSelected;
     }
 
     private void createMask( ModelImage kActive, boolean bInside )
@@ -3224,9 +3222,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     	
         updateDisplay();
     }
+
     
-    
-    private void paste()
+    private void paste(int dir)
     {
         if ( m_kCopyList.size() == 0 )
         {
@@ -3245,7 +3243,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 }
             }
 
-            kManager.pasteVOI( kCurrentVOI );  
+            kManager.pasteVOI( kCurrentVOI, dir );  
         }
     }
 
@@ -4459,6 +4457,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         {
             m_kVOIDialog.updateVOI( added.getVOI(), getActiveImage() );
             m_kVOIDialog.updateTree();
+        }
+        else
+        {
+            setCenter(added.getBase().getGeometricCenter(), true );
         }
     }
 
