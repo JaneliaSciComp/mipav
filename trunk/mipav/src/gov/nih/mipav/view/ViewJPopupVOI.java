@@ -291,9 +291,9 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
                     popup.add(itemCrop);
                 }
             } 
-            //These are the number of pixels that the scrollbar of the activeImage has already scrolled, they adjust the position of the voiPopup
-            int xAmount = voiHandler.getActiveImage().getParentFrame().getScrollPane().getHorizontalScrollBar().getModel().getValue();
-            int yAmount = voiHandler.getActiveImage().getParentFrame().getScrollPane().getVerticalScrollBar().getModel().getValue();
+            //These are the number of pixels that the scrollbar of the activeImage has already scrolled and is offset by the actual location of the scroll pane
+            int xAmount = voiHandler.getActiveImage().getParentFrame().getScrollPane().getHorizontalScrollBar().getModel().getValue()-voiHandler.getActiveImage().getParentFrame().getScrollPane().getLocation().x;
+            int yAmount = voiHandler.getActiveImage().getParentFrame().getScrollPane().getVerticalScrollBar().getModel().getValue()-voiHandler.getActiveImage().getParentFrame().getScrollPane().getLocation().y;
             
             popup.show(voiHandler.getActiveImage().getParentFrame(), event.getX()-xAmount, event.getY()-yAmount);
         }
