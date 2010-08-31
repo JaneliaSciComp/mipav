@@ -125,9 +125,9 @@ public class AlgorithmVOIExtractionPaint extends AlgorithmBase {
 
         srcImage = sourceImage;
 
-        xDim = sourceImage.getExtents()[0];
-        yDim = sourceImage.getExtents()[1];
-        zDim = sourceImage.getExtents()[2];
+        xDim = sourceImage.getExtents().length > 0 ? sourceImage.getExtents()[0] : 1;
+        yDim = sourceImage.getExtents().length > 1 ? sourceImage.getExtents()[1] : 1;
+        zDim = sourceImage.getExtents().length > 2 ? sourceImage.getExtents()[2] : 1;
 
         xDim2 = 2 * xDim;
         yDim2 = 2 * xDim;
