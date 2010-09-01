@@ -1608,7 +1608,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         
         
 
-        jtemCheckbox = new JCheckBox("Use JTEM");
+        jtemCheckbox = new JCheckBox("Full Powell's Method");
         jtemCheckbox.setFont(serif12);
         jtemCheckbox.setForeground(Color.black);
         jtemCheckbox.setSelected(false);

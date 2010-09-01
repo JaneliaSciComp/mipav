@@ -2154,17 +2154,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
 
         Vector3f gcFilePt = kVOI.getGeometricCenter();
-        //Profile.clear();
-        //Profile.start();
-        //for ( int i = 0; i < 100; i++ )
-        //{
-        //    kVOI.update();
-        //    gcFilePt = kVOI.getGeometricCenter();
-        //}
-        //Profile.stop();
-        //Profile.setFileName( "profile_out" );
-        //Profile.shutdown();
-
         Vector3f gcPt = m_kDrawingContext.fileToScreen( gcFilePt );
         xS = (int)gcPt.X;
         yS = (int)gcPt.Y;

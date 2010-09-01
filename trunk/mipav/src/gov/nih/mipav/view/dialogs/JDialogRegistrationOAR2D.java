@@ -1737,7 +1737,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         sampleCheckBox.setSelected(true);
         sampleCheckBox.setEnabled(true);
 
-        jtemCheckBox = new JCheckBox("Use JTEM");
+        jtemCheckBox = new JCheckBox("Full Powell's Method");
         jtemCheckBox.setFont(serif12);
         jtemCheckBox.setForeground(Color.black);
         jtemCheckBox.setSelected(false);
