@@ -666,8 +666,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 if (thePlugIn instanceof PlugInGeneric) {
                     ((PlugInGeneric) thePlugIn).run();
                 } else {
-                    MipavUtil.displayError("Plug-in " + plugInName
-                            + " claims to be an generic PlugIn, but does not implement PlugInGeneric.");
+                	MipavUtil.displayError("Plugin " + plugInName
+                            + " is not a generic plugin.");
                 }
             } catch (final UnsupportedClassVersionError ucve) {
                 Preferences
@@ -2488,8 +2488,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
                             ((PlugInGeneric) thePlugIn).run();
                         } else {
-                            MipavUtil.displayError("Plug-in " + plugInName
-                                    + " claims to be an generic PlugIn, but does not implement PlugInGeneric.");
+                        	MipavUtil.displayError("Plugin " + plugInName
+                                    + " must implement the PlugInGeneric interface in order to be run from the command line.");
                         }
                     } catch (final ClassNotFoundException e) {
                         MipavUtil.displayError("PlugIn not found: " + plugInName);

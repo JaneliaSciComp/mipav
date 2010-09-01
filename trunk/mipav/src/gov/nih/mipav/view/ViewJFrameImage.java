@@ -2247,8 +2247,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 if (thePlugIn instanceof PlugInGeneric) {
                     ((PlugInGeneric) thePlugIn).run();
                 } else {
-                    MipavUtil.displayError("Plug-in " + plugInName
-                            + " claims to be an generic PlugIn, but does not implement PlugInGeneric.");
+                    MipavUtil.displayError("Plugin " + plugInName
+                            + " is not a generic plugin.");
                 }
             } catch (final ClassNotFoundException e) {
                 MipavUtil.displayError("PlugIn not found: " + plugInName);
