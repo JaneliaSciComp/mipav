@@ -34,12 +34,7 @@ import java.util.concurrent.CountDownLatch;
  * A global optimisation method for robust affine registration of brain images.<br>
  * <i>Medical Image Analysis</i>, 5(2):143-156.<br>
  * </p>
- *
- * <p>For further information about Powell's method consult: <u>Numerical Recipes in C: The Art of Scientific Computing
- * Second Edition</u><br>
- * Press, William H., Teukolsky, Saul A., Vettering, William T., and Flannery, Brian P. Cambridge Unversity Press:
- * Cambridge, 1988.</p>
- *
+ * 
  * @version  0.1 Oct 1, 2001
  * @author   Neva Cherniavsky
  * @version  0.2 March 27, 2008
@@ -50,37 +45,17 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    /**
-     * Golden ratio is .38197 and .61803. Use this second part to magnify successive intervals in the bracketing
-     * function. The "1" is for the magnification.
-     */
-    private static final double GOLD = 1.618034;
-
-    /** Golden ratio is .38197 and .61803. */
-    private static final double RGOLD = 0.618034;
-
-    /** Golden ratio - second part. */
-    private static final double CGOLD = 0.3819660;
-
     /** Used to prevent division by zero. */
     private static final double TINY = 1.0 * Math.pow(10, -20);
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** The initial bracket size for first iteration of Powell. */
-    protected int bracketBound;
 
     /** Cost function called to measure cost - 1D. */
     protected AlgorithmOptimizeFunctionBase costFunction;
 
-    /** Final point when optimization is complete. */
-//    protected double[] finalPoint;
-
     /** The transformation matrix from the origin of the input image. */
     protected TransMatrix fromOrigin;
-
-    /** The cost of the function at the best minimum. */
-//    protected double functionAtBest;
 
     /** The maximum number of iterations the optimization allows. */
     protected int maxIterations;
@@ -90,12 +65,6 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
 
     /** Parent algorithm that called this optimization. */
     protected AlgorithmBase parent;
-
-    /** Point that is currently being optimized. */
-//    protected volatile double[] point;
-
-       /** Point that was initially passed into function. */
-//    protected double[] start;
 
     /** Array of tolerances for each dimension. */
     protected double[] tolerance;
@@ -149,7 +118,6 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
         costFunction = costFunc;
         tolerance = tols;
         maxIterations = maxIter;
-        bracketBound = bracket;
         parent = parentAlgo;
     }
 
@@ -385,18 +353,16 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
         maxIterations = max;
     }
 
+
     /**
      * Minimizes the point along the given vector direction. Given an initial point and a guess as to how far from that
      * point we should go to look for a minimum.
-     *
-     * @param   initial     Initial point to look for minimum at.
-     * @param   boundguess  Guess as to how far from that point we should go to look.
-     * @param   directions  Direction to find minimum along.
-     *
-     * @return  Minimum of the point along the given vector.
+     * @param startPoint
+     * @param pt
+     * @param directions
+     * @param bestCost
      */
-    public void lineMinimization(double[] startPoint, double[] pt, double initial, double boundguess, double[] directions, double[]bestCost) {
-
+    public void lineMinimization(double[] startPoint, double[] pt, double[] directions, double[]bestCost) { 
         // Set up tolerances in direction of line minimization.
         // "unit_directions" is a unit vector in the direction of "directions"
         double tol = 0, sum = 0;
@@ -414,9 +380,8 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
             }
         }
 
-        double unit_tolerance = Math.abs(1 / tol);
+        double unit_tolerance = Math.abs(1 / tol);        
         
-        /*
         //System.err.println( "AlgorithmPowellOptBase " + unit_tolerance );
         savedStartPoint = new double[startPoint.length];
         for ( int i = 0; i < startPoint.length; i++ )
@@ -425,362 +390,6 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
         }
         BrentOnLine brentOnLine = new BrentOnLine(pt, directions, this);
         bestCost[0] = brentOnLine.search(unit_tolerance);
-        */
-        
-
-        // Create new Bracket.  Set a and b and find functionAtA and functionAtB.
-        Bracket bracket = new Bracket();
-
-        bracket.a = boundguess * unit_tolerance;
-        bracket.functionAtA = oneDimension(startPoint, pt, bracket.a, unit_directions);
-
-        bracket.b = 0;
-
-        if (initial == 0) { // for first call to lineMinimization within PowellOpt3D
-            bracket.functionAtB = oneDimension(startPoint, pt, bracket.b, unit_directions);
-        } else {
-            bracket.functionAtB = initial;
-        }
-
-        // minimumBracket is called and will set bracket.c and functionAtC.
-        minimumBracket(startPoint, pt, bracket, unit_directions);
-        // if (initial == 0)  Preferences.debug("Initial bracket: \n" +bracket);
-
-        double minDist = 0.1 * unit_tolerance;
-        double xNew, yNew;
-        int count = 0;
-        //Profile.clear();
-        //Profile.start();
-        boolean bLineMinDone = false; 
-        if ( (costFunction instanceof AlgorithmCostFunctions2D) && (costFunction.getCostFunction() == AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU_LM) )
-        {
-            if ( ((AlgorithmCostFunctions2D)costFunction).isGPULineMin() )
-            {
-                //System.err.println( "GPU LineMinimization" );
-                float[] bracketB = ((AlgorithmCostFunctions2D)costFunction).lineMin( toOrigin, fromOrigin, 
-                        0f, 2f, startPoint, pt, pt.length, unit_directions, unit_tolerance, (float)minDist,
-                        bracket.a, bracket.functionAtA, bracket.b, bracket.functionAtB, 
-                        bracket.c, bracket.functionAtC );
-                bracket.b = bracketB[0];
-                bracket.functionAtB = bracketB[1];
-                bLineMinDone = true;
-            }
-        }
-        else if ( (costFunction instanceof AlgorithmCostFunctions) && (costFunction.getCostFunction() == AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU_LM) )
-        {
-            if ( ((AlgorithmCostFunctions)costFunction).isGPULineMin() )
-            {
-                //System.err.println( "3D GPU LineMinimization" );
-                float[] bracketB = ((AlgorithmCostFunctions)costFunction).lineMin( toOrigin, fromOrigin, 
-                        0f, 3f, startPoint, pt, pt.length, unit_directions, unit_tolerance, (float)minDist,
-                        bracket.a, bracket.functionAtA, bracket.b, bracket.functionAtB, 
-                        bracket.c, bracket.functionAtC );
-                bracket.b = bracketB[0];
-                bracket.functionAtB = bracketB[1];
-                bLineMinDone = true;
-            }
-        }
-        if ( !bLineMinDone )
-        {
-            while (((++count) < 100) && (Math.abs(bracket.c - bracket.a) > unit_tolerance) && ((parent == null)?true:!parent.isThreadStopped())) {
-
-                if (count > 0) {
-                    xNew = nextPoint(bracket);
-                } else {
-                    xNew = extrapolatePoint(bracket);
-                }
-                if ( xNew == 0 )
-                {
-                    System.err.println( xNew );
-                }
-
-                double directionN = 1.0;
-
-                if (bracket.c < bracket.a) {
-                    directionN = -1.0;
-                }
-
-                if (Math.abs(xNew - bracket.a) < minDist) {
-                    xNew = bracket.a + (directionN * minDist);
-                }
-
-                if (Math.abs(xNew - bracket.c) < minDist) {
-                    xNew = bracket.c - (directionN * minDist);
-                }
-
-                if (Math.abs(xNew - bracket.b) < minDist) {
-                    xNew = extrapolatePoint(bracket);
-                }
-
-                if (Math.abs(bracket.b - bracket.a) < (4 * minDist)) {
-                    xNew = bracket.b + (directionN * 5 * minDist);
-                }
-
-                if (Math.abs(bracket.b - bracket.c) < (4 * minDist)) {
-                    xNew = bracket.b - (directionN * 5 * minDist);
-                }
-
-                yNew = oneDimension(startPoint, pt, xNew, unit_directions);
-                //System.err.println( yNew );
-                if (((xNew - bracket.b) * (bracket.c - bracket.b)) > 0) { // is xnew between bracket.c and bracket.b ?
-
-                    // swap bracket.a and bracket.c so that xnew is between bracket.a and bracket.b
-                    double xtemp = bracket.a;
-
-                    bracket.a = bracket.c;
-                    bracket.c = xtemp;
-
-                    double ytemp = bracket.functionAtA;
-
-                    bracket.functionAtA = bracket.functionAtC;
-                    bracket.functionAtC = ytemp;
-                }
-
-                if (yNew < bracket.functionAtB) {
-
-                    // new interval is [bracket.b,bracket.a] with xNew as best point in the middle
-                    bracket.c = bracket.b;
-                    bracket.functionAtC = bracket.functionAtB;
-                    bracket.b = xNew;
-                    bracket.functionAtB = yNew;
-                } else {
-
-                    // new interval is  [bracket.c,xnew] with bracket.b as best point still
-                    bracket.a = xNew;
-                    bracket.functionAtA = yNew;
-                }
-            }
-            //System.err.println( "CPU BracketA = " + bracket.a + " " + bracket.functionAtA );
-            //System.err.println( "BracketB = " + bracket.b + " " + bracket.functionAtB );
-            //System.err.println( "BracketC = " + bracket.c + " " + bracket.functionAtC );
-        }
-        for (int i = 0; i < dof; i++) {
-            pt[i] = (bracket.b * unit_directions[i]) + pt[i];
-        }
-
-        bestCost[0] = bracket.functionAtB;
-        
-    }
-
-    /**
-     * Finds the estimated quadratic minimum's position.
-     *
-     * @param   bracket  Bracketed minimum, with a < b < c and functionAtB < functionAtA and functionAtB < functionAtC.
-     *
-     * @return  The estimated quadratic minimum's position.
-     */
-    private double estimateMinimum(Bracket bracket) {
-        double ad = 0.0, bd = 0.0, det = 0.0;
-        double xNew;
-
-        ad = ((bracket.b - bracket.c) * (bracket.functionAtB - bracket.functionAtA)) -
-             ((bracket.b - bracket.a) * (bracket.functionAtB - bracket.functionAtC));
-        bd = (-((bracket.b * bracket.b) - (bracket.c * bracket.c)) * (bracket.functionAtB - bracket.functionAtA)) +
-             (((bracket.b * bracket.b) - (bracket.a * bracket.a)) * (bracket.functionAtB - bracket.functionAtC));
-        det = (bracket.b - bracket.c) * (bracket.c - bracket.a) * (bracket.a - bracket.b);
-
-        if ((Math.abs(det) > TINY) && ((ad / det) < 0)) { // quadratic only has a maxima
-            xNew = Double.NaN;
-
-            return xNew;
-        }
-
-        if (Math.abs(ad) > TINY) {
-            xNew = -bd / (2 * ad);
-
-            return xNew;
-        } else { // near linear condition -> get closer to an end point
-            xNew = Double.NaN;
-
-            return xNew;
-        }
-    }
-
-    /**
-     * Comes up with a new point to test based on the golden ratio.
-     *
-     * @param   bracket  Original bracket - set of a, b, c and f(a), f(b) and f(c).
-     *
-     * @return  New point to test.
-     */
-    private double extrapolatePoint(Bracket bracket) {
-
-        // bracket.b must be between bracket.a and bracket.c
-        // use the golden ratio (scale similar result)
-        double xNew;
-
-        if (Math.abs(bracket.c - bracket.b) > Math.abs(bracket.a - bracket.b)) {
-            xNew = (CGOLD * bracket.c) + (RGOLD * bracket.b);
-        } else {
-            xNew = (CGOLD * bracket.a) + (RGOLD * bracket.b);
-        }
-
-        return xNew;
-    }
-
-    /**
-     * Creates a good "bracket" for the minimum value. A "bracket" is a set of three points such that a < b < c and f(a)
-     * > f(b) and f(c) > f(b). a and c are said to "bracket" b if this condition holds.
-     *
-     * @param   bracket          Starting value for bracket - we will change so that f(b)< f(a).
-     * @param   unit_directions  Starting value for bracket - we will change so that f(b)< f(a).
-     *
-     * @return  The class Bracket which contains a, b, c, and f(a), f(b), and f(c).
-     */
-    private Bracket minimumBracket(double[] startPoint, double[] pt, Bracket bracket, double[] unit_directions) {
-
-        if (bracket.functionAtA == 0) {
-            bracket.functionAtA = oneDimension(startPoint, pt, bracket.a, unit_directions);
-        }
-
-        if (bracket.functionAtB == 0) {
-            bracket.functionAtB = oneDimension(startPoint, pt, bracket.b, unit_directions);
-        }
-
-        if (bracket.functionAtA < bracket.functionAtB) { // f(a) should be > f(b).  if not, swap a and b
-
-            double tempx = bracket.a, tempy = bracket.functionAtA;
-
-            bracket.a = bracket.b;
-            bracket.functionAtA = bracket.functionAtB;
-            bracket.b = tempx;
-            bracket.functionAtB = tempy;
-        }
-
-        double newX2 = 0.0, newY2 = 0.0, maxX2 = 0.0;
-        double dir = 1.0;
-
-        if (bracket.b < bracket.a) {
-            dir = -1.0;
-        }
-
-        bracket.c = bracket.b + (GOLD * (bracket.b - bracket.a));
-        bracket.functionAtC = oneDimension(startPoint,pt, bracket.c, unit_directions);
-
-        while (bracket.functionAtB > bracket.functionAtC) { // note: must maintain bracket.functionAtA >=
-                                                            // bracket.functionAtB
-            maxX2 = bracket.b + (2 * GOLD * (bracket.c - bracket.b));
-            newX2 = estimateMinimum(bracket);
-
-            if ((Double.isNaN(newX2)) || (((newX2 - bracket.a) * dir) < 0) || (((newX2 - maxX2) * dir) > 0)) {
-                newX2 = bracket.b + (GOLD * (bracket.c - bracket.a));
-            }
-
-            newY2 = oneDimension(startPoint, pt, newX2, unit_directions);
-
-            if (((newX2 - bracket.b) * (newX2 - bracket.a)) < 0) { // newx2 is between bracket.a and bracket.b
-
-                if (newY2 < bracket.functionAtB) { // found a bracket!
-                    bracket.c = bracket.b;
-                    bracket.functionAtC = bracket.functionAtB;
-                    bracket.b = newX2;
-                    bracket.functionAtB = newY2;
-
-                    break;
-                } else { // can use newx2 as a new value for bracket.a (as newY2 >= bracket.functionAtB)
-                    bracket.a = newX2;
-                    bracket.functionAtA = newY2;
-                }
-            } else { // newx2 is between bracket.b and maxx2
-
-                if (newY2 > bracket.functionAtB) { // found a bracket!
-                    bracket.c = newX2;
-                    bracket.functionAtC = newY2;
-
-                    break;
-                } else if (((newX2 - bracket.c) * dir) < 0) { // newx2 closer to bracket.b than old bracket.c
-                    bracket.a = bracket.b;
-                    bracket.functionAtA = bracket.functionAtB;
-                    bracket.b = newX2;
-                    bracket.functionAtB = newY2;
-                } else {
-                    bracket.a = bracket.b;
-                    bracket.functionAtA = bracket.functionAtB;
-                    bracket.b = bracket.c;
-                    bracket.functionAtB = bracket.functionAtC;
-                    bracket.c = newX2;
-                    bracket.functionAtC = newY2;
-                }
-            }
-        }
-
-        if ((bracket.functionAtC < bracket.functionAtB) || (bracket.functionAtA < bracket.functionAtB)) {
-            System.err.println("findinitialbound failed to bracket: current triplet is " + bracket);
-        }
-
-        return bracket;
-    }
-
-    /**
-     * Takes the estimated minimum of the quadratic, checks to see if it is valid; if so, returns it, if not, returns
-     * extrapolated point instead.
-     *
-     * @param   bracket  DOCUMENT ME!
-     *
-     * @return  Next point to test.
-     */
-    private double nextPoint(Bracket bracket) {
-        // bracket.a and bracket.c are the bounds, bracket.b is between them
-
-        double xNew, min, max;
-
-        xNew = estimateMinimum(bracket);
-        min = (bracket.a < bracket.c) ? bracket.a : bracket.c;
-        max = (bracket.c < bracket.a) ? bracket.a : bracket.c;
-
-        // check to see that the quadratic result is in the range
-        if ((Double.isNaN(xNew)) || (xNew < min) || (xNew > max)) {
-            xNew = extrapolatePoint(bracket);
-        }
-
-        return xNew;
-    }
-
-    /**
-     * Measures the cost of the vector point at x.
-     *
-     * @param   x                DOCUMENT ME!
-     * @param   unit_directions  DOCUMENT ME!
-     *
-     * @return  Cost of function at x.
-     */
-    private double oneDimension(double[] startPoint, double[] pt, double x, double[] unit_directions) {
-        double f;
-        double[] xt = new double[pt.length];
-
-        for (int i = 0; i < pt.length; i++) {
-            xt[i] = pt[i] + (x * unit_directions[i]);
-        }
-        double[]fullPoint = constructPoint(startPoint, xt);
-        f = costFunction.cost(convertToMatrix(fullPoint));
-
-        return f;
-    }
-
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
-
-    /**
-     * Helper class for storing the six variables that come out of the minimumBracket function.
-     */
-    private class Bracket {
-
-        /** DOCUMENT ME! */
-        protected double a, b, c, functionAtA, functionAtB, functionAtC;
-
-        /**
-         * Default constructor initializes nothing.
-         */
-        protected Bracket() { }
-
-        /**
-         * Returns this class's elements as a string.
-         *
-         * @return  Representation of this class as a string.
-         */
-        public String toString() {
-            return new String("a: " + a + " f(a): " + functionAtA + "\n" + "b: " + b + " f(b): " + functionAtB + "\n" +
-                              "c: " + c + " f(c): " + functionAtC + "\n");
-        }
     }
 
     /**
@@ -850,9 +459,8 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
         if (pathRecorded && (dof == 3)) {
             path = new Vector<Vector3f>();
         }
-
         if (parallelPowell) {
-        	//System.err.println( "using Parallel Powell" );
+        	System.err.println( "using Parallel Powell" );
             final double[][] pts = new double[dof][dof];
             final double[][] costs = new double[dof][1];
             boolean keepGoing = true;
@@ -874,8 +482,6 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
                     final CountDownLatch doneSignal = new CountDownLatch(dof);
 
                     for (int k = 0; k < dof; k++) {
-                        final int boundGuess = bracketBound;
-                        final double initialGuess = 0;
                         final double[] directions = new double[dof];
 
                         // directions should hold "1" for i and "0" for all
@@ -891,8 +497,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
                         // "+i +".\n");
                         Runnable task = new Runnable() {
                             public void run() {
-                                lineMinimization(v.getPoint(), pts[index],
-                                        initialGuess, boundGuess, directions,
+                                lineMinimization(v.getPoint(), pts[index], directions,
                                         costs[index]);
                                 doneSignal.countDown();
                             }
@@ -959,8 +564,6 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
         }
         else {
         	//System.err.println( "using MIPAV Powell" );
-            int boundGuess;
-            double initialGuess;
             double[] originalPoint = new double[dof];
             double[] directions = new double[dof];
             boolean keepGoing = true;
@@ -983,9 +586,6 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
                     fireProgressStateChanged((int) (progress / progressModulus));
                 }
                 for (int i = 0; (i < dof) && ((parent == null)?true:!parent.isThreadStopped()); i++) {
-                    boundGuess = bracketBound;
-                    initialGuess = 0;
-
                     // directions should hold "1" for i and "0" for all other
                     // dimensions.
                     for (int j = 0; j < dof; j++) {
@@ -996,8 +596,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
 
                     // Preferences.debug("Calling lineMinimization for dimension
                     // "+i +".\n");
-                    lineMinimization(v.getPoint(), point, initialGuess,
-                            boundGuess, directions, cost);
+                    lineMinimization(v.getPoint(), point, directions, cost);
                     min = cost[0];
                     if (Math.abs(point[i] - originalPoint[i]) > tolerance[i]) {
                         keepGoing = true;
