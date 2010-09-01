@@ -3197,10 +3197,14 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 	                            	if ((orient == FileInfoBase.ORI_R2L_TYPE) || 
 	                                        (orient == FileInfoBase.ORI_A2P_TYPE) || 
 	                                        (orient == FileInfoBase.ORI_I2S_TYPE)) {
-	                                	loc = loc + ((image.getFileInfo(0).getExtents()[i] - 1) * image.getFileInfo(0).getResolutions()[i]);
+	                            		if (loc < 0) {
+	                                	    loc = loc + ((image.getFileInfo(0).getExtents()[i] - 1) * image.getFileInfo(0).getResolutions()[i]);
+	                            		}
 	                                }
 	                                else {
-	                                	loc = loc - ((image.getFileInfo(0).getExtents()[i] - 1) * image.getFileInfo(0).getResolutions()[i]);	
+	                                	if (loc > 0) {
+	                                	    loc = loc - ((image.getFileInfo(0).getExtents()[i] - 1) * image.getFileInfo(0).getResolutions()[i]);
+	                                	}
 	                                }
 	                            }
 	                            newMatrix.set(i, 3, loc);
@@ -3250,10 +3254,14 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 	                            	if ((orient == FileInfoBase.ORI_R2L_TYPE) || 
 	                                        (orient == FileInfoBase.ORI_A2P_TYPE) || 
 	                                        (orient == FileInfoBase.ORI_I2S_TYPE)) {
-	                                	loc = loc + ((image.getFileInfo(0).getExtents()[i] - 1) * image.getFileInfo(0).getResolutions()[i]);
+	                            		if (loc < 0) {
+	                                	    loc = loc + ((image.getFileInfo(0).getExtents()[i] - 1) * image.getFileInfo(0).getResolutions()[i]);
+	                            		}
 	                                }
 	                                else {
-	                                	loc = loc - ((image.getFileInfo(0).getExtents()[i] - 1) * image.getFileInfo(0).getResolutions()[i]);	
+	                                	if (loc > 0) {
+	                                	    loc = loc - ((image.getFileInfo(0).getExtents()[i] - 1) * image.getFileInfo(0).getResolutions()[i]);
+	                                	}
 	                                }
 	                            }
 	                            newMatrix2.set(i, 3, loc);
