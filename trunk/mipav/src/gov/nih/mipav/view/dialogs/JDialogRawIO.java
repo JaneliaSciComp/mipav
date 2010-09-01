@@ -413,13 +413,16 @@ public class JDialogRawIO extends JDialogBase {
         } catch (NullPointerException npe) {
             return;
         }
-
-        textDim1.setText(st.nextToken());
-        textDim2.setText(st.nextToken());
-        textDim3.setText(st.nextToken());
-        textDim4.setText(st.nextToken());
-        textDim5.setText(st.nextToken());
-    }
+        
+       
+        if(st.countTokens() == 5) {
+	        textDim1.setText(st.nextToken());
+	        textDim2.setText(st.nextToken());
+	        textDim3.setText(st.nextToken());
+	        textDim4.setText(st.nextToken());
+	        textDim5.setText(st.nextToken());
+        }
+	    }
 
     /**
      * Inserts the values given by the preference file into the resolutions fields of the dialog.
