@@ -3027,7 +3027,9 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     /**
      * Updates the image orientation.
      */
-    private void updateImageOrientation() {
+    private void updateImageOrientation() {  	
+    	TransMatrix newMatrix = null;
+    	TransMatrix newMatrix2 = null;
         FileInfoBase[] fileInfo = null;
         int originalOrientAxis[] = null;
         originalOrientAxis = image.getFileInfo()[0].getAxisOrientation().clone();
@@ -3066,58 +3068,240 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             boolean changeQ = false;
             boolean changeS = false;
             matHolder = image.getMatrixHolder();
-
+            int axisOrder[] = new int[3];
+            boolean axisFlip[] = new boolean[3];
+            boolean found;
+            float loc;
+            
             if (matHolder != null) {
-                final LinkedHashMap<String, TransMatrix> matrixMap = matHolder.getMatrixMap();
-                final Iterator<String> iter = matrixMap.keySet().iterator();
+            	
+                LinkedHashMap<String, TransMatrix> matrixMap = matHolder.getMatrixMap();
+                Iterator<String> iter = matrixMap.keySet().iterator();
                 String nextKey = null;
-
+                
                 TransMatrix tempMatrix = null;
-
+                
+                for (j = 0; j <= 2; j++) {
+                    switch (originalOrientAxis[j]) {
+                        case FileInfoBase.ORI_R2L_TYPE:
+                            found = false;
+                            for (i = 0; (i <= 2) && (!found); i++) {
+                                if (orientAxis[i] == FileInfoBase.ORI_R2L_TYPE) {
+                                	axisOrder[i] = j;
+                                	axisFlip[i] = false;
+                                    found = true;
+                                }
+                                else if (orientAxis[i] == FileInfoBase.ORI_L2R_TYPE) {
+                                	axisOrder[i] = j;
+                                	axisFlip[i] = true;
+                                    found = true;
+                                }
+                            }
+                            break;
+                        case FileInfoBase.ORI_L2R_TYPE:
+                            found = false;
+                            for (i = 0; (i <= 2) && (!found); i++) {
+                                if (orientAxis[i] == FileInfoBase.ORI_L2R_TYPE) {
+                                	axisOrder[i] = j;
+                                	axisFlip[i] = false;
+                                    found = true;
+                                }
+                                else if (orientAxis[i] == FileInfoBase.ORI_R2L_TYPE) {
+                                	axisOrder[i] = j;
+                                	axisFlip[i] = true;
+                                    found = true;
+                                }
+                            }
+                            break;
+                        case FileInfoBase.ORI_A2P_TYPE:
+                            found = false;
+                            for (i = 0; (i <= 2) && (!found); i++) {
+                                if (orientAxis[i] == FileInfoBase.ORI_A2P_TYPE) {
+                                	axisOrder[i] = j;
+                                	axisFlip[i] = false;
+                                    found = true;
+                                }
+                                else if (orientAxis[i] == FileInfoBase.ORI_P2A_TYPE) {
+                                	axisOrder[i] = j;
+                                	axisFlip[i] = true;
+                                    found = true;
+                                }
+                            }
+                            break;
+                        case FileInfoBase.ORI_P2A_TYPE:
+                            found = false;
+                            for (i = 0; (i <= 2) && (!found); i++) {
+                                if (orientAxis[i] == FileInfoBase.ORI_P2A_TYPE) {
+                                	axisOrder[i] = j;
+                                	axisFlip[i] = false;
+                                    found = true;
+                                }
+                                else if (orientAxis[i] == FileInfoBase.ORI_A2P_TYPE) {
+                                	axisOrder[i] = j;
+                                	axisFlip[i] = true;
+                                    found = true;
+                                }
+                            }
+                            break;
+                        case FileInfoBase.ORI_I2S_TYPE:
+                            found = false;
+                            for (i = 0; (i <= 2) && (!found); i++) {
+                                if (orientAxis[i] == FileInfoBase.ORI_I2S_TYPE) {
+                                	axisOrder[i] = j;
+                                	axisFlip[i] = false;
+                                    found = true;
+                                }
+                                else if (orientAxis[i] == FileInfoBase.ORI_S2I_TYPE) {
+                                	axisOrder[i] = j;
+                                	axisFlip[i] = true;
+                                    found = true;
+                                }
+                            }
+                            break;
+                        case FileInfoBase.ORI_S2I_TYPE:
+                            found = false;
+                            for (i = 0; (i <= 2) && (!found); i++) {
+                                if (orientAxis[i] == FileInfoBase.ORI_S2I_TYPE) {
+                                	axisOrder[i] = j;
+                                	axisFlip[i] = false;
+                                    found = true;
+                                }
+                                else if (orientAxis[i] == FileInfoBase.ORI_I2S_TYPE) {
+                                	axisOrder[i] = j;
+                                	axisFlip[i] = true;
+                                    found = true;
+                                }
+                            }
+                            break;
+                    }
+                } // for (j = 0; j <= 2; j++)
+	            
                 while (iter.hasNext()) {
                     nextKey = iter.next();
                     tempMatrix = matrixMap.get(nextKey);
                     if (tempMatrix.isNIFTI()) {
-                        for (i = 0; i < 3; i++) {
-                            if (originalOrientAxis[i] != orientAxis[i]) {
-                                if (tempMatrix.isQform()) {
-                                    changeQ = true;
-                                } else {
-                                    changeS = true;
-                                }
-                                for (j = 0; j < 4; j++) {
-                                    tempMatrix.set(i, j, -tempMatrix.get(i, j));
-                                }
-                            }
-                        }
-                        if (tempMatrix.isQform() && changeQ) {
-                            if (image.getNDims() == 3) {
-                                for (i = 0; i < image.getExtents()[2]; i++) {
-                                    ((FileInfoNIFTI) fileInfo[i]).setMatrixQ(tempMatrix);
-                                }
-                            } else if (image.getNDims() == 4) {
-                                for (i = 0; i < image.getExtents()[2] * image.getExtents()[3]; i++) {
-                                    ((FileInfoNIFTI) fileInfo[i]).setMatrixQ(tempMatrix);
-                                }
-                            }
-                        } // if (tempMatrix.isQform() && changeQ)
-                        else if ( ( !tempMatrix.isQform()) && changeS) {
-                            if (image.getNDims() == 3) {
-                                for (i = 0; i < image.getExtents()[2]; i++) {
-                                    ((FileInfoNIFTI) fileInfo[i]).setMatrixS(tempMatrix);
-                                }
-                            } else if (image.getNDims() == 4) {
-                                for (i = 0; i < image.getExtents()[2] * image.getExtents()[3]; i++) {
-                                    ((FileInfoNIFTI) fileInfo[i]).setMatrixS(tempMatrix);
-                                }
-                            }
-                        } // else if ((!tempMatrix.isQform()) && changeS)
-                    }
+                    	if (newMatrix == null) {
+                    	    newMatrix = new TransMatrix(4);
+	                    	for (i = 0; i < 3; i++) {
+	                            for (j = 0; j < 3; j++) {
+	                            	if (axisFlip[i]) {
+	                            		newMatrix.set(j, i, -tempMatrix.get(j, axisOrder[i]));
+	                            	}
+	                            	else {
+	                                    newMatrix.set(j, i, tempMatrix.get(j, axisOrder[i]));
+	                            	}
+	                            }
+	                            loc = tempMatrix.get(i, 3);
+	                            if (axisFlip[i]) {
+	                            	orient = image.getFileInfo(0).getAxisOrientation(axisOrder[i]);
+	                            	if ((orient == FileInfoBase.ORI_R2L_TYPE) || 
+	                                        (orient == FileInfoBase.ORI_A2P_TYPE) || 
+	                                        (orient == FileInfoBase.ORI_I2S_TYPE)) {
+	                                	loc = loc + ((image.getFileInfo(0).getExtents()[i] - 1) * image.getFileInfo(0).getResolutions()[i]);
+	                                }
+	                                else {
+	                                	loc = loc - ((image.getFileInfo(0).getExtents()[i] - 1) * image.getFileInfo(0).getResolutions()[i]);	
+	                                }
+	                            }
+	                            newMatrix.set(i, 3, loc);
+	                    	} // for (i = 0; i < 3; i++)
+	                    	tempMatrix.Copy(newMatrix);
+	                    	if (image.getFileInfo(0) instanceof FileInfoNIFTI) {
+		                        if (tempMatrix.isQform()) {
+		                            if (image.getNDims() == 3) {
+		                                for (i = 0; i < image.getExtents()[2]; i++) {
+		                                    ((FileInfoNIFTI)image.getFileInfo(i)).setMatrixQ(newMatrix);
+		                                }
+		                            }
+		                            else if (image.getNDims() == 4) {
+		                                for (i = 0; i < image.getExtents()[2]*image.getExtents()[3]; i++) {
+		                                    ((FileInfoNIFTI)image.getFileInfo(i)).setMatrixQ(newMatrix);    
+		                                }
+		                            }
+		                        } // if (tempMatrix.isQform())
+		                        else { // tempMatrix is sform
+		                            if (image.getNDims() == 3) {
+		                                for (i = 0; i < image.getExtents()[2]; i++) {
+		                                    ((FileInfoNIFTI)image.getFileInfo(i)).setMatrixS(newMatrix);
+		                                }
+		                            }
+		                            else if (image.getNDims() == 4) {
+		                                for (i = 0; i < image.getExtents()[2]*image.getExtents()[3]; i++) {
+		                                    ((FileInfoNIFTI)image.getFileInfo(i)).setMatrixS(newMatrix);    
+		                                }
+		                            }    
+		                        } // else tempMatrix is sform
+	                    	} // if (destImage.getFileInfo(0) instanceof FileInfoNIFTI)
+                    	} // if (newMatrix == null)
+                    	else {
+                    		newMatrix2 = new TransMatrix(4);
+                    		for (i = 0; i < 3; i++) {
+	                            for (j = 0; j < 3; j++) {
+	                            	if (axisFlip[i]) {
+	                            		newMatrix2.set(j, i, -tempMatrix.get(j, axisOrder[i]));
+	                            	}
+	                            	else {
+	                                    newMatrix2.set(j, i, tempMatrix.get(j, axisOrder[i]));
+	                            	}
+	                            }
+	                            loc = tempMatrix.get(i, 3);
+	                            if (axisFlip[i]) {
+	                            	orient = image.getFileInfo(0).getAxisOrientation(axisOrder[i]);
+	                            	if ((orient == FileInfoBase.ORI_R2L_TYPE) || 
+	                                        (orient == FileInfoBase.ORI_A2P_TYPE) || 
+	                                        (orient == FileInfoBase.ORI_I2S_TYPE)) {
+	                                	loc = loc + ((image.getFileInfo(0).getExtents()[i] - 1) * image.getFileInfo(0).getResolutions()[i]);
+	                                }
+	                                else {
+	                                	loc = loc - ((image.getFileInfo(0).getExtents()[i] - 1) * image.getFileInfo(0).getResolutions()[i]);	
+	                                }
+	                            }
+	                            newMatrix2.set(i, 3, loc);
+	                    	} // for (i = 0; i < 3; i++)
+	                    	tempMatrix.Copy(newMatrix2);
+	                    	if (image.getFileInfo(0) instanceof FileInfoNIFTI) {
+		                        if (tempMatrix.isQform()) {
+		                            if (image.getNDims() == 3) {
+		                                for (i = 0; i < image.getExtents()[2]; i++) {
+		                                    ((FileInfoNIFTI)image.getFileInfo(i)).setMatrixQ(newMatrix2);
+		                                }
+		                            }
+		                            else if (image.getNDims() == 4) {
+		                                for (i = 0; i < image.getExtents()[2]*image.getExtents()[3]; i++) {
+		                                    ((FileInfoNIFTI)image.getFileInfo(i)).setMatrixQ(newMatrix2);    
+		                                }
+		                            }
+		                        } // if (tempMatrix.isQform())
+		                        else { // tempMatrix is sform
+		                            if (image.getNDims() == 3) {
+		                                for (i = 0; i < image.getExtents()[2]; i++) {
+		                                    ((FileInfoNIFTI)image.getFileInfo(i)).setMatrixS(newMatrix2);
+		                                }
+		                            }
+		                            else if (image.getNDims() == 4) {
+		                                for (i = 0; i < image.getExtents()[2]*image.getExtents()[3]; i++) {
+		                                    ((FileInfoNIFTI)image.getFileInfo(i)).setMatrixS(newMatrix2);    
+		                                }
+		                            }    
+		                        } // else tempMatrix is sform
+	                    	} // if (destImage.getFileInfo(0) instanceof FileInfoNIFTI)
+                    	}
+                    } // if (tempMatrix.isNIFTI())
                 }
+                if (newMatrix != null) {
+                	matHolder.clearMatrices();
+                	matHolder.addMatrix(newMatrix);
+                	if (newMatrix2 != null) {
+                		matHolder.addMatrix(newMatrix2);
+                	}
+                }
+                
                 if (changeQ || changeS) {
                     updateMatrixBox(true);
                 }
-            } // if (matHolder != null)
+            } // if (matHolder != null)    
+
+            
         } // if (fileInfo[0] instanceof FileInfoNIFTI)
 
         // if script recording, show the change of image orientation/axis orientations
