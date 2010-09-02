@@ -3806,6 +3806,15 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         menuItem.setActionCommand(SHOW_INTENSITY_GRAPH);
         int x = mouseEvent.getX();
         int y = mouseEvent.getY();
+        System.out.println(x+", "+y);
+        //These are the number of pixels that the scrollbar of the activeImage has already scrolled and 
+        //is offset by the actual location of the scroll pane, also add offset for better display
+        x = x - m_kImageActive.getParentFrame().getScrollPane().getHorizontalScrollBar().getModel().getValue() 
+        		- m_kImageActive.getParentFrame().getScrollPane().getLocation().x;
+        y = y - m_kImageActive.getParentFrame().getScrollPane().getVerticalScrollBar().getModel().getValue() 
+        		- m_kImageActive.getParentFrame().getScrollPane().getLocation().y+5;
+        System.out.println(x+", "+y);
+        
         popupMenu.show(m_kImageActive.getParentFrame(), x, y);
 
 
