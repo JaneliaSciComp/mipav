@@ -75,6 +75,15 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
     	int index;
     	int subIndex;
     	int c;
+    	FileInfoDicom[] fileInfoDicom;
+    	int i;
+    	double slLoc;
+        int RLIndex;
+        int APIndex;
+        int ISIndex;
+        boolean increaseRes;
+        double sliceResolution = 1.0;
+        float resolutions[] = new float[3];
         if (srcImage == null) {
         	displayError("Source Image is null");
             setCompleted(false);
@@ -145,9 +154,103 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
         	}
         }
         destImage.calcMinMax();
+        if (srcImage.getFileInfo()[0] instanceof FileInfoDicom) {
+        	FileInfoDicom dicomInfo = (FileInfoDicom) srcImage.getFileInfo(0);
+        	FileDicomTagTable tagTable = dicomInfo.getTagTable();
+        	if (tagTable.getValue("0018,0088") != null) {
+        		String sliceGapString = ((String) (dicomInfo.getTagTable().getValue("0018,0088"))).trim();
+                sliceResolution = new Double(sliceGapString.trim()).doubleValue();
+        	}
+        	resolutions[0] = srcImage.getFileInfo(0).getResolutions()[0];
+        	resolutions[1] = srcImage.getFileInfo(0).getResolutions()[1];
+        	resolutions[2] = (float)sliceResolution;
+            fileInfoDicom = new FileInfoDicom[destImage.getExtents()[2]];
+            final float[] imageOrg = srcImage.getFileInfo(0).getOrigin();
+            final double dicomOrigin[] = new double[imageOrg.length];
+
+            for (int k = 0; k < imageOrg.length; k++) {
+                dicomOrigin[k] = imageOrg[k];
+            }
+            TransMatrix matrix = dicomInfo.getPatientOrientation();
+            if (matrix != null) {
+                final TransMatrix transposeMatrix = new TransMatrix(4);
+            	for (i = 0; i < 4; i++) {
+            		for (int j = 0; j < 4; j ++) {
+            			transposeMatrix.set(i, j, matrix.get(j, i));
+            		}
+            	}
+            	matrix = null;
+            	matrix = transposeMatrix;
+            }
+            else {
+            	matrix = srcImage.getMatrix();
+            }
+            RLIndex = 0;
+            APIndex = 1;
+            ISIndex = 2;
+            increaseRes = true;
+            for (i = 0; i <= 2; i++) {
+            	if (srcImage.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_R2L_TYPE) {
+            		RLIndex = i;
+                } else if (srcImage.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_L2R_TYPE) {
+            		RLIndex = i;
+            		if (i == 2) {
+            		    increaseRes = false;
+            		}
+                } else if (srcImage.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_A2P_TYPE) {
+            		APIndex = i;
+                } else if (srcImage.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_P2A_TYPE) {
+            		APIndex = i;
+            		if (i == 2) {
+            			increaseRes = false;
+            		}
+                } else if (srcImage.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_I2S_TYPE) {
+            		ISIndex = i;
+                } else if (srcImage.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_S2I_TYPE) {
+            		ISIndex = i;
+            		if (i == 2) {
+            			increaseRes = false;
+            		}
+            	}
+            }
+      
+            slLoc = dicomOrigin[2];
+
+            for (i = 0; (i < destImage.getExtents()[2]) && !threadStopped; i++) {
+                fileInfoDicom[i] = (FileInfoDicom) (dicomInfo.clone());
+                fileInfoDicom[i].getTagTable().setValue("0028,0011", new Short((short) subXDim), 2); // columns
+                fileInfoDicom[i].getTagTable().setValue("0028,0010", new Short((short) subYDim), 2); // rows
+                fileInfoDicom[i].setExtents(destImage.getExtents());
+                fileInfoDicom[i].setResolutions(resolutions);
+                fileInfoDicom[i].getTagTable().setValue("0020,0013", Short.toString((short) (i + 1)),
+                		                                 Short.toString((short) (i + 1)).length()); // instance number
+                
+                // Add code to modify the slice location attribute (0020, 1041) VR = DS = decimal string
+                fileInfoDicom[i].getTagTable().setValue("0020,1041", Double.toString(slLoc),
+                                  Double.toString(slLoc).length());
+                if (increaseRes) {
+                	slLoc += sliceResolution;
+                } else {
+                	slLoc -= sliceResolution;
+                }
+                
+                final String tmpStr = new String(Float.toString((float) dicomOrigin[RLIndex]) + "\\"
+                        + Float.toString((float) dicomOrigin[APIndex]) + "\\" 
+                        + Float.toString((float) dicomOrigin[ISIndex]));
+
+                fileInfoDicom[i].getTagTable().setValue("0020,0032", tmpStr, tmpStr.length());
+                
+                dicomOrigin[RLIndex] += matrix.get(0, 2)*sliceResolution;
+                dicomOrigin[APIndex] += matrix.get(1, 2)*sliceResolution;
+                dicomOrigin[ISIndex] += matrix.get(2, 2)*sliceResolution;
+
+            }
+
+            destImage.setFileInfo(fileInfoDicom);
+            fileInfoDicom = null;
+        } // if (srcImage.getFileInfo()[0] instanceof FileInfoDicom)
         setCompleted(true);
         
     }
-
-   
+    
 }
