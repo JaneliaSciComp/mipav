@@ -84,6 +84,7 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
         boolean increaseRes;
         double sliceResolution = 1.0;
         float resolutions[] = new float[3];
+        FileInfoBase[] fileInfo;
         if (srcImage == null) {
         	displayError("Source Image is null");
             setCompleted(false);
@@ -249,6 +250,29 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
             destImage.setFileInfo(fileInfoDicom);
             fileInfoDicom = null;
         } // if (srcImage.getFileInfo()[0] instanceof FileInfoDicom)
+        else {
+            fileInfo = destImage.getFileInfo();
+            resolutions[0] = srcImage.getFileInfo(0).getResolutions()[0];
+            resolutions[1] = srcImage.getFileInfo(0).getResolutions()[1];
+            resolutions[2] = 1.0f;
+
+            for (i = 0; (i < (destImage.getExtents()[2]) && !threadStopped); i++) {
+                fileInfo[i].setModality(srcImage.getFileInfo()[0].getModality());
+                fileInfo[i].setFileDirectory(srcImage.getFileInfo()[0].getFileDirectory());
+                fileInfo[i].setEndianess(srcImage.getFileInfo()[0].getEndianess());
+                fileInfo[i].setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
+                fileInfo[i].setResolutions(resolutions);
+                fileInfo[i].setExtents(destImage.getExtents());
+                fileInfo[i].setMax(destImage.getMax());
+                fileInfo[i].setMin(destImage.getMin());
+                fileInfo[i].setImageOrientation(srcImage.getImageOrientation());
+                fileInfo[i].setPixelPadValue(srcImage.getFileInfo()[0].getPixelPadValue());
+                fileInfo[i].setPhotometric(srcImage.getFileInfo()[0].getPhotometric());
+                fileInfo[i].setAxisOrientation(srcImage.getAxisOrientation());
+                fileInfo[i].setOrigin(srcImage.getOrigin());
+            }
+            fileInfo = null;
+        }
         setCompleted(true);
         
     }
