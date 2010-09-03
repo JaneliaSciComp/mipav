@@ -119,8 +119,8 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
         subLength = cFactor * subXDim * subYDim;
         subBuffer = new double[subLength];
         sliceNum = 0;
-        for (y = 0; y < yDim; y += subYDim) {
-        	for (x = 0; x < xDim; x += subXDim) {
+        for (y = 0; (y + subYDim - 1) < yDim; y += subYDim) {
+        	for (x = 0; (x + subXDim - 1) < xDim; x += subXDim) {
         	    for (ys = 0; ys < subYDim; ys++) {
         	    	for (xs = 0; xs <  subXDim; xs++) {
         	    	    for (c = 0; c < cFactor; c++) {
