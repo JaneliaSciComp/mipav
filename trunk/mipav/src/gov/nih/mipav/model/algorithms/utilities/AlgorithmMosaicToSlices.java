@@ -168,10 +168,16 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
             fileInfoDicom = new FileInfoDicom[destImage.getExtents()[2]];
             final float[] imageOrg = srcImage.getFileInfo(0).getOrigin();
             final double dicomOrigin[] = new double[imageOrg.length];
-
-            for (int k = 0; k < imageOrg.length; k++) {
-                dicomOrigin[k] = imageOrg[k];
+            
+            // DICOM (20,32) is incorrect for mosaics.  The value in this field gives where the
+            // origin of an image the size of the mosaic would have been had such an image been
+            // collected.  This puts the origin outside of the scanner.
+            dicomOrigin[0] = imageOrg[0]/(xDim/subXDim);
+            dicomOrigin[1] = imageOrg[1]/(yDim/subYDim);
+            if (imageOrg.length >= 3) {
+                dicomOrigin[2] = imageOrg[2];
             }
+
             TransMatrix matrix = dicomInfo.getPatientOrientation();
             if (matrix != null) {
                 final TransMatrix transposeMatrix = new TransMatrix(4);
