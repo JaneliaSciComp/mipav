@@ -246,6 +246,9 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                         + Float.toString((float) dicomOrigin[ISIndex]));
 
                 fileInfoDicom[i].getTagTable().setValue("0020,0032", tmpStr, tmpStr.length());
+                for (int k = 0; k < 3; k++) {
+                    fileInfoDicom[i].setOrigin((float)dicomOrigin[k],k);
+                }
                 
                 dicomOrigin[RLIndex] += matrix.get(0, 2)*sliceResolution;
                 dicomOrigin[APIndex] += matrix.get(1, 2)*sliceResolution;
