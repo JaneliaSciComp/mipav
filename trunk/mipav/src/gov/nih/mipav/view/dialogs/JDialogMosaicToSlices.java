@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
@@ -41,9 +42,9 @@ public class JDialogMosaicToSlices extends JDialogScriptableBase implements Algo
     /** DOCUMENT ME! */
     private ModelImage image; // source image
     
-    private int subXDim;
+    private int subXDim = 0;
     
-    private int subYDim;
+    private int subYDim = 0;
     
     private JTextField textXDim;
     
@@ -390,6 +391,38 @@ public class JDialogMosaicToSlices extends JDialogScriptableBase implements Algo
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
+    	if (image.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
+        	FileInfoDicom dicomInfo = (FileInfoDicom) image.getFileInfo(0);
+        	FileDicomTagTable tagTable = dicomInfo.getTagTable();
+        	if (tagTable.getValue("0018,1310") != null) {
+        	    // Acquisition matrix
+        		FileDicomTag tag = tagTable.get(new FileDicomKey("0018,1310"));
+        		Object[] values = tag.getValueList();
+        		int valNumber = values.length;	
+        		if ((valNumber == 4) && (values instanceof Short[])) {
+        			int frequencyRows = ((Short) values[0]).intValue();
+        			Preferences.debug("frequencyRows = " + frequencyRows + "\n");
+        			int frequencyColumns = ((Short) values[1]).intValue();
+        			Preferences.debug("frequencyColumns = " + frequencyColumns + "\n");
+        			int phaseRows = ((Short) values[2]).intValue();
+        			Preferences.debug("phaseRows = " + phaseRows + "\n");
+        			int phaseColumns = ((Short) values[3]).intValue();
+        			Preferences.debug("phaseColumns = " + phaseColumns + "\n");
+        			if ((frequencyRows > 0) && (phaseRows == 0)) {
+        				subYDim = frequencyRows;
+        			}
+        			else if ((frequencyRows == 0) && (phaseRows > 0)) {
+        				subYDim = phaseRows;
+        			}
+        			if ((frequencyColumns > 0) && (phaseColumns == 0)) {
+        				subXDim = frequencyColumns;
+        			}
+        			else if ((frequencyColumns == 0) && (phaseColumns > 0)) {
+        				subXDim = phaseColumns;
+        			}
+        		}
+        	}
+    	}
         setForeground(Color.black);
         setTitle("Mosaic To Slices");
 
@@ -428,6 +461,9 @@ public class JDialogMosaicToSlices extends JDialogScriptableBase implements Algo
         labelXDim.setFont(serif12);
         
         textXDim = new JTextField(10);
+        if (subXDim != 0) {
+        	textXDim.setText(String.valueOf(subXDim));
+        }
         textXDim.setFont(serif12);
         textXDim.setForeground(Color.black);
         
@@ -436,6 +472,9 @@ public class JDialogMosaicToSlices extends JDialogScriptableBase implements Algo
         labelYDim.setFont(serif12);
         
         textYDim = new JTextField(10);
+        if (subYDim != 0) {
+        	textYDim.setText(String.valueOf(subYDim));
+        }
         textYDim.setFont(serif12);
         textYDim.setForeground(Color.black);
         gbc.gridx = 0;
@@ -472,7 +511,16 @@ public class JDialogMosaicToSlices extends JDialogScriptableBase implements Algo
         String tmpStr;
         
         tmpStr = textXDim.getText();
-        subXDim = Integer.parseInt(tmpStr);
+        try {
+            subXDim = Integer.parseInt(tmpStr);
+        }
+        catch(NumberFormatException e) {
+        	MipavUtil.displayError("New XDIM string is not a valid integer");
+        	textXDim.requestFocus();
+            textXDim.selectAll();
+
+            return false;
+        }
         if (subXDim < 3) {
             MipavUtil.displayError("New XDIM must be at least 3");
             textXDim.requestFocus();
@@ -488,7 +536,16 @@ public class JDialogMosaicToSlices extends JDialogScriptableBase implements Algo
         }
         
         tmpStr = textYDim.getText();
-        subYDim = Integer.parseInt(tmpStr);
+        try {
+            subYDim = Integer.parseInt(tmpStr);
+        }
+        catch(NumberFormatException e) {
+        	MipavUtil.displayError("New YDIM string is not a valid integer");
+        	textYDim.requestFocus();
+            textYDim.selectAll();
+
+            return false;
+        }
         if (subYDim < 3) {
             MipavUtil.displayError("New YDIM must be at least 3");
             textYDim.requestFocus();
