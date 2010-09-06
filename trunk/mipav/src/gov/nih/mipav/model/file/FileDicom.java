@@ -746,7 +746,25 @@ public class FileDicom extends FileDicomBase {
 
                 if (type.equals(FileDicomBase.TYPE_STRING)) {
                     strValue = getString(elementLength);
-
+                    if (name.equals("0019,0010") && strValue.trim().equals("SIEMENS MR HEADER")) {
+                    	isSiemensMRI = true;
+                    }
+                    else if (name.equals("0019,100B") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "SliceMeasurementDuration", "Slice Measurement Duration"));	
+                    }
+                    else if (name.equals("0019,100C") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "BValue", "B_Value"));	
+                    }
+                    else if (name.equals("0019,100D") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "DiffusionDirectionality", "Diffusion Directionality"));	
+                    }
+                    else if (name.equals("0019,100F") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "GradientMode", "Gradient Mode"));	
+                    }
                     tagTable.setValue(key, strValue, elementLength);
 
                     Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t" + type + "; value = "
@@ -779,9 +797,6 @@ public class FileDicom extends FileDicomBase {
                             tagTable.attachChildTagTables(childrenTagTables);
                         }
                     }
-                    if (name.equals("0019,0010") && strValue.trim().equals("SIEMENS MR HEADER")) {
-                    	isSiemensMRI = true;
-                    }
 
                 } else if (type.equals(FileDicomBase.OTHER_BYTE_STRING)) {
 
@@ -797,7 +812,8 @@ public class FileDicom extends FileDicomBase {
                     }
                 } else if (type.equals(FileDicomBase.OTHER_WORD_STRING) && !name.equals("0028,1201")
                         && !name.equals("0028,1202") && !name.equals("0028,1203")) {
-
+                	
+                	
                     if ( !name.equals(FileDicom.IMAGE_TAG)) {
                         data = getByte(tagVM, elementLength, endianess);
                         tagTable.setValue(key, data, elementLength);
@@ -829,6 +845,18 @@ public class FileDicom extends FileDicomBase {
 
                 } else if (type.equals(FileDicomBase.TYPE_DOUBLE)) {
                     data = getDouble(tagVM, elementLength, endianess);
+                    if (name.equals("0019,100E") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "DiffusionGradientDirection", "Diffusion Gradient Direction"));	
+                    }
+                    else if (name.equals("0019,1027") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "BMatrix", "B_Matrix"));	
+                    }
+                    else if (name.equals("0019,1028") && isSiemensMRI) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+			                    "BandwidthPerPixelPhaseEncode", "Bandwidth Per Pixel Phase Encode"));	
+                    }
                     tagTable.setValue(key, data, elementLength);
 
                     Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t (double) value = " + data
