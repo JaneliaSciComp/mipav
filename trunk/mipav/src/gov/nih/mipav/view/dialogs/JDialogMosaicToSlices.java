@@ -46,9 +46,13 @@ public class JDialogMosaicToSlices extends JDialogScriptableBase implements Algo
     
     private int subYDim = 0;
     
+    private int numberOfImagesInMosaic = 0;
+    
     private JTextField textXDim;
     
     private JTextField textYDim;
+    
+    private JTextField textNumberImages;
 
     /** DOCUMENT ME! */
     private AlgorithmMosaicToSlices mathAlgo;
@@ -282,7 +286,7 @@ public class JDialogMosaicToSlices extends JDialogScriptableBase implements Algo
     	
     	destExtents[0] = subXDim;
     	destExtents[1] = subYDim;
-    	destExtents[2] = (image.getExtents()[0]/subXDim)* (image.getExtents()[1]/subYDim);
+    	destExtents[2] = numberOfImagesInMosaic;
 
         destImage = new ModelImage(image.getType(), destExtents, makeImageName(image.getImageName(), "_mosaic_to_slices"));
 
@@ -368,6 +372,7 @@ public class JDialogMosaicToSlices extends JDialogScriptableBase implements Algo
         
         subXDim = scriptParameters.getParams().getInt("sub_x_dim");
         subYDim = scriptParameters.getParams().getInt("sub_y_dim");
+        numberOfImagesInMosaic = scriptParameters.getParams().getInt("number_of_images_in_mosaic");
     }
 
     // ************************************************************************
@@ -383,6 +388,7 @@ public class JDialogMosaicToSlices extends JDialogScriptableBase implements Algo
         
         scriptParameters.getParams().put(ParameterFactory.newParameter("sub_x_dim", subXDim));
         scriptParameters.getParams().put(ParameterFactory.newParameter("sub_y_dim", subYDim));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_images_in_mosaic",numberOfImagesInMosaic));
     }
 
     
@@ -421,8 +427,16 @@ public class JDialogMosaicToSlices extends JDialogScriptableBase implements Algo
         				subXDim = phaseColumns;
         			}
         		}
-        	}
-    	}
+        	} // if (tagTable.getValue("0018,1310") != null)
+        	if (tagTable.getValue("0019,100A") != null) {
+        		FileDicomTag tag = tagTable.get(new FileDicomKey("0019,100A"));
+        		Object value = tag.getValue(false);
+        		if (value instanceof Short) {
+        			numberOfImagesInMosaic = ((Short) value).intValue();
+        			Preferences.debug("Number of images in mosaic = " + numberOfImagesInMosaic + "\n");
+        		}	
+        	} // if (tagTable.getValue("0019,100A") != null)
+    	} // if (image.getFileInfo(0).getFileFormat() == FileUtility.DICOM)
         setForeground(Color.black);
         setTitle("Mosaic To Slices");
 
@@ -477,6 +491,18 @@ public class JDialogMosaicToSlices extends JDialogScriptableBase implements Algo
         }
         textYDim.setFont(serif12);
         textYDim.setForeground(Color.black);
+        
+        JLabel labelNumberImages = new JLabel("Number of images in mosaic");
+        labelNumberImages.setForeground(Color.black);
+        labelNumberImages.setFont(serif12);
+        
+        textNumberImages = new JTextField(10);
+        if (numberOfImagesInMosaic != 0) {
+        	textNumberImages.setText(String.valueOf(numberOfImagesInMosaic));
+        }
+        textNumberImages.setFont(serif12);
+        textNumberImages.setForeground(Color.black);
+        
         gbc.gridx = 0;
         gbc.gridy = 0;
         dimensionPanel.add(labelXDim, gbc);
@@ -487,6 +513,11 @@ public class JDialogMosaicToSlices extends JDialogScriptableBase implements Algo
         dimensionPanel.add(labelYDim, gbc);
         gbc.gridx = 1;
         dimensionPanel.add(textYDim, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        dimensionPanel.add(labelNumberImages, gbc);
+        gbc.gridx = 1;
+        dimensionPanel.add(textNumberImages, gbc);
 
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.add(inputPanel, BorderLayout.NORTH);
@@ -556,6 +587,31 @@ public class JDialogMosaicToSlices extends JDialogScriptableBase implements Algo
             MipavUtil.displayError("New YDIM cannot exceed " + image.getExtents()[1]);
             textYDim.requestFocus();
             textYDim.selectAll();
+
+            return false;
+        }
+        
+        tmpStr = textNumberImages.getText();
+        try {
+            numberOfImagesInMosaic = Integer.parseInt(tmpStr);
+        }
+        catch(NumberFormatException e) {
+        	MipavUtil.displayError("New numberOfImagesInMosaic string is not a valid integer");
+        	textNumberImages.requestFocus();
+            textNumberImages.selectAll();
+
+            return false;
+        }
+        if (numberOfImagesInMosaic < 1) {
+            MipavUtil.displayError("New numberOfImagesInMosaic must be at least 1");
+            textNumberImages.requestFocus();
+            textNumberImages.selectAll();
+
+            return false;
+        } else if (numberOfImagesInMosaic > (subXDim*subYDim)) {
+            MipavUtil.displayError("New YDIM cannot exceed (newXDim) * (newYDim)");
+            textNumberImages.requestFocus();
+            textNumberImages.selectAll();
 
             return false;
         }
