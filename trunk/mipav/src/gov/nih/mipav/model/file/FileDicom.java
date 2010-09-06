@@ -619,6 +619,7 @@ public class FileDicom extends FileDicomBase {
         int[] extents;
         String type, // type of data; there are 7, see FileInfoDicom
         name; // string representing the tag
+        boolean isSiemensMRI = false;
 
         boolean endianess = FileBase.LITTLE_ENDIAN; // all DICOM files start as little endian (tags 0002)
         boolean flag = true;
@@ -778,6 +779,9 @@ public class FileDicom extends FileDicomBase {
                             tagTable.attachChildTagTables(childrenTagTables);
                         }
                     }
+                    if (name.equals("0019,0010") && strValue.trim().equals("SIEMENS MR HEADER")) {
+                    	isSiemensMRI = true;
+                    }
 
                 } else if (type.equals(FileDicomBase.OTHER_BYTE_STRING)) {
 
@@ -800,10 +804,13 @@ public class FileDicom extends FileDicomBase {
                     }
                 } else if (type.equals(FileDicomBase.TYPE_SHORT)) {
                     data = getShort(tagVM, elementLength, endianess);
+                    if ((name.trim().equalsIgnoreCase("0019,100A")) && (isSiemensMRI)) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
+                    			                    "NumberOfImagesInMosaic", "Number Of Images in Mosaic"));
+                    }
                     tagTable.setValue(key, data, elementLength);
-
-                    Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t (short) value = " + data
-                            + " element length = " + elementLength + "\n", Preferences.DEBUG_FILEIO);
+	                Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t (short) value = " + data
+	                            + " element length = " + elementLength + "\n", Preferences.DEBUG_FILEIO);
 
                 } else if (type.equals(FileDicomBase.TYPE_INT)) {
                     data = getInteger(tagVM, elementLength, endianess);
