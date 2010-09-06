@@ -917,7 +917,6 @@
 (0018,A001) VERS="3NEW" VR="SQ"   VM="1-n"	Keyword="ContributingEquipmentSequence"		Name="Contributing Equipment Sequence"
 (0018,A002) VERS="3NEW" VR="DT"   VM="1"	Keyword="ContributionDateTime"			Name="Contribution DateTime"
 (0018,A003) VERS="3NEW" VR="ST"   VM="1"	Keyword="ContributionDescription"		Name="Contribution Description"
-(0019,100A) VERS="3NEW" VR="US"   VM="1"    Keyword="NumberOfImagesInMosaic"    Name="Number of Images in Mosaic"
 (0020,0000) VERS="3"	VR="UL"   VM="1"	Keyword="RelationshipGroupLength"		Name="Relationship Group Length"
 (0020,000D) VERS="3"	VR="UI"   VM="1"	Keyword="StudyInstanceUID"			Name="Study Instance UID"
 (0020,000E) VERS="3"	VR="UI"   VM="1"	Keyword="SeriesInstanceUID"			Name="Series Instance UID"
