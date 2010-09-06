@@ -4637,9 +4637,11 @@ public class DICOM_RTC {
 
     /** DOCUMENT ME! */
     public static final int DD_TemporalResolution = 1493;
+    
+    public static final int DD_NumberOfImagesInMosaic = 1494;
 
     /** DOCUMENT ME! */
-    public static final int DD_LASTSEARCHED = 1494;
+    public static final int DD_LASTSEARCHED = 1495;
 
     /** DOCUMENT ME! */
     private static Hashtable ddTypeIndexes = new Hashtable();
@@ -6292,7 +6294,8 @@ public class DICOM_RTC {
         new RTCEntry(0x0300a, 0x0121, TYPE_CS, "Beam Limiting Device Rotation Direction",
                      DD_BeamLimitingDeviceRotationDirection),
         new RTCEntry(0x0300a, 0x0120, TYPE_DS, "Beam Limiting Device Angle", DD_BeamLimitingDeviceAngle),
-        new RTCEntry(0x020, 0x0110, TYPE_DS, "Temporal Resolution", DD_TemporalResolution)
+        new RTCEntry(0x020, 0x0110, TYPE_DS, "Temporal Resolution", DD_TemporalResolution),
+        new RTCEntry(0x0019, 0x100a, TYPE_US, "Number of Images in Mosaic", DD_NumberOfImagesInMosaic)
     }; // End RTCEntry[]
 
     /** DOCUMENT ME! */
