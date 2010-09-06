@@ -85,6 +85,7 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
         double sliceResolution = 1.0;
         float resolutions[] = new float[3];
         FileInfoBase[] fileInfo;
+        int numberOfImagesInMosaic;
         if (srcImage == null) {
         	displayError("Source Image is null");
             setCompleted(false);
@@ -126,11 +127,12 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
         
         subXDim = destImage.getExtents()[0];
         subYDim = destImage.getExtents()[1];
+        numberOfImagesInMosaic = destImage.getExtents()[2];
         subLength = cFactor * subXDim * subYDim;
         subBuffer = new double[subLength];
         sliceNum = 0;
-        for (y = 0; (y + subYDim - 1) < yDim; y += subYDim) {
-        	for (x = 0; (x + subXDim - 1) < xDim; x += subXDim) {
+        for (y = 0; ((y + subYDim - 1) < yDim) && (sliceNum < numberOfImagesInMosaic); y += subYDim) {
+        	for (x = 0; ((x + subXDim - 1) < xDim) && (sliceNum < numberOfImagesInMosaic); x += subXDim) {
         	    for (ys = 0; ys < subYDim; ys++) {
         	    	for (xs = 0; xs <  subXDim; xs++) {
         	    	    for (c = 0; c < cFactor; c++) {
