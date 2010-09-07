@@ -402,6 +402,13 @@ public class JDialogSnake extends JDialogBase implements AlgorithmInterface {
 
                 image.registerVOI(resultVOI);
 
+                // Update frame
+                ((ViewJFrameBase) parentFrame).updateImages(true);
+                if ( voiManager != null )
+                {
+                    voiManager.algorithmPerformed();
+                }
+
             } // if(snakeAlgo.isCompleted() == true)
 
             // These next lines set the titles in all frames where the source image is displayed to
@@ -414,13 +421,6 @@ public class JDialogSnake extends JDialogBase implements AlgorithmInterface {
                 ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
                 userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
             }
-        }
-
-        // Update frame
-        ((ViewJFrameBase) parentFrame).updateImages(true);
-        if ( voiManager != null )
-        {
-        	voiManager.algorithmPerformed();
         }
         dispose();
     }

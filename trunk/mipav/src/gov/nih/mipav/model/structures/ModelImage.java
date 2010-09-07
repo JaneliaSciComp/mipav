@@ -715,21 +715,10 @@ public class ModelImage extends ModelStorageBase {
         }
     }
 
-    /**
-     * Exports data based on the mapping the current ModelImage to a new ModelImage oriented based on the axisOrder and
-     * axisFlip arrays.
-     * 
-     * @param axisOrderOut The mapping of current ModelImage to the new ModelImage axes.
-     * @param axisFlip Invert flags for the new axes.
-     * 
-     * @return A new ModelImage. Extents, resolutions, units, origins and orientations are all updated.
-     */
-    public final ModelImage export(final int[] axisOrderOut, final boolean[] axisFlipOut) {
-
+    public boolean matched( final int[] axisOrderOut, final boolean[] axisFlipOut )
+    {
         final int orientationIn = getImageOrientation();
         final int[] axisOrderIn = MipavCoordinateSystems.getAxisOrder(this, orientationIn);
-
-        final int orientationOut = MipavCoordinateSystems.axisOrderToImageOrientation(axisOrderOut);
 
         boolean bMatched = true;
         for (int i = 0; i < axisOrderIn.length; i++) {
@@ -742,9 +731,32 @@ public class ModelImage extends ModelStorageBase {
                 break;
             }
         }
+        return bMatched;
+    }
+    
+    /**
+     * Exports data based on the mapping the current ModelImage to a new ModelImage oriented based on the axisOrder and
+     * axisFlip arrays.
+     * 
+     * @param axisOrderOut The mapping of current ModelImage to the new ModelImage axes.
+     * @param axisFlip Invert flags for the new axes.
+     * 
+     * @return A new ModelImage. Extents, resolutions, units, origins and orientations are all updated.
+     */
+    public final ModelImage export(final int[] axisOrderOut, final boolean[] axisFlipOut, boolean bClone) {
+
+        final int orientationIn = getImageOrientation();
+        final int[] axisOrderIn = MipavCoordinateSystems.getAxisOrder(this, orientationIn);
+
+        boolean bMatched = matched( axisOrderOut, axisFlipOut );
         if (bMatched) {
-            return (ModelImage) this.clone();
+            if ( bClone )
+            {
+                return (ModelImage) this.clone();
+            }
+            return this;
         }
+        
         final int iDims = getNDims();
         final int[] extentsOut = new int[iDims];
         final float[] resolutionsOut = new float[iDims];
@@ -903,7 +915,7 @@ public class ModelImage extends ModelStorageBase {
         
         calcStartLocations(startLocationsOut, axisOrderOut, axisFlipOut);
         final int[] axisOrientationOut = new int[3];
-        calcAxisOrientation(axisOrientationOut, axisOrderOut, axisFlipOut);
+        int orientationOut = calcAxisOrientation(axisOrientationOut, axisOrderOut, axisFlipOut);
         kReturn.setImageOrientation(orientationOut);
         if (kReturn.fileInfo != null) {
             for (int i = 0; i < kReturn.getFileInfo().length; i++) {
@@ -956,10 +968,9 @@ public class ModelImage extends ModelStorageBase {
      * @param axisOrder re-ordering of axes
      * @param axisFlip inverting new axes.
      */
-    private void calcAxisOrientation(final int[] newOrient, final int[] axisOrder, final boolean axisFlip[]) {
+    private int calcAxisOrientation(final int[] newOrient, final int[] axisOrder, final boolean axisFlip[]) {
 
         final int[] oldOrient = getAxisOrientation();
-
         for (int i = 0; i < newOrient.length; i++) {
             newOrient[i] = oldOrient[axisOrder[i]];
             if (axisFlip[i]) {
@@ -978,6 +989,20 @@ public class ModelImage extends ModelStorageBase {
                 }
             }
         }
+        int imageOrientation = FileInfoBase.UNKNOWN_ORIENT;
+        if ( newOrient[2] == FileInfoBase.ORI_S2I_TYPE || newOrient[2] == FileInfoBase.ORI_I2S_TYPE)
+        {
+            imageOrientation = FileInfoBase.AXIAL;
+        }
+        if ( newOrient[2] == FileInfoBase.ORI_R2L_TYPE || newOrient[2] == FileInfoBase.ORI_L2R_TYPE)
+        {
+            imageOrientation = FileInfoBase.SAGITTAL;
+        }
+        if ( newOrient[2] == FileInfoBase.ORI_P2A_TYPE || newOrient[2] == FileInfoBase.ORI_A2P_TYPE)
+        {
+            imageOrientation = FileInfoBase.CORONAL;
+        }
+        return imageOrientation;
     }
 
     /**

@@ -4597,7 +4597,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				Vector<VOIBase> sliceCurves = temp.getSliceCurves(k);
 				for ( int s = 0; s < sliceCurves.size(); s++ )
 				{
-				    v2.importCurve( sliceCurves.elementAt(s) );
+				    v2.importCurve( sliceCurves.elementAt(s).clone() );
 				}
 				performCalculations(v2, k, sliceMultiplier);
 			}

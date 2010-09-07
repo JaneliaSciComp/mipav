@@ -3,6 +3,7 @@ package gov.nih.mipav.model.structures;
 import gov.nih.mipav.MipavMath;
 import gov.nih.mipav.model.structures.event.VOIEvent;
 import gov.nih.mipav.model.structures.event.VOIListener;
+import gov.nih.mipav.model.structures.event.VOIVectorListener;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameGraph;
@@ -282,7 +283,6 @@ public class VOI extends ModelSerialCloneable {
         for ( int j = 0; j < kVOI.curves.size(); j++ )
         {
             VOIBase kContour = kVOI.curves.get(j).clone();
-            kContour.setGroup(this);
             this.curves.add( kContour );
         }
 
@@ -345,8 +345,29 @@ public class VOI extends ModelSerialCloneable {
         if (listenerList == null) {
             listenerList = new EventListenerList();
         }
-
-        listenerList.add(VOIListener.class, listener);
+        if ( !hasListener( listener ) )
+        {
+            listenerList.add(VOIListener.class, listener);        
+        }    
+    }
+    
+    public boolean hasListener( VOIListener listener )
+    {
+        if (listenerList.getListenerCount(VOIListener.class) == 0)
+        {
+            return false;
+        }        
+        // Guaranteed to return a non-null array
+        Object[] listeners = listenerList.getListenerList();
+        // Process the listeners last to first, notifying
+        // those that are interested in this event
+        for (int i = listeners.length - 2; i >= 0; i -= 2) {
+            if (listeners[i] == VOIListener.class && 
+                    ((VOIListener) listeners[i + 1]) == listener) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -1138,6 +1159,11 @@ public class VOI extends ModelSerialCloneable {
      * @param  curve new curve added to this VOI.
      */
     protected void fireVOIBaseAdded(VOIBase curve) {
+        //System.err.println( "fireVOIBaseAdded" );
+        for ( int i = 0; i < curves.size(); i++ )
+        {
+            curves.elementAt(i).getLabel();
+        }
 
         try {
 
@@ -1173,6 +1199,7 @@ public class VOI extends ModelSerialCloneable {
      * @param  curve curve removed from this VOI.
      */
     protected void fireVOIBaseRemoved(VOIBase curve) {
+        //System.err.println( "fireVOIBaseRemoved" );
         
         for ( int i = 0; i < curves.size(); i++ )
         {
@@ -1211,6 +1238,11 @@ public class VOI extends ModelSerialCloneable {
      * Fires a VOI event based on the VOI. calls the listener's <code>removedVOI()</code> method.
      */
     protected void fireVOIselection() {
+        //System.err.println( "fireVOIselection" );
+        for ( int i = 0; i < curves.size(); i++ )
+        {
+            curves.elementAt(i).getLabel();
+        }
         //System.err.println( "VOI.fireVOIselection" );
         try {
 
@@ -1744,8 +1776,6 @@ public class VOI extends ModelSerialCloneable {
         }
 
         curve.importArrays(x, y, z, x.length);
-        curve.setGroup(this);
-        curve.getGeometricCenter();
         curves.addElement(curve);
         return curve;
     }
@@ -1769,8 +1799,6 @@ public class VOI extends ModelSerialCloneable {
         }
 
         curve.importArrays(x, y, z, x.length);
-        curve.setGroup(this);
-        curve.getGeometricCenter();
         curves.addElement(curve);
     }
 
@@ -1796,8 +1824,6 @@ public class VOI extends ModelSerialCloneable {
         }
 
         curve.importPoints(pt);
-        curve.setGroup(this);
-        curve.getGeometricCenter();
         curves.addElement(curve);
     }
 
@@ -1806,8 +1832,6 @@ public class VOI extends ModelSerialCloneable {
      * @param  curve  curve to import
      */
     public void importCurve(VOIBase curve) {
-        curve.setGroup(this);
-        curve.getGeometricCenter();
         curves.addElement(curve.clone());
     }
 
@@ -1855,7 +1879,6 @@ public class VOI extends ModelSerialCloneable {
         }
 
         voiPt.set(0, point);
-        voiPt.setGroup(this);
         curves.addElement(voiPt);
     }
 
@@ -1878,8 +1901,6 @@ public class VOI extends ModelSerialCloneable {
         }
 
         contour.importPolygon(gon, slice);
-        contour.setGroup(this);
-        contour.getGeometricCenter();
         curves.addElement(contour);
     }
 

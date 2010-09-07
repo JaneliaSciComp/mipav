@@ -1,14 +1,7 @@
 package gov.nih.mipav.model.structures;
 
 
-import java.awt.Color;
 import java.util.Vector;
-
-import gov.nih.mipav.model.structures.event.*;
-
-import gov.nih.mipav.view.*;
-
-import javax.swing.event.*;
 
 
 public class VOIBaseVector extends Vector<VOIBase> {
@@ -27,6 +20,7 @@ public class VOIBaseVector extends Vector<VOIBase> {
     public boolean add(VOIBase e)
     {
         boolean result = super.add(e);
+        e.setGroup(parent);
         parent.fireVOIBaseAdded(e);
         return result;
     }
@@ -34,6 +28,7 @@ public class VOIBaseVector extends Vector<VOIBase> {
     public void add( int index, VOIBase element )
     {
         super.add(index,element);
+        element.setGroup(parent);
         parent.fireVOIBaseAdded(element);
     }
     
@@ -44,26 +39,30 @@ public class VOIBaseVector extends Vector<VOIBase> {
     public void addElement(VOIBase obj )
     {
         super.addElement(obj);
+        obj.setGroup(parent);
         parent.fireVOIBaseAdded(obj);
     }
     
     public void insertElementAt(VOIBase obj, int index)
     {
         super.insertElementAt(obj, index);
+        obj.setGroup(parent);
         parent.fireVOIBaseAdded(obj);
     }
     
     public VOIBase remove(int index)
     {
         VOIBase element = super.remove(index);
+        element.setGroup(null);
         parent.fireVOIBaseRemoved(element);
         return element;
     }
     
-    public boolean remove(Object o)
+    public boolean remove(VOIBase o)
     {
         boolean result = super.remove(o);
-        parent.fireVOIBaseRemoved((VOIBase)o);
+        o.setGroup(null);
+        parent.fireVOIBaseRemoved(o);
         return result;
     }
     
@@ -71,16 +70,18 @@ public class VOIBaseVector extends Vector<VOIBase> {
     
     //public void removeAllElements() {}
     
-    public boolean removeElement(Object obj)
+    public boolean removeElement(VOIBase obj)
     {
         boolean result = super.removeElement(obj);
-        parent.fireVOIBaseRemoved((VOIBase)obj);
+        obj.setGroup(null);
+        parent.fireVOIBaseRemoved(obj);
         return result;
     }
     
     public void removeElementAt(int index)
     {
         VOIBase element = super.remove(index);
+        element.setGroup(null);
         parent.fireVOIBaseRemoved(element);
     }
     

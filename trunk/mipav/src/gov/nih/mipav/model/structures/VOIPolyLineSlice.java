@@ -32,7 +32,6 @@ public class VOIPolyLineSlice extends VOIBase
     public VOIPolyLineSlice( VOIPoint kPoint )
     {
         super( false, false, kPoint );
-        setGroup(kPoint.getGroup());
         m_iVOIType = VOI.POLYLINE_SLICE;
         m_kPoints.clear();
         m_kPoints.add( kPoint.clone() );

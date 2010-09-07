@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.structures;
 
+import gov.nih.mipav.MipavCoordinateSystems;
 import gov.nih.mipav.MipavMath;
 import gov.nih.mipav.view.Preferences;
 
@@ -701,8 +702,16 @@ public class VOIContour extends VOIBase {
         float[] afScale = new float[3];
         
         // First translate into LPS Coordinates then calculate fit
+        Vector<Vector3f> kLPSPoints = new Vector<Vector3f>();
+        for ( int i = 0; i < size(); i++ )
+        {
+            Vector3f kLPS = new Vector3f();
+            MipavCoordinateSystems.fileToScanner( elementAt(i), kLPS, kImage );
+            kLPSPoints.add( kLPS );
+        }
+        
         // Try different Powell for fitting the points.
-        ApprEllipsoidFit3f kFit = new ApprEllipsoidFit3f( this.size(), this, kUp, kMat, afScale );
+        ApprEllipsoidFit3f kFit = new ApprEllipsoidFit3f( kLPSPoints.size(), kLPSPoints, kUp, kMat, afScale );
 
         double fMin = Float.MAX_VALUE;
         double fMax = -Float.MAX_VALUE;

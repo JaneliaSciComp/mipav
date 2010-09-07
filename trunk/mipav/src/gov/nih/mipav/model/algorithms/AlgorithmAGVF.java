@@ -767,7 +767,11 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
                     runSnake(xPoints, yPoints, zPoints, uVal, vVal, resultContour);
                     resultContour.trimPoints(Preferences.getTrim(),
                             Preferences.getTrimAdjacient());
-                    resultVOI.importCurve(resultContour);
+                    if ( resultContour.size() > 0 )
+                    {
+                        resultContour.update();
+                        resultVOI.importCurve(resultContour);
+                    }
                     stSlice = slice;
                 } else {
                     resultVOI.importCurve( contours.elementAt(j) );
@@ -1048,7 +1052,11 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
                 runSnake(xPoints, yPoints, zPoints, uVal, vVal, resultContour);
                 resultContour.trimPoints(Preferences.getTrim(),
                         Preferences.getTrimAdjacient());
-                resultVOI.importCurve(resultContour);
+                if ( resultContour.size() > 0 )
+                {
+                    resultContour.update();
+                    resultVOI.importCurve(resultContour);
+                }
             } else {
                 resultVOI.importCurve( contours.elementAt(j) );
             }

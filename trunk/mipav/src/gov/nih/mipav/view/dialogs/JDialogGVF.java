@@ -472,6 +472,13 @@ public class JDialogGVF extends JDialogBase implements AlgorithmInterface, ItemL
                                                       JOptionPane.ERROR_MESSAGE);
                     }
                 } // if (resultImage != null)
+
+                // Update frame
+                ((ViewJFrameBase) parentFrame).updateImages(true);
+                if ( voiManager != null )
+                {
+                    voiManager.algorithmPerformed();
+                }
             } // if (agvfAlgo.isCompleted() == true)
             else if ((gvfAlgo.isCompleted() == false) && (resultImage != null)) {
                 resultImage.disposeLocal();
@@ -489,13 +496,6 @@ public class JDialogGVF extends JDialogBase implements AlgorithmInterface, ItemL
                 ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(true);
                 ((ViewJFrameBase) parentFrame).getUserInterface().registerFrame((Frame) (imageFrames.elementAt(i)));
             }
-        }
-
-        // Update frame
-        ((ViewJFrameBase) parentFrame).updateImages(true);
-        if ( voiManager != null )
-        {
-        	voiManager.algorithmPerformed();
         }
         dispose();
     }

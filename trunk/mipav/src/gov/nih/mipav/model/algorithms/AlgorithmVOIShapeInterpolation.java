@@ -122,7 +122,7 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
 			this.VOI2 = VOI1;
 		}
 		this.VOIHandle = VOIHandle;
-		numSlicesInBetween = sliceIndex2 - sliceIndex1 - 1;
+		numSlicesInBetween = this.sliceIndex2 - this.sliceIndex1 - 1;
 		
 		averageDistanceMaps = new ModelImage[numSlicesInBetween];
 		inBetweenBooleanShapes = new ModelImage[numSlicesInBetween];
@@ -368,7 +368,8 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
                 if(geomCenter1.X < geomCenter2.X) {
                 	newX = (int)geomCenter1.X + (stepX * i);
                 }else if(geomCenter1.X > geomCenter2.X) {
-                	newX = (int)geomCenter2.X + (stepX * i);
+                    //newX = (int)geomCenter2.X + (stepX * i);
+                    newX = (int)geomCenter1.X - (stepX * i);
                 }else {
                 	//line is vertical...to do later
                 	isLineVertical = true;
@@ -385,7 +386,8 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
                     if(geomCenter1.Y < geomCenter2.Y) {
                     	newY = geomCenter1.Y + (stepY * i);
                     }else if(geomCenter1.Y > geomCenter2.Y) {
-                    	newY = geomCenter2.Y + (stepY * i);
+                        //newY = geomCenter2.Y + (stepY * i);
+                        newY = geomCenter1.Y - (stepY * i);
                     }else {
                     	newY = geomCenter1.Y;
                     }

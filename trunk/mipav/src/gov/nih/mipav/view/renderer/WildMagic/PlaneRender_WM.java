@@ -2233,4 +2233,39 @@ public class PlaneRender_WM extends GPURenderBase
         return (int)patientPt.Z;
     }
 
+
+    @Override
+    public Vector3f fileToScreenVOI(Vector3f kFile) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+
+    @Override
+    public Vector3f patientToScreenVOI(Vector3f kPt) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+
+    @Override
+    public boolean screenToFileVOI(int iX, int iY, int iZ, Vector3f kVolumePt) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+
+    @Override
+    public Vector3f screenToFileVOI(Vector3f kScreen) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+
+    @Override
+    public boolean screenToFileVOI(Vector3f kScreen, Vector3f kFile) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
 }

@@ -695,28 +695,6 @@ public class MipavCoordinateSystems {
     }
 
     /**
-     * Calculates a new image orientation based on the input axisOrder.
-     * 
-     * @param axisOrder maps x,y,z to the image extents 0, 1, 2. Determines image orientation.
-     * @return SAGITTAL, CORONAL, AXIAL, or UNKNOWN_ORIENT based on input axisOrder.
-     */
-    public static final int axisOrderToImageOrientation(final int[] axisOrder) {
-
-        int orientation = FileInfoBase.UNKNOWN_ORIENT;
-        if (axisOrder.length < 3) {
-            return orientation;
-        }
-        if (axisOrder[2] == 0) {
-            orientation = FileInfoBase.SAGITTAL;
-        } else if (axisOrder[2] == 1) {
-            orientation = FileInfoBase.CORONAL;
-        } else if (axisOrder[2] == 2) {
-            orientation = FileInfoBase.AXIAL;
-        }
-        return orientation;
-    }
-
-    /**
      * Returns the axisOrder and axisFlip mapping of the input image to LPS coordinates.
      * 
      * @param kImage input image.

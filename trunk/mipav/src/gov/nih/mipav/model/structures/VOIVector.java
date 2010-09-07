@@ -158,7 +158,23 @@ public class VOIVector extends ViewVOIVector {
         if (listener == null) {
             throw new IllegalArgumentException("listener is null");
         }
-
+        
+        
+        if (listenerList.getListenerCount(VOIVectorListener.class) == 0)
+        {
+            listenerList.add(VOIVectorListener.class, listener);
+            return;
+        }        
+        // Guaranteed to return a non-null array
+        Object[] listeners = listenerList.getListenerList();
+        // Process the listeners last to first, notifying
+        // those that are interested in this event
+        for (int i = listeners.length - 2; i >= 0; i -= 2) {
+            if (listeners[i] == VOIVectorListener.class && 
+                    ((VOIVectorListener) listeners[i + 1]) == listener) {
+                return;
+            }
+        }
         listenerList.add(VOIVectorListener.class, listener);
     }
 

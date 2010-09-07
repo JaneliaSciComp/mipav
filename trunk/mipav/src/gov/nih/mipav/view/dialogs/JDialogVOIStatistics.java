@@ -2363,7 +2363,9 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             }
 
             // userInterface.getActiveImageFrame().repaint();
-            userInterface.getActiveImageFrame().updateImages();
+            if ( userInterface.getActiveImageFrame() != null ) {
+                userInterface.getActiveImageFrame().updateImages();
+            }
         }
     }
 
