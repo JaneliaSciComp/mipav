@@ -21,7 +21,7 @@ public interface ScreenCoordinateListener
      * @param kFile image file coordinates.
      * @return local screen coordinates.
      */
-    public Vector3f fileToScreen( Vector3f kFile );
+    public Vector3f fileToScreenVOI( Vector3f kFile );
     /**
      * Returns the height of the display canvas.
      * @return height of the display canvas.
@@ -41,7 +41,7 @@ public interface ScreenCoordinateListener
      * @param kPt local patient (Axial, Coronal, Sagittal) coordinates.
      * @return image file coordinate representation of the input point.
      */
-    public Vector3f patientToScreen( Vector3f kPt );
+    public Vector3f patientToScreenVOI( Vector3f kPt );
     /**
      * Converts local screen coordinates, usually from a MouseEvent, into image file coordinates.
      * @param iX input X position in local screen coordinates.
@@ -50,18 +50,18 @@ public interface ScreenCoordinateListener
      * @param kVolumePt image file coordinates return value.
      * @return returns true if the screen coordinate is clipped (is outside the displayed image space).
      */
-    public boolean screenToFile(int iX, int iY, int iZ, Vector3f kVolumePt );
+    public boolean screenToFileVOI(int iX, int iY, int iZ, Vector3f kVolumePt );
     /**
      * Converts local screen coordinates, usually from a MouseEvent, into image file coordinates.
      * @param kScreen input X,Y,Z position in local screen coordinates, where z = local image slice or 0 for 2D images.
      * @return image file coordinates.
      */
-    public Vector3f screenToFile( Vector3f kScreen );
+    public Vector3f screenToFileVOI( Vector3f kScreen );
     /**
      * Converts local screen coordinates, usually from a MouseEvent, into image file coordinates.
      * @param kScreen input X,Y,Z position in local screen coordinates, where z = local image slice or 0 for 2D images.
      * @param kFile image file coordinates return value.
      * @return true if the screen coordinate is clipped (is outside the displayed image space).
      */
-    public boolean screenToFile( Vector3f kScreen, Vector3f kFile );
+    public boolean screenToFileVOI( Vector3f kScreen, Vector3f kFile );
 }

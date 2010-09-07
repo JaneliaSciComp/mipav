@@ -5973,10 +5973,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      */
     public Vector3f fileToScreen(Vector3f kFile) {
         Vector3f patientPt = new Vector3f(kFile);
-        //if ( orientation != imageA.getImageOrientation() && orientation != FileInfoBase.UNKNOWN_ORIENT )
-        //{
         MipavCoordinateSystems.fileToPatient( kFile, patientPt, imageA, orientation );
-        //}
         Vector3f screenPt = new Vector3f();
         super.LocalToScreen( patientPt, screenPt );
         return screenPt;
@@ -6003,20 +6000,14 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         Vector3f screenPt = new Vector3f(iX, iY, iZ);
         Vector3f patientPt = new Vector3f();
         super.ScreenToLocal( screenPt, patientPt );
-        if ( (patientPt.X < 0) || (patientPt.X > imageExtents[0]-1) ||
-                (patientPt.Y < 0) || (patientPt.Y > imageExtents[1]-1) )
+        final int[] extents = getActiveImage().getExtents(orientation);
+        if ( (patientPt.X < 0) || (patientPt.X > extents[0]-1) ||
+                (patientPt.Y < 0) || (patientPt.Y > extents[1]-1) )
         {
             bClipped = true;
         }
 
-        //if ( orientation != imageA.getImageOrientation() && orientation != FileInfoBase.UNKNOWN_ORIENT )
-        //{
         MipavCoordinateSystems.patientToFile( patientPt, kVolumePt, imageA, orientation );
-        //}
-        //else
-        //{
-        //   kVolumePt.Copy(patientPt);
-        //}
         return bClipped;
     }
 
@@ -6032,19 +6023,13 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         }
         Vector3f patientPt = new Vector3f();
         super.ScreenToLocal( kScreen, patientPt );
-        if ( (patientPt.X < 0) || (patientPt.X > imageExtents[0]-1) ||
-                (patientPt.Y < 0) || (patientPt.Y > imageExtents[1]-1) )
+        final int[] extents = getActiveImage().getExtents(orientation);
+        if ( (patientPt.X < 0) || (patientPt.X > extents[0]-1) ||
+                (patientPt.Y < 0) || (patientPt.Y > extents[1]-1) )
         {
             bClipped = true;
         }
-        //if ( orientation != imageA.getImageOrientation() && orientation != FileInfoBase.UNKNOWN_ORIENT )
-        //{
         MipavCoordinateSystems.patientToFile( patientPt, kFile, imageA, orientation );
-        //}
-        //else
-        //{
-        //    kFile.Copy(patientPt);
-        //}
         return bClipped;
     }
 
@@ -6055,14 +6040,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         Vector3f patientPt = new Vector3f();
         super.ScreenToLocal( kScreen, patientPt );
         Vector3f kFile = new Vector3f();
-        //if ( orientation != imageA.getImageOrientation() && orientation != FileInfoBase.UNKNOWN_ORIENT )
-        //{
         MipavCoordinateSystems.patientToFile( patientPt, kFile, imageA, orientation );
-        //}
-        //else
-        //{
-        //    kFile.Copy(patientPt);
-        //}
         return kFile;
     }
 
@@ -6651,6 +6629,94 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             return null;
 
         }
+    }
+
+    @Override
+    public Vector3f fileToScreenVOI(Vector3f kFile) {
+        // axisFlip represents whether to invert the axes after they are reordered
+        final boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip(getActiveImage(), orientation);
+        Vector3f patientPt = new Vector3f(kFile);
+        MipavCoordinateSystems.fileToPatient( kFile, patientPt, imageA, orientation );
+        if ( axisFlip[0] ) patientPt.X += 1;
+        if ( axisFlip[1] ) patientPt.Y += 1;
+        //if ( axisFlip[2] ) patientPt.Z += 1;
+        Vector3f screenPt = new Vector3f();
+        super.LocalToScreen( patientPt, screenPt );
+        return screenPt;
+    }
+
+    @Override
+    public Vector3f patientToScreenVOI(Vector3f kPt) {
+        return patientToScreen(kPt);
+    }
+
+    @Override
+    public boolean screenToFileVOI(int iX, int iY, int iZ, Vector3f kVolumePt) {
+        boolean bClipped = false;
+        if ( (iX < 0 ) || (iX > getWidth()) || (iY < 0 ) || (iY > getHeight()) )
+        {
+            bClipped = true;
+        }
+        Vector3f screenPt = new Vector3f(iX, iY, iZ);
+        Vector3f patientPt = new Vector3f();
+        super.ScreenToLocal( screenPt, patientPt );
+
+        // axisFlip represents whether to invert the axes after they are reordered
+        final boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip(getActiveImage(), orientation);
+        final int[] extents = getActiveImage().getExtents(orientation);
+        if ( axisFlip[0] ) patientPt.X -= 1;
+        if ( axisFlip[1] ) patientPt.Y -= 1;
+        //if ( axisFlip[2] ) patientPt.Z -= 1;
+        
+        if ( (patientPt.X < 0) || (patientPt.X > extents[0]-1) ||
+                (patientPt.Y < 0) || (patientPt.Y > extents[1]-1) )
+        {
+            bClipped = true;
+        }
+        
+        //System.err.println( patientPt + " " + kVolumePt + " " + bClipped + " " + imageExtents[0] + " " + imageExtents[1] + " " + imageExtents[2]);
+
+        MipavCoordinateSystems.patientToFile( patientPt, kVolumePt, imageA, orientation );
+        return bClipped;
+    }
+
+    @Override
+    public Vector3f screenToFileVOI(Vector3f kScreen) {
+        Vector3f patientPt = new Vector3f();
+        super.ScreenToLocal( kScreen, patientPt );
+        // axisFlip represents whether to invert the axes after they are reordered
+        final boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip(getActiveImage(), orientation);
+        if ( axisFlip[0] ) patientPt.X -= 1;
+        if ( axisFlip[1] ) patientPt.Y -= 1;
+        //if ( axisFlip[2] ) patientPt.Z -= 1;
+        Vector3f kFile = new Vector3f();
+        MipavCoordinateSystems.patientToFile( patientPt, kFile, imageA, orientation );
+        return kFile;
+    }
+
+    @Override
+    public boolean screenToFileVOI(Vector3f kScreen, Vector3f kFile) {
+        boolean bClipped = false;
+        if ( (kScreen.X < 0 ) || (kScreen.X > getWidth()) || (kScreen.Y < 0 ) || (kScreen.Y > getHeight()) )
+        {
+            bClipped = true;
+        }
+        Vector3f patientPt = new Vector3f();
+        super.ScreenToLocal( kScreen, patientPt );
+        // axisFlip represents whether to invert the axes after they are reordered
+        final boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip(getActiveImage(), orientation);
+        final int[] extents = getActiveImage().getExtents(orientation);
+        if ( axisFlip[0] ) patientPt.X -= 1;
+        if ( axisFlip[1] ) patientPt.Y -= 1;
+        //if ( axisFlip[2] ) patientPt.Z -= 1;
+        
+        if ( (patientPt.X < 0) || (patientPt.X > extents[0]-1) ||
+                (patientPt.Y < 0) || (patientPt.Y > extents[1]-1) )
+        {
+            bClipped = true;
+        }
+        MipavCoordinateSystems.patientToFile( patientPt, kFile, imageA, orientation );
+        return bClipped;
     }
 
 

@@ -115,8 +115,8 @@ public class JDialogVOIShapeInterpolation extends JDialogBase implements Algorit
             MipavUtil.displayWarning("VOIs must have the same orientation.");
              return;
          }
-         int sliceIndex1 = VOI1.slice();
-         int sliceIndex2 = VOI2.slice();
+         int sliceIndex1 = (int)VOI1.elementAt(0).Z;
+         int sliceIndex2 = (int)VOI2.elementAt(0).Z;
          
          if(sliceIndex1 == sliceIndex2) {
          	MipavUtil.displayWarning("Please select 2 closed VOI contours in non-contiguous slices");

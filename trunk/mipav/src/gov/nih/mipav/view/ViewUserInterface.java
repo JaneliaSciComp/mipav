@@ -90,6 +90,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /** Vector to hold clipped VOIs (multiple). */
     private final ViewVOIVector clippedVOIs = new ViewVOIVector();
+    
+    
+    /** Vector to hold clipped VOIs (multiple). */
+    private Vector<VOIBase> copyVOIList = new Vector<VOIBase>();
 
     /** String holding the command line arguments for data provenance usage. */
     private String cmdLineArguments = new String();
@@ -848,6 +852,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * Copies into the VOI clipboard.
      * 
      * @param voi VOI
+     * @deprecated
      */
     public void copyClippedVOIs( ViewVOIVector copyList) {
         clearClippedVOIs();
@@ -855,6 +860,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         {
             clippedVOIs.add( copyList.get(i) );
         }
+    }
+    
+    public void copyVOIs( Vector<VOIBase> copyList )
+    {
+        copyVOIList = copyList;
     }
 
     /**
@@ -1212,6 +1222,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /**
      * DOCUMENT ME!
+     * @deprecated
      */
     public void clearClippedVOIs() {
         this.clippedVOIs.removeAllElements();
@@ -1347,6 +1358,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * DOCUMENT ME!
      * 
      * @return DOCUMENT ME!
+     * @deprecated
      */
     public Vector<Vector<Vector3f>> getClippedScannerVectors() {
         return this.clippedScannerVectors;
@@ -1355,9 +1367,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /**
      * Returns the VOIs copied into the clip board. For copying and pasting VOIs between images.
      * @return Vector<VOIBase>
+     * @deprecated
      */
     public ViewVOIVector getClippedVOIs() {
         return this.clippedVOIs;
+    }
+    
+    public Vector<VOIBase> getCopyVOIs() {
+        return this.copyVOIList;
     }
 
     /**

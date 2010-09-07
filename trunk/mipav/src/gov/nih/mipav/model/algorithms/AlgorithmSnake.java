@@ -249,8 +249,12 @@ public class AlgorithmSnake extends AlgorithmBase {
                 VOIContour resultContour = new VOIContour( false, true );
                 runSnake(xPoints, yPoints, zPoints, imgBuffer, resultContour );
                 resultContour.trimPoints(Preferences.getTrim(),
-                        Preferences.getTrimAdjacient());
-                resultVOI.importCurve(resultContour);
+                            Preferences.getTrimAdjacient());
+                if ( resultContour.size() > 0 )
+                {
+                    resultContour.update();
+                    resultVOI.importCurve(resultContour);
+                }
             } else {
                 resultVOI.importCurve(contours.elementAt(j));
             }
@@ -325,8 +329,11 @@ public class AlgorithmSnake extends AlgorithmBase {
                 
                 resultContour.trimPoints(Preferences.getTrim(),
                         Preferences.getTrimAdjacient());
-                resultVOI.importCurve(resultContour);
-
+                if ( resultContour.size() > 0 )
+                {
+                    resultContour.update();
+                    resultVOI.importCurve(resultContour);
+                }
                 if (propagationType != PROP_SINGLE) {
                     propUp( resultContour, resultVOI, baseEnergy, baseNPts );
                     propDown( resultContour, resultVOI, baseEnergy, baseNPts  );

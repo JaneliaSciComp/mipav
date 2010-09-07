@@ -189,8 +189,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     private boolean m_bGPURenderer = false;
     /** VOI Properties dialog -- from the popup menu or drop-down menu. */
     private JDialogVOIStats m_kVOIDialog;
-    /** List of copies of VOIBase to paste or propagate. */
-    private Vector<VOIBase> m_kCopyList = new Vector<VOIBase>();
     /** Saved VOI states for undo. */
     private Vector<VOISaveState> m_kUndoList = new Vector<VOISaveState>();
     /** Saved VOI states for re-do. */
@@ -304,6 +302,24 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             m_kVOIManagers.elementAt(i).setPopupVOI(popup);
             m_kVOIManagers.elementAt(i).setPopupPt(popupPt);
         }
+        if ( m_kImageA != null && m_kImageA.getVOIs() != null )
+        {
+            m_kImageA.getVOIs().addVectorListener(this);
+            VOIVector kVOIs = m_kImageA.getVOIs();
+            for ( int i = 0; i < kVOIs.size(); i++ )
+            {
+                kVOIs.elementAt(i).addVOIListener(this);
+            }
+        }
+        if ( m_kImageB != null && m_kImageB.getVOIs() != null )
+        {
+            m_kImageB.getVOIs().addVectorListener(this);
+            VOIVector kVOIs = m_kImageB.getVOIs();
+            for ( int i = 0; i < kVOIs.size(); i++ )
+            {
+                kVOIs.elementAt(i).addVOIListener(this);
+            }
+        }
     }
 
     /* 
@@ -313,7 +329,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     public void actionPerformed(ActionEvent event) {
 
         String command = event.getActionCommand();
-        
+        //System.err.println( command );
         if ( command.equals(CustomUIBuilder.PARAM_VOI_COLOR.getActionCommand()) ) {
             showColorDialog();
             setDefaultCursor();
@@ -891,10 +907,38 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 m_kTempImage = rotateAlgo.returnImage();
                 getActiveImage().unregisterAllVOIs();            
                 getActiveImage().setVOIs( m_kTempImage.getVOIs() );
+                
+
+                if ( getActiveImage() != null && getActiveImage().getVOIs() != null )
+                {
+                    getActiveImage().getVOIs().addVectorListener(this);
+                    VOIVector kVOIs = getActiveImage().getVOIs();
+                    for ( int i = 0; i < kVOIs.size(); i++ )
+                    {
+                        kVOIs.elementAt(i).addVOIListener(this);
+                    }
+                }
             }
             m_bDefaultImage = true;
             m_kTempImage = null;
     	}
+
+        if ( m_kVOIDialog != null )
+        {
+            ModelImage kActive = getActiveImage();
+            ViewVOIVector VOIs = kActive.getVOIs();
+            for (int i = 0; i < VOIs.size(); i++) {
+                if (VOIs.VOIAt(i).isActive()) {
+                    m_kVOIDialog.updateVOI( VOIs.VOIAt(i), kActive );
+                    m_kVOIDialog.updateTree();
+                    return;
+                }
+            }
+            if (VOIs.size() > 0) {
+                m_kVOIDialog.updateVOI( VOIs.VOIAt(0), kActive );
+                m_kVOIDialog.updateTree();
+            }
+        }
     	updateDisplay();
     }
     
@@ -993,7 +1037,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             popupPt = null;
         }
 
-        m_kParent = null;
         m_kImageA = null;
         m_kImageB = null;
 
@@ -1016,6 +1059,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         m_kImageBRedo = null;
 
         listenerList = null;
+        m_kParent = null;
     }
 
 
@@ -1038,27 +1082,28 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
         if ( kCommand.equals(CustomUIBuilder.PARAM_VOI_PROPAGATE_UP.getActionCommand()) )
         {
-            saveVOIs(kCommand);
-            copy();
-            paste(1);
+            if ( copy() > 0 )
+            {
+                saveVOIs(kCommand);
+                propagate(1);
+            }
             setDefaultCursor();
         }
         else if ( kCommand.equals(CustomUIBuilder.PARAM_VOI_PROPAGATE_DOWN.getActionCommand()) )
         {
-            saveVOIs(kCommand);
-            copy();
-            Vector3f kCenter = m_kParent.PropDown(m_iActive);
-            if ( kCenter != null )
+            if ( copy() > 0 )
             {
-                setCenter( kCenter );
-                paste(-1);
+                saveVOIs(kCommand);
+                propagate(-1);
             }
             setDefaultCursor();
         }
         else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_PROPAGATE_ALL.getActionCommand()) ) {
-            saveVOIs(kCommand);
-            cut();
-            pasteAll();
+            if ( copy() > 0 )
+            {
+                saveVOIs(kCommand);
+                pasteAll();
+            }
             setDefaultCursor();
         }
         else if ( kCommand.equals(CustomUIBuilder.PARAM_VOI_POINT_DELETE.getActionCommand()) ) 
@@ -1097,8 +1142,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             setDefaultCursor();
         } 
         else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_CUT.getActionCommand()) ) {
-            saveVOIs(kCommand);
-            cut();
+            if ( cut() > 0 )
+            {
+                saveVOIs(kCommand);
+            }
             setDefaultCursor();
         } 
         else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_COPY.getActionCommand()) ) {
@@ -1107,7 +1154,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         } 
         else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_PASTE.getActionCommand()) ) {
             saveVOIs(kCommand);
-            paste(0);
+            paste();
             setDefaultCursor();
         }
         else if ( kCommand.equals("MoveUP") )
@@ -1769,10 +1816,24 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      */
     public void pasteVOI(VOIBase kNew)
     {
+        if ( kNew.getGroup() == null )
+        {
+            if ( m_kCurrentVOIGroup == null )
+            {
+                newVOI(false, false);
+            }
+            kNew.setGroup(m_kCurrentVOIGroup);
+        }
         kNew.getGroup().getCurves().add(kNew);
         if (m_kParent.getActiveImage().isRegistered(kNew.getGroup()) == -1 )
         {
             m_kParent.getActiveImage().registerVOI(kNew.getGroup());
+        }
+
+        if ( (m_kUndoCommands.size() > 0) && (m_kUndoCommands.lastElement() != null) && 
+                !m_kUndoCommands.lastElement().equals(CustomUIBuilder.PARAM_VOI_PROPAGATE_ALL.getActionCommand()) )
+        {
+            setCenter(kNew.getGeometricCenter(), true );
         }
         updateDisplay();
     }
@@ -1782,8 +1843,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      */
     public boolean propVOI(int direction, boolean active)
     {
-        copy();
-        if ( m_kCopyList.size() == 0 )
+        if ( copy() <= 0 )
         {
             return false;
         }
@@ -1795,7 +1855,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         {
             saveVOIs(CustomUIBuilder.PARAM_VOI_PROPAGATE_DOWN.getActionCommand());
         }
-        paste(direction);
+        propagate(direction);
         updateDisplay();
         return true;
     }
@@ -1804,8 +1864,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      * @see gov.nih.mipav.view.VOIHandlerInterface#propVOIAll()
      */
     public boolean propVOIAll() {
-        copy();
-        if ( m_kCopyList.size() == 0 )
+        if ( copy() <= 0 )
         {
             return false;
         }
@@ -2255,7 +2314,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 kName = kName.substring(index);
                 m_kCurrentVOIGroup.setName( kName + m_kCurrentVOIGroup.getName() );
             }
-            kNew.setGroup( m_kCurrentVOIGroup );
             if ( kNew instanceof VOIPoint &&  kNew.getType() == VOI.POLYLINE_SLICE )
             {
                 VOIPoint kNewPoint = (VOIPoint)kNew;
@@ -2410,50 +2468,25 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     }
 
 
-    private boolean[] copy()
-    {
-        boolean[] abSelected = new boolean[m_kVOIManagers.size()];
-        for ( int i = 0; i < m_kVOIManagers.size(); i++ )
-        {
-            abSelected[i] = false;
-        }
-        m_kCopyList.clear();
+    private int copy()
+    {        
+        // Get the reference to the Global copy list:
+        Vector<VOIBase> copyList = ViewUserInterface.getReference().getCopyVOIs();
+        copyList.clear();
         VOIVector kVOIs = m_kParent.getActiveImage().getVOIs();
-        ViewVOIVector voiCopyList = new ViewVOIVector();
         for ( int i = 0; i < kVOIs.size(); i++ )
         {
             VOI kCurrentGroup = kVOIs.get(i);
             for ( int j = 0; j < kCurrentGroup.getCurves().size(); j++ )
             {
                 VOIBase kCurrentVOI = kCurrentGroup.getCurves().get(j);
-                if ( kCurrentVOI.isActive() && !m_kCopyList.contains(kCurrentVOI) )
+                if ( kCurrentVOI.isActive() && !copyList.contains(kCurrentVOI) )
                 {
-                    for ( int k = 0; k < m_kVOIManagers.size(); k++ )
-                    {
-                        if ( kCurrentVOI.getPlane() == m_kVOIManagers.elementAt(k).getPlane() )
-                        {
-                            abSelected[k] = true;
-                        }
-                    }
-                    m_kCopyList.add(kCurrentVOI);
+                    copyList.add(kCurrentVOI);
                 }
-            }
-            if ( kCurrentGroup.isActive() && !voiCopyList.contains(kCurrentGroup) )
-            {
-                VOI newGroup = new VOI(kCurrentGroup);
-                for ( int j = newGroup.getCurves().size()-1; j >= 0; j-- )
-                {
-                    VOIBase kCurrentVOI = newGroup.getCurves().get(j);
-                    if ( !kCurrentVOI.isActive() )
-                    {
-                        newGroup.getCurves().remove(kCurrentVOI);
-                    }
-                }
-                voiCopyList.add(newGroup);
             }
         }
-        ViewUserInterface.getReference().copyClippedVOIs(voiCopyList);
-        return abSelected;
+        return copyList.size();
     }
 
     private void createMask( ModelImage kActive, boolean bInside )
@@ -2496,10 +2529,14 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
     }
 
-    private void cut()
+    private int cut()
     {
-        copy();
-        deleteActiveVOI();
+        int count = copy();
+        if ( count > 0 )
+        {
+            deleteActiveVOI();
+        }
+        return count;
     }
 
     private void deleteActiveVOI()
@@ -2947,6 +2984,36 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 kImage = rotateAlgo.returnImage();
                 getActiveImage().unregisterAllVOIs();            
                 getActiveImage().setVOIs( kImage.getVOIs() );
+                
+                if ( getActiveImage() != null && getActiveImage().getVOIs() != null )
+                {
+                    getActiveImage().getVOIs().addVectorListener(this);
+                    VOIVector kVOIs = getActiveImage().getVOIs();
+                    for ( int i = 0; i < kVOIs.size(); i++ )
+                    {
+                        kVOIs.elementAt(i).addVOIListener(this);
+                    }
+                }
+            }
+        }
+        if ( imageStatList != null )
+        {
+            imageStatList.refreshVOIList(getActiveImage().getVOIs());
+        }
+        if ( m_kVOIDialog != null )
+        {
+            ModelImage kActive = getActiveImage();
+            ViewVOIVector VOIs = kActive.getVOIs();
+            for (int i = 0; i < VOIs.size(); i++) {
+                if (VOIs.VOIAt(i).isActive()) {
+                    m_kVOIDialog.updateVOI( VOIs.VOIAt(i), kActive );
+                    m_kVOIDialog.updateTree();
+                    return;
+                }
+            }
+            if (VOIs.size() > 0) {
+                m_kVOIDialog.updateVOI( VOIs.VOIAt(0), kActive );
+                m_kVOIDialog.updateTree();
             }
         }
     }
@@ -3083,6 +3150,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
                 for (j = 0; j < VOIs.length; j++) {
                     currentImage.registerVOI(VOIs[j]);
+                    VOIs[j].addVOIListener(this);
                 }
             }
 
@@ -3150,9 +3218,13 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
         try {
             openVOI = new ViewOpenVOIUI();
-
-            if (openVOI.open(m_kParent.getActiveImage(), doLabels) == null) {
+            VOI[] newVOIs = openVOI.open(m_kParent.getActiveImage(), doLabels);
+            if ( newVOIs == null) {
                 return false;
+            }
+            for ( int i = 0; i < newVOIs.length; i++ )
+            {
+                newVOIs[i].addVOIListener(this);
             }
         } catch (final OutOfMemoryError error) {
 
@@ -3217,22 +3289,62 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 kImage = rotateAlgo.returnImage();
                 getActiveImage().unregisterAllVOIs();            
                 getActiveImage().setVOIs( kImage.getVOIs() );
+                
+
+                if ( getActiveImage() != null && getActiveImage().getVOIs() != null )
+                {
+                    getActiveImage().getVOIs().addVectorListener(this);
+                    VOIVector kVOIs = getActiveImage().getVOIs();
+                    for ( int i = 0; i < kVOIs.size(); i++ )
+                    {
+                        kVOIs.elementAt(i).addVOIListener(this);
+                    }
+                }
             }
         }
-    	
+
+        if ( imageStatList != null )
+        {
+            imageStatList.refreshVOIList(getActiveImage().getVOIs());
+        }
+        if ( m_kVOIDialog != null )
+        {
+            ModelImage kActive = getActiveImage();
+            ViewVOIVector VOIs = kActive.getVOIs();
+            for (int i = 0; i < VOIs.size(); i++) {
+                if (VOIs.VOIAt(i).isActive()) {
+                    m_kVOIDialog.updateVOI( VOIs.VOIAt(i), kActive );
+                    m_kVOIDialog.updateTree();
+                    return;
+                }
+            }
+            if (VOIs.size() > 0) {
+                m_kVOIDialog.updateVOI( VOIs.VOIAt(0), kActive );
+                m_kVOIDialog.updateTree();
+            }
+        }
         updateDisplay();
     }
 
-    
-    private void paste(int dir)
+    private void paste()
     {
-        if ( m_kCopyList.size() == 0 )
+        // Get the Global copy list:
+        Vector<VOIBase> copyList = ViewUserInterface.getReference().getCopyVOIs();
+        // Return if no contours to paste:
+        if ( copyList.size() == 0 )
+        {
+            return;
+        }
+        // If the copy list is from another image:
+        if ( copyList.elementAt(0).getGroup() != null && !copyList.elementAt(0).getGroup().hasListener(this) )
         {
             pasteFromViewUserInterface();
+            return;
         }
-        for ( int i = 0; i < m_kCopyList.size(); i++ )
+        // The copy list is from this image/manager: 
+        for ( int i = 0; i < copyList.size(); i++ )
         {
-            VOIBase kCurrentVOI = m_kCopyList.get(i); 
+            VOIBase kCurrentVOI = copyList.get(i); 
             VOIManager kManager = m_kVOIManagers.elementAt(0);
             for ( int j = 0; j < m_kVOIManagers.size(); j++ )
             {
@@ -3243,16 +3355,53 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 }
             }
 
-            kManager.pasteVOI( kCurrentVOI, dir );  
+            kManager.pasteVOI( kCurrentVOI );  
+        }
+    }
+    
+
+
+    
+    private void propagate(int dir)
+    {
+        // Get the Global copy list:
+        Vector<VOIBase> copyList = ViewUserInterface.getReference().getCopyVOIs();
+        // Return if no contours to paste:
+        if ( copyList.size() == 0 )
+        {
+            return;
+        }
+        // If the copy list is from another image:
+        if ( copyList.elementAt(0).getGroup() != null && !copyList.elementAt(0).getGroup().hasListener(this) )
+        {
+            pasteFromViewUserInterface();
+            return;
+        }
+        // The copy list is from this image/manager: 
+        for ( int i = 0; i < copyList.size(); i++ )
+        {
+            VOIBase kCurrentVOI = copyList.get(i); 
+            VOIManager kManager = m_kVOIManagers.elementAt(0);
+            for ( int j = 0; j < m_kVOIManagers.size(); j++ )
+            {
+                if ( kCurrentVOI.getPlane() == m_kVOIManagers.elementAt(j).getPlane() )
+                {
+                    kManager = m_kVOIManagers.elementAt(j);
+                    break;
+                }
+            }
+
+            kManager.propagateVOI( kCurrentVOI, dir );  
         }
     }
 
-
     private void pasteAll()
     {
-        for ( int i = 0; i < m_kCopyList.size(); i++ )
+        // Get the Global copy list:
+        Vector<VOIBase> copyList = ViewUserInterface.getReference().getCopyVOIs();
+        for ( int i = 0; i < copyList.size(); i++ )
         {
-            VOIBase kCurrentVOI = m_kCopyList.get(i); 
+            VOIBase kCurrentVOI = copyList.get(i); 
             VOIManager kManager = m_kVOIManagers.elementAt(0);
             for ( int j = 0; j < m_kVOIManagers.size(); j++ )
             {
@@ -3272,20 +3421,66 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         int xDim = kActive.getExtents().length > 0 ? kActive.getExtents()[0] : 1;
         int yDim = kActive.getExtents().length > 1 ? kActive.getExtents()[1] : 1;
         int zDim = kActive.getExtents().length > 2 ? kActive.getExtents()[2] : 1;
-        ViewVOIVector copyList = ViewUserInterface.getReference().getClippedVOIs();
+
         int[] xBounds = new int[2];
         int[] yBounds = new int[2];
         int[] zBounds = new int[2];
-        for ( int i = 0; i < copyList.size(); i++ )
+        
+
+        // Get the Global copy list:
+        Vector<VOIBase> copyList = ViewUserInterface.getReference().getCopyVOIs();
+        
+        // make new VOI groups:
+        VOIVector newVOIs = new VOIVector();
+        int iAdded = 0;
+        while ( iAdded < copyList.size() )
         {
-            VOI currentVOI = copyList.get(i);
+            VOIBase kCurrentVOI = copyList.elementAt(iAdded++ );
+            
+            short sID = (short)(kActive.getVOIs().getUniqueID());
+            String kName = kCurrentVOI.getClass().getName();
+            int index = kName.lastIndexOf('.') + 1;
+            kName = kName.substring(index);
+            VOI kNewVOI = new VOI(sID, kName + "_" + sID );
+            kNewVOI.setCurveType( kCurrentVOI.getType() );
+            kNewVOI.setColor( kCurrentVOI.getGroup().getColor() );
+                        
+            
+            VOI kOldGroup = kCurrentVOI.getGroup();
+            kNewVOI.getCurves().add( kCurrentVOI );
+            for ( int i = iAdded; i < copyList.size(); i++ )
+            {
+                if ( copyList.elementAt(i).getGroup() == kOldGroup )
+                {
+                    kNewVOI.getCurves().add( copyList.elementAt(i) );
+                }
+                else
+                {
+                    iAdded = i;
+                    break;
+                }
+            }
+            if ( kNewVOI.getCurves().size() > 0 )
+            {
+                newVOIs.add( kNewVOI );
+            }
+        }
+        // Paste new VOI groups:
+        
+        
+        for ( int i = 0; i < newVOIs.size(); i++ )
+        {
+            VOI currentVOI = newVOIs.get(i);
             currentVOI.getBounds( xBounds, yBounds, zBounds );
             if ( (xBounds[1] < xDim) && (yBounds[1] < yDim) && (zBounds[1] < zDim) )
             {
-                kActive.registerVOI(new VOI(currentVOI));
+                kActive.registerVOI(currentVOI);
+                currentVOI.addVOIListener(this);
             }
             else
             {
+                // Copy the VOI and contents so we can modify it for this image.
+                // May want to paste again into another image, so don't modify the original from the copy list.
                 currentVOI = new VOI(currentVOI);
                 for ( int j = currentVOI.getCurves().size()-1; j >= 0; j-- )
                 {
@@ -3320,6 +3515,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 if ( currentVOI.getCurves().size() > 0 )
                 {               
                     kActive.registerVOI(currentVOI);
+                    currentVOI.addVOIListener(this);
                 }
             }  
         }
@@ -4458,10 +4654,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             m_kVOIDialog.updateVOI( added.getVOI(), getActiveImage() );
             m_kVOIDialog.updateTree();
         }
-        else
-        {
-            setCenter(added.getBase().getGeometricCenter(), true );
-        }
     }
 
     @Override
@@ -4469,15 +4661,28 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     @Override
     public void removedCurve(VOIEvent removed) { 
+        //System.err.println( "removedCurve " + this );
         if ( m_kVOIDialog != null )
         {
-            m_kVOIDialog.updateVOI( removed.getVOI(), getActiveImage() );
-            m_kVOIDialog.updateTree();
+            ModelImage kActive = getActiveImage();
+            ViewVOIVector VOIs = kActive.getVOIs();
+            for (int i = 0; i < VOIs.size(); i++) {
+                if (VOIs.VOIAt(i).isActive()) {
+                    m_kVOIDialog.updateVOI( VOIs.VOIAt(i), kActive );
+                    m_kVOIDialog.updateTree();
+                    return;
+                }
+            }
+            if (VOIs.size() > 0) {
+                m_kVOIDialog.updateVOI( VOIs.VOIAt(0), kActive );
+                m_kVOIDialog.updateTree();
+            }
         }
      }
 
     @Override
     public void selectedVOI(VOIEvent selection) {
+        //System.err.println( "selectedVOI " + this );
         if ( m_kVOIDialog != null )
         {
             m_kVOIDialog.updateVOI( selection.getVOI(), getActiveImage() );
@@ -4487,6 +4692,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     @Override
     public void addedVOI(VOIVectorEvent newVOIselection) {
+        //System.err.println( "addedVOI " + this );
+        newVOIselection.getVOI().addVOIListener(this);
         if ( m_kVOIDialog != null )
         {
             m_kVOIDialog.updateVOI( newVOIselection.getVOI(), getActiveImage() );
@@ -4497,15 +4704,28 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     @Override
     public void removedVOI(VOIVectorEvent removed) {
-        if ( m_kVOIDialog != null && m_kCurrentVOIGroup != null )
+        //System.err.println( "removedVOI " + this );
+        if ( m_kVOIDialog != null )
         {
-            m_kVOIDialog.updateVOI( m_kCurrentVOIGroup, getActiveImage() );
-            m_kVOIDialog.updateTree();
+            ModelImage kActive = getActiveImage();
+            ViewVOIVector VOIs = kActive.getVOIs();
+            for (int i = 0; i < VOIs.size(); i++) {
+                if (VOIs.VOIAt(i).isActive()) {
+                    m_kVOIDialog.updateVOI( VOIs.VOIAt(i), kActive );
+                    m_kVOIDialog.updateTree();
+                    return;
+                }
+            }
+            if (VOIs.size() > 0) {
+                m_kVOIDialog.updateVOI( VOIs.VOIAt(0), kActive );
+                m_kVOIDialog.updateTree();
+            }
         }
     }
 
     @Override
     public void vectorSelected(VOIVectorEvent selection) {
+        //System.err.println( "vectorSelected " + this );
         if ( m_kVOIDialog != null )
         {
             m_kVOIDialog.updateVOI( selection.getVOI(), getActiveImage() );

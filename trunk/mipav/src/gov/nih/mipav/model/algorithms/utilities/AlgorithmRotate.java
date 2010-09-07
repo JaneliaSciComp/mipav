@@ -191,7 +191,7 @@ public class AlgorithmRotate extends AlgorithmBase {
      * Calculates the rotated image and replaces the source image with the rotated image.
      */
     private void calcInPlace() {
-        destImage = srcImage.export( axisOrder, axisFlip );
+        destImage = srcImage.export( axisOrder, axisFlip, true );
         destImage.setImageName( srcImage.getImageName() );
         
         destImage.calcMinMax();
