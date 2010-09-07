@@ -346,6 +346,7 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
             slLoc = dicomOrigin[2];
 
             for (i = 0; (i < destImage.getExtents()[2]) && !threadStopped; i++) {
+            	fireProgressStateChanged((100 * i)/destImage.getExtents()[2]);
                 fileInfoDicom[i] = (FileInfoDicom) (dicomInfo.clone());
                 fileInfoDicom[i].getTagTable().setValue("0028,0011", new Short((short) subXDim), 2); // columns
                 fileInfoDicom[i].getTagTable().setValue("0028,0010", new Short((short) subYDim), 2); // rows
@@ -388,6 +389,7 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
             resolutions[2] = 1.0f;
 
             for (i = 0; (i < (destImage.getExtents()[2]) && !threadStopped); i++) {
+            	fireProgressStateChanged((100 * i)/destImage.getExtents()[2]);
                 fileInfo[i].setModality(srcImage.getFileInfo()[0].getModality());
                 fileInfo[i].setFileDirectory(srcImage.getFileInfo()[0].getFileDirectory());
                 fileInfo[i].setEndianess(srcImage.getFileInfo()[0].getEndianess());
