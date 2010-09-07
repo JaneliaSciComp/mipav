@@ -679,7 +679,7 @@ public class ViewMenuBar {
                 menuBuilder.buildMenuItem("Match images", "matchImages", 0, null, false),
                 menuBuilder.buildMenuItem("Maximum intensity projection (MIP)", "maximumIntensityProjection", 0, null,
                         false),
-                menuBuilder.buildMenuItem("Mosaic to slices", "Mosaic", 0, null, false),
+                menuBuilder.buildMenuItem("Mosaic to 3D volume", "MosaicTo3D", 0, null, false),
                 menuBuilder.buildMenuItem("Noise", null, 0, null, false),
                 menuBuilder.buildMenuItem("Pad", null, 0, null, false),
                 menuBuilder.makeMenu("Quantify", false, new JMenuItem[] {
@@ -917,7 +917,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Mean", false);
             menuBuilder.setMenuItemEnabled("Median", false);
             menuBuilder.setMenuItemEnabled("Mode", false);
-            menuBuilder.setMenuItemEnabled("Mosaic to slices", false);
+            menuBuilder.setMenuItemEnabled("Mosaic to 3D volume", false);
             menuBuilder.setMenuItemEnabled("Zero X non-maximum suppression", false);
             menuBuilder.setMenuItemEnabled("Slice averaging", false);
             menuBuilder.setMenuItemEnabled("Unsharp mask", false);
@@ -990,7 +990,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Denoising BLS GSM", false);
             menuBuilder.setMenuItemEnabled("Extract 3D subset from 4D", false);
             menuBuilder.setMenuItemEnabled("Graph based", false);
-            menuBuilder.setMenuItemEnabled("Mosaic to slices", false);
+            menuBuilder.setMenuItemEnabled("Mosaic to 3D volume", false);
             // menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", false);
             menuBuilder.setMenuItemEnabled("Remove time volumes", false);
             menuBuilder.setMenuItemEnabled("Swap dims 3<->4", false);
