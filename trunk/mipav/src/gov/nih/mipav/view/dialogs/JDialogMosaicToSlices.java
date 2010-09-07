@@ -438,7 +438,7 @@ public class JDialogMosaicToSlices extends JDialogScriptableBase implements Algo
         	} // if (tagTable.getValue("0019,100A") != null)
     	} // if (image.getFileInfo(0).getFileFormat() == FileUtility.DICOM)
         setForeground(Color.black);
-        setTitle("Mosaic To Slices");
+        setTitle("Mosaic To 3D Volume");
 
         JPanel inputPanel = new JPanel(new GridBagLayout());
         inputPanel.setForeground(Color.black);
