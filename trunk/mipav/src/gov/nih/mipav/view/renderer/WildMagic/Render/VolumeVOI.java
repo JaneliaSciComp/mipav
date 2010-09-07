@@ -258,6 +258,23 @@ public class VolumeVOI extends VolumeObject
      * Sets and updates the VOIBase displayed by this VolumeVOI.
      * @param kVOI
      */
+    public void setVOI( VOIBase kVOI, boolean bForceReload )
+    {
+        if ( bForceReload )
+        {
+            m_kVOI = kVOI;
+            scaleVOI();
+        }
+        else
+        {
+            setVOI(kVOI);
+        }
+    }
+
+    /**
+     * Sets and updates the VOIBase displayed by this VolumeVOI.
+     * @param kVOI
+     */
     public void setVOI( VOIBase kVOI )
     {
         m_kVOI = kVOI;

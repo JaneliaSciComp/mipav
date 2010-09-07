@@ -155,7 +155,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
     protected ColorRGBA m_kColor = new ColorRGBA();
 
     /** Data structure for drawing this contour in the GPU VolumeRenderer */
-    protected VolumeVOI m_kVolumeVOI;   
+    protected transient VolumeVOI m_kVolumeVOI;   
 
     /**
      * Number of pixels in the array used in graphing intensity along the
@@ -855,6 +855,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             return;
         }
         getImageBoundingBox();
+        long time = System.currentTimeMillis();
         if ( m_iPlane == NOT_A_PLANE )
         {
             m_bUpdatePlane = true;
@@ -862,7 +863,6 @@ public abstract class VOIBase extends Vector<Vector3f> {
         }
         if ( m_iPlane == ZPLANE )
         {
-            //long time = System.currentTimeMillis();
             //fillZ((int)elementAt(0).Z, 
             //        kMask, xDim, yDim, XOR, polarity );
             
@@ -930,7 +930,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
             //System.out.println(getGroup().getName() + getLabel() + " outlineRegion/fill " +(System.currentTimeMillis() - time)); 
             
         }
-        
+
+        System.out.println("mask " + getGroup().getName() + getLabel() + " " +(System.currentTimeMillis() - time));
         m_bUpdateMask = false;
     }
     
@@ -1731,6 +1732,11 @@ public abstract class VOIBase extends Vector<Vector3f> {
         else
         {
             m_iVOIType = VOI.POLYLINE;
+        }
+
+        if ( m_kVolumeVOI != null )
+        {
+            m_kVolumeVOI.setVOI(this, true);
         }
     }
 
