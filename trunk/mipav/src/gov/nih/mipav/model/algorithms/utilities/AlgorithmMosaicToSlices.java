@@ -4,12 +4,16 @@ package gov.nih.mipav.model.algorithms.utilities;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.MipavUtil;
+import Jama.*;
 
 import java.io.*;
 
 
 /**
  * Extracts slices from a mosaic in a 2D image
+ * Followed DICOM orientation for mosaic from http://nipy.sourceforge.net/dipy/theory/dicom_mosaic.html and
+ * http://nipy.sourceforge.net/dipy/theory/dicom_orientation.html#dicom-affines-reloaded.
  *
  * @version  1.0 September 2, 2010
  * @author   William Gandler
@@ -86,6 +90,13 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
         float resolutions[] = new float[3];
         FileInfoBase[] fileInfo;
         int numberOfImagesInMosaic;
+        double xOrient[] = new double[3];
+        double yOrient[] = new double[3];
+        double Q[][] = new double[3][2];
+        Matrix matQ;
+        double rc[][] = new double[2][1];
+        Matrix matRC;
+        Matrix matDicom;
         if (srcImage == null) {
         	displayError("Source Image is null");
             setCompleted(false);
@@ -174,11 +185,120 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
             // DICOM (20,32) is incorrect for mosaics.  The value in this field gives where the
             // origin of an image the size of the mosaic would have been had such an image been
             // collected.  This puts the origin outside of the scanner.
-            dicomOrigin[0] = imageOrg[0]/(xDim/subXDim);
-            dicomOrigin[1] = imageOrg[1]/(yDim/subYDim);
-            if (imageOrg.length >= 3) {
-                dicomOrigin[2] = imageOrg[2];
-            }
+            
+            // Define a flipped version of 'ImageOrientationPatient (20,37)', F, that has flipped columns.
+            // Thus if the vector of 6 values in 'ImageOrientationPatient', are i1,i2,i3,i4,i5,i6, then F =
+            // [i4 i1]
+            // [i5 i2]
+            // [i6 i3]
+            // Now the first column of F contains what the DICOM docs call the 'column(Y) direction cosine',
+            // and second column contains the 'row(X) direction cosine.'  We prefer to think of these as 
+            // (respectively) the row index direction cosine.
+            
+            // We can think of the affine A as the (3,3) component, RS, and a (3,1) translation vector t.
+            // RS can in turn be thought of as the dot product of a (3,3) rotation matrix R and a scaling
+            // matrix S, where S = diag(s) and s a is (3,) vector of voxel sizes.  t is a (3,1) translation
+            // vector, defining the coordinate in millimeters of the first voxel in the voxel volume(the
+            // voxel given by the voxel_array[0,0,0]).
+            
+            // In the case of the mosaic, we have the first two columns of R from the F - the left/right
+            // flipped version of the ImageOrientationPatient DICOM field described in DICOM affines again.
+            // To make a full rotation matrix, we can generate the last column from the cross product of the
+            // first two.  However, Siemens defines, in its private CSA header, a SliceNormalVector which gives
+            // the third column, but possibly with a z flip, so that R is orthogonal, but not a rotation 
+            // matrix (it has a determinant of < 0).
+            
+            // The first two values of s(s1,s2) are given by the PixelSpacing field.  We get s3(the slice
+            // scaling value) from SpacingBetweenSlices.
+            
+            // The SPM DICOM conversion code has a comment saying that mosaic DICOM images have an incorrect
+            // ImagePositionPatient field.  The ImagePositionPatient field gives the t vector.  The comments
+            // imply that Siemens has derived ImagePositionPatient from the (correct) position of the center
+            // of the first slice (once the mosaic has been unpacked), but has then adjusted the vector to 
+            // point to the top left voxel, where the slice size used for this adjustment is the size of the
+            // mosaic, before it has been unpacked.  Let's call the correct position in millimeters of the
+            // center of the first slice c = [cx,cy,cz].  We have derived the RS matrix from the calculations
+            // above.  The unpacked (eventual, real) slice dimensions are (rdrows, rdcols) and the mosaic
+            // dimensions are (mdrows,mdcols).  The ImagePositionPatient  vector i resulted from:
+            
+            //           [-(mdrows - 1)/2] 
+            // i = c + RS[-(mdcols - 1)/2]
+            //           [       0       ]
+            
+            // To correct the faulty translation, we reverse it, and add the correct translation for the unpacked
+            // slice size (rdrows, rdcols), giving the true image position t:
+            
+            //             [-(mdrows - 1)/2]       [-(rdrows - 1)/2]
+            // t = i - (RS [-(mdcols - 1)/2]) + (RS[-(rdcols - 1)/2])
+            //             [       0       ]       [       0       ]
+            
+            // Because of the final zero in the voxel translations, this simplifies to:
+            
+            
+            // t = i + Q[(mdrows - rdrows)/2]
+            //          [(mdcols - rdcols)/2]
+            
+            // where:
+            
+            //      [r11*s1 r12*s2]
+            //  Q = [r21*s1 r22*s2]
+            //      [r31*s1 r32*s2]
+            
+            if (tagTable.getValue("0020,0037") != null) {
+            	String orientation = (String) tagTable.getValue("0020,0037");
+                if (orientation != null) {
+
+	                int index1, index2, index3, index4, index5;
+	                int notSet = -1;
+	                index1 = index2 = index3 = index4 = notSet = index5 = notSet;
+	
+	                for (i = 0; i < orientation.length(); i++) {
+	
+	                    if (orientation.charAt(i) == '\\') {
+	
+	                        if (index1 == notSet) {
+	                            index1 = i;
+	                        } else if (index2 == notSet) {
+	                            index2 = i;
+	                        } else if (index3 == notSet) {
+	                            index3 = i;
+	                        } else if (index4 == notSet) {
+	                            index4 = i;
+	                        } else {
+	                            index5 = i;
+	                        }
+	                    }
+	                }
+	
+	                xOrient[0] = Double.valueOf(orientation.substring(0, index1)).doubleValue();
+	                xOrient[1] = Double.valueOf(orientation.substring(index1 + 1, index2)).doubleValue();
+	                xOrient[2] = Double.valueOf(orientation.substring(index2 + 1, index3)).doubleValue();
+	                yOrient[0] = Double.valueOf(orientation.substring(index3 + 1, index4)).doubleValue();
+	                yOrient[1] = Double.valueOf(orientation.substring(index4 + 1, index5)).doubleValue();
+	                yOrient[2] = Double.valueOf(orientation.substring(index5 + 1)).doubleValue();
+	                Q[0][0] = yOrient[0] * srcImage.getFileInfo(0).getResolution(0);
+	                Q[1][0] = yOrient[1] * srcImage.getFileInfo(0).getResolution(0);
+	                Q[2][0] = yOrient[2] * srcImage.getFileInfo(0).getResolution(0);
+	                Q[0][1] = xOrient[0] * srcImage.getFileInfo(0).getResolution(1);
+	                Q[1][1] = xOrient[1] * srcImage.getFileInfo(0).getResolution(1);
+	                Q[2][1] = xOrient[2] * srcImage.getFileInfo(0).getResolution(1);
+	                matQ = new Matrix(Q);
+	                rc[0][0] = (yDim - subYDim)/2.0;
+	                rc[1][0] = (xDim - subXDim)/2.0;
+	                matRC = new Matrix(rc);
+	                matDicom = matQ.times(matRC);
+	                dicomOrigin[0] = imageOrg[0] + matDicom.get(0, 0);
+	                dicomOrigin[1] = imageOrg[1] + matDicom.get(1, 0);
+	                dicomOrigin[2] = imageOrg[2] + matDicom.get(2, 0);
+                } // if (orientation != null) 
+            } // if (tagTable.getValue("0020,0037") != null)
+            else {
+	            dicomOrigin[0] = imageOrg[0]/(xDim/subXDim);
+	            dicomOrigin[1] = imageOrg[1]/(yDim/subYDim);
+	            if (imageOrg.length >= 3) {
+	                dicomOrigin[2] = imageOrg[2];
+	            }
+            } // else
 
             TransMatrix matrix = dicomInfo.getPatientOrientation();
             if (matrix != null) {
