@@ -2100,9 +2100,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         {
             return;
         }
-        if ( bUnSelectVOI && (m_kCurrentVOIGroup != null) && (m_kCurrentVOIGroup != kSelected) )
+        if ( bUnSelectVOI )
         {
-            m_kCurrentVOIGroup.setAllActive(false);
+            selectAllVOIs(false);
         }
         m_kCurrentVOIGroup = kSelected;
         if ( bUnSelectVOI || bSelectAll )

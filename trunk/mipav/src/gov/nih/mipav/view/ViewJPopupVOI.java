@@ -291,10 +291,20 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
                     popup.add(itemCrop);
                 }
             } 
-            //These are the number of pixels that the scrollbar of the activeImage has already scrolled and is offset by the actual location of the scroll pane
-            int xAmount = voiHandler.getActiveImage().getParentFrame().getScrollPane().getHorizontalScrollBar().getModel().getValue()-voiHandler.getActiveImage().getParentFrame().getScrollPane().getLocation().x;
-            int yAmount = voiHandler.getActiveImage().getParentFrame().getScrollPane().getVerticalScrollBar().getModel().getValue()-voiHandler.getActiveImage().getParentFrame().getScrollPane().getLocation().y;
-            
+            int xAmount = 0;
+            int yAmount = 0;
+            if ( voiHandler.getActiveImage().getParentFrame()  != null ) {       
+                if ( voiHandler.getActiveImage().getParentFrame().getScrollPane()  != null ) {                
+                    //These are the number of pixels that the scrollbar of the activeImage has already scrolled and is offset by the actual location of the scroll pane
+                    xAmount = voiHandler.getActiveImage().getParentFrame().getScrollPane().getHorizontalScrollBar().getModel().getValue()-voiHandler.getActiveImage().getParentFrame().getScrollPane().getLocation().x;
+                }
+            }
+            if ( voiHandler.getActiveImage().getParentFrame() != null ) {   
+                if ( voiHandler.getActiveImage().getParentFrame().getScrollPane()  != null ) {                
+                    //These are the number of pixels that the scrollbar of the activeImage has already scrolled and is offset by the actual location of the scroll pane
+                    yAmount = voiHandler.getActiveImage().getParentFrame().getScrollPane().getVerticalScrollBar().getModel().getValue()-voiHandler.getActiveImage().getParentFrame().getScrollPane().getLocation().y;
+                }
+            }
             popup.show(voiHandler.getActiveImage().getParentFrame(), event.getX()-xAmount, event.getY()-yAmount);
         }
     }
