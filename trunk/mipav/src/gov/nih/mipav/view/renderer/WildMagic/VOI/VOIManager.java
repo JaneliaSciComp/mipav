@@ -1199,6 +1199,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             {
                 retraceContour( m_kCurrentVOI, kEvent.getX(), kEvent.getY() );
                 m_iDrawType = RETRACE;
+                m_kParent.saveVOIs("retraceContour");
             }
             else if ( m_kParent.getPointerButton().isSelected() && !m_bDrawVOI )
             {    
