@@ -243,6 +243,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                         kIn.Y = Math.min( yDim, Math.max( 0, kIn.Y - yShiftSrc ) );
                         kIn.Z = Math.min( zDim - 1, Math.max( 0, kIn.Z - zShiftSrc ) );
                     }
+                    contour.update();
                 }
             }
         }
