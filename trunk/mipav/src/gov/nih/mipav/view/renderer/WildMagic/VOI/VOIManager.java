@@ -1051,6 +1051,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_bMouseDrag = false;
             return;
         }
+        // On double-click, finish the current livewire or polyline contour:
         if ( m_bDrawVOI && (m_iDrawType == LIVEWIRE || m_iDrawType == POLYLINE) && (kEvent.getClickCount() > 1) )
         {
             showSelectedVOI( kEvent.getX(), kEvent.getY() );
@@ -1130,6 +1131,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
      */
     public void mouseExited(MouseEvent arg0) 
     {
+        // Delete any levelset vois that are in progress when the mouse exits the window:
         if ( m_bDrawVOI && (m_iDrawType == LEVELSET) )
         {
             if ( m_kCurrentVOI != null )
@@ -1150,30 +1152,36 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         {
             return;
         }
-        //m_kParent.setActive(this, m_kImageActive);
+        // On mouse move, if the mode is draw: set the cursor depending on the draw mode:
         if ( m_bDrawVOI )
         {
+            // If the user is adding an annotation, set the cursor the the textCursor:
             if ( m_iDrawType == TEXT )
             {
                 m_kParent.setCursor(MipavUtil.textCursor);                
             }
+            // Otherwise set the cursor to crosshair
             else
             {
                 m_kParent.setCursor(MipavUtil.crosshairCursor);
             }
         }
+        // Show any selected contours:
         if ( m_kParent.getPointerButton().isSelected() && !m_bDrawVOI )
         {
             showSelectedVOI( kEvent.getX(), kEvent.getY() );
         }
+        // The levelset voi is created during a mouse moved event:
         else if ( m_bDrawVOI && (m_iDrawType == LEVELSET) )
         {
             createVOI( kEvent.getX(), kEvent.getY() );
         } 
+        // Polylines and livewire contours are created during mouse moved:
         else if ( (m_kCurrentVOI != null) && m_bDrawVOI && (m_iDrawType == LIVEWIRE) )
         {
             drawNext( kEvent.getX(), kEvent.getY() );
         } 
+        // Polylines and livewire contours are created during mouse moved:
         else if ( (m_kCurrentVOI != null) && m_bDrawVOI && (m_iDrawType == POLYLINE) )
         {
             drawNextPolyline( kEvent.getX(), kEvent.getY() );
@@ -1192,51 +1200,64 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             return;
         }
 
+        // Left Button pressed:
         if (kEvent.getButton() == MouseEvent.BUTTON1) {
             m_bLeftMousePressed = true;
 
+            // if the Alt-key is held down while dragging, go to contour retrace mode
             if ( kEvent.isAltDown() && m_kCurrentVOI != null )
             {
+                // Save the VOI before starting to retrace the contour:
+                m_kParent.saveVOIs("retraceContour");
                 retraceContour( m_kCurrentVOI, kEvent.getX(), kEvent.getY() );
                 m_iDrawType = RETRACE;
-                m_kParent.saveVOIs("retraceContour");
             }
+            // if the mode is the default pointer button, determine if any contours are selected:
             else if ( m_kParent.getPointerButton().isSelected() && !m_bDrawVOI )
             {    
+                // if near a point:
                 if ( m_iNearStatus == NearPoint )
                 {
                     moveVOIPoint( kEvent.getX(), kEvent.getY() );
                 }
+                // if near the bounding-box control point:
                 else if ( m_iNearStatus == NearBoundPoint )
                 {
                     scaleVOI( m_kCurrentVOI, kEvent.getX(), kEvent.getY() );
                 }
+                // if near a contour edge"
                 else if ( m_iNearStatus == NearLine )
                 {
                     m_kParent.saveVOIs("addVOIPoint");
                     addVOIPoint( kEvent.getX(), kEvent.getY() );
                 }
+                // otherwise determine if the pointer is inside a contour, show that the contour can be selected:
                 else if ( selectVOI( kEvent.getX(), kEvent.getY(), kEvent.isShiftDown(), kEvent.isControlDown() ) != null )
                 {
                     Vector3f kGC = m_kDrawingContext.fileToScreenVOI( m_kCurrentVOI.getGeometricCenter() );
                     m_kMouseOffset.Set ( kGC.X - kEvent.getX(), kGC.Y - kEvent.getY(), 0 );
                 }
             }
-
+            // Call the default drag:
             processLeftMouseDrag( kEvent );
         }
+        // If tthe right-button is pressed:
         else if ( kEvent.getButton() == MouseEvent.BUTTON3 )
         {
+            // if a contour is selected:
             if ( selectVOI( kEvent.getX(), kEvent.getY(), kEvent.isShiftDown(), kEvent.isControlDown() ) != null )
             {
+                // Line popup menu:
                 if ( m_kCurrentVOI.getType() == VOI.LINE )
                 {
                     handleIntensityLineBtn3(kEvent);
                 }
+                // Text popup dialog:
                 else if ( m_kCurrentVOI.getType() == VOI.ANNOTATION )
                 {
                     new JDialogAnnotation(m_kImageActive, m_kCurrentVOI.getGroup(), m_kCurrentVOI.getContourID(), true, true);
                 }
+                // Otherwise, call the popup menu for points or contours:
                 else
                 {
                     addPopup( m_kCurrentVOI );
@@ -1257,19 +1278,21 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_bMouseDrag = false;
             return;
         }
-
-        //processLeftMouseDrag( kEvent );
+        // turn off the flag for left-mouse drag:
         m_bLeftMousePressed = false;
         m_bFirstDrag = true;
 
+        // Points and PolyLineSlice points are added on mouse release:
         if ( m_bDrawVOI && ((m_iDrawType == POINT) || (m_iDrawType == POLYPOINT)) )
         {
             createVOI( kEvent.getX(), kEvent.getY() );
         } 
+        // Annotation VOIs are added on mouse release:
         else if ( m_bDrawVOI && (m_iDrawType == TEXT) )
         {
             createTextVOI( kEvent.getX(), kEvent.getY() );
         } 
+        // The 3D Rectangle is propagated to all slices on mouse release:
         else if ( m_bDrawVOI && (m_iDrawType == RECTANGLE3D) )
         {
             m_kCurrentVOI.setActive(true);
@@ -1278,6 +1301,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_bMouseDrag = false;
             return;
         }
+        // The Quick LUT is processed on mouse release:
         else if ( m_bDrawVOI && (m_iDrawType == LUT) )
         {
             m_kParent.quickLUT(m_kCurrentVOI);
@@ -1287,6 +1311,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_bMouseDrag = false;
             return;
         }
+        // Split-line is processed on mouse release:
         else if ( m_bDrawVOI && (m_iDrawType == SPLITLINE) )
         {
             JDialogVOISplitter kSplitDialog = new JDialogVOISplitter(m_kImageActive) ;
@@ -1298,15 +1323,20 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_kParent.setDefaultCursor( );
             return;
         }
+        // If the current draw type is a polyline or livewire, a new anchor point is added on mouse release:
         else if ( m_bDrawVOI && ((m_iDrawType == POLYLINE) || (m_iDrawType == LIVEWIRE)) )
         {   
+            // If the contour has more than 2 points already, then we can possibly close the polyline:
             if ( m_kCurrentVOI != null && m_kCurrentVOI.size() > 2 )
             {
                 showSelectedVOI( kEvent.getX(), kEvent.getY() );
+                // If the user clicks on the last point in the current contour, or on the first point
+                // finish the polyline or livewire contour:
                 if ( (m_iNearStatus == NearPoint) &&
                         ((m_kCurrentVOI.getNearPoint() == 0) || 
                                 (!m_bMouseDrag && m_kCurrentVOI.getNearPoint() == m_kCurrentVOI.size()-2)) )
                 {
+                    // If the user clicks on the first point close the contour:
                     m_kCurrentVOI.setClosed((m_kCurrentVOI.getNearPoint() == 0));
                     m_kCurrentVOI.removeElementAt( m_kCurrentVOI.size() -1 );
                     m_kCurrentVOI.trimPoints(Preferences.getTrim(),
@@ -1334,6 +1364,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                     return;
                 }
             }
+            // Not finished with the contour yet, add the new point as an anchor point:
             if ( m_iDrawType == LIVEWIRE )
             {
                 anchor( kEvent.getX(), kEvent.getY(), true );
@@ -1345,11 +1376,13 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             m_bMouseDrag = false;
             return;
         }
+        // If the draw type is levelset, trim the points on mouse release:
         else if ( m_iDrawType == LEVELSET && m_kCurrentVOI != null )
         {
             m_kCurrentVOI.trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
             m_iDrawType = NONE;
         }
+        // If the mode was retrace contour, end retrace on mouse release and trim the points:
         else if ( m_iDrawType == RETRACE && m_kCurrentVOI != null )
         {
             m_kCurrentVOI.trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
@@ -1358,7 +1391,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             resetStart();
         }
 
-
+        // Determine if the draw mode should be reset, or if the user hase selected continuous draw:
         if ( !(kEvent.isShiftDown() || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR) ) && m_bDrawVOI )
         {
             m_kParent.setDefaultCursor( );
@@ -1827,7 +1860,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         newTextVOI.setActive(false);
         new JDialogAnnotation(m_kImageActive, newTextVOI, 0, false, true);
         m_kImageActive.unregisterVOI(newTextVOI);
-        newTextVOI.removeCurves();
+        newTextVOI.removeCurve(m_kCurrentVOI);
         if ( m_kCurrentVOI.isActive() ) {
             m_kParent.addVOI( m_kCurrentVOI, false, true, true );
         }
