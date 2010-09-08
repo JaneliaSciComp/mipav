@@ -1,12 +1,15 @@
 import gov.nih.mipav.util.MipavMath;
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmCoherenceEnhancingDiffusion;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmMedian;
 import gov.nih.mipav.model.algorithms.registration.AlgorithmRegLeastSquares;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBtoGray;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.RegionGrowDialog;
 
 import java.io.*;
 import java.util.*;
@@ -161,9 +164,9 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	
 	private float greenThresold;
 	
-	private String outputFilename, outputFilename_auto;
+	private String outputFilename, outputFilename_auto, outputFilename_regionGrow;
 	
-	private String outputFilename_rigidOnly, outputFilename_auto_rigidOnly;
+	private String outputFilename_rigidOnly, outputFilename_auto_rigidOnly, outputFilename_regionGrow_rigidOnly;
 	
 	/** coords of filament **/
     private ArrayList <ArrayList<float[]>> allFilamentCoords_swc = new ArrayList <ArrayList<float[]>>();
@@ -190,7 +193,18 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     /** images showing the swc spheres/radii **/
     //private ModelImage maskImage, maskImageAuto;
     
+    //private ModelImage maskImageRegionGrow;
+    
     private boolean doRigidOnly = false;
+    
+    
+    private ModelImage greenImage,cohResultImage, greenRegionGrowMaskImage;
+    
+    private AlgorithmMedian medianAlgo;
+    
+    private AlgorithmCoherenceEnhancingDiffusion coherenceAlg;
+    
+    private BitSet paintBitmap;
 	
 	
 	
@@ -206,7 +220,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
             final File oldSurfaceFile, final float samplingRate, final ModelImage cityBlockImage,
             final File pointsFile, final JTextArea outputTextArea, final boolean flipX, final boolean flipY,
             final boolean flipZ,float greenThreshold, float subsamplingDistance, String outputFilename, String outputFilename_auto,
-            boolean rigidOnly) {
+            String outputFilename_regionGrow, boolean rigidOnly) {
         this.neuronImage = neuronImage;
         this.neuronImageExtents = neuronImage.getExtents();
         dir = neuronImage.getImageDirectory();
@@ -251,18 +265,20 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		this.subsamplingDistance = subsamplingDistance;
 		this.outputFilename = outputFilename;
 		this.outputFilename_auto = outputFilename_auto;
+		this.outputFilename_regionGrow = outputFilename_regionGrow;
 		this.outputFilename_rigidOnly = outputFilename.substring(0,outputFilename.lastIndexOf(".")) + ".swc";
 		this.outputFilename_auto_rigidOnly = outputFilename_auto.substring(0,outputFilename_auto.lastIndexOf(".")) + ".swc";
+		this.outputFilename_regionGrow_rigidOnly = outputFilename_regionGrow.substring(0,outputFilename_regionGrow.lastIndexOf(".")) + ".swc";
 		this.doRigidOnly = rigidOnly;
 		
-System.out.println("doRigidOnly is " + doRigidOnly);
+
     }
 
     /**
      * run algorithm
      */
     public void runAlgorithm() {
-        outputTextArea.append("Running Algorithm v2.5" + "\n");
+        outputTextArea.append("Running Algorithm v2.6" + "\n");
 
         final long begTime = System.currentTimeMillis();
 
@@ -614,6 +630,25 @@ System.out.println("doRigidOnly is " + doRigidOnly);
             resultImage1.disposeLocal();
             resultImage1 = null;
         }
+        
+        if (greenImage!= null) {
+        	greenImage.disposeLocal();
+        	greenImage = null;
+        }
+        
+        if (finalImage!= null) {
+        	finalImage.disposeLocal();
+        	finalImage = null;
+        }
+        
+        
+        if (greenRegionGrowMaskImage!= null) {
+        	greenRegionGrowMaskImage.disposeLocal();
+        	greenRegionGrowMaskImage = null;
+        }
+        
+        
+        
 
         final long endTime = System.currentTimeMillis();
         final long diffTime = endTime - begTime;
@@ -648,11 +683,22 @@ System.out.println("doRigidOnly is " + doRigidOnly);
 		outputTextArea.append("SWC - subsampling..." + "\n");
         outputTextArea.append("\n");
 		subsample_swc(allFilamentCoords_swc,newFilamentCoords_swc);
-
+		
 		outputTextArea.append("SWC - determining connectivity..." + "\n");
         outputTextArea.append("\n");
 		determineConnectivity2_swc(newFilamentCoords_swc);
-
+		
+		createGreenImage();
+		
+		outputTextArea.append("SWC - determining radii via region grow/distance map..." + "\n");
+        outputTextArea.append("\n");
+        determineRadiiRegionGrow_swc(newFilamentCoords_swc);
+        
+        output_swc(outputFilename_regionGrow,newFilamentCoords_swc);
+		outputTextArea.append("Saving region grow SWC file to " + filamentFileParentDir + File.separator + outputFilename_auto + "\n");
+        outputTextArea.append("\n");
+        
+        
 		outputTextArea.append("SWC - determining radii autolatically..." + "\n");
         outputTextArea.append("\n");
 		determineRadiiAutomatically_swc(newFilamentCoords_swc);
@@ -670,48 +716,10 @@ System.out.println("doRigidOnly is " + doRigidOnly);
         outputTextArea.append("\n");
         
         
-        
-        /*outputTextArea.append("Creating Rigid Only SWC file..." + "\n");
-        outputTextArea.append("\n");
-        
-        File filamentFile = new File(filamentFileParentDir + File.separator + standardizedFilamentFileName);
-    	readFilamentFile_swc(filamentFile);
-        
-        determineConnectivity1_swc(allFilamentCoords_swc);
-        
-        determineAxon_swc(allFilamentCoords_swc);
-        
-        determineDistances_swc(allFilamentCoords_swc);
-        
-        outputTextArea.append("SWC - subsampling..." + "\n");
-        outputTextArea.append("\n");
-        subsample_swc(allFilamentCoords_swc,newFilamentCoords_swc);
-        
-        outputTextArea.append("SWC - determining connectivity..." + "\n");
-        outputTextArea.append("\n");
-		determineConnectivity2_swc(newFilamentCoords_swc);
-		
-		outputTextArea.append("SWC - determining radii autolatically..." + "\n");
-        outputTextArea.append("\n");
-		determineRadiiAutomatically_swc(newFilamentCoords_swc);
-		
-		output_swc(outputFilename_auto_rigidOnly,newFilamentCoords_swc);
-		outputTextArea.append("Saving automatic SWC file to " + filamentFileParentDir + File.separator + outputFilename_auto_rigidOnly + "\n");
-        outputTextArea.append("\n");
-        
-        outputTextArea.append("SWC - determining radd via threshold..." + "\n");
-        outputTextArea.append("\n");
-		determineRadiiThreshold_swc(newFilamentCoords_swc);
-		
-		output_swc(outputFilename_rigidOnly,newFilamentCoords_swc);
-		outputTextArea.append("Saving threshold SWC file to " + filamentFileParentDir + File.separator + outputFilename_rigidOnly + "\n");
-        outputTextArea.append("\n");*/
-        
-        
-        
 		
 		//new ViewJFrameImage(maskImageAuto);
 		//new ViewJFrameImage(maskImage);
+        //new ViewJFrameImage(maskImageRegionGrow);
     }
     
     
@@ -834,7 +842,732 @@ System.out.println("doRigidOnly is " + doRigidOnly);
 		
 		
 	}
+	
+	/**
+	 * creates green channel image
+	 */
+	private void createGreenImage() {
+		int extents[] = finalImage.getExtents();
+		int length = finalImage.getExtents()[0] * finalImage.getExtents()[1] * finalImage.getExtents()[2];
+		float[] greenBuffer = new float[length];
+		try {
+			finalImage.exportRGBData(2, 0, length, greenBuffer);
+		}catch (Exception e) {
+			e.printStackTrace();
+		}
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//We need to pass the green channel through a median filter or Coherence-Enhancing Diffusion
+		greenImage = new ModelImage(ModelStorageBase.FLOAT, extents, "greenImage");
+		try {
+            greenImage.importData(0, greenBuffer, true);
+        } catch (final IOException error) {
+            System.out.println("IO exception");
+            error.printStackTrace();
+            return;
+        }
+		FileInfoImageXML[] fileInfoBases = new FileInfoImageXML[finalImage.getExtents()[2]];
+		float[] finalImageResols = new float[3];
+        finalImageResols[0] = neuronImage.getResolutions(0)[0];
+        finalImageResols[1] = neuronImage.getResolutions(0)[1];
+        finalImageResols[2] = neuronImage.getResolutions(0)[2];
+        float[] f = null;
+        if (r7_27Coord_transformed != null) {
+            f = new float[3];
+            f[0] = -r7_27Coord_transformed[0];
+            f[1] = -r7_27Coord_transformed[1];
+            f[2] = -r7_27Coord_transformed[2];
+        }
+		for (int i = 0; i < fileInfoBases.length; i++) {
+            fileInfoBases[i] = new FileInfoImageXML(greenImage.getImageName(), null, FileUtility.XML);
+            fileInfoBases[i].setUnitsOfMeasure(neuronImage.getFileInfo()[0].getUnitsOfMeasure());
+            fileInfoBases[i].setResolutions(finalImageResols);
+            fileInfoBases[i].setExtents(neuronImage.getExtents());
+            if (r7_27Coord_transformed != null) {
+
+                fileInfoBases[i].setOrigin(f);
+            } else {
+                fileInfoBases[i].setOrigin(neuronImage.getFileInfo()[0].getOrigin());
+            }
+
+            fileInfoBases[i].setDataType(ModelStorageBase.ARGB);
+
+        }
+		greenImage.setFileInfo(fileInfoBases);
+        greenImage.calcMinMax();
+        //new ViewJFrameImage(greenImage);
+	}
     
+	
+	/**
+	 * This determines radii via creating region grow and then a distance map
+	 * and then walking along the value to get the radius
+	 * @param newFilamentCoords
+	 */
+	private void determineRadiiRegionGrow_swc(ArrayList <ArrayList<float[]>> newFilamentCoords) {
+		int[] extents;
+		
+		
+		/*extents = {512, 512, 512};
+        maskImageRegionGrow = new ModelImage(ModelStorageBase.UBYTE, extents, "maskImage_swc_regionGrow");
+        for (int i = 0; i < maskImageRegionGrow.getExtents()[2]; i++) {
+        	maskImageRegionGrow.setResolutions(i, resols);
+        }
+        FileInfoImageXML[] fileInfoBases = new FileInfoImageXML[maskImageRegionGrow.getExtents()[2]];
+        for (int i = 0; i < fileInfoBases.length; i++) {
+            fileInfoBases[i] = new FileInfoImageXML(maskImageRegionGrow.getImageName(), null, FileUtility.XML);
+            fileInfoBases[i].setEndianess(finalImage.getFileInfo()[0].getEndianess());
+            fileInfoBases[i].setUnitsOfMeasure(finalImage.getFileInfo()[0].getUnitsOfMeasure());
+            fileInfoBases[i].setResolutions(finalImage.getFileInfo()[0].getResolutions());
+            fileInfoBases[i].setExtents(finalImage.getExtents());
+            fileInfoBases[i].setOrigin(finalImage.getFileInfo()[0].getOrigin());
+
+        }
+        maskImageRegionGrow.setFileInfo(fileInfoBases);*/
+		
+
+		paintBitmap = greenImage.getMask();
+		int newFilamentsSize = newFilamentCoords.size();
+		int alSize;
+		ArrayList<float[]> al;
+		float[] coords;
+		int xCenterPixel,yCenterPixel,zCenterPixel;
+		int[] imageExtents = greenImage.getExtents();
+		BitSet seedPaintBitmap;
+		float fuzzyThreshold = -1;
+		boolean useVOI = false;
+		boolean displayFuzzy = false;
+		RegionGrowDialog growDialog = null;
+		float upperBound = (float)greenImage.getMax();
+		float lowerBound = 20;
+		float value = 0;
+		int sizeLimit = -1;
+		float maxDistance = -1;
+		boolean variableThresholds = false;
+		AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(greenImage, 1.0f, 1.0f);
+		int timeSlice = 0;
+		CubeBounds regionGrowBounds = new CubeBounds(imageExtents[0], 0, imageExtents[1], 0, imageExtents[2], 0);
+		
+		for(int i=0;i<newFilamentsSize;i++) {
+			 al = newFilamentCoords.get(i);
+			 alSize = al.size();
+			 for(int k=0;k<alSize;k++) {
+				 coords = al.get(k);
+				 if(r7CenterPointFound) {
+					 xCenterPixel = (int)Math.floor((coords[0]+r7_27Coord_transformed[0])/resols[0]);
+					 yCenterPixel = (int)Math.floor((coords[1]+r7_27Coord_transformed[1])/resols[1]);
+					 zCenterPixel = (int)Math.floor((coords[2]+r7_27Coord_transformed[2])/resols[2]);
+				 }else {
+					 xCenterPixel = (int)Math.floor(coords[0]/resols[0]);
+					 yCenterPixel = (int)Math.floor(coords[1]/resols[1]);
+					 zCenterPixel = (int)Math.floor(coords[2]/resols[2]);
+				 }
+				 value = greenImage.getFloat(xCenterPixel, yCenterPixel, zCenterPixel);
+				 seedPaintBitmap = new BitSet();
+				 regionGrowAlgo.regionGrow3D(seedPaintBitmap, new Point3D(xCenterPixel, yCenterPixel, zCenterPixel), fuzzyThreshold,
+	                        useVOI, displayFuzzy, growDialog, lowerBound, upperBound, sizeLimit, maxDistance,
+	                        variableThresholds, timeSlice, regionGrowBounds);
+
+				 paintBitmap.or(seedPaintBitmap);
+ 
+			 }
+			 
+		}
+		
+		greenImage.notifyImageDisplayListeners(null, true);
+		
+		
+		//now create mask image
+		extents = finalImage.getExtents();
+		int length = finalImage.getExtents()[0] * finalImage.getExtents()[1] * finalImage.getExtents()[2];
+		greenRegionGrowMaskImage = new ModelImage(ModelStorageBase.UBYTE, extents, "greenImage");
+
+        boolean on = false;
+        byte val;
+        for(int i=0;i<paintBitmap.length();i++) {
+        	on = paintBitmap.get(i);
+        	if(on) {
+        		val = (byte)1.0;
+        	}else {
+        		val = (byte)0;
+        	}
+        	greenRegionGrowMaskImage.set(i, val);
+        	
+        }
+        
+        FileInfoImageXML[] fileInfoBases2 = new FileInfoImageXML[finalImage.getExtents()[2]];
+		float[] finalImageResols = new float[3];
+        finalImageResols[0] = neuronImage.getResolutions(0)[0];
+        finalImageResols[1] = neuronImage.getResolutions(0)[1];
+        finalImageResols[2] = neuronImage.getResolutions(0)[2];
+        float[] f = null;
+        if (r7_27Coord_transformed != null) {
+            f = new float[3];
+            f[0] = -r7_27Coord_transformed[0];
+            f[1] = -r7_27Coord_transformed[1];
+            f[2] = -r7_27Coord_transformed[2];
+        }
+		for (int i = 0; i < fileInfoBases2.length; i++) {
+			fileInfoBases2[i] = new FileInfoImageXML(greenImage.getImageName(), null, FileUtility.XML);
+			fileInfoBases2[i].setUnitsOfMeasure(neuronImage.getFileInfo()[0].getUnitsOfMeasure());
+			fileInfoBases2[i].setResolutions(finalImageResols);
+			fileInfoBases2[i].setExtents(neuronImage.getExtents());
+            if (r7_27Coord_transformed != null) {
+
+            	fileInfoBases2[i].setOrigin(f);
+            } else {
+            	fileInfoBases2[i].setOrigin(neuronImage.getFileInfo()[0].getOrigin());
+            }
+
+            fileInfoBases2[i].setDataType(ModelStorageBase.ARGB);
+
+        }
+		greenRegionGrowMaskImage.setFileInfo(fileInfoBases2);
+		greenRegionGrowMaskImage.calcMinMax();
+		
+		//create distance map
+		int kernel = 0;
+		AlgorithmMorphology3D distanceMapAlgo3D = new AlgorithmMorphology3D(greenRegionGrowMaskImage, kernel, 0, AlgorithmMorphology3D.DISTANCE_MAP,
+                0, 0, 0, 0, true);
+		distanceMapAlgo3D.run();
+		
+		greenRegionGrowMaskImage.calcMinMax();
+
+        //new ViewJFrameImage(greenRegionGrowMaskImage);
+		
+		int numIter = 7;
+		int xPix,yPix,zPix;
+		int xPix1,yPix1,zPix1;
+		float value1=0;
+		float highestValue = 0;
+		//now set radius based on distance map
+        for(int i=0;i<newFilamentsSize;i++) {
+			 al = newFilamentCoords.get(i);
+			 alSize = al.size();
+			 for(int k=0;k<alSize;k++) {
+				 coords = al.get(k);
+				 if(r7CenterPointFound) {
+					 xCenterPixel = (int)Math.floor((coords[0]+r7_27Coord_transformed[0])/resols[0]);
+					 yCenterPixel = (int)Math.floor((coords[1]+r7_27Coord_transformed[1])/resols[1]);
+					 zCenterPixel = (int)Math.floor((coords[2]+r7_27Coord_transformed[2])/resols[2]);
+				 }else {
+					 xCenterPixel = (int)Math.floor(coords[0]/resols[0]);
+					 yCenterPixel = (int)Math.floor(coords[1]/resols[1]);
+					 zCenterPixel = (int)Math.floor(coords[2]/resols[2]);
+				 }
+				 value = greenRegionGrowMaskImage.getFloat(xCenterPixel, yCenterPixel, zCenterPixel);
+				 
+				 //now we need to look at the immediate neighbors of it to see
+				 //if we are truly at the center (center will have highest value)
+				 //if neighbor is higher...walk to it.   do this iteration 7 times
+				 
+				 xPix = xCenterPixel;
+				 yPix = yCenterPixel;
+				 zPix = zCenterPixel;
+				 
+				 for(int m=0;m<numIter;m++) {
+
+					xPix1 = xPix;
+					yPix1 = yPix+1;
+					zPix1 = zPix;
+					if(!(xPix1<0 || xPix1>=greenRegionGrowMaskImage.getExtents()[0] || yPix1<0 || yPix1>=greenRegionGrowMaskImage.getExtents()[1] || zPix1<0 || zPix1>=greenRegionGrowMaskImage.getExtents()[2])) {
+						 value1 = greenRegionGrowMaskImage.getFloat(xPix1, yPix1, zPix1);
+						 if(value1 > value) {
+							 highestValue = value1;
+							 xPix = xPix1;
+							 yPix = yPix1;
+							 zPix = zPix1;
+							
+						 }
+					 } 
+					
+					xPix1 = xPix;
+					yPix1 = yPix;
+					zPix1 = zPix+1;
+					if(!(xPix1<0 || xPix1>=greenRegionGrowMaskImage.getExtents()[0] || yPix1<0 || yPix1>=greenRegionGrowMaskImage.getExtents()[1] || zPix1<0 || zPix1>=greenRegionGrowMaskImage.getExtents()[2])) {
+						 value1 = greenRegionGrowMaskImage.getFloat(xPix1, yPix1, zPix1);
+						 if(value1 > value) {
+							 if(value1 > highestValue) {
+								 highestValue = value1;
+								 xPix = xPix1;
+								 yPix = yPix1;
+								 zPix = zPix1;
+							 }
+							
+						 }
+					 } 
+					
+					
+					xPix1 = xPix;
+					yPix1 = yPix+1;
+					zPix1 = zPix+1;
+					if(!(xPix1<0 || xPix1>=greenRegionGrowMaskImage.getExtents()[0] || yPix1<0 || yPix1>=greenRegionGrowMaskImage.getExtents()[1] || zPix1<0 || zPix1>=greenRegionGrowMaskImage.getExtents()[2])) {
+						 value1 = greenRegionGrowMaskImage.getFloat(xPix1, yPix1, zPix1);
+						 if(value1 > value) {
+							 if(value1 > highestValue) {
+								 highestValue = value1;
+								 xPix = xPix1;
+								 yPix = yPix1;
+								 zPix = zPix1;
+							 }
+					
+						 }
+					 } 
+					
+					xPix1 = xPix;
+					yPix1 = yPix-1;
+					zPix1 = zPix;
+					if(!(xPix1<0 || xPix1>=greenRegionGrowMaskImage.getExtents()[0] || yPix1<0 || yPix1>=greenRegionGrowMaskImage.getExtents()[1] || zPix1<0 || zPix1>=greenRegionGrowMaskImage.getExtents()[2])) {
+						 value1 = greenRegionGrowMaskImage.getFloat(xPix1, yPix1, zPix1);
+						 if(value1 > value) {
+							 if(value1 > highestValue) {
+								 highestValue = value1;
+								 xPix = xPix1;
+								 yPix = yPix1;
+								 zPix = zPix1;
+							 }
+						 }
+					 } 
+					
+					xPix1 = xPix;
+					yPix1 = yPix;
+					zPix1 = zPix-1;
+					if(!(xPix1<0 || xPix1>=greenRegionGrowMaskImage.getExtents()[0] || yPix1<0 || yPix1>=greenRegionGrowMaskImage.getExtents()[1] || zPix1<0 || zPix1>=greenRegionGrowMaskImage.getExtents()[2])) {
+						 value1 = greenRegionGrowMaskImage.getFloat(xPix1, yPix1, zPix1);
+						 if(value1 > value) {
+							 if(value1 > highestValue) {
+								 highestValue = value1;
+								 xPix = xPix1;
+								 yPix = yPix1;
+								 zPix = zPix1;
+							 }
+						 }
+					 } 
+					
+					xPix1 = xPix;
+					yPix1 = yPix-1;
+					zPix1 = zPix-1;
+					if(!(xPix1<0 || xPix1>=greenRegionGrowMaskImage.getExtents()[0] || yPix1<0 || yPix1>=greenRegionGrowMaskImage.getExtents()[1] || zPix1<0 || zPix1>=greenRegionGrowMaskImage.getExtents()[2])) {
+						 value1 = greenRegionGrowMaskImage.getFloat(xPix1, yPix1, zPix1);
+						 if(value1 > value) {
+							 if(value1 > highestValue) {
+								 highestValue = value1;
+								 xPix = xPix1;
+								 yPix = yPix1;
+								 zPix = zPix1;
+							 }
+						 }
+					 }
+					
+					xPix1 = xPix;
+					yPix1 = yPix+1;
+					zPix1 = zPix-1;
+					if(!(xPix1<0 || xPix1>=greenRegionGrowMaskImage.getExtents()[0] || yPix1<0 || yPix1>=greenRegionGrowMaskImage.getExtents()[1] || zPix1<0 || zPix1>=greenRegionGrowMaskImage.getExtents()[2])) {
+						 value1 = greenRegionGrowMaskImage.getFloat(xPix1, yPix1, zPix1);
+						 if(value1 > value) {
+							 if(value1 > highestValue) {
+								 highestValue = value1;
+								 xPix = xPix1;
+								 yPix = yPix1;
+								 zPix = zPix1;
+							 }
+						 }
+					 }
+					
+					xPix1 = xPix;
+					yPix1 = yPix-1;
+					zPix1 = zPix+1;
+					if(!(xPix1<0 || xPix1>=greenRegionGrowMaskImage.getExtents()[0] || yPix1<0 || yPix1>=greenRegionGrowMaskImage.getExtents()[1] || zPix1<0 || zPix1>=greenRegionGrowMaskImage.getExtents()[2])) {
+						 value1 = greenRegionGrowMaskImage.getFloat(xPix1, yPix1, zPix1);
+						 if(value1 > value) {
+							 if(value1 > highestValue) {
+								 highestValue = value1;
+								 xPix = xPix1;
+								 yPix = yPix1;
+								 zPix = zPix1;
+							 }
+						 }
+					 }
+					
+					
+					
+					xPix1 = xPix+1;
+					yPix1 = yPix;
+					zPix1 = zPix;
+					if(!(xPix1<0 || xPix1>=greenRegionGrowMaskImage.getExtents()[0] || yPix1<0 || yPix1>=greenRegionGrowMaskImage.getExtents()[1] || zPix1<0 || zPix1>=greenRegionGrowMaskImage.getExtents()[2])) {
+						 value1 = greenRegionGrowMaskImage.getFloat(xPix1, yPix1, zPix1);
+						 if(value1 > value) {
+							 if(value1 > highestValue) {
+								 highestValue = value1;
+								 xPix = xPix1;
+								 yPix = yPix1;
+								 zPix = zPix1;
+							 }
+						 }
+					 }
+					
+					xPix1 = xPix+1;
+					yPix1 = yPix+1;
+					zPix1 = zPix;
+					if(!(xPix1<0 || xPix1>=greenRegionGrowMaskImage.getExtents()[0] || yPix1<0 || yPix1>=greenRegionGrowMaskImage.getExtents()[1] || zPix1<0 || zPix1>=greenRegionGrowMaskImage.getExtents()[2])) {
+						 value1 = greenRegionGrowMaskImage.getFloat(xPix1, yPix1, zPix1);
+						 if(value1 > value) {
+							 if(value1 > highestValue) {
+								 highestValue = value1;
+								 xPix = xPix1;
+								 yPix = yPix1;
+								 zPix = zPix1;
+							 }
+						 }
+					 }
+					
+					xPix1 = xPix+1;
+					yPix1 = yPix;
+					zPix1 = zPix+1;
+					if(!(xPix1<0 || xPix1>=greenRegionGrowMaskImage.getExtents()[0] || yPix1<0 || yPix1>=greenRegionGrowMaskImage.getExtents()[1] || zPix1<0 || zPix1>=greenRegionGrowMaskImage.getExtents()[2])) {
+						 value1 = greenRegionGrowMaskImage.getFloat(xPix1, yPix1, zPix1);
+						 if(value1 > value) {
+							 if(value1 > highestValue) {
+								 highestValue = value1;
+								 xPix = xPix1;
+								 yPix = yPix1;
+								 zPix = zPix1;
+							 }
+						 }
+					 }
+					
+					xPix1 = xPix+1;
+					yPix1 = yPix+1;
+					zPix1 = zPix+1;
+					if(!(xPix1<0 || xPix1>=greenRegionGrowMaskImage.getExtents()[0] || yPix1<0 || yPix1>=greenRegionGrowMaskImage.getExtents()[1] || zPix1<0 || zPix1>=greenRegionGrowMaskImage.getExtents()[2])) {
+						 value1 = greenRegionGrowMaskImage.getFloat(xPix1, yPix1, zPix1);
+						 if(value1 > value) {
+							 if(value1 > highestValue) {
+								 highestValue = value1;
+								 xPix = xPix1;
+								 yPix = yPix1;
+								 zPix = zPix1;
+							 }
+						 }
+					 }
+					
+					xPix1 = xPix+1;
+					yPix1 = yPix-1;
+					zPix1 = zPix;
+					if(!(xPix1<0 || xPix1>=greenRegionGrowMaskImage.getExtents()[0] || yPix1<0 || yPix1>=greenRegionGrowMaskImage.getExtents()[1] || zPix1<0 || zPix1>=greenRegionGrowMaskImage.getExtents()[2])) {
+						 value1 = greenRegionGrowMaskImage.getFloat(xPix1, yPix1, zPix1);
+						 if(value1 > value) {
+							 if(value1 > highestValue) {
+								 highestValue = value1;
+								 xPix = xPix1;
+								 yPix = yPix1;
+								 zPix = zPix1;
+							 }
+						 }
+					 }
+					
+					 
+					xPix1 = xPix+1;
+					yPix1 = yPix;
+					zPix1 = zPix-1;
+					if(!(xPix1<0 || xPix1>=greenRegionGrowMaskImage.getExtents()[0] || yPix1<0 || yPix1>=greenRegionGrowMaskImage.getExtents()[1] || zPix1<0 || zPix1>=greenRegionGrowMaskImage.getExtents()[2])) {
+						 value1 = greenRegionGrowMaskImage.getFloat(xPix1, yPix1, zPix1);
+						 if(value1 > value) {
+							 if(value1 > highestValue) {
+								 highestValue = value1;
+								 xPix = xPix1;
+								 yPix = yPix1;
+								 zPix = zPix1;
+							 }
+						 }
+					 }
+					
+					xPix1 = xPix+1;
+					yPix1 = yPix-1;
+					zPix1 = zPix-1;
+					if(!(xPix1<0 || xPix1>=greenRegionGrowMaskImage.getExtents()[0] || yPix1<0 || yPix1>=greenRegionGrowMaskImage.getExtents()[1] || zPix1<0 || zPix1>=greenRegionGrowMaskImage.getExtents()[2])) {
+						 value1 = greenRegionGrowMaskImage.getFloat(xPix1, yPix1, zPix1);
+						 if(value1 > value) {
+							 if(value1 > highestValue) {
+								 highestValue = value1;
+								 xPix = xPix1;
+								 yPix = yPix1;
+								 zPix = zPix1;
+							 }
+						 }
+					 }
+					
+					xPix1 = xPix+1;
+					yPix1 = yPix+1;
+					zPix1 = zPix-1;
+					if(!(xPix1<0 || xPix1>=greenRegionGrowMaskImage.getExtents()[0] || yPix1<0 || yPix1>=greenRegionGrowMaskImage.getExtents()[1] || zPix1<0 || zPix1>=greenRegionGrowMaskImage.getExtents()[2])) {
+						 value1 = greenRegionGrowMaskImage.getFloat(xPix1, yPix1, zPix1);
+						 if(value1 > value) {
+							 if(value1 > highestValue) {
+								 highestValue = value1;
+								 xPix = xPix1;
+								 yPix = yPix1;
+								 zPix = zPix1;
+							 }
+						 }
+					 }
+					
+					xPix1 = xPix+1;
+					yPix1 = yPix-1;
+					zPix1 = zPix+1;
+					if(!(xPix1<0 || xPix1>=greenRegionGrowMaskImage.getExtents()[0] || yPix1<0 || yPix1>=greenRegionGrowMaskImage.getExtents()[1] || zPix1<0 || zPix1>=greenRegionGrowMaskImage.getExtents()[2])) {
+						 value1 = greenRegionGrowMaskImage.getFloat(xPix1, yPix1, zPix1);
+						 if(value1 > value) {
+							 if(value1 > highestValue) {
+								 highestValue = value1;
+								 xPix = xPix1;
+								 yPix = yPix1;
+								 zPix = zPix1;
+							 }
+						 }
+					 }
+					
+					
+					
+					
+					
+					
+					
+					xPix1 = xPix-1;
+					yPix1 = yPix;
+					zPix1 = zPix;
+					if(!(xPix1<0 || xPix1>=greenRegionGrowMaskImage.getExtents()[0] || yPix1<0 || yPix1>=greenRegionGrowMaskImage.getExtents()[1] || zPix1<0 || zPix1>=greenRegionGrowMaskImage.getExtents()[2])) {
+						 value1 = greenRegionGrowMaskImage.getFloat(xPix1, yPix1, zPix1);
+						 if(value1 > value) {
+							 if(value1 > highestValue) {
+								 highestValue = value1;
+								 xPix = xPix1;
+								 yPix = yPix1;
+								 zPix = zPix1;
+							 }
+						 }
+					 }
+					
+					xPix1 = xPix-1;
+					yPix1 = yPix+1;
+					zPix1 = zPix;
+					if(!(xPix1<0 || xPix1>=greenRegionGrowMaskImage.getExtents()[0] || yPix1<0 || yPix1>=greenRegionGrowMaskImage.getExtents()[1] || zPix1<0 || zPix1>=greenRegionGrowMaskImage.getExtents()[2])) {
+						 value1 = greenRegionGrowMaskImage.getFloat(xPix1, yPix1, zPix1);
+						 if(value1 > value) {
+							 if(value1 > highestValue) {
+								 highestValue = value1;
+								 xPix = xPix1;
+								 yPix = yPix1;
+								 zPix = zPix1;
+							 }
+						 }
+					 }
+					
+					xPix1 = xPix-1;
+					yPix1 = yPix;
+					zPix1 = zPix+1;
+					if(!(xPix1<0 || xPix1>=greenRegionGrowMaskImage.getExtents()[0] || yPix1<0 || yPix1>=greenRegionGrowMaskImage.getExtents()[1] || zPix1<0 || zPix1>=greenRegionGrowMaskImage.getExtents()[2])) {
+						 value1 = greenRegionGrowMaskImage.getFloat(xPix1, yPix1, zPix1);
+						 if(value1 > value) {
+							 if(value1 > highestValue) {
+								 highestValue = value1;
+								 xPix = xPix1;
+								 yPix = yPix1;
+								 zPix = zPix1;
+							 }
+						 }
+					 }
+					
+					xPix1 = xPix-1;
+					yPix1 = yPix+1;
+					zPix1 = zPix+1;
+					if(!(xPix1<0 || xPix1>=greenRegionGrowMaskImage.getExtents()[0] || yPix1<0 || yPix1>=greenRegionGrowMaskImage.getExtents()[1] || zPix1<0 || zPix1>=greenRegionGrowMaskImage.getExtents()[2])) {
+						 value1 = greenRegionGrowMaskImage.getFloat(xPix1, yPix1, zPix1);
+						 if(value1 > value) {
+							 if(value1 > highestValue) {
+								 highestValue = value1;
+								 xPix = xPix1;
+								 yPix = yPix1;
+								 zPix = zPix1;
+							 }
+						 }
+					 }
+					
+					xPix1 = xPix-1;
+					yPix1 = yPix-1;
+					zPix1 = zPix;
+					if(!(xPix1<0 || xPix1>=greenRegionGrowMaskImage.getExtents()[0] || yPix1<0 || yPix1>=greenRegionGrowMaskImage.getExtents()[1] || zPix1<0 || zPix1>=greenRegionGrowMaskImage.getExtents()[2])) {
+						 value1 = greenRegionGrowMaskImage.getFloat(xPix1, yPix1, zPix1);
+						 if(value1 > value) {
+							 if(value1 > highestValue) {
+								 highestValue = value1;
+								 xPix = xPix1;
+								 yPix = yPix1;
+								 zPix = zPix1;
+							 }
+						 }
+					 }
+					
+					 
+					xPix1 = xPix-1;
+					yPix1 = yPix;
+					zPix1 = zPix-1;
+					if(!(xPix1<0 || xPix1>=greenRegionGrowMaskImage.getExtents()[0] || yPix1<0 || yPix1>=greenRegionGrowMaskImage.getExtents()[1] || zPix1<0 || zPix1>=greenRegionGrowMaskImage.getExtents()[2])) {
+						 value1 = greenRegionGrowMaskImage.getFloat(xPix1, yPix1, zPix1);
+						 if(value1 > value) {
+							 if(value1 > highestValue) {
+								 highestValue = value1;
+								 xPix = xPix1;
+								 yPix = yPix1;
+								 zPix = zPix1;
+							 }
+						 }
+					 }
+					
+					xPix1 = xPix-1;
+					yPix1 = yPix-1;
+					zPix1 = zPix-1;
+					if(!(xPix1<0 || xPix1>=greenRegionGrowMaskImage.getExtents()[0] || yPix1<0 || yPix1>=greenRegionGrowMaskImage.getExtents()[1] || zPix1<0 || zPix1>=greenRegionGrowMaskImage.getExtents()[2])) {
+						 value1 = greenRegionGrowMaskImage.getFloat(xPix1, yPix1, zPix1);
+						 if(value1 > value) {
+							 if(value1 > highestValue) {
+								 highestValue = value1;
+								 xPix = xPix1;
+								 yPix = yPix1;
+								 zPix = zPix1;
+							 }
+						 }
+					 }
+					
+					xPix1 = xPix-1;
+					yPix1 = yPix+1;
+					zPix1 = zPix-1;
+					if(!(xPix1<0 || xPix1>=greenRegionGrowMaskImage.getExtents()[0] || yPix1<0 || yPix1>=greenRegionGrowMaskImage.getExtents()[1] || zPix1<0 || zPix1>=greenRegionGrowMaskImage.getExtents()[2])) {
+						 value1 = greenRegionGrowMaskImage.getFloat(xPix1, yPix1, zPix1);
+						 if(value1 > value) {
+							 if(value1 > highestValue) {
+								 highestValue = value1;
+								 xPix = xPix1;
+								 yPix = yPix1;
+								 zPix = zPix1;
+							 }
+						 }
+					 }
+					
+					xPix1 = xPix-1;
+					yPix1 = yPix-1;
+					zPix1 = zPix+1;
+					if(!(xPix1<0 || xPix1>=greenRegionGrowMaskImage.getExtents()[0] || yPix1<0 || yPix1>=greenRegionGrowMaskImage.getExtents()[1] || zPix1<0 || zPix1>=greenRegionGrowMaskImage.getExtents()[2])) {
+						 value1 = greenRegionGrowMaskImage.getFloat(xPix1, yPix1, zPix1);
+						 if(value1 > value) {
+							 if(value1 > highestValue) {
+								 highestValue = value1;
+								 xPix = xPix1;
+								 yPix = yPix1;
+								 zPix = zPix1;
+							 }
+						 }
+					 }
+					 
+					 
+					 
+				 }
+				 
+				 if(xPix == xCenterPixel && yPix == yCenterPixel && zPix == zCenterPixel) {
+					 //this means we didnt walk at all
+					 coords[3] = value;
+					 
+				 }else {
+					 coords[3] = highestValue;
+				 }
+
+				 al.set(k, coords);
+				 
+			 }
+        }
+        
+        
+        
+        
+        
+        /*float resX = resols[0];
+		float resY = resols[1];
+		float resZ = resols[2];
+		
+		float increaseRadiusBy = resZ;
+		
+
+		float radius;
+		float radiusSquared;
+		float xDist,yDist,zDist;
+		float distance;
+		int xStart,yStart,zStart;
+		int xEnd,yEnd,zEnd;*/
+
+        /*for(int i=0;i<newFilamentsSize;i++) {
+			 al = newFilamentCoords.get(i);
+			 alSize = al.size();
+			 for(int k=0;k<alSize;k++) {
+				 coords = al.get(k);
+				 
+				 if(r7CenterPointFound) {
+					 xCenterPixel = (int)Math.floor((coords[0]+r7_27Coord_transformed[0])/resols[0]);
+					 yCenterPixel = (int)Math.floor((coords[1]+r7_27Coord_transformed[1])/resols[1]);
+					 zCenterPixel = (int)Math.floor((coords[2]+r7_27Coord_transformed[2])/resols[2]);
+				 }else {
+					 xCenterPixel = (int)Math.floor(coords[0]/resols[0]);
+					 yCenterPixel = (int)Math.floor(coords[1]/resols[1]);
+					 zCenterPixel = (int)Math.floor(coords[2]/resols[2]);
+				 }
+				 
+				 //expand radius..start with increaseRadiusBy and increse
+				 loop:		for(radius=increaseRadiusBy;radius<=coords[3];radius=radius+increaseRadiusBy) {
+								
+								 radiusSquared = radius * radius;  //we will work with radius squared...that way we dont have to do SqrRt down in the for loops
+								 
+								 xStart = xCenterPixel - Math.round(radius/resX);
+								 xStart = xStart - 1;
+								 yStart = yCenterPixel - Math.round(radius/resY);
+								 yStart = yStart - 1;
+								 zStart = zCenterPixel - Math.round(radius/resZ);
+								 zStart = zStart - 1;
+								 
+								 xEnd = xCenterPixel + Math.round(radius/resX);
+								 xEnd = xEnd + 1;
+								 yEnd = yCenterPixel + Math.round(radius/resY);
+								 yEnd = yEnd + 1;
+								 zEnd = zCenterPixel + Math.round(radius/resZ);
+								 zEnd = zEnd + 1;
+								 
+								 for(int z=zStart;z<=zEnd;z++) {
+									 zDist = ((z-zCenterPixel)*(resZ)) * ((z-zCenterPixel)*(resZ));
+									 for(int y=yStart;y<=yEnd;y++) {
+										 yDist = ((y-yCenterPixel)*(resY)) * ((y-yCenterPixel)*(resY));
+										 for(int x=xStart;x<=xEnd;x++) {
+											 xDist = ((x-xCenterPixel)*(resX)) * ((x-xCenterPixel)*(resX));
+											 distance = xDist + yDist + zDist;
+											 if(distance <= radiusSquared) {
+												 //this means we have a valid pixel in the sphere
+												 //first check to see of x,y,z are in bounds
+												 if(x<0 || x>=finalImage.getExtents()[0] || y<0 || y>=finalImage.getExtents()[1] || z<0 || z>=finalImage.getExtents()[2]) {
+													 continue;
+												 }
+												 
+													maskImageRegionGrow.set(x, y, z, 100);
+												 
+											 }
+											 
+										 }
+										 
+									 }
+								 }
+							 } //end loop:
+			 }
+		}
+        */
+	
+	}
+	
+	
     
     
     /**
@@ -943,10 +1676,20 @@ System.out.println("doRigidOnly is " + doRigidOnly);
 											 if(distance <= radiusSquared) {
 												 //this means we have a valid pixel in the sphere
 												 //first check to see of x,y,z are in bounds
-												 if(x<0 || x>=finalImage.getExtents()[0] || y<0 || y>=finalImage.getExtents()[1] || z<0 || z>=finalImage.getExtents()[2]) {
+												 /*if(x<0 || x>=finalImage.getExtents()[0] || y<0 || y>=finalImage.getExtents()[1] || z<0 || z>=finalImage.getExtents()[2]) {
 													 continue;
 												 }
-												 greenValue = finalImage.getFloatC(x, y, z, 2);
+												 greenValue = finalImage.getFloatC(x, y, z, 2);*/
+												 
+												 
+												 if(x<0 || x>=greenImage.getExtents()[0] || y<0 || y>=greenImage.getExtents()[1] || z<0 || z>=greenImage.getExtents()[2]) {
+													 continue;
+												 }
+												 greenValue = greenImage.getFloat(x, y, z);
+												 
+												 
+												 
+												 
 												 if(greenValue <= greenThresold) {
 													 //this means we have exceeded the radius
 													 //break the loop:  and move on to next point
@@ -1071,6 +1814,85 @@ System.out.println("doRigidOnly is " + doRigidOnly);
 		}catch (Exception e) {
 			e.printStackTrace();
 		}
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//We need to pass the green channel through a median filter or Coherence-Enhancing Diffusion
+		/*greenImage = new ModelImage(ModelStorageBase.FLOAT, extents, "greenImage");
+		try {
+            greenImage.importData(0, greenBuffer, true);
+        } catch (final IOException error) {
+            System.out.println("IO exception");
+            error.printStackTrace();
+            return;
+        }
+		FileInfoImageXML[] fileInfoBases = new FileInfoImageXML[finalImage.getExtents()[2]];
+		float[] finalImageResols = new float[3];
+        finalImageResols[0] = neuronImage.getResolutions(0)[0];
+        finalImageResols[1] = neuronImage.getResolutions(0)[1];
+        finalImageResols[2] = neuronImage.getResolutions(0)[2];
+        float[] f = null;
+        if (r7_27Coord_transformed != null) {
+            f = new float[3];
+            f[0] = -r7_27Coord_transformed[0];
+            f[1] = -r7_27Coord_transformed[1];
+            f[2] = -r7_27Coord_transformed[2];
+        }
+		for (int i = 0; i < fileInfoBases.length; i++) {
+            fileInfoBases[i] = new FileInfoImageXML(greenImage.getImageName(), null, FileUtility.XML);
+            fileInfoBases[i].setUnitsOfMeasure(neuronImage.getFileInfo()[0].getUnitsOfMeasure());
+            fileInfoBases[i].setResolutions(finalImageResols);
+            fileInfoBases[i].setExtents(neuronImage.getExtents());
+            if (r7_27Coord_transformed != null) {
+
+                fileInfoBases[i].setOrigin(f);
+            } else {
+                fileInfoBases[i].setOrigin(neuronImage.getFileInfo()[0].getOrigin());
+            }
+
+            fileInfoBases[i].setDataType(ModelStorageBase.ARGB);
+
+        }
+		greenImage.setFileInfo(fileInfoBases);
+        greenImage.calcMinMax();*/
+        //now we send it through the median filter
+        /*int iters = 1;
+        int kernelSize = 3;
+        int kernelShape = 0;
+        float stdDev = 1;
+        boolean adaptiveSize = false;
+        int maximumSize = 5;
+        boolean wholeImage = true;
+        medianAlgo = new AlgorithmMedian(greenImage, iters, kernelSize, kernelShape, stdDev, adaptiveSize,maximumSize, wholeImage);
+        medianAlgo.run();
+        //ok...now export buffer back to greenBuffer
+		try {
+			greenImage.exportData(0, length, greenBuffer);
+		}catch (Exception e) {
+			e.printStackTrace();
+		}*/
+        
+        //send through coherence-enhancing diffusion filter
+       /* cohResultImage = new ModelImage(ModelStorageBase.FLOAT, greenImage.getExtents(), "coherence");
+        int numIterations = 1;
+        float diffusitivityDenom = 0.001f;
+        float derivativeScale = 0.5f;
+        float gaussianScale = 2.0f;
+        boolean do25D = true;
+        boolean entireImage = true;
+        coherenceAlg = new AlgorithmCoherenceEnhancingDiffusion(cohResultImage, greenImage, numIterations,diffusitivityDenom,derivativeScale, gaussianScale,do25D, entireImage);
+        coherenceAlg.run();
+        //ok...now export buffer back to greenBuffer
+		try {
+			cohResultImage.exportData(0, length, greenBuffer);
+		}catch (Exception e) {
+			e.printStackTrace();
+		}*/
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        
+        
+        
+		
+		
 		
 		//intitilaize all radii to -1 first
 		for(int i=0;i<newFilamentsSize;i++) {
@@ -1177,17 +1999,17 @@ System.out.println("doRigidOnly is " + doRigidOnly);
         for (int i = 0; i < maskImageAuto.getExtents()[2]; i++) {
         	maskImageAuto.setResolutions(i, resols);
         }
-        final FileInfoImageXML[] fileInfoBases = new FileInfoImageXML[maskImageAuto.getExtents()[2]];
-        for (int i = 0; i < fileInfoBases.length; i++) {
-            fileInfoBases[i] = new FileInfoImageXML(maskImageAuto.getImageName(), null, FileUtility.XML);
-            fileInfoBases[i].setEndianess(finalImage.getFileInfo()[0].getEndianess());
-            fileInfoBases[i].setUnitsOfMeasure(finalImage.getFileInfo()[0].getUnitsOfMeasure());
-            fileInfoBases[i].setResolutions(finalImage.getFileInfo()[0].getResolutions());
-            fileInfoBases[i].setExtents(finalImage.getExtents());
-            fileInfoBases[i].setOrigin(finalImage.getFileInfo()[0].getOrigin());
+        final FileInfoImageXML[] fileInfoBases2 = new FileInfoImageXML[maskImageAuto.getExtents()[2]];
+        for (int i = 0; i < fileInfoBases2.length; i++) {
+        	fileInfoBases2[i] = new FileInfoImageXML(maskImageAuto.getImageName(), null, FileUtility.XML);
+        	fileInfoBases2[i].setEndianess(finalImage.getFileInfo()[0].getEndianess());
+        	fileInfoBases2[i].setUnitsOfMeasure(finalImage.getFileInfo()[0].getUnitsOfMeasure());
+        	fileInfoBases2[i].setResolutions(finalImage.getFileInfo()[0].getResolutions());
+        	fileInfoBases2[i].setExtents(finalImage.getExtents());
+            fileInfoBases2[i].setOrigin(finalImage.getFileInfo()[0].getOrigin());
 
         }
-        maskImageAuto.setFileInfo(fileInfoBases);*/
+        maskImageAuto.setFileInfo(fileInfoBases2);*/
         
 
         float radius;
@@ -1202,7 +2024,7 @@ System.out.println("doRigidOnly is " + doRigidOnly);
 		int xEnd,yEnd,zEnd;
 		
         //may not need the following
-        for(int i=0;i<newFilamentsSize;i++) {
+        /*for(int i=0;i<newFilamentsSize;i++) {
 			 al = newFilamentCoords.get(i);
 			 alSize = al.size();
 			 for(int k=0;k<alSize;k++) {
@@ -1251,7 +2073,7 @@ System.out.println("doRigidOnly is " + doRigidOnly);
 													 continue;
 												 }
 												 
-													//maskImageAuto.set(x, y, z, 100);
+													maskImageAuto.set(x, y, z, 100);
 												 
 											 }
 											 
@@ -1261,7 +2083,7 @@ System.out.println("doRigidOnly is " + doRigidOnly);
 								 }
 							 } //end loop:
 			 }
-		}
+		}*/
         
         
         
