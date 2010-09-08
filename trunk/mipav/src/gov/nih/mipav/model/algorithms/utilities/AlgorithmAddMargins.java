@@ -239,8 +239,8 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                     for ( int k = 0; k < contour.size(); k++ )
                     {
                         Vector3f kIn = contour.elementAt(k);
-                        kIn.X = Math.min( xDim - 1, Math.max( 0, kIn.X - xShiftSrc ) );
-                        kIn.Y = Math.min( yDim - 1, Math.max( 0, kIn.Y - yShiftSrc ) );
+                        kIn.X = Math.min( xDim, Math.max( 0, kIn.X - xShiftSrc ) );
+                        kIn.Y = Math.min( yDim, Math.max( 0, kIn.Y - yShiftSrc ) );
                         kIn.Z = Math.min( zDim - 1, Math.max( 0, kIn.Z - zShiftSrc ) );
                     }
                 }
