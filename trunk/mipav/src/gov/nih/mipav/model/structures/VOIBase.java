@@ -20,6 +20,7 @@ import WildMagic.LibFoundation.Mathematics.Segment3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
+import com.mentorgen.tools.profile.runtime.Profile;
 
 /**
  * Base which holds the functions common to both Contour, Line and Point type VOI. Abstract class.
@@ -890,13 +891,22 @@ public abstract class VOIBase extends Vector<Vector3f> {
         }
         if ( m_iPlane == ZPLANE )
         {
-            //fillZ((int)elementAt(0).Z, 
-            //        kMask, xDim, yDim, XOR, polarity );
+            //long time = System.currentTimeMillis();
+            //
+            // fillZ is the original 'fill' algorithm from 4.1.1 it is slow....
+            //
+            fillZ((int)elementAt(0).Z, 
+                    kMask, xDim, yDim, XOR, polarity );
             
             //System.out.println("fillZ " +(System.currentTimeMillis() - time));
             
+            // If you want to call both fill algorithms to compare times, you have to clear the
+            // mask in-between calls...
+            //kMask.clear();
             
+            // This is the faster 'scan-conversion' fill technique:
             //time = System.currentTimeMillis();                        
+            /*
             int iXMin = (int)(m_akImageMinMax[0].X);
             int iXMax = (int)(m_akImageMinMax[1].X);
 
@@ -908,6 +918,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             outlineRegion(aafCrossingPoints, aiNumCrossings, iXMin, iXMax);
             fill(aafCrossingPoints, aiNumCrossings, iXMin, iXMax, (int)elementAt(0).Z, 
                     kMask, xDim, yDim, XOR, polarity );
+                    */
             //System.out.println(getGroup().getName() + getLabel() + " outlineRegion/fill " +(System.currentTimeMillis() - time));
             
         }
@@ -959,7 +970,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         }
 
         //System.out.println("mask " + getGroup().getName() + getLabel() + " " +(System.currentTimeMillis() - time));
-        m_bUpdateMask = false;
+
     }
     
     /**
@@ -1300,12 +1311,21 @@ public abstract class VOIBase extends Vector<Vector3f> {
      */
     public Vector3f getGeometricCenter() {
 
+        //long time = System.currentTimeMillis();
         if ( !m_bUpdateGeometricCenter )
         {
             return new Vector3f(gcPt);
         }  
+        //Profile.clear();
+        //Profile.start();
+        //System.out.println("getGeometricCenter " + getGroup().getName() + getLabel() );
         getMask();
         m_bUpdateGeometricCenter = false;
+        //System.out.println(" ... " + (System.currentTimeMillis() - time));
+
+        //Profile.stop();
+        //Profile.setFileName( "profile_out_GC" );
+        //Profile.shutdown();
         return new Vector3f(gcPt);
     }
 
@@ -1438,7 +1458,9 @@ public abstract class VOIBase extends Vector<Vector3f> {
         }                                                 
         m_kMask.clear();
         fillVolume( m_kMask, xDim, yDim, false, VOI.ADDITIVE );
-        
+
+        m_bUpdateGeometricCenter = false;
+        m_bUpdateMask = false;
         return m_kMask;
     }
     
@@ -2091,13 +2113,19 @@ public abstract class VOIBase extends Vector<Vector3f> {
             Vector3f kVeci = elementAt(i);
             Vector3f kVecj = elementAt(j);
 
-            if (((kVecj.Y <= fy) && (fy < kVeci.Y) && (areaTwice(kVeci.X,
-                    kVeci.Y, kVecj.X, kVecj.Y, fx, fy) >= 0))
-                    || ((kVeci.Y <= fy) && (fy < kVecj.Y) && (areaTwice(kVecj.X,
-                            kVecj.Y, kVeci.X, kVeci.Y, fx, fy) >= 0))) {
-                isInside = !isInside;
+            if ( ((kVecj.Y <= fy) && (fy < kVeci.Y)) || ((kVeci.Y <= fy) && (fy < kVecj.Y)) )
+            {
+                if (((kVecj.Y <= fy) && (fy < kVeci.Y) && (areaTwice(kVeci.X,
+                        kVeci.Y, kVecj.X, kVecj.Y, fx, fy) >= 0)) )
+                {
+                    isInside = !isInside;
+                }
+                else if ( ((kVeci.Y <= fy) && (fy < kVecj.Y) && (areaTwice(kVecj.X,
+                                kVecj.Y, kVeci.X, kVeci.Y, fx, fy) >= 0)))
+                {
+                    isInside = !isInside;
+                }
             }
-
             j = i;
         }
         return isInside;
@@ -2148,7 +2176,6 @@ public abstract class VOIBase extends Vector<Vector3f> {
         }
         return isInside;
     }
-    /*
     private void fillZ(int iZ, 
             BitSet kMask, int xDim, int yDim, boolean XOR, int polarity ) {
 
@@ -2181,6 +2208,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         gcPt.Z = MipavMath.round( m_kPositionSum.Z * scale );        
     }
 
+    /*
     private void fillX(int iX, 
             BitSet kMask, int xDim, int yDim, boolean XOR, int polarity ) {
 
@@ -2326,7 +2354,10 @@ public abstract class VOIBase extends Vector<Vector3f> {
                 {
                     int yStart = (int)Math.floor(aaiCrossingPoints[iIndex][i]);
                     int yEnd = (int)Math.ceil(aaiCrossingPoints[iIndex][i+1]);
-                    for ( int iY = yStart-3; iY <= yEnd+3; iY++ )
+                    // This is the straight scan-conversion technique:
+                    for ( int iY = yStart; iY < yEnd; iY++ )
+                        // I modified the above loop because it was missing pixels:
+                        //for ( int iY = yStart-3; iY <= yEnd+3; iY++ )
                     {              
                         if ( (iX >= 0) && (iY >= 0) && (iZ >= 0) )
                         {
@@ -2335,13 +2366,17 @@ public abstract class VOIBase extends Vector<Vector3f> {
                             iMaskIndex += iX;
                             if ( !kMask.get(iMaskIndex) )
                             {
-                                if ( containsZ(iX,iY) )
+                                // Because I modified the above loop, I added a 'contains' test, 
+                                // contains is used in the original fill algorithm from 4.1.1
+                                // it is slow, and unnecessary for the original scan-conversion
+                                //if ( containsZ(iX,iY) )
                                 {         
                                     kMask.set(iMaskIndex);            
                                     Vector3f kPos = new Vector3f(iX, iY, iZ); 
                                     m_kMaskPositions.add(kPos);
-                                    m_kPositionSum.Add(kPos);
-                                }              
+                                    m_kPositionSum.X += kPos.X;
+                                    m_kPositionSum.Y += kPos.Y;
+                                }
                             }
                         }
                     }
@@ -2368,7 +2403,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         float scale = 1f/m_kMaskPositions.size();
         gcPt.X = MipavMath.round( m_kPositionSum.X * scale );
         gcPt.Y = MipavMath.round( m_kPositionSum.Y * scale );
-        gcPt.Z = MipavMath.round( m_kPositionSum.Z * scale );
+        gcPt.Z = iZ;
     }
 
 
