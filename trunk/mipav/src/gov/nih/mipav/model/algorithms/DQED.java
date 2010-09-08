@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.view.*;
+import java.text.DecimalFormat;
 
 /** This is a port of the FORTRAN90 source code dqed.f90.  DQED solves (square) systems of nonlinear equations,
     or minimizes the residual in a set of nonlinear equations, using least squares.  The user may include 
@@ -2762,7 +2763,7 @@ public abstract class DQED {
 			!     WITH BOUNDS ON SELECTED X VALUES.
 			*/
 
-			  /*double alpha;
+			  double alpha;
 			  double beta;
 			  double big;
 			  //double bl(ncols)
@@ -2801,6 +2802,7 @@ public abstract class DQED {
 			  int lp;
 			  int mrows;
 			  int mval;
+			  int n;
 			  int nerr;
 			  int nlevel;
 			  int nsetb;
@@ -2819,8 +2821,15 @@ public abstract class DQED {
 			  double wt;
 			  double xnew;
 			  boolean do50 = false;
+			  boolean do60 = false;
+			  boolean do70 = false;
+			  boolean do130 = false;
+			  boolean do180 = false;
+			  boolean do280 = false;
 			  boolean do460 = false;
 			  boolean do570 = false;
+			  double arr[];
+			  double arr2[];
 			//
 			//  Statement function:
 			//
@@ -2830,7 +2839,7 @@ public abstract class DQED {
 			//
 			//  VERIFY THAT THE PROBLEM DIMENSIONS ARE DEFINED PROPERLY.
 			//
-			  if ( minput<=0) {
+			  /*if ( minput<=0) {
 			    nerr = 31;
 			    xerrwv("dbolsm(). the number of rows=(i1) must be positive.",
 			      nerr,level,1,minput,idum,0,rdum,rdum);
@@ -2903,116 +2912,155 @@ public abstract class DQED {
 			//  PROCESS OPTION ARRAY
 			//
 			  do570 = true;
-	  loop: while (true) {
+	    loop: while (true) {
 			//
 			//  INITIALIZE VARIABLES AND DATA VALUES
 			//
 
 			  if (do50) {
+				  do50 = false;
+				  do60 = true;
 				  if ( iprint > 0) {
-				      call dmout(mrows,ncols+1,mdw,w,'('' pretri. input matrix'')',-4)
-				      call dvout(ncols,bl,'('' lower bounds'')',-4)
-				      call dvout(ncols,bu,'('' upper bounds'')',-4)
+				      dmout(mrows,ncols+1,mdw,w,"pretri. input matrix",-4);
+				      dvout(ncols,bl,"lower bounds",-4);
+				      dvout(ncols,bu,"upper bounds",-4);
 				  }
 			  } // if (do50)
 
-			   60 continue
-			  iter = iter + 1
-			  if ( iter<=itmax) go to 80
-			  nerr = 22
-			  call xerrwv('dbolsm(). more than (i1)=itmax iterations solving bounded ' // &
-			    'least squares problem.', &
-			    nerr,level,1,itmax,idum,0,rdum,rdum)
-			!
-			!  RESCALE AND TRANSLATE VARIABLES
-			!
-			  igopr = 1
-			  go to 130
+			  if (do60) {
+		          do60 = false;
+			      iter = iter + 1;
+			      if ( iter<=itmax) {
+				      do180 = true;
+			      }
+			      else {
+			          nerr = 22;
+			          xerrwv("dbolsm(). more than (i1)=itmax iterations solving bounded least squares problem.",
+			                  nerr,level,1,itmax,idum,0,rdum,rdum);
+			          //
+			          // RESCALE AND TRANSLATE VARIABLES
+			          //
+			          igopr = 1;
+			          do130 = true;
+			       } // else
+			  } // if (do60)
+	  
 
-			   70 continue
+			   if (do70) {
+			       mode[0] = -nerr;
+			       return;
+			   } // if (do70)
 
-			   mode[0] = -nerr;
-			   return;
+			   if (do90) {
+                   do90 = false;
+			       if ( found ) {
+			    	   do280 = true;
+			       }
+			       else {
+			           //
+			           // RESCALE AND TRANSLATE VARIABLES
+			           // 
+			           igopr = 2;
+			           do130 = true;
+			       } // else   
+			   } // if (do90)
 
-			   80 continue
-			!
-			!  FIND A VARIABLE TO BECOME NON-ACTIVE
-			!
-			  go to 180
+			  if (do100) {
+			      mode[0] = nsetb;
+			      return;
+			  }
 
-			   90 continue
+			  //
+			  //  RESCALE AND TRANSLATE VARIABLES
+			  //
+			  if (do130) {
+                  do130 = false;
+                  for (j = 1; j <= nsetb; j++) {
+                	  rw[j] = x[j];
+                  }
+                  
+                  for (j = 1; j <= ncols; j++) {
+                	  x[j] = 0.0;
+                  }
 
-			  if ( found ) go to 110
-			!
-			!  RESCALE AND TRANSLATE VARIABLES
-			!
-			  igopr = 2
-			  go to 130
+			      for (j = 1; j <= nsetb; j++) {
+			          jcol = Math.abs(ibasis[j]);
+			          x[jcol] = rw[j]*Math.abs(scl[jcol]);
+			      } // for (j = 1; j <= nsetb; j++)
 
-			  100 continue
-			  mode = nsetb
-			  return
+			      for (j = 1; j <= ncols; j++) {
+			          if ((ibb[j] % 2) == 0) {
+			        	  x[j] = bu[j] - x[j];
+			          }
+			      } // for (j = 1; j <= ncols; j++)
 
-			  110 continue
-			!
-			!  MAKE MOVE AND UPDATE FACTORIZATION
-			!
-			  go to 280
+			      for (j = 1; j <= ncols; j++) {
+			          jcol = ibasis[j];
+			          if ( jcol < 0) {
+			        	  x[-jcol] = bl[-jcol] + x[-jcol];
+			          }
+			      } // for (j = 1; j <= ncols; j++)
 
-			  120 continue
-			  go to 60
-			!
-			!  RESCALE AND TRANSLATE VARIABLES
-			!
-			  130 continue
+			      for (j = 1; j <= ncols; j++) {
+			          if ( scl[j] < 0.0 ) {
+			        	  x[j] = -x[j];
+			          }
+			      } // (j = 1; j <= ncols; j++)
 
-			  rw(1:nsetb) = x(1:nsetb)
+			      arr = new double[mrows-mval+1];
+			      for (j = 1; j <= mrows - mval; j++) {
+			    	  arr[j] = w[Math.min(mval+1,mrows)+j-1][ncols+1];
+			      }
+			      dscal ( mrows-mval, wt, arr, 1 );
+			      for (j = 1; j <= mrows - mval; j++) {
+			    	  w[Math.min(mval+1,mrows)+j-1][ncols+1] = arr[j];
+			      }
 
-			  x(1:ncols) = 0.0D+00
+			      arr = new double[mrows - Math.max(nsetb,mval) + 1];
+			      for (j = 1; j <= mrows - Math.max(nsetb,mval); j++) {
+			    	  arr[j] = w[Math.min((Math.max(nsetb,mval) + 1),mrows) + j - 1][ncols+1];
+			      }
+			      rnorm = dnrm2(mrows-max(nsetb,mval),arr,1);
+                  if (igopr == 1) {
+                	  do70 = true;
+                  }
+                  else if (igopr == 2) {
+                	  do100 = true;
+                  }
+                  else {
+                	  do180 = true;
+                  }
+			  } // if (do130)
+			  //
+			  //  FIND A VARIABLE TO BECOME NON-ACTIVE
+			  //
+			  if (do180) {
+		          do180 = false;
+		          do200 = true;
+			      //
+			      //  COMPUTE (NEGATIVE) OF GRADIENT VECTOR, W=(TRANSPOSE OF E)*(F-E*X).
+			      //
+		          for (j = 1; j <= ncols; j++) {
+		        	  ww[j] = 0.0;
+		          }
 
-			  do j = 1,nsetb
-			     jcol = abs(ibasis(j))
-			     x(jcol) = rw(j)*abs(scl(jcol))
-			  end do
+			      for (j = nsetb + 1; j <= ncols; j++) {
+			          jcol = Math.abs ( ibasis[j] );
+			          arr = new double[mrows-nsetb+1];
+			          arr2 = new double[mrows-nsetb+1];
+			          for (n = 1; n <= mrows - nsetb; n++) {
+			        	  arr[j] = w[Math.min(nsetb+1, mrows) + n - 1][j];
+			        	  arr2[j] = w[Math.min(nsetb+1,mrows) + n - 1][ncols+1];
+			          }
+			          ww[j] = ddot(mrows-nsetb,arr,1,arr2,1)*Math.abs(scl[jcol]);
+			      } // for (j = nsetb + 1; j <= ncols; j++)
 
-			  do j = 1,ncols
-			     if ( mod(ibb(j),2) == 0) x(j) = bu(j) - x(j)
-			  end do
-
-			  do j = 1,ncols
-			     jcol = ibasis(j)
-			     if ( jcol < 0) x(-jcol) = bl(-jcol) + x(-jcol)
-			  end do
-
-			  do j = 1,ncols
-			     if ( scl(j) < 0.0D+00 ) x(j) = -x(j)
-			  end do
-
-			  call dscal ( mrows-mval, wt, w(Math.min(mval+1,mrows),ncols+1), 1 )
-
-			  rnorm = dnrm2(mrows-max(nsetb,mval),w(Math.min((max(nsetb,mval) + 1),mrows),ncols+1),1)
-
-			  go to (70,100),igopr
-			!
-			!  FIND A VARIABLE TO BECOME NON-ACTIVE
-			!
-			  180 continue
-			!
-			!  COMPUTE (NEGATIVE) OF GRADIENT VECTOR, W=(TRANSPOSE OF E)*(F-E*X).
-			!
-			  ww(1:ncols) = 0.0D+00
-
-			  do j = nsetb + 1, ncols
-			     jcol = abs ( ibasis(j) )
-			     ww(j) = ddot(mrows-nsetb,w(Math.min(nsetb+1,mrows),j),1, &
-			             w(Math.min(nsetb+1,mrows),ncols+1),1)*abs(scl(jcol))
-			  end do
-
-			  if ( iprint > 0) then
-			      call dvout(ncols,ww,'('' Gradient values'')',-4)
-			      call ivout(ncols,ibasis,'('' internal variable order'')',-4)
-			      call ivout(ncols,ibb,'('' bound polarity'')',-4)
-			  end if
+			      if ( iprint > 0) {
+			          dvout(ncols,ww,"Gradient values",-4);
+			          ivout(ncols,ibasis,"internal variable order",-4);
+			          ivout(ncols,ibb,"bound polarity",-4);
+			      } // if (iprint > 0)
+			  } // if (do180)
 
 			  200 continue
 			!
@@ -3293,7 +3341,7 @@ public abstract class DQED {
 			!
 			  x(1:nsetb) = rw(1:nsetb)
 
-			  go to 120
+			  go to 60
 
 			  310 continue
 			!
@@ -3469,7 +3517,7 @@ public abstract class DQED {
 
 			  450 continue
 
-			  go to 120
+			  go to 60
 			!
 			!  INITIALIZE VARIABLES AND DATA VALUES
 			!
@@ -3579,7 +3627,7 @@ public abstract class DQED {
 			  ip = iopt(lp+1)
 			  jp = abs(ip)
 			  if ( ip == 99) then
-			      go to 590
+			      do460 = true;
 			  else if ( jp == 99) then
 			      lds = 1
 			      go to 580
@@ -3739,8 +3787,6 @@ public abstract class DQED {
 			      mode[0] = -nerr;
 				  return;
 			  end if
-
-			  590 continue
 
 			  do460 = true;
 	  } // loop while (true)
@@ -3953,17 +3999,21 @@ public abstract class DQED {
 	!                 UTILIZED. (THIS CAN BE USED ON MOST LINE PRINTERS).
 	*/
 
-	 /* //double a(lda,n)
+	  //double a(lda,n)
 	  int i;
 	  char icol[] = new char[4];
 	  int j;
 	  int k1;
 	  int k2;
-	  int m;
 	  int ndigit;
 	  boolean do10 = false;
 	  boolean do20 = false;
+	  boolean do40 = false;
+	  boolean do60 = false;
 	  boolean do80 = false;
+	  boolean do100 = false;
+	  boolean do120 = false;
+	  boolean do140 = false;
 	  icol[1] = 'c';
 	  icol[2] = 'o';
 	  icol[3] = 'l';
@@ -3971,6 +4021,11 @@ public abstract class DQED {
 	  int sLen;
 	  int padLen;
 	  int p;
+	  DecimalFormat dfi = new DecimalFormat("###0");
+	  DecimalFormat df1 = new DecimalFormat("###0.00000E000");
+	  DecimalFormat df2 = new DecimalFormat("###0.0000000000000E000");
+	  DecimalFormat df3 = new DecimalFormat("###0.0000000000000000000E000");
+	  DecimalFormat df4 = new DecimalFormat("###0.000000000000000000000000000E000");
 
 	  Preferences.debug(ifmt + "\n");
 
@@ -3986,13 +4041,14 @@ public abstract class DQED {
 		  do80 = true;
 	  }
 	  else {
-	      ndigit = -idigit
+	      ndigit = -idigit;
 	      if ( ndigit > 6) {
 	    	  do20 = true;
 	      }
 	      else {
 	    	  do10 = true;
 	      }
+	  }
 
 	  if (do10) {
 	      for (k1=1; k1 <= n; k1 += 4) {
@@ -4000,117 +4056,261 @@ public abstract class DQED {
 	          Preferences.debug("          ");
 	          for (i = k1; i <= k2; i++) {
 	        	  Preferences.debug("     col");
-	        	  iStr = String.valueOf(i);
-	        	  sLen = iStr.length();
-	        	  padLen = 4 - sLen;
-	        	  for (p = 1; p <= padLen; p++) {
-	        		  Preferences.debug(" ");
-	        	  }
-	        	  Preferences.debug(iStr + "  ");
-	        	  if (((k2 - k1) % 8) == 7) {
+	        	  Preferences.debug(dfi.format(i) + "  ");
+	        	  if  ((i == k2) || (((i - k1) % 8) == 7)) {
 	        		  Preferences.debug("\n");
 	        	  }
+	        	  if ((i < k2) && (((i - k1) % 8) == 7)) {
+	        		  Preferences.debug("          ");  
+	        	  }
 	          }
-	          write(*,1000) (icol,i,i=k1,k2)
-	          do i=1,m
-	              write(*,1004) i,(a(i,j),j=k1,k2)
-	          end do
+	          //write(*,1000) (icol,i,i=k1,k2)
+	          for (i=1; i <= m; i++) {
+	              Preferences.debug(" row");
+	        	  Preferences.debug(dfi.format(i) + "  ");
+	        	  for (j = k1; j <= k2; j++) {
+	        		  Preferences.debug(df1.format(a[i][j]));
+	        	  }
+	        	  Preferences.debug("\n");
+	              //write(*,1004) i,(a(i,j),j=k1,k2)
+	          } // for (i = 1; i <= m; i++)
 	      } // for (k1=1; k1 <= n; k1 += 4)
 
 	  return;
 	  } // if (do10)
 
-	   20 continue
-	  if ( ndigit > 14) go to 40
+	  if (do20) {
+		  if ( ndigit > 14)  {
+			  do40 = true;
+		  }
+		  else {
+			  for (k1=1; k1 <= n; k1 += 2) {
+			    k2 = Math.min ( n, k1+1 );
+			    Preferences.debug("          ");
+			    for (i = k1; i <= k2; i++) {
+		        	  Preferences.debug("         col");
+		        	  Preferences.debug(dfi.format(i) + "      ");
+		        	  if  ((i == k2) || (((i - k1) % 5) == 4)) {
+		        		  Preferences.debug("\n");
+		        	  }
+		        	  if ((i < k2) && (((i - k1) % 5) == 4)) {
+		        		  Preferences.debug("          ");  
+		        	  }
+		          }
+			    //write(*,1001) (icol,i,i=k1,k2)
+			    for (i = 1; i <= m; i++) {
+			    	Preferences.debug(" row");
+		        	Preferences.debug(dfi.format(i) + "  ");
+		        	for (j = k1; j <= k2; j++) {
+		        		Preferences.debug(df2.format(a[i][j]));
+		        	}
+		        	Preferences.debug("\n");
+			      //write(*,1005) i,(a(i,j),j=k1,k2)
+			    } // for (i = 1; i <= m; i++)
+			  } // for (k1=1; k1 <= n; k1 += 2)
+	
+		  return;
+		  } // else 
+	  } // if (do20)
 
-	  do k1=1,n,2
-	    k2 = min ( n, k1+1 )
-	    write(*,1001) (icol,i,i=k1,k2)
-	    do i=1,m
-	      write(*,1005) i,(a(i,j),j=k1,k2)
-	    end do
-	  end do
+	  if (do40) {
+		  if ( ndigit > 20) {
+			  do60 = true;
+		  }
+		  else {
+			  for (k1=1; k1 <= n; k1 += 2) {
+			    k2 = Math.min(n,k1+1);
+			    Preferences.debug("          ");
+			    for (i = k1; i <= k2; i++) {
+		        	  Preferences.debug("            col");
+		        	  Preferences.debug(dfi.format(i) + "         ");
+		        	  if  ((i == k2) || (((i - k1) % 4) == 3)) {
+		        		  Preferences.debug("\n");
+		        	  }
+		        	  if ((i < k2) && (((i - k1) % 4) == 3)) {
+		        		  Preferences.debug("          ");  
+		        	  }
+		          }
+			    //write(*,1002) (icol,i,i=k1,k2)
+			    for (i = 1; i <= m; i++) {
+			    	Preferences.debug(" row");
+		        	Preferences.debug(dfi.format(i) + "  ");
+		        	for (j = k1; j <= k2; j++) {
+		        		Preferences.debug(df3.format(a[i][j]));
+		        	}
+		        	Preferences.debug("\n");
+			      //write(*,1006) i,(a(i,j),j=k1,k2)
+			    } // for (i = 1; i <= m; i++)
+			  } // for (k1=1; k1 <= n; k1 += 2)
+		  return;
+		  } // else 
+	  } // if (do40)
 
-	  return
+	  if (do60) {
+	      for (k1 = 1; k1 <= n; k1++) {
+	          k2 = k1;
+	          Preferences.debug("          ");
+			  for (i = k1; i <= k2; i++) {
+		          Preferences.debug("                col");
+		          Preferences.debug(dfi.format(i) + "             ");
+		          if  ((i == k2) || (((i - k1) % 3) == 2)) {
+		              Preferences.debug("\n");
+		          }
+		          if ((i < k2) && (((i - k1) % 3) == 2)) {
+		              Preferences.debug("          ");  
+		          }
+			  }
+	          //write(*,1003) (icol,i,i=k1,k2)
+	          for (i = 1; i <= m; i++) {
+	        	  Preferences.debug(" row");
+	        	  Preferences.debug(dfi.format(i) + "  ");
+	        	  for (j = k1; j <= k2; j++) {
+	        		  Preferences.debug(df4.format(a[i][j]));
+	        	  }
+	        	  Preferences.debug("\n");
+	              //write(*,1007) i,(a(i,j),j=k1,k2)
+	          } // for (i = 1; i <= m; i++)
+	      } // for (k1 = 1; k1 <= n; k1++) 
+	  return;
+	  } // if (do60)
 
-	   40 continue
-	  if ( ndigit > 20) go to 60
+	  if (do80) {
+		  if ( ndigit > 6) {
+			  do100 = true;
+		  }
+		  else {
+		      for (k1=1; k1 <= n; k1 +=8) {
+		          k2 = Math.min(n,k1+7);
+		          Preferences.debug("          ");
+		          for (i = k1; i <= k2; i++) {
+		        	  Preferences.debug("     col");
+		        	  Preferences.debug(dfi.format(i) + "  ");
+		        	  if  ((i == k2) || (((i - k1) % 8) == 7)) {
+		        		  Preferences.debug("\n");
+		        	  }
+		        	  if ((i < k2) && (((i - k1) % 8) == 7)) {
+		        		  Preferences.debug("          ");  
+		        	  }
+		          }
+		          //write(*,1000) (icol,i,i=k1,k2)
+		          for (i=1; i <= m; i++) {
+		        	  Preferences.debug(" row");
+		        	  Preferences.debug(dfi.format(i) + "  ");
+		        	  for (j = k1; j <= k2; j++) {
+		        		  Preferences.debug(df1.format(a[i][j]));
+		        	  }
+		        	  Preferences.debug("\n");
+		              //write(*,1004) i,(a(i,j),j=k1,k2)
+		          } // for (i = 1; i <= m; i++)
+		      } // for (k1 = 1; k1 <= n; k1 += 8)
+	          return;
+		  } // else 
+	  } // if (do80)
 
-	  do k1=1,n,2
-	    k2=min(n,k1+1)
-	    write(*,1002) (icol,i,i=k1,k2)
-	    do i=1,m
-	      write(*,1006) i,(a(i,j),j=k1,k2)
-	    end do
-	  end do
-	  return
+	  if (do100) {
+	      if ( ndigit > 14) {
+	    	  do120 = true;
+	      }
+	      else {
+	          for (k1=1; k1 <= n; k1 += 5) {
+	              k2 = Math.min(n,k1+4);
+	              Preferences.debug("          ");
+			      for (i = k1; i <= k2; i++) {
+		        	  Preferences.debug("         col");
+		        	  Preferences.debug(dfi.format(i) + "      ");
+		        	  if  ((i == k2) || (((i - k1) % 5) == 4)) {
+		        		  Preferences.debug("\n");
+		        	  }
+		        	  if ((i < k2) && (((i - k1) % 5) == 4)) {
+		        		  Preferences.debug("          ");  
+		        	  }
+		          }
+	              //write(*,1001) (icol,i,i=k1,k2)
+	              for (i = 1; i <= m; i++) {
+	            	  Preferences.debug(" row");
+			          Preferences.debug(dfi.format(i) + "  ");
+			          for (j = k1; j <= k2; j++) {
+			        	  Preferences.debug(df2.format(a[i][j]));
+			          }
+			          Preferences.debug("\n");
+	                  //write(*,1005) i,(a(i,j),j=k1,k2)
+	              } // for (i = 1; i <= m; i++)
+	          } // for (k1 = 1; k1 <= n; k1 += 5)
 
-	   60 continue
-	  do 70 k1=1,n
-	  k2 = k1
-	  write(*,1003) (icol,i,i=k1,k2)
-	  do 70 i=1,m
-	  write(*,1007) i,(a(i,j),j=k1,k2)
-	   70 continue
-	  return
+	          return;
+	      } // else
+	  } // if (do100)
 
-	   80 continue
-	  if ( ndigit > 6) go to 100
+	  if (do120) {
+	      if ( ndigit > 20) {
+		      do140 = true;
+	      }
+	      else {
+	          for (k1 = 1; k1 <= n; k1 += 4) {
+	              k2 = Math.min(n,k1+3);
+	              Preferences.debug("          ");
+				  for (i = k1; i <= k2; i++) {
+			          Preferences.debug("            col");
+			          Preferences.debug(dfi.format(i) + "         ");
+			          if  ((i == k2) || (((i - k1) % 4) == 3)) {
+			              Preferences.debug("\n");
+			          }
+			          if ((i < k2) && (((i - k1) % 4) == 3)) {
+			              Preferences.debug("          ");  
+			          }
+			      }
+	              //write(*,1002) (icol,i,i=k1,k2)
+	              for (i = 1; i <= m; i++) {
+	            	  Preferences.debug(" row");
+			          Preferences.debug(dfi.format(i) + "  ");
+			          for (j = k1; j <= k2; j++) {
+			        	  Preferences.debug(df3.format(a[i][j]));
+			          }
+			          Preferences.debug("\n");
+	                  //write(*,1006) i,(a(i,j),j=k1,k2)
+	              } // for (i = 1; i <= m; i++)
+	          } // for (k1 = 1; k1 <= n; k1 += 4)
+	          return;
+	      } // else 
+	  } // if (do120)
 
-	  do k1=1,n,8
-	    k2 = min(n,k1+7)
-	    write(*,1000) (icol,i,i=k1,k2)
-	    do i=1,m
-	      write(*,1004) i,(a(i,j),j=k1,k2)
-	    end do
-	  end do
-	  return
+	  if (do140) {
 
-	  100 continue
-	  if ( ndigit > 14) go to 120
+		  for (k1=1; k1 <= n; k1 += 3) {
+		    k2 = Math.min(n,k1+2);
+		    Preferences.debug("          ");
+			for (i = k1; i <= k2; i++) {
+		        Preferences.debug("                col");
+		        Preferences.debug(dfi.format(i) + "             ");
+		        if  ((i == k2) || (((i - k1) % 3) == 2)) {
+		            Preferences.debug("\n");
+		        }
+		        if ((i < k2) && (((i - k1) % 3) == 2)) {
+		            Preferences.debug("          ");  
+		        }
+			}
+		    //write(*,1003) (icol,i,i=k1,k2)
+		    for (i=1; i <= m; i++) {
+		    	Preferences.debug(" row");
+	        	Preferences.debug(dfi.format(i) + "  ");
+	        	for (j = k1; j <= k2; j++) {
+	        		Preferences.debug(df4.format(a[i][j]));
+	        	}
+	        	Preferences.debug("\n");
+		        //write(*,1007) i,(a(i,j),j=k1,k2)
+		    } // for (i = 1; i <= m; i++)
+		  } // for (k1=1; k1 <= n; k1 += 3)
 
-	  do k1=1,n,5
-	    k2 = min(n,k1+4)
-	    write(*,1001) (icol,i,i=k1,k2)
-	    do i=1,m
-	      write(*,1005) i,(a(i,j),j=k1,k2)
-	    end do
-	  end do
-
-	  return
-
-	  120 continue
-	  if ( ndigit > 20) go to 140
-
-	  do k1=1,n,4
-	    k2 = min(n,k1+3)
-	    write(*,1002) (icol,i,i=k1,k2)
-	    do i=1,m
-	      write(*,1006) i,(a(i,j),j=k1,k2)
-	    end do
-	  end do
-
-	  return
-
-	  140 continue
-
-	  do k1=1,n,3
-	    k2 = min(n,k1+2)
-	    write(*,1003) (icol,i,i=k1,k2)
-	    do i=1,m
-	      write(*,1007) i,(a(i,j),j=k1,k2)
-	    end do
-	  end do
-
-	  return
-	 1000 format(10x,8(5x,3a1,i4,2x))
-	 1001 format(10x,5(9x,3a1,i4,6x))
-	 1002 format(10x,4(12x,3a1,i4,9x))
-	 1003 format(10x,3(16x,3a1,i4,13x))
-	 1004 format(1x,'row',i4,2x,1p8d14.5)
-	 1005 format(1x,'row',i4,2x,1p5d22.13)
-	 1006 format(1x,'row',i4,2x,1p4d28.19)
-	 1007 format(1x,'row',i4,2x,1p3d36.27) */
+	      return;
+	  } // if (do140)
+	 //1000 format(10x,8(5x,3a1,i4,2x))
+	 //1001 format(10x,5(9x,3a1,i4,6x))
+	 //1002 format(10x,4(12x,3a1,i4,9x))
+	 //1003 format(10x,3(16x,3a1,i4,13x))
+	 //1004 format(1x,'row',i4,2x,1p8d14.5)
+	 //1005 format(1x,'row',i4,2x,1p5d22.13)
+	 //1006 format(1x,'row',i4,2x,1p4d28.19)
+	 //1007 format(1x,'row',i4,2x,1p3d36.27) 
     } // dmout
 	
 	private double dnrm2 ( int n, double x[], int incx ) {
@@ -4428,6 +4628,180 @@ public abstract class DQED {
 	  return;
 	} // dscal
 	
+	private void dvout (int n, double dx[], String ifmt, int idigit ) {
+
+	/*****************************************************************************80
+	!
+	!! DVOUT prints double precision vectors.
+	!
+	!  Discussion:
+	!
+	!    This routine tries to print out, neatly, a double precision array.
+	!    The heading in the format statement IFMT is printed first.
+	!
+	!  Example:
+	!
+	!    PRINT AN ARRAY CALLED (COSTS OF PURCHASES) OF LENGTH 100 SHOWING
+	!    6 DECIMAL DIGITS PER NUMBER. THE USER IS RUNNING ON A TIME-SHARING
+	!    SYSTEM WITH A 72 COLUMN OUTPUT DEVICE.
+	!
+	!      double precision COSTS(100)
+	!      N = 100
+	!      IDIGIT = -6
+	!      CALL DVOUT(N,COSTS,'(''1COSTS OF PURCHASES'')',IDIGIT)
+	!
+	!  Author:
+	!
+	!    John Wisniewski, Richard Hanson,
+	!    Sandia National Laboratory.
+	!
+	!  Parameters:
+	!
+	!    Input, integer N, the dimension of the vector.
+	!
+	!    Input, double DX(N), the vector to be printed.
+	!
+	!    Input, String IFMT, a heading or title.
+	!
+	!  IDIGIT  PRINT AT LEAST IABS(IDIGIT) DECIMAL DIGITS PER NUMBER.
+	!          THE SUBPROGRAM WILL CHOOSE THAT integer 6,14,20 OR 28
+	!          WHICH WILL PRINT AT LEAST IABS(IDIGIT) NUMBER OF
+	!          PLACES.  IF IDIGIT.LT.0, 72 PRINTING COLUMNS ARE UTILIZED
+	!          TO WRITE EACH LINE OF OUTPUT OF THE ARRAY DX(*). (THIS
+	!          CAN BE USED ON MOST TIME-SHARING TERMINALS). IF
+	!          IDIGIT.GE.0, 133 PRINTING COLUMNS ARE UTILIZED. (THIS CAN
+	!          BE USED ON MOST LINE PRINTERS).
+	*/
+
+	  int i;
+	  int k1;
+	  int k2;
+	  int ndigit;
+	  DecimalFormat dfi = new DecimalFormat("###0");
+	  DecimalFormat df1 = new DecimalFormat("###0.00000E000");
+	  DecimalFormat df2 = new DecimalFormat("###0.0000000000000E000");
+	  DecimalFormat df3 = new DecimalFormat("###0.0000000000000000000E000");
+	  DecimalFormat df4 = new DecimalFormat("###0.000000000000000000000000000E000");
+
+	  Preferences.debug(ifmt + "\n");
+
+	  if ( n <= 0 ) {
+	    return;
+	  }
+
+	  ndigit = idigit;
+
+	  if ( idigit == 0) {
+		  ndigit = 6;
+	  }
+
+	  if ( idigit < 0 ) {
+
+	    ndigit = -idigit;
+
+	    if ( ndigit <= 6 ) {
+
+	      for (k1=1; k1 <= n; k1 += 4) {
+	        k2 = Math.min(n,k1+3);
+	        Preferences.debug(dfi.format(k1) + " - " + dfi.format(k2) + " ");
+	        for (i = k1; i <= k2; i++) {
+	            Preferences.debug(df1.format(dx[i]));	
+	        }
+	        //write(*,1000) k1,k2,(dx(i),i=k1,k2)
+	      } // for (k1=1; k1 <= n; k1 += 4)
+	    } // if (ndigit <= 6)
+	    else if ( ndigit <= 14 ) {
+
+	      for (k1=1; k1 <= n; k1 += 2) {
+	        k2 = Math.min(n,k1+1);
+	        Preferences.debug(dfi.format(k1) + " - " + dfi.format(k2) + " ");
+	        for (i = k1; i <= k2; i++) {
+	            Preferences.debug(df2.format(dx[i]));	
+	        }
+	        //write(*,1001) k1,k2,(dx(i),i=k1,k2)
+	      } // for (k1 = 1; k1 <= n; k1 += 2)
+	    } // else if (ndigit <= 14)
+	    else if ( ndigit <= 20 ) {
+
+	      for (k1=1; k1 <= n; k1 += 2) {
+	        k2=Math.min(n,k1+1);
+	        Preferences.debug(dfi.format(k1) + " - " + dfi.format(k2) + " ");
+	        for (i = k1; i <= k2; i++) {
+	            Preferences.debug(df3.format(dx[i]));	
+	        }
+	        //write(*,1002) k1,k2,(dx(i),i=k1,k2)
+	      } // for (k1=1; k1 <= n; k1 += 2) 
+	    } // else if (ndigit <= 20)
+	    else {
+
+	      for (k1=1; k1 <= n; k1++) {
+	        k2 = k1;
+	        Preferences.debug(dfi.format(k1) + " - " + dfi.format(k2) + " ");
+	        for (i = k1; i <= k2; i++) {
+	            Preferences.debug(df4.format(dx[i]));	
+	        }
+	        //write(*,1003) k1,k2,(dx(i),i=k1,k2)
+	      } // for (k1=1; k1 <= n; k1++)
+
+	    } // else 
+	  } // if (idigit < 0)
+	  else {
+
+	    if ( ndigit <= 6 ) {
+
+	      for (k1=1; k1 <= n; k1 += 8) {
+	        k2 = Math.min(n,k1+7);
+	        Preferences.debug(dfi.format(k1) + " - " + dfi.format(k2) + " ");
+	        for (i = k1; i <= k2; i++) {
+	            Preferences.debug(df1.format(dx[i]));	
+	        }
+	        //write(*,1000) k1,k2,(dx(i),i=k1,k2)
+	      } // for (k1=1; k1 <= n; k1 += 8)
+	    } // if (ndigit <= 6)
+	    else if ( ndigit <= 14 ) {
+
+	      for (k1=1; k1 <= n; k1 += 5) {
+	        k2 = Math.min(n,k1+4);
+	        Preferences.debug(dfi.format(k1) + " - " + dfi.format(k2) + " ");
+	        for (i = k1; i <= k2; i++) {
+	            Preferences.debug(df2.format(dx[i]));	
+	        }
+	        //write(*,1001) k1,k2,(dx(i),i=k1,k2)
+	      } // for (k1=1; k1 <= n; k1 += 5)
+	    } // else if (ndigit <= 14)
+	    else if ( ndigit <= 20 ) {
+
+	      for (k1=1; k1 <= n; k1 += 4) {
+	        k2 = Math.min(n,k1+3);
+	        Preferences.debug(dfi.format(k1) + " - " + dfi.format(k2) + " ");
+	        for (i = k1; i <= k2; i++) {
+	            Preferences.debug(df3.format(dx[i]));	
+	        }
+	        //write(*,1002) k1,k2,(dx(i),i=k1,k2)
+	      } // for (k1=1; k1 <= n; k1 += 4)
+	    } // else if ( ndigit <= 20 )
+	    else {
+
+	      for (k1=1; k1 <= n; k1 += 3) {
+	        k2 = Math.min(n,k1+2);
+	        Preferences.debug(dfi.format(k1) + " - " + dfi.format(k2) + " ");
+	        for (i = k1; i <= k2; i++) {
+	            Preferences.debug(df4.format(dx[i]));	
+	        }
+	        //write(*,1003) k1,k2,(dx(i),i=k1,k2)
+	      } // for (k1=1; k1 <= n; k1 += 3)
+
+	    }
+
+	  } // else 
+
+	  return;
+	 //1000 format(1x,i4,' - ',i4,1x,1p8e14.5)
+	 //1001 format(1x,i4,' - ',i4,1x,1p5e22.13)
+	 //1002 format(1x,i4,' - ',i4,1x,1p4e28.19)
+	 //1003 format(1x,i4,' - ',i4,1x,1p3e36.27)
+	} // dvout
+	
 	private int idamax ( int n, double x[], int incx ) {
 
 	/*****************************************************************************80
@@ -4511,6 +4885,170 @@ public abstract class DQED {
 
 	  return index;
 	} // idamax
+	
+	private void ivout (int n, int ix[], String title, int idigit ) {
+
+	/*****************************************************************************80
+	!
+	!! IVOUT prints integer vectors.
+	!
+	!  Modified:
+	!
+	!    28 July 2006
+	!
+	!  Author:
+	!
+	!    John Wisniewski, Richard Hanson,
+	!    Sandia National Laboratory.
+	!
+	!  Parameters:
+	!
+	!    Input, integer N, the size of the vector IX.
+	!
+	!    Input, integer IX(N), the array to be printed.
+	!
+	!    Input, character ( len = * ) TITLE, a title to be printed.
+	!
+	!    Input, integer IDIGIT, indicates the number of digits to print.
+	!    print up to iabs(idigit) decimal digits per number.
+	!    the subprogram will choose that integer 4,6,10 or 14
+	!    which will print at least iabs(idigit) number of
+	!    places.  if idigit.lt.0, 72 printing columns are utilized
+	!    to write each line of output of the array ix(*). (this
+	!    can be used on most time-sharing terminals). if
+	!    idigit.ge.0, 133 printing columns are utilized. (this can
+	!    be used on most line printers).
+	*/
+
+	  int k1;
+	  int k2;
+	  int ndigit;
+	  DecimalFormat df4 = new DecimalFormat("###0");
+	  DecimalFormat df5 = new DecimalFormat("####0");
+	  DecimalFormat df7 = new DecimalFormat("######0");
+	  DecimalFormat df11 = new DecimalFormat("##########0");
+	  DecimalFormat df15 = new DecimalFormat("##############0");
+	  int i;
+
+	  Preferences.debug(title.trim() + "\n");
+
+	  if ( n <= 0 ) {
+	    return;
+	  }
+
+	  ndigit = idigit;
+
+	  if ( idigit == 0 ) {
+	    ndigit = 4;
+	  }
+
+	  if ( idigit < 0 ) {
+
+	    ndigit = -idigit;
+
+	    if ( ndigit <= 4 ){
+	 
+	      for (k1 = 1; k1 <= n; k1 += 10) {
+	        k2 = Math.min ( n, k1+9 );
+	        Preferences.debug(" " + df4.format(k1) + " - " + df4.format(k2));
+	        for (i = k1; i <= k2; i++) {
+	        	Preferences.debug(" " + df5.format(ix[i]));
+	        }
+	        //write(*,1000) k1, k2, ix(k1:k2)
+	      } // for (k1 = 1; k1 <= n; k1 += 10)
+	    } // if (ndigit <= 4)
+	    else if ( ndigit <= 6) {
+
+	      for (k1=1; k1 <= n; k1 += 7) {
+	        k2 = Math.min(n,k1+6);
+	        Preferences.debug(" " + df4.format(k1) + " - " + df4.format(k2));
+	        for (i = k1; i <= k2; i++) {
+	        	Preferences.debug(" " + df7.format(ix[i]));
+	        }
+	        //write(*,1001) k1,k2, ix(k1:k2)
+	      } // for (k1=1; k1 <= n; k1 += 7)
+	    } // else if (ndigit <= 6)
+	    else if ( ndigit <= 10) {
+
+	      for (k1=1; k1 <= n; k1 += 5) {
+	        k2=Math.min(n,k1+4);
+	        Preferences.debug(" " + df4.format(k1) + " - " + df4.format(k2));
+	        for (i = k1; i <= k2; i++) {
+	        	Preferences.debug(" " + df11.format(ix[i]));
+	        }
+	        //write(*,1002) k1,k2, ix(k1:k2)
+	      } // for (k1=1; k1 <= n; k1 += 5)
+	    } // else if (ndigit <= 10)
+	    else {
+
+	      for (k1=1; k1 <= n; k1 += 3) {
+	        k2 = Math.min(n,k1+2);
+	        Preferences.debug(" " + df4.format(k1) + " - " + df4.format(k2));
+	        for (i = k1; i <= k2; i++) {
+	        	Preferences.debug(" " + df15.format(ix[i]));
+	        }
+	        //write(*,1003) k1,k2, ix(k1:k2)
+	      } // for (k1=1; k1 <= n; k1 += 3)
+
+	    } // else
+	  } // if (idigit < 0)
+	  else {
+
+	    if ( ndigit <= 4 ) {
+	 
+	      for (k1=1; k1 <= n; k1 += 20) {
+	        k2 = Math.min(n,k1+19);
+	        Preferences.debug(" " + df4.format(k1) + " - " + df4.format(k2));
+	        for (i = k1; i <= k2; i++) {
+	        	Preferences.debug(" " + df5.format(ix[i]));
+	        }
+	        //write(*,1000) k1,k2, ix(k1:k2)
+	      } // for (k1=1; k1 <= n; k1 += 20)
+	    } // else if (ndigit <= 4)
+	    else if ( ndigit <= 6) {
+
+	      for (k1=1; k1 <= n; k1 += 15) {
+	        k2 = Math.min(n,k1+14);
+	        Preferences.debug(" " + df4.format(k1) + " - " + df4.format(k2));
+	        for (i = k1; i <= k2; i++) {
+	        	Preferences.debug(" " + df7.format(ix[i]));
+	        }
+	        //write(*,1001) k1,k2, ix(k1:k2)
+	      } // for (k1=1; k1 <= n; k1 += 15)
+	    } // else if ( ndigit <= 6)
+	    else if ( ndigit <= 10) {
+
+	      for (k1=1; k1 <= n; k1 += 10) {
+	        k2 = Math.min(n,k1+9);
+	        Preferences.debug(" " + df4.format(k1) + " - " + df4.format(k2));
+	        for (i = k1; i <= k2; i++) {
+	        	Preferences.debug(" " + df11.format(ix[i]));
+	        }
+	        //write(*,1002) k1,k2, ix(k1:k2)
+	      } // for (k1=1; k1 <= n; k1 += 10)
+	    } // else if (ndigit <= 10)
+	    else {
+
+	      for (k1=1; k1 <= n; k1 += 7) {
+	        k2 = Math.min(n,k1+6);
+	        Preferences.debug(" " + df4.format(k1) + " - " + df4.format(k2));
+	        for (i = k1; i <= k2; i++) {
+	        	Preferences.debug(" " + df15.format(ix[i]));
+	        }
+	        //write(*,1003) k1,k2, ix(k1:k2)
+	      } // for (k1=1; k1 <= n; k1 += 7)
+
+	    } // else
+
+	  } // else
+
+	  return;
+
+	 //1000 format(1x,i4,' - ',i4,20(1x,i5))
+	 //1001 format(1x,i4,' - ',i4,15(1x,i7))
+	 //1002 format(1x,i4,' - ',i4,10(1x,i11))
+	 //1003 format(1x,i4,' - ',i4,7(1x,i15))
+	} // ivout
     
     private void xerrwv (String xmess, int nerr, int level, int ni, int i1, int i2,
     		             int nr, double r1, double r2 ) {
