@@ -1347,6 +1347,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         else if ( m_iDrawType == LEVELSET && m_kCurrentVOI != null )
         {
             m_kCurrentVOI.trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
+            m_iDrawType = NONE;
         }
         else if ( m_iDrawType == RETRACE && m_kCurrentVOI != null )
         {
@@ -2712,14 +2713,17 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
         gon = scalePolygon(kVOI);
 
-        if (kVOI.isActive()) {
-            if (kVOI.isClosed()) {
+        if ( !m_bLeftMousePressed ) 
+        {
+            if (kVOI.isActive()) {
+                if (kVOI.isClosed()) {
+                    drawGeometricCenter(kVOI, g);
+                } else {
+                    drawLength( g, kVOI, resols, unitsOfMeasure );
+                }
+            } else if ( kVOI.getDoGeometricCenterLabel() && kVOI.isClosed()) {
                 drawGeometricCenter(kVOI, g);
-            } else {
-                drawLength( g, kVOI, resols, unitsOfMeasure );
             }
-        } else if ( kVOI.getDoGeometricCenterLabel() && kVOI.isClosed()) {
-            drawGeometricCenter(kVOI, g);
         }
 
         int thickness = kVOI.getGroup() != null ? kVOI.getGroup().getThickness() : 1;
@@ -4332,8 +4336,12 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
             // Return if trying to add the same point.
             Vector3f kScreen = new Vector3f( x1, y1, m_kDrawingContext.getSlice() );
-            Vector3f kCurrent = m_kDrawingContext.screenToFileVOI( kScreen );
-
+            Vector3f kCurrent = new Vector3f();
+            
+            if ( m_kDrawingContext.screenToFileVOI( kScreen, kCurrent ) )
+            {
+                return;
+            }
             if (kVOI.contains(kCurrent)) {
                 return;
             }

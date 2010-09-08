@@ -2199,6 +2199,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
             upSliderField = new JTextField(4);
             upSliderField.setText(String.valueOf((float) (upSlider.getValue() / 100.0f)));
             upSliderField.addKeyListener(this);
+            upSliderField.addFocusListener(this);
 
             if (disableSliders) {
                 upSliderField.setEnabled(false);
@@ -2300,6 +2301,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
             lowSliderField = new JTextField(4);
             lowSliderField.setText(String.valueOf((float) (lowSlider.getValue() / 100.0f)));
             lowSliderField.addKeyListener(this);
+            lowSliderField.addFocusListener(this);
 
             if (disableSliders) {
                 lowSliderField.setEnabled(false);
@@ -3374,8 +3376,44 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
         return staticPanel;
     }
     
-    
-    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.dialogs.JDialogBase#focusLost(java.awt.event.FocusEvent)
+     */
+    public void focusLost(FocusEvent e)
+    {
+        super.focusLost(e);
+
+        if ((upSliderField != null) && (e.getSource() == upSliderField)) {
+
+            try {
+                int newVal = (int) Float.parseFloat(upSliderField.getText()) * 100;
+
+                if ((newVal > upSlider.getMaximum()) || (newVal < upSlider.getMinimum())) {
+                    upSliderField.setText(String.valueOf(upSlider.getValue() / 100.0f));
+                } else {
+                    upSetFromField = true;
+                    upSlider.setValue(newVal);
+                }
+            } catch (Exception ex) {
+                upSliderField.setText(String.valueOf(upSlider.getValue() / 100.0f));
+            }
+        } 
+        if ((lowSliderField != null) && (e.getSource() == lowSliderField)) {
+
+            try {
+                int newVal = (int) Float.parseFloat(lowSliderField.getText()) * 100;
+
+                if ((newVal > lowSlider.getMaximum()) || (newVal < lowSlider.getMinimum())) {
+                    lowSliderField.setText(String.valueOf(lowSlider.getValue() / 100.0f));
+                } else {
+                    lowSetFromField = true;
+                    lowSlider.setValue(newVal);
+                }
+            } catch (Exception ex) {
+                lowSliderField.setText(String.valueOf(lowSlider.getValue() / 100.0f));
+            }
+        } 
+    }
     
     
  

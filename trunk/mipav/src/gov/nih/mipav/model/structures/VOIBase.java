@@ -250,7 +250,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         this.m_kVolumeVOI = null;     
 
         this.numPixels = kBase.numPixels;
-        /*
+        
         if ( kBase.m_kMask != null )
         {
             this.m_kMask = (BitSet)kBase.m_kMask.clone();
@@ -260,8 +260,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
             this.m_kMaskPositions.add( new Vector3f( kBase.m_kMaskPositions.elementAt(i)));
         }
         this.m_kPositionSum.Copy( kBase.m_kPositionSum );
-        */
-        this.m_bUpdateMask = true;
+        
+        //this.m_bUpdateMask = true;
         
 
         for ( int i = 0; i < kBase.size(); i++ )
@@ -608,6 +608,10 @@ public abstract class VOIBase extends Vector<Vector3f> {
                 return true;
             }
         }
+        
+        return containsZ((int)iX,(int)iY);
+        
+        /*
         getMask();
         int xDim = (int)kBounds[1].X;
         int yDim = (int)kBounds[1].Y;
@@ -620,6 +624,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             }
         }
         return false;
+        */
     }
 
 
@@ -640,12 +645,34 @@ public abstract class VOIBase extends Vector<Vector3f> {
         {
             return false;
         }
+        
+
+        if ( m_iPlane == NOT_A_PLANE )
+        {
+            m_bUpdatePlane = true;
+            getPlane();
+        }
+        if ( m_iPlane == ZPLANE )
+        {
+            return ( (iZ == (int)elementAt(0).Z) && containsZ((int)iX,(int)iY) );
+        }
+        else if ( m_iPlane == XPLANE )
+        {
+            return ( (iX == (int)elementAt(0).X) && containsX((int)iY,(int)iZ) );                               
+        }
+        else
+        {
+            return ( (iY == (int)elementAt(0).Y) && containsY((int)iZ,(int)iZ) );                   
+        }
+               
+        /*
         getMask();
         int xDim = (int)kBounds[1].X;
         int yDim = (int)kBounds[1].Y;
                 
         int index = (int)(iZ * xDim * yDim + iY * xDim + iX);
         return m_kMask.get(index );
+        */
     }
 
     /**
@@ -855,7 +882,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             return;
         }
         getImageBoundingBox();
-        long time = System.currentTimeMillis();
+        //long time = System.currentTimeMillis();
         if ( m_iPlane == NOT_A_PLANE )
         {
             m_bUpdatePlane = true;
@@ -931,7 +958,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             
         }
 
-        System.out.println("mask " + getGroup().getName() + getLabel() + " " +(System.currentTimeMillis() - time));
+        //System.out.println("mask " + getGroup().getName() + getLabel() + " " +(System.currentTimeMillis() - time));
         m_bUpdateMask = false;
     }
     
@@ -1985,6 +2012,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
      */
     public void update()
     {
+        //System.err.println( "update mask set to true " + getGroup().getName() + getLabel() );
         m_bUpdateMask = true;
         m_bUpdateBounds = true;
         m_bUpdatePlane = true;
@@ -2016,6 +2044,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
      */
     public void update(Vector3f kTranslate)
     {
+        //System.err.println( "update mask set to true " + getGroup().getName() + getLabel() );
         m_bUpdateMask = true;
         gcPt.Add(kTranslate);
         m_akImageMinMax[0].Add(kTranslate);
