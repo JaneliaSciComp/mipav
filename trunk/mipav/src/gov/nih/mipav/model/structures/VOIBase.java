@@ -662,7 +662,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         }
         else
         {
-            return ( (iY == (int)elementAt(0).Y) && containsY((int)iZ,(int)iZ) );                   
+            return ( (iY == (int)elementAt(0).Y) && containsY((int)iX,(int)iZ) );                   
         }
                
         /*
