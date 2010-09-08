@@ -329,7 +329,7 @@ public class VOI extends ModelSerialCloneable {
         this.zBounds[1] = kVOI.zBounds[1];
         this.extension = new String( kVOI.extension );
         
-        this.update();
+        //this.update();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

@@ -3592,6 +3592,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         } else {
             paintBitmap.or(seedPaintBitmap);
         }
+        if ( imageActive != null )
+        {
+            imageActive.setMask(paintBitmap);
+        }
 
         if (growDialog != null) {
             growDialog.notifyPaintListeners(true, false, paintBitmap);
@@ -4422,6 +4426,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      */
     public void setPaintMask(final BitSet mask) {
         paintBitmap = mask;
+        if ( imageActive != null )
+        {
+            imageActive.setMask(paintBitmap);
+        }
     }
 
     /**
@@ -5301,6 +5309,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         }
         // changethis
 
+        if ( imageActive != null )
+        {
+            imageActive.setMask(paintBitmap);
+        }
         // imageActive.notifyImageDisplayListeners();
     }
 
@@ -6686,8 +6698,8 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         super.ScreenToLocal( kScreen, patientPt );
         // axisFlip represents whether to invert the axes after they are reordered
         final boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip(getActiveImage(), orientation);
-        if ( axisFlip[0] ) patientPt.X -= 1;
-        if ( axisFlip[1] ) patientPt.Y -= 1;
+        //if ( axisFlip[0] ) patientPt.X -= 1;
+        //if ( axisFlip[1] ) patientPt.Y -= 1;
         //if ( axisFlip[2] ) patientPt.Z -= 1;
         Vector3f kFile = new Vector3f();
         MipavCoordinateSystems.patientToFile( patientPt, kFile, imageA, orientation );
