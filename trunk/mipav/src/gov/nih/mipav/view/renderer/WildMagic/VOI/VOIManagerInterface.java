@@ -761,6 +761,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 MipavUtil.displayWarning("Please select a VOI!");
                 return;
             }
+            saveVOIs(command);
             new JDialogBSmooth(m_kParent.getFrame(), getActiveImage(), getSlice());
         } // Paint
         else if (command.equals(CustomUIBuilder.PARAM_VOI_FLIPY.getActionCommand())) {
@@ -768,34 +769,34 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 MipavUtil.displayWarning("Please select a VOI!");
                 return;
             }
-
+            saveVOIs(command);
             final JDialogFlip flip = new JDialogFlip(m_kParent.getFrame(), getActiveImage(), AlgorithmFlip.Y_AXIS,
                     AlgorithmFlip.VOI_TYPE);
-
             flip.callAlgorithm();
         } else if (command.equals(CustomUIBuilder.PARAM_VOI_FLIPX.getActionCommand())) {
             if ( !checkForActiveVOIs()) {
                 MipavUtil.displayWarning("Please select a VOI!");
                 return;
             }
+            saveVOIs(command);
             final JDialogFlip flip = new JDialogFlip(m_kParent.getFrame(), getActiveImage(), AlgorithmFlip.X_AXIS,
                     AlgorithmFlip.VOI_TYPE);
-
             flip.callAlgorithm();
         } else if (command.equals(CustomUIBuilder.PARAM_VOI_FLIPZ.getActionCommand())) {
             if ( !checkForActiveVOIs()) {
                 MipavUtil.displayWarning("Please select a VOI!");
                 return;
             }
+            saveVOIs(command);
             final JDialogFlip flip = new JDialogFlip(m_kParent.getFrame(), getActiveImage(), AlgorithmFlip.Z_AXIS,
                     AlgorithmFlip.VOI_TYPE);
-
             flip.callAlgorithm();
         } else if (command.equals("interpolateVOIs")) {
+            saveVOIs(command);
             interpolateVOIs();
         } 
         else if (command.equals("Trim")) {
-            saveVOIs("Trim");
+            saveVOIs(command);
             final JDialogTrim trimSettings = new JDialogTrim(m_kParent.getFrame(), getActiveImage());
 
             trimSettings.setVisible(true);
@@ -1142,10 +1143,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             setDefaultCursor();
         } 
         else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_CUT.getActionCommand()) ) {
-            if ( cut() > 0 )
-            {
-                saveVOIs(kCommand);
-            }
+            cut();
             setDefaultCursor();
         } 
         else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_COPY.getActionCommand()) ) {
@@ -1153,7 +1151,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             setDefaultCursor();
         } 
         else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_PASTE.getActionCommand()) ) {
-            saveVOIs(kCommand);
             paste();
             setDefaultCursor();
         }
@@ -2533,7 +2530,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     {
         int count = copy();
         if ( count > 0 )
-        {
+        {            
+            saveVOIs(CustomUIBuilder.PARAM_VOI_CUT.getActionCommand());
             deleteActiveVOI();
         }
         return count;
@@ -2622,7 +2620,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         	m_bDefaultImage = false;
         	m_kTempImage = (ModelImage)m_kTempImage.clone();
         }
-
+        saveVOIs(command);
     	if (command.equals("Snake") ) {
     		JDialogSnake kEvolve = new JDialogSnake(m_kParent.getFrame(), m_kTempImage);
     		kEvolve.setVOIManager(this);
@@ -3335,6 +3333,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         {
             return;
         }
+        saveVOIs(CustomUIBuilder.PARAM_VOI_PASTE.getActionCommand());
         // If the copy list is from another image:
         if ( copyList.elementAt(0).getGroup() != null && !copyList.elementAt(0).getGroup().hasListener(this) )
         {
