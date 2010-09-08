@@ -740,6 +740,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             m_kParent.maskToPaint();
         }
         else if (command.equals("PaintToVOI")) {
+            saveVOIs(command);
             paintToVOI();
         } 
         else if (command.equals("PaintToUbyteMask")) {
