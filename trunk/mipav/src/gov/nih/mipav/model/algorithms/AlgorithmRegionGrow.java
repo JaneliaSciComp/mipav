@@ -2563,7 +2563,6 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
             final float upperBoundR, final float lowBoundG, final float upperBoundG, final float lowBoundB,
             final float upperBoundB, final int sizeLimit, final float maxDistance, final int timeSlice,
             CubeBounds regionBounds) {
-
         final int xDim = srcImage.getExtents()[0];
         final int yDim = srcImage.getExtents()[1];
         final int zDim = srcImage.getExtents()[2];
