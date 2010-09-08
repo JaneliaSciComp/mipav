@@ -1749,8 +1749,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
     private boolean contains( VOIBase kVOI, int iX, int iY, int iZ ) {
 
+        Vector3f kLocalPt = new Vector3f(iX, iY, iZ);
         Vector3f kVolumePt = new Vector3f();
-        m_kDrawingContext.screenToFileVOI( iX, iY, m_kDrawingContext.getSlice(), kVolumePt );
+        m_kDrawingContext.screenToFileVOI( kLocalPt, kVolumePt );
         if ( kVOI.contains( kVolumePt.X, kVolumePt.Y, kVolumePt.Z ) )
         {
             return true;
@@ -3819,7 +3820,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         }
         if ( kVOI.size() == 0 )
         {
-            System.err.println( kVOI.getName() + " " + kVOI.size() );
             return m_kDrawingContext.getSlice();
         }
         return (int)fileCoordinatesToPatient( kVOI.get(0) ).Z;
@@ -5224,7 +5224,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
         VOIVector kVOIs = m_kImageActive.getVOIs();
         for ( int i = kVOIs.size()-1; i >=0; i-- )
         {
-            VOI kVOI = kVOIs.get(i);
+            VOI kVOI = kVOIs.elementAt(i);
             for ( int j = kVOI.getCurves().size()-1; j >= 0; j-- )
             {
                 VOIBase kVOI3D = kVOI.getCurves().get(j);
