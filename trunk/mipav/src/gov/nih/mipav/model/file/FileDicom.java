@@ -620,6 +620,7 @@ public class FileDicom extends FileDicomBase {
         String type, // type of data; there are 7, see FileInfoDicom
         name; // string representing the tag
         boolean isSiemensMRI = false;
+        boolean isSiemensMRI2 = false;
 
         boolean endianess = FileBase.LITTLE_ENDIAN; // all DICOM files start as little endian (tags 0002)
         boolean flag = true;
@@ -749,6 +750,9 @@ public class FileDicom extends FileDicomBase {
                     if (name.equals("0019,0010") && strValue.trim().equals("SIEMENS MR HEADER")) {
                     	isSiemensMRI = true;
                     }
+                    else if (name.equals("0051,0010") && strValue.trim().equals("SIEMENS MR HEADER")) {
+                    	isSiemensMRI2 = true;
+                    }
                     else if (name.equals("0019,100B") && isSiemensMRI) {
                     	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
 			                    "SliceMeasurementDuration", "Slice Measurement Duration"));	
@@ -764,6 +768,10 @@ public class FileDicom extends FileDicomBase {
                     else if (name.equals("0019,100F") && isSiemensMRI) {
                     	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, 
 			                    "GradientMode", "Gradient Mode"));	
+                    }
+                    else if (name.equals("0051,100B") && isSiemensMRI2) {
+                    	tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM,
+                    			"MosaicMatrixSize", "Mosaic Matrix Size"));
                     }
                     tagTable.setValue(key, strValue, elementLength);
 
