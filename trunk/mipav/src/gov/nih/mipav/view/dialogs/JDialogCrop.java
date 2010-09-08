@@ -282,24 +282,24 @@ public class JDialogCrop extends JDialogScriptableBase implements
 
 			if (image.getNDims() == 2) {
 				destExtents = new int[2];
-				destExtents[0] = Math.abs(xBounds[1] - xBounds[0]) + 1
+				destExtents[0] = Math.abs(xBounds[1] - xBounds[0])
 						+ (2 * borderSize);
-				destExtents[1] = Math.abs(yBounds[1] - yBounds[0]) + 1
+				destExtents[1] = Math.abs(yBounds[1] - yBounds[0])
 						+ (2 * borderSize);
 			} else if (image.getNDims() == 3) {
 
 				if (Math.abs(zBounds[1] - zBounds[0]) == 0) { // crop 3D image
 																// to 2D image
 					destExtents = new int[2];
-					destExtents[0] = Math.abs(xBounds[1] - xBounds[0]) + 1
+					destExtents[0] = Math.abs(xBounds[1] - xBounds[0])
 							+ (2 * borderSize);
-					destExtents[1] = Math.abs(yBounds[1] - yBounds[0]) + 1
+					destExtents[1] = Math.abs(yBounds[1] - yBounds[0])
 							+ (2 * borderSize);
 				} else {
 					destExtents = new int[3];
-					destExtents[0] = Math.abs(xBounds[1] - xBounds[0]) + 1
+					destExtents[0] = Math.abs(xBounds[1] - xBounds[0])
 							+ (2 * borderSize);
-					destExtents[1] = Math.abs(yBounds[1] - yBounds[0]) + 1
+					destExtents[1] = Math.abs(yBounds[1] - yBounds[0])
 							+ (2 * borderSize);
 					destExtents[2] = Math.abs(zBounds[1] - zBounds[0] + 1);
 				}
@@ -308,16 +308,16 @@ public class JDialogCrop extends JDialogScriptableBase implements
 				if (Math.abs(zBounds[1] - zBounds[0]) == 0) { // crop 4D image
 																// to 3D image
 					destExtents = new int[3];
-					destExtents[0] = Math.abs(xBounds[1] - xBounds[0]) + 1
+					destExtents[0] = Math.abs(xBounds[1] - xBounds[0])
 							+ (2 * borderSize);
-					destExtents[1] = Math.abs(yBounds[1] - yBounds[0]) + 1
+					destExtents[1] = Math.abs(yBounds[1] - yBounds[0])
 							+ (2 * borderSize);
 					destExtents[2] = image.getExtents()[3];
 				} else {
 					destExtents = new int[4];
-					destExtents[0] = Math.abs(xBounds[1] - xBounds[0]) + 1
+					destExtents[0] = Math.abs(xBounds[1] - xBounds[0])
 							+ (2 * borderSize);
-					destExtents[1] = Math.abs(yBounds[1] - yBounds[0]) + 1
+					destExtents[1] = Math.abs(yBounds[1] - yBounds[0])
 							+ (2 * borderSize);
 					destExtents[2] = Math.abs(zBounds[1] - zBounds[0] + 1);
 					destExtents[3] = image.getExtents()[3];
@@ -353,6 +353,7 @@ public class JDialogCrop extends JDialogScriptableBase implements
                 zCrop[0] = -1 * (zBounds[0]);
                 zCrop[1] = -1 * (zBounds[1]+1);
             }
+
             cropAlgo = new AlgorithmAddMargins(image, resultImage, 
                     xCrop, yCrop, zCrop);
 
@@ -600,7 +601,7 @@ public class JDialogCrop extends JDialogScriptableBase implements
 		textXmin = new JTextField(10);
 		textXmin.setText(String.valueOf(xBounds[0]));
 		textXmin.setFont(serif12);
-		textXmin.setEnabled(false);
+
 		textXmin.setEditable(false);
 		coordinatesPanel.add(textXmin);
 
@@ -612,7 +613,7 @@ public class JDialogCrop extends JDialogScriptableBase implements
 		textYmin = new JTextField(10);
 		textYmin.setText(String.valueOf(yBounds[0]));
 		textYmin.setFont(serif12);
-		textYmin.setEnabled(false);
+
 		textYmin.setEditable(false);
 		coordinatesPanel.add(textYmin);
 
@@ -624,7 +625,7 @@ public class JDialogCrop extends JDialogScriptableBase implements
 		textZmin = new JTextField(10);
 		textZmin.setText(String.valueOf(zBounds[0]));
 		textZmin.setFont(serif12);
-		textZmin.setEnabled(false);
+
 		textZmin.setEditable(false);
 		coordinatesPanel.add(textZmin);
 
@@ -640,7 +641,7 @@ public class JDialogCrop extends JDialogScriptableBase implements
 		textLowerXmm = new JTextField(10);
 		textLowerXmm.setText(String.valueOf(lowXmm));
 		textLowerXmm.setFont(serif12);
-		textLowerXmm.setEnabled(false);
+
 		textLowerXmm.setEditable(false);
 		coordinatesPanel.add(textLowerXmm);
 
@@ -656,7 +657,7 @@ public class JDialogCrop extends JDialogScriptableBase implements
 		textLowerYmm = new JTextField(10);
 		textLowerYmm.setText(String.valueOf(lowYmm));
 		textLowerYmm.setFont(serif12);
-		textLowerYmm.setEnabled(false);
+
 		textLowerYmm.setEditable(false);
 		coordinatesPanel.add(textLowerYmm);
 
@@ -670,7 +671,7 @@ public class JDialogCrop extends JDialogScriptableBase implements
 		textLowerZmm = new JTextField(10);
 		textLowerZmm.setText(String.valueOf(lowZmm));
 		textLowerZmm.setFont(serif12);
-		textLowerZmm.setEnabled(false);
+
 		textLowerZmm.setEditable(false);
 		coordinatesPanel.add(textLowerZmm);
 
@@ -682,7 +683,7 @@ public class JDialogCrop extends JDialogScriptableBase implements
 		textWidth = new JTextField(10);
 		textWidth.setText(String.valueOf(xBounds[1] - xBounds[0]));
 		textWidth.setFont(serif12);
-		textWidth.setEnabled(false);
+
 		textWidth.setEditable(false);
 		coordinatesPanel.add(textWidth);
 
@@ -694,7 +695,7 @@ public class JDialogCrop extends JDialogScriptableBase implements
 		textHeight = new JTextField(10);
 		textHeight.setText(String.valueOf(yBounds[1] - yBounds[0]));
 		textHeight.setFont(serif12);
-		textHeight.setEnabled(false);
+
 		textHeight.setEditable(false);
 		coordinatesPanel.add(textHeight);
 
@@ -706,7 +707,7 @@ public class JDialogCrop extends JDialogScriptableBase implements
 		textDepth = new JTextField(10);
 		textDepth.setText(String.valueOf(zBounds[1] - zBounds[0]));
 		textDepth.setFont(serif12);
-		textDepth.setEnabled(false);
+
 		textDepth.setEditable(false);
 		coordinatesPanel.add(textDepth);
 
