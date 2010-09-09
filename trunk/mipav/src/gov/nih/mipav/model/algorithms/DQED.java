@@ -2769,8 +2769,8 @@ public abstract class DQED {
 			  //double bl(ncols)
 			  double bou;
 			  //double bu(ncols)
-			  double cl1;
-			  double cl2;
+			  double cl1[] = new double[1];
+			  double cl2[] = new double[1];
 			  double cl3;
 			  boolean cnz;
 			  double colabv;
@@ -2807,8 +2807,8 @@ public abstract class DQED {
 			  int nlevel;
 			  int nsetb;
 			  double rdum;
-			  double sc;
-			  double ss;
+			  double sc[] = new double[1];
+			  double ss[] = new double[1];
 			  double t;
 			  double t1;
 			  double t2;
@@ -2823,23 +2823,37 @@ public abstract class DQED {
 			  boolean do50 = false;
 			  boolean do60 = false;
 			  boolean do70 = false;
+			  boolean do90 = false;
+			  boolean do100 = false;
 			  boolean do130 = false;
 			  boolean do180 = false;
-			  boolean do280 = false;
+			  boolean do200 = false;
+			  boolean do230 = false;
+			  boolean do240 = false;
+			  boolean do260 = false;
+			  boolean do290 = false;
+			  boolean do310 = false;
+			  boolean do330 = false;
+			  boolean do340 = false;
+			  boolean do390 = false;
+			  boolean do420 = false;
+			  boolean do430 = false;
 			  boolean do460 = false;
 			  boolean do570 = false;
+			  boolean do580 = false;
 			  double arr[];
 			  double arr2[];
+			  double temp;
 			//
 			//  Statement function:
 			//
 			  //inext[idum] = Math.min(idum+1,mrows);
 
-			  level = 1;
+			  /*level = 1;
 			//
 			//  VERIFY THAT THE PROBLEM DIMENSIONS ARE DEFINED PROPERLY.
 			//
-			  /*if ( minput<=0) {
+			  if ( minput<=0) {
 			    nerr = 31;
 			    xerrwv("dbolsm(). the number of rows=(i1) must be positive.",
 			      nerr,level,1,minput,idum,0,rdum,rdum);
@@ -2954,7 +2968,11 @@ public abstract class DQED {
 			   if (do90) {
                    do90 = false;
 			       if ( found ) {
-			    	   do280 = true;
+			    	   //
+					   //  SOLVE THE TRIANGULAR SYSTEM
+					   //
+					   lgopr = 1;
+					   do260 = true;
 			       }
 			       else {
 			           //
@@ -3020,7 +3038,7 @@ public abstract class DQED {
 			      for (j = 1; j <= mrows - Math.max(nsetb,mval); j++) {
 			    	  arr[j] = w[Math.min((Math.max(nsetb,mval) + 1),mrows) + j - 1][ncols+1];
 			      }
-			      rnorm = dnrm2(mrows-max(nsetb,mval),arr,1);
+			      rnorm[0] = dnrm2(mrows-Math.max(nsetb,mval),arr,1);
                   if (igopr == 1) {
                 	  do70 = true;
                   }
@@ -3062,568 +3080,811 @@ public abstract class DQED {
 			      } // if (iprint > 0)
 			  } // if (do180)
 
-			  200 continue
-			!
-			!  IF ACTIVE SET = NUMBER OF TOTAL ROWS, QUIT.
-			!
-			  if ( nsetb == mrows) then
-			      found = .false.
-			      go to 90
-			  end if
-			!
-			!  CHOOSE AN EXTREMAL COMPONENT OF GRADIENT VECTOR
-			!  FOR A CANDIDATE TO BECOME NON-ACTIVE.
-			!
-			  wlarge = -big
-			  jbig = 0
-			  cnz = .false.
-
-			  do j = nsetb + 1,ncols
-
-			    t = ww(j)
-			!
-			!  SKIP LOOKING AT COMPONENTS FLAGGED AS NON-CANDIDATES.
-			!
-			    if ( t == big) then
-			      cycle
-			    end if
-
-			    itemp = ibasis(j)
-			    jcol = abs(itemp)
-			    if ( nsetb < mval) then
-			         cl1 = dnrm2(nsetb,w(1,j),1)
-			         cl2 = dnrm2(mval-nsetb,w(Math.min(nsetb+1,mrows),j),1)
-			         colabv = cl1
-			         colblo = cl2
-			    else
-			         cl1 = dnrm2(mval,w(1,j),1)
-			         cl2 = abs(wt)*dnrm2(nsetb-mval,w(Math.min(mval+1,mrows),j),1)
-			         cl3 = abs(wt)*dnrm2(mrows-nsetb,w(Math.min(nsetb+1,mrows),j),1)
-			         call drotg(cl1,cl2,sc,ss)
-			         colabv = abs(cl1)
-			         colblo = cl3
-			    end if
-
-			    if ( itemp < 0) then
-			      if ( mod(ibb(jcol),2) == 0) t = -t
-			!
-			!  SKIP LOOKING AT COMPONENTS THAT WOULD NOT DECREASE OBJECTIVE.
-			!
-			      if ( t < 0.0D+00 ) then
-			        cycle
-			      end if
-
-			    end if
-			!
-			!  THIS IS A COLUMN PIVOTING STEP THAT MAXIMIZES THE RATIO OF
-			!  COLUMN MASS ON AND BELOW THE PIVOT LINE RELATIVE TO THAT
-			!  STRICTLY ABOVE THE PIVOT LINE.
-			!
-			     if ( colabv == 0.0D+00 .and. .not. cnz) then
-			         t = colblo*abs(scl(jcol))
-			         if ( wlarge < t) then
-			             wlarge = t
-			             jbig = j
-			         end if
-			     else
-			         if ( .not. cnz) then
-			             wla = 0.0D+00
-			             wlb = 0.0D+00
-			             cnz = .true.
-			         end if
-
-			       if ( sqrt(colblo)*sqrt(wla) >= sqrt(colabv)*sqrt(wlb)) then
-			            wlb=colblo
-			            wla=colabv
-			            jbig=j
-			       end if
-
-			     end if
-
-			  end do
-
-			  if ( jbig == 0) then
-			      found = .false.
-			      if ( iprint > 0) then
-			        write ( *, '(a)' ) '  Found no variable to enter.'
-			      end if
-
-			      go to 90
-
-			  end if
-			!
-			!  SEE IF THE INCOMING COL. IS SUFFICIENTLY INDEPENDENT.
-			!  THIS TEST IS MADE BEFORE AN ELIMINATION IS PERFORMED.
-			!
-			  if ( iprint > 0) then
-			    write ( *, '(a,i6)' ) '  Try to bring in column ', jbig
-			  end if
-
-			  if ( cnz) then
-
-			    if ( wlb<=wla*tolind) then
-			      found = .false.
-			      if ( iprint > 0) then
-			        write ( *, '(a)' ) '  Variable is dependent, not used.'
-			      end if
-
-			      ww(jbig) = big
-			      go to 200
-
-			    end if
-
-			  end if
-			!
-			!  SWAP MATRIX COLS. NSETB+1 AND JBIG, PLUS POINTER INFO., AND
-			!  GRADIENT VALUES.
-			!
-			  nsetb = nsetb + 1
-			  if ( nsetb/=jbig) then
-			      call dswap(mrows,w(1,nsetb),1,w(1,jbig),1)
-			      call dswap(1,ww(nsetb),1,ww(jbig),1)
-			      itemp = ibasis(nsetb)
-			      ibasis(nsetb) = ibasis(jbig)
-			      ibasis(jbig) = itemp
-			  end if
-			!
-			!  ELIMINATE ENTRIES BELOW THE PIVOT LINE IN COL. NSETB.
-			!
-			  if ( mrows > nsetb) then
-
-			      do i = mrows,nsetb + 1,-1
-			         if ( i /= mval+1 ) then
-			           call drotg(w(i-1,nsetb),w(i,nsetb),sc,ss)
-			           w(i,nsetb) = 0.0D+00
-			           call drot(ncols-nsetb+1,w(i-1,nsetb+1),mdw,w(i,nsetb+1),mdw,sc,ss)
-			         end if
-			      end do
-
-			      if ( (mval>=nsetb) .and. (mval < mrows)) then
-			          t = w(nsetb,nsetb)
-			          if ( t/= 0.0D+00 ) then
-			              t = wt*w(mval+1,nsetb)/t
-			          else
-			              t = big
-			          end if
-
-			          if ( tolind*abs(t) > one) then
-			              call dswap(ncols-nsetb+2,w(nsetb,nsetb),mdw,w(mval+1,nsetb),mdw)
-			              call dscal(ncols-nsetb+2,wt,w(nsetb,nsetb),mdw)
-			              call dscal(ncols-nsetb+2,one/wt,w(mval+1,nsetb),mdw)
-			          end if
-
-			          call drotg(w(nsetb,nsetb),w(mval+1,nsetb),sc,ss)
-			          w(mval+1,nsetb) = 0.0D+00
-			          call drot(ncols-nsetb+1,w(nsetb,nsetb+1),mdw, &
-			                   w(mval+1,nsetb+1),mdw,sc,ss)
-			      end if
-
-			  end if
-
-			  if ( w(nsetb,nsetb) == 0.0D+00 ) then
-			      ww(nsetb) = big
-			      nsetb = nsetb - 1
-			      if ( iprint > 0) then
-			        write ( *, '(a)' ) '  Pivot is zero, not used.'
-			      end if
-
-			      go to 200
-			  end if
-			!
-			!  CHECK THAT NEW VARIABLE IS MOVING IN THE RIGHT DIRECTION.
-			!
-			  itemp = ibasis(nsetb)
-			  jcol = abs(itemp)
-			  xnew = (w(nsetb,ncols+1)/w(nsetb,nsetb))/abs(scl(jcol))
-
-			  if ( itemp < 0) then
-			      if ( ww(nsetb)>= 0.0D+00 .and. xnew<= 0.0D+00 ) go to 230
-			      if ( ww(nsetb)<= 0.0D+00 .and. xnew>= 0.0D+00 ) go to 230
-			  end if
-
-			  go to 240
-
-			  230 continue
-			  ww(nsetb) = big
-			  nsetb = nsetb - 1
-			  if ( iprint > 0) then
-			    write ( *, '(a)' ) '  Variable has bad direction, not used.'
-			  end if
-
-			  go to 200
-
-			  240 continue
-			  found = .true.
-			  go to 250
-
-			  250 continue
-
-			  go to 90
-			!
-			!  SOLVE THE TRIANGULAR SYSTEM
-			!
-			  260 continue
-			  call dcopy(nsetb,w(1,ncols+1),1,rw,1)
-
-			  do j = nsetb,1,-1
-			     rw(j) = rw(j)/w(j,j)
-			     jcol = abs(ibasis(j))
-			     t = rw(j)
-			     if ( mod(ibb(jcol),2) == 0) rw(j) = -rw(j)
-			     call daxpy(j-1,-t,w(1,j),1,rw,1)
-			     rw(j) = rw(j)/abs(scl(jcol))
-			  end do
-
-			  if ( iprint > 0) then
-			      call dvout(nsetb,rw,'('' soln. values'')',-4)
-			      call ivout(nsetb,ibasis,'('' cols. used'')',-4)
-			  end if
-
-			  go to (290,430),lgopr
-			!
-			!  MAKE MOVE AND UPDATE FACTORIZATION
-			!
-			  280 continue
-			!
-			!  SOLVE THE TRIANGULAR SYSTEM
-			!
-			  lgopr = 1
-			  go to 260
-
-			  290 continue
-			!
-			!  SEE IF THE UNCONSTRAINED SOL. (OBTAINED BY SOLVING THE
-			!  TRIANGULAR SYSTEM) SATISFIES THE PROBLEM BOUNDS.
-			!
-			  alpha = 2.0D+00
-			  beta = 2.0D+00
-			  x(nsetb) = 0.0D+00
-
-			  do j = 1,nsetb
-
-			     itemp = ibasis(j)
-			     jcol = abs(itemp)
-			     t1 = 2.0D+00
-			     t2 = 2.0D+00
-
-			     if ( itemp < 0) then
-			         bou = 0.0D+00
-			     else
-			         bou = bl(jcol)
-			     end if
-
-			     if ( (-bou)/=big) bou = bou/abs(scl(jcol))
-			     if ( rw(j)<=bou) t1 = (x(j)-bou)/ (x(j)-rw(j))
-			     bou = bu(jcol)
-			     if ( bou/=big) bou = bou/abs(scl(jcol))
-			     if ( rw(j)>=bou) t2 = (bou-x(j))/ (rw(j)-x(j))
-			!
-			!  IF NOT, THEN COMPUTE A STEP LENGTH SO THAT THE
-			!  VARIABLES REMAIN FEASIBLE.
-			!
-			     if ( t1 < alpha) then
-			         alpha = t1
-			         jdrop1 = j
-			     end if
-
-			     if ( t2 < beta) then
-			         beta = t2
-			         jdrop2 = j
-			     end if
-
-			  end do
-
-			  constr = alpha < 2.0D+00 .or. beta < 2.0D+00
-			  if ( constr) go to 310
-			!
-			!  ACCEPT THE CANDIDATE BECAUSE IT SATISFIES THE STATED BOUNDS
-			!  ON THE VARIABLES.
-			!
-			  x(1:nsetb) = rw(1:nsetb)
-
-			  go to 60
-
-			  310 continue
-			!
-			!  TAKE A STEP THAT IS AS LARGE AS POSSIBLE WITH ALL
-			!  VARIABLES REMAINING FEASIBLE.
-			!
-			  do j = 1,nsetb
-			     x(j) = x(j) + min(alpha,beta)* (rw(j)-x(j))
-			  end do
-
-			  if ( alpha<=beta) then
-			      jdrop2 = 0
-
-			  else
-			      jdrop1 = 0
-			  end if
-
-			  330 if ( jdrop1+jdrop2 > 0 .and. nsetb > 0) go to 340
-			  go to 450
-
-			  340 continue
-
-			  jdrop = jdrop1 + jdrop2
-			  itemp = ibasis(jdrop)
-			  jcol = abs(itemp)
-			  if ( jdrop2 > 0) then
-			!
-			!  VARIABLE IS AT AN UPPER BOUND.  SUBTRACT MULTIPLE OF THIS COL.
-			!  FROM RIGHT HAND SIDE.
-			!
-			      t = bu(jcol)
-			      if ( itemp > 0) then
-
-			          bu(jcol) = t - bl(jcol)
-			          bl(jcol) = -t
-			          itemp = -itemp
-			          scl(jcol) = -scl(jcol)
-			          w(1:jdrop,jdrop) = -w(1:jdrop,jdrop)
-
-			      else
-			          ibb(jcol) = ibb(jcol) + 1
-			          if ( mod(ibb(jcol),2) == 0) t = -t
-			      end if
-			!
-			!  VARIABLE IS AT A LOWER BOUND.
-			!
-			  else
-			      if ( itemp < 0.0D+00 ) then
-			          t = 0.0D+00
-			      else
-			          t = -bl(jcol)
-			          bu(jcol) = bu(jcol) + t
-			          itemp = -itemp
-			      end if
-
-			  end if
-
-			  call daxpy(jdrop,t,w(1,jdrop),1,w(1,ncols+1),1)
-			!
-			!  MOVE CERTAIN COLS. LEFT TO ACHIEVE UPPER HESSENBERG FORM.
-			!
-			  call dcopy(jdrop,w(1,jdrop),1,rw,1)
-
-			  do j = jdrop + 1,nsetb
-			     ibasis(j-1) = ibasis(j)
-			     x(j-1) = x(j)
-			     call dcopy(j,w(1,j),1,w(1,j-1),1)
-			  end do
-
-			  ibasis(nsetb) = itemp
-			  w(1,nsetb) = 0.0D+00
-			  w(jdrop+1:mrows,nsetb) = 0.0D+00
-
-			  call dcopy(jdrop,rw,1,w(1,nsetb),1)
-			!
-			!  TRANSFORM THE MATRIX FROM UPPER HESSENBERG FORM TO
-			!  UPPER TRIANGULAR FORM.
-			!
-			  nsetb = nsetb - 1
-
-			  do i = jdrop,nsetb
-			!
-			!  LOOK FOR SMALL PIVOTS AND AVOID MIXING WEIGHTED AND NONWEIGHTED ROWS.
-			!
-			     if ( i == mval) then
-			         t = 0.0D+00
-			         do j = i,nsetb
-			            jcol = abs(ibasis(j))
-			            t1 = abs(w(i,j)*scl(jcol))
-			            if ( t1 > t) then
-			                jbig = j
-			                t = t1
-			            end if
-			         end do
-			         go to 390
-			     end if
-
-			     call drotg(w(i,i),w(i+1,i),sc,ss)
-			     w(i+1,i) = 0.0D+00
-			     call drot(ncols-i+1,w(i,i+1),mdw,w(i+1,i+1),mdw,sc,ss)
-			  end do
-
-			  go to 420
-
-			  390 continue
-			!
-			!  THE TRIANGULARIZATION IS COMPLETED BY GIVING UP
-			!  THE HESSENBERG FORM AND TRIANGULARIZING A RECTANGULAR MATRIX.
-			!
-			  call dswap(mrows,w(1,i),1,w(1,jbig),1)
-			  call dswap(1,ww(i),1,ww(jbig),1)
-			  call dswap(1,x(i),1,x(jbig),1)
-			  itemp = ibasis(i)
-			  ibasis(i) = ibasis(jbig)
-			  ibasis(jbig) = itemp
-			  jbig = i
-			  do j = jbig,nsetb
-			     do i = j + 1,mrows
-			        call drotg(w(j,j),w(i,j),sc,ss)
-			        w(i,j) = 0.0D+00
-			        call drot(ncols-j+1,w(j,j+1),mdw,w(i,j+1),mdw,sc,ss)
-			     end do
-			  end do
-
-			  420 continue
-			!
-			!  SEE IF THE REMAINING COEFFICIENTS ARE FEASIBLE.  THEY SHOULD
-			!  BE BECAUSE OF THE WAY MIN(ALPHA,BETA) WAS CHOSEN.  ANY THAT ARE
-			!  NOT FEASIBLE WILL BE SET TO THEIR BOUNDS AND
-			!  APPROPRIATELY TRANSLATED.
-			!
-			  jdrop1 = 0
-			  jdrop2 = 0
-			!
-			!  SOLVE THE TRIANGULAR SYSTEM
-			!
-			  lgopr = 2
-			  go to 260
-
-			  430 continue
-			  call dcopy(nsetb,rw,1,x,1)
-
-			  do j = 1,nsetb
-
-			     itemp = ibasis(j)
-			     jcol = abs(itemp)
-
-			     if ( itemp < 0) then
-			         bou = 0.0D+00
-			     else
-			         bou = bl(jcol)
-			     end if
-
-			     if ( (-bou)/=big) bou = bou/abs(scl(jcol))
-
-			     if ( x(j)<=bou) then
-			         jdrop1 = j
-			         go to 330
-			     end if
-
-			     bou = bu(jcol)
-
-			     if ( bou/=big) bou = bou/abs(scl(jcol))
-
-			     if ( x(j)>=bou) then
-			         jdrop2 = j
-			         go to 330
-			     end if
-
-			  end do
-
-			  go to 330
-
-			  450 continue
-
-			  go to 60
-			!
-			!  INITIALIZE VARIABLES AND DATA VALUES
-			!
-			  460 continue
-			!
-			!  PRETRIANGULARIZE RECTANGULAR ARRAYS OF CERTAIN SIZES
-			!  FOR INCREASED EFFICIENCY.
-			!
-			  if ( fac*minput > ncols) then
-			      do j = 1,ncols + 1
-			         do i = minput,j + mval + 1,-1
-			            call drotg(w(i-1,j),w(i,j),sc,ss)
-			            w(i,j) = 0.0D+00
-			            call drot(ncols-j+1,w(i-1,j+1),mdw,w(i,j+1),mdw,sc,ss)
-			         end do
-			      end do
-			      mrows = ncols + mval + 1
-			  else
-			      mrows = minput
-			  end if
-			!
-			!  SET THE X(*) ARRAY TO ZERO SO ALL COMPONENTS ARE DEFINED.
-			!
-			  x(1:ncols) = 0.0D+00
-			!
-			!  THE ARRAYS IBASIS(*), IBB(*) ARE INITIALIZED BY THE CALLING
-			!  PROGRAM UNIT.
-			!  THE COL. SCALING IS DEFINED IN THE CALLING PROGRAM UNIT.
-			!  'BIG' IS PLUS INFINITY ON THIS MACHINE.
-			!
-			  big = huge ( big )
-
-			  do j = 1, ncols
-
-			    if ( ind(j) == 1 ) then
-			      bu(j) = big
-			    else if ( ind(j) == 2 ) then
-			      bl(j) = -big
-			    else if ( ind(j) == 3 ) then
-
-			    else if ( ind(j) == 4 ) then
-			      bl(j) = -big
-			      bu(j) = big
-			    end if
-
-			  end do
-
-			  do j = 1,ncols
-
-			     if ( (bl(j)<= 0.0D+00 .and. 0.0D+00 <= bu(j) .and. &
-			        abs(bu(j)) < abs(bl(j))) .or. bu(j) < 0.0D+00 ) then
-			         t = bu(j)
-			         bu(j) = -bl(j)
-			         bl(j) = -t
-			         scl(j) = -scl(j)
-			         w(1:mrows,j) = -w(1:mrows,j)
-			     end if
-			!
-			!  INDICES IN SET T(=TIGHT) ARE DENOTED BY NEGATIVE VALUES OF IBASIS(*).
-			!
-			     if ( bl(j)>=0.0D+00 ) then
-			         ibasis(j) = -ibasis(j)
-			         t = -bl(j)
-			         bu(j) = bu(j) + t
-			         call daxpy(mrows,t,w(1,j),1,w(1,ncols+1),1)
-			     end if
-
-			  end do
-
-			  nsetb = 0
-			  iter = 0
-
-			  go to 50
-			!
-			!  PROCESS OPTION ARRAY
-			!
-			  570 continue
-
-			  if ( idope(5) == 1) then
-			      fac = x(ncols+idope(1))
-			      wt = x(ncols+idope(2))
-			      mval = idope(3)
-			  else
-			      fac = 0.0D+00
-			      wt = 1.0D+00
-			      mval = 0
-			  end if
-
-			  tolind = sqrt( epsilon ( tolind ) )
-			  tolsze = sqrt( epsilon ( tolsze ) )
-			  itmax = 5 * max ( minput, ncols )
-			  iprint = 0
-			!
-			!  CHANGES TO SOME PARAMETERS CAN OCCUR THROUGH THE OPTION
-			!  ARRAY, IOPT(*).  PROCESS THIS ARRAY LOOKING CAREFULLY
-			!  FOR INPUT DATA ERRORS.
-			!
-			  lp = 0
-			  lds = 0
-
-			  580 continue
-
-			  lp = lp + lds
-			!
-			!  TEST FOR NO MORE OPTIONS.
-			!
+			  if (do200) {
+				  do200 = false;
+			      //
+			      //  IF ACTIVE SET = NUMBER OF TOTAL ROWS, QUIT.
+			      //
+			  if ( nsetb == mrows) {
+			      found = false;
+			      do90 = true;
+			      continue loop;
+			  }
+			  //
+			  //  CHOOSE AN EXTREMAL COMPONENT OF GRADIENT VECTOR
+			  //  FOR A CANDIDATE TO BECOME NON-ACTIVE.
+			  //
+			  wlarge = -big;
+			  jbig = 0;
+			  cnz = false;
+
+			  forLoop: for (j = nsetb + 1; j <= ncols; j++) {
+
+			    t = ww[j];
+			    //
+			    // SKIP LOOKING AT COMPONENTS FLAGGED AS NON-CANDIDATES.
+			    //
+			    if ( t == big) {
+			      continue forLoop;
+			    }
+
+			    itemp = ibasis[j];
+			    jcol = Math.abs(itemp);
+			    if ( nsetb < mval) {
+			    	 arr = new double[nsetb+1];
+			    	 for (n = 1; n <= nsetb; n++) {
+			    		 arr[n] = w[n][j];
+			    	 }
+			         cl1[0] = dnrm2(nsetb,arr,1);
+			         arr = new double[mval-nsetb+1];
+			         for (n = 1; n <= mval-nsetb; n++) {
+			        	 arr[n] = w[Math.min(nsetb+1,mrows)+n-1][j];
+			         }
+			         cl2[0] = dnrm2(mval-nsetb,arr,1);
+			         colabv = cl1[0];
+			         colblo = cl2[0];
+			    } // if
+			    else {
+			    	 arr = new double[mval+1];
+			    	 for (n = 1; n <= mval; n++) {
+			    		 arr[n] = w[n][j];
+			    	 }
+			         cl1[0] = dnrm2(mval,arr,1);
+			         arr = new double[nsetb-mval+1];
+			         for (n = 1; n <= nsetb-mval; n++) {
+			        	 arr[n] = w[Math.min(mval+1,mrows)+n-1][j];
+			         }
+			         cl2[0] = Math.abs(wt)*dnrm2(nsetb-mval,arr,1);
+			         arr = new double[mrows-nsetb+1];
+			         for (n = 1; n <= mrows-nsetb; n++) {
+			        	 arr[n] = w[Math.min(nsetb+1, mrows)+n-1][j];
+			         }
+			         cl3 = Math.abs(wt)*dnrm2(mrows-nsetb,arr,1);
+			         drotg(cl1,cl2,sc,ss);
+			         colabv = Math.abs(cl1[0]);
+			         colblo = cl3;
+			    } // else
+
+			    if ( itemp < 0) {
+			      if ((ibb[jcol] % 2) == 0) {
+			    	  t = -t;
+			      }
+			    
+			    //
+			    //  SKIP LOOKING AT COMPONENTS THAT WOULD NOT DECREASE OBJECTIVE.
+			    //
+			      if ( t < 0.0 ) {
+			        continue forLoop;
+			      }
+
+			    } // if (itemp < 0)
+			//
+			//  THIS IS A COLUMN PIVOTING STEP THAT MAXIMIZES THE RATIO OF
+			//  COLUMN MASS ON AND BELOW THE PIVOT LINE RELATIVE TO THAT
+			//  STRICTLY ABOVE THE PIVOT LINE.
+			//
+			     if ( (colabv == 0.0) && (!cnz)) {
+			         t = colblo*Math.abs(scl[jcol]);
+			         if ( wlarge < t) {
+			             wlarge = t;
+			             jbig = j;
+			         } // if (wlarge < t)
+			     } // if ( (colabv == 0.0) && (!cnz))
+			     else {
+			         if (!cnz) {
+			             wla = 0.0;
+			             wlb = 0.0;
+			             cnz = true;
+			         } // if (!cnz)
+
+			       if ( Math.sqrt(colblo)*Math.sqrt(wla) >= Math.sqrt(colabv)*Math.sqrt(wlb)) {
+			            wlb=colblo;
+			            wla=colabv;
+			            jbig=j;
+			       } 
+
+			     } // else
+
+			  } // for (j = nsetb + 1; j <= ncols; j++)
+
+			  if ( jbig == 0) {
+			      found = false;
+			      if ( iprint > 0) {
+			        Preferences.debug("Found no variable to enter.\n");
+			      }
+
+			      do90 = true;
+			      continue loop;
+
+			  } // if (jbig == 0)
+			  //
+			  //  SEE IF THE INCOMING COL. IS SUFFICIENTLY INDEPENDENT.
+			  //  THIS TEST IS MADE BEFORE AN ELIMINATION IS PERFORMED.
+			  //
+			  if ( iprint > 0) {
+			    Preferences.debug("Try to bring in column " +  jbig + "\n");
+			  }
+
+			  if ( cnz) {
+
+			    if ( wlb<=wla*tolind) {
+			      found = false;
+			      if ( iprint > 0) {
+			        Preferences.debug("Variable is dependent, not used.\n");
+			      }
+
+			      ww[jbig] = big;
+			      do200 = true;
+			      continue loop;
+
+			    } // if ( wlb<=wla*tolind)
+
+			  } // if (cnz)
+			  //
+			  //  SWAP MATRIX COLS. NSETB+1 AND JBIG, PLUS POINTER INFO., AND
+			  //  GRADIENT VALUES.
+			  //
+			  nsetb = nsetb + 1;
+			  if ( nsetb != jbig) {
+				  for (n = 1; n <= mrows; n++) {
+			          temp = w[n][nsetb];
+			          w[n][nsetb] = w[n][jbig];
+			          w[n][jbig] = temp;
+				  }
+			      temp = ww[nsetb];
+			      ww[nsetb] = ww[jbig];
+			      ww[jbig] = temp;
+			      itemp = ibasis[nsetb];
+			      ibasis[nsetb] = ibasis[jbig];
+			      ibasis[jbig] = itemp;
+			  } // if (nsetb != jbig)
+			  //
+			  //  ELIMINATE ENTRIES BELOW THE PIVOT LINE IN COL. NSETB.
+			  //
+			  if ( mrows > nsetb) {
+
+			      for (i = mrows; i >= nsetb + 1; i--) {
+			         if ( i != mval+1 ) {
+			           arr = new double[1];
+			           arr[0] = w[i-1][nsetb];
+			           arr2 = new double[1];
+			           arr2[0] = w[i][nsetb];
+			           drotg(arr,arr2,sc,ss);
+			           w[i-1][nsetb] = arr[0];
+			           w[i][nsetb] = 0.0;
+			           arr = new double[ncols-nsetb+2];
+			           arr2 = new double[ncols-nsetb+2];
+			           for (n = 1; n <= ncols-nsetb+1; n++) {
+			        	   arr[n] = w[i-1][nsetb + n];
+			        	   arr2[n] = w[i][nsetb+n];
+			           }
+			           drot(ncols-nsetb+1,arr,1,arr2,1,sc[0],ss[0]);
+			           for (n = 1; n <= ncols-nsetb+1; n++) {
+			        	   w[i-1][nsetb + n] = arr[n];
+			        	   w[i][nsetb+n] = arr2[n];;
+			           }
+			         } // (i != mval+1)
+			      } // for (i = mrows; i >= nsetb + 1; i--)
+
+			      if ( (mval>=nsetb) && (mval < mrows)) {
+			          t = w[nsetb][nsetb];
+			          if ( t != 0.0 ) {
+			              t = wt*w[mval+1][nsetb]/t;
+			          }
+			          else {
+			              t = big;
+			          }
+
+			          if ( tolind*Math.abs(t) > 1.0) {
+			        	  for (n = 1; n <= ncols-nsetb+2; n++) {
+			        		  temp = w[nsetb][nsetb+n-1];
+			        		  w[nsetb][nsetb+n-1] = w[mval+1][nsetb+n-1];
+			        		  w[mval+1][nsetb+n-1] = temp;
+			        	  }
+			        	  for (n = 1; n <= ncols-nsetb+2; n++) {
+			        		  w[nsetb][nsetb+n-1] = wt * w[nsetb][nsetb+n-1];
+			        	  }
+			              for (n = 1; n <= ncols-nsetb+2; n++) {
+			            	  w[mval+1][nsetb+n-1] = 1.0/wt * w[mval+1][nsetb+n-1];
+			              }
+			          } // if ( tolind*Math.abs(t) > 1.0)
+
+			          arr = new double[1];
+			          arr[0] = w[nsetb][nsetb];
+			          arr2 = new double[1];
+			          arr2[0] = w[mval+1][nsetb];
+			          drotg(arr,arr2,sc,ss);
+			          w[nsetb][nsetb] = arr[0];
+			          w[mval+1][nsetb] = 0.0;
+			          arr = new double[ncols-nsetb+2];
+			          arr2 = new double[ncols-nsetb+2];
+			          for (n = 1; n <= ncols-nsetb+1; n++) {
+			        	  arr[n] = w[nsetb][nsetb+n];
+			        	  arr2[n] = w[mval+1][nsetb+n];
+			          }
+			          drot(ncols-nsetb+1,arr,1,arr2,1,sc[0],ss[0]);
+			          for (n = 1; n <= ncols-nsetb+1; n++) {
+			        	  w[nsetb][nsetb+n] = arr[n];
+			        	  w[mval+1][nsetb+n] = arr2[n];
+			          }
+			      } // if ( (mval>=nsetb) && (mval < mrows))
+
+			  } // if (mrows > nsetb)
+
+			  if ( w[nsetb][nsetb] == 0.0 ) {
+			      ww[nsetb] = big;
+			      nsetb = nsetb - 1;
+			      if ( iprint > 0) {
+			        Preferences.debug("Pivot is zero, not used.\n");
+			      }
+
+			      do200 = true;
+			      continue loop;
+			  } // if ( w[nsetb][nsetb] == 0.0 )
+			  //
+			  //  CHECK THAT NEW VARIABLE IS MOVING IN THE RIGHT DIRECTION.
+			  //
+			  itemp = ibasis[nsetb];
+			  jcol = Math.abs(itemp);
+			  xnew = (w[nsetb][ncols+1]/w[nsetb][nsetb])/Math.abs(scl[jcol]);
+
+			  if ( itemp < 0) {
+			      if ( ww[nsetb]>= 0.0 && xnew<= 0.0 ) {
+			    	  do230 = true;
+			      }
+			      else if ( ww[nsetb]<= 0.0 && xnew>= 0.0 ) {
+			    	  do230 = true;
+			      }
+			      else {
+			    	  do240 = true;
+			      }
+			  } // if (itemp < 0)
+			  else {
+                  do240 = true;
+			  } // if (do200)
+
+			  if (do230) {
+				  do230 = false;
+			      ww[nsetb] = big;
+			      nsetb = nsetb - 1;
+			      if ( iprint > 0) {
+			          Preferences.debug("Variable has bad direction, not used.\n");
+			      }
+
+			      do200 = true;
+			      continue loop;
+			  } // if (do230)
+
+			  if (do240) {
+				  do240 = false;
+			      found = true;
+			      do90 = true;
+			      continue loop;
+			  } // if (do240)
+
+			  //
+			  //  SOLVE THE TRIANGULAR SYSTEM
+			  //
+			  if (do260) {
+		          do260 = false;
+		          for (j = 1; j <= nsetb; j++) {
+		        	  rw[j] = w[j][ncols+1];
+		          }
+
+			     for (j = nsetb; j >= 1; j--) {
+			         rw[j] = rw[j]/w[j][j];
+			         jcol = Math.abs(ibasis[j]);
+			         t = rw[j];
+			         if ((ibb[jcol] % 2) == 0) {
+			        	 rw[j] = -rw[j];
+			         }
+			         arr = new double[j];
+			         for (n = 1; n <= j; n++) {
+			        	 arr[n] = w[n][j];
+			         }
+			         daxpy(j-1,-t,arr,1,rw,1);
+			         rw[j] = rw[j]/Math.abs(scl[jcol]);
+			     } // for (j = nsetb; j >= 1; j--)
+
+			     if ( iprint > 0) {
+			         dvout(nsetb,rw,"soln. values",-4);
+			         ivout(nsetb,ibasis,"cols. used",-4);
+			     } // if (iprint > 0)
+
+			     if (lgopr == 1) {
+			    	 do290 = true;
+			     }
+			     else if (lgopr == 2) {
+			    	 do430 = true;
+			     }
+			     else {
+			    	  //
+				      //  SOLVE THE TRIANGULAR SYSTEM
+				      //
+				      lgopr = 1;
+				      do260 = true;
+				      continue loop;
+			     }
+			  } // if (do260)
+
+			  if (do290) {
+				  do290 = false;
+			      //
+			      //  SEE IF THE UNCONSTRAINED SOL. (OBTAINED BY SOLVING THE
+			      //  TRIANGULAR SYSTEM) SATISFIES THE PROBLEM BOUNDS.
+			      //
+			      alpha = 2.0;
+			      beta = 2.0;
+			      x[nsetb] = 0.0;
+
+			      for (j = 1; j <= nsetb; j++) {
+
+			          itemp = ibasis[j];
+			          jcol = Math.abs(itemp);
+			          t1 = 2.0;
+			          t2 = 2.0;
+
+			          if ( itemp < 0) {
+			              bou = 0.0;
+			          }
+			          else {
+			              bou = bl[jcol];
+			          } // else
+
+			          if ( (-bou) != big) {
+			        	  bou = bou/Math.abs(scl[jcol]);
+			          }
+			          if ( rw[j]<=bou) {
+			        	  t1 = (x[j]-bou)/ (x[j]-rw[j]);
+			          }
+			          bou = bu[jcol];
+			          if ( bou != big){
+			        	  bou = bou/Math.abs(scl[jcol]);
+			          }
+			          if ( rw[j]>=bou) {
+			        	  t2 = (bou-x[j])/ (rw[j]-x[j]);
+			          }
+			          //
+			          // IF NOT, THEN COMPUTE A STEP LENGTH SO THAT THE
+			          // VARIABLES REMAIN FEASIBLE.
+			          //
+			          if ( t1 < alpha) {
+			              alpha = t1;
+			              jdrop1 = j;
+			          } // if (t1 < alpha)
+
+			          if ( t2 < beta) {
+			              beta = t2;
+			              jdrop2 = j;
+			          } // if (t2 < beta)
+
+			      } // for (j = 1; j <= nsetb; j++)
+
+			      constr = (alpha < 2.0) || (beta < 2.0);
+			      if ( constr) {
+			    	  do310 = true;
+			      }
+			      else {
+			          //
+			          // ACCEPT THE CANDIDATE BECAUSE IT SATISFIES THE STATED BOUNDS
+			          // ON THE VARIABLES.
+			          //
+			    	  for (j = 1; j <= nsetb; j++) {
+			              x[j] = rw[j];
+			    	  }
+
+			          do60 = true;
+			          continue loop;
+			      } // else 
+			  } // if (do290)
+
+			  if (do310) {
+				  do310 = false;
+				  do330 = true;
+			      //
+			      //  TAKE A STEP THAT IS AS LARGE AS POSSIBLE WITH ALL
+			      //  VARIABLES REMAINING FEASIBLE.
+			      //
+			      for (j = 1; j <= nsetb; j++) {
+			          x[j] = x[j] + Math.min(alpha,beta)* (rw[j]-x[j]);
+			      } // for (j = 1; j <= nsetb; j++)
+
+			      if ( alpha<=beta) {
+			          jdrop2 = 0;
+			      }
+			      else {
+			          jdrop1 = 0;
+			      }
+			  } // if (do310)
+
+			  if (do330) {
+				  do330 = false;
+			      if ( jdrop1+jdrop2 > 0 && nsetb > 0) {
+			    	  do340 = true;
+			      }
+			      else {
+			    	  do60 = true;
+			    	  continue loop;
+			      }
+			  } // if (do330)
+
+			  if (do340) {
+                  do340 = false;
+			      jdrop = jdrop1 + jdrop2;
+			      itemp = ibasis[jdrop];
+			      jcol = Math.abs(itemp);
+			      if ( jdrop2 > 0) {
+			          //
+			          //  VARIABLE IS AT AN UPPER BOUND.  SUBTRACT MULTIPLE OF THIS COL.
+			          //  FROM RIGHT HAND SIDE.
+			          //
+			          t = bu[jcol];
+			          if ( itemp > 0) {
+
+			              bu[jcol] = t - bl[jcol];
+			              bl[jcol] = -t;
+			              itemp = -itemp;
+			              scl[jcol] = -scl[jcol];
+			              for (j = 1; j <= jdrop; j++) {
+			                  w[j][jdrop] = -w[j][jdrop];
+			              }
+			          } // if (itemp > 0)
+			          else {
+			              ibb[jcol] = ibb[jcol] + 1;
+			              if ((ibb[jcol] % 2) == 0) {
+			            	  t = -t;
+			              }
+			          } // else
+			          
+			      } // if (jdrop2 > 0)
+			      else {
+			    	  //
+			          //  VARIABLE IS AT A LOWER BOUND.
+			          // 
+			          if ( itemp < 0.0 ) {
+			              t = 0.0;
+			          }
+			          else {
+			              t = -bl[jcol];
+			              bu[jcol] = bu[jcol] + t;
+			              itemp = -itemp;
+			          } // else
+
+			      } // else
+
+			      arr = new double[jdrop+1];
+			      arr2 = new double[jdrop+1];
+			      for (j = 1; j <= jdrop; j++) {
+			    	  arr[j] = w[j][jdrop];
+			    	  arr2[j] = w[j][ncols+1];
+			      }
+			      daxpy(jdrop,t,arr,1,arr2,1);
+			      for (j = 1; j <= jdrop; j++) {
+			    	  w[j][ncols+1] = arr2[j];
+			      }
+			      // 
+			      //  MOVE CERTAIN COLS. LEFT TO ACHIEVE UPPER HESSENBERG FORM.
+			      // 
+			      for (j = 1; j <= jdrop; j++) {
+			    	  rw[j] = w[j][jdrop];
+			      }
+
+			      for (j = jdrop + 1; j <= nsetb; j++) {
+			          ibasis[j-1] = ibasis[j];
+			          x[j-1] = x[j];
+			          for (n = 1; n <= j; n++) {
+			        	  w[n][j-1] = w[n][j];
+			          }
+			      } // for (j = jdrop + 1; j <= nsetb; j++)
+
+			      ibasis[nsetb] = itemp;
+			      w[1][nsetb] = 0.0;
+		          for (j = jdrop+1; j <= mrows; j++) {
+		        	  w[j][nsetb] = 0.0;
+		          }
+
+			      for (j = 1; j <= jdrop; j++) {
+			    	  w[j][nsetb] = rw[j];
+			      }
+			      //
+			      //  TRANSFORM THE MATRIX FROM UPPER HESSENBERG FORM TO
+			      //  UPPER TRIANGULAR FORM.
+			      //
+			      nsetb = nsetb - 1;
+
+			      f2loop: for (i = jdrop; i <= nsetb; i++) {
+			          //
+			          //  LOOK FOR SMALL PIVOTS AND AVOID MIXING WEIGHTED AND NONWEIGHTED ROWS.
+			          // 
+			          if ( i == mval){
+			              t = 0.0;
+			              for (j = i; j <= nsetb; j++) {
+			                  jcol = Math.abs(ibasis[j]);
+			                  t1 = Math.abs(w[i][j]*scl[jcol]);
+			                  if ( t1 > t) {
+			                      jbig = j;
+			                      t = t1;
+			                  } // if (t1 > t)
+			              } // for (j = i; j <= nsetb; j++)
+			              do390 = true;
+			              break f2loop;
+			          } // if (i == mval)
+                      arr = new double[1];
+                      arr[0] = w[i][i];
+                      arr2 = new double[1];
+                      arr2[0] = w[i+1][i];
+			          drotg(arr,arr2,sc,ss);
+			          w[i][i] = arr[0];
+			          w[i+1][i] = 0.0;
+			          arr = new double[ncols-i+2];
+			          arr2 = new double[ncols-i+2];
+			          for (j = 1; j <= ncols-i+1; j++) {
+			        	  arr[j] = w[i][i+j];
+			        	  arr2[j] = w[i+1][i+j];
+			          }
+			          drot(ncols-i+1,arr,1,arr2,1,sc[0],ss[0]);
+			          for (j = 1; j <= ncols-i+1; j++) {
+			        	  w[i][i+j] = arr[j];
+			        	  w[i+1][i+j] = arr2[j];
+			          }
+			      } // for (i = jdrop; i <= nsetb; i++)
+                  if (!do390) {
+                	  do420 = true;
+                  }
+			  } // if (do340)
+
+			  if (do390) {
+				  do390 = false;
+				  do420 = true;
+			      //
+			      //  THE TRIANGULARIZATION IS COMPLETED BY GIVING UP
+			      //  THE HESSENBERG FORM AND TRIANGULARIZING A RECTANGULAR MATRIX.
+			      //
+				  for (j = 1; j <= mrows; j++) {
+					  temp = w[j][i];
+					  w[j][i] = w[j][jbig];
+					  w[j][jbig] = temp;
+				  }
+				  temp = ww[i];
+				  ww[i] = ww[jbig];
+				  ww[jbig] = temp;
+	              temp = x[i];
+	              x[i] = x[jbig];
+	              x[jbig] = temp;
+			      itemp = ibasis[i];
+			      ibasis[i] = ibasis[jbig];
+			      ibasis[jbig] = itemp;
+			      jbig = i;
+			      for (j = jbig; j <= nsetb; j++) {
+			          for (i = j + 1; i <= mrows; i++) {
+			        	  arr = new double[1];
+			        	  arr[0] = w[j][j];
+			        	  arr2 = new double[1];
+			        	  arr2[0] = w[i][j];
+			              drotg(arr,arr2,sc,ss);
+			              w[j][j] = arr[0];
+			              w[i][j] = 0.0;
+			              arr = new double[ncols-j+2];
+			              arr2 = new double[ncols-j+2];
+			              for (n = 1; n <= ncols-j+1; n++) {
+			            	  arr[n] = w[j][j+n];
+			            	  arr2[n] = w[i][j+n];
+			              }
+			              drot(ncols-j+1,arr,1,arr2,1,sc[0],ss[0]);
+			              for (n = 1; n <= ncols-j+1; n++) {
+			            	  w[j][j+n] = arr[n];
+			            	  w[i][j+n] = arr2[n];
+			              }
+			          } // for (i = j + 1; i <= mrows; i++) 
+			      } // for (j = jbig; j <= nsetb; j++)
+			  } // if (do390)
+
+			  if (do420) {
+				  do420 = false;
+			      //
+			      //  SEE IF THE REMAINING COEFFICIENTS ARE FEASIBLE.  THEY SHOULD
+			      //  BE BECAUSE OF THE WAY MIN(ALPHA,BETA) WAS CHOSEN.  ANY THAT ARE
+			      //  NOT FEASIBLE WILL BE SET TO THEIR BOUNDS AND
+			      //  APPROPRIATELY TRANSLATED.
+			      // 
+			      jdrop1 = 0;
+			      jdrop2 = 0;
+			      //
+			      // SOLVE THE TRIANGULAR SYSTEM
+			      // 
+			      lgopr = 2;
+			      do260 = true;
+			      continue loop;
+			  } // if (do420)
+
+			  if (do430) {
+				  do430 = false;
+				  for (j = 1; j <= nsetb; j++) {
+					  x[j] = rw[j];
+				  }
+
+			      f3loop: for (j = 1; j <= nsetb; j++) {
+
+			          itemp = ibasis[j];
+			          jcol = Math.abs(itemp);
+
+			          if ( itemp < 0) {
+			              bou = 0.0;
+			          }
+			          else {
+			              bou = bl[jcol];
+			          }
+
+			          if ( (-bou) != big) {
+			    	      bou = bou/Math.abs(scl[jcol]);
+			          }
+
+			          if ( x[j] <=bou){
+			              jdrop1 = j;
+			              break f3loop;
+			          } // if ( x[j] <=bou)
+
+			          bou = bu[jcol];
+
+			          if ( bou !=big ) {
+			        	  bou = bou/Math.abs(scl[jcol]);
+			          }
+
+			          if ( x[j]>=bou) {
+			              jdrop2 = j;
+			              break f3loop;
+			          } // if ( x[j]>=bou)
+
+			      } // for (j = 1; j <= nsetb; j++)
+
+			      do330 = true;
+			      continue loop;
+			  } // if (do430)
+
+			  //
+			  // INITIALIZE VARIABLES AND DATA VALUES
+			  // 
+			  if (do460) {
+			      do460 = false;
+			      //
+			      //  PRETRIANGULARIZE RECTANGULAR ARRAYS OF CERTAIN SIZES
+			      //  FOR INCREASED EFFICIENCY.
+			      // 
+			      if ( fac*minput > ncols) {
+			          for (j = 1; j <= ncols + 1; j++) {
+			              for (i = minput; i >= j + mval + 1; i--) {
+			            	  arr = new double[1];
+			            	  arr[0] = w[i-1][j];
+			            	  arr2 = new double[1];
+			            	  arr2[0] = w[i][j];
+			                  drotg(arr,arr2,sc,ss);
+			                  w[i-1][j] = arr[0];
+			                  w[i][j] = 0.0;
+			                  arr = new double[ncols-j+2];
+			                  arr2 = new double[ncols-j+2];
+			                  for (n = 1; n <= ncols-j+1; n++) {
+			                	  arr[n] = w[i-1][j+n];
+			                	  arr2[n] = w[i][j+n];
+			                  }
+			                  drot(ncols-j+1,arr,1,arr2,1,sc[0],ss[0]);
+			                  for (n = 1; n <= ncols-j+1; n++) {
+			                	  w[i-1][j+n] = arr[n];
+			                	  w[i][j+n] = arr2[n];
+			                  }
+			              } // for (i = minput; i >= j + mval + 1; i--)
+			          } // for (j = 1; j <= ncols + 1; j++)
+			          mrows = ncols + mval + 1;
+			      } // if (fac*minput > ncols)
+			      else {
+			          mrows = minput;
+			      }
+			      //
+			      //  SET THE X(*) ARRAY TO ZERO SO ALL COMPONENTS ARE DEFINED.
+			      //
+			      for (j = 1; j <= ncols; j++) {
+			          x[j] = 0.0;
+			      }
+			      //
+			      //  THE ARRAYS IBASIS(*), IBB(*) ARE INITIALIZED BY THE CALLING
+			      //  PROGRAM UNIT.
+			      //  THE COL. SCALING IS DEFINED IN THE CALLING PROGRAM UNIT.
+			      //  'BIG' IS PLUS INFINITY ON THIS MACHINE.
+			      //
+			  big = Double.MAX_VALUE;
+
+			  for (j = 1; j <= ncols; j++) {
+
+			    if ( ind[j] == 1 ) {
+			      bu[j] = big;
+			    }
+			    else if ( ind[j] == 2 ) {
+			      bl[j] = -big;
+			    }
+			    else if ( ind[j] == 3 ) {
+			    	
+			    }
+			    else if ( ind[j] == 4 ) {
+			      bl[j] = -big;
+			      bu[j] = big;
+			    }
+
+			  } // for (j = 1; j <= ncols; j++)
+
+			  for (j = 1; j <= ncols; j++) {
+
+			     if ( (bl[j]<= 0.0 && 0.0 <= bu[j] &&
+			        Math.abs(bu[j]) < Math.abs(bl[j])) || bu[j] < 0.0 ) {
+			         t = bu[j];
+			         bu[j] = -bl[j];
+			         bl[j] = -t;
+			         scl[j] = -scl[j];
+			         for (n = 1; n <= mrows; n++) {
+			             w[n][j] = -w[n][j];
+			         }
+			     }
+			     //
+			     //  INDICES IN SET T(=TIGHT) ARE DENOTED BY NEGATIVE VALUES OF IBASIS(*).
+			     //
+			     if ( bl[j]>=0.0 ) {
+			         ibasis[j] = -ibasis[j];
+			         t = -bl[j];
+			         bu[j] = bu[j] + t;
+			         arr = new double[mrows+1];
+			         arr2 = new double[mrows+1];
+			         for (n = 1; n <= mrows; n++) {
+			        	 arr[n] = w[n][j];
+			        	 arr2[n] = w[n][ncols+1];
+			         }
+			         daxpy(mrows,t,arr,1,arr2,1);
+			         for (n = 1; n <= mrows; n++) {
+			        	 w[n][ncols+1] = arr2[n];
+			         }
+			     }
+
+			  } // for (j = 1; j <= ncols; j++)
+
+			  nsetb = 0;
+			  iter = 0;
+
+			  do50 = true;
+			  continue loop;
+			  } // if (do460)
+			  //
+			  //  PROCESS OPTION ARRAY
+			  //
+			  if (do570) {
+                  do570 = false;
+                  do580 = true;
+			      if ( idope[5] == 1) {
+			          fac = x[ncols+idope[1]];
+			          wt = x[ncols+idope[2]];
+			          mval = idope[3];
+			      } // if (idope[5] == 1)
+			      else {
+			          fac = 0.0;
+			          wt = 1.0;
+			          mval = 0;
+			      }
+
+			      tolind = Math.sqrt( epsilon);
+			      tolsze = Math.sqrt( epsilon);
+			      itmax = 5 * Math.max ( minput, ncols );
+			      iprint = 0;
+			      //
+			      //  CHANGES TO SOME PARAMETERS CAN OCCUR THROUGH THE OPTION
+			      //  ARRAY, IOPT(*).  PROCESS THIS ARRAY LOOKING CAREFULLY
+			      //  FOR INPUT DATA ERRORS.
+			      //
+			      lp = 0;
+			      lds = 0;
+			  } // if (do570)
+
+			  if (do580) {
+                  do580 = false;
+			      lp = lp + lds;
+			      //
+			      //  TEST FOR NO MORE OPTIONS.
+			      //
 			  ip = iopt(lp+1)
 			  jp = abs(ip)
 			  if ( ip == 99) then
@@ -3789,11 +4050,9 @@ public abstract class DQED {
 			  end if
 
 			  do460 = true;
-	  } // loop while (true)
+			  } // if (do580)
+	  } // loop while (true)*/
 
-			  600 continue
-			  mode[0] = -nerr;
-			  return;*/
     } // dbolsm
 	
 	private void dcopy ( int n, double x[], int incx, double y[], int incy ) {
@@ -4627,6 +4886,105 @@ public abstract class DQED {
 
 	  return;
 	} // dscal
+	
+	private void dswap (int n, double x[], int incx, double y[], int incy ) {
+
+	/*****************************************************************************80
+	!
+	!! DSWAP interchanges two vectors.
+	!
+	!  Modified:
+	!
+	!    08 April 1999
+	!
+	!  Author:
+	!
+	!    Charles Lawson, Richard Hanson, David Kincaid, Fred Krogh
+	!
+	!  Reference:
+	!
+	!    Charles Lawson, Richard Hanson, David Kincaid, Fred Krogh,
+	!    Basic Linear Algebra Subprograms for Fortran Usage,
+	!    Algorithm 539,
+	!    ACM Transactions on Mathematical Software,
+	!    Volume 5, Number 3, September 1979, pages 308-323.
+	!
+	!  Parameters:
+	!
+	!    Input, integer N, the number of entries in the vectors.
+	!
+	!    Input/output, double X(*), one of the vectors to swap.
+	!
+	!    Input, integer INCX, the increment between successive entries of X.
+	!
+	!    Input/output, double Y(*), one of the vectors to swap.
+	!
+	!    Input, integer INCY, the increment between successive elements of Y.
+	*/
+
+	  int i;
+	  int ix;
+	  int iy;
+	  int m;
+	  double stemp;
+
+	  if ( n <= 0 ) {
+		  
+	  }
+	  else if ( (incx == 1) && (incy == 1) ) {
+
+	    m = ( n % 3 );
+
+	    for (i = 1; i <= m; i++) {
+	      stemp = x[i];
+	      x[i] = y[i];
+	      y[i] = stemp;
+	    } // for (i = 1; i <= m; i++)
+
+	    for (i = m+1; i <= n; i += 3) {
+
+	      stemp = x[i];
+	      x[i] = y[i];
+	      y[i] = stemp;
+
+	      stemp = x[i + 1];
+	      x[i + 1] = y[i + 1];
+	      y[i + 1] = stemp;
+
+	      stemp = x[i + 2];
+	      x[i + 2] = y[i + 2];
+	      y[i + 2] = stemp;
+
+	    } // for (i = m+1; i <= n; i += 3)
+	  } // else if ( (incx == 1) && (incy == 1) )
+	  else {
+
+	    if ( incx >= 0 ) {
+	      ix = 1;
+	    }
+	    else {
+	      ix = ( - n + 1 ) * incx + 1;
+	    }
+
+	    if ( incy >= 0 ) {
+	      iy = 1;
+	    }
+	    else {
+	      iy = ( - n + 1 ) * incy + 1;
+	    }
+
+	    for (i = 1; i <= n; i++) {
+	      stemp = x[ix];
+	      x[ix] = y[iy];
+	      y[iy] = stemp;
+	      ix = ix + incx;
+	      iy = iy + incy;
+	    } // for (i = 1; i <= n; i++)
+
+	  } // else
+
+	  return;
+	} // dswap
 	
 	private void dvout (int n, double dx[], String ifmt, int idigit ) {
 
