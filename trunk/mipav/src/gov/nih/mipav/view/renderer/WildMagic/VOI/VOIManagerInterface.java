@@ -1031,6 +1031,26 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      */
     public void disposeLocal(boolean flag)
     {
+        
+        if ( m_kImageA != null && m_kImageA.getVOIs() != null )
+        {
+            VOIVector kVOIs = m_kImageA.getVOIs();
+            kVOIs.removeVectorListener(this);
+            for ( int i = 0; i < kVOIs.size(); i++ )
+            {
+                kVOIs.elementAt(i).removeVOIListener(this);
+            }
+        }
+        if ( m_kImageB != null && m_kImageB.getVOIs() != null )
+        {
+            VOIVector kVOIs = m_kImageB.getVOIs();
+            kVOIs.removeVectorListener(this);
+            for ( int i = 0; i < kVOIs.size(); i++ )
+            {
+                kVOIs.elementAt(i).removeVOIListener(this);
+            }
+        }
+        
         if (popup != null) {
             popup = null;
         }
@@ -3149,6 +3169,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
                 for (j = 0; j < VOIs.length; j++) {
                     currentImage.registerVOI(VOIs[j]);
+                    VOIs[j].getGeometricCenter();
                     VOIs[j].addVOIListener(this);
                 }
             }
@@ -3223,6 +3244,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             }
             for ( int i = 0; i < newVOIs.length; i++ )
             {
+                newVOIs[i].getGeometricCenter();
                 newVOIs[i].addVOIListener(this);
             }
         } catch (final OutOfMemoryError error) {
@@ -4649,6 +4671,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     @Override
     public void addedCurve(VOIEvent added) {
+        added.getBase().getGeometricCenter();
         if ( m_kVOIDialog != null )
         {
             m_kVOIDialog.updateVOI( added.getVOI(), getActiveImage() );
