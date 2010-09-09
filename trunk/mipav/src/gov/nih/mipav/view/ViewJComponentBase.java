@@ -859,6 +859,12 @@ public abstract class ViewJComponentBase extends JComponent {
                                   int slice, ViewJFrameBase frame,
                                   boolean b2D )
     {
+        if ( paintBitmap.cardinality() <= 0 )
+        {
+            // Nothing to paint...
+            return;
+        }
+        
         // get the color of the paint the user has selected
         int color = getSelectedPaintColor( frame );
         float opacity = 0.3f;

@@ -770,8 +770,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             triImageFrame.setIntensityPaintName(intensityDropper);
             return;
         }
-
-        frame.updateImages();
+        repaint();
     }
 
     /**
@@ -939,7 +938,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             imageActive.notifyImageDisplayListeners(null, true);
         } // end of else if (mode == DROPPER_PAINT)
 
-        frame.updateImages();
+        //frame.updateImages();
 
         return;
     }
@@ -1557,8 +1556,14 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      */
     protected void makePaintImage(final int[] paintImageBuffer, final BitSet paintBitmap, final int slice,
             final ViewJFrameBase frame, final boolean b2D) {
+        
+        if ( paintBitmap.cardinality() <= 0 )
+        {
+            // Nothing to paint...
+            return;
+        }
+        
         // get the color of the paint the user has selected
-
         int color = getSelectedPaintColor(frame);
         final float opacity = frame.getControls().getTools().getOpacity();
         int opacityInt = (int) (opacity * 255);

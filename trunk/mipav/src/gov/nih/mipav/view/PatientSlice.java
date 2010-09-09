@@ -598,8 +598,7 @@ public class PatientSlice {
         if ((!m_bUpdateImage && !forceShow) || (imageA == null)) {
             return false;
         }
-        // System.err.println( "PatientSlice: " + orientation + " " + slice + " " + m_bUpdateImage + " " + forceShow + "
-        // " + bBlend);
+        //System.err.println( "PatientSlice: " + orientation + " " + slice + " " + m_bUpdateImage + " " + forceShow + " " + bBlend);
 
         timeSliceA = (imageA.getNDims() < 4) ? 0 : tSlice;
 
