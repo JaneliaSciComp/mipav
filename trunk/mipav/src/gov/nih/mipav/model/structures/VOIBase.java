@@ -895,8 +895,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
             //
             // fillZ is the original 'fill' algorithm from 4.1.1 it is slow....
             //
-            fillZ((int)elementAt(0).Z, 
-                    kMask, xDim, yDim, XOR, polarity );
+            //fillZ((int)elementAt(0).Z, 
+             //       kMask, xDim, yDim, XOR, polarity );
             
             //System.out.println("fillZ " +(System.currentTimeMillis() - time));
             
@@ -906,7 +906,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             
             // This is the faster 'scan-conversion' fill technique:
             //time = System.currentTimeMillis();                        
-            /*
+            
             int iXMin = (int)(m_akImageMinMax[0].X);
             int iXMax = (int)(m_akImageMinMax[1].X);
 
@@ -918,7 +918,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             outlineRegion(aafCrossingPoints, aiNumCrossings, iXMin, iXMax);
             fill(aafCrossingPoints, aiNumCrossings, iXMin, iXMax, (int)elementAt(0).Z, 
                     kMask, xDim, yDim, XOR, polarity );
-                    */
+                    
             //System.out.println(getGroup().getName() + getLabel() + " outlineRegion/fill " +(System.currentTimeMillis() - time));
             
         }
@@ -2521,7 +2521,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
                 {                   
                     int zStart = (int)Math.floor(aaiCrossingPoints[iIndex][i]);
                     int zEnd = (int)Math.ceil(aaiCrossingPoints[iIndex][i+1]);
-                    for ( int iZ = zStart-3; iZ <= zEnd+3; iZ++ )
+                    for ( int iZ = zStart; iZ < zEnd; iZ++ )
+                        //for ( int iZ = zStart-3; iZ <= zEnd+3; iZ++ )
                     {              
                         if ( (iX >= 0) && (iY >= 0) && (iZ >= 0) )
                         {
@@ -2530,7 +2531,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
                             iMaskIndex += iX;
                             if ( !kMask.get(iMaskIndex) )
                             {
-                                if ( containsX(iY,iZ) )
+                                //if ( containsX(iY,iZ) )
                                 {         
                                     kMask.set(iMaskIndex);            
                                     Vector3f kPos = new Vector3f(iX, iY, iZ); 
@@ -2679,7 +2680,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
                 {
                     int zStart = Math.round(aaiCrossingPoints[iIndex][i]);
                     int zEnd = Math.round(aaiCrossingPoints[iIndex][i+1]);
-                    for ( int iZ = zStart-3; iZ < zEnd+3; iZ++ )
+                    for ( int iZ = zStart; iZ < zEnd; iZ++ )
+                        //for ( int iZ = zStart-3; iZ < zEnd+3; iZ++ )
                     {
                         if ( (iX >= 0) && (iY >= 0) && (iZ >= 0) )
                         {
@@ -2688,7 +2690,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
                             iMaskIndex += iX;
                             if ( !kMask.get(iMaskIndex) )
                             {
-                                if ( containsY(iX,iZ) )
+                                //if ( containsY(iX,iZ) )
                                 {         
                                     kMask.set(iMaskIndex);            
                                     Vector3f kPos = new Vector3f(iX, iY, iZ);                       
