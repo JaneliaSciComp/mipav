@@ -5621,9 +5621,16 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#setModified()
      */
     public void setModified() {
-        updateImages();
-        getActiveImage().notifyImageDisplayListeners();
-        //System.err.println( "setModified" );
+        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+
+            if (triImage[i] != null) {
+                triImage[i].paintComponent(triImage[i].getGraphics());
+            }
+        }
+        final ViewControlsImage myControls = getControls();
+        if (myControls != null) {
+            myControls.repaint();
+        }
     }
 
     /* (non-Javadoc)

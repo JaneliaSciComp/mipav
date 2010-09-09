@@ -51,6 +51,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+//import com.mentorgen.tools.profile.runtime.Profile;
 
 /**
  * VOIManager class performs all direct user-manipulation of VOIs. The VOIManager is a MouseListener and
@@ -1110,6 +1111,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             return;
         }
         if (m_bLeftMousePressed) {
+            //-javaagent:E:\MagicConsulting\mipav\src\lib\profile.jar
+            // -Dprofile.properties=E:\MagicConsulting\mipav\src\lib\profile.properties
+            //Profile.clear();
+            //Profile.start();
             if ( kEvent.isAltDown() && m_kCurrentVOI != null )
             {
                 retraceContour( m_kCurrentVOI, kEvent.getX(), kEvent.getY() );
@@ -1118,6 +1123,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             {
                 processLeftMouseDrag(kEvent);
             }
+            //Profile.stop();
+            //Profile.setFileName( "profile_out_drag2" );
+            //Profile.shutdown();
         }
     }
 
@@ -4524,6 +4532,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
             }
 
             kVOI.setActive(true);
+            m_kParent.updateDisplay( );
 
         } catch (OutOfMemoryError error) {
             System.gc();
