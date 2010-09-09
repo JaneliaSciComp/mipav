@@ -5175,6 +5175,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
     private void showSelectedVOI( int iX, int iY )
     {
+        VOIVector kVOIs = m_kImageActive.getVOIs();
+        if ( kVOIs == null || kVOIs.size() <= 0 )
+        {
+            return;
+        }
         m_kComponent.removeMouseListener(m_kPopupPt);
         m_kComponent.removeMouseListener(m_kPopupVOI);
         Vector3f kVolumePt = new Vector3f();
@@ -5221,7 +5226,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 return;
             }
         }
-        VOIVector kVOIs = m_kImageActive.getVOIs();
         for ( int i = kVOIs.size()-1; i >=0; i-- )
         {
             VOI kVOI = kVOIs.elementAt(i);

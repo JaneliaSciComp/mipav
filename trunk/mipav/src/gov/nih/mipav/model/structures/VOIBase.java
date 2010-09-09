@@ -895,8 +895,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
             //
             // fillZ is the original 'fill' algorithm from 4.1.1 it is slow....
             //
-            //fillZ((int)elementAt(0).Z, 
-             //       kMask, xDim, yDim, XOR, polarity );
+            fillZ((int)elementAt(0).Z, 
+                    kMask, xDim, yDim, XOR, polarity );
             
             //System.out.println("fillZ " +(System.currentTimeMillis() - time));
             
@@ -906,7 +906,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             
             // This is the faster 'scan-conversion' fill technique:
             //time = System.currentTimeMillis();                        
-            
+            /*
             int iXMin = (int)(m_akImageMinMax[0].X);
             int iXMax = (int)(m_akImageMinMax[1].X);
 
@@ -918,7 +918,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             outlineRegion(aafCrossingPoints, aiNumCrossings, iXMin, iXMax);
             fill(aafCrossingPoints, aiNumCrossings, iXMin, iXMax, (int)elementAt(0).Z, 
                     kMask, xDim, yDim, XOR, polarity );
-                    
+                 */
             //System.out.println(getGroup().getName() + getLabel() + " outlineRegion/fill " +(System.currentTimeMillis() - time));
             
         }
@@ -1311,13 +1311,13 @@ public abstract class VOIBase extends Vector<Vector3f> {
      */
     public Vector3f getGeometricCenter() {
 
-        //long time = System.currentTimeMillis();
         if ( !m_bUpdateGeometricCenter )
         {
             return new Vector3f(gcPt);
         }  
         //Profile.clear();
         //Profile.start();
+        //long time = System.currentTimeMillis();
         //System.out.println("getGeometricCenter " + getGroup().getName() + getLabel() );
         getMask();
         m_bUpdateGeometricCenter = false;
@@ -2104,8 +2104,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
     
     private boolean containsZ(int x, int y)
     {
-        float fx = x;// + 0.49f; // Matt add doc !!!
-        float fy = y;// + 0.49f;
+        float fx = x + 0.49f; // Matt add doc !!!
+        float fy = y + 0.49f;
 
         boolean isInside = false;
         int j = size()-1;
@@ -2133,8 +2133,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
     
     private boolean containsX(int y, int z)
     {
-        float fy = y;// + 0.49f; // Matt add doc !!!
-        float fz = z;// + 0.49f;
+        float fy = y + 0.49f; // Matt add doc !!!
+        float fz = z + 0.49f;
 
         boolean isInside = false;
         int j = size()-1;
@@ -2156,8 +2156,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
     
     private boolean containsY(int x, int z)
     {
-        float fx = x;// + 0.49f; // Matt add doc !!!
-        float fz = z;// + 0.49f;
+        float fx = x + 0.49f; // Matt add doc !!!
+        float fz = z + 0.49f;
 
         boolean isInside = false;
         int j = size()-1;
@@ -2352,8 +2352,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
             {
                 for ( int i = 0; i < aiNumCrossings[iIndex]; i+= 2 )
                 {
-                    int yStart = (int)Math.floor(aaiCrossingPoints[iIndex][i]);
-                    int yEnd = (int)Math.ceil(aaiCrossingPoints[iIndex][i+1]);
+                    int yStart = Math.round(aaiCrossingPoints[iIndex][i]);
+                    int yEnd = Math.round(aaiCrossingPoints[iIndex][i+1]);
                     // This is the straight scan-conversion technique:
                     for ( int iY = yStart; iY < yEnd; iY++ )
                         // I modified the above loop because it was missing pixels:
@@ -2508,7 +2508,6 @@ public abstract class VOIBase extends Vector<Vector3f> {
             int iYMin, int iYMax, int iZMax, int iX, 
             BitSet kMask, int xDim, int yDim, boolean XOR, int polarity )
     {
-        //System.err.println( "fillX" );
         m_kMaskPositions.clear();
         m_kPositionSum.Set(0,0,0);
         gcPt.Set(0,0,0);        
@@ -2519,10 +2518,9 @@ public abstract class VOIBase extends Vector<Vector3f> {
             {
                 for ( int i = 0; i < aiNumCrossings[iIndex]; i+= 2 )
                 {                   
-                    int zStart = (int)Math.floor(aaiCrossingPoints[iIndex][i]);
-                    int zEnd = (int)Math.ceil(aaiCrossingPoints[iIndex][i+1]);
+                    int zStart = Math.round(aaiCrossingPoints[iIndex][i]);
+                    int zEnd = Math.round(aaiCrossingPoints[iIndex][i+1]);
                     for ( int iZ = zStart; iZ < zEnd; iZ++ )
-                        //for ( int iZ = zStart-3; iZ <= zEnd+3; iZ++ )
                     {              
                         if ( (iX >= 0) && (iY >= 0) && (iZ >= 0) )
                         {
@@ -2531,13 +2529,10 @@ public abstract class VOIBase extends Vector<Vector3f> {
                             iMaskIndex += iX;
                             if ( !kMask.get(iMaskIndex) )
                             {
-                                //if ( containsX(iY,iZ) )
-                                {         
-                                    kMask.set(iMaskIndex);            
-                                    Vector3f kPos = new Vector3f(iX, iY, iZ); 
-                                    m_kMaskPositions.add(kPos);
-                                    m_kPositionSum.Add(kPos);
-                                }              
+                                kMask.set(iMaskIndex);            
+                                Vector3f kPos = new Vector3f(iX, iY, iZ); 
+                                m_kMaskPositions.add(kPos);
+                                m_kPositionSum.Add(kPos);
                             }
                         }
                     }
@@ -2681,7 +2676,6 @@ public abstract class VOIBase extends Vector<Vector3f> {
                     int zStart = Math.round(aaiCrossingPoints[iIndex][i]);
                     int zEnd = Math.round(aaiCrossingPoints[iIndex][i+1]);
                     for ( int iZ = zStart; iZ < zEnd; iZ++ )
-                        //for ( int iZ = zStart-3; iZ < zEnd+3; iZ++ )
                     {
                         if ( (iX >= 0) && (iY >= 0) && (iZ >= 0) )
                         {
@@ -2690,13 +2684,10 @@ public abstract class VOIBase extends Vector<Vector3f> {
                             iMaskIndex += iX;
                             if ( !kMask.get(iMaskIndex) )
                             {
-                                //if ( containsY(iX,iZ) )
-                                {         
-                                    kMask.set(iMaskIndex);            
-                                    Vector3f kPos = new Vector3f(iX, iY, iZ);                       
-                                    m_kMaskPositions.add(kPos);
-                                    m_kPositionSum.Add(kPos);
-                                }
+                                kMask.set(iMaskIndex);            
+                                Vector3f kPos = new Vector3f(iX, iY, iZ);                       
+                                m_kMaskPositions.add(kPos);
+                                m_kPositionSum.Add(kPos);
                             }
                         }
                     }
@@ -2871,7 +2862,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
     private void outlineRegion(float[][] aaiCrossingPoints, int[] aiNumCrossings, int iXMin, int iXMax)
     {        
         int iNumPts = size();
-        double dNudge = 0.1;       
+        double dNudge = 0.001;       
         double[][][] aaadEdgeList = new double[iNumPts][2][2];
 
         for (int i = 0; i < (iNumPts - 1); i++) {
@@ -2914,8 +2905,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
                     double dM = (dDX == 0) ? 0 : (dDY / dDX);
                     double dB = (dDX == 0) ? 0 : (((dX1 * dY0) - (dY1 * dX0)) / dDX);
 
-                    double dYCross = (dM * iColumn) + dB;
-                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (float) Math.round(dYCross);
+                    double dYCross = (dM * (iColumn + 0.5)) + dB;
+                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (float)(dYCross);
                     aiNumCrossings[iIndex]++;
                 }
             }
@@ -2938,19 +2929,19 @@ public abstract class VOIBase extends Vector<Vector3f> {
     private void outlineRegion_X(float[][] aaiCrossingPoints, int[] aiNumCrossings, int iYMin, int iYMax)
     {        
         int iNumPts = size();
-        double dNudge = 0.1;       
+        double dNudge = 0.001;       
         double[][][] aaadEdgeList = new double[iNumPts][2][2];
 
         for (int i = 0; i < (iNumPts - 1); i++) {
             aaadEdgeList[i][0][0] = elementAt(i).Y - dNudge;
-            aaadEdgeList[i][0][1] = elementAt(i).Z + dNudge;
+            aaadEdgeList[i][0][1] = elementAt(i).Z - dNudge;
             aaadEdgeList[i][1][0] = elementAt(i+1).Y - dNudge;
-            aaadEdgeList[i][1][1] = elementAt(i+1).Z + dNudge;
+            aaadEdgeList[i][1][1] = elementAt(i+1).Z - dNudge;
         }
         aaadEdgeList[iNumPts-1][0][0] = lastElement().Y - dNudge;
-        aaadEdgeList[iNumPts-1][0][1] = lastElement().Z + dNudge;
+        aaadEdgeList[iNumPts-1][0][1] = lastElement().Z - dNudge;
         aaadEdgeList[iNumPts-1][1][0] = firstElement().Y - dNudge;
-        aaadEdgeList[iNumPts-1][1][1] = firstElement().Z + dNudge;
+        aaadEdgeList[iNumPts-1][1][1] = firstElement().Z - dNudge;
         iNumPts++;
 
         /*
@@ -2981,8 +2972,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
                     double dM = (dDY == 0) ? 0 : (dDZ / dDY);
                     double dB = (dDY == 0) ? 0 : (((dY1 * dZ0) - (dZ1 * dY0)) / dDY);
 
-                    double dZCross = (dM * iColumn) + dB;
-                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (float)Math.round(dZCross);
+                    double dZCross = (dM * (iColumn + 0.5)) + dB;
+                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (float)(dZCross);
                     aiNumCrossings[iIndex]++;
                 }
             }
@@ -3006,14 +2997,14 @@ public abstract class VOIBase extends Vector<Vector3f> {
     private void outlineRegion_Y(float[][] aaiCrossingPoints, int[] aiNumCrossings, int iXMin, int iXMax)
     {        
         int iNumPts = size();
-        double dNudge = 0.1;       
+        double dNudge = 0.001;       
         double[][][] aaadEdgeList = new double[iNumPts][2][2];
 
         for (int i = 0; i < (iNumPts - 1); i++) {
             aaadEdgeList[i][0][0] = elementAt(i).X - dNudge;
             aaadEdgeList[i][0][1] = elementAt(i).Z - dNudge;
             aaadEdgeList[i][1][0] = elementAt(i+1).X - dNudge;
-            aaadEdgeList[i][1][1] = elementAt(i+1).Z + dNudge;
+            aaadEdgeList[i][1][1] = elementAt(i+1).Z - dNudge;
         }
         aaadEdgeList[iNumPts-1][0][0] = lastElement().X - dNudge;
         aaadEdgeList[iNumPts-1][0][1] = lastElement().Z - dNudge;
@@ -3049,8 +3040,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
                     double dM = (dDX == 0) ? 0 : (dDY / dDX);
                     double dB = (dDX == 0) ? 0 : (((dX1 * dY0) - (dY1 * dX0)) / dDX);
 
-                    double dYCross = (dM * iColumn) + dB;
-                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (float)Math.round(dYCross);
+                    double dYCross = (dM * (iColumn + 0.5)) + dB;
+                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (float)(dYCross);
                     aiNumCrossings[iIndex]++;
                 }
             }
