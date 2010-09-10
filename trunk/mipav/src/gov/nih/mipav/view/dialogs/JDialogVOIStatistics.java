@@ -1032,7 +1032,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         for (int i = 0; i < selectedList.getModel().getSize(); i++) {
 
             try {
-                System.out.println( ((VOI) selectedList.getModel().getElementAt(i)).getName());
+                //System.out.println( ((VOI) selectedList.getModel().getElementAt(i)).getName());
                 ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnore(outputOptionsPanel.getMaximumExclude()
                         .floatValue());
             } catch (final NullPointerException noMax) {
@@ -1040,7 +1040,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             }
 
             try {
-                System.out.println( ((VOI) selectedList.getModel().getElementAt(i)).getName());
+                //System.out.println( ((VOI) selectedList.getModel().getElementAt(i)).getName());
                 ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnore(outputOptionsPanel.getMinimumExclude()
                         .floatValue());
             } catch (final NullPointerException noMax) {

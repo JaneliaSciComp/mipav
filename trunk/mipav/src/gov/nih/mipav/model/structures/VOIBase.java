@@ -20,8 +20,6 @@ import WildMagic.LibFoundation.Mathematics.Segment3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
-import com.mentorgen.tools.profile.runtime.Profile;
-
 /**
  * Base which holds the functions common to both Contour, Line and Point type VOI. Abstract class.
  *

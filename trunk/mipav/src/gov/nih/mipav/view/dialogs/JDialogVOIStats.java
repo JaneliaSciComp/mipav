@@ -423,7 +423,6 @@ public class JDialogVOIStats extends JDialogBase
             //only calculate these if appropriate box is checked for speed.
             algoVOI.setDistanceFlag(listPanel.getSelectedList(VOIStatisticList.largestDistanceDescription));
             algoVOI.setSliceDistanceFlag(listPanel.getSelectedList(VOIStatisticList.largestSliceDistanceDescription));
-            
             createProgressBar(image.getImageName(), algoVOI);
             
             if (isRunInSeparateThread()) {

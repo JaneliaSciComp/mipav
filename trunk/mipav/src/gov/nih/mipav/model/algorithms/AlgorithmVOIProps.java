@@ -744,7 +744,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 calcStatsTotal( calcSelectedVOI, statProperty, fileInfo, unit2DStr, unit3DStr, ignoreMin, ignoreMax, largestDistance );
             }
 
-            System.out.println("Time required to calculate "+calcSelectedVOI.getName()+": "+(System.currentTimeMillis() - time));
+            //System.out.println("Time required to calculate "+calcSelectedVOI.getName()+": "+(System.currentTimeMillis() - time));
         }
 
 
@@ -982,7 +982,6 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 stats.Ecc = tmpEcc[0];
                 stats.MajorAxis = tmpMajorAxis[0];
                 stats.MinorAxis = tmpMinorAxis[0];
-System.out.println("HERE");
 
                 statProperty.setProperty(VOIStatisticList.axisDescription + end, nf.format(stats.PAxis));
                 statProperty.setProperty(VOIStatisticList.eccentricityDescription + end, nf.format(stats.Ecc));
@@ -1598,7 +1597,6 @@ System.out.println("HERE");
                 stats.Ecc = tmpEcc[0];
                 stats.MajorAxis = tmpMajorAxis[0];
                 stats.MinorAxis = tmpMinorAxis[0];
-                System.out.println("HERE2");
                 
                 statProperty.setProperty(VOIStatisticList.axisDescription, nf.format(stats.PAxis));
                 statProperty.setProperty(VOIStatisticList.eccentricityDescription, nf.format(stats.Ecc));
@@ -2657,11 +2655,16 @@ System.out.println("HERE");
     public void runAlgorithm() {
         int threadsCreated = 0;
         try {
-
             // stats for 2D images are by defined to work only on the VOIs in the slice
             // find the VOI to calculate for (need not be active!!)
             // System.out.println("algoVOIprops n VOIs = " + selectedVOIset.size());
             for (int i = 0; i < selectedVOIset.size(); i++) {
+            	if(selectedVOIset.size() == 1) {
+            		fireProgressStateChanged(50);
+            	}else {
+            		fireProgressStateChanged((int)((i+1)/selectedVOIset.size()*100));
+            	}
+            	
                 activeVOI = selectedVOIset.elementAt(i);
                 if (!doOnlyActiveContours) {
                     activeVOI.setAllActive(false);
