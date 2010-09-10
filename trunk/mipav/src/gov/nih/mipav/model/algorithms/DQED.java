@@ -2763,9 +2763,9 @@ public abstract class DQED {
 			!     WITH BOUNDS ON SELECTED X VALUES.
 			*/
 
-			  double alpha;
-			  double beta;
-			  double big;
+			  double alpha = 0.0;
+			  double beta = 0.0;
+			  double big = Double.MAX_VALUE;
 			  //double bl(ncols)
 			  double bou;
 			  //double bu(ncols)
@@ -2776,49 +2776,49 @@ public abstract class DQED {
 			  double colabv;
 			  double colblo;
 			  boolean constr;
-			  double fac;
-			  boolean found;
-			  int i;
+			  double fac = 0.0;
+			  boolean found = false;
+			  int i = 0;
 			  int icase;
-			  int idum;
-			  int igopr;
+			  int idum = 0;
+			  int igopr = 0;
 			  //int ind(ncols)
 			  int ioff;
 			  int ip;
-			  int iprint;
+			  int iprint = 0;
 			  int itemp;
-			  int iter;
-			  int itmax;
+			  int iter = 0;
+			  int itmax = 0;
 			  int j;
-			  int jbig;
+			  int jbig = 0;
 			  int jcol;
 			  int jdrop;
-			  int jdrop1;
-			  int jdrop2;
+			  int jdrop1 = 0;
+			  int jdrop2 = 0;
 			  int jp;
-			  int lds;
+			  int lds = 0;
 			  int level;
-			  int lgopr;
-			  int lp;
-			  int mrows;
-			  int mval;
+			  int lgopr = 0;
+			  int lp = 0;
+			  int mrows = 0;
+			  int mval = 0;
 			  int n;
-			  int nerr;
+			  int nerr = 0;
 			  int nlevel;
-			  int nsetb;
-			  double rdum;
+			  int nsetb = 0;
+			  double rdum = 0.0;
 			  double sc[] = new double[1];
 			  double ss[] = new double[1];
 			  double t;
 			  double t1;
 			  double t2;
-			  double tolind;
+			  double tolind = 0.0;
 			  double tolsze;
 			  //double w(mdw,*)
 			  double wlarge;
-			  double wla;
-			  double wlb;
-			  double wt;
+			  double wla = 0.0;
+			  double wlb = 0.0;
+			  double wt = 1.0;
 			  double xnew;
 			  boolean do50 = false;
 			  boolean do60 = false;
@@ -2849,7 +2849,7 @@ public abstract class DQED {
 			//
 			  //inext[idum] = Math.min(idum+1,mrows);
 
-			  /*level = 1;
+			  level = 1;
 			//
 			//  VERIFY THAT THE PROBLEM DIMENSIONS ARE DEFINED PROPERLY.
 			//
@@ -3341,6 +3341,7 @@ public abstract class DQED {
 			  } // if (itemp < 0)
 			  else {
                   do240 = true;
+			  } // else
 			  } // if (do200)
 
 			  if (do230) {
@@ -3885,173 +3886,181 @@ public abstract class DQED {
 			      //
 			      //  TEST FOR NO MORE OPTIONS.
 			      //
-			  ip = iopt(lp+1)
-			  jp = abs(ip)
-			  if ( ip == 99) then
-			      do460 = true;
-			  else if ( jp == 99) then
-			      lds = 1
-			      go to 580
-			  else if ( jp == 1) then
-			!
-			!  MOVE THE IOPT(*) PROCESSING POINTER.
-			!
-			      if ( ip > 0) then
-			          lp = iopt(lp+2) - 1
-			          lds = 0
-			      else
-			          lds = 2
-			      end if
+			      ip = iopt[lp+1];
+			      jp = Math.abs(ip);
+			      if ( ip == 99) {
+			          do460 = true;
+			          continue loop;
+			      }
+			      else if ( jp == 99) {
+			          lds = 1;
+			          do580 = true;
+			          continue loop;
+			      }
+			      else if ( jp == 1) {
+			          //
+			          //  MOVE THE IOPT(*) PROCESSING POINTER.
+			          //
+			          if ( ip > 0) {
+			              lp = iopt[lp+2] - 1;
+			              lds = 0;
+			          }
+			          else {
+			              lds = 2;
+			          }
 
-			      go to 580
+			          do580 = true;
+			          continue loop;
+			      } // else if (jp == 1)
+			      else if ( jp == 2) {
+			          //
+			          //  CHANGE TOLERANCE FOR RANK DETERMINATION.
+			          //
+			          if (ip > 0) {
+			              ioff = iopt[lp+2];
+			              if ( ioff<=0) {
+			                  nerr = 24;
+			                  xerrwv("dbolsm(). the offset=(i1) beyond postion\nncols=(i2) must be positive for option number 2.",
+			                         nerr,level,2,ioff,ncols,0,rdum,rdum);
+			                  mode[0] = -nerr;
+			                  return;
+			              } // if (ioff <= 0)
 
-			  else if ( jp == 2) then
-			!
-			!  CHANGE TOLERANCE FOR RANK DETERMINATION.
-			!
-			      if ( ip > 0) then
-			          ioff = iopt(lp+2)
-			          if ( ioff<=0) then
-			              nerr = 24
-			              call xerrwv('dbolsm(). the offset=(i1) beyond postion ' // &
-			                'ncols=(i2) must be positive for option number 2.', &
-			                nerr,level,2,ioff,ncols,0,rdum,rdum)
-			              mode[0] = -nerr;
-			              return;
-			          end if
+			              tolind = x[ncols+ioff];
+			              if (tolind < epsilon) {
+			                  nerr = 25;
+			                  nlevel = 0;
+			                  xerrwv("dbolsm(). the tolerance for rank\ndetermination=(r1) is less than machine precision=(r2).",
+			                         nerr,nlevel,0,idum,idum,2,tolind, epsilon);
+			              } // if (tolind < epsilon)
+			          } // if (ip > 0)
 
-			          tolind = x(ncols+ioff)
-			          if ( tolind < epsilon ( tolind ) ) then
-			              nerr = 25
-			              nlevel = 0
-			              call xerrwv( 'dbolsm(). the tolerance for rank ' // &
-			                'determination=(r1) is less than machine precision=(r2).', &
-			                nerr,nlevel,0,idum,idum,2,tolind, epsilon ( tolind ) )
-			          end if
-			      end if
+			          lds = 2;
+			          do580 = true;
+			          continue loop;
+			      } // else if (jp == 2)
+			      else if ( jp == 3) {
+			          //
+			          //  CHANGE BLOWUP FACTOR FOR ALLOWING VARIABLES TO BECOME INACTIVE.
+			          //
+			          if ( ip > 0) {
+			              ioff = iopt[lp+2];
+			              if ( ioff<=0) {
+			                  nerr = 26;
+			                  xerrwv("dbolsm(). the offset=(i1) beyond position\nncols=(i2) must be postive for option number 3.",
+			                         nerr,level,2,ioff,ncols,0,rdum,rdum);
+			                  mode[0] = -nerr;
+					          return;
+			              } // if (ioff <= 0)
 
-			      lds = 2
-			      go to 580
+			              tolsze = x[ncols+ioff];
+			              if ( tolsze<= 0.0 ) {
+			                  nerr = 27;
+			                  xerrwv("dbolsm(). the reciprocal of the blow-up factor\nfor rejecting variables must be positive. now=(r1).",
+			                         nerr,level,0,idum,idum,1,tolsze,rdum);
+			                  mode[0] = -nerr;
+					          return;
+			              } // if (tolsze <= 0.0)
+			          } // if (ip > 0)
 
-			  else if ( jp == 3) then
-			!
-			!  CHANGE BLOWUP FACTOR FOR ALLOWING VARIABLES TO BECOME INACTIVE.
-			!
-			      if ( ip > 0) then
-			          ioff = iopt(lp+2)
-			          if ( ioff<=0) then
-			              nerr = 26
-			              call xerrwv( 'dbolsm(). the offset=(i1) beyond position ' // &
-			                'ncols=(i2) must be postive for option number 3.', &
-			                nerr,level,2,ioff,ncols,0,rdum,rdum)
+			          lds = 2;
+			          do580 = true;
+			          continue loop;
+			      } // else if (jp == 3)
+			      else if ( jp == 4) {
+			          //
+			          //  Change the maximum number of iterations allowed.
+			          //
+			          if ( ip > 0) {
+			              itmax = iopt[lp+2];
+			              if ( itmax<=0) {
+			                  nerr = 28;
+			                  xerrwv("dbolsm(). the maximum number of iterations=(i1) must be positive.",
+			                		  nerr,level,1,itmax,idum,0,rdum,rdum);
+			                  mode[0] = -nerr;
+					          return;
+			              } // if (itmax <= 0)
+			          } // if (ip > 0)
+
+			          lds = 2;
+			          do580 = true;
+			          continue loop;
+			      } // else if (jp == 4)
+			      else if ( jp == 5) {
+			          //
+			          //  CHANGE THE FACTOR FOR PRETRIANGULARIZING THE DATA MATRIX.
+			          //
+			          if ( ip > 0) {
+			              ioff = iopt[lp+2];
+			              if ( ioff<=0) {
+			                  nerr = 29;
+			                  xerrwv("dbolsm(). the offset=(i1) beyond position\nncols=(i2) must be postive for option number 5.",
+			                         nerr,level,2,ioff,ncols,0,rdum,rdum);
+			                  mode[0] = -nerr;
+					          return;
+			              } // if (ioff <= 0)
+
+			              fac = x[ncols+ioff];
+			              if ( fac < 0.0 ) {
+			                  nerr = 30;
+			                  nlevel = 0;
+			                  xerrwv("dbolsm(). the factor (ncols/mrows) where pre-triangularizing is performed must be nonnegative.\nnow=(r1).",
+			                		  nerr,nlevel,0,idum,idum,1,fac,rdum);
+			                  mode[0] = -nerr;
+					          return;
+			              } // if (fac < 0.0)
+			          } // if (ip > 0)
+
+			          lds = 2;
+			          do580 = true;
+			          continue loop;
+			      } // else if (jp == 5)
+			      else if ( jp == 6) {
+			          // 
+			          //  CHANGE THE WEIGHTING FACTOR (FROM ONE) TO APPLY TO COMPONENTS
+			          //  NUMBERED .GT. MVAL (INITIALLY SET TO 1.)  THIS TRICK IS NEEDED
+			          //  FOR APPLICATIONS OF THIS SUBPROGRAM TO THE HEAVILY WEIGHTED
+			          //  LEAST SQUARES PROBLEM THAT COME FROM EQUALITY CONSTRAINTS.
+			          //
+			          if ( ip > 0) {
+			              ioff = iopt[lp+2];
+			              mval = iopt[lp+3];
+			              wt = x[ncols+ioff];
+			          } // if (ip > 0)
+
+			          if ( mval < 0 || mval > minput || wt<= 0.0 ) {
+			              nerr = 38;
+			              nlevel = 0;
+			              xerrwv("dbolsm(). the row separator to apply weighting (i1)\nmust lie between 0 and mrows (i2). weight (r1) must be positive.",
+			                      nerr,nlevel,2,mval,minput,1,wt,rdum);
 			              mode[0] = -nerr;
 					      return;
-			          end if
+			          } // if ( mval < 0 || mval > minput || wt<= 0.0 )
 
-			          tolsze = x(ncols+ioff)
-			          if ( tolsze<= 0.0D+00 ) then
-			              nerr = 27
-			              call xerrwv('dbolsm(). the reciprocal of the blow-up factor ' // &
-			                'for rejecting variables must be positive. now=(r1).', &
-			                nerr,level,0,idum,idum,1,tolsze,rdum)
-			              mode[0] = -nerr;
-					      return;
-			          end if
-			      end if
-
-			      lds = 2
-			      go to 580
-
-			  else if ( jp == 4) then
-			!
-			!  Change the maximum number of iterations allowed.
-			!
-			      if ( ip > 0) then
-			          itmax = iopt(lp+2)
-			          if ( itmax<=0) then
-			              nerr = 28
-			              call xerrwv('dbolsm(). the maximum number of iterations=(i1) ' // &
-			                'must be positive.',nerr,level,1,itmax,idum,0,rdum,rdum)
-			              mode[0] = -nerr;
-					      return;
-			          end if
-			      end if
-
-			      lds = 2
-			      go to 580
-
-			  else if ( jp == 5) then
-			!
-			!  CHANGE THE FACTOR FOR PRETRIANGULARIZING THE DATA MATRIX.
-			!
-			      if ( ip > 0) then
-			          ioff = iopt(lp+2)
-			          if ( ioff<=0) then
-			              nerr = 29
-			              call xerrwv('dbolsm(). the offset=(i1) beyond position ' // &
-			                'ncols=(i2) must be postive for option number 5.', &
-			                nerr,level,2,ioff,ncols,0,rdum,rdum)
-			              mode[0] = -nerr;
-					      return;
-			          end if
-
-			          fac = x(ncols+ioff)
-			          if ( fac < 0.0D+00 ) then
-			              nerr = 30
-			              nlevel = 0
-			              call xerrwv('dbolsm(). the factor (ncols/mrows) where ' // &
-			                'pre-triangularizing is performed must be nonnegative. ' // &
-			                'now=(r1).',nerr,nlevel,0,idum,idum,1,fac,rdum)
-			              mode[0] = -nerr;
-					      return;
-			          end if
-			      end if
-
-			      lds = 2
-			      go to 580
-			  else if ( jp == 6) then
-			!
-			!  CHANGE THE WEIGHTING FACTOR (FROM ONE) TO APPLY TO COMPONENTS
-			!  NUMBERED .GT. MVAL (INITIALLY SET TO 1.)  THIS TRICK IS NEEDED
-			!  FOR APPLICATIONS OF THIS SUBPROGRAM TO THE HEAVILY WEIGHTED
-			!  LEAST SQUARES PROBLEM THAT COME FROM EQUALITY CONSTRAINTS.
-			!
-			      if ( ip > 0) then
-			        ioff = iopt(lp+2)
-			        mval = iopt(lp+3)
-			        wt = x(ncols+ioff)
-			      end if
-
-			      if ( mval < 0 .or. mval > minput .or. wt<= 0.0D+00 ) then
-			          nerr = 38
-			          nlevel = 0
-			          call xerrwv('dbolsm(). the row separator to apply weighting (i1) ' // &
-			            'must lie between 0 and mrows (i2). weight (r1) must be positive.', &
-			            nerr,nlevel,2,mval,minput,1,wt,rdum)
+			          lds = 3;
+			          do580 = true;
+			          continue loop;
+			      } // else if (jp == 6)
+			      //
+			      //  TURN ON DEBUG OUTPUT.
+			      //
+			      else if ( jp == 7) {
+			          if ( ip > 0) {
+			    	      iprint = 1;
+			          }
+			          lds = 1;
+			          do580 = true;
+			          continue loop;
+			      } // else if (jp == 7)
+			      else {
+			          nerr = 23;
+			          xerrwv("dbolsm. the option number=(i1) is not defined.",
+			                  nerr,level,1,ip,idum,0,rdum,rdum);
 			          mode[0] = -nerr;
-					  return;
-			      end if
-
-			      lds = 3
-			      go to 580
-			!
-			!  TURN ON DEBUG OUTPUT.
-			!
-			  else if ( jp == 7) then
-			      if ( ip > 0) iprint = 1
-			      lds = 1
-			      go to 580
-			  else
-			      nerr = 23
-			      call xerrwv('dbolsm. the option number=(i1) is not defined.', &
-			           nerr,level,1,ip,idum,0,rdum,rdum)
-			      mode[0] = -nerr;
-				  return;
-			  end if
-
-			  do460 = true;
+				      return;
+			      } // else
 			  } // if (do580)
-	  } // loop while (true)*/
+	  } // loop while (true)
 
     } // dbolsm
 	
@@ -4208,6 +4217,767 @@ public abstract class DQED {
 
 	  return result;
 	} // ddot
+	
+	private void dgeco (double a[][], int lda, int n, int ipvt[], double rcond[], double z[] ) {
+
+	/*****************************************************************************80
+	!
+	!! DGECO factors a real matrix and estimates its condition number.
+	!
+	!  Discussion:
+	!
+	!    If RCOND is not needed, DGEFA is slightly faster.
+	!
+	!    To solve A * X = B, follow DGECO by DGESL.
+	!
+	!    To compute inverse ( A ) * C, follow DGECO by DGESL.
+	!
+	!    To compute determinant ( A ), follow DGECO by DGEDI.
+	!
+	!    To compute inverse ( A ), follow DGECO by DGEDI.
+	!
+	!    For the system A * X = B, relative perturbations in A and B
+	!    of size EPSILON may cause relative perturbations in X of size
+	!    EPSILON/RCOND.
+	!
+	!    If RCOND is so small that the logical expression
+	!      1.0D+00 + RCOND == 1.0D+00
+	!    is true, then A may be singular to working precision.  In particular,
+	!    RCOND is zero if exact singularity is detected or the estimate
+	!    underflows.
+	!
+	!  Modified:
+	!
+	!    17 May 2005
+	!
+	!  Author:
+	!
+	!    Jack Dongarra, Cleve Moler, Jim Bunch, Pete Stewart.
+	!
+	!    FORTRAN90 translation by John Burkardt.
+	!
+	!  Reference:
+	!
+	!    Jack Dongarra, Cleve Moler, Jim Bunch, Pete Stewart,
+	!    LINPACK User's Guide,
+	!    SIAM, (Society for Industrial and Applied Mathematics),
+	!    3600 University City Science Center,
+	!    Philadelphia, PA, 19104-2688.
+	!    ISBN 0-89871-172-X
+	!
+	!  Parameters:
+	!
+	!    Input/output, real ( kind = 8 ) A(LDA,N).  On input, a matrix to be
+	!    factored.  On output, the LU factorization of the matrix.
+	!
+	!    Input, integer LDA, the leading dimension of the array A.
+	!
+	!    Input, integer N, the order of the matrix A.
+	!
+	!    Output, integer IPVT(N), the pivot indices.
+	!
+	!    Output, real ( kind = 8 ) RCOND, an estimate of the reciprocal
+	!    condition number of A.
+	!
+	!    Output, real ( kind = 8 ) Z(N), a work vector whose contents are usually
+	!    unimportant.  If A is close to a singular matrix, then Z is an
+	!    approximate null vector in the sense that
+	!      norm ( A * Z ) = RCOND * norm ( A ) * norm ( Z ).
+	*/
+
+	  //double a(lda,n)
+	  double anorm;
+	  double ek;
+	  int info[] = new int[1];
+	  //integer ipvt(n)
+	  int j;
+	  int k;
+	  int l;
+	  double s;
+	  double sm;
+	  double t;
+	  double wk;
+	  double wkm;
+	  double ynorm;
+	  double asum;
+	  double zsum;
+	  double azsum;
+	  //double z(n)
+	  //
+	  //  Compute the L1 norm of A.
+	  //
+	  anorm = 0.0;
+	  for (j = 1; j <= n; j++) {
+		asum = 0.0;
+		for (k = 1; k <= n; k++) {
+			asum = asum + Math.abs(a[k][j]);
+		}
+	    anorm = Math.max ( anorm, asum );
+	  } // for (j = 1; j <= n; j++)
+	  //
+	  //  Compute the LU factorization.
+	  //
+	  dgefa ( a, lda, n, ipvt, info );
+	  //
+	  //  RCOND = 1 / ( norm(A) * (estimate of norm(inverse(A))) )
+	  //
+	  //  estimate of norm(inverse(A)) = norm(Z) / norm(Y)
+	  //
+	  //  where
+	  //    A * Z = Y
+	  //  and
+	  //    A' * Y = E
+	  //
+	  //  The components of E are chosen to cause maximum local growth in the
+	  //  elements of W, where U'*W = E.  The vectors are frequently rescaled
+	  //  to avoid overflow.
+	  //
+	  //  Solve U' * W = E.
+	  //
+	  ek = 1.0;
+	  for (j = 1; j <= n; j++) {
+	      z[j] = 0.0;
+	  }
+
+	  for (k = 1; k <= n; k++) {
+
+	    if ( z[k] != 0.0 ) {
+	    	if (-z[k] > 0) {
+	    		ek = Math.abs(ek);
+	    	}
+	    	else {
+	    		ek = -Math.abs(ek);
+	    	}
+	    } // if ( z[k] != 0.0 )
+
+	    if ( Math.abs ( a[k][k] ) < Math.abs ( ek - z[k] ) ) {
+	      s = Math.abs ( a[k][k] ) / Math.abs ( ek - z[k] );
+	      for (j = 1; j <= n; j++) {
+	          z[j] = s * z[j];
+	      }
+	      ek = s * ek;
+	    } // if ( Math.abs ( a[k][k] ) < Math.abs ( ek - z[k] ) )
+
+	    wk = ek - z[k];
+	    wkm = -ek - z[k];
+	    s = Math.abs ( wk );
+	    sm = Math.abs ( wkm );
+
+	    if ( a[k][k] != 0.0) {
+	      wk = wk / a[k][k];
+	      wkm = wkm / a[k][k];
+	    }
+	    else {
+	      wk = 1.0;
+	      wkm = 1.0;
+	    }
+
+	    if ( k+1 <= n ) {
+
+	      for (j = k+1; j <= n; j++) {
+	        sm = sm + Math.abs ( z[j] + wkm * a[k][j] );
+	        z[j] = z[j] + wk * a[k][j];
+	        s = s + Math.abs ( z[j] );
+	      } // for (j = k+1; j <= n; j++)
+
+	      if ( s < sm ) {
+	        t = wkm - wk;
+	        wk = wkm;
+	        for (j = k+1; j <= n; j++) {
+	            z[j] = z[j] + t * a[k][j];
+	        }
+	      } // if (s < sm)
+
+	    } // if ( k+1 <= n )
+
+	    z[k] = wk;
+
+	  } // for (k = 1; k <= n; k++)
+
+	  zsum = 0.0;
+	  for (j = 1; j <= n; j++) {
+		  zsum = zsum + Math.abs(z[j]);
+	  }
+	  for (j = 1; j <= n; j++) {
+	      z[j] = z[j] / zsum;
+	  }
+	  //
+	  //  Solve L' * Y = W
+	  //
+	  for (k = n; k >=  1; k--) {
+        azsum = 0.0;
+        for (j = k+1; j <= n; j++) {
+        	azsum = azsum + a[j][k] * z[j];
+        }
+	    z[k] = z[k] + azsum;
+
+	    if ( 1.0 < Math.abs ( z[k] ) ) {
+	      for (j = 1; j <= n; j++) {
+	          z[j] = z[j] / Math.abs ( z[k] );
+	      }
+	    } // if ( 1.0 < Math.abs ( z[k] ) )
+
+	    l = ipvt[k];
+
+	    t = z[l];
+	    z[l] = z[k];
+	    z[k] = t;
+
+	  } // for (k = n; k >=  1; k--)
+
+	  zsum = 0.0;
+	  for (j = 1; j <= n; j++) {
+		  zsum = zsum + Math.abs(z[j]);
+	  }
+	  for (j = 1; j <= n; j++) {
+	      z[j] = z[j] / zsum;
+	  }
+
+	  ynorm = 1.0;
+	  //
+	  //  Solve L * V = Y.
+	  //
+	  for (k = 1; k <= n; k++) {
+
+	    l = ipvt[k];
+
+	    t = z[l];
+	    z[l] = z[k];
+	    z[k] = t;
+        
+	    for (j = k+1; j <= n; j++) {
+	        z[j] = z[j] + t * a[j][k];
+	    }
+
+	    if ( 1.0 < Math.abs ( z[k] ) ) {
+	      ynorm = ynorm / Math.abs ( z[k] );
+	      for (j = 1; j <= n; j++) {
+	          z[j] = z[j] / Math.abs ( z[k] );
+	      }
+	    }
+
+	  } // for (k = 1; k <= n; k++)
+
+	  s = 0.0;
+	  for (j = 1; j <= n; j++) {
+		  s = s + Math.abs(z[j]);
+	  }
+	  for (j = 1; j <= n; j++) {
+	      z[j] = z[j] / s;
+	  }
+	  ynorm = ynorm / s;
+	  //
+	  //  Solve U * Z = V.
+	  //
+	  for (k = n; k >= 1; k--) {
+
+	    if ( Math.abs ( a[k][k] ) < Math.abs ( z[k] ) ) {
+	      s = Math.abs ( a[k][k] ) / Math.abs ( z[k] );
+	      for (j = 1; j <= n; j++) {
+	          z[j] = s * z[j];
+	      }
+	      ynorm = s * ynorm;
+	    } // if ( Math.abs ( a[k][k] ) < Math.abs ( z[k] ) )
+
+	    if ( a[k][k] != 0.0 ) {
+	      z[k] = z[k] / a[k][k];
+	    }
+	    else {
+	      z[k] = 1.0;
+	    }
+
+	    for (j = 1; j <= k-1; j++) {
+	        z[j] = z[j] - z[k] * a[j][k];
+	    }
+
+	  } // for (k = n; k >= 1; k--)
+	  //
+	  //  Normalize Z in the L1 norm.
+	  //
+	  zsum = 0.0;
+	  for (j = 1; j <= n; j++) {
+		  zsum = zsum + Math.abs(z[j]);
+	  }
+	  s = 1.0 / zsum;
+	  for (j = 1; j <= n; j++) {
+	      z[j] = s * z[j];
+	  }
+	  ynorm = s * ynorm;
+
+	  if ( anorm != 0.0) {
+	    rcond[0] = ynorm / anorm;
+	  }
+	  else {
+	    rcond[0] = 0.0;
+	  }
+
+	  return;
+    } // dgeco
+	
+	private void dgefa (double a[][], int lda, int n, int ipvt[], int info[] ) {
+
+	/*****************************************************************************80
+	!
+	!! DGEFA factors a real general matrix.
+	!
+	!  Modified:
+	!
+	!    07 March 2001
+	!
+	!  Author:
+	!
+	!    Jack Dongarra, Cleve Moler, Jim Bunch, Pete Stewart.
+	!
+	!    FORTRAN90 translation by John Burkardt.
+	!
+	!  Reference:
+	!
+	!    Jack Dongarra, Cleve Moler, Jim Bunch, Pete Stewart,
+	!    LINPACK User's Guide,
+	!    SIAM, (Society for Industrial and Applied Mathematics),
+	!    3600 University City Science Center,
+	!    Philadelphia, PA, 19104-2688.
+	!    ISBN 0-89871-172-X
+	!
+	!  Parameters:
+	!
+	!    Input/output, double A(LDA,N).
+	!    On intput, the matrix to be factored.
+	!    On output, an upper triangular matrix and the multipliers used to obtain
+	!    it.  The factorization can be written A=L*U, where L is a product of
+	!    permutation and unit lower triangular matrices, and U is upper triangular.
+	!
+	!    Input, integer LDA, the leading dimension of A.
+	!
+	!    Input, integer N, the order of the matrix A.
+	!
+	!    Output, integer IPVT(N), the pivot indices.
+	!
+	!    Output, integer INFO, singularity indicator.
+	!    0, normal value.
+	!    K, if U(K,K) == 0.  This is not an error condition for this subroutine,
+	!    but it does indicate that DGESL or DGEDI will divide by zero if called.
+	!    Use RCOND in DGECO for a reliable indication of singularity.
+	*/
+
+
+	  //double a(lda,n)
+	  int j;
+	  int k;
+	  int l;
+	  double t;
+	  double arr[];
+	  double arr2[];
+	  int m;
+	  //
+	  //  Gaussian elimination with partial pivoting.
+	  //
+	  info[0] = 0;
+
+	  for (k = 1; k <= n - 1; k++) {
+	      //
+	      //  Find L = pivot index.
+	      //
+		  arr = new double[n-k+2];
+		  for (j = 1; j <= n-k+1; j++) {
+			  arr[j] = a[k+j-1][k];
+		  }
+	      l = idamax ( n-k+1, arr, 1 ) + k - 1;
+	      ipvt[k] = l;
+	      //
+	      //  Zero pivot implies this column already triangularized.
+	      //
+	      if ( a[l][k] == 0.0) {
+	          info[0] = k;
+	          continue;
+	      } // if (a[l][k] == 0.0)
+	      //
+	      //  Interchange if necessary.
+	      //
+	      if ( l != k ) {
+	          t = a[l][k];
+	          a[l][k] = a[k][k];
+	          a[k][k] = t;
+	      } // if (l != k)
+	      //
+	      //  Compute multipliers.
+	      //
+	      t = -1.0 / a[k][k];
+	      for (j = 1; j <= n-k; j++) {
+	    	  a[k+j][k] = t * a[k+j][k];
+	      }
+	      //
+	      //  Row elimination with column indexing.
+	      //
+	      for (j = k+1; j <= n; j++) {
+	          t = a[l][j];
+	          if ( l != k ) {
+	              a[l][j] = a[k][j];
+	              a[k][j] = t;
+	          } // if (l != k)
+	          arr = new double[n-k+1];
+	          arr2 = new double[n-k+1];
+	          for (m = 1; m <= n-k; m++) {
+	        	  arr[m] = a[k+m][k];
+	        	  arr2[m] = a[k+m][j];
+	          }
+	          daxpy ( n-k, t, arr, 1, arr2, 1 );
+	          for (m = 1; m <= n-k; m++) {
+	        	  a[k+m][j] = arr2[m];
+	          }
+	      } // for (j = k+1; j <= n; j++)
+
+	  } // for (k = 1; k <= n - 1; k++)
+
+	  ipvt[n] = n;
+
+	  if ( a[n][n] == 0.0) {
+	    info[0] = n;
+	  }
+
+	  return;
+    } // dgefa
+	
+	private void dgesl (double a[][], int lda, int n, int ipvt[], double b[], int job ) {
+
+	/*****************************************************************************80
+	!
+	!! DGESL solves a real general linear system A * X = B.
+	!
+	!  Discussion:
+	!
+	!    DGESL can solve either of the systems A * X = B or A' * X = B.
+	!
+	!    The system matrix must have been factored by DGECO or DGEFA.
+	!
+	!    A division by zero will occur if the input factor contains a
+	!    zero on the diagonal.  Technically this indicates singularity
+	!    but it is often caused by improper arguments or improper
+	!    setting of LDA.  It will not occur if the subroutines are
+	!    called correctly and if DGECO has set 0.0 < RCOND
+	!    or DGEFA has set INFO == 0.
+	!
+	!  Modified:
+	!
+	!    07 March 2001
+	!
+	!  Author:
+	!
+	!    Jack Dongarra, Cleve Moler, Jim Bunch, Pete Stewart.
+	!
+	!    FORTRAN90 translation by John Burkardt.
+	!
+	!  Reference:
+	!
+	!    Jack Dongarra, Cleve Moler, Jim Bunch, Pete Stewart,
+	!    LINPACK User's Guide,
+	!    SIAM, (Society for Industrial and Applied Mathematics),
+	!    3600 University City Science Center,
+	!    Philadelphia, PA, 19104-2688.
+	!    ISBN 0-89871-172-X
+	!
+	!  Parameters:
+	!
+	!    Input, real ( kind = 8 ) A(LDA,N), the output from DGECO or DGEFA.
+	!
+	!    Input, integer LDA, the leading dimension of A.
+	!
+	!    Input, integer N, the order of the matrix A.
+	!
+	!    Input, integer IPVT(N), the pivot vector from DGECO or DGEFA.
+	!
+	!    Input/output, double B(N).
+	!    On input, the right hand side vector.
+	!    On output, the solution vector.
+	!
+	!    Input, integer JOB.
+	!    0, solve A * X = B;
+	!    nonzero, solve A' * X = B.
+	*/
+
+	  //double a(lda,n)
+	  //double b(n)
+	  //integer ipvt(n)
+	  int k;
+	  int l;
+	  double t;
+	  double arr[];
+	  double arr2[];
+	  int j;
+	  //
+	  //  Solve A * X = B.
+	  //
+	  if ( job == 0 ) {
+
+	    for (k = 1; k <= n-1; k++) {
+
+	      l = ipvt[k];
+	      t = b[l];
+
+	      if ( l != k ) {
+	        b[l] = b[k];
+	        b[k] = t;
+	      }
+
+	      arr = new double[n-k+1];
+	      arr2 = new double[n-k+1];
+	      for (j = 1; j <= n-k; j++) {
+	    	  arr[j] = a[k+j][k];
+	    	  arr2[j] = b[k+j];
+	      }
+	      daxpy ( n-k, t, arr, 1, arr2, 1 );
+	      for (j = 1; j <= n-k; j++) {
+	    	  b[k+j] = arr2[j];
+	      }
+
+	    } // for (k = 1; k <= n-1; k++) 
+
+	    for (k = n; k >= 1; k--) {
+	      b[k] = b[k] / a[k][k];
+	      t = -b[k];
+	      arr = new double[k];
+	      for (j = 1; j <= k-1; j++) {
+	    	  arr[j] = a[j][k];
+	      }
+	      daxpy ( k-1, t, arr, 1, b, 1 );
+	    } // for (k = n; k >= 1; k--)
+	  } // if (job == 0)
+	  else {
+	    //
+	    // Solve A' * X = B.
+	    //
+	    for (k = 1; k <= n; k++) {
+	      arr = new double[k];
+	      for (j = 1; j <= k-1; j++) {
+	    	  arr[j] = a[j][k];
+	      }
+	      t = ddot ( k-1, arr, 1, b, 1 );
+	      b[k] = ( b[k] - t ) / a[k][k];
+	    } // for (k = 1; k <= n; k++)
+
+	    for (k = n-1; k >= 1; k--) {
+          arr = new double[n-k+1];
+          arr2 = new double[n-k+1];
+          for (j = 1; j <= n-k; j++) {
+        	  arr[j] = a[k+j][k];
+        	  arr2[j] = b[k+j];
+          }
+	      b[k] = b[k] + ddot ( n-k, arr, 1, arr2, 1 );
+	      l = ipvt[k];
+
+	      if ( l != k ) {
+	        t = b[l];
+	        b[l] = b[k];
+	        b[k] = t;
+	      }
+
+	    } // for (k = n-1; k >= 1; k--)
+
+	  } // else
+
+	  return;
+	} // dgesl
+	
+	private void difcen (double fj[][], int func, double fx[], int iopt[], int ldfj, int mcon,
+			             int mequa, int nvars, double ropt[], double x[] ) {
+
+	/*****************************************************************************80
+	!
+	!! DIFCEN estimates a jacobian using central differences.
+	!
+	!  Modified:
+	!
+	!    18 February 2002
+	!
+	!  Author:
+	!
+	!    John Burkardt
+	!
+	!  Parameters:
+	!
+	!    Output, double FJ(LDFJ,NVARS), the estimated jacobian.
+	!
+	!    Input, external FUNC, the name of the user written
+	!    function evaluation routine.  FUNC should have the form:
+	!      subroutine func ( fx, iopt, mcon, mequa, nvars, ropt, x )
+	!    and should accept X as input, and return in FX the value
+	!    of the MEQUA+MCON functions.
+	!
+	!    Workspace, double FX(MEQUA+MCON).
+	!
+	!    Throughput, integer IOPT(*), parameters to be passed to FUNC.
+	!
+	!    Input, integer LDFJ, the leading dimension of FJ, which must
+	!    be at least MEQUA+MCON.
+	!
+	!    Input, integer MCON, the number of constraints.
+	!
+	!    Input, integer MEQUA, the number of nonlinear functions.
+	!
+	!    Input, integer NVARS, the number of variables.
+	!
+	!    Throughput, double ROPT(*), parameters to be passed to FUNC.
+	!
+	!    Input, double X(NVARS), the point at which the
+	!    jacobian should be evaluated.
+	*/
+
+	  double dxj;
+	  double eps;
+	  //double fj(ldfj,nvars)
+	  //external func
+	  //double fx(mequa+mcon)
+	  int j;
+	  //double x(nvars)
+	  double xsave;
+	  int k;
+	  //
+	  //  Get the square root of the machine precision.
+	  //
+	  eps = Math.sqrt ( epsilon);
+	  //
+	  //  Consider each component X(J) of the set of variables.
+	  //
+	  for (j = 1; j <= nvars; j++) {
+	      //
+	      //  Set the appropriate increment DXJ to X(J).
+	      //
+	      dxj = eps * ( Math.abs ( x[j] ) + 1.0 );
+	      //
+	      //  Make a copy XP of X, with X(J) incremented by DXJ.
+	      //
+	      xsave = x[j];
+
+	      x[j] = xsave + dxj;
+	      //
+	      //Evaluate F(XP).
+	      //
+	      //func ( fx, iopt, mcon, mequa, nvars, ropt, x )
+	      //
+	      //  Save F(XP).
+	      //
+	      for (k = 1; k <= mequa+mcon; k++) {
+	          fj[k][j] = fx[k];
+	      }
+	      //
+	      // Make a copy XM of X, with X(J) decremented by DXJ.
+	      //
+	      x[j] = xsave - dxj;
+	      //
+	      //  Evaluate F(XM).
+	      //
+	      //func ( fx, iopt, mcon, mequa, nvars, ropt, x )
+	      //
+	      // Estimate the partial derivative d F/d X(J) by (F(XP)-F(XM))/(2*DXJ)
+	      //
+	      for (k = 1; k <= mequa+mcon; k++) {
+	          fj[k][j] = ( fj[k][j] - fx[k] ) / ( 2.0 * dxj );
+	      }
+	      //
+	      //  Restore the value of X(J).
+	      //
+	      x[j] = xsave;
+
+	  } // for (j = 1; j <= nvars; j++)
+
+	  return;
+   } // difcen
+	
+	private void diffor (double fj[][], int func, double fx[], int iopt[], int ldfj,
+			             int mcon, int mequa, int nvars, double ropt[], double x[] ) {
+
+	/*****************************************************************************80
+	!
+	!! DIFFOR estimates a jacobian using forward differences.
+	!
+	!  Modified:
+	!
+	!    18 February 2002
+	!
+	!  Author:
+	!
+	!    John Burkardt
+	!
+	!  Parameters:
+	!
+	!    Output, double FJ(LDFJ,NVARS), the estimated jacobian.
+	!
+	!    Input, external FUNC, the name of the user written
+	!    function evaluation routine.  FUNC should have the form:
+	!      subroutine func ( fx, iopt, mcon, mequa, nvars, ropt, x )
+	!    and should accept X as input, and return in FX the value
+	!    of the MEQUA+MCON functions.
+	!
+	!    Workspace, double FX(MEQUA+MCON).
+	!
+	!    Throughput, integer IOPT(*), parameters to be passed
+	!    to FUNC.
+	!
+	!    Input, integer LDFJ, the leading dimension of FJ, which must
+	!    be at least MEQUA+MCON.
+	!
+	!    Input, integer MCON, the number of constraints.
+	!
+	!    Input, integer MEQUA, the number of nonlinear functions.
+	!
+	!    Input, integer NVARS, the number of variables.
+	!
+	!    Throughput, double ROPT(*), parameters to be passed to FUNC.
+	!
+	!    Input, double X(NVARS), the point at which the
+	!    jacobian should be evaluated.
+	*/
+
+	  double dxj;
+	  double eps;
+	  //double fj(ldfj,nvars)
+	  //external func
+	  //double fx(mequa+mcon)
+	  int j;
+	  //double x(nvars)
+	  double xsave;
+	  int k;
+	  //
+	  // Evaluate F(X) and save it in FX.
+	  //
+	  //func ( fx, iopt, mcon, mequa, nvars, ropt, x )
+	  //
+	  //  Get the square root of the machine precision.
+	  //
+	  eps = Math.sqrt ( epsilon );
+	  //
+	  //  Consider each component X(J) of the set of variables.
+	  //
+	  for (j = 1; j <= nvars; j++) {
+	      //
+	      //  Set the appropriate increment DXJ to X(J).
+	      //
+	      dxj = eps * ( Math.abs ( x[j] ) + 1.0 );
+	      //
+	      //  Make a copy XP of X, with X(J) incremented by DXJ.
+	      //
+	      xsave = x[j];
+
+	      x[j] = xsave + dxj;
+	      //
+	      //  Evaluate F(XP) and store it in column J.
+	      //
+	      //func ( fj(1,j), iopt, mcon, mequa, nvars, ropt, x )
+	      //
+	      // Estimate the partial derivative d F/d X(J) by (F(XP)-F(X))/DXJ
+	      //
+	      for (k = 1; k <= mequa+mcon; k++) {
+	          fj[k][j] = ( fj[k][j] - fx[k] ) / dxj;
+	      }
+	      //
+	      //  Restore the value of X(J).
+	      //
+	      x[j] = xsave;
+
+	  } //  for (j = 1; j <= nvars; j++)
+
+	  return;
+   } // diffor
 	
 	private void dmout ( int m, int n, int lda, double a[][], String ifmt, int idigit ) {
 
@@ -4653,6 +5423,275 @@ public abstract class DQED {
 
 	  return norm;
 	} // dnrm2
+	
+	private void dpchek (double df[], int dqedev, double fj[][], int iopt[], int ldfj,
+			             int nvars, double ropt[], double x[], double y[] ) {
+
+	/*****************************************************************************80
+	!
+	!! DPCHEK checks the user's jacobian routine.
+	!
+	!  Modified:
+	!
+	!    11 September 2002
+	!
+	!  Parameters:
+	!
+	!    Workspace, double DF(NVARS).
+	!
+	!    Input, external DQEDEV, the name of the user written jacobian
+	!    and function evaluation routine.
+	!
+	!    Workspace, double FJ(LDFJ,NVARS+1), space to store
+	!    the jacobian and the function, as required by DQEDEV.
+	!
+	!    Throughput, integer IOPT(*), parameters to be passed to DQEDEV.
+	!
+	!    Input, integer LDFJ, the leading dimension of FJ, which must
+	!    be at least NVARS.
+	!
+	!    Input, integer NVARS, the number of variables.
+	!
+	!    Throughput, double ROPT(*), parameters to be passed to DQEDEV.
+	!
+	!    Input, double X(NVARS), the point at which the
+	!    jacobian should be evaluated.
+	!
+	!    Workspace, double Y(NVARS).
+	*/
+
+
+	  //double df(nvars)
+	  //external dqedev
+	  double eps;
+	  //double fj(ldfj,nvars+1)
+	  int igo[] = new int[1];
+	  int j;
+	  double t;
+	  int k;
+	  double arr[];
+	  //double x(nvars)
+	  //double y(nvars)
+	  //
+	  //  Get the square root of the machine precision.
+	  //
+	  eps = Math.sqrt ( epsilon );
+	  //
+	  //  Consider each component X(J) of the set of variables.
+	  //
+	  Preferences.debug("DPCHEK:\n");
+	  Preferences.debug("Compare user jacobian and function for\n");
+	  Preferences.debug("consistency, using finite differences.\n\n");
+
+	  dvout ( nvars, x, "Evaluation point X", -4 );
+
+	  for (j = 1; j <= nvars; j++) {
+	      //
+	      //  Set the appropriate increment T to X(J).
+	      //
+	      t = eps * ( Math.abs ( x[j] ) + 1.0 );
+	      //
+	      //  Make a copy YP of X, with Y(J) incremented by T.
+	      //
+	      for (k = 1; k <= nvars; k++) {
+	          y[k] = x[k];
+	      }
+	      y[j] = x[j] + t;
+	      //
+	      //  Evaluate F(YP).
+	      //
+	      igo[0] = 0;
+	      dqedev ( y, fj, ldfj, igo, iopt, ropt );
+	      //
+	      //  Save F(YP).
+	      //
+	      for (k = 1; k <= nvars; k++) {
+	          df[k] = fj[k][nvars+1];
+	      }
+	      //
+	      //  Make a copy YM of X, with Y(J) decremented by T.
+	      //
+	      y[j] = x[j] - t;
+	      //
+	      //  Evaluate F(YM).
+	      //
+	      igo[0] = 0;
+	      dqedev ( y, fj, ldfj, igo, iopt, ropt );
+	      //
+	      //  Estimate the partial derivative d F/d X(J) by (F(YP)-F(YM))/2*T
+	      //
+	      for (k = 1; k <= nvars; k++) {
+	          df[k] = ( df[k] - fj[k][nvars+1] ) / ( 2.0 * t );
+	      }
+	      //
+	      //  Evaluate the user's formula for the partial derivatives.
+	      //
+	      igo[0] = 1;
+	      dqedev ( x, fj, ldfj, igo, iopt, ropt );
+
+	      dvout(nvars,df,"Numerical derivative",-4);
+
+	      Preferences.debug("Variable number " + j + "\n");
+          arr = new double[nvars+1];
+          for (k = 1; k <= nvars; k++) {
+        	  arr[k] = fj[k][j];
+          }
+	      dvout(nvars,arr,"Analytic partial",-4);
+
+	  } // for (j = 1; j <= nvars; j++)
+
+	  return;
+   } // dpchek
+	
+	private void dqedev (double x[], double fj[][], int ldfj, int igo[], int iopt[],
+			             double ropt[] ) {
+
+	/*****************************************************************************80
+	!
+	!! DQEDEV evaluates functions being treated by DQED.
+	!
+	!  Discussion:
+	!
+	!    The user has NVARS variables X(I), and is trying to minimize
+	!    the square root of the sum of the squares of MEQUA functions
+	!    F(I)(X), subject to MCON constraints which have the form
+	!
+	!      BL(I) <= G(I)(X) <= BU(I)
+	!
+	!    where either the left or right bounding inequality may be dropped.
+	!
+	!  Parameters:
+	!
+	!    Input, REAL X(*), an array of length NVARS, containing
+	!    the values of the independent variables at which the
+	!    functions and partial derivatives should be evaluated.
+	!
+	!    Output, REAL FJ(LDFJ,NVARS+1).
+	!
+	!    If IGO is nonzero, then partial derivatives must
+	!    be placed in the first NVARS columns of FJ, as follows:
+	!
+	!      Rows I = 1 to MCON, and columns J = 1 to NVARS
+	!      should contain the partials of the I-th constraint
+	!      function G(I) with respect to the J-th variable.
+	!
+	!      Rows I=MCON+1 to MCON+MEQUA, and columns J = 1 to NVARS
+	!      should contain the partials of the (I-MCON)-th nonlinear
+	!      function F(I-MCON) with respect to the J-th variable.
+	!
+	!    Regardless of the value of IGO, column NVARS+1 must be
+	!    assigned the values of the constraints and functions, as follows:
+	!
+	!      Rows I = 1 to MCON, column J = NVARS+1, should contain
+	!      the value of G(I).
+	!
+	!      Rows I=MCON+1 to MCON+MEQUA, column J = NVARS+1, should
+	!      contain the value of F(I-MCON).
+	!
+	!    Input, integer LDFJ, the leading dimension of FJ, which
+	!    must be at least MCON+MEQUA.
+	!
+	!    Input/output, integer IGO.
+	!
+	!    On input, IGO tells the user whether the partial derivatives are needed.
+	!
+	!      0, the partial derivatives are not needed.
+	!      nonzero, the partial derivatives are needed.
+	!
+	!    On output, the user may reset the input value of IGO if one
+	!    of two situations is encountered:
+	!
+	!      99, the functions, constraints, or partial derivatives
+	!          could not be evaluated at the given input point X.  Request
+	!          that DQED reject that point, and try a different one.
+	!
+	!      Any other value, abort the run.
+	!
+	!    Input, integer IOPT(*), the integer option array.
+	!
+	!    Input, REAL ROPT(*), the double precision option array.
+	C***BEGIN PROLOGUE  DQEDEV
+C***REFER TO  DQED
+C***ROUTINES CALLED  XERROR,CHRCNT
+C***END PROLOGUE  DQEDEV
+C     REVISED 870204-1100
+C     REVISED YYMMDD-HHMM
+C     THIS IS THE SUBPROGRAM FOR EVALUATING THE FUNCTIONS
+C     AND DERIVATIVES FOR THE NONLINEAR SOLVER, DQED.
+C
+C     THE USER PROBLEM HAS MCON CONSTRAINT FUNCTIONS,
+C     MEQUA LEAST SQUARES EQUATIONS, AND INVOLVES NVARS
+C     UNKNOWN VARIABLES.
+C
+C     WHEN THIS SUBPROGRAM IS ENTERED, THE GENERAL (NEAR)
+C     LINEAR CONSTRAINT PARTIAL DERIVATIVES, THE DERIVATIVES
+C     FOR THE LEAST SQUARES EQUATIONS, AND THE ASSOCIATED
+C     FUNCTION VALUES ARE PLACED INTO THE ARRAY FJ(*,*).
+C     ALL PARTIALS AND FUNCTIONS ARE EVALUATED AT THE POINT
+C     IN X(*).  THEN THE SUBPROGRAM RETURNS TO THE CALLING
+C     PROGRAM UNIT. TYPICALLY ONE COULD DO THE FOLLOWING
+C     STEPS:
+C
+C  IF(IGO.NE.0) THEN
+C     STEP 1. PLACE THE PARTIALS OF THE I-TH CONSTRAINT
+C             FUNCTION WITH REPECT TO VARIABLE J IN THE
+C             ARRAY FJ(I,J), I=1,...,MCON, J=1,...,NVARS.
+C  END IF
+C     STEP 2. PLACE THE VALUES OF THE I-TH CONSTRAINT
+C             EQUATION INTO FJ(I,NVARS+1).
+C  IF(IGO.NE.0) THEN
+C     STEP 3. PLACE THE PARTIALS OF THE I-TH LEAST SQUARES
+C             EQUATION WITH RESPECT TO VARIABLE J IN THE
+C             ARRAY FJ(MCON+I,J), I=1,...,MEQUA,
+C             J=1,...,NVARS.
+C  END IF
+C     STEP 4. PLACE THE VALUE OF THE I-TH LEAST SQUARES
+C             EQUATION INTO FJ(MCON+I,NVARS+1).
+C     STEP 5. RETURN TO THE CALLING PROGRAM UNIT.
+C DQEDEV:
+C GLOSSARY OF VARIABLES. NOTATION:
+C DUMMY-ARG A dummy argument, that is an argument to this prog. unit.
+C /S$A$V$E/ SAV Denotes that this variable is local to the routine
+C               and is saved between calls to it.
+C INTEGER, REAL, DOUBLE PRECISION, LOGICAL, CHARACTER
+C               The types of the variables.
+C ADJ-ARR An adjustable array, that is an argument to this prog. unit.
+C Name      Memory Status  Type     Argument   Uses and comments.
+C                                    Status
+C ----      -------------  ----     --------   ------------------
+C FJ         DUMMY-ARG     REAL      ADJ-ARY
+C IGO        DUMMY-ARG     INTEGER
+C IOPT       DUMMY-ARG     INTEGER   ADJ-ARY
+C LDFJ       DUMMY-ARG     INTEGER
+C NERR                     INTEGER
+C NMESS                    INTEGER
+C ROPT       DUMMY-ARG     REAL      ADJ-ARY
+C X          DUMMY-ARG     REAL      ADJ-ARY
+C XMESS                    CHAR*128
+      DOUBLE PRECISION FJ(LDFJ,*),X(*),ROPT(*)
+      INTEGER IGO,IOPT(*)
+      CHARACTER XMESS*128
+      XMESS =
+     . 'DQED. THE EVALUATOR PROGRAM DQEDEV MUST BE WRITTEN BY THE USER.'
+      NERR = 09
+      IGO = 17
+C
+C     THE INTENT HERE IS THAT THE EVALUATOR WILL NOT RETURN
+C     FROM THE ERROR PROCESSOR CALL.
+      CALL CHRCNT(XMESS,NMESS)
+      CALL XERROR(XMESS,NMESS,NERR,01)
+      RETURN
+      END
+	*/
+
+	  //double fj(ldfj,*)
+
+	  Preferences.debug("DQEDEV - Fatal error\n");
+	  System.out.println("DQEDEV - Fatal error");
+	  //write ( *, '(a)' ) '  DQEDEV must be written by the user.'
+
+	  System.exit(-1);
+	} // dqedev
 	
 	private void drot ( int n, double x[], int incx, double y[], int incy,
 			            double c, double s ) {
