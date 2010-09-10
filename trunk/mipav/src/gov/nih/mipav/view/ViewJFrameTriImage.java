@@ -775,11 +775,27 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             colorChooser = new ViewJColorChooser(this, "Pick paint color", new OkColorListener(), null);
         } else if (command.equals("OpacityPaint")) {
 
-            if (controls != null) {
-                new JDialogOpacityControls(this, controls);
-            } else {
-                new JDialogOpacityControls(this, OPACITY);
-            }
+            //if (controls != null) {
+               // new JDialogOpacityControls(this, controls);
+            //} else {
+            	String prefOpacity = Preferences.getProperty(Preferences.PREF_PAINT_OPACITY);
+            	if (prefOpacity != null && ! prefOpacity.trim().equals("")) {
+            		try{
+            			float prefOpacityFloat = Float.valueOf(prefOpacity).floatValue();
+            			if(prefOpacityFloat < 0 || prefOpacityFloat > 1) {
+            				new JDialogOpacityControls(this, OPACITY);
+            			}else {
+            				new JDialogOpacityControls(this, prefOpacityFloat);
+            			}
+            			
+            		}catch(Exception e) {
+            			e.printStackTrace();
+            			new JDialogOpacityControls(this, OPACITY);
+            		}
+            	}else {
+            		new JDialogOpacityControls(this, OPACITY);
+            	}
+            //}
 
             triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
         } else if (command.equals("DisplayBorder")) {
