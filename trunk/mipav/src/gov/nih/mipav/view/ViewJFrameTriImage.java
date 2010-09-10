@@ -3576,7 +3576,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         colorPaintButton.setBackground(color);
 
         paintToolBar.add(colorPaintButton);
-        paintToolBar.add(toolbarBuilder.buildTextButton("Opacity", "Change opacity of paint", "OpacityPaint"));
+        
+        paintToolBar.add(toolbarBuilder.buildButton(CustomUIBuilder.PARAM_PAINT_OPACITY));
         ButtonGroup borderPaintGroup = new ButtonGroup();
         borderPaintButton = toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_PAINT_BORDER,borderPaintGroup);
         bogusBorderPaintButton = new JToggleButton();
