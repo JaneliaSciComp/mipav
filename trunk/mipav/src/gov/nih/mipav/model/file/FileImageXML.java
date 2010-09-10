@@ -440,7 +440,7 @@ public class FileImageXML extends FileXML {
 
             fileInfo.setFileName(fileName);
         }
-        System.out.println(fileInfo.getEndianess());
+
         if (imageFileName == null) {
             imageFileName = FileUtility.stripExtension(fileName) + ".raw";
         }
