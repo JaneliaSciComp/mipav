@@ -775,9 +775,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             colorChooser = new ViewJColorChooser(this, "Pick paint color", new OkColorListener(), null);
         } else if (command.equals("OpacityPaint")) {
 
-            //if (controls != null) {
-               // new JDialogOpacityControls(this, controls);
-            //} else {
+            if (controls != null) {
+               new JDialogOpacityControls(this, controls);
+            } else {
             	String prefOpacity = Preferences.getProperty(Preferences.PREF_PAINT_OPACITY);
             	if (prefOpacity != null && ! prefOpacity.trim().equals("")) {
             		try{
@@ -795,7 +795,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             	}else {
             		new JDialogOpacityControls(this, OPACITY);
             	}
-            //}
+            }
 
             triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
         } else if (command.equals("DisplayBorder")) {
@@ -3464,7 +3464,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         String userBrushes = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "brushes" +
                              File.separator;
 
-        int numBrushes = ViewToolBarBuilder.NUM_BRUSHES_INTERNAL; // built in... 5 so far
+        int numBrushes = ViewToolBarBuilder.NUM_BRUSHES_INTERNAL; // built in... 9 so far
 
         File brushesDir = new File(userBrushes);
 
@@ -3488,13 +3488,14 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         paintBrushNames = new String[numBrushes];
 
         paintBrushNames[0] = "square 1x1.gif";
-        paintBrushNames[1] = "square 4x4.gif";
-        paintBrushNames[2] = "square 8x8.gif";
-        paintBrushNames[3] = "square 16x16.gif";
-        paintBrushNames[4] = "square 24x24.gif";
-        paintBrushNames[5] = "circle 10x10.gif";
-        paintBrushNames[6] = "circle 14x14.gif";
-        paintBrushNames[7] = "circle 20x20.gif";
+        paintBrushNames[1] = "square 2x2.gif";
+        paintBrushNames[2] = "square 4x4.gif";
+        paintBrushNames[3] = "square 8x8.gif";
+        paintBrushNames[4] = "square 16x16.gif";
+        paintBrushNames[5] = "square 24x24.gif";
+        paintBrushNames[6] = "circle 10x10.gif";
+        paintBrushNames[7] = "circle 14x14.gif";
+        paintBrushNames[8] = "circle 20x20.gif";
 
         if (brushesDir.isDirectory()) {
             File[] brushes = brushesDir.listFiles();
