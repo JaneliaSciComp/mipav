@@ -58,8 +58,23 @@ public class JDialogOpacityControls extends JDialogBase implements ChangeListene
     public JDialogOpacityControls(Frame theParentFrame, ViewControlsImage cntrls) {
         super(theParentFrame, false);
         controls = cntrls;
-       
-        init(controls.getTools().getOpacity());
+        String prefOpacity = Preferences.getProperty(Preferences.PREF_PAINT_OPACITY);
+    	if (prefOpacity != null && ! prefOpacity.trim().equals("")) {
+    		try{
+    			float prefOpacityFloat = Float.valueOf(prefOpacity).floatValue();
+    			if(prefOpacityFloat < 0 || prefOpacityFloat > 1) {
+    				init(controls.getTools().getOpacity());
+    			}else {
+    				init(prefOpacityFloat);
+    			}
+    			
+    		}catch(Exception e) {
+    			e.printStackTrace();
+    			init(controls.getTools().getOpacity());
+    		}
+    	}else {
+    		init(controls.getTools().getOpacity());
+    	}
     }
 
     /**
