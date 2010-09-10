@@ -35,7 +35,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
     protected static final Border etchedBorder = BorderFactory.createEtchedBorder();
 
     /** DOCUMENT ME! */
-    protected static final int NUM_BRUSHES_INTERNAL = 8;
+    protected static final int NUM_BRUSHES_INTERNAL = 9;
 
     /** DOCUMENT ME! */
     public static final String USER_BRUSHES = System.getProperty("user.home") + File.separator + "mipav" +
@@ -1504,7 +1504,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
     private Integer[] getPaintList() {
         Integer[] intArray = null;
 
-        int numBrushes = NUM_BRUSHES_INTERNAL; // built in... 5 so far
+        int numBrushes = NUM_BRUSHES_INTERNAL; // built in... 9 so far
 
         File brushesDir = new File(USER_BRUSHES);
 
@@ -1528,13 +1528,14 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         paintBrushNames = new String[numBrushes];
 
         paintBrushNames[0] = "square 1x1.gif";
-        paintBrushNames[1] = "square 4x4.gif";
-        paintBrushNames[2] = "square 8x8.gif";
-        paintBrushNames[3] = "square 16x16.gif";
-        paintBrushNames[4] = "square 24x24.gif";
-        paintBrushNames[5] = "circle 10x10.gif";
-        paintBrushNames[6] = "circle 14x14.gif";
-        paintBrushNames[7] = "circle 20x20.gif";
+        paintBrushNames[1] = "square 2x2.gif";
+        paintBrushNames[2] = "square 4x4.gif";
+        paintBrushNames[3] = "square 8x8.gif";
+        paintBrushNames[4] = "square 16x16.gif";
+        paintBrushNames[5] = "square 24x24.gif";
+        paintBrushNames[6] = "circle 10x10.gif";
+        paintBrushNames[7] = "circle 14x14.gif";
+        paintBrushNames[8] = "circle 20x20.gif";
 
         if (brushesDir.isDirectory()) {
             File[] brushes = brushesDir.listFiles();
