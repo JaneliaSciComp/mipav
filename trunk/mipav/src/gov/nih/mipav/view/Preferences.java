@@ -470,6 +470,8 @@ public class Preferences {
     
     public static final String PREF_NDAR_PLUGIN_DATASTRUCT_NAME = "image01";
     
+    public static final String PREF_PAINT_OPACITY = "paintOpacity";
+    
     
 
     /**

@@ -58,6 +58,7 @@ public class JDialogOpacityControls extends JDialogBase implements ChangeListene
     public JDialogOpacityControls(Frame theParentFrame, ViewControlsImage cntrls) {
         super(theParentFrame, false);
         controls = cntrls;
+       
         init(controls.getTools().getOpacity());
     }
 
@@ -255,7 +256,7 @@ public class JDialogOpacityControls extends JDialogBase implements ChangeListene
 
         if (source == opacitySlider) {
             opacity = opacitySlider.getValue() / 100f;
-
+            Preferences.setProperty(Preferences.PREF_PAINT_OPACITY, String.valueOf(opacity));
             current.setText(String.valueOf(opacity));
 
             if (!opacitySlider.getValueIsAdjusting()) {

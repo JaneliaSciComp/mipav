@@ -779,7 +779,25 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("RGBPaintComponent")) {
             new JDialogPaintRGBComponents(this, getComponentImage().getRGBPaintComponents());
         } else if (command.equals("OpacityPaint")) {
-            new JDialogOpacityControls(this, controls);
+            //new JDialogOpacityControls(this, controls);
+        	float OPACITY = 0.25f;
+            String prefOpacity = Preferences.getProperty(Preferences.PREF_PAINT_OPACITY);
+        	if (prefOpacity != null && ! prefOpacity.trim().equals("")) {
+        		try{
+        			float prefOpacityFloat = Float.valueOf(prefOpacity).floatValue();
+        			if(prefOpacityFloat < 0 || prefOpacityFloat > 1) {
+        				new JDialogOpacityControls(this, OPACITY);
+        			}else {
+        				new JDialogOpacityControls(this, prefOpacityFloat);
+        			}
+        			
+        		}catch(Exception e) {
+        			e.printStackTrace();
+        			new JDialogOpacityControls(this, OPACITY);
+        		}
+        	}else {
+        		new JDialogOpacityControls(this, OPACITY);
+        	}
         } else if (command.equals("CommitPaint") || command.equals("CommitPaintExt")) {
             final boolean outputNew = Preferences.is(Preferences.PREF_PAINT_TO_MASK_NEW);
             final boolean polarity = command.equals("CommitPaint");
