@@ -1242,7 +1242,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                 // otherwise determine if the pointer is inside a contour, show that the contour can be selected:
                 else if ( selectVOI( kEvent.getX(), kEvent.getY(), kEvent.isShiftDown(), kEvent.isControlDown() ) != null )
                 {
-                    Vector3f kGC = m_kDrawingContext.fileToScreenVOI( m_kCurrentVOI.getGeometricCenter() );
+                    Vector3f kGC = m_kDrawingContext.fileToScreenVOI( m_kCurrentVOI.getAverage() );
                     m_kMouseOffset.Set ( kGC.X - kEvent.getX(), kGC.Y - kEvent.getY(), 0 );
                 }
             }
@@ -4288,7 +4288,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
                     m_bFirstDrag = false;
                 } 
 
-                Vector3f kGC = m_kDrawingContext.fileToScreenVOI( m_kCurrentVOI.getGeometricCenter() );
+                Vector3f kGC = m_kDrawingContext.fileToScreenVOI( m_kCurrentVOI.getAverage() );
                 Vector3f kNewGC = new Vector3f( kEvent.getX() + m_kMouseOffset.X, kEvent.getY() + m_kMouseOffset.Y, kGC.Z );
                 Vector3f kDiff = new Vector3f();
                 kDiff.Sub( kNewGC, kGC );

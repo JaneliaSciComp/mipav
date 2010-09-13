@@ -671,7 +671,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     if ( showTotals )
                     {
                         printTotals( stats, statProperty, 
-                                unit2DStr, unit3DStr, new String( "2;" + sortedZ + ";" ), ignoreMin, ignoreMax, largestDistance );
+                                unit2DStr, unit3DStr, new String( sortedZ + ";" ), ignoreMin, ignoreMax, largestDistance );
                     }
                 }
                 Vector<VOIBase>[] sortedContoursX = calcSelectedVOI.getSortedCurves( VOIBase.XPLANE, xDim );
@@ -690,7 +690,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     if ( showTotals )
                     {
                         printTotals( stats, statProperty, 
-                                unit2DStr, unit3DStr, new String( "0;" + sortedX + ";" ), ignoreMin, ignoreMax, largestDistance );
+                                unit2DStr, unit3DStr, new String( sortedX + ";" ), ignoreMin, ignoreMax, largestDistance );
                     }
                 }
                 Vector<VOIBase>[] sortedContoursY = calcSelectedVOI.getSortedCurves( VOIBase.YPLANE, yDim );
@@ -709,7 +709,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     if ( showTotals )
                     {
                         printTotals( stats, statProperty, 
-                                unit2DStr, unit3DStr, new String( "1;" + sortedY + ";" ), ignoreMin, ignoreMax, largestDistance );
+                                unit2DStr, unit3DStr, new String( sortedY + ";" ), ignoreMin, ignoreMax, largestDistance );
                     }
                 }
                 
@@ -767,15 +767,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 String unit2DStr, String unit3DStr, float ignoreMin, float ignoreMax, VOIStatisticalProperties statProperty, int iSlice, int iID  )
         {
             String end = new String();
-            if ( orientation != -1 )
-            {
-                end += orientation + ";";
-            }
             if ( iSlice != -1 )
             {
                 end += iSlice + ";";
             }
-            end += iID;
+            end += contour.getLabel();
+            //System.err.println( "calcStatsPerContour "  + end );
             
             contour.update();
             ContourStats stats = new ContourStats();
@@ -1326,7 +1323,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             kVOI.createBinaryMask3D(mask, xDim, yDim, Preferences.is(Preferences.PREF_USE_VOI_XOR), false);
 
             stats.nVox = mask.cardinality();
-            
+
+            //System.err.println( "calcStatsTotal " );
             
             
             // The following depend on each other: quantityDescription, volumeDescription, areaDescription
@@ -1620,6 +1618,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 String unit2DStr, String unit3DStr, String end, float ignoreMin, float ignoreMax,
                 double largestDistance)
         {            
+            //System.err.println( "printTotals "  + end );
             double xRes = srcImage.getFileInfo(0).getResolutions().length > 0 ? srcImage.getFileInfo(0).getResolutions()[0] : 1;
             double yRes = srcImage.getFileInfo(0).getResolutions().length > 1 ? srcImage.getFileInfo(0).getResolutions()[1] : 1;
             double zRes = srcImage.getFileInfo(0).getResolutions().length > 2 ? srcImage.getFileInfo(0).getResolutions()[2] : 1;
