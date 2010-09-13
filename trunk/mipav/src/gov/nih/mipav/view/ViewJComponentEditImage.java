@@ -433,6 +433,8 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
     protected VOIManager voiManager;
 
+	private long lastMouseEvent = 0;
+
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -2432,6 +2434,8 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
         int xS, yS;
         Color dropperColor;
+        int diffX = Math.round((lastMouseX - mouseEvent.getX()) * getZoomX());
+        int diffY = Math.round((lastMouseY - mouseEvent.getY()) * getZoomY());
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
 
@@ -2450,6 +2454,11 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         }
 
         processDefaultMouseDrag(mouseEvent, xS, yS);
+        
+        int scrollX = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().width;
+    	int scrollY = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().height;
+    	float imageX = imageActive.getExtents()[0]*getZoomX();
+    	float imageY = imageActive.getExtents()[1]*getZoomY();
 
         if (cursorMode == ViewJComponentBase.DROPPER_PAINT) {
             if (imageActive.isColorImage() == true) {
@@ -2476,6 +2485,19 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             } else {
                 imageActive.notifyImageDisplayListeners_notTriFrame();
             }
+        } else if(scrollX<imageX || scrollY<imageY) {
+        	if(cursorMode == ViewJComponentBase.DEFAULT && mouseEvent.isShiftDown()) {
+        		setCursor(new Cursor(Cursor.HAND_CURSOR));
+        		int currentScrollX = ((ViewJFrameImage) frame).getScrollPane().getHorizontalScrollBar().getValue();
+        		int currentScrollY = ((ViewJFrameImage) frame).getScrollPane().getVerticalScrollBar().getValue();
+
+        		if(mouseEvent.getWhen() - lastMouseEvent > 100) {
+	        		lastMouseEvent = mouseEvent.getWhen();
+	        		 ((ViewJFrameImage) frame).getScrollPane().getHorizontalScrollBar().setValue(currentScrollX + diffX);
+	        		 ((ViewJFrameImage) frame).getScrollPane().getVerticalScrollBar().setValue(currentScrollY + diffY);
+        		} 
+ 
+        	}
         }
     }
 
